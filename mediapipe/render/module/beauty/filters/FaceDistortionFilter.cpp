@@ -289,6 +289,32 @@ namespace Opipe
                          0.0f,
                          0.02);
             }
+            
+            //瘦左鼻子
+            {
+                Vector2 point1 = _positionAt(219);
+                Vector2 point2 = _positionAt(4);
+                Vector2 point3 = _positionAt(131);
+                Vector2 point4 = _positionAt(60);
+
+                float angle = getRadius(point2, point1);
+                addPoint(point1, point1.distance(point3), point1.distance(point4), 0.02, 3, angle,
+                         0.0f,
+                         0.02);
+            }
+            
+            //瘦右鼻子鼻子
+            {
+                Vector2 point1 = _positionAt(294);
+                Vector2 point2 = _positionAt(4);
+                Vector2 point3 = _positionAt(429);
+                Vector2 point4 = _positionAt(290);
+
+                float angle = getRadius(point2, point1);
+                addPoint(point1, point1.distance(point3), point1.distance(point4), 0.02, 3, angle,
+                         0.0f,
+                         0.02);
+            }
 
             _filterProgram->setUniformValue("count", _count);
             _filterProgram->setUniformValue("center", _count, _center, 2);

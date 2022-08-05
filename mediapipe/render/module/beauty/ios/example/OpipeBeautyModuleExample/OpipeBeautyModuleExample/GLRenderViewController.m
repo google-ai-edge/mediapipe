@@ -7,6 +7,7 @@
 
 #import "GLRenderViewController.h"
 #import <OlaFaceUnityFramework/OlaFaceUnity.h>
+static int glfps = 30;
 
 @interface GLRenderViewController ()
 <AVCaptureVideoDataOutputSampleBufferDelegate,
@@ -133,13 +134,13 @@ AVCaptureAudioDataOutputSampleBufferDelegate>
         
         CMVideoDimensions dimensions = CMVideoFormatDescriptionGetDimensions(description);
         FourCharCode formatType = CMFormatDescriptionGetMediaSubType(description);
-        if(maxrate == 30 && formatType == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange &&
+        if(maxrate == glfps && formatType == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange &&
            dimensions.width ==[[outputSettings objectForKey:@"Width"]  intValue] &&
            dimensions.height ==[[outputSettings objectForKey:@"Height"]  intValue]) {
             if (YES == [self.captureDevice lockForConfiguration:NULL] ) {
                 self.captureDevice.activeFormat = vFormat;
-                [self.captureDevice setActiveVideoMinFrameDuration:CMTimeMake(1,30)];
-                [self.captureDevice setActiveVideoMaxFrameDuration:CMTimeMake(1,30)];
+                [self.captureDevice setActiveVideoMinFrameDuration:CMTimeMake(1,glfps)];
+                [self.captureDevice setActiveVideoMaxFrameDuration:CMTimeMake(1,glfps)];
                 [self.captureDevice unlockForConfiguration];
             }
         }

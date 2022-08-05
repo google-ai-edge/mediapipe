@@ -1288,12 +1288,12 @@
 			);
 			dependencies = (
 				2811397AE51A0D9D00000000 /* PBXTargetDependency */,
-				2811397A2F164B6300000000 /* PBXTargetDependency */,
-				2811397A2F164B6300000000 /* PBXTargetDependency */,
 				2811397AE39F886700000000 /* PBXTargetDependency */,
+				2811397A2F164B6300000000 /* PBXTargetDependency */,
 				2811397AF15E172100000000 /* PBXTargetDependency */,
-				2811397AE39F886700000000 /* PBXTargetDependency */,
 				2811397A2F164B6300000000 /* PBXTargetDependency */,
+				2811397A2F164B6300000000 /* PBXTargetDependency */,
+				2811397AE39F886700000000 /* PBXTargetDependency */,
 			);
 			name = _idx_cpu_op_resolver_0FB1B7D6_ios_min11.0;
 			productName = _idx_cpu_op_resolver_0FB1B7D6_ios_min11.0;
@@ -1344,10 +1344,10 @@
 				2811397AE51A0D9D00000000 /* PBXTargetDependency */,
 				2811397AC4A1069D00000000 /* PBXTargetDependency */,
 				2811397A36B3CE1700000000 /* PBXTargetDependency */,
+				2811397AC4A1069D00000000 /* PBXTargetDependency */,
+				2811397AC4A1069D00000000 /* PBXTargetDependency */,
 				2811397A36B3CE1700000000 /* PBXTargetDependency */,
 				2811397A40B23BB500000000 /* PBXTargetDependency */,
-				2811397AC4A1069D00000000 /* PBXTargetDependency */,
-				2811397AC4A1069D00000000 /* PBXTargetDependency */,
 			);
 			name = _idx_cpu_op_resolver_0FB1B7D6_ios_min15.5;
 			productName = _idx_cpu_op_resolver_0FB1B7D6_ios_min15.5;
@@ -1408,7 +1408,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 58316E17E93848CA00000000 /* Build configuration list for PBXNativeTarget "_idx_transform_tensor_bilinear_landmarks_to_transform_matrix_transform_landmarks_F04B04B0_ios_min11.0" */;
 			buildPhases = (
-				D51719AF000000000000001B /* Sources */,
+				D51719AF000000000000001C /* Sources */,
 			);
 			buildRules = (
 			);
@@ -1580,9 +1580,9 @@
 			dependencies = (
 				2811397AE51A0D9D00000000 /* PBXTargetDependency */,
 				2811397A2543EE8700000000 /* PBXTargetDependency */,
-				2811397A2543EE8700000000 /* PBXTargetDependency */,
 				2811397A83F4347500000000 /* PBXTargetDependency */,
 				2811397AAC3AEC4700000000 /* PBXTargetDependency */,
+				2811397A2543EE8700000000 /* PBXTargetDependency */,
 			);
 			name = "_idx_core_core-ios_F9E9FB32_ios_min11.0";
 			productName = "_idx_core_core-ios_F9E9FB32_ios_min11.0";
@@ -1631,9 +1631,9 @@
 			);
 			dependencies = (
 				2811397AE51A0D9D00000000 /* PBXTargetDependency */,
-				2811397ADA50AA6900000000 /* PBXTargetDependency */,
-				2811397A6444CACD00000000 /* PBXTargetDependency */,
 				2811397AF3A1AA7100000000 /* PBXTargetDependency */,
+				2811397A6444CACD00000000 /* PBXTargetDependency */,
+				2811397ADA50AA6900000000 /* PBXTargetDependency */,
 			);
 			name = _idx_OlaFaceUnityLibrary_FaceMeshGPULibrary_2828BEF2_ios_min15.5;
 			productName = _idx_OlaFaceUnityLibrary_FaceMeshGPULibrary_2828BEF2_ios_min15.5;
@@ -1666,8 +1666,8 @@
 			);
 			dependencies = (
 				2811397AE51A0D9D00000000 /* PBXTargetDependency */,
-				2811397A91016CBF00000000 /* PBXTargetDependency */,
 				2811397AAD83C52B00000000 /* PBXTargetDependency */,
+				2811397A91016CBF00000000 /* PBXTargetDependency */,
 			);
 			name = _idx_to_image_calculator_association_norm_rect_calculator_collection_has_min_size_calculator_constant_side_packet_calculator_detections_to_rects_calculator_detections_to_render_data_etc_7D53CB1B_ios_min15.5;
 			productName = _idx_to_image_calculator_association_norm_rect_calculator_collection_has_min_size_calculator_constant_side_packet_calculator_detections_to_rects_calculator_detections_to_render_data_etc_7D53CB1B_ios_min15.5;
@@ -1685,9 +1685,9 @@
 			dependencies = (
 				2811397AE51A0D9D00000000 /* PBXTargetDependency */,
 				2811397A71D64AF700000000 /* PBXTargetDependency */,
-				2811397A71D64AF700000000 /* PBXTargetDependency */,
 				2811397ADC6BB92900000000 /* PBXTargetDependency */,
 				2811397AA30404F300000000 /* PBXTargetDependency */,
+				2811397A71D64AF700000000 /* PBXTargetDependency */,
 			);
 			name = "_idx_core_core-ios_F9E9FB32_ios_min15.5";
 			productName = "_idx_core_core-ios_F9E9FB32_ios_min15.5";
@@ -1720,8 +1720,8 @@
 			);
 			dependencies = (
 				2811397AE51A0D9D00000000 /* PBXTargetDependency */,
-				2811397A4521587B00000000 /* PBXTargetDependency */,
 				2811397A4E78DF7F00000000 /* PBXTargetDependency */,
+				2811397A4521587B00000000 /* PBXTargetDependency */,
 				2811397A2D59C41300000000 /* PBXTargetDependency */,
 			);
 			name = _idx_OlaFaceUnityLibrary_FaceMeshGPULibrary_2828BEF2_ios_min11.0;
@@ -1885,8 +1885,8 @@
 			);
 			dependencies = (
 				2811397AE51A0D9D00000000 /* PBXTargetDependency */,
-				2811397ADF58A07300000000 /* PBXTargetDependency */,
 				2811397A83F46D1900000000 /* PBXTargetDependency */,
+				2811397ADF58A07300000000 /* PBXTargetDependency */,
 			);
 			name = _idx_mediapipe_framework_ios_4D298135_ios_min15.5;
 			productName = _idx_mediapipe_framework_ios_4D298135_ios_min15.5;
@@ -2074,7 +2074,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 58316E176FB16FD200000000 /* Build configuration list for PBXNativeTarget "_idx_max_unpooling_max_pool_argmax_54A4D221_ios_min11.0" */;
 			buildPhases = (
-				D51719AF000000000000001C /* Sources */,
+				D51719AF000000000000001B /* Sources */,
 			);
 			buildRules = (
 			);
@@ -2683,9 +2683,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				AE561F62FAF3CE2D00000000 /* transform_tensor_bilinear.cc in operations */,
-				AE561F621305049200000000 /* landmarks_to_transform_matrix.cc in operations */,
-				AE561F62E1ED7AB700000000 /* transform_landmarks.cc in operations */,
+				AE561F62A18B807100000000 /* max_unpooling.cc in operations */,
+				AE561F62D295FD0100000000 /* max_pool_argmax.cc in operations */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2693,8 +2692,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				AE561F62A18B807100000000 /* max_unpooling.cc in operations */,
-				AE561F62D295FD0100000000 /* max_pool_argmax.cc in operations */,
+				AE561F62FAF3CE2D00000000 /* transform_tensor_bilinear.cc in operations */,
+				AE561F621305049200000000 /* landmarks_to_transform_matrix.cc in operations */,
+				AE561F62E1ED7AB700000000 /* transform_landmarks.cc in operations */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3160,7 +3160,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "--version";
 				OTHER_LDFLAGS = "--version";
@@ -3253,7 +3253,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "--version";
 				OTHER_LDFLAGS = "--version";
@@ -3684,10 +3684,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/FP16/_virtual_includes/FP16 $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers/_virtual_includes/runtime_cc $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo/_virtual_includes/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog/_virtual_includes/clog $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers/_virtual_includes/flatbuffers $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers/src/_virtual_includes/flatbuffers $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_OUTPUT_BASE)/external/org_tensorflow $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/org_tensorflow $(TULSI_OUTPUT_BASE)/external/FP16 $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/FP16 $(TULSI_OUTPUT_BASE)/external/gemmlowp $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/gemmlowp $(TULSI_OUTPUT_BASE)/external/flatbuffers $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers $(TULSI_OUTPUT_BASE)/external/com_google_absl $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/com_google_absl $(TULSI_OUTPUT_BASE)/external/eigen_archive $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/eigen_archive $(TULSI_OUTPUT_BASE)/external/ruy $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/ruy $(TULSI_OUTPUT_BASE)/external/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo $(TULSI_OUTPUT_BASE)/external/clog $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog $(TULSI_OUTPUT_BASE)/external/FP16/include $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/FP16/include $(TULSI_OUTPUT_BASE)/external/org_tensorflow/tensorflow/lite/schema $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/org_tensorflow/tensorflow/lite/schema ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo/_virtual_includes/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog/_virtual_includes/clog $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_OUTPUT_BASE)/external/org_tensorflow $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/org_tensorflow $(TULSI_OUTPUT_BASE)/external/gemmlowp $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/gemmlowp $(TULSI_OUTPUT_BASE)/external/eigen_archive $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/eigen_archive $(TULSI_OUTPUT_BASE)/external/ruy $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/ruy $(TULSI_OUTPUT_BASE)/external/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo $(TULSI_OUTPUT_BASE)/external/clog $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog ";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				OTHER_CFLAGS = "-DEIGEN_MAX_ALIGN_BYTES=64 -DEIGEN_MPL2_ONLY -DNDEBUG -DNS_BLOCK_ASSERTIONS=1 -DTFLITE_WITH_RUY -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_transform_tensor_bilinear_landmarks_to_transform_matrix_transform_landmarks_F04B04B0_ios_min11.0;
+				PRODUCT_NAME = _idx_max_unpooling_max_pool_argmax_54A4D221_ios_min11.0;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
 			};
@@ -3697,10 +3697,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo/_virtual_includes/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog/_virtual_includes/clog $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_OUTPUT_BASE)/external/org_tensorflow $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/org_tensorflow $(TULSI_OUTPUT_BASE)/external/gemmlowp $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/gemmlowp $(TULSI_OUTPUT_BASE)/external/eigen_archive $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/eigen_archive $(TULSI_OUTPUT_BASE)/external/ruy $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/ruy $(TULSI_OUTPUT_BASE)/external/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo $(TULSI_OUTPUT_BASE)/external/clog $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/FP16/_virtual_includes/FP16 $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers/_virtual_includes/runtime_cc $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo/_virtual_includes/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog/_virtual_includes/clog $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers/_virtual_includes/flatbuffers $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers/src/_virtual_includes/flatbuffers $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_OUTPUT_BASE)/external/org_tensorflow $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/org_tensorflow $(TULSI_OUTPUT_BASE)/external/FP16 $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/FP16 $(TULSI_OUTPUT_BASE)/external/gemmlowp $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/gemmlowp $(TULSI_OUTPUT_BASE)/external/flatbuffers $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers $(TULSI_OUTPUT_BASE)/external/com_google_absl $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/com_google_absl $(TULSI_OUTPUT_BASE)/external/eigen_archive $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/eigen_archive $(TULSI_OUTPUT_BASE)/external/ruy $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/ruy $(TULSI_OUTPUT_BASE)/external/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo $(TULSI_OUTPUT_BASE)/external/clog $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog $(TULSI_OUTPUT_BASE)/external/FP16/include $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/FP16/include $(TULSI_OUTPUT_BASE)/external/org_tensorflow/tensorflow/lite/schema $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/org_tensorflow/tensorflow/lite/schema ";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				OTHER_CFLAGS = "-DEIGEN_MAX_ALIGN_BYTES=64 -DEIGEN_MPL2_ONLY -DNDEBUG -DNS_BLOCK_ASSERTIONS=1 -DTFLITE_WITH_RUY -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_max_unpooling_max_pool_argmax_54A4D221_ios_min11.0;
+				PRODUCT_NAME = _idx_transform_tensor_bilinear_landmarks_to_transform_matrix_transform_landmarks_F04B04B0_ios_min11.0;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
 			};
@@ -4069,7 +4069,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				PRODUCT_NAME = "mediapipe-render-module-beauty-ios-framework-OlaFaceUnityLibrary";
 				SDKROOT = iphoneos;
 				TULSI_BUILD_PATH = mediapipe/render/module/beauty/ios/framework;
@@ -4494,10 +4494,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/FP16/_virtual_includes/FP16 $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers/_virtual_includes/runtime_cc $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo/_virtual_includes/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog/_virtual_includes/clog $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers/_virtual_includes/flatbuffers $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers/src/_virtual_includes/flatbuffers $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_OUTPUT_BASE)/external/org_tensorflow $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/org_tensorflow $(TULSI_OUTPUT_BASE)/external/FP16 $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/FP16 $(TULSI_OUTPUT_BASE)/external/gemmlowp $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/gemmlowp $(TULSI_OUTPUT_BASE)/external/flatbuffers $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers $(TULSI_OUTPUT_BASE)/external/com_google_absl $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/com_google_absl $(TULSI_OUTPUT_BASE)/external/eigen_archive $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/eigen_archive $(TULSI_OUTPUT_BASE)/external/ruy $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/ruy $(TULSI_OUTPUT_BASE)/external/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo $(TULSI_OUTPUT_BASE)/external/clog $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog $(TULSI_OUTPUT_BASE)/external/FP16/include $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/FP16/include $(TULSI_OUTPUT_BASE)/external/org_tensorflow/tensorflow/lite/schema $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/org_tensorflow/tensorflow/lite/schema ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo/_virtual_includes/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog/_virtual_includes/clog $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_OUTPUT_BASE)/external/org_tensorflow $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/org_tensorflow $(TULSI_OUTPUT_BASE)/external/gemmlowp $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/gemmlowp $(TULSI_OUTPUT_BASE)/external/eigen_archive $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/eigen_archive $(TULSI_OUTPUT_BASE)/external/ruy $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/ruy $(TULSI_OUTPUT_BASE)/external/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo $(TULSI_OUTPUT_BASE)/external/clog $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog ";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				OTHER_CFLAGS = "-DEIGEN_MAX_ALIGN_BYTES=64 -DEIGEN_MPL2_ONLY -DNDEBUG -DNS_BLOCK_ASSERTIONS=1 -DTFLITE_WITH_RUY -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_transform_tensor_bilinear_landmarks_to_transform_matrix_transform_landmarks_F04B04B0_ios_min11.0;
+				PRODUCT_NAME = _idx_max_unpooling_max_pool_argmax_54A4D221_ios_min11.0;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
 			};
@@ -4507,10 +4507,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
-				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo/_virtual_includes/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog/_virtual_includes/clog $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_OUTPUT_BASE)/external/org_tensorflow $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/org_tensorflow $(TULSI_OUTPUT_BASE)/external/gemmlowp $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/gemmlowp $(TULSI_OUTPUT_BASE)/external/eigen_archive $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/eigen_archive $(TULSI_OUTPUT_BASE)/external/ruy $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/ruy $(TULSI_OUTPUT_BASE)/external/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo $(TULSI_OUTPUT_BASE)/external/clog $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog ";
+				HEADER_SEARCH_PATHS = "$(inherited) $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/FP16/_virtual_includes/FP16 $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers/_virtual_includes/runtime_cc $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo/_virtual_includes/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog/_virtual_includes/clog $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers/_virtual_includes/flatbuffers $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers/src/_virtual_includes/flatbuffers $(TULSI_WR)/. $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/ $(TULSI_OUTPUT_BASE)/external/org_tensorflow $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/org_tensorflow $(TULSI_OUTPUT_BASE)/external/FP16 $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/FP16 $(TULSI_OUTPUT_BASE)/external/gemmlowp $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/gemmlowp $(TULSI_OUTPUT_BASE)/external/flatbuffers $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/flatbuffers $(TULSI_OUTPUT_BASE)/external/com_google_absl $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/com_google_absl $(TULSI_OUTPUT_BASE)/external/eigen_archive $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/eigen_archive $(TULSI_OUTPUT_BASE)/external/ruy $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/ruy $(TULSI_OUTPUT_BASE)/external/cpuinfo $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/cpuinfo $(TULSI_OUTPUT_BASE)/external/clog $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/clog $(TULSI_OUTPUT_BASE)/external/FP16/include $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/FP16/include $(TULSI_OUTPUT_BASE)/external/org_tensorflow/tensorflow/lite/schema $(TULSI_EXECUTION_ROOT)/bazel-tulsi-includes/x/x/external/org_tensorflow/tensorflow/lite/schema ";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				OTHER_CFLAGS = "-DEIGEN_MAX_ALIGN_BYTES=64 -DEIGEN_MPL2_ONLY -DNDEBUG -DNS_BLOCK_ASSERTIONS=1 -DTFLITE_WITH_RUY -D_FORTIFY_SOURCE=1 -D__DATE__=\"redacted\" -D__TIMESTAMP__=\"redacted\" -D__TIME__=\"redacted\"";
-				PRODUCT_NAME = _idx_max_unpooling_max_pool_argmax_54A4D221_ios_min11.0;
+				PRODUCT_NAME = _idx_transform_tensor_bilinear_landmarks_to_transform_matrix_transform_landmarks_F04B04B0_ios_min11.0;
 				SDKROOT = iphoneos;
 				USER_HEADER_SEARCH_PATHS = "$(TULSI_WR)";
 			};
@@ -4879,7 +4879,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
 				INFOPLIST_FILE = "${PROJECT_FILE_PATH}/.tulsi/Resources/StubInfoPlist.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				PRODUCT_NAME = "mediapipe-render-module-beauty-ios-framework-OlaFaceUnityLibrary";
 				SDKROOT = iphoneos;
 				TULSI_BUILD_PATH = mediapipe/render/module/beauty/ios/framework;
@@ -5077,8 +5077,8 @@
 		58316E176FB16FD200000000 /* Build configuration list for PBXNativeTarget "_idx_max_unpooling_max_pool_argmax_54A4D221_ios_min11.0" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				F04780B2C6C86FF10000001E /* Debug */,
-				F04780B2FA7DE14A0000001E /* Release */,
+				F04780B2C6C86FF10000001D /* Debug */,
+				F04780B2FA7DE14A0000001D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};
@@ -5321,8 +5321,8 @@
 		58316E17E93848CA00000000 /* Build configuration list for PBXNativeTarget "_idx_transform_tensor_bilinear_landmarks_to_transform_matrix_transform_landmarks_F04B04B0_ios_min11.0" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				F04780B2C6C86FF10000001D /* Debug */,
-				F04780B2FA7DE14A0000001D /* Release */,
+				F04780B2C6C86FF10000001E /* Debug */,
+				F04780B2FA7DE14A0000001E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};

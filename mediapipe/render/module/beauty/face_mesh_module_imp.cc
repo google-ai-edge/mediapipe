@@ -140,7 +140,6 @@ namespace Opipe
     bool FaceMeshModuleIMP::init(void *env, void *binaryData,
                                  int size)
     {
-        std::string graphName = "face_mesh_mobile_gpu";
         _delegate = std::make_shared<FaceMeshCallFrameDelegate>();
         _delegate->attach(this);
         mediapipe::CalculatorGraphConfig config;
@@ -244,7 +243,17 @@ namespace Opipe
         ts);
         CVPixelBufferUnlockBaseAddress(pixelbuffer, 0);
 #endif
-        
+        _dispatch->runSync([&] {
+            std::vector<Vec2> facePoints;
+            if (_lastLandmark.landmark_size() > 0) {
+                Log("FaceMeshModule", "检测到人脸输出");
+                for (int i = 0; i < _lastLandmark.landmark_size(); i++) {
+                    facePoints.emplace_back( _lastLandmark.landmark(i).x(), _lastLandmark.landmark(i).y());
+                }
+                Log("FaceMeshModule", "检测到人脸输完毕");
+            }
+            _render->setFacePoints(facePoints);
+        }, Context::IOContext);
     }
 #endif
 
@@ -284,15 +293,7 @@ namespace Opipe
         });
         
         textureInfo = _render->outputRenderTexture(inputTexture);
-        std::vector<Vec2> facePoints;
-        if (_lastLandmark.landmark_size() > 0) {
-            Log("FaceMeshModule", "检测到人脸输出");
-            for (int i = 0; i < _lastLandmark.landmark_size(); i++) {
-                facePoints.emplace_back( _lastLandmark.landmark(i).x(), _lastLandmark.landmark(i).y());
-            }
-            Log("FaceMeshModule", "检测到人脸输完毕");
-        }
-        _render->setFacePoints(facePoints);
+
         return textureInfo;
     }
 

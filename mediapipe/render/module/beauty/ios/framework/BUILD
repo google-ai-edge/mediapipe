@@ -37,8 +37,9 @@ objc_library(
          "@ios_opencv//:OpencvFramework",
     ],
     data = [
-        # "//mediapipe/graphs/face_mesh:face_mesh_mobile_gpu.binarypb",
-       "//mediapipe/graphs/face_mesh:face_mesh_mobile_landmark_gpu.binarypb",
+#        "//mediapipe/graphs/beauty_graph:beauty_graph.binarypb",
+          "//mediapipe/graphs/face_mesh:face_mesh_mobile_gpu.binarypb",
+#       "//mediapipe/graphs/face_mesh:face_mesh_mobile_landmark_gpu.binarypb",
         "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
         "//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite",
         "//mediapipe/render/module/beauty:whiten.png",

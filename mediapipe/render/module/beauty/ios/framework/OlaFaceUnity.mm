@@ -4,6 +4,7 @@
 #include "mediapipe/render/core/OlaCameraSource.hpp"
 #include "mediapipe/render/core/Context.hpp"
 #include "mediapipe/render/core/Filter.hpp"
+#include "mediapipe/render/core/CVFramebuffer.hpp"
 
 using namespace Opipe;
 @interface OlaFaceUnity() {
@@ -43,7 +44,7 @@ using namespace Opipe;
 {
     _face_module = Opipe::FaceMeshModule::create();
     NSBundle *bundle = [NSBundle bundleForClass:[self class]];
-    NSURL* graphURL = [bundle URLForResource:@"face_mesh_mobile_landmark_gpu" withExtension:@"binarypb"];
+    NSURL* graphURL = [bundle URLForResource:@"face_mesh_mobile_gpu" withExtension:@"binarypb"];
     NSData* data = [NSData dataWithContentsOfURL:graphURL options:0 error:nil];
     if (data) {
         _face_module->init(nullptr, (void *)data.bytes, data.length);
@@ -126,7 +127,6 @@ using namespace Opipe;
         int height = (int)CVPixelBufferGetHeight(imagebuffer);
         
         CFRetain(samplebuffer);
-        NSLog(@"surfaceId:%@", @(surfaceId));
         dispatch_async(videoQueue, ^{
             _face_module->runInContextSync([&] {
                 CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(samplebuffer);
@@ -143,9 +143,14 @@ using namespace Opipe;
                 CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
                 sourceCamera->updateTargets(frameTime);
                 dispatch_semaphore_signal(block_camera_sema);
+                CVFramebuffer *framebuffer = dynamic_cast<CVFramebuffer *>(sourceCamera->getScaleFramebuffer());
+                if (framebuffer && framebuffer->renderTarget) {
+                    _face_module->processVideoFrame(framebuffer->renderTarget, frameTime);
+                }
             });
             CFRelease(samplebuffer);
         });
+     
     }
 }
 

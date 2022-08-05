@@ -5,6 +5,7 @@
 #include "OlaYUVTexture.hpp"
 #include "OlaYUVTexture420P.hpp"
 #include "Framebuffer.hpp"
+#include "OlaShareTextureFilter.hpp"
 
 #if defined(__APPLE__)
 #import <OpenGLES/ES3/gl.h>
@@ -31,6 +32,7 @@ namespace Opipe
     {
         private:
             Filter *_yuvTexture = nullptr;
+            OlaShareTextureFilter *_scaleTexture = nullptr;
             SourceType _sourceType;
             int _lastIOSurface = -1;
             #if defined(__APPLE__)

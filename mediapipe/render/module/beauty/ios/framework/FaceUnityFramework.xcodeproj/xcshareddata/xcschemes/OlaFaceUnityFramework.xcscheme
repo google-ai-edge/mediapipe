@@ -1,27 +1,27 @@
 
-<Scheme LastUpgradeVersion="1000" version="1.3">
+<Scheme version="1.3" LastUpgradeVersion="1000">
     <BuildAction buildImplicitDependencies="YES" parallelizeBuildables="YES">
         <BuildActionEntries>
-            <BuildActionEntry buildForAnalyzing="YES" buildForProfiling="YES" buildForRunning="YES" buildForArchiving="YES" buildForTesting="YES">
-                <BuildableReference BuildableName="OlaFaceUnityFramework.framework" BuildableIdentifier="primary" ReferencedContainer="container:FaceUnityFramework.xcodeproj" BlueprintName="OlaFaceUnityFramework" BlueprintIdentifier="EDD0A78501748AFE00000000"></BuildableReference>
+            <BuildActionEntry buildForProfiling="YES" buildForTesting="YES" buildForAnalyzing="YES" buildForRunning="YES" buildForArchiving="YES">
+                <BuildableReference BlueprintName="OlaFaceUnityFramework" BuildableName="OlaFaceUnityFramework.framework" ReferencedContainer="container:FaceUnityFramework.xcodeproj" BuildableIdentifier="primary" BlueprintIdentifier="EDD0A78501748AFE00000000"></BuildableReference>
             </BuildActionEntry>
         </BuildActionEntries>
     </BuildAction>
-    <TestAction selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" buildConfiguration="__TulsiTestRunner_Debug" shouldUseLaunchSchemeArgsEnv="YES" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB">
+    <TestAction selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" shouldUseLaunchSchemeArgsEnv="YES" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" buildConfiguration="__TulsiTestRunner_Debug">
         <Testables></Testables>
         <BuildableProductRunnable runnableDebuggingMode="0">
-            <BuildableReference ReferencedContainer="container:FaceUnityFramework.xcodeproj" BlueprintIdentifier="EDD0A78501748AFE00000000" BuildableName="OlaFaceUnityFramework.framework" BlueprintName="OlaFaceUnityFramework" BuildableIdentifier="primary"></BuildableReference>
+            <BuildableReference BuildableName="OlaFaceUnityFramework.framework" BlueprintName="OlaFaceUnityFramework" BuildableIdentifier="primary" BlueprintIdentifier="EDD0A78501748AFE00000000" ReferencedContainer="container:FaceUnityFramework.xcodeproj"></BuildableReference>
         </BuildableProductRunnable>
     </TestAction>
-    <LaunchAction customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" debugDocumentVersioning="YES" allowLocationSimulation="YES" ignoresPersistentStateOnLaunch="NO" launchStyle="0" debugServiceExtension="internal" buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" useCustomWorkingDirectory="NO">
+    <LaunchAction ignoresPersistentStateOnLaunch="NO" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" debugDocumentVersioning="YES" customLLDBInitFile="$(PROJECT_FILE_PATH)/.tulsi/Utils/lldbinit" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" buildConfiguration="Debug" launchStyle="0" useCustomWorkingDirectory="NO" allowLocationSimulation="YES" debugServiceExtension="internal">
         <EnvironmentVariables></EnvironmentVariables>
         <BuildableProductRunnable runnableDebuggingMode="0">
-            <BuildableReference BlueprintIdentifier="EDD0A78501748AFE00000000" BuildableIdentifier="primary" BlueprintName="OlaFaceUnityFramework" ReferencedContainer="container:FaceUnityFramework.xcodeproj" BuildableName="OlaFaceUnityFramework.framework"></BuildableReference>
+            <BuildableReference BlueprintIdentifier="EDD0A78501748AFE00000000" BuildableName="OlaFaceUnityFramework.framework" ReferencedContainer="container:FaceUnityFramework.xcodeproj" BlueprintName="OlaFaceUnityFramework" BuildableIdentifier="primary"></BuildableReference>
         </BuildableProductRunnable>
     </LaunchAction>
-    <ProfileAction shouldUseLaunchSchemeArgsEnv="YES" useCustomWorkingDirectory="NO" buildConfiguration="__TulsiTestRunner_Release" debugDocumentVersioning="YES">
+    <ProfileAction buildConfiguration="__TulsiTestRunner_Release" debugDocumentVersioning="YES" useCustomWorkingDirectory="NO" shouldUseLaunchSchemeArgsEnv="YES">
         <BuildableProductRunnable runnableDebuggingMode="0">
-            <BuildableReference ReferencedContainer="container:FaceUnityFramework.xcodeproj" BuildableName="OlaFaceUnityFramework.framework" BlueprintName="OlaFaceUnityFramework" BlueprintIdentifier="EDD0A78501748AFE00000000" BuildableIdentifier="primary"></BuildableReference>
+            <BuildableReference BuildableName="OlaFaceUnityFramework.framework" BlueprintName="OlaFaceUnityFramework" ReferencedContainer="container:FaceUnityFramework.xcodeproj" BlueprintIdentifier="EDD0A78501748AFE00000000" BuildableIdentifier="primary"></BuildableReference>
         </BuildableProductRunnable>
     </ProfileAction>
     <AnalyzeAction buildConfiguration="Debug"></AnalyzeAction>

@@ -29,7 +29,12 @@ OlaCameraSource::OlaCameraSource(Context *context, SourceType sourceType) : Sour
             break;
     }
     if (_yuvTexture) {
+        _scaleTexture = OlaShareTextureFilter::create(context);
+        _scaleTexture->setFramebufferScale(0.5);
         addTarget(_yuvTexture);
+        _yuvTexture->addTarget(_scaleTexture);
+    } else {
+        addTarget(_scaleTexture);
     }
 }
 
@@ -40,6 +45,11 @@ OlaCameraSource::~OlaCameraSource()
         _yuvTexture->removeAllTargets();
         _yuvTexture->release();
         _yuvTexture = nullptr;
+    }
+    
+    if (_scaleTexture) {
+        _scaleTexture->release();
+        _scaleTexture = nullptr;
     }
 }
 
@@ -177,7 +187,13 @@ void OlaCameraSource::_bindIOSurfaceToTexture(int iosurface, RotationMode output
     }
 }
 
-
+Framebuffer* OlaCameraSource::getScaleFramebuffer() {
+    if (_scaleTexture && _scaleTexture->getFramebuffer()) {
+        return _scaleTexture->getFramebuffer();
+    } else {
+        return nullptr;
+    }
+}
 
 #endif
 }

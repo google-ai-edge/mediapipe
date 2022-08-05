@@ -18,7 +18,7 @@ namespace Opipe {
 
     OpipeDispatch::OpipeDispatch(Opipe::Context *context, void *id, Opipe::GLThreadDispatch *glDispatch) : _context(context) {
         _id = id;
-        _contextQueueIO = new dispatch_queue("quaramera_io");
+        _contextQueueIO = new dispatch_queue("com.ola.ioContextQueue");
         _contextQueueIO->dispatch_sync([&] {
             _context->useAsCurrent(Opipe::Context::IOContext, true);
         });
@@ -30,7 +30,7 @@ namespace Opipe {
         });
 #endif
 
-        _contextQueueOffline = new dispatch_queue("quaramera_offline");
+        _contextQueueOffline = new dispatch_queue("com.ola.offscreenQueue");
         _contextQueueOffline->dispatch_sync([&] {
             _context->useAsCurrent(Opipe::Context::OfflineRenderContext, true);
         });
