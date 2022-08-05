@@ -1,15 +1,15 @@
 # Description:
 #   OpenCV libraries for video/image processing on MacOS
 
+load("@bazel_skylib//lib:paths.bzl", "paths")
+
 licenses(["notice"])  # BSD license
 
 exports_files(["LICENSE"])
 
-load("@bazel_skylib//lib:paths.bzl", "paths")
-
 # The path to OpenCV is a combination of the path set for "macos_opencv"
 # in the WORKSPACE file and the prefix here.
-PREFIX = "opt/opencv@3"
+PREFIX = "homebrew"
 
 cc_library(
     name = "opencv",
@@ -25,8 +25,8 @@ cc_library(
             paths.join(PREFIX, "lib/libopencv_videoio.dylib"),
         ],
     ),
-    hdrs = glob([paths.join(PREFIX, "include/opencv2/**/*.h*")]),
-    includes = [paths.join(PREFIX, "include/")],
+    hdrs = glob([paths.join(PREFIX, "include/opencv4/opencv2/**/*.h*")]),
+    includes = [paths.join(PREFIX, "include/opencv4/")],
     linkstatic = 1,
     visibility = ["//visibility:public"],
 )

@@ -211,7 +211,7 @@ new_local_repository(
     # For local MacOS builds, the path should point to an opencv@3 installation.
     # If you edit the path here, you will also need to update the corresponding
     # prefix in "opencv_macos.BUILD".
-    path = "/usr/local",
+    path = "/opt",
 )
 
 new_local_repository(
@@ -223,7 +223,7 @@ new_local_repository(
 new_local_repository(
     name = "windows_opencv",
     build_file = "@//third_party:opencv_windows.BUILD",
-    path = "C:\\opencv\\build",
+    path = "D:\\opencv\\build",
 )
 
 http_archive(
