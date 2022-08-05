@@ -1,0 +1,11 @@
+holistic_tracking_cpu_fps
+bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://Python//python.exe" mediapipe/examples/desktop/holistic_tracking:holistic_tracking_cpu_fps
+bazel-bin/mediapipe/examples/desktop/holistic_tracking/holistic_tracking_cpu_fps.exe --calculator_graph_config_file=mediapipe/graphs/holistic_tracking/holistic_tracking_cpu.pbtxt --input_video_path=D:/video/bjs.mp4
+
+face_mesh_cpu_fps
+bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://Python//python.exe" mediapipe/examples/desktop/face_mesh:face_mesh_cpu_fps
+bazel-bin/mediapipe/examples/desktop/face_mesh/face_mesh_cpu_fps.exe --calculator_graph_config_file=mediapipe/graphs/face_mesh/face_mesh_desktop_live.pbtxt --input_video_path=D:/video/bjs.mp4
+
+holistic_attention_tracking_cpu_fps
+bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://Python//python.exe" mediapipe/examples/desktop/holistic_tracking:holistic_tracking_cpu_fps
+bazel-bin/mediapipe/examples/desktop/holistic_tracking/holistic_tracking_cpu_fps.exe --calculator_graph_config_file=mediapipe/graphs/holistic_tracking/holistic_tracking_cpu_attention.pbtxt --input_video_path=D:/video/bjs.mp4
