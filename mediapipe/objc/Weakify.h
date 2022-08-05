@@ -36,7 +36,7 @@
  * you should not need to invoke WEAKIFY multiple times on the same variable.
  */
 #define WEAKIFY(variable) \
-  __weak __typeof__(variable) __WEAKNAME_(variable) = (variable)
+    __weak __typeof__(variable) __WEAKNAME_(variable) = (variable)
 
 /**
  * STRONGIFY defines a new shadow local variable with the same name as the
@@ -47,8 +47,8 @@
  * This macro must be called within each block scope to prevent nested blocks
  * from capturing a strong reference from an outer block.
  */
-#define STRONGIFY(variable)                            \
-  _Pragma("clang diagnostic push")                     \
-      _Pragma("clang diagnostic ignored \"-Wshadow\"") \
-          __strong __typeof__(variable) variable =     \
-              __WEAKNAME_(variable) _Pragma("clang diagnostic pop")
+#define STRONGIFY(variable)                              \
+    _Pragma("clang diagnostic push")                     \
+        _Pragma("clang diagnostic ignored \"-Wshadow\"") \
+            __strong __typeof__(variable) variable =     \
+                __WEAKNAME_(variable) _Pragma("clang diagnostic pop")

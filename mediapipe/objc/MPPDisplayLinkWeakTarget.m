@@ -15,30 +15,30 @@
 #import "mediapipe/objc/MPPDisplayLinkWeakTarget.h"
 
 @implementation MPPDisplayLinkWeakTarget {
-  __weak id _target;
-  SEL _selector;
+    __weak id _target;
+    SEL _selector;
 }
 
 #pragma mark - Init
 
 - (instancetype)initWithTarget:(id)target selector:(SEL)sel {
-  self = [super init];
-  if (self) {
-    _target = target;
-    _selector = sel;
-  }
-  return self;
+    self = [super init];
+    if (self) {
+        _target = target;
+        _selector = sel;
+    }
+    return self;
 }
 
 #pragma mark - Public
 
-- (void)displayLinkCallback:(CADisplayLink *)sender {
-  __strong id target = _target;
-  if (target == nil) {
-    return;
-  }
-  void (*display)(id, SEL, CADisplayLink *) = (void *)[target methodForSelector:_selector];
-  display(target, _selector, sender);
+- (void)displayLinkCallback:(CADisplayLink*)sender {
+    __strong id target = _target;
+    if (target == nil) {
+        return;
+    }
+    void (*display)(id, SEL, CADisplayLink*) = (void*)[target methodForSelector:_selector];
+    display(target, _selector, sender);
 }
 
 @end

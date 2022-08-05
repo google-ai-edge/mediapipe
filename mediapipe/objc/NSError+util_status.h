@@ -13,21 +13,20 @@
 // limitations under the License.
 
 #import "Foundation/Foundation.h"
-
 #include "mediapipe/framework/port/status.h"
 
 /// Error domain for absl::Status errors.
-extern NSString *const kGUSGoogleUtilStatusErrorDomain;
+extern NSString* const kGUSGoogleUtilStatusErrorDomain;
 
 /// Key for the absl::Status wrapper in an NSError's user info dictionary.
-extern NSString *const kGUSGoogleUtilStatusErrorKey;
+extern NSString* const kGUSGoogleUtilStatusErrorKey;
 
 /// This just wraps absl::Status into an Objective-C object.
 @interface GUSUtilStatusWrapper : NSObject
 
 @property(nonatomic) absl::Status status;
 
-+ (instancetype)wrapStatus:(const absl::Status &)status;
++ (instancetype)wrapStatus:(const absl::Status&)status;
 
 @end
 
@@ -37,7 +36,7 @@ extern NSString *const kGUSGoogleUtilStatusErrorKey;
 
 /// Generates an NSError representing a absl::Status. Note that NSError always
 /// represents an error, so this should not be called with absl::Status::OK.
-+ (NSError *)gus_errorWithStatus:(const absl::Status &)status;
++ (NSError*)gus_errorWithStatus:(const absl::Status&)status;
 
 /// Returns a absl::Status object representing an NSError. If the NSError was
 /// generated from a absl::Status, the absl::Status returned is identical to

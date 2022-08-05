@@ -22,7 +22,7 @@ extern "C" {
 #endif  // __cplusplus
 
 #define PACKET_GETTER_METHOD(METHOD_NAME) \
-  Java_com_google_mediapipe_framework_PacketGetter_##METHOD_NAME
+    Java_com_google_mediapipe_framework_PacketGetter_##METHOD_NAME
 
 // Get a native mediapipe packet.
 JNIEXPORT jlong JNICALL PACKET_GETTER_METHOD(nativeGetPacketFromReference)(

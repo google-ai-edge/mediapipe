@@ -25,7 +25,7 @@ namespace mediapipe {
 
 #if MEDIAPIPE_DISABLE_GPU
 class GpuResources {
-  GpuResources() = delete;
+    GpuResources() = delete;
 };
 #endif  // !MEDIAPIPE_DISABLE_GPU
 

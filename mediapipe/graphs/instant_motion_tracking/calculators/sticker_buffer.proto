@@ -20,14 +20,14 @@ option java_package = "com.google.mediapipe.graphs.instantmotiontracking";
 option java_outer_classname = "StickerBufferProto";
 
 message Sticker {
-  optional int32 id = 1;
-  optional float x = 2;
-  optional float y = 3;
-  optional float rotation = 4;
-  optional float scale = 5;
-  optional int32 render_id = 6;
+    optional int32 id = 1;
+    optional float x = 2;
+    optional float y = 3;
+    optional float rotation = 4;
+    optional float scale = 5;
+    optional int32 render_id = 6;
 }
 
 message StickerRoll {
-  repeated Sticker sticker = 1;
+    repeated Sticker sticker = 1;
 }

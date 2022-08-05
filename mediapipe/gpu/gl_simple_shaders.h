@@ -82,15 +82,15 @@ extern const GLchar* const kYUV2TexToRGBFragmentShader;
 // A square covering the full clip space.
 static const GLfloat kBasicSquareVertices[] = {
     -1.0f, -1.0f,  // bottom left
-    1.0f,  -1.0f,  // bottom right
+    1.0f, -1.0f,   // bottom right
     -1.0f, 1.0f,   // top left
-    1.0f,  1.0f,   // top right
+    1.0f, 1.0f,    // top right
 };
 
 // Temporary macros to copy vertices.
 #define V(source, n) source[2 * (n)], source[2 * (n) + 1]
 #define V4(source, a, b, c, d) \
-  V(source, a), V(source, b), V(source, c), V(source, d)
+    V(source, a), V(source, b), V(source, c), V(source, d)
 
 // A square covering the full clip space, rotated 90 degrees counterclockwise.
 static const GLfloat kBasicSquareVertices90[] = {

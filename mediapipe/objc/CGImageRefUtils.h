@@ -21,7 +21,7 @@
 extern "C" {
 #endif  // __cplusplus
 
-extern NSString *const kCGImageRefUtilsErrorDomain;
+extern NSString* const kCGImageRefUtilsErrorDomain;
 
 // TODO: Get rid of this library or make it a wrapper around util.h
 // versions so that it can be used in pure Objective-C code.
@@ -29,12 +29,12 @@ extern NSString *const kCGImageRefUtilsErrorDomain;
 /// Creates a CGImage with a copy of the contents of the CVPixelBuffer. Returns nil on error, if
 /// the |error| argument is not nil, *error is set to an NSError describing the failure. Caller
 /// is responsible for releasing the CGImage by calling CGImageRelease().
-CGImageRef CreateCGImageFromCVPixelBuffer(CVPixelBufferRef imageBuffer, NSError **error);
+CGImageRef CreateCGImageFromCVPixelBuffer(CVPixelBufferRef imageBuffer, NSError** error);
 
 /// Creates a CVPixelBuffer with a copy of the contents of the CGImage. Returns nil on error, if
 /// the |error| argument is not nil, *error is set to an NSError describing the failure. Caller
 /// is responsible for releasing the CVPixelBuffer by calling CVPixelBufferRelease.
-CVPixelBufferRef CreateCVPixelBufferFromCGImage(CGImageRef image, NSError **error);
+CVPixelBufferRef CreateCVPixelBufferFromCGImage(CGImageRef image, NSError** error);
 
 #ifdef __cplusplus
 }  // extern "C"

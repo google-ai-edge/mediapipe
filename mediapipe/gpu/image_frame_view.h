@@ -9,12 +9,12 @@ namespace internal {
 
 template <>
 class ViewProvider<ImageFrame> {
- public:
-  virtual ~ViewProvider() = default;
-  virtual std::shared_ptr<const ImageFrame> GetReadView(
-      types<ImageFrame>, std::shared_ptr<GpuBuffer> gpu_buffer) const = 0;
-  virtual std::shared_ptr<ImageFrame> GetWriteView(
-      types<ImageFrame>, std::shared_ptr<GpuBuffer> gpu_buffer) = 0;
+public:
+    virtual ~ViewProvider() = default;
+    virtual std::shared_ptr<const ImageFrame> GetReadView(
+        types<ImageFrame>, std::shared_ptr<GpuBuffer> gpu_buffer) const = 0;
+    virtual std::shared_ptr<ImageFrame> GetWriteView(
+        types<ImageFrame>, std::shared_ptr<GpuBuffer> gpu_buffer) = 0;
 };
 
 }  // namespace internal

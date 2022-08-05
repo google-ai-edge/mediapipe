@@ -17,32 +17,32 @@ syntax = "proto2";
 package mediapipe;
 
 message TimedModelMatrixProto {
-  // 4x4 model matrix stored in ROW major order.
-  repeated float matrix_entries = 1 [packed = true];
-  // Timestamp of this model matrix in milliseconds.
-  optional int64 time_msec = 2 [default = 0];
-  // Unique per object id
-  optional int32 id = 3 [default = -1];
+    // 4x4 model matrix stored in ROW major order.
+    repeated float matrix_entries = 1 [packed = true];
+    // Timestamp of this model matrix in milliseconds.
+    optional int64 time_msec = 2 [default = 0];
+    // Unique per object id
+    optional int32 id = 3 [default = -1];
 }
 
 message TimedModelMatrixProtoList {
-  repeated TimedModelMatrixProto model_matrix = 1;
+    repeated TimedModelMatrixProto model_matrix = 1;
 }
 
 // For convenience, when the desired information or transformation can be
 // encoded into vectors (e.g. when the matrix represents a scale or Euler-angle-
 // based rotation operation.)
 message TimedVectorProto {
-  // The vector values themselves.
-  repeated float vector_entries = 1 [packed = true];
+    // The vector values themselves.
+    repeated float vector_entries = 1 [packed = true];
 
-  // Timestamp of this vector in milliseconds.
-  optional int64 time_msec = 2 [default = 0];
+    // Timestamp of this vector in milliseconds.
+    optional int64 time_msec = 2 [default = 0];
 
-  // Unique per object id
-  optional int32 id = 3 [default = -1];
+    // Unique per object id
+    optional int32 id = 3 [default = -1];
 }
 
 message TimedVectorProtoList {
-  repeated TimedVectorProto vector_list = 1;
+    repeated TimedVectorProto vector_list = 1;
 }

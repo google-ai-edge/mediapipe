@@ -17,15 +17,15 @@ syntax = "proto2";
 package mediapipe;
 
 message GpuOrigin {
-  enum Mode {
-    DEFAULT = 0;
+    enum Mode {
+        DEFAULT = 0;
 
-    // OpenGL: bottom-left origin
-    // Metal : top-left origin
-    CONVENTIONAL = 1;
+        // OpenGL: bottom-left origin
+        // Metal : top-left origin
+        CONVENTIONAL = 1;
 
-    // OpenGL: top-left origin
-    // Metal : top-left origin
-    TOP_LEFT = 2;
-  }
+        // OpenGL: top-left origin
+        // Metal : top-left origin
+        TOP_LEFT = 2;
+    }
 }

@@ -12,11 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
@@ -31,6 +26,10 @@
 #include "mediapipe/modules/face_geometry/protos/face_geometry.pb.h"
 #include "mediapipe/modules/face_geometry/protos/geometry_pipeline_metadata.pb.h"
 #include "mediapipe/util/resource_util.h"
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace mediapipe {
 namespace {
@@ -71,121 +70,121 @@ static constexpr char kMultiFaceLandmarksTag[] = "MULTI_FACE_LANDMARKS";
 //     `face_geometry.GeometryPipelineMetadata` proto.
 //
 class GeometryPipelineCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->InputSidePackets()
-        .Tag(kEnvironmentTag)
-        .Set<face_geometry::Environment>();
-    cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
-    cc->Inputs()
-        .Tag(kMultiFaceLandmarksTag)
-        .Set<std::vector<NormalizedLandmarkList>>();
-    cc->Outputs()
-        .Tag(kMultiFaceGeometryTag)
-        .Set<std::vector<face_geometry::FaceGeometry>>();
-
-    return absl::OkStatus();
-  }
-
-  absl::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(mediapipe::TimestampDiff(0));
-
-    const auto& options = cc->Options<FaceGeometryPipelineCalculatorOptions>();
-
-    ASSIGN_OR_RETURN(
-        face_geometry::GeometryPipelineMetadata metadata,
-        ReadMetadataFromFile(options.metadata_path()),
-        _ << "Failed to read the geometry pipeline metadata from file!");
-
-    MP_RETURN_IF_ERROR(
-        face_geometry::ValidateGeometryPipelineMetadata(metadata))
-        << "Invalid geometry pipeline metadata!";
-
-    const face_geometry::Environment& environment =
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
         cc->InputSidePackets()
             .Tag(kEnvironmentTag)
-            .Get<face_geometry::Environment>();
-
-    MP_RETURN_IF_ERROR(face_geometry::ValidateEnvironment(environment))
-        << "Invalid environment!";
-
-    ASSIGN_OR_RETURN(
-        geometry_pipeline_,
-        face_geometry::CreateGeometryPipeline(environment, metadata),
-        _ << "Failed to create a geometry pipeline!");
-
-    return absl::OkStatus();
-  }
-
-  absl::Status Process(CalculatorContext* cc) override {
-    // Both the `IMAGE_SIZE` and the `MULTI_FACE_LANDMARKS` streams are required
-    // to have a non-empty packet. In case this requirement is not met, there's
-    // nothing to be processed at the current timestamp.
-    if (cc->Inputs().Tag(kImageSizeTag).IsEmpty() ||
-        cc->Inputs().Tag(kMultiFaceLandmarksTag).IsEmpty()) {
-      return absl::OkStatus();
-    }
-
-    const auto& image_size =
-        cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
-    const auto& multi_face_landmarks =
+            .Set<face_geometry::Environment>();
+        cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
         cc->Inputs()
             .Tag(kMultiFaceLandmarksTag)
-            .Get<std::vector<NormalizedLandmarkList>>();
+            .Set<std::vector<NormalizedLandmarkList>>();
+        cc->Outputs()
+            .Tag(kMultiFaceGeometryTag)
+            .Set<std::vector<face_geometry::FaceGeometry>>();
 
-    auto multi_face_geometry =
-        absl::make_unique<std::vector<face_geometry::FaceGeometry>>();
+        return absl::OkStatus();
+    }
 
-    ASSIGN_OR_RETURN(
-        *multi_face_geometry,
-        geometry_pipeline_->EstimateFaceGeometry(
-            multi_face_landmarks,  //
-            /*frame_width*/ image_size.first,
-            /*frame_height*/ image_size.second),
-        _ << "Failed to estimate face geometry for multiple faces!");
+    absl::Status Open(CalculatorContext* cc) override {
+        cc->SetOffset(mediapipe::TimestampDiff(0));
 
-    cc->Outputs()
-        .Tag(kMultiFaceGeometryTag)
-        .AddPacket(mediapipe::Adopt<std::vector<face_geometry::FaceGeometry>>(
-                       multi_face_geometry.release())
-                       .At(cc->InputTimestamp()));
+        const auto& options = cc->Options<FaceGeometryPipelineCalculatorOptions>();
 
-    return absl::OkStatus();
-  }
+        ASSIGN_OR_RETURN(
+            face_geometry::GeometryPipelineMetadata metadata,
+            ReadMetadataFromFile(options.metadata_path()),
+            _ << "Failed to read the geometry pipeline metadata from file!");
 
-  absl::Status Close(CalculatorContext* cc) override {
-    return absl::OkStatus();
-  }
+        MP_RETURN_IF_ERROR(
+            face_geometry::ValidateGeometryPipelineMetadata(metadata))
+            << "Invalid geometry pipeline metadata!";
 
- private:
-  static absl::StatusOr<face_geometry::GeometryPipelineMetadata>
-  ReadMetadataFromFile(const std::string& metadata_path) {
-    ASSIGN_OR_RETURN(std::string metadata_blob,
-                     ReadContentBlobFromFile(metadata_path),
-                     _ << "Failed to read a metadata blob from file!");
+        const face_geometry::Environment& environment =
+            cc->InputSidePackets()
+                .Tag(kEnvironmentTag)
+                .Get<face_geometry::Environment>();
 
-    face_geometry::GeometryPipelineMetadata metadata;
-    RET_CHECK(metadata.ParseFromString(metadata_blob))
-        << "Failed to parse a metadata proto from a binary blob!";
+        MP_RETURN_IF_ERROR(face_geometry::ValidateEnvironment(environment))
+            << "Invalid environment!";
 
-    return metadata;
-  }
+        ASSIGN_OR_RETURN(
+            geometry_pipeline_,
+            face_geometry::CreateGeometryPipeline(environment, metadata),
+            _ << "Failed to create a geometry pipeline!");
 
-  static absl::StatusOr<std::string> ReadContentBlobFromFile(
-      const std::string& unresolved_path) {
-    ASSIGN_OR_RETURN(std::string resolved_path,
-                     mediapipe::PathToResourceAsFile(unresolved_path),
-                     _ << "Failed to resolve path! Path = " << unresolved_path);
+        return absl::OkStatus();
+    }
 
-    std::string content_blob;
-    MP_RETURN_IF_ERROR(
-        mediapipe::GetResourceContents(resolved_path, &content_blob))
-        << "Failed to read content blob! Resolved path = " << resolved_path;
+    absl::Status Process(CalculatorContext* cc) override {
+        // Both the `IMAGE_SIZE` and the `MULTI_FACE_LANDMARKS` streams are required
+        // to have a non-empty packet. In case this requirement is not met, there's
+        // nothing to be processed at the current timestamp.
+        if (cc->Inputs().Tag(kImageSizeTag).IsEmpty() ||
+            cc->Inputs().Tag(kMultiFaceLandmarksTag).IsEmpty()) {
+            return absl::OkStatus();
+        }
 
-    return content_blob;
-  }
+        const auto& image_size =
+            cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
+        const auto& multi_face_landmarks =
+            cc->Inputs()
+                .Tag(kMultiFaceLandmarksTag)
+                .Get<std::vector<NormalizedLandmarkList>>();
 
-  std::unique_ptr<face_geometry::GeometryPipeline> geometry_pipeline_;
+        auto multi_face_geometry =
+            absl::make_unique<std::vector<face_geometry::FaceGeometry>>();
+
+        ASSIGN_OR_RETURN(
+            *multi_face_geometry,
+            geometry_pipeline_->EstimateFaceGeometry(
+                multi_face_landmarks,  //
+                /*frame_width*/ image_size.first,
+                /*frame_height*/ image_size.second),
+            _ << "Failed to estimate face geometry for multiple faces!");
+
+        cc->Outputs()
+            .Tag(kMultiFaceGeometryTag)
+            .AddPacket(mediapipe::Adopt<std::vector<face_geometry::FaceGeometry>>(
+                           multi_face_geometry.release())
+                           .At(cc->InputTimestamp()));
+
+        return absl::OkStatus();
+    }
+
+    absl::Status Close(CalculatorContext* cc) override {
+        return absl::OkStatus();
+    }
+
+private:
+    static absl::StatusOr<face_geometry::GeometryPipelineMetadata>
+    ReadMetadataFromFile(const std::string& metadata_path) {
+        ASSIGN_OR_RETURN(std::string metadata_blob,
+                         ReadContentBlobFromFile(metadata_path),
+                         _ << "Failed to read a metadata blob from file!");
+
+        face_geometry::GeometryPipelineMetadata metadata;
+        RET_CHECK(metadata.ParseFromString(metadata_blob))
+            << "Failed to parse a metadata proto from a binary blob!";
+
+        return metadata;
+    }
+
+    static absl::StatusOr<std::string> ReadContentBlobFromFile(
+        const std::string& unresolved_path) {
+        ASSIGN_OR_RETURN(std::string resolved_path,
+                         mediapipe::PathToResourceAsFile(unresolved_path),
+                         _ << "Failed to resolve path! Path = " << unresolved_path);
+
+        std::string content_blob;
+        MP_RETURN_IF_ERROR(
+            mediapipe::GetResourceContents(resolved_path, &content_blob))
+            << "Failed to read content blob! Resolved path = " << resolved_path;
+
+        return content_blob;
+    }
+
+    std::unique_ptr<face_geometry::GeometryPipeline> geometry_pipeline_;
 };
 
 }  // namespace

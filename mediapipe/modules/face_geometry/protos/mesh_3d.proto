@@ -20,22 +20,22 @@ option java_package = "com.google.mediapipe.modules.facegeometry";
 option java_outer_classname = "Mesh3dProto";
 
 message Mesh3d {
-  enum VertexType {
-    // Is defined by 5 coordinates: Position (XYZ) + Texture coordinate (UV).
-    VERTEX_PT = 0;
-  }
+    enum VertexType {
+        // Is defined by 5 coordinates: Position (XYZ) + Texture coordinate (UV).
+        VERTEX_PT = 0;
+    }
 
-  enum PrimitiveType {
-    // Is defined by 3 indices: triangle vertex IDs.
-    TRIANGLE = 0;
-  }
+    enum PrimitiveType {
+        // Is defined by 3 indices: triangle vertex IDs.
+        TRIANGLE = 0;
+    }
 
-  optional VertexType vertex_type = 1;
-  optional PrimitiveType primitive_type = 2;
-  // Vertex buffer size is a multiple of the vertex size (e.g., 5 for
-  // VERTEX_PT).
-  repeated float vertex_buffer = 3;
-  // Index buffer size is a multiple of the primitive size (e.g., 3 for
-  // TRIANGLE).
-  repeated uint32 index_buffer = 4;
+    optional VertexType vertex_type = 1;
+    optional PrimitiveType primitive_type = 2;
+    // Vertex buffer size is a multiple of the vertex size (e.g., 5 for
+    // VERTEX_PT).
+    repeated float vertex_buffer = 3;
+    // Index buffer size is a multiple of the primitive size (e.g., 3 for
+    // TRIANGLE).
+    repeated uint32 index_buffer = 4;
 }

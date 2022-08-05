@@ -15,12 +15,11 @@
 #ifndef MEDIAPIPE_GPU_MPPGRAPHGPUDATA_H_
 #define MEDIAPIPE_GPU_MPPGRAPHGPUDATA_H_
 
+#import "mediapipe/gpu/gl_base.h"
+#import "mediapipe/gpu/gl_context.h"
 #import <CoreVideo/CVMetalTextureCache.h>
 #import <CoreVideo/CoreVideo.h>
 #import <Metal/Metal.h>
-
-#import "mediapipe/gpu/gl_base.h"
-#import "mediapipe/gpu/gl_context.h"
 
 namespace mediapipe {
 class GlContext;
@@ -28,9 +27,9 @@ class GpuBufferMultiPool;
 }  // namespace mediapipe
 
 @interface MPPGraphGPUData : NSObject {
-  // Shared buffer pool for GPU calculators.
-  mediapipe::GpuBufferMultiPool* _gpuBufferPool;
-  mediapipe::GlContext* _glContext;
+    // Shared buffer pool for GPU calculators.
+    mediapipe::GpuBufferMultiPool* _gpuBufferPool;
+    mediapipe::GlContext* _glContext;
 }
 
 - (instancetype)init NS_UNAVAILABLE;

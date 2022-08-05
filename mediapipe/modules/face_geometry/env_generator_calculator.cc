@@ -39,37 +39,37 @@ static constexpr char kEnvironmentTag[] = "ENVIRONMENT";
 //     comments and/or `modules/face_geometry/libs/validation_utils.h/cc`)
 //
 class EnvGeneratorCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->OutputSidePackets()
-        .Tag(kEnvironmentTag)
-        .Set<face_geometry::Environment>();
-    return absl::OkStatus();
-  }
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        cc->OutputSidePackets()
+            .Tag(kEnvironmentTag)
+            .Set<face_geometry::Environment>();
+        return absl::OkStatus();
+    }
 
-  absl::Status Open(CalculatorContext* cc) override {
-    cc->SetOffset(mediapipe::TimestampDiff(0));
+    absl::Status Open(CalculatorContext* cc) override {
+        cc->SetOffset(mediapipe::TimestampDiff(0));
 
-    const face_geometry::Environment& environment =
-        cc->Options<FaceGeometryEnvGeneratorCalculatorOptions>().environment();
+        const face_geometry::Environment& environment =
+            cc->Options<FaceGeometryEnvGeneratorCalculatorOptions>().environment();
 
-    MP_RETURN_IF_ERROR(face_geometry::ValidateEnvironment(environment))
-        << "Invalid environment!";
+        MP_RETURN_IF_ERROR(face_geometry::ValidateEnvironment(environment))
+            << "Invalid environment!";
 
-    cc->OutputSidePackets()
-        .Tag(kEnvironmentTag)
-        .Set(mediapipe::MakePacket<face_geometry::Environment>(environment));
+        cc->OutputSidePackets()
+            .Tag(kEnvironmentTag)
+            .Set(mediapipe::MakePacket<face_geometry::Environment>(environment));
 
-    return absl::OkStatus();
-  }
+        return absl::OkStatus();
+    }
 
-  absl::Status Process(CalculatorContext* cc) override {
-    return absl::OkStatus();
-  }
+    absl::Status Process(CalculatorContext* cc) override {
+        return absl::OkStatus();
+    }
 
-  absl::Status Close(CalculatorContext* cc) override {
-    return absl::OkStatus();
-  }
+    absl::Status Close(CalculatorContext* cc) override {
+        return absl::OkStatus();
+    }
 };
 
 }  // namespace

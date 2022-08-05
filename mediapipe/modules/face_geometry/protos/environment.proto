@@ -59,8 +59,8 @@ option java_outer_classname = "EnvironmentProto";
 // sure all the input landmarks are in-sync with this location is crucial
 // for receiving the correct output face geometry and visual renders.
 enum OriginPointLocation {
-  BOTTOM_LEFT_CORNER = 1;
-  TOP_LEFT_CORNER = 2;
+    BOTTOM_LEFT_CORNER = 1;
+    TOP_LEFT_CORNER = 2;
 }
 
 // The perspective camera is defined through its vertical FOV angle and the
@@ -71,14 +71,14 @@ enum OriginPointLocation {
 // More info on Perspective Cameras:
 // http://www.songho.ca/opengl/gl_projectionmatrix.html#perspective
 message PerspectiveCamera {
-  // `0 < vertical_fov_degrees < 180`.
-  optional float vertical_fov_degrees = 1;
-  // `0 < near < far`.
-  optional float near = 2;
-  optional float far = 3;
+    // `0 < vertical_fov_degrees < 180`.
+    optional float vertical_fov_degrees = 1;
+    // `0 < near < far`.
+    optional float near = 2;
+    optional float far = 3;
 }
 
 message Environment {
-  optional OriginPointLocation origin_point_location = 1;
-  optional PerspectiveCamera perspective_camera = 2;
+    optional OriginPointLocation origin_point_location = 1;
+    optional PerspectiveCamera perspective_camera = 2;
 }

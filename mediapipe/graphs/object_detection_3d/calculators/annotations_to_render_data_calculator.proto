@@ -20,24 +20,24 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/util/color.proto";
 
 message AnnotationsToRenderDataCalculatorOptions {
-  extend CalculatorOptions {
-    optional AnnotationsToRenderDataCalculatorOptions ext = 267644238;
-  }
+    extend CalculatorOptions {
+        optional AnnotationsToRenderDataCalculatorOptions ext = 267644238;
+    }
 
-  // Specifies the landmarks to be connected in the drawing. For example, the
-  // landmark_connections value of [0, 1, 1, 2] specifies two connections: one
-  // that connects landmarks with index 0 and 1, and another that connects
-  // landmarks with index 1 and 2.
-  repeated int32 landmark_connections = 1;
+    // Specifies the landmarks to be connected in the drawing. For example, the
+    // landmark_connections value of [0, 1, 1, 2] specifies two connections: one
+    // that connects landmarks with index 0 and 1, and another that connects
+    // landmarks with index 1 and 2.
+    repeated int32 landmark_connections = 1;
 
-  // Color of the landmarks.
-  optional Color landmark_color = 2;
-  // Color of the connections.
-  optional Color connection_color = 3;
+    // Color of the landmarks.
+    optional Color landmark_color = 2;
+    // Color of the connections.
+    optional Color connection_color = 3;
 
-  // Thickness of the drawing of landmarks and connections.
-  optional double thickness = 4 [default = 1.0];
+    // Thickness of the drawing of landmarks and connections.
+    optional double thickness = 4 [default = 1.0];
 
-  // Change color and size of rendered landmarks based on its z value.
-  optional bool visualize_landmark_depth = 5 [default = true];
+    // Change color and size of rendered landmarks based on its z value.
+    optional bool visualize_landmark_depth = 5 [default = true];
 }

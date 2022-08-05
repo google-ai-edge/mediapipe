@@ -22,7 +22,7 @@ extern "C" {
 #endif  // __cplusplus
 
 #define COMPAT_METHOD(METHOD_NAME) \
-  Java_com_google_mediapipe_framework_Compat_##METHOD_NAME
+    Java_com_google_mediapipe_framework_Compat_##METHOD_NAME
 
 JNIEXPORT jlong JNICALL COMPAT_METHOD(getCurrentNativeEGLContext)(JNIEnv* env,
                                                                   jclass clz);

@@ -15,9 +15,8 @@
 #ifndef MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_BOX_H_
 #define MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_BOX_H_
 
-#include <vector>
-
 #include "mediapipe/modules/objectron/calculators/model.h"
+#include <vector>
 
 namespace mediapipe {
 
@@ -63,68 +62,68 @@ namespace mediapipe {
 //
 
 class Box : public Model {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  explicit Box(const std::string& category);
-  ~Box() override = default;
+    explicit Box(const std::string& category);
+    ~Box() override = default;
 
-  bool InsideTest(const Vector3f& point, int check_axis) const;
+    bool InsideTest(const Vector3f& point, int check_axis) const;
 
-  const std::vector<Face>& GetFaces() const { return faces_; }
-  const Face& GetFace(size_t face_id) const { return faces_[face_id]; }
+    const std::vector<Face>& GetFaces() const { return faces_; }
+    const Face& GetFace(size_t face_id) const { return faces_[face_id]; }
 
-  const std::vector<std::array<int, 2>>& GetEdges() const { return edges_; }
-  const std::array<int, 2>& GetEdge(size_t edge_id) const {
-    return edges_[edge_id];
-  }
+    const std::vector<std::array<int, 2>>& GetEdges() const { return edges_; }
+    const std::array<int, 2>& GetEdge(size_t edge_id) const {
+        return edges_[edge_id];
+    }
 
-  // Returns the keypoints for the front face of the box.
-  // The front face is defind as a face with +z normal vector on xy plane
-  // In Box's c'tor, the top face is set to {1, 3, 7, 5}
-  const Face& GetFrontFace() const;
+    // Returns the keypoints for the front face of the box.
+    // The front face is defind as a face with +z normal vector on xy plane
+    // In Box's c'tor, the top face is set to {1, 3, 7, 5}
+    const Face& GetFrontFace() const;
 
-  // Returns the keypoints for the top face of the box.
-  // The top face is defind as a face with +z normal vector on xy plane
-  // In Box's c'tor, the top face is set to {1, 3, 7, 5}
-  const Face& GetTopFace() const;
+    // Returns the keypoints for the top face of the box.
+    // The top face is defind as a face with +z normal vector on xy plane
+    // In Box's c'tor, the top face is set to {1, 3, 7, 5}
+    const Face& GetTopFace() const;
 
-  void Update() override;
-  void Adjust(const std::vector<float>& variables) override;
-  float* GetVertex(size_t vertex_id) override;
-  const float* GetVertex(size_t vertex_id) const override;
-  void Deserialize(const Object& obj) override;
-  void Serialize(Object* obj) override;
+    void Update() override;
+    void Adjust(const std::vector<float>& variables) override;
+    float* GetVertex(size_t vertex_id) override;
+    const float* GetVertex(size_t vertex_id) const override;
+    void Deserialize(const Object& obj) override;
+    void Serialize(Object* obj) override;
 
-  // Computes the plane center and the normal vector for the plane the object
-  // is sitting on in the world cooordinate system. The normal vector is roughly
-  // aligned with gravity.
-  std::pair<Vector3f, Vector3f> GetGroundPlane() const;
+    // Computes the plane center and the normal vector for the plane the object
+    // is sitting on in the world cooordinate system. The normal vector is roughly
+    // aligned with gravity.
+    std::pair<Vector3f, Vector3f> GetGroundPlane() const;
 
-  // Estimates a box 9-dof parameters from the given vertices. Directly computes
-  // the scale of the box, then solves for orientation and translation.
-  // Expects a std::vector of size 9 of a Eigen::Vector3f or mapped Vector3f.
-  // If mapping proto messages, we recommend to use the Map<const Vector3f>.
-  // For example:
-  //
-  // using T = Map<const Vector3f>;
-  // std::vector<T> vertices;
-  // for (const auto& point : message) { // point is a repeated float message.
-  //   T p(point.data());
-  //   vertices.emplace_back(p);
-  // }
-  // box.Fit<T>(vertices);
-  //
-  // The Points must be arranged as 1 + 8 (center keypoint followed by 8 box
-  // vertices) vector. This function will overwrite the scale and transformation
-  // properties of the class.
-  template <typename T = Eigen::Map<const Vector3f>>
-  void Fit(const std::vector<T>& vertices);
+    // Estimates a box 9-dof parameters from the given vertices. Directly computes
+    // the scale of the box, then solves for orientation and translation.
+    // Expects a std::vector of size 9 of a Eigen::Vector3f or mapped Vector3f.
+    // If mapping proto messages, we recommend to use the Map<const Vector3f>.
+    // For example:
+    //
+    // using T = Map<const Vector3f>;
+    // std::vector<T> vertices;
+    // for (const auto& point : message) { // point is a repeated float message.
+    //   T p(point.data());
+    //   vertices.emplace_back(p);
+    // }
+    // box.Fit<T>(vertices);
+    //
+    // The Points must be arranged as 1 + 8 (center keypoint followed by 8 box
+    // vertices) vector. This function will overwrite the scale and transformation
+    // properties of the class.
+    template <typename T = Eigen::Map<const Vector3f>>
+    void Fit(const std::vector<T>& vertices);
 
- private:
-  std::vector<Face> faces_;
-  std::vector<std::array<int, 2>> edges_;
-  std::vector<Vector3f> bounding_box_;
+private:
+    std::vector<Face> faces_;
+    std::vector<std::array<int, 2>> edges_;
+    std::vector<Vector3f> bounding_box_;
 };
 
 }  // namespace mediapipe

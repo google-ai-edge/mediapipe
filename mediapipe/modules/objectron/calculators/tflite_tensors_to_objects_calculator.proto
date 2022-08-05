@@ -22,30 +22,30 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/modules/objectron/calculators/belief_decoder_config.proto";
 
 message TfLiteTensorsToObjectsCalculatorOptions {
-  extend CalculatorOptions {
-    optional TfLiteTensorsToObjectsCalculatorOptions ext = 263667646;
-  }
+    extend CalculatorOptions {
+        optional TfLiteTensorsToObjectsCalculatorOptions ext = 263667646;
+    }
 
-  // The number of output classes predicted by the detection model.
-  optional int32 num_classes = 1;
+    // The number of output classes predicted by the detection model.
+    optional int32 num_classes = 1;
 
-  // The number of predicted keypoints.
-  optional int32 num_keypoints = 2;
-  // The dimension of each keypoint, e.g. number of values predicted for each
-  // keypoint.
-  optional int32 num_values_per_keypoint = 3 [default = 2];
+    // The number of predicted keypoints.
+    optional int32 num_keypoints = 2;
+    // The dimension of each keypoint, e.g. number of values predicted for each
+    // keypoint.
+    optional int32 num_values_per_keypoint = 3 [default = 2];
 
-  optional BeliefDecoderConfig decoder_config = 4;
+    optional BeliefDecoderConfig decoder_config = 4;
 
-  // Camera focal length along x, normalized by width/2.
-  optional float normalized_focal_x = 5 [default = 1.0];
+    // Camera focal length along x, normalized by width/2.
+    optional float normalized_focal_x = 5 [default = 1.0];
 
-  // Camera focal length along y, normalized by height/2.
-  optional float normalized_focal_y = 6 [default = 1.0];
+    // Camera focal length along y, normalized by height/2.
+    optional float normalized_focal_y = 6 [default = 1.0];
 
-  // Camera principle point x, normalized by width/2, origin is image center.
-  optional float normalized_principal_point_x = 7 [default = 0.0];
+    // Camera principle point x, normalized by width/2, origin is image center.
+    optional float normalized_principal_point_x = 7 [default = 0.0];
 
-  // Camera principle point y, normalized by height/2, origin is image center.
-  optional float normalized_principal_point_y = 8 [default = 0.0];
+    // Camera principle point y, normalized by height/2, origin is image center.
+    optional float normalized_principal_point_y = 8 [default = 0.0];
 }

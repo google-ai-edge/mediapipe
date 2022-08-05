@@ -20,13 +20,13 @@ import "mediapipe/framework/calculator_options.proto";
 import "mediapipe/modules/face_geometry/protos/environment.proto";
 
 message FaceGeometryEnvGeneratorCalculatorOptions {
-  extend CalculatorOptions {
-    optional FaceGeometryEnvGeneratorCalculatorOptions ext = 323693810;
-  }
+    extend CalculatorOptions {
+        optional FaceGeometryEnvGeneratorCalculatorOptions ext = 323693810;
+    }
 
-  // Defines an environment to be packed as the output side packet.
-  //
-  // Must be valid (for details, please refer to the proto message definition
-  // comments and/or `modules/face_geometry/libs/validation_utils.h/cc`)
-  optional face_geometry.Environment environment = 1;
+    // Defines an environment to be packed as the output side packet.
+    //
+    // Must be valid (for details, please refer to the proto message definition
+    // comments and/or `modules/face_geometry/libs/validation_utils.h/cc`)
+    optional face_geometry.Environment environment = 1;
 }

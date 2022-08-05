@@ -15,9 +15,6 @@
 #ifndef MEDIAPIPE_MODULES_FACE_GEOMETRY_LIBS_EFFECT_RENDERER_H_
 #define MEDIAPIPE_MODULES_FACE_GEOMETRY_LIBS_EFFECT_RENDERER_H_
 
-#include <memory>
-#include <vector>
-
 #include "absl/types/optional.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/status.h"
@@ -26,37 +23,39 @@
 #include "mediapipe/modules/face_geometry/protos/environment.pb.h"
 #include "mediapipe/modules/face_geometry/protos/face_geometry.pb.h"
 #include "mediapipe/modules/face_geometry/protos/mesh_3d.pb.h"
+#include <memory>
+#include <vector>
 
 namespace mediapipe::face_geometry {
 
 // Encapsulates a stateful face effect renderer.
 class EffectRenderer {
- public:
-  virtual ~EffectRenderer() = default;
+public:
+    virtual ~EffectRenderer() = default;
 
-  // Renders a face effect based on the multiple facial geometries.
-  //
-  // Must be called in the same GL context as was used upon initialization.
-  //
-  // Each of the `multi_face_geometry` must be valid (for details, please refer
-  // to the proto message definition comments and/or `validation_utils.h/cc`).
-  // Additionally, all face mesh index buffer elements must fit into the
-  // `uint16` type in order to be renderable.
-  //
-  // Both `frame_width` and `frame_height` must be positive.
-  //
-  // Both `src_texture_name` and `dst_texture_name` must be positive and
-  // reference existing OpenGL textures in the current context. They should also
-  // reference different textures as the in-place effect rendering is not yet
-  // supported.
-  virtual absl::Status RenderEffect(
-      const std::vector<FaceGeometry>& multi_face_geometry,
-      int frame_width,            //
-      int frame_height,           //
-      GLenum src_texture_target,  //
-      GLuint src_texture_name,    //
-      GLenum dst_texture_target,  //
-      GLuint dst_texture_name) = 0;
+    // Renders a face effect based on the multiple facial geometries.
+    //
+    // Must be called in the same GL context as was used upon initialization.
+    //
+    // Each of the `multi_face_geometry` must be valid (for details, please refer
+    // to the proto message definition comments and/or `validation_utils.h/cc`).
+    // Additionally, all face mesh index buffer elements must fit into the
+    // `uint16` type in order to be renderable.
+    //
+    // Both `frame_width` and `frame_height` must be positive.
+    //
+    // Both `src_texture_name` and `dst_texture_name` must be positive and
+    // reference existing OpenGL textures in the current context. They should also
+    // reference different textures as the in-place effect rendering is not yet
+    // supported.
+    virtual absl::Status RenderEffect(
+        const std::vector<FaceGeometry>& multi_face_geometry,
+        int frame_width,            //
+        int frame_height,           //
+        GLenum src_texture_target,  //
+        GLuint src_texture_name,    //
+        GLenum dst_texture_target,  //
+        GLuint dst_texture_name) = 0;
 };
 
 // Creates an instance of `EffectRenderer`.

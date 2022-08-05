@@ -15,8 +15,8 @@ using AttachmentPtr = std::unique_ptr<T, std::function<void(void*)>>;
 template <class T, class... Args>
 static std::enable_if_t<!std::is_array<T>::value, AttachmentPtr<T>>
 MakeAttachmentPtr(Args&&... args) {
-  return {new T(std::forward<Args>(args)...),
-          [](void* ptr) { delete static_cast<T*>(ptr); }};
+    return {new T(std::forward<Args>(args)...),
+            [](void* ptr) { delete static_cast<T*>(ptr); }};
 }
 
 template <class Context>
@@ -30,32 +30,32 @@ class AttachmentBase {};
 // context. The lifetime of the object it returns is managed by the context.
 template <class Context, class T>
 class Attachment : public AttachmentBase<Context> {
- public:
-  using FactoryT = std::function<AttachmentPtr<T>(Context&)>;
-  Attachment(FactoryT factory) : factory_(factory) {}
+public:
+    using FactoryT = std::function<AttachmentPtr<T>(Context&)>;
+    Attachment(FactoryT factory) : factory_(factory) {}
 
-  Attachment(const Attachment&) = delete;
-  Attachment(Attachment&&) = delete;
-  Attachment& operator=(const Attachment&) = delete;
-  Attachment& operator=(Attachment&&) = delete;
+    Attachment(const Attachment&) = delete;
+    Attachment(Attachment&&) = delete;
+    Attachment& operator=(const Attachment&) = delete;
+    Attachment& operator=(Attachment&&) = delete;
 
-  T& Get(Context& ctx) const { return ctx.GetCachedAttachment(*this); }
+    T& Get(Context& ctx) const { return ctx.GetCachedAttachment(*this); }
 
-  const FactoryT& factory() const { return factory_; }
+    const FactoryT& factory() const { return factory_; }
 
-  // Ptr and MakePtr here make it more convenient to define new types of
-  // attachment contexts, since you only need a using declaration for Attachment
-  // and can refer to Ptr from it.
-  using Ptr = AttachmentPtr<T>;
+    // Ptr and MakePtr here make it more convenient to define new types of
+    // attachment contexts, since you only need a using declaration for Attachment
+    // and can refer to Ptr from it.
+    using Ptr = AttachmentPtr<T>;
 
-  template <class... Args>
-  inline static std::enable_if_t<!std::is_array<T>::value, AttachmentPtr<T>>
-  MakePtr(Args&&... args) {
-    return MakeAttachmentPtr<T>(std::forward<Args>(args)...);
-  }
+    template <class... Args>
+    inline static std::enable_if_t<!std::is_array<T>::value, AttachmentPtr<T>>
+    MakePtr(Args&&... args) {
+        return MakeAttachmentPtr<T>(std::forward<Args>(args)...);
+    }
 
- private:
-  FactoryT factory_;
+private:
+    FactoryT factory_;
 };
 
 }  // namespace internal

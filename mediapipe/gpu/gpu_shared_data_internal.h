@@ -41,90 +41,90 @@ namespace mediapipe {
 
 // TODO: rename to GpuService or GpuManager or something.
 class GpuResources {
- public:
-  using StatusOrGpuResources = absl::StatusOr<std::shared_ptr<GpuResources>>;
+public:
+    using StatusOrGpuResources = absl::StatusOr<std::shared_ptr<GpuResources>>;
 
-  static StatusOrGpuResources Create();
-  static StatusOrGpuResources Create(PlatformGlContext external_context);
+    static StatusOrGpuResources Create();
+    static StatusOrGpuResources Create(PlatformGlContext external_context);
 
-  // The destructor must be defined in the implementation file so that on iOS
-  // the correct ARC release calls are generated.
-  ~GpuResources();
+    // The destructor must be defined in the implementation file so that on iOS
+    // the correct ARC release calls are generated.
+    ~GpuResources();
 
-  explicit GpuResources(PlatformGlContext external_context);
+    explicit GpuResources(PlatformGlContext external_context);
 
-  // Shared GL context for calculators.
-  // TODO: require passing a context or node identifier.
-  const std::shared_ptr<GlContext>& gl_context() {
-    return gl_context(nullptr);
-  };
+    // Shared GL context for calculators.
+    // TODO: require passing a context or node identifier.
+    const std::shared_ptr<GlContext>& gl_context() {
+        return gl_context(nullptr);
+    };
 
-  const std::shared_ptr<GlContext>& gl_context(CalculatorContext* cc);
+    const std::shared_ptr<GlContext>& gl_context(CalculatorContext* cc);
 
-  // Shared buffer pool.
-  GpuBufferMultiPool& gpu_buffer_pool() { return gpu_buffer_pool_; }
+    // Shared buffer pool.
+    GpuBufferMultiPool& gpu_buffer_pool() { return gpu_buffer_pool_; }
 
 #ifdef __APPLE__
-  MPPGraphGPUData* ios_gpu_data();
+    MPPGraphGPUData* ios_gpu_data();
 #endif  // defined(__APPLE__)§
 
-  absl::Status PrepareGpuNode(CalculatorNode* node);
+    absl::Status PrepareGpuNode(CalculatorNode* node);
 
-  // If the node requires custom GPU executors in the current configuration,
-  // returns the executor's names and the executors themselves.
-  const std::map<std::string, std::shared_ptr<Executor>>& GetGpuExecutors() {
-    return named_executors_;
-  }
+    // If the node requires custom GPU executors in the current configuration,
+    // returns the executor's names and the executors themselves.
+    const std::map<std::string, std::shared_ptr<Executor>>& GetGpuExecutors() {
+        return named_executors_;
+    }
 
- private:
-  GpuResources() = delete;
-  explicit GpuResources(std::shared_ptr<GlContext> gl_context);
+private:
+    GpuResources() = delete;
+    explicit GpuResources(std::shared_ptr<GlContext> gl_context);
 
-  GlContext::StatusOrGlContext GetOrCreateGlContext(const std::string& key);
-  const std::string& ContextKey(const std::string& canonical_node_name);
+    GlContext::StatusOrGlContext GetOrCreateGlContext(const std::string& key);
+    const std::string& ContextKey(const std::string& canonical_node_name);
 
-  std::map<std::string, std::string> node_key_;
-  std::map<std::string, std::shared_ptr<GlContext>> gl_key_context_;
+    std::map<std::string, std::string> node_key_;
+    std::map<std::string, std::shared_ptr<GlContext>> gl_key_context_;
 
-  // The pool must be destructed before the gl_context, but after the
-  // ios_gpu_data, so the declaration order is important.
-  GpuBufferMultiPool gpu_buffer_pool_;
+    // The pool must be destructed before the gl_context, but after the
+    // ios_gpu_data, so the declaration order is important.
+    GpuBufferMultiPool gpu_buffer_pool_;
 
 #ifdef __APPLE__
-  // Note that this is an Objective-C object.
-  MPPGraphGPUData* ios_gpu_data_;
+    // Note that this is an Objective-C object.
+    MPPGraphGPUData* ios_gpu_data_;
 #endif  // defined(__APPLE__)
 
-  std::map<std::string, std::shared_ptr<Executor>> named_executors_;
+    std::map<std::string, std::shared_ptr<Executor>> named_executors_;
 };
 
 // Legacy struct to keep existing client code happy.
 // TODO: eliminate!
 struct GpuSharedData {
-  GpuSharedData();
+    GpuSharedData();
 
-  explicit GpuSharedData(PlatformGlContext external_context)
-      : GpuSharedData(CreateGpuResourcesOrDie(external_context)) {}
+    explicit GpuSharedData(PlatformGlContext external_context)
+        : GpuSharedData(CreateGpuResourcesOrDie(external_context)) {}
 
-  explicit GpuSharedData(std::shared_ptr<GpuResources> gpu_resources)
-      : gpu_resources(gpu_resources),
-        gl_context(gpu_resources->gl_context()),
-        gpu_buffer_pool(gpu_resources->gpu_buffer_pool()) {}
+    explicit GpuSharedData(std::shared_ptr<GpuResources> gpu_resources)
+        : gpu_resources(gpu_resources),
+          gl_context(gpu_resources->gl_context()),
+          gpu_buffer_pool(gpu_resources->gpu_buffer_pool()) {}
 
-  std::shared_ptr<GpuResources> gpu_resources;
+    std::shared_ptr<GpuResources> gpu_resources;
 
-  std::shared_ptr<GlContext> gl_context;
+    std::shared_ptr<GlContext> gl_context;
 
-  GpuBufferMultiPool& gpu_buffer_pool;
+    GpuBufferMultiPool& gpu_buffer_pool;
 
- private:
-  static std::shared_ptr<GpuResources> CreateGpuResourcesOrDie(
-      PlatformGlContext external_context) {
-    auto status_or_resources = GpuResources::Create(external_context);
-    MEDIAPIPE_CHECK_OK(status_or_resources.status())
-        << ": could not create GpuResources";
-    return std::move(status_or_resources).value();
-  }
+private:
+    static std::shared_ptr<GpuResources> CreateGpuResourcesOrDie(
+        PlatformGlContext external_context) {
+        auto status_or_resources = GpuResources::Create(external_context);
+        MEDIAPIPE_CHECK_OK(status_or_resources.status())
+            << ": could not create GpuResources";
+        return std::move(status_or_resources).value();
+    }
 };
 
 }  // namespace mediapipe

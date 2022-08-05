@@ -15,36 +15,35 @@
 #import "MPPTimestampConverter.h"
 
 @implementation MPPTimestampConverter {
-  mediapipe::Timestamp _mediapipeTimestamp;
-  mediapipe::Timestamp _lastTimestamp;
-  mediapipe::TimestampDiff _timestampOffset;
+    mediapipe::Timestamp _mediapipeTimestamp;
+    mediapipe::Timestamp _lastTimestamp;
+    mediapipe::TimestampDiff _timestampOffset;
 }
 
-- (instancetype)init
-{
-  self = [super init];
-  if (self) {
-    [self reset];
-  }
-  return self;
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        [self reset];
+    }
+    return self;
 }
 
 - (void)reset {
-  _mediapipeTimestamp = mediapipe::Timestamp::Min();
-  _lastTimestamp = _mediapipeTimestamp;
-  _timestampOffset = 0;
+    _mediapipeTimestamp = mediapipe::Timestamp::Min();
+    _lastTimestamp = _mediapipeTimestamp;
+    _timestampOffset = 0;
 }
 
 - (mediapipe::Timestamp)timestampForMediaTime:(CMTime)mediaTime {
-  Float64 sampleSeconds = CMTIME_IS_VALID(mediaTime) ? CMTimeGetSeconds(mediaTime) : 0;
-  const int64 sampleUsec = sampleSeconds * mediapipe::Timestamp::kTimestampUnitsPerSecond;
-  _mediapipeTimestamp = mediapipe::Timestamp(sampleUsec) + _timestampOffset;
-  if (_mediapipeTimestamp <= _lastTimestamp) {
-    _timestampOffset = _timestampOffset + _lastTimestamp + 1 - _mediapipeTimestamp;
-    _mediapipeTimestamp = _lastTimestamp + 1;
-  }
-  _lastTimestamp = _mediapipeTimestamp;
-  return _mediapipeTimestamp;
+    Float64 sampleSeconds = CMTIME_IS_VALID(mediaTime) ? CMTimeGetSeconds(mediaTime) : 0;
+    const int64 sampleUsec = sampleSeconds * mediapipe::Timestamp::kTimestampUnitsPerSecond;
+    _mediapipeTimestamp = mediapipe::Timestamp(sampleUsec) + _timestampOffset;
+    if (_mediapipeTimestamp <= _lastTimestamp) {
+        _timestampOffset = _timestampOffset + _lastTimestamp + 1 - _mediapipeTimestamp;
+        _mediapipeTimestamp = _lastTimestamp + 1;
+    }
+    _lastTimestamp = _mediapipeTimestamp;
+    return _mediapipeTimestamp;
 }
 
 @end

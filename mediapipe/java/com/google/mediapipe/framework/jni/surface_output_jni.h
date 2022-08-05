@@ -22,7 +22,7 @@ extern "C" {
 #endif  // __cplusplus
 
 #define MEDIAPIPE_SURFACE_OUTPUT_METHOD(METHOD_NAME) \
-  Java_com_google_mediapipe_framework_SurfaceOutput_##METHOD_NAME
+    Java_com_google_mediapipe_framework_SurfaceOutput_##METHOD_NAME
 
 JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetFlipY)(
     JNIEnv* env, jobject thiz, jlong packet, jboolean flip);

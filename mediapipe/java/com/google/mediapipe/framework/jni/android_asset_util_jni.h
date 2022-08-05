@@ -22,7 +22,7 @@ extern "C" {
 #endif  // __cplusplus
 
 #define ANDROID_ASSET_UTIL_METHOD(METHOD_NAME) \
-  Java_com_google_mediapipe_framework_AndroidAssetUtil_##METHOD_NAME
+    Java_com_google_mediapipe_framework_AndroidAssetUtil_##METHOD_NAME
 
 JNIEXPORT jboolean JNICALL ANDROID_ASSET_UTIL_METHOD(
     nativeInitializeAssetManager)(JNIEnv* env, jclass clz,

@@ -13,15 +13,14 @@
 // limitations under the License.
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/compat_jni.h"
-
 #include <EGL/egl.h>
 
 JNIEXPORT jlong JNICALL COMPAT_METHOD(getCurrentNativeEGLContext)(JNIEnv* env,
                                                                   jclass clz) {
-  return reinterpret_cast<jlong>(eglGetCurrentContext());
+    return reinterpret_cast<jlong>(eglGetCurrentContext());
 }
 
 JNIEXPORT jlong JNICALL COMPAT_METHOD(getCurrentNativeEGLSurface)(
     JNIEnv* env, jclass clz, jint readdraw) {
-  return reinterpret_cast<jlong>(eglGetCurrentSurface(readdraw));
+    return reinterpret_cast<jlong>(eglGetCurrentSurface(readdraw));
 }

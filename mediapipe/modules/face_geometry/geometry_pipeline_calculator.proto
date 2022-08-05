@@ -19,9 +19,9 @@ package mediapipe;
 import "mediapipe/framework/calculator_options.proto";
 
 message FaceGeometryPipelineCalculatorOptions {
-  extend CalculatorOptions {
-    optional FaceGeometryPipelineCalculatorOptions ext = 323693812;
-  }
+    extend CalculatorOptions {
+        optional FaceGeometryPipelineCalculatorOptions ext = 323693812;
+    }
 
-  optional string metadata_path = 1;
+    optional string metadata_path = 1;
 }

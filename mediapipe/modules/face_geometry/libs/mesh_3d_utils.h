@@ -15,15 +15,15 @@
 #ifndef MEDIAPIPE_FACE_GEOMETRY_LIBS_MESH_3D_UTILS_H_
 #define MEDIAPIPE_FACE_GEOMETRY_LIBS_MESH_3D_UTILS_H_
 
+#include "mediapipe/framework/port/statusor.h"
+#include "mediapipe/modules/face_geometry/protos/mesh_3d.pb.h"
 #include <cstdint>
 #include <cstdlib>
 
-#include "mediapipe/framework/port/statusor.h"
-#include "mediapipe/modules/face_geometry/protos/mesh_3d.pb.h"
-
 namespace mediapipe::face_geometry {
 
-enum class VertexComponent { POSITION, TEX_COORD };
+enum class VertexComponent { POSITION,
+                             TEX_COORD };
 
 std::size_t GetVertexSize(Mesh3d::VertexType vertex_type);
 

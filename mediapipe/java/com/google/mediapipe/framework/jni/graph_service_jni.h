@@ -15,10 +15,9 @@
 #ifndef JAVA_COM_GOOGLE_MEDIAPIPE_FRAMEWORK_JNI_GRAPH_SERVICE_JNI_H_
 #define JAVA_COM_GOOGLE_MEDIAPIPE_FRAMEWORK_JNI_GRAPH_SERVICE_JNI_H_
 
-#include <jni.h>
-
 #include "mediapipe/framework/graph_service.h"
 #include "mediapipe/framework/packet.h"
+#include <jni.h>
 
 namespace mediapipe {
 namespace android {
@@ -27,22 +26,22 @@ namespace android {
 // It keeps the context argument opaque and avoids exposing the entire
 // Graph to service JNI implementations.
 class GraphServiceHelper {
- public:
-  // Call this static method to provide a native service object in response to
-  // a call to GraphService#installServiceObject in Java.
-  // The context_handle parameter should be the same as passed to
-  // installServiceObject.
-  template <typename T>
-  static void SetServiceObject(jlong context_handle,
-                               const GraphService<T>& service,
-                               std::shared_ptr<T> object) {
-    SetServicePacket(context_handle, service,
-                     MakePacket<std::shared_ptr<T>>(std::move(object)));
-  }
+public:
+    // Call this static method to provide a native service object in response to
+    // a call to GraphService#installServiceObject in Java.
+    // The context_handle parameter should be the same as passed to
+    // installServiceObject.
+    template <typename T>
+    static void SetServiceObject(jlong context_handle,
+                                 const GraphService<T>& service,
+                                 std::shared_ptr<T> object) {
+        SetServicePacket(context_handle, service,
+                         MakePacket<std::shared_ptr<T>>(std::move(object)));
+    }
 
- private:
-  static void SetServicePacket(jlong context_handle,
-                               const GraphServiceBase& service, Packet packet);
+private:
+    static void SetServicePacket(jlong context_handle,
+                                 const GraphServiceBase& service, Packet packet);
 };
 
 }  // namespace android

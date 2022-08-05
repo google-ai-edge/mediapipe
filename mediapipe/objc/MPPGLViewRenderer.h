@@ -17,24 +17,24 @@
 
 /// Modes of rotation (clockwise) for input frames.
 typedef NS_ENUM(int, MPPFrameRotation) {
-  MPPFrameRotationNone,
-  MPPFrameRotationCw90,
-  MPPFrameRotationCw180,
-  MPPFrameRotationCw270,
+    MPPFrameRotationNone,
+    MPPFrameRotationCw90,
+    MPPFrameRotationCw180,
+    MPPFrameRotationCw270,
 };
 
 typedef NS_ENUM(int, MPPFrameScaleMode) {
-  // Scale the frame up to fit the drawing area, preserving aspect ratio; may letterbox.
-  MPPFrameScaleModeFit,
-  // Scale the frame up to fill the drawing area, preserving aspect ratio; may crop.
-  MPPFrameScaleModeFillAndCrop,
+    // Scale the frame up to fit the drawing area, preserving aspect ratio; may letterbox.
+    MPPFrameScaleModeFit,
+    // Scale the frame up to fill the drawing area, preserving aspect ratio; may crop.
+    MPPFrameScaleModeFillAndCrop,
 };
 
 /// Renders frames in a GLKView.
 @interface MPPGLViewRenderer : NSObject <GLKViewDelegate>
 
 /// Rendering context for display.
-@property(nonatomic) EAGLContext *glContext;
+@property(nonatomic) EAGLContext* glContext;
 
 /// The frame to be rendered next. This pixel buffer must be unlocked, and
 /// should not be modified after handing it to the renderer.

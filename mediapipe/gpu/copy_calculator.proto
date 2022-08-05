@@ -19,15 +19,15 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message CopyCalculatorOptions {
-  extend CalculatorOptions {
-    optional CopyCalculatorOptions ext = 161773876;
-  }
+    extend CalculatorOptions {
+        optional CopyCalculatorOptions ext = 161773876;
+    }
 
-  enum Rotation {
-    NONE = 0;
-    CCW = 1;       // rotate 90 degrees counterclockwise
-    CCW_FLIP = 2;  // hack to rectify convfloat
-  }
+    enum Rotation {
+        NONE = 0;
+        CCW = 1;       // rotate 90 degrees counterclockwise
+        CCW_FLIP = 2;  // hack to rectify convfloat
+    }
 
-  optional Rotation rotation = 1 [default = NONE];
+    optional Rotation rotation = 1 [default = NONE];
 }

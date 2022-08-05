@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph_service_jni.h"
-
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph.h"
 
 namespace mediapipe {
@@ -22,9 +21,9 @@ namespace android {
 void GraphServiceHelper::SetServicePacket(jlong context_handle,
                                           const GraphServiceBase& service,
                                           Packet packet) {
-  mediapipe::android::Graph* mediapipe_graph =
-      reinterpret_cast<mediapipe::android::Graph*>(context_handle);
-  mediapipe_graph->SetServicePacket(service, packet);
+    mediapipe::android::Graph* mediapipe_graph =
+        reinterpret_cast<mediapipe::android::Graph*>(context_handle);
+    mediapipe_graph->SetServicePacket(service, packet);
 }
 
 }  // namespace android

@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <XCTest/XCTest.h>
-
 #import "mediapipe/objc/MPPDisplayLinkWeakTarget.h"
+#import <XCTest/XCTest.h>
 
 @interface DummyTarget : NSObject
 
@@ -28,7 +27,7 @@
 @synthesize updateCalled = _updateCalled;
 
 - (void)update:(id)sender {
-  _updateCalled = YES;
+    _updateCalled = YES;
 }
 
 @end
@@ -37,32 +36,32 @@
 @end
 
 @implementation MPPDisplayLinkWeakTargetTests {
-  DummyTarget *_dummyTarget;
+    DummyTarget* _dummyTarget;
 }
 
 - (void)setUp {
-  _dummyTarget = [[DummyTarget alloc] init];
+    _dummyTarget = [[DummyTarget alloc] init];
 }
 
 - (void)testCallingLiveTarget {
-  XCTAssertFalse(_dummyTarget.updateCalled);
+    XCTAssertFalse(_dummyTarget.updateCalled);
 
-  MPPDisplayLinkWeakTarget *target =
-      [[MPPDisplayLinkWeakTarget alloc] initWithTarget:_dummyTarget
-                                                  selector:@selector(update:)];
-  [target displayLinkCallback:nil];
+    MPPDisplayLinkWeakTarget* target =
+        [[MPPDisplayLinkWeakTarget alloc] initWithTarget:_dummyTarget
+                                                selector:@selector(update:)];
+    [target displayLinkCallback:nil];
 
-  XCTAssertTrue(_dummyTarget.updateCalled);
+    XCTAssertTrue(_dummyTarget.updateCalled);
 }
 
 - (void)testDoesNotCrashWhenTargetIsDeallocated {
-  MPPDisplayLinkWeakTarget *target =
-      [[MPPDisplayLinkWeakTarget alloc] initWithTarget:_dummyTarget
-                                                  selector:@selector(update:)];
-  _dummyTarget = nil;
-  [target displayLinkCallback:nil];
+    MPPDisplayLinkWeakTarget* target =
+        [[MPPDisplayLinkWeakTarget alloc] initWithTarget:_dummyTarget
+                                                selector:@selector(update:)];
+    _dummyTarget = nil;
+    [target displayLinkCallback:nil];
 
-  XCTAssertNil(_dummyTarget);
+    XCTAssertNil(_dummyTarget);
 }
 
 @end

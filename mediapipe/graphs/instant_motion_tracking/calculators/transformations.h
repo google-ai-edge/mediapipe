@@ -19,22 +19,22 @@ namespace mediapipe {
 
 // Radians by which to rotate the object (Provided by UI input)
 struct UserRotation {
-  float rotation_radians;
-  int sticker_id;
+    float rotation_radians;
+    int sticker_id;
 };
 
 // Scaling factor provided by the UI application end
 struct UserScaling {
-  float scale_factor;
-  int sticker_id;
+    float scale_factor;
+    int sticker_id;
 };
 
 // The normalized anchor coordinates of a sticker
 struct Anchor {
-  float x;  // [0.0-1.0]
-  float y;  // [0.0-1.0]
-  float z;  // Centered around 1.0 [current_scale = z * initial_scale]
-  int sticker_id;
+    float x;  // [0.0-1.0]
+    float y;  // [0.0-1.0]
+    float z;  // Centered around 1.0 [current_scale = z * initial_scale]
+    int sticker_id;
 };
 
 }  // namespace mediapipe

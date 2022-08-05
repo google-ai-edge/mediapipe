@@ -22,7 +22,7 @@ extern "C" {
 #endif  // __cplusplus
 
 #define GRAPH_METHOD(METHOD_NAME) \
-  Java_com_google_mediapipe_framework_Graph_##METHOD_NAME
+    Java_com_google_mediapipe_framework_Graph_##METHOD_NAME
 
 // Creates a native mediapipe context.
 JNIEXPORT jlong JNICALL GRAPH_METHOD(nativeCreateGraph)(JNIEnv* env,

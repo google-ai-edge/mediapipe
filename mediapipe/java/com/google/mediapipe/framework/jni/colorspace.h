@@ -24,35 +24,35 @@ namespace android {
 // Converts an RGBA image to RGB
 inline void RgbaToRgb(const uint8_t* rgba_img, int rgba_width_step, int width,
                       int height, uint8_t* rgb_img, int rgb_width_step) {
-  for (int y = 0; y < height; ++y) {
-    const auto* rgba = rgba_img + y * rgba_width_step;
-    auto* rgb = rgb_img + y * rgb_width_step;
-    for (int x = 0; x < width; ++x) {
-      *rgb = *rgba;
-      *(rgb + 1) = *(rgba + 1);
-      *(rgb + 2) = *(rgba + 2);
-      rgb += 3;
-      rgba += 4;
+    for (int y = 0; y < height; ++y) {
+        const auto* rgba = rgba_img + y * rgba_width_step;
+        auto* rgb = rgb_img + y * rgb_width_step;
+        for (int x = 0; x < width; ++x) {
+            *rgb = *rgba;
+            *(rgb + 1) = *(rgba + 1);
+            *(rgb + 2) = *(rgba + 2);
+            rgb += 3;
+            rgba += 4;
+        }
     }
-  }
 }
 
 // Converts a RGB image to RGBA
 inline void RgbToRgba(const uint8_t* rgb_img, int rgb_width_step, int width,
                       int height, uint8_t* rgba_img, int rgba_width_step,
                       uint8_t alpha) {
-  for (int y = 0; y < height; ++y) {
-    const auto* rgb = rgb_img + y * rgb_width_step;
-    auto* rgba = rgba_img + y * rgba_width_step;
-    for (int x = 0; x < width; ++x) {
-      *rgba = *rgb;
-      *(rgba + 1) = *(rgb + 1);
-      *(rgba + 2) = *(rgb + 2);
-      *(rgba + 3) = alpha;
-      rgb += 3;
-      rgba += 4;
+    for (int y = 0; y < height; ++y) {
+        const auto* rgb = rgb_img + y * rgb_width_step;
+        auto* rgba = rgba_img + y * rgba_width_step;
+        for (int x = 0; x < width; ++x) {
+            *rgba = *rgb;
+            *(rgba + 1) = *(rgb + 1);
+            *(rgba + 2) = *(rgb + 2);
+            *(rgba + 3) = alpha;
+            rgb += 3;
+            rgba += 4;
+        }
     }
-  }
 }
 
 }  // namespace android

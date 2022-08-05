@@ -12,28 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <UIKit/UIKit.h>
-#import <XCTest/XCTest.h>
-
 #import "mediapipe/objc/MPPGraph.h"
 #import "mediapipe/objc/NSError+util_status.h"
 #import "mediapipe/objc/util.h"
+#import <UIKit/UIKit.h>
+#import <XCTest/XCTest.h>
 
 /// This XCTestCase subclass provides common convenience methods for testing
 /// with MPPGraph.
 @interface MPPGraphTestBase : XCTestCase <MPPGraphDelegate> {
-  /// This block is used to respond to mediapipeGraph:didOutputPixelBuffer:fromStream:.
-  /// runGraph:withPixelBuffer:packetType: uses this internally, but you can reuse it
-  /// if you need to run a graph directly and want a MPPGraphTestBase object to
-  /// act as the delegate.
-  void (^_pixelBufferOutputBlock)(MPPGraph* graph, CVPixelBufferRef imageBuffer,
-                                  const std::string& streamName);
+    /// This block is used to respond to mediapipeGraph:didOutputPixelBuffer:fromStream:.
+    /// runGraph:withPixelBuffer:packetType: uses this internally, but you can reuse it
+    /// if you need to run a graph directly and want a MPPGraphTestBase object to
+    /// act as the delegate.
+    void (^_pixelBufferOutputBlock)(MPPGraph* graph, CVPixelBufferRef imageBuffer,
+                                    const std::string& streamName);
 
-  /// This block is used to respond to mediapipeGraph:didOutputPacket:fromStream:.
-  /// You can use it if you need to run a graph directly and want a MPPGraphTestBase
-  /// object to act as the delegate.
-  void (^_packetOutputBlock)(MPPGraph* graph, const mediapipe::Packet& packet,
-                             const std::string& streamName);
+    /// This block is used to respond to mediapipeGraph:didOutputPacket:fromStream:.
+    /// You can use it if you need to run a graph directly and want a MPPGraphTestBase
+    /// object to act as the delegate.
+    void (^_packetOutputBlock)(MPPGraph* graph, const mediapipe::Packet& packet,
+                               const std::string& streamName);
 }
 
 /// Runs a single frame through a simple graph. The graph is expected to have an

@@ -13,28 +13,26 @@
 // limitations under the License.
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph_gl_sync_token.h"
-
-#include <memory>
-
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
+#include <memory>
 
 JNIEXPORT void JNICALL GRAPH_GL_SYNC_TOKEN_METHOD(nativeWaitOnCpu)(
     JNIEnv* env, jclass cls, jlong syncToken) {
-  mediapipe::GlSyncToken& token =
-      *reinterpret_cast<mediapipe::GlSyncToken*>(syncToken);
-  token->Wait();
+    mediapipe::GlSyncToken& token =
+        *reinterpret_cast<mediapipe::GlSyncToken*>(syncToken);
+    token->Wait();
 }
 
 JNIEXPORT void JNICALL GRAPH_GL_SYNC_TOKEN_METHOD(nativeWaitOnGpu)(
     JNIEnv* env, jclass cls, jlong syncToken) {
-  mediapipe::GlSyncToken& token =
-      *reinterpret_cast<mediapipe::GlSyncToken*>(syncToken);
-  token->WaitOnGpu();
+    mediapipe::GlSyncToken& token =
+        *reinterpret_cast<mediapipe::GlSyncToken*>(syncToken);
+    token->WaitOnGpu();
 }
 
 JNIEXPORT void JNICALL GRAPH_GL_SYNC_TOKEN_METHOD(nativeRelease)(
     JNIEnv* env, jclass cls, jlong syncToken) {
-  delete reinterpret_cast<mediapipe::GlSyncToken*>(syncToken);
+    delete reinterpret_cast<mediapipe::GlSyncToken*>(syncToken);
 }

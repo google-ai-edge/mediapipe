@@ -19,9 +19,9 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message GlContextOptions {
-  extend CalculatorOptions {
-    optional GlContextOptions ext = 222332034;
-  }
+    extend CalculatorOptions {
+        optional GlContextOptions ext = 222332034;
+    }
 
-  optional string gl_context_name = 1;
+    optional string gl_context_name = 1;
 }

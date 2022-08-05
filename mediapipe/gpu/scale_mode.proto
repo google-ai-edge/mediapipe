@@ -18,16 +18,16 @@ package mediapipe;
 
 // We wrap the enum in a message to avoid namespace collisions.
 message ScaleMode {
-  // This enum mirrors the ScaleModes supported by Quad Renderer.
-  enum Mode {
-    DEFAULT = 0;
-    // Stretch the frame to the exact provided output dimensions.
-    STRETCH = 1;
-    // Scale the frame up to fit the drawing area, preserving aspect ratio; may
-    // letterbox.
-    FIT = 2;
-    // Scale the frame up to fill the drawing area, preserving aspect ratio; may
-    // crop.
-    FILL_AND_CROP = 3;
-  }
+    // This enum mirrors the ScaleModes supported by Quad Renderer.
+    enum Mode {
+        DEFAULT = 0;
+        // Stretch the frame to the exact provided output dimensions.
+        STRETCH = 1;
+        // Scale the frame up to fit the drawing area, preserving aspect ratio; may
+        // letterbox.
+        FIT = 2;
+        // Scale the frame up to fill the drawing area, preserving aspect ratio; may
+        // crop.
+        FILL_AND_CROP = 3;
+    }
 }

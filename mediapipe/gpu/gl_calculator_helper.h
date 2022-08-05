@@ -15,8 +15,6 @@
 #ifndef MEDIAPIPE_GPU_GL_CALCULATOR_HELPER_H_
 #define MEDIAPIPE_GPU_GL_CALCULATOR_HELPER_H_
 
-#include <memory>
-
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
@@ -30,6 +28,7 @@
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/graph_support.h"
+#include <memory>
 
 namespace mediapipe {
 
@@ -52,124 +51,124 @@ typedef std::function<void(const GlTexture& src, const GlTexture& dst)>
 // Direct use of this class is recommended for calculators that do not fit
 // that mold (e.g. calculators that combine two video streams).
 class GlCalculatorHelper {
- public:
-  GlCalculatorHelper();
-  ~GlCalculatorHelper();
+public:
+    GlCalculatorHelper();
+    ~GlCalculatorHelper();
 
-  // Call Open from the Open method of a calculator to initialize the helper.
-  absl::Status Open(CalculatorContext* cc);
+    // Call Open from the Open method of a calculator to initialize the helper.
+    absl::Status Open(CalculatorContext* cc);
 
-  // Can be used to initialize the helper outside of a calculator. Useful for
-  // testing.
-  void InitializeForTest(GpuResources* gpu_resources);
-  void InitializeForTest(GpuSharedData* gpu_shared);
+    // Can be used to initialize the helper outside of a calculator. Useful for
+    // testing.
+    void InitializeForTest(GpuResources* gpu_resources);
+    void InitializeForTest(GpuSharedData* gpu_shared);
 
-  // This method can be called from GetContract to set up the needed GPU
-  // resources.
-  static absl::Status UpdateContract(CalculatorContract* cc);
+    // This method can be called from GetContract to set up the needed GPU
+    // resources.
+    static absl::Status UpdateContract(CalculatorContract* cc);
 
-  // This method can be called from FillExpectations to set the correct types
-  // for the shared GL input side packet(s).
-  static absl::Status SetupInputSidePackets(PacketTypeSet* input_side_packets);
+    // This method can be called from FillExpectations to set the correct types
+    // for the shared GL input side packet(s).
+    static absl::Status SetupInputSidePackets(PacketTypeSet* input_side_packets);
 
-  // Execute the provided function within the helper's GL context. On some
-  // platforms, this may be run on a different thread; however, this method
-  // will still wait for the function to finish executing before returning.
-  // The status result from the function is passed on to the caller.
-  absl::Status RunInGlContext(std::function<absl::Status(void)> gl_func);
+    // Execute the provided function within the helper's GL context. On some
+    // platforms, this may be run on a different thread; however, this method
+    // will still wait for the function to finish executing before returning.
+    // The status result from the function is passed on to the caller.
+    absl::Status RunInGlContext(std::function<absl::Status(void)> gl_func);
 
-  // Convenience version of RunInGlContext for arguments with a void result
-  // type. As with the absl::Status version, this also waits for the
-  // function to finish executing before returning.
-  //
-  // Implementation note: we cannot use a std::function<void(void)> argument
-  // here, because that would break passing in a lambda that returns a status;
-  // e.g.:
-  //   RunInGlContext([]() -> absl::Status { ... });
-  //
-  // The reason is that std::function<void(...)> allows the implicit conversion
-  // of a callable with any result type, as long as the argument types match.
-  // As a result, the above lambda would be implicitly convertible to both
-  // std::function<absl::Status(void)> and std::function<void(void)>, and
-  // the invocation would be ambiguous.
-  //
-  // Therefore, instead of using std::function<void(void)>, we use a template
-  // that only accepts arguments with a void result type.
-  template <typename T, typename = typename std::enable_if<std::is_void<
-                            typename std::result_of<T()>::type>::value>::type>
-  void RunInGlContext(T f) {
-    RunInGlContext([f] {
-      f();
-      return absl::OkStatus();
-    }).IgnoreError();
-  }
+    // Convenience version of RunInGlContext for arguments with a void result
+    // type. As with the absl::Status version, this also waits for the
+    // function to finish executing before returning.
+    //
+    // Implementation note: we cannot use a std::function<void(void)> argument
+    // here, because that would break passing in a lambda that returns a status;
+    // e.g.:
+    //   RunInGlContext([]() -> absl::Status { ... });
+    //
+    // The reason is that std::function<void(...)> allows the implicit conversion
+    // of a callable with any result type, as long as the argument types match.
+    // As a result, the above lambda would be implicitly convertible to both
+    // std::function<absl::Status(void)> and std::function<void(void)>, and
+    // the invocation would be ambiguous.
+    //
+    // Therefore, instead of using std::function<void(void)>, we use a template
+    // that only accepts arguments with a void result type.
+    template <typename T, typename = typename std::enable_if<std::is_void<
+                              typename std::result_of<T()>::type>::value>::type>
+    void RunInGlContext(T f) {
+        RunInGlContext([f] {
+            f();
+            return absl::OkStatus();
+        }).IgnoreError();
+    }
 
-  // Use CreateSourceTexture and CreateDestinationTexture to set up textures
-  // for input and output frames. They are not just a convenience; on platforms
-  // where it is supported (iOS, for now) they take advantage of memory sharing
-  // between the CPU and GPU, avoiding memory copies.
+    // Use CreateSourceTexture and CreateDestinationTexture to set up textures
+    // for input and output frames. They are not just a convenience; on platforms
+    // where it is supported (iOS, for now) they take advantage of memory sharing
+    // between the CPU and GPU, avoiding memory copies.
 
-  // Gives access to an input frame as an OpenGL texture for reading (sampling).
-  //
-  // IMPORTANT: the returned GlTexture should be treated as a short-term view
-  // into the frame (typically for the duration of a Process call). Do not store
-  // it as a member in your calculator. If you need to keep a frame around,
-  // store the GpuBuffer instead, and call CreateSourceTexture again on each
-  // Process call.
-  //
-  // TODO: rename this; the use of "Create" makes this sound more expensive than
-  // it is.
-  GlTexture CreateSourceTexture(const GpuBuffer& pixel_buffer);
-  GlTexture CreateSourceTexture(const mediapipe::Image& image);
+    // Gives access to an input frame as an OpenGL texture for reading (sampling).
+    //
+    // IMPORTANT: the returned GlTexture should be treated as a short-term view
+    // into the frame (typically for the duration of a Process call). Do not store
+    // it as a member in your calculator. If you need to keep a frame around,
+    // store the GpuBuffer instead, and call CreateSourceTexture again on each
+    // Process call.
+    //
+    // TODO: rename this; the use of "Create" makes this sound more expensive than
+    // it is.
+    GlTexture CreateSourceTexture(const GpuBuffer& pixel_buffer);
+    GlTexture CreateSourceTexture(const mediapipe::Image& image);
 
-  // Gives read access to a plane of a planar buffer.
-  // The plane index is zero-based. The number of planes depends on the
-  // internal format of the buffer.
-  // Note: multi-plane support is not available on all platforms.
-  GlTexture CreateSourceTexture(const GpuBuffer& pixel_buffer, int plane);
+    // Gives read access to a plane of a planar buffer.
+    // The plane index is zero-based. The number of planes depends on the
+    // internal format of the buffer.
+    // Note: multi-plane support is not available on all platforms.
+    GlTexture CreateSourceTexture(const GpuBuffer& pixel_buffer, int plane);
 
-  // Convenience function for converting an ImageFrame to GpuBuffer and then
-  // accessing it as a texture.
-  // This is deprecated because: 1) it encourages the use of GlTexture as a
-  // long-lived object; 2) it requires copying the ImageFrame's contents,
-  // which may not always be necessary.
-  ABSL_DEPRECATED("Use `GpuBufferWithImageFrame`.")
-  GlTexture CreateSourceTexture(const ImageFrame& image_frame);
+    // Convenience function for converting an ImageFrame to GpuBuffer and then
+    // accessing it as a texture.
+    // This is deprecated because: 1) it encourages the use of GlTexture as a
+    // long-lived object; 2) it requires copying the ImageFrame's contents,
+    // which may not always be necessary.
+    ABSL_DEPRECATED("Use `GpuBufferWithImageFrame`.")
+    GlTexture CreateSourceTexture(const ImageFrame& image_frame);
 
-  // Creates a GpuBuffer sharing ownership of image_frame. The contents of
-  // image_frame should not be modified after calling this.
-  GpuBuffer GpuBufferWithImageFrame(std::shared_ptr<ImageFrame> image_frame);
+    // Creates a GpuBuffer sharing ownership of image_frame. The contents of
+    // image_frame should not be modified after calling this.
+    GpuBuffer GpuBufferWithImageFrame(std::shared_ptr<ImageFrame> image_frame);
 
-  // Creates a GpuBuffer copying the contents of image_frame.
-  GpuBuffer GpuBufferCopyingImageFrame(const ImageFrame& image_frame);
+    // Creates a GpuBuffer copying the contents of image_frame.
+    GpuBuffer GpuBufferCopyingImageFrame(const ImageFrame& image_frame);
 
-  // Extracts GpuBuffer dimensions without creating a texture.
-  ABSL_DEPRECATED("Use width and height methods on GpuBuffer instead")
-  void GetGpuBufferDimensions(const GpuBuffer& pixel_buffer, int* width,
-                              int* height);
+    // Extracts GpuBuffer dimensions without creating a texture.
+    ABSL_DEPRECATED("Use width and height methods on GpuBuffer instead")
+    void GetGpuBufferDimensions(const GpuBuffer& pixel_buffer, int* width,
+                                int* height);
 
-  // Gives access to an OpenGL texture for writing (rendering) a new frame.
-  // TODO: This should either return errors or a status.
-  GlTexture CreateDestinationTexture(
-      int output_width, int output_height,
-      GpuBufferFormat format = GpuBufferFormat::kBGRA32);
+    // Gives access to an OpenGL texture for writing (rendering) a new frame.
+    // TODO: This should either return errors or a status.
+    GlTexture CreateDestinationTexture(
+        int output_width, int output_height,
+        GpuBufferFormat format = GpuBufferFormat::kBGRA32);
 
-  // The OpenGL name of the output framebuffer.
-  GLuint framebuffer() const;
+    // The OpenGL name of the output framebuffer.
+    GLuint framebuffer() const;
 
-  // Binds the rendering framebuffer to a destination texture.
-  // TODO: do we need an unbind method too?
-  void BindFramebuffer(const GlTexture& dst);
+    // Binds the rendering framebuffer to a destination texture.
+    // TODO: do we need an unbind method too?
+    void BindFramebuffer(const GlTexture& dst);
 
-  GlContext& GetGlContext() const;
+    GlContext& GetGlContext() const;
 
-  GlVersion GetGlVersion() const;
+    GlVersion GetGlVersion() const;
 
-  // Check if the calculator helper has been previously initialized.
-  bool Initialized() { return impl_ != nullptr; }
+    // Check if the calculator helper has been previously initialized.
+    bool Initialized() { return impl_ != nullptr; }
 
- private:
-  std::unique_ptr<GlCalculatorHelperImpl> impl_;
+private:
+    std::unique_ptr<GlCalculatorHelperImpl> impl_;
 };
 
 // Represents an OpenGL texture, and is a 'view' into the memory pool.
@@ -182,29 +181,29 @@ class GlCalculatorHelper {
 // the pool. A GPU backed Image can be extracted from the unerlying
 // memory.
 class GlTexture {
- public:
-  GlTexture() : view_(std::make_shared<GlTextureView>()) {}
-  ~GlTexture() = default;
+public:
+    GlTexture() : view_(std::make_shared<GlTextureView>()) {}
+    ~GlTexture() = default;
 
-  int width() const { return view_->width(); }
-  int height() const { return view_->height(); }
-  GLenum target() const { return view_->target(); }
-  GLuint name() const { return view_->name(); }
+    int width() const { return view_->width(); }
+    int height() const { return view_->height(); }
+    GLenum target() const { return view_->target(); }
+    GLuint name() const { return view_->name(); }
 
-  // Returns a buffer that can be sent to another calculator.
-  // & manages sync token
-  // Can be used with GpuBuffer or ImageFrame or Image
-  template <typename T>
-  std::unique_ptr<T> GetFrame() const;
+    // Returns a buffer that can be sent to another calculator.
+    // & manages sync token
+    // Can be used with GpuBuffer or ImageFrame or Image
+    template <typename T>
+    std::unique_ptr<T> GetFrame() const;
 
-  // Releases texture memory & manages sync token
-  void Release() { view_ = std::make_shared<GlTextureView>(); }
+    // Releases texture memory & manages sync token
+    void Release() { view_ = std::make_shared<GlTextureView>(); }
 
- private:
-  explicit GlTexture(GlTextureView view)
-      : view_(std::make_shared<GlTextureView>(std::move(view))) {}
-  friend class GlCalculatorHelperImpl;
-  std::shared_ptr<GlTextureView> view_;
+private:
+    explicit GlTexture(GlTextureView view)
+        : view_(std::make_shared<GlTextureView>(std::move(view))) {}
+    friend class GlCalculatorHelperImpl;
+    std::shared_ptr<GlTextureView> view_;
 };
 
 // Returns the entry with the given tag if the collection uses tags, with the
@@ -219,26 +218,26 @@ class GlTexture {
 template <typename T>
 auto TagOrIndex(const T& collection, const std::string& tag, int index)
     -> decltype(collection.Tag(tag)) {
-  return collection.UsesTags() ? collection.Tag(tag) : collection.Index(index);
+    return collection.UsesTags() ? collection.Tag(tag) : collection.Index(index);
 }
 
 template <typename T>
 auto TagOrIndex(T* collection, const std::string& tag, int index)
     -> decltype(collection->Tag(tag)) {
-  return collection->UsesTags() ? collection->Tag(tag)
-                                : collection->Index(index);
+    return collection->UsesTags() ? collection->Tag(tag)
+                                  : collection->Index(index);
 }
 
 template <typename T>
 bool HasTagOrIndex(const T& collection, const std::string& tag, int index) {
-  return collection.UsesTags() ? collection.HasTag(tag)
-                               : index < collection.NumEntries();
+    return collection.UsesTags() ? collection.HasTag(tag)
+                                 : index < collection.NumEntries();
 }
 
 template <typename T>
 bool HasTagOrIndex(T* collection, const std::string& tag, int index) {
-  return collection->UsesTags() ? collection->HasTag(tag)
-                                : index < collection->NumEntries();
+    return collection->UsesTags() ? collection->HasTag(tag)
+                                  : index < collection->NumEntries();
 }
 
 }  // namespace mediapipe

@@ -13,24 +13,22 @@
 // limitations under the License.
 
 #import "mediapipe/gpu/MPPMetalHelper.h"
-
-#import "mediapipe/gpu/graph_support.h"
 #import "GTMDefines.h"
-
 #include "mediapipe/framework/port/ret_check.h"
+#import "mediapipe/gpu/graph_support.h"
 
 namespace mediapipe {
 
 // Using a C++ class so it can be declared as a friend of LegacyCalculatorSupport.
 class MetalHelperLegacySupport {
- public:
-  static CalculatorContract* GetCalculatorContract() {
-    return LegacyCalculatorSupport::Scoped<CalculatorContract>::current();
-  }
+public:
+    static CalculatorContract* GetCalculatorContract() {
+        return LegacyCalculatorSupport::Scoped<CalculatorContract>::current();
+    }
 
-  static CalculatorContext* GetCalculatorContext() {
-    return LegacyCalculatorSupport::Scoped<CalculatorContext>::current();
-  }
+    static CalculatorContext* GetCalculatorContext() {
+        return LegacyCalculatorSupport::Scoped<CalculatorContext>::current();
+    }
 };
 
 }  // namespace mediapipe
@@ -38,172 +36,173 @@ class MetalHelperLegacySupport {
 @implementation MPPMetalHelper
 
 - (instancetype)initWithGpuResources:(mediapipe::GpuResources*)gpuResources {
-  self = [super init];
-  if (self) {
-    _gpuShared = gpuResources->ios_gpu_data();
-  }
-  return self;
+    self = [super init];
+    if (self) {
+        _gpuShared = gpuResources->ios_gpu_data();
+    }
+    return self;
 }
 
 - (instancetype)initWithGpuSharedData:(mediapipe::GpuSharedData*)gpuShared {
-  return [self initWithGpuResources:gpuShared->gpu_resources.get()];
+    return [self initWithGpuResources:gpuShared->gpu_resources.get()];
 }
 
 - (instancetype)initWithCalculatorContext:(mediapipe::CalculatorContext*)cc {
-  if (!cc) return nil;
-  return [self initWithGpuResources:&cc->Service(mediapipe::kGpuService).GetObject()];
+    if (!cc) return nil;
+    return [self initWithGpuResources:&cc->Service(mediapipe::kGpuService).GetObject()];
 }
 
 + (absl::Status)updateContract:(mediapipe::CalculatorContract*)cc {
-  cc->UseService(mediapipe::kGpuService);
-  // Allow the legacy side packet to be provided, too, for backwards
-  // compatibility with existing graphs. It will just be ignored.
-  auto& input_side_packets = cc->InputSidePackets();
-  auto id = input_side_packets.GetId(mediapipe::kGpuSharedTagName, 0);
-  if (id.IsValid()) {
-    input_side_packets.Get(id).Set<mediapipe::GpuSharedData*>();
-  }
-  return absl::OkStatus();
+    cc->UseService(mediapipe::kGpuService);
+    // Allow the legacy side packet to be provided, too, for backwards
+    // compatibility with existing graphs. It will just be ignored.
+    auto& input_side_packets = cc->InputSidePackets();
+    auto id = input_side_packets.GetId(mediapipe::kGpuSharedTagName, 0);
+    if (id.IsValid()) {
+        input_side_packets.Get(id).Set<mediapipe::GpuSharedData*>();
+    }
+    return absl::OkStatus();
 }
 
 // Legacy support.
 - (instancetype)initWithSidePackets:(const mediapipe::PacketSet&)inputSidePackets {
-  auto cc = mediapipe::MetalHelperLegacySupport::GetCalculatorContext();
-  if (cc) {
-    CHECK_EQ(&inputSidePackets, &cc->InputSidePackets());
-    return [self initWithCalculatorContext:cc];
-  }
+    auto cc = mediapipe::MetalHelperLegacySupport::GetCalculatorContext();
+    if (cc) {
+        CHECK_EQ(&inputSidePackets, &cc->InputSidePackets());
+        return [self initWithCalculatorContext:cc];
+    }
 
-  // TODO: remove when we can.
-  LOG(WARNING)
-      << "CalculatorContext not available. If this calculator uses "
-         "CalculatorBase, call initWithCalculatorContext instead.";
-  mediapipe::GpuSharedData* gpu_shared =
-      inputSidePackets.Tag(mediapipe::kGpuSharedTagName).Get<mediapipe::GpuSharedData*>();
+    // TODO: remove when we can.
+    LOG(WARNING)
+        << "CalculatorContext not available. If this calculator uses "
+           "CalculatorBase, call initWithCalculatorContext instead.";
+    mediapipe::GpuSharedData* gpu_shared =
+        inputSidePackets.Tag(mediapipe::kGpuSharedTagName).Get<mediapipe::GpuSharedData*>();
 
-  return [self initWithGpuResources:gpu_shared->gpu_resources.get()];
+    return [self initWithGpuResources:gpu_shared->gpu_resources.get()];
 }
 
 // Legacy support.
 + (absl::Status)setupInputSidePackets:(mediapipe::PacketTypeSet*)inputSidePackets {
-  auto cc = mediapipe::MetalHelperLegacySupport::GetCalculatorContract();
-  if (cc) {
-    CHECK_EQ(inputSidePackets, &cc->InputSidePackets());
-    return [self updateContract:cc];
-  }
+    auto cc = mediapipe::MetalHelperLegacySupport::GetCalculatorContract();
+    if (cc) {
+        CHECK_EQ(inputSidePackets, &cc->InputSidePackets());
+        return [self updateContract:cc];
+    }
 
-  // TODO: remove when we can.
-  LOG(WARNING)
-      << "CalculatorContract not available. If you're calling this "
-         "from a GetContract method, call updateContract instead.";
-  auto id = inputSidePackets->GetId(mediapipe::kGpuSharedTagName, 0);
-  RET_CHECK(id.IsValid())
-      << "A " << mediapipe::kGpuSharedTagName
-      << " input side packet is required here.";
-  inputSidePackets->Get(id).Set<mediapipe::GpuSharedData*>();
-  return absl::OkStatus();
+    // TODO: remove when we can.
+    LOG(WARNING)
+        << "CalculatorContract not available. If you're calling this "
+           "from a GetContract method, call updateContract instead.";
+    auto id = inputSidePackets->GetId(mediapipe::kGpuSharedTagName, 0);
+    RET_CHECK(id.IsValid())
+        << "A " << mediapipe::kGpuSharedTagName
+        << " input side packet is required here.";
+    inputSidePackets->Get(id).Set<mediapipe::GpuSharedData*>();
+    return absl::OkStatus();
 }
 
 - (id<MTLDevice>)mtlDevice {
-  return _gpuShared.mtlDevice;
+    return _gpuShared.mtlDevice;
 }
 
 - (id<MTLCommandQueue>)mtlCommandQueue {
-  return _gpuShared.mtlCommandQueue;
+    return _gpuShared.mtlCommandQueue;
 }
 
 - (CVMetalTextureCacheRef)mtlTextureCache {
-  return _gpuShared.mtlTextureCache;
+    return _gpuShared.mtlTextureCache;
 }
 
 - (id<MTLCommandBuffer>)commandBuffer {
-  return [_gpuShared.mtlCommandQueue commandBuffer];
+    return [_gpuShared.mtlCommandQueue commandBuffer];
 }
 
 - (CVMetalTextureRef)copyCVMetalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer
                                                plane:(size_t)plane {
-  CVPixelBufferRef pixel_buffer = mediapipe::GetCVPixelBufferRef(gpuBuffer);
-  OSType pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
+    CVPixelBufferRef pixel_buffer = mediapipe::GetCVPixelBufferRef(gpuBuffer);
+    OSType pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
 
-  MTLPixelFormat metalPixelFormat = MTLPixelFormatInvalid;
-  int width = gpuBuffer.width();
-  int height = gpuBuffer.height();
+    MTLPixelFormat metalPixelFormat = MTLPixelFormatInvalid;
+    int width = gpuBuffer.width();
+    int height = gpuBuffer.height();
 
-  switch (pixel_format) {
-    case kCVPixelFormatType_32BGRA:
-      NSCAssert(plane == 0, @"Invalid plane number");
-      metalPixelFormat = MTLPixelFormatBGRA8Unorm;
-      break;
-    case kCVPixelFormatType_64RGBAHalf:
-      NSCAssert(plane == 0, @"Invalid plane number");
-      metalPixelFormat = MTLPixelFormatRGBA16Float;
-      break;
-    case kCVPixelFormatType_OneComponent8:
-      NSCAssert(plane == 0, @"Invalid plane number");
-      metalPixelFormat = MTLPixelFormatR8Uint;
-      break;
-    case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange:
-    case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange:
-      if (plane == 0) {
-        metalPixelFormat = MTLPixelFormatR8Unorm;
-      } else if (plane == 1) {
-        metalPixelFormat = MTLPixelFormatRG8Unorm;
-      } else {
-        NSCAssert(NO, @"Invalid plane number");
-      }
-      width = CVPixelBufferGetWidthOfPlane(pixel_buffer, plane);
-      height = CVPixelBufferGetHeightOfPlane(pixel_buffer, plane);
-      break;
-    case kCVPixelFormatType_TwoComponent16Half:
-      metalPixelFormat = MTLPixelFormatRG16Float;
-      NSCAssert(plane == 0, @"Invalid plane number");
-      break;
-    case kCVPixelFormatType_OneComponent32Float:
-      metalPixelFormat = MTLPixelFormatR32Float;
-      NSCAssert(plane == 0, @"Invalid plane number");
-      break;
-    default:
-      NSCAssert(NO, @"Invalid pixel buffer format");
-      break;
-  }
+    switch (pixel_format) {
+        case kCVPixelFormatType_32BGRA:
+            NSCAssert(plane == 0, @"Invalid plane number");
+            metalPixelFormat = MTLPixelFormatBGRA8Unorm;
+            break;
+        case kCVPixelFormatType_64RGBAHalf:
+            NSCAssert(plane == 0, @"Invalid plane number");
+            metalPixelFormat = MTLPixelFormatRGBA16Float;
+            break;
+        case kCVPixelFormatType_OneComponent8:
+            NSCAssert(plane == 0, @"Invalid plane number");
+            metalPixelFormat = MTLPixelFormatR8Uint;
+            break;
+        case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange:
+        case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange:
+            if (plane == 0) {
+                metalPixelFormat = MTLPixelFormatR8Unorm;
+            } else if (plane == 1) {
+                metalPixelFormat = MTLPixelFormatRG8Unorm;
+            } else {
+                NSCAssert(NO, @"Invalid plane number");
+            }
+            width = CVPixelBufferGetWidthOfPlane(pixel_buffer, plane);
+            height = CVPixelBufferGetHeightOfPlane(pixel_buffer, plane);
+            break;
+        case kCVPixelFormatType_TwoComponent16Half:
+            metalPixelFormat = MTLPixelFormatRG16Float;
+            NSCAssert(plane == 0, @"Invalid plane number");
+            break;
+        case kCVPixelFormatType_OneComponent32Float:
+            metalPixelFormat = MTLPixelFormatR32Float;
+            NSCAssert(plane == 0, @"Invalid plane number");
+            break;
+        default:
+            NSCAssert(NO, @"Invalid pixel buffer format");
+            break;
+    }
 
-  CVMetalTextureRef texture;
-  CVReturn err = CVMetalTextureCacheCreateTextureFromImage(
-      NULL, _gpuShared.mtlTextureCache, mediapipe::GetCVPixelBufferRef(gpuBuffer), NULL,
-      metalPixelFormat, width, height, plane, &texture);
-  CHECK_EQ(err, kCVReturnSuccess);
-  return texture;
+    CVMetalTextureRef texture;
+    CVReturn err = CVMetalTextureCacheCreateTextureFromImage(
+        NULL, _gpuShared.mtlTextureCache, mediapipe::GetCVPixelBufferRef(gpuBuffer), NULL,
+        metalPixelFormat, width, height, plane, &texture);
+    CHECK_EQ(err, kCVReturnSuccess);
+    return texture;
 }
 
 - (CVMetalTextureRef)copyCVMetalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer {
-  return [self copyCVMetalTextureWithGpuBuffer:gpuBuffer plane:0];
+    return [self copyCVMetalTextureWithGpuBuffer:gpuBuffer plane:0];
 }
 
 - (id<MTLTexture>)metalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer {
-  return [self metalTextureWithGpuBuffer:gpuBuffer plane:0];
+    return [self metalTextureWithGpuBuffer:gpuBuffer plane:0];
 }
 
 - (id<MTLTexture>)metalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer
-                                 plane:(size_t)plane {
-  CFHolder<CVMetalTextureRef> cvTexture;
-  cvTexture.adopt([self copyCVMetalTextureWithGpuBuffer:gpuBuffer plane:plane]);
-  return CVMetalTextureGetTexture(*cvTexture);
+                                      plane:(size_t)plane {
+    CFHolder<CVMetalTextureRef> cvTexture;
+    cvTexture.adopt([self copyCVMetalTextureWithGpuBuffer:gpuBuffer plane:plane]);
+    return CVMetalTextureGetTexture(*cvTexture);
 }
 
 - (mediapipe::GpuBuffer)mediapipeGpuBufferWithWidth:(int)width height:(int)height {
-  return _gpuShared.gpuBufferPool->GetBuffer(width, height);
+    return _gpuShared.gpuBufferPool->GetBuffer(width, height);
 }
 
 - (mediapipe::GpuBuffer)mediapipeGpuBufferWithWidth:(int)width
-                                         height:(int)height
-                                         format:(mediapipe::GpuBufferFormat)format {
-  return _gpuShared.gpuBufferPool->GetBuffer(width, height, format);
+                                             height:(int)height
+                                             format:(mediapipe::GpuBufferFormat)format {
+    return _gpuShared.gpuBufferPool->GetBuffer(width, height, format);
 }
 
-- (id<MTLLibrary>)newLibraryWithResourceName:(NSString*)name error:(NSError * _Nullable *)error {
-  return [_gpuShared.mtlDevice newLibraryWithFile:[[NSBundle bundleForClass:[self class]]
-                                                   pathForResource:name ofType:@"metallib"]
-                                            error:error];
+- (id<MTLLibrary>)newLibraryWithResourceName:(NSString*)name error:(NSError* _Nullable*)error {
+    return [_gpuShared.mtlDevice newLibraryWithFile:[[NSBundle bundleForClass:[self class]]
+                                                        pathForResource:name
+                                                                 ofType:@"metallib"]
+                                              error:error];
 }
 
 @end

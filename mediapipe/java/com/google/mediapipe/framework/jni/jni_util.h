@@ -15,11 +15,9 @@
 #ifndef JAVA_COM_GOOGLE_MEDIAPIPE_FRAMEWORK_JNI_JNI_UTIL_H_
 #define JAVA_COM_GOOGLE_MEDIAPIPE_FRAMEWORK_JNI_JNI_UTIL_H_
 
-#include <jni.h>
-
-#include <string>
-
 #include "mediapipe/framework/port/status.h"
+#include <jni.h>
+#include <string>
 
 namespace mediapipe {
 
@@ -38,11 +36,11 @@ bool ThrowIfError(JNIEnv* env, absl::Status status);
 
 // The Jni ids for Java class SerializedMessage.
 class SerializedMessageIds {
- public:
-  SerializedMessageIds(JNIEnv* env, jobject data);
-  jclass j_class;
-  jfieldID type_name_id;
-  jfieldID value_id;
+public:
+    SerializedMessageIds(JNIEnv* env, jobject data);
+    jclass j_class;
+    jfieldID type_name_id;
+    jfieldID value_id;
 };
 
 }  // namespace android

@@ -5,6 +5,7 @@ node: {
   input_stream: "input_video"
   output_stream: "luma_video"
 }
+
 node: {
   calculator: "GlSobelCalculator"
   input_stream: "luma_video"

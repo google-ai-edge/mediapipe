@@ -16,54 +16,54 @@
 
 @implementation GUSUtilStatusWrapper
 
-+ (instancetype)wrapStatus:(const absl::Status &)status {
-  return [[self alloc] initWithStatus:status];
++ (instancetype)wrapStatus:(const absl::Status&)status {
+    return [[self alloc] initWithStatus:status];
 }
 
-- (instancetype)initWithStatus:(const absl::Status &)status {
-  self = [super init];
-  if (self) {
-    _status = status;
-  }
-  return self;
+- (instancetype)initWithStatus:(const absl::Status&)status {
+    self = [super init];
+    if (self) {
+        _status = status;
+    }
+    return self;
 }
 
-- (NSString *)description {
-  return [NSString stringWithFormat:@"<%@: %p; status = %s>",
-          [self class], self, _status.message().data()];
+- (NSString*)description {
+    return [NSString stringWithFormat:@"<%@: %p; status = %s>",
+                                      [self class], self, _status.message().data()];
 }
 
 @end
 
 @implementation NSError (GUSGoogleUtilStatus)
 
-NSString *const kGUSGoogleUtilStatusErrorDomain = @"GoogleUtilStatusErrorDomain";
-NSString *const kGUSGoogleUtilStatusErrorKey = @"GUSGoogleUtilStatusErrorKey";
+NSString* const kGUSGoogleUtilStatusErrorDomain = @"GoogleUtilStatusErrorDomain";
+NSString* const kGUSGoogleUtilStatusErrorKey = @"GUSGoogleUtilStatusErrorKey";
 
-+ (NSError *)gus_errorWithStatus:(const absl::Status &)status {
-  NSDictionary *userInfo = @{
-    NSLocalizedDescriptionKey : @(status.message().data()),
-    kGUSGoogleUtilStatusErrorKey : [GUSUtilStatusWrapper wrapStatus:status],
-  };
-  NSError *error = [NSError errorWithDomain:kGUSGoogleUtilStatusErrorDomain
-                                       code:static_cast<NSInteger>(status.code())
-                                   userInfo:userInfo];
-  return error;
++ (NSError*)gus_errorWithStatus:(const absl::Status&)status {
+    NSDictionary* userInfo = @{
+        NSLocalizedDescriptionKey : @(status.message().data()),
+        kGUSGoogleUtilStatusErrorKey : [GUSUtilStatusWrapper wrapStatus:status],
+    };
+    NSError* error = [NSError errorWithDomain:kGUSGoogleUtilStatusErrorDomain
+                                         code:static_cast<NSInteger>(status.code())
+                                     userInfo:userInfo];
+    return error;
 }
 
 - (absl::Status)gus_status {
-  NSString *domain = self.domain;
-  if ([domain isEqual:kGUSGoogleUtilStatusErrorDomain]) {
-    GUSUtilStatusWrapper *wrapper = self.userInfo[kGUSGoogleUtilStatusErrorKey];
-    if (wrapper) return wrapper.status;
+    NSString* domain = self.domain;
+    if ([domain isEqual:kGUSGoogleUtilStatusErrorDomain]) {
+        GUSUtilStatusWrapper* wrapper = self.userInfo[kGUSGoogleUtilStatusErrorKey];
+        if (wrapper) return wrapper.status;
 #if 0
   // Unfortunately, util/task/posixerrorspace.h is not in portable status yet.
   // TODO: fix that.
   } else if ([domain isEqual:NSPOSIXErrorDomain]) {
     return ::util::PosixErrorToStatus(self.code, self.localizedDescription.UTF8String);
 #endif
-  }
-  return absl::Status(absl::StatusCode::kUnknown, self.localizedDescription.UTF8String);
+    }
+    return absl::Status(absl::StatusCode::kUnknown, self.localizedDescription.UTF8String);
 }
 
 @end

@@ -21,6 +21,6 @@
 
 - (instancetype)initWithTarget:(id)target selector:(SEL)sel;
 
-- (void)displayLinkCallback:(CADisplayLink *)sender;
+- (void)displayLinkCallback:(CADisplayLink*)sender;
 
 @end

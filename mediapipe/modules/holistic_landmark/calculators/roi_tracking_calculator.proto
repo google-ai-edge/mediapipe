@@ -19,41 +19,41 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message RoiTrackingCalculatorOptions {
-  extend CalculatorOptions {
-    optional RoiTrackingCalculatorOptions ext = 329994630;
-  }
+    extend CalculatorOptions {
+        optional RoiTrackingCalculatorOptions ext = 329994630;
+    }
 
-  // Verifies that Intersection over Union of previous frame rect and current
-  // frame re-crop rect is less than threshold.
-  message IouRequirements {
-    optional float min_iou = 1 [default = 0.5];
-  }
+    // Verifies that Intersection over Union of previous frame rect and current
+    // frame re-crop rect is less than threshold.
+    message IouRequirements {
+        optional float min_iou = 1 [default = 0.5];
+    }
 
-  // Verifies that current frame re-crop rect rotation/translation/scale didn't
-  // change much comparing to the previous frame rect.
-  message RectRequirements {
-    // Allowed rotation change defined in degrees.
-    optional float rotation_degrees = 1 [default = 10.0];
+    // Verifies that current frame re-crop rect rotation/translation/scale didn't
+    // change much comparing to the previous frame rect.
+    message RectRequirements {
+        // Allowed rotation change defined in degrees.
+        optional float rotation_degrees = 1 [default = 10.0];
 
-    // Allowed translation change defined as absolute translation normalized by
-    // re-crop rectangle size.
-    optional float translation = 2 [default = 0.1];
+        // Allowed translation change defined as absolute translation normalized by
+        // re-crop rectangle size.
+        optional float translation = 2 [default = 0.1];
 
-    // Allowed scale change defined as absolute translation normalized by
-    // re-crop rectangle size.
-    optional float scale = 3 [default = 0.1];
-  }
+        // Allowed scale change defined as absolute translation normalized by
+        // re-crop rectangle size.
+        optional float scale = 3 [default = 0.1];
+    }
 
-  // Verifies that landmarks from the previous frame are within re-crop
-  // rectangle bounds on the current frame.
-  message LandmarksRequirements {
-    // Margin to apply to re-crop rectangle before checking verifing landmarks.
-    optional float recrop_rect_margin = 1 [default = 0.0];
-  }
+    // Verifies that landmarks from the previous frame are within re-crop
+    // rectangle bounds on the current frame.
+    message LandmarksRequirements {
+        // Margin to apply to re-crop rectangle before checking verifing landmarks.
+        optional float recrop_rect_margin = 1 [default = 0.0];
+    }
 
-  optional IouRequirements iou_requirements = 1;
+    optional IouRequirements iou_requirements = 1;
 
-  optional RectRequirements rect_requirements = 2;
+    optional RectRequirements rect_requirements = 2;
 
-  optional LandmarksRequirements landmarks_requirements = 3;
+    optional LandmarksRequirements landmarks_requirements = 3;
 }

@@ -15,9 +15,8 @@
 #ifndef MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_TYPES_H_
 #define MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_TYPES_H_
 
-#include <array>
-
 #include "Eigen/Geometry"
+#include <array>
 
 namespace mediapipe {
 
@@ -31,24 +30,26 @@ using Matrix3f_RM = Eigen::Matrix<float, 3, 3, Eigen::RowMajor>;
 using Face = std::array<int, 4>;
 
 struct SuperPoint {
-  enum PointSourceType { kPointCloud = 0, kBoundingBox = 1, kSkeleton = 2 };
-  // The id of the point in the point-cloud
-  int reference_point;
-  // The source of the
-  PointSourceType source;
-  // The id of the point in set of points in current frame
-  int id;
-  // If source is kBoundingBox or kSkeleton, object_id stores the id of which \
+    enum PointSourceType { kPointCloud = 0,
+                           kBoundingBox = 1,
+                           kSkeleton = 2 };
+    // The id of the point in the point-cloud
+    int reference_point;
+    // The source of the
+    PointSourceType source;
+    // The id of the point in set of points in current frame
+    int id;
+    // If source is kBoundingBox or kSkeleton, object_id stores the id of which \
   // object this point belongs to.
-  int object_id;
-  // projected u-v value
-  Vector2f uv;
-  Vector2f pixel;
-  // the 3D point
-  Vector3f point_3d;
-  // Color
-  Eigen::Matrix<unsigned char, 4, 1> color;
-  bool rendered;
+    int object_id;
+    // projected u-v value
+    Vector2f uv;
+    Vector2f pixel;
+    // the 3D point
+    Vector3f point_3d;
+    // Color
+    Eigen::Matrix<unsigned char, 4, 1> color;
+    bool rendered;
 };
 
 }  // namespace mediapipe

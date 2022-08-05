@@ -22,7 +22,7 @@ extern "C" {
 #endif  // __cplusplus
 
 #define PACKET_METHOD(METHOD_NAME) \
-  Java_com_google_mediapipe_framework_Packet_##METHOD_NAME
+    Java_com_google_mediapipe_framework_Packet_##METHOD_NAME
 
 // Releases a native mediapipe packet.
 JNIEXPORT void JNICALL PACKET_METHOD(nativeReleasePacket)(JNIEnv* env,

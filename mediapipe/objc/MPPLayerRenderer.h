@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import "mediapipe/objc/MPPGLViewRenderer.h"
 #import <Foundation/Foundation.h>
 #import <GLKit/GLKit.h>
-
-#import "mediapipe/objc/MPPGLViewRenderer.h"
 
 /// Renders frames in a Core Animation layer.
 @interface MPPLayerRenderer : NSObject
 
-@property(nonatomic, readonly) CAEAGLLayer *layer;
+@property(nonatomic, readonly) CAEAGLLayer* layer;
 
 /// Updates the layer with a new pixel buffer.
 - (void)renderPixelBuffer:(CVPixelBufferRef)pixelBuffer;

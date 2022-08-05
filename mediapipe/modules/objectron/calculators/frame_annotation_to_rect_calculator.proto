@@ -19,13 +19,13 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message FrameAnnotationToRectCalculatorOptions {
-  extend CalculatorOptions {
-    optional FrameAnnotationToRectCalculatorOptions ext = 338119067;
-  }
+    extend CalculatorOptions {
+        optional FrameAnnotationToRectCalculatorOptions ext = 338119067;
+    }
 
-  // The threshold to use when top-view is off,to enable hysteresis,
-  // It's required that off_threshold <= on_threshold.
-  optional float off_threshold = 1 [default = 40.0];
-  // The threshold to use when top-view is on.
-  optional float on_threshold = 2 [default = 41.0];
+    // The threshold to use when top-view is off,to enable hysteresis,
+    // It's required that off_threshold <= on_threshold.
+    optional float off_threshold = 1 [default = 40.0];
+    // The threshold to use when top-view is on.
+    optional float on_threshold = 2 [default = 41.0];
 }

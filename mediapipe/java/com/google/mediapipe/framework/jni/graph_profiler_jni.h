@@ -22,7 +22,7 @@ extern "C" {
 #endif  // __cplusplus
 
 #define GRAPH_PROFILER_METHOD(METHOD_NAME) \
-  Java_com_google_mediapipe_framework_GraphProfiler_##METHOD_NAME
+    Java_com_google_mediapipe_framework_GraphProfiler_##METHOD_NAME
 
 JNIEXPORT void JNICALL GRAPH_PROFILER_METHOD(nativeReset)(
     JNIEnv* env, jobject thiz, jlong profiling_context);

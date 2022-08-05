@@ -15,15 +15,14 @@
 #ifndef MEDIAPIPE_OBJC_UTIL_H_
 #define MEDIAPIPE_OBJC_UTIL_H_
 
-#import <Accelerate/Accelerate.h>
-#import <CoreFoundation/CoreFoundation.h>
-#import <CoreGraphics/CoreGraphics.h>
-#import <CoreVideo/CoreVideo.h>
-
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/objc/CFHolder.h"
+#import <Accelerate/Accelerate.h>
+#import <CoreFoundation/CoreFoundation.h>
+#import <CoreGraphics/CoreGraphics.h>
+#import <CoreVideo/CoreVideo.h>
 
 // TODO: namespace and/or prefix these. Split up the file.
 
@@ -31,18 +30,18 @@
 /// NOTE: the pixel buffer's base address must have been locked before this
 /// call, and it must stay locked as long as the vImage_Buffer is in use.
 inline vImage_Buffer vImageForCVPixelBuffer(CVPixelBufferRef pixel_buffer) {
-  return {.data = CVPixelBufferGetBaseAddress(pixel_buffer),
-          .width = CVPixelBufferGetWidth(pixel_buffer),
-          .height = CVPixelBufferGetHeight(pixel_buffer),
-          .rowBytes = CVPixelBufferGetBytesPerRow(pixel_buffer)};
+    return {.data = CVPixelBufferGetBaseAddress(pixel_buffer),
+            .width = CVPixelBufferGetWidth(pixel_buffer),
+            .height = CVPixelBufferGetHeight(pixel_buffer),
+            .rowBytes = CVPixelBufferGetBytesPerRow(pixel_buffer)};
 }
 
 /// Returns a vImage_Buffer describing the data inside the ImageFrame.
 inline vImage_Buffer vImageForImageFrame(const mediapipe::ImageFrame& frame) {
-  return {.data = (void*)frame.PixelData(),
-          .width = static_cast<vImagePixelCount>(frame.Width()),
-          .height = static_cast<vImagePixelCount>(frame.Height()),
-          .rowBytes = static_cast<size_t>(frame.WidthStep())};
+    return {.data = (void*)frame.PixelData(),
+            .width = static_cast<vImagePixelCount>(frame.Width()),
+            .height = static_cast<vImagePixelCount>(frame.Height()),
+            .rowBytes = static_cast<size_t>(frame.WidthStep())};
 }
 
 /// Converts a grayscale image without alpha to BGRA format.

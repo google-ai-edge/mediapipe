@@ -20,10 +20,10 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/gpu/scale_mode.proto";
 
 message GlSurfaceSinkCalculatorOptions {
-  extend CalculatorOptions {
-    optional GlSurfaceSinkCalculatorOptions ext = 243334538;
-  }
+    extend CalculatorOptions {
+        optional GlSurfaceSinkCalculatorOptions ext = 243334538;
+    }
 
-  // Output frame scale mode. Default is FILL_AND_CROP.
-  optional ScaleMode.Mode frame_scale_mode = 1;
+    // Output frame scale mode. Default is FILL_AND_CROP.
+    optional ScaleMode.Mode frame_scale_mode = 1;
 }

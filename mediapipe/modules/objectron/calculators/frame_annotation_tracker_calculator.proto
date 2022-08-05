@@ -21,16 +21,16 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 
 message FrameAnnotationTrackerCalculatorOptions {
-  extend CalculatorOptions {
-    optional FrameAnnotationTrackerCalculatorOptions ext = 291291253;
-  }
+    extend CalculatorOptions {
+        optional FrameAnnotationTrackerCalculatorOptions ext = 291291253;
+    }
 
-  // The threshold on intersection-over-union (IoU). We consider
-  // boxes with IoU larger than this threshold to be the duplicates.
-  optional float iou_threshold = 1 [default = 0.5];
+    // The threshold on intersection-over-union (IoU). We consider
+    // boxes with IoU larger than this threshold to be the duplicates.
+    optional float iou_threshold = 1 [default = 0.5];
 
-  // We need image dimension to properly compute annotation locations.
-  optional float img_width = 2;
+    // We need image dimension to properly compute annotation locations.
+    optional float img_width = 2;
 
-  optional float img_height = 3;
+    optional float img_height = 3;
 }

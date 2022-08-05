@@ -13,9 +13,7 @@
 // limitations under the License.
 
 #import "mediapipe/gpu/MPPGraphGPUData.h"
-
 #import "GTMDefines.h"
-
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gpu_buffer_multi_pool.h"
 
@@ -40,83 +38,83 @@ typedef CVOpenGLTextureCacheRef CVTextureCacheType;
 typedef CVOpenGLESTextureCacheRef CVTextureCacheType;
 #endif  // TARGET_OS_OSX
 
-- (instancetype)initWithContext:(mediapipe::GlContext *)context
-                      multiPool:(mediapipe::GpuBufferMultiPool *)pool {
-  self = [super init];
-  if (self) {
-    _gpuBufferPool = pool;
-    _glContext = context;
-  }
-  return self;
+- (instancetype)initWithContext:(mediapipe::GlContext*)context
+                      multiPool:(mediapipe::GpuBufferMultiPool*)pool {
+    self = [super init];
+    if (self) {
+        _gpuBufferPool = pool;
+        _glContext = context;
+    }
+    return self;
 }
 
 - (void)dealloc {
-  if (_textureCache) {
-    _textureCache = NULL;
-  }
+    if (_textureCache) {
+        _textureCache = NULL;
+    }
 #if COREVIDEO_SUPPORTS_METAL
-  if (_mtlTextureCache) {
-    CFRelease(_mtlTextureCache);
-    _mtlTextureCache = NULL;
-  }
+    if (_mtlTextureCache) {
+        CFRelease(_mtlTextureCache);
+        _mtlTextureCache = NULL;
+    }
 #endif
 }
 
 #if TARGET_OS_OSX
-- (NSOpenGLContext *)glContext {
-  return _glContext->nsgl_context();
+- (NSOpenGLContext*)glContext {
+    return _glContext->nsgl_context();
 }
 
-- (NSOpenGLPixelFormat *) glPixelFormat {
-  return _glContext->nsgl_pixel_format();
+- (NSOpenGLPixelFormat*)glPixelFormat {
+    return _glContext->nsgl_pixel_format();
 }
 #else
-- (EAGLContext *)glContext {
-  return _glContext->eagl_context();
+- (EAGLContext*)glContext {
+    return _glContext->eagl_context();
 }
 #endif  // TARGET_OS_OSX
 
 - (CVTextureCacheType)textureCache {
-  @synchronized(self) {
-    if (!_textureCache) {
-      _textureCache = _glContext->cv_texture_cache();
+    @synchronized(self) {
+        if (!_textureCache) {
+            _textureCache = _glContext->cv_texture_cache();
+        }
     }
-  }
-  return _textureCache;
+    return _textureCache;
 }
 
-- (mediapipe::GpuBufferMultiPool *)gpuBufferPool {
-  return _gpuBufferPool;
+- (mediapipe::GpuBufferMultiPool*)gpuBufferPool {
+    return _gpuBufferPool;
 }
 
 - (id<MTLDevice>)mtlDevice {
-  @synchronized(self) {
-    if (!_mtlDevice) {
-      _mtlDevice = MTLCreateSystemDefaultDevice();
+    @synchronized(self) {
+        if (!_mtlDevice) {
+            _mtlDevice = MTLCreateSystemDefaultDevice();
+        }
     }
-  }
-  return _mtlDevice;
+    return _mtlDevice;
 }
 
 - (id<MTLCommandQueue>)mtlCommandQueue {
-  @synchronized(self) {
-    if (!_mtlCommandQueue) {
-      _mtlCommandQueue = [self.mtlDevice newCommandQueue];
+    @synchronized(self) {
+        if (!_mtlCommandQueue) {
+            _mtlCommandQueue = [self.mtlDevice newCommandQueue];
+        }
     }
-  }
-  return _mtlCommandQueue;
+    return _mtlCommandQueue;
 }
 
 #if COREVIDEO_SUPPORTS_METAL
 - (CVMetalTextureCacheRef)mtlTextureCache {
-  @synchronized(self) {
-    if (!_mtlTextureCache) {
-      CVReturn err = CVMetalTextureCacheCreate(NULL, NULL, self.mtlDevice, NULL, &_mtlTextureCache);
-      NSAssert(err == kCVReturnSuccess, @"Error at CVMetalTextureCacheCreate %d", err);
-      // TODO: register and flush metal caches too.
+    @synchronized(self) {
+        if (!_mtlTextureCache) {
+            CVReturn err = CVMetalTextureCacheCreate(NULL, NULL, self.mtlDevice, NULL, &_mtlTextureCache);
+            NSAssert(err == kCVReturnSuccess, @"Error at CVMetalTextureCacheCreate %d", err);
+            // TODO: register and flush metal caches too.
+        }
     }
-  }
-  return _mtlTextureCache;
+    return _mtlTextureCache;
 }
 #endif
 

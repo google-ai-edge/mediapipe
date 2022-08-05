@@ -14,26 +14,26 @@
 
 #import "MPPInputSource.h"
 
-#define ABSTRACT_METHOD \
-    @throw [NSException exceptionWithName:NSInternalInconsistencyException \
-        reason:[NSString stringWithFormat:@"You must override %@ in a subclass", \
-                    NSStringFromSelector(_cmd)] \
-        userInfo:nil];
+#define ABSTRACT_METHOD                                                                                     \
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException                                  \
+                                   reason:[NSString stringWithFormat:@"You must override %@ in a subclass", \
+                                                                     NSStringFromSelector(_cmd)]            \
+                                 userInfo:nil];
 
 @implementation MPPInputSource
 
 - (void)setDelegate:(id<MPPInputSourceDelegate>)delegate
               queue:(dispatch_queue_t)queue {
-  _delegate = delegate;
-  _delegateQueue = queue;
+    _delegate = delegate;
+    _delegateQueue = queue;
 }
 
 - (void)start {
-  ABSTRACT_METHOD
+    ABSTRACT_METHOD
 }
 
 - (void)stop {
-  ABSTRACT_METHOD
+    ABSTRACT_METHOD
 }
 
 @end

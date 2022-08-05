@@ -23,15 +23,15 @@
 namespace mediapipe {
 
 class GpuTestBase : public ::testing::Test {
- protected:
-  GpuTestBase() { helper_.InitializeForTest(&gpu_shared_); }
+protected:
+    GpuTestBase() { helper_.InitializeForTest(&gpu_shared_); }
 
-  void RunInGlContext(std::function<void(void)> gl_func) {
-    helper_.RunInGlContext(std::move(gl_func));
-  }
+    void RunInGlContext(std::function<void(void)> gl_func) {
+        helper_.RunInGlContext(std::move(gl_func));
+    }
 
-  GpuSharedData gpu_shared_;
-  GlCalculatorHelper helper_;
+    GpuSharedData gpu_shared_;
+    GlCalculatorHelper helper_;
 };
 
 }  // namespace mediapipe

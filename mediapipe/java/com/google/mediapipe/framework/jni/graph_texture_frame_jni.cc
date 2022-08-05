@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph_texture_frame_jni.h"
-
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_texture_buffer.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
@@ -22,35 +21,35 @@ using mediapipe::GlTextureBufferSharedPtr;
 
 JNIEXPORT void JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeReleaseBuffer)(
     JNIEnv* env, jobject thiz, jlong nativeHandle) {
-  GlTextureBufferSharedPtr* buffer =
-      reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
-  delete buffer;
+    GlTextureBufferSharedPtr* buffer =
+        reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
+    delete buffer;
 }
 
 JNIEXPORT jint JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGetTextureName)(
     JNIEnv* env, jobject thiz, jlong nativeHandle) {
-  GlTextureBufferSharedPtr* buffer =
-      reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
-  return (*buffer)->name();
+    GlTextureBufferSharedPtr* buffer =
+        reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
+    return (*buffer)->name();
 }
 
 JNIEXPORT void JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGpuWait)(
     JNIEnv* env, jobject thiz, jlong nativeHandle) {
-  GlTextureBufferSharedPtr* buffer =
-      reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
-  (*buffer)->WaitOnGpu();
+    GlTextureBufferSharedPtr* buffer =
+        reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
+    (*buffer)->WaitOnGpu();
 }
 
 JNIEXPORT jint JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGetWidth)(
     JNIEnv* env, jobject thiz, jlong nativeHandle) {
-  GlTextureBufferSharedPtr* buffer =
-      reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
-  return (*buffer)->width();
+    GlTextureBufferSharedPtr* buffer =
+        reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
+    return (*buffer)->width();
 }
 
 JNIEXPORT jint JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeGetHeight)(
     JNIEnv* env, jobject thiz, jlong nativeHandle) {
-  GlTextureBufferSharedPtr* buffer =
-      reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
-  return (*buffer)->height();
+    GlTextureBufferSharedPtr* buffer =
+        reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
+    return (*buffer)->height();
 }

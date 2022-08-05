@@ -9,14 +9,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <cmath>
-#include <memory>
-
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include <cmath>
+#include <memory>
 
 namespace mediapipe {
 
@@ -214,55 +213,55 @@ constexpr int kEyeLandmarkIndicesInFaceLandmarks[] = {
 // }
 //
 class UpdateFaceLandmarksCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->Inputs().Tag(kFaceLandmarksTag).Set<NormalizedLandmarkList>();
-    cc->Inputs().Tag(kNewEyeLandmarksTag).Set<NormalizedLandmarkList>();
+public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        cc->Inputs().Tag(kFaceLandmarksTag).Set<NormalizedLandmarkList>();
+        cc->Inputs().Tag(kNewEyeLandmarksTag).Set<NormalizedLandmarkList>();
 
-    cc->Outputs().Tag(kUpdatedFaceLandmarksTag).Set<NormalizedLandmarkList>();
+        cc->Outputs().Tag(kUpdatedFaceLandmarksTag).Set<NormalizedLandmarkList>();
 
-    return absl::OkStatus();
-  }
-  absl::Status Open(CalculatorContext* cc) {
-    cc->SetOffset(TimestampDiff(0));
-    return absl::OkStatus();
-  }
+        return absl::OkStatus();
+    }
+    absl::Status Open(CalculatorContext* cc) {
+        cc->SetOffset(TimestampDiff(0));
+        return absl::OkStatus();
+    }
 
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(UpdateFaceLandmarksCalculator);
 
 absl::Status UpdateFaceLandmarksCalculator::Process(CalculatorContext* cc) {
-  if (cc->Inputs().Tag(kFaceLandmarksTag).IsEmpty() ||
-      cc->Inputs().Tag(kNewEyeLandmarksTag).IsEmpty()) {
+    if (cc->Inputs().Tag(kFaceLandmarksTag).IsEmpty() ||
+        cc->Inputs().Tag(kNewEyeLandmarksTag).IsEmpty()) {
+        return absl::OkStatus();
+    }
+    const auto& face_landmarks =
+        cc->Inputs().Tag(kFaceLandmarksTag).Get<NormalizedLandmarkList>();
+    const auto& new_eye_landmarks =
+        cc->Inputs().Tag(kNewEyeLandmarksTag).Get<NormalizedLandmarkList>();
+
+    RET_CHECK_EQ(face_landmarks.landmark_size(), kNumFaceLandmarks)
+        << "Wrong number of face landmarks";
+    RET_CHECK_EQ(new_eye_landmarks.landmark_size(), kNumEyeLandmarks)
+        << "Wrong number of face landmarks";
+
+    auto refined_face_landmarks =
+        absl::make_unique<NormalizedLandmarkList>(face_landmarks);
+    for (int i = 0; i < kNumEyeLandmarks; ++i) {
+        const auto& refined_ld = new_eye_landmarks.landmark(i);
+        const int id = kEyeLandmarkIndicesInFaceLandmarks[i];
+        refined_face_landmarks->mutable_landmark(id)->set_x(refined_ld.x());
+        refined_face_landmarks->mutable_landmark(id)->set_y(refined_ld.y());
+        refined_face_landmarks->mutable_landmark(id)->set_z(refined_ld.z());
+        refined_face_landmarks->mutable_landmark(id)->set_visibility(
+            refined_ld.visibility());
+    }
+    cc->Outputs()
+        .Tag(kUpdatedFaceLandmarksTag)
+        .Add(refined_face_landmarks.release(), cc->InputTimestamp());
+
     return absl::OkStatus();
-  }
-  const auto& face_landmarks =
-      cc->Inputs().Tag(kFaceLandmarksTag).Get<NormalizedLandmarkList>();
-  const auto& new_eye_landmarks =
-      cc->Inputs().Tag(kNewEyeLandmarksTag).Get<NormalizedLandmarkList>();
-
-  RET_CHECK_EQ(face_landmarks.landmark_size(), kNumFaceLandmarks)
-      << "Wrong number of face landmarks";
-  RET_CHECK_EQ(new_eye_landmarks.landmark_size(), kNumEyeLandmarks)
-      << "Wrong number of face landmarks";
-
-  auto refined_face_landmarks =
-      absl::make_unique<NormalizedLandmarkList>(face_landmarks);
-  for (int i = 0; i < kNumEyeLandmarks; ++i) {
-    const auto& refined_ld = new_eye_landmarks.landmark(i);
-    const int id = kEyeLandmarkIndicesInFaceLandmarks[i];
-    refined_face_landmarks->mutable_landmark(id)->set_x(refined_ld.x());
-    refined_face_landmarks->mutable_landmark(id)->set_y(refined_ld.y());
-    refined_face_landmarks->mutable_landmark(id)->set_z(refined_ld.z());
-    refined_face_landmarks->mutable_landmark(id)->set_visibility(
-        refined_ld.visibility());
-  }
-  cc->Outputs()
-      .Tag(kUpdatedFaceLandmarksTag)
-      .Add(refined_face_landmarks.release(), cc->InputTimestamp());
-
-  return absl::OkStatus();
 }
 
 }  // namespace mediapipe

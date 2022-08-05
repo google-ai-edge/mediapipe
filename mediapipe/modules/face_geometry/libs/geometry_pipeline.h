@@ -15,41 +15,40 @@
 #ifndef MEDIAPIPE_FACE_GEOMETRY_LIBS_GEOMETRY_PIPELINE_H_
 #define MEDIAPIPE_FACE_GEOMETRY_LIBS_GEOMETRY_PIPELINE_H_
 
-#include <memory>
-#include <vector>
-
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/modules/face_geometry/protos/environment.pb.h"
 #include "mediapipe/modules/face_geometry/protos/face_geometry.pb.h"
 #include "mediapipe/modules/face_geometry/protos/geometry_pipeline_metadata.pb.h"
+#include <memory>
+#include <vector>
 
 namespace mediapipe::face_geometry {
 
 // Encapsulates a stateless estimator of facial geometry in a Metric space based
 // on the normalized face landmarks in the Screen space.
 class GeometryPipeline {
- public:
-  virtual ~GeometryPipeline() = default;
+public:
+    virtual ~GeometryPipeline() = default;
 
-  // Estimates geometry data for multiple faces.
-  //
-  // Returns an error status if any of the passed arguments is invalid.
-  //
-  // The result includes face geometry data for a subset of the input faces,
-  // however geometry data for some faces might be missing. This may happen if
-  // it'd be unstable to estimate the facial geometry based on a corresponding
-  // face landmark list for any reason (for example, if the landmark list is too
-  // compact).
-  //
-  // Each face landmark list must have the same number of landmarks as was
-  // passed upon initialization via the canonical face mesh (as a part of the
-  // geometry pipeline metadata).
-  //
-  // Both `frame_width` and `frame_height` must be positive.
-  virtual absl::StatusOr<std::vector<FaceGeometry>> EstimateFaceGeometry(
-      const std::vector<NormalizedLandmarkList>& multi_face_landmarks,
-      int frame_width, int frame_height) const = 0;
+    // Estimates geometry data for multiple faces.
+    //
+    // Returns an error status if any of the passed arguments is invalid.
+    //
+    // The result includes face geometry data for a subset of the input faces,
+    // however geometry data for some faces might be missing. This may happen if
+    // it'd be unstable to estimate the facial geometry based on a corresponding
+    // face landmark list for any reason (for example, if the landmark list is too
+    // compact).
+    //
+    // Each face landmark list must have the same number of landmarks as was
+    // passed upon initialization via the canonical face mesh (as a part of the
+    // geometry pipeline metadata).
+    //
+    // Both `frame_width` and `frame_height` must be positive.
+    virtual absl::StatusOr<std::vector<FaceGeometry>> EstimateFaceGeometry(
+        const std::vector<NormalizedLandmarkList>& multi_face_landmarks,
+        int frame_width, int frame_height) const = 0;
 };
 
 // Creates an instance of `GeometryPipeline`.

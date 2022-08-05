@@ -22,7 +22,7 @@ extern "C" {
 #endif  // __cplusplus
 
 #define PACKET_CREATOR_METHOD(METHOD_NAME) \
-  Java_com_google_mediapipe_framework_PacketCreator_##METHOD_NAME
+    Java_com_google_mediapipe_framework_PacketCreator_##METHOD_NAME
 
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateReferencePacket)(
     JNIEnv* env, jobject thiz, jlong context, jlong packet);

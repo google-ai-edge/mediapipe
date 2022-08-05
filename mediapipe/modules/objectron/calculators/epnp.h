@@ -15,12 +15,11 @@
 #ifndef MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_EPNP_H_
 #define MEDIAPIPE_MODULES_OBJECTRON_CALCULATORS_EPNP_H_
 
-#include <vector>
-
 #include "Eigen/Dense"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/port/logging.h"
+#include <vector>
 
 namespace mediapipe {
 

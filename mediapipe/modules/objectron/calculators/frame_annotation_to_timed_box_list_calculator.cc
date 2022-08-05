@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <utility>
-
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
@@ -23,6 +21,7 @@
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
 #include "mediapipe/modules/objectron/calculators/box_util.h"
 #include "mediapipe/util/tracking/box_tracker.pb.h"
+#include <utility>
 
 namespace {
 constexpr char kInputStreamTag[] = "FRAME_ANNOTATION";
@@ -46,70 +45,70 @@ namespace mediapipe {
 //   output_stream: "BOXES:boxes"
 // }
 class FrameAnnotationToTimedBoxListCalculator : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc);
+public:
+    static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
-  absl::Status Close(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Close(CalculatorContext* cc) override;
 };
 REGISTER_CALCULATOR(FrameAnnotationToTimedBoxListCalculator);
 
 absl::Status FrameAnnotationToTimedBoxListCalculator::GetContract(
     CalculatorContract* cc) {
-  RET_CHECK(!cc->Inputs().GetTags().empty());
-  RET_CHECK(!cc->Outputs().GetTags().empty());
+    RET_CHECK(!cc->Inputs().GetTags().empty());
+    RET_CHECK(!cc->Outputs().GetTags().empty());
 
-  if (cc->Inputs().HasTag(kInputStreamTag)) {
-    cc->Inputs().Tag(kInputStreamTag).Set<FrameAnnotation>();
-  }
+    if (cc->Inputs().HasTag(kInputStreamTag)) {
+        cc->Inputs().Tag(kInputStreamTag).Set<FrameAnnotation>();
+    }
 
-  if (cc->Outputs().HasTag(kOutputStreamTag)) {
-    cc->Outputs().Tag(kOutputStreamTag).Set<TimedBoxProtoList>();
-  }
-  return absl::OkStatus();
+    if (cc->Outputs().HasTag(kOutputStreamTag)) {
+        cc->Outputs().Tag(kOutputStreamTag).Set<TimedBoxProtoList>();
+    }
+    return absl::OkStatus();
 }
 
 absl::Status FrameAnnotationToTimedBoxListCalculator::Open(
     CalculatorContext* cc) {
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status FrameAnnotationToTimedBoxListCalculator::Process(
     CalculatorContext* cc) {
-  if (cc->Inputs().HasTag(kInputStreamTag) &&
-      !cc->Inputs().Tag(kInputStreamTag).IsEmpty()) {
-    const auto& frame_annotation =
-        cc->Inputs().Tag(kInputStreamTag).Get<FrameAnnotation>();
-    auto output_objects = absl::make_unique<TimedBoxProtoList>();
-    for (const auto& annotation : frame_annotation.annotations()) {
-      std::vector<cv::Point2f> key_points;
-      for (const auto& keypoint : annotation.keypoints()) {
-        key_points.push_back(
-            cv::Point2f(keypoint.point_2d().x(), keypoint.point_2d().y()));
-      }
-      TimedBoxProto* added_box = output_objects->add_box();
-      ComputeBoundingRect(key_points, added_box);
-      added_box->set_id(annotation.object_id());
-      const int64 time_msec =
-          static_cast<int64>(std::round(frame_annotation.timestamp() / 1000));
-      added_box->set_time_msec(time_msec);
+    if (cc->Inputs().HasTag(kInputStreamTag) &&
+        !cc->Inputs().Tag(kInputStreamTag).IsEmpty()) {
+        const auto& frame_annotation =
+            cc->Inputs().Tag(kInputStreamTag).Get<FrameAnnotation>();
+        auto output_objects = absl::make_unique<TimedBoxProtoList>();
+        for (const auto& annotation : frame_annotation.annotations()) {
+            std::vector<cv::Point2f> key_points;
+            for (const auto& keypoint : annotation.keypoints()) {
+                key_points.push_back(
+                    cv::Point2f(keypoint.point_2d().x(), keypoint.point_2d().y()));
+            }
+            TimedBoxProto* added_box = output_objects->add_box();
+            ComputeBoundingRect(key_points, added_box);
+            added_box->set_id(annotation.object_id());
+            const int64 time_msec =
+                static_cast<int64>(std::round(frame_annotation.timestamp() / 1000));
+            added_box->set_time_msec(time_msec);
+        }
+
+        // Output
+        if (cc->Outputs().HasTag(kOutputStreamTag)) {
+            cc->Outputs()
+                .Tag(kOutputStreamTag)
+                .Add(output_objects.release(), cc->InputTimestamp());
+        }
     }
 
-    // Output
-    if (cc->Outputs().HasTag(kOutputStreamTag)) {
-      cc->Outputs()
-          .Tag(kOutputStreamTag)
-          .Add(output_objects.release(), cc->InputTimestamp());
-    }
-  }
-
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 absl::Status FrameAnnotationToTimedBoxListCalculator::Close(
     CalculatorContext* cc) {
-  return absl::OkStatus();
+    return absl::OkStatus();
 }
 
 }  // namespace mediapipe

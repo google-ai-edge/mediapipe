@@ -18,60 +18,59 @@
 #ifndef MEDIAPIPE_GPU_GL_TEXTURE_BUFFER_POOL_H_
 #define MEDIAPIPE_GPU_GL_TEXTURE_BUFFER_POOL_H_
 
-#include <utility>
-#include <vector>
-
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/gpu/gl_texture_buffer.h"
+#include <utility>
+#include <vector>
 
 namespace mediapipe {
 
 class GlTextureBufferPool
     : public std::enable_shared_from_this<GlTextureBufferPool> {
- public:
-  // Creates a pool. This pool will manage buffers of the specified dimensions,
-  // and will keep keep_count buffers around for reuse.
-  // We enforce creation as a shared_ptr so that we can use a weak reference in
-  // the buffers' deleters.
-  static std::shared_ptr<GlTextureBufferPool> Create(int width, int height,
-                                                     GpuBufferFormat format,
-                                                     int keep_count) {
-    return std::shared_ptr<GlTextureBufferPool>(
-        new GlTextureBufferPool(width, height, format, keep_count));
-  }
+public:
+    // Creates a pool. This pool will manage buffers of the specified dimensions,
+    // and will keep keep_count buffers around for reuse.
+    // We enforce creation as a shared_ptr so that we can use a weak reference in
+    // the buffers' deleters.
+    static std::shared_ptr<GlTextureBufferPool> Create(int width, int height,
+                                                       GpuBufferFormat format,
+                                                       int keep_count) {
+        return std::shared_ptr<GlTextureBufferPool>(
+            new GlTextureBufferPool(width, height, format, keep_count));
+    }
 
-  // Obtains a buffers. May either be reused or created anew.
-  // A GlContext must be current when this is called.
-  GlTextureBufferSharedPtr GetBuffer();
+    // Obtains a buffers. May either be reused or created anew.
+    // A GlContext must be current when this is called.
+    GlTextureBufferSharedPtr GetBuffer();
 
-  int width() const { return width_; }
-  int height() const { return height_; }
-  GpuBufferFormat format() const { return format_; }
+    int width() const { return width_; }
+    int height() const { return height_; }
+    GpuBufferFormat format() const { return format_; }
 
-  // This method is meant for testing.
-  std::pair<int, int> GetInUseAndAvailableCounts();
+    // This method is meant for testing.
+    std::pair<int, int> GetInUseAndAvailableCounts();
 
- private:
-  GlTextureBufferPool(int width, int height, GpuBufferFormat format,
-                      int keep_count);
+private:
+    GlTextureBufferPool(int width, int height, GpuBufferFormat format,
+                        int keep_count);
 
-  // Return a buffer to the pool.
-  void Return(std::unique_ptr<GlTextureBuffer> buf);
+    // Return a buffer to the pool.
+    void Return(std::unique_ptr<GlTextureBuffer> buf);
 
-  // If the total number of buffers is greater than keep_count, destroys any
-  // surplus buffers that are no longer in use.
-  void TrimAvailable(std::vector<std::unique_ptr<GlTextureBuffer>>* trimmed)
-      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+    // If the total number of buffers is greater than keep_count, destroys any
+    // surplus buffers that are no longer in use.
+    void TrimAvailable(std::vector<std::unique_ptr<GlTextureBuffer>>* trimmed)
+        ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  const int width_;
-  const int height_;
-  const GpuBufferFormat format_;
-  const int keep_count_;
+    const int width_;
+    const int height_;
+    const GpuBufferFormat format_;
+    const int keep_count_;
 
-  absl::Mutex mutex_;
-  int in_use_count_ ABSL_GUARDED_BY(mutex_) = 0;
-  std::vector<std::unique_ptr<GlTextureBuffer>> available_
-      ABSL_GUARDED_BY(mutex_);
+    absl::Mutex mutex_;
+    int in_use_count_ ABSL_GUARDED_BY(mutex_) = 0;
+    std::vector<std::unique_ptr<GlTextureBuffer>> available_
+        ABSL_GUARDED_BY(mutex_);
 };
 
 }  // namespace mediapipe

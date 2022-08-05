@@ -15,19 +15,18 @@
 #ifndef MEDIAPIPE_GPU_MEDIAPIPE_METAL_HELPER_H_
 #define MEDIAPIPE_GPU_MEDIAPIPE_METAL_HELPER_H_
 
-#import <CoreVideo/CVMetalTextureCache.h>
-#import <CoreVideo/CoreVideo.h>
-#import <Metal/Metal.h>
-
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/gpu/MPPGraphGPUData.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
+#import <CoreVideo/CVMetalTextureCache.h>
+#import <CoreVideo/CoreVideo.h>
+#import <Metal/Metal.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPMetalHelper : NSObject {
-  MPPGraphGPUData* _gpuShared;
+    MPPGraphGPUData* _gpuShared;
 }
 
 - (instancetype)init NS_UNAVAILABLE;

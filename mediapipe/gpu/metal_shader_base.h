@@ -18,24 +18,24 @@
 #include <simd/simd.h>
 
 typedef struct {
-  // Vertex position in 2D clip space.
-  vector_float2 position;
-  // Corresponding texture coordinate.
-  vector_float2 texture_coordinate;
+    // Vertex position in 2D clip space.
+    vector_float2 position;
+    // Corresponding texture coordinate.
+    vector_float2 texture_coordinate;
 } MediaPipeTexturedVertex;
 
 // Common buffer indices used in our Metal shaders.
 typedef enum {
-  MediaPipeBufferIndexInputVertices = 0,
-  MediaPipeBufferIndexRgbWeights = 1,
-  MediaPipeBufferIndexPixelSize = 2,
-  MediaPipeBufferIndexOutputColor = 3,
+    MediaPipeBufferIndexInputVertices = 0,
+    MediaPipeBufferIndexRgbWeights = 1,
+    MediaPipeBufferIndexPixelSize = 2,
+    MediaPipeBufferIndexOutputColor = 3,
 } MediaPipeBufferIndex;
 
 // Common texture indices used in our Metal shaders.
 typedef enum {
-  MediaPipeTextureIndexInputColor = 0,
-  MediaPipeTextureIndexOutputColor = 1,
+    MediaPipeTextureIndexInputColor = 0,
+    MediaPipeTextureIndexOutputColor = 1,
 } MediaPipeTextureIndex;
 
 typedef vector_float3 MetalRgbWeightPacketType;

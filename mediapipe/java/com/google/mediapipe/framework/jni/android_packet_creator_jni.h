@@ -22,7 +22,7 @@ extern "C" {
 #endif  // __cplusplus
 
 #define ANDROID_PACKET_CREATOR_METHOD(METHOD_NAME) \
-  Java_com_google_mediapipe_framework_AndroidPacketCreator_##METHOD_NAME
+    Java_com_google_mediapipe_framework_AndroidPacketCreator_##METHOD_NAME
 
 JNIEXPORT jlong JNICALL ANDROID_PACKET_CREATOR_METHOD(
     nativeCreateRgbImageFrame)(JNIEnv* env, jobject thiz, jlong context,

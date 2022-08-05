@@ -22,19 +22,19 @@ namespace mediapipe {
 
 // This is used to pass an EGLSurface to a GlSurfaceSinkCalculator.
 struct EglSurfaceHolder {
-  // Access to the surface needs to be protected by a mutex to ensure that the
-  // application does not destroy the surface while MediaPipe is using it.
-  // NOTE: Code that needs to grab the GlContext mutex should always do so
-  // before grabbing this one. For example, do not call GlContext::Run or
-  // GlCalculatorHelper::RunInGlContext while holding this mutex, but instead
-  // grab this inside the callable passed to them.
-  absl::Mutex mutex;
-  EGLSurface surface ABSL_GUARDED_BY(mutex) = EGL_NO_SURFACE;
-  // True if MediaPipe created the surface and is responsible for destroying it.
-  bool owned ABSL_GUARDED_BY(mutex) = false;
-  // Vertical flip of the surface, useful for conversion between coordinate
-  // systems with top-left v.s. bottom-left origins.
-  bool flip_y = false;
+    // Access to the surface needs to be protected by a mutex to ensure that the
+    // application does not destroy the surface while MediaPipe is using it.
+    // NOTE: Code that needs to grab the GlContext mutex should always do so
+    // before grabbing this one. For example, do not call GlContext::Run or
+    // GlCalculatorHelper::RunInGlContext while holding this mutex, but instead
+    // grab this inside the callable passed to them.
+    absl::Mutex mutex;
+    EGLSurface surface ABSL_GUARDED_BY(mutex) = EGL_NO_SURFACE;
+    // True if MediaPipe created the surface and is responsible for destroying it.
+    bool owned ABSL_GUARDED_BY(mutex) = false;
+    // Vertical flip of the surface, useful for conversion between coordinate
+    // systems with top-left v.s. bottom-left origins.
+    bool flip_y = false;
 };
 
 }  // namespace mediapipe

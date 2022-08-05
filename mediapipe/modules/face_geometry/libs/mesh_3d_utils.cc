@@ -13,91 +13,89 @@
 // limitations under the License.
 
 #include "mediapipe/modules/face_geometry/libs/mesh_3d_utils.h"
-
-#include <cstdint>
-#include <cstdlib>
-
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/modules/face_geometry/protos/mesh_3d.pb.h"
+#include <cstdint>
+#include <cstdlib>
 
 namespace mediapipe::face_geometry {
 namespace {
 
 bool HasVertexComponentVertexPT(VertexComponent vertex_component) {
-  switch (vertex_component) {
-    case VertexComponent::POSITION:
-    case VertexComponent::TEX_COORD:
-      return true;
+    switch (vertex_component) {
+        case VertexComponent::POSITION:
+        case VertexComponent::TEX_COORD:
+            return true;
 
-    default:
-      return false;
-  }
+        default:
+            return false;
+    }
 }
 
 uint32_t GetVertexComponentSizeVertexPT(VertexComponent vertex_component) {
-  switch (vertex_component) {
-    case VertexComponent::POSITION:
-      return 3;
-    case VertexComponent::TEX_COORD:
-      return 2;
-  }
+    switch (vertex_component) {
+        case VertexComponent::POSITION:
+            return 3;
+        case VertexComponent::TEX_COORD:
+            return 2;
+    }
 }
 
 uint32_t GetVertexComponentOffsetVertexPT(VertexComponent vertex_component) {
-  switch (vertex_component) {
-    case VertexComponent::POSITION:
-      return 0;
-    case VertexComponent::TEX_COORD:
-      return GetVertexComponentSizeVertexPT(VertexComponent::POSITION);
-  }
+    switch (vertex_component) {
+        case VertexComponent::POSITION:
+            return 0;
+        case VertexComponent::TEX_COORD:
+            return GetVertexComponentSizeVertexPT(VertexComponent::POSITION);
+    }
 }
 
 }  // namespace
 
 std::size_t GetVertexSize(Mesh3d::VertexType vertex_type) {
-  switch (vertex_type) {
-    case Mesh3d::VERTEX_PT:
-      return GetVertexComponentSizeVertexPT(VertexComponent::POSITION) +
-             GetVertexComponentSizeVertexPT(VertexComponent::TEX_COORD);
-  }
+    switch (vertex_type) {
+        case Mesh3d::VERTEX_PT:
+            return GetVertexComponentSizeVertexPT(VertexComponent::POSITION) +
+                   GetVertexComponentSizeVertexPT(VertexComponent::TEX_COORD);
+    }
 }
 
 std::size_t GetPrimitiveSize(Mesh3d::PrimitiveType primitive_type) {
-  switch (primitive_type) {
-    case Mesh3d::TRIANGLE:
-      return 3;
-  }
+    switch (primitive_type) {
+        case Mesh3d::TRIANGLE:
+            return 3;
+    }
 }
 
 bool HasVertexComponent(Mesh3d::VertexType vertex_type,
                         VertexComponent vertex_component) {
-  switch (vertex_type) {
-    case Mesh3d::VERTEX_PT:
-      return HasVertexComponentVertexPT(vertex_component);
-  }
+    switch (vertex_type) {
+        case Mesh3d::VERTEX_PT:
+            return HasVertexComponentVertexPT(vertex_component);
+    }
 }
 
 absl::StatusOr<uint32_t> GetVertexComponentOffset(
     Mesh3d::VertexType vertex_type, VertexComponent vertex_component) {
-  RET_CHECK(HasVertexComponentVertexPT(vertex_component))
-      << "A given vertex type doesn't have the requested component!";
+    RET_CHECK(HasVertexComponentVertexPT(vertex_component))
+        << "A given vertex type doesn't have the requested component!";
 
-  switch (vertex_type) {
-    case Mesh3d::VERTEX_PT:
-      return GetVertexComponentOffsetVertexPT(vertex_component);
-  }
+    switch (vertex_type) {
+        case Mesh3d::VERTEX_PT:
+            return GetVertexComponentOffsetVertexPT(vertex_component);
+    }
 }
 
 absl::StatusOr<uint32_t> GetVertexComponentSize(
     Mesh3d::VertexType vertex_type, VertexComponent vertex_component) {
-  RET_CHECK(HasVertexComponentVertexPT(vertex_component))
-      << "A given vertex type doesn't have the requested component!";
+    RET_CHECK(HasVertexComponentVertexPT(vertex_component))
+        << "A given vertex type doesn't have the requested component!";
 
-  switch (vertex_type) {
-    case Mesh3d::VERTEX_PT:
-      return GetVertexComponentSizeVertexPT(vertex_component);
-  }
+    switch (vertex_type) {
+        case Mesh3d::VERTEX_PT:
+            return GetVertexComponentSizeVertexPT(vertex_component);
+    }
 }
 
 }  // namespace mediapipe::face_geometry

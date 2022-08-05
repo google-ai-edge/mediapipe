@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import <AVFoundation/AVFoundation.h>
-
 #import "mediapipe/objc/MPPInputSource.h"
+#import <AVFoundation/AVFoundation.h>
 
 /// A source that obtains video frames from the camera.
 @interface MPPCameraInputSource : MPPInputSource
@@ -23,7 +22,7 @@
 @property(nonatomic, getter=isAuthorized, readonly) BOOL authorized;
 
 /// Session preset to use for capturing.
-@property(nonatomic) NSString *sessionPreset;
+@property(nonatomic) NSString* sessionPreset;
 
 /// Which camera on an iOS device to use, assuming iOS device with more than one camera.
 @property(nonatomic) AVCaptureDevicePosition cameraPosition;
@@ -41,10 +40,10 @@
 @property(nonatomic, readonly) matrix_float3x3 cameraIntrinsicMatrix;
 
 /// The capture session.
-@property(nonatomic, readonly) AVCaptureSession *session;
+@property(nonatomic, readonly) AVCaptureSession* session;
 
 /// The capture video preview layer.
-@property(nonatomic, readonly) AVCaptureVideoPreviewLayer *videoPreviewLayer;
+@property(nonatomic, readonly) AVCaptureVideoPreviewLayer* videoPreviewLayer;
 
 /// The orientation of camera frame buffers.
 @property(nonatomic) AVCaptureVideoOrientation orientation;

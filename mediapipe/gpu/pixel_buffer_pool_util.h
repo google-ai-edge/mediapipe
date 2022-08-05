@@ -17,7 +17,6 @@
 
 #include <CoreVideo/CoreVideo.h>
 #include <TargetConditionals.h>
-
 #include <functional>
 
 #ifndef __APPLE__

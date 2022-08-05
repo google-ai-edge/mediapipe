@@ -22,18 +22,18 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/modules/objectron/calculators/belief_decoder_config.proto";
 
 message TensorsToObjectsCalculatorOptions {
-  extend CalculatorOptions {
-    optional TensorsToObjectsCalculatorOptions ext = 334361940;
-  }
+    extend CalculatorOptions {
+        optional TensorsToObjectsCalculatorOptions ext = 334361940;
+    }
 
-  // The number of output classes predicted by the detection model.
-  optional int32 num_classes = 1;
+    // The number of output classes predicted by the detection model.
+    optional int32 num_classes = 1;
 
-  // The number of predicted keypoints.
-  optional int32 num_keypoints = 2;
-  // The dimension of each keypoint, e.g. number of values predicted for each
-  // keypoint.
-  optional int32 num_values_per_keypoint = 3 [default = 2];
+    // The number of predicted keypoints.
+    optional int32 num_keypoints = 2;
+    // The dimension of each keypoint, e.g. number of values predicted for each
+    // keypoint.
+    optional int32 num_values_per_keypoint = 3 [default = 2];
 
-  optional BeliefDecoderConfig decoder_config = 4;
+    optional BeliefDecoderConfig decoder_config = 4;
 }

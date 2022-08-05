@@ -85,7 +85,7 @@ namespace mediapipe {
 // never be null" errors on certain platforms and compilers.
 template <typename T>
 inline bool SymbolAvailable(T* symbol) {
-  return symbol != nullptr;
+    return symbol != nullptr;
 }
 
 }  // namespace mediapipe

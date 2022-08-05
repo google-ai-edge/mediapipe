@@ -32,49 +32,49 @@ namespace mediapipe {
 // This class implements the GlCalculatorHelper for iOS and Android.
 // See GlCalculatorHelper for details on these methods.
 class GlCalculatorHelperImpl {
- public:
-  explicit GlCalculatorHelperImpl(CalculatorContext* cc,
-                                  GpuResources* gpu_resources);
-  ~GlCalculatorHelperImpl();
+public:
+    explicit GlCalculatorHelperImpl(CalculatorContext* cc,
+                                    GpuResources* gpu_resources);
+    ~GlCalculatorHelperImpl();
 
-  absl::Status RunInGlContext(std::function<absl::Status(void)> gl_func,
-                              CalculatorContext* calculator_context);
+    absl::Status RunInGlContext(std::function<absl::Status(void)> gl_func,
+                                CalculatorContext* calculator_context);
 
-  GlTexture CreateSourceTexture(const ImageFrame& image_frame);
-  GlTexture CreateSourceTexture(const GpuBuffer& gpu_buffer);
+    GlTexture CreateSourceTexture(const ImageFrame& image_frame);
+    GlTexture CreateSourceTexture(const GpuBuffer& gpu_buffer);
 
-  // Note: multi-plane support is currently only available on iOS.
-  GlTexture CreateSourceTexture(const GpuBuffer& gpu_buffer, int plane);
+    // Note: multi-plane support is currently only available on iOS.
+    GlTexture CreateSourceTexture(const GpuBuffer& gpu_buffer, int plane);
 
-  // Creates a framebuffer and returns the texture that it is bound to.
-  GlTexture CreateDestinationTexture(int output_width, int output_height,
-                                     GpuBufferFormat format);
+    // Creates a framebuffer and returns the texture that it is bound to.
+    GlTexture CreateDestinationTexture(int output_width, int output_height,
+                                       GpuBufferFormat format);
 
-  GpuBuffer GpuBufferWithImageFrame(std::shared_ptr<ImageFrame> image_frame);
-  GpuBuffer GpuBufferCopyingImageFrame(const ImageFrame& image_frame);
+    GpuBuffer GpuBufferWithImageFrame(std::shared_ptr<ImageFrame> image_frame);
+    GpuBuffer GpuBufferCopyingImageFrame(const ImageFrame& image_frame);
 
-  GLuint framebuffer() const { return framebuffer_; }
-  void BindFramebuffer(const GlTexture& dst);
+    GLuint framebuffer() const { return framebuffer_; }
+    void BindFramebuffer(const GlTexture& dst);
 
-  GlVersion GetGlVersion() const { return gl_context_->GetGlVersion(); }
+    GlVersion GetGlVersion() const { return gl_context_->GetGlVersion(); }
 
-  GlContext& GetGlContext() const;
+    GlContext& GetGlContext() const;
 
-  // For internal use.
-  static void ReadTexture(const GlTextureView& view, void* output, size_t size);
+    // For internal use.
+    static void ReadTexture(const GlTextureView& view, void* output, size_t size);
 
- private:
-  // Makes a GpuBuffer accessible as a texture in the GL context.
-  GlTexture MapGpuBuffer(const GpuBuffer& gpu_buffer, GlTextureView view);
+private:
+    // Makes a GpuBuffer accessible as a texture in the GL context.
+    GlTexture MapGpuBuffer(const GpuBuffer& gpu_buffer, GlTextureView view);
 
-  // Create the framebuffer for rendering.
-  void CreateFramebuffer();
+    // Create the framebuffer for rendering.
+    void CreateFramebuffer();
 
-  std::shared_ptr<GlContext> gl_context_;
+    std::shared_ptr<GlContext> gl_context_;
 
-  GLuint framebuffer_ = 0;
+    GLuint framebuffer_ = 0;
 
-  GpuResources& gpu_resources_;
+    GpuResources& gpu_resources_;
 };
 
 }  // namespace mediapipe

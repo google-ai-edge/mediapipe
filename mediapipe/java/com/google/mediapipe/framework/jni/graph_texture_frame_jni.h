@@ -22,7 +22,7 @@ extern "C" {
 #endif  // __cplusplus
 
 #define GRAPH_TEXTURE_FRAME_METHOD(METHOD_NAME) \
-  Java_com_google_mediapipe_framework_GraphTextureFrame_##METHOD_NAME
+    Java_com_google_mediapipe_framework_GraphTextureFrame_##METHOD_NAME
 
 // Releases a native mediapipe::GpuBuffer.
 JNIEXPORT void JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeReleaseBuffer)(

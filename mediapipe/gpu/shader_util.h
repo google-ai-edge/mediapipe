@@ -15,10 +15,9 @@
 #ifndef MEDIAPIPE_GPU_SHADER_UTIL_H_
 #define MEDIAPIPE_GPU_SHADER_UTIL_H_
 
+#include "mediapipe/gpu/gl_base.h"
 #include <string>
 #include <unordered_map>
-
-#include "mediapipe/gpu/gl_base.h"
 
 namespace mediapipe {
 

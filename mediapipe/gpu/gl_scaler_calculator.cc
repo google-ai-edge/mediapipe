@@ -72,330 +72,330 @@ using Image = mediapipe::Image;
 // To enable horizontal or vertical flip, specify them in options.
 // The flipping is applied after rotation.
 class GlScalerCalculator : public CalculatorBase {
- public:
-  GlScalerCalculator() {}
-  ~GlScalerCalculator();
+public:
+    GlScalerCalculator() {}
+    ~GlScalerCalculator();
 
-  static absl::Status GetContract(CalculatorContract* cc);
+    static absl::Status GetContract(CalculatorContract* cc);
 
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
+    absl::Status Open(CalculatorContext* cc) override;
+    absl::Status Process(CalculatorContext* cc) override;
 
-  absl::Status GlSetup();
-  absl::Status GlRender(const GlTexture& src, const GlTexture& dst);
-  void GetOutputDimensions(int src_width, int src_height, int* dst_width,
-                           int* dst_height);
-  void GetOutputPadding(int src_width, int src_height, int dst_width,
-                        int dst_height, float* top_bottom_padding,
-                        float* left_right_padding);
-  GpuBufferFormat GetOutputFormat() { return GpuBufferFormat::kBGRA32; }
+    absl::Status GlSetup();
+    absl::Status GlRender(const GlTexture& src, const GlTexture& dst);
+    void GetOutputDimensions(int src_width, int src_height, int* dst_width,
+                             int* dst_height);
+    void GetOutputPadding(int src_width, int src_height, int dst_width,
+                          int dst_height, float* top_bottom_padding,
+                          float* left_right_padding);
+    GpuBufferFormat GetOutputFormat() { return GpuBufferFormat::kBGRA32; }
 
- private:
-  GlCalculatorHelper helper_;
-  int dst_width_ = 0;
-  int dst_height_ = 0;
-  float dst_scale_ = -1.f;
-  FrameRotation rotation_;
-  std::unique_ptr<QuadRenderer> rgb_renderer_;
-  std::unique_ptr<QuadRenderer> yuv_renderer_;
+private:
+    GlCalculatorHelper helper_;
+    int dst_width_ = 0;
+    int dst_height_ = 0;
+    float dst_scale_ = -1.f;
+    FrameRotation rotation_;
+    std::unique_ptr<QuadRenderer> rgb_renderer_;
+    std::unique_ptr<QuadRenderer> yuv_renderer_;
 #ifdef __ANDROID__
-  std::unique_ptr<QuadRenderer> ext_rgb_renderer_;
+    std::unique_ptr<QuadRenderer> ext_rgb_renderer_;
 #endif
-  bool vertical_flip_output_;
-  bool horizontal_flip_output_;
-  FrameScaleMode scale_mode_ = FrameScaleMode::kStretch;
+    bool vertical_flip_output_;
+    bool horizontal_flip_output_;
+    FrameScaleMode scale_mode_ = FrameScaleMode::kStretch;
 };
 REGISTER_CALCULATOR(GlScalerCalculator);
 
 // static
 absl::Status GlScalerCalculator::GetContract(CalculatorContract* cc) {
-  if (cc->Inputs().HasTag(kImageTag)) {
-    cc->Inputs().Tag(kImageTag).Set<Image>();
-  } else {
-    TagOrIndex(&cc->Inputs(), "VIDEO", 0).Set<GpuBuffer>();
-  }
-  if (cc->Outputs().HasTag(kImageTag)) {
-    cc->Outputs().Tag(kImageTag).Set<Image>();
-  } else {
-    TagOrIndex(&cc->Outputs(), "VIDEO", 0).Set<GpuBuffer>();
-  }
-
-  if (cc->Inputs().HasTag(kRotationTag)) {
-    cc->Inputs().Tag(kRotationTag).Set<int>();
-  }
-  if (cc->Inputs().HasTag(kOutputDimensionsTag)) {
-    cc->Inputs().Tag(kOutputDimensionsTag).Set<DimensionsPacketType>();
-  }
-  MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
-
-  if (cc->InputSidePackets().HasTag(kOptionsTag)) {
-    cc->InputSidePackets().Tag(kOptionsTag).Set<GlScalerCalculatorOptions>();
-  }
-  if (HasTagOrIndex(&cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)) {
-    TagOrIndex(&cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)
-        .Set<DimensionsPacketType>();
-  }
-  if (cc->InputSidePackets().HasTag(kRotationTag)) {
-    // Counterclockwise rotation.
-    cc->InputSidePackets().Tag(kRotationTag).Set<int>();
-  }
-
-  if (cc->Outputs().HasTag(kTopBottomPaddingTag) &&
-      cc->Outputs().HasTag(kLeftRightPaddingTag)) {
-    cc->Outputs().Tag(kTopBottomPaddingTag).Set<float>();
-    cc->Outputs().Tag(kLeftRightPaddingTag).Set<float>();
-  }
-  return absl::OkStatus();
-}
-
-absl::Status GlScalerCalculator::Open(CalculatorContext* cc) {
-  // Inform the framework that we always output at the same timestamp
-  // as we receive a packet at.
-  cc->SetOffset(mediapipe::TimestampDiff(0));
-
-  // Let the helper access the GL context information.
-  MP_RETURN_IF_ERROR(helper_.Open(cc));
-
-  int rotation_ccw = 0;
-  const auto& options =
-      tool::RetrieveOptions(cc->Options<GlScalerCalculatorOptions>(),
-                            cc->InputSidePackets(), "OPTIONS");
-  if (options.has_output_width()) {
-    dst_width_ = options.output_width();
-  }
-  if (options.has_output_height()) {
-    dst_height_ = options.output_height();
-  }
-  if (options.has_output_scale()) {
-    dst_scale_ = options.output_scale();
-  }
-  if (options.has_rotation()) {
-    rotation_ccw = options.rotation();
-  }
-  if (options.has_flip_vertical()) {
-    vertical_flip_output_ = options.flip_vertical();
-  } else {
-    vertical_flip_output_ = false;
-  }
-  if (options.has_flip_horizontal()) {
-    horizontal_flip_output_ = options.flip_horizontal();
-  } else {
-    horizontal_flip_output_ = false;
-  }
-  if (options.has_scale_mode()) {
-    scale_mode_ =
-        FrameScaleModeFromProto(options.scale_mode(), FrameScaleMode::kStretch);
-  }
-
-  if (HasTagOrIndex(cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)) {
-    const auto& dimensions =
-        TagOrIndex(cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)
-            .Get<DimensionsPacketType>();
-    dst_width_ = dimensions[0];
-    dst_height_ = dimensions[1];
-  }
-  if (cc->InputSidePackets().HasTag(kRotationTag)) {
-    rotation_ccw = cc->InputSidePackets().Tag(kRotationTag).Get<int>();
-  }
-
-  MP_RETURN_IF_ERROR(FrameRotationFromInt(&rotation_, rotation_ccw));
-
-  return absl::OkStatus();
-}
-
-absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
-  if (cc->Inputs().HasTag(kOutputDimensionsTag)) {
-    if (cc->Inputs().Tag(kOutputDimensionsTag).IsEmpty()) {
-      // OUTPUT_DIMENSIONS input stream is specified, but value is missing.
-      return absl::OkStatus();
+    if (cc->Inputs().HasTag(kImageTag)) {
+        cc->Inputs().Tag(kImageTag).Set<Image>();
+    } else {
+        TagOrIndex(&cc->Inputs(), "VIDEO", 0).Set<GpuBuffer>();
+    }
+    if (cc->Outputs().HasTag(kImageTag)) {
+        cc->Outputs().Tag(kImageTag).Set<Image>();
+    } else {
+        TagOrIndex(&cc->Outputs(), "VIDEO", 0).Set<GpuBuffer>();
     }
 
-    const auto& dimensions =
-        cc->Inputs().Tag(kOutputDimensionsTag).Get<DimensionsPacketType>();
-    dst_width_ = dimensions[0];
-    dst_height_ = dimensions[1];
-  }
-
-  return helper_.RunInGlContext([this, cc]() -> absl::Status {
-    const auto& input =
-        cc->Inputs().HasTag(kImageTag)
-            ? cc->Inputs().Tag(kImageTag).Get<Image>().GetGpuBuffer()
-            : TagOrIndex(cc->Inputs(), "VIDEO", 0).Get<GpuBuffer>();
-    QuadRenderer* renderer = nullptr;
-    GlTexture src1;
-    GlTexture src2;
-
-#ifdef __APPLE__
-    if (input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8VideoRange ||
-        input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8FullRange) {
-      if (!yuv_renderer_) {
-        yuv_renderer_ = absl::make_unique<QuadRenderer>();
-        MP_RETURN_IF_ERROR(yuv_renderer_->GlSetup(
-            kYUV2TexToRGBFragmentShader, {"video_frame_y", "video_frame_uv"}));
-      }
-      renderer = yuv_renderer_.get();
-      src1 = helper_.CreateSourceTexture(input, 0);
-      src2 = helper_.CreateSourceTexture(input, 1);
-    } else  // NOLINT(readability/braces)
-#endif      // __APPLE__
-    {
-      src1 = helper_.CreateSourceTexture(input);
-#ifdef __ANDROID__
-      if (src1.target() == GL_TEXTURE_EXTERNAL_OES) {
-        if (!ext_rgb_renderer_) {
-          ext_rgb_renderer_ = absl::make_unique<QuadRenderer>();
-          MP_RETURN_IF_ERROR(ext_rgb_renderer_->GlSetup(
-              kBasicTexturedFragmentShaderOES, {"video_frame"}));
-        }
-        renderer = ext_rgb_renderer_.get();
-      } else  // NOLINT(readability/braces)
-#endif        // __ANDROID__
-      {
-        if (!rgb_renderer_) {
-          rgb_renderer_ = absl::make_unique<QuadRenderer>();
-          MP_RETURN_IF_ERROR(rgb_renderer_->GlSetup());
-        }
-        renderer = rgb_renderer_.get();
-      }
-    }
-    RET_CHECK(renderer) << "Unsupported input texture type";
-
-    // Override input side packet if ROTATION input packet is provided.
     if (cc->Inputs().HasTag(kRotationTag)) {
-      int rotation_ccw = cc->Inputs().Tag(kRotationTag).Get<int>();
-      MP_RETURN_IF_ERROR(FrameRotationFromInt(&rotation_, rotation_ccw));
+        cc->Inputs().Tag(kRotationTag).Set<int>();
     }
+    if (cc->Inputs().HasTag(kOutputDimensionsTag)) {
+        cc->Inputs().Tag(kOutputDimensionsTag).Set<DimensionsPacketType>();
+    }
+    MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
 
-    int dst_width;
-    int dst_height;
-    GetOutputDimensions(src1.width(), src1.height(), &dst_width, &dst_height);
+    if (cc->InputSidePackets().HasTag(kOptionsTag)) {
+        cc->InputSidePackets().Tag(kOptionsTag).Set<GlScalerCalculatorOptions>();
+    }
+    if (HasTagOrIndex(&cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)) {
+        TagOrIndex(&cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)
+            .Set<DimensionsPacketType>();
+    }
+    if (cc->InputSidePackets().HasTag(kRotationTag)) {
+        // Counterclockwise rotation.
+        cc->InputSidePackets().Tag(kRotationTag).Set<int>();
+    }
 
     if (cc->Outputs().HasTag(kTopBottomPaddingTag) &&
         cc->Outputs().HasTag(kLeftRightPaddingTag)) {
-      float top_bottom_padding;
-      float left_right_padding;
-      GetOutputPadding(src1.width(), src1.height(), dst_width, dst_height,
-                       &top_bottom_padding, &left_right_padding);
-      cc->Outputs()
-          .Tag(kTopBottomPaddingTag)
-          .AddPacket(
-              MakePacket<float>(top_bottom_padding).At(cc->InputTimestamp()));
-      cc->Outputs()
-          .Tag(kLeftRightPaddingTag)
-          .AddPacket(
-              MakePacket<float>(left_right_padding).At(cc->InputTimestamp()));
+        cc->Outputs().Tag(kTopBottomPaddingTag).Set<float>();
+        cc->Outputs().Tag(kLeftRightPaddingTag).Set<float>();
     }
+    return absl::OkStatus();
+}
 
-    auto dst = helper_.CreateDestinationTexture(dst_width, dst_height,
-                                                GetOutputFormat());
+absl::Status GlScalerCalculator::Open(CalculatorContext* cc) {
+    // Inform the framework that we always output at the same timestamp
+    // as we receive a packet at.
+    cc->SetOffset(mediapipe::TimestampDiff(0));
 
-    helper_.BindFramebuffer(dst);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(src1.target(), src1.name());
-    if (src2.name()) {
-      glActiveTexture(GL_TEXTURE2);
-      glBindTexture(src2.target(), src2.name());
+    // Let the helper access the GL context information.
+    MP_RETURN_IF_ERROR(helper_.Open(cc));
+
+    int rotation_ccw = 0;
+    const auto& options =
+        tool::RetrieveOptions(cc->Options<GlScalerCalculatorOptions>(),
+                              cc->InputSidePackets(), "OPTIONS");
+    if (options.has_output_width()) {
+        dst_width_ = options.output_width();
     }
-
-    MP_RETURN_IF_ERROR(renderer->GlRender(
-        src1.width(), src1.height(), dst.width(), dst.height(), scale_mode_,
-        rotation_, horizontal_flip_output_, vertical_flip_output_,
-        /*flip_texture*/ false));
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(src1.target(), 0);
-    if (src2.name()) {
-      glActiveTexture(GL_TEXTURE2);
-      glBindTexture(src2.target(), 0);
+    if (options.has_output_height()) {
+        dst_height_ = options.output_height();
     }
-
-    glFlush();
-
-    if (cc->Outputs().HasTag(kImageTag)) {
-      auto output = dst.GetFrame<Image>();
-      cc->Outputs().Tag(kImageTag).Add(output.release(), cc->InputTimestamp());
+    if (options.has_output_scale()) {
+        dst_scale_ = options.output_scale();
+    }
+    if (options.has_rotation()) {
+        rotation_ccw = options.rotation();
+    }
+    if (options.has_flip_vertical()) {
+        vertical_flip_output_ = options.flip_vertical();
     } else {
-      auto output = dst.GetFrame<GpuBuffer>();
-      TagOrIndex(&cc->Outputs(), "VIDEO", 0)
-          .Add(output.release(), cc->InputTimestamp());
+        vertical_flip_output_ = false;
     }
+    if (options.has_flip_horizontal()) {
+        horizontal_flip_output_ = options.flip_horizontal();
+    } else {
+        horizontal_flip_output_ = false;
+    }
+    if (options.has_scale_mode()) {
+        scale_mode_ =
+            FrameScaleModeFromProto(options.scale_mode(), FrameScaleMode::kStretch);
+    }
+
+    if (HasTagOrIndex(cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)) {
+        const auto& dimensions =
+            TagOrIndex(cc->InputSidePackets(), "OUTPUT_DIMENSIONS", 1)
+                .Get<DimensionsPacketType>();
+        dst_width_ = dimensions[0];
+        dst_height_ = dimensions[1];
+    }
+    if (cc->InputSidePackets().HasTag(kRotationTag)) {
+        rotation_ccw = cc->InputSidePackets().Tag(kRotationTag).Get<int>();
+    }
+
+    MP_RETURN_IF_ERROR(FrameRotationFromInt(&rotation_, rotation_ccw));
 
     return absl::OkStatus();
-  });
+}
+
+absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
+    if (cc->Inputs().HasTag(kOutputDimensionsTag)) {
+        if (cc->Inputs().Tag(kOutputDimensionsTag).IsEmpty()) {
+            // OUTPUT_DIMENSIONS input stream is specified, but value is missing.
+            return absl::OkStatus();
+        }
+
+        const auto& dimensions =
+            cc->Inputs().Tag(kOutputDimensionsTag).Get<DimensionsPacketType>();
+        dst_width_ = dimensions[0];
+        dst_height_ = dimensions[1];
+    }
+
+    return helper_.RunInGlContext([this, cc]() -> absl::Status {
+        const auto& input =
+            cc->Inputs().HasTag(kImageTag)
+                ? cc->Inputs().Tag(kImageTag).Get<Image>().GetGpuBuffer()
+                : TagOrIndex(cc->Inputs(), "VIDEO", 0).Get<GpuBuffer>();
+        QuadRenderer* renderer = nullptr;
+        GlTexture src1;
+        GlTexture src2;
+
+#ifdef __APPLE__
+        if (input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8VideoRange ||
+            input.format() == GpuBufferFormat::kBiPlanar420YpCbCr8FullRange) {
+            if (!yuv_renderer_) {
+                yuv_renderer_ = absl::make_unique<QuadRenderer>();
+                MP_RETURN_IF_ERROR(yuv_renderer_->GlSetup(
+                    kYUV2TexToRGBFragmentShader, {"video_frame_y", "video_frame_uv"}));
+            }
+            renderer = yuv_renderer_.get();
+            src1 = helper_.CreateSourceTexture(input, 0);
+            src2 = helper_.CreateSourceTexture(input, 1);
+        } else  // NOLINT(readability/braces)
+#endif          // __APPLE__
+        {
+            src1 = helper_.CreateSourceTexture(input);
+#ifdef __ANDROID__
+            if (src1.target() == GL_TEXTURE_EXTERNAL_OES) {
+                if (!ext_rgb_renderer_) {
+                    ext_rgb_renderer_ = absl::make_unique<QuadRenderer>();
+                    MP_RETURN_IF_ERROR(ext_rgb_renderer_->GlSetup(
+                        kBasicTexturedFragmentShaderOES, {"video_frame"}));
+                }
+                renderer = ext_rgb_renderer_.get();
+            } else  // NOLINT(readability/braces)
+#endif              // __ANDROID__
+            {
+                if (!rgb_renderer_) {
+                    rgb_renderer_ = absl::make_unique<QuadRenderer>();
+                    MP_RETURN_IF_ERROR(rgb_renderer_->GlSetup());
+                }
+                renderer = rgb_renderer_.get();
+            }
+        }
+        RET_CHECK(renderer) << "Unsupported input texture type";
+
+        // Override input side packet if ROTATION input packet is provided.
+        if (cc->Inputs().HasTag(kRotationTag)) {
+            int rotation_ccw = cc->Inputs().Tag(kRotationTag).Get<int>();
+            MP_RETURN_IF_ERROR(FrameRotationFromInt(&rotation_, rotation_ccw));
+        }
+
+        int dst_width;
+        int dst_height;
+        GetOutputDimensions(src1.width(), src1.height(), &dst_width, &dst_height);
+
+        if (cc->Outputs().HasTag(kTopBottomPaddingTag) &&
+            cc->Outputs().HasTag(kLeftRightPaddingTag)) {
+            float top_bottom_padding;
+            float left_right_padding;
+            GetOutputPadding(src1.width(), src1.height(), dst_width, dst_height,
+                             &top_bottom_padding, &left_right_padding);
+            cc->Outputs()
+                .Tag(kTopBottomPaddingTag)
+                .AddPacket(
+                    MakePacket<float>(top_bottom_padding).At(cc->InputTimestamp()));
+            cc->Outputs()
+                .Tag(kLeftRightPaddingTag)
+                .AddPacket(
+                    MakePacket<float>(left_right_padding).At(cc->InputTimestamp()));
+        }
+
+        auto dst = helper_.CreateDestinationTexture(dst_width, dst_height,
+                                                    GetOutputFormat());
+
+        helper_.BindFramebuffer(dst);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(src1.target(), src1.name());
+        if (src2.name()) {
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(src2.target(), src2.name());
+        }
+
+        MP_RETURN_IF_ERROR(renderer->GlRender(
+            src1.width(), src1.height(), dst.width(), dst.height(), scale_mode_,
+            rotation_, horizontal_flip_output_, vertical_flip_output_,
+            /*flip_texture*/ false));
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(src1.target(), 0);
+        if (src2.name()) {
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(src2.target(), 0);
+        }
+
+        glFlush();
+
+        if (cc->Outputs().HasTag(kImageTag)) {
+            auto output = dst.GetFrame<Image>();
+            cc->Outputs().Tag(kImageTag).Add(output.release(), cc->InputTimestamp());
+        } else {
+            auto output = dst.GetFrame<GpuBuffer>();
+            TagOrIndex(&cc->Outputs(), "VIDEO", 0)
+                .Add(output.release(), cc->InputTimestamp());
+        }
+
+        return absl::OkStatus();
+    });
 }
 
 void GlScalerCalculator::GetOutputDimensions(int src_width, int src_height,
                                              int* dst_width, int* dst_height) {
-  if (dst_width_ > 0 && dst_height_ > 0) {
-    *dst_width = dst_width_;
-    *dst_height = dst_height_;
-    return;
-  }
-  if (dst_scale_ > 0) {
-    // Scales the destination size, but just uses src size as a temporary for
-    // calculations.
-    src_width = static_cast<int>(src_width * dst_scale_);
-    src_height = static_cast<int>(src_height * dst_scale_);
-    // Round to nearest multiply of 4 for better memory alignment.
-    src_width = ((src_width + 2) >> 2) << 2;
-    src_height = ((src_height + 2) >> 2) << 2;
-  }
-  if (rotation_ == FrameRotation::k90 || rotation_ == FrameRotation::k270) {
-    *dst_width = src_height;
-    *dst_height = src_width;
-  } else {
-    *dst_width = src_width;
-    *dst_height = src_height;
-  }
+    if (dst_width_ > 0 && dst_height_ > 0) {
+        *dst_width = dst_width_;
+        *dst_height = dst_height_;
+        return;
+    }
+    if (dst_scale_ > 0) {
+        // Scales the destination size, but just uses src size as a temporary for
+        // calculations.
+        src_width = static_cast<int>(src_width * dst_scale_);
+        src_height = static_cast<int>(src_height * dst_scale_);
+        // Round to nearest multiply of 4 for better memory alignment.
+        src_width = ((src_width + 2) >> 2) << 2;
+        src_height = ((src_height + 2) >> 2) << 2;
+    }
+    if (rotation_ == FrameRotation::k90 || rotation_ == FrameRotation::k270) {
+        *dst_width = src_height;
+        *dst_height = src_width;
+    } else {
+        *dst_width = src_width;
+        *dst_height = src_height;
+    }
 }
 
 void GlScalerCalculator::GetOutputPadding(int src_width, int src_height,
                                           int dst_width, int dst_height,
                                           float* top_bottom_padding,
                                           float* left_right_padding) {
-  *top_bottom_padding = 0.0f;
-  *left_right_padding = 0.0f;
-  if (rotation_ == FrameRotation::k90 || rotation_ == FrameRotation::k270) {
-    const int tmp = src_width;
-    src_width = src_height;
-    src_height = tmp;
-  }
-  if (scale_mode_ == FrameScaleMode::kFit) {
-    const float src_scale = 1.0f * src_width / src_height;
-    const float dst_scale = 1.0f * dst_width / dst_height;
-    if (src_scale - dst_scale > 1e-5) {
-      // Total padding on top and bottom sides.
-      *top_bottom_padding =
-          1.0f - 1.0f * dst_width / src_width * src_height / dst_height;
-      // Get padding on each side.
-      *top_bottom_padding /= 2.0f;
-
-    } else if (dst_scale - src_scale > 1e-5) {
-      // Total padding on left and right sides.
-      *left_right_padding =
-          1.0f - 1.0f / dst_width * src_width / src_height * dst_height;
-      // Get padding on each side.
-      *left_right_padding /= 2.0f;
+    *top_bottom_padding = 0.0f;
+    *left_right_padding = 0.0f;
+    if (rotation_ == FrameRotation::k90 || rotation_ == FrameRotation::k270) {
+        const int tmp = src_width;
+        src_width = src_height;
+        src_height = tmp;
     }
-  }
+    if (scale_mode_ == FrameScaleMode::kFit) {
+        const float src_scale = 1.0f * src_width / src_height;
+        const float dst_scale = 1.0f * dst_width / dst_height;
+        if (src_scale - dst_scale > 1e-5) {
+            // Total padding on top and bottom sides.
+            *top_bottom_padding =
+                1.0f - 1.0f * dst_width / src_width * src_height / dst_height;
+            // Get padding on each side.
+            *top_bottom_padding /= 2.0f;
+
+        } else if (dst_scale - src_scale > 1e-5) {
+            // Total padding on left and right sides.
+            *left_right_padding =
+                1.0f - 1.0f / dst_width * src_width / src_height * dst_height;
+            // Get padding on each side.
+            *left_right_padding /= 2.0f;
+        }
+    }
 }
 
 GlScalerCalculator::~GlScalerCalculator() {
-  // TODO: use move capture when we have C++14 or better.
-  QuadRenderer* rgb_renderer = rgb_renderer_.release();
-  QuadRenderer* yuv_renderer = yuv_renderer_.release();
-  if (rgb_renderer || yuv_renderer) {
-    helper_.RunInGlContext([rgb_renderer, yuv_renderer] {
-      if (rgb_renderer) {
-        rgb_renderer->GlTeardown();
-        delete rgb_renderer;
-      }
-      if (yuv_renderer) {
-        yuv_renderer->GlTeardown();
-        delete yuv_renderer;
-      }
-    });
-  }
+    // TODO: use move capture when we have C++14 or better.
+    QuadRenderer* rgb_renderer = rgb_renderer_.release();
+    QuadRenderer* yuv_renderer = yuv_renderer_.release();
+    if (rgb_renderer || yuv_renderer) {
+        helper_.RunInGlContext([rgb_renderer, yuv_renderer] {
+            if (rgb_renderer) {
+                rgb_renderer->GlTeardown();
+                delete rgb_renderer;
+            }
+            if (yuv_renderer) {
+                yuv_renderer->GlTeardown();
+                delete yuv_renderer;
+            }
+        });
+    }
 }
 
 }  // namespace mediapipe

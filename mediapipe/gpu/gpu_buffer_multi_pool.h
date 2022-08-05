@@ -41,100 +41,100 @@ struct GpuSharedData;
 class CvPixelBufferPoolWrapper;
 
 class GpuBufferMultiPool {
- public:
-  GpuBufferMultiPool() {}
-  explicit GpuBufferMultiPool(void* ignored) {}
-  ~GpuBufferMultiPool();
+public:
+    GpuBufferMultiPool() {}
+    explicit GpuBufferMultiPool(void* ignored) {}
+    ~GpuBufferMultiPool();
 
-  // Obtains a buffer. May either be reused or created anew.
-  GpuBuffer GetBuffer(int width, int height,
-                      GpuBufferFormat format = GpuBufferFormat::kBGRA32);
+    // Obtains a buffer. May either be reused or created anew.
+    GpuBuffer GetBuffer(int width, int height,
+                        GpuBufferFormat format = GpuBufferFormat::kBGRA32);
 
 #ifdef __APPLE__
-  // TODO: add tests for the texture cache registration.
+    // TODO: add tests for the texture cache registration.
 
-  // Inform the pool of a cache that should be flushed when it is low on
-  // reusable buffers.
-  void RegisterTextureCache(CVTextureCacheType cache);
+    // Inform the pool of a cache that should be flushed when it is low on
+    // reusable buffers.
+    void RegisterTextureCache(CVTextureCacheType cache);
 
-  // Remove a texture cache from the list of caches to be flushed.
-  void UnregisterTextureCache(CVTextureCacheType cache);
+    // Remove a texture cache from the list of caches to be flushed.
+    void UnregisterTextureCache(CVTextureCacheType cache);
 
-  void FlushTextureCaches();
+    void FlushTextureCaches();
 #endif  // defined(__APPLE__)
 
-  // This class is not intended as part of the public api of this class. It is
-  // public only because it is used as a map key type, and the map
-  // implementation needs access to, e.g., the equality operator.
-  struct BufferSpec {
-    BufferSpec(int w, int h, mediapipe::GpuBufferFormat f)
-        : width(w), height(h), format(f) {}
+    // This class is not intended as part of the public api of this class. It is
+    // public only because it is used as a map key type, and the map
+    // implementation needs access to, e.g., the equality operator.
+    struct BufferSpec {
+        BufferSpec(int w, int h, mediapipe::GpuBufferFormat f)
+            : width(w), height(h), format(f) {}
 
-    template <typename H>
-    friend H AbslHashValue(H h, const BufferSpec& spec) {
-      return H::combine(std::move(h), spec.width, spec.height,
-                        static_cast<uint32_t>(spec.format));
-    }
+        template <typename H>
+        friend H AbslHashValue(H h, const BufferSpec& spec) {
+            return H::combine(std::move(h), spec.width, spec.height,
+                              static_cast<uint32_t>(spec.format));
+        }
 
-    int width;
-    int height;
-    mediapipe::GpuBufferFormat format;
-  };
+        int width;
+        int height;
+        mediapipe::GpuBufferFormat format;
+    };
 
- private:
+private:
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  using SimplePool = std::shared_ptr<CvPixelBufferPoolWrapper>;
+    using SimplePool = std::shared_ptr<CvPixelBufferPoolWrapper>;
 #else
-  using SimplePool = std::shared_ptr<GlTextureBufferPool>;
+    using SimplePool = std::shared_ptr<GlTextureBufferPool>;
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-  SimplePool MakeSimplePool(const BufferSpec& spec);
-  // Requests a simple buffer pool for the given spec. This may return nullptr
-  // if we have not yet reached a sufficient number of requests to allocate a
-  // pool, in which case the caller should invoke GetBufferWithoutPool instead
-  // of GetBufferFromSimplePool.
-  SimplePool RequestPool(const BufferSpec& spec);
-  GpuBuffer GetBufferFromSimplePool(BufferSpec spec, const SimplePool& pool);
-  GpuBuffer GetBufferWithoutPool(const BufferSpec& spec);
+    SimplePool MakeSimplePool(const BufferSpec& spec);
+    // Requests a simple buffer pool for the given spec. This may return nullptr
+    // if we have not yet reached a sufficient number of requests to allocate a
+    // pool, in which case the caller should invoke GetBufferWithoutPool instead
+    // of GetBufferFromSimplePool.
+    SimplePool RequestPool(const BufferSpec& spec);
+    GpuBuffer GetBufferFromSimplePool(BufferSpec spec, const SimplePool& pool);
+    GpuBuffer GetBufferWithoutPool(const BufferSpec& spec);
 
-  absl::Mutex mutex_;
-  mediapipe::ResourceCache<BufferSpec, SimplePool, absl::Hash<BufferSpec>>
-      cache_ ABSL_GUARDED_BY(mutex_);
+    absl::Mutex mutex_;
+    mediapipe::ResourceCache<BufferSpec, SimplePool, absl::Hash<BufferSpec>>
+        cache_ ABSL_GUARDED_BY(mutex_);
 
 #ifdef __APPLE__
-  // Texture caches used with this pool.
-  std::vector<CFHolder<CVTextureCacheType>> texture_caches_
-      ABSL_GUARDED_BY(mutex_);
+    // Texture caches used with this pool.
+    std::vector<CFHolder<CVTextureCacheType>> texture_caches_
+        ABSL_GUARDED_BY(mutex_);
 #endif  // defined(__APPLE__)
 };
 
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 class CvPixelBufferPoolWrapper {
- public:
-  CvPixelBufferPoolWrapper(const GpuBufferMultiPool::BufferSpec& spec,
-                           CFTimeInterval maxAge);
-  GpuBuffer GetBuffer(std::function<void(void)> flush);
+public:
+    CvPixelBufferPoolWrapper(const GpuBufferMultiPool::BufferSpec& spec,
+                             CFTimeInterval maxAge);
+    GpuBuffer GetBuffer(std::function<void(void)> flush);
 
-  int GetBufferCount() const { return count_; }
-  std::string GetDebugString() const;
+    int GetBufferCount() const { return count_; }
+    std::string GetDebugString() const;
 
-  void Flush();
+    void Flush();
 
- private:
-  CFHolder<CVPixelBufferPoolRef> pool_;
-  int count_ = 0;
+private:
+    CFHolder<CVPixelBufferPoolRef> pool_;
+    int count_ = 0;
 };
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 // BufferSpec equality operators
 inline bool operator==(const GpuBufferMultiPool::BufferSpec& lhs,
                        const GpuBufferMultiPool::BufferSpec& rhs) {
-  return lhs.width == rhs.width && lhs.height == rhs.height &&
-         lhs.format == rhs.format;
+    return lhs.width == rhs.width && lhs.height == rhs.height &&
+           lhs.format == rhs.format;
 }
 inline bool operator!=(const GpuBufferMultiPool::BufferSpec& lhs,
                        const GpuBufferMultiPool::BufferSpec& rhs) {
-  return !operator==(lhs, rhs);
+    return !operator==(lhs, rhs);
 }
 
 }  // namespace mediapipe

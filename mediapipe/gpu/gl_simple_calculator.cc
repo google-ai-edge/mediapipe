@@ -18,63 +18,63 @@ namespace mediapipe {
 
 // static
 absl::Status GlSimpleCalculator::GetContract(CalculatorContract* cc) {
-  TagOrIndex(&cc->Inputs(), "VIDEO", 0).Set<GpuBuffer>();
-  TagOrIndex(&cc->Outputs(), "VIDEO", 0).Set<GpuBuffer>();
-  // Currently we pass GL context information and other stuff as external
-  // inputs, which are handled by the helper.
-  return GlCalculatorHelper::UpdateContract(cc);
+    TagOrIndex(&cc->Inputs(), "VIDEO", 0).Set<GpuBuffer>();
+    TagOrIndex(&cc->Outputs(), "VIDEO", 0).Set<GpuBuffer>();
+    // Currently we pass GL context information and other stuff as external
+    // inputs, which are handled by the helper.
+    return GlCalculatorHelper::UpdateContract(cc);
 }
 
 absl::Status GlSimpleCalculator::Open(CalculatorContext* cc) {
-  // Inform the framework that we always output at the same timestamp
-  // as we receive a packet at.
-  cc->SetOffset(mediapipe::TimestampDiff(0));
+    // Inform the framework that we always output at the same timestamp
+    // as we receive a packet at.
+    cc->SetOffset(mediapipe::TimestampDiff(0));
 
-  // Let the helper access the GL context information.
-  return helper_.Open(cc);
+    // Let the helper access the GL context information.
+    return helper_.Open(cc);
 }
 
 absl::Status GlSimpleCalculator::Process(CalculatorContext* cc) {
-  return RunInGlContext([this, cc]() -> absl::Status {
-    const auto& input = TagOrIndex(cc->Inputs(), "VIDEO", 0).Get<GpuBuffer>();
-    if (!initialized_) {
-      MP_RETURN_IF_ERROR(GlSetup());
-      initialized_ = true;
-    }
+    return RunInGlContext([this, cc]() -> absl::Status {
+        const auto& input = TagOrIndex(cc->Inputs(), "VIDEO", 0).Get<GpuBuffer>();
+        if (!initialized_) {
+            MP_RETURN_IF_ERROR(GlSetup());
+            initialized_ = true;
+        }
 
-    auto src = helper_.CreateSourceTexture(input);
-    int dst_width;
-    int dst_height;
-    GetOutputDimensions(src.width(), src.height(), &dst_width, &dst_height);
-    auto dst = helper_.CreateDestinationTexture(dst_width, dst_height,
-                                                GetOutputFormat());
+        auto src = helper_.CreateSourceTexture(input);
+        int dst_width;
+        int dst_height;
+        GetOutputDimensions(src.width(), src.height(), &dst_width, &dst_height);
+        auto dst = helper_.CreateDestinationTexture(dst_width, dst_height,
+                                                    GetOutputFormat());
 
-    helper_.BindFramebuffer(dst);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(src.target(), src.name());
+        helper_.BindFramebuffer(dst);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(src.target(), src.name());
 
-    MP_RETURN_IF_ERROR(GlBind());
-    // Run core program.
-    MP_RETURN_IF_ERROR(GlRender(src, dst));
+        MP_RETURN_IF_ERROR(GlBind());
+        // Run core program.
+        MP_RETURN_IF_ERROR(GlRender(src, dst));
 
-    glBindTexture(src.target(), 0);
+        glBindTexture(src.target(), 0);
 
-    glFlush();
+        glFlush();
 
-    auto output = dst.GetFrame<GpuBuffer>();
+        auto output = dst.GetFrame<GpuBuffer>();
 
-    src.Release();
-    dst.Release();
+        src.Release();
+        dst.Release();
 
-    TagOrIndex(&cc->Outputs(), "VIDEO", 0)
-        .Add(output.release(), cc->InputTimestamp());
+        TagOrIndex(&cc->Outputs(), "VIDEO", 0)
+            .Add(output.release(), cc->InputTimestamp());
 
-    return absl::OkStatus();
-  });
+        return absl::OkStatus();
+    });
 }
 
 absl::Status GlSimpleCalculator::Close(CalculatorContext* cc) {
-  return RunInGlContext([this]() -> absl::Status { return GlTeardown(); });
+    return RunInGlContext([this]() -> absl::Status { return GlTeardown(); });
 }
 
 }  // namespace mediapipe
