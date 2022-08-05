@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+load("@rules_foreign_cc//tools/build_defs:cmake.bzl", "cmake_external")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -69,8 +70,6 @@ alias(
     }),
     visibility = ["//visibility:public"],
 )
-
-load("@rules_foreign_cc//tools/build_defs:cmake.bzl", "cmake_external")
 
 # Note: this determines the order in which the libraries are passed to the
 # linker, so if library A depends on library B, library B must come _after_.
