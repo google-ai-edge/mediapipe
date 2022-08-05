@@ -24,6 +24,14 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "holistic_tracking_cpu_fps",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_fps",
+        "//mediapipe/graphs/holistic_tracking:holistic_tracking_cpu_graph_deps",
+    ],
+)
+
 # Linux only
 cc_binary(
     name = "holistic_tracking_gpu",

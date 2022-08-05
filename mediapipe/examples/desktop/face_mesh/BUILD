@@ -32,6 +32,14 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "face_mesh_cpu_fps",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_fps",
+        "//mediapipe/graphs/face_mesh:desktop_live_calculators",
+    ],
+)
+
 # Linux only
 cc_binary(
     name = "face_mesh_gpu",
