@@ -12,33 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Generates MediaPipe AAR including different variants of .so in jni folder.
-
-Usage:
-
-Creates a new mediapipe_aar() target in a BUILD file. For example,
-putting the following code into mediapipe/examples/android/aar_demo/BUILD.
-
-```
-load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_aar")
-
-mediapipe_aar(
-    name = "demo",
-    calculators = ["//mediapipe/calculators/core:pass_through_calculator"],
-)
-```
-
-Then, runs the following Bazel command to generate the aar.
-
-```
-$ bazel build --strip=always -s -c opt \
-    --host_crosstool_top=@bazel_tools//tools/cpp:toolchain \
-    --fat_apk_cpu=arm64-v8a,armeabi-v7a \
-    mediapipe/examples/android/aar_demo:demo.aar
-```
-
-Finally, imports the aar into Android Studio.
-
+"""Generates MediaPipe AAR including different variants of .so in jni folder.\r
+\r
+Usage:\r
+\r
+Creates a new mediapipe_aar() target in a BUILD file. For example,\r
+putting the following code into mediapipe/examples/android/aar_demo/BUILD.\r
+\r
+```\r
+load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_aar")\r
+\r
+mediapipe_aar(\r
+    name = "demo",\r
+    calculators = ["//mediapipe/calculators/core:pass_through_calculator"],\r
+)\r
+```\r
+\r
+Then, runs the following Bazel command to generate the aar.\r
+\r
+```\r
+$ bazel build --strip=always -s -c opt \\\r
+    --host_crosstool_top=@bazel_tools//tools/cpp:toolchain \\\r
+    --fat_apk_cpu=arm64-v8a,armeabi-v7a \\\r
+    mediapipe/examples/android/aar_demo:demo.aar\r
+```\r
+\r
+Finally, imports the aar into Android Studio.\r
+\r
 """
 
 load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android_library")
@@ -178,11 +178,11 @@ EOF
 
     _aar_with_jni(name, name + "_android_lib")
 
-def _mediapipe_proto(name):
+def _mediapipe_proto(name):  #@unused
     """Generates MediaPipe java proto libraries.
 
     Args:
-      name: the name of the target.
+      name: the name of the target. 
     """
     _proto_java_src_generator(
         name = "mediapipe_log_extension_proto",

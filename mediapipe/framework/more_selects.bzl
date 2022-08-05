@@ -12,22 +12,21 @@ def _config_setting_always_true(name, visibility):
     name_on = name + "_stamp_binary_on_check"
     name_off = name + "_stamp_binary_off_check"
     native.config_setting(
-        name=name_on,
-        values={"stamp": "1"},
+        name = name_on,
+        values = {"stamp": "1"},
     )
     native.config_setting(
-        name=name_off,
-        values={"stamp": "0"},
+        name = name_off,
+        values = {"stamp": "0"},
     )
     return selects.config_setting_group(
-        name=name,
-        visibility=visibility,
-        match_any=[
+        name = name,
+        visibility = visibility,
+        match_any = [
             ":" + name_on,
             ":" + name_off,
         ],
     )
-
 
 def _config_setting_always_false(name, visibility):
     """Returns a config_setting with the given name that's always false.
@@ -38,44 +37,42 @@ def _config_setting_always_false(name, visibility):
     name_on = name + "_stamp_binary_on_check"
     name_off = name + "_stamp_binary_off_check"
     native.config_setting(
-        name=name_on,
-        values={"stamp": "1"},
+        name = name_on,
+        values = {"stamp": "1"},
     )
     native.config_setting(
-        name=name_off,
-        values={"stamp": "0"},
+        name = name_off,
+        values = {"stamp": "0"},
     )
     return selects.config_setting_group(
-        name=name,
-        visibility=visibility,
-        match_all=[
+        name = name,
+        visibility = visibility,
+        match_all = [
             ":" + name_on,
             ":" + name_off,
         ],
     )
 
-
-def _config_setting_negation(name, negate, visibility=None):
+def _config_setting_negation(name, negate, visibility = None):
     _config_setting_always_true(
-        name=name + "_true",
-        visibility=visibility,
+        name = name + "_true",
+        visibility = visibility,
     )
     _config_setting_always_false(
-        name=name + "_false",
-        visibility=visibility,
+        name = name + "_false",
+        visibility = visibility,
     )
     native.alias(
-        name=name,
-        actual=select(
+        name = name,
+        actual = select(
             {
                 "//conditions:default": ":%s_true" % name,
                 negate: ":%s_false" % name,
-            }
+            },
         ),
-        visibility=visibility,
+        visibility = visibility,
     )
 
-
 more_selects = struct(
-    config_setting_negation=_config_setting_negation,
+    config_setting_negation = _config_setting_negation,
 )

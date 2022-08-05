@@ -18,9 +18,9 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load(
     "//mediapipe/framework/tool:mediapipe_graph.bzl",
     "mediapipe_binary_graph",
-)
-load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
-load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto")
+)  # @unused
+load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")  # @unused
+load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto")  # @unused
 
 licenses(["notice"])
 

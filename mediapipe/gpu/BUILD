@@ -16,7 +16,7 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 load("//mediapipe/gpu:metal.bzl", "metal_library")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library", "mediapipe_proto_library")
-load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
+load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")  # @unused
 load("//mediapipe/framework:more_selects.bzl", "more_selects")
 
 licenses(["notice"])
