@@ -73,5 +73,7 @@ message ImageFormat {
     // sBGRA, interleaved: one byte for B, one byte for G, one byte for R,
     // one byte for alpha or unused. This is the N32 format for Skia.
     SBGRA = 11;
+    
+    SBGR = 13;
   }
 }

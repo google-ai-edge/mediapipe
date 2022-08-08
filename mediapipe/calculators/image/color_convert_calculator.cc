@@ -39,10 +39,12 @@ void SetColorChannel(int channel, uint8 value, cv::Mat* mat) {
 constexpr char kRgbaInTag[] = "RGBA_IN";
 constexpr char kRgbInTag[] = "RGB_IN";
 constexpr char kBgraInTag[] = "BGRA_IN";
+constexpr char kBgrInTag[] = "BGR_IN";
 constexpr char kGrayInTag[] = "GRAY_IN";
 constexpr char kRgbaOutTag[] = "RGBA_OUT";
 constexpr char kRgbOutTag[] = "RGB_OUT";
 constexpr char kBgraOutTag[] = "BGRA_OUT";
+constexpr char kBgrOutTag[] = "BGR_OUT";
 constexpr char kGrayOutTag[] = "GRAY_OUT";
 }  // namespace
 
@@ -57,6 +59,7 @@ constexpr char kGrayOutTag[] = "GRAY_OUT";
 //   RGB  -> RGBA
 //   RGBA -> BGRA
 //   BGRA -> RGBA
+//   BGRA -> RGB
 //
 // This calculator only supports a single input stream and output stream at a
 // time. If more than one input stream or output stream is present, the
@@ -122,6 +125,10 @@ absl::Status ColorConvertCalculator::GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag(kBgraInTag).Set<ImageFrame>();
   }
 
+  if (cc->Inputs().HasTag(kBgrInTag)) {
+    cc->Inputs().Tag(kBgrInTag).Set<ImageFrame>();
+  }
+
   if (cc->Outputs().HasTag(kRgbOutTag)) {
     cc->Outputs().Tag(kRgbOutTag).Set<ImageFrame>();
   }
@@ -136,6 +143,10 @@ absl::Status ColorConvertCalculator::GetContract(CalculatorContract* cc) {
 
   if (cc->Outputs().HasTag(kBgraOutTag)) {
     cc->Outputs().Tag(kBgraOutTag).Set<ImageFrame>();
+  }
+  
+  if (cc->Outputs().HasTag(kBgrOutTag)) {
+    cc->Outputs().Tag(kBgrOutTag).Set<ImageFrame>();
   }
 
   return absl::OkStatus();
@@ -157,6 +168,7 @@ absl::Status ColorConvertCalculator::ConvertAndOutput(
   if (open_cv_convert_code == cv::COLOR_RGB2RGBA) {
     SetColorChannel(3, 255, &output_mat);
   }
+
   cc->Outputs()
       .Tag(output_tag)
       .Add(output_frame.release(), cc->InputTimestamp());
@@ -193,6 +205,21 @@ absl::Status ColorConvertCalculator::Process(CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kRgbaInTag) && cc->Outputs().HasTag(kBgraOutTag)) {
     return ConvertAndOutput(kRgbaInTag, kBgraOutTag, ImageFormat::SBGRA,
                             cv::COLOR_RGBA2BGRA, cc);
+  }
+  // RGBA -> BGR
+  if (cc->Inputs().HasTag(kRgbaInTag) && cc->Outputs().HasTag(kBgrOutTag)) {
+    return ConvertAndOutput(kRgbaInTag, kBgrOutTag, ImageFormat::SBGR,
+                            cv::COLOR_RGBA2BGR, cc);
+  }
+  // BGR -> RGBA
+  if (cc->Inputs().HasTag(kBgrInTag) && cc->Outputs().HasTag(kRgbaOutTag)) {
+    return ConvertAndOutput(kBgrInTag, kRgbaOutTag, ImageFormat::SRGBA,
+                            cv::COLOR_BGR2RGBA, cc);
+  }
+  // BGRA -> RGB
+  if (cc->Inputs().HasTag(kBgraInTag) && cc->Outputs().HasTag(kRgbOutTag)) {
+    return ConvertAndOutput(kBgraInTag, kRgbOutTag, ImageFormat::SRGB,
+                            cv::COLOR_BGRA2RGB, cc);
   }
 
   return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)

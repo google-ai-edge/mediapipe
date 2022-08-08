@@ -19,10 +19,7 @@ bazel-bin/mediapipe/examples/desktop/deformation/deformation_cpu
 ```
 Run with (using video):
 ```
-bazel-bin/mediapipe/examples/desktop//deformation/deformation_cpu
---calculator_graph_config_file=mediapipe/graphs/deformation/deformation_cpu.pbtxt 
---input_video_path=/path/video.mp4 
---output_video_path=/path/outvideo.mp4
+bazel-bin/mediapipe/examples/desktop/deformation/deformation_cpu --calculator_graph_config_file=mediapipe/graphs/deformation/deformation_cpu.pbtxt --input_video_path=/path/video.mp4 --output_video_path=/path/outvideo.mp4
 ```
 
 2. Mobile (Android)

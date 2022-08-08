@@ -6,6 +6,13 @@ input_stream: "input_video"
 # Output image with rendered results. (ImageFrame)
 output_stream: "output_video"
 
+profiler_config {
+  trace_enabled: true
+  enable_profiler: true
+  trace_log_interval_count: 200
+  trace_log_path: "/home/mslight/Work/clone/mediapipe/mediapipe/logs/deformation/"
+}
+
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
@@ -41,8 +48,35 @@ node {
 }
 
 node {
+  calculator: "ColorConvertCalculator"
+  input_stream: "RGBA_IN:throttled_input_video"
+  output_stream: "BGR_OUT:throttled_input_video_bgr"
+}
+
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "SIZE:size"	
+}
+
+node {
   calculator: "FaceProcessorCalculator"
   input_stream: "NORM_LANDMARKS:multi_face_landmarks"
-  input_stream: "IMAGE:throttled_input_video"
-  output_stream: "IMAGE:output_video"
+  input_stream: "SIZE:size"
+  output_stream: "SRC_TENSOR:src"
+  output_stream: "DST_TENSOR:dst"
+}
+
+node {
+  calculator: "WarpAffineCalculator"
+  input_stream: "IMAGE:throttled_input_video_bgr"
+  input_stream: "SRC_TENSOR:src"
+  input_stream: "DST_TENSOR:dst"
+  output_stream: "IMAGE:output_video_bgr"
+}
+
+node{
+  calculator: "ColorConvertCalculator"
+  input_stream: "BGR_IN:output_video_bgr"
+  output_stream: "RGBA_OUT:output_video"
 }

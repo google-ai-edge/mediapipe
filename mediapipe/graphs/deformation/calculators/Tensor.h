@@ -64,6 +64,10 @@ public:
         return vector<T>(M.ptr<T>(0), M.ptr<T>(0) + dims[1]);
     }
 
+    /* vector<int> get_dims() {
+        return dims;
+    } */
+
     T at(vector<int> _indexes) {
         return M.at<T>(_indexes.data());
     }

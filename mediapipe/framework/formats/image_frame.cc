@@ -283,6 +283,8 @@ int ImageFrame::NumberOfChannelsForFormat(ImageFormat::Format format) {
       return 3;
     case ImageFormat::SBGRA:
       return 4;
+    case ImageFormat::SBGR:
+      return 3;
     default:
       LOG(FATAL) << InvalidFormatString(format);
   }
@@ -312,6 +314,8 @@ int ImageFrame::ChannelSizeForFormat(ImageFormat::Format format) {
       return sizeof(uint8);
     case ImageFormat::SBGRA:
       return sizeof(uint8);
+    case ImageFormat::SBGR:
+      return sizeof(uint8);
     default:
       LOG(FATAL) << InvalidFormatString(format);
   }
@@ -340,6 +344,8 @@ int ImageFrame::ByteDepthForFormat(ImageFormat::Format format) {
     case ImageFormat::LAB8:
       return 1;
     case ImageFormat::SBGRA:
+      return 1;
+    case ImageFormat::SBGR:
       return 1;
     default:
       LOG(FATAL) << InvalidFormatString(format);

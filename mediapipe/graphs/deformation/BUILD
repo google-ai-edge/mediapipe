@@ -22,26 +22,33 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "mobile_calculators",
+    name = "mobile_calculators" ,
     deps = [
-    "//mediapipe/graphs/deformation/calculators:face_processor_calculator",
-        "//mediapipe/calculators/core:flow_limiter_calculator",
-            "//mediapipe/calculators/image:image_transformation_calculator",
-           "//mediapipe/modules/face_landmark:face_landmark_front_gpu",
-              "//mediapipe/calculators/core:constant_side_packet_calculator",
-                  	"//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
-    	"//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
+        "//mediapipe/graphs/deformation/calculators:face_processor_calculator" ,
+        "//mediapipe/graphs/deformation/calculators:warp_affine_calculator" ,
+        "//mediapipe/calculators/core:flow_limiter_calculator" ,
+        "//mediapipe/calculators/image:image_transformation_calculator" ,
+        "//mediapipe/modules/face_landmark:face_landmark_front_gpu" ,
+        "//mediapipe/calculators/core:constant_side_packet_calculator" ,
+        "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator" ,
+        "//mediapipe/gpu:image_frame_to_gpu_buffer_calculator" ,
+        "//mediapipe/calculators/image:color_convert_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
     ],
 )
 
 cc_library(
-    name = "desktop_calculators",
+    name = "desktop_calculators" ,
     deps = [
-    "//mediapipe/graphs/deformation/calculators:face_processor_calculator",
-        "//mediapipe/calculators/core:flow_limiter_calculator",
-            "//mediapipe/calculators/image:image_transformation_calculator",
-           "//mediapipe/modules/face_landmark:face_landmark_front_cpu",
-              "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/graphs/deformation/calculators:face_processor_calculator" ,
+        "//mediapipe/graphs/deformation/calculators:warp_affine_calculator" ,
+        "//mediapipe/calculators/core:flow_limiter_calculator" ,
+        "//mediapipe/calculators/image:image_transformation_calculator" ,
+        "//mediapipe/modules/face_landmark:face_landmark_front_cpu" ,
+        "//mediapipe/calculators/core:constant_side_packet_calculator" ,
+        "//mediapipe/calculators/image:color_convert_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+
     ],
 )
 

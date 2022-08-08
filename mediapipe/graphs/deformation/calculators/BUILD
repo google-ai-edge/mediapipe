@@ -47,5 +47,23 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "warp_affine_calculator",
+    srcs = ["warp_affine_calculator.cc"],
+    hdrs = ["Tensor.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_highgui",
+    ],
+    alwayslink = 1,
+)
+
+
 
 
