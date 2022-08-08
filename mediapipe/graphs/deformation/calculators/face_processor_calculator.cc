@@ -283,9 +283,9 @@ namespace mediapipe
 
   absl::Status FaceProcessorCalculator::ProcessImage(CalculatorContext *cc)
   {
-    double alfaNose = 2.7;
-    double alfaLips = 0.7;
-    double alfaCheekbones = 0.7;
+    double alfaNose = 1.2;
+    double alfaLips = 0.4;
+    double alfaCheekbones = 0.4;
 
     if (cc->Inputs().HasTag(kNormLandmarksTag))
     {
@@ -381,7 +381,7 @@ namespace mediapipe
 
       Tensor<double> _src = __facePts.index(_trianglesIndexes).index(_order);
       Tensor<double> _dst = ___facePts.index(_trianglesIndexes).index(_order);
-     // cout << _src.get_dims().size() << endl;
+
       auto srcPtr = absl::make_unique<Tensor<double>>(_src);
       cc->Outputs().Tag(kSrcTensorTag).Add(srcPtr.release(), cc->InputTimestamp());
 
