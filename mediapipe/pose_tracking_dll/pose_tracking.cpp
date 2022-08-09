@@ -36,6 +36,7 @@ class PoseTrackingImpl {
  public:
   PoseTrackingImpl(const std::string& calculatorGraphConfigFile) {
     auto status = initialize(calculatorGraphConfigFile);
+	LOG(WARNING) << "Initialized PoseTracking with status: " << status;
   }
 
   absl::Status initialize(const std::string& calculatorGraphConfigFile) {
@@ -139,7 +140,7 @@ class PoseTrackingImpl {
   mediapipe::CalculatorGraph graph;
   const char* kInputStream = "input_video";
   const char* kOutputSegmentationStream = "segmentation_mask";
-  const char* kOutpuLandmarksStream = "pose_world_landmarks";
+  const char* kOutpuLandmarksStream = "pose_landmarks";
 };
 
 namespace nimagna {
