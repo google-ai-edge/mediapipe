@@ -116,6 +116,7 @@ class PoseTrackingImpl {
       poseLandmarks[j].x = landmark.x();
       poseLandmarks[j].y = landmark.y();
       poseLandmarks[j].z = landmark.z();
+      visibility[j] = landmark.visibility();
     }
 
     return absl::OkStatus();
@@ -124,6 +125,7 @@ class PoseTrackingImpl {
   nimagna::cv_wrapper::Point3f* lastDetectedLandmarks() { return poseLandmarks; }
 
   cv::Mat lastSegmentedFrame() { return segmentedMask; }
+  float* landmarksVisibility() { return visibility; }
 
   static constexpr size_t kLandmarksCount = 33u;
 
@@ -131,12 +133,13 @@ class PoseTrackingImpl {
   mediapipe::Packet poseLandmarksPacket;
   cv::Mat segmentedMask;
   nimagna::cv_wrapper::Point3f poseLandmarks[kLandmarksCount];
+  float visibility[kLandmarksCount] = {0};
   std::unique_ptr<mediapipe::OutputStreamPoller> maskPollerPtr;
   std::unique_ptr<mediapipe::OutputStreamPoller> landmarksPollerPtr;
   mediapipe::CalculatorGraph graph;
   const char* kInputStream = "input_video";
   const char* kOutputSegmentationStream = "segmentation_mask";
-  const char* kOutpuLandmarksStream = "pose_landmarks";
+  const char* kOutpuLandmarksStream = "pose_world_landmarks";
 };
 
 namespace nimagna {
@@ -151,6 +154,10 @@ bool PoseTracking::processFrame(const cv_wrapper::Mat& inputRGB8Bit) {
 
 cv_wrapper::Point3f* PoseTracking::lastDetectedLandmarks() {
   return mImplementation->lastDetectedLandmarks();
+}
+
+float* PoseTracking::lastLandmarksVisibility() {
+  return mImplementation->landmarksVisibility();
 }
 
 cv_wrapper::Mat PoseTracking::lastSegmentedFrame() {

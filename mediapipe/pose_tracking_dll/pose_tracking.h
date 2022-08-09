@@ -108,6 +108,7 @@ class DLLEXPORT PoseTracking {
   bool processFrame(const cv_wrapper::Mat& inputRGB8Bit);
   cv_wrapper::Mat lastSegmentedFrame();
   cv_wrapper::Point3f* lastDetectedLandmarks();
+  float* lastLandmarksVisibility();
 
  private:
   PoseTrackingImpl* mImplementation;
