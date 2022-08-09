@@ -77,6 +77,21 @@ bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH
 
 The results will be stored in the `bazel-bin\mediapipe\pose_tracking_dll` folder.
 
+In the case the build stalls, pressing Ctrl+C might not be sufficient to stop the task. In that case, if you try to (resume the) build again,
+the following message will be displayed:
+
+```
+Another command (pid=5300) is running. Waiting for it to complete on the server (server_pid=3684)
+```
+
+Unfortunately this process is hidden for some reason and can't be found in taskmgr. Fortunately, you can use the `taskkill` command to kill the process:
+
+```
+taskkill /F /PID 3684
+```
+
+After that, you should be able to run the build command again.
+
 ### Build debug symbols
 - `dbg` can be used in place of `opt` to build the library with debug symbols in Visual Studio pdb format.
 
