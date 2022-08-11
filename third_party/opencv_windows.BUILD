@@ -5,7 +5,7 @@ licenses(["notice"])  # BSD license
 
 exports_files(["LICENSE"])
 
-OPENCV_VERSION = "3415"  # 3.4.15
+OPENCV_VERSION = "3410"  # 3.4.10
 
 config_setting(
     name = "opt_build",
@@ -17,7 +17,7 @@ config_setting(
     values = {"compilation_mode": "dbg"},
 )
 
-# The following build rule assumes that the executable "opencv-3.4.15-vc14_vc15.exe"
+# The following build rule assumes that the executable "opencv-3.4.10-vc14_vc15.exe"
 # is downloaded and the files are extracted to local.
 # If you install OpenCV separately, please modify the build rule accordingly.
 cc_library(
