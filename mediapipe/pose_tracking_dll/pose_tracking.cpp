@@ -153,12 +153,8 @@ bool PoseTracking::processFrame(const cv_wrapper::Mat& inputRGB8Bit) {
   return mImplementation->processFrame(frame);
 }
 
-cv_wrapper::Point3f* PoseTracking::lastDetectedLandmarks() {
-  return mImplementation->lastDetectedLandmarks();
-}
-
-float* PoseTracking::lastLandmarksVisibility() {
-  return mImplementation->landmarksVisibility();
+PoseTracking::PoseLandmarks PoseTracking::lastDetectedLandmarks() {
+  return {mImplementation->lastDetectedLandmarks(), mImplementation->landmarksVisibility()};
 }
 
 cv_wrapper::Mat PoseTracking::lastSegmentedFrame() {
@@ -171,5 +167,4 @@ PoseTracking::~PoseTracking()
 {
 	delete mImplementation;
 }
-
 }  // namespace nimagna
