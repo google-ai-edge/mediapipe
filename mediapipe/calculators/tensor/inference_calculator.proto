@@ -126,11 +126,17 @@ message InferenceCalculatorOptions {
             optional int32 num_threads = 1 [default = -1];
         }
 
+        message OnnxCUDA {}
+
+        message OnnxTensorRT {}
+
         oneof delegate {
             TfLite tflite = 1;
             Gpu gpu = 2;
             Nnapi nnapi = 3;
             Xnnpack xnnpack = 4;
+            OnnxCUDA cuda = 5;
+            OnnxTensorRT tensorrt = 6;
         }
     }
 
@@ -163,4 +169,5 @@ message InferenceCalculatorOptions {
     // NOTE: use_gpu/use_nnapi are ignored if specified. (Delegate takes
     // precedence over use_* deprecated options.)
     optional Delegate delegate = 5;
+    optional string landmark_path = 6;
 }

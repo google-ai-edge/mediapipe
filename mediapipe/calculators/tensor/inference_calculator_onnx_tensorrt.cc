@@ -34,7 +34,7 @@ int64_t value_size_of(const std::vector<int64_t>& dims) {
 
 }  // namespace
 
-class InferenceCalculatorOnnxCUDAImpl : public NodeImpl<InferenceCalculatorOnnxCUDA, InferenceCalculatorOnnxCUDAImpl> {
+class InferenceCalculatorOnnxTensorRTImpl : public NodeImpl<InferenceCalculatorOnnxTensorRT, InferenceCalculatorOnnxTensorRTImpl> {
 public:
     static absl::Status UpdateContract(CalculatorContract* cc);
 
@@ -52,18 +52,25 @@ private:
     std::vector<const char*> m_output_names;
 };
 
-absl::Status InferenceCalculatorOnnxCUDAImpl::UpdateContract(CalculatorContract* cc) {
+absl::Status InferenceCalculatorOnnxTensorRTImpl::UpdateContract(CalculatorContract* cc) {
     const auto& options = cc->Options<::mediapipe::InferenceCalculatorOptions>();
     RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
         << "Either model as side packet or model path in options is required.";
     return absl::OkStatus();
 }
 
-absl::Status InferenceCalculatorOnnxCUDAImpl::LoadModel(const std::string& path) {
+absl::Status InferenceCalculatorOnnxTensorRTImpl::LoadModel(const std::string& path) {
     auto model_path = std::wstring(path.begin(), path.end());
     Ort::SessionOptions session_options;
-    OrtCUDAProviderOptions cuda_options;
-    session_options.AppendExecutionProvider_CUDA(cuda_options);
+    OrtTensorRTProviderOptions trt_options{};
+    trt_options.device_id = 0;
+    trt_options.trt_max_workspace_size = 1073741824;
+    trt_options.trt_max_partition_iterations = 1000;
+    trt_options.trt_min_subgraph_size = 1;
+    trt_options.trt_engine_cache_enable = 1;
+    trt_options.trt_engine_cache_path = "D:/code/mediapipe/mediapipe/modules/tensorrt/";
+    trt_options.trt_dump_subgraphs = 1;
+    session_options.AppendExecutionProvider_TensorRT(trt_options);
     session_ = std::make_unique<Ort::Session>(env_, model_path.c_str(), session_options);
     size_t num_input_nodes = session_->GetInputCount();
     size_t num_output_nodes = session_->GetOutputCount();
@@ -80,7 +87,7 @@ absl::Status InferenceCalculatorOnnxCUDAImpl::LoadModel(const std::string& path)
     return absl::OkStatus();
 }
 
-absl::Status InferenceCalculatorOnnxCUDAImpl::Open(CalculatorContext* cc) {
+absl::Status InferenceCalculatorOnnxTensorRTImpl::Open(CalculatorContext* cc) {
     const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
     if (!options.model_path().empty()) {
         return LoadModel(options.model_path());
@@ -88,7 +95,7 @@ absl::Status InferenceCalculatorOnnxCUDAImpl::Open(CalculatorContext* cc) {
     return absl::Status(mediapipe::StatusCode::kNotFound, "Must specify Onnx model path.");
 }
 
-absl::Status InferenceCalculatorOnnxCUDAImpl::Process(CalculatorContext* cc) {
+absl::Status InferenceCalculatorOnnxTensorRTImpl::Process(CalculatorContext* cc) {
     if (kInTensors(cc).IsEmpty()) {
         return absl::OkStatus();
     }

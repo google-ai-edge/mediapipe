@@ -37,6 +37,14 @@ public:
                 subgraph_node);
         std::vector<absl::string_view> impls;
 
+        if ((options.has_delegate() && options.delegate().has_cuda())) {
+            impls.emplace_back("OnnxCUDA");
+        }
+
+        if ((options.has_delegate() && options.delegate().has_tensorrt())) {
+            impls.emplace_back("OnnxTensorRT");
+        }
+
         const bool should_use_gpu =
             !options.has_delegate() ||  // Use GPU delegate if not specified
             (options.has_delegate() && options.delegate().has_gpu());
@@ -58,7 +66,10 @@ public:
         impls.emplace_back("Cpu");
         for (const auto& suffix : impls) {
             const auto impl = absl::StrCat("InferenceCalculator", suffix);
-            if (!mediapipe::CalculatorBaseRegistry::IsRegistered(impl)) continue;
+            if (!mediapipe::CalculatorBaseRegistry::IsRegistered(impl)) {
+                LOG(INFO) << impl;
+                continue;
+            }
             CalculatorGraphConfig::Node impl_node = subgraph_node;
             impl_node.set_calculator(impl);
             return tool::MakeSingleNodeGraph(std::move(impl_node));

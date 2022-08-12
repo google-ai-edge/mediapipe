@@ -149,6 +149,10 @@ struct InferenceCalculatorOnnxCUDA : public InferenceCalculator {
     static constexpr char kCalculatorName[] = "InferenceCalculatorOnnxCUDA";
 };
 
+struct InferenceCalculatorOnnxTensorRT : public InferenceCalculator {
+    static constexpr char kCalculatorName[] = "InferenceCalculatorOnnxTensorRT";
+};
+
 }  // namespace api2
 }  // namespace mediapipe
 
