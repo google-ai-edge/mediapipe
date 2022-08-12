@@ -1,4 +1,4 @@
-# MediaPipe graph that performs pose tracking with TensorFlow Lite on CPU.
+# MediaPipe graph that performs pose tracking with onnxruntime on tensorrt.
 
 # CPU buffer. (ImageFrame)
 input_stream: "input_video"
@@ -42,7 +42,7 @@ node {
 
 # Subgraph that detects poses and corresponding landmarks.
 node {
-  calculator: "PoseLandmarkCpu"
+  calculator: "PoseLandmarkOnnxTensorRT"
   input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
   input_stream: "IMAGE:throttled_input_video"
   output_stream: "LANDMARKS:pose_landmarks"

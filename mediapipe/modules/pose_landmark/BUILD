@@ -61,6 +61,35 @@ mediapipe_simple_subgraph(
     ],
 )
 
+
+mediapipe_simple_subgraph(
+    name = "pose_landmark_by_roi_onnx_cuda",
+    graph = "pose_landmark_by_roi_onnx_cuda.pbtxt",
+    register_as = "PoseLandmarkByRoiOnnxCUDA",
+    deps = [
+        ":pose_landmark_model_loader",
+        ":pose_landmarks_and_segmentation_inverse_projection",
+        ":tensors_to_pose_landmarks_and_segmentation",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_onnx_cuda",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "pose_landmark_by_roi_onnx_tensorrt",
+    graph = "pose_landmark_by_roi_onnx_tensorrt.pbtxt",
+    register_as = "PoseLandmarkByRoiOnnxTensorRT",
+    deps = [
+        ":pose_landmark_model_loader",
+        ":pose_landmarks_and_segmentation_inverse_projection",
+        ":tensors_to_pose_landmarks_and_segmentation",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_onnx_tensorrt",
+    ],
+)
+
 mediapipe_simple_subgraph(
     name = "tensors_to_pose_landmarks_and_segmentation",
     graph = "tensors_to_pose_landmarks_and_segmentation.pbtxt",
@@ -159,10 +188,57 @@ mediapipe_simple_subgraph(
     ],
 )
 
+mediapipe_simple_subgraph(
+    name = "pose_landmark_onnx_cuda",
+    graph = "pose_landmark_onnx_cuda.pbtxt",
+    register_as = "PoseLandmarkOnnxCUDA",
+    deps = [
+        ":pose_detection_to_roi",
+        ":pose_landmark_by_roi_onnx_cuda",
+        ":pose_landmark_filtering",
+        ":pose_landmarks_to_roi",
+        ":pose_segmentation_filtering",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:merge_calculator",
+        "//mediapipe/calculators/core:packet_presence_calculator",
+        "//mediapipe/calculators/core:previous_loopback_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/util:from_image_calculator",
+        "//mediapipe/modules/pose_detection:pose_detection_onnx_cuda",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "pose_landmark_onnx_tensorrt",
+    graph = "pose_landmark_onnx_tensorrt.pbtxt",
+    register_as = "PoseLandmarkOnnxTensorRT",
+    deps = [
+        ":pose_detection_to_roi",
+        ":pose_landmark_by_roi_onnx_tensorrt",
+        ":pose_landmark_filtering",
+        ":pose_landmarks_to_roi",
+        ":pose_segmentation_filtering",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:merge_calculator",
+        "//mediapipe/calculators/core:packet_presence_calculator",
+        "//mediapipe/calculators/core:previous_loopback_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/util:from_image_calculator",
+        "//mediapipe/modules/pose_detection:pose_detection_onnx_tensorrt",
+    ],
+)
+
 exports_files(
     srcs = [
+        "pose_landmark_full.onnx",
         "pose_landmark_full.tflite",
+        "pose_landmark_heavy.onnx",
         "pose_landmark_heavy.tflite",
+        "pose_landmark_lite.onnx",
         "pose_landmark_lite.tflite",
     ],
 )

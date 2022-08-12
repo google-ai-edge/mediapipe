@@ -54,3 +54,37 @@ mediapipe_binary_graph(
     output_name = "pose_tracking_cpu.binarypb",
     deps = [":pose_tracking_cpu_deps"],
 )
+
+cc_library(
+    name = "pose_tracking_onnx_cuda_deps",
+    deps = [
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/graphs/pose_tracking/subgraphs:pose_renderer_cpu",
+        "//mediapipe/modules/pose_landmark:pose_landmark_onnx_cuda",
+    ],
+)
+
+mediapipe_binary_graph(
+    name = "pose_tracking_onnx_cuda_binary_graph",
+    graph = "pose_tracking_onnx_cuda.pbtxt",
+    output_name = "pose_tracking_onnx_cuda.binarypb",
+    deps = [":pose_tracking_onnx_cuda_deps"],
+)
+
+cc_library(
+    name = "pose_tracking_onnx_tensorrt_deps",
+    deps = [
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/graphs/pose_tracking/subgraphs:pose_renderer_cpu",
+        "//mediapipe/modules/pose_landmark:pose_landmark_onnx_tensorrt",
+    ],
+)
+
+mediapipe_binary_graph(
+    name = "pose_tracking_onnx_tensorrt_binary_graph",
+    graph = "pose_tracking_onnx_tensorrt.pbtxt",
+    output_name = "pose_tracking_onnx_tensorrt.binarypb",
+    deps = [":pose_tracking_onnx_tensorrt"],
+)

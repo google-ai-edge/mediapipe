@@ -24,6 +24,46 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "pose_tracking_cpu_fps",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_fps",
+        "//mediapipe/graphs/pose_tracking:pose_tracking_cpu_deps",
+    ],
+)
+
+cc_binary(
+    name = "pose_tracking_onnx_cuda",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/graphs/pose_tracking:pose_tracking_onnx_cuda_deps",
+    ],
+)
+
+cc_binary(
+    name = "pose_tracking_onnx_cuda_fps",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_fps",
+        "//mediapipe/graphs/pose_tracking:pose_tracking_onnx_cuda_deps",
+    ],
+)
+
+cc_binary(
+    name = "pose_tracking_onnx_tensorrt",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/graphs/pose_tracking:pose_tracking_onnx_tensorrt_deps",
+    ],
+)
+
+cc_binary(
+    name = "pose_tracking_onnx_tensorrt_fps",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_fps",
+        "//mediapipe/graphs/pose_tracking:pose_tracking_onnx_tensorrt_deps",
+    ],
+)
+
 # Linux only
 cc_binary(
     name = "pose_tracking_gpu",
