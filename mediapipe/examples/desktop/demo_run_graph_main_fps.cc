@@ -83,7 +83,6 @@ absl::Status RunMPPGraph() {
 
     LOG(INFO) << "Start grabbing and processing frames.";
     bool grab_frames = true;
-    auto start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock ::now().time_since_epoch()).count();
     int frames = 0;
     int fps_sum = 0;
     while (grab_frames) {
