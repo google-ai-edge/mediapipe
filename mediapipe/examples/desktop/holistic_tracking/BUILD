@@ -32,6 +32,38 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "holistic_tracking_onnx_cuda",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/graphs/holistic_tracking:holistic_tracking_onnx_cuda_graph_deps",
+    ],
+)
+
+cc_binary(
+    name = "holistic_tracking_onnx_cuda_fps",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_fps",
+        "//mediapipe/graphs/holistic_tracking:holistic_tracking_onnx_cuda_graph_deps",
+    ],
+)
+
+cc_binary(
+    name = "holistic_tracking_onnx_tensorrt",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/graphs/holistic_tracking:holistic_tracking_onnx_tensorrt_graph_deps",
+    ],
+)
+
+cc_binary(
+    name = "holistic_tracking_onnx_tensorrt_fps",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_fps",
+        "//mediapipe/graphs/holistic_tracking:holistic_tracking_onnx_tensorrt_graph_deps",
+    ],
+)
+
 # Linux only
 cc_binary(
     name = "holistic_tracking_gpu",

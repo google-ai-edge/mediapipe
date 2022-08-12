@@ -68,3 +68,27 @@ cc_library(
         "//mediapipe/modules/holistic_landmark:holistic_landmark_cpu",
     ],
 )
+
+cc_library(
+    name = "holistic_tracking_onnx_cuda_graph_deps",
+    deps = [
+        ":holistic_tracking_to_render_data",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/modules/holistic_landmark:holistic_landmark_onnx_cuda",
+    ],
+)
+
+cc_library(
+    name = "holistic_tracking_onnx_tensorrt_graph_deps",
+    deps = [
+        ":holistic_tracking_to_render_data",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/modules/holistic_landmark:holistic_landmark_onnx_tensorrt",
+    ],
+)

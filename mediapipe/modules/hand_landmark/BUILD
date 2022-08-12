@@ -60,6 +60,46 @@ mediapipe_simple_subgraph(
 )
 
 mediapipe_simple_subgraph(
+    name = "hand_landmark_onnx_cuda",
+    graph = "hand_landmark_onnx_cuda.pbtxt",
+    register_as = "HandLandmarkOnnxCUDA",
+    deps = [
+        ":hand_landmark_model_loader",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_onnx_cuda",
+        "//mediapipe/calculators/tensor:tensors_to_classification_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
+        "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
+        "//mediapipe/calculators/util:landmark_projection_calculator",
+        "//mediapipe/calculators/util:thresholding_calculator",
+        "//mediapipe/calculators/util:world_landmark_projection_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "hand_landmark_onnx_tensorrt",
+    graph = "hand_landmark_onnx_tensorrt.pbtxt",
+    register_as = "HandLandmarkOnnxTensorRT",
+    deps = [
+        ":hand_landmark_model_loader",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_onnx_tensorrt",
+        "//mediapipe/calculators/tensor:tensors_to_classification_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
+        "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
+        "//mediapipe/calculators/util:landmark_projection_calculator",
+        "//mediapipe/calculators/util:thresholding_calculator",
+        "//mediapipe/calculators/util:world_landmark_projection_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
     name = "hand_landmark_gpu",
     graph = "hand_landmark_gpu.pbtxt",
     register_as = "HandLandmarkGpu",

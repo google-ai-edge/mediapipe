@@ -54,6 +54,36 @@ mediapipe_simple_subgraph(
 )
 
 mediapipe_simple_subgraph(
+    name = "face_landmarks_from_pose_onnx_cuda",
+    graph = "face_landmarks_from_pose_onnx_cuda.pbtxt",
+    register_as = "FaceLandmarksFromPoseOnnxCUDA",
+    deps = [
+        ":face_detection_front_detections_to_roi",
+        ":face_landmarks_from_pose_to_recrop_roi",
+        ":face_tracking",
+        "//mediapipe/calculators/core:split_proto_list_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/modules/face_detection:face_detection_short_range_by_roi_onnx_cuda",
+        "//mediapipe/modules/face_landmark:face_landmark_onnx_cuda",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_landmarks_from_pose_onnx_tensorrt",
+    graph = "face_landmarks_from_pose_onnx_tensorrt.pbtxt",
+    register_as = "FaceLandmarksFromPoseOnnxTensorRT",
+    deps = [
+        ":face_detection_front_detections_to_roi",
+        ":face_landmarks_from_pose_to_recrop_roi",
+        ":face_tracking",
+        "//mediapipe/calculators/core:split_proto_list_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/modules/face_detection:face_detection_short_range_by_roi_onnx_tensorrt",
+        "//mediapipe/modules/face_landmark:face_landmark_onnx_tensorrt",
+    ],
+)
+
+mediapipe_simple_subgraph(
     name = "face_landmarks_to_roi",
     graph = "face_landmarks_to_roi.pbtxt",
     register_as = "FaceLandmarksToRoi",
@@ -127,6 +157,36 @@ mediapipe_simple_subgraph(
 )
 
 mediapipe_simple_subgraph(
+    name = "hand_landmarks_from_pose_onnx_cuda",
+    graph = "hand_landmarks_from_pose_onnx_cuda.pbtxt",
+    register_as = "HandLandmarksFromPoseOnnxCUDA",
+    deps = [
+        ":hand_landmarks_from_pose_to_recrop_roi",
+        ":hand_recrop_by_roi_onnx_cuda",
+        ":hand_tracking",
+        ":hand_visibility_from_hand_landmarks_from_pose",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/modules/hand_landmark:hand_landmark_onnx_cuda",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "hand_landmarks_from_pose_onnx_tensorrt",
+    graph = "hand_landmarks_from_pose_onnx_tensorrt.pbtxt",
+    register_as = "HandLandmarksFromPoseOnnxTensorRT",
+    deps = [
+        ":hand_landmarks_from_pose_to_recrop_roi",
+        ":hand_recrop_by_roi_onnx_tensorrt",
+        ":hand_tracking",
+        ":hand_visibility_from_hand_landmarks_from_pose",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/modules/hand_landmark:hand_landmark_onnx_tensorrt",
+    ],
+)
+
+mediapipe_simple_subgraph(
     name = "hand_landmarks_to_roi",
     graph = "hand_landmarks_to_roi.pbtxt",
     register_as = "HandLandmarksToRoi",
@@ -161,6 +221,40 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
+        "//mediapipe/calculators/util:alignment_points_to_rects_calculator",
+        "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
+        "//mediapipe/calculators/util:landmark_projection_calculator",
+        "//mediapipe/calculators/util:landmarks_to_detection_calculator",
+        "//mediapipe/calculators/util:rect_transformation_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "hand_recrop_by_roi_onnx_cuda",
+    graph = "hand_recrop_by_roi_onnx_cuda.pbtxt",
+    register_as = "HandRecropByRoiOnnxCUDA",
+    deps = [
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_onnx_cuda",
+        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
+        "//mediapipe/calculators/util:alignment_points_to_rects_calculator",
+        "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
+        "//mediapipe/calculators/util:landmark_projection_calculator",
+        "//mediapipe/calculators/util:landmarks_to_detection_calculator",
+        "//mediapipe/calculators/util:rect_transformation_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "hand_recrop_by_roi_onnx_tensorrt",
+    graph = "hand_recrop_by_roi_onnx_tensorrt.pbtxt",
+    register_as = "HandRecropByRoiOnnxTensorRT",
+    deps = [
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_onnx_tensorrt",
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:alignment_points_to_rects_calculator",
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
@@ -216,6 +310,26 @@ mediapipe_simple_subgraph(
 )
 
 mediapipe_simple_subgraph(
+    name = "hand_landmarks_left_and_right_onnx_cuda",
+    graph = "hand_landmarks_left_and_right_onnx_cuda.pbtxt",
+    register_as = "HandLandmarksLeftAndRightOnnxCUDA",
+    deps = [
+        ":hand_landmarks_from_pose_onnx_cuda",
+        "//mediapipe/calculators/core:split_proto_list_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "hand_landmarks_left_and_right_onnx_tensorrt",
+    graph = "hand_landmarks_left_and_right_onnx_tensorrt.pbtxt",
+    register_as = "HandLandmarksLeftAndRightOnnxTensorRT",
+    deps = [
+        ":hand_landmarks_from_pose_onnx_tensorrt",
+        "//mediapipe/calculators/core:split_proto_list_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
     name = "hand_landmarks_from_pose_to_recrop_roi",
     graph = "hand_landmarks_from_pose_to_recrop_roi.pbtxt",
     register_as = "HandLandmarksFromPoseToRecropRoi",
@@ -262,5 +376,33 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/modules/pose_landmark:pose_landmark_cpu",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "holistic_landmark_onnx_cuda",
+    graph = "holistic_landmark_onnx_cuda.pbtxt",
+    register_as = "HolisticLandmarkOnnxCUDA",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":face_landmarks_from_pose_onnx_cuda",
+        ":hand_landmarks_left_and_right_onnx_cuda",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/image:image_transformation_calculator",
+        "//mediapipe/modules/pose_landmark:pose_landmark_onnx_cuda",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "holistic_landmark_onnx_tensorrt",
+    graph = "holistic_landmark_onnx_tensorrt.pbtxt",
+    register_as = "HolisticLandmarkOnnxTensorRT",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":face_landmarks_from_pose_onnx_tensorrt",
+        ":hand_landmarks_left_and_right_onnx_tensorrt",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/image:image_transformation_calculator",
+        "//mediapipe/modules/pose_landmark:pose_landmark_onnx_tensorrt",
     ],
 )
