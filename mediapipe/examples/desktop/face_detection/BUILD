@@ -25,10 +25,90 @@ cc_binary(
 )
 
 cc_binary(
+    name = "face_detection_full_range_cpu_fps",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_fps",
+        "//mediapipe/graphs/face_detection:face_detection_full_range_desktop_live_deps",
+    ],
+)
+
+cc_binary(
+    name = "face_detection_full_range_onnx_cuda",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/graphs/face_detection:face_detection_full_range_desktop_live_onnx_cuda_deps",
+    ],
+)
+
+cc_binary(
+    name = "face_detection_full_range_onnx_cuda_fps",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_fps",
+        "//mediapipe/graphs/face_detection:face_detection_full_range_desktop_live_onnx_cuda_deps",
+    ],
+)
+
+cc_binary(
+    name = "face_detection_full_range_onnx_tensorrt",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/graphs/face_detection:face_detection_full_range_desktop_live_onnx_tensorrt_deps",
+    ],
+)
+
+cc_binary(
+    name = "face_detection_full_range_onnx_tensorrt_fps",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_fps",
+        "//mediapipe/graphs/face_detection:face_detection_full_range_desktop_live_onnx_tensorrt_deps",
+    ],
+)
+
+cc_binary(
     name = "face_detection_cpu",
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/face_detection:desktop_live_calculators",
+    ],
+)
+
+cc_binary(
+    name = "face_detection_cpu_fps",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_fps",
+        "//mediapipe/graphs/face_detection:desktop_live_calculators",
+    ],
+)
+
+cc_binary(
+    name = "face_detection_onnx_cuda",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/graphs/face_detection:desktop_live_onnx_cuda_calculators",
+    ],
+)
+
+cc_binary(
+    name = "face_detection_onnx_cuda_fps",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_fps",
+        "//mediapipe/graphs/face_detection:desktop_live_onnx_cuda_calculators",
+    ],
+)
+
+cc_binary(
+    name = "face_detection_onnx_tensorrt",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/graphs/face_detection:desktop_live_onnx_tensorrt_calculators",
+    ],
+)
+
+cc_binary(
+    name = "face_detection_onnx_tensorrt_fps",
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_fps",
+        "//mediapipe/graphs/face_detection:desktop_live_onnx_tensorrt_calculators",
     ],
 )
 

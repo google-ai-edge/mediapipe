@@ -43,6 +43,45 @@ mediapipe_simple_subgraph(
 )
 
 mediapipe_simple_subgraph(
+    name = "face_landmark_onnx_cuda",
+    graph = "face_landmark_onnx_cuda.pbtxt",
+    register_as = "FaceLandmarkOnnxCUDA",
+    deps = [
+        ":tensors_to_face_landmarks",
+        ":tensors_to_face_landmarks_with_attention",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_onnx_cuda",
+        "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
+        "//mediapipe/calculators/util:landmark_projection_calculator",
+        "//mediapipe/calculators/util:thresholding_calculator",
+        "//mediapipe/framework/tool:switch_container",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_landmark_onnx_tensorrt",
+    graph = "face_landmark_onnx_tensorrt.pbtxt",
+    register_as = "FaceLandmarkOnnxTensorRT",
+    deps = [
+        ":tensors_to_face_landmarks",
+        ":tensors_to_face_landmarks_with_attention",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_onnx_tensorrt",
+        "//mediapipe/calculators/tensor:tensors_to_floats_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
+        "//mediapipe/calculators/util:landmark_projection_calculator",
+        "//mediapipe/calculators/util:thresholding_calculator",
+        "//mediapipe/framework/tool:switch_container",
+    ],
+)
+
+mediapipe_simple_subgraph(
     name = "face_landmark_gpu",
     graph = "face_landmark_gpu.pbtxt",
     register_as = "FaceLandmarkGpu",
@@ -81,6 +120,48 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:association_norm_rect_calculator",
         "//mediapipe/calculators/util:collection_has_min_size_calculator",
         "//mediapipe/modules/face_detection:face_detection_short_range_cpu",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_landmark_front_onnx_cuda",
+    graph = "face_landmark_front_onnx_cuda.pbtxt",
+    register_as = "FaceLandmarkFrontOnnxCUDA",
+    deps = [
+        ":face_detection_front_detection_to_roi",
+        ":face_landmark_landmarks_to_roi",
+        ":face_landmark_onnx_cuda",
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:clip_vector_size_calculator",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:previous_loopback_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/util:association_norm_rect_calculator",
+        "//mediapipe/calculators/util:collection_has_min_size_calculator",
+        "//mediapipe/modules/face_detection:face_detection_short_range_onnx_cuda",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_landmark_front_onnx_tensorrt",
+    graph = "face_landmark_front_onnx_tensorrt.pbtxt",
+    register_as = "FaceLandmarkFrontOnnxTensorRT",
+    deps = [
+        ":face_detection_front_detection_to_roi",
+        ":face_landmark_landmarks_to_roi",
+        ":face_landmark_onnx_tensorrt",
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:clip_vector_size_calculator",
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:previous_loopback_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/util:association_norm_rect_calculator",
+        "//mediapipe/calculators/util:collection_has_min_size_calculator",
+        "//mediapipe/modules/face_detection:face_detection_short_range_onnx_tensorrt",
     ],
 )
 

@@ -17,7 +17,7 @@ load(
     "mediapipe_simple_subgraph",
 )
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
-load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
+load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")  #@unused
 
 licenses(["notice"])
 
@@ -32,6 +32,24 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
         "//mediapipe/calculators/util:to_image_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_detection_short_range_by_roi_onnx_cuda",
+    graph = "face_detection_short_range_by_roi_onnx_cuda.pbtxt",
+    register_as = "FaceDetectionShortRangeByRoiOnnxCUDA",
+    deps = [
+        ":face_detection_short_range_onnx_cuda",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_detection_short_range_by_roi_onnx_tensorrt",
+    graph = "face_detection_short_range_by_roi_onnx_tensorrt.pbtxt",
+    register_as = "FaceDetectionShortRangeByRoiOnnxTensorRT",
+    deps = [
+        ":face_detection_short_range_onnx_tensorrt",
     ],
 )
 
@@ -75,11 +93,47 @@ mediapipe_simple_subgraph(
 )
 
 mediapipe_simple_subgraph(
+    name = "face_detection_short_range_onnx_cuda",
+    graph = "face_detection_short_range_onnx_cuda.pbtxt",
+    register_as = "FaceDetectionShortRangeOnnxCUDA",
+    deps = [
+        ":face_detection_onnx_cuda",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_detection_short_range_onnx_tensorrt",
+    graph = "face_detection_short_range_onnx_tensorrt.pbtxt",
+    register_as = "FaceDetectionShortRangeOnnxTensorRT",
+    deps = [
+        ":face_detection_onnx_tensorrt",
+    ],
+)
+
+mediapipe_simple_subgraph(
     name = "face_detection_full_range",
     graph = "face_detection_full_range.pbtxt",
     register_as = "FaceDetectionFullRange",
     deps = [
         ":face_detection",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_detection_full_range_onnx_cuda",
+    graph = "face_detection_full_range_onnx_cuda.pbtxt",
+    register_as = "FaceDetectionFullRangeOnnxCUDA",
+    deps = [
+        ":face_detection_onnx_cuda",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_detection_full_range_onnx_tensorrt",
+    graph = "face_detection_full_range_onnx_tensorrt.pbtxt",
+    register_as = "FaceDetectionFullRangeOnnxTensorRT",
+    deps = [
+        ":face_detection_onnx_tensorrt",
     ],
 )
 
@@ -102,6 +156,42 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/core:gate_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
+        "//mediapipe/calculators/tflite:ssd_anchors_calculator",
+        "//mediapipe/calculators/util:detection_projection_calculator",
+        "//mediapipe/calculators/util:non_max_suppression_calculator",
+        "//mediapipe/calculators/util:to_image_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_detection_onnx_cuda",
+    graph = "face_detection_onnx_cuda.pbtxt",
+    register_as = "FaceDetectionOnnxCUDA",
+    deps = [
+        ":face_detection_cc_proto",
+        ":face_detection_options_lib",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_onnx_cuda",
+        "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
+        "//mediapipe/calculators/tflite:ssd_anchors_calculator",
+        "//mediapipe/calculators/util:detection_projection_calculator",
+        "//mediapipe/calculators/util:non_max_suppression_calculator",
+        "//mediapipe/calculators/util:to_image_calculator",
+    ],
+)
+
+mediapipe_simple_subgraph(
+    name = "face_detection_onnx_tensorrt",
+    graph = "face_detection_onnx_tensorrt.pbtxt",
+    register_as = "FaceDetectionOnnxTensorRT",
+    deps = [
+        ":face_detection_cc_proto",
+        ":face_detection_options_lib",
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_onnx_tensorrt",
         "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
         "//mediapipe/calculators/tflite:ssd_anchors_calculator",
         "//mediapipe/calculators/util:detection_projection_calculator",
@@ -168,8 +258,11 @@ mediapipe_simple_subgraph(
 
 exports_files(
     srcs = [
+        "face_detection_full_range.onnx",
         "face_detection_full_range.tflite",
+        "face_detection_full_range_sparse.onnx",
         "face_detection_full_range_sparse.tflite",
+        "face_detection_short_range.onnx",
         "face_detection_short_range.tflite",
     ],
 )

@@ -44,6 +44,26 @@ cc_library(
 )
 
 cc_library(
+    name = "desktop_live_onnx_cuda_calculators",
+    deps = [
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/modules/face_detection:face_detection_short_range_onnx_cuda",
+    ],
+)
+
+cc_library(
+    name = "desktop_live_onnx_tensorrt_calculators",
+    deps = [
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/modules/face_detection:face_detection_short_range_onnx_tensorrt",
+    ],
+)
+
+cc_library(
     name = "desktop_live_gpu_calculators",
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator",
@@ -91,5 +111,25 @@ cc_library(
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/modules/face_detection:face_detection_full_range_cpu",
+    ],
+)
+
+cc_library(
+    name = "face_detection_full_range_desktop_live_onnx_cuda_deps",
+    deps = [
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/modules/face_detection:face_detection_full_range_onnx_cuda",
+    ],
+)
+
+cc_library(
+    name = "face_detection_full_range_desktop_live_onnx_tensorrt_deps",
+    deps = [
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/modules/face_detection:face_detection_full_range_onnx_tensorrt",
     ],
 )

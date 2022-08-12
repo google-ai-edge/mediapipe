@@ -1,0 +1,37 @@
+type: "FaceDetectionFullRangeOnnxTensorRT"
+
+input_stream: "IMAGE:image"
+
+input_stream: "ROI:roi"
+
+output_stream: "DETECTIONS:detections"
+
+graph_options: {
+  [type.googleapis.com/mediapipe.FaceDetectionOptions] {}
+}
+
+node {
+  calculator: "FaceDetectionOnnxTensorRT"
+  input_stream: "IMAGE:image"
+  input_stream: "ROI:roi"
+  output_stream: "DETECTIONS:detections"
+  node_options: {
+    [type.googleapis.com/mediapipe.FaceDetectionOptions] {
+      model_path: "mediapipe/modules/face_detection/face_detection_full_range.onnx"
+      tensor_width: 192
+      tensor_height: 192
+
+      num_layers: 1
+      strides: 4
+      interpolated_scale_aspect_ratio: 0.0
+
+      num_boxes: 2304
+      x_scale: 192.0
+      y_scale: 192.0
+      h_scale: 192.0
+      w_scale: 192.0
+      min_score_thresh: 0.6
+    }
+  }
+  option_value: "OPTIONS:options"
+}
