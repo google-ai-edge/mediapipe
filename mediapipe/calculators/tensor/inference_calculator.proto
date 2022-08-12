@@ -169,5 +169,4 @@ message InferenceCalculatorOptions {
     // NOTE: use_gpu/use_nnapi are ignored if specified. (Delegate takes
     // precedence over use_* deprecated options.)
     optional Delegate delegate = 5;
-    optional string landmark_path = 6;
 }

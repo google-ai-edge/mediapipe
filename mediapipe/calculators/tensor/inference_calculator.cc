@@ -67,7 +67,6 @@ public:
         for (const auto& suffix : impls) {
             const auto impl = absl::StrCat("InferenceCalculator", suffix);
             if (!mediapipe::CalculatorBaseRegistry::IsRegistered(impl)) {
-                LOG(INFO) << impl;
                 continue;
             }
             CalculatorGraphConfig::Node impl_node = subgraph_node;
