@@ -141,6 +141,7 @@ run code search using
 *   [Slack community](https://mediapipe.page.link/joinslack) for MediaPipe users
 *   [Discuss](https://groups.google.com/forum/#!forum/mediapipe) - General
     community discussion around MediaPipe
+*   [Kaggle starter](https://www.kaggle.com/code/ipythonx/google-mediapipe-starter) - Getting started MediaPipe in kaggle environment.
 
 ## Alpha disclaimer
 
