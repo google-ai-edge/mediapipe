@@ -142,6 +142,7 @@ run code search using
 *   [Discuss](https://groups.google.com/forum/#!forum/mediapipe) - General
     community discussion around MediaPipe
 *   [Kaggle starter](https://www.kaggle.com/code/ipythonx/google-mediapipe-starter) - Getting started MediaPipe in kaggle environment.
+*   [Huggingface gradio](https://huggingface.co/spaces/innat/Google-MediaPipe)
 
 ## Alpha disclaimer
 
