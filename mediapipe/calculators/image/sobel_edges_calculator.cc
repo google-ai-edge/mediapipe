@@ -185,7 +185,6 @@ absl::Status SobelEdgesCalculator::GlRender(const GlTexture& src,
 
   // program
   glUseProgram(program_);
-  glUniform1i(frame_, 1);
 
   // parameters
   glUniform1i(frame_, 1);
