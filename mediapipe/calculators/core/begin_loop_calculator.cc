@@ -16,6 +16,7 @@
 
 #include <vector>
 
+#include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
@@ -45,6 +46,9 @@ REGISTER_CALCULATOR(BeginLoopDetectionCalculator);
 // A calculator to process std::vector<Matrix>.
 typedef BeginLoopCalculator<std::vector<Matrix>> BeginLoopMatrixCalculator;
 REGISTER_CALCULATOR(BeginLoopMatrixCalculator);
+
+typedef BeginLoopCalculator<std::vector<std::vector<cv::Point3d>>> BeginLoopPointsCalculator;
+REGISTER_CALCULATOR(BeginLoopPointsCalculator);
 
 // A calculator to process std::vector<std::vector<Matrix>>.
 typedef BeginLoopCalculator<std::vector<std::vector<Matrix>>>

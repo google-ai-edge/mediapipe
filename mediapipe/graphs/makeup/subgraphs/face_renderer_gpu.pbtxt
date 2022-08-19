@@ -18,7 +18,7 @@ output_stream: "IMAGE:output_image"
 
 node {
   calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE:input_image"
+  input_stream: "IMAGE_GPU:input_image"
   output_stream: "SIZE:image_size"
 }
 # Outputs each element of multi_face_landmarks at a fake timestamp for the rest
@@ -28,16 +28,16 @@ node {
 node {
   calculator: "BeginLoopNormalizedLandmarkListVectorCalculator"
   input_stream: "ITERABLE:multi_face_landmarks"
-  input_stream: "IMAGE:input_image"
+  input_stream: "IMAGE_GPU:input_image"
   output_stream: "ITEM:face_landmarks"
-  output_stream: "IMAGE:loop_image"
+  output_stream: "IMAGE_GPU:loop_image"
   output_stream: "BATCH_END:landmark_timestamp"
 }
 
 # Converts landmarks to face part masks.
 node {
   calculator: "LandmarksToMaskCalculator"
-  input_stream: "IMAGE:loop_image"
+  input_stream: "IMAGE_GPU:loop_image"
   input_stream: "NORM_LANDMARKS:face_landmarks"
   output_stream: "FACEBOX:face_box"
   output_stream: "MASK:mask"
@@ -63,17 +63,17 @@ node {
 #Applies lipstick to the face on the IMAGE using MASK.
 node {
   calculator: "DrawLipstickCalculator"
-  input_stream: "IMAGE:input_image"
+  input_stream: "IMAGE_GPU:input_image"
   input_stream: "MASK:0:multi_mask"
-  output_stream: "IMAGE:input_image_1"
+  output_stream: "IMAGE_GPU:input_image_1"
 }
 
 #Whitens teeth of the face on the IMAGE using MASK.
 node {
   calculator: "WhitenTeethCalculator"
-  input_stream: "IMAGE:input_image_1"
+  input_stream: "IMAGE_GPU:input_image_1"
   input_stream: "MASK:0:multi_mask"
-  output_stream: "IMAGE:input_image_2"
+  output_stream: "IMAGE_GPU:input_image_2"
 }
 
 #Smoothes face on the IMAGE using MASK.
@@ -81,41 +81,19 @@ node {
   calculator: "SmoothFaceCalculator1"
   input_stream: "IMAGE:input_image_2"
   input_stream: "MASK:0:multi_mask"
-  input_stream: "FACE:0:multi_face_box"
+  input_stream: "FACEBOX:0:multi_face_box"
   output_stream: "IMAGE:input_image_3"
   output_stream: "MASK:not_full_face"
-  output_stream: "FACE:box1"
+  output_stream: "FACEBOX:box1"
 }
 
+#Smoothes face on the IMAGE using MASK.
 node {
-   calculator: "RoundRobinDemuxCalculator"
-   input_stream: "box1"
-   output_stream: "OUTPUT:0:box1_0"
-   output_stream: "OUTPUT:1:box1_1"
-   output_stream: "SELECT:select"
- }
-
- node {
   calculator: "BilateralCalculator"
-  input_stream: "IMAGE:box1_0"
-  output_stream: "CVMAT:box14_0"
+  input_stream: "IMAGE:input_image_3"
+  input_stream: "FACEBOX:box1"
+  output_stream: "IMAGE2:input_image_4"
 }
- node {
-   calculator: "BilateralCalculator"
-   input_stream: "IMAGE:box1_1"
-   output_stream: "CVMAT:box14_1"
- }
-
- node {
-   calculator: "MuxCalculator"
-   input_stream: "INPUT:0:box14_0"
-   input_stream: "INPUT:1:box14_1"
-   input_stream: "SELECT:select"
-  output_stream: "OUTPUT:input_image_4"
-   input_stream_handler {
-     input_stream_handler: "MuxInputStreamHandler"
-   }
- }
 
 #Smoothes face on the IMAGE using MASK.
 node {
@@ -126,4 +104,3 @@ node {
   input_stream: "FACEBOX:box1"
   output_stream: "IMAGE:output_image"
 }
-

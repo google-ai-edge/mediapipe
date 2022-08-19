@@ -40,3 +40,54 @@ cc_library(
     ],
     alwayslink = 1,
 )
+
+cc_library(
+    name = "points_to_face_box_calculator",
+    srcs = ["points_to_face_box_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+   "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_highgui",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "landmarks_to_point_array_calculator",
+    srcs = ["landmarks_to_point_array_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+   "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "point_vector_to_mask_calculator",
+    srcs = ["point_vector_to_mask_calculator.cc"],
+    hdrs = ["point_vector_to_mask_calculator.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+   "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+    ],
+    alwayslink = 1,
+)

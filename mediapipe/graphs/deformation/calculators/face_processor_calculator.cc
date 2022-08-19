@@ -137,9 +137,9 @@ namespace mediapipe
 
     vector<string> index_names;
     map<string, vector<int>> indexes;
-
-    map<string, Tensor<double>> masks;
     vector<vector<int>> _trianglesIndexes;
+    map<string, Tensor<double>> masks;
+
     Tensor<double> __facePts;
   };
 
@@ -181,14 +181,13 @@ namespace mediapipe
   absl::Status FaceProcessorCalculator::Open(CalculatorContext *cc)
   {
     cc->SetOffset(TimestampDiff(0));
+    MP_RETURN_IF_ERROR(SetData(cc));
 
-    return absl::OkStatus();
+        return absl::OkStatus();
   }
 
   absl::Status FaceProcessorCalculator::Process(CalculatorContext *cc)
   {
-    MP_RETURN_IF_ERROR(SetData(cc));
-
     if (cc->Inputs().HasTag(kNormLandmarksTag) &&
         !cc->Inputs().Tag(kNormLandmarksTag).IsEmpty())
     {
@@ -206,11 +205,10 @@ namespace mediapipe
   absl::Status FaceProcessorCalculator::SetData(CalculatorContext *cc)
   {
     masks = {};
-    _trianglesIndexes = {};
+    string line;
 
     string filename = "mediapipe/graphs/deformation/config/triangles.txt";
-    string content_blob;
-    ASSIGN_OR_RETURN(content_blob,
+    ASSIGN_OR_RETURN(string content_blob,
                      ReadContentBlobFromFile(filename),
                      _ << "Failed to read texture blob from file!");
 
@@ -219,7 +217,6 @@ namespace mediapipe
     vector<int> tmp;
     for (int i = 0; i < 854; ++i)
     {
-      string line;
       tmp = {};
       for (int j = 0; j < 3; ++j)
       {
@@ -228,20 +225,20 @@ namespace mediapipe
       }
       _trianglesIndexes.push_back(tmp);
     }
+    stream.clear();
 
     filename = "./mediapipe/graphs/deformation/config/index_names.txt";
     ASSIGN_OR_RETURN(content_blob,
                      ReadContentBlobFromFile(filename),
                      _ << "Failed to read texture blob from file!");
-    istringstream stream2(content_blob);
+    stream.str(content_blob);
 
-    string line;
     vector<int> idxs;
-    while (getline(stream2, line))
+    while (getline(stream, line))
     {
       index_names.push_back(line);
     }
-    stream2.clear();
+    stream.clear();
 
     for (int i = 0; i < index_names.size(); i++)
     {
@@ -250,16 +247,16 @@ namespace mediapipe
       ASSIGN_OR_RETURN(content_blob,
                        ReadContentBlobFromFile(filename),
                        _ << "Failed to read texture blob from file!");
-      stream2.str(content_blob);
+      stream.str(content_blob);
 
-      while (getline(stream2, line))
+      while (getline(stream, line))
       {
         idxs.push_back(stoi(line));
       }
       indexes[index_names[i]] = idxs;
 
       idxs = {};
-      stream2.clear();
+      stream.clear();
     }
 
     double **zero_arr;

@@ -1,51 +1,55 @@
 # MediaPipe face mesh rendering subgraph.
 
-type: "FaceRendererGpu"
+type: "FaceRendererCpu"
 
-# GPU image. (GpuBuffer)
+# CPU image. (ImageFrame)
 input_stream: "IMAGE:input_image"
 # Collection of detected/predicted faces, each represented as a list of
 # landmarks. (std::vector<NormalizedLandmarkList>)
 input_stream: "LANDMARKS:multi_face_landmarks"
-# Regions of interest calculated based on palm detections.
-# (std::vector<NormalizedRect>)
-input_stream: "NORM_RECTS:rects"
-# Detected palms. (std::vector<Detection>)
-input_stream: "DETECTIONS:detections"
 
-# GPU image with rendered data. (GpuBuffer)
+# CPU image with rendered data. (ImageFrame)
 output_stream: "IMAGE:output_image"
 
 node {
   calculator: "ImagePropertiesCalculator"
   input_stream: "IMAGE:input_image"
-  output_stream: "SIZE:image_size"
+  output_stream: "SIZE:size"
 }
-# Outputs each element of multi_face_landmarks at a fake timestamp for the rest
-# of the graph to process. At the end of the loop, outputs the BATCH_END
-# timestamp for downstream calculators to inform them that all elements in the
-# vector have been processed.
+
 node {
   calculator: "BeginLoopNormalizedLandmarkListVectorCalculator"
   input_stream: "ITERABLE:multi_face_landmarks"
-  input_stream: "IMAGE:input_image"
+  input_stream: "CLONE:size"
   output_stream: "ITEM:face_landmarks"
-  output_stream: "IMAGE:loop_image"
+  output_stream: "CLONE:image_size"
   output_stream: "BATCH_END:landmark_timestamp"
 }
 
 # Converts landmarks to face part masks.
 node {
-  calculator: "LandmarksToMaskCalculator"
-  input_stream: "IMAGE:loop_image"
+  calculator: "LandmarksToPointArrayCalculator"
+  input_stream: "IMAGE_SIZE:image_size"
   input_stream: "NORM_LANDMARKS:face_landmarks"
-  output_stream: "FACEBOX:face_box"
-  output_stream: "MASK:mask"
+  output_stream: "POINTS:points"
 }
 
-# Collects a MapMask object for each hand into a vector. Upon receiving the
-# BATCH_END timestamp, outputs the vector of RenderData at the BATCH_END
-# timestamp.
+# Converts landmarks to face part masks.
+node {
+  calculator: "PointVectorToMaskCalculator"
+  input_stream: "POINTS:points"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "MASKS:mask"
+}
+
+# Converts landmarks to face part masks.
+node {
+  calculator: "PointsToFaceBoxCalculator"
+  input_stream: "POINTS:points"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "FACE_BOX:face_box"
+}
+
 node {
   calculator: "EndLoopMapMaskCalculator"
   input_stream: "ITEM:mask"
@@ -60,36 +64,44 @@ node {
   output_stream: "ITERABLE:multi_face_box"
 }
 
+node {
+  calculator: "ImageFrameToMatCalculator"
+  input_stream: "IMAGE:input_image"
+  output_stream: "MAT:input_mat"
+}
+
 #Applies lipstick to the face on the IMAGE using MASK.
 node {
   calculator: "DrawLipstickCalculator"
-  input_stream: "IMAGE:input_image"
+  input_stream: "MAT:input_mat"
   input_stream: "MASK:0:multi_mask"
-  output_stream: "IMAGE:input_image_1"
+  output_stream: "MAT:lipstick_image"
+  output_stream: "MASK:lipstick_mask"
 }
 
 #Whitens teeth of the face on the IMAGE using MASK.
 node {
   calculator: "WhitenTeethCalculator"
-  input_stream: "IMAGE:input_image_1"
+  input_stream: "MAT:input_mat"
   input_stream: "MASK:0:multi_mask"
-  output_stream: "IMAGE:input_image_2"
+  output_stream: "MAT:teeth_image"
+  output_stream: "MASK:teeth_mask"
 }
 
 #Smoothes face on the IMAGE using MASK.
 node {
   calculator: "SmoothFaceCalculator1"
-  input_stream: "IMAGE:input_image_2"
+  input_stream: "MAT:input_mat"
   input_stream: "MASK:0:multi_mask"
   input_stream: "FACE:0:multi_face_box"
-  output_stream: "IMAGE:input_image_3"
-  output_stream: "MASK:not_full_face"
-  output_stream: "FACE:box1"
+  output_stream: "MAT:tmp_image_1"
+  output_stream: "MASK:face_mask"
+  output_stream: "FACE:box_1"
 }
 
 node {
    calculator: "RoundRobinDemuxCalculator"
-   input_stream: "box1"
+   input_stream: "box_1"
    output_stream: "OUTPUT:0:box1_0"
    output_stream: "OUTPUT:1:box1_1"
    output_stream: "SELECT:select"
@@ -111,7 +123,7 @@ node {
    input_stream: "INPUT:0:box14_0"
    input_stream: "INPUT:1:box14_1"
    input_stream: "SELECT:select"
-  output_stream: "OUTPUT:input_image_4"
+  output_stream: "OUTPUT:tmp_image_2"
    input_stream_handler {
      input_stream_handler: "MuxInputStreamHandler"
    }
@@ -120,10 +132,21 @@ node {
 #Smoothes face on the IMAGE using MASK.
 node {
   calculator: "SmoothFaceCalculator2"
-  input_stream: "IMAGE:input_image_2"
-  input_stream: "IMAGE2:input_image_4"
-  input_stream: "MASK:not_full_face"
-  input_stream: "FACEBOX:box1"
-  output_stream: "IMAGE:output_image"
+  input_stream: "MAT:input_mat"
+  input_stream: "IMAGE2:tmp_image_2"
+  input_stream: "MASK:face_mask"
+  input_stream: "FACEBOX:box_1"
+  output_stream: "MAT:face_image"
 }
 
+#Merges output images of DrawLipstick, WhitenTeeth and SmoothFace calculators
+node {
+  calculator: "MergeImagesCalculator"
+  input_stream: "MAT:0:lipstick_image"
+  input_stream: "MASK:0:lipstick_mask"
+  input_stream: "MAT:1:teeth_image"
+  input_stream: "MASK:1:teeth_mask"
+  input_stream: "MAT:2:face_image"
+  input_stream: "MASK:2:face_mask"
+  output_stream: "IMAGE:output_image"
+}

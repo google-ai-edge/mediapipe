@@ -18,9 +18,7 @@ bazel-bin/mediapipe/examples/desktop/image_style/image_style_cpu --calculator_gr
 ```
 Run with (using video):
 ```
-bazel-bin/mediapipe/examples/desktop/image_style/image_style_cpu --calculator_graph_config_file=mediapipe/graphs/image_style/image_style_cpu.pbtxt
---input_video_path=/path/video.mp4 
---output_video_path=/path/outvideo.mp4
+bazel-bin/mediapipe/examples/desktop/image_style/image_style_cpu --calculator_graph_config_file=mediapipe/graphs/image_style/image_style_cpu.pbtxt --input_video_path=/path/video.mp4 --output_video_path=/path/outvideo.mp4
 ```
 
 2. Mobile (Android)

@@ -19,10 +19,7 @@ bazel-bin/mediapipe/examples/desktop/beauty/beauty_cpu
 ```
 Run with (using video):
 ```
-bazel-bin/mediapipe/examples/desktop/beauty/beauty_cpu 
---calculator_graph_config_file=mediapipe/graphs/beauty/beauty_desktop_cpu.pbtxt 
---input_video_path=/path/video.mp4 
---output_video_path=/path/outvideo.mp4
+bazel-bin/mediapipe/examples/desktop/beauty/beauty_cpu --calculator_graph_config_file=mediapipe/graphs/beauty/beauty_desktop_cpu.pbtxt --input_video_path=/path/video.mp4 --output_video_path=/path/outvideo.mp4
 ```
 
 2. Desktop-CPU-Single (Not divided, using render data)

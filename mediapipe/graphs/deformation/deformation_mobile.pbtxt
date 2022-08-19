@@ -57,6 +57,16 @@ node {
 }
 
 node {
+   calculator: "LocalFileContentsCalculator"
+   input_side_packet: "FILE_PATH:0:file_path1"
+   input_side_packet: "FILE_PATH:1:file_path2"
+  input_side_packet: "FILE_PATH:1:file_path2"
+   output_side_packet: "CONTENTS:0:contents1"
+   output_side_packet: "CONTENTS:1:contents2"
+   output_side_packet: "CONTENTS:1:contents2"
+}
+
+node {
   calculator: "FaceProcessorCalculator"
   input_stream: "NORM_LANDMARKS:multi_face_landmarks"
   input_stream: "SIZE:size"

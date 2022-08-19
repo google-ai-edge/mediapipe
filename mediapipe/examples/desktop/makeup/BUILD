@@ -17,47 +17,18 @@ licenses(["notice"])
 package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
 cc_binary(
-    name = "beauty_tflite",
+    name = "makeup_cpu",
     deps = [
-        "//mediapipe/examples/desktop:simple_run_graph_main",
-        "//mediapipe/graphs/beauty:desktop_calculators",
+        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/graphs/makeup:desktop_live_calculators",
     ],
 )
 
 cc_binary(
-    name = "beauty_cpu",
+    name = "makeup_mobile",
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
-        "//mediapipe/graphs/beauty:desktop_live_calculators",
+        "//mediapipe/graphs/makeup:mobile_calculators",
     ],
 )
 
-cc_binary(
-    name = "beauty_mobile",
-    deps = [
-        "//mediapipe/examples/desktop:demo_run_graph_main",
-        "//mediapipe/graphs/beauty:mobile_calculators",
-    ],
-)
-
-cc_binary(
-    name = "beauty_cpu_single",
-    deps = [
-        "//mediapipe/examples/desktop:demo_run_graph_main",
-        "//mediapipe/graphs/beauty:desktop_live_single_calculators",
-    ],
-)
-
-
-
-
-
-
-
-cc_binary(
-    name = "beauty_gpu_over",
-    deps = [
-        "//mediapipe/examples/desktop:demo_run_graph_main",
-        "//mediapipe/graphs/beauty:desktop_gpu_over",
-    ],
-)

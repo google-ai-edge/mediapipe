@@ -57,6 +57,10 @@ typedef EndLoopCalculator<std::vector<std::tuple<double, double, double, double>
     EndLoopFaceBoxCalculator;
 REGISTER_CALCULATOR(EndLoopFaceBoxCalculator);
 
+typedef EndLoopCalculator<std::vector<std::vector<cv::Point3d>>>
+    EndLoopPointsCalculator;
+REGISTER_CALCULATOR(EndLoopPointsCalculator);
+
 typedef EndLoopCalculator<std::vector<TfLiteTensor>> EndLoopTensorCalculator;
 REGISTER_CALCULATOR(EndLoopTensorCalculator);
 

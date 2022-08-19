@@ -15,7 +15,7 @@ output_stream: "multi_face_landmarks"
 profiler_config {
   trace_enabled: true
   enable_profiler: true
-  trace_log_path: "/storage/emulated/0/Download/profiles/"
+  trace_log_interval_count: 200
 }
 
 # Throttles the images flowing downstream for flow control. It passes through

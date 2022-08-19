@@ -329,7 +329,7 @@ namespace mediapipe
     orig_width = size.first;
     orig_height = size.second;
     CHECK_GT(size.first, 0);
-    CHECK_GT(orig_height, 0);
+    CHECK_GT(size.second, 0);
 
     MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
     mat_image_ = *image_mat.get();

@@ -34,39 +34,12 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
-        "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:vector",
-    ],
-    alwayslink = 1,
-)
-
-
-cc_library(
-    name = "form_face_mask_calculator",
-    srcs = ["form_face_mask_calculator.cc"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/framework:calculator_options_cc_proto",
-        "//mediapipe/framework/formats:image_format_cc_proto",
-        "//mediapipe/util:color_cc_proto",
-        "@com_google_absl//absl/strings",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/framework/formats:image_frame_opencv",
-        "//mediapipe/framework/formats:video_stream_header",
-        "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:opencv_core",
-        "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:opencv_highgui",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
-        "//mediapipe/util:annotation_renderer",
-        "//mediapipe/util:render_data_cc_proto",
     ],
     alwayslink = 1,
 )
-
-
 
 cc_library(
     name = "smooth_face_calculator1",
@@ -84,6 +57,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_highgui",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
     ],
@@ -106,6 +80,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
+                "//mediapipe/framework/port:opencv_highgui",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
     ],
@@ -128,6 +103,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
+          "//mediapipe/framework/port:opencv_highgui",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
     ],
@@ -150,14 +126,49 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_highgui",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
     ],
     alwayslink = 1,
 )
 
+cc_library(
+    name = "merging_images_calculator",
+    srcs = ["merging_images_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "@com_google_absl//absl/strings",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:video_stream_header",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:vector",
+    ],
+    alwayslink = 1,
+)
 
-
-
+cc_library(
+    name = "imageframe_to_mat_calculator",
+    srcs = ["imageframe_to_mat_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+   "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_highgui",
+    ],
+    alwayslink = 1,
+)
 
 

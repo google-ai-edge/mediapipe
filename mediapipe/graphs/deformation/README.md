@@ -14,8 +14,7 @@ bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/d
 ```
 Run with (using your camera):
 ```
-bazel-bin/mediapipe/examples/desktop/deformation/deformation_cpu 
---calculator_graph_config_file=mediapipe/graphs/deformation/deformation_cpu.pbtxt
+bazel-bin/mediapipe/examples/desktop/deformation/deformation_cpu --calculator_graph_config_file=mediapipe/graphs/deformation/deformation_cpu.pbtxt
 ```
 Run with (using video):
 ```

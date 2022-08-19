@@ -12,16 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <math.h>
-
-#include <algorithm>
-#include <cmath>
-
-#include <memory>
-
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
@@ -29,17 +21,19 @@
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
+#include "mediapipe/framework/port/opencv_highgui_inc.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/vector.h"
 
+using namespace std;
 namespace mediapipe
 {
   namespace
   {
 
     constexpr char kMaskTag[] = "MASK";
-    constexpr char kImageFrameTag[] = "IMAGE";
+    constexpr char kMatTag[] = "MAT";
 
     inline bool HasImageTag(mediapipe::CalculatorContext *cc) { return false; }
   } // namespace
@@ -58,20 +52,15 @@ namespace mediapipe
     absl::Status Close(CalculatorContext *cc) override;
 
   private:
-    absl::Status CreateRenderTargetCpu(CalculatorContext *cc,
-                                       std::unique_ptr<cv::Mat> &image_mat,
-                                       ImageFormat::Format *target_format);
-
     absl::Status RenderToCpu(
-        CalculatorContext *cc, const ImageFormat::Format &target_format,
-        uchar *data_image, std::unique_ptr<cv::Mat> &image_mat);
+        CalculatorContext *cc);
 
-    absl::Status WhitenTeeth(CalculatorContext *cc, ImageFormat::Format *target_format,
+    absl::Status WhitenTeeth(CalculatorContext *cc,
                              const std::unordered_map<std::string, cv::Mat> &mask_vec);
 
     // Indicates if image frame is available as input.
     bool image_frame_available_ = false;
-    std::unique_ptr<cv::Mat> image_mat;
+    cv::Mat mouth;
     cv::Mat mat_image_;
     int image_width_;
     int image_height_;
@@ -82,10 +71,10 @@ namespace mediapipe
   {
     CHECK_GE(cc->Inputs().NumEntries(), 1);
 
-    if (cc->Inputs().HasTag(kImageFrameTag))
+    if (cc->Inputs().HasTag(kMatTag))
     {
-      cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
-      CHECK(cc->Outputs().HasTag(kImageFrameTag));
+      cc->Inputs().Tag(kMatTag).Set<cv::Mat>();
+      CHECK(cc->Outputs().HasTag(kMatTag));
     }
 
     // Data streams to render.
@@ -105,9 +94,13 @@ namespace mediapipe
       }
     }
 
-    if (cc->Outputs().HasTag(kImageFrameTag))
+    if (cc->Outputs().HasTag(kMatTag))
     {
-      cc->Outputs().Tag(kImageFrameTag).Set<ImageFrame>();
+      cc->Outputs().Tag(kMatTag).Set<cv::Mat>();
+    }
+    if (cc->Outputs().HasTag(kMaskTag))
+    {
+      cc->Outputs().Tag(kMaskTag).Set<cv::Mat>();
     }
 
     return absl::OkStatus();
@@ -117,16 +110,13 @@ namespace mediapipe
   {
     cc->SetOffset(TimestampDiff(0));
 
-    if (cc->Inputs().HasTag(kImageFrameTag) || HasImageTag(cc))
+    if (cc->Inputs().HasTag(kMatTag) || HasImageTag(cc))
     {
       image_frame_available_ = true;
     }
-    else
-    {
-    }
 
     // Set the output header based on the input header (if present).
-    const char *tag = kImageFrameTag;
+    const char *tag = kMatTag;
     if (image_frame_available_ && !cc->Inputs().Tag(tag).Header().IsEmpty())
     {
       const auto &input_header =
@@ -140,22 +130,21 @@ namespace mediapipe
 
   absl::Status WhitenTeethCalculator::Process(CalculatorContext *cc)
   {
-    if (cc->Inputs().HasTag(kImageFrameTag) &&
-        cc->Inputs().Tag(kImageFrameTag).IsEmpty())
+    if (cc->Inputs().HasTag(kMatTag) &&
+        cc->Inputs().Tag(kMatTag).IsEmpty())
     {
       return absl::OkStatus();
     }
 
-    // Initialize render target, drawn with OpenCV.
     ImageFormat::Format target_format;
 
-    if (cc->Outputs().HasTag(kImageFrameTag))
-    {
-      MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
-    }
-    mat_image_ = *image_mat.get();
-    image_width_ = image_mat->cols;
-    image_height_ = image_mat->rows;
+    const cv::Mat &input_mat =
+        cc->Inputs().Tag(kMatTag).Get<cv::Mat>();
+
+    mat_image_ = input_mat.clone();
+
+    image_width_ = input_mat.cols;
+    image_height_ = input_mat.rows;
 
     if (cc->Inputs().HasTag(kMaskTag) &&
         !cc->Inputs().Tag(kMaskTag).IsEmpty())
@@ -165,12 +154,11 @@ namespace mediapipe
       if (mask_vec.size() > 0)
       {
         for (auto mask : mask_vec)
-          MP_RETURN_IF_ERROR(WhitenTeeth(cc, &target_format, mask));
+          MP_RETURN_IF_ERROR(WhitenTeeth(cc, mask));
       }
     }
-    // Copy the rendered image to output.
-    uchar *image_mat_ptr = image_mat->data;
-    MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr, image_mat));
+
+    MP_RETURN_IF_ERROR(RenderToCpu(cc));
 
     return absl::OkStatus();
   }
@@ -181,124 +169,57 @@ namespace mediapipe
   }
 
   absl::Status WhitenTeethCalculator::RenderToCpu(
-      CalculatorContext *cc, const ImageFormat::Format &target_format,
-      uchar *data_image, std::unique_ptr<cv::Mat> &image_mat)
+      CalculatorContext *cc)
   {
+    auto output_frame = absl::make_unique<cv::Mat>(mat_image_);
 
-    cv::Mat mat_image_ = *image_mat.get();
-
-    auto output_frame = absl::make_unique<ImageFrame>(
-        target_format, image_width_, image_height_);
-
-    output_frame->CopyPixelData(target_format, image_width_, image_height_, data_image,
-                                ImageFrame::kDefaultAlignmentBoundary);
-
-    if (cc->Outputs().HasTag(kImageFrameTag))
+    if (cc->Outputs().HasTag(kMatTag))
     {
       cc->Outputs()
-          .Tag(kImageFrameTag)
+          .Tag(kMatTag)
           .Add(output_frame.release(), cc->InputTimestamp());
     }
 
-    return absl::OkStatus();
-  }
+    mouth.convertTo(mouth, CV_32F, 255);
+    auto output_frame2 = absl::make_unique<cv::Mat>(mouth);
 
-  absl::Status WhitenTeethCalculator::CreateRenderTargetCpu(
-      CalculatorContext *cc, std::unique_ptr<cv::Mat> &image_mat,
-      ImageFormat::Format *target_format)
-  {
-    if (image_frame_available_)
+    if (cc->Outputs().HasTag(kMaskTag))
     {
-      const auto &input_frame =
-          cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
-
-      int target_mat_type;
-      switch (input_frame.Format())
-      {
-      case ImageFormat::SRGBA:
-        *target_format = ImageFormat::SRGBA;
-        target_mat_type = CV_8UC4;
-        break;
-      case ImageFormat::SRGB:
-        *target_format = ImageFormat::SRGB;
-        target_mat_type = CV_8UC3;
-        break;
-      case ImageFormat::GRAY8:
-        *target_format = ImageFormat::SRGB;
-        target_mat_type = CV_8UC3;
-        break;
-      default:
-        return absl::UnknownError("Unexpected image frame format.");
-        break;
-      }
-
-      image_mat = absl::make_unique<cv::Mat>(
-          input_frame.Height(), input_frame.Width(), target_mat_type);
-
-      auto input_mat = formats::MatView(&input_frame);
-
-      if (input_frame.Format() == ImageFormat::GRAY8)
-      {
-        cv::Mat rgb_mat;
-        cv::cvtColor(input_mat, rgb_mat, CV_GRAY2RGB);
-        rgb_mat.copyTo(*image_mat);
-      }
-      else
-      {
-        input_mat.copyTo(*image_mat);
-      }
-    }
-    else
-    {
-      image_mat = absl::make_unique<cv::Mat>(
-          150, 150, CV_8UC4,
-          cv::Scalar(255, 255,
-                     255));
-      *target_format = ImageFormat::SRGBA;
+      cc->Outputs()
+          .Tag(kMaskTag)
+          .Add(output_frame2.release(), cc->InputTimestamp());
     }
 
     return absl::OkStatus();
   }
 
   absl::Status WhitenTeethCalculator::WhitenTeeth(CalculatorContext *cc,
-                                                  ImageFormat::Format *target_format,
                                                   const std::unordered_map<std::string, cv::Mat> &mask_vec)
   {
-    cv::Mat mouth_mask, mouth;
-    mouth_mask = cv::Mat::zeros(mat_image_.size(), CV_32F);
-
-    mouth_mask = mask_vec.find("MOUTH_INSIDE")->second.clone();
+    cv::Mat mouth_mask = mask_vec.find("MOUTH_INSIDE")->second.clone();
 
     cv::resize(mouth_mask, mouth, mat_image_.size(), cv::INTER_LINEAR);
 
-    std::vector<int> x, y;
-    std::vector<cv::Point> location;
+    cv::Rect rect = cv::boundingRect(mouth);
 
-    cv::findNonZero(mouth, location);
-
-    for (auto &i : location)
+    if (!rect.empty())
     {
-      x.push_back(i.x);
-      y.push_back(i.y);
-    }
+      double mouth_min_y = rect.y, mouth_max_y = rect.y + rect.height,
+             mouth_max_x = rect.x + rect.width, mouth_min_x = rect.x;
 
-    if (!(x.empty()) && !(y.empty()))
-    {
-      double mouth_min_y, mouth_max_y, mouth_max_x, mouth_min_x;
-      cv::minMaxLoc(y, &mouth_min_y, &mouth_max_y);
-      cv::minMaxLoc(x, &mouth_min_x, &mouth_max_x);
       double mh = mouth_max_y - mouth_min_y;
       double mw = mouth_max_x - mouth_min_x;
-      cv::Mat mouth_crop_mask;
+
       mouth.convertTo(mouth, CV_32F, 1.0 / 255);
       mouth.convertTo(mouth, CV_32F, 1.0 / 255);
+
       if (mh / mw > 0.17)
       {
         mouth_min_y = static_cast<int>(std::max(mouth_min_y - mh * 0.1, 0.0));
         mouth_max_y = static_cast<int>(std::min(mouth_max_y + mh * 0.1, (double)image_height_));
         mouth_min_x = static_cast<int>(std::max(mouth_min_x - mw * 0.1, 0.0));
         mouth_max_x = static_cast<int>(std::min(mouth_max_x + mw * 0.1, (double)image_width_));
-        mouth_crop_mask = mouth(cv::Range(mouth_min_y, mouth_max_y), cv::Range(mouth_min_x, mouth_max_x));
+        cv::Mat mouth_crop_mask = mouth(cv::Range(mouth_min_y, mouth_max_y), cv::Range(mouth_min_x, mouth_max_x));
         cv::Mat img_hsv, tmp_mask, img_hls;
         cv::cvtColor(mat_image_(cv::Range(mouth_min_y, mouth_max_y), cv::Range(mouth_min_x, mouth_max_x)), img_hsv,
                      cv::COLOR_RGBA2RGB);

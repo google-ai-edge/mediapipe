@@ -54,7 +54,8 @@ android_binary(
         ASSETS_DIR+":lowerLipCnt.txt",
         ASSETS_DIR+":upperLipCnt.txt",
         ASSETS_DIR+":widerLowerLipPts1.txt",
-        ASSETS_DIR+":widerUpperLipPts1.txt",        
+        ASSETS_DIR+":widerUpperLipPts1.txt",      
+        "//mediapipe/graphs/deformation/calculators:Tensor.h"  
     ],
     assets_dir = "",
     manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:AndroidManifest.xml",

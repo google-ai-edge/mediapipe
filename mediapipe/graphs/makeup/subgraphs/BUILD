@@ -26,21 +26,16 @@ cc_library(
     deps = [
         "//mediapipe/calculators/beauty:smooth_face_calculator1",
         "//mediapipe/calculators/beauty:bilateral_filter_calculator",
-        "//mediapipe/calculators/beauty:merging_images_calculator",
         "//mediapipe/calculators/beauty:smooth_face_calculator2",
         "//mediapipe/calculators/beauty:draw_lipstick_calculator",
         "//mediapipe/calculators/beauty:whiten_teeth_calculator",
+        "//mediapipe/calculators/beauty:merging_images_calculator",
         "//mediapipe/calculators/beauty:imageframe_to_mat_calculator",
-        "//mediapipe/calculators/landmarks:landmarks_to_mask_calculator",
-        "//mediapipe/calculators/image:image_properties_calculator",
-        "//mediapipe/calculators/image:color_convert_calculator",
+        "//mediapipe/calculators/landmarks:landmarks_to_point_array_calculator",
+        "//mediapipe/calculators/landmarks:points_to_face_box_calculator",
+        "//mediapipe/calculators/landmarks:point_vector_to_mask_calculator",
         "//mediapipe/calculators/core:round_robin_demux_calculator",
-        "//mediapipe/calculators/core:mux_calculator",        
-        "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
-         "//mediapipe/util:annotation_renderer",
-         "//mediapipe/calculators/util:annotation_overlay_calculator",
-         "//mediapipe/calculators/core:split_proto_list_calculator",
-           "//mediapipe/graphs/face_mesh/calculators:face_landmarks_to_render_data_calculator",      
+        "//mediapipe/calculators/core:mux_calculator",    
     ],
 )
 
@@ -63,13 +58,3 @@ mediapipe_simple_subgraph(
         ":renderer_calculators",
     ],
 )
-
-mediapipe_simple_subgraph(
-    name = "face_renderer_cpu_single",
-    graph = "face_renderer_cpu_single.pbtxt",
-    register_as = "FaceRendererCpuSingle",
-    deps = [
-        ":renderer_calculators",
-    ],
-)
-
