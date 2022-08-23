@@ -1,4 +1,3 @@
-我要开始征服mediapipe了哈哈哈哈哈
 ---
 layout: default
 title: Home
