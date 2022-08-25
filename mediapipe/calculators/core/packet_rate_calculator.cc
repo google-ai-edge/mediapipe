@@ -24,11 +24,10 @@ using namespace mediapipe;
 /***
  * PacketRateCalculator allows to calculate rate of incoming packages.
  * E.g. when you want to extract FPS, or any other processing rate.
- * As input it accepts any packets stream.
- * As output it emits rate (floating point scalar), namely amount of packets per second based
+ * - As input it accepts any packets stream.
+ * - As output it emits rate (floating point scalar), namely amount of packets per second based
  * calculation of current packet and previous packet.
- *
- * For very first packet it emits empty packet.
+ * - For very first packet it emits empty packet.
  *
  * Usage example:
  * node {
