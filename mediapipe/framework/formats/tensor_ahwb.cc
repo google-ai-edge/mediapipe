@@ -50,8 +50,9 @@ bool IsGlSupported() {
   return extensions_allowed;
 }
 
-absl::Status MapAHardwareBufferToGlBuffer(AHardwareBuffer* handle, size_t size,
-                                          GLuint name) {
+// Expects the target SSBO to be already bound.
+absl::Status MapAHardwareBufferToGlBuffer(AHardwareBuffer* handle,
+                                          size_t size) {
   if (!IsGlSupported()) {
     return absl::UnknownError(
         "No GL extension functions found to bind AHardwareBuffer and "
@@ -96,33 +97,71 @@ class DelayedReleaser {
 
   static void Add(AHardwareBuffer* ahwb, GLuint opengl_buffer,
                   EGLSyncKHR ssbo_sync, GLsync ssbo_read,
-                  std::function<bool()>&& ahwb_written,
+                  Tensor::FinishingFunc&& ahwb_written,
                   std::shared_ptr<mediapipe::GlContext> gl_context,
                   std::function<void()>&& callback) {
     static absl::Mutex mutex;
-    absl::MutexLock lock(&mutex);
+    std::deque<std::unique_ptr<DelayedReleaser>> to_release_local;
+    using std::swap;
+
+    // IsSignaled will grab other mutexes, so we don't want to call it while
+    // holding the deque mutex.
+    {
+      absl::MutexLock lock(&mutex);
+      swap(to_release_local, to_release_);
+    }
+
     // Using `new` to access a non-public constructor.
-    to_release_.emplace_back(absl::WrapUnique(new DelayedReleaser(
+    to_release_local.emplace_back(absl::WrapUnique(new DelayedReleaser(
         ahwb, opengl_buffer, ssbo_sync, ssbo_read, std::move(ahwb_written),
         gl_context, std::move(callback))));
-    for (auto it = to_release_.begin(); it != to_release_.end();) {
+    for (auto it = to_release_local.begin(); it != to_release_local.end();) {
       if ((*it)->IsSignaled()) {
-        it = to_release_.erase(it);
+        it = to_release_local.erase(it);
       } else {
         ++it;
       }
     }
+
+    {
+      absl::MutexLock lock(&mutex);
+      to_release_.insert(to_release_.end(),
+                         std::make_move_iterator(to_release_local.begin()),
+                         std::make_move_iterator(to_release_local.end()));
+      to_release_local.clear();
+    }
   }
+
   ~DelayedReleaser() {
-    AHardwareBuffer_release(ahwb_);
     if (release_callback_) release_callback_();
+    if (__builtin_available(android 26, *)) {
+      AHardwareBuffer_release(ahwb_);
+    }
   }
 
   bool IsSignaled() {
-    CHECK(!(ssbo_read_ && ahwb_written_))
-        << "ssbo_read_ and ahwb_written_ cannot both be set";
+    bool ready = true;
+
     if (ahwb_written_) {
-      if (!ahwb_written_()) return false;
+      if (!ahwb_written_(false)) {
+        ready = false;
+      }
+    }
+
+    if (ssbo_read_ != 0) {
+      gl_context_->Run([this, &ready]() {
+        GLenum status = glClientWaitSync(ssbo_read_, 0,
+                                         /* timeout ns = */ 0);
+        if (status != GL_CONDITION_SATISFIED && status != GL_ALREADY_SIGNALED) {
+          ready = false;
+          return;
+        }
+        glDeleteSync(ssbo_read_);
+        ssbo_read_ = 0;
+      });
+    }
+
+    if (ready && gl_context_) {
       gl_context_->Run([this]() {
         if (fence_sync_ != EGL_NO_SYNC_KHR && IsGlSupported()) {
           auto egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -134,33 +173,9 @@ class DelayedReleaser {
         glDeleteBuffers(1, &opengl_buffer_);
         opengl_buffer_ = GL_INVALID_INDEX;
       });
-      return true;
     }
 
-    gl_context_->Run([this]() {
-      if (ssbo_read_ != 0) {
-        GLenum status = glClientWaitSync(ssbo_read_, 0,
-                                         /* timeout ns = */ 0);
-        if (status != GL_CONDITION_SATISFIED && status != GL_ALREADY_SIGNALED) {
-          return;
-        }
-        glDeleteSync(ssbo_read_);
-        ssbo_read_ = 0;
-
-        // Don't wait on ssbo_sync because it is ahead of ssbo_read_sync.
-        if (fence_sync_ != EGL_NO_SYNC_KHR && IsGlSupported()) {
-          auto egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-          if (egl_display != EGL_NO_DISPLAY) {
-            eglDestroySyncKHR(egl_display, fence_sync_);
-          }
-        }
-        fence_sync_ = EGL_NO_SYNC_KHR;
-
-        glDeleteBuffers(1, &opengl_buffer_);
-        opengl_buffer_ = GL_INVALID_INDEX;
-      }
-    });
-    return opengl_buffer_ == GL_INVALID_INDEX;
+    return ready;
   }
 
  protected:
@@ -170,14 +185,14 @@ class DelayedReleaser {
   EGLSyncKHR fence_sync_;
   // TODO: use wrapper instead.
   GLsync ssbo_read_;
-  std::function<bool()> ahwb_written_;
+  Tensor::FinishingFunc ahwb_written_;
   std::shared_ptr<mediapipe::GlContext> gl_context_;
   std::function<void()> release_callback_;
   static inline std::deque<std::unique_ptr<DelayedReleaser>> to_release_;
 
   DelayedReleaser(AHardwareBuffer* ahwb, GLuint opengl_buffer,
                   EGLSyncKHR fence_sync, GLsync ssbo_read,
-                  std::function<bool()>&& ahwb_written,
+                  Tensor::FinishingFunc&& ahwb_written,
                   std::shared_ptr<mediapipe::GlContext> gl_context,
                   std::function<void()>&& callback)
       : ahwb_(ahwb),
@@ -240,44 +255,49 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView(
   valid_ = kValidAHardwareBuffer;
   return {ahwb_,
           /*ssbo_written=*/-1,
-          &fence_fd_,                // For SetWritingFinishedFD.
-          /*ahwb_written=*/nullptr,  // The lifetime is managed by SSBO.
+          &fence_fd_,  // For SetWritingFinishedFD.
+          &ahwb_written_,
           &release_callback_,
           std::move(lock)};
 }
 
 bool Tensor::AllocateAHardwareBuffer(int size_alignment) const {
   if (!use_ahwb_) return false;
-  if (ahwb_ == nullptr) {
-    AHardwareBuffer_Desc desc = {};
-    if (size_alignment == 0) {
-      desc.width = bytes();
-    } else {
-      // We expect allocations to be page-aligned, implicitly satisfying any
-      // requirements from Edge TPU. No need to add a check for this,
-      // since Edge TPU will check for us.
-      desc.width = AlignedToPowerOf2(bytes(), size_alignment);
+  if (__builtin_available(android 26, *)) {
+    if (ahwb_ == nullptr) {
+      AHardwareBuffer_Desc desc = {};
+      if (size_alignment == 0) {
+        desc.width = bytes();
+      } else {
+        // We expect allocations to be page-aligned, implicitly satisfying any
+        // requirements from Edge TPU. No need to add a check for this,
+        // since Edge TPU will check for us.
+        desc.width = AlignedToPowerOf2(bytes(), size_alignment);
+      }
+      desc.height = 1;
+      desc.layers = 1;
+      desc.format = AHARDWAREBUFFER_FORMAT_BLOB;
+      desc.usage = AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN |
+                   AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN |
+                   AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
+      return AHardwareBuffer_allocate(&desc, &ahwb_) == 0;
     }
-    desc.height = 1;
-    desc.layers = 1;
-    desc.format = AHARDWAREBUFFER_FORMAT_BLOB;
-    desc.usage = AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN |
-                 AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN |
-                 AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
-    return AHardwareBuffer_allocate(&desc, &ahwb_) == 0;
+    return true;
   }
-  return true;
+  return false;
 }
 
 bool Tensor::AllocateAhwbMapToSsbo() const {
-  if (AllocateAHardwareBuffer()) {
-    if (MapAHardwareBufferToGlBuffer(ahwb_, bytes(), opengl_buffer_).ok()) {
-      glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-      return true;
+  if (__builtin_available(android 26, *)) {
+    if (AllocateAHardwareBuffer()) {
+      if (MapAHardwareBufferToGlBuffer(ahwb_, bytes()).ok()) {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+        return true;
+      }
+      // Unable to make OpenGL <-> AHWB binding. Use regular SSBO instead.
+      AHardwareBuffer_release(ahwb_);
+      ahwb_ = nullptr;
     }
-    // Unable to make OpenGL <-> AHWB binding. Use regular SSBO instead.
-    AHardwareBuffer_release(ahwb_);
-    ahwb_ = nullptr;
   }
   return false;
 }
@@ -295,12 +315,19 @@ bool Tensor::InsertAhwbToSsboFence() const {
     // Server-side fence.
     auto egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (egl_display == EGL_NO_DISPLAY) return true;
+
+    // EGL will take ownership of the passed fd if eglCreateSyncKHR is
+    // successful.
+    int fd_for_egl = dup(fence_fd_);
+
     EGLint sync_attribs[] = {EGL_SYNC_NATIVE_FENCE_FD_ANDROID,
-                             (EGLint)fence_fd_, EGL_NONE};
+                             (EGLint)fd_for_egl, EGL_NONE};
     fence_sync_ = eglCreateSyncKHR(egl_display, EGL_SYNC_NATIVE_FENCE_ANDROID,
                                    sync_attribs);
     if (fence_sync_ != EGL_NO_SYNC_KHR) {
       eglWaitSyncKHR(egl_display, fence_sync_, 0);
+    } else {
+      close(fd_for_egl);
     }
   }
   return true;
@@ -321,49 +348,62 @@ void Tensor::ReleaseAhwbStuff() {
     close(fence_fd_);
     fence_fd_ = -1;
   }
-  if (ahwb_) {
-    if (ssbo_read_ != 0 || fence_sync_ != EGL_NO_SYNC_KHR) {
-      if (ssbo_written_ != -1) close(ssbo_written_);
-      DelayedReleaser::Add(ahwb_, opengl_buffer_, fence_sync_, ssbo_read_,
-                           std::move(ahwb_written_), gl_context_,
-                           std::move(release_callback_));
-      opengl_buffer_ = GL_INVALID_INDEX;
-    } else {
-      AHardwareBuffer_release(ahwb_);
+  if (__builtin_available(android 26, *)) {
+    if (ahwb_) {
+      if (ssbo_read_ != 0 || fence_sync_ != EGL_NO_SYNC_KHR || ahwb_written_) {
+        if (ssbo_written_ != -1) close(ssbo_written_);
+        DelayedReleaser::Add(ahwb_, opengl_buffer_, fence_sync_, ssbo_read_,
+                             std::move(ahwb_written_), gl_context_,
+                             std::move(release_callback_));
+        opengl_buffer_ = GL_INVALID_INDEX;
+      } else {
+        if (release_callback_) release_callback_();
+        AHardwareBuffer_release(ahwb_);
+      }
     }
   }
 }
 
 void* Tensor::MapAhwbToCpuRead() const {
-  if (ahwb_) {
-    if (!(valid_ & kValidCpu) && (valid_ & kValidOpenGlBuffer) &&
-        ssbo_written_ == -1) {
-      // EGLSync is failed. Use another synchronization method.
-      // TODO: Use tflite::gpu::GlBufferSync and GlActiveSync.
-      glFinish();
+  if (__builtin_available(android 26, *)) {
+    if (ahwb_) {
+      if (!(valid_ & kValidCpu)) {
+        if ((valid_ & kValidOpenGlBuffer) && ssbo_written_ == -1) {
+          // EGLSync is failed. Use another synchronization method.
+          // TODO: Use tflite::gpu::GlBufferSync and GlActiveSync.
+          glFinish();
+        } else if (valid_ & kValidAHardwareBuffer) {
+          CHECK(ahwb_written_) << "Ahwb-to-Cpu synchronization requires the "
+                                  "completion function to be set";
+          CHECK(ahwb_written_(true))
+              << "An error oqcured while waiting for the buffer to be written";
+        }
+      }
+      void* ptr;
+      auto error =
+          AHardwareBuffer_lock(ahwb_, AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN,
+                               ssbo_written_, nullptr, &ptr);
+      CHECK(error == 0) << "AHardwareBuffer_lock " << error;
+      close(ssbo_written_);
+      ssbo_written_ = -1;
+      return ptr;
     }
-    void* ptr;
-    auto error =
-        AHardwareBuffer_lock(ahwb_, AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN,
-                             ssbo_written_, nullptr, &ptr);
-    CHECK(error == 0) << "AHardwareBuffer_lock " << error;
-    close(ssbo_written_);
-    ssbo_written_ = -1;
-    return ptr;
   }
   return nullptr;
 }
 
 void* Tensor::MapAhwbToCpuWrite() const {
-  if (ahwb_) {
-    // TODO: If previously acquired view is GPU write view then need to
-    // be sure that writing is finished. That's a warning: two consequent write
-    // views should be interleaved with read view.
-    void* ptr;
-    auto error = AHardwareBuffer_lock(
-        ahwb_, AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN, -1, nullptr, &ptr);
-    CHECK(error == 0) << "AHardwareBuffer_lock " << error;
-    return ptr;
+  if (__builtin_available(android 26, *)) {
+    if (ahwb_) {
+      // TODO: If previously acquired view is GPU write view then need
+      // to be sure that writing is finished. That's a warning: two consequent
+      // write views should be interleaved with read view.
+      void* ptr;
+      auto error = AHardwareBuffer_lock(
+          ahwb_, AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN, -1, nullptr, &ptr);
+      CHECK(error == 0) << "AHardwareBuffer_lock " << error;
+      return ptr;
+    }
   }
   return nullptr;
 }

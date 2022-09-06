@@ -1,6 +1,7 @@
 // Proto messages related to latency measurement for Soapbox.
 syntax = "proto2";
 
+// TODO: Switch to package mediapipe.
 package mediapipe;
 
 // Contains the latency information for a packet stream in mediapipe. The

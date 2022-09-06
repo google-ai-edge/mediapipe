@@ -22,7 +22,7 @@ load(
     "example_provisioning",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 MIN_IOS_VERSION = "11.0"
 

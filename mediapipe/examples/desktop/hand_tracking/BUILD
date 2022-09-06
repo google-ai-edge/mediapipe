@@ -18,6 +18,10 @@ package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
 cc_binary(
     name = "hand_tracking_tflite",
+    data = [
+        "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",
+        "//mediapipe/modules/palm_detection:palm_detection_full.tflite",
+    ],
     deps = [
         "//mediapipe/examples/desktop:simple_run_graph_main",
         "//mediapipe/graphs/hand_tracking:desktop_tflite_calculators",
@@ -26,6 +30,10 @@ cc_binary(
 
 cc_binary(
     name = "hand_tracking_cpu",
+    data = [
+        "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",
+        "//mediapipe/modules/palm_detection:palm_detection_full.tflite",
+    ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/hand_tracking:desktop_tflite_calculators",
@@ -35,6 +43,10 @@ cc_binary(
 # Linux only
 cc_binary(
     name = "hand_tracking_gpu",
+    data = [
+        "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",
+        "//mediapipe/modules/palm_detection:palm_detection_full.tflite",
+    ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
         "//mediapipe/graphs/hand_tracking:mobile_calculators",

@@ -78,9 +78,6 @@ void GlCalculatorHelperImpl::BindFramebuffer(const GlTexture& dst) {
   }
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
   glViewport(0, 0, dst.width(), dst.height());
-
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(dst.target(), dst.name());
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, dst.target(),
                          dst.name(), 0);
 

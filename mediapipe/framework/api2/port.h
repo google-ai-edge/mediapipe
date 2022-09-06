@@ -460,6 +460,9 @@ class OutputShardAccessBase {
   OutputShardAccessBase(const CalculatorContext& cc, OutputStreamShard* output)
       : context_(cc), output_(output) {}
 
+  Timestamp NextTimestampBound() const {
+    return (output_) ? output_->NextTimestampBound() : Timestamp::Unset();
+  }
   void SetNextTimestampBound(Timestamp timestamp) {
     if (output_) output_->SetNextTimestampBound(timestamp);
   }

@@ -1,0 +1,37 @@
+/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto2";
+
+package mediapipe.tasks;
+
+// A single classification result.
+message Category {
+  // The index of the category in the corresponding label map, usually packed in
+  // the TFLite Model Metadata [1].
+  //
+  // [1]: https://www.tensorflow.org/lite/convert/metadata
+  optional int32 index = 1;
+  // The score for this category, e.g. (but not necessarily) a probability in
+  // [0,1].
+  optional float score = 2;
+  // A human readable name of the category filled from the label map.
+  optional string display_name = 3;
+  // An ID for the category, not necessarily human-readable, e.g. a Google
+  // Knowledge Graph ID [1], filled from the label map.
+  //
+  // [1]: https://developers.google.com/knowledge-graph
+  optional string category_name = 4;
+}

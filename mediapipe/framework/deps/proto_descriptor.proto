@@ -2,6 +2,9 @@ syntax = "proto2";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.proto";
+option java_outer_classname = "FieldDescriptorProtoProto";
+
 // Describes a field within a message.
 message FieldDescriptorProto {
   enum Type {

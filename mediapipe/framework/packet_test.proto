@@ -18,8 +18,6 @@ syntax = "proto2";
 
 package mediapipe;
 
-option objc_class_prefix = "MediaPipe";
-
 message PacketTestProto {
   // Tests that the tags used to encode the timestamp do not interfere with
   // proto tags.

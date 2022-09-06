@@ -27,6 +27,15 @@ package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 # Cup: box_landmark_model_path=mediapipe/modules/objectron/object_detection_3d_cup.tflite,allowed_labels=Mug
 cc_binary(
     name = "objectron_cpu",
+    data = [
+        "//mediapipe/modules/objectron:object_detection_3d_camera.tflite",
+        "//mediapipe/modules/objectron:object_detection_3d_chair.tflite",
+        "//mediapipe/modules/objectron:object_detection_3d_chair_1stage.tflite",
+        "//mediapipe/modules/objectron:object_detection_3d_cup.tflite",
+        "//mediapipe/modules/objectron:object_detection_3d_sneakers.tflite",
+        "//mediapipe/modules/objectron:object_detection_3d_sneakers_1stage.tflite",
+        "//mediapipe/modules/objectron:object_detection_ssd_mobilenetv2_oidv4_fp16.tflite",
+    ],
     deps = [
         "//mediapipe/examples/desktop:simple_run_graph_main",
         "//mediapipe/graphs/object_detection_3d:desktop_cpu_calculators",

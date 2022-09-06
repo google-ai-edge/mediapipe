@@ -18,6 +18,8 @@ package mediapipe;
 
 import "mediapipe/framework/formats/annotation/rasterization.proto";
 
+option cc_enable_arenas = true;
+
 // A way to identify a part of an image. A locus does not need to correspond to
 // a subset of pixels -- e.g. for a local descriptor we might define a locus in
 // terms of its location and scale, even if the support of the descriptor is the

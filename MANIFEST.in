@@ -7,14 +7,4 @@ include MANIFEST.in
 include README.md
 include requirements.txt
 
-recursive-include mediapipe/modules *.tflite *.txt *.binarypb
-exclude mediapipe/modules/face_detection/face_detection_full_range.tflite
-exclude mediapipe/modules/objectron/object_detection_3d_chair_1stage.tflite
-exclude mediapipe/modules/objectron/object_detection_3d_sneakers_1stage.tflite
-exclude mediapipe/modules/objectron/object_detection_3d_sneakers.tflite
-exclude mediapipe/modules/objectron/object_detection_3d_chair.tflite
-exclude mediapipe/modules/objectron/object_detection_3d_camera.tflite
-exclude mediapipe/modules/objectron/object_detection_3d_cup.tflite
-exclude mediapipe/modules/objectron/object_detection_ssd_mobilenetv2_oidv4_fp16.tflite
-exclude mediapipe/modules/pose_landmark/pose_landmark_lite.tflite
-exclude mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite
+recursive-include mediapipe/modules *.txt

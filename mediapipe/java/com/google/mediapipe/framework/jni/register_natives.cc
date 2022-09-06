@@ -238,6 +238,10 @@ void RegisterPacketCreatorNatives(JNIEnv *env) {
       &packet_creator_methods, packet_creator,
       "nativeCreateStringFromByteArray", "(J[B)J",
       (void *)&PACKET_CREATOR_METHOD(nativeCreateStringFromByteArray));
+  AddJNINativeMethod(
+      &packet_creator_methods, packet_creator, "nativeCreateRgbImageFromRgba",
+      "(JLjava/nio/ByteBuffer;II)J",
+      (void *)&PACKET_CREATOR_METHOD(nativeCreateRgbImageFromRgba));
   std::string serialized_message_name = class_registry.GetClassName(
       mediapipe::android::ClassRegistry::kProtoUtilSerializedMessageClassName);
   AddJNINativeMethod(&packet_creator_methods, packet_creator,
@@ -276,6 +280,9 @@ void RegisterPacketGetterNatives(JNIEnv *env) {
   AddJNINativeMethod(&packet_getter_methods, packet_getter,
                      "nativeGetProtoVector", "(J)[[B",
                      (void *)&PACKET_GETTER_METHOD(nativeGetProtoVector));
+  AddJNINativeMethod(&packet_getter_methods, packet_getter,
+                     "nativeGetRgbaFromRgb", "(JLjava/nio/ByteBuffer;)Z",
+                     (void *)&PACKET_GETTER_METHOD(nativeGetRgbaFromRgb));
   RegisterNativesVector(env, packet_getter_class, packet_getter_methods);
   env->DeleteLocalRef(packet_getter_class);
 }

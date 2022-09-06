@@ -129,8 +129,8 @@ namespace mediapipe {
 //      }));
 
 namespace registration_internal {
-constexpr char kCxxSep[] = "::";
-constexpr char kNameSep[] = ".";
+inline constexpr char kCxxSep[] = "::";
+inline constexpr char kNameSep[] = ".";
 
 template <typename T>
 struct WrapStatusOr {
@@ -245,7 +245,7 @@ class FunctionRegistry {
   // The name must be either unqualified or fully qualified with a leading "::".
   // The leading "::" in a fully qualified name is stripped.
   std::string GetNormalizedName(const std::string& name) {
-    constexpr auto kCxxSep = registration_internal::kCxxSep;
+    using ::mediapipe::registration_internal::kCxxSep;
     std::vector<std::string> names = absl::StrSplit(name, kCxxSep);
     if (names[0].empty()) {
       names.erase(names.begin());
@@ -261,8 +261,8 @@ class FunctionRegistry {
   // Namespaces are separated by kNameSep.
   std::string GetQualifiedName(const std::string& ns,
                                const std::string& name) const {
-    constexpr auto kCxxSep = registration_internal::kCxxSep;
-    constexpr auto kNameSep = registration_internal::kNameSep;
+    using ::mediapipe::registration_internal::kCxxSep;
+    using ::mediapipe::registration_internal::kNameSep;
     std::vector<std::string> names = absl::StrSplit(name, kNameSep);
     if (names[0].empty()) {
       names.erase(names.begin());
@@ -291,7 +291,7 @@ class FunctionRegistry {
 
   // For names included in NamespaceAllowlist, strips the namespace.
   std::string GetAdjustedName(const std::string& name) {
-    constexpr auto kCxxSep = registration_internal::kCxxSep;
+    using ::mediapipe::registration_internal::kCxxSep;
     std::vector<std::string> names = absl::StrSplit(name, kCxxSep);
     std::string base_name = names.back();
     names.pop_back();

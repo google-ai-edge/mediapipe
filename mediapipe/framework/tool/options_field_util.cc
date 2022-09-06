@@ -380,7 +380,7 @@ absl::StatusOr<std::vector<FieldData>> GetFieldValues(
   int index = tail.empty() ? head.index : std::max(0, head.index);
   if ((int)results.size() <= index) {
     return absl::OutOfRangeError(absl::StrCat(
-        "Missing feild value: ", head.field ? head.field->name() : "#",
+        "Missing field value: ", head.field ? head.field->name() : "#",
         " at index: ", index));
   }
   if (!tail.empty()) {
@@ -402,7 +402,7 @@ absl::StatusOr<FieldData> GetField(const FieldData& message_data,
   if (results.empty()) {
     FieldPathEntry tail = field_path.back();
     return absl::OutOfRangeError(absl::StrCat(
-        "Missing feild value: ", tail.field ? tail.field->name() : "##",
+        "Missing field value: ", tail.field ? tail.field->name() : "##",
         " at index: ", tail.index));
   }
   return results[0];
@@ -414,7 +414,7 @@ absl::Status SetFieldValues(FieldData& message_data,
                             const std::vector<FieldData>& values) {
   if (field_path.empty()) {
     if (values.empty()) {
-      return absl::InvalidArgumentError("Missing feild value.");
+      return absl::InvalidArgumentError("Missing field value.");
     }
     message_data = values[0];
     return absl::OkStatus();

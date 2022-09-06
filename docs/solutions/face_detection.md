@@ -37,7 +37,7 @@ improved tie resolution strategy alternative to non-maximum suppression. For
 more information about BlazeFace, please see the [Resources](#resources)
 section.
 
-![face_detection_android_gpu.gif](../images/mobile/face_detection_android_gpu.gif)
+![face_detection_android_gpu.gif](https://mediapipe.dev/images/mobile/face_detection_android_gpu.gif)
 
 ## Solution APIs
 

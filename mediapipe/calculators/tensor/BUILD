@@ -153,11 +153,12 @@ cc_library(
     tags = ["nomac"],  # config problem with cpuinfo via TF
     visibility = ["//visibility:public"],
     deps = [
+        ":inference_calculator_cc_proto",
         ":inference_calculator_interface",
+        "//mediapipe/framework:calculator_context",
         "//mediapipe/gpu:gl_calculator_helper",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
-        "@org_tensorflow//tensorflow/lite:framework_stable",
         "@org_tensorflow//tensorflow/lite/delegates/gpu:gl_delegate",
     ],
     alwayslink = 1,
@@ -172,6 +173,7 @@ cc_library(
         ":inference_calculator_interface",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/gpu:gl_calculator_helper",
         "//mediapipe/util/tflite:tflite_gpu_runner",
@@ -231,6 +233,7 @@ cc_library(
     deps = [
         ":inference_calculator_interface",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
         "@org_tensorflow//tensorflow/lite:framework_stable",
         "@org_tensorflow//tensorflow/lite/c:c_api_types",
@@ -636,6 +639,7 @@ cc_library(
         ":image_to_tensor_calculator_cc_proto",
         ":image_to_tensor_converter",
         ":image_to_tensor_utils",
+        ":loose_headers",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
@@ -989,4 +993,59 @@ cc_library(
         ],
     }),
     alwayslink = 1,
+)
+
+cc_library(
+    name = "tensors_dequantization_calculator",
+    srcs = ["tensors_dequantization_calculator.cc"],
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+# For a more maintainable build this target should not exist and the headers
+# should  be split into the existing cc_library targets, but this change was
+# automatically  done so that we can remove long standing issues and complexity
+# in the build system. It's up to the OWNERS of this package to get rid of it or
+# not. The use of the textual_hdrs attribute is discouraged, use hdrs instead.
+# Here it is used to avoid header parsing errors in packages where the feature
+# parse_headers was enabled since loose headers were not being parsed.
+cc_library(
+    name = "loose_headers",
+    tags = ["avoid_dep"],
+    textual_hdrs = [
+        "image_to_tensor_converter_gl_buffer.h",
+        "image_to_tensor_converter_gl_texture.h",
+    ],
+    visibility = [":__pkg__"],
+)
+
+cc_test(
+    name = "tensors_dequantization_calculator_test",
+    srcs = ["tensors_dequantization_calculator_test.cc"],
+    deps = [
+        ":tensors_dequantization_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/status",
+    ],
 )

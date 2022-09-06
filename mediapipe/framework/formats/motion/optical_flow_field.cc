@@ -22,6 +22,7 @@
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/mathutil.h"
 #include "mediapipe/framework/formats/location.h"
+#include "mediapipe/framework/formats/location_opencv.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
@@ -304,6 +305,6 @@ Location OpticalFlowField::FindMotionInconsistentPixels(
       }
     }
   }
-  return Location::CreateCvMaskLocation<uint8>(occluded);
+  return CreateCvMaskLocation<uint8>(occluded);
 }
 }  // namespace mediapipe

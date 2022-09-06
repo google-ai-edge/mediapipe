@@ -27,7 +27,7 @@ on iOS.
 A simple camera app for real-time Sobel edge detection applied to a live video
 stream on an iOS device.
 
-![edge_detection_ios_gpu_gif](../images/mobile/edge_detection_ios_gpu.gif)
+![edge_detection_ios_gpu_gif](https://mediapipe.dev/images/mobile/edge_detection_ios_gpu.gif)
 
 ## Setup
 
@@ -67,7 +67,7 @@ node: {
 
 A visualization of the graph is shown below:
 
-![edge_detection_mobile_gpu](../images/mobile/edge_detection_mobile_gpu.png)
+![edge_detection_mobile_gpu](https://mediapipe.dev/images/mobile/edge_detection_mobile_gpu.png)
 
 This graph has a single input stream named `input_video` for all incoming frames
 that will be provided by your device's camera.
@@ -580,7 +580,7 @@ Update the interface definition of `ViewController` with `MPPGraphDelegate`:
 And that is all! Build and run the app on your iOS device. You should see the
 results of running the edge detection graph on a live video feed. Congrats!
 
-![edge_detection_ios_gpu_gif](../images/mobile/edge_detection_ios_gpu.gif)
+![edge_detection_ios_gpu_gif](https://mediapipe.dev/images/mobile/edge_detection_ios_gpu.gif)
 
 Please note that the iOS examples now use a [common] template app. The code in
 this tutorial is used in the [common] template app. The [helloworld] app has the

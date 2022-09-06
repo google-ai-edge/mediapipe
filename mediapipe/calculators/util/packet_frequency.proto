@@ -1,5 +1,6 @@
 syntax = "proto2";
 
+// TODO: Switch to package mediapipe.
 package mediapipe;
 
 // Contains the packet frequency information.

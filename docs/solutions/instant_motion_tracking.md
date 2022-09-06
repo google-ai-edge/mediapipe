@@ -30,7 +30,7 @@ platforms without initialization or calibration. It is built upon the
 Tracking, you can easily place virtual 2D and 3D content on static or moving
 surfaces, allowing them to seamlessly interact with the real-world environment.
 
-![instant_motion_tracking_android_small](../images/mobile/instant_motion_tracking_android_small.gif) |
+![instant_motion_tracking_android_small](https://mediapipe.dev/images/mobile/instant_motion_tracking_android_small.gif) |
 :-----------------------------------------------------------------------: |
 *Fig 1. Instant Motion Tracking is used to augment the world with a 3D sticker.* |
 

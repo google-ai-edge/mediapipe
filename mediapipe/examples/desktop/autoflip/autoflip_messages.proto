@@ -17,7 +17,9 @@ syntax = "proto2";
 
 package mediapipe.autoflip;
 
-import "mediapipe/framework/calculator.proto";
+import "mediapipe/framework/calculator_options.proto";
+
+option java_multiple_files = true;
 
 // Borders detected on the frame as well as non-border color (if present).
 // Next tag: 4

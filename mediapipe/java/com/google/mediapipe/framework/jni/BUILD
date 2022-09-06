@@ -171,6 +171,7 @@ cc_library(
     hdrs = ["register_natives.h"],
     deps = [
         ":class_registry",
+        ":loose_headers",
         ":mediapipe_framework_jni",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -182,4 +183,21 @@ cc_library(
         "//mediapipe:android": [
         ],
     }),
+)
+
+# For a more maintainable build this target should not exist and the headers
+# should  be split into the existing cc_library targets, but this change was
+# automatically  done so that we can remove long standing issues and complexity
+# in the build system. It's up to the OWNERS of this package to get rid of it or
+# not. The use of the textual_hdrs attribute is discouraged, use hdrs instead.
+# Here it is used to avoid header parsing errors in packages where the feature
+# parse_headers was enabled since loose headers were not being parsed.
+cc_library(
+    name = "loose_headers",
+    tags = ["avoid_dep"],
+    textual_hdrs = [
+        "android_asset_util_jni.h",
+        "android_packet_creator_jni.h",
+    ],
+    visibility = [":__pkg__"],
 )

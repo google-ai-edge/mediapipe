@@ -76,6 +76,7 @@ Packet CreateImagePacket(mediapipe::ImageFormat::Format format,
 
 namespace py = pybind11;
 
+// The packet creator methods that can be accessed directly by the users.
 void PublicPacketCreators(pybind11::module* m) {
   m->def(
       "create_string",
@@ -516,17 +517,40 @@ void PublicPacketCreators(pybind11::module* m) {
       py::arg().noconvert(), py::return_value_policy::move);
 
   m->def(
+      "create_image_vector",
+      [](const std::vector<Image>& data) {
+        return MakePacket<std::vector<Image>>(data);
+      },
+      R"doc(Create a MediaPipe Packet holding a vector of MediaPipe Images.
+
+  Args:
+    data: A list of MediaPipe Images.
+
+  Returns:
+    A MediaPipe Packet holding a vector of MediaPipe Images.
+
+  Raises:
+    TypeError: If the input is not a list of MediaPipe Images.
+
+  Examples:
+    packet = mp.packet_creator.create_image_vector([
+        image1, image2, image3])
+    data = mp.packet_getter.get_image_list(packet)
+)doc",
+      py::arg().noconvert(), py::return_value_policy::move);
+
+  m->def(
       "create_packet_vector",
       [](const std::vector<Packet>& data) {
         return MakePacket<std::vector<Packet>>(data);
       },
-      R"doc(Create a MediaPipe Packet holds a vector of packets.
+      R"doc(Create a MediaPipe Packet holding a vector of packets.
 
   Args:
     data: A list of packets.
 
   Returns:
-    A MediaPipe Packet holds a vector of packets.
+    A MediaPipe Packet holding a vector of packets.
 
   Raises:
     TypeError: If the input is not a list of packets.
@@ -552,7 +576,7 @@ void PublicPacketCreators(pybind11::module* m) {
     data: A dictionary that has (str, Packet) pairs.
 
   Returns:
-    A MediaPipe Packet holds std::map<std::string, Packet>.
+    A MediaPipe Packet holding std::map<std::string, Packet>.
 
   Raises:
     TypeError: If the input is not a dictionary from str to packet.
@@ -602,8 +626,9 @@ void PublicPacketCreators(pybind11::module* m) {
     matrix = mp.packet_getter.get_matrix(packet)
 )doc",
       py::return_value_policy::move);
-}
+}  // NOLINT(readability/fn_size)
 
+// The packet creator methods that should be used by MediaPipe Python itself.
 void InternalPacketCreators(pybind11::module* m) {
   m->def("_create_image_frame_from_pixel_data", &CreateImageFramePacket,
          py::arg("format"), py::arg("data").noconvert(), py::arg("copy"),

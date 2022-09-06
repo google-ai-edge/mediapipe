@@ -18,6 +18,10 @@ package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
 cc_binary(
     name = "object_tracking_cpu",
+    data = [
+        "//mediapipe/models:ssdlite_object_detection.tflite",
+        "//mediapipe/models:ssdlite_object_detection_labelmap.txt",
+    ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/tracking:desktop_calculators",

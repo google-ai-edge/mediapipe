@@ -253,6 +253,7 @@ cc_library(
     deps = [
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:location",
+        "//mediapipe/framework/formats:location_opencv",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:variant",
         "//mediapipe/framework/port:status",

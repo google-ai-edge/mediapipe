@@ -56,14 +56,14 @@ namespace api2 {
 // previous output.
 //
 // The calculator has two running modes:
-//   Streaming mode: when "streaming_mode" is set to true in the calculator
+//   Streaming mode: when "stream_mode" is set to true in the calculator
 //     options, the calculator treats the input audio stream as a continuous
 //     stream. Thus, any samples that are not consumed in the previous runs will
 //     be cached in a global sample buffer. The audio data resampled from the
 //     current raw audio input will be appended to the global sample buffer.
 //     The calculator will process the global sample buffer and output as many
 //     tensors as possible.
-//   Non-streaming mode: when "streaming_mode" is set to false in the calculator
+//   Non-streaming mode: when "stream_mode" is set to false in the calculator
 //     options, the calculators treats the packets in the input audio stream as
 //     a batch of unrelated audio buffers. In each Process() call, the input
 //     buffer will be frist resampled, and framed as fixed-sized, possibly
@@ -104,7 +104,7 @@ namespace api2 {
 //       num_samples: 512
 //       num_overlapping_samples: 64
 //       target_sample_rate: 16000
-//       streaming_mode: true # or false
+//       stream_mode: true # or false
 //     }
 //   }
 // }
@@ -136,7 +136,7 @@ class AudioToTensorCalculator : public Node {
   // The number of samples per channel to advance after the current frame is
   // processed.
   int frame_step_;
-  bool streaming_mode_;
+  bool stream_mode_;
   bool check_inconsistent_timestamps_;
   Timestamp initial_timestamp_ = Timestamp::Unstarted();
   int64 cumulative_input_samples_ = 0;
@@ -151,8 +151,9 @@ class AudioToTensorCalculator : public Node {
   Matrix sample_buffer_;
   int processed_buffer_cols_ = 0;
 
-  absl::Status ProcessStreamingData(CalculatorContext* cc);
-  absl::Status ProcessNonStreamingData(CalculatorContext* cc);
+  absl::Status ProcessStreamingData(CalculatorContext* cc, const Matrix& input);
+  absl::Status ProcessNonStreamingData(CalculatorContext* cc,
+                                       const Matrix& input);
 
   absl::Status SetupStreamingResampler(double input_sample_rate_);
   void AppendToSampleBuffer(Matrix buffer_to_append);
@@ -172,7 +173,7 @@ absl::Status AudioToTensorCalculator::UpdateContract(CalculatorContract* cc) {
         "AudioToTensorCalculatorOptions must specifiy "
         "`num_channels`, `num_samples`, and `target_sample_rate`.");
   }
-  if (options.streaming_mode()) {
+  if (options.stream_mode()) {
     // Explicitly disables tiemstamp offset to disallow the timestamp bound
     // from the input streams to be propagated to the output streams.
     // In the streaming mode, the output timestamp bound is based on
@@ -196,8 +197,8 @@ absl::Status AudioToTensorCalculator::Open(CalculatorContext* cc) {
     frame_step_ = num_samples_;
   }
   target_sample_rate_ = options.target_sample_rate();
-  streaming_mode_ = options.streaming_mode();
-  if (streaming_mode_) {
+  stream_mode_ = options.stream_mode();
+  if (stream_mode_) {
     check_inconsistent_timestamps_ = options.check_inconsistent_timestamps();
     sample_buffer_.resize(num_channels_, Eigen::NoChange);
   }
@@ -210,7 +211,7 @@ absl::Status AudioToTensorCalculator::Open(CalculatorContext* cc) {
     mediapipe::TimeSeriesHeader input_header;
     MP_RETURN_IF_ERROR(mediapipe::time_series_util::FillTimeSeriesHeaderIfValid(
         kAudioIn(cc).Header(), &input_header));
-    if (streaming_mode_) {
+    if (stream_mode_) {
       MP_RETURN_IF_ERROR(SetupStreamingResampler(input_header.sample_rate()));
     } else {
       source_sample_rate_ = input_header.sample_rate();
@@ -223,7 +224,7 @@ absl::Status AudioToTensorCalculator::Process(CalculatorContext* cc) {
   if (cc->InputTimestamp() == Timestamp::PreStream()) {
     double current_source_sample_rate = kAudioSampleRateIn(cc).Get();
     if (cc->Options<mediapipe::AudioToTensorCalculatorOptions>()
-            .streaming_mode()) {
+            .stream_mode()) {
       return SetupStreamingResampler(current_source_sample_rate);
     } else {
       source_sample_rate_ = current_source_sample_rate;
@@ -232,21 +233,28 @@ absl::Status AudioToTensorCalculator::Process(CalculatorContext* cc) {
   }
   // Sanity checks.
   const auto& input_frame = kAudioIn(cc).Get();
-  if (input_frame.rows() != num_channels_) {
+  const bool channels_match = input_frame.rows() == num_channels_;
+  // The special case of `num_channels_ == 1` is automatic mixdown to mono.
+  const bool mono_output = num_channels_ == 1;
+  if (!mono_output && !channels_match) {
     return absl::InvalidArgumentError(absl::StrFormat(
         "Audio input has %d channel(s) but the model requires %d channel(s).",
         input_frame.rows(), num_channels_));
   }
-  if (num_channels_ > 1 && input_frame.IsRowMajor) {
+  if (!mono_output && input_frame.IsRowMajor) {
     return absl::InvalidArgumentError(
         "The audio data should be stored in column-major.");
   }
-  return streaming_mode_ ? ProcessStreamingData(cc)
-                         : ProcessNonStreamingData(cc);
+  CHECK(channels_match || mono_output);
+  const Matrix& input = channels_match ? input_frame
+                                       // Mono mixdown.
+                                       : input_frame.colwise().mean();
+  return stream_mode_ ? ProcessStreamingData(cc, input)
+                      : ProcessNonStreamingData(cc, input);
 }
 
 absl::Status AudioToTensorCalculator::Close(CalculatorContext* cc) {
-  if (!streaming_mode_) {
+  if (!stream_mode_) {
     return absl::OkStatus();
   }
   if (resampler_) {
@@ -258,8 +266,8 @@ absl::Status AudioToTensorCalculator::Close(CalculatorContext* cc) {
 }
 
 absl::Status AudioToTensorCalculator::ProcessStreamingData(
-    CalculatorContext* cc) {
-  const auto& input_buffer = kAudioIn(cc).Get();
+    CalculatorContext* cc, const Matrix& input) {
+  const auto& input_buffer = input;
   if (initial_timestamp_ == Timestamp::Unstarted()) {
     initial_timestamp_ = cc->InputTimestamp();
     next_output_timestamp_ = initial_timestamp_;
@@ -303,10 +311,10 @@ absl::Status AudioToTensorCalculator::ProcessStreamingData(
 }
 
 absl::Status AudioToTensorCalculator::ProcessNonStreamingData(
-    CalculatorContext* cc) {
+    CalculatorContext* cc, const Matrix& input) {
   initial_timestamp_ = cc->InputTimestamp();
   next_output_timestamp_ = initial_timestamp_;
-  const auto& input_frame = kAudioIn(cc).Get();
+  const auto& input_frame = input;
   double source_sample_rate = kAudioSampleRateIn(cc).GetOr(source_sample_rate_);
 
   if (source_sample_rate != -1 && source_sample_rate != target_sample_rate_) {
@@ -362,7 +370,7 @@ absl::Status AudioToTensorCalculator::OutputTensors(const Matrix& buffer,
                                                     CalculatorContext* cc) {
   int next_frame_first_col = 0;
   std::vector<Timestamp> timestamps;
-  while ((!streaming_mode_ || !should_flush) &&
+  while ((!stream_mode_ || !should_flush) &&
          next_frame_first_col + num_samples_ <= buffer.cols()) {
     ASSIGN_OR_RETURN(auto output_tensor, ConvertToTensor(buffer.block(
                                              0, next_frame_first_col,
@@ -383,7 +391,7 @@ absl::Status AudioToTensorCalculator::OutputTensors(const Matrix& buffer,
     // Timestamp::Max() will be emitted. In the non-streaming mode, each
     // Process() invocation will process the entire buffer completely.
     Timestamp timestamp =
-        streaming_mode_ ? Timestamp::Max() : next_output_timestamp_;
+        stream_mode_ ? Timestamp::Max() : next_output_timestamp_;
     timestamps.push_back(timestamp);
     kTensorsOut(cc).Send(std::move(output_tensor), timestamp);
   }

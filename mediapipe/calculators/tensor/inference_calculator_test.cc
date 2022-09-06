@@ -16,13 +16,17 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
+#include "mediapipe/calculators/tensor/inference_calculator_test_base.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/port/benchmark.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/integral_types.h"
@@ -118,9 +122,11 @@ void RunGraphThenClose(CalculatorGraph& graph, std::vector<Tensor> input_vec) {
   MP_ASSERT_OK(graph.StartRun({}));
 
   // Push the tensor into the graph.
-  MP_ASSERT_OK(graph.AddPacketToInputStream(
-      "tensor_in",
-      MakePacket<std::vector<Tensor>>(std::move(input_vec)).At(Timestamp(0))));
+  if (!input_vec.empty()) {
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
+        "tensor_in", MakePacket<std::vector<Tensor>>(std::move(input_vec))
+                         .At(Timestamp(0))));
+  }
   // Wait until the calculator done processing.
   MP_ASSERT_OK(graph.WaitUntilIdle());
 
@@ -173,6 +179,14 @@ TEST(InferenceCalculatorTest, SmokeTest) {
 TEST(InferenceCalculatorTest, ModelAsInputSidePacketSmokeTest) {
   DoSmokeTest(kGraphWithModelAsInputSidePacket);
 }
+
+void BM_InitializeCalculator(benchmark::State& state) {
+  mediapipe::InferenceCalculatorOptions::Delegate delegate;
+  delegate.mutable_tflite();
+  RunBenchmarkCalculatorInitialization(state, delegate);
+}
+
+BENCHMARK(BM_InitializeCalculator);
 
 }  // namespace
 }  // namespace mediapipe

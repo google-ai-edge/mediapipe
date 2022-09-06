@@ -78,8 +78,10 @@ public class PacketCreator {
   /**
    * Create a MediaPipe audio packet that is used by most of the audio calculators.
    *
-   * @param data the raw audio data, bytes per sample is 2. Must either be a direct byte buffer or
-   *     have an array.
+   * @param data the raw audio data, bytes per sample is 2(only AudioFormat.ENCODING_PCM_16BIT is
+   *     supported). Must either be a direct byte buffer or have an array, and the data has to be
+   *     FILLED with ByteOrder.LITTLE_ENDIAN byte order, which is ByteOrder.nativeOrder() on Android
+   *     (https://developer.android.com/ndk/guides/abis.html).
    * @param numChannels number of channels in the raw data.
    * @param numSamples number of samples in the data.
    */

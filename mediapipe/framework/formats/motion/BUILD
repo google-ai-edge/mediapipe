@@ -46,6 +46,7 @@ cc_library(
         "//mediapipe/framework:type_map",
         "//mediapipe/framework/deps:mathutil",
         "//mediapipe/framework/formats:location",
+        "//mediapipe/framework/formats:location_opencv",
         "//mediapipe/framework/formats/motion:optical_flow_field_data_cc_proto",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:integral_types",
@@ -67,6 +68,7 @@ cc_test(
     deps = [
         ":optical_flow_field",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/formats:location_opencv",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:integral_types",

@@ -179,6 +179,8 @@ namespace mediasequence {
 const char kExampleIdKey[] = "example/id";
 // The name of the data set, including the version.
 const char kExampleDatasetNameKey[] = "example/dataset_name";
+// String flags or attributes for this example within a data set.
+const char kExampleDatasetFlagStringKey[] = "example/dataset/flag/string";
 
 // The relative path to the data on disk from some root directory.
 const char kClipDataPathKey[] = "clip/data_path";
@@ -204,6 +206,8 @@ const char kClipLabelConfidenceKey[] = "clip/label/confidence";
 
 BYTES_CONTEXT_FEATURE(ExampleId, kExampleIdKey);
 BYTES_CONTEXT_FEATURE(ExampleDatasetName, kExampleDatasetNameKey);
+VECTOR_BYTES_CONTEXT_FEATURE(ExampleDatasetFlagString,
+                             kExampleDatasetFlagStringKey);
 
 BYTES_CONTEXT_FEATURE(ClipDataPath, kClipDataPathKey);
 BYTES_CONTEXT_FEATURE(ClipAlternativeMediaId, kClipAlternativeMediaId);
@@ -667,6 +671,10 @@ const char kFeaturePacketRateKey[] = "feature/packet_rate";
 const char kFeatureAudioSampleRateKey[] = "feature/audio_sample_rate";
 // The feature as a list of floats.
 const char kContextFeatureFloatsKey[] = "context_feature/floats";
+// The feature as a list of floats.
+const char kContextFeatureBytesKey[] = "context_feature/bytes";
+// The feature as a list of floats.
+const char kContextFeatureIntsKey[] = "context_feature/ints";
 
 // Feature list keys:
 // The feature as a list of floats.
@@ -699,6 +707,10 @@ PREFIXED_VECTOR_INT64_CONTEXT_FEATURE(FeatureDimensions, kFeatureDimensionsKey);
 PREFIXED_FLOAT_CONTEXT_FEATURE(FeatureRate, kFeatureRateKey);
 PREFIXED_VECTOR_FLOAT_CONTEXT_FEATURE(ContextFeatureFloats,
                                       kContextFeatureFloatsKey);
+PREFIXED_VECTOR_BYTES_CONTEXT_FEATURE(ContextFeatureBytes,
+                                      kContextFeatureBytesKey);
+PREFIXED_VECTOR_INT64_CONTEXT_FEATURE(ContextFeatureInts,
+                                      kContextFeatureIntsKey);
 PREFIXED_BYTES_CONTEXT_FEATURE(FeatureBytesFormat, kFeatureBytesFormatKey);
 PREFIXED_VECTOR_FLOAT_FEATURE_LIST(FeatureFloats, kFeatureFloatsKey);
 PREFIXED_VECTOR_BYTES_FEATURE_LIST(FeatureBytes, kFeatureBytesKey);

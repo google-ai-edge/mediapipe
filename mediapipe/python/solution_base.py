@@ -33,29 +33,28 @@ from google.protobuf import descriptor
 from google.protobuf import message
 # resources dependency
 # pylint: disable=unused-import
-# pylint: enable=unused-import
-from mediapipe.framework import calculator_pb2
-# pylint: disable=unused-import
-from mediapipe.framework.formats import detection_pb2
 from mediapipe.calculators.core import constant_side_packet_calculator_pb2
 from mediapipe.calculators.image import image_transformation_calculator_pb2
 from mediapipe.calculators.tensor import tensors_to_detections_calculator_pb2
 from mediapipe.calculators.util import landmarks_smoothing_calculator_pb2
 from mediapipe.calculators.util import logic_calculator_pb2
 from mediapipe.calculators.util import thresholding_calculator_pb2
+from mediapipe.framework import calculator_pb2
+from mediapipe.framework.formats import body_rig_pb2
 from mediapipe.framework.formats import classification_pb2
+from mediapipe.framework.formats import detection_pb2
 from mediapipe.framework.formats import landmark_pb2
 from mediapipe.framework.formats import rect_pb2
 from mediapipe.modules.objectron.calculators import annotation_data_pb2
 from mediapipe.modules.objectron.calculators import lift_2d_frame_annotation_to_3d_calculator_pb2
 # pylint: enable=unused-import
+from mediapipe.python import packet_creator
+from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import calculator_graph
 from mediapipe.python._framework_bindings import image_frame
 from mediapipe.python._framework_bindings import packet
 from mediapipe.python._framework_bindings import resource_util
 from mediapipe.python._framework_bindings import validated_graph_config
-import mediapipe.python.packet_creator as packet_creator
-import mediapipe.python.packet_getter as packet_getter
 
 RGB_CHANNELS = 3
 # TODO: Enable calculator options modification for more calculators.
@@ -100,6 +99,7 @@ class PacketDataType(enum.Enum):
   FLOAT_LIST = 'float_list'
   AUDIO = 'matrix'
   IMAGE = 'image'
+  IMAGE_LIST = 'image_list'
   IMAGE_FRAME = 'image_frame'
   PROTO = 'proto'
   PROTO_LIST = 'proto_list'
@@ -171,6 +171,8 @@ NAME_TO_TYPE: Mapping[str, 'PacketDataType'] = {
         PacketDataType.PROTO,
     '::mediapipe::Image':
         PacketDataType.IMAGE,
+    '::std::vector<::mediapipe::Image>':
+        PacketDataType.IMAGE_LIST,
     '::std::vector<::mediapipe::Classification>':
         PacketDataType.PROTO_LIST,
     '::std::vector<::mediapipe::ClassificationList>':

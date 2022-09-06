@@ -2,6 +2,12 @@ workspace(name = "mediapipe")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# Protobuf expects an //external:python_headers target
+bind(
+    name = "python_headers",
+    actual = "@local_config_python//:python_headers",
+)
+
 http_archive(
     name = "bazel_skylib",
     type = "tar.gz",
@@ -142,10 +148,48 @@ http_archive(
     ],
 )
 
+load("//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
+flatbuffers()
+
 http_archive(
     name = "com_google_audio_tools",
     strip_prefix = "multichannel-audio-tools-master",
     urls = ["https://github.com/google/multichannel-audio-tools/archive/master.zip"],
+)
+
+# sentencepiece
+http_archive(
+    name = "com_google_sentencepiece",
+    strip_prefix = "sentencepiece-1.0.0",
+    sha256 = "c05901f30a1d0ed64cbcf40eba08e48894e1b0e985777217b7c9036cac631346",
+    urls = [
+        "https://github.com/google/sentencepiece/archive/1.0.0.zip",
+    ],
+    repo_mapping = {"@com_google_glog" : "@com_github_glog_glog"},
+)
+
+http_archive(
+    name = "org_tensorflow_text",
+    sha256 = "f64647276f7288d1b1fe4c89581d51404d0ce4ae97f2bcc4c19bd667549adca8",
+    strip_prefix = "text-2.2.0",
+    urls = [
+        "https://github.com/tensorflow/text/archive/v2.2.0.zip",
+    ],
+    patches = [
+        "//third_party:tensorflow_text_remove_tf_deps.diff",
+        "//third_party:tensorflow_text_a0f49e63.diff",
+    ],
+    patch_args = ["-p1"],
+    repo_mapping = {"@com_google_re2": "@com_googlesource_code_re2"},
+)
+
+http_archive(
+    name = "com_googlesource_code_re2",
+    sha256 = "e06b718c129f4019d6e7aa8b7631bee38d3d450dd980246bfaf493eb7db67868",
+    strip_prefix = "re2-fe4a310131c37f9a7e7f7816fa6ce2a8b27d65a8",
+    urls = [
+        "https://github.com/google/re2/archive/fe4a310131c37f9a7e7f7816fa6ce2a8b27d65a8.tar.gz",
+    ],
 )
 
 # 2020-07-09
@@ -165,6 +209,15 @@ http_archive(
     sha256 = "b971842fab1b5b8f3815a2302331782b7d137fef0e06502422bc4bc360f4956c",
     strip_prefix = "pybind11-70a58c577eaf067748c2ec31bfd0b0a614cffba6",
     build_file = "@pybind11_bazel//:pybind11.BUILD",
+)
+
+http_archive(
+    name = "pybind11_protobuf",
+    sha256 = "baa1f53568283630a5055c85f0898b8810f7a6431bd01bbaedd32b4c1defbcb1",
+    strip_prefix = "pybind11_protobuf-3594106f2df3d725e65015ffb4c7886d6eeee683",
+    urls = [
+        "https://github.com/pybind/pybind11_protobuf/archive/3594106f2df3d725e65015ffb4c7886d6eeee683.tar.gz",
+    ],
 )
 
 # Point to the commit that deprecates the usage of Eigen::MappedSparseMatrix.
@@ -377,10 +430,29 @@ http_archive(
     ],
 )
 
-# Tensorflow repo should always go after the other external dependencies.
-# 2022-02-15
-_TENSORFLOW_GIT_COMMIT = "a3419acc751dfc19caf4d34a1594e1f76810ec58"
-_TENSORFLOW_SHA256 = "b95b2a83632d4055742ae1a2dcc96b45da6c12a339462dbc76c8bca505308e3a"
+# Load Zlib before initializing TensorFlow to guarantee that the target
+# @zlib//:mini_zlib is available
+http_archive(
+    name = "zlib",
+    build_file = "//third_party:zlib.BUILD",
+    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
+    strip_prefix = "zlib-1.2.11",
+    urls = [
+        "http://mirror.bazel.build/zlib.net/fossils/zlib-1.2.11.tar.gz",
+        "http://zlib.net/fossils/zlib-1.2.11.tar.gz",  # 2017-01-15
+    ],
+    patches = [
+        "@//third_party:zlib.diff",
+    ],
+    patch_args = [
+        "-p1",
+    ],
+)
+
+# TensorFlow repo should always go after the other external dependencies.
+# TF on 2022-08-10.
+_TENSORFLOW_GIT_COMMIT = "af1d5bc4fbb66d9e6cc1cf89503014a99233583b"
+_TENSORFLOW_SHA256 = "f85a5443264fc58a12d136ca6a30774b5bc25ceaf7d114d97f252351b3c3a2cb"
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -417,3 +489,6 @@ libedgetpu_dependencies()
 
 load("@coral_crosstool//:configure.bzl", "cc_crosstool")
 cc_crosstool(name = "crosstool")
+
+load("//third_party:external_files.bzl", "external_files")
+external_files()

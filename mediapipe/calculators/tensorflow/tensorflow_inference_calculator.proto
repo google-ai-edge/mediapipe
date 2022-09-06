@@ -49,6 +49,13 @@ message TensorFlowInferenceCalculatorOptions {
   // dimension needs to be added.
   optional bool add_batch_dim_to_tensors = 3 [default = true];
 
+  // Whether to pad the last batch to batch_size or run inference on a partial
+  // batch.
+  // Setting this to false is useful for TPU models that use in-graph batching
+  // as padding in MediaPipe conflicts with merging of batches in tensorflows
+  // batch ops.
+  optional bool pad_to_batch_size = 8 [default = true];
+
   // These pairs represent feed and fetch tensors for handling recurrent state.
   // Each entry is a colon separated pair of strings. The first half of each
   // string is the signature tag for the feed tensor for recurrent state. The

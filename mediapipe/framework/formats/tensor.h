@@ -16,6 +16,7 @@
 #define MEDIAPIPE_FRAMEWORK_FORMATS_TENSOR_H_
 
 #include <algorithm>
+#include <functional>
 #include <initializer_list>
 #include <tuple>
 #include <type_traits>
@@ -30,10 +31,12 @@
 #import <Metal/Metal.h>
 #endif  // MEDIAPIPE_METAL_ENABLED
 
+#if __ANDROID_API__ >= 26 || defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
+#define MEDIAPIPE_TENSOR_USE_AHWB 1
+#endif  // __ANDROID_API__ >= 26 ||
+        // defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
+
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-#if __ANDROID_API__ < 26
-#error MEDIAPIPE_TENSOR_USE_AHWB requires NDK version 26 or higher to be specified.
-#endif  // __ANDROID_API__ < 26
 #include <android/hardware_buffer.h>
 
 #include "third_party/GL/gl/include/EGL/egl.h"
@@ -86,7 +89,7 @@ class Tensor {
 
  public:
   // No resources are allocated here.
-  enum class ElementType { kNone, kFloat16, kFloat32, kUInt8, kInt8 };
+  enum class ElementType { kNone, kFloat16, kFloat32, kUInt8, kInt8, kInt32 };
   struct Shape {
     Shape() = default;
     Shape(std::initializer_list<int> dimensions) : dims(dimensions) {}
@@ -98,8 +101,19 @@ class Tensor {
     }
     std::vector<int> dims;
   };
+  // Quantization parameters corresponding to the zero_point and scale value
+  // made available by TfLite quantized (uint8/int8) tensors.
+  struct QuantizationParameters {
+    QuantizationParameters() = default;
+    QuantizationParameters(float scale, int zero_point)
+        : scale(scale), zero_point(zero_point) {}
+    float scale = 1.0f;
+    int zero_point = 0;
+  };
 
   Tensor(ElementType element_type, const Shape& shape);
+  Tensor(ElementType element_type, const Shape& shape,
+         const QuantizationParameters& quantization_parameters);
 
   // Non-copyable.
   Tensor(const Tensor&) = delete;
@@ -120,36 +134,21 @@ class Tensor {
     }
     CpuView(CpuView&& src) : View(std::move(src)) {
       buffer_ = std::exchange(src.buffer_, nullptr);
-#ifdef MEDIAPIPE_TENSOR_USE_AHWB
-      ahwb_ = std::exchange(src.ahwb_, nullptr);
-      fence_fd_ = std::exchange(src.fence_fd_, nullptr);
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB
+      release_callback_ = std::exchange(src.release_callback_, nullptr);
     }
-#ifdef MEDIAPIPE_TENSOR_USE_AHWB
     ~CpuView() {
-      if (ahwb_) {
-        auto error = AHardwareBuffer_unlock(ahwb_, fence_fd_);
-        CHECK(error == 0) << "AHardwareBuffer_unlock " << error;
-      }
+      if (release_callback_) release_callback_();
     }
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB
 
    protected:
     friend class Tensor;
-#ifdef MEDIAPIPE_TENSOR_USE_AHWB
-    CpuView(T* buffer, AHardwareBuffer* ahwb, int* fence_fd,
-            std::unique_ptr<absl::MutexLock>&& lock)
+    CpuView(T* buffer, std::unique_ptr<absl::MutexLock>&& lock,
+            std::function<void()> release_callback = nullptr)
         : View(std::move(lock)),
           buffer_(buffer),
-          fence_fd_(fence_fd),
-          ahwb_(ahwb) {}
-    AHardwareBuffer* ahwb_;
-    int* fence_fd_;
-#else
-    CpuView(T* buffer, std::unique_ptr<absl::MutexLock>&& lock)
-        : View(std::move(lock)), buffer_(buffer) {}
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB
+          release_callback_(release_callback) {}
     T* buffer_;
+    std::function<void()> release_callback_;
   };
   using CpuReadView = CpuView<const void>;
   CpuReadView GetCpuReadView() const;
@@ -184,6 +183,7 @@ class Tensor {
 #endif  // MEDIAPIPE_METAL_ENABLED
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
+  using FinishingFunc = std::function<bool(bool)>;
   class AHardwareBufferView : public View {
    public:
     AHardwareBuffer* handle() const { return handle_; }
@@ -195,15 +195,16 @@ class Tensor {
       release_callback_ = std::exchange(src.release_callback_, nullptr);
     }
     int file_descriptor() const { return file_descriptor_; }
-    void SetReadingFinishedFunc(std::function<bool()>&& func) {
+    void SetReadingFinishedFunc(FinishingFunc&& func) {
       CHECK(ahwb_written_)
           << "AHWB write view can't accept 'reading finished callback'";
       *ahwb_written_ = std::move(func);
     }
-    void SetWritingFinishedFD(int fd) {
+    void SetWritingFinishedFD(int fd, FinishingFunc func = nullptr) {
       CHECK(fence_fd_)
           << "AHWB read view can't accept 'writing finished file descriptor'";
       *fence_fd_ = fd;
+      *ahwb_written_ = std::move(func);
     }
     // The function is called when the tensor is released.
     void SetReleaseCallback(std::function<void()> callback) {
@@ -213,7 +214,7 @@ class Tensor {
    protected:
     friend class Tensor;
     AHardwareBufferView(AHardwareBuffer* handle, int file_descriptor,
-                        int* fence_fd, std::function<bool()>* ahwb_written,
+                        int* fence_fd, FinishingFunc* ahwb_written,
                         std::function<void()>* release_callback,
                         std::unique_ptr<absl::MutexLock>&& lock)
         : View(std::move(lock)),
@@ -226,7 +227,7 @@ class Tensor {
     int file_descriptor_;
     // The view sets some Tensor's fields. The view is released prior to tensor.
     int* fence_fd_;
-    std::function<bool()>* ahwb_written_;
+    FinishingFunc* ahwb_written_;
     std::function<void()>* release_callback_;
   };
   AHardwareBufferView GetAHardwareBufferReadView() const;
@@ -301,6 +302,9 @@ class Tensor {
 
   const Shape& shape() const { return shape_; }
   ElementType element_type() const { return element_type_; }
+  const QuantizationParameters& quantization_parameters() const {
+    return quantization_parameters_;
+  }
   int element_size() const {
     switch (element_type_) {
       case ElementType::kNone:
@@ -313,6 +317,8 @@ class Tensor {
         return 1;
       case ElementType::kInt8:
         return 1;
+      case ElementType::kInt32:
+        return sizeof(int32_t);
     }
   }
   int bytes() const { return shape_.num_elements() * element_size(); }
@@ -337,6 +343,7 @@ class Tensor {
     kAhwb,
   };
   static void SetPreferredStorageType(StorageType type);
+  static StorageType GetPreferredStorageType();
 
  private:
   void Move(Tensor*);
@@ -344,6 +351,7 @@ class Tensor {
 
   ElementType element_type_;
   Shape shape_;
+  QuantizationParameters quantization_parameters_;
 
   // The flags describe the current source of truth resource type.
   enum {
@@ -383,13 +391,15 @@ class Tensor {
   // Reading from SSBO has been finished so SSBO can be released.
   mutable GLsync ssbo_read_ = 0;
   // An externally set function that signals when it is safe to release AHWB.
-  mutable std::function<bool()> ahwb_written_;
+  // If the input parameter is 'true' then wait for the writing to be finished.
+  mutable FinishingFunc ahwb_written_;
   mutable std::function<void()> release_callback_;
   bool AllocateAHardwareBuffer(int size_alignment = 0) const;
   void CreateEglSyncAndFd() const;
   // Use Ahwb for other views: OpenGL / CPU buffer.
   static inline bool use_ahwb_ = false;
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
+  // Expects the target SSBO to be already bound.
   bool AllocateAhwbMapToSsbo() const;
   bool InsertAhwbToSsboFence() const;
   void MoveAhwbStuff(Tensor* src);

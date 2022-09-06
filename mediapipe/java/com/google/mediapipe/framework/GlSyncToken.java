@@ -34,4 +34,7 @@ public interface GlSyncToken {
 
   /** Releases the underlying native object. */
   void release();
+
+  /** Returns a handle to the underlying native object. For internal use. */
+  long nativeToken();
 }

@@ -113,9 +113,8 @@ Nvidia Jetson and Raspberry Pi, please read
 
     Download the latest protoc win64 zip from
     [the Protobuf GitHub repo](https://github.com/protocolbuffers/protobuf/releases),
-    unzip the file, and copy the protoc.exe executable to a preferred
-    location. Please ensure that location is added into the Path environment
-    variable.
+    unzip the file, and copy the protoc.exe executable to a preferred location.
+    Please ensure that location is added into the Path environment variable.
 
 3.  Activate a Python virtual environment.
 
@@ -131,16 +130,14 @@ Nvidia Jetson and Raspberry Pi, please read
     (mp_env)mediapipe$ pip3 install -r requirements.txt
     ```
 
-6.  Generate and install MediaPipe package.
+6.  Build and install MediaPipe package.
 
     ```bash
-    (mp_env)mediapipe$ python3 setup.py gen_protos
     (mp_env)mediapipe$ python3 setup.py install --link-opencv
     ```
 
     or
 
     ```bash
-    (mp_env)mediapipe$ python3 setup.py gen_protos
     (mp_env)mediapipe$ python3 setup.py bdist_wheel
     ```

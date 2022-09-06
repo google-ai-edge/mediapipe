@@ -193,6 +193,7 @@ void GraphProfiler::Initialize(
         "Calculator \"$0\" has already been added.", node_name);
   }
   profile_builder_ = std::make_unique<GraphProfileBuilder>(this);
+
   is_initialized_ = true;
 }
 

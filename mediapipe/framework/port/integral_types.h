@@ -32,13 +32,17 @@ typedef uint16_t uint16;
 typedef uint32_t uint32;
 typedef uint64_t uint64;
 
-typedef signed int char32;
 typedef unsigned long uword_t;
 
 #define GG_LONGLONG(x) x##LL
 #define GG_ULONGLONG(x) x##ULL
 #define GG_LL_FORMAT "ll"  // As in "%lld". Note that "q" is poor form also.
 #define GG_LL_FORMAT_W L"ll"
+
+// Add namespace here to avoid conflict with other libraries.
+namespace mediapipe {
+
+typedef signed int char32;
 
 const uint8 kuint8max{0xFF};
 const uint16 kuint16max{0xFFFF};
@@ -56,5 +60,7 @@ const int64 kint64max{GG_LONGLONG(0x7FFFFFFFFFFFFFFF)};
 typedef uint64 Fprint;
 static const Fprint kIllegalFprint = 0;
 static const Fprint kMaxFprint = GG_ULONGLONG(0xFFFFFFFFFFFFFFFF);
+
+}  // namespace mediapipe
 
 #endif  // MEDIAPIPE_PORT_INTEGRAL_TYPES_H_

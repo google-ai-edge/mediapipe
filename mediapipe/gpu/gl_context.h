@@ -94,6 +94,7 @@ class GlSyncPoint {
   // Returns whether the sync point has been reached. Does not block.
   virtual bool IsReady() = 0;
 
+  // Returns the GlContext object associated with this sync point, if any.
   const std::shared_ptr<GlContext>& GetContext() { return gl_context_; }
 
  protected:
@@ -302,6 +303,15 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
     return *static_cast<T*>(entry.get());
   }
 
+  // Creates a synchronization token for the current, non-GlContext-owned
+  // context. This can be passed to MediaPipe so it can synchronize with the
+  // commands issued in the external context up to this point.
+  // Note: if the current context does not support sync fences, this calls
+  // glFinish and returns nullptr.
+  // TODO: return GlNopSyncPoint instead?
+  static std::shared_ptr<GlSyncPoint> CreateSyncTokenForCurrentExternalContext(
+      const std::shared_ptr<GlContext>& delegate_graph_context);
+
   // These are used for testing specific SyncToken implementations. Do not use
   // outside of tests.
   enum class SyncTokenTypeForTest {
@@ -312,6 +322,8 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
 
  private:
   GlContext();
+
+  bool ShouldUseFenceSync() const;
 
 #if defined(__EMSCRIPTEN__)
   absl::Status CreateContext(EMSCRIPTEN_WEBGL_CONTEXT_HANDLE share_context);

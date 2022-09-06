@@ -287,7 +287,11 @@ absl::Status TensorsToDetectionsCalculator::Process(CalculatorContext* cc) {
       }
     }
   }
-  const int num_input_tensors = kInTensors(cc)->size();
+  const auto& input_tensors = *kInTensors(cc);
+  for (const auto& tensor : input_tensors) {
+    RET_CHECK(tensor.element_type() == Tensor::ElementType::kFloat32);
+  }
+  const int num_input_tensors = input_tensors.size();
   if (!scores_tensor_index_is_set_) {
     if (num_input_tensors == 2 ||
         num_input_tensors == kNumInputTensorsWithAnchors) {

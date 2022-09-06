@@ -1,0 +1,64 @@
+/* Copyright 2022 The MediaPipe Authors.  All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto2";
+
+package mediapipe.tasks.core.proto;
+
+option java_package = "com.google.mediapipe.tasks.core.proto";
+option java_outer_classname = "ExternalFileProto";
+
+// Represents external files used by the engines (e.g. TF Lite flatbuffers). The
+// files can be specified by one of the following three ways:
+//
+// (1) file contents loaded in `file_content`.
+// (2) file path in `file_name`.
+// (3) file descriptor through `file_descriptor_meta` as returned by open(2).
+//
+// If more than one field of these fields is provided, they are used in this
+// precedence order.
+// Next id: 4
+message ExternalFile {
+  // The file contents as a byte array.
+  optional bytes file_content = 1;
+
+  // The path to the file to open and mmap in memory
+  optional string file_name = 2;
+
+  // The file descriptor to a file opened with open(2), with optional additional
+  // offset and length information.
+  optional FileDescriptorMeta file_descriptor_meta = 3;
+}
+
+// A proto defining file descriptor metadata for mapping file into memory using
+// mmap(2).
+message FileDescriptorMeta {
+  // File descriptor as returned by open(2).
+  optional int32 fd = 1;
+
+  // Optional length of the mapped memory. If not specified, the actual file
+  // size is used at runtime.
+  //
+  // This is an advanced option, e.g. this can be used on Android to specify the
+  // length of a given asset obtained from AssetFileDescriptor#getLength().
+  optional int64 length = 2;
+
+  // Optional starting offset in the file referred to by the file descriptor
+  // `fd`.
+  //
+  // This is an advanced option, e.g. this can be used on Android to specify the
+  // offset of a given asset obtained from AssetFileDescriptor#getStartOffset().
+  optional int64 offset = 3;
+}

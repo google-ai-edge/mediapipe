@@ -102,7 +102,7 @@ each project.
     /path/to/your/app/libs/
     ```
 
-    ![Screenshot](../images/mobile/aar_location.png)
+    ![Screenshot](https://mediapipe.dev/images/mobile/aar_location.png)
 
 3.  Make app/src/main/assets and copy assets (graph, model, and etc) into
     app/src/main/assets.
@@ -120,7 +120,7 @@ each project.
     cp mediapipe/modules/face_detection/face_detection_short_range.tflite /path/to/your/app/src/main/assets/
     ```
 
-    ![Screenshot](../images/mobile/assets_location.png)
+    ![Screenshot](https://mediapipe.dev/images/mobile/assets_location.png)
 
 4.  Modify app/build.gradle to add MediaPipe dependencies and MediaPipe AAR.
 

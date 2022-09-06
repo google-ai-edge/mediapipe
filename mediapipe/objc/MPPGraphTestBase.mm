@@ -221,7 +221,7 @@ static void EnsureOutputDirFor(NSString *outputFile) {
       aWidth != bWidth ||
       aHeight != bHeight) return NO;
 
-  size_t bytesPerPixel;  // is there a generic way to get this from a pixel buffer?
+  size_t bytesPerPixel = 0;  // is there a generic way to get this from a pixel buffer?
   switch (aPixelFormat) {
     case kCVPixelFormatType_32BGRA:
       bytesPerPixel = 4;

@@ -569,55 +569,64 @@ class GlFinishSyncPoint : public GlSyncPoint {
   int64_t gl_finish_count_ = -1;
 };
 
-class GlFenceSyncPoint : public GlSyncPoint {
+// Just handles a GLsync. No context management.
+class GlSyncWrapper {
  public:
-  explicit GlFenceSyncPoint(const std::shared_ptr<GlContext>& gl_context)
-      : GlSyncPoint(gl_context) {
-    gl_context_->Run([this] {
-      sync_ = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-      // Defer the flush for WebGL until the glClientWaitSync call as it's a
-      // costly IPC call in Chrome's WebGL implementation.
+  GlSyncWrapper() : sync_(nullptr) {}
+  explicit GlSyncWrapper(GLsync sync) : sync_(sync) {}
+
+  void Create() {
+    Clear();
+    sync_ = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+    // Defer the flush for WebGL until the glClientWaitSync call as it's a
+    // costly IPC call in Chrome's WebGL implementation.
 #ifndef __EMSCRIPTEN__
-      glFlush();
+    glFlush();
 #endif
-    });
   }
 
-  ~GlFenceSyncPoint() {
-    if (sync_) {
-      GLsync sync = sync_;
-      gl_context_->RunWithoutWaiting([sync] { glDeleteSync(sync); });
-    }
+  ~GlSyncWrapper() { Clear(); }
+
+  GlSyncWrapper(const GlSyncWrapper&) = delete;
+  GlSyncWrapper(GlSyncWrapper&& other) : sync_(nullptr) {
+    *this = std::move(other);
+  }
+  GlSyncWrapper& operator=(const GlSyncWrapper&) = delete;
+  GlSyncWrapper& operator=(GlSyncWrapper&& other) {
+    using std::swap;
+    swap(sync_, other.sync_);
+    return *this;
+  }
+  GlSyncWrapper& operator=(std::nullptr_t) {
+    Clear();
+    return *this;
   }
 
-  GlFenceSyncPoint(const GlFenceSyncPoint&) = delete;
-  GlFenceSyncPoint& operator=(const GlFenceSyncPoint&) = delete;
+  operator bool() const { return sync_ != nullptr; }
+  bool operator==(std::nullptr_t) const { return sync_ == nullptr; }
+  bool operator!=(std::nullptr_t) const { return sync_ != nullptr; }
 
-  void Wait() override {
+  void Wait() {
     if (!sync_) return;
-    gl_context_->Run([this] {
-      GLuint flags = 0;
-      uint64_t timeout = std::numeric_limits<uint64_t>::max();
+    GLuint flags = 0;
+    uint64_t timeout = std::numeric_limits<uint64_t>::max();
 #ifdef __EMSCRIPTEN__
-      // Setting GL_SYNC_FLUSH_COMMANDS_BIT ensures flush happens before we wait
-      // on the fence. This is necessary since we defer the flush on WebGL.
-      flags = GL_SYNC_FLUSH_COMMANDS_BIT;
-      // WebGL only supports small implementation dependent timeout values. In
-      // particular, Chrome only supports a timeout of 0.
-      timeout = 0;
+    // Setting GL_SYNC_FLUSH_COMMANDS_BIT ensures flush happens before we wait
+    // on the fence. This is necessary since we defer the flush on WebGL.
+    flags = GL_SYNC_FLUSH_COMMANDS_BIT;
+    // WebGL only supports small implementation dependent timeout values. In
+    // particular, Chrome only supports a timeout of 0.
+    timeout = 0;
 #endif
-      GLenum result = glClientWaitSync(sync_, flags, timeout);
-      if (result == GL_ALREADY_SIGNALED || result == GL_CONDITION_SATISFIED) {
-        glDeleteSync(sync_);
-        sync_ = nullptr;
-      }
-      // TODO: do something if the wait fails?
-    });
+    GLenum result = glClientWaitSync(sync_, flags, timeout);
+    if (result == GL_ALREADY_SIGNALED || result == GL_CONDITION_SATISFIED) {
+      Clear();
+    }
+    // TODO: do something if the wait fails?
   }
 
-  void WaitOnGpu() override {
+  void WaitOnGpu() {
     if (!sync_) return;
-      // TODO: do not wait if we are already on the same context?
       // WebGL2 specifies a waitSync call, but since cross-context
       // synchronization is not supported, it's actually a no-op. Firefox prints
       // a warning when it's called, so let's just skip the call. See
@@ -627,36 +636,122 @@ class GlFenceSyncPoint : public GlSyncPoint {
 #endif
   }
 
+  bool IsReady() {
+    if (!sync_) return true;
+    GLuint flags = 0;
+#ifdef __EMSCRIPTEN__
+    // Setting GL_SYNC_FLUSH_COMMANDS_BIT ensures flush happens before we wait
+    // on the fence. This is necessary since we defer the flush on WebGL.
+    flags = GL_SYNC_FLUSH_COMMANDS_BIT;
+#endif
+    GLenum result = glClientWaitSync(sync_, flags, 0);
+    if (result == GL_ALREADY_SIGNALED || result == GL_CONDITION_SATISFIED) {
+      Clear();
+      return true;
+    }
+    return false;
+  }
+
+ private:
+  void Clear() {
+    if (sync_) {
+      glDeleteSync(sync_);
+      sync_ = nullptr;
+    }
+  }
+
+  GLsync sync_;
+};
+
+class GlFenceSyncPoint : public GlSyncPoint {
+ public:
+  explicit GlFenceSyncPoint(const std::shared_ptr<GlContext>& gl_context)
+      : GlSyncPoint(gl_context) {
+    gl_context_->Run([this] { sync_.Create(); });
+  }
+
+  ~GlFenceSyncPoint() {
+    if (sync_) {
+      gl_context_->RunWithoutWaiting(
+          [sync = new GlSyncWrapper(std::move(sync_))] { delete sync; });
+    }
+  }
+
+  GlFenceSyncPoint(const GlFenceSyncPoint&) = delete;
+  GlFenceSyncPoint& operator=(const GlFenceSyncPoint&) = delete;
+
+  void Wait() override {
+    if (!sync_) return;
+    gl_context_->Run([this] {
+      // TODO: must this run on the original context??
+      sync_.Wait();
+    });
+  }
+
+  void WaitOnGpu() override {
+    if (!sync_) return;
+    // TODO: do not wait if we are already on the same context?
+    sync_.WaitOnGpu();
+  }
+
   bool IsReady() override {
     if (!sync_) return true;
     bool ready = false;
     // TODO: we should not block on the original context if possible.
-    gl_context_->Run([this, &ready] {
-      GLuint flags = 0;
-#ifdef __EMSCRIPTEN__
-      // Setting GL_SYNC_FLUSH_COMMANDS_BIT ensures flush happens before we wait
-      // on the fence. This is necessary since we defer the flush on WebGL.
-      flags = GL_SYNC_FLUSH_COMMANDS_BIT;
-#endif
-      GLenum result = glClientWaitSync(sync_, flags, 0);
-      if (result == GL_ALREADY_SIGNALED || result == GL_CONDITION_SATISFIED) {
-        glDeleteSync(sync_);
-        sync_ = nullptr;
-        ready = true;
-      }
-    });
+    gl_context_->Run([this, &ready] { ready = sync_.IsReady(); });
     return ready;
   }
 
  private:
-  GLsync sync_;
+  GlSyncWrapper sync_;
+};
+
+class GlExternalFenceSyncPoint : public GlSyncPoint {
+ public:
+  // The provided GlContext is used as a fallback when a context is needed (e.g.
+  // for deletion), but it's not the context the sync was created on, so we pass
+  // nullptr to GlSyncPoint.
+  explicit GlExternalFenceSyncPoint(
+      const std::shared_ptr<GlContext>& graph_service_gl_context)
+      : GlSyncPoint(nullptr),
+        graph_service_gl_context_(graph_service_gl_context) {
+    sync_.Create();
+  }
+
+  ~GlExternalFenceSyncPoint() {
+    if (sync_) {
+      graph_service_gl_context_->RunWithoutWaiting(
+          [sync = new GlSyncWrapper(std::move(sync_))] { delete sync; });
+    }
+  }
+
+  GlExternalFenceSyncPoint(const GlExternalFenceSyncPoint&) = delete;
+  GlExternalFenceSyncPoint& operator=(const GlExternalFenceSyncPoint&) = delete;
+
+  void Wait() override {
+    // TODO: can we assume this is always called with a GLContext being current?
+    sync_.Wait();
+  }
+
+  void WaitOnGpu() override { sync_.WaitOnGpu(); }
+
+  bool IsReady() override {
+    // TODO: can we assume this is always called with a GLContext being current?
+    return sync_.IsReady();
+  }
+
+ private:
+  GlSyncWrapper sync_;
+  std::shared_ptr<GlContext> graph_service_gl_context_;
 };
 
 void GlMultiSyncPoint::Add(std::shared_ptr<GlSyncPoint> new_sync) {
-  for (auto& sync : syncs_) {
-    if (sync->GetContext() == new_sync->GetContext()) {
-      sync = std::move(new_sync);
-      return;
+  if (new_sync->GetContext() != nullptr) {
+    for (auto& sync : syncs_) {
+      if (sync->GetContext() == new_sync->GetContext()) {
+        sync = std::move(new_sync);
+        return;
+      }
     }
   }
   syncs_.emplace_back(std::move(new_sync));
@@ -701,28 +796,43 @@ class GlNopSyncPoint : public GlSyncPoint {
 };
 #endif
 
-std::shared_ptr<GlSyncPoint> GlContext::CreateSyncToken() {
-  std::shared_ptr<GlSyncPoint> token;
-#if MEDIAPIPE_DISABLE_GL_SYNC_FOR_DEBUG
-  token.reset(new GlNopSyncPoint(shared_from_this()));
-#else
-
+bool GlContext::ShouldUseFenceSync() const {
 #ifdef __EMSCRIPTEN__
   // In Emscripten the glWaitSync function is non-null depending on linkopts,
   // but only works in a WebGL2 context, so fall back to use Finish if it is a
   // WebGL1/ES2 context.
   // TODO: apply this more generally once b/152794517 is fixed.
-  bool useFenceSync = gl_major_version() > 2;
+  return gl_major_version() > 2;
 #else
-  bool useFenceSync = SymbolAvailable(&glWaitSync);
+  return SymbolAvailable(&glWaitSync);
 #endif  // __EMSCRIPTEN__
-  if (useFenceSync) {
+}
+
+std::shared_ptr<GlSyncPoint> GlContext::CreateSyncToken() {
+  std::shared_ptr<GlSyncPoint> token;
+#if MEDIAPIPE_DISABLE_GL_SYNC_FOR_DEBUG
+  token.reset(new GlNopSyncPoint(shared_from_this()));
+#else
+  if (ShouldUseFenceSync()) {
     token.reset(new GlFenceSyncPoint(shared_from_this()));
   } else {
     token.reset(new GlFinishSyncPoint(shared_from_this()));
   }
 #endif
   return token;
+}
+
+std::shared_ptr<GlSyncPoint>
+GlContext::CreateSyncTokenForCurrentExternalContext(
+    const std::shared_ptr<GlContext>& delegate_graph_context) {
+  CHECK(delegate_graph_context);
+  if (delegate_graph_context->ShouldUseFenceSync()) {
+    return std::shared_ptr<GlSyncPoint>(
+        new GlExternalFenceSyncPoint(delegate_graph_context));
+  } else {
+    glFinish();
+    return nullptr;
+  }
 }
 
 std::shared_ptr<GlSyncPoint> GlContext::TestOnly_CreateSpecificSyncToken(

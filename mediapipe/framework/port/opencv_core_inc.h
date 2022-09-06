@@ -20,7 +20,9 @@
 #ifdef CV_VERSION_EPOCH  // for OpenCV 2.x
 #include <opencv2/core/core.hpp>
 #else
+#if CV_VERSION_MAJOR == 3
 #include <opencv2/cvconfig.h>
+#endif
 
 #include <opencv2/core.hpp>
 #endif

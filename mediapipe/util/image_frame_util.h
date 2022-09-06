@@ -64,6 +64,11 @@ void ImageFrameToYUVNV12Image(const ImageFrame& image_frame,
 void YUVImageToImageFrame(const YUVImage& yuv_image, ImageFrame* image_frame,
                           bool use_bt709 = false);
 
+// Converts a YUV image to an image frame, based on the yuv_image.fourcc()
+// format.  Fails if no format is provided.
+void YUVImageToImageFrameFromFormat(const YUVImage& yuv_image,
+                                    ImageFrame* image_frame);
+
 // Convert sRGB values into MPEG YCbCr values.  Notice that MPEG YCbCr
 // values use a smaller range of values than JPEG YCbCr.  The conversion
 // values used are those from ITU-R BT.601 (which are the same as ITU-R

@@ -28,8 +28,12 @@ namespace api2 {
 // A calculator for converting landmars into a Tensor.
 //
 // Input:
-//   LANDMARKS - LandmarkList
+//   LANDMARKS (optional) - LandmarkList
 //     Landmarks to be converted into a Tensor.
+//   NORM_LANDMARKS (optional) - NormalizedLandmarkList.
+//     Normalized landmarks to be converted into a Tensor.
+//   IMAGE_SIZE (optional) - std::pair<int, int>
+//     Image size to scale NORM_LANDMARKS.
 //
 // Output:
 //   TENSORS - std::vector<Tensor>
@@ -49,10 +53,15 @@ namespace api2 {
 // }
 class LandmarksToTensorCalculator : public NodeIntf {
  public:
-  static constexpr Input<LandmarkList>::Optional kInLandmarkList{"LANDMARKS"};
+  static constexpr Input<mediapipe::LandmarkList>::Optional kInLandmarkList{
+      "LANDMARKS"};
+  static constexpr Input<mediapipe::NormalizedLandmarkList>::Optional
+      kInNormLandmarkList{"NORM_LANDMARKS"};
+  static constexpr Input<std::pair<int, int>>::Optional kImageSize{
+      "IMAGE_SIZE"};
   static constexpr Output<std::vector<Tensor>> kOutTensors{"TENSORS"};
   MEDIAPIPE_NODE_INTERFACE(LandmarksToTensorCalculator, kInLandmarkList,
-                           kOutTensors);
+                           kInNormLandmarkList, kImageSize, kOutTensors);
 };
 
 }  // namespace api2

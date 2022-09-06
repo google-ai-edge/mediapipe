@@ -505,11 +505,13 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
               << keyed_tensors.first;
         }
       } else {
-        // Pad by replicating the first tensor, then ignore the values.
-        keyed_tensors.second.resize(options_.batch_size());
-        std::fill(keyed_tensors.second.begin() +
-                      inference_state->batch_timestamps_.size(),
-                  keyed_tensors.second.end(), keyed_tensors.second[0]);
+        if (options_.pad_to_batch_size()) {
+          // Pad by replicating the first tensor, then ignore the values.
+          keyed_tensors.second.resize(options_.batch_size());
+          std::fill(keyed_tensors.second.begin() +
+                        inference_state->batch_timestamps_.size(),
+                    keyed_tensors.second.end(), keyed_tensors.second[0]);
+        }
         tf::Tensor concated;
         const tf::Status concat_status =
             tf::tensor::Concat(keyed_tensors.second, &concated);
@@ -576,7 +578,11 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
 
     absl::WriterMutexLock l(&mutex_);
     // Set that we want to split on each index of the 0th dimension.
-    std::vector<tf::int64> split_vector(options_.batch_size(), 1);
+    std::vector<tf::int64> split_vector(
+        options_.pad_to_batch_size()
+            ? options_.batch_size()
+            : inference_state->batch_timestamps_.size(),
+        1);
     for (int i = 0; i < output_tensor_names.size(); ++i) {
       if (options_.batch_size() == 1) {
         if (cc->Outputs().HasTag(output_name_in_signature[i])) {

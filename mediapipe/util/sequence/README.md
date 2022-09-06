@@ -22,14 +22,17 @@ number of features per timestep varies, creating a ragged struction. Video
 object detection is one example task that requires this ragged structure because
 the number of detections per frame varies. SequenceExamples can easily encode
 this ragged structure. Sequences naturally match the semantics of video as a
-sequence of frames or other common media patterns. The interpretable semantics simplify debugging and decoding of
-potentially complicated data. One potential disadvantage of SequenceExamples is
-that keys and formats can vary widely. The MediaSequence library provides tools
-for consistently manipulating and decoding SequenceExamples in Python and C++ in
-a consistent format. The consistent format enables creating a pipeline for
-processing data sets. A goal of MediaSequence as a pipeline is that users should
-only need to specify the metadata (e.g. videos and labels) for their task. The
-pipeline will turn the metadata into training data.
+sequence of frames or other common media patterns. The video feature lists will
+be stored in order with strictly increasing timestamps so the data is
+unambiguously ordered. The interpretable semantics simplify debugging and
+decoding of potentially complicated data. One potential disadvantage of
+SequenceExamples is that keys and formats can vary widely. The MediaSequence
+library provides tools for consistently manipulating and decoding
+SequenceExamples in Python and C++ in a consistent format. The consistent format
+enables creating a pipeline for processing data sets. A goal of MediaSequence as
+a pipeline is that users should only need to specify the metadata (e.g. videos
+and labels) for their task. The pipeline will turn the metadata into training
+data.
 
 The pipeline has two stages. First, users must generate the metadata
 describing the data and applicable labels. This process is
@@ -233,8 +236,10 @@ The values that are unpacked and packed into these calculators are determined
 by the tags on the streams in the MediaPipe calculator graph. (Tags are required
 to be all capitals and underscores. To encode prefixes for feature keys as tags,
 prefixes for feature keys should follow the same convention.) The documentation
-for these two calculators describes the variety of data they support. Any other
-MediaPipe processing can be used between these calculators to extract features.
+for these two calculators describes the variety of data they support. The
+timestamps of each feature list being unpacked must be in strictly increasing
+order. Any other MediaPipe processing can be used between these calculators to
+extract features.
 
 #### Adding data and reconciling metadata
 In general, the pipeline will decode the specified media between the clip
@@ -279,6 +284,31 @@ optical flow can't be estimated for the last frame of a video clip, so it
 adds one less frame of data. With the exception of aligning bounding boxes, the
 pipeline does nothing to require consistent timestamps between features.
 
+### Using prefixes
+
+Prefixes enable storing semantically identical data without collisions. For
+example, it is possible to store predicted and ground truth bounding boxes by
+using different prefixes. We can also store bounding boxes and labels from
+different tasks by utilizing prefixes.
+
+To minimize burdening the API and documentation, eschew using prefixes unless
+necessary.
+
+The recommended prefix format, enforced by some MediaPipe functions, is all caps
+with underscores, and numeric characters after the first character. e.g.
+`MY_FAVORITE_FEATURE_V1`.
+
+The convention for encoding groundtruth labels is to use no prefix, while
+predicted labels are typically tagged with prefixes. For example:
+
+*   Example groudntruth keys:
+    *   `region/label/string`
+    *   `region/label/confidence`
+
+*   Example predicted label keys:
+    *   `PREDICT_V1/region/label/string`
+    *   `PREDICT_V1/region/label/confidence`
+
 ## Function prototypes for each data type
 
 MediaSequence provides accessors to store common data patterns in
@@ -288,14 +318,11 @@ the key, so we will document the functions with a generic name, Feature. Note
 that due to different conventions for Python and C++ code, the capitalization
 and parameter order varies, but the functionality should be equivalent.
 
-Each function takes an optional prefix parameter. Prefixes enable storing
-semantically identical data without collisions. For example, it is possible to
-store predicted and ground truth bounding boxes by using different prefixes.
-To minimize burdening the API and documentation, eschew using prefixes unless
-necessary. For some common cases, such as storing instance segmentation labels
-along with images, named versions with prefixes baked in provided as documented
-below. Lastly, generic features and audio streams should almost always use a
-prefix because storing multiple features or transformed audio streams is common.
+Each function takes an optional prefix parameter. For some common cases, such as
+storing instance segmentation labels along with images, named versions with
+prefixes baked in provided as documented below. Lastly, generic features and
+audio streams should almost always use a prefix because storing multiple
+features or transformed audio streams is common.
 
 The code generating these functions resides in media_sequence.h/.cc/.py and
 media_sequence_util.h/.cc/.py. The media_sequence files generally defines the
@@ -368,6 +395,7 @@ are provided for elaboration.
 |-----|------|------------------------|-------------|
 |`example/id`|context bytes|`set_example_id` / `SetExampleId`|A unique identifier for each example.|
 |`example/dataset_name`|context bytes|`set_example_dataset_name` / `SetExampleDatasetName`|The name of the data set, including the version.|
+|`example/dataset/flag/string`|context bytes list|`set_example_dataset_flag_string` / `SetExampleDatasetFlagString`|A list of bytes for dataset related attributes or flags for this example.
 
 ### Keys related to a clip
 | key | type | python call / c++ call | description |
@@ -381,7 +409,7 @@ are provided for elaboration.
 |`clip/media_id`|context bytes|`set_clip_media_id` / `SetClipMediaId`|Any identifier for the media beyond the data path.|
 |`clip/alternative_media_id`|context bytes|`set_clip_alternative_media_id` / `SetClipAlternativeMediaId`|Yet another alternative identifier.|
 |`clip/encoded_media_bytes`|context bytes|`set_clip_encoded_media_bytes` / `SetClipEncodedMediaBytes`|The encoded bytes for storing media directly in the SequenceExample.|
-|`clip/ encoded_media_start_timestamp`|context int|`set_clip_encoded_media_start_timestamp` / `SetClipEncodedMediaStartTimestamp`|The start time for the encoded media if not preserved during encoding.
+|`clip/encoded_media_start_timestamp`|context int|`set_clip_encoded_media_start_timestamp` / `SetClipEncodedMediaStartTimestamp`|The start time for the encoded media if not preserved during encoding.|
 
 ### Keys related to segments of clips
 | key | type | python call / c++ call | description |
@@ -447,7 +475,7 @@ tasks and tracking (or class) fields for tracking information.
 |`region/embedding/format`|context string|`set_bbox_embedding_format` / `SetBBoxEmbeddingFormat`|Provides the encoding format, if any, for region embeddings.|
 |`region/embedding/encoded`|feature list bytes list|`add_bbox_embedding_encoded` / `AddBBoxEmbeddingEncoded`|For each region, provide an encoded embedding.|
 |`region/embedding/confidence`|feature list float list|`add_bbox_embedding_confidence` / `AddBBoxEmbeddingConfidence` | For each region, provide a confidence for the embedding.|
-|`region/unmodified_timestamp`|feature list int|`add_bbox_unmodified_timestamp` / `AddBBoxUnmodifiedTimestamp`|Used to store the original timestamps if procedurally aligning timestamps to image frames.|
+|`region/unmodified_timestamp`|feature list int|`add_bbox_unmodified_timestamp` / `AddUnmodifiedBBoxTimestamp`|Used to store the original timestamps if procedurally aligning timestamps to image frames.|
 
 ### Keys related to images
 | key | type | python call / c++ call | description |
@@ -511,7 +539,10 @@ recommendation is to use more specific methods if possible. When using these
 generic features, always supply a prefix. (The recommended prefix format,
 enforced by some MediaPipe functions, is all caps with underscores, e.g.
 MY_FAVORITE_FEATURE.) Following this recommendation, the keys will be listed
-with a generic PREFIX.
+with a generic PREFIX. Calls exist for storing generic features in both the
+`feature_list` and the `context`. For anything that occurs with a timestamp,
+use the `feature_list`; for anything that applies to the example as a whole,
+without timestamps, use the `context`.
 
 | key | type | python call / c++ call | description |
 |-----|------|------------------------|-------------|
@@ -524,13 +555,14 @@ with a generic PREFIX.
 |`PREFIX/feature/dimensions`|context int list|`set_feature_dimensions` / `SetFeatureDimensions`|A list of integer dimensions for each feature.|
 |`PREFIX/feature/rate`|context float|`set_feature_rate` / `SetFeatureRate`|The rate that features are calculated as features per second.|
 |`PREFIX/feature/bytes/format`|context bytes|`set_feature_bytes_format` / `SetFeatureBytesFormat`|The encoding format if any for features stored as bytes.|
+|`PREFIX/context_feature/floats`|context float list|`add_context_feature_floats` / `AddContextFeatureFloats`|A list of floats for the entire example.|
+|`PREFIX/context_feature/bytes`|context bytes list|`add_context_feature_bytes` / `AddContextFeatureBytes`|A list of bytes for the entire example. Maybe be encoded.|
+|`PREFIX/context_feature/ints`|context int list|`add_context_feature_ints` / `AddContextFeatureInts`|A list of ints for the entire example.|
 
 ### Keys related to audio
 Audio is a special subtype of generic features with additional data about the
-audio format. When using audio, always supply a prefix. (The recommended prefix
-format, enforced by some MediaPipe functions, is all caps with underscores, e.g.
-MY_FAVORITE_FEATURE.) Following this recommendation, the keys will be listed
-with a generic PREFIX.
+audio format. When using audio, always supply a prefix. The keys here will be
+listed with a generic PREFIX.
 
 To understand the terminology, it is helpful conceptualize the audio as a list
 of matrices. The columns of the matrix are called samples. The rows of the

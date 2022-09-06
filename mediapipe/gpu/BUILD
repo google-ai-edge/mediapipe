@@ -385,9 +385,7 @@ objc_library(
         "CoreVideo",
     ],
     visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/objc:util",
-    ],
+    deps = ["//mediapipe/objc:util"],
 )
 
 objc_library(
@@ -421,10 +419,11 @@ objc_library(
         ":gpu_buffer_multi_pool",
         ":gpu_shared_data_header",
         ":graph_support",
+        "//mediapipe/gpu:gl_context_options_cc_proto",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/gpu:gl_context_options_cc_proto",
         "@google_toolbox_for_mac//:GTM_Defines",
+    ] + [
     ],
 )
 

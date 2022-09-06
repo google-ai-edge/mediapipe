@@ -93,10 +93,9 @@ public class GraphTextureFrame implements TextureFrame {
    */
   @Override
   public void release() {
-    if (nativeBufferHandle != 0) {
-      nativeReleaseBuffer(nativeBufferHandle);
-      nativeBufferHandle = 0;
-    }
+    GlSyncToken consumerToken =
+        new GraphGlSyncToken(nativeCreateSyncTokenForCurrentExternalContext(nativeBufferHandle));
+    release(consumerToken);
   }
 
   /**
@@ -109,15 +108,24 @@ public class GraphTextureFrame implements TextureFrame {
    * currently cannot create a GlSyncToken, so they cannot call this method.
    */
   @Override
-  public void release(GlSyncToken syncToken) {
-    syncToken.release();
-    release();
+  public void release(GlSyncToken consumerSyncToken) {
+    if (nativeBufferHandle != 0) {
+      long token = consumerSyncToken == null ? 0 : consumerSyncToken.nativeToken();
+      nativeReleaseBuffer(nativeBufferHandle, token);
+      nativeBufferHandle = 0;
+    }
+    if (consumerSyncToken != null) {
+      consumerSyncToken.release();
+    }
   }
 
-  private native void nativeReleaseBuffer(long nativeHandle);
+  private native void nativeReleaseBuffer(long nativeHandle, long consumerSyncToken);
+
   private native int nativeGetTextureName(long nativeHandle);
   private native int nativeGetWidth(long nativeHandle);
   private native int nativeGetHeight(long nativeHandle);
 
   private native void nativeGpuWait(long nativeHandle);
+
+  private native long nativeCreateSyncTokenForCurrentExternalContext(long nativeHandle);
 }

@@ -33,6 +33,7 @@ namespace {
 
 using ::testing::ElementsAre;
 using ::testing::Eq;
+using ::testing::IsTrue;
 using ::testing::Value;
 
 MATCHER_P2(IntPacket, value, ts, "") {
@@ -42,6 +43,11 @@ MATCHER_P2(IntPacket, value, ts, "") {
 
 MATCHER_P2(FloatPacket, value, ts, "") {
   return Value(arg.template Get<float>(), Eq(value)) &&
+         Value(arg.Timestamp(), Eq(Timestamp(ts)));
+}
+
+MATCHER_P(EmptyPacket, ts, "") {
+  return Value(arg.IsEmpty(), IsTrue()) &&
          Value(arg.Timestamp(), Eq(Timestamp(ts)));
 }
 
@@ -340,6 +346,105 @@ TEST_P(PacketClonerCalculatorTest,
           ElementsAre(FloatPacket(10.0f, 10000), FloatPacket(10.0f, 15000),
                       FloatPacket(20.0f, 20000), FloatPacket(30.0f, 25000),
                       FloatPacket(40.0f, 40000))));
+}
+
+class PacketClonerCalculatorGatedInputTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    CalculatorGraphConfig graph_config =
+        ParseTextProtoOrDie<CalculatorGraphConfig>([&]() {
+          return R"pb(
+            input_stream: 'input'
+            input_stream: 'input_enabled'
+            input_stream: 'tick'
+            input_stream: 'tick_enabled'
+            node {
+              calculator: 'GateCalculator'
+              input_stream: 'tick'
+              input_stream: 'ALLOW:tick_enabled'
+              output_stream: 'tick_gated'
+            }
+            node {
+              calculator: 'GateCalculator'
+              input_stream: 'input'
+              input_stream: 'ALLOW:input_enabled'
+              output_stream: 'input_gated'
+            }
+            node {
+              calculator: 'PacketClonerCalculator'
+              input_stream: 'input_gated'
+              input_stream: 'TICK:tick_gated'
+              output_stream: 'output'
+            })pb";
+        }());
+
+    MP_ASSERT_OK(graph.Initialize(graph_config, {}));
+    MP_ASSERT_OK(graph.ObserveOutputStream(
+        "output",
+        [this](Packet const& packet) {
+          output.push_back(packet);
+          return absl::OkStatus();
+        },
+        true));
+    MP_ASSERT_OK(graph.StartRun({}));
+  }
+
+  CalculatorGraph graph;
+  std::vector<Packet> output;
+};
+
+TEST_F(PacketClonerCalculatorGatedInputTest,
+       PropagatesTimestampBoundsWithEmptyInput) {
+  MP_ASSERT_OK(SendPacket("tick_enabled", false, /*ts=*/100, graph));
+  MP_ASSERT_OK(SendPacket("tick", 0, /*ts=*/100, graph));
+
+  MP_ASSERT_OK(SendPacket("input_enabled", false, /*ts=*/200, graph));
+  MP_ASSERT_OK(SendPacket("input", 1, /*ts=*/200, graph));
+
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  EXPECT_THAT(output, ElementsAre(EmptyPacket(100)));
+}
+
+TEST_F(PacketClonerCalculatorGatedInputTest,
+       PropagatesTimestampBoundsWithInput) {
+  MP_ASSERT_OK(SendPacket("input_enabled", true, /*ts=*/100, graph));
+  MP_ASSERT_OK(SendPacket("input", 1, /*ts=*/100, graph));
+
+  MP_ASSERT_OK(SendPacket("tick_enabled", true, /*ts=*/100, graph));
+  MP_ASSERT_OK(SendPacket("tick", 0, /*ts=*/100, graph));
+
+  MP_ASSERT_OK(SendPacket("tick_enabled", false, /*ts=*/110, graph));
+  MP_ASSERT_OK(SendPacket("tick", 0, /*ts=*/110, graph));
+
+  MP_ASSERT_OK(SendPacket("input_enabled", false, /*ts=*/200, graph));
+  MP_ASSERT_OK(SendPacket("input", 2, /*ts=*/200, graph));
+
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  EXPECT_THAT(output, ElementsAre(IntPacket(1, 100), EmptyPacket(110)));
+}
+
+TEST_F(PacketClonerCalculatorGatedInputTest,
+       PropagatesTimestampBoundsFromTick) {
+  MP_ASSERT_OK(SendPacket("input_enabled", true, /*ts=*/100, graph));
+  MP_ASSERT_OK(SendPacket("input", 1, /*ts=*/100, graph));
+
+  MP_ASSERT_OK(SendPacket("tick_enabled", true, /*ts=*/100, graph));
+  MP_ASSERT_OK(SendPacket("tick", 0, /*ts=*/100, graph));
+
+  MP_ASSERT_OK(SendPacket("input_enabled", true, /*ts=*/110, graph));
+  MP_ASSERT_OK(SendPacket("input", 2, /*ts=*/110, graph));
+
+  MP_ASSERT_OK(SendPacket("tick_enabled", false, /*ts=*/200, graph));
+  MP_ASSERT_OK(SendPacket("tick", 0, /*ts=*/200, graph));
+
+  MP_ASSERT_OK(SendPacket("input_enabled", false, /*ts=*/200, graph));
+  MP_ASSERT_OK(SendPacket("input", 2, /*ts=*/200, graph));
+
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+
+  EXPECT_THAT(output, ElementsAre(IntPacket(1, 100), EmptyPacket(200)));
 }
 
 INSTANTIATE_TEST_SUITE_P(PacketClonerCalculator, PacketClonerCalculatorTest,

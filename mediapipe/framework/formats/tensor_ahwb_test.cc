@@ -1,15 +1,13 @@
+#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/gpu/gpu_test_base.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-#include <android/hardware_buffer.h>
-
-#include "mediapipe/framework/formats/tensor.h"
+#if !MEDIAPIPE_DISABLE_GPU
 
 namespace mediapipe {
 
-#if !MEDIAPIPE_DISABLE_GPU
 class TensorAhwbTest : public mediapipe::GpuTestBase {
  public:
 };
@@ -55,5 +53,4 @@ TEST_F(TensorAhwbTest, TestCpuThenGl) {
 }  // namespace mediapipe
 
 #endif  // !MEDIAPIPE_DISABLE_GPU
-
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB

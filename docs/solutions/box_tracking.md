@@ -80,7 +80,7 @@ frame (e.g., [MediaPipe Object Detection](./object_detection.md)):
 *   Object localization is temporally consistent with the help of tracking,
     meaning less jitter is observable across frames.
 
-![object_tracking_android_gpu.gif](../images/mobile/object_tracking_android_gpu.gif) |
+![object_tracking_android_gpu.gif](https://mediapipe.dev/images/mobile/object_tracking_android_gpu.gif) |
 :----------------------------------------------------------------------------------: |
 *Fig 1. Box tracking paired with ML-based object detection.*                         |
 

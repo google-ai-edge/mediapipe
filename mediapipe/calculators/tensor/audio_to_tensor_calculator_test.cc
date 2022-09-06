@@ -63,7 +63,10 @@ class AudioToTensorCalculatorNonStreamingModeTest : public ::testing::Test {
  protected:
   void SetUp() override {}
   void Run(int num_samples, int num_overlapping_samples,
-           double resampling_factor, const Matrix& input_matrix) {
+           double resampling_factor, const Matrix& input_matrix,
+           int num_channels_override = 0) {
+    const int num_channels = num_channels_override == 0 ? input_matrix.rows()
+                                                        : num_channels_override;
     double input_sample_rate = 10000;
     double target_sample_rate = input_sample_rate * resampling_factor;
     auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(
@@ -84,12 +87,12 @@ class AudioToTensorCalculatorNonStreamingModeTest : public ::testing::Test {
               num_samples: $1
               num_overlapping_samples: $2
               target_sample_rate: $3
-              streaming_mode: false
+              stream_mode: false
             }
           }
         }
         )",
-                         /*$0=*/input_matrix.rows(),
+                         /*$0=*/num_channels,
                          /*$1=*/num_samples, /*$2=*/num_overlapping_samples,
                          /*$3=*/target_sample_rate));
     tool::AddVectorSink("tensors", &graph_config, &tensors_packets_);
@@ -114,20 +117,21 @@ class AudioToTensorCalculatorNonStreamingModeTest : public ::testing::Test {
   }
 
   void CheckTensorsOutputPackets(const Matrix& expected_matrix,
-                                 int sample_offset, int num_tensors_per_input) {
+                                 int sample_offset, int num_tensors_per_input,
+                                 bool mono = false) {
     ASSERT_EQ(num_iterations_ * num_tensors_per_input, tensors_packets_.size());
     for (int i = 0; i < num_iterations_; ++i) {
       for (int j = 0; j < num_tensors_per_input; ++j) {
         CheckTensorsOutputPacket(
             expected_matrix, tensors_packets_[i * num_tensors_per_input + j],
-            /*sample_offset*/ sample_offset * j, /*index=*/j);
+            /*sample_offset=*/sample_offset * j, /*index=*/j, /*mono=*/mono);
       }
     }
   }
 
   void CheckTensorsOutputPacket(const Matrix& expected_matrix,
                                 const Packet& packet, int sample_offset,
-                                int index) {
+                                int index, bool mono = false) {
     MP_ASSERT_OK(packet.ValidateAsType<std::vector<Tensor>>());
     ASSERT_EQ(1, packet.Get<std::vector<Tensor>>().size());
     const Tensor& output_tensor = packet.Get<std::vector<Tensor>>()[0];
@@ -137,7 +141,11 @@ class AudioToTensorCalculatorNonStreamingModeTest : public ::testing::Test {
     for (int i = 0; i < num_values; ++i) {
       if (i + sample_offset >= expected_matrix.size()) {
         EXPECT_FLOAT_EQ(output_floats[i], 0);
+      } else if (mono) {
+        EXPECT_FLOAT_EQ(output_floats[i],
+                        expected_matrix.coeff(0, i + sample_offset));
       } else {
+        // Stereo.
         EXPECT_FLOAT_EQ(output_floats[i],
                         expected_matrix.coeff((i + sample_offset) % 2,
                                               (i + sample_offset) / 2))
@@ -206,6 +214,17 @@ TEST_F(AudioToTensorCalculatorNonStreamingModeTest, TensorsWithZeroPadding) {
   CheckTensorsOutputPackets(*input_matrix, /*sample_offset=*/4,
                             /*num_tensors_per_input=*/3);
   CheckTimestampsOutputPackets({0, 200, 400});
+  CloseGraph();
+}
+
+TEST_F(AudioToTensorCalculatorNonStreamingModeTest, Mixdown) {
+  auto input_matrix = CreateTestMatrix(2, 8, 0);
+  Run(/*num_samples=*/4, /*num_overlapping_samples=*/2,
+      /*resampling_factor=*/1.0f, *input_matrix, /*num_channels_override=*/1);
+  const Matrix& mono_matrix = input_matrix->colwise().mean();
+  CheckTensorsOutputPackets(mono_matrix, /*sample_offset=*/2,
+                            /*num_tensors_per_input=*/4, /*mono=*/true);
+  CheckTimestampsOutputPackets({0, 200, 400, 600});
   CloseGraph();
 }
 
@@ -299,7 +318,7 @@ class AudioToTensorCalculatorStreamingModeTest : public ::testing::Test {
               num_samples: $0
               num_overlapping_samples: $1
               target_sample_rate: $2
-              streaming_mode:true
+              stream_mode:true
             }
           }
         }

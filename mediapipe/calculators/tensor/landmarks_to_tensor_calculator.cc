@@ -15,6 +15,8 @@
 #include "mediapipe/calculators/tensor/landmarks_to_tensor_calculator.h"
 
 #include <memory>
+#include <optional>
+#include <type_traits>
 
 #include "mediapipe/calculators/tensor/landmarks_to_tensor_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
@@ -28,8 +30,25 @@ namespace api2 {
 
 namespace {
 
+// Returns the scale attribute should be multiplied by.
+float GetAttributeScale(
+    const LandmarksToTensorCalculatorOptions::Attribute& attribute,
+    const std::pair<int, int>& image_size) {
+  switch (attribute) {
+    case LandmarksToTensorCalculatorOptions::X:
+    case LandmarksToTensorCalculatorOptions::Z:
+      return image_size.first;
+    case LandmarksToTensorCalculatorOptions::Y:
+      return image_size.second;
+    case LandmarksToTensorCalculatorOptions::VISIBILITY:
+    case LandmarksToTensorCalculatorOptions::PRESENCE:
+      return 1.0f;
+  }
+}
+
+template <typename LandmarkType>
 float GetAttribute(
-    const Landmark& landmark,
+    const LandmarkType& landmark,
     const LandmarksToTensorCalculatorOptions::Attribute& attribute) {
   switch (attribute) {
     case LandmarksToTensorCalculatorOptions::X:
@@ -45,6 +64,33 @@ float GetAttribute(
   }
 }
 
+template <typename LandmarksT>
+Tensor ConvertLandmarksToTensor(
+    const LandmarksT& landmarks, const std::vector<float>& attribute_scales,
+    const LandmarksToTensorCalculatorOptions& options) {
+  // Determine tensor shape.
+  const int n_landmarks = landmarks.landmark_size();
+  const int n_attributes = options.attributes_size();
+  auto tensor_shape = options.flatten()
+                          ? Tensor::Shape{1, n_landmarks * n_attributes}
+                          : Tensor::Shape{1, n_landmarks, n_attributes};
+
+  // Create empty tesnor.
+  Tensor tensor(Tensor::ElementType::kFloat32, tensor_shape);
+  auto* buffer = tensor.GetCpuWriteView().buffer<float>();
+
+  // Fill tensor with landmark attributes.
+  for (int i = 0; i < n_landmarks; ++i) {
+    for (int j = 0; j < n_attributes; ++j) {
+      float value = GetAttribute(landmarks.landmark(i), options.attributes(j));
+      float scale = attribute_scales[j];
+      buffer[i * n_attributes + j] = value * scale;
+    }
+  }
+
+  return tensor;
+}
+
 }  // namespace
 
 class LandmarksToTensorCalculatorImpl
@@ -54,39 +100,52 @@ class LandmarksToTensorCalculatorImpl
     options_ = cc->Options<LandmarksToTensorCalculatorOptions>();
     RET_CHECK(options_.attributes_size() > 0)
         << "At least one attribute must be specified";
+
+    RET_CHECK(kInLandmarkList(cc).IsConnected() ^
+              kInNormLandmarkList(cc).IsConnected())
+        << "Exactly one landmarks input should be provided";
+    RET_CHECK_EQ(kInNormLandmarkList(cc).IsConnected(),
+                 kImageSize(cc).IsConnected())
+        << "Image size should be provided only for normalized landmarks";
+
     return absl::OkStatus();
   }
 
   absl::Status Process(CalculatorContext* cc) override {
-    if (kInLandmarkList(cc).IsEmpty()) {
-      return absl::OkStatus();
-    }
-
-    // Get input landmarks.
-    const auto& in_landmarks = *kInLandmarkList(cc);
-
-    // Determine tensor shape.
-    const int n_landmarks = in_landmarks.landmark_size();
-    const int n_attributes = options_.attributes_size();
-    auto tensor_shape = options_.flatten()
-                            ? Tensor::Shape{1, n_landmarks * n_attributes}
-                            : Tensor::Shape{1, n_landmarks, n_attributes};
-
-    // Create empty tesnor.
-    Tensor tensor(Tensor::ElementType::kFloat32, tensor_shape);
-    auto* buffer = tensor.GetCpuWriteView().buffer<float>();
-
-    // Fill tensor with landmark attributes.
-    for (int i = 0; i < n_landmarks; ++i) {
-      for (int j = 0; j < n_attributes; ++j) {
-        buffer[i * n_attributes + j] =
-            GetAttribute(in_landmarks.landmark(i), options_.attributes(j));
+    // Get attribute scales depending on whether landmarks are normalized or
+    // not.
+    std::vector<float> attribute_scales;
+    if (kInLandmarkList(cc).IsConnected()) {
+      for (int j = 0; j < options_.attributes_size(); ++j) {
+        attribute_scales.push_back(1.0f);
+      }
+    } else {
+      RET_CHECK(!kImageSize(cc).IsEmpty());
+      auto image_size = kImageSize(cc).Get();
+      for (int j = 0; j < options_.attributes_size(); ++j) {
+        attribute_scales.push_back(
+            GetAttributeScale(options_.attributes(j), image_size));
       }
     }
 
-    // Return vector with a single tensor.
+    // Convert landmarks to tensor.
     auto result = std::vector<Tensor>();
-    result.push_back(std::move(tensor));
+    if (kInLandmarkList(cc).IsConnected()) {
+      if (kInLandmarkList(cc).IsEmpty()) {
+        return absl::OkStatus();
+      }
+      Tensor tensor = ConvertLandmarksToTensor(kInLandmarkList(cc).Get(),
+                                               attribute_scales, options_);
+      result.push_back(std::move(tensor));
+    } else {
+      if (kInNormLandmarkList(cc).IsEmpty()) {
+        return absl::OkStatus();
+      }
+      Tensor tensor = ConvertLandmarksToTensor(kInNormLandmarkList(cc).Get(),
+                                               attribute_scales, options_);
+      result.push_back(std::move(tensor));
+    }
+
     kOutTensors(cc).Send(std::move(result));
 
     return absl::OkStatus();

@@ -1634,7 +1634,7 @@ new file mode 100644
 index 00000000000..2723216f324
 --- /dev/null
 +++ b/tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.cc
-@@ -0,0 +1,133 @@
+@@ -0,0 +1,123 @@
 +#include "tensorflow/lite/delegates/gpu/common/tasks/mediapipe/transform_tensor_bilinear.h"
 +
 +#include <string>
@@ -1707,22 +1707,14 @@ index 00000000000..2723216f324
 +  c += "    float4 p1 = INIT_FLOAT4(0.0f);\n";
 +  c += "    float4 p2 = INIT_FLOAT4(0.0f);\n";
 +  c += "    float4 p3 = INIT_FLOAT4(0.0f);\n";
-+  const auto src_tensor_type = op_def.src_tensors[0].storage_type;
-+  const bool buffer_type = src_tensor_type == TensorStorageType::BUFFER ||
-+                           src_tensor_type == TensorStorageType::IMAGE_BUFFER;
 +  auto read_src = [&](const std::string& result, const std::string& xc,
 +                      const std::string& yc, const std::string& zc) {
-+    if (buffer_type) {
-+      c += "    if(" + xc + " >= 0 && " + yc + " >= 0 && " + xc +
-+           " < args.src_tensor.Width() && " + yc +
-+           " < args.src_tensor.Height()) {\n";
-+      c += "      " + result + " = args.src_tensor.Read<float>(" + xc + ", " +
-+           yc + ", " + zc + ");\n";
-+      c += "    }\n";
-+    } else {
-+      c += "    " + result + " = args.src_tensor.Read<float>(" + xc + ", " +
-+           yc + ", " + zc + ");\n";
-+    }
++    c += "    if(" + xc + " >= 0 && " + yc + " >= 0 && " + xc +
++         " < args.src_tensor.Width() && " + yc +
++         " < args.src_tensor.Height()) {\n";
++    c += "      " + result + " = args.src_tensor.Read<float>(" + xc + ", " +
++         yc + ", " + zc + ");\n";
++    c += "    }\n";
 +  };
 +  read_src("p0", "st.x", "st.y", "Z");
 +  read_src("p1", "st.z", "st.y", "Z");
@@ -1755,9 +1747,7 @@ index 00000000000..2723216f324
 +    const OperationDef& definition,
 +    const TransformTensorBilinearAttributes& attr) {
 +  GPUOperation op(definition);
-+  auto src_desc = definition.src_tensors[0];
-+  src_desc.SetAddressMode(AddressMode::kZero);
-+  op.AddSrcTensor("src_tensor", src_desc);
++  op.AddSrcTensor("src_tensor", definition.src_tensors[0]);
 +  op.AddSrcTensor("matrix_transform", definition.src_tensors[1]);
 +  op.AddDstTensor("dst_tensor", definition.dst_tensors[0]);
 +  op.code_ =

@@ -151,6 +151,16 @@ mediapipe_proto_library(
     ],
 )
 
+mediapipe_proto_library(
+    name = "get_vector_item_calculator_proto",
+    srcs = ["get_vector_item_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
 cc_library(
     name = "add_header_calculator",
     srcs = ["add_header_calculator.cc"],
@@ -561,6 +571,7 @@ cc_test(
     name = "packet_cloner_calculator_test",
     srcs = ["packet_cloner_calculator_test.cc"],
     deps = [
+        ":gate_calculator",
         ":packet_cloner_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:timestamp",
@@ -1281,6 +1292,7 @@ cc_library(
     hdrs = ["get_vector_item_calculator.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":get_vector_item_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
         "//mediapipe/framework/api2:node",
@@ -1291,6 +1303,20 @@ cc_library(
         "//mediapipe/framework/port:status",
     ],
     alwayslink = 1,
+)
+
+cc_test(
+    name = "get_vector_item_calculator_test",
+    srcs = ["get_vector_item_calculator_test.cc"],
+    deps = [
+        ":get_vector_item_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_library(
@@ -1304,6 +1330,57 @@ cc_library(
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "packet_sequencer_calculator",
+    srcs = ["packet_sequencer_calculator.cc"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:contract",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "packet_sequencer_calculator_test",
+    srcs = ["packet_sequencer_calculator_test.cc"],
+    deps = [
+        ":packet_sequencer_calculator",
+        "//mediapipe/calculators/core:pass_through_calculator",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:subgraph",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "merge_to_vector_calculator",
+    srcs = ["merge_to_vector_calculator.cc"],
+    hdrs = ["merge_to_vector_calculator.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:image",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )

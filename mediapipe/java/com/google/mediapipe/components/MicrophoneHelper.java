@@ -235,6 +235,9 @@ public class MicrophoneHelper implements AudioDataProducer {
       int numBytesRead = 0;
       // Blocking reads are available in only API Level 23 and above.
       // https://developer.android.com/reference/android/media/AudioRecord.html#read(java.nio.ByteBuffer,%20int,%20int).
+      // Note that this AudioRecord.read() fills the audio ByteBuffer in native order according to
+      // the reference above, which matches further MediaPipe audio processing from the requirement
+      // of PacketCreator.createAudioPacket() with this output ByteBuffer.
       if (VERSION.SDK_INT >= VERSION_CODES.M) {
         numBytesRead =
             audioRecord.read(

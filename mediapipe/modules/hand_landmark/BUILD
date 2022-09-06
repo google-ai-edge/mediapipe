@@ -16,16 +16,21 @@ load(
     "//mediapipe/framework/tool:mediapipe_graph.bzl",
     "mediapipe_simple_subgraph",
 )
+load(
+    "//mediapipe/framework/tool:mediapipe_files.bzl",
+    "mediapipe_files",
+)
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files([
+mediapipe_files(srcs = [
     "hand_landmark_full.tflite",
     "hand_landmark_lite.tflite",
-    "handedness.txt",
 ])
+
+exports_files(srcs = ["handedness.txt"])
 
 mediapipe_simple_subgraph(
     name = "hand_landmark_model_loader",

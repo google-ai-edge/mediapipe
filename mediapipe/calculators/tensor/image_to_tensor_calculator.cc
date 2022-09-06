@@ -348,14 +348,13 @@ class ImageToTensorCalculator : public Node {
                          CreateImageToGlBufferTensorConverter(
                              cc, DoesGpuInputStartAtBottom(), GetBorderMode()));
 #else
-        // Check whether the underlying storage object is a GL texture.
-        if (image.GetGpuBuffer()
-                .internal_storage<mediapipe::GlTextureBuffer>()) {
+        if (!gpu_converter_) {
           ASSIGN_OR_RETURN(
               gpu_converter_,
               CreateImageToGlTextureTensorConverter(
                   cc, DoesGpuInputStartAtBottom(), GetBorderMode()));
-        } else {
+        }
+        if (!gpu_converter_) {
           return absl::UnimplementedError(
               "ImageToTensorConverter for the input GPU image is unavailable.");
         }

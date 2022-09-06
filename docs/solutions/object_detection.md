@@ -18,7 +18,7 @@ nav_order: 9
 </details>
 ---
 
-![object_detection_android_gpu.gif](../images/mobile/object_detection_android_gpu.gif)
+![object_detection_android_gpu.gif](https://mediapipe.dev/images/mobile/object_detection_android_gpu.gif)
 
 ## Example Apps
 
@@ -75,7 +75,7 @@ on how to build MediaPipe examples.
 *   With a TFLite Model
 
     This uses the same
-    [TFLite model](https://github.com/google/mediapipe/tree/master/mediapipe/models/ssdlite_object_detection.tflite)
+    [TFLite model](https://storage.googleapis.com/mediapipe-assets/ssdlite_object_detection.tflite)
     (see also
     [model info](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_saved_model/README.md))
     as in [Live Camera Input](#live-camera-input) above. The pipeline is

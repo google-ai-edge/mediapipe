@@ -38,7 +38,7 @@ hand perception functionality to the wider research and development community
 will result in an emergence of creative use cases, stimulating new applications
 and new research avenues.
 
-![hand_tracking_3d_android_gpu.gif](../images/mobile/hand_tracking_3d_android_gpu.gif) |
+![hand_tracking_3d_android_gpu.gif](https://mediapipe.dev/images/mobile/hand_tracking_3d_android_gpu.gif) |
 :------------------------------------------------------------------------------------: |
 *Fig 1. Tracked 3D hand landmarks are represented by dots in different shades, with the brighter ones denoting landmarks closer to the camera.* |
 
@@ -91,9 +91,9 @@ To detect initial hand locations, we designed a
 mobile real-time uses in a manner similar to the face detection model in
 [MediaPipe Face Mesh](./face_mesh.md). Detecting hands is a decidedly complex
 task: our
-[lite model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/palm_detection/palm_detection_lite.tflite)
+[lite model](https://storage.googleapis.com/mediapipe-assets/palm_detection_lite.tflite)
 and
-[full model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/palm_detection/palm_detection_full.tflite)
+[full model](https://storage.googleapis.com/mediapipe-assets/palm_detection_full.tflite)
 have to work across a variety of hand sizes with a large scale span (~20x)
 relative to the image frame and be able to detect occluded and self-occluded
 hands. Whereas faces have high contrast patterns, e.g., in the eye and mouth
@@ -122,7 +122,7 @@ just 86.22%.
 ### Hand Landmark Model
 
 After the palm detection over the whole image our subsequent hand landmark
-[model](https://github.com/google/mediapipe/tree/master/mediapipe/modules/hand_landmark/hand_landmark_full.tflite)
+[model](https://storage.googleapis.com/mediapipe-assets/hand_landmark_full.tflite)
 performs precise keypoint localization of 21 3D hand-knuckle coordinates inside
 the detected hand regions via regression, that is direct coordinate prediction.
 The model learns a consistent internal hand pose representation and is robust
@@ -135,11 +135,11 @@ and provide additional supervision on the nature of hand geometry, we also
 render a high-quality synthetic hand model over various backgrounds and map it
 to the corresponding 3D coordinates.
 
-![hand_landmarks.png](../images/mobile/hand_landmarks.png) |
+![hand_landmarks.png](https://mediapipe.dev/images/mobile/hand_landmarks.png) |
 :--------------------------------------------------------: |
 *Fig 2. 21 hand landmarks.*                                |
 
-![hand_crops.png](../images/mobile/hand_crops.png)                          |
+![hand_crops.png](https://mediapipe.dev/images/mobile/hand_crops.png)                          |
 :-------------------------------------------------------------------------: |
 *Fig 3. Top: Aligned hand crops passed to the tracking network with ground truth annotation. Bottom: Rendered synthetic hand images with ground truth annotation.* |
 

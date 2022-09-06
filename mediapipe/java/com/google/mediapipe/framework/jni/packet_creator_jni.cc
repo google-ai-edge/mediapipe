@@ -257,9 +257,13 @@ static mediapipe::Packet createAudioPacket(const uint8_t* audio_sample,
   // Preparing and normalize the audio data.
   // kMultiplier is same as what used in av_sync_media_decoder.cc.
   static const float kMultiplier = 1.f / (1 << 15);
-  // We try to not assume the Endian order of the data.
   for (int sample = 0; sample < num_samples; ++sample) {
     for (int channel = 0; channel < num_channels; ++channel) {
+      // MediaPipe createAudioPacket can currently only handle
+      // AudioFormat.ENCODING_PCM_16BIT data, so here we are reading 2 bytes per
+      // sample, using ByteOrder.LITTLE_ENDIAN byte order, which is
+      // ByteOrder.nativeOrder() on Android
+      // (https://developer.android.com/ndk/guides/abis.html).
       int16_t value = (audio_sample[1] & 0xff) << 8 | audio_sample[0];
       (*matrix)(channel, sample) = kMultiplier * value;
       audio_sample += 2;
@@ -361,8 +365,13 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateMatrix)(
     return 0L;
   }
   std::unique_ptr<mediapipe::Matrix> matrix(new mediapipe::Matrix(rows, cols));
-  // The java and native has the same byte order, by default is little Endian,
-  // we can safely copy data directly, we have tests to cover this.
+  // Android is always
+  // little-endian(https://developer.android.com/ndk/guides/abis.html), even
+  // though Java's ByteBuffer defaults to
+  // big-endian(https://docs.oracle.com/javase/7/docs/api/java/nio/ByteBuffer.html),
+  // there is no Java ByteBuffer involved, JNI does not change the endianness(we
+  // have PacketGetterTest.testEndianOrder() to cover this case), so we can
+  // safely copy data directly here.
   env->GetFloatArrayRegion(data, 0, rows * cols, matrix->data());
   mediapipe::Packet packet = mediapipe::Adopt(matrix.release());
   return CreatePacketWithContext(context, packet);

@@ -289,7 +289,6 @@ cc_library(
         ":signal_fusing_calculator_cc_proto",
         "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/container:btree",
@@ -343,7 +342,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":shot_boundary_calculator_cc_proto",
-        "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:image_frame",
@@ -358,10 +356,7 @@ cc_library(
 proto_library(
     name = "shot_boundary_calculator_proto",
     srcs = ["shot_boundary_calculator.proto"],
-    deps = [
-        "//mediapipe/examples/desktop/autoflip:autoflip_messages_proto",
-        "//mediapipe/framework:calculator_proto",
-    ],
+    deps = ["//mediapipe/framework:calculator_proto"],
 )
 
 mediapipe_cc_proto_library(
@@ -414,7 +409,6 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "@com_google_absl//absl/memory",
     ],
     alwayslink = 1,
 )
@@ -452,7 +446,6 @@ cc_test(
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
-        "//mediapipe/framework/formats:location_data_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:ret_check",
@@ -505,7 +498,6 @@ cc_test(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/formats:detection_cc_proto",
-        "//mediapipe/framework/formats:location_data_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:ret_check",

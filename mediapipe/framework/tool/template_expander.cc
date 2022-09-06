@@ -594,7 +594,7 @@ class TemplateExpanderImpl {
     return AsArgument(static_cast<double>(b));
   }
 
-  // Convert between a proto feild value and a template argument.
+  // Convert between a proto field value and a template argument.
   absl::Status AsFieldValues(const std::vector<TemplateArgument>& args,
                              FieldType field_type,
                              std::vector<FieldValue>* result) {

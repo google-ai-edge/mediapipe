@@ -44,6 +44,11 @@ public final class GraphGlSyncToken implements GlSyncToken {
     }
   }
 
+  @Override
+  public long nativeToken() {
+    return token;
+  }
+
   public GraphGlSyncToken(long token) {
     this.token = token;
   }

@@ -36,6 +36,7 @@ class MediaSequenceTest(tf.test.TestCase):
     # context
     ms.set_example_id(b"string", example)
     ms.set_example_dataset_name(b"string", example)
+    ms.set_example_dataset_flag_string([b"overal", b"test"], example)
     ms.set_clip_media_id(b"string", example)
     ms.set_clip_alternative_media_id(b"string", example)
     ms.set_clip_encoded_media_bytes(b"string", example)
@@ -76,6 +77,9 @@ class MediaSequenceTest(tf.test.TestCase):
     ms.set_instance_segmentation_width(47, example)
     ms.set_instance_segmentation_object_class_index((47, 49), example)
     ms.set_bbox_parts((b"HEAD", b"TOE"), example)
+    ms.set_context_feature_floats((47., 35.), example)
+    ms.set_context_feature_bytes((b"test", b"strings"), example)
+    ms.set_context_feature_ints((47, 35), example)
     # feature lists
     ms.add_image_encoded(b"test", example)
     ms.add_image_multi_encoded([b"test", b"test"], example)

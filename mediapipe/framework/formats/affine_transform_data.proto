@@ -16,8 +16,6 @@ syntax = "proto2";
 
 package mediapipe;
 
-option objc_class_prefix = "MediaPipe";
-
 // Proto for serializing Vector2 data
 message Vector2Data {
   optional float x = 1;

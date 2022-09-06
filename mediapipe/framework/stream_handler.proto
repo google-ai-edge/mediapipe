@@ -24,7 +24,6 @@ import "mediapipe/framework/mediapipe_options.proto";
 
 option java_package = "com.google.mediapipe.proto";
 option java_outer_classname = "StreamHandlerProto";
-option objc_class_prefix = "MediaPipe";
 
 // Settings specifying an input stream handler.
 message InputStreamHandlerConfig {

@@ -81,6 +81,7 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "latency_proto",
     srcs = ["latency.proto"],
+    visibility = ["//visibility:public"],
 )
 
 mediapipe_proto_library(
@@ -96,11 +97,13 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "packet_frequency_proto",
     srcs = ["packet_frequency.proto"],
+    visibility = ["//visibility:public"],
 )
 
 mediapipe_proto_library(
     name = "packet_frequency_calculator_proto",
     srcs = ["packet_frequency_calculator.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
@@ -110,6 +113,7 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "packet_latency_calculator_proto",
     srcs = ["packet_latency_calculator.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",

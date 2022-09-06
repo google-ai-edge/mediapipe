@@ -18,12 +18,16 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
+# This is a protobuf alias.
 mediapipe_proto_library(
     name = "gl_animation_overlay_calculator_proto",
     srcs = ["gl_animation_overlay_calculator.proto"],
     visibility = ["//visibility:public"],
+    exports = [
+        "//mediapipe/gpu:gl_animation_overlay_calculator_proto",
+    ],
     deps = [
-        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/gpu:gl_animation_overlay_calculator_proto",
     ],
 )
 

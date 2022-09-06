@@ -30,21 +30,6 @@
 #include "mediapipe/framework/port/point2.h"
 #include "mediapipe/framework/port/rectangle.h"
 
-// clang-format off
-#if !defined(LOCATION_OPENCV)
-#  if !MEDIAPIPE_DISABLE_OPENCV && \
-      (!defined(MEDIAPIPE_MOBILE) || defined(MEDIAPIPE_ANDROID_OPENCV))
-#    define LOCATION_OPENCV 1
-#  else
-#    define LOCATION_OPENCV 0
-#  endif
-#endif
-
-#if LOCATION_OPENCV
-#include "mediapipe/framework/port/opencv_core_inc.h"
-#endif
-// clang-format on
-
 namespace mediapipe {
 class BoundingBox;
 }  // namespace mediapipe
@@ -68,9 +53,6 @@ class Location {
   // formats.
   static Location CreateBBoxLocation(const Rectangle_i& rect);
   static Location CreateBBoxLocation(const ::mediapipe::BoundingBox& bbox);
-#if LOCATION_OPENCV
-  static Location CreateBBoxLocation(const cv::Rect& rect);
-#endif
   // Creates a location of type RELATIVE_BOUNDING_BOX, i.e. it is based on a
   // bounding box defined by its upper left corner (xmin, ymin) and its width
   // and height, all relative to the image dimensions.
@@ -81,14 +63,6 @@ class Location {
   // Creates a location of type RELATIVE_BOUNDING_BOX from bounding boxes in
   // various formats.
   static Location CreateRelativeBBoxLocation(const Rectangle_f& relative_rect);
-#if LOCATION_OPENCV
-  // Creates a location of type MASK from a single-channel uint8 or float
-  // cv::Mat_ (type is CV_8UC1 or CV_32FC1). Check fails if the mat is not
-  // single channel . All pixel with positive values are considered foreground,
-  // the rest background.
-  template <typename T>
-  static Location CreateCvMaskLocation(const cv::Mat_<T>& mask);
-#endif
 
   // Returns the location type describing the type of data it contains. This
   // type is set at creation time based on the one of the above factory methods.
@@ -104,14 +78,6 @@ class Location {
   //
   // NOTE: it does not handle masks.
   Location& Scale(float scale);
-
-#if LOCATION_OPENCV
-  // Enlarges the location by the given factor. This operation keeps the center
-  // of the location fixed, while enlarging its dimensions by the given factor.
-  // Note that the location may partially lie outside the image after this
-  // operation. OpenCV required for mask enlargement. Returns *this.
-  Location& Enlarge(float factor);
-#endif
 
   // Resizes the location such that it is the tighest square location containing
   // centered the original location. It supports locations of type GLOBAL,
@@ -154,12 +120,7 @@ class Location {
   T GetBBox() const;
   // Accessor for location data type RELATIVE_BOUNDING_BOX.
   Rectangle_f GetRelativeBBox() const;
-#if LOCATION_OPENCV
-  // Same as GetMask() with the difference that the return value is a cv::Mat of
-  // type CV_8UC1. It contains value 0 for background pixels and value 255 for
-  // foreground ones.
-  std::unique_ptr<cv::Mat> GetCvMask() const;
-#endif
+
   // Accessor for relative_keypoints in location data. Relative keypoints are
   // specified with x and y coordinates, where both x and y are relative to the
   // image width and height, respectively, and are in the range [0, 1]. Fails if
@@ -181,10 +142,6 @@ class Location {
   template <typename T>
   T ConvertToBBox(int image_width, int image_height) const;
   Rectangle_f ConvertToRelativeBBox(int image_width, int image_height) const;
-#if LOCATION_OPENCV
-  std::unique_ptr<cv::Mat> ConvertToCvMask(int image_width,
-                                           int image_height) const;
-#endif
   // Returns keypoints in absolute pixel coordinates.
   std::vector<Point2_i> ConvertToKeypoints(int image_width,
                                            int image_height) const;

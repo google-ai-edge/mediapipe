@@ -58,6 +58,7 @@ namespace mediapipe {
 class PacketClonerCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
+    cc->SetProcessTimestampBounds(true);
     const Ids ids = GetIds(*cc);
     for (const auto& in_out : ids.inputs_outputs) {
       auto& input = cc->Inputs().Get(in_out.in);
@@ -101,30 +102,30 @@ class PacketClonerCalculator : public CalculatorBase {
       }
     }
 
+    bool has_all_inputs = HasAllInputs();
     // Output according to the TICK signal.
-    if (!cc->Inputs().Get(ids_.tick_id).IsEmpty()) {
-      if (output_only_when_all_inputs_received_) {
-        // Return if one of the input is null.
-        for (int i = 0; i < ids_.inputs_outputs.size(); ++i) {
-          if (current_[i].IsEmpty()) {
-            if (output_empty_packets_before_all_inputs_received_) {
-              SetAllNextTimestampBounds(cc);
-            }
-            return absl::OkStatus();
-          }
-        }
-      }
+    if (!cc->Inputs().Get(ids_.tick_id).IsEmpty() &&
+        (has_all_inputs || !output_only_when_all_inputs_received_)) {
       // Output each stream.
       for (int i = 0; i < ids_.inputs_outputs.size(); ++i) {
         auto& output = cc->Outputs().Get(ids_.inputs_outputs[i].out);
         if (!current_[i].IsEmpty()) {
-          output.AddPacket(current_[i].At(cc->InputTimestamp()));
-        } else {
-          output.SetNextTimestampBound(
-              cc->InputTimestamp().NextAllowedInStream());
+          output.AddPacket(current_[i].At(
+              cc->Inputs().Get(ids_.tick_id).Value().Timestamp()));
         }
       }
     }
+
+    // Set timestamp bounds according to the TICK signal.
+    bool tick_updated = cc->Inputs().Get(ids_.tick_id).Value().Timestamp() ==
+                        cc->InputTimestamp();
+    bool producing_output = has_all_inputs ||
+                            output_empty_packets_before_all_inputs_received_ ||
+                            !output_only_when_all_inputs_received_;
+    if (tick_updated && producing_output) {
+      SetAllNextTimestampBounds(cc);
+    }
+
     return absl::OkStatus();
   }
 
@@ -163,6 +164,15 @@ class PacketClonerCalculator : public CalculatorBase {
           .Get(in_out.out)
           .SetNextTimestampBound(cc->InputTimestamp().NextAllowedInStream());
     }
+  }
+
+  bool HasAllInputs() {
+    for (int i = 0; i < ids_.inputs_outputs.size(); ++i) {
+      if (current_[i].IsEmpty()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   std::vector<Packet> current_;

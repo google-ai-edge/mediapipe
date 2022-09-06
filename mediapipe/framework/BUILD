@@ -102,13 +102,13 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "packet_factory_proto",
     srcs = ["packet_factory.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = ["//visibility:public"],
 )
 
 mediapipe_proto_library(
     name = "packet_generator_proto",
     srcs = ["packet_generator.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = ["//visibility:public"],
 )
 
 mediapipe_proto_library(
@@ -153,6 +153,7 @@ mediapipe_proto_library(
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
 )
 
+# It is for pure-native Android builds where the library can't have any dependency on libandroid.so
 config_setting(
     name = "android_no_jni",
     define_values = {"MEDIAPIPE_NO_JNI": "1"},

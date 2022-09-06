@@ -13,13 +13,17 @@
 # limitations under the License.
 
 load("//mediapipe/framework/tool:mediapipe_graph.bzl", "mediapipe_simple_subgraph")
+load(
+    "//mediapipe/framework/tool:mediapipe_files.bzl",
+    "mediapipe_files",
+)
 
 # TODO: revert to private.
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
-exports_files([
+mediapipe_files(srcs = [
     "hand_recrop.tflite",
 ])
 

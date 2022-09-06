@@ -20,8 +20,6 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/framework/formats/classification.proto";
 import "mediapipe/framework/formats/landmark.proto";
 
-option objc_class_prefix = "MediaPipe";
-
 message ConstantSidePacketCalculatorOptions {
   extend CalculatorOptions {
     optional ConstantSidePacketCalculatorOptions ext = 291214597;

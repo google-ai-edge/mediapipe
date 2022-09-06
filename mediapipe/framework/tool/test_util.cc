@@ -34,7 +34,6 @@
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/file_helpers.h"
-#include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"

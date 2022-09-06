@@ -22,6 +22,9 @@ syntax = "proto2";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.proto";
+option java_outer_classname = "PacketFactoryProto";
+
 // Options used by a PacketFactory to create the Packet.
 message PacketFactoryOptions {
   extensions 20000 to max;

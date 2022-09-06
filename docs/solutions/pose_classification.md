@@ -31,7 +31,7 @@ demo within
 Push-ups and squats are used for demonstration purposes as the most common
 exercises.
 
-![pose_classification_pushups_and_squats.gif](../images/mobile/pose_classification_pushups_and_squats.gif) |
+![pose_classification_pushups_and_squats.gif](https://mediapipe.dev/images/mobile/pose_classification_pushups_and_squats.gif) |
 :--------------------------------------------------------------------------------------------------------: |
 *Fig 1. Pose classification and repetition counting with MediaPipe Pose.*                                  |
 
@@ -58,7 +58,7 @@ exercise (e.g., "up" and "down" positions for push-ups). It's important that
 collected samples cover different camera angles, environment conditions, body
 shapes, and exercise variations.
 
-![pose_classification_pushups_un_and_down_samples.jpg](../images/mobile/pose_classification_pushups_un_and_down_samples.jpg) |
+![pose_classification_pushups_un_and_down_samples.jpg](https://mediapipe.dev/images/mobile/pose_classification_pushups_un_and_down_samples.jpg) |
 :--------------------------------------------------------------------------------------------------------------------------: |
 *Fig 2. Two terminal states of push-ups.*                                                                                    |
 
@@ -90,7 +90,7 @@ ankle and hip, and two wrists. Since the algorithm relies on distances, all
 poses are normalized to have the same torso size and vertical torso orientation
 before the conversion.
 
-![pose_classification_pairwise_distances.png](../images/mobile/pose_classification_pairwise_distances.png) |
+![pose_classification_pairwise_distances.png](https://mediapipe.dev/images/mobile/pose_classification_pairwise_distances.png) |
 :--------------------------------------------------------------------------------------------------------: |
 *Fig 3. Main pairwise distances used for the pose feature vector.*                                         |
 

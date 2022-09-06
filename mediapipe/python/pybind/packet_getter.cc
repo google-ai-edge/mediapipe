@@ -298,6 +298,25 @@ void PublicPacketGetters(pybind11::module* m) {
 )doc");
 
   m->def(
+      "get_image_list", &GetContent<std::vector<Image>>,
+      R"doc(Get the content of a MediaPipe Packet of image vector as a list of MediaPipe Images.
+
+  Args:
+    packet: A MediaPipe Packet that holds std:vector<mediapipe::Image>.
+
+  Returns:
+    A list of MediaPipe Images.
+
+  Raises:
+    ValueError: If the Packet doesn't contain std:vector<mediapipe::Image>.
+
+  Examples:
+    packet = mp.packet_creator.create_image_vector([
+        image1, image2, image3])
+    image_list = mp.packet_getter.get_image_list(packet)
+)doc");
+
+  m->def(
       "get_packet_list", &GetContent<std::vector<Packet>>,
       R"doc(Get the content of a MediaPipe Packet of Packet vector as a Packet list.
 

@@ -20,6 +20,7 @@
 
 #include "absl/flags/flag.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/formats/location_opencv.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/integral_types.h"
@@ -289,8 +290,8 @@ TEST(OpticalFlowField, Occlusions) {
   OpticalFlowField::EstimateMotionConsistencyOcclusions(
       OpticalFlowField(forward), OpticalFlowField(backward), 0.5,
       &occlusion_mask, &disocclusion_mask);
-  std::unique_ptr<cv::Mat> occlusion_mat = occlusion_mask.GetCvMask();
-  std::unique_ptr<cv::Mat> disocclusion_mat = disocclusion_mask.GetCvMask();
+  std::unique_ptr<cv::Mat> occlusion_mat = GetCvMask(occlusion_mask);
+  std::unique_ptr<cv::Mat> disocclusion_mat = GetCvMask(disocclusion_mask);
   EXPECT_EQ(3, occlusion_mat->rows);
   EXPECT_EQ(3, disocclusion_mat->rows);
   EXPECT_EQ(4, occlusion_mat->cols);

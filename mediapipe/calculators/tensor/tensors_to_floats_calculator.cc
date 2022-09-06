@@ -76,6 +76,7 @@ absl::Status TensorsToFloatsCalculator::Open(CalculatorContext* cc) {
 absl::Status TensorsToFloatsCalculator::Process(CalculatorContext* cc) {
   const auto& input_tensors = *kInTensors(cc);
   RET_CHECK(!input_tensors.empty());
+  RET_CHECK(input_tensors[0].element_type() == Tensor::ElementType::kFloat32);
   // TODO: Add option to specify which tensor to take from.
   auto view = input_tensors[0].GetCpuReadView();
   auto raw_floats = view.buffer<float>();

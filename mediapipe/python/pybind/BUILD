@@ -16,7 +16,7 @@ load("@pybind11_bazel//:build_defs.bzl", "pybind_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/python:__subpackages__"])
+package(default_visibility = ["//mediapipe:__subpackages__"])
 
 pybind_library(
     name = "calculator_graph",

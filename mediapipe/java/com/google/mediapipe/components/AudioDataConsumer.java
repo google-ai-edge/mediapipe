@@ -19,7 +19,12 @@ import java.nio.ByteBuffer;
 
 /** Lightweight abstraction for an object that can receive audio data. */
 public interface AudioDataConsumer {
-  /** Called when a new audio data buffer is available. */
+  /**
+   * Called when a new audio data buffer is available. Note, for consistency, the ByteBuffer used in
+   * AudioDataConsumer has to use AudioFormat.ENCODING_PCM_16BIT, 2 bytes per sample, FILLED with
+   * ByteOrder.LITTLE_ENDIAN, which is ByteOrder.nativeOrder() on Android
+   * (https://developer.android.com/ndk/guides/abis.html).
+   */
   public abstract void onNewAudioData(
       ByteBuffer audioData, long timestampMicros, AudioFormat audioFormat);
 }

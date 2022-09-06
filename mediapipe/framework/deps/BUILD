@@ -41,7 +41,10 @@ bzl_library(
 proto_library(
     name = "proto_descriptor_proto",
     srcs = ["proto_descriptor.proto"],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = [
+        "//mediapipe/deps:__subpackages__",
+        "//mediapipe/framework:__subpackages__",
+    ],
 )
 
 mediapipe_cc_proto_library(

@@ -116,7 +116,9 @@ class InferenceCalculatorMetalImpl
 
 absl::Status InferenceCalculatorMetalImpl::UpdateContract(
     CalculatorContract* cc) {
-  const auto& options = cc->Options<::mediapipe::InferenceCalculatorOptions>();
+  RET_CHECK(!kDelegate(cc).IsConnected())
+      << "Delegate configuration through side packet is not supported.";
+  const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
       << "Either model as side packet or model path in options is required.";
 

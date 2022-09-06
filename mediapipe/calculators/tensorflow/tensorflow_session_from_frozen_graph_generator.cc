@@ -69,7 +69,7 @@ class TensorFlowSessionFromFrozenGraphGenerator : public PacketGenerator {
         TensorFlowSessionFromFrozenGraphGeneratorOptions::ext);
     bool has_exactly_one_model =
         !options.graph_proto_path().empty()
-            ? !(input_side_packets->HasTag(kStringModelTag) |
+            ? !(input_side_packets->HasTag(kStringModelTag) ||
                 input_side_packets->HasTag(kStringModelFilePathTag))
             : (input_side_packets->HasTag(kStringModelTag) ^
                input_side_packets->HasTag(kStringModelFilePathTag));

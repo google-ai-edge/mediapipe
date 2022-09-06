@@ -19,6 +19,7 @@ package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 # Linux only
 cc_binary(
     name = "hair_segmentation_gpu",
+    data = ["//mediapipe/models:hair_segmentation.tflite"],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
         "//mediapipe/graphs/hair_segmentation:mobile_calculators",
@@ -27,6 +28,7 @@ cc_binary(
 
 cc_binary(
     name = "hair_segmentation_cpu",
+    data = ["//mediapipe/models:hair_segmentation.tflite"],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
     ] + select({

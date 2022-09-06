@@ -38,7 +38,7 @@ lightweight statistical analysis method called
 employed to drive a robust, performant and portable logic. The analysis runs on
 CPU and has a minimal speed/memory footprint on top of the ML model inference.
 
-![face_mesh_ar_effects.gif](../images/face_mesh_ar_effects.gif) |
+![face_mesh_ar_effects.gif](https://mediapipe.dev/images/face_mesh_ar_effects.gif) |
 :-------------------------------------------------------------: |
 *Fig 1. AR effects utilizing the 3D facial surface.*            |
 
@@ -107,7 +107,7 @@ angle and occlusions.
 You can find more information about the face landmark model in this
 [paper](https://arxiv.org/abs/1907.06724).
 
-![face_mesh_android_gpu.gif](../images/mobile/face_mesh_android_gpu.gif)   |
+![face_mesh_android_gpu.gif](https://mediapipe.dev/images/mobile/face_mesh_android_gpu.gif)   |
 :------------------------------------------------------------------------: |
 *Fig 2. Face landmarks: the red box indicates the cropped area as input to the landmark model, the red dots represent the 468 landmarks in 3D, and the green lines connecting landmarks illustrate the contours around the eyes, eyebrows, lips and the entire face.* |
 
@@ -124,7 +124,7 @@ The attention mesh model can be selected in the Solution APIs via the
 [refine_landmarks](#refine_landmarks) option. You can also find more information
 about the model in this [paper](https://arxiv.org/abs/2006.10962).
 
-![attention_mesh_architecture.png](../images/attention_mesh_architecture.png) |
+![attention_mesh_architecture.png](https://mediapipe.dev/images/attention_mesh_architecture.png) |
 :---------------------------------------------------------------------------: |
 *Fig 3. Attention Mesh: Overview of model architecture.*                      |
 
@@ -161,7 +161,7 @@ coordinates back into the Metric 3D space. The *virtual camera parameters* can
 be set freely, however for better results it is advised to set them as close to
 the *real physical camera parameters* as possible.
 
-![face_geometry_metric_3d_space.gif](../images/face_geometry_metric_3d_space.gif) |
+![face_geometry_metric_3d_space.gif](https://mediapipe.dev/images/face_geometry_metric_3d_space.gif) |
 :-------------------------------------------------------------------------------: |
 *Fig 4. A visualization of multiple key elements in the Metric 3D space.*         |
 
@@ -225,7 +225,7 @@ hiding invisible elements behind the face surface.
 The effect renderer is implemented as a MediaPipe
 [calculator](https://github.com/google/mediapipe/tree/master/mediapipe/modules/face_geometry/effect_renderer_calculator.cc).
 
-| ![face_geometry_renderer.gif](../images/face_geometry_renderer.gif)     |
+| ![face_geometry_renderer.gif](https://mediapipe.dev/images/face_geometry_renderer.gif)     |
 | :---------------------------------------------------------------------: |
 | *Fig 5. An example of face effects rendered by the Face Transform Effect Renderer.* |
 

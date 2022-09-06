@@ -21,8 +21,6 @@ syntax = "proto2";
 
 package mediapipe;
 
-option objc_class_prefix = "MediaPipe";
-
 // Header for a uniformly sampled time series stream. Each Packet in
 // the stream is a Matrix, and each column is a (vector-valued) sample of
 // the series, i.e. each column corresponds to a distinct sample in time.

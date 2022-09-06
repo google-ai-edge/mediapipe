@@ -40,6 +40,20 @@ void RunLandmarks(mediapipe::CalculatorRunner* runner,
   MP_ASSERT_OK(runner->Run());
 }
 
+void RunNormLandmarks(mediapipe::CalculatorRunner* runner,
+                      const NormalizedLandmarkList& landmarks,
+                      const std::pair<int, int> image_size) {
+  runner->MutableInputs()
+      ->Tag("NORM_LANDMARKS")
+      .packets.push_back(
+          MakePacket<NormalizedLandmarkList>(landmarks).At(Timestamp(0)));
+  runner->MutableInputs()
+      ->Tag("IMAGE_SIZE")
+      .packets.push_back(
+          MakePacket<std::pair<int, int>>(image_size).At(Timestamp(0)));
+  MP_ASSERT_OK(runner->Run());
+}
+
 const Tensor& GetOutputTensor(mediapipe::CalculatorRunner* runner) {
   const auto& output_packets = runner->Outputs().Tag("TENSORS").packets;
   EXPECT_EQ(output_packets.size(), 1);
@@ -149,6 +163,35 @@ TEST(LandmarksToTensorCalculatorTest, XYZAttributes_Flatten) {
   const auto& tensor = GetOutputTensor(&runner);
   ValidateTensor(tensor, /*expected_shape=*/{1, 6}, /*expected_values=*/
                  {1.0f, 2.0f, 3.0f, 6.0f, 7.0f, 8.0f});
+}
+
+TEST(LandmarksToTensorCalculatorTest, NormalizedLandmarks) {
+  mediapipe::CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
+    calculator: "LandmarksToTensorCalculator"
+    input_stream: "NORM_LANDMARKS:landmarks"
+    input_stream: "IMAGE_SIZE:image_size"
+    output_stream: "TENSORS:tensors"
+    options: {
+      [mediapipe.LandmarksToTensorCalculatorOptions.ext] {
+        attributes: [ X, Y, Z, VISIBILITY, PRESENCE ]
+      }
+    }
+  )pb"));
+
+  NormalizedLandmarkList landmarks;
+  auto* landmark1 = landmarks.add_landmark();
+  landmark1->set_x(0.1f);
+  landmark1->set_y(0.5f);
+  landmark1->set_z(1.0f);
+  landmark1->set_visibility(4.0f);
+  landmark1->set_presence(5.0f);
+
+  std::pair<int, int> image_size{200, 100};
+
+  RunNormLandmarks(&runner, landmarks, image_size);
+  const auto& tensor = GetOutputTensor(&runner);
+  ValidateTensor(tensor, /*expected_shape=*/{1, 1, 5}, /*expected_values=*/
+                 {20.0f, 50.0f, 200.0f, 4.0f, 5.0f});
 }
 
 }  // namespace

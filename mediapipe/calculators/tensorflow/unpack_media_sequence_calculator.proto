@@ -56,4 +56,8 @@ message UnpackMediaSequenceCalculatorOptions {
   // the clip start and end times and outputs these for the
   // AudioDecoderCalculator to consume.
   optional AudioDecoderOptions base_audio_decoder_options = 9;
+
+  // Often if a post-stream packet is stored in a SequenceExample, it should be
+  // used as a pre-stream packet in a subsequent graph.
+  optional bool output_poststream_as_prestream = 12;
 }

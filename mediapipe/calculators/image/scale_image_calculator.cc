@@ -573,8 +573,13 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
       // ImageFrame immediately, before cropping and scaling. Investigate how to
       // make color space conversion more efficient when cropping or scaling is
       // also needed.
-      image_frame_util::YUVImageToImageFrame(*yuv_image, &converted_image_frame,
-                                             options_.use_bt709());
+      if (options_.use_bt709() || yuv_image->fourcc() == libyuv::FOURCC_ANY) {
+        image_frame_util::YUVImageToImageFrame(
+            *yuv_image, &converted_image_frame, options_.use_bt709());
+      } else {
+        image_frame_util::YUVImageToImageFrameFromFormat(
+            *yuv_image, &converted_image_frame);
+      }
       image_frame = &converted_image_frame;
     } else if (output_format_ == ImageFormat::YCBCR420P) {
       RET_CHECK(row_start_ == 0 && col_start_ == 0 &&

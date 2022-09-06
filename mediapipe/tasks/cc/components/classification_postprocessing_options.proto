@@ -1,0 +1,41 @@
+/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto2";
+
+package mediapipe.tasks;
+
+import "mediapipe/calculators/tensor/tensors_to_classification_calculator.proto";
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/tasks/cc/components/calculators/classification_aggregation_calculator.proto";
+
+message ClassificationPostprocessingOptions {
+  extend mediapipe.CalculatorOptions {
+    optional ClassificationPostprocessingOptions ext = 460416950;
+  }
+
+  // Options for the TensorsToClassification calculators (one per classification
+  // head) encapsulated by the ClassificationPostprocessing subgraph.
+  repeated mediapipe.TensorsToClassificationCalculatorOptions
+      tensors_to_classifications_options = 1;
+
+  // Options for the ClassificationAggregationCalculator encapsulated by the
+  // ClassificationPostprocessing subgraph.
+  optional ClassificationAggregationCalculatorOptions
+      classification_aggregation_options = 2;
+
+  // Whether output tensors are quantized (kTfLiteUint8) or not (kFloat32).
+  optional bool has_quantized_outputs = 3;
+}

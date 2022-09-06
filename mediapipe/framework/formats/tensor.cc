@@ -338,6 +338,7 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
       void* ptr =
           glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bytes(),
                            GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_WRITE_BIT);
+      CHECK(ptr) << "glMapBufferRange failed: " << glGetError();
       std::memcpy(ptr, cpu_buffer_, bytes());
       glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     }
@@ -415,6 +416,11 @@ void Tensor::Move(Tensor* src) {
 
 Tensor::Tensor(ElementType element_type, const Shape& shape)
     : element_type_(element_type), shape_(shape) {}
+Tensor::Tensor(ElementType element_type, const Shape& shape,
+               const QuantizationParameters& quantization_parameters)
+    : element_type_(element_type),
+      shape_(shape),
+      quantization_parameters_(quantization_parameters) {}
 
 #if MEDIAPIPE_METAL_ENABLED
 void Tensor::Invalidate() {
@@ -485,10 +491,15 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
   LOG_IF(FATAL, valid_ == kValidNone)
       << "Tensor must be written prior to read from.";
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-  void* ptr = MapAhwbToCpuRead();
-  if (ptr) {
-    valid_ |= kValidCpu;
-    return {ptr, ahwb_, nullptr, std::move(lock)};
+  if (__builtin_available(android 26, *)) {
+    void* ptr = MapAhwbToCpuRead();
+    if (ptr) {
+      valid_ |= kValidCpu;
+      return {ptr, std::move(lock), [ahwb = ahwb_] {
+                auto error = AHardwareBuffer_unlock(ahwb, nullptr);
+                CHECK(error == 0) << "AHardwareBuffer_unlock " << error;
+              }};
+    }
   }
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 
@@ -553,11 +564,7 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
     valid_ |= kValidCpu;
   }
-#ifdef MEDIAPIPE_TENSOR_USE_AHWB
-  return {cpu_buffer_, nullptr, nullptr, std::move(lock)};
-#else
   return {cpu_buffer_, std::move(lock)};
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB
 }
 
 Tensor::CpuWriteView Tensor::GetCpuWriteView() const {
@@ -565,14 +572,17 @@ Tensor::CpuWriteView Tensor::GetCpuWriteView() const {
   AllocateCpuBuffer();
   valid_ = kValidCpu;
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-  void* ptr = MapAhwbToCpuWrite();
-  if (ptr) {
-    return {ptr, ahwb_, &fence_fd_, std::move(lock)};
+  if (__builtin_available(android 26, *)) {
+    void* ptr = MapAhwbToCpuWrite();
+    if (ptr) {
+      return {ptr, std::move(lock), [ahwb = ahwb_, fence_fd = &fence_fd_] {
+                auto error = AHardwareBuffer_unlock(ahwb, fence_fd);
+                CHECK(error == 0) << "AHardwareBuffer_unlock " << error;
+              }};
+    }
   }
-  return {cpu_buffer_, nullptr, nullptr, std::move(lock)};
-#else
-  return {cpu_buffer_, std::move(lock)};
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
+  return {cpu_buffer_, std::move(lock)};
 }
 
 void Tensor::AllocateCpuBuffer() const {
@@ -590,7 +600,21 @@ void Tensor::AllocateCpuBuffer() const {
 
 void Tensor::SetPreferredStorageType(StorageType type) {
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-  use_ahwb_ = type == StorageType::kAhwb;
+  if (__builtin_available(android 26, *)) {
+    use_ahwb_ = type == StorageType::kAhwb;
+    VLOG(4) << "Tensor: use of AHardwareBuffer is "
+            << (use_ahwb_ ? "allowed" : "not allowed");
+  }
+#else
+  VLOG(4) << "Tensor: use of AHardwareBuffer is not allowed";
+#endif  // MEDIAPIPE_TENSOR_USE_AHWB
+}
+
+Tensor::StorageType Tensor::GetPreferredStorageType() {
+#ifdef MEDIAPIPE_TENSOR_USE_AHWB
+  return use_ahwb_ ? StorageType::kAhwb : StorageType::kDefault;
+#else
+  return StorageType::kDefault;
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 }
 

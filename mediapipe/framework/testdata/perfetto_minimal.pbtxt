@@ -1,0 +1,32 @@
+# Perfetto Config with minimal information needed for tracing MediaPipe functions.
+# Use when benchmarking to reduce latency overhead from Perfetto trace.
+# proto-file: third_party/perfetto/protos/perfetto/config/perfetto_config.proto
+# proto-message: TraceConfig
+
+buffers: {
+  size_kb: 150000
+  fill_policy: DISCARD
+}
+
+data_sources: {
+  config {
+    name: "track_event"
+  }
+}
+data_sources: {
+    config {
+        name: "linux.ftrace"
+        ftrace_config {
+            # Scheduling information & process tracking. Useful for:
+            # - what is happening on each CPU at each moment
+            ftrace_events: "power/cpu_frequency"
+            ftrace_events: "power/cpu_idle"
+            ftrace_events: "sched/sched_switch"
+            compact_sched {
+              enabled: true
+            }
+       }
+    }
+}
+write_into_file: true
+file_write_period_ms: 500

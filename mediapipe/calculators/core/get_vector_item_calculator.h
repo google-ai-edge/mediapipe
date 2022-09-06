@@ -17,22 +17,24 @@
 
 #include <optional>
 
+#include "mediapipe/calculators/core/get_vector_item_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 namespace api2 {
 
-// A calcutlator to return an item from the vector by its index.
+// A calculator to return an item from the vector by its index.
+// Item index can be specified through INDEX stream and/or calculator options.
+// INDEX stream takes precedence over options.
 //
 // Inputs:
 //   VECTOR - std::vector<T>
 //     Vector to take an item from.
-//   INDEX - int
+//   INDEX [OPTIONAL] - int
 //     Index of the item to return.
 //
 // Outputs:
@@ -45,26 +47,47 @@ namespace api2 {
 //     input_stream: "VECTOR:vector"
 //     input_stream: "INDEX:index"
 //     input_stream: "ITEM:item"
+//     options {
+//       [mediapipe.GetVectorItemCalculatorOptions.ext] {
+//         item_index: 5
+//       }
+//     }
 //   }
 //
 template <typename T>
 class GetVectorItemCalculator : public Node {
  public:
   static constexpr Input<std::vector<T>> kIn{"VECTOR"};
-  static constexpr Input<int> kIdx{"INDEX"};
+  static constexpr Input<int>::Optional kIdx{"INDEX"};
   static constexpr Output<T> kOut{"ITEM"};
 
   MEDIAPIPE_NODE_CONTRACT(kIn, kIdx, kOut);
 
+  absl::Status Open(CalculatorContext* cc) final {
+    auto& options = cc->Options<mediapipe::GetVectorItemCalculatorOptions>();
+    RET_CHECK(kIdx(cc).IsConnected() || options.has_item_index());
+    return absl::OkStatus();
+  }
+
   absl::Status Process(CalculatorContext* cc) final {
-    if (kIn(cc).IsEmpty() || kIdx(cc).IsEmpty()) {
+    if (kIn(cc).IsEmpty()) {
       return absl::OkStatus();
     }
 
     const std::vector<T>& items = kIn(cc).Get();
-    const int idx = kIdx(cc).Get();
+    const auto& options =
+        cc->Options<mediapipe::GetVectorItemCalculatorOptions>();
 
-    RET_CHECK_LT(idx, items.size());
+    int idx = 0;
+    if (kIdx(cc).IsConnected() && !kIdx(cc).IsEmpty()) {
+      idx = kIdx(cc).Get();
+    } else if (options.has_item_index()) {
+      idx = options.item_index();
+    } else {
+      return absl::OkStatus();
+    }
+
+    RET_CHECK(idx >= 0 && idx < items.size());
     kOut(cc).Send(items[idx]);
 
     return absl::OkStatus();

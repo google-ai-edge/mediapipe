@@ -24,6 +24,7 @@ message AudioToTensorCalculatorOptions {
   }
 
   // The required number of channels the output audio tensor has.
+  // If set to 1, multichannel signals will be automatically mixed down to mono.
   optional int64 num_channels = 1;
 
   // The required number of samples per channel the output audio tensor has.
@@ -38,7 +39,7 @@ message AudioToTensorCalculatorOptions {
 
   // Whether to treat the input audio stream as a continous stream or a batch
   // of unrelated audio buffers.
-  optional bool streaming_mode = 5 [default = true];
+  optional bool stream_mode = 5 [default = true];
 
   // Set to false to disable checks for jitter in timestamp values. Useful with
   // live audio input.

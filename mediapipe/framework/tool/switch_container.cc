@@ -12,13 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <fstream>
-#include <iostream>
-#include <sstream>
+#include <functional>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
+#include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/mediapipe_options.pb.h"
+#include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -95,6 +100,18 @@ CalculatorGraphConfig::Node* BuildMuxNode(
     CalculatorGraphConfig* config) {
   CalculatorGraphConfig::Node* result = config->add_node();
   *result->mutable_calculator() = "SwitchMuxCalculator";
+  return result;
+}
+
+// Returns a PacketSequencerCalculator node.
+CalculatorGraphConfig::Node* BuildTimestampNode(CalculatorGraphConfig* config,
+                                                bool synchronize_io) {
+  CalculatorGraphConfig::Node* result = config->add_node();
+  *result->mutable_calculator() = "PacketSequencerCalculator";
+  if (synchronize_io) {
+    *result->mutable_input_stream_handler()->mutable_input_stream_handler() =
+        "DefaultInputStreamHandler";
+  }
   return result;
 }
 
@@ -214,6 +231,14 @@ absl::Status ValidateContract(
   return absl::OkStatus();
 }
 
+// Returns true if a set of streams references a certain tag name.
+bool HasTag(const proto_ns::RepeatedPtrField<std::string>& streams,
+            std::string tag) {
+  std::map<TagIndex, std::string> tags;
+  ParseTags(streams, &tags);
+  return tags.count({tag, 0}) > 0;
+}
+
 absl::StatusOr<CalculatorGraphConfig> SwitchContainer::GetConfig(
     const Subgraph::SubgraphOptions& options) {
   CalculatorGraphConfig config;
@@ -232,32 +257,62 @@ absl::StatusOr<CalculatorGraphConfig> SwitchContainer::GetConfig(
   ParseTags(container_streams.input_side_packet(), &side_input_tags);
   ParseTags(container_streams.output_side_packet(), &side_output_tags);
 
+  CalculatorGraphConfig::Node* select_node = nullptr;
+  CalculatorGraphConfig::Node* enable_node = nullptr;
+  std::string select_stream = "SELECT:gate_select";
+  std::string enable_stream = "ENABLE:gate_enable";
+
+  // Add a PacketSequencerCalculator node for "SELECT" or "ENABLE" streams.
+  bool synchronize_io =
+      Subgraph::GetOptions<mediapipe::SwitchContainerOptions>(options)
+          .synchronize_io();
+  if (HasTag(container_node.input_stream(), "SELECT")) {
+    select_node = BuildTimestampNode(&config, synchronize_io);
+    select_node->add_input_stream("INPUT:gate_select");
+    select_node->add_output_stream("OUTPUT:gate_select_timed");
+    select_stream = "SELECT:gate_select_timed";
+  }
+  if (HasTag(container_node.input_stream(), "ENABLE")) {
+    enable_node = BuildTimestampNode(&config, synchronize_io);
+    enable_node->add_input_stream("INPUT:gate_enable");
+    enable_node->add_output_stream("OUTPUT:gate_enable_timed");
+    enable_stream = "ENABLE:gate_enable_timed";
+  }
+
   // Add a graph node for the demux, mux.
   auto demux = BuildDemuxNode(input_tags, container_node, &config);
   CopyOptions(container_node, demux);
   ClearContainerOptions(demux);
-  demux->add_input_stream("SELECT:gate_select");
-  demux->add_input_stream("ENABLE:gate_enable");
+  demux->add_input_stream(select_stream);
+  demux->add_input_stream(enable_stream);
   demux->add_input_side_packet("SELECT:gate_select");
   demux->add_input_side_packet("ENABLE:gate_enable");
 
   auto mux = BuildMuxNode(output_tags, &config);
   CopyOptions(container_node, mux);
   ClearContainerOptions(mux);
-  mux->add_input_stream("SELECT:gate_select");
-  mux->add_input_stream("ENABLE:gate_enable");
+  mux->add_input_stream(select_stream);
+  mux->add_input_stream(enable_stream);
   mux->add_input_side_packet("SELECT:gate_select");
   mux->add_input_side_packet("ENABLE:gate_enable");
 
-  // Add input streams for graph and demux.
+  // Add input streams for graph and demux and the timestamper.
   config.add_input_stream("SELECT:gate_select");
   config.add_input_stream("ENABLE:gate_enable");
   config.add_input_side_packet("SELECT:gate_select");
   config.add_input_side_packet("ENABLE:gate_enable");
+  int tick_index = 0;
   for (const auto& p : input_tags) {
     std::string stream = CatStream(p.first, p.second);
     config.add_input_stream(stream);
     demux->add_input_stream(stream);
+    TagIndex tick_tag{"TICK", tick_index++};
+    if (select_node) {
+      select_node->add_input_stream(CatStream(tick_tag, p.second));
+    }
+    if (enable_node) {
+      enable_node->add_input_stream(CatStream(tick_tag, p.second));
+    }
   }
 
   // Add output streams for graph and mux.

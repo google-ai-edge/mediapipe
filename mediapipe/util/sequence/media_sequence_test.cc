@@ -35,6 +35,14 @@ TEST(MediaSequenceTest, RoundTripDatasetName) {
   ASSERT_EQ(GetExampleDatasetName(sequence), name);
 }
 
+TEST(MediaSequenceTest, RoundTripDatasetFlagString) {
+  tensorflow::SequenceExample sequence;
+  std::vector<std::string> flags = {"test", "overall", "special"};
+  SetExampleDatasetFlagString(flags, &sequence);
+  ASSERT_THAT(GetExampleDatasetFlagString(sequence),
+              testing::ElementsAreArray(flags));
+}
+
 TEST(MediaSequenceTest, RoundTripMediaId) {
   tensorflow::SequenceExample sequence;
   std::string id = "test";
@@ -623,6 +631,39 @@ TEST(MediaSequenceTest, RoundTripFeatureTimestamp) {
   }
   ClearFeatureTimestamp(feature_key, &sequence);
   ASSERT_EQ(GetFeatureTimestampSize(feature_key, sequence), 0);
+}
+
+TEST(MediaSequenceTest, RoundTripContextFeatureFloats) {
+  tensorflow::SequenceExample sequence;
+  std::string feature_key = "TEST";
+  std::vector<float> vf = {0., 1., 2., 4.};
+  SetContextFeatureFloats(feature_key, vf, &sequence);
+  ASSERT_EQ(GetContextFeatureFloats(feature_key, sequence).size(), vf.size());
+  ASSERT_EQ(GetContextFeatureFloats(feature_key, sequence)[3], vf[3]);
+  ClearContextFeatureFloats(feature_key, &sequence);
+  ASSERT_FALSE(HasFeatureFloats(feature_key, sequence));
+}
+
+TEST(MediaSequenceTest, RoundTripContextFeatureBytes) {
+  tensorflow::SequenceExample sequence;
+  std::string feature_key = "TEST";
+  std::vector<std::string> vs = {"0", "1", "2", "4"};
+  SetContextFeatureBytes(feature_key, vs, &sequence);
+  ASSERT_EQ(GetContextFeatureBytes(feature_key, sequence).size(), vs.size());
+  ASSERT_EQ(GetContextFeatureBytes(feature_key, sequence)[3], vs[3]);
+  ClearContextFeatureBytes(feature_key, &sequence);
+  ASSERT_FALSE(HasFeatureBytes(feature_key, sequence));
+}
+
+TEST(MediaSequenceTest, RoundTripContextFeatureInts) {
+  tensorflow::SequenceExample sequence;
+  std::string feature_key = "TEST";
+  std::vector<int64> vi = {0, 1, 2, 4};
+  SetContextFeatureInts(feature_key, vi, &sequence);
+  ASSERT_EQ(GetContextFeatureInts(feature_key, sequence).size(), vi.size());
+  ASSERT_EQ(GetContextFeatureInts(feature_key, sequence)[3], vi[3]);
+  ClearContextFeatureInts(feature_key, &sequence);
+  ASSERT_FALSE(HasFeatureInts(feature_key, sequence));
 }
 
 TEST(MediaSequenceTest, RoundTripOpticalFlowEncoded) {

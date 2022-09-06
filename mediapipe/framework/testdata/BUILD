@@ -50,3 +50,8 @@ mediapipe_proto_library(
         "//mediapipe/framework:packet_generator_proto",
     ],
 )
+
+exports_files([
+    "perfetto_detailed.pbtxt",
+    "perfetto_minimal.pbtxt",
+])

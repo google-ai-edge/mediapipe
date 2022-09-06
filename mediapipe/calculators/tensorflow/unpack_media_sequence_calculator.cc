@@ -190,6 +190,7 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     // Copy the packet to copy the otherwise inaccessible shared ptr.
     example_packet_holder_ = cc->InputSidePackets().Tag(kSequenceExampleTag);
     sequence_ = &example_packet_holder_.Get<tf::SequenceExample>();
+    const auto& options = cc->Options<UnpackMediaSequenceCalculatorOptions>();
 
     // Collect the timestamps for all streams keyed by the timestamp feature's
     // key. While creating this data structure we also identify the last
@@ -210,6 +211,13 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
               << "Timestamps must be sequential. If you're seeing this message "
               << "you may have added images to the same SequenceExample twice. "
               << "Key: " << map_kv.first;
+          if (options.output_poststream_as_prestream() &&
+              next_timestamp == Timestamp::PostStream().Value()) {
+            RET_CHECK_EQ(i, 0)
+                << "Detected PostStream() and timestamps being output for the "
+                << "same stream. This is currently invalid.";
+            next_timestamp = Timestamp::PreStream().Value();
+          }
           timestamps_[map_kv.first].push_back(next_timestamp);
           recent_timestamp = next_timestamp;
           if (recent_timestamp < first_timestamp_seen_) {
@@ -247,7 +255,6 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     process_poststream_ = false;
 
     // Determine the data path and output it.
-    const auto& options = cc->Options<UnpackMediaSequenceCalculatorOptions>();
     const auto& sequence = cc->InputSidePackets()
                                .Tag(kSequenceExampleTag)
                                .Get<tensorflow::SequenceExample>();
@@ -379,10 +386,14 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
       for (int i = 0; i < map_kv.second.size(); ++i) {
         if (map_kv.second[i] >= start_timestamp &&
             map_kv.second[i] < end_timestamp) {
-          const Timestamp current_timestamp =
-              map_kv.second[i] == Timestamp::PostStream().Value()
-                  ? Timestamp::PostStream()
-                  : Timestamp(map_kv.second[i]);
+          Timestamp current_timestamp;
+          if (map_kv.second[i] == Timestamp::PostStream().Value()) {
+            current_timestamp = Timestamp::PostStream();
+          } else if (map_kv.second[i] == Timestamp::PreStream().Value()) {
+            current_timestamp = Timestamp::PreStream();
+          } else {
+            current_timestamp = Timestamp(map_kv.second[i]);
+          }
 
           if (absl::StrContains(map_kv.first, mpms::GetImageTimestampKey())) {
             std::vector<std::string> pieces = absl::StrSplit(map_kv.first, '/');

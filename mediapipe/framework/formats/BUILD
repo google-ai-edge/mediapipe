@@ -206,12 +206,6 @@ cc_library(
     name = "location",
     srcs = ["location.cc"],
     hdrs = ["location.h"],
-    defines = select({
-        "//conditions:default": [],
-        "//mediapipe:android": ["MEDIAPIPE_ANDROID_OPENCV"],
-        ":portable_opencv": ["MEDIAPIPE_ANDROID_OPENCV"],
-        ":opencv": [],
-    }),
     visibility = ["//visibility:public"],
     deps = [
         "@com_google_protobuf//:protobuf",
@@ -233,16 +227,33 @@ cc_library(
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
     ] + select({
         "//conditions:default": [
-            "//mediapipe/framework/port:opencv_imgproc",
-        ],
-        "//mediapipe/framework/port:disable_opencv": [],
-    }) + select({
-        "//conditions:default": [
         ],
         "//mediapipe:android": [],
         "//mediapipe:apple": [],
     }),
     alwayslink = 1,
+)
+
+cc_library(
+    name = "location_opencv",
+    srcs = ["location_opencv.cc"],
+    hdrs = ["location_opencv.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":location",
+        "//mediapipe/framework/port:opencv_imgproc",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "location_opencv_test",
+    srcs = ["location_opencv_test.cc"],
+    deps = [
+        ":location_opencv",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:rectangle",
+    ],
 )
 
 cc_library(
@@ -464,6 +475,7 @@ cc_library(
             "-framework MetalKit",
         ],
         "//conditions:default": [],
+        "//mediapipe/framework:android_no_jni": [],
         "//mediapipe:android": [
             "-landroid",
         ],

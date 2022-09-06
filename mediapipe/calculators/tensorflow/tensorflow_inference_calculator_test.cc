@@ -458,6 +458,46 @@ TEST_F(TensorflowInferenceCalculatorTest, GetCloseBatchComputed) {
                    ->Get());
 }
 
+TEST_F(TensorflowInferenceCalculatorTest, GetCloseBatchComputedNoPadding) {
+  CalculatorGraphConfig::Node config;
+  config.set_calculator("TensorFlowInferenceCalculator");
+  config.add_input_stream("A:tensor_a");
+  config.add_input_stream("B:tensor_b");
+  config.add_output_stream("MULTIPLIED:tensor_o1");
+  config.add_input_side_packet("SESSION:session");
+  CalculatorOptions options;
+  options.MutableExtension(TensorFlowInferenceCalculatorOptions::ext)
+      ->set_batch_size(3);
+  options.MutableExtension(TensorFlowInferenceCalculatorOptions::ext)
+      ->set_pad_to_batch_size(false);
+  options.MutableExtension(TensorFlowInferenceCalculatorOptions::ext)
+      ->set_add_batch_dim_to_tensors(true);
+  *config.mutable_options() = options;
+
+  runner_ = absl::make_unique<CalculatorRunner>(config);
+  AddSessionInputSidePacket();
+  AddVectorToInputsAsTensor({2, 2, 2}, "A", 0);
+  AddVectorToInputsAsTensor({3, 4, 5}, "B", 0);
+  AddVectorToInputsAsTensor({3, 3, 3}, "A", 1);
+  AddVectorToInputsAsTensor({3, 4, 5}, "B", 1);
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets_mult =
+      runner_->Outputs().Tag(kMultipliedTag).packets;
+  ASSERT_EQ(2, output_packets_mult.size());
+  const tf::Tensor& tensor_mult = output_packets_mult[0].Get<tf::Tensor>();
+  auto expected_tensor = tf::test::AsTensor<int32>({6, 8, 10});
+  tf::test::ExpectTensorEqual<int32>(tensor_mult, expected_tensor);
+  const tf::Tensor& tensor_mult1 = output_packets_mult[1].Get<tf::Tensor>();
+  auto expected_tensor1 = tf::test::AsTensor<int32>({9, 12, 15});
+  tf::test::ExpectTensorEqual<int32>(tensor_mult1, expected_tensor1);
+
+  EXPECT_EQ(2, runner_
+                   ->GetCounter(
+                       "TensorFlowInferenceCalculator-TotalProcessedTimestamps")
+                   ->Get());
+}
+
 TEST_F(TensorflowInferenceCalculatorTest, GetBatchComputed_MaxInFlight) {
   CalculatorGraphConfig::Node config;
   config.set_calculator("TensorFlowInferenceCalculator");

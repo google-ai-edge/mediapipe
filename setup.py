@@ -1,4 +1,4 @@
-"""Copyright 2020-2021 The MediaPipe Authors.
+"""Copyright 2020-2022 The MediaPipe Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,23 +25,16 @@ import subprocess
 import sys
 
 import setuptools
-import setuptools.command.build_ext as build_ext
-import setuptools.command.build_py as build_py
-import setuptools.command.install as install
+from setuptools.command import build_ext
+from setuptools.command import build_py
+from setuptools.command import install
 
 __version__ = 'dev'
 IS_WINDOWS = (platform.system() == 'Windows')
 MP_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 MP_DIR_INIT_PY = os.path.join(MP_ROOT_PATH, 'mediapipe/__init__.py')
 MP_THIRD_PARTY_BUILD = os.path.join(MP_ROOT_PATH, 'third_party/BUILD')
-DIR_INIT_PY_FILES = [
-    os.path.join(MP_ROOT_PATH, '__init__.py'),
-    os.path.join(MP_ROOT_PATH, 'mediapipe/calculators/__init__.py'),
-    os.path.join(MP_ROOT_PATH, 'mediapipe/modules/__init__.py'),
-    os.path.join(MP_ROOT_PATH,
-                 'mediapipe/modules/holistic_landmark/__init__.py'),
-    os.path.join(MP_ROOT_PATH, 'mediapipe/modules/objectron/__init__.py')
-]
+MP_ROOT_INIT_PY = os.path.join(MP_ROOT_PATH, '__init__.py')
 
 
 def _normalize_path(path):
@@ -120,16 +113,22 @@ def _modify_opencv_cmake_rule(link_opencv):
     build_file.close()
 
 
-class GeneratePyProtos(setuptools.Command):
+def _add_mp_init_files():
+  """Add __init__.py to mediapipe root directories to make the subdirectories indexable."""
+  open(MP_ROOT_INIT_PY, 'w').close()
+  # Save the original mediapipe/__init__.py file.
+  shutil.copyfile(MP_DIR_INIT_PY, _get_backup_file(MP_DIR_INIT_PY))
+  mp_dir_init_file = open(MP_DIR_INIT_PY, 'a')
+  mp_dir_init_file.writelines([
+      '\n', 'from mediapipe.python import *\n',
+      'import mediapipe.python.solutions as solutions', '\n\n',
+      '__version__ = \'{}\''.format(__version__), '\n'
+  ])
+  mp_dir_init_file.close()
+
+
+class GeneratePyProtos(build_ext.build_ext):
   """Generate MediaPipe Python protobuf files by Protocol Compiler."""
-
-  user_options = []
-
-  def initialize_options(self):
-    pass
-
-  def finalize_options(self):
-    pass
 
   def run(self):
     if 'PROTOC' in os.environ and os.path.exists(os.environ['PROTOC']):
@@ -142,65 +141,62 @@ class GeneratePyProtos(setuptools.Command):
           '-compiler\' (linux) or \'brew install protobuf\'(macos) to install '
           'protobuf compiler binary.')
       sys.exit(-1)
-    self._modify_inits()
-    # Build framework and calculator protos.
+
+    # Add __init__.py to mediapipe proto directories to make the py protos
+    # indexable.
+    proto_dirs = ['mediapipe/calculators'] + [
+        x[0] for x in os.walk('mediapipe/modules')
+    ] + [x[0] for x in os.walk('mediapipe/tasks/cc')]
+    for proto_dir in proto_dirs:
+      self._add_empty_init_file(
+          os.path.abspath(
+              os.path.join(MP_ROOT_PATH, self.build_lib, proto_dir,
+                           '__init__.py')))
+
+    # Build framework and calculator py protos.
     for pattern in [
         'mediapipe/framework/**/*.proto', 'mediapipe/calculators/**/*.proto',
         'mediapipe/gpu/**/*.proto', 'mediapipe/modules/**/*.proto',
-        'mediapipe/util/**/*.proto'
+        'mediapipe/tasks/cc/**/*.proto', 'mediapipe/util/**/*.proto'
     ]:
       for proto_file in glob.glob(pattern, recursive=True):
-        proto_dir = os.path.dirname(os.path.abspath(proto_file))
         # Ignore test protos.
         if proto_file.endswith('test.proto'):
           continue
         # Ignore tensorflow protos in mediapipe/calculators/tensorflow.
-        if 'tensorflow' in proto_dir:
+        if 'tensorflow' in proto_file:
           continue
         # Ignore testdata dir.
-        if proto_dir.endswith('testdata'):
+        if 'testdata' in proto_file:
           continue
-        init_py = os.path.join(proto_dir, '__init__.py')
-        if not os.path.exists(init_py):
-          sys.stderr.write('adding __init__ file: %s\n' % init_py)
-          open(init_py, 'w').close()
+        self._add_empty_init_file(
+            os.path.abspath(
+                os.path.join(MP_ROOT_PATH, self.build_lib,
+                             os.path.dirname(proto_file), '__init__.py')))
         self._generate_proto(proto_file)
 
-  def _modify_inits(self):
-    # Add __init__.py to make the dirs indexable.
-    for init_py in DIR_INIT_PY_FILES:
-      if not os.path.exists(init_py):
-        sys.stderr.write('adding __init__ file: %s\n' % init_py)
-        open(init_py, 'w').close()
-    # Save the original init file.
-    shutil.copyfile(MP_DIR_INIT_PY, _get_backup_file(MP_DIR_INIT_PY))
-    mp_dir_init_file = open(MP_DIR_INIT_PY, 'a')
-    mp_dir_init_file.writelines(
-        ['\n', 'from mediapipe.python import *\n',
-         'import mediapipe.python.solutions as solutions',
-         '\n'])
-    mp_dir_init_file.close()
+  def _add_empty_init_file(self, init_file):
+    init_py_dir = os.path.dirname(init_file)
+    if not os.path.exists(init_py_dir):
+      os.makedirs(init_py_dir)
+    if not os.path.exists(init_file):
+      open(init_file, 'w').close()
 
   def _generate_proto(self, source):
     """Invokes the Protocol Compiler to generate a _pb2.py."""
-
-    output = source.replace('.proto', '_pb2.py')
-    sys.stderr.write('generating proto file: %s\n' % output)
-    if (not os.path.exists(output) or
-        (os.path.exists(source) and
-         os.path.getmtime(source) > os.path.getmtime(output))):
-
-      if not os.path.exists(source):
-        sys.stderr.write('cannot find required file: %s\n' % source)
-        sys.exit(-1)
-
-      protoc_command = [self._protoc, '-I.', '--python_out=.', source]
+    output = os.path.join(self.build_lib, source.replace('.proto', '_pb2.py'))
+    if not os.path.exists(output):
+      sys.stderr.write('generating proto file: %s\n' % output)
+      protoc_command = [
+          self._protoc, '-I.',
+          '--python_out=' + os.path.abspath(self.build_lib), source
+      ]
       if subprocess.call(protoc_command) != 0:
         sys.exit(-1)
 
 
-class BuildBinaryGraphs(build_ext.build_ext):
-  """Build MediaPipe solution binary graphs."""
+class BuildModules(build_ext.build_ext):
+  """Build binary graphs and download external files of various MediaPipe modules."""
 
   user_options = build_ext.build_ext.user_options + [
       ('link-opencv', None, 'if true, build opencv from source.'),
@@ -216,6 +212,27 @@ class BuildBinaryGraphs(build_ext.build_ext):
 
   def run(self):
     _check_bazel()
+    external_files = [
+        'face_detection/face_detection_full_range_sparse.tflite',
+        'face_detection/face_detection_short_range.tflite',
+        'face_landmark/face_landmark.tflite',
+        'face_landmark/face_landmark_with_attention.tflite',
+        'hand_landmark/hand_landmark_full.tflite',
+        'hand_landmark/hand_landmark_lite.tflite',
+        'holistic_landmark/hand_recrop.tflite',
+        'iris_landmark/iris_landmark.tflite',
+        'palm_detection/palm_detection_full.tflite',
+        'palm_detection/palm_detection_lite.tflite',
+        'pose_detection/pose_detection.tflite',
+        'pose_landmark/pose_landmark_full.tflite',
+        'selfie_segmentation/selfie_segmentation.tflite',
+        'selfie_segmentation/selfie_segmentation_landscape.tflite',
+    ]
+    for elem in external_files:
+      external_file = os.path.join('mediapipe/modules/', elem)
+      sys.stderr.write('downloading file: %s\n' % external_file)
+      self._download_external_file(external_file)
+
     binary_graphs = [
         'face_detection/face_detection_short_range_cpu',
         'face_detection/face_detection_full_range_cpu',
@@ -225,12 +242,24 @@ class BuildBinaryGraphs(build_ext.build_ext):
         'pose_landmark/pose_landmark_cpu',
         'selfie_segmentation/selfie_segmentation_cpu'
     ]
-    for binary_graph in binary_graphs:
-      sys.stderr.write('generating binarypb: %s\n' %
-                       os.path.join('mediapipe/modules/', binary_graph))
+    for elem in binary_graphs:
+      binary_graph = os.path.join('mediapipe/modules/', elem)
+      sys.stderr.write('generating binarypb: %s\n' % binary_graph)
       self._generate_binary_graph(binary_graph)
 
-  def _generate_binary_graph(self, graph_path):
+  def _download_external_file(self, external_file):
+    """Download an external file from GCS via Bazel."""
+
+    fetch_model_command = [
+        'bazel',
+        'build',
+        external_file,
+    ]
+    if subprocess.call(fetch_model_command) != 0:
+      sys.exit(-1)
+    self._copy_to_build_lib_dir(external_file)
+
+  def _generate_binary_graph(self, binary_graph_target):
     """Generate binary graph for a particular MediaPipe binary graph target."""
 
     bazel_command = [
@@ -240,16 +269,21 @@ class BuildBinaryGraphs(build_ext.build_ext):
         '--copt=-DNDEBUG',
         '--define=MEDIAPIPE_DISABLE_GPU=1',
         '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
-        os.path.join('mediapipe/modules/', graph_path),
+        binary_graph_target,
     ]
     if not self.link_opencv and not IS_WINDOWS:
       bazel_command.append('--define=OPENCV=source')
     if subprocess.call(bazel_command) != 0:
       sys.exit(-1)
-    output_name = graph_path + '.binarypb'
-    output_file = os.path.join('mediapipe/modules', output_name)
-    shutil.copyfile(
-        os.path.join('bazel-bin/mediapipe/modules/', output_name), output_file)
+    self._copy_to_build_lib_dir(binary_graph_target + '.binarypb')
+
+  def _copy_to_build_lib_dir(self, file):
+    """Copy a file from bazel-bin to the build lib dir."""
+    dst = os.path.join(self.build_lib + '/', file)
+    dst_dir = os.path.dirname(dst)
+    if not os.path.exists(dst_dir):
+      os.makedirs(dst_dir)
+    shutil.copyfile(os.path.join('bazel-bin/', file), dst)
 
 
 class BazelExtension(setuptools.Extension):
@@ -333,15 +367,16 @@ class BuildPy(build_py.build_py):
 
   def run(self):
     _modify_opencv_cmake_rule(self.link_opencv)
-    build_binary_graphs_obj = self.distribution.get_command_obj(
-        'build_binary_graphs')
-    build_binary_graphs_obj.link_opencv = self.link_opencv
+    _add_mp_init_files()
+    build_modules_obj = self.distribution.get_command_obj('build_modules')
+    build_modules_obj.link_opencv = self.link_opencv
     build_ext_obj = self.distribution.get_command_obj('build_ext')
     build_ext_obj.link_opencv = self.link_opencv
-    self.run_command('build_binary_graphs')
+    self.run_command('gen_protos')
+    self.run_command('build_modules')
     self.run_command('build_ext')
     build_py.build_py.run(self)
-    self.run_command('remove_generated')
+    self.run_command('restore')
 
 
 class Install(install.install):
@@ -360,20 +395,13 @@ class Install(install.install):
     install.install.finalize_options(self)
 
   def run(self):
-    _modify_opencv_cmake_rule(self.link_opencv)
-    build_binary_graphs_obj = self.distribution.get_command_obj(
-        'build_binary_graphs')
-    build_binary_graphs_obj.link_opencv = self.link_opencv
-    build_ext_obj = self.distribution.get_command_obj('build_ext')
-    build_ext_obj.link_opencv = self.link_opencv
-    self.run_command('build_binary_graphs')
-    self.run_command('build_ext')
+    build_py_obj = self.distribution.get_command_obj('build_py')
+    build_py_obj.link_opencv = self.link_opencv
     install.install.run(self)
-    self.run_command('remove_generated')
 
 
-class RemoveGenerated(setuptools.Command):
-  """Remove the generated files."""
+class Restore(setuptools.Command):
+  """Restore the modified mediapipe source files."""
 
   user_options = []
 
@@ -384,25 +412,6 @@ class RemoveGenerated(setuptools.Command):
     pass
 
   def run(self):
-    for pattern in [
-        'mediapipe/calculators/**/*pb2.py',
-        'mediapipe/framework/**/*pb2.py',
-        'mediapipe/gpu/**/*pb2.py',
-        'mediapipe/modules/**/*pb2.py',
-        'mediapipe/util/**/*pb2.py',
-    ]:
-      for py_file in glob.glob(pattern, recursive=True):
-        sys.stderr.write('removing generated files: %s\n' % py_file)
-        os.remove(py_file)
-        init_py = os.path.join(
-            os.path.dirname(os.path.abspath(py_file)), '__init__.py')
-        if os.path.exists(init_py):
-          sys.stderr.write('removing __init__ file: %s\n' % init_py)
-          os.remove(init_py)
-    for binarypb_file in glob.glob(
-        'mediapipe/modules/**/*.binarypb', recursive=True):
-      sys.stderr.write('removing generated binary graphs: %s\n' % binarypb_file)
-      os.remove(binarypb_file)
     # Restore the original init file from the backup.
     if os.path.exists(_get_backup_file(MP_DIR_INIT_PY)):
       os.remove(MP_DIR_INIT_PY)
@@ -411,9 +420,7 @@ class RemoveGenerated(setuptools.Command):
     if os.path.exists(_get_backup_file(MP_THIRD_PARTY_BUILD)):
       os.remove(MP_THIRD_PARTY_BUILD)
       shutil.move(_get_backup_file(MP_THIRD_PARTY_BUILD), MP_THIRD_PARTY_BUILD)
-    for init_py in DIR_INIT_PY_FILES:
-      if os.path.exists(init_py):
-        os.remove(init_py)
+    os.remove(MP_ROOT_INIT_PY)
 
 
 setuptools.setup(
@@ -430,10 +437,10 @@ setuptools.setup(
     cmdclass={
         'build_py': BuildPy,
         'gen_protos': GeneratePyProtos,
-        'build_binary_graphs': BuildBinaryGraphs,
+        'build_modules': BuildModules,
         'build_ext': BuildExtension,
         'install': Install,
-        'remove_generated': RemoveGenerated,
+        'restore': Restore,
     },
     ext_modules=[
         BazelExtension('//mediapipe/python:_framework_bindings'),

@@ -25,6 +25,7 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/location.h"
+#include "mediapipe/framework/formats/location_opencv.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
@@ -56,6 +57,8 @@ constexpr char kFloatContextFeatureOtherTag[] = "FLOAT_CONTEXT_FEATURE_OTHER";
 constexpr char kFloatContextFeatureTestTag[] = "FLOAT_CONTEXT_FEATURE_TEST";
 constexpr char kFloatFeatureOtherTag[] = "FLOAT_FEATURE_OTHER";
 constexpr char kFloatFeatureTestTag[] = "FLOAT_FEATURE_TEST";
+constexpr char kIntFeatureOtherTag[] = "INT_FEATURE_OTHER";
+constexpr char kIntFeatureTestTag[] = "INT_FEATURE_TEST";
 constexpr char kImagePrefixTag[] = "IMAGE_PREFIX";
 constexpr char kSequenceExampleTag[] = "SEQUENCE_EXAMPLE";
 constexpr char kImageTag[] = "IMAGE";
@@ -214,6 +217,50 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoFloatLists) {
     ASSERT_EQ(i, mpms::GetFeatureTimestampAt("OTHER", output_sequence, i));
     ASSERT_THAT(mpms::GetFeatureFloatsAt("OTHER", output_sequence, i),
                 ::testing::ElementsAreArray(std::vector<float>(2, 2 << i)));
+  }
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, PacksTwoIntLists) {
+  SetUpCalculator({"INT_FEATURE_TEST:test", "INT_FEATURE_OTHER:test2"}, {},
+                  false, true);
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+
+  int num_timesteps = 2;
+  for (int i = 0; i < num_timesteps; ++i) {
+    auto vi_ptr = ::absl::make_unique<std::vector<int64>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kIntFeatureTestTag)
+        .packets.push_back(Adopt(vi_ptr.release()).At(Timestamp(i)));
+    vi_ptr = ::absl::make_unique<std::vector<int64>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kIntFeatureOtherTag)
+        .packets.push_back(Adopt(vi_ptr.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_EQ(num_timesteps,
+            mpms::GetFeatureTimestampSize("TEST", output_sequence));
+  ASSERT_EQ(num_timesteps, mpms::GetFeatureIntsSize("TEST", output_sequence));
+  ASSERT_EQ(num_timesteps,
+            mpms::GetFeatureTimestampSize("OTHER", output_sequence));
+  ASSERT_EQ(num_timesteps, mpms::GetFeatureIntsSize("OTHER", output_sequence));
+  for (int i = 0; i < num_timesteps; ++i) {
+    ASSERT_EQ(i, mpms::GetFeatureTimestampAt("TEST", output_sequence, i));
+    ASSERT_THAT(mpms::GetFeatureIntsAt("TEST", output_sequence, i),
+                ::testing::ElementsAreArray(std::vector<int64>(2, 2 << i)));
+    ASSERT_EQ(i, mpms::GetFeatureTimestampAt("OTHER", output_sequence, i));
+    ASSERT_THAT(mpms::GetFeatureIntsAt("OTHER", output_sequence, i),
+                ::testing::ElementsAreArray(std::vector<int64>(2, 2 << i)));
   }
 }
 
@@ -434,7 +481,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoBBoxDetections) {
     detection.add_label("mask");
     detection.add_score(1.0);
     cv::Mat image(2, 3, CV_8UC1, cv::Scalar(0));
-    Location::CreateCvMaskLocation<uint8>(image).ConvertToProto(
+    mediapipe::CreateCvMaskLocation<uint8>(image).ConvertToProto(
         detection.mutable_location_data());
     detections->push_back(detection);
 
@@ -513,7 +560,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksBBoxWithoutImageDims) {
     detection.add_label("mask");
     detection.add_score(1.0);
     cv::Mat image(2, 3, CV_8UC1, cv::Scalar(0));
-    Location::CreateCvMaskLocation<uint8>(image).ConvertToProto(
+    mediapipe::CreateCvMaskLocation<uint8>(image).ConvertToProto(
         detection.mutable_location_data());
     detections->push_back(detection);
 
@@ -561,7 +608,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksBBoxWithImages) {
     detection.add_label("mask");
     detection.add_score(1.0);
     cv::Mat image(2, 3, CV_8UC1, cv::Scalar(0));
-    Location::CreateCvMaskLocation<uint8>(image).ConvertToProto(
+    mediapipe::CreateCvMaskLocation<uint8>(image).ConvertToProto(
         detection.mutable_location_data());
     detections->push_back(detection);
 
@@ -677,7 +724,7 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoMaskDetections) {
     detection.add_label("mask");
     detection.add_score(1.0);
     cv::Mat image(2, 3, CV_8UC1, cv::Scalar(0));
-    Location::CreateCvMaskLocation<uint8>(image).ConvertToProto(
+    mediapipe::CreateCvMaskLocation<uint8>(image).ConvertToProto(
         detection.mutable_location_data());
 
     detections->push_back(detection);

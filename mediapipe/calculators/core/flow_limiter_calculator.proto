@@ -18,7 +18,8 @@ package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
 
-option objc_class_prefix = "MediaPipe";
+option java_package = "com.google.mediapipe.calculator.proto";
+option java_outer_classname = "FlowLimiterCalculatorProto";
 
 message FlowLimiterCalculatorOptions {
   extend mediapipe.CalculatorOptions {

@@ -18,8 +18,6 @@ package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
 
-option objc_class_prefix = "MediaPipe";
-
 // A Range {begin, end} specifies beginning ane ending indices to splice a
 // vector. A vector v is spliced to have elements v[begin:(end-1)], i.e., with
 // begin index inclusive and end index exclusive.

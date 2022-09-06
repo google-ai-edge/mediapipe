@@ -18,7 +18,7 @@ nav_order: 8
 </details>
 ---
 
-![hair_segmentation_android_gpu_gif](../images/mobile/hair_segmentation_android_gpu.gif)
+![hair_segmentation_android_gpu_gif](https://mediapipe.dev/images/mobile/hair_segmentation_android_gpu.gif)
 
 ## Example Apps
 
@@ -58,7 +58,7 @@ processed all locally in real-time and never leaves your device. Please see
 [MediaPipe on the Web](https://developers.googleblog.com/2020/01/mediapipe-on-web.html)
 in Google Developers Blog for details.
 
-![visualizer_runner](../images/visualizer_runner.png)
+![visualizer_runner](https://mediapipe.dev/images/visualizer_runner.png)
 
 ## Resources
 

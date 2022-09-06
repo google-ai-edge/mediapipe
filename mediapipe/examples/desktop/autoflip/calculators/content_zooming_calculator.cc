@@ -203,6 +203,7 @@ absl::Status ContentZoomingCalculator::GetContract(
 }
 
 absl::Status ContentZoomingCalculator::Open(mediapipe::CalculatorContext* cc) {
+  cc->SetOffset(mediapipe::TimestampDiff(0));
   options_ = cc->Options<ContentZoomingCalculatorOptions>();
   if (options_.has_kinematic_options()) {
     return mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)

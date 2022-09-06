@@ -18,6 +18,10 @@ package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
 cc_binary(
     name = "pose_tracking_cpu",
+    data = [
+        "//mediapipe/modules/pose_detection:pose_detection.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+    ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/pose_tracking:pose_tracking_cpu_deps",
@@ -27,6 +31,10 @@ cc_binary(
 # Linux only
 cc_binary(
     name = "pose_tracking_gpu",
+    data = [
+        "//mediapipe/modules/pose_detection:pose_detection.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+    ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
         "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps",

@@ -16,14 +16,18 @@ load(
     "//mediapipe/framework/tool:mediapipe_graph.bzl",
     "mediapipe_simple_subgraph",
 )
+load(
+    "//mediapipe/framework/tool:mediapipe_files.bzl",
+    "mediapipe_files",
+)
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files([
-    "palm_detection_lite.tflite",
+mediapipe_files(srcs = [
     "palm_detection_full.tflite",
+    "palm_detection_lite.tflite",
 ])
 
 mediapipe_simple_subgraph(

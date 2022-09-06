@@ -166,6 +166,8 @@ _HAS_DYNAMIC_ATTRIBUTES = True
 EXAMPLE_ID_KEY = "example/id"
 # The name o fthe data set, including the version.
 EXAMPLE_DATASET_NAME_KEY = "example/dataset_name"
+# String flags or attributes for this example within a data set.
+EXAMPLE_DATASET_FLAG_STRING_KEY = "example/dataset/flag/string"
 # The relative path to the data on disk from some root directory.
 CLIP_DATA_PATH_KEY = "clip/data_path"
 # Any identifier for the media beyond the data path.
@@ -190,6 +192,9 @@ msu.create_bytes_context_feature(
     "example_id", EXAMPLE_ID_KEY, module_dict=globals())
 msu.create_bytes_context_feature(
     "example_dataset_name", EXAMPLE_DATASET_NAME_KEY, module_dict=globals())
+msu.create_bytes_list_context_feature(
+    "example_dataset_flag_string", EXAMPLE_DATASET_FLAG_STRING_KEY,
+    module_dict=globals())
 msu.create_bytes_context_feature(
     "clip_media_id", CLIP_MEDIA_ID_KEY, module_dict=globals())
 msu.create_bytes_context_feature(
@@ -646,6 +651,12 @@ FEATURE_TIMESTAMP_KEY = "feature/timestamp"
 FEATURE_DURATION_KEY = "feature/duration"
 # Encodes an optional confidence score for the generated features.
 FEATURE_CONFIDENCE_KEY = "feature/confidence"
+# The feature as a list of floats in the context.
+CONTEXT_FEATURE_FLOATS_KEY = "context_feature/floats"
+# The feature as a list of bytes in the context. May be encoded.
+CONTEXT_FEATURE_BYTES_KEY = "context_feature/bytes"
+# The feature as a list of ints in the context.
+CONTEXT_FEATURE_INTS_KEY = "context_feature/ints"
 
 msu.create_int_list_context_feature(
     "feature_dimensions", FEATURE_DIMENSIONS_KEY, module_dict=globals())
@@ -676,4 +687,10 @@ msu.create_int_list_feature_list(
     "feature_duration", FEATURE_DURATION_KEY, module_dict=globals())
 msu.create_float_list_feature_list(
     "feature_confidence", FEATURE_CONFIDENCE_KEY, module_dict=globals())
+msu.create_float_list_context_feature(
+    "context_feature_floats", CONTEXT_FEATURE_FLOATS_KEY, module_dict=globals())
+msu.create_bytes_list_context_feature(
+    "context_feature_bytes", CONTEXT_FEATURE_BYTES_KEY, module_dict=globals())
+msu.create_int_list_context_feature(
+    "context_feature_ints", CONTEXT_FEATURE_INTS_KEY, module_dict=globals())
 

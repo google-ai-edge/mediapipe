@@ -24,6 +24,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "libyuv/convert.h"
+#include "libyuv/convert_argb.h"
 #include "libyuv/convert_from.h"
 #include "libyuv/row.h"
 #include "libyuv/video_common.h"
@@ -160,6 +161,53 @@ void YUVImageToImageFrame(const YUVImage& yuv_image, ImageFrame* image_frame,
                            image_frame->WidthStep(), width, height);
   }
   CHECK_EQ(0, rv);
+}
+
+void YUVImageToImageFrameFromFormat(const YUVImage& yuv_image,
+                                    ImageFrame* image_frame) {
+  CHECK(image_frame);
+  int width = yuv_image.width();
+  int height = yuv_image.height();
+  image_frame->Reset(ImageFormat::SRGB, width, height, 16);
+
+  const auto& format = yuv_image.fourcc();
+  switch (format) {
+    case libyuv::FOURCC_NV12:
+      // 8-bit Y plane followed by an interleaved 8-bit U/V plane with 2×2
+      // subsampling.
+      libyuv::NV12ToRAW(
+          yuv_image.data(0), yuv_image.stride(0), yuv_image.data(1),
+          yuv_image.stride(1), image_frame->MutablePixelData(),
+          image_frame->WidthStep(), yuv_image.width(), yuv_image.height());
+      break;
+    case libyuv::FOURCC_NV21:
+      // 8-bit Y plane followed by an interleaved 8-bit V/U plane with 2×2
+      // subsampling.
+      libyuv::NV21ToRAW(
+          yuv_image.data(0), yuv_image.stride(0), yuv_image.data(1),
+          yuv_image.stride(1), image_frame->MutablePixelData(),
+          image_frame->WidthStep(), yuv_image.width(), yuv_image.height());
+      break;
+    case libyuv::FOURCC_I420:
+      // Also known as YV21.
+      // 8-bit Y plane followed by 8-bit 2×2 subsampled U and V planes.
+      libyuv::I420ToRAW(
+          yuv_image.data(0), yuv_image.stride(0), yuv_image.data(1),
+          yuv_image.stride(1), yuv_image.data(2), yuv_image.stride(2),
+          image_frame->MutablePixelData(), image_frame->WidthStep(),
+          yuv_image.width(), yuv_image.height());
+      break;
+    case libyuv::FOURCC_YV12:
+      // 8-bit Y plane followed by 8-bit 2×2 subsampled V and U planes.
+      libyuv::I420ToRAW(
+          yuv_image.data(0), yuv_image.stride(0), yuv_image.data(2),
+          yuv_image.stride(2), yuv_image.data(1), yuv_image.stride(1),
+          image_frame->MutablePixelData(), image_frame->WidthStep(),
+          yuv_image.width(), yuv_image.height());
+      break;
+    default:
+      LOG(FATAL) << "Unsupported YUVImage format.";
+  }
 }
 
 void SrgbToMpegYCbCr(const uint8 r, const uint8 g, const uint8 b,  //

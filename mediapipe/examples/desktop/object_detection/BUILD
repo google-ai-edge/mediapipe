@@ -18,6 +18,10 @@ package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
 cc_binary(
     name = "object_detection_tensorflow",
+    data = [
+        "//mediapipe/models:ssdlite_object_detection.tflite",
+        "//mediapipe/models:ssdlite_object_detection_labelmap.txt",
+    ],
     deps = [
         "//mediapipe/examples/desktop:simple_run_graph_main",
         "//mediapipe/graphs/object_detection:desktop_tensorflow_calculators",
@@ -28,6 +32,10 @@ cc_binary(
 
 cc_binary(
     name = "object_detection_tflite",
+    data = [
+        "//mediapipe/models:ssdlite_object_detection.tflite",
+        "//mediapipe/models:ssdlite_object_detection_labelmap.txt",
+    ],
     deps = [
         "//mediapipe/examples/desktop:simple_run_graph_main",
         "//mediapipe/graphs/object_detection:desktop_tflite_calculators",
@@ -36,6 +44,10 @@ cc_binary(
 
 cc_binary(
     name = "object_detection_cpu",
+    data = [
+        "//mediapipe/models:ssdlite_object_detection.tflite",
+        "//mediapipe/models:ssdlite_object_detection_labelmap.txt",
+    ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/object_detection:desktop_tflite_calculators",

@@ -29,7 +29,7 @@ solutions for these tasks. Combining them all in real-time into a semantically
 consistent end-to-end solution is a uniquely difficult problem requiring
 simultaneous inference of multiple, dependent neural networks.
 
-![holistic_sports_and_gestures_example.gif](../images/mobile/holistic_sports_and_gestures_example.gif) |
+![holistic_sports_and_gestures_example.gif](https://mediapipe.dev/images/mobile/holistic_sports_and_gestures_example.gif) |
 :----------------------------------------------------------------------------------------------------: |
 *Fig 1. Example of MediaPipe Holistic.*                                                                |
 
@@ -54,7 +54,7 @@ full-resolution input frame to these ROIs and apply task-specific face and hand
 models to estimate their corresponding landmarks. Finally, we merge all
 landmarks with those of the pose model to yield the full 540+ landmarks.
 
-![holistic_pipeline_example.jpg](../images/mobile/holistic_pipeline_example.jpg) |
+![holistic_pipeline_example.jpg](https://mediapipe.dev/images/mobile/holistic_pipeline_example.jpg) |
 :------------------------------------------------------------------------------: |
 *Fig 2. MediaPipe Holistic Pipeline Overview.*                                   |
 

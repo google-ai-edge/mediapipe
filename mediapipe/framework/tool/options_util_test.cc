@@ -345,7 +345,7 @@ absl::Status Equals(std::vector<FieldData> b1, std::vector<FieldData> b2) {
   return absl::OkStatus();
 }
 
-// Unit-tests for graph options feild accessors from options_field_util.
+// Unit-tests for graph options field accessors from options_field_util.
 class OptionsFieldUtilTest : public ::testing::Test {
  protected:
   void SetUp() override {}
@@ -581,7 +581,7 @@ TEST_F(OptionsFieldUtilTest, MergeFieldValuesInt) {
       MergeFieldValues(node_data, path, {AsFieldData(55), AsFieldData(66)});
   EXPECT_EQ(status.code(), absl::StatusCode::kOutOfRange);
   EXPECT_THAT(status.message(),
-              HasSubstr("Missing feild value: num_lights at index: 1"));
+              HasSubstr("Missing field value: num_lights at index: 1"));
 }
 
 // Tests MergeFieldValues applied to a protobuf field.

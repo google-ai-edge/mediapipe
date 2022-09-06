@@ -1,0 +1,41 @@
+// Copyright 2019 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message GlAnimationOverlayCalculatorOptions {
+  extend CalculatorOptions {
+    optional GlAnimationOverlayCalculatorOptions ext = 174760573;
+  }
+
+  // Default aspect ratio of rendering target width over height.
+  // This specific value is for 3:4 view. Do not change this default value.
+  optional float aspect_ratio = 1 [default = 0.75];
+  // Default vertical field of view in degrees. This specific default value
+  // is arbitrary. Do not change this default value. If you want to use
+  // a different vertical_fov_degrees, set it in the options.
+  optional float vertical_fov_degrees = 2 [default = 70.0];
+
+  // Perspective projection matrix z-clipping near plane value.
+  optional float z_clipping_plane_near = 3 [default = 0.1];
+  // Perspective projection matrix z-clipping far plane value.
+  optional float z_clipping_plane_far = 4 [default = 1000.0];
+
+  // Speed at which to play the animation (in frames per second).
+  optional float animation_speed_fps = 5 [default = 25.0];
+}

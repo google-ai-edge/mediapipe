@@ -24,6 +24,9 @@ package mediapipe;
 
 import "mediapipe/framework/mediapipe_options.proto";
 
+option java_package = "com.google.mediapipe.proto";
+option java_outer_classname = "StatusHandlerProto";
+
 // The settings specifying a status handler and its required external inputs.
 message StatusHandlerConfig {
   // The name of the registered status handler class.

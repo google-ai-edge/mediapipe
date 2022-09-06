@@ -116,8 +116,9 @@ using ::tflite::gpu::gl::GlShader;
 //
 // Inputs:
 //   One of the following TENSORS tags:
-//   TENSORS: Vector of Tensor,
-//            The tensor dimensions are specified in this calculator's options.
+//   TENSORS: Vector of Tensors of type kFloat32. Only the first tensor will be
+//            used. The tensor dimensions are specified in this calculator's
+//            options.
 //   OUTPUT_SIZE(optional): std::pair<int, int>,
 //                          If provided, the size to upscale mask to.
 //
@@ -261,6 +262,7 @@ absl::Status TensorsToSegmentationCalculator::Process(CalculatorContext* cc) {
   // Validate tensor channels and activation type.
   {
     RET_CHECK(!input_tensors.empty());
+    RET_CHECK(input_tensors[0].element_type() == Tensor::ElementType::kFloat32);
     ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensors[0].shape().dims));
     int tensor_channels = std::get<2>(hwc);
     typedef mediapipe::TensorsToSegmentationCalculatorOptions Options;

@@ -40,7 +40,7 @@ environments for inference, whereas our method achieves real-time performance on
 most modern [mobile phones](#mobile), [desktops/laptops](#desktop), in
 [python](#python-solution-api) and even on the [web](#javascript-solution-api).
 
-![pose_tracking_example.gif](../images/mobile/pose_tracking_example.gif) |
+![pose_tracking_example.gif](https://mediapipe.dev/images/mobile/pose_tracking_example.gif) |
 :----------------------------------------------------------------------: |
 *Fig 1. Example of MediaPipe Pose for pose tracking.*                    |
 
@@ -94,7 +94,7 @@ BlazePose GHUM Lite                                                             
 [AlphaPose ResNet50](https://github.com/MVIG-SJTU/AlphaPose)                                          | 63.4               | **96.0**               | 57.8                | **95.5**                | 63.4               | **96.0**
 [Apple Vision](https://developer.apple.com/documentation/vision/detecting_human_body_poses_in_images) | 32.8               | **82.7**               | 36.4                | **91.4**                | 44.5               | **88.6**
 
-![pose_tracking_pck_chart.png](../images/mobile/pose_tracking_pck_chart.png) |
+![pose_tracking_pck_chart.png](https://mediapipe.dev/images/mobile/pose_tracking_pck_chart.png) |
 :--------------------------------------------------------------------------: |
 *Fig 2. Quality evaluation in [`PCK@0.2`].*                                  |
 
@@ -121,7 +121,7 @@ predict the midpoint of a person's hips, the radius of a circle circumscribing
 the whole person, and the incline angle of the line connecting the shoulder and
 hip midpoints.
 
-![pose_tracking_detector_vitruvian_man.png](../images/mobile/pose_tracking_detector_vitruvian_man.png) |
+![pose_tracking_detector_vitruvian_man.png](https://mediapipe.dev/images/mobile/pose_tracking_detector_vitruvian_man.png) |
 :----------------------------------------------------------------------------------------------------: |
 *Fig 3. Vitruvian man aligned via two virtual keypoints predicted by BlazePose detector in addition to the face bounding box.* |
 
@@ -130,7 +130,7 @@ hip midpoints.
 The landmark model in MediaPipe Pose predicts the location of 33 pose landmarks
 (see figure below).
 
-![pose_tracking_full_body_landmarks.png](../images/mobile/pose_tracking_full_body_landmarks.png) |
+![pose_tracking_full_body_landmarks.png](https://mediapipe.dev/images/mobile/pose_tracking_full_body_landmarks.png) |
 :----------------------------------------------------------------------------------------------: |
 *Fig 4. 33 pose landmarks.*                                                                      |
 

@@ -20,7 +20,7 @@ aux_links:
     - "//github.com/google/mediapipe"
 
 # Footer content appears at the bottom of every page's main content
-footer_content: "&copy; 2020 GOOGLE LLC | <a href=\"https://policies.google.com/privacy\">PRIVACY POLICY</a> | <a href=\"https://policies.google.com/terms\">TERMS OF SERVICE</a>"
+footer_content: "&copy; GOOGLE LLC | <a href=\"https://policies.google.com/privacy\">PRIVACY POLICY</a> | <a href=\"https://policies.google.com/terms\">TERMS OF SERVICE</a>"
 
 # Color scheme currently only supports "dark", "light"/nil (default), or a custom scheme that you define
 color_scheme: mediapipe

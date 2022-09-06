@@ -1,0 +1,33 @@
+diff --git a/tensorflow_text/core/kernels/BUILD b/tensorflow_text/core/kernels/BUILD
+index bdca365..1c20eae 100644
+--- a/tensorflow_text/core/kernels/BUILD
++++ b/tensorflow_text/core/kernels/BUILD
+@@ -209,8 +209,12 @@ cc_library(
+     name = "regex_split",
+     srcs = ["regex_split.cc"],
+     hdrs = ["regex_split.h"],
+-    deps = OSS_DEPS + [
++    deps = [
+         # absl/strings dep
++        "@com_google_absl//absl/container:inlined_vector",
++        "@com_google_absl//absl/strings",
++        "@com_google_absl//absl/types:optional",
++        "@com_google_absl//absl/types:span",
+         "@com_google_re2//:re2",
+     ],
+ )
+@@ -437,8 +441,12 @@ cc_library(
+     name = "wordpiece_tokenizer",
+     srcs = ["wordpiece_tokenizer.cc"],
+     hdrs = ["wordpiece_tokenizer.h"],
+-    deps = OSS_DEPS + [
++    deps = [
+         # absl/strings dep
++        "@com_google_absl//absl/container:inlined_vector",
++        "@com_google_absl//absl/strings",
++        "@com_google_absl//absl/types:optional",
++        "@com_google_absl//absl/types:span",
+         "@icu//:common",
+     ],
+ )
+ 

@@ -42,5 +42,7 @@ bool Image::ConvertToGpu() const {
 
 MEDIAPIPE_REGISTER_TYPE(mediapipe::Image, "::mediapipe::Image", nullptr,
                         nullptr);
+MEDIAPIPE_REGISTER_TYPE(std::vector<mediapipe::Image>,
+                        "::std::vector<::mediapipe::Image>", nullptr, nullptr);
 
 }  // namespace mediapipe

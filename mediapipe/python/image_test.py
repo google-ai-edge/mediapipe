@@ -17,11 +17,17 @@
 import gc
 import random
 import sys
+
 from absl.testing import absltest
 import cv2
-import mediapipe as mp
 import numpy as np
 import PIL.Image
+
+from mediapipe.python._framework_bindings import image
+from mediapipe.python._framework_bindings import image_frame
+
+Image = image.Image
+ImageFormat = image_frame.ImageFormat
 
 
 # TODO: Add unit tests specifically for memory management.
@@ -33,13 +39,13 @@ class ImageTest(absltest.TestCase):
         np.random.randint(2**8 - 1, size=(h, w, 3), dtype=np.uint8),
         cv2.COLOR_RGB2GRAY)
     mat[2, 2] = 42
-    image = mp.Image(image_format=mp.ImageFormat.GRAY8, data=mat)
-    self.assertTrue(np.array_equal(mat, image.numpy_view()))
+    gray8_image = Image(image_format=ImageFormat.GRAY8, data=mat)
+    self.assertTrue(np.array_equal(mat, gray8_image.numpy_view()))
     with self.assertRaisesRegex(IndexError, 'index dimension mismatch'):
-      print(image[w, h, 1])
+      print(gray8_image[w, h, 1])
     with self.assertRaisesRegex(IndexError, 'out of bounds'):
-      print(image[w, h])
-    self.assertEqual(42, image[2, 2])
+      print(gray8_image[w, h])
+    self.assertEqual(42, gray8_image[2, 2])
 
   def test_create_image_from_rgb_cv_mat(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
@@ -47,11 +53,11 @@ class ImageTest(absltest.TestCase):
         np.random.randint(2**8 - 1, size=(h, w, channels), dtype=np.uint8),
         cv2.COLOR_RGB2BGR)
     mat[2, 2, 1] = 42
-    image = mp.Image(image_format=mp.ImageFormat.SRGB, data=mat)
-    self.assertTrue(np.array_equal(mat, image.numpy_view()))
+    rgb_image = Image(image_format=ImageFormat.SRGB, data=mat)
+    self.assertTrue(np.array_equal(mat, rgb_image.numpy_view()))
     with self.assertRaisesRegex(IndexError, 'out of bounds'):
-      print(image[w, h, channels])
-    self.assertEqual(42, image[2, 2, 1])
+      print(rgb_image[w, h, channels])
+    self.assertEqual(42, rgb_image[2, 2, 1])
 
   def test_create_image_from_rgb48_cv_mat(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
@@ -59,53 +65,53 @@ class ImageTest(absltest.TestCase):
         np.random.randint(2**16 - 1, size=(h, w, channels), dtype=np.uint16),
         cv2.COLOR_RGB2BGR)
     mat[2, 2, 1] = 42
-    image = mp.Image(image_format=mp.ImageFormat.SRGB48, data=mat)
-    self.assertTrue(np.array_equal(mat, image.numpy_view()))
+    rgb48_image = Image(image_format=ImageFormat.SRGB48, data=mat)
+    self.assertTrue(np.array_equal(mat, rgb48_image.numpy_view()))
     with self.assertRaisesRegex(IndexError, 'out of bounds'):
-      print(image[w, h, channels])
-    self.assertEqual(42, image[2, 2, 1])
+      print(rgb48_image[w, h, channels])
+    self.assertEqual(42, rgb48_image[2, 2, 1])
 
   def test_create_image_from_gray_pil_image(self):
     w, h = random.randrange(3, 100), random.randrange(3, 100)
     img = PIL.Image.fromarray(
         np.random.randint(2**8 - 1, size=(h, w), dtype=np.uint8), 'L')
-    image = mp.Image(image_format=mp.ImageFormat.GRAY8, data=np.asarray(img))
-    self.assertTrue(np.array_equal(np.asarray(img), image.numpy_view()))
+    gray8_image = Image(image_format=ImageFormat.GRAY8, data=np.asarray(img))
+    self.assertTrue(np.array_equal(np.asarray(img), gray8_image.numpy_view()))
     with self.assertRaisesRegex(IndexError, 'index dimension mismatch'):
-      print(image[w, h, 1])
+      print(gray8_image[w, h, 1])
     with self.assertRaisesRegex(IndexError, 'out of bounds'):
-      print(image[w, h])
+      print(gray8_image[w, h])
 
   def test_create_image_from_rgb_pil_image(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
     img = PIL.Image.fromarray(
         np.random.randint(2**8 - 1, size=(h, w, channels), dtype=np.uint8),
         'RGB')
-    image = mp.Image(image_format=mp.ImageFormat.SRGB, data=np.asarray(img))
-    self.assertTrue(np.array_equal(np.asarray(img), image.numpy_view()))
+    rgb_image = Image(image_format=ImageFormat.SRGB, data=np.asarray(img))
+    self.assertTrue(np.array_equal(np.asarray(img), rgb_image.numpy_view()))
     with self.assertRaisesRegex(IndexError, 'out of bounds'):
-      print(image[w, h, channels])
+      print(rgb_image[w, h, channels])
 
   def test_create_image_from_rgba64_pil_image(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 4
     img = PIL.Image.fromarray(
         np.random.randint(2**16 - 1, size=(h, w, channels), dtype=np.uint16),
         'RGBA')
-    image = mp.Image(
-        image_format=mp.ImageFormat.SRGBA64,
+    rgba_image = Image(
+        image_format=ImageFormat.SRGBA64,
         data=np.asarray(img).astype(np.uint16))
-    self.assertTrue(np.array_equal(np.asarray(img), image.numpy_view()))
+    self.assertTrue(np.array_equal(np.asarray(img), rgba_image.numpy_view()))
     with self.assertRaisesRegex(IndexError, 'out of bounds'):
-      print(image[1000, 1000, 1000])
+      print(rgba_image[1000, 1000, 1000])
 
   def test_image_numby_view(self):
     w, h, channels = random.randrange(3, 100), random.randrange(3, 100), 3
     mat = cv2.cvtColor(
         np.random.randint(2**8 - 1, size=(h, w, channels), dtype=np.uint8),
         cv2.COLOR_RGB2BGR)
-    image = mp.Image(image_format=mp.ImageFormat.SRGB, data=mat)
-    output_ndarray = image.numpy_view()
-    self.assertTrue(np.array_equal(mat, image.numpy_view()))
+    rgb_image = Image(image_format=ImageFormat.SRGB, data=mat)
+    output_ndarray = rgb_image.numpy_view()
+    self.assertTrue(np.array_equal(mat, rgb_image.numpy_view()))
     # The output of numpy_view() is a reference to the internal data and it's
     # unwritable after creation.
     with self.assertRaisesRegex(ValueError,
@@ -120,11 +126,12 @@ class ImageTest(absltest.TestCase):
     mat = cv2.cvtColor(
         np.random.randint(2**8 - 1, size=(h, w, channels), dtype=np.uint8),
         cv2.COLOR_RGB2GRAY)
-    image = mp.Image(
-        image_format=mp.ImageFormat.GRAY8,
+    gray8_image = Image(
+        image_format=ImageFormat.GRAY8,
         data=np.ascontiguousarray(mat[offset:-offset, offset:-offset]))
     self.assertTrue(
-        np.array_equal(mat[offset:-offset, offset:-offset], image.numpy_view()))
+        np.array_equal(mat[offset:-offset, offset:-offset],
+                       gray8_image.numpy_view()))
 
   def test_cropped_rgb_image(self):
     w, h = random.randrange(20, 100), random.randrange(20, 100)
@@ -132,12 +139,12 @@ class ImageTest(absltest.TestCase):
     mat = cv2.cvtColor(
         np.random.randint(2**8 - 1, size=(h, w, channels), dtype=np.uint8),
         cv2.COLOR_RGB2BGR)
-    image = mp.Image(
-        image_format=mp.ImageFormat.SRGB,
+    rgb_image = Image(
+        image_format=ImageFormat.SRGB,
         data=np.ascontiguousarray(mat[offset:-offset, offset:-offset, :]))
     self.assertTrue(
         np.array_equal(mat[offset:-offset, offset:-offset, :],
-                       image.numpy_view()))
+                       rgb_image.numpy_view()))
 
   # For image frames that store contiguous data, the output of numpy_view()
   # points to the pixel data of the original image frame object. The life cycle
@@ -145,22 +152,22 @@ class ImageTest(absltest.TestCase):
   def test_image_numpy_view_with_contiguous_data(self):
     w, h = 640, 480
     mat = np.random.randint(2**8 - 1, size=(h, w, 3), dtype=np.uint8)
-    image = mp.Image(image_format=mp.ImageFormat.SRGB, data=mat)
-    self.assertTrue(image.is_contiguous())
-    initial_ref_count = sys.getrefcount(image)
-    self.assertTrue(np.array_equal(mat, image.numpy_view()))
+    rgb_image = Image(image_format=ImageFormat.SRGB, data=mat)
+    self.assertTrue(rgb_image.is_contiguous())
+    initial_ref_count = sys.getrefcount(rgb_image)
+    self.assertTrue(np.array_equal(mat, rgb_image.numpy_view()))
     # Get 2 data array objects and verify that the image frame's ref count is
     # increased by 2.
-    np_view = image.numpy_view()
-    self.assertEqual(sys.getrefcount(image), initial_ref_count + 1)
-    np_view2 = image.numpy_view()
-    self.assertEqual(sys.getrefcount(image), initial_ref_count + 2)
+    np_view = rgb_image.numpy_view()
+    self.assertEqual(sys.getrefcount(rgb_image), initial_ref_count + 1)
+    np_view2 = rgb_image.numpy_view()
+    self.assertEqual(sys.getrefcount(rgb_image), initial_ref_count + 2)
     del np_view
     del np_view2
     gc.collect()
     # After the two data array objects getting destroyed, the current ref count
     # should euqal to the initial ref count.
-    self.assertEqual(sys.getrefcount(image), initial_ref_count)
+    self.assertEqual(sys.getrefcount(rgb_image), initial_ref_count)
 
   # For image frames that store non contiguous data, the output of numpy_view()
   # stores a copy of the pixel data of the image frame object. The life cycle of
@@ -168,15 +175,15 @@ class ImageTest(absltest.TestCase):
   def test_image_numpy_view_with_non_contiguous_data(self):
     w, h = 641, 481
     mat = np.random.randint(2**8 - 1, size=(h, w, 3), dtype=np.uint8)
-    image = mp.Image(image_format=mp.ImageFormat.SRGB, data=mat)
-    self.assertFalse(image.is_contiguous())
-    initial_ref_count = sys.getrefcount(image)
-    self.assertTrue(np.array_equal(mat, image.numpy_view()))
-    np_view = image.numpy_view()
-    self.assertEqual(sys.getrefcount(image), initial_ref_count)
+    rgb_image = Image(image_format=ImageFormat.SRGB, data=mat)
+    self.assertFalse(rgb_image.is_contiguous())
+    initial_ref_count = sys.getrefcount(rgb_image)
+    self.assertTrue(np.array_equal(mat, rgb_image.numpy_view()))
+    np_view = rgb_image.numpy_view()
+    self.assertEqual(sys.getrefcount(rgb_image), initial_ref_count)
     del np_view
     gc.collect()
-    self.assertEqual(sys.getrefcount(image), initial_ref_count)
+    self.assertEqual(sys.getrefcount(rgb_image), initial_ref_count)
 
 
 if __name__ == '__main__':

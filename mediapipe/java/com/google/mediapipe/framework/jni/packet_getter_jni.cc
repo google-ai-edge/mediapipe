@@ -339,8 +339,15 @@ JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
 
 JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetRgbaFromRgb)(
     JNIEnv* env, jobject thiz, jlong packet, jobject byte_buffer) {
+  mediapipe::Packet mediapipe_packet =
+      mediapipe::android::Graph::GetPacketFromHandle(packet);
+  const bool is_image =
+      mediapipe_packet.ValidateAsType<mediapipe::Image>().ok();
   const mediapipe::ImageFrame& image =
-      GetFromNativeHandle<mediapipe::ImageFrame>(packet);
+      is_image ? *GetFromNativeHandle<mediapipe::Image>(packet)
+                      .GetImageFrameSharedPtr()
+                      .get()
+               : GetFromNativeHandle<mediapipe::ImageFrame>(packet);
   uint8_t* rgba_data =
       static_cast<uint8_t*>(env->GetDirectBufferAddress(byte_buffer));
   int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);

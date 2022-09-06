@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "mediapipe/calculators/tensor/inference_calculator.h"
+#include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/interpreter_builder.h"
 #if defined(MEDIAPIPE_ANDROID)
 #include "tensorflow/lite/delegates/nnapi/nnapi_delegate.h"
@@ -63,14 +66,26 @@ int GetXnnpackNumThreads(
 }
 
 template <typename T>
-void CopyTensorBuffer(const Tensor& input_tensor,
-                      tflite::Interpreter* interpreter,
-                      int input_tensor_index) {
+void CopyTensorBufferToInterpreter(const Tensor& input_tensor,
+                                   tflite::Interpreter* interpreter,
+                                   int input_tensor_index) {
   auto input_tensor_view = input_tensor.GetCpuReadView();
   auto input_tensor_buffer = input_tensor_view.buffer<T>();
   T* local_tensor_buffer =
       interpreter->typed_input_tensor<T>(input_tensor_index);
   std::memcpy(local_tensor_buffer, input_tensor_buffer, input_tensor.bytes());
+}
+
+template <typename T>
+void CopyTensorBufferFromInterpreter(tflite::Interpreter* interpreter,
+                                     int output_tensor_index,
+                                     Tensor* output_tensor) {
+  auto output_tensor_view = output_tensor->GetCpuWriteView();
+  auto output_tensor_buffer = output_tensor_view.buffer<T>();
+  T* local_tensor_buffer =
+      interpreter->typed_output_tensor<T>(output_tensor_index);
+  std::memcpy(output_tensor_buffer, local_tensor_buffer,
+              output_tensor->bytes());
 }
 
 }  // namespace
@@ -99,7 +114,7 @@ class InferenceCalculatorCpuImpl
 
 absl::Status InferenceCalculatorCpuImpl::UpdateContract(
     CalculatorContract* cc) {
-  const auto& options = cc->Options<::mediapipe::InferenceCalculatorOptions>();
+  const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   RET_CHECK(!options.model_path().empty() ^ kSideInModel(cc).IsConnected())
       << "Either model as side packet or model path in options is required.";
 
@@ -118,20 +133,32 @@ absl::Status InferenceCalculatorCpuImpl::Process(CalculatorContext* cc) {
   RET_CHECK(!input_tensors.empty());
   auto output_tensors = absl::make_unique<std::vector<Tensor>>();
 
+  if (input_tensor_type_ == kTfLiteNoType) {
+    input_tensor_type_ = interpreter_->tensor(interpreter_->inputs()[0])->type;
+  }
+
   // Read CPU input into tensors.
   for (int i = 0; i < input_tensors.size(); ++i) {
     switch (input_tensor_type_) {
       case TfLiteType::kTfLiteFloat16:
       case TfLiteType::kTfLiteFloat32: {
-        CopyTensorBuffer<float>(input_tensors[i], interpreter_.get(), i);
+        CopyTensorBufferToInterpreter<float>(input_tensors[i],
+                                             interpreter_.get(), i);
         break;
       }
       case TfLiteType::kTfLiteUInt8: {
-        CopyTensorBuffer<uint8>(input_tensors[i], interpreter_.get(), i);
+        CopyTensorBufferToInterpreter<uint8>(input_tensors[i],
+                                             interpreter_.get(), i);
         break;
       }
       case TfLiteType::kTfLiteInt8: {
-        CopyTensorBuffer<int8>(input_tensors[i], interpreter_.get(), i);
+        CopyTensorBufferToInterpreter<int8>(input_tensors[i],
+                                            interpreter_.get(), i);
+        break;
+      }
+      case TfLiteType::kTfLiteInt32: {
+        CopyTensorBufferToInterpreter<int32_t>(input_tensors[i],
+                                               interpreter_.get(), i);
         break;
       }
       default:
@@ -148,13 +175,41 @@ absl::Status InferenceCalculatorCpuImpl::Process(CalculatorContext* cc) {
   output_tensors->reserve(tensor_indexes.size());
   for (int i = 0; i < tensor_indexes.size(); ++i) {
     TfLiteTensor* tensor = interpreter_->tensor(tensor_indexes[i]);
-    output_tensors->emplace_back(
-        Tensor::ElementType::kFloat32,
-        Tensor::Shape{std::vector<int>{
-            tensor->dims->data, tensor->dims->data + tensor->dims->size}});
-    auto cpu_view = output_tensors->back().GetCpuWriteView();
-    std::memcpy(cpu_view.buffer<float>(), tensor->data.f,
-                output_tensors->back().bytes());
+    Tensor::Shape shape{std::vector<int>{
+        tensor->dims->data, tensor->dims->data + tensor->dims->size}};
+    switch (tensor->type) {
+      case TfLiteType::kTfLiteFloat16:
+      case TfLiteType::kTfLiteFloat32:
+        output_tensors->emplace_back(Tensor::ElementType::kFloat32, shape);
+        CopyTensorBufferFromInterpreter<float>(interpreter_.get(), i,
+                                               &output_tensors->back());
+        break;
+      case TfLiteType::kTfLiteUInt8:
+        output_tensors->emplace_back(
+            Tensor::ElementType::kUInt8, shape,
+            Tensor::QuantizationParameters{tensor->params.scale,
+                                           tensor->params.zero_point});
+        CopyTensorBufferFromInterpreter<uint8>(interpreter_.get(), i,
+                                               &output_tensors->back());
+        break;
+      case TfLiteType::kTfLiteInt8:
+        output_tensors->emplace_back(
+            Tensor::ElementType::kInt8, shape,
+            Tensor::QuantizationParameters{tensor->params.scale,
+                                           tensor->params.zero_point});
+        CopyTensorBufferFromInterpreter<int8>(interpreter_.get(), i,
+                                              &output_tensors->back());
+        break;
+      case TfLiteType::kTfLiteInt32:
+        output_tensors->emplace_back(Tensor::ElementType::kInt32, shape);
+        CopyTensorBufferFromInterpreter<int32_t>(interpreter_.get(), i,
+                                                 &output_tensors->back());
+        break;
+      default:
+        return absl::InvalidArgumentError(
+            absl::StrCat("Unsupported output tensor type:",
+                         TfLiteTypeGetName(tensor->type)));
+    }
   }
   kOutTensors(cc).Send(std::move(output_tensors));
   return absl::OkStatus();
@@ -188,7 +243,6 @@ absl::Status InferenceCalculatorCpuImpl::InitInterpreter(
 
 absl::Status InferenceCalculatorCpuImpl::AllocateTensors() {
   RET_CHECK_EQ(interpreter_->AllocateTensors(), kTfLiteOk);
-  input_tensor_type_ = interpreter_->tensor(interpreter_->inputs()[0])->type;
   return absl::OkStatus();
 }
 
@@ -198,13 +252,14 @@ absl::Status InferenceCalculatorCpuImpl::LoadDelegate(
       cc->Options<mediapipe::InferenceCalculatorOptions>();
   auto opts_delegate = calculator_opts.delegate();
   if (!kDelegate(cc).IsEmpty()) {
-    mediapipe::InferenceCalculatorOptions::Delegate input_side_packet_delegate =
-        kDelegate(cc).Get();
-    CHECK(input_side_packet_delegate.has_tflite() ||
-          input_side_packet_delegate.has_xnnpack() ||
-          input_side_packet_delegate.has_nnapi() ||
-          input_side_packet_delegate.delegate_case() ==
-              mediapipe::InferenceCalculatorOptions::Delegate::DELEGATE_NOT_SET)
+    const mediapipe::InferenceCalculatorOptions::Delegate&
+        input_side_packet_delegate = kDelegate(cc).Get();
+    RET_CHECK(
+        input_side_packet_delegate.has_tflite() ||
+        input_side_packet_delegate.has_xnnpack() ||
+        input_side_packet_delegate.has_nnapi() ||
+        input_side_packet_delegate.delegate_case() ==
+            mediapipe::InferenceCalculatorOptions::Delegate::DELEGATE_NOT_SET)
         << "inference_calculator_cpu only supports delegate input side packet "
         << "for TFLite, XNNPack and Nnapi";
     opts_delegate.MergeFrom(input_side_packet_delegate);

@@ -236,15 +236,23 @@ class DetectionTransformationCalculator : public Node {
           [&](const std::vector<Detection>& detection_vector) {
             return detection_vector;
           });
+      if (transformed_detections.empty()) {
+        OutputEmptyDetections(cc);
+        return absl::OkStatus();
+      }
       ASSIGN_OR_RETURN(input_location_data_format,
                        GetLocationDataFormat(transformed_detections));
       for (Detection& detection : transformed_detections) {
         MP_RETURN_IF_ERROR(ConvertBoundingBox(image_size, &detection));
       }
     } else {
+      Detection transformed_detection(kInDetection(cc).Get());
+      if (!transformed_detection.has_location_data()) {
+        OutputEmptyDetections(cc);
+        return absl::OkStatus();
+      }
       ASSIGN_OR_RETURN(input_location_data_format,
                        GetLocationDataFormat(kInDetection(cc).Get()));
-      Detection transformed_detection(kInDetection(cc).Get());
       MP_RETURN_IF_ERROR(
           ConvertBoundingBox(image_size, &transformed_detection));
       transformed_detections.push_back(transformed_detection);
@@ -288,6 +296,27 @@ class DetectionTransformationCalculator : public Node {
   }
 
  private:
+  void OutputEmptyDetections(CalculatorContext* cc) {
+    if (kOutPixelDetection(cc).IsConnected()) {
+      kOutPixelDetection(cc).Send(Detection());
+    }
+    if (kOutPixelDetections(cc).IsConnected()) {
+      kOutPixelDetections(cc).Send(std::vector<Detection>());
+    }
+    if (kOutPixelDetectionList(cc).IsConnected()) {
+      kOutPixelDetectionList(cc).Send(DetectionList());
+    }
+    if (kOutRelativeDetection(cc).IsConnected()) {
+      kOutRelativeDetection(cc).Send(Detection());
+    }
+    if (kOutRelativeDetections(cc).IsConnected()) {
+      kOutRelativeDetections(cc).Send(std::vector<Detection>());
+    }
+    if (kOutRelativeDetectionList(cc).IsConnected()) {
+      kOutRelativeDetectionList(cc).Send(DetectionList());
+    }
+  }
+
   bool output_relative_bounding_boxes_;
   bool output_pixel_bounding_boxes_;
 };

@@ -165,6 +165,7 @@ absl::Status TensorsToClassificationCalculator::Open(CalculatorContext* cc) {
 absl::Status TensorsToClassificationCalculator::Process(CalculatorContext* cc) {
   const auto& input_tensors = *kInTensors(cc);
   RET_CHECK_EQ(input_tensors.size(), 1);
+  RET_CHECK(input_tensors[0].element_type() == Tensor::ElementType::kFloat32);
 
   int num_classes = input_tensors[0].shape().num_elements();
 

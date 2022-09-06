@@ -16,13 +16,22 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library"
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/examples:__subpackages__"])
+package(default_visibility = [
+    "//mediapipe/examples:__subpackages__",
+])
 
 proto_library(
     name = "autoflip_messages_proto",
     srcs = ["autoflip_messages.proto"],
     deps = [
-        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/framework:calculator_options_proto",
+    ],
+)
+
+java_lite_proto_library(
+    name = "autoflip_messages_java_proto_lite",
+    deps = [
+        ":autoflip_messages_proto",
     ],
 )
 
@@ -38,6 +47,9 @@ mediapipe_cc_proto_library(
 
 cc_binary(
     name = "run_autoflip",
+    data = [
+        "//mediapipe/modules/face_detection:face_detection_full_range_sparse.tflite",
+    ],
     deps = [
         "//mediapipe/calculators/core:packet_thinner_calculator",
         "//mediapipe/calculators/image:scale_image_calculator",

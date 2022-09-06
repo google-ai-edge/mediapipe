@@ -22,8 +22,15 @@ syntax = "proto2";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.proto";
+option java_outer_classname = "PacketGeneratorProto";
+
 // Options used by a PacketGenerator.
 message PacketGeneratorOptions {
+  // If true, this proto specifies a subset of field values,
+  // which should override corresponding field values.
+  optional bool merge_fields = 1 [default = true];
+
   extensions 20000 to max;
 }
 

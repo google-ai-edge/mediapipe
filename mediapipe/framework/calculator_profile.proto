@@ -20,7 +20,6 @@ import "mediapipe/framework/calculator.proto";
 
 option java_package = "com.google.mediapipe.proto";
 option java_outer_classname = "CalculatorProfileProto";
-option objc_class_prefix = "MediaPipe";
 
 // Stores the profiling information.
 //

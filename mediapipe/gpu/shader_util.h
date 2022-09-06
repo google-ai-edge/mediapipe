@@ -25,11 +25,12 @@ namespace mediapipe {
 // TODO: Remove the C-style helpers.
 // Compiles a GLSL shader, logs errors, returns the compile status
 // (GL_TRUE for success, GL_FALSE for failure).
-GLint GlhCompileShader(GLenum target, const GLchar* source, GLuint* shader);
+GLint GlhCompileShader(GLenum target, const GLchar* source, GLuint* shader,
+                       bool force_log_errors = false);
 
 // Links a GLSL program, logs errors, returns the link status
 // (GL_TRUE for success, GL_FALSE for failure).
-GLint GlhLinkProgram(GLuint program);
+GLint GlhLinkProgram(GLuint program, bool force_log_errors = false);
 
 // Validates a GLSL program, logs errors, returns the validate status
 // (GL_TRUE for success, GL_FALSE for failure).
@@ -40,7 +41,8 @@ GLint GlhValidateProgram(GLuint program);
 // Return GL_TRUE for success, GL_FALSE for failure.
 GLint GlhCreateProgram(const GLchar* vert_src, const GLchar* frag_src,
                        GLsizei attr_count, const GLchar* const* attr_names,
-                       const GLint* attr_locations, GLuint* program);
+                       const GLint* attr_locations, GLuint* program,
+                       bool force_log_errors = false);
 
 // Compiles a shader specified by shader_source. Returns true on success.
 bool CompileShader(GLenum shader_type, const std::string& shader_source,

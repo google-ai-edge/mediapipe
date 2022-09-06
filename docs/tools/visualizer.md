@@ -21,7 +21,7 @@ that is available online.
     through a graph configuration that is pasted into the graph editor or
     uploaded. The user can visualize and troubleshoot a graph they have created.
 
-    ![Startup screen](../images/startup_screen.png)
+    ![Startup screen](https://mediapipe.dev/images/startup_screen.png)
 
 ## Working within the Editor
 
@@ -29,12 +29,12 @@ Getting Started:
 
 The graph can be modified by adding and editing code in the Editor view.
 
-![Editor UI](../images/editor_view.png)
+![Editor UI](https://mediapipe.dev/images/editor_view.png)
 
 *   Pressing the "New" button in the upper right corner will clear any existing
     code in the Editor window.
 
-    ![New Button](../images/upload_button.png)
+    ![New Button](https://mediapipe.dev/images/upload_button.png)
 
 *   Pressing the "Upload" button will prompt the user to select a local PBTXT
     file, which will overwrite the current code within the editor.
@@ -43,7 +43,7 @@ The graph can be modified by adding and editing code in the Editor view.
 
 *   Errors and informational messages will appear in the Feedback window.
 
-    ![Error Msg](../images/console_error.png)
+    ![Error Msg](https://mediapipe.dev/images/console_error.png)
 
 ## Understanding the Graph
 
@@ -53,24 +53,24 @@ The visualizer graph shows the connections between calculator nodes.
     enter the top of any calculator receiving the stream. (Notice the use of the
     key, "input_stream" and "output_stream").
 
-    ![Stream UI](../images/stream_ui.png)
+    ![Stream UI](https://mediapipe.dev/images/stream_ui.png)
 
-    ![Stream_code](../images/stream_code.png)
+    ![Stream_code](https://mediapipe.dev/images/stream_code.png)
 
 *   Sidepackets work the same, except that they exit a node on the right and
     enter on the left. (Notice the use of the key, "input_side_packet" and
     "output_side_packet").
 
-    ![Sidepacket UI](../images/side_packet.png)
+    ![Sidepacket UI](https://mediapipe.dev/images/side_packet.png)
 
-    ![Sidepacket_code](../images/side_packet_code.png)
+    ![Sidepacket_code](https://mediapipe.dev/images/side_packet_code.png)
 
 *   There are special nodes that represent inputs and outputs to the graph and
     can supply either side packets or streams.
 
-    ![Special nodes](../images/special_nodes.png)
+    ![Special nodes](https://mediapipe.dev/images/special_nodes.png)
 
-    ![Special nodes](../images/special_nodes_code.png)
+    ![Special nodes](https://mediapipe.dev/images/special_nodes_code.png)
 
 ## Visualizing Subgraphs
 
@@ -91,16 +91,16 @@ To visualize them:
 *   In the MediaPipe visualizer, click on the upload graph button and select the
     2 pbtxt files to visualize (main graph and its associated subgraph).
 
-    ![Upload graph button](../images/upload_button.png)
+    ![Upload graph button](https://mediapipe.dev/images/upload_button.png)
 
-    ![Choose the 2 files](../images/upload_2pbtxt.png)
+    ![Choose the 2 files](https://mediapipe.dev/images/upload_2pbtxt.png)
 
 *   There will be 2 additional tabs. The main graph tab is
     `hand_detection_mobile.pbtxt`.
 
-    ![hand_detection_mobile_gpu.pbtxt](../images/maingraph_visualizer.png)
+    ![hand_detection_mobile_gpu.pbtxt](https://mediapipe.dev/images/maingraph_visualizer.png)
 
 *   Clicking on the `HandDetection` node in purple redirects the view to the
     `hand_detection_gpu.pbtxt` tab.
 
-    ![Hand detection subgraph](../images/click_subgraph_handdetection.png)
+    ![Hand detection subgraph](https://mediapipe.dev/images/click_subgraph_handdetection.png)

@@ -43,7 +43,7 @@ of the MediaPipe framework, MediaPipe Iris can run on most modern
 [mobile phones](#mobile), [desktops/laptops](#desktop) and even on the
 [web](#web).
 
-![iris_tracking_example.gif](../images/mobile/iris_tracking_example.gif)   |
+![iris_tracking_example.gif](https://mediapipe.dev/images/mobile/iris_tracking_example.gif)   |
 :------------------------------------------------------------------------: |
 *Fig 1. Example of MediaPipe Iris: eyelid (red) and iris (blue) contours.* |
 
@@ -102,7 +102,7 @@ The iris model takes an image patch of the eye region and estimates both the eye
 landmarks (along the eyelid) and iris landmarks (along ths iris contour). You
 can find more details in this [paper](https://arxiv.org/abs/2006.11341).
 
-![iris_tracking_eye_and_iris_landmarks.png](../images/mobile/iris_tracking_eye_and_iris_landmarks.png) |
+![iris_tracking_eye_and_iris_landmarks.png](https://mediapipe.dev/images/mobile/iris_tracking_eye_and_iris_landmarks.png) |
 :----------------------------------------------------------------------------------------------------: |
 *Fig 2. Eye landmarks (red) and iris landmarks (green).*                                               |
 
@@ -115,7 +115,7 @@ human eye remains roughly constant at 11.7±0.5 mm across a wide population,
 along with some simple geometric arguments. For more details please refer to our
 [Google AI Blog post](https://ai.googleblog.com/2020/08/mediapipe-iris-real-time-iris-tracking.html).
 
-![iris_tracking_depth_from_iris.gif](../images/mobile/iris_tracking_depth_from_iris.gif) |
+![iris_tracking_depth_from_iris.gif](https://mediapipe.dev/images/mobile/iris_tracking_depth_from_iris.gif) |
 :--------------------------------------------------------------------------------------------: |
 *Fig 3. (Left) MediaPipe Iris predicting metric distance in cm on a Pixel 2 from iris tracking without use of a depth sensor. (Right) Ground-truth depth.* |
 
@@ -200,7 +200,7 @@ never leaves your device. Please see
 [MediaPipe on the Web](https://developers.googleblog.com/2020/01/mediapipe-on-web.html)
 in Google Developers Blog for details.
 
-![visualizer_runner](../images/visualizer_runner.png)
+![visualizer_runner](https://mediapipe.dev/images/visualizer_runner.png)
 
 *   [MediaPipe Iris](https://viz.mediapipe.dev/demo/iris_tracking)
 *   [MediaPipe Iris: Depth-from-Iris](https://viz.mediapipe.dev/demo/iris_depth)

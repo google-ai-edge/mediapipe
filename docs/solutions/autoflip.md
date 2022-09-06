@@ -27,7 +27,7 @@ to arbitrary aspect ratios.
 For overall context on AutoFlip, please read this
 [Google AI Blog](https://ai.googleblog.com/2020/02/autoflip-open-source-framework-for.html).
 
-![graph is_required](../images/autoflip_edited_example.gif)
+![graph is_required](https://mediapipe.dev/images/autoflip_edited_example.gif)
 
 ## Building
 
@@ -61,7 +61,7 @@ command above accordingly to run AutoFlip against the videos.
 
 ## MediaPipe Graph
 
-![graph visualization](../images/autoflip_graph.png)
+![graph visualization](https://mediapipe.dev/images/autoflip_graph.png)
 
 To visualize the graph as shown above, copy the text specification of the graph
 below and paste it into [MediaPipe Visualizer](https://viz.mediapipe.dev).
@@ -297,7 +297,7 @@ the required features cannot be all covered (for example, when they are too
 spread out in the video), AutoFlip will apply a padding effect to cover as much
 salient content as possible. See an illustration below.
 
-![graph is_required](../images/autoflip_is_required.gif)
+![graph is_required](https://mediapipe.dev/images/autoflip_is_required.gif)
 
 ### Stable vs Tracking Camera Motion
 

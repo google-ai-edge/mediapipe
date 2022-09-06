@@ -14,6 +14,7 @@
 
 syntax = "proto2";
 
+// TODO: Switch to package mediapipe.
 package mediapipe;
 
 import "mediapipe/framework/calculator.proto";

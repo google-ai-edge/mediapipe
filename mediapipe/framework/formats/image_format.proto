@@ -23,6 +23,9 @@ syntax = "proto2";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.formats.proto";
+option java_outer_classname = "ImageFormatProto";
+
 message ImageFormat {
   enum Format {
     // The format is unknown.  It is not valid for an ImageFrame to be

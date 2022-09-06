@@ -18,6 +18,7 @@ package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
 cc_binary(
     name = "selfie_segmentation_cpu",
+    data = ["//mediapipe/modules/selfie_segmentation:selfie_segmentation.tflite"],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/selfie_segmentation:selfie_segmentation_cpu_deps",
@@ -27,6 +28,7 @@ cc_binary(
 # Linux only
 cc_binary(
     name = "selfie_segmentation_gpu",
+    data = ["//mediapipe/modules/selfie_segmentation:selfie_segmentation.tflite"],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
         "//mediapipe/graphs/selfie_segmentation:selfie_segmentation_gpu_deps",

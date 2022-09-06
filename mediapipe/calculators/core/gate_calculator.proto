@@ -18,8 +18,6 @@ package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
 
-option objc_class_prefix = "MediaPipe";
-
 message GateCalculatorOptions {
   extend mediapipe.CalculatorOptions {
     optional GateCalculatorOptions ext = 261754847;

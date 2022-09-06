@@ -32,10 +32,6 @@
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/type_map.h"
 
-#if LOCATION_OPENCV
-#include "mediapipe/framework/port/opencv_imgproc_inc.h"
-#endif
-
 namespace mediapipe {
 
 namespace {
@@ -60,41 +56,6 @@ Rectangle_i MaskToRectangle(const LocationData& location_data) {
   }
   return Rectangle_i(xmin, ymin, xmax - xmin + 1, ymax - ymin + 1);
 }
-
-#if LOCATION_OPENCV
-std::unique_ptr<cv::Mat> MaskToMat(const LocationData::BinaryMask& mask) {
-  auto image = absl::make_unique<cv::Mat>();
-  *image = cv::Mat::zeros(cv::Size(mask.width(), mask.height()), CV_32FC1);
-  for (const auto& interval : mask.rasterization().interval()) {
-    for (int x = interval.left_x(); x <= interval.right_x(); ++x) {
-      image->at<float>(interval.y(), x) = 1.0f;
-    }
-  }
-  return image;
-}
-absl::StatusOr<std::unique_ptr<cv::Mat>> RectangleToMat(
-    int image_width, int image_height, const Rectangle_i& rect) {
-  // These checks prevent undefined behavior caused when setting memory for
-  // rectangles whose edges lie outside image edges.
-  if (rect.ymin() < 0 || rect.xmin() < 0 || rect.xmax() > image_width ||
-      rect.ymax() > image_height) {
-    return absl::InvalidArgumentError(absl::Substitute(
-        "Rectangle must be bounded by image boundaries.\nImage Width: "
-        "$0\nImage Height: $1\nRectangle: [($2, $3), ($4, $5)]",
-        image_width, image_height, rect.xmin(), rect.ymin(), rect.xmax(),
-        rect.ymax()));
-  }
-  // Allocate image and set pixels of foreground mask.
-  auto image = absl::make_unique<cv::Mat>();
-  *image = cv::Mat::zeros(cv::Size(image_width, image_height), CV_32FC1);
-  for (int y = rect.ymin(); y < rect.ymax(); ++y) {
-    for (int x = rect.xmin(); x < rect.xmax(); ++x) {
-      image->at<float>(y, x) = 1.0f;
-    }
-  }
-  return std::move(image);
-}
-#endif  // OPENCV
 
 }  // namespace
 
@@ -134,12 +95,6 @@ Location Location::CreateBBoxLocation(const ::mediapipe::BoundingBox& bbox) {
                             bbox.lower_y() - bbox.upper_y());
 }
 
-#if LOCATION_OPENCV
-Location Location::CreateBBoxLocation(const cv::Rect& rect) {
-  return CreateBBoxLocation(rect.x, rect.y, rect.width, rect.height);
-}
-#endif
-
 Location Location::CreateRelativeBBoxLocation(float relative_xmin,
                                               float relative_ymin,
                                               float relative_width,
@@ -158,41 +113,6 @@ Location Location::CreateRelativeBBoxLocation(const Rectangle_f& rect) {
   return CreateRelativeBBoxLocation(rect.xmin(), rect.ymin(), rect.Width(),
                                     rect.Height());
 }
-
-#if LOCATION_OPENCV
-template <typename T>
-Location Location::CreateCvMaskLocation(const cv::Mat_<T>& mask) {
-  CHECK_EQ(1, mask.channels())
-      << "The specified cv::Mat mask should be single-channel.";
-
-  LocationData location_data;
-  location_data.set_format(LocationData::MASK);
-  location_data.mutable_mask()->set_width(mask.cols);
-  location_data.mutable_mask()->set_height(mask.rows);
-  auto* rasterization = location_data.mutable_mask()->mutable_rasterization();
-  const auto kForegroundThreshold = static_cast<T>(0);
-  for (int y = 0; y < mask.rows; y++) {
-    Rasterization::Interval* interval;
-    bool traversing = false;
-    for (int x = 0; x < mask.cols; x++) {
-      const bool is_foreground =
-          mask.template at<T>(y, x) > kForegroundThreshold;
-      if (is_foreground) {
-        if (!traversing) {
-          interval = rasterization->add_interval();
-          interval->set_y(y);
-          interval->set_left_x(x);
-          traversing = true;
-        }
-        interval->set_right_x(x);
-      } else {
-        traversing = false;
-      }
-    }
-  }
-  return Location(location_data);
-}
-#endif
 
 LocationData::Format Location::GetFormat() const {
   return location_data_.format();
@@ -273,62 +193,6 @@ Location& Location::Scale(const float scale) {
   }
   return *this;
 }
-
-#if LOCATION_OPENCV
-Location& Location::Enlarge(const float factor) {
-  CHECK_GT(factor, 0.0f);
-  if (factor == 1.0f) return *this;
-  switch (location_data_.format()) {
-    case LocationData::GLOBAL: {
-      // Do nothing.
-      break;
-    }
-    case LocationData::BOUNDING_BOX: {
-      auto* box = location_data_.mutable_bounding_box();
-      const int enlarged_int_width =
-          static_cast<int>(std::round(factor * box->width()));
-      const int enlarged_int_height =
-          static_cast<int>(std::round(factor * box->height()));
-      box->set_xmin(
-          std::max(box->xmin() + box->width() / 2 - enlarged_int_width / 2, 0));
-      box->set_ymin(std::max(
-          box->ymin() + box->height() / 2 - enlarged_int_height / 2, 0));
-      box->set_width(enlarged_int_width);
-      box->set_height(enlarged_int_height);
-      break;
-    }
-    case LocationData::RELATIVE_BOUNDING_BOX: {
-      auto* box = location_data_.mutable_relative_bounding_box();
-      box->set_xmin(box->xmin() - ((factor - 1.0) * box->width()) / 2.0);
-      box->set_ymin(box->ymin() - ((factor - 1.0) * box->height()) / 2.0);
-      box->set_width(factor * box->width());
-      box->set_height(factor * box->height());
-      break;
-    }
-    case LocationData::MASK: {
-      auto mask_bounding_box = MaskToRectangle(location_data_);
-      const float scaler = std::fabs(factor - 1.0f);
-      const int dilation_width =
-          static_cast<int>(std::round(scaler * mask_bounding_box.Width()));
-      const int dilation_height =
-          static_cast<int>(std::round(scaler * mask_bounding_box.Height()));
-      if (dilation_width == 0 || dilation_height == 0) break;
-      cv::Mat morph_element(dilation_height, dilation_width, CV_8U,
-                            cv::Scalar(1));
-      auto mask = GetCvMask();
-      if (factor > 1.0f) {
-        cv::dilate(*mask, *mask, morph_element);
-      } else {
-        cv::erode(*mask, *mask, morph_element);
-      }
-      Location::CreateCvMaskLocation<uint8>(*mask).ConvertToProto(
-          &location_data_);
-      break;
-    }
-  }
-  return *this;
-}
-#endif
 
 Location& Location::Square(int image_width, int image_height) {
   switch (location_data_.format()) {
@@ -615,51 +479,6 @@ template <>
   return bounding_box;
 }
 
-#if LOCATION_OPENCV
-std::unique_ptr<cv::Mat> Location::GetCvMask() const {
-  CHECK_EQ(LocationData::MASK, location_data_.format());
-  const auto& mask = location_data_.mask();
-  std::unique_ptr<cv::Mat> mat(
-      new cv::Mat(mask.height(), mask.width(), CV_8UC1, cv::Scalar(0)));
-  for (const auto& interval :
-       location_data_.mask().rasterization().interval()) {
-    for (int x = interval.left_x(); x <= interval.right_x(); ++x) {
-      mat->at<uint8>(interval.y(), x) = 255;
-    }
-  }
-  return mat;
-}
-
-std::unique_ptr<cv::Mat> Location::ConvertToCvMask(int image_width,
-                                                   int image_height) const {
-  switch (location_data_.format()) {
-    case LocationData::GLOBAL:
-    case LocationData::BOUNDING_BOX:
-    case LocationData::RELATIVE_BOUNDING_BOX: {
-      auto status_or_mat =
-          RectangleToMat(image_width, image_height,
-                         ConvertToBBox<Rectangle_i>(image_width, image_height));
-      if (!status_or_mat.ok()) {
-        LOG(ERROR) << status_or_mat.status().message();
-        return nullptr;
-      }
-      return std::move(status_or_mat).value();
-    }
-    case LocationData::MASK: {
-      return MaskToMat(location_data_.mask());
-    }
-  }
-// This should never happen; a new LocationData::Format enum was introduced
-// without updating this function's switch(...) to support it.
-#if !defined(MEDIAPIPE_MOBILE) && !defined(MEDIAPIPE_LITE)
-  LOG(ERROR) << "Location's LocationData has format not supported by "
-                "Location::ConvertToMask: "
-             << location_data_.DebugString();
-#endif
-  return nullptr;
-}
-#endif
-
 std::vector<Point2_f> Location::GetRelativeKeypoints() const {
   CHECK_EQ(LocationData::RELATIVE_BOUNDING_BOX, location_data_.format());
   std::vector<Point2_f> keypoints;
@@ -702,10 +521,5 @@ LocationData Location::ConvertToProto() const {
   ConvertToProto(&location_data);
   return location_data;
 }
-
-#if LOCATION_OPENCV
-template Location Location::CreateCvMaskLocation(const cv::Mat_<uint8>& mask);
-template Location Location::CreateCvMaskLocation(const cv::Mat_<float>& mask);
-#endif  // LOCATION_OPENCV
 
 }  // namespace mediapipe
