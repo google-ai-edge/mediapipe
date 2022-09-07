@@ -51,6 +51,8 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 100 --slave /u
 RUN pip3 install --upgrade setuptools
 RUN pip3 install wheel
 RUN pip3 install future
+RUN pip3 install absl-py
+RUN pip3 install numpy
 RUN pip3 install six==1.14.0
 RUN pip3 install tensorflow==2.2.0
 RUN pip3 install tf_slim

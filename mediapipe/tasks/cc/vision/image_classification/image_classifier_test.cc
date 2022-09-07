@@ -142,7 +142,7 @@ TEST_F(CreateTest, FailsWithSelectiveOpResolverMissingOps) {
   // interpreter errors (e.g., "Encountered unresolved custom op").
   EXPECT_EQ(image_classifier_or.status().code(), absl::StatusCode::kInternal);
   EXPECT_THAT(image_classifier_or.status().message(),
-              HasSubstr("interpreter_builder(&interpreter_) == kTfLiteOk"));
+              HasSubstr("interpreter_builder(&interpreter) == kTfLiteOk"));
 }
 TEST_F(CreateTest, FailsWithMissingModel) {
   auto image_classifier_or =

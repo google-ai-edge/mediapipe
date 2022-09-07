@@ -217,6 +217,50 @@ cc_library(
 )
 
 cc_library(
+    name = "inference_runner",
+    hdrs = ["inference_runner.h"],
+    copts = select({
+        # TODO: fix tensor.h not to require this, if possible
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/formats:tensor",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "inference_interpreter_delegate_runner",
+    srcs = ["inference_interpreter_delegate_runner.cc"],
+    hdrs = ["inference_interpreter_delegate_runner.h"],
+    copts = select({
+        # TODO: fix tensor.h not to require this, if possible
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":inference_runner",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/util/tflite:tflite_model_loader",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+    ],
+)
+
+cc_library(
     name = "inference_calculator_cpu",
     srcs = [
         "inference_calculator_cpu.cc",
@@ -232,19 +276,60 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":inference_calculator_interface",
+        ":inference_calculator_utils",
+        ":inference_interpreter_delegate_runner",
+        ":inference_runner",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
         "@org_tensorflow//tensorflow/lite:framework_stable",
         "@org_tensorflow//tensorflow/lite/c:c_api_types",
     ] + select({
-        "//conditions:default": [
-            "//mediapipe/util:cpu_util",
-        ],
-    }) + select({
         "//conditions:default": [],
         "//mediapipe:android": ["@org_tensorflow//tensorflow/lite/delegates/nnapi:nnapi_delegate"],
     }),
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "inference_calculator_utils",
+    srcs = ["inference_calculator_utils.cc"],
+    hdrs = ["inference_calculator_utils.h"],
+    deps = [
+        ":inference_calculator_cc_proto",
+    ] + select({
+        "//conditions:default": [
+            "//mediapipe/util:cpu_util",
+        ],
+    }),
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "inference_calculator_xnnpack",
+    srcs = [
+        "inference_calculator_xnnpack.cc",
+    ],
+    copts = select({
+        # TODO: fix tensor.h not to require this, if possible
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":inference_calculator_interface",
+        ":inference_calculator_utils",
+        ":inference_interpreter_delegate_runner",
+        ":inference_runner",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
+    ],
     alwayslink = 1,
 )
 

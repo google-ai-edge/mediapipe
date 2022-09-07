@@ -185,7 +185,7 @@ TEST_F(CreateFromOptionsTest, FailsWithSelectiveOpResolverMissingOps) {
   EXPECT_EQ(segmenter_or.status().code(), absl::StatusCode::kInternal);
   EXPECT_THAT(
       segmenter_or.status().message(),
-      testing::HasSubstr("interpreter_builder(&interpreter_) == kTfLiteOk"));
+      testing::HasSubstr("interpreter_builder(&interpreter) == kTfLiteOk"));
 }
 
 TEST_F(CreateFromOptionsTest, FailsWithMissingModel) {

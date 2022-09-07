@@ -194,7 +194,7 @@ TEST_F(CreateFromOptionsTest, FailsWithSelectiveOpResolverMissingOps) {
   // interpreter errors (e.g., "Encountered unresolved custom op").
   EXPECT_EQ(object_detector.status().code(), absl::StatusCode::kInternal);
   EXPECT_THAT(object_detector.status().message(),
-              HasSubstr("interpreter_->AllocateTensors() == kTfLiteOk"));
+              HasSubstr("interpreter->AllocateTensors() == kTfLiteOk"));
 }
 
 TEST_F(CreateFromOptionsTest, FailsWithMissingModel) {
