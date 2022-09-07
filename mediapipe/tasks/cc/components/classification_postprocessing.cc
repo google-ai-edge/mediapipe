@@ -148,8 +148,9 @@ absl::StatusOr<ClassificationHeadsProperties> GetClassificationHeadsProperties(
                         num_output_tensors, output_tensors_metadata->size()),
         MediaPipeTasksStatus::kMetadataInconsistencyError);
   }
-  return ClassificationHeadsProperties{.num_heads = num_output_tensors,
-                                       .quantized = num_quantized_tensors > 0};
+  return ClassificationHeadsProperties{
+      /* num_heads= */ num_output_tensors,
+      /* quantized= */ num_quantized_tensors > 0};
 }
 
 // Builds the label map from the tensor metadata, if available.

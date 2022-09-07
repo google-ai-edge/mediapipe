@@ -226,12 +226,14 @@ class ImagePreprocessingSubgraph : public Subgraph {
 
     // Connect outputs.
     return {
-        .tensors = image_to_tensor[Output<std::vector<Tensor>>(kTensorsTag)],
-        .matrix = image_to_tensor[Output<std::array<float, 16>>(kMatrixTag)],
-        .letterbox_padding =
-            image_to_tensor[Output<std::array<float, 4>>(kLetterboxPaddingTag)],
-        .image_size = image_size[Output<std::pair<int, int>>(kSizeTag)],
-        .image = pass_through[Output<Image>("")],
+        /* tensors= */ image_to_tensor[Output<std::vector<Tensor>>(
+            kTensorsTag)],
+        /* matrix= */
+        image_to_tensor[Output<std::array<float, 16>>(kMatrixTag)],
+        /* letterbox_padding= */
+        image_to_tensor[Output<std::array<float, 4>>(kLetterboxPaddingTag)],
+        /* image_size= */ image_size[Output<std::pair<int, int>>(kSizeTag)],
+        /* image= */ pass_through[Output<Image>("")],
     };
   }
 };
