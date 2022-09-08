@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/cc/vision/segmentation/custom_op_resolvers.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_op_resolvers.h"
 
 #include "mediapipe/util/tflite/operations/landmarks_to_transform_matrix.h"
 #include "mediapipe/util/tflite/operations/max_pool_argmax.h"

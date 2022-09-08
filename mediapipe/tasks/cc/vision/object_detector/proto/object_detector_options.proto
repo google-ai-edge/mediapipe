@@ -27,7 +27,7 @@ message ObjectDetectorOptions {
   extend mediapipe.CalculatorOptions {
     optional ObjectDetectorOptions ext = 443442058;
   }
-  // Base options for configuring Task library, such as specifying the TfLite
+  // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
   // model file with metadata, accelerator options, etc.
   optional core.proto.BaseOptions base_options = 1;
 

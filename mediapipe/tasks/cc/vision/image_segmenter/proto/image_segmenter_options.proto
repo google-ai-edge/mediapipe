@@ -15,7 +15,7 @@ limitations under the License.
 
 syntax = "proto2";
 
-package mediapipe.tasks;
+package mediapipe.tasks.vision.image_segmenter.proto;
 
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/components/segmenter_options.proto";
@@ -25,7 +25,7 @@ message ImageSegmenterOptions {
   extend mediapipe.CalculatorOptions {
     optional ImageSegmenterOptions ext = 458105758;
   }
-  // Base options for configuring Task library, such as specifying the TfLite
+  // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
   // model file with metadata, accelerator options, etc.
   optional core.proto.BaseOptions base_options = 1;
 

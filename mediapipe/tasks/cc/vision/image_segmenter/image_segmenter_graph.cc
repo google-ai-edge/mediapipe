@@ -33,7 +33,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
-#include "mediapipe/tasks/cc/vision/segmentation/image_segmenter_options.pb.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_options.pb.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 #include "mediapipe/util/label_map.pb.h"
 #include "mediapipe/util/label_map_util.h"
@@ -53,6 +53,7 @@ using ::mediapipe::api2::builder::MultiSource;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::SegmenterOptions;
 using ::mediapipe::tasks::metadata::ModelMetadataExtractor;
+using ::mediapipe::tasks::vision::image_segmenter::proto::ImageSegmenterOptions;
 using ::tflite::Tensor;
 using ::tflite::TensorMetadata;
 using LabelItems = mediapipe::proto_ns::Map<int64, ::mediapipe::LabelMapItem>;
@@ -62,6 +63,14 @@ constexpr char kGroupedSegmentationTag[] = "GROUPED_SEGMENTATION";
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kOutputSizeTag[] = "OUTPUT_SIZE";
+
+// Struct holding the different output streams produced by the image segmenter
+// subgraph.
+struct ImageSegmenterOutputs {
+  std::vector<Source<Image>> segmented_masks;
+  // The same as the input image, mainly used for live stream mode.
+  Source<Image> image;
+};
 
 }  // namespace
 
@@ -140,6 +149,10 @@ absl::StatusOr<const Tensor*> GetOutputTensor(
 
 // An "mediapipe.tasks.vision.ImageSegmenterGraph" performs semantic
 // segmentation.
+// Two kinds of outputs are provided: SEGMENTATION and GROUPED_SEGMENTATION.
+// Users can retrieve segmented mask of only particular category/channel from
+// SEGMENTATION, and users can also get all segmented masks from
+// GROUPED_SEGMENTATION.
 // - Accepts CPU input images and outputs segmented masks on CPU.
 //
 // Inputs:
@@ -147,8 +160,13 @@ absl::StatusOr<const Tensor*> GetOutputTensor(
 //     Image to perform segmentation on.
 //
 // Outputs:
-//   SEGMENTATION - SEGMENTATION
-//     Segmented masks.
+//   SEGMENTATION - mediapipe::Image @Multiple
+//     Segmented masks for individual category. Segmented mask of single
+//     category can be accessed by index based output stream.
+//   GROUPED_SEGMENTATION - std::vector<mediapipe::Image>
+//     The output segmented masks grouped in a vector.
+//   IMAGE - mediapipe::Image
+//     The image that image segmenter runs on.
 //
 // Example:
 // node {
@@ -156,7 +174,8 @@ absl::StatusOr<const Tensor*> GetOutputTensor(
 //   input_stream: "IMAGE:image"
 //   output_stream: "SEGMENTATION:segmented_masks"
 //   options {
-//     [mediapipe.tasks.ImageSegmenterOptions.ext] {
+//     [mediapipe.tasks.vision.image_segmenter.proto.ImageSegmenterOptions.ext]
+//     {
 //       segmenter_options {
 //         output_type: CONFIDENCE_MASK
 //         activation: SOFTMAX
@@ -171,20 +190,22 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
     ASSIGN_OR_RETURN(const auto* model_resources,
                      CreateModelResources<ImageSegmenterOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(auto segmentations,
+    ASSIGN_OR_RETURN(auto output_streams,
                      BuildSegmentationTask(
                          sc->Options<ImageSegmenterOptions>(), *model_resources,
                          graph[Input<Image>(kImageTag)], graph));
 
     auto& merge_images_to_vector =
         graph.AddNode("MergeImagesToVectorCalculator");
-    for (int i = 0; i < segmentations.size(); ++i) {
-      segmentations[i] >> merge_images_to_vector[Input<Image>::Multiple("")][i];
-      segmentations[i] >> graph[Output<Image>::Multiple(kSegmentationTag)][i];
+    for (int i = 0; i < output_streams.segmented_masks.size(); ++i) {
+      output_streams.segmented_masks[i] >>
+          merge_images_to_vector[Input<Image>::Multiple("")][i];
+      output_streams.segmented_masks[i] >>
+          graph[Output<Image>::Multiple(kSegmentationTag)][i];
     }
     merge_images_to_vector.Out("") >>
         graph[Output<std::vector<Image>>(kGroupedSegmentationTag)];
-
+    output_streams.image >> graph[Output<Image>(kImageTag)];
     return graph.GetConfig();
   }
 
@@ -193,12 +214,12 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
   // builder::Graph instance. The segmentation pipeline takes images
   // (mediapipe::Image) as the input and returns segmented image mask as output.
   //
-  // task_options: the mediapipe tasks ImageSegmenterOptions.
+  // task_options: the mediapipe tasks ImageSegmenterOptions proto.
   // model_resources: the ModelSources object initialized from a segmentation
   // model file with model metadata.
   // image_in: (mediapipe::Image) stream to run segmentation on.
   // graph: the mediapipe builder::Graph instance to be updated.
-  absl::StatusOr<std::vector<Source<Image>>> BuildSegmentationTask(
+  absl::StatusOr<ImageSegmenterOutputs> BuildSegmentationTask(
       const ImageSegmenterOptions& task_options,
       const core::ModelResources& model_resources, Source<Image> image_in,
       Graph& graph) {
@@ -246,7 +267,10 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
             tensor_to_images[Output<Image>::Multiple(kSegmentationTag)][i]));
       }
     }
-    return segmented_masks;
+    return {{
+        .segmented_masks = segmented_masks,
+        .image = preprocessing[Output<Image>(kImageTag)],
+    }};
   }
 };
 

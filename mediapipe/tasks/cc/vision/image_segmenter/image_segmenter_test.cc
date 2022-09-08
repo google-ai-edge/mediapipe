@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/cc/vision/segmentation/image_segmenter.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter.h"
 
 #include <cstdint>
 #include <memory>
@@ -32,8 +32,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/segmenter_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
-#include "mediapipe/tasks/cc/vision/segmentation/custom_op_resolvers.h"
-#include "mediapipe/tasks/cc/vision/segmentation/image_segmenter_options.pb.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_op_resolvers.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/core/shims/cc/shims_test_util.h"
 #include "tensorflow/lite/kernels/builtin_op_kernels.h"
@@ -46,11 +46,8 @@ namespace {
 
 using ::mediapipe::Image;
 using ::mediapipe::file::JoinPath;
-using ::mediapipe::tasks::ImageSegmenterOptions;
-using ::mediapipe::tasks::SegmenterOptions;
 using ::testing::HasSubstr;
 using ::testing::Optional;
-using ::tflite::ops::builtin::BuiltinOpResolver;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kDeeplabV3WithMetadata[] = "deeplabv3.tflite";
@@ -167,19 +164,19 @@ class DeepLabOpResolverMissingOps : public ::tflite::MutableOpResolver {
 
 TEST_F(CreateFromOptionsTest, SucceedsWithSelectiveOpResolver) {
   auto options = std::make_unique<ImageSegmenterOptions>();
-  options->mutable_base_options()->mutable_model_file()->set_file_name(
-      JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata));
-  MP_ASSERT_OK(ImageSegmenter::Create(std::move(options),
-                                      absl::make_unique<DeepLabOpResolver>()));
+  options->base_options.model_file_name =
+      JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
+  options->base_options.op_resolver = absl::make_unique<DeepLabOpResolver>();
+  MP_ASSERT_OK(ImageSegmenter::Create(std::move(options)));
 }
 
 TEST_F(CreateFromOptionsTest, FailsWithSelectiveOpResolverMissingOps) {
   auto options = std::make_unique<ImageSegmenterOptions>();
-  options->mutable_base_options()->mutable_model_file()->set_file_name(
-      JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata));
-
-  auto segmenter_or = ImageSegmenter::Create(
-      std::move(options), absl::make_unique<DeepLabOpResolverMissingOps>());
+  options->base_options.model_file_name =
+      JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
+  options->base_options.op_resolver =
+      absl::make_unique<DeepLabOpResolverMissingOps>();
+  auto segmenter_or = ImageSegmenter::Create(std::move(options));
   // TODO: Make MediaPipe InferenceCalculator report the detailed
   // interpreter errors (e.g., "Encountered unresolved custom op").
   EXPECT_EQ(segmenter_or.status().code(), absl::StatusCode::kInternal);
@@ -202,24 +199,6 @@ TEST_F(CreateFromOptionsTest, FailsWithMissingModel) {
                   MediaPipeTasksStatus::kRunnerInitializationError))));
 }
 
-TEST_F(CreateFromOptionsTest, FailsWithUnspecifiedOutputType) {
-  auto options = std::make_unique<ImageSegmenterOptions>();
-  options->mutable_base_options()->mutable_model_file()->set_file_name(
-      JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata));
-  options->mutable_segmenter_options()->set_output_type(
-      SegmenterOptions::UNSPECIFIED);
-
-  auto segmenter_or = ImageSegmenter::Create(
-      std::move(options), absl::make_unique<DeepLabOpResolver>());
-
-  EXPECT_EQ(segmenter_or.status().code(), absl::StatusCode::kInvalidArgument);
-  EXPECT_THAT(segmenter_or.status().message(),
-              HasSubstr("`output_type` must not be UNSPECIFIED"));
-  EXPECT_THAT(segmenter_or.status().GetPayload(kMediaPipeTasksPayload),
-              Optional(absl::Cord(absl::StrCat(
-                  MediaPipeTasksStatus::kRunnerInitializationError))));
-}
-
 class SegmentationTest : public tflite_shims::testing::Test {};
 
 TEST_F(SegmentationTest, SucceedsWithCategoryMask) {
@@ -228,10 +207,10 @@ TEST_F(SegmentationTest, SucceedsWithCategoryMask) {
       DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
                                    "segmentation_input_rotation0.jpg")));
   auto options = std::make_unique<ImageSegmenterOptions>();
-  options->mutable_segmenter_options()->set_output_type(
-      SegmenterOptions::CATEGORY_MASK);
-  options->mutable_base_options()->mutable_model_file()->set_file_name(
-      JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata));
+  options->base_options.model_file_name =
+      JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
+  options->output_type = ImageSegmenterOptions::OutputType::CATEGORY_MASK;
+
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
   MP_ASSERT_OK_AND_ASSIGN(auto category_masks, segmenter->Segment(image));
@@ -253,12 +232,11 @@ TEST_F(SegmentationTest, SucceedsWithConfidenceMask) {
       Image image,
       DecodeImageFromFile(JoinPath("./", kTestDataDirectory, "cat.jpg")));
   auto options = std::make_unique<ImageSegmenterOptions>();
-  options->mutable_segmenter_options()->set_output_type(
-      SegmenterOptions::CONFIDENCE_MASK);
-  options->mutable_segmenter_options()->set_activation(
-      SegmenterOptions::SOFTMAX);
-  options->mutable_base_options()->mutable_model_file()->set_file_name(
-      JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata));
+  options->base_options.model_file_name =
+      JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
+  options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
+  options->activation = ImageSegmenterOptions::Activation::SOFTMAX;
+
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
   MP_ASSERT_OK_AND_ASSIGN(auto results, segmenter->Segment(image));
@@ -281,17 +259,15 @@ TEST_F(SegmentationTest, SucceedsSelfie128x128Segmentation) {
   Image image =
       GetSRGBImage(JoinPath("./", kTestDataDirectory, "mozart_square.jpg"));
   auto options = std::make_unique<ImageSegmenterOptions>();
-  options->mutable_segmenter_options()->set_output_type(
-      SegmenterOptions::CONFIDENCE_MASK);
-  options->mutable_segmenter_options()->set_activation(
-      SegmenterOptions::SOFTMAX);
-  options->mutable_base_options()->mutable_model_file()->set_file_name(
-      JoinPath("./", kTestDataDirectory, kSelfie128x128WithMetadata));
-  MP_ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<ImageSegmenter> segmenter,
-      ImageSegmenter::Create(
-          std::move(options),
-          absl::make_unique<SelfieSegmentationModelOpResolver>()));
+  options->base_options.model_file_name =
+      JoinPath("./", kTestDataDirectory, kSelfie128x128WithMetadata);
+  options->base_options.op_resolver =
+      absl::make_unique<SelfieSegmentationModelOpResolver>();
+  options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
+  options->activation = ImageSegmenterOptions::Activation::SOFTMAX;
+
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
+                          ImageSegmenter::Create(std::move(options)));
   MP_ASSERT_OK_AND_ASSIGN(auto confidence_masks, segmenter->Segment(image));
   EXPECT_EQ(confidence_masks.size(), 2);
 
@@ -313,15 +289,14 @@ TEST_F(SegmentationTest, SucceedsSelfie144x256Segmentations) {
   Image image =
       GetSRGBImage(JoinPath("./", kTestDataDirectory, "mozart_square.jpg"));
   auto options = std::make_unique<ImageSegmenterOptions>();
-  options->mutable_segmenter_options()->set_output_type(
-      SegmenterOptions::CONFIDENCE_MASK);
-  options->mutable_base_options()->mutable_model_file()->set_file_name(
-      JoinPath("./", kTestDataDirectory, kSelfie144x256WithMetadata));
-  MP_ASSERT_OK_AND_ASSIGN(
-      std::unique_ptr<ImageSegmenter> segmenter,
-      ImageSegmenter::Create(
-          std::move(options),
-          absl::make_unique<SelfieSegmentationModelOpResolver>()));
+  options->base_options.model_file_name =
+      JoinPath("./", kTestDataDirectory, kSelfie144x256WithMetadata);
+  options->base_options.op_resolver =
+      absl::make_unique<SelfieSegmentationModelOpResolver>();
+  options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
+  options->activation = ImageSegmenterOptions::Activation::NONE;
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
+                          ImageSegmenter::Create(std::move(options)));
   MP_ASSERT_OK_AND_ASSIGN(auto confidence_masks, segmenter->Segment(image));
   EXPECT_EQ(confidence_masks.size(), 1);
 

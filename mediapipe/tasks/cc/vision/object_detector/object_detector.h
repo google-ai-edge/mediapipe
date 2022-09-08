@@ -36,9 +36,18 @@ namespace vision {
 
 // The options for configuring a mediapipe object detector task.
 struct ObjectDetectorOptions {
-  // Base options for configuring Task library, such as specifying the TfLite
+  // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
   // model file with metadata, accelerator options, op resolver, etc.
   tasks::core::BaseOptions base_options;
+
+  // The running mode of the task. Default to the image mode.
+  // Object detector has three running modes:
+  // 1) The image mode for detecting objects on single image inputs.
+  // 2) The video mode for detecting objects on the decoded frames of a video.
+  // 3) The live stream mode for detecting objects on the live stream of input
+  // data, such as from camera. In this mode, the "result_callback" below must
+  // be specified to receive the detection results asynchronously.
+  core::RunningMode running_mode = core::RunningMode::IMAGE;
 
   // The locale to use for display names specified through the TFLite Model
   // Metadata, if any. Defaults to English.
@@ -64,15 +73,6 @@ struct ObjectDetectorOptions {
   // category name is in this set will be filtered out. Duplicate or unknown
   // category names are ignored. Mutually exclusive with category_allowlist.
   std::vector<std::string> category_denylist = {};
-
-  // The running mode of the task. Default to the image mode.
-  // Object detector has three running modes:
-  // 1) The image mode for detecting objects on single image inputs.
-  // 2) The video mode for detecting objects on the decoded frames of a video.
-  // 3) The live stream mode for detecting objects on the live stream of input
-  // data, such as from camera. In this mode, the "result_callback" below must
-  // be specified to receive the detection results asynchronously.
-  core::RunningMode running_mode = core::RunningMode::IMAGE;
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
