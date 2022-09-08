@@ -18,4 +18,40 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-# TODO: This test fails in OSS
+py_test(
+    name = "object_detector_test",
+    srcs = ["object_detector_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+    ],
+    deps = [
+        # build rule placeholder: numpy dep,
+        "//mediapipe/tasks/python/components/containers:bounding_box",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_util",
+        "//mediapipe/tasks/python/vision:object_detector",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@absl_py//absl/testing:parameterized",
+    ],
+)
+
+py_test(
+    name = "image_classification_test",
+    srcs = ["image_classification_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:classifications",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_util",
+        "//mediapipe/tasks/python/vision:image_classification",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@absl_py//absl/testing:parameterized",
+    ],
+)

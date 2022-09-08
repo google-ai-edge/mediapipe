@@ -36,3 +36,23 @@ py_library(
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
     ],
 )
+
+py_library(
+    name = "image_classification",
+    srcs = [
+        "image_classification.py",
+    ],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/components:classifier_options_py_pb2",
+        "//mediapipe/tasks/cc/vision/image_classification:image_classifier_options_py_pb2",
+        "//mediapipe/tasks/python/components/containers:classifications",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)
