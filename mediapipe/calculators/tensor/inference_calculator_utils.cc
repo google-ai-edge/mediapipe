@@ -15,6 +15,7 @@
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
+#include "mediapipe/framework/port.h"  // NOLINT: provides MEDIAPIPE_ANDROID/IOS
 
 #if !defined(__EMSCRIPTEN__) || defined(__EMSCRIPTEN_PTHREADS__)
 #include "mediapipe/util/cpu_util.h"

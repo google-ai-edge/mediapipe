@@ -77,10 +77,6 @@ struct NoneType {
   NoneType() = delete;
 };
 
-struct DynamicType {};
-
-struct AnyType : public DynamicType {};
-
 template <auto& P>
 class SameType : public DynamicType {
  public:

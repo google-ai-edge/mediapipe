@@ -23,7 +23,7 @@
 @property(nonatomic, getter=isAuthorized, readonly) BOOL authorized;
 
 /// Session preset to use for capturing.
-@property(nonatomic) NSString *sessionPreset;
+@property(nonatomic, nullable) NSString *sessionPreset;
 
 /// Which camera on an iOS device to use, assuming iOS device with more than one camera.
 @property(nonatomic) AVCaptureDevicePosition cameraPosition;

@@ -298,6 +298,7 @@ cc_library(
     hdrs = ["inference_calculator_utils.h"],
     deps = [
         ":inference_calculator_cc_proto",
+        "//mediapipe/framework:port",
     ] + select({
         "//conditions:default": [
             "//mediapipe/util:cpu_util",
