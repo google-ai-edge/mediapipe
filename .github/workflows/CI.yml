@@ -1,0 +1,49 @@
+name: PullRequest
+
+on: [pull_request]
+
+jobs:
+  buildTest:
+    name: Build
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install Android SDK
+        uses: malinskiy/action-android/install-sdk@release/0.1.3
+      - name: Install prerequisite brew
+        run: |
+          brew install opencv@3
+          brew install python
+          python --version
+      - name: Install prerequisite Python
+        run: |
+          python --version
+          pip install --user six
+          pip install numpy
+      - name: Build project
+        run: |
+          export ANDROID_HOME=/Users/runner/Library/Android/sdk
+          export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
+          echo a | ./build_android_examples.sh
+      - name: Show result
+        run: git status
+      - name: Find Tag
+        id: tagger
+        uses: jimschubert/query-tag-action@v2
+        with:
+          skip-unshallow: 'true'
+          abbrev: false
+          commit-ish: HEAD
+      - name: Get Version
+        run: git describe --tags
+      - name: Archive APK ${{steps.tagger.outputs.tag}}
+        uses: actions/upload-artifact@v2.2.1
+        if: ${{ always() }}
+        with:
+          name: APK-${{steps.tagger.outputs.tag}}
+          path: ./*.apk
+          if-no-files-found: error
+
