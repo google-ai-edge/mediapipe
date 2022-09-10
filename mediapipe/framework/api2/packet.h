@@ -27,6 +27,12 @@ using HolderBase = mediapipe::packet_internal::HolderBase;
 template <typename T>
 class Packet;
 
+struct DynamicType {};
+
+struct AnyType : public DynamicType {
+  AnyType() = delete;
+};
+
 // Type-erased packet.
 class PacketBase {
  public:
@@ -148,9 +154,8 @@ inline void CheckCompatibleType(const HolderBase& holder,
       << " was requested.";
 }
 
-struct Generic {
-  Generic() = delete;
-};
+// TODO: remove usage of internal::Generic and simply use AnyType.
+using Generic = ::mediapipe::api2::AnyType;
 
 template <class V, class U>
 struct IsCompatibleType : std::false_type {};

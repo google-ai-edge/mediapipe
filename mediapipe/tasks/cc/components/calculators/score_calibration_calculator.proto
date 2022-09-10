@@ -1,0 +1,67 @@
+/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto2";
+
+package mediapipe.tasks;
+
+import "mediapipe/framework/calculator.proto";
+
+message ScoreCalibrationCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional ScoreCalibrationCalculatorOptions ext = 470204318;
+  }
+
+  // Score calibration parameters for one individual category. The formula used
+  // to transform the uncalibrated score `x` is:
+  // * `f(x) = scale / (1 + e^-(slope * g(x) + offset))` if `x > min_score` or
+  //   if no min_score has been specified,
+  // * `f(x) = default_score` otherwise or if no scale, slope or offset have
+  //   been specified.
+  //
+  // Where:
+  // * scale must be positive,
+  // * g(x) is a global (i.e. category independent) transform specified using
+  //   the score_transformation field,
+  // * default_score is a global parameter defined below.
+  //
+  // There should be exactly one sigmoid per number of supported output
+  // categories in the model, with either:
+  // * no fields set,
+  // * scale, slope and offset set,
+  // * all fields set.
+  message Sigmoid {
+    optional float scale = 1;
+    optional float slope = 2;
+    optional float offset = 3;
+    optional float min_score = 4;
+  }
+  repeated Sigmoid sigmoids = 1;
+
+  // Score transformation that defines the `g(x)` function in the above formula.
+  enum ScoreTransformation {
+    UNSPECIFIED = 0;
+    // g(x) = x.
+    IDENTITY = 1;
+    // g(x) = log(x).
+    LOG = 2;
+    // g(x) = log(x) - log(1 - x).
+    INVERSE_LOGISTIC = 3;
+  }
+  optional ScoreTransformation score_transformation = 2 [default = IDENTITY];
+
+  // Default score.
+  optional float default_score = 3;
+}

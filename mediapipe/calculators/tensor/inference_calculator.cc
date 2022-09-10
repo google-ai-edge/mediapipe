@@ -59,6 +59,7 @@ class InferenceCalculatorSelectorImpl
       }
     }
     impls.emplace_back("Cpu");
+    impls.emplace_back("Xnnpack");
     for (const auto& suffix : impls) {
       const auto impl = absl::StrCat("InferenceCalculator", suffix);
       if (!mediapipe::CalculatorBaseRegistry::IsRegistered(impl)) continue;

@@ -80,6 +80,7 @@ filegroup(
     ],
 )
 
+# TODO Create individual filegroup for models required for each Tasks.
 filegroup(
     name = "test_models",
     srcs = [

@@ -388,13 +388,13 @@ class HandLandmarkDetectorGraph : public core::ModelTaskGraph {
         hand_rect_transformation[Output<NormalizedRect>("")];
 
     return {{
-        .hand_landmarks = projected_landmarks,
-        .world_hand_landmarks = projected_world_landmarks,
-        .hand_rect_next_frame = hand_rect_next_frame,
-        .hand_presence = hand_presence,
-        .hand_presence_score = hand_presence_score,
-        .handedness = handedness,
-        .image_size = image_size,
+        /* hand_landmarks= */ projected_landmarks,
+        /* world_hand_landmarks= */ projected_world_landmarks,
+        /* hand_rect_next_frame= */ hand_rect_next_frame,
+        /* hand_presence= */ hand_presence,
+        /* hand_presence_score= */ hand_presence_score,
+        /* handedness= */ handedness,
+        /* image_size= */ image_size,
     }};
   }
 };

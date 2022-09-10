@@ -104,6 +104,18 @@ public class ExternalTextureConverter implements TextureFrameProducer {
   }
 
   /**
+   * Re-renders the current frame. Notifies all consumers as if it were a new frame. This should not
+   * typically be used but can be useful for cases where the consumer has lost ownership of the most
+   * recent frame and needs to get it again. This does nothing if no frame has yet been received.
+   */
+  public void rerenderCurrentFrame() {
+    SurfaceTexture surfaceTexture = getSurfaceTexture();
+    if (thread != null && surfaceTexture != null && thread.getHasReceivedFirstFrame()) {
+      thread.onFrameAvailable(surfaceTexture);
+    }
+  }
+
+  /**
    * Sets the new buffer pool size. This is safe to set at any time.
    *
    * This doesn't adjust the buffer pool right way. Instead, it behaves as follows:
@@ -278,6 +290,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     private volatile SurfaceTexture internalSurfaceTexture = null;
     private int[] textures = null;
     private final List<TextureFrameConsumer> consumers;
+    private volatile boolean hasReceivedFirstFrame = false;
 
     private final Queue<PoolTextureFrame> framesAvailable = new ArrayDeque<>();
     private int framesInUse = 0;
@@ -335,6 +348,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
     }
 
     public void setSurfaceTexture(SurfaceTexture texture, int width, int height) {
+      hasReceivedFirstFrame = false;
       if (surfaceTexture != null) {
         surfaceTexture.setOnFrameAvailableListener(null);
       }
@@ -379,6 +393,10 @@ public class ExternalTextureConverter implements TextureFrameProducer {
 
     public SurfaceTexture getInternalSurfaceTexture() {
       return surfaceTexture != null ? surfaceTexture : internalSurfaceTexture;
+    }
+
+    public boolean getHasReceivedFirstFrame() {
+      return hasReceivedFirstFrame;
     }
 
     @Override
@@ -427,6 +445,7 @@ public class ExternalTextureConverter implements TextureFrameProducer {
         // pending on the handler. When that happens, we should simply disregard the call.
         return;
       }
+      hasReceivedFirstFrame = true;
       try {
         synchronized (consumers) {
           boolean frameUpdated = false;

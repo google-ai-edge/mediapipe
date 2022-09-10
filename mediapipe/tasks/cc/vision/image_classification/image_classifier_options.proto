@@ -25,7 +25,7 @@ message ImageClassifierOptions {
   extend mediapipe.CalculatorOptions {
     optional ImageClassifierOptions ext = 456383383;
   }
-  // Base options for configuring Task library, such as specifying the TfLite
+  // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
   // model file with metadata, accelerator options, etc.
   optional core.proto.BaseOptions base_options = 1;
 

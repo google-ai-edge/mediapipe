@@ -324,6 +324,63 @@ TEST(BuilderTest, GraphIndexes) {
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }
 
+class AnyAndSameTypeCalculator : public NodeIntf {
+ public:
+  static constexpr Input<AnyType> kAnyTypeInput{"INPUT"};
+  static constexpr Output<AnyType> kAnyTypeOutput{"ANY_OUTPUT"};
+  static constexpr Output<SameType<kAnyTypeInput>> kSameTypeOutput{
+      "SAME_OUTPUT"};
+
+  static constexpr Input<int> kIntInput{"INT_INPUT"};
+  // `SameType` usage for this output is only for testing purposes.
+  //
+  // `SameType` is designed to work with inputs of `AnyType` and, normally, you
+  // would not use `Output<SameType<kIntInput>>` in a real calculator. You
+  // should write `Output<int>` instead, since the type is known.
+  static constexpr Output<SameType<kIntInput>> kSameIntOutput{
+      "SAME_INT_OUTPUT"};
+
+  MEDIAPIPE_NODE_INTERFACE(AnyTypeCalculator, kAnyTypeInput, kAnyTypeOutput,
+                           kSameTypeOutput);
+};
+
+TEST(BuilderTest, AnyAndSameTypeHandledProperly) {
+  builder::Graph graph;
+  builder::Source<internal::Generic> any_input =
+      graph[Input<AnyType>{"GRAPH_ANY_INPUT"}];
+  builder::Source<int> int_input = graph[Input<int>{"GRAPH_INT_INPUT"}];
+
+  auto& node = graph.AddNode("AnyAndSameTypeCalculator");
+  any_input >> node[AnyAndSameTypeCalculator::kAnyTypeInput];
+  int_input >> node[AnyAndSameTypeCalculator::kIntInput];
+
+  builder::Source<internal::Generic> any_type_output =
+      node[AnyAndSameTypeCalculator::kAnyTypeOutput];
+  any_type_output.SetName("any_type_output");
+
+  builder::Source<internal::Generic> same_type_output =
+      node[AnyAndSameTypeCalculator::kSameTypeOutput];
+  same_type_output.SetName("same_type_output");
+  builder::Source<internal::Generic> same_int_output =
+      node[AnyAndSameTypeCalculator::kSameIntOutput];
+  same_int_output.SetName("same_int_output");
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node {
+          calculator: "AnyAndSameTypeCalculator"
+          input_stream: "INPUT:__stream_0"
+          input_stream: "INT_INPUT:__stream_1"
+          output_stream: "ANY_OUTPUT:any_type_output"
+          output_stream: "SAME_INT_OUTPUT:same_int_output"
+          output_stream: "SAME_OUTPUT:same_type_output"
+        }
+        input_stream: "GRAPH_ANY_INPUT:__stream_0"
+        input_stream: "GRAPH_INT_INPUT:__stream_1"
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
 }  // namespace test
 }  // namespace api2
 }  // namespace mediapipe

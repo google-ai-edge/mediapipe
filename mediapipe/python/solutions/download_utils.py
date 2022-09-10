@@ -17,21 +17,21 @@ import os
 import shutil
 import urllib.request
 
-_OSS_URL_PREFIX = 'https://github.com/google/mediapipe/raw/master/'
+_GCS_URL_PREFIX = 'https://storage.googleapis.com/mediapipe-assets/'
 
 
 def download_oss_model(model_path: str):
-  """Downloads the oss model from the MediaPipe GitHub repo if it doesn't exist in the package."""
+  """Downloads the oss model from Google Cloud Storage if it doesn't exist in the package."""
 
   mp_root_path = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-4])
   model_abspath = os.path.join(mp_root_path, model_path)
   if os.path.exists(model_abspath):
     return
-  model_url = _OSS_URL_PREFIX + model_path
+  model_url = _GCS_URL_PREFIX + model_path.split('/')[-1]
   print('Downloading model to ' + model_abspath)
   with urllib.request.urlopen(model_url) as response, open(model_abspath,
                                                            'wb') as out_file:
     if response.code != 200:
       raise ConnectionError('Cannot download ' + model_path +
-                            ' from the MediaPipe Github repo.')
+                            ' from Google Cloud Storage.')
     shutil.copyfileobj(response, out_file)

@@ -159,12 +159,12 @@ absl::Status TensorsToSegmentationCalculator::Process(
     std::tie(output_width, output_height) = kOutputSizeIn(cc).Get();
   }
   Shape output_shape = {
-      .height = output_height,
-      .width = output_width,
-      .channels = options_.segmenter_options().output_type() ==
-                          SegmenterOptions::CATEGORY_MASK
-                      ? 1
-                      : input_shape.channels};
+      /* height= */ output_height,
+      /* width= */ output_width,
+      /* channels= */ options_.segmenter_options().output_type() ==
+              SegmenterOptions::CATEGORY_MASK
+          ? 1
+          : input_shape.channels};
 
   std::vector<Image> segmented_masks = GetSegmentationResult(
       input_shape, output_shape, input_tensor.GetCpuReadView().buffer<float>());

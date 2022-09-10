@@ -531,9 +531,9 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
     // Outputs the labeled detections and the processed image as the subgraph
     // output streams.
     return {{
-        .detections =
-            detection_label_id_to_text[Output<std::vector<Detection>>("")],
-        .image = preprocessing[Output<Image>(kImageTag)],
+        /* detections= */
+        detection_label_id_to_text[Output<std::vector<Detection>>("")],
+        /* image= */ preprocessing[Output<Image>(kImageTag)],
     }};
   }
 };
