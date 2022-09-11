@@ -83,7 +83,8 @@ class ImageClassifierOptions:
   category_allowlist: Optional[List[str]] = None
   category_denylist: Optional[List[str]] = None
   result_callback: Optional[
-      Callable[[classifications_module.ClassificationResult], None]] = None
+      Callable[[classifications_module.ClassificationResult],
+               None]] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _ImageClassifierOptionsProto:
@@ -96,7 +97,8 @@ class ImageClassifierOptions:
         max_results=self.max_results,
         score_threshold=self.score_threshold,
         category_allowlist=self.category_allowlist,
-        category_denylist=self.category_denylist)
+        category_denylist=self.category_denylist
+    )
 
     return _ImageClassifierOptionsProto(
         base_options=base_options_proto,
@@ -198,30 +200,3 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
       classifications_module.Classifications.create_from_pb2(classification)
       for classification in classification_result_proto.classifications
     ])
-
-  def classify_async(self, image: image_module.Image, timestamp_ms: int) -> None:
-    """Sends live image data (an Image with a unique timestamp) to perform image
-     classification.
-
-    This method will return immediately after the input image is accepted. The
-    results will be available via the `result_callback` provided in the
-    `ImageClassifierOptions`. The `detect_async` method is designed to process
-    live stream data such as camera input. To lower the overall latency, image
-    classifier may drop the input images if needed. In other words, it's not
-    guaranteed to have output per input image. The `result_callback` provides:
-      - A classification result object that contains a list of classifications.
-      - The input image that the image classifier runs on.
-      - The input timestamp in milliseconds.
-
-    Args:
-      image: MediaPipe Image.
-      timestamp_ms: The timestamp of the input image in milliseconds.
-
-    Raises:
-      ValueError: If the current input timestamp is smaller than what the image
-        classifier has already processed.
-    """
-    self._send_live_stream_data({
-        _IMAGE_IN_STREAM_NAME:
-            packet_creator.create_image(image).at(timestamp_ms)
-    })

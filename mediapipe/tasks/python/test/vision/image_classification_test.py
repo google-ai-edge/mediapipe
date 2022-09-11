@@ -124,7 +124,7 @@ class ImageClassifierTest(parameterized.TestCase):
       (ModelFileType.FILE_NAME, 4, _EXPECTED_CLASSIFICATION_RESULT),
       (ModelFileType.FILE_CONTENT, 4, _EXPECTED_CLASSIFICATION_RESULT))
   def test_classify(self, model_file_type, max_results,
-                  expected_classification_result):
+                    expected_classification_result):
     # Creates classifier.
     if model_file_type is ModelFileType.FILE_NAME:
       base_options = _BaseOptions(file_name=self.model_path)
@@ -152,7 +152,7 @@ class ImageClassifierTest(parameterized.TestCase):
       (ModelFileType.FILE_NAME, 4, _EXPECTED_CLASSIFICATION_RESULT),
       (ModelFileType.FILE_CONTENT, 4, _EXPECTED_CLASSIFICATION_RESULT))
   def test_classify_in_context(self, model_file_type, max_results,
-                             expected_classification_result):
+                               expected_classification_result):
     if model_file_type is ModelFileType.FILE_NAME:
       base_options = _BaseOptions(file_name=self.model_path)
     elif model_file_type is ModelFileType.FILE_CONTENT:
@@ -274,27 +274,6 @@ class ImageClassifierTest(parameterized.TestCase):
                                 r'result callback should not be provided'):
       with _ImageClassifier.create_from_options(options) as unused_classifier:
         pass
-
-  # @parameterized.parameters((0, _EXPECTED_CLASSIFICATION_RESULT),
-  #                           (1, _ClassificationResult(classifications=[])))
-  # def test_classify_async_calls(self, threshold, expected_result):
-  #   observed_timestamp_ms = -1
-  #
-  #   def check_result(result: _ClassificationResult, timestamp_ms: int):
-  #     self.assertEqual(result, expected_result)
-  #     self.assertLess(observed_timestamp_ms, timestamp_ms)
-  #     self.observed_timestamp_ms = timestamp_ms
-  #
-  #   options = _ImageClassifierOptions(
-  #       base_options=_BaseOptions(file_name=self.model_path),
-  #       running_mode=_RUNNING_MODE.LIVE_STREAM,
-  #       max_results=4,
-  #       score_threshold=threshold,
-  #       result_callback=check_result)
-  #   classifier = _ImageClassifier.create_from_options(options)
-  #   for timestamp in range(0, 300, 30):
-  #     classifier.classify_async(self.test_image, timestamp)
-  #   classifier.close()
 
 
 if __name__ == '__main__':
