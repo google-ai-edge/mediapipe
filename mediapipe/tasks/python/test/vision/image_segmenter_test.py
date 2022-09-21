@@ -104,10 +104,11 @@ class ImageSegmenterTest(parameterized.TestCase):
     segmenter = _ImageSegmenter.create_from_options(options)
 
     # Performs image segmentation on the input.
-    image_result = segmenter.segment(self.test_image)
+    category_masks = segmenter.segment(self.test_image)
 
     # Comparing results.
-    print(image_result)
+    print(len(category_masks))
+    s
 
     # Closes the segmenter explicitly when the segmenter is not used in
     # a context.
