@@ -36,9 +36,8 @@ _RunningMode = running_mode_module.VisionTaskRunningMode
 _TaskInfo = task_info_module.TaskInfo
 _TaskRunner = task_runner_module.TaskRunner
 
-_SEGMENTATION_OUT_STREAM_NAME = 'segmented_masks'
-_SEGMENTATION_TAG = 'SEGMENTATION'
-_GROUPED_SEGMENTATION_TAG = 'GROUPED_SEGMENTATION'
+_SEGMENTATION_OUT_STREAM_NAME = 'segmented_mask_out'
+_SEGMENTATION_TAG = 'GROUPED_SEGMENTATION'
 _IMAGE_IN_STREAM_NAME = 'image_in'
 _IMAGE_OUT_STREAM_NAME = 'image_out'
 _IMAGE_TAG = 'IMAGE'
