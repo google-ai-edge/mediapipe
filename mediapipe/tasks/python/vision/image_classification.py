@@ -57,20 +57,7 @@ class ImageClassifierOptions:
          video.
       3) The live stream mode for classifying objects on a live stream of input
          data, such as from camera.
-    display_names_locale: The locale to use for display names specified through
-      the TFLite Model Metadata.
-    max_results: The maximum number of top-scored classification results to
-      return.
-    score_threshold: Overrides the ones provided in the model metadata. Results
-      below this value are rejected.
-    category_allowlist: Allowlist of category names. If non-empty, detection
-      results whose category name is not in this set will be filtered out.
-      Duplicate or unknown category names are ignored. Mutually exclusive with
-      `category_denylist`.
-    category_denylist: Denylist of category names. If non-empty, detection
-      results whose category name is in this set will be filtered out. Duplicate
-      or unknown category names are ignored. Mutually exclusive with
-      `category_allowlist`.
+    classifier_options: Options for the image classification task.
     result_callback: The user-defined result callback for processing live stream
       data. The result callback should only be specified when the running mode
       is set to the live stream mode.
