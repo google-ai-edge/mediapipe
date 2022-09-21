@@ -17,7 +17,6 @@ import enum
 
 from absl.testing import absltest
 from absl.testing import parameterized
-import numpy as np
 
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.python.components import segmenter_options
@@ -30,6 +29,7 @@ _BaseOptions = base_options_module.BaseOptions
 _Image = image_module.Image
 _OutputType = segmenter_options.OutputType
 _Activation = segmenter_options.Activation
+_SegmenterOptions = segmenter_options.SegmenterOptions
 _ImageSegmenter = image_segmenter.ImageSegmenter
 _ImageSegmenterOptions = image_segmenter.ImageSegmenterOptions
 _RUNNING_MODE = running_mode_module.VisionTaskRunningMode
@@ -99,16 +99,13 @@ class ImageSegmenterTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
+    segmenter_options = _SegmenterOptions(output_type=_OutputType.CATEGORY_MASK)
     options = _ImageSegmenterOptions(base_options=base_options,
-                                     output_type=_OutputType.CATEGORY_MASK)
+                                     segmenter_options=segmenter_options)
     segmenter = _ImageSegmenter.create_from_options(options)
 
     # Performs image segmentation on the input.
     category_masks = segmenter.segment(self.test_image)
-
-    # Comparing results.
-    print(len(category_masks))
-    s
 
     # Closes the segmenter explicitly when the segmenter is not used in
     # a context.

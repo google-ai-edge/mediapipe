@@ -57,16 +57,14 @@ class ImageSegmenterOptions:
       2) The video mode for detecting objects on the decoded frames of a video.
       3) The live stream mode for detecting objects on a live stream of input
          data, such as from camera.
-    output_type: Optional output mask type.
-    activation: Activation function to apply to input tensor.
+    segmenter_options: Options for the image segmenter task.
     result_callback: The user-defined result callback for processing live stream
       data. The result callback should only be specified when the running mode
       is set to the live stream mode.
   """
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
-  output_type: Optional[segmenter_options.OutputType] = segmenter_options.OutputType.CATEGORY_MASK
-  activation: Optional[segmenter_options.Activation] = segmenter_options.Activation.NONE
+  segmenter_options: _SegmenterOptions = _SegmenterOptions()
   result_callback: Optional[
       Callable[[List[image_module.Image], image_module.Image, int],
                None]] = None
@@ -76,15 +74,11 @@ class ImageSegmenterOptions:
     """Generates an ImageSegmenterOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
     base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.IMAGE else True
-
-    segmenter_options = _SegmenterOptions(
-        output_type=self.output_type,
-        activation=self.activation
-    )
+    segmenter_options_proto = self.segmenter_options.to_pb2()
 
     return _ImageSegmenterOptionsProto(
         base_options=base_options_proto,
-        segmenter_options=segmenter_options.to_pb2()
+        segmenter_options=segmenter_options_proto
     )
 
 
@@ -176,30 +170,3 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
     segmentation_result = packet_getter.get_proto_list(
         output_packets[_SEGMENTATION_OUT_STREAM_NAME])
     return segmentation_result
-
-  # def segment_async(self, image: image_module.Image, timestamp_ms: int) -> None:
-  #   """Sends live image data (an Image with a unique timestamp) to perform image segmentation.
-  #
-  #   This method will return immediately after the input image is accepted. The
-  #   results will be available via the `result_callback` provided in the
-  #   `ImageSegmenterOptions`. The `segment_async` method is designed to process
-  #   live stream data such as camera input. To lower the overall latency, image
-  #   segmenter may drop the input images if needed. In other words, it's not
-  #   guaranteed to have output per input image. The `result_callback` provides:
-  #     - A segmentation result object that contains a list of segmentation masks
-  #       as images.
-  #     - The input image that the image segmenter runs on.
-  #     - The input timestamp in milliseconds.
-  #
-  #   Args:
-  #     image: MediaPipe Image.
-  #     timestamp_ms: The timestamp of the input image in milliseconds.
-  #
-  #   Raises:
-  #     ValueError: If the current input timestamp is smaller than what the object
-  #       detector has already processed.
-  #   """
-  #   self._send_live_stream_data({
-  #       _IMAGE_IN_STREAM_NAME:
-  #           packet_creator.create_image(image).at(timestamp_ms)
-  #   })
