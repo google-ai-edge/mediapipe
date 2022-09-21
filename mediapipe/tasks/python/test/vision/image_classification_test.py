@@ -19,6 +19,7 @@ from absl.testing import absltest
 from absl.testing import parameterized
 
 from mediapipe.python._framework_bindings import image as image_module
+from mediapipe.tasks.python.components import classifier_options
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import classifications as classifications_module
 from mediapipe.tasks.python.core import base_options as base_options_module
@@ -27,6 +28,7 @@ from mediapipe.tasks.python.vision import image_classification
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
 _BaseOptions = base_options_module.BaseOptions
+_ClassifierOptions = classifier_options.ClassifierOptions
 _Category = category_module.Category
 _ClassificationEntry = classifications_module.ClassificationEntry
 _Classifications = classifications_module.Classifications
@@ -136,8 +138,9 @@ class ImageClassifierTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
+    classifier_options = _ClassifierOptions(max_results=max_results)
     options = _ImageClassifierOptions(
-        base_options=base_options, max_results=max_results)
+        base_options=base_options, classifier_options=classifier_options)
     classifier = _ImageClassifier.create_from_options(options)
 
     # Performs image classification on the input.
@@ -163,8 +166,9 @@ class ImageClassifierTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
+    classifier_options = _ClassifierOptions(max_results=max_results)
     options = _ImageClassifierOptions(
-        base_options=base_options, max_results=max_results)
+        base_options=base_options, classifier_options=classifier_options)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs object detection on the input.
       image_result = classifier.classify(self.test_image)
@@ -172,9 +176,10 @@ class ImageClassifierTest(parameterized.TestCase):
       self.assertEqual(image_result, expected_classification_result)
 
   def test_score_threshold_option(self):
+    classifier_options = _ClassifierOptions(score_threshold=_SCORE_THRESHOLD)
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(file_name=self.model_path),
-        score_threshold=_SCORE_THRESHOLD)
+        classifier_options=classifier_options)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
@@ -189,9 +194,10 @@ class ImageClassifierTest(parameterized.TestCase):
               f'{classification}')
 
   def test_max_results_option(self):
+    classifier_options = _ClassifierOptions(score_threshold=_SCORE_THRESHOLD)
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(file_name=self.model_path),
-        max_results=_MAX_RESULTS)
+        classifier_options=classifier_options)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
@@ -201,9 +207,10 @@ class ImageClassifierTest(parameterized.TestCase):
           len(categories), _MAX_RESULTS, 'Too many results returned.')
 
   def test_allow_list_option(self):
+    classifier_options = _ClassifierOptions(category_allowlist=_ALLOW_LIST)
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(file_name=self.model_path),
-        category_allowlist=_ALLOW_LIST)
+        classifier_options=classifier_options)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
@@ -216,9 +223,10 @@ class ImageClassifierTest(parameterized.TestCase):
                         f'Label {label} found but not in label allow list')
 
   def test_deny_list_option(self):
+    classifier_options = _ClassifierOptions(category_denylist=_DENY_LIST)
     options = _ImageClassifierOptions(
-      base_options=_BaseOptions(file_name=self.model_path),
-      category_denylist=_DENY_LIST)
+        base_options=_BaseOptions(file_name=self.model_path),
+        classifier_options=classifier_options)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
@@ -236,16 +244,19 @@ class ImageClassifierTest(parameterized.TestCase):
         ValueError,
         r'`category_allowlist` and `category_denylist` are mutually '
         r'exclusive options.'):
+      classifier_options = _ClassifierOptions(category_allowlist=['foo'],
+                                              category_denylist=['bar'])
       options = _ImageClassifierOptions(
           base_options=_BaseOptions(file_name=self.model_path),
-          category_allowlist=['foo'],
-          category_denylist=['bar'])
+          classifier_options=classifier_options)
       with _ImageClassifier.create_from_options(options) as unused_classifier:
         pass
 
   def test_empty_classification_outputs(self):
+    classifier_options = _ClassifierOptions(score_threshold=1)
     options = _ImageClassifierOptions(
-        base_options=_BaseOptions(file_name=self.model_path), score_threshold=1)
+        base_options=_BaseOptions(file_name=self.model_path),
+        classifier_options=classifier_options)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)

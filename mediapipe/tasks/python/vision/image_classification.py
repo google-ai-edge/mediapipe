@@ -21,8 +21,8 @@ from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.python._framework_bindings import task_runner as task_runner_module
-from mediapipe.tasks.cc.components import classifier_options_pb2
 from mediapipe.tasks.cc.vision.image_classification import image_classifier_options_pb2
+from mediapipe.tasks.python.components import classifier_options
 from mediapipe.tasks.python.components.containers import classifications as classifications_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
@@ -31,8 +31,8 @@ from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
 _BaseOptions = base_options_module.BaseOptions
-_ClassifierOptionsProto = classifier_options_pb2.ClassifierOptions
 _ImageClassifierOptionsProto = image_classifier_options_pb2.ImageClassifierOptions
+_ClassifierOptions = classifier_options.ClassifierOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _TaskInfo = task_info_module.TaskInfo
 _TaskRunner = task_runner_module.TaskRunner
@@ -77,11 +77,7 @@ class ImageClassifierOptions:
   """
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
-  display_names_locale: Optional[str] = None
-  max_results: Optional[int] = None
-  score_threshold: Optional[float] = None
-  category_allowlist: Optional[List[str]] = None
-  category_denylist: Optional[List[str]] = None
+  classifier_options: _ClassifierOptions = _ClassifierOptions()
   result_callback: Optional[
       Callable[[classifications_module.ClassificationResult],
                None]] = None
@@ -91,14 +87,7 @@ class ImageClassifierOptions:
     """Generates an ImageClassifierOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
     base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.IMAGE else True
-
-    classifier_options_proto = _ClassifierOptionsProto(
-        display_names_locale=self.display_names_locale,
-        max_results=self.max_results,
-        score_threshold=self.score_threshold,
-        category_allowlist=self.category_allowlist,
-        category_denylist=self.category_denylist
-    )
+    classifier_options_proto = self.classifier_options.to_pb2()
 
     return _ImageClassifierOptionsProto(
         base_options=base_options_proto,
