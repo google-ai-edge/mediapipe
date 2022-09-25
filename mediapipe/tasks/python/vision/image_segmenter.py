@@ -128,7 +128,7 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
     def packets_callback(output_packets: Mapping[str, packet_module.Packet]):
       if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
         return
-      segmentation_result = packet_getter.get_proto_list(
+      segmentation_result = packet_getter.get_image_list(
           output_packets[_SEGMENTATION_OUT_STREAM_NAME])
       image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
       timestamp = output_packets[_IMAGE_OUT_STREAM_NAME].timestamp
@@ -166,6 +166,6 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
     """
     output_packets = self._process_image_data(
         {_IMAGE_IN_STREAM_NAME: packet_creator.create_image(image)})
-    segmentation_result = packet_getter.get_proto_list(
+    segmentation_result = packet_getter.get_image_list(
         output_packets[_SEGMENTATION_OUT_STREAM_NAME])
     return segmentation_result

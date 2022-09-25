@@ -47,6 +47,7 @@ py_test(
     ],
     deps = [
         # build rule placeholder: numpy dep,
+        # build rule placeholder: cv2 dep,
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_util",
         "//mediapipe/tasks/python/components:segmenter_options",

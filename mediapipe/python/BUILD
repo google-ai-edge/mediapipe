@@ -35,7 +35,7 @@ pybind_extension(
     }),
     module_name = "_framework_bindings",
     deps = [
-        ":builtin_calculators",
+        #":builtin_calculators",
         ":builtin_task_graphs",
         "//mediapipe/python/pybind:calculator_graph",
         "//mediapipe/python/pybind:image",
@@ -85,6 +85,7 @@ cc_library(
 cc_library(
     name = "builtin_task_graphs",
     deps = [
+    	"//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
     ],
