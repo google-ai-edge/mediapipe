@@ -38,6 +38,13 @@ mediapipe_binary_graph(
     deps = [":pose_tracking_gpu_deps"],
 )
 
+mediapipe_binary_graph(
+    name = "pose_tracking_gpu_image_binary_graph",
+    graph = "pose_tracking_gpu_image.pbtxt",
+    output_name = "pose_tracking_gpu_image.binarypb",
+    deps = [":pose_tracking_gpu_deps"],
+)
+
 cc_library(
     name = "pose_tracking_cpu_deps",
     deps = [
