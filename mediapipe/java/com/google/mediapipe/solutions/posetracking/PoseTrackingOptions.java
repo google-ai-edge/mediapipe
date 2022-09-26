@@ -39,6 +39,8 @@ public abstract class PoseTrackingOptions {
 
   public abstract float minDetectionConfidence();
 
+  public abstract boolean landmarkVisibility();
+
   public static Builder builder() {
     return new AutoValue_PoseTrackingOptions.Builder().withDefaultValues();
   }
@@ -55,6 +57,8 @@ public abstract class PoseTrackingOptions {
     public abstract Builder setModelSelection(int value);
 
     public abstract Builder setMinDetectionConfidence(float value);
+
+    public abstract Builder setLandmarkVisibility(boolean value);
 
     public abstract PoseTrackingOptions build();
   }

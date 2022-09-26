@@ -90,10 +90,12 @@ public class PoseTracking extends ImageSolutionBase {
           } catch (MediaPipeException e) {
             reportError("Error occurs while getting MediaPipe pose tracking results.", e);
           }
+
+          int imageIndex = options.landmarkVisibility() ? OUTPUT_IMAGE_INDEX : INPUT_IMAGE_INDEX;
           return poseTrackingResultBuilder
-              .setImagePacket(packets.get(OUTPUT_IMAGE_INDEX))
+              .setImagePacket(packets.get(imageIndex))
               .setTimestamp(
-                  staticImageMode ? Long.MIN_VALUE : packets.get(OUTPUT_IMAGE_INDEX).getTimestamp())
+                  staticImageMode ? Long.MIN_VALUE : packets.get(imageIndex).getTimestamp())
               .build();
         });
 

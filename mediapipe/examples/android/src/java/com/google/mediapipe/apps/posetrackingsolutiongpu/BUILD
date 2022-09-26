@@ -31,7 +31,7 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/solutioncore:camera_input",
         "//mediapipe/java/com/google/mediapipe/solutioncore:solution_rendering",
         "//mediapipe/java/com/google/mediapipe/solutioncore:video_input",
-        "//mediapipe/java/com/google/mediapipe/solutions/facedetection",
+        #        "//mediapipe/java/com/google/mediapipe/solutions/facedetection",
         "//mediapipe/java/com/google/mediapipe/solutions/posetracking",
         "//third_party:androidx_appcompat",
         "//third_party:androidx_constraint_layout",
@@ -55,11 +55,11 @@ cc_binary(
     linkshared = 1,
     linkstatic = 1,
     deps = [
-        "//mediapipe/graphs/edge_detection:mobile_calculators",
+        #        "//mediapipe/graphs/edge_detection:mobile_calculators",
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
         #facedetection deps
-        "//mediapipe/graphs/face_detection:face_detection_full_range_mobile_gpu_deps",
-        "//mediapipe/graphs/face_detection:mobile_calculators",
+        #        "//mediapipe/graphs/face_detection:face_detection_full_range_mobile_gpu_deps",
+        #        "//mediapipe/graphs/face_detection:mobile_calculators",
         #pose tracking deps
         "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps",
     ],

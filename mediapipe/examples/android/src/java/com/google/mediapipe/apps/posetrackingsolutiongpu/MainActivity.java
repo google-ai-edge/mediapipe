@@ -17,7 +17,6 @@ package com.google.mediapipe.apps.posetrackingsolutiongpu;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
-import android.media.Image;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import androidx.appcompat.app.AppCompatActivity;
@@ -38,7 +37,6 @@ import com.google.mediapipe.solutions.posetracking.PoseTracking;
 import com.google.mediapipe.solutions.posetracking.PoseTrackingOptions;
 import com.google.mediapipe.solutions.posetracking.PoseTrackingResult;
 //import com.google.mediapipe.solutions.posetracking.FaceKeypoint;
-import com.google.mediapipe.formats.proto.LocationDataProto.LocationData.RelativeKeypoint;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -46,7 +44,7 @@ import java.io.InputStream;
 public class MainActivity extends AppCompatActivity {
   private static final String TAG = "MainActivity";
 
-  private PoseTracking faceDetection;
+  private PoseTracking poseTracking;
 
   private enum InputSource {
     UNKNOWN,
@@ -82,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
     if (inputSource == InputSource.CAMERA) {
       // Restarts the camera and the opengl surface rendering.
       cameraInput = new CameraInput(this);
-      cameraInput.setNewFrameListener(textureFrame -> faceDetection.send(textureFrame));
+      cameraInput.setNewFrameListener(textureFrame -> poseTracking.send(textureFrame));
       glSurfaceView.post(this::startCamera);
       glSurfaceView.setVisibility(View.VISIBLE);
     } else if (inputSource == InputSource.VIDEO) {
@@ -165,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
                             Log.e(TAG, "Bitmap rotation error:" + e);
                           }
                           if (bitmap != null) {
-                            faceDetection.send(bitmap);
+                            poseTracking.send(bitmap);
                           }
                         }
                       }
@@ -190,23 +188,24 @@ public class MainActivity extends AppCompatActivity {
   private void setupStaticImageModePipeline() {
     this.inputSource = InputSource.IMAGE;
     // Initializes a new MediaPipe Face Detection solution instance in the static image mode.
-    faceDetection =
+    poseTracking =
             new PoseTracking(
                     this,
                     PoseTrackingOptions.builder()
                             .setStaticImageMode(true)
                             .setModelSelection(0)
                             .setMinDetectionConfidence(0.5f)
+                            .setLandmarkVisibility(true)
                             .build());
 
     // Connects MediaPipe Face Detection solution to the user-defined PoseTrackingResultImageView.
-    faceDetection.setResultListener(
-            faceDetectionResult -> {
-              logNoseTipKeypoint(faceDetectionResult, /*faceIndex=*/ 0, /*showPixelValues=*/ true);
-//              imageView.setPoseTrackingResult(faceDetectionResult);
+    poseTracking.setResultListener(
+            poseTrackingResult -> {
+              logNoseTipKeypoint(poseTrackingResult, /*faceIndex=*/ 0, /*showPixelValues=*/ true);
+//              imageView.setPoseTrackingResult(poseTrackingResult);
 //              runOnUiThread(() -> imageView.update());
             });
-    faceDetection.setErrorListener(
+    poseTracking.setErrorListener(
             (message, e) -> Log.e(TAG, "MediaPipe Face Detection error:" + message));
 
     // Updates the preview layout.
@@ -232,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
                                           videoInput.start(
                                                   this,
                                                   resultIntent.getData(),
-                                                  faceDetection.getGlContext(),
+                                                  poseTracking.getGlContext(),
                                                   glSurfaceView.getWidth(),
                                                   glSurfaceView.getHeight()));
                         }
@@ -267,31 +266,35 @@ public class MainActivity extends AppCompatActivity {
   private void setupStreamingModePipeline(InputSource inputSource) {
     this.inputSource = inputSource;
     // Initializes a new MediaPipe Face Detection solution instance in the streaming mode.
-    faceDetection =
+    poseTracking =
             new PoseTracking(
                     this,
-                    PoseTrackingOptions.builder().setStaticImageMode(false).setModelSelection(0).build());
-    faceDetection.setErrorListener(
+                    PoseTrackingOptions.builder()
+                            .setStaticImageMode(false)
+                            .setLandmarkVisibility(false)
+                            .setModelSelection(0)
+                            .build());
+    poseTracking.setErrorListener(
             (message, e) -> Log.e(TAG, "MediaPipe Face Detection error:" + message));
 
     if (inputSource == InputSource.CAMERA) {
       cameraInput = new CameraInput(this);
-      cameraInput.setNewFrameListener(textureFrame -> faceDetection.send(textureFrame));
+      cameraInput.setNewFrameListener(textureFrame -> poseTracking.send(textureFrame));
     } else if (inputSource == InputSource.VIDEO) {
       videoInput = new VideoInput(this);
-      videoInput.setNewFrameListener(textureFrame -> faceDetection.send(textureFrame));
+      videoInput.setNewFrameListener(textureFrame -> poseTracking.send(textureFrame));
     }
 
     // Initializes a new Gl surface view with a user-defined PoseTrackingResultGlRenderer.
     glSurfaceView =
             new SolutionGlSurfaceView<>(
-                    this, faceDetection.getGlContext(), faceDetection.getGlMajorVersion());
+                    this, poseTracking.getGlContext(), poseTracking.getGlMajorVersion());
     glSurfaceView.setSolutionResultRenderer(new PoseTrackingResultGlRenderer());
     glSurfaceView.setRenderInputImage(true);
-    faceDetection.setResultListener(
-            faceDetectionResult -> {
-              logNoseTipKeypoint(faceDetectionResult, /*faceIndex=*/ 0, /*showPixelValues=*/ false);
-              glSurfaceView.setRenderData(faceDetectionResult);
+    poseTracking.setResultListener(
+            poseTrackingResult -> {
+              logNoseTipKeypoint(poseTrackingResult, /*faceIndex=*/ 0, /*showPixelValues=*/ false);
+              glSurfaceView.setRenderData(poseTrackingResult);
               glSurfaceView.requestRender();
             });
 
@@ -313,7 +316,7 @@ public class MainActivity extends AppCompatActivity {
   private void startCamera() {
     cameraInput.start(
             this,
-            faceDetection.getGlContext(),
+            poseTracking.getGlContext(),
             CameraInput.CameraFacing.FRONT,
             glSurfaceView.getWidth(),
             glSurfaceView.getHeight());
@@ -331,8 +334,8 @@ public class MainActivity extends AppCompatActivity {
     if (glSurfaceView != null) {
       glSurfaceView.setVisibility(View.GONE);
     }
-    if (faceDetection != null) {
-      faceDetection.close();
+    if (poseTracking != null) {
+      poseTracking.close();
     }
   }
 
