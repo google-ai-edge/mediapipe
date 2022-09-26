@@ -73,18 +73,22 @@ public class PoseTrackingResultGlRenderer implements ResultGlRenderer<PoseTracki
     colorHandle = GLES20.glGetUniformLocation(program, "uColor");
   }
 
+  /**
+   * No needed anymore to be deleted
+   * **/
   @Override
   public void renderResult(PoseTrackingResult result, float[] projectionMatrix) {
     if (result == null) {
       return;
     }
+
     GLES20.glUseProgram(program);
     GLES20.glUniformMatrix4fv(projectionMatrixHandle, 1, false, projectionMatrix, 0);
-    GLES20.glUniform1f(pointSizeHandle, KEYPOINT_SIZE);
-    int numDetectedFaces = result.multiPoseTrackings().size();
-    for (int i = 0; i < numDetectedFaces; ++i) {
-      drawDetection(result.multiPoseTrackings().get(i));
-    }
+//    GLES20.glUniform1f(pointSizeHandle, KEYPOINT_SIZE);
+//    int numDetectedFaces = result.multiPoseTrackings().size();
+//    for (int i = 0; i < numDetectedFaces; ++i) {
+//      drawDetection(result.multiPoseTrackings().get(i));
+//    }
   }
 
   /**
@@ -95,8 +99,11 @@ public class PoseTrackingResultGlRenderer implements ResultGlRenderer<PoseTracki
   public void release() {
     GLES20.glDeleteProgram(program);
   }
-
+  /**
+   * Not needed anymore, to be cleaned
+   * */
   private void drawDetection(Detection detection) {
+
     if (!detection.hasLocationData()) {
       return;
     }
@@ -106,28 +113,28 @@ public class PoseTrackingResultGlRenderer implements ResultGlRenderer<PoseTracki
 //      points[2 * i] = detection.getLocationData().getRelativeKeypoints(i).getX();
 //      points[2 * i + 1] = detection.getLocationData().getRelativeKeypoints(i).getY();
 //    }
-    GLES20.glUniform4fv(colorHandle, 1, KEYPOINT_COLOR, 0);
+//    GLES20.glUniform4fv(colorHandle, 1, KEYPOINT_COLOR, 0);
 //    FloatBuffer vertexBuffer =
 //        ByteBuffer.allocateDirect(points.length * 4)
 //            .order(ByteOrder.nativeOrder())
 //            .asFloatBuffer()
 //            .put(points);
 //    vertexBuffer.position(0);
-    GLES20.glEnableVertexAttribArray(positionHandle);
+//    GLES20.glEnableVertexAttribArray(positionHandle);
 //    GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer);
 //    GLES20.glDrawArrays(GLES20.GL_POINTS, 0, FaceKeypoint.NUM_KEY_POINTS);
     if (!detection.getLocationData().hasRelativeBoundingBox()) {
       return;
     }
     // Draw bounding box.
-    float left = detection.getLocationData().getRelativeBoundingBox().getXmin();
-    float top = detection.getLocationData().getRelativeBoundingBox().getYmin();
-    float right = left + detection.getLocationData().getRelativeBoundingBox().getWidth();
-    float bottom = top + detection.getLocationData().getRelativeBoundingBox().getHeight();
-    drawLine(top, left, top, right);
-    drawLine(bottom, left, bottom, right);
-    drawLine(top, left, bottom, left);
-    drawLine(top, right, bottom, right);
+//    float left = detection.getLocationData().getRelativeBoundingBox().getXmin();
+//    float top = detection.getLocationData().getRelativeBoundingBox().getYmin();
+//    float right = left + detection.getLocationData().getRelativeBoundingBox().getWidth();
+//    float bottom = top + detection.getLocationData().getRelativeBoundingBox().getHeight();
+//    drawLine(top, left, top, right);
+//    drawLine(bottom, left, bottom, right);
+//    drawLine(top, left, bottom, left);
+//    drawLine(top, right, bottom, right);
   }
 
   private void drawLine(float y1, float x1, float y2, float x2) {
