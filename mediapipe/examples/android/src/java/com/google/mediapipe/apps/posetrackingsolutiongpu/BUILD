@@ -22,6 +22,7 @@ android_library(
     resource_files = glob(["res/**"]),
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework/formats:landmark_java_proto_lite",
         "//mediapipe/framework/formats:detection_java_proto_lite",
         "//mediapipe/framework/formats:location_data_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/components:android_camerax_helper",

@@ -5,12 +5,13 @@ input_stream: "IMAGE:input_video"
 
 # Output image with rendered results. (GpuBuffer)
 output_stream: "output_video"
-# Pose landmarks. (NormalizedLandmarkList)
-#output_stream: "pose_landmarks"
 
 output_stream: "IMAGE:throttled_input_video"
 output_stream: "DETECTION:pose_detection"
 output_stream: "output_video"
+# Pose landmarks. (NormalizedLandmarkList)
+output_stream: "pose_landmarks"
+
 
 # Generates side packet to enable segmentation.
 node {

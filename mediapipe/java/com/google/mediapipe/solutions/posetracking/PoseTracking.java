@@ -19,6 +19,7 @@ import android.util.Log;
 
 import com.google.common.collect.ImmutableList;
 import com.google.mediapipe.formats.proto.DetectionProto;
+import com.google.mediapipe.formats.proto.LandmarkProto;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
@@ -31,6 +32,7 @@ import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -48,10 +50,11 @@ public class PoseTracking extends ImageSolutionBase {
   private static final String FULL_RANGE_GRAPH_NAME = "face_detection_full_range_image.binarypb";
   private static final String IMAGE_INPUT_STREAM = "input_video";
   private static final ImmutableList<String> OUTPUT_STREAMS =
-      ImmutableList.of("pose_detection", "throttled_input_video","output_video");
+      ImmutableList.of("pose_detection", "throttled_input_video","output_video","pose_landmarks");
   private static final int DETECTIONS_INDEX = 0;
   private static final int INPUT_IMAGE_INDEX = 1;
   private static final int OUTPUT_IMAGE_INDEX = 2;
+  private static final int LANDMARKS_INDEX = 3;
   private final OutputHandler<PoseTrackingResult> outputHandler;
 
   /**
@@ -71,24 +74,40 @@ public class PoseTracking extends ImageSolutionBase {
               try {
                 byte[] bytes = PacketGetter.getProtoBytes(packet);
                 Detection det = Detection.parseFrom(bytes);
-                poseTrackingResultBuilder.setMultiPoseTrackings(
+                poseTrackingResultBuilder.setMultiPoseDetections(
                         ImmutableList.<Detection>of(det));
+
 //                Detection det = PacketGetter.getProto(packet, Detection.getDefaultInstance());
                 Log.v(TAG,"Packet not empty");
 
               }catch (InvalidProtocolBufferException e){
                 Log.e(TAG,e.getMessage());
-                poseTrackingResultBuilder.setMultiPoseTrackings(
+                poseTrackingResultBuilder.setMultiPoseDetections(
                         ImmutableList.<Detection>of());
 
               }
 
             }else {
-              poseTrackingResultBuilder.setMultiPoseTrackings(
+              poseTrackingResultBuilder.setMultiPoseDetections(
                       getProtoVector(packets.get(DETECTIONS_INDEX), Detection.parser()));
             }
+
+            Packet landmarksPacket = packets.get(LANDMARKS_INDEX);
+            if (landmarksPacket.isEmpty()){
+              poseTrackingResultBuilder.setMultiPoseLandmarks(ImmutableList.of());
+            }else {
+              byte[] landmarkBytes = PacketGetter.getProtoBytes(landmarksPacket);
+              LandmarkProto.LandmarkList landmarks = LandmarkProto.LandmarkList.parseFrom(landmarkBytes);
+//              List<LandmarkProto.Landmark> landmarks = getProtoVector(landmarksPacket, LandmarkProto.Landmark.parser());
+              poseTrackingResultBuilder.setMultiPoseLandmarks(landmarks.getLandmarkList());
+            }
+
+
+
           } catch (MediaPipeException e) {
             reportError("Error occurs while getting MediaPipe pose tracking results.", e);
+          } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
           }
 
           int imageIndex = options.landmarkVisibility() ? OUTPUT_IMAGE_INDEX : INPUT_IMAGE_INDEX;

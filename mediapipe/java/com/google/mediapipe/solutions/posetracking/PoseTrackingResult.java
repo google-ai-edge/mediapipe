@@ -17,6 +17,7 @@ package com.google.mediapipe.solutions.posetracking;
 import android.graphics.Bitmap;
 import com.google.auto.value.AutoBuilder;
 import com.google.common.collect.ImmutableList;
+import com.google.mediapipe.formats.proto.LandmarkProto;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.TextureFrame;
 import com.google.mediapipe.solutioncore.ImageSolutionResult;
@@ -29,11 +30,13 @@ import java.util.List;
  * the corresponding input image.
  */
 public class PoseTrackingResult extends ImageSolutionResult {
-  private final ImmutableList<Detection> multiPoseTrackings;
+  private final ImmutableList<Detection> multiPoseDetections;
+  private final ImmutableList<LandmarkProto.Landmark> multiPoseLandmarks;
 
   PoseTrackingResult(
-      ImmutableList<Detection> multiPoseTrackings, Packet imagePacket, long timestamp) {
-    this.multiPoseTrackings = multiPoseTrackings;
+          ImmutableList<Detection> multiPoseDetections,ImmutableList<LandmarkProto.Landmark> multiPoseLandmarks, Packet imagePacket, long timestamp) {
+    this.multiPoseDetections = multiPoseDetections;
+    this.multiPoseLandmarks = multiPoseLandmarks;
     this.timestamp = timestamp;
     this.imagePacket = imagePacket;
   }
@@ -44,7 +47,12 @@ public class PoseTrackingResult extends ImageSolutionResult {
   // to [0.0, 1.0] by the image height). Each keypoint is composed of x and y, which are normalized
   // to [0.0, 1.0] by the image width and height respectively.
   public ImmutableList<Detection> multiPoseTrackings() {
-    return multiPoseTrackings;
+    return multiPoseDetections;
+  }
+
+
+  public ImmutableList<LandmarkProto.Landmark> multiPoseLandmarks() {
+    return multiPoseLandmarks;
   }
 
   public static Builder builder() {
@@ -54,7 +62,8 @@ public class PoseTrackingResult extends ImageSolutionResult {
   /** Builder for {@link PoseTrackingResult}. */
   @AutoBuilder
   public abstract static class Builder {
-    abstract Builder setMultiPoseTrackings(List<Detection> value);
+    abstract Builder setMultiPoseDetections(List<Detection> value);
+    abstract Builder setMultiPoseLandmarks(List<LandmarkProto.Landmark> value);
 
     abstract Builder setTimestamp(long value);
 

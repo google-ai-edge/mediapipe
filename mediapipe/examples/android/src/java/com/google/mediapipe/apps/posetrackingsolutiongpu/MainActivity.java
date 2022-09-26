@@ -30,6 +30,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.exifinterface.media.ExifInterface;
 // ContentResolver dependency
+import com.google.mediapipe.formats.proto.LandmarkProto;
 import com.google.mediapipe.solutioncore.CameraInput;
 import com.google.mediapipe.solutioncore.SolutionGlSurfaceView;
 import com.google.mediapipe.solutioncore.VideoInput;
@@ -201,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
     // Connects MediaPipe Face Detection solution to the user-defined PoseTrackingResultImageView.
     poseTracking.setResultListener(
             poseTrackingResult -> {
-              logNoseTipKeypoint(poseTrackingResult, /*faceIndex=*/ 0, /*showPixelValues=*/ true);
+              logExampleKeypoint(poseTrackingResult, /*faceIndex=*/ 0, /*showPixelValues=*/ true);
 //              imageView.setPoseTrackingResult(poseTrackingResult);
 //              runOnUiThread(() -> imageView.update());
             });
@@ -271,7 +272,7 @@ public class MainActivity extends AppCompatActivity {
                     this,
                     PoseTrackingOptions.builder()
                             .setStaticImageMode(false)
-                            .setLandmarkVisibility(false)
+                            .setLandmarkVisibility(true)
                             .setModelSelection(0)
                             .build());
     poseTracking.setErrorListener(
@@ -293,7 +294,7 @@ public class MainActivity extends AppCompatActivity {
     glSurfaceView.setRenderInputImage(true);
     poseTracking.setResultListener(
             poseTrackingResult -> {
-              logNoseTipKeypoint(poseTrackingResult, /*faceIndex=*/ 0, /*showPixelValues=*/ false);
+              logExampleKeypoint(poseTrackingResult, /*faceIndex=*/ 0, /*showPixelValues=*/ false);
               glSurfaceView.setRenderData(poseTrackingResult);
               glSurfaceView.requestRender();
             });
@@ -339,33 +340,18 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
-  private void logNoseTipKeypoint(
+  private void logExampleKeypoint(
           PoseTrackingResult result, int faceIndex, boolean showPixelValues) {
     if (result.multiPoseTrackings().isEmpty()) {
       return;
     }
-//    RelativeKeypoint noseTip =
-//            result
-//                    .multiPoseTrackings()
-//                    .get(faceIndex)
-//                    .getLocationData()
-//                    .getRelativeKeypoints(FaceKeypoint.NOSE_TIP);
-    // For Bitmaps, show the pixel values. For texture inputs, show the normalized coordinates.
-    if (showPixelValues) {
-      int width = result.inputBitmap().getWidth();
-      int height = result.inputBitmap().getHeight();
-//      Log.i(
-//              TAG,
-//              String.format(
-//                      "MediaPipe Face Detection nose tip coordinates (pixel values): x=%f, y=%f",
-//                      noseTip.getX() * width, noseTip.getY() * height));
-    } else {
-//      Log.i(
-//              TAG,
-//              String.format(
-//                      "MediaPipe Face Detection nose tip normalized coordinates (value range: [0, 1]):"
-//                              + " x=%f, y=%f",
-//                      noseTip.getX(), noseTip.getY()));
-    }
+    LandmarkProto.Landmark exampleLandmark = result.multiPoseLandmarks().get(0);
+      Log.d(
+              TAG,
+              String.format(
+                      "Pose Landmark Landmark at index 0: x=%f, y=%f, z=%f",
+                      exampleLandmark.getX() , exampleLandmark.getY(),exampleLandmark.getZ() ));
+
+
   }
 }
