@@ -195,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
                     this,
                     PoseTrackingOptions.builder()
                             .setStaticImageMode(true)
-                            .setModelSelection(0)
+                            .setModelComplexity(2)
                             .setMinDetectionConfidence(0.5f)
                             .setLandmarkVisibility(true)
                             .build());
@@ -274,7 +274,7 @@ public class MainActivity extends AppCompatActivity {
                     PoseTrackingOptions.builder()
                             .setStaticImageMode(false)
                             .setLandmarkVisibility(true)
-                            .setModelSelection(0)
+                            .setModelComplexity(0)
                             .build());
     poseTracking.setErrorListener(
             (message, e) -> Log.e(TAG, "MediaPipe Face Detection error:" + message));

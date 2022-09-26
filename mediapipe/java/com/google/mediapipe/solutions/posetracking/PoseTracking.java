@@ -18,7 +18,6 @@ import android.content.Context;
 import android.util.Log;
 
 import com.google.common.collect.ImmutableList;
-import com.google.mediapipe.formats.proto.DetectionProto;
 import com.google.mediapipe.formats.proto.LandmarkProto;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
@@ -32,7 +31,6 @@ import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -46,8 +44,7 @@ import javax.annotation.Nullable;
 public class PoseTracking extends ImageSolutionBase {
   private static final String TAG = "PoseTracking";
 
-  private static final String SHORT_RANGE_GRAPH_NAME = "pose_tracking_gpu_image.binarypb";
-  private static final String FULL_RANGE_GRAPH_NAME = "face_detection_full_range_image.binarypb";
+  private static final String GRAPH_NAME = "pose_tracking_gpu_image.binarypb";
   private static final String IMAGE_INPUT_STREAM = "input_video";
   private static final ImmutableList<String> OUTPUT_STREAMS =
       ImmutableList.of("pose_detection", "throttled_input_video","output_video","pose_landmarks");
@@ -121,15 +118,17 @@ public class PoseTracking extends ImageSolutionBase {
     SolutionInfo solutionInfo =
         SolutionInfo.builder()
             .setBinaryGraphPath(
-                options.modelSelection() == 0 ? SHORT_RANGE_GRAPH_NAME : FULL_RANGE_GRAPH_NAME)
+                    GRAPH_NAME)
             .setImageInputStreamName(IMAGE_INPUT_STREAM)
             .setOutputStreamNames(OUTPUT_STREAMS)
             .setStaticImageMode(options.staticImageMode())
             .build();
 
     initialize(context, solutionInfo, outputHandler);
-    Map<String, Packet> emptyInputSidePackets = new HashMap<>();
-    start(emptyInputSidePackets);
+    Map<String, Packet> inputSidePackets = new HashMap<>();
+//    inputSidePackets.put("enable_segmentation", packetCreator.createBool(false));
+    inputSidePackets.put("model_complexity",packetCreator.createInt32(options.modelComplexity()));
+    start(inputSidePackets);
   }
 
   /**

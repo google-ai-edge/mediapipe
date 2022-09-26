@@ -35,7 +35,7 @@ import com.google.auto.value.AutoValue;
 public abstract class PoseTrackingOptions {
   public abstract boolean staticImageMode();
 
-  public abstract int modelSelection();
+  public abstract int modelComplexity();
 
   public abstract float minDetectionConfidence();
 
@@ -49,12 +49,12 @@ public abstract class PoseTrackingOptions {
   @AutoValue.Builder
   public abstract static class Builder {
     public Builder withDefaultValues() {
-      return setStaticImageMode(false).setModelSelection(0).setMinDetectionConfidence(0.5f);
+      return setStaticImageMode(false).setModelComplexity(0).setMinDetectionConfidence(0.5f);
     }
 
     public abstract Builder setStaticImageMode(boolean value);
 
-    public abstract Builder setModelSelection(int value);
+    public abstract Builder setModelComplexity(int value);
 
     public abstract Builder setMinDetectionConfidence(float value);
 
