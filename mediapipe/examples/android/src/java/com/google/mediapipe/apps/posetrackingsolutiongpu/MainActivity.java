@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Surface;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -44,7 +45,7 @@ import java.io.InputStream;
 /** Main activity of MediaPipe Face Detection app. */
 public class MainActivity extends AppCompatActivity {
   private static final String TAG = "MainActivity";
-
+  private static int rotation = Surface.ROTATION_0;
   private PoseTracking poseTracking;
 
   private enum InputSource {
@@ -280,6 +281,7 @@ public class MainActivity extends AppCompatActivity {
 
     if (inputSource == InputSource.CAMERA) {
       cameraInput = new CameraInput(this);
+
       cameraInput.setNewFrameListener(textureFrame -> poseTracking.send(textureFrame));
     } else if (inputSource == InputSource.VIDEO) {
       videoInput = new VideoInput(this);
@@ -315,6 +317,7 @@ public class MainActivity extends AppCompatActivity {
   }
 
   private void startCamera() {
+    cameraInput.getConverter(poseTracking.getGlContext()).setRotation(rotation);
     cameraInput.start(
             this,
             poseTracking.getGlContext(),
@@ -346,7 +349,7 @@ public class MainActivity extends AppCompatActivity {
       return;
     }
     LandmarkProto.Landmark exampleLandmark = result.multiPoseLandmarks().get(0);
-      Log.d(
+      Log.i(
               TAG,
               String.format(
                       "Pose Landmark Landmark at index 0: x=%f, y=%f, z=%f",

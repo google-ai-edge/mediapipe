@@ -57,6 +57,13 @@ public class CameraInput {
     PermissionHelper.checkAndRequestCameraPermissions(activity);
   }
 
+  public ExternalTextureConverter getConverter(EGLContext eglContext){
+    if (converter == null) {
+      converter = new ExternalTextureConverter(eglContext, 2);
+    }
+    return converter;
+  }
+
   /**
    * Sets a callback to be invoked when new frames available.
    *
