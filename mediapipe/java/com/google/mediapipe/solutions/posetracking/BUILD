@@ -43,6 +43,7 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/solutioncore:camera_input",
         "//mediapipe/java/com/google/mediapipe/solutioncore:solution_base",
         "//third_party:autovalue",
+        "@com_google_protobuf//:protobuf_javalite",
         "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_code_findbugs_jsr305",
         "@maven//:com_google_guava_guava",

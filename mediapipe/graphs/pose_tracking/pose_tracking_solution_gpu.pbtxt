@@ -1,16 +1,12 @@
 # MediaPipe graph that performs pose tracking with TensorFlow Lite on GPU.
 
 # GPU buffer. (GpuBuffer)
-input_stream: "IMAGE:input_video"
+input_stream: "input_video"
 
 # Output image with rendered results. (GpuBuffer)
 output_stream: "output_video"
 # Pose landmarks. (NormalizedLandmarkList)
-#output_stream: "pose_landmarks"
-
-output_stream: "IMAGE:throttled_input_video"
-output_stream: "DETECTION:pose_detection"
-output_stream: "output_video"
+output_stream: "pose_landmarks"
 
 # Generates side packet to enable segmentation.
 node {
@@ -18,11 +14,10 @@ node {
   output_side_packet: "PACKET:enable_segmentation"
   node_options: {
     [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
-      packet { bool_value: false }
+      packet { bool_value: true }
     }
   }
 }
-
 
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
@@ -34,9 +29,6 @@ node {
 # real-time mobile applications. It also eliminates unnecessarily computation,
 # e.g., the output produced by a node may get dropped downstream if the
 # subsequent nodes are still busy processing previous inputs.
-
-
-
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
@@ -45,17 +37,8 @@ node {
     tag_index: "FINISHED"
     back_edge: true
   }
-  output_stream: "throttled_input_video_cpu"
+  output_stream: "throttled_input_video"
 }
-
-# Converts Image to GpuBuffer for PoseLandmarkGPU to consume.
-node {
-  calculator: "FromImageCalculator"
-  input_stream: "IMAGE:throttled_input_video_cpu"
-  output_stream: "IMAGE_GPU:throttled_input_video"
-  output_stream: "SOURCE_ON_GPU:is_gpu_image"
-}
-
 
 # Subgraph that detects poses and corresponding landmarks.
 node {

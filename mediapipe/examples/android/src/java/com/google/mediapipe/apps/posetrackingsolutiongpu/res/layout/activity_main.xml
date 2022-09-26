@@ -1,20 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <LinearLayout
+        android:id="@+id/buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="?android:attr/buttonBarStyle" android:gravity="center"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/button_load_picture"
+            android:layout_width="wrap_content"
+            style="?android:attr/buttonBarButtonStyle" android:layout_height="wrap_content"
+            android:text="Load Image" />
+        <Button
+            android:id="@+id/button_load_video"
+            android:layout_width="wrap_content"
+            style="?android:attr/buttonBarButtonStyle" android:layout_height="wrap_content"
+            android:text="Load Video" />
+        <Button
+            android:id="@+id/button_start_camera"
+            android:layout_width="wrap_content"
+            style="?android:attr/buttonBarButtonStyle" android:layout_height="wrap_content"
+            android:text="Start Camera" />
+    </LinearLayout>
     <FrameLayout
         android:id="@+id/preview_display_layout"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_weight="1">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
         <TextView
-            android:id="@+id/no_camera_access_view"
-            android:layout_height="fill_parent"
-            android:layout_width="fill_parent"
+            android:id="@+id/no_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="@string/no_camera_access" />
+            android:text="No camera" />
     </FrameLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>
