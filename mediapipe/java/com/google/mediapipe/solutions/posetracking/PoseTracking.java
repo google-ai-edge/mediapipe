@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
 public class PoseTracking extends ImageSolutionBase {
   private static final String TAG = "PoseTracking";
 
-  private static final String SHORT_RANGE_GRAPH_NAME = "pose_tracking_gpu.binarypb";
+  private static final String SHORT_RANGE_GRAPH_NAME = "pose_tracking_gpu_image.binarypb";
   private static final String FULL_RANGE_GRAPH_NAME = "face_detection_full_range_image.binarypb";
   private static final String IMAGE_INPUT_STREAM = "input_video";
   private static final ImmutableList<String> OUTPUT_STREAMS =

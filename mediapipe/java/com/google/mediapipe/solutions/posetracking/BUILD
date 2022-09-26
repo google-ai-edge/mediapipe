@@ -27,7 +27,7 @@ android_library(
         #        "//mediapipe/modules/face_detection:face_detection_full_range_sparse.tflite",
         #        "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
         #        "//mediapipe/modules/face_detection:face_detection_short_range_image.binarypb",
-        "//mediapipe/graphs/pose_tracking:pose_tracking_gpu.binarypb",
+        "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_image.binarypb",
         "//mediapipe/modules/pose_landmark:pose_landmark_heavy.tflite",
         "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
         "//mediapipe/modules/pose_landmark:pose_landmark_lite.tflite",
