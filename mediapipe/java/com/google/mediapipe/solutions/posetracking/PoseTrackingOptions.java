@@ -41,6 +41,8 @@ public abstract class PoseTrackingOptions {
 
   public abstract boolean landmarkVisibility();
 
+  public abstract boolean smoothLandmarks();
+
   public static Builder builder() {
     return new AutoValue_PoseTrackingOptions.Builder().withDefaultValues();
   }
@@ -49,7 +51,10 @@ public abstract class PoseTrackingOptions {
   @AutoValue.Builder
   public abstract static class Builder {
     public Builder withDefaultValues() {
-      return setStaticImageMode(false).setModelComplexity(0).setMinDetectionConfidence(0.5f);
+      return setStaticImageMode(false)
+              .setModelComplexity(0)
+              .setMinDetectionConfidence(0.5f)
+              .setSmoothLandmarks(true);
     }
 
     public abstract Builder setStaticImageMode(boolean value);
@@ -60,6 +65,7 @@ public abstract class PoseTrackingOptions {
 
     public abstract Builder setLandmarkVisibility(boolean value);
 
+    public abstract Builder setSmoothLandmarks(boolean value);
     public abstract PoseTrackingOptions build();
   }
 }

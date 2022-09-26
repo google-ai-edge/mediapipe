@@ -63,6 +63,7 @@ node {
   calculator: "PoseLandmarkGpu"
   input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
   input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+  input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
   input_stream: "IMAGE:throttled_input_video"
   output_stream: "LANDMARKS:pose_landmarks"
   output_stream: "SEGMENTATION_MASK:segmentation_mask"

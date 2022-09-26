@@ -275,6 +275,7 @@ public class MainActivity extends AppCompatActivity {
                             .setStaticImageMode(false)
                             .setLandmarkVisibility(true)
                             .setModelComplexity(0)
+                            .setSmoothLandmarks(true)
                             .build());
     poseTracking.setErrorListener(
             (message, e) -> Log.e(TAG, "MediaPipe Face Detection error:" + message));

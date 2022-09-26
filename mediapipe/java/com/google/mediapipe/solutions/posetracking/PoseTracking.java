@@ -128,6 +128,7 @@ public class PoseTracking extends ImageSolutionBase {
     Map<String, Packet> inputSidePackets = new HashMap<>();
 //    inputSidePackets.put("enable_segmentation", packetCreator.createBool(false));
     inputSidePackets.put("model_complexity",packetCreator.createInt32(options.modelComplexity()));
+    inputSidePackets.put("smooth_landmarks",packetCreator.createBool(options.smoothLandmarks()));
     start(inputSidePackets);
   }
 
