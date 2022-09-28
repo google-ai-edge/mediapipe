@@ -23,7 +23,7 @@
 
 namespace mediapipe {
 namespace api2 {
-// Calculator that takes a vector and consturct an index range vector based on
+// Calculator that takes a vector and constructs an index range vector based on
 // the size of the input vector.
 //
 // Inputs:
