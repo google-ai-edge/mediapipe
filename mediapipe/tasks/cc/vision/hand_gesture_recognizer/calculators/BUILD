@@ -50,14 +50,14 @@ cc_test(
 )
 
 cc_library(
-    name = "hand_landmarks_to_matrix_calculator",
-    srcs = ["hand_landmarks_to_matrix_calculator.cc"],
+    name = "landmarks_to_matrix_calculator",
+    srcs = ["landmarks_to_matrix_calculator.cc"],
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:ret_check",
-        "@com_google_absl//absl/memory",
+        "//mediapipe/tasks/cc/vision/hand_gesture_recognizer/proto:landmarks_to_matrix_calculator_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -66,16 +66,16 @@ cc_library(
 )
 
 cc_test(
-    name = "hand_landmarks_to_matrix_calculator_test",
-    srcs = ["hand_landmarks_to_matrix_calculator_test.cc"],
+    name = "landmarks_to_matrix_calculator_test",
+    srcs = ["landmarks_to_matrix_calculator_test.cc"],
     deps = [
-        ":hand_landmarks_to_matrix_calculator",
+        ":landmarks_to_matrix_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
-        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
     ],
 )

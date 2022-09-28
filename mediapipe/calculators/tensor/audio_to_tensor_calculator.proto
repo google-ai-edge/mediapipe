@@ -44,4 +44,28 @@ message AudioToTensorCalculatorOptions {
   // Set to false to disable checks for jitter in timestamp values. Useful with
   // live audio input.
   optional bool check_inconsistent_timestamps = 6 [default = true];
+
+  // Size of the fft in number of bins. If set, the calculator outputs fft
+  // tensors.
+  optional int64 fft_size = 7;
+
+  // The amount of padding samples to add before the audio after resampling.
+  // Note that the timestamps shift. Currently, only zero padding is supported.
+  optional int64 padding_samples_before = 8;
+
+  // The amount of padding samples to add after the audio after resampling.
+  // Currently, only zero padding is supported.
+  optional int64 padding_samples_after = 9;
+
+  // Determines the "flushing" behavior in stream mode.
+  enum FlushMode {
+    // Unspecified (causes an error). Won't be used because of the default.
+    NONE = 0;
+    // Emit a packet with the entire remainder at `Timestamp::Max`.
+    ENTIRE_TAIL_AT_TIMESTAMP_MAX = 1;
+    // Continue emitting framed packets with relevant timestamps.
+    PROCEED_AS_USUAL = 2;
+  }
+
+  optional FlushMode flush_mode = 10 [default = ENTIRE_TAIL_AT_TIMESTAMP_MAX];
 }

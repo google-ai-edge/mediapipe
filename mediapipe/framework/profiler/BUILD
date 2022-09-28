@@ -108,6 +108,7 @@ cc_library(
         ":sharded_map",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_profile_cc_proto",
+        "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:integral_types",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/types:optional",

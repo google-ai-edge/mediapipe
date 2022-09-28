@@ -135,6 +135,7 @@ filegroup(
     srcs = [
         "testdata/anchor_golden_file_0.txt",
         "testdata/anchor_golden_file_1.txt",
+        "testdata/anchor_golden_file_2.txt",
     ],
 )
 

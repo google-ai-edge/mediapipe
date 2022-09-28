@@ -37,26 +37,21 @@ namespace mediapipe {
 bool IsPowerOfTwo(int v) { return (v & (v - 1)) == 0; }
 
 int BhwcBatchFromShape(const Tensor::Shape& shape) {
-  LOG_IF(FATAL, shape.dims.empty())
-      << "Tensor::Shape must be non-empty to retrieve a named dimension";
+  if (shape.dims.empty()) {
+    return 1;
+  }
   return shape.dims[0];
 }
 
 int BhwcHeightFromShape(const Tensor::Shape& shape) {
-  LOG_IF(FATAL, shape.dims.empty())
-      << "Tensor::Shape must be non-empty to retrieve a named dimension";
   return shape.dims.size() < 4 ? 1 : shape.dims[shape.dims.size() - 3];
 }
 
 int BhwcWidthFromShape(const Tensor::Shape& shape) {
-  LOG_IF(FATAL, shape.dims.empty())
-      << "Tensor::Shape must be non-empty to retrieve a named dimension";
   return shape.dims.size() < 3 ? 1 : shape.dims[shape.dims.size() - 2];
 }
 
 int BhwcDepthFromShape(const Tensor::Shape& shape) {
-  LOG_IF(FATAL, shape.dims.empty())
-      << "Tensor::Shape must be non-empty to retrieve a named dimension";
   return shape.dims.size() < 2 ? 1 : shape.dims[shape.dims.size() - 1];
 }
 
@@ -424,14 +419,36 @@ Tensor::Tensor(ElementType element_type, const Shape& shape,
 
 #if MEDIAPIPE_METAL_ENABLED
 void Tensor::Invalidate() {
-  absl::MutexLock lock(&view_mutex_);
-  // If memory is allocated and not owned by the metal buffer.
-  // TODO: Re-design cpu buffer memory management.
-  if (cpu_buffer_ && !metal_buffer_) {
-    DeallocateVirtualMemory(cpu_buffer_, AlignToPageSize(bytes()));
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+  GLuint cleanup_gl_tex = GL_INVALID_INDEX;
+  GLuint cleanup_gl_fb = GL_INVALID_INDEX;
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+  {
+    absl::MutexLock lock(&view_mutex_);
+    // If memory is allocated and not owned by the metal buffer.
+    // TODO: Re-design cpu buffer memory management.
+    if (cpu_buffer_ && !metal_buffer_) {
+      DeallocateVirtualMemory(cpu_buffer_, AlignToPageSize(bytes()));
+    }
+    metal_buffer_ = nil;
+    cpu_buffer_ = nullptr;
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+    // Don't need to wait for the resource to be deleted bacause if will be
+    // released on last reference deletion inside the OpenGL driver.
+    std::swap(cleanup_gl_tex, opengl_texture2d_);
+    std::swap(cleanup_gl_fb, frame_buffer_);
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   }
-  metal_buffer_ = nil;
-  cpu_buffer_ = nullptr;
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
+  // Do not hold the view mutex while invoking GlContext::RunWithoutWaiting,
+  // since that method may acquire the context's own lock.
+  if (cleanup_gl_tex != GL_INVALID_INDEX || cleanup_gl_fb != GL_INVALID_INDEX) {
+    gl_context_->RunWithoutWaiting([cleanup_gl_tex, cleanup_gl_fb]() {
+      glDeleteTextures(1, &cleanup_gl_tex);
+      glDeleteFramebuffers(1, &cleanup_gl_fb);
+    });
+  }
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 }
 
 #else

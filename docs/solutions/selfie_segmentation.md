@@ -22,7 +22,7 @@ nav_order: 7
 
 *Fig 1. Example of MediaPipe Selfie Segmentation.* |
 :------------------------------------------------: |
-<video autoplay muted loop preload style="height: auto; width: 480px"><source src="../images/selfie_segmentation_web.mp4" type="video/mp4"></video> |
+<video autoplay muted loop preload style="height: auto; width: 480px"><source src="https://mediapipe.dev/images/selfie_segmentation_web.mp4" type="video/mp4"></video> |
 
 MediaPipe Selfie Segmentation segments the prominent humans in the scene. It can
 run in real-time on both smartphones and laptops. The intended use cases include

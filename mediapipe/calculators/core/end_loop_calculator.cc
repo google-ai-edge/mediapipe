@@ -40,6 +40,9 @@ REGISTER_CALCULATOR(EndLoopNormalizedLandmarkListVectorCalculator);
 typedef EndLoopCalculator<std::vector<bool>> EndLoopBooleanCalculator;
 REGISTER_CALCULATOR(EndLoopBooleanCalculator);
 
+typedef EndLoopCalculator<std::vector<float>> EndLoopFloatCalculator;
+REGISTER_CALCULATOR(EndLoopFloatCalculator);
+
 typedef EndLoopCalculator<std::vector<::mediapipe::RenderData>>
     EndLoopRenderDataCalculator;
 REGISTER_CALCULATOR(EndLoopRenderDataCalculator);

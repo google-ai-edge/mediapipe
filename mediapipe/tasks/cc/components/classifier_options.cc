@@ -15,15 +15,15 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/components/classifier_options.h"
 
-#include "mediapipe/tasks/cc/components/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/components/proto/classifier_options.pb.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace components {
 
-tasks::ClassifierOptions ConvertClassifierOptionsToProto(
+tasks::components::proto::ClassifierOptions ConvertClassifierOptionsToProto(
     ClassifierOptions* options) {
-  tasks::ClassifierOptions options_proto;
+  tasks::components::proto::ClassifierOptions options_proto;
   options_proto.set_display_names_locale(options->display_names_locale);
   options_proto.set_max_results(options->max_results);
   options_proto.set_score_threshold(options->score_threshold);

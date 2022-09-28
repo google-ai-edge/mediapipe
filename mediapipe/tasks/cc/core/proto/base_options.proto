@@ -26,13 +26,13 @@ option java_outer_classname = "BaseOptionsProto";
 // Base options for mediapipe tasks.
 // Next Id: 4
 message BaseOptions {
-  // The external model file, as a single standalone TFLite file. It could be
+  // The external model asset, as a single standalone TFLite file. It could be
   // packed with TFLite Model Metadata[1] and associated files if exist. Fail to
   // provide the necessary metadata and associated files might result in errors.
   // Check the documentation for each task about the specific requirement.
   // [1]: https://www.tensorflow.org/lite/convert/metadata
 
-  optional ExternalFile model_file = 1;
+  optional ExternalFile model_asset = 1;
 
   // Whether the mediapipe task treats the input data as a continuous data
   // stream, or a batch of unrelated data. Default to False.

@@ -22,6 +22,7 @@ limitations under the License.
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "mediapipe/calculators/image/image_clone_calculator.pb.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
@@ -37,6 +38,7 @@ limitations under the License.
 
 namespace mediapipe {
 namespace tasks {
+namespace components {
 namespace {
 
 using ::mediapipe::Tensor;
@@ -137,10 +139,25 @@ absl::Status ConfigureImagePreprocessing(const ModelResources& model_resources,
                    BuildImageTensorSpecs(model_resources));
   MP_RETURN_IF_ERROR(ConfigureImageToTensorCalculator(
       image_tensor_specs, options->mutable_image_to_tensor_options()));
+  // The GPU backend isn't able to process int data. If the input tensor is
+  // quantized, forces the image preprocessing graph to use CPU backend.
+  if (image_tensor_specs.tensor_type == tflite::TensorType_UINT8) {
+    options->set_backend(ImagePreprocessingOptions::CPU_BACKEND);
+  }
   return absl::OkStatus();
 }
 
-// A "mediapipe.tasks.ImagePreprocessingSubgraph" performs image preprocessing.
+Source<Image> AddDataConverter(Source<Image> image_in, Graph& graph,
+                               bool output_on_gpu) {
+  auto& image_converter = graph.AddNode("ImageCloneCalculator");
+  image_converter.GetOptions<mediapipe::ImageCloneCalculatorOptions>()
+      .set_output_on_gpu(output_on_gpu);
+  image_in >> image_converter.In("");
+  return image_converter[Output<Image>("")];
+}
+
+// A "mediapipe.tasks.components.ImagePreprocessingSubgraph" performs image
+// preprocessing.
 // - Accepts CPU input images and outputs CPU tensors.
 //
 // Inputs:
@@ -212,7 +229,22 @@ class ImagePreprocessingSubgraph : public Subgraph {
     auto& image_to_tensor = graph.AddNode("ImageToTensorCalculator");
     image_to_tensor.GetOptions<mediapipe::ImageToTensorCalculatorOptions>()
         .CopyFrom(options.image_to_tensor_options());
-    image_in >> image_to_tensor.In(kImageTag);
+    switch (options.backend()) {
+      case ImagePreprocessingOptions::CPU_BACKEND: {
+        auto cpu_image =
+            AddDataConverter(image_in, graph, /*output_on_gpu=*/false);
+        cpu_image >> image_to_tensor.In(kImageTag);
+        break;
+      }
+      case ImagePreprocessingOptions::GPU_BACKEND: {
+        auto gpu_image =
+            AddDataConverter(image_in, graph, /*output_on_gpu=*/true);
+        gpu_image >> image_to_tensor.In(kImageTag);
+        break;
+      }
+      default:
+        image_in >> image_to_tensor.In(kImageTag);
+    }
     norm_rect_in >> image_to_tensor.In(kNormRectTag);
 
     // Extract optional image properties.
@@ -237,7 +269,9 @@ class ImagePreprocessingSubgraph : public Subgraph {
     };
   }
 };
-REGISTER_MEDIAPIPE_GRAPH(::mediapipe::tasks::ImagePreprocessingSubgraph);
+REGISTER_MEDIAPIPE_GRAPH(
+    ::mediapipe::tasks::components::ImagePreprocessingSubgraph);
 
+}  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe

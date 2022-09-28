@@ -18,7 +18,7 @@ syntax = "proto2";
 package mediapipe.tasks.vision.hand_gesture_recognizer.proto;
 
 import "mediapipe/framework/calculator.proto";
-import "mediapipe/tasks/cc/components/classifier_options.proto";
+import "mediapipe/tasks/cc/components/proto/classifier_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
 message HandGestureRecognizerSubgraphOptions {
@@ -31,7 +31,7 @@ message HandGestureRecognizerSubgraphOptions {
 
   // Options for configuring the gesture classifier behavior, such as score
   // threshold, number of results, etc.
-  optional ClassifierOptions classifier_options = 2;
+  optional components.proto.ClassifierOptions classifier_options = 2;
 
   // Minimum confidence value ([0.0, 1.0]) for the hand landmarks to be
   // considered tracked successfully

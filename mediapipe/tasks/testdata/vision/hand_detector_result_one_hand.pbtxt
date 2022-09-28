@@ -1,0 +1,33 @@
+detections {
+  label: "Palm"
+  score: 0.9694994
+  location_data {
+    format: RELATIVE_BOUNDING_BOX
+    relative_bounding_box {
+      xmin: 0.64567286
+      ymin: 0.04196969
+      width: 0.22876495
+      height: 0.43088135
+    }
+  }
+}
+detections {
+  label: "Palm"
+  score: 0.9691078
+  location_data {
+    format: RELATIVE_BOUNDING_BOX
+    relative_bounding_box {
+      xmin: 0.1332045
+      ymin: 0.53324974
+      width: 0.22739677
+      height: 0.42832413
+    }
+  }
+}
+hand_rects {
+  x_center: 0.6807422
+  y_center: 0.41254658
+  height: 1.121068
+  width: 0.59478885
+  rotation: -2.374725
+}

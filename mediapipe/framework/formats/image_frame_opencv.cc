@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -85,14 +85,8 @@ cv::Mat MatView(const ImageFrame* image) {
   const size_t steps[] = {static_cast<size_t>(image->WidthStep()),
                           static_cast<size_t>(image->ByteDepth())};
   // Use ImageFrame to initialize in-place. ImageFrame still owns memory.
-  if (steps[0] == sizes[1] * image->NumberOfChannels() * image->ByteDepth()) {
-    // Contiguous memory optimization. See b/78570764
-    return cv::Mat(dims, sizes, type, const_cast<uint8*>(image->PixelData()));
-  } else {
-    // Custom width step.
-    return cv::Mat(dims, sizes, type, const_cast<uint8*>(image->PixelData()),
-                   steps);
-  }
+  return cv::Mat(dims, sizes, type, const_cast<uint8_t*>(image->PixelData()),
+                 steps);
 }
 
 }  // namespace formats

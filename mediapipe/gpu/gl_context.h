@@ -303,6 +303,10 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
     return *static_cast<T*>(entry.get());
   }
 
+  // Returns true if any GL context, including external contexts not managed by
+  // the GlContext class, is current.
+  static bool IsAnyContextCurrent();
+
   // Creates a synchronization token for the current, non-GlContext-owned
   // context. This can be passed to MediaPipe so it can synchronize with the
   // commands issued in the external context up to this point.

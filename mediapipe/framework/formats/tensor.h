@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include <initializer_list>
+#include <numeric>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -95,9 +96,8 @@ class Tensor {
     Shape(std::initializer_list<int> dimensions) : dims(dimensions) {}
     Shape(const std::vector<int>& dimensions) : dims(dimensions) {}
     int num_elements() const {
-      int res = dims.empty() ? 0 : 1;
-      std::for_each(dims.begin(), dims.end(), [&res](int i) { res *= i; });
-      return res;
+      return std::accumulate(dims.begin(), dims.end(), 1,
+                             std::multiplies<int>());
     }
     std::vector<int> dims;
   };

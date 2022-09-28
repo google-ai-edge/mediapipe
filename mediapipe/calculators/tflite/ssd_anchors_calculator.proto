@@ -60,4 +60,30 @@ message SsdAnchorsCalculatorOptions {
   // This option can be used when the predicted anchor width and height are in
   // pixels.
   optional bool fixed_anchor_size = 14 [default = false];
+
+  // Generates grid anchors on the fly corresponding to multiple CNN layers as
+  // described in:
+  // "Focal Loss for Dense Object Detection" (https://arxiv.org/abs/1708.02002)
+  //  T.-Y. Lin, P. Goyal, R. Girshick, K. He, P. Dollar
+  optional bool multiscale_anchor_generation = 15 [default = false];
+
+  // minimum level in feature pyramid
+  // for multiscale_anchor_generation only!
+  optional int32 min_level = 16 [default = 3];
+
+  // maximum level in feature pyramid
+  // for multiscale_anchor_generation only!
+  optional int32 max_level = 17 [default = 7];
+
+  // Scale of anchor to feature stride
+  // for multiscale_anchor_generation only!
+  optional float anchor_scale = 18 [default = 4.0];
+
+  // Number of intermediate scale each scale octave
+  // for multiscale_anchor_generation only!
+  optional int32 scales_per_octave = 19 [default = 2];
+
+  // Whether to produce anchors in normalized coordinates.
+  // for multiscale_anchor_generation only!
+  optional bool normalize_coordinates = 20 [default = true];
 }

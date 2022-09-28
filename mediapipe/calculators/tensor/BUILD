@@ -55,6 +55,14 @@ mediapipe_proto_library(
 cc_library(
     name = "audio_to_tensor_calculator",
     srcs = ["audio_to_tensor_calculator.cc"],
+    copts = select({
+        # b/215212850
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",
+        ],
+        "//conditions:default": [],
+    }),
     visibility = [
         "//mediapipe/framework:mediapipe_internal",
     ],
@@ -67,13 +75,16 @@ cc_library(
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/formats:time_series_header_cc_proto",
+        "//mediapipe/framework/port:ret_check",
         "//mediapipe/util:time_series_util",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_audio_tools//audio/dsp:resampler_q",
+        "@com_google_audio_tools//audio/dsp:window_functions",
         "@org_tensorflow//tensorflow/lite/c:common",
+        "@pffft",
     ],
     alwayslink = 1,
 )
@@ -83,6 +94,7 @@ cc_test(
     srcs = ["audio_to_tensor_calculator_test.cc"],
     deps = [
         ":audio_to_tensor_calculator",
+        ":audio_to_tensor_calculator_cc_proto",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:timestamp",
@@ -93,6 +105,58 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "@com_google_absl//absl/strings",
         "@com_google_audio_tools//audio/dsp:resampler_q",
+        "@org_tensorflow//tensorflow/lite/c:common",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "feedback_tensors_calculator_proto",
+    srcs = ["feedback_tensors_calculator.proto"],
+    visibility = [
+        "//mediapipe/framework:mediapipe_internal",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "feedback_tensors_calculator",
+    srcs = ["feedback_tensors_calculator.cc"],
+    copts = select({
+        # b/215212850
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = [
+        "//mediapipe/framework:mediapipe_internal",
+    ],
+    deps = [
+        ":feedback_tensors_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:tensor",
+        "@com_google_absl//absl/status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "feedback_tensors_calculator_test",
+    srcs = ["feedback_tensors_calculator_test.cc"],
+    deps = [
+        ":feedback_tensors_calculator",
+        ":feedback_tensors_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
         "@org_tensorflow//tensorflow/lite/c:common",
     ],
 )
@@ -346,6 +410,10 @@ cc_library(
     }),
 )
 
+# This target provides the InferenceCalculator and a default set of implementations tailored for the
+# current build platforms. More implementations can be added as separate dependencies to a client;
+# for clients that want a narrower set of implementations than the default should see the comment on
+# inference_calculator_interface.
 cc_library(
     name = "inference_calculator",
     visibility = ["//visibility:public"],

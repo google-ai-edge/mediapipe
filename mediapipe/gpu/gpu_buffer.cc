@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "mediapipe/framework/port/logging.h"
 
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
@@ -9,6 +11,23 @@
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 namespace mediapipe {
+
+namespace {
+
+struct StorageTypeFormatter {
+  void operator()(std::string* out,
+                  const std::shared_ptr<internal::GpuBufferStorage>& s) const {
+    absl::StrAppend(out, s->storage_type().name());
+  }
+};
+
+}  // namespace
+
+std::string GpuBuffer::DebugString() const {
+  return absl::StrCat("GpuBuffer[",
+                      absl::StrJoin(storages_, ", ", StorageTypeFormatter()),
+                      "]");
+}
 
 internal::GpuBufferStorage& GpuBuffer::GetStorageForView(
     TypeId view_provider_type, bool for_writing) const {
@@ -52,7 +71,10 @@ internal::GpuBufferStorage& GpuBuffer::GetStorageForView(
     }
   }
 
-  CHECK(chosen_storage) << "no view provider found";
+  CHECK(chosen_storage) << "no view provider found for requested view "
+                        << view_provider_type.name() << "; storages available: "
+                        << absl::StrJoin(storages_, ", ",
+                                         StorageTypeFormatter());
   DCHECK((*chosen_storage)->can_down_cast_to(view_provider_type));
   return **chosen_storage;
 }

@@ -18,11 +18,12 @@ limitations under the License.
 
 #include "absl/status/status.h"
 #include "mediapipe/tasks/cc/components/classification_postprocessing_options.pb.h"
-#include "mediapipe/tasks/cc/components/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/components/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 
 namespace mediapipe {
 namespace tasks {
+namespace components {
 
 // Configures a ClassificationPostprocessing subgraph using the provided model
 // resources and ClassifierOptions.
@@ -31,7 +32,7 @@ namespace tasks {
 // Example usage:
 //
 //   auto& postprocessing =
-//       graph.AddNode("mediapipe.tasks.ClassificationPostprocessingSubgraph");
+//       graph.AddNode("mediapipe.tasks.components.ClassificationPostprocessingSubgraph");
 //   MP_RETURN_IF_ERROR(ConfigureClassificationPostprocessing(
 //       model_resources,
 //       classifier_options,
@@ -49,10 +50,11 @@ namespace tasks {
 //   CLASSIFICATION_RESULT - ClassificationResult
 //     The output aggregated classification results.
 absl::Status ConfigureClassificationPostprocessing(
-    const core::ModelResources& model_resources,
-    const ClassifierOptions& classifier_options,
+    const tasks::core::ModelResources& model_resources,
+    const tasks::components::proto::ClassifierOptions& classifier_options,
     ClassificationPostprocessingOptions* options);
 
+}  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe
 
