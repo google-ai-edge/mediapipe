@@ -1,5 +1,8 @@
 #include "mediapipe/framework/formats/tensor.h"
 
+#include <cstring>
+#include <string>
+
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #if !MEDIAPIPE_DISABLE_GPU
@@ -23,6 +26,9 @@ TEST(General, TestDataTypes) {
 
   Tensor t2(Tensor::ElementType::kFloat16, Tensor::Shape{4, 3, 2, 3});
   EXPECT_EQ(t2.bytes(), t2.shape().num_elements() * 2);
+
+  Tensor t_char(Tensor::ElementType::kChar, Tensor::Shape{4});
+  EXPECT_EQ(t_char.bytes(), t_char.shape().num_elements() * sizeof(char));
 }
 
 TEST(Cpu, TestMemoryAllocation) {

@@ -90,7 +90,16 @@ class Tensor {
 
  public:
   // No resources are allocated here.
-  enum class ElementType { kNone, kFloat16, kFloat32, kUInt8, kInt8, kInt32 };
+  enum class ElementType {
+    kNone,
+    kFloat16,
+    kFloat32,
+    kUInt8,
+    kInt8,
+    kInt32,
+    // TODO: Update the inference runner to handle kTfLiteString.
+    kChar
+  };
   struct Shape {
     Shape() = default;
     Shape(std::initializer_list<int> dimensions) : dims(dimensions) {}
@@ -319,6 +328,8 @@ class Tensor {
         return 1;
       case ElementType::kInt32:
         return sizeof(int32_t);
+      case ElementType::kChar:
+        return sizeof(char);
     }
   }
   int bytes() const { return shape_.num_elements() * element_size(); }
