@@ -21,10 +21,13 @@ data_sources: {
       # - what is happening on each CPU at each moment
       ftrace_events: "power/cpu_frequency"
       ftrace_events: "power/cpu_idle"
+      # TODO: CPU frequency does not show up without scheduling
       ftrace_events: "sched/sched_switch"
       compact_sched {
         enabled: true
       }
+      # GPU
+      ftrace_events: "power/gpu_frequency"
     }
   }
 }
