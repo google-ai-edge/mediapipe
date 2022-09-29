@@ -620,7 +620,9 @@ class GlSyncWrapper {
 #endif
     GLenum result = glClientWaitSync(sync_, flags, timeout);
     if (result == GL_ALREADY_SIGNALED || result == GL_CONDITION_SATISFIED) {
-      Clear();
+      // TODO: we could clear at this point so later calls are faster,
+      // but we need to do so in a thread-safe way.
+      // Clear();
     }
     // TODO: do something if the wait fails?
   }
@@ -646,7 +648,9 @@ class GlSyncWrapper {
 #endif
     GLenum result = glClientWaitSync(sync_, flags, 0);
     if (result == GL_ALREADY_SIGNALED || result == GL_CONDITION_SATISFIED) {
-      Clear();
+      // TODO: we could clear at this point so later calls are faster,
+      // but we need to do so in a thread-safe way.
+      // Clear();
       return true;
     }
     return false;
@@ -822,10 +826,17 @@ std::shared_ptr<GlSyncPoint> GlContext::CreateSyncToken() {
   return token;
 }
 
+bool GlContext::IsAnyContextCurrent() {
+  ContextBinding ctx;
+  GetCurrentContextBinding(&ctx);
+  return ctx.context != kPlatformGlContextNone;
+}
+
 std::shared_ptr<GlSyncPoint>
 GlContext::CreateSyncTokenForCurrentExternalContext(
     const std::shared_ptr<GlContext>& delegate_graph_context) {
   CHECK(delegate_graph_context);
+  if (!IsAnyContextCurrent()) return nullptr;
   if (delegate_graph_context->ShouldUseFenceSync()) {
     return std::shared_ptr<GlSyncPoint>(
         new GlExternalFenceSyncPoint(delegate_graph_context));

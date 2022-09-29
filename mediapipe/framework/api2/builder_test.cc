@@ -2,6 +2,7 @@
 
 #include <functional>
 
+#include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
@@ -296,6 +297,32 @@ TEST(BuilderTest, EmptyTag) {
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }
 
+TEST(BuilderTest, StringLikeTags) {
+  const char kA[] = "A";
+  const std::string kB = "B";
+  constexpr absl::string_view kC = "C";
+
+  builder::Graph graph;
+  auto& foo = graph.AddNode("Foo");
+  graph.In(kA).SetName("a") >> foo.In(kA);
+  graph.In(kB).SetName("b") >> foo.In(kB);
+  foo.Out(kC).SetName("c") >> graph.Out(kC);
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "A:a"
+        input_stream: "B:b"
+        output_stream: "C:c"
+        node {
+          calculator: "Foo"
+          input_stream: "A:a"
+          input_stream: "B:b"
+          output_stream: "C:c"
+        }
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
 TEST(BuilderTest, GraphIndexes) {
   builder::Graph graph;
   auto& foo = graph.AddNode("Foo");
@@ -326,57 +353,91 @@ TEST(BuilderTest, GraphIndexes) {
 
 class AnyAndSameTypeCalculator : public NodeIntf {
  public:
-  static constexpr Input<AnyType> kAnyTypeInput{"INPUT"};
-  static constexpr Output<AnyType> kAnyTypeOutput{"ANY_OUTPUT"};
-  static constexpr Output<SameType<kAnyTypeInput>> kSameTypeOutput{
+  static constexpr Input<AnyType>::Optional kAnyTypeInput{"INPUT"};
+  static constexpr Output<AnyType>::Optional kAnyTypeOutput{"ANY_OUTPUT"};
+  static constexpr Output<SameType<kAnyTypeInput>>::Optional kSameTypeOutput{
       "SAME_OUTPUT"};
+  static constexpr Output<SameType<kSameTypeOutput>> kRecursiveSameTypeOutput{
+      "RECURSIVE_SAME_OUTPUT"};
 
-  static constexpr Input<int> kIntInput{"INT_INPUT"};
+  static constexpr Input<int>::Optional kIntInput{"INT_INPUT"};
   // `SameType` usage for this output is only for testing purposes.
   //
   // `SameType` is designed to work with inputs of `AnyType` and, normally, you
   // would not use `Output<SameType<kIntInput>>` in a real calculator. You
   // should write `Output<int>` instead, since the type is known.
-  static constexpr Output<SameType<kIntInput>> kSameIntOutput{
+  static constexpr Output<SameType<kIntInput>>::Optional kSameIntOutput{
       "SAME_INT_OUTPUT"};
+  static constexpr Output<SameType<kSameIntOutput>> kRecursiveSameIntOutput{
+      "RECURSIVE_SAME_INT_OUTPUT"};
 
-  MEDIAPIPE_NODE_INTERFACE(AnyTypeCalculator, kAnyTypeInput, kAnyTypeOutput,
-                           kSameTypeOutput);
+  MEDIAPIPE_NODE_INTERFACE(AnyAndSameTypeCalculator, kAnyTypeInput,
+                           kAnyTypeOutput, kSameTypeOutput);
 };
 
 TEST(BuilderTest, AnyAndSameTypeHandledProperly) {
   builder::Graph graph;
-  builder::Source<internal::Generic> any_input =
-      graph[Input<AnyType>{"GRAPH_ANY_INPUT"}];
+  builder::Source<AnyType> any_input = graph[Input<AnyType>{"GRAPH_ANY_INPUT"}];
   builder::Source<int> int_input = graph[Input<int>{"GRAPH_INT_INPUT"}];
 
   auto& node = graph.AddNode("AnyAndSameTypeCalculator");
   any_input >> node[AnyAndSameTypeCalculator::kAnyTypeInput];
   int_input >> node[AnyAndSameTypeCalculator::kIntInput];
 
-  builder::Source<internal::Generic> any_type_output =
+  builder::Source<AnyType> any_type_output =
       node[AnyAndSameTypeCalculator::kAnyTypeOutput];
   any_type_output.SetName("any_type_output");
 
-  builder::Source<internal::Generic> same_type_output =
+  builder::Source<AnyType> same_type_output =
       node[AnyAndSameTypeCalculator::kSameTypeOutput];
   same_type_output.SetName("same_type_output");
-  builder::Source<internal::Generic> same_int_output =
+  builder::Source<AnyType> recursive_same_type_output =
+      node[AnyAndSameTypeCalculator::kRecursiveSameTypeOutput];
+  recursive_same_type_output.SetName("recursive_same_type_output");
+  builder::Source<int> same_int_output =
       node[AnyAndSameTypeCalculator::kSameIntOutput];
   same_int_output.SetName("same_int_output");
+  builder::Source<int> recursive_same_int_type_output =
+      node[AnyAndSameTypeCalculator::kRecursiveSameIntOutput];
+  recursive_same_int_type_output.SetName("recursive_same_int_type_output");
+
+  CalculatorGraphConfig expected = mediapipe::ParseTextProtoOrDie<
+      CalculatorGraphConfig>(R"pb(
+    node {
+      calculator: "AnyAndSameTypeCalculator"
+      input_stream: "INPUT:__stream_0"
+      input_stream: "INT_INPUT:__stream_1"
+      output_stream: "ANY_OUTPUT:any_type_output"
+      output_stream: "RECURSIVE_SAME_INT_OUTPUT:recursive_same_int_type_output"
+      output_stream: "RECURSIVE_SAME_OUTPUT:recursive_same_type_output"
+      output_stream: "SAME_INT_OUTPUT:same_int_output"
+      output_stream: "SAME_OUTPUT:same_type_output"
+    }
+    input_stream: "GRAPH_ANY_INPUT:__stream_0"
+    input_stream: "GRAPH_INT_INPUT:__stream_1"
+  )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
+TEST(BuilderTest, AnyTypeCanBeCast) {
+  builder::Graph graph;
+  builder::Source<std::string> any_input =
+      graph.In("GRAPH_ANY_INPUT").Cast<std::string>();
+
+  auto& node = graph.AddNode("AnyAndSameTypeCalculator");
+  any_input >> node[AnyAndSameTypeCalculator::kAnyTypeInput];
+  builder::Source<double> any_type_output =
+      node[AnyAndSameTypeCalculator::kAnyTypeOutput].Cast<double>();
+  any_type_output.SetName("any_type_output");
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         node {
           calculator: "AnyAndSameTypeCalculator"
           input_stream: "INPUT:__stream_0"
-          input_stream: "INT_INPUT:__stream_1"
           output_stream: "ANY_OUTPUT:any_type_output"
-          output_stream: "SAME_INT_OUTPUT:same_int_output"
-          output_stream: "SAME_OUTPUT:same_type_output"
         }
         input_stream: "GRAPH_ANY_INPUT:__stream_0"
-        input_stream: "GRAPH_INT_INPUT:__stream_1"
       )pb");
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }

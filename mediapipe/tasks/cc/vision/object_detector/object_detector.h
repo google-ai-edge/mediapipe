@@ -113,11 +113,17 @@ struct ObjectDetectorOptions {
 //  (kTfLiteFloat32)
 //   - scores tensor of size `[num_results]`, each value representing the score
 //     of the detected object.
+//   - optional score calibration can be attached using ScoreCalibrationOptions
+//     and an AssociatedFile with type TENSOR_AXIS_SCORE_CALIBRATION. See
+//     metadata_schema.fbs [1] for more details.
 //  (kTfLiteFloat32)
 //   - integer num_results as a tensor of size `[1]`
 //
 // An example of such model can be found at:
 // https://tfhub.dev/google/lite-model/object_detection/mobile_object_localizer_v1/1/metadata/1
+//
+// [1]:
+// https://github.com/google/mediapipe/blob/6cdc6443b6a7ed662744e2a2ce2d58d9c83e6d6f/mediapipe/tasks/metadata/metadata_schema.fbs#L456
 class ObjectDetector : tasks::vision::core::BaseVisionTaskApi {
  public:
   using BaseVisionTaskApi::BaseVisionTaskApi;
@@ -166,7 +172,7 @@ class ObjectDetector : tasks::vision::core::BaseVisionTaskApi {
   // unrotated input frame of reference coordinates system, i.e. in `[0,
   // image_width) x [0, image_height)`, which are the dimensions of the
   // underlying image data.
-  absl::StatusOr<std::vector<mediapipe::Detection>> Detect(
+  absl::StatusOr<std::vector<mediapipe::Detection>> DetectForVideo(
       mediapipe::Image image, int64 timestamp_ms);
 
   // Sends live image data to perform object detection, and the results will be

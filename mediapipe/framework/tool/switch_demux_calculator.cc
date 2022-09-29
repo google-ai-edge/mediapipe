@@ -129,16 +129,33 @@ absl::Status SwitchDemuxCalculator::Open(CalculatorContext* cc) {
   // Relay side packets to all channels.
   // Note: This is necessary because Calculator::Open only proceeds when every
   // anticipated side-packet arrives.
-  int channel_count = tool::ChannelCount(cc->OutputSidePackets().TagMap());
+  int side_channel_count = tool::ChannelCount(cc->OutputSidePackets().TagMap());
   for (const std::string& tag : ChannelTags(cc->OutputSidePackets().TagMap())) {
     int num_entries = cc->InputSidePackets().NumEntries(tag);
     for (int index = 0; index < num_entries; ++index) {
       Packet input = cc->InputSidePackets().Get(tag, index);
-      for (int channel = 0; channel < channel_count; ++channel) {
+      for (int channel = 0; channel < side_channel_count; ++channel) {
         std::string output_tag = tool::ChannelTag(tag, channel);
         auto output_id = cc->OutputSidePackets().GetId(output_tag, index);
         if (output_id.IsValid()) {
           cc->OutputSidePackets().Get(output_tag, index).Set(input);
+        }
+      }
+    }
+  }
+
+  // Relay headers to all channels.
+  int output_channel_count = tool::ChannelCount(cc->Outputs().TagMap());
+  for (const std::string& tag : ChannelTags(cc->Outputs().TagMap())) {
+    int num_entries = cc->Inputs().NumEntries(tag);
+    for (int index = 0; index < num_entries; ++index) {
+      auto& input = cc->Inputs().Get(tag, index);
+      if (input.Header().IsEmpty()) continue;
+      for (int channel = 0; channel < output_channel_count; ++channel) {
+        std::string output_tag = tool::ChannelTag(tag, channel);
+        auto output_id = cc->Outputs().GetId(output_tag, index);
+        if (output_id.IsValid()) {
+          cc->Outputs().Get(output_tag, index).SetHeader(input.Header());
         }
       }
     }

@@ -5,7 +5,7 @@
 
 buffers: {
   size_kb: 150000
-  fill_policy: DISCARD
+  fill_policy: RING_BUFFER
 }
 
 data_sources: {
@@ -14,19 +14,24 @@ data_sources: {
   }
 }
 data_sources: {
-    config {
-        name: "linux.ftrace"
-        ftrace_config {
-            # Scheduling information & process tracking. Useful for:
-            # - what is happening on each CPU at each moment
-            ftrace_events: "power/cpu_frequency"
-            ftrace_events: "power/cpu_idle"
-            ftrace_events: "sched/sched_switch"
-            compact_sched {
-              enabled: true
-            }
-       }
+  config {
+    name: "linux.ftrace"
+    ftrace_config {
+      # Scheduling information & process tracking. Useful for:
+      # - what is happening on each CPU at each moment
+      ftrace_events: "power/cpu_frequency"
+      ftrace_events: "power/cpu_idle"
+      # TODO: CPU frequency does not show up without scheduling
+      ftrace_events: "sched/sched_switch"
+      compact_sched {
+        enabled: true
+      }
+      # GPU
+      ftrace_events: "power/gpu_frequency"
     }
+  }
 }
 write_into_file: true
 file_write_period_ms: 500
+# b/243571696 Added to remove Perfetto timeouts when running benchmarks remotely.
+duration_ms: 60000

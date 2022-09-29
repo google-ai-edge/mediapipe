@@ -73,9 +73,14 @@ JNIEXPORT jlong JNICALL GRAPH_TEXTURE_FRAME_METHOD(
   // TODO: get the graph's main context from the packet context?
   // Or clean up in some other way?
   if (context_for_deletion) {
-    token = new mediapipe::GlSyncToken(
-        mediapipe::GlContext::CreateSyncTokenForCurrentExternalContext(
-            context_for_deletion));
+    auto sync = mediapipe::GlContext::CreateSyncTokenForCurrentExternalContext(
+        context_for_deletion);
+    // A Java handle to a token is a raw pointer to a std::shared_ptr on the
+    // heap, cast to a long. If the shared_ptr itself is null, leave the token
+    // null too.
+    if (sync) {
+      token = new mediapipe::GlSyncToken(std::move(sync));
+    }
   }
   return reinterpret_cast<jlong>(token);
 }

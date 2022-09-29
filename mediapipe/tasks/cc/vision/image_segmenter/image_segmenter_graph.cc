@@ -28,9 +28,10 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/calculators/tensor/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/image_preprocessing.h"
 #include "mediapipe/tasks/cc/components/image_preprocessing_options.pb.h"
-#include "mediapipe/tasks/cc/components/segmenter_options.pb.h"
+#include "mediapipe/tasks/cc/components/proto/segmenter_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
+#include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_options.pb.h"
@@ -51,7 +52,7 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::MultiSource;
 using ::mediapipe::api2::builder::Source;
-using ::mediapipe::tasks::SegmenterOptions;
+using ::mediapipe::tasks::components::proto::SegmenterOptions;
 using ::mediapipe::tasks::metadata::ModelMetadataExtractor;
 using ::mediapipe::tasks::vision::image_segmenter::proto::ImageSegmenterOptions;
 using ::tflite::Tensor;
@@ -176,6 +177,11 @@ absl::StatusOr<const Tensor*> GetOutputTensor(
 //   options {
 //     [mediapipe.tasks.vision.image_segmenter.proto.ImageSegmenterOptions.ext]
 //     {
+//       base_options {
+//         model_asset {
+//           file_name: "/path/to/model.tflite"
+//         }
+//       }
 //       segmenter_options {
 //         output_type: CONFIDENCE_MASK
 //         activation: SOFTMAX
@@ -228,19 +234,22 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
     // Adds preprocessing calculators and connects them to the graph input image
     // stream.
     auto& preprocessing =
-        graph.AddNode("mediapipe.tasks.ImagePreprocessingSubgraph");
+        graph.AddNode("mediapipe.tasks.components.ImagePreprocessingSubgraph");
     MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
         model_resources,
-        &preprocessing.GetOptions<ImagePreprocessingOptions>()));
+        &preprocessing
+             .GetOptions<tasks::components::ImagePreprocessingOptions>()));
     image_in >> preprocessing.In(kImageTag);
 
     // Adds inference subgraph and connects its input stream to the output
     // tensors produced by the ImageToTensorCalculator.
-    auto& inference = AddInference(model_resources, graph);
+    auto& inference = AddInference(
+        model_resources, task_options.base_options().acceleration(), graph);
     preprocessing.Out(kTensorsTag) >> inference.In(kTensorsTag);
 
     // Adds segmentation calculators for output streams.
-    auto& tensor_to_images = graph.AddNode("TensorsToSegmentationCalculator");
+    auto& tensor_to_images =
+        graph.AddNode("mediapipe.tasks.TensorsToSegmentationCalculator");
     RET_CHECK_OK(ConfigureTensorsToSegmentationCalculator(
         task_options, model_resources,
         &tensor_to_images

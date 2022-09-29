@@ -25,7 +25,7 @@ mediapipe_proto_library(
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/framework/formats:image_format_proto",
-        "//mediapipe/tasks/cc/components:segmenter_options_proto",
+        "//mediapipe/tasks/cc/components/proto:segmenter_options_proto",
         "//mediapipe/util:label_map_proto",
     ],
 )
@@ -45,7 +45,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:status",
-        "//mediapipe/tasks/cc/components:segmenter_options_cc_proto",
+        "//mediapipe/tasks/cc/components/proto:segmenter_options_cc_proto",
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "//mediapipe/util:label_map_cc_proto",
         "@com_google_absl//absl/status",

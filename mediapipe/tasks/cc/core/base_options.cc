@@ -18,6 +18,8 @@ limitations under the License.
 #include <memory>
 #include <string>
 
+#include "mediapipe/calculators/tensor/inference_calculator.pb.h"
+#include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 
 namespace mediapipe {
@@ -26,28 +28,37 @@ namespace core {
 
 proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
   proto::BaseOptions base_options_proto;
-  if (!base_options->model_file_name.empty()) {
-    base_options_proto.mutable_model_file()->set_file_name(
-        base_options->model_file_name);
+  if (!base_options->model_asset_path.empty()) {
+    base_options_proto.mutable_model_asset()->set_file_name(
+        base_options->model_asset_path);
   }
-  if (base_options->model_file_contents) {
-    base_options_proto.mutable_model_file()->mutable_file_content()->swap(
-        *base_options->model_file_contents.release());
+  if (base_options->model_asset_buffer) {
+    base_options_proto.mutable_model_asset()->mutable_file_content()->swap(
+        *base_options->model_asset_buffer.release());
   }
-  if (base_options->model_file_descriptor_meta.fd > 0) {
-    auto* file_descriptor_meta_proto =
-        base_options_proto.mutable_model_file()->mutable_file_descriptor_meta();
+  if (base_options->model_asset_descriptor_meta.fd > 0) {
+    auto* file_descriptor_meta_proto = base_options_proto.mutable_model_asset()
+                                           ->mutable_file_descriptor_meta();
     file_descriptor_meta_proto->set_fd(
-        base_options->model_file_descriptor_meta.fd);
-    if (base_options->model_file_descriptor_meta.length > 0) {
+        base_options->model_asset_descriptor_meta.fd);
+    if (base_options->model_asset_descriptor_meta.length > 0) {
       file_descriptor_meta_proto->set_length(
-          base_options->model_file_descriptor_meta.length);
+          base_options->model_asset_descriptor_meta.length);
     }
-    if (base_options->model_file_descriptor_meta.offset > 0) {
+    if (base_options->model_asset_descriptor_meta.offset > 0) {
       file_descriptor_meta_proto->set_offset(
-          base_options->model_file_descriptor_meta.offset);
+          base_options->model_asset_descriptor_meta.offset);
     }
   }
+  switch (base_options->delegate) {
+    case BaseOptions::Delegate::CPU:
+      base_options_proto.mutable_acceleration()->mutable_xnnpack();
+      break;
+    case BaseOptions::Delegate::GPU:
+      base_options_proto.mutable_acceleration()->mutable_gpu();
+      break;
+  }
+
   return base_options_proto;
 }
 }  // namespace core

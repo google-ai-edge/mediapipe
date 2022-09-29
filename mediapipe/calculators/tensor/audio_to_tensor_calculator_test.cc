@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "absl/strings/substitute.h"
 #include "audio/dsp/resampler_q.h"
+#include "mediapipe/calculators/tensor/audio_to_tensor_calculator.pb.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -31,6 +31,14 @@
 
 namespace mediapipe {
 namespace {
+
+using ::testing::Not;
+using Options = ::mediapipe::AudioToTensorCalculatorOptions;
+using FlushMode = Options::FlushMode;
+
+int DivideRoundedUp(int dividend, int divisor) {
+  return (dividend + divisor - 1) / divisor;
+}
 
 std::unique_ptr<Matrix> CreateTestMatrix(int num_channels, int num_samples,
                                          int timestamp) {
@@ -292,16 +300,17 @@ class AudioToTensorCalculatorStreamingModeTest : public ::testing::Test {
     num_iterations_ = num_iterations;
   }
 
-  int GetExpectedNumOfSamples() {
-    Matrix* expected_matrix =
-        resampled_buffer_ ? resampled_buffer_.get() : sample_buffer_.get();
-    return expected_matrix->cols();
-  }
+  int GetExpectedNumOfSamples() { return output_sample_buffer_->cols(); }
 
   void Run(int num_samples, int num_overlapping_samples,
-           double resampling_factor) {
+           double resampling_factor, int padding_before = 0,
+           int padding_after = 0, bool expect_init_error = false) {
     double input_sample_rate = 10000;
     double target_sample_rate = input_sample_rate * resampling_factor;
+    FlushMode flush_mode = (padding_before != 0 || padding_after != 0)
+                               ? Options::PROCEED_AS_USUAL
+                               : Options::ENTIRE_TAIL_AT_TIMESTAMP_MAX;
+
     auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(
         absl::Substitute(R"(
         input_stream: "audio"
@@ -319,16 +328,25 @@ class AudioToTensorCalculatorStreamingModeTest : public ::testing::Test {
               num_overlapping_samples: $1
               target_sample_rate: $2
               stream_mode:true
+              padding_samples_before: $3
+              padding_samples_after: $4
+              flush_mode: $5
             }
           }
         }
         )",
                          /*$0=*/num_samples, /*$1=*/num_overlapping_samples,
-                         /*$2=*/target_sample_rate));
+                         /*$2=*/target_sample_rate, /*$3=*/padding_before,
+                         /*$4=*/padding_after, /*$5=*/flush_mode));
     tool::AddVectorSink("tensors", &graph_config, &tensors_packets_);
 
     // Run the graph.
-    MP_ASSERT_OK(graph_.Initialize(graph_config));
+    const absl::Status init_status = graph_.Initialize(graph_config);
+    if (expect_init_error) {
+      EXPECT_THAT(init_status, Not(IsOk()));
+      return;
+    }
+    MP_ASSERT_OK(init_status);
     MP_ASSERT_OK(graph_.StartRun({}));
     for (int i = 0; i < num_iterations_; ++i) {
       Timestamp input_timestamp(Timestamp::kTimestampUnitsPerSecond * i);
@@ -345,8 +363,18 @@ class AudioToTensorCalculatorStreamingModeTest : public ::testing::Test {
     }
     MP_ASSERT_OK(graph_.CloseAllInputStreams());
     MP_ASSERT_OK(graph_.WaitUntilIdle());
-    if (resampling_factor != 1) {
-      resampled_buffer_ = ResampleBuffer(*sample_buffer_, resampling_factor);
+    if (resampling_factor == 1) {
+      output_sample_buffer_ = std::make_unique<Matrix>(*sample_buffer_);
+    } else {
+      output_sample_buffer_ =
+          ResampleBuffer(*sample_buffer_, resampling_factor);
+    }
+    if (padding_before != 0 || padding_after != 0) {
+      Matrix padded = Matrix::Zero(
+          2, padding_before + output_sample_buffer_->cols() + padding_after);
+      padded.block(0, padding_before, 2, output_sample_buffer_->cols()) =
+          *output_sample_buffer_;
+      output_sample_buffer_->swap(padded);
     }
   }
 
@@ -372,15 +400,13 @@ class AudioToTensorCalculatorStreamingModeTest : public ::testing::Test {
     auto buffer = output_tensor.GetCpuReadView().buffer<float>();
     int num_values = output_tensor.shape().num_elements();
     std::vector<float> output_floats(buffer, buffer + num_values);
-    Matrix* expected_matrix =
-        resampled_buffer_ ? resampled_buffer_.get() : sample_buffer_.get();
     for (int i = 0; i < num_values; ++i) {
-      if (i + sample_offset >= expected_matrix->size()) {
+      if (i + sample_offset >= output_sample_buffer_->size()) {
         EXPECT_FLOAT_EQ(output_floats[i], 0);
       } else {
         EXPECT_NEAR(output_floats[i],
-                    expected_matrix->coeff((i + sample_offset) % 2,
-                                           (i + sample_offset) / 2),
+                    output_sample_buffer_->coeff((i + sample_offset) % 2,
+                                                 (i + sample_offset) / 2),
                     0.001)
             << "i=" << i << ", sample_offset=" << sample_offset
             << ", packet index=" << index;
@@ -391,7 +417,8 @@ class AudioToTensorCalculatorStreamingModeTest : public ::testing::Test {
 
   // Fully close graph at end, otherwise calculator+tensors are destroyed
   // after calling WaitUntilDone().
-  void CloseGraph() { MP_EXPECT_OK(graph_.WaitUntilDone()); }
+  absl::Status TryCloseGraph() { return graph_.WaitUntilDone(); }
+  void CloseGraph() { MP_EXPECT_OK(TryCloseGraph()); }
 
  private:
   int input_buffer_num_samples_ = 10;
@@ -399,7 +426,7 @@ class AudioToTensorCalculatorStreamingModeTest : public ::testing::Test {
   CalculatorGraph graph_;
   std::vector<Packet> tensors_packets_;
   std::unique_ptr<Matrix> sample_buffer_;
-  std::unique_ptr<Matrix> resampled_buffer_;
+  std::unique_ptr<Matrix> output_sample_buffer_;
 };
 
 TEST_F(AudioToTensorCalculatorStreamingModeTest,
@@ -408,7 +435,7 @@ TEST_F(AudioToTensorCalculatorStreamingModeTest,
       /*resampling_factor=*/1.0f);
   CheckTensorsOutputPackets(
       /*sample_offset=*/10,
-      /*num_packets=*/std::ceil((float)GetExpectedNumOfSamples() / 5),
+      /*num_packets=*/DivideRoundedUp(GetExpectedNumOfSamples(), 5),
       /*timestamp_interval=*/500,
       /*output_last_at_close=*/false);
   CloseGraph();
@@ -419,7 +446,7 @@ TEST_F(AudioToTensorCalculatorStreamingModeTest, OutputRemainingInCloseMethod) {
       /*resampling_factor=*/1.0f);
   CheckTensorsOutputPackets(
       /*sample_offset=*/12,
-      /*num_packets=*/std::ceil((float)GetExpectedNumOfSamples() / 6),
+      /*num_packets=*/DivideRoundedUp(GetExpectedNumOfSamples(), 6),
       /*timestamp_interval=*/600,
       /*output_last_at_close=*/true);
   CloseGraph();
@@ -431,7 +458,7 @@ TEST_F(AudioToTensorCalculatorStreamingModeTest, OutputOverlappingFp32Tensors) {
       /*resampling_factor=*/1.0f);
   CheckTensorsOutputPackets(
       /*sample_offset=*/16,
-      /*num_packets=*/std::ceil((float)GetExpectedNumOfSamples() / 8),
+      /*num_packets=*/DivideRoundedUp(GetExpectedNumOfSamples(), 8),
       /*timestamp_interval=*/800,
       /*output_last_at_close=*/true);
   CloseGraph();
@@ -443,7 +470,7 @@ TEST_F(AudioToTensorCalculatorStreamingModeTest, Downsampling) {
       /*resampling_factor=*/0.5f);
   CheckTensorsOutputPackets(
       /*sample_offset=*/512,
-      /*num_packets=*/std::ceil((float)GetExpectedNumOfSamples() / 256),
+      /*num_packets=*/DivideRoundedUp(GetExpectedNumOfSamples(), 256),
       /*timestamp_interval=*/51200,
       /*output_last_at_close=*/true);
   CloseGraph();
@@ -455,7 +482,7 @@ TEST_F(AudioToTensorCalculatorStreamingModeTest, DownsamplingWithOverlapping) {
       /*resampling_factor=*/0.5f);
   CheckTensorsOutputPackets(
       /*sample_offset=*/384,
-      /*num_packets=*/std::ceil((float)GetExpectedNumOfSamples() / 192),
+      /*num_packets=*/DivideRoundedUp(GetExpectedNumOfSamples(), 192),
       /*timestamp_interval=*/38400,
       /*output_last_at_close=*/true);
   CloseGraph();
@@ -467,7 +494,7 @@ TEST_F(AudioToTensorCalculatorStreamingModeTest, Upsampling) {
       /*resampling_factor=*/2.0f);
   CheckTensorsOutputPackets(
       /*sample_offset=*/512,
-      /*num_packets=*/std::ceil((float)GetExpectedNumOfSamples() / 256),
+      /*num_packets=*/DivideRoundedUp(GetExpectedNumOfSamples(), 256),
       /*timestamp_interval=*/12800,
       /*output_last_at_close=*/true);
   CloseGraph();
@@ -479,10 +506,31 @@ TEST_F(AudioToTensorCalculatorStreamingModeTest, UpsamplingWithOverlapping) {
       /*resampling_factor=*/2.0f);
   CheckTensorsOutputPackets(
       /*sample_offset=*/384,
-      /*num_packets=*/std::ceil((float)GetExpectedNumOfSamples() / 192),
+      /*num_packets=*/DivideRoundedUp(GetExpectedNumOfSamples(), 192),
       /*timestamp_interval=*/9600,
       /*output_last_at_close=*/true);
   CloseGraph();
+}
+
+TEST_F(AudioToTensorCalculatorStreamingModeTest,
+       UpsamplingWithOverlappingAndPadding) {
+  SetInputBufferNumSamplesPerChannel(1024);
+  Run(/*num_samples=*/256, /*num_overlapping_samples=*/64,
+      /*resampling_factor=*/2.0f, /*padding_before=*/13, /*padding_after=*/999);
+  CheckTensorsOutputPackets(
+      /*sample_offset=*/384,
+      /*num_packets=*/DivideRoundedUp(GetExpectedNumOfSamples(), 192),
+      /*timestamp_interval=*/9600,
+      /*output_last_at_close=*/false);
+  CloseGraph();
+}
+
+TEST_F(AudioToTensorCalculatorStreamingModeTest, NegativePaddingUnsupported) {
+  SetInputBufferNumSamplesPerChannel(1024);
+  Run(/*num_samples=*/256, /*num_overlapping_samples=*/64,
+      /*resampling_factor=*/2.0f, /*padding_before=*/13, /*padding_after=*/-3,
+      /*expect_init_error=*/true);
+  EXPECT_THAT(TryCloseGraph(), Not(IsOk()));
 }
 
 TEST_F(AudioToTensorCalculatorStreamingModeTest,
@@ -495,6 +543,123 @@ TEST_F(AudioToTensorCalculatorStreamingModeTest,
       /*num_packets=*/1,
       /*timestamp_interval=*/0,
       /*output_last_at_close=*/true);
+  CloseGraph();
+}
+
+class AudioToTensorCalculatorFftTest : public ::testing::Test {
+ protected:
+  // Creates an audio matrix containing a single sample of 1.0 at a specified
+  // offset.
+  std::unique_ptr<Matrix> CreateImpulseSignalData(int64 num_samples,
+                                                  int impulse_offset_idx) {
+    Matrix impulse = Matrix::Zero(1, num_samples);
+    impulse(0, impulse_offset_idx) = 1.0;
+    return std::make_unique<Matrix>(std::move(impulse));
+  }
+
+  void ConfigGraph(int num_channels, int num_samples,
+                   int num_overlapping_samples, double sample_rate,
+                   int fft_size) {
+    graph_config_ = ParseTextProtoOrDie<CalculatorGraphConfig>(
+        absl::Substitute(R"(
+        input_stream: "audio"
+        input_stream: "sample_rate"
+        output_stream: "tensors"
+        output_stream: "dc_and_nyquist"
+        node {
+          calculator: "AudioToTensorCalculator"
+          input_stream: "AUDIO:audio"
+          input_stream: "SAMPLE_RATE:sample_rate"
+          output_stream: "TENSORS:tensors"
+          output_stream: "DC_AND_NYQUIST:dc_and_nyquist"
+          options {
+            [mediapipe.AudioToTensorCalculatorOptions.ext] {
+              num_channels: $0
+              num_samples: $1
+              num_overlapping_samples: $2
+              target_sample_rate: $3
+              fft_size: $4
+            }
+          }
+        }
+        )",
+                         /*$0=*/num_channels,
+                         /*$1=*/num_samples,
+                         /*$2=*/num_overlapping_samples,
+                         /*$3=*/sample_rate, /*$4=*/fft_size));
+    std::vector<Packet> tensors_packets;
+    tool::AddVectorSink("tensors", &graph_config_, &tensors_packets_);
+    std::vector<Packet> dc_and_nyquist_packets;
+    tool::AddVectorSink("dc_and_nyquist", &graph_config_,
+                        &dc_and_nyquist_packets_);
+  }
+
+  void RunGraph(std::unique_ptr<Matrix> input_data, double sample_rate) {
+    MP_ASSERT_OK(graph_.Initialize(graph_config_));
+    MP_ASSERT_OK(graph_.StartRun({}));
+    MP_ASSERT_OK(graph_.AddPacketToInputStream(
+        "sample_rate", MakePacket<double>(sample_rate).At(Timestamp(0))));
+    MP_ASSERT_OK(graph_.AddPacketToInputStream(
+        "audio", MakePacket<Matrix>(*input_data).At(Timestamp(0))));
+    MP_ASSERT_OK(graph_.CloseAllInputStreams());
+    MP_ASSERT_OK(graph_.WaitUntilIdle());
+    ASSERT_EQ(tensors_packets_.size(), dc_and_nyquist_packets_.size());
+  }
+
+  // Fully close graph at end, otherwise calculator+tensors are destroyed
+  // after calling WaitUntilDone().
+  void CloseGraph() { MP_EXPECT_OK(graph_.WaitUntilDone()); }
+
+  std::vector<Packet> tensors_packets_;
+  std::vector<Packet> dc_and_nyquist_packets_;
+  CalculatorGraphConfig graph_config_;
+  CalculatorGraph graph_;
+};
+
+TEST_F(AudioToTensorCalculatorFftTest, TestInvalidFftSize) {
+  ConfigGraph(1, 320, 160, 16000, 103);
+  MP_ASSERT_OK(graph_.Initialize(graph_config_));
+  MP_ASSERT_OK(graph_.StartRun({}));
+  auto status = graph_.WaitUntilIdle();
+  EXPECT_EQ(status.code(), absl::StatusCode::kInternal);
+  EXPECT_THAT(status.message(),
+              ::testing::HasSubstr("FFT size must be of the form"));
+}
+
+TEST_F(AudioToTensorCalculatorFftTest, TestInvalidNumChannels) {
+  ConfigGraph(3, 320, 160, 16000, 256);
+  MP_ASSERT_OK(graph_.Initialize(graph_config_));
+  MP_ASSERT_OK(graph_.StartRun({}));
+  auto status = graph_.WaitUntilIdle();
+  EXPECT_EQ(status.code(), absl::StatusCode::kInternal);
+  EXPECT_THAT(
+      status.message(),
+      ::testing::HasSubstr("only support applying FFT on mono channel"));
+}
+
+TEST_F(AudioToTensorCalculatorFftTest, TestImpulseSignal) {
+  constexpr double sample_rate = 16000;
+  ConfigGraph(1, 320, 160, sample_rate, 320);
+  RunGraph(CreateImpulseSignalData(320, 160), sample_rate);
+  for (int i = 0; i < tensors_packets_.size(); ++i) {
+    const auto& tensors = tensors_packets_[i].Get<std::vector<Tensor>>();
+    ASSERT_EQ(1, tensors.size());
+    const Tensor& output_tensor =
+        tensors_packets_[0].Get<std::vector<Tensor>>()[0];
+    auto* buffer = output_tensor.GetCpuReadView().buffer<float>();
+    int num_values = output_tensor.shape().num_elements();
+    const std::vector<float> output_floats(buffer, buffer + num_values);
+    // Impulse signal should have (approximately) const power across all
+    // frequency bins.
+    const auto& pair =
+        dc_and_nyquist_packets_[i].Get<std::pair<float, float>>();
+    EXPECT_FLOAT_EQ(pair.first, 1.0f);
+    EXPECT_FLOAT_EQ(pair.second, 1.0f);
+    for (int j = 0; j < num_values / 2; ++j) {
+      std::complex<float> cf(output_floats[j * 2], output_floats[j * 2 + 1]);
+      EXPECT_FLOAT_EQ(std::norm(cf), 1.0f);
+    }
+  }
   CloseGraph();
 }
 

@@ -203,6 +203,10 @@ const char kClipLabelIndexKey[] = "clip/label/index";
 const char kClipLabelStringKey[] = "clip/label/string";
 // A list of label confidences for this clip.
 const char kClipLabelConfidenceKey[] = "clip/label/confidence";
+// A list of label start timestamps for this clip.
+const char kClipLabelStartTimestampKey[] = "clip/label/start/timestamp";
+// A list of label end timestamps for this clip.
+const char kClipLabelEndTimestampKey[] = "clip/label/end/timestamp";
 
 BYTES_CONTEXT_FEATURE(ExampleId, kExampleIdKey);
 BYTES_CONTEXT_FEATURE(ExampleDatasetName, kExampleDatasetNameKey);
@@ -220,6 +224,9 @@ INT64_CONTEXT_FEATURE(ClipEndTimestamp, kClipEndTimestampKey);
 VECTOR_BYTES_CONTEXT_FEATURE(ClipLabelString, kClipLabelStringKey);
 VECTOR_INT64_CONTEXT_FEATURE(ClipLabelIndex, kClipLabelIndexKey);
 VECTOR_FLOAT_CONTEXT_FEATURE(ClipLabelConfidence, kClipLabelConfidenceKey);
+VECTOR_INT64_CONTEXT_FEATURE(ClipLabelStartTimestamp,
+                             kClipLabelStartTimestampKey);
+VECTOR_INT64_CONTEXT_FEATURE(ClipLabelEndTimestamp, kClipLabelEndTimestampKey);
 
 // ***********************    SEGMENTS    *************************************
 // Context Keys:

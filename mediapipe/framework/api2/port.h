@@ -73,14 +73,12 @@ class SideOutputBase : public PortBase {
 };
 
 struct NoneType {
- private:
   NoneType() = delete;
 };
 
-template <auto& P>
-class SameType : public DynamicType {
- public:
-  static constexpr const decltype(P)& kPort = P;
+template <auto& kP>
+struct SameType {
+  static constexpr const decltype(kP)& kPort = kP;
 };
 
 class PacketTypeAccess;
@@ -137,21 +135,28 @@ struct IsOneOf : std::false_type {};
 template <class... T>
 struct IsOneOf<OneOf<T...>> : std::true_type {};
 
-template <typename T, typename std::enable_if<
-                          !std::is_base_of<DynamicType, T>{} && !IsOneOf<T>{},
-                          int>::type = 0>
+template <class T>
+struct IsSameType : std::false_type {};
+
+template <class P, P& kP>
+struct IsSameType<SameType<kP>> : std::true_type {};
+
+template <typename T,
+          typename std::enable_if<!std::is_same<T, AnyType>{} &&
+                                      !IsOneOf<T>{} && !IsSameType<T>{},
+                                  int>::type = 0>
 inline void SetType(CalculatorContract* cc, PacketType& pt) {
   pt.Set<T>();
 }
 
-template <typename T, typename std::enable_if<std::is_base_of<DynamicType, T>{},
-                                              int>::type = 0>
+template <typename T, typename std::enable_if<IsSameType<T>{}, int>::type = 0>
 inline void SetType(CalculatorContract* cc, PacketType& pt) {
   pt.SetSameAs(&internal::GetCollection(cc, T::kPort).Tag(T::kPort.Tag()));
 }
 
-template <>
-inline void SetType<AnyType>(CalculatorContract* cc, PacketType& pt) {
+template <typename T,
+          typename std::enable_if<std::is_same<T, AnyType>{}, int>::type = 0>
+inline void SetType(CalculatorContract* cc, PacketType& pt) {
   pt.SetAny();
 }
 
@@ -289,15 +294,15 @@ struct SideBase<InputBase> {
 };
 
 // TODO: maybe return a PacketBase instead of a Packet<internal::Generic>?
-template <typename T, class = void>
+template <typename T, typename = void>
 struct ActualPayloadType {
   using type = T;
 };
 
 template <typename T>
-struct ActualPayloadType<
-    T, std::enable_if_t<std::is_base_of<DynamicType, T>{}, void>> {
-  using type = internal::Generic;
+struct ActualPayloadType<T, std::enable_if_t<IsSameType<T>{}, void>> {
+  using type = typename ActualPayloadType<
+      typename std::decay_t<decltype(T::kPort)>::value_t>::type;
 };
 
 }  // namespace internal

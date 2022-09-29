@@ -188,6 +188,10 @@ CLIP_LABEL_INDEX_KEY = "clip/label/index"
 CLIP_LABEL_STRING_KEY = "clip/label/string"
 # A list of label confidences for this clip.
 CLIP_LABEL_CONFIDENCE_KEY = "clip/label/confidence"
+# A list of label start timestamps for this clip.
+CLIP_LABEL_START_TIMESTAMP_KEY = "clip/label/start/timestamp"
+# A list of label end timestamps for this clip.
+CLIP_LABEL_END_TIMESTAMP_KEY = "clip/label/end/timestamp"
 msu.create_bytes_context_feature(
     "example_id", EXAMPLE_ID_KEY, module_dict=globals())
 msu.create_bytes_context_feature(
@@ -218,6 +222,14 @@ msu.create_int_list_context_feature(
     "clip_label_index", CLIP_LABEL_INDEX_KEY, module_dict=globals())
 msu.create_float_list_context_feature(
     "clip_label_confidence", CLIP_LABEL_CONFIDENCE_KEY, module_dict=globals())
+msu.create_int_list_context_feature(
+    "clip_label_start_timestamp",
+    CLIP_LABEL_START_TIMESTAMP_KEY,
+    module_dict=globals())
+msu.create_int_list_context_feature(
+    "clip_label_end_timestamp",
+    CLIP_LABEL_END_TIMESTAMP_KEY,
+    module_dict=globals())
 
 ##################################  SEGMENTS  #################################
 # A list of segment start times in microseconds.

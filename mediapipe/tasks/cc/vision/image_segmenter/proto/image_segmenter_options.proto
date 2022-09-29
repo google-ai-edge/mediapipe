@@ -18,7 +18,7 @@ syntax = "proto2";
 package mediapipe.tasks.vision.image_segmenter.proto;
 
 import "mediapipe/framework/calculator.proto";
-import "mediapipe/tasks/cc/components/segmenter_options.proto";
+import "mediapipe/tasks/cc/components/proto/segmenter_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
 message ImageSegmenterOptions {
@@ -34,5 +34,5 @@ message ImageSegmenterOptions {
   optional string display_names_locale = 2 [default = "en"];
 
   // Segmentation output options.
-  optional SegmenterOptions segmenter_options = 3;
+  optional components.proto.SegmenterOptions segmenter_options = 3;
 }

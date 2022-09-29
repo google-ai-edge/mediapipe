@@ -121,7 +121,7 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
         file such as invalid file path.
       RuntimeError: If other types of error occurred.
     """
-    base_options = _BaseOptions(file_name=model_path)
+    base_options = _BaseOptions(model_asset_path=model_path)
     options = ObjectDetectorOptions(
         base_options=base_options, running_mode=_RunningMode.IMAGE)
     return cls.create_from_options(options)
@@ -175,6 +175,9 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
              image: image_module.Image) -> detections_module.DetectionResult:
     """Performs object detection on the provided MediaPipe Image.
 
+    Only use this method when the ObjectDetector is created with the image
+    running mode.
+
     Args:
       image: MediaPipe Image.
 
@@ -197,15 +200,54 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
         for result in detection_proto_list
     ])
 
+  def detect_for_video(self, image: image_module.Image,
+                       timestamp_ms: int) -> detections_module.DetectionResult:
+    """Performs object detection on the provided video frames.
+
+    Only use this method when the ObjectDetector is created with the video
+    running mode. It's required to provide the video frame's timestamp (in
+    milliseconds) along with the video frame. The input timestamps should be
+    monotonically increasing for adjacent calls of this method.
+
+    Args:
+      image: MediaPipe Image.
+      timestamp_ms: The timestamp of the input video frame in milliseconds.
+
+    Returns:
+      A detection result object that contains a list of detections, each
+      detection has a bounding box that is expressed in the unrotated input
+      frame of reference coordinates system, i.e. in `[0,image_width) x [0,
+      image_height)`, which are the dimensions of the underlying image data.
+
+    Raises:
+      ValueError: If any of the input arguments is invalid.
+      RuntimeError: If object detection failed to run.
+    """
+    output_packets = self._process_video_data({
+        _IMAGE_IN_STREAM_NAME:
+            packet_creator.create_image(image).at(timestamp_ms)
+    })
+    detection_proto_list = packet_getter.get_proto_list(
+        output_packets[_DETECTIONS_OUT_STREAM_NAME])
+    return detections_module.DetectionResult([
+        detections_module.Detection.create_from_pb2(result)
+        for result in detection_proto_list
+    ])
+
   def detect_async(self, image: image_module.Image, timestamp_ms: int) -> None:
     """Sends live image data (an Image with a unique timestamp) to perform object detection.
 
-    This method will return immediately after the input image is accepted. The
-    results will be available via the `result_callback` provided in the
-    `ObjectDetectorOptions`. The `detect_async` method is designed to process
-    live stream data such as camera input. To lower the overall latency, object
-    detector may drop the input images if needed. In other words, it's not
-    guaranteed to have output per input image. The `result_callback` prvoides:
+    Only use this method when the ObjectDetector is created with the live stream
+    running mode. The input timestamps should be monotonically increasing for
+    adjacent calls of this method. This method will return immediately after the
+    input image is accepted. The results will be available via the
+    `result_callback` provided in the `ObjectDetectorOptions`. The
+    `detect_async` method is designed to process live stream data such as camera
+    input. To lower the overall latency, object detector may drop the input
+    images if needed. In other words, it's not guaranteed to have output per
+    input image.
+
+    The `result_callback` prvoides:
       - A detection result object that contains a list of detections, each
         detection has a bounding box that is expressed in the unrotated input
         frame of reference coordinates system, i.e. in `[0,image_width) x [0,

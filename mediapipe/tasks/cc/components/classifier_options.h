@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_CLASSIFIER_OPTIONS_H_
 #define MEDIAPIPE_TASKS_CC_COMPONENTS_CLASSIFIER_OPTIONS_H_
 
-#include "mediapipe/tasks/cc/components/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/components/proto/classifier_options.pb.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -49,7 +49,7 @@ struct ClassifierOptions {
 };
 
 // Converts a ClassifierOptions to a ClassifierOptionsProto.
-tasks::ClassifierOptions ConvertClassifierOptionsToProto(
+tasks::components::proto::ClassifierOptions ConvertClassifierOptionsToProto(
     ClassifierOptions* classifier_options);
 
 }  // namespace components

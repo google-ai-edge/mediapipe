@@ -18,7 +18,7 @@ syntax = "proto2";
 package mediapipe.tasks;
 
 import "mediapipe/framework/calculator.proto";
-import "mediapipe/tasks/cc/components/segmenter_options.proto";
+import "mediapipe/tasks/cc/components/proto/segmenter_options.proto";
 import "mediapipe/util/label_map.proto";
 
 message TensorsToSegmentationCalculatorOptions {
@@ -26,7 +26,7 @@ message TensorsToSegmentationCalculatorOptions {
     optional TensorsToSegmentationCalculatorOptions ext = 458105876;
   }
 
-  optional SegmenterOptions segmenter_options = 1;
+  optional components.proto.SegmenterOptions segmenter_options = 1;
 
   // Identifying information for each classification label.
   map<int64, mediapipe.LabelMapItem> label_items = 2;

@@ -52,6 +52,5 @@ py_test(
         "//mediapipe/tasks/python/test:test_util",
         "//mediapipe/tasks/python/vision:image_classification",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
-        "@absl_py//absl/testing:parameterized",
     ],
 )

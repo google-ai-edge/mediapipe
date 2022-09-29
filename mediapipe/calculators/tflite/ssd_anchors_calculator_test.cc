@@ -33,9 +33,6 @@ std::string GetGoldenFilePath(const std::string& filename) {
 
 void ParseAnchorsFromText(const std::string& text,
                           std::vector<Anchor>* anchors) {
-  const std::string line_delimiter = "\n";
-  const std::string number_delimiter = ",";
-
   std::istringstream stream(text);
   std::string line;
   while (std::getline(stream, line)) {
@@ -64,6 +61,8 @@ void CompareAnchors(const std::vector<Anchor>& anchors_0,
                 testing::FloatNear(anchor_1.x_center(), 1e-5));
     EXPECT_THAT(anchor_0.y_center(),
                 testing::FloatNear(anchor_1.y_center(), 1e-5));
+    EXPECT_THAT(anchor_0.h(), testing::FloatNear(anchor_1.h(), 1e-5));
+    EXPECT_THAT(anchor_0.w(), testing::FloatNear(anchor_1.w(), 1e-5));
   }
 }
 
@@ -141,6 +140,42 @@ TEST(SsdAnchorCalculatorTest, MobileSSDConfig) {
   std::string anchors_string;
   MP_EXPECT_OK(mediapipe::file::GetContents(
       GetGoldenFilePath("anchor_golden_file_1.txt"), &anchors_string));
+
+  std::vector<Anchor> anchors_golden;
+  ParseAnchorsFromText(anchors_string, &anchors_golden);
+
+  CompareAnchors(anchors, anchors_golden);
+}
+
+TEST(SsdAnchorCalculatorTest, RetinaNetSSDConfig) {
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+    calculator: "SsdAnchorsCalculator"
+    output_side_packet: "anchors"
+    options {
+      [mediapipe.SsdAnchorsCalculatorOptions.ext] {
+        input_size_height: 640
+        input_size_width: 640
+        strides: 64
+        strides: 128
+        aspect_ratios: 1.0
+        aspect_ratios: 2.0
+        aspect_ratios: 0.5
+        multiscale_anchor_generation: true
+        min_level: 6
+        max_level: 7
+        anchor_scale: 3.0
+        scales_per_octave: 3
+      }
+    }
+  )pb"));
+
+  MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
+  const auto& anchors =
+      runner.OutputSidePackets().Index(0).Get<std::vector<Anchor>>();
+
+  std::string anchors_string;
+  MP_EXPECT_OK(mediapipe::file::GetContents(
+      GetGoldenFilePath("anchor_golden_file_2.txt"), &anchors_string));
 
   std::vector<Anchor> anchors_golden;
   ParseAnchorsFromText(anchors_string, &anchors_golden);

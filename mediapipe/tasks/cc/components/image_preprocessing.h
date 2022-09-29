@@ -22,6 +22,7 @@ limitations under the License.
 
 namespace mediapipe {
 namespace tasks {
+namespace components {
 
 // Configures an ImagePreprocessing subgraph using the provided model resources.
 // - Accepts CPU input images and outputs CPU tensors.
@@ -29,7 +30,7 @@ namespace tasks {
 // Example usage:
 //
 //   auto& preprocessing =
-//       graph.AddNode("mediapipe.tasks.ImagePreprocessingSubgraph");
+//       graph.AddNode("mediapipe.tasks.components.ImagePreprocessingSubgraph");
 //   MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
 //       model_resources,
 //       &preprocessing.GetOptions<ImagePreprocessingOptions>()));
@@ -38,6 +39,9 @@ namespace tasks {
 // Inputs:
 //   IMAGE - Image
 //     The image to preprocess.
+//   NORM_RECT - NormalizedRect @Optional
+//     Describes region of image to extract.
+//     @Optional: rect covering the whole image is used if not specified.
 // Outputs:
 //   TENSORS - std::vector<Tensor>
 //     Vector containing a single Tensor populated with the converted and
@@ -55,6 +59,7 @@ absl::Status ConfigureImagePreprocessing(
     const core::ModelResources& model_resources,
     ImagePreprocessingOptions* options);
 
+}  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe
 

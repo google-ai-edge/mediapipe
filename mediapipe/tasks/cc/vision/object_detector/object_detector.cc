@@ -152,7 +152,7 @@ absl::StatusOr<std::vector<Detection>> ObjectDetector::Detect(
   return output_packets[kDetectionsOutStreamName].Get<std::vector<Detection>>();
 }
 
-absl::StatusOr<std::vector<Detection>> ObjectDetector::Detect(
+absl::StatusOr<std::vector<Detection>> ObjectDetector::DetectForVideo(
     mediapipe::Image image, int64 timestamp_ms) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(

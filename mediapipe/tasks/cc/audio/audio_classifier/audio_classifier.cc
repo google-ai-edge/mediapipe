@@ -76,9 +76,10 @@ ConvertAudioClassifierOptionsToProto(AudioClassifierOptions* options) {
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
   options_proto->mutable_base_options()->set_use_stream_mode(
       options->running_mode == core::RunningMode::AUDIO_STREAM);
-  auto classifier_options_proto = std::make_unique<tasks::ClassifierOptions>(
-      components::ConvertClassifierOptionsToProto(
-          &(options->classifier_options)));
+  auto classifier_options_proto =
+      std::make_unique<tasks::components::proto::ClassifierOptions>(
+          components::ConvertClassifierOptionsToProto(
+              &(options->classifier_options)));
   options_proto->mutable_classifier_options()->Swap(
       classifier_options_proto.get());
   if (options->sample_rate > 0) {
