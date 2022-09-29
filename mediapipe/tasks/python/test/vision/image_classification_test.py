@@ -99,11 +99,11 @@ class ImageClassifierTest(parameterized.TestCase):
                     expected_classification_result):
     # Creates classifier.
     if model_file_type is ModelFileType.FILE_NAME:
-      base_options = _BaseOptions(file_name=self.model_path)
+      base_options = _BaseOptions(model_asset_path=self.model_path)
     elif model_file_type is ModelFileType.FILE_CONTENT:
       with open(self.model_path, 'rb') as f:
         model_content = f.read()
-      base_options = _BaseOptions(file_content=model_content)
+      base_options = _BaseOptions(model_asset_buffer=model_content)
     else:
       # Should never happen
       raise ValueError('model_file_type is invalid.')

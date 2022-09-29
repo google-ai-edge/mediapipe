@@ -21,8 +21,8 @@ from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.python._framework_bindings import task_runner as task_runner_module
-from mediapipe.tasks.cc.vision.image_classification import image_classifier_options_pb2
-from mediapipe.tasks.python.components import classifier_options
+from mediapipe.tasks.cc.vision.image_classifier.proto import image_classifier_options_pb2
+from mediapipe.tasks.python.components.proto import classifier_options
 from mediapipe.tasks.python.components.containers import classifications as classifications_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
@@ -104,7 +104,7 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
         file such as invalid file path.
       RuntimeError: If other types of error occurred.
     """
-    base_options = _BaseOptions(file_name=model_path)
+    base_options = _BaseOptions(model_asset_path=model_path)
     options = ImageClassifierOptions(
         base_options=base_options, running_mode=_RunningMode.IMAGE)
     return cls.create_from_options(options)
