@@ -38,9 +38,9 @@ py_library(
 )
 
 py_library(
-    name = "image_classification",
+    name = "image_classifier",
     srcs = [
-        "image_classification.py",
+        "image_classifier.py",
     ],
     deps = [
         "//mediapipe/python:_framework_bindings",

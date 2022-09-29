@@ -19,12 +19,12 @@ from absl.testing import absltest
 from absl.testing import parameterized
 
 from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.tasks.python.components import classifier_options
+from mediapipe.tasks.python.components.proto import classifier_options
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import classifications as classifications_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_util
-from mediapipe.tasks.python.vision import image_classification
+from mediapipe.tasks.python.vision import image_classifier
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
 _BaseOptions = base_options_module.BaseOptions
@@ -34,8 +34,8 @@ _ClassificationEntry = classifications_module.ClassificationEntry
 _Classifications = classifications_module.Classifications
 _ClassificationResult = classifications_module.ClassificationResult
 _Image = image_module.Image
-_ImageClassifier = image_classification.ImageClassifier
-_ImageClassifierOptions = image_classification.ImageClassifierOptions
+_ImageClassifier = image_classifier.ImageClassifier
+_ImageClassifierOptions = image_classifier.ImageClassifierOptions
 _RUNNING_MODE = running_mode_module.VisionTaskRunningMode
 
 _MODEL_FILE = 'mobilenet_v2_1.0_224.tflite'

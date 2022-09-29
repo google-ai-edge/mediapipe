@@ -38,19 +38,20 @@ py_test(
 )
 
 py_test(
-    name = "image_classification_test",
-    srcs = ["image_classification_test.py"],
+    name = "image_classifier_test",
+    srcs = ["image_classifier_test.py"],
     data = [
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
     deps = [
         "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/components/proto:classifier_options",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:classifications",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_util",
-        "//mediapipe/tasks/python/vision:image_classification",
+        "//mediapipe/tasks/python/vision:image_classifier",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
     ],
 )
