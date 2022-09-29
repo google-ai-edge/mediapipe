@@ -19,7 +19,7 @@ package mediapipe.tasks.core.proto;
 
 import "mediapipe/calculators/tensor/inference_calculator.proto";
 
-option java_package = "com.google.mediapipe.tasks.core";
+option java_package = "com.google.mediapipe.tasks.core.proto";
 option java_outer_classname = "AccelerationProto";
 
 message Acceleration {

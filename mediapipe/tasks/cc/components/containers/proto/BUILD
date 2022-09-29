@@ -29,3 +29,8 @@ mediapipe_proto_library(
         "//mediapipe/framework/formats:rect_proto",
     ],
 )
+
+mediapipe_proto_library(
+    name = "embeddings_proto",
+    srcs = ["embeddings.proto"],
+)

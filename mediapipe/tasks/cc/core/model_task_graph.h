@@ -28,6 +28,7 @@ limitations under the License.
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/subgraph.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
+#include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 
@@ -62,7 +63,7 @@ class ModelTaskGraph : public Subgraph {
     auto external_file = std::make_unique<proto::ExternalFile>();
     external_file->Swap(sc->MutableOptions<Options>()
                             ->mutable_base_options()
-                            ->mutable_model_file());
+                            ->mutable_model_asset());
     return CreateModelResources(sc, std::move(external_file));
   }
 
@@ -88,7 +89,9 @@ class ModelTaskGraph : public Subgraph {
   //     engine.
   //   - a MetadataExtractor output side packet with tag "METADATA_EXTRACTOR".
   api2::builder::GenericNode& AddInference(
-      const ModelResources& model_resources, api2::builder::Graph& graph) const;
+      const ModelResources& model_resources,
+      const proto::Acceleration& acceleration,
+      api2::builder::Graph& graph) const;
 
  private:
   std::unique_ptr<ModelResources> local_model_resources_;

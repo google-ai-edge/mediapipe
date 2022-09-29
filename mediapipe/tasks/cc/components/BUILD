@@ -35,6 +35,8 @@ cc_library(
     deps = [
         ":image_preprocessing_options_cc_proto",
         "//mediapipe/calculators/core:pass_through_calculator",
+        "//mediapipe/calculators/image:image_clone_calculator",
+        "//mediapipe/calculators/image:image_clone_calculator_cc_proto",
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator_cc_proto",
@@ -56,21 +58,11 @@ cc_library(
 
 # TODO: Enable this test
 
-mediapipe_proto_library(
-    name = "segmenter_options_proto",
-    srcs = ["segmenter_options.proto"],
-)
-
 cc_library(
     name = "classifier_options",
     srcs = ["classifier_options.cc"],
     hdrs = ["classifier_options.h"],
-    deps = [":classifier_options_cc_proto"],
-)
-
-mediapipe_proto_library(
-    name = "classifier_options_proto",
-    srcs = ["classifier_options.proto"],
+    deps = ["//mediapipe/tasks/cc/components/proto:classifier_options_cc_proto"],
 )
 
 mediapipe_proto_library(
@@ -81,6 +73,7 @@ mediapipe_proto_library(
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/tasks/cc/components/calculators:classification_aggregation_calculator_proto",
+        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator_proto",
     ],
 )
 
@@ -90,7 +83,6 @@ cc_library(
     hdrs = ["classification_postprocessing.h"],
     deps = [
         ":classification_postprocessing_options_cc_proto",
-        ":classifier_options_cc_proto",
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/core:split_vector_calculator_cc_proto",
         "//mediapipe/calculators/tensor:tensors_dequantization_calculator",
@@ -104,7 +96,12 @@ cc_library(
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/components/calculators:classification_aggregation_calculator",
         "//mediapipe/tasks/cc/components/calculators:classification_aggregation_calculator_cc_proto",
+        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator",
+        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator_cc_proto",
+        "//mediapipe/tasks/cc/components/calculators:score_calibration_utils",
         "//mediapipe/tasks/cc/components/containers:classifications_cc_proto",
+        "//mediapipe/tasks/cc/components/proto:classifier_options_cc_proto",
+        "//mediapipe/tasks/cc/components/utils:source_or_node_output",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
@@ -114,6 +111,41 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "embedder_options",
+    srcs = ["embedder_options.cc"],
+    hdrs = ["embedder_options.h"],
+    deps = ["//mediapipe/tasks/cc/components/proto:embedder_options_cc_proto"],
+)
+
+cc_library(
+    name = "embedding_postprocessing_graph",
+    srcs = ["embedding_postprocessing_graph.cc"],
+    hdrs = ["embedding_postprocessing_graph.h"],
+    deps = [
+        "//mediapipe/calculators/tensor:tensors_dequantization_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/tool:options_map",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components/calculators:tensors_to_embeddings_calculator",
+        "//mediapipe/tasks/cc/components/calculators:tensors_to_embeddings_calculator_cc_proto",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "//mediapipe/tasks/cc/components/proto:embedder_options_cc_proto",
+        "//mediapipe/tasks/cc/components/proto:embedding_postprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/components/utils:source_or_node_output",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
         "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
     ],

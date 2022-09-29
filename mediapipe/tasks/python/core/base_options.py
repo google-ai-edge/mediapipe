@@ -28,39 +28,39 @@ _ExternalFileProto = external_file_pb2.ExternalFile
 class BaseOptions:
   """Base options for MediaPipe Tasks' Python APIs.
 
-  Represents external files used by the Task APIs (e.g. TF Lite FlatBuffer or
-  plain-text labels file). The files can be specified by one of the following
-  two ways:
+  Represents external model asset used by the Task APIs. The files can be
+  specified by one of the following two ways:
 
-  (1) file contents loaded in `file_content`.
-  (2) file path in `file_name`.
+  (1) model asset file path in `model_asset_path`.
+  (2) model asset contents loaded in `model_asset_buffer`.
 
   If more than one field of these fields is provided, they are used in this
   precedence order.
 
   Attributes:
-    file_name: Path to the index.
-    file_content: The index file contents as bytes.
+    model_asset_path: Path to the model asset file.
+    model_asset_buffer: The model asset file contents as bytes.
   """
 
-  file_name: Optional[str] = None
-  file_content: Optional[bytes] = None
+  model_asset_path: Optional[str] = None
+  model_asset_buffer: Optional[bytes] = None
   # TODO: Allow Python API to specify acceleration settings.
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _BaseOptionsProto:
     """Generates a BaseOptions protobuf object."""
     return _BaseOptionsProto(
-        model_file=_ExternalFileProto(
-            file_name=self.file_name, file_content=self.file_content))
+        model_asset=_ExternalFileProto(
+            file_name=self.model_asset_path,
+            file_content=self.model_asset_buffer))
 
   @classmethod
   @doc_controls.do_not_generate_docs
   def create_from_pb2(cls, pb2_obj: _BaseOptionsProto) -> 'BaseOptions':
     """Creates a `BaseOptions` object from the given protobuf object."""
     return BaseOptions(
-        file_name=pb2_obj.model_file.file_name,
-        file_content=pb2_obj.model_file.file_content)
+        model_asset_path=pb2_obj.model_asset.file_name,
+        model_asset_buffer=pb2_obj.model_asset.file_content)
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.

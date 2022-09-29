@@ -57,6 +57,7 @@ android_library(
     ],
     deps = [
         ":android_core",
+        "//mediapipe/java/com/google/mediapipe/framework/image",
         "//third_party:androidx_annotation",
         "//third_party:androidx_legacy_support_v4",
         "@maven//:com_google_code_findbugs_jsr305",
@@ -75,6 +76,7 @@ android_library(
     srcs = glob(
         ["**/*.java"],
         exclude = [
+            "image/**",
             "Android*",
             "AssetCache.java",
             "AssetCacheDbHelper.java",

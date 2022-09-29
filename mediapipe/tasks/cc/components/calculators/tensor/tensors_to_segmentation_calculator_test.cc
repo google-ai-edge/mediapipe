@@ -117,7 +117,7 @@ TEST(TensorsToSegmentationCalculatorTest, FailsInvalidTensorDimensionOne) {
   CalculatorRunner runner(
       mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
           R"pb(
-            calculator: "TensorsToSegmentationCalculator"
+            calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
             output_stream: "SEGMENTATION:segmentation"
             options {
@@ -144,7 +144,7 @@ TEST(TensorsToSegmentationCalculatorTest, FailsInvalidTensorDimensionFive) {
   CalculatorRunner runner(
       mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
           R"pb(
-            calculator: "TensorsToSegmentationCalculator"
+            calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
             output_stream: "SEGMENTATION:segmentation"
             options {
@@ -172,7 +172,7 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithSoftmax) {
   CalculatorRunner runner(
       mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
           R"pb(
-            calculator: "TensorsToSegmentationCalculator"
+            calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
             output_stream: "SEGMENTATION:0:segmented_mask_0"
             output_stream: "SEGMENTATION:1:segmented_mask_1"
@@ -217,7 +217,7 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithNone) {
   CalculatorRunner runner(
       mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
           R"pb(
-            calculator: "TensorsToSegmentationCalculator"
+            calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
             output_stream: "SEGMENTATION:0:segmented_mask_0"
             output_stream: "SEGMENTATION:1:segmented_mask_1"
@@ -258,7 +258,7 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsConfidenceMaskWithSigmoid) {
   CalculatorRunner runner(
       mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
           R"pb(
-            calculator: "TensorsToSegmentationCalculator"
+            calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
             output_stream: "SEGMENTATION:0:segmented_mask_0"
             output_stream: "SEGMENTATION:1:segmented_mask_1"
@@ -300,7 +300,7 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMask) {
   CalculatorRunner runner(
       mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
           R"pb(
-            calculator: "TensorsToSegmentationCalculator"
+            calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
             output_stream: "SEGMENTATION:segmentation"
             options {
@@ -333,7 +333,7 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMaskResize) {
   CalculatorRunner runner(
       mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig::Node>(
           R"pb(
-            calculator: "TensorsToSegmentationCalculator"
+            calculator: "mediapipe.tasks.TensorsToSegmentationCalculator"
             input_stream: "TENSORS:tensors"
             input_stream: "OUTPUT_SIZE:size"
             output_stream: "SEGMENTATION:segmentation"

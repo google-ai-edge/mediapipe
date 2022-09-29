@@ -145,9 +145,13 @@ bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
     CHECK_NE(name_, 0);
     GLuint name_to_delete = name_;
     context->RunWithoutWaiting([name_to_delete, sync_token]() {
-      // TODO: maybe we do not actually have to wait for the
-      // consumer sync here. Check docs.
-      sync_token->WaitOnGpu();
+      if (sync_token) {
+        // TODO: maybe we do not actually have to wait for the
+        // consumer sync here. Check docs.
+        sync_token->WaitOnGpu();
+      } else {
+        LOG_FIRST_N(WARNING, 5) << "unexpected null sync in deletion_callback";
+      }
       DLOG_IF(ERROR, !glIsTexture(name_to_delete))
           << "Deleting invalid texture id: " << name_to_delete;
       glDeleteTextures(1, &name_to_delete);
@@ -179,13 +183,19 @@ void GlTextureBuffer::Reuse() {
 void GlTextureBuffer::Updated(std::shared_ptr<GlSyncPoint> prod_token) {
   CHECK(!producer_sync_)
       << "Updated existing texture which had not been marked for reuse!";
+  CHECK(prod_token);
   producer_sync_ = std::move(prod_token);
   producer_context_ = producer_sync_->GetContext();
 }
 
 void GlTextureBuffer::DidRead(std::shared_ptr<GlSyncPoint> cons_token) const {
   absl::MutexLock lock(&consumer_sync_mutex_);
-  consumer_multi_sync_->Add(std::move(cons_token));
+  if (cons_token) {
+    consumer_multi_sync_->Add(std::move(cons_token));
+  } else {
+    // TODO: change to a CHECK.
+    LOG_FIRST_N(WARNING, 5) << "unexpected null sync in DidRead";
+  }
 }
 
 GlTextureBuffer::~GlTextureBuffer() {

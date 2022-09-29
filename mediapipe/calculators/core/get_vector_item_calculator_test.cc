@@ -227,4 +227,15 @@ TEST(TestGetIntVectorItemCalculatorTest, IndexOptionsTwoTimestamps) {
               testing::ElementsAre(TimestampValue(1), TimestampValue(2)));
 }
 
+TEST(TestGetIntVectorItemCalculatorTest, IndexUint64) {
+  CalculatorRunner runner = MakeRunnerWithStream();
+  const std::vector<int> inputs = {1, 2, 3};
+  const uint64_t index = 1;
+  AddInputVector(runner, inputs, 1);
+  AddInputIndex(runner, index, 1);
+  MP_ASSERT_OK(runner.Run());
+  const std::vector<Packet>& outputs = runner.Outputs().Tag("ITEM").packets;
+  EXPECT_THAT(outputs, testing::ElementsAre(IntPacket(inputs[index])));
+}
+
 }  // namespace mediapipe

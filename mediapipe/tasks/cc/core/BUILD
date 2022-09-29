@@ -23,6 +23,8 @@ cc_library(
     srcs = ["base_options.cc"],
     hdrs = ["base_options.h"],
     deps = [
+        "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
+        "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "@com_google_absl//absl/memory",

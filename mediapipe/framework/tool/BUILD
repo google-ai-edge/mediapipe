@@ -821,6 +821,19 @@ cc_library(
     alwayslink = 1,
 )
 
+mediapipe_cc_test(
+    name = "switch_demux_calculator_test",
+    srcs = ["switch_demux_calculator_test.cc"],
+    deps = [
+        ":container_util",
+        ":switch_demux_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_library(
     name = "switch_mux_calculator",
     srcs = ["switch_mux_calculator.cc"],

@@ -41,9 +41,10 @@ limitations under the License.
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/components/calculators/classification_aggregation_calculator.pb.h"
+#include "mediapipe/tasks/cc/components/calculators/score_calibration_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/classification_postprocessing_options.pb.h"
-#include "mediapipe/tasks/cc/components/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/util/label_map.pb.h"
@@ -51,6 +52,7 @@ limitations under the License.
 
 namespace mediapipe {
 namespace tasks {
+namespace components {
 namespace {
 
 using ::mediapipe::api2::Input;
@@ -58,6 +60,7 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::components::proto::ClassifierOptions;
 using ::mediapipe::tasks::core::ModelResources;
 using ::testing::HasSubstr;
 using ::testing::proto::Approximately;
@@ -65,6 +68,8 @@ using ::testing::proto::Approximately;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/";
 constexpr char kQuantizedImageClassifierWithMetadata[] =
     "vision/mobilenet_v1_0.25_224_quant.tflite";
+constexpr char kQuantizedImageClassifierWithDummyScoreCalibration[] =
+    "vision/mobilenet_v1_0.25_224_quant_with_dummy_score_calibration.tflite";
 constexpr char kQuantizedImageClassifierWithoutMetadata[] =
     "vision/mobilenet_v1_0.25_192_quantized_1_default_1.tflite";
 constexpr char kFloatTwoHeadsAudioClassifierWithMetadata[] =
@@ -147,11 +152,12 @@ TEST_F(ConfigureTest, SucceedsWithoutMetadata) {
   ClassifierOptions options_in;
 
   ClassificationPostprocessingOptions options_out;
-  MP_EXPECT_OK(ConfigureClassificationPostprocessing(*model_resources,
+  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
                                                      options_in, &options_out));
 
   EXPECT_THAT(options_out, Approximately(EqualsProto(
-                               R"pb(tensors_to_classifications_options {
+                               R"pb(score_calibration_options: []
+                                    tensors_to_classifications_options {
                                       min_score_threshold: -3.4028235e+38
                                       top_k: -1
                                       sort_by_descending_score: true
@@ -169,11 +175,12 @@ TEST_F(ConfigureTest, SucceedsWithMaxResults) {
   options_in.set_max_results(3);
 
   ClassificationPostprocessingOptions options_out;
-  MP_EXPECT_OK(ConfigureClassificationPostprocessing(*model_resources,
+  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
                                                      options_in, &options_out));
 
   EXPECT_THAT(options_out, Approximately(EqualsProto(
-                               R"pb(tensors_to_classifications_options {
+                               R"pb(score_calibration_options: []
+                                    tensors_to_classifications_options {
                                       min_score_threshold: -3.4028235e+38
                                       top_k: 3
                                       sort_by_descending_score: true
@@ -191,11 +198,12 @@ TEST_F(ConfigureTest, SucceedsWithScoreThreshold) {
   options_in.set_score_threshold(0.5);
 
   ClassificationPostprocessingOptions options_out;
-  MP_EXPECT_OK(ConfigureClassificationPostprocessing(*model_resources,
+  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
                                                      options_in, &options_out));
 
   EXPECT_THAT(options_out, Approximately(EqualsProto(
-                               R"pb(tensors_to_classifications_options {
+                               R"pb(score_calibration_options: []
+                                    tensors_to_classifications_options {
                                       min_score_threshold: 0.5
                                       top_k: -1
                                       sort_by_descending_score: true
@@ -212,7 +220,7 @@ TEST_F(ConfigureTest, SucceedsWithMetadata) {
   ClassifierOptions options_in;
 
   ClassificationPostprocessingOptions options_out;
-  MP_EXPECT_OK(ConfigureClassificationPostprocessing(*model_resources,
+  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
                                                      options_in, &options_out));
 
   // Check label map size and two first elements.
@@ -229,7 +237,8 @@ TEST_F(ConfigureTest, SucceedsWithMetadata) {
   options_out.mutable_tensors_to_classifications_options(0)
       ->clear_label_items();
   EXPECT_THAT(options_out, Approximately(EqualsProto(
-                               R"pb(tensors_to_classifications_options {
+                               R"pb(score_calibration_options: []
+                                    tensors_to_classifications_options {
                                       min_score_threshold: -3.4028235e+38
                                       top_k: -1
                                       sort_by_descending_score: true
@@ -249,14 +258,15 @@ TEST_F(ConfigureTest, SucceedsWithAllowlist) {
   options_in.add_category_allowlist("tench");
 
   ClassificationPostprocessingOptions options_out;
-  MP_EXPECT_OK(ConfigureClassificationPostprocessing(*model_resources,
+  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
                                                      options_in, &options_out));
 
   // Clear label map and compare the rest of the options.
   options_out.mutable_tensors_to_classifications_options(0)
       ->clear_label_items();
   EXPECT_THAT(options_out, Approximately(EqualsProto(
-                               R"pb(tensors_to_classifications_options {
+                               R"pb(score_calibration_options: []
+                                    tensors_to_classifications_options {
                                       min_score_threshold: -3.4028235e+38
                                       top_k: -1
                                       sort_by_descending_score: true
@@ -277,14 +287,15 @@ TEST_F(ConfigureTest, SucceedsWithDenylist) {
   options_in.add_category_denylist("background");
 
   ClassificationPostprocessingOptions options_out;
-  MP_EXPECT_OK(ConfigureClassificationPostprocessing(*model_resources,
+  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
                                                      options_in, &options_out));
 
   // Clear label map and compare the rest of the options.
   options_out.mutable_tensors_to_classifications_options(0)
       ->clear_label_items();
   EXPECT_THAT(options_out, Approximately(EqualsProto(
-                               R"pb(tensors_to_classifications_options {
+                               R"pb(score_calibration_options: []
+                                    tensors_to_classifications_options {
                                       min_score_threshold: -3.4028235e+38
                                       top_k: -1
                                       sort_by_descending_score: true
@@ -297,6 +308,56 @@ TEST_F(ConfigureTest, SucceedsWithDenylist) {
                                )pb")));
 }
 
+TEST_F(ConfigureTest, SucceedsWithScoreCalibration) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto model_resources,
+      CreateModelResourcesForModel(
+          kQuantizedImageClassifierWithDummyScoreCalibration));
+  ClassifierOptions options_in;
+
+  ClassificationPostprocessingOptions options_out;
+  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
+                                                     options_in, &options_out));
+
+  // Check label map size and two first elements.
+  EXPECT_EQ(
+      options_out.tensors_to_classifications_options(0).label_items_size(),
+      kMobileNetNumClasses);
+  EXPECT_THAT(
+      options_out.tensors_to_classifications_options(0).label_items().at(0),
+      EqualsProto(R"pb(name: "background")pb"));
+  EXPECT_THAT(
+      options_out.tensors_to_classifications_options(0).label_items().at(1),
+      EqualsProto(R"pb(name: "tench")pb"));
+  // Clear label map.
+  options_out.mutable_tensors_to_classifications_options(0)
+      ->clear_label_items();
+  // Check sigmoids size and first element.
+  EXPECT_EQ(options_out.score_calibration_options_size(), 1);
+  auto score_calibration_options =
+      options_out.score_calibration_options().at(0);
+  EXPECT_EQ(score_calibration_options.sigmoids_size(), kMobileNetNumClasses);
+  EXPECT_THAT(score_calibration_options.sigmoids(0),
+              EqualsProto(R"pb(scale: 1.0 slope: 1.0 offset: 0.0)pb"));
+  options_out.mutable_score_calibration_options()->at(0).clear_sigmoids();
+  // Compare the rest of the options.
+  EXPECT_THAT(
+      options_out,
+      Approximately(EqualsProto(
+          R"pb(score_calibration_options {
+                 key: 0
+                 value { score_transformation: IDENTITY default_score: 0.5 }
+               }
+               tensors_to_classifications_options {
+                 min_score_threshold: -3.4028235e+38
+                 top_k: -1
+                 sort_by_descending_score: true
+               }
+               classification_aggregation_options { head_names: "probability" }
+               has_quantized_outputs: true
+          )pb")));
+}
+
 TEST_F(ConfigureTest, SucceedsWithMultipleHeads) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
@@ -304,7 +365,7 @@ TEST_F(ConfigureTest, SucceedsWithMultipleHeads) {
   ClassifierOptions options_in;
 
   ClassificationPostprocessingOptions options_out;
-  MP_EXPECT_OK(ConfigureClassificationPostprocessing(*model_resources,
+  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
                                                      options_in, &options_out));
   // Check label maps sizes and first two elements.
   EXPECT_EQ(
@@ -331,7 +392,8 @@ TEST_F(ConfigureTest, SucceedsWithMultipleHeads) {
   options_out.mutable_tensors_to_classifications_options(1)
       ->clear_label_items();
   EXPECT_THAT(options_out, Approximately(EqualsProto(
-                               R"pb(tensors_to_classifications_options {
+                               R"pb(score_calibration_options: []
+                                    tensors_to_classifications_options {
                                       min_score_threshold: -3.4028235e+38
                                       top_k: -1
                                       sort_by_descending_score: true
@@ -358,8 +420,8 @@ class PostprocessingTest : public tflite_shims::testing::Test {
                      CreateModelResourcesForModel(model_name));
 
     Graph graph;
-    auto& postprocessing =
-        graph.AddNode("mediapipe.tasks.ClassificationPostprocessingSubgraph");
+    auto& postprocessing = graph.AddNode(
+        "mediapipe.tasks.components.ClassificationPostprocessingSubgraph");
     MP_RETURN_IF_ERROR(ConfigureClassificationPostprocessing(
         *model_resources, options,
         &postprocessing.GetOptions<ClassificationPostprocessingOptions>()));
@@ -503,6 +565,52 @@ TEST_F(PostprocessingTest, SucceedsWithMetadata) {
                })pb"));
 }
 
+TEST_F(PostprocessingTest, SucceedsWithScoreCalibration) {
+  // Build graph.
+  ClassifierOptions options;
+  options.set_max_results(3);
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto poller,
+      BuildGraph(kQuantizedImageClassifierWithDummyScoreCalibration, options));
+  // Build input tensors.
+  std::vector<uint8> tensor(kMobileNetNumClasses, 0);
+  tensor[1] = 12;
+  tensor[2] = 14;
+  tensor[3] = 16;
+  tensor[4] = 18;
+
+  // Send tensors and get results.
+  AddTensor(tensor, Tensor::ElementType::kUInt8,
+            /*quantization_parameters=*/{0.1, 10});
+  MP_ASSERT_OK(Run());
+  MP_ASSERT_OK_AND_ASSIGN(auto results, GetClassificationResult(poller));
+
+  // Validate results.
+  EXPECT_THAT(results, EqualsProto(
+                           R"pb(classifications {
+                                  entries {
+                                    categories {
+                                      index: 4
+                                      score: 0.6899744811
+                                      category_name: "tiger shark"
+                                    }
+                                    categories {
+                                      index: 3
+                                      score: 0.6456563062
+                                      category_name: "great white shark"
+                                    }
+                                    categories {
+                                      index: 2
+                                      score: 0.5986876601
+                                      category_name: "goldfish"
+                                    }
+                                    timestamp_ms: 0
+                                  }
+                                  head_index: 0
+                                  head_name: "probability"
+                                })pb"));
+}
+
 TEST_F(PostprocessingTest, SucceedsWithMultipleHeads) {
   // Build graph.
   ClassifierOptions options;
@@ -621,5 +729,6 @@ TEST_F(PostprocessingTest, SucceedsWithTimestamps) {
 }
 
 }  // namespace
+}  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe

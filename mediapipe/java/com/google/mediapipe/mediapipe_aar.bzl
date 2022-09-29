@@ -145,6 +145,7 @@ EOF
             "//mediapipe/java/com/google/mediapipe/components:android_components",
             "//mediapipe/java/com/google/mediapipe/components:android_camerax_helper",
             "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+            "//mediapipe/java/com/google/mediapipe/framework/image",
             "//mediapipe/java/com/google/mediapipe/glutil",
             "//third_party:androidx_annotation",
             "//third_party:androidx_appcompat",

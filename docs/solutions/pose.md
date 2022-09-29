@@ -217,7 +217,7 @@ A list of pose landmarks. Each landmark consists of the following:
 
 *Fig 5. Example of MediaPipe Pose real-world 3D coordinates.* |
 :-----------------------------------------------------------: |
-<video autoplay muted loop preload style="height: auto; width: 480px"><source src="../images/mobile/pose_world_landmarks.mp4" type="video/mp4"></video> |
+<video autoplay muted loop preload style="height: auto; width: 480px"><source src="https://mediapipe.dev/images/mobile/pose_world_landmarks.mp4" type="video/mp4"></video> |
 
 Another list of pose landmarks in world coordinates. Each landmark consists of
 the following:
@@ -238,7 +238,7 @@ for usage details.
 
 *Fig 6. Example of MediaPipe Pose segmentation mask.* |
 :---------------------------------------------------: |
-<video autoplay muted loop preload style="height: auto; width: 480px"><source src="../images/mobile/pose_segmentation.mp4" type="video/mp4"></video> |
+<video autoplay muted loop preload style="height: auto; width: 480px"><source src="https://mediapipe.dev/images/mobile/pose_segmentation.mp4" type="video/mp4"></video> |
 
 ### Python Solution API
 

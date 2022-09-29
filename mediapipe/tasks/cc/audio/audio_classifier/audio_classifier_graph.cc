@@ -136,6 +136,11 @@ void ConfigureAudioToTensorCalculator(
 //   options {
 //     [mediapipe.tasks.audio.audio_classifier.proto.AudioClassifierOptions.ext]
 //     {
+//       base_options {
+//         model_asset {
+//           file_name: "/path/to/model.tflite"
+//         }
+//       }
 //       max_results: 4
 //       score_threshold: 0.5
 //       category_allowlist: "foo"
@@ -225,15 +230,17 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
 
     // Adds inference subgraph and connects its input stream to the output
     // tensors produced by the AudioToTensorCalculator.
-    auto& inference = AddInference(model_resources, graph);
+    auto& inference = AddInference(
+        model_resources, task_options.base_options().acceleration(), graph);
     audio_to_tensor.Out(kTensorsTag) >> inference.In(kTensorsTag);
 
     // Adds postprocessing calculators and connects them to the graph output.
-    auto& postprocessing =
-        graph.AddNode("mediapipe.tasks.ClassificationPostprocessingSubgraph");
+    auto& postprocessing = graph.AddNode(
+        "mediapipe.tasks.components.ClassificationPostprocessingSubgraph");
     MP_RETURN_IF_ERROR(ConfigureClassificationPostprocessing(
         model_resources, task_options.classifier_options(),
-        &postprocessing.GetOptions<ClassificationPostprocessingOptions>()));
+        &postprocessing.GetOptions<
+            tasks::components::ClassificationPostprocessingOptions>()));
     inference.Out(kTensorsTag) >> postprocessing.In(kTensorsTag);
 
     // Time aggregation is only needed for performing audio classification on

@@ -112,8 +112,60 @@ class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
   static absl::StatusOr<std::unique_ptr<ImageSegmenter>> Create(
       std::unique_ptr<ImageSegmenterOptions> options);
 
-  // Runs the actual segmentation task.
+  // Performs image segmentation on the provided single image.
+  // Only use this method when the ImageSegmenter is created with the image
+  // running mode.
+  //
+  // The image can be of any size with format RGB or RGBA.
+  // TODO: Describes how the input image will be preprocessed
+  // after the yuv support is implemented.
+  //
+  // If the output_type is CATEGORY_MASK, the returned vector of images is
+  // per-category segmented image mask.
+  // If the output_type is CONFIDENCE_MASK, the returned vector of images
+  // contains only one confidence image mask.
   absl::StatusOr<std::vector<mediapipe::Image>> Segment(mediapipe::Image image);
+
+  // Performs image segmentation on the provided video frame.
+  // Only use this method when the ImageSegmenter is created with the video
+  // running mode.
+  //
+  // The image can be of any size with format RGB or RGBA. It's required to
+  // provide the video frame's timestamp (in milliseconds). The input timestamps
+  // must be monotonically increasing.
+  //
+  // If the output_type is CATEGORY_MASK, the returned vector of images is
+  // per-category segmented image mask.
+  // If the output_type is CONFIDENCE_MASK, the returned vector of images
+  // contains only one confidence image mask.
+  absl::StatusOr<std::vector<mediapipe::Image>> SegmentForVideo(
+      mediapipe::Image image, int64 timestamp_ms);
+
+  // Sends live image data to perform image segmentation, and the results will
+  // be available via the "result_callback" provided in the
+  // ImageSegmenterOptions. Only use this method when the ImageSegmenter is
+  // created with the live stream running mode.
+  //
+  // The image can be of any size with format RGB or RGBA. It's required to
+  // provide a timestamp (in milliseconds) to indicate when the input image is
+  // sent to the image segmenter. The input timestamps must be monotonically
+  // increasing.
+  //
+  // The "result_callback" prvoides
+  //   - A vector of segmented image masks.
+  //     If the output_type is CATEGORY_MASK, the returned vector of images is
+  //     per-category segmented image mask.
+  //     If the output_type is CONFIDENCE_MASK, the returned vector of images
+  //     contains only one confidence image mask.
+  //   - The const reference to the corresponding input image that the image
+  //     segmentation runs on. Note that the const reference to the image will
+  //     no longer be valid when the callback returns. To access the image data
+  //     outside of the callback, callers need to make a copy of the image.
+  //   - The input timestamp in milliseconds.
+  absl::Status SegmentAsync(mediapipe::Image image, int64 timestamp_ms);
+
+  // Shuts down the ImageSegmenter when all works are done.
+  absl::Status Close() { return runner_->Close(); }
 };
 
 }  // namespace vision

@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 #include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
-
 namespace {
 
 // Set image_frame to a constant per-channel pix_value.
@@ -50,8 +49,8 @@ TEST(ImageFrameOpencvTest, ConvertToMat) {
   ImageFrame frame2(ImageFormat::GRAY8, i_width, i_height);
 
   // Check adding constant images.
-  const uint8 frame1_val = 12;
-  const uint8 frame2_val = 34;
+  const uint8_t frame1_val = 12;
+  const uint8_t frame2_val = 34;
   SetToColor<uint8>(&frame1_val, &frame1);
   SetToColor<uint8>(&frame2_val, &frame2);
   // Get Mat wrapper around ImageFrame memory (zero copy).
@@ -60,6 +59,37 @@ TEST(ImageFrameOpencvTest, ConvertToMat) {
   // Use OpenCV functions directly on ImageFrame data.
   cv::Mat frame_sum = frame1_mat + frame2_mat;
   const auto frame_avg = static_cast<int>(cv::mean(frame_sum)[0]);
+  EXPECT_EQ(frame_avg, frame1_val + frame2_val);
+
+  // Check setting min/max pixels.
+  uint8* frame1_ptr = frame1.MutablePixelData();
+  frame1_ptr[(i_width - 5) + (i_height - 5) * frame1.WidthStep()] = 1;
+  frame1_ptr[(i_width - 6) + (i_height - 6) * frame1.WidthStep()] = 100;
+  double min, max;
+  cv::Point min_loc, max_loc;
+  cv::minMaxLoc(frame1_mat, &min, &max, &min_loc, &max_loc);
+  EXPECT_EQ(min, 1);
+  EXPECT_EQ(min_loc.x, i_width - 5);
+  EXPECT_EQ(min_loc.y, i_height - 5);
+  EXPECT_EQ(max, 100);
+  EXPECT_EQ(max_loc.x, i_width - 6);
+  EXPECT_EQ(max_loc.y, i_height - 6);
+}
+
+TEST(ImageFrameOpencvTest, ConvertToIpl) {
+  const int i_width = 123, i_height = 45;
+  ImageFrame frame1(ImageFormat::GRAY8, i_width, i_height);
+  ImageFrame frame2(ImageFormat::GRAY8, i_width, i_height);
+
+  // Check adding constant images.
+  const uint8_t frame1_val = 12;
+  const uint8_t frame2_val = 34;
+  SetToColor<uint8>(&frame1_val, &frame1);
+  SetToColor<uint8>(&frame2_val, &frame2);
+  const cv::Mat frame1_mat = formats::MatView(&frame1);
+  const cv::Mat frame2_mat = formats::MatView(&frame2);
+  const cv::Mat frame_sum = frame1_mat + frame2_mat;
+  const auto frame_avg = static_cast<int>(cv::mean(frame_sum).val[0]);
   EXPECT_EQ(frame_avg, frame1_val + frame2_val);
 
   // Check setting min/max pixels.

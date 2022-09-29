@@ -24,6 +24,10 @@ using GetLandmarkListVectorItemCalculator =
     GetVectorItemCalculator<mediapipe::LandmarkList>;
 REGISTER_CALCULATOR(GetLandmarkListVectorItemCalculator);
 
+using GetNormalizedLandmarkListVectorItemCalculator =
+    GetVectorItemCalculator<mediapipe::NormalizedLandmarkList>;
+REGISTER_CALCULATOR(GetNormalizedLandmarkListVectorItemCalculator);
+
 using GetClassificationListVectorItemCalculator =
     GetVectorItemCalculator<mediapipe::ClassificationList>;
 REGISTER_CALCULATOR(GetClassificationListVectorItemCalculator);

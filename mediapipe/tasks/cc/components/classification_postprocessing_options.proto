@@ -15,16 +15,21 @@ limitations under the License.
 
 syntax = "proto2";
 
-package mediapipe.tasks;
+package mediapipe.tasks.components;
 
 import "mediapipe/calculators/tensor/tensors_to_classification_calculator.proto";
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/components/calculators/classification_aggregation_calculator.proto";
+import "mediapipe/tasks/cc/components/calculators/score_calibration_calculator.proto";
 
 message ClassificationPostprocessingOptions {
   extend mediapipe.CalculatorOptions {
     optional ClassificationPostprocessingOptions ext = 460416950;
   }
+
+  // Optional mapping between output tensor index and corresponding score
+  // calibration options.
+  map<int32, ScoreCalibrationCalculatorOptions> score_calibration_options = 4;
 
   // Options for the TensorsToClassification calculators (one per classification
   // head) encapsulated by the ClassificationPostprocessing subgraph.

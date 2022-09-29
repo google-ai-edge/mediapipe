@@ -91,7 +91,7 @@ class InferenceSubgraph : public Subgraph {
           subgraph_options->model_resources_tag());
     } else {
       model_resources_opts.mutable_model_file()->Swap(
-          subgraph_options->mutable_base_options()->mutable_model_file());
+          subgraph_options->mutable_base_options()->mutable_model_asset());
     }
     model_resources_node.SideOut(kMetadataExtractorTag) >>
         graph.SideOut(kMetadataExtractorTag);
@@ -165,12 +165,16 @@ absl::StatusOr<const ModelResources*> ModelTaskGraph::CreateModelResources(
   return model_resources_cache_service.GetObject().GetModelResources(tag);
 }
 
-GenericNode& ModelTaskGraph::AddInference(const ModelResources& model_resources,
-                                          Graph& graph) const {
+GenericNode& ModelTaskGraph::AddInference(
+    const ModelResources& model_resources,
+    const proto::Acceleration& acceleration, Graph& graph) const {
   auto& inference_subgraph =
       graph.AddNode("mediapipe.tasks.core.InferenceSubgraph");
   auto& inference_subgraph_opts =
       inference_subgraph.GetOptions<InferenceSubgraphOptions>();
+  inference_subgraph_opts.mutable_base_options()
+      ->mutable_acceleration()
+      ->CopyFrom(acceleration);
   // When the model resources tag is available, the ModelResourcesCalculator
   // will retrieve the cached model resources from the graph service by tag.
   // Otherwise, provides the exteranal file and asks the
@@ -180,7 +184,7 @@ GenericNode& ModelTaskGraph::AddInference(const ModelResources& model_resources,
     inference_subgraph_opts.set_model_resources_tag(model_resources.GetTag());
   } else {
     inference_subgraph_opts.mutable_base_options()
-        ->mutable_model_file()
+        ->mutable_model_asset()
         ->CopyFrom(model_resources.GetModelFile());
   }
   return inference_subgraph;

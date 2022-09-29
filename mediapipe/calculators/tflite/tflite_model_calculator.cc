@@ -19,6 +19,7 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "tensorflow/lite/allocation.h"
 #include "tensorflow/lite/model.h"
 
 namespace mediapipe {
@@ -32,6 +33,8 @@ namespace mediapipe {
 //                it to the graph as input side packet or you can use some of
 //                calculators like LocalFileContentsCalculator to get model
 //                blob and use it as input here.
+//   MODEL_FD   - Tflite model file descriptor std::tuple<int, size_t, size_t>
+//                containing (fd, offset, size).
 //
 // Output side packets:
 //   MODEL - TfLite model. (std::unique_ptr<tflite::FlatBufferModel,
@@ -52,17 +55,42 @@ class TfLiteModelCalculator : public CalculatorBase {
                       std::function<void(tflite::FlatBufferModel*)>>;
 
   static absl::Status GetContract(CalculatorContract* cc) {
-    cc->InputSidePackets().Tag("MODEL_BLOB").Set<std::string>();
+    if (cc->InputSidePackets().HasTag("MODEL_BLOB")) {
+      cc->InputSidePackets().Tag("MODEL_BLOB").Set<std::string>();
+    }
+
+    if (cc->InputSidePackets().HasTag("MODEL_FD")) {
+      cc->InputSidePackets()
+          .Tag("MODEL_FD")
+          .Set<std::tuple<int, size_t, size_t>>();
+    }
+
     cc->OutputSidePackets().Tag("MODEL").Set<TfLiteModelPtr>();
     return absl::OkStatus();
   }
 
   absl::Status Open(CalculatorContext* cc) override {
-    const Packet& model_packet = cc->InputSidePackets().Tag("MODEL_BLOB");
-    const std::string& model_blob = model_packet.Get<std::string>();
-    std::unique_ptr<tflite::FlatBufferModel> model =
-        tflite::FlatBufferModel::BuildFromBuffer(model_blob.data(),
-                                                 model_blob.size());
+    Packet model_packet;
+    std::unique_ptr<tflite::FlatBufferModel> model;
+
+    if (cc->InputSidePackets().HasTag("MODEL_BLOB")) {
+      model_packet = cc->InputSidePackets().Tag("MODEL_BLOB");
+      const std::string& model_blob = model_packet.Get<std::string>();
+      model = tflite::FlatBufferModel::BuildFromBuffer(model_blob.data(),
+                                                       model_blob.size());
+    }
+
+    if (cc->InputSidePackets().HasTag("MODEL_FD")) {
+      model_packet = cc->InputSidePackets().Tag("MODEL_FD");
+      const auto& model_fd =
+          model_packet.Get<std::tuple<int, size_t, size_t>>();
+      auto model_allocation = std::make_unique<tflite::MMAPAllocation>(
+          std::get<0>(model_fd), std::get<1>(model_fd), std::get<2>(model_fd),
+          tflite::DefaultErrorReporter());
+      model = tflite::FlatBufferModel::BuildFromAllocation(
+          std::move(model_allocation), tflite::DefaultErrorReporter());
+    }
+
     RET_CHECK(model) << "Failed to load TfLite model from blob.";
 
     cc->OutputSidePackets().Tag("MODEL").Set(

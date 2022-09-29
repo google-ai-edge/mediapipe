@@ -157,6 +157,13 @@ http_archive(
     urls = ["https://github.com/google/multichannel-audio-tools/archive/master.zip"],
 )
 
+http_archive(
+    name = "pffft",
+    strip_prefix = "jpommier-pffft-7c3b5a7dc510",
+    urls = ["https://bitbucket.org/jpommier/pffft/get/7c3b5a7dc510.zip"],
+    build_file = "@//third_party:pffft.BUILD",
+)
+
 # sentencepiece
 http_archive(
     name = "com_google_sentencepiece",
