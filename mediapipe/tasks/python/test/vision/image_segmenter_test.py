@@ -45,13 +45,6 @@ _MASK_MAGNIFICATION_FACTOR = 10
 _MATCH_PIXELS_THRESHOLD = 0.01
 
 
-def _iou(ground_truth, prediction):
-  intersection = np.logical_and(ground_truth, prediction)
-  union = np.logical_or(ground_truth, prediction)
-  iou = np.sum(intersection) / np.sum(union)
-  return iou
-
-
 class ModelFileType(enum.Enum):
   FILE_CONTENT = 1
   FILE_NAME = 2
