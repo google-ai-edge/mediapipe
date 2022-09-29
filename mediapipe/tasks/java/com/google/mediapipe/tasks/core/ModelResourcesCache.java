@@ -16,7 +16,7 @@ package com.google.mediapipe.tasks.core;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Facililates creation and destruction of the native ModelResourcesCache. */
+/** Facilitates creation and destruction of the native ModelResourcesCache. */
 class ModelResourcesCache {
   private final long nativeHandle;
   private final AtomicBoolean isHandleValid;
