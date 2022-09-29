@@ -34,6 +34,7 @@ android_library(
 android_library(
     name = "android_framework_no_mff",
     proguard_specs = [":proguard.pgcfg"],
+    visibility = ["//visibility:public"],
     exports = [
         ":android_framework_no_proguard",
     ],
