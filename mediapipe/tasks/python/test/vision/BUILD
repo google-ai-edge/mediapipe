@@ -26,7 +26,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
     deps = [
-        # build rule placeholder: numpy dep,
+        "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:bounding_box",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:detections",
@@ -34,7 +34,6 @@ py_test(
         "//mediapipe/tasks/python/test:test_util",
         "//mediapipe/tasks/python/vision:object_detector",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
-        "@absl_py//absl/testing:parameterized",
     ],
 )
 
@@ -46,6 +45,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
     deps = [
+        "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:classifications",
         "//mediapipe/tasks/python/core:base_options",
