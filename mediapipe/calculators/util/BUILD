@@ -143,9 +143,7 @@ mediapipe_proto_library(
 cc_library(
     name = "packet_frequency_calculator",
     srcs = ["packet_frequency_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/calculators/util:packet_frequency_calculator_cc_proto",
         "//mediapipe/calculators/util:packet_frequency_cc_proto",
@@ -190,9 +188,7 @@ cc_test(
 cc_library(
     name = "packet_latency_calculator",
     srcs = ["packet_latency_calculator.cc"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/calculators/util:latency_cc_proto",
         "//mediapipe/calculators/util:packet_latency_calculator_cc_proto",
