@@ -22,7 +22,7 @@ from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.python._framework_bindings import task_runner as task_runner_module
 from mediapipe.tasks.cc.vision.image_segmenter.proto import image_segmenter_options_pb2
-from mediapipe.tasks.python.components import segmenter_options
+from mediapipe.tasks.python.components.proto import segmenter_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
@@ -103,7 +103,7 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
         file such as invalid file path.
       RuntimeError: If other types of error occurred.
     """
-    base_options = _BaseOptions(file_name=model_path)
+    base_options = _BaseOptions(model_asset_path=model_path)
     options = ImageSegmenterOptions(
         base_options=base_options, running_mode=_RunningMode.IMAGE)
     return cls.create_from_options(options)

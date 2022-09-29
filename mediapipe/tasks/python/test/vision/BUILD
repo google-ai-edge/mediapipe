@@ -48,7 +48,7 @@ py_test(
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_util",
-        "//mediapipe/tasks/python/components:segmenter_options",
+        "//mediapipe/tasks/python/components/proto:segmenter_options",
         "//mediapipe/tasks/python/vision:image_segmenter",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
         "@absl_py//absl/testing:parameterized",

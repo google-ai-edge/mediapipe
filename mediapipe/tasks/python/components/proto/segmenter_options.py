@@ -17,7 +17,7 @@ import dataclasses
 import enum
 from typing import Any, Optional
 
-from mediapipe.tasks.cc.components import segmenter_options_pb2
+from mediapipe.tasks.cc.components.proto import segmenter_options_pb2
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _SegmenterOptionsProto = segmenter_options_pb2.SegmenterOptions

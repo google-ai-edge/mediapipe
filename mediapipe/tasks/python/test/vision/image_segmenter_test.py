@@ -22,7 +22,7 @@ from absl.testing import parameterized
 
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import image_frame as image_frame_module
-from mediapipe.tasks.python.components import segmenter_options
+from mediapipe.tasks.python.components.proto import segmenter_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_util
 from mediapipe.tasks.python.vision import image_segmenter
@@ -66,7 +66,7 @@ class ImageSegmenterTest(parameterized.TestCase):
 
   def test_create_from_options_succeeds_with_valid_model_path(self):
     # Creates with options containing model file successfully.
-    base_options = _BaseOptions(file_name=self.model_path)
+    base_options = _BaseOptions(model_asset_path=self.model_path)
     options = _ImageSegmenterOptions(base_options=base_options)
     with _ImageSegmenter.create_from_options(options) as segmenter:
       self.assertIsInstance(segmenter, _ImageSegmenter)
@@ -77,14 +77,14 @@ class ImageSegmenterTest(parameterized.TestCase):
         ValueError,
         r"ExternalFile must specify at least one of 'file_content', "
         r"'file_name' or 'file_descriptor_meta'."):
-      base_options = _BaseOptions(file_name='')
+      base_options = _BaseOptions(model_asset_path='')
       options = _ImageSegmenterOptions(base_options=base_options)
       _ImageSegmenter.create_from_options(options)
 
   def test_create_from_options_succeeds_with_valid_model_content(self):
     # Creates with options containing model content successfully.
     with open(self.model_path, 'rb') as f:
-      base_options = _BaseOptions(file_content=f.read())
+      base_options = _BaseOptions(model_asset_buffer=f.read())
       options = _ImageSegmenterOptions(base_options=base_options)
       segmenter = _ImageSegmenter.create_from_options(options)
       self.assertIsInstance(segmenter, _ImageSegmenter)
@@ -95,11 +95,11 @@ class ImageSegmenterTest(parameterized.TestCase):
   def test_succeeds_with_category_mask(self, model_file_type):
     # Creates segmenter.
     if model_file_type is ModelFileType.FILE_NAME:
-      base_options = _BaseOptions(file_name=self.model_path)
+      base_options = _BaseOptions(model_asset_path=self.model_path)
     elif model_file_type is ModelFileType.FILE_CONTENT:
       with open(self.model_path, 'rb') as f:
         model_content = f.read()
-      base_options = _BaseOptions(file_content=model_content)
+      base_options = _BaseOptions(model_asset_buffer=model_content)
     else:
       # Should never happen
       raise ValueError('model_file_type is invalid.')
@@ -147,7 +147,7 @@ class ImageSegmenterTest(parameterized.TestCase):
 
   def test_succeeds_with_confidence_mask(self):
     # Creates segmenter.
-    base_options = _BaseOptions(file_name=self.model_path)
+    base_options = _BaseOptions(model_asset_path=self.model_path)
 
     # Run segmentation on the model in CATEGORY_MASK mode.
     segmenter_options = _SegmenterOptions(output_type=_OutputType.CATEGORY_MASK)
