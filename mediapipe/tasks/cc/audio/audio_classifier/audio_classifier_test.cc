@@ -44,6 +44,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace audio {
+namespace audio_classifier {
 namespace {
 
 using ::absl::StatusOr;
@@ -557,6 +558,7 @@ TEST_F(ClassifyAsyncTest, SucceedsWithNonDeterministicNumAudioSamples) {
 }
 
 }  // namespace
+}  // namespace audio_classifier
 }  // namespace audio
 }  // namespace tasks
 }  // namespace mediapipe

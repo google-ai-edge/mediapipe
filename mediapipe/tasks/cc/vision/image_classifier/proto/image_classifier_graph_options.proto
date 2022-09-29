@@ -21,9 +21,9 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/components/proto/classifier_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
-message ImageClassifierOptions {
+message ImageClassifierGraphOptions {
   extend mediapipe.CalculatorOptions {
-    optional ImageClassifierOptions ext = 456383383;
+    optional ImageClassifierGraphOptions ext = 456383383;
   }
   // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
   // model file with metadata, accelerator options, etc.

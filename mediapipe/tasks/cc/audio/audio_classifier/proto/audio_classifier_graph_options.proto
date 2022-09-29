@@ -21,9 +21,9 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/components/proto/classifier_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
-message AudioClassifierOptions {
+message AudioClassifierGraphOptions {
   extend mediapipe.CalculatorOptions {
-    optional AudioClassifierOptions ext = 451755788;
+    optional AudioClassifierGraphOptions ext = 451755788;
   }
   // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
   // model file with metadata, accelerator options, etc.

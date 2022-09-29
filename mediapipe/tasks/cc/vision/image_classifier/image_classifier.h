@@ -32,6 +32,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace image_classifier {
 
 // The options for configuring a Mediapipe image classifier task.
 struct ImageClassifierOptions {
@@ -161,6 +162,7 @@ class ImageClassifier : tasks::vision::core::BaseVisionTaskApi {
   absl::Status Close() { return runner_->Close(); }
 };
 
+}  // namespace image_classifier
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

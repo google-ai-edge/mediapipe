@@ -44,6 +44,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace image_classifier {
 namespace {
 
 using ::mediapipe::file::JoinPath;
@@ -814,6 +815,7 @@ TEST_F(LiveStreamModeTest, SucceedsWithRegionOfInterest) {
 }
 
 }  // namespace
+}  // namespace image_classifier
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

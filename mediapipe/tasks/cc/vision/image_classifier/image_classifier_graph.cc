@@ -29,11 +29,12 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/image_preprocessing_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
-#include "mediapipe/tasks/cc/vision/image_classifier/proto/image_classifier_options.pb.h"
+#include "mediapipe/tasks/cc/vision/image_classifier/proto/image_classifier_graph_options.pb.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace image_classifier {
 
 namespace {
 
@@ -42,8 +43,6 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::GenericNode;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
-using ImageClassifierOptionsProto =
-    image_classifier::proto::ImageClassifierOptions;
 
 constexpr float kDefaultScoreThreshold = std::numeric_limits<float>::lowest();
 
@@ -61,8 +60,7 @@ struct ImageClassifierOutputStreams {
 
 }  // namespace
 
-// A "mediapipe.tasks.vision.ImageClassifierGraph" performs image
-// classification.
+// An "ImageClassifierGraph" performs image classification.
 // - Accepts CPU input images and outputs classifications on CPU.
 //
 // Inputs:
@@ -80,12 +78,12 @@ struct ImageClassifierOutputStreams {
 //
 // Example:
 // node {
-//   calculator: "mediapipe.tasks.vision.ImageClassifierGraph"
+//   calculator: "mediapipe.tasks.vision.image_classifier.ImageClassifierGraph"
 //   input_stream: "IMAGE:image_in"
 //   output_stream: "CLASSIFICATION_RESULT:classification_result_out"
 //   output_stream: "IMAGE:image_out"
 //   options {
-//     [mediapipe.tasks.vision.image_classifier.proto.ImageClassifierOptions.ext]
+//     [mediapipe.tasks.vision.image_classifier.proto.ImageClassifierGraphOptions.ext]
 //     {
 //       base_options {
 //         model_asset {
@@ -104,13 +102,14 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(const auto* model_resources,
-                     CreateModelResources<ImageClassifierOptionsProto>(sc));
+    ASSIGN_OR_RETURN(
+        const auto* model_resources,
+        CreateModelResources<proto::ImageClassifierGraphOptions>(sc));
     Graph graph;
     ASSIGN_OR_RETURN(
         auto output_streams,
         BuildImageClassificationTask(
-            sc->Options<ImageClassifierOptionsProto>(), *model_resources,
+            sc->Options<proto::ImageClassifierGraphOptions>(), *model_resources,
             graph[Input<Image>(kImageTag)],
             graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
     output_streams.classification_result >>
@@ -125,13 +124,13 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
   // (mediapipe::Image) as input and returns one classification result per input
   // image.
   //
-  // task_options: the mediapipe tasks ImageClassifierOptions.
+  // task_options: the mediapipe tasks ImageClassifierGraphOptions.
   // model_resources: the ModelSources object initialized from an image
   // classification model file with model metadata.
   // image_in: (mediapipe::Image) stream to run classification on.
   // graph: the mediapipe builder::Graph instance to be updated.
   absl::StatusOr<ImageClassifierOutputStreams> BuildImageClassificationTask(
-      const ImageClassifierOptionsProto& task_options,
+      const proto::ImageClassifierGraphOptions& task_options,
       const core::ModelResources& model_resources, Source<Image> image_in,
       Source<NormalizedRect> norm_rect_in, Graph& graph) {
     // Adds preprocessing calculators and connects them to the graph input image
@@ -168,8 +167,10 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
         /*image=*/preprocessing[Output<Image>(kImageTag)]};
   }
 };
-REGISTER_MEDIAPIPE_GRAPH(::mediapipe::tasks::vision::ImageClassifierGraph);
+REGISTER_MEDIAPIPE_GRAPH(
+    ::mediapipe::tasks::vision::image_classifier::ImageClassifierGraph);
 
+}  // namespace image_classifier
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

@@ -22,7 +22,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/matrix.h"
-#include "mediapipe/tasks/cc/audio/audio_classifier/proto/audio_classifier_options.pb.h"
+#include "mediapipe/tasks/cc/audio/audio_classifier/proto/audio_classifier_graph_options.pb.h"
 #include "mediapipe/tasks/cc/audio/core/audio_task_api_factory.h"
 #include "mediapipe/tasks/cc/components/classifier_options.h"
 #include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
@@ -33,6 +33,8 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace audio {
+namespace audio_classifier {
+
 namespace {
 
 constexpr char kAudioStreamName[] = "audio_in";
@@ -42,16 +44,13 @@ constexpr char kClassificationResultTag[] = "CLASSIFICATION_RESULT";
 constexpr char kSampleRateName[] = "sample_rate_in";
 constexpr char kSampleRateTag[] = "SAMPLE_RATE";
 constexpr char kSubgraphTypeName[] =
-    "mediapipe.tasks.audio.AudioClassifierGraph";
+    "mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
 
-using AudioClassifierOptionsProto =
-    audio_classifier::proto::AudioClassifierOptions;
-
 // Creates a MediaPipe graph config that only contains a single subgraph node of
-// "mediapipe.tasks.audio.AudioClassifierGraph".
+// type "AudioClassifierGraph".
 CalculatorGraphConfig CreateGraphConfig(
-    std::unique_ptr<AudioClassifierOptionsProto> options_proto) {
+    std::unique_ptr<proto::AudioClassifierGraphOptions> options_proto) {
   api2::builder::Graph graph;
   auto& subgraph = graph.AddNode(kSubgraphTypeName);
   graph.In(kAudioTag).SetName(kAudioStreamName) >> subgraph.In(kAudioTag);
@@ -59,7 +58,8 @@ CalculatorGraphConfig CreateGraphConfig(
     graph.In(kSampleRateTag).SetName(kSampleRateName) >>
         subgraph.In(kSampleRateTag);
   }
-  subgraph.GetOptions<AudioClassifierOptionsProto>().Swap(options_proto.get());
+  subgraph.GetOptions<proto::AudioClassifierGraphOptions>().Swap(
+      options_proto.get());
   subgraph.Out(kClassificationResultTag)
           .SetName(kClassificationResultStreamName) >>
       graph.Out(kClassificationResultTag);
@@ -67,10 +67,10 @@ CalculatorGraphConfig CreateGraphConfig(
 }
 
 // Converts the user-facing AudioClassifierOptions struct to the internal
-// AudioClassifierOptions proto.
-std::unique_ptr<AudioClassifierOptionsProto>
+// AudioClassifierGraphOptions proto.
+std::unique_ptr<proto::AudioClassifierGraphOptions>
 ConvertAudioClassifierOptionsToProto(AudioClassifierOptions* options) {
-  auto options_proto = std::make_unique<AudioClassifierOptionsProto>();
+  auto options_proto = std::make_unique<proto::AudioClassifierGraphOptions>();
   auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
       tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
@@ -119,7 +119,7 @@ absl::StatusOr<std::unique_ptr<AudioClassifier>> AudioClassifier::Create(
         };
   }
   return core::AudioTaskApiFactory::Create<AudioClassifier,
-                                           AudioClassifierOptionsProto>(
+                                           proto::AudioClassifierGraphOptions>(
       CreateGraphConfig(std::move(options_proto)),
       std::move(options->base_options.op_resolver), options->running_mode,
       std::move(packets_callback));
@@ -140,6 +140,7 @@ absl::Status AudioClassifier::ClassifyAsync(Matrix audio_block,
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
 }
 
+}  // namespace audio_classifier
 }  // namespace audio
 }  // namespace tasks
 }  // namespace mediapipe

@@ -19,8 +19,8 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 mediapipe_proto_library(
-    name = "audio_classifier_options_proto",
-    srcs = ["audio_classifier_options.proto"],
+    name = "audio_classifier_graph_options_proto",
+    srcs = ["audio_classifier_graph_options.proto"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",

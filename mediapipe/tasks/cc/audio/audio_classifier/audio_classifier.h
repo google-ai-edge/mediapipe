@@ -30,6 +30,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace audio {
+namespace audio_classifier {
 
 // The options for configuring a mediapipe audio classifier task.
 struct AudioClassifierOptions {
@@ -162,6 +163,7 @@ class AudioClassifier : tasks::audio::core::BaseAudioTaskApi {
   absl::Status Close() { return runner_->Close(); }
 };
 
+}  // namespace audio_classifier
 }  // namespace audio
 }  // namespace tasks
 }  // namespace mediapipe
