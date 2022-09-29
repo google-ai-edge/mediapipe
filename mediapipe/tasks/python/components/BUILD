@@ -17,12 +17,3 @@
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
-
-py_library(
-    name = "classifier_options",
-    srcs = ["classifier_options.py"],
-    deps = [
-        "//mediapipe/tasks/cc/components:classifier_options_py_pb2",
-        "//mediapipe/tasks/python/core:optional_dependencies",
-    ],
-)
