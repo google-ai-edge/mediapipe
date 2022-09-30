@@ -13,23 +13,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/cc/vision/hand_detector/hand_detector_op_resolver.h"
+#include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 
+#include "mediapipe/util/tflite/operations/landmarks_to_transform_matrix.h"
 #include "mediapipe/util/tflite/operations/max_pool_argmax.h"
 #include "mediapipe/util/tflite/operations/max_unpooling.h"
+#include "mediapipe/util/tflite/operations/transform_landmarks.h"
+#include "mediapipe/util/tflite/operations/transform_tensor_bilinear.h"
 #include "mediapipe/util/tflite/operations/transpose_conv_bias.h"
 
 namespace mediapipe {
 namespace tasks {
-namespace vision {
-HandDetectorOpResolver::HandDetectorOpResolver() {
+namespace core {
+MediaPipeBuiltinOpResolver::MediaPipeBuiltinOpResolver() {
   AddCustom("MaxPoolingWithArgmax2D",
             mediapipe::tflite_operations::RegisterMaxPoolingWithArgmax2D());
   AddCustom("MaxUnpooling2D",
             mediapipe::tflite_operations::RegisterMaxUnpooling2D());
   AddCustom("Convolution2DTransposeBias",
             mediapipe::tflite_operations::RegisterConvolution2DTransposeBias());
+  AddCustom("TransformTensorBilinear",
+            mediapipe::tflite_operations::RegisterTransformTensorBilinearV2(),
+            /*version=*/2);
+  AddCustom("TransformLandmarks",
+            mediapipe::tflite_operations::RegisterTransformLandmarksV2(),
+            /*version=*/2);
+  AddCustom(
+      "Landmarks2TransformMatrix",
+      mediapipe::tflite_operations::RegisterLandmarksToTransformMatrixV2(),
+      /*version=*/2);
 }
-}  // namespace vision
+}  // namespace core
 }  // namespace tasks
 }  // namespace mediapipe

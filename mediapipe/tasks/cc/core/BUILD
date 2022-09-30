@@ -23,6 +23,7 @@ cc_library(
     srcs = ["base_options.cc"],
     hdrs = ["base_options.h"],
     deps = [
+        ":mediapipe_builtin_op_resolver",
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
         "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
@@ -47,6 +48,21 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+cc_library(
+    name = "mediapipe_builtin_op_resolver",
+    srcs = ["mediapipe_builtin_op_resolver.cc"],
+    hdrs = ["mediapipe_builtin_op_resolver.h"],
+    deps = [
+        "//mediapipe/util/tflite/operations:landmarks_to_transform_matrix",
+        "//mediapipe/util/tflite/operations:max_pool_argmax",
+        "//mediapipe/util/tflite/operations:max_unpooling",
+        "//mediapipe/util/tflite/operations:transform_landmarks",
+        "//mediapipe/util/tflite/operations:transform_tensor_bilinear",
+        "//mediapipe/util/tflite/operations:transpose_conv_bias",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
 )
 

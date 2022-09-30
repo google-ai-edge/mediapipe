@@ -31,7 +31,6 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/calculators/tensor/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
-#include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_op_resolvers.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/core/shims/cc/shims_test_util.h"
@@ -260,8 +259,6 @@ TEST_F(ImageModeTest, SucceedsSelfie128x128Segmentation) {
   auto options = std::make_unique<ImageSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kSelfie128x128WithMetadata);
-  options->base_options.op_resolver =
-      absl::make_unique<SelfieSegmentationModelOpResolver>();
   options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
   options->activation = ImageSegmenterOptions::Activation::SOFTMAX;
 
@@ -290,8 +287,6 @@ TEST_F(ImageModeTest, SucceedsSelfie144x256Segmentations) {
   auto options = std::make_unique<ImageSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kSelfie144x256WithMetadata);
-  options->base_options.op_resolver =
-      absl::make_unique<SelfieSegmentationModelOpResolver>();
   options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
   options->activation = ImageSegmenterOptions::Activation::NONE;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,

@@ -13,25 +13,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_CC_VISION_IMAGE_SEGMENTER_IMAGE_SEGMENTER_OP_RESOLVERS_H_
-#define MEDIAPIPE_TASKS_CC_VISION_IMAGE_SEGMENTER_IMAGE_SEGMENTER_OP_RESOLVERS_H_
+#ifndef MEDIAPIPE_TASKS_CC_CORE_MEDIAPIPE_BUILTIN_OP_RESOLVER_H_
+#define MEDIAPIPE_TASKS_CC_CORE_MEDIAPIPE_BUILTIN_OP_RESOLVER_H_
 
 #include "tensorflow/lite/kernels/register.h"
 
 namespace mediapipe {
 namespace tasks {
-namespace vision {
-
-class SelfieSegmentationModelOpResolver
+namespace core {
+class MediaPipeBuiltinOpResolver
     : public tflite::ops::builtin::BuiltinOpResolver {
  public:
-  SelfieSegmentationModelOpResolver();
-  SelfieSegmentationModelOpResolver(
-      const SelfieSegmentationModelOpResolver& r) = delete;
+  MediaPipeBuiltinOpResolver();
+  MediaPipeBuiltinOpResolver(const MediaPipeBuiltinOpResolver& r) = delete;
 };
 
-}  // namespace vision
+}  // namespace core
 }  // namespace tasks
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_TASKS_CC_VISION_IMAGE_SEGMENTER_IMAGE_SEGMENTER_OP_RESOLVERS_H_
+#endif  // MEDIAPIPE_TASKS_CC_CORE_MEDIAPIPE_BUILTIN_OP_RESOLVER_H_

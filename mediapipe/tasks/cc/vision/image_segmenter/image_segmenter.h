@@ -26,7 +26,6 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_options.pb.h"
-#include "tensorflow/lite/core/api/op_resolver.h"
 #include "tensorflow/lite/kernels/register.h"
 
 namespace mediapipe {

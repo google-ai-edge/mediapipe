@@ -19,18 +19,6 @@ package(default_visibility = [
 licenses(["notice"])
 
 cc_library(
-    name = "hand_detector_op_resolver",
-    srcs = ["hand_detector_op_resolver.cc"],
-    hdrs = ["hand_detector_op_resolver.h"],
-    deps = [
-        "//mediapipe/util/tflite/operations:max_pool_argmax",
-        "//mediapipe/util/tflite/operations:max_unpooling",
-        "//mediapipe/util/tflite/operations:transpose_conv_bias",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
-    ],
-)
-
-cc_library(
     name = "hand_detector_graph",
     srcs = ["hand_detector_graph.cc"],
     deps = [

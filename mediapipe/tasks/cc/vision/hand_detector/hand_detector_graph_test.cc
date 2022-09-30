@@ -35,11 +35,11 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
+#include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
-#include "mediapipe/tasks/cc/vision/hand_detector/hand_detector_op_resolver.h"
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_options.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_result.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
@@ -121,8 +121,8 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
   hand_detection.Out(kHandNormRectsTag).SetName(kHandNormRectsName) >>
       graph[Output<std::vector<NormalizedRect>>(kHandNormRectsTag)];
 
-  return TaskRunner::Create(graph.GetConfig(),
-                            absl::make_unique<HandDetectorOpResolver>());
+  return TaskRunner::Create(
+      graph.GetConfig(), std::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
 
 HandDetectorResult GetExpectedHandDetectorResult(absl::string_view file_name) {
