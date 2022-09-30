@@ -187,16 +187,5 @@ class ImageTest(absltest.TestCase):
     gc.collect()
     self.assertEqual(sys.getrefcount(rgb_image), initial_ref_count)
 
-  def test_image_create_from_file(self):
-    image_path = os.path.join(
-        resources.GetRunfilesDir(),
-        'mediapipe/tasks/testdata/vision/cat.jpg')
-    loaded_image = Image.create_from_file(image_path)
-    self.assertEqual(loaded_image.width, 600)
-    self.assertEqual(loaded_image.height, 400)
-    self.assertEqual(loaded_image.channels, 3)
-    self.assertEqual(loaded_image.image_format, ImageFormat.SRGB)
-
-
 if __name__ == '__main__':
   absltest.main()
