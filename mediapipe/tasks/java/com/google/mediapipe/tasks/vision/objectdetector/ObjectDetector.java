@@ -292,7 +292,10 @@ public final class ObjectDetector extends BaseVisionTaskApi {
        */
       public abstract Builder setRunningMode(RunningMode value);
 
-      /** Sets the maximum number of top-scored classification results to return. */
+      /**
+       * Sets the locale to use for display names specified through the TFLite Model Metadata, if
+       * any. Defaults to English.
+       */
       public abstract Builder setDisplayNamesLocale(String value);
 
       /**
