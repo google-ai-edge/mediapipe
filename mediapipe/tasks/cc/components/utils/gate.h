@@ -26,15 +26,12 @@ namespace tasks {
 namespace components {
 namespace utils {
 
-using ::mediapipe::api2::builder::SideSource;
-using ::mediapipe::api2::builder::Source;
-
 // Utility class that simplifies allowing (gating) multiple streams.
 class AllowGate {
  public:
-  AllowGate(Source<bool> allow, mediapipe::api2::builder::Graph& graph)
+  AllowGate(api2::builder::Source<bool> allow, api2::builder::Graph& graph)
       : node_(AddSourceGate(allow, graph)) {}
-  AllowGate(SideSource<bool> allow, mediapipe::api2::builder::Graph& graph)
+  AllowGate(api2::builder::SideSource<bool> allow, api2::builder::Graph& graph)
       : node_(AddSideSourceGate(allow, graph)) {}
 
   // Move-only
@@ -42,39 +39,40 @@ class AllowGate {
   AllowGate& operator=(AllowGate&& allow_gate) = default;
 
   template <typename T>
-  Source<T> Allow(Source<T> source) {
+  api2::builder::Source<T> Allow(api2::builder::Source<T> source) {
     source >> node_.In(index_);
     return node_.Out(index_++).Cast<T>();
   }
 
  private:
   template <typename T>
-  static mediapipe::api2::builder::GenericNode& AddSourceGate(
-      T allow, mediapipe::api2::builder::Graph& graph) {
+  static api2::builder::GenericNode& AddSourceGate(
+      T allow, api2::builder::Graph& graph) {
     auto& gate_node = graph.AddNode("GateCalculator");
     allow >> gate_node.In("ALLOW");
     return gate_node;
   }
 
   template <typename T>
-  static mediapipe::api2::builder::GenericNode& AddSideSourceGate(
-      T allow, mediapipe::api2::builder::Graph& graph) {
+  static api2::builder::GenericNode& AddSideSourceGate(
+      T allow, api2::builder::Graph& graph) {
     auto& gate_node = graph.AddNode("GateCalculator");
     allow >> gate_node.SideIn("ALLOW");
     return gate_node;
   }
 
-  mediapipe::api2::builder::GenericNode& node_;
+  api2::builder::GenericNode& node_;
   int index_ = 0;
 };
 
 // Utility class that simplifies disallowing (gating) multiple streams.
 class DisallowGate {
  public:
-  DisallowGate(Source<bool> disallow, mediapipe::api2::builder::Graph& graph)
+  DisallowGate(api2::builder::Source<bool> disallow,
+               api2::builder::Graph& graph)
       : node_(AddSourceGate(disallow, graph)) {}
-  DisallowGate(SideSource<bool> disallow,
-               mediapipe::api2::builder::Graph& graph)
+  DisallowGate(api2::builder::SideSource<bool> disallow,
+               api2::builder::Graph& graph)
       : node_(AddSideSourceGate(disallow, graph)) {}
 
   // Move-only
@@ -82,15 +80,15 @@ class DisallowGate {
   DisallowGate& operator=(DisallowGate&& disallow_gate) = default;
 
   template <typename T>
-  Source<T> Disallow(Source<T> source) {
+  api2::builder::Source<T> Disallow(api2::builder::Source<T> source) {
     source >> node_.In(index_);
     return node_.Out(index_++).Cast<T>();
   }
 
  private:
   template <typename T>
-  static mediapipe::api2::builder::GenericNode& AddSourceGate(
-      T disallow, mediapipe::api2::builder::Graph& graph) {
+  static api2::builder::GenericNode& AddSourceGate(
+      T disallow, api2::builder::Graph& graph) {
     auto& gate_node = graph.AddNode("GateCalculator");
     auto& gate_node_opts =
         gate_node.GetOptions<mediapipe::GateCalculatorOptions>();
@@ -104,8 +102,8 @@ class DisallowGate {
   }
 
   template <typename T>
-  static mediapipe::api2::builder::GenericNode& AddSideSourceGate(
-      T disallow, mediapipe::api2::builder::Graph& graph) {
+  static api2::builder::GenericNode& AddSideSourceGate(
+      T disallow, api2::builder::Graph& graph) {
     auto& gate_node = graph.AddNode("GateCalculator");
     auto& gate_node_opts =
         gate_node.GetOptions<mediapipe::GateCalculatorOptions>();
@@ -114,39 +112,43 @@ class DisallowGate {
     return gate_node;
   }
 
-  mediapipe::api2::builder::GenericNode& node_;
+  api2::builder::GenericNode& node_;
   int index_ = 0;
 };
 
 // Updates graph to drop @value stream packet if corresponding @condition stream
 // packet holds true.
 template <class T>
-Source<T> DisallowIf(Source<T> value, Source<bool> condition,
-                     mediapipe::api2::builder::Graph& graph) {
+api2::builder::Source<T> DisallowIf(api2::builder::Source<T> value,
+                                    api2::builder::Source<bool> condition,
+                                    api2::builder::Graph& graph) {
   return DisallowGate(condition, graph).Disallow(value);
 }
 
 // Updates graph to drop @value stream packet if corresponding @condition stream
 // packet holds true.
 template <class T>
-Source<T> DisallowIf(Source<T> value, SideSource<bool> condition,
-                     mediapipe::api2::builder::Graph& graph) {
+api2::builder::Source<T> DisallowIf(api2::builder::Source<T> value,
+                                    api2::builder::SideSource<bool> condition,
+                                    api2::builder::Graph& graph) {
   return DisallowGate(condition, graph).Disallow(value);
 }
 
 // Updates graph to pass through @value stream packet if corresponding
-// @condition stream packet holds true.
+// @allow stream packet holds true.
 template <class T>
-Source<T> AllowIf(Source<T> value, Source<bool> allow,
-                  mediapipe::api2::builder::Graph& graph) {
+api2::builder::Source<T> AllowIf(api2::builder::Source<T> value,
+                                 api2::builder::Source<bool> allow,
+                                 api2::builder::Graph& graph) {
   return AllowGate(allow, graph).Allow(value);
 }
 
 // Updates graph to pass through @value stream packet if corresponding
-// @condition side stream packet holds true.
+// @allow side stream packet holds true.
 template <class T>
-Source<T> AllowIf(Source<T> value, SideSource<bool> allow,
-                  mediapipe::api2::builder::Graph& graph) {
+api2::builder::Source<T> AllowIf(api2::builder::Source<T> value,
+                                 api2::builder::SideSource<bool> allow,
+                                 api2::builder::Graph& graph) {
   return AllowGate(allow, graph).Allow(value);
 }
 
