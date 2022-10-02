@@ -34,7 +34,5 @@ py_binary(
     visibility = [
         "//visibility:public",
     ],
-    deps = [
-        ":metadata",
-    ],
+    deps = [":metadata"],
 )

@@ -25,7 +25,5 @@ py_test(
     srcs = ["metadata_parser_test.py"],
     python_version = "PY3",
     srcs_version = "PY2AND3",
-    deps = [
-        "//mediapipe/tasks/python/metadata",
-    ],
+    deps = ["//mediapipe/tasks/python/metadata"],
 )
