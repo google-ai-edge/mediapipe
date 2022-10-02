@@ -4,26 +4,23 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+"""Information about the metadata parser that this python library depends on."""
 
-# Placeholder for internal Python strict library compatibility macro.
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
 
-licenses(["notice"])
+class MetadataParser(object):
+  """Information about the metadata parser."""
 
-py_library(
-    name = "test_utils",
-    testonly = 1,
-    srcs = ["test_utils.py"],
-    srcs_version = "PY3",
-    deps = [
-        "//mediapipe/python:_framework_bindings",
-    ],
-)
+  # The version of the metadata parser.
+  VERSION = "{LATEST_METADATA_PARSER_VERSION}"
