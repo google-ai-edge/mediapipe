@@ -42,3 +42,16 @@ cc_test(
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
     ],
 )
+
+cc_library(
+    name = "gate",
+    hdrs = ["gate.h"],
+    deps = [
+        "//mediapipe/calculators/core:gate_calculator",
+        "//mediapipe/calculators/core:gate_calculator_cc_proto",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+    ],
+)
+
+# TODO: Enable this test

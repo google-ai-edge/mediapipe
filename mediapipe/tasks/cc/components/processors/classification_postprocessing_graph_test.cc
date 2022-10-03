@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/cc/components/classification_postprocessing.h"
+#include "mediapipe/tasks/cc/components/processors/classification_postprocessing_graph.h"
 
 #include <map>
 #include <memory>
@@ -42,9 +42,9 @@ limitations under the License.
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/tasks/cc/components/calculators/classification_aggregation_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/calculators/score_calibration_calculator.pb.h"
-#include "mediapipe/tasks/cc/components/classification_postprocessing_options.pb.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
-#include "mediapipe/tasks/cc/components/proto/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/util/label_map.pb.h"
@@ -53,6 +53,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace components {
+namespace processors {
 namespace {
 
 using ::mediapipe::api2::Input;
@@ -60,7 +61,7 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::file::JoinPath;
-using ::mediapipe::tasks::components::proto::ClassifierOptions;
+using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::mediapipe::tasks::core::ModelResources;
 using ::testing::HasSubstr;
 using ::testing::proto::Approximately;
@@ -101,12 +102,12 @@ TEST_F(ConfigureTest, FailsWithInvalidMaxResults) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
       CreateModelResourcesForModel(kQuantizedImageClassifierWithMetadata));
-  ClassifierOptions options_in;
+  proto::ClassifierOptions options_in;
   options_in.set_max_results(0);
 
-  ClassificationPostprocessingOptions options_out;
-  auto status = ConfigureClassificationPostprocessing(*model_resources,
-                                                      options_in, &options_out);
+  proto::ClassificationPostprocessingGraphOptions options_out;
+  auto status = ConfigureClassificationPostprocessingGraph(
+      *model_resources, options_in, &options_out);
 
   EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(), HasSubstr("Invalid `max_results` option"));
@@ -116,13 +117,13 @@ TEST_F(ConfigureTest, FailsWithBothAllowlistAndDenylist) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
       CreateModelResourcesForModel(kQuantizedImageClassifierWithMetadata));
-  ClassifierOptions options_in;
+  proto::ClassifierOptions options_in;
   options_in.add_category_allowlist("foo");
   options_in.add_category_denylist("bar");
 
-  ClassificationPostprocessingOptions options_out;
-  auto status = ConfigureClassificationPostprocessing(*model_resources,
-                                                      options_in, &options_out);
+  proto::ClassificationPostprocessingGraphOptions options_out;
+  auto status = ConfigureClassificationPostprocessingGraph(
+      *model_resources, options_in, &options_out);
 
   EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(), HasSubstr("mutually exclusive options"));
@@ -132,12 +133,12 @@ TEST_F(ConfigureTest, FailsWithAllowlistAndNoMetadata) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
       CreateModelResourcesForModel(kQuantizedImageClassifierWithoutMetadata));
-  ClassifierOptions options_in;
+  proto::ClassifierOptions options_in;
   options_in.add_category_allowlist("foo");
 
-  ClassificationPostprocessingOptions options_out;
-  auto status = ConfigureClassificationPostprocessing(*model_resources,
-                                                      options_in, &options_out);
+  proto::ClassificationPostprocessingGraphOptions options_out;
+  auto status = ConfigureClassificationPostprocessingGraph(
+      *model_resources, options_in, &options_out);
 
   EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(
@@ -149,11 +150,11 @@ TEST_F(ConfigureTest, SucceedsWithoutMetadata) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
       CreateModelResourcesForModel(kQuantizedImageClassifierWithoutMetadata));
-  ClassifierOptions options_in;
+  proto::ClassifierOptions options_in;
 
-  ClassificationPostprocessingOptions options_out;
-  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
-                                                     options_in, &options_out));
+  proto::ClassificationPostprocessingGraphOptions options_out;
+  MP_ASSERT_OK(ConfigureClassificationPostprocessingGraph(
+      *model_resources, options_in, &options_out));
 
   EXPECT_THAT(options_out, Approximately(EqualsProto(
                                R"pb(score_calibration_options: []
@@ -171,12 +172,12 @@ TEST_F(ConfigureTest, SucceedsWithMaxResults) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
       CreateModelResourcesForModel(kQuantizedImageClassifierWithoutMetadata));
-  ClassifierOptions options_in;
+  proto::ClassifierOptions options_in;
   options_in.set_max_results(3);
 
-  ClassificationPostprocessingOptions options_out;
-  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
-                                                     options_in, &options_out));
+  proto::ClassificationPostprocessingGraphOptions options_out;
+  MP_ASSERT_OK(ConfigureClassificationPostprocessingGraph(
+      *model_resources, options_in, &options_out));
 
   EXPECT_THAT(options_out, Approximately(EqualsProto(
                                R"pb(score_calibration_options: []
@@ -194,12 +195,12 @@ TEST_F(ConfigureTest, SucceedsWithScoreThreshold) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
       CreateModelResourcesForModel(kQuantizedImageClassifierWithoutMetadata));
-  ClassifierOptions options_in;
+  proto::ClassifierOptions options_in;
   options_in.set_score_threshold(0.5);
 
-  ClassificationPostprocessingOptions options_out;
-  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
-                                                     options_in, &options_out));
+  proto::ClassificationPostprocessingGraphOptions options_out;
+  MP_ASSERT_OK(ConfigureClassificationPostprocessingGraph(
+      *model_resources, options_in, &options_out));
 
   EXPECT_THAT(options_out, Approximately(EqualsProto(
                                R"pb(score_calibration_options: []
@@ -217,11 +218,11 @@ TEST_F(ConfigureTest, SucceedsWithMetadata) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
       CreateModelResourcesForModel(kQuantizedImageClassifierWithMetadata));
-  ClassifierOptions options_in;
+  proto::ClassifierOptions options_in;
 
-  ClassificationPostprocessingOptions options_out;
-  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
-                                                     options_in, &options_out));
+  proto::ClassificationPostprocessingGraphOptions options_out;
+  MP_ASSERT_OK(ConfigureClassificationPostprocessingGraph(
+      *model_resources, options_in, &options_out));
 
   // Check label map size and two first elements.
   EXPECT_EQ(
@@ -254,12 +255,12 @@ TEST_F(ConfigureTest, SucceedsWithAllowlist) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
       CreateModelResourcesForModel(kQuantizedImageClassifierWithMetadata));
-  ClassifierOptions options_in;
+  proto::ClassifierOptions options_in;
   options_in.add_category_allowlist("tench");
 
-  ClassificationPostprocessingOptions options_out;
-  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
-                                                     options_in, &options_out));
+  proto::ClassificationPostprocessingGraphOptions options_out;
+  MP_ASSERT_OK(ConfigureClassificationPostprocessingGraph(
+      *model_resources, options_in, &options_out));
 
   // Clear label map and compare the rest of the options.
   options_out.mutable_tensors_to_classifications_options(0)
@@ -283,12 +284,12 @@ TEST_F(ConfigureTest, SucceedsWithDenylist) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
       CreateModelResourcesForModel(kQuantizedImageClassifierWithMetadata));
-  ClassifierOptions options_in;
+  proto::ClassifierOptions options_in;
   options_in.add_category_denylist("background");
 
-  ClassificationPostprocessingOptions options_out;
-  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
-                                                     options_in, &options_out));
+  proto::ClassificationPostprocessingGraphOptions options_out;
+  MP_ASSERT_OK(ConfigureClassificationPostprocessingGraph(
+      *model_resources, options_in, &options_out));
 
   // Clear label map and compare the rest of the options.
   options_out.mutable_tensors_to_classifications_options(0)
@@ -313,11 +314,11 @@ TEST_F(ConfigureTest, SucceedsWithScoreCalibration) {
       auto model_resources,
       CreateModelResourcesForModel(
           kQuantizedImageClassifierWithDummyScoreCalibration));
-  ClassifierOptions options_in;
+  proto::ClassifierOptions options_in;
 
-  ClassificationPostprocessingOptions options_out;
-  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
-                                                     options_in, &options_out));
+  proto::ClassificationPostprocessingGraphOptions options_out;
+  MP_ASSERT_OK(ConfigureClassificationPostprocessingGraph(
+      *model_resources, options_in, &options_out));
 
   // Check label map size and two first elements.
   EXPECT_EQ(
@@ -362,11 +363,11 @@ TEST_F(ConfigureTest, SucceedsWithMultipleHeads) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
       CreateModelResourcesForModel(kFloatTwoHeadsAudioClassifierWithMetadata));
-  ClassifierOptions options_in;
+  proto::ClassifierOptions options_in;
 
-  ClassificationPostprocessingOptions options_out;
-  MP_ASSERT_OK(ConfigureClassificationPostprocessing(*model_resources,
-                                                     options_in, &options_out));
+  proto::ClassificationPostprocessingGraphOptions options_out;
+  MP_ASSERT_OK(ConfigureClassificationPostprocessingGraph(
+      *model_resources, options_in, &options_out));
   // Check label maps sizes and first two elements.
   EXPECT_EQ(
       options_out.tensors_to_classifications_options(0).label_items_size(),
@@ -414,17 +415,19 @@ TEST_F(ConfigureTest, SucceedsWithMultipleHeads) {
 class PostprocessingTest : public tflite_shims::testing::Test {
  protected:
   absl::StatusOr<OutputStreamPoller> BuildGraph(
-      absl::string_view model_name, const ClassifierOptions& options,
+      absl::string_view model_name, const proto::ClassifierOptions& options,
       bool connect_timestamps = false) {
     ASSIGN_OR_RETURN(auto model_resources,
                      CreateModelResourcesForModel(model_name));
 
     Graph graph;
     auto& postprocessing = graph.AddNode(
-        "mediapipe.tasks.components.ClassificationPostprocessingSubgraph");
-    MP_RETURN_IF_ERROR(ConfigureClassificationPostprocessing(
+        "mediapipe.tasks.components.processors."
+        "ClassificationPostprocessingGraph");
+    MP_RETURN_IF_ERROR(ConfigureClassificationPostprocessingGraph(
         *model_resources, options,
-        &postprocessing.GetOptions<ClassificationPostprocessingOptions>()));
+        &postprocessing
+             .GetOptions<proto::ClassificationPostprocessingGraphOptions>()));
     graph[Input<std::vector<Tensor>>(kTensorsTag)].SetName(kTensorsName) >>
         postprocessing.In(kTensorsTag);
     if (connect_timestamps) {
@@ -495,7 +498,7 @@ class PostprocessingTest : public tflite_shims::testing::Test {
 
 TEST_F(PostprocessingTest, SucceedsWithoutMetadata) {
   // Build graph.
-  ClassifierOptions options;
+  proto::ClassifierOptions options;
   options.set_max_results(3);
   options.set_score_threshold(0.5);
   MP_ASSERT_OK_AND_ASSIGN(
@@ -524,7 +527,7 @@ TEST_F(PostprocessingTest, SucceedsWithoutMetadata) {
 
 TEST_F(PostprocessingTest, SucceedsWithMetadata) {
   // Build graph.
-  ClassifierOptions options;
+  proto::ClassifierOptions options;
   options.set_max_results(3);
   MP_ASSERT_OK_AND_ASSIGN(
       auto poller, BuildGraph(kQuantizedImageClassifierWithMetadata, options));
@@ -567,7 +570,7 @@ TEST_F(PostprocessingTest, SucceedsWithMetadata) {
 
 TEST_F(PostprocessingTest, SucceedsWithScoreCalibration) {
   // Build graph.
-  ClassifierOptions options;
+  proto::ClassifierOptions options;
   options.set_max_results(3);
   MP_ASSERT_OK_AND_ASSIGN(
       auto poller,
@@ -613,7 +616,7 @@ TEST_F(PostprocessingTest, SucceedsWithScoreCalibration) {
 
 TEST_F(PostprocessingTest, SucceedsWithMultipleHeads) {
   // Build graph.
-  ClassifierOptions options;
+  proto::ClassifierOptions options;
   options.set_max_results(2);
   MP_ASSERT_OK_AND_ASSIGN(
       auto poller,
@@ -673,7 +676,7 @@ TEST_F(PostprocessingTest, SucceedsWithMultipleHeads) {
 
 TEST_F(PostprocessingTest, SucceedsWithTimestamps) {
   // Build graph.
-  ClassifierOptions options;
+  proto::ClassifierOptions options;
   options.set_max_results(2);
   MP_ASSERT_OK_AND_ASSIGN(
       auto poller, BuildGraph(kQuantizedImageClassifierWithMetadata, options,
@@ -729,6 +732,7 @@ TEST_F(PostprocessingTest, SucceedsWithTimestamps) {
 }
 
 }  // namespace
+}  // namespace processors
 }  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe

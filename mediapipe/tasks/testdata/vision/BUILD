@@ -85,6 +85,10 @@ filegroup(
         "selfie_segm_128_128_3_expected_mask.jpg",
         "selfie_segm_144_256_3_expected_mask.jpg",
     ],
+    visibility = [
+        "//mediapipe/python:__subpackages__",
+        "//mediapipe/tasks:internal",
+    ],
 )
 
 # TODO Create individual filegroup for models required for each Tasks.

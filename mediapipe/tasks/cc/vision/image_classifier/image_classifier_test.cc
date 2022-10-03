@@ -32,8 +32,8 @@ limitations under the License.
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/containers/category.pb.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/category.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -44,9 +44,13 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace image_classifier {
 namespace {
 
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::components::containers::proto::ClassificationEntry;
+using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
+using ::mediapipe::tasks::components::containers::proto::Classifications;
 using ::testing::HasSubstr;
 using ::testing::Optional;
 
@@ -814,6 +818,7 @@ TEST_F(LiveStreamModeTest, SucceedsWithRegionOfInterest) {
 }
 
 }  // namespace
+}  // namespace image_classifier
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

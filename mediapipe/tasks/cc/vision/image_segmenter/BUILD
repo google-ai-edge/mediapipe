@@ -33,7 +33,6 @@ cc_library(
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_options_cc_proto",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status:statusor",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
 )
@@ -71,21 +70,6 @@ cc_library(
         "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
     ],
     alwayslink = 1,
-)
-
-cc_library(
-    name = "image_segmenter_op_resolvers",
-    srcs = ["image_segmenter_op_resolvers.cc"],
-    hdrs = ["image_segmenter_op_resolvers.h"],
-    deps = [
-        "//mediapipe/util/tflite/operations:landmarks_to_transform_matrix",
-        "//mediapipe/util/tflite/operations:max_pool_argmax",
-        "//mediapipe/util/tflite/operations:max_unpooling",
-        "//mediapipe/util/tflite/operations:transform_landmarks",
-        "//mediapipe/util/tflite/operations:transform_tensor_bilinear",
-        "//mediapipe/util/tflite/operations:transpose_conv_bias",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
-    ],
 )
 
 # TODO: This test fails in OSS

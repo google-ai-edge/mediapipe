@@ -25,15 +25,15 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/tasks/cc/components/calculators/classification_aggregation_calculator.pb.h"
-#include "mediapipe/tasks/cc/components/containers/category.pb.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/category.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 
 namespace mediapipe {
 namespace api2 {
 
 using ::mediapipe::tasks::ClassificationAggregationCalculatorOptions;
-using ::mediapipe::tasks::ClassificationResult;
-using ::mediapipe::tasks::Classifications;
+using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
+using ::mediapipe::tasks::components::containers::proto::Classifications;
 
 // Aggregates ClassificationLists into a single ClassificationResult that has
 // 3 dimensions: (classification head, classification timestamp, classification

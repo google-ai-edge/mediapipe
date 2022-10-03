@@ -12,7 +12,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
-#include "mediapipe/tasks/cc/components/classification_postprocessing.h"
+#include "mediapipe/tasks/cc/components/processors/classification_postprocessing_graph.h"
 
 #include <stdint.h>
 
@@ -37,9 +37,9 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/calculators/classification_aggregation_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/calculators/score_calibration_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/calculators/score_calibration_utils.h"
-#include "mediapipe/tasks/cc/components/classification_postprocessing_options.pb.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
-#include "mediapipe/tasks/cc/components/proto/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/components/utils/source_or_node_output.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
@@ -51,6 +51,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace components {
+namespace processors {
 
 namespace {
 
@@ -61,7 +62,7 @@ using ::mediapipe::api2::Timestamp;
 using ::mediapipe::api2::builder::GenericNode;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
-using ::mediapipe::tasks::components::proto::ClassifierOptions;
+using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::mediapipe::tasks::core::ModelResources;
 using ::mediapipe::tasks::metadata::ModelMetadataExtractor;
 using ::tflite::ProcessUnit;
@@ -79,7 +80,8 @@ constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kTimestampsTag[] = "TIMESTAMPS";
 
 // Performs sanity checks on provided ClassifierOptions.
-absl::Status SanityCheckClassifierOptions(const ClassifierOptions& options) {
+absl::Status SanityCheckClassifierOptions(
+    const proto::ClassifierOptions& options) {
   if (options.max_results() == 0) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -203,7 +205,7 @@ absl::StatusOr<float> GetScoreThreshold(
 
 // Gets the category allowlist or denylist (if any) as a set of indices.
 absl::StatusOr<absl::flat_hash_set<int>> GetAllowOrDenyCategoryIndicesIfAny(
-    const ClassifierOptions& options, const LabelItems& label_items) {
+    const proto::ClassifierOptions& options, const LabelItems& label_items) {
   absl::flat_hash_set<int> category_indices;
   // Exit early if no denylist/allowlist.
   if (options.category_denylist_size() == 0 &&
@@ -239,7 +241,7 @@ absl::StatusOr<absl::flat_hash_set<int>> GetAllowOrDenyCategoryIndicesIfAny(
 
 absl::Status ConfigureScoreCalibrationIfAny(
     const ModelMetadataExtractor& metadata_extractor, int tensor_index,
-    ClassificationPostprocessingOptions* options) {
+    proto::ClassificationPostprocessingGraphOptions* options) {
   const auto* tensor_metadata =
       metadata_extractor.GetOutputTensorMetadata(tensor_index);
   if (tensor_metadata == nullptr) {
@@ -283,7 +285,7 @@ absl::Status ConfigureScoreCalibrationIfAny(
 // Fills in the TensorsToClassificationCalculatorOptions based on the
 // classifier options and the (optional) output tensor metadata.
 absl::Status ConfigureTensorsToClassificationCalculator(
-    const ClassifierOptions& options,
+    const proto::ClassifierOptions& options,
     const ModelMetadataExtractor& metadata_extractor, int tensor_index,
     TensorsToClassificationCalculatorOptions* calculator_options) {
   const auto* tensor_metadata =
@@ -345,10 +347,10 @@ void ConfigureClassificationAggregationCalculator(
 
 }  // namespace
 
-absl::Status ConfigureClassificationPostprocessing(
+absl::Status ConfigureClassificationPostprocessingGraph(
     const ModelResources& model_resources,
-    const ClassifierOptions& classifier_options,
-    ClassificationPostprocessingOptions* options) {
+    const proto::ClassifierOptions& classifier_options,
+    proto::ClassificationPostprocessingGraphOptions* options) {
   MP_RETURN_IF_ERROR(SanityCheckClassifierOptions(classifier_options));
   ASSIGN_OR_RETURN(const auto heads_properties,
                    GetClassificationHeadsProperties(model_resources));
@@ -366,8 +368,8 @@ absl::Status ConfigureClassificationPostprocessing(
   return absl::OkStatus();
 }
 
-// A "mediapipe.tasks.components.ClassificationPostprocessingSubgraph" converts
-// raw tensors into ClassificationResult objects.
+// A "ClassificationPostprocessingGraph" converts raw tensors into
+// ClassificationResult objects.
 // - Accepts CPU input tensors.
 //
 // Inputs:
@@ -381,10 +383,10 @@ absl::Status ConfigureClassificationPostprocessing(
 //   CLASSIFICATION_RESULT - ClassificationResult
 //     The output aggregated classification results.
 //
-// The recommended way of using this subgraph is through the GraphBuilder API
-// using the 'ConfigureClassificationPostprocessing()' function. See header file
-// for more details.
-class ClassificationPostprocessingSubgraph : public mediapipe::Subgraph {
+// The recommended way of using this graph is through the GraphBuilder API
+// using the 'ConfigureClassificationPostprocessingGraph()' function. See header
+// file for more details.
+class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
  public:
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
@@ -392,7 +394,7 @@ class ClassificationPostprocessingSubgraph : public mediapipe::Subgraph {
     ASSIGN_OR_RETURN(
         auto classification_result_out,
         BuildClassificationPostprocessing(
-            sc->Options<ClassificationPostprocessingOptions>(),
+            sc->Options<proto::ClassificationPostprocessingGraphOptions>(),
             graph[Input<std::vector<Tensor>>(kTensorsTag)],
             graph[Input<std::vector<Timestamp>>(kTimestampsTag)], graph));
     classification_result_out >>
@@ -401,19 +403,19 @@ class ClassificationPostprocessingSubgraph : public mediapipe::Subgraph {
   }
 
  private:
-  // Adds an on-device classification postprocessing subgraph into the provided
-  // builder::Graph instance. The classification postprocessing subgraph takes
+  // Adds an on-device classification postprocessing graph into the provided
+  // builder::Graph instance. The classification postprocessing graph takes
   // tensors (std::vector<mediapipe::Tensor>) as input and returns one output
   // stream containing the output classification results (ClassificationResult).
   //
-  // options: the on-device ClassificationPostprocessingOptions.
+  // options: the on-device ClassificationPostprocessingGraphOptions.
   // tensors_in: (std::vector<mediapipe::Tensor>>) tensors to postprocess.
   // timestamps_in: (std::vector<mediapipe::Timestamp>) optional collection of
   //   timestamps that a single ClassificationResult should aggregate.
   // graph: the mediapipe builder::Graph instance to be updated.
   absl::StatusOr<Source<ClassificationResult>>
   BuildClassificationPostprocessing(
-      const ClassificationPostprocessingOptions& options,
+      const proto::ClassificationPostprocessingGraphOptions& options,
       Source<std::vector<Tensor>> tensors_in,
       Source<std::vector<Timestamp>> timestamps_in, Graph& graph) {
     const int num_heads = options.tensors_to_classifications_options_size();
@@ -504,9 +506,11 @@ class ClassificationPostprocessingSubgraph : public mediapipe::Subgraph {
         kClassificationResultTag)];
   }
 };
-REGISTER_MEDIAPIPE_GRAPH(
-    ::mediapipe::tasks::components::ClassificationPostprocessingSubgraph);
 
+REGISTER_MEDIAPIPE_GRAPH(::mediapipe::tasks::components::processors::
+                             ClassificationPostprocessingGraph);  // NOLINT
+
+}  // namespace processors
 }  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe

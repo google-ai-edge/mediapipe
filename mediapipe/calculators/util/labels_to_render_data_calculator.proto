@@ -30,6 +30,13 @@ message LabelsToRenderDataCalculatorOptions {
   // Thickness for drawing the label(s).
   optional double thickness = 2 [default = 2];
 
+  // Color of outline around each character, if any. One per label, as with
+  // color attribute.
+  repeated Color outline_color = 12;
+
+  // Thickness of outline around each character.
+  optional double outline_thickness = 11;
+
   // The font height in absolute pixels.
   optional int32 font_height_px = 3 [default = 50];
 

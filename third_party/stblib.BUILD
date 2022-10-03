@@ -7,16 +7,19 @@ package(
 
 licenses(["notice"])  # MIT license
 
-exports_files(["LICENSE"])
+COPTS = select({
+    "@platforms//os:windows": [],
+    "//conditions:default": [
+        "-Wno-unused-function",
+        "$(STACK_FRAME_UNLIMITED)",
+    ],
+})
 
 cc_library(
     name = "stb_image",
     srcs = ["stb_image.c"],
     hdrs = ["stb_image.h"],
-    copts = [
-        "-Wno-unused-function",
-        "$(STACK_FRAME_UNLIMITED)",
-    ],
+    copts = COPTS,
     includes = ["."],
 )
 
@@ -24,5 +27,6 @@ cc_library(
     name = "stb_image_write",
     srcs = ["stb_image_write.c"],
     hdrs = ["stb_image_write.h"],
+    copts = COPTS,
     includes = ["."],
 )

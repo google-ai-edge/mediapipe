@@ -45,6 +45,8 @@ pybind_library(
         ":util",
         "//mediapipe/framework:type_map",
         "//mediapipe/framework/formats:image",
+        "@com_google_absl//absl/strings:str_format",
+        "@stblib//:stb_image",
     ],
 )
 

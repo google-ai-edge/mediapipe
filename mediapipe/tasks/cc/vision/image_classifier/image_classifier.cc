@@ -26,9 +26,9 @@ limitations under the License.
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/timestamp.h"
-#include "mediapipe/tasks/cc/components/classifier_options.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
-#include "mediapipe/tasks/cc/components/proto/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/processors/classifier_options.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
@@ -36,11 +36,12 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
-#include "mediapipe/tasks/cc/vision/image_classifier/proto/image_classifier_options.pb.h"
+#include "mediapipe/tasks/cc/vision/image_classifier/proto/image_classifier_graph_options.pb.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace image_classifier {
 
 namespace {
 
@@ -52,12 +53,11 @@ constexpr char kImageTag[] = "IMAGE";
 constexpr char kNormRectName[] = "norm_rect_in";
 constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kSubgraphTypeName[] =
-    "mediapipe.tasks.vision.ImageClassifierGraph";
+    "mediapipe.tasks.vision.image_classifier.ImageClassifierGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
 
+using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::mediapipe::tasks::core::PacketMap;
-using ImageClassifierOptionsProto =
-    image_classifier::proto::ImageClassifierOptions;
 
 // Builds a NormalizedRect covering the entire image.
 NormalizedRect BuildFullImageNormRect() {
@@ -70,17 +70,17 @@ NormalizedRect BuildFullImageNormRect() {
 }
 
 // Creates a MediaPipe graph config that contains a subgraph node of
-// "mediapipe.tasks.vision.ImageClassifierGraph". If the task is running in the
-// live stream mode, a "FlowLimiterCalculator" will be added to limit the number
-// of frames in flight.
+// type "ImageClassifierGraph". If the task is running in the live stream mode,
+// a "FlowLimiterCalculator" will be added to limit the number of frames in
+// flight.
 CalculatorGraphConfig CreateGraphConfig(
-    std::unique_ptr<ImageClassifierOptionsProto> options_proto,
+    std::unique_ptr<proto::ImageClassifierGraphOptions> options_proto,
     bool enable_flow_limiting) {
   api2::builder::Graph graph;
   graph.In(kImageTag).SetName(kImageInStreamName);
   graph.In(kNormRectTag).SetName(kNormRectName);
   auto& task_subgraph = graph.AddNode(kSubgraphTypeName);
-  task_subgraph.GetOptions<ImageClassifierOptionsProto>().Swap(
+  task_subgraph.GetOptions<proto::ImageClassifierGraphOptions>().Swap(
       options_proto.get());
   task_subgraph.Out(kClassificationResultTag)
           .SetName(kClassificationResultStreamName) >>
@@ -98,18 +98,18 @@ CalculatorGraphConfig CreateGraphConfig(
 }
 
 // Converts the user-facing ImageClassifierOptions struct to the internal
-// ImageClassifierOptions proto.
-std::unique_ptr<ImageClassifierOptionsProto>
+// ImageClassifierGraphOptions proto.
+std::unique_ptr<proto::ImageClassifierGraphOptions>
 ConvertImageClassifierOptionsToProto(ImageClassifierOptions* options) {
-  auto options_proto = std::make_unique<ImageClassifierOptionsProto>();
+  auto options_proto = std::make_unique<proto::ImageClassifierGraphOptions>();
   auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
       tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
   options_proto->mutable_base_options()->set_use_stream_mode(
       options->running_mode != core::RunningMode::IMAGE);
   auto classifier_options_proto =
-      std::make_unique<tasks::components::proto::ClassifierOptions>(
-          components::ConvertClassifierOptionsToProto(
+      std::make_unique<components::processors::proto::ClassifierOptions>(
+          components::processors::ConvertClassifierOptionsToProto(
               &(options->classifier_options)));
   options_proto->mutable_classifier_options()->Swap(
       classifier_options_proto.get());
@@ -145,7 +145,7 @@ absl::StatusOr<std::unique_ptr<ImageClassifier>> ImageClassifier::Create(
         };
   }
   return core::VisionTaskApiFactory::Create<ImageClassifier,
-                                            ImageClassifierOptionsProto>(
+                                            proto::ImageClassifierGraphOptions>(
       CreateGraphConfig(
           std::move(options_proto),
           options->running_mode == core::RunningMode::LIVE_STREAM),
@@ -214,6 +214,7 @@ absl::Status ImageClassifier::ClassifyAsync(Image image, int64 timestamp_ms,
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
 }
 
+}  // namespace image_classifier
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

@@ -11,3 +11,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+package(default_visibility = ["//mediapipe/tasks:internal"])
+
+licenses(["notice"])
+
+android_library(
+    name = "category",
+    srcs = ["Category.java"],
+    deps = [
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "detection",
+    srcs = ["Detection.java"],
+    deps = [
+        ":category",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)

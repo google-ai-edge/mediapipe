@@ -15,15 +15,15 @@ limitations under the License.
 
 syntax = "proto2";
 
-package mediapipe.tasks.audio.audio_classifier.proto;
+package mediapipe.tasks.vision.image_classifier.proto;
 
 import "mediapipe/framework/calculator.proto";
-import "mediapipe/tasks/cc/components/proto/classifier_options.proto";
+import "mediapipe/tasks/cc/components/processors/proto/classifier_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
-message AudioClassifierOptions {
+message ImageClassifierGraphOptions {
   extend mediapipe.CalculatorOptions {
-    optional AudioClassifierOptions ext = 451755788;
+    optional ImageClassifierGraphOptions ext = 456383383;
   }
   // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
   // model file with metadata, accelerator options, etc.
@@ -31,9 +31,5 @@ message AudioClassifierOptions {
 
   // Options for configuring the classifier behavior, such as score threshold,
   // number of results, etc.
-  optional components.proto.ClassifierOptions classifier_options = 2;
-
-  // The default sample rate of the input audio. Must be set when the
-  // AudioClassifier is configured to process audio stream data.
-  optional double default_input_audio_sample_rate = 3;
+  optional components.processors.proto.ClassifierOptions classifier_options = 2;
 }

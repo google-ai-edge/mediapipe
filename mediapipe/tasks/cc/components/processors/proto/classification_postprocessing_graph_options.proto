@@ -15,16 +15,16 @@ limitations under the License.
 
 syntax = "proto2";
 
-package mediapipe.tasks.components;
+package mediapipe.tasks.components.processors.proto;
 
 import "mediapipe/calculators/tensor/tensors_to_classification_calculator.proto";
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/components/calculators/classification_aggregation_calculator.proto";
 import "mediapipe/tasks/cc/components/calculators/score_calibration_calculator.proto";
 
-message ClassificationPostprocessingOptions {
+message ClassificationPostprocessingGraphOptions {
   extend mediapipe.CalculatorOptions {
-    optional ClassificationPostprocessingOptions ext = 460416950;
+    optional ClassificationPostprocessingGraphOptions ext = 460416950;
   }
 
   // Optional mapping between output tensor index and corresponding score

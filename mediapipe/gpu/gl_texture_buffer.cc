@@ -185,7 +185,10 @@ void GlTextureBuffer::Updated(std::shared_ptr<GlSyncPoint> prod_token) {
       << "Updated existing texture which had not been marked for reuse!";
   CHECK(prod_token);
   producer_sync_ = std::move(prod_token);
-  producer_context_ = producer_sync_->GetContext();
+  const auto& synced_context = producer_sync_->GetContext();
+  if (synced_context) {
+    producer_context_ = synced_context;
+  }
 }
 
 void GlTextureBuffer::DidRead(std::shared_ptr<GlSyncPoint> cons_token) const {

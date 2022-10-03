@@ -15,7 +15,7 @@ limitations under the License.
 
 syntax = "proto2";
 
-package mediapipe.tasks;
+package mediapipe.tasks.components.containers.proto;
 
 // A single classification result.
 message Category {

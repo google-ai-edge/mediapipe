@@ -28,12 +28,12 @@ limitations under the License.
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
-#include "mediapipe/tasks/cc/audio/audio_classifier/proto/audio_classifier_options.pb.h"
+#include "mediapipe/tasks/cc/audio/audio_classifier/proto/audio_classifier_graph_options.pb.h"
 #include "mediapipe/tasks/cc/audio/utils/audio_tensor_specs.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/classification_postprocessing.h"
-#include "mediapipe/tasks/cc/components/classification_postprocessing_options.pb.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/processors/classification_postprocessing_graph.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
@@ -44,6 +44,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace audio {
+namespace audio_classifier {
 
 namespace {
 
@@ -52,6 +53,7 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::GenericNode;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
+using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 
 constexpr char kAtPrestreamTag[] = "AT_PRESTREAM";
 constexpr char kAudioTag[] = "AUDIO";
@@ -60,10 +62,9 @@ constexpr char kPacketTag[] = "PACKET";
 constexpr char kSampleRateTag[] = "SAMPLE_RATE";
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kTimestampsTag[] = "TIMESTAMPS";
-using AudioClassifierOptionsProto =
-    audio_classifier::proto::AudioClassifierOptions;
 
-absl::Status SanityCheckOptions(const AudioClassifierOptionsProto& options) {
+absl::Status SanityCheckOptions(
+    const proto::AudioClassifierGraphOptions& options) {
   if (options.base_options().use_stream_mode() &&
       !options.has_default_input_audio_sample_rate()) {
     return CreateStatusWithPayload(absl::StatusCode::kInvalidArgument,
@@ -111,7 +112,7 @@ void ConfigureAudioToTensorCalculator(
 
 }  // namespace
 
-// A "mediapipe.tasks.audio.AudioClassifierGraph" performs audio classification.
+// An "AudioClassifierGraph" performs audio classification.
 // - Accepts CPU audio buffer and outputs classification results on CPU.
 //
 // Inputs:
@@ -129,12 +130,12 @@ void ConfigureAudioToTensorCalculator(
 //
 // Example:
 // node {
-//   calculator: "mediapipe.tasks.audio.AudioClassifierGraph"
+//   calculator: "mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph"
 //   input_stream: "AUDIO:audio_in"
 //   input_stream: "SAMPLE_RATE:sample_rate_in"
 //   output_stream: "CLASSIFICATION_RESULT:classification_result_out"
 //   options {
-//     [mediapipe.tasks.audio.audio_classifier.proto.AudioClassifierOptions.ext]
+//     [mediapipe.tasks.audio.audio_classifier.proto.AudioClassifierGraphOptions.ext]
 //     {
 //       base_options {
 //         model_asset {
@@ -152,16 +153,18 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(const auto* model_resources,
-                     CreateModelResources<AudioClassifierOptionsProto>(sc));
+    ASSIGN_OR_RETURN(
+        const auto* model_resources,
+        CreateModelResources<proto::AudioClassifierGraphOptions>(sc));
     Graph graph;
-    const bool use_stream_mode = sc->Options<AudioClassifierOptionsProto>()
-                                     .base_options()
-                                     .use_stream_mode();
+    const bool use_stream_mode =
+        sc->Options<proto::AudioClassifierGraphOptions>()
+            .base_options()
+            .use_stream_mode();
     ASSIGN_OR_RETURN(
         auto classification_result_out,
         BuildAudioClassificationTask(
-            sc->Options<AudioClassifierOptionsProto>(), *model_resources,
+            sc->Options<proto::AudioClassifierGraphOptions>(), *model_resources,
             graph[Input<Matrix>(kAudioTag)],
             use_stream_mode
                 ? absl::nullopt
@@ -178,14 +181,14 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
   // buffer (mediapipe::Matrix) and the corresponding sample rate (double) as
   // the inputs and returns one classification result per input audio buffer.
   //
-  // task_options: the mediapipe tasks AudioClassifierOptions proto.
+  // task_options: the mediapipe tasks AudioClassifierGraphOptions proto.
   // model_resources: the ModelSources object initialized from an audio
   // classifier model file with model metadata.
   // audio_in: (mediapipe::Matrix) stream to run audio classification on.
   // sample_rate_in: (double) optional stream of the input audio sample rate.
   // graph: the mediapipe builder::Graph instance to be updated.
   absl::StatusOr<Source<ClassificationResult>> BuildAudioClassificationTask(
-      const AudioClassifierOptionsProto& task_options,
+      const proto::AudioClassifierGraphOptions& task_options,
       const core::ModelResources& model_resources, Source<Matrix> audio_in,
       absl::optional<Source<double>> sample_rate_in, Graph& graph) {
     MP_RETURN_IF_ERROR(SanityCheckOptions(task_options));
@@ -236,11 +239,14 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
 
     // Adds postprocessing calculators and connects them to the graph output.
     auto& postprocessing = graph.AddNode(
-        "mediapipe.tasks.components.ClassificationPostprocessingSubgraph");
-    MP_RETURN_IF_ERROR(ConfigureClassificationPostprocessing(
-        model_resources, task_options.classifier_options(),
-        &postprocessing.GetOptions<
-            tasks::components::ClassificationPostprocessingOptions>()));
+        "mediapipe.tasks.components.processors."
+        "ClassificationPostprocessingGraph");
+    MP_RETURN_IF_ERROR(
+        components::processors::ConfigureClassificationPostprocessingGraph(
+            model_resources, task_options.classifier_options(),
+            &postprocessing
+                 .GetOptions<components::processors::proto::
+                                 ClassificationPostprocessingGraphOptions>()));
     inference.Out(kTensorsTag) >> postprocessing.In(kTensorsTag);
 
     // Time aggregation is only needed for performing audio classification on
@@ -257,8 +263,10 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
   }
 };
 
-REGISTER_MEDIAPIPE_GRAPH(::mediapipe::tasks::audio::AudioClassifierGraph);
+REGISTER_MEDIAPIPE_GRAPH(
+    ::mediapipe::tasks::audio::audio_classifier::AudioClassifierGraph);
 
+}  // namespace audio_classifier
 }  // namespace audio
 }  // namespace tasks
 }  // namespace mediapipe

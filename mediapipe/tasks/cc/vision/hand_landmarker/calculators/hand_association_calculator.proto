@@ -13,22 +13,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_CC_VISION_HAND_DETECTOR_HAND_DETECTOR_OP_RESOLVER_H_
-#define MEDIAPIPE_TASKS_CC_VISION_HAND_DETECTOR_HAND_DETECTOR_OP_RESOLVER_H_
+syntax = "proto2";
 
-#include "tensorflow/lite/kernels/register.h"
+package mediapipe;
 
-namespace mediapipe {
-namespace tasks {
-namespace vision {
-class HandDetectorOpResolver : public tflite::ops::builtin::BuiltinOpResolver {
- public:
-  HandDetectorOpResolver();
-  HandDetectorOpResolver(const HandDetectorOpResolver& r) = delete;
-};
+import "mediapipe/framework/calculator.proto";
 
-}  // namespace vision
-}  // namespace tasks
-}  // namespace mediapipe
+message HandAssociationCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional HandAssociationCalculatorOptions ext = 408244367;
+  }
 
-#endif  // MEDIAPIPE_TASKS_CC_VISION_HAND_DETECTOR_HAND_DETECTOR_OP_RESOLVER_H_
+  optional float min_similarity_threshold = 1 [default = 1.0];
+}
