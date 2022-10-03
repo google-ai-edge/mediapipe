@@ -27,9 +27,9 @@ limitations under the License.
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/classification_postprocessing.h"
-#include "mediapipe/tasks/cc/components/classification_postprocessing_options.pb.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/processors/classification_postprocessing_graph.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
@@ -49,6 +49,7 @@ using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
+using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::mediapipe::tasks::vision::hand_gesture_recognizer::proto::
     HandGestureRecognizerSubgraphOptions;
 using ::mediapipe::tasks::vision::proto::LandmarksToMatrixCalculatorOptions;
@@ -218,11 +219,14 @@ class SingleHandGestureRecognizerSubgraph : public core::ModelTaskGraph {
     auto inference_output_tensors = inference.Out(kTensorsTag);
 
     auto& postprocessing = graph.AddNode(
-        "mediapipe.tasks.components.ClassificationPostprocessingSubgraph");
-    MP_RETURN_IF_ERROR(ConfigureClassificationPostprocessing(
-        model_resources, graph_options.classifier_options(),
-        &postprocessing.GetOptions<
-            tasks::components::ClassificationPostprocessingOptions>()));
+        "mediapipe.tasks.components.processors."
+        "ClassificationPostprocessingGraph");
+    MP_RETURN_IF_ERROR(
+        components::processors::ConfigureClassificationPostprocessingGraph(
+            model_resources, graph_options.classifier_options(),
+            &postprocessing
+                 .GetOptions<components::processors::proto::
+                                 ClassificationPostprocessingGraphOptions>()));
     inference_output_tensors >> postprocessing.In(kTensorsTag);
     auto classification_result =
         postprocessing[Output<ClassificationResult>("CLASSIFICATION_RESULT")];

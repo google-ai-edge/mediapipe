@@ -31,9 +31,9 @@ limitations under the License.
 #include "mediapipe/tasks/cc/audio/audio_classifier/proto/audio_classifier_graph_options.pb.h"
 #include "mediapipe/tasks/cc/audio/utils/audio_tensor_specs.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/classification_postprocessing.h"
-#include "mediapipe/tasks/cc/components/classification_postprocessing_options.pb.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/processors/classification_postprocessing_graph.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
@@ -53,6 +53,7 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::GenericNode;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
+using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 
 constexpr char kAtPrestreamTag[] = "AT_PRESTREAM";
 constexpr char kAudioTag[] = "AUDIO";
@@ -238,11 +239,14 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
 
     // Adds postprocessing calculators and connects them to the graph output.
     auto& postprocessing = graph.AddNode(
-        "mediapipe.tasks.components.ClassificationPostprocessingSubgraph");
-    MP_RETURN_IF_ERROR(ConfigureClassificationPostprocessing(
-        model_resources, task_options.classifier_options(),
-        &postprocessing.GetOptions<
-            tasks::components::ClassificationPostprocessingOptions>()));
+        "mediapipe.tasks.components.processors."
+        "ClassificationPostprocessingGraph");
+    MP_RETURN_IF_ERROR(
+        components::processors::ConfigureClassificationPostprocessingGraph(
+            model_resources, task_options.classifier_options(),
+            &postprocessing
+                 .GetOptions<components::processors::proto::
+                                 ClassificationPostprocessingGraphOptions>()));
     inference.Out(kTensorsTag) >> postprocessing.In(kTensorsTag);
 
     // Time aggregation is only needed for performing audio classification on

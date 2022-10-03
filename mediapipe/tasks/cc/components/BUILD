@@ -59,65 +59,6 @@ cc_library(
 # TODO: Enable this test
 
 cc_library(
-    name = "classifier_options",
-    srcs = ["classifier_options.cc"],
-    hdrs = ["classifier_options.h"],
-    deps = ["//mediapipe/tasks/cc/components/proto:classifier_options_cc_proto"],
-)
-
-mediapipe_proto_library(
-    name = "classification_postprocessing_options_proto",
-    srcs = ["classification_postprocessing_options.proto"],
-    deps = [
-        "//mediapipe/calculators/tensor:tensors_to_classification_calculator_proto",
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
-        "//mediapipe/tasks/cc/components/calculators:classification_aggregation_calculator_proto",
-        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator_proto",
-    ],
-)
-
-cc_library(
-    name = "classification_postprocessing",
-    srcs = ["classification_postprocessing.cc"],
-    hdrs = ["classification_postprocessing.h"],
-    deps = [
-        ":classification_postprocessing_options_cc_proto",
-        "//mediapipe/calculators/core:split_vector_calculator",
-        "//mediapipe/calculators/core:split_vector_calculator_cc_proto",
-        "//mediapipe/calculators/tensor:tensors_dequantization_calculator",
-        "//mediapipe/calculators/tensor:tensors_to_classification_calculator",
-        "//mediapipe/calculators/tensor:tensors_to_classification_calculator_cc_proto",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/api2:builder",
-        "//mediapipe/framework/api2:packet",
-        "//mediapipe/framework/api2:port",
-        "//mediapipe/framework/formats:tensor",
-        "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/components/calculators:classification_aggregation_calculator",
-        "//mediapipe/tasks/cc/components/calculators:classification_aggregation_calculator_cc_proto",
-        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator",
-        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator_cc_proto",
-        "//mediapipe/tasks/cc/components/calculators:score_calibration_utils",
-        "//mediapipe/tasks/cc/components/containers:classifications_cc_proto",
-        "//mediapipe/tasks/cc/components/proto:classifier_options_cc_proto",
-        "//mediapipe/tasks/cc/components/utils:source_or_node_output",
-        "//mediapipe/tasks/cc/core:model_resources",
-        "//mediapipe/tasks/cc/metadata:metadata_extractor",
-        "//mediapipe/tasks/metadata:metadata_schema_cc",
-        "//mediapipe/util:label_map_cc_proto",
-        "//mediapipe/util:label_map_util",
-        "@com_google_absl//absl/container:flat_hash_set",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
-        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
-    ],
-    alwayslink = 1,
-)
-
-cc_library(
     name = "embedder_options",
     srcs = ["embedder_options.cc"],
     hdrs = ["embedder_options.h"],

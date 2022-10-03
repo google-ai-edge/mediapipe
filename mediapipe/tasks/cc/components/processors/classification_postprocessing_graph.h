@@ -13,32 +13,33 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_CLASSIFICATION_POSTPROCESSING_H_
-#define MEDIAPIPE_TASKS_CC_COMPONENTS_CLASSIFICATION_POSTPROCESSING_H_
+#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_CLASSIFICATION_POSTPROCESSING_GRAPH_H_
+#define MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_CLASSIFICATION_POSTPROCESSING_GRAPH_H_
 
 #include "absl/status/status.h"
-#include "mediapipe/tasks/cc/components/classification_postprocessing_options.pb.h"
-#include "mediapipe/tasks/cc/components/proto/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace components {
+namespace processors {
 
-// Configures a ClassificationPostprocessing subgraph using the provided model
+// Configures a ClassificationPostprocessingGraph using the provided model
 // resources and ClassifierOptions.
 // - Accepts CPU input tensors.
 //
 // Example usage:
 //
 //   auto& postprocessing =
-//       graph.AddNode("mediapipe.tasks.components.ClassificationPostprocessingSubgraph");
-//   MP_RETURN_IF_ERROR(ConfigureClassificationPostprocessing(
+//       graph.AddNode("mediapipe.tasks.components.processors.ClassificationPostprocessingGraph");
+//   MP_RETURN_IF_ERROR(ConfigureClassificationPostprocessingGraph(
 //       model_resources,
 //       classifier_options,
-//       &preprocessing.GetOptions<ClassificationPostprocessingOptions>()));
+//       &preprocessing.GetOptions<ClassificationPostprocessingGraphOptions>()));
 //
-// The resulting ClassificationPostprocessing subgraph has the following I/O:
+// The resulting ClassificationPostprocessingGraph has the following I/O:
 // Inputs:
 //   TENSORS - std::vector<Tensor>
 //     The output tensors of an InferenceCalculator.
@@ -49,13 +50,14 @@ namespace components {
 // Outputs:
 //   CLASSIFICATION_RESULT - ClassificationResult
 //     The output aggregated classification results.
-absl::Status ConfigureClassificationPostprocessing(
+absl::Status ConfigureClassificationPostprocessingGraph(
     const tasks::core::ModelResources& model_resources,
-    const tasks::components::proto::ClassifierOptions& classifier_options,
-    ClassificationPostprocessingOptions* options);
+    const proto::ClassifierOptions& classifier_options,
+    proto::ClassificationPostprocessingGraphOptions* options);
 
+}  // namespace processors
 }  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_CLASSIFICATION_POSTPROCESSING_H_
+#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_CLASSIFICATION_POSTPROCESSING_GRAPH_H_

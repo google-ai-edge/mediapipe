@@ -26,9 +26,9 @@ limitations under the License.
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/timestamp.h"
-#include "mediapipe/tasks/cc/components/classifier_options.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
-#include "mediapipe/tasks/cc/components/proto/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/processors/classifier_options.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
@@ -56,6 +56,7 @@ constexpr char kSubgraphTypeName[] =
     "mediapipe.tasks.vision.image_classifier.ImageClassifierGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
 
+using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::mediapipe::tasks::core::PacketMap;
 
 // Builds a NormalizedRect covering the entire image.
@@ -107,8 +108,8 @@ ConvertImageClassifierOptionsToProto(ImageClassifierOptions* options) {
   options_proto->mutable_base_options()->set_use_stream_mode(
       options->running_mode != core::RunningMode::IMAGE);
   auto classifier_options_proto =
-      std::make_unique<tasks::components::proto::ClassifierOptions>(
-          components::ConvertClassifierOptionsToProto(
+      std::make_unique<components::processors::proto::ClassifierOptions>(
+          components::processors::ConvertClassifierOptionsToProto(
               &(options->classifier_options)));
   options_proto->mutable_classifier_options()->Swap(
       classifier_options_proto.get());

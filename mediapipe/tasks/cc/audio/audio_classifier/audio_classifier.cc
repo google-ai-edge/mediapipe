@@ -24,8 +24,9 @@ limitations under the License.
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/tasks/cc/audio/audio_classifier/proto/audio_classifier_graph_options.pb.h"
 #include "mediapipe/tasks/cc/audio/core/audio_task_api_factory.h"
-#include "mediapipe/tasks/cc/components/classifier_options.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/processors/classifier_options.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -36,6 +37,8 @@ namespace audio {
 namespace audio_classifier {
 
 namespace {
+
+using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 
 constexpr char kAudioStreamName[] = "audio_in";
 constexpr char kAudioTag[] = "AUDIO";
@@ -77,8 +80,8 @@ ConvertAudioClassifierOptionsToProto(AudioClassifierOptions* options) {
   options_proto->mutable_base_options()->set_use_stream_mode(
       options->running_mode == core::RunningMode::AUDIO_STREAM);
   auto classifier_options_proto =
-      std::make_unique<tasks::components::proto::ClassifierOptions>(
-          components::ConvertClassifierOptionsToProto(
+      std::make_unique<components::processors::proto::ClassifierOptions>(
+          components::processors::ConvertClassifierOptionsToProto(
               &(options->classifier_options)));
   options_proto->mutable_classifier_options()->Swap(
       classifier_options_proto.get());

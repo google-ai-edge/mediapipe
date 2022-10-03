@@ -18,7 +18,7 @@ syntax = "proto2";
 package mediapipe.tasks.audio.audio_classifier.proto;
 
 import "mediapipe/framework/calculator.proto";
-import "mediapipe/tasks/cc/components/proto/classifier_options.proto";
+import "mediapipe/tasks/cc/components/processors/proto/classifier_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
 message AudioClassifierGraphOptions {
@@ -31,7 +31,7 @@ message AudioClassifierGraphOptions {
 
   // Options for configuring the classifier behavior, such as score threshold,
   // number of results, etc.
-  optional components.proto.ClassifierOptions classifier_options = 2;
+  optional components.processors.proto.ClassifierOptions classifier_options = 2;
 
   // The default sample rate of the input audio. Must be set when the
   // AudioClassifier is configured to process audio stream data.

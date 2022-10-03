@@ -13,14 +13,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_CLASSIFIER_OPTIONS_H_
-#define MEDIAPIPE_TASKS_CC_COMPONENTS_CLASSIFIER_OPTIONS_H_
+#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_CLASSIFIER_OPTIONS_H_
+#define MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_CLASSIFIER_OPTIONS_H_
 
-#include "mediapipe/tasks/cc/components/proto/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace components {
+namespace processors {
 
 // Classifier options for MediaPipe C++ classification Tasks.
 struct ClassifierOptions {
@@ -49,11 +50,12 @@ struct ClassifierOptions {
 };
 
 // Converts a ClassifierOptions to a ClassifierOptionsProto.
-tasks::components::proto::ClassifierOptions ConvertClassifierOptionsToProto(
+proto::ClassifierOptions ConvertClassifierOptionsToProto(
     ClassifierOptions* classifier_options);
 
+}  // namespace processors
 }  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_CLASSIFIER_OPTIONS_H_
+#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_CLASSIFIER_OPTIONS_H_

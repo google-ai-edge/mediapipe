@@ -24,11 +24,6 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
-    name = "classifier_options_proto",
-    srcs = ["classifier_options.proto"],
-)
-
-mediapipe_proto_library(
     name = "embedder_options_proto",
     srcs = ["embedder_options.proto"],
 )

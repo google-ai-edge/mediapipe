@@ -19,14 +19,18 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 mediapipe_proto_library(
-    name = "category_proto",
-    srcs = ["category.proto"],
+    name = "classifier_options_proto",
+    srcs = ["classifier_options.proto"],
 )
 
 mediapipe_proto_library(
-    name = "classifications_proto",
-    srcs = ["classifications.proto"],
+    name = "classification_postprocessing_graph_options_proto",
+    srcs = ["classification_postprocessing_graph_options.proto"],
     deps = [
-        ":category_proto",
+        "//mediapipe/calculators/tensor:tensors_to_classification_calculator_proto",
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/tasks/cc/components/calculators:classification_aggregation_calculator_proto",
+        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator_proto",
     ],
 )

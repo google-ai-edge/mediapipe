@@ -13,17 +13,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/cc/components/classifier_options.h"
+#include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 
-#include "mediapipe/tasks/cc/components/proto/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace components {
+namespace processors {
 
-tasks::components::proto::ClassifierOptions ConvertClassifierOptionsToProto(
+proto::ClassifierOptions ConvertClassifierOptionsToProto(
     ClassifierOptions* options) {
-  tasks::components::proto::ClassifierOptions options_proto;
+  proto::ClassifierOptions options_proto;
   options_proto.set_display_names_locale(options->display_names_locale);
   options_proto.set_max_results(options->max_results);
   options_proto.set_score_threshold(options->score_threshold);
@@ -36,6 +37,7 @@ tasks::components::proto::ClassifierOptions ConvertClassifierOptionsToProto(
   return options_proto;
 }
 
+}  // namespace processors
 }  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe
