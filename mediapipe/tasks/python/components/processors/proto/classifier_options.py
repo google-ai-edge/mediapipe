@@ -16,7 +16,7 @@
 import dataclasses
 from typing import Any, List, Optional
 
-from mediapipe.tasks.cc.components.proto import classifier_options_pb2
+from mediapipe.tasks.cc.components.processors.proto import classifier_options_pb2
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _ClassifierOptionsProto = classifier_options_pb2.ClassifierOptions

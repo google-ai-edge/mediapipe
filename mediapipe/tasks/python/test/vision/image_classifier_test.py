@@ -19,11 +19,11 @@ from absl.testing import absltest
 from absl.testing import parameterized
 
 from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.tasks.python.components.proto import classifier_options
-from mediapipe.tasks.python.components.containers import category as category_module
-from mediapipe.tasks.python.components.containers import classifications as classifications_module
+from mediapipe.tasks.python.components.processors.proto import classifier_options
+from mediapipe.tasks.python.components.containers.proto import category as category_module
+from mediapipe.tasks.python.components.containers.proto import classifications as classifications_module
 from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.test import test_util
+from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import image_classifier
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
@@ -88,9 +88,9 @@ class ImageClassifierTest(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
-    self.test_image = test_util.read_test_image(
-        test_util.get_test_data_path(_IMAGE_FILE))
-    self.model_path = test_util.get_test_data_path(_MODEL_FILE)
+    self.test_image = _Image.create_from_file(
+        test_utils.get_test_data_path(_IMAGE_FILE))
+    self.model_path = test_utils.get_test_data_path(_MODEL_FILE)
 
   @parameterized.parameters(
       (ModelFileType.FILE_NAME, 4, _EXPECTED_CLASSIFICATION_RESULT),

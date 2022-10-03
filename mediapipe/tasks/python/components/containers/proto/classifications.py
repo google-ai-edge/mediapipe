@@ -16,8 +16,8 @@
 import dataclasses
 from typing import Any, List, Optional
 
-from mediapipe.tasks.cc.components.containers import classifications_pb2
-from mediapipe.tasks.python.components.containers import category as category_module
+from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
+from mediapipe.tasks.python.components.containers.proto import category as category_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _ClassificationEntryProto = classifications_pb2.ClassificationEntry
