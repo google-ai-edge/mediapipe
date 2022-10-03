@@ -48,22 +48,22 @@ _EXPECTED_CLASSIFICATION_RESULT = _ClassificationResult(
           categories=[
             _Category(
               index=934,
-              score=0.7952049970626831,
+              score=0.7939587831497192,
               display_name='',
               category_name='cheeseburger'),
             _Category(
               index=932,
-              score=0.02732999622821808,
+              score=0.02739289402961731,
               display_name='',
               category_name='bagel'),
             _Category(
               index=925,
-              score=0.01933487318456173,
+              score=0.01934075355529785,
               display_name='',
               category_name='guacamole'),
             _Category(
               index=963,
-              score=0.006279350258409977,
+              score=0.006327860057353973,
               display_name='',
               category_name='meat loaf')
           ],

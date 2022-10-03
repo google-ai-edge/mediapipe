@@ -507,8 +507,8 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
   }
 };
 
-REGISTER_MEDIAPIPE_GRAPH(::mediapipe::tasks::components::processors::
-                             ClassificationPostprocessingGraph);  // NOLINT
+REGISTER_MEDIAPIPE_GRAPH(
+    ::mediapipe::tasks::components::processors::ClassificationPostprocessingGraph);  // NOLINT
 
 }  // namespace processors
 }  // namespace components
