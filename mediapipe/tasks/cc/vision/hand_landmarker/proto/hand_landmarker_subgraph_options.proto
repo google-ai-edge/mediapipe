@@ -28,11 +28,7 @@ message HandLandmarkerSubgraphOptions {
   // model file with metadata, accelerator options, etc.
   optional core.proto.BaseOptions base_options = 1;
 
-  // The locale to use for display names specified through the TFLite Model
-  // Metadata, if any. Defaults to English.
-  optional string display_names_locale = 2 [default = "en"];
-
   // Minimum confidence value ([0.0, 1.0]) for hand presence score to be
   // considered successfully detecting a hand in the image.
-  optional float min_detection_confidence = 3 [default = 0.5];
+  optional float min_detection_confidence = 2 [default = 0.5];
 }

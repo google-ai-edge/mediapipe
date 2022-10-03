@@ -15,26 +15,26 @@ limitations under the License.
 
 syntax = "proto2";
 
-package mediapipe.tasks.vision.hand_landmarker.proto;
+package mediapipe.tasks.vision.hand_detector.proto;
 
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
-import "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_options.proto";
-import "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_subgraph_options.proto";
 
-message HandLandmarkerOptions {
+option java_package = "com.google.mediapipe.tasks.vision.handdetector";
+option java_outer_classname = "HandDetectorGraphOptionsProto";
+
+message HandDetectorGraphOptions {
   extend mediapipe.CalculatorOptions {
-    optional HandLandmarkerOptions ext = 462713202;
+    optional HandDetectorGraphOptions ext = 464864288;
   }
-  // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
+  // Base options for configuring Task library, such as specifying the TfLite
   // model file with metadata, accelerator options, etc.
   optional core.proto.BaseOptions base_options = 1;
 
-  // The locale to use for display names specified through the TFLite Model
-  // Metadata, if any. Defaults to English.
-  optional string display_names_locale = 2 [default = "en"];
+  // Minimum confidence value ([0.0, 1.0]) for confidence score to be considered
+  // successfully detecting a hand in the image.
+  optional float min_detection_confidence = 2 [default = 0.5];
 
-  optional hand_detector.proto.HandDetectorOptions hand_detector_options = 3;
-
-  optional HandLandmarkerSubgraphOptions hand_landmarker_subgraph_options = 4;
+  // The maximum number of hands output by the detector.
+  optional int32 num_hands = 3;
 }

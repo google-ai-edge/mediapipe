@@ -45,6 +45,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace hand_landmarker {
 namespace {
 
 using ::file::Defaults;
@@ -112,8 +113,8 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateSingleHandTaskRunner(
     absl::string_view model_name) {
   Graph graph;
 
-  auto& hand_landmark_detection =
-      graph.AddNode("mediapipe.tasks.vision.SingleHandLandmarkerSubgraph");
+  auto& hand_landmark_detection = graph.AddNode(
+      "mediapipe.tasks.vision.hand_landmarker.SingleHandLandmarkerSubgraph");
 
   auto options = std::make_unique<HandLandmarkerSubgraphOptions>();
   options->mutable_base_options()->mutable_model_asset()->set_file_name(
@@ -151,8 +152,8 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateMultiHandTaskRunner(
     absl::string_view model_name) {
   Graph graph;
 
-  auto& multi_hand_landmark_detection =
-      graph.AddNode("mediapipe.tasks.vision.HandLandmarkerSubgraph");
+  auto& multi_hand_landmark_detection = graph.AddNode(
+      "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerSubgraph");
 
   auto options = std::make_unique<HandLandmarkerSubgraphOptions>();
   options->mutable_base_options()->mutable_model_asset()->set_file_name(
@@ -462,6 +463,7 @@ INSTANTIATE_TEST_SUITE_P(
     });
 
 }  // namespace
+}  // namespace hand_landmarker
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

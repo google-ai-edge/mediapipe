@@ -34,6 +34,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/image_preprocessing.h"
+#include "mediapipe/tasks/cc/components/utils/gate.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
@@ -48,6 +49,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace hand_landmarker {
 
 namespace {
 
@@ -55,6 +57,7 @@ using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
+using ::mediapipe::tasks::components::utils::AllowIf;
 using ::mediapipe::tasks::core::ModelResources;
 using ::mediapipe::tasks::vision::hand_landmarker::proto::
     HandLandmarkerSubgraphOptions;
@@ -82,7 +85,6 @@ struct SingleHandLandmarkerOutputs {
   Source<bool> hand_presence;
   Source<float> hand_presence_score;
   Source<ClassificationList> handedness;
-  Source<std::pair<int, int>> image_size;
 };
 
 struct HandLandmarkerOutputs {
@@ -92,7 +94,6 @@ struct HandLandmarkerOutputs {
   Source<std::vector<bool>> presences;
   Source<std::vector<float>> presence_scores;
   Source<std::vector<ClassificationList>> handednesses;
-  Source<std::pair<int, int>> image_size;
 };
 
 absl::Status SanityCheckOptions(const HandLandmarkerSubgraphOptions& options) {
@@ -208,8 +209,6 @@ void ConfigureHandRectTransformationCalculator(
 //     Float value indicates the probability that the hand is present.
 //   HANDEDNESS - ClassificationList
 //     Classification of handedness.
-//   IMAGE_SIZE - std::vector<int, int>
-//     The size of input image.
 //
 // Example:
 // node {
@@ -221,8 +220,6 @@ void ConfigureHandRectTransformationCalculator(
 //   output_stream: "HAND_RECT_NEXT_FRAME:hand_rect_next_frame"
 //   output_stream: "PRESENCE:hand_presence"
 //   output_stream: "PRESENCE_SCORE:hand_presence_score"
-//   output_stream: "HANDEDNESS:handedness"
-//   output_stream: "IMAGE_SIZE:image_size"
 //   options {
 //     [mediapipe.tasks.vision.hand_landmarker.proto.HandLandmarkerSubgraphOptions.ext]
 //     {
@@ -259,8 +256,6 @@ class SingleHandLandmarkerSubgraph : public core::ModelTaskGraph {
         graph[Output<float>(kPresenceScoreTag)];
     hand_landmark_detection_outs.handedness >>
         graph[Output<ClassificationList>(kHandednessTag)];
-    hand_landmark_detection_outs.image_size >>
-        graph[Output<std::pair<int, int>>(kImageSizeTag)];
 
     return graph.GetConfig();
   }
@@ -332,18 +327,7 @@ class SingleHandLandmarkerSubgraph : public core::ModelTaskGraph {
     // score of hand presence.
     auto& tensors_to_hand_presence = graph.AddNode("TensorsToFloatsCalculator");
     hand_flag_tensors >> tensors_to_hand_presence.In("TENSORS");
-
-    // Converts the handedness tensor into a float that represents the
-    // classification score of handedness.
-    auto& tensors_to_handedness =
-        graph.AddNode("TensorsToClassificationCalculator");
-    ConfigureTensorsToHandednessCalculator(
-        &tensors_to_handedness.GetOptions<
-            mediapipe::TensorsToClassificationCalculatorOptions>());
-    handedness_tensors >> tensors_to_handedness.In("TENSORS");
     auto hand_presence_score = tensors_to_hand_presence[Output<float>("FLOAT")];
-    auto handedness =
-        tensors_to_handedness[Output<ClassificationList>("CLASSIFICATIONS")];
 
     // Applies a threshold to the confidence score to determine whether a
     // hand is present.
@@ -353,6 +337,18 @@ class SingleHandLandmarkerSubgraph : public core::ModelTaskGraph {
         .set_threshold(subgraph_options.min_detection_confidence());
     hand_presence_score >> hand_presence_thresholding.In("FLOAT");
     auto hand_presence = hand_presence_thresholding[Output<bool>("FLAG")];
+
+    // Converts the handedness tensor into a float that represents the
+    // classification score of handedness.
+    auto& tensors_to_handedness =
+        graph.AddNode("TensorsToClassificationCalculator");
+    ConfigureTensorsToHandednessCalculator(
+        &tensors_to_handedness.GetOptions<
+            mediapipe::TensorsToClassificationCalculatorOptions>());
+    handedness_tensors >> tensors_to_handedness.In("TENSORS");
+    auto handedness = AllowIf(
+        tensors_to_handedness[Output<ClassificationList>("CLASSIFICATIONS")],
+        hand_presence, graph);
 
     // Adjusts landmarks (already normalized to [0.f, 1.f]) on the letterboxed
     // hand image (after image transformation with the FIT scale mode) to the
@@ -371,8 +367,9 @@ class SingleHandLandmarkerSubgraph : public core::ModelTaskGraph {
     landmark_letterbox_removal.Out("LANDMARKS") >>
         landmark_projection.In("NORM_LANDMARKS");
     hand_rect >> landmark_projection.In("NORM_RECT");
-    auto projected_landmarks =
-        landmark_projection[Output<NormalizedLandmarkList>("NORM_LANDMARKS")];
+    auto projected_landmarks = AllowIf(
+        landmark_projection[Output<NormalizedLandmarkList>("NORM_LANDMARKS")],
+        hand_presence, graph);
 
     // Projects the world landmarks from the cropped hand image to the
     // corresponding locations on the full image before cropping (input to the
@@ -383,7 +380,8 @@ class SingleHandLandmarkerSubgraph : public core::ModelTaskGraph {
         world_landmark_projection.In("LANDMARKS");
     hand_rect >> world_landmark_projection.In("NORM_RECT");
     auto projected_world_landmarks =
-        world_landmark_projection[Output<LandmarkList>("LANDMARKS")];
+        AllowIf(world_landmark_projection[Output<LandmarkList>("LANDMARKS")],
+                hand_presence, graph);
 
     // Converts the hand landmarks into a rectangle (normalized by image size)
     // that encloses the hand.
@@ -403,7 +401,8 @@ class SingleHandLandmarkerSubgraph : public core::ModelTaskGraph {
     hand_landmarks_to_rect.Out("NORM_RECT") >>
         hand_rect_transformation.In("NORM_RECT");
     auto hand_rect_next_frame =
-        hand_rect_transformation[Output<NormalizedRect>("")];
+        AllowIf(hand_rect_transformation[Output<NormalizedRect>("")],
+                hand_presence, graph);
 
     return {{
         /* hand_landmarks= */ projected_landmarks,
@@ -412,16 +411,15 @@ class SingleHandLandmarkerSubgraph : public core::ModelTaskGraph {
         /* hand_presence= */ hand_presence,
         /* hand_presence_score= */ hand_presence_score,
         /* handedness= */ handedness,
-        /* image_size= */ image_size,
     }};
   }
 };
 
 REGISTER_MEDIAPIPE_GRAPH(
-    ::mediapipe::tasks::vision::SingleHandLandmarkerSubgraph);
+    ::mediapipe::tasks::vision::hand_landmarker::SingleHandLandmarkerSubgraph);
 
-// A "mediapipe.tasks.vision.HandLandmarkerSubgraph" performs multi
-// hand landmark detection.
+// A "mediapipe.tasks.vision.HandLandmarkerSubgraph" performs multi hand
+// landmark detection.
 // - Accepts CPU input image and a vector of hand rect RoIs to detect the
 //   multiple hands landmarks enclosed by the RoIs. Output vectors of
 //   hand landmarks related results, where each element in the vectors
@@ -449,8 +447,6 @@ REGISTER_MEDIAPIPE_GRAPH(
 //     Vector of float value indicates the probability that the hand is present.
 //   HANDEDNESS - std::vector<ClassificationList>
 //     Vector of classification of handedness.
-//   IMAGE_SIZE - std::vector<int, int>
-//     The size of input image.
 //
 // Example:
 // node {
@@ -463,7 +459,6 @@ REGISTER_MEDIAPIPE_GRAPH(
 //   output_stream: "PRESENCE:hand_presence"
 //   output_stream: "PRESENCE_SCORE:hand_presence_score"
 //   output_stream: "HANDEDNESS:handedness"
-//   output_stream: "IMAGE_SIZE:image_size"
 //   options {
 //     [mediapipe.tasks.vision.hand_landmarker.proto.HandLandmarkerSubgraphOptions.ext]
 //     {
@@ -499,8 +494,6 @@ class HandLandmarkerSubgraph : public core::ModelTaskGraph {
         graph[Output<std::vector<float>>(kPresenceScoreTag)];
     hand_landmark_detection_outputs.handednesses >>
         graph[Output<std::vector<ClassificationList>>(kHandednessTag)];
-    hand_landmark_detection_outputs.image_size >>
-        graph[Output<std::pair<int, int>>(kImageSizeTag)];
 
     return graph.GetConfig();
   }
@@ -510,8 +503,8 @@ class HandLandmarkerSubgraph : public core::ModelTaskGraph {
       const HandLandmarkerSubgraphOptions& subgraph_options,
       Source<Image> image_in,
       Source<std::vector<NormalizedRect>> multi_hand_rects, Graph& graph) {
-    auto& hand_landmark_subgraph =
-        graph.AddNode("mediapipe.tasks.vision.SingleHandLandmarkerSubgraph");
+    auto& hand_landmark_subgraph = graph.AddNode(
+        "mediapipe.tasks.vision.hand_landmarker.SingleHandLandmarkerSubgraph");
     hand_landmark_subgraph.GetOptions<HandLandmarkerSubgraphOptions>().CopyFrom(
         subgraph_options);
 
@@ -533,8 +526,6 @@ class HandLandmarkerSubgraph : public core::ModelTaskGraph {
         hand_landmark_subgraph.Out("HAND_RECT_NEXT_FRAME");
     auto landmarks = hand_landmark_subgraph.Out("LANDMARKS");
     auto world_landmarks = hand_landmark_subgraph.Out("WORLD_LANDMARKS");
-    auto image_size =
-        hand_landmark_subgraph[Output<std::pair<int, int>>("IMAGE_SIZE")];
 
     auto& end_loop_handedness =
         graph.AddNode("EndLoopClassificationListCalculator");
@@ -585,13 +576,14 @@ class HandLandmarkerSubgraph : public core::ModelTaskGraph {
         /* presences= */ presences,
         /* presence_scores= */ presence_scores,
         /* handednesses= */ handednesses,
-        /* image_size= */ image_size,
     }};
   }
 };
 
-REGISTER_MEDIAPIPE_GRAPH(::mediapipe::tasks::vision::HandLandmarkerSubgraph);
+REGISTER_MEDIAPIPE_GRAPH(
+    ::mediapipe::tasks::vision::hand_landmarker::HandLandmarkerSubgraph);
 
+}  // namespace hand_landmarker
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe
