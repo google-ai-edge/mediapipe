@@ -12,10 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+
 package(default_visibility = [
     "//mediapipe/app/xeno:__subpackages__",
     "//mediapipe/tasks:internal",
 ])
+
+mediapipe_proto_library(
+    name = "landmarks_to_matrix_calculator_proto",
+    srcs = ["landmarks_to_matrix_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_proto",
+    ],
+)
 
 cc_library(
     name = "handedness_to_matrix_calculator",
@@ -25,7 +37,7 @@ cc_library(
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/tasks/cc/vision/hand_gesture_recognizer:handedness_util",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer:handedness_util",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
@@ -53,11 +65,11 @@ cc_library(
     name = "landmarks_to_matrix_calculator",
     srcs = ["landmarks_to_matrix_calculator.cc"],
     deps = [
+        ":landmarks_to_matrix_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/tasks/cc/vision/hand_gesture_recognizer/proto:landmarks_to_matrix_calculator_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

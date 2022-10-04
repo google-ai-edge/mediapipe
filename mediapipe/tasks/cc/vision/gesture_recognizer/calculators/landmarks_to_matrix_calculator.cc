@@ -27,13 +27,11 @@ limitations under the License.
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/tasks/cc/vision/hand_gesture_recognizer/proto/landmarks_to_matrix_calculator.pb.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/landmarks_to_matrix_calculator.pb.h"
 
+// TODO Update to use API2
 namespace mediapipe {
-namespace tasks {
-namespace vision {
-
-using proto::LandmarksToMatrixCalculatorOptions;
+namespace api2 {
 
 namespace {
 
@@ -175,7 +173,7 @@ absl::Status ProcessLandmarks(LandmarkListT landmarks, CalculatorContext* cc) {
 //   input_stream: "IMAGE_SIZE:image_size"
 //   output_stream: "LANDMARKS_MATRIX:landmarks_matrix"
 //   options {
-//     [mediapipe.tasks.vision.proto.LandmarksToMatrixCalculatorOptions.ext] {
+//     [mediapipe.LandmarksToMatrixCalculatorOptions.ext] {
 //       object_normalization: true
 //       object_normalization_origin_offset: 0
 //     }
@@ -221,6 +219,5 @@ absl::Status LandmarksToMatrixCalculator::Process(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
-}  // namespace vision
-}  // namespace tasks
+}  // namespace api2
 }  // namespace mediapipe

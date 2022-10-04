@@ -46,6 +46,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace hand_detector {
 
 namespace {
 
@@ -139,9 +140,9 @@ void ConfigureRectTransformationCalculator(
 
 }  // namespace
 
-// A "mediapipe.tasks.vision.HandDetectorGraph" performs hand detection. The
-// Hand Detection Graph is based on palm detection model, and scale the detected
-// palm bounding box to enclose the detected whole hand.
+// A "mediapipe.tasks.vision.hand_detector.HandDetectorGraph" performs hand
+// detection. The Hand Detection Graph is based on palm detection model, and
+// scale the detected palm bounding box to enclose the detected whole hand.
 // Accepts CPU input images and outputs Landmark on CPU.
 //
 // Inputs:
@@ -161,14 +162,15 @@ void ConfigureRectTransformationCalculator(
 //
 // Example:
 // node {
-//   calculator: "mediapipe.tasks.vision.HandDetectorGraph"
+//   calculator: "mediapipe.tasks.vision.hand_detector.HandDetectorGraph"
 //   input_stream: "IMAGE:image"
 //   output_stream: "PALM_DETECTIONS:palm_detections"
 //   output_stream: "HAND_RECTS:hand_rects_from_palm_detections"
 //   output_stream: "PALM_RECTS:palm_rects"
 //   output_stream: "IMAGE:image_out"
 //   options {
-//     [mediapipe.tasks.hand_detector.proto.HandDetectorGraphOptions.ext] {
+//     [mediapipe.tasks.vision.hand_detector.proto.HandDetectorGraphOptions.ext]
+//     {
 //       base_options {
 //          model_asset {
 //            file_name: "palm_detection.tflite"
@@ -334,8 +336,10 @@ class HandDetectorGraph : public core::ModelTaskGraph {
   }
 };
 
-REGISTER_MEDIAPIPE_GRAPH(::mediapipe::tasks::vision::HandDetectorGraph);
+REGISTER_MEDIAPIPE_GRAPH(
+    ::mediapipe::tasks::vision::hand_detector::HandDetectorGraph);
 
+}  // namespace hand_detector
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

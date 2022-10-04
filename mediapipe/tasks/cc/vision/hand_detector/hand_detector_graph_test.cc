@@ -47,6 +47,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace hand_detector {
 namespace {
 
 using ::file::Defaults;
@@ -105,7 +106,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
   Graph graph;
 
   auto& hand_detection =
-      graph.AddNode("mediapipe.tasks.vision.HandDetectorGraph");
+      graph.AddNode("mediapipe.tasks.vision.hand_detector.HandDetectorGraph");
 
   auto options = std::make_unique<HandDetectorGraphOptions>();
   options->mutable_base_options()->mutable_model_asset()->set_file_name(
@@ -201,6 +202,7 @@ INSTANTIATE_TEST_SUITE_P(
     });
 
 }  // namespace
+}  // namespace hand_detector
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

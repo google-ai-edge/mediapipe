@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/cc/vision/hand_gesture_recognizer/handedness_util.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/handedness_util.h"
 
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -23,6 +23,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace gesture_recognizer {
 namespace {
 
 TEST(GetLeftHandScore, SingleLeftHandClassification) {
@@ -72,6 +73,7 @@ TEST(GetLeftHandScore, LeftAndRightLowerCaseHandClassification) {
 }
 
 }  // namespace
+}  // namespace gesture_recognizer
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

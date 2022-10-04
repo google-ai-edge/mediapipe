@@ -34,14 +34,15 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/utils.h"
-#include "mediapipe/tasks/cc/vision/hand_gesture_recognizer/proto/hand_gesture_recognizer_subgraph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/hand_gesture_recognizer/proto/landmarks_to_matrix_calculator.pb.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/landmarks_to_matrix_calculator.pb.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/hand_gesture_recognizer_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace gesture_recognizer {
 
 namespace {
 
@@ -50,9 +51,8 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
-using ::mediapipe::tasks::vision::hand_gesture_recognizer::proto::
-    HandGestureRecognizerSubgraphOptions;
-using ::mediapipe::tasks::vision::proto::LandmarksToMatrixCalculatorOptions;
+using ::mediapipe::tasks::vision::gesture_recognizer::proto::
+    HandGestureRecognizerGraphOptions;
 
 constexpr char kHandednessTag[] = "HANDEDNESS";
 constexpr char kLandmarksTag[] = "LANDMARKS";
@@ -70,18 +70,6 @@ constexpr char kIndexTag[] = "INDEX";
 constexpr char kIterableTag[] = "ITERABLE";
 constexpr char kBatchEndTag[] = "BATCH_END";
 
-absl::Status SanityCheckOptions(
-    const HandGestureRecognizerSubgraphOptions& options) {
-  if (options.min_tracking_confidence() < 0 ||
-      options.min_tracking_confidence() > 1) {
-    return CreateStatusWithPayload(absl::StatusCode::kInvalidArgument,
-                                   "Invalid `min_tracking_confidence` option: "
-                                   "value must be in the range [0.0, 1.0]",
-                                   MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  return absl::OkStatus();
-}
-
 Source<std::vector<Tensor>> ConvertMatrixToTensor(Source<Matrix> matrix,
                                                   Graph& graph) {
   auto& node = graph.AddNode("TensorConverterCalculator");
@@ -91,9 +79,10 @@ Source<std::vector<Tensor>> ConvertMatrixToTensor(Source<Matrix> matrix,
 
 }  // namespace
 
-// A "mediapipe.tasks.vision.SingleHandGestureRecognizerSubgraph" performs
-// single hand gesture recognition. This graph is used as a building block for
-// mediapipe.tasks.vision.HandGestureRecognizerGraph.
+// A
+// "mediapipe.tasks.vision.gesture_recognizer.SingleHandGestureRecognizerGraph"
+// performs single hand gesture recognition. This graph is used as a building
+// block for mediapipe.tasks.vision.GestureRecognizerGraph.
 //
 // Inputs:
 //   HANDEDNESS - ClassificationList
@@ -113,14 +102,15 @@ Source<std::vector<Tensor>> ConvertMatrixToTensor(Source<Matrix> matrix,
 //
 // Example:
 // node {
-//   calculator: "mediapipe.tasks.vision.SingleHandGestureRecognizerSubgraph"
+//   calculator:
+//   "mediapipe.tasks.vision.gesture_recognizer.SingleHandGestureRecognizerGraph"
 //   input_stream: "HANDEDNESS:handedness"
 //   input_stream: "LANDMARKS:landmarks"
 //   input_stream: "WORLD_LANDMARKS:world_landmarks"
 //   input_stream: "IMAGE_SIZE:image_size"
 //   output_stream: "HAND_GESTURES:hand_gestures"
 //   options {
-//     [mediapipe.tasks.vision.hand_gesture_recognizer.proto.HandGestureRecognizerSubgraphOptions.ext]
+//     [mediapipe.tasks.vision.gesture_recognizer.proto.HandGestureRecognizerGraphOptions.ext]
 //     {
 //       base_options {
 //         model_asset {
@@ -130,19 +120,19 @@ Source<std::vector<Tensor>> ConvertMatrixToTensor(Source<Matrix> matrix,
 //     }
 //   }
 // }
-class SingleHandGestureRecognizerSubgraph : public core::ModelTaskGraph {
+class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     ASSIGN_OR_RETURN(
         const auto* model_resources,
-        CreateModelResources<HandGestureRecognizerSubgraphOptions>(sc));
+        CreateModelResources<HandGestureRecognizerGraphOptions>(sc));
     Graph graph;
     ASSIGN_OR_RETURN(
         auto hand_gestures,
-        BuildHandGestureRecognizerGraph(
-            sc->Options<HandGestureRecognizerSubgraphOptions>(),
-            *model_resources, graph[Input<ClassificationList>(kHandednessTag)],
+        BuildGestureRecognizerGraph(
+            sc->Options<HandGestureRecognizerGraphOptions>(), *model_resources,
+            graph[Input<ClassificationList>(kHandednessTag)],
             graph[Input<NormalizedLandmarkList>(kLandmarksTag)],
             graph[Input<LandmarkList>(kWorldLandmarksTag)],
             graph[Input<std::pair<int, int>>(kImageSizeTag)], graph));
@@ -151,15 +141,13 @@ class SingleHandGestureRecognizerSubgraph : public core::ModelTaskGraph {
   }
 
  private:
-  absl::StatusOr<Source<ClassificationResult>> BuildHandGestureRecognizerGraph(
-      const HandGestureRecognizerSubgraphOptions& graph_options,
+  absl::StatusOr<Source<ClassificationResult>> BuildGestureRecognizerGraph(
+      const HandGestureRecognizerGraphOptions& graph_options,
       const core::ModelResources& model_resources,
       Source<ClassificationList> handedness,
       Source<NormalizedLandmarkList> hand_landmarks,
       Source<LandmarkList> hand_world_landmarks,
       Source<std::pair<int, int>> image_size, Graph& graph) {
-    MP_RETURN_IF_ERROR(SanityCheckOptions(graph_options));
-
     // Converts the ClassificationList to a matrix.
     auto& handedness_to_matrix = graph.AddNode("HandednessToMatrixCalculator");
     handedness >> handedness_to_matrix.In(kHandednessTag);
@@ -235,12 +223,15 @@ class SingleHandGestureRecognizerSubgraph : public core::ModelTaskGraph {
   }
 };
 
+// clang-format off
 REGISTER_MEDIAPIPE_GRAPH(
-    ::mediapipe::tasks::vision::SingleHandGestureRecognizerSubgraph);
+  ::mediapipe::tasks::vision::gesture_recognizer::SingleHandGestureRecognizerGraph);  // NOLINT
+// clang-format on
 
-// A "mediapipe.tasks.vision.HandGestureRecognizerSubgraph" performs multi
-// hand gesture recognition. This graph is used as a building block for
-// mediapipe.tasks.vision.HandGestureRecognizerGraph.
+// A
+// "mediapipe.tasks.vision.gesture_recognizer.MultipleHandGestureRecognizerGraph"
+// performs multi hand gesture recognition. This graph is used as a building
+// block for mediapipe.tasks.vision.gesture_recognizer.GestureRecognizerGraph.
 //
 // Inputs:
 //   HANDEDNESS - std::vector<ClassificationList>
@@ -263,7 +254,8 @@ REGISTER_MEDIAPIPE_GRAPH(
 //
 // Example:
 // node {
-//   calculator: "mediapipe.tasks.vision.HandGestureRecognizerSubgraph"
+//   calculator:
+//   "mediapipe.tasks.vision.gesture_recognizer.MultipleHandGestureRecognizerGraph"
 //   input_stream: "HANDEDNESS:handedness"
 //   input_stream: "LANDMARKS:landmarks"
 //   input_stream: "WORLD_LANDMARKS:world_landmarks"
@@ -271,7 +263,7 @@ REGISTER_MEDIAPIPE_GRAPH(
 //   input_stream: "HAND_TRACKING_IDS:hand_tracking_ids"
 //   output_stream: "HAND_GESTURES:hand_gestures"
 //   options {
-//     [mediapipe.tasks.vision.hand_gesture_recognizer.proto.HandGestureRecognizerSubgraph.ext]
+//     [mediapipe.tasks.vision.gesture_recognizer.proto.MultipleHandGestureRecognizerGraph.ext]
 //     {
 //       base_options {
 //         model_asset {
@@ -281,15 +273,15 @@ REGISTER_MEDIAPIPE_GRAPH(
 //     }
 //   }
 // }
-class HandGestureRecognizerSubgraph : public core::ModelTaskGraph {
+class MultipleHandGestureRecognizerGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     Graph graph;
     ASSIGN_OR_RETURN(
         auto multi_hand_gestures,
-        BuildMultiHandGestureRecognizerSubraph(
-            sc->Options<HandGestureRecognizerSubgraphOptions>(),
+        BuildMultiGestureRecognizerSubraph(
+            sc->Options<HandGestureRecognizerGraphOptions>(),
             graph[Input<std::vector<ClassificationList>>(kHandednessTag)],
             graph[Input<std::vector<NormalizedLandmarkList>>(kLandmarksTag)],
             graph[Input<std::vector<LandmarkList>>(kWorldLandmarksTag)],
@@ -302,8 +294,8 @@ class HandGestureRecognizerSubgraph : public core::ModelTaskGraph {
 
  private:
   absl::StatusOr<Source<std::vector<ClassificationResult>>>
-  BuildMultiHandGestureRecognizerSubraph(
-      const HandGestureRecognizerSubgraphOptions& graph_options,
+  BuildMultiGestureRecognizerSubraph(
+      const HandGestureRecognizerGraphOptions& graph_options,
       Source<std::vector<ClassificationList>> multi_handedness,
       Source<std::vector<NormalizedLandmarkList>> multi_hand_landmarks,
       Source<std::vector<LandmarkList>> multi_hand_world_landmarks,
@@ -341,17 +333,18 @@ class HandGestureRecognizerSubgraph : public core::ModelTaskGraph {
     hand_tracking_id >> get_world_landmarks_at_index.In(kIndexTag);
     auto hand_world_landmarks = get_world_landmarks_at_index.Out(kItemTag);
 
-    auto& hand_gesture_recognizer_subgraph = graph.AddNode(
-        "mediapipe.tasks.vision.SingleHandGestureRecognizerSubgraph");
-    hand_gesture_recognizer_subgraph
-        .GetOptions<HandGestureRecognizerSubgraphOptions>()
+    auto& hand_gesture_recognizer_graph = graph.AddNode(
+        "mediapipe.tasks.vision.gesture_recognizer."
+        "SingleHandGestureRecognizerGraph");
+    hand_gesture_recognizer_graph
+        .GetOptions<HandGestureRecognizerGraphOptions>()
         .CopyFrom(graph_options);
-    handedness >> hand_gesture_recognizer_subgraph.In(kHandednessTag);
-    hand_landmarks >> hand_gesture_recognizer_subgraph.In(kLandmarksTag);
+    handedness >> hand_gesture_recognizer_graph.In(kHandednessTag);
+    hand_landmarks >> hand_gesture_recognizer_graph.In(kLandmarksTag);
     hand_world_landmarks >>
-        hand_gesture_recognizer_subgraph.In(kWorldLandmarksTag);
-    image_size_clone >> hand_gesture_recognizer_subgraph.In(kImageSizeTag);
-    auto hand_gestures = hand_gesture_recognizer_subgraph.Out(kHandGesturesTag);
+        hand_gesture_recognizer_graph.In(kWorldLandmarksTag);
+    image_size_clone >> hand_gesture_recognizer_graph.In(kImageSizeTag);
+    auto hand_gestures = hand_gesture_recognizer_graph.Out(kHandGesturesTag);
 
     auto& end_loop_classification_results =
         graph.AddNode("mediapipe.tasks.EndLoopClassificationResultCalculator");
@@ -364,9 +357,12 @@ class HandGestureRecognizerSubgraph : public core::ModelTaskGraph {
   }
 };
 
+// clang-format off
 REGISTER_MEDIAPIPE_GRAPH(
-    ::mediapipe::tasks::vision::HandGestureRecognizerSubgraph);
+  ::mediapipe::tasks::vision::gesture_recognizer::MultipleHandGestureRecognizerGraph);  // NOLINT
+// clang-format on
 
+}  // namespace gesture_recognizer
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

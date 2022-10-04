@@ -216,7 +216,7 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
         DisallowIf(image_in, has_enough_hands, graph);
 
     auto& hand_detector =
-        graph.AddNode("mediapipe.tasks.vision.HandDetectorGraph");
+        graph.AddNode("mediapipe.tasks.vision.hand_detector.HandDetectorGraph");
     hand_detector.GetOptions<HandDetectorGraphOptions>().CopyFrom(
         tasks_options.hand_detector_graph_options());
     image_for_hand_detector >> hand_detector.In("IMAGE");
