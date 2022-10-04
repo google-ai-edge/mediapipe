@@ -507,8 +507,11 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
   }
 };
 
-REGISTER_MEDIAPIPE_GRAPH(::mediapipe::tasks::components::processors::
-                             ClassificationPostprocessingGraph);  // NOLINT
+// REGISTER_MEDIAPIPE_GRAPH argument has to fit on one line to work properly.
+// clang-format off
+REGISTER_MEDIAPIPE_GRAPH(
+  ::mediapipe::tasks::components::processors::ClassificationPostprocessingGraph); // NOLINT
+// clang-format on
 
 }  // namespace processors
 }  // namespace components
