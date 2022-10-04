@@ -21,6 +21,16 @@ package(default_visibility = [
 licenses(["notice"])
 
 mediapipe_proto_library(
+    name = "gesture_embedder_graph_options_proto",
+    srcs = ["gesture_embedder_graph_options.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_proto",
+    ],
+)
+
+mediapipe_proto_library(
     name = "hand_gesture_recognizer_graph_options_proto",
     srcs = ["hand_gesture_recognizer_graph_options.proto"],
     deps = [
