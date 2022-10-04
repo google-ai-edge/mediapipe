@@ -41,8 +41,8 @@ cc_test(
 )
 
 cc_library(
-    name = "hand_gesture_recognizer_subgraph",
-    srcs = ["hand_gesture_recognizer_subgraph.cc"],
+    name = "hand_gesture_recognizer_graph",
+    srcs = ["hand_gesture_recognizer_graph.cc"],
     deps = [
         "//mediapipe/calculators/core:concatenate_vector_calculator",
         "//mediapipe/calculators/tensor:tensor_converter_calculator",
@@ -62,11 +62,11 @@ cc_library(
         "//mediapipe/tasks/cc/core:model_task_graph",
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
-        "//mediapipe/tasks/cc/vision/hand_gesture_recognizer/calculators:handedness_to_matrix_calculator",
-        "//mediapipe/tasks/cc/vision/hand_gesture_recognizer/calculators:landmarks_to_matrix_calculator",
-        "//mediapipe/tasks/cc/vision/hand_gesture_recognizer/proto:hand_gesture_recognizer_subgraph_options_cc_proto",
-        "//mediapipe/tasks/cc/vision/hand_gesture_recognizer/proto:landmarks_to_matrix_calculator_cc_proto",
-        "//mediapipe/tasks/cc/vision/hand_landmarker:hand_landmarker_subgraph",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer/calculators:handedness_to_matrix_calculator",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer/calculators:landmarks_to_matrix_calculator",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer/calculators:landmarks_to_matrix_calculator_cc_proto",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:hand_gesture_recognizer_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/hand_landmarker:hand_landmarks_detector_graph",
         "//mediapipe/tasks/cc/vision/utils:image_tensor_specs",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "@com_google_absl//absl/status",

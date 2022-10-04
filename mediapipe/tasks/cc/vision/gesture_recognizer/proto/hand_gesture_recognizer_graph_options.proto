@@ -12,29 +12,28 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
-
+// TODO Refactor naming and class structure of hand related Tasks.
 syntax = "proto2";
 
-package mediapipe.tasks.vision.hand_landmarker.proto;
+package mediapipe.tasks.vision.gesture_recognizer.proto;
 
 import "mediapipe/framework/calculator.proto";
+import "mediapipe/tasks/cc/components/processors/proto/classifier_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
-import "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_options.proto";
-import "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_subgraph_options.proto";
 
-message HandLandmarkerOptions {
+message HandGestureRecognizerGraphOptions {
   extend mediapipe.CalculatorOptions {
-    optional HandLandmarkerOptions ext = 462713202;
+    optional HandGestureRecognizerGraphOptions ext = 463370452;
   }
-  // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
-  // model file with metadata, accelerator options, etc.
+  // Base options for configuring hand gesture recognition subgraph, such as
+  // specifying the TfLite model file with metadata, accelerator options, etc.
   optional core.proto.BaseOptions base_options = 1;
 
-  // The locale to use for display names specified through the TFLite Model
-  // Metadata, if any. Defaults to English.
-  optional string display_names_locale = 2 [default = "en"];
+  // Options for configuring the gesture classifier behavior, such as score
+  // threshold, number of results, etc.
+  optional components.processors.proto.ClassifierOptions classifier_options = 2;
 
-  optional hand_detector.proto.HandDetectorOptions hand_detector_options = 3;
-
-  optional HandLandmarkerSubgraphOptions hand_landmarker_subgraph_options = 4;
+  // Minimum confidence value ([0.0, 1.0]) for the hand landmarks to be
+  // considered tracked successfully
+  optional float min_tracking_confidence = 3 [default = 0.0];
 }

@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/cc/vision/hand_gesture_recognizer/handedness_util.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/handedness_util.h"
 
 #include <algorithm>
 
@@ -25,6 +25,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace gesture_recognizer {
 
 namespace {}  // namespace
 
@@ -58,6 +59,7 @@ absl::StatusOr<float> GetLeftHandScore(
   }
 }
 
+}  // namespace gesture_recognizer
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

@@ -39,12 +39,13 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
-#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_subgraph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace hand_landmarker {
 namespace {
 
 using ::file::Defaults;
@@ -57,7 +58,7 @@ using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::core::TaskRunner;
 using ::mediapipe::tasks::vision::DecodeImageFromFile;
 using ::mediapipe::tasks::vision::hand_landmarker::proto::
-    HandLandmarkerSubgraphOptions;
+    HandLandmarksDetectorGraphOptions;
 using ::testing::ElementsAreArray;
 using ::testing::EqualsProto;
 using ::testing::Pointwise;
@@ -112,13 +113,14 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateSingleHandTaskRunner(
     absl::string_view model_name) {
   Graph graph;
 
-  auto& hand_landmark_detection =
-      graph.AddNode("mediapipe.tasks.vision.SingleHandLandmarkerSubgraph");
+  auto& hand_landmark_detection = graph.AddNode(
+      "mediapipe.tasks.vision.hand_landmarker."
+      "SingleHandLandmarksDetectorGraph");
 
-  auto options = std::make_unique<HandLandmarkerSubgraphOptions>();
+  auto options = std::make_unique<HandLandmarksDetectorGraphOptions>();
   options->mutable_base_options()->mutable_model_asset()->set_file_name(
       JoinPath("./", kTestDataDirectory, model_name));
-  hand_landmark_detection.GetOptions<HandLandmarkerSubgraphOptions>().Swap(
+  hand_landmark_detection.GetOptions<HandLandmarksDetectorGraphOptions>().Swap(
       options.get());
 
   graph[Input<Image>(kImageTag)].SetName(kImageName) >>
@@ -151,13 +153,14 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateMultiHandTaskRunner(
     absl::string_view model_name) {
   Graph graph;
 
-  auto& multi_hand_landmark_detection =
-      graph.AddNode("mediapipe.tasks.vision.HandLandmarkerSubgraph");
+  auto& multi_hand_landmark_detection = graph.AddNode(
+      "mediapipe.tasks.vision.hand_landmarker."
+      "MultipleHandLandmarksDetectorGraph");
 
-  auto options = std::make_unique<HandLandmarkerSubgraphOptions>();
+  auto options = std::make_unique<HandLandmarksDetectorGraphOptions>();
   options->mutable_base_options()->mutable_model_asset()->set_file_name(
       JoinPath("./", kTestDataDirectory, model_name));
-  multi_hand_landmark_detection.GetOptions<HandLandmarkerSubgraphOptions>()
+  multi_hand_landmark_detection.GetOptions<HandLandmarksDetectorGraphOptions>()
       .Swap(options.get());
 
   graph[Input<Image>(kImageTag)].SetName(kImageName) >>
@@ -462,6 +465,7 @@ INSTANTIATE_TEST_SUITE_P(
     });
 
 }  // namespace
+}  // namespace hand_landmarker
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

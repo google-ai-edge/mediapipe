@@ -26,13 +26,15 @@ limitations under the License.
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/tasks/cc/vision/hand_gesture_recognizer/handedness_util.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/handedness_util.h"
 
+// TODO Update to use API2
 namespace mediapipe {
-namespace tasks {
-namespace vision {
+namespace api2 {
 
 namespace {
+
+using ::mediapipe::tasks::vision::gesture_recognizer::GetLeftHandScore;
 
 constexpr char kHandednessTag[] = "HANDEDNESS";
 constexpr char kHandednessMatrixTag[] = "HANDEDNESS_MATRIX";
@@ -71,6 +73,8 @@ class HandednessToMatrixCalculator : public CalculatorBase {
     return absl::OkStatus();
   }
 
+  // TODO remove this after change to API2, because Setting offset
+  // to 0 is the default in API2
   absl::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
     return absl::OkStatus();
@@ -95,6 +99,5 @@ absl::Status HandednessToMatrixCalculator::Process(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
-}  // namespace vision
-}  // namespace tasks
+}  // namespace api2
 }  // namespace mediapipe

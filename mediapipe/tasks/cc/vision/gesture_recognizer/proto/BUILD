@@ -21,21 +21,12 @@ package(default_visibility = [
 licenses(["notice"])
 
 mediapipe_proto_library(
-    name = "hand_gesture_recognizer_subgraph_options_proto",
-    srcs = ["hand_gesture_recognizer_subgraph_options.proto"],
+    name = "hand_gesture_recognizer_graph_options_proto",
+    srcs = ["hand_gesture_recognizer_graph_options.proto"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/tasks/cc/components/processors/proto:classifier_options_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_proto",
-    ],
-)
-
-mediapipe_proto_library(
-    name = "landmarks_to_matrix_calculator_proto",
-    srcs = ["landmarks_to_matrix_calculator.proto"],
-    deps = [
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
     ],
 )

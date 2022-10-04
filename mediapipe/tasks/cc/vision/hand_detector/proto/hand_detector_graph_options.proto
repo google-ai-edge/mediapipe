@@ -12,28 +12,29 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
-// TODO Refactor naming and class structure of hand related Tasks.
+
 syntax = "proto2";
 
-package mediapipe.tasks.vision.hand_gesture_recognizer.proto;
+package mediapipe.tasks.vision.hand_detector.proto;
 
 import "mediapipe/framework/calculator.proto";
-import "mediapipe/tasks/cc/components/processors/proto/classifier_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
-message HandGestureRecognizerSubgraphOptions {
+option java_package = "com.google.mediapipe.tasks.vision.handdetector";
+option java_outer_classname = "HandDetectorGraphOptionsProto";
+
+message HandDetectorGraphOptions {
   extend mediapipe.CalculatorOptions {
-    optional HandGestureRecognizerSubgraphOptions ext = 463370452;
+    optional HandDetectorGraphOptions ext = 464864288;
   }
-  // Base options for configuring hand gesture recognition subgraph, such as
-  // specifying the TfLite model file with metadata, accelerator options, etc.
+  // Base options for configuring Task library, such as specifying the TfLite
+  // model file with metadata, accelerator options, etc.
   optional core.proto.BaseOptions base_options = 1;
 
-  // Options for configuring the gesture classifier behavior, such as score
-  // threshold, number of results, etc.
-  optional components.processors.proto.ClassifierOptions classifier_options = 2;
+  // Minimum confidence value ([0.0, 1.0]) for confidence score to be considered
+  // successfully detecting a hand in the image.
+  optional float min_detection_confidence = 2 [default = 0.5];
 
-  // Minimum confidence value ([0.0, 1.0]) for the hand landmarks to be
-  // considered tracked successfully
-  optional float min_tracking_confidence = 3 [default = 0.0];
+  // The maximum number of hands output by the detector.
+  optional int32 num_hands = 3;
 }

@@ -28,8 +28,6 @@ limitations under the License.
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {
-namespace tasks {
-namespace vision {
 
 namespace {
 
@@ -72,8 +70,7 @@ TEST_P(Landmarks2dToMatrixCalculatorTest, OutputsCorrectResult) {
             input_stream: "IMAGE_SIZE:image_size"
             output_stream: "LANDMARKS_MATRIX:landmarks_matrix"
             options {
-              [mediapipe.tasks.vision.proto.LandmarksToMatrixCalculatorOptions
-                   .ext] {
+              [mediapipe.LandmarksToMatrixCalculatorOptions.ext] {
                 object_normalization: $0
                 object_normalization_origin_offset: $1
               }
@@ -145,8 +142,7 @@ TEST_P(LandmarksWorld3dToMatrixCalculatorTest, OutputsCorrectResult) {
             input_stream: "IMAGE_SIZE:image_size"
             output_stream: "LANDMARKS_MATRIX:landmarks_matrix"
             options {
-              [mediapipe.tasks.vision.proto.LandmarksToMatrixCalculatorOptions
-                   .ext] {
+              [mediapipe.LandmarksToMatrixCalculatorOptions.ext] {
                 object_normalization: $0
                 object_normalization_origin_offset: $1
               }
@@ -202,6 +198,4 @@ INSTANTIATE_TEST_CASE_P(
 
 }  // namespace
 
-}  // namespace vision
-}  // namespace tasks
 }  // namespace mediapipe

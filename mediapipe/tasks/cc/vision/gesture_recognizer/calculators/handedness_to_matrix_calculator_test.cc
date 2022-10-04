@@ -28,8 +28,6 @@ limitations under the License.
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {
-namespace tasks {
-namespace vision {
 
 namespace {
 
@@ -95,6 +93,4 @@ INSTANTIATE_TEST_CASE_P(
 
 }  // namespace
 
-}  // namespace vision
-}  // namespace tasks
 }  // namespace mediapipe
