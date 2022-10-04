@@ -19,10 +19,10 @@ package(default_visibility = [
 licenses(["notice"])
 
 cc_library(
-    name = "hand_landmarker_subgraph",
-    srcs = ["hand_landmarker_subgraph.cc"],
+    name = "hand_landmarks_detector_graph",
+    srcs = ["hand_landmarks_detector_graph.cc"],
     deps = [
-        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_subgraph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "//mediapipe/calculators/core:split_vector_calculator",
@@ -72,7 +72,7 @@ cc_library(
     name = "hand_landmarker_graph",
     srcs = ["hand_landmarker_graph.cc"],
     deps = [
-        ":hand_landmarker_subgraph",
+        ":hand_landmarks_detector_graph",
         "//mediapipe/calculators/core:begin_loop_calculator",
         "//mediapipe/calculators/core:clip_vector_size_calculator_cc_proto",
         "//mediapipe/calculators/core:end_loop_calculator",
@@ -99,7 +99,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/hand_landmarker/calculators:hand_association_calculator",
         "//mediapipe/tasks/cc/vision/hand_landmarker/calculators:hand_association_calculator_cc_proto",
         "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_subgraph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_cc_proto",
     ],
     alwayslink = 1,
 )

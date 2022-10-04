@@ -66,7 +66,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/gesture_recognizer/calculators:landmarks_to_matrix_calculator",
         "//mediapipe/tasks/cc/vision/gesture_recognizer/calculators:landmarks_to_matrix_calculator_cc_proto",
         "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:hand_gesture_recognizer_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/vision/hand_landmarker:hand_landmarker_subgraph",
+        "//mediapipe/tasks/cc/vision/hand_landmarker:hand_landmarks_detector_graph",
         "//mediapipe/tasks/cc/vision/utils:image_tensor_specs",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "@com_google_absl//absl/status",

@@ -36,7 +36,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/calculators/hand_association_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_subgraph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -55,7 +55,7 @@ using ::mediapipe::tasks::vision::hand_detector::proto::
 using ::mediapipe::tasks::vision::hand_landmarker::proto::
     HandLandmarkerGraphOptions;
 using ::mediapipe::tasks::vision::hand_landmarker::proto::
-    HandLandmarkerSubgraphOptions;
+    HandLandmarksDetectorGraphOptions;
 
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kLandmarksTag[] = "LANDMARKS";
@@ -78,14 +78,14 @@ struct HandLandmarkerOutputs {
 
 }  // namespace
 
-// A "mediapipe.tasks.vision.HandLandmarkerGraph" performs hand
+// A "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph" performs hand
 // landmarks detection. The HandLandmarkerGraph consists of two subgraphs:
-// HandDetectorGraph and HandLandmarkerSubgraph. HandLandmarkerSubgraph detects
-// landmarks from bounding boxes produced by HandDetectorGraph.
-// HandLandmarkerGraph tracks the landmarks over time, and skips the
-// HandDetectorGraph. If the tracking is lost or the detectd hands are
-// less than configured max number hands, HandDetectorGraph would be triggered
-// to detect hands.
+// HandDetectorGraph and MultipleHandLandmarksDetectorGraph.
+// MultipleHandLandmarksDetectorGraph detects landmarks from bounding boxes
+// produced by HandDetectorGraph. HandLandmarkerGraph tracks the landmarks over
+// time, and skips the HandDetectorGraph. If the tracking is lost or the detectd
+// hands are less than configured max number hands, HandDetectorGraph would be
+// triggered to detect hands.
 //
 // Accepts CPU input images and outputs Landmarks on CPU.
 //
@@ -113,7 +113,7 @@ struct HandLandmarkerOutputs {
 //
 // Example:
 // node {
-//   calculator: "mediapipe.tasks.vision.HandLandmarkerGraph"
+//   calculator: "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph"
 //   input_stream: "IMAGE:image_in"
 //   output_stream: "LANDMARKS:hand_landmarks"
 //   output_stream: "WORLD_LANDMARKS:world_hand_landmarks"
@@ -138,7 +138,7 @@ struct HandLandmarkerOutputs {
 //         min_detection_confidence: 0.5
 //         num_hands: 2
 //       }
-//       hand_landmarker_subgraph_options {
+//       hand_landmarks_detector_graph_options {
 //         base_options {
 //              model_asset {
 //                file_name: "hand_landmark_lite.tflite"
@@ -238,15 +238,17 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
     hand_rects >> clip_hand_rects.In("");
     auto clipped_hand_rects = clip_hand_rects.Out("");
 
-    auto& hand_landmarker_subgraph = graph.AddNode(
-        "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerSubgraph");
-    hand_landmarker_subgraph.GetOptions<HandLandmarkerSubgraphOptions>()
-        .CopyFrom(tasks_options.hand_landmarker_subgraph_options());
-    image_in >> hand_landmarker_subgraph.In("IMAGE");
-    clipped_hand_rects >> hand_landmarker_subgraph.In("HAND_RECT");
+    auto& hand_landmarks_detector_graph = graph.AddNode(
+        "mediapipe.tasks.vision.hand_landmarker."
+        "MultipleHandLandmarksDetectorGraph");
+    hand_landmarks_detector_graph
+        .GetOptions<HandLandmarksDetectorGraphOptions>()
+        .CopyFrom(tasks_options.hand_landmarks_detector_graph_options());
+    image_in >> hand_landmarks_detector_graph.In("IMAGE");
+    clipped_hand_rects >> hand_landmarks_detector_graph.In("HAND_RECT");
 
     auto hand_rects_for_next_frame =
-        hand_landmarker_subgraph[Output<std::vector<NormalizedRect>>(
+        hand_landmarks_detector_graph[Output<std::vector<NormalizedRect>>(
             kHandRectNextFrameTag)];
     // Back edge.
     hand_rects_for_next_frame >> previous_loopback.In("LOOP");
@@ -257,13 +259,13 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
     image_in >> pass_through.In("");
 
     return {{
-        /* landmark_lists= */ hand_landmarker_subgraph
+        /* landmark_lists= */ hand_landmarks_detector_graph
             [Output<std::vector<NormalizedLandmarkList>>(kLandmarksTag)],
         /*  world_landmark_lists= */
-        hand_landmarker_subgraph[Output<std::vector<LandmarkList>>(
+        hand_landmarks_detector_graph[Output<std::vector<LandmarkList>>(
             kWorldLandmarksTag)],
         /* hand_rects_next_frame= */ hand_rects_for_next_frame,
-        hand_landmarker_subgraph[Output<std::vector<ClassificationList>>(
+        hand_landmarks_detector_graph[Output<std::vector<ClassificationList>>(
             kHandednessTag)],
         /* palm_rects= */
         hand_detector[Output<std::vector<NormalizedRect>>(kPalmRectsTag)],

@@ -40,7 +40,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
-#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_subgraph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 #include "mediapipe/util/label_map.pb.h"
@@ -60,7 +60,7 @@ using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::utils::AllowIf;
 using ::mediapipe::tasks::core::ModelResources;
 using ::mediapipe::tasks::vision::hand_landmarker::proto::
-    HandLandmarkerSubgraphOptions;
+    HandLandmarksDetectorGraphOptions;
 using LabelItems = mediapipe::proto_ns::Map<int64, ::mediapipe::LabelMapItem>;
 
 constexpr char kImageTag[] = "IMAGE";
@@ -96,7 +96,8 @@ struct HandLandmarkerOutputs {
   Source<std::vector<ClassificationList>> handednesses;
 };
 
-absl::Status SanityCheckOptions(const HandLandmarkerSubgraphOptions& options) {
+absl::Status SanityCheckOptions(
+    const HandLandmarksDetectorGraphOptions& options) {
   if (options.min_detection_confidence() < 0 ||
       options.min_detection_confidence() > 1) {
     return CreateStatusWithPayload(absl::StatusCode::kInvalidArgument,
@@ -183,8 +184,8 @@ void ConfigureHandRectTransformationCalculator(
 
 }  // namespace
 
-// A "mediapipe.tasks.vision.SingleHandLandmarkerSubgraph" performs hand
-// landmark detection.
+// A "mediapipe.tasks.vision.hand_landmarker.SingleHandLandmarksDetectorGraph"
+// performs hand landmarks detection.
 // - Accepts CPU input images and outputs Landmark on CPU.
 //
 // Inputs:
@@ -212,7 +213,8 @@ void ConfigureHandRectTransformationCalculator(
 //
 // Example:
 // node {
-//   calculator: "mediapipe.tasks.vision.SingleHandLandmarkerSubgraph"
+//   calculator:
+//   "mediapipe.tasks.vision.hand_landmarker.SingleHandLandmarksDetectorGraph"
 //   input_stream: "IMAGE:input_image"
 //   input_stream: "HAND_RECT:hand_rect"
 //   output_stream: "LANDMARKS:hand_landmarks"
@@ -221,7 +223,7 @@ void ConfigureHandRectTransformationCalculator(
 //   output_stream: "PRESENCE:hand_presence"
 //   output_stream: "PRESENCE_SCORE:hand_presence_score"
 //   options {
-//     [mediapipe.tasks.vision.hand_landmarker.proto.HandLandmarkerSubgraphOptions.ext]
+//     [mediapipe.tasks.vision.hand_landmarker.proto.HandLandmarksDetectorGraphOptions.ext]
 //     {
 //       base_options {
 //          model_asset {
@@ -232,16 +234,17 @@ void ConfigureHandRectTransformationCalculator(
 //     }
 //   }
 // }
-class SingleHandLandmarkerSubgraph : public core::ModelTaskGraph {
+class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(const auto* model_resources,
-                     CreateModelResources<HandLandmarkerSubgraphOptions>(sc));
+    ASSIGN_OR_RETURN(
+        const auto* model_resources,
+        CreateModelResources<HandLandmarksDetectorGraphOptions>(sc));
     Graph graph;
     ASSIGN_OR_RETURN(auto hand_landmark_detection_outs,
-                     BuildSingleHandLandmarkerSubgraph(
-                         sc->Options<HandLandmarkerSubgraphOptions>(),
+                     BuildSingleHandLandmarksDetectorGraph(
+                         sc->Options<HandLandmarksDetectorGraphOptions>(),
                          *model_resources, graph[Input<Image>(kImageTag)],
                          graph[Input<NormalizedRect>(kHandRectTag)], graph));
     hand_landmark_detection_outs.hand_landmarks >>
@@ -264,14 +267,16 @@ class SingleHandLandmarkerSubgraph : public core::ModelTaskGraph {
   // Adds a mediapipe hand landmark detection graph into the provided
   // builder::Graph instance.
   //
-  // subgraph_options: the mediapipe tasks module HandLandmarkerSubgraphOptions.
-  // model_resources: the ModelSources object initialized from a hand landmark
+  // subgraph_options: the mediapipe tasks module
+  // HandLandmarksDetectorGraphOptions. model_resources: the ModelSources object
+  // initialized from a hand landmark
   //   detection model file with model metadata.
   // image_in: (mediapipe::Image) stream to run hand landmark detection on.
   // rect: (NormalizedRect) stream to run on the RoI of image.
   // graph: the mediapipe graph instance to be updated.
-  absl::StatusOr<SingleHandLandmarkerOutputs> BuildSingleHandLandmarkerSubgraph(
-      const HandLandmarkerSubgraphOptions& subgraph_options,
+  absl::StatusOr<SingleHandLandmarkerOutputs>
+  BuildSingleHandLandmarksDetectorGraph(
+      const HandLandmarksDetectorGraphOptions& subgraph_options,
       const core::ModelResources& model_resources, Source<Image> image_in,
       Source<NormalizedRect> hand_rect, Graph& graph) {
     MP_RETURN_IF_ERROR(SanityCheckOptions(subgraph_options));
@@ -415,11 +420,13 @@ class SingleHandLandmarkerSubgraph : public core::ModelTaskGraph {
   }
 };
 
+// clang-format off
 REGISTER_MEDIAPIPE_GRAPH(
-    ::mediapipe::tasks::vision::hand_landmarker::SingleHandLandmarkerSubgraph);
+  ::mediapipe::tasks::vision::hand_landmarker::SingleHandLandmarksDetectorGraph); // NOLINT
+// clang-format on
 
-// A "mediapipe.tasks.vision.HandLandmarkerSubgraph" performs multi hand
-// landmark detection.
+// A "mediapipe.tasks.vision.hand_landmarker.MultipleHandLandmarksDetectorGraph"
+// performs multi hand landmark detection.
 // - Accepts CPU input image and a vector of hand rect RoIs to detect the
 //   multiple hands landmarks enclosed by the RoIs. Output vectors of
 //   hand landmarks related results, where each element in the vectors
@@ -450,7 +457,8 @@ REGISTER_MEDIAPIPE_GRAPH(
 //
 // Example:
 // node {
-//   calculator: "mediapipe.tasks.vision.HandLandmarkerSubgraph"
+//   calculator:
+//   "mediapipe.tasks.vision.hand_landmarker.MultipleHandLandmarksDetectorGraph"
 //   input_stream: "IMAGE:input_image"
 //   input_stream: "HAND_RECT:hand_rect"
 //   output_stream: "LANDMARKS:hand_landmarks"
@@ -460,7 +468,7 @@ REGISTER_MEDIAPIPE_GRAPH(
 //   output_stream: "PRESENCE_SCORE:hand_presence_score"
 //   output_stream: "HANDEDNESS:handedness"
 //   options {
-//     [mediapipe.tasks.vision.hand_landmarker.proto.HandLandmarkerSubgraphOptions.ext]
+//     [mediapipe.tasks.vision.hand_landmarker.proto.HandLandmarksDetectorGraphOptions.ext]
 //     {
 //       base_options {
 //          model_asset {
@@ -471,15 +479,15 @@ REGISTER_MEDIAPIPE_GRAPH(
 //     }
 //   }
 // }
-class HandLandmarkerSubgraph : public core::ModelTaskGraph {
+class MultipleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     Graph graph;
     ASSIGN_OR_RETURN(
         auto hand_landmark_detection_outputs,
-        BuildHandLandmarkerSubgraph(
-            sc->Options<HandLandmarkerSubgraphOptions>(),
+        BuildHandLandmarksDetectorGraph(
+            sc->Options<HandLandmarksDetectorGraphOptions>(),
             graph[Input<Image>(kImageTag)],
             graph[Input<std::vector<NormalizedRect>>(kHandRectTag)], graph));
     hand_landmark_detection_outputs.landmark_lists >>
@@ -499,14 +507,15 @@ class HandLandmarkerSubgraph : public core::ModelTaskGraph {
   }
 
  private:
-  absl::StatusOr<HandLandmarkerOutputs> BuildHandLandmarkerSubgraph(
-      const HandLandmarkerSubgraphOptions& subgraph_options,
+  absl::StatusOr<HandLandmarkerOutputs> BuildHandLandmarksDetectorGraph(
+      const HandLandmarksDetectorGraphOptions& subgraph_options,
       Source<Image> image_in,
       Source<std::vector<NormalizedRect>> multi_hand_rects, Graph& graph) {
     auto& hand_landmark_subgraph = graph.AddNode(
-        "mediapipe.tasks.vision.hand_landmarker.SingleHandLandmarkerSubgraph");
-    hand_landmark_subgraph.GetOptions<HandLandmarkerSubgraphOptions>().CopyFrom(
-        subgraph_options);
+        "mediapipe.tasks.vision.hand_landmarker."
+        "SingleHandLandmarksDetectorGraph");
+    hand_landmark_subgraph.GetOptions<HandLandmarksDetectorGraphOptions>()
+        .CopyFrom(subgraph_options);
 
     auto& begin_loop_multi_hand_rects =
         graph.AddNode("BeginLoopNormalizedRectCalculator");
@@ -580,8 +589,10 @@ class HandLandmarkerSubgraph : public core::ModelTaskGraph {
   }
 };
 
+// clang-format off
 REGISTER_MEDIAPIPE_GRAPH(
-    ::mediapipe::tasks::vision::hand_landmarker::HandLandmarkerSubgraph);
+  ::mediapipe::tasks::vision::hand_landmarker::MultipleHandLandmarksDetectorGraph); // NOLINT
+// clang-format on
 
 }  // namespace hand_landmarker
 }  // namespace vision

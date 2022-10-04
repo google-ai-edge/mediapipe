@@ -20,9 +20,9 @@ package mediapipe.tasks.vision.hand_landmarker.proto;
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
-message HandLandmarkerSubgraphOptions {
+message HandLandmarksDetectorGraphOptions {
   extend mediapipe.CalculatorOptions {
-    optional HandLandmarkerSubgraphOptions ext = 474472470;
+    optional HandLandmarksDetectorGraphOptions ext = 474472470;
   }
   // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
   // model file with metadata, accelerator options, etc.

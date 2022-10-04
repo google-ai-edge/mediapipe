@@ -38,7 +38,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_subgraph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/core/shims/cc/shims_test_util.h"
@@ -111,7 +111,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner() {
       ->set_file_name(JoinPath("./", kTestDataDirectory, kPalmDetectionModel));
   options.mutable_hand_detector_graph_options()->mutable_base_options();
   options.mutable_hand_detector_graph_options()->set_num_hands(kMaxNumHands);
-  options.mutable_hand_landmarker_subgraph_options()
+  options.mutable_hand_landmarks_detector_graph_options()
       ->mutable_base_options()
       ->mutable_model_asset()
       ->set_file_name(
