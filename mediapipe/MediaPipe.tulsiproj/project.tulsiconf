@@ -2,7 +2,7 @@
   "configDefaults" : {
     "optionSet" : {
       "BazelBuildOptionsDebug" : {
-        "p" : "--config=debug"
+        "p" : "--config=debug --strip=never --features=oso_prefix_is_pwd --apple_generate_dsym"
       },
       "CLANG_CXX_LANGUAGE_STANDARD" : {
         "p" : "c++14"
@@ -13,6 +13,7 @@
     "",
     "mediapipe",
     "mediapipe/examples/ios",
+    "mediapipe/examples/ios/common",
     "mediapipe/examples/ios/facedetectioncpu",
     "mediapipe/examples/ios/facedetectiongpu",
     "mediapipe/examples/ios/faceeffect",

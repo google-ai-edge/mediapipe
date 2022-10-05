@@ -13,9 +13,13 @@
 // limitations under the License.
 
 #import <UIKit/UIKit.h>
+#import "mediapipe/objc/MPPCameraInputSource.h"
+#import "mediapipe/objc/solutions/posetracking_gpu/PoseTracking.h"
 
-#import "CommonViewController.h"
-
-@interface PoseTrackingViewController : CommonViewController
+@interface PoseTrackingViewController : UIViewController
+@property(strong, nonatomic) IBOutlet UIView* liveView;
+// Handles camera access via AVCaptureSession library.
+@property(nonatomic) MPPCameraInputSource* cameraSource;
+@property(nonatomic) PoseTracking* poseTracking;
 
 @end

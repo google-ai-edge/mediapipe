@@ -4,8 +4,8 @@
 
 #ifndef MEDIAPIPE_POSETRACKINGOPTIONS_H
 #define MEDIAPIPE_POSETRACKINGOPTIONS_H
-
-@interface PoseTrackingOptions
+#import <Foundation/Foundation.h>
+@interface PoseTrackingOptions: NSObject
 
 @property(nonatomic) bool showLandmarks;
 @property(nonatomic) int cameraRotation;

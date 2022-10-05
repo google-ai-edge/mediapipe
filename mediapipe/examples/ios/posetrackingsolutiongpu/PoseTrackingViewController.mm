@@ -16,6 +16,7 @@
 
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/objc/solutions/posetracking_gpu/PoseTrackingOptions.h"
+#include "mediapipe/objc/solutions/posetracking_gpu/PoseTracking.h"
 
 static const char* kLandmarksOutputStream = "pose_landmarks";
 
@@ -23,41 +24,64 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 
 #pragma mark - UIViewController methods
 
+
 - (void)viewDidLoad {
     
     
   [super viewDidLoad];
   PoseTrackingOptions* options =   [ [PoseTrackingOptions alloc] initWithShowLandmarks:true cameraRotation:0];
-  [self.mediapipeGraph addFrameOutputStream:kLandmarksOutputStream
-                           outputPacketType:MPPPacketTypeRaw];
-    [self.mediapipeGraph addFrameOutputStream:"throttled_input_video"
-                             outputPacketType:MPPPacketTypePixelBuffer];
-    if (options.showLandmarks){
-        self.graphOutputStream = "output_video";
-    }else{
-        self.graphOutputStream = "throttled_input_video";
-    }
+    self.poseTracking = [[PoseTracking alloc] initWithPoseTrackingOptions:options];
+    
+    self.poseTracking.renderer.layer.frame = self.liveView.layer.bounds;
+    [self.liveView.layer addSublayer:self.poseTracking.renderer.layer];
+    
+    
+
+    
+    
+    
+
+    
 }
 
-#pragma mark - MPPGraphDelegate methods
 
-// Receives a raw packet from the MediaPipe graph. Invoked on a MediaPipe worker thread.
-- (void)mediapipeGraph:(MPPGraph*)graph
-     didOutputPacket:(const ::mediapipe::Packet&)packet
-          fromStream:(const std::string&)streamName {
-  if (streamName == kLandmarksOutputStream) {
-    if (packet.IsEmpty()) {
-      NSLog(@"[TS:%lld] No pose landmarks", packet.Timestamp().Value());
-      return;
-    }
-    const auto& landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
-    NSLog(@"[TS:%lld] Number of pose landmarks: %d", packet.Timestamp().Value(),
-          landmarks.landmark_size());
-    for (int i = 0; i < landmarks.landmark_size(); ++i) {
-      NSLog(@"\tLandmark[%d]: (%f, %f, %f)", i, landmarks.landmark(i).x(),
-            landmarks.landmark(i).y(), landmarks.landmark(i).z());
-    }
-  }
+// In this application, there is only one ViewController which has no navigation to other view
+// controllers, and there is only one View with live display showing the result of running the
+// MediaPipe graph on the live video feed. If more view controllers are needed later, the graph
+// setup/teardown and camera start/stop logic should be updated appropriately in response to the
+// appearance/disappearance of this ViewController, as viewWillAppear: can be invoked multiple times
+// depending on the application navigation flow in that case.
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    
+    self.cameraSource = [[MPPCameraInputSource alloc] init];
+    [self.cameraSource setDelegate:self.poseTracking queue:self.poseTracking.videoQueue];
+    self.cameraSource.sessionPreset = AVCaptureSessionPresetHigh;
+
+    
+      self.cameraSource.cameraPosition = AVCaptureDevicePositionBack;
+    
+//      self.cameraSource.cameraPosition = AVCaptureDevicePositionFront;
+//      // When using the front camera, mirror the input for a more natural look.
+//      _cameraSource.videoMirrored = YES;
+    
+
+    // The frame's native format is rotated with respect to the portrait orientation.
+    _cameraSource.orientation = AVCaptureVideoOrientationPortrait;
+
+    [self.cameraSource requestCameraAccessWithCompletionHandler:^void(BOOL granted) {
+      if (granted) {
+       
+          [self.poseTracking startWithCamera:self.cameraSource];
+      }
+    }];
+    
 }
+
+//#pragma mark - MPPGraphDelegate methods
+//
+
+
+
 
 @end

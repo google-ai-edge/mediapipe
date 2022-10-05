@@ -55,6 +55,10 @@ objc_library(
     name = "PoseTrackingGpuAppLibrary",
     srcs = [
         "PoseTrackingViewController.mm",
+    ] + [
+        "AppDelegate.mm",
+        "main.mm",
+        "AppDelegate.h",
     ],
     hdrs = [
         "PoseTrackingViewController.h",
@@ -64,10 +68,21 @@ objc_library(
         "//mediapipe/graphs/pose_tracking:pose_tracking_gpu.binarypb",
         "//mediapipe/modules/pose_detection:pose_detection.tflite",
         "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+    ] + [
+        "Base.lproj/LaunchScreen.storyboard",
+        "Base.lproj/Main.storyboard",
+    ],
+    sdk_frameworks = [
+        "AVFoundation",
+        "CoreGraphics",
+        "CoreMedia",
+        "UIKit",
     ],
     deps = [
-        ":CommonMediaPipeAppLibrary",
         "//mediapipe/objc/solutions/posetracking_gpu:posetracking_gpu_solution",
+        "//mediapipe/objc:mediapipe_framework_ios",
+        "//mediapipe/objc:mediapipe_input_sources_ios",
+        "//mediapipe/objc:mediapipe_layer_renderer",
     ] + select({
         "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
@@ -78,38 +93,34 @@ objc_library(
     }),
 )
 
-objc_library(
-    name = "CommonMediaPipeAppLibrary",
-    srcs = [
-        "AppDelegate.mm",
-        "CommonViewController.mm",
-        "main.m",
-    ],
-    hdrs = [
-        "AppDelegate.h",
-        "CommonViewController.h",
-    ],
-    data = [
-        "Base.lproj/LaunchScreen.storyboard",
-        "Base.lproj/Main.storyboard",
-    ],
-    sdk_frameworks = [
-        "AVFoundation",
-        "CoreGraphics",
-        "CoreMedia",
-        "UIKit",
-    ],
-    visibility = [
-        "//mediapipe:__subpackages__",
-    ],
-    deps = [
-        "//mediapipe/objc:mediapipe_framework_ios",
-        "//mediapipe/objc:mediapipe_input_sources_ios",
-        "//mediapipe/objc:mediapipe_layer_renderer",
-    ],
-)
-
-exports_files(["Info.plist"])
+#objc_library(
+#    name = "CommonMediaPipeAppLibrary",
+#    srcs = [
+#        "AppDelegate.mm",
+#        "main.m",
+#    ],
+#    hdrs = [
+#        "AppDelegate.h",
+#    ],
+#    data = [
+#        "Base.lproj/LaunchScreen.storyboard",
+#        "Base.lproj/Main.storyboard",
+#    ],
+#    sdk_frameworks = [
+#        "AVFoundation",
+#        "CoreGraphics",
+#        "CoreMedia",
+#        "UIKit",
+#    ],
+#    visibility = [
+#        "//mediapipe:__subpackages__",
+#    ],
+#    deps = [
+#        "//mediapipe/objc:mediapipe_framework_ios",
+#        "//mediapipe/objc:mediapipe_input_sources_ios",
+#        "//mediapipe/objc:mediapipe_layer_renderer",
+#    ],
+#)
 
 filegroup(
     name = "AppIcon",

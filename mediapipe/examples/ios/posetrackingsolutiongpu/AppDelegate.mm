@@ -13,8 +13,7 @@
 // limitations under the License.
 
 #import "AppDelegate.h"
-
-#import "CommonViewController.h"
+#import "PoseTrackingViewController.h"
 
 @interface AppDelegate ()
 
