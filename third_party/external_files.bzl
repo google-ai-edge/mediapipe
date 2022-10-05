@@ -551,6 +551,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_test_jpg",
+        sha256 = "798a12a466933842528d8438f553320eebe5137f02650f12dd68706a2f94fb4f",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/test.jpg?generation=1664672140191116"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_test_model_add_op_tflite",
         sha256 = "298300ca8a9193b80ada1dca39d36f20bffeebde09e85385049b3bfe7be2272f",
         urls = ["https://storage.googleapis.com/mediapipe-assets/test_model_add_op.tflite?generation=1661875950076192"],
