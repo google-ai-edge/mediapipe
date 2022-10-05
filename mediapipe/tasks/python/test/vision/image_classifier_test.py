@@ -15,6 +15,7 @@
 
 import enum
 
+import numpy as np
 from absl.testing import absltest
 from absl.testing import parameterized
 
@@ -120,6 +121,18 @@ class ImageClassifierTest(parameterized.TestCase):
     # Closes the classifier explicitly when the classifier is not used in
     # a context.
     classifier.close()
+
+  def test_classify_for_video(self):
+    classifier_options = _ClassifierOptions(max_results=4)
+    options = _ImageClassifierOptions(
+        base_options=_BaseOptions(model_asset_path=self.model_path),
+        running_mode=_RUNNING_MODE.VIDEO,
+        classifier_options=classifier_options)
+    with _ImageClassifier.create_from_options(options) as classifier:
+      for timestamp in range(0, 300, 30):
+        classification_result = classifier.classify_for_video(
+            self.test_image, timestamp)
+        self.assertEqual(classification_result, _EXPECTED_CLASSIFICATION_RESULT)
 
 
 if __name__ == '__main__':
