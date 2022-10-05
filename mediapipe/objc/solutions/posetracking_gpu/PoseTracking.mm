@@ -45,7 +45,8 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
     self.graphName = @"pose_tracking_gpu";
     self.mediapipeGraph = [[self class] loadGraphFromResource: self.graphName];
     self.graphInputStream = "input_video";
-
+    
+    
     if (poseTrackingOptions.showLandmarks){
         self.graphOutputStream = "output_video";
     }else{
@@ -62,7 +63,7 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
     
     self.mediapipeGraph.delegate = self;
     
-    
+    self.poseTrackingResultsListener = ^(PoseTrackingResults*){};
     
     
     return self;
@@ -82,6 +83,8 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 }
 
 - (void) startWithCamera: (MPPCameraInputSource*) cameraSource {
+    [cameraSource setDelegate:self queue:self.videoQueue];
+
     [self startGraph];
     // Start fetching frames from the camera.
     dispatch_async(self.videoQueue, ^{
@@ -124,18 +127,23 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 - (void)mediapipeGraph:(MPPGraph*)graph
      didOutputPacket:(const ::mediapipe::Packet&)packet
           fromStream:(const std::string&)streamName {
+    
   if (streamName == kLandmarksOutputStream) {
+      
+      
     if (packet.IsEmpty()) {
-      NSLog(@"[TS:%lld] No pose landmarks", packet.Timestamp().Value());
+        self.poseTrackingResultsListener(nil);
       return;
     }
     const auto& landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
-    NSLog(@"[TS:%lld] Number of pose landmarks: %d", packet.Timestamp().Value(),
-          landmarks.landmark_size());
+      NSMutableArray<PoseLandmark*>* poseLandmarks =   [[NSMutableArray<PoseLandmark*> alloc] init];
     for (int i = 0; i < landmarks.landmark_size(); ++i) {
-      NSLog(@"\tLandmark[%d]: (%f, %f, %f)", i, landmarks.landmark(i).x(),
-            landmarks.landmark(i).y(), landmarks.landmark(i).z());
+        
+        [poseLandmarks addObject: [[PoseLandmark alloc] initWithX:landmarks.landmark(i).x() y:landmarks.landmark(i).y() z:landmarks.landmark(i).z() presence:landmarks.landmark(i).presence() visibility:landmarks.landmark(i).visibility()] ];
     }
+      PoseTrackingResults* results = [[PoseTrackingResults alloc] initWithLandmarks:poseLandmarks];
+      self.poseTrackingResultsListener(results);
   }
+    
 }
 @end

@@ -23,8 +23,6 @@
     "mediapipe/objc/testing/app/BUILD"
   ],
   "buildTargets" : [
-    "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",
-    "//mediapipe/examples/ios/posetrackingsolutiongpu:CommonMediaPipeAppLibrary",
     "//mediapipe/examples/ios/posetrackingsolutiongpu:PoseTrackingSolutionGpuApp"
   ],
   "optionSet" : {

@@ -13,7 +13,6 @@
     "",
     "mediapipe",
     "mediapipe/examples/ios",
-    "mediapipe/examples/ios/common",
     "mediapipe/examples/ios/facedetectioncpu",
     "mediapipe/examples/ios/facedetectiongpu",
     "mediapipe/examples/ios/faceeffect",

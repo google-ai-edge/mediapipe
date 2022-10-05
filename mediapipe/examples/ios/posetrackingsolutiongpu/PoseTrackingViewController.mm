@@ -28,20 +28,21 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 - (void)viewDidLoad {
     
     
-  [super viewDidLoad];
-  PoseTrackingOptions* options =   [ [PoseTrackingOptions alloc] initWithShowLandmarks:true cameraRotation:0];
+    [super viewDidLoad];
+
+    // create pose tracking options
+    PoseTrackingOptions* options =   [ [PoseTrackingOptions alloc] initWithShowLandmarks:true cameraRotation:0];
+    // create pose tracking from options
     self.poseTracking = [[PoseTracking alloc] initWithPoseTrackingOptions:options];
-    
+    // render pose tracking to a UIView (self.liveView)
     self.poseTracking.renderer.layer.frame = self.liveView.layer.bounds;
     [self.liveView.layer addSublayer:self.poseTracking.renderer.layer];
     
-    
-
-    
-    
-    
-
-    
+    // create a block to run when PoseTrackingResults are available
+    self.poseTracking.poseTrackingResultsListener = ^(PoseTrackingResults* results){
+              NSLog(@"\tLandmark[%d]: (%f, %f, %f)", 0, results.landmarks[0].x,results.landmarks[0].y,results.landmarks[0].z);
+        
+    };
 }
 
 
@@ -53,25 +54,21 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 // depending on the application navigation flow in that case.
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    
-    self.cameraSource = [[MPPCameraInputSource alloc] init];
-    [self.cameraSource setDelegate:self.poseTracking queue:self.poseTracking.videoQueue];
-    self.cameraSource.sessionPreset = AVCaptureSessionPresetHigh;
 
-    
-      self.cameraSource.cameraPosition = AVCaptureDevicePositionBack;
-    
-//      self.cameraSource.cameraPosition = AVCaptureDevicePositionFront;
-//      // When using the front camera, mirror the input for a more natural look.
-//      _cameraSource.videoMirrored = YES;
-    
+    // create and set camera options
+    self.cameraSource = [[MPPCameraInputSource alloc] init];
+    self.cameraSource.sessionPreset = AVCaptureSessionPresetHigh;
+    self.cameraSource.cameraPosition = AVCaptureDevicePositionBack;
+    // When using the front camera, mirror the input for a more natural look.
+    //self.cameraSource.videoMirrored = YES;
 
     // The frame's native format is rotated with respect to the portrait orientation.
-    _cameraSource.orientation = AVCaptureVideoOrientationPortrait;
+    self.cameraSource.orientation = AVCaptureVideoOrientationPortrait;
 
+    // request camera access permission
     [self.cameraSource requestCameraAccessWithCompletionHandler:^void(BOOL granted) {
       if (granted) {
-       
+          //start pose tracking
           [self.poseTracking startWithCamera:self.cameraSource];
       }
     }];

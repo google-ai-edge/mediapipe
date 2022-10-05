@@ -11,6 +11,7 @@
 #import "mediapipe/objc/MPPPlayerInputSource.h"
 #import "mediapipe/objc/MPPTimestampConverter.h"
 #import "PoseTrackingOptions.h"
+#import "PoseTrackingResults.h"
 @interface PoseTracking : NSObject<MPPGraphDelegate,MPPInputSourceDelegate>
 
 // The MediaPipe graph currently in use. Initialized in viewDidLoad, started in
@@ -40,6 +41,9 @@
 
 // Process camera frames on this queue.
 @property(nonatomic) dispatch_queue_t videoQueue;
+
+// Codeblock that runs whenever pose tracking results are available
+@property(nonatomic) void(^poseTrackingResultsListener)(PoseTrackingResults*);
 
 - (instancetype) initWithPoseTrackingOptions: (PoseTrackingOptions*) poseTrackingOptions;
 - (void) startWithCamera: (MPPCameraInputSource*) cameraSource;
