@@ -102,8 +102,7 @@ Source<std::vector<Tensor>> ConvertMatrixToTensor(Source<Matrix> matrix,
 //
 // Example:
 // node {
-//   calculator:
-//   "mediapipe.tasks.vision.gesture_recognizer.SingleHandGestureRecognizerGraph"
+//   calculator: "mediapipe.tasks.vision.SingleHandGestureRecognizerGraph"
 //   input_stream: "HANDEDNESS:handedness"
 //   input_stream: "LANDMARKS:landmarks"
 //   input_stream: "WORLD_LANDMARKS:world_landmarks"
