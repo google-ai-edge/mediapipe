@@ -66,7 +66,7 @@ objc_library(
         "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
     ],
     deps = [
-        "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",
+        ":CommonMediaPipeAppLibrary",
         "//mediapipe/objc/solutions/posetracking_gpu:posetracking_gpu_solution",
     ] + select({
         "//mediapipe:ios_i386": [],
@@ -76,4 +76,43 @@ objc_library(
             "//mediapipe/framework/formats:landmark_cc_proto",
         ],
     }),
+)
+
+objc_library(
+    name = "CommonMediaPipeAppLibrary",
+    srcs = [
+        "AppDelegate.mm",
+        "CommonViewController.mm",
+        "main.m",
+    ],
+    hdrs = [
+        "AppDelegate.h",
+        "CommonViewController.h",
+    ],
+    data = [
+        "Base.lproj/LaunchScreen.storyboard",
+        "Base.lproj/Main.storyboard",
+    ],
+    sdk_frameworks = [
+        "AVFoundation",
+        "CoreGraphics",
+        "CoreMedia",
+        "UIKit",
+    ],
+    visibility = [
+        "//mediapipe:__subpackages__",
+    ],
+    deps = [
+        "//mediapipe/objc:mediapipe_framework_ios",
+        "//mediapipe/objc:mediapipe_input_sources_ios",
+        "//mediapipe/objc:mediapipe_layer_renderer",
+    ],
+)
+
+exports_files(["Info.plist"])
+
+filegroup(
+    name = "AppIcon",
+    srcs = glob(["Assets.xcassets/AppIcon.appiconset/*"]),
+    visibility = ["//mediapipe:__subpackages__"],
 )

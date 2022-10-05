@@ -1,4 +1,4 @@
-// Copyright 2020 The MediaPipe Authors.
+// Copyright 2019 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
 
 #import <UIKit/UIKit.h>
 
-#import "CommonViewController.h"
+@interface AppDelegate : UIResponder <UIApplicationDelegate>
 
-@interface PoseTrackingViewController : CommonViewController
+@property(strong, nonatomic) UIWindow *window;
 
 @end

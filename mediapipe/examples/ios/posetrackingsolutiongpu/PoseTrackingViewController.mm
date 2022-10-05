@@ -15,6 +15,7 @@
 #import "PoseTrackingViewController.h"
 
 #include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/objc/solutions/posetracking_gpu/PoseTrackingOptions.h"
 
 static const char* kLandmarksOutputStream = "pose_landmarks";
 
@@ -23,10 +24,19 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 #pragma mark - UIViewController methods
 
 - (void)viewDidLoad {
+    
+    
   [super viewDidLoad];
-
+  PoseTrackingOptions* options =   [ [PoseTrackingOptions alloc] initWithShowLandmarks:true cameraRotation:0];
   [self.mediapipeGraph addFrameOutputStream:kLandmarksOutputStream
                            outputPacketType:MPPPacketTypeRaw];
+    [self.mediapipeGraph addFrameOutputStream:"throttled_input_video"
+                             outputPacketType:MPPPacketTypePixelBuffer];
+    if (options.showLandmarks){
+        self.graphOutputStream = "output_video";
+    }else{
+        self.graphOutputStream = "throttled_input_video";
+    }
 }
 
 #pragma mark - MPPGraphDelegate methods
