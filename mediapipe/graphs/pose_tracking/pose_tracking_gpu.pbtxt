@@ -14,7 +14,7 @@ node {
   output_side_packet: "PACKET:enable_segmentation"
   node_options: {
     [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
-      packet { bool_value: true }
+      packet { bool_value: false }
     }
   }
 }
