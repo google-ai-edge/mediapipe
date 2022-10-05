@@ -31,7 +31,7 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
     [super viewDidLoad];
 
     // create pose tracking options
-    PoseTrackingOptions* options =   [ [PoseTrackingOptions alloc] initWithShowLandmarks:true cameraRotation:0];
+    PoseTrackingOptions* options =   [ [PoseTrackingOptions alloc] initWithShowLandmarks:true];
     // create pose tracking from options
     self.poseTracking = [[PoseTracking alloc] initWithPoseTrackingOptions:options];
     // render pose tracking to a UIView (self.liveView)
@@ -63,7 +63,14 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
     //self.cameraSource.videoMirrored = YES;
 
     // The frame's native format is rotated with respect to the portrait orientation.
+    // 0 degree
     self.cameraSource.orientation = AVCaptureVideoOrientationPortrait;
+      //90 degree
+//    self.cameraSource.orientation = AVCaptureVideoOrientationLandscapeRight;
+      //180 degree
+//    self.cameraSource.orientation = AVCaptureVideoOrientationPortraitUpsideDown;
+      //270 degree
+//    self.cameraSource.orientation = AVCaptureVideoOrientationLandscapeLeft;
 
     // request camera access permission
     [self.cameraSource requestCameraAccessWithCompletionHandler:^void(BOOL granted) {

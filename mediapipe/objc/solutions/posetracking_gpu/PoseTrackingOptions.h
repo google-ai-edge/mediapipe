@@ -8,9 +8,9 @@
 @interface PoseTrackingOptions: NSObject
 
 @property(nonatomic) bool showLandmarks;
-@property(nonatomic) int cameraRotation;
+//@property(nonatomic) int cameraRotation;
 
-- (instancetype) initWithShowLandmarks : (bool) showLandmarks cameraRotation:(int) cameraRotation;
+- (instancetype) initWithShowLandmarks : (bool) showLandmarks;
 
 @end
 
