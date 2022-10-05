@@ -3,6 +3,15 @@
 # Tensorflow needs remote repo
 common --experimental_repo_remote_exec
 
+# debug config
+build:debug -c dbg
+build:debug --features=oso_prefix_is_pwd
+build:debug --javacopt="-g"
+#build:debug --copt="-g"
+build:debug --strip="never"
+
+
+
 # Basic build settings
 build --jobs 128
 build --define='absl=1'  # for gtest

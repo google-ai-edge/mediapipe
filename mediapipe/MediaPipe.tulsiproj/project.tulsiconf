@@ -1,6 +1,9 @@
 {
   "configDefaults" : {
     "optionSet" : {
+      "BazelBuildOptionsDebug" : {
+        "p" : "--config=debug"
+      },
       "CLANG_CXX_LANGUAGE_STANDARD" : {
         "p" : "c++14"
       }
