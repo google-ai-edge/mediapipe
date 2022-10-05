@@ -22,8 +22,8 @@ from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.python._framework_bindings import task_runner as task_runner_module
 from mediapipe.tasks.cc.vision.image_classifier.proto import image_classifier_graph_options_pb2
-from mediapipe.tasks.python.components.processors.proto import classifier_options
-from mediapipe.tasks.python.components.containers.proto import classifications as classifications_module
+from mediapipe.tasks.python.components.processors import classifier_options
+from mediapipe.tasks.python.components.containers import classifications as classifications_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls

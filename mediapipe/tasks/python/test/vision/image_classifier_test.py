@@ -19,9 +19,9 @@ from absl.testing import absltest
 from absl.testing import parameterized
 
 from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.tasks.python.components.processors.proto import classifier_options
-from mediapipe.tasks.python.components.containers.proto import category as category_module
-from mediapipe.tasks.python.components.containers.proto import classifications as classifications_module
+from mediapipe.tasks.python.components.processors import classifier_options
+from mediapipe.tasks.python.components.containers import category as category_module
+from mediapipe.tasks.python.components.containers import classifications as classifications_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import image_classifier
