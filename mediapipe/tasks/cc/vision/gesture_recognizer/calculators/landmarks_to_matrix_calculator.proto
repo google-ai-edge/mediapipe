@@ -1,0 +1,39 @@
+/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+// Options for LandmarksToMatrixCalculator.
+message LandmarksToMatrixCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional LandmarksToMatrixCalculatorOptions ext = 473345607;
+  }
+
+  // Determines whether to perform object normalization. If enabled, the
+  // normalizes the object so that:
+  // - max(height, width) of the object is 1
+  // - the aspect ratio is preserved
+  // - the landmark at offset object_normalization_origin_offset within
+  //   the landmarks array is at the origin.
+  // It is required to set object_normalization to true or false.
+  optional bool object_normalization = 1;
+  // The offset within the landmarks list of the landmark to use as origin
+  // for object normalization.
+  optional int32 object_normalization_origin_offset = 2 [default = 0];
+}

@@ -89,10 +89,6 @@ def mediapipe_aar(
         calculators = calculators,
     )
 
-    _mediapipe_proto(
-        name = name + "_proto",
-    )
-
     native.genrule(
         name = name + "_aar_manifest_generator",
         outs = ["AndroidManifest.xml"],
@@ -115,19 +111,10 @@ EOF
                    "//mediapipe/java/com/google/mediapipe/components:java_src",
                    "//mediapipe/java/com/google/mediapipe/framework:java_src",
                    "//mediapipe/java/com/google/mediapipe/glutil:java_src",
-                   "com/google/mediapipe/formats/annotation/proto/RasterizationProto.java",
-                   "com/google/mediapipe/formats/proto/ClassificationProto.java",
-                   "com/google/mediapipe/formats/proto/DetectionProto.java",
-                   "com/google/mediapipe/formats/proto/LandmarkProto.java",
-                   "com/google/mediapipe/formats/proto/LocationDataProto.java",
-                   "com/google/mediapipe/proto/CalculatorProto.java",
-               ] +
+               ] + mediapipe_java_proto_srcs() +
                select({
                    "//conditions:default": [],
-                   "enable_stats_logging": [
-                       "com/google/mediapipe/proto/MediaPipeLoggingProto.java",
-                       "com/google/mediapipe/proto/MediaPipeLoggingEnumsProto.java",
-                   ],
+                   "enable_stats_logging": mediapipe_logging_java_proto_srcs(),
                }),
         manifest = "AndroidManifest.xml",
         proguard_specs = ["//mediapipe/java/com/google/mediapipe/framework:proguard.pgcfg"],
@@ -178,93 +165,6 @@ EOF
     )
 
     _aar_with_jni(name, name + "_android_lib")
-
-def _mediapipe_proto(name):
-    """Generates MediaPipe java proto libraries.
-
-    Args:
-      name: the name of the target.
-    """
-    _proto_java_src_generator(
-        name = "mediapipe_log_extension_proto",
-        proto_src = "mediapipe/util/analytics/mediapipe_log_extension.proto",
-        java_lite_out = "com/google/mediapipe/proto/MediaPipeLoggingProto.java",
-        srcs = ["//mediapipe/util/analytics:protos_src"],
-    )
-
-    _proto_java_src_generator(
-        name = "mediapipe_logging_enums_proto",
-        proto_src = "mediapipe/util/analytics/mediapipe_logging_enums.proto",
-        java_lite_out = "com/google/mediapipe/proto/MediaPipeLoggingEnumsProto.java",
-        srcs = ["//mediapipe/util/analytics:protos_src"],
-    )
-
-    _proto_java_src_generator(
-        name = "calculator_proto",
-        proto_src = "mediapipe/framework/calculator.proto",
-        java_lite_out = "com/google/mediapipe/proto/CalculatorProto.java",
-        srcs = ["//mediapipe/framework:protos_src"],
-    )
-
-    _proto_java_src_generator(
-        name = "landmark_proto",
-        proto_src = "mediapipe/framework/formats/landmark.proto",
-        java_lite_out = "com/google/mediapipe/formats/proto/LandmarkProto.java",
-        srcs = ["//mediapipe/framework/formats:protos_src"],
-    )
-
-    _proto_java_src_generator(
-        name = "rasterization_proto",
-        proto_src = "mediapipe/framework/formats/annotation/rasterization.proto",
-        java_lite_out = "com/google/mediapipe/formats/annotation/proto/RasterizationProto.java",
-        srcs = ["//mediapipe/framework/formats/annotation:protos_src"],
-    )
-
-    _proto_java_src_generator(
-        name = "location_data_proto",
-        proto_src = "mediapipe/framework/formats/location_data.proto",
-        java_lite_out = "com/google/mediapipe/formats/proto/LocationDataProto.java",
-        srcs = [
-            "//mediapipe/framework/formats:protos_src",
-            "//mediapipe/framework/formats/annotation:protos_src",
-        ],
-    )
-
-    _proto_java_src_generator(
-        name = "detection_proto",
-        proto_src = "mediapipe/framework/formats/detection.proto",
-        java_lite_out = "com/google/mediapipe/formats/proto/DetectionProto.java",
-        srcs = [
-            "//mediapipe/framework/formats:protos_src",
-            "//mediapipe/framework/formats/annotation:protos_src",
-        ],
-    )
-
-    _proto_java_src_generator(
-        name = "classification_proto",
-        proto_src = "mediapipe/framework/formats/classification.proto",
-        java_lite_out = "com/google/mediapipe/formats/proto/ClassificationProto.java",
-        srcs = [
-            "//mediapipe/framework/formats:protos_src",
-        ],
-    )
-
-def _proto_java_src_generator(name, proto_src, java_lite_out, srcs = []):
-    native.genrule(
-        name = name + "_proto_java_src_generator",
-        srcs = srcs + [
-            "@com_google_protobuf//:lite_well_known_protos",
-        ],
-        outs = [java_lite_out],
-        cmd = "$(location @com_google_protobuf//:protoc) " +
-              "--proto_path=. --proto_path=$(GENDIR) " +
-              "--proto_path=$$(pwd)/external/com_google_protobuf/src " +
-              "--java_out=lite:$(GENDIR) " + proto_src + " && " +
-              "mv $(GENDIR)/" + java_lite_out + " $$(dirname $(location " + java_lite_out + "))",
-        tools = [
-            "@com_google_protobuf//:protoc",
-        ],
-    )
 
 def _mediapipe_jni(name, gen_libmediapipe, calculators = []):
     """Generates MediaPipe jni library.
@@ -345,3 +245,93 @@ cp -r lib jni
 zip -r $$origdir/$(location :{}.aar) jni/*/*.so
 """.format(android_library, name, name, name, name),
     )
+
+def mediapipe_java_proto_src_extractor(target, src_out, name = ""):
+    """Extracts the generated MediaPipe java proto source code from the target.
+
+    Args:
+      target: The java proto lite target to be built and extracted.
+      src_out: The output java proto src code path.
+      name: The optional bazel target name.
+
+    Returns:
+      The output java proto src code path.
+    """
+
+    if not name:
+        name = target.split(":")[-1] + "_proto_java_src_extractor"
+    src_jar = target.replace("_java_proto_lite", "_proto-lite-src.jar").replace(":", "/").replace("//", "")
+    native.genrule(
+        name = name + "_proto_java_src_extractor",
+        srcs = [target],
+        outs = [src_out],
+        cmd = "unzip $(GENDIR)/" + src_jar + " -d $(GENDIR) && mv $(GENDIR)/" +
+              src_out + " $$(dirname $(location " + src_out + "))",
+    )
+    return src_out
+
+def mediapipe_java_proto_srcs(name = ""):
+    """Extracts the generated MediaPipe framework java proto source code.
+
+    Args:
+      name: The optional bazel target name.
+
+    Returns:
+      The list of the extrated MediaPipe java proto source code.
+    """
+
+    proto_src_list = []
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/framework:calculator_java_proto_lite",
+        src_out = "com/google/mediapipe/proto/CalculatorProto.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/framework/formats:landmark_java_proto_lite",
+        src_out = "com/google/mediapipe/formats/proto/LandmarkProto.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/framework/formats/annotation:rasterization_java_proto_lite",
+        src_out = "com/google/mediapipe/formats/annotation/proto/RasterizationProto.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/framework/formats:location_data_java_proto_lite",
+        src_out = "com/google/mediapipe/formats/proto/LocationDataProto.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/framework/formats:detection_java_proto_lite",
+        src_out = "com/google/mediapipe/formats/proto/DetectionProto.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/framework/formats:classification_java_proto_lite",
+        src_out = "com/google/mediapipe/formats/proto/ClassificationProto.java",
+    ))
+    return proto_src_list
+
+def mediapipe_logging_java_proto_srcs(name = ""):
+    """Extracts the generated logging-related MediaPipe java proto source code.
+
+    Args:
+      name: The optional bazel target name.
+
+    Returns:
+      The list of the extrated MediaPipe logging-related java proto source code.
+    """
+
+    proto_src_list = []
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/util/analytics:mediapipe_log_extension_java_proto_lite",
+        src_out = "com/google/mediapipe/proto/MediaPipeLoggingProto.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/util/analytics:mediapipe_logging_enums_java_proto_lite",
+        src_out = "com/google/mediapipe/proto/MediaPipeLoggingEnumsProto.java",
+    ))
+    return proto_src_list

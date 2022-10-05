@@ -21,8 +21,8 @@ package(default_visibility = [
 licenses(["notice"])
 
 mediapipe_proto_library(
-    name = "hand_detector_options_proto",
-    srcs = ["hand_detector_options.proto"],
+    name = "hand_detector_graph_options_proto",
+    srcs = ["hand_detector_graph_options.proto"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",

@@ -40,12 +40,13 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/utils.h"
-#include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_options.pb.h"
+#include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace hand_detector {
 
 namespace {
 
@@ -53,18 +54,23 @@ using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
-using ::mediapipe::tasks::vision::hand_detector::proto::HandDetectorOptions;
+using ::mediapipe::tasks::vision::hand_detector::proto::
+    HandDetectorGraphOptions;
 
 constexpr char kImageTag[] = "IMAGE";
-constexpr char kDetectionsTag[] = "DETECTIONS";
-constexpr char kNormRectsTag[] = "NORM_RECTS";
+constexpr char kPalmDetectionsTag[] = "PALM_DETECTIONS";
+constexpr char kHandRectsTag[] = "HAND_RECTS";
+constexpr char kPalmRectsTag[] = "PALM_RECTS";
 
 struct HandDetectionOuts {
   Source<std::vector<Detection>> palm_detections;
   Source<std::vector<NormalizedRect>> hand_rects;
+  Source<std::vector<NormalizedRect>> palm_rects;
+  Source<Image> image;
 };
 
 void ConfigureTensorsToDetectionsCalculator(
+    const HandDetectorGraphOptions& tasks_options,
     mediapipe::TensorsToDetectionsCalculatorOptions* options) {
   // TODO use metadata to configure these fields.
   options->set_num_classes(1);
@@ -77,7 +83,7 @@ void ConfigureTensorsToDetectionsCalculator(
   options->set_sigmoid_score(true);
   options->set_score_clipping_thresh(100.0);
   options->set_reverse_output_order(true);
-  options->set_min_score_thresh(0.5);
+  options->set_min_score_thresh(tasks_options.min_detection_confidence());
   options->set_x_scale(192.0);
   options->set_y_scale(192.0);
   options->set_w_scale(192.0);
@@ -134,9 +140,9 @@ void ConfigureRectTransformationCalculator(
 
 }  // namespace
 
-// A "mediapipe.tasks.vision.HandDetectorGraph" performs hand detection. The
-// Hand Detection Graph is based on palm detection model, and scale the detected
-// palm bounding box to enclose the detected whole hand.
+// A "mediapipe.tasks.vision.hand_detector.HandDetectorGraph" performs hand
+// detection. The Hand Detection Graph is based on palm detection model, and
+// scale the detected palm bounding box to enclose the detected whole hand.
 // Accepts CPU input images and outputs Landmark on CPU.
 //
 // Inputs:
@@ -144,19 +150,27 @@ void ConfigureRectTransformationCalculator(
 //     Image to perform detection on.
 //
 // Outputs:
-//   DETECTIONS - std::vector<Detection>
+//   PALM_DETECTIONS - std::vector<Detection>
 //     Detected palms with maximum `num_hands` specified in options.
-//   NORM_RECTS - std::vector<NormalizedRect>
+//   HAND_RECTS - std::vector<NormalizedRect>
 //     Detected hand bounding boxes in normalized coordinates.
+//   PLAM_RECTS - std::vector<NormalizedRect>
+//     Detected palm bounding boxes in normalized coordinates.
+//   IMAGE - Image
+//     The input image that the hand detector runs on and has the pixel data
+//     stored on the target storage (CPU vs GPU).
 //
 // Example:
 // node {
-//   calculator: "mediapipe.tasks.vision.HandDetectorGraph"
+//   calculator: "mediapipe.tasks.vision.hand_detector.HandDetectorGraph"
 //   input_stream: "IMAGE:image"
-//   output_stream: "DETECTIONS:palm_detections"
-//   output_stream: "NORM_RECTS:hand_rects_from_palm_detections"
+//   output_stream: "PALM_DETECTIONS:palm_detections"
+//   output_stream: "HAND_RECTS:hand_rects_from_palm_detections"
+//   output_stream: "PALM_RECTS:palm_rects"
+//   output_stream: "IMAGE:image_out"
 //   options {
-//     [mediapipe.tasks.hand_detector.proto.HandDetectorOptions.ext] {
+//     [mediapipe.tasks.vision.hand_detector.proto.HandDetectorGraphOptions.ext]
+//     {
 //       base_options {
 //          model_asset {
 //            file_name: "palm_detection.tflite"
@@ -173,16 +187,20 @@ class HandDetectorGraph : public core::ModelTaskGraph {
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     ASSIGN_OR_RETURN(const auto* model_resources,
-                     CreateModelResources<HandDetectorOptions>(sc));
+                     CreateModelResources<HandDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(auto hand_detection_outs,
-                     BuildHandDetectionSubgraph(
-                         sc->Options<HandDetectorOptions>(), *model_resources,
-                         graph[Input<Image>(kImageTag)], graph));
+    ASSIGN_OR_RETURN(
+        auto hand_detection_outs,
+        BuildHandDetectionSubgraph(sc->Options<HandDetectorGraphOptions>(),
+                                   *model_resources,
+                                   graph[Input<Image>(kImageTag)], graph));
     hand_detection_outs.palm_detections >>
-        graph[Output<std::vector<Detection>>(kDetectionsTag)];
+        graph[Output<std::vector<Detection>>(kPalmDetectionsTag)];
     hand_detection_outs.hand_rects >>
-        graph[Output<std::vector<NormalizedRect>>(kNormRectsTag)];
+        graph[Output<std::vector<NormalizedRect>>(kHandRectsTag)];
+    hand_detection_outs.palm_rects >>
+        graph[Output<std::vector<NormalizedRect>>(kPalmRectsTag)];
+    hand_detection_outs.image >> graph[Output<Image>(kImageTag)];
     return graph.GetConfig();
   }
 
@@ -196,7 +214,7 @@ class HandDetectorGraph : public core::ModelTaskGraph {
   // image_in: image stream to run hand detection on.
   // graph: the mediapipe builder::Graph instance to be updated.
   absl::StatusOr<HandDetectionOuts> BuildHandDetectionSubgraph(
-      const HandDetectorOptions& subgraph_options,
+      const HandDetectorGraphOptions& subgraph_options,
       const core::ModelResources& model_resources, Source<Image> image_in,
       Graph& graph) {
     // Add image preprocessing subgraph. The model expects aspect ratio
@@ -235,6 +253,7 @@ class HandDetectorGraph : public core::ModelTaskGraph {
     auto& tensors_to_detections =
         graph.AddNode("TensorsToDetectionsCalculator");
     ConfigureTensorsToDetectionsCalculator(
+        subgraph_options,
         &tensors_to_detections
              .GetOptions<mediapipe::TensorsToDetectionsCalculatorOptions>());
     model_output_tensors >> tensors_to_detections.In("TENSORS");
@@ -281,7 +300,8 @@ class HandDetectorGraph : public core::ModelTaskGraph {
              .GetOptions<mediapipe::DetectionsToRectsCalculatorOptions>());
     palm_detections >> detections_to_rects.In("DETECTIONS");
     image_size >> detections_to_rects.In("IMAGE_SIZE");
-    auto palm_rects = detections_to_rects.Out("NORM_RECTS");
+    auto palm_rects =
+        detections_to_rects[Output<std::vector<NormalizedRect>>("NORM_RECTS")];
 
     // Expands and shifts the rectangle that contains the palm so that it's
     //  likely to cover the entire hand.
@@ -308,13 +328,18 @@ class HandDetectorGraph : public core::ModelTaskGraph {
         clip_normalized_rect_vector_size[Output<std::vector<NormalizedRect>>(
             "")];
 
-    return HandDetectionOuts{.palm_detections = palm_detections,
-                             .hand_rects = clipped_hand_rects};
+    return HandDetectionOuts{
+        /* palm_detections= */ palm_detections,
+        /* hand_rects= */ clipped_hand_rects,
+        /* palm_rects= */ palm_rects,
+        /* image= */ preprocessing[Output<Image>(kImageTag)]};
   }
 };
 
-REGISTER_MEDIAPIPE_GRAPH(::mediapipe::tasks::vision::HandDetectorGraph);
+REGISTER_MEDIAPIPE_GRAPH(
+    ::mediapipe::tasks::vision::hand_detector::HandDetectorGraph);
 
+}  // namespace hand_detector
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

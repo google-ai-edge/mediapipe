@@ -143,6 +143,98 @@ Below is an example of how to create a subgraph named `TwoPassThroughSubgraph`.
     }
     ```
 
+## Graph Options
+
+It is possible to specify a "graph options" protobuf for a MediaPipe graph
+similar to the [`Calculator Options`](calculators.md#calculator-options)
+protobuf specified for a MediaPipe calculator. These "graph options" can be
+specified where a graph is invoked, and used to populate calculator options and
+subgraph options within the graph.
+
+In a CalculatorGraphConfig, graph options can be specified for a subgraph
+exactly like calculator options, as shown below:
+
+```
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "image"
+  output_stream: "throttled_image"
+  node_options: {
+    [type.googleapis.com/mediapipe.FlowLimiterCalculatorOptions] {
+      max_in_flight: 1
+    }
+  }
+}
+
+node {
+  calculator: "FaceDetectionSubgraph"
+  input_stream: "IMAGE:throttled_image"
+  node_options: {
+    [type.googleapis.com/mediapipe.FaceDetectionOptions] {
+      tensor_width: 192
+      tensor_height: 192
+    }
+  }
+}
+```
+
+In a CalculatorGraphConfig, graph options can be accepted and used to populate
+calculator options, as shown below:
+
+```
+graph_options: {
+  [type.googleapis.com/mediapipe.FaceDetectionOptions] {}
+}
+
+node: {
+  calculator: "ImageToTensorCalculator"
+  input_stream: "IMAGE:multi_backend_image"
+  node_options: {
+    [type.googleapis.com/mediapipe.ImageToTensorCalculatorOptions] {
+        keep_aspect_ratio: true
+        border_mode: BORDER_ZERO
+    }
+  }
+  option_value: "output_tensor_width:options/tensor_width"
+  option_value: "output_tensor_height:options/tensor_height"
+}
+
+node {
+  calculator: "InferenceCalculator"
+  node_options: {
+    [type.googleapis.com/mediapipe.InferenceCalculatorOptions] {}
+  }
+  option_value: "delegate:options/delegate"
+  option_value: "model_path:options/model_path"
+}
+```
+
+In this example, the `FaceDetectionSubgraph` accepts graph option protobuf
+`FaceDetectionOptions`. The `FaceDetectionOptions` is used to define some field
+values in the calculator options `ImageToTensorCalculatorOptions` and some field
+values in the subgraph options `InferenceCalculatorOptions`. The field values
+are defined using the `option_value:` syntax.
+
+In the `CalculatorGraphConfig::Node` protobuf, the fields `node_options:` and
+`option_value:` together define the option values for a calculator such as
+`ImageToTensorCalculator`. The `node_options:` field defines a set of literal
+constant values using the text protobuf syntax. Each `option_value:` field
+defines the value for one protobuf field using information from the enclosing
+graph, specifically from field values of the graph options of the enclosing
+graph. In the example above, the `option_value:`
+`"output_tensor_width:options/tensor_width"` defines the field
+`ImageToTensorCalculatorOptions.output_tensor_width` using the value of
+`FaceDetectionOptions.tensor_width`.
+
+The syntax of `option_value:` is similar to the syntax of `input_stream:`. The
+syntax is `option_value: "LHS:RHS"`. The LHS identifies a calculator option
+field and the RHS identifies a graph option field. More specifically, the LHS
+and RHS each consists of a series of protobuf field names identifying nested
+protobuf messages and fields separated by '/'. This is known as the "ProtoPath"
+syntax. Nested messages that are referenced in the LHS or RHS must already be
+defined in the enclosing protobuf in order to be traversed using
+`option_value:`.
+
 ## Cycles
 
 <!-- TODO: add discussion of PreviousLoopbackCalculator -->

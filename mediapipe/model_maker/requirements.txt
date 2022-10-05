@@ -1,0 +1,4 @@
+absl-py
+numpy
+opencv-contrib-python
+tensorflow
