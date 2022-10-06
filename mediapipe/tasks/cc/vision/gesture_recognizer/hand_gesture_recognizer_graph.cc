@@ -36,7 +36,6 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/landmarks_to_matrix_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/hand_gesture_recognizer_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 
 namespace mediapipe {
@@ -200,6 +199,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
     auto concatenated_tensors = concatenate_tensor_vector.Out("");
 
     // Inference for static hand gesture recognition.
+    // TODO add embedding step.
     auto& inference = AddInference(
         model_resources, graph_options.base_options().acceleration(), graph);
     concatenated_tensors >> inference.In(kTensorsTag);

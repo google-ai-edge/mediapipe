@@ -24,13 +24,13 @@ import "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_op
 
 message GestureRecognizerGraphOptions {
   extend mediapipe.CalculatorOptions {
-    optional GestureRecognizerGraphOptions ext = 478371831;
+    optional GestureRecognizerGraphOptions ext = 479097054;
   }
   // Base options for configuring gesture recognizer graph, such as specifying
   // the TfLite model file with metadata, accelerator options, etc.
   optional core.proto.BaseOptions base_options = 1;
 
-  // Options for configuring hand landmarker subgraph.
+  // Options for configuring hand landmarker graph.
   optional hand_landmarker.proto.HandLandmarkerGraphOptions
       hand_landmarker_graph_options = 2;
 
