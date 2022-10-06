@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <string>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
@@ -79,6 +80,12 @@ absl::StatusOr<ZipFileInfo> GetCurrentZipFileInfo(const unzFile& zf) {
   int method;
   MP_RETURN_IF_ERROR(UnzipErrorToStatus(
       unzOpenCurrentFile2(zf, &method, /*level=*/nullptr, /*raw=*/1)));
+  absl::Cleanup unzipper_closer = [zf]() {
+    auto status = UnzipErrorToStatus(unzCloseCurrentFile(zf));
+    if (!status.ok()) {
+      LOG(ERROR) << "Failed to close the current zip file: " << status;
+    }
+  };
   if (method != Z_NO_COMPRESSION) {
     return CreateStatusWithPayload(
         StatusCode::kUnknown, "Expected uncompressed zip archive.",
@@ -110,6 +117,8 @@ absl::StatusOr<ZipFileInfo> GetCurrentZipFileInfo(const unzFile& zf) {
         MediaPipeTasksStatus::kMetadataAssociatedFileZipError);
   }
 
+  // Perform the cleanup manually for error propagation.
+  std::move(unzipper_closer).Cancel();
   // Close file and return.
   MP_RETURN_IF_ERROR(UnzipErrorToStatus(unzCloseCurrentFile(zf)));
 
@@ -247,6 +256,11 @@ absl::Status ModelMetadataExtractor::ExtractAssociatedFiles(
     // model.
     return absl::OkStatus();
   }
+  absl::Cleanup unzipper_closer = [zf]() {
+    if (unzClose(zf) != UNZ_OK) {
+      LOG(ERROR) << "Unable to close zip archive.";
+    }
+  };
   // Get number of files.
   unz_global_info global_info;
   if (unzGetGlobalInfo(zf, &global_info) != UNZ_OK) {
@@ -272,6 +286,9 @@ absl::Status ModelMetadataExtractor::ExtractAssociatedFiles(
           MediaPipeTasksStatus::kMetadataAssociatedFileZipError);
     }
   }
+
+  // Perform the cleanup manually for error propagation.
+  std::move(unzipper_closer).Cancel();
   // Close zip.
   if (unzClose(zf) != UNZ_OK) {
     return CreateStatusWithPayload(

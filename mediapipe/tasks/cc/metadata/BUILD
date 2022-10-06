@@ -21,6 +21,7 @@ cc_library(
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/metadata/utils:zip_readonly_mem_file",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
+        "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
