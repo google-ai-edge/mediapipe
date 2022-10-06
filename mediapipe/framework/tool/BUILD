@@ -150,7 +150,7 @@ cc_library(
     name = "executor_util",
     srcs = ["executor_util.cc"],
     hdrs = ["executor_util.h"],
-    visibility = ["//mediapipe/framework:mediapipe_internal"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:mediapipe_options_cc_proto",
