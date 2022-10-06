@@ -282,6 +282,20 @@ absl::Status ConfigureScoreCalibrationIfAny(
   return absl::OkStatus();
 }
 
+void ConfigureClassificationAggregationCalculator(
+    const ModelMetadataExtractor& metadata_extractor,
+    ClassificationAggregationCalculatorOptions* options) {
+  auto* output_tensors_metadata = metadata_extractor.GetOutputTensorMetadata();
+  if (output_tensors_metadata == nullptr) {
+    return;
+  }
+  for (const auto& metadata : *output_tensors_metadata) {
+    options->add_head_names(metadata->name()->str());
+  }
+}
+
+}  // namespace
+
 // Fills in the TensorsToClassificationCalculatorOptions based on the
 // classifier options and the (optional) output tensor metadata.
 absl::Status ConfigureTensorsToClassificationCalculator(
@@ -332,20 +346,6 @@ absl::Status ConfigureTensorsToClassificationCalculator(
   calculator_options->set_sort_by_descending_score(true);
   return absl::OkStatus();
 }
-
-void ConfigureClassificationAggregationCalculator(
-    const ModelMetadataExtractor& metadata_extractor,
-    ClassificationAggregationCalculatorOptions* options) {
-  auto* output_tensors_metadata = metadata_extractor.GetOutputTensorMetadata();
-  if (output_tensors_metadata == nullptr) {
-    return;
-  }
-  for (const auto& metadata : *output_tensors_metadata) {
-    options->add_head_names(metadata->name()->str());
-  }
-}
-
-}  // namespace
 
 absl::Status ConfigureClassificationPostprocessingGraph(
     const ModelResources& model_resources,

@@ -46,8 +46,9 @@ cc_library(
     deps = [
         "//mediapipe/calculators/core:begin_loop_calculator",
         "//mediapipe/calculators/core:concatenate_vector_calculator",
-        "//mediapipe/calculators/core:get_vector_item_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
         "//mediapipe/calculators/tensor:tensor_converter_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_classification_calculator",
         "//mediapipe/calculators/tensor:tensors_to_classification_calculator_cc_proto",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
@@ -57,7 +58,6 @@ cc_library(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/components:image_preprocessing",
-        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
         "//mediapipe/tasks/cc/components/processors:classification_postprocessing_graph",
         "//mediapipe/tasks/cc/components/processors/proto:classification_postprocessing_graph_options_cc_proto",
         "//mediapipe/tasks/cc/core:model_resources",
