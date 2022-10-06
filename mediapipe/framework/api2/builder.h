@@ -125,12 +125,6 @@ class DestinationImpl {
   DestinationBase& base_;
 };
 
-template <bool IsSide, typename T>
-class MultiDestinationImpl : public MultiPort<DestinationImpl<IsSide, T>> {
- public:
-  using MultiPort<DestinationImpl<IsSide, T>>::MultiPort;
-};
-
 template <bool IsSide, typename T = internal::Generic>
 class SourceImpl {
  public:
@@ -186,12 +180,6 @@ class SourceImpl {
   SourceBase* base_;
 };
 
-template <bool IsSide, typename T>
-class MultiSourceImpl : public MultiPort<SourceImpl<IsSide, T>> {
- public:
-  using MultiPort<SourceImpl<IsSide, T>>::MultiPort;
-};
-
 // A source and a destination correspond to an output/input stream on a node,
 // and a side source and side destination correspond to an output/input side
 // packet.
@@ -201,20 +189,20 @@ class MultiSourceImpl : public MultiPort<SourceImpl<IsSide, T>> {
 template <typename T = internal::Generic>
 using Source = SourceImpl<false, T>;
 template <typename T = internal::Generic>
-using MultiSource = MultiSourceImpl<false, T>;
+using MultiSource = MultiPort<Source<T>>;
 template <typename T = internal::Generic>
 using SideSource = SourceImpl<true, T>;
 template <typename T = internal::Generic>
-using MultiSideSource = MultiSourceImpl<true, T>;
+using MultiSideSource = MultiPort<SideSource<T>>;
 
 template <typename T = internal::Generic>
 using Destination = DestinationImpl<false, T>;
 template <typename T = internal::Generic>
 using SideDestination = DestinationImpl<true, T>;
 template <typename T = internal::Generic>
-using MultiDestination = MultiDestinationImpl<false, T>;
+using MultiDestination = MultiPort<Destination<T>>;
 template <typename T = internal::Generic>
-using MultiSideDestination = MultiDestinationImpl<true, T>;
+using MultiSideDestination = MultiPort<SideDestination<T>>;
 
 class NodeBase {
  public:
