@@ -20,6 +20,7 @@ limitations under the License.
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
+#include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -33,6 +34,11 @@ namespace metadata {
 absl::Status ExtractFilesfromZipFile(
     const char* buffer_data, const size_t buffer_size,
     absl::flat_hash_map<std::string, absl::string_view>* files);
+
+// Set file_pointer_meta in ExternalFile which is the pointer points to location
+// of a file in memory by file_content.
+void SetExternalFile(const std::string_view& file_content,
+                     core::proto::ExternalFile* model_file);
 
 }  // namespace metadata
 }  // namespace tasks

@@ -92,13 +92,26 @@ absl::Status ExternalFileHandler::MapExternalFile() {
 #else
   if (!external_file_.file_content().empty()) {
     return absl::OkStatus();
+  } else if (external_file_.has_file_pointer_meta()) {
+    if (external_file_.file_pointer_meta().pointer() == 0) {
+      return CreateStatusWithPayload(
+          StatusCode::kInvalidArgument,
+          "Need to set the file pointer in external_file.file_pointer_meta.");
+    }
+    if (external_file_.file_pointer_meta().length() <= 0) {
+      return CreateStatusWithPayload(
+          StatusCode::kInvalidArgument,
+          "The length of the file in external_file.file_pointer_meta should be "
+          "positive.");
+    }
+    return absl::OkStatus();
   }
   if (external_file_.file_name().empty() &&
       !external_file_.has_file_descriptor_meta()) {
     return CreateStatusWithPayload(
         StatusCode::kInvalidArgument,
-        "ExternalFile must specify at least one of 'file_content', 'file_name' "
-        "or 'file_descriptor_meta'.",
+        "ExternalFile must specify at least one of 'file_content', "
+        "'file_name', 'file_pointer_meta' or 'file_descriptor_meta'.",
         MediaPipeTasksStatus::kInvalidArgumentError);
   }
   // Obtain file descriptor, offset and size.
@@ -196,6 +209,11 @@ absl::Status ExternalFileHandler::MapExternalFile() {
 absl::string_view ExternalFileHandler::GetFileContent() {
   if (!external_file_.file_content().empty()) {
     return external_file_.file_content();
+  } else if (external_file_.has_file_pointer_meta()) {
+    void* ptr =
+        reinterpret_cast<void*>(external_file_.file_pointer_meta().pointer());
+    return absl::string_view(static_cast<const char*>(ptr),
+                             external_file_.file_pointer_meta().length());
   } else {
     return absl::string_view(static_cast<const char*>(buffer_) +
                                  buffer_offset_ - buffer_aligned_offset_,

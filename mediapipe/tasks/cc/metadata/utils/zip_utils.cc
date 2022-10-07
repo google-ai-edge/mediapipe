@@ -162,6 +162,14 @@ absl::Status ExtractFilesfromZipFile(
   return absl::OkStatus();
 }
 
+void SetExternalFile(const std::string_view& file_content,
+                     core::proto::ExternalFile* model_file) {
+  auto pointer = reinterpret_cast<uint64_t>(file_content.data());
+
+  model_file->mutable_file_pointer_meta()->set_pointer(pointer);
+  model_file->mutable_file_pointer_meta()->set_length(file_content.length());
+}
+
 }  // namespace metadata
 }  // namespace tasks
 }  // namespace mediapipe
