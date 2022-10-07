@@ -21,6 +21,9 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/components/processors/proto/classifier_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
+option java_package = "com.google.mediapipe.tasks.vision.imageclassifier.proto";
+option java_outer_classname = "ImageClassifierGraphOptionsProto";
+
 message ImageClassifierGraphOptions {
   extend mediapipe.CalculatorOptions {
     optional ImageClassifierGraphOptions ext = 456383383;

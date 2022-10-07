@@ -17,39 +17,13 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 android_library(
-    name = "category",
-    srcs = ["Category.java"],
-    deps = [
-        "//third_party:autovalue",
-        "@maven//:com_google_guava_guava",
+    name = "classifieroptions",
+    srcs = ["ClassifierOptions.java"],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
     ],
-)
-
-android_library(
-    name = "detection",
-    srcs = ["Detection.java"],
     deps = [
-        ":category",
-        "//third_party:autovalue",
-        "@maven//:com_google_guava_guava",
-    ],
-)
-
-android_library(
-    name = "classification_entry",
-    srcs = ["ClassificationEntry.java"],
-    deps = [
-        ":category",
-        "//third_party:autovalue",
-        "@maven//:com_google_guava_guava",
-    ],
-)
-
-android_library(
-    name = "classifications",
-    srcs = ["Classifications.java"],
-    deps = [
-        ":classification_entry",
+        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_java_proto_lite",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
