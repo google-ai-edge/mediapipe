@@ -15,7 +15,6 @@
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 package(default_visibility = [
-    "//mediapipe/app/xeno:__subpackages__",
     "//mediapipe/tasks:internal",
 ])
 
@@ -46,4 +45,26 @@ cc_library(
     alwayslink = 1,
 )
 
-# TODO: Enable this test
+cc_library(
+    name = "hand_landmarks_deduplication_calculator",
+    srcs = ["hand_landmarks_deduplication_calculator.cc"],
+    hdrs = ["hand_landmarks_deduplication_calculator.h"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/cc/components/containers:landmarks_detection",
+        "//mediapipe/tasks/cc/vision/utils:landmarks_duplicates_finder",
+        "//mediapipe/tasks/cc/vision/utils:landmarks_utils",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/types:optional",
+    ],
+    alwayslink = 1,
+)
