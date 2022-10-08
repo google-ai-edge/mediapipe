@@ -25,7 +25,6 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_recognizer_graph_options.pb.h"
@@ -46,7 +45,6 @@ using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
-using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::mediapipe::tasks::vision::gesture_recognizer::proto::
     GestureRecognizerGraphOptions;
 using ::mediapipe::tasks::vision::gesture_recognizer::proto::
@@ -63,10 +61,10 @@ constexpr char kHandGesturesTag[] = "HAND_GESTURES";
 constexpr char kHandTrackingIdsTag[] = "HAND_TRACKING_IDS";
 
 struct GestureRecognizerOutputs {
-  Source<std::vector<ClassificationResult>> gesture;
-  Source<std::vector<mediapipe::ClassificationList>> handedness;
-  Source<std::vector<mediapipe::NormalizedLandmarkList>> hand_landmarks;
-  Source<std::vector<mediapipe::LandmarkList>> hand_world_landmarks;
+  Source<std::vector<ClassificationList>> gesture;
+  Source<std::vector<ClassificationList>> handedness;
+  Source<std::vector<NormalizedLandmarkList>> hand_landmarks;
+  Source<std::vector<LandmarkList>> hand_world_landmarks;
   Source<Image> image;
 };
 
@@ -80,7 +78,7 @@ struct GestureRecognizerOutputs {
 //     Image to perform hand gesture recognition on.
 //
 // Outputs:
-//   HAND_GESTURES - std::vector<ClassificationResult>
+//   HAND_GESTURES - std::vector<ClassificationList>
 //     Recognized hand gestures with sorted order such that the winning label is
 //     the first item in the list.
 //   LANDMARKS: - std::vector<NormalizedLandmarkList>
@@ -136,15 +134,13 @@ class GestureRecognizerGraph : public core::ModelTaskGraph {
                          *sc->MutableOptions<GestureRecognizerGraphOptions>(),
                          graph[Input<Image>(kImageTag)], graph));
     hand_gesture_recognition_output.gesture >>
-        graph[Output<std::vector<ClassificationResult>>(kHandGesturesTag)];
+        graph[Output<std::vector<ClassificationList>>(kHandGesturesTag)];
     hand_gesture_recognition_output.handedness >>
-        graph[Output<std::vector<mediapipe::ClassificationList>>(
-            kHandednessTag)];
+        graph[Output<std::vector<ClassificationList>>(kHandednessTag)];
     hand_gesture_recognition_output.hand_landmarks >>
-        graph[Output<std::vector<mediapipe::NormalizedLandmarkList>>(
-            kLandmarksTag)];
+        graph[Output<std::vector<NormalizedLandmarkList>>(kLandmarksTag)];
     hand_gesture_recognition_output.hand_world_landmarks >>
-        graph[Output<std::vector<mediapipe::LandmarkList>>(kWorldLandmarksTag)];
+        graph[Output<std::vector<LandmarkList>>(kWorldLandmarksTag)];
     hand_gesture_recognition_output.image >> graph[Output<Image>(kImageTag)];
     return graph.GetConfig();
   }
@@ -193,7 +189,7 @@ class GestureRecognizerGraph : public core::ModelTaskGraph {
     image_size >> hand_gesture_subgraph.In(kImageSizeTag);
     hand_landmarks_id >> hand_gesture_subgraph.In(kHandTrackingIdsTag);
     auto hand_gestures =
-        hand_gesture_subgraph[Output<std::vector<ClassificationResult>>(
+        hand_gesture_subgraph[Output<std::vector<ClassificationList>>(
             kHandGesturesTag)];
 
     return {{.gesture = hand_gestures,
