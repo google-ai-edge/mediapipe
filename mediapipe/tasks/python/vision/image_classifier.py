@@ -43,6 +43,7 @@ _IMAGE_IN_STREAM_NAME = 'image_in'
 _IMAGE_OUT_STREAM_NAME = 'image_out'
 _IMAGE_TAG = 'IMAGE'
 _TASK_GRAPH_NAME = 'mediapipe.tasks.vision.image_classifier.ImageClassifierGraph'
+_MICRO_SECONDS_PER_MILLISECOND = 1000
 
 
 @dataclasses.dataclass
@@ -91,7 +92,7 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
     """Creates an `ImageClassifier` object from a TensorFlow Lite model and the default `ImageClassifierOptions`.
 
     Note that the created `ImageClassifier` instance is in image mode, for
-    detecting objects on single image inputs.
+    classifying objects on single image inputs.
 
     Args:
       model_path: Path to the model.
@@ -137,7 +138,8 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
       ])
       image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
       timestamp = output_packets[_IMAGE_OUT_STREAM_NAME].timestamp
-      options.result_callback(classification_result, image, timestamp)
+      options.result_callback(classification_result, image,
+                              timestamp.value / _MICRO_SECONDS_PER_MILLISECOND)
 
     task_info = _TaskInfo(
         task_graph=_TASK_GRAPH_NAME,
@@ -156,7 +158,6 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
             _RunningMode.LIVE_STREAM), options.running_mode,
         packets_callback if options.result_callback else None)
 
-  # TODO: Create an Image class for MediaPipe Tasks.
   def classify(
       self,
       image: image_module.Image,
@@ -206,8 +207,9 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
       RuntimeError: If image classification failed to run.
     """
     output_packets = self._process_video_data({
-      _IMAGE_IN_STREAM_NAME:
-        packet_creator.create_image(image).at(timestamp_ms)
+        _IMAGE_IN_STREAM_NAME:
+            packet_creator.create_image(image).at(
+                timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
     })
     classification_result_proto = packet_getter.get_proto(
       output_packets[_CLASSIFICATION_RESULT_OUT_STREAM_NAME])
@@ -216,3 +218,36 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
         classifications_module.Classifications.create_from_pb2(classification)
         for classification in classification_result_proto.classifications
     ])
+
+  def classify_async(self, image: image_module.Image, timestamp_ms: int) -> None:
+    """Sends live image data (an Image with a unique timestamp) to perform
+    image classification.
+
+    Only use this method when the ImageClassifier is created with the live
+    stream running mode. The input timestamps should be monotonically increasing
+    for adjacent calls of this method. This method will return immediately after
+    the input image is accepted. The results will be available via the
+    `result_callback` provided in the `ImageClassifierOptions`. The
+    `classify_async` method is designed to process live stream data such as
+    camera input. To lower the overall latency, image classifier may drop the
+    input images if needed. In other words, it's not guaranteed to have output
+    per input image.
+
+    The `result_callback` provides:
+      - A classification result object that contains a list of classifications.
+      - The input image that the image classifier runs on.
+      - The input timestamp in milliseconds.
+
+    Args:
+      image: MediaPipe Image.
+      timestamp_ms: The timestamp of the input image in milliseconds.
+
+    Raises:
+      ValueError: If the current input timestamp is smaller than what the image
+        classifier has already processed.
+    """
+    self._send_live_stream_data({
+        _IMAGE_IN_STREAM_NAME:
+            packet_creator.create_image(image).at(
+                timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
+    })
