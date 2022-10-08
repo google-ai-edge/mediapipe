@@ -563,6 +563,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_test_model_text_classifier_bool_output_tflite",
+        sha256 = "09877ac6d718d78da6380e21fe8179854909d116632d6d770c12f8a51792e310",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/test_model_text_classifier_bool_output.tflite?generation=1664904110313163"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_test_model_text_classifier_with_regex_tokenizer_tflite",
         sha256 = "cb12618d084b813cb7b90ceb39c9fe4b18dae4de9880b912cdcd4b577cd65b4f",
         urls = ["https://storage.googleapis.com/mediapipe-assets/test_model_text_classifier_with_regex_tokenizer.tflite?generation=1663009546758456"],

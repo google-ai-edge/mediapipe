@@ -123,15 +123,17 @@ absl::StatusOr<ClassificationHeadsProperties> GetClassificationHeadsProperties(
     const auto* tensor =
         primary_subgraph->tensors()->Get(primary_subgraph->outputs()->Get(i));
     if (tensor->type() != tflite::TensorType_FLOAT32 &&
-        tensor->type() != tflite::TensorType_UINT8) {
+        tensor->type() != tflite::TensorType_UINT8 &&
+        tensor->type() != tflite::TensorType_BOOL) {
       return CreateStatusWithPayload(
           absl::StatusCode::kInvalidArgument,
           absl::StrFormat("Expected output tensor at index %d to have type "
-                          "UINT8 or FLOAT32, found %s instead.",
+                          "UINT8 or FLOAT32 or BOOL, found %s instead.",
                           i, tflite::EnumNameTensorType(tensor->type())),
           MediaPipeTasksStatus::kInvalidOutputTensorTypeError);
     }
-    if (tensor->type() == tflite::TensorType_UINT8) {
+    if (tensor->type() == tflite::TensorType_UINT8 ||
+        tensor->type() == tflite::TensorType_BOOL) {
       num_quantized_tensors++;
     }
   }

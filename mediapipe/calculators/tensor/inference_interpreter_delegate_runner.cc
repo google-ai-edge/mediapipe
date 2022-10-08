@@ -21,8 +21,10 @@
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "tensorflow/lite/c/c_api_types.h"
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/interpreter_builder.h"
+#include "tensorflow/lite/string_util.h"
 
 namespace mediapipe {
 
@@ -37,6 +39,19 @@ void CopyTensorBufferToInterpreter(const Tensor& input_tensor,
   T* local_tensor_buffer =
       interpreter->typed_input_tensor<T>(input_tensor_index);
   std::memcpy(local_tensor_buffer, input_tensor_buffer, input_tensor.bytes());
+}
+
+template <>
+void CopyTensorBufferToInterpreter<char>(const Tensor& input_tensor,
+                                         tflite::Interpreter* interpreter,
+                                         int input_tensor_index) {
+  const char* input_tensor_buffer =
+      input_tensor.GetCpuReadView().buffer<char>();
+  tflite::DynamicBuffer dynamic_buffer;
+  dynamic_buffer.AddString(input_tensor_buffer,
+                           input_tensor.shape().num_elements());
+  dynamic_buffer.WriteToTensorAsVector(
+      interpreter->tensor(interpreter->inputs()[input_tensor_index]));
 }
 
 template <typename T>
@@ -87,13 +102,13 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
         break;
       }
       case TfLiteType::kTfLiteUInt8: {
-        CopyTensorBufferToInterpreter<uint8>(input_tensors[i],
-                                             interpreter_.get(), i);
+        CopyTensorBufferToInterpreter<uint8_t>(input_tensors[i],
+                                               interpreter_.get(), i);
         break;
       }
       case TfLiteType::kTfLiteInt8: {
-        CopyTensorBufferToInterpreter<int8>(input_tensors[i],
-                                            interpreter_.get(), i);
+        CopyTensorBufferToInterpreter<int8_t>(input_tensors[i],
+                                              interpreter_.get(), i);
         break;
       }
       case TfLiteType::kTfLiteInt32: {
@@ -101,6 +116,14 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
                                                interpreter_.get(), i);
         break;
       }
+      case TfLiteType::kTfLiteString: {
+        CopyTensorBufferToInterpreter<char>(input_tensors[i],
+                                            interpreter_.get(), i);
+        break;
+      }
+      case TfLiteType::kTfLiteBool:
+        // No current use-case for copying MediaPipe Tensors with bool type to
+        // TfLiteTensors.
       default:
         return absl::InvalidArgumentError(
             absl::StrCat("Unsupported input tensor type:", input_tensor_type));
@@ -146,6 +169,15 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
         CopyTensorBufferFromInterpreter<int32_t>(interpreter_.get(), i,
                                                  &output_tensors.back());
         break;
+      case TfLiteType::kTfLiteBool:
+        output_tensors.emplace_back(Tensor::ElementType::kBool, shape,
+                                    Tensor::QuantizationParameters{1.0f, 0});
+        CopyTensorBufferFromInterpreter<bool>(interpreter_.get(), i,
+                                              &output_tensors.back());
+        break;
+      case TfLiteType::kTfLiteString:
+        // No current use-case for copying TfLiteTensors with string type to
+        // MediaPipe Tensors.
       default:
         return absl::InvalidArgumentError(
             absl::StrCat("Unsupported output tensor type:",

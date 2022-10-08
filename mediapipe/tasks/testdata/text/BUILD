@@ -27,6 +27,7 @@ mediapipe_files(srcs = [
     "albert_with_metadata.tflite",
     "bert_text_classifier.tflite",
     "mobilebert_with_metadata.tflite",
+    "test_model_text_classifier_bool_output.tflite",
     "test_model_text_classifier_with_regex_tokenizer.tflite",
 ])
 
