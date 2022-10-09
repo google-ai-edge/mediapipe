@@ -75,7 +75,7 @@ cc_library(
 
 # Hello World example app.
 android_binary(
-    name = "helloworld",
+    name = "PoseTrackingGpuSolution",
     #    assets = [
     #        "//mediapipe/graphs/edge_detection:mobile_gpu.binarypb",
     #    ],
@@ -83,7 +83,7 @@ android_binary(
     manifest = "AndroidManifest.xml",
     manifest_values = {
         "applicationId": "com.google.mediapipe.apps.posetrackingsolutiongpu",
-        "appName": "Hello World",
+        "appName": "PoseTrackingGpuSolution",
         "mainActivity": ".MainActivity",
         #        "cameraFacingFront": "False",
         #        "binaryGraphName": "mobile_gpu.binarypb",
