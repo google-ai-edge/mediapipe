@@ -43,3 +43,13 @@ def get_test_data_path(file_or_dirname: str) -> str:
       if f.endswith(file_or_dirname):
         return os.path.join(directory, f)
   raise ValueError("No %s in test directory" % file_or_dirname)
+
+
+def create_calibration_file(file_dir: str,
+                            file_name: str = "score_calibration.txt",
+                            content: str = "1.0,2.0,3.0,4.0") -> str:
+  """Creates the calibration file."""
+  calibration_file = os.path.join(file_dir, file_name)
+  with open(calibration_file, mode="w") as file:
+    file.write(content)
+  return calibration_file

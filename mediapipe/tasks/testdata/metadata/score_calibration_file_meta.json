@@ -1,0 +1,9 @@
+{
+  "associated_files": [
+    {
+      "name": "score_calibration.txt",
+      "description": "Contains sigmoid-based score calibration parameters. The main purposes of score calibration is to make scores across classes comparable, so that a common threshold can be used for all output classes.",
+      "type": "TENSOR_AXIS_SCORE_CALIBRATION"
+    }
+  ]
+}
