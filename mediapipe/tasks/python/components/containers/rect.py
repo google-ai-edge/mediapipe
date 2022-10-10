@@ -109,6 +109,8 @@ class NormalizedRect:
         y_center=self.y_center,
         width=self.width,
         height=self.height,
+        rotation=self.rotation,
+        rect_id=self.rect_id
     )
 
   @classmethod
@@ -119,7 +121,10 @@ class NormalizedRect:
         x_center=pb2_obj.x_center,
         y_center=pb2_obj.y_center,
         width=pb2_obj.width,
-        height=pb2_obj.height)
+        height=pb2_obj.height,
+        rotation=pb2_obj.rotation,
+        rect_id=pb2_obj.rect_id
+    )
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.
