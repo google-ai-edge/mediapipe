@@ -11,7 +11,7 @@
         android:targetSdkVersion="30" />
 
     <application
-        android:label="facedetectiontest"
+        android:label="objectdetectortest"
         android:name="android.support.multidex.MultiDexApplication"
         android:taskAffinity="">
         <uses-library android:name="android.test.runner" />

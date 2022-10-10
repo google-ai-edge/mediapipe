@@ -38,7 +38,8 @@ public abstract class ObjectDetectionResult implements TaskResult {
    * Creates an {@link ObjectDetectionResult} instance from a list of {@link Detection} protobuf
    * messages.
    *
-   * @param detectionList a list of {@link Detection} protobuf messages.
+   * @param detectionList a list of {@link DetectionOuterClass.Detection} protobuf messages.
+   * @param timestampMs a timestamp for this result.
    */
   static ObjectDetectionResult create(List<Detection> detectionList, long timestampMs) {
     List<com.google.mediapipe.tasks.components.containers.Detection> detections = new ArrayList<>();

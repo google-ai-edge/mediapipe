@@ -19,8 +19,12 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 android_library(
     name = "core",
     srcs = glob(["*.java"]),
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
     deps = [
         ":libmediapipe_tasks_vision_jni_lib",
+        "//mediapipe/framework/formats:rect_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/java/com/google/mediapipe/framework/image",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
@@ -36,6 +40,7 @@ cc_binary(
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
+        "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
