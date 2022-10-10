@@ -334,13 +334,6 @@ mediapipe_register_type(
     deps = [":landmark_cc_proto"],
 )
 
-# Expose the proto source files for building mediapipe AAR.
-filegroup(
-    name = "protos_src",
-    srcs = glob(["*.proto"]),
-    visibility = ["//mediapipe:__subpackages__"],
-)
-
 cc_library(
     name = "image",
     srcs = ["image.cc"],

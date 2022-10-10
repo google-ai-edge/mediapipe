@@ -20,6 +20,8 @@ package mediapipe.tasks.vision.gesture_recognizer.proto;
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/components/processors/proto/classifier_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
+import "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_classifier_graph_options.proto";
+import "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_embedder_graph_options.proto";
 
 message HandGestureRecognizerGraphOptions {
   extend mediapipe.CalculatorOptions {
@@ -29,11 +31,18 @@ message HandGestureRecognizerGraphOptions {
   // specifying the TfLite model file with metadata, accelerator options, etc.
   optional core.proto.BaseOptions base_options = 1;
 
-  // Options for configuring the gesture classifier behavior, such as score
-  // threshold, number of results, etc.
-  optional components.processors.proto.ClassifierOptions classifier_options = 2;
+  // Options for GestureEmbedder.
+  optional GestureEmbedderGraphOptions gesture_embedder_graph_options = 2;
 
-  // Minimum confidence value ([0.0, 1.0]) for the hand landmarks to be
-  // considered tracked successfully
-  optional float min_tracking_confidence = 3 [default = 0.0];
+  // Options for GestureClassifier of default gestures.
+  optional GestureClassifierGraphOptions
+      canned_gesture_classifier_graph_options = 3;
+
+  // Options for GestureClassifier of custom gestures.
+  optional GestureClassifierGraphOptions
+      custom_gesture_classifier_graph_options = 4;
+
+  // TODO: remove these. Temporary solutions before bundle asset is
+  // ready.
+  optional components.processors.proto.ClassifierOptions classifier_options = 5;
 }

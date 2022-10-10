@@ -97,8 +97,8 @@ class Tensor {
     kUInt8,
     kInt8,
     kInt32,
-    // TODO: Update the inference runner to handle kTfLiteString.
-    kChar
+    kChar,
+    kBool
   };
   struct Shape {
     Shape() = default;
@@ -330,6 +330,8 @@ class Tensor {
         return sizeof(int32_t);
       case ElementType::kChar:
         return sizeof(char);
+      case ElementType::kBool:
+        return sizeof(bool);
     }
   }
   int bytes() const { return shape_.num_elements() * element_size(); }

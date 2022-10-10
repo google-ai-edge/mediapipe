@@ -155,7 +155,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    * Creates an {@link ObjectDetector} instance from an {@link ObjectDetectorOptions}.
    *
    * @param context an Android {@link Context}.
-   * @param detectorOptions a {@link ObjectDetectorOptions} instance.
+   * @param detectorOptions an {@link ObjectDetectorOptions} instance.
    * @throws MediaPipeException if there is an error during {@link ObjectDetector} creation.
    */
   public static ObjectDetector createFromOptions(
@@ -192,7 +192,6 @@ public final class ObjectDetector extends BaseVisionTaskApi {
                 .setEnableFlowLimiting(detectorOptions.runningMode() == RunningMode.LIVE_STREAM)
                 .build(),
             handler);
-    detectorOptions.errorListener().ifPresent(runner::setErrorListener);
     return new ObjectDetector(runner, detectorOptions.runningMode());
   }
 
@@ -204,7 +203,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    * @param runningMode a mediapipe vision task {@link RunningMode}.
    */
   private ObjectDetector(TaskRunner taskRunner, RunningMode runningMode) {
-    super(taskRunner, runningMode);
+    super(taskRunner, runningMode, IMAGE_IN_STREAM_NAME);
   }
 
   /**
@@ -221,7 +220,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    * @throws MediaPipeException if there is an internal error.
    */
   public ObjectDetectionResult detect(Image inputImage) {
-    return (ObjectDetectionResult) processImageData(IMAGE_IN_STREAM_NAME, inputImage);
+    return (ObjectDetectionResult) processImageData(inputImage);
   }
 
   /**
@@ -242,8 +241,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    * @throws MediaPipeException if there is an internal error.
    */
   public ObjectDetectionResult detectForVideo(Image inputImage, long inputTimestampMs) {
-    return (ObjectDetectionResult)
-        processVideoData(IMAGE_IN_STREAM_NAME, inputImage, inputTimestampMs);
+    return (ObjectDetectionResult) processVideoData(inputImage, inputTimestampMs);
   }
 
   /**
@@ -265,7 +263,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    * @throws MediaPipeException if there is an internal error.
    */
   public void detectAsync(Image inputImage, long inputTimestampMs) {
-    sendLiveStreamData(IMAGE_IN_STREAM_NAME, inputImage, inputTimestampMs);
+    sendLiveStreamData(inputImage, inputTimestampMs);
   }
 
   /** Options for setting up an {@link ObjectDetector}. */
@@ -275,12 +273,12 @@ public final class ObjectDetector extends BaseVisionTaskApi {
     /** Builder for {@link ObjectDetectorOptions}. */
     @AutoValue.Builder
     public abstract static class Builder {
-      /** Sets the base options for the object detector task. */
+      /** Sets the {@link BaseOptions} for the object detector task. */
       public abstract Builder setBaseOptions(BaseOptions value);
 
       /**
-       * Sets the running mode for the object detector task. Default to the image mode. Object
-       * detector has three modes:
+       * Sets the {@link RunningMode} for the object detector task. Default to the image mode.
+       * Object detector has three modes:
        *
        * <ul>
        *   <li>IMAGE: The mode for detecting objects on single image inputs.
@@ -293,8 +291,8 @@ public final class ObjectDetector extends BaseVisionTaskApi {
       public abstract Builder setRunningMode(RunningMode value);
 
       /**
-       * Sets the locale to use for display names specified through the TFLite Model Metadata, if
-       * any. Defaults to English.
+       * Sets the optional locale to use for display names specified through the TFLite Model
+       * Metadata, if any.
        */
       public abstract Builder setDisplayNamesLocale(String value);
 
@@ -331,12 +329,12 @@ public final class ObjectDetector extends BaseVisionTaskApi {
       public abstract Builder setCategoryDenylist(List<String> value);
 
       /**
-       * Sets the result listener to receive the detection results asynchronously when the object
-       * detector is in the live stream mode.
+       * Sets the {@link ResultListener} to receive the detection results asynchronously when the
+       * object detector is in the live stream mode.
        */
       public abstract Builder setResultListener(ResultListener<ObjectDetectionResult, Image> value);
 
-      /** Sets an optional error listener. */
+      /** Sets an optional {@link ErrorListener}}. */
       public abstract Builder setErrorListener(ErrorListener value);
 
       abstract ObjectDetectorOptions autoBuild();

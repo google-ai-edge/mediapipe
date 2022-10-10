@@ -208,7 +208,7 @@ TEST_F(CreateFromOptionsTest, FailsWithMissingModel) {
   EXPECT_THAT(
       object_detector.status().message(),
       HasSubstr("ExternalFile must specify at least one of 'file_content', "
-                "'file_name' or 'file_descriptor_meta'."));
+                "'file_name', 'file_pointer_meta' or 'file_descriptor_meta'."));
   EXPECT_THAT(object_detector.status().GetPayload(kMediaPipeTasksPayload),
               Optional(absl::Cord(absl::StrCat(
                   MediaPipeTasksStatus::kRunnerInitializationError))));

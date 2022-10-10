@@ -247,11 +247,37 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
     image_in >> hand_landmarks_detector_graph.In("IMAGE");
     clipped_hand_rects >> hand_landmarks_detector_graph.In("HAND_RECT");
 
+    auto landmarks = hand_landmarks_detector_graph.Out(kLandmarksTag);
+    auto world_landmarks =
+        hand_landmarks_detector_graph.Out(kWorldLandmarksTag);
     auto hand_rects_for_next_frame =
-        hand_landmarks_detector_graph[Output<std::vector<NormalizedRect>>(
-            kHandRectNextFrameTag)];
+        hand_landmarks_detector_graph.Out(kHandRectNextFrameTag);
+    auto handedness = hand_landmarks_detector_graph.Out(kHandednessTag);
+
+    auto& image_property = graph.AddNode("ImagePropertiesCalculator");
+    image_in >> image_property.In("IMAGE");
+    auto image_size = image_property.Out("SIZE");
+
+    auto& deduplicate = graph.AddNode("HandLandmarksDeduplicationCalculator");
+    landmarks >> deduplicate.In("MULTI_LANDMARKS");
+    world_landmarks >> deduplicate.In("MULTI_WORLD_LANDMARKS");
+    hand_rects_for_next_frame >> deduplicate.In("MULTI_ROIS");
+    handedness >> deduplicate.In("MULTI_CLASSIFICATIONS");
+    image_size >> deduplicate.In("IMAGE_SIZE");
+
+    auto filtered_landmarks =
+        deduplicate[Output<std::vector<NormalizedLandmarkList>>(
+            "MULTI_LANDMARKS")];
+    auto filtered_world_landmarks =
+        deduplicate[Output<std::vector<LandmarkList>>("MULTI_WORLD_LANDMARKS")];
+    auto filtered_hand_rects_for_next_frame =
+        deduplicate[Output<std::vector<NormalizedRect>>("MULTI_ROIS")];
+    auto filtered_handedness =
+        deduplicate[Output<std::vector<ClassificationList>>(
+            "MULTI_CLASSIFICATIONS")];
+
     // Back edge.
-    hand_rects_for_next_frame >> previous_loopback.In("LOOP");
+    filtered_hand_rects_for_next_frame >> previous_loopback.In("LOOP");
 
     // TODO: Replace PassThroughCalculator with a calculator that
     // converts the pixel data to be stored on the target storage (CPU vs GPU).
@@ -259,14 +285,10 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
     image_in >> pass_through.In("");
 
     return {{
-        /* landmark_lists= */ hand_landmarks_detector_graph
-            [Output<std::vector<NormalizedLandmarkList>>(kLandmarksTag)],
-        /*  world_landmark_lists= */
-        hand_landmarks_detector_graph[Output<std::vector<LandmarkList>>(
-            kWorldLandmarksTag)],
-        /* hand_rects_next_frame= */ hand_rects_for_next_frame,
-        hand_landmarks_detector_graph[Output<std::vector<ClassificationList>>(
-            kHandednessTag)],
+        /* landmark_lists= */ filtered_landmarks,
+        /* world_landmark_lists= */ filtered_world_landmarks,
+        /* hand_rects_next_frame= */ filtered_hand_rects_for_next_frame,
+        /* handedness= */ filtered_handedness,
         /* palm_rects= */
         hand_detector[Output<std::vector<NormalizedRect>>(kPalmRectsTag)],
         /* palm_detections */

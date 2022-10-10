@@ -87,6 +87,9 @@ absl::Status TensorsDequantizationCalculator::Process(CalculatorContext* cc) {
       case Tensor::ElementType::kInt8:
         Dequantize<int8>(input_tensor, &output_tensors->back());
         break;
+      case Tensor::ElementType::kBool:
+        Dequantize<bool>(input_tensor, &output_tensors->back());
+        break;
       default:
         return absl::InvalidArgumentError(absl::StrCat(
             "Unsupported input tensor type: ", input_tensor.element_type()));

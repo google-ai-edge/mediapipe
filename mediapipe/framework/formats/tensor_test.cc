@@ -29,6 +29,9 @@ TEST(General, TestDataTypes) {
 
   Tensor t_char(Tensor::ElementType::kChar, Tensor::Shape{4});
   EXPECT_EQ(t_char.bytes(), t_char.shape().num_elements() * sizeof(char));
+
+  Tensor t_bool(Tensor::ElementType::kBool, Tensor::Shape{2, 3});
+  EXPECT_EQ(t_bool.bytes(), t_bool.shape().num_elements() * sizeof(bool));
 }
 
 TEST(Cpu, TestMemoryAllocation) {

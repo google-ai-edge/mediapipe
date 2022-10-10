@@ -27,7 +27,6 @@ limitations under the License.
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #include "mediapipe/tasks/cc/components/processors/classification_postprocessing_graph.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
@@ -36,7 +35,6 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/landmarks_to_matrix_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/hand_gesture_recognizer_graph_options.pb.h"
-#include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 
 namespace mediapipe {
@@ -50,7 +48,8 @@ using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
-using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
+using ::mediapipe::tasks::components::processors::
+    ConfigureTensorsToClassificationCalculator;
 using ::mediapipe::tasks::vision::gesture_recognizer::proto::
     HandGestureRecognizerGraphOptions;
 
@@ -95,15 +94,14 @@ Source<std::vector<Tensor>> ConvertMatrixToTensor(Source<Matrix> matrix,
 //     The size of image from which the landmarks detected from.
 //
 // Outputs:
-//   HAND_GESTURES - ClassificationResult
+//   HAND_GESTURES - ClassificationList
 //     Recognized hand gestures with sorted order such that the winning label is
 //     the first item in the list.
 //
 //
 // Example:
 // node {
-//   calculator:
-//   "mediapipe.tasks.vision.gesture_recognizer.SingleHandGestureRecognizerGraph"
+//   calculator: "mediapipe.tasks.vision.SingleHandGestureRecognizerGraph"
 //   input_stream: "HANDEDNESS:handedness"
 //   input_stream: "LANDMARKS:landmarks"
 //   input_stream: "WORLD_LANDMARKS:world_landmarks"
@@ -136,12 +134,12 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
             graph[Input<NormalizedLandmarkList>(kLandmarksTag)],
             graph[Input<LandmarkList>(kWorldLandmarksTag)],
             graph[Input<std::pair<int, int>>(kImageSizeTag)], graph));
-    hand_gestures >> graph[Output<ClassificationResult>(kHandGesturesTag)];
+    hand_gestures >> graph[Output<ClassificationList>(kHandGesturesTag)];
     return graph.GetConfig();
   }
 
  private:
-  absl::StatusOr<Source<ClassificationResult>> BuildGestureRecognizerGraph(
+  absl::StatusOr<Source<ClassificationList>> BuildGestureRecognizerGraph(
       const HandGestureRecognizerGraphOptions& graph_options,
       const core::ModelResources& model_resources,
       Source<ClassificationList> handedness,
@@ -201,25 +199,24 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
     auto concatenated_tensors = concatenate_tensor_vector.Out("");
 
     // Inference for static hand gesture recognition.
+    // TODO add embedding step.
     auto& inference = AddInference(
         model_resources, graph_options.base_options().acceleration(), graph);
     concatenated_tensors >> inference.In(kTensorsTag);
     auto inference_output_tensors = inference.Out(kTensorsTag);
 
-    auto& postprocessing = graph.AddNode(
-        "mediapipe.tasks.components.processors."
-        "ClassificationPostprocessingGraph");
-    MP_RETURN_IF_ERROR(
-        components::processors::ConfigureClassificationPostprocessingGraph(
-            model_resources, graph_options.classifier_options(),
-            &postprocessing
-                 .GetOptions<components::processors::proto::
-                                 ClassificationPostprocessingGraphOptions>()));
-    inference_output_tensors >> postprocessing.In(kTensorsTag);
-    auto classification_result =
-        postprocessing[Output<ClassificationResult>("CLASSIFICATION_RESULT")];
-
-    return classification_result;
+    auto& tensors_to_classification =
+        graph.AddNode("TensorsToClassificationCalculator");
+    MP_RETURN_IF_ERROR(ConfigureTensorsToClassificationCalculator(
+        graph_options.classifier_options(),
+        *model_resources.GetMetadataExtractor(), 0,
+        &tensors_to_classification.GetOptions<
+            mediapipe::TensorsToClassificationCalculatorOptions>()));
+    inference_output_tensors >> tensors_to_classification.In(kTensorsTag);
+    auto classification_list =
+        tensors_to_classification[Output<ClassificationList>(
+            "CLASSIFICATIONS")];
+    return classification_list;
   }
 };
 
@@ -247,9 +244,9 @@ REGISTER_MEDIAPIPE_GRAPH(
 //     index corresponding to the same hand if the graph runs multiple times.
 //
 // Outputs:
-//   HAND_GESTURES - std::vector<ClassificationResult>
+//   HAND_GESTURES - std::vector<ClassificationList>
 //     A vector of recognized hand gestures. Each vector element is the
-//     ClassificationResult of the hand in input vector.
+//     ClassificationList of the hand in input vector.
 //
 //
 // Example:
@@ -288,12 +285,12 @@ class MultipleHandGestureRecognizerGraph : public core::ModelTaskGraph {
             graph[Input<std::pair<int, int>>(kImageSizeTag)],
             graph[Input<std::vector<int>>(kHandTrackingIdsTag)], graph));
     multi_hand_gestures >>
-        graph[Output<std::vector<ClassificationResult>>(kHandGesturesTag)];
+        graph[Output<std::vector<ClassificationList>>(kHandGesturesTag)];
     return graph.GetConfig();
   }
 
  private:
-  absl::StatusOr<Source<std::vector<ClassificationResult>>>
+  absl::StatusOr<Source<std::vector<ClassificationList>>>
   BuildMultiGestureRecognizerSubraph(
       const HandGestureRecognizerGraphOptions& graph_options,
       Source<std::vector<ClassificationList>> multi_handedness,
@@ -346,12 +343,13 @@ class MultipleHandGestureRecognizerGraph : public core::ModelTaskGraph {
     image_size_clone >> hand_gesture_recognizer_graph.In(kImageSizeTag);
     auto hand_gestures = hand_gesture_recognizer_graph.Out(kHandGesturesTag);
 
-    auto& end_loop_classification_results =
-        graph.AddNode("mediapipe.tasks.EndLoopClassificationResultCalculator");
-    batch_end >> end_loop_classification_results.In(kBatchEndTag);
-    hand_gestures >> end_loop_classification_results.In(kItemTag);
-    auto multi_hand_gestures = end_loop_classification_results
-        [Output<std::vector<ClassificationResult>>(kIterableTag)];
+    auto& end_loop_classification_lists =
+        graph.AddNode("EndLoopClassificationListCalculator");
+    batch_end >> end_loop_classification_lists.In(kBatchEndTag);
+    hand_gestures >> end_loop_classification_lists.In(kItemTag);
+    auto multi_hand_gestures =
+        end_loop_classification_lists[Output<std::vector<ClassificationList>>(
+            kIterableTag)];
 
     return multi_hand_gestures;
   }

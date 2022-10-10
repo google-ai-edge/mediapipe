@@ -79,3 +79,30 @@ cc_library(
         "@stblib//:stb_image",
     ],
 )
+
+cc_library(
+    name = "landmarks_duplicates_finder",
+    hdrs = ["landmarks_duplicates_finder.h"],
+    deps = [
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "landmarks_utils",
+    srcs = ["landmarks_utils.cc"],
+    hdrs = ["landmarks_utils.h"],
+    deps = ["//mediapipe/tasks/cc/components/containers:landmarks_detection"],
+)
+
+cc_test(
+    name = "landmarks_utils_test",
+    srcs = ["landmarks_utils_test.cc"],
+    deps = [
+        ":landmarks_utils",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/tasks/cc/components/containers:landmarks_detection",
+    ],
+)

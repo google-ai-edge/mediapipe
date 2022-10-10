@@ -20,6 +20,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
+#include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -54,6 +55,16 @@ absl::Status ConfigureClassificationPostprocessingGraph(
     const tasks::core::ModelResources& model_resources,
     const proto::ClassifierOptions& classifier_options,
     proto::ClassificationPostprocessingGraphOptions* options);
+
+// Utility function to fill in the TensorsToClassificationCalculatorOptions
+// based on the classifier options and the (optional) output tensor metadata.
+// This is meant to be used by other graphs that may also rely on this
+// calculator.
+absl::Status ConfigureTensorsToClassificationCalculator(
+    const proto::ClassifierOptions& options,
+    const metadata::ModelMetadataExtractor& metadata_extractor,
+    int tensor_index,
+    mediapipe::TensorsToClassificationCalculatorOptions* calculator_options);
 
 }  // namespace processors
 }  // namespace components

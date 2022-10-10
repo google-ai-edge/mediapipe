@@ -31,12 +31,37 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
-    name = "hand_gesture_recognizer_graph_options_proto",
-    srcs = ["hand_gesture_recognizer_graph_options.proto"],
+    name = "gesture_classifier_graph_options_proto",
+    srcs = ["gesture_classifier_graph_options.proto"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/tasks/cc/components/processors/proto:classifier_options_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_proto",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "hand_gesture_recognizer_graph_options_proto",
+    srcs = ["hand_gesture_recognizer_graph_options.proto"],
+    deps = [
+        ":gesture_classifier_graph_options_proto",
+        ":gesture_embedder_graph_options_proto",
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_proto",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "gesture_recognizer_graph_options_proto",
+    srcs = ["gesture_recognizer_graph_options.proto"],
+    deps = [
+        ":hand_gesture_recognizer_graph_options_proto",
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_proto",
+        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_proto",
     ],
 )

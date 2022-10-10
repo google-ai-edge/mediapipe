@@ -123,15 +123,17 @@ absl::StatusOr<ClassificationHeadsProperties> GetClassificationHeadsProperties(
     const auto* tensor =
         primary_subgraph->tensors()->Get(primary_subgraph->outputs()->Get(i));
     if (tensor->type() != tflite::TensorType_FLOAT32 &&
-        tensor->type() != tflite::TensorType_UINT8) {
+        tensor->type() != tflite::TensorType_UINT8 &&
+        tensor->type() != tflite::TensorType_BOOL) {
       return CreateStatusWithPayload(
           absl::StatusCode::kInvalidArgument,
           absl::StrFormat("Expected output tensor at index %d to have type "
-                          "UINT8 or FLOAT32, found %s instead.",
+                          "UINT8 or FLOAT32 or BOOL, found %s instead.",
                           i, tflite::EnumNameTensorType(tensor->type())),
           MediaPipeTasksStatus::kInvalidOutputTensorTypeError);
     }
-    if (tensor->type() == tflite::TensorType_UINT8) {
+    if (tensor->type() == tflite::TensorType_UINT8 ||
+        tensor->type() == tflite::TensorType_BOOL) {
       num_quantized_tensors++;
     }
   }
@@ -282,6 +284,20 @@ absl::Status ConfigureScoreCalibrationIfAny(
   return absl::OkStatus();
 }
 
+void ConfigureClassificationAggregationCalculator(
+    const ModelMetadataExtractor& metadata_extractor,
+    ClassificationAggregationCalculatorOptions* options) {
+  auto* output_tensors_metadata = metadata_extractor.GetOutputTensorMetadata();
+  if (output_tensors_metadata == nullptr) {
+    return;
+  }
+  for (const auto& metadata : *output_tensors_metadata) {
+    options->add_head_names(metadata->name()->str());
+  }
+}
+
+}  // namespace
+
 // Fills in the TensorsToClassificationCalculatorOptions based on the
 // classifier options and the (optional) output tensor metadata.
 absl::Status ConfigureTensorsToClassificationCalculator(
@@ -332,20 +348,6 @@ absl::Status ConfigureTensorsToClassificationCalculator(
   calculator_options->set_sort_by_descending_score(true);
   return absl::OkStatus();
 }
-
-void ConfigureClassificationAggregationCalculator(
-    const ModelMetadataExtractor& metadata_extractor,
-    ClassificationAggregationCalculatorOptions* options) {
-  auto* output_tensors_metadata = metadata_extractor.GetOutputTensorMetadata();
-  if (output_tensors_metadata == nullptr) {
-    return;
-  }
-  for (const auto& metadata : *output_tensors_metadata) {
-    options->add_head_names(metadata->name()->str());
-  }
-}
-
-}  // namespace
 
 absl::Status ConfigureClassificationPostprocessingGraph(
     const ModelResources& model_resources,

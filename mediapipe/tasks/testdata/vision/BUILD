@@ -47,6 +47,7 @@ mediapipe_files(srcs = [
     "mozart_square.jpg",
     "multi_objects.jpg",
     "palm_detection_full.tflite",
+    "pointing_up.jpg",
     "right_hands.jpg",
     "segmentation_golden_rotation0.png",
     "segmentation_input_rotation0.jpg",
@@ -54,6 +55,7 @@ mediapipe_files(srcs = [
     "selfie_segm_128_128_3_expected_mask.jpg",
     "selfie_segm_144_256_3.tflite",
     "selfie_segm_144_256_3_expected_mask.jpg",
+    "thumb_up.jpg",
 ])
 
 exports_files(
@@ -79,11 +81,13 @@ filegroup(
         "left_hands.jpg",
         "mozart_square.jpg",
         "multi_objects.jpg",
+        "pointing_up.jpg",
         "right_hands.jpg",
         "segmentation_golden_rotation0.png",
         "segmentation_input_rotation0.jpg",
         "selfie_segm_128_128_3_expected_mask.jpg",
         "selfie_segm_144_256_3_expected_mask.jpg",
+        "thumb_up.jpg",
     ],
     visibility = [
         "//mediapipe/python:__subpackages__",

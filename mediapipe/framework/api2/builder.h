@@ -112,6 +112,14 @@ class MultiPort : public Single {
   std::vector<std::unique_ptr<Base>>& vec_;
 };
 
+namespace internal_builder {
+
+template <typename T, typename U>
+using AllowCast = std::integral_constant<bool, std::is_same_v<T, AnyType> &&
+                                                   !std::is_same_v<T, U>>;
+
+}  // namespace internal_builder
+
 // These classes wrap references to the underlying source/destination
 // endpoints, adding type information and the user-visible API.
 template <bool IsSide, typename T = internal::Generic>
@@ -122,13 +130,14 @@ class DestinationImpl {
   explicit DestinationImpl(std::vector<std::unique_ptr<Base>>* vec)
       : DestinationImpl(&GetWithAutoGrow(vec, 0)) {}
   explicit DestinationImpl(DestinationBase* base) : base_(*base) {}
-  DestinationBase& base_;
-};
 
-template <bool IsSide, typename T>
-class MultiDestinationImpl : public MultiPort<DestinationImpl<IsSide, T>> {
- public:
-  using MultiPort<DestinationImpl<IsSide, T>>::MultiPort;
+  template <typename U,
+            std::enable_if_t<internal_builder::AllowCast<T, U>{}, int> = 0>
+  DestinationImpl<IsSide, U> Cast() {
+    return DestinationImpl<IsSide, U>(&base_);
+  }
+
+  DestinationBase& base_;
 };
 
 template <bool IsSide, typename T = internal::Generic>
@@ -171,12 +180,8 @@ class SourceImpl {
     return AddTarget(dest);
   }
 
-  template <typename U>
-  struct AllowCast
-      : public std::integral_constant<bool, std::is_same_v<T, AnyType> &&
-                                                !std::is_same_v<T, U>> {};
-
-  template <typename U, std::enable_if_t<AllowCast<U>{}, int> = 0>
+  template <typename U,
+            std::enable_if_t<internal_builder::AllowCast<T, U>{}, int> = 0>
   SourceImpl<IsSide, U> Cast() {
     return SourceImpl<IsSide, U>(base_);
   }
@@ -184,12 +189,6 @@ class SourceImpl {
  private:
   // Never null.
   SourceBase* base_;
-};
-
-template <bool IsSide, typename T>
-class MultiSourceImpl : public MultiPort<SourceImpl<IsSide, T>> {
- public:
-  using MultiPort<SourceImpl<IsSide, T>>::MultiPort;
 };
 
 // A source and a destination correspond to an output/input stream on a node,
@@ -201,20 +200,20 @@ class MultiSourceImpl : public MultiPort<SourceImpl<IsSide, T>> {
 template <typename T = internal::Generic>
 using Source = SourceImpl<false, T>;
 template <typename T = internal::Generic>
-using MultiSource = MultiSourceImpl<false, T>;
+using MultiSource = MultiPort<Source<T>>;
 template <typename T = internal::Generic>
 using SideSource = SourceImpl<true, T>;
 template <typename T = internal::Generic>
-using MultiSideSource = MultiSourceImpl<true, T>;
+using MultiSideSource = MultiPort<SideSource<T>>;
 
 template <typename T = internal::Generic>
 using Destination = DestinationImpl<false, T>;
 template <typename T = internal::Generic>
 using SideDestination = DestinationImpl<true, T>;
 template <typename T = internal::Generic>
-using MultiDestination = MultiDestinationImpl<false, T>;
+using MultiDestination = MultiPort<Destination<T>>;
 template <typename T = internal::Generic>
-using MultiSideDestination = MultiDestinationImpl<true, T>;
+using MultiSideDestination = MultiPort<SideDestination<T>>;
 
 class NodeBase {
  public:

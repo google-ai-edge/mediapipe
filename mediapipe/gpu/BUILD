@@ -1050,7 +1050,7 @@ objc_library(
     alwayslink = 1,
 )
 
-MIN_IOS_VERSION = "9.0"  # For thread_local.
+MIN_IOS_VERSION = "11.0"
 
 test_suite(
     name = "ios",
