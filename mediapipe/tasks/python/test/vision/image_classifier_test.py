@@ -146,7 +146,7 @@ class ImageClassifierTest(parameterized.TestCase):
     with self.assertRaisesRegex(
         ValueError,
         r"ExternalFile must specify at least one of 'file_content', "
-        r"'file_name' or 'file_descriptor_meta'."):
+        r"'file_name', 'file_pointer_meta' or 'file_descriptor_meta'."):
       base_options = _BaseOptions(model_asset_path='')
       options = _ImageClassifierOptions(base_options=base_options)
       _ImageClassifier.create_from_options(options)
