@@ -24,11 +24,13 @@ from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import classifications as classifications_module
+from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import image_classifier
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
+_NormalizedRect = rect_module.NormalizedRect
 _BaseOptions = base_options_module.BaseOptions
 _ClassifierOptions = classifier_options.ClassifierOptions
 _Category = category_module.Category
@@ -42,40 +44,6 @@ _RUNNING_MODE = running_mode_module.VisionTaskRunningMode
 
 _MODEL_FILE = 'mobilenet_v2_1.0_224.tflite'
 _IMAGE_FILE = 'burger.jpg'
-_EXPECTED_CATEGORIES = [
-    _Category(
-      index=934,
-      score=0.7939587831497192,
-      display_name='',
-      category_name='cheeseburger'),
-    _Category(
-      index=932,
-      score=0.02739289402961731,
-      display_name='',
-      category_name='bagel'),
-    _Category(
-      index=925,
-      score=0.01934075355529785,
-      display_name='',
-      category_name='guacamole'),
-    _Category(
-      index=963,
-      score=0.006327860057353973,
-      display_name='',
-      category_name='meat loaf')
-]
-_EXPECTED_CLASSIFICATION_RESULT = _ClassificationResult(
-  classifications=[
-    _Classifications(
-      entries=[
-        _ClassificationEntry(
-          categories=_EXPECTED_CATEGORIES,
-          timestamp_ms=0
-        )
-      ],
-      head_index=0,
-      head_name='probability')
-  ])
 _EMPTY_CLASSIFICATION_RESULT = _ClassificationResult(
   classifications=[
     _Classifications(
@@ -92,6 +60,60 @@ _ALLOW_LIST = ['cheeseburger', 'guacamole']
 _DENY_LIST = ['cheeseburger']
 _SCORE_THRESHOLD = 0.5
 _MAX_RESULTS = 3
+
+
+def _generate_burger_results(timestamp_ms: int) -> _ClassificationResult:
+  return _ClassificationResult(
+    classifications=[
+      _Classifications(
+        entries=[
+          _ClassificationEntry(
+            categories=[
+              _Category(
+                index=934,
+                score=0.7939587831497192,
+                display_name='',
+                category_name='cheeseburger'),
+              _Category(
+                index=932,
+                score=0.02739289402961731,
+                display_name='',
+                category_name='bagel'),
+              _Category(
+                index=925,
+                score=0.01934075355529785,
+                display_name='',
+                category_name='guacamole'),
+              _Category(
+                index=963,
+                score=0.006327860057353973,
+                display_name='',
+                category_name='meat loaf')
+            ],
+            timestamp_ms=timestamp_ms
+          )
+        ],
+        head_index=0,
+        head_name='probability')
+    ])
+
+
+def _generate_soccer_ball_results(timestamp_ms: int) -> _ClassificationResult:
+  return _ClassificationResult(
+    classifications=[
+      _Classifications(
+        entries=[
+          _ClassificationEntry(
+            categories=[
+              _Category(index=806, score=0.9965274930000305, display_name='',
+                        category_name='soccer ball')
+            ],
+            timestamp_ms=timestamp_ms
+          )
+        ],
+        head_index=0,
+        head_name='probability')
+    ])
 
 
 class ModelFileType(enum.Enum):
@@ -138,8 +160,8 @@ class ImageClassifierTest(parameterized.TestCase):
       self.assertIsInstance(classifier, _ImageClassifier)
 
   @parameterized.parameters(
-      (ModelFileType.FILE_NAME, 4, _EXPECTED_CLASSIFICATION_RESULT),
-      (ModelFileType.FILE_CONTENT, 4, _EXPECTED_CLASSIFICATION_RESULT))
+      (ModelFileType.FILE_NAME, 4, _generate_burger_results(0)),
+      (ModelFileType.FILE_CONTENT, 4, _generate_burger_results(0)))
   def test_classify(self, model_file_type, max_results,
                     expected_classification_result):
     # Creates classifier.
@@ -167,8 +189,8 @@ class ImageClassifierTest(parameterized.TestCase):
     classifier.close()
 
   @parameterized.parameters(
-    (ModelFileType.FILE_NAME, 4, _EXPECTED_CLASSIFICATION_RESULT),
-    (ModelFileType.FILE_CONTENT, 4, _EXPECTED_CLASSIFICATION_RESULT))
+    (ModelFileType.FILE_NAME, 4, _generate_burger_results(0)),
+    (ModelFileType.FILE_CONTENT, 4, _generate_burger_results(0)))
   def test_classify_in_context(self, model_file_type, max_results,
                                expected_classification_result):
     if model_file_type is ModelFileType.FILE_NAME:
@@ -189,6 +211,23 @@ class ImageClassifierTest(parameterized.TestCase):
       image_result = classifier.classify(self.test_image)
       # Comparing results.
       self.assertEqual(image_result, expected_classification_result)
+
+  def test_classify_succeeds_with_region_of_interest(self):
+    base_options = _BaseOptions(model_asset_path=self.model_path)
+    classifier_options = _ClassifierOptions(max_results=1)
+    options = _ImageClassifierOptions(
+      base_options=base_options, classifier_options=classifier_options)
+    with _ImageClassifier.create_from_options(options) as classifier:
+      # Load the test image.
+      test_image = _Image.create_from_file(
+          test_utils.get_test_data_path('multi_objects.jpg'))
+      # NormalizedRect around the soccer ball.
+      roi = _NormalizedRect(x_center=0.532, y_center=0.521, width=0.164,
+                            height=0.427)
+      # Performs image classification on the input.
+      image_result = classifier.classify(test_image, roi)
+      # Comparing results.
+      self.assertEqual(image_result, _generate_soccer_ball_results(0))
 
   def test_score_threshold_option(self):
     classifier_options = _ClassifierOptions(score_threshold=_SCORE_THRESHOLD)
@@ -353,16 +392,27 @@ class ImageClassifierTest(parameterized.TestCase):
       for timestamp in range(0, 300, 30):
         classification_result = classifier.classify_for_video(
             self.test_image, timestamp)
-        expected_classification_result = _ClassificationResult(
-          classifications=[
-            _Classifications(
-              entries=[
-                _ClassificationEntry(
-                  categories=_EXPECTED_CATEGORIES, timestamp_ms=timestamp)
-              ],
-              head_index=0, head_name='probability')
-          ])
-        self.assertEqual(classification_result, expected_classification_result)
+        self.assertEqual(classification_result,
+                         _generate_burger_results(timestamp))
+
+  def test_classify_for_video_succeeds_with_region_of_interest(self):
+    classifier_options = _ClassifierOptions(max_results=1)
+    options = _ImageClassifierOptions(
+      base_options=_BaseOptions(model_asset_path=self.model_path),
+      running_mode=_RUNNING_MODE.VIDEO,
+      classifier_options=classifier_options)
+    with _ImageClassifier.create_from_options(options) as classifier:
+      # Load the test image.
+      test_image = _Image.create_from_file(
+        test_utils.get_test_data_path('multi_objects.jpg'))
+      # NormalizedRect around the soccer ball.
+      roi = _NormalizedRect(x_center=0.532, y_center=0.521, width=0.164,
+                            height=0.427)
+      for timestamp in range(0, 300, 30):
+        classification_result = classifier.classify_for_video(
+          test_image, timestamp, roi)
+        self.assertEqual(classification_result,
+                         _generate_soccer_ball_results(timestamp))
 
   def test_calling_classify_in_live_stream_mode(self):
     options = _ImageClassifierOptions(

@@ -49,6 +49,7 @@ py_test(
         "//mediapipe/tasks/python/components/processors:classifier_options",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:classifications",
+        "//mediapipe/tasks/python/components/containers:rect",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:image_classifier",

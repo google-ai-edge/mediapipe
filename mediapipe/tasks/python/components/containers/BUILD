@@ -28,6 +28,15 @@ py_library(
 )
 
 py_library(
+    name = "rect",
+    srcs = ["rect.py"],
+    deps = [
+        "//mediapipe/framework/formats:rect_py_pb2",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
     name = "category",
     srcs = ["category.py"],
     deps = [

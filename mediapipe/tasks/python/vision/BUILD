@@ -49,6 +49,7 @@ py_library(
         "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_py_pb2",
         "//mediapipe/tasks/python/components/processors:classifier_options",
         "//mediapipe/tasks/python/components/containers:classifications",
+        "//mediapipe/tasks/python/components/containers:rect",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:optional_dependencies",
         "//mediapipe/tasks/python/core:task_info",
