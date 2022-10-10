@@ -12,8 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Placeholder for internal Python strict library compatibility macro.
+
 package(
     default_visibility = ["//mediapipe:__subpackages__"],
 )
 
 licenses(["notice"])
+
+py_library(
+    name = "hyperparameters",
+    srcs = ["hyperparameters.py"],
+)
