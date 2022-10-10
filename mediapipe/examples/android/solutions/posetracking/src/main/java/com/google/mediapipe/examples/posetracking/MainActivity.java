@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.mediapipe.apps.posetrackingsolutiongpu;
+package com.google.mediapipe.examples.posetracking;;
 
 import android.content.Intent;
 import android.graphics.Bitmap;

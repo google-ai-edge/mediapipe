@@ -110,6 +110,7 @@ cc_binary(
     linkstatic = 1,
     # TODO: Add more calculators to support other top-level solutions.
     deps = [
+        "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps",
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
         "//mediapipe/modules/face_detection:face_detection_full_range_image",
         "//mediapipe/modules/face_detection:face_detection_short_range_image",
@@ -131,7 +132,13 @@ cc_library(
 load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_aar")
 
 mediapipe_aar(
-    name = "solution_core",
+    name = "copperlabs-mediapipe",
     srcs = glob(["**/*.java"]),
     gen_libmediapipe = False,
 )
+
+#mediapipe_aar(
+#    name = "solution_core",
+#    srcs = glob(["**/*.java"]),
+#    gen_libmediapipe = False,
+#)

@@ -11,29 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+load("//mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs_aar.bzl", "copperlabs_aar")
 
 licenses(["notice"])
 
+POSE_TRACKING_SRCS = [
+    "PersonKeypoint.java",
+    "PoseTracking.java",
+    "PoseTrackingOptions.java",
+    "PoseTrackingResult.java",
+]
+
 android_library(
-    name = "posetracking",
-    srcs = [
-        "PersonKeypoint.java",
-        "PoseTracking.java",
-        "PoseTrackingOptions.java",
-        "PoseTrackingResult.java",
-    ],
-    assets = [
-        #        "//mediapipe/modules/face_detection:face_detection_full_range_image.binarypb",
-        #        "//mediapipe/modules/face_detection:face_detection_full_range_sparse.tflite",
-        #        "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
-        #        "//mediapipe/modules/face_detection:face_detection_short_range_image.binarypb",
-        "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_image.binarypb",
-        "//mediapipe/modules/pose_landmark:pose_landmark_heavy.tflite",
-        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
-        "//mediapipe/modules/pose_landmark:pose_landmark_lite.tflite",
-        "//mediapipe/modules/pose_detection:pose_detection.tflite",
-    ],
-    assets_dir = "",
+    name = "copperlabs-pose-api",
+    srcs = POSE_TRACKING_SRCS,
     javacopts = ["-Acom.google.auto.value.AutoBuilderIsUnstable"],
     manifest = ":AndroidManifest.xml",
     visibility = ["//visibility:public"],
@@ -50,3 +41,68 @@ android_library(
         "@maven//:com_google_guava_guava",
     ],
 )
+
+android_library(
+    name = "copperlabs-pose-landmark",
+    srcs = [],
+    assets = [
+        "//mediapipe/modules/pose_landmark:pose_landmark_heavy.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_lite.tflite",
+    ],
+    assets_dir = "",
+    manifest = ":AndroidManifest.xml",
+    visibility = ["//visibility:public"],
+    deps = [],
+)
+
+android_library(
+    name = "copperlabs-pose-detection",
+    srcs = [],
+    assets = [
+        "//mediapipe/modules/pose_detection:pose_detection.tflite",
+    ],
+    assets_dir = "",
+    manifest = ":AndroidManifest.xml",
+    visibility = ["//visibility:public"],
+    deps = [],
+)
+
+android_library(
+    name = "copperlabs-pose-graph",
+    srcs = [],
+    assets = [
+        "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_image.binarypb",
+    ],
+    assets_dir = "",
+    manifest = ":AndroidManifest.xml",
+    visibility = ["//visibility:public"],
+    deps = [],
+)
+
+#mediapipe_aar(
+#    name = "copperlabs-mediapipe",
+#    calculators = ["//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps"],
+#)
+#
+
+#copperlabs_aar(
+#    name = "copperlabs-pose-api",
+#    srcs = POSE_TRACKING_SRCS,
+#    additional_deps = [
+#        "//mediapipe/java/com/google/mediapipe/solutioncore:solution_base",
+#        "//mediapipe/java/com/google/mediapipe/solutioncore:camera_input",
+#        "@maven//:androidx_annotation_annotation",
+#    ],
+#    gen_libmediapipe = False,
+#)
+
+#mediapipe_aar(
+#    name = "copperlabs-pose-landmark",
+#    assets = [
+#        "//mediapipe/modules/pose_landmark:pose_landmark_heavy.tflite",
+#        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+#        "//mediapipe/modules/pose_landmark:pose_landmark_lite.tflite",
+#    ],
+#    gen_libmediapipe = False,
+#)

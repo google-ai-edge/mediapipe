@@ -4,3 +4,6 @@ mediapipe/MediaPipe.tulsiproj/*.tulsiconf-user
 mediapipe/provisioning_profile.mobileprovision
 .configure.bazelrc
 .user.bazelrc
+/mediapipe/examples/android/solutions/posetracking/libs/
+/mediapipe/examples/android/solutions/.idea/
+/mediapipe/examples/android/solutions/
