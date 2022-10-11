@@ -6,4 +6,5 @@ mediapipe/provisioning_profile.mobileprovision
 .user.bazelrc
 /mediapipe/examples/android/solutions/posetracking/libs/
 /mediapipe/examples/android/solutions/.idea/
-/mediapipe/examples/android/solutions/
+/mediapipe/examples/android/solutions/posetracking-camera/libs/
+/mediapipe/examples/android/solutions/posetracking-camera/build/
