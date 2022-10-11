@@ -15,7 +15,6 @@
 import os
 
 from absl.testing import parameterized
-import numpy as np
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.utils import model_util
@@ -24,6 +23,18 @@ from mediapipe.model_maker.python.core.utils import test_util
 
 
 class ModelUtilTest(tf.test.TestCase, parameterized.TestCase):
+
+  def test_load_model(self):
+    input_dim = 4
+    model = test_util.build_model(input_shape=[input_dim], num_classes=2)
+    saved_model_path = os.path.join(self.get_temp_dir(), 'saved_model')
+    model.save(saved_model_path)
+    loaded_model = model_util.load_keras_model(saved_model_path)
+
+    input_tensors = test_util.create_random_sample(size=[1, input_dim])
+    model_output = model.predict_on_batch(input_tensors)
+    loaded_model_output = loaded_model.predict_on_batch(input_tensors)
+    self.assertTrue((model_output == loaded_model_output).all())
 
   @parameterized.named_parameters(
       dict(
@@ -124,9 +135,9 @@ class ModelUtilTest(tf.test.TestCase, parameterized.TestCase):
                    input_dim: int,
                    max_input_value: int = 1000,
                    atol: float = 1e-04):
-    np.random.seed(0)
-    random_input = np.random.uniform(
-        low=0, high=max_input_value, size=(1, input_dim)).astype(np.float32)
+    random_input = test_util.create_random_sample(
+        size=[1, input_dim], high=max_input_value)
+    random_input = tf.convert_to_tensor(random_input)
 
     self.assertTrue(
         test_util.is_same_output(
