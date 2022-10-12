@@ -440,8 +440,9 @@ class Graph {
   // Creates a node of a specific type. Should be used for pure interfaces,
   // which do not have a built-in type string.
   template <class Calc>
-  Node<Calc>& AddNode(const std::string& type) {
-    auto node = std::make_unique<Node<Calc>>(type);
+  Node<Calc>& AddNode(absl::string_view type) {
+    auto node =
+        std::make_unique<Node<Calc>>(std::string(type.data(), type.size()));
     auto node_p = node.get();
     nodes_.emplace_back(std::move(node));
     return *node_p;
@@ -449,16 +450,18 @@ class Graph {
 
   // Creates a generic node, with no compile-time checking of inputs and
   // outputs. This can be used for calculators whose contract is not visible.
-  GenericNode& AddNode(const std::string& type) {
-    auto node = std::make_unique<GenericNode>(type);
+  GenericNode& AddNode(absl::string_view type) {
+    auto node =
+        std::make_unique<GenericNode>(std::string(type.data(), type.size()));
     auto node_p = node.get();
     nodes_.emplace_back(std::move(node));
     return *node_p;
   }
 
   // For legacy PacketGenerators.
-  PacketGenerator& AddPacketGenerator(const std::string& type) {
-    auto node = std::make_unique<PacketGenerator>(type);
+  PacketGenerator& AddPacketGenerator(absl::string_view type) {
+    auto node = std::make_unique<PacketGenerator>(
+        std::string(type.data(), type.size()));
     auto node_p = node.get();
     packet_gens_.emplace_back(std::move(node));
     return *node_p;
