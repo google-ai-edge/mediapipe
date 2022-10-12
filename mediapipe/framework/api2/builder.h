@@ -120,6 +120,9 @@ using AllowCast = std::integral_constant<bool, std::is_same_v<T, AnyType> &&
 
 }  // namespace internal_builder
 
+template <bool IsSide, typename T = internal::Generic>
+class SourceImpl;
+
 // These classes wrap references to the underlying source/destination
 // endpoints, adding type information and the user-visible API.
 template <bool IsSide, typename T = internal::Generic>
@@ -137,10 +140,14 @@ class DestinationImpl {
     return DestinationImpl<IsSide, U>(&base_);
   }
 
+ private:
   DestinationBase& base_;
+
+  template <bool Source_IsSide, typename Source_T>
+  friend class SourceImpl;
 };
 
-template <bool IsSide, typename T = internal::Generic>
+template <bool IsSide, typename T>
 class SourceImpl {
  public:
   using Base = SourceBase;
