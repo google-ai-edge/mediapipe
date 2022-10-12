@@ -138,6 +138,8 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
     """
 
     def packets_callback(output_packets: Mapping[str, packet_module.Packet]):
+      if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
+        return
       classification_result_proto = packet_getter.get_proto(
           output_packets[_CLASSIFICATION_RESULT_OUT_STREAM_NAME])
 
@@ -148,7 +150,7 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
       image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
       timestamp = output_packets[_IMAGE_OUT_STREAM_NAME].timestamp
       options.result_callback(classification_result, image,
-                              timestamp.value / _MICRO_SECONDS_PER_MILLISECOND)
+                              timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
 
     task_info = _TaskInfo(
         task_graph=_TASK_GRAPH_NAME,
