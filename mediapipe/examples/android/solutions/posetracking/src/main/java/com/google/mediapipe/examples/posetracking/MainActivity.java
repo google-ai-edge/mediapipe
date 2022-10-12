@@ -346,7 +346,7 @@ public class MainActivity extends AppCompatActivity {
 
   private void logExampleKeypoint(
           PoseTrackingResult result, int faceIndex, boolean showPixelValues) {
-    if (result.multiPoseTrackings().isEmpty()) {
+    if (result.multiPoseLandmarks().isEmpty()) {
       return;
     }
     LandmarkProto.Landmark exampleLandmark = result.multiPoseLandmarks().get(0);
