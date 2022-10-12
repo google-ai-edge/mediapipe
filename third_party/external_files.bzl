@@ -59,6 +59,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_burger_rotated_jpg",
+        sha256 = "b7bb5e59ef778f3ce6b3e616c511908a53d513b83a56aae58b7453e14b0a4b2a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/burger_rotated.jpg?generation=1665065843774448"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_cat_jpg",
         sha256 = "2533197401eebe9410ea4d063f86c43fbd2666f3e8165a38aca155c0d09c21be",
         urls = ["https://storage.googleapis.com/mediapipe-assets/cat.jpg?generation=1661875672441459"],
@@ -434,6 +440,12 @@ def external_files():
         name = "com_google_mediapipe_multi_objects_jpg",
         sha256 = "ada6e36b40519cf0a4fbdf1b535de7fa7d0c472f2c0a08ada8ee5728e16c0c68",
         urls = ["https://storage.googleapis.com/mediapipe-assets/multi_objects.jpg?generation=1663251779213308"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_multi_objects_rotated_jpg",
+        sha256 = "175f6c572ffbab6554e382fd5056d09720eef931ccc4ed79481bdc47a8443911",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/multi_objects_rotated.jpg?generation=1665065847969523"],
     )
 
     http_file(

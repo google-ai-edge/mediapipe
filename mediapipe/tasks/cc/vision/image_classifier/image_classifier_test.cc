@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/image_classifier/image_classifier.h"
 
+#include <cmath>
 #include <functional>
 #include <memory>
 #include <string>
@@ -546,16 +547,100 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterest) {
   options->classifier_options.max_results = 1;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
-  // NormalizedRect around the soccer ball.
-  NormalizedRect roi;
-  roi.set_x_center(0.532);
-  roi.set_y_center(0.521);
-  roi.set_width(0.164);
-  roi.set_height(0.427);
+  // Crop around the soccer ball.
+  NormalizedRect image_processing_options;
+  image_processing_options.set_x_center(0.532);
+  image_processing_options.set_y_center(0.521);
+  image_processing_options.set_width(0.164);
+  image_processing_options.set_height(0.427);
 
-  MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(image, roi));
+  MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(
+                                            image, image_processing_options));
 
   ExpectApproximatelyEqual(results, GenerateSoccerBallResults(0));
+}
+
+TEST_F(ImageModeTest, SucceedsWithRotation) {
+  MP_ASSERT_OK_AND_ASSIGN(Image image,
+                          DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
+                                                       "burger_rotated.jpg")));
+  auto options = std::make_unique<ImageClassifierOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kMobileNetFloatWithMetadata);
+  options->classifier_options.max_results = 3;
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
+                          ImageClassifier::Create(std::move(options)));
+
+  // Specify a 90° anti-clockwise rotation.
+  NormalizedRect image_processing_options;
+  image_processing_options.set_rotation(M_PI / 2.0);
+
+  MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(
+                                            image, image_processing_options));
+
+  // Results differ slightly from the non-rotated image, but that's expected
+  // as models are very sensitive to the slightest numerical differences
+  // introduced by the rotation and JPG encoding.
+  ExpectApproximatelyEqual(results, ParseTextProtoOrDie<ClassificationResult>(
+                                        R"pb(classifications {
+                                               entries {
+                                                 categories {
+                                                   index: 934
+                                                   score: 0.6371766
+                                                   category_name: "cheeseburger"
+                                                 }
+                                                 categories {
+                                                   index: 963
+                                                   score: 0.049443405
+                                                   category_name: "meat loaf"
+                                                 }
+                                                 categories {
+                                                   index: 925
+                                                   score: 0.047918003
+                                                   category_name: "guacamole"
+                                                 }
+                                                 timestamp_ms: 0
+                                               }
+                                               head_index: 0
+                                               head_name: "probability"
+                                             })pb"));
+}
+
+TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      Image image, DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
+                                                "multi_objects_rotated.jpg")));
+  auto options = std::make_unique<ImageClassifierOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kMobileNetFloatWithMetadata);
+  options->classifier_options.max_results = 1;
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
+                          ImageClassifier::Create(std::move(options)));
+  // Crop around the chair, with 90° anti-clockwise rotation.
+  NormalizedRect image_processing_options;
+  image_processing_options.set_x_center(0.2821);
+  image_processing_options.set_y_center(0.2406);
+  image_processing_options.set_width(0.5642);
+  image_processing_options.set_height(0.1286);
+  image_processing_options.set_rotation(M_PI / 2.0);
+
+  MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(
+                                            image, image_processing_options));
+
+  ExpectApproximatelyEqual(results,
+                           ParseTextProtoOrDie<ClassificationResult>(
+                               R"pb(classifications {
+                                      entries {
+                                        categories {
+                                          index: 560
+                                          score: 0.6800408
+                                          category_name: "folding chair"
+                                        }
+                                        timestamp_ms: 0
+                                      }
+                                      head_index: 0
+                                      head_name: "probability"
+                                    })pb"));
 }
 
 class VideoModeTest : public tflite_shims::testing::Test {};
@@ -646,16 +731,17 @@ TEST_F(VideoModeTest, SucceedsWithRegionOfInterest) {
   options->classifier_options.max_results = 1;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
-  // NormalizedRect around the soccer ball.
-  NormalizedRect roi;
-  roi.set_x_center(0.532);
-  roi.set_y_center(0.521);
-  roi.set_width(0.164);
-  roi.set_height(0.427);
+  // Crop around the soccer ball.
+  NormalizedRect image_processing_options;
+  image_processing_options.set_x_center(0.532);
+  image_processing_options.set_y_center(0.521);
+  image_processing_options.set_width(0.164);
+  image_processing_options.set_height(0.427);
 
   for (int i = 0; i < iterations; ++i) {
-    MP_ASSERT_OK_AND_ASSIGN(auto results,
-                            image_classifier->ClassifyForVideo(image, i, roi));
+    MP_ASSERT_OK_AND_ASSIGN(
+        auto results,
+        image_classifier->ClassifyForVideo(image, i, image_processing_options));
     ExpectApproximatelyEqual(results, GenerateSoccerBallResults(i));
   }
   MP_ASSERT_OK(image_classifier->Close());
@@ -790,15 +876,16 @@ TEST_F(LiveStreamModeTest, SucceedsWithRegionOfInterest) {
       };
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
-  // NormalizedRect around the soccer ball.
-  NormalizedRect roi;
-  roi.set_x_center(0.532);
-  roi.set_y_center(0.521);
-  roi.set_width(0.164);
-  roi.set_height(0.427);
+  // Crop around the soccer ball.
+  NormalizedRect image_processing_options;
+  image_processing_options.set_x_center(0.532);
+  image_processing_options.set_y_center(0.521);
+  image_processing_options.set_width(0.164);
+  image_processing_options.set_height(0.427);
 
   for (int i = 0; i < iterations; ++i) {
-    MP_ASSERT_OK(image_classifier->ClassifyAsync(image, i, roi));
+    MP_ASSERT_OK(
+        image_classifier->ClassifyAsync(image, i, image_processing_options));
   }
   MP_ASSERT_OK(image_classifier->Close());
 
