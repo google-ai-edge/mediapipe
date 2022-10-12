@@ -22,6 +22,9 @@ import "mediapipe/tasks/cc/core/proto/base_options.proto";
 import "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.proto";
 import "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.proto";
 
+option java_package = "com.google.mediapipe.tasks.vision.handlandmarker";
+option java_outer_classname = "HandLandmarkerGraphOptionsProto";
+
 message HandLandmarkerGraphOptions {
   extend mediapipe.CalculatorOptions {
     optional HandLandmarkerGraphOptions ext = 462713202;
