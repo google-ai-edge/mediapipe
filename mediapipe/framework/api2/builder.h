@@ -5,12 +5,7 @@
 #include <type_traits>
 
 #include "absl/container/btree_map.h"
-#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
-#include "mediapipe/framework/api2/const_str.h"
-#include "mediapipe/framework/api2/contract.h"
-#include "mediapipe/framework/api2/node.h"
-#include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_contract.h"
