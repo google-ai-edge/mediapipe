@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "mediapipe/calculators/image/image_transformation_calculator.pb.h"
+#include "mediapipe/calculators/image/rotation_mode.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
