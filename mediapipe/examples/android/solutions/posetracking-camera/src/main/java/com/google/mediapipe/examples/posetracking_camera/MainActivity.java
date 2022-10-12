@@ -143,14 +143,14 @@ public class MainActivity extends AppCompatActivity {
 
   private void logExampleKeypoint(
           PoseTrackingResult result) {
-    if (result.multiPoseTrackings().isEmpty()) {
+    if (result.multiPoseLandmarks().isEmpty()) {
       return;
     }
-    LandmarkProto.Landmark exampleLandmark = result.multiPoseLandmarks().get(0);
+    LandmarkProto.Landmark exampleLandmark = result.multiPoseLandmarks().get(PoseTrackingResult.NOSE);
       Log.i(
               TAG,
               String.format(
-                      "Pose Landmark Landmark at index 0: x=%f, y=%f, z=%f",
+                      "Pose Landmark Landmark of Nose: x=%f, y=%f, z=%f",
                       exampleLandmark.getX() , exampleLandmark.getY(),exampleLandmark.getZ() ));
 
 
