@@ -20,6 +20,7 @@ android_library(
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",
     ],
+    manifest = "AndroidManifest.xml",
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator_java_proto_lite",
         "//mediapipe/calculators/tensor:inference_calculator_java_proto_lite",
