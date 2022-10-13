@@ -87,9 +87,8 @@ struct GestureRecognizerOptions {
 // Performs hand gesture recognition on the given image.
 //
 // TODO  add the link to DevSite.
-// This API expects expects a pre-trained hand gesture model asset bundle, or a
-// custom one created using Model Maker. See <link to the DevSite documentation
-// page>.
+// This API expects a pre-trained hand gesture model asset bundle, or a custom
+// one created using Model Maker. See <link to the DevSite documentation page>.
 //
 // Inputs:
 //   Image
