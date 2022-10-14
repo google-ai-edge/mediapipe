@@ -462,6 +462,10 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
+    defines = select({
+        "//mediapipe/framework:android_no_jni": ["MEDIAPIPE_NO_JNI"],
+        "//conditions:default": [],
+    }),
     linkopts = select({
         "//mediapipe:ios": [
             "-framework CoreVideo",
