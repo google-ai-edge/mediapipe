@@ -25,6 +25,7 @@ package(
 mediapipe_files(srcs = [
     "burger.jpg",
     "burger_crop.jpg",
+    "burger_rotated.jpg",
     "cat.jpg",
     "cat_mask.jpg",
     "cats_and_dogs.jpg",
@@ -46,6 +47,7 @@ mediapipe_files(srcs = [
     "mobilenet_v3_small_100_224_embedder.tflite",
     "mozart_square.jpg",
     "multi_objects.jpg",
+    "multi_objects_rotated.jpg",
     "palm_detection_full.tflite",
     "pointing_up.jpg",
     "right_hands.jpg",
@@ -72,6 +74,7 @@ filegroup(
     srcs = [
         "burger.jpg",
         "burger_crop.jpg",
+        "burger_rotated.jpg",
         "cat.jpg",
         "cat_mask.jpg",
         "cats_and_dogs.jpg",
@@ -81,6 +84,7 @@ filegroup(
         "left_hands.jpg",
         "mozart_square.jpg",
         "multi_objects.jpg",
+        "multi_objects_rotated.jpg",
         "pointing_up.jpg",
         "right_hands.jpg",
         "segmentation_golden_rotation0.png",

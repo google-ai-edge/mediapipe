@@ -46,6 +46,24 @@ def create_dataset(data_size: int,
   return dataset
 
 
+def create_random_sample(size: Union[int, List[int]],
+                         low: float = 0,
+                         high: float = 1) -> np.ndarray:
+  """Creates and returns a random sample with floating point values.
+
+  Args:
+    size: Size of the output multi-dimensional array.
+    low: Lower boundary of the output values.
+    high: Higher boundary of the output values.
+
+  Returns:
+    1D array if the size is scalar. Otherwise, N-D array whose dimension equals
+    input size.
+  """
+  np.random.seed(0)
+  return np.random.uniform(low=low, high=high, size=size).astype(np.float32)
+
+
 def build_model(input_shape: List[int], num_classes: int) -> tf.keras.Model:
   """Builds a simple Keras model for test."""
   inputs = tf.keras.layers.Input(shape=input_shape)

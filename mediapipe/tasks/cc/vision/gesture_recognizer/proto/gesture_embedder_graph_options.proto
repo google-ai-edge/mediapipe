@@ -20,6 +20,9 @@ package mediapipe.tasks.vision.gesture_recognizer.proto;
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
+option java_package = "com.google.mediapipe.tasks.vision.gesturerecognizer";
+option java_outer_classname = "GestureEmbedderGraphOptionsProto";
+
 message GestureEmbedderGraphOptions {
   extend mediapipe.CalculatorOptions {
     optional GestureEmbedderGraphOptions ext = 478825422;

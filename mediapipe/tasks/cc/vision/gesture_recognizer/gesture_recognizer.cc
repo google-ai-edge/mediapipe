@@ -180,6 +180,15 @@ absl::StatusOr<std::unique_ptr<GestureRecognizer>> GestureRecognizer::Create(
       if (status_or_packets.value()[kImageOutStreamName].IsEmpty()) {
         return;
       }
+      Packet image_packet = status_or_packets.value()[kImageOutStreamName];
+      if (status_or_packets.value()[kHandGesturesStreamName].IsEmpty()) {
+        Packet empty_packet =
+            status_or_packets.value()[kHandGesturesStreamName];
+        result_callback(
+            {{{}, {}, {}, {}}}, image_packet.Get<Image>(),
+            empty_packet.Timestamp().Value() / kMicroSecondsPerMilliSecond);
+        return;
+      }
       Packet gesture_packet =
           status_or_packets.value()[kHandGesturesStreamName];
       Packet handedness_packet =
@@ -188,7 +197,6 @@ absl::StatusOr<std::unique_ptr<GestureRecognizer>> GestureRecognizer::Create(
           status_or_packets.value()[kHandLandmarksStreamName];
       Packet hand_world_landmarks_packet =
           status_or_packets.value()[kHandWorldLandmarksStreamName];
-      Packet image_packet = status_or_packets.value()[kImageOutStreamName];
       result_callback(
           {{gesture_packet.Get<std::vector<ClassificationList>>(),
             handedness_packet.Get<std::vector<ClassificationList>>(),
@@ -218,6 +226,9 @@ absl::StatusOr<GestureRecognitionResult> GestureRecognizer::Recognize(
   ASSIGN_OR_RETURN(auto output_packets,
                    ProcessImageData({{kImageInStreamName,
                                       MakePacket<Image>(std::move(image))}}));
+  if (output_packets[kHandGesturesStreamName].IsEmpty()) {
+    return {{{}, {}, {}, {}}};
+  }
   return {
       {/* gestures= */ {output_packets[kHandGesturesStreamName]
                             .Get<std::vector<ClassificationList>>()},
@@ -247,6 +258,9 @@ absl::StatusOr<GestureRecognitionResult> GestureRecognizer::RecognizeForVideo(
           {{kImageInStreamName,
             MakePacket<Image>(std::move(image))
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
+  if (output_packets[kHandGesturesStreamName].IsEmpty()) {
+    return {{{}, {}, {}, {}}};
+  }
   return {
       {/* gestures= */ {output_packets[kHandGesturesStreamName]
                             .Get<std::vector<ClassificationList>>()},

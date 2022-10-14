@@ -59,14 +59,24 @@ constexpr int kMicroSecondsPerMilliSecond = 1000;
 using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::mediapipe::tasks::core::PacketMap;
 
-// Builds a NormalizedRect covering the entire image.
-NormalizedRect BuildFullImageNormRect() {
-  NormalizedRect norm_rect;
-  norm_rect.set_x_center(0.5);
-  norm_rect.set_y_center(0.5);
-  norm_rect.set_width(1);
-  norm_rect.set_height(1);
-  return norm_rect;
+// Returns a NormalizedRect covering the full image if input is not present.
+// Otherwise, makes sure the x_center, y_center, width and height are set in
+// case only a rotation was provided in the input.
+NormalizedRect FillNormalizedRect(
+    std::optional<NormalizedRect> normalized_rect) {
+  NormalizedRect result;
+  if (normalized_rect.has_value()) {
+    result = *normalized_rect;
+  }
+  bool has_coordinates = result.has_x_center() || result.has_y_center() ||
+                         result.has_width() || result.has_height();
+  if (!has_coordinates) {
+    result.set_x_center(0.5);
+    result.set_y_center(0.5);
+    result.set_width(1);
+    result.set_height(1);
+  }
+  return result;
 }
 
 // Creates a MediaPipe graph config that contains a subgraph node of
@@ -154,15 +164,14 @@ absl::StatusOr<std::unique_ptr<ImageClassifier>> ImageClassifier::Create(
 }
 
 absl::StatusOr<ClassificationResult> ImageClassifier::Classify(
-    Image image, std::optional<NormalizedRect> roi) {
+    Image image, std::optional<NormalizedRect> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  NormalizedRect norm_rect =
-      roi.has_value() ? roi.value() : BuildFullImageNormRect();
+  NormalizedRect norm_rect = FillNormalizedRect(image_processing_options);
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
@@ -173,15 +182,15 @@ absl::StatusOr<ClassificationResult> ImageClassifier::Classify(
 }
 
 absl::StatusOr<ClassificationResult> ImageClassifier::ClassifyForVideo(
-    Image image, int64 timestamp_ms, std::optional<NormalizedRect> roi) {
+    Image image, int64 timestamp_ms,
+    std::optional<NormalizedRect> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  NormalizedRect norm_rect =
-      roi.has_value() ? roi.value() : BuildFullImageNormRect();
+  NormalizedRect norm_rect = FillNormalizedRect(image_processing_options);
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
@@ -195,16 +204,16 @@ absl::StatusOr<ClassificationResult> ImageClassifier::ClassifyForVideo(
       .Get<ClassificationResult>();
 }
 
-absl::Status ImageClassifier::ClassifyAsync(Image image, int64 timestamp_ms,
-                                            std::optional<NormalizedRect> roi) {
+absl::Status ImageClassifier::ClassifyAsync(
+    Image image, int64 timestamp_ms,
+    std::optional<NormalizedRect> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  NormalizedRect norm_rect =
-      roi.has_value() ? roi.value() : BuildFullImageNormRect();
+  NormalizedRect norm_rect = FillNormalizedRect(image_processing_options);
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

@@ -23,6 +23,9 @@ import "mediapipe/tasks/cc/core/proto/base_options.proto";
 import "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_classifier_graph_options.proto";
 import "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_embedder_graph_options.proto";
 
+option java_package = "com.google.mediapipe.tasks.vision.gesturerecognizer";
+option java_outer_classname = "HandGestureRecognizerGraphOptionsProto";
+
 message HandGestureRecognizerGraphOptions {
   extend mediapipe.CalculatorOptions {
     optional HandGestureRecognizerGraphOptions ext = 463370452;

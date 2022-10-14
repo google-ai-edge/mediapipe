@@ -26,11 +26,37 @@ from typing import Any, Callable, Dict, List, Optional, Text, Tuple, Union
 import numpy as np
 import tensorflow as tf
 
+# resources dependency
 from mediapipe.model_maker.python.core.data import dataset
 from mediapipe.model_maker.python.core.utils import quantization
 
 DEFAULT_SCALE, DEFAULT_ZERO_POINT = 0, 0
 ESTIMITED_STEPS_PER_EPOCH = 1000
+
+
+def load_keras_model(model_path: str,
+                     compile_on_load: bool = False) -> tf.keras.Model:
+  """Loads a tensorflow Keras model from file and returns the Keras model.
+
+  Args:
+    model_path: Relative path to a directory containing model data, such as
+      <parent_path>/saved_model/.
+    compile_on_load: Whether the model should be compiled while loading. If
+      False, the model returned has to be compiled with the appropriate loss
+      function and custom metrics before running for inference on a test
+      dataset.
+
+  Returns:
+    A tensorflow Keras model.
+  """
+  # Extract the file path before mediapipe/ as the `base_dir`. By joining it
+  # with the `model_path` which defines the relative path under mediapipe/, it
+  # yields to the aboslution path of the model files directory.
+  cwd = os.path.dirname(__file__)
+  base_dir = cwd[:cwd.rfind('mediapipe')]
+  absolute_path = os.path.join(base_dir, model_path)
+  return tf.keras.models.load_model(
+      absolute_path, custom_objects={'tf': tf}, compile=compile_on_load)
 
 
 def get_steps_per_epoch(steps_per_epoch: Optional[int] = None,
@@ -68,7 +94,8 @@ def export_tflite(
     tflite_filepath: str,
     quantization_config: Optional[quantization.QuantizationConfig] = None,
     supported_ops: Tuple[tf.lite.OpsSet,
-                         ...] = (tf.lite.OpsSet.TFLITE_BUILTINS,)):
+                         ...] = (tf.lite.OpsSet.TFLITE_BUILTINS,),
+    preprocess: Optional[Callable[..., bool]] = None):
   """Converts the model to tflite format and saves it.
 
   Args:
@@ -76,6 +103,9 @@ def export_tflite(
     tflite_filepath: File path to save tflite model.
     quantization_config: Configuration for post-training quantization.
     supported_ops: A list of supported ops in the converted TFLite file.
+    preprocess: A callable to preprocess the representative dataset for
+        quantization. The callable takes three arguments in order: feature,
+        label, and is_training.
   """
   if tflite_filepath is None:
     raise ValueError(
@@ -87,7 +117,8 @@ def export_tflite(
     converter = tf.lite.TFLiteConverter.from_saved_model(save_path)
 
     if quantization_config:
-      converter = quantization_config.set_converter_with_quantization(converter)
+      converter = quantization_config.set_converter_with_quantization(
+          converter, preprocess=preprocess)
 
     converter.target_spec.supported_ops = supported_ops
     tflite_model = converter.convert()
