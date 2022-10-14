@@ -26,6 +26,7 @@ mediapipe_files(srcs = [
     "30k-clean.model",
     "albert_with_metadata.tflite",
     "bert_text_classifier.tflite",
+    "mobilebert_embedding_with_metadata.tflite",
     "mobilebert_with_metadata.tflite",
     "test_model_text_classifier_bool_output.tflite",
     "test_model_text_classifier_with_regex_tokenizer.tflite",
@@ -82,4 +83,9 @@ filegroup(
 filegroup(
     name = "bert_text_classifier_models",
     srcs = ["bert_text_classifier.tflite"],
+)
+
+filegroup(
+    name = "mobilebert_embedding_model",
+    srcs = ["mobilebert_embedding_with_metadata.tflite"],
 )

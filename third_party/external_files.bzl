@@ -341,6 +341,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_mobilebert_embedding_with_metadata_tflite",
+        sha256 = "fa47142dcc6f446168bc672f2df9605b6da5d0c0d6264e9be62870282365b95c",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobilebert_embedding_with_metadata.tflite?generation=1664516086197724"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_mobilebert_vocab_txt",
         sha256 = "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
         urls = ["https://storage.googleapis.com/mediapipe-assets/mobilebert_vocab.txt?generation=1661875800701493"],
