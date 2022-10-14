@@ -471,10 +471,9 @@ class ImageClassifierTest(parameterized.TestCase):
       running_mode=_RUNNING_MODE.LIVE_STREAM,
       classifier_options=classifier_options,
       result_callback=check_result)
-    classifier = _ImageClassifier.create_from_options(options)
-    for timestamp in range(0, 300, 30):
-      classifier.classify_async(self.test_image, timestamp)
-    classifier.close()
+    with _ImageClassifier.create_from_options(options) as classifier:
+      for timestamp in range(0, 300, 30):
+        classifier.classify_async(self.test_image, timestamp)
 
   def test_classify_async_succeeds_with_region_of_interest(self):
     # Load the test image.
@@ -499,10 +498,9 @@ class ImageClassifierTest(parameterized.TestCase):
       running_mode=_RUNNING_MODE.LIVE_STREAM,
       classifier_options=classifier_options,
       result_callback=check_result)
-    classifier = _ImageClassifier.create_from_options(options)
-    for timestamp in range(0, 300, 30):
-      classifier.classify_async(test_image, timestamp, roi)
-    classifier.close()
+    with _ImageClassifier.create_from_options(options) as classifier:
+      for timestamp in range(0, 300, 30):
+        classifier.classify_async(test_image, timestamp, roi)
 
 
 if __name__ == '__main__':
