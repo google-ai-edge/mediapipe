@@ -144,14 +144,23 @@ bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
                         context](std::shared_ptr<GlSyncPoint> sync_token) {
     CHECK_NE(name_, 0);
     GLuint name_to_delete = name_;
-    context->RunWithoutWaiting([name_to_delete, sync_token]() {
-      if (sync_token) {
-        // TODO: maybe we do not actually have to wait for the
-        // consumer sync here. Check docs.
-        sync_token->WaitOnGpu();
-      } else {
-        LOG_FIRST_N(WARNING, 5) << "unexpected null sync in deletion_callback";
-      }
+    context->RunWithoutWaiting([name_to_delete]() {
+      // Note that we do not wait for consumers to be done before deleting the
+      // texture. Based on a reading of the GLES 3.0 spec, appendix D:
+      // - when a texture is deleted, it is _not_ automatically unbound from
+      //   bind points in other contexts;
+      // - when a texture is deleted, its name becomes immediately invalid, but
+      //   the actual object is not deleted until it is no longer in use, i.e.
+      //   attached to a container object or bound to a context;
+      // - deleting an object is not an operation that changes its contents;
+      // - within each context, commands are executed sequentially, so it seems
+      //   like an unbind that follows a command that reads a texture should not
+      //   take effect until the GPU has actually finished executing the
+      //   previous commands.
+      // The final point is the least explicit in the docs, but it is implied by
+      // normal single-context behavior. E.g. if you do bind, delete, render,
+      // unbind, the object is not deleted until the unbind, and it waits for
+      // the render to finish.
       DLOG_IF(ERROR, !glIsTexture(name_to_delete))
           << "Deleting invalid texture id: " << name_to_delete;
       glDeleteTextures(1, &name_to_delete);
