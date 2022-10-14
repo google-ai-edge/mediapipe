@@ -138,6 +138,7 @@ cc_test_with_tflite(
         "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
     ],
     deps = [
+        ":utils",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/tasks/cc:common",
@@ -312,5 +313,43 @@ cc_library(
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "@com_google_absl//absl/strings",
         "@flatbuffers//:runtime_cc",
+    ],
+)
+
+cc_library(
+    name = "model_asset_bundle_resources",
+    srcs = ["model_asset_bundle_resources.cc"],
+    hdrs = ["model_asset_bundle_resources.h"],
+    deps = [
+        ":external_file_handler",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
+        "//mediapipe/tasks/cc/metadata/utils:zip_utils",
+        "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
+cc_test(
+    name = "model_asset_bundle_resources_test",
+    srcs = ["model_asset_bundle_resources_test.cc"],
+    data = [
+        "//mediapipe/tasks/testdata/core:test_models",
+    ],
+    deps = [
+        ":model_asset_bundle_resources",
+        ":model_resources",
+        ":utils",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
+        "//mediapipe/tasks/cc/metadata/utils:zip_utils",
+        "@org_tensorflow//tensorflow/lite/c:common",
     ],
 )

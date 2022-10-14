@@ -149,6 +149,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_dummy_gesture_recognizer_task",
+        sha256 = "18e54586bda33300d459ca140cd045f6daf43d897224ba215a16db3423eae18e",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/dummy_gesture_recognizer.task?generation=1665524417056146"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_empty_vocab_for_regex_tokenizer_txt",
         sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         urls = ["https://storage.googleapis.com/mediapipe-assets/empty_vocab_for_regex_tokenizer.txt?generation=1661875714907539"],
