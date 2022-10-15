@@ -2,9 +2,9 @@ package com.google.mediapipe.examples.posetracking_lindera;
 
 import android.util.Log;
 
-import com.google.mediapipe.solutions.posetracking.BodyJoints;
-import com.google.mediapipe.solutions.posetracking.ComputerVisionPlugin;
-import com.google.mediapipe.solutions.posetracking.XYZPointWithConfidence;
+import com.google.mediapipe.solutions.lindera.BodyJoints;
+import com.google.mediapipe.solutions.lindera.ComputerVisionPlugin;
+import com.google.mediapipe.solutions.lindera.XYZPointWithConfidence;
 
 public class ComputerVisionPluginImpl implements ComputerVisionPlugin {
 

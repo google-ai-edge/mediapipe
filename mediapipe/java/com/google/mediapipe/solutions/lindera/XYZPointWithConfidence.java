@@ -1,4 +1,4 @@
-package com.google.mediapipe.solutions.posetracking;
+package com.google.mediapipe.solutions.lindera;
 
 public class XYZPointWithConfidence {
     public float x = 0;

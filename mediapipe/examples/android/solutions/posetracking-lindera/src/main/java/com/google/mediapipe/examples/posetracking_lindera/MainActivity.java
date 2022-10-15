@@ -21,8 +21,8 @@ import android.widget.FrameLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.mediapipe.solutions.posetracking.ComputerVisionPlugin;
-import com.google.mediapipe.solutions.posetracking.Lindera;
+import com.google.mediapipe.solutions.lindera.ComputerVisionPlugin;
+import com.google.mediapipe.solutions.lindera.Lindera;
 
 import java.util.List;
 

@@ -1,7 +1,6 @@
-package com.google.mediapipe.solutions.posetracking;
+package com.google.mediapipe.solutions.lindera;
 
 import android.util.Log;
-import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -11,6 +10,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.mediapipe.formats.proto.LandmarkProto;
 import com.google.mediapipe.solutioncore.CameraInput;
 import com.google.mediapipe.solutioncore.SolutionGlSurfaceView;
+import com.google.mediapipe.solutions.posetracking.PoseTracking;
+import com.google.mediapipe.solutions.posetracking.PoseTrackingOptions;
+import com.google.mediapipe.solutions.posetracking.PoseTrackingResult;
+import com.google.mediapipe.solutions.posetracking.PoseTrackingResultGlRenderer;
 
 import java.util.Arrays;
 import java.util.List;

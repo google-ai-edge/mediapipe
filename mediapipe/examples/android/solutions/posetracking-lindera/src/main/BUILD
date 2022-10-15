@@ -35,7 +35,7 @@ android_binary(
         "//mediapipe/java/com/google/mediapipe/solutioncore:solution_rendering",
         "//mediapipe/java/com/google/mediapipe/solutioncore:video_input",
         #        "//mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-lindera",
-        "//mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-lindera-dummpy-interface",
+        "//mediapipe/java/com/google/mediapipe/solutions/lindera:copperlabs-lindera",
         "//mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-api",
         "//mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-detection",
         "//mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-graph",
