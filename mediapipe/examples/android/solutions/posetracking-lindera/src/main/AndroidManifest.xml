@@ -14,11 +14,12 @@
   <!-- For logging solution events -->
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <uses-feature android:glEsVersion="0x00020000" android:required="true" />
 
   <application
       android:allowBackup="true"
       android:icon="@mipmap/ic_launcher"
-      android:label="CopperLabs PoseTracking"
+      android:label="CopperLabs Lindera"
       android:roundIcon="@mipmap/ic_launcher_round"
       android:supportsRtl="true"
       android:theme="@style/AppTheme">

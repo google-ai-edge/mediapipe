@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-;
+
 
 /** A custom implementation of {@link ResultGlRenderer} to render {@link PoseTrackingResult}. */
 public class PoseTrackingResultGlRenderer implements ResultGlRenderer<PoseTrackingResult> {

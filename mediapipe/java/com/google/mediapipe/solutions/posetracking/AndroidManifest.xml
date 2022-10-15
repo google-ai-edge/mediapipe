@@ -4,5 +4,5 @@
 
     <uses-sdk android:minSdkVersion="21"
         android:targetSdkVersion="27" />
-
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
 </manifest>

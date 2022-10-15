@@ -39,7 +39,7 @@ import com.google.mediapipe.solutioncore.VideoInput;
 import com.google.mediapipe.solutions.posetracking.PoseTracking;
 import com.google.mediapipe.solutions.posetracking.PoseTrackingOptions;
 import com.google.mediapipe.solutions.posetracking.PoseTrackingResult;
-//import com.google.mediapipe.solutions.posetracking.FaceKeypoint;
+import com.google.mediapipe.solutions.posetracking.PoseTrackingResultGlRenderer;
 import java.io.IOException;
 import java.io.InputStream;
 

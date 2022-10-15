@@ -24,7 +24,9 @@ public class Lindera {
     }
 
     public void initialize (ViewGroup computerVisionContainerView , AppCompatActivity appCompatActivity){
+
         setupStreamingModePipeline(computerVisionContainerView,appCompatActivity);
+
     }
     /** Sets up core workflow for streaming mode. */
     private void setupStreamingModePipeline(ViewGroup computerVisionContainerView,AppCompatActivity appCompatActivity) {

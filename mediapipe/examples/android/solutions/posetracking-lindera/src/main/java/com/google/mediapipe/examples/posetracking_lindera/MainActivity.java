@@ -29,6 +29,7 @@ import android.widget.FrameLayout;
 
 import androidx.activity.result.ActivityResultLauncher;
 
+import com.google.mediapipe.solutioncore.SolutionGlSurfaceView;
 import com.google.mediapipe.solutions.posetracking.ComputerVisionPlugin;
 import com.google.mediapipe.solutions.posetracking.Lindera;
 import com.google.mediapipe.solutions.posetracking.PoseTrackingResultGlRenderer;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
   // Live camera demo UI and camera components.
 
 
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -56,10 +58,8 @@ public class MainActivity extends AppCompatActivity {
     disableRedundantUI();
 
     setupLiveDemoUiComponents();
-
     plugin = new ComputerVisionPluginImpl();
     lindera = new Lindera(plugin);
-     new PoseTrackingResultGlRenderer();
   }
 
 
@@ -73,25 +73,8 @@ public class MainActivity extends AppCompatActivity {
             v -> {
               startCameraButton.setVisibility(View.GONE);
 
-                lindera.initialize(frameLayout,MainActivity.this);
+              lindera.initialize(frameLayout, MainActivity.this);
 
-              ExecutorService executor = Executors.newSingleThreadExecutor();
-              Handler handler = new Handler(Looper.getMainLooper());
-
-              executor.execute(new Runnable() {
-                @Override
-                public void run() {
-
-                  //Background work here
-
-                  handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                      //UI Thread work here
-                    }
-                  });
-                }
-              });
             });
   }
   /**Disables unecesary UI buttons*/

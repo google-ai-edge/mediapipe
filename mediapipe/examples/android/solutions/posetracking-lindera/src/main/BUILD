@@ -39,6 +39,7 @@ android_binary(
         "//mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-api",
         "//mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-detection",
         "//mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-graph",
+        "//mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-landmark",
         "//third_party:androidx_appcompat",
         "//third_party:androidx_constraint_layout",
         "//third_party:opencv",
