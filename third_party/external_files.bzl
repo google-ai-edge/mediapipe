@@ -737,6 +737,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_universal_sentence_encoder_qa_with_metadata_tflite",
+        sha256 = "82c2d0450aa458adbec2f78eff33cfbf2a41b606b44246726ab67373926e32bc",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/universal_sentence_encoder_qa_with_metadata.tflite?generation=1665445919252005"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_vocab_for_regex_tokenizer_txt",
         sha256 = "b1134b10927a53ce4224bbc30ccf075c9969c94ebf40c368966d1dcf445ca923",
         urls = ["https://storage.googleapis.com/mediapipe-assets/vocab_for_regex_tokenizer.txt?generation=1661875971574893"],

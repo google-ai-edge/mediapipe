@@ -30,6 +30,7 @@ mediapipe_files(srcs = [
     "mobilebert_with_metadata.tflite",
     "test_model_text_classifier_bool_output.tflite",
     "test_model_text_classifier_with_regex_tokenizer.tflite",
+    "universal_sentence_encoder_qa_with_metadata.tflite",
 ])
 
 exports_files(srcs = [
@@ -88,4 +89,9 @@ filegroup(
 filegroup(
     name = "mobilebert_embedding_model",
     srcs = ["mobilebert_embedding_with_metadata.tflite"],
+)
+
+filegroup(
+    name = "universal_sentence_encoder_qa",
+    data = ["universal_sentence_encoder_qa_with_metadata.tflite"],
 )
