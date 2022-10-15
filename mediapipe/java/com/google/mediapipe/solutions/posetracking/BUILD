@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 load("//mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs_aar.bzl", "copperlabs_aar")
-load("@io_bazel_rules_kotlin//kotlin:android.bzl", "kt_android_library")
 
 licenses(["notice"])
 
