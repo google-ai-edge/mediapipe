@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.mediapipe.examples.posetracking_camera;
+package com.google.mediapipe.solutions.posetracking;
 
 import android.opengl.GLES20;
 
 import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 import com.google.mediapipe.solutioncore.ResultGlRenderer;
-import com.google.mediapipe.solutions.posetracking.PoseTrackingResult;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+
+;
 
 /** A custom implementation of {@link ResultGlRenderer} to render {@link PoseTrackingResult}. */
 public class PoseTrackingResultGlRenderer implements ResultGlRenderer<PoseTrackingResult> {

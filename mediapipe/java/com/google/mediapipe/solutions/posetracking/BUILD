@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 load("//mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs_aar.bzl", "copperlabs_aar")
+load("@io_bazel_rules_kotlin//kotlin:android.bzl", "kt_android_library")
 
 licenses(["notice"])
 
@@ -20,6 +21,8 @@ POSE_TRACKING_SRCS = [
     "PoseTracking.java",
     "PoseTrackingOptions.java",
     "PoseTrackingResult.java",
+    "Lindera.java",
+    "PoseTrackingResultGlRenderer.java",
 ]
 
 android_library(
@@ -29,14 +32,23 @@ android_library(
     manifest = ":AndroidManifest.xml",
     visibility = ["//visibility:public"],
     deps = [
+        ":copperlabs-lindera-dummpy-interface",
         "//mediapipe/framework/formats:detection_java_proto_lite",
         "//mediapipe/framework/formats:landmark_java_proto_lite",
+        "//mediapipe/framework/formats:location_data_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/solutioncore:camera_input",
         "//mediapipe/java/com/google/mediapipe/solutioncore:solution_base",
+        "//mediapipe/java/com/google/mediapipe/solutioncore:solution_rendering",
+        "//third_party:androidx_appcompat",
+        "//third_party:androidx_constraint_layout",
         "//third_party:autovalue",
         "@com_google_protobuf//:protobuf_javalite",
+        "@maven//:androidx_activity_activity",
         "@maven//:androidx_annotation_annotation",
+        "@maven//:androidx_concurrent_concurrent_futures",
+        "@maven//:androidx_exifinterface_exifinterface",
+        "@maven//:androidx_fragment_fragment",
         "@maven//:com_google_code_findbugs_jsr305",
         "@maven//:com_google_guava_guava",
     ],
@@ -80,6 +92,36 @@ android_library(
     deps = [],
 )
 
+#android_library(
+#    name = "copperlabs-lindera",
+#    srcs = ["Lindera.java"],
+#    manifest = "AndroidManifest.xml",
+#    visibility = ["//visibility:public"],
+#    deps = [
+#        "copperlabs-lindera-dummpy-interface",
+#        "copperlabs-pose-api",
+#        "//mediapipe/framework/formats:detection_java_proto_lite",
+#        "//mediapipe/framework/formats:landmark_java_proto_lite",
+#        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+#        "//mediapipe/java/com/google/mediapipe/solutioncore:camera_input",
+#        "//mediapipe/java/com/google/mediapipe/solutioncore:solution_base",
+#        "//mediapipe/java/com/google/mediapipe/solutioncore:solution_rendering",
+#        "//third_party:androidx_appcompat",
+#        "//third_party:autovalue",
+#        "@com_google_protobuf//:protobuf_javalite",
+#        "@maven//:androidx_annotation_annotation",
+#        "@maven//:com_google_code_findbugs_jsr305",
+#        "@maven//:com_google_guava_guava",
+#    ],
+#)
+
+android_library(
+    name = "copperlabs-lindera-dummpy-interface",
+    srcs = ["ComputerVisionPlugin.java"],
+    manifest = "AndroidManifest.xml",
+    visibility = ["//visibility:public"],
+    deps = [],
+)
 #mediapipe_aar(
 #    name = "copperlabs-mediapipe",
 #    calculators = ["//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps"],

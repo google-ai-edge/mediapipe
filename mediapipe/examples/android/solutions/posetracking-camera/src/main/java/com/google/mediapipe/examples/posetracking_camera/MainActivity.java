@@ -123,9 +123,9 @@ public class MainActivity extends AppCompatActivity {
       glSurfaceView.post(this::startCamera);
 
     // Updates the preview layout.
-    FrameLayout frameLayout = findViewById(R.id.preview_display_layout);
-    frameLayout.removeAllViewsInLayout();
-    frameLayout.addView(glSurfaceView);
+      FrameLayout frameLayout = findViewById(R.id.preview_display_layout);
+      frameLayout.removeAllViewsInLayout();
+      frameLayout.addView(glSurfaceView);
     glSurfaceView.setVisibility(View.VISIBLE);
     frameLayout.requestLayout();
   }
