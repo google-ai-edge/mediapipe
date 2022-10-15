@@ -21,6 +21,7 @@ import android.widget.FrameLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.mediapipe.solutions.lindera.CameraRotation;
 import com.google.mediapipe.solutions.lindera.ComputerVisionPlugin;
 import com.google.mediapipe.solutions.lindera.Lindera;
 
@@ -35,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
 
     private Lindera lindera;
     private ComputerVisionPlugin plugin;
+    private boolean isLinderaInitialized = false;
+    private boolean isDetectionStarted = false;
     // Live camera demo UI and camera components.
 
 
@@ -50,7 +53,10 @@ public class MainActivity extends AppCompatActivity {
         plugin = new ComputerVisionPluginImpl();
         lindera = new Lindera(plugin);
         List<String> cameras = lindera.getAvailableCameras();
-        lindera.setCamera("BACK");
+        // FRONT or BACK
+        lindera.setCamera("FRONT");
+        lindera.setCameraRotation(CameraRotation.AUTOMATIC);
+
     }
 
 
@@ -64,9 +70,28 @@ public class MainActivity extends AppCompatActivity {
 
         startCameraButton.setOnClickListener(
                 v -> {
-                    startCameraButton.setVisibility(View.GONE);
+//                    startCameraButton.setVisibility(View.GONE);
+                    if (!isLinderaInitialized) {
+                        lindera.initialize(frameLayout, MainActivity.this);
+                        isLinderaInitialized = true;
+                        startCameraButton.setText("STOP CAMERA");
 
-                    lindera.initialize(frameLayout, MainActivity.this);
+                    } else {
+
+                        if (isDetectionStarted) {
+                            startCameraButton.setText(R.string.start_camera);
+
+
+                            lindera.stopDetection();
+                        } else {
+                            lindera.startDetection();
+                            startCameraButton.setText("STOP CAMERA");
+
+                        }
+
+                    }
+                    isDetectionStarted = !isDetectionStarted;
+
 
                 });
     }

@@ -1,5 +1,5 @@
 POSE_TRACKING_OUTPUT_DIR=bazel-bin/mediapipe/java/com/google/mediapipe/solutions/posetracking
-GRADLE_LIBS_DIR=mediapipe/examples/android/solutions/posetracking-camera/libs
+GRADLE_LIBS_DIR=mediapipe/examples/android/solutions/posetracking-lindera/libs
 #
 bazel build     -c opt --strip=ALWAYS\
                 --host_crosstool_top=@bazel_tools//tools/cpp:toolchain \
@@ -18,7 +18,9 @@ bazel build     -c opt --strip=ALWAYS\
                 //mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-landmark.aar \
                 //mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-detection.aar \
                 //mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-graph.aar \
+                //mediapipe/java/com/google/mediapipe/solutions/lindera:copperlabs-lindera.aar \
                 //mediapipe/java/com/google/mediapipe/solutioncore:copperlabs-mediapipe
+
 
 
 mkdir $GRADLE_LIBS_DIR
@@ -28,5 +30,6 @@ rm -f $GRADLE_LIBS_DIR/copperlabs-*.aar
 \cp $POSE_TRACKING_OUTPUT_DIR/copperlabs-pose-detection.aar $GRADLE_LIBS_DIR
 \cp $POSE_TRACKING_OUTPUT_DIR/copperlabs-pose-graph.aar $GRADLE_LIBS_DIR
 \cp $POSE_TRACKING_OUTPUT_DIR/copperlabs-pose-landmark.aar $GRADLE_LIBS_DIR
+\cp bazel-bin/mediapipe/java/com/google/mediapipe/solutions/lindera/copperlabs-lindera.aar $GRADLE_LIBS_DIR
 \cp bazel-bin/mediapipe/java/com/google/mediapipe/solutioncore/copperlabs-mediapipe.aar $GRADLE_LIBS_DIR
 

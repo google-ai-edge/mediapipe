@@ -7,7 +7,7 @@ android {
     buildToolsVersion "30.0.3"
 
     defaultConfig {
-        applicationId "com.google.mediapipe.apps.posetracking_camera"
+        applicationId "com.google.mediapipe.apps.posetracking_lindera"
         minSdkVersion 21
         targetSdkVersion 30
         versionCode 1
