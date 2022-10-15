@@ -12,29 +12,80 @@ import com.google.mediapipe.formats.proto.LandmarkProto;
 import com.google.mediapipe.solutioncore.CameraInput;
 import com.google.mediapipe.solutioncore.SolutionGlSurfaceView;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class Lindera {
     private ComputerVisionPlugin plugin;
-    private static final int rotation = Surface.ROTATION_0;
     private PoseTracking poseTracking;
     // TODO: Verify that this is the timestamp used in Actual Plugin
     private int timeStamp = 0;
+    private CameraRotation cameraRotation = CameraRotation.AUTOMATIC;
     // Live camera demo UI and camera components.
     private CameraInput cameraInput;
     private SolutionGlSurfaceView<PoseTrackingResult> glSurfaceView;
-
+    private CameraInput.CameraFacing cameraFacing = CameraInput.CameraFacing.FRONT;
+    private AppCompatActivity appCompatActivity;
+    private  ViewGroup computerVisionContainerView;
     public Lindera(ComputerVisionPlugin plugin){
         this.plugin = plugin;
     }
 
     public void initialize (ViewGroup computerVisionContainerView , AppCompatActivity appCompatActivity){
 
-        setupStreamingModePipeline(computerVisionContainerView,appCompatActivity);
+        this.computerVisionContainerView = computerVisionContainerView;
+        this.appCompatActivity = appCompatActivity;
+        startDetection();
+    }
+
+    public void setCameraRotation(CameraRotation cameraRotation){
+        this.cameraRotation = cameraRotation;
+    }
+
+
+
+
+    public void setupEventListener() {
+    poseTracking.setResultListener(
+            poseTrackingResult -> {
+                glSurfaceView.setRenderData(poseTrackingResult);
+                glSurfaceView.requestRender();
+                ImmutableList<LandmarkProto.Landmark> landmarks = poseTrackingResult.multiPoseLandmarks();
+                timeStamp+=1;
+
+                if (landmarks.isEmpty()) return;
+
+                BodyJoints bodyJoints = new BodyJoints();
+                landmarksToBodyJoints(landmarks,bodyJoints);
+
+                plugin.bodyJoints(timeStamp, bodyJoints);
+            });
+    }
+
+    public List<String> getAvailableCameras(){
+        return Arrays.stream(CameraInput.CameraFacing.values()).map(Enum::name).collect(Collectors.toList());
+
+    }
+    public void doOnDestroy(){
+        stopDetection();
+        appCompatActivity = null;
+        computerVisionContainerView = null;
 
     }
 
-    
-    /** Sets up core workflow for streaming mode. */
-    private void setupStreamingModePipeline(ViewGroup computerVisionContainerView,AppCompatActivity appCompatActivity) {
+    /**
+     * Will need to restart camera pipeline if already started
+     * @param name One of FRONT or BACK
+     */
+    public void setCamera(String name){
+        cameraFacing = CameraInput.CameraFacing.valueOf(name);
+
+    }
+
+    public void startDetection(){
+        // ensure that class is initalized
+        assert (appCompatActivity != null);
         // Initializes a new MediaPipe Face Detection solution instance in the streaming mode.
         poseTracking =
                 new PoseTracking(
@@ -62,7 +113,7 @@ public class Lindera {
         setupEventListener();
         // The runnable to start camera after the gl surface view is attached.
         // For video input source, videoInput.start() will be called when the video uri is available.
-        glSurfaceView.post(()->{this.startCamera(appCompatActivity);});
+        glSurfaceView.post(this::startCamera);
         // Updates the preview layout.
 
         computerVisionContainerView.removeAllViewsInLayout();
@@ -70,33 +121,21 @@ public class Lindera {
         glSurfaceView.setVisibility(View.VISIBLE);
         computerVisionContainerView.requestLayout();
     }
-
-    private void startCamera(AppCompatActivity appCompatActivity) {
-        cameraInput.getConverter(poseTracking.getGlContext()).setRotation(rotation);
-        cameraInput.start(
-                appCompatActivity,
-                poseTracking.getGlContext(),
-                CameraInput.CameraFacing.FRONT,
-                glSurfaceView.getWidth(),
-                glSurfaceView.getHeight());
+    public void stopDetection(){
+        if (cameraInput != null) {
+            cameraInput.setNewFrameListener(null);
+            cameraInput.close();
+        }
+        if (glSurfaceView != null) {
+            glSurfaceView.setVisibility(View.GONE);
+        }
+        if (poseTracking != null) {
+            poseTracking.close();
+        }
+        timeStamp = 0;
     }
 
-    public void setupEventListener() {
-    poseTracking.setResultListener(
-            poseTrackingResult -> {
-                glSurfaceView.setRenderData(poseTrackingResult);
-                glSurfaceView.requestRender();
-                ImmutableList<LandmarkProto.Landmark> landmarks = poseTrackingResult.multiPoseLandmarks();
-                timeStamp+=1;
 
-                if (landmarks.isEmpty()) return;
-
-                BodyJoints bodyJoints = new BodyJoints();
-                landmarksToBodyJoints(landmarks,bodyJoints);
-
-                plugin.bodyJoints(timeStamp, bodyJoints);
-            });
-    }
     private void landmarkToXYZPointWithConfidence(LandmarkProto.Landmark landmark,XYZPointWithConfidence bodyJoint){
         bodyJoint.x = landmark.getX();
         bodyJoint.y = landmark.getY();
@@ -155,7 +194,17 @@ public class Lindera {
                 landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.LEFT_FOOT), bodyJoints.leftFoot);
     }
 
-
+    private void startCamera() {
+        if (cameraRotation!=CameraRotation.AUTOMATIC) {
+            cameraInput.getConverter(poseTracking.getGlContext()).setRotation(cameraRotation.getValue());
+        }
+        cameraInput.start(
+                appCompatActivity,
+                poseTracking.getGlContext(),
+                cameraFacing,
+                glSurfaceView.getWidth(),
+                glSurfaceView.getHeight());
+    }
 
 
 }

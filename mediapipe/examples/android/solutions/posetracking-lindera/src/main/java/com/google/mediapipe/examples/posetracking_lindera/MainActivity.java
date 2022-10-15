@@ -24,6 +24,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.mediapipe.solutions.posetracking.ComputerVisionPlugin;
 import com.google.mediapipe.solutions.posetracking.Lindera;
 
+import java.util.List;
+
 
 /**
  * Main activity of MediaPipe Face Detection app.
@@ -47,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
         setupLiveDemoUiComponents();
         plugin = new ComputerVisionPluginImpl();
         lindera = new Lindera(plugin);
+        List<String> cameras = lindera.getAvailableCameras();
+        lindera.setCamera("BACK");
     }
 
 

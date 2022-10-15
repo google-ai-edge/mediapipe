@@ -23,6 +23,7 @@ POSE_TRACKING_SRCS = [
     "PoseTrackingResult.java",
     "Lindera.java",
     "PoseTrackingResultGlRenderer.java",
+    "CameraRotation.java",
 ]
 
 android_library(
