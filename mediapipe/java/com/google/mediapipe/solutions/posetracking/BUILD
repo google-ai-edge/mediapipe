@@ -117,7 +117,11 @@ android_library(
 
 android_library(
     name = "copperlabs-lindera-dummpy-interface",
-    srcs = ["ComputerVisionPlugin.java"],
+    srcs = [
+        "BodyJoints.java",
+        "ComputerVisionPlugin.java",
+        "XYZPointWithConfidence.java",
+    ],
     manifest = "AndroidManifest.xml",
     visibility = ["//visibility:public"],
     deps = [],

@@ -49,7 +49,7 @@ public class PoseTrackingResult extends ImageSolutionResult {
   public static final int LEFT_SHOULDER = 11;
   public static final int RIGHT_SHOULDER = 12;
   public static final int LEFT_ELBOW = 13;
-  public static final int RIGH_ELBOW = 14;
+  public static final int RIGHT_ELBOW = 14;
   public static final int LEFT_WRIST = 15;
   public static final int RIGHT_WRIST = 16;
   public static final int LEFT_PINKY = 17;
