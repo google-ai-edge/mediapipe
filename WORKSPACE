@@ -316,17 +316,23 @@ http_archive(
 
 # iOS basic build deps.
 
+#http_archive(
+#    name = "build_bazel_rules_apple",
+#    patch_args = [
+#        "-p1",
+#    ],
+#    patches = [
+#        # Bypass checking ios unit test runner when building MP ios applications.
+#        "@//third_party:build_bazel_rules_apple_bypass_test_runner_check.diff",
+#    ],
+#    sha256 = "77e8bf6fda706f420a55874ae6ee4df0c9d95da6c7838228b26910fc82eea5a2",
+#    url = "https://github.com/bazelbuild/rules_apple/releases/download/0.32.0/rules_apple.0.32.0.tar.gz",
+#)
+
 http_archive(
     name = "build_bazel_rules_apple",
-    patch_args = [
-        "-p1",
-    ],
-    patches = [
-        # Bypass checking ios unit test runner when building MP ios applications.
-        "@//third_party:build_bazel_rules_apple_bypass_test_runner_check.diff",
-    ],
-    sha256 = "77e8bf6fda706f420a55874ae6ee4df0c9d95da6c7838228b26910fc82eea5a2",
-    url = "https://github.com/bazelbuild/rules_apple/releases/download/0.32.0/rules_apple.0.32.0.tar.gz",
+    sha256 = "90e3b5e8ff942be134e64a83499974203ea64797fd620eddeb71b3a8e1bff681",
+    url = "https://github.com/bazelbuild/rules_apple/releases/download/1.1.2/rules_apple.1.1.2.tar.gz",
 )
 
 load(
@@ -342,6 +348,13 @@ load(
 )
 
 swift_rules_dependencies()
+
+load(
+    "@build_bazel_rules_swift//swift:extras.bzl",
+    "swift_rules_extra_dependencies",
+)
+
+swift_rules_extra_dependencies()
 
 http_archive(
     name = "build_bazel_apple_support",
@@ -513,12 +526,12 @@ load("@build_bazel_rules_android//android:rules.bzl", "android_ndk_repository", 
 
 android_sdk_repository(
     name = "androidsdk",
-    #    build_tools_version = "30.0.3",
-    #    path = "/Users/tj/Library/Android/sdk",  # Path to Android SDK, optional if $ANDROID_HOME is set
+    build_tools_version = "30.0.3",
+#    path = "/Users/tj/Library/Android/sdk",  # Path to Android SDK, optional if $ANDROID_HOME is set
 )
 
 android_ndk_repository(
     name = "androidndk",  # Required. Name *must* be "androidndk".
     api_level = 21,
-    #    path = "/Users/tj/Library/Android/sdk/ndk/21.4.7075529",  # Optional. Can be omitted if `ANDROID_NDK_HOME` environment variable is set.
+#    path = "/Users/tj/Library/Android/sdk/ndk/21.4.7075529",  # Optional. Can be omitted if `ANDROID_NDK_HOME` environment variable is set.
 )
