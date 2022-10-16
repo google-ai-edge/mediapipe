@@ -8,7 +8,6 @@
 #import "mediapipe/objc/MPPCameraInputSource.h"
 #import "mediapipe/objc/MPPLayerRenderer.h"
 #import "mediapipe/objc/MPPPlayerInputSource.h"
-#import "mediapipe/objc/MPPTimestampConverter.h"
 #import "PoseTrackingOptions.h"
 #import "PoseTrackingResults.h"
 @interface PoseTracking : NSObject<MPPInputSourceDelegate>
@@ -18,8 +17,7 @@
 //@property(nonatomic) MPPGraph* mediapipeGraph;
 
 
-// Helps to convert timestamp.
-@property(nonatomic) MPPTimestampConverter* timestampConverter;
+
 
 // Render frames in a layer.
 @property(nonatomic) MPPLayerRenderer* renderer;

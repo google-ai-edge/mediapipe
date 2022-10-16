@@ -1,6 +1,7 @@
 #include "PoseTracking.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #import "mediapipe/objc/MPPGraph.h"
+#import "mediapipe/objc/MPPTimestampConverter.h"
 
 
 static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
@@ -82,11 +83,14 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 
 @end
 
+
 @interface PoseTracking(){
     // The MediaPipe graph currently in use. Initialized in viewDidLoad, started in
     // viewWillAppear: and sent video frames on videoQueue.
     MPPGraph* mediapipeGraph;
     PoseTrackingGraphDelegate* poseTrackingGraphDelegate;
+    //// Helps to convert timestamp.
+    MPPTimestampConverter* timestampConverter;
 }
 
 @end
@@ -122,7 +126,7 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
     self.renderer = [[MPPLayerRenderer alloc] init];
     self.renderer.frameScaleMode = MPPFrameScaleModeFillAndCrop;
 
-    self.timestampConverter = [[MPPTimestampConverter alloc] init];
+    self->timestampConverter = [[MPPTimestampConverter alloc] init];
     
     dispatch_queue_attr_t qosAttribute = dispatch_queue_attr_make_with_qos_class(
         DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, /*relative_priority=*/0);
@@ -196,7 +200,7 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
   [self->mediapipeGraph sendPixelBuffer:imageBuffer
                             intoStream:self.graphInputStream
                             packetType:MPPPacketTypePixelBuffer
-                             timestamp:[self.timestampConverter timestampForMediaTime:timestamp]];
+                             timestamp:[self->timestampConverter timestampForMediaTime:timestamp]];
 }
 
 #pragma mark - MPPGraphDelegate methods
