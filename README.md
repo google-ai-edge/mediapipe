@@ -10,5 +10,5 @@ Launch the Android SDK Manager from Android Studio and install:
 
 NDK Version 21.4.7075529
 
-![alt text](https://github.com//[reponame]/blob/[branch]/docs/asensei/images/ndk.png?raw=true)
+https://github.com/udamaster/mediapipe/blob/0627d7c9bfe92107ac2f797acb1e4a5f188d7a3f/docs/asensei/images/ndk.png
 
