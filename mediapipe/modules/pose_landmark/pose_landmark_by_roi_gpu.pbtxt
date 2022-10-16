@@ -140,6 +140,11 @@ node {
   input_side_packet: "MODEL:model"
   input_stream: "TENSORS:input_tensors"
   output_stream: "TENSORS:output_tensors"
+  options: {
+       [mediapipe.InferenceCalculatorOptions.ext] {
+         delegate { gpu { use_advanced_gpu_api: true } }
+       }
+  }
 }
 
 # Decodes the tensors into the corresponding landmark and segmentation mask
