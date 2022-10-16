@@ -1,5 +1,5 @@
 
-# Asensei Gi
+# asensei-gi
 
 Cross-platform solution for Computer Vision and Pose Estimation
 
