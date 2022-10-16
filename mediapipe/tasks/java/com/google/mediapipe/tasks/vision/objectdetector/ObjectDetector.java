@@ -33,6 +33,7 @@ import com.google.mediapipe.tasks.core.TaskRunner;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.vision.core.BaseVisionTaskApi;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
+import com.google.mediapipe.tasks.vision.objectdetector.proto.ObjectDetectorOptionsProto;
 import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 import java.io.File;
 import java.io.IOException;
