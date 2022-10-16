@@ -513,7 +513,7 @@ load("@build_bazel_rules_android//android:rules.bzl", "android_ndk_repository", 
 
 android_sdk_repository(
     name = "androidsdk",
-    #    build_tools_version = "30.0.3",
+    build_tools_version = "30.0.3",
     #    path = "/Users/tj/Library/Android/sdk",  # Path to Android SDK, optional if $ANDROID_HOME is set
 )
 
