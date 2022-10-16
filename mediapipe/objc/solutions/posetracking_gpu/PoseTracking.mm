@@ -1,8 +1,95 @@
 #include "PoseTracking.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
+#import "mediapipe/objc/MPPGraph.h"
+
 
 static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 static const char* kLandmarksOutputStream = "pose_landmarks";
+
+
+
+# pragma  mark - PoseTrackingGraphDelegate Interface
+@interface PoseTrackingGraphDelegate : NSObject<MPPGraphDelegate>
+// Receives CVPixelBufferRef from the MediaPipe graph. Invoked on a MediaPipe worker thread.
+@property (nonatomic) MPPGraph* mediapipeGraph;
+@property (nonatomic) const char* graphOutputStream;
+@property (nonatomic) MPPLayerRenderer* renderer;
+@property(nonatomic) void(^poseTrackingResultsListener)(PoseTrackingResults*);
+
+-(id) initWithMediapipeGraph: (MPPGraph*) graph graphOutputStream: (const char*) graphOutputStream
+                    renderer: (MPPLayerRenderer*) renderer;
+- (void)mediapipeGraph:(MPPGraph*)graph
+    didOutputPixelBuffer:(CVPixelBufferRef)pixelBuffer
+            fromStream:(const std::string&)streamName ;
+- (void)mediapipeGraph:(MPPGraph*)graph
+     didOutputPacket:(const ::mediapipe::Packet&)packet
+            fromStream:(const std::string&)streamName ;
+
+@end
+
+# pragma  mark - PoseTrackingGraphDelegate Implementation
+
+@implementation PoseTrackingGraphDelegate
+
+-(id) initWithMediapipeGraph: (MPPGraph*) graph graphOutputStream: (const char*) graphOutputStream
+    renderer: (MPPLayerRenderer*) renderer
+{
+    
+    self.mediapipeGraph = graph;
+    self.graphOutputStream =graphOutputStream;
+    self.renderer = renderer;
+    return self;
+}
+
+// Receives CVPixelBufferRef from the MediaPipe graph. Invoked on a MediaPipe worker thread.
+- (void)mediapipeGraph:(MPPGraph*)graph
+    didOutputPixelBuffer:(CVPixelBufferRef)pixelBuffer
+              fromStream:(const std::string&)streamName {
+  if (streamName == self.graphOutputStream) {
+    // Display the captured image on the screen.
+    CVPixelBufferRetain(pixelBuffer);
+    dispatch_async(dispatch_get_main_queue(), ^{
+      [self.renderer renderPixelBuffer:pixelBuffer];
+      CVPixelBufferRelease(pixelBuffer);
+    });
+  }
+}
+
+
+// Receives a raw packet from the MediaPipe graph. Invoked on a MediaPipe worker thread.
+- (void)mediapipeGraph:(MPPGraph*)graph
+     didOutputPacket:(const ::mediapipe::Packet&)packet
+          fromStream:(const std::string&)streamName {
+    
+  if (streamName == kLandmarksOutputStream) {
+      
+      
+    if (packet.IsEmpty()) {
+        self.poseTrackingResultsListener(nil);
+      return;
+    }
+    const auto& landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
+      NSMutableArray<PoseLandmark*>* poseLandmarks =   [[NSMutableArray<PoseLandmark*> alloc] init];
+    for (int i = 0; i < landmarks.landmark_size(); ++i) {
+        
+        [poseLandmarks addObject: [[PoseLandmark alloc] initWithX:landmarks.landmark(i).x() y:landmarks.landmark(i).y() z:landmarks.landmark(i).z() presence:landmarks.landmark(i).presence() visibility:landmarks.landmark(i).visibility()] ];
+    }
+      PoseTrackingResults* results = [[PoseTrackingResults alloc] initWithLandmarks:poseLandmarks];
+      self.poseTrackingResultsListener(results);
+  }
+    
+}
+
+@end
+
+@interface PoseTracking(){
+    // The MediaPipe graph currently in use. Initialized in viewDidLoad, started in
+    // viewWillAppear: and sent video frames on videoQueue.
+    MPPGraph* mediapipeGraph;
+    PoseTrackingGraphDelegate* poseTrackingGraphDelegate;
+}
+
+@end
 
 @implementation PoseTracking
 
@@ -43,7 +130,7 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
     
     self.poseTrackingOptions = poseTrackingOptions;
     self.graphName = @"pose_tracking_gpu";
-    self.mediapipeGraph = [[self class] loadGraphFromResource: self.graphName];
+    self->mediapipeGraph = [[self class] loadGraphFromResource: self.graphName];
     self.graphInputStream = "input_video";
     
     
@@ -53,17 +140,23 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
         self.graphOutputStream = "throttled_input_video";
     }
     
-    [self.mediapipeGraph addFrameOutputStream:self.graphOutputStream
+    [self->mediapipeGraph addFrameOutputStream:self.graphOutputStream
                              outputPacketType:MPPPacketTypePixelBuffer];
     
-    
-    
-    [self.mediapipeGraph addFrameOutputStream:"pose_landmarks"
-                           outputPacketType:MPPPacketTypeRaw];
-    
-    self.mediapipeGraph.delegate = self;
-    
     self.poseTrackingResultsListener = ^(PoseTrackingResults*){};
+
+    
+    [self->mediapipeGraph addFrameOutputStream:"pose_landmarks"
+                           outputPacketType:MPPPacketTypeRaw];
+    self-> poseTrackingGraphDelegate = [[PoseTrackingGraphDelegate alloc] initWithMediapipeGraph:self->mediapipeGraph graphOutputStream:self.graphOutputStream renderer:self.renderer];
+    // To prevent ARC from causing an accidental memory leak in the next block
+    __weak PoseTracking* weakSelf = self;
+    self -> poseTrackingGraphDelegate.poseTrackingResultsListener =  ^(PoseTrackingResults* results){
+        
+        weakSelf.poseTrackingResultsListener(results);
+    };
+    self->mediapipeGraph.delegate = self->poseTrackingGraphDelegate;
+    
     
     
     return self;
@@ -74,10 +167,10 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 - (void)startGraph {
   // Start running self.mediapipeGraph.
   NSError* error;
-  if (![self.mediapipeGraph startWithError:&error]) {
+  if (![self->mediapipeGraph startWithError:&error]) {
     NSLog(@"Failed to start graph: %@", error);
   }
-  else if (![self.mediapipeGraph waitUntilIdleWithError:&error]) {
+  else if (![self->mediapipeGraph waitUntilIdleWithError:&error]) {
     NSLog(@"Failed to complete graph initial run: %@", error);
   }
 }
@@ -100,7 +193,7 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
                 timestamp:(CMTime)timestamp
                fromSource:(MPPInputSource*)source {
 
-  [self.mediapipeGraph sendPixelBuffer:imageBuffer
+  [self->mediapipeGraph sendPixelBuffer:imageBuffer
                             intoStream:self.graphInputStream
                             packetType:MPPPacketTypePixelBuffer
                              timestamp:[self.timestampConverter timestampForMediaTime:timestamp]];
@@ -108,42 +201,5 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 
 #pragma mark - MPPGraphDelegate methods
 
-// Receives CVPixelBufferRef from the MediaPipe graph. Invoked on a MediaPipe worker thread.
-- (void)mediapipeGraph:(MPPGraph*)graph
-    didOutputPixelBuffer:(CVPixelBufferRef)pixelBuffer
-              fromStream:(const std::string&)streamName {
-  if (streamName == self.graphOutputStream) {
-    // Display the captured image on the screen.
-    CVPixelBufferRetain(pixelBuffer);
-    dispatch_async(dispatch_get_main_queue(), ^{
-      [self.renderer renderPixelBuffer:pixelBuffer];
-      CVPixelBufferRelease(pixelBuffer);
-    });
-  }
-}
 
-
-// Receives a raw packet from the MediaPipe graph. Invoked on a MediaPipe worker thread.
-- (void)mediapipeGraph:(MPPGraph*)graph
-     didOutputPacket:(const ::mediapipe::Packet&)packet
-          fromStream:(const std::string&)streamName {
-    
-  if (streamName == kLandmarksOutputStream) {
-      
-      
-    if (packet.IsEmpty()) {
-        self.poseTrackingResultsListener(nil);
-      return;
-    }
-    const auto& landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
-      NSMutableArray<PoseLandmark*>* poseLandmarks =   [[NSMutableArray<PoseLandmark*> alloc] init];
-    for (int i = 0; i < landmarks.landmark_size(); ++i) {
-        
-        [poseLandmarks addObject: [[PoseLandmark alloc] initWithX:landmarks.landmark(i).x() y:landmarks.landmark(i).y() z:landmarks.landmark(i).z() presence:landmarks.landmark(i).presence() visibility:landmarks.landmark(i).visibility()] ];
-    }
-      PoseTrackingResults* results = [[PoseTrackingResults alloc] initWithLandmarks:poseLandmarks];
-      self.poseTrackingResultsListener(results);
-  }
-    
-}
 @end

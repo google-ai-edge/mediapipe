@@ -25,10 +25,12 @@
     "mediapipe/examples/ios/objectdetectiongpu",
     "mediapipe/examples/ios/objectdetectiontrackinggpu",
     "mediapipe/examples/ios/posetrackinggpu",
+    "mediapipe/examples/ios/posetrackingsolution-swift",
     "mediapipe/examples/ios/posetrackingsolutiongpu",
     "mediapipe/examples/ios/selfiesegmentationgpu",
     "mediapipe/objc",
-    "mediapipe/objc/solutions/posetracking_gpu"
+    "mediapipe/objc/solutions/posetracking_gpu",
+    "mediapipe/swift/solutions/lindera"
   ],
   "projectName" : "Mediapipe",
   "workspaceRoot" : "../.."

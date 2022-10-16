@@ -4,6 +4,7 @@ objc_library(
         "*.h",
         "*.mm",
     ]),
+    module_name = "MPPoseTracking",
     hdrs = [
         "PoseTracking.h",
         "PoseTrackingOptions.h",
