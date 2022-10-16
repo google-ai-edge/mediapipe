@@ -1,4 +1,6 @@
 rootProject.name = "mediapipe-solutions-examples"
 include ':facedetection'
 include ':facemesh'
+include ':posetracking'
 include ':hands'
+include ':posetracking-camera'
