@@ -243,8 +243,8 @@ class ImageToTensorCalculator : public Node {
     }
 
     ASSIGN_OR_RETURN(auto image, GetInputImage(cc));
-    const Size size{image->width(), image->height()};
-    RotatedRect roi = GetRoi(size.width, size.height, norm_rect);
+
+    RotatedRect roi = GetRoi(image->width(), image->height(), norm_rect);
     ASSIGN_OR_RETURN(auto padding, PadRoi(options_.output_tensor_width(),
                                           options_.output_tensor_height(),
                                           options_.keep_aspect_ratio(), &roi));
@@ -253,19 +253,22 @@ class ImageToTensorCalculator : public Node {
     }
     if (kOutMatrix(cc).IsConnected()) {
       std::array<float, 16> matrix;
-      GetRotatedSubRectToRectTransformMatrix(roi, size.width, size.height,
-                                             /*flip_horizontaly=*/false,
-                                             &matrix);
+      GetRotatedSubRectToRectTransformMatrix(
+          roi, image->width(), image->height(),
+          /*flip_horizontaly=*/false, &matrix);
       kOutMatrix(cc).Send(std::move(matrix));
     }
 
     // Lazy initialization of the GPU or CPU converter.
     MP_RETURN_IF_ERROR(InitConverterIfNecessary(cc, *image.get()));
 
-    ASSIGN_OR_RETURN(Tensor tensor,
-                     (image->UsesGpu() ? gpu_converter_ : cpu_converter_)
-                         ->Convert(*image, roi, {output_width_, output_height_},
-                                   range_min_, range_max_));
+    Tensor::ElementType output_tensor_type =
+        GetOutputTensorType(image->UsesGpu());
+    Tensor tensor(output_tensor_type, {1, output_height_, output_width_,
+                                       GetNumOutputChannels(*image)});
+    MP_RETURN_IF_ERROR((image->UsesGpu() ? gpu_converter_ : cpu_converter_)
+                           ->Convert(*image, roi, range_min_, range_max_,
+                                     /*tensor_buffer_offset=*/0, tensor));
 
     auto result = std::make_unique<std::vector<Tensor>>();
     result->push_back(std::move(tensor));
@@ -292,15 +295,31 @@ class ImageToTensorCalculator : public Node {
     }
   }
 
-  Tensor::ElementType GetOutputTensorType() {
-    if (is_float_output_) {
-      return Tensor::ElementType::kFloat32;
+  Tensor::ElementType GetOutputTensorType(bool uses_gpu) {
+    if (!uses_gpu) {
+      if (is_float_output_) {
+        return Tensor::ElementType::kFloat32;
+      }
+      if (range_min_ < 0) {
+        return Tensor::ElementType::kInt8;
+      } else {
+        return Tensor::ElementType::kUInt8;
+      }
     }
-    if (range_min_ < 0) {
-      return Tensor::ElementType::kInt8;
-    } else {
-      return Tensor::ElementType::kUInt8;
+    // Always use float32 when GPU is enabled.
+    return Tensor::ElementType::kFloat32;
+  }
+
+  int GetNumOutputChannels(const Image& image) {
+#if !MEDIAPIPE_DISABLE_GPU
+#if MEDIAPIPE_METAL_ENABLED
+    if (image.UsesGpu()) {
+      return 4;
     }
+#endif  // MEDIAPIPE_METAL_ENABLED
+#endif  // !MEDIAPIPE_DISABLE_GPU
+    // All of the processors except for Metal expect 3 channels.
+    return 3;
   }
 
   absl::StatusOr<std::shared_ptr<const mediapipe::Image>> GetInputImage(
@@ -366,7 +385,8 @@ class ImageToTensorCalculator : public Node {
 #if !MEDIAPIPE_DISABLE_OPENCV
         ASSIGN_OR_RETURN(
             cpu_converter_,
-            CreateOpenCvConverter(cc, GetBorderMode(), GetOutputTensorType()));
+            CreateOpenCvConverter(cc, GetBorderMode(),
+                                  GetOutputTensorType(/*uses_gpu=*/false)));
 #else
         LOG(FATAL) << "Cannot create image to tensor opencv converter since "
                       "MEDIAPIPE_DISABLE_OPENCV is defined.";
