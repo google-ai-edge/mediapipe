@@ -460,7 +460,7 @@ void ConfigureTensorsToDetectionsCalculator(
 //   IMAGE - Image
 //     Image to perform detection on.
 //   NORM_RECT - NormalizedRect @Optional
-//     Describes image rotation and region of image to perform classification
+//     Describes image rotation and region of image to perform detection
 //     on.
 //     @Optional: rect covering the whole image is used if not specified.
 //
@@ -469,6 +469,8 @@ void ConfigureTensorsToDetectionsCalculator(
 //     Detected objects with bounding box in pixel units.
 //   IMAGE - mediapipe::Image
 //     The image that object detection runs on.
+// All returned coordinates are in the unrotated and uncropped input image
+// coordinates system.
 //
 // Example:
 // node {

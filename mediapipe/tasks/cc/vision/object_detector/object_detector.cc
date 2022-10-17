@@ -101,8 +101,8 @@ CalculatorGraphConfig CreateGraphConfig(
   task_subgraph.Out(kImageTag).SetName(kImageOutStreamName) >>
       graph.Out(kImageTag);
   if (enable_flow_limiting) {
-    return tasks::core::AddFlowLimiterCalculator(graph, task_subgraph,
-                                                 {kImageTag}, kDetectionsTag);
+    return tasks::core::AddFlowLimiterCalculator(
+        graph, task_subgraph, {kImageTag, kNormRectTag}, kDetectionsTag);
   }
   graph.In(kImageTag) >> task_subgraph.In(kImageTag);
   graph.In(kNormRectTag) >> task_subgraph.In(kNormRectTag);
