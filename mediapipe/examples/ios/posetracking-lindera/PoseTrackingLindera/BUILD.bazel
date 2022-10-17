@@ -1,0 +1,78 @@
+load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
+load("@build_bazel_rules_apple//apple:ios.bzl", "ios_application")
+load("@build_bazel_rules_apple//apple:resources.bzl", "apple_resource_bundle")
+load(
+    "//mediapipe/examples/ios:bundle_id.bzl",
+    "BUNDLE_ID_PREFIX",
+    "example_provisioning",
+)
+
+MIN_IOS_VERSION = "14.0"
+
+swift_library(
+    name = "lindera_app_lib",
+    srcs = glob(["**/*.swift"]),
+    data = [
+        "//mediapipe/graphs/pose_tracking:pose_tracking_gpu.binarypb",
+        "//mediapipe/modules/pose_detection:pose_detection.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+    ] + [
+        "Base.lproj/LaunchScreen.storyboard",
+        "Base.lproj/Main.storyboard",
+    ],
+    linkopts = [
+        "-lc++",
+        "-std=c++17",
+        "-lstdc++",
+    ],
+    module_name = "lindera_app_lib",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@ios_opencv//:OpencvFramework",
+    ] + [
+        "//mediapipe/objc/solutions/posetracking_gpu:posetracking_gpu_solution",
+        "//mediapipe/objc:mediapipe_framework_ios",
+        "//mediapipe/objc:mediapipe_input_sources_ios",
+        "//mediapipe/objc:mediapipe_layer_renderer",
+    ] + select({
+        "//mediapipe:ios_i386": [],
+        "//mediapipe:ios_x86_64": [],
+        "//conditions:default": [
+            "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps",
+            "//mediapipe/framework/formats:landmark_cc_proto",
+        ],
+    }),
+)
+
+apple_resource_bundle(
+    name = "app_resources",
+    bundle_id = BUNDLE_ID_PREFIX + ".PoseTrackingGpu",
+    resources = [
+        "Assets.xcassets",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+ios_application(
+    name = "posetracking-lindera",
+    bundle_id = BUNDLE_ID_PREFIX + ".PoseTrackingGpu",
+    families = [
+        "iphone",
+        "ipad",
+    ],
+    infoplists = ["Info.plist",
+    "//mediapipe/examples/ios/common:Info.plist",
+],
+    linkopts = [
+        "-lc++",
+    ],
+    minimum_os_version = MIN_IOS_VERSION,
+    provisioning_profile = example_provisioning(),
+    resources = [":app_resources"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":lindera_app_lib",
+        ":app_resources",
+        #        "@ios_opencv//:OpencvFramework",
+    ],
+)

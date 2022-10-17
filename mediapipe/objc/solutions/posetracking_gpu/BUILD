@@ -8,6 +8,7 @@ objc_library(
     hdrs = [
         "PoseTracking.h",
         "PoseTrackingOptions.h",
+        "PoseTrackingResults.h"
     ],
     copts = [
         "-Wno-shorten-64-to-32",

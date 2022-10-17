@@ -23,8 +23,7 @@
     "mediapipe/objc/testing/app/BUILD"
   ],
   "buildTargets" : [
-    "//mediapipe/examples/ios/posetrackingsolution-swift:app_lib",
-    "//mediapipe/examples/ios/posetrackingsolution-swift:posetracking-solution-swift",
+    "//mediapipe/examples/ios/posetracking-lindera/PoseTrackingLindera:posetracking-lindera",
     "//mediapipe/examples/ios/posetrackingsolutiongpu:PoseTrackingSolutionGpuApp",
     "//mediapipe/swift/solutions/lindera:Lindera"
   ],
@@ -93,6 +92,9 @@
     "mediapipe/examples/ios/iristrackinggpu",
     "mediapipe/examples/ios/objectdetectioncpu",
     "mediapipe/examples/ios/objectdetectiongpu",
+    "mediapipe/examples/ios/posetracking-lindera",
+    "mediapipe/examples/ios/posetracking-lindera/PoseTrackingLindera",
+    "mediapipe/examples/ios/posetracking-lindera/PoseTrackingLindera/Base.lproj",
     "mediapipe/examples/ios/posetrackinggpu",
     "mediapipe/examples/ios/posetrackingsolution-swift",
     "mediapipe/examples/ios/posetrackingsolution-swift/Camera",
