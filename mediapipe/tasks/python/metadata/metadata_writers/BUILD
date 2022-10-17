@@ -19,3 +19,21 @@ py_library(
         "//mediapipe/tasks/metadata:schema_py",
     ],
 )
+
+py_library(
+    name = "metadata_writer",
+    srcs = ["metadata_writer.py"],
+    deps = [
+        ":metadata_info",
+        ":writer_utils",
+        "//mediapipe/tasks/metadata:metadata_schema_py",
+        "//mediapipe/tasks/python/metadata",
+        "@flatbuffers//:runtime_py",
+    ],
+)
+
+py_library(
+    name = "writer_utils",
+    srcs = ["writer_utils.py"],
+    deps = ["//mediapipe/tasks/metadata:schema_py"],
+)

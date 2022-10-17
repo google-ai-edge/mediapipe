@@ -24,3 +24,13 @@ py_test(
         "@flatbuffers//:runtime_py",
     ],
 )
+
+py_test(
+    name = "metadata_writer_test",
+    srcs = ["metadata_writer_test.py"],
+    data = ["//mediapipe/tasks/testdata/metadata:model_files"],
+    deps = [
+        "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
+        "//mediapipe/tasks/python/test:test_utils",
+    ],
+)
