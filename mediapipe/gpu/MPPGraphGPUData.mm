@@ -111,7 +111,8 @@ typedef CVOpenGLESTextureCacheRef CVTextureCacheType;
 - (CVMetalTextureCacheRef)mtlTextureCache {
   @synchronized(self) {
     if (!_mtlTextureCache) {
-      CVReturn err = CVMetalTextureCacheCreate(NULL, NULL, self.mtlDevice, NULL, &_mtlTextureCache);
+      CVReturn __unused err =
+          CVMetalTextureCacheCreate(NULL, NULL, self.mtlDevice, NULL, &_mtlTextureCache);
       NSAssert(err == kCVReturnSuccess, @"Error at CVMetalTextureCacheCreate %d", err);
       // TODO: register and flush metal caches too.
     }

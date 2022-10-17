@@ -262,7 +262,6 @@ class SubRectExtractorMetal {
     RET_CHECK(pipeline_state != nil);
 
     std::string output_type_def;
-    MTLPixelFormat pixel_format;
     switch (output_format) {
       case OutputFormat::kF16C4:
         output_type_def = R"(
