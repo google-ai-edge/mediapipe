@@ -1410,3 +1410,45 @@ cc_library(
     ],
     alwayslink = 1,
 )
+
+mediapipe_proto_library(
+    name = "bypass_calculator_proto",
+    srcs = ["bypass_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "bypass_calculator",
+    srcs = ["bypass_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":bypass_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:collection_item_id",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "bypass_calculator_test",
+    srcs = ["bypass_calculator_test.cc"],
+    deps = [
+        ":bypass_calculator",
+        ":pass_through_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:switch_container",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:optional",
+    ],
+)
