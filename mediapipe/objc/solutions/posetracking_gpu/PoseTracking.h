@@ -22,7 +22,7 @@
 // Render frames in a layer.
 @property(nonatomic) MPPLayerRenderer* renderer;
 
-
+@property (nonatomic) CMTime timeStamp;
 // Graph name.
 @property(nonatomic) NSString* graphName;
 
@@ -43,6 +43,7 @@
 @property(nonatomic) void(^poseTrackingResultsListener)(PoseTrackingResults*);
 
 - (instancetype) initWithPoseTrackingOptions: (PoseTrackingOptions*) poseTrackingOptions;
+- (void)startGraph;
 - (void) startWithCamera: (MPPCameraInputSource*) cameraSource;
 @end
 

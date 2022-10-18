@@ -30,18 +30,23 @@ swift_library(
     deps = [
         "@ios_opencv//:OpencvFramework",
     ] + [
-        "//mediapipe/objc/solutions/posetracking_gpu:posetracking_gpu_solution",
-        "//mediapipe/objc:mediapipe_framework_ios",
-        "//mediapipe/objc:mediapipe_input_sources_ios",
-        "//mediapipe/objc:mediapipe_layer_renderer",
-    ] + select({
-        "//mediapipe:ios_i386": [],
-        "//mediapipe:ios_x86_64": [],
-        "//conditions:default": [
-            "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps",
-            "//mediapipe/framework/formats:landmark_cc_proto",
-        ],
-    }),
+        "//mediapipe/swift/solutions/lindera:lindera",
+    ],
+
+    #    +
+    #        [
+    #        "//mediapipe/objc/solutions/posetracking_gpu:posetracking_gpu_solution",
+    #        "//mediapipe/objc:mediapipe_framework_ios",
+    #        "//mediapipe/objc:mediapipe_input_sources_ios",
+    #        "//mediapipe/objc:mediapipe_layer_renderer",
+    #    ] + select({
+    #        "//mediapipe:ios_i386": [],
+    #        "//mediapipe:ios_x86_64": [],
+    #        "//conditions:default": [
+    #            "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps",
+    #            "//mediapipe/framework/formats:landmark_cc_proto",
+    #        ],
+    #    })
 )
 
 apple_resource_bundle(
@@ -60,9 +65,10 @@ ios_application(
         "iphone",
         "ipad",
     ],
-    infoplists = ["Info.plist",
-    "//mediapipe/examples/ios/common:Info.plist",
-],
+    infoplists = [
+        "Info.plist",
+        "//mediapipe/examples/ios/common:Info.plist",
+    ],
     linkopts = [
         "-lc++",
     ],
@@ -73,6 +79,7 @@ ios_application(
     deps = [
         ":lindera_app_lib",
         ":app_resources",
+
         #        "@ios_opencv//:OpencvFramework",
     ],
 )

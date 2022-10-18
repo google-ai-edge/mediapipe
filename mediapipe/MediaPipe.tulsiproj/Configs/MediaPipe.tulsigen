@@ -24,8 +24,7 @@
   ],
   "buildTargets" : [
     "//mediapipe/examples/ios/posetracking-lindera/PoseTrackingLindera:posetracking-lindera",
-    "//mediapipe/examples/ios/posetrackingsolutiongpu:PoseTrackingSolutionGpuApp",
-    "//mediapipe/swift/solutions/lindera:Lindera"
+    "//mediapipe/swift/solutions/lindera:lindera"
   ],
   "optionSet" : {
     "BazelBuildOptionsDebug" : {

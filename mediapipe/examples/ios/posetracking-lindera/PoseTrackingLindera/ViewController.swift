@@ -4,35 +4,45 @@
 //
 //  Created by Mautisim Munir on 17/10/2022.
 //
-
 import UIKit
-import MPPoseTracking
+import LinderaDetection
+
 
 class ViewController: UIViewController {
-    let poseTracking:PoseTracking = PoseTracking(poseTrackingOptions: PoseTrackingOptions(showLandmarks: true));
-    let cameraSource = MPPCameraInputSource();
+
     @IBOutlet  var liveView:UIView?;
+    
+    let lindera =  Lindera()
+    
+    /// A simple LinderaDelegate implementation that prints nose coordinates if detected
+    class LinderaDelegateImpl:LinderaDelegate{
+        func lindera(_ lindera: Lindera, didDetect event: Asensei3DPose.Event) {
+            if let kpt = event.pose.nose{
+                print("LinderaDelegateImpl: Nose Keypoint (\(String(describing: kpt.position.x)),\(String(describing: kpt.position.y)),\(kpt.position.z)) with confidence \(kpt.confidence)")
+            }
+        }
+        
+        
+    }
+
+    let linderaDelegate = LinderaDelegateImpl()
+    
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         // Do any additional setup after loading the view.
-       
-        self.poseTracking.renderer.layer.frame = self.liveView!.layer.bounds
-        self.liveView?.layer.addSublayer(self.poseTracking.renderer.layer)
-        self.cameraSource.sessionPreset = AVCaptureSession.Preset.high.rawValue;
-        self.cameraSource.cameraPosition = AVCaptureDevice.Position.front;
-        self.cameraSource.orientation = AVCaptureVideoOrientation.portrait;
-        if (self.cameraSource.orientation == AVCaptureVideoOrientation.portrait){
-            self.cameraSource.videoMirrored = true;
-        }
-        self.cameraSource.requestCameraAccess(
-            completionHandler: {(granted:Bool)->Void
-            in
-                if (granted){
-                    self.poseTracking.start(withCamera: self.cameraSource)
-                }
-            
-        })
+        
+
+        self.lindera.delegate = linderaDelegate
+        
+        // add lindera camera view to our app's UIView i.e. liveView
+        self.liveView?.addSubview(lindera.cameraView)
+        // Expand our cameraView frame to liveView frame
+        lindera.cameraView.frame = self.liveView!.bounds;
+        
+        lindera.startCamera()
+
     }
 
 

@@ -196,6 +196,8 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 - (void)processVideoFrame:(CVPixelBufferRef)imageBuffer
                 timestamp:(CMTime)timestamp
                fromSource:(MPPInputSource*)source {
+    
+    self.timeStamp = timestamp;
 
   [self->mediapipeGraph sendPixelBuffer:imageBuffer
                             intoStream:self.graphInputStream
