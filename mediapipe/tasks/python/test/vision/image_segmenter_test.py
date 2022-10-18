@@ -113,7 +113,7 @@ class ImageSegmenterTest(parameterized.TestCase):
   @parameterized.parameters(
       (ModelFileType.FILE_NAME,),
       (ModelFileType.FILE_CONTENT,))
-  def test_succeeds_with_category_mask(self, model_file_type):
+  def test_segment_succeeds_with_category_mask(self, model_file_type):
     # Creates segmenter.
     if model_file_type is ModelFileType.FILE_NAME:
       base_options = _BaseOptions(model_asset_path=self.model_path)
@@ -148,7 +148,7 @@ class ImageSegmenterTest(parameterized.TestCase):
     # a context.
     segmenter.close()
 
-  def test_succeeds_with_confidence_mask(self):
+  def test_segment_succeeds_with_confidence_mask(self):
     # Creates segmenter.
     base_options = _BaseOptions(model_asset_path=self.model_path)
 
@@ -192,8 +192,7 @@ class ImageSegmenterTest(parameterized.TestCase):
     segmenter.close()
 
   @parameterized.parameters(
-    (ModelFileType.FILE_NAME,),
-    (ModelFileType.FILE_CONTENT,))
+    (ModelFileType.FILE_NAME), (ModelFileType.FILE_CONTENT))
   def test_segment_in_context(self, model_file_type):
     if model_file_type is ModelFileType.FILE_NAME:
       base_options = _BaseOptions(model_asset_path=self.model_path)
