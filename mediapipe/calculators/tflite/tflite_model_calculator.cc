@@ -91,7 +91,7 @@ class TfLiteModelCalculator : public CalculatorBase {
           tflite::DefaultErrorReporter());
       model = tflite::FlatBufferModel::BuildFromAllocation(
           std::move(model_allocation), tflite::DefaultErrorReporter());
-#elif
+#else
       return absl::FailedPreconditionError(
           "Loading by file descriptor is not supported on this platform.")
 #endif
