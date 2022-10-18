@@ -29,8 +29,8 @@ message HandLandmarkerGraphOptions {
   extend mediapipe.CalculatorOptions {
     optional HandLandmarkerGraphOptions ext = 462713202;
   }
-  // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
-  // model file with metadata, accelerator options, etc.
+  // Base options for configuring MediaPipe Tasks, such as specifying the model
+  // asset bundle file with metadata, accelerator options, etc.
   optional core.proto.BaseOptions base_options = 1;
 
   // Options for hand detector graph.

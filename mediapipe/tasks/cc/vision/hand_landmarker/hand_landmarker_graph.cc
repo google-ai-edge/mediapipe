@@ -29,10 +29,14 @@ limitations under the License.
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/utils/gate.h"
+#include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
+#include "mediapipe/tasks/cc/core/model_resources_cache.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/utils.h"
+#include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/calculators/hand_association_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options.pb.h"
@@ -50,6 +54,8 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::utils::DisallowIf;
+using ::mediapipe::tasks::core::ModelAssetBundleResources;
+using ::mediapipe::tasks::metadata::SetExternalFile;
 using ::mediapipe::tasks::vision::hand_detector::proto::
     HandDetectorGraphOptions;
 using ::mediapipe::tasks::vision::hand_landmarker::proto::
@@ -65,6 +71,9 @@ constexpr char kHandednessTag[] = "HANDEDNESS";
 constexpr char kPalmDetectionsTag[] = "PALM_DETECTIONS";
 constexpr char kPalmRectsTag[] = "PALM_RECTS";
 constexpr char kPreviousLoopbackCalculatorName[] = "PreviousLoopbackCalculator";
+constexpr char kHandDetectorTFLiteName[] = "hand_detector.tflite";
+constexpr char kHandLandmarksDetectorTFLiteName[] =
+    "hand_landmarks_detector.tflite";
 
 struct HandLandmarkerOutputs {
   Source<std::vector<NormalizedLandmarkList>> landmark_lists;
@@ -75,6 +84,27 @@ struct HandLandmarkerOutputs {
   Source<std::vector<Detection>> palm_detections;
   Source<Image> image;
 };
+
+// Sets the base options in the sub tasks.
+absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
+                                   HandLandmarkerGraphOptions* options,
+                                   bool is_copy) {
+  ASSIGN_OR_RETURN(const auto hand_detector_file,
+                   resources.GetModelFile(kHandDetectorTFLiteName));
+  SetExternalFile(hand_detector_file,
+                  options->mutable_hand_detector_graph_options()
+                      ->mutable_base_options()
+                      ->mutable_model_asset(),
+                  is_copy);
+  ASSIGN_OR_RETURN(const auto hand_landmarks_detector_file,
+                   resources.GetModelFile(kHandLandmarksDetectorTFLiteName));
+  SetExternalFile(hand_landmarks_detector_file,
+                  options->mutable_hand_landmarks_detector_graph_options()
+                      ->mutable_base_options()
+                      ->mutable_model_asset(),
+                  is_copy);
+  return absl::OkStatus();
+}
 
 }  // namespace
 
@@ -154,6 +184,20 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     Graph graph;
+    if (sc->Options<HandLandmarkerGraphOptions>()
+            .base_options()
+            .has_model_asset()) {
+      ASSIGN_OR_RETURN(
+          const auto* model_asset_bundle_resources,
+          CreateModelAssetBundleResources<HandLandmarkerGraphOptions>(sc));
+      // Copies the file content instead of passing the pointer of file in
+      // memory if the subgraph model resource service is not available.
+      MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+          *model_asset_bundle_resources,
+          sc->MutableOptions<HandLandmarkerGraphOptions>(),
+          !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
+               .IsAvailable()));
+    }
     ASSIGN_OR_RETURN(
         auto hand_landmarker_outputs,
         BuildHandLandmarkerGraph(sc->Options<HandLandmarkerGraphOptions>(),

@@ -73,6 +73,7 @@ cc_library(
     srcs = ["model_task_graph.cc"],
     hdrs = ["model_task_graph.h"],
     deps = [
+        ":model_asset_bundle_resources",
         ":model_resources",
         ":model_resources_cache",
         ":model_resources_calculator",
@@ -163,6 +164,7 @@ cc_library_with_tflite(
         "@org_tensorflow//tensorflow/lite/core/shims:builtin_ops",
     ],
     deps = [
+        ":model_asset_bundle_resources",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/tasks/cc:common",

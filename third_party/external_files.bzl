@@ -269,6 +269,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_hand_landmark_task",
+        sha256 = "dd830295598e48e6bbbdf22fd9e69538fa07768106cd9ceb04d5462ca7e38c95",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/hand_landmark.task?generation=1665707323647357"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_hand_recrop_tflite",
         sha256 = "67d996ce96f9d36fe17d2693022c6da93168026ab2f028f9e2365398d8ac7d5d",
         urls = ["https://storage.googleapis.com/mediapipe-assets/hand_recrop.tflite?generation=1661875770633070"],

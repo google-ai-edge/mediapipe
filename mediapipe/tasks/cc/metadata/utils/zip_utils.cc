@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 
+#include <string>
+
 #include "absl/cleanup/cleanup.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
@@ -162,12 +164,16 @@ absl::Status ExtractFilesfromZipFile(
   return absl::OkStatus();
 }
 
-void SetExternalFile(const std::string_view& file_content,
-                     core::proto::ExternalFile* model_file) {
-  auto pointer = reinterpret_cast<uint64_t>(file_content.data());
-
-  model_file->mutable_file_pointer_meta()->set_pointer(pointer);
-  model_file->mutable_file_pointer_meta()->set_length(file_content.length());
+void SetExternalFile(const absl::string_view& file_content,
+                     core::proto::ExternalFile* model_file, bool is_copy) {
+  if (is_copy) {
+    std::string str_content{file_content};
+    model_file->set_file_content(str_content);
+  } else {
+    auto pointer = reinterpret_cast<uint64_t>(file_content.data());
+    model_file->mutable_file_pointer_meta()->set_pointer(pointer);
+    model_file->mutable_file_pointer_meta()->set_length(file_content.length());
+  }
 }
 
 }  // namespace metadata

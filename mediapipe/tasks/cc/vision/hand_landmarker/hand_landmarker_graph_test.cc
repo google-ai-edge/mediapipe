@@ -65,8 +65,7 @@ using ::testing::proto::Approximately;
 using ::testing::proto::Partially;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
-constexpr char kPalmDetectionModel[] = "palm_detection_full.tflite";
-constexpr char kHandLandmarkerFullModel[] = "hand_landmark_full.tflite";
+constexpr char kHandLandmarkerModelBundle[] = "hand_landmark.task";
 constexpr char kLeftHandsImage[] = "left_hands.jpg";
 
 constexpr char kImageTag[] = "IMAGE";
@@ -105,17 +104,9 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner() {
       "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph");
   auto& options =
       hand_landmarker_graph.GetOptions<HandLandmarkerGraphOptions>();
-  options.mutable_hand_detector_graph_options()
-      ->mutable_base_options()
-      ->mutable_model_asset()
-      ->set_file_name(JoinPath("./", kTestDataDirectory, kPalmDetectionModel));
-  options.mutable_hand_detector_graph_options()->mutable_base_options();
+  options.mutable_base_options()->mutable_model_asset()->set_file_name(
+      JoinPath("./", kTestDataDirectory, kHandLandmarkerModelBundle));
   options.mutable_hand_detector_graph_options()->set_num_hands(kMaxNumHands);
-  options.mutable_hand_landmarks_detector_graph_options()
-      ->mutable_base_options()
-      ->mutable_model_asset()
-      ->set_file_name(
-          JoinPath("./", kTestDataDirectory, kHandLandmarkerFullModel));
   options.set_min_tracking_confidence(kMinTrackingConfidence);
 
   graph[Input<Image>(kImageTag)].SetName(kImageName) >>

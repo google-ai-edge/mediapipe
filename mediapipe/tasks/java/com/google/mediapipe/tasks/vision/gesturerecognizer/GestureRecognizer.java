@@ -433,8 +433,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
               HandLandmarkerGraphOptionsProto.HandLandmarkerGraphOptions.newBuilder()
                   .setBaseOptions(
                       BaseOptionsProto.BaseOptions.newBuilder()
-                          .setUseStreamMode(runningMode() != RunningMode.IMAGE)
-                          .mergeFrom(convertBaseOptionsToProto(baseOptionsHandLandmarker())));
+                          .setUseStreamMode(runningMode() != RunningMode.IMAGE));
       minTrackingConfidence()
           .ifPresent(handLandmarkerGraphOptionsBuilder::setMinTrackingConfidence);
       handLandmarkerGraphOptionsBuilder
