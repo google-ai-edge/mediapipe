@@ -37,9 +37,21 @@ class ViewController: UIViewController {
         self.lindera.delegate = linderaDelegate
         
         // add lindera camera view to our app's UIView i.e. liveView
-        self.liveView?.addSubview(lindera.cameraView)
+        
         // Expand our cameraView frame to liveView frame
-        lindera.cameraView.frame = self.liveView!.bounds;
+        if let view = self.liveView{
+            view.addSubview(lindera.cameraView)
+            self.lindera.cameraView.frame = view.bounds
+            
+            self.lindera.cameraView.translatesAutoresizingMaskIntoConstraints = false
+             NSLayoutConstraint.activate([
+                 self.lindera.cameraView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                 self.lindera.cameraView.topAnchor.constraint(equalTo: view.topAnchor),
+                 self.lindera.cameraView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                 self.lindera.cameraView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+             ])
+        }
+
         
         lindera.startCamera()
 
