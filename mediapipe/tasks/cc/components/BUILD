@@ -92,3 +92,29 @@ cc_library(
     ],
     alwayslink = 1,
 )
+
+# TODO: Investigate rewriting the build rule to only link
+# the Bert Preprocessor if it's needed.
+cc_library(
+    name = "text_preprocessing_graph",
+    srcs = ["text_preprocessing_graph.cc"],
+    hdrs = ["text_preprocessing_graph.h"],
+    deps = [
+        "//mediapipe/calculators/tensor:bert_preprocessor_calculator",
+        "//mediapipe/calculators/tensor:bert_preprocessor_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:regex_preprocessor_calculator",
+        "//mediapipe/calculators/tensor:regex_preprocessor_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:text_to_tensor_calculator",
+        "//mediapipe/framework:subgraph",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/tasks/cc/components/proto:text_preprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
