@@ -16,6 +16,8 @@
 import enum
 import numpy as np
 import cv2
+from typing import List
+from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
@@ -24,7 +26,7 @@ from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import image_frame as image_frame_module
 from mediapipe.tasks.python.components.proto import segmenter_options
 from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.test import test_util
+from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import image_segmenter
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
@@ -42,7 +44,22 @@ _MODEL_FILE = 'deeplabv3.tflite'
 _IMAGE_FILE = 'segmentation_input_rotation0.jpg'
 _SEGMENTATION_FILE = 'segmentation_golden_rotation0.png'
 _MASK_MAGNIFICATION_FACTOR = 10
-_MATCH_PIXELS_THRESHOLD = 0.01
+_MASK_SIMILARITY_THRESHOLD = 0.98
+
+
+def _similar_to_uint8_mask(actual_mask, expected_mask):
+  actual_mask_pixels = actual_mask.numpy_view().flatten()
+  expected_mask_pixels = expected_mask.numpy_view().flatten()
+
+  consistent_pixels = 0
+  num_pixels = len(expected_mask_pixels)
+
+  for index in range(num_pixels):
+    consistent_pixels += (
+        actual_mask_pixels[index] * _MASK_MAGNIFICATION_FACTOR ==
+        expected_mask_pixels[index])
+
+  return consistent_pixels / num_pixels >= _MASK_SIMILARITY_THRESHOLD
 
 
 class ModelFileType(enum.Enum):
@@ -54,10 +71,14 @@ class ImageSegmenterTest(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
-    self.test_image = test_util.read_test_image(
-        test_util.get_test_data_path(_IMAGE_FILE))
-    self.test_seg_path = test_util.get_test_data_path(_SEGMENTATION_FILE)
-    self.model_path = test_util.get_test_data_path(_MODEL_FILE)
+    # Load the test input image.
+    self.test_image = _Image.create_from_file(
+        test_utils.get_test_data_path(_IMAGE_FILE))
+    # Loads ground truth segmentation file.
+    gt_segmentation_data = cv2.imread(
+      test_utils.get_test_data_path(_SEGMENTATION_FILE), cv2.IMREAD_GRAYSCALE)
+    self.test_seg_image = _Image(_ImageFormat.GRAY8, gt_segmentation_data)
+    self.model_path = test_utils.get_test_data_path(_MODEL_FILE)
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
     # Creates with default option and valid model file successfully.
@@ -76,7 +97,7 @@ class ImageSegmenterTest(parameterized.TestCase):
     with self.assertRaisesRegex(
         ValueError,
         r"ExternalFile must specify at least one of 'file_content', "
-        r"'file_name' or 'file_descriptor_meta'."):
+        r"'file_name', 'file_pointer_meta' or 'file_descriptor_meta'."):
       base_options = _BaseOptions(model_asset_path='')
       options = _ImageSegmenterOptions(base_options=base_options)
       _ImageSegmenter.create_from_options(options)
@@ -112,34 +133,16 @@ class ImageSegmenterTest(parameterized.TestCase):
     # Performs image segmentation on the input.
     category_masks = segmenter.segment(self.test_image)
     self.assertEqual(len(category_masks), 1)
-    result_pixels = category_masks[0].numpy_view().flatten()
+    category_mask = category_masks[0]
+    result_pixels = category_mask.numpy_view().flatten()
 
-    # Check if data type of `category_masks` is correct.
+    # Check if data type of `category_mask` is correct.
     self.assertEqual(result_pixels.dtype, np.uint8)
 
-    # Loads ground truth segmentation file.
-    image_data = cv2.imread(self.test_seg_path, cv2.IMREAD_GRAYSCALE)
-    gt_segmentation = _Image(_ImageFormat.GRAY8, image_data)
-    gt_segmentation_array = gt_segmentation.numpy_view()
-    gt_segmentation_shape = gt_segmentation_array.shape
-    num_pixels = gt_segmentation_shape[0] * gt_segmentation_shape[1]
-    ground_truth_pixels = gt_segmentation_array.flatten()
-
-    self.assertEqual(
-      len(result_pixels), len(ground_truth_pixels),
-      'Segmentation mask size does not match the ground truth mask size.')
-
-    inconsistent_pixels = 0
-
-    for index in range(num_pixels):
-      inconsistent_pixels += (
-          result_pixels[index] * _MASK_MAGNIFICATION_FACTOR !=
-          ground_truth_pixels[index])
-
-    self.assertLessEqual(
-      inconsistent_pixels / num_pixels, _MATCH_PIXELS_THRESHOLD,
+    self.assertTrue(
+      _similar_to_uint8_mask(category_masks[0], self.test_seg_image),
       f'Number of pixels in the candidate mask differing from that of the '
-      f'ground truth mask exceeds {_MATCH_PIXELS_THRESHOLD}.')
+      f'ground truth mask exceeds {_MASK_SIMILARITY_THRESHOLD}.')
 
     # Closes the segmenter explicitly when the segmenter is not used in
     # a context.
@@ -187,6 +190,174 @@ class ImageSegmenterTest(parameterized.TestCase):
     # Closes the segmenter explicitly when the segmenter is not used in
     # a context.
     segmenter.close()
+
+  @parameterized.parameters(
+    (ModelFileType.FILE_NAME,),
+    (ModelFileType.FILE_CONTENT,))
+  def test_segment_in_context(self, model_file_type):
+    if model_file_type is ModelFileType.FILE_NAME:
+      base_options = _BaseOptions(model_asset_path=self.model_path)
+    elif model_file_type is ModelFileType.FILE_CONTENT:
+      with open(self.model_path, 'rb') as f:
+        model_contents = f.read()
+      base_options = _BaseOptions(model_asset_buffer=model_contents)
+    else:
+      # Should never happen
+      raise ValueError('model_file_type is invalid.')
+
+    segmenter_options = _SegmenterOptions(output_type=_OutputType.CATEGORY_MASK)
+    options = _ImageSegmenterOptions(base_options=base_options,
+                                     segmenter_options=segmenter_options)
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      # Performs image segmentation on the input.
+      category_masks = segmenter.segment(self.test_image)
+      self.assertEqual(len(category_masks), 1)
+
+      self.assertTrue(
+        _similar_to_uint8_mask(category_masks[0], self.test_seg_image),
+        f'Number of pixels in the candidate mask differing from that of the '
+        f'ground truth mask exceeds {_MASK_SIMILARITY_THRESHOLD}.')
+
+  def test_missing_result_callback(self):
+    options = _ImageSegmenterOptions(
+      base_options=_BaseOptions(model_asset_path=self.model_path),
+      running_mode=_RUNNING_MODE.LIVE_STREAM)
+    with self.assertRaisesRegex(ValueError,
+                                r'result callback must be provided'):
+      with _ImageSegmenter.create_from_options(options) as unused_segmenter:
+        pass
+
+  @parameterized.parameters((_RUNNING_MODE.IMAGE), (_RUNNING_MODE.VIDEO))
+  def test_illegal_result_callback(self, running_mode):
+    options = _ImageSegmenterOptions(
+      base_options=_BaseOptions(model_asset_path=self.model_path),
+      running_mode=running_mode,
+      result_callback=mock.MagicMock())
+    with self.assertRaisesRegex(ValueError,
+                                r'result callback should not be provided'):
+      with _ImageSegmenter.create_from_options(options) as unused_segmenter:
+        pass
+
+  def test_calling_segment_for_video_in_image_mode(self):
+    options = _ImageSegmenterOptions(
+      base_options=_BaseOptions(model_asset_path=self.model_path),
+      running_mode=_RUNNING_MODE.IMAGE)
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      with self.assertRaisesRegex(ValueError,
+                                  r'not initialized with the video mode'):
+        segmenter.segment_for_video(self.test_image, 0)
+
+  def test_calling_segment_async_in_image_mode(self):
+    options = _ImageSegmenterOptions(
+      base_options=_BaseOptions(model_asset_path=self.model_path),
+      running_mode=_RUNNING_MODE.IMAGE)
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      with self.assertRaisesRegex(ValueError,
+                                  r'not initialized with the live stream mode'):
+        segmenter.segment_async(self.test_image, 0)
+
+  def test_calling_segment_in_video_mode(self):
+    options = _ImageSegmenterOptions(
+      base_options=_BaseOptions(model_asset_path=self.model_path),
+      running_mode=_RUNNING_MODE.VIDEO)
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      with self.assertRaisesRegex(ValueError,
+                                  r'not initialized with the image mode'):
+        segmenter.segment(self.test_image)
+
+  def test_calling_segment_async_in_video_mode(self):
+    options = _ImageSegmenterOptions(
+      base_options=_BaseOptions(model_asset_path=self.model_path),
+      running_mode=_RUNNING_MODE.VIDEO)
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      with self.assertRaisesRegex(ValueError,
+                                  r'not initialized with the live stream mode'):
+        segmenter.segment_async(self.test_image, 0)
+
+  def test_detect_for_video_with_out_of_order_timestamp(self):
+    options = _ImageSegmenterOptions(
+      base_options=_BaseOptions(model_asset_path=self.model_path),
+      running_mode=_RUNNING_MODE.VIDEO)
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      unused_result = segmenter.segment_for_video(self.test_image, 1)
+      with self.assertRaisesRegex(
+          ValueError, r'Input timestamp must be monotonically increasing'):
+        segmenter.segment_for_video(self.test_image, 0)
+
+  def test_segment_for_video(self):
+    segmenter_options = _SegmenterOptions(output_type=_OutputType.CATEGORY_MASK)
+    options = _ImageSegmenterOptions(
+      base_options=_BaseOptions(model_asset_path=self.model_path),
+      segmenter_options=segmenter_options,
+      running_mode=_RUNNING_MODE.VIDEO)
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      for timestamp in range(0, 300, 30):
+        category_masks = segmenter.segment_for_video(self.test_image, timestamp)
+        self.assertEqual(len(category_masks), 1)
+        self.assertTrue(
+          _similar_to_uint8_mask(category_masks[0], self.test_seg_image),
+          f'Number of pixels in the candidate mask differing from that of the '
+          f'ground truth mask exceeds {_MASK_SIMILARITY_THRESHOLD}.')
+
+  def test_calling_segment_in_live_stream_mode(self):
+    options = _ImageSegmenterOptions(
+      base_options=_BaseOptions(model_asset_path=self.model_path),
+      running_mode=_RUNNING_MODE.LIVE_STREAM,
+      result_callback=mock.MagicMock())
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      with self.assertRaisesRegex(ValueError,
+                                  r'not initialized with the image mode'):
+        segmenter.segment(self.test_image)
+
+  def test_calling_segment_for_video_in_live_stream_mode(self):
+    options = _ImageSegmenterOptions(
+      base_options=_BaseOptions(model_asset_path=self.model_path),
+      running_mode=_RUNNING_MODE.LIVE_STREAM,
+      result_callback=mock.MagicMock())
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      with self.assertRaisesRegex(ValueError,
+                                  r'not initialized with the video mode'):
+        segmenter.segment_for_video(self.test_image, 0)
+
+  def test_segment_async_calls_with_illegal_timestamp(self):
+    options = _ImageSegmenterOptions(
+      base_options=_BaseOptions(model_asset_path=self.model_path),
+      running_mode=_RUNNING_MODE.LIVE_STREAM,
+      result_callback=mock.MagicMock())
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      segmenter.segment_async(self.test_image, 100)
+      with self.assertRaisesRegex(
+          ValueError, r'Input timestamp must be monotonically increasing'):
+        segmenter.segment_async(self.test_image, 0)
+
+  def test_segment_async_calls(self):
+    observed_timestamp_ms = -1
+
+    def check_result(result: List[image_module.Image],
+                     output_image: _Image,
+                     timestamp_ms: int):
+      # Get the output category mask.
+      category_mask = result[0]
+      self.assertEqual(output_image.width, self.test_image.width)
+      self.assertEqual(output_image.height, self.test_image.height)
+      self.assertEqual(output_image.width, self.test_seg_image.width)
+      self.assertEqual(output_image.height, self.test_seg_image.height)
+      self.assertTrue(
+        _similar_to_uint8_mask(category_mask, self.test_seg_image),
+        f'Number of pixels in the candidate mask differing from that of the '
+        f'ground truth mask exceeds {_MASK_SIMILARITY_THRESHOLD}.')
+      self.assertLess(observed_timestamp_ms, timestamp_ms)
+      self.observed_timestamp_ms = timestamp_ms
+
+    segmenter_options = _SegmenterOptions(output_type=_OutputType.CATEGORY_MASK)
+    options = _ImageSegmenterOptions(
+      base_options=_BaseOptions(model_asset_path=self.model_path),
+      segmenter_options=segmenter_options,
+      running_mode=_RUNNING_MODE.LIVE_STREAM,
+      result_callback=check_result)
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      for timestamp in range(0, 300, 30):
+        segmenter.segment_async(self.test_image, timestamp)
 
 
 if __name__ == '__main__':

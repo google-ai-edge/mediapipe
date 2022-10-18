@@ -42,6 +42,7 @@ _IMAGE_IN_STREAM_NAME = 'image_in'
 _IMAGE_OUT_STREAM_NAME = 'image_out'
 _IMAGE_TAG = 'IMAGE'
 _TASK_GRAPH_NAME = 'mediapipe.tasks.vision.ImageSegmenterGraph'
+_MICRO_SECONDS_PER_MILLISECOND = 1000
 
 
 @dataclasses.dataclass
@@ -52,9 +53,9 @@ class ImageSegmenterOptions:
     base_options: Base options for the image segmenter task.
     running_mode: The running mode of the task. Default to the image mode.
       Image segmenter task has three running modes:
-      1) The image mode for detecting objects on single image inputs.
-      2) The video mode for detecting objects on the decoded frames of a video.
-      3) The live stream mode for detecting objects on a live stream of input
+      1) The image mode for segmenting objects on single image inputs.
+      2) The video mode for segmenting objects on the decoded frames of a video.
+      3) The live stream mode for segmenting objects on a live stream of input
          data, such as from camera.
     segmenter_options: Options for the image segmenter task.
     result_callback: The user-defined result callback for processing live stream
@@ -86,7 +87,8 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'ImageSegmenter':
-    """Creates an `ImageSegmenter` object from a TensorFlow Lite model and the default `ImageSegmenterOptions`.
+    """Creates an `ImageSegmenter` object from a TensorFlow Lite model and the
+    default `ImageSegmenterOptions`.
 
     Note that the created `ImageSegmenter` instance is in image mode, for
     performing image segmentation on single image inputs.
@@ -131,8 +133,9 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
       segmentation_result = packet_getter.get_image_list(
           output_packets[_SEGMENTATION_OUT_STREAM_NAME])
       image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
-      timestamp = output_packets[_IMAGE_OUT_STREAM_NAME].timestamp
-      options.result_callback(segmentation_result, image, timestamp)
+      timestamp = output_packets[_SEGMENTATION_OUT_STREAM_NAME].timestamp
+      options.result_callback(segmentation_result, image,
+                              timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
 
     task_info = _TaskInfo(
         task_graph=_TASK_GRAPH_NAME,
@@ -148,7 +151,6 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
             _RunningMode.LIVE_STREAM), options.running_mode,
         packets_callback if options.result_callback else None)
 
-  # TODO: Create an Image class for MediaPipe Tasks.
   def segment(self,
               image: image_module.Image) -> List[image_module.Image]:
     """Performs the actual segmentation task on the provided MediaPipe Image.
@@ -162,10 +164,74 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
 
     Raises:
       ValueError: If any of the input arguments is invalid.
-      RuntimeError: If object detection failed to run.
+      RuntimeError: If image segmentation failed to run.
     """
     output_packets = self._process_image_data(
         {_IMAGE_IN_STREAM_NAME: packet_creator.create_image(image)})
     segmentation_result = packet_getter.get_image_list(
         output_packets[_SEGMENTATION_OUT_STREAM_NAME])
     return segmentation_result
+
+  def segment_for_video(self, image: image_module.Image,
+                        timestamp_ms: int) -> List[image_module.Image]:
+    """Performs segmentation on the provided video frames.
+
+    Only use this method when the ImageSegmenter is created with the video
+    running mode. It's required to provide the video frame's timestamp (in
+    milliseconds) along with the video frame. The input timestamps should be
+    monotonically increasing for adjacent calls of this method.
+
+    Args:
+      image: MediaPipe Image.
+      timestamp_ms: The timestamp of the input video frame in milliseconds.
+
+    Returns:
+      A segmentation result object that contains a list of segmentation masks
+      as images.
+
+    Raises:
+      ValueError: If any of the input arguments is invalid.
+      RuntimeError: If image segmentation failed to run.
+    """
+    output_packets = self._process_video_data({
+      _IMAGE_IN_STREAM_NAME:
+        packet_creator.create_image(image).at(
+          timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
+    })
+    segmentation_result = packet_getter.get_image_list(
+      output_packets[_SEGMENTATION_OUT_STREAM_NAME])
+    return segmentation_result
+
+  def segment_async(self, image: image_module.Image, timestamp_ms: int) -> None:
+    """Sends live image data (an Image with a unique timestamp) to perform
+    image segmentation.
+
+    Only use this method when the ImageSegmenter is created with the live stream
+    running mode. The input timestamps should be monotonically increasing for
+    adjacent calls of this method. This method will return immediately after the
+    input image is accepted. The results will be available via the
+    `result_callback` provided in the `ImageSegmenterOptions`. The
+    `segment_async` method is designed to process live stream data such as
+    camera input. To lower the overall latency, image segmenter may drop the
+    input images if needed. In other words, it's not guaranteed to have output
+    per input image.
+
+    The `result_callback` prvoides:
+      - A segmentation result object that contains a list of segmentation masks
+        as images.
+      - The input image that the image segmenter runs on.
+      - The input timestamp in milliseconds.
+
+    Args:
+      image: MediaPipe Image.
+      timestamp_ms: The timestamp of the input image in milliseconds.
+
+    Raises:
+      ValueError: If the current input timestamp is smaller than what the image
+        segmenter has already processed.
+    """
+    self._send_live_stream_data({
+      _IMAGE_IN_STREAM_NAME:
+        packet_creator.create_image(image).at(
+          timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
+    })
