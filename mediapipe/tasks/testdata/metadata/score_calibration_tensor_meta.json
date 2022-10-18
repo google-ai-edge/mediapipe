@@ -1,0 +1,15 @@
+{
+  "subgraph_metadata": [
+    {
+      "input_process_units": [
+        {
+          "options_type": "ScoreCalibrationOptions",
+          "options": {
+            "score_transformation": "LOG",
+            "default_score": 0.2
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -35,18 +35,19 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
+#include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
-#include "mediapipe/tasks/cc/vision/hand_detector/hand_detector_op_resolver.h"
-#include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_options.pb.h"
+#include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_result.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace hand_detector {
 namespace {
 
 using ::file::Defaults;
@@ -60,7 +61,8 @@ using ::mediapipe::tasks::core::ModelResources;
 using ::mediapipe::tasks::core::TaskRunner;
 using ::mediapipe::tasks::core::proto::ExternalFile;
 using ::mediapipe::tasks::vision::DecodeImageFromFile;
-using ::mediapipe::tasks::vision::hand_detector::proto::HandDetectorOptions;
+using ::mediapipe::tasks::vision::hand_detector::proto::
+    HandDetectorGraphOptions;
 using ::mediapipe::tasks::vision::hand_detector::proto::HandDetectorResult;
 using ::testing::EqualsProto;
 using ::testing::TestParamInfo;
@@ -80,9 +82,9 @@ constexpr char kTwoHandsResultFile[] = "hand_detector_result_two_hands.pbtxt";
 
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageName[] = "image";
-constexpr char kPalmDetectionsTag[] = "DETECTIONS";
+constexpr char kPalmDetectionsTag[] = "PALM_DETECTIONS";
 constexpr char kPalmDetectionsName[] = "palm_detections";
-constexpr char kHandNormRectsTag[] = "NORM_RECTS";
+constexpr char kHandRectsTag[] = "HAND_RECTS";
 constexpr char kHandNormRectsName[] = "hand_norm_rects";
 
 constexpr float kPalmDetectionBboxMaxDiff = 0.01;
@@ -104,25 +106,25 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
   Graph graph;
 
   auto& hand_detection =
-      graph.AddNode("mediapipe.tasks.vision.HandDetectorGraph");
+      graph.AddNode("mediapipe.tasks.vision.hand_detector.HandDetectorGraph");
 
-  auto options = std::make_unique<HandDetectorOptions>();
+  auto options = std::make_unique<HandDetectorGraphOptions>();
   options->mutable_base_options()->mutable_model_asset()->set_file_name(
       JoinPath("./", kTestDataDirectory, model_name));
   options->set_min_detection_confidence(0.5);
   options->set_num_hands(num_hands);
-  hand_detection.GetOptions<HandDetectorOptions>().Swap(options.get());
+  hand_detection.GetOptions<HandDetectorGraphOptions>().Swap(options.get());
 
   graph[Input<Image>(kImageTag)].SetName(kImageName) >>
       hand_detection.In(kImageTag);
 
   hand_detection.Out(kPalmDetectionsTag).SetName(kPalmDetectionsName) >>
       graph[Output<std::vector<Detection>>(kPalmDetectionsTag)];
-  hand_detection.Out(kHandNormRectsTag).SetName(kHandNormRectsName) >>
-      graph[Output<std::vector<NormalizedRect>>(kHandNormRectsTag)];
+  hand_detection.Out(kHandRectsTag).SetName(kHandNormRectsName) >>
+      graph[Output<std::vector<NormalizedRect>>(kHandRectsTag)];
 
-  return TaskRunner::Create(graph.GetConfig(),
-                            absl::make_unique<HandDetectorOpResolver>());
+  return TaskRunner::Create(
+      graph.GetConfig(), std::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
 
 HandDetectorResult GetExpectedHandDetectorResult(absl::string_view file_name) {
@@ -200,6 +202,7 @@ INSTANTIATE_TEST_SUITE_P(
     });
 
 }  // namespace
+}  // namespace hand_detector
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

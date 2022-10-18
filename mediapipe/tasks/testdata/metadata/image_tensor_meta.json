@@ -1,0 +1,35 @@
+{
+  "subgraph_metadata": [
+    {
+      "input_tensor_metadata": [
+        {
+          "name": "input",
+          "description": "The input tensor.",
+          "content": {
+            "content_properties_type": "ImageProperties",
+            "content_properties": {
+            }
+          },
+          "stats": {
+            "max": [
+              1.0
+            ],
+            "min": [
+              0.0
+            ]
+          },
+          "associated_files": [
+            {
+              "name": "labels.txt",
+              "locale": "en"
+            },
+            {
+              "name": "labels_cn.txt",
+              "locale": "cn"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

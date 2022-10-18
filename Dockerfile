@@ -53,7 +53,7 @@ RUN pip3 install wheel
 RUN pip3 install future
 RUN pip3 install absl-py numpy opencv-contrib-python protobuf==3.20.1
 RUN pip3 install six==1.14.0
-RUN pip3 install tensorflow==2.2.0
+RUN pip3 install tensorflow
 RUN pip3 install tf_slim
 
 RUN ln -s /usr/bin/python3 /usr/bin/python

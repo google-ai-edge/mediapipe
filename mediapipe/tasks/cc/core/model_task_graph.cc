@@ -122,6 +122,9 @@ class InferenceSubgraph : public Subgraph {
       case Acceleration::kGpu:
         delegate.mutable_gpu()->CopyFrom(acceleration.gpu());
         break;
+      case Acceleration::kTflite:
+        delegate.mutable_tflite()->CopyFrom(acceleration.tflite());
+        break;
       case Acceleration::DELEGATE_NOT_SET:
         // Deafult inference calculator setting.
         break;
@@ -177,9 +180,9 @@ GenericNode& ModelTaskGraph::AddInference(
       ->CopyFrom(acceleration);
   // When the model resources tag is available, the ModelResourcesCalculator
   // will retrieve the cached model resources from the graph service by tag.
-  // Otherwise, provides the exteranal file and asks the
+  // Otherwise, provides the external file and asks the
   // ModelResourcesCalculator to create a local model resources in its
-  // Calcualtor::Open().
+  // Calculator::Open().
   if (!model_resources.GetTag().empty()) {
     inference_subgraph_opts.set_model_resources_tag(model_resources.GetTag());
   } else {

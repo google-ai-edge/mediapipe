@@ -134,12 +134,12 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
         if (format == mediapipe::ImageFormat::SRGBA) {
           // Swap R and B channels.
           const uint8_t permuteMap[4] = {2, 1, 0, 3};
-          vImage_Error vError = vImagePermuteChannels_ARGB8888(
-              &vSource, &vDestination, permuteMap, kvImageNoFlags);
+          vImage_Error __unused vError =
+              vImagePermuteChannels_ARGB8888(&vSource, &vDestination, permuteMap, kvImageNoFlags);
           _GTMDevAssert(vError == kvImageNoError, @"vImagePermuteChannels failed: %zd", vError);
         } else {
           // Convert grayscale back to BGRA
-          vImage_Error vError = vImageGrayToBGRA(&vSource, &vDestination);
+          vImage_Error __unused vError = vImageGrayToBGRA(&vSource, &vDestination);
           _GTMDevAssert(vError == kvImageNoError, @"vImageGrayToBGRA failed: %zd", vError);
         }
 

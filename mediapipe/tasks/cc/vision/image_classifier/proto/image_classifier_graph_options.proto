@@ -1,0 +1,38 @@
+/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto2";
+
+package mediapipe.tasks.vision.image_classifier.proto;
+
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/tasks/cc/components/processors/proto/classifier_options.proto";
+import "mediapipe/tasks/cc/core/proto/base_options.proto";
+
+option java_package = "com.google.mediapipe.tasks.vision.imageclassifier.proto";
+option java_outer_classname = "ImageClassifierGraphOptionsProto";
+
+message ImageClassifierGraphOptions {
+  extend mediapipe.CalculatorOptions {
+    optional ImageClassifierGraphOptions ext = 456383383;
+  }
+  // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
+  // model file with metadata, accelerator options, etc.
+  optional core.proto.BaseOptions base_options = 1;
+
+  // Options for configuring the classifier behavior, such as score threshold,
+  // number of results, etc.
+  optional components.processors.proto.ClassifierOptions classifier_options = 2;
+}

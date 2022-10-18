@@ -27,6 +27,7 @@ pybind_library(
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/python/pybind:util",
+        "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",
         "//mediapipe/tasks/cc/core:task_runner",
         "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
         "@pybind11_protobuf//pybind11_protobuf:native_proto_caster",

@@ -38,10 +38,6 @@ static pthread_key_t egl_release_thread_key;
 static pthread_once_t egl_release_key_once = PTHREAD_ONCE_INIT;
 
 static void EglThreadExitCallback(void* key_value) {
-#if defined(__ANDROID__)
-  eglMakeCurrent(EGL_NO_DISPLAY, EGL_NO_SURFACE, EGL_NO_SURFACE,
-                 EGL_NO_CONTEXT);
-#else
   // Some implementations have chosen to allow EGL_NO_DISPLAY as a valid display
   // parameter for eglMakeCurrent. This behavior is not portable to all EGL
   // implementations, and should be considered as an undocumented vendor
@@ -49,7 +45,6 @@ static void EglThreadExitCallback(void* key_value) {
   // https://www.khronos.org/registry/EGL/sdk/docs/man/html/eglMakeCurrent.xhtml
   eglMakeCurrent(eglGetDisplay(EGL_DEFAULT_DISPLAY), EGL_NO_SURFACE,
                  EGL_NO_SURFACE, EGL_NO_CONTEXT);
-#endif
   eglReleaseThread();
 }
 

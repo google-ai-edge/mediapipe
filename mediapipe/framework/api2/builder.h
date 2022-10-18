@@ -5,12 +5,7 @@
 #include <type_traits>
 
 #include "absl/container/btree_map.h"
-#include "absl/container/flat_hash_map.h"
 #include "absl/strings/string_view.h"
-#include "mediapipe/framework/api2/const_str.h"
-#include "mediapipe/framework/api2/contract.h"
-#include "mediapipe/framework/api2/node.h"
-#include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_contract.h"
@@ -112,6 +107,17 @@ class MultiPort : public Single {
   std::vector<std::unique_ptr<Base>>& vec_;
 };
 
+namespace internal_builder {
+
+template <typename T, typename U>
+using AllowCast = std::integral_constant<bool, std::is_same_v<T, AnyType> &&
+                                                   !std::is_same_v<T, U>>;
+
+}  // namespace internal_builder
+
+template <bool IsSide, typename T = internal::Generic>
+class SourceImpl;
+
 // These classes wrap references to the underlying source/destination
 // endpoints, adding type information and the user-visible API.
 template <bool IsSide, typename T = internal::Generic>
@@ -122,16 +128,21 @@ class DestinationImpl {
   explicit DestinationImpl(std::vector<std::unique_ptr<Base>>* vec)
       : DestinationImpl(&GetWithAutoGrow(vec, 0)) {}
   explicit DestinationImpl(DestinationBase* base) : base_(*base) {}
+
+  template <typename U,
+            std::enable_if_t<internal_builder::AllowCast<T, U>{}, int> = 0>
+  DestinationImpl<IsSide, U> Cast() {
+    return DestinationImpl<IsSide, U>(&base_);
+  }
+
+ private:
   DestinationBase& base_;
+
+  template <bool Source_IsSide, typename Source_T>
+  friend class SourceImpl;
 };
 
 template <bool IsSide, typename T>
-class MultiDestinationImpl : public MultiPort<DestinationImpl<IsSide, T>> {
- public:
-  using MultiPort<DestinationImpl<IsSide, T>>::MultiPort;
-};
-
-template <bool IsSide, typename T = internal::Generic>
 class SourceImpl {
  public:
   using Base = SourceBase;
@@ -171,12 +182,8 @@ class SourceImpl {
     return AddTarget(dest);
   }
 
-  template <typename U>
-  struct AllowCast
-      : public std::integral_constant<bool, std::is_same_v<T, AnyType> &&
-                                                !std::is_same_v<T, U>> {};
-
-  template <typename U, std::enable_if_t<AllowCast<U>{}, int> = 0>
+  template <typename U,
+            std::enable_if_t<internal_builder::AllowCast<T, U>{}, int> = 0>
   SourceImpl<IsSide, U> Cast() {
     return SourceImpl<IsSide, U>(base_);
   }
@@ -184,12 +191,6 @@ class SourceImpl {
  private:
   // Never null.
   SourceBase* base_;
-};
-
-template <bool IsSide, typename T>
-class MultiSourceImpl : public MultiPort<SourceImpl<IsSide, T>> {
- public:
-  using MultiPort<SourceImpl<IsSide, T>>::MultiPort;
 };
 
 // A source and a destination correspond to an output/input stream on a node,
@@ -201,20 +202,20 @@ class MultiSourceImpl : public MultiPort<SourceImpl<IsSide, T>> {
 template <typename T = internal::Generic>
 using Source = SourceImpl<false, T>;
 template <typename T = internal::Generic>
-using MultiSource = MultiSourceImpl<false, T>;
+using MultiSource = MultiPort<Source<T>>;
 template <typename T = internal::Generic>
 using SideSource = SourceImpl<true, T>;
 template <typename T = internal::Generic>
-using MultiSideSource = MultiSourceImpl<true, T>;
+using MultiSideSource = MultiPort<SideSource<T>>;
 
 template <typename T = internal::Generic>
 using Destination = DestinationImpl<false, T>;
 template <typename T = internal::Generic>
 using SideDestination = DestinationImpl<true, T>;
 template <typename T = internal::Generic>
-using MultiDestination = MultiDestinationImpl<false, T>;
+using MultiDestination = MultiPort<Destination<T>>;
 template <typename T = internal::Generic>
-using MultiSideDestination = MultiDestinationImpl<true, T>;
+using MultiSideDestination = MultiPort<SideDestination<T>>;
 
 class NodeBase {
  public:
@@ -439,8 +440,9 @@ class Graph {
   // Creates a node of a specific type. Should be used for pure interfaces,
   // which do not have a built-in type string.
   template <class Calc>
-  Node<Calc>& AddNode(const std::string& type) {
-    auto node = std::make_unique<Node<Calc>>(type);
+  Node<Calc>& AddNode(absl::string_view type) {
+    auto node =
+        std::make_unique<Node<Calc>>(std::string(type.data(), type.size()));
     auto node_p = node.get();
     nodes_.emplace_back(std::move(node));
     return *node_p;
@@ -448,16 +450,18 @@ class Graph {
 
   // Creates a generic node, with no compile-time checking of inputs and
   // outputs. This can be used for calculators whose contract is not visible.
-  GenericNode& AddNode(const std::string& type) {
-    auto node = std::make_unique<GenericNode>(type);
+  GenericNode& AddNode(absl::string_view type) {
+    auto node =
+        std::make_unique<GenericNode>(std::string(type.data(), type.size()));
     auto node_p = node.get();
     nodes_.emplace_back(std::move(node));
     return *node_p;
   }
 
   // For legacy PacketGenerators.
-  PacketGenerator& AddPacketGenerator(const std::string& type) {
-    auto node = std::make_unique<PacketGenerator>(type);
+  PacketGenerator& AddPacketGenerator(absl::string_view type) {
+    auto node = std::make_unique<PacketGenerator>(
+        std::string(type.data(), type.size()));
     auto node_p = node.get();
     packet_gens_.emplace_back(std::move(node));
     return *node_p;

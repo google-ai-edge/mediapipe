@@ -28,9 +28,27 @@ mediapipe_files(srcs = [
     "mobile_ica_8bit-without-model-metadata.tflite",
     "mobile_object_classifier_v0_2_3-metadata-no-name.tflite",
     "mobilenet_v1_0.25_224_1_default_1.tflite",
+    "mobilenet_v2_1.0_224_quant.tflite",
 ])
 
-exports_files(["external_file"])
+exports_files([
+    "external_file",
+    "general_meta.json",
+    "golden_json.json",
+    "associated_file_meta.json",
+    "bounding_box_tensor_meta.json",
+    "classification_tensor_float_meta.json",
+    "classification_tensor_uint8_meta.json",
+    "classification_tensor_unsupported_meta.json",
+    "feature_tensor_meta.json",
+    "image_tensor_meta.json",
+    "input_image_tensor_float_meta.json",
+    "input_image_tensor_uint8_meta.json",
+    "input_image_tensor_unsupported_meta.json",
+    "score_calibration.txt",
+    "score_calibration_file_meta.json",
+    "score_calibration_tensor_meta.json",
+])
 
 filegroup(
     name = "model_files",
@@ -40,10 +58,28 @@ filegroup(
         "mobile_ica_8bit-without-model-metadata.tflite",
         "mobile_object_classifier_v0_2_3-metadata-no-name.tflite",
         "mobilenet_v1_0.25_224_1_default_1.tflite",
+        "mobilenet_v2_1.0_224_quant.tflite",
     ],
 )
 
 filegroup(
     name = "data_files",
-    srcs = ["external_file"],
+    srcs = [
+        "associated_file_meta.json",
+        "bounding_box_tensor_meta.json",
+        "classification_tensor_float_meta.json",
+        "classification_tensor_uint8_meta.json",
+        "classification_tensor_unsupported_meta.json",
+        "external_file",
+        "feature_tensor_meta.json",
+        "general_meta.json",
+        "golden_json.json",
+        "image_tensor_meta.json",
+        "input_image_tensor_float_meta.json",
+        "input_image_tensor_uint8_meta.json",
+        "input_image_tensor_unsupported_meta.json",
+        "score_calibration.txt",
+        "score_calibration_file_meta.json",
+        "score_calibration_tensor_meta.json",
+    ],
 )

@@ -34,6 +34,7 @@ limitations under the License.
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -87,16 +88,6 @@ constexpr char kInvalidTestModelPath[] =
 constexpr char kCorruptedModelPath[] =
     "mediapipe/tasks/testdata/core/"
     "corrupted_mobilenet_v1_0.25_224_1_default_1.tflite";
-
-std::string LoadBinaryContent(const char* filename) {
-  std::ifstream input_file(filename, std::ios::binary | std::ios::ate);
-  // Find buffer size from input file, and load the buffer.
-  size_t buffer_size = input_file.tellg();
-  std::string buffer(buffer_size, '\0');
-  input_file.seekg(0, std::ios::beg);
-  input_file.read(const_cast<char*>(buffer.c_str()), buffer_size);
-  return buffer;
-}
 
 void AssertStatusHasMediaPipeTasksStatusCode(
     absl::Status status, MediaPipeTasksStatus mediapipe_tasks_code) {

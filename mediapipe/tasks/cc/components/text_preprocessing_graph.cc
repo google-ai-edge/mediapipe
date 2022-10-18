@@ -65,6 +65,8 @@ absl::StatusOr<std::string> GetCalculatorNameFromPreprocessorType(
       return "BertPreprocessorCalculator";
     case TextPreprocessingGraphOptions::REGEX_PREPROCESSOR:
       return "RegexPreprocessorCalculator";
+    case TextPreprocessingGraphOptions::STRING_PREPROCESSOR:
+      return "TextToTensorCalculator";
   }
 }
 
@@ -91,11 +93,7 @@ GetPreprocessorType(const ModelResources& model_resources) {
         MediaPipeTasksStatus::kInvalidInputTensorTypeError);
   }
   if (all_string_tensors) {
-    // TODO: Support a TextToTensor calculator for string tensors.
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "String tensors are not supported yet",
-        MediaPipeTasksStatus::kInvalidInputTensorTypeError);
+    return TextPreprocessingGraphOptions::STRING_PREPROCESSOR;
   }
 
   // Otherwise, all tensors should have type int32
@@ -185,10 +183,19 @@ absl::Status ConfigureTextPreprocessingSubgraph(
       TextPreprocessingGraphOptions::PreprocessorType preprocessor_type,
       GetPreprocessorType(model_resources));
   options.set_preprocessor_type(preprocessor_type);
-  ASSIGN_OR_RETURN(
-      int max_seq_len,
-      GetMaxSeqLen(*(*model_resources.GetTfLiteModel()->subgraphs())[0]));
-  options.set_max_seq_len(max_seq_len);
+  switch (preprocessor_type) {
+    case TextPreprocessingGraphOptions::UNSPECIFIED_PREPROCESSOR:
+    case TextPreprocessingGraphOptions::STRING_PREPROCESSOR: {
+      break;
+    }
+    case TextPreprocessingGraphOptions::BERT_PREPROCESSOR:
+    case TextPreprocessingGraphOptions::REGEX_PREPROCESSOR: {
+      ASSIGN_OR_RETURN(
+          int max_seq_len,
+          GetMaxSeqLen(*(*model_resources.GetTfLiteModel()->subgraphs())[0]));
+      options.set_max_seq_len(max_seq_len);
+    }
+  }
 
   return absl::OkStatus();
 }
@@ -236,7 +243,8 @@ class TextPreprocessingSubgraph : public mediapipe::Subgraph {
         GetCalculatorNameFromPreprocessorType(options.preprocessor_type()));
     auto& text_preprocessor = graph.AddNode(preprocessor_name);
     switch (options.preprocessor_type()) {
-      case TextPreprocessingGraphOptions::UNSPECIFIED_PREPROCESSOR: {
+      case TextPreprocessingGraphOptions::UNSPECIFIED_PREPROCESSOR:
+      case TextPreprocessingGraphOptions::STRING_PREPROCESSOR: {
         break;
       }
       case TextPreprocessingGraphOptions::BERT_PREPROCESSOR: {

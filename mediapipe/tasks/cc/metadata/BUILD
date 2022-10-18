@@ -19,8 +19,9 @@ cc_library(
     deps = [
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/metadata/utils:zip_readonly_mem_file",
+        "//mediapipe/tasks/cc/metadata/utils:zip_utils",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
+        "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
@@ -29,7 +30,6 @@ cc_library(
         "@com_google_absl//absl/strings:str_format",
         "@flatbuffers//:runtime_cc",
         "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
-        "@zlib//:zlib_minizip",
     ],
 )
 

@@ -224,9 +224,6 @@ absl::Status InferenceCalculatorMetalImpl::InitInterpreter(
 
 void InferenceCalculatorMetalImpl::AddDelegate(
     CalculatorContext* cc, tflite::InterpreterBuilder* interpreter_builder) {
-  const auto& calculator_opts =
-      cc->Options<mediapipe::InferenceCalculatorOptions>();
-
   // Configure and create the delegate.
   TFLGpuDelegateOptions options;
   // `enable_quantization` enables the run of sparse models i.e. the models with

@@ -1,0 +1,7 @@
+{
+  "name": "model",
+  "description": "A ML model.",
+  "version": "v1",
+  "author": "MediaPipe",
+  "license": "Apache"
+}

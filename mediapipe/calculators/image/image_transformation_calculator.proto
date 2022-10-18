@@ -16,19 +16,9 @@ syntax = "proto2";
 
 package mediapipe;
 
+import "mediapipe/calculators/image/rotation_mode.proto";
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/gpu/scale_mode.proto";
-
-// Counterclockwise rotation.
-message RotationMode {
-  enum Mode {
-    UNKNOWN = 0;
-    ROTATION_0 = 1;
-    ROTATION_90 = 2;
-    ROTATION_180 = 3;
-    ROTATION_270 = 4;
-  }
-}
 
 message ImageTransformationCalculatorOptions {
   extend CalculatorOptions {

@@ -1,0 +1,10 @@
+{
+  "associated_files": [
+    {
+      "name": "label.txt",
+      "description": "The label file.",
+      "type": "TENSOR_AXIS_LABELS",
+      "locale": "en"
+    }
+  ]
+}

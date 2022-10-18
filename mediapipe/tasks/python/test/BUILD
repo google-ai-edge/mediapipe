@@ -19,11 +19,9 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 py_library(
-    name = "test_util",
+    name = "test_utils",
     testonly = 1,
-    srcs = ["test_util.py"],
+    srcs = ["test_utils.py"],
     srcs_version = "PY3",
-    deps = [
-        "//mediapipe/python:_framework_bindings",
-    ],
+    deps = ["//mediapipe/python:_framework_bindings"],
 )

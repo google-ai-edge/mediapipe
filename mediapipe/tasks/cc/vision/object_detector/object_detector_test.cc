@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/object_detector/object_detector.h"
 
+#include <cmath>
 #include <functional>
 #include <memory>
 #include <string>
@@ -30,6 +31,7 @@ limitations under the License.
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/location_data.pb.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -195,7 +197,7 @@ TEST_F(CreateFromOptionsTest, FailsWithSelectiveOpResolverMissingOps) {
   // interpreter errors (e.g., "Encountered unresolved custom op").
   EXPECT_EQ(object_detector.status().code(), absl::StatusCode::kInternal);
   EXPECT_THAT(object_detector.status().message(),
-              HasSubstr("interpreter_builder(&interpreter) == kTfLiteOk"));
+              HasSubstr("interpreter->AllocateTensors() == kTfLiteOk"));
 }
 
 TEST_F(CreateFromOptionsTest, FailsWithMissingModel) {
@@ -208,7 +210,7 @@ TEST_F(CreateFromOptionsTest, FailsWithMissingModel) {
   EXPECT_THAT(
       object_detector.status().message(),
       HasSubstr("ExternalFile must specify at least one of 'file_content', "
-                "'file_name' or 'file_descriptor_meta'."));
+                "'file_name', 'file_pointer_meta' or 'file_descriptor_meta'."));
   EXPECT_THAT(object_detector.status().GetPayload(kMediaPipeTasksPayload),
               Optional(absl::Cord(absl::StrCat(
                   MediaPipeTasksStatus::kRunnerInitializationError))));
@@ -517,6 +519,54 @@ TEST_F(ImageModeTest, SucceedsWithDenylistOption) {
   std::vector<Detection> full_expected_results =
       GenerateMobileSsdNoImageResizingFullExpectedResults();
   ExpectApproximatelyEqual(results, {full_expected_results[3]});
+}
+
+TEST_F(ImageModeTest, SucceedsWithRotation) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      Image image, DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
+                                                "cats_and_dogs_rotated.jpg")));
+  auto options = std::make_unique<ObjectDetectorOptions>();
+  options->max_results = 1;
+  options->category_allowlist.push_back("cat");
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kMobileSsdWithMetadata);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ObjectDetector> object_detector,
+                          ObjectDetector::Create(std::move(options)));
+  NormalizedRect image_processing_options;
+  image_processing_options.set_rotation(M_PI / 2.0);
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto results, object_detector->Detect(image, image_processing_options));
+  MP_ASSERT_OK(object_detector->Close());
+  ExpectApproximatelyEqual(
+      results, {ParseTextProtoOrDie<Detection>(R"pb(
+        label: "cat"
+        score: 0.7109375
+        location_data {
+          format: BOUNDING_BOX
+          bounding_box { xmin: 0 ymin: 622 width: 436 height: 276 }
+        })pb")});
+}
+
+TEST_F(ImageModeTest, FailsWithRegionOfInterest) {
+  MP_ASSERT_OK_AND_ASSIGN(Image image,
+                          DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
+                                                       "cats_and_dogs.jpg")));
+  auto options = std::make_unique<ObjectDetectorOptions>();
+  options->max_results = 1;
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kMobileSsdWithMetadata);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ObjectDetector> object_detector,
+                          ObjectDetector::Create(std::move(options)));
+  NormalizedRect image_processing_options;
+  image_processing_options.set_x_center(0.5);
+  image_processing_options.set_y_center(0.5);
+  image_processing_options.set_width(1.0);
+  image_processing_options.set_height(1.0);
+
+  auto results = object_detector->Detect(image, image_processing_options);
+  EXPECT_EQ(results.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(results.status().message(),
+              HasSubstr("ObjectDetector does not support region-of-interest"));
 }
 
 class VideoModeTest : public tflite_shims::testing::Test {};

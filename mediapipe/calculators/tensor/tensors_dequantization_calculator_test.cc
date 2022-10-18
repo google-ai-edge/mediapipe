@@ -124,5 +124,15 @@ TEST_F(TensorsDequantizationCalculatorTest, SucceedsWithInt8Tensors) {
   ValidateResult(GetOutput(), {-1.007874, 0, 1});
 }
 
+TEST_F(TensorsDequantizationCalculatorTest, SucceedsWithBoolTensors) {
+  std::vector<bool> tensor = {true, false, true};
+  PushTensor(Tensor::ElementType::kBool, tensor,
+             Tensor::QuantizationParameters{1.0f, 0});
+
+  MP_ASSERT_OK(runner_.Run());
+
+  ValidateResult(GetOutput(), {1, 0, 1});
+}
+
 }  // namespace
 }  // namespace mediapipe

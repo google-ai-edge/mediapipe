@@ -16,9 +16,11 @@
 
 #include <memory>
 
+#include "absl/strings/str_format.h"
 #include "mediapipe/python/pybind/image_frame_util.h"
 #include "mediapipe/python/pybind/util.h"
 #include "pybind11/stl.h"
+#include "stb_image.h"
 
 namespace mediapipe {
 namespace python {
@@ -224,6 +226,62 @@ void ImageSubmodule(pybind11::module* module) {
   Examples:
     image.is_aligned(16)
 )doc");
+
+  image.def_static(
+      "create_from_file",
+      [](const std::string& file_name) {
+        int width;
+        int height;
+        int channels;
+        auto* image_data =
+            stbi_load(file_name.c_str(), &width, &height, &channels,
+                      /*desired_channels=*/0);
+        if (image_data == nullptr) {
+          throw RaisePyError(PyExc_RuntimeError,
+                             absl::StrFormat("Image decoding failed (%s): %s",
+                                             stbi_failure_reason(), file_name)
+                                 .c_str());
+        }
+        ImageFrameSharedPtr image_frame;
+        switch (channels) {
+          case 1:
+            image_frame = std::make_shared<ImageFrame>(
+                ImageFormat::GRAY8, width, height, width, image_data,
+                stbi_image_free);
+            break;
+          case 3:
+            image_frame = std::make_shared<ImageFrame>(
+                ImageFormat::SRGB, width, height, 3 * width, image_data,
+                stbi_image_free);
+            break;
+          case 4:
+            image_frame = std::make_shared<ImageFrame>(
+                ImageFormat::SRGBA, width, height, 4 * width, image_data,
+                stbi_image_free);
+            break;
+          default:
+            throw RaisePyError(
+                PyExc_RuntimeError,
+                absl::StrFormat(
+                    "Expected image with 1 (grayscale), 3 (RGB) or 4 "
+                    "(RGBA) channels, found %d channels.",
+                    channels)
+                    .c_str());
+        }
+        return Image(std::move(image_frame));
+      },
+      R"doc(Creates `Image` object from the image file.
+
+Args:
+  file_name: Image file name.
+
+Returns:
+  `Image` object.
+
+Raises:
+  RuntimeError if the image file can't be decoded.
+  )doc",
+      py::arg("file_name"));
 
   image.def_property_readonly("width", &Image::width)
       .def_property_readonly("height", &Image::height)

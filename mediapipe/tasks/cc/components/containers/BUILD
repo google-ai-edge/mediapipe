@@ -12,21 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
-
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-mediapipe_proto_library(
-    name = "category_proto",
-    srcs = ["category.proto"],
+cc_library(
+    name = "landmarks_detection",
+    hdrs = ["landmarks_detection.h"],
 )
 
-mediapipe_proto_library(
-    name = "classifications_proto",
-    srcs = ["classifications.proto"],
+cc_library(
+    name = "gesture_recognition_result",
+    hdrs = ["gesture_recognition_result.h"],
     deps = [
-        ":category_proto",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
     ],
 )

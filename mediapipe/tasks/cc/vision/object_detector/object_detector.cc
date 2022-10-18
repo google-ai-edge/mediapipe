@@ -28,6 +28,7 @@ limitations under the License.
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
@@ -48,12 +49,39 @@ constexpr char kDetectionsTag[] = "DETECTIONS";
 constexpr char kImageInStreamName[] = "image_in";
 constexpr char kImageOutStreamName[] = "image_out";
 constexpr char kImageTag[] = "IMAGE";
+constexpr char kNormRectName[] = "norm_rect_in";
+constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kSubgraphTypeName[] =
     "mediapipe.tasks.vision.ObjectDetectorGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
 
 using ObjectDetectorOptionsProto =
     object_detector::proto::ObjectDetectorOptions;
+
+// Returns a NormalizedRect filling the whole image. If input is present, its
+// rotation is set in the returned NormalizedRect and a check is performed to
+// make sure no region-of-interest was provided. Otherwise, rotation is set to
+// 0.
+absl::StatusOr<NormalizedRect> FillNormalizedRect(
+    std::optional<NormalizedRect> normalized_rect) {
+  NormalizedRect result;
+  if (normalized_rect.has_value()) {
+    result = *normalized_rect;
+  }
+  bool has_coordinates = result.has_x_center() || result.has_y_center() ||
+                         result.has_width() || result.has_height();
+  if (has_coordinates) {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        "ObjectDetector does not support region-of-interest.",
+        MediaPipeTasksStatus::kInvalidArgumentError);
+  }
+  result.set_x_center(0.5);
+  result.set_y_center(0.5);
+  result.set_width(1);
+  result.set_height(1);
+  return result;
+}
 
 // Creates a MediaPipe graph config that contains a subgraph node of
 // "mediapipe.tasks.vision.ObjectDetectorGraph". If the task is running in the
@@ -64,6 +92,7 @@ CalculatorGraphConfig CreateGraphConfig(
     bool enable_flow_limiting) {
   api2::builder::Graph graph;
   graph.In(kImageTag).SetName(kImageInStreamName);
+  graph.In(kNormRectTag).SetName(kNormRectName);
   auto& task_subgraph = graph.AddNode(kSubgraphTypeName);
   task_subgraph.GetOptions<ObjectDetectorOptionsProto>().Swap(
       options_proto.get());
@@ -72,10 +101,11 @@ CalculatorGraphConfig CreateGraphConfig(
   task_subgraph.Out(kImageTag).SetName(kImageOutStreamName) >>
       graph.Out(kImageTag);
   if (enable_flow_limiting) {
-    return tasks::core::AddFlowLimiterCalculator(graph, task_subgraph,
-                                                 {kImageTag}, kDetectionsTag);
+    return tasks::core::AddFlowLimiterCalculator(
+        graph, task_subgraph, {kImageTag, kNormRectTag}, kDetectionsTag);
   }
   graph.In(kImageTag) >> task_subgraph.In(kImageTag);
+  graph.In(kNormRectTag) >> task_subgraph.In(kNormRectTag);
   return graph.GetConfig();
 }
 
@@ -139,46 +169,64 @@ absl::StatusOr<std::unique_ptr<ObjectDetector>> ObjectDetector::Create(
 }
 
 absl::StatusOr<std::vector<Detection>> ObjectDetector::Detect(
-    mediapipe::Image image) {
+    mediapipe::Image image,
+    std::optional<mediapipe::NormalizedRect> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(auto output_packets,
-                   ProcessImageData({{kImageInStreamName,
-                                      MakePacket<Image>(std::move(image))}}));
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   FillNormalizedRect(image_processing_options));
+  ASSIGN_OR_RETURN(
+      auto output_packets,
+      ProcessImageData(
+          {{kImageInStreamName, MakePacket<Image>(std::move(image))},
+           {kNormRectName, MakePacket<NormalizedRect>(std::move(norm_rect))}}));
   return output_packets[kDetectionsOutStreamName].Get<std::vector<Detection>>();
 }
 
 absl::StatusOr<std::vector<Detection>> ObjectDetector::DetectForVideo(
-    mediapipe::Image image, int64 timestamp_ms) {
+    mediapipe::Image image, int64 timestamp_ms,
+    std::optional<mediapipe::NormalizedRect> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   FillNormalizedRect(image_processing_options));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
           {{kImageInStreamName,
             MakePacket<Image>(std::move(image))
+                .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
+           {kNormRectName,
+            MakePacket<NormalizedRect>(std::move(norm_rect))
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
   return output_packets[kDetectionsOutStreamName].Get<std::vector<Detection>>();
 }
 
-absl::Status ObjectDetector::DetectAsync(Image image, int64 timestamp_ms) {
+absl::Status ObjectDetector::DetectAsync(
+    Image image, int64 timestamp_ms,
+    std::optional<mediapipe::NormalizedRect> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   FillNormalizedRect(image_processing_options));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))
+            .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
+       {kNormRectName,
+        MakePacket<NormalizedRect>(std::move(norm_rect))
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
 }
 

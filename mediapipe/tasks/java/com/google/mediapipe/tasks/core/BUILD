@@ -11,3 +11,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+package(default_visibility = ["//mediapipe/tasks:internal"])
+
+android_library(
+    name = "core",
+    srcs = glob(["*.java"]),
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    manifest = "AndroidManifest.xml",
+    deps = [
+        "//mediapipe/calculators/core:flow_limiter_calculator_java_proto_lite",
+        "//mediapipe/calculators/tensor:inference_calculator_java_proto_lite",
+        "//mediapipe/framework:calculator_java_proto_lite",
+        "//mediapipe/framework:calculator_options_java_proto_lite",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/tasks/cc/core/proto:acceleration_java_proto_lite",
+        "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
+        "//mediapipe/tasks/cc/core/proto:external_file_java_proto_lite",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
+        "//third_party:autovalue",
+        "@com_google_protobuf//:protobuf_javalite",
+        "@maven//:com_google_guava_guava",
+    ],
+)

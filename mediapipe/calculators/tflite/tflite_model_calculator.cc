@@ -16,6 +16,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -81,6 +82,7 @@ class TfLiteModelCalculator : public CalculatorBase {
     }
 
     if (cc->InputSidePackets().HasTag("MODEL_FD")) {
+#ifdef ABSL_HAVE_MMAP
       model_packet = cc->InputSidePackets().Tag("MODEL_FD");
       const auto& model_fd =
           model_packet.Get<std::tuple<int, size_t, size_t>>();
@@ -89,6 +91,10 @@ class TfLiteModelCalculator : public CalculatorBase {
           tflite::DefaultErrorReporter());
       model = tflite::FlatBufferModel::BuildFromAllocation(
           std::move(model_allocation), tflite::DefaultErrorReporter());
+#elif
+      return absl::FailedPreconditionError(
+          "Loading by file descriptor is not supported on this platform.")
+#endif
     }
 
     RET_CHECK(model) << "Failed to load TfLite model from blob.";

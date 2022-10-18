@@ -23,8 +23,8 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "mediapipe/tasks/cc/components/classifier_options.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
@@ -32,6 +32,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace image_classifier {
 
 // The options for configuring a Mediapipe image classifier task.
 struct ImageClassifierOptions {
@@ -50,12 +51,14 @@ struct ImageClassifierOptions {
 
   // Options for configuring the classifier behavior, such as score threshold,
   // number of results, etc.
-  components::ClassifierOptions classifier_options;
+  components::processors::ClassifierOptions classifier_options;
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
   // to RunningMode::LIVE_STREAM.
-  std::function<void(absl::StatusOr<ClassificationResult>, const Image&, int64)>
+  std::function<void(
+      absl::StatusOr<components::containers::proto::ClassificationResult>,
+      const Image&, int64)>
       result_callback = nullptr;
 };
 
@@ -102,9 +105,18 @@ class ImageClassifier : tasks::vision::core::BaseVisionTaskApi {
   static absl::StatusOr<std::unique_ptr<ImageClassifier>> Create(
       std::unique_ptr<ImageClassifierOptions> options);
 
-  // Performs image classification on the provided single image. Classification
-  // is performed on the region of interest specified by the `roi` argument if
-  // provided, or on the entire image otherwise.
+  // Performs image classification on the provided single image.
+  //
+  // The optional 'image_processing_options' parameter can be used to specify:
+  // - the rotation to apply to the image before performing classification, by
+  //   setting its 'rotation' field in radians (e.g. 'M_PI / 2' for a 90°
+  //   anti-clockwise rotation).
+  // and/or
+  // - the region-of-interest on which to perform classification, by setting its
+  //  'x_center', 'y_center', 'width' and 'height' fields. If none of these is
+  //  set, they will automatically be set to cover the full image.
+  // If both are specified, the crop around the region-of-interest is extracted
+  // first, then the specified rotation is applied to the crop.
   //
   // Only use this method when the ImageClassifier is created with the image
   // running mode.
@@ -112,13 +124,23 @@ class ImageClassifier : tasks::vision::core::BaseVisionTaskApi {
   // The image can be of any size with format RGB or RGBA.
   // TODO: describe exact preprocessing steps once
   // YUVToImageCalculator is integrated.
-  absl::StatusOr<ClassificationResult> Classify(
+  absl::StatusOr<components::containers::proto::ClassificationResult> Classify(
       mediapipe::Image image,
-      std::optional<mediapipe::NormalizedRect> roi = std::nullopt);
+      std::optional<mediapipe::NormalizedRect> image_processing_options =
+          std::nullopt);
 
-  // Performs image classification on the provided video frame. Classification
-  // is performed on the region of interested specified by the `roi` argument if
-  // provided, or on the entire image otherwise.
+  // Performs image classification on the provided video frame.
+  //
+  // The optional 'image_processing_options' parameter can be used to specify:
+  // - the rotation to apply to the image before performing classification, by
+  //   setting its 'rotation' field in radians (e.g. 'M_PI / 2' for a 90°
+  //   anti-clockwise rotation).
+  // and/or
+  // - the region-of-interest on which to perform classification, by setting its
+  //  'x_center', 'y_center', 'width' and 'height' fields. If none of these is
+  //  set, they will automatically be set to cover the full image.
+  // If both are specified, the crop around the region-of-interest is extracted
+  // first, then the specified rotation is applied to the crop.
   //
   // Only use this method when the ImageClassifier is created with the video
   // running mode.
@@ -126,14 +148,24 @@ class ImageClassifier : tasks::vision::core::BaseVisionTaskApi {
   // The image can be of any size with format RGB or RGBA. It's required to
   // provide the video frame's timestamp (in milliseconds). The input timestamps
   // must be monotonically increasing.
-  absl::StatusOr<ClassificationResult> ClassifyForVideo(
-      mediapipe::Image image, int64 timestamp_ms,
-      std::optional<mediapipe::NormalizedRect> roi = std::nullopt);
+  absl::StatusOr<components::containers::proto::ClassificationResult>
+  ClassifyForVideo(mediapipe::Image image, int64 timestamp_ms,
+                   std::optional<mediapipe::NormalizedRect>
+                       image_processing_options = std::nullopt);
 
   // Sends live image data to image classification, and the results will be
   // available via the "result_callback" provided in the ImageClassifierOptions.
-  // Classification is performed on the region of interested specified by the
-  // `roi` argument if provided, or on the entire image otherwise.
+  //
+  // The optional 'image_processing_options' parameter can be used to specify:
+  // - the rotation to apply to the image before performing classification, by
+  //   setting its 'rotation' field in radians (e.g. 'M_PI / 2' for a 90°
+  //   anti-clockwise rotation).
+  // and/or
+  // - the region-of-interest on which to perform classification, by setting its
+  //  'x_center', 'y_center', 'width' and 'height' fields. If none of these is
+  //  set, they will automatically be set to cover the full image.
+  // If both are specified, the crop around the region-of-interest is extracted
+  // first, then the specified rotation is applied to the crop.
   //
   // Only use this method when the ImageClassifier is created with the live
   // stream running mode.
@@ -150,9 +182,9 @@ class ImageClassifier : tasks::vision::core::BaseVisionTaskApi {
   //     longer be valid when the callback returns. To access the image data
   //     outside of the callback, callers need to make a copy of the image.
   //   - The input timestamp in milliseconds.
-  absl::Status ClassifyAsync(
-      mediapipe::Image image, int64 timestamp_ms,
-      std::optional<mediapipe::NormalizedRect> roi = std::nullopt);
+  absl::Status ClassifyAsync(mediapipe::Image image, int64 timestamp_ms,
+                             std::optional<mediapipe::NormalizedRect>
+                                 image_processing_options = std::nullopt);
 
   // TODO: add Classify() variants taking a region of interest as
   // additional argument.
@@ -161,6 +193,7 @@ class ImageClassifier : tasks::vision::core::BaseVisionTaskApi {
   absl::Status Close() { return runner_->Close(); }
 };
 
+}  // namespace image_classifier
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

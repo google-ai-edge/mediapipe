@@ -52,7 +52,7 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
   }
   switch (base_options->delegate) {
     case BaseOptions::Delegate::CPU:
-      base_options_proto.mutable_acceleration()->mutable_xnnpack();
+      base_options_proto.mutable_acceleration()->mutable_tflite();
       break;
     case BaseOptions::Delegate::GPU:
       base_options_proto.mutable_acceleration()->mutable_gpu();

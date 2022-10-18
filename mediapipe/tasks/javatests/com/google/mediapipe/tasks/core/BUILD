@@ -11,3 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+package(default_visibility = ["//mediapipe/tasks:internal"])
+
+licenses(["notice"])
+
+android_library(
+    name = "test_utils",
+    srcs = ["TestUtils.java"],
+    deps = [
+        "//third_party/java/android_libs/guava_jdk5:io",
+    ],
+)

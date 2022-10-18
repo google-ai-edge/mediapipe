@@ -31,6 +31,8 @@ message TextPreprocessingGraphOptions {
     BERT_PREPROCESSOR = 1;
     // Used for the RegexPreprocessorCalculator.
     REGEX_PREPROCESSOR = 2;
+    // Used for the TextToTensorCalculator.
+    STRING_PREPROCESSOR = 3;
   }
   optional PreprocessorType preprocessor_type = 1;
 

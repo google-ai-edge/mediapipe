@@ -1,0 +1,43 @@
+/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+
+syntax = "proto2";
+
+package mediapipe.tasks.vision.gesture_recognizer.proto;
+
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/tasks/cc/core/proto/base_options.proto";
+import "mediapipe/tasks/cc/vision/gesture_recognizer/proto/hand_gesture_recognizer_graph_options.proto";
+import "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options.proto";
+
+option java_package = "com.google.mediapipe.tasks.vision.gesturerecognizer.proto";
+option java_outer_classname = "GestureRecognizerGraphOptionsProto";
+
+message GestureRecognizerGraphOptions {
+  extend mediapipe.CalculatorOptions {
+    optional GestureRecognizerGraphOptions ext = 479097054;
+  }
+  // Base options for configuring gesture recognizer graph, such as specifying
+  // the TfLite model file with metadata, accelerator options, etc.
+  optional core.proto.BaseOptions base_options = 1;
+
+  // Options for configuring hand landmarker graph.
+  optional hand_landmarker.proto.HandLandmarkerGraphOptions
+      hand_landmarker_graph_options = 2;
+
+  // Options for configuring hand gesture recognizer graph.
+  optional HandGestureRecognizerGraphOptions
+      hand_gesture_recognizer_graph_options = 3;
+}

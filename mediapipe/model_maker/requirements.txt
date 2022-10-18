@@ -1,0 +1,6 @@
+absl-py
+numpy
+opencv-contrib-python
+tensorflow
+tensorflow-datasets
+tensorflow-hub
