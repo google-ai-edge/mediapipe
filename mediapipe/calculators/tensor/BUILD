@@ -253,6 +253,42 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "text_to_tensor_calculator",
+    srcs = ["text_to_tensor_calculator.cc"],
+    visibility = [
+        "//mediapipe/framework:mediapipe_internal",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:tensor",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "text_to_tensor_calculator_test",
+    srcs = ["text_to_tensor_calculator_test.cc"],
+    deps = [
+        ":text_to_tensor_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_graph",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/tool:options_map",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 mediapipe_proto_library(
     name = "inference_calculator_proto",
     srcs = ["inference_calculator.proto"],
