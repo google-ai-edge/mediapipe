@@ -273,7 +273,7 @@ class ImageSegmenterTest(parameterized.TestCase):
                                   r'not initialized with the live stream mode'):
         segmenter.segment_async(self.test_image, 0)
 
-  def test_detect_for_video_with_out_of_order_timestamp(self):
+  def test_segment_for_video_with_out_of_order_timestamp(self):
     options = _ImageSegmenterOptions(
       base_options=_BaseOptions(model_asset_path=self.model_path),
       running_mode=_RUNNING_MODE.VIDEO)
