@@ -16,6 +16,9 @@ syntax = "proto2";
 
 package mediapipe;
 
+option java_package = "com.google.mediapipe.calculator.proto";
+option java_outer_classname = "RotationModeProto";
+
 // Counterclockwise rotation.
 message RotationMode {
   enum Mode {
