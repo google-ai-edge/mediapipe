@@ -13,26 +13,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_LANDMARKS_DETECTION_H_
-#define MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_LANDMARKS_DETECTION_H_
+#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_RECT_H_
+#define MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_RECT_H_
 
-#include <vector>
-
-// Sturcts holding landmarks related data structure for hand landmarker, pose
-// detector, face mesher, etc.
 namespace mediapipe::tasks::components::containers {
 
-// x and y are in [0,1] range with origin in top left in input image space.
-// If model provides z, z is in the same scale as x. origin is in the center
-// of the face.
-struct Landmark {
-  float x;
-  float y;
-  float z;
-};
-
-// [0, 1] range in input image space
-struct Bound {
+// Defines a rectangle, used e.g. as part of detection results or as input
+// region-of-interest.
+//
+// The coordinates are normalized wrt the image dimensions, i.e. generally in
+// [0,1] but they may exceed these bounds if describing a region overlapping the
+// image. The origin is on the top-left corner of the image.
+struct Rect {
   float left;
   float top;
   float right;
@@ -40,4 +32,4 @@ struct Bound {
 };
 
 }  // namespace mediapipe::tasks::components::containers
-#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_LANDMARKS_DETECTION_H_
+#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_RECT_H_

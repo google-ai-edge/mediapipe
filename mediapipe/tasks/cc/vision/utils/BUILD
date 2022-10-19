@@ -94,7 +94,7 @@ cc_library(
     name = "landmarks_utils",
     srcs = ["landmarks_utils.cc"],
     hdrs = ["landmarks_utils.h"],
-    deps = ["//mediapipe/tasks/cc/components/containers:landmarks_detection"],
+    deps = ["//mediapipe/tasks/cc/components/containers:rect"],
 )
 
 cc_test(
@@ -103,6 +103,6 @@ cc_test(
     deps = [
         ":landmarks_utils",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/tasks/cc/components/containers:landmarks_detection",
+        "//mediapipe/tasks/cc/components/containers:rect",
     ],
 )
