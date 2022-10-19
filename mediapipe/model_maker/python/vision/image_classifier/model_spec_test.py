@@ -37,11 +37,17 @@ class ModelSpecTest(tf.test.TestCase, parameterized.TestCase):
           expected_name='efficientnet_lite0',
           expected_input_image_shape=[224, 224]),
       dict(
-          testcase_name='efficientnet_lite1_spec_test',
-          model_spec=ms.efficientnet_lite1_spec,
-          expected_uri='https://tfhub.dev/tensorflow/efficientnet/lite1/feature-vector/2',
-          expected_name='efficientnet_lite1',
-          expected_input_image_shape=[240, 240]),
+          testcase_name='efficientnet_lite2_spec_test',
+          model_spec=ms.efficientnet_lite2_spec,
+          expected_uri='https://tfhub.dev/tensorflow/efficientnet/lite2/feature-vector/2',
+          expected_name='efficientnet_lite2',
+          expected_input_image_shape=[260, 260]),
+      dict(
+          testcase_name='efficientnet_lite4_spec_test',
+          model_spec=ms.efficientnet_lite4_spec,
+          expected_uri='https://tfhub.dev/tensorflow/efficientnet/lite4/feature-vector/2',
+          expected_name='efficientnet_lite4',
+          expected_input_image_shape=[300, 300]),
   )
   def test_predefiend_spec(self, model_spec: Callable[..., ms.ModelSpec],
                            expected_uri: str, expected_name: str,

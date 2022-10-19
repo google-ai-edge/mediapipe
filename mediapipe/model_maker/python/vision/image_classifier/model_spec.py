@@ -53,11 +53,17 @@ efficientnet_lite0_spec = functools.partial(
     uri='https://tfhub.dev/tensorflow/efficientnet/lite0/feature-vector/2',
     name='efficientnet_lite0')
 
-efficientnet_lite1_spec = functools.partial(
+efficientnet_lite2_spec = functools.partial(
     ModelSpec,
-    uri='https://tfhub.dev/tensorflow/efficientnet/lite1/feature-vector/2',
-    input_image_shape=[240, 240],
-    name='efficientnet_lite1')
+    uri='https://tfhub.dev/tensorflow/efficientnet/lite2/feature-vector/2',
+    input_image_shape=[260, 260],
+    name='efficientnet_lite2')
+
+efficientnet_lite4_spec = functools.partial(
+    ModelSpec,
+    uri='https://tfhub.dev/tensorflow/efficientnet/lite4/feature-vector/2',
+    input_image_shape=[300, 300],
+    name='efficientnet_lite4')
 
 
 # TODO: Document the exposed models.
@@ -66,7 +72,8 @@ class SupportedModels(enum.Enum):
   """Image classifier model supported by model maker."""
   MOBILENET_V2 = mobilenet_v2_spec
   EFFICIENTNET_LITE0 = efficientnet_lite0_spec
-  EFFICIENTNET_LITE1 = efficientnet_lite1_spec
+  EFFICIENTNET_LITE2 = efficientnet_lite2_spec
+  EFFICIENTNET_LITE4 = efficientnet_lite4_spec
 
   @classmethod
   def get(cls, spec: 'SupportedModels') -> 'ModelSpec':

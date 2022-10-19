@@ -66,8 +66,13 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
           hparams=image_classifier.HParams(
               train_epochs=1, batch_size=1, shuffle=True)),
       dict(
-          testcase_name='efficientnet_lite1',
-          model_spec=image_classifier.SupportedModels.EFFICIENTNET_LITE1,
+          testcase_name='efficientnet_lite2',
+          model_spec=image_classifier.SupportedModels.EFFICIENTNET_LITE2,
+          hparams=image_classifier.HParams(
+              train_epochs=1, batch_size=1, shuffle=True)),
+      dict(
+          testcase_name='efficientnet_lite4',
+          model_spec=image_classifier.SupportedModels.EFFICIENTNET_LITE4,
           hparams=image_classifier.HParams(
               train_epochs=1, batch_size=1, shuffle=True)),
   )
