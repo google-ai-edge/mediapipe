@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 public class Lindera {
     
     private ComputerVisionPlugin plugin;
+    public FpsHelper fpsHelper = new FpsHelper();
     private PoseTracking poseTracking;
     // TODO: Verify that this is the timestamp used in Actual Plugin
     private int timeStamp = 0;
@@ -78,6 +79,7 @@ public class Lindera {
     public void setupEventListener() {
         poseTracking.setResultListener(
             poseTrackingResult -> {
+                fpsHelper.logNewPoint();
                 glSurfaceView.setRenderData(poseTrackingResult);
                 glSurfaceView.requestRender();
                 ImmutableList<LandmarkProto.Landmark> landmarks = poseTrackingResult.multiPoseLandmarks();

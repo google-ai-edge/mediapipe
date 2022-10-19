@@ -17,10 +17,12 @@ package com.google.mediapipe.examples.posetracking_lindera;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -33,6 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 
 /**
@@ -63,6 +66,17 @@ public class MainActivity extends AppCompatActivity {
         // FRONT or BACK
         lindera.setCamera("FRONT");
         lindera.setCameraRotation(CameraRotation.AUTOMATIC);
+
+        lindera.fpsHelper.onFpsUpdate = new Consumer<Double>() {
+            @Override
+            public void accept(Double fps) {
+                String text = "FPS: "+String.format("%04.1f" ,fps);
+                runOnUiThread(()-> {
+                    TextView view = findViewById(R.id.fps_view);
+                    view.setText(text);
+                });
+            }
+        };
 
     }
 

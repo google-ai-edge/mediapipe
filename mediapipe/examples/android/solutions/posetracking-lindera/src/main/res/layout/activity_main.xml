@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
+
     <LinearLayout
         android:id="@+id/buttons"
+        style="?android:attr/buttonBarStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        style="?android:attr/buttonBarStyle" android:gravity="center"
+        android:gravity="center"
         android:orientation="horizontal">
 
         <Button
@@ -32,11 +33,18 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Set Model" />
+
+        <TextView
+            android:id="@+id/fps_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
     </LinearLayout>
+
     <FrameLayout
         android:id="@+id/preview_display_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
         <TextView
             android:id="@+id/no_view"
             android:layout_width="match_parent"
