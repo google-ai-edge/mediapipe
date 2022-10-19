@@ -289,6 +289,23 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "universal_sentence_encoder_preprocessor_calculator",
+    srcs = ["universal_sentence_encoder_preprocessor_calculator.cc"],
+    deps = [
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 mediapipe_proto_library(
     name = "inference_calculator_proto",
     srcs = ["inference_calculator.proto"],
