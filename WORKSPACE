@@ -415,6 +415,7 @@ maven_install(
         "com.google.guava:listenablefuture:1.0",
         "junit:junit:4.12",
         "org.hamcrest:hamcrest-library:1.3",
+        "com.afollestad.material-dialogs:core:0.9.6.0",
     ],
     fetch_sources = True,
     repositories = [

@@ -37,6 +37,33 @@ public class Lindera {
         this.plugin = plugin;
     }
 
+    public void setLandmarksVisibility(boolean visible){
+        this.poseTracking.options = PoseTrackingOptions.builder().withPoseTrackingOptions(this.poseTracking
+                .options).setLandmarkVisibility(visible).build();
+    }
+    public boolean getLandmarkVisibility(){
+        return this.poseTracking.options.landmarkVisibility();
+    }
+
+    public int getModelComplexity(){
+        return this.poseTracking.options.modelComplexity();
+
+    }
+    public void setModelComplexity(int complexity){
+        this.poseTracking.options = PoseTrackingOptions.builder().withPoseTrackingOptions(this.poseTracking
+                .options).setModelComplexity(complexity).build();
+    }
+
+    public void restartDetection(){
+        if (poseTracking!=null) {
+            stopDetection();
+            startDetection(poseTracking.options);
+        }else{
+            startDetection();
+        }
+
+    }
+
     public void initialize (ViewGroup computerVisionContainerView , AppCompatActivity appCompatActivity){
 
         this.computerVisionContainerView = computerVisionContainerView;
@@ -100,6 +127,7 @@ public class Lindera {
                 .build()
                 );    
     }
+
 
     public void startDetection(PoseTrackingOptions options){
         // ensure that class is initalized

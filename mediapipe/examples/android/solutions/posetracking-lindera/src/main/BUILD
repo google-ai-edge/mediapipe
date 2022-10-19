@@ -25,7 +25,7 @@ android_binary(
         "applicationId": "com.google.mediapipe.examples.posetracking_lindera",
     },
     multidex = "native",
-    resource_files = ["//mediapipe/examples/android/solutions:resource_files"],
+    resource_files = [":resource_files"],
     deps = [
         "//mediapipe/framework/formats:detection_java_proto_lite",
         "//mediapipe/framework/formats:landmark_java_proto_lite",
@@ -48,5 +48,12 @@ android_binary(
         "@maven//:androidx_exifinterface_exifinterface",
         "@maven//:androidx_fragment_fragment",
         "@maven//:com_google_guava_guava",
+        "@maven//:com_afollestad_material_dialogs_core",
     ],
+)
+
+filegroup(
+    name = "resource_files",
+    srcs = glob(["res/**"]),
+    #    visibility = ["//mediapipe/examples/android/solutions:__subpackages__"],
 )

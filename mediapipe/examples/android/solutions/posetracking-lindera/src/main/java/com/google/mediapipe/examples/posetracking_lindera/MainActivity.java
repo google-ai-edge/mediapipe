@@ -15,17 +15,24 @@
 package com.google.mediapipe.examples.posetracking_lindera;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.mediapipe.solutions.lindera.CameraRotation;
 import com.google.mediapipe.solutions.lindera.ComputerVisionPlugin;
 import com.google.mediapipe.solutions.lindera.Lindera;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 /**
@@ -47,8 +54,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        disableRedundantUI();
-
+        findViewById(R.id.button_set_model).setVisibility(View.GONE);
+        findViewById(R.id.button_toggle_landmarks).setVisibility(View.GONE);
         setupLiveDemoUiComponents();
         plugin = new ComputerVisionPluginImpl();
         lindera = new Lindera(plugin);
@@ -65,45 +72,125 @@ public class MainActivity extends AppCompatActivity {
      */
     private void setupLiveDemoUiComponents() {
 
-        Button startCameraButton = findViewById(R.id.button_start_camera);
+        Button startDetectionButton = findViewById(R.id.button_start_detection);
+        Button toggleLandmarks = findViewById(R.id.button_toggle_landmarks);
+        Button modelComplexity = findViewById(R.id.button_set_model);
         FrameLayout frameLayout = findViewById(R.id.preview_display_layout);
-
-        startCameraButton.setOnClickListener(
+        startDetectionButton.setOnClickListener(
                 v -> {
 //                    startCameraButton.setVisibility(View.GONE);
                     if (!isLinderaInitialized) {
-                        lindera.initialize(frameLayout, MainActivity.this);
-                        isLinderaInitialized = true;
-                        startCameraButton.setText("STOP CAMERA");
+                        modelLoadAsyncDialogue(()->{
+                            lindera.initialize(frameLayout, MainActivity.this);
+                            isLinderaInitialized = true;
+                            startDetectionButton.setVisibility(View.GONE);
+                            findViewById(R.id.button_set_model).setVisibility(View.VISIBLE);
+                            findViewById(R.id.button_toggle_landmarks).setVisibility(View.VISIBLE);
+                            updateLandmarkButtonText();
+                            updateModelComplexityButtonText();
+                        });
 
-                    } else {
-
-                        if (isDetectionStarted) {
-                            startCameraButton.setText(R.string.start_camera);
-
-
-                            lindera.stopDetection();
-                        } else {
-                            lindera.startDetection();
-                            startCameraButton.setText("STOP CAMERA");
-
-                        }
 
                     }
                     isDetectionStarted = !isDetectionStarted;
 
 
                 });
+
+        toggleLandmarks.setOnClickListener(
+                v ->{
+                    this.lindera.setLandmarksVisibility(!this.lindera.getLandmarkVisibility());
+                    updateLandmarkButtonText();
+                }
+        );
+
+        modelComplexity.setOnClickListener(v->{
+            int modelComplexityVal = lindera.getModelComplexity();
+
+            new MaterialDialog.Builder(this)
+                    .title("Choose Model Complexity")
+                    .items(Arrays.asList("Lite","Full","Heavy"))
+                    .itemsCallbackSingleChoice(modelComplexityVal, new MaterialDialog.ListCallbackSingleChoice() {
+                        @Override
+                        public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                            /**
+                             * If you use alwaysCallSingleChoiceCallback(), which is discussed below,
+                             * returning false here won't allow the newly selected radio button to actually be selected.
+                             **/
+                            if (which != modelComplexityVal){
+                                modelLoadAsyncDialogue(()-> {
+                                    lindera.setModelComplexity(which);
+                                    lindera.restartDetection();
+                                    updateModelComplexityButtonText();
+                                });
+                            }
+                            return true;
+                        }
+                    })
+                    .positiveText("choose")
+                    .show();
+//                listItemsSingleChoice(R.array.my_items, initialSelection = 1);
+
+
+
+        });
+
+    }
+    void updateLandmarkButtonText(){
+        Button toggleLandmarks = findViewById(R.id.button_toggle_landmarks);
+
+        if (this.lindera.getLandmarkVisibility()) {
+            toggleLandmarks.setText("Show Landmarks (On)");
+        }else{
+            toggleLandmarks.setText("Show Landmarks (Off)");
+
+        }
     }
 
-    /**
-     * Disables unecesary UI buttons
-     */
-    private void disableRedundantUI() {
-        findViewById(R.id.button_load_picture).setVisibility(View.GONE);
-        findViewById(R.id.button_load_video).setVisibility(View.GONE);
+    void updateModelComplexityButtonText(){
+        String text = "Select Model ";
+        switch (this.lindera.getModelComplexity()){
+            case 0:
+                text += "(lite)";
+                break;
+            case 1:
+                text += "(full)";
+                break;
+            case 2:
+                text += "(heavy)";
+                break;
+
+        }
+        Button setModel = findViewById(R.id.button_set_model);
+        setModel.setText(text);
 
     }
+
+    void modelLoadAsyncDialogue(Runnable loader){
+        ProgressBar pbar = new ProgressBar(this);
+        MaterialDialog dialog = new MaterialDialog.Builder(this)
+                .title("Loading Model")
+                .customView(pbar, false)
+                .build();
+        dialog.show();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                //Background work here
+                handler.post(loader);
+                dialog.dismiss();
+            }
+        });
+    }
+
+
+
+
+
+
 
 
 }

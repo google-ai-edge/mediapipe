@@ -53,14 +53,15 @@ public class PoseTracking extends ImageSolutionBase {
   private static final int OUTPUT_IMAGE_INDEX = 2;
   private static final int LANDMARKS_INDEX = 3;
   private final OutputHandler<PoseTrackingResult> outputHandler;
-
+  public PoseTrackingOptions options;
   /**
    * Initializes MediaPipe Face Detection solution.
    *
    * @param context an Android {@link Context}.
-   * @param options the configuration options defined in {@link PoseTrackingOptions}.
+   * @param poseTrackingOptions the configuration options defined in {@link PoseTrackingOptions}.
    */
-  public PoseTracking(Context context, PoseTrackingOptions options) {
+  public PoseTracking(Context context, PoseTrackingOptions poseTrackingOptions) {
+    options = poseTrackingOptions;
     outputHandler = new OutputHandler<>();
     outputHandler.setOutputConverter(
         packets -> {

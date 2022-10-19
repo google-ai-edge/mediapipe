@@ -56,6 +56,13 @@ public abstract class PoseTrackingOptions {
               .setMinDetectionConfidence(0.5f)
               .setSmoothLandmarks(true);
     }
+    public Builder withPoseTrackingOptions(PoseTrackingOptions options){
+      return setStaticImageMode(options.staticImageMode())
+              .setModelComplexity(options.modelComplexity())
+              .setMinDetectionConfidence(options.minDetectionConfidence())
+              .setSmoothLandmarks(options.smoothLandmarks())
+              .setLandmarkVisibility(options.landmarkVisibility());
+    }
 
     public abstract Builder setStaticImageMode(boolean value);
 
