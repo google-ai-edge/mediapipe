@@ -24,6 +24,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/utils.h"
@@ -53,6 +54,7 @@ using ::mediapipe::tasks::vision::hand_landmarker::proto::
     HandLandmarkerGraphOptions;
 
 constexpr char kImageTag[] = "IMAGE";
+constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kLandmarksTag[] = "LANDMARKS";
 constexpr char kWorldLandmarksTag[] = "WORLD_LANDMARKS";
 constexpr char kHandednessTag[] = "HANDEDNESS";
@@ -76,6 +78,9 @@ struct GestureRecognizerOutputs {
 // Inputs:
 //   IMAGE - Image
 //     Image to perform hand gesture recognition on.
+//   NORM_RECT - NormalizedRect
+//     Describes image rotation and region of image to perform landmarks
+//     detection on.
 //
 // Outputs:
 //   HAND_GESTURES - std::vector<ClassificationList>
@@ -93,13 +98,15 @@ struct GestureRecognizerOutputs {
 //   IMAGE - mediapipe::Image
 //     The image that gesture recognizer runs on and has the pixel data stored
 //     on the target storage (CPU vs GPU).
-//
+// All returned coordinates are in the unrotated and uncropped input image
+// coordinates system.
 //
 // Example:
 // node {
 //   calculator:
 //   "mediapipe.tasks.vision.gesture_recognizer.GestureRecognizerGraph"
 //   input_stream: "IMAGE:image_in"
+//   input_stream: "NORM_RECT:norm_rect"
 //   output_stream: "HAND_GESTURES:hand_gestures"
 //   output_stream: "LANDMARKS:hand_landmarks"
 //   output_stream: "WORLD_LANDMARKS:world_hand_landmarks"
@@ -132,7 +139,8 @@ class GestureRecognizerGraph : public core::ModelTaskGraph {
     ASSIGN_OR_RETURN(auto hand_gesture_recognition_output,
                      BuildGestureRecognizerGraph(
                          *sc->MutableOptions<GestureRecognizerGraphOptions>(),
-                         graph[Input<Image>(kImageTag)], graph));
+                         graph[Input<Image>(kImageTag)],
+                         graph[Input<NormalizedRect>(kNormRectTag)], graph));
     hand_gesture_recognition_output.gesture >>
         graph[Output<std::vector<ClassificationList>>(kHandGesturesTag)];
     hand_gesture_recognition_output.handedness >>
@@ -148,7 +156,7 @@ class GestureRecognizerGraph : public core::ModelTaskGraph {
  private:
   absl::StatusOr<GestureRecognizerOutputs> BuildGestureRecognizerGraph(
       GestureRecognizerGraphOptions& graph_options, Source<Image> image_in,
-      Graph& graph) {
+      Source<NormalizedRect> norm_rect_in, Graph& graph) {
     auto& image_property = graph.AddNode("ImagePropertiesCalculator");
     image_in >> image_property.In("IMAGE");
     auto image_size = image_property.Out("SIZE");
@@ -162,6 +170,7 @@ class GestureRecognizerGraph : public core::ModelTaskGraph {
         graph_options.mutable_hand_landmarker_graph_options());
 
     image_in >> hand_landmarker_graph.In(kImageTag);
+    norm_rect_in >> hand_landmarker_graph.In(kNormRectTag);
     auto hand_landmarks =
         hand_landmarker_graph[Output<std::vector<NormalizedLandmarkList>>(
             kLandmarksTag)];
@@ -187,6 +196,7 @@ class GestureRecognizerGraph : public core::ModelTaskGraph {
     hand_world_landmarks >> hand_gesture_subgraph.In(kWorldLandmarksTag);
     handedness >> hand_gesture_subgraph.In(kHandednessTag);
     image_size >> hand_gesture_subgraph.In(kImageSizeTag);
+    norm_rect_in >> hand_gesture_subgraph.In(kNormRectTag);
     hand_landmarks_id >> hand_gesture_subgraph.In(kHandTrackingIdsTag);
     auto hand_gestures =
         hand_gesture_subgraph[Output<std::vector<ClassificationList>>(

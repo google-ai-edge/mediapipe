@@ -58,6 +58,7 @@ using ::mediapipe::tasks::vision::hand_detector::proto::
     HandDetectorGraphOptions;
 
 constexpr char kImageTag[] = "IMAGE";
+constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kPalmDetectionsTag[] = "PALM_DETECTIONS";
 constexpr char kHandRectsTag[] = "HAND_RECTS";
 constexpr char kPalmRectsTag[] = "PALM_RECTS";
@@ -148,6 +149,9 @@ void ConfigureRectTransformationCalculator(
 // Inputs:
 //   IMAGE - Image
 //     Image to perform detection on.
+//   NORM_RECT - NormalizedRect
+//     Describes image rotation and region of image to perform detection
+//     on.
 //
 // Outputs:
 //   PALM_DETECTIONS - std::vector<Detection>
@@ -159,11 +163,14 @@ void ConfigureRectTransformationCalculator(
 //   IMAGE - Image
 //     The input image that the hand detector runs on and has the pixel data
 //     stored on the target storage (CPU vs GPU).
+// All returned coordinates are in the unrotated and uncropped input image
+// coordinates system.
 //
 // Example:
 // node {
 //   calculator: "mediapipe.tasks.vision.hand_detector.HandDetectorGraph"
 //   input_stream: "IMAGE:image"
+//   input_stream: "NORM_RECT:norm_rect"
 //   output_stream: "PALM_DETECTIONS:palm_detections"
 //   output_stream: "HAND_RECTS:hand_rects_from_palm_detections"
 //   output_stream: "PALM_RECTS:palm_rects"
@@ -189,11 +196,11 @@ class HandDetectorGraph : public core::ModelTaskGraph {
     ASSIGN_OR_RETURN(const auto* model_resources,
                      CreateModelResources<HandDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(
-        auto hand_detection_outs,
-        BuildHandDetectionSubgraph(sc->Options<HandDetectorGraphOptions>(),
-                                   *model_resources,
-                                   graph[Input<Image>(kImageTag)], graph));
+    ASSIGN_OR_RETURN(auto hand_detection_outs,
+                     BuildHandDetectionSubgraph(
+                         sc->Options<HandDetectorGraphOptions>(),
+                         *model_resources, graph[Input<Image>(kImageTag)],
+                         graph[Input<NormalizedRect>(kNormRectTag)], graph));
     hand_detection_outs.palm_detections >>
         graph[Output<std::vector<Detection>>(kPalmDetectionsTag)];
     hand_detection_outs.hand_rects >>
@@ -216,7 +223,7 @@ class HandDetectorGraph : public core::ModelTaskGraph {
   absl::StatusOr<HandDetectionOuts> BuildHandDetectionSubgraph(
       const HandDetectorGraphOptions& subgraph_options,
       const core::ModelResources& model_resources, Source<Image> image_in,
-      Graph& graph) {
+      Source<NormalizedRect> norm_rect_in, Graph& graph) {
     // Add image preprocessing subgraph. The model expects aspect ratio
     // unchanged.
     auto& preprocessing =
@@ -233,8 +240,9 @@ class HandDetectorGraph : public core::ModelTaskGraph {
         &preprocessing
              .GetOptions<tasks::components::ImagePreprocessingOptions>()));
     image_in >> preprocessing.In("IMAGE");
+    norm_rect_in >> preprocessing.In("NORM_RECT");
     auto preprocessed_tensors = preprocessing.Out("TENSORS");
-    auto letterbox_padding = preprocessing.Out("LETTERBOX_PADDING");
+    auto matrix = preprocessing.Out("MATRIX");
     auto image_size = preprocessing.Out("IMAGE_SIZE");
 
     // Adds SSD palm detection model.
@@ -278,17 +286,12 @@ class HandDetectorGraph : public core::ModelTaskGraph {
     nms_detections >> detection_label_id_to_text.In("");
     auto detections_with_text = detection_label_id_to_text.Out("");
 
-    // Adjusts detection locations (already normalized to [0.f, 1.f]) on the
-    // letterboxed image (after image transformation with the FIT scale mode) to
-    // the corresponding locations on the same image with the letterbox removed
-    // (the input image to the graph before image transformation).
-    auto& detection_letterbox_removal =
-        graph.AddNode("DetectionLetterboxRemovalCalculator");
-    detections_with_text >> detection_letterbox_removal.In("DETECTIONS");
-    letterbox_padding >> detection_letterbox_removal.In("LETTERBOX_PADDING");
+    // Projects detections back into the input image coordinates system.
+    auto& detection_projection = graph.AddNode("DetectionProjectionCalculator");
+    detections_with_text >> detection_projection.In("DETECTIONS");
+    matrix >> detection_projection.In("PROJECTION_MATRIX");
     auto palm_detections =
-        detection_letterbox_removal[Output<std::vector<Detection>>(
-            "DETECTIONS")];
+        detection_projection[Output<std::vector<Detection>>("DETECTIONS")];
 
     // Converts each palm detection into a rectangle (normalized by image size)
     // that encloses the palm and is rotated such that the line connecting

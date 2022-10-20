@@ -32,7 +32,7 @@ cc_library(
         "//mediapipe/calculators/tflite:ssd_anchors_calculator_cc_proto",
         "//mediapipe/calculators/util:detection_label_id_to_text_calculator",
         "//mediapipe/calculators/util:detection_label_id_to_text_calculator_cc_proto",
-        "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
+        "//mediapipe/calculators/util:detection_projection_calculator",
         "//mediapipe/calculators/util:detections_to_rects_calculator",
         "//mediapipe/calculators/util:detections_to_rects_calculator_cc_proto",
         "//mediapipe/calculators/util:non_max_suppression_calculator",

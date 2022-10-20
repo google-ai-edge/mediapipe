@@ -15,6 +15,7 @@
 package com.google.mediapipe.tasks.vision.gesturerecognizer;
 
 import android.content.Context;
+import android.graphics.RectF;
 import android.os.ParcelFileDescriptor;
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.formats.proto.LandmarkProto.LandmarkList;
@@ -71,8 +72,10 @@ import java.util.Optional;
 public final class GestureRecognizer extends BaseVisionTaskApi {
   private static final String TAG = GestureRecognizer.class.getSimpleName();
   private static final String IMAGE_IN_STREAM_NAME = "image_in";
+  private static final String NORM_RECT_IN_STREAM_NAME = "norm_rect_in";
   private static final List<String> INPUT_STREAMS =
-      Collections.unmodifiableList(Arrays.asList("IMAGE:" + IMAGE_IN_STREAM_NAME));
+      Collections.unmodifiableList(
+          Arrays.asList("IMAGE:" + IMAGE_IN_STREAM_NAME, "NORM_RECT:" + NORM_RECT_IN_STREAM_NAME));
   private static final List<String> OUTPUT_STREAMS =
       Collections.unmodifiableList(
           Arrays.asList(
@@ -205,7 +208,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    * @param runningMode a mediapipe vision task {@link RunningMode}.
    */
   private GestureRecognizer(TaskRunner taskRunner, RunningMode runningMode) {
-    super(taskRunner, runningMode, IMAGE_IN_STREAM_NAME);
+    super(taskRunner, runningMode, IMAGE_IN_STREAM_NAME, NORM_RECT_IN_STREAM_NAME);
   }
 
   /**
@@ -223,7 +226,8 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    * @throws MediaPipeException if there is an internal error.
    */
   public GestureRecognitionResult recognize(Image inputImage) {
-    return (GestureRecognitionResult) processImageData(inputImage);
+    // TODO: add proper support for rotations.
+    return (GestureRecognitionResult) processImageData(inputImage, buildFullImageRectF());
   }
 
   /**
@@ -244,7 +248,9 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    * @throws MediaPipeException if there is an internal error.
    */
   public GestureRecognitionResult recognizeForVideo(Image inputImage, long inputTimestampMs) {
-    return (GestureRecognitionResult) processVideoData(inputImage, inputTimestampMs);
+    // TODO: add proper support for rotations.
+    return (GestureRecognitionResult)
+        processVideoData(inputImage, buildFullImageRectF(), inputTimestampMs);
   }
 
   /**
@@ -266,7 +272,8 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    * @throws MediaPipeException if there is an internal error.
    */
   public void recognizeAsync(Image inputImage, long inputTimestampMs) {
-    sendLiveStreamData(inputImage, inputTimestampMs);
+    // TODO: add proper support for rotations.
+    sendLiveStreamData(inputImage, buildFullImageRectF(), inputTimestampMs);
   }
 
   /** Options for setting up an {@link GestureRecognizer}. */
@@ -463,5 +470,10 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
               taskOptionsBuilder.build())
           .build();
     }
+  }
+
+  /** Creates a RectF covering the full image. */
+  private static RectF buildFullImageRectF() {
+    return new RectF(0, 0, 1, 1);
   }
 }

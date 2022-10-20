@@ -17,11 +17,13 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_CC_VISION_GESTURE_RECOGNIZRER_GESTURE_RECOGNIZER_H_
 
 #include <memory>
+#include <optional>
 
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/components/containers/gesture_recognition_result.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
@@ -93,6 +95,13 @@ struct GestureRecognizerOptions {
 // Inputs:
 //   Image
 //     - The image that gesture recognition runs on.
+//   std::optional<NormalizedRect>
+//     - If provided, can be used to specify the rotation to apply to the image
+//       before performing gesture recognition, by setting its 'rotation' field
+//       in radians (e.g. 'M_PI / 2' for a 90° anti-clockwise rotation). Note
+//       that specifying a region-of-interest using the 'x_center', 'y_center',
+//       'width' and 'height' fields is NOT supported and will result in an
+//       invalid argument error being returned.
 // Outputs:
 //   GestureRecognitionResult
 //     - The hand gesture recognition results.
@@ -122,12 +131,23 @@ class GestureRecognizer : tasks::vision::core::BaseVisionTaskApi {
   //
   // image - mediapipe::Image
   //   Image to perform hand gesture recognition on.
+  // imageProcessingOptions - std::optional<NormalizedRect>
+  //   If provided, can be used to specify the rotation to apply to the image
+  //   before performing classification, by setting its 'rotation' field in
+  //   radians (e.g. 'M_PI / 2' for a 90° anti-clockwise rotation). Note that
+  //   specifying a region-of-interest using the 'x_center', 'y_center', 'width'
+  //   and 'height' fields is NOT supported and will result in an invalid
+  //   argument error being returned.
   //
   // The image can be of any size with format RGB or RGBA.
   // TODO: Describes how the input image will be preprocessed
   // after the yuv support is implemented.
+  // TODO: use an ImageProcessingOptions struct instead of
+  // NormalizedRect.
   absl::StatusOr<components::containers::GestureRecognitionResult> Recognize(
-      Image image);
+      Image image,
+      std::optional<mediapipe::NormalizedRect> image_processing_options =
+          std::nullopt);
 
   // Performs gesture recognition on the provided video frame.
   // Only use this method when the GestureRecognizer is created with the video
@@ -137,7 +157,9 @@ class GestureRecognizer : tasks::vision::core::BaseVisionTaskApi {
   // provide the video frame's timestamp (in milliseconds). The input timestamps
   // must be monotonically increasing.
   absl::StatusOr<components::containers::GestureRecognitionResult>
-  RecognizeForVideo(Image image, int64 timestamp_ms);
+  RecognizeForVideo(Image image, int64 timestamp_ms,
+                    std::optional<mediapipe::NormalizedRect>
+                        image_processing_options = std::nullopt);
 
   // Sends live image data to perform gesture recognition, and the results will
   // be available via the "result_callback" provided in the
@@ -157,7 +179,9 @@ class GestureRecognizer : tasks::vision::core::BaseVisionTaskApi {
   //     longer be valid when the callback returns. To access the image data
   //     outside of the callback, callers need to make a copy of the image.
   //   - The input timestamp in milliseconds.
-  absl::Status RecognizeAsync(Image image, int64 timestamp_ms);
+  absl::Status RecognizeAsync(Image image, int64 timestamp_ms,
+                              std::optional<mediapipe::NormalizedRect>
+                                  image_processing_options = std::nullopt);
 
   // Shuts down the GestureRecognizer when all works are done.
   absl::Status Close() { return runner_->Close(); }

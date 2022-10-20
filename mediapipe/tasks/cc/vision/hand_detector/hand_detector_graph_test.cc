@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -75,13 +76,18 @@ using ::testing::proto::Partially;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kPalmDetectionModel[] = "palm_detection_full.tflite";
 constexpr char kTestRightHandsImage[] = "right_hands.jpg";
+constexpr char kTestRightHandsRotatedImage[] = "right_hands_rotated.jpg";
 constexpr char kTestModelResourcesTag[] = "test_model_resources";
 
 constexpr char kOneHandResultFile[] = "hand_detector_result_one_hand.pbtxt";
+constexpr char kOneHandRotatedResultFile[] =
+    "hand_detector_result_one_hand_rotated.pbtxt";
 constexpr char kTwoHandsResultFile[] = "hand_detector_result_two_hands.pbtxt";
 
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageName[] = "image";
+constexpr char kNormRectTag[] = "NORM_RECT";
+constexpr char kNormRectName[] = "norm_rect";
 constexpr char kPalmDetectionsTag[] = "PALM_DETECTIONS";
 constexpr char kPalmDetectionsName[] = "palm_detections";
 constexpr char kHandRectsTag[] = "HAND_RECTS";
@@ -117,6 +123,8 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
 
   graph[Input<Image>(kImageTag)].SetName(kImageName) >>
       hand_detection.In(kImageTag);
+  graph[Input<NormalizedRect>(kNormRectTag)].SetName(kNormRectName) >>
+      hand_detection.In(kNormRectTag);
 
   hand_detection.Out(kPalmDetectionsTag).SetName(kPalmDetectionsName) >>
       graph[Output<std::vector<Detection>>(kPalmDetectionsTag)];
@@ -142,6 +150,9 @@ struct TestParams {
   std::string hand_detection_model_name;
   // The filename of test image.
   std::string test_image_name;
+  // The rotation to apply to the test image before processing, in radians
+  // counter-clockwise.
+  float rotation;
   // The number of maximum detected hands.
   int num_hands;
   // The expected hand detector result.
@@ -154,14 +165,22 @@ TEST_P(HandDetectionTest, DetectTwoHands) {
   MP_ASSERT_OK_AND_ASSIGN(
       Image image, DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
                                                 GetParam().test_image_name)));
+  NormalizedRect input_norm_rect;
+  input_norm_rect.set_rotation(GetParam().rotation);
+  input_norm_rect.set_x_center(0.5);
+  input_norm_rect.set_y_center(0.5);
+  input_norm_rect.set_width(1.0);
+  input_norm_rect.set_height(1.0);
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
       CreateModelResourcesForModel(GetParam().hand_detection_model_name));
   MP_ASSERT_OK_AND_ASSIGN(
       auto task_runner, CreateTaskRunner(*model_resources, kPalmDetectionModel,
                                          GetParam().num_hands));
-  auto output_packets =
-      task_runner->Process({{kImageName, MakePacket<Image>(std::move(image))}});
+  auto output_packets = task_runner->Process(
+      {{kImageName, MakePacket<Image>(std::move(image))},
+       {kNormRectName,
+        MakePacket<NormalizedRect>(std::move(input_norm_rect))}});
   MP_ASSERT_OK(output_packets);
   const std::vector<Detection>& palm_detections =
       (*output_packets)[kPalmDetectionsName].Get<std::vector<Detection>>();
@@ -188,15 +207,24 @@ INSTANTIATE_TEST_SUITE_P(
     Values(TestParams{.test_name = "DetectOneHand",
                       .hand_detection_model_name = kPalmDetectionModel,
                       .test_image_name = kTestRightHandsImage,
+                      .rotation = 0,
                       .num_hands = 1,
                       .expected_result =
                           GetExpectedHandDetectorResult(kOneHandResultFile)},
            TestParams{.test_name = "DetectTwoHands",
                       .hand_detection_model_name = kPalmDetectionModel,
                       .test_image_name = kTestRightHandsImage,
+                      .rotation = 0,
                       .num_hands = 2,
                       .expected_result =
-                          GetExpectedHandDetectorResult(kTwoHandsResultFile)}),
+                          GetExpectedHandDetectorResult(kTwoHandsResultFile)},
+           TestParams{.test_name = "DetectOneHandWithRotation",
+                      .hand_detection_model_name = kPalmDetectionModel,
+                      .test_image_name = kTestRightHandsRotatedImage,
+                      .rotation = M_PI / 2.0f,
+                      .num_hands = 1,
+                      .expected_result = GetExpectedHandDetectorResult(
+                          kOneHandRotatedResultFile)}),
     [](const TestParamInfo<HandDetectionTest::ParamType>& info) {
       return info.param.test_name;
     });
