@@ -21,6 +21,9 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/components/processors/proto/classifier_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
+option java_package = "com.google.mediapipe.tasks.text.textclassifier.proto";
+option java_outer_classname = "TextClassifierGraphOptionsProto";
+
 message TextClassifierGraphOptions {
   extend mediapipe.CalculatorOptions {
     optional TextClassifierGraphOptions ext = 462704549;
