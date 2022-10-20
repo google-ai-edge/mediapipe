@@ -23,5 +23,9 @@ py_library(
     testonly = 1,
     srcs = ["test_utils.py"],
     srcs_version = "PY3",
+    visibility = [
+        "//mediapipe/model_maker/python/vision/gesture_recognizer:__pkg__",
+        "//mediapipe/tasks:internal",
+    ],
     deps = ["//mediapipe/python:_framework_bindings"],
 )
