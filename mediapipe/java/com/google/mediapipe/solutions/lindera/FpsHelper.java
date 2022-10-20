@@ -4,7 +4,7 @@ import java.util.function.Consumer;
 
 public class FpsHelper {
     // 0 no smoothing, 1 is constant output
-    double smoothingFactor = 0.8;
+    double smoothingFactor = 0.9;
     double _fps = -1;
     long startTime = -1;
     public FpsHelper(double smoothingFactor){
@@ -29,7 +29,7 @@ public class FpsHelper {
                 _fps = (1 - smoothingFactor) * fps + _fps * smoothingFactor;
             }
             if (onFpsUpdate!=null) {
-                onFpsUpdate.accept(fps);
+                onFpsUpdate.accept(_fps);
             }
         }
     }
