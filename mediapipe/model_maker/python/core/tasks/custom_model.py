@@ -21,8 +21,6 @@ import abc
 import os
 from typing import Any, Callable, Optional
 
-# Dependency imports
-
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.data import dataset
@@ -77,9 +75,9 @@ class CustomModel(abc.ABC):
     tflite_filepath = os.path.join(export_dir, tflite_filename)
     # TODO: Populate metadata to the exported TFLite model.
     model_util.export_tflite(
-        self._model,
-        tflite_filepath,
-        quantization_config,
+        model=self._model,
+        tflite_filepath=tflite_filepath,
+        quantization_config=quantization_config,
         preprocess=preprocess)
     tf.compat.v1.logging.info(
         'TensorFlow Lite model exported successfully: %s' % tflite_filepath)

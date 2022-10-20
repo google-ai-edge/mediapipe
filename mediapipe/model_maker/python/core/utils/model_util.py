@@ -104,8 +104,8 @@ def export_tflite(
     quantization_config: Configuration for post-training quantization.
     supported_ops: A list of supported ops in the converted TFLite file.
     preprocess: A callable to preprocess the representative dataset for
-        quantization. The callable takes three arguments in order: feature,
-        label, and is_training.
+      quantization. The callable takes three arguments in order: feature, label,
+      and is_training.
   """
   if tflite_filepath is None:
     raise ValueError(

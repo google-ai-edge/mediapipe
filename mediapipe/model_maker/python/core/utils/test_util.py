@@ -92,3 +92,32 @@ def is_same_output(tflite_file: str,
   keras_output = keras_model.predict_on_batch(input_tensors)
 
   return np.allclose(lite_output, keras_output, atol=atol)
+
+
+def test_tflite(keras_model: tf.keras.Model,
+                tflite_file: str,
+                size: Union[int, List[int]],
+                high: float = 1,
+                atol: float = 1e-04) -> bool:
+  """Verifies if the output of TFLite model and TF Keras model are identical.
+
+  Args:
+    keras_model: Input TensorFlow Keras model.
+    tflite_file: Input TFLite model file.
+    size: Size of the input tesnor.
+    high: Higher boundary of the values in input tensors.
+    atol: Absolute tolerance of the difference between the outputs of Keras
+      model and TFLite model.
+
+  Returns:
+    True if the output of TFLite model and TF Keras model are identical.
+    Otherwise, False.
+  """
+  random_input = create_random_sample(size=size, high=high)
+  random_input = tf.convert_to_tensor(random_input)
+
+  return is_same_output(
+      tflite_file=tflite_file,
+      keras_model=keras_model,
+      input_tensors=random_input,
+      atol=atol)
