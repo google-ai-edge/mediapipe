@@ -304,6 +304,7 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
+    alwayslink = 1,
 )
 
 mediapipe_proto_library(
