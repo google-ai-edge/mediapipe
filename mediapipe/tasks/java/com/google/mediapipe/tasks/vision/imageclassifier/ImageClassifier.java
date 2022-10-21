@@ -39,7 +39,6 @@ import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.vision.core.BaseVisionTaskApi;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.imageclassifier.proto.ImageClassifierGraphOptionsProto;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -176,7 +175,7 @@ public final class ImageClassifier extends BaseVisionTaskApi {
                       packets.get(CLASSIFICATION_RESULT_OUT_STREAM_INDEX),
                       ClassificationsProto.ClassificationResult.getDefaultInstance()),
                   packets.get(CLASSIFICATION_RESULT_OUT_STREAM_INDEX).getTimestamp());
-            } catch (InvalidProtocolBufferException e) {
+            } catch (IOException e) {
               throw new MediaPipeException(
                   MediaPipeException.StatusCode.INTERNAL.ordinal(), e.getMessage());
             }
