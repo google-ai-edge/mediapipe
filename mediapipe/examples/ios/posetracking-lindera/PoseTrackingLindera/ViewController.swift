@@ -24,8 +24,60 @@ class ViewController: UIViewController {
         
     }
     
+    
     func updateModelButtonText(){
+        var text = "MODEL "
+        switch(lindera.getModelComplexity()){
+            
+        case 0:
+            text += "(LITE)"
+            break;
+        case 1:
+            text += "(FULL)"
+            break;
+        case 2:
+            text += "(HEAVY)"
+            break;
+            
+        default:
+            text += "(Unknown)"
+        }
+        chooseModelButton.setTitle(text, for: UIControl.State.normal)
+    }
+    
+    @IBAction func setModelComplexity(){
+                let alert = UIAlertController(
+                    title: nil,
+                    message: nil,
+                    preferredStyle: .actionSheet
+                )
         
+                alert.addAction(
+                    .init(title: "MODEL (LITE)", style: .default) {[weak self] _ in
+                        self?.lindera.setModelComplexityNow(complexity: 0)
+                        self?.updateModelButtonText()
+
+                    }
+                )
+        
+                alert.addAction(
+                    .init(title: "MODEL (FULL)", style: .default) { [weak self] _ in
+                        self?.lindera.setModelComplexityNow(complexity: 1)
+                        self?.updateModelButtonText()
+
+
+                    }
+                )
+                alert.addAction(
+                    .init(title: "MODEL (HEAVY)", style: .default) { [weak self] _ in
+                        self?.lindera.setModelComplexityNow(complexity: 2)
+                        self?.updateModelButtonText()
+
+
+                    }
+                )
+        
+        present(alert, animated: true)
     }
     
     @IBAction func showLandmarksButtonTouch(sender: UIButton){
@@ -33,25 +85,7 @@ class ViewController: UIViewController {
         lindera.showLandmarks(value:  !lindera.areLandmarksShown());
         updateLandmarksButtonText()
 
-//        let alert = UIAlertController(
-//            title: nil,
-//            message: nil,
-//            preferredStyle: .actionSheet
-//        )
-//
-//        alert.addAction(
-//            .init(title: "Action 1", style: .default) { _ in
-//                print("Action1")
-//            }
-//        )
-//
-//        alert.addAction(
-//            .init(title: "Action 2", style: .default) { _ in
-//                print("Action 2")
-//            }
-//        )
-//
-//        present(alert, animated: true)
+
         
 
     }
@@ -100,7 +134,7 @@ class ViewController: UIViewController {
         
         self.liveView.bringSubviewToFront(titleview)
         updateLandmarksButtonText()
-//        self.liveView.bringSubviewToFront(chooseModelButton)
+        updateModelButtonText()
 
     }
 

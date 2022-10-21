@@ -12,11 +12,7 @@ MIN_IOS_VERSION = "14.0"
 swift_library(
     name = "lindera_app_lib",
     srcs = glob(["**/*.swift"]),
-    data = [
-        "//mediapipe/graphs/pose_tracking:pose_tracking_gpu.binarypb",
-        "//mediapipe/modules/pose_detection:pose_detection.tflite",
-        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
-    ] + [
+    data =[
         "Base.lproj/LaunchScreen.storyboard",
         "Base.lproj/Main.storyboard",
     ],

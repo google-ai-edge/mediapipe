@@ -7,7 +7,7 @@ import UIKit
 ///  TFLite models are also loaded when you initialize this class
 public final class Lindera{
     // initalize the PoseTracking api and load models
-    let poseTracking:PoseTracking = PoseTracking(poseTrackingOptions: PoseTrackingOptions(showLandmarks: true))
+    var poseTracking:PoseTracking = PoseTracking(poseTrackingOptions: PoseTrackingOptions(showLandmarks: true,modelComplexity: 1))
     // attach Mediapipe camera helper to our class
     let cameraSource = MPPCameraInputSource()
 
@@ -26,6 +26,24 @@ public final class Lindera{
     public func areLandmarksShown() -> Bool{
         return self.poseTracking.areLandmarksShown()
     }
+    public func getModelComplexity() -> Int {
+        return Int(self.poseTracking.poseTrackingOptions.modelComplexity);
+    }
+    public func setModelComplexityNow(complexity:Int){
+        let poseTrackingOptions = poseTracking.poseTrackingOptions
+        
+        poseTrackingOptions?.modelComplexity = Int32(complexity)
+        
+        poseTracking = PoseTracking(poseTrackingOptions: poseTrackingOptions)
+        startPoseTracking()
+        startCamera()
+        
+
+
+
+    }
+    
+    
 //    public func getModelComplexity() -> Int{
 //        return self.poseTracking
 //    }
@@ -35,12 +53,20 @@ public final class Lindera{
         // this will be the main camera view
         let liveView = UIView()
         
-        // set camera preferences
+        startPoseTracking()
+        
+
+
+        return liveView
+        
+    }()
+    private func  startPoseTracking(){
+            // set camera preferences
         self.cameraSource.sessionPreset = AVCaptureSession.Preset.high.rawValue
         self.cameraSource.cameraPosition = AVCaptureDevice.Position.front
         self.cameraSource.orientation = AVCaptureVideoOrientation.portrait
         if (self.cameraSource.orientation == AVCaptureVideoOrientation.portrait){
-            self.cameraSource.videoMirrored = true
+        self.cameraSource.videoMirrored = true
         }
         // call LinderaDelegate on pose tracking results
         self.poseTracking.poseTrackingResultsListener = {[weak self] results in
@@ -53,16 +79,11 @@ public final class Lindera{
         self.poseTracking.startGraph()
         // attach camera's output with poseTracking object and its videoQueue
         self.cameraSource.setDelegate(self.poseTracking, queue: self.poseTracking.videoQueue)
-
-        return liveView
-        
-    }()
-    
+    }
     public required init(){}
     
     
     public func startCamera(_ completion: ((Result<Void, Error>) -> Void)? = nil) {
-        if (!self.cameraSource.isRunning){
         // set our rendering layer frame according to cameraView boundry
         self.poseTracking.renderer.layer.frame = cameraView.layer.bounds
         // attach render CALayer on cameraView to render output to
@@ -84,7 +105,6 @@ public final class Lindera{
                 }
         })
             
-        }
         
         
         
@@ -98,6 +118,7 @@ public final class Lindera{
             
         }
     }
+    
     /// switches camera from front to back and vice versa
     func switchCamera(_ completion: ((Result<Void, Error>) -> Void)? = nil) {
         self.poseTracking.videoQueue.async { [weak self] in

@@ -47,6 +47,7 @@
 - (void) startWithCamera: (MPPCameraInputSource*) cameraSource;
 - (void)showLandmarks: (BOOL) value;
 - (BOOL) areLandmarksShown;
+- (void) stopGraph;
 @end
 
 

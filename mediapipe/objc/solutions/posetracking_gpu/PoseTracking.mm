@@ -2,7 +2,7 @@
 #include "mediapipe/framework/formats/landmark.pb.h"
 #import "mediapipe/objc/MPPGraph.h"
 #import "mediapipe/objc/MPPTimestampConverter.h"
-
+#include "mediapipe/framework/packet.h"
 
 static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 static const char* kLandmarksOutputStream = "pose_landmarks";
@@ -162,6 +162,10 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
         
         weakSelf.poseTrackingResultsListener(results);
     };
+    
+    
+    
+    
     self->mediapipeGraph.delegate = self->poseTrackingGraphDelegate;
     
     
@@ -184,6 +188,7 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 
 - (void)startGraph {
   // Start running self.mediapipeGraph.
+[self->mediapipeGraph setSidePacket:mediapipe::MakePacket<int>(self.poseTrackingOptions.modelComplexity) named:"model_complexity"];
   NSError* error;
   if (![self->mediapipeGraph startWithError:&error]) {
     NSLog(@"Failed to start graph: %@", error);
@@ -193,6 +198,20 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
   }
 }
 
+- (void) stopGraph {
+    [self->mediapipeGraph cancel];
+    NSError* error;
+    if ([self->mediapipeGraph closeAllInputStreamsWithError: &error]){
+        if (![self->mediapipeGraph waitUntilDoneWithError:&error]){
+            NSLog(@"Failed to stop graph: %@", error);
+
+        }
+    }else {
+        NSLog(@"Failed to close input streams: %@", error);
+
+    }
+    
+}
 - (void) startWithCamera: (MPPCameraInputSource*) cameraSource {
     [cameraSource setDelegate:self queue:self.videoQueue];
 
