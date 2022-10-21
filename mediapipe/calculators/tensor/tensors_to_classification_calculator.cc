@@ -163,6 +163,7 @@ absl::Status TensorsToClassificationCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status TensorsToClassificationCalculator::Process(CalculatorContext* cc) {
+  const auto& options = cc->Options<TensorsToClassificationCalculatorOptions>();
   const auto& input_tensors = *kInTensors(cc);
   RET_CHECK_EQ(input_tensors.size(), 1);
   RET_CHECK(input_tensors[0].element_type() == Tensor::ElementType::kFloat32);
@@ -181,6 +182,12 @@ absl::Status TensorsToClassificationCalculator::Process(CalculatorContext* cc) {
   auto raw_scores = view.buffer<float>();
 
   auto classification_list = absl::make_unique<ClassificationList>();
+  if (options.has_tensor_index()) {
+    classification_list->set_tensor_index(options.tensor_index());
+  }
+  if (options.has_tensor_name()) {
+    classification_list->set_tensor_name(options.tensor_name());
+  }
   if (is_binary_classification_) {
     Classification* class_first = classification_list->add_classification();
     Classification* class_second = classification_list->add_classification();

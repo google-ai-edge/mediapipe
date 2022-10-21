@@ -37,6 +37,10 @@ message Classification {
 // Group of Classification protos.
 message ClassificationList {
   repeated Classification classification = 1;
+  // Optional index of the tensor that produced these classifications.
+  optional int32 tensor_index = 2;
+  // Optional name of the tensor that produced these classifications.
+  optional string tensor_name = 3;
 }
 
 // Group of ClassificationList protos.
