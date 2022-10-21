@@ -31,35 +31,17 @@ class ModelSpecTest(tf.test.TestCase, parameterized.TestCase):
           expected_name='mobilenet_v2',
           expected_input_image_shape=[224, 224]),
       dict(
-          testcase_name='resnet_50_spec_test',
-          model_spec=ms.resnet_50_spec,
-          expected_uri='https://tfhub.dev/google/imagenet/resnet_v2_50/feature_vector/4',
-          expected_name='resnet_50',
-          expected_input_image_shape=[224, 224]),
-      dict(
           testcase_name='efficientnet_lite0_spec_test',
           model_spec=ms.efficientnet_lite0_spec,
           expected_uri='https://tfhub.dev/tensorflow/efficientnet/lite0/feature-vector/2',
           expected_name='efficientnet_lite0',
           expected_input_image_shape=[224, 224]),
       dict(
-          testcase_name='efficientnet_lite1_spec_test',
-          model_spec=ms.efficientnet_lite1_spec,
-          expected_uri='https://tfhub.dev/tensorflow/efficientnet/lite1/feature-vector/2',
-          expected_name='efficientnet_lite1',
-          expected_input_image_shape=[240, 240]),
-      dict(
           testcase_name='efficientnet_lite2_spec_test',
           model_spec=ms.efficientnet_lite2_spec,
           expected_uri='https://tfhub.dev/tensorflow/efficientnet/lite2/feature-vector/2',
           expected_name='efficientnet_lite2',
           expected_input_image_shape=[260, 260]),
-      dict(
-          testcase_name='efficientnet_lite3_spec_test',
-          model_spec=ms.efficientnet_lite3_spec,
-          expected_uri='https://tfhub.dev/tensorflow/efficientnet/lite3/feature-vector/2',
-          expected_name='efficientnet_lite3',
-          expected_input_image_shape=[280, 280]),
       dict(
           testcase_name='efficientnet_lite4_spec_test',
           model_spec=ms.efficientnet_lite4_spec,

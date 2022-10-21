@@ -22,20 +22,20 @@ limitations under the License.
 #include <limits>
 #include <vector>
 
-#include "mediapipe/tasks/cc/components/containers/landmarks_detection.h"
+#include "mediapipe/tasks/cc/components/containers/rect.h"
 
 namespace mediapipe::tasks::vision::utils {
 
 // Calculates intersection over union for two bounds.
-float CalculateIOU(const components::containers::Bound& a,
-                   const components::containers::Bound& b);
+float CalculateIOU(const components::containers::Rect& a,
+                   const components::containers::Rect& b);
 
 // Calculates area for face bound
-float CalculateArea(const components::containers::Bound& bound);
+float CalculateArea(const components::containers::Rect& rect);
 
 // Calucates intersection area of two face bounds
-float CalculateIntersectionArea(const components::containers::Bound& a,
-                                const components::containers::Bound& b);
+float CalculateIntersectionArea(const components::containers::Rect& a,
+                                const components::containers::Rect& b);
 }  // namespace mediapipe::tasks::vision::utils
 
 #endif  // MEDIAPIPE_TASKS_CC_VISION_UTILS_LANDMARKS_UTILS_H_

@@ -151,7 +151,7 @@ def external_files():
     http_file(
         name = "com_google_mediapipe_dummy_gesture_recognizer_task",
         sha256 = "18e54586bda33300d459ca140cd045f6daf43d897224ba215a16db3423eae18e",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/dummy_gesture_recognizer.task?generation=1665524417056146"],
+        urls = ["https://storage.googleapis.com/mediapipe-assets/dummy_gesture_recognizer.task?generation=1665707319890725"],
     )
 
     http_file(
@@ -167,9 +167,21 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_expected_left_down_hand_rotated_landmarks_prototxt",
+        sha256 = "a16d6cb8dd07d60f0678ddeb6a7447b73b9b03d4ddde365c8770b472205bb6cf",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/expected_left_down_hand_rotated_landmarks.prototxt?generation=1666037061297507"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_expected_left_up_hand_landmarks_prototxt",
         sha256 = "1353ba617c4f048083618587cd23a8a22115f634521c153d4e1bd1ebd4f49dd7",
         urls = ["https://storage.googleapis.com/mediapipe-assets/expected_left_up_hand_landmarks.prototxt?generation=1661875726008879"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_expected_left_up_hand_rotated_landmarks_prototxt",
+        sha256 = "a9b9789c274d48a7cb9cc10af7bc644eb2512bb934529790d0a5404726daa86a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/expected_left_up_hand_rotated_landmarks.prototxt?generation=1666037063443676"],
     )
 
     http_file(
@@ -251,6 +263,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_hand_detector_result_one_hand_rotated_pbtxt",
+        sha256 = "ff5ca0654028d78a3380df90054273cae79abe1b7369b164063fd1d5758ec370",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/hand_detector_result_one_hand_rotated.pbtxt?generation=1666037065601724"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_hand_detector_result_two_hands_pbtxt",
         sha256 = "2589cb08b0ee027dc24649fe597adcfa2156a21d12ea2480f83832714ebdf95f",
         urls = ["https://storage.googleapis.com/mediapipe-assets/hand_detector_result_two_hands.pbtxt?generation=1662745353586157"],
@@ -266,6 +284,12 @@ def external_files():
         name = "com_google_mediapipe_hand_landmark_lite_tflite",
         sha256 = "048edd3645c9bf7397d19a9f6e3a42957d6e414c9bea6598030a2e9b624156e6",
         urls = ["https://storage.googleapis.com/mediapipe-assets/hand_landmark_lite.tflite?generation=1661875766398729"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_hand_landmark_task",
+        sha256 = "dd830295598e48e6bbbdf22fd9e69538fa07768106cd9ceb04d5462ca7e38c95",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/hand_landmark.task?generation=1665707323647357"],
     )
 
     http_file(
@@ -344,6 +368,12 @@ def external_files():
         name = "com_google_mediapipe_left_hands_jpg",
         sha256 = "4b5134daa4cb60465535239535f9f74c2842aba3aa5fd30bf04ef5678f93d87f",
         urls = ["https://storage.googleapis.com/mediapipe-assets/left_hands.jpg?generation=1661875796949017"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_left_hands_rotated_jpg",
+        sha256 = "8609c6202bca43a99bbf23fa8e687e49fa525e89481152e4c0987f46d60d7931",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/left_hands_rotated.jpg?generation=1666037068103465"],
     )
 
     http_file(
@@ -539,6 +569,18 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_pointing_up_rotated_jpg",
+        sha256 = "50ff66f50281207072a038e5bb6648c43f4aacbfb8204a4d2591868756aaeff1",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pointing_up_rotated.jpg?generation=1666037072219697"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_pointing_up_rotated_landmarks_pbtxt",
+        sha256 = "ccf67e5867094ffb6c465a4dfbf2ef1eb3f9db2465803fc25a0b84c958e050de",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pointing_up_rotated_landmarks.pbtxt?generation=1666037074376515"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_pose_detection_tflite",
         sha256 = "a63c614bef30d35947f13be361820b1e4e3bec9cfeebf4d11216a18373108e85",
         urls = ["https://storage.googleapis.com/mediapipe-assets/pose_detection.tflite?generation=1661875889147923"],
@@ -572,6 +614,12 @@ def external_files():
         name = "com_google_mediapipe_right_hands_jpg",
         sha256 = "240c082e80128ff1ca8a83ce645e2ba4d8bc30f0967b7991cf5fa375bab489e1",
         urls = ["https://storage.googleapis.com/mediapipe-assets/right_hands.jpg?generation=1661875908672404"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_right_hands_rotated_jpg",
+        sha256 = "b3bdf692f0d54b86c8b67e6d1286dd0078fbe6e9dfcd507b187e3bd8b398c0f9",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/right_hands_rotated.jpg?generation=1666037076873345"],
     )
 
     http_file(
@@ -716,6 +764,12 @@ def external_files():
         name = "com_google_mediapipe_thumb_up_landmarks_pbtxt",
         sha256 = "b129ae0536be4e25d6cdee74aabe9dedf1bcfe87430a40b68be4079db3a4d926",
         urls = ["https://storage.googleapis.com/mediapipe-assets/thumb_up_landmarks.pbtxt?generation=1665174979747784"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_thumb_up_rotated_landmarks_pbtxt",
+        sha256 = "5d0a465959cacbd201ac8dd8fc8a66c5997a172b71809b12d27296db6a28a102",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/thumb_up_rotated_landmarks.pbtxt?generation=1666037079490527"],
     )
 
     http_file(

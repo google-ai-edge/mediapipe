@@ -34,7 +34,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "mediapipe/tasks/cc/components/containers/landmarks_detection.h"
+#include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/vision/utils/landmarks_duplicates_finder.h"
 #include "mediapipe/tasks/cc/vision/utils/landmarks_utils.h"
 
@@ -44,7 +44,7 @@ namespace {
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Source;
-using ::mediapipe::tasks::components::containers::Bound;
+using ::mediapipe::tasks::components::containers::Rect;
 using ::mediapipe::tasks::vision::utils::CalculateIOU;
 using ::mediapipe::tasks::vision::utils::DuplicatesFinder;
 
@@ -126,7 +126,7 @@ absl::StatusOr<float> HandBaselineDistance(
   return distance;
 }
 
-Bound CalculateBound(const NormalizedLandmarkList& list) {
+Rect CalculateBound(const NormalizedLandmarkList& list) {
   constexpr float kMinInitialValue = std::numeric_limits<float>::max();
   constexpr float kMaxInitialValue = std::numeric_limits<float>::lowest();
 
@@ -172,7 +172,7 @@ class HandDuplicatesFinder : public DuplicatesFinder {
     const int num = multi_landmarks.size();
     std::vector<float> baseline_distances;
     baseline_distances.reserve(num);
-    std::vector<Bound> bounds;
+    std::vector<Rect> bounds;
     bounds.reserve(num);
     for (const NormalizedLandmarkList& list : multi_landmarks) {
       ASSIGN_OR_RETURN(const float baseline_distance,

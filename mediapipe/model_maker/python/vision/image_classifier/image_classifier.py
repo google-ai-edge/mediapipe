@@ -20,9 +20,9 @@ import tensorflow_hub as hub
 
 from mediapipe.model_maker.python.core.data import classification_dataset as classification_ds
 from mediapipe.model_maker.python.core.tasks import classifier
-from mediapipe.model_maker.python.core.utils import image_preprocessing
 from mediapipe.model_maker.python.core.utils import model_util
 from mediapipe.model_maker.python.core.utils import quantization
+from mediapipe.model_maker.python.vision.core import image_preprocessing
 from mediapipe.model_maker.python.vision.image_classifier import hyperparameters as hp
 from mediapipe.model_maker.python.vision.image_classifier import model_spec as ms
 from mediapipe.model_maker.python.vision.image_classifier import train_image_classifier_lib
@@ -31,18 +31,18 @@ from mediapipe.model_maker.python.vision.image_classifier import train_image_cla
 class ImageClassifier(classifier.Classifier):
   """ImageClassifier for building image classification model."""
 
-  def __init__(self, model_spec: ms.ModelSpec, index_to_label: List[Any],
+  def __init__(self, model_spec: ms.ModelSpec, index_by_label: List[Any],
                hparams: hp.HParams):
     """Initializes ImageClassifier class.
 
     Args:
       model_spec: Specification for the model.
-      index_to_label: A list that maps from index to label class name.
+      index_by_label: A list that maps from index to label class name.
       hparams: The hyperparameters for training image classifier.
     """
-    super(ImageClassifier, self).__init__(
+    super().__init__(
         model_spec=model_spec,
-        index_to_label=index_to_label,
+        index_by_label=index_by_label,
         shuffle=hparams.shuffle,
         full_train=hparams.do_fine_tuning)
     self._hparams = hparams
@@ -81,7 +81,7 @@ class ImageClassifier(classifier.Classifier):
     spec = ms.SupportedModels.get(model_spec)
     image_classifier = cls(
         model_spec=spec,
-        index_to_label=train_data.index_to_label,
+        index_by_label=train_data.index_by_label,
         hparams=hparams)
 
     image_classifier._create_model()

@@ -78,9 +78,9 @@ py_library(
         ":train_image_classifier_lib",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
         "//mediapipe/model_maker/python/core/tasks:classifier",
-        "//mediapipe/model_maker/python/core/utils:image_preprocessing",
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/core/utils:quantization",
+        "//mediapipe/model_maker/python/vision/core:image_preprocessing",
     ],
 )
 

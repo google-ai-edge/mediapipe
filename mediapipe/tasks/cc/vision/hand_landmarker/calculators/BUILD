@@ -57,7 +57,7 @@ cc_library(
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
-        "//mediapipe/tasks/cc/components/containers:landmarks_detection",
+        "//mediapipe/tasks/cc/components/containers:rect",
         "//mediapipe/tasks/cc/vision/utils:landmarks_duplicates_finder",
         "//mediapipe/tasks/cc/vision/utils:landmarks_utils",
         "@com_google_absl//absl/algorithm:container",

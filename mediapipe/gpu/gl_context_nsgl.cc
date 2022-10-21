@@ -78,7 +78,7 @@ absl::Status GlContext::CreateContext(NSOpenGLContext* share_context) {
                                                 16,
                                                 0};
 
-    pixel_format_ = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
+    pixel_format_ = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs_2_1];
   }
   if (!pixel_format_) {
     // On several Forge machines, the default config fails. For now let's do

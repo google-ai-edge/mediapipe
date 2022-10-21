@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <memory>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "absl/memory/memory.h"
@@ -27,6 +28,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/image_preprocessing.h"
@@ -62,6 +64,8 @@ constexpr char kHandGestureSubgraphTypeName[] =
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageInStreamName[] = "image_in";
 constexpr char kImageOutStreamName[] = "image_out";
+constexpr char kNormRectTag[] = "NORM_RECT";
+constexpr char kNormRectStreamName[] = "norm_rect_in";
 constexpr char kHandGesturesTag[] = "HAND_GESTURES";
 constexpr char kHandGesturesStreamName[] = "hand_gestures";
 constexpr char kHandednessTag[] = "HANDEDNESS";
@@ -71,6 +75,31 @@ constexpr char kHandLandmarksStreamName[] = "landmarks";
 constexpr char kHandWorldLandmarksTag[] = "WORLD_LANDMARKS";
 constexpr char kHandWorldLandmarksStreamName[] = "world_landmarks";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
+
+// Returns a NormalizedRect filling the whole image. If input is present, its
+// rotation is set in the returned NormalizedRect and a check is performed to
+// make sure no region-of-interest was provided. Otherwise, rotation is set to
+// 0.
+absl::StatusOr<NormalizedRect> FillNormalizedRect(
+    std::optional<NormalizedRect> normalized_rect) {
+  NormalizedRect result;
+  if (normalized_rect.has_value()) {
+    result = *normalized_rect;
+  }
+  bool has_coordinates = result.has_x_center() || result.has_y_center() ||
+                         result.has_width() || result.has_height();
+  if (has_coordinates) {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        "GestureRecognizer does not support region-of-interest.",
+        MediaPipeTasksStatus::kInvalidArgumentError);
+  }
+  result.set_x_center(0.5);
+  result.set_y_center(0.5);
+  result.set_width(1);
+  result.set_height(1);
+  return result;
+}
 
 // Creates a MediaPipe graph config that contains a subgraph node of
 // "mediapipe.tasks.vision.GestureRecognizerGraph". If the task is running
@@ -83,6 +112,7 @@ CalculatorGraphConfig CreateGraphConfig(
   auto& subgraph = graph.AddNode(kHandGestureSubgraphTypeName);
   subgraph.GetOptions<GestureRecognizerGraphOptionsProto>().Swap(options.get());
   graph.In(kImageTag).SetName(kImageInStreamName);
+  graph.In(kNormRectTag).SetName(kNormRectStreamName);
   subgraph.Out(kHandGesturesTag).SetName(kHandGesturesStreamName) >>
       graph.Out(kHandGesturesTag);
   subgraph.Out(kHandednessTag).SetName(kHandednessStreamName) >>
@@ -93,10 +123,11 @@ CalculatorGraphConfig CreateGraphConfig(
       graph.Out(kHandWorldLandmarksTag);
   subgraph.Out(kImageTag).SetName(kImageOutStreamName) >> graph.Out(kImageTag);
   if (enable_flow_limiting) {
-    return tasks::core::AddFlowLimiterCalculator(graph, subgraph, {kImageTag},
-                                                 kHandGesturesTag);
+    return tasks::core::AddFlowLimiterCalculator(
+        graph, subgraph, {kImageTag, kNormRectTag}, kHandGesturesTag);
   }
   graph.In(kImageTag) >> subgraph.In(kImageTag);
+  graph.In(kNormRectTag) >> subgraph.In(kNormRectTag);
   return graph.GetConfig();
 }
 
@@ -216,16 +247,22 @@ absl::StatusOr<std::unique_ptr<GestureRecognizer>> GestureRecognizer::Create(
 }
 
 absl::StatusOr<GestureRecognitionResult> GestureRecognizer::Recognize(
-    mediapipe::Image image) {
+    mediapipe::Image image,
+    std::optional<mediapipe::NormalizedRect> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(auto output_packets,
-                   ProcessImageData({{kImageInStreamName,
-                                      MakePacket<Image>(std::move(image))}}));
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   FillNormalizedRect(image_processing_options));
+  ASSIGN_OR_RETURN(
+      auto output_packets,
+      ProcessImageData(
+          {{kImageInStreamName, MakePacket<Image>(std::move(image))},
+           {kNormRectStreamName,
+            MakePacket<NormalizedRect>(std::move(norm_rect))}}));
   if (output_packets[kHandGesturesStreamName].IsEmpty()) {
     return {{{}, {}, {}, {}}};
   }
@@ -245,18 +282,24 @@ absl::StatusOr<GestureRecognitionResult> GestureRecognizer::Recognize(
 }
 
 absl::StatusOr<GestureRecognitionResult> GestureRecognizer::RecognizeForVideo(
-    mediapipe::Image image, int64 timestamp_ms) {
+    mediapipe::Image image, int64 timestamp_ms,
+    std::optional<mediapipe::NormalizedRect> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   FillNormalizedRect(image_processing_options));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
           {{kImageInStreamName,
             MakePacket<Image>(std::move(image))
+                .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
+           {kNormRectStreamName,
+            MakePacket<NormalizedRect>(std::move(norm_rect))
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
   if (output_packets[kHandGesturesStreamName].IsEmpty()) {
     return {{{}, {}, {}, {}}};
@@ -276,17 +319,23 @@ absl::StatusOr<GestureRecognitionResult> GestureRecognizer::RecognizeForVideo(
   };
 }
 
-absl::Status GestureRecognizer::RecognizeAsync(mediapipe::Image image,
-                                               int64 timestamp_ms) {
+absl::Status GestureRecognizer::RecognizeAsync(
+    mediapipe::Image image, int64 timestamp_ms,
+    std::optional<mediapipe::NormalizedRect> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   FillNormalizedRect(image_processing_options));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))
+            .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
+       {kNormRectStreamName,
+        MakePacket<NormalizedRect>(std::move(norm_rect))
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
 }
 

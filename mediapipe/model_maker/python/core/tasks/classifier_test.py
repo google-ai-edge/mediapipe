@@ -36,10 +36,10 @@ class ClassifierTest(tf.test.TestCase):
 
   def setUp(self):
     super(ClassifierTest, self).setUp()
-    index_to_label = ['cat', 'dog']
+    index_by_label = ['cat', 'dog']
     self.model = MockClassifier(
         model_spec=None,
-        index_to_label=index_to_label,
+        index_by_label=index_by_label,
         shuffle=False,
         full_train=False)
     self.model.model = test_util.build_model(input_shape=[4], num_classes=2)

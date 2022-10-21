@@ -270,10 +270,10 @@ class GlProcessor : public ImageToTensorConverter {
                        Tensor& output_tensor) override {
     if (input.format() != mediapipe::GpuBufferFormat::kBGRA32 &&
         input.format() != mediapipe::GpuBufferFormat::kRGBAHalf64 &&
-        input.format() != mediapipe::GpuBufferFormat::kRGBAFloat128) {
+        input.format() != mediapipe::GpuBufferFormat::kRGBAFloat128 &&
+        input.format() != mediapipe::GpuBufferFormat::kRGB24) {
       return InvalidArgumentError(absl::StrCat(
-          "Only 4-channel texture input formats are supported, passed format: ",
-          static_cast<uint32_t>(input.format())));
+          "Unsupported format: ", static_cast<uint32_t>(input.format())));
     }
     const auto& output_shape = output_tensor.shape();
     MP_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
@@ -281,12 +281,13 @@ class GlProcessor : public ImageToTensorConverter {
     MP_RETURN_IF_ERROR(gl_helper_.RunInGlContext(
         [this, &output_tensor, &input, &roi, &output_shape, range_min,
          range_max, tensor_buffer_offset]() -> absl::Status {
-          constexpr int kRgbaNumChannels = 4;
+          const int input_num_channels = input.channels();
           auto source_texture = gl_helper_.CreateSourceTexture(input);
           tflite::gpu::gl::GlTexture input_texture(
-              GL_TEXTURE_2D, source_texture.name(), GL_RGBA,
+              GL_TEXTURE_2D, source_texture.name(),
+              input_num_channels == 4 ? GL_RGB : GL_RGBA,
               source_texture.width() * source_texture.height() *
-                  kRgbaNumChannels * sizeof(uint8_t),
+                  input_num_channels * sizeof(uint8_t),
               /*layer=*/0,
               /*owned=*/false);
 

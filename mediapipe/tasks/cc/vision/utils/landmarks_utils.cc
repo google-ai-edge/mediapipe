@@ -18,15 +18,17 @@ limitations under the License.
 #include <algorithm>
 #include <vector>
 
+#include "mediapipe/tasks/cc/components/containers/rect.h"
+
 namespace mediapipe::tasks::vision::utils {
 
-using ::mediapipe::tasks::components::containers::Bound;
+using ::mediapipe::tasks::components::containers::Rect;
 
-float CalculateArea(const Bound& bound) {
-  return (bound.right - bound.left) * (bound.bottom - bound.top);
+float CalculateArea(const Rect& rect) {
+  return (rect.right - rect.left) * (rect.bottom - rect.top);
 }
 
-float CalculateIntersectionArea(const Bound& a, const Bound& b) {
+float CalculateIntersectionArea(const Rect& a, const Rect& b) {
   const float intersection_left = std::max<float>(a.left, b.left);
   const float intersection_top = std::max<float>(a.top, b.top);
   const float intersection_right = std::min<float>(a.right, b.right);
@@ -36,7 +38,7 @@ float CalculateIntersectionArea(const Bound& a, const Bound& b) {
          std::max<float>(intersection_right - intersection_left, 0.0);
 }
 
-float CalculateIOU(const Bound& a, const Bound& b) {
+float CalculateIOU(const Rect& a, const Rect& b) {
   const float area_a = CalculateArea(a);
   const float area_b = CalculateArea(b);
   if (area_a <= 0 || area_b <= 0) return 0.0;

@@ -17,8 +17,8 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 cc_library(
-    name = "landmarks_detection",
-    hdrs = ["landmarks_detection.h"],
+    name = "rect",
+    hdrs = ["rect.h"],
 )
 
 cc_library(

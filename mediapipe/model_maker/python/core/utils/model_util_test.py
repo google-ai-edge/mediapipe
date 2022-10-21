@@ -100,7 +100,8 @@ class ModelUtilTest(tf.test.TestCase, parameterized.TestCase):
     model = test_util.build_model(input_shape=[input_dim], num_classes=2)
     tflite_file = os.path.join(self.get_temp_dir(), 'model.tflite')
     model_util.export_tflite(model, tflite_file)
-    self._test_tflite(model, tflite_file, input_dim)
+    test_util.test_tflite(
+        keras_model=model, tflite_file=tflite_file, size=[1, input_dim])
 
   @parameterized.named_parameters(
       dict(
@@ -121,27 +122,20 @@ class ModelUtilTest(tf.test.TestCase, parameterized.TestCase):
     input_dim = 16
     num_classes = 2
     max_input_value = 5
-    model = test_util.build_model([input_dim], num_classes)
+    model = test_util.build_model(
+        input_shape=[input_dim], num_classes=num_classes)
     tflite_file = os.path.join(self.get_temp_dir(), 'model_quantized.tflite')
 
-    model_util.export_tflite(model, tflite_file, config)
-    self._test_tflite(
-        model, tflite_file, input_dim, max_input_value, atol=1e-00)
-    self.assertNear(os.path.getsize(tflite_file), model_size, 300)
-
-  def _test_tflite(self,
-                   keras_model: tf.keras.Model,
-                   tflite_model_file: str,
-                   input_dim: int,
-                   max_input_value: int = 1000,
-                   atol: float = 1e-04):
-    random_input = test_util.create_random_sample(
-        size=[1, input_dim], high=max_input_value)
-    random_input = tf.convert_to_tensor(random_input)
-
+    model_util.export_tflite(
+        model=model, tflite_filepath=tflite_file, quantization_config=config)
     self.assertTrue(
-        test_util.is_same_output(
-            tflite_model_file, keras_model, random_input, atol=atol))
+        test_util.test_tflite(
+            keras_model=model,
+            tflite_file=tflite_file,
+            size=[1, input_dim],
+            high=max_input_value,
+            atol=1e-00))
+    self.assertNear(os.path.getsize(tflite_file), model_size, 300)
 
 
 if __name__ == '__main__':

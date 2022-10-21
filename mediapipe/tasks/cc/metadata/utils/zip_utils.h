@@ -35,10 +35,13 @@ absl::Status ExtractFilesfromZipFile(
     const char* buffer_data, const size_t buffer_size,
     absl::flat_hash_map<std::string, absl::string_view>* files);
 
-// Set file_pointer_meta in ExternalFile which is the pointer points to location
-// of a file in memory by file_content.
-void SetExternalFile(const std::string_view& file_content,
-                     core::proto::ExternalFile* model_file);
+// Set the ExternalFile object by file_content in memory. By default,
+// `is_copy=false` which means to set `file_pointer_meta` in ExternalFile which
+// is the pointer points to location of a file in memory. Otherwise, if
+// `is_copy=true`, copy the memory into `file_content` in ExternalFile.
+void SetExternalFile(const absl::string_view& file_content,
+                     core::proto::ExternalFile* model_file,
+                     bool is_copy = false);
 
 }  // namespace metadata
 }  // namespace tasks

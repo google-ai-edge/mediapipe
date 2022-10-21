@@ -61,28 +61,13 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
           hparams=image_classifier.HParams(
               train_epochs=1, batch_size=1, shuffle=True)),
       dict(
-          testcase_name='resnet_50',
-          model_spec=image_classifier.SupportedModels.RESNET_50,
-          hparams=image_classifier.HParams(
-              train_epochs=1, batch_size=1, shuffle=True)),
-      dict(
           testcase_name='efficientnet_lite0',
           model_spec=image_classifier.SupportedModels.EFFICIENTNET_LITE0,
           hparams=image_classifier.HParams(
               train_epochs=1, batch_size=1, shuffle=True)),
       dict(
-          testcase_name='efficientnet_lite1',
-          model_spec=image_classifier.SupportedModels.EFFICIENTNET_LITE1,
-          hparams=image_classifier.HParams(
-              train_epochs=1, batch_size=1, shuffle=True)),
-      dict(
           testcase_name='efficientnet_lite2',
           model_spec=image_classifier.SupportedModels.EFFICIENTNET_LITE2,
-          hparams=image_classifier.HParams(
-              train_epochs=1, batch_size=1, shuffle=True)),
-      dict(
-          testcase_name='efficientnet_lite3',
-          model_spec=image_classifier.SupportedModels.EFFICIENTNET_LITE3,
           hparams=image_classifier.HParams(
               train_epochs=1, batch_size=1, shuffle=True)),
       dict(

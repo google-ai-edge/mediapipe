@@ -48,33 +48,16 @@ mobilenet_v2_spec = functools.partial(
     uri='https://tfhub.dev/google/tf2-preview/mobilenet_v2/feature_vector/4',
     name='mobilenet_v2')
 
-resnet_50_spec = functools.partial(
-    ModelSpec,
-    uri='https://tfhub.dev/google/imagenet/resnet_v2_50/feature_vector/4',
-    name='resnet_50')
-
 efficientnet_lite0_spec = functools.partial(
     ModelSpec,
     uri='https://tfhub.dev/tensorflow/efficientnet/lite0/feature-vector/2',
     name='efficientnet_lite0')
-
-efficientnet_lite1_spec = functools.partial(
-    ModelSpec,
-    uri='https://tfhub.dev/tensorflow/efficientnet/lite1/feature-vector/2',
-    input_image_shape=[240, 240],
-    name='efficientnet_lite1')
 
 efficientnet_lite2_spec = functools.partial(
     ModelSpec,
     uri='https://tfhub.dev/tensorflow/efficientnet/lite2/feature-vector/2',
     input_image_shape=[260, 260],
     name='efficientnet_lite2')
-
-efficientnet_lite3_spec = functools.partial(
-    ModelSpec,
-    uri='https://tfhub.dev/tensorflow/efficientnet/lite3/feature-vector/2',
-    input_image_shape=[280, 280],
-    name='efficientnet_lite3')
 
 efficientnet_lite4_spec = functools.partial(
     ModelSpec,
@@ -88,11 +71,8 @@ efficientnet_lite4_spec = functools.partial(
 class SupportedModels(enum.Enum):
   """Image classifier model supported by model maker."""
   MOBILENET_V2 = mobilenet_v2_spec
-  RESNET_50 = resnet_50_spec
   EFFICIENTNET_LITE0 = efficientnet_lite0_spec
-  EFFICIENTNET_LITE1 = efficientnet_lite1_spec
   EFFICIENTNET_LITE2 = efficientnet_lite2_spec
-  EFFICIENTNET_LITE3 = efficientnet_lite3_spec
   EFFICIENTNET_LITE4 = efficientnet_lite4_spec
 
   @classmethod

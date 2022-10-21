@@ -30,13 +30,13 @@ public abstract class Landmark {
     return new AutoValue_Landmark(x, y, z, normalized);
   }
 
-  // The x coordniates of the landmark.
+  // The x coordinates of the landmark.
   public abstract float x();
 
-  // The y coordniates of the landmark.
+  // The y coordinates of the landmark.
   public abstract float y();
 
-  // The z coordniates of the landmark.
+  // The z coordinates of the landmark.
   public abstract float z();
 
   // Whether this landmark is normalized with respect to the image size.

@@ -25,6 +25,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/processors/classification_postprocessing_graph.h"
@@ -57,6 +58,7 @@ constexpr char kHandednessTag[] = "HANDEDNESS";
 constexpr char kLandmarksTag[] = "LANDMARKS";
 constexpr char kWorldLandmarksTag[] = "WORLD_LANDMARKS";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
+constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kHandTrackingIdsTag[] = "HAND_TRACKING_IDS";
 constexpr char kHandGesturesTag[] = "HAND_GESTURES";
 constexpr char kLandmarksMatrixTag[] = "LANDMARKS_MATRIX";
@@ -92,6 +94,9 @@ Source<std::vector<Tensor>> ConvertMatrixToTensor(Source<Matrix> matrix,
 //     Detected hand landmarks in world coordinates.
 //   IMAGE_SIZE - std::pair<int, int>
 //     The size of image from which the landmarks detected from.
+//   NORM_RECT - NormalizedRect
+//     NormalizedRect whose 'rotation' field is used to rotate the
+//     landmarks before processing them.
 //
 // Outputs:
 //   HAND_GESTURES - ClassificationList
@@ -106,6 +111,7 @@ Source<std::vector<Tensor>> ConvertMatrixToTensor(Source<Matrix> matrix,
 //   input_stream: "LANDMARKS:landmarks"
 //   input_stream: "WORLD_LANDMARKS:world_landmarks"
 //   input_stream: "IMAGE_SIZE:image_size"
+//   input_stream: "NORM_RECT:norm_rect"
 //   output_stream: "HAND_GESTURES:hand_gestures"
 //   options {
 //     [mediapipe.tasks.vision.gesture_recognizer.proto.HandGestureRecognizerGraphOptions.ext]
@@ -133,7 +139,8 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
             graph[Input<ClassificationList>(kHandednessTag)],
             graph[Input<NormalizedLandmarkList>(kLandmarksTag)],
             graph[Input<LandmarkList>(kWorldLandmarksTag)],
-            graph[Input<std::pair<int, int>>(kImageSizeTag)], graph));
+            graph[Input<std::pair<int, int>>(kImageSizeTag)],
+            graph[Input<NormalizedRect>(kNormRectTag)], graph));
     hand_gestures >> graph[Output<ClassificationList>(kHandGesturesTag)];
     return graph.GetConfig();
   }
@@ -145,7 +152,8 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
       Source<ClassificationList> handedness,
       Source<NormalizedLandmarkList> hand_landmarks,
       Source<LandmarkList> hand_world_landmarks,
-      Source<std::pair<int, int>> image_size, Graph& graph) {
+      Source<std::pair<int, int>> image_size, Source<NormalizedRect> norm_rect,
+      Graph& graph) {
     // Converts the ClassificationList to a matrix.
     auto& handedness_to_matrix = graph.AddNode("HandednessToMatrixCalculator");
     handedness >> handedness_to_matrix.In(kHandednessTag);
@@ -166,6 +174,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
         landmarks_options;
     hand_landmarks >> hand_landmarks_to_matrix.In(kLandmarksTag);
     image_size >> hand_landmarks_to_matrix.In(kImageSizeTag);
+    norm_rect >> hand_landmarks_to_matrix.In(kNormRectTag);
     auto hand_landmarks_matrix =
         hand_landmarks_to_matrix[Output<Matrix>(kLandmarksMatrixTag)];
 
@@ -181,6 +190,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
     hand_world_landmarks >>
         hand_world_landmarks_to_matrix.In(kWorldLandmarksTag);
     image_size >> hand_world_landmarks_to_matrix.In(kImageSizeTag);
+    norm_rect >> hand_world_landmarks_to_matrix.In(kNormRectTag);
     auto hand_world_landmarks_matrix =
         hand_world_landmarks_to_matrix[Output<Matrix>(kLandmarksMatrixTag)];
 
@@ -239,6 +249,9 @@ REGISTER_MEDIAPIPE_GRAPH(
 //     A vector hand landmarks in world coordinates.
 //   IMAGE_SIZE - std::pair<int, int>
 //     The size of image from which the landmarks detected from.
+//   NORM_RECT - NormalizedRect
+//     NormalizedRect whose 'rotation' field is used to rotate the
+//     landmarks before processing them.
 //   HAND_TRACKING_IDS - std::vector<int>
 //     A vector of the tracking ids of the hands. The tracking id is the vector
 //     index corresponding to the same hand if the graph runs multiple times.
@@ -257,6 +270,7 @@ REGISTER_MEDIAPIPE_GRAPH(
 //   input_stream: "LANDMARKS:landmarks"
 //   input_stream: "WORLD_LANDMARKS:world_landmarks"
 //   input_stream: "IMAGE_SIZE:image_size"
+//   input_stream: "NORM_RECT:norm_rect"
 //   input_stream: "HAND_TRACKING_IDS:hand_tracking_ids"
 //   output_stream: "HAND_GESTURES:hand_gestures"
 //   options {
@@ -283,6 +297,7 @@ class MultipleHandGestureRecognizerGraph : public core::ModelTaskGraph {
             graph[Input<std::vector<NormalizedLandmarkList>>(kLandmarksTag)],
             graph[Input<std::vector<LandmarkList>>(kWorldLandmarksTag)],
             graph[Input<std::pair<int, int>>(kImageSizeTag)],
+            graph[Input<NormalizedRect>(kNormRectTag)],
             graph[Input<std::vector<int>>(kHandTrackingIdsTag)], graph));
     multi_hand_gestures >>
         graph[Output<std::vector<ClassificationList>>(kHandGesturesTag)];
@@ -296,18 +311,20 @@ class MultipleHandGestureRecognizerGraph : public core::ModelTaskGraph {
       Source<std::vector<ClassificationList>> multi_handedness,
       Source<std::vector<NormalizedLandmarkList>> multi_hand_landmarks,
       Source<std::vector<LandmarkList>> multi_hand_world_landmarks,
-      Source<std::pair<int, int>> image_size,
+      Source<std::pair<int, int>> image_size, Source<NormalizedRect> norm_rect,
       Source<std::vector<int>> multi_hand_tracking_ids, Graph& graph) {
     auto& begin_loop_int = graph.AddNode("BeginLoopIntCalculator");
     image_size >> begin_loop_int.In(kCloneTag)[0];
-    multi_handedness >> begin_loop_int.In(kCloneTag)[1];
-    multi_hand_landmarks >> begin_loop_int.In(kCloneTag)[2];
-    multi_hand_world_landmarks >> begin_loop_int.In(kCloneTag)[3];
+    norm_rect >> begin_loop_int.In(kCloneTag)[1];
+    multi_handedness >> begin_loop_int.In(kCloneTag)[2];
+    multi_hand_landmarks >> begin_loop_int.In(kCloneTag)[3];
+    multi_hand_world_landmarks >> begin_loop_int.In(kCloneTag)[4];
     multi_hand_tracking_ids >> begin_loop_int.In(kIterableTag);
     auto image_size_clone = begin_loop_int.Out(kCloneTag)[0];
-    auto multi_handedness_clone = begin_loop_int.Out(kCloneTag)[1];
-    auto multi_hand_landmarks_clone = begin_loop_int.Out(kCloneTag)[2];
-    auto multi_hand_world_landmarks_clone = begin_loop_int.Out(kCloneTag)[3];
+    auto norm_rect_clone = begin_loop_int.Out(kCloneTag)[1];
+    auto multi_handedness_clone = begin_loop_int.Out(kCloneTag)[2];
+    auto multi_hand_landmarks_clone = begin_loop_int.Out(kCloneTag)[3];
+    auto multi_hand_world_landmarks_clone = begin_loop_int.Out(kCloneTag)[4];
     auto hand_tracking_id = begin_loop_int.Out(kItemTag);
     auto batch_end = begin_loop_int.Out(kBatchEndTag);
 
@@ -341,6 +358,7 @@ class MultipleHandGestureRecognizerGraph : public core::ModelTaskGraph {
     hand_world_landmarks >>
         hand_gesture_recognizer_graph.In(kWorldLandmarksTag);
     image_size_clone >> hand_gesture_recognizer_graph.In(kImageSizeTag);
+    norm_rect_clone >> hand_gesture_recognizer_graph.In(kNormRectTag);
     auto hand_gestures = hand_gesture_recognizer_graph.Out(kHandGesturesTag);
 
     auto& end_loop_classification_lists =

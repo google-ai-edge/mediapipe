@@ -88,9 +88,7 @@ RunUniversalSentenceEncoderPreprocessorCalculator(absl::string_view text) {
         kNumInputTensorsForUniversalSentenceEncoder));
   }
   if (tensor_vec[0].element_type() != Tensor::ElementType::kChar) {
-    return absl::InvalidArgumentError(absl::Substitute(
-        "tensor has element type $0, expected $1", tensor_vec[0].element_type(),
-        Tensor::ElementType::kChar));
+    return absl::InvalidArgumentError("Expected tensor element type kChar");
   }
   std::vector<std::string> results;
   for (int i = 0; i < kNumInputTensorsForUniversalSentenceEncoder; ++i) {
