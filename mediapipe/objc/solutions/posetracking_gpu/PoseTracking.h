@@ -45,6 +45,8 @@
 - (instancetype) initWithPoseTrackingOptions: (PoseTrackingOptions*) poseTrackingOptions;
 - (void)startGraph;
 - (void) startWithCamera: (MPPCameraInputSource*) cameraSource;
+- (void)showLandmarks: (BOOL) value;
+- (BOOL) areLandmarksShown;
 @end
 
 

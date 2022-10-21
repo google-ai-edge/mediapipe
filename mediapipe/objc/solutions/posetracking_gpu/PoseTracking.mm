@@ -144,8 +144,11 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
         self.graphOutputStream = "throttled_input_video";
     }
     
-    [self->mediapipeGraph addFrameOutputStream:self.graphOutputStream
+    [self->mediapipeGraph addFrameOutputStream:"output_video"
                              outputPacketType:MPPPacketTypePixelBuffer];
+    [self->mediapipeGraph addFrameOutputStream:"throttled_input_video"
+                             outputPacketType:MPPPacketTypePixelBuffer];
+    
     
     self.poseTrackingResultsListener = ^(PoseTrackingResults*){};
 
@@ -166,7 +169,18 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
     return self;
 }
 
+- (void)showLandmarks: (BOOL) value{
+    if (value){
+        self->poseTrackingGraphDelegate.graphOutputStream = "output_video";
+    }else{
+        self->poseTrackingGraphDelegate.graphOutputStream = "throttled_input_video";
+    }
+    
+}
 
+- (BOOL) areLandmarksShown{
+    return self->poseTrackingGraphDelegate.graphOutputStream == "output_video";
+}
 
 - (void)startGraph {
   // Start running self.mediapipeGraph.

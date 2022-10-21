@@ -10,8 +10,51 @@ import LinderaDetection
 
 class ViewController: UIViewController {
 
-    @IBOutlet  var liveView:UIView?;
+    @IBOutlet  var liveView : UIView!
+    @IBOutlet var showLandmarksButton: UIButton!
+    @IBOutlet var chooseModelButton: UIButton!
+    @IBOutlet var titleview: UIView!
     
+    func updateLandmarksButtonText(){
+        if (lindera.areLandmarksShown()){
+            showLandmarksButton.setTitle("LANDMARKS (ON)", for: UIControl.State.normal)
+        }else{
+            showLandmarksButton.setTitle("LANDMARKS (OFF)", for: UIControl.State.normal)
+        }
+        
+    }
+    
+    func updateModelButtonText(){
+        
+    }
+    
+    @IBAction func showLandmarksButtonTouch(sender: UIButton){
+        
+        lindera.showLandmarks(value:  !lindera.areLandmarksShown());
+        updateLandmarksButtonText()
+
+//        let alert = UIAlertController(
+//            title: nil,
+//            message: nil,
+//            preferredStyle: .actionSheet
+//        )
+//
+//        alert.addAction(
+//            .init(title: "Action 1", style: .default) { _ in
+//                print("Action1")
+//            }
+//        )
+//
+//        alert.addAction(
+//            .init(title: "Action 2", style: .default) { _ in
+//                print("Action 2")
+//            }
+//        )
+//
+//        present(alert, animated: true)
+        
+
+    }
     let lindera =  Lindera()
     
     /// A simple LinderaDelegate implementation that prints nose coordinates if detected
@@ -31,18 +74,18 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Do any additional setup after loading the view.
-        
-
+//        // Do any additional setup after loading the view.
+//
+//
         self.lindera.delegate = linderaDelegate
-        
+
         // add lindera camera view to our app's UIView i.e. liveView
-        
+
         // Expand our cameraView frame to liveView frame
         if let view = self.liveView{
             view.addSubview(lindera.cameraView)
             self.lindera.cameraView.frame = view.bounds
-            
+
             self.lindera.cameraView.translatesAutoresizingMaskIntoConstraints = false
              NSLayoutConstraint.activate([
                  self.lindera.cameraView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -52,8 +95,12 @@ class ViewController: UIViewController {
              ])
         }
 
-        
+
         lindera.startCamera()
+        
+        self.liveView.bringSubviewToFront(titleview)
+        updateLandmarksButtonText()
+//        self.liveView.bringSubviewToFront(chooseModelButton)
 
     }
 

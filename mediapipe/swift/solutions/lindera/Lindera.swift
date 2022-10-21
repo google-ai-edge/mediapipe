@@ -18,7 +18,17 @@ public final class Lindera{
     public var cameraView: UIView {
         return self.linderaExerciseSession
     }
+    public func showLandmarks(value:Bool){
+        self.poseTracking.showLandmarks(value)
+    }
     
+    
+    public func areLandmarksShown() -> Bool{
+        return self.poseTracking.areLandmarksShown()
+    }
+//    public func getModelComplexity() -> Int{
+//        return self.poseTracking
+//    }
     // Initializes pipeline parameters and starts mediapipe graph
     private lazy var linderaExerciseSession: UIView = {
         
