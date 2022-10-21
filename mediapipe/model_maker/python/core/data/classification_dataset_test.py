@@ -12,45 +12,59 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Any, Tuple, TypeVar
+
 # Dependency imports
 
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.data import classification_dataset
 
+_DatasetT = TypeVar(
+    '_DatasetT', bound='ClassificationDatasetTest.MagicClassificationDataset')
 
-class ClassificationDataLoaderTest(tf.test.TestCase):
+
+class ClassificationDatasetTest(tf.test.TestCase):
 
   def test_split(self):
 
-    class MagicClassificationDataLoader(
+    class MagicClassificationDataset(
         classification_dataset.ClassificationDataset):
+      """A mock classification dataset class for testing purpose.
 
-      def __init__(self, dataset, size, index_to_label, value):
-        super(MagicClassificationDataLoader,
-              self).__init__(dataset, size, index_to_label)
+      Attributes:
+        value: A value variable stored by the mock dataset class for testing.
+      """
+
+      def __init__(self, dataset: tf.data.Dataset, size: int,
+                   index_by_label: Any, value: Any):
+        super().__init__(
+            dataset=dataset, size=size, index_by_label=index_by_label)
         self.value = value
 
-      def split(self, fraction):
-        return self._split(fraction, self.index_to_label, self.value)
+      def split(self, fraction: float) -> Tuple[_DatasetT, _DatasetT]:
+        return self._split(fraction, self.index_by_label, self.value)
 
     # Some dummy inputs.
     magic_value = 42
     num_classes = 2
-    index_to_label = (False, True)
+    index_by_label = (False, True)
 
     # Create data loader from sample data.
     ds = tf.data.Dataset.from_tensor_slices([[0, 1], [1, 1], [0, 0], [1, 0]])
-    data = MagicClassificationDataLoader(ds, len(ds), index_to_label,
-                                         magic_value)
+    data = MagicClassificationDataset(
+        dataset=ds,
+        size=len(ds),
+        index_by_label=index_by_label,
+        value=magic_value)
 
     # Train/Test data split.
     fraction = .25
-    train_data, test_data = data.split(fraction)
+    train_data, test_data = data.split(fraction=fraction)
 
     # `split` should return instances of child DataLoader.
-    self.assertIsInstance(train_data, MagicClassificationDataLoader)
-    self.assertIsInstance(test_data, MagicClassificationDataLoader)
+    self.assertIsInstance(train_data, MagicClassificationDataset)
+    self.assertIsInstance(test_data, MagicClassificationDataset)
 
     # Make sure number of entries are right.
     self.assertEqual(len(train_data.gen_tf_dataset()), len(train_data))
@@ -59,7 +73,7 @@ class ClassificationDataLoaderTest(tf.test.TestCase):
 
     # Make sure attributes propagated correctly.
     self.assertEqual(train_data.num_classes, num_classes)
-    self.assertEqual(test_data.index_to_label, index_to_label)
+    self.assertEqual(test_data.index_by_label, index_by_label)
     self.assertEqual(train_data.value, magic_value)
     self.assertEqual(test_data.value, magic_value)
 

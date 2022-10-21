@@ -23,13 +23,17 @@ from mediapipe.model_maker.python.core.data import dataset as ds
 class ClassificationDataset(ds.Dataset):
   """DataLoader for classification models."""
 
-  def __init__(self, dataset: tf.data.Dataset, size: int, index_to_label: Any):
+  def __init__(self, dataset: tf.data.Dataset, size: int, index_by_label: Any):
     super().__init__(dataset, size)
-    self.index_to_label = index_to_label
+    self._index_by_label = index_by_label
 
   @property
   def num_classes(self: ds._DatasetT) -> int:
-    return len(self.index_to_label)
+    return len(self._index_by_label)
+
+  @property
+  def index_by_label(self: ds._DatasetT) -> Any:
+    return self._index_by_label
 
   def split(self: ds._DatasetT,
             fraction: float) -> Tuple[ds._DatasetT, ds._DatasetT]:
@@ -44,4 +48,4 @@ class ClassificationDataset(ds.Dataset):
     Returns:
       The splitted two sub datasets.
     """
-    return self._split(fraction, self.index_to_label)
+    return self._split(fraction, self._index_by_label)

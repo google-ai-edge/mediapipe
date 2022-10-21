@@ -29,22 +29,22 @@ from mediapipe.model_maker.python.core.tasks import custom_model
 class Classifier(custom_model.CustomModel):
   """An abstract base class that represents a TensorFlow classifier."""
 
-  def __init__(self, model_spec: Any, index_to_label: List[str], shuffle: bool,
+  def __init__(self, model_spec: Any, index_by_label: List[str], shuffle: bool,
                full_train: bool):
     """Initilizes a classifier with its specifications.
 
     Args:
         model_spec: Specification for the model.
-        index_to_label: A list that map from index to label class name.
+        index_by_label: A list that map from index to label class name.
         shuffle: Whether the dataset should be shuffled.
         full_train: If true, train the model end-to-end including the backbone
           and the classification layers on top. Otherwise, only train the top
           classification layers.
     """
     super(Classifier, self).__init__(model_spec, shuffle)
-    self._index_to_label = index_to_label
+    self._index_by_label = index_by_label
     self._full_train = full_train
-    self._num_classes = len(index_to_label)
+    self._num_classes = len(index_by_label)
 
   def evaluate(self, data: dataset.Dataset, batch_size: int = 32) -> Any:
     """Evaluates the classifier with the provided evaluation dataset.
@@ -74,4 +74,4 @@ class Classifier(custom_model.CustomModel):
     label_filepath = os.path.join(export_dir, label_filename)
     tf.compat.v1.logging.info('Saving labels in %s', label_filepath)
     with tf.io.gfile.GFile(label_filepath, 'w') as f:
-      f.write('\n'.join(self._index_to_label))
+      f.write('\n'.join(self._index_by_label))

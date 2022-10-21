@@ -84,10 +84,10 @@ class Dataset(classification_dataset.ClassificationDataset):
         name for name in os.listdir(data_root)
         if os.path.isdir(os.path.join(data_root, name)))
     all_label_size = len(label_names)
-    label_to_index = dict(
+    index_by_label = dict(
         (name, index) for index, name in enumerate(label_names))
     all_image_labels = [
-        label_to_index[os.path.basename(os.path.dirname(path))]
+        index_by_label[os.path.basename(os.path.dirname(path))]
         for path in all_image_paths
     ]
 
@@ -106,7 +106,7 @@ class Dataset(classification_dataset.ClassificationDataset):
         'Load image with size: %d, num_label: %d, labels: %s.', all_image_size,
         all_label_size, ', '.join(label_names))
     return Dataset(
-        dataset=image_label_ds, size=all_image_size, index_to_label=label_names)
+        dataset=image_label_ds, size=all_image_size, index_by_label=label_names)
 
   @classmethod
   def load_tf_dataset(
