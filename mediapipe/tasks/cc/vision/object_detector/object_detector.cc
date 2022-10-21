@@ -34,6 +34,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/utils.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/object_detector/proto/object_detector_options.pb.h"
@@ -57,31 +58,6 @@ constexpr int kMicroSecondsPerMilliSecond = 1000;
 
 using ObjectDetectorOptionsProto =
     object_detector::proto::ObjectDetectorOptions;
-
-// Returns a NormalizedRect filling the whole image. If input is present, its
-// rotation is set in the returned NormalizedRect and a check is performed to
-// make sure no region-of-interest was provided. Otherwise, rotation is set to
-// 0.
-absl::StatusOr<NormalizedRect> FillNormalizedRect(
-    std::optional<NormalizedRect> normalized_rect) {
-  NormalizedRect result;
-  if (normalized_rect.has_value()) {
-    result = *normalized_rect;
-  }
-  bool has_coordinates = result.has_x_center() || result.has_y_center() ||
-                         result.has_width() || result.has_height();
-  if (has_coordinates) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "ObjectDetector does not support region-of-interest.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  result.set_x_center(0.5);
-  result.set_y_center(0.5);
-  result.set_width(1);
-  result.set_height(1);
-  return result;
-}
 
 // Creates a MediaPipe graph config that contains a subgraph node of
 // "mediapipe.tasks.vision.ObjectDetectorGraph". If the task is running in the
@@ -170,15 +146,16 @@ absl::StatusOr<std::unique_ptr<ObjectDetector>> ObjectDetector::Create(
 
 absl::StatusOr<std::vector<Detection>> ObjectDetector::Detect(
     mediapipe::Image image,
-    std::optional<mediapipe::NormalizedRect> image_processing_options) {
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   FillNormalizedRect(image_processing_options));
+  ASSIGN_OR_RETURN(
+      NormalizedRect norm_rect,
+      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
@@ -189,15 +166,16 @@ absl::StatusOr<std::vector<Detection>> ObjectDetector::Detect(
 
 absl::StatusOr<std::vector<Detection>> ObjectDetector::DetectForVideo(
     mediapipe::Image image, int64 timestamp_ms,
-    std::optional<mediapipe::NormalizedRect> image_processing_options) {
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   FillNormalizedRect(image_processing_options));
+  ASSIGN_OR_RETURN(
+      NormalizedRect norm_rect,
+      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
@@ -212,15 +190,16 @@ absl::StatusOr<std::vector<Detection>> ObjectDetector::DetectForVideo(
 
 absl::Status ObjectDetector::DetectAsync(
     Image image, int64 timestamp_ms,
-    std::optional<mediapipe::NormalizedRect> image_processing_options) {
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   FillNormalizedRect(image_processing_options));
+  ASSIGN_OR_RETURN(
+      NormalizedRect norm_rect,
+      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

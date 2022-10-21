@@ -39,6 +39,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_recognizer_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/hand_gesture_recognizer_graph_options.pb.h"
@@ -75,31 +76,6 @@ constexpr char kHandLandmarksStreamName[] = "landmarks";
 constexpr char kHandWorldLandmarksTag[] = "WORLD_LANDMARKS";
 constexpr char kHandWorldLandmarksStreamName[] = "world_landmarks";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
-
-// Returns a NormalizedRect filling the whole image. If input is present, its
-// rotation is set in the returned NormalizedRect and a check is performed to
-// make sure no region-of-interest was provided. Otherwise, rotation is set to
-// 0.
-absl::StatusOr<NormalizedRect> FillNormalizedRect(
-    std::optional<NormalizedRect> normalized_rect) {
-  NormalizedRect result;
-  if (normalized_rect.has_value()) {
-    result = *normalized_rect;
-  }
-  bool has_coordinates = result.has_x_center() || result.has_y_center() ||
-                         result.has_width() || result.has_height();
-  if (has_coordinates) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "GestureRecognizer does not support region-of-interest.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  result.set_x_center(0.5);
-  result.set_y_center(0.5);
-  result.set_width(1);
-  result.set_height(1);
-  return result;
-}
 
 // Creates a MediaPipe graph config that contains a subgraph node of
 // "mediapipe.tasks.vision.GestureRecognizerGraph". If the task is running
@@ -248,15 +224,16 @@ absl::StatusOr<std::unique_ptr<GestureRecognizer>> GestureRecognizer::Create(
 
 absl::StatusOr<GestureRecognitionResult> GestureRecognizer::Recognize(
     mediapipe::Image image,
-    std::optional<mediapipe::NormalizedRect> image_processing_options) {
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   FillNormalizedRect(image_processing_options));
+  ASSIGN_OR_RETURN(
+      NormalizedRect norm_rect,
+      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
@@ -283,15 +260,16 @@ absl::StatusOr<GestureRecognitionResult> GestureRecognizer::Recognize(
 
 absl::StatusOr<GestureRecognitionResult> GestureRecognizer::RecognizeForVideo(
     mediapipe::Image image, int64 timestamp_ms,
-    std::optional<mediapipe::NormalizedRect> image_processing_options) {
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   FillNormalizedRect(image_processing_options));
+  ASSIGN_OR_RETURN(
+      NormalizedRect norm_rect,
+      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
@@ -321,15 +299,16 @@ absl::StatusOr<GestureRecognitionResult> GestureRecognizer::RecognizeForVideo(
 
 absl::Status GestureRecognizer::RecognizeAsync(
     mediapipe::Image image, int64 timestamp_ms,
-    std::optional<mediapipe::NormalizedRect> image_processing_options) {
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   FillNormalizedRect(image_processing_options));
+  ASSIGN_OR_RETURN(
+      NormalizedRect norm_rect,
+      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

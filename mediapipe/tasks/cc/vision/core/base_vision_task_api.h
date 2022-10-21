@@ -16,15 +16,20 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_VISION_CORE_BASE_VISION_TASK_API_H_
 #define MEDIAPIPE_TASKS_CC_VISION_CORE_BASE_VISION_TASK_API_H_
 
+#include <cmath>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "mediapipe/framework/formats/rect.pb.h"
+#include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/core/base_task_api.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 
 namespace mediapipe {
@@ -85,6 +90,60 @@ class BaseVisionTaskApi : public tasks::core::BaseTaskApi {
           MediaPipeTasksStatus::kRunnerApiCalledInWrongModeError);
     }
     return runner_->Send(std::move(inputs));
+  }
+
+  // Convert from ImageProcessingOptions to NormalizedRect, performing sanity
+  // checks on-the-fly. If the input ImageProcessingOptions is not present,
+  // returns a default NormalizedRect covering the whole image with rotation set
+  // to 0. If 'roi_allowed' is false, an error will be returned if the input
+  // ImageProcessingOptions has its 'region_or_interest' field set.
+  static absl::StatusOr<mediapipe::NormalizedRect> ConvertToNormalizedRect(
+      std::optional<ImageProcessingOptions> options, bool roi_allowed = true) {
+    mediapipe::NormalizedRect normalized_rect;
+    normalized_rect.set_rotation(0);
+    normalized_rect.set_x_center(0.5);
+    normalized_rect.set_y_center(0.5);
+    normalized_rect.set_width(1.0);
+    normalized_rect.set_height(1.0);
+    if (!options.has_value()) {
+      return normalized_rect;
+    }
+
+    if (options->rotation_degrees % 90 != 0) {
+      return CreateStatusWithPayload(
+          absl::StatusCode::kInvalidArgument,
+          "Expected rotation to be a multiple of 90°.",
+          MediaPipeTasksStatus::kImageProcessingInvalidArgumentError);
+    }
+    // Convert to radians counter-clockwise.
+    normalized_rect.set_rotation(-options->rotation_degrees * M_PI / 180.0);
+
+    if (options->region_of_interest.has_value()) {
+      if (!roi_allowed) {
+        return CreateStatusWithPayload(
+            absl::StatusCode::kInvalidArgument,
+            "This task doesn't support region-of-interest.",
+            MediaPipeTasksStatus::kImageProcessingInvalidArgumentError);
+      }
+      auto& roi = *options->region_of_interest;
+      if (roi.left >= roi.right || roi.top >= roi.bottom) {
+        return CreateStatusWithPayload(
+            absl::StatusCode::kInvalidArgument,
+            "Expected Rect with left < right and top < bottom.",
+            MediaPipeTasksStatus::kImageProcessingInvalidArgumentError);
+      }
+      if (roi.left < 0 || roi.top < 0 || roi.right > 1 || roi.bottom > 1) {
+        return CreateStatusWithPayload(
+            absl::StatusCode::kInvalidArgument,
+            "Expected Rect values to be in [0,1].",
+            MediaPipeTasksStatus::kImageProcessingInvalidArgumentError);
+      }
+      normalized_rect.set_x_center((roi.left + roi.right) / 2.0);
+      normalized_rect.set_y_center((roi.top + roi.bottom) / 2.0);
+      normalized_rect.set_width(roi.right - roi.left);
+      normalized_rect.set_height(roi.bottom - roi.top);
+    }
+    return normalized_rect;
   }
 
  private:

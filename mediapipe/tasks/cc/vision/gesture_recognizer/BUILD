@@ -137,6 +137,7 @@ cc_library(
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
         "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/cc/vision/core:image_processing_options",
         "//mediapipe/tasks/cc/vision/core:running_mode",
         "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
         "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_recognizer_graph_options_cc_proto",

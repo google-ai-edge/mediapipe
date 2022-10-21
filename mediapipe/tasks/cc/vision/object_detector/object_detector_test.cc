@@ -31,11 +31,12 @@ limitations under the License.
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/location_data.pb.h"
-#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/tasks/cc/components/containers/rect.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/c/common.h"
@@ -64,6 +65,8 @@ namespace vision {
 namespace {
 
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::components::containers::Rect;
+using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::HasSubstr;
 using ::testing::Optional;
 
@@ -532,8 +535,8 @@ TEST_F(ImageModeTest, SucceedsWithRotation) {
       JoinPath("./", kTestDataDirectory, kMobileSsdWithMetadata);
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ObjectDetector> object_detector,
                           ObjectDetector::Create(std::move(options)));
-  NormalizedRect image_processing_options;
-  image_processing_options.set_rotation(M_PI / 2.0);
+  ImageProcessingOptions image_processing_options;
+  image_processing_options.rotation_degrees = -90;
   MP_ASSERT_OK_AND_ASSIGN(
       auto results, object_detector->Detect(image, image_processing_options));
   MP_ASSERT_OK(object_detector->Close());
@@ -557,16 +560,17 @@ TEST_F(ImageModeTest, FailsWithRegionOfInterest) {
       JoinPath("./", kTestDataDirectory, kMobileSsdWithMetadata);
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ObjectDetector> object_detector,
                           ObjectDetector::Create(std::move(options)));
-  NormalizedRect image_processing_options;
-  image_processing_options.set_x_center(0.5);
-  image_processing_options.set_y_center(0.5);
-  image_processing_options.set_width(1.0);
-  image_processing_options.set_height(1.0);
+  Rect roi{/*left=*/0.1, /*top=*/0, /*right=*/0.9, /*bottom=*/1};
+  ImageProcessingOptions image_processing_options{roi, /*rotation_degrees=*/0};
 
   auto results = object_detector->Detect(image, image_processing_options);
   EXPECT_EQ(results.status().code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(results.status().message(),
-              HasSubstr("ObjectDetector does not support region-of-interest"));
+              HasSubstr("This task doesn't support region-of-interest"));
+  EXPECT_THAT(
+      results.status().GetPayload(kMediaPipeTasksPayload),
+      Optional(absl::Cord(absl::StrCat(
+          MediaPipeTasksStatus::kImageProcessingInvalidArgumentError))));
 }
 
 class VideoModeTest : public tflite_shims::testing::Test {};
