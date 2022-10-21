@@ -35,7 +35,6 @@ _Image = image_module.Image
 _ImageFormat = image_frame_module.ImageFormat
 _OutputType = segmenter_options.OutputType
 _Activation = segmenter_options.Activation
-_SegmenterOptions = segmenter_options.SegmenterOptions
 _ImageSegmenter = image_segmenter.ImageSegmenter
 _ImageSegmenterOptions = image_segmenter.ImageSegmenterOptions
 _RUNNING_MODE = running_mode_module.VisionTaskRunningMode
@@ -125,9 +124,8 @@ class ImageSegmenterTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
-    segmenter_options = _SegmenterOptions(output_type=_OutputType.CATEGORY_MASK)
     options = _ImageSegmenterOptions(base_options=base_options,
-                                     segmenter_options=segmenter_options)
+                                     output_type=_OutputType.CATEGORY_MASK)
     segmenter = _ImageSegmenter.create_from_options(options)
 
     # Performs image segmentation on the input.
@@ -153,19 +151,16 @@ class ImageSegmenterTest(parameterized.TestCase):
     base_options = _BaseOptions(model_asset_path=self.model_path)
 
     # Run segmentation on the model in CATEGORY_MASK mode.
-    segmenter_options = _SegmenterOptions(output_type=_OutputType.CATEGORY_MASK)
     options = _ImageSegmenterOptions(base_options=base_options,
-                                     segmenter_options=segmenter_options)
+                                     output_type=_OutputType.CATEGORY_MASK)
     segmenter = _ImageSegmenter.create_from_options(options)
     category_masks = segmenter.segment(self.test_image)
     category_mask = category_masks[0].numpy_view()
 
     # Run segmentation on the model in CONFIDENCE_MASK mode.
-    segmenter_options = _SegmenterOptions(
-        output_type=_OutputType.CONFIDENCE_MASK,
-        activation=_Activation.SOFTMAX)
     options = _ImageSegmenterOptions(base_options=base_options,
-                                     segmenter_options=segmenter_options)
+                                     output_type=_OutputType.CONFIDENCE_MASK,
+                                     activation=_Activation.SOFTMAX)
     segmenter = _ImageSegmenter.create_from_options(options)
     confidence_masks = segmenter.segment(self.test_image)
 
@@ -204,9 +199,8 @@ class ImageSegmenterTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
-    segmenter_options = _SegmenterOptions(output_type=_OutputType.CATEGORY_MASK)
     options = _ImageSegmenterOptions(base_options=base_options,
-                                     segmenter_options=segmenter_options)
+                                     output_type=_OutputType.CATEGORY_MASK)
     with _ImageSegmenter.create_from_options(options) as segmenter:
       # Performs image segmentation on the input.
       category_masks = segmenter.segment(self.test_image)
@@ -284,10 +278,9 @@ class ImageSegmenterTest(parameterized.TestCase):
         segmenter.segment_for_video(self.test_image, 0)
 
   def test_segment_for_video(self):
-    segmenter_options = _SegmenterOptions(output_type=_OutputType.CATEGORY_MASK)
     options = _ImageSegmenterOptions(
       base_options=_BaseOptions(model_asset_path=self.model_path),
-      segmenter_options=segmenter_options,
+      output_type=_OutputType.CATEGORY_MASK,
       running_mode=_RUNNING_MODE.VIDEO)
     with _ImageSegmenter.create_from_options(options) as segmenter:
       for timestamp in range(0, 300, 30):
@@ -348,10 +341,9 @@ class ImageSegmenterTest(parameterized.TestCase):
       self.assertLess(observed_timestamp_ms, timestamp_ms)
       self.observed_timestamp_ms = timestamp_ms
 
-    segmenter_options = _SegmenterOptions(output_type=_OutputType.CATEGORY_MASK)
     options = _ImageSegmenterOptions(
       base_options=_BaseOptions(model_asset_path=self.model_path),
-      segmenter_options=segmenter_options,
+      output_type=_OutputType.CATEGORY_MASK,
       running_mode=_RUNNING_MODE.LIVE_STREAM,
       result_callback=check_result)
     with _ImageSegmenter.create_from_options(options) as segmenter:

@@ -19,22 +19,25 @@ from typing import Callable, List, Mapping, Optional
 from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import packet as packet_module
-from mediapipe.python._framework_bindings import task_runner as task_runner_module
+from mediapipe.python._framework_bindings import packet
+from mediapipe.python._framework_bindings import task_runner
+from mediapipe.tasks.cc.components.proto import segmenter_options_pb2
 from mediapipe.tasks.cc.vision.image_segmenter.proto import image_segmenter_options_pb2
 from mediapipe.tasks.python.components.proto import segmenter_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import base_vision_task_api
-from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
+from mediapipe.tasks.python.vision.core import vision_task_running_mode
 
 _BaseOptions = base_options_module.BaseOptions
+_SegmenterOptionsProto = segmenter_options_pb2.SegmenterOptions
 _ImageSegmenterOptionsProto = image_segmenter_options_pb2.ImageSegmenterOptions
-_SegmenterOptions = segmenter_options.SegmenterOptions
-_RunningMode = running_mode_module.VisionTaskRunningMode
+_OutputType = segmenter_options.OutputType
+_Activation = segmenter_options.Activation
+_RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _TaskInfo = task_info_module.TaskInfo
-_TaskRunner = task_runner_module.TaskRunner
+_TaskRunner = task_runner.TaskRunner
 
 _SEGMENTATION_OUT_STREAM_NAME = 'segmented_mask_out'
 _SEGMENTATION_TAG = 'GROUPED_SEGMENTATION'
@@ -57,14 +60,17 @@ class ImageSegmenterOptions:
       2) The video mode for segmenting objects on the decoded frames of a video.
       3) The live stream mode for segmenting objects on a live stream of input
          data, such as from camera.
-    segmenter_options: Options for the image segmenter task.
+    output_type: The output mask type allows specifying the type of
+      post-processing to perform on the raw model results.
+    activation: Activation function to apply to input tensor.
     result_callback: The user-defined result callback for processing live stream
       data. The result callback should only be specified when the running mode
       is set to the live stream mode.
   """
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
-  segmenter_options: _SegmenterOptions = _SegmenterOptions()
+  output_type: Optional[_OutputType] = _OutputType.CATEGORY_MASK
+  activation: Optional[_Activation] = _Activation.NONE
   result_callback: Optional[
       Callable[[List[image_module.Image], image_module.Image, int],
                None]] = None
@@ -74,8 +80,10 @@ class ImageSegmenterOptions:
     """Generates an ImageSegmenterOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
     base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.IMAGE else True
-    segmenter_options_proto = self.segmenter_options.to_pb2()
-
+    segmenter_options_proto = _SegmenterOptionsProto(
+        output_type=self.output_type.value,
+        activation=self.activation.value
+    )
     return _ImageSegmenterOptionsProto(
         base_options=base_options_proto,
         segmenter_options=segmenter_options_proto
@@ -127,7 +135,7 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
       RuntimeError: If other types of error occurred.
     """
 
-    def packets_callback(output_packets: Mapping[str, packet_module.Packet]):
+    def packets_callback(output_packets: Mapping[str, packet.Packet]):
       if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
         return
       segmentation_result = packet_getter.get_image_list(
@@ -159,8 +167,11 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
       image: MediaPipe Image.
 
     Returns:
-      A segmentation result object that contains a list of segmentation masks
-      as images.
+      If the output_type is CATEGORY_MASK, the returned vector of images is
+      per-category segmented image mask.
+      If the output_type is CONFIDENCE_MASK, the returned vector of images
+      contains only one confidence image mask. A segmentation result object that
+      contains a list of segmentation masks as images.
 
     Raises:
       ValueError: If any of the input arguments is invalid.
@@ -186,8 +197,11 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
       timestamp_ms: The timestamp of the input video frame in milliseconds.
 
     Returns:
-      A segmentation result object that contains a list of segmentation masks
-      as images.
+      If the output_type is CATEGORY_MASK, the returned vector of images is
+      per-category segmented image mask.
+      If the output_type is CONFIDENCE_MASK, the returned vector of images
+      contains only one confidence image mask. A segmentation result object that
+      contains a list of segmentation masks as images.
 
     Raises:
       ValueError: If any of the input arguments is invalid.

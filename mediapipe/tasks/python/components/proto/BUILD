@@ -20,9 +20,5 @@ licenses(["notice"])
 
 py_library(
     name = "segmenter_options",
-    srcs = ["segmenter_options.py"],
-    deps = [
-        "//mediapipe/tasks/cc/components/proto:segmenter_options_py_pb2",
-        "//mediapipe/tasks/python/core:optional_dependencies",
-    ],
+    srcs = ["segmenter_options.py"]
 )
