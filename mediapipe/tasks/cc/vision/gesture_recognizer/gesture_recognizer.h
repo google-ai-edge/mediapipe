@@ -59,7 +59,7 @@ struct GestureRecognizerOptions {
   int num_hands = 1;
 
   // The minimum confidence score for the hand detection to be considered
-  // successfully.
+  // successful.
   float min_hand_detection_confidence = 0.5;
 
   // The minimum confidence score of hand presence score in the hand landmark
@@ -67,11 +67,11 @@ struct GestureRecognizerOptions {
   float min_hand_presence_confidence = 0.5;
 
   // The minimum confidence score for the hand tracking to be considered
-  // successfully.
+  // successful.
   float min_tracking_confidence = 0.5;
 
   // The minimum confidence score for the gestures to be considered
-  // successfully. If < 0, the gesture confidence thresholds in the model
+  // successful. If < 0, the gesture confidence thresholds in the model
   // metadata are used.
   // TODO  Note this option is subject to change, after scoring
   // merging calculator is implemented.

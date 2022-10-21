@@ -310,18 +310,18 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
       /** Sets the maximum number of hands can be detected by the GestureRecognizer. */
       public abstract Builder setNumHands(Integer value);
 
-      /** Sets minimum confidence score for the hand detection to be considered successfully */
+      /** Sets minimum confidence score for the hand detection to be considered successful */
       public abstract Builder setMinHandDetectionConfidence(Float value);
 
       /** Sets minimum confidence score of hand presence score in the hand landmark detection. */
       public abstract Builder setMinHandPresenceConfidence(Float value);
 
-      /** Sets the minimum confidence score for the hand tracking to be considered successfully. */
+      /** Sets the minimum confidence score for the hand tracking to be considered successful. */
       public abstract Builder setMinTrackingConfidence(Float value);
 
       /**
-       * Sets the minimum confidence score for the gestures to be considered successfully. If < 0,
-       * the gesture confidence threshold=0.5 for the model is used.
+       * Sets the minimum confidence score for the gestures to be considered successful. If < 0, the
+       * gesture confidence threshold=0.5 for the model is used.
        *
        * <p>TODO  Note this option is subject to change, after scoring merging
        * calculator is implemented.
