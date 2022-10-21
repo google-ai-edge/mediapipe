@@ -12,15 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-# Dependency imports
 import numpy as np
 import tensorflow as tf
 
-from mediapipe.model_maker.python.core.utils import image_preprocessing
+from mediapipe.model_maker.python.vision.core import image_preprocessing
 
 
 def _get_preprocessed_image(preprocessor, is_training=False):

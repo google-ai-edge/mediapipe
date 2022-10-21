@@ -32,20 +32,6 @@ py_library(
 )
 
 py_library(
-    name = "image_preprocessing",
-    srcs = ["image_preprocessing.py"],
-    srcs_version = "PY3",
-)
-
-py_test(
-    name = "image_preprocessing_test",
-    srcs = ["image_preprocessing_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
-    deps = [":image_preprocessing"],
-)
-
-py_library(
     name = "model_util",
     srcs = ["model_util.py"],
     srcs_version = "PY3",
