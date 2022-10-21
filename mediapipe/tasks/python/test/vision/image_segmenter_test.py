@@ -23,21 +23,21 @@ from absl.testing import absltest
 from absl.testing import parameterized
 
 from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.python._framework_bindings import image_frame as image_frame_module
+from mediapipe.python._framework_bindings import image_frame
 from mediapipe.tasks.python.components.proto import segmenter_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import image_segmenter
-from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
+from mediapipe.tasks.python.vision.core import vision_task_running_mode
 
 _BaseOptions = base_options_module.BaseOptions
 _Image = image_module.Image
-_ImageFormat = image_frame_module.ImageFormat
+_ImageFormat = image_frame.ImageFormat
 _OutputType = segmenter_options.OutputType
 _Activation = segmenter_options.Activation
 _ImageSegmenter = image_segmenter.ImageSegmenter
 _ImageSegmenterOptions = image_segmenter.ImageSegmenterOptions
-_RUNNING_MODE = running_mode_module.VisionTaskRunningMode
+_RUNNING_MODE = vision_task_running_mode.VisionTaskRunningMode
 
 _MODEL_FILE = 'deeplabv3.tflite'
 _IMAGE_FILE = 'segmentation_input_rotation0.jpg'
