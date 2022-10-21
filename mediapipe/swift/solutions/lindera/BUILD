@@ -2,7 +2,7 @@ load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 
 swift_library(
     name = "lindera",
-    srcs = ["Lindera.swift","Asensei3D.swift"],
+    srcs = ["Lindera.swift","Asensei3D.swift","utils.swift"],
     linkopts = [
         "-lc++",
         "-std=c++17",

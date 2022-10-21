@@ -16,6 +16,8 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 @property (nonatomic) const char* graphOutputStream;
 @property (nonatomic) MPPLayerRenderer* renderer;
 @property(nonatomic) void(^poseTrackingResultsListener)(PoseTrackingResults*);
+@property(nonatomic) void(^graphOutputStreamListener)();
+
 
 -(id) initWithMediapipeGraph: (MPPGraph*) graph graphOutputStream: (const char*) graphOutputStream
                     renderer: (MPPLayerRenderer*) renderer;
@@ -47,6 +49,8 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
     didOutputPixelBuffer:(CVPixelBufferRef)pixelBuffer
               fromStream:(const std::string&)streamName {
   if (streamName == self.graphOutputStream) {
+      self.graphOutputStreamListener();
+
     // Display the captured image on the screen.
     CVPixelBufferRetain(pixelBuffer);
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -161,6 +165,11 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
     self -> poseTrackingGraphDelegate.poseTrackingResultsListener =  ^(PoseTrackingResults* results){
         
         weakSelf.poseTrackingResultsListener(results);
+    };
+    
+    self -> poseTrackingGraphDelegate.graphOutputStreamListener = ^(){
+        if (weakSelf.graphOutputStream != nil)
+            weakSelf.graphOutputStreamListener();
     };
     
     

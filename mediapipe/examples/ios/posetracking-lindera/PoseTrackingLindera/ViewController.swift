@@ -14,6 +14,7 @@ class ViewController: UIViewController {
     @IBOutlet var showLandmarksButton: UIButton!
     @IBOutlet var chooseModelButton: UIButton!
     @IBOutlet var titleview: UIView!
+    @IBOutlet var fpsLabel: UILabel!
     
     func updateLandmarksButtonText(){
         if (lindera.areLandmarksShown()){
@@ -94,9 +95,10 @@ class ViewController: UIViewController {
     /// A simple LinderaDelegate implementation that prints nose coordinates if detected
     class LinderaDelegateImpl:LinderaDelegate{
         func lindera(_ lindera: Lindera, didDetect event: Asensei3DPose.Event) {
-            if let kpt = event.pose.nose{
-                print("LinderaDelegateImpl: Nose Keypoint (\(String(describing: kpt.position.x)),\(String(describing: kpt.position.y)),\(kpt.position.z)) with confidence \(kpt.confidence)")
-            }
+//            if let kpt = event.pose.nose{
+//                // Printing causes large drops in FPS
+//                print("LinderaDelegateImpl: Nose Keypoint (\(String(describing: kpt.position.x)),\(String(describing: kpt.position.y)),\(kpt.position.z)) with confidence \(kpt.confidence)")
+//            }
         }
         
         
@@ -131,8 +133,15 @@ class ViewController: UIViewController {
 
 
         lindera.startCamera()
-        
+        self.lindera.setFpsDelegate(fpsDelegate: {[weak self] fps in
+            DispatchQueue.main.async {
+                self?.fpsLabel.text = "\(Int(fps)) fps"
+            }
+            
+        })
         self.liveView.bringSubviewToFront(titleview)
+        self.liveView.bringSubviewToFront(fpsLabel)
+        
         updateLandmarksButtonText()
         updateModelButtonText()
 

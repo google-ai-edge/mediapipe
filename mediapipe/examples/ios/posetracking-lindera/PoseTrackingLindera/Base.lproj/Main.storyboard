@@ -24,7 +24,7 @@
                                         <rect key="frame" x="8" y="86" width="200" height="31"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <state key="normal" title="Button"/>
-                                        <buttonConfiguration key="configuration" style="plain" title="Show Landmarks (ON)" titleAlignment="center"/>
+                                        <buttonConfiguration key="configuration" style="plain" title="LANDMARKS (ON)" titleAlignment="center"/>
                                         <connections>
                                             <action selector="showLandmarksButtonTouchWithSender:" destination="BYZ-38-t0r" eventType="touchDown" id="rE9-Y7-U5g"/>
                                         </connections>
@@ -49,12 +49,20 @@
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             </view>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="hSQ-so-ykH">
+                                <rect key="frame" x="20" y="133" width="374" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                     </view>
                     <connections>
                         <outlet property="chooseModelButton" destination="oaC-Ax-V0a" id="Knp-ll-Zgu"/>
+                        <outlet property="fpsLabel" destination="hSQ-so-ykH" id="sw5-ik-ro9"/>
                         <outlet property="liveView" destination="8bC-Xf-vdC" id="COw-5j-lAL"/>
                         <outlet property="showLandmarksButton" destination="dv5-h1-tjP" id="xXW-UG-aSR"/>
                         <outlet property="titleview" destination="1BO-kg-lOt" id="uP4-0G-Gix"/>

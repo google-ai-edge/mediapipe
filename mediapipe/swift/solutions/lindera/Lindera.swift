@@ -8,6 +8,11 @@ import UIKit
 public final class Lindera{
     // initalize the PoseTracking api and load models
     var poseTracking:PoseTracking = PoseTracking(poseTrackingOptions: PoseTrackingOptions(showLandmarks: true,modelComplexity: 1))
+    let fpsHelper = FPSHelper(smoothingFactor: 0.95)
+    public func setFpsDelegate(fpsDelegate: @escaping (_ fps:Double)->Void){
+        fpsHelper.onFpsUpdate = fpsDelegate;
+    }
+    
     // attach Mediapipe camera helper to our class
     let cameraSource = MPPCameraInputSource()
 
@@ -44,10 +49,7 @@ public final class Lindera{
     }
     
     
-//    public func getModelComplexity() -> Int{
-//        return self.poseTracking
-//    }
-    // Initializes pipeline parameters and starts mediapipe graph
+
     private lazy var linderaExerciseSession: UIView = {
         
         // this will be the main camera view
@@ -70,17 +72,26 @@ public final class Lindera{
         }
         // call LinderaDelegate on pose tracking results
         self.poseTracking.poseTrackingResultsListener = {[weak self] results in
+            
+
             guard let self = self, let results = results else {
                 return
             }
+            
             self.delegate?.lindera(self, didDetect: .init(pose: Asensei3DPose.init(results), timestamp: CMTimeGetSeconds(self.poseTracking.timeStamp)))
+        }
+        self.poseTracking.graphOutputStreamListener = {[weak self] in
+            self?.fpsHelper.logTime()
         }
         
         self.poseTracking.startGraph()
         // attach camera's output with poseTracking object and its videoQueue
         self.cameraSource.setDelegate(self.poseTracking, queue: self.poseTracking.videoQueue)
     }
-    public required init(){}
+    public required init(){
+        
+        
+    }
     
     
     public func startCamera(_ completion: ((Result<Void, Error>) -> Void)? = nil) {

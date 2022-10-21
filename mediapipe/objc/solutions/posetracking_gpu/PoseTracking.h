@@ -42,6 +42,9 @@
 // Codeblock that runs whenever pose tracking results are available
 @property(nonatomic) void(^poseTrackingResultsListener)(PoseTrackingResults*);
 
+// Codeblock that runs whenever output is available
+@property(nonatomic) void(^graphOutputStreamListener)();
+
 - (instancetype) initWithPoseTrackingOptions: (PoseTrackingOptions*) poseTrackingOptions;
 - (void)startGraph;
 - (void) startWithCamera: (MPPCameraInputSource*) cameraSource;
