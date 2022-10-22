@@ -253,6 +253,26 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "regex_preprocessor_calculator_test",
+    srcs = ["regex_preprocessor_calculator_test.cc"],
+    data = ["//mediapipe/tasks/testdata/text:text_classifier_models"],
+    linkopts = ["-ldl"],
+    deps = [
+        ":regex_preprocessor_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/tool:sink",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
 cc_library(
     name = "text_to_tensor_calculator",
     srcs = ["text_to_tensor_calculator.cc"],

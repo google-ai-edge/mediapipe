@@ -49,9 +49,6 @@ using ::mediapipe::tasks::kMediaPipeTasksPayload;
 using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::testing::HasSubstr;
 using ::testing::Optional;
-using ::testing::proto::Approximately;
-using ::testing::proto::IgnoringRepeatedFieldOrdering;
-using ::testing::proto::Partially;
 
 constexpr float kEpsilon = 0.001;
 constexpr int kMaxSeqLen = 128;
@@ -108,127 +105,6 @@ TEST_F(TextClassifierTest, CreateSucceedsWithRegexModel) {
   auto options = std::make_unique<TextClassifierOptions>();
   options->base_options.model_asset_path = GetFullPath(kTestRegexModelPath);
   MP_ASSERT_OK(TextClassifier::Create(std::move(options)));
-}
-
-TEST_F(TextClassifierTest, TextClassifierWithBert) {
-  auto options = std::make_unique<TextClassifierOptions>();
-  options->base_options.model_asset_path = GetFullPath(kTestBertModelPath);
-  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextClassifier> classifier,
-                          TextClassifier::Create(std::move(options)));
-  MP_ASSERT_OK_AND_ASSIGN(
-      ClassificationResult negative_result,
-      classifier->Classify("unflinchingly bleak and desperate"));
-  ASSERT_THAT(negative_result,
-              Partially(IgnoringRepeatedFieldOrdering(Approximately(
-                  EqualsProto(R"pb(
-                    classifications {
-                      entries {
-                        categories { category_name: "negative" score: 0.956 }
-                        categories { category_name: "positive" score: 0.044 }
-                      }
-                    }
-                  )pb"),
-                  kEpsilon))));
-
-  MP_ASSERT_OK_AND_ASSIGN(
-      ClassificationResult positive_result,
-      classifier->Classify("it's a charming and often affecting journey"));
-  ASSERT_THAT(positive_result,
-              Partially(IgnoringRepeatedFieldOrdering(Approximately(
-                  EqualsProto(R"pb(
-                    classifications {
-                      entries {
-                        categories { category_name: "negative" score: 0.0 }
-                        categories { category_name: "positive" score: 1.0 }
-                      }
-                    }
-                  )pb"),
-                  kEpsilon))));
-  MP_ASSERT_OK(classifier->Close());
-}
-
-TEST_F(TextClassifierTest, TextClassifierWithIntInputs) {
-  auto options = std::make_unique<TextClassifierOptions>();
-  options->base_options.model_asset_path = GetFullPath(kTestRegexModelPath);
-  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextClassifier> classifier,
-                          TextClassifier::Create(std::move(options)));
-  MP_ASSERT_OK_AND_ASSIGN(ClassificationResult negative_result,
-                          classifier->Classify("What a waste of my time."));
-  ASSERT_THAT(negative_result,
-              Partially(IgnoringRepeatedFieldOrdering(Approximately(
-                  EqualsProto(R"pb(
-                    classifications {
-                      entries {
-                        categories { category_name: "Negative" score: 0.813 }
-                        categories { category_name: "Positive" score: 0.187 }
-                      }
-                    }
-                  )pb"),
-                  kEpsilon))));
-
-  MP_ASSERT_OK_AND_ASSIGN(
-      ClassificationResult positive_result,
-      classifier->Classify("This is the best movie I’ve seen in recent years. "
-                           "Strongly recommend it!"));
-  ASSERT_THAT(positive_result,
-              Partially(IgnoringRepeatedFieldOrdering(Approximately(
-                  EqualsProto(R"pb(
-                    classifications {
-                      entries {
-                        categories { category_name: "Negative" score: 0.487 }
-                        categories { category_name: "Positive" score: 0.513 }
-                      }
-                    }
-                  )pb"),
-                  kEpsilon))));
-  MP_ASSERT_OK(classifier->Close());
-}
-
-TEST_F(TextClassifierTest, TextClassifierWithStringToBool) {
-  auto options = std::make_unique<TextClassifierOptions>();
-  options->base_options.model_asset_path = GetFullPath(kStringToBoolModelPath);
-  options->base_options.op_resolver = CreateCustomResolver();
-  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextClassifier> classifier,
-                          TextClassifier::Create(std::move(options)));
-  MP_ASSERT_OK_AND_ASSIGN(ClassificationResult result,
-                          classifier->Classify("hello"));
-  ASSERT_THAT(result, Partially(IgnoringRepeatedFieldOrdering(EqualsProto(R"pb(
-                classifications {
-                  entries {
-                    categories { index: 1 score: 1 }
-                    categories { index: 0 score: 1 }
-                    categories { index: 2 score: 0 }
-                  }
-                }
-              )pb"))));
-}
-
-TEST_F(TextClassifierTest, BertLongPositive) {
-  std::stringstream ss_for_positive_review;
-  ss_for_positive_review
-      << "it's a charming and often affecting journey and this is a long";
-  for (int i = 0; i < kMaxSeqLen; ++i) {
-    ss_for_positive_review << " long";
-  }
-  ss_for_positive_review << " movie review";
-  auto options = std::make_unique<TextClassifierOptions>();
-  options->base_options.model_asset_path = GetFullPath(kTestBertModelPath);
-  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextClassifier> classifier,
-                          TextClassifier::Create(std::move(options)));
-  MP_ASSERT_OK_AND_ASSIGN(ClassificationResult result,
-                          classifier->Classify(ss_for_positive_review.str()));
-  ASSERT_THAT(result,
-              Partially(IgnoringRepeatedFieldOrdering(Approximately(
-                  EqualsProto(R"pb(
-                    classifications {
-                      entries {
-                        categories { category_name: "negative" score: 0.014 }
-                        categories { category_name: "positive" score: 0.986 }
-                      }
-                    }
-                  )pb"),
-                  kEpsilon))));
-  MP_ASSERT_OK(classifier->Close());
 }
 
 }  // namespace

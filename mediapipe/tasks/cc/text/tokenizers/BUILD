@@ -73,8 +73,6 @@ cc_library(
     ],
 )
 
-# TODO: This test fails in OSS
-
 cc_library(
     name = "tokenizer_utils",
     srcs = ["tokenizer_utils.cc"],
@@ -96,8 +94,6 @@ cc_library(
         "@flatbuffers//:runtime_cc",
     ],
 )
-
-# TODO: This test fails in OSS
 
 cc_library(
     name = "regex_tokenizer",
