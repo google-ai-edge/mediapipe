@@ -26,6 +26,8 @@
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "tensorflow/lite/delegates/gpu/gl_delegate.h"
 
+#define PERFETTO_TRACK_EVENT_NAMESPACE mediapipe
+
 namespace mediapipe {
 namespace api2 {
 
@@ -191,7 +193,7 @@ absl::Status InferenceCalculatorGlImpl::GpuInferenceRunner::Process(
     CalculatorContext* cc, const std::vector<Tensor>& input_tensors,
     std::vector<Tensor>& output_tensors) {
   return gpu_helper_.RunInGlContext(
-      [this, &input_tensors, &output_tensors]() -> absl::Status {
+      [this, cc, &input_tensors, &output_tensors]() -> absl::Status {
         // Explicitly copy input.
         for (int i = 0; i < input_tensors.size(); ++i) {
           glBindBuffer(GL_COPY_READ_BUFFER,
@@ -203,7 +205,10 @@ absl::Status InferenceCalculatorGlImpl::GpuInferenceRunner::Process(
         }
 
         // Run inference.
-        RET_CHECK_EQ(interpreter_->Invoke(), kTfLiteOk);
+        {
+          MEDIAPIPE_PROFILING(GPU_TASK_INVOKE, cc);
+          RET_CHECK_EQ(interpreter_->Invoke(), kTfLiteOk);
+        }
 
         output_tensors.reserve(output_size_);
         for (int i = 0; i < output_size_; ++i) {
