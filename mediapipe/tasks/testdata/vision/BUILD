@@ -35,7 +35,6 @@ mediapipe_files(srcs = [
     "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.tflite",
     "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29_with_dummy_score_calibration.tflite",
     "deeplabv3.tflite",
-    "hand_landmark.task",
     "hand_landmark_full.tflite",
     "hand_landmark_lite.tflite",
     "left_hands.jpg",
@@ -67,13 +66,13 @@ mediapipe_files(srcs = [
 
 exports_files(
     srcs = [
-        "cg_classifier_screen3d_landmark_features_nn_2022_08_04_base_simple_model.tflite",
         "expected_left_down_hand_landmarks.prototxt",
         "expected_left_down_hand_rotated_landmarks.prototxt",
         "expected_left_up_hand_landmarks.prototxt",
         "expected_left_up_hand_rotated_landmarks.prototxt",
         "expected_right_down_hand_landmarks.prototxt",
         "expected_right_up_hand_landmarks.prototxt",
+        "gesture_recognizer.task",
     ],
 )
 
@@ -119,9 +118,9 @@ filegroup(
         "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.tflite",
         "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29_with_dummy_score_calibration.tflite",
         "deeplabv3.tflite",
-        "hand_landmark.task",
         "hand_landmark_full.tflite",
         "hand_landmark_lite.tflite",
+        "hand_landmarker.task",
         "mobilenet_v1_0.25_192_quantized_1_default_1.tflite",
         "mobilenet_v1_0.25_224_1_default_1.tflite",
         "mobilenet_v1_0.25_224_1_metadata_1.tflite",

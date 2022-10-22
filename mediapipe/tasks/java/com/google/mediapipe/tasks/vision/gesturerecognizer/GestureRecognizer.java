@@ -38,6 +38,7 @@ import com.google.mediapipe.tasks.core.TaskRunner;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.vision.core.BaseVisionTaskApi;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
+import com.google.mediapipe.tasks.vision.gesturerecognizer.proto.GestureClassifierGraphOptionsProto;
 import com.google.mediapipe.tasks.vision.gesturerecognizer.proto.GestureRecognizerGraphOptionsProto;
 import com.google.mediapipe.tasks.vision.gesturerecognizer.proto.HandGestureRecognizerGraphOptionsProto;
 import com.google.mediapipe.tasks.vision.handdetector.proto.HandDetectorGraphOptionsProto;
@@ -300,13 +301,6 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
        */
       public abstract Builder setRunningMode(RunningMode value);
 
-      // TODO: remove these. Temporary solutions before bundle asset is ready.
-      public abstract Builder setBaseOptionsHandDetector(BaseOptions value);
-
-      public abstract Builder setBaseOptionsHandLandmarker(BaseOptions value);
-
-      public abstract Builder setBaseOptionsGestureRecognizer(BaseOptions value);
-
       /** Sets the maximum number of hands can be detected by the GestureRecognizer. */
       public abstract Builder setNumHands(Integer value);
 
@@ -366,13 +360,6 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
 
     abstract BaseOptions baseOptions();
 
-    // TODO: remove these. Temporary solutions before bundle asset is ready.
-    abstract BaseOptions baseOptionsHandDetector();
-
-    abstract BaseOptions baseOptionsHandLandmarker();
-
-    abstract BaseOptions baseOptionsGestureRecognizer();
-
     abstract RunningMode runningMode();
 
     abstract Optional<Integer> numHands();
@@ -405,22 +392,18 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
      */
     @Override
     public CalculatorOptions convertToCalculatorOptionsProto() {
-      BaseOptionsProto.BaseOptions.Builder baseOptionsBuilder =
-          BaseOptionsProto.BaseOptions.newBuilder()
-              .setUseStreamMode(runningMode() != RunningMode.IMAGE)
-              .mergeFrom(convertBaseOptionsToProto(baseOptions()));
       GestureRecognizerGraphOptionsProto.GestureRecognizerGraphOptions.Builder taskOptionsBuilder =
           GestureRecognizerGraphOptionsProto.GestureRecognizerGraphOptions.newBuilder()
-              .setBaseOptions(baseOptionsBuilder);
+              .setBaseOptions(
+                  BaseOptionsProto.BaseOptions.newBuilder()
+                      .setUseStreamMode(runningMode() != RunningMode.IMAGE)
+                      .mergeFrom(convertBaseOptionsToProto(baseOptions()))
+                      .build());
 
       // Setup HandDetectorGraphOptions.
       HandDetectorGraphOptionsProto.HandDetectorGraphOptions.Builder
           handDetectorGraphOptionsBuilder =
-              HandDetectorGraphOptionsProto.HandDetectorGraphOptions.newBuilder()
-                  .setBaseOptions(
-                      BaseOptionsProto.BaseOptions.newBuilder()
-                          .setUseStreamMode(runningMode() != RunningMode.IMAGE)
-                          .mergeFrom(convertBaseOptionsToProto(baseOptionsHandDetector())));
+              HandDetectorGraphOptionsProto.HandDetectorGraphOptions.newBuilder();
       numHands().ifPresent(handDetectorGraphOptionsBuilder::setNumHands);
       minHandDetectionConfidence()
           .ifPresent(handDetectorGraphOptionsBuilder::setMinDetectionConfidence);
@@ -428,19 +411,12 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
       // Setup HandLandmarkerGraphOptions.
       HandLandmarksDetectorGraphOptionsProto.HandLandmarksDetectorGraphOptions.Builder
           handLandmarksDetectorGraphOptionsBuilder =
-              HandLandmarksDetectorGraphOptionsProto.HandLandmarksDetectorGraphOptions.newBuilder()
-                  .setBaseOptions(
-                      BaseOptionsProto.BaseOptions.newBuilder()
-                          .setUseStreamMode(runningMode() != RunningMode.IMAGE)
-                          .mergeFrom(convertBaseOptionsToProto(baseOptionsHandLandmarker())));
+              HandLandmarksDetectorGraphOptionsProto.HandLandmarksDetectorGraphOptions.newBuilder();
       minHandPresenceConfidence()
           .ifPresent(handLandmarksDetectorGraphOptionsBuilder::setMinDetectionConfidence);
       HandLandmarkerGraphOptionsProto.HandLandmarkerGraphOptions.Builder
           handLandmarkerGraphOptionsBuilder =
-              HandLandmarkerGraphOptionsProto.HandLandmarkerGraphOptions.newBuilder()
-                  .setBaseOptions(
-                      BaseOptionsProto.BaseOptions.newBuilder()
-                          .setUseStreamMode(runningMode() != RunningMode.IMAGE));
+              HandLandmarkerGraphOptionsProto.HandLandmarkerGraphOptions.newBuilder();
       minTrackingConfidence()
           .ifPresent(handLandmarkerGraphOptionsBuilder::setMinTrackingConfidence);
       handLandmarkerGraphOptionsBuilder
@@ -450,16 +426,13 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
       // Setup HandGestureRecognizerGraphOptions.
       HandGestureRecognizerGraphOptionsProto.HandGestureRecognizerGraphOptions.Builder
           handGestureRecognizerGraphOptionsBuilder =
-              HandGestureRecognizerGraphOptionsProto.HandGestureRecognizerGraphOptions.newBuilder()
-                  .setBaseOptions(
-                      BaseOptionsProto.BaseOptions.newBuilder()
-                          .setUseStreamMode(runningMode() != RunningMode.IMAGE)
-                          .mergeFrom(convertBaseOptionsToProto(baseOptionsGestureRecognizer())));
+              HandGestureRecognizerGraphOptionsProto.HandGestureRecognizerGraphOptions.newBuilder();
       ClassifierOptionsProto.ClassifierOptions.Builder classifierOptionsBuilder =
           ClassifierOptionsProto.ClassifierOptions.newBuilder();
       minGestureConfidence().ifPresent(classifierOptionsBuilder::setScoreThreshold);
-      handGestureRecognizerGraphOptionsBuilder.setClassifierOptions(
-          classifierOptionsBuilder.build());
+      handGestureRecognizerGraphOptionsBuilder.setCannedGestureClassifierGraphOptions(
+          GestureClassifierGraphOptionsProto.GestureClassifierGraphOptions.newBuilder()
+              .setClassifierOptions(classifierOptionsBuilder.build()));
 
       taskOptionsBuilder
           .setHandLandmarkerGraphOptions(handLandmarkerGraphOptionsBuilder.build())

@@ -25,9 +25,13 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
+#include "mediapipe/tasks/cc/core/model_resources_cache.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/utils.h"
+#include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_recognizer_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/hand_gesture_recognizer_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
@@ -46,6 +50,8 @@ using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
+using ::mediapipe::tasks::core::ModelAssetBundleResources;
+using ::mediapipe::tasks::metadata::SetExternalFile;
 using ::mediapipe::tasks::vision::gesture_recognizer::proto::
     GestureRecognizerGraphOptions;
 using ::mediapipe::tasks::vision::gesture_recognizer::proto::
@@ -61,6 +67,9 @@ constexpr char kHandednessTag[] = "HANDEDNESS";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 constexpr char kHandGesturesTag[] = "HAND_GESTURES";
 constexpr char kHandTrackingIdsTag[] = "HAND_TRACKING_IDS";
+constexpr char kHandLandmarkerBundleAssetName[] = "hand_landmarker.task";
+constexpr char kHandGestureRecognizerBundleAssetName[] =
+    "hand_gesture_recognizer.task";
 
 struct GestureRecognizerOutputs {
   Source<std::vector<ClassificationList>> gesture;
@@ -69,6 +78,53 @@ struct GestureRecognizerOutputs {
   Source<std::vector<LandmarkList>> hand_world_landmarks;
   Source<Image> image;
 };
+
+// Sets the base options in the sub tasks.
+absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
+                                   GestureRecognizerGraphOptions* options,
+                                   bool is_copy) {
+  ASSIGN_OR_RETURN(const auto hand_landmarker_file,
+                   resources.GetModelFile(kHandLandmarkerBundleAssetName));
+  auto* hand_landmarker_graph_options =
+      options->mutable_hand_landmarker_graph_options();
+  SetExternalFile(hand_landmarker_file,
+                  hand_landmarker_graph_options->mutable_base_options()
+                      ->mutable_model_asset(),
+                  is_copy);
+  hand_landmarker_graph_options->mutable_base_options()
+      ->mutable_acceleration()
+      ->CopyFrom(options->base_options().acceleration());
+  hand_landmarker_graph_options->mutable_base_options()->set_use_stream_mode(
+      options->base_options().use_stream_mode());
+
+  ASSIGN_OR_RETURN(
+      const auto hand_gesture_recognizer_file,
+      resources.GetModelFile(kHandGestureRecognizerBundleAssetName));
+  auto* hand_gesture_recognizer_graph_options =
+      options->mutable_hand_gesture_recognizer_graph_options();
+  SetExternalFile(hand_gesture_recognizer_file,
+                  hand_gesture_recognizer_graph_options->mutable_base_options()
+                      ->mutable_model_asset(),
+                  is_copy);
+  hand_gesture_recognizer_graph_options->mutable_base_options()
+      ->mutable_acceleration()
+      ->CopyFrom(options->base_options().acceleration());
+  if (!hand_gesture_recognizer_graph_options->base_options()
+           .acceleration()
+           .has_xnnpack() &&
+      !hand_gesture_recognizer_graph_options->base_options()
+           .acceleration()
+           .has_tflite()) {
+    hand_gesture_recognizer_graph_options->mutable_base_options()
+        ->mutable_acceleration()
+        ->mutable_xnnpack();
+    LOG(WARNING) << "Hand Gesture Recognizer contains CPU only ops. Sets "
+                 << "HandGestureRecognizerGraph acceleartion to Xnnpack.";
+  }
+  hand_gesture_recognizer_graph_options->mutable_base_options()
+      ->set_use_stream_mode(options->base_options().use_stream_mode());
+  return absl::OkStatus();
+}
 
 }  // namespace
 
@@ -136,6 +192,21 @@ class GestureRecognizerGraph : public core::ModelTaskGraph {
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     Graph graph;
+    if (sc->Options<GestureRecognizerGraphOptions>()
+            .base_options()
+            .has_model_asset()) {
+      ASSIGN_OR_RETURN(
+          const auto* model_asset_bundle_resources,
+          CreateModelAssetBundleResources<GestureRecognizerGraphOptions>(sc));
+      // When the model resources cache service is available, filling in
+      // the file pointer meta in the subtasks' base options. Otherwise,
+      // providing the file contents instead.
+      MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+          *model_asset_bundle_resources,
+          sc->MutableOptions<GestureRecognizerGraphOptions>(),
+          !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
+               .IsAvailable()));
+    }
     ASSIGN_OR_RETURN(auto hand_gesture_recognition_output,
                      BuildGestureRecognizerGraph(
                          *sc->MutableOptions<GestureRecognizerGraphOptions>(),

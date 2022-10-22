@@ -39,12 +39,6 @@ struct GestureRecognizerOptions {
   // model file with metadata, accelerator options, op resolver, etc.
   tasks::core::BaseOptions base_options;
 
-  // TODO: remove these. Temporary solutions before bundle asset is
-  // ready.
-  tasks::core::BaseOptions base_options_for_hand_landmarker;
-  tasks::core::BaseOptions base_options_for_hand_detector;
-  tasks::core::BaseOptions base_options_for_gesture_recognizer;
-
   // The running mode of the task. Default to the image mode.
   // GestureRecognizer has three running modes:
   // 1) The image mode for recognizing hand gestures on single image inputs.

@@ -43,10 +43,7 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({GestureRecognizerTest.General.class, GestureRecognizerTest.RunningModeTest.class})
 public class GestureRecognizerTest {
-  private static final String HAND_DETECTOR_MODEL_FILE = "palm_detection_full.tflite";
-  private static final String HAND_LANDMARKER_MODEL_FILE = "hand_landmark_full.tflite";
-  private static final String GESTURE_RECOGNIZER_MODEL_FILE =
-      "cg_classifier_screen3d_landmark_features_nn_2022_08_04_base_simple_model.tflite";
+  private static final String GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE = "gesture_recognizer.task";
   private static final String TWO_HANDS_IMAGE = "right_hands.jpg";
   private static final String THUMB_UP_IMAGE = "thumb_up.jpg";
   private static final String NO_HANDS_IMAGE = "cats_and_dogs.jpg";
@@ -66,13 +63,9 @@ public class GestureRecognizerTest {
       GestureRecognizerOptions options =
           GestureRecognizerOptions.builder()
               .setBaseOptions(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-              .setBaseOptionsHandDetector(
-                  BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-              .setBaseOptionsHandLandmarker(
-                  BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-              .setBaseOptionsGestureRecognizer(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
               .build();
       GestureRecognizer gestureRecognizer =
           GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -88,13 +81,9 @@ public class GestureRecognizerTest {
       GestureRecognizerOptions options =
           GestureRecognizerOptions.builder()
               .setBaseOptions(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-              .setBaseOptionsHandDetector(
-                  BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-              .setBaseOptionsHandLandmarker(
-                  BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-              .setBaseOptionsGestureRecognizer(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
               .build();
       GestureRecognizer gestureRecognizer =
           GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -111,16 +100,12 @@ public class GestureRecognizerTest {
       GestureRecognizerOptions options =
           GestureRecognizerOptions.builder()
               .setBaseOptions(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-              .setBaseOptionsHandDetector(
-                  BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-              .setBaseOptionsHandLandmarker(
-                  BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-              .setBaseOptionsGestureRecognizer(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
               // TODO update the confidence to be in range [0,1] after embedding model
               // and scoring calculator is integrated.
-              .setMinGestureConfidence(3.0f)
+              .setMinGestureConfidence(2.0f)
               .build();
       GestureRecognizer gestureRecognizer =
           GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -139,13 +124,9 @@ public class GestureRecognizerTest {
       GestureRecognizerOptions options =
           GestureRecognizerOptions.builder()
               .setBaseOptions(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-              .setBaseOptionsHandDetector(
-                  BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-              .setBaseOptionsHandLandmarker(
-                  BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-              .setBaseOptionsGestureRecognizer(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
               .setNumHands(2)
               .build();
       GestureRecognizer gestureRecognizer =
@@ -168,19 +149,7 @@ public class GestureRecognizerTest {
                     GestureRecognizerOptions.builder()
                         .setBaseOptions(
                             BaseOptions.builder()
-                                .setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE)
-                                .build())
-                        .setBaseOptionsHandDetector(
-                            BaseOptions.builder()
-                                .setModelAssetPath(HAND_DETECTOR_MODEL_FILE)
-                                .build())
-                        .setBaseOptionsHandLandmarker(
-                            BaseOptions.builder()
-                                .setModelAssetPath(HAND_LANDMARKER_MODEL_FILE)
-                                .build())
-                        .setBaseOptionsGestureRecognizer(
-                            BaseOptions.builder()
-                                .setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE)
+                                .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
                                 .build())
                         .setRunningMode(mode)
                         .setResultListener((gestureRecognitionResult, inputImage) -> {})
@@ -201,15 +170,7 @@ public class GestureRecognizerTest {
                 GestureRecognizerOptions.builder()
                     .setBaseOptions(
                         BaseOptions.builder()
-                            .setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE)
-                            .build())
-                    .setBaseOptionsHandDetector(
-                        BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-                    .setBaseOptionsHandLandmarker(
-                        BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-                    .setBaseOptionsGestureRecognizer(
-                        BaseOptions.builder()
-                            .setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE)
+                            .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
                             .build())
                     .setRunningMode(RunningMode.LIVE_STREAM)
                     .build());
@@ -223,13 +184,9 @@ public class GestureRecognizerTest {
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.IMAGE)
             .build();
 
@@ -252,13 +209,9 @@ public class GestureRecognizerTest {
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.VIDEO)
             .build();
 
@@ -281,13 +234,9 @@ public class GestureRecognizerTest {
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.LIVE_STREAM)
             .setResultListener((gestureRecognitionResult, inputImage) -> {})
             .build();
@@ -311,13 +260,9 @@ public class GestureRecognizerTest {
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.IMAGE)
             .build();
 
@@ -335,13 +280,9 @@ public class GestureRecognizerTest {
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.VIDEO)
             .build();
     GestureRecognizer gestureRecognizer =
@@ -363,13 +304,9 @@ public class GestureRecognizerTest {
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.LIVE_STREAM)
             .setResultListener(
                 (actualResult, inputImage) -> {
@@ -397,13 +334,9 @@ public class GestureRecognizerTest {
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.LIVE_STREAM)
             .setResultListener(
                 (actualResult, inputImage) -> {

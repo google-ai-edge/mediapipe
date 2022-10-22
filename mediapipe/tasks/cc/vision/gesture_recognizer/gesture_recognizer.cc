@@ -41,6 +41,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_classifier_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_recognizer_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/hand_gesture_recognizer_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
@@ -112,57 +113,38 @@ CalculatorGraphConfig CreateGraphConfig(
 std::unique_ptr<GestureRecognizerGraphOptionsProto>
 ConvertGestureRecognizerGraphOptionsProto(GestureRecognizerOptions* options) {
   auto options_proto = std::make_unique<GestureRecognizerGraphOptionsProto>();
+  auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
+      tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
+  options_proto->mutable_base_options()->Swap(base_options_proto.get());
+  options_proto->mutable_base_options()->set_use_stream_mode(
+      options->running_mode != core::RunningMode::IMAGE);
 
-  bool use_stream_mode = options->running_mode != core::RunningMode::IMAGE;
-
-  // TODO remove these workarounds for base options of subgraphs.
   // Configure hand detector options.
-  auto base_options_proto_for_hand_detector =
-      std::make_unique<tasks::core::proto::BaseOptions>(
-          tasks::core::ConvertBaseOptionsToProto(
-              &(options->base_options_for_hand_detector)));
-  base_options_proto_for_hand_detector->set_use_stream_mode(use_stream_mode);
   auto* hand_detector_graph_options =
       options_proto->mutable_hand_landmarker_graph_options()
           ->mutable_hand_detector_graph_options();
-  hand_detector_graph_options->mutable_base_options()->Swap(
-      base_options_proto_for_hand_detector.get());
   hand_detector_graph_options->set_num_hands(options->num_hands);
   hand_detector_graph_options->set_min_detection_confidence(
       options->min_hand_detection_confidence);
 
   // Configure hand landmark detector options.
-  auto base_options_proto_for_hand_landmarker =
-      std::make_unique<tasks::core::proto::BaseOptions>(
-          tasks::core::ConvertBaseOptionsToProto(
-              &(options->base_options_for_hand_landmarker)));
-  base_options_proto_for_hand_landmarker->set_use_stream_mode(use_stream_mode);
-  auto* hand_landmarks_detector_graph_options =
-      options_proto->mutable_hand_landmarker_graph_options()
-          ->mutable_hand_landmarks_detector_graph_options();
-  hand_landmarks_detector_graph_options->mutable_base_options()->Swap(
-      base_options_proto_for_hand_landmarker.get());
-  hand_landmarks_detector_graph_options->set_min_detection_confidence(
-      options->min_hand_presence_confidence);
-
   auto* hand_landmarker_graph_options =
       options_proto->mutable_hand_landmarker_graph_options();
   hand_landmarker_graph_options->set_min_tracking_confidence(
       options->min_tracking_confidence);
+  auto* hand_landmarks_detector_graph_options =
+      hand_landmarker_graph_options
+          ->mutable_hand_landmarks_detector_graph_options();
+  hand_landmarks_detector_graph_options->set_min_detection_confidence(
+      options->min_hand_presence_confidence);
 
   // Configure hand gesture recognizer options.
-  auto base_options_proto_for_gesture_recognizer =
-      std::make_unique<tasks::core::proto::BaseOptions>(
-          tasks::core::ConvertBaseOptionsToProto(
-              &(options->base_options_for_gesture_recognizer)));
-  base_options_proto_for_gesture_recognizer->set_use_stream_mode(
-      use_stream_mode);
   auto* hand_gesture_recognizer_graph_options =
       options_proto->mutable_hand_gesture_recognizer_graph_options();
-  hand_gesture_recognizer_graph_options->mutable_base_options()->Swap(
-      base_options_proto_for_gesture_recognizer.get());
   if (options->min_gesture_confidence >= 0) {
-    hand_gesture_recognizer_graph_options->mutable_classifier_options()
+    hand_gesture_recognizer_graph_options
+        ->mutable_canned_gesture_classifier_graph_options()
+        ->mutable_classifier_options()
         ->set_score_threshold(options->min_gesture_confidence);
   }
   return options_proto;
