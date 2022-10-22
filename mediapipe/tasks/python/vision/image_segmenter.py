@@ -15,6 +15,7 @@
 
 import dataclasses
 from typing import Callable, List, Mapping, Optional
+import enum
 
 from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
@@ -23,7 +24,6 @@ from mediapipe.python._framework_bindings import packet
 from mediapipe.python._framework_bindings import task_runner
 from mediapipe.tasks.cc.components.proto import segmenter_options_pb2
 from mediapipe.tasks.cc.vision.image_segmenter.proto import image_segmenter_options_pb2
-from mediapipe.tasks.python.components.proto import segmenter_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
@@ -33,8 +33,6 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode
 _BaseOptions = base_options_module.BaseOptions
 _SegmenterOptionsProto = segmenter_options_pb2.SegmenterOptions
 _ImageSegmenterOptionsProto = image_segmenter_options_pb2.ImageSegmenterOptions
-_OutputType = segmenter_options.OutputType
-_Activation = segmenter_options.Activation
 _RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _TaskInfo = task_info_module.TaskInfo
 _TaskRunner = task_runner.TaskRunner
@@ -46,6 +44,18 @@ _IMAGE_OUT_STREAM_NAME = 'image_out'
 _IMAGE_TAG = 'IMAGE'
 _TASK_GRAPH_NAME = 'mediapipe.tasks.vision.ImageSegmenterGraph'
 _MICRO_SECONDS_PER_MILLISECOND = 1000
+
+
+class OutputType(enum.Enum):
+  UNSPECIFIED = 0
+  CATEGORY_MASK = 1
+  CONFIDENCE_MASK = 2
+
+
+class Activation(enum.Enum):
+  NONE = 0
+  SIGMOID = 1
+  SOFTMAX = 2
 
 
 @dataclasses.dataclass
@@ -69,8 +79,8 @@ class ImageSegmenterOptions:
   """
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
-  output_type: Optional[_OutputType] = _OutputType.CATEGORY_MASK
-  activation: Optional[_Activation] = _Activation.NONE
+  output_type: Optional[OutputType] = OutputType.CATEGORY_MASK
+  activation: Optional[Activation] = Activation.NONE
   result_callback: Optional[
       Callable[[List[image_module.Image], image_module.Image, int],
                None]] = None

@@ -48,7 +48,6 @@ py_library(
         "//mediapipe/python:packet_getter",
         "//mediapipe/tasks/cc/components/proto:segmenter_options_py_pb2",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_options_py_pb2",
-        "//mediapipe/tasks/python/components/proto:segmenter_options",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:optional_dependencies",
         "//mediapipe/tasks/python/core:task_info",
