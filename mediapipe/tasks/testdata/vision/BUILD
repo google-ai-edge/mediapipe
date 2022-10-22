@@ -67,6 +67,7 @@ mediapipe_files(srcs = [
 
 exports_files(
     srcs = [
+        "cg_classifier_screen3d_landmark_features_nn_2022_08_04_base_simple_model.tflite",
         "expected_left_down_hand_landmarks.prototxt",
         "expected_left_down_hand_rotated_landmarks.prototxt",
         "expected_left_up_hand_landmarks.prototxt",
