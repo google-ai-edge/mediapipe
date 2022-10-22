@@ -24,7 +24,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
-import com.google.mediapipe.framework.image.Image;
+import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.Category;
 import com.google.mediapipe.tasks.components.containers.Detection;
 import com.google.mediapipe.tasks.core.BaseOptions;
@@ -370,7 +370,7 @@ public class ObjectDetectorTest {
 
     @Test
     public void detect_failsWithOutOfOrderInputTimestamps() throws Exception {
-      Image image = getImageFromAsset(CAT_AND_DOG_IMAGE);
+      MPImage image = getImageFromAsset(CAT_AND_DOG_IMAGE);
       ObjectDetectorOptions options =
           ObjectDetectorOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(MODEL_FILE).build())
@@ -395,7 +395,7 @@ public class ObjectDetectorTest {
 
     @Test
     public void detect_successWithLiveSteamMode() throws Exception {
-      Image image = getImageFromAsset(CAT_AND_DOG_IMAGE);
+      MPImage image = getImageFromAsset(CAT_AND_DOG_IMAGE);
       ObjectDetectorOptions options =
           ObjectDetectorOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(MODEL_FILE).build())
@@ -416,7 +416,7 @@ public class ObjectDetectorTest {
     }
   }
 
-  private static Image getImageFromAsset(String filePath) throws Exception {
+  private static MPImage getImageFromAsset(String filePath) throws Exception {
     AssetManager assetManager = ApplicationProvider.getApplicationContext().getAssets();
     InputStream istr = assetManager.open(filePath);
     return new BitmapImageBuilder(BitmapFactory.decodeStream(istr)).build();
@@ -448,7 +448,7 @@ public class ObjectDetectorTest {
     assertThat(boundingBox1.bottom).isWithin(PIXEL_DIFF_TOLERANCE).of(boundingBox2.bottom);
   }
 
-  private static void assertImageSizeIsExpected(Image inputImage) {
+  private static void assertImageSizeIsExpected(MPImage inputImage) {
     assertThat(inputImage).isNotNull();
     assertThat(inputImage.getWidth()).isEqualTo(IMAGE_WIDTH);
     assertThat(inputImage.getHeight()).isEqualTo(IMAGE_HEIGHT);

@@ -17,25 +17,25 @@ package com.google.mediapipe.framework.image;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
-import com.google.mediapipe.framework.image.Image.ImageFormat;
-import com.google.mediapipe.framework.image.Image.StorageType;
+import com.google.mediapipe.framework.image.MPImage.MPImageFormat;
+import com.google.mediapipe.framework.image.MPImage.StorageType;
 
 /** Groups a set of properties to describe how an image is stored. */
 @AutoValue
-public abstract class ImageProperties {
+public abstract class MPImageProperties {
 
   /**
    * Gets the pixel format of the image.
    *
-   * @see Image.ImageFormat
+   * @see MPImage.MPImageFormat
    */
-  @ImageFormat
+  @MPImageFormat
   public abstract int getImageFormat();
 
   /**
    * Gets the storage type of the image.
    *
-   * @see Image.StorageType
+   * @see MPImage.StorageType
    */
   @StorageType
   public abstract int getStorageType();
@@ -45,36 +45,36 @@ public abstract class ImageProperties {
   public abstract int hashCode();
 
   /**
-   * Creates a builder of {@link ImageProperties}.
+   * Creates a builder of {@link MPImageProperties}.
    *
-   * @see ImageProperties.Builder
+   * @see MPImageProperties.Builder
    */
   static Builder builder() {
-    return new AutoValue_ImageProperties.Builder();
+    return new AutoValue_MPImageProperties.Builder();
   }
 
-  /** Builds a {@link ImageProperties}. */
+  /** Builds a {@link MPImageProperties}. */
   @AutoValue.Builder
   abstract static class Builder {
 
     /**
-     * Sets the {@link Image.ImageFormat}.
+     * Sets the {@link MPImage.MPImageFormat}.
      *
-     * @see ImageProperties#getImageFormat
+     * @see MPImageProperties#getImageFormat
      */
-    abstract Builder setImageFormat(@ImageFormat int value);
+    abstract Builder setImageFormat(@MPImageFormat int value);
 
     /**
-     * Sets the {@link Image.StorageType}.
+     * Sets the {@link MPImage.StorageType}.
      *
-     * @see ImageProperties#getStorageType
+     * @see MPImageProperties#getStorageType
      */
     abstract Builder setStorageType(@StorageType int value);
 
-    /** Builds the {@link ImageProperties}. */
-    abstract ImageProperties build();
+    /** Builds the {@link MPImageProperties}. */
+    abstract MPImageProperties build();
   }
 
   // Hide the constructor.
-  ImageProperties() {}
+  MPImageProperties() {}
 }

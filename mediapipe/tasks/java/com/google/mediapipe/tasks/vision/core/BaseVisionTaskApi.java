@@ -19,7 +19,7 @@ import com.google.mediapipe.formats.proto.RectProto.NormalizedRect;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.ProtoUtil;
-import com.google.mediapipe.framework.image.Image;
+import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.core.TaskResult;
 import com.google.mediapipe.tasks.core.TaskRunner;
 import java.util.HashMap;
@@ -77,11 +77,11 @@ public class BaseVisionTaskApi implements AutoCloseable {
    * A synchronous method to process single image inputs. The call blocks the current thread until a
    * failure status or a successful result is returned.
    *
-   * @param image a MediaPipe {@link Image} object for processing.
+   * @param image a MediaPipe {@link MPImage} object for processing.
    * @throws MediaPipeException if the task is not in the image mode or requires a normalized rect
    *     input.
    */
-  protected TaskResult processImageData(Image image) {
+  protected TaskResult processImageData(MPImage image) {
     if (runningMode != RunningMode.IMAGE) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
@@ -102,13 +102,13 @@ public class BaseVisionTaskApi implements AutoCloseable {
    * A synchronous method to process single image inputs. The call blocks the current thread until a
    * failure status or a successful result is returned.
    *
-   * @param image a MediaPipe {@link Image} object for processing.
+   * @param image a MediaPipe {@link MPImage} object for processing.
    * @param roi a {@link RectF} defining the region-of-interest to process in the image. Coordinates
    *     are expected to be specified as normalized values in [0,1].
    * @throws MediaPipeException if the task is not in the image mode or doesn't require a normalized
    *     rect.
    */
-  protected TaskResult processImageData(Image image, RectF roi) {
+  protected TaskResult processImageData(MPImage image, RectF roi) {
     if (runningMode != RunningMode.IMAGE) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
@@ -132,12 +132,12 @@ public class BaseVisionTaskApi implements AutoCloseable {
    * A synchronous method to process continuous video frames. The call blocks the current thread
    * until a failure status or a successful result is returned.
    *
-   * @param image a MediaPipe {@link Image} object for processing.
+   * @param image a MediaPipe {@link MPImage} object for processing.
    * @param timestampMs the corresponding timestamp of the input image in milliseconds.
    * @throws MediaPipeException if the task is not in the video mode or requires a normalized rect
    *     input.
    */
-  protected TaskResult processVideoData(Image image, long timestampMs) {
+  protected TaskResult processVideoData(MPImage image, long timestampMs) {
     if (runningMode != RunningMode.VIDEO) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
@@ -158,14 +158,14 @@ public class BaseVisionTaskApi implements AutoCloseable {
    * A synchronous method to process continuous video frames. The call blocks the current thread
    * until a failure status or a successful result is returned.
    *
-   * @param image a MediaPipe {@link Image} object for processing.
+   * @param image a MediaPipe {@link MPImage} object for processing.
    * @param roi a {@link RectF} defining the region-of-interest to process in the image. Coordinates
    *     are expected to be specified as normalized values in [0,1].
    * @param timestampMs the corresponding timestamp of the input image in milliseconds.
    * @throws MediaPipeException if the task is not in the video mode or doesn't require a normalized
    *     rect.
    */
-  protected TaskResult processVideoData(Image image, RectF roi, long timestampMs) {
+  protected TaskResult processVideoData(MPImage image, RectF roi, long timestampMs) {
     if (runningMode != RunningMode.VIDEO) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
@@ -189,12 +189,12 @@ public class BaseVisionTaskApi implements AutoCloseable {
    * An asynchronous method to send live stream data to the {@link TaskRunner}. The results will be
    * available in the user-defined result listener.
    *
-   * @param image a MediaPipe {@link Image} object for processing.
+   * @param image a MediaPipe {@link MPImage} object for processing.
    * @param timestampMs the corresponding timestamp of the input image in milliseconds.
    * @throws MediaPipeException if the task is not in the video mode or requires a normalized rect
    *     input.
    */
-  protected void sendLiveStreamData(Image image, long timestampMs) {
+  protected void sendLiveStreamData(MPImage image, long timestampMs) {
     if (runningMode != RunningMode.LIVE_STREAM) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
@@ -215,14 +215,14 @@ public class BaseVisionTaskApi implements AutoCloseable {
    * An asynchronous method to send live stream data to the {@link TaskRunner}. The results will be
    * available in the user-defined result listener.
    *
-   * @param image a MediaPipe {@link Image} object for processing.
+   * @param image a MediaPipe {@link MPImage} object for processing.
    * @param roi a {@link RectF} defining the region-of-interest to process in the image. Coordinates
    *     are expected to be specified as normalized values in [0,1].
    * @param timestampMs the corresponding timestamp of the input image in milliseconds.
    * @throws MediaPipeException if the task is not in the video mode or doesn't require a normalized
    *     rect.
    */
-  protected void sendLiveStreamData(Image image, RectF roi, long timestampMs) {
+  protected void sendLiveStreamData(MPImage image, RectF roi, long timestampMs) {
     if (runningMode != RunningMode.LIVE_STREAM) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),

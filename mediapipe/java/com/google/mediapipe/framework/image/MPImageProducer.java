@@ -14,9 +14,9 @@ limitations under the License.
 ==============================================================================*/
 package com.google.mediapipe.framework.image;
 
-/** Lightweight abstraction for an object that produce {@link Image} */
-public interface ImageProducer {
+/** Lightweight abstraction for an object that produce {@link MPImage} */
+public interface MPImageProducer {
 
-  /** Sets the consumer that receives the {@link Image}. */
-  void setImageConsumer(ImageConsumer imageConsumer);
+  /** Sets the consumer that receives the {@link MPImage}. */
+  void setMPImageConsumer(MPImageConsumer imageConsumer);
 }

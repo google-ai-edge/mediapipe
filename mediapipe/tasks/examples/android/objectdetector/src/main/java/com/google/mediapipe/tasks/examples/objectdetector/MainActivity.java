@@ -30,7 +30,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.exifinterface.media.ExifInterface;
 // ContentResolver dependency
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
-import com.google.mediapipe.framework.image.Image;
+import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.objectdetector.ObjectDetectionResult;
@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(TAG, "Bitmap rotation error:" + e);
                   }
                   if (bitmap != null) {
-                    Image image = new BitmapImageBuilder(bitmap).build();
+                    MPImage image = new BitmapImageBuilder(bitmap).build();
                     ObjectDetectionResult detectionResult = objectDetector.detect(image);
                     imageView.setData(image, detectionResult);
                     runOnUiThread(() -> imageView.update());
@@ -144,7 +144,8 @@ public class MainActivity extends AppCompatActivity {
                               MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT));
                   long frameIntervalMs = duration / numFrames;
                   for (int i = 0; i < numFrames; ++i) {
-                    Image image = new BitmapImageBuilder(metaRetriever.getFrameAtIndex(i)).build();
+                    MPImage image =
+                        new BitmapImageBuilder(metaRetriever.getFrameAtIndex(i)).build();
                     ObjectDetectionResult detectionResult =
                         objectDetector.detectForVideo(image, frameIntervalMs * i);
                     // Currently only annotates the detection result on the first video frame and

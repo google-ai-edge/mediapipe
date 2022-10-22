@@ -22,7 +22,7 @@ import com.google.mediapipe.framework.AndroidPacketGetter;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
-import com.google.mediapipe.framework.image.Image;
+import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -162,9 +162,9 @@ public final class ObjectDetector extends BaseVisionTaskApi {
   public static ObjectDetector createFromOptions(
       Context context, ObjectDetectorOptions detectorOptions) {
     // TODO: Consolidate OutputHandler and TaskRunner.
-    OutputHandler<ObjectDetectionResult, Image> handler = new OutputHandler<>();
+    OutputHandler<ObjectDetectionResult, MPImage> handler = new OutputHandler<>();
     handler.setOutputPacketConverter(
-        new OutputHandler.OutputPacketConverter<ObjectDetectionResult, Image>() {
+        new OutputHandler.OutputPacketConverter<ObjectDetectionResult, MPImage>() {
           @Override
           public ObjectDetectionResult convertToTaskResult(List<Packet> packets) {
             return ObjectDetectionResult.create(
@@ -174,7 +174,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
           }
 
           @Override
-          public Image convertToTaskInput(List<Packet> packets) {
+          public MPImage convertToTaskInput(List<Packet> packets) {
             return new BitmapImageBuilder(
                     AndroidPacketGetter.getBitmapFromRgb(packets.get(IMAGE_OUT_STREAM_INDEX)))
                 .build();
@@ -217,10 +217,10 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link Image} object for processing.
+   * @param inputImage a MediaPipe {@link MPImage} object for processing.
    * @throws MediaPipeException if there is an internal error.
    */
-  public ObjectDetectionResult detect(Image inputImage) {
+  public ObjectDetectionResult detect(MPImage inputImage) {
     return (ObjectDetectionResult) processImageData(inputImage);
   }
 
@@ -237,11 +237,11 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link Image} object for processing.
+   * @param inputImage a MediaPipe {@link MPImage} object for processing.
    * @param inputTimestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error.
    */
-  public ObjectDetectionResult detectForVideo(Image inputImage, long inputTimestampMs) {
+  public ObjectDetectionResult detectForVideo(MPImage inputImage, long inputTimestampMs) {
     return (ObjectDetectionResult) processVideoData(inputImage, inputTimestampMs);
   }
 
@@ -259,11 +259,11 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link Image} object for processing.
+   * @param inputImage a MediaPipe {@link MPImage} object for processing.
    * @param inputTimestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error.
    */
-  public void detectAsync(Image inputImage, long inputTimestampMs) {
+  public void detectAsync(MPImage inputImage, long inputTimestampMs) {
     sendLiveStreamData(inputImage, inputTimestampMs);
   }
 
@@ -333,7 +333,8 @@ public final class ObjectDetector extends BaseVisionTaskApi {
        * Sets the {@link ResultListener} to receive the detection results asynchronously when the
        * object detector is in the live stream mode.
        */
-      public abstract Builder setResultListener(ResultListener<ObjectDetectionResult, Image> value);
+      public abstract Builder setResultListener(
+          ResultListener<ObjectDetectionResult, MPImage> value);
 
       /** Sets an optional {@link ErrorListener}}. */
       public abstract Builder setErrorListener(ErrorListener value);
@@ -378,7 +379,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
 
     abstract List<String> categoryDenylist();
 
-    abstract Optional<ResultListener<ObjectDetectionResult, Image>> resultListener();
+    abstract Optional<ResultListener<ObjectDetectionResult, MPImage>> resultListener();
 
     abstract Optional<ErrorListener> errorListener();
 

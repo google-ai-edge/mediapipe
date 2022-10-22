@@ -16,19 +16,19 @@ limitations under the License.
 package com.google.mediapipe.framework.image;
 
 import android.graphics.Bitmap;
-import com.google.mediapipe.framework.image.Image.ImageFormat;
+import com.google.mediapipe.framework.image.MPImage.MPImageFormat;
 
-class BitmapImageContainer implements ImageContainer {
+class BitmapImageContainer implements MPImageContainer {
 
   private final Bitmap bitmap;
-  private final ImageProperties properties;
+  private final MPImageProperties properties;
 
   public BitmapImageContainer(Bitmap bitmap) {
     this.bitmap = bitmap;
     this.properties =
-        ImageProperties.builder()
+        MPImageProperties.builder()
             .setImageFormat(convertFormatCode(bitmap.getConfig()))
-            .setStorageType(Image.STORAGE_TYPE_BITMAP)
+            .setStorageType(MPImage.STORAGE_TYPE_BITMAP)
             .build();
   }
 
@@ -37,7 +37,7 @@ class BitmapImageContainer implements ImageContainer {
   }
 
   @Override
-  public ImageProperties getImageProperties() {
+  public MPImageProperties getImageProperties() {
     return properties;
   }
 
@@ -46,15 +46,15 @@ class BitmapImageContainer implements ImageContainer {
     bitmap.recycle();
   }
 
-  @ImageFormat
+  @MPImageFormat
   static int convertFormatCode(Bitmap.Config config) {
     switch (config) {
       case ALPHA_8:
-        return Image.IMAGE_FORMAT_ALPHA;
+        return MPImage.IMAGE_FORMAT_ALPHA;
       case ARGB_8888:
-        return Image.IMAGE_FORMAT_RGBA;
+        return MPImage.IMAGE_FORMAT_RGBA;
       default:
-        return Image.IMAGE_FORMAT_UNKNOWN;
+        return MPImage.IMAGE_FORMAT_UNKNOWN;
     }
   }
 }

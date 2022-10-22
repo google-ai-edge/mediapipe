@@ -29,10 +29,10 @@ import java.util.Map.Entry;
 /**
  * The wrapper class for image objects.
  *
- * <p>{@link Image} is designed to be an immutable image container, which could be shared
+ * <p>{@link MPImage} is designed to be an immutable image container, which could be shared
  * cross-platforms.
  *
- * <p>To construct an {@link Image}, use the provided builders:
+ * <p>To construct a {@link MPImage}, use the provided builders:
  *
  * <ul>
  *   <li>{@link ByteBufferImageBuilder}
@@ -40,7 +40,7 @@ import java.util.Map.Entry;
  *   <li>{@link MediaImageBuilder}
  * </ul>
  *
- * <p>{@link Image} uses reference counting to maintain internal storage. When it is created the
+ * <p>{@link MPImage} uses reference counting to maintain internal storage. When it is created the
  * reference count is 1. Developer can call {@link #close()} to reduce reference count to release
  * internal storage earlier, otherwise Java garbage collection will release the storage eventually.
  *
@@ -53,7 +53,7 @@ import java.util.Map.Entry;
  *   <li>{@link MediaImageExtractor}
  * </ul>
  */
-public class Image implements Closeable {
+public class MPImage implements Closeable {
 
   /** Specifies the image format of an image. */
   @IntDef({
@@ -69,7 +69,7 @@ public class Image implements Closeable {
     IMAGE_FORMAT_JPEG,
   })
   @Retention(RetentionPolicy.SOURCE)
-  public @interface ImageFormat {}
+  public @interface MPImageFormat {}
 
   public static final int IMAGE_FORMAT_UNKNOWN = 0;
   public static final int IMAGE_FORMAT_RGBA = 1;
@@ -98,14 +98,14 @@ public class Image implements Closeable {
   public static final int STORAGE_TYPE_IMAGE_PROXY = 4;
 
   /**
-   * Returns a list of supported image properties for this {@link Image}.
+   * Returns a list of supported image properties for this {@link MPImage}.
    *
-   * <p>Currently {@link Image} only support single storage type so the size of return list will
+   * <p>Currently {@link MPImage} only support single storage type so the size of return list will
    * always be 1.
    *
-   * @see ImageProperties
+   * @see MPImageProperties
    */
-  public List<ImageProperties> getContainedImageProperties() {
+  public List<MPImageProperties> getContainedImageProperties() {
     return Collections.singletonList(getContainer().getImageProperties());
   }
 
@@ -124,7 +124,7 @@ public class Image implements Closeable {
     return height;
   }
 
-  /** Acquires a reference on this {@link Image}. This will increase the reference count by 1. */
+  /** Acquires a reference on this {@link MPImage}. This will increase the reference count by 1. */
   private synchronized void acquire() {
     referenceCount += 1;
   }
@@ -132,7 +132,7 @@ public class Image implements Closeable {
   /**
    * Removes a reference that was previously acquired or init.
    *
-   * <p>When {@link Image} is created, it has 1 reference count.
+   * <p>When {@link MPImage} is created, it has 1 reference count.
    *
    * <p>When the reference count becomes 0, it will release the resource under the hood.
    */
@@ -141,24 +141,24 @@ public class Image implements Closeable {
   public synchronized void close() {
     referenceCount -= 1;
     if (referenceCount == 0) {
-      for (ImageContainer imageContainer : containerMap.values()) {
+      for (MPImageContainer imageContainer : containerMap.values()) {
         imageContainer.close();
       }
     }
   }
 
-  /** Advanced API access for {@link Image}. */
+  /** Advanced API access for {@link MPImage}. */
   static final class Internal {
 
     /**
-     * Acquires a reference on this {@link Image}. This will increase the reference count by 1.
+     * Acquires a reference on this {@link MPImage}. This will increase the reference count by 1.
      *
      * <p>This method is more useful for image consumer to acquire a reference so image resource
      * will not be closed accidentally. As image creator, normal developer doesn't need to call this
      * method.
      *
-     * <p>The reference count is 1 when {@link Image} is created. Developer can call {@link
-     * #close()} to indicate it doesn't need this {@link Image} anymore.
+     * <p>The reference count is 1 when {@link MPImage} is created. Developer can call {@link
+     * #close()} to indicate it doesn't need this {@link MPImage} anymore.
      *
      * @see #close()
      */
@@ -166,10 +166,10 @@ public class Image implements Closeable {
       image.acquire();
     }
 
-    private final Image image;
+    private final MPImage image;
 
-    // Only Image creates the internal helper.
-    private Internal(Image image) {
+    // Only MPImage creates the internal helper.
+    private Internal(MPImage image) {
       this.image = image;
     }
   }
@@ -179,15 +179,15 @@ public class Image implements Closeable {
     return new Internal(this);
   }
 
-  private final Map<ImageProperties, ImageContainer> containerMap;
+  private final Map<MPImageProperties, MPImageContainer> containerMap;
   private final long timestamp;
   private final int width;
   private final int height;
 
   private int referenceCount;
 
-  /** Constructs an {@link Image} with a built container. */
-  Image(ImageContainer container, long timestamp, int width, int height) {
+  /** Constructs a {@link MPImage} with a built container. */
+  MPImage(MPImageContainer container, long timestamp, int width, int height) {
     this.containerMap = new HashMap<>();
     containerMap.put(container.getImageProperties(), container);
     this.timestamp = timestamp;
@@ -201,10 +201,10 @@ public class Image implements Closeable {
    *
    * @return the current container.
    */
-  ImageContainer getContainer() {
+  MPImageContainer getContainer() {
     // According to the design, in the future we will support multiple containers in one image.
     // Currently just return the original container.
-    // TODO: Cache multiple containers in Image.
+    // TODO: Cache multiple containers in MPImage.
     return containerMap.values().iterator().next();
   }
 
@@ -214,8 +214,8 @@ public class Image implements Closeable {
    * <p>If there are multiple containers with required {@code storageType}, returns the first one.
    */
   @Nullable
-  ImageContainer getContainer(@StorageType int storageType) {
-    for (Entry<ImageProperties, ImageContainer> entry : containerMap.entrySet()) {
+  MPImageContainer getContainer(@StorageType int storageType) {
+    for (Entry<MPImageProperties, MPImageContainer> entry : containerMap.entrySet()) {
       if (entry.getKey().getStorageType() == storageType) {
         return entry.getValue();
       }
@@ -225,13 +225,13 @@ public class Image implements Closeable {
 
   /** Gets container from required {@code imageProperties}. Returns {@code null} if non existed. */
   @Nullable
-  ImageContainer getContainer(ImageProperties imageProperties) {
+  MPImageContainer getContainer(MPImageProperties imageProperties) {
     return containerMap.get(imageProperties);
   }
 
   /** Adds a new container if it doesn't exist. Returns {@code true} if it succeeds. */
-  boolean addContainer(ImageContainer container) {
-    ImageProperties imageProperties = container.getImageProperties();
+  boolean addContainer(MPImageContainer container) {
+    MPImageProperties imageProperties = container.getImageProperties();
     if (containerMap.containsKey(imageProperties)) {
       return false;
     }

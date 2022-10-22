@@ -12,16 +12,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
+
 package com.google.mediapipe.framework.image;
 
-/** Lightweight abstraction for an object that can receive {@link Image} */
-public interface ImageConsumer {
+/** Manages internal image data storage. The interface is package-private. */
+interface MPImageContainer {
+  /** Returns the properties of the contained image. */
+  MPImageProperties getImageProperties();
 
-  /**
-   * Called when an {@link Image} is available.
-   *
-   * <p>The argument is only guaranteed to be available until this method returns. if you need to
-   * extend its life time, acquire it, then release it when done.
-   */
-  void onNewImage(Image image);
+  /** Close the image container and releases the image resource inside. */
+  void close();
 }

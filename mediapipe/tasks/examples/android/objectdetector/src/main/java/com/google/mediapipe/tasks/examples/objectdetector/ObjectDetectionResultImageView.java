@@ -22,7 +22,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import androidx.appcompat.widget.AppCompatImageView;
 import com.google.mediapipe.framework.image.BitmapExtractor;
-import com.google.mediapipe.framework.image.Image;
+import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.Detection;
 import com.google.mediapipe.tasks.vision.objectdetector.ObjectDetectionResult;
 
@@ -40,12 +40,12 @@ public class ObjectDetectionResultImageView extends AppCompatImageView {
   }
 
   /**
-   * Sets an {@link Image} and an {@link ObjectDetectionResult} to render.
+   * Sets a {@link MPImage} and an {@link ObjectDetectionResult} to render.
    *
-   * @param image an {@link Image} object for annotation.
+   * @param image a {@link MPImage} object for annotation.
    * @param result an {@link ObjectDetectionResult} object that contains the detection result.
    */
-  public void setData(Image image, ObjectDetectionResult result) {
+  public void setData(MPImage image, ObjectDetectionResult result) {
     if (image == null || result == null) {
       return;
     }

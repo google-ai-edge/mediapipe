@@ -26,7 +26,7 @@ import com.google.mediapipe.framework.AndroidPacketGetter;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
-import com.google.mediapipe.framework.image.Image;
+import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.processors.proto.ClassifierOptionsProto;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
@@ -59,7 +59,7 @@ import java.util.Optional;
  * Model Maker. See <TODO link to the DevSite documentation page>.
  *
  * <ul>
- *   <li>Input image {@link Image}
+ *   <li>Input image {@link MPImage}
  *       <ul>
  *         <li>The image that gesture recognition runs on.
  *       </ul>
@@ -151,9 +151,9 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
   public static GestureRecognizer createFromOptions(
       Context context, GestureRecognizerOptions recognizerOptions) {
     // TODO: Consolidate OutputHandler and TaskRunner.
-    OutputHandler<GestureRecognitionResult, Image> handler = new OutputHandler<>();
+    OutputHandler<GestureRecognitionResult, MPImage> handler = new OutputHandler<>();
     handler.setOutputPacketConverter(
-        new OutputHandler.OutputPacketConverter<GestureRecognitionResult, Image>() {
+        new OutputHandler.OutputPacketConverter<GestureRecognitionResult, MPImage>() {
           @Override
           public GestureRecognitionResult convertToTaskResult(List<Packet> packets) {
             // If there is no hands detected in the image, just returns empty lists.
@@ -178,7 +178,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
           }
 
           @Override
-          public Image convertToTaskInput(List<Packet> packets) {
+          public MPImage convertToTaskInput(List<Packet> packets) {
             return new BitmapImageBuilder(
                     AndroidPacketGetter.getBitmapFromRgb(packets.get(IMAGE_OUT_STREAM_INDEX)))
                 .build();
@@ -222,10 +222,10 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link Image} object for processing.
+   * @param inputImage a MediaPipe {@link MPImage} object for processing.
    * @throws MediaPipeException if there is an internal error.
    */
-  public GestureRecognitionResult recognize(Image inputImage) {
+  public GestureRecognitionResult recognize(MPImage inputImage) {
     // TODO: add proper support for rotations.
     return (GestureRecognitionResult) processImageData(inputImage, buildFullImageRectF());
   }
@@ -243,11 +243,11 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link Image} object for processing.
+   * @param inputImage a MediaPipe {@link MPImage} object for processing.
    * @param inputTimestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error.
    */
-  public GestureRecognitionResult recognizeForVideo(Image inputImage, long inputTimestampMs) {
+  public GestureRecognitionResult recognizeForVideo(MPImage inputImage, long inputTimestampMs) {
     // TODO: add proper support for rotations.
     return (GestureRecognitionResult)
         processVideoData(inputImage, buildFullImageRectF(), inputTimestampMs);
@@ -267,11 +267,11 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link Image} object for processing.
+   * @param inputImage a MediaPipe {@link MPImage} object for processing.
    * @param inputTimestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error.
    */
-  public void recognizeAsync(Image inputImage, long inputTimestampMs) {
+  public void recognizeAsync(MPImage inputImage, long inputTimestampMs) {
     // TODO: add proper support for rotations.
     sendLiveStreamData(inputImage, buildFullImageRectF(), inputTimestampMs);
   }
@@ -333,7 +333,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
        * recognizer is in the live stream mode.
        */
       public abstract Builder setResultListener(
-          ResultListener<GestureRecognitionResult, Image> value);
+          ResultListener<GestureRecognitionResult, MPImage> value);
 
       /** Sets an optional error listener. */
       public abstract Builder setErrorListener(ErrorListener value);
@@ -386,7 +386,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
     // TODO update gesture confidence options after score merging calculator is ready.
     abstract Optional<Float> minGestureConfidence();
 
-    abstract Optional<ResultListener<GestureRecognitionResult, Image>> resultListener();
+    abstract Optional<ResultListener<GestureRecognitionResult, MPImage>> resultListener();
 
     abstract Optional<ErrorListener> errorListener();
 

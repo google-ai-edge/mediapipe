@@ -25,7 +25,7 @@ import com.google.common.truth.Correspondence;
 import com.google.mediapipe.formats.proto.ClassificationProto;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
-import com.google.mediapipe.framework.image.Image;
+import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.Category;
 import com.google.mediapipe.tasks.components.containers.Landmark;
 import com.google.mediapipe.tasks.components.containers.proto.LandmarksDetectionResultProto.LandmarksDetectionResult;
@@ -357,7 +357,7 @@ public class GestureRecognizerTest {
 
   @Test
   public void recognize_failsWithOutOfOrderInputTimestamps() throws Exception {
-    Image image = getImageFromAsset(THUMB_UP_IMAGE);
+    MPImage image = getImageFromAsset(THUMB_UP_IMAGE);
     GestureRecognitionResult expectedResult =
         getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL, THUMB_UP_INDEX);
     GestureRecognizerOptions options =
@@ -391,7 +391,7 @@ public class GestureRecognizerTest {
 
   @Test
   public void recognize_successWithLiveSteamMode() throws Exception {
-    Image image = getImageFromAsset(THUMB_UP_IMAGE);
+    MPImage image = getImageFromAsset(THUMB_UP_IMAGE);
     GestureRecognitionResult expectedResult =
         getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL, THUMB_UP_INDEX);
     GestureRecognizerOptions options =
@@ -420,7 +420,7 @@ public class GestureRecognizerTest {
     }
   }
 
-  private static Image getImageFromAsset(String filePath) throws Exception {
+  private static MPImage getImageFromAsset(String filePath) throws Exception {
     AssetManager assetManager = ApplicationProvider.getApplicationContext().getAssets();
     InputStream istr = assetManager.open(filePath);
     return new BitmapImageBuilder(BitmapFactory.decodeStream(istr)).build();
@@ -487,7 +487,7 @@ public class GestureRecognizerTest {
     assertThat(expectedGesture.categoryName()).isEqualTo(expectedGesture.categoryName());
   }
 
-  private static void assertImageSizeIsExpected(Image inputImage) {
+  private static void assertImageSizeIsExpected(MPImage inputImage) {
     assertThat(inputImage).isNotNull();
     assertThat(inputImage.getWidth()).isEqualTo(IMAGE_WIDTH);
     assertThat(inputImage.getHeight()).isEqualTo(IMAGE_HEIGHT);

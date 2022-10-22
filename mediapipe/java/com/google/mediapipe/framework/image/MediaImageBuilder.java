@@ -15,11 +15,12 @@ limitations under the License.
 
 package com.google.mediapipe.framework.image;
 
+import android.media.Image;
 import android.os.Build.VERSION_CODES;
 import androidx.annotation.RequiresApi;
 
 /**
- * Builds {@link Image} from {@link android.media.Image}.
+ * Builds {@link MPImage} from {@link android.media.Image}.
  *
  * <p>Once {@link android.media.Image} is passed in, to keep data integrity you shouldn't modify
  * content in it.
@@ -30,7 +31,7 @@ import androidx.annotation.RequiresApi;
 public class MediaImageBuilder {
 
   // Mandatory fields.
-  private final android.media.Image mediaImage;
+  private final Image mediaImage;
 
   // Optional fields.
   private long timestamp;
@@ -40,20 +41,20 @@ public class MediaImageBuilder {
    *
    * @param mediaImage image data object.
    */
-  public MediaImageBuilder(android.media.Image mediaImage) {
+  public MediaImageBuilder(Image mediaImage) {
     this.mediaImage = mediaImage;
     this.timestamp = 0;
   }
 
-  /** Sets value for {@link Image#getTimestamp()}. */
+  /** Sets value for {@link MPImage#getTimestamp()}. */
   MediaImageBuilder setTimestamp(long timestamp) {
     this.timestamp = timestamp;
     return this;
   }
 
-  /** Builds an {@link Image} instance. */
-  public Image build() {
-    return new Image(
+  /** Builds a {@link MPImage} instance. */
+  public MPImage build() {
+    return new MPImage(
         new MediaImageContainer(mediaImage),
         timestamp,
         mediaImage.getWidth(),

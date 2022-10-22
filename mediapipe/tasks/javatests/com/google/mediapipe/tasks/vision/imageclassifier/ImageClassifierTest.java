@@ -24,7 +24,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
-import com.google.mediapipe.framework.image.Image;
+import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.Category;
 import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
 import com.google.mediapipe.tasks.core.BaseOptions;
@@ -342,7 +342,7 @@ public class ImageClassifierTest {
 
     @Test
     public void classify_succeedsWithVideoMode() throws Exception {
-      Image image = getImageFromAsset(BURGER_IMAGE);
+      MPImage image = getImageFromAsset(BURGER_IMAGE);
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
@@ -361,7 +361,7 @@ public class ImageClassifierTest {
 
     @Test
     public void classify_failsWithOutOfOrderInputTimestamps() throws Exception {
-      Image image = getImageFromAsset(BURGER_IMAGE);
+      MPImage image = getImageFromAsset(BURGER_IMAGE);
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
@@ -388,7 +388,7 @@ public class ImageClassifierTest {
 
     @Test
     public void classify_succeedsWithLiveStreamMode() throws Exception {
-      Image image = getImageFromAsset(BURGER_IMAGE);
+      MPImage image = getImageFromAsset(BURGER_IMAGE);
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
@@ -411,7 +411,7 @@ public class ImageClassifierTest {
     }
   }
 
-  private static Image getImageFromAsset(String filePath) throws Exception {
+  private static MPImage getImageFromAsset(String filePath) throws Exception {
     AssetManager assetManager = ApplicationProvider.getApplicationContext().getAssets();
     InputStream istr = assetManager.open(filePath);
     return new BitmapImageBuilder(BitmapFactory.decodeStream(istr)).build();
@@ -437,7 +437,7 @@ public class ImageClassifierTest {
     }
   }
 
-  private static void assertImageSizeIsExpected(Image inputImage) {
+  private static void assertImageSizeIsExpected(MPImage inputImage) {
     assertThat(inputImage).isNotNull();
     assertThat(inputImage.getWidth()).isEqualTo(480);
     assertThat(inputImage.getHeight()).isEqualTo(325);
