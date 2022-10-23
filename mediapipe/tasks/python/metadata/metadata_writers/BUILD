@@ -1,4 +1,4 @@
-# Placeholder for internal Python strict library compatibility macro.
+# Placeholder for internal Python strict library and test compatibility macro.
 
 package(
     default_visibility = [

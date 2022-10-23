@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python strict test compatibility macro.
 
 licenses(["notice"])
 
@@ -23,15 +24,12 @@ package(
 py_library(
     name = "data_util",
     srcs = ["data_util.py"],
-    srcs_version = "PY3",
 )
 
 py_test(
     name = "data_util_test",
     srcs = ["data_util_test.py"],
     data = ["//mediapipe/model_maker/python/core/data/testdata"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [":data_util"],
 )
 
@@ -44,8 +42,6 @@ py_library(
 py_test(
     name = "dataset_test",
     srcs = ["dataset_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":dataset",
         "//mediapipe/model_maker/python/core/utils:test_util",
@@ -55,14 +51,11 @@ py_test(
 py_library(
     name = "classification_dataset",
     srcs = ["classification_dataset.py"],
-    srcs_version = "PY3",
     deps = [":dataset"],
 )
 
 py_test(
     name = "classification_dataset_test",
     srcs = ["classification_dataset_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [":classification_dataset"],
 )
