@@ -1,4 +1,4 @@
-# Copyright 2019-2020 The MediaPipe Authors.
+# Copyright 2019-2022 The MediaPipe Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -209,9 +209,9 @@ def _mediapipe_jni(name, gen_libmediapipe, calculators = []):
 def mediapipe_build_aar_with_jni(name, android_library):
     """Builds MediaPipe AAR with jni.
 
-      Args:
-        name: The bazel target name.
-        android_library: the android library that contains jni.
+    Args:
+      name: The bazel target name.
+      android_library: the android library that contains jni.
     """
 
     # Generates dummy AndroidManifest.xml for dummy apk usage
@@ -329,18 +329,13 @@ def mediapipe_java_proto_srcs(name = ""):
     ))
 
     proto_src_list.append(mediapipe_java_proto_src_extractor(
-        target = "//mediapipe/framework/formats:landmark_java_proto_lite",
-        src_out = "com/google/mediapipe/formats/proto/LandmarkProto.java",
-    ))
-
-    proto_src_list.append(mediapipe_java_proto_src_extractor(
         target = "//mediapipe/framework/formats/annotation:rasterization_java_proto_lite",
         src_out = "com/google/mediapipe/formats/annotation/proto/RasterizationProto.java",
     ))
 
     proto_src_list.append(mediapipe_java_proto_src_extractor(
-        target = "//mediapipe/framework/formats:location_data_java_proto_lite",
-        src_out = "com/google/mediapipe/formats/proto/LocationDataProto.java",
+        target = "//mediapipe/framework/formats:classification_java_proto_lite",
+        src_out = "com/google/mediapipe/formats/proto/ClassificationProto.java",
     ))
 
     proto_src_list.append(mediapipe_java_proto_src_extractor(
@@ -349,8 +344,18 @@ def mediapipe_java_proto_srcs(name = ""):
     ))
 
     proto_src_list.append(mediapipe_java_proto_src_extractor(
-        target = "//mediapipe/framework/formats:classification_java_proto_lite",
-        src_out = "com/google/mediapipe/formats/proto/ClassificationProto.java",
+        target = "//mediapipe/framework/formats:landmark_java_proto_lite",
+        src_out = "com/google/mediapipe/formats/proto/LandmarkProto.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/framework/formats:location_data_java_proto_lite",
+        src_out = "com/google/mediapipe/formats/proto/LocationDataProto.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/framework/formats:rect_java_proto_lite",
+        src_out = "com/google/mediapipe/formats/proto/RectProto.java",
     ))
     return proto_src_list
 

@@ -141,3 +141,11 @@ android_library(
         "@maven//:com_google_guava_guava",
     ],
 )
+
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_tasks_vision_aar")
+
+mediapipe_tasks_vision_aar(
+    name = "tasks_vision",
+    srcs = glob(["**/*.java"]),
+    native_library = ":libmediapipe_tasks_vision_jni_lib",
+)
