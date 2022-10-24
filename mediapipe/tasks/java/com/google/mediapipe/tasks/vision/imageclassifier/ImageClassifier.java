@@ -26,7 +26,7 @@ import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.ProtoUtil;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
-import com.google.mediapipe.tasks.components.container.proto.ClassificationsProto;
+import com.google.mediapipe.tasks.components.containers.proto.ClassificationsProto;
 import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
