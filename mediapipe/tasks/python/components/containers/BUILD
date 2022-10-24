@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict library compatibility macro.
+# Placeholder for internal Python strict library and test compatibility macro.
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -31,7 +31,7 @@ py_library(
     name = "category",
     srcs = ["category.py"],
     deps = [
-        "//mediapipe/tasks/cc/components/containers:category_py_pb2",
+        "//mediapipe/tasks/cc/components/containers/proto:category_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )

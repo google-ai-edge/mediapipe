@@ -31,11 +31,12 @@
 #if MEDIAPIPE_METAL_ENABLED
 #import <Metal/Metal.h>
 #endif  // MEDIAPIPE_METAL_ENABLED
-
+#ifndef MEDIAPIPE_NO_JNI
 #if __ANDROID_API__ >= 26 || defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
 #define MEDIAPIPE_TENSOR_USE_AHWB 1
 #endif  // __ANDROID_API__ >= 26 ||
         // defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
+#endif  // MEDIAPIPE_NO_JNI
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
 #include <android/hardware_buffer.h>
@@ -43,7 +44,6 @@
 #include "third_party/GL/gl/include/EGL/egl.h"
 #include "third_party/GL/gl/include/EGL/eglext.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
-
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
@@ -97,8 +97,8 @@ class Tensor {
     kUInt8,
     kInt8,
     kInt32,
-    // TODO: Update the inference runner to handle kTfLiteString.
-    kChar
+    kChar,
+    kBool
   };
   struct Shape {
     Shape() = default;
@@ -330,6 +330,8 @@ class Tensor {
         return sizeof(int32_t);
       case ElementType::kChar:
         return sizeof(char);
+      case ElementType::kBool:
+        return sizeof(bool);
     }
   }
   int bytes() const { return shape_.num_elements() * element_size(); }

@@ -14,9 +14,12 @@
 
 package com.google.mediapipe.tasks.vision.core;
 
+import android.graphics.RectF;
+import com.google.mediapipe.formats.proto.RectProto.NormalizedRect;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
-import com.google.mediapipe.framework.image.Image;
+import com.google.mediapipe.framework.ProtoUtil;
+import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.core.TaskResult;
 import com.google.mediapipe.tasks.core.TaskRunner;
 import java.util.HashMap;
@@ -27,32 +30,45 @@ public class BaseVisionTaskApi implements AutoCloseable {
   private static final long MICROSECONDS_PER_MILLISECOND = 1000;
   private final TaskRunner runner;
   private final RunningMode runningMode;
+  private final String imageStreamName;
+  private final String normRectStreamName;
 
   static {
     System.loadLibrary("mediapipe_tasks_vision_jni");
+    ProtoUtil.registerTypeName(NormalizedRect.class, "mediapipe.NormalizedRect");
   }
 
   /**
-   * Constructor to initialize an {@link BaseVisionTaskApi} from a {@link TaskRunner} and a vision
-   * task {@link RunningMode}.
+   * Constructor to initialize a {@link BaseVisionTaskApi}.
    *
    * @param runner a {@link TaskRunner}.
    * @param runningMode a mediapipe vision task {@link RunningMode}.
+   * @param imageStreamName the name of the input image stream.
+   * @param normRectStreamName the name of the input normalized rect image stream used to provide
+   *     (mandatory) rotation and (optional) region-of-interest.
    */
-  public BaseVisionTaskApi(TaskRunner runner, RunningMode runningMode) {
+  public BaseVisionTaskApi(
+      TaskRunner runner,
+      RunningMode runningMode,
+      String imageStreamName,
+      String normRectStreamName) {
     this.runner = runner;
     this.runningMode = runningMode;
+    this.imageStreamName = imageStreamName;
+    this.normRectStreamName = normRectStreamName;
   }
 
   /**
    * A synchronous method to process single image inputs. The call blocks the current thread until a
    * failure status or a successful result is returned.
    *
-   * @param imageStreamName the image input stream name.
-   * @param image a MediaPipe {@link Image} object for processing.
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference.
    * @throws MediaPipeException if the task is not in the image mode.
    */
-  protected TaskResult processImageData(String imageStreamName, Image image) {
+  protected TaskResult processImageData(
+      MPImage image, ImageProcessingOptions imageProcessingOptions) {
     if (runningMode != RunningMode.IMAGE) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
@@ -61,6 +77,9 @@ public class BaseVisionTaskApi implements AutoCloseable {
     }
     Map<String, Packet> inputPackets = new HashMap<>();
     inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
+    inputPackets.put(
+        normRectStreamName,
+        runner.getPacketCreator().createProto(convertToNormalizedRect(imageProcessingOptions)));
     return runner.process(inputPackets);
   }
 
@@ -68,12 +87,14 @@ public class BaseVisionTaskApi implements AutoCloseable {
    * A synchronous method to process continuous video frames. The call blocks the current thread
    * until a failure status or a successful result is returned.
    *
-   * @param imageStreamName the image input stream name.
-   * @param image a MediaPipe {@link Image} object for processing.
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference.
    * @param timestampMs the corresponding timestamp of the input image in milliseconds.
    * @throws MediaPipeException if the task is not in the video mode.
    */
-  protected TaskResult processVideoData(String imageStreamName, Image image, long timestampMs) {
+  protected TaskResult processVideoData(
+      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
     if (runningMode != RunningMode.VIDEO) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
@@ -82,6 +103,9 @@ public class BaseVisionTaskApi implements AutoCloseable {
     }
     Map<String, Packet> inputPackets = new HashMap<>();
     inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
+    inputPackets.put(
+        normRectStreamName,
+        runner.getPacketCreator().createProto(convertToNormalizedRect(imageProcessingOptions)));
     return runner.process(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
   }
 
@@ -89,12 +113,14 @@ public class BaseVisionTaskApi implements AutoCloseable {
    * An asynchronous method to send live stream data to the {@link TaskRunner}. The results will be
    * available in the user-defined result listener.
    *
-   * @param imageStreamName the image input stream name.
-   * @param image a MediaPipe {@link Image} object for processing.
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference.
    * @param timestampMs the corresponding timestamp of the input image in milliseconds.
-   * @throws MediaPipeException if the task is not in the video mode.
+   * @throws MediaPipeException if the task is not in the stream mode.
    */
-  protected void sendLiveStreamData(String imageStreamName, Image image, long timestampMs) {
+  protected void sendLiveStreamData(
+      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
     if (runningMode != RunningMode.LIVE_STREAM) {
       throw new MediaPipeException(
           MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
@@ -103,6 +129,9 @@ public class BaseVisionTaskApi implements AutoCloseable {
     }
     Map<String, Packet> inputPackets = new HashMap<>();
     inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
+    inputPackets.put(
+        normRectStreamName,
+        runner.getPacketCreator().createProto(convertToNormalizedRect(imageProcessingOptions)));
     runner.send(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
   }
 
@@ -110,5 +139,25 @@ public class BaseVisionTaskApi implements AutoCloseable {
   @Override
   public void close() {
     runner.close();
+  }
+
+  /**
+   * Converts an {@link ImageProcessingOptions} instance into a {@link NormalizedRect} protobuf
+   * message.
+   */
+  private static NormalizedRect convertToNormalizedRect(
+      ImageProcessingOptions imageProcessingOptions) {
+    RectF regionOfInterest =
+        imageProcessingOptions.regionOfInterest().isPresent()
+            ? imageProcessingOptions.regionOfInterest().get()
+            : new RectF(0, 0, 1, 1);
+    return NormalizedRect.newBuilder()
+        .setXCenter(regionOfInterest.centerX())
+        .setYCenter(regionOfInterest.centerY())
+        .setWidth(regionOfInterest.width())
+        .setHeight(regionOfInterest.height())
+        // Convert to radians anti-clockwise.
+        .setRotation(-(float) Math.PI * imageProcessingOptions.rotationDegrees() / 180.0f)
+        .build();
   }
 }

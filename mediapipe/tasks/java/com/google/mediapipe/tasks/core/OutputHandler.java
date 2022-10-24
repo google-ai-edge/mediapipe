@@ -117,7 +117,7 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
       if (errorListener != null) {
         errorListener.onError(e);
       } else {
-        Log.e(TAG, "Error occurs when getting MediaPipe vision task result. " + e);
+        Log.e(TAG, "Error occurs when getting MediaPipe task result. " + e);
       }
     } finally {
       for (Packet packet : packets) {

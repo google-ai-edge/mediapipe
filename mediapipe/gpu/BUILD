@@ -378,8 +378,11 @@ cc_library(
         ],
     }),
     deps = [
+        ":gl_texture_buffer",
         ":gpu_buffer_format",
         ":gpu_buffer_storage",
+        ":image_frame_view",
+        "//mediapipe/framework/formats:image_frame",
         "@com_google_absl//absl/strings:str_format",
     ],
 )
@@ -1050,7 +1053,7 @@ objc_library(
     alwayslink = 1,
 )
 
-MIN_IOS_VERSION = "9.0"  # For thread_local.
+MIN_IOS_VERSION = "11.0"
 
 test_suite(
     name = "ios",

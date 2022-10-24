@@ -37,8 +37,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/audio/core/running_mode.h"
 #include "mediapipe/tasks/cc/audio/utils/test_utils.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/containers/category.pb.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/category.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #include "tensorflow/lite/core/shims/cc/shims_test_util.h"
 
 namespace mediapipe {
@@ -49,6 +49,7 @@ namespace {
 
 using ::absl::StatusOr;
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::testing::HasSubstr;
 using ::testing::Optional;
 
@@ -183,7 +184,7 @@ TEST_F(CreateFromOptionsTest, FailsWithMissingModel) {
   EXPECT_THAT(
       audio_classifier_or.status().message(),
       HasSubstr("ExternalFile must specify at least one of 'file_content', "
-                "'file_name' or 'file_descriptor_meta'."));
+                "'file_name', 'file_pointer_meta' or 'file_descriptor_meta'."));
   EXPECT_THAT(audio_classifier_or.status().GetPayload(kMediaPipeTasksPayload),
               Optional(absl::Cord(absl::StrCat(
                   MediaPipeTasksStatus::kRunnerInitializationError))));

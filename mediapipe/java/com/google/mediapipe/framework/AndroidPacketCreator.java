@@ -17,8 +17,8 @@ package com.google.mediapipe.framework;
 import android.graphics.Bitmap;
 import com.google.mediapipe.framework.image.BitmapExtractor;
 import com.google.mediapipe.framework.image.ByteBufferExtractor;
-import com.google.mediapipe.framework.image.Image;
-import com.google.mediapipe.framework.image.ImageProperties;
+import com.google.mediapipe.framework.image.MPImage;
+import com.google.mediapipe.framework.image.MPImageProperties;
 import java.nio.ByteBuffer;
 
 // TODO: use Preconditions in this file.
@@ -60,24 +60,24 @@ public class AndroidPacketCreator extends PacketCreator {
   }
 
   /**
-   * Creates an Image packet from an {@link Image}.
+   * Creates a MediaPipe Image packet from a {@link MPImage}.
    *
    * <p>The ImageContainerType must be IMAGE_CONTAINER_BYTEBUFFER or IMAGE_CONTAINER_BITMAP.
    */
-  public Packet createImage(Image image) {
+  public Packet createImage(MPImage image) {
     // TODO: Choose the best storage from multiple containers.
-    ImageProperties properties = image.getContainedImageProperties().get(0);
-    if (properties.getStorageType() == Image.STORAGE_TYPE_BYTEBUFFER) {
+    MPImageProperties properties = image.getContainedImageProperties().get(0);
+    if (properties.getStorageType() == MPImage.STORAGE_TYPE_BYTEBUFFER) {
       ByteBuffer buffer = ByteBufferExtractor.extract(image);
       int numChannels = 0;
       switch (properties.getImageFormat()) {
-        case Image.IMAGE_FORMAT_RGBA:
+        case MPImage.IMAGE_FORMAT_RGBA:
           numChannels = 4;
           break;
-        case Image.IMAGE_FORMAT_RGB:
+        case MPImage.IMAGE_FORMAT_RGB:
           numChannels = 3;
           break;
-        case Image.IMAGE_FORMAT_ALPHA:
+        case MPImage.IMAGE_FORMAT_ALPHA:
           numChannels = 1;
           break;
         default: // fall out
@@ -90,7 +90,7 @@ public class AndroidPacketCreator extends PacketCreator {
       int height = image.getHeight();
       return createImage(buffer, width, height, numChannels);
     }
-    if (properties.getImageFormat() == Image.STORAGE_TYPE_BITMAP) {
+    if (properties.getImageFormat() == MPImage.STORAGE_TYPE_BITMAP) {
       Bitmap bitmap = BitmapExtractor.extract(image);
       if (bitmap.getConfig() != Bitmap.Config.ARGB_8888) {
         throw new UnsupportedOperationException("bitmap must use ARGB_8888 config.");

@@ -26,10 +26,11 @@ option java_outer_classname = "ExternalFileProto";
 // (1) file contents loaded in `file_content`.
 // (2) file path in `file_name`.
 // (3) file descriptor through `file_descriptor_meta` as returned by open(2).
+// (4) file pointer and length in memory through `file_pointer_meta`.
 //
 // If more than one field of these fields is provided, they are used in this
 // precedence order.
-// Next id: 4
+// Next id: 5
 message ExternalFile {
   // The file contents as a byte array.
   optional bytes file_content = 1;
@@ -40,6 +41,13 @@ message ExternalFile {
   // The file descriptor to a file opened with open(2), with optional additional
   // offset and length information.
   optional FileDescriptorMeta file_descriptor_meta = 3;
+
+  // The pointer points to location of a file in memory. Use the util method,
+  // `SetExternalFile` in [1], to configure `file_pointer_meta` from a
+  // `std::string_view` object.
+  //
+  // [1]: mediapipe/tasks/cc/metadata/utils/zip_utils.h
+  optional FilePointerMeta file_pointer_meta = 4;
 }
 
 // A proto defining file descriptor metadata for mapping file into memory using
@@ -61,4 +69,15 @@ message FileDescriptorMeta {
   // This is an advanced option, e.g. this can be used on Android to specify the
   // offset of a given asset obtained from AssetFileDescriptor#getStartOffset().
   optional int64 offset = 3;
+}
+
+// The pointer points to location of a file in memory. Make sure the file memory
+// that it points locates on the same machine and it outlives this
+// FilePointerMeta object.
+message FilePointerMeta {
+  // Memory address of the file in decimal.
+  optional uint64 pointer = 1;
+
+  // File length.
+  optional int64 length = 2;
 }

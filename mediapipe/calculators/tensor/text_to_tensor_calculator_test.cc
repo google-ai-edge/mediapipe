@@ -67,9 +67,7 @@ absl::StatusOr<std::string> RunTextToTensorCalculator(absl::string_view text) {
         "tensor_vec has size $0, expected 1", tensor_vec.size()));
   }
   if (tensor_vec[0].element_type() != Tensor::ElementType::kChar) {
-    return absl::InvalidArgumentError(absl::Substitute(
-        "tensor has element type $0, expected $1", tensor_vec[0].element_type(),
-        Tensor::ElementType::kChar));
+    return absl::InvalidArgumentError("Expected tensor element type kChar");
   }
   const char* buffer = tensor_vec[0].GetCpuReadView().buffer<char>();
   return std::string(buffer, text.length());

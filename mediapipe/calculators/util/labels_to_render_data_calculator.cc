@@ -184,6 +184,17 @@ absl::Status LabelsToRenderDataCalculator::Process(CalculatorContext* cc) {
     text->set_left(label_left_px_);
     text->set_baseline(label_baseline_px + i * label_height_px_);
     text->set_font_face(options_.font_face());
+    if (options_.outline_thickness() > 0) {
+      text->set_outline_thickness(options_.outline_thickness());
+      if (options_.outline_color_size() > 0) {
+        *(text->mutable_outline_color()) =
+            options_.outline_color(i % options_.outline_color_size());
+      } else {
+        text->mutable_outline_color()->set_r(0);
+        text->mutable_outline_color()->set_g(0);
+        text->mutable_outline_color()->set_b(0);
+      }
+    }
   }
   cc->Outputs()
       .Tag(kRenderDataTag)

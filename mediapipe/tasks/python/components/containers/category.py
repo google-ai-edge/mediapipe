@@ -16,7 +16,7 @@
 import dataclasses
 from typing import Any
 
-from mediapipe.tasks.cc.components.containers import category_pb2
+from mediapipe.tasks.cc.components.containers.proto import category_pb2
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _CategoryProto = category_pb2.Category

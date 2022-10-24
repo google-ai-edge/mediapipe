@@ -26,6 +26,7 @@ limitations under the License.
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
@@ -39,10 +40,14 @@ ModelResourcesCache::ModelResourcesCache(
     graph_op_resolver_packet_ =
         api2::PacketAdopting<tflite::OpResolver>(std::move(graph_op_resolver));
   }
-};
+}
 
 bool ModelResourcesCache::Exists(const std::string& tag) const {
   return model_resources_collection_.contains(tag);
+}
+
+bool ModelResourcesCache::ModelAssetBundleExists(const std::string& tag) const {
+  return model_asset_bundle_resources_collection_.contains(tag);
 }
 
 absl::Status ModelResourcesCache::AddModelResources(
@@ -92,6 +97,62 @@ absl::StatusOr<const ModelResources*> ModelResourcesCache::GetModelResources(
         MediaPipeTasksStatus::kRunnerModelResourcesCacheServiceError);
   }
   return model_resources_collection_.at(tag).get();
+}
+
+absl::Status ModelResourcesCache::AddModelAssetBundleResources(
+    std::unique_ptr<ModelAssetBundleResources> model_asset_bundle_resources) {
+  if (model_asset_bundle_resources == nullptr) {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        "ModelAssetBundleResources object is null.",
+        MediaPipeTasksStatus::kRunnerModelResourcesCacheServiceError);
+  }
+  const std::string& tag = model_asset_bundle_resources->GetTag();
+  if (tag.empty()) {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        "ModelAssetBundleResources must have a non-empty tag.",
+        MediaPipeTasksStatus::kRunnerModelResourcesCacheServiceError);
+  }
+  if (ModelAssetBundleExists(tag)) {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        absl::Substitute(
+            "ModelAssetBundleResources with tag \"$0\" already exists.", tag),
+        MediaPipeTasksStatus::kRunnerModelResourcesCacheServiceError);
+  }
+  model_asset_bundle_resources_collection_.emplace(
+      tag, std::move(model_asset_bundle_resources));
+  return absl::OkStatus();
+}
+
+absl::Status ModelResourcesCache::AddModelAssetBundleResourcesCollection(
+    std::vector<std::unique_ptr<ModelAssetBundleResources>>&
+        model_asset_bundle_resources_collection) {
+  for (auto& model_bundle_resources : model_asset_bundle_resources_collection) {
+    MP_RETURN_IF_ERROR(
+        AddModelAssetBundleResources(std::move(model_bundle_resources)));
+  }
+  return absl::OkStatus();
+}
+
+absl::StatusOr<const ModelAssetBundleResources*>
+ModelResourcesCache::GetModelAssetBundleResources(
+    const std::string& tag) const {
+  if (tag.empty()) {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        "ModelAssetBundleResources must be retrieved with a non-empty tag.",
+        MediaPipeTasksStatus::kRunnerModelResourcesCacheServiceError);
+  }
+  if (!ModelAssetBundleExists(tag)) {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        absl::Substitute(
+            "ModelAssetBundleResources with tag \"$0\" does not exist.", tag),
+        MediaPipeTasksStatus::kRunnerModelResourcesCacheServiceError);
+  }
+  return model_asset_bundle_resources_collection_.at(tag).get();
 }
 
 absl::StatusOr<api2::Packet<tflite::OpResolver>>

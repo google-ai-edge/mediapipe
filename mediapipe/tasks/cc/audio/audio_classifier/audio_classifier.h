@@ -23,8 +23,8 @@ limitations under the License.
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/tasks/cc/audio/core/base_audio_task_api.h"
 #include "mediapipe/tasks/cc/audio/core/running_mode.h"
-#include "mediapipe/tasks/cc/components/classifier_options.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 
 namespace mediapipe {
@@ -40,7 +40,7 @@ struct AudioClassifierOptions {
 
   // Options for configuring the classifier behavior, such as score threshold,
   // number of results, etc.
-  components::ClassifierOptions classifier_options;
+  components::processors::ClassifierOptions classifier_options;
 
   // The running mode of the audio classifier. Default to the audio clips mode.
   // Audio classifier has two running modes:
@@ -59,8 +59,9 @@ struct AudioClassifierOptions {
   // The user-defined result callback for processing audio stream data.
   // The result callback should only be specified when the running mode is set
   // to RunningMode::AUDIO_STREAM.
-  std::function<void(absl::StatusOr<ClassificationResult>)> result_callback =
-      nullptr;
+  std::function<void(
+      absl::StatusOr<components::containers::proto::ClassificationResult>)>
+      result_callback = nullptr;
 };
 
 // Performs audio classification on audio clips or audio stream.
@@ -132,8 +133,8 @@ class AudioClassifier : tasks::audio::core::BaseAudioTaskApi {
   //     framed audio clip.
   // TODO: Use `sample_rate` in AudioClassifierOptions by default
   // and makes `audio_sample_rate` optional.
-  absl::StatusOr<ClassificationResult> Classify(mediapipe::Matrix audio_clip,
-                                                double audio_sample_rate);
+  absl::StatusOr<components::containers::proto::ClassificationResult> Classify(
+      mediapipe::Matrix audio_clip, double audio_sample_rate);
 
   // Sends audio data (a block in a continuous audio stream) to perform audio
   // classification. Only use this method when the AudioClassifier is created

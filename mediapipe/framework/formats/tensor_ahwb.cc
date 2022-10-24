@@ -371,7 +371,7 @@ void* Tensor::MapAhwbToCpuRead() const {
         if ((valid_ & kValidOpenGlBuffer) && ssbo_written_ == -1) {
           // EGLSync is failed. Use another synchronization method.
           // TODO: Use tflite::gpu::GlBufferSync and GlActiveSync.
-          glFinish();
+          gl_context_->Run([]() { glFinish(); });
         } else if (valid_ & kValidAHardwareBuffer) {
           CHECK(ahwb_written_) << "Ahwb-to-Cpu synchronization requires the "
                                   "completion function to be set";

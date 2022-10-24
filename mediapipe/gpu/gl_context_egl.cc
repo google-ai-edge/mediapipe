@@ -47,6 +47,8 @@ static void EglThreadExitCallback(void* key_value) {
   // implementations, and should be considered as an undocumented vendor
   // extension.
   // https://www.khronos.org/registry/EGL/sdk/docs/man/html/eglMakeCurrent.xhtml
+  //
+  // NOTE: crashes on some Android devices (occurs with libGLES_meow.so).
   eglMakeCurrent(eglGetDisplay(EGL_DEFAULT_DISPLAY), EGL_NO_SURFACE,
                  EGL_NO_SURFACE, EGL_NO_CONTEXT);
 #endif

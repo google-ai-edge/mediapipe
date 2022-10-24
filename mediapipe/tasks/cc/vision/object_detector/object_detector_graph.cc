@@ -28,6 +28,7 @@ limitations under the License.
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/calculators/score_calibration_calculator.pb.h"
@@ -87,6 +88,7 @@ constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kIndicesTag[] = "INDICES";
 constexpr char kMatrixTag[] = "MATRIX";
+constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kPixelDetectionsTag[] = "PIXEL_DETECTIONS";
 constexpr char kProjectionMatrixTag[] = "PROJECTION_MATRIX";
 constexpr char kScoresTag[] = "SCORES";
@@ -457,12 +459,18 @@ void ConfigureTensorsToDetectionsCalculator(
 // Inputs:
 //   IMAGE - Image
 //     Image to perform detection on.
+//   NORM_RECT - NormalizedRect @Optional
+//     Describes image rotation and region of image to perform detection
+//     on.
+//     @Optional: rect covering the whole image is used if not specified.
 //
 // Outputs:
 //   DETECTIONS - std::vector<Detection>
 //     Detected objects with bounding box in pixel units.
 //   IMAGE - mediapipe::Image
 //     The image that object detection runs on.
+// All returned coordinates are in the unrotated and uncropped input image
+// coordinates system.
 //
 // Example:
 // node {
@@ -494,9 +502,10 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
     Graph graph;
     ASSIGN_OR_RETURN(
         auto output_streams,
-        BuildObjectDetectionTask(sc->Options<ObjectDetectorOptionsProto>(),
-                                 *model_resources,
-                                 graph[Input<Image>(kImageTag)], graph));
+        BuildObjectDetectionTask(
+            sc->Options<ObjectDetectorOptionsProto>(), *model_resources,
+            graph[Input<Image>(kImageTag)],
+            graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
     output_streams.detections >>
         graph[Output<std::vector<Detection>>(kDetectionsTag)];
     output_streams.image >> graph[Output<Image>(kImageTag)];
@@ -519,7 +528,7 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
   absl::StatusOr<ObjectDetectionOutputStreams> BuildObjectDetectionTask(
       const ObjectDetectorOptionsProto& task_options,
       const core::ModelResources& model_resources, Source<Image> image_in,
-      Graph& graph) {
+      Source<NormalizedRect> norm_rect_in, Graph& graph) {
     MP_RETURN_IF_ERROR(SanityCheckOptions(task_options));
     // Checks that the model has 4 outputs.
     auto& model = *model_resources.GetTfLiteModel();
@@ -559,6 +568,7 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
         &preprocessing
              .GetOptions<tasks::components::ImagePreprocessingOptions>()));
     image_in >> preprocessing.In(kImageTag);
+    norm_rect_in >> preprocessing.In(kNormRectTag);
 
     // Adds inference subgraph and connects its input stream to the output
     // tensors produced by the ImageToTensorCalculator.

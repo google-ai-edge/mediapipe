@@ -25,7 +25,7 @@ from mediapipe.tasks.python.components.containers import bounding_box as boundin
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import detections as detections_module
 from mediapipe.tasks.python.core import base_options as base_options_module
-from mediapipe.tasks.python.test import test_util
+from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import object_detector
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
@@ -99,8 +99,8 @@ class ObjectDetectorTest(parameterized.TestCase):
   def setUp(self):
     super().setUp()
     self.test_image = _Image.create_from_file(
-        test_util.get_test_data_path(_IMAGE_FILE))
-    self.model_path = test_util.get_test_data_path(_MODEL_FILE)
+        test_utils.get_test_data_path(_IMAGE_FILE))
+    self.model_path = test_utils.get_test_data_path(_MODEL_FILE)
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
     # Creates with default option and valid model file successfully.
@@ -119,7 +119,7 @@ class ObjectDetectorTest(parameterized.TestCase):
     with self.assertRaisesRegex(
         ValueError,
         r"ExternalFile must specify at least one of 'file_content', "
-        r"'file_name' or 'file_descriptor_meta'."):
+        r"'file_name', 'file_pointer_meta' or 'file_descriptor_meta'."):
       base_options = _BaseOptions(model_asset_path='')
       options = _ObjectDetectorOptions(base_options=base_options)
       _ObjectDetector.create_from_options(options)

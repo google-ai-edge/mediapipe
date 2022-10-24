@@ -241,6 +241,36 @@ TEST_F(TensorsToClassificationCalculatorTest,
 }
 
 TEST_F(TensorsToClassificationCalculatorTest,
+       CorrectOutputWithTensorNameAndIndex) {
+  mediapipe::CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
+    calculator: "TensorsToClassificationCalculator"
+    input_stream: "TENSORS:tensors"
+    output_stream: "CLASSIFICATIONS:classifications"
+    options {
+      [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
+        tensor_index: 1
+        tensor_name: "foo"
+      }
+    }
+  )pb"));
+
+  BuildGraph(&runner, {0, 0.5, 1});
+  MP_ASSERT_OK(runner.Run());
+
+  const auto& output_packets_ = runner.Outputs().Tag("CLASSIFICATIONS").packets;
+
+  EXPECT_EQ(1, output_packets_.size());
+
+  const auto& classification_list =
+      output_packets_[0].Get<ClassificationList>();
+  EXPECT_EQ(3, classification_list.classification_size());
+
+  // Verify that the tensor_index and tensor_name fields are correctly set.
+  EXPECT_EQ(classification_list.tensor_index(), 1);
+  EXPECT_EQ(classification_list.tensor_name(), "foo");
+}
+
+TEST_F(TensorsToClassificationCalculatorTest,
        ClassNameAllowlistWithLabelItems) {
   mediapipe::CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
     calculator: "TensorsToClassificationCalculator"

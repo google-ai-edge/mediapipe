@@ -21,11 +21,11 @@ limitations under the License.
 
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
-#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #include "mediapipe/tasks/cc/components/embedder_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 
 namespace mediapipe {
@@ -88,9 +88,17 @@ class ImageEmbedder : core::BaseVisionTaskApi {
   static absl::StatusOr<std::unique_ptr<ImageEmbedder>> Create(
       std::unique_ptr<ImageEmbedderOptions> options);
 
-  // Performs embedding extraction on the provided single image. Extraction
-  // is performed on the region of interest specified by the `roi` argument if
-  // provided, or on the entire image otherwise.
+  // Performs embedding extraction on the provided single image.
+  //
+  // The optional 'image_processing_options' parameter can be used to specify:
+  // - the rotation to apply to the image before performing embedding
+  //   extraction, by setting its 'rotation_degrees' field.
+  // and/or
+  // - the region-of-interest on which to perform embedding extraction, by
+  //   setting its 'region_of_interest' field. If not specified, the full image
+  //   is used.
+  // If both are specified, the crop around the region-of-interest is extracted
+  // first, then the specified rotation is applied to the crop.
   //
   // Only use this method when the ImageEmbedder is created with the image
   // running mode.
@@ -98,11 +106,20 @@ class ImageEmbedder : core::BaseVisionTaskApi {
   // The image can be of any size with format RGB or RGBA.
   absl::StatusOr<components::containers::proto::EmbeddingResult> Embed(
       mediapipe::Image image,
-      std::optional<mediapipe::NormalizedRect> roi = std::nullopt);
+      std::optional<core::ImageProcessingOptions> image_processing_options =
+          std::nullopt);
 
-  // Performs embedding extraction on the provided video frame. Extraction
-  // is performed on the region of interested specified by the `roi` argument if
-  // provided, or on the entire image otherwise.
+  // Performs embedding extraction on the provided video frame.
+  //
+  // The optional 'image_processing_options' parameter can be used to specify:
+  // - the rotation to apply to the image before performing embedding
+  //   extraction, by setting its 'rotation_degrees' field.
+  // and/or
+  // - the region-of-interest on which to perform embedding extraction, by
+  //   setting its 'region_of_interest' field. If not specified, the full image
+  //   is used.
+  // If both are specified, the crop around the region-of-interest is extracted
+  // first, then the specified rotation is applied to the crop.
   //
   // Only use this method when the ImageEmbedder is created with the video
   // running mode.
@@ -112,12 +129,21 @@ class ImageEmbedder : core::BaseVisionTaskApi {
   // must be monotonically increasing.
   absl::StatusOr<components::containers::proto::EmbeddingResult> EmbedForVideo(
       mediapipe::Image image, int64 timestamp_ms,
-      std::optional<mediapipe::NormalizedRect> roi = std::nullopt);
+      std::optional<core::ImageProcessingOptions> image_processing_options =
+          std::nullopt);
 
   // Sends live image data to embedder, and the results will be available via
-  // the "result_callback" provided in the ImageEmbedderOptions. Embedding
-  // extraction is performed on the region of interested specified by the `roi`
-  // argument if provided, or on the entire image otherwise.
+  // the "result_callback" provided in the ImageEmbedderOptions.
+  //
+  // The optional 'image_processing_options' parameter can be used to specify:
+  // - the rotation to apply to the image before performing embedding
+  //   extraction, by setting its 'rotation_degrees' field.
+  // and/or
+  // - the region-of-interest on which to perform embedding extraction, by
+  //   setting its 'region_of_interest' field. If not specified, the full image
+  //   is used.
+  // If both are specified, the crop around the region-of-interest is extracted
+  // first, then the specified rotation is applied to the crop.
   //
   // Only use this method when the ImageEmbedder is created with the live
   // stream running mode.
@@ -135,9 +161,9 @@ class ImageEmbedder : core::BaseVisionTaskApi {
   //     longer be valid when the callback returns. To access the image data
   //     outside of the callback, callers need to make a copy of the image.
   //   - The input timestamp in milliseconds.
-  absl::Status EmbedAsync(
-      mediapipe::Image image, int64 timestamp_ms,
-      std::optional<mediapipe::NormalizedRect> roi = std::nullopt);
+  absl::Status EmbedAsync(mediapipe::Image image, int64 timestamp_ms,
+                          std::optional<core::ImageProcessingOptions>
+                              image_processing_options = std::nullopt);
 
   // Shuts down the ImageEmbedder when all works are done.
   absl::Status Close() { return runner_->Close(); }

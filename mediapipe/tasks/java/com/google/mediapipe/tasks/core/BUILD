@@ -20,6 +20,7 @@ android_library(
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",
     ],
+    manifest = "AndroidManifest.xml",
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator_java_proto_lite",
         "//mediapipe/calculators/tensor:inference_calculator_java_proto_lite",
@@ -31,7 +32,19 @@ android_library(
         "//mediapipe/tasks/cc/core/proto:external_file_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
         "//third_party:autovalue",
-        "//third_party/java/protobuf:protobuf_lite",
+        "@com_google_protobuf//:protobuf_javalite",
         "@maven//:com_google_guava_guava",
     ],
+)
+
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_tasks_core_aar")
+
+mediapipe_tasks_core_aar(
+    name = "tasks_core",
+    srcs = glob(["*.java"]) + [
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:java_src",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:java_src",
+        "//mediapipe/java/com/google/mediapipe/framework/image:java_src",
+    ],
+    manifest = "AndroidManifest.xml",
 )

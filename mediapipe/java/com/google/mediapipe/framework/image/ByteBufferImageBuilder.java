@@ -15,11 +15,11 @@ limitations under the License.
 
 package com.google.mediapipe.framework.image;
 
-import com.google.mediapipe.framework.image.Image.ImageFormat;
+import com.google.mediapipe.framework.image.MPImage.MPImageFormat;
 import java.nio.ByteBuffer;
 
 /**
- * Builds a {@link Image} from a {@link ByteBuffer}.
+ * Builds a {@link MPImage} from a {@link ByteBuffer}.
  *
  * <p>You can pass in either mutable or immutable {@link ByteBuffer}. However once {@link
  * ByteBuffer} is passed in, to keep data integrity you shouldn't modify content in it.
@@ -32,7 +32,7 @@ public class ByteBufferImageBuilder {
   private final ByteBuffer buffer;
   private final int width;
   private final int height;
-  @ImageFormat private final int imageFormat;
+  @MPImageFormat private final int imageFormat;
 
   // Optional fields.
   private long timestamp;
@@ -49,7 +49,7 @@ public class ByteBufferImageBuilder {
    * @param imageFormat how the data encode the image.
    */
   public ByteBufferImageBuilder(
-      ByteBuffer byteBuffer, int width, int height, @ImageFormat int imageFormat) {
+      ByteBuffer byteBuffer, int width, int height, @MPImageFormat int imageFormat) {
     this.buffer = byteBuffer;
     this.width = width;
     this.height = height;
@@ -58,14 +58,14 @@ public class ByteBufferImageBuilder {
     this.timestamp = 0;
   }
 
-  /** Sets value for {@link Image#getTimestamp()}. */
+  /** Sets value for {@link MPImage#getTimestamp()}. */
   ByteBufferImageBuilder setTimestamp(long timestamp) {
     this.timestamp = timestamp;
     return this;
   }
 
-  /** Builds an {@link Image} instance. */
-  public Image build() {
-    return new Image(new ByteBufferImageContainer(buffer, imageFormat), timestamp, width, height);
+  /** Builds a {@link MPImage} instance. */
+  public MPImage build() {
+    return new MPImage(new ByteBufferImageContainer(buffer, imageFormat), timestamp, width, height);
   }
 }

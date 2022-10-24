@@ -34,3 +34,39 @@ android_library(
         "@maven//:com_google_guava_guava",
     ],
 )
+
+android_library(
+    name = "classification_entry",
+    srcs = ["ClassificationEntry.java"],
+    deps = [
+        ":category",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "classifications",
+    srcs = ["Classifications.java"],
+    deps = [
+        ":classification_entry",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "landmark",
+    srcs = ["Landmark.java"],
+    deps = [
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+# Expose the java source files for building mediapipe tasks core AAR.
+filegroup(
+    name = "java_src",
+    srcs = glob(["*.java"]),
+    visibility = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/core:__subpackages__"],
+)

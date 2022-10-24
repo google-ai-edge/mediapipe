@@ -20,7 +20,7 @@ package mediapipe.tasks.vision.object_detector.proto;
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
-option java_package = "com.google.mediapipe.tasks.vision.objectdetector";
+option java_package = "com.google.mediapipe.tasks.vision.objectdetector.proto";
 option java_outer_classname = "ObjectDetectorOptionsProto";
 
 message ObjectDetectorOptions {

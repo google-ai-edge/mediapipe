@@ -430,6 +430,8 @@ TEST(BuilderTest, AnyTypeCanBeCast) {
       node[AnyAndSameTypeCalculator::kAnyTypeOutput].Cast<double>();
   any_type_output.SetName("any_type_output");
 
+  any_type_output >> graph.Out("GRAPH_ANY_OUTPUT").Cast<double>();
+
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         node {
@@ -438,6 +440,7 @@ TEST(BuilderTest, AnyTypeCanBeCast) {
           output_stream: "ANY_OUTPUT:any_type_output"
         }
         input_stream: "GRAPH_ANY_INPUT:__stream_0"
+        output_stream: "GRAPH_ANY_OUTPUT:any_type_output"
       )pb");
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }

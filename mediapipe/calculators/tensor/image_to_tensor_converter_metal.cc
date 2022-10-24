@@ -262,7 +262,6 @@ class SubRectExtractorMetal {
     RET_CHECK(pipeline_state != nil);
 
     std::string output_type_def;
-    MTLPixelFormat pixel_format;
     switch (output_format) {
       case OutputFormat::kF16C4:
         output_type_def = R"(
@@ -348,10 +347,10 @@ class MetalProcessor : public ImageToTensorConverter {
     return absl::OkStatus();
   }
 
-  absl::StatusOr<Tensor> Convert(const mediapipe::Image& input,
-                                 const RotatedRect& roi,
-                                 const Size& output_dims, float range_min,
-                                 float range_max) override {
+  absl::Status Convert(const mediapipe::Image& input, const RotatedRect& roi,
+                       float range_min, float range_max,
+                       int tensor_buffer_offset,
+                       Tensor& output_tensor) override {
     if (input.format() != mediapipe::GpuBufferFormat::kBGRA32 &&
         input.format() != mediapipe::GpuBufferFormat::kRGBAHalf64 &&
         input.format() != mediapipe::GpuBufferFormat::kRGBAFloat128) {
@@ -359,15 +358,14 @@ class MetalProcessor : public ImageToTensorConverter {
           "Only 4-channel texture input formats are supported, passed format: ",
           static_cast<uint32_t>(input.format())));
     }
+    RET_CHECK_EQ(tensor_buffer_offset, 0)
+        << "The non-zero tensor_buffer_offset input is not supported yet.";
+    const auto& output_shape = output_tensor.shape();
+    MP_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
 
     @autoreleasepool {
       id<MTLTexture> texture =
           [metal_helper_ metalTextureWithGpuBuffer:input.GetGpuBuffer()];
-
-      constexpr int kNumChannels = 4;
-      Tensor tensor(Tensor::ElementType::kFloat32,
-                    Tensor::Shape{1, output_dims.height, output_dims.width,
-                                  kNumChannels});
 
       constexpr float kInputImageRangeMin = 0.0f;
       constexpr float kInputImageRangeMax = 1.0f;
@@ -377,18 +375,30 @@ class MetalProcessor : public ImageToTensorConverter {
                                       range_min, range_max));
 
       id<MTLCommandBuffer> command_buffer = [metal_helper_ commandBuffer];
-      const auto& buffer_view = tensor.GetMtlBufferWriteView(command_buffer);
+      const auto& buffer_view =
+          output_tensor.GetMtlBufferWriteView(command_buffer);
       MP_RETURN_IF_ERROR(extractor_->Execute(
           texture, roi,
           /*flip_horizontaly=*/false, transform.scale, transform.offset,
-          tflite::gpu::HW(output_dims.height, output_dims.width),
+          tflite::gpu::HW(output_shape.dims[1], output_shape.dims[2]),
           command_buffer, buffer_view.buffer()));
       [command_buffer commit];
-      return tensor;
+      return absl::OkStatus();
     }
   }
 
  private:
+  absl::Status ValidateTensorShape(const Tensor::Shape& output_shape) {
+    RET_CHECK_EQ(output_shape.dims.size(), 4)
+        << "Wrong output dims size: " << output_shape.dims.size();
+    RET_CHECK_EQ(output_shape.dims[0], 1)
+        << "Handling batch dimension not equal to 1 is not implemented in this "
+           "converter.";
+    RET_CHECK_EQ(output_shape.dims[3], 4)
+        << "Wrong output channel: " << output_shape.dims[3];
+    return absl::OkStatus();
+  }
+
   MPPMetalHelper* metal_helper_ = nil;
   std::unique_ptr<SubRectExtractorMetal> extractor_;
 };

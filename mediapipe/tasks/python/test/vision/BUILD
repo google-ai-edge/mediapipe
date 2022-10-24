@@ -31,7 +31,7 @@ py_test(
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:detections",
         "//mediapipe/tasks/python/core:base_options",
-        "//mediapipe/tasks/python/test:test_util",
+        "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:object_detector",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
     ],

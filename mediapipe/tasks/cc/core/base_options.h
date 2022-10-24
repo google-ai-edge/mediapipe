@@ -20,6 +20,7 @@ limitations under the License.
 #include <string>
 
 #include "absl/memory/memory.h"
+#include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 #include "tensorflow/lite/kernels/register.h"
@@ -63,7 +64,7 @@ struct BaseOptions {
   // A non-default OpResolver to support custom Ops or specify a subset of
   // built-in Ops.
   std::unique_ptr<tflite::OpResolver> op_resolver =
-      absl::make_unique<tflite::ops::builtin::BuiltinOpResolver>();
+      absl::make_unique<MediaPipeBuiltinOpResolver>();
 };
 
 // Converts a BaseOptions to a BaseOptionsProto.

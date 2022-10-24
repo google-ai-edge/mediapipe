@@ -26,6 +26,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
@@ -46,6 +47,10 @@ class ModelResourcesCache {
   // Returns whether the tag exists in the model resources cache.
   bool Exists(const std::string& tag) const;
 
+  // Returns whether the tag of the model asset bundle exists in the model
+  // resources cache.
+  bool ModelAssetBundleExists(const std::string& tag) const;
+
   // Adds a ModelResources object into the cache.
   // The tag of the ModelResources must be unique; the ownership of the
   // ModelResources will be transferred into the cache.
@@ -62,6 +67,23 @@ class ModelResourcesCache {
   absl::StatusOr<const ModelResources*> GetModelResources(
       const std::string& tag) const;
 
+  // Adds a ModelAssetBundleResources object into the cache.
+  // The tag of the ModelAssetBundleResources must be unique; the ownership of
+  // the ModelAssetBundleResources will be transferred into the cache.
+  absl::Status AddModelAssetBundleResources(
+      std::unique_ptr<ModelAssetBundleResources> model_asset_bundle_resources);
+
+  // Adds a collection of the ModelAssetBundleResources objects into the cache.
+  // The tag of the each ModelAssetBundleResources must be unique; the ownership
+  // of every ModelAssetBundleResources will be transferred into the cache.
+  absl::Status AddModelAssetBundleResourcesCollection(
+      std::vector<std::unique_ptr<ModelAssetBundleResources>>&
+          model_asset_bundle_resources_collection);
+
+  // Retrieves a const ModelAssetBundleResources pointer by the unique tag.
+  absl::StatusOr<const ModelAssetBundleResources*> GetModelAssetBundleResources(
+      const std::string& tag) const;
+
   // Retrieves the graph op resolver packet.
   absl::StatusOr<api2::Packet<tflite::OpResolver>> GetGraphOpResolverPacket()
       const;
@@ -73,6 +95,11 @@ class ModelResourcesCache {
   // A collection of ModelResources objects for the models in the graph.
   absl::flat_hash_map<std::string, std::unique_ptr<ModelResources>>
       model_resources_collection_;
+
+  // A collection of ModelAssetBundleResources objects for the model bundles in
+  // the graph.
+  absl::flat_hash_map<std::string, std::unique_ptr<ModelAssetBundleResources>>
+      model_asset_bundle_resources_collection_;
 };
 
 // Global service for mediapipe task model resources cache.

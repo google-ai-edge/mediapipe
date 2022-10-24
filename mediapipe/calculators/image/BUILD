@@ -210,10 +210,17 @@ cc_library(
 )
 
 mediapipe_proto_library(
+    name = "rotation_mode_proto",
+    srcs = ["rotation_mode.proto"],
+    visibility = ["//visibility:public"],
+)
+
+mediapipe_proto_library(
     name = "image_transformation_calculator_proto",
     srcs = ["image_transformation_calculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
+        ":rotation_mode_proto",
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/gpu:scale_mode_proto",
@@ -238,6 +245,7 @@ cc_library(
     }),
     visibility = ["//visibility:public"],
     deps = [
+        ":rotation_mode_cc_proto",
         ":image_transformation_calculator_cc_proto",
         "//mediapipe/framework:packet",
         "//mediapipe/framework:timestamp",

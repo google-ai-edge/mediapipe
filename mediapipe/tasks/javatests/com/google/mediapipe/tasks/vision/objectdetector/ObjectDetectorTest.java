@@ -24,11 +24,12 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
-import com.google.mediapipe.framework.image.Image;
+import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.Category;
 import com.google.mediapipe.tasks.components.containers.Detection;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.TestUtils;
+import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.objectdetector.ObjectDetector.ObjectDetectorOptions;
 import java.io.InputStream;
@@ -45,10 +46,11 @@ import org.junit.runners.Suite.SuiteClasses;
 public class ObjectDetectorTest {
   private static final String MODEL_FILE = "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.tflite";
   private static final String CAT_AND_DOG_IMAGE = "cats_and_dogs.jpg";
+  private static final String CAT_AND_DOG_ROTATED_IMAGE = "cats_and_dogs_rotated.jpg";
   private static final int IMAGE_WIDTH = 1200;
   private static final int IMAGE_HEIGHT = 600;
   private static final float CAT_SCORE = 0.69f;
-  private static final RectF catBoundingBox = new RectF(611, 164, 986, 596);
+  private static final RectF CAT_BOUNDING_BOX = new RectF(611, 164, 986, 596);
   // TODO: Figure out why android_x86 and android_arm tests have slightly different
   // scores (0.6875 vs 0.69921875).
   private static final float SCORE_DIFF_TOLERANCE = 0.01f;
@@ -67,7 +69,7 @@ public class ObjectDetectorTest {
       ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
-      assertContainsOnlyCat(results, catBoundingBox, CAT_SCORE);
+      assertContainsOnlyCat(results, CAT_BOUNDING_BOX, CAT_SCORE);
     }
 
     @Test
@@ -104,7 +106,7 @@ public class ObjectDetectorTest {
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
       // The score threshold should block all other other objects, except cat.
-      assertContainsOnlyCat(results, catBoundingBox, CAT_SCORE);
+      assertContainsOnlyCat(results, CAT_BOUNDING_BOX, CAT_SCORE);
     }
 
     @Test
@@ -175,7 +177,7 @@ public class ObjectDetectorTest {
       ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
-      assertContainsOnlyCat(results, catBoundingBox, CAT_SCORE);
+      assertContainsOnlyCat(results, CAT_BOUNDING_BOX, CAT_SCORE);
     }
 
     @Test
@@ -226,6 +228,46 @@ public class ObjectDetectorTest {
       assertThat(exception)
           .hasMessageThat()
           .contains("`category_allowlist` and `category_denylist` are mutually exclusive options.");
+    }
+
+    @Test
+    public void detect_succeedsWithRotation() throws Exception {
+      ObjectDetectorOptions options =
+          ObjectDetectorOptions.builder()
+              .setBaseOptions(BaseOptions.builder().setModelAssetPath(MODEL_FILE).build())
+              .setMaxResults(1)
+              .setCategoryAllowlist(Arrays.asList("cat"))
+              .build();
+      ObjectDetector objectDetector =
+          ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      ImageProcessingOptions imageProcessingOptions =
+          ImageProcessingOptions.builder().setRotationDegrees(-90).build();
+      ObjectDetectionResult results =
+          objectDetector.detect(
+              getImageFromAsset(CAT_AND_DOG_ROTATED_IMAGE), imageProcessingOptions);
+
+      assertContainsOnlyCat(results, new RectF(22.0f, 611.0f, 452.0f, 890.0f), 0.7109375f);
+    }
+
+    @Test
+    public void detect_failsWithRegionOfInterest() throws Exception {
+      ObjectDetectorOptions options =
+          ObjectDetectorOptions.builder()
+              .setBaseOptions(BaseOptions.builder().setModelAssetPath(MODEL_FILE).build())
+              .build();
+      ObjectDetector objectDetector =
+          ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      ImageProcessingOptions imageProcessingOptions =
+          ImageProcessingOptions.builder().setRegionOfInterest(new RectF(0, 0, 1, 1)).build();
+      IllegalArgumentException exception =
+          assertThrows(
+              IllegalArgumentException.class,
+              () ->
+                  objectDetector.detect(
+                      getImageFromAsset(CAT_AND_DOG_IMAGE), imageProcessingOptions));
+      assertThat(exception)
+          .hasMessageThat()
+          .contains("ObjectDetector doesn't support region-of-interest");
     }
 
     // TODO: Implement detect_succeedsWithFloatImages, detect_succeedsWithOrientation,
@@ -282,12 +324,16 @@ public class ObjectDetectorTest {
       MediaPipeException exception =
           assertThrows(
               MediaPipeException.class,
-              () -> objectDetector.detectForVideo(getImageFromAsset(CAT_AND_DOG_IMAGE), 0));
+              () ->
+                  objectDetector.detectForVideo(
+                      getImageFromAsset(CAT_AND_DOG_IMAGE), /*timestampsMs=*/ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
       exception =
           assertThrows(
               MediaPipeException.class,
-              () -> objectDetector.detectAsync(getImageFromAsset(CAT_AND_DOG_IMAGE), 0));
+              () ->
+                  objectDetector.detectAsync(
+                      getImageFromAsset(CAT_AND_DOG_IMAGE), /*timestampsMs=*/ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -309,7 +355,9 @@ public class ObjectDetectorTest {
       exception =
           assertThrows(
               MediaPipeException.class,
-              () -> objectDetector.detectAsync(getImageFromAsset(CAT_AND_DOG_IMAGE), 0));
+              () ->
+                  objectDetector.detectAsync(
+                      getImageFromAsset(CAT_AND_DOG_IMAGE), /*timestampsMs=*/ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -333,7 +381,9 @@ public class ObjectDetectorTest {
       exception =
           assertThrows(
               MediaPipeException.class,
-              () -> objectDetector.detectForVideo(getImageFromAsset(CAT_AND_DOG_IMAGE), 0));
+              () ->
+                  objectDetector.detectForVideo(
+                      getImageFromAsset(CAT_AND_DOG_IMAGE), /*timestampsMs=*/ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
     }
 
@@ -348,7 +398,7 @@ public class ObjectDetectorTest {
       ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
-      assertContainsOnlyCat(results, catBoundingBox, CAT_SCORE);
+      assertContainsOnlyCat(results, CAT_BOUNDING_BOX, CAT_SCORE);
     }
 
     @Test
@@ -363,30 +413,33 @@ public class ObjectDetectorTest {
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       for (int i = 0; i < 3; i++) {
         ObjectDetectionResult results =
-            objectDetector.detectForVideo(getImageFromAsset(CAT_AND_DOG_IMAGE), i);
-        assertContainsOnlyCat(results, catBoundingBox, CAT_SCORE);
+            objectDetector.detectForVideo(
+                getImageFromAsset(CAT_AND_DOG_IMAGE), /*timestampsMs=*/ i);
+        assertContainsOnlyCat(results, CAT_BOUNDING_BOX, CAT_SCORE);
       }
     }
 
     @Test
     public void detect_failsWithOutOfOrderInputTimestamps() throws Exception {
-      Image image = getImageFromAsset(CAT_AND_DOG_IMAGE);
+      MPImage image = getImageFromAsset(CAT_AND_DOG_IMAGE);
       ObjectDetectorOptions options =
           ObjectDetectorOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(MODEL_FILE).build())
               .setRunningMode(RunningMode.LIVE_STREAM)
               .setResultListener(
                   (objectDetectionResult, inputImage) -> {
-                    assertContainsOnlyCat(objectDetectionResult, catBoundingBox, CAT_SCORE);
+                    assertContainsOnlyCat(objectDetectionResult, CAT_BOUNDING_BOX, CAT_SCORE);
                     assertImageSizeIsExpected(inputImage);
                   })
               .setMaxResults(1)
               .build();
       try (ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
-        objectDetector.detectAsync(image, 1);
+        objectDetector.detectAsync(image, /*timestampsMs=*/ 1);
         MediaPipeException exception =
-            assertThrows(MediaPipeException.class, () -> objectDetector.detectAsync(image, 0));
+            assertThrows(
+                MediaPipeException.class,
+                () -> objectDetector.detectAsync(image, /*timestampsMs=*/ 0));
         assertThat(exception)
             .hasMessageThat()
             .contains("having a smaller timestamp than the processed timestamp");
@@ -395,14 +448,14 @@ public class ObjectDetectorTest {
 
     @Test
     public void detect_successWithLiveSteamMode() throws Exception {
-      Image image = getImageFromAsset(CAT_AND_DOG_IMAGE);
+      MPImage image = getImageFromAsset(CAT_AND_DOG_IMAGE);
       ObjectDetectorOptions options =
           ObjectDetectorOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(MODEL_FILE).build())
               .setRunningMode(RunningMode.LIVE_STREAM)
               .setResultListener(
                   (objectDetectionResult, inputImage) -> {
-                    assertContainsOnlyCat(objectDetectionResult, catBoundingBox, CAT_SCORE);
+                    assertContainsOnlyCat(objectDetectionResult, CAT_BOUNDING_BOX, CAT_SCORE);
                     assertImageSizeIsExpected(inputImage);
                   })
               .setMaxResults(1)
@@ -410,13 +463,13 @@ public class ObjectDetectorTest {
       try (ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
         for (int i = 0; i < 3; i++) {
-          objectDetector.detectAsync(image, i);
+          objectDetector.detectAsync(image, /*timestampsMs=*/ i);
         }
       }
     }
   }
 
-  private static Image getImageFromAsset(String filePath) throws Exception {
+  private static MPImage getImageFromAsset(String filePath) throws Exception {
     AssetManager assetManager = ApplicationProvider.getApplicationContext().getAssets();
     InputStream istr = assetManager.open(filePath);
     return new BitmapImageBuilder(BitmapFactory.decodeStream(istr)).build();
@@ -448,7 +501,7 @@ public class ObjectDetectorTest {
     assertThat(boundingBox1.bottom).isWithin(PIXEL_DIFF_TOLERANCE).of(boundingBox2.bottom);
   }
 
-  private static void assertImageSizeIsExpected(Image inputImage) {
+  private static void assertImageSizeIsExpected(MPImage inputImage) {
     assertThat(inputImage).isNotNull();
     assertThat(inputImage.getWidth()).isEqualTo(IMAGE_WIDTH);
     assertThat(inputImage.getHeight()).isEqualTo(IMAGE_HEIGHT);

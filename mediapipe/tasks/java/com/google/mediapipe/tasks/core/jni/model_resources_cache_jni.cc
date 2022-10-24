@@ -17,11 +17,13 @@
 #include <utility>
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph_service_jni.h"
+#include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
 #include "tensorflow/lite/core/shims/cc/kernels/register.h"
 
 namespace {
 using ::mediapipe::tasks::core::kModelResourcesCacheService;
+using ::mediapipe::tasks::core::MediaPipeBuiltinOpResolver;
 using ::mediapipe::tasks::core::ModelResourcesCache;
 using HandleType = std::shared_ptr<ModelResourcesCache>*;
 }  // namespace
@@ -29,7 +31,7 @@ using HandleType = std::shared_ptr<ModelResourcesCache>*;
 JNIEXPORT jlong JNICALL MODEL_RESOURCES_CACHE_METHOD(
     nativeCreateModelResourcesCache)(JNIEnv* env, jobject thiz) {
   auto ptr = std::make_shared<ModelResourcesCache>(
-      absl::make_unique<tflite_shims::ops::builtin::BuiltinOpResolver>());
+      absl::make_unique<MediaPipeBuiltinOpResolver>());
   HandleType handle = new std::shared_ptr<ModelResourcesCache>(std::move(ptr));
   return reinterpret_cast<jlong>(handle);
 }

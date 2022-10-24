@@ -64,7 +64,7 @@ void BasicTraceEventTypes(TraceEventRegistry* result) {
   std::vector<TraceEventType> basic_types = {
       {TraceEvent::UNKNOWN, "An uninitialized trace-event."},
       {TraceEvent::OPEN, "A call to Calculator::Open.", true, true},
-      {TraceEvent::PROCESS, "A call to Calculator::Open.", true, true},
+      {TraceEvent::PROCESS, "A call to Calculator::Process.", true, true},
       {TraceEvent::CLOSE, "A call to Calculator::Close.", true, true},
 
       {TraceEvent::NOT_READY, "A calculator cannot process packets yet."},

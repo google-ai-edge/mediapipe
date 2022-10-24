@@ -65,6 +65,7 @@ class GlTextureView {
   friend class GpuBuffer;
   friend class GlTextureBuffer;
   friend class GpuBufferStorageCvPixelBuffer;
+  friend class GpuBufferStorageAhwb;
   GlTextureView(GlContext* context, GLenum target, GLuint name, int width,
                 int height, std::shared_ptr<GpuBuffer> gpu_buffer, int plane,
                 DetachFn detach, DoneWritingFn done_writing)

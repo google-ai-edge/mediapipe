@@ -23,6 +23,7 @@ limitations under the License.
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/calculators/tensor/tensors_to_segmentation_calculator.pb.h"
@@ -62,6 +63,7 @@ using LabelItems = mediapipe::proto_ns::Map<int64, ::mediapipe::LabelMapItem>;
 constexpr char kSegmentationTag[] = "SEGMENTATION";
 constexpr char kGroupedSegmentationTag[] = "GROUPED_SEGMENTATION";
 constexpr char kImageTag[] = "IMAGE";
+constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kOutputSizeTag[] = "OUTPUT_SIZE";
 
@@ -159,6 +161,10 @@ absl::StatusOr<const Tensor*> GetOutputTensor(
 // Inputs:
 //   IMAGE - Image
 //     Image to perform segmentation on.
+//   NORM_RECT - NormalizedRect @Optional
+//     Describes image rotation and region of image to perform detection
+//     on.
+//     @Optional: rect covering the whole image is used if not specified.
 //
 // Outputs:
 //   SEGMENTATION - mediapipe::Image @Multiple
@@ -196,10 +202,12 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
     ASSIGN_OR_RETURN(const auto* model_resources,
                      CreateModelResources<ImageSegmenterOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(auto output_streams,
-                     BuildSegmentationTask(
-                         sc->Options<ImageSegmenterOptions>(), *model_resources,
-                         graph[Input<Image>(kImageTag)], graph));
+    ASSIGN_OR_RETURN(
+        auto output_streams,
+        BuildSegmentationTask(
+            sc->Options<ImageSegmenterOptions>(), *model_resources,
+            graph[Input<Image>(kImageTag)],
+            graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
 
     auto& merge_images_to_vector =
         graph.AddNode("MergeImagesToVectorCalculator");
@@ -228,7 +236,7 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
   absl::StatusOr<ImageSegmenterOutputs> BuildSegmentationTask(
       const ImageSegmenterOptions& task_options,
       const core::ModelResources& model_resources, Source<Image> image_in,
-      Graph& graph) {
+      Source<NormalizedRect> norm_rect_in, Graph& graph) {
     MP_RETURN_IF_ERROR(SanityCheckOptions(task_options));
 
     // Adds preprocessing calculators and connects them to the graph input image
@@ -240,6 +248,7 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
         &preprocessing
              .GetOptions<tasks::components::ImagePreprocessingOptions>()));
     image_in >> preprocessing.In(kImageTag);
+    norm_rect_in >> preprocessing.In(kNormRectTag);
 
     // Adds inference subgraph and connects its input stream to the output
     // tensors produced by the ImageToTensorCalculator.

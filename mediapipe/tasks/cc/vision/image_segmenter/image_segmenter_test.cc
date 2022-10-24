@@ -29,9 +29,10 @@ limitations under the License.
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/components/calculators/tensor/tensors_to_segmentation_calculator.pb.h"
+#include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
-#include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_op_resolvers.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/core/shims/cc/shims_test_util.h"
@@ -45,6 +46,8 @@ namespace {
 
 using ::mediapipe::Image;
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::components::containers::Rect;
+using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::HasSubstr;
 using ::testing::Optional;
 
@@ -192,7 +195,7 @@ TEST_F(CreateFromOptionsTest, FailsWithMissingModel) {
   EXPECT_THAT(
       segmenter_or.status().message(),
       HasSubstr("ExternalFile must specify at least one of 'file_content', "
-                "'file_name' or 'file_descriptor_meta'."));
+                "'file_name', 'file_pointer_meta' or 'file_descriptor_meta'."));
   EXPECT_THAT(segmenter_or.status().GetPayload(kMediaPipeTasksPayload),
               Optional(absl::Cord(absl::StrCat(
                   MediaPipeTasksStatus::kRunnerInitializationError))));
@@ -238,7 +241,6 @@ TEST_F(ImageModeTest, SucceedsWithConfidenceMask) {
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
-  MP_ASSERT_OK_AND_ASSIGN(auto results, segmenter->Segment(image));
   MP_ASSERT_OK_AND_ASSIGN(auto confidence_masks, segmenter->Segment(image));
   EXPECT_EQ(confidence_masks.size(), 21);
 
@@ -254,14 +256,67 @@ TEST_F(ImageModeTest, SucceedsWithConfidenceMask) {
               SimilarToFloatMask(expected_mask_float, kGoldenMaskSimilarity));
 }
 
+TEST_F(ImageModeTest, SucceedsWithRotation) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      Image image, DecodeImageFromFile(
+                       JoinPath("./", kTestDataDirectory, "cat_rotated.jpg")));
+  auto options = std::make_unique<ImageSegmenterOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
+  options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
+  options->activation = ImageSegmenterOptions::Activation::SOFTMAX;
+
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
+                          ImageSegmenter::Create(std::move(options)));
+  ImageProcessingOptions image_processing_options;
+  image_processing_options.rotation_degrees = -90;
+  MP_ASSERT_OK_AND_ASSIGN(auto confidence_masks, segmenter->Segment(image));
+  EXPECT_EQ(confidence_masks.size(), 21);
+
+  cv::Mat expected_mask =
+      cv::imread(JoinPath("./", kTestDataDirectory, "cat_rotated_mask.jpg"),
+                 cv::IMREAD_GRAYSCALE);
+  cv::Mat expected_mask_float;
+  expected_mask.convertTo(expected_mask_float, CV_32FC1, 1 / 255.f);
+
+  // Cat category index 8.
+  cv::Mat cat_mask = mediapipe::formats::MatView(
+      confidence_masks[8].GetImageFrameSharedPtr().get());
+  EXPECT_THAT(cat_mask,
+              SimilarToFloatMask(expected_mask_float, kGoldenMaskSimilarity));
+}
+
+TEST_F(ImageModeTest, FailsWithRegionOfInterest) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      Image image,
+      DecodeImageFromFile(JoinPath("./", kTestDataDirectory, "cat.jpg")));
+  auto options = std::make_unique<ImageSegmenterOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
+  options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
+  options->activation = ImageSegmenterOptions::Activation::SOFTMAX;
+
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
+                          ImageSegmenter::Create(std::move(options)));
+  Rect roi{/*left=*/0.1, /*top=*/0, /*right=*/0.9, /*bottom=*/1};
+  ImageProcessingOptions image_processing_options{roi, /*rotation_degrees=*/0};
+
+  auto results = segmenter->Segment(image, image_processing_options);
+  EXPECT_EQ(results.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(results.status().message(),
+              HasSubstr("This task doesn't support region-of-interest"));
+  EXPECT_THAT(
+      results.status().GetPayload(kMediaPipeTasksPayload),
+      Optional(absl::Cord(absl::StrCat(
+          MediaPipeTasksStatus::kImageProcessingInvalidArgumentError))));
+}
+
 TEST_F(ImageModeTest, SucceedsSelfie128x128Segmentation) {
   Image image =
       GetSRGBImage(JoinPath("./", kTestDataDirectory, "mozart_square.jpg"));
   auto options = std::make_unique<ImageSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kSelfie128x128WithMetadata);
-  options->base_options.op_resolver =
-      absl::make_unique<SelfieSegmentationModelOpResolver>();
   options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
   options->activation = ImageSegmenterOptions::Activation::SOFTMAX;
 
@@ -290,8 +345,6 @@ TEST_F(ImageModeTest, SucceedsSelfie144x256Segmentations) {
   auto options = std::make_unique<ImageSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kSelfie144x256WithMetadata);
-  options->base_options.op_resolver =
-      absl::make_unique<SelfieSegmentationModelOpResolver>();
   options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
   options->activation = ImageSegmenterOptions::Activation::NONE;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,

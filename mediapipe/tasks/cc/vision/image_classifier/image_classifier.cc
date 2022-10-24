@@ -26,14 +26,15 @@ limitations under the License.
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/timestamp.h"
-#include "mediapipe/tasks/cc/components/classifier_options.h"
-#include "mediapipe/tasks/cc/components/containers/classifications.pb.h"
-#include "mediapipe/tasks/cc/components/proto/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/processors/classifier_options.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/core/utils.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/image_classifier/proto/image_classifier_graph_options.pb.h"
@@ -56,17 +57,8 @@ constexpr char kSubgraphTypeName[] =
     "mediapipe.tasks.vision.image_classifier.ImageClassifierGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
 
+using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::mediapipe::tasks::core::PacketMap;
-
-// Builds a NormalizedRect covering the entire image.
-NormalizedRect BuildFullImageNormRect() {
-  NormalizedRect norm_rect;
-  norm_rect.set_x_center(0.5);
-  norm_rect.set_y_center(0.5);
-  norm_rect.set_width(1);
-  norm_rect.set_height(1);
-  return norm_rect;
-}
 
 // Creates a MediaPipe graph config that contains a subgraph node of
 // type "ImageClassifierGraph". If the task is running in the live stream mode,
@@ -107,8 +99,8 @@ ConvertImageClassifierOptionsToProto(ImageClassifierOptions* options) {
   options_proto->mutable_base_options()->set_use_stream_mode(
       options->running_mode != core::RunningMode::IMAGE);
   auto classifier_options_proto =
-      std::make_unique<tasks::components::proto::ClassifierOptions>(
-          components::ConvertClassifierOptionsToProto(
+      std::make_unique<components::processors::proto::ClassifierOptions>(
+          components::processors::ConvertClassifierOptionsToProto(
               &(options->classifier_options)));
   options_proto->mutable_classifier_options()->Swap(
       classifier_options_proto.get());
@@ -153,15 +145,16 @@ absl::StatusOr<std::unique_ptr<ImageClassifier>> ImageClassifier::Create(
 }
 
 absl::StatusOr<ClassificationResult> ImageClassifier::Classify(
-    Image image, std::optional<NormalizedRect> roi) {
+    Image image,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  NormalizedRect norm_rect =
-      roi.has_value() ? roi.value() : BuildFullImageNormRect();
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   ConvertToNormalizedRect(image_processing_options));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
@@ -172,15 +165,16 @@ absl::StatusOr<ClassificationResult> ImageClassifier::Classify(
 }
 
 absl::StatusOr<ClassificationResult> ImageClassifier::ClassifyForVideo(
-    Image image, int64 timestamp_ms, std::optional<NormalizedRect> roi) {
+    Image image, int64 timestamp_ms,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  NormalizedRect norm_rect =
-      roi.has_value() ? roi.value() : BuildFullImageNormRect();
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   ConvertToNormalizedRect(image_processing_options));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
@@ -194,16 +188,17 @@ absl::StatusOr<ClassificationResult> ImageClassifier::ClassifyForVideo(
       .Get<ClassificationResult>();
 }
 
-absl::Status ImageClassifier::ClassifyAsync(Image image, int64 timestamp_ms,
-                                            std::optional<NormalizedRect> roi) {
+absl::Status ImageClassifier::ClassifyAsync(
+    Image image, int64 timestamp_ms,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  NormalizedRect norm_rect =
-      roi.has_value() ? roi.value() : BuildFullImageNormRect();
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   ConvertToNormalizedRect(image_processing_options));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

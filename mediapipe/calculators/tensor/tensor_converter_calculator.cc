@@ -296,7 +296,6 @@ absl::Status TensorConverterCalculator::ProcessGPU(CalculatorContext* cc) {
   output_tensors->emplace_back(Tensor::ElementType::kFloat32,
                                Tensor::Shape{1, height, width, channels});
 #if MEDIAPIPE_METAL_ENABLED
-  id<MTLDevice> device = gpu_helper_.mtlDevice;
   id<MTLCommandBuffer> command_buffer = [gpu_helper_ commandBuffer];
   command_buffer.label = @"TensorConverterCalculatorConvert";
   id<MTLComputeCommandEncoder> compute_encoder =

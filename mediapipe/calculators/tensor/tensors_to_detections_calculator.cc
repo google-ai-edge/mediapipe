@@ -532,7 +532,6 @@ absl::Status TensorsToDetectionsCalculator::ProcessGPU(
                                          detection_classes.data(),
                                          output_detections));
 #elif MEDIAPIPE_METAL_ENABLED
-  id<MTLDevice> device = gpu_helper_.mtlDevice;
   if (!anchors_init_) {
     if (input_tensors.size() == kNumInputTensorsWithAnchors) {
       RET_CHECK_EQ(input_tensors.size(), kNumInputTensorsWithAnchors);

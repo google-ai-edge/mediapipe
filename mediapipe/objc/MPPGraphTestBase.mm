@@ -32,10 +32,11 @@ static UIImage* UIImageWithPixelBuffer(CVPixelBufferRef pixelBuffer) {
 static void EnsureOutputDirFor(NSString *outputFile) {
   NSFileManager *fileManager = [NSFileManager defaultManager];
   NSError *error = nil;
-  BOOL result = [fileManager createDirectoryAtPath:[outputFile stringByDeletingLastPathComponent]
-                       withIntermediateDirectories:YES
-                                        attributes:nil
-                                             error:&error];
+  BOOL __unused result =
+      [fileManager createDirectoryAtPath:[outputFile stringByDeletingLastPathComponent]
+             withIntermediateDirectories:YES
+                              attributes:nil
+                                   error:&error];
   // TODO: Log the error for clarity. The file-write will fail later
   // but it would be nice to see this error. However, 'error' is still testing
   // false and result is true even on an unwritable path-- not sure what's up.
@@ -89,17 +90,10 @@ static void EnsureOutputDirFor(NSString *outputFile) {
   __block CVPixelBufferRef output;
   graph.delegate = self;
 
-  // The XCTAssert macros contain references to self, which causes a retain cycle,
-  // since the block retains self and self retains the block. The cycle is broken
-  // at the end of this method, with _pixelBufferOutputBlock = nil, but Clang does
-  // not realize that and outputs a warning. WEAKIFY and STRONGIFY, though not
-  // strictly necessary, are used here to avoid the warning.
-  WEAKIFY(self);
   if (!_pixelBufferOutputBlock) {
     XCTestExpectation* outputReceived = [self expectationWithDescription:@"output received"];
     _pixelBufferOutputBlock = ^(MPPGraph* outputGraph, CVPixelBufferRef outputBuffer,
                                 const std::string& outputStreamName) {
-      STRONGIFY(self);
       XCTAssertEqualObjects(outputGraph, graph);
       XCTAssertEqual(outputStreamName, outputStream);
       CFRetain(outputBuffer);

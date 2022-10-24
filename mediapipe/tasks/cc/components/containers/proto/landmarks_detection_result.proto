@@ -21,6 +21,9 @@ import "mediapipe/framework/formats/classification.proto";
 import "mediapipe/framework/formats/landmark.proto";
 import "mediapipe/framework/formats/rect.proto";
 
+option java_package = "com.google.mediapipe.tasks.components.containers.proto";
+option java_outer_classname = "LandmarksDetectionResultProto";
+
 message LandmarksDetectionResult {
   optional mediapipe.NormalizedLandmarkList landmarks = 1;
   optional mediapipe.ClassificationList classifications = 2;

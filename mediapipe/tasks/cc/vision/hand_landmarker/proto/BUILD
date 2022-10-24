@@ -21,8 +21,8 @@ package(default_visibility = [
 licenses(["notice"])
 
 mediapipe_proto_library(
-    name = "hand_landmarker_subgraph_options_proto",
-    srcs = ["hand_landmarker_subgraph_options.proto"],
+    name = "hand_landmarks_detector_graph_options_proto",
+    srcs = ["hand_landmarks_detector_graph_options.proto"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
@@ -31,13 +31,13 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
-    name = "hand_landmarker_options_proto",
-    srcs = ["hand_landmarker_options.proto"],
+    name = "hand_landmarker_graph_options_proto",
+    srcs = ["hand_landmarker_graph_options.proto"],
     deps = [
-        ":hand_landmarker_subgraph_options_proto",
+        ":hand_landmarks_detector_graph_options_proto",
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_proto",
-        "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_options_proto",
+        "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_proto",
     ],
 )
