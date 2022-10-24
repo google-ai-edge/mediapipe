@@ -36,3 +36,22 @@ py_test(
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
     ],
 )
+
+py_test(
+    name = "gesture_recognizer_test",
+    srcs = ["gesture_recognizer_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+    ],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/components/containers:classification",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/components/containers:rect",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:gesture_recognizer",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)

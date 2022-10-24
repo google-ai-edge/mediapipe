@@ -28,6 +28,43 @@ py_library(
 )
 
 py_library(
+    name = "rect",
+    srcs = ["rect.py"],
+    deps = [
+        "//mediapipe/framework/formats:rect_py_pb2",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "classification",
+    srcs = ["classification.py"],
+    deps = [
+        "//mediapipe/framework/formats:classification_py_pb2",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "landmark",
+    srcs = ["landmark.py"],
+    deps = [
+        "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "gesture",
+    srcs = ["gesture.py"],
+    deps = [
+        ":classification",
+        ":landmark",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
     name = "category",
     srcs = ["category.py"],
     deps = [
