@@ -25,6 +25,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_options.pb.h"
 #include "tensorflow/lite/kernels/register.h"
 
@@ -116,14 +117,21 @@ class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
   // running mode.
   //
   // The image can be of any size with format RGB or RGBA.
-  // TODO: Describes how the input image will be preprocessed
-  // after the yuv support is implemented.
+  //
+  // The optional 'image_processing_options' parameter can be used to specify
+  // the rotation to apply to the image before performing segmentation, by
+  // setting its 'rotation_degrees' field. Note that specifying a
+  // region-of-interest using the 'region_of_interest' field is NOT supported
+  // and will result in an invalid argument error being returned.
   //
   // If the output_type is CATEGORY_MASK, the returned vector of images is
   // per-category segmented image mask.
   // If the output_type is CONFIDENCE_MASK, the returned vector of images
   // contains only one confidence image mask.
-  absl::StatusOr<std::vector<mediapipe::Image>> Segment(mediapipe::Image image);
+  absl::StatusOr<std::vector<mediapipe::Image>> Segment(
+      mediapipe::Image image,
+      std::optional<core::ImageProcessingOptions> image_processing_options =
+          std::nullopt);
 
   // Performs image segmentation on the provided video frame.
   // Only use this method when the ImageSegmenter is created with the video
@@ -133,12 +141,20 @@ class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
   // provide the video frame's timestamp (in milliseconds). The input timestamps
   // must be monotonically increasing.
   //
+  // The optional 'image_processing_options' parameter can be used to specify
+  // the rotation to apply to the image before performing segmentation, by
+  // setting its 'rotation_degrees' field. Note that specifying a
+  // region-of-interest using the 'region_of_interest' field is NOT supported
+  // and will result in an invalid argument error being returned.
+  //
   // If the output_type is CATEGORY_MASK, the returned vector of images is
   // per-category segmented image mask.
   // If the output_type is CONFIDENCE_MASK, the returned vector of images
   // contains only one confidence image mask.
   absl::StatusOr<std::vector<mediapipe::Image>> SegmentForVideo(
-      mediapipe::Image image, int64 timestamp_ms);
+      mediapipe::Image image, int64 timestamp_ms,
+      std::optional<core::ImageProcessingOptions> image_processing_options =
+          std::nullopt);
 
   // Sends live image data to perform image segmentation, and the results will
   // be available via the "result_callback" provided in the
@@ -149,6 +165,12 @@ class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
   // provide a timestamp (in milliseconds) to indicate when the input image is
   // sent to the image segmenter. The input timestamps must be monotonically
   // increasing.
+  //
+  // The optional 'image_processing_options' parameter can be used to specify
+  // the rotation to apply to the image before performing segmentation, by
+  // setting its 'rotation_degrees' field. Note that specifying a
+  // region-of-interest using the 'region_of_interest' field is NOT supported
+  // and will result in an invalid argument error being returned.
   //
   // The "result_callback" prvoides
   //   - A vector of segmented image masks.
@@ -161,7 +183,9 @@ class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
   //     no longer be valid when the callback returns. To access the image data
   //     outside of the callback, callers need to make a copy of the image.
   //   - The input timestamp in milliseconds.
-  absl::Status SegmentAsync(mediapipe::Image image, int64 timestamp_ms);
+  absl::Status SegmentAsync(mediapipe::Image image, int64 timestamp_ms,
+                            std::optional<core::ImageProcessingOptions>
+                                image_processing_options = std::nullopt);
 
   // Shuts down the ImageSegmenter when all works are done.
   absl::Status Close() { return runner_->Close(); }
