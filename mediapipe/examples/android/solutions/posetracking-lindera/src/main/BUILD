@@ -49,6 +49,7 @@ android_binary(
         "@maven//:androidx_fragment_fragment",
         "@maven//:com_google_guava_guava",
         "@maven//:com_afollestad_material_dialogs_core",
+        "@maven//:androidx_annotation_annotation",
     ],
 )
 
