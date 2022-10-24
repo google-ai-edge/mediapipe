@@ -24,9 +24,11 @@ public class Lindera {
     private ComputerVisionPlugin plugin;
     public FpsHelper fpsHelper = new FpsHelper();
     private PoseTracking poseTracking;
+    
     // TODO: Verify that this is the timestamp used in Actual Plugin
     private int timeStamp = 0;
     private CameraRotation cameraRotation = CameraRotation.AUTOMATIC;
+    
     // Live camera demo UI and camera components.
     private CameraInput cameraInput;
     private SolutionGlSurfaceView<PoseTrackingResult> glSurfaceView;
@@ -76,7 +78,7 @@ public class Lindera {
         this.cameraRotation = cameraRotation;
     }
 
-    public void setupEventListener() {
+    private void setupEventListener() {
         poseTracking.setResultListener(
             poseTrackingResult -> {
                 fpsHelper.logNewPoint();
@@ -130,7 +132,6 @@ public class Lindera {
                 );    
     }
 
-
     public void startDetection(PoseTrackingOptions options){
         // ensure that class is initalized
         assert (appCompatActivity != null);
@@ -146,13 +147,17 @@ public class Lindera {
         cameraInput.setNewFrameListener(textureFrame -> poseTracking.send(textureFrame));
 
         // Initializes a new Gl surface view with a user-defined PoseTrackingResultGlRenderer.
-        glSurfaceView =
-                new SolutionGlSurfaceView<>(
-                        appCompatActivity, poseTracking.getGlContext(), poseTracking.getGlMajorVersion());
+        glSurfaceView = 
+            new SolutionGlSurfaceView<>(
+                appCompatActivity, 
+                poseTracking.getGlContext(), 
+                poseTracking.getGlMajorVersion()
+            );
         glSurfaceView.setSolutionResultRenderer(new PoseTrackingResultGlRenderer());
         glSurfaceView.setRenderInputImage(true);
 
         setupEventListener();
+        
         // The runnable to start camera after the gl surface view is attached.
         // For video input source, videoInput.start() will be called when the video uri is available.
         glSurfaceView.post(this::startCamera);
