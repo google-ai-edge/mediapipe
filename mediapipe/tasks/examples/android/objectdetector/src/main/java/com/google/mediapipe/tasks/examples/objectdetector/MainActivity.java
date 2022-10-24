@@ -16,7 +16,6 @@ package com.google.mediapipe.tasks.examples.objectdetector;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -29,9 +28,11 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.exifinterface.media.ExifInterface;
 // ContentResolver dependency
+import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.core.BaseOptions;
+import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.objectdetector.ObjectDetectionResult;
 import com.google.mediapipe.tasks.vision.objectdetector.ObjectDetector;
@@ -82,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
               if (resultIntent != null) {
                 if (result.getResultCode() == RESULT_OK) {
                   Bitmap bitmap = null;
+                  int rotation = 0;
                   try {
                     bitmap =
                         downscaleBitmap(
@@ -93,13 +95,16 @@ public class MainActivity extends AppCompatActivity {
                   try {
                     InputStream imageData =
                         this.getContentResolver().openInputStream(resultIntent.getData());
-                    bitmap = rotateBitmap(bitmap, imageData);
-                  } catch (IOException e) {
+                    rotation = getImageRotation(imageData);
+                  } catch (IOException | MediaPipeException e) {
                     Log.e(TAG, "Bitmap rotation error:" + e);
                   }
                   if (bitmap != null) {
                     MPImage image = new BitmapImageBuilder(bitmap).build();
-                    ObjectDetectionResult detectionResult = objectDetector.detect(image);
+                    ObjectDetectionResult detectionResult =
+                        objectDetector.detect(
+                            image,
+                            ImageProcessingOptions.builder().setRotationDegrees(rotation).build());
                     imageView.setData(image, detectionResult);
                     runOnUiThread(() -> imageView.update());
                   }
@@ -210,28 +215,25 @@ public class MainActivity extends AppCompatActivity {
     return Bitmap.createScaledBitmap(originalBitmap, width, height, false);
   }
 
-  private Bitmap rotateBitmap(Bitmap inputBitmap, InputStream imageData) throws IOException {
+  private int getImageRotation(InputStream imageData) throws IOException, MediaPipeException {
     int orientation =
         new ExifInterface(imageData)
             .getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-    if (orientation == ExifInterface.ORIENTATION_NORMAL) {
-      return inputBitmap;
-    }
-    Matrix matrix = new Matrix();
     switch (orientation) {
+      case ExifInterface.ORIENTATION_NORMAL:
+        return 0;
       case ExifInterface.ORIENTATION_ROTATE_90:
-        matrix.postRotate(90);
-        break;
+        return 90;
       case ExifInterface.ORIENTATION_ROTATE_180:
-        matrix.postRotate(180);
-        break;
+        return 180;
       case ExifInterface.ORIENTATION_ROTATE_270:
-        matrix.postRotate(270);
-        break;
+        return 270;
       default:
-        matrix.postRotate(0);
+        // TODO: use getRotationDegrees() and isFlipped() instead of switch once flip
+        // is supported.
+        throw new MediaPipeException(
+            MediaPipeException.StatusCode.UNIMPLEMENTED.ordinal(),
+            "Flipped images are not supported yet.");
     }
-    return Bitmap.createBitmap(
-        inputBitmap, 0, 0, inputBitmap.getWidth(), inputBitmap.getHeight(), matrix, true);
   }
 }
