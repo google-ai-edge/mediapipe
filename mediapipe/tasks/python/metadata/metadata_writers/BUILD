@@ -37,3 +37,9 @@ py_library(
     srcs = ["writer_utils.py"],
     deps = ["//mediapipe/tasks/metadata:schema_py"],
 )
+
+py_library(
+    name = "image_classifier",
+    srcs = ["image_classifier.py"],
+    deps = [":metadata_writer"],
+)

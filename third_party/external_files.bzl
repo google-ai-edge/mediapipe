@@ -365,6 +365,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_labels_txt",
+        sha256 = "536feacc519de3d418de26b2effb4d75694a8c4c0063e36499a46fa8061e2da9",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/labels.txt?generation=1665988394538324"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_left_hands_jpg",
         sha256 = "4b5134daa4cb60465535239535f9f74c2842aba3aa5fd30bf04ef5678f93d87f",
         urls = ["https://storage.googleapis.com/mediapipe-assets/left_hands.jpg?generation=1661875796949017"],
@@ -449,15 +455,39 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_mobilenet_v2_1_0_224_json",
+        sha256 = "0eb285a857b4bb1815736d0902ace0af45ea62e90c1dac98844b9ca797cd0d7b",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobilenet_v2_1.0_224.json?generation=1665988398778178"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_mobilenet_v2_1_0_224_quant_json",
+        sha256 = "932f345ebe3d98daf0dc4c88b0f9e694e450390fb394fc217e851338dfec43e6",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobilenet_v2_1.0_224_quant.json?generation=1665988401522527"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_mobilenet_v2_1_0_224_quant_tflite",
         sha256 = "f08d447cde49b4e0446428aa921aff0a14ea589fa9c5817b31f83128e9a43c1d",
         urls = ["https://storage.googleapis.com/mediapipe-assets/mobilenet_v2_1.0_224_quant.tflite?generation=1664340173966530"],
     )
 
     http_file(
+        name = "com_google_mediapipe_mobilenet_v2_1_0_224_quant_without_metadata_tflite",
+        sha256 = "f08d447cde49b4e0446428aa921aff0a14ea589fa9c5817b31f83128e9a43c1d",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobilenet_v2_1.0_224_quant_without_metadata.tflite?generation=1665988405130772"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_mobilenet_v2_1_0_224_tflite",
         sha256 = "ff5cb7f9e62c92ebdad971f8a98aa6b3106d82a64587a7787c6a385c9e791339",
         urls = ["https://storage.googleapis.com/mediapipe-assets/mobilenet_v2_1.0_224.tflite?generation=1661875840611150"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_mobilenet_v2_1_0_224_without_metadata_tflite",
+        sha256 = "9f3bc29e38e90842a852bfed957dbf5e36f2d97a91dd17736b1e5c0aca8d3303",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobilenet_v2_1.0_224_without_metadata.tflite?generation=1665988408360823"],
     )
 
     http_file(

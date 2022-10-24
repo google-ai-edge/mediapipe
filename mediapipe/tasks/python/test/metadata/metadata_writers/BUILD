@@ -28,8 +28,27 @@ py_test(
 py_test(
     name = "metadata_writer_test",
     srcs = ["metadata_writer_test.py"],
-    data = ["//mediapipe/tasks/testdata/metadata:model_files"],
+    data = [
+        "//mediapipe/tasks/testdata/metadata:data_files",
+        "//mediapipe/tasks/testdata/metadata:model_files",
+    ],
     deps = [
+        "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
+        "//mediapipe/tasks/python/test:test_utils",
+    ],
+)
+
+py_test(
+    name = "image_classifier_test",
+    srcs = ["image_classifier_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/metadata:data_files",
+        "//mediapipe/tasks/testdata/metadata:model_files",
+    ],
+    deps = [
+        "//mediapipe/tasks/metadata:metadata_schema_py",
+        "//mediapipe/tasks/python/metadata",
+        "//mediapipe/tasks/python/metadata/metadata_writers:image_classifier",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
         "//mediapipe/tasks/python/test:test_utils",
     ],

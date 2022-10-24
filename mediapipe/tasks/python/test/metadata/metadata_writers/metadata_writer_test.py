@@ -13,6 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for metadata writer classes."""
+import os
+import tempfile
+
 from absl.testing import absltest
 
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer
@@ -20,6 +23,7 @@ from mediapipe.tasks.python.test import test_utils
 
 _IMAGE_CLASSIFIER_MODEL = test_utils.get_test_data_path(
     'mobilenet_v1_0.25_224_1_default_1.tflite')
+_SCORE_CALIBRATION_FILE = test_utils.get_test_data_path('score_calibration.txt')
 
 
 class LabelsTest(absltest.TestCase):
@@ -47,6 +51,54 @@ class LabelsTest(absltest.TestCase):
         metadata_writer.LabelItem('labels_en.txt', ['a', 'b'], 'en'),
         metadata_writer.LabelItem('my_file.txt', ['A', 'B'], 'fr'),
     ])
+
+
+class ScoreCalibrationTest(absltest.TestCase):
+
+  def test_create_from_file_successful(self):
+    score_calibration = metadata_writer.ScoreCalibration.create_from_file(
+        metadata_writer.ScoreCalibration.transformation_types.LOG,
+        _SCORE_CALIBRATION_FILE)
+    self.assertLen(score_calibration.parameters, 511)
+    self.assertIsNone(score_calibration.parameters[0])
+    self.assertEqual(
+        score_calibration.parameters[1],
+        metadata_writer.CalibrationParameter(
+            scale=0.9876328110694885,
+            slope=0.36622241139411926,
+            offset=0.5352765321731567,
+            min_score=0.71484375))
+    self.assertEqual(
+        score_calibration.parameters[510],
+        metadata_writer.CalibrationParameter(
+            scale=0.9901729226112366,
+            slope=0.8561913371086121,
+            offset=0.8783953189849854,
+            min_score=0.5859375))
+
+  def test_create_from_file_fail(self):
+    with tempfile.TemporaryDirectory() as temp_dir:
+      test_file = os.path.join(temp_dir, 'score_calibration.csv')
+      with open(test_file, 'w') as f:
+        f.write('0.98,0.5\n')
+
+      with self.assertRaisesRegex(
+          ValueError,
+          'Expected empty lines or 3 or 4 parameters per line in score '
+          'calibration file, but got 2.'
+      ):
+        metadata_writer.ScoreCalibration.create_from_file(
+            metadata_writer.ScoreCalibration.transformation_types.LOG,
+            test_file)
+
+      with open(test_file, 'w') as f:
+        f.write('-0.98,0.5,0.34\n')
+      with self.assertRaisesRegex(
+          ValueError,
+          'Expected scale to be a non-negative value, but got -0.98.'):
+        metadata_writer.ScoreCalibration.create_from_file(
+            metadata_writer.ScoreCalibration.transformation_types.LOG,
+            test_file)
 
 
 class MetadataWriterForTaskTest(absltest.TestCase):
@@ -197,7 +249,7 @@ class MetadataWriterForTaskTest(absltest.TestCase):
               "output_tensor_metadata": [
                 {
                   "name": "score",
-                  "description": "Score of the labels respectively",
+                  "description": "Score of the labels respectively.",
                   "content": {
                     "content_properties_type": "FeatureProperties",
                     "content_properties": {
@@ -298,7 +350,7 @@ class MetadataWriterForTaskTest(absltest.TestCase):
               "output_tensor_metadata": [
                 {
                   "name": "score",
-                  "description": "Score of the labels respectively",
+                  "description": "Score of the labels respectively.",
                   "content": {
                     "content_properties_type": "FeatureProperties",
                     "content_properties": {
