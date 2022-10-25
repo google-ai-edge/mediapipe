@@ -13,17 +13,22 @@
 # limitations under the License.
 """MediaPipe vision task base api."""
 
+import math
 from typing import Callable, Mapping, Optional
 
 from mediapipe.framework import calculator_pb2
 from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.python._framework_bindings import task_runner as task_runner_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
+from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
+from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 
 _TaskRunner = task_runner_module.TaskRunner
 _Packet = packet_module.Packet
+_NormalizedRect = rect_module.NormalizedRect
 _RunningMode = running_mode_module.VisionTaskRunningMode
+_ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 
 
 class BaseVisionTaskApi(object):
@@ -121,6 +126,50 @@ class BaseVisionTaskApi(object):
           'Task is not initialized with the live stream mode. Current running mode:'
           + self._running_mode.name)
     self._runner.send(inputs)
+
+  @staticmethod
+  def convert_to_normalized_rect(
+      options: _ImageProcessingOptions,
+      roi_allowed: bool = True
+  ) -> _NormalizedRect:
+    """
+    Convert from ImageProcessingOptions to NormalizedRect, performing sanity
+    checks on-the-fly. If the input ImageProcessingOptions is not present,
+    returns a default NormalizedRect covering the whole image with rotation set
+    to 0. If 'roi_allowed' is false, an error will be returned if the input
+    ImageProcessingOptions has its 'region_of_interest' field set.
+
+    Args:
+      options: Options for image processing.
+      roi_allowed: Indicates if the `region_of_interest` field is allowed to be
+        set. By default, it's set to True.
+
+    """
+    normalized_rect = _NormalizedRect(rotation=0, x_center=0.5, y_center=0.5,
+                                      width=1, height=1)
+    if options is None:
+      return normalized_rect
+
+    if options.rotation_degrees % 90 != 0:
+      raise ValueError("Expected rotation to be a multiple of 90°.")
+
+    # Convert to radians counter-clockwise.
+    normalized_rect.rotation = -options.rotation_degrees * math.pi / 180.0
+
+    if options.region_of_interest:
+      if not roi_allowed:
+        raise ValueError("This task doesn't support region-of-interest.")
+      roi = options.region_of_interest
+      if roi.x_center >= roi.width or roi.y_center >= roi.height:
+        raise ValueError(
+          "Expected Rect with x_center < width and y_center < height.")
+      if roi.x_center < 0 or roi.y_center < 0 or roi.width > 1 or roi.height > 1:
+        raise ValueError("Expected Rect values to be in [0,1].")
+      normalized_rect.x_center = roi.x_center + roi.width / 2.0
+      normalized_rect.y_center = roi.y_center + roi.height / 2.0
+      normalized_rect.width = roi.width - roi.x_center
+      normalized_rect.height = roi.height - roi.y_center
+    return normalized_rect
 
   def close(self) -> None:
     """Shuts down the mediapipe vision task instance.

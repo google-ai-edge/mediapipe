@@ -27,7 +27,6 @@ from mediapipe.tasks.cc.vision.gesture_recognizer.proto import hand_gesture_reco
 from mediapipe.tasks.cc.vision.hand_detector.proto import hand_detector_graph_options_pb2
 from mediapipe.tasks.cc.vision.hand_landmarker.proto import hand_landmarker_graph_options_pb2
 from mediapipe.tasks.cc.vision.hand_landmarker.proto import hand_landmarks_detector_graph_options_pb2
-from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.components.containers import classification as classification_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
 from mediapipe.tasks.python.components.processors import classifier_options
@@ -36,8 +35,8 @@ from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
+from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 
-_NormalizedRect = rect_module.NormalizedRect
 _BaseOptions = base_options_module.BaseOptions
 _GestureClassifierGraphOptionsProto = gesture_classifier_graph_options_pb2.GestureClassifierGraphOptions
 _GestureRecognizerGraphOptionsProto = gesture_recognizer_graph_options_pb2.GestureRecognizerGraphOptions
@@ -47,6 +46,7 @@ _HandLandmarkerGraphOptionsProto = hand_landmarker_graph_options_pb2.HandLandmar
 _HandLandmarksDetectorGraphOptionsProto = hand_landmarks_detector_graph_options_pb2.HandLandmarksDetectorGraphOptions
 _ClassifierOptions = classifier_options.ClassifierOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
+_ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _TaskInfo = task_info_module.TaskInfo
 _TaskRunner = task_runner_module.TaskRunner
 
@@ -65,11 +65,6 @@ _HAND_WORLD_LANDMARKS_STREAM_NAME = 'world_landmarks'
 _HAND_WORLD_LANDMARKS_TAG = 'WORLD_LANDMARKS'
 _TASK_GRAPH_NAME = 'mediapipe.tasks.vision.gesture_recognizer.GestureRecognizerGraph'
 _MICRO_SECONDS_PER_MILLISECOND = 1000
-
-
-def _build_full_image_norm_rect() -> _NormalizedRect:
-  # Builds a NormalizedRect covering the entire image.
-  return _NormalizedRect(x_center=0.5, y_center=0.5, width=1, height=1)
 
 
 @dataclasses.dataclass
@@ -278,7 +273,7 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
   def recognize(
       self,
       image: image_module.Image,
-      roi: Optional[_NormalizedRect] = None
+      image_processing_options: Optional[_ImageProcessingOptions] = None
   ) -> GestureRecognitionResult:
     """Performs hand gesture recognition on the given image. Only use this
     method when the GestureRecognizer is created with the image running mode.
@@ -289,7 +284,7 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
 
     Args:
       image: MediaPipe Image.
-      roi: The region of interest.
+      image_processing_options: Options for image processing.
 
     Returns:
       The hand gesture recognition results.
@@ -298,11 +293,16 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If gesture recognition failed to run.
     """
-    norm_rect = roi if roi is not None else _build_full_image_norm_rect()
+    normalized_rect = self.convert_to_normalized_rect(image_processing_options,
+                                                      roi_allowed=False)
     output_packets = self._process_image_data({
         _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
         _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            norm_rect.to_pb2())})
+            normalized_rect.to_pb2())})
+
+    if output_packets[_HAND_GESTURE_STREAM_NAME].is_empty():
+      return GestureRecognitionResult([], [], [], [])
+
     gestures_proto_list = packet_getter.get_proto_list(
       output_packets[_HAND_GESTURE_STREAM_NAME])
     handedness_proto_list = packet_getter.get_proto_list(
@@ -331,7 +331,7 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
   def recognize_for_video(
       self, image: image_module.Image,
       timestamp_ms: int,
-      roi: Optional[_NormalizedRect] = None
+      image_processing_options: Optional[_ImageProcessingOptions] = None
   ) -> GestureRecognitionResult:
     """Performs gesture recognition on the provided video frame. Only use this
     method when the GestureRecognizer is created with the video running mode.
@@ -344,7 +344,7 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
     Args:
       image: MediaPipe Image.
       timestamp_ms: The timestamp of the input video frame in milliseconds.
-      roi: The region of interest.
+      image_processing_options: Options for image processing.
 
     Returns:
       The hand gesture recognition results.
@@ -353,14 +353,19 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If gesture recognition failed to run.
     """
-    norm_rect = roi if roi is not None else _build_full_image_norm_rect()
+    normalized_rect = self.convert_to_normalized_rect(image_processing_options,
+                                                      roi_allowed=False)
     output_packets = self._process_video_data({
         _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
             timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
         _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            norm_rect.to_pb2()).at(
+            normalized_rect.to_pb2()).at(
                 timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
     })
+
+    if output_packets[_HAND_GESTURE_STREAM_NAME].is_empty():
+      return GestureRecognitionResult([], [], [], [])
+
     gestures_proto_list = packet_getter.get_proto_list(
       output_packets[_HAND_GESTURE_STREAM_NAME])
     handedness_proto_list = packet_getter.get_proto_list(
@@ -390,7 +395,7 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
       self,
       image: image_module.Image,
       timestamp_ms: int,
-      roi: Optional[_NormalizedRect] = None
+      image_processing_options: Optional[_ImageProcessingOptions] = None
   ) -> None:
     """Sends live image data to perform gesture recognition, and the results
     will be available via the "result_callback" provided in the
@@ -415,17 +420,18 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
     Args:
       image: MediaPipe Image.
       timestamp_ms: The timestamp of the input image in milliseconds.
-      roi: The region of interest.
+      image_processing_options: Options for image processing.
 
     Raises:
       ValueError: If the current input timestamp is smaller than what the
       gesture recognizer has already processed.
     """
-    norm_rect = roi if roi is not None else _build_full_image_norm_rect()
+    normalized_rect = self.convert_to_normalized_rect(image_processing_options,
+                                                      roi_allowed=False)
     self._send_live_stream_data({
         _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
             timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
         _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
-            norm_rect.to_pb2()).at(
+            normalized_rect.to_pb2()).at(
                 timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
     })
