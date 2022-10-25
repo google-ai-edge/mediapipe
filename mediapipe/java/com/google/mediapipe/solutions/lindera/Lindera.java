@@ -26,7 +26,7 @@ public class Lindera {
     private PoseTracking poseTracking;
     
     // TODO: Verify that this is the timestamp used in Actual Plugin
-    private int timeStamp = 0;
+    private Long timeStamp = 0L;
     private CameraRotation cameraRotation = CameraRotation.AUTOMATIC;
     
     // Live camera demo UI and camera components.
@@ -85,14 +85,14 @@ public class Lindera {
                 glSurfaceView.setRenderData(poseTrackingResult);
                 glSurfaceView.requestRender();
                 ImmutableList<LandmarkProto.Landmark> landmarks = poseTrackingResult.multiPoseLandmarks();
-                timeStamp+=1;
+                //timeStamp+=1;
 
                 if (landmarks.isEmpty()) return;
 
                 BodyJoints bodyJoints = new BodyJoints();
                 landmarksToBodyJoints(landmarks,bodyJoints);
 
-                plugin.bodyJoints(timeStamp, bodyJoints);
+                plugin.bodyJoints(System.currentTimeMillis(), bodyJoints);
             });
     }
 
