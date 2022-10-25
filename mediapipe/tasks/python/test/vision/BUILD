@@ -43,15 +43,19 @@ py_test(
     data = [
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
+        "//mediapipe/tasks/testdata/vision:test_protos",
     ],
     deps = [
         "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
+        "//mediapipe/tasks/python/components/containers:rect",
         "//mediapipe/tasks/python/components/containers:classification",
         "//mediapipe/tasks/python/components/containers:landmark",
-        "//mediapipe/tasks/python/components/containers:rect",
+        "//mediapipe/tasks/python/components/containers:landmark_detection_result",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:gesture_recognizer",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@com_google_protobuf//:protobuf_python"
     ],
 )

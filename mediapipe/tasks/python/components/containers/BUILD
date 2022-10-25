@@ -55,11 +55,13 @@ py_library(
 )
 
 py_library(
-    name = "gesture",
-    srcs = ["gesture.py"],
+    name = "landmark_detection_result",
+    srcs = ["landmark_detection_result.py"],
     deps = [
+        ":rect",
         ":classification",
         ":landmark",
+        "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )

@@ -14,14 +14,13 @@
 """Classification data class."""
 
 import dataclasses
-from typing import Any, List
+from typing import Any, List, Optional
 
 from mediapipe.framework.formats import classification_pb2
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _ClassificationProto = classification_pb2.Classification
 _ClassificationListProto = classification_pb2.ClassificationList
-_ClassificationListCollectionProto = classification_pb2.ClassificationListCollection
 
 
 @dataclasses.dataclass
@@ -35,10 +34,10 @@ class Classification:
     display_name: Optional human-readable string for display purposes.
   """
 
-  index: int
-  score: float
-  label_name: str
-  display_name: str
+  index: Optional[int] = None
+  score: Optional[float] = None
+  label: Optional[str] = None
+  display_name: Optional[str] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _ClassificationProto:
@@ -46,7 +45,7 @@ class Classification:
     return _ClassificationProto(
         index=self.index,
         score=self.score,
-        label_name=self.label_name,
+        label=self.label,
         display_name=self.display_name)
 
   @classmethod
@@ -56,7 +55,7 @@ class Classification:
     return Classification(
         index=pb2_obj.index,
         score=pb2_obj.score,
-        label_name=pb2_obj.label_name,
+        label=pb2_obj.label,
         display_name=pb2_obj.display_name)
 
   def __eq__(self, other: Any) -> bool:
@@ -86,8 +85,8 @@ class ClassificationList:
   """
 
   classifications: List[Classification]
-  tensor_index: int
-  tensor_name: str
+  tensor_index: Optional[int] = None
+  tensor_name: Optional[str] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _ClassificationListProto:

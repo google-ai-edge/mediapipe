@@ -136,8 +136,6 @@ class GestureRecognizerOptions:
     """Generates an GestureRecognizerOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
     base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.IMAGE else True
-    # hand_landmark_detector_base_options_proto = self.hand_landmark_detector_base_options.to_pb2()
-    # hand_landmark_detector_base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.IMAGE else True
 
     # Configure hand detector options.
     hand_detector_options_proto = _HandDetectorGraphOptionsProto(
@@ -153,13 +151,12 @@ class GestureRecognizerOptions:
         min_tracking_confidence=self.min_tracking_confidence)
 
     # Configure hand gesture recognizer options.
-    hand_gesture_recognizer_options_proto = _HandGestureRecognizerGraphOptionsProto()
-    if self.min_gesture_confidence >= 0:
-      classifier_options = _ClassifierOptions(
-          score_threshold=self.min_gesture_confidence)
-      hand_gesture_recognizer_options_proto.canned_gesture_classifier_graph_options = \
-          _GestureClassifierGraphOptionsProto(
-              classifier_options=classifier_options.to_pb2())
+    classifier_options = _ClassifierOptions(
+        score_threshold=self.min_gesture_confidence)
+    gesture_classifier_options = _GestureClassifierGraphOptionsProto(
+        classifier_options=classifier_options.to_pb2())
+    hand_gesture_recognizer_options_proto = _HandGestureRecognizerGraphOptionsProto(
+        canned_gesture_classifier_graph_options=gesture_classifier_options)
 
     return _GestureRecognizerGraphOptionsProto(
         base_options=base_options_proto,
