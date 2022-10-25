@@ -5,12 +5,16 @@
 #ifndef MEDIAPIPE_POSETRACKINGOPTIONS_H
 #define MEDIAPIPE_POSETRACKINGOPTIONS_H
 #import <Foundation/Foundation.h>
-@interface PoseTrackingOptions: NSObject
 
+
+
+@interface PoseTrackingOptions: NSObject
+@property(nonatomic) int modelComplexity;
 @property(nonatomic) bool showLandmarks;
 //@property(nonatomic) int cameraRotation;
 
-- (instancetype) initWithShowLandmarks : (bool) showLandmarks;
+
+- (instancetype) initWithShowLandmarks : (bool) showLandmarks modelComplexity:  (int) modelComplexity;
 
 @end
 

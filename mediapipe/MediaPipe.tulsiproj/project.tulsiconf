@@ -2,7 +2,7 @@
   "configDefaults" : {
     "optionSet" : {
       "BazelBuildOptionsDebug" : {
-        "p" : "--config=debug --strip=never --features=oso_prefix_is_pwd --apple_generate_dsym"
+        "p" : "--strip=never --features=oso_prefix_is_pwd --apple_generate_dsym"
       },
       "CLANG_CXX_LANGUAGE_STANDARD" : {
         "p" : "c++14"
@@ -24,11 +24,13 @@
     "mediapipe/examples/ios/objectdetectioncpu",
     "mediapipe/examples/ios/objectdetectiongpu",
     "mediapipe/examples/ios/objectdetectiontrackinggpu",
+    "mediapipe/examples/ios/posetracking-lindera/PoseTrackingLindera",
     "mediapipe/examples/ios/posetrackinggpu",
     "mediapipe/examples/ios/posetrackingsolutiongpu",
     "mediapipe/examples/ios/selfiesegmentationgpu",
     "mediapipe/objc",
-    "mediapipe/objc/solutions/posetracking_gpu"
+    "mediapipe/objc/solutions/posetracking_gpu",
+    "mediapipe/swift/solutions/lindera"
   ],
   "projectName" : "Mediapipe",
   "workspaceRoot" : "../.."

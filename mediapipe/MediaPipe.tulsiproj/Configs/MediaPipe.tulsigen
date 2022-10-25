@@ -23,7 +23,8 @@
     "mediapipe/objc/testing/app/BUILD"
   ],
   "buildTargets" : [
-    "//mediapipe/examples/ios/posetrackingsolutiongpu:PoseTrackingSolutionGpuApp"
+    "//mediapipe/examples/ios/posetracking-lindera/PoseTrackingLindera:posetracking-lindera",
+    "//mediapipe/swift/solutions/lindera:lindera"
   ],
   "optionSet" : {
     "BazelBuildOptionsDebug" : {
@@ -90,7 +91,14 @@
     "mediapipe/examples/ios/iristrackinggpu",
     "mediapipe/examples/ios/objectdetectioncpu",
     "mediapipe/examples/ios/objectdetectiongpu",
+    "mediapipe/examples/ios/posetracking-lindera",
+    "mediapipe/examples/ios/posetracking-lindera/PoseTrackingLindera",
+    "mediapipe/examples/ios/posetracking-lindera/PoseTrackingLindera/Base.lproj",
     "mediapipe/examples/ios/posetrackinggpu",
+    "mediapipe/examples/ios/posetrackingsolution-swift",
+    "mediapipe/examples/ios/posetrackingsolution-swift/Camera",
+    "mediapipe/examples/ios/posetrackingsolution-swift/ViewModels",
+    "mediapipe/examples/ios/posetrackingsolution-swift/Views",
     "mediapipe/examples/ios/posetrackingsolutiongpu",
     "mediapipe/examples/ios/posetrackingsolutiongpu/Base.lproj",
     "mediapipe/examples/ios/selfiesegmentationgpu",
@@ -117,6 +125,9 @@
     "mediapipe/objc",
     "mediapipe/objc/solutions",
     "mediapipe/objc/solutions/posetracking_gpu",
+    "mediapipe/swift",
+    "mediapipe/swift/solutions",
+    "mediapipe/swift/solutions/lindera",
     "mediapipe/util",
     "mediapipe/util/android",
     "mediapipe/util/android/file",
