@@ -98,6 +98,5 @@ def train_model(model: tf.keras.Model, hparams: hp.HParams,
   return model.fit(
       x=train_ds,
       epochs=hparams.train_epochs,
-      steps_per_epoch=hparams.steps_per_epoch,
       validation_data=validation_ds,
       callbacks=callbacks)
