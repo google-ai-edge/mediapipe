@@ -6,26 +6,23 @@
 #define MEDIAPIPE_POSETRACKING_H
 #import <Foundation/Foundation.h>
 #import "mediapipe/objc/MPPCameraInputSource.h"
-#import "mediapipe/objc/MPPGraph.h"
 #import "mediapipe/objc/MPPLayerRenderer.h"
 #import "mediapipe/objc/MPPPlayerInputSource.h"
-#import "mediapipe/objc/MPPTimestampConverter.h"
 #import "PoseTrackingOptions.h"
 #import "PoseTrackingResults.h"
-@interface PoseTracking : NSObject<MPPGraphDelegate,MPPInputSourceDelegate>
+@interface PoseTracking : NSObject<MPPInputSourceDelegate>
 
 // The MediaPipe graph currently in use. Initialized in viewDidLoad, started in
 // viewWillAppear: and sent video frames on videoQueue.
-@property(nonatomic) MPPGraph* mediapipeGraph;
+//@property(nonatomic) MPPGraph* mediapipeGraph;
 
 
-// Helps to convert timestamp.
-@property(nonatomic) MPPTimestampConverter* timestampConverter;
+
 
 // Render frames in a layer.
 @property(nonatomic) MPPLayerRenderer* renderer;
 
-
+@property (nonatomic) CMTime timeStamp;
 // Graph name.
 @property(nonatomic) NSString* graphName;
 
@@ -45,8 +42,15 @@
 // Codeblock that runs whenever pose tracking results are available
 @property(nonatomic) void(^poseTrackingResultsListener)(PoseTrackingResults*);
 
+// Codeblock that runs whenever output is available
+@property(nonatomic) void(^graphOutputStreamListener)();
+
 - (instancetype) initWithPoseTrackingOptions: (PoseTrackingOptions*) poseTrackingOptions;
+- (void)startGraph;
 - (void) startWithCamera: (MPPCameraInputSource*) cameraSource;
+- (void)showLandmarks: (BOOL) value;
+- (BOOL) areLandmarksShown;
+- (void) stopGraph;
 @end
 
 

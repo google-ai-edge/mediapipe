@@ -7,6 +7,8 @@
     self.x = x;
     self.y = y;
     self.z = z;
+    self.presence = presence;
+    self.visibility = visibility;
     return self;
 }
 
