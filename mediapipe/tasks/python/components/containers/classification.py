@@ -85,8 +85,6 @@ class ClassificationList:
   """
 
   classifications: List[Classification]
-  tensor_index: Optional[int] = None
-  tensor_name: Optional[str] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _ClassificationListProto:
@@ -95,9 +93,7 @@ class ClassificationList:
       classification=[
           classification.to_pb2()
           for classification in self.classifications
-      ],
-      tensor_index=self.tensor_index,
-      tensor_name=self.tensor_name)
+      ])
 
   @classmethod
   @doc_controls.do_not_generate_docs
@@ -110,9 +106,7 @@ class ClassificationList:
       classifications=[
         Classification.create_from_pb2(classification)
         for classification in pb2_obj.classification
-      ],
-      tensor_index=pb2_obj.tensor_index,
-      tensor_name=pb2_obj.tensor_name)
+      ])
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.

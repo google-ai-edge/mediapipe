@@ -80,7 +80,7 @@ def _get_expected_gesture_recognition_result(
       classifications=[
         _Classification(label=gesture_label, index=gesture_index,
                         display_name='')
-      ], tensor_index=0, tensor_name='')
+      ])
   return _GestureRecognitionResult(
       gestures=[gesture],
       handedness=[landmarks_detection_result.classifications],
