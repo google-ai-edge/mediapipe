@@ -51,8 +51,8 @@ _MAX_RESULTS = 3
 
 
 # TODO: Port assertProtoEquals
-def _assert_proto_equals(expected, actual):  # pylint: disable=unused-argument
-  pass
+def _assert_proto_equals(self, expected, actual):  # pylint: disable=unused-argument
+  test_utils.assertProtoEqual(self, expected, actual)
 
 
 def _generate_empty_results(timestamp_ms: int) -> _ClassificationResult:
@@ -186,7 +186,7 @@ class ImageClassifierTest(parameterized.TestCase):
     # Performs image classification on the input.
     image_result = classifier.classify(self.test_image)
     # Comparing results.
-    _assert_proto_equals(image_result.to_pb2(),
+    _assert_proto_equals(self, image_result.to_pb2(),
                          expected_classification_result.to_pb2())
     # Closes the classifier explicitly when the classifier is not used in
     # a context.
@@ -214,7 +214,7 @@ class ImageClassifierTest(parameterized.TestCase):
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
       # Comparing results.
-      _assert_proto_equals(image_result.to_pb2(),
+      _assert_proto_equals(self, image_result.to_pb2(),
                            expected_classification_result.to_pb2())
 
   def test_classify_succeeds_with_region_of_interest(self):
@@ -232,7 +232,7 @@ class ImageClassifierTest(parameterized.TestCase):
       # Performs image classification on the input.
       image_result = classifier.classify(test_image, roi)
       # Comparing results.
-      _assert_proto_equals(image_result.to_pb2(),
+      _assert_proto_equals(self, image_result.to_pb2(),
                            _generate_soccer_ball_results(0).to_pb2())
 
   def test_score_threshold_option(self):
@@ -401,7 +401,7 @@ class ImageClassifierTest(parameterized.TestCase):
       for timestamp in range(0, 300, 30):
         classification_result = classifier.classify_for_video(
             self.test_image, timestamp)
-        _assert_proto_equals(classification_result.to_pb2(),
+        _assert_proto_equals(self, classification_result.to_pb2(),
                              _generate_burger_results(timestamp).to_pb2())
 
   def test_classify_for_video_succeeds_with_region_of_interest(self):
@@ -420,8 +420,8 @@ class ImageClassifierTest(parameterized.TestCase):
       for timestamp in range(0, 300, 30):
         classification_result = classifier.classify_for_video(
             test_image, timestamp, roi)
-        self.assertEqual(classification_result,
-                         _generate_soccer_ball_results(timestamp))
+        _assert_proto_equals(self, classification_result.to_pb2(),
+                             _generate_soccer_ball_results(timestamp).to_pb2())
 
   def test_calling_classify_in_live_stream_mode(self):
     options = _ImageClassifierOptions(
@@ -463,7 +463,7 @@ class ImageClassifierTest(parameterized.TestCase):
 
     def check_result(result: _ClassificationResult, output_image: _Image,
                      timestamp_ms: int):
-      _assert_proto_equals(result.to_pb2(),
+      _assert_proto_equals(self, result.to_pb2(),
                            expected_result_fn(timestamp_ms).to_pb2())
       self.assertTrue(
           np.array_equal(output_image.numpy_view(),
@@ -493,7 +493,7 @@ class ImageClassifierTest(parameterized.TestCase):
 
     def check_result(result: _ClassificationResult, output_image: _Image,
                      timestamp_ms: int):
-      _assert_proto_equals(result.to_pb2(),
+      _assert_proto_equals(self, result.to_pb2(),
                            _generate_soccer_ball_results(timestamp_ms).to_pb2())
       self.assertEqual(output_image.width, test_image.width)
       self.assertEqual(output_image.height, test_image.height)
