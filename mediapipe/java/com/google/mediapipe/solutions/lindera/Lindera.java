@@ -25,8 +25,6 @@ public class Lindera {
     public FpsHelper fpsHelper = new FpsHelper();
     private PoseTracking poseTracking;
     
-    // TODO: Verify that this is the timestamp used in Actual Plugin
-    private Long timeStamp = 0L;
     private CameraRotation cameraRotation = CameraRotation.AUTOMATIC;
     
     // Live camera demo UI and camera components.
@@ -85,7 +83,6 @@ public class Lindera {
                 glSurfaceView.setRenderData(poseTrackingResult);
                 glSurfaceView.requestRender();
                 ImmutableList<LandmarkProto.Landmark> landmarks = poseTrackingResult.multiPoseLandmarks();
-                //timeStamp+=1;
 
                 if (landmarks.isEmpty()) return;
 
@@ -180,7 +177,6 @@ public class Lindera {
         if (poseTracking != null) {
             poseTracking.close();
         }
-        timeStamp = 0;
     }
 
     private void landmarkToXYZPointWithConfidence(LandmarkProto.Landmark landmark,XYZPointWithConfidence bodyJoint){
