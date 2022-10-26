@@ -235,8 +235,10 @@ class HandDetectorGraph : public core::ModelTaskGraph {
     image_to_tensor_options.set_keep_aspect_ratio(true);
     image_to_tensor_options.set_border_mode(
         mediapipe::ImageToTensorCalculatorOptions::BORDER_ZERO);
+    bool use_gpu = components::DetermineImagePreprocessingGpuBackend(
+        subgraph_options.base_options().acceleration());
     MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
-        model_resources,
+        model_resources, use_gpu,
         &preprocessing
              .GetOptions<tasks::components::ImagePreprocessingOptions>()));
     image_in >> preprocessing.In("IMAGE");
