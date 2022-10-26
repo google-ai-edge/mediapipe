@@ -26,6 +26,7 @@ _NormalizedRectProto = rect_pb2.NormalizedRect
 @dataclasses.dataclass
 class Rect:
   """A rectangle with rotation in image coordinates.
+
   Attributes: x_center : The X coordinate of the top-left corner, in pixels.
   y_center : The Y coordinate of the top-left corner, in pixels.
     width: The width of the rectangle, in pixels.
@@ -80,8 +81,11 @@ class Rect:
 @dataclasses.dataclass
 class NormalizedRect:
   """A rectangle with rotation in normalized coordinates.
+
   The values of box
+
     center location and size are within [0, 1].
+
   Attributes: x_center : The X normalized coordinate of the top-left corner.
   y_center : The Y normalized coordinate of the top-left corner.
     width: The width of the rectangle.
