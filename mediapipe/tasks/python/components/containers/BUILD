@@ -86,3 +86,13 @@ py_library(
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
+
+py_library(
+    name = "classifications",
+    srcs = ["classifications.py"],
+    deps = [
+        ":category",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_py_pb2",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)

@@ -73,6 +73,19 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "sentencepiece_tokenizer_test",
+    srcs = ["sentencepiece_tokenizer_test.cc"],
+    data = [
+        "//mediapipe/tasks/testdata/text:albert_model",
+    ],
+    deps = [
+        ":sentencepiece_tokenizer",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/tasks/cc/core:utils",
+    ],
+)
+
 cc_library(
     name = "tokenizer_utils",
     srcs = ["tokenizer_utils.cc"],
@@ -92,6 +105,33 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@flatbuffers//:runtime_cc",
+    ],
+)
+
+cc_test(
+    name = "tokenizer_utils_test",
+    srcs = ["tokenizer_utils_test.cc"],
+    data = [
+        "//mediapipe/tasks/testdata/text:albert_model",
+        "//mediapipe/tasks/testdata/text:mobile_bert_model",
+        "//mediapipe/tasks/testdata/text:text_classifier_models",
+    ],
+    linkopts = ["-ldl"],
+    deps = [
+        ":bert_tokenizer",
+        ":regex_tokenizer",
+        ":sentencepiece_tokenizer",
+        ":tokenizer_utils",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "//mediapipe/tasks/metadata:metadata_schema_cc",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:cord",
     ],
 )
 

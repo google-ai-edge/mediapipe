@@ -46,6 +46,7 @@ cc_library(
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/formats:tensor",
+        "//mediapipe/gpu:gpu_origin_cc_proto",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/vision/utils:image_tensor_specs",

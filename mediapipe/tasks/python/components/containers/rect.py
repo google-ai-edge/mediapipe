@@ -26,15 +26,13 @@ _NormalizedRectProto = rect_pb2.NormalizedRect
 @dataclasses.dataclass
 class Rect:
   """A rectangle with rotation in image coordinates.
-
-  Attributes:
-    x_center : The X coordinate of the top-left corner, in pixels.
-    y_center : The Y coordinate of the top-left corner, in pixels.
+  Attributes: x_center : The X coordinate of the top-left corner, in pixels.
+  y_center : The Y coordinate of the top-left corner, in pixels.
     width: The width of the rectangle, in pixels.
     height: The height of the rectangle, in pixels.
     rotation: Rotation angle is clockwise in radians.
     rect_id:  Optional unique id to help associate different rectangles to each
-      other.
+    other.
   """
 
   x_center: int
@@ -81,17 +79,16 @@ class Rect:
 
 @dataclasses.dataclass
 class NormalizedRect:
-  """A rectangle with rotation in normalized coordinates. The values of box
+  """A rectangle with rotation in normalized coordinates.
+  The values of box
     center location and size are within [0, 1].
-
-  Attributes:
-    x_center : The X normalized coordinate of the top-left corner.
-    y_center : The Y normalized coordinate of the top-left corner.
+  Attributes: x_center : The X normalized coordinate of the top-left corner.
+  y_center : The Y normalized coordinate of the top-left corner.
     width: The width of the rectangle.
     height: The height of the rectangle.
     rotation: Rotation angle is clockwise in radians.
     rect_id:  Optional unique id to help associate different rectangles to each
-      other.
+    other.
   """
 
   x_center: float
@@ -110,8 +107,7 @@ class NormalizedRect:
         width=self.width,
         height=self.height,
         rotation=self.rotation,
-        rect_id=self.rect_id
-    )
+        rect_id=self.rect_id)
 
   @classmethod
   @doc_controls.do_not_generate_docs
@@ -123,8 +119,7 @@ class NormalizedRect:
         width=pb2_obj.width,
         height=pb2_obj.height,
         rotation=pb2_obj.rotation,
-        rect_id=pb2_obj.rect_id
-    )
+        rect_id=pb2_obj.rect_id)
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.

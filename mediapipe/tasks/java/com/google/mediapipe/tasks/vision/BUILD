@@ -28,6 +28,7 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/java/com/google/mediapipe/framework/image",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
 )

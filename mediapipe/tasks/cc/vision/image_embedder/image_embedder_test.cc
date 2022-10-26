@@ -23,7 +23,6 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
-#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
@@ -42,7 +41,9 @@ namespace image_embedder {
 namespace {
 
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::components::containers::Rect;
 using ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
+using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::HasSubstr;
 using ::testing::Optional;
 
@@ -326,16 +327,14 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterest) {
   MP_ASSERT_OK_AND_ASSIGN(
       Image crop, DecodeImageFromFile(
                       JoinPath("./", kTestDataDirectory, "burger_crop.jpg")));
-  // Bounding box in "burger.jpg" corresponding to "burger_crop.jpg".
-  NormalizedRect roi;
-  roi.set_x_center(200.0 / 480);
-  roi.set_y_center(0.5);
-  roi.set_width(400.0 / 480);
-  roi.set_height(1.0f);
+  // Region-of-interest in "burger.jpg" corresponding to "burger_crop.jpg".
+  Rect roi{/*left=*/0, /*top=*/0, /*right=*/0.833333, /*bottom=*/1};
+  ImageProcessingOptions image_processing_options{roi, /*rotation_degrees=*/0};
 
   // Extract both embeddings.
-  MP_ASSERT_OK_AND_ASSIGN(const EmbeddingResult& image_result,
-                          image_embedder->Embed(image, roi));
+  MP_ASSERT_OK_AND_ASSIGN(
+      const EmbeddingResult& image_result,
+      image_embedder->Embed(image, image_processing_options));
   MP_ASSERT_OK_AND_ASSIGN(const EmbeddingResult& crop_result,
                           image_embedder->Embed(crop));
 
@@ -348,6 +347,77 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterest) {
       ImageEmbedder::CosineSimilarity(image_result.embeddings(0).entries(0),
                                       crop_result.embeddings(0).entries(0)));
   double expected_similarity = 0.999931;
+  EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
+}
+
+TEST_F(ImageModeTest, SucceedsWithRotation) {
+  auto options = std::make_unique<ImageEmbedderOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kMobileNetV3Embedder);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageEmbedder> image_embedder,
+                          ImageEmbedder::Create(std::move(options)));
+  // Load images: one is a rotated version of the other.
+  MP_ASSERT_OK_AND_ASSIGN(
+      Image image,
+      DecodeImageFromFile(JoinPath("./", kTestDataDirectory, "burger.jpg")));
+  MP_ASSERT_OK_AND_ASSIGN(Image rotated,
+                          DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
+                                                       "burger_rotated.jpg")));
+  ImageProcessingOptions image_processing_options;
+  image_processing_options.rotation_degrees = -90;
+
+  // Extract both embeddings.
+  MP_ASSERT_OK_AND_ASSIGN(const EmbeddingResult& image_result,
+                          image_embedder->Embed(image));
+  MP_ASSERT_OK_AND_ASSIGN(
+      const EmbeddingResult& rotated_result,
+      image_embedder->Embed(rotated, image_processing_options));
+
+  // Check results.
+  CheckMobileNetV3Result(image_result, false);
+  CheckMobileNetV3Result(rotated_result, false);
+  // CheckCosineSimilarity.
+  MP_ASSERT_OK_AND_ASSIGN(
+      double similarity,
+      ImageEmbedder::CosineSimilarity(image_result.embeddings(0).entries(0),
+                                      rotated_result.embeddings(0).entries(0)));
+  double expected_similarity = 0.572265;
+  EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
+}
+
+TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
+  auto options = std::make_unique<ImageEmbedderOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kMobileNetV3Embedder);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageEmbedder> image_embedder,
+                          ImageEmbedder::Create(std::move(options)));
+  MP_ASSERT_OK_AND_ASSIGN(
+      Image crop, DecodeImageFromFile(
+                      JoinPath("./", kTestDataDirectory, "burger_crop.jpg")));
+  MP_ASSERT_OK_AND_ASSIGN(Image rotated,
+                          DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
+                                                       "burger_rotated.jpg")));
+  // Region-of-interest corresponding to burger_crop.jpg.
+  Rect roi{/*left=*/0, /*top=*/0, /*right=*/1, /*bottom=*/0.8333333};
+  ImageProcessingOptions image_processing_options{roi,
+                                                  /*rotation_degrees=*/-90};
+
+  // Extract both embeddings.
+  MP_ASSERT_OK_AND_ASSIGN(const EmbeddingResult& crop_result,
+                          image_embedder->Embed(crop));
+  MP_ASSERT_OK_AND_ASSIGN(
+      const EmbeddingResult& rotated_result,
+      image_embedder->Embed(rotated, image_processing_options));
+
+  // Check results.
+  CheckMobileNetV3Result(crop_result, false);
+  CheckMobileNetV3Result(rotated_result, false);
+  // CheckCosineSimilarity.
+  MP_ASSERT_OK_AND_ASSIGN(
+      double similarity,
+      ImageEmbedder::CosineSimilarity(crop_result.embeddings(0).entries(0),
+                                      rotated_result.embeddings(0).entries(0)));
+  double expected_similarity = 0.62838;
   EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
 }
 

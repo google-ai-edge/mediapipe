@@ -29,6 +29,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/core/utils.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/image_embedder/proto/image_embedder_graph_options.pb.h"
@@ -57,16 +58,6 @@ using ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::vision::image_embedder::proto::
     ImageEmbedderGraphOptions;
-
-// Builds a NormalizedRect covering the entire image.
-NormalizedRect BuildFullImageNormRect() {
-  NormalizedRect norm_rect;
-  norm_rect.set_x_center(0.5);
-  norm_rect.set_y_center(0.5);
-  norm_rect.set_width(1);
-  norm_rect.set_height(1);
-  return norm_rect;
-}
 
 // Creates a MediaPipe graph config that contains a single node of type
 // "mediapipe.tasks.vision.image_embedder.ImageEmbedderGraph". If the task is
@@ -148,15 +139,16 @@ absl::StatusOr<std::unique_ptr<ImageEmbedder>> ImageEmbedder::Create(
 }
 
 absl::StatusOr<EmbeddingResult> ImageEmbedder::Embed(
-    Image image, std::optional<NormalizedRect> roi) {
+    Image image,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  NormalizedRect norm_rect =
-      roi.has_value() ? roi.value() : BuildFullImageNormRect();
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   ConvertToNormalizedRect(image_processing_options));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
@@ -167,15 +159,16 @@ absl::StatusOr<EmbeddingResult> ImageEmbedder::Embed(
 }
 
 absl::StatusOr<EmbeddingResult> ImageEmbedder::EmbedForVideo(
-    Image image, int64 timestamp_ms, std::optional<NormalizedRect> roi) {
+    Image image, int64 timestamp_ms,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  NormalizedRect norm_rect =
-      roi.has_value() ? roi.value() : BuildFullImageNormRect();
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   ConvertToNormalizedRect(image_processing_options));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
@@ -188,16 +181,17 @@ absl::StatusOr<EmbeddingResult> ImageEmbedder::EmbedForVideo(
   return output_packets[kEmbeddingResultStreamName].Get<EmbeddingResult>();
 }
 
-absl::Status ImageEmbedder::EmbedAsync(Image image, int64 timestamp_ms,
-                                       std::optional<NormalizedRect> roi) {
+absl::Status ImageEmbedder::EmbedAsync(
+    Image image, int64 timestamp_ms,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  NormalizedRect norm_rect =
-      roi.has_value() ? roi.value() : BuildFullImageNormRect();
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   ConvertToNormalizedRect(image_processing_options));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

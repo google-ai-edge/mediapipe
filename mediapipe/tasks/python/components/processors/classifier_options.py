@@ -61,19 +61,13 @@ class ClassifierOptions:
 
   @classmethod
   @doc_controls.do_not_generate_docs
-  def create_from_pb2(
-      cls,
-      pb2_obj: _ClassifierOptionsProto
-  ) -> 'ClassifierOptions':
+  def create_from_pb2(cls,
+                      pb2_obj: _ClassifierOptionsProto) -> 'ClassifierOptions':
     """Creates a `ClassifierOptions` object from the given protobuf object."""
     return ClassifierOptions(
         score_threshold=pb2_obj.score_threshold,
-        category_allowlist=[
-          str(name) for name in pb2_obj.class_name_allowlist
-        ],
-        category_denylist=[
-          str(name) for name in pb2_obj.class_name_denylist
-        ],
+        category_allowlist=[str(name) for name in pb2_obj.category_allowlist],
+        category_denylist=[str(name) for name in pb2_obj.category_denylist],
         display_names_locale=pb2_obj.display_names_locale,
         max_results=pb2_obj.max_results)
 

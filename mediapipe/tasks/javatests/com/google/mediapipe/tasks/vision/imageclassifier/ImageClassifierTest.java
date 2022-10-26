@@ -29,6 +29,7 @@ import com.google.mediapipe.tasks.components.containers.Category;
 import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.TestUtils;
+import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.imageclassifier.ImageClassifier.ImageClassifierOptions;
 import java.io.InputStream;
@@ -47,7 +48,9 @@ public class ImageClassifierTest {
   private static final String FLOAT_MODEL_FILE = "mobilenet_v2_1.0_224.tflite";
   private static final String QUANTIZED_MODEL_FILE = "mobilenet_v1_0.25_224_quant.tflite";
   private static final String BURGER_IMAGE = "burger.jpg";
+  private static final String BURGER_ROTATED_IMAGE = "burger_rotated.jpg";
   private static final String MULTI_OBJECTS_IMAGE = "multi_objects.jpg";
+  private static final String MULTI_OBJECTS_ROTATED_IMAGE = "multi_objects_rotated.jpg";
 
   @RunWith(AndroidJUnit4.class)
   public static final class General extends ImageClassifierTest {
@@ -209,12 +212,59 @@ public class ImageClassifierTest {
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       // RectF around the soccer ball.
       RectF roi = new RectF(0.450f, 0.308f, 0.614f, 0.734f);
+      ImageProcessingOptions imageProcessingOptions =
+          ImageProcessingOptions.builder().setRegionOfInterest(roi).build();
       ImageClassificationResult results =
-          imageClassifier.classify(getImageFromAsset(MULTI_OBJECTS_IMAGE), roi);
+          imageClassifier.classify(getImageFromAsset(MULTI_OBJECTS_IMAGE), imageProcessingOptions);
 
       assertHasOneHeadAndOneTimestamp(results, 0);
       assertCategoriesAre(
           results, Arrays.asList(Category.create(0.9969325f, 806, "soccer ball", "")));
+    }
+
+    @Test
+    public void classify_succeedsWithRotation() throws Exception {
+      ImageClassifierOptions options =
+          ImageClassifierOptions.builder()
+              .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
+              .setClassifierOptions(ClassifierOptions.builder().setMaxResults(3).build())
+              .build();
+      ImageClassifier imageClassifier =
+          ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      ImageProcessingOptions imageProcessingOptions =
+          ImageProcessingOptions.builder().setRotationDegrees(-90).build();
+      ImageClassificationResult results =
+          imageClassifier.classify(getImageFromAsset(BURGER_ROTATED_IMAGE), imageProcessingOptions);
+
+      assertHasOneHeadAndOneTimestamp(results, 0);
+      assertCategoriesAre(
+          results,
+          Arrays.asList(
+              Category.create(0.6390683f, 934, "cheeseburger", ""),
+              Category.create(0.0495407f, 963, "meat loaf", ""),
+              Category.create(0.0469720f, 925, "guacamole", "")));
+    }
+
+    @Test
+    public void classify_succeedsWithRegionOfInterestAndRotation() throws Exception {
+      ImageClassifierOptions options =
+          ImageClassifierOptions.builder()
+              .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
+              .setClassifierOptions(ClassifierOptions.builder().setMaxResults(1).build())
+              .build();
+      ImageClassifier imageClassifier =
+          ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      // RectF around the chair.
+      RectF roi = new RectF(0.0f, 0.1763f, 0.5642f, 0.3049f);
+      ImageProcessingOptions imageProcessingOptions =
+          ImageProcessingOptions.builder().setRegionOfInterest(roi).setRotationDegrees(-90).build();
+      ImageClassificationResult results =
+          imageClassifier.classify(
+              getImageFromAsset(MULTI_OBJECTS_ROTATED_IMAGE), imageProcessingOptions);
+
+      assertHasOneHeadAndOneTimestamp(results, 0);
+      assertCategoriesAre(
+          results, Arrays.asList(Category.create(0.686824f, 560, "folding chair", "")));
     }
   }
 
@@ -269,12 +319,16 @@ public class ImageClassifierTest {
       MediaPipeException exception =
           assertThrows(
               MediaPipeException.class,
-              () -> imageClassifier.classifyForVideo(getImageFromAsset(BURGER_IMAGE), 0));
+              () ->
+                  imageClassifier.classifyForVideo(
+                      getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
       exception =
           assertThrows(
               MediaPipeException.class,
-              () -> imageClassifier.classifyAsync(getImageFromAsset(BURGER_IMAGE), 0));
+              () ->
+                  imageClassifier.classifyAsync(
+                      getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -296,7 +350,9 @@ public class ImageClassifierTest {
       exception =
           assertThrows(
               MediaPipeException.class,
-              () -> imageClassifier.classifyAsync(getImageFromAsset(BURGER_IMAGE), 0));
+              () ->
+                  imageClassifier.classifyAsync(
+                      getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -320,7 +376,9 @@ public class ImageClassifierTest {
       exception =
           assertThrows(
               MediaPipeException.class,
-              () -> imageClassifier.classifyForVideo(getImageFromAsset(BURGER_IMAGE), 0));
+              () ->
+                  imageClassifier.classifyForVideo(
+                      getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
     }
 
@@ -352,7 +410,8 @@ public class ImageClassifierTest {
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       for (int i = 0; i < 3; i++) {
-        ImageClassificationResult results = imageClassifier.classifyForVideo(image, i);
+        ImageClassificationResult results =
+            imageClassifier.classifyForVideo(image, /*timestampMs=*/ i);
         assertHasOneHeadAndOneTimestamp(results, i);
         assertCategoriesAre(
             results, Arrays.asList(Category.create(0.7952058f, 934, "cheeseburger", "")));
@@ -377,9 +436,11 @@ public class ImageClassifierTest {
               .build();
       try (ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
-        imageClassifier.classifyAsync(getImageFromAsset(BURGER_IMAGE), 1);
+        imageClassifier.classifyAsync(getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 1);
         MediaPipeException exception =
-            assertThrows(MediaPipeException.class, () -> imageClassifier.classifyAsync(image, 0));
+            assertThrows(
+                MediaPipeException.class,
+                () -> imageClassifier.classifyAsync(image, /*timestampMs=*/ 0));
         assertThat(exception)
             .hasMessageThat()
             .contains("having a smaller timestamp than the processed timestamp");
@@ -405,7 +466,7 @@ public class ImageClassifierTest {
       try (ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
         for (int i = 0; i < 3; ++i) {
-          imageClassifier.classifyAsync(image, i);
+          imageClassifier.classifyAsync(image, /*timestampMs=*/ i);
         }
       }
     }

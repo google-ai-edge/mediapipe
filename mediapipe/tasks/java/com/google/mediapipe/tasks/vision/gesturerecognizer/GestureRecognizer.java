@@ -15,7 +15,6 @@
 package com.google.mediapipe.tasks.vision.gesturerecognizer;
 
 import android.content.Context;
-import android.graphics.RectF;
 import android.os.ParcelFileDescriptor;
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.formats.proto.LandmarkProto.LandmarkList;
@@ -37,6 +36,7 @@ import com.google.mediapipe.tasks.core.TaskOptions;
 import com.google.mediapipe.tasks.core.TaskRunner;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.vision.core.BaseVisionTaskApi;
+import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.gesturerecognizer.proto.GestureClassifierGraphOptionsProto;
 import com.google.mediapipe.tasks.vision.gesturerecognizer.proto.GestureRecognizerGraphOptionsProto;
@@ -213,6 +213,25 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
   }
 
   /**
+   * Performs gesture recognition on the provided single image with default image processing
+   * options, i.e. without any rotation applied. Only use this method when the {@link
+   * GestureRecognizer} is created with {@link RunningMode.IMAGE}. TODO update java doc
+   * for input image format.
+   *
+   * <p>{@link GestureRecognizer} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @throws MediaPipeException if there is an internal error.
+   */
+  public GestureRecognitionResult recognize(MPImage image) {
+    return recognize(image, ImageProcessingOptions.builder().build());
+  }
+
+  /**
    * Performs gesture recognition on the provided single image. Only use this method when the {@link
    * GestureRecognizer} is created with {@link RunningMode.IMAGE}. TODO update java doc
    * for input image format.
@@ -223,12 +242,41 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link MPImage} object for processing.
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference. Note that region-of-interest is <b>not</b> supported
+   *     by this task: specifying {@link ImageProcessingOptions#regionOfInterest()} will result in
+   *     this method throwing an IllegalArgumentException.
+   * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
+   *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public GestureRecognitionResult recognize(MPImage inputImage) {
-    // TODO: add proper support for rotations.
-    return (GestureRecognitionResult) processImageData(inputImage, buildFullImageRectF());
+  public GestureRecognitionResult recognize(
+      MPImage image, ImageProcessingOptions imageProcessingOptions) {
+    validateImageProcessingOptions(imageProcessingOptions);
+    return (GestureRecognitionResult) processImageData(image, imageProcessingOptions);
+  }
+
+  /**
+   * Performs gesture recognition on the provided video frame with default image processing options,
+   * i.e. without any rotation applied. Only use this method when the {@link GestureRecognizer} is
+   * created with {@link RunningMode.VIDEO}.
+   *
+   * <p>It's required to provide the video frame's timestamp (in milliseconds). The input timestamps
+   * must be monotonically increasing.
+   *
+   * <p>{@link GestureRecognizer} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws MediaPipeException if there is an internal error.
+   */
+  public GestureRecognitionResult recognizeForVideo(MPImage image, long timestampMs) {
+    return recognizeForVideo(image, ImageProcessingOptions.builder().build(), timestampMs);
   }
 
   /**
@@ -244,14 +292,43 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link MPImage} object for processing.
-   * @param inputTimestampMs the input timestamp (in milliseconds).
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference. Note that region-of-interest is <b>not</b> supported
+   *     by this task: specifying {@link ImageProcessingOptions#regionOfInterest()} will result in
+   *     this method throwing an IllegalArgumentException.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
+   *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public GestureRecognitionResult recognizeForVideo(MPImage inputImage, long inputTimestampMs) {
-    // TODO: add proper support for rotations.
-    return (GestureRecognitionResult)
-        processVideoData(inputImage, buildFullImageRectF(), inputTimestampMs);
+  public GestureRecognitionResult recognizeForVideo(
+      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
+    validateImageProcessingOptions(imageProcessingOptions);
+    return (GestureRecognitionResult) processVideoData(image, imageProcessingOptions, timestampMs);
+  }
+
+  /**
+   * Sends live image data to perform gesture recognition with default image processing options,
+   * i.e. without any rotation applied, and the results will be available via the {@link
+   * ResultListener} provided in the {@link GestureRecognizerOptions}. Only use this method when the
+   * {@link GestureRecognition} is created with {@link RunningMode.LIVE_STREAM}.
+   *
+   * <p>It's required to provide a timestamp (in milliseconds) to indicate when the input image is
+   * sent to the gesture recognizer. The input timestamps must be monotonically increasing.
+   *
+   * <p>{@link GestureRecognizer} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws MediaPipeException if there is an internal error.
+   */
+  public void recognizeAsync(MPImage image, long timestampMs) {
+    recognizeAsync(image, ImageProcessingOptions.builder().build(), timestampMs);
   }
 
   /**
@@ -268,13 +345,20 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link MPImage} object for processing.
-   * @param inputTimestampMs the input timestamp (in milliseconds).
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference. Note that region-of-interest is <b>not</b> supported
+   *     by this task: specifying {@link ImageProcessingOptions#regionOfInterest()} will result in
+   *     this method throwing an IllegalArgumentException.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
+   *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public void recognizeAsync(MPImage inputImage, long inputTimestampMs) {
-    // TODO: add proper support for rotations.
-    sendLiveStreamData(inputImage, buildFullImageRectF(), inputTimestampMs);
+  public void recognizeAsync(
+      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
+    validateImageProcessingOptions(imageProcessingOptions);
+    sendLiveStreamData(image, imageProcessingOptions, timestampMs);
   }
 
   /** Options for setting up an {@link GestureRecognizer}. */
@@ -445,8 +529,14 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
     }
   }
 
-  /** Creates a RectF covering the full image. */
-  private static RectF buildFullImageRectF() {
-    return new RectF(0, 0, 1, 1);
+  /**
+   * Validates that the provided {@link ImageProcessingOptions} doesn't contain a
+   * region-of-interest.
+   */
+  private static void validateImageProcessingOptions(
+      ImageProcessingOptions imageProcessingOptions) {
+    if (imageProcessingOptions.regionOfInterest().isPresent()) {
+      throw new IllegalArgumentException("GestureRecognizer doesn't support region-of-interest.");
+    }
   }
 }

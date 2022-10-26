@@ -14,7 +14,7 @@
 
 """The public facing packet getter APIs."""
 
-from typing import List, Type
+from typing import List
 
 from google.protobuf import message
 from google.protobuf import symbol_database
@@ -39,7 +39,7 @@ get_image_frame = _packet_getter.get_image_frame
 get_matrix = _packet_getter.get_matrix
 
 
-def get_proto(packet: mp_packet.Packet) -> Type[message.Message]:
+def get_proto(packet: mp_packet.Packet) -> message.Message:
   """Get the content of a MediaPipe proto Packet as a proto message.
 
   Args:

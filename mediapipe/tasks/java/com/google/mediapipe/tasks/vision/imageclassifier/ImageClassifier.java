@@ -15,7 +15,6 @@
 package com.google.mediapipe.tasks.vision.imageclassifier;
 
 import android.content.Context;
-import android.graphics.RectF;
 import android.os.ParcelFileDescriptor;
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
@@ -26,7 +25,7 @@ import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.ProtoUtil;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
-import com.google.mediapipe.tasks.components.container.proto.ClassificationsProto;
+import com.google.mediapipe.tasks.components.containers.proto.ClassificationsProto;
 import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
@@ -37,6 +36,7 @@ import com.google.mediapipe.tasks.core.TaskOptions;
 import com.google.mediapipe.tasks.core.TaskRunner;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.vision.core.BaseVisionTaskApi;
+import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.imageclassifier.proto.ImageClassifierGraphOptionsProto;
 import java.io.File;
@@ -216,6 +216,24 @@ public final class ImageClassifier extends BaseVisionTaskApi {
   }
 
   /**
+   * Performs classification on the provided single image with default image processing options,
+   * i.e. using the whole image as region-of-interest and without any rotation applied. Only use
+   * this method when the {@link ImageClassifier} is created with {@link RunningMode.IMAGE}.
+   *
+   * <p>{@link ImageClassifier} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @throws MediaPipeException if there is an internal error.
+   */
+  public ImageClassificationResult classify(MPImage image) {
+    return classify(image, ImageProcessingOptions.builder().build());
+  }
+
+  /**
    * Performs classification on the provided single image. Only use this method when the {@link
    * ImageClassifier} is created with {@link RunningMode.IMAGE}.
    *
@@ -225,16 +243,23 @@ public final class ImageClassifier extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link MPImage} object for processing.
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference.
    * @throws MediaPipeException if there is an internal error.
    */
-  public ImageClassificationResult classify(MPImage inputImage) {
-    return (ImageClassificationResult) processImageData(inputImage, buildFullImageRectF());
+  public ImageClassificationResult classify(
+      MPImage image, ImageProcessingOptions imageProcessingOptions) {
+    return (ImageClassificationResult) processImageData(image, imageProcessingOptions);
   }
 
   /**
-   * Performs classification on the provided single image and region-of-interest. Only use this
-   * method when the {@link ImageClassifier} is created with {@link RunningMode.IMAGE}.
+   * Performs classification on the provided video frame with default image processing options, i.e.
+   * using the whole image as region-of-interest and without any rotation applied. Only use this
+   * method when the {@link ImageClassifier} is created with {@link RunningMode.VIDEO}.
+   *
+   * <p>It's required to provide the video frame's timestamp (in milliseconds). The input timestamps
+   * must be monotonically increasing.
    *
    * <p>{@link ImageClassifier} supports the following color space types:
    *
@@ -242,13 +267,12 @@ public final class ImageClassifier extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link MPImage} object for processing.
-   * @param roi a {@link RectF} specifying the region of interest on which to perform
-   *     classification. Coordinates are expected to be specified as normalized values in [0,1].
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param timestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error.
    */
-  public ImageClassificationResult classify(MPImage inputImage, RectF roi) {
-    return (ImageClassificationResult) processImageData(inputImage, roi);
+  public ImageClassificationResult classifyForVideo(MPImage image, long timestampMs) {
+    return classifyForVideo(image, ImageProcessingOptions.builder().build(), timestampMs);
   }
 
   /**
@@ -264,21 +288,26 @@ public final class ImageClassifier extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link MPImage} object for processing.
-   * @param inputTimestampMs the input timestamp (in milliseconds).
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference.
+   * @param timestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error.
    */
-  public ImageClassificationResult classifyForVideo(MPImage inputImage, long inputTimestampMs) {
-    return (ImageClassificationResult)
-        processVideoData(inputImage, buildFullImageRectF(), inputTimestampMs);
+  public ImageClassificationResult classifyForVideo(
+      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
+    return (ImageClassificationResult) processVideoData(image, imageProcessingOptions, timestampMs);
   }
 
   /**
-   * Performs classification on the provided video frame with additional region-of-interest. Only
-   * use this method when the {@link ImageClassifier} is created with {@link RunningMode.VIDEO}.
+   * Sends live image data to perform classification with default image processing options, i.e.
+   * using the whole image as region-of-interest and without any rotation applied, and the results
+   * will be available via the {@link ResultListener} provided in the {@link
+   * ImageClassifierOptions}. Only use this method when the {@link ImageClassifier} is created with
+   * {@link RunningMode.LIVE_STREAM}.
    *
-   * <p>It's required to provide the video frame's timestamp (in milliseconds). The input timestamps
-   * must be monotonically increasing.
+   * <p>It's required to provide a timestamp (in milliseconds) to indicate when the input image is
+   * sent to the object detector. The input timestamps must be monotonically increasing.
    *
    * <p>{@link ImageClassifier} supports the following color space types:
    *
@@ -286,15 +315,12 @@ public final class ImageClassifier extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link MPImage} object for processing.
-   * @param roi a {@link RectF} specifying the region of interest on which to perform
-   *     classification. Coordinates are expected to be specified as normalized values in [0,1].
-   * @param inputTimestampMs the input timestamp (in milliseconds).
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param timestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error.
    */
-  public ImageClassificationResult classifyForVideo(
-      MPImage inputImage, RectF roi, long inputTimestampMs) {
-    return (ImageClassificationResult) processVideoData(inputImage, roi, inputTimestampMs);
+  public void classifyAsync(MPImage image, long timestampMs) {
+    classifyAsync(image, ImageProcessingOptions.builder().build(), timestampMs);
   }
 
   /**
@@ -311,37 +337,15 @@ public final class ImageClassifier extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link MPImage} object for processing.
-   * @param inputTimestampMs the input timestamp (in milliseconds).
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference.
+   * @param timestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error.
    */
-  public void classifyAsync(MPImage inputImage, long inputTimestampMs) {
-    sendLiveStreamData(inputImage, buildFullImageRectF(), inputTimestampMs);
-  }
-
-  /**
-   * Sends live image data and additional region-of-interest to perform classification, and the
-   * results will be available via the {@link ResultListener} provided in the {@link
-   * ImageClassifierOptions}. Only use this method when the {@link ImageClassifier} is created with
-   * {@link RunningMode.LIVE_STREAM}.
-   *
-   * <p>It's required to provide a timestamp (in milliseconds) to indicate when the input image is
-   * sent to the object detector. The input timestamps must be monotonically increasing.
-   *
-   * <p>{@link ImageClassifier} supports the following color space types:
-   *
-   * <ul>
-   *   <li>{@link Bitmap.Config.ARGB_8888}
-   * </ul>
-   *
-   * @param inputImage a MediaPipe {@link MPImage} object for processing.
-   * @param roi a {@link RectF} specifying the region of interest on which to perform
-   *     classification. Coordinates are expected to be specified as normalized values in [0,1].
-   * @param inputTimestampMs the input timestamp (in milliseconds).
-   * @throws MediaPipeException if there is an internal error.
-   */
-  public void classifyAsync(MPImage inputImage, RectF roi, long inputTimestampMs) {
-    sendLiveStreamData(inputImage, roi, inputTimestampMs);
+  public void classifyAsync(
+      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
+    sendLiveStreamData(image, imageProcessingOptions, timestampMs);
   }
 
   /** Options for setting up and {@link ImageClassifier}. */
@@ -446,10 +450,5 @@ public final class ImageClassifier extends BaseVisionTaskApi {
               taskOptionsBuilder.build())
           .build();
     }
-  }
-
-  /** Creates a RectF covering the full image. */
-  private static RectF buildFullImageRectF() {
-    return new RectF(0, 0, 1, 1);
   }
 }

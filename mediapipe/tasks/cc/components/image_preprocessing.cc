@@ -30,6 +30,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/gpu/gpu_origin.pb.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/image_preprocessing_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
@@ -128,6 +129,9 @@ absl::Status ConfigureImageToTensorCalculator(
     options->mutable_output_tensor_float_range()->set_max((255.0f - mean) /
                                                           std);
   }
+  // TODO: need to.support different GPU origin on differnt
+  // platforms or applications.
+  options->set_gpu_origin(mediapipe::GpuOrigin::TOP_LEFT);
   return absl::OkStatus();
 }
 

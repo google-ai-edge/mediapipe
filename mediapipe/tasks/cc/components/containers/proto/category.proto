@@ -17,7 +17,7 @@ syntax = "proto2";
 
 package mediapipe.tasks.components.containers.proto;
 
-option java_package = "com.google.mediapipe.tasks.components.container.proto";
+option java_package = "com.google.mediapipe.tasks.components.containers.proto";
 option java_outer_classname = "CategoryProto";
 
 // A single classification result.

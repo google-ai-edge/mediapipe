@@ -72,9 +72,4 @@ message TensorsToClassificationCalculatorOptions {
   // that are not in the `allow_classes` field will be completely ignored.
   // `ignore_classes` and `allow_classes` are mutually exclusive.
   repeated int32 allow_classes = 8 [packed = true];
-
-  // The optional index of the tensor these classifications originate from.
-  optional int32 tensor_index = 10;
-  // The optional name of the tensor these classifications originate from.
-  optional string tensor_name = 11;
 }
