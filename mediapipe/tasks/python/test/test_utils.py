@@ -61,10 +61,13 @@ def create_calibration_file(file_dir: str,
 
 
 def assertProtoEqual(self, a, b, check_initialized=True,
-                     normalize_numbers=False, msg=None):
-  """Fails with a useful error if a and b aren't equal.
-  Comparison of repeated fields matches the semantics of
+                     normalize_numbers=True, msg=None):
+  """assertProtoEqual() is useful for unit tests. It produces much more helpful
+  output than assertEqual() for proto2 messages. Fails with a useful error if a
+  and b aren't equal. Comparison of repeated fields matches the semantics of
   unittest.TestCase.assertEqual(), ie order and extra duplicates fields matter.
+  https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/util/protobuf/compare.py#L73
+
   Args:
     self: absltest.testing.parameterized.TestCase
     a: proto2 PB instance, or text string representing one.
@@ -112,6 +115,8 @@ def _normalize_number_fields(pb):
   five digits of precision to account for python always storing them as 64-bit,
   and ensures doubles are floating point for when they're set to integers.
   Modifies pb in place. Recurses into nested objects.
+  https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/util/protobuf/compare.py#L118
+
   Args:
     pb: proto2 message.
   Returns:
