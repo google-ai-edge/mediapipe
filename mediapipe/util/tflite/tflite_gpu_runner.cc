@@ -34,7 +34,7 @@
 
 // This code should be enabled as soon as TensorFlow version, which mediapipe
 // uses, will include this module.
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
 #include "tensorflow/lite/delegates/gpu/cl/api.h"
 #endif
 
@@ -82,7 +82,7 @@ ObjectDef GetSSBOObjectDef(int channels) {
   return gpu_object_def;
 }
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
 
 cl::InferenceOptions GetClInferenceOptions(const InferenceOptions& options) {
   cl::InferenceOptions result{};
@@ -106,7 +106,7 @@ absl::Status VerifyShapes(const std::vector<TensorObjectDef>& actual,
   return absl::OkStatus();
 }
 
-#endif  // __ANDROID__
+#endif  // defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
 
 }  // namespace
 
@@ -225,7 +225,7 @@ absl::Status TFLiteGPURunner::InitializeOpenGL(
 
 absl::Status TFLiteGPURunner::InitializeOpenCL(
     std::unique_ptr<InferenceBuilder>* builder) {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
   cl::InferenceEnvironmentOptions env_options;
   if (!serialized_binary_cache_.empty()) {
     env_options.serialized_binary_cache = serialized_binary_cache_;
@@ -254,11 +254,12 @@ absl::Status TFLiteGPURunner::InitializeOpenCL(
 
   return absl::OkStatus();
 #else
-  return mediapipe::UnimplementedError("Currently only Android is supported");
-#endif  // __ANDROID__
+  return mediapipe::UnimplementedError(
+      "Currently only Android & ChromeOS are supported");
+#endif  // defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
 }
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
 
 absl::Status TFLiteGPURunner::InitializeOpenCLFromSerializedModel(
     std::unique_ptr<InferenceBuilder>* builder) {
@@ -283,7 +284,7 @@ absl::StatusOr<std::vector<uint8_t>> TFLiteGPURunner::GetSerializedModel() {
   return serialized_model;
 }
 
-#endif  // __ANDROID__
+#endif  // defined(__ANDROID__) || defined(MEDIAPIPE_CHROMIUMOS)
 
 }  // namespace gpu
 }  // namespace tflite

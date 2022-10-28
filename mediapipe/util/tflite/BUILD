@@ -84,33 +84,28 @@ cc_library(
         "//conditions:default": ["tflite_gpu_runner.h"],
     }),
     deps = select({
-        "//mediapipe:ios": [],
-        "//mediapipe:macos": [],
-        "//conditions:default": [
-            "@com_google_absl//absl/strings",
-            "//mediapipe/framework/port:ret_check",
-            "//mediapipe/framework/port:status",
-            "//mediapipe/framework/port:statusor",
-            "@org_tensorflow//tensorflow/lite:framework",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu:api",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model_builder",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
-        ],
-        "//mediapipe:android": [
-            "@com_google_absl//absl/strings",
-            "//mediapipe/framework/port:ret_check",
-            "//mediapipe/framework/port:status",
-            "//mediapipe/framework/port:statusor",
-            "@org_tensorflow//tensorflow/lite:framework",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu:api",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/cl:api",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model_builder",
-            "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
-        ],
-    }) + [
+               "//mediapipe:ios": [],
+               "//mediapipe:macos": [],
+               "//conditions:default": [
+                   "@com_google_absl//absl/strings",
+                   "//mediapipe/framework/port:ret_check",
+                   "//mediapipe/framework/port:status",
+                   "//mediapipe/framework/port:statusor",
+                   "@org_tensorflow//tensorflow/lite:framework",
+                   "@org_tensorflow//tensorflow/lite/delegates/gpu:api",
+                   "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
+                   "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model_builder",
+                   "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:api2",
+               ],
+           }) +
+           select({
+               "//mediapipe:android": [
+                   "@org_tensorflow//tensorflow/lite/delegates/gpu/cl:api",
+               ],
+               "//conditions:default": [],
+           }) + [
         "@com_google_absl//absl/status",
+        "//mediapipe/framework:port",
         "@org_tensorflow//tensorflow/lite/core/api",
     ],
 )

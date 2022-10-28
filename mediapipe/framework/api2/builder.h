@@ -289,8 +289,15 @@ class NodeBase {
 
   template <typename T>
   T& GetOptions() {
+    return GetOptions(T::ext);
+  }
+
+  // Use this API when the proto extension does not follow the "ext" naming
+  // convention.
+  template <typename E>
+  auto& GetOptions(const E& extension) {
     options_used_ = true;
-    return *options_.MutableExtension(T::ext);
+    return *options_.MutableExtension(extension);
   }
 
  protected:
@@ -386,8 +393,15 @@ class PacketGenerator {
 
   template <typename T>
   T& GetOptions() {
+    return GetOptions(T::ext);
+  }
+
+  // Use this API when the proto extension does not follow the "ext" naming
+  // convention.
+  template <typename E>
+  auto& GetOptions(const E& extension) {
     options_used_ = true;
-    return *options_.MutableExtension(T::ext);
+    return *options_.MutableExtension(extension);
   }
 
   template <typename B, typename T, bool kIsOptional, bool kIsMultiple>

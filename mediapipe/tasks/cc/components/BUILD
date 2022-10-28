@@ -49,6 +49,7 @@ cc_library(
         "//mediapipe/gpu:gpu_origin_cc_proto",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
         "//mediapipe/tasks/cc/vision/utils:image_tensor_specs",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",

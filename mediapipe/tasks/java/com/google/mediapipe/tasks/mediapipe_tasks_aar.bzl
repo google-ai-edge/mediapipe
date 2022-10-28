@@ -40,6 +40,10 @@ _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_java_proto_lite",
 ]
 
+_TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
+    "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_java_proto_lite",
+]
+
 def mediapipe_tasks_core_aar(name, srcs, manifest):
     """Builds medaipipe tasks core AAR.
 
@@ -56,6 +60,11 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
         )
 
     for target in _VISION_TASKS_JAVA_PROTO_LITE_TARGETS:
+        mediapipe_tasks_java_proto_srcs.append(
+            _mediapipe_tasks_java_proto_src_extractor(target = target),
+        )
+
+    for target in _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS:
         mediapipe_tasks_java_proto_srcs.append(
             _mediapipe_tasks_java_proto_src_extractor(target = target),
         )
@@ -81,32 +90,35 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
         ],
         manifest = manifest,
         deps = [
-            "//mediapipe/calculators/core:flow_limiter_calculator_java_proto_lite",
-            "//mediapipe/calculators/tensor:inference_calculator_java_proto_lite",
-            "//mediapipe/framework:calculator_java_proto_lite",
-            "//mediapipe/framework:calculator_profile_java_proto_lite",
-            "//mediapipe/framework:calculator_options_java_proto_lite",
-            "//mediapipe/framework:mediapipe_options_java_proto_lite",
-            "//mediapipe/framework:packet_factory_java_proto_lite",
-            "//mediapipe/framework:packet_generator_java_proto_lite",
-            "//mediapipe/framework:status_handler_java_proto_lite",
-            "//mediapipe/framework:stream_handler_java_proto_lite",
-            "//mediapipe/framework/formats:classification_java_proto_lite",
-            "//mediapipe/framework/formats:detection_java_proto_lite",
-            "//mediapipe/framework/formats:landmark_java_proto_lite",
-            "//mediapipe/framework/formats:location_data_java_proto_lite",
-            "//mediapipe/framework/formats:rect_java_proto_lite",
-            "//mediapipe/java/com/google/mediapipe/framework:android_framework",
-            "//mediapipe/java/com/google/mediapipe/framework/image",
-            "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
-            "//third_party:androidx_annotation",
-            "//third_party:autovalue",
-            "@com_google_protobuf//:protobuf_javalite",
-            "@maven//:com_google_guava_guava",
-            "@maven//:com_google_flogger_flogger",
-            "@maven//:com_google_flogger_flogger_system_backend",
-            "@maven//:com_google_code_findbugs_jsr305",
-        ] + _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _VISION_TASKS_JAVA_PROTO_LITE_TARGETS,
+                   "//mediapipe/calculators/core:flow_limiter_calculator_java_proto_lite",
+                   "//mediapipe/calculators/tensor:inference_calculator_java_proto_lite",
+                   "//mediapipe/framework:calculator_java_proto_lite",
+                   "//mediapipe/framework:calculator_profile_java_proto_lite",
+                   "//mediapipe/framework:calculator_options_java_proto_lite",
+                   "//mediapipe/framework:mediapipe_options_java_proto_lite",
+                   "//mediapipe/framework:packet_factory_java_proto_lite",
+                   "//mediapipe/framework:packet_generator_java_proto_lite",
+                   "//mediapipe/framework:status_handler_java_proto_lite",
+                   "//mediapipe/framework:stream_handler_java_proto_lite",
+                   "//mediapipe/framework/formats:classification_java_proto_lite",
+                   "//mediapipe/framework/formats:detection_java_proto_lite",
+                   "//mediapipe/framework/formats:landmark_java_proto_lite",
+                   "//mediapipe/framework/formats:location_data_java_proto_lite",
+                   "//mediapipe/framework/formats:rect_java_proto_lite",
+                   "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+                   "//mediapipe/java/com/google/mediapipe/framework/image",
+                   "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
+                   "//third_party:androidx_annotation",
+                   "//third_party:autovalue",
+                   "@com_google_protobuf//:protobuf_javalite",
+                   "@maven//:com_google_guava_guava",
+                   "@maven//:com_google_flogger_flogger",
+                   "@maven//:com_google_flogger_flogger_system_backend",
+                   "@maven//:com_google_code_findbugs_jsr305",
+               ] +
+               _CORE_TASKS_JAVA_PROTO_LITE_TARGETS +
+               _VISION_TASKS_JAVA_PROTO_LITE_TARGETS +
+               _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS,
     )
 
 def mediapipe_tasks_vision_aar(name, srcs, native_library):
@@ -139,6 +151,39 @@ EOF
         srcs = srcs,
         manifest = "AndroidManifest.xml",
         java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _VISION_TASKS_JAVA_PROTO_LITE_TARGETS,
+        native_library = native_library,
+    )
+
+def mediapipe_tasks_text_aar(name, srcs, native_library):
+    """Builds medaipipe tasks text AAR.
+
+    Args:
+      name: The bazel target name.
+      srcs: MediaPipe Text Tasks' source files.
+      native_library: The native library that contains text tasks' graph and calculators.
+    """
+
+    native.genrule(
+        name = name + "tasks_manifest_generator",
+        outs = ["AndroidManifest.xml"],
+        cmd = """
+cat > $(OUTS) <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.google.mediapipe.tasks.text">
+    <uses-sdk
+        android:minSdkVersion="24"
+        android:targetSdkVersion="30" />
+</manifest>
+EOF
+""",
+    )
+
+    _mediapipe_tasks_aar(
+        name = name,
+        srcs = srcs,
+        manifest = "AndroidManifest.xml",
+        java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS,
         native_library = native_library,
     )
 

@@ -283,8 +283,10 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
 
     auto& preprocessing =
         graph.AddNode("mediapipe.tasks.components.ImagePreprocessingSubgraph");
+    bool use_gpu = components::DetermineImagePreprocessingGpuBackend(
+        subgraph_options.base_options().acceleration());
     MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
-        model_resources,
+        model_resources, use_gpu,
         &preprocessing
              .GetOptions<tasks::components::ImagePreprocessingOptions>()));
     image_in >> preprocessing.In("IMAGE");
