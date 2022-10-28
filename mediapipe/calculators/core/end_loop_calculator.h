@@ -50,7 +50,7 @@ namespace mediapipe {
 //   calculator:    "EndLoopWithOutputCalculator"
 //   input_stream:  "ITEM:output_of_loop_body"     # ItemU     @loop_internal_ts
 //   input_stream:  "BATCH_END:ext_ts"             # Timestamp @loop_internal_ts
-//   output_stream: "OUTPUT:aggregated_result"     # IterableU @ext_ts
+//   output_stream: "ITERABLE:aggregated_result"   # IterableU @ext_ts
 // }
 template <typename IterableT>
 class EndLoopCalculator : public CalculatorBase {
