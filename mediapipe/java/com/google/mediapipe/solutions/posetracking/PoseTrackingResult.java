@@ -126,17 +126,22 @@ public class PoseTrackingResult extends ImageSolutionResult {
         float x = 0;
         float y  = 0;
         float z = 0;
+        float confidence = 1;
+        float presence = 1;
         final List<Integer> ptsIdx = Arrays.asList(LEFT_EAR, LEFT_EYE, RIGHT_EYE, RIGHT_EAR);
         for (Integer i :ptsIdx){
             LandmarkProto.Landmark landmark = landmarks.get(i);
             x+=landmark.getX();
             y+=landmark.getY();
             z+=landmark.getZ();
+            presence = min(presence,landmark.getPresence());
+            confidence = min(confidence,landmark.getVisibility());
         }
         x = x/ptsIdx.size();
         y = y/ptsIdx.size();
         z = z/ptsIdx.size();
-        LandmarkProto.Landmark midupper = LandmarkProto.Landmark.newBuilder().setX(x).setY(y).setZ(z).build();
+        LandmarkProto.Landmark midupper = LandmarkProto.Landmark.newBuilder().setX(x).setY(y).setZ(z)
+                .setVisibility(confidence).setPresence(presence).build();
 
 
         LandmarkProto.Landmark midlower = getJointBetweenPoints(landmarks.get(MOUTH_LEFT), landmarks.get(MOUTH_RIGHT), 0.5f);

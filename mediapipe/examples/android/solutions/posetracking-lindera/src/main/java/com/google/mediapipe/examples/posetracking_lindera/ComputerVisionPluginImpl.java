@@ -80,6 +80,18 @@ public class ComputerVisionPluginImpl implements ComputerVisionPlugin {
                         }
                     }
                     abbrev = abbrev.toUpperCase(Locale.ROOT);
+                    // correct abbreviations here
+                    switch (abbrev) {
+                        case "P":
+                            abbrev = "PE";
+                            break;
+                        case "T":
+                            abbrev = "TH";
+                            break;
+                        case "S":
+                            abbrev = "SP";
+                            break;
+                    }
                     XYZPointWithConfidence data = (XYZPointWithConfidence) field.get(bodyJoints);
                     assert data != null;
                     bodyJointsString = bodyJointsString.concat(String.format(abbrev+":%f,%f,%f=",data.x,data.y,data.z));

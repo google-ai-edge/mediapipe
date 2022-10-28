@@ -24,7 +24,9 @@ import com.google.mediapipe.solutioncore.ResultGlRenderer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /** A custom implementation of {@link ResultGlRenderer} to render {@link PoseTrackingResult}. */
@@ -91,7 +93,10 @@ public class PoseTrackingResultGlRenderer implements ResultGlRenderer<PoseTracki
     GLES20.glUseProgram(program);
     GLES20.glUniformMatrix4fv(projectionMatrixHandle, 1, false, projectionMatrix, 0);
     GLES20.glUniform1f(pointSizeHandle, KEYPOINT_SIZE);
-    ImmutableList<LandmarkProto.Landmark> landmarks = result.multiPoseLandmarks();
+    ImmutableList<LandmarkProto.Landmark> originalLandmarks = result.multiPoseLandmarks();
+    List<LandmarkProto.Landmark> landmarks = originalLandmarks.stream().filter((landmark -> {
+      return landmark.getVisibility() > 0.25 || landmark.getPresence()>0.25;
+    })).collect(Collectors.toList());
 
 
       // Draw keypoints.
