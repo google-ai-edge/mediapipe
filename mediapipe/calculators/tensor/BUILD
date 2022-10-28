@@ -110,6 +110,56 @@ cc_test(
 )
 
 mediapipe_proto_library(
+    name = "tensors_to_audio_calculator_proto",
+    srcs = ["tensors_to_audio_calculator.proto"],
+    visibility = [
+        "//mediapipe/framework:mediapipe_internal",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "tensors_to_audio_calculator",
+    srcs = ["tensors_to_audio_calculator.cc"],
+    visibility = [
+        "//mediapipe/framework:mediapipe_internal",
+    ],
+    deps = [
+        ":tensors_to_audio_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/status",
+        "@com_google_audio_tools//audio/dsp:window_functions",
+        "@pffft",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "tensors_to_audio_calculator_test",
+    srcs = ["tensors_to_audio_calculator_test.cc"],
+    deps = [
+        ":audio_to_tensor_calculator",
+        ":audio_to_tensor_calculator_cc_proto",
+        ":tensors_to_audio_calculator",
+        ":tensors_to_audio_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+mediapipe_proto_library(
     name = "feedback_tensors_calculator_proto",
     srcs = ["feedback_tensors_calculator.proto"],
     visibility = [
