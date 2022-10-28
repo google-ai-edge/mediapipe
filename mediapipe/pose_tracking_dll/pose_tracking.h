@@ -62,9 +62,16 @@ struct Mat {
 };
 }  // namespace cv_wrapper
 
+  
 class DLLEXPORT PoseTracking {
  public:
-  static constexpr size_t kLandmarksCount = 33u;
+  struct PoseLandmarks {
+    PoseLandmarks(cv_wrapper::Point3f* points, float* visibility) : points(points), visibility(visibility) {}
+    static constexpr size_t kLandmarksCount = 33u;
+    const cv_wrapper::Point3f* points;
+    const float* visibility;
+  };
+
   enum LandmarkNames {
     NOSE = 0,
     LEFT_EYE_INNER,
@@ -99,7 +106,7 @@ class DLLEXPORT PoseTracking {
     RIGHT_HEEL,
     LEFT_FOOT_INDEX,
     RIGHT_FOOT_INDEX,
-    COUNT = kLandmarksCount
+    COUNT = PoseLandmarks::kLandmarksCount
   };
 
   PoseTracking(const char* calculatorGraphConfigFile);
@@ -107,7 +114,7 @@ class DLLEXPORT PoseTracking {
 
   bool processFrame(const cv_wrapper::Mat& inputRGB8Bit);
   cv_wrapper::Mat lastSegmentedFrame();
-  cv_wrapper::Point3f* lastDetectedLandmarks();
+  PoseTracking::PoseLandmarks lastDetectedLandmarks();
 
  private:
   PoseTrackingImpl* mImplementation;

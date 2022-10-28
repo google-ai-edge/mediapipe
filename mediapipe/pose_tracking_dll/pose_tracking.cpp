@@ -36,6 +36,7 @@ class PoseTrackingImpl {
  public:
   PoseTrackingImpl(const std::string& calculatorGraphConfigFile) {
     auto status = initialize(calculatorGraphConfigFile);
+	LOG(WARNING) << "Initialized PoseTracking with status: " << status;
   }
 
   absl::Status initialize(const std::string& calculatorGraphConfigFile) {
@@ -116,6 +117,7 @@ class PoseTrackingImpl {
       poseLandmarks[j].x = landmark.x();
       poseLandmarks[j].y = landmark.y();
       poseLandmarks[j].z = landmark.z();
+      visibility[j] = landmark.visibility();
     }
 
     return absl::OkStatus();
@@ -124,6 +126,7 @@ class PoseTrackingImpl {
   nimagna::cv_wrapper::Point3f* lastDetectedLandmarks() { return poseLandmarks; }
 
   cv::Mat lastSegmentedFrame() { return segmentedMask; }
+  float* landmarksVisibility() { return visibility; }
 
   static constexpr size_t kLandmarksCount = 33u;
 
@@ -131,6 +134,7 @@ class PoseTrackingImpl {
   mediapipe::Packet poseLandmarksPacket;
   cv::Mat segmentedMask;
   nimagna::cv_wrapper::Point3f poseLandmarks[kLandmarksCount];
+  float visibility[kLandmarksCount] = {0};
   std::unique_ptr<mediapipe::OutputStreamPoller> maskPollerPtr;
   std::unique_ptr<mediapipe::OutputStreamPoller> landmarksPollerPtr;
   mediapipe::CalculatorGraph graph;
@@ -149,8 +153,8 @@ bool PoseTracking::processFrame(const cv_wrapper::Mat& inputRGB8Bit) {
   return mImplementation->processFrame(frame);
 }
 
-cv_wrapper::Point3f* PoseTracking::lastDetectedLandmarks() {
-  return mImplementation->lastDetectedLandmarks();
+PoseTracking::PoseLandmarks PoseTracking::lastDetectedLandmarks() {
+  return {mImplementation->lastDetectedLandmarks(), mImplementation->landmarksVisibility()};
 }
 
 cv_wrapper::Mat PoseTracking::lastSegmentedFrame() {
@@ -163,5 +167,4 @@ PoseTracking::~PoseTracking()
 {
 	delete mImplementation;
 }
-
 }  // namespace nimagna
