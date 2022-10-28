@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <queue>
 #include <set>
 #include <string>
 
@@ -54,9 +55,6 @@ namespace mediapipe {
 // contained subgraph or calculator nodes.
 //
 class SwitchDemuxCalculator : public CalculatorBase {
-  static constexpr char kSelectTag[] = "SELECT";
-  static constexpr char kEnableTag[] = "ENABLE";
-
  public:
   static absl::Status GetContract(CalculatorContract* cc);
 
@@ -64,10 +62,39 @@ class SwitchDemuxCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override;
 
  private:
+  absl::Status RecordPackets(CalculatorContext* cc);
+  int ChannelIndex(Timestamp timestamp);
+  absl::Status SendActivePackets(CalculatorContext* cc);
+
+ private:
   int channel_index_;
   std::set<std::string> channel_tags_;
+  using PacketQueue = std::map<CollectionItemId, std::queue<Packet>>;
+  PacketQueue input_queue_;
+  std::map<Timestamp, int> channel_history_;
 };
 REGISTER_CALCULATOR(SwitchDemuxCalculator);
+
+namespace {
+static constexpr char kSelectTag[] = "SELECT";
+static constexpr char kEnableTag[] = "ENABLE";
+
+// Returns the last received timestamp for an input stream.
+inline Timestamp SettledTimestamp(const InputStreamShard& input) {
+  return input.Value().Timestamp();
+}
+
+// Returns the last received timestamp for channel selection.
+inline Timestamp ChannelSettledTimestamp(CalculatorContext* cc) {
+  Timestamp result = Timestamp::Done();
+  if (cc->Inputs().HasTag(kEnableTag)) {
+    result = SettledTimestamp(cc->Inputs().Tag(kEnableTag));
+  } else if (cc->Inputs().HasTag(kSelectTag)) {
+    result = SettledTimestamp(cc->Inputs().Tag(kSelectTag));
+  }
+  return result;
+}
+}  // namespace
 
 absl::Status SwitchDemuxCalculator::GetContract(CalculatorContract* cc) {
   // Allow any one of kSelectTag, kEnableTag.
@@ -125,6 +152,7 @@ absl::Status SwitchDemuxCalculator::GetContract(CalculatorContract* cc) {
 absl::Status SwitchDemuxCalculator::Open(CalculatorContext* cc) {
   channel_index_ = tool::GetChannelIndex(*cc, channel_index_);
   channel_tags_ = ChannelTags(cc->Outputs().TagMap());
+  channel_history_[Timestamp::Unstarted()] = channel_index_;
 
   // Relay side packets to all channels.
   // Note: This is necessary because Calculator::Open only proceeds when every
@@ -164,21 +192,77 @@ absl::Status SwitchDemuxCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status SwitchDemuxCalculator::Process(CalculatorContext* cc) {
-  // Update the input channel index if specified.
-  channel_index_ = tool::GetChannelIndex(*cc, channel_index_);
+  MP_RETURN_IF_ERROR(RecordPackets(cc));
+  MP_RETURN_IF_ERROR(SendActivePackets(cc));
+  return absl::OkStatus();
+}
 
-  // Relay packets and timestamps only to channel_index_.
+// Enqueue all arriving packets and bounds.
+absl::Status SwitchDemuxCalculator::RecordPackets(CalculatorContext* cc) {
+  // Enqueue any new arriving packets.
   for (const std::string& tag : channel_tags_) {
     for (int index = 0; index < cc->Inputs().NumEntries(tag); ++index) {
-      auto& input = cc->Inputs().Get(tag, index);
-      std::string output_tag = tool::ChannelTag(tag, channel_index_);
-      auto output_id = cc->Outputs().GetId(output_tag, index);
-      if (output_id.IsValid()) {
-        auto& output = cc->Outputs().Get(output_tag, index);
-        tool::Relay(input, &output);
+      auto input_id = cc->Inputs().GetId(tag, index);
+      Packet packet = cc->Inputs().Get(input_id).Value();
+      if (packet.Timestamp() == cc->InputTimestamp()) {
+        input_queue_[input_id].push(packet);
       }
     }
   }
+
+  // Enque any new input channel and its activation timestamp.
+  Timestamp channel_settled = ChannelSettledTimestamp(cc);
+  int new_channel_index = tool::GetChannelIndex(*cc, channel_index_);
+  if (channel_settled == cc->InputTimestamp() &&
+      new_channel_index != channel_index_) {
+    channel_index_ = new_channel_index;
+    channel_history_[channel_settled] = channel_index_;
+  }
+  return absl::OkStatus();
+}
+
+// Returns the channel index for a Timestamp.
+int SwitchDemuxCalculator::ChannelIndex(Timestamp timestamp) {
+  auto it = std::prev(channel_history_.upper_bound(timestamp));
+  return it->second;
+}
+
+// Dispatches all queued input packets with known channels.
+absl::Status SwitchDemuxCalculator::SendActivePackets(CalculatorContext* cc) {
+  // Dispatch any queued input packets with a defined channel_index.
+  Timestamp channel_settled = ChannelSettledTimestamp(cc);
+  for (const std::string& tag : channel_tags_) {
+    for (int index = 0; index < cc->Inputs().NumEntries(tag); ++index) {
+      auto input_id = cc->Inputs().GetId(tag, index);
+      auto& queue = input_queue_[input_id];
+      while (!queue.empty() && queue.front().Timestamp() <= channel_settled) {
+        int channel_index = ChannelIndex(queue.front().Timestamp());
+        std::string output_tag = tool::ChannelTag(tag, channel_index);
+        auto output_id = cc->Outputs().GetId(output_tag, index);
+        if (output_id.IsValid()) {
+          cc->Outputs().Get(output_id).AddPacket(queue.front());
+        }
+        queue.pop();
+      }
+    }
+  }
+
+  // Discard all select packets not needed for any remaining input packets.
+  Timestamp input_settled = Timestamp::Done();
+  for (const std::string& tag : channel_tags_) {
+    for (int index = 0; index < cc->Inputs().NumEntries(tag); ++index) {
+      auto input_id = cc->Inputs().GetId(tag, index);
+      Timestamp stream_settled = SettledTimestamp(cc->Inputs().Get(input_id));
+      if (!input_queue_[input_id].empty()) {
+        Timestamp stream_bound = input_queue_[input_id].front().Timestamp();
+        stream_settled =
+            std::min(stream_settled, stream_bound.PreviousAllowedInStream());
+      }
+    }
+  }
+  Timestamp input_bound = input_settled.NextAllowedInStream();
+  auto history_bound = std::prev(channel_history_.upper_bound(input_bound));
+  channel_history_.erase(channel_history_.begin(), history_bound);
   return absl::OkStatus();
 }
 

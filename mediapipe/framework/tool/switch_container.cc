@@ -105,10 +105,10 @@ CalculatorGraphConfig::Node* BuildMuxNode(
 
 // Returns a PacketSequencerCalculator node.
 CalculatorGraphConfig::Node* BuildTimestampNode(CalculatorGraphConfig* config,
-                                                bool synchronize_io) {
+                                                bool async_selection) {
   CalculatorGraphConfig::Node* result = config->add_node();
   *result->mutable_calculator() = "PacketSequencerCalculator";
-  if (synchronize_io) {
+  if (!async_selection) {
     *result->mutable_input_stream_handler()->mutable_input_stream_handler() =
         "DefaultInputStreamHandler";
   }
@@ -263,17 +263,17 @@ absl::StatusOr<CalculatorGraphConfig> SwitchContainer::GetConfig(
   std::string enable_stream = "ENABLE:gate_enable";
 
   // Add a PacketSequencerCalculator node for "SELECT" or "ENABLE" streams.
-  bool synchronize_io =
+  bool async_selection =
       Subgraph::GetOptions<mediapipe::SwitchContainerOptions>(options)
-          .synchronize_io();
+          .async_selection();
   if (HasTag(container_node.input_stream(), "SELECT")) {
-    select_node = BuildTimestampNode(&config, synchronize_io);
+    select_node = BuildTimestampNode(&config, async_selection);
     select_node->add_input_stream("INPUT:gate_select");
     select_node->add_output_stream("OUTPUT:gate_select_timed");
     select_stream = "SELECT:gate_select_timed";
   }
   if (HasTag(container_node.input_stream(), "ENABLE")) {
-    enable_node = BuildTimestampNode(&config, synchronize_io);
+    enable_node = BuildTimestampNode(&config, async_selection);
     enable_node->add_input_stream("INPUT:gate_enable");
     enable_node->add_output_stream("OUTPUT:gate_enable_timed");
     enable_stream = "ENABLE:gate_enable_timed";
