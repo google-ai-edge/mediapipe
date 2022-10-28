@@ -224,6 +224,24 @@ class GestureRecognizerTest(parameterized.TestCase):
       self._assert_actual_result_approximately_matches_expected_result(
         recognition_result, expected_recognition_result)
 
+  def test_recognize_succeeds_with_min_gesture_confidence(self):
+    # Creates gesture recognizer.
+    base_options = _BaseOptions(model_asset_path=self.model_path)
+    options = _GestureRecognizerOptions(base_options=base_options,
+                                        min_gesture_confidence=2)
+    with _GestureRecognizer.create_from_options(options) as recognizer:
+      # Performs hand gesture recognition on the input.
+      recognition_result = recognizer.recognize(self.test_image)
+      expected_result = _get_expected_gesture_recognition_result(
+          _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL, _THUMB_UP_INDEX)
+      # Only contains one top scoring gesture.
+      self.assertLen(recognition_result.gestures[0].classifications, 1)
+      # Actual gesture with top score matches expected gesture.
+      actual_top_gesture = recognition_result.gestures[0].classifications[0]
+      expected_top_gesture = expected_result.gestures[0].classifications[0]
+      self.assertEqual(actual_top_gesture.index, expected_top_gesture.index)
+      self.assertEqual(actual_top_gesture.label, expected_top_gesture.label)
+
   def test_recognize_succeeds_with_num_hands(self):
     # Creates gesture recognizer.
     base_options = _BaseOptions(model_asset_path=self.model_path)

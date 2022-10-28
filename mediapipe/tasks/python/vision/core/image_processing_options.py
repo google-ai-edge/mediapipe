@@ -30,7 +30,7 @@ class ImageProcessingOptions:
   Attributes:
     region_of_interest: The optional region-of-interest to crop from the image.
       If not specified, the full image is used. Coordinates must be in [0,1]
-      with 'left' < 'right' and 'top' < bottom.
+      with 'x_center' < 'width' and 'y_center' < height.
     rotation_degress: The rotation to apply to the image (or cropped
       region-of-interest), in degrees clockwise. The rotation must be a
       multiple (positive or negative) of 90°.

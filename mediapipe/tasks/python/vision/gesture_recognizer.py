@@ -118,10 +118,10 @@ class GestureRecognizerOptions:
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
   num_hands: Optional[int] = 1
-  min_hand_detection_confidence: Optional[int] = 0.5
-  min_hand_presence_confidence: Optional[int] = 0.5
-  min_tracking_confidence: Optional[int] = 0.5
-  min_gesture_confidence: Optional[int] = -1
+  min_hand_detection_confidence: Optional[float] = 0.5
+  min_hand_presence_confidence: Optional[float] = 0.5
+  min_tracking_confidence: Optional[float] = 0.5
+  min_gesture_confidence: Optional[float] = -1
   result_callback: Optional[
       Callable[[GestureRecognitionResult, image_module.Image,
                 int], None]] = None
