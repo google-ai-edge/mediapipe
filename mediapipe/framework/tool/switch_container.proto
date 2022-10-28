@@ -30,4 +30,9 @@ message SwitchContainerOptions {
 
   // Use ImmediateInputStreamHandler for channel selection.
   optional bool async_selection = 6;
+
+  // Specifies an input stream, "TAG:index", that defines the processed
+  // timestamps.  SwitchContainer awaits output at the last processed
+  // timestamp before advancing from one selected channel to the next.
+  repeated string tick_input_stream = 7;
 }
