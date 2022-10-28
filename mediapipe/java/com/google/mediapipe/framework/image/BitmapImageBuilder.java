@@ -22,7 +22,7 @@ import android.provider.MediaStore;
 import java.io.IOException;
 
 /**
- * Builds {@link Image} from {@link android.graphics.Bitmap}.
+ * Builds {@link MPImage} from {@link android.graphics.Bitmap}.
  *
  * <p>You can pass in either mutable or immutable {@link android.graphics.Bitmap}. However once
  * {@link android.graphics.Bitmap} is passed in, to keep data integrity you shouldn't modify content
@@ -49,7 +49,7 @@ public class BitmapImageBuilder {
   }
 
   /**
-   * Creates the builder to build {@link Image} from a file.
+   * Creates the builder to build {@link MPImage} from a file.
    *
    * @param context the application context.
    * @param uri the path to the resource file.
@@ -58,15 +58,15 @@ public class BitmapImageBuilder {
     this(MediaStore.Images.Media.getBitmap(context.getContentResolver(), uri));
   }
 
-  /** Sets value for {@link Image#getTimestamp()}. */
+  /** Sets value for {@link MPImage#getTimestamp()}. */
   BitmapImageBuilder setTimestamp(long timestamp) {
     this.timestamp = timestamp;
     return this;
   }
 
-  /** Builds an {@link Image} instance. */
-  public Image build() {
-    return new Image(
+  /** Builds a {@link MPImage} instance. */
+  public MPImage build() {
+    return new MPImage(
         new BitmapImageContainer(bitmap), timestamp, bitmap.getWidth(), bitmap.getHeight());
   }
 }

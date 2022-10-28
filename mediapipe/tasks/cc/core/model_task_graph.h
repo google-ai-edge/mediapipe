@@ -19,6 +19,7 @@ limitations under the License.
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
@@ -75,9 +76,14 @@ class ModelTaskGraph : public Subgraph {
   // construction stage. Note that the external file contents will be moved
   // into the model resources object on creation. The returned model resources
   // pointer will provide graph authors with the access to the metadata
-  // extractor and the tflite model.
+  // extractor and the tflite model. When the model resources graph service is
+  // available, a tag is generated internally asscoiated with the created model
+  // resource. If more than one model resources are created in a graph, the
+  // model resources graph service add the tag_suffix to support multiple
+  // resources.
   absl::StatusOr<const ModelResources*> CreateModelResources(
-      SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file);
+      SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file,
+      const std::string tag_suffix = "");
 
   // If the model resources graph service is available, creates a model asset
   // bundle resources object from the subgraph context, and caches the created
@@ -103,10 +109,15 @@ class ModelTaskGraph : public Subgraph {
   // that can only be used in the graph construction stage. Note that the
   // external file contents will be moved into the model asset bundle resources
   // object on creation. The returned model asset bundle resources pointer will
-  // provide graph authors with the access to extracted model files.
+  // provide graph authors with the access to extracted model files. When the
+  // model resources graph service is available, a tag is generated internally
+  // asscoiated with the created model asset bundle resource. If more than one
+  // model asset bundle resources are created in a graph, the model resources
+  // graph service add the tag_suffix to support multiple resources.
   absl::StatusOr<const ModelAssetBundleResources*>
   CreateModelAssetBundleResources(
-      SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file);
+      SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file,
+      const std::string tag_suffix = "");
 
   // Inserts a mediapipe task inference subgraph into the provided
   // GraphBuilder. The returned node provides the following interfaces to the
@@ -124,9 +135,9 @@ class ModelTaskGraph : public Subgraph {
       api2::builder::Graph& graph) const;
 
  private:
-  std::unique_ptr<ModelResources> local_model_resources_;
+  std::vector<std::unique_ptr<ModelResources>> local_model_resources_;
 
-  std::unique_ptr<ModelAssetBundleResources>
+  std::vector<std::unique_ptr<ModelAssetBundleResources>>
       local_model_asset_bundle_resources_;
 };
 

@@ -30,9 +30,11 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/gpu/gpu_origin.pb.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/image_preprocessing_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
+#include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
@@ -128,12 +130,21 @@ absl::Status ConfigureImageToTensorCalculator(
     options->mutable_output_tensor_float_range()->set_max((255.0f - mean) /
                                                           std);
   }
+  // TODO: need to support different GPU origin on differnt
+  // platforms or applications.
+  options->set_gpu_origin(mediapipe::GpuOrigin::TOP_LEFT);
   return absl::OkStatus();
 }
 
 }  // namespace
 
+bool DetermineImagePreprocessingGpuBackend(
+    const core::proto::Acceleration& acceleration) {
+  return acceleration.has_gpu();
+}
+
 absl::Status ConfigureImagePreprocessing(const ModelResources& model_resources,
+                                         bool use_gpu,
                                          ImagePreprocessingOptions* options) {
   ASSIGN_OR_RETURN(auto image_tensor_specs,
                    BuildImageTensorSpecs(model_resources));
@@ -141,7 +152,9 @@ absl::Status ConfigureImagePreprocessing(const ModelResources& model_resources,
       image_tensor_specs, options->mutable_image_to_tensor_options()));
   // The GPU backend isn't able to process int data. If the input tensor is
   // quantized, forces the image preprocessing graph to use CPU backend.
-  if (image_tensor_specs.tensor_type == tflite::TensorType_UINT8) {
+  if (use_gpu && image_tensor_specs.tensor_type != tflite::TensorType_UINT8) {
+    options->set_backend(ImagePreprocessingOptions::GPU_BACKEND);
+  } else {
     options->set_backend(ImagePreprocessingOptions::CPU_BACKEND);
   }
   return absl::OkStatus();

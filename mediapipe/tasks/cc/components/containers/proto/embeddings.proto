@@ -17,6 +17,9 @@ syntax = "proto2";
 
 package mediapipe.tasks.components.containers.proto;
 
+option java_package = "com.google.mediapipe.tasks.components.containers.proto";
+option java_outer_classname = "EmbeddingsProto";
+
 // Defines a dense floating-point embedding.
 message FloatEmbedding {
   repeated float values = 1 [packed = true];

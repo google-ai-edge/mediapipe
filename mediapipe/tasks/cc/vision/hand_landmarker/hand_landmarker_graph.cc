@@ -92,18 +92,30 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
                                    bool is_copy) {
   ASSIGN_OR_RETURN(const auto hand_detector_file,
                    resources.GetModelFile(kHandDetectorTFLiteName));
+  auto* hand_detector_graph_options =
+      options->mutable_hand_detector_graph_options();
   SetExternalFile(hand_detector_file,
-                  options->mutable_hand_detector_graph_options()
-                      ->mutable_base_options()
+                  hand_detector_graph_options->mutable_base_options()
                       ->mutable_model_asset(),
                   is_copy);
+  hand_detector_graph_options->mutable_base_options()
+      ->mutable_acceleration()
+      ->CopyFrom(options->base_options().acceleration());
+  hand_detector_graph_options->mutable_base_options()->set_use_stream_mode(
+      options->base_options().use_stream_mode());
   ASSIGN_OR_RETURN(const auto hand_landmarks_detector_file,
                    resources.GetModelFile(kHandLandmarksDetectorTFLiteName));
+  auto* hand_landmarks_detector_graph_options =
+      options->mutable_hand_landmarks_detector_graph_options();
   SetExternalFile(hand_landmarks_detector_file,
-                  options->mutable_hand_landmarks_detector_graph_options()
-                      ->mutable_base_options()
+                  hand_landmarks_detector_graph_options->mutable_base_options()
                       ->mutable_model_asset(),
                   is_copy);
+  hand_landmarks_detector_graph_options->mutable_base_options()
+      ->mutable_acceleration()
+      ->CopyFrom(options->base_options().acceleration());
+  hand_landmarks_detector_graph_options->mutable_base_options()
+      ->set_use_stream_mode(options->base_options().use_stream_mode());
   return absl::OkStatus();
 }
 

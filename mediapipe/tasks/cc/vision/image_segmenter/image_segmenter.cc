@@ -17,8 +17,10 @@ limitations under the License.
 
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/components/proto/segmenter_options.pb.h"
 #include "mediapipe/tasks/cc/core/utils.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 
@@ -32,6 +34,8 @@ constexpr char kGroupedSegmentationTag[] = "GROUPED_SEGMENTATION";
 constexpr char kImageInStreamName[] = "image_in";
 constexpr char kImageOutStreamName[] = "image_out";
 constexpr char kImageTag[] = "IMAGE";
+constexpr char kNormRectStreamName[] = "norm_rect_in";
+constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kSubgraphTypeName[] =
     "mediapipe.tasks.vision.ImageSegmenterGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
@@ -51,15 +55,18 @@ CalculatorGraphConfig CreateGraphConfig(
   auto& task_subgraph = graph.AddNode(kSubgraphTypeName);
   task_subgraph.GetOptions<ImageSegmenterOptionsProto>().Swap(options.get());
   graph.In(kImageTag).SetName(kImageInStreamName);
+  graph.In(kNormRectTag).SetName(kNormRectStreamName);
   task_subgraph.Out(kGroupedSegmentationTag).SetName(kSegmentationStreamName) >>
       graph.Out(kGroupedSegmentationTag);
   task_subgraph.Out(kImageTag).SetName(kImageOutStreamName) >>
       graph.Out(kImageTag);
   if (enable_flow_limiting) {
-    return tasks::core::AddFlowLimiterCalculator(
-        graph, task_subgraph, {kImageTag}, kGroupedSegmentationTag);
+    return tasks::core::AddFlowLimiterCalculator(graph, task_subgraph,
+                                                 {kImageTag, kNormRectTag},
+                                                 kGroupedSegmentationTag);
   }
   graph.In(kImageTag) >> task_subgraph.In(kImageTag);
+  graph.In(kNormRectTag) >> task_subgraph.In(kNormRectTag);
   return graph.GetConfig();
 }
 
@@ -139,7 +146,8 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
 }
 
 absl::StatusOr<std::vector<Image>> ImageSegmenter::Segment(
-    mediapipe::Image image) {
+    mediapipe::Image image,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -147,39 +155,59 @@ absl::StatusOr<std::vector<Image>> ImageSegmenter::Segment(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(
+      NormalizedRect norm_rect,
+      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
+  ASSIGN_OR_RETURN(
       auto output_packets,
-      ProcessImageData({{kImageInStreamName,
-                         mediapipe::MakePacket<Image>(std::move(image))}}));
+      ProcessImageData(
+          {{kImageInStreamName, mediapipe::MakePacket<Image>(std::move(image))},
+           {kNormRectStreamName,
+            MakePacket<NormalizedRect>(std::move(norm_rect))}}));
   return output_packets[kSegmentationStreamName].Get<std::vector<Image>>();
 }
 
 absl::StatusOr<std::vector<Image>> ImageSegmenter::SegmentForVideo(
-    mediapipe::Image image, int64 timestamp_ms) {
+    mediapipe::Image image, int64 timestamp_ms,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
+  ASSIGN_OR_RETURN(
+      NormalizedRect norm_rect,
+      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
           {{kImageInStreamName,
             MakePacket<Image>(std::move(image))
+                .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
+           {kNormRectStreamName,
+            MakePacket<NormalizedRect>(std::move(norm_rect))
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
   return output_packets[kSegmentationStreamName].Get<std::vector<Image>>();
 }
 
-absl::Status ImageSegmenter::SegmentAsync(Image image, int64 timestamp_ms) {
+absl::Status ImageSegmenter::SegmentAsync(
+    Image image, int64 timestamp_ms,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
+  ASSIGN_OR_RETURN(
+      NormalizedRect norm_rect,
+      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))
+            .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
+       {kNormRectStreamName,
+        MakePacket<NormalizedRect>(std::move(norm_rect))
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
 }
 

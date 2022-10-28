@@ -22,11 +22,22 @@ cc_library(
 )
 
 cc_library(
+    name = "image_processing_options",
+    hdrs = ["image_processing_options.h"],
+    deps = [
+        "//mediapipe/tasks/cc/components/containers:rect",
+    ],
+)
+
+cc_library(
     name = "base_vision_task_api",
     hdrs = ["base_vision_task_api.h"],
     deps = [
+        ":image_processing_options",
         ":running_mode",
         "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/cc/components/containers:rect",
         "//mediapipe/tasks/cc/core:base_task_api",
         "//mediapipe/tasks/cc/core:task_runner",
         "@com_google_absl//absl/status",

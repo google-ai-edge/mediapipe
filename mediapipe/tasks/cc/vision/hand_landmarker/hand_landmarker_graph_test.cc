@@ -67,7 +67,7 @@ using ::testing::proto::Approximately;
 using ::testing::proto::Partially;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
-constexpr char kHandLandmarkerModelBundle[] = "hand_landmark.task";
+constexpr char kHandLandmarkerModelBundle[] = "hand_landmarker.task";
 constexpr char kLeftHandsImage[] = "left_hands.jpg";
 constexpr char kLeftHandsRotatedImage[] = "left_hands_rotated.jpg";
 

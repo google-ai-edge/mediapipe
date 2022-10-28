@@ -18,29 +18,29 @@ package com.google.mediapipe.framework.image;
 import android.graphics.Bitmap;
 
 /**
- * Utility for extracting {@link android.graphics.Bitmap} from {@link Image}.
+ * Utility for extracting {@link android.graphics.Bitmap} from {@link MPImage}.
  *
- * <p>Currently it only supports {@link Image} with {@link Image#STORAGE_TYPE_BITMAP}, otherwise
+ * <p>Currently it only supports {@link MPImage} with {@link MPImage#STORAGE_TYPE_BITMAP}, otherwise
  * {@link IllegalArgumentException} will be thrown.
  */
 public final class BitmapExtractor {
 
   /**
-   * Extracts a {@link android.graphics.Bitmap} from an {@link Image}.
+   * Extracts a {@link android.graphics.Bitmap} from a {@link MPImage}.
    *
    * @param image the image to extract {@link android.graphics.Bitmap} from.
-   * @return the {@link android.graphics.Bitmap} stored in {@link Image}
+   * @return the {@link android.graphics.Bitmap} stored in {@link MPImage}
    * @throws IllegalArgumentException when the extraction requires unsupported format or data type
    *     conversions.
    */
-  public static Bitmap extract(Image image) {
-    ImageContainer imageContainer = image.getContainer(Image.STORAGE_TYPE_BITMAP);
+  public static Bitmap extract(MPImage image) {
+    MPImageContainer imageContainer = image.getContainer(MPImage.STORAGE_TYPE_BITMAP);
     if (imageContainer != null) {
       return ((BitmapImageContainer) imageContainer).getBitmap();
     } else {
       // TODO: Support ByteBuffer -> Bitmap conversion.
       throw new IllegalArgumentException(
-          "Extracting Bitmap from an Image created by objects other than Bitmap is not"
+          "Extracting Bitmap from a MPImage created by objects other than Bitmap is not"
               + " supported");
     }
   }

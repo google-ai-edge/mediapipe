@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict library compatibility macro.
+# Placeholder for internal Python strict library and test compatibility macro.
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -29,6 +29,28 @@ py_library(
         "//mediapipe/python:packet_getter",
         "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_py_pb2",
         "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)
+
+py_library(
+    name = "image_classifier",
+    srcs = [
+        "image_classifier.py",
+    ],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_py_pb2",
+        "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_py_pb2",
+        "//mediapipe/tasks/python/components/containers:classifications",
+        "//mediapipe/tasks/python/components/containers:rect",
+        "//mediapipe/tasks/python/components/processors:classifier_options",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:optional_dependencies",
         "//mediapipe/tasks/python/core:task_info",

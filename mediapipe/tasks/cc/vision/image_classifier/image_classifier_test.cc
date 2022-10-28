@@ -27,7 +27,6 @@ limitations under the License.
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
-#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -35,6 +34,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/containers/proto/category.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/rect.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -49,9 +50,11 @@ namespace image_classifier {
 namespace {
 
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::components::containers::Rect;
 using ::mediapipe::tasks::components::containers::proto::ClassificationEntry;
 using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::mediapipe::tasks::components::containers::proto::Classifications;
+using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::HasSubstr;
 using ::testing::Optional;
 
@@ -547,12 +550,9 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterest) {
   options->classifier_options.max_results = 1;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
-  // Crop around the soccer ball.
-  NormalizedRect image_processing_options;
-  image_processing_options.set_x_center(0.532);
-  image_processing_options.set_y_center(0.521);
-  image_processing_options.set_width(0.164);
-  image_processing_options.set_height(0.427);
+  // Region-of-interest around the soccer ball.
+  Rect roi{/*left=*/0.45, /*top=*/0.3075, /*right=*/0.614, /*bottom=*/0.7345};
+  ImageProcessingOptions image_processing_options{roi, /*rotation_degrees=*/0};
 
   MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(
                                             image, image_processing_options));
@@ -572,8 +572,8 @@ TEST_F(ImageModeTest, SucceedsWithRotation) {
                           ImageClassifier::Create(std::move(options)));
 
   // Specify a 90° anti-clockwise rotation.
-  NormalizedRect image_processing_options;
-  image_processing_options.set_rotation(M_PI / 2.0);
+  ImageProcessingOptions image_processing_options;
+  image_processing_options.rotation_degrees = -90;
 
   MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(
                                             image, image_processing_options));
@@ -616,13 +616,10 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
   options->classifier_options.max_results = 1;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
-  // Crop around the chair, with 90° anti-clockwise rotation.
-  NormalizedRect image_processing_options;
-  image_processing_options.set_x_center(0.2821);
-  image_processing_options.set_y_center(0.2406);
-  image_processing_options.set_width(0.5642);
-  image_processing_options.set_height(0.1286);
-  image_processing_options.set_rotation(M_PI / 2.0);
+  // Region-of-interest around the chair, with 90° anti-clockwise rotation.
+  Rect roi{/*left=*/0.006, /*top=*/0.1763, /*right=*/0.5702, /*bottom=*/0.3049};
+  ImageProcessingOptions image_processing_options{roi,
+                                                  /*rotation_degrees=*/-90};
 
   MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(
                                             image, image_processing_options));
@@ -633,7 +630,7 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
                                       entries {
                                         categories {
                                           index: 560
-                                          score: 0.6800408
+                                          score: 0.6522213
                                           category_name: "folding chair"
                                         }
                                         timestamp_ms: 0
@@ -641,6 +638,69 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
                                       head_index: 0
                                       head_name: "probability"
                                     })pb"));
+}
+
+// Testing all these once with ImageClassifier.
+TEST_F(ImageModeTest, FailsWithInvalidImageProcessingOptions) {
+  MP_ASSERT_OK_AND_ASSIGN(Image image,
+                          DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
+                                                       "multi_objects.jpg")));
+  auto options = std::make_unique<ImageClassifierOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kMobileNetFloatWithMetadata);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
+                          ImageClassifier::Create(std::move(options)));
+
+  // Invalid: left > right.
+  Rect roi{/*left=*/0.9, /*top=*/0, /*right=*/0.1, /*bottom=*/1};
+  ImageProcessingOptions image_processing_options{roi,
+                                                  /*rotation_degrees=*/0};
+  auto results = image_classifier->Classify(image, image_processing_options);
+  EXPECT_EQ(results.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(results.status().message(),
+              HasSubstr("Expected Rect with left < right and top < bottom"));
+  EXPECT_THAT(
+      results.status().GetPayload(kMediaPipeTasksPayload),
+      Optional(absl::Cord(absl::StrCat(
+          MediaPipeTasksStatus::kImageProcessingInvalidArgumentError))));
+
+  // Invalid: top > bottom.
+  roi = {/*left=*/0, /*top=*/0.9, /*right=*/1, /*bottom=*/0.1};
+  image_processing_options = {roi,
+                              /*rotation_degrees=*/0};
+  results = image_classifier->Classify(image, image_processing_options);
+  EXPECT_EQ(results.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(results.status().message(),
+              HasSubstr("Expected Rect with left < right and top < bottom"));
+  EXPECT_THAT(
+      results.status().GetPayload(kMediaPipeTasksPayload),
+      Optional(absl::Cord(absl::StrCat(
+          MediaPipeTasksStatus::kImageProcessingInvalidArgumentError))));
+
+  // Invalid: coordinates out of [0,1] range.
+  roi = {/*left=*/-0.1, /*top=*/0, /*right=*/1, /*bottom=*/1};
+  image_processing_options = {roi,
+                              /*rotation_degrees=*/0};
+  results = image_classifier->Classify(image, image_processing_options);
+  EXPECT_EQ(results.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(results.status().message(),
+              HasSubstr("Expected Rect values to be in [0,1]"));
+  EXPECT_THAT(
+      results.status().GetPayload(kMediaPipeTasksPayload),
+      Optional(absl::Cord(absl::StrCat(
+          MediaPipeTasksStatus::kImageProcessingInvalidArgumentError))));
+
+  // Invalid: rotation not a multiple of 90°.
+  image_processing_options = {/*region_of_interest=*/std::nullopt,
+                              /*rotation_degrees=*/1};
+  results = image_classifier->Classify(image, image_processing_options);
+  EXPECT_EQ(results.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(results.status().message(),
+              HasSubstr("Expected rotation to be a multiple of 90°"));
+  EXPECT_THAT(
+      results.status().GetPayload(kMediaPipeTasksPayload),
+      Optional(absl::Cord(absl::StrCat(
+          MediaPipeTasksStatus::kImageProcessingInvalidArgumentError))));
 }
 
 class VideoModeTest : public tflite_shims::testing::Test {};
@@ -732,11 +792,9 @@ TEST_F(VideoModeTest, SucceedsWithRegionOfInterest) {
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
   // Crop around the soccer ball.
-  NormalizedRect image_processing_options;
-  image_processing_options.set_x_center(0.532);
-  image_processing_options.set_y_center(0.521);
-  image_processing_options.set_width(0.164);
-  image_processing_options.set_height(0.427);
+  // Region-of-interest around the soccer ball.
+  Rect roi{/*left=*/0.45, /*top=*/0.3075, /*right=*/0.614, /*bottom=*/0.7345};
+  ImageProcessingOptions image_processing_options{roi, /*rotation_degrees=*/0};
 
   for (int i = 0; i < iterations; ++i) {
     MP_ASSERT_OK_AND_ASSIGN(
@@ -877,11 +935,8 @@ TEST_F(LiveStreamModeTest, SucceedsWithRegionOfInterest) {
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
   // Crop around the soccer ball.
-  NormalizedRect image_processing_options;
-  image_processing_options.set_x_center(0.532);
-  image_processing_options.set_y_center(0.521);
-  image_processing_options.set_width(0.164);
-  image_processing_options.set_height(0.427);
+  Rect roi{/*left=*/0.45, /*top=*/0.3075, /*right=*/0.614, /*bottom=*/0.7345};
+  ImageProcessingOptions image_processing_options{roi, /*rotation_degrees=*/0};
 
   for (int i = 0; i < iterations; ++i) {
     MP_ASSERT_OK(

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python strict test compatibility macro.
 
 package(
     default_visibility = ["//mediapipe:__subpackages__"],
@@ -23,7 +24,6 @@ licenses(["notice"])
 py_library(
     name = "custom_model",
     srcs = ["custom_model.py"],
-    srcs_version = "PY3",
     deps = [
         "//mediapipe/model_maker/python/core/data:dataset",
         "//mediapipe/model_maker/python/core/utils:model_util",
@@ -34,8 +34,6 @@ py_library(
 py_test(
     name = "custom_model_test",
     srcs = ["custom_model_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":custom_model",
         "//mediapipe/model_maker/python/core/utils:test_util",
@@ -45,7 +43,6 @@ py_test(
 py_library(
     name = "classifier",
     srcs = ["classifier.py"],
-    srcs_version = "PY3",
     deps = [
         ":custom_model",
         "//mediapipe/model_maker/python/core/data:dataset",
@@ -55,8 +52,6 @@ py_library(
 py_test(
     name = "classifier_test",
     srcs = ["classifier_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":classifier",
         "//mediapipe/model_maker/python/core/utils:test_util",

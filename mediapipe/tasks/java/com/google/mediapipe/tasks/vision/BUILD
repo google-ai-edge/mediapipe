@@ -28,6 +28,7 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/java/com/google/mediapipe/framework/image",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
 )
@@ -128,6 +129,7 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/framework/image",
         "//mediapipe/tasks/cc/components/processors/proto:classifier_options_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_classifier_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_recognizer_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:hand_gesture_recognizer_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_java_proto_lite",
@@ -139,4 +141,12 @@ android_library(
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
+)
+
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_tasks_vision_aar")
+
+mediapipe_tasks_vision_aar(
+    name = "tasks_vision",
+    srcs = glob(["**/*.java"]),
+    native_library = ":libmediapipe_tasks_vision_jni_lib",
 )

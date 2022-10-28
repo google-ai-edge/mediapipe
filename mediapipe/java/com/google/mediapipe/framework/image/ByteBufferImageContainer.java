@@ -15,21 +15,19 @@ limitations under the License.
 
 package com.google.mediapipe.framework.image;
 
-import com.google.mediapipe.framework.image.Image.ImageFormat;
+import com.google.mediapipe.framework.image.MPImage.MPImageFormat;
 import java.nio.ByteBuffer;
 
-class ByteBufferImageContainer implements ImageContainer {
+class ByteBufferImageContainer implements MPImageContainer {
 
   private final ByteBuffer buffer;
-  private final ImageProperties properties;
+  private final MPImageProperties properties;
 
-  public ByteBufferImageContainer(
-      ByteBuffer buffer,
-      @ImageFormat int imageFormat) {
+  public ByteBufferImageContainer(ByteBuffer buffer, @MPImageFormat int imageFormat) {
     this.buffer = buffer;
     this.properties =
-        ImageProperties.builder()
-            .setStorageType(Image.STORAGE_TYPE_BYTEBUFFER)
+        MPImageProperties.builder()
+            .setStorageType(MPImage.STORAGE_TYPE_BYTEBUFFER)
             .setImageFormat(imageFormat)
             .build();
   }
@@ -39,14 +37,12 @@ class ByteBufferImageContainer implements ImageContainer {
   }
 
   @Override
-  public ImageProperties getImageProperties() {
+  public MPImageProperties getImageProperties() {
     return properties;
   }
 
-  /**
-   * Returns the image format.
-   */
-  @ImageFormat
+  /** Returns the image format. */
+  @MPImageFormat
   public int getImageFormat() {
     return properties.getImageFormat();
   }

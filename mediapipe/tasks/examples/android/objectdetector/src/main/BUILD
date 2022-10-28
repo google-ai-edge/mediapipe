@@ -31,6 +31,7 @@ android_binary(
     multidex = "native",
     resource_files = ["//mediapipe/tasks/examples/android:resource_files"],
     deps = [
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/framework/image",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",

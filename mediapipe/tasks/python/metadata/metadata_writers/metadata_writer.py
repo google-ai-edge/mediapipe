@@ -15,19 +15,22 @@
 """Generic metadata writer."""
 
 import collections
+import csv
 import dataclasses
 import os
 import tempfile
 from typing import List, Optional, Tuple
 
 import flatbuffers
-from mediapipe.tasks.metadata import metadata_schema_py_generated as _metadata_fb
-from mediapipe.tasks.python.metadata import metadata as _metadata
+from mediapipe.tasks.metadata import metadata_schema_py_generated as metadata_fb
+from mediapipe.tasks.python.metadata import metadata
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_info
 from mediapipe.tasks.python.metadata.metadata_writers import writer_utils
 
 _INPUT_IMAGE_NAME = 'image'
 _INPUT_IMAGE_DESCRIPTION = 'Input image to be processed.'
+_OUTPUT_CLASSIFICATION_NAME = 'score'
+_OUTPUT_CLASSIFICATION_DESCRIPTION = 'Score of the labels respectively.'
 
 
 @dataclasses.dataclass
@@ -140,26 +143,85 @@ class Labels(object):
 class ScoreCalibration:
   """Simple container holding score calibration related parameters."""
 
-  # A shortcut to avoid client side code importing _metadata_fb
-  transformation_types = _metadata_fb.ScoreTransformationType
+  # A shortcut to avoid client side code importing metadata_fb
+  transformation_types = metadata_fb.ScoreTransformationType
 
   def __init__(self,
-               transformation_type: _metadata_fb.ScoreTransformationType,
-               parameters: List[CalibrationParameter],
+               transformation_type: metadata_fb.ScoreTransformationType,
+               parameters: List[Optional[CalibrationParameter]],
                default_score: int = 0):
     self.transformation_type = transformation_type
     self.parameters = parameters
     self.default_score = default_score
 
+  @classmethod
+  def create_from_file(cls,
+                       transformation_type: metadata_fb.ScoreTransformationType,
+                       file_path: str,
+                       default_score: int = 0) -> 'ScoreCalibration':
+    """Creates ScoreCalibration from the file.
+
+    Args:
+      transformation_type: type of the function used for transforming the
+        uncalibrated score before applying score calibration.
+      file_path: file_path of the score calibration file [1]. Contains
+        sigmoid-based score calibration parameters, formatted as CSV. Lines
+        contain for each index of an output tensor the scale, slope, offset and
+        (optional) min_score parameters to be used for sigmoid fitting (in this
+        order and in `strtof`-compatible [2] format). Scale should be a
+        non-negative value. A line may be left empty to default calibrated
+        scores for this index to default_score. In summary, each line should
+        thus contain 0, 3 or 4 comma-separated values.
+      default_score: the default calibrated score to apply if the uncalibrated
+        score is below min_score or if no parameters were specified for a given
+        index.
+      [1]:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L133
+      [2]:
+        https://en.cppreference.com/w/c/string/byte/strtof
+
+    Returns:
+      A ScoreCalibration object.
+    Raises:
+      ValueError: if the score_calibration file is malformed.
+    """
+    with open(file_path, 'r') as calibration_file:
+      csv_reader = csv.reader(calibration_file, delimiter=',')
+      parameters = []
+      for row in csv_reader:
+        if not row:
+          parameters.append(None)
+          continue
+
+        if len(row) != 3 and len(row) != 4:
+          raise ValueError(
+              f'Expected empty lines or 3 or 4 parameters per line in score'
+              f' calibration file, but got {len(row)}.')
+
+        if float(row[0]) < 0:
+          raise ValueError(
+              f'Expected scale to be a non-negative value, but got '
+              f'{float(row[0])}.')
+
+        parameters.append(
+            CalibrationParameter(
+                scale=float(row[0]),
+                slope=float(row[1]),
+                offset=float(row[2]),
+                min_score=None if len(row) == 3 else float(row[3])))
+
+    return cls(transformation_type, parameters, default_score)
+
 
 def _fill_default_tensor_names(
-    tensor_metadata: List[_metadata_fb.TensorMetadataT],
+    tensor_metadata_list: List[metadata_fb.TensorMetadataT],
     tensor_names_from_model: List[str]):
   """Fills the default tensor names."""
   # If tensor name in metadata is empty, default to the tensor name saved in
   # the model.
-  for metadata, name in zip(tensor_metadata, tensor_names_from_model):
-    metadata.name = metadata.name or name
+  for tensor_metadata, name in zip(tensor_metadata_list,
+                                   tensor_names_from_model):
+    tensor_metadata.name = tensor_metadata.name or name
 
 
 def _pair_tensor_metadata(
@@ -212,7 +274,7 @@ def _create_metadata_buffer(
     input_metadata = [m.create_metadata() for m in input_md]
   else:
     num_input_tensors = writer_utils.get_subgraph(model_buffer).InputsLength()
-    input_metadata = [_metadata_fb.TensorMetadataT()] * num_input_tensors
+    input_metadata = [metadata_fb.TensorMetadataT()] * num_input_tensors
 
   _fill_default_tensor_names(input_metadata,
                              writer_utils.get_input_tensor_names(model_buffer))
@@ -224,12 +286,12 @@ def _create_metadata_buffer(
     output_metadata = [m.create_metadata() for m in output_md]
   else:
     num_output_tensors = writer_utils.get_subgraph(model_buffer).OutputsLength()
-    output_metadata = [_metadata_fb.TensorMetadataT()] * num_output_tensors
+    output_metadata = [metadata_fb.TensorMetadataT()] * num_output_tensors
   _fill_default_tensor_names(output_metadata,
                              writer_utils.get_output_tensor_names(model_buffer))
 
   # Create the subgraph metadata.
-  subgraph_metadata = _metadata_fb.SubGraphMetadataT()
+  subgraph_metadata = metadata_fb.SubGraphMetadataT()
   subgraph_metadata.inputTensorMetadata = input_metadata
   subgraph_metadata.outputTensorMetadata = output_metadata
 
@@ -243,7 +305,7 @@ def _create_metadata_buffer(
   b = flatbuffers.Builder(0)
   b.Finish(
       model_metadata.Pack(b),
-      _metadata.MetadataPopulator.METADATA_FILE_IDENTIFIER)
+      metadata.MetadataPopulator.METADATA_FILE_IDENTIFIER)
   return b.Output()
 
 
@@ -291,7 +353,7 @@ class MetadataWriter(object):
         name=model_name, description=model_description)
     return self
 
-  color_space_types = _metadata_fb.ColorSpaceType
+  color_space_types = metadata_fb.ColorSpaceType
 
   def add_feature_input(self,
                         name: Optional[str] = None,
@@ -305,7 +367,7 @@ class MetadataWriter(object):
       self,
       norm_mean: List[float],
       norm_std: List[float],
-      color_space_type: Optional[int] = _metadata_fb.ColorSpaceType.RGB,
+      color_space_type: Optional[int] = metadata_fb.ColorSpaceType.RGB,
       name: str = _INPUT_IMAGE_NAME,
       description: str = _INPUT_IMAGE_DESCRIPTION) -> 'MetadataWriter':
     """Adds an input image metadata for the image input.
@@ -340,9 +402,6 @@ class MetadataWriter(object):
 
     self._input_mds.append(input_md)
     return self
-
-  _OUTPUT_CLASSIFICATION_NAME = 'score'
-  _OUTPUT_CLASSIFICATION_DESCRIPTION = 'Score of the labels respectively'
 
   def add_classification_output(
       self,
@@ -416,8 +475,7 @@ class MetadataWriter(object):
       A tuple of (model_with_metadata_in_bytes, metdata_json_content)
     """
     # Populates metadata and associated files into TFLite model buffer.
-    populator = _metadata.MetadataPopulator.with_model_buffer(
-        self._model_buffer)
+    populator = metadata.MetadataPopulator.with_model_buffer(self._model_buffer)
     metadata_buffer = _create_metadata_buffer(
         model_buffer=self._model_buffer,
         general_md=self._general_md,
@@ -429,7 +487,7 @@ class MetadataWriter(object):
     populator.populate()
     tflite_content = populator.get_model_buffer()
 
-    displayer = _metadata.MetadataDisplayer.with_model_buffer(tflite_content)
+    displayer = metadata.MetadataDisplayer.with_model_buffer(tflite_content)
     metadata_json_content = displayer.get_metadata_json()
 
     return tflite_content, metadata_json_content
@@ -452,9 +510,7 @@ class MetadataWriter(object):
     """Stores calibration parameters in a csv file."""
     filepath = os.path.join(self._temp_folder.name, filename)
     with open(filepath, 'w') as f:
-      for idx, item in enumerate(calibrations):
-        if idx != 0:
-          f.write('\n')
+      for item in calibrations:
         if item:
           if item.scale is None or item.slope is None or item.offset is None:
             raise ValueError('scale, slope and offset values can not be set to '
@@ -463,6 +519,30 @@ class MetadataWriter(object):
             f.write(f'{item.scale},{item.slope},{item.offset},{item.min_score}')
           else:
             f.write(f'{item.scale},{item.slope},{item.offset}')
+        f.write('\n')
 
-          self._associated_files.append(filepath)
+    self._associated_files.append(filepath)
     return filepath
+
+
+class MetadataWriterBase:
+  """Base MetadataWriter class which contains the apis exposed to users.
+
+  MetadataWriter for Tasks e.g. image classifier / object detector will inherit
+  this class for their own usage.
+  """
+
+  def __init__(self, writer: MetadataWriter) -> None:
+    self.writer = writer
+
+  def populate(self) -> Tuple[bytearray, str]:
+    """Populates metadata into the TFLite file.
+
+    Note that only the output tflite is used for deployment. The output JSON
+    content is used to interpret the metadata content.
+
+    Returns:
+      A tuple of (model_with_metadata_in_bytes, metdata_json_content)
+    """
+    return self.writer.populate()
+

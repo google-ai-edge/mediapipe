@@ -1,4 +1,4 @@
-# Placeholder for internal Python strict library compatibility macro.
+# Placeholder for internal Python strict library and test compatibility macro.
 
 package(
     default_visibility = [
@@ -36,4 +36,10 @@ py_library(
     name = "writer_utils",
     srcs = ["writer_utils.py"],
     deps = ["//mediapipe/tasks/metadata:schema_py"],
+)
+
+py_library(
+    name = "image_classifier",
+    srcs = ["image_classifier.py"],
+    deps = [":metadata_writer"],
 )

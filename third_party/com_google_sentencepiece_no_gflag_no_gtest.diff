@@ -1,0 +1,34 @@
+diff --git a/src/BUILD b/src/BUILD
+index b4298d2..f3877a3 100644
+--- a/src/BUILD
++++ b/src/BUILD
+@@ -71,9 +71,7 @@ cc_library(
+             ":common",
+             ":sentencepiece_cc_proto",
+             ":sentencepiece_model_cc_proto",
+-            "@com_github_gflags_gflags//:gflags",
+             "@com_google_glog//:glog",
+-            "@com_google_googletest//:gtest",
+             "@com_google_absl//absl/memory",
+             "@com_google_absl//absl/strings",
+             "@com_google_absl//absl/container:flat_hash_map",
+diff --git a/src/normalizer.h b/src/normalizer.h
+index c16ac16..2af58be 100644
+--- a/src/normalizer.h
++++ b/src/normalizer.h
+@@ -21,7 +21,6 @@
+ #include <utility>
+ #include <vector>
+
+-#include "gtest/gtest_prod.h"
+ #include "absl/strings/string_view.h"
+ #include "third_party/darts_clone/include/darts.h"
+ #include "src/common.h"
+@@ -97,7 +96,6 @@ class Normalizer {
+   friend class Builder;
+
+  private:
+-  FRIEND_TEST(NormalizerTest, EncodeDecodePrecompiledCharsMapTest);
+
+   void Init();
+

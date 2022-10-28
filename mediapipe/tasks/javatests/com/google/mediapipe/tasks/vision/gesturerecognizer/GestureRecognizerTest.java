@@ -19,17 +19,19 @@ import static org.junit.Assert.assertThrows;
 
 import android.content.res.AssetManager;
 import android.graphics.BitmapFactory;
+import android.graphics.RectF;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.common.truth.Correspondence;
 import com.google.mediapipe.formats.proto.ClassificationProto;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
-import com.google.mediapipe.framework.image.Image;
+import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.Category;
 import com.google.mediapipe.tasks.components.containers.Landmark;
 import com.google.mediapipe.tasks.components.containers.proto.LandmarksDetectionResultProto.LandmarksDetectionResult;
 import com.google.mediapipe.tasks.core.BaseOptions;
+import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.gesturerecognizer.GestureRecognizer.GestureRecognizerOptions;
 import java.io.InputStream;
@@ -43,17 +45,17 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({GestureRecognizerTest.General.class, GestureRecognizerTest.RunningModeTest.class})
 public class GestureRecognizerTest {
-  private static final String HAND_DETECTOR_MODEL_FILE = "palm_detection_full.tflite";
-  private static final String HAND_LANDMARKER_MODEL_FILE = "hand_landmark_full.tflite";
-  private static final String GESTURE_RECOGNIZER_MODEL_FILE =
-      "cg_classifier_screen3d_landmark_features_nn_2022_08_04_base_simple_model.tflite";
+  private static final String GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE = "gesture_recognizer.task";
   private static final String TWO_HANDS_IMAGE = "right_hands.jpg";
   private static final String THUMB_UP_IMAGE = "thumb_up.jpg";
+  private static final String POINTING_UP_ROTATED_IMAGE = "pointing_up_rotated.jpg";
   private static final String NO_HANDS_IMAGE = "cats_and_dogs.jpg";
   private static final String THUMB_UP_LANDMARKS = "thumb_up_landmarks.pb";
   private static final String TAG = "Gesture Recognizer Test";
   private static final String THUMB_UP_LABEL = "Thumb_Up";
   private static final int THUMB_UP_INDEX = 5;
+  private static final String POINTING_UP_LABEL = "Pointing_Up";
+  private static final int POINTING_UP_INDEX = 3;
   private static final float LANDMARKS_ERROR_TOLERANCE = 0.03f;
   private static final int IMAGE_WIDTH = 382;
   private static final int IMAGE_HEIGHT = 406;
@@ -66,13 +68,9 @@ public class GestureRecognizerTest {
       GestureRecognizerOptions options =
           GestureRecognizerOptions.builder()
               .setBaseOptions(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-              .setBaseOptionsHandDetector(
-                  BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-              .setBaseOptionsHandLandmarker(
-                  BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-              .setBaseOptionsGestureRecognizer(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
               .build();
       GestureRecognizer gestureRecognizer =
           GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -88,13 +86,9 @@ public class GestureRecognizerTest {
       GestureRecognizerOptions options =
           GestureRecognizerOptions.builder()
               .setBaseOptions(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-              .setBaseOptionsHandDetector(
-                  BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-              .setBaseOptionsHandLandmarker(
-                  BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-              .setBaseOptionsGestureRecognizer(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
               .build();
       GestureRecognizer gestureRecognizer =
           GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -111,16 +105,12 @@ public class GestureRecognizerTest {
       GestureRecognizerOptions options =
           GestureRecognizerOptions.builder()
               .setBaseOptions(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-              .setBaseOptionsHandDetector(
-                  BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-              .setBaseOptionsHandLandmarker(
-                  BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-              .setBaseOptionsGestureRecognizer(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
               // TODO update the confidence to be in range [0,1] after embedding model
               // and scoring calculator is integrated.
-              .setMinGestureConfidence(3.0f)
+              .setMinGestureConfidence(2.0f)
               .build();
       GestureRecognizer gestureRecognizer =
           GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -139,13 +129,9 @@ public class GestureRecognizerTest {
       GestureRecognizerOptions options =
           GestureRecognizerOptions.builder()
               .setBaseOptions(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-              .setBaseOptionsHandDetector(
-                  BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-              .setBaseOptionsHandLandmarker(
-                  BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-              .setBaseOptionsGestureRecognizer(
-                  BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
               .setNumHands(2)
               .build();
       GestureRecognizer gestureRecognizer =
@@ -153,6 +139,53 @@ public class GestureRecognizerTest {
       GestureRecognitionResult actualResult =
           gestureRecognizer.recognize(getImageFromAsset(TWO_HANDS_IMAGE));
       assertThat(actualResult.handednesses()).hasSize(2);
+    }
+
+    @Test
+    public void recognize_successWithRotation() throws Exception {
+      GestureRecognizerOptions options =
+          GestureRecognizerOptions.builder()
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
+              .setNumHands(1)
+              .build();
+      GestureRecognizer gestureRecognizer =
+          GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      ImageProcessingOptions imageProcessingOptions =
+          ImageProcessingOptions.builder().setRotationDegrees(-90).build();
+      GestureRecognitionResult actualResult =
+          gestureRecognizer.recognize(
+              getImageFromAsset(POINTING_UP_ROTATED_IMAGE), imageProcessingOptions);
+      assertThat(actualResult.gestures()).hasSize(1);
+      assertThat(actualResult.gestures().get(0).get(0).index()).isEqualTo(POINTING_UP_INDEX);
+      assertThat(actualResult.gestures().get(0).get(0).categoryName()).isEqualTo(POINTING_UP_LABEL);
+    }
+
+    @Test
+    public void recognize_failsWithRegionOfInterest() throws Exception {
+      GestureRecognizerOptions options =
+          GestureRecognizerOptions.builder()
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
+              .setNumHands(1)
+              .build();
+      GestureRecognizer gestureRecognizer =
+          GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      ImageProcessingOptions imageProcessingOptions =
+          ImageProcessingOptions.builder().setRegionOfInterest(new RectF(0, 0, 1, 1)).build();
+      IllegalArgumentException exception =
+          assertThrows(
+              IllegalArgumentException.class,
+              () ->
+                  gestureRecognizer.recognize(
+                      getImageFromAsset(THUMB_UP_IMAGE), imageProcessingOptions));
+      assertThat(exception)
+          .hasMessageThat()
+          .contains("GestureRecognizer doesn't support region-of-interest");
     }
   }
 
@@ -168,19 +201,7 @@ public class GestureRecognizerTest {
                     GestureRecognizerOptions.builder()
                         .setBaseOptions(
                             BaseOptions.builder()
-                                .setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE)
-                                .build())
-                        .setBaseOptionsHandDetector(
-                            BaseOptions.builder()
-                                .setModelAssetPath(HAND_DETECTOR_MODEL_FILE)
-                                .build())
-                        .setBaseOptionsHandLandmarker(
-                            BaseOptions.builder()
-                                .setModelAssetPath(HAND_LANDMARKER_MODEL_FILE)
-                                .build())
-                        .setBaseOptionsGestureRecognizer(
-                            BaseOptions.builder()
-                                .setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE)
+                                .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
                                 .build())
                         .setRunningMode(mode)
                         .setResultListener((gestureRecognitionResult, inputImage) -> {})
@@ -201,15 +222,7 @@ public class GestureRecognizerTest {
                 GestureRecognizerOptions.builder()
                     .setBaseOptions(
                         BaseOptions.builder()
-                            .setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE)
-                            .build())
-                    .setBaseOptionsHandDetector(
-                        BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-                    .setBaseOptionsHandLandmarker(
-                        BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-                    .setBaseOptionsGestureRecognizer(
-                        BaseOptions.builder()
-                            .setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE)
+                            .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
                             .build())
                     .setRunningMode(RunningMode.LIVE_STREAM)
                     .build());
@@ -223,13 +236,9 @@ public class GestureRecognizerTest {
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.IMAGE)
             .build();
 
@@ -238,12 +247,16 @@ public class GestureRecognizerTest {
     MediaPipeException exception =
         assertThrows(
             MediaPipeException.class,
-            () -> gestureRecognizer.recognizeForVideo(getImageFromAsset(THUMB_UP_IMAGE), 0));
+            () ->
+                gestureRecognizer.recognizeForVideo(
+                    getImageFromAsset(THUMB_UP_IMAGE), /*timestampsMs=*/ 0));
     assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
     exception =
         assertThrows(
             MediaPipeException.class,
-            () -> gestureRecognizer.recognizeAsync(getImageFromAsset(THUMB_UP_IMAGE), 0));
+            () ->
+                gestureRecognizer.recognizeAsync(
+                    getImageFromAsset(THUMB_UP_IMAGE), /*timestampsMs=*/ 0));
     assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
   }
 
@@ -252,13 +265,9 @@ public class GestureRecognizerTest {
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.VIDEO)
             .build();
 
@@ -272,7 +281,9 @@ public class GestureRecognizerTest {
     exception =
         assertThrows(
             MediaPipeException.class,
-            () -> gestureRecognizer.recognizeAsync(getImageFromAsset(THUMB_UP_IMAGE), 0));
+            () ->
+                gestureRecognizer.recognizeAsync(
+                    getImageFromAsset(THUMB_UP_IMAGE), /*timestampsMs=*/ 0));
     assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
   }
 
@@ -281,13 +292,9 @@ public class GestureRecognizerTest {
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.LIVE_STREAM)
             .setResultListener((gestureRecognitionResult, inputImage) -> {})
             .build();
@@ -302,7 +309,9 @@ public class GestureRecognizerTest {
     exception =
         assertThrows(
             MediaPipeException.class,
-            () -> gestureRecognizer.recognizeForVideo(getImageFromAsset(THUMB_UP_IMAGE), 0));
+            () ->
+                gestureRecognizer.recognizeForVideo(
+                    getImageFromAsset(THUMB_UP_IMAGE), /*timestampsMs=*/ 0));
     assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
   }
 
@@ -311,13 +320,9 @@ public class GestureRecognizerTest {
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.IMAGE)
             .build();
 
@@ -335,13 +340,9 @@ public class GestureRecognizerTest {
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.VIDEO)
             .build();
     GestureRecognizer gestureRecognizer =
@@ -350,26 +351,23 @@ public class GestureRecognizerTest {
         getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL, THUMB_UP_INDEX);
     for (int i = 0; i < 3; i++) {
       GestureRecognitionResult actualResult =
-          gestureRecognizer.recognizeForVideo(getImageFromAsset(THUMB_UP_IMAGE), i);
+          gestureRecognizer.recognizeForVideo(
+              getImageFromAsset(THUMB_UP_IMAGE), /*timestampsMs=*/ i);
       assertActualResultApproximatelyEqualsToExpectedResult(actualResult, expectedResult);
     }
   }
 
   @Test
   public void recognize_failsWithOutOfOrderInputTimestamps() throws Exception {
-    Image image = getImageFromAsset(THUMB_UP_IMAGE);
+    MPImage image = getImageFromAsset(THUMB_UP_IMAGE);
     GestureRecognitionResult expectedResult =
         getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL, THUMB_UP_INDEX);
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.LIVE_STREAM)
             .setResultListener(
                 (actualResult, inputImage) -> {
@@ -380,9 +378,11 @@ public class GestureRecognizerTest {
             .build();
     try (GestureRecognizer gestureRecognizer =
         GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
-      gestureRecognizer.recognizeAsync(image, 1);
+      gestureRecognizer.recognizeAsync(image, /*timestampsMs=*/ 1);
       MediaPipeException exception =
-          assertThrows(MediaPipeException.class, () -> gestureRecognizer.recognizeAsync(image, 0));
+          assertThrows(
+              MediaPipeException.class,
+              () -> gestureRecognizer.recognizeAsync(image, /*timestampsMs=*/ 0));
       assertThat(exception)
           .hasMessageThat()
           .contains("having a smaller timestamp than the processed timestamp");
@@ -391,19 +391,15 @@ public class GestureRecognizerTest {
 
   @Test
   public void recognize_successWithLiveSteamMode() throws Exception {
-    Image image = getImageFromAsset(THUMB_UP_IMAGE);
+    MPImage image = getImageFromAsset(THUMB_UP_IMAGE);
     GestureRecognitionResult expectedResult =
         getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL, THUMB_UP_INDEX);
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
-            .setBaseOptionsHandDetector(
-                BaseOptions.builder().setModelAssetPath(HAND_DETECTOR_MODEL_FILE).build())
-            .setBaseOptionsHandLandmarker(
-                BaseOptions.builder().setModelAssetPath(HAND_LANDMARKER_MODEL_FILE).build())
-            .setBaseOptionsGestureRecognizer(
-                BaseOptions.builder().setModelAssetPath(GESTURE_RECOGNIZER_MODEL_FILE).build())
+                BaseOptions.builder()
+                    .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                    .build())
             .setRunningMode(RunningMode.LIVE_STREAM)
             .setResultListener(
                 (actualResult, inputImage) -> {
@@ -415,12 +411,12 @@ public class GestureRecognizerTest {
     try (GestureRecognizer gestureRecognizer =
         GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
       for (int i = 0; i < 3; i++) {
-        gestureRecognizer.recognizeAsync(image, i);
+        gestureRecognizer.recognizeAsync(image, /*timestampsMs=*/ i);
       }
     }
   }
 
-  private static Image getImageFromAsset(String filePath) throws Exception {
+  private static MPImage getImageFromAsset(String filePath) throws Exception {
     AssetManager assetManager = ApplicationProvider.getApplicationContext().getAssets();
     InputStream istr = assetManager.open(filePath);
     return new BitmapImageBuilder(BitmapFactory.decodeStream(istr)).build();
@@ -487,7 +483,7 @@ public class GestureRecognizerTest {
     assertThat(expectedGesture.categoryName()).isEqualTo(expectedGesture.categoryName());
   }
 
-  private static void assertImageSizeIsExpected(Image inputImage) {
+  private static void assertImageSizeIsExpected(MPImage inputImage) {
     assertThat(inputImage).isNotNull();
     assertThat(inputImage.getWidth()).isEqualTo(IMAGE_WIDTH);
     assertThat(inputImage.getHeight()).isEqualTo(IMAGE_HEIGHT);

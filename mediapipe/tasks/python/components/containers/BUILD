@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict library compatibility macro.
+# Placeholder for internal Python strict library and test compatibility macro.
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -23,6 +23,15 @@ py_library(
     srcs = ["bounding_box.py"],
     deps = [
         "//mediapipe/framework/formats:location_data_py_pb2",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "rect",
+    srcs = ["rect.py"],
+    deps = [
+        "//mediapipe/framework/formats:rect_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
@@ -44,6 +53,16 @@ py_library(
         ":category",
         "//mediapipe/framework/formats:detection_py_pb2",
         "//mediapipe/framework/formats:location_data_py_pb2",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "classifications",
+    srcs = ["classifications.py"],
+    deps = [
+        ":category",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )

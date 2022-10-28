@@ -19,7 +19,7 @@ package mediapipe.tasks.components.containers.proto;
 
 import "mediapipe/tasks/cc/components/containers/proto/category.proto";
 
-option java_package = "com.google.mediapipe.tasks.components.container.proto";
+option java_package = "com.google.mediapipe.tasks.components.containers.proto";
 option java_outer_classname = "ClassificationsProto";
 
 // List of predicted categories with an optional timestamp.

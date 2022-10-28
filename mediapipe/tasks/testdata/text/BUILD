@@ -76,9 +76,10 @@ filegroup(
 
 filegroup(
     name = "text_classifier_models",
-    srcs = glob([
-        "test_model_text_classifier*.tflite",
-    ]),
+    srcs = [
+        "test_model_text_classifier_bool_output.tflite",
+        "test_model_text_classifier_with_regex_tokenizer.tflite",
+    ],
 )
 
 filegroup(
