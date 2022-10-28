@@ -37,6 +37,7 @@ public class Lindera {
     private CameraInput.CameraFacing cameraFacing = CameraInput.CameraFacing.FRONT;
     private AppCompatActivity appCompatActivity;
     private  ViewGroup computerVisionContainerView;
+    private PoseTrackingResultGlRenderer solutionRenderer;
     
     public Lindera(ComputerVisionPlugin plugin){
         this.plugin = plugin;
@@ -45,6 +46,8 @@ public class Lindera {
     public void setLandmarksVisibility(boolean visible){
         this.poseTracking.options = PoseTrackingOptions.builder().withPoseTrackingOptions(this.poseTracking
                 .options).setLandmarkVisibility(visible).build();
+        solutionRenderer.setLandmarksVisibility(this.poseTracking.options.landmarkVisibility());
+        glSurfaceView.setSolutionResultRenderer(solutionRenderer);
     }
     public boolean getLandmarkVisibility(){
         return this.poseTracking.options.landmarkVisibility();
@@ -154,7 +157,9 @@ public class Lindera {
                 poseTracking.getGlContext(), 
                 poseTracking.getGlMajorVersion()
             );
-        glSurfaceView.setSolutionResultRenderer(new PoseTrackingResultGlRenderer());
+        solutionRenderer = new PoseTrackingResultGlRenderer();
+        solutionRenderer.setLandmarksVisibility(this.poseTracking.options.landmarkVisibility());
+        glSurfaceView.setSolutionResultRenderer(solutionRenderer);
         glSurfaceView.setRenderInputImage(true);
 
         setupEventListener();
@@ -193,7 +198,7 @@ public class Lindera {
     }
 
     private void landmarksToBodyJoints(ImmutableList<LandmarkProto.Landmark> landmarks , BodyJoints bodyJoints){
-        landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.NOSE), bodyJoints.nose);
+        landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.NOSE), bodyJoints.neckNose);
 
         landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.LEFT_EYE_INNER), bodyJoints.leftEyeInner);
         landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.LEFT_EYE), bodyJoints.leftEye);
@@ -242,6 +247,16 @@ public class Lindera {
 
         landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.RIGHT_FOOT), bodyJoints.rightFoot);
         landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.LEFT_FOOT), bodyJoints.leftFoot);
+
+        // additional points
+        landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.PELVIS), bodyJoints.pelvis);
+        landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.SPINE), bodyJoints.spine);
+        landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.THORAX), bodyJoints.thorax);
+        landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.HEAD_TOP), bodyJoints.headTop);
+
+
+
+
     }
 
     private void startCamera() {

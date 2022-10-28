@@ -20,6 +20,7 @@ android_binary(
     name = "posetracking-lindera",
     srcs = glob(["**/*.java"]),
     custom_package = "com.google.mediapipe.examples.posetracking_lindera",
+    dex_shards = 10,
     manifest = "AndroidManifest.xml",
     manifest_values = {
         "applicationId": "com.google.mediapipe.examples.posetracking_lindera",

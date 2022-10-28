@@ -16,7 +16,9 @@ package com.google.mediapipe.solutions.posetracking;
 
 import android.opengl.GLES20;
 
+import com.google.common.collect.ImmutableList;
 import com.google.mediapipe.formats.proto.DetectionProto.Detection;
+import com.google.mediapipe.formats.proto.LandmarkProto;
 import com.google.mediapipe.solutioncore.ResultGlRenderer;
 
 import java.nio.ByteBuffer;
@@ -52,7 +54,10 @@ public class PoseTrackingResultGlRenderer implements ResultGlRenderer<PoseTracki
   private int pointSizeHandle;
   private int projectionMatrixHandle;
   private int colorHandle;
-
+  private boolean areLandmarksVisible= true;
+  public void setLandmarksVisibility(boolean value){
+    areLandmarksVisible = value;
+  }
   private int loadShader(int type, String shaderCode) {
     int shader = GLES20.glCreateShader(type);
     GLES20.glShaderSource(shader, shaderCode);
@@ -79,17 +84,33 @@ public class PoseTrackingResultGlRenderer implements ResultGlRenderer<PoseTracki
    * **/
   @Override
   public void renderResult(PoseTrackingResult result, float[] projectionMatrix) {
-    if (result == null) {
+    if (result == null || !areLandmarksVisible) {
       return;
     }
 
     GLES20.glUseProgram(program);
     GLES20.glUniformMatrix4fv(projectionMatrixHandle, 1, false, projectionMatrix, 0);
-//    GLES20.glUniform1f(pointSizeHandle, KEYPOINT_SIZE);
-//    int numDetectedFaces = result.multiPoseTrackings().size();
-//    for (int i = 0; i < numDetectedFaces; ++i) {
-//      drawDetection(result.multiPoseTrackings().get(i));
-//    }
+    GLES20.glUniform1f(pointSizeHandle, KEYPOINT_SIZE);
+    ImmutableList<LandmarkProto.Landmark> landmarks = result.multiPoseLandmarks();
+
+
+      // Draw keypoints.
+      float[] points = new float[landmarks.size() * 2];
+      for (int i = 0; i < landmarks.size(); ++i) {
+        points[2 * i] = landmarks.get(i).getX();
+        points[2 * i + 1] = 1-landmarks.get(i).getY();
+      }
+      GLES20.glUniform4fv(colorHandle, 1, KEYPOINT_COLOR, 0);
+      FloatBuffer vertexBuffer =
+          ByteBuffer.allocateDirect(points.length * 4)
+              .order(ByteOrder.nativeOrder())
+              .asFloatBuffer()
+              .put(points);
+      vertexBuffer.position(0);
+      GLES20.glEnableVertexAttribArray(positionHandle);
+      GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer);
+      GLES20.glDrawArrays(GLES20.GL_POINTS, 0, landmarks.size());
+
   }
 
   /**
@@ -100,6 +121,8 @@ public class PoseTrackingResultGlRenderer implements ResultGlRenderer<PoseTracki
   public void release() {
     GLES20.glDeleteProgram(program);
   }
+
+
   /**
    * Not needed anymore, to be cleaned
    * */
