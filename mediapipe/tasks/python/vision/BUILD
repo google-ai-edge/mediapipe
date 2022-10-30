@@ -74,7 +74,7 @@ py_library(
         "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_py_pb2",
         "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_py_pb2",
         "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_py_pb2",
-        "//mediapipe/tasks/python/components/containers:classification",
+        "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:landmark",
         "//mediapipe/tasks/python/components/processors:classifier_options",
         "//mediapipe/tasks/python/core:base_options",

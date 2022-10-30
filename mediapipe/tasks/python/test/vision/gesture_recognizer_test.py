@@ -24,7 +24,7 @@ from absl.testing import parameterized
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.cc.components.containers.proto import landmarks_detection_result_pb2
 from mediapipe.tasks.python.components.containers import rect as rect_module
-from mediapipe.tasks.python.components.containers import classification as classification_module
+from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
 from mediapipe.tasks.python.components.containers import landmark_detection_result as landmark_detection_result_module
 from mediapipe.tasks.python.core import base_options as base_options_module
@@ -36,12 +36,9 @@ from mediapipe.tasks.python.vision.core import image_processing_options as image
 _LandmarksDetectionResultProto = landmarks_detection_result_pb2.LandmarksDetectionResult
 _BaseOptions = base_options_module.BaseOptions
 _Rect = rect_module.Rect
-_Classification = classification_module.Classification
-_ClassificationList = classification_module.ClassificationList
+_Category = category_module.Category
 _Landmark = landmark_module.Landmark
-_LandmarkList = landmark_module.LandmarkList
 _NormalizedLandmark = landmark_module.NormalizedLandmark
-_NormalizedLandmarkList = landmark_module.NormalizedLandmarkList
 _LandmarksDetectionResult = landmark_detection_result_module.LandmarksDetectionResult
 _Image = image_module.Image
 _GestureRecognizer = gesture_recognizer.GestureRecognizer
@@ -76,14 +73,11 @@ def _get_expected_gesture_recognition_result(
     text_format.Parse(f.read(), landmarks_detection_result_proto)
     landmarks_detection_result = _LandmarksDetectionResult.create_from_pb2(
         landmarks_detection_result_proto)
-  gesture = _ClassificationList(
-      classifications=[
-        _Classification(label=gesture_label, index=gesture_index,
-                        display_name='')
-      ])
+  gesture = _Category(category_name=gesture_label, index=gesture_index,
+                      display_name='')
   return _GestureRecognitionResult(
-      gestures=[gesture],
-      handedness=[landmarks_detection_result.classifications],
+      gestures=[[gesture]],
+      handedness=[landmarks_detection_result.categories],
       hand_landmarks=[landmarks_detection_result.landmarks],
       hand_world_landmarks=[landmarks_detection_result.world_landmarks])
 
@@ -115,25 +109,27 @@ class GestureRecognizerTest(parameterized.TestCase):
     self.assertLen(actual_result.handedness, len(expected_result.handedness))
     self.assertLen(actual_result.gestures, len(expected_result.gestures))
     # Actual landmarks match expected landmarks.
-    self.assertLen(actual_result.hand_landmarks[0].landmarks,
-                   len(expected_result.hand_landmarks[0].landmarks))
-    actual_landmarks = actual_result.hand_landmarks[0].landmarks
-    expected_landmarks = expected_result.hand_landmarks[0].landmarks
+    self.assertLen(actual_result.hand_landmarks[0],
+                   len(expected_result.hand_landmarks[0]))
+    actual_landmarks = actual_result.hand_landmarks[0]
+    expected_landmarks = expected_result.hand_landmarks[0]
     for i in range(len(actual_landmarks)):
       self.assertAlmostEqual(actual_landmarks[i].x, expected_landmarks[i].x,
                              delta=_LANDMARKS_ERROR_TOLERANCE)
       self.assertAlmostEqual(actual_landmarks[i].y, expected_landmarks[i].y,
                              delta=_LANDMARKS_ERROR_TOLERANCE)
     # Actual handedness matches expected handedness.
-    actual_top_handedness = actual_result.handedness[0].classifications[0]
-    expected_top_handedness = expected_result.handedness[0].classifications[0]
+    actual_top_handedness = actual_result.handedness[0][0]
+    expected_top_handedness = expected_result.handedness[0][0]
     self.assertEqual(actual_top_handedness.index, expected_top_handedness.index)
-    self.assertEqual(actual_top_handedness.label, expected_top_handedness.label)
+    self.assertEqual(actual_top_handedness.category_name,
+                     expected_top_handedness.category_name)
     # Actual gesture with top score matches expected gesture.
-    actual_top_gesture = actual_result.gestures[0].classifications[0]
-    expected_top_gesture = expected_result.gestures[0].classifications[0]
+    actual_top_gesture = actual_result.gestures[0][0]
+    expected_top_gesture = expected_result.gestures[0][0]
     self.assertEqual(actual_top_gesture.index, expected_top_gesture.index)
-    self.assertEqual(actual_top_gesture.label, expected_top_gesture.label)
+    self.assertEqual(actual_top_gesture.category_name,
+                     expected_top_gesture.category_name)
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
     # Creates with default option and valid model file successfully.
@@ -235,12 +231,13 @@ class GestureRecognizerTest(parameterized.TestCase):
       expected_result = _get_expected_gesture_recognition_result(
           _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL, _THUMB_UP_INDEX)
       # Only contains one top scoring gesture.
-      self.assertLen(recognition_result.gestures[0].classifications, 1)
+      self.assertLen(recognition_result.gestures[0], 1)
       # Actual gesture with top score matches expected gesture.
-      actual_top_gesture = recognition_result.gestures[0].classifications[0]
-      expected_top_gesture = expected_result.gestures[0].classifications[0]
+      actual_top_gesture = recognition_result.gestures[0][0]
+      expected_top_gesture = expected_result.gestures[0][0]
       self.assertEqual(actual_top_gesture.index, expected_top_gesture.index)
-      self.assertEqual(actual_top_gesture.label, expected_top_gesture.label)
+      self.assertEqual(actual_top_gesture.category_name,
+                       expected_top_gesture.category_name)
 
   def test_recognize_succeeds_with_num_hands(self):
     # Creates gesture recognizer.

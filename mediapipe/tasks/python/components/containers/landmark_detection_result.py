@@ -14,19 +14,25 @@
 """Landmarks Detection Result data class."""
 
 import dataclasses
-from typing import Any, Optional
+from typing import Any, Optional, List
 
 from mediapipe.tasks.cc.components.containers.proto import landmarks_detection_result_pb2
+from mediapipe.framework.formats import classification_pb2
+from mediapipe.framework.formats import landmark_pb2
 from mediapipe.tasks.python.components.containers import rect as rect_module
-from mediapipe.tasks.python.components.containers import classification as classification_module
+from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _LandmarksDetectionResultProto = landmarks_detection_result_pb2.LandmarksDetectionResult
+_ClassificationProto = classification_pb2.Classification
+_ClassificationListProto = classification_pb2.ClassificationList
+_LandmarkListProto = landmark_pb2.LandmarkList
+_NormalizedLandmarkListProto = landmark_pb2.NormalizedLandmarkList
 _NormalizedRect = rect_module.NormalizedRect
-_ClassificationList = classification_module.ClassificationList
-_NormalizedLandmarkList = landmark_module.NormalizedLandmarkList
-_LandmarkList = landmark_module.LandmarkList
+_Category = category_module.Category
+_NormalizedLandmark = landmark_module.NormalizedLandmark
+_Landmark = landmark_module.Landmark
 
 
 @dataclasses.dataclass
@@ -34,25 +40,32 @@ class LandmarksDetectionResult:
   """Represents the landmarks detection result.
 
   Attributes:
-    landmarks : A `NormalizedLandmarkList` object.
-    classifications : A `ClassificationList` object.
-    world_landmarks : A `LandmarkList` object.
+    landmarks : A list of `NormalizedLandmark` objects.
+    categories : A list of `Category` objects.
+    world_landmarks : A list of `Landmark` objects.
     rect : A `NormalizedRect` object.
   """
 
-  landmarks: Optional[_NormalizedLandmarkList]
-  classifications: Optional[_ClassificationList]
-  world_landmarks: Optional[_LandmarkList]
+  landmarks: Optional[List[_NormalizedLandmark]]
+  categories: Optional[List[_Category]]
+  world_landmarks: Optional[List[_Landmark]]
   rect: _NormalizedRect
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _LandmarksDetectionResultProto:
     """Generates a LandmarksDetectionResult protobuf object."""
     return _LandmarksDetectionResultProto(
-      landmarks=self.landmarks.to_pb2(),
-      classifications=self.classifications.to_pb2(),
-      world_landmarks=self.world_landmarks.to_pb2(),
-      rect=self.rect.to_pb2())
+        landmarks=_NormalizedLandmarkListProto(landmarks=self.landmarks),
+        classifications=_ClassificationListProto(
+            classification=[
+                _ClassificationProto(
+                    index=category.index,
+                    score=category.score,
+                    label=category.category_name,
+                    display_name=category.display_name)
+                for category in self.categories]),
+        world_landmarks=_LandmarkListProto(landmarks=self.world_landmarks),
+        rect=self.rect.to_pb2())
 
   @classmethod
   @doc_controls.do_not_generate_docs
@@ -63,11 +76,19 @@ class LandmarksDetectionResult:
     """Creates a `LandmarksDetectionResult` object from the given protobuf
     object."""
     return LandmarksDetectionResult(
-      landmarks=_NormalizedLandmarkList.create_from_pb2(pb2_obj.landmarks),
-      classifications=_ClassificationList.create_from_pb2(
-        pb2_obj.classifications),
-      world_landmarks=_LandmarkList.create_from_pb2(pb2_obj.world_landmarks),
-      rect=_NormalizedRect.create_from_pb2(pb2_obj.rect))
+        landmarks=[
+            _NormalizedLandmark.create_from_pb2(landmark)
+            for landmark in pb2_obj.landmarks.landmark],
+        categories=[category_module.Category(
+            score=classification.score,
+            index=classification.index,
+            category_name=classification.label,
+            display_name=classification.display_name)
+            for classification in pb2_obj.classifications.classification],
+        world_landmarks=[
+            _Landmark.create_from_pb2(landmark)
+            for landmark in pb2_obj.world_landmarks.landmark],
+        rect=_NormalizedRect.create_from_pb2(pb2_obj.rect))
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.

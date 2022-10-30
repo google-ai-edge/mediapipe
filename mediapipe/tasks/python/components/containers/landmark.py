@@ -20,9 +20,7 @@ from mediapipe.framework.formats import landmark_pb2
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _LandmarkProto = landmark_pb2.Landmark
-_LandmarkListProto = landmark_pb2.LandmarkList
 _NormalizedLandmarkProto = landmark_pb2.NormalizedLandmark
-_NormalizedLandmarkListProto = landmark_pb2.NormalizedLandmarkList
 
 
 @dataclasses.dataclass
@@ -90,53 +88,6 @@ class Landmark:
 
 
 @dataclasses.dataclass
-class LandmarkList:
-  """Represents the list of landmarks.
-
-  Attributes:
-    landmarks : A list of `Landmark` objects.
-  """
-
-  landmarks: List[Landmark]
-
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _LandmarkListProto:
-    """Generates a LandmarkList protobuf object."""
-    return _LandmarkListProto(
-        landmark=[
-            landmark.to_pb2()
-            for landmark in self.landmarks
-        ]
-    )
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(
-      cls,
-      pb2_obj: _LandmarkListProto
-  ) -> 'LandmarkList':
-    """Creates a `LandmarkList` object from the given protobuf object."""
-    return LandmarkList(
-        landmarks=[
-            Landmark.create_from_pb2(landmark)
-            for landmark in pb2_obj.landmark
-        ]
-    )
-
-  def __eq__(self, other: Any) -> bool:
-    """Checks if this object is equal to the given object.
-    Args:
-      other: The object to be compared with.
-    Returns:
-      True if the objects are equal.
-    """
-    if not isinstance(other, LandmarkList):
-      return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
-
-
-@dataclasses.dataclass
 class NormalizedLandmark:
   """A normalized version of above Landmark proto.
 
@@ -198,53 +149,6 @@ class NormalizedLandmark:
       True if the objects are equal.
     """
     if not isinstance(other, NormalizedLandmark):
-      return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
-
-
-@dataclasses.dataclass
-class NormalizedLandmarkList:
-  """Represents the list of normalized landmarks.
-
-  Attributes:
-    landmarks : A list of `Landmark` objects.
-  """
-
-  landmarks: List[NormalizedLandmark]
-
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _NormalizedLandmarkListProto:
-    """Generates a NormalizedLandmarkList protobuf object."""
-    return _NormalizedLandmarkListProto(
-      landmark=[
-        landmark.to_pb2()
-        for landmark in self.landmarks
-      ]
-    )
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(
-      cls,
-      pb2_obj: _NormalizedLandmarkListProto
-  ) -> 'NormalizedLandmarkList':
-    """Creates a `NormalizedLandmarkList` object from the given protobuf object."""
-    return NormalizedLandmarkList(
-      landmarks=[
-        NormalizedLandmark.create_from_pb2(landmark)
-        for landmark in pb2_obj.landmark
-      ]
-    )
-
-  def __eq__(self, other: Any) -> bool:
-    """Checks if this object is equal to the given object.
-    Args:
-      other: The object to be compared with.
-    Returns:
-      True if the objects are equal.
-    """
-    if not isinstance(other, NormalizedLandmarkList):
       return False
 
     return self.to_pb2().__eq__(other.to_pb2())
