@@ -46,19 +46,24 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({GestureRecognizerTest.General.class, GestureRecognizerTest.RunningModeTest.class})
 public class GestureRecognizerTest {
   private static final String GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE = "gesture_recognizer.task";
+  private static final String GESTURE_RECOGNIZER_WITH_CUSTOM_CLASSIFIER_BUNDLE_ASSET_FILE =
+      "gesture_recognizer_with_custom_classifier.task";
   private static final String TWO_HANDS_IMAGE = "right_hands.jpg";
   private static final String THUMB_UP_IMAGE = "thumb_up.jpg";
   private static final String POINTING_UP_ROTATED_IMAGE = "pointing_up_rotated.jpg";
   private static final String NO_HANDS_IMAGE = "cats_and_dogs.jpg";
+  private static final String FIST_IMAGE = "fist.jpg";
   private static final String THUMB_UP_LANDMARKS = "thumb_up_landmarks.pb";
+  private static final String FIST_LANDMARKS = "fist_landmarks.pb";
   private static final String TAG = "Gesture Recognizer Test";
   private static final String THUMB_UP_LABEL = "Thumb_Up";
-  private static final int THUMB_UP_INDEX = 5;
   private static final String POINTING_UP_LABEL = "Pointing_Up";
-  private static final int POINTING_UP_INDEX = 3;
+  private static final String FIST_LABEL = "Closed_Fist";
+  private static final String ROCK_LABEL = "Rock";
   private static final float LANDMARKS_ERROR_TOLERANCE = 0.03f;
   private static final int IMAGE_WIDTH = 382;
   private static final int IMAGE_HEIGHT = 406;
+  private static final int GESTURE_EXPECTED_INDEX = -1;
 
   @RunWith(AndroidJUnit4.class)
   public static final class General extends GestureRecognizerTest {
@@ -77,7 +82,7 @@ public class GestureRecognizerTest {
       GestureRecognitionResult actualResult =
           gestureRecognizer.recognize(getImageFromAsset(THUMB_UP_IMAGE));
       GestureRecognitionResult expectedResult =
-          getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL, THUMB_UP_INDEX);
+          getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL);
       assertActualResultApproximatelyEqualsToExpectedResult(actualResult, expectedResult);
     }
 
@@ -108,16 +113,14 @@ public class GestureRecognizerTest {
                   BaseOptions.builder()
                       .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
                       .build())
-              // TODO update the confidence to be in range [0,1] after embedding model
-              // and scoring calculator is integrated.
-              .setMinGestureConfidence(2.0f)
+              .setMinGestureConfidence(0.5f)
               .build();
       GestureRecognizer gestureRecognizer =
           GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       GestureRecognitionResult actualResult =
           gestureRecognizer.recognize(getImageFromAsset(THUMB_UP_IMAGE));
       GestureRecognitionResult expectedResult =
-          getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL, THUMB_UP_INDEX);
+          getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL);
       // Only contains one top scoring gesture.
       assertThat(actualResult.gestures().get(0)).hasSize(1);
       assertActualGestureEqualExpectedGesture(
@@ -159,8 +162,46 @@ public class GestureRecognizerTest {
           gestureRecognizer.recognize(
               getImageFromAsset(POINTING_UP_ROTATED_IMAGE), imageProcessingOptions);
       assertThat(actualResult.gestures()).hasSize(1);
-      assertThat(actualResult.gestures().get(0).get(0).index()).isEqualTo(POINTING_UP_INDEX);
       assertThat(actualResult.gestures().get(0).get(0).categoryName()).isEqualTo(POINTING_UP_LABEL);
+    }
+
+    @Test
+    public void recognize_successWithCannedGestureFist() throws Exception {
+      GestureRecognizerOptions options =
+          GestureRecognizerOptions.builder()
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
+              .setNumHands(1)
+              .build();
+      GestureRecognizer gestureRecognizer =
+          GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      GestureRecognitionResult actualResult =
+          gestureRecognizer.recognize(getImageFromAsset(FIST_IMAGE));
+      GestureRecognitionResult expectedResult =
+          getExpectedGestureRecognitionResult(FIST_LANDMARKS, FIST_LABEL);
+      assertActualResultApproximatelyEqualsToExpectedResult(actualResult, expectedResult);
+    }
+
+    @Test
+    public void recognize_successWithCustomGestureRock() throws Exception {
+      GestureRecognizerOptions options =
+          GestureRecognizerOptions.builder()
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(
+                          GESTURE_RECOGNIZER_WITH_CUSTOM_CLASSIFIER_BUNDLE_ASSET_FILE)
+                      .build())
+              .setNumHands(1)
+              .build();
+      GestureRecognizer gestureRecognizer =
+          GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      GestureRecognitionResult actualResult =
+          gestureRecognizer.recognize(getImageFromAsset(FIST_IMAGE));
+      GestureRecognitionResult expectedResult =
+          getExpectedGestureRecognitionResult(FIST_LANDMARKS, ROCK_LABEL);
+      assertActualResultApproximatelyEqualsToExpectedResult(actualResult, expectedResult);
     }
 
     @Test
@@ -331,7 +372,7 @@ public class GestureRecognizerTest {
     GestureRecognitionResult actualResult =
         gestureRecognizer.recognize(getImageFromAsset(THUMB_UP_IMAGE));
     GestureRecognitionResult expectedResult =
-        getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL, THUMB_UP_INDEX);
+        getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL);
     assertActualResultApproximatelyEqualsToExpectedResult(actualResult, expectedResult);
   }
 
@@ -348,7 +389,7 @@ public class GestureRecognizerTest {
     GestureRecognizer gestureRecognizer =
         GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
     GestureRecognitionResult expectedResult =
-        getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL, THUMB_UP_INDEX);
+        getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL);
     for (int i = 0; i < 3; i++) {
       GestureRecognitionResult actualResult =
           gestureRecognizer.recognizeForVideo(
@@ -361,7 +402,7 @@ public class GestureRecognizerTest {
   public void recognize_failsWithOutOfOrderInputTimestamps() throws Exception {
     MPImage image = getImageFromAsset(THUMB_UP_IMAGE);
     GestureRecognitionResult expectedResult =
-        getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL, THUMB_UP_INDEX);
+        getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL);
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
@@ -393,7 +434,7 @@ public class GestureRecognizerTest {
   public void recognize_successWithLiveSteamMode() throws Exception {
     MPImage image = getImageFromAsset(THUMB_UP_IMAGE);
     GestureRecognitionResult expectedResult =
-        getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL, THUMB_UP_INDEX);
+        getExpectedGestureRecognitionResult(THUMB_UP_LANDMARKS, THUMB_UP_LABEL);
     GestureRecognizerOptions options =
         GestureRecognizerOptions.builder()
             .setBaseOptions(
@@ -423,7 +464,7 @@ public class GestureRecognizerTest {
   }
 
   private static GestureRecognitionResult getExpectedGestureRecognitionResult(
-      String filePath, String gestureLabel, int gestureIndex) throws Exception {
+      String filePath, String gestureLabel) throws Exception {
     AssetManager assetManager = ApplicationProvider.getApplicationContext().getAssets();
     InputStream istr = assetManager.open(filePath);
     LandmarksDetectionResult landmarksDetectionResultProto =
@@ -431,9 +472,7 @@ public class GestureRecognizerTest {
     ClassificationProto.ClassificationList gesturesProto =
         ClassificationProto.ClassificationList.newBuilder()
             .addClassification(
-                ClassificationProto.Classification.newBuilder()
-                    .setLabel(gestureLabel)
-                    .setIndex(gestureIndex))
+                ClassificationProto.Classification.newBuilder().setLabel(gestureLabel))
             .build();
     return GestureRecognitionResult.create(
         Arrays.asList(landmarksDetectionResultProto.getLandmarks()),
@@ -479,8 +518,8 @@ public class GestureRecognizerTest {
 
   private static void assertActualGestureEqualExpectedGesture(
       Category actualGesture, Category expectedGesture) {
-    assertThat(actualGesture.index()).isEqualTo(actualGesture.index());
-    assertThat(expectedGesture.categoryName()).isEqualTo(expectedGesture.categoryName());
+    assertThat(actualGesture.categoryName()).isEqualTo(expectedGesture.categoryName());
+    assertThat(actualGesture.index()).isEqualTo(GESTURE_EXPECTED_INDEX);
   }
 
   private static void assertImageSizeIsExpected(MPImage inputImage) {

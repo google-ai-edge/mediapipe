@@ -245,6 +245,18 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_fist_jpg",
+        sha256 = "43fa1cabf3f90d574accc9a56986e2ee48638ce59fc65af1846487f73bb2ef24",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/fist.jpg?generation=1666999359066679"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_fist_landmarks_pbtxt",
+        sha256 = "76d6489e6163211ce5e9080e51983165bb9b24ff50146cc7487bd629f011c598",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/fist_landmarks.pbtxt?generation=1666999360561864"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_general_meta_json",
         sha256 = "b95363e4bae89b9c2af484498312aaad4efc7ff57c7eadcc4e5e7adca641445f",
         urls = ["https://storage.googleapis.com/mediapipe-assets/general_meta.json?generation=1665422822603848"],
@@ -836,6 +848,18 @@ def external_files():
         name = "com_google_mediapipe_universal_sentence_encoder_qa_with_metadata_tflite",
         sha256 = "82c2d0450aa458adbec2f78eff33cfbf2a41b606b44246726ab67373926e32bc",
         urls = ["https://storage.googleapis.com/mediapipe-assets/universal_sentence_encoder_qa_with_metadata.tflite?generation=1665445919252005"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_victory_jpg",
+        sha256 = "84cb8853e3df614e0cb5c93a25e3e2f38ea5e4f92fd428ee7d867ed3479d5764",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/victory.jpg?generation=1666999364225126"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_victory_landmarks_pbtxt",
+        sha256 = "b25ab4f222674489f543afb6454396ecbc1437a7ae6213dbf0553029ae939ab0",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/victory_landmarks.pbtxt?generation=1666999366036622"],
     )
 
     http_file(

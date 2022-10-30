@@ -30,14 +30,17 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/processors/classification_postprocessing_graph.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
+#include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/combined_prediction_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/landmarks_to_matrix_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_classifier_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_embedder_graph_options.pb.h"
@@ -58,6 +61,7 @@ using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::processors::
     ConfigureTensorsToClassificationCalculator;
 using ::mediapipe::tasks::core::ModelAssetBundleResources;
+using ::mediapipe::tasks::core::proto::BaseOptions;
 using ::mediapipe::tasks::metadata::SetExternalFile;
 using ::mediapipe::tasks::vision::gesture_recognizer::proto::
     HandGestureRecognizerGraphOptions;
@@ -78,13 +82,20 @@ constexpr char kVectorTag[] = "VECTOR";
 constexpr char kIndexTag[] = "INDEX";
 constexpr char kIterableTag[] = "ITERABLE";
 constexpr char kBatchEndTag[] = "BATCH_END";
+constexpr char kPredictionTag[] = "PREDICTION";
+constexpr char kBackgroundLabel[] = "None";
 constexpr char kGestureEmbedderTFLiteName[] = "gesture_embedder.tflite";
 constexpr char kCannedGestureClassifierTFLiteName[] =
     "canned_gesture_classifier.tflite";
+constexpr char kCustomGestureClassifierTFLiteName[] =
+    "custom_gesture_classifier.tflite";
 
 struct SubTaskModelResources {
-  const core::ModelResources* gesture_embedder_model_resource;
-  const core::ModelResources* canned_gesture_classifier_model_resource;
+  const core::ModelResources* gesture_embedder_model_resource = nullptr;
+  const core::ModelResources* canned_gesture_classifier_model_resource =
+      nullptr;
+  const core::ModelResources* custom_gesture_classifier_model_resource =
+      nullptr;
 };
 
 Source<std::vector<Tensor>> ConvertMatrixToTensor(Source<Matrix> matrix,
@@ -94,39 +105,19 @@ Source<std::vector<Tensor>> ConvertMatrixToTensor(Source<Matrix> matrix,
   return node[Output<std::vector<Tensor>>{"TENSORS"}];
 }
 
-// Sets the base options in the sub tasks.
-absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
-                                   HandGestureRecognizerGraphOptions* options,
-                                   bool is_copy) {
-  ASSIGN_OR_RETURN(const auto gesture_embedder_file,
-                   resources.GetModelFile(kGestureEmbedderTFLiteName));
-  auto* gesture_embedder_graph_options =
-      options->mutable_gesture_embedder_graph_options();
-  SetExternalFile(gesture_embedder_file,
-                  gesture_embedder_graph_options->mutable_base_options()
-                      ->mutable_model_asset(),
-                  is_copy);
-  gesture_embedder_graph_options->mutable_base_options()
-      ->mutable_acceleration()
-      ->CopyFrom(options->base_options().acceleration());
-  gesture_embedder_graph_options->mutable_base_options()->set_use_stream_mode(
-      options->base_options().use_stream_mode());
-
-  ASSIGN_OR_RETURN(const auto canned_gesture_classifier_file,
-                   resources.GetModelFile(kCannedGestureClassifierTFLiteName));
-  auto* canned_gesture_classifier_graph_options =
-      options->mutable_canned_gesture_classifier_graph_options();
-  SetExternalFile(
-      canned_gesture_classifier_file,
-      canned_gesture_classifier_graph_options->mutable_base_options()
-          ->mutable_model_asset(),
-      is_copy);
-  canned_gesture_classifier_graph_options->mutable_base_options()
-      ->mutable_acceleration()
-      ->CopyFrom(options->base_options().acceleration());
-  canned_gesture_classifier_graph_options->mutable_base_options()
-      ->set_use_stream_mode(options->base_options().use_stream_mode());
+absl::Status ConfigureCombinedPredictionCalculator(
+    CombinedPredictionCalculatorOptions* options) {
+  options->set_background_label(kBackgroundLabel);
   return absl::OkStatus();
+}
+
+void PopulateAccelerationAndUseStreamMode(
+    const BaseOptions& parent_base_options,
+    BaseOptions* sub_task_base_options) {
+  sub_task_base_options->mutable_acceleration()->CopyFrom(
+      parent_base_options.acceleration());
+  sub_task_base_options->set_use_stream_mode(
+      parent_base_options.use_stream_mode());
 }
 
 }  // namespace
@@ -212,6 +203,56 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
   }
 
  private:
+  // Sets the base options in the sub tasks.
+  absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
+                                     HandGestureRecognizerGraphOptions* options,
+                                     bool is_copy) {
+    ASSIGN_OR_RETURN(const auto gesture_embedder_file,
+                     resources.GetModelFile(kGestureEmbedderTFLiteName));
+    auto* gesture_embedder_graph_options =
+        options->mutable_gesture_embedder_graph_options();
+    SetExternalFile(gesture_embedder_file,
+                    gesture_embedder_graph_options->mutable_base_options()
+                        ->mutable_model_asset(),
+                    is_copy);
+    PopulateAccelerationAndUseStreamMode(
+        options->base_options(),
+        gesture_embedder_graph_options->mutable_base_options());
+
+    ASSIGN_OR_RETURN(
+        const auto canned_gesture_classifier_file,
+        resources.GetModelFile(kCannedGestureClassifierTFLiteName));
+    auto* canned_gesture_classifier_graph_options =
+        options->mutable_canned_gesture_classifier_graph_options();
+    SetExternalFile(
+        canned_gesture_classifier_file,
+        canned_gesture_classifier_graph_options->mutable_base_options()
+            ->mutable_model_asset(),
+        is_copy);
+    PopulateAccelerationAndUseStreamMode(
+        options->base_options(),
+        canned_gesture_classifier_graph_options->mutable_base_options());
+
+    const auto custom_gesture_classifier_file =
+        resources.GetModelFile(kCustomGestureClassifierTFLiteName);
+    if (custom_gesture_classifier_file.ok()) {
+      has_custom_gesture_classifier = true;
+      auto* custom_gesture_classifier_graph_options =
+          options->mutable_custom_gesture_classifier_graph_options();
+      SetExternalFile(
+          custom_gesture_classifier_file.value(),
+          custom_gesture_classifier_graph_options->mutable_base_options()
+              ->mutable_model_asset(),
+          is_copy);
+      PopulateAccelerationAndUseStreamMode(
+          options->base_options(),
+          custom_gesture_classifier_graph_options->mutable_base_options());
+    } else {
+      LOG(INFO) << "Custom gesture classifier is not defined.";
+    }
+    return absl::OkStatus();
+  }
+
   absl::StatusOr<SubTaskModelResources> CreateSubTaskModelResources(
       SubgraphContext* sc) {
     auto* options = sc->MutableOptions<HandGestureRecognizerGraphOptions>();
@@ -237,6 +278,19 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
             std::make_unique<core::proto::ExternalFile>(
                 std::move(canned_gesture_classifier_model_asset)),
             "_canned_gesture_classifier"));
+    if (has_custom_gesture_classifier) {
+      auto& custom_gesture_classifier_model_asset =
+          *options->mutable_custom_gesture_classifier_graph_options()
+               ->mutable_base_options()
+               ->mutable_model_asset();
+      ASSIGN_OR_RETURN(
+          sub_task_model_resources.custom_gesture_classifier_model_resource,
+          CreateModelResources(
+              sc,
+              std::make_unique<core::proto::ExternalFile>(
+                  std::move(custom_gesture_classifier_model_asset)),
+              "_custom_gesture_classifier"));
+    }
     return sub_task_model_resources;
   }
 
@@ -302,7 +356,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
     hand_world_landmarks_tensor >> concatenate_tensor_vector.In(2);
     auto concatenated_tensors = concatenate_tensor_vector.Out("");
 
-    // Inference for static hand gesture recognition.
+    // Inference for gesture embedder.
     auto& gesture_embedder_inference =
         AddInference(*sub_task_model_resources.gesture_embedder_model_resource,
                      graph_options.gesture_embedder_graph_options()
@@ -310,34 +364,64 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
                          .acceleration(),
                      graph);
     concatenated_tensors >> gesture_embedder_inference.In(kTensorsTag);
-    auto embedding_tensors = gesture_embedder_inference.Out(kTensorsTag);
+    auto embedding_tensors =
+        gesture_embedder_inference.Out(kTensorsTag).Cast<Tensor>();
 
-    auto& canned_gesture_classifier_inference = AddInference(
-        *sub_task_model_resources.canned_gesture_classifier_model_resource,
-        graph_options.canned_gesture_classifier_graph_options()
-            .base_options()
-            .acceleration(),
-        graph);
-    embedding_tensors >> canned_gesture_classifier_inference.In(kTensorsTag);
-    auto inference_output_tensors =
-        canned_gesture_classifier_inference.Out(kTensorsTag);
+    auto& combine_predictions = graph.AddNode("CombinedPredictionCalculator");
+    MP_RETURN_IF_ERROR(ConfigureCombinedPredictionCalculator(
+        &combine_predictions
+             .GetOptions<CombinedPredictionCalculatorOptions>()));
 
+    int classifier_nums = 0;
+    // Inference for custom gesture classifier if it exists.
+    if (has_custom_gesture_classifier) {
+      ASSIGN_OR_RETURN(
+          auto gesture_clasification_list,
+          GetGestureClassificationList(
+              sub_task_model_resources.custom_gesture_classifier_model_resource,
+              graph_options.custom_gesture_classifier_graph_options(),
+              embedding_tensors, graph));
+      gesture_clasification_list >> combine_predictions.In(classifier_nums++);
+    }
+
+    // Inference for canned gesture classifier.
+    ASSIGN_OR_RETURN(
+        auto gesture_clasification_list,
+        GetGestureClassificationList(
+            sub_task_model_resources.canned_gesture_classifier_model_resource,
+            graph_options.canned_gesture_classifier_graph_options(),
+            embedding_tensors, graph));
+    gesture_clasification_list >> combine_predictions.In(classifier_nums++);
+
+    auto combined_classification_list =
+        combine_predictions.Out(kPredictionTag).Cast<ClassificationList>();
+
+    return combined_classification_list;
+  }
+
+  absl::StatusOr<Source<ClassificationList>> GetGestureClassificationList(
+      const core::ModelResources* model_resources,
+      const proto::GestureClassifierGraphOptions& options,
+      Source<Tensor>& embedding_tensors, Graph& graph) {
+    auto& custom_gesture_classifier_inference = AddInference(
+        *model_resources, options.base_options().acceleration(), graph);
+    embedding_tensors >> custom_gesture_classifier_inference.In(kTensorsTag);
+    auto custom_gesture_inference_out_tensors =
+        custom_gesture_classifier_inference.Out(kTensorsTag);
     auto& tensors_to_classification =
         graph.AddNode("TensorsToClassificationCalculator");
     MP_RETURN_IF_ERROR(ConfigureTensorsToClassificationCalculator(
-        graph_options.canned_gesture_classifier_graph_options()
-            .classifier_options(),
-        *sub_task_model_resources.canned_gesture_classifier_model_resource
-             ->GetMetadataExtractor(),
+        options.classifier_options(), *model_resources->GetMetadataExtractor(),
         0,
         &tensors_to_classification.GetOptions<
             mediapipe::TensorsToClassificationCalculatorOptions>()));
-    inference_output_tensors >> tensors_to_classification.In(kTensorsTag);
-    auto classification_list =
-        tensors_to_classification[Output<ClassificationList>(
-            "CLASSIFICATIONS")];
-    return classification_list;
+    custom_gesture_inference_out_tensors >>
+        tensors_to_classification.In(kTensorsTag);
+    return tensors_to_classification.Out("CLASSIFICATIONS")
+        .Cast<ClassificationList>();
   }
+
+  bool has_custom_gesture_classifier = false;
 };
 
 // clang-format off
