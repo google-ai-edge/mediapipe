@@ -25,6 +25,14 @@ message SwitchContainerOptions {
   // Activates channel 1 for enable = true, channel 0 otherwise.
   optional bool enable = 4;
 
-  // Use DefaultInputStreamHandler for muxing & demuxing.
+  // Use DefaultInputStreamHandler for demuxing.
   optional bool synchronize_io = 5;
+
+  // Use ImmediateInputStreamHandler for channel selection.
+  optional bool async_selection = 6;
+
+  // Specifies an input stream, "TAG:index", that defines the processed
+  // timestamps.  SwitchContainer awaits output at the last processed
+  // timestamp before advancing from one selected channel to the next.
+  repeated string tick_input_stream = 7;
 }

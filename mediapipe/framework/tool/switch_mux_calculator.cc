@@ -164,7 +164,7 @@ absl::Status SwitchMuxCalculator::Open(CalculatorContext* cc) {
   options_ = cc->Options<mediapipe::SwitchContainerOptions>();
   channel_index_ = tool::GetChannelIndex(*cc, channel_index_);
   channel_tags_ = ChannelTags(cc->Inputs().TagMap());
-  channel_history_[Timestamp::Unset()] = channel_index_;
+  channel_history_[Timestamp::Unstarted()] = channel_index_;
 
   // Relay side packets only from channel_index_.
   for (const std::string& tag : ChannelTags(cc->InputSidePackets().TagMap())) {

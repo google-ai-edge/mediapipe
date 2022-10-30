@@ -252,6 +252,9 @@ TEST(SwitchContainerTest, ApplyToSubnodes) {
           input_stream: "INPUT:enable"
           input_stream: "TICK:foo"
           output_stream: "OUTPUT:switchcontainer__gate_enable_timed"
+          input_stream_handler {
+            input_stream_handler: "DefaultInputStreamHandler"
+          }
         }
         node {
           name: "switchcontainer__SwitchDemuxCalculator"
@@ -306,7 +309,8 @@ TEST(SwitchContainerTest, ApplyToSubnodes) {
 // Shows the SwitchContainer container runs with a pair of simple subnodes.
 TEST(SwitchContainerTest, RunsWithSubnodes) {
   EXPECT_TRUE(SubgraphRegistry::IsRegistered("SwitchContainer"));
-  CalculatorGraphConfig supergraph = SubnodeContainerExample();
+  CalculatorGraphConfig supergraph =
+      SubnodeContainerExample("async_selection: true");
   MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
   RunTestContainer(supergraph);
 }

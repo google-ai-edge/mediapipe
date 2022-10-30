@@ -105,10 +105,10 @@ CalculatorGraphConfig::Node* BuildMuxNode(
 
 // Returns a PacketSequencerCalculator node.
 CalculatorGraphConfig::Node* BuildTimestampNode(CalculatorGraphConfig* config,
-                                                bool synchronize_io) {
+                                                bool async_selection) {
   CalculatorGraphConfig::Node* result = config->add_node();
   *result->mutable_calculator() = "PacketSequencerCalculator";
-  if (synchronize_io) {
+  if (!async_selection) {
     *result->mutable_input_stream_handler()->mutable_input_stream_handler() =
         "DefaultInputStreamHandler";
   }
@@ -239,6 +239,15 @@ bool HasTag(const proto_ns::RepeatedPtrField<std::string>& streams,
   return tags.count({tag, 0}) > 0;
 }
 
+// Returns true if a set of "TAG::index" includes a TagIndex.
+bool ContainsTag(const proto_ns::RepeatedPtrField<std::string>& tags,
+                 TagIndex item) {
+  for (const std::string& t : tags) {
+    if (ParseTagIndex(t) == item) return true;
+  }
+  return false;
+}
+
 absl::StatusOr<CalculatorGraphConfig> SwitchContainer::GetConfig(
     const Subgraph::SubgraphOptions& options) {
   CalculatorGraphConfig config;
@@ -263,17 +272,17 @@ absl::StatusOr<CalculatorGraphConfig> SwitchContainer::GetConfig(
   std::string enable_stream = "ENABLE:gate_enable";
 
   // Add a PacketSequencerCalculator node for "SELECT" or "ENABLE" streams.
-  bool synchronize_io =
-      Subgraph::GetOptions<mediapipe::SwitchContainerOptions>(options)
-          .synchronize_io();
+  const auto& switch_options =
+      Subgraph::GetOptions<mediapipe::SwitchContainerOptions>(options);
+  bool async_selection = switch_options.async_selection();
   if (HasTag(container_node.input_stream(), "SELECT")) {
-    select_node = BuildTimestampNode(&config, synchronize_io);
+    select_node = BuildTimestampNode(&config, async_selection);
     select_node->add_input_stream("INPUT:gate_select");
     select_node->add_output_stream("OUTPUT:gate_select_timed");
     select_stream = "SELECT:gate_select_timed";
   }
   if (HasTag(container_node.input_stream(), "ENABLE")) {
-    enable_node = BuildTimestampNode(&config, synchronize_io);
+    enable_node = BuildTimestampNode(&config, async_selection);
     enable_node->add_input_stream("INPUT:gate_enable");
     enable_node->add_output_stream("OUTPUT:gate_enable_timed");
     enable_stream = "ENABLE:gate_enable_timed";
@@ -296,7 +305,7 @@ absl::StatusOr<CalculatorGraphConfig> SwitchContainer::GetConfig(
   mux->add_input_side_packet("SELECT:gate_select");
   mux->add_input_side_packet("ENABLE:gate_enable");
 
-  // Add input streams for graph and demux and the timestamper.
+  // Add input streams for graph and demux.
   config.add_input_stream("SELECT:gate_select");
   config.add_input_stream("ENABLE:gate_enable");
   config.add_input_side_packet("SELECT:gate_select");
@@ -306,6 +315,12 @@ absl::StatusOr<CalculatorGraphConfig> SwitchContainer::GetConfig(
     std::string stream = CatStream(p.first, p.second);
     config.add_input_stream(stream);
     demux->add_input_stream(stream);
+  }
+
+  // Add input streams for the timestamper.
+  auto& tick_streams = switch_options.tick_input_stream();
+  for (const auto& p : input_tags) {
+    if (!tick_streams.empty() && !ContainsTag(tick_streams, p.first)) continue;
     TagIndex tick_tag{"TICK", tick_index++};
     if (select_node) {
       select_node->add_input_stream(CatStream(tick_tag, p.second));
