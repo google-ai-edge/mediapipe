@@ -444,7 +444,7 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
 
     The `result_callback` provides:
       - The hand gesture recognition results.
-      - The input image that the image classifier runs on.
+      - The input image that the gesture recognizer runs on.
       - The input timestamp in milliseconds.
 
     Args:
