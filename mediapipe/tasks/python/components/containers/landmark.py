@@ -30,9 +30,9 @@ class Landmark:
   Use x for 1D points, (x, y) for 2D points and (x, y, z) for 3D points.
 
   Attributes:
-    x: The x coordinate of the 3D point.
-    y: The y coordinate of the 3D point.
-    z: The z coordinate of the 3D point.
+    x: The x coordinate.
+    y: The y coordinate.
+    z: The z coordinate.
     visibility: Landmark visibility. Should stay unset if not supported.
       Float score of whether landmark is visible or occluded by other objects.
       Landmark considered as invisible also if it is not present on the screen
@@ -72,20 +72,6 @@ class Landmark:
         visibility=pb2_obj.visibility,
         presence=pb2_obj.presence)
 
-  def __eq__(self, other: Any) -> bool:
-    """Checks if this object is equal to the given object.
-
-    Args:
-      other: The object to be compared with.
-
-    Returns:
-      True if the objects are equal.
-    """
-    if not isinstance(other, Landmark):
-      return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
-
 
 @dataclasses.dataclass
 class NormalizedLandmark:
@@ -94,9 +80,9 @@ class NormalizedLandmark:
   All coordinates should be within [0, 1].
 
   Attributes:
-    x: The normalized x coordinate of the 3D point.
-    y: The normalized y coordinate of the 3D point.
-    z: The normalized z coordinate of the 3D point.
+    x: The normalized x coordinate.
+    y: The normalized y coordinate.
+    z: The normalized z coordinate.
     visibility: Landmark visibility. Should stay unset if not supported.
       Float score of whether landmark is visible or occluded by other objects.
       Landmark considered as invisible also if it is not present on the screen
@@ -138,17 +124,3 @@ class NormalizedLandmark:
       z=pb2_obj.z,
       visibility=pb2_obj.visibility,
       presence=pb2_obj.presence)
-
-  def __eq__(self, other: Any) -> bool:
-    """Checks if this object is equal to the given object.
-
-    Args:
-      other: The object to be compared with.
-
-    Returns:
-      True if the objects are equal.
-    """
-    if not isinstance(other, NormalizedLandmark):
-      return False
-
-    return self.to_pb2().__eq__(other.to_pb2())

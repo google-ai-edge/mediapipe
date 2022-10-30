@@ -14,7 +14,7 @@
 """Landmarks Detection Result data class."""
 
 import dataclasses
-from typing import Any, Optional, List
+from typing import Optional, List
 
 from mediapipe.tasks.cc.components.containers.proto import landmarks_detection_result_pb2
 from mediapipe.framework.formats import classification_pb2
@@ -89,15 +89,3 @@ class LandmarksDetectionResult:
             _Landmark.create_from_pb2(landmark)
             for landmark in pb2_obj.world_landmarks.landmark],
         rect=_NormalizedRect.create_from_pb2(pb2_obj.rect))
-
-  def __eq__(self, other: Any) -> bool:
-    """Checks if this object is equal to the given object.
-    Args:
-      other: The object to be compared with.
-    Returns:
-      True if the objects are equal.
-    """
-    if not isinstance(other, LandmarksDetectionResult):
-      return False
-
-    return self.to_pb2().__eq__(other.to_pb2())

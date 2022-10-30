@@ -48,7 +48,6 @@ _ClassifierOptions = classifier_options.ClassifierOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _TaskInfo = task_info_module.TaskInfo
-_TaskRunner = task_runner_module.TaskRunner
 
 _IMAGE_IN_STREAM_NAME = 'image_in'
 _IMAGE_OUT_STREAM_NAME = 'image_out'
@@ -84,6 +83,45 @@ class GestureRecognitionResult:
   handedness: List[List[category_module.Category]]
   hand_landmarks: List[List[landmark_module.NormalizedLandmark]]
   hand_world_landmarks: List[List[landmark_module.Landmark]]
+
+
+def _build_recognition_result(
+    output_packets: Mapping[str, packet_module.Packet]
+) -> GestureRecognitionResult:
+  gestures_proto_list = packet_getter.get_proto_list(
+    output_packets[_HAND_GESTURE_STREAM_NAME])
+  handedness_proto_list = packet_getter.get_proto_list(
+    output_packets[_HANDEDNESS_STREAM_NAME])
+  hand_landmarks_proto_list = packet_getter.get_proto_list(
+    output_packets[_HAND_LANDMARKS_STREAM_NAME])
+  hand_world_landmarks_proto_list = packet_getter.get_proto_list(
+    output_packets[_HAND_WORLD_LANDMARKS_STREAM_NAME])
+
+  return GestureRecognitionResult(
+    [
+      [
+        category_module.Category(
+          index=gesture.index, score=gesture.score,
+          display_name=gesture.display_name, category_name=gesture.label)
+        for gesture in gesture_classifications.classification]
+      for gesture_classifications in gestures_proto_list
+    ], [
+      [
+        category_module.Category(
+          index=gesture.index, score=gesture.score,
+          display_name=gesture.display_name, category_name=gesture.label)
+        for gesture in handedness_classifications.classification]
+      for handedness_classifications in handedness_proto_list
+    ], [
+      [landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
+       for hand_landmark in hand_landmarks.landmark]
+      for hand_landmarks in hand_landmarks_proto_list
+    ], [
+      [landmark_module.Landmark.create_from_pb2(hand_world_landmark)
+       for hand_world_landmark in hand_world_landmarks.landmark]
+      for hand_world_landmarks in hand_world_landmarks_proto_list
+    ]
+  )
 
 
 @dataclasses.dataclass
@@ -220,40 +258,7 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
             empty_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
         return
 
-      gestures_proto_list = packet_getter.get_proto_list(
-        output_packets[_HAND_GESTURE_STREAM_NAME])
-      handedness_proto_list = packet_getter.get_proto_list(
-        output_packets[_HANDEDNESS_STREAM_NAME])
-      hand_landmarks_proto_list = packet_getter.get_proto_list(
-        output_packets[_HAND_LANDMARKS_STREAM_NAME])
-      hand_world_landmarks_proto_list = packet_getter.get_proto_list(
-        output_packets[_HAND_WORLD_LANDMARKS_STREAM_NAME])
-
-      gesture_recognition_result = GestureRecognitionResult(
-        [
-          [
-            category_module.Category(
-              index=gesture.index, score=gesture.score,
-              display_name=gesture.display_name, category_name=gesture.label)
-            for gesture in gesture_classifications.classification]
-          for gesture_classifications in gestures_proto_list
-        ], [
-          [
-            category_module.Category(
-              index=gesture.index, score=gesture.score,
-              display_name=gesture.display_name, category_name=gesture.label)
-            for gesture in handedness_classifications.classification]
-          for handedness_classifications in handedness_proto_list
-        ], [
-          [landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
-           for hand_landmark in hand_landmarks.landmark]
-          for hand_landmarks in hand_landmarks_proto_list
-        ], [
-          [landmark_module.Landmark.create_from_pb2(hand_world_landmark)
-           for hand_world_landmark in hand_world_landmarks.landmark]
-          for hand_world_landmarks in hand_world_landmarks_proto_list
-        ]
-      )
+      gesture_recognition_result = _build_recognition_result(output_packets)
       timestamp = output_packets[_HAND_GESTURE_STREAM_NAME].timestamp
       options.result_callback(
           gesture_recognition_result, image,
@@ -313,40 +318,7 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
     if output_packets[_HAND_GESTURE_STREAM_NAME].is_empty():
       return GestureRecognitionResult([], [], [], [])
 
-    gestures_proto_list = packet_getter.get_proto_list(
-      output_packets[_HAND_GESTURE_STREAM_NAME])
-    handedness_proto_list = packet_getter.get_proto_list(
-      output_packets[_HANDEDNESS_STREAM_NAME])
-    hand_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_HAND_LANDMARKS_STREAM_NAME])
-    hand_world_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_HAND_WORLD_LANDMARKS_STREAM_NAME])
-
-    return GestureRecognitionResult(
-      [
-        [
-          category_module.Category(
-            index=gesture.index, score=gesture.score,
-            display_name=gesture.display_name, category_name=gesture.label)
-          for gesture in gesture_classifications.classification]
-        for gesture_classifications in gestures_proto_list
-      ], [
-        [
-          category_module.Category(
-            index=gesture.index, score=gesture.score,
-            display_name=gesture.display_name, category_name=gesture.label)
-          for gesture in handedness_classifications.classification]
-        for handedness_classifications in handedness_proto_list
-      ], [
-        [landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
-         for hand_landmark in hand_landmarks.landmark]
-        for hand_landmarks in hand_landmarks_proto_list
-      ], [
-        [landmark_module.Landmark.create_from_pb2(hand_world_landmark)
-         for hand_world_landmark in hand_world_landmarks.landmark]
-        for hand_world_landmarks in hand_world_landmarks_proto_list
-      ]
-    )
+    return _build_recognition_result(output_packets)
 
   def recognize_for_video(
       self, image: image_module.Image,
@@ -386,40 +358,7 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
     if output_packets[_HAND_GESTURE_STREAM_NAME].is_empty():
       return GestureRecognitionResult([], [], [], [])
 
-    gestures_proto_list = packet_getter.get_proto_list(
-      output_packets[_HAND_GESTURE_STREAM_NAME])
-    handedness_proto_list = packet_getter.get_proto_list(
-      output_packets[_HANDEDNESS_STREAM_NAME])
-    hand_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_HAND_LANDMARKS_STREAM_NAME])
-    hand_world_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_HAND_WORLD_LANDMARKS_STREAM_NAME])
-
-    return GestureRecognitionResult(
-      [
-        [
-          category_module.Category(
-            index=gesture.index, score=gesture.score,
-            display_name=gesture.display_name, category_name=gesture.label)
-          for gesture in gesture_classifications.classification]
-        for gesture_classifications in gestures_proto_list
-      ], [
-        [
-          category_module.Category(
-            index=gesture.index, score=gesture.score,
-            display_name=gesture.display_name, category_name=gesture.label)
-          for gesture in handedness_classifications.classification]
-        for handedness_classifications in handedness_proto_list
-      ], [
-        [landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
-         for hand_landmark in hand_landmarks.landmark]
-        for hand_landmarks in hand_landmarks_proto_list
-      ], [
-        [landmark_module.Landmark.create_from_pb2(hand_world_landmark)
-         for hand_world_landmark in hand_world_landmarks.landmark]
-        for hand_world_landmarks in hand_world_landmarks_proto_list
-      ]
-    )
+    return _build_recognition_result(output_packets)
 
   def recognize_async(
       self,
