@@ -283,7 +283,7 @@ class GestureRecognizerTest(parameterized.TestCase):
     base_options = _BaseOptions(model_asset_path=self.model_path)
     options = _GestureRecognizerOptions(base_options=base_options, num_hands=1)
     with _GestureRecognizer.create_from_options(options) as recognizer:
-      # Load the fist image.
+      # Load the victory image.
       test_image = _Image.create_from_file(
         test_utils.get_test_data_path(_VICTORY_IMAGE))
       # Performs hand gesture recognition on the input.
