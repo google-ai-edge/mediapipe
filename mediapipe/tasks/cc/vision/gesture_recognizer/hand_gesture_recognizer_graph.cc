@@ -403,11 +403,11 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
       const core::ModelResources* model_resources,
       const proto::GestureClassifierGraphOptions& options,
       Source<Tensor>& embedding_tensors, Graph& graph) {
-    auto& custom_gesture_classifier_inference = AddInference(
+    auto& gesture_classifier_inference = AddInference(
         *model_resources, options.base_options().acceleration(), graph);
-    embedding_tensors >> custom_gesture_classifier_inference.In(kTensorsTag);
-    auto custom_gesture_inference_out_tensors =
-        custom_gesture_classifier_inference.Out(kTensorsTag);
+    embedding_tensors >> gesture_classifier_inference.In(kTensorsTag);
+    auto gesture_inference_out_tensors =
+        gesture_classifier_inference.Out(kTensorsTag);
     auto& tensors_to_classification =
         graph.AddNode("TensorsToClassificationCalculator");
     MP_RETURN_IF_ERROR(ConfigureTensorsToClassificationCalculator(
@@ -415,8 +415,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
         0,
         &tensors_to_classification.GetOptions<
             mediapipe::TensorsToClassificationCalculatorOptions>()));
-    custom_gesture_inference_out_tensors >>
-        tensors_to_classification.In(kTensorsTag);
+    gesture_inference_out_tensors >> tensors_to_classification.In(kTensorsTag);
     return tensors_to_classification.Out("CLASSIFICATIONS")
         .Cast<ClassificationList>();
   }

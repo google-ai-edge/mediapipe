@@ -141,6 +141,7 @@ cc_library(
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/components:image_preprocessing",
         "//mediapipe/tasks/cc/components/containers:gesture_recognition_result",
+        "//mediapipe/tasks/cc/components/processors:classifier_options",
         "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:base_task_api",

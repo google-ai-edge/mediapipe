@@ -30,6 +30,7 @@ import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.Category;
 import com.google.mediapipe.tasks.components.containers.Landmark;
 import com.google.mediapipe.tasks.components.containers.proto.LandmarksDetectionResultProto.LandmarksDetectionResult;
+import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
@@ -106,14 +107,15 @@ public class GestureRecognizerTest {
     }
 
     @Test
-    public void recognize_successWithMinGestureConfidence() throws Exception {
+    public void recognize_successWithScoreThreshold() throws Exception {
       GestureRecognizerOptions options =
           GestureRecognizerOptions.builder()
               .setBaseOptions(
                   BaseOptions.builder()
                       .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
                       .build())
-              .setMinGestureConfidence(0.5f)
+              .setCannedGesturesClassifierOptions(
+                  ClassifierOptions.builder().setScoreThreshold(0.5f).build())
               .build();
       GestureRecognizer gestureRecognizer =
           GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -201,6 +203,113 @@ public class GestureRecognizerTest {
           gestureRecognizer.recognize(getImageFromAsset(FIST_IMAGE));
       GestureRecognitionResult expectedResult =
           getExpectedGestureRecognitionResult(FIST_LANDMARKS, ROCK_LABEL);
+      assertActualResultApproximatelyEqualsToExpectedResult(actualResult, expectedResult);
+    }
+
+    @Test
+    public void recognize_successWithAllowGestureFist() throws Exception {
+      GestureRecognizerOptions options =
+          GestureRecognizerOptions.builder()
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
+              .setNumHands(1)
+              .setCannedGesturesClassifierOptions(
+                  ClassifierOptions.builder()
+                      .setScoreThreshold(0.5f)
+                      .setCategoryAllowlist(Arrays.asList("Closed_Fist"))
+                      .build())
+              .build();
+      GestureRecognizer gestureRecognizer =
+          GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      GestureRecognitionResult actualResult =
+          gestureRecognizer.recognize(getImageFromAsset(FIST_IMAGE));
+      GestureRecognitionResult expectedResult =
+          getExpectedGestureRecognitionResult(FIST_LANDMARKS, FIST_LABEL);
+      assertActualResultApproximatelyEqualsToExpectedResult(actualResult, expectedResult);
+    }
+
+    @Test
+    public void recognize_successWithDenyGestureFist() throws Exception {
+      GestureRecognizerOptions options =
+          GestureRecognizerOptions.builder()
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
+              .setNumHands(1)
+              .setCannedGesturesClassifierOptions(
+                  ClassifierOptions.builder()
+                      .setScoreThreshold(0.5f)
+                      .setCategoryDenylist(Arrays.asList("Closed_Fist"))
+                      .build())
+              .build();
+      GestureRecognizer gestureRecognizer =
+          GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      GestureRecognitionResult actualResult =
+          gestureRecognizer.recognize(getImageFromAsset(FIST_IMAGE));
+      assertThat(actualResult.landmarks()).isEmpty();
+      assertThat(actualResult.worldLandmarks()).isEmpty();
+      assertThat(actualResult.handednesses()).isEmpty();
+      assertThat(actualResult.gestures()).isEmpty();
+    }
+
+    @Test
+    public void recognize_successWithAllowAllGestureExceptFist() throws Exception {
+      GestureRecognizerOptions options =
+          GestureRecognizerOptions.builder()
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
+              .setNumHands(1)
+              .setCannedGesturesClassifierOptions(
+                  ClassifierOptions.builder()
+                      .setScoreThreshold(0.5f)
+                      .setCategoryAllowlist(
+                          Arrays.asList(
+                              "None",
+                              "Open_Palm",
+                              "Pointing_Up",
+                              "Thumb_Down",
+                              "Thumb_Up",
+                              "Victory",
+                              "ILoveYou"))
+                      .build())
+              .build();
+      GestureRecognizer gestureRecognizer =
+          GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      GestureRecognitionResult actualResult =
+          gestureRecognizer.recognize(getImageFromAsset(FIST_IMAGE));
+      assertThat(actualResult.landmarks()).isEmpty();
+      assertThat(actualResult.worldLandmarks()).isEmpty();
+      assertThat(actualResult.handednesses()).isEmpty();
+      assertThat(actualResult.gestures()).isEmpty();
+    }
+
+    @Test
+    public void recognize_successWithPreferAlowListThanDenyList() throws Exception {
+      GestureRecognizerOptions options =
+          GestureRecognizerOptions.builder()
+              .setBaseOptions(
+                  BaseOptions.builder()
+                      .setModelAssetPath(GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
+                      .build())
+              .setNumHands(1)
+              .setCannedGesturesClassifierOptions(
+                  ClassifierOptions.builder()
+                      .setScoreThreshold(0.5f)
+                      .setCategoryAllowlist(Arrays.asList("Closed_Fist"))
+                      .setCategoryDenylist(Arrays.asList("Closed_Fist"))
+                      .build())
+              .build();
+      GestureRecognizer gestureRecognizer =
+          GestureRecognizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      GestureRecognitionResult actualResult =
+          gestureRecognizer.recognize(getImageFromAsset(FIST_IMAGE));
+      GestureRecognitionResult expectedResult =
+          getExpectedGestureRecognitionResult(FIST_LANDMARKS, FIST_LABEL);
       assertActualResultApproximatelyEqualsToExpectedResult(actualResult, expectedResult);
     }
 
