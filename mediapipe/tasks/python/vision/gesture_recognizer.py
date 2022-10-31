@@ -25,7 +25,6 @@ from mediapipe.tasks.cc.vision.gesture_recognizer.proto import hand_gesture_reco
 from mediapipe.tasks.cc.vision.hand_landmarker.proto import hand_landmarker_graph_options_pb2
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
-from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
@@ -37,7 +36,6 @@ _BaseOptions = base_options_module.BaseOptions
 _GestureRecognizerGraphOptionsProto = gesture_recognizer_graph_options_pb2.GestureRecognizerGraphOptions
 _HandGestureRecognizerGraphOptionsProto = hand_gesture_recognizer_graph_options_pb2.HandGestureRecognizerGraphOptions
 _HandLandmarkerGraphOptionsProto = hand_landmarker_graph_options_pb2.HandLandmarkerGraphOptions
-_ClassifierOptions = classifier_options.ClassifierOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _TaskInfo = task_info_module.TaskInfo
