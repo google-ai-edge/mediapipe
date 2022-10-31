@@ -13,7 +13,7 @@
 # limitations under the License.
 """APIs to train image classifier model."""
 
-from typing import Any, List, Optional
+from typing import List, Optional
 
 import tensorflow as tf
 import tensorflow_hub as hub
@@ -31,18 +31,18 @@ from mediapipe.model_maker.python.vision.image_classifier import train_image_cla
 class ImageClassifier(classifier.Classifier):
   """ImageClassifier for building image classification model."""
 
-  def __init__(self, model_spec: ms.ModelSpec, index_by_label: List[Any],
+  def __init__(self, model_spec: ms.ModelSpec, label_names: List[str],
                hparams: hp.HParams):
     """Initializes ImageClassifier class.
 
     Args:
       model_spec: Specification for the model.
-      index_by_label: A list that maps from index to label class name.
+      label_names: A list of label names for the classes.
       hparams: The hyperparameters for training image classifier.
     """
     super().__init__(
         model_spec=model_spec,
-        index_by_label=index_by_label,
+        label_names=label_names,
         shuffle=hparams.shuffle,
         full_train=hparams.do_fine_tuning)
     self._hparams = hparams
@@ -80,9 +80,7 @@ class ImageClassifier(classifier.Classifier):
 
     spec = ms.SupportedModels.get(model_spec)
     image_classifier = cls(
-        model_spec=spec,
-        index_by_label=train_data.index_by_label,
-        hparams=hparams)
+        model_spec=spec, label_names=train_data.label_names, hparams=hparams)
 
     image_classifier._create_model()
 
