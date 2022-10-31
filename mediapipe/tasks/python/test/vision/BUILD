@@ -56,3 +56,19 @@ py_test(
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
     ],
 )
+
+py_test(
+    name = "image_segmenter_test",
+    srcs = ["image_segmenter_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+    ],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:image_segmenter",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)
