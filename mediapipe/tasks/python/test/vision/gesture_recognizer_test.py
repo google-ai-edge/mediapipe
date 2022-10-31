@@ -47,22 +47,26 @@ _GestureRecognitionResult = gesture_recognizer.GestureRecognitionResult
 _RUNNING_MODE = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 
-_GESTURE_RECOGNIZER_MODEL_FILE = 'gesture_recognizer.task'
+_GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE = 'gesture_recognizer.task'
+_GESTURE_RECOGNIZER_WITH_CUSTOM_CLASSIFIER_BUNDLE_ASSET_FILE = 'gesture_recognizer_with_custom_classifier.task'
 _NO_HANDS_IMAGE = 'cats_and_dogs.jpg'
 _TWO_HANDS_IMAGE = 'right_hands.jpg'
+_FIST_IMAGE = 'fist.jpg'
+_FIST_LANDMARKS = 'fist_landmarks.pbtxt'
+_FIST_LABEL = 'Closed_Fist'
 _THUMB_UP_IMAGE = 'thumb_up.jpg'
 _THUMB_UP_LANDMARKS = 'thumb_up_landmarks.pbtxt'
 _THUMB_UP_LABEL = 'Thumb_Up'
-_THUMB_UP_INDEX = 5
 _POINTING_UP_ROTATED_IMAGE = 'pointing_up_rotated.jpg'
 _POINTING_UP_LANDMARKS = 'pointing_up_rotated_landmarks.pbtxt'
 _POINTING_UP_LABEL = 'Pointing_Up'
-_POINTING_UP_INDEX = 3
+_ROCK_LABEL = "Rock"
 _LANDMARKS_ERROR_TOLERANCE = 0.03
+_GESTURE_EXPECTED_INDEX = -1
 
 
 def _get_expected_gesture_recognition_result(
-    file_path: str, gesture_label: str, gesture_index: int
+    file_path: str, gesture_label: str
 ) -> _GestureRecognitionResult:
   landmarks_detection_result_file_path = test_utils.get_test_data_path(
     file_path)
@@ -73,7 +77,8 @@ def _get_expected_gesture_recognition_result(
     text_format.Parse(f.read(), landmarks_detection_result_proto)
     landmarks_detection_result = _LandmarksDetectionResult.create_from_pb2(
         landmarks_detection_result_proto)
-  gesture = _Category(category_name=gesture_label, index=gesture_index,
+  gesture = _Category(category_name=gesture_label,
+                      index=_GESTURE_EXPECTED_INDEX,
                       display_name='')
   return _GestureRecognitionResult(
       gestures=[[gesture]],
@@ -94,7 +99,7 @@ class GestureRecognizerTest(parameterized.TestCase):
     self.test_image = _Image.create_from_file(
         test_utils.get_test_data_path(_THUMB_UP_IMAGE))
     self.model_path = test_utils.get_test_data_path(
-        _GESTURE_RECOGNIZER_MODEL_FILE)
+        _GESTURE_RECOGNIZER_BUNDLE_ASSET_FILE)
 
   def _assert_actual_result_approximately_matches_expected_result(
       self,
@@ -127,7 +132,7 @@ class GestureRecognizerTest(parameterized.TestCase):
     # Actual gesture with top score matches expected gesture.
     actual_top_gesture = actual_result.gestures[0][0]
     expected_top_gesture = expected_result.gestures[0][0]
-    self.assertEqual(actual_top_gesture.index, expected_top_gesture.index)
+    self.assertEqual(actual_top_gesture.index, _GESTURE_EXPECTED_INDEX)
     self.assertEqual(actual_top_gesture.category_name,
                      expected_top_gesture.category_name)
 
@@ -163,10 +168,10 @@ class GestureRecognizerTest(parameterized.TestCase):
 
   @parameterized.parameters(
       (ModelFileType.FILE_NAME, _get_expected_gesture_recognition_result(
-          _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL, _THUMB_UP_INDEX
+          _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL
       )),
       (ModelFileType.FILE_CONTENT, _get_expected_gesture_recognition_result(
-          _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL, _THUMB_UP_INDEX
+          _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL
       )))
   def test_recognize(self, model_file_type, expected_recognition_result):
     # Creates gesture recognizer.
@@ -194,10 +199,10 @@ class GestureRecognizerTest(parameterized.TestCase):
 
   @parameterized.parameters(
       (ModelFileType.FILE_NAME, _get_expected_gesture_recognition_result(
-          _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL, _THUMB_UP_INDEX
+          _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL
       )),
       (ModelFileType.FILE_CONTENT, _get_expected_gesture_recognition_result(
-          _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL, _THUMB_UP_INDEX
+          _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL
       )))
   def test_recognize_in_context(self, model_file_type,
                                 expected_recognition_result):
@@ -224,12 +229,12 @@ class GestureRecognizerTest(parameterized.TestCase):
     # Creates gesture recognizer.
     base_options = _BaseOptions(model_asset_path=self.model_path)
     options = _GestureRecognizerOptions(base_options=base_options,
-                                        min_gesture_confidence=2)
+                                        min_gesture_confidence=0.5)
     with _GestureRecognizer.create_from_options(options) as recognizer:
       # Performs hand gesture recognition on the input.
       recognition_result = recognizer.recognize(self.test_image)
       expected_result = _get_expected_gesture_recognition_result(
-          _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL, _THUMB_UP_INDEX)
+          _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL)
       # Only contains one top scoring gesture.
       self.assertLen(recognition_result.gestures[0], 1)
       # Actual gesture with top score matches expected gesture.
@@ -266,10 +271,28 @@ class GestureRecognizerTest(parameterized.TestCase):
       recognition_result = recognizer.recognize(test_image,
                                                 image_processing_options)
       expected_recognition_result = _get_expected_gesture_recognition_result(
-          _POINTING_UP_LANDMARKS, _POINTING_UP_LABEL, _POINTING_UP_INDEX)
+          _POINTING_UP_LANDMARKS, _POINTING_UP_LABEL)
       # Comparing results.
       self._assert_actual_result_approximately_matches_expected_result(
           recognition_result, expected_recognition_result)
+
+  def test_recognize_succeeds_with_custom_gesture_fist(self):
+    # Creates gesture recognizer.
+    model_path = test_utils.get_test_data_path(
+        _GESTURE_RECOGNIZER_WITH_CUSTOM_CLASSIFIER_BUNDLE_ASSET_FILE)
+    base_options = _BaseOptions(model_asset_path=model_path)
+    options = _GestureRecognizerOptions(base_options=base_options, num_hands=1)
+    with _GestureRecognizer.create_from_options(options) as recognizer:
+      # Load the fist image.
+      test_image = _Image.create_from_file(
+          test_utils.get_test_data_path(_FIST_IMAGE))
+      # Performs hand gesture recognition on the input.
+      recognition_result = recognizer.recognize(test_image)
+      expected_recognition_result = _get_expected_gesture_recognition_result(
+          _FIST_LANDMARKS, _ROCK_LABEL)
+      # Comparing results.
+      self._assert_actual_result_approximately_matches_expected_result(
+        recognition_result, expected_recognition_result)
 
   def test_recognize_fails_with_region_of_interest(self):
     # Creates gesture recognizer.
@@ -373,7 +396,7 @@ class GestureRecognizerTest(parameterized.TestCase):
         recognition_result = recognizer.recognize_for_video(self.test_image,
                                                             timestamp)
         expected_recognition_result = _get_expected_gesture_recognition_result(
-           _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL, _THUMB_UP_INDEX)
+           _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL)
         self._assert_actual_result_approximately_matches_expected_result(
             recognition_result, expected_recognition_result)
 
@@ -410,7 +433,7 @@ class GestureRecognizerTest(parameterized.TestCase):
 
   @parameterized.parameters(
       (_THUMB_UP_IMAGE, _get_expected_gesture_recognition_result(
-          _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL, _THUMB_UP_INDEX)),
+          _THUMB_UP_LANDMARKS, _THUMB_UP_LABEL)),
       (_NO_HANDS_IMAGE, _GestureRecognitionResult([], [], [], [])))
   def test_recognize_async_calls(self, image_path, expected_result):
     test_image = _Image.create_from_file(

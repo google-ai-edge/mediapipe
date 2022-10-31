@@ -130,6 +130,7 @@ filegroup(
         "hand_landmark_lite.tflite",
         "hand_landmarker.task",
         "gesture_recognizer.task",
+        "gesture_recognizer_with_custom_classifier.task",
         "mobilenet_v1_0.25_192_quantized_1_default_1.tflite",
         "mobilenet_v1_0.25_224_1_default_1.tflite",
         "mobilenet_v1_0.25_224_1_metadata_1.tflite",

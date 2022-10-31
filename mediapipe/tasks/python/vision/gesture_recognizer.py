@@ -20,13 +20,9 @@ from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
-from mediapipe.python._framework_bindings import task_runner as task_runner_module
-from mediapipe.tasks.cc.vision.gesture_recognizer.proto import gesture_classifier_graph_options_pb2
 from mediapipe.tasks.cc.vision.gesture_recognizer.proto import gesture_recognizer_graph_options_pb2
 from mediapipe.tasks.cc.vision.gesture_recognizer.proto import hand_gesture_recognizer_graph_options_pb2
-from mediapipe.tasks.cc.vision.hand_detector.proto import hand_detector_graph_options_pb2
 from mediapipe.tasks.cc.vision.hand_landmarker.proto import hand_landmarker_graph_options_pb2
-from mediapipe.tasks.cc.vision.hand_landmarker.proto import hand_landmarks_detector_graph_options_pb2
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
 from mediapipe.tasks.python.components.processors import classifier_options
@@ -38,12 +34,9 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode as runni
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 
 _BaseOptions = base_options_module.BaseOptions
-_GestureClassifierGraphOptionsProto = gesture_classifier_graph_options_pb2.GestureClassifierGraphOptions
 _GestureRecognizerGraphOptionsProto = gesture_recognizer_graph_options_pb2.GestureRecognizerGraphOptions
 _HandGestureRecognizerGraphOptionsProto = hand_gesture_recognizer_graph_options_pb2.HandGestureRecognizerGraphOptions
-_HandDetectorGraphOptionsProto = hand_detector_graph_options_pb2.HandDetectorGraphOptions
 _HandLandmarkerGraphOptionsProto = hand_landmarker_graph_options_pb2.HandLandmarkerGraphOptions
-_HandLandmarksDetectorGraphOptionsProto = hand_landmarks_detector_graph_options_pb2.HandLandmarksDetectorGraphOptions
 _ClassifierOptions = classifier_options.ClassifierOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
@@ -64,6 +57,7 @@ _HAND_WORLD_LANDMARKS_STREAM_NAME = 'world_landmarks'
 _HAND_WORLD_LANDMARKS_TAG = 'WORLD_LANDMARKS'
 _TASK_GRAPH_NAME = 'mediapipe.tasks.vision.gesture_recognizer.GestureRecognizerGraph'
 _MICRO_SECONDS_PER_MILLISECOND = 1000
+_GESTURE_DEFAULT_INDEX = -1
 
 
 @dataclasses.dataclass
@@ -72,8 +66,9 @@ class GestureRecognitionResult:
   element represents a single hand detected in the image.
 
   Attributes:
-    gestures:  Recognized hand gestures with sorted order such that the
-      winning label is the first item in the list.
+    gestures: Recognized hand gestures of detected hands. Note that the index
+      of the gesture is always 0, because the raw indices from multiple gesture
+      classifiers cannot consolidate to a meaningful index.
     handedness: Classification of handedness.
     hand_landmarks: Detected hand landmarks in normalized image coordinates.
     hand_world_landmarks: Detected hand landmarks in world coordinates.
@@ -101,16 +96,16 @@ def _build_recognition_result(
     [
       [
         category_module.Category(
-          index=gesture.index, score=gesture.score,
+          index=_GESTURE_DEFAULT_INDEX, score=gesture.score,
           display_name=gesture.display_name, category_name=gesture.label)
         for gesture in gesture_classifications.classification]
       for gesture_classifications in gestures_proto_list
     ], [
       [
         category_module.Category(
-          index=gesture.index, score=gesture.score,
-          display_name=gesture.display_name, category_name=gesture.label)
-        for gesture in handedness_classifications.classification]
+          index=handedness.index, score=handedness.score,
+          display_name=handedness.display_name, category_name=handedness.label)
+        for handedness in handedness_classifications.classification]
       for handedness_classifications in handedness_proto_list
     ], [
       [landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
@@ -170,26 +165,17 @@ class GestureRecognizerOptions:
     base_options_proto = self.base_options.to_pb2()
     base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.IMAGE else True
 
-    # Configure hand detector options.
-    hand_detector_options_proto = _HandDetectorGraphOptionsProto(
-        num_hands=self.num_hands,
-        min_detection_confidence=self.min_hand_detection_confidence)
-
-    # Configure hand landmarker options.
-    hand_landmarks_detector_options_proto = _HandLandmarksDetectorGraphOptionsProto(
-        min_detection_confidence=self.min_hand_presence_confidence)
-    hand_landmarker_options_proto = _HandLandmarkerGraphOptionsProto(
-        hand_detector_graph_options=hand_detector_options_proto,
-        hand_landmarks_detector_graph_options=hand_landmarks_detector_options_proto,
-        min_tracking_confidence=self.min_tracking_confidence)
+    # Configure hand detector and hand landmarker options.
+    hand_landmarker_options_proto = _HandLandmarkerGraphOptionsProto()
+    hand_landmarker_options_proto.min_tracking_confidence = self.min_tracking_confidence
+    hand_landmarker_options_proto.hand_detector_graph_options.num_hands = self.num_hands
+    hand_landmarker_options_proto.hand_detector_graph_options.min_detection_confidence = self.min_hand_detection_confidence
+    hand_landmarker_options_proto.hand_landmarks_detector_graph_options.min_detection_confidence = self.min_hand_presence_confidence
 
     # Configure hand gesture recognizer options.
-    classifier_options = _ClassifierOptions(
-        score_threshold=self.min_gesture_confidence)
-    gesture_classifier_options = _GestureClassifierGraphOptionsProto(
-        classifier_options=classifier_options.to_pb2())
-    hand_gesture_recognizer_options_proto = _HandGestureRecognizerGraphOptionsProto(
-        canned_gesture_classifier_graph_options=gesture_classifier_options)
+    hand_gesture_recognizer_options_proto = _HandGestureRecognizerGraphOptionsProto()
+    hand_gesture_recognizer_options_proto.canned_gesture_classifier_graph_options.classifier_options.score_threshold = self.min_gesture_confidence
+    hand_gesture_recognizer_options_proto.custom_gesture_classifier_graph_options.classifier_options.score_threshold = self.min_gesture_confidence
 
     return _GestureRecognizerGraphOptionsProto(
         base_options=base_options_proto,
