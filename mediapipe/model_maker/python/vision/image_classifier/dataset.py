@@ -106,4 +106,4 @@ class Dataset(classification_dataset.ClassificationDataset):
         'Load image with size: %d, num_label: %d, labels: %s.', all_image_size,
         all_label_size, ', '.join(label_names))
     return Dataset(
-        dataset=image_label_ds, size=all_image_size, index_by_label=label_names)
+        dataset=image_label_ds, size=all_image_size, label_names=label_names)

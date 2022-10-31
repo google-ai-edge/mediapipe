@@ -153,13 +153,12 @@ class CombinedPredictionCalculator : public Node {
     // After loop, if have winning prediction return. Otherwise empty packet.
     std::unique_ptr<ClassificationList> first_winning_prediction = nullptr;
     auto collection = kClassificationListIn(cc);
-    for (int idx = 0; idx < collection.Count(); ++idx) {
-      const auto& packet = collection[idx];
-      if (packet.IsEmpty()) {
+    for (const auto& input : collection) {
+      if (input.IsEmpty() || input.Get().classification_size() == 0) {
         continue;
       }
       auto prediction = GetWinningPrediction(
-          packet.Get(), classwise_thresholds_, options_.background_label(),
+          input.Get(), classwise_thresholds_, options_.background_label(),
           options_.default_global_threshold());
       if (prediction->classification(0).label() !=
           options_.background_label()) {

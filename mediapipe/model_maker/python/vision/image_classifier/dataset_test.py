@@ -49,27 +49,27 @@ class DatasetTest(tf.test.TestCase):
 
   def test_split(self):
     ds = tf.data.Dataset.from_tensor_slices([[0, 1], [1, 1], [0, 0], [1, 0]])
-    data = dataset.Dataset(dataset=ds, size=4, index_by_label=['pos', 'neg'])
+    data = dataset.Dataset(dataset=ds, size=4, label_names=['pos', 'neg'])
     train_data, test_data = data.split(fraction=0.5)
 
     self.assertLen(train_data, 2)
     for i, elem in enumerate(train_data._dataset):
       self.assertTrue((elem.numpy() == np.array([i, 1])).all())
     self.assertEqual(train_data.num_classes, 2)
-    self.assertEqual(train_data.index_by_label, ['pos', 'neg'])
+    self.assertEqual(train_data.label_names, ['pos', 'neg'])
 
     self.assertLen(test_data, 2)
     for i, elem in enumerate(test_data._dataset):
       self.assertTrue((elem.numpy() == np.array([i, 0])).all())
     self.assertEqual(test_data.num_classes, 2)
-    self.assertEqual(test_data.index_by_label, ['pos', 'neg'])
+    self.assertEqual(test_data.label_names, ['pos', 'neg'])
 
   def test_from_folder(self):
     data = dataset.Dataset.from_folder(dirname=self.image_path)
 
     self.assertLen(data, 2)
     self.assertEqual(data.num_classes, 2)
-    self.assertEqual(data.index_by_label, ['daisy', 'tulips'])
+    self.assertEqual(data.label_names, ['daisy', 'tulips'])
     for image, label in data.gen_tf_dataset():
       self.assertTrue(label.numpy() == 1 or label.numpy() == 0)
       if label.numpy() == 0:
@@ -88,19 +88,19 @@ class DatasetTest(tf.test.TestCase):
     self.assertIsInstance(train_data.gen_tf_dataset(), tf.data.Dataset)
     self.assertLen(train_data, 1034)
     self.assertEqual(train_data.num_classes, 3)
-    self.assertEqual(train_data.index_by_label,
+    self.assertEqual(train_data.label_names,
                      ['angular_leaf_spot', 'bean_rust', 'healthy'])
 
     self.assertIsInstance(validation_data.gen_tf_dataset(), tf.data.Dataset)
     self.assertLen(validation_data, 133)
     self.assertEqual(validation_data.num_classes, 3)
-    self.assertEqual(validation_data.index_by_label,
+    self.assertEqual(validation_data.label_names,
                      ['angular_leaf_spot', 'bean_rust', 'healthy'])
 
     self.assertIsInstance(test_data.gen_tf_dataset(), tf.data.Dataset)
     self.assertLen(test_data, 128)
     self.assertEqual(test_data.num_classes, 3)
-    self.assertEqual(test_data.index_by_label,
+    self.assertEqual(test_data.label_names,
                      ['angular_leaf_spot', 'bean_rust', 'healthy'])
 
 

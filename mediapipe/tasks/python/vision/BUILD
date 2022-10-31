@@ -60,6 +60,25 @@ py_library(
 )
 
 py_library(
+    name = "image_segmenter",
+    srcs = [
+        "image_segmenter.py",
+    ],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/components/proto:segmenter_options_py_pb2",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_options_py_pb2",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)
+
+py_library(
     name = "gesture_recognizer",
     srcs = [
         "gesture_recognizer.py",

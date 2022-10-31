@@ -146,6 +146,10 @@ ConvertGestureRecognizerGraphOptionsProto(GestureRecognizerOptions* options) {
         ->mutable_canned_gesture_classifier_graph_options()
         ->mutable_classifier_options()
         ->set_score_threshold(options->min_gesture_confidence);
+    hand_gesture_recognizer_graph_options
+        ->mutable_custom_gesture_classifier_graph_options()
+        ->mutable_classifier_options()
+        ->set_score_threshold(options->min_gesture_confidence);
   }
   return options_proto;
 }
