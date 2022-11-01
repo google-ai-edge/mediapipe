@@ -367,7 +367,7 @@ class GestureRecognizerTest(parameterized.TestCase):
         _GESTURE_RECOGNIZER_WITH_CUSTOM_CLASSIFIER_BUNDLE_ASSET_FILE)
     base_options = _BaseOptions(model_asset_path=model_path)
     canned_gesture_classifier_options = _ClassifierOptions(
-        score_threshold=.5, category_allowlist=[
+        category_allowlist=[
             'None', 'Open_Palm', 'Victory', 'Thumb_Down', 'Thumb_Up',
             'ILoveYou', 'Closed_Fist'])
     options = _GestureRecognizerOptions(
@@ -389,7 +389,7 @@ class GestureRecognizerTest(parameterized.TestCase):
         _GESTURE_RECOGNIZER_WITH_CUSTOM_CLASSIFIER_BUNDLE_ASSET_FILE)
     base_options = _BaseOptions(model_asset_path=model_path)
     canned_gesture_classifier_options = _ClassifierOptions(
-        score_threshold=.5, category_allowlist=['Pointing_Up'],
+        category_allowlist=['Pointing_Up'],
         category_denylist=['Pointing_Up'])
     options = _GestureRecognizerOptions(
         base_options=base_options,
