@@ -1,0 +1,14 @@
+{
+  "subgraph_metadata": [
+    {
+      "input_process_units": [
+        {
+          "options_type": "ScoreThresholdingOptions",
+          "options": {
+            "global_score_threshold": 0.5
+          }
+        }
+      ]
+    }
+  ]
+}

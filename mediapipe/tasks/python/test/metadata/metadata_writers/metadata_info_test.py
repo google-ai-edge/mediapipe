@@ -307,6 +307,25 @@ class ScoreCalibrationMdTest(absltest.TestCase):
             malformed_calibration_file)
 
 
+class ScoreThresholdingMdTest(absltest.TestCase):
+  _DEFAULT_GLOBAL_THRESHOLD = 0.5
+  _EXPECTED_TENSOR_JSON = test_utils.get_test_data_path(
+      "score_thresholding_meta.json")
+
+  def test_create_metadata_should_succeed(self):
+    score_thresholding_md = metadata_info.ScoreThresholdingMd(
+        global_score_threshold=self._DEFAULT_GLOBAL_THRESHOLD)
+
+    score_thresholding_metadata = score_thresholding_md.create_metadata()
+
+    metadata_json = _metadata.convert_to_json(
+        _create_dummy_model_metadata_with_process_uint(
+            score_thresholding_metadata))
+    with open(self._EXPECTED_TENSOR_JSON, "r") as f:
+      expected_json = f.read()
+    self.assertEqual(metadata_json, expected_json)
+
+
 def _create_dummy_model_metadata_with_tensor(
     tensor_metadata: _metadata_fb.TensorMetadataT) -> bytes:
   # Create a dummy model using the tensor metadata.

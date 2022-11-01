@@ -405,6 +405,64 @@ class MetadataWriterForTaskTest(absltest.TestCase):
         }
         """)
 
+  def test_add_classification_output_with_score_thresholding(self):
+    writer = metadata_writer.MetadataWriter.create(
+        self.image_classifier_model_buffer)
+    writer.add_classification_output(
+        labels=metadata_writer.Labels().add(['a', 'b', 'c']),
+        score_thresholding=metadata_writer.ScoreThresholding(
+            global_score_threshold=0.5))
+    _, metadata_json = writer.populate()
+    print(metadata_json)
+    self.assertJsonEqual(
+        metadata_json, """{
+        "subgraph_metadata": [
+          {
+            "input_tensor_metadata": [
+              {
+                "name": "input"
+              }
+            ],
+            "output_tensor_metadata": [
+              {
+                "name": "score",
+                "description": "Score of the labels respectively.",
+                "content": {
+                  "content_properties_type": "FeatureProperties",
+                  "content_properties": {
+                  }
+                },
+                "process_units": [
+                  {
+                    "options_type": "ScoreThresholdingOptions",
+                    "options": {
+                      "global_score_threshold": 0.5
+                    }
+                  }
+                ],
+                "stats": {
+                  "max": [
+                    1.0
+                  ],
+                  "min": [
+                    0.0
+                  ]
+                },
+                "associated_files": [
+                  {
+                    "name": "labels.txt",
+                    "description": "Labels for categories that the model can recognize.",
+                    "type": "TENSOR_AXIS_LABELS"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "min_parser_version": "1.0.0"
+      }
+      """)
+
 
 if __name__ == '__main__':
   absltest.main()

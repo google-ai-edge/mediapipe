@@ -70,6 +70,18 @@ class LabelItem:
   locale: Optional[str] = None
 
 
+@dataclasses.dataclass
+class ScoreThresholding:
+  """Parameters to performs thresholding on output tensor values [1].
+
+  Attributes:
+    global_score_threshold: The recommended global threshold below which results
+      are considered low-confidence and should be filtered out.  [1]:
+    https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L468
+  """
+  global_score_threshold: float
+
+
 class Labels(object):
   """Simple container holding classification labels of a particular tensor.
 
@@ -407,6 +419,7 @@ class MetadataWriter(object):
       self,
       labels: Optional[Labels] = None,
       score_calibration: Optional[ScoreCalibration] = None,
+      score_thresholding: Optional[ScoreThresholding] = None,
       name: str = _OUTPUT_CLASSIFICATION_NAME,
       description: str = _OUTPUT_CLASSIFICATION_DESCRIPTION
   ) -> 'MetadataWriter':
@@ -423,6 +436,7 @@ class MetadataWriter(object):
     Args:
       labels: an instance of Labels helper class.
       score_calibration: an instance of ScoreCalibration helper class.
+      score_thresholding: an instance of ScoreThresholding.
       name: Metadata name of the tensor. Note that this is different from tensor
         name in the flatbuffer.
       description: human readable description of what the output is.
@@ -437,6 +451,10 @@ class MetadataWriter(object):
           default_score=score_calibration.default_score,
           file_path=self._export_calibration_file('score_calibration.txt',
                                                   score_calibration.parameters))
+    score_thresholding_md = None
+    if score_thresholding:
+      score_thresholding_md = metadata_info.ScoreThresholdingMd(
+          score_thresholding.global_score_threshold)
 
     label_files = None
     if labels:
@@ -453,6 +471,7 @@ class MetadataWriter(object):
         label_files=label_files,
         tensor_type=self._output_tensor_type(len(self._output_mds)),
         score_calibration_md=calibration_md,
+        score_thresholding_md=score_thresholding_md,
     )
     self._output_mds.append(output_md)
     return self
@@ -545,4 +564,3 @@ class MetadataWriterBase:
       A tuple of (model_with_metadata_in_bytes, metdata_json_content)
     """
     return self.writer.populate()
-
