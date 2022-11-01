@@ -141,16 +141,22 @@ ConvertGestureRecognizerGraphOptionsProto(GestureRecognizerOptions* options) {
   // Configure hand gesture recognizer options.
   auto* hand_gesture_recognizer_graph_options =
       options_proto->mutable_hand_gesture_recognizer_graph_options();
-  if (options->min_gesture_confidence >= 0) {
-    hand_gesture_recognizer_graph_options
-        ->mutable_canned_gesture_classifier_graph_options()
-        ->mutable_classifier_options()
-        ->set_score_threshold(options->min_gesture_confidence);
-    hand_gesture_recognizer_graph_options
-        ->mutable_custom_gesture_classifier_graph_options()
-        ->mutable_classifier_options()
-        ->set_score_threshold(options->min_gesture_confidence);
-  }
+  auto canned_gestures_classifier_options_proto =
+      std::make_unique<components::processors::proto::ClassifierOptions>(
+          components::processors::ConvertClassifierOptionsToProto(
+              &(options->canned_gestures_classifier_options)));
+  hand_gesture_recognizer_graph_options
+      ->mutable_canned_gesture_classifier_graph_options()
+      ->mutable_classifier_options()
+      ->Swap(canned_gestures_classifier_options_proto.get());
+  auto custom_gestures_classifier_options_proto =
+      std::make_unique<components::processors::proto::ClassifierOptions>(
+          components::processors::ConvertClassifierOptionsToProto(
+              &(options->canned_gestures_classifier_options)));
+  hand_gesture_recognizer_graph_options
+      ->mutable_custom_gesture_classifier_graph_options()
+      ->mutable_classifier_options()
+      ->Swap(canned_gestures_classifier_options_proto.get());
   return options_proto;
 }
 

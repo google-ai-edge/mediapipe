@@ -21,7 +21,6 @@ from mediapipe.python import packet_getter
 # TODO: Import MPImage directly one we have an alias
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet
-from mediapipe.python._framework_bindings import task_runner
 from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
 from mediapipe.tasks.cc.vision.image_classifier.proto import image_classifier_graph_options_pb2
 from mediapipe.tasks.python.components.containers import classifications
@@ -39,7 +38,6 @@ _ImageClassifierGraphOptionsProto = image_classifier_graph_options_pb2.ImageClas
 _ClassifierOptions = classifier_options.ClassifierOptions
 _RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _TaskInfo = task_info_module.TaskInfo
-_TaskRunner = task_runner.TaskRunner
 
 _CLASSIFICATION_RESULT_OUT_STREAM_NAME = 'classification_result_out'
 _CLASSIFICATION_RESULT_TAG = 'CLASSIFICATION_RESULT'

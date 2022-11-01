@@ -26,7 +26,7 @@ import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
-import com.google.mediapipe.tasks.components.processors.proto.ClassifierOptionsProto;
+import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -398,13 +398,26 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
       public abstract Builder setMinTrackingConfidence(Float value);
 
       /**
-       * Sets the minimum confidence score for the gestures to be considered successful. If < 0, the
-       * gesture confidence threshold=0.5 for the model is used.
+       * Sets the optional {@link ClassifierOptions} controling the canned gestures classifier, such
+       * as score threshold, allow list and deny list of gestures. The categories for canned gesture
+       * classifiers are: ["None", "Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down",
+       * "Thumb_Up", "Victory", "ILoveYou"]
        *
        * <p>TODO  Note this option is subject to change, after scoring merging
        * calculator is implemented.
        */
-      public abstract Builder setMinGestureConfidence(Float value);
+      public abstract Builder setCannedGesturesClassifierOptions(
+          ClassifierOptions classifierOptions);
+
+      /**
+       * Sets the optional {@link ClassifierOptions} controling the custom gestures classifier, such
+       * as score threshold, allow list and deny list of gestures.
+       *
+       * <p>TODO  Note this option is subject to change, after scoring merging
+       * calculator is implemented.
+       */
+      public abstract Builder setCustomGesturesClassifierOptions(
+          ClassifierOptions classifierOptions);
 
       /**
        * Sets the result listener to receive the detection results asynchronously when the gesture
@@ -454,8 +467,9 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
 
     abstract Optional<Float> minTrackingConfidence();
 
-    // TODO update gesture confidence options after score merging calculator is ready.
-    abstract Optional<Float> minGestureConfidence();
+    abstract Optional<ClassifierOptions> cannedGesturesClassifierOptions();
+
+    abstract Optional<ClassifierOptions> customGesturesClassifierOptions();
 
     abstract Optional<ResultListener<GestureRecognitionResult, MPImage>> resultListener();
 
@@ -467,8 +481,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
           .setNumHands(1)
           .setMinHandDetectionConfidence(0.5f)
           .setMinHandPresenceConfidence(0.5f)
-          .setMinTrackingConfidence(0.5f)
-          .setMinGestureConfidence(-1f);
+          .setMinTrackingConfidence(0.5f);
     }
 
     /**
@@ -511,13 +524,22 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
       HandGestureRecognizerGraphOptionsProto.HandGestureRecognizerGraphOptions.Builder
           handGestureRecognizerGraphOptionsBuilder =
               HandGestureRecognizerGraphOptionsProto.HandGestureRecognizerGraphOptions.newBuilder();
-      ClassifierOptionsProto.ClassifierOptions.Builder classifierOptionsBuilder =
-          ClassifierOptionsProto.ClassifierOptions.newBuilder();
-      minGestureConfidence().ifPresent(classifierOptionsBuilder::setScoreThreshold);
-      handGestureRecognizerGraphOptionsBuilder.setCannedGestureClassifierGraphOptions(
-          GestureClassifierGraphOptionsProto.GestureClassifierGraphOptions.newBuilder()
-              .setClassifierOptions(classifierOptionsBuilder.build()));
-
+      cannedGesturesClassifierOptions()
+          .ifPresent(
+              classifierOptions -> {
+                handGestureRecognizerGraphOptionsBuilder.setCannedGestureClassifierGraphOptions(
+                    GestureClassifierGraphOptionsProto.GestureClassifierGraphOptions.newBuilder()
+                        .setClassifierOptions(classifierOptions.convertToProto())
+                        .build());
+              });
+      customGesturesClassifierOptions()
+          .ifPresent(
+              classifierOptions -> {
+                handGestureRecognizerGraphOptionsBuilder.setCustomGestureClassifierGraphOptions(
+                    GestureClassifierGraphOptionsProto.GestureClassifierGraphOptions.newBuilder()
+                        .setClassifierOptions(classifierOptions.convertToProto())
+                        .build());
+              });
       taskOptionsBuilder
           .setHandLandmarkerGraphOptions(handLandmarkerGraphOptionsBuilder.build())
           .setHandGestureRecognizerGraphOptions(handGestureRecognizerGraphOptionsBuilder.build());

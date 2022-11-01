@@ -21,7 +21,6 @@ from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet
-from mediapipe.python._framework_bindings import task_runner
 from mediapipe.tasks.cc.components.proto import segmenter_options_pb2
 from mediapipe.tasks.cc.vision.image_segmenter.proto import image_segmenter_options_pb2
 from mediapipe.tasks.python.core import base_options as base_options_module
@@ -35,7 +34,6 @@ _SegmenterOptionsProto = segmenter_options_pb2.SegmenterOptions
 _ImageSegmenterOptionsProto = image_segmenter_options_pb2.ImageSegmenterOptions
 _RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _TaskInfo = task_info_module.TaskInfo
-_TaskRunner = task_runner.TaskRunner
 
 _SEGMENTATION_OUT_STREAM_NAME = 'segmented_mask_out'
 _SEGMENTATION_TAG = 'GROUPED_SEGMENTATION'

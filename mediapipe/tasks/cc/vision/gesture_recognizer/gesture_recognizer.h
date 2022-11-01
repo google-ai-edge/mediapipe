@@ -18,12 +18,14 @@ limitations under the License.
 
 #include <memory>
 #include <optional>
+#include <vector>
 
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/tasks/cc/components/containers/gesture_recognition_result.h"
+#include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
@@ -64,12 +66,17 @@ struct GestureRecognizerOptions {
   // successful.
   float min_tracking_confidence = 0.5;
 
-  // The minimum confidence score for the gestures to be considered
-  // successful. If < 0, the gesture confidence thresholds in the model
-  // metadata are used.
-  // TODO  Note this option is subject to change, after scoring
-  // merging calculator is implemented.
-  float min_gesture_confidence = -1;
+  // TODO  Note this option is subject to change.
+  // Options for configuring the canned gestures classifier, such as score
+  // threshold, allow list and deny list of gestures. The categories for canned
+  // gesture classifiers are: ["None", "Closed_Fist", "Open_Palm",
+  // "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory", "ILoveYou"]
+  components::processors::ClassifierOptions canned_gestures_classifier_options;
+
+  // TODO  Note this option is subject to change.
+  // Options for configuring the custom gestures classifier, such as score
+  // threshold, allow list and deny list of gestures.
+  components::processors::ClassifierOptions custom_gestures_classifier_options;
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
