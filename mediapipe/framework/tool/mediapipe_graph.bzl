@@ -134,7 +134,7 @@ def mediapipe_simple_subgraph(
     expand_template(
         name = name + "_linked_cc",
         template = clean_dep("//mediapipe/framework/tool:simple_subgraph_template.cc"),
-        out = name + "_linked.cc",
+        out = name + "_linked.h",
         substitutions = {
             "{{SUBGRAPH_CLASS_NAME}}": register_as,
             "{{SUBGRAPH_INC_FILE_PATH}}": native.package_name() + "/" + graph_base_name + ".inc",
@@ -145,7 +145,7 @@ def mediapipe_simple_subgraph(
         native.cc_library(
             name = name,
             srcs = [
-                name + "_linked.cc",
+                name + "_linked.h",
                 graph_base_name + ".inc",
             ],
             deps = [
@@ -161,7 +161,7 @@ def mediapipe_simple_subgraph(
         cc_library_with_tflite(
             name = name,
             srcs = [
-                name + "_linked.cc",
+                name + "_linked.h",
                 graph_base_name + ".inc",
             ],
             tflite_deps = tflite_deps,

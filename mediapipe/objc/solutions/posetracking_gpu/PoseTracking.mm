@@ -5,8 +5,14 @@
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/calculators/core/flow_limiter_calculator.h"
 #include "mediapipe/calculators/core/constant_side_packet_calculator.h"
+#include "mediapipe/modules/pose_landmark/pose_landmark_gpu_linked.h"
 
+void registerCalculators(){
+    typeid(::mediapipe::FlowLimiterCalculator);
+    typeid(::mediapipe::ConstantSidePacketCalculator);
+    typeid(::mediapipe::PoseLandmarkGpu);
 
+}
 
 static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 static const char* kLandmarksOutputStream = "pose_landmarks";
@@ -131,9 +137,8 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 }
 
 - (instancetype) initWithPoseTrackingOptions: (PoseTrackingOptions*) poseTrackingOptions{
-    typeid(::mediapipe::FlowLimiterCalculator);
-    typeid(::mediapipe::ConstantSidePacketCalculator);
 
+    registerCalculators();
     self.renderer = [[MPPLayerRenderer alloc] init];
     self.renderer.frameScaleMode = MPPFrameScaleModeFillAndCrop;
 
