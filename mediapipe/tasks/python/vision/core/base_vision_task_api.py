@@ -160,15 +160,15 @@ class BaseVisionTaskApi(object):
       if not roi_allowed:
         raise ValueError("This task doesn't support region-of-interest.")
       roi = options.region_of_interest
-      if roi.x_center >= roi.width or roi.y_center >= roi.height:
+      if roi.left >= roi.right or roi.top >= roi.bottom:
         raise ValueError(
-          "Expected Rect with x_center < width and y_center < height.")
-      if roi.x_center < 0 or roi.y_center < 0 or roi.width > 1 or roi.height > 1:
+          "Expected Rect with left < right and top < bottom.")
+      if roi.left < 0 or roi.top < 0 or roi.right > 1 or roi.bottom > 1:
         raise ValueError("Expected Rect values to be in [0,1].")
-      normalized_rect.x_center = roi.x_center + roi.width / 2.0
-      normalized_rect.y_center = roi.y_center + roi.height / 2.0
-      normalized_rect.width = roi.width - roi.x_center
-      normalized_rect.height = roi.height - roi.y_center
+      normalized_rect.x_center = (roi.left + roi.right) / 2.0
+      normalized_rect.y_center = (roi.top + roi.bottom) / 2.0
+      normalized_rect.width = roi.right - roi.left
+      normalized_rect.height = roi.bottom - roi.top
     return normalized_rect
 
   def close(self) -> None:

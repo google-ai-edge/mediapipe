@@ -63,7 +63,7 @@ class GestureRecognitionResult:
 
   Attributes:
     gestures: Recognized hand gestures of detected hands. Note that the index
-      of the gesture is always 0, because the raw indices from multiple gesture
+      of the gesture is always -1, because the raw indices from multiple gesture
       classifiers cannot consolidate to a meaningful index.
     handedness: Classification of handedness.
     hand_landmarks: Detected hand landmarks in normalized image coordinates.

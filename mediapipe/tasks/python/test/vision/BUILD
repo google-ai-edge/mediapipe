@@ -54,6 +54,7 @@ py_test(
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:image_classifier",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
     ],
 )
 

@@ -78,7 +78,7 @@ def _get_expected_gesture_recognition_result(
     file_path)
   with open(landmarks_detection_result_file_path, "rb") as f:
     landmarks_detection_result_proto = _LandmarksDetectionResultProto()
-    # # Use this if a .pb file is available.
+    # Use this if a .pb file is available.
     # landmarks_detection_result_proto.ParseFromString(f.read())
     text_format.Parse(f.read(), landmarks_detection_result_proto)
     landmarks_detection_result = _LandmarksDetectionResult.create_from_pb2(
