@@ -50,6 +50,7 @@ exports_files([
     "score_calibration.txt",
     "score_calibration_file_meta.json",
     "score_calibration_tensor_meta.json",
+    "score_thresholding_meta.json",
     "labels.txt",
     "mobilenet_v2_1.0_224.json",
     "mobilenet_v2_1.0_224_quant.json",
@@ -91,5 +92,6 @@ filegroup(
         "score_calibration.txt",
         "score_calibration_file_meta.json",
         "score_calibration_tensor_meta.json",
+        "score_thresholding_meta.json",
     ],
 )

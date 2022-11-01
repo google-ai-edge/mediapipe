@@ -695,6 +695,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_score_thresholding_meta_json",
+        sha256 = "7bb74f21c2d7f0237675ed7c09d7b7afd3507c8373f51dc75fa0507852f6ee19",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/score_thresholding_meta.json?generation=1667273953630766"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_segmentation_golden_rotation0_png",
         sha256 = "9ee993919b753118928ba2d14f7c5c83a6cfc23355e6943dac4ad81eedd73069",
         urls = ["https://storage.googleapis.com/mediapipe-assets/segmentation_golden_rotation0.png?generation=1661875911319083"],

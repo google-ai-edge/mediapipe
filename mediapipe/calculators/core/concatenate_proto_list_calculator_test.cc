@@ -18,6 +18,7 @@
 
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
+#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -66,6 +67,16 @@ void AddInputLandmarkLists(
   for (int i = 0; i < input_landmarks_vec.size(); ++i) {
     runner->MutableInputs()->Index(i).packets.push_back(
         MakePacket<NormalizedLandmarkList>(input_landmarks_vec[i])
+            .At(Timestamp(timestamp)));
+  }
+}
+
+void AddInputClassificationLists(
+    const std::vector<ClassificationList>& input_classifications_vec,
+    int64 timestamp, CalculatorRunner* runner) {
+  for (int i = 0; i < input_classifications_vec.size(); ++i) {
+    runner->MutableInputs()->Index(i).packets.push_back(
+        MakePacket<ClassificationList>(input_classifications_vec[i])
             .At(Timestamp(timestamp)));
   }
 }
@@ -179,6 +190,41 @@ TEST(ConcatenateNormalizedLandmarkListCalculatorTest, OneEmptyStreamNoOutput) {
 
   const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
   EXPECT_EQ(0, outputs.size());
+}
+
+TEST(ConcatenateClassificationListCalculatorTest, OneTimestamp) {
+  CalculatorRunner runner("ConcatenateClassificationListCalculator",
+                          /*options_string=*/
+                          "[mediapipe.ConcatenateVectorCalculatorOptions.ext]: "
+                          "{only_emit_if_all_present: true}",
+                          /*num_inputs=*/2,
+                          /*num_outputs=*/1, /*num_side_packets=*/0);
+
+  auto input_0 = ParseTextProtoOrDie<ClassificationList>(R"pb(
+    classification: { index: 0 score: 0.2 label: "test_0" }
+    classification: { index: 1 score: 0.3 label: "test_1" }
+    classification: { index: 2 score: 0.4 label: "test_2" }
+  )pb");
+  auto input_1 = ParseTextProtoOrDie<ClassificationList>(R"pb(
+    classification: { index: 3 score: 0.2 label: "test_3" }
+    classification: { index: 4 score: 0.3 label: "test_4" }
+  )pb");
+  std::vector<ClassificationList> inputs = {input_0, input_1};
+  AddInputClassificationLists(inputs, /*timestamp=*/1, &runner);
+  MP_ASSERT_OK(runner.Run());
+
+  const std::vector<Packet>& outputs = runner.Outputs().Index(0).packets;
+  EXPECT_EQ(1, outputs.size());
+  EXPECT_EQ(Timestamp(1), outputs[0].Timestamp());
+  auto result = outputs[0].Get<ClassificationList>();
+  EXPECT_THAT(ParseTextProtoOrDie<ClassificationList>(R"pb(
+                classification: { index: 0 score: 0.2 label: "test_0" }
+                classification: { index: 1 score: 0.3 label: "test_1" }
+                classification: { index: 2 score: 0.4 label: "test_2" }
+                classification: { index: 3 score: 0.2 label: "test_3" }
+                classification: { index: 4 score: 0.3 label: "test_4" }
+              )pb"),
+              EqualsProto(result));
 }
 
 }  // namespace mediapipe

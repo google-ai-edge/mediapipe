@@ -19,16 +19,19 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 py_library(
-    name = "test_utils",
-    testonly = 1,
-    srcs = ["test_utils.py"],
-    srcs_version = "PY3",
-    visibility = [
-        "//mediapipe/model_maker/python/vision/gesture_recognizer:__pkg__",
-        "//mediapipe/tasks:internal",
+    name = "audio_task_running_mode",
+    srcs = ["audio_task_running_mode.py"],
+)
+
+py_library(
+    name = "base_audio_task_api",
+    srcs = [
+        "base_audio_task_api.py",
     ],
     deps = [
+        ":audio_task_running_mode",
+        "//mediapipe/framework:calculator_py_pb2",
         "//mediapipe/python:_framework_bindings",
-        "@com_google_protobuf//:protobuf_python",
+        "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
