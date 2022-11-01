@@ -5,8 +5,8 @@
 //  Created by Mautisim Munir on 17/10/2022.
 //
 import UIKit
-import MPPoseTracking
 import LinderaDetection
+//import LinderaDetection
 
 
 class ViewController: UIViewController {

@@ -18,16 +18,16 @@ POSETRACKING_DEPS = [
 genrule(
     name = "podgen",
     srcs = [
-        "lindera-framework",
+        "//mediapipe/objc/solutions/posetracking_gpu:MPPoseTrackingHeaderPatched",
         "LinderaDetection.podspec",
-    ],
+    ] + glob(["*.swift"]),
     outs = ["LinderaDetection.zip"],
     cmd = """
     mkdir mediapipe/swift/solutions/lindera/frameworks
-    unzip $(location lindera-framework) -d mediapipe/swift/solutions/lindera/frameworks
+    unzip $(location //mediapipe/objc/solutions/posetracking_gpu:MPPoseTrackingHeaderPatched) -d mediapipe/swift/solutions/lindera/frameworks
     cd mediapipe/swift/solutions/lindera/
 
-    zip -r LinderaDetection.zip frameworks LinderaDetection.podspec
+    zip -r LinderaDetection.zip frameworks LinderaDetection.podspec *.swift
     cd ../../../../
     cp mediapipe/swift/solutions/lindera/LinderaDetection.zip $@
     """,

@@ -3,6 +3,10 @@
 #import "mediapipe/objc/MPPGraph.h"
 #import "mediapipe/objc/MPPTimestampConverter.h"
 #include "mediapipe/framework/packet.h"
+#include "mediapipe/calculators/core/flow_limiter_calculator.h"
+#include "mediapipe/calculators/core/constant_side_packet_calculator.h"
+
+
 
 static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 static const char* kLandmarksOutputStream = "pose_landmarks";
@@ -37,7 +41,7 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 -(id) initWithMediapipeGraph: (MPPGraph*) graph graphOutputStream: (const char*) graphOutputStream
     renderer: (MPPLayerRenderer*) renderer
 {
-    
+
     self.mediapipeGraph = graph;
     self.graphOutputStream =graphOutputStream;
     self.renderer = renderer;
@@ -127,6 +131,9 @@ static const char* kLandmarksOutputStream = "pose_landmarks";
 }
 
 - (instancetype) initWithPoseTrackingOptions: (PoseTrackingOptions*) poseTrackingOptions{
+    typeid(::mediapipe::FlowLimiterCalculator);
+    typeid(::mediapipe::ConstantSidePacketCalculator);
+
     self.renderer = [[MPPLayerRenderer alloc] init];
     self.renderer.frameScaleMode = MPPFrameScaleModeFillAndCrop;
 

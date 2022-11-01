@@ -86,7 +86,7 @@ Pod::Spec.new do |spec|
   #  Not including the public_header_files will make all headers public.
   #
 
-  # spec.source_files  = ""
+  spec.source_files  = "*.swift"
   # spec.exclude_files = "Classes/Exclude"
 
   # spec.public_header_files = ""
@@ -101,7 +101,7 @@ Pod::Spec.new do |spec|
   #
 
   # spec.resource  = "icon.png"
-  # spec.resources = "Resources/*.png"
+   spec.resources = ["frameworks/*/*.tflite","frameworks/*/*.binarypb"]
 
   # spec.preserve_paths = "FilesToSave", "MoreFilesToSave"
 
