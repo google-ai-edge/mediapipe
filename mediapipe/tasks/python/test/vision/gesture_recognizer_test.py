@@ -27,6 +27,7 @@ from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
 from mediapipe.tasks.python.components.containers import landmark_detection_result as landmark_detection_result_module
+from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import gesture_recognizer
@@ -40,6 +41,7 @@ _Category = category_module.Category
 _Landmark = landmark_module.Landmark
 _NormalizedLandmark = landmark_module.NormalizedLandmark
 _LandmarksDetectionResult = landmark_detection_result_module.LandmarksDetectionResult
+_ClassifierOptions = classifier_options.ClassifierOptions
 _Image = image_module.Image
 _GestureRecognizer = gesture_recognizer.GestureRecognizer
 _GestureRecognizerOptions = gesture_recognizer.GestureRecognizerOptions
@@ -59,10 +61,12 @@ _VICTORY_LABEL = 'Victory'
 _THUMB_UP_IMAGE = 'thumb_up.jpg'
 _THUMB_UP_LANDMARKS = 'thumb_up_landmarks.pbtxt'
 _THUMB_UP_LABEL = 'Thumb_Up'
+_POINTING_UP_IMAGE = 'pointing_up.jpg'
+_POINTING_UP_LANDMARKS = 'pointing_up_landmarks.pbtxt'
 _POINTING_UP_ROTATED_IMAGE = 'pointing_up_rotated.jpg'
-_POINTING_UP_LANDMARKS = 'pointing_up_rotated_landmarks.pbtxt'
+_POINTING_UP_ROTATED_LANDMARKS = 'pointing_up_rotated_landmarks.pbtxt'
 _POINTING_UP_LABEL = 'Pointing_Up'
-_ROCK_LABEL = "Rock"
+_ROCK_LABEL = 'Rock'
 _LANDMARKS_ERROR_TOLERANCE = 0.03
 _GESTURE_EXPECTED_INDEX = -1
 
@@ -227,11 +231,13 @@ class GestureRecognizerTest(parameterized.TestCase):
       self._assert_actual_result_approximately_matches_expected_result(
         recognition_result, expected_recognition_result)
 
-  def test_recognize_succeeds_with_min_gesture_confidence(self):
+  def test_recognize_succeeds_with_score_threshold(self):
     # Creates gesture recognizer.
     base_options = _BaseOptions(model_asset_path=self.model_path)
-    options = _GestureRecognizerOptions(base_options=base_options,
-                                        min_gesture_confidence=0.5)
+    canned_gesture_classifier_options = _ClassifierOptions(score_threshold=.5)
+    options = _GestureRecognizerOptions(
+        base_options=base_options,
+        canned_gesture_classifier_options=canned_gesture_classifier_options)
     with _GestureRecognizer.create_from_options(options) as recognizer:
       # Performs hand gesture recognition on the input.
       recognition_result = recognizer.recognize(self.test_image)
@@ -273,7 +279,7 @@ class GestureRecognizerTest(parameterized.TestCase):
       recognition_result = recognizer.recognize(test_image,
                                                 image_processing_options)
       expected_recognition_result = _get_expected_gesture_recognition_result(
-          _POINTING_UP_LANDMARKS, _POINTING_UP_LABEL)
+          _POINTING_UP_ROTATED_LANDMARKS, _POINTING_UP_LABEL)
       # Comparing results.
       self._assert_actual_result_approximately_matches_expected_result(
           recognition_result, expected_recognition_result)
@@ -294,14 +300,14 @@ class GestureRecognizerTest(parameterized.TestCase):
       self._assert_actual_result_approximately_matches_expected_result(
         recognition_result, expected_recognition_result)
 
-  def test_recognize_succeeds_with_custom_gesture_fist(self):
+  def test_recognize_succeeds_with_custom_gesture_rock(self):
     # Creates gesture recognizer.
     model_path = test_utils.get_test_data_path(
         _GESTURE_RECOGNIZER_WITH_CUSTOM_CLASSIFIER_BUNDLE_ASSET_FILE)
     base_options = _BaseOptions(model_asset_path=model_path)
     options = _GestureRecognizerOptions(base_options=base_options, num_hands=1)
     with _GestureRecognizer.create_from_options(options) as recognizer:
-      # Load the fist image.
+      # Load the rock image.
       test_image = _Image.create_from_file(
           test_utils.get_test_data_path(_FIST_IMAGE))
       # Performs hand gesture recognition on the input.
@@ -311,6 +317,95 @@ class GestureRecognizerTest(parameterized.TestCase):
       # Comparing results.
       self._assert_actual_result_approximately_matches_expected_result(
         recognition_result, expected_recognition_result)
+
+  def test_recognize_succeeds_with_allow_gesture_pointing_up(self):
+    # Creates gesture recognizer.
+    model_path = test_utils.get_test_data_path(
+        _GESTURE_RECOGNIZER_WITH_CUSTOM_CLASSIFIER_BUNDLE_ASSET_FILE)
+    base_options = _BaseOptions(model_asset_path=model_path)
+    canned_gesture_classifier_options = _ClassifierOptions(
+        category_allowlist=['Pointing_Up'])
+    options = _GestureRecognizerOptions(
+        base_options=base_options,
+        num_hands=1,
+        canned_gesture_classifier_options=canned_gesture_classifier_options)
+    with _GestureRecognizer.create_from_options(options) as recognizer:
+      # Load the pointing up image.
+      test_image = _Image.create_from_file(
+          test_utils.get_test_data_path(_POINTING_UP_IMAGE))
+      # Performs hand gesture recognition on the input.
+      recognition_result = recognizer.recognize(test_image)
+      expected_recognition_result = _get_expected_gesture_recognition_result(
+          _POINTING_UP_LANDMARKS, _POINTING_UP_LABEL)
+      # Comparing results.
+      self._assert_actual_result_approximately_matches_expected_result(
+          recognition_result, expected_recognition_result)
+
+  def test_recognize_succeeds_with_deny_gesture_pointing_up(self):
+    # Creates gesture recognizer.
+    model_path = test_utils.get_test_data_path(
+        _GESTURE_RECOGNIZER_WITH_CUSTOM_CLASSIFIER_BUNDLE_ASSET_FILE)
+    base_options = _BaseOptions(model_asset_path=model_path)
+    canned_gesture_classifier_options = _ClassifierOptions(
+        category_denylist=['Pointing_Up'])
+    options = _GestureRecognizerOptions(
+        base_options=base_options,
+        num_hands=1,
+        canned_gesture_classifier_options=canned_gesture_classifier_options)
+    with _GestureRecognizer.create_from_options(options) as recognizer:
+      # Load the pointing up image.
+      test_image = _Image.create_from_file(
+          test_utils.get_test_data_path(_POINTING_UP_IMAGE))
+      # Performs hand gesture recognition on the input.
+      recognition_result = recognizer.recognize(test_image)
+      actual_top_gesture = recognition_result.gestures[0][0]
+      self.assertEqual(actual_top_gesture.category_name, 'None')
+
+  def test_recognize_succeeds_with_allow_all_gestures_except_pointing_up(self):
+    # Creates gesture recognizer.
+    model_path = test_utils.get_test_data_path(
+        _GESTURE_RECOGNIZER_WITH_CUSTOM_CLASSIFIER_BUNDLE_ASSET_FILE)
+    base_options = _BaseOptions(model_asset_path=model_path)
+    canned_gesture_classifier_options = _ClassifierOptions(
+        score_threshold=.5, category_allowlist=[
+            'None', 'Open_Palm', 'Victory', 'Thumb_Down', 'Thumb_Up',
+            'ILoveYou', 'Closed_Fist'])
+    options = _GestureRecognizerOptions(
+        base_options=base_options,
+        num_hands=1,
+        canned_gesture_classifier_options=canned_gesture_classifier_options)
+    with _GestureRecognizer.create_from_options(options) as recognizer:
+      # Load the pointing up image.
+      test_image = _Image.create_from_file(
+          test_utils.get_test_data_path(_POINTING_UP_IMAGE))
+      # Performs hand gesture recognition on the input.
+      recognition_result = recognizer.recognize(test_image)
+      actual_top_gesture = recognition_result.gestures[0][0]
+      self.assertEqual(actual_top_gesture.category_name, 'None')
+
+  def test_recognize_succeeds_with_prefer_allow_list_than_deny_list(self):
+    # Creates gesture recognizer.
+    model_path = test_utils.get_test_data_path(
+        _GESTURE_RECOGNIZER_WITH_CUSTOM_CLASSIFIER_BUNDLE_ASSET_FILE)
+    base_options = _BaseOptions(model_asset_path=model_path)
+    canned_gesture_classifier_options = _ClassifierOptions(
+        score_threshold=.5, category_allowlist=['Pointing_Up'],
+        category_denylist=['Pointing_Up'])
+    options = _GestureRecognizerOptions(
+        base_options=base_options,
+        num_hands=1,
+        canned_gesture_classifier_options=canned_gesture_classifier_options)
+    with _GestureRecognizer.create_from_options(options) as recognizer:
+      # Load the pointing up image.
+      test_image = _Image.create_from_file(
+          test_utils.get_test_data_path(_POINTING_UP_IMAGE))
+      # Performs hand gesture recognition on the input.
+      recognition_result = recognizer.recognize(test_image)
+      expected_recognition_result = _get_expected_gesture_recognition_result(
+          _POINTING_UP_LANDMARKS, _POINTING_UP_LABEL)
+      # Comparing results.
+      self._assert_actual_result_approximately_matches_expected_result(
+          recognition_result, expected_recognition_result)
 
   def test_recognize_fails_with_region_of_interest(self):
     # Creates gesture recognizer.

@@ -21,10 +21,9 @@ from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.tasks.cc.vision.gesture_recognizer.proto import gesture_recognizer_graph_options_pb2
-from mediapipe.tasks.cc.vision.gesture_recognizer.proto import hand_gesture_recognizer_graph_options_pb2
-from mediapipe.tasks.cc.vision.hand_landmarker.proto import hand_landmarker_graph_options_pb2
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
+from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
@@ -34,8 +33,7 @@ from mediapipe.tasks.python.vision.core import image_processing_options as image
 
 _BaseOptions = base_options_module.BaseOptions
 _GestureRecognizerGraphOptionsProto = gesture_recognizer_graph_options_pb2.GestureRecognizerGraphOptions
-_HandGestureRecognizerGraphOptionsProto = hand_gesture_recognizer_graph_options_pb2.HandGestureRecognizerGraphOptions
-_HandLandmarkerGraphOptionsProto = hand_landmarker_graph_options_pb2.HandLandmarkerGraphOptions
+_ClassifierOptions = classifier_options.ClassifierOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _TaskInfo = task_info_module.TaskInfo
@@ -137,11 +135,16 @@ class GestureRecognizerOptions:
       score in the hand landmark detection.
     min_tracking_confidence: The minimum confidence score for the hand tracking
       to be considered successful.
-    min_gesture_confidence: The minimum confidence score for the gestures to be
-      considered successful. If < 0, the gesture confidence thresholds in the
-      model metadata are used.
-      TODO: Note this option is subject to change, after scoring merging
-      calculator is implemented.
+    canned_gesture_classifier_options: Options for configuring the canned
+      gestures classifier, such as score threshold, allow list and deny list of
+      gestures. The categories for canned gesture classifiers are:
+      ["None", "Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down",
+      "Thumb_Up", "Victory", "ILoveYou"]
+      TODO :Note this option is subject to change.
+    custom_gesture_classifier_options: Options for configuring the custom
+      gestures classifier, such as score threshold, allow list and deny list of
+       gestures.
+      TODO :Note this option is subject to change.
     result_callback: The user-defined result callback for processing live stream
       data. The result callback should only be specified when the running mode
       is set to the live stream mode.
@@ -152,7 +155,8 @@ class GestureRecognizerOptions:
   min_hand_detection_confidence: Optional[float] = 0.5
   min_hand_presence_confidence: Optional[float] = 0.5
   min_tracking_confidence: Optional[float] = 0.5
-  min_gesture_confidence: Optional[float] = -1
+  canned_gesture_classifier_options: Optional[_ClassifierOptions] = _ClassifierOptions()
+  custom_gesture_classifier_options: Optional[_ClassifierOptions] = _ClassifierOptions()
   result_callback: Optional[
       Callable[[GestureRecognitionResult, image_module.Image,
                 int], None]] = None
@@ -163,23 +167,22 @@ class GestureRecognizerOptions:
     base_options_proto = self.base_options.to_pb2()
     base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.IMAGE else True
 
+    # Initialize gesture recognizer options from base options.
+    gesture_recognizer_options_proto = _GestureRecognizerGraphOptionsProto(
+        base_options=base_options_proto)
     # Configure hand detector and hand landmarker options.
-    hand_landmarker_options_proto = _HandLandmarkerGraphOptionsProto()
+    hand_landmarker_options_proto = gesture_recognizer_options_proto.hand_landmarker_graph_options
     hand_landmarker_options_proto.min_tracking_confidence = self.min_tracking_confidence
     hand_landmarker_options_proto.hand_detector_graph_options.num_hands = self.num_hands
     hand_landmarker_options_proto.hand_detector_graph_options.min_detection_confidence = self.min_hand_detection_confidence
     hand_landmarker_options_proto.hand_landmarks_detector_graph_options.min_detection_confidence = self.min_hand_presence_confidence
 
     # Configure hand gesture recognizer options.
-    hand_gesture_recognizer_options_proto = _HandGestureRecognizerGraphOptionsProto()
-    hand_gesture_recognizer_options_proto.canned_gesture_classifier_graph_options.classifier_options.score_threshold = self.min_gesture_confidence
-    hand_gesture_recognizer_options_proto.custom_gesture_classifier_graph_options.classifier_options.score_threshold = self.min_gesture_confidence
+    hand_gesture_recognizer_options_proto = gesture_recognizer_options_proto.hand_gesture_recognizer_graph_options
+    hand_gesture_recognizer_options_proto.canned_gesture_classifier_graph_options.classifier_options.CopyFrom(self.canned_gesture_classifier_options.to_pb2())
+    hand_gesture_recognizer_options_proto.custom_gesture_classifier_graph_options.classifier_options.CopyFrom(self.custom_gesture_classifier_options.to_pb2())
 
-    return _GestureRecognizerGraphOptionsProto(
-        base_options=base_options_proto,
-        hand_landmarker_graph_options=hand_landmarker_options_proto,
-        hand_gesture_recognizer_graph_options=hand_gesture_recognizer_options_proto
-    )
+    return gesture_recognizer_options_proto
 
 
 class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
