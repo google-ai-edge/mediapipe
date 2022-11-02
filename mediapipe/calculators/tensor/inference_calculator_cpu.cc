@@ -72,7 +72,7 @@ absl::Status InferenceCalculatorCpuImpl::Process(CalculatorContext* cc) {
   RET_CHECK(!input_tensors.empty());
 
   ASSIGN_OR_RETURN(std::vector<Tensor> output_tensors,
-                   inference_runner_->Run(input_tensors));
+                   inference_runner_->Run(cc, input_tensors));
   kOutTensors(cc).Send(std::move(output_tensors));
   return absl::OkStatus();
 }

@@ -20,11 +20,14 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "tensorflow/lite/c/c_api_types.h"
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/interpreter_builder.h"
 #include "tensorflow/lite/string_util.h"
+
+#define PERFETTO_TRACK_EVENT_NAMESPACE mediapipe
 
 namespace mediapipe {
 
@@ -79,7 +82,7 @@ class InferenceInterpreterDelegateRunner : public InferenceRunner {
         delegate_(std::move(delegate)) {}
 
   absl::StatusOr<std::vector<Tensor>> Run(
-      const std::vector<Tensor>& input_tensors) override;
+      CalculatorContext* cc, const std::vector<Tensor>& input_tensors) override;
 
  private:
   api2::Packet<TfLiteModelPtr> model_;
@@ -88,7 +91,7 @@ class InferenceInterpreterDelegateRunner : public InferenceRunner {
 };
 
 absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
-    const std::vector<Tensor>& input_tensors) {
+    CalculatorContext* cc, const std::vector<Tensor>& input_tensors) {
   // Read CPU input into tensors.
   RET_CHECK_EQ(interpreter_->inputs().size(), input_tensors.size());
   for (int i = 0; i < input_tensors.size(); ++i) {
@@ -131,8 +134,10 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
   }
 
   // Run inference.
-  RET_CHECK_EQ(interpreter_->Invoke(), kTfLiteOk);
-
+  {
+    MEDIAPIPE_PROFILING(CPU_TASK_INVOKE, cc);
+    RET_CHECK_EQ(interpreter_->Invoke(), kTfLiteOk);
+  }
   // Output result tensors (CPU).
   const auto& tensor_indexes = interpreter_->outputs();
   std::vector<Tensor> output_tensors;

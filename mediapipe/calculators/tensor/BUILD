@@ -530,6 +530,7 @@ cc_library(
     }),
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework:calculator_context",
         "//mediapipe/framework/formats:tensor",
         "@com_google_absl//absl/status:statusor",
     ],
@@ -550,6 +551,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":inference_runner",
+        "//mediapipe/framework:mediapipe_profiling",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
