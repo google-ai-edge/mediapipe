@@ -17,11 +17,13 @@ syntax = "proto2";
 
 package mediapipe.tasks.components.containers.proto;
 
+import "mediapipe/framework/formats/classification.proto";
 import "mediapipe/tasks/cc/components/containers/proto/category.proto";
 
 option java_package = "com.google.mediapipe.tasks.components.containers.proto";
 option java_outer_classname = "ClassificationsProto";
 
+// TODO: deprecate this message once migration is over.
 // List of predicted categories with an optional timestamp.
 message ClassificationEntry {
   // The array of predicted categories, usually sorted by descending scores,
@@ -33,9 +35,12 @@ message ClassificationEntry {
   optional int64 timestamp_ms = 2;
 }
 
-// Classifications for a given classifier head.
+// Classifications for a given classifier head, i.e. for a given output tensor.
 message Classifications {
+  // TODO: deprecate this field once migration is over.
   repeated ClassificationEntry entries = 1;
+  // The classification results for this head.
+  optional mediapipe.ClassificationList classification_list = 4;
   // The index of the classifier head these categories refer to. This is useful
   // for multi-head models.
   optional int32 head_index = 2;
@@ -45,7 +50,17 @@ message Classifications {
   optional string head_name = 3;
 }
 
-// Contains one set of results per classifier head.
+// Classifications for a given classifier model.
 message ClassificationResult {
+  // The classification results for each model head, i.e. one for each output
+  // tensor.
   repeated Classifications classifications = 1;
+  // The optional timestamp (in milliseconds) of the start of the chunk of data
+  // corresponding to these results.
+  //
+  // This is only used for classification on time series (e.g. audio
+  // classification). In these use cases, the amount of data to process might
+  // exceed the maximum size that the model can process: to solve this, the
+  // input data is split into multiple chunks starting at different timestamps.
+  optional int64 timestamp_ms = 2;
 }

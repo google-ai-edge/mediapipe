@@ -286,7 +286,7 @@ absl::Status ConfigureScoreCalibrationIfAny(
 
 void ConfigureClassificationAggregationCalculator(
     const ModelMetadataExtractor& metadata_extractor,
-    ClassificationAggregationCalculatorOptions* options) {
+    mediapipe::ClassificationAggregationCalculatorOptions* options) {
   auto* output_tensors_metadata = metadata_extractor.GetOutputTensorMetadata();
   if (output_tensors_metadata == nullptr) {
     return;
@@ -494,7 +494,8 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
     // Aggregates Classifications into a single ClassificationResult.
     auto& result_aggregation =
         graph.AddNode("ClassificationAggregationCalculator");
-    result_aggregation.GetOptions<ClassificationAggregationCalculatorOptions>()
+    result_aggregation
+        .GetOptions<mediapipe::ClassificationAggregationCalculatorOptions>()
         .CopyFrom(options.classification_aggregation_options());
     for (int i = 0; i < num_heads; ++i) {
       tensors_to_classification_nodes[i]->Out(kClassificationsTag) >>

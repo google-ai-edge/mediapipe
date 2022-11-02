@@ -28,6 +28,7 @@ mediapipe_proto_library(
     srcs = ["classifications.proto"],
     deps = [
         ":category_proto",
+        "//mediapipe/framework/formats:classification_proto",
     ],
 )
 
