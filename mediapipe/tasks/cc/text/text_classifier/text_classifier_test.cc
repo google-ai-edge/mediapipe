@@ -33,7 +33,8 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/category.h"
+#include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "mediapipe/tasks/cc/text/text_classifier/text_classifier_test_utils.h"
 #include "tensorflow/lite/core/shims/cc/shims_test_util.h"
 
@@ -43,14 +44,13 @@ namespace text {
 namespace text_classifier {
 namespace {
 
-using ::mediapipe::EqualsProto;
 using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::kMediaPipeTasksPayload;
-using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
+using ::mediapipe::tasks::components::containers::Category;
+using ::mediapipe::tasks::components::containers::Classifications;
 using ::testing::HasSubstr;
 using ::testing::Optional;
 
-constexpr float kEpsilon = 0.001;
 constexpr int kMaxSeqLen = 128;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
 constexpr char kTestBertModelPath[] = "bert_text_classifier.tflite";
@@ -62,6 +62,30 @@ constexpr char kStringToBoolModelPath[] =
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
+}
+
+// Checks that the two provided `TextClassifierResult` are equal, with a
+// tolerancy on floating-point score to account for numerical instabilities.
+// TODO: create shared matcher for ClassificationResult.
+void ExpectApproximatelyEqual(const TextClassifierResult& actual,
+                              const TextClassifierResult& expected) {
+  const float kPrecision = 1e-6;
+  ASSERT_EQ(actual.classifications.size(), expected.classifications.size());
+  for (int i = 0; i < actual.classifications.size(); ++i) {
+    const Classifications& a = actual.classifications[i];
+    const Classifications& b = expected.classifications[i];
+    EXPECT_EQ(a.head_index, b.head_index);
+    EXPECT_EQ(a.head_name, b.head_name);
+    EXPECT_EQ(a.categories.size(), b.categories.size());
+    for (int j = 0; j < a.categories.size(); ++j) {
+      const Category& x = a.categories[j];
+      const Category& y = b.categories[j];
+      EXPECT_EQ(x.index, y.index);
+      EXPECT_NEAR(x.score, y.score, kPrecision);
+      EXPECT_EQ(x.category_name, y.category_name);
+      EXPECT_EQ(x.display_name, y.display_name);
+    }
+  }
 }
 
 class TextClassifierTest : public tflite_shims::testing::Test {};
@@ -105,6 +129,92 @@ TEST_F(TextClassifierTest, CreateSucceedsWithRegexModel) {
   auto options = std::make_unique<TextClassifierOptions>();
   options->base_options.model_asset_path = GetFullPath(kTestRegexModelPath);
   MP_ASSERT_OK(TextClassifier::Create(std::move(options)));
+}
+
+TEST_F(TextClassifierTest, TextClassifierWithBert) {
+  auto options = std::make_unique<TextClassifierOptions>();
+  options->base_options.model_asset_path = GetFullPath(kTestBertModelPath);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextClassifier> classifier,
+                          TextClassifier::Create(std::move(options)));
+  MP_ASSERT_OK_AND_ASSIGN(
+      TextClassifierResult negative_result,
+      classifier->Classify("unflinchingly bleak and desperate"));
+  TextClassifierResult negative_expected;
+  negative_expected.classifications.emplace_back(Classifications{
+      /*categories=*/{
+          {/*index=*/0, /*score=*/0.956317, /*category_name=*/"negative"},
+          {/*index=*/1, /*score=*/0.043683, /*category_name=*/"positive"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+  ExpectApproximatelyEqual(negative_result, negative_expected);
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      TextClassifierResult positive_result,
+      classifier->Classify("it's a charming and often affecting journey"));
+  TextClassifierResult positive_expected;
+  positive_expected.classifications.emplace_back(Classifications{
+      /*categories=*/{
+          {/*index=*/1, /*score=*/0.999945, /*category_name=*/"positive"},
+          {/*index=*/0, /*score=*/0.000056, /*category_name=*/"negative"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+  ExpectApproximatelyEqual(positive_result, positive_expected);
+
+  MP_ASSERT_OK(classifier->Close());
+}
+
+TEST_F(TextClassifierTest, TextClassifierWithIntInputs) {
+  auto options = std::make_unique<TextClassifierOptions>();
+  options->base_options.model_asset_path = GetFullPath(kTestRegexModelPath);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextClassifier> classifier,
+                          TextClassifier::Create(std::move(options)));
+  MP_ASSERT_OK_AND_ASSIGN(TextClassifierResult negative_result,
+                          classifier->Classify("What a waste of my time."));
+  TextClassifierResult negative_expected;
+  negative_expected.classifications.emplace_back(Classifications{
+      /*categories=*/{
+          {/*index=*/0, /*score=*/0.813130, /*category_name=*/"Negative"},
+          {/*index=*/1, /*score=*/0.186870, /*category_name=*/"Positive"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+  ExpectApproximatelyEqual(negative_result, negative_expected);
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      TextClassifierResult positive_result,
+      classifier->Classify("This is the best movie I’ve seen in recent years."
+                           "Strongly recommend it!"));
+  TextClassifierResult positive_expected;
+  positive_expected.classifications.emplace_back(Classifications{
+      /*categories=*/{
+          {/*index=*/1, /*score=*/0.513427, /*category_name=*/"Positive"},
+          {/*index=*/0, /*score=*/0.486573, /*category_name=*/"Negative"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+  ExpectApproximatelyEqual(positive_result, positive_expected);
+
+  MP_ASSERT_OK(classifier->Close());
+}
+
+TEST_F(TextClassifierTest, TextClassifierWithStringToBool) {
+  auto options = std::make_unique<TextClassifierOptions>();
+  options->base_options.model_asset_path = GetFullPath(kStringToBoolModelPath);
+  options->base_options.op_resolver = CreateCustomResolver();
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextClassifier> classifier,
+                          TextClassifier::Create(std::move(options)));
+  MP_ASSERT_OK_AND_ASSIGN(TextClassifierResult result,
+                          classifier->Classify("hello"));
+
+  // Binary outputs causes flaky ordering, so we compare manually.
+  ASSERT_EQ(result.classifications.size(), 1);
+  ASSERT_EQ(result.classifications[0].head_index, 0);
+  ASSERT_EQ(result.classifications[0].categories.size(), 3);
+  ASSERT_EQ(result.classifications[0].categories[0].score, 1);
+  ASSERT_LT(result.classifications[0].categories[0].index, 2);  // i.e O or 1.
+  ASSERT_EQ(result.classifications[0].categories[1].score, 1);
+  ASSERT_LT(result.classifications[0].categories[1].index, 2);  // i.e 0 or 1.
+  ASSERT_EQ(result.classifications[0].categories[2].score, 0);
+  ASSERT_EQ(result.classifications[0].categories[2].index, 2);
+  MP_ASSERT_OK(classifier->Close());
 }
 
 }  // namespace

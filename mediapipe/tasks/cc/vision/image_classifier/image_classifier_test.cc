@@ -32,8 +32,8 @@ limitations under the License.
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/containers/proto/category.pb.h"
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/category.h"
+#include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
@@ -50,10 +50,9 @@ namespace image_classifier {
 namespace {
 
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::components::containers::Category;
+using ::mediapipe::tasks::components::containers::Classifications;
 using ::mediapipe::tasks::components::containers::Rect;
-using ::mediapipe::tasks::components::containers::proto::ClassificationEntry;
-using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
-using ::mediapipe::tasks::components::containers::proto::Classifications;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::HasSubstr;
 using ::testing::Optional;
@@ -65,83 +64,56 @@ constexpr char kMobileNetQuantizedWithMetadata[] =
 constexpr char kMobileNetQuantizedWithDummyScoreCalibration[] =
     "mobilenet_v1_0.25_224_quant_with_dummy_score_calibration.tflite";
 
-// Checks that the two provided `ClassificationResult` are equal, with a
+// Checks that the two provided `ImageClassifierResult` are equal, with a
 // tolerancy on floating-point score to account for numerical instabilities.
-void ExpectApproximatelyEqual(const ClassificationResult& actual,
-                              const ClassificationResult& expected) {
+void ExpectApproximatelyEqual(const ImageClassifierResult& actual,
+                              const ImageClassifierResult& expected) {
   const float kPrecision = 1e-6;
-  ASSERT_EQ(actual.classifications_size(), expected.classifications_size());
-  for (int i = 0; i < actual.classifications_size(); ++i) {
-    const Classifications& a = actual.classifications(i);
-    const Classifications& b = expected.classifications(i);
-    EXPECT_EQ(a.head_index(), b.head_index());
-    EXPECT_EQ(a.head_name(), b.head_name());
-    EXPECT_EQ(a.entries_size(), b.entries_size());
-    for (int j = 0; j < a.entries_size(); ++j) {
-      const ClassificationEntry& x = a.entries(j);
-      const ClassificationEntry& y = b.entries(j);
-      EXPECT_EQ(x.timestamp_ms(), y.timestamp_ms());
-      EXPECT_EQ(x.categories_size(), y.categories_size());
-      for (int k = 0; k < x.categories_size(); ++k) {
-        EXPECT_EQ(x.categories(k).index(), y.categories(k).index());
-        EXPECT_EQ(x.categories(k).category_name(),
-                  y.categories(k).category_name());
-        EXPECT_EQ(x.categories(k).display_name(),
-                  y.categories(k).display_name());
-        EXPECT_NEAR(x.categories(k).score(), y.categories(k).score(),
-                    kPrecision);
-      }
+  ASSERT_EQ(actual.classifications.size(), expected.classifications.size());
+  for (int i = 0; i < actual.classifications.size(); ++i) {
+    const Classifications& a = actual.classifications[i];
+    const Classifications& b = expected.classifications[i];
+    EXPECT_EQ(a.head_index, b.head_index);
+    EXPECT_EQ(a.head_name, b.head_name);
+    EXPECT_EQ(a.categories.size(), b.categories.size());
+    for (int j = 0; j < a.categories.size(); ++j) {
+      const Category& x = a.categories[j];
+      const Category& y = b.categories[j];
+      EXPECT_EQ(x.index, y.index);
+      EXPECT_NEAR(x.score, y.score, kPrecision);
+      EXPECT_EQ(x.category_name, y.category_name);
+      EXPECT_EQ(x.display_name, y.display_name);
     }
   }
 }
 
 // Generates expected results for "burger.jpg" using kMobileNetFloatWithMetadata
 // with max_results set to 3.
-ClassificationResult GenerateBurgerResults(int64 timestamp) {
-  return ParseTextProtoOrDie<ClassificationResult>(
-      absl::StrFormat(R"pb(classifications {
-                             entries {
-                               categories {
-                                 index: 934
-                                 score: 0.7939592
-                                 category_name: "cheeseburger"
-                               }
-                               categories {
-                                 index: 932
-                                 score: 0.027392805
-                                 category_name: "bagel"
-                               }
-                               categories {
-                                 index: 925
-                                 score: 0.019340655
-                                 category_name: "guacamole"
-                               }
-                               timestamp_ms: %d
-                             }
-                             head_index: 0
-                             head_name: "probability"
-                           })pb",
-                      timestamp));
+ImageClassifierResult GenerateBurgerResults() {
+  ImageClassifierResult result;
+  result.classifications.emplace_back(Classifications{
+      /*categories=*/{
+          {/*index=*/934, /*score=*/0.793959200,
+           /*category_name=*/"cheeseburger"},
+          {/*index=*/932, /*score=*/0.027392805, /*category_name=*/"bagel"},
+          {/*index=*/925, /*score=*/0.019340655,
+           /*category_name=*/"guacamole"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+  return result;
 }
 
 // Generates expected results for "multi_objects.jpg" using
 // kMobileNetFloatWithMetadata with max_results set to 1 and the right bounding
 // box set around the soccer ball.
-ClassificationResult GenerateSoccerBallResults(int64 timestamp) {
-  return ParseTextProtoOrDie<ClassificationResult>(
-      absl::StrFormat(R"pb(classifications {
-                             entries {
-                               categories {
-                                 index: 806
-                                 score: 0.996527493
-                                 category_name: "soccer ball"
-                               }
-                               timestamp_ms: %d
-                             }
-                             head_index: 0
-                             head_name: "probability"
-                           })pb",
-                      timestamp));
+ImageClassifierResult GenerateSoccerBallResults() {
+  ImageClassifierResult result;
+  result.classifications.emplace_back(
+      Classifications{/*categories=*/{{/*index=*/806, /*score=*/0.996527493,
+                                       /*category_name=*/"soccer ball"}},
+                      /*head_index=*/0,
+                      /*head_name=*/"probability"});
+  return result;
 }
 
 // A custom OpResolver only containing the Ops required by the test model.
@@ -260,7 +232,7 @@ TEST_F(CreateTest, FailsWithIllegalCallbackInImageOrVideoMode) {
     options->base_options.model_asset_path =
         JoinPath("./", kTestDataDirectory, kMobileNetQuantizedWithMetadata);
     options->running_mode = running_mode;
-    options->result_callback = [](absl::StatusOr<ClassificationResult>,
+    options->result_callback = [](absl::StatusOr<ImageClassifierResult>,
                                   const Image& image, int64 timestamp_ms) {};
 
     auto image_classifier = ImageClassifier::Create(std::move(options));
@@ -336,7 +308,7 @@ TEST_F(ImageModeTest, SucceedsWithFloatModel) {
 
   MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(image));
 
-  ExpectApproximatelyEqual(results, GenerateBurgerResults(0));
+  ExpectApproximatelyEqual(results, GenerateBurgerResults());
 }
 
 TEST_F(ImageModeTest, SucceedsWithQuantizedModel) {
@@ -355,19 +327,13 @@ TEST_F(ImageModeTest, SucceedsWithQuantizedModel) {
 
   MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(image));
 
-  ExpectApproximatelyEqual(results, ParseTextProtoOrDie<ClassificationResult>(
-                                        R"pb(classifications {
-                                               entries {
-                                                 categories {
-                                                   index: 934
-                                                   score: 0.97265625
-                                                   category_name: "cheeseburger"
-                                                 }
-                                                 timestamp_ms: 0
-                                               }
-                                               head_index: 0
-                                               head_name: "probability"
-                                             })pb"));
+  ImageClassifierResult expected;
+  expected.classifications.emplace_back(
+      Classifications{/*categories=*/{{/*index=*/934, /*score=*/0.97265625,
+                                       /*category_name=*/"cheeseburger"}},
+                      /*head_index=*/0,
+                      /*head_name=*/"probability"});
+  ExpectApproximatelyEqual(results, expected);
 }
 
 TEST_F(ImageModeTest, SucceedsWithMaxResultsOption) {
@@ -383,19 +349,13 @@ TEST_F(ImageModeTest, SucceedsWithMaxResultsOption) {
 
   MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(image));
 
-  ExpectApproximatelyEqual(results, ParseTextProtoOrDie<ClassificationResult>(
-                                        R"pb(classifications {
-                                               entries {
-                                                 categories {
-                                                   index: 934
-                                                   score: 0.7939592
-                                                   category_name: "cheeseburger"
-                                                 }
-                                                 timestamp_ms: 0
-                                               }
-                                               head_index: 0
-                                               head_name: "probability"
-                                             })pb"));
+  ImageClassifierResult expected;
+  expected.classifications.emplace_back(
+      Classifications{/*categories=*/{{/*index=*/934, /*score=*/0.7939592,
+                                       /*category_name=*/"cheeseburger"}},
+                      /*head_index=*/0,
+                      /*head_name=*/"probability"});
+  ExpectApproximatelyEqual(results, expected);
 }
 
 TEST_F(ImageModeTest, SucceedsWithScoreThresholdOption) {
@@ -411,24 +371,15 @@ TEST_F(ImageModeTest, SucceedsWithScoreThresholdOption) {
 
   MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(image));
 
-  ExpectApproximatelyEqual(results, ParseTextProtoOrDie<ClassificationResult>(
-                                        R"pb(classifications {
-                                               entries {
-                                                 categories {
-                                                   index: 934
-                                                   score: 0.7939592
-                                                   category_name: "cheeseburger"
-                                                 }
-                                                 categories {
-                                                   index: 932
-                                                   score: 0.027392805
-                                                   category_name: "bagel"
-                                                 }
-                                                 timestamp_ms: 0
-                                               }
-                                               head_index: 0
-                                               head_name: "probability"
-                                             })pb"));
+  ImageClassifierResult expected;
+  expected.classifications.emplace_back(Classifications{
+      /*categories=*/{
+          {/*index=*/934, /*score=*/0.7939592,
+           /*category_name=*/"cheeseburger"},
+          {/*index=*/932, /*score=*/0.027392805, /*category_name=*/"bagel"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+  ExpectApproximatelyEqual(results, expected);
 }
 
 TEST_F(ImageModeTest, SucceedsWithAllowlistOption) {
@@ -445,29 +396,17 @@ TEST_F(ImageModeTest, SucceedsWithAllowlistOption) {
 
   MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(image));
 
-  ExpectApproximatelyEqual(results, ParseTextProtoOrDie<ClassificationResult>(
-                                        R"pb(classifications {
-                                               entries {
-                                                 categories {
-                                                   index: 934
-                                                   score: 0.7939592
-                                                   category_name: "cheeseburger"
-                                                 }
-                                                 categories {
-                                                   index: 925
-                                                   score: 0.019340655
-                                                   category_name: "guacamole"
-                                                 }
-                                                 categories {
-                                                   index: 963
-                                                   score: 0.0063278517
-                                                   category_name: "meat loaf"
-                                                 }
-                                                 timestamp_ms: 0
-                                               }
-                                               head_index: 0
-                                               head_name: "probability"
-                                             })pb"));
+  ImageClassifierResult expected;
+  expected.classifications.emplace_back(Classifications{
+      /*categories=*/{
+          {/*index=*/934, /*score=*/0.7939592,
+           /*category_name=*/"cheeseburger"},
+          {/*index=*/925, /*score=*/0.019340655, /*category_name=*/"guacamole"},
+          {/*index=*/963, /*score=*/0.0063278517,
+           /*category_name=*/"meat loaf"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+  ExpectApproximatelyEqual(results, expected);
 }
 
 TEST_F(ImageModeTest, SucceedsWithDenylistOption) {
@@ -484,29 +423,17 @@ TEST_F(ImageModeTest, SucceedsWithDenylistOption) {
 
   MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(image));
 
-  ExpectApproximatelyEqual(results, ParseTextProtoOrDie<ClassificationResult>(
-                                        R"pb(classifications {
-                                               entries {
-                                                 categories {
-                                                   index: 934
-                                                   score: 0.7939592
-                                                   category_name: "cheeseburger"
-                                                 }
-                                                 categories {
-                                                   index: 925
-                                                   score: 0.019340655
-                                                   category_name: "guacamole"
-                                                 }
-                                                 categories {
-                                                   index: 963
-                                                   score: 0.0063278517
-                                                   category_name: "meat loaf"
-                                                 }
-                                                 timestamp_ms: 0
-                                               }
-                                               head_index: 0
-                                               head_name: "probability"
-                                             })pb"));
+  ImageClassifierResult expected;
+  expected.classifications.emplace_back(Classifications{
+      /*categories=*/{
+          {/*index=*/934, /*score=*/0.7939592,
+           /*category_name=*/"cheeseburger"},
+          {/*index=*/925, /*score=*/0.019340655, /*category_name=*/"guacamole"},
+          {/*index=*/963, /*score=*/0.0063278517,
+           /*category_name=*/"meat loaf"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+  ExpectApproximatelyEqual(results, expected);
 }
 
 TEST_F(ImageModeTest, SucceedsWithScoreCalibration) {
@@ -525,19 +452,13 @@ TEST_F(ImageModeTest, SucceedsWithScoreCalibration) {
 
   MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(image));
 
-  ExpectApproximatelyEqual(results, ParseTextProtoOrDie<ClassificationResult>(
-                                        R"pb(classifications {
-                                               entries {
-                                                 categories {
-                                                   index: 934
-                                                   score: 0.725648628
-                                                   category_name: "cheeseburger"
-                                                 }
-                                                 timestamp_ms: 0
-                                               }
-                                               head_index: 0
-                                               head_name: "probability"
-                                             })pb"));
+  ImageClassifierResult expected;
+  expected.classifications.emplace_back(
+      Classifications{/*categories=*/{{/*index=*/934, /*score=*/0.725648628,
+                                       /*category_name=*/"cheeseburger"}},
+                      /*head_index=*/0,
+                      /*head_name=*/"probability"});
+  ExpectApproximatelyEqual(results, expected);
 }
 
 TEST_F(ImageModeTest, SucceedsWithRegionOfInterest) {
@@ -557,7 +478,7 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterest) {
   MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(
                                             image, image_processing_options));
 
-  ExpectApproximatelyEqual(results, GenerateSoccerBallResults(0));
+  ExpectApproximatelyEqual(results, GenerateSoccerBallResults());
 }
 
 TEST_F(ImageModeTest, SucceedsWithRotation) {
@@ -581,29 +502,17 @@ TEST_F(ImageModeTest, SucceedsWithRotation) {
   // Results differ slightly from the non-rotated image, but that's expected
   // as models are very sensitive to the slightest numerical differences
   // introduced by the rotation and JPG encoding.
-  ExpectApproximatelyEqual(results, ParseTextProtoOrDie<ClassificationResult>(
-                                        R"pb(classifications {
-                                               entries {
-                                                 categories {
-                                                   index: 934
-                                                   score: 0.6371766
-                                                   category_name: "cheeseburger"
-                                                 }
-                                                 categories {
-                                                   index: 963
-                                                   score: 0.049443405
-                                                   category_name: "meat loaf"
-                                                 }
-                                                 categories {
-                                                   index: 925
-                                                   score: 0.047918003
-                                                   category_name: "guacamole"
-                                                 }
-                                                 timestamp_ms: 0
-                                               }
-                                               head_index: 0
-                                               head_name: "probability"
-                                             })pb"));
+  ImageClassifierResult expected;
+  expected.classifications.emplace_back(Classifications{
+      /*categories=*/{
+          {/*index=*/934, /*score=*/0.6371766,
+           /*category_name=*/"cheeseburger"},
+          {/*index=*/963, /*score=*/0.049443405, /*category_name=*/"meat loaf"},
+          {/*index=*/925, /*score=*/0.047918003,
+           /*category_name=*/"guacamole"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+  ExpectApproximatelyEqual(results, expected);
 }
 
 TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
@@ -624,20 +533,13 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
   MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(
                                             image, image_processing_options));
 
-  ExpectApproximatelyEqual(results,
-                           ParseTextProtoOrDie<ClassificationResult>(
-                               R"pb(classifications {
-                                      entries {
-                                        categories {
-                                          index: 560
-                                          score: 0.6522213
-                                          category_name: "folding chair"
-                                        }
-                                        timestamp_ms: 0
-                                      }
-                                      head_index: 0
-                                      head_name: "probability"
-                                    })pb"));
+  ImageClassifierResult expected;
+  expected.classifications.emplace_back(
+      Classifications{/*categories=*/{{/*index=*/560, /*score=*/0.6522213,
+                                       /*category_name=*/"folding chair"}},
+                      /*head_index=*/0,
+                      /*head_name=*/"probability"});
+  ExpectApproximatelyEqual(results, expected);
 }
 
 // Testing all these once with ImageClassifier.
@@ -774,7 +676,7 @@ TEST_F(VideoModeTest, Succeeds) {
   for (int i = 0; i < iterations; ++i) {
     MP_ASSERT_OK_AND_ASSIGN(auto results,
                             image_classifier->ClassifyForVideo(image, i));
-    ExpectApproximatelyEqual(results, GenerateBurgerResults(i));
+    ExpectApproximatelyEqual(results, GenerateBurgerResults());
   }
   MP_ASSERT_OK(image_classifier->Close());
 }
@@ -800,7 +702,7 @@ TEST_F(VideoModeTest, SucceedsWithRegionOfInterest) {
     MP_ASSERT_OK_AND_ASSIGN(
         auto results,
         image_classifier->ClassifyForVideo(image, i, image_processing_options));
-    ExpectApproximatelyEqual(results, GenerateSoccerBallResults(i));
+    ExpectApproximatelyEqual(results, GenerateSoccerBallResults());
   }
   MP_ASSERT_OK(image_classifier->Close());
 }
@@ -815,7 +717,7 @@ TEST_F(LiveStreamModeTest, FailsWithCallingWrongMethod) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kMobileNetFloatWithMetadata);
   options->running_mode = core::RunningMode::LIVE_STREAM;
-  options->result_callback = [](absl::StatusOr<ClassificationResult>,
+  options->result_callback = [](absl::StatusOr<ImageClassifierResult>,
                                 const Image& image, int64 timestamp_ms) {};
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
@@ -846,7 +748,7 @@ TEST_F(LiveStreamModeTest, FailsWithOutOfOrderInputTimestamps) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kMobileNetFloatWithMetadata);
   options->running_mode = core::RunningMode::LIVE_STREAM;
-  options->result_callback = [](absl::StatusOr<ClassificationResult>,
+  options->result_callback = [](absl::StatusOr<ImageClassifierResult>,
                                 const Image& image, int64 timestamp_ms) {};
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
@@ -864,7 +766,7 @@ TEST_F(LiveStreamModeTest, FailsWithOutOfOrderInputTimestamps) {
 }
 
 struct LiveStreamModeResults {
-  ClassificationResult classification_result;
+  ImageClassifierResult classification_result;
   std::pair<int, int> image_size;
   int64 timestamp_ms;
 };
@@ -881,7 +783,7 @@ TEST_F(LiveStreamModeTest, Succeeds) {
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->classifier_options.max_results = 3;
   options->result_callback =
-      [&results](absl::StatusOr<ClassificationResult> classification_result,
+      [&results](absl::StatusOr<ImageClassifierResult> classification_result,
                  const Image& image, int64 timestamp_ms) {
         MP_ASSERT_OK(classification_result.status());
         results.push_back(
@@ -908,7 +810,7 @@ TEST_F(LiveStreamModeTest, Succeeds) {
     EXPECT_EQ(result.image_size.first, image.width());
     EXPECT_EQ(result.image_size.second, image.height());
     ExpectApproximatelyEqual(result.classification_result,
-                             GenerateBurgerResults(timestamp_ms));
+                             GenerateBurgerResults());
   }
 }
 
@@ -924,7 +826,7 @@ TEST_F(LiveStreamModeTest, SucceedsWithRegionOfInterest) {
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->classifier_options.max_results = 1;
   options->result_callback =
-      [&results](absl::StatusOr<ClassificationResult> classification_result,
+      [&results](absl::StatusOr<ImageClassifierResult> classification_result,
                  const Image& image, int64 timestamp_ms) {
         MP_ASSERT_OK(classification_result.status());
         results.push_back(
@@ -955,7 +857,7 @@ TEST_F(LiveStreamModeTest, SucceedsWithRegionOfInterest) {
     EXPECT_EQ(result.image_size.first, image.width());
     EXPECT_EQ(result.image_size.second, image.height());
     ExpectApproximatelyEqual(result.classification_result,
-                             GenerateSoccerBallResults(timestamp_ms));
+                             GenerateSoccerBallResults());
   }
 }
 

@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
@@ -33,6 +33,10 @@ namespace mediapipe {
 namespace tasks {
 namespace vision {
 namespace image_classifier {
+
+// Alias the shared ClassificationResult struct as result type.
+using ImageClassifierResult =
+    ::mediapipe::tasks::components::containers::ClassificationResult;
 
 // The options for configuring a Mediapipe image classifier task.
 struct ImageClassifierOptions {
@@ -56,9 +60,8 @@ struct ImageClassifierOptions {
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
   // to RunningMode::LIVE_STREAM.
-  std::function<void(
-      absl::StatusOr<components::containers::proto::ClassificationResult>,
-      const Image&, int64)>
+  std::function<void(absl::StatusOr<ImageClassifierResult>, const Image&,
+                     int64)>
       result_callback = nullptr;
 };
 
@@ -122,7 +125,7 @@ class ImageClassifier : tasks::vision::core::BaseVisionTaskApi {
   // The image can be of any size with format RGB or RGBA.
   // TODO: describe exact preprocessing steps once
   // YUVToImageCalculator is integrated.
-  absl::StatusOr<components::containers::proto::ClassificationResult> Classify(
+  absl::StatusOr<ImageClassifierResult> Classify(
       mediapipe::Image image,
       std::optional<core::ImageProcessingOptions> image_processing_options =
           std::nullopt);
@@ -144,10 +147,10 @@ class ImageClassifier : tasks::vision::core::BaseVisionTaskApi {
   // The image can be of any size with format RGB or RGBA. It's required to
   // provide the video frame's timestamp (in milliseconds). The input timestamps
   // must be monotonically increasing.
-  absl::StatusOr<components::containers::proto::ClassificationResult>
-  ClassifyForVideo(mediapipe::Image image, int64 timestamp_ms,
-                   std::optional<core::ImageProcessingOptions>
-                       image_processing_options = std::nullopt);
+  absl::StatusOr<ImageClassifierResult> ClassifyForVideo(
+      mediapipe::Image image, int64 timestamp_ms,
+      std::optional<core::ImageProcessingOptions> image_processing_options =
+          std::nullopt);
 
   // Sends live image data to image classification, and the results will be
   // available via the "result_callback" provided in the ImageClassifierOptions.
@@ -170,7 +173,7 @@ class ImageClassifier : tasks::vision::core::BaseVisionTaskApi {
   // increasing.
   //
   // The "result_callback" provides:
-  //   - The classification results as a ClassificationResult object.
+  //   - The classification results as an ImageClassifierResult object.
   //   - The const reference to the corresponding input image that the image
   //     classifier runs on. Note that the const reference to the image will no
   //     longer be valid when the callback returns. To access the image data

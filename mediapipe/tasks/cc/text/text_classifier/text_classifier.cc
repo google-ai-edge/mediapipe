@@ -24,6 +24,7 @@ limitations under the License.
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/packet.h"
+#include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/task_api_factory.h"
@@ -37,12 +38,13 @@ namespace text_classifier {
 
 namespace {
 
+using ::mediapipe::tasks::components::containers::ConvertToClassificationResult;
 using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 
 constexpr char kTextStreamName[] = "text_in";
 constexpr char kTextTag[] = "TEXT";
-constexpr char kClassificationResultStreamName[] = "classification_result_out";
-constexpr char kClassificationResultTag[] = "CLASSIFICATION_RESULT";
+constexpr char kClassificationsStreamName[] = "classifications_out";
+constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
 constexpr char kSubgraphTypeName[] =
     "mediapipe.tasks.text.text_classifier.TextClassifierGraph";
 
@@ -54,9 +56,8 @@ CalculatorGraphConfig CreateGraphConfig(
   auto& subgraph = graph.AddNode(kSubgraphTypeName);
   subgraph.GetOptions<proto::TextClassifierGraphOptions>().Swap(options.get());
   graph.In(kTextTag).SetName(kTextStreamName) >> subgraph.In(kTextTag);
-  subgraph.Out(kClassificationResultTag)
-          .SetName(kClassificationResultStreamName) >>
-      graph.Out(kClassificationResultTag);
+  subgraph.Out(kClassificationsTag).SetName(kClassificationsStreamName) >>
+      graph.Out(kClassificationsTag);
   return graph.GetConfig();
 }
 
@@ -88,14 +89,14 @@ absl::StatusOr<std::unique_ptr<TextClassifier>> TextClassifier::Create(
       std::move(options->base_options.op_resolver));
 }
 
-absl::StatusOr<ClassificationResult> TextClassifier::Classify(
+absl::StatusOr<TextClassifierResult> TextClassifier::Classify(
     absl::string_view text) {
   ASSIGN_OR_RETURN(
       auto output_packets,
       runner_->Process(
           {{kTextStreamName, MakePacket<std::string>(std::string(text))}}));
-  return output_packets[kClassificationResultStreamName]
-      .Get<ClassificationResult>();
+  return ConvertToClassificationResult(
+      output_packets[kClassificationsStreamName].Get<ClassificationResult>());
 }
 
 }  // namespace text_classifier
