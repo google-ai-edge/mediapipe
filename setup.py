@@ -121,8 +121,10 @@ def _add_mp_init_files():
   mp_dir_init_file = open(MP_DIR_INIT_PY, 'a')
   mp_dir_init_file.writelines([
       '\n', 'from mediapipe.python import *\n',
-      'import mediapipe.python.solutions as solutions', '\n\n',
-      '__version__ = \'{}\''.format(__version__), '\n'
+      'import mediapipe.python.solutions as solutions \n',
+      'import mediapipe.tasks.python as tasks\n', '\n\n', 'del framework\n',
+      'del gpu\n', 'del modules\n', 'del python\n', 'del mediapipe\n',
+      'del util\n', '__version__ = \'{}\''.format(__version__), '\n'
   ])
   mp_dir_init_file.close()
 
