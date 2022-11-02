@@ -45,12 +45,22 @@ namespace processors {
 //   TENSORS - std::vector<Tensor>
 //     The output tensors of an InferenceCalculator.
 //   TIMESTAMPS - std::vector<Timestamp> @Optional
-//     The collection of timestamps that a single ClassificationResult should
-//     aggregate. This is mostly useful for classifiers working on time series,
-//     e.g. audio or video classification.
+//     The collection of the timestamps that this calculator should aggregate.
+//     This stream is optional: if provided then the TIMESTAMPED_CLASSIFICATIONS
+//     output is used for results. Otherwise as no timestamp aggregation is
+//     required the CLASSIFICATIONS output is used for results.
 // Outputs:
-//   CLASSIFICATION_RESULT - ClassificationResult
-//     The output aggregated classification results.
+//   CLASSIFICATIONS - ClassificationResult @Optional
+//     The classification results aggregated by head. Must be connected if the
+//     TIMESTAMPS input is not connected, as it signals that timestamp
+//     aggregation is not required.
+//   TIMESTAMPED_CLASSIFICATIONS - std::vector<ClassificationResult> @Optional
+//     The classification result aggregated by timestamp, then by head. Must be
+//     connected if the TIMESTAMPS input is connected, as it signals that
+//     timestamp aggregation is required.
+//   // TODO: remove output once migration is over.
+//   CLASSIFICATION_RESULT - (DEPRECATED) ClassificationResult @Optional
+//     The aggregated classification result.
 absl::Status ConfigureClassificationPostprocessingGraph(
     const tasks::core::ModelResources& model_resources,
     const proto::ClassifierOptions& classifier_options,
