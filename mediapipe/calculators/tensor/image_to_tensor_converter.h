@@ -27,12 +27,6 @@ struct Size {
   int height;
 };
 
-// Pixel extrapolation method.
-// When converting image to tensor it may happen that tensor needs to read
-// pixels outside image boundaries. Border mode helps to specify how such pixels
-// will be calculated.
-enum class BorderMode { kZero, kReplicate };
-
 // Converts image to tensor.
 class ImageToTensorConverter {
  public:

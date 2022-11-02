@@ -16,6 +16,8 @@
 
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/framework/port/parse_text_proto.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe {
@@ -23,6 +25,7 @@ namespace {
 
 using ::testing::ElementsAre;
 using ::testing::ElementsAreArray;
+using ::testing::HasSubstr;
 
 testing::Matcher<RotatedRect> EqRotatedRect(float width, float height,
                                             float center_x, float center_y,
@@ -155,6 +158,96 @@ TEST(GetValueRangeTransformation, FloatToPixel) {
   MP_ASSERT_OK(status_or_value);
   EXPECT_THAT(status_or_value.value(),
               EqValueTransformation(/*scale=*/255.0f, /*offset=*/0.0f));
+}
+
+constexpr char kValidFloatProto[] = R"(
+  output_tensor_float_range { min: 0.0 max: 1.0 }
+  output_tensor_width: 100
+  output_tensor_height: 200
+)";
+
+constexpr char kValidIntProto[] = R"(
+  output_tensor_float_range { min: 0 max: 255 }
+  output_tensor_width: 100
+  output_tensor_height: 200
+)";
+
+TEST(ValidateOptionOutputDims, ValidProtos) {
+  const auto float_options =
+      mediapipe::ParseTextProtoOrDie<mediapipe::ImageToTensorCalculatorOptions>(
+          kValidFloatProto);
+  MP_EXPECT_OK(ValidateOptionOutputDims(float_options));
+}
+
+TEST(ValidateOptionOutputDims, EmptyProto) {
+  mediapipe::ImageToTensorCalculatorOptions options;
+  // No output tensor range set.
+  EXPECT_THAT(ValidateOptionOutputDims(options),
+              StatusIs(absl::StatusCode::kInternal,
+                       HasSubstr("Output tensor range is required")));
+
+  // Invalid output float tensor range.
+  options.mutable_output_tensor_float_range()->set_min(1.0);
+  options.mutable_output_tensor_float_range()->set_max(0.0);
+  EXPECT_THAT(
+      ValidateOptionOutputDims(options),
+      StatusIs(absl::StatusCode::kInternal,
+               HasSubstr("Valid output float tensor range is required")));
+
+  // Output width/height is not set.
+  options.mutable_output_tensor_float_range()->set_min(0.0);
+  options.mutable_output_tensor_float_range()->set_max(1.0);
+  EXPECT_THAT(ValidateOptionOutputDims(options),
+              StatusIs(absl::StatusCode::kInternal,
+                       HasSubstr("Valid output tensor width is required")));
+}
+
+TEST(GetOutputTensorParams, SetValues) {
+  // Test int range with ImageToTensorCalculatorOptions.
+  const auto int_options =
+      mediapipe::ParseTextProtoOrDie<mediapipe::ImageToTensorCalculatorOptions>(
+          kValidIntProto);
+  const auto params2 = GetOutputTensorParams(int_options);
+  EXPECT_EQ(params2.range_min, 0.0f);
+  EXPECT_EQ(params2.range_max, 255.0f);
+  EXPECT_EQ(params2.output_batch, 1);
+  EXPECT_EQ(params2.output_width, 100);
+  EXPECT_EQ(params2.output_height, 200);
+}
+
+TEST(GetBorderMode, GetBorderMode) {
+  // Default to REPLICATE.
+  auto border_mode =
+      mediapipe::ImageToTensorCalculatorOptions_BorderMode_BORDER_UNSPECIFIED;
+  EXPECT_EQ(BorderMode::kReplicate, GetBorderMode(border_mode));
+
+  // Set to ZERO.
+  border_mode =
+      mediapipe::ImageToTensorCalculatorOptions_BorderMode_BORDER_ZERO;
+  EXPECT_EQ(BorderMode::kZero, GetBorderMode(border_mode));
+}
+
+TEST(GetOutputTensorType, GetOutputTensorType) {
+  OutputTensorParams params;
+  // Return float32 when GPU is enabled.
+  EXPECT_EQ(Tensor::ElementType::kFloat32,
+            GetOutputTensorType(/*uses_gpu=*/true, params));
+
+  // Return float32 when is_float_output is set to true.
+  params.is_float_output = true;
+  EXPECT_EQ(Tensor::ElementType::kFloat32,
+            GetOutputTensorType(/*uses_gpu=*/false, params));
+
+  // Return int8 when range_min is negative.
+  params.is_float_output = false;
+  params.range_min = -255.0f;
+  EXPECT_EQ(Tensor::ElementType::kInt8,
+            GetOutputTensorType(/*uses_gpu=*/false, params));
+
+  // Return 8int8 when range_min is non-negative.
+  params.range_min = 0.0f;
+  EXPECT_EQ(Tensor::ElementType::kUInt8,
+            GetOutputTensorType(/*uses_gpu=*/false, params));
 }
 
 }  // namespace

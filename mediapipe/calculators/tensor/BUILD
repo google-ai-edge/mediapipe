@@ -1294,13 +1294,30 @@ cc_library(
     name = "image_to_tensor_utils",
     srcs = ["image_to_tensor_utils.cc"],
     hdrs = ["image_to_tensor_utils.h"],
+    copts = select({
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
     deps = [
+        ":image_to_tensor_calculator_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/types:optional",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:statusor",
-        "@com_google_absl//absl/types:optional",
-    ],
+        "//mediapipe/gpu:gpu_origin_cc_proto",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": ["//mediapipe/gpu:gpu_buffer"],
+    }),
 )
 
 cc_test(
@@ -1310,6 +1327,8 @@ cc_test(
         ":image_to_tensor_utils",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
     ],
 )
 

@@ -16,7 +16,9 @@
 
 #include <array>
 
+#include "absl/status/status.h"
 #include "absl/types/optional.h"
+#include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/statusor.h"
 
@@ -213,5 +215,69 @@ void GetTransposedRotatedSubRectToRectTransformMatrix(
   matrix[14] = 0.0f;
   matrix[15] = 1.0f;
 }
+
+BorderMode GetBorderMode(
+    const mediapipe::ImageToTensorCalculatorOptions::BorderMode& mode) {
+  switch (mode) {
+    case mediapipe::
+        ImageToTensorCalculatorOptions_BorderMode_BORDER_UNSPECIFIED:
+      return BorderMode::kReplicate;
+    case mediapipe::ImageToTensorCalculatorOptions_BorderMode_BORDER_ZERO:
+      return BorderMode::kZero;
+    case mediapipe::ImageToTensorCalculatorOptions_BorderMode_BORDER_REPLICATE:
+      return BorderMode::kReplicate;
+  }
+}
+
+Tensor::ElementType GetOutputTensorType(bool uses_gpu,
+                                        const OutputTensorParams& params) {
+  if (!uses_gpu) {
+    if (params.is_float_output) {
+      return Tensor::ElementType::kFloat32;
+    }
+    if (params.range_min < 0) {
+      return Tensor::ElementType::kInt8;
+    } else {
+      return Tensor::ElementType::kUInt8;
+    }
+  }
+  // Always use float32 when GPU is enabled.
+  return Tensor::ElementType::kFloat32;
+}
+
+int GetNumOutputChannels(const mediapipe::Image& image) {
+#if !MEDIAPIPE_DISABLE_GPU
+#if MEDIAPIPE_METAL_ENABLED
+  if (image.UsesGpu()) {
+    return 4;
+  }
+#endif  // MEDIAPIPE_METAL_ENABLED
+#endif  // !MEDIAPIPE_DISABLE_GPU
+  // All of the processors except for Metal expect 3 channels.
+  return 3;
+}
+
+absl::StatusOr<std::shared_ptr<const mediapipe::Image>> GetInputImage(
+    const api2::Packet<api2::OneOf<Image, mediapipe::ImageFrame>>&
+        image_packet) {
+  return image_packet.Visit(
+      [&image_packet](const mediapipe::Image&) {
+        return SharedPtrWithPacket<mediapipe::Image>(image_packet);
+      },
+      [&image_packet](const mediapipe::ImageFrame&) {
+        return std::make_shared<const mediapipe::Image>(
+            std::const_pointer_cast<mediapipe::ImageFrame>(
+                SharedPtrWithPacket<mediapipe::ImageFrame>(image_packet)));
+      });
+}
+
+#if !MEDIAPIPE_DISABLE_GPU
+absl::StatusOr<std::shared_ptr<const mediapipe::Image>> GetInputImage(
+    const api2::Packet<mediapipe::GpuBuffer>& image_gpu_packet) {
+  // A shallow copy is okay since the resulting 'image' object is local in
+  // Process(), and thus never outlives 'input'.
+  return std::make_shared<const mediapipe::Image>(image_gpu_packet.Get());
+}
+#endif  // !MEDIAPIPE_DISABLE_GPU
 
 }  // namespace mediapipe
