@@ -90,7 +90,7 @@ public class AndroidPacketCreator extends PacketCreator {
       int height = image.getHeight();
       return createImage(buffer, width, height, numChannels);
     }
-    if (properties.getImageFormat() == MPImage.STORAGE_TYPE_BITMAP) {
+    if (properties.getStorageType() == MPImage.STORAGE_TYPE_BITMAP) {
       Bitmap bitmap = BitmapExtractor.extract(image);
       if (bitmap.getConfig() != Bitmap.Config.ARGB_8888) {
         throw new UnsupportedOperationException("bitmap must use ARGB_8888 config.");
@@ -100,7 +100,7 @@ public class AndroidPacketCreator extends PacketCreator {
 
     // Unsupported type.
     throw new UnsupportedOperationException(
-        "Unsupported Image container type: " + properties.getImageFormat());
+        "Unsupported Image container type: " + properties.getStorageType());
   }
 
   /**
