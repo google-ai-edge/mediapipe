@@ -17,7 +17,6 @@ import dataclasses
 
 from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
-# TODO: Import MPImage directly one we have an alias
 from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
 from mediapipe.tasks.cc.text.text_classifier.proto import text_classifier_graph_options_pb2
 from mediapipe.tasks.python.components.containers import classifications
