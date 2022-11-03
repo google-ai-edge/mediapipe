@@ -21,9 +21,12 @@ from absl.testing import absltest
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer
 from mediapipe.tasks.python.test import test_utils
 
+_TEST_DATA_DIR = 'mediapipe/tasks/testdata/metadata'
+
 _IMAGE_CLASSIFIER_MODEL = test_utils.get_test_data_path(
-    'mobilenet_v1_0.25_224_1_default_1.tflite')
-_SCORE_CALIBRATION_FILE = test_utils.get_test_data_path('score_calibration.txt')
+    os.path.join(_TEST_DATA_DIR, 'mobilenet_v1_0.25_224_1_default_1.tflite'))
+_SCORE_CALIBRATION_FILE = test_utils.get_test_data_path(
+    os.path.join(_TEST_DATA_DIR, 'score_calibration.txt'))
 
 
 class LabelsTest(absltest.TestCase):
@@ -85,8 +88,7 @@ class ScoreCalibrationTest(absltest.TestCase):
       with self.assertRaisesRegex(
           ValueError,
           'Expected empty lines or 3 or 4 parameters per line in score '
-          'calibration file, but got 2.'
-      ):
+          'calibration file, but got 2.'):
         metadata_writer.ScoreCalibration.create_from_file(
             metadata_writer.ScoreCalibration.transformation_types.LOG,
             test_file)

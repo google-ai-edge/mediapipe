@@ -42,13 +42,15 @@ def test_srcdir():
     raise RuntimeError("Missing TEST_SRCDIR environment.")
 
 
-def get_test_data_path(file_or_dirname: str) -> str:
+def get_test_data_path(file_or_dirname_path: str) -> str:
   """Returns full test data path."""
   for (directory, subdirs, files) in os.walk(test_srcdir()):
     for f in subdirs + files:
-      if f.endswith(file_or_dirname):
-        return os.path.join(directory, f)
-  raise ValueError("No %s in test directory" % file_or_dirname)
+      path = os.path.join(directory, f)
+      if path.endswith(file_or_dirname_path):
+        return path
+  raise ValueError("No %s in test directory: %s." %
+                   (file_or_dirname_path, test_srcdir()))
 
 
 def create_calibration_file(file_dir: str,

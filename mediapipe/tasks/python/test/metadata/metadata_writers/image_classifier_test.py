@@ -14,6 +14,8 @@
 # ==============================================================================
 """Tests for metadata_writer.image_classifier."""
 
+import os
+
 from absl.testing import absltest
 from absl.testing import parameterized
 
@@ -23,18 +25,25 @@ from mediapipe.tasks.python.metadata.metadata_writers import image_classifier
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer
 from mediapipe.tasks.python.test import test_utils
 
+_TEST_DATA_DIR = "mediapipe/tasks/testdata/metadata"
 _FLOAT_MODEL = test_utils.get_test_data_path(
-    "mobilenet_v2_1.0_224_without_metadata.tflite")
+    os.path.join(_TEST_DATA_DIR,
+                 "mobilenet_v2_1.0_224_without_metadata.tflite"))
 _QUANT_MODEL = test_utils.get_test_data_path(
-    "mobilenet_v2_1.0_224_quant_without_metadata.tflite")
-_LABEL_FILE = test_utils.get_test_data_path("labels.txt")
-_SCORE_CALIBRATION_FILE = test_utils.get_test_data_path("score_calibration.txt")
+    os.path.join(_TEST_DATA_DIR,
+                 "mobilenet_v2_1.0_224_quant_without_metadata.tflite"))
+_LABEL_FILE = test_utils.get_test_data_path(
+    os.path.join(_TEST_DATA_DIR, "labels.txt"))
+_SCORE_CALIBRATION_FILE = test_utils.get_test_data_path(
+    os.path.join(_TEST_DATA_DIR, "score_calibration.txt"))
 _SCORE_CALIBRATION_FILENAME = "score_calibration.txt"
 _DEFAULT_SCORE_CALIBRATION_VALUE = 0.2
 _NORM_MEAN = 127.5
 _NORM_STD = 127.5
-_FLOAT_JSON = test_utils.get_test_data_path("mobilenet_v2_1.0_224.json")
-_QUANT_JSON = test_utils.get_test_data_path("mobilenet_v2_1.0_224_quant.json")
+_FLOAT_JSON = test_utils.get_test_data_path(
+    os.path.join(_TEST_DATA_DIR, "mobilenet_v2_1.0_224.json"))
+_QUANT_JSON = test_utils.get_test_data_path(
+    os.path.join(_TEST_DATA_DIR, "mobilenet_v2_1.0_224_quant.json"))
 
 
 class ImageClassifierTest(parameterized.TestCase):

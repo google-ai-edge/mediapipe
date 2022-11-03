@@ -14,6 +14,7 @@
 """Tests for image segmenter."""
 
 import enum
+import os
 from typing import List
 from unittest import mock
 
@@ -43,6 +44,7 @@ _IMAGE_FILE = 'segmentation_input_rotation0.jpg'
 _SEGMENTATION_FILE = 'segmentation_golden_rotation0.png'
 _MASK_MAGNIFICATION_FACTOR = 10
 _MASK_SIMILARITY_THRESHOLD = 0.98
+_TEST_DATA_DIR = 'mediapipe/tasks/testdata/vision'
 
 
 def _similar_to_uint8_mask(actual_mask, expected_mask):
@@ -71,12 +73,16 @@ class ImageSegmenterTest(parameterized.TestCase):
     super().setUp()
     # Load the test input image.
     self.test_image = _Image.create_from_file(
-        test_utils.get_test_data_path(_IMAGE_FILE))
+        test_utils.get_test_data_path(
+            os.path.join(_TEST_DATA_DIR, _IMAGE_FILE)))
     # Loads ground truth segmentation file.
     gt_segmentation_data = cv2.imread(
-        test_utils.get_test_data_path(_SEGMENTATION_FILE), cv2.IMREAD_GRAYSCALE)
+        test_utils.get_test_data_path(
+            os.path.join(_TEST_DATA_DIR, _SEGMENTATION_FILE)),
+        cv2.IMREAD_GRAYSCALE)
     self.test_seg_image = _Image(_ImageFormat.GRAY8, gt_segmentation_data)
-    self.model_path = test_utils.get_test_data_path(_MODEL_FILE)
+    self.model_path = test_utils.get_test_data_path(
+        os.path.join(_TEST_DATA_DIR, _MODEL_FILE))
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
     # Creates with default option and valid model file successfully.

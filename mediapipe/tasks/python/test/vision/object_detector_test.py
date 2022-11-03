@@ -14,6 +14,7 @@
 """Tests for object detector."""
 
 import enum
+import os
 from unittest import mock
 
 from absl.testing import absltest
@@ -87,6 +88,7 @@ _ALLOW_LIST = ['cat', 'dog']
 _DENY_LIST = ['cat']
 _SCORE_THRESHOLD = 0.3
 _MAX_RESULTS = 3
+_TEST_DATA_DIR = 'mediapipe/tasks/testdata/vision'
 
 
 class ModelFileType(enum.Enum):
@@ -99,8 +101,10 @@ class ObjectDetectorTest(parameterized.TestCase):
   def setUp(self):
     super().setUp()
     self.test_image = _Image.create_from_file(
-        test_utils.get_test_data_path(_IMAGE_FILE))
-    self.model_path = test_utils.get_test_data_path(_MODEL_FILE)
+        test_utils.get_test_data_path(
+            os.path.join(_TEST_DATA_DIR, _IMAGE_FILE)))
+    self.model_path = test_utils.get_test_data_path(
+        os.path.join(_TEST_DATA_DIR, _MODEL_FILE))
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
     # Creates with default option and valid model file successfully.
@@ -394,6 +398,7 @@ class ObjectDetectorTest(parameterized.TestCase):
     for timestamp in range(0, 300, 30):
       detector.detect_async(self.test_image, timestamp)
     detector.close()
+
 
 if __name__ == '__main__':
   absltest.main()

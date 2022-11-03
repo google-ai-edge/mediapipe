@@ -14,10 +14,12 @@
 """Tests for image classifier."""
 
 import enum
+import os
 from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
+
 import numpy as np
 
 from mediapipe.python._framework_bindings import image
@@ -48,6 +50,7 @@ _ALLOW_LIST = ['cheeseburger', 'guacamole']
 _DENY_LIST = ['cheeseburger']
 _SCORE_THRESHOLD = 0.5
 _MAX_RESULTS = 3
+_TEST_DATA_DIR = 'mediapipe/tasks/testdata/vision'
 
 
 def _generate_empty_results(timestamp_ms: int) -> _ClassificationResult:
@@ -124,8 +127,10 @@ class ImageClassifierTest(parameterized.TestCase):
   def setUp(self):
     super().setUp()
     self.test_image = _Image.create_from_file(
-        test_utils.get_test_data_path(_IMAGE_FILE))
-    self.model_path = test_utils.get_test_data_path(_MODEL_FILE)
+        test_utils.get_test_data_path(
+            os.path.join(_TEST_DATA_DIR, _IMAGE_FILE)))
+    self.model_path = test_utils.get_test_data_path(
+        os.path.join(_TEST_DATA_DIR, _MODEL_FILE))
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
     # Creates with default option and valid model file successfully.
@@ -220,7 +225,8 @@ class ImageClassifierTest(parameterized.TestCase):
     with _ImageClassifier.create_from_options(options) as classifier:
       # Load the test image.
       test_image = _Image.create_from_file(
-          test_utils.get_test_data_path('multi_objects.jpg'))
+          test_utils.get_test_data_path(
+              os.path.join(_TEST_DATA_DIR, 'multi_objects.jpg')))
       # NormalizedRect around the soccer ball.
       roi = _NormalizedRect(
           x_center=0.532, y_center=0.521, width=0.164, height=0.427)
@@ -409,7 +415,8 @@ class ImageClassifierTest(parameterized.TestCase):
     with _ImageClassifier.create_from_options(options) as classifier:
       # Load the test image.
       test_image = _Image.create_from_file(
-          test_utils.get_test_data_path('multi_objects.jpg'))
+          test_utils.get_test_data_path(
+              os.path.join(_TEST_DATA_DIR, 'multi_objects.jpg')))
       # NormalizedRect around the soccer ball.
       roi = _NormalizedRect(
           x_center=0.532, y_center=0.521, width=0.164, height=0.427)
@@ -482,7 +489,8 @@ class ImageClassifierTest(parameterized.TestCase):
   def test_classify_async_succeeds_with_region_of_interest(self):
     # Load the test image.
     test_image = _Image.create_from_file(
-        test_utils.get_test_data_path('multi_objects.jpg'))
+        test_utils.get_test_data_path(
+            os.path.join(_TEST_DATA_DIR, 'multi_objects.jpg')))
     # NormalizedRect around the soccer ball.
     roi = _NormalizedRect(
         x_center=0.532, y_center=0.521, width=0.164, height=0.427)

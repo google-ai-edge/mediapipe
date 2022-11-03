@@ -14,6 +14,7 @@
 # ==============================================================================
 """Tests for metadata info classes."""
 
+import os
 import tempfile
 
 from absl.testing import absltest
@@ -26,13 +27,15 @@ from mediapipe.tasks.python.metadata import metadata as _metadata
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_info
 from mediapipe.tasks.python.test import test_utils
 
-_SCORE_CALIBRATION_FILE = test_utils.get_test_data_path("score_calibration.txt")
+_TEST_DATA_DIR = "mediapipe/tasks/testdata/metadata"
+_SCORE_CALIBRATION_FILE = test_utils.get_test_data_path(
+    os.path.join(_TEST_DATA_DIR, "score_calibration.txt"))
 
 
 class GeneralMdTest(absltest.TestCase):
 
   _EXPECTED_GENERAL_META_JSON = test_utils.get_test_data_path(
-      "general_meta.json")
+      os.path.join(_TEST_DATA_DIR, "general_meta.json"))
 
   def test_create_metadata_should_succeed(self):
     general_md = metadata_info.GeneralMd(
@@ -59,7 +62,7 @@ class GeneralMdTest(absltest.TestCase):
 class AssociatedFileMdTest(absltest.TestCase):
 
   _EXPECTED_META_JSON = test_utils.get_test_data_path(
-      "associated_file_meta.json")
+      os.path.join(_TEST_DATA_DIR, "associated_file_meta.json"))
 
   def test_create_metadata_should_succeed(self):
     file_md = metadata_info.AssociatedFileMd(
@@ -92,11 +95,11 @@ class TensorMdTest(parameterized.TestCase):
   _LABEL_FILE_EN = "labels.txt"
   _LABEL_FILE_CN = "labels_cn.txt"  # Locale label file in Chinese.
   _EXPECTED_FEATURE_TENSOR_JSON = test_utils.get_test_data_path(
-      "feature_tensor_meta.json")
+      os.path.join(_TEST_DATA_DIR, "feature_tensor_meta.json"))
   _EXPECTED_IMAGE_TENSOR_JSON = test_utils.get_test_data_path(
-      "image_tensor_meta.json")
+      os.path.join(_TEST_DATA_DIR, "image_tensor_meta.json"))
   _EXPECTED_BOUNDING_BOX_TENSOR_JSON = test_utils.get_test_data_path(
-      "bounding_box_tensor_meta.json")
+      os.path.join(_TEST_DATA_DIR, "bounding_box_tensor_meta.json"))
 
   @parameterized.named_parameters(
       {
@@ -142,11 +145,11 @@ class InputImageTensorMdTest(parameterized.TestCase):
   _NORM_STD = (127.5, 127.5, 127.5)
   _COLOR_SPACE_TYPE = _metadata_fb.ColorSpaceType.RGB
   _EXPECTED_FLOAT_TENSOR_JSON = test_utils.get_test_data_path(
-      "input_image_tensor_float_meta.json")
+      os.path.join(_TEST_DATA_DIR, "input_image_tensor_float_meta.json"))
   _EXPECTED_UINT8_TENSOR_JSON = test_utils.get_test_data_path(
-      "input_image_tensor_uint8_meta.json")
+      os.path.join(_TEST_DATA_DIR, "input_image_tensor_uint8_meta.json"))
   _EXPECTED_UNSUPPORTED_TENSOR_JSON = test_utils.get_test_data_path(
-      "input_image_tensor_unsupported_meta.json")
+      os.path.join(_TEST_DATA_DIR, "input_image_tensor_unsupported_meta.json"))
 
   @parameterized.named_parameters(
       {
@@ -196,11 +199,12 @@ class ClassificationTensorMdTest(parameterized.TestCase):
   _LABEL_FILE_CN = "labels_cn.txt"  # Locale label file in Chinese.
   _CALIBRATION_DEFAULT_SCORE = 0.2
   _EXPECTED_FLOAT_TENSOR_JSON = test_utils.get_test_data_path(
-      "classification_tensor_float_meta.json")
+      os.path.join(_TEST_DATA_DIR, "classification_tensor_float_meta.json"))
   _EXPECTED_UINT8_TENSOR_JSON = test_utils.get_test_data_path(
-      "classification_tensor_uint8_meta.json")
+      os.path.join(_TEST_DATA_DIR, "classification_tensor_uint8_meta.json"))
   _EXPECTED_UNSUPPORTED_TENSOR_JSON = test_utils.get_test_data_path(
-      "classification_tensor_unsupported_meta.json")
+      os.path.join(_TEST_DATA_DIR,
+                   "classification_tensor_unsupported_meta.json"))
 
   @parameterized.named_parameters(
       {
@@ -243,9 +247,9 @@ class ClassificationTensorMdTest(parameterized.TestCase):
 class ScoreCalibrationMdTest(absltest.TestCase):
   _DEFAULT_VALUE = 0.2
   _EXPECTED_TENSOR_JSON = test_utils.get_test_data_path(
-      "score_calibration_tensor_meta.json")
+      os.path.join(_TEST_DATA_DIR, "score_calibration_tensor_meta.json"))
   _EXPECTED_MODEL_META_JSON = test_utils.get_test_data_path(
-      "score_calibration_file_meta.json")
+      os.path.join(_TEST_DATA_DIR, "score_calibration_file_meta.json"))
 
   def test_create_metadata_should_succeed(self):
     score_calibration_md = metadata_info.ScoreCalibrationMd(
@@ -310,7 +314,7 @@ class ScoreCalibrationMdTest(absltest.TestCase):
 class ScoreThresholdingMdTest(absltest.TestCase):
   _DEFAULT_GLOBAL_THRESHOLD = 0.5
   _EXPECTED_TENSOR_JSON = test_utils.get_test_data_path(
-      "score_thresholding_meta.json")
+      os.path.join(_TEST_DATA_DIR, "score_thresholding_meta.json"))
 
   def test_create_metadata_should_succeed(self):
     score_thresholding_md = metadata_info.ScoreThresholdingMd(

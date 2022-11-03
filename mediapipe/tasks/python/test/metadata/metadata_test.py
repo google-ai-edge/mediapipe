@@ -27,6 +27,8 @@ from mediapipe.tasks.metadata import schema_py_generated as _schema_fb
 from mediapipe.tasks.python.metadata import metadata as _metadata
 from mediapipe.tasks.python.test import test_utils
 
+_TEST_DATA_DIR = "mediapipe/tasks/testdata/metadata"
+
 
 class Tokenizer(enum.Enum):
   BERT_TOKENIZER = 0
@@ -810,7 +812,8 @@ class MetadataDisplayerTest(MetadataTest):
     actual_json = _metadata.convert_to_json(actual_buffer)
 
     # Verifies the generated json file.
-    golden_json_file_path = test_utils.get_test_data_path("golden_json.json")
+    golden_json_file_path = test_utils.get_test_data_path(
+        os.path.join(_TEST_DATA_DIR, "golden_json.json"))
     with open(golden_json_file_path, "r") as f:
       expected = f.read()
     self.assertEqual(actual_json, expected)
@@ -821,7 +824,8 @@ class MetadataDisplayerTest(MetadataTest):
     actual = displayer.get_metadata_json()
 
     # Verifies the generated json file.
-    golden_json_file_path = test_utils.get_test_data_path("golden_json.json")
+    golden_json_file_path = test_utils.get_test_data_path(
+        os.path.join(_TEST_DATA_DIR, "golden_json.json"))
     expected = _read_file(golden_json_file_path, "r")
     self.assertEqual(actual, expected)
 
@@ -848,7 +852,8 @@ class MetadataUtilTest(MetadataTest):
     metadata_json = _metadata.convert_to_json(metadata_buf)
 
     # Verifies the generated json file.
-    golden_json_file_path = test_utils.get_test_data_path("golden_json.json")
+    golden_json_file_path = test_utils.get_test_data_path(
+        os.path.join(_TEST_DATA_DIR, "golden_json.json"))
     expected = _read_file(golden_json_file_path, "r")
     self.assertEqual(metadata_json, expected)
 
