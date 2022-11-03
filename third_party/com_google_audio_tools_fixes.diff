@@ -1,0 +1,476 @@
+diff --git a/audio/dsp/BUILD b/audio/dsp/BUILD
+index db6a909..de6bb1a 100644
+--- a/audio/dsp/BUILD
++++ b/audio/dsp/BUILD
+@@ -57,7 +57,7 @@ cc_library(
+     deps = [
+         ":porting",
+         ":signal_vector_util",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -80,7 +80,7 @@ cc_library(
+     hdrs = ["batch_top_n.h"],
+     deps = [
+         ":porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -88,7 +88,7 @@ cc_library(
+     name = "circular_buffer",
+     hdrs = ["circular_buffer.h"],
+     deps = [
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/types:span",
+     ],
+ )
+@@ -99,7 +99,7 @@ cc_test(
+     srcs = ["circular_buffer_test.cc"],
+     deps = [
+         ":circular_buffer",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@gtest//:gtest_main",
+         "@com_google_absl//absl/types:span",
+     ],
+@@ -133,7 +133,7 @@ cc_library(
+     hdrs = ["eigen_types.h"],
+     deps = [
+         ":porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/base:core_headers",
+         "@com_google_absl//absl/meta:type_traits",
+         "@com_google_absl//absl/types:span",
+@@ -160,7 +160,7 @@ cc_library(
+     deps = [
+         ":porting",
+         ":signal_vector_util",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -210,7 +210,7 @@ cc_library(
+     hdrs = ["fixed_delay_line.h"],
+     deps = [
+         ":porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "//third_party/eigen3",
+     ],
+ )
+@@ -233,7 +233,7 @@ cc_library(
+     hdrs = ["kiss_fft.h"],
+     deps = [
+         ":porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "//third_party/kissfft:kiss_fft_float",
+     ],
+ )
+@@ -282,7 +282,7 @@ cc_library(
+     deps = [
+         ":porting",
+         "//audio/dsp/portable:number_util",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -420,7 +420,7 @@ cc_library(
+     srcs = ["signal_generator.cc"],
+     deps = [
+         ":porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "//third_party/eigen3",
+     ],
+ )
+@@ -459,7 +459,7 @@ cc_library(
+         ":circular_buffer",
+         ":kiss_fft",
+         ":number_util",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/types:span",
+         "//third_party/eigen3",
+     ],
+@@ -469,7 +469,7 @@ cc_library(
+     name = "teager_energy_filter",
+     hdrs = ["teager_energy_filter.h"],
+     deps = [
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/types:span",
+     ],
+ )
+@@ -492,7 +492,7 @@ cc_library(
+     deps = [
+         ":porting",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/types:span",
+         "@gtest//:gtest",
+     ],
+@@ -506,7 +506,7 @@ cc_test(
+     deps = [
+         ":porting",
+         ":testing_util",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/types:span",
+         "@gtest//:gtest_main",
+     ],
+diff --git a/audio/dsp/hifi/BUILD b/audio/dsp/hifi/BUILD
+index e015d10..7a8a1ec 100644
+--- a/audio/dsp/hifi/BUILD
++++ b/audio/dsp/hifi/BUILD
+@@ -17,7 +17,7 @@ cc_library(
+         "//audio/dsp:decibels",
+         "//audio/dsp:fixed_delay_line",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -43,7 +43,7 @@ cc_library(
+         "//audio/linear_filters:crossover",
+         "//audio/linear_filters:ladder_filter",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -56,6 +56,6 @@ cc_library(
+         ":multi_crossover_filter",
+         "//audio/linear_filters:crossover",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+diff --git a/audio/dsp/loudness/BUILD b/audio/dsp/loudness/BUILD
+index 5f8bcef..fdfc327 100644
+--- a/audio/dsp/loudness/BUILD
++++ b/audio/dsp/loudness/BUILD
+@@ -15,7 +15,7 @@ cc_library(
+         "//audio/linear_filters:biquad_filter_design",
+         "//audio/linear_filters:ladder_filter",
+         "//audio/linear_filters:perceptual_filter_design",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "//third_party/eigen3",
+     ],
+ )
+@@ -30,7 +30,7 @@ cc_library(
+         "//audio/dsp:decibels",
+         "//audio/dsp:fixed_delay_line",
+         "//audio/dsp/hifi:dynamic_range_control_functions",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/memory",
+         "//third_party/eigen3",
+     ],
+@@ -47,7 +47,7 @@ cc_library(
+         "//audio/linear_filters:biquad_filter_coefficients",
+         "//audio/linear_filters:discretization",
+         "//audio/linear_filters:perceptual_filter_design",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+diff --git a/audio/dsp/mfcc/BUILD b/audio/dsp/mfcc/BUILD
+index cacb0ac..c22fb2e 100644
+--- a/audio/dsp/mfcc/BUILD
++++ b/audio/dsp/mfcc/BUILD
+@@ -14,7 +14,7 @@ cc_library(
+     ],
+     deps = [
+         "//audio/dsp:porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -51,7 +51,7 @@ cc_test(
+         ":mfcc",
+         "//audio/dsp:porting",
+         "//audio/dsp:signal_vector_util",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@gtest//:gtest_main",
+     ],
+ )
+diff --git a/audio/dsp/spectrogram/BUILD b/audio/dsp/spectrogram/BUILD
+index 271e759..eec50aa 100644
+--- a/audio/dsp/spectrogram/BUILD
++++ b/audio/dsp/spectrogram/BUILD
+@@ -8,7 +8,7 @@ cc_library(
+     deps = [
+         "//audio/dsp:number_util",
+         "//third_party/fft2d",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -21,6 +21,6 @@ cc_library(
+         "//audio/dsp:porting",
+         "//audio/dsp:window_functions",
+         "//third_party/fft2d:fft2d",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+diff --git a/audio/linear_filters/BUILD b/audio/linear_filters/BUILD
+index 4820434..5b9f479 100644
+--- a/audio/linear_filters/BUILD
++++ b/audio/linear_filters/BUILD
+@@ -31,7 +31,7 @@ cc_test(
+         "//audio/dsp:testing_util",
+         "//audio/dsp:types",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/strings:str_format",
+         "@com_google_benchmark//:benchmark",
+         "@gtest//:gtest_main",
+@@ -44,7 +44,7 @@ cc_library(
+     hdrs = ["biquad_filter_coefficients.h"],
+     deps = [
+         "//audio/dsp:porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/strings",
+     ],
+ )
+@@ -59,7 +59,7 @@ cc_test(
+         ":biquad_filter_design",
+         "//audio/dsp:porting",
+         "//audio/dsp:testing_util",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/strings:str_format",
+         "@gtest//:gtest_main",
+     ],
+@@ -79,7 +79,7 @@ cc_library(
+         "//audio/dsp:elliptic_functions",
+         "//audio/dsp:porting",
+         "//audio/dsp:signal_vector_util",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -93,7 +93,7 @@ cc_test(
+         "//audio/dsp:decibels",
+         "//audio/dsp:porting",
+         "//audio/dsp:testing_util",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@gtest//:gtest_main",
+     ],
+ )
+@@ -106,7 +106,7 @@ cc_library(
+     deps = [
+         ":biquad_filter_coefficients",
+         "//audio/dsp:porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/strings",
+         "@com_google_absl//absl/strings:str_format",
+         "@gtest//:gtest",
+@@ -120,7 +120,7 @@ cc_test(
+         ":biquad_filter",
+         ":biquad_filter_test_tools",
+         "//audio/dsp:porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@gtest//:gtest_main",
+     ],
+ )
+@@ -133,7 +133,7 @@ cc_library(
+         ":biquad_filter_coefficients",
+         ":biquad_filter_design",
+         "//audio/dsp:porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -147,7 +147,7 @@ cc_test(
+         ":crossover",
+         "//audio/dsp:decibels",
+         "//audio/dsp:porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/strings:str_format",
+         "@gtest//:gtest_main",
+     ],
+@@ -161,7 +161,7 @@ cc_library(
+         ":biquad_filter_coefficients",
+         ":filter_poles_and_zeros",
+         "//audio/dsp:porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -172,7 +172,7 @@ cc_test(
+     deps = [
+         ":discretization",
+         "//audio/dsp:porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@gtest//:gtest_main",
+     ],
+ )
+@@ -192,7 +192,7 @@ cc_library(
+     deps = [
+         ":biquad_filter_coefficients",
+         "//audio/dsp:porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -205,7 +205,7 @@ cc_test(
+         ":filter_poles_and_zeros",
+         "//audio/dsp:porting",
+         "//audio/dsp:testing_util",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@gtest//:gtest_main",
+     ],
+ )
+@@ -217,7 +217,7 @@ cc_library(
+         "//audio/dsp:porting",
+         "//audio/dsp:types",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -227,7 +227,7 @@ cc_library(
+     hdrs = ["fir_filter.h"],
+     deps = [
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -239,7 +239,7 @@ cc_test(
+         ":fir_filter",
+         "//audio/dsp:testing_util",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@gtest//:gtest_main",
+     ],
+ )
+@@ -255,7 +255,7 @@ cc_library(
+         ":filter_traits",
+         "//audio/dsp:porting",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/base:core_headers",
+     ],
+ )
+@@ -272,7 +272,7 @@ cc_test(
+         "//audio/dsp:porting",
+         "//audio/dsp:testing_util",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/strings:str_format",
+         "@com_google_benchmark//:benchmark",
+         "@gtest//:gtest_main",
+@@ -325,7 +325,7 @@ cc_library(
+         ":discretization",
+         ":filter_poles_and_zeros",
+         "//audio/dsp:porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -337,7 +337,7 @@ cc_test(
+         ":perceptual_filter_design",
+         "//audio/dsp:decibels",
+         "//audio/dsp:porting",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@gtest//:gtest_main",
+     ],
+ )
+@@ -348,7 +348,7 @@ cc_library(
+     deps = [
+         "//audio/dsp:porting",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -361,7 +361,7 @@ cc_test(
+         "//audio/dsp:porting",
+         "//audio/dsp:testing_util",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_benchmark//:benchmark",
+         "@gtest//:gtest_main",
+     ],
+diff --git a/audio/linear_filters/filterbanks/BUILD b/audio/linear_filters/filterbanks/BUILD
+index 708c0d8..0c7b7d2 100644
+--- a/audio/linear_filters/filterbanks/BUILD
++++ b/audio/linear_filters/filterbanks/BUILD
+@@ -19,7 +19,7 @@ cc_library(
+         "//audio/linear_filters:two_tap_fir_filter",
+         "//audio/linear_filters/filterbanks:factor_two_decimator",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -33,7 +33,7 @@ cc_test(
+         "//audio/dsp:porting",
+         "//audio/dsp:testing_util",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@com_google_absl//absl/strings:str_format",
+         "@gtest//:gtest_main",
+     ],
+@@ -55,7 +55,7 @@ cc_library(
+     deps = [
+         "//audio/dsp:porting",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+     ],
+ )
+ 
+@@ -68,7 +68,7 @@ cc_test(
+         "//audio/dsp:porting",
+         "//audio/dsp:testing_util",
+         "//third_party/eigen3",
+-        "@com_github_glog_glog//:glog",
++        "@//third_party:glog",
+         "@gtest//:gtest_main",
+     ],
+ )
