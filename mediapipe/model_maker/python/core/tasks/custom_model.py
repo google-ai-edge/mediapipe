@@ -52,6 +52,7 @@ class CustomModel(abc.ABC):
     """Prints a summary of the model."""
     self._model.summary()
 
+# TODO: Remove this method when all tasks use Metadata writer
   def export_tflite(
       self,
       export_dir: str,
@@ -62,7 +63,7 @@ class CustomModel(abc.ABC):
 
     Args:
       export_dir: The directory to save exported files.
-      tflite_filename: File name to save tflite model. The full export path is
+      tflite_filename: File name to save TFLite model. The full export path is
         {export_dir}/{tflite_filename}.
       quantization_config: The configuration for model quantization.
       preprocess: A callable to preprocess the representative dataset for
@@ -73,11 +74,11 @@ class CustomModel(abc.ABC):
       tf.io.gfile.makedirs(export_dir)
 
     tflite_filepath = os.path.join(export_dir, tflite_filename)
-    # TODO: Populate metadata to the exported TFLite model.
-    model_util.export_tflite(
+    tflite_model = model_util.convert_to_tflite(
         model=self._model,
-        tflite_filepath=tflite_filepath,
         quantization_config=quantization_config,
         preprocess=preprocess)
+    model_util.save_tflite(
+        tflite_model=tflite_model, tflite_file=tflite_filepath)
     tf.compat.v1.logging.info(
         'TensorFlow Lite model exported successfully: %s' % tflite_filepath)

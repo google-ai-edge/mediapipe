@@ -89,28 +89,25 @@ def get_steps_per_epoch(steps_per_epoch: Optional[int] = None,
     return len(train_data) // batch_size
 
 
-def export_tflite(
+def convert_to_tflite(
     model: tf.keras.Model,
-    tflite_filepath: str,
     quantization_config: Optional[quantization.QuantizationConfig] = None,
     supported_ops: Tuple[tf.lite.OpsSet,
                          ...] = (tf.lite.OpsSet.TFLITE_BUILTINS,),
-    preprocess: Optional[Callable[..., bool]] = None):
-  """Converts the model to tflite format and saves it.
+    preprocess: Optional[Callable[..., bool]] = None) -> bytearray:
+  """Converts the input Keras model to TFLite format.
 
   Args:
-    model: model to be converted to tflite.
-    tflite_filepath: File path to save tflite model.
+    model: Keras model to be converted to TFLite.
     quantization_config: Configuration for post-training quantization.
     supported_ops: A list of supported ops in the converted TFLite file.
     preprocess: A callable to preprocess the representative dataset for
       quantization. The callable takes three arguments in order: feature, label,
       and is_training.
-  """
-  if tflite_filepath is None:
-    raise ValueError(
-        "TFLite filepath couldn't be None when exporting to tflite.")
 
+  Returns:
+    bytearray of TFLite model
+  """
   with tempfile.TemporaryDirectory() as temp_dir:
     save_path = os.path.join(temp_dir, 'saved_model')
     model.save(save_path, include_optimizer=False, save_format='tf')
@@ -122,9 +119,22 @@ def export_tflite(
 
     converter.target_spec.supported_ops = supported_ops
     tflite_model = converter.convert()
+    return tflite_model
 
-  with tf.io.gfile.GFile(tflite_filepath, 'wb') as f:
+
+def save_tflite(tflite_model: bytearray, tflite_file: str) -> None:
+  """Saves TFLite file to tflite_file.
+
+  Args:
+    tflite_model: A valid flatbuffer representing the TFLite model.
+    tflite_file: File path to save TFLite model.
+  """
+  if tflite_file is None:
+    raise ValueError("TFLite filepath can't be None when exporting to TFLite.")
+  with tf.io.gfile.GFile(tflite_file, 'wb') as f:
     f.write(tflite_model)
+  tf.compat.v1.logging.info(
+      'TensorFlow Lite model exported successfully to: %s' % tflite_file)
 
 
 class WarmUp(tf.keras.optimizers.schedules.LearningRateSchedule):
@@ -176,14 +186,12 @@ class WarmUp(tf.keras.optimizers.schedules.LearningRateSchedule):
 class LiteRunner(object):
   """A runner to do inference with the TFLite model."""
 
-  def __init__(self, tflite_filepath: str):
-    """Initializes Lite runner with tflite model file.
+  def __init__(self, tflite_model: bytearray):
+    """Initializes Lite runner from TFLite model buffer.
 
     Args:
-      tflite_filepath: File path to the TFLite model.
+      tflite_model: A valid flatbuffer representing the TFLite model.
     """
-    with tf.io.gfile.GFile(tflite_filepath, 'rb') as f:
-      tflite_model = f.read()
     self.interpreter = tf.lite.Interpreter(model_content=tflite_model)
     self.interpreter.allocate_tensors()
     self.input_details = self.interpreter.get_input_details()
@@ -250,9 +258,9 @@ class LiteRunner(object):
     return output_tensors
 
 
-def get_lite_runner(tflite_filepath: str) -> 'LiteRunner':
-  """Returns a `LiteRunner` from file path to TFLite model."""
-  lite_runner = LiteRunner(tflite_filepath)
+def get_lite_runner(tflite_buffer: bytearray) -> 'LiteRunner':
+  """Returns a `LiteRunner` from flatbuffer of the TFLite model."""
+  lite_runner = LiteRunner(tflite_buffer)
   return lite_runner
 
 
