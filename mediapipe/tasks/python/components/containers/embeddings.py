@@ -131,18 +131,14 @@ class EmbeddingEntry:
       cls, pb2_obj: _EmbeddingEntryProto) -> 'EmbeddingEntry':
     """Creates a `EmbeddingEntry` object from the given protobuf object."""
 
-    if pb2_obj.float_embedding:
-      return EmbeddingEntry(
-          embedding=np.array(pb2_obj.float_embedding.values, dtype=float))
+    quantized_embedding = np.array(
+        bytearray(pb2_obj.quantized_embedding.values))
+    float_embedding = np.array(pb2_obj.float_embedding.values, dtype=float)
 
-    elif pb2_obj.quantized_embedding:
-      return EmbeddingEntry(
-          embedding=np.array(bytearray(pb2_obj.quantized_embedding.values),
-                             dtype=np.uint8))
-
+    if len(quantized_embedding) == 0:
+      return EmbeddingEntry(embedding=float_embedding)
     else:
-      raise ValueError("Either float_embedding or quantized_embedding must "
-                       "exist.")
+      return EmbeddingEntry(embedding=quantized_embedding)
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.

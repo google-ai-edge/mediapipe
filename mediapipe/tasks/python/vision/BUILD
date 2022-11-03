@@ -118,6 +118,7 @@ py_library(
         "//mediapipe/tasks/python/core:optional_dependencies",
         "//mediapipe/tasks/python/core:task_info",
         "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
     ],
 )

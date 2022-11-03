@@ -45,8 +45,7 @@ class EmbedderOptions:
     """Generates a EmbedderOptions protobuf object."""
     return _EmbedderOptionsProto(
         l2_normalize=self.l2_normalize,
-        quantize=self.quantize
-    )
+        quantize=self.quantize)
 
   @classmethod
   @doc_controls.do_not_generate_docs
@@ -54,8 +53,7 @@ class EmbedderOptions:
     """Creates a `EmbedderOptions` object from the given protobuf object."""
     return EmbedderOptions(
         l2_normalize=pb2_obj.l2_normalize,
-        quantize=pb2_obj.quantize
-    )
+        quantize=pb2_obj.quantize)
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.
