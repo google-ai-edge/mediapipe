@@ -196,9 +196,7 @@ class ImageClassifierTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
-    custom_classifier_options = _ClassifierOptions()
-    options = _TextClassifierOptions(
-        base_options=base_options, classifier_options=custom_classifier_options)
+    options = _TextClassifierOptions(base_options=base_options)
     classifier = _TextClassifier.create_from_options(options)
 
     # Performs text classification on the input.
@@ -230,9 +228,7 @@ class ImageClassifierTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
-    custom_classifier_options = _ClassifierOptions()
-    options = _TextClassifierOptions(
-      base_options=base_options, classifier_options=custom_classifier_options)
+    options = _TextClassifierOptions(base_options=base_options)
 
     with _TextClassifier.create_from_options(options) as classifier:
       # Performs text classification on the input.
