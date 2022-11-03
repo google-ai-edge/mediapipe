@@ -25,12 +25,12 @@
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/util/tflite/tflite_gpu_runner.h"
 
-#if defined(MEDIAPIPE_ANDROID)
+#if defined(MEDIAPIPE_ANDROID) || defined(MEDIAPIPE_CHROMIUMOS)
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/util/android/file/base/file.h"
 #include "mediapipe/util/android/file/base/filesystem.h"
 #include "mediapipe/util/android/file/base/helpers.h"
-#endif  // MEDIAPIPE_ANDROID
+#endif  // defined(MEDIAPIPE_ANDROID) || defined(MEDIAPIPE_CHROMIUMOS)
 
 #define PERFETTO_TRACK_EVENT_NAMESPACE mediapipe
 
@@ -231,7 +231,7 @@ InferenceCalculatorGlAdvancedImpl::GpuInferenceRunner::InitTFLiteGPURunner(
   return tflite_gpu_runner_->Build();
 }
 
-#if defined(MEDIAPIPE_ANDROID)
+#if defined(MEDIAPIPE_ANDROID) || defined(MEDIAPIPE_CHROMIUMOS)
 absl::Status InferenceCalculatorGlAdvancedImpl::OnDiskCacheHelper::Init(
     const mediapipe::InferenceCalculatorOptions& options,
     const mediapipe::InferenceCalculatorOptions::Delegate::Gpu&
@@ -318,7 +318,7 @@ InferenceCalculatorGlAdvancedImpl::OnDiskCacheHelper::SaveGpuCaches(
     tflite::gpu::TFLiteGPURunner* gpu_runner) const {
   return absl::OkStatus();
 }
-#endif  // MEDIAPIPE_ANDROID
+#endif  // defined(MEDIAPIPE_ANDROID) || defined(MEDIAPIPE_CHROMIUMOS)
 
 absl::Status InferenceCalculatorGlAdvancedImpl::UpdateContract(
     CalculatorContract* cc) {
