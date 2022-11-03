@@ -1,0 +1,82 @@
+{
+  "name": "ImageClassifier",
+  "description": "Identify the most prominent object in the image from a known set of categories.",
+  "subgraph_metadata": [
+    {
+      "input_tensor_metadata": [
+        {
+          "name": "image",
+          "description": "Input image to be processed.",
+          "content": {
+            "content_properties_type": "ImageProperties",
+            "content_properties": {
+              "color_space": "RGB"
+            }
+          },
+          "process_units": [
+            {
+              "options_type": "NormalizationOptions",
+              "options": {
+                "mean": [
+                  127.5
+                ],
+                "std": [
+                  127.5
+                ]
+              }
+            }
+          ],
+          "stats": {
+            "max": [
+              255.0
+            ],
+            "min": [
+              0.0
+            ]
+          }
+        }
+      ],
+      "output_tensor_metadata": [
+        {
+          "name": "score",
+          "description": "Score of the labels respectively.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {
+            }
+          },
+          "process_units": [
+            {
+              "options_type": "ScoreCalibrationOptions",
+              "options": {
+                "score_transformation": "LOG",
+                "default_score": 0.2
+              }
+            }
+          ],
+          "stats": {
+            "max": [
+              255.0
+            ],
+            "min": [
+              0.0
+            ]
+          },
+          "associated_files": [
+            {
+              "name": "labels.txt",
+              "description": "Labels for categories that the model can recognize.",
+              "type": "TENSOR_AXIS_LABELS"
+            },
+            {
+              "name": "score_calibration.txt",
+              "description": "Contains sigmoid-based score calibration parameters. The main purposes of score calibration is to make scores across classes comparable, so that a common threshold can be used for all output classes.",
+              "type": "TENSOR_AXIS_SCORE_CALIBRATION"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "min_parser_version": "1.0.0"
+}

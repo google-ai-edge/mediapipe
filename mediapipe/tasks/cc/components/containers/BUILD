@@ -29,3 +29,23 @@ cc_library(
         "//mediapipe/framework/formats:landmark_cc_proto",
     ],
 )
+
+cc_library(
+    name = "category",
+    srcs = ["category.cc"],
+    hdrs = ["category.h"],
+    deps = [
+        "//mediapipe/framework/formats:classification_cc_proto",
+    ],
+)
+
+cc_library(
+    name = "classification_result",
+    srcs = ["classification_result.cc"],
+    hdrs = ["classification_result.h"],
+    deps = [
+        ":category",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
+    ],
+)

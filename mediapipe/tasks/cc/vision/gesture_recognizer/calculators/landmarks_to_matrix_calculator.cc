@@ -14,6 +14,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <string>
@@ -26,6 +27,7 @@ limitations under the License.
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/landmarks_to_matrix_calculator.pb.h"
 
@@ -38,6 +40,7 @@ namespace {
 constexpr char kLandmarksTag[] = "LANDMARKS";
 constexpr char kWorldLandmarksTag[] = "WORLD_LANDMARKS";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
+constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kLandmarksMatrixTag[] = "LANDMARKS_MATRIX";
 constexpr int kFeaturesPerLandmark = 3;
 
@@ -60,6 +63,25 @@ absl::StatusOr<LandmarkListT> NormalizeLandmarkAspectRatio(
     new_landmark->set_z(old_landmark.z());
   }
   return normalized_landmarks;
+}
+
+template <class LandmarkListT>
+absl::StatusOr<LandmarkListT> RotateLandmarks(const LandmarkListT& landmarks,
+                                              float rotation) {
+  float cos = std::cos(rotation);
+  // Negate because Y-axis points down and not up.
+  float sin = std::sin(-rotation);
+  LandmarkListT rotated_landmarks;
+  for (int i = 0; i < landmarks.landmark_size(); ++i) {
+    const auto& old_landmark = landmarks.landmark(i);
+    float x = old_landmark.x() - 0.5;
+    float y = old_landmark.y() - 0.5;
+    auto* new_landmark = rotated_landmarks.add_landmark();
+    new_landmark->set_x(x * cos - y * sin + 0.5);
+    new_landmark->set_y(y * cos + x * sin + 0.5);
+    new_landmark->set_z(old_landmark.z());
+  }
+  return rotated_landmarks;
 }
 
 template <class LandmarkListT>
@@ -134,6 +156,13 @@ absl::Status ProcessLandmarks(LandmarkListT landmarks, CalculatorContext* cc) {
                      NormalizeLandmarkAspectRatio(landmarks, width, height));
   }
 
+  if (cc->Inputs().HasTag(kNormRectTag)) {
+    RET_CHECK(!cc->Inputs().Tag(kNormRectTag).IsEmpty());
+    const auto rotation =
+        cc->Inputs().Tag(kNormRectTag).Get<NormalizedRect>().rotation();
+    ASSIGN_OR_RETURN(landmarks, RotateLandmarks(landmarks, rotation));
+  }
+
   const auto& options = cc->Options<LandmarksToMatrixCalculatorOptions>();
   if (options.object_normalization()) {
     ASSIGN_OR_RETURN(
@@ -163,6 +192,8 @@ absl::Status ProcessLandmarks(LandmarkListT landmarks, CalculatorContext* cc) {
 //   WORLD_LANDMARKS - World 3d landmarks of one object. Use *either*
 //               LANDMARKS or WORLD_LANDMARKS.
 //   IMAGE_SIZE - (width, height) of the image
+//   NORM_RECT - Optional NormalizedRect object whose 'rotation' field is used
+//               to rotate the landmarks.
 // Output:
 //   LANDMARKS_MATRIX - Matrix for the landmarks.
 //
@@ -185,6 +216,7 @@ class LandmarksToMatrixCalculator : public CalculatorBase {
     cc->Inputs().Tag(kLandmarksTag).Set<NormalizedLandmarkList>().Optional();
     cc->Inputs().Tag(kWorldLandmarksTag).Set<LandmarkList>().Optional();
     cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>().Optional();
+    cc->Inputs().Tag(kNormRectTag).Set<NormalizedRect>().Optional();
     cc->Outputs().Tag(kLandmarksMatrixTag).Set<Matrix>();
     return absl::OkStatus();
   }

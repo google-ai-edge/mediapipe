@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict library compatibility macro.
+# Placeholder for internal Python strict library and test compatibility macro.
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -27,5 +27,8 @@ py_library(
         "//mediapipe/model_maker/python/vision/gesture_recognizer:__pkg__",
         "//mediapipe/tasks:internal",
     ],
-    deps = ["//mediapipe/python:_framework_bindings"],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "@com_google_protobuf//:protobuf_python",
+    ],
 )

@@ -48,6 +48,7 @@ using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 constexpr float kDefaultScoreThreshold = std::numeric_limits<float>::lowest();
 
 constexpr char kClassificationResultTag[] = "CLASSIFICATION_RESULT";
+constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kTensorsTag[] = "TENSORS";
@@ -56,6 +57,7 @@ constexpr char kTensorsTag[] = "TENSORS";
 // subgraph.
 struct ImageClassifierOutputStreams {
   Source<ClassificationResult> classification_result;
+  Source<ClassificationResult> classifications;
   Source<Image> image;
 };
 
@@ -71,17 +73,19 @@ struct ImageClassifierOutputStreams {
 //     Describes region of image to perform classification on.
 //     @Optional: rect covering the whole image is used if not specified.
 // Outputs:
-//   CLASSIFICATION_RESULT - ClassificationResult
-//     The aggregated classification result object has two dimensions:
-//     (classification head, classification category)
+//   CLASSIFICATIONS - ClassificationResult @Optional
+//     The classification results aggregated by classifier head.
 //   IMAGE - Image
 //     The image that object detection runs on.
+// TODO: remove this output once Java API migration is over.
+//   CLASSIFICATION_RESULT - (DEPRECATED) ClassificationResult @Optional
+//     The aggregated classification result.
 //
 // Example:
 // node {
 //   calculator: "mediapipe.tasks.vision.image_classifier.ImageClassifierGraph"
 //   input_stream: "IMAGE:image_in"
-//   output_stream: "CLASSIFICATION_RESULT:classification_result_out"
+//   output_stream: "CLASSIFICATIONS:classifications_out"
 //   output_stream: "IMAGE:image_out"
 //   options {
 //     [mediapipe.tasks.vision.image_classifier.proto.ImageClassifierGraphOptions.ext]
@@ -115,6 +119,8 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
             graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
     output_streams.classification_result >>
         graph[Output<ClassificationResult>(kClassificationResultTag)];
+    output_streams.classifications >>
+        graph[Output<ClassificationResult>(kClassificationsTag)];
     output_streams.image >> graph[Output<Image>(kImageTag)];
     return graph.GetConfig();
   }
@@ -138,8 +144,10 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
     // stream.
     auto& preprocessing =
         graph.AddNode("mediapipe.tasks.components.ImagePreprocessingSubgraph");
+    bool use_gpu = components::DetermineImagePreprocessingGpuBackend(
+        task_options.base_options().acceleration());
     MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
-        model_resources,
+        model_resources, use_gpu,
         &preprocessing
              .GetOptions<tasks::components::ImagePreprocessingOptions>()));
     image_in >> preprocessing.In(kImageTag);
@@ -168,6 +176,8 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
     return ImageClassifierOutputStreams{
         /*classification_result=*/postprocessing[Output<ClassificationResult>(
             kClassificationResultTag)],
+        /*classifications=*/
+        postprocessing[Output<ClassificationResult>(kClassificationsTag)],
         /*image=*/preprocessing[Output<Image>(kImageTag)]};
   }
 };

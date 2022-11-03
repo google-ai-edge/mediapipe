@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <cmath>
 #include <memory>
 #include <string>
 #include <utility>
@@ -23,6 +24,7 @@ limitations under the License.
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
@@ -35,6 +37,7 @@ constexpr char kLandmarksTag[] = "LANDMARKS";
 constexpr char kWorldLandmarksTag[] = "WORLD_LANDMARKS";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 constexpr char kLandmarksMatrixTag[] = "LANDMARKS_MATRIX";
+constexpr char kNormRectTag[] = "NORM_RECT";
 
 template <class LandmarkListT>
 LandmarkListT BuildPseudoLandmarks(int num_landmarks, int offset = 0) {
@@ -54,6 +57,7 @@ struct Landmarks2dToMatrixCalculatorTestCase {
   int object_normalization_origin_offset = -1;
   float expected_cell_0_2;
   float expected_cell_1_5;
+  float rotation;
 };
 
 using Landmarks2dToMatrixCalculatorTest =
@@ -68,6 +72,7 @@ TEST_P(Landmarks2dToMatrixCalculatorTest, OutputsCorrectResult) {
             calculator: "LandmarksToMatrixCalculator"
             input_stream: "LANDMARKS:landmarks"
             input_stream: "IMAGE_SIZE:image_size"
+            input_stream: "NORM_RECT:norm_rect"
             output_stream: "LANDMARKS_MATRIX:landmarks_matrix"
             options {
               [mediapipe.LandmarksToMatrixCalculatorOptions.ext] {
@@ -91,6 +96,11 @@ TEST_P(Landmarks2dToMatrixCalculatorTest, OutputsCorrectResult) {
   runner.MutableInputs()
       ->Tag(kImageSizeTag)
       .packets.push_back(Adopt(image_size.release()).At(Timestamp(0)));
+  auto norm_rect = std::make_unique<NormalizedRect>();
+  norm_rect->set_rotation(test_case.rotation);
+  runner.MutableInputs()
+      ->Tag(kNormRectTag)
+      .packets.push_back(Adopt(norm_rect.release()).At(Timestamp(0)));
 
   MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
 
@@ -109,12 +119,20 @@ INSTANTIATE_TEST_CASE_P(
           .base_offset = 0,
           .object_normalization_origin_offset = 0,
           .expected_cell_0_2 = 0.1f,
-          .expected_cell_1_5 = 0.1875f},
+          .expected_cell_1_5 = 0.1875f,
+          .rotation = 0},
          {.test_name = "TestWithOffset21",
           .base_offset = 21,
           .object_normalization_origin_offset = 0,
           .expected_cell_0_2 = 0.1f,
-          .expected_cell_1_5 = 0.1875f}}),
+          .expected_cell_1_5 = 0.1875f,
+          .rotation = 0},
+         {.test_name = "TestWithRotation",
+          .base_offset = 0,
+          .object_normalization_origin_offset = 0,
+          .expected_cell_0_2 = 0.075f,
+          .expected_cell_1_5 = -0.25f,
+          .rotation = M_PI / 2.0}}),
     [](const testing::TestParamInfo<
         Landmarks2dToMatrixCalculatorTest::ParamType>& info) {
       return info.param.test_name;
@@ -126,6 +144,7 @@ struct LandmarksWorld3dToMatrixCalculatorTestCase {
   int object_normalization_origin_offset = -1;
   float expected_cell_0_2;
   float expected_cell_1_5;
+  float rotation;
 };
 
 using LandmarksWorld3dToMatrixCalculatorTest =
@@ -140,6 +159,7 @@ TEST_P(LandmarksWorld3dToMatrixCalculatorTest, OutputsCorrectResult) {
             calculator: "LandmarksToMatrixCalculator"
             input_stream: "WORLD_LANDMARKS:landmarks"
             input_stream: "IMAGE_SIZE:image_size"
+            input_stream: "NORM_RECT:norm_rect"
             output_stream: "LANDMARKS_MATRIX:landmarks_matrix"
             options {
               [mediapipe.LandmarksToMatrixCalculatorOptions.ext] {
@@ -162,6 +182,11 @@ TEST_P(LandmarksWorld3dToMatrixCalculatorTest, OutputsCorrectResult) {
   runner.MutableInputs()
       ->Tag(kImageSizeTag)
       .packets.push_back(Adopt(image_size.release()).At(Timestamp(0)));
+  auto norm_rect = std::make_unique<NormalizedRect>();
+  norm_rect->set_rotation(test_case.rotation);
+  runner.MutableInputs()
+      ->Tag(kNormRectTag)
+      .packets.push_back(Adopt(norm_rect.release()).At(Timestamp(0)));
 
   MP_ASSERT_OK(runner.Run()) << "Calculator execution failed.";
 
@@ -180,17 +205,26 @@ INSTANTIATE_TEST_CASE_P(
           .base_offset = 0,
           .object_normalization_origin_offset = 0,
           .expected_cell_0_2 = 0.1f,
-          .expected_cell_1_5 = 0.25},
+          .expected_cell_1_5 = 0.25,
+          .rotation = 0},
          {.test_name = "TestWithOffset21",
           .base_offset = 21,
           .object_normalization_origin_offset = 0,
           .expected_cell_0_2 = 0.1f,
-          .expected_cell_1_5 = 0.25},
+          .expected_cell_1_5 = 0.25,
+          .rotation = 0},
          {.test_name = "NoObjectNormalization",
           .base_offset = 0,
           .object_normalization_origin_offset = -1,
           .expected_cell_0_2 = 0.021f,
-          .expected_cell_1_5 = 0.052f}}),
+          .expected_cell_1_5 = 0.052f,
+          .rotation = 0},
+         {.test_name = "TestWithRotation",
+          .base_offset = 0,
+          .object_normalization_origin_offset = 0,
+          .expected_cell_0_2 = 0.1f,
+          .expected_cell_1_5 = -0.25f,
+          .rotation = M_PI / 2.0}}),
     [](const testing::TestParamInfo<
         LandmarksWorld3dToMatrixCalculatorTest::ParamType>& info) {
       return info.param.test_name;

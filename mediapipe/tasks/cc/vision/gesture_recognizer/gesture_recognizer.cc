@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <memory>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "absl/memory/memory.h"
@@ -27,6 +28,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/image_preprocessing.h"
@@ -37,7 +39,9 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_classifier_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_recognizer_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/hand_gesture_recognizer_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
@@ -62,6 +66,8 @@ constexpr char kHandGestureSubgraphTypeName[] =
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageInStreamName[] = "image_in";
 constexpr char kImageOutStreamName[] = "image_out";
+constexpr char kNormRectTag[] = "NORM_RECT";
+constexpr char kNormRectStreamName[] = "norm_rect_in";
 constexpr char kHandGesturesTag[] = "HAND_GESTURES";
 constexpr char kHandGesturesStreamName[] = "hand_gestures";
 constexpr char kHandednessTag[] = "HANDEDNESS";
@@ -83,6 +89,7 @@ CalculatorGraphConfig CreateGraphConfig(
   auto& subgraph = graph.AddNode(kHandGestureSubgraphTypeName);
   subgraph.GetOptions<GestureRecognizerGraphOptionsProto>().Swap(options.get());
   graph.In(kImageTag).SetName(kImageInStreamName);
+  graph.In(kNormRectTag).SetName(kNormRectStreamName);
   subgraph.Out(kHandGesturesTag).SetName(kHandGesturesStreamName) >>
       graph.Out(kHandGesturesTag);
   subgraph.Out(kHandednessTag).SetName(kHandednessStreamName) >>
@@ -93,10 +100,11 @@ CalculatorGraphConfig CreateGraphConfig(
       graph.Out(kHandWorldLandmarksTag);
   subgraph.Out(kImageTag).SetName(kImageOutStreamName) >> graph.Out(kImageTag);
   if (enable_flow_limiting) {
-    return tasks::core::AddFlowLimiterCalculator(graph, subgraph, {kImageTag},
-                                                 kHandGesturesTag);
+    return tasks::core::AddFlowLimiterCalculator(
+        graph, subgraph, {kImageTag, kNormRectTag}, kHandGesturesTag);
   }
   graph.In(kImageTag) >> subgraph.In(kImageTag);
+  graph.In(kNormRectTag) >> subgraph.In(kNormRectTag);
   return graph.GetConfig();
 }
 
@@ -105,59 +113,50 @@ CalculatorGraphConfig CreateGraphConfig(
 std::unique_ptr<GestureRecognizerGraphOptionsProto>
 ConvertGestureRecognizerGraphOptionsProto(GestureRecognizerOptions* options) {
   auto options_proto = std::make_unique<GestureRecognizerGraphOptionsProto>();
+  auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
+      tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
+  options_proto->mutable_base_options()->Swap(base_options_proto.get());
+  options_proto->mutable_base_options()->set_use_stream_mode(
+      options->running_mode != core::RunningMode::IMAGE);
 
-  bool use_stream_mode = options->running_mode != core::RunningMode::IMAGE;
-
-  // TODO remove these workarounds for base options of subgraphs.
   // Configure hand detector options.
-  auto base_options_proto_for_hand_detector =
-      std::make_unique<tasks::core::proto::BaseOptions>(
-          tasks::core::ConvertBaseOptionsToProto(
-              &(options->base_options_for_hand_detector)));
-  base_options_proto_for_hand_detector->set_use_stream_mode(use_stream_mode);
   auto* hand_detector_graph_options =
       options_proto->mutable_hand_landmarker_graph_options()
           ->mutable_hand_detector_graph_options();
-  hand_detector_graph_options->mutable_base_options()->Swap(
-      base_options_proto_for_hand_detector.get());
   hand_detector_graph_options->set_num_hands(options->num_hands);
   hand_detector_graph_options->set_min_detection_confidence(
       options->min_hand_detection_confidence);
 
   // Configure hand landmark detector options.
-  auto base_options_proto_for_hand_landmarker =
-      std::make_unique<tasks::core::proto::BaseOptions>(
-          tasks::core::ConvertBaseOptionsToProto(
-              &(options->base_options_for_hand_landmarker)));
-  base_options_proto_for_hand_landmarker->set_use_stream_mode(use_stream_mode);
-  auto* hand_landmarks_detector_graph_options =
-      options_proto->mutable_hand_landmarker_graph_options()
-          ->mutable_hand_landmarks_detector_graph_options();
-  hand_landmarks_detector_graph_options->mutable_base_options()->Swap(
-      base_options_proto_for_hand_landmarker.get());
-  hand_landmarks_detector_graph_options->set_min_detection_confidence(
-      options->min_hand_presence_confidence);
-
   auto* hand_landmarker_graph_options =
       options_proto->mutable_hand_landmarker_graph_options();
   hand_landmarker_graph_options->set_min_tracking_confidence(
       options->min_tracking_confidence);
+  auto* hand_landmarks_detector_graph_options =
+      hand_landmarker_graph_options
+          ->mutable_hand_landmarks_detector_graph_options();
+  hand_landmarks_detector_graph_options->set_min_detection_confidence(
+      options->min_hand_presence_confidence);
 
   // Configure hand gesture recognizer options.
-  auto base_options_proto_for_gesture_recognizer =
-      std::make_unique<tasks::core::proto::BaseOptions>(
-          tasks::core::ConvertBaseOptionsToProto(
-              &(options->base_options_for_gesture_recognizer)));
-  base_options_proto_for_gesture_recognizer->set_use_stream_mode(
-      use_stream_mode);
   auto* hand_gesture_recognizer_graph_options =
       options_proto->mutable_hand_gesture_recognizer_graph_options();
-  hand_gesture_recognizer_graph_options->mutable_base_options()->Swap(
-      base_options_proto_for_gesture_recognizer.get());
-  if (options->min_gesture_confidence >= 0) {
-    hand_gesture_recognizer_graph_options->mutable_classifier_options()
-        ->set_score_threshold(options->min_gesture_confidence);
-  }
+  auto canned_gestures_classifier_options_proto =
+      std::make_unique<components::processors::proto::ClassifierOptions>(
+          components::processors::ConvertClassifierOptionsToProto(
+              &(options->canned_gestures_classifier_options)));
+  hand_gesture_recognizer_graph_options
+      ->mutable_canned_gesture_classifier_graph_options()
+      ->mutable_classifier_options()
+      ->Swap(canned_gestures_classifier_options_proto.get());
+  auto custom_gestures_classifier_options_proto =
+      std::make_unique<components::processors::proto::ClassifierOptions>(
+          components::processors::ConvertClassifierOptionsToProto(
+              &(options->canned_gestures_classifier_options)));
+  hand_gesture_recognizer_graph_options
+      ->mutable_custom_gesture_classifier_graph_options()
+      ->mutable_classifier_options()
+      ->Swap(canned_gestures_classifier_options_proto.get());
   return options_proto;
 }
 
@@ -216,16 +215,23 @@ absl::StatusOr<std::unique_ptr<GestureRecognizer>> GestureRecognizer::Create(
 }
 
 absl::StatusOr<GestureRecognitionResult> GestureRecognizer::Recognize(
-    mediapipe::Image image) {
+    mediapipe::Image image,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         "GPU input images are currently not supported.",
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(auto output_packets,
-                   ProcessImageData({{kImageInStreamName,
-                                      MakePacket<Image>(std::move(image))}}));
+  ASSIGN_OR_RETURN(
+      NormalizedRect norm_rect,
+      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
+  ASSIGN_OR_RETURN(
+      auto output_packets,
+      ProcessImageData(
+          {{kImageInStreamName, MakePacket<Image>(std::move(image))},
+           {kNormRectStreamName,
+            MakePacket<NormalizedRect>(std::move(norm_rect))}}));
   if (output_packets[kHandGesturesStreamName].IsEmpty()) {
     return {{{}, {}, {}, {}}};
   }
@@ -245,7 +251,8 @@ absl::StatusOr<GestureRecognitionResult> GestureRecognizer::Recognize(
 }
 
 absl::StatusOr<GestureRecognitionResult> GestureRecognizer::RecognizeForVideo(
-    mediapipe::Image image, int64 timestamp_ms) {
+    mediapipe::Image image, int64 timestamp_ms,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -253,10 +260,16 @@ absl::StatusOr<GestureRecognitionResult> GestureRecognizer::RecognizeForVideo(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(
+      NormalizedRect norm_rect,
+      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
+  ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
           {{kImageInStreamName,
             MakePacket<Image>(std::move(image))
+                .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
+           {kNormRectStreamName,
+            MakePacket<NormalizedRect>(std::move(norm_rect))
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
   if (output_packets[kHandGesturesStreamName].IsEmpty()) {
     return {{{}, {}, {}, {}}};
@@ -276,17 +289,24 @@ absl::StatusOr<GestureRecognitionResult> GestureRecognizer::RecognizeForVideo(
   };
 }
 
-absl::Status GestureRecognizer::RecognizeAsync(mediapipe::Image image,
-                                               int64 timestamp_ms) {
+absl::Status GestureRecognizer::RecognizeAsync(
+    mediapipe::Image image, int64 timestamp_ms,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
+  ASSIGN_OR_RETURN(
+      NormalizedRect norm_rect,
+      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))
+            .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
+       {kNormRectStreamName,
+        MakePacket<NormalizedRect>(std::move(norm_rect))
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
 }
 

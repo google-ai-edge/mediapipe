@@ -197,6 +197,37 @@ class ScoreCalibrationMd:
                             self._FILE_TYPE)
 
 
+class ScoreThresholdingMd:
+  """A container for score thresholding [1] metadata information.
+
+  [1]:
+    https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L468
+  """
+
+  def __init__(self, global_score_threshold: float) -> None:
+    """Creates a ScoreThresholdingMd object.
+
+    Args:
+      global_score_threshold: The recommended global threshold below which
+        results are considered low-confidence and should be filtered out.
+    """
+    self._global_score_threshold = global_score_threshold
+
+  def create_metadata(self) -> _metadata_fb.ProcessUnitT:
+    """Creates the score thresholding metadata based on the information.
+
+    Returns:
+      A Flatbuffers Python object of the score thresholding metadata.
+    """
+    score_thresholding = _metadata_fb.ProcessUnitT()
+    score_thresholding.optionsType = (
+        _metadata_fb.ProcessUnitOptions.ScoreThresholdingOptions)
+    options = _metadata_fb.ScoreThresholdingOptionsT()
+    options.globalScoreThreshold = self._global_score_threshold
+    score_thresholding.options = options
+    return score_thresholding
+
+
 class TensorMd:
   """A container for common tensor metadata information.
 
@@ -374,23 +405,29 @@ class ClassificationTensorMd(TensorMd):
       tensor.
     score_calibration_md: information of the score calibration operation [2] in
       the classification tensor.
+    score_thresholding_md: information of the score thresholding [3] in the
+        classification tensor.
     [1]:
       https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L99
     [2]:
       https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L456
+    [3]:
+      https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L468
   """
 
   # Min and max float values for classification results.
   _MIN_FLOAT = 0.0
   _MAX_FLOAT = 1.0
 
-  def __init__(self,
-               name: Optional[str] = None,
-               description: Optional[str] = None,
-               label_files: Optional[List[LabelFileMd]] = None,
-               tensor_type: Optional[int] = None,
-               score_calibration_md: Optional[ScoreCalibrationMd] = None,
-               tensor_name: Optional[str] = None) -> None:
+  def __init__(
+      self,
+      name: Optional[str] = None,
+      description: Optional[str] = None,
+      label_files: Optional[List[LabelFileMd]] = None,
+      tensor_type: Optional[int] = None,
+      score_calibration_md: Optional[ScoreCalibrationMd] = None,
+      tensor_name: Optional[str] = None,
+      score_thresholding_md: Optional[ScoreThresholdingMd] = None) -> None:
     """Initializes the instance of ClassificationTensorMd.
 
     Args:
@@ -404,6 +441,8 @@ class ClassificationTensorMd(TensorMd):
       tensor_name: name of the corresponding tensor [3] in the TFLite model. It
         is used to locate the corresponding classification tensor and decide the
         order of the tensor metadata [4] when populating model metadata.
+      score_thresholding_md: information of the score thresholding [5] in the
+        classification tensor.
       [1]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L99
       [2]:
@@ -412,8 +451,11 @@ class ClassificationTensorMd(TensorMd):
         https://github.com/tensorflow/tensorflow/blob/cb67fef35567298b40ac166b0581cd8ad68e5a3a/tensorflow/lite/schema/schema.fbs#L1129-L1136
       [4]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L623-L640
+      [5]:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L468
     """
     self.score_calibration_md = score_calibration_md
+    self.score_thresholding_md = score_thresholding_md
 
     if tensor_type is _schema_fb.TensorType.UINT8:
       min_values = [_MIN_UINT8]
@@ -443,4 +485,12 @@ class ClassificationTensorMd(TensorMd):
       tensor_metadata.processUnits = [
           self.score_calibration_md.create_metadata()
       ]
+    if self.score_thresholding_md:
+      if tensor_metadata.processUnits:
+        tensor_metadata.processUnits.append(
+            self.score_thresholding_md.create_metadata())
+      else:
+        tensor_metadata.processUnits = [
+            self.score_thresholding_md.create_metadata()
+        ]
     return tensor_metadata

@@ -25,8 +25,8 @@ import com.google.mediapipe.framework.AndroidPacketGetter;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
-import com.google.mediapipe.framework.image.Image;
-import com.google.mediapipe.tasks.components.processors.proto.ClassifierOptionsProto;
+import com.google.mediapipe.framework.image.MPImage;
+import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -36,7 +36,9 @@ import com.google.mediapipe.tasks.core.TaskOptions;
 import com.google.mediapipe.tasks.core.TaskRunner;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.vision.core.BaseVisionTaskApi;
+import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
+import com.google.mediapipe.tasks.vision.gesturerecognizer.proto.GestureClassifierGraphOptionsProto;
 import com.google.mediapipe.tasks.vision.gesturerecognizer.proto.GestureRecognizerGraphOptionsProto;
 import com.google.mediapipe.tasks.vision.gesturerecognizer.proto.HandGestureRecognizerGraphOptionsProto;
 import com.google.mediapipe.tasks.vision.handdetector.proto.HandDetectorGraphOptionsProto;
@@ -58,7 +60,7 @@ import java.util.Optional;
  * Model Maker. See <TODO link to the DevSite documentation page>.
  *
  * <ul>
- *   <li>Input image {@link Image}
+ *   <li>Input image {@link MPImage}
  *       <ul>
  *         <li>The image that gesture recognition runs on.
  *       </ul>
@@ -71,8 +73,10 @@ import java.util.Optional;
 public final class GestureRecognizer extends BaseVisionTaskApi {
   private static final String TAG = GestureRecognizer.class.getSimpleName();
   private static final String IMAGE_IN_STREAM_NAME = "image_in";
+  private static final String NORM_RECT_IN_STREAM_NAME = "norm_rect_in";
   private static final List<String> INPUT_STREAMS =
-      Collections.unmodifiableList(Arrays.asList("IMAGE:" + IMAGE_IN_STREAM_NAME));
+      Collections.unmodifiableList(
+          Arrays.asList("IMAGE:" + IMAGE_IN_STREAM_NAME, "NORM_RECT:" + NORM_RECT_IN_STREAM_NAME));
   private static final List<String> OUTPUT_STREAMS =
       Collections.unmodifiableList(
           Arrays.asList(
@@ -148,9 +152,9 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
   public static GestureRecognizer createFromOptions(
       Context context, GestureRecognizerOptions recognizerOptions) {
     // TODO: Consolidate OutputHandler and TaskRunner.
-    OutputHandler<GestureRecognitionResult, Image> handler = new OutputHandler<>();
+    OutputHandler<GestureRecognitionResult, MPImage> handler = new OutputHandler<>();
     handler.setOutputPacketConverter(
-        new OutputHandler.OutputPacketConverter<GestureRecognitionResult, Image>() {
+        new OutputHandler.OutputPacketConverter<GestureRecognitionResult, MPImage>() {
           @Override
           public GestureRecognitionResult convertToTaskResult(List<Packet> packets) {
             // If there is no hands detected in the image, just returns empty lists.
@@ -175,7 +179,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
           }
 
           @Override
-          public Image convertToTaskInput(List<Packet> packets) {
+          public MPImage convertToTaskInput(List<Packet> packets) {
             return new BitmapImageBuilder(
                     AndroidPacketGetter.getBitmapFromRgb(packets.get(IMAGE_OUT_STREAM_INDEX)))
                 .build();
@@ -205,7 +209,26 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    * @param runningMode a mediapipe vision task {@link RunningMode}.
    */
   private GestureRecognizer(TaskRunner taskRunner, RunningMode runningMode) {
-    super(taskRunner, runningMode, IMAGE_IN_STREAM_NAME);
+    super(taskRunner, runningMode, IMAGE_IN_STREAM_NAME, NORM_RECT_IN_STREAM_NAME);
+  }
+
+  /**
+   * Performs gesture recognition on the provided single image with default image processing
+   * options, i.e. without any rotation applied. Only use this method when the {@link
+   * GestureRecognizer} is created with {@link RunningMode.IMAGE}. TODO update java doc
+   * for input image format.
+   *
+   * <p>{@link GestureRecognizer} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @throws MediaPipeException if there is an internal error.
+   */
+  public GestureRecognitionResult recognize(MPImage image) {
+    return recognize(image, ImageProcessingOptions.builder().build());
   }
 
   /**
@@ -219,11 +242,41 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link Image} object for processing.
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference. Note that region-of-interest is <b>not</b> supported
+   *     by this task: specifying {@link ImageProcessingOptions#regionOfInterest()} will result in
+   *     this method throwing an IllegalArgumentException.
+   * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
+   *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public GestureRecognitionResult recognize(Image inputImage) {
-    return (GestureRecognitionResult) processImageData(inputImage);
+  public GestureRecognitionResult recognize(
+      MPImage image, ImageProcessingOptions imageProcessingOptions) {
+    validateImageProcessingOptions(imageProcessingOptions);
+    return (GestureRecognitionResult) processImageData(image, imageProcessingOptions);
+  }
+
+  /**
+   * Performs gesture recognition on the provided video frame with default image processing options,
+   * i.e. without any rotation applied. Only use this method when the {@link GestureRecognizer} is
+   * created with {@link RunningMode.VIDEO}.
+   *
+   * <p>It's required to provide the video frame's timestamp (in milliseconds). The input timestamps
+   * must be monotonically increasing.
+   *
+   * <p>{@link GestureRecognizer} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws MediaPipeException if there is an internal error.
+   */
+  public GestureRecognitionResult recognizeForVideo(MPImage image, long timestampMs) {
+    return recognizeForVideo(image, ImageProcessingOptions.builder().build(), timestampMs);
   }
 
   /**
@@ -239,12 +292,43 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link Image} object for processing.
-   * @param inputTimestampMs the input timestamp (in milliseconds).
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference. Note that region-of-interest is <b>not</b> supported
+   *     by this task: specifying {@link ImageProcessingOptions#regionOfInterest()} will result in
+   *     this method throwing an IllegalArgumentException.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
+   *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public GestureRecognitionResult recognizeForVideo(Image inputImage, long inputTimestampMs) {
-    return (GestureRecognitionResult) processVideoData(inputImage, inputTimestampMs);
+  public GestureRecognitionResult recognizeForVideo(
+      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
+    validateImageProcessingOptions(imageProcessingOptions);
+    return (GestureRecognitionResult) processVideoData(image, imageProcessingOptions, timestampMs);
+  }
+
+  /**
+   * Sends live image data to perform gesture recognition with default image processing options,
+   * i.e. without any rotation applied, and the results will be available via the {@link
+   * ResultListener} provided in the {@link GestureRecognizerOptions}. Only use this method when the
+   * {@link GestureRecognition} is created with {@link RunningMode.LIVE_STREAM}.
+   *
+   * <p>It's required to provide a timestamp (in milliseconds) to indicate when the input image is
+   * sent to the gesture recognizer. The input timestamps must be monotonically increasing.
+   *
+   * <p>{@link GestureRecognizer} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws MediaPipeException if there is an internal error.
+   */
+  public void recognizeAsync(MPImage image, long timestampMs) {
+    recognizeAsync(image, ImageProcessingOptions.builder().build(), timestampMs);
   }
 
   /**
@@ -261,12 +345,20 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link Image} object for processing.
-   * @param inputTimestampMs the input timestamp (in milliseconds).
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference. Note that region-of-interest is <b>not</b> supported
+   *     by this task: specifying {@link ImageProcessingOptions#regionOfInterest()} will result in
+   *     this method throwing an IllegalArgumentException.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
+   *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public void recognizeAsync(Image inputImage, long inputTimestampMs) {
-    sendLiveStreamData(inputImage, inputTimestampMs);
+  public void recognizeAsync(
+      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
+    validateImageProcessingOptions(imageProcessingOptions);
+    sendLiveStreamData(image, imageProcessingOptions, timestampMs);
   }
 
   /** Options for setting up an {@link GestureRecognizer}. */
@@ -293,40 +385,46 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
        */
       public abstract Builder setRunningMode(RunningMode value);
 
-      // TODO: remove these. Temporary solutions before bundle asset is ready.
-      public abstract Builder setBaseOptionsHandDetector(BaseOptions value);
-
-      public abstract Builder setBaseOptionsHandLandmarker(BaseOptions value);
-
-      public abstract Builder setBaseOptionsGestureRecognizer(BaseOptions value);
-
       /** Sets the maximum number of hands can be detected by the GestureRecognizer. */
       public abstract Builder setNumHands(Integer value);
 
-      /** Sets minimum confidence score for the hand detection to be considered successfully */
+      /** Sets minimum confidence score for the hand detection to be considered successful */
       public abstract Builder setMinHandDetectionConfidence(Float value);
 
       /** Sets minimum confidence score of hand presence score in the hand landmark detection. */
       public abstract Builder setMinHandPresenceConfidence(Float value);
 
-      /** Sets the minimum confidence score for the hand tracking to be considered successfully. */
+      /** Sets the minimum confidence score for the hand tracking to be considered successful. */
       public abstract Builder setMinTrackingConfidence(Float value);
 
       /**
-       * Sets the minimum confidence score for the gestures to be considered successfully. If < 0,
-       * the gesture confidence threshold=0.5 for the model is used.
+       * Sets the optional {@link ClassifierOptions} controling the canned gestures classifier, such
+       * as score threshold, allow list and deny list of gestures. The categories for canned gesture
+       * classifiers are: ["None", "Closed_Fist", "Open_Palm", "Pointing_Up", "Thumb_Down",
+       * "Thumb_Up", "Victory", "ILoveYou"]
        *
        * <p>TODO  Note this option is subject to change, after scoring merging
        * calculator is implemented.
        */
-      public abstract Builder setMinGestureConfidence(Float value);
+      public abstract Builder setCannedGesturesClassifierOptions(
+          ClassifierOptions classifierOptions);
+
+      /**
+       * Sets the optional {@link ClassifierOptions} controling the custom gestures classifier, such
+       * as score threshold, allow list and deny list of gestures.
+       *
+       * <p>TODO  Note this option is subject to change, after scoring merging
+       * calculator is implemented.
+       */
+      public abstract Builder setCustomGesturesClassifierOptions(
+          ClassifierOptions classifierOptions);
 
       /**
        * Sets the result listener to receive the detection results asynchronously when the gesture
        * recognizer is in the live stream mode.
        */
       public abstract Builder setResultListener(
-          ResultListener<GestureRecognitionResult, Image> value);
+          ResultListener<GestureRecognitionResult, MPImage> value);
 
       /** Sets an optional error listener. */
       public abstract Builder setErrorListener(ErrorListener value);
@@ -359,13 +457,6 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
 
     abstract BaseOptions baseOptions();
 
-    // TODO: remove these. Temporary solutions before bundle asset is ready.
-    abstract BaseOptions baseOptionsHandDetector();
-
-    abstract BaseOptions baseOptionsHandLandmarker();
-
-    abstract BaseOptions baseOptionsGestureRecognizer();
-
     abstract RunningMode runningMode();
 
     abstract Optional<Integer> numHands();
@@ -376,10 +467,11 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
 
     abstract Optional<Float> minTrackingConfidence();
 
-    // TODO update gesture confidence options after score merging calculator is ready.
-    abstract Optional<Float> minGestureConfidence();
+    abstract Optional<ClassifierOptions> cannedGesturesClassifierOptions();
 
-    abstract Optional<ResultListener<GestureRecognitionResult, Image>> resultListener();
+    abstract Optional<ClassifierOptions> customGesturesClassifierOptions();
+
+    abstract Optional<ResultListener<GestureRecognitionResult, MPImage>> resultListener();
 
     abstract Optional<ErrorListener> errorListener();
 
@@ -389,8 +481,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
           .setNumHands(1)
           .setMinHandDetectionConfidence(0.5f)
           .setMinHandPresenceConfidence(0.5f)
-          .setMinTrackingConfidence(0.5f)
-          .setMinGestureConfidence(-1f);
+          .setMinTrackingConfidence(0.5f);
     }
 
     /**
@@ -398,22 +489,18 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
      */
     @Override
     public CalculatorOptions convertToCalculatorOptionsProto() {
-      BaseOptionsProto.BaseOptions.Builder baseOptionsBuilder =
-          BaseOptionsProto.BaseOptions.newBuilder()
-              .setUseStreamMode(runningMode() != RunningMode.IMAGE)
-              .mergeFrom(convertBaseOptionsToProto(baseOptions()));
       GestureRecognizerGraphOptionsProto.GestureRecognizerGraphOptions.Builder taskOptionsBuilder =
           GestureRecognizerGraphOptionsProto.GestureRecognizerGraphOptions.newBuilder()
-              .setBaseOptions(baseOptionsBuilder);
+              .setBaseOptions(
+                  BaseOptionsProto.BaseOptions.newBuilder()
+                      .setUseStreamMode(runningMode() != RunningMode.IMAGE)
+                      .mergeFrom(convertBaseOptionsToProto(baseOptions()))
+                      .build());
 
       // Setup HandDetectorGraphOptions.
       HandDetectorGraphOptionsProto.HandDetectorGraphOptions.Builder
           handDetectorGraphOptionsBuilder =
-              HandDetectorGraphOptionsProto.HandDetectorGraphOptions.newBuilder()
-                  .setBaseOptions(
-                      BaseOptionsProto.BaseOptions.newBuilder()
-                          .setUseStreamMode(runningMode() != RunningMode.IMAGE)
-                          .mergeFrom(convertBaseOptionsToProto(baseOptionsHandDetector())));
+              HandDetectorGraphOptionsProto.HandDetectorGraphOptions.newBuilder();
       numHands().ifPresent(handDetectorGraphOptionsBuilder::setNumHands);
       minHandDetectionConfidence()
           .ifPresent(handDetectorGraphOptionsBuilder::setMinDetectionConfidence);
@@ -421,19 +508,12 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
       // Setup HandLandmarkerGraphOptions.
       HandLandmarksDetectorGraphOptionsProto.HandLandmarksDetectorGraphOptions.Builder
           handLandmarksDetectorGraphOptionsBuilder =
-              HandLandmarksDetectorGraphOptionsProto.HandLandmarksDetectorGraphOptions.newBuilder()
-                  .setBaseOptions(
-                      BaseOptionsProto.BaseOptions.newBuilder()
-                          .setUseStreamMode(runningMode() != RunningMode.IMAGE)
-                          .mergeFrom(convertBaseOptionsToProto(baseOptionsHandLandmarker())));
+              HandLandmarksDetectorGraphOptionsProto.HandLandmarksDetectorGraphOptions.newBuilder();
       minHandPresenceConfidence()
           .ifPresent(handLandmarksDetectorGraphOptionsBuilder::setMinDetectionConfidence);
       HandLandmarkerGraphOptionsProto.HandLandmarkerGraphOptions.Builder
           handLandmarkerGraphOptionsBuilder =
-              HandLandmarkerGraphOptionsProto.HandLandmarkerGraphOptions.newBuilder()
-                  .setBaseOptions(
-                      BaseOptionsProto.BaseOptions.newBuilder()
-                          .setUseStreamMode(runningMode() != RunningMode.IMAGE));
+              HandLandmarkerGraphOptionsProto.HandLandmarkerGraphOptions.newBuilder();
       minTrackingConfidence()
           .ifPresent(handLandmarkerGraphOptionsBuilder::setMinTrackingConfidence);
       handLandmarkerGraphOptionsBuilder
@@ -443,17 +523,23 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
       // Setup HandGestureRecognizerGraphOptions.
       HandGestureRecognizerGraphOptionsProto.HandGestureRecognizerGraphOptions.Builder
           handGestureRecognizerGraphOptionsBuilder =
-              HandGestureRecognizerGraphOptionsProto.HandGestureRecognizerGraphOptions.newBuilder()
-                  .setBaseOptions(
-                      BaseOptionsProto.BaseOptions.newBuilder()
-                          .setUseStreamMode(runningMode() != RunningMode.IMAGE)
-                          .mergeFrom(convertBaseOptionsToProto(baseOptionsGestureRecognizer())));
-      ClassifierOptionsProto.ClassifierOptions.Builder classifierOptionsBuilder =
-          ClassifierOptionsProto.ClassifierOptions.newBuilder();
-      minGestureConfidence().ifPresent(classifierOptionsBuilder::setScoreThreshold);
-      handGestureRecognizerGraphOptionsBuilder.setClassifierOptions(
-          classifierOptionsBuilder.build());
-
+              HandGestureRecognizerGraphOptionsProto.HandGestureRecognizerGraphOptions.newBuilder();
+      cannedGesturesClassifierOptions()
+          .ifPresent(
+              classifierOptions -> {
+                handGestureRecognizerGraphOptionsBuilder.setCannedGestureClassifierGraphOptions(
+                    GestureClassifierGraphOptionsProto.GestureClassifierGraphOptions.newBuilder()
+                        .setClassifierOptions(classifierOptions.convertToProto())
+                        .build());
+              });
+      customGesturesClassifierOptions()
+          .ifPresent(
+              classifierOptions -> {
+                handGestureRecognizerGraphOptionsBuilder.setCustomGestureClassifierGraphOptions(
+                    GestureClassifierGraphOptionsProto.GestureClassifierGraphOptions.newBuilder()
+                        .setClassifierOptions(classifierOptions.convertToProto())
+                        .build());
+              });
       taskOptionsBuilder
           .setHandLandmarkerGraphOptions(handLandmarkerGraphOptionsBuilder.build())
           .setHandGestureRecognizerGraphOptions(handGestureRecognizerGraphOptionsBuilder.build());
@@ -462,6 +548,17 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
               GestureRecognizerGraphOptionsProto.GestureRecognizerGraphOptions.ext,
               taskOptionsBuilder.build())
           .build();
+    }
+  }
+
+  /**
+   * Validates that the provided {@link ImageProcessingOptions} doesn't contain a
+   * region-of-interest.
+   */
+  private static void validateImageProcessingOptions(
+      ImageProcessingOptions imageProcessingOptions) {
+    if (imageProcessingOptions.regionOfInterest().isPresent()) {
+      throw new IllegalArgumentException("GestureRecognizer doesn't support region-of-interest.");
     }
   }
 }

@@ -25,15 +25,25 @@ limitations under the License.
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/processors/classification_postprocessing_graph.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
+#include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
+#include "mediapipe/tasks/cc/core/model_resources_cache.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
+#include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
+#include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/utils.h"
+#include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/combined_prediction_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/calculators/landmarks_to_matrix_calculator.pb.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_classifier_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_embedder_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/gesture_recognizer/proto/hand_gesture_recognizer_graph_options.pb.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 
@@ -50,6 +60,9 @@ using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::processors::
     ConfigureTensorsToClassificationCalculator;
+using ::mediapipe::tasks::core::ModelAssetBundleResources;
+using ::mediapipe::tasks::core::proto::BaseOptions;
+using ::mediapipe::tasks::metadata::SetExternalFile;
 using ::mediapipe::tasks::vision::gesture_recognizer::proto::
     HandGestureRecognizerGraphOptions;
 
@@ -57,6 +70,7 @@ constexpr char kHandednessTag[] = "HANDEDNESS";
 constexpr char kLandmarksTag[] = "LANDMARKS";
 constexpr char kWorldLandmarksTag[] = "WORLD_LANDMARKS";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
+constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kHandTrackingIdsTag[] = "HAND_TRACKING_IDS";
 constexpr char kHandGesturesTag[] = "HAND_GESTURES";
 constexpr char kLandmarksMatrixTag[] = "LANDMARKS_MATRIX";
@@ -68,12 +82,42 @@ constexpr char kVectorTag[] = "VECTOR";
 constexpr char kIndexTag[] = "INDEX";
 constexpr char kIterableTag[] = "ITERABLE";
 constexpr char kBatchEndTag[] = "BATCH_END";
+constexpr char kPredictionTag[] = "PREDICTION";
+constexpr char kBackgroundLabel[] = "None";
+constexpr char kGestureEmbedderTFLiteName[] = "gesture_embedder.tflite";
+constexpr char kCannedGestureClassifierTFLiteName[] =
+    "canned_gesture_classifier.tflite";
+constexpr char kCustomGestureClassifierTFLiteName[] =
+    "custom_gesture_classifier.tflite";
+
+struct SubTaskModelResources {
+  const core::ModelResources* gesture_embedder_model_resource = nullptr;
+  const core::ModelResources* canned_gesture_classifier_model_resource =
+      nullptr;
+  const core::ModelResources* custom_gesture_classifier_model_resource =
+      nullptr;
+};
 
 Source<std::vector<Tensor>> ConvertMatrixToTensor(Source<Matrix> matrix,
                                                   Graph& graph) {
   auto& node = graph.AddNode("TensorConverterCalculator");
   matrix >> node.In("MATRIX");
   return node[Output<std::vector<Tensor>>{"TENSORS"}];
+}
+
+absl::Status ConfigureCombinedPredictionCalculator(
+    CombinedPredictionCalculatorOptions* options) {
+  options->set_background_label(kBackgroundLabel);
+  return absl::OkStatus();
+}
+
+void PopulateAccelerationAndUseStreamMode(
+    const BaseOptions& parent_base_options,
+    BaseOptions* sub_task_base_options) {
+  sub_task_base_options->mutable_acceleration()->CopyFrom(
+      parent_base_options.acceleration());
+  sub_task_base_options->set_use_stream_mode(
+      parent_base_options.use_stream_mode());
 }
 
 }  // namespace
@@ -92,6 +136,9 @@ Source<std::vector<Tensor>> ConvertMatrixToTensor(Source<Matrix> matrix,
 //     Detected hand landmarks in world coordinates.
 //   IMAGE_SIZE - std::pair<int, int>
 //     The size of image from which the landmarks detected from.
+//   NORM_RECT - NormalizedRect
+//     NormalizedRect whose 'rotation' field is used to rotate the
+//     landmarks before processing them.
 //
 // Outputs:
 //   HAND_GESTURES - ClassificationList
@@ -106,6 +153,7 @@ Source<std::vector<Tensor>> ConvertMatrixToTensor(Source<Matrix> matrix,
 //   input_stream: "LANDMARKS:landmarks"
 //   input_stream: "WORLD_LANDMARKS:world_landmarks"
 //   input_stream: "IMAGE_SIZE:image_size"
+//   input_stream: "NORM_RECT:norm_rect"
 //   output_stream: "HAND_GESTURES:hand_gestures"
 //   options {
 //     [mediapipe.tasks.vision.gesture_recognizer.proto.HandGestureRecognizerGraphOptions.ext]
@@ -122,30 +170,138 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(
-        const auto* model_resources,
-        CreateModelResources<HandGestureRecognizerGraphOptions>(sc));
+    if (sc->Options<HandGestureRecognizerGraphOptions>()
+            .base_options()
+            .has_model_asset()) {
+      ASSIGN_OR_RETURN(
+          const auto* model_asset_bundle_resources,
+          CreateModelAssetBundleResources<HandGestureRecognizerGraphOptions>(
+              sc));
+      // When the model resources cache service is available, filling in
+      // the file pointer meta in the subtasks' base options. Otherwise,
+      // providing the file contents instead.
+      MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+          *model_asset_bundle_resources,
+          sc->MutableOptions<HandGestureRecognizerGraphOptions>(),
+          !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
+               .IsAvailable()));
+    }
+    ASSIGN_OR_RETURN(const auto sub_task_model_resources,
+                     CreateSubTaskModelResources(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(
-        auto hand_gestures,
-        BuildGestureRecognizerGraph(
-            sc->Options<HandGestureRecognizerGraphOptions>(), *model_resources,
-            graph[Input<ClassificationList>(kHandednessTag)],
-            graph[Input<NormalizedLandmarkList>(kLandmarksTag)],
-            graph[Input<LandmarkList>(kWorldLandmarksTag)],
-            graph[Input<std::pair<int, int>>(kImageSizeTag)], graph));
+    ASSIGN_OR_RETURN(auto hand_gestures,
+                     BuildGestureRecognizerGraph(
+                         sc->Options<HandGestureRecognizerGraphOptions>(),
+                         sub_task_model_resources,
+                         graph[Input<ClassificationList>(kHandednessTag)],
+                         graph[Input<NormalizedLandmarkList>(kLandmarksTag)],
+                         graph[Input<LandmarkList>(kWorldLandmarksTag)],
+                         graph[Input<std::pair<int, int>>(kImageSizeTag)],
+                         graph[Input<NormalizedRect>(kNormRectTag)], graph));
     hand_gestures >> graph[Output<ClassificationList>(kHandGesturesTag)];
     return graph.GetConfig();
   }
 
  private:
+  // Sets the base options in the sub tasks.
+  absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
+                                     HandGestureRecognizerGraphOptions* options,
+                                     bool is_copy) {
+    ASSIGN_OR_RETURN(const auto gesture_embedder_file,
+                     resources.GetModelFile(kGestureEmbedderTFLiteName));
+    auto* gesture_embedder_graph_options =
+        options->mutable_gesture_embedder_graph_options();
+    SetExternalFile(gesture_embedder_file,
+                    gesture_embedder_graph_options->mutable_base_options()
+                        ->mutable_model_asset(),
+                    is_copy);
+    PopulateAccelerationAndUseStreamMode(
+        options->base_options(),
+        gesture_embedder_graph_options->mutable_base_options());
+
+    ASSIGN_OR_RETURN(
+        const auto canned_gesture_classifier_file,
+        resources.GetModelFile(kCannedGestureClassifierTFLiteName));
+    auto* canned_gesture_classifier_graph_options =
+        options->mutable_canned_gesture_classifier_graph_options();
+    SetExternalFile(
+        canned_gesture_classifier_file,
+        canned_gesture_classifier_graph_options->mutable_base_options()
+            ->mutable_model_asset(),
+        is_copy);
+    PopulateAccelerationAndUseStreamMode(
+        options->base_options(),
+        canned_gesture_classifier_graph_options->mutable_base_options());
+
+    const auto custom_gesture_classifier_file =
+        resources.GetModelFile(kCustomGestureClassifierTFLiteName);
+    if (custom_gesture_classifier_file.ok()) {
+      has_custom_gesture_classifier = true;
+      auto* custom_gesture_classifier_graph_options =
+          options->mutable_custom_gesture_classifier_graph_options();
+      SetExternalFile(
+          custom_gesture_classifier_file.value(),
+          custom_gesture_classifier_graph_options->mutable_base_options()
+              ->mutable_model_asset(),
+          is_copy);
+      PopulateAccelerationAndUseStreamMode(
+          options->base_options(),
+          custom_gesture_classifier_graph_options->mutable_base_options());
+    } else {
+      LOG(INFO) << "Custom gesture classifier is not defined.";
+    }
+    return absl::OkStatus();
+  }
+
+  absl::StatusOr<SubTaskModelResources> CreateSubTaskModelResources(
+      SubgraphContext* sc) {
+    auto* options = sc->MutableOptions<HandGestureRecognizerGraphOptions>();
+    SubTaskModelResources sub_task_model_resources;
+    auto& gesture_embedder_model_asset =
+        *options->mutable_gesture_embedder_graph_options()
+             ->mutable_base_options()
+             ->mutable_model_asset();
+    ASSIGN_OR_RETURN(
+        sub_task_model_resources.gesture_embedder_model_resource,
+        CreateModelResources(sc,
+                             std::make_unique<core::proto::ExternalFile>(
+                                 std::move(gesture_embedder_model_asset)),
+                             "_gesture_embedder"));
+    auto& canned_gesture_classifier_model_asset =
+        *options->mutable_canned_gesture_classifier_graph_options()
+             ->mutable_base_options()
+             ->mutable_model_asset();
+    ASSIGN_OR_RETURN(
+        sub_task_model_resources.canned_gesture_classifier_model_resource,
+        CreateModelResources(
+            sc,
+            std::make_unique<core::proto::ExternalFile>(
+                std::move(canned_gesture_classifier_model_asset)),
+            "_canned_gesture_classifier"));
+    if (has_custom_gesture_classifier) {
+      auto& custom_gesture_classifier_model_asset =
+          *options->mutable_custom_gesture_classifier_graph_options()
+               ->mutable_base_options()
+               ->mutable_model_asset();
+      ASSIGN_OR_RETURN(
+          sub_task_model_resources.custom_gesture_classifier_model_resource,
+          CreateModelResources(
+              sc,
+              std::make_unique<core::proto::ExternalFile>(
+                  std::move(custom_gesture_classifier_model_asset)),
+              "_custom_gesture_classifier"));
+    }
+    return sub_task_model_resources;
+  }
+
   absl::StatusOr<Source<ClassificationList>> BuildGestureRecognizerGraph(
       const HandGestureRecognizerGraphOptions& graph_options,
-      const core::ModelResources& model_resources,
+      const SubTaskModelResources& sub_task_model_resources,
       Source<ClassificationList> handedness,
       Source<NormalizedLandmarkList> hand_landmarks,
       Source<LandmarkList> hand_world_landmarks,
-      Source<std::pair<int, int>> image_size, Graph& graph) {
+      Source<std::pair<int, int>> image_size, Source<NormalizedRect> norm_rect,
+      Graph& graph) {
     // Converts the ClassificationList to a matrix.
     auto& handedness_to_matrix = graph.AddNode("HandednessToMatrixCalculator");
     handedness >> handedness_to_matrix.In(kHandednessTag);
@@ -166,6 +322,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
         landmarks_options;
     hand_landmarks >> hand_landmarks_to_matrix.In(kLandmarksTag);
     image_size >> hand_landmarks_to_matrix.In(kImageSizeTag);
+    norm_rect >> hand_landmarks_to_matrix.In(kNormRectTag);
     auto hand_landmarks_matrix =
         hand_landmarks_to_matrix[Output<Matrix>(kLandmarksMatrixTag)];
 
@@ -181,6 +338,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
     hand_world_landmarks >>
         hand_world_landmarks_to_matrix.In(kWorldLandmarksTag);
     image_size >> hand_world_landmarks_to_matrix.In(kImageSizeTag);
+    norm_rect >> hand_world_landmarks_to_matrix.In(kNormRectTag);
     auto hand_world_landmarks_matrix =
         hand_world_landmarks_to_matrix[Output<Matrix>(kLandmarksMatrixTag)];
 
@@ -198,26 +356,71 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
     hand_world_landmarks_tensor >> concatenate_tensor_vector.In(2);
     auto concatenated_tensors = concatenate_tensor_vector.Out("");
 
-    // Inference for static hand gesture recognition.
-    // TODO add embedding step.
-    auto& inference = AddInference(
-        model_resources, graph_options.base_options().acceleration(), graph);
-    concatenated_tensors >> inference.In(kTensorsTag);
-    auto inference_output_tensors = inference.Out(kTensorsTag);
+    // Inference for gesture embedder.
+    auto& gesture_embedder_inference =
+        AddInference(*sub_task_model_resources.gesture_embedder_model_resource,
+                     graph_options.gesture_embedder_graph_options()
+                         .base_options()
+                         .acceleration(),
+                     graph);
+    concatenated_tensors >> gesture_embedder_inference.In(kTensorsTag);
+    auto embedding_tensors =
+        gesture_embedder_inference.Out(kTensorsTag).Cast<Tensor>();
 
+    auto& combine_predictions = graph.AddNode("CombinedPredictionCalculator");
+    MP_RETURN_IF_ERROR(ConfigureCombinedPredictionCalculator(
+        &combine_predictions
+             .GetOptions<CombinedPredictionCalculatorOptions>()));
+
+    int classifier_nums = 0;
+    // Inference for custom gesture classifier if it exists.
+    if (has_custom_gesture_classifier) {
+      ASSIGN_OR_RETURN(
+          auto gesture_clasification_list,
+          GetGestureClassificationList(
+              sub_task_model_resources.custom_gesture_classifier_model_resource,
+              graph_options.custom_gesture_classifier_graph_options(),
+              embedding_tensors, graph));
+      gesture_clasification_list >> combine_predictions.In(classifier_nums++);
+    }
+
+    // Inference for canned gesture classifier.
+    ASSIGN_OR_RETURN(
+        auto gesture_clasification_list,
+        GetGestureClassificationList(
+            sub_task_model_resources.canned_gesture_classifier_model_resource,
+            graph_options.canned_gesture_classifier_graph_options(),
+            embedding_tensors, graph));
+    gesture_clasification_list >> combine_predictions.In(classifier_nums++);
+
+    auto combined_classification_list =
+        combine_predictions.Out(kPredictionTag).Cast<ClassificationList>();
+
+    return combined_classification_list;
+  }
+
+  absl::StatusOr<Source<ClassificationList>> GetGestureClassificationList(
+      const core::ModelResources* model_resources,
+      const proto::GestureClassifierGraphOptions& options,
+      Source<Tensor>& embedding_tensors, Graph& graph) {
+    auto& gesture_classifier_inference = AddInference(
+        *model_resources, options.base_options().acceleration(), graph);
+    embedding_tensors >> gesture_classifier_inference.In(kTensorsTag);
+    auto gesture_inference_out_tensors =
+        gesture_classifier_inference.Out(kTensorsTag);
     auto& tensors_to_classification =
         graph.AddNode("TensorsToClassificationCalculator");
     MP_RETURN_IF_ERROR(ConfigureTensorsToClassificationCalculator(
-        graph_options.classifier_options(),
-        *model_resources.GetMetadataExtractor(), 0,
+        options.classifier_options(), *model_resources->GetMetadataExtractor(),
+        0,
         &tensors_to_classification.GetOptions<
             mediapipe::TensorsToClassificationCalculatorOptions>()));
-    inference_output_tensors >> tensors_to_classification.In(kTensorsTag);
-    auto classification_list =
-        tensors_to_classification[Output<ClassificationList>(
-            "CLASSIFICATIONS")];
-    return classification_list;
+    gesture_inference_out_tensors >> tensors_to_classification.In(kTensorsTag);
+    return tensors_to_classification.Out("CLASSIFICATIONS")
+        .Cast<ClassificationList>();
   }
+
+  bool has_custom_gesture_classifier = false;
 };
 
 // clang-format off
@@ -239,6 +442,9 @@ REGISTER_MEDIAPIPE_GRAPH(
 //     A vector hand landmarks in world coordinates.
 //   IMAGE_SIZE - std::pair<int, int>
 //     The size of image from which the landmarks detected from.
+//   NORM_RECT - NormalizedRect
+//     NormalizedRect whose 'rotation' field is used to rotate the
+//     landmarks before processing them.
 //   HAND_TRACKING_IDS - std::vector<int>
 //     A vector of the tracking ids of the hands. The tracking id is the vector
 //     index corresponding to the same hand if the graph runs multiple times.
@@ -257,6 +463,7 @@ REGISTER_MEDIAPIPE_GRAPH(
 //   input_stream: "LANDMARKS:landmarks"
 //   input_stream: "WORLD_LANDMARKS:world_landmarks"
 //   input_stream: "IMAGE_SIZE:image_size"
+//   input_stream: "NORM_RECT:norm_rect"
 //   input_stream: "HAND_TRACKING_IDS:hand_tracking_ids"
 //   output_stream: "HAND_GESTURES:hand_gestures"
 //   options {
@@ -283,6 +490,7 @@ class MultipleHandGestureRecognizerGraph : public core::ModelTaskGraph {
             graph[Input<std::vector<NormalizedLandmarkList>>(kLandmarksTag)],
             graph[Input<std::vector<LandmarkList>>(kWorldLandmarksTag)],
             graph[Input<std::pair<int, int>>(kImageSizeTag)],
+            graph[Input<NormalizedRect>(kNormRectTag)],
             graph[Input<std::vector<int>>(kHandTrackingIdsTag)], graph));
     multi_hand_gestures >>
         graph[Output<std::vector<ClassificationList>>(kHandGesturesTag)];
@@ -296,18 +504,20 @@ class MultipleHandGestureRecognizerGraph : public core::ModelTaskGraph {
       Source<std::vector<ClassificationList>> multi_handedness,
       Source<std::vector<NormalizedLandmarkList>> multi_hand_landmarks,
       Source<std::vector<LandmarkList>> multi_hand_world_landmarks,
-      Source<std::pair<int, int>> image_size,
+      Source<std::pair<int, int>> image_size, Source<NormalizedRect> norm_rect,
       Source<std::vector<int>> multi_hand_tracking_ids, Graph& graph) {
     auto& begin_loop_int = graph.AddNode("BeginLoopIntCalculator");
     image_size >> begin_loop_int.In(kCloneTag)[0];
-    multi_handedness >> begin_loop_int.In(kCloneTag)[1];
-    multi_hand_landmarks >> begin_loop_int.In(kCloneTag)[2];
-    multi_hand_world_landmarks >> begin_loop_int.In(kCloneTag)[3];
+    norm_rect >> begin_loop_int.In(kCloneTag)[1];
+    multi_handedness >> begin_loop_int.In(kCloneTag)[2];
+    multi_hand_landmarks >> begin_loop_int.In(kCloneTag)[3];
+    multi_hand_world_landmarks >> begin_loop_int.In(kCloneTag)[4];
     multi_hand_tracking_ids >> begin_loop_int.In(kIterableTag);
     auto image_size_clone = begin_loop_int.Out(kCloneTag)[0];
-    auto multi_handedness_clone = begin_loop_int.Out(kCloneTag)[1];
-    auto multi_hand_landmarks_clone = begin_loop_int.Out(kCloneTag)[2];
-    auto multi_hand_world_landmarks_clone = begin_loop_int.Out(kCloneTag)[3];
+    auto norm_rect_clone = begin_loop_int.Out(kCloneTag)[1];
+    auto multi_handedness_clone = begin_loop_int.Out(kCloneTag)[2];
+    auto multi_hand_landmarks_clone = begin_loop_int.Out(kCloneTag)[3];
+    auto multi_hand_world_landmarks_clone = begin_loop_int.Out(kCloneTag)[4];
     auto hand_tracking_id = begin_loop_int.Out(kItemTag);
     auto batch_end = begin_loop_int.Out(kBatchEndTag);
 
@@ -341,6 +551,7 @@ class MultipleHandGestureRecognizerGraph : public core::ModelTaskGraph {
     hand_world_landmarks >>
         hand_gesture_recognizer_graph.In(kWorldLandmarksTag);
     image_size_clone >> hand_gesture_recognizer_graph.In(kImageSizeTag);
+    norm_rect_clone >> hand_gesture_recognizer_graph.In(kNormRectTag);
     auto hand_gestures = hand_gesture_recognizer_graph.Out(kHandGesturesTag);
 
     auto& end_loop_classification_lists =

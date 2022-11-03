@@ -17,14 +17,18 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_CC_VISION_GESTURE_RECOGNIZRER_GESTURE_RECOGNIZER_H_
 
 #include <memory>
+#include <optional>
+#include <vector>
 
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/tasks/cc/components/containers/gesture_recognition_result.h"
+#include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
+#include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 
 namespace mediapipe {
@@ -36,12 +40,6 @@ struct GestureRecognizerOptions {
   // Base options for configuring Task library, such as specifying the TfLite
   // model file with metadata, accelerator options, op resolver, etc.
   tasks::core::BaseOptions base_options;
-
-  // TODO: remove these. Temporary solutions before bundle asset is
-  // ready.
-  tasks::core::BaseOptions base_options_for_hand_landmarker;
-  tasks::core::BaseOptions base_options_for_hand_detector;
-  tasks::core::BaseOptions base_options_for_gesture_recognizer;
 
   // The running mode of the task. Default to the image mode.
   // GestureRecognizer has three running modes:
@@ -57,7 +55,7 @@ struct GestureRecognizerOptions {
   int num_hands = 1;
 
   // The minimum confidence score for the hand detection to be considered
-  // successfully.
+  // successful.
   float min_hand_detection_confidence = 0.5;
 
   // The minimum confidence score of hand presence score in the hand landmark
@@ -65,15 +63,20 @@ struct GestureRecognizerOptions {
   float min_hand_presence_confidence = 0.5;
 
   // The minimum confidence score for the hand tracking to be considered
-  // successfully.
+  // successful.
   float min_tracking_confidence = 0.5;
 
-  // The minimum confidence score for the gestures to be considered
-  // successfully. If < 0, the gesture confidence thresholds in the model
-  // metadata are used.
-  // TODO  Note this option is subject to change, after scoring
-  // merging calculator is implemented.
-  float min_gesture_confidence = -1;
+  // TODO  Note this option is subject to change.
+  // Options for configuring the canned gestures classifier, such as score
+  // threshold, allow list and deny list of gestures. The categories for canned
+  // gesture classifiers are: ["None", "Closed_Fist", "Open_Palm",
+  // "Pointing_Up", "Thumb_Down", "Thumb_Up", "Victory", "ILoveYou"]
+  components::processors::ClassifierOptions canned_gestures_classifier_options;
+
+  // TODO  Note this option is subject to change.
+  // Options for configuring the custom gestures classifier, such as score
+  // threshold, allow list and deny list of gestures.
+  components::processors::ClassifierOptions custom_gestures_classifier_options;
 
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
@@ -93,6 +96,13 @@ struct GestureRecognizerOptions {
 // Inputs:
 //   Image
 //     - The image that gesture recognition runs on.
+//   std::optional<NormalizedRect>
+//     - If provided, can be used to specify the rotation to apply to the image
+//       before performing gesture recognition, by setting its 'rotation' field
+//       in radians (e.g. 'M_PI / 2' for a 90° anti-clockwise rotation). Note
+//       that specifying a region-of-interest using the 'x_center', 'y_center',
+//       'width' and 'height' fields is NOT supported and will result in an
+//       invalid argument error being returned.
 // Outputs:
 //   GestureRecognitionResult
 //     - The hand gesture recognition results.
@@ -120,24 +130,37 @@ class GestureRecognizer : tasks::vision::core::BaseVisionTaskApi {
   // Only use this method when the GestureRecognizer is created with the image
   // running mode.
   //
-  // image - mediapipe::Image
-  //   Image to perform hand gesture recognition on.
+  // The optional 'image_processing_options' parameter can be used to specify
+  // the rotation to apply to the image before performing recognition, by
+  // setting its 'rotation_degrees' field. Note that specifying a
+  // region-of-interest using the 'region_of_interest' field is NOT supported
+  // and will result in an invalid argument error being returned.
   //
   // The image can be of any size with format RGB or RGBA.
   // TODO: Describes how the input image will be preprocessed
   // after the yuv support is implemented.
   absl::StatusOr<components::containers::GestureRecognitionResult> Recognize(
-      Image image);
+      Image image,
+      std::optional<core::ImageProcessingOptions> image_processing_options =
+          std::nullopt);
 
   // Performs gesture recognition on the provided video frame.
   // Only use this method when the GestureRecognizer is created with the video
   // running mode.
   //
+  // The optional 'image_processing_options' parameter can be used to specify
+  // the rotation to apply to the image before performing recognition, by
+  // setting its 'rotation_degrees' field. Note that specifying a
+  // region-of-interest using the 'region_of_interest' field is NOT supported
+  // and will result in an invalid argument error being returned.
+  //
   // The image can be of any size with format RGB or RGBA. It's required to
   // provide the video frame's timestamp (in milliseconds). The input timestamps
   // must be monotonically increasing.
   absl::StatusOr<components::containers::GestureRecognitionResult>
-  RecognizeForVideo(Image image, int64 timestamp_ms);
+  RecognizeForVideo(Image image, int64 timestamp_ms,
+                    std::optional<core::ImageProcessingOptions>
+                        image_processing_options = std::nullopt);
 
   // Sends live image data to perform gesture recognition, and the results will
   // be available via the "result_callback" provided in the
@@ -149,6 +172,12 @@ class GestureRecognizer : tasks::vision::core::BaseVisionTaskApi {
   // sent to the gesture recognizer. The input timestamps must be monotonically
   // increasing.
   //
+  // The optional 'image_processing_options' parameter can be used to specify
+  // the rotation to apply to the image before performing recognition, by
+  // setting its 'rotation_degrees' field. Note that specifying a
+  // region-of-interest using the 'region_of_interest' field is NOT supported
+  // and will result in an invalid argument error being returned.
+  //
   // The "result_callback" provides
   //   - A vector of GestureRecognitionResult, each is the recognized results
   //     for a input frame.
@@ -157,7 +186,9 @@ class GestureRecognizer : tasks::vision::core::BaseVisionTaskApi {
   //     longer be valid when the callback returns. To access the image data
   //     outside of the callback, callers need to make a copy of the image.
   //   - The input timestamp in milliseconds.
-  absl::Status RecognizeAsync(Image image, int64 timestamp_ms);
+  absl::Status RecognizeAsync(Image image, int64 timestamp_ms,
+                              std::optional<core::ImageProcessingOptions>
+                                  image_processing_options = std::nullopt);
 
   // Shuts down the GestureRecognizer when all works are done.
   absl::Status Close() { return runner_->Close(); }

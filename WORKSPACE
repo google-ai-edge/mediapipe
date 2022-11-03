@@ -172,6 +172,10 @@ http_archive(
     urls = [
         "https://github.com/google/sentencepiece/archive/1.0.0.zip",
     ],
+    patches = [
+        "//third_party:com_google_sentencepiece_no_gflag_no_gtest.diff",
+    ],
+    patch_args = ["-p1"],
     repo_mapping = {"@com_google_glog" : "@com_github_glog_glog"},
 )
 

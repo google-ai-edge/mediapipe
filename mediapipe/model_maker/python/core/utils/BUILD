@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python strict test compatibility macro.
 
 licenses(["notice"])
 
@@ -24,7 +25,6 @@ py_library(
     name = "test_util",
     testonly = 1,
     srcs = ["test_util.py"],
-    srcs_version = "PY3",
     deps = [
         ":model_util",
         "//mediapipe/model_maker/python/core/data:dataset",
@@ -32,23 +32,8 @@ py_library(
 )
 
 py_library(
-    name = "image_preprocessing",
-    srcs = ["image_preprocessing.py"],
-    srcs_version = "PY3",
-)
-
-py_test(
-    name = "image_preprocessing_test",
-    srcs = ["image_preprocessing_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
-    deps = [":image_preprocessing"],
-)
-
-py_library(
     name = "model_util",
     srcs = ["model_util.py"],
-    srcs_version = "PY3",
     deps = [
         ":quantization",
         "//mediapipe/model_maker/python/core/data:dataset",
@@ -58,8 +43,6 @@ py_library(
 py_test(
     name = "model_util_test",
     srcs = ["model_util_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":model_util",
         ":quantization",
@@ -76,8 +59,6 @@ py_library(
 py_test(
     name = "loss_functions_test",
     srcs = ["loss_functions_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [":loss_functions"],
 )
 
@@ -91,8 +72,6 @@ py_library(
 py_test(
     name = "quantization_test",
     srcs = ["quantization_test.py"],
-    python_version = "PY3",
-    srcs_version = "PY3",
     deps = [
         ":quantization",
         ":test_util",

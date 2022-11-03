@@ -20,7 +20,6 @@ from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
-from mediapipe.python._framework_bindings import task_runner as task_runner_module
 from mediapipe.tasks.cc.vision.object_detector.proto import object_detector_options_pb2
 from mediapipe.tasks.python.components.containers import detections as detections_module
 from mediapipe.tasks.python.core import base_options as base_options_module
@@ -33,7 +32,6 @@ _BaseOptions = base_options_module.BaseOptions
 _ObjectDetectorOptionsProto = object_detector_options_pb2.ObjectDetectorOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _TaskInfo = task_info_module.TaskInfo
-_TaskRunner = task_runner_module.TaskRunner
 
 _DETECTIONS_OUT_STREAM_NAME = 'detections_out'
 _DETECTIONS_TAG = 'DETECTIONS'

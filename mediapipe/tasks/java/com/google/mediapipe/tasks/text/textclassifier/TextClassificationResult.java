@@ -15,11 +15,11 @@
 package com.google.mediapipe.tasks.text.textclassifier;
 
 import com.google.auto.value.AutoValue;
-import com.google.mediapipe.tasks.components.container.proto.CategoryProto;
-import com.google.mediapipe.tasks.components.container.proto.ClassificationsProto;
 import com.google.mediapipe.tasks.components.containers.Category;
 import com.google.mediapipe.tasks.components.containers.ClassificationEntry;
 import com.google.mediapipe.tasks.components.containers.Classifications;
+import com.google.mediapipe.tasks.components.containers.proto.CategoryProto;
+import com.google.mediapipe.tasks.components.containers.proto.ClassificationsProto;
 import com.google.mediapipe.tasks.core.TaskResult;
 import java.util.ArrayList;
 import java.util.Collections;

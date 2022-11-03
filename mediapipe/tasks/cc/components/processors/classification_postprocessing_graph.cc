@@ -78,6 +78,14 @@ constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
 constexpr char kScoresTag[] = "SCORES";
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kTimestampsTag[] = "TIMESTAMPS";
+constexpr char kTimestampedClassificationsTag[] = "TIMESTAMPED_CLASSIFICATIONS";
+
+// Struct holding the different output streams produced by the graph.
+struct ClassificationPostprocessingOutputStreams {
+  Source<ClassificationResult> classification_result;
+  Source<ClassificationResult> classifications;
+  Source<std::vector<ClassificationResult>> timestamped_classifications;
+};
 
 // Performs sanity checks on provided ClassifierOptions.
 absl::Status SanityCheckClassifierOptions(
@@ -286,7 +294,7 @@ absl::Status ConfigureScoreCalibrationIfAny(
 
 void ConfigureClassificationAggregationCalculator(
     const ModelMetadataExtractor& metadata_extractor,
-    ClassificationAggregationCalculatorOptions* options) {
+    mediapipe::ClassificationAggregationCalculatorOptions* options) {
   auto* output_tensors_metadata = metadata_extractor.GetOutputTensorMetadata();
   if (output_tensors_metadata == nullptr) {
     return;
@@ -378,12 +386,23 @@ absl::Status ConfigureClassificationPostprocessingGraph(
 //   TENSORS - std::vector<Tensor>
 //     The output tensors of an InferenceCalculator.
 //   TIMESTAMPS - std::vector<Timestamp> @Optional
-//     The collection of timestamps that a single ClassificationResult should
-//     aggregate. This is mostly useful for classifiers working on time series,
-//     e.g. audio or video classification.
+//     The collection of the timestamps that this calculator should aggregate.
+//     This stream is optional: if provided then the TIMESTAMPED_CLASSIFICATIONS
+//     output is used for results. Otherwise as no timestamp aggregation is
+//     required the CLASSIFICATIONS output is used for results.
+//
 // Outputs:
-//   CLASSIFICATION_RESULT - ClassificationResult
-//     The output aggregated classification results.
+//   CLASSIFICATIONS - ClassificationResult @Optional
+//     The classification results aggregated by head. Must be connected if the
+//     TIMESTAMPS input is not connected, as it signals that timestamp
+//     aggregation is not required.
+//   TIMESTAMPED_CLASSIFICATIONS - std::vector<ClassificationResult> @Optional
+//     The classification result aggregated by timestamp, then by head. Must be
+//     connected if the TIMESTAMPS input is connected, as it signals that
+//     timestamp aggregation is required.
+//   // TODO: remove output once migration is over.
+//   CLASSIFICATION_RESULT - (DEPRECATED) ClassificationResult @Optional
+//     The aggregated classification result.
 //
 // The recommended way of using this graph is through the GraphBuilder API
 // using the 'ConfigureClassificationPostprocessingGraph()' function. See header
@@ -394,28 +413,39 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
       mediapipe::SubgraphContext* sc) override {
     Graph graph;
     ASSIGN_OR_RETURN(
-        auto classification_result_out,
+        auto output_streams,
         BuildClassificationPostprocessing(
             sc->Options<proto::ClassificationPostprocessingGraphOptions>(),
             graph[Input<std::vector<Tensor>>(kTensorsTag)],
             graph[Input<std::vector<Timestamp>>(kTimestampsTag)], graph));
-    classification_result_out >>
+    output_streams.classification_result >>
         graph[Output<ClassificationResult>(kClassificationResultTag)];
+    output_streams.classifications >>
+        graph[Output<ClassificationResult>(kClassificationsTag)];
+    output_streams.timestamped_classifications >>
+        graph[Output<std::vector<ClassificationResult>>(
+            kTimestampedClassificationsTag)];
     return graph.GetConfig();
   }
 
  private:
   // Adds an on-device classification postprocessing graph into the provided
   // builder::Graph instance. The classification postprocessing graph takes
-  // tensors (std::vector<mediapipe::Tensor>) as input and returns one output
-  // stream containing the output classification results (ClassificationResult).
+  // tensors (std::vector<mediapipe::Tensor>) and optional timestamps
+  // (std::vector<Timestamp>) as input and returns two output streams:
+  //  - classification results aggregated by classifier head as a
+  //  ClassificationResult proto, used when no timestamps are passed in
+  //    the graph,
+  //  - classification results aggregated by timestamp then by classifier head
+  //    as a std::vector<ClassificationResult>, used when timestamps are passed
+  //    in the graph.
   //
   // options: the on-device ClassificationPostprocessingGraphOptions.
   // tensors_in: (std::vector<mediapipe::Tensor>>) tensors to postprocess.
   // timestamps_in: (std::vector<mediapipe::Timestamp>) optional collection of
-  //   timestamps that a single ClassificationResult should aggregate.
+  //   timestamps that should be used to aggregate classification results.
   // graph: the mediapipe builder::Graph instance to be updated.
-  absl::StatusOr<Source<ClassificationResult>>
+  absl::StatusOr<ClassificationPostprocessingOutputStreams>
   BuildClassificationPostprocessing(
       const proto::ClassificationPostprocessingGraphOptions& options,
       Source<std::vector<Tensor>> tensors_in,
@@ -494,7 +524,8 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
     // Aggregates Classifications into a single ClassificationResult.
     auto& result_aggregation =
         graph.AddNode("ClassificationAggregationCalculator");
-    result_aggregation.GetOptions<ClassificationAggregationCalculatorOptions>()
+    result_aggregation
+        .GetOptions<mediapipe::ClassificationAggregationCalculatorOptions>()
         .CopyFrom(options.classification_aggregation_options());
     for (int i = 0; i < num_heads; ++i) {
       tensors_to_classification_nodes[i]->Out(kClassificationsTag) >>
@@ -504,8 +535,15 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
     timestamps_in >> result_aggregation.In(kTimestampsTag);
 
     // Connects output.
-    return result_aggregation[Output<ClassificationResult>(
-        kClassificationResultTag)];
+    ClassificationPostprocessingOutputStreams output_streams{
+        /*classification_result=*/result_aggregation
+            [Output<ClassificationResult>(kClassificationResultTag)],
+        /*classifications=*/
+        result_aggregation[Output<ClassificationResult>(kClassificationsTag)],
+        /*timestamped_classifications=*/
+        result_aggregation[Output<std::vector<ClassificationResult>>(
+            kTimestampedClassificationsTag)]};
+    return output_streams;
   }
 };
 

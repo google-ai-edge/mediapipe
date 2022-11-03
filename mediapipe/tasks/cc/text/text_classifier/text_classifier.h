@@ -21,7 +21,7 @@ limitations under the License.
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/base_task_api.h"
@@ -30,6 +30,10 @@ namespace mediapipe {
 namespace tasks {
 namespace text {
 namespace text_classifier {
+
+// Alias the shared ClassificationResult struct as result type.
+using TextClassifierResult =
+    ::mediapipe::tasks::components::containers::ClassificationResult;
 
 // The options for configuring a MediaPipe text classifier task.
 struct TextClassifierOptions {
@@ -81,8 +85,7 @@ class TextClassifier : core::BaseTaskApi {
       std::unique_ptr<TextClassifierOptions> options);
 
   // Performs classification on the input `text`.
-  absl::StatusOr<components::containers::proto::ClassificationResult> Classify(
-      absl::string_view text);
+  absl::StatusOr<TextClassifierResult> Classify(absl::string_view text);
 
   // Shuts down the TextClassifier when all the work is done.
   absl::Status Close() { return runner_->Close(); }

@@ -293,7 +293,6 @@ mediapipe_proto_library(
     name = "rect_proto",
     srcs = ["rect.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework/formats:location_data_proto"],
 )
 
 mediapipe_register_type(

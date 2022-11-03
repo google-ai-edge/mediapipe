@@ -13,10 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/status/statusor.h"
@@ -65,11 +67,14 @@ using ::testing::proto::Approximately;
 using ::testing::proto::Partially;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
-constexpr char kHandLandmarkerModelBundle[] = "hand_landmark.task";
+constexpr char kHandLandmarkerModelBundle[] = "hand_landmarker.task";
 constexpr char kLeftHandsImage[] = "left_hands.jpg";
+constexpr char kLeftHandsRotatedImage[] = "left_hands_rotated.jpg";
 
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageName[] = "image_in";
+constexpr char kNormRectTag[] = "NORM_RECT";
+constexpr char kNormRectName[] = "norm_rect_in";
 constexpr char kLandmarksTag[] = "LANDMARKS";
 constexpr char kLandmarksName[] = "landmarks";
 constexpr char kWorldLandmarksTag[] = "WORLD_LANDMARKS";
@@ -84,6 +89,11 @@ constexpr char kExpectedLeftUpHandLandmarksFilename[] =
     "expected_left_up_hand_landmarks.prototxt";
 constexpr char kExpectedLeftDownHandLandmarksFilename[] =
     "expected_left_down_hand_landmarks.prototxt";
+// Same but for the rotated image.
+constexpr char kExpectedLeftUpHandRotatedLandmarksFilename[] =
+    "expected_left_up_hand_rotated_landmarks.prototxt";
+constexpr char kExpectedLeftDownHandRotatedLandmarksFilename[] =
+    "expected_left_down_hand_rotated_landmarks.prototxt";
 
 constexpr float kFullModelFractionDiff = 0.03;  // percentage
 constexpr float kAbsMargin = 0.03;
@@ -111,6 +121,8 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner() {
 
   graph[Input<Image>(kImageTag)].SetName(kImageName) >>
       hand_landmarker_graph.In(kImageTag);
+  graph[Input<NormalizedRect>(kNormRectTag)].SetName(kNormRectName) >>
+      hand_landmarker_graph.In(kNormRectTag);
   hand_landmarker_graph.Out(kLandmarksTag).SetName(kLandmarksName) >>
       graph[Output<std::vector<NormalizedLandmarkList>>(kLandmarksTag)];
   hand_landmarker_graph.Out(kWorldLandmarksTag).SetName(kWorldLandmarksName) >>
@@ -130,15 +142,54 @@ TEST_F(HandLandmarkerTest, Succeeds) {
   MP_ASSERT_OK_AND_ASSIGN(
       Image image,
       DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kLeftHandsImage)));
+  NormalizedRect input_norm_rect;
+  input_norm_rect.set_x_center(0.5);
+  input_norm_rect.set_y_center(0.5);
+  input_norm_rect.set_width(1.0);
+  input_norm_rect.set_height(1.0);
   MP_ASSERT_OK_AND_ASSIGN(auto task_runner, CreateTaskRunner());
-  auto output_packets =
-      task_runner->Process({{kImageName, MakePacket<Image>(std::move(image))}});
+  auto output_packets = task_runner->Process(
+      {{kImageName, MakePacket<Image>(std::move(image))},
+       {kNormRectName,
+        MakePacket<NormalizedRect>(std::move(input_norm_rect))}});
   const auto& landmarks = (*output_packets)[kLandmarksName]
                               .Get<std::vector<NormalizedLandmarkList>>();
   ASSERT_EQ(landmarks.size(), kMaxNumHands);
   std::vector<NormalizedLandmarkList> expected_landmarks = {
       GetExpectedLandmarkList(kExpectedLeftUpHandLandmarksFilename),
       GetExpectedLandmarkList(kExpectedLeftDownHandLandmarksFilename)};
+
+  EXPECT_THAT(landmarks[0],
+              Approximately(Partially(EqualsProto(expected_landmarks[0])),
+                            /*margin=*/kAbsMargin,
+                            /*fraction=*/kFullModelFractionDiff));
+  EXPECT_THAT(landmarks[1],
+              Approximately(Partially(EqualsProto(expected_landmarks[1])),
+                            /*margin=*/kAbsMargin,
+                            /*fraction=*/kFullModelFractionDiff));
+}
+
+TEST_F(HandLandmarkerTest, SucceedsWithRotation) {
+  MP_ASSERT_OK_AND_ASSIGN(
+      Image image, DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
+                                                kLeftHandsRotatedImage)));
+  NormalizedRect input_norm_rect;
+  input_norm_rect.set_x_center(0.5);
+  input_norm_rect.set_y_center(0.5);
+  input_norm_rect.set_width(1.0);
+  input_norm_rect.set_height(1.0);
+  input_norm_rect.set_rotation(M_PI / 2.0);
+  MP_ASSERT_OK_AND_ASSIGN(auto task_runner, CreateTaskRunner());
+  auto output_packets = task_runner->Process(
+      {{kImageName, MakePacket<Image>(std::move(image))},
+       {kNormRectName,
+        MakePacket<NormalizedRect>(std::move(input_norm_rect))}});
+  const auto& landmarks = (*output_packets)[kLandmarksName]
+                              .Get<std::vector<NormalizedLandmarkList>>();
+  ASSERT_EQ(landmarks.size(), kMaxNumHands);
+  std::vector<NormalizedLandmarkList> expected_landmarks = {
+      GetExpectedLandmarkList(kExpectedLeftUpHandRotatedLandmarksFilename),
+      GetExpectedLandmarkList(kExpectedLeftDownHandRotatedLandmarksFilename)};
 
   EXPECT_THAT(landmarks[0],
               Approximately(Partially(EqualsProto(expected_landmarks[0])),

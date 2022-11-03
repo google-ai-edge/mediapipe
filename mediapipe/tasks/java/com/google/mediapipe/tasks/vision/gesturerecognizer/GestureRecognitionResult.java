@@ -31,6 +31,8 @@ import java.util.List;
 @AutoValue
 public abstract class GestureRecognitionResult implements TaskResult {
 
+  private static final int kGestureDefaultIndex = -1;
+
   /**
    * Creates a {@link GestureRecognitionResult} instance from the lists of landmarks, handedness,
    * and gestures protobuf messages.
@@ -97,7 +99,9 @@ public abstract class GestureRecognitionResult implements TaskResult {
         gestures.add(
             Category.create(
                 classification.getScore(),
-                classification.getIndex(),
+                // Gesture index is not used, because the final gesture result comes from multiple
+                // classifiers.
+                kGestureDefaultIndex,
                 classification.getLabel(),
                 classification.getDisplayName()));
       }
@@ -123,6 +127,10 @@ public abstract class GestureRecognitionResult implements TaskResult {
   /** Handedness of detected hands. */
   public abstract List<List<Category>> handednesses();
 
-  /** Recognized hand gestures of detected hands */
+  /**
+   * Recognized hand gestures of detected hands. Note that the index of the gesture is always -1,
+   * because the raw indices from multiple gesture classifiers cannot consolidate to a meaningful
+   * index.
+   */
   public abstract List<List<Category>> gestures();
 }

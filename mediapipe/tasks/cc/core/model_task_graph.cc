@@ -156,21 +156,24 @@ absl::StatusOr<CalculatorGraphConfig> ModelTaskGraph::GetConfig(
 }
 
 absl::StatusOr<const ModelResources*> ModelTaskGraph::CreateModelResources(
-    SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file) {
+    SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file,
+    const std::string tag_suffix) {
   auto model_resources_cache_service = sc->Service(kModelResourcesCacheService);
   if (!model_resources_cache_service.IsAvailable()) {
-    ASSIGN_OR_RETURN(local_model_resources_,
+    ASSIGN_OR_RETURN(auto local_model_resource,
                      ModelResources::Create("", std::move(external_file)));
     LOG(WARNING)
         << "A local ModelResources object is created. Please consider using "
            "ModelResourcesCacheService to cache the created ModelResources "
            "object in the CalculatorGraph.";
-    return local_model_resources_.get();
+    local_model_resources_.push_back(std::move(local_model_resource));
+    return local_model_resources_.back().get();
   }
   ASSIGN_OR_RETURN(
       auto op_resolver_packet,
       model_resources_cache_service.GetObject().GetGraphOpResolverPacket());
-  const std::string tag = CreateModelResourcesTag(sc->OriginalNode());
+  const std::string tag =
+      absl::StrCat(CreateModelResourcesTag(sc->OriginalNode()), tag_suffix);
   ASSIGN_OR_RETURN(auto model_resources,
                    ModelResources::Create(tag, std::move(external_file),
                                           op_resolver_packet));
@@ -182,7 +185,8 @@ absl::StatusOr<const ModelResources*> ModelTaskGraph::CreateModelResources(
 
 absl::StatusOr<const ModelAssetBundleResources*>
 ModelTaskGraph::CreateModelAssetBundleResources(
-    SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file) {
+    SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file,
+    const std::string tag_suffix) {
   auto model_resources_cache_service = sc->Service(kModelResourcesCacheService);
   bool has_file_pointer_meta = external_file->has_file_pointer_meta();
   // if external file is set by file pointer, no need to add the model asset
@@ -190,7 +194,7 @@ ModelTaskGraph::CreateModelAssetBundleResources(
   // not owned by this model asset bundle resources.
   if (!model_resources_cache_service.IsAvailable() || has_file_pointer_meta) {
     ASSIGN_OR_RETURN(
-        local_model_asset_bundle_resources_,
+        auto local_model_asset_bundle_resource,
         ModelAssetBundleResources::Create("", std::move(external_file)));
     if (!has_file_pointer_meta) {
       LOG(WARNING)
@@ -198,10 +202,12 @@ ModelTaskGraph::CreateModelAssetBundleResources(
              "ModelResourcesCacheService to cache the created ModelResources "
              "object in the CalculatorGraph.";
     }
-    return local_model_asset_bundle_resources_.get();
+    local_model_asset_bundle_resources_.push_back(
+        std::move(local_model_asset_bundle_resource));
+    return local_model_asset_bundle_resources_.back().get();
   }
-  const std::string tag =
-      CreateModelAssetBundleResourcesTag(sc->OriginalNode());
+  const std::string tag = absl::StrCat(
+      CreateModelAssetBundleResourcesTag(sc->OriginalNode()), tag_suffix);
   ASSIGN_OR_RETURN(
       auto model_bundle_resources,
       ModelAssetBundleResources::Create(tag, std::move(external_file)));

@@ -19,20 +19,26 @@ limitations under the License.
 #include "absl/status/status.h"
 #include "mediapipe/tasks/cc/components/image_preprocessing_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
+#include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace components {
 
-// Configures an ImagePreprocessing subgraph using the provided model resources.
+// Configures an ImagePreprocessing subgraph using the provided model resources
+// When use_gpu is true, use GPU as backend to convert image to tensor.
 // - Accepts CPU input images and outputs CPU tensors.
 //
 // Example usage:
 //
 //   auto& preprocessing =
 //       graph.AddNode("mediapipe.tasks.components.ImagePreprocessingSubgraph");
+//   core::proto::Acceleration acceleration;
+//   acceleration.mutable_xnnpack();
+//   bool use_gpu = DetermineImagePreprocessingGpuBackend(acceleration);
 //   MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
 //       model_resources,
+//       use_gpu,
 //       &preprocessing.GetOptions<ImagePreprocessingOptions>()));
 //
 // The resulting ImagePreprocessing subgraph has the following I/O:
@@ -56,8 +62,13 @@ namespace components {
 //     The image that has the pixel data stored on the target storage (CPU vs
 //     GPU).
 absl::Status ConfigureImagePreprocessing(
-    const core::ModelResources& model_resources,
+    const core::ModelResources& model_resources, bool use_gpu,
     ImagePreprocessingOptions* options);
+
+// Determine if the image preprocessing subgraph should use GPU as the backend
+// according to the given acceleration setting.
+bool DetermineImagePreprocessingGpuBackend(
+    const core::proto::Acceleration& acceleration);
 
 }  // namespace components
 }  // namespace tasks

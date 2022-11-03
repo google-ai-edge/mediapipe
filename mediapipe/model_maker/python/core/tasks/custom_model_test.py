@@ -40,8 +40,8 @@ class CustomModelTest(tf.test.TestCase):
 
   def setUp(self):
     super(CustomModelTest, self).setUp()
-    self.model = MockCustomModel(model_spec=None, shuffle=False)
-    self.model._model = test_util.build_model(input_shape=[4], num_classes=2)
+    self._model = MockCustomModel(model_spec=None, shuffle=False)
+    self._model._model = test_util.build_model(input_shape=[4], num_classes=2)
 
   def _check_nonempty_file(self, filepath):
     self.assertTrue(os.path.isfile(filepath))
@@ -49,7 +49,7 @@ class CustomModelTest(tf.test.TestCase):
 
   def test_export_tflite(self):
     export_path = os.path.join(self.get_temp_dir(), 'export/')
-    self.model.export_tflite(export_dir=export_path)
+    self._model.export_tflite(export_dir=export_path)
     self._check_nonempty_file(os.path.join(export_path, 'model.tflite'))
 
 if __name__ == '__main__':

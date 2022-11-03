@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict library compatibility macro.
+# Placeholder for internal Python strict library and test compatibility macro.
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -37,6 +37,29 @@ py_library(
 )
 
 py_library(
+    name = "landmark",
+    srcs = ["landmark.py"],
+    deps = [
+        "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "landmark_detection_result",
+    srcs = ["landmark_detection_result.py"],
+    deps = [
+        ":landmark",
+        ":rect",
+        "//mediapipe/framework/formats:classification_py_pb2",
+        "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
     name = "category",
     srcs = ["category.py"],
     deps = [
@@ -53,6 +76,16 @@ py_library(
         ":category",
         "//mediapipe/framework/formats:detection_py_pb2",
         "//mediapipe/framework/formats:location_data_py_pb2",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "classifications",
+    srcs = ["classifications.py"],
+    deps = [
+        ":category",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )

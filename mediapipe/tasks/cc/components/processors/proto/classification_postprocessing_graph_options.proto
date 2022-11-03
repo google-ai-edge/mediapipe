@@ -38,7 +38,7 @@ message ClassificationPostprocessingGraphOptions {
 
   // Options for the ClassificationAggregationCalculator encapsulated by the
   // ClassificationPostprocessing subgraph.
-  optional ClassificationAggregationCalculatorOptions
+  optional mediapipe.ClassificationAggregationCalculatorOptions
       classification_aggregation_options = 2;
 
   // Whether output tensors are quantized (kTfLiteUint8) or not (kFloat32).

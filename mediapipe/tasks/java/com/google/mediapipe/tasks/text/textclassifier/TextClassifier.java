@@ -22,7 +22,7 @@ import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.ProtoUtil;
-import com.google.mediapipe.tasks.components.container.proto.ClassificationsProto;
+import com.google.mediapipe.tasks.components.containers.proto.ClassificationsProto;
 import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -31,7 +31,6 @@ import com.google.mediapipe.tasks.core.TaskOptions;
 import com.google.mediapipe.tasks.core.TaskRunner;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.text.textclassifier.proto.TextClassifierGraphOptionsProto;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -154,7 +153,7 @@ public final class TextClassifier implements AutoCloseable {
                       packets.get(CLASSIFICATION_RESULT_OUT_STREAM_INDEX),
                       ClassificationsProto.ClassificationResult.getDefaultInstance()),
                   packets.get(CLASSIFICATION_RESULT_OUT_STREAM_INDEX).getTimestamp());
-            } catch (InvalidProtocolBufferException e) {
+            } catch (IOException e) {
               throw new MediaPipeException(
                   MediaPipeException.StatusCode.INTERNAL.ordinal(), e.getMessage());
             }

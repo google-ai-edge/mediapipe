@@ -18,7 +18,6 @@ syntax = "proto2";
 package mediapipe.tasks.vision.gesture_recognizer.proto;
 
 import "mediapipe/framework/calculator.proto";
-import "mediapipe/tasks/cc/components/processors/proto/classifier_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 import "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_classifier_graph_options.proto";
 import "mediapipe/tasks/cc/vision/gesture_recognizer/proto/gesture_embedder_graph_options.proto";
@@ -37,15 +36,11 @@ message HandGestureRecognizerGraphOptions {
   // Options for GestureEmbedder.
   optional GestureEmbedderGraphOptions gesture_embedder_graph_options = 2;
 
-  // Options for GestureClassifier of default gestures.
+  // Options for GestureClassifier of canned gestures.
   optional GestureClassifierGraphOptions
       canned_gesture_classifier_graph_options = 3;
 
   // Options for GestureClassifier of custom gestures.
   optional GestureClassifierGraphOptions
       custom_gesture_classifier_graph_options = 4;
-
-  // TODO: remove these. Temporary solutions before bundle asset is
-  // ready.
-  optional components.processors.proto.ClassifierOptions classifier_options = 5;
 }

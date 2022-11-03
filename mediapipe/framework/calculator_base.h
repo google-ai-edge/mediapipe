@@ -185,7 +185,7 @@ class CalculatorBaseFactory {
 // Functions for checking that the calculator has the required GetContract.
 template <class T>
 constexpr bool CalculatorHasGetContract(decltype(&T::GetContract) /*unused*/) {
-  typedef absl::Status (*GetContractType)(CalculatorContract * cc);
+  typedef absl::Status (*GetContractType)(CalculatorContract* cc);
   return std::is_same<decltype(&T::GetContract), GetContractType>::value;
 }
 template <class T>

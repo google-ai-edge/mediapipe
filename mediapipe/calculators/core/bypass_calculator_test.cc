@@ -75,6 +75,7 @@ constexpr char kTestGraphConfig2[] = R"pb(
     output_stream: "FEDERATED_GAZE_OUTPUT:federated_gaze_output"
     options {
       [mediapipe.SwitchContainerOptions.ext] {
+        async_selection: true
         contained_node: { calculator: "AppearancesPassThroughSubgraph" }
       }
     }
@@ -101,6 +102,7 @@ constexpr char kTestGraphConfig3[] = R"pb(
     output_stream: "FEDERATED_GAZE_OUTPUT:federated_gaze_output"
     options {
       [mediapipe.SwitchContainerOptions.ext] {
+        async_selection: true
         contained_node: {
           calculator: "BypassCalculator"
           node_options: {

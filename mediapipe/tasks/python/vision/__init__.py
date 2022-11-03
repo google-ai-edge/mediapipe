@@ -11,3 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""MediaPipe Tasks Vision API."""
+
+import mediapipe.tasks.python.vision.core
+import mediapipe.tasks.python.vision.image_classifier
+import mediapipe.tasks.python.vision.object_detector
+
+ImageClassifier = image_classifier.ImageClassifier
+ImageClassifierOptions = image_classifier.ImageClassifierOptions
+ObjectDetector = object_detector.ObjectDetector
+ObjectDetectorOptions = object_detector.ObjectDetectorOptions
+RunningMode = core.vision_task_running_mode.VisionTaskRunningMode
+
+# Remove unnecessary modules to avoid duplication in API docs.
+del core
+del image_classifier
+del object_detector
+del mediapipe

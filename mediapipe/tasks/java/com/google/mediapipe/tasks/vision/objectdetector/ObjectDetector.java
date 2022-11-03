@@ -22,7 +22,7 @@ import com.google.mediapipe.framework.AndroidPacketGetter;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
-import com.google.mediapipe.framework.image.Image;
+import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -32,6 +32,7 @@ import com.google.mediapipe.tasks.core.TaskOptions;
 import com.google.mediapipe.tasks.core.TaskRunner;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.vision.core.BaseVisionTaskApi;
+import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.objectdetector.proto.ObjectDetectorOptionsProto;
 import com.google.mediapipe.formats.proto.DetectionProto.Detection;
@@ -96,8 +97,10 @@ import java.util.Optional;
 public final class ObjectDetector extends BaseVisionTaskApi {
   private static final String TAG = ObjectDetector.class.getSimpleName();
   private static final String IMAGE_IN_STREAM_NAME = "image_in";
+  private static final String NORM_RECT_IN_STREAM_NAME = "norm_rect_in";
   private static final List<String> INPUT_STREAMS =
-      Collections.unmodifiableList(Arrays.asList("IMAGE:" + IMAGE_IN_STREAM_NAME));
+      Collections.unmodifiableList(
+          Arrays.asList("IMAGE:" + IMAGE_IN_STREAM_NAME, "NORM_RECT:" + NORM_RECT_IN_STREAM_NAME));
   private static final List<String> OUTPUT_STREAMS =
       Collections.unmodifiableList(Arrays.asList("DETECTIONS:detections_out", "IMAGE:image_out"));
   private static final int DETECTIONS_OUT_STREAM_INDEX = 0;
@@ -162,9 +165,9 @@ public final class ObjectDetector extends BaseVisionTaskApi {
   public static ObjectDetector createFromOptions(
       Context context, ObjectDetectorOptions detectorOptions) {
     // TODO: Consolidate OutputHandler and TaskRunner.
-    OutputHandler<ObjectDetectionResult, Image> handler = new OutputHandler<>();
+    OutputHandler<ObjectDetectionResult, MPImage> handler = new OutputHandler<>();
     handler.setOutputPacketConverter(
-        new OutputHandler.OutputPacketConverter<ObjectDetectionResult, Image>() {
+        new OutputHandler.OutputPacketConverter<ObjectDetectionResult, MPImage>() {
           @Override
           public ObjectDetectionResult convertToTaskResult(List<Packet> packets) {
             return ObjectDetectionResult.create(
@@ -174,7 +177,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
           }
 
           @Override
-          public Image convertToTaskInput(List<Packet> packets) {
+          public MPImage convertToTaskInput(List<Packet> packets) {
             return new BitmapImageBuilder(
                     AndroidPacketGetter.getBitmapFromRgb(packets.get(IMAGE_OUT_STREAM_INDEX)))
                 .build();
@@ -204,7 +207,25 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    * @param runningMode a mediapipe vision task {@link RunningMode}.
    */
   private ObjectDetector(TaskRunner taskRunner, RunningMode runningMode) {
-    super(taskRunner, runningMode, IMAGE_IN_STREAM_NAME);
+    super(taskRunner, runningMode, IMAGE_IN_STREAM_NAME, NORM_RECT_IN_STREAM_NAME);
+  }
+
+  /**
+   * Performs object detection on the provided single image with default image processing options,
+   * i.e. without any rotation applied. Only use this method when the {@link ObjectDetector} is
+   * created with {@link RunningMode.IMAGE}.
+   *
+   * <p>{@link ObjectDetector} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @throws MediaPipeException if there is an internal error.
+   */
+  public ObjectDetectionResult detect(MPImage image) {
+    return detect(image, ImageProcessingOptions.builder().build());
   }
 
   /**
@@ -217,11 +238,41 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link Image} object for processing.
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference. Note that region-of-interest is <b>not</b> supported
+   *     by this task: specifying {@link ImageProcessingOptions#regionOfInterest()} will result in
+   *     this method throwing an IllegalArgumentException.
+   * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
+   *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public ObjectDetectionResult detect(Image inputImage) {
-    return (ObjectDetectionResult) processImageData(inputImage);
+  public ObjectDetectionResult detect(
+      MPImage image, ImageProcessingOptions imageProcessingOptions) {
+    validateImageProcessingOptions(imageProcessingOptions);
+    return (ObjectDetectionResult) processImageData(image, imageProcessingOptions);
+  }
+
+  /**
+   * Performs object detection on the provided video frame with default image processing options,
+   * i.e. without any rotation applied. Only use this method when the {@link ObjectDetector} is
+   * created with {@link RunningMode.VIDEO}.
+   *
+   * <p>It's required to provide the video frame's timestamp (in milliseconds). The input timestamps
+   * must be monotonically increasing.
+   *
+   * <p>{@link ObjectDetector} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws MediaPipeException if there is an internal error.
+   */
+  public ObjectDetectionResult detectForVideo(MPImage image, long timestampMs) {
+    return detectForVideo(image, ImageProcessingOptions.builder().build(), timestampMs);
   }
 
   /**
@@ -237,12 +288,43 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link Image} object for processing.
-   * @param inputTimestampMs the input timestamp (in milliseconds).
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference. Note that region-of-interest is <b>not</b> supported
+   *     by this task: specifying {@link ImageProcessingOptions#regionOfInterest()} will result in
+   *     this method throwing an IllegalArgumentException.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
+   *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public ObjectDetectionResult detectForVideo(Image inputImage, long inputTimestampMs) {
-    return (ObjectDetectionResult) processVideoData(inputImage, inputTimestampMs);
+  public ObjectDetectionResult detectForVideo(
+      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
+    validateImageProcessingOptions(imageProcessingOptions);
+    return (ObjectDetectionResult) processVideoData(image, imageProcessingOptions, timestampMs);
+  }
+
+  /**
+   * Sends live image data to perform object detection with default image processing options, i.e.
+   * without any rotation applied, and the results will be available via the {@link ResultListener}
+   * provided in the {@link ObjectDetectorOptions}. Only use this method when the {@link
+   * ObjectDetector} is created with {@link RunningMode.LIVE_STREAM}.
+   *
+   * <p>It's required to provide a timestamp (in milliseconds) to indicate when the input image is
+   * sent to the object detector. The input timestamps must be monotonically increasing.
+   *
+   * <p>{@link ObjectDetector} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws MediaPipeException if there is an internal error.
+   */
+  public void detectAsync(MPImage image, long timestampMs) {
+    detectAsync(image, ImageProcessingOptions.builder().build(), timestampMs);
   }
 
   /**
@@ -259,12 +341,20 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    *   <li>{@link Bitmap.Config.ARGB_8888}
    * </ul>
    *
-   * @param inputImage a MediaPipe {@link Image} object for processing.
-   * @param inputTimestampMs the input timestamp (in milliseconds).
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference. Note that region-of-interest is <b>not</b> supported
+   *     by this task: specifying {@link ImageProcessingOptions#regionOfInterest()} will result in
+   *     this method throwing an IllegalArgumentException.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
+   *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public void detectAsync(Image inputImage, long inputTimestampMs) {
-    sendLiveStreamData(inputImage, inputTimestampMs);
+  public void detectAsync(
+      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
+    validateImageProcessingOptions(imageProcessingOptions);
+    sendLiveStreamData(image, imageProcessingOptions, timestampMs);
   }
 
   /** Options for setting up an {@link ObjectDetector}. */
@@ -333,7 +423,8 @@ public final class ObjectDetector extends BaseVisionTaskApi {
        * Sets the {@link ResultListener} to receive the detection results asynchronously when the
        * object detector is in the live stream mode.
        */
-      public abstract Builder setResultListener(ResultListener<ObjectDetectionResult, Image> value);
+      public abstract Builder setResultListener(
+          ResultListener<ObjectDetectionResult, MPImage> value);
 
       /** Sets an optional {@link ErrorListener}}. */
       public abstract Builder setErrorListener(ErrorListener value);
@@ -378,7 +469,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
 
     abstract List<String> categoryDenylist();
 
-    abstract Optional<ResultListener<ObjectDetectionResult, Image>> resultListener();
+    abstract Optional<ResultListener<ObjectDetectionResult, MPImage>> resultListener();
 
     abstract Optional<ErrorListener> errorListener();
 
@@ -412,6 +503,17 @@ public final class ObjectDetector extends BaseVisionTaskApi {
           .setExtension(
               ObjectDetectorOptionsProto.ObjectDetectorOptions.ext, taskOptionsBuilder.build())
           .build();
+    }
+  }
+
+  /**
+   * Validates that the provided {@link ImageProcessingOptions} doesn't contain a
+   * region-of-interest.
+   */
+  private static void validateImageProcessingOptions(
+      ImageProcessingOptions imageProcessingOptions) {
+    if (imageProcessingOptions.regionOfInterest().isPresent()) {
+      throw new IllegalArgumentException("ObjectDetector doesn't support region-of-interest.");
     }
   }
 }

@@ -56,7 +56,7 @@ class FocalLoss(tf.keras.losses.Loss):
       class_weight: A weight to apply to the loss, one for each class. The
         weight is applied for each input where the ground truth label matches.
     """
-    super(tf.keras.losses.Loss, self).__init__()
+    super().__init__()
     # Used for clipping min/max values of probability values in y_pred to avoid
     # NaNs and Infs in computation.
     self._epsilon = 1e-7

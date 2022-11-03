@@ -64,6 +64,7 @@ using ::mediapipe::tasks::vision::hand_landmarker::proto::
     HandLandmarksDetectorGraphOptions;
 
 constexpr char kImageTag[] = "IMAGE";
+constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kLandmarksTag[] = "LANDMARKS";
 constexpr char kWorldLandmarksTag[] = "WORLD_LANDMARKS";
 constexpr char kHandRectNextFrameTag[] = "HAND_RECT_NEXT_FRAME";
@@ -91,18 +92,30 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
                                    bool is_copy) {
   ASSIGN_OR_RETURN(const auto hand_detector_file,
                    resources.GetModelFile(kHandDetectorTFLiteName));
+  auto* hand_detector_graph_options =
+      options->mutable_hand_detector_graph_options();
   SetExternalFile(hand_detector_file,
-                  options->mutable_hand_detector_graph_options()
-                      ->mutable_base_options()
+                  hand_detector_graph_options->mutable_base_options()
                       ->mutable_model_asset(),
                   is_copy);
+  hand_detector_graph_options->mutable_base_options()
+      ->mutable_acceleration()
+      ->CopyFrom(options->base_options().acceleration());
+  hand_detector_graph_options->mutable_base_options()->set_use_stream_mode(
+      options->base_options().use_stream_mode());
   ASSIGN_OR_RETURN(const auto hand_landmarks_detector_file,
                    resources.GetModelFile(kHandLandmarksDetectorTFLiteName));
+  auto* hand_landmarks_detector_graph_options =
+      options->mutable_hand_landmarks_detector_graph_options();
   SetExternalFile(hand_landmarks_detector_file,
-                  options->mutable_hand_landmarks_detector_graph_options()
-                      ->mutable_base_options()
+                  hand_landmarks_detector_graph_options->mutable_base_options()
                       ->mutable_model_asset(),
                   is_copy);
+  hand_landmarks_detector_graph_options->mutable_base_options()
+      ->mutable_acceleration()
+      ->CopyFrom(options->base_options().acceleration());
+  hand_landmarks_detector_graph_options->mutable_base_options()
+      ->set_use_stream_mode(options->base_options().use_stream_mode());
   return absl::OkStatus();
 }
 
@@ -122,6 +135,9 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
 // Inputs:
 //   IMAGE - Image
 //     Image to perform hand landmarks detection on.
+//   NORM_RECT - NormalizedRect
+//     Describes image rotation and region of image to perform landmarks
+//     detection on.
 //
 // Outputs:
 //   LANDMARKS: - std::vector<NormalizedLandmarkList>
@@ -140,11 +156,14 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
 //   IMAGE - Image
 //     The input image that the hand landmarker runs on and has the pixel data
 //     stored on the target storage (CPU vs GPU).
+// All returned coordinates are in the unrotated and uncropped input image
+// coordinates system.
 //
 // Example:
 // node {
 //   calculator: "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph"
 //   input_stream: "IMAGE:image_in"
+//   input_stream: "NORM_RECT:norm_rect"
 //   output_stream: "LANDMARKS:hand_landmarks"
 //   output_stream: "WORLD_LANDMARKS:world_hand_landmarks"
 //   output_stream: "HAND_RECT_NEXT_FRAME:hand_rect_next_frame"
@@ -198,10 +217,11 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
           !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
                .IsAvailable()));
     }
-    ASSIGN_OR_RETURN(
-        auto hand_landmarker_outputs,
-        BuildHandLandmarkerGraph(sc->Options<HandLandmarkerGraphOptions>(),
-                                 graph[Input<Image>(kImageTag)], graph));
+    ASSIGN_OR_RETURN(auto hand_landmarker_outputs,
+                     BuildHandLandmarkerGraph(
+                         sc->Options<HandLandmarkerGraphOptions>(),
+                         graph[Input<Image>(kImageTag)],
+                         graph[Input<NormalizedRect>(kNormRectTag)], graph));
     hand_landmarker_outputs.landmark_lists >>
         graph[Output<std::vector<NormalizedLandmarkList>>(kLandmarksTag)];
     hand_landmarker_outputs.world_landmark_lists >>
@@ -240,7 +260,7 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
   // graph: the mediapipe graph instance to be updated.
   absl::StatusOr<HandLandmarkerOutputs> BuildHandLandmarkerGraph(
       const HandLandmarkerGraphOptions& tasks_options, Source<Image> image_in,
-      Graph& graph) {
+      Source<NormalizedRect> norm_rect_in, Graph& graph) {
     const int max_num_hands =
         tasks_options.hand_detector_graph_options().num_hands();
 
@@ -258,12 +278,15 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
 
     auto image_for_hand_detector =
         DisallowIf(image_in, has_enough_hands, graph);
+    auto norm_rect_in_for_hand_detector =
+        DisallowIf(norm_rect_in, has_enough_hands, graph);
 
     auto& hand_detector =
         graph.AddNode("mediapipe.tasks.vision.hand_detector.HandDetectorGraph");
     hand_detector.GetOptions<HandDetectorGraphOptions>().CopyFrom(
         tasks_options.hand_detector_graph_options());
     image_for_hand_detector >> hand_detector.In("IMAGE");
+    norm_rect_in_for_hand_detector >> hand_detector.In("NORM_RECT");
     auto hand_rects_from_hand_detector = hand_detector.Out("HAND_RECTS");
 
     auto& hand_association = graph.AddNode("HandAssociationCalculator");

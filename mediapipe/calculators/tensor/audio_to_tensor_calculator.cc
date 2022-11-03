@@ -133,7 +133,7 @@ bool IsValidFftSize(int size) {
 //     invocation. In the non-streaming mode, the vector contains all of the
 //     output timestamps for an input audio buffer.
 //   DC_AND_NYQUIST - std::pair<float, float> @Optional.
-//     A pair of dc component and nyquest component. Only can be connected when
+//     A pair of dc component and nyquist component. Only can be connected when
 //     the calculator performs fft (the fft_size is set in the calculator
 //     options).
 //

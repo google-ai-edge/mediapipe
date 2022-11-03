@@ -47,9 +47,17 @@ using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::mediapipe::tasks::core::ModelResources;
 
 constexpr char kClassificationResultTag[] = "CLASSIFICATION_RESULT";
+constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
 constexpr char kTextTag[] = "TEXT";
 constexpr char kMetadataExtractorTag[] = "METADATA_EXTRACTOR";
 constexpr char kTensorsTag[] = "TENSORS";
+
+// TODO: remove once Java API migration is over.
+// Struct holding the different output streams produced by the text classifier.
+struct TextClassifierOutputStreams {
+  Source<ClassificationResult> classification_result;
+  Source<ClassificationResult> classifications;
+};
 
 }  // namespace
 
@@ -62,7 +70,10 @@ constexpr char kTensorsTag[] = "TENSORS";
 //     Input text to perform classification on.
 //
 // Outputs:
-//   CLASSIFICATION_RESULT - ClassificationResult
+//   CLASSIFICATIONS - ClassificationResult @Optional
+//     The classification results aggregated by classifier head.
+// TODO: remove once Java API migration is over.
+//   CLASSIFICATION_RESULT - (DEPRECATED) ClassificationResult @Optional
 //     The aggregated classification result object that has 3 dimensions:
 //     (classification head, classification timestamp, classification category).
 //
@@ -70,7 +81,7 @@ constexpr char kTensorsTag[] = "TENSORS";
 // node {
 //   calculator: "mediapipe.tasks.text.text_classifier.TextClassifierGraph"
 //   input_stream: "TEXT:text_in"
-//   output_stream: "CLASSIFICATION_RESULT:classification_result_out"
+//   output_stream: "CLASSIFICATIONS:classifications_out"
 //   options {
 //     [mediapipe.tasks.text.text_classifier.proto.TextClassifierGraphOptions.ext]
 //     {
@@ -91,12 +102,14 @@ class TextClassifierGraph : public core::ModelTaskGraph {
         CreateModelResources<proto::TextClassifierGraphOptions>(sc));
     Graph graph;
     ASSIGN_OR_RETURN(
-        Source<ClassificationResult> classification_result_out,
+        auto output_streams,
         BuildTextClassifierTask(
             sc->Options<proto::TextClassifierGraphOptions>(), *model_resources,
             graph[Input<std::string>(kTextTag)], graph));
-    classification_result_out >>
+    output_streams.classification_result >>
         graph[Output<ClassificationResult>(kClassificationResultTag)];
+    output_streams.classifications >>
+        graph[Output<ClassificationResult>(kClassificationsTag)];
     return graph.GetConfig();
   }
 
@@ -111,7 +124,7 @@ class TextClassifierGraph : public core::ModelTaskGraph {
   //   TextClassifier model file with model metadata.
   // text_in: (std::string) stream to run text classification on.
   // graph: the mediapipe builder::Graph instance to be updated.
-  absl::StatusOr<Source<ClassificationResult>> BuildTextClassifierTask(
+  absl::StatusOr<TextClassifierOutputStreams> BuildTextClassifierTask(
       const proto::TextClassifierGraphOptions& task_options,
       const ModelResources& model_resources, Source<std::string> text_in,
       Graph& graph) {
@@ -148,8 +161,11 @@ class TextClassifierGraph : public core::ModelTaskGraph {
 
     // Outputs the aggregated classification result as the subgraph output
     // stream.
-    return postprocessing[Output<ClassificationResult>(
-        kClassificationResultTag)];
+    return TextClassifierOutputStreams{
+        /*classification_result=*/postprocessing[Output<ClassificationResult>(
+            kClassificationResultTag)],
+        /*classifications=*/postprocessing[Output<ClassificationResult>(
+            kClassificationsTag)]};
   }
 };
 
