@@ -30,9 +30,10 @@ from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import image_classifier
+from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode
 
-_NormalizedRect = rect.NormalizedRect
+_Rect = rect.Rect
 _BaseOptions = base_options_module.BaseOptions
 _ClassifierOptions = classifier_options.ClassifierOptions
 _Category = category.Category
@@ -43,6 +44,7 @@ _Image = image.Image
 _ImageClassifier = image_classifier.ImageClassifier
 _ImageClassifierOptions = image_classifier.ImageClassifierOptions
 _RUNNING_MODE = vision_task_running_mode.VisionTaskRunningMode
+_ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 
 _MODEL_FILE = 'mobilenet_v2_1.0_224.tflite'
 _IMAGE_FILE = 'burger.jpg'
@@ -227,11 +229,11 @@ class ImageClassifierTest(parameterized.TestCase):
       test_image = _Image.create_from_file(
           test_utils.get_test_data_path(
               os.path.join(_TEST_DATA_DIR, 'multi_objects.jpg')))
-      # NormalizedRect around the soccer ball.
-      roi = _NormalizedRect(
-          x_center=0.532, y_center=0.521, width=0.164, height=0.427)
+      # Region-of-interest around the soccer ball.
+      roi = _Rect(left=0.45, top=0.3075, right=0.614, bottom=0.7345)
+      image_processing_options = _ImageProcessingOptions(roi)
       # Performs image classification on the input.
-      image_result = classifier.classify(test_image, roi)
+      image_result = classifier.classify(test_image, image_processing_options)
       # Comparing results.
       test_utils.assert_proto_equals(self, image_result.to_pb2(),
                                      _generate_soccer_ball_results(0).to_pb2())
@@ -417,12 +419,12 @@ class ImageClassifierTest(parameterized.TestCase):
       test_image = _Image.create_from_file(
           test_utils.get_test_data_path(
               os.path.join(_TEST_DATA_DIR, 'multi_objects.jpg')))
-      # NormalizedRect around the soccer ball.
-      roi = _NormalizedRect(
-          x_center=0.532, y_center=0.521, width=0.164, height=0.427)
+      # Region-of-interest around the soccer ball.
+      roi = _Rect(left=0.45, top=0.3075, right=0.614, bottom=0.7345)
+      image_processing_options = _ImageProcessingOptions(roi)
       for timestamp in range(0, 300, 30):
         classification_result = classifier.classify_for_video(
-            test_image, timestamp, roi)
+            test_image, timestamp, image_processing_options)
         test_utils.assert_proto_equals(
             self, classification_result.to_pb2(),
             _generate_soccer_ball_results(timestamp).to_pb2())
@@ -491,9 +493,9 @@ class ImageClassifierTest(parameterized.TestCase):
     test_image = _Image.create_from_file(
         test_utils.get_test_data_path(
             os.path.join(_TEST_DATA_DIR, 'multi_objects.jpg')))
-    # NormalizedRect around the soccer ball.
-    roi = _NormalizedRect(
-        x_center=0.532, y_center=0.521, width=0.164, height=0.427)
+    # Region-of-interest around the soccer ball.
+    roi = _Rect(left=0.45, top=0.3075, right=0.614, bottom=0.7345)
+    image_processing_options = _ImageProcessingOptions(roi)
     observed_timestamp_ms = -1
 
     def check_result(result: _ClassificationResult, output_image: _Image,
@@ -514,7 +516,8 @@ class ImageClassifierTest(parameterized.TestCase):
         result_callback=check_result)
     with _ImageClassifier.create_from_options(options) as classifier:
       for timestamp in range(0, 300, 30):
-        classifier.classify_async(test_image, timestamp, roi)
+        classifier.classify_async(test_image, timestamp,
+                                  image_processing_options)
 
 
 if __name__ == '__main__':

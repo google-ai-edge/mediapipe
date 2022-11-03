@@ -24,14 +24,24 @@ py_library(
 )
 
 py_library(
+    name = "image_processing_options",
+    srcs = ["image_processing_options.py"],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:rect",
+    ],
+)
+
+py_library(
     name = "base_vision_task_api",
     srcs = [
         "base_vision_task_api.py",
     ],
     deps = [
+        ":image_processing_options",
         ":vision_task_running_mode",
         "//mediapipe/framework:calculator_py_pb2",
         "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/components/containers:rect",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )

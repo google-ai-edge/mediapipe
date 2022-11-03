@@ -37,6 +37,29 @@ py_library(
 )
 
 py_library(
+    name = "landmark",
+    srcs = ["landmark.py"],
+    deps = [
+        "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
+    name = "landmark_detection_result",
+    srcs = ["landmark_detection_result.py"],
+    deps = [
+        ":landmark",
+        ":rect",
+        "//mediapipe/framework/formats:classification_py_pb2",
+        "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
     name = "category",
     srcs = ["category.py"],
     deps = [
