@@ -24,7 +24,7 @@ mediapipe_proto_library(
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
-        "//mediapipe/tasks/cc/components/proto:embedder_options_proto",
+        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_proto",
     ],
 )

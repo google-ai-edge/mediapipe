@@ -19,6 +19,11 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 py_library(
+    name = "audio_data",
+    srcs = ["audio_data.py"],
+)
+
+py_library(
     name = "bounding_box",
     srcs = ["bounding_box.py"],
     deps = [

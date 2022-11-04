@@ -1,1 +1,0 @@
-"""Model maker internal library."""

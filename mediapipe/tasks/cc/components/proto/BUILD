@@ -24,21 +24,6 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
-    name = "embedder_options_proto",
-    srcs = ["embedder_options.proto"],
-)
-
-mediapipe_proto_library(
-    name = "embedding_postprocessing_graph_options_proto",
-    srcs = ["embedding_postprocessing_graph_options.proto"],
-    deps = [
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
-        "//mediapipe/tasks/cc/components/calculators:tensors_to_embeddings_calculator_proto",
-    ],
-)
-
-mediapipe_proto_library(
     name = "text_preprocessing_graph_options_proto",
     srcs = ["text_preprocessing_graph_options.proto"],
     deps = [

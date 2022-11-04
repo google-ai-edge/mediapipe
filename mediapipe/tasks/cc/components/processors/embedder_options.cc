@@ -13,22 +13,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/cc/components/embedder_options.h"
+#include "mediapipe/tasks/cc/components/processors/embedder_options.h"
 
-#include "mediapipe/tasks/cc/components/proto/embedder_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace components {
+namespace processors {
 
-tasks::components::proto::EmbedderOptions ConvertEmbedderOptionsToProto(
+proto::EmbedderOptions ConvertEmbedderOptionsToProto(
     EmbedderOptions* embedder_options) {
-  tasks::components::proto::EmbedderOptions options_proto;
+  proto::EmbedderOptions options_proto;
   options_proto.set_l2_normalize(embedder_options->l2_normalize);
   options_proto.set_quantize(embedder_options->quantize);
   return options_proto;
 }
 
+}  // namespace processors
 }  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe

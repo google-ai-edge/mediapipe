@@ -20,10 +20,10 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
-#include "mediapipe/tasks/cc/components/embedding_postprocessing_graph.h"
 #include "mediapipe/tasks/cc/components/image_preprocessing.h"
 #include "mediapipe/tasks/cc/components/image_preprocessing_options.pb.h"
-#include "mediapipe/tasks/cc/components/proto/embedding_postprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/embedding_postprocessing_graph.h"
+#include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/vision/image_embedder/proto/image_embedder_graph_options.pb.h"
 
@@ -40,10 +40,8 @@ using ::mediapipe::api2::builder::GenericNode;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
-using ::mediapipe::tasks::components::proto::
-    EmbeddingPostprocessingGraphOptions;
 
-constexpr char kEmbeddingResultTag[] = "EMBEDDING_RESULT";
+constexpr char kEmbeddingsTag[] = "EMBEDDINGS";
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kTensorsTag[] = "TENSORS";
@@ -67,7 +65,7 @@ struct ImageEmbedderOutputStreams {
 //     Describes region of image to perform embedding extraction on.
 //     @Optional: rect covering the whole image is used if not specified.
 // Outputs:
-//   EMBEDDING_RESULT - EmbeddingResult
+//   EMBEDDINGS - EmbeddingResult
 //     The embedding result.
 //   IMAGE - Image
 //     The image that embedding extraction runs on.
@@ -76,7 +74,7 @@ struct ImageEmbedderOutputStreams {
 // node {
 //   calculator: "mediapipe.tasks.vision.image_embedder.ImageEmbedderGraph"
 //   input_stream: "IMAGE:image_in"
-//   output_stream: "EMBEDDING_RESULT:embedding_result_out"
+//   output_stream: "EMBEDDINGS:embedding_result_out"
 //   output_stream: "IMAGE:image_out"
 //   options {
 //     [mediapipe.tasks.vision.image_embedder.proto.ImageEmbedderOptions.ext]
@@ -107,7 +105,7 @@ class ImageEmbedderGraph : public core::ModelTaskGraph {
             graph[Input<Image>(kImageTag)],
             graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
     output_streams.embedding_result >>
-        graph[Output<EmbeddingResult>(kEmbeddingResultTag)];
+        graph[Output<EmbeddingResult>(kEmbeddingsTag)];
     output_streams.image >> graph[Output<Image>(kImageTag)];
     return graph.GetConfig();
   }
@@ -152,16 +150,17 @@ class ImageEmbedderGraph : public core::ModelTaskGraph {
     // Adds postprocessing calculators and connects its input stream to the
     // inference results.
     auto& postprocessing = graph.AddNode(
-        "mediapipe.tasks.components.EmbeddingPostprocessingGraph");
-    MP_RETURN_IF_ERROR(components::ConfigureEmbeddingPostprocessing(
+        "mediapipe.tasks.components.processors.EmbeddingPostprocessingGraph");
+    MP_RETURN_IF_ERROR(components::processors::ConfigureEmbeddingPostprocessing(
         model_resources, task_options.embedder_options(),
-        &postprocessing.GetOptions<EmbeddingPostprocessingGraphOptions>()));
+        &postprocessing.GetOptions<components::processors::proto::
+                                       EmbeddingPostprocessingGraphOptions>()));
     inference.Out(kTensorsTag) >> postprocessing.In(kTensorsTag);
 
     // Outputs the embedding results.
     return ImageEmbedderOutputStreams{
         /*embedding_result=*/postprocessing[Output<EmbeddingResult>(
-            kEmbeddingResultTag)],
+            kEmbeddingsTag)],
         /*image=*/preprocessing[Output<Image>(kImageTag)]};
   }
 };

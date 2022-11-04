@@ -49,3 +49,12 @@ cc_library(
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
     ],
 )
+
+cc_library(
+    name = "embedding_result",
+    srcs = ["embedding_result.cc"],
+    hdrs = ["embedding_result.h"],
+    deps = [
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+    ],
+)

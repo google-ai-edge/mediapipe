@@ -62,3 +62,38 @@ cc_library(
     ],
     alwayslink = 1,
 )
+
+cc_library(
+    name = "embedder_options",
+    srcs = ["embedder_options.cc"],
+    hdrs = ["embedder_options.h"],
+    deps = ["//mediapipe/tasks/cc/components/processors/proto:embedder_options_cc_proto"],
+)
+
+cc_library(
+    name = "embedding_postprocessing_graph",
+    srcs = ["embedding_postprocessing_graph.cc"],
+    hdrs = ["embedding_postprocessing_graph.h"],
+    deps = [
+        "//mediapipe/calculators/tensor:tensors_dequantization_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/tool:options_map",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components/calculators:tensors_to_embeddings_calculator",
+        "//mediapipe/tasks/cc/components/calculators:tensors_to_embeddings_calculator_cc_proto",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_cc_proto",
+        "//mediapipe/tasks/cc/components/processors/proto:embedding_postprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/components/utils:source_or_node_output",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:str_format",
+        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
+    ],
+    alwayslink = 1,
+)

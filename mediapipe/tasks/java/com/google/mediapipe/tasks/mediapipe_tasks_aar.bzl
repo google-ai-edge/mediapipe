@@ -23,6 +23,7 @@ _CORE_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/components/containers/proto:embeddings_java_proto_lite",
     "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_java_proto_lite",
     "//mediapipe/tasks/cc/components/processors/proto:classifier_options_java_proto_lite",
+    "//mediapipe/tasks/cc/components/processors/proto:embedder_options_java_proto_lite",
     "//mediapipe/tasks/cc/core/proto:acceleration_java_proto_lite",
     "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
     "//mediapipe/tasks/cc/core/proto:external_file_java_proto_lite",

@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/cc/components/embedding_postprocessing_graph.h"
+#include "mediapipe/tasks/cc/components/processors/embedding_postprocessing_graph.h"
 
 #include <string>
 #include <vector>
@@ -29,8 +29,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/calculators/tensors_to_embeddings_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
-#include "mediapipe/tasks/cc/components/proto/embedder_options.pb.h"
-#include "mediapipe/tasks/cc/components/proto/embedding_postprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/components/utils/source_or_node_output.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
@@ -39,6 +39,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace components {
+namespace processors {
 
 namespace {
 
@@ -49,13 +50,12 @@ using ::mediapipe::api2::builder::GenericNode;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
-using ::mediapipe::tasks::components::proto::EmbedderOptions;
 using ::mediapipe::tasks::core::ModelResources;
 using TensorsSource =
     ::mediapipe::tasks::SourceOrNodeOutput<std::vector<Tensor>>;
 
 constexpr char kTensorsTag[] = "TENSORS";
-constexpr char kEmbeddingResultTag[] = "EMBEDDING_RESULT";
+constexpr char kEmbeddingsTag[] = "EMBEDDINGS";
 
 // Identifies whether or not the model has quantized outputs, and performs
 // sanity checks.
@@ -144,7 +144,7 @@ absl::StatusOr<std::vector<std::string>> GetHeadNames(
 
 absl::Status ConfigureEmbeddingPostprocessing(
     const ModelResources& model_resources,
-    const EmbedderOptions& embedder_options,
+    const proto::EmbedderOptions& embedder_options,
     proto::EmbeddingPostprocessingGraphOptions* options) {
   ASSIGN_OR_RETURN(bool has_quantized_outputs,
                    HasQuantizedOutputs(model_resources));
@@ -188,7 +188,7 @@ class EmbeddingPostprocessingGraph : public mediapipe::Subgraph {
         BuildEmbeddingPostprocessing(
             sc->Options<proto::EmbeddingPostprocessingGraphOptions>(),
             graph[Input<std::vector<Tensor>>(kTensorsTag)], graph));
-    embedding_result_out >> graph[Output<EmbeddingResult>(kEmbeddingResultTag)];
+    embedding_result_out >> graph[Output<EmbeddingResult>(kEmbeddingsTag)];
     return graph.GetConfig();
   }
 
@@ -220,13 +220,13 @@ class EmbeddingPostprocessingGraph : public mediapipe::Subgraph {
         .GetOptions<mediapipe::TensorsToEmbeddingsCalculatorOptions>()
         .CopyFrom(options.tensors_to_embeddings_options());
     dequantized_tensors >> tensors_to_embeddings_node.In(kTensorsTag);
-    return tensors_to_embeddings_node[Output<EmbeddingResult>(
-        kEmbeddingResultTag)];
+    return tensors_to_embeddings_node[Output<EmbeddingResult>(kEmbeddingsTag)];
   }
 };
 REGISTER_MEDIAPIPE_GRAPH(
-    ::mediapipe::tasks::components::EmbeddingPostprocessingGraph);
+    ::mediapipe::tasks::components::processors::EmbeddingPostprocessingGraph);
 
+}  // namespace processors
 }  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe

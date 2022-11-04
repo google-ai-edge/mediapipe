@@ -13,17 +13,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_EMBEDDING_POSTPROCESSING_GRAPH_H_
-#define MEDIAPIPE_TASKS_CC_COMPONENTS_EMBEDDING_POSTPROCESSING_GRAPH_H_
+#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_EMBEDDING_POSTPROCESSING_GRAPH_H_
+#define MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_EMBEDDING_POSTPROCESSING_GRAPH_H_
 
 #include "absl/status/status.h"
-#include "mediapipe/tasks/cc/components/proto/embedder_options.pb.h"
-#include "mediapipe/tasks/cc/components/proto/embedding_postprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace components {
+namespace processors {
 
 // Configures an EmbeddingPostprocessingGraph using the provided model resources
 // and EmbedderOptions.
@@ -44,18 +45,19 @@ namespace components {
 //     The output tensors of an InferenceCalculator, to convert into
 //     EmbeddingResult objects. Expected to be of type kFloat32 or kUInt8.
 // Outputs:
-//   EMBEDDING_RESULT - EmbeddingResult
+//   EMBEDDINGS - EmbeddingResult
 //     The output EmbeddingResult.
 //
 // TODO: add support for additional optional "TIMESTAMPS" input for
 // embeddings aggregation.
 absl::Status ConfigureEmbeddingPostprocessing(
     const tasks::core::ModelResources& model_resources,
-    const tasks::components::proto::EmbedderOptions& embedder_options,
+    const proto::EmbedderOptions& embedder_options,
     proto::EmbeddingPostprocessingGraphOptions* options);
 
+}  // namespace processors
 }  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_EMBEDDING_POSTPROCESSING_GRAPH_H_
+#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_EMBEDDING_POSTPROCESSING_GRAPH_H_

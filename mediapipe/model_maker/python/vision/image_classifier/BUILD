@@ -81,6 +81,8 @@ py_library(
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/core/utils:quantization",
         "//mediapipe/model_maker/python/vision/core:image_preprocessing",
+        "//mediapipe/tasks/python/metadata/metadata_writers:image_classifier",
+        "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
     ],
 )
 
@@ -88,7 +90,11 @@ py_library(
     name = "image_classifier_test_lib",
     testonly = 1,
     srcs = ["image_classifier_test.py"],
-    deps = [":image_classifier_import"],
+    data = ["//mediapipe/model_maker/python/vision/image_classifier/testdata"],
+    deps = [
+        ":image_classifier_import",
+        "//mediapipe/tasks/python/test:test_utils",
+    ],
 )
 
 py_test(

@@ -44,18 +44,6 @@ _TASK_GRAPH_NAME = 'mediapipe.tasks.vision.ImageSegmenterGraph'
 _MICRO_SECONDS_PER_MILLISECOND = 1000
 
 
-class OutputType(enum.Enum):
-  UNSPECIFIED = 0
-  CATEGORY_MASK = 1
-  CONFIDENCE_MASK = 2
-
-
-class Activation(enum.Enum):
-  NONE = 0
-  SIGMOID = 1
-  SOFTMAX = 2
-
-
 @dataclasses.dataclass
 class ImageSegmenterOptions:
   """Options for the image segmenter task.
@@ -74,6 +62,17 @@ class ImageSegmenterOptions:
       data. The result callback should only be specified when the running mode
       is set to the live stream mode.
   """
+
+  class OutputType(enum.Enum):
+    UNSPECIFIED = 0
+    CATEGORY_MASK = 1
+    CONFIDENCE_MASK = 2
+
+  class Activation(enum.Enum):
+    NONE = 0
+    SIGMOID = 1
+    SOFTMAX = 2
+
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
   output_type: Optional[OutputType] = OutputType.CATEGORY_MASK

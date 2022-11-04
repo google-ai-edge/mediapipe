@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/cc/components/embedding_postprocessing_graph.h"
+#include "mediapipe/tasks/cc/components/processors/embedding_postprocessing_graph.h"
 
 #include <memory>
 
@@ -25,8 +25,8 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "mediapipe/tasks/cc/components/proto/embedder_options.pb.h"
-#include "mediapipe/tasks/cc/components/proto/embedding_postprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "tensorflow/lite/core/shims/cc/shims_test_util.h"
@@ -34,12 +34,10 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace components {
+namespace processors {
 namespace {
 
 using ::mediapipe::file::JoinPath;
-using ::mediapipe::tasks::components::proto::EmbedderOptions;
-using ::mediapipe::tasks::components::proto::
-    EmbeddingPostprocessingGraphOptions;
 using ::mediapipe::tasks::core::ModelResources;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/";
@@ -69,68 +67,72 @@ TEST_F(ConfigureTest, SucceedsWithQuantizedModelWithMetadata) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
       CreateModelResourcesForModel(kQuantizedImageClassifierWithMetadata));
-  EmbedderOptions options_in;
+  proto::EmbedderOptions options_in;
   options_in.set_l2_normalize(true);
 
-  EmbeddingPostprocessingGraphOptions options_out;
+  proto::EmbeddingPostprocessingGraphOptions options_out;
   MP_ASSERT_OK(ConfigureEmbeddingPostprocessing(*model_resources, options_in,
                                                 &options_out));
 
   EXPECT_THAT(
       options_out,
-      EqualsProto(ParseTextProtoOrDie<EmbeddingPostprocessingGraphOptions>(
-          R"pb(tensors_to_embeddings_options {
-                 embedder_options { l2_normalize: true }
-                 head_names: "probability"
-               }
-               has_quantized_outputs: true)pb")));
+      EqualsProto(
+          ParseTextProtoOrDie<proto::EmbeddingPostprocessingGraphOptions>(
+              R"pb(tensors_to_embeddings_options {
+                     embedder_options { l2_normalize: true }
+                     head_names: "probability"
+                   }
+                   has_quantized_outputs: true)pb")));
 }
 
 TEST_F(ConfigureTest, SucceedsWithQuantizedModelWithoutMetadata) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto model_resources,
       CreateModelResourcesForModel(kQuantizedImageClassifierWithoutMetadata));
-  EmbedderOptions options_in;
+  proto::EmbedderOptions options_in;
   options_in.set_quantize(true);
 
-  EmbeddingPostprocessingGraphOptions options_out;
+  proto::EmbeddingPostprocessingGraphOptions options_out;
   MP_ASSERT_OK(ConfigureEmbeddingPostprocessing(*model_resources, options_in,
                                                 &options_out));
 
   EXPECT_THAT(
       options_out,
-      EqualsProto(ParseTextProtoOrDie<EmbeddingPostprocessingGraphOptions>(
-          R"pb(tensors_to_embeddings_options {
-                 embedder_options { quantize: true }
-               }
-               has_quantized_outputs: true)pb")));
+      EqualsProto(
+          ParseTextProtoOrDie<proto::EmbeddingPostprocessingGraphOptions>(
+              R"pb(tensors_to_embeddings_options {
+                     embedder_options { quantize: true }
+                   }
+                   has_quantized_outputs: true)pb")));
 }
 
 TEST_F(ConfigureTest, SucceedsWithFloatModelWithMetadata) {
   MP_ASSERT_OK_AND_ASSIGN(auto model_resources,
                           CreateModelResourcesForModel(kMobileNetV3Embedder));
-  EmbedderOptions options_in;
+  proto::EmbedderOptions options_in;
   options_in.set_quantize(true);
   options_in.set_l2_normalize(true);
 
-  EmbeddingPostprocessingGraphOptions options_out;
+  proto::EmbeddingPostprocessingGraphOptions options_out;
   MP_ASSERT_OK(ConfigureEmbeddingPostprocessing(*model_resources, options_in,
                                                 &options_out));
 
   EXPECT_THAT(
       options_out,
-      EqualsProto(ParseTextProtoOrDie<EmbeddingPostprocessingGraphOptions>(
-          R"pb(tensors_to_embeddings_options {
-                 embedder_options { quantize: true l2_normalize: true }
-                 head_names: "feature"
-               }
-               has_quantized_outputs: false)pb")));
+      EqualsProto(
+          ParseTextProtoOrDie<proto::EmbeddingPostprocessingGraphOptions>(
+              R"pb(tensors_to_embeddings_options {
+                     embedder_options { quantize: true l2_normalize: true }
+                     head_names: "feature"
+                   }
+                   has_quantized_outputs: false)pb")));
 }
 
 // TODO: add E2E Postprocessing tests once timestamp aggregation is
 // supported.
 
 }  // namespace
+}  // namespace processors
 }  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe
