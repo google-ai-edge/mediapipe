@@ -273,11 +273,12 @@ class GestureRecognizerGraph : public core::ModelTaskGraph {
         hand_gesture_subgraph[Output<std::vector<ClassificationList>>(
             kHandGesturesTag)];
 
-    return {{.gesture = hand_gestures,
-             .handedness = handedness,
-             .hand_landmarks = hand_landmarks,
-             .hand_world_landmarks = hand_world_landmarks,
-             .image = hand_landmarker_graph[Output<Image>(kImageTag)]}};
+    return GestureRecognizerOutputs{
+        /*gesture=*/hand_gestures,
+        /*handedness=*/handedness,
+        /*hand_landmarks=*/hand_landmarks,
+        /*hand_world_landmarks=*/hand_world_landmarks,
+        /*image=*/hand_landmarker_graph[Output<Image>(kImageTag)]};
   }
 };
 
