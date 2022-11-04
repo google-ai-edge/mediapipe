@@ -15,7 +15,7 @@
 # Description:
 #   The dependencies of mediapipe.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 
 licenses(["notice"])
@@ -38,20 +38,13 @@ bzl_library(
     visibility = ["//mediapipe/framework:__subpackages__"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "proto_descriptor_proto",
     srcs = ["proto_descriptor.proto"],
     visibility = [
         "//mediapipe/deps:__subpackages__",
         "//mediapipe/framework:__subpackages__",
     ],
-)
-
-mediapipe_cc_proto_library(
-    name = "proto_descriptor_cc_proto",
-    srcs = ["proto_descriptor.proto"],
-    visibility = ["//mediapipe/framework:__subpackages__"],
-    deps = [":proto_descriptor_proto"],
 )
 
 cc_library(

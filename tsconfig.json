@@ -1,0 +1,47 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "lib": ["ES2017", "dom"],
+    "declaration": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "strict": true,
+    "types": ["@types/offscreencanvas"],
+    "rootDirs": [
+      ".",
+      "./bazel-out/host/bin",
+      "./bazel-out/darwin-dbg/bin",
+      "./bazel-out/darwin-fastbuild/bin",
+      "./bazel-out/darwin-opt/bin",
+      "./bazel-out/darwin_arm64-dbg/bin",
+      "./bazel-out/darwin_arm64-fastbuild/bin",
+      "./bazel-out/darwin_arm64-opt/bin",
+      "./bazel-out/k8-dbg/bin",
+      "./bazel-out/k8-fastbuild/bin",
+      "./bazel-out/k8-opt/bin",
+      "./bazel-out/x64_windows-dbg/bin",
+      "./bazel-out/x64_windows-fastbuild/bin",
+      "./bazel-out/x64_windows-opt/bin",
+      "./bazel-out/darwin-dbg/bin",
+      "./bazel-out/darwin-fastbuild/bin",
+      "./bazel-out/darwin-opt/bin",
+      "./bazel-out/k8-dbg/bin",
+      "./bazel-out/k8-fastbuild/bin",
+      "./bazel-out/k8-opt/bin",
+      "./bazel-out/x64_windows-dbg/bin",
+      "./bazel-out/x64_windows-fastbuild/bin",
+      "./bazel-out/x64_windows-opt/bin",
+      "./bazel-out/k8-fastbuild-ST-4a519fd6d3e4/bin"
+    ]
+  },
+  "exclude": [
+    "./_bazel_bin",
+    "./_bazel_buildbot",
+    "./_bazel_out",
+    "./_bazel_testlogs"
+  ]
+}
