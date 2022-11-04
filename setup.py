@@ -129,6 +129,15 @@ def _add_mp_init_files():
   mp_dir_init_file.close()
 
 
+def _copy_to_build_lib_dir(build_lib, file):
+  """Copy a file from bazel-bin to the build lib dir."""
+  dst = os.path.join(build_lib + '/', file)
+  dst_dir = os.path.dirname(dst)
+  if not os.path.exists(dst_dir):
+    os.makedirs(dst_dir)
+  shutil.copyfile(os.path.join('bazel-bin/', file), dst)
+
+
 class GeneratePyProtos(build_ext.build_ext):
   """Generate MediaPipe Python protobuf files by Protocol Compiler."""
 
@@ -259,7 +268,7 @@ class BuildModules(build_ext.build_ext):
     ]
     if subprocess.call(fetch_model_command) != 0:
       sys.exit(-1)
-    self._copy_to_build_lib_dir(external_file)
+    _copy_to_build_lib_dir(self.build_lib, external_file)
 
   def _generate_binary_graph(self, binary_graph_target):
     """Generate binary graph for a particular MediaPipe binary graph target."""
@@ -277,15 +286,27 @@ class BuildModules(build_ext.build_ext):
       bazel_command.append('--define=OPENCV=source')
     if subprocess.call(bazel_command) != 0:
       sys.exit(-1)
-    self._copy_to_build_lib_dir(binary_graph_target + '.binarypb')
+    _copy_to_build_lib_dir(self.build_lib, binary_graph_target + '.binarypb')
 
-  def _copy_to_build_lib_dir(self, file):
-    """Copy a file from bazel-bin to the build lib dir."""
-    dst = os.path.join(self.build_lib + '/', file)
-    dst_dir = os.path.dirname(dst)
-    if not os.path.exists(dst_dir):
-      os.makedirs(dst_dir)
-    shutil.copyfile(os.path.join('bazel-bin/', file), dst)
+
+class GenerateMetadataSchema(build_ext.build_ext):
+  """Generate metadata python schema files."""
+
+  def run(self):
+    for target in ['metadata_schema_py', 'schema_py']:
+      bazel_command = [
+          'bazel',
+          'build',
+          '--compilation_mode=opt',
+          '--define=MEDIAPIPE_DISABLE_GPU=1',
+          '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
+          '//mediapipe/tasks/metadata:' + target,
+      ]
+      if subprocess.call(bazel_command) != 0:
+        sys.exit(-1)
+      _copy_to_build_lib_dir(
+          self.build_lib,
+          'mediapipe/tasks/metadata/' + target + '_generated.py')
 
 
 class BazelExtension(setuptools.Extension):
@@ -375,6 +396,7 @@ class BuildPy(build_py.build_py):
     build_ext_obj = self.distribution.get_command_obj('build_ext')
     build_ext_obj.link_opencv = self.link_opencv
     self.run_command('gen_protos')
+    self.run_command('generate_metadata_schema')
     self.run_command('build_modules')
     self.run_command('build_ext')
     build_py.build_py.run(self)
@@ -434,18 +456,25 @@ setuptools.setup(
     author_email='mediapipe@google.com',
     long_description=_get_long_description(),
     long_description_content_type='text/markdown',
-    packages=setuptools.find_packages(exclude=['mediapipe.examples.desktop.*']),
+    packages=setuptools.find_packages(
+        exclude=['mediapipe.examples.desktop.*', 'mediapipe.model_maker.*']),
     install_requires=_parse_requirements('requirements.txt'),
     cmdclass={
         'build_py': BuildPy,
-        'gen_protos': GeneratePyProtos,
         'build_modules': BuildModules,
         'build_ext': BuildExtension,
+        'generate_metadata_schema': GenerateMetadataSchema,
+        'gen_protos': GeneratePyProtos,
         'install': Install,
         'restore': Restore,
     },
     ext_modules=[
         BazelExtension('//mediapipe/python:_framework_bindings'),
+        BazelExtension(
+            '//mediapipe/tasks/cc/metadata/python:_pywrap_metadata_version'),
+        BazelExtension(
+            '//mediapipe/tasks/python/metadata/flatbuffers_lib:_pywrap_flatbuffers'
+        ),
     ],
     zip_safe=False,
     include_package_data=True,
