@@ -18,7 +18,7 @@ syntax = "proto2";
 package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
-import "mediapipe/tasks/cc/components/proto/embedder_options.proto";
+import "mediapipe/tasks/cc/components/processors/proto/embedder_options.proto";
 
 message TensorsToEmbeddingsCalculatorOptions {
   extend mediapipe.CalculatorOptions {
@@ -27,8 +27,8 @@ message TensorsToEmbeddingsCalculatorOptions {
 
   // The embedder options defining whether to L2-normalize or scalar-quantize
   // the outputs.
-  optional mediapipe.tasks.components.proto.EmbedderOptions embedder_options =
-      1;
+  optional mediapipe.tasks.components.processors.proto.EmbedderOptions
+      embedder_options = 1;
 
   // The embedder head names.
   repeated string head_names = 2;

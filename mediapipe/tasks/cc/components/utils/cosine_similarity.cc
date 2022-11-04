@@ -21,7 +21,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
+#include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -30,7 +30,7 @@ namespace utils {
 
 namespace {
 
-using ::mediapipe::tasks::components::containers::proto::EmbeddingEntry;
+using ::mediapipe::tasks::components::containers::Embedding;
 
 template <typename T>
 absl::StatusOr<double> ComputeCosineSimilarity(const T& u, const T& v,
@@ -66,39 +66,35 @@ absl::StatusOr<double> ComputeCosineSimilarity(const T& u, const T& v,
 // an L2-norm of 0.
 //
 // [1]: https://en.wikipedia.org/wiki/Cosine_similarity
-absl::StatusOr<double> CosineSimilarity(const EmbeddingEntry& u,
-                                        const EmbeddingEntry& v) {
-  if (u.has_float_embedding() && v.has_float_embedding()) {
-    if (u.float_embedding().values().size() !=
-        v.float_embedding().values().size()) {
+absl::StatusOr<double> CosineSimilarity(const Embedding& u,
+                                        const Embedding& v) {
+  if (!u.float_embedding.empty() && !v.float_embedding.empty()) {
+    if (u.float_embedding.size() != v.float_embedding.size()) {
       return CreateStatusWithPayload(
           absl::StatusCode::kInvalidArgument,
           absl::StrFormat("Cannot compute cosine similarity between embeddings "
                           "of different sizes (%d vs. %d)",
-                          u.float_embedding().values().size(),
-                          v.float_embedding().values().size()),
+                          u.float_embedding.size(), v.float_embedding.size()),
           MediaPipeTasksStatus::kInvalidArgumentError);
     }
-    return ComputeCosineSimilarity(u.float_embedding().values().data(),
-                                   v.float_embedding().values().data(),
-                                   u.float_embedding().values().size());
+    return ComputeCosineSimilarity(u.float_embedding.data(),
+                                   v.float_embedding.data(),
+                                   u.float_embedding.size());
   }
-  if (u.has_quantized_embedding() && v.has_quantized_embedding()) {
-    if (u.quantized_embedding().values().size() !=
-        v.quantized_embedding().values().size()) {
+  if (!u.quantized_embedding.empty() && !v.quantized_embedding.empty()) {
+    if (u.quantized_embedding.size() != v.quantized_embedding.size()) {
       return CreateStatusWithPayload(
           absl::StatusCode::kInvalidArgument,
           absl::StrFormat("Cannot compute cosine similarity between embeddings "
                           "of different sizes (%d vs. %d)",
-                          u.quantized_embedding().values().size(),
-                          v.quantized_embedding().values().size()),
+                          u.quantized_embedding.size(),
+                          v.quantized_embedding.size()),
           MediaPipeTasksStatus::kInvalidArgumentError);
     }
-    return ComputeCosineSimilarity(reinterpret_cast<const int8_t*>(
-                                       u.quantized_embedding().values().data()),
-                                   reinterpret_cast<const int8_t*>(
-                                       v.quantized_embedding().values().data()),
-                                   u.quantized_embedding().values().size());
+    return ComputeCosineSimilarity(
+        reinterpret_cast<const int8_t*>(u.quantized_embedding.data()),
+        reinterpret_cast<const int8_t*>(v.quantized_embedding.data()),
+        u.quantized_embedding.size());
   }
   return CreateStatusWithPayload(
       absl::StatusCode::kInvalidArgument,

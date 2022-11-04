@@ -26,14 +26,14 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/tasks/cc/components/calculators/tensors_to_embeddings_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
-#include "mediapipe/tasks/cc/components/proto/embedder_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
 
 namespace mediapipe {
 namespace api2 {
 
 namespace {
 
-using ::mediapipe::tasks::components::containers::proto::EmbeddingEntry;
+using ::mediapipe::tasks::components::containers::proto::Embedding;
 using ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
 
 // Computes the inverse L2 norm of the provided array of values. Returns 1.0 in
@@ -66,7 +66,7 @@ float GetInverseL2Norm(const float* values, int size) {
 class TensorsToEmbeddingsCalculator : public Node {
  public:
   static constexpr Input<std::vector<Tensor>> kTensorsIn{"TENSORS"};
-  static constexpr Output<EmbeddingResult> kEmbeddingsOut{"EMBEDDING_RESULT"};
+  static constexpr Output<EmbeddingResult> kEmbeddingsOut{"EMBEDDINGS"};
   MEDIAPIPE_NODE_CONTRACT(kTensorsIn, kEmbeddingsOut);
 
   absl::Status Open(CalculatorContext* cc) override;
@@ -77,8 +77,8 @@ class TensorsToEmbeddingsCalculator : public Node {
   bool quantize_;
   std::vector<std::string> head_names_;
 
-  void FillFloatEmbeddingEntry(const Tensor& tensor, EmbeddingEntry* entry);
-  void FillQuantizedEmbeddingEntry(const Tensor& tensor, EmbeddingEntry* entry);
+  void FillFloatEmbedding(const Tensor& tensor, Embedding* embedding);
+  void FillQuantizedEmbedding(const Tensor& tensor, Embedding* embedding);
 };
 
 absl::Status TensorsToEmbeddingsCalculator::Open(CalculatorContext* cc) {
@@ -104,42 +104,42 @@ absl::Status TensorsToEmbeddingsCalculator::Process(CalculatorContext* cc) {
   for (int i = 0; i < tensors.size(); ++i) {
     const auto& tensor = tensors[i];
     RET_CHECK(tensor.element_type() == Tensor::ElementType::kFloat32);
-    auto* embeddings = result.add_embeddings();
-    embeddings->set_head_index(i);
+    auto* embedding = result.add_embeddings();
+    embedding->set_head_index(i);
     if (!head_names_.empty()) {
-      embeddings->set_head_name(head_names_[i]);
+      embedding->set_head_name(head_names_[i]);
     }
     if (quantize_) {
-      FillQuantizedEmbeddingEntry(tensor, embeddings->add_entries());
+      FillQuantizedEmbedding(tensor, embedding);
     } else {
-      FillFloatEmbeddingEntry(tensor, embeddings->add_entries());
+      FillFloatEmbedding(tensor, embedding);
     }
   }
   kEmbeddingsOut(cc).Send(result);
   return absl::OkStatus();
 }
 
-void TensorsToEmbeddingsCalculator::FillFloatEmbeddingEntry(
-    const Tensor& tensor, EmbeddingEntry* entry) {
+void TensorsToEmbeddingsCalculator::FillFloatEmbedding(const Tensor& tensor,
+                                                       Embedding* embedding) {
   int size = tensor.shape().num_elements();
   auto tensor_view = tensor.GetCpuReadView();
   const float* tensor_buffer = tensor_view.buffer<float>();
   float inv_l2_norm =
       l2_normalize_ ? GetInverseL2Norm(tensor_buffer, size) : 1.0f;
-  auto* float_embedding = entry->mutable_float_embedding();
+  auto* float_embedding = embedding->mutable_float_embedding();
   for (int i = 0; i < size; ++i) {
     float_embedding->add_values(tensor_buffer[i] * inv_l2_norm);
   }
 }
 
-void TensorsToEmbeddingsCalculator::FillQuantizedEmbeddingEntry(
-    const Tensor& tensor, EmbeddingEntry* entry) {
+void TensorsToEmbeddingsCalculator::FillQuantizedEmbedding(
+    const Tensor& tensor, Embedding* embedding) {
   int size = tensor.shape().num_elements();
   auto tensor_view = tensor.GetCpuReadView();
   const float* tensor_buffer = tensor_view.buffer<float>();
   float inv_l2_norm =
       l2_normalize_ ? GetInverseL2Norm(tensor_buffer, size) : 1.0f;
-  auto* values = entry->mutable_quantized_embedding()->mutable_values();
+  auto* values = embedding->mutable_quantized_embedding()->mutable_values();
   values->resize(size);
   for (int i = 0; i < size; ++i) {
     // Normalize.

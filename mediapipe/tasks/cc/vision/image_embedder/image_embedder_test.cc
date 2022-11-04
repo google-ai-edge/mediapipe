@@ -26,7 +26,7 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
+#include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -42,7 +42,6 @@ namespace {
 
 using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::components::containers::Rect;
-using ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::HasSubstr;
 using ::testing::Optional;
@@ -54,18 +53,14 @@ constexpr double kSimilarityTolerancy = 1e-6;
 
 // Utility function to check the sizes, head_index and head_names of a result
 // procuded by kMobileNetV3Embedder.
-void CheckMobileNetV3Result(const EmbeddingResult& result, bool quantized) {
-  EXPECT_EQ(result.embeddings().size(), 1);
-  EXPECT_EQ(result.embeddings(0).head_index(), 0);
-  EXPECT_EQ(result.embeddings(0).head_name(), "feature");
-  EXPECT_EQ(result.embeddings(0).entries().size(), 1);
+void CheckMobileNetV3Result(const ImageEmbedderResult& result, bool quantized) {
+  EXPECT_EQ(result.embeddings.size(), 1);
+  EXPECT_EQ(result.embeddings[0].head_index, 0);
+  EXPECT_EQ(result.embeddings[0].head_name, "feature");
   if (quantized) {
-    EXPECT_EQ(
-        result.embeddings(0).entries(0).quantized_embedding().values().size(),
-        1024);
+    EXPECT_EQ(result.embeddings[0].quantized_embedding.size(), 1024);
   } else {
-    EXPECT_EQ(result.embeddings(0).entries(0).float_embedding().values().size(),
-              1024);
+    EXPECT_EQ(result.embeddings[0].float_embedding.size(), 1024);
   }
 }
 
@@ -154,7 +149,7 @@ TEST_F(CreateTest, FailsWithIllegalCallbackInImageOrVideoMode) {
     options->base_options.model_asset_path =
         JoinPath("./", kTestDataDirectory, kMobileNetV3Embedder);
     options->running_mode = running_mode;
-    options->result_callback = [](absl::StatusOr<EmbeddingResult>,
+    options->result_callback = [](absl::StatusOr<ImageEmbedderResult>,
                                   const Image& image, int64 timestamp_ms) {};
 
     auto image_embedder = ImageEmbedder::Create(std::move(options));
@@ -231,19 +226,18 @@ TEST_F(ImageModeTest, SucceedsWithoutL2Normalization) {
                       JoinPath("./", kTestDataDirectory, "burger_crop.jpg")));
 
   // Extract both embeddings.
-  MP_ASSERT_OK_AND_ASSIGN(const EmbeddingResult& image_result,
+  MP_ASSERT_OK_AND_ASSIGN(const ImageEmbedderResult& image_result,
                           image_embedder->Embed(image));
-  MP_ASSERT_OK_AND_ASSIGN(const EmbeddingResult& crop_result,
+  MP_ASSERT_OK_AND_ASSIGN(const ImageEmbedderResult& crop_result,
                           image_embedder->Embed(crop));
 
   // Check results.
   CheckMobileNetV3Result(image_result, false);
   CheckMobileNetV3Result(crop_result, false);
   // CheckCosineSimilarity.
-  MP_ASSERT_OK_AND_ASSIGN(
-      double similarity,
-      ImageEmbedder::CosineSimilarity(image_result.embeddings(0).entries(0),
-                                      crop_result.embeddings(0).entries(0)));
+  MP_ASSERT_OK_AND_ASSIGN(double similarity, ImageEmbedder::CosineSimilarity(
+                                                 image_result.embeddings[0],
+                                                 crop_result.embeddings[0]));
   double expected_similarity = 0.925519;
   EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
 }
@@ -264,19 +258,18 @@ TEST_F(ImageModeTest, SucceedsWithL2Normalization) {
                       JoinPath("./", kTestDataDirectory, "burger_crop.jpg")));
 
   // Extract both embeddings.
-  MP_ASSERT_OK_AND_ASSIGN(const EmbeddingResult& image_result,
+  MP_ASSERT_OK_AND_ASSIGN(const ImageEmbedderResult& image_result,
                           image_embedder->Embed(image));
-  MP_ASSERT_OK_AND_ASSIGN(const EmbeddingResult& crop_result,
+  MP_ASSERT_OK_AND_ASSIGN(const ImageEmbedderResult& crop_result,
                           image_embedder->Embed(crop));
 
   // Check results.
   CheckMobileNetV3Result(image_result, false);
   CheckMobileNetV3Result(crop_result, false);
   // CheckCosineSimilarity.
-  MP_ASSERT_OK_AND_ASSIGN(
-      double similarity,
-      ImageEmbedder::CosineSimilarity(image_result.embeddings(0).entries(0),
-                                      crop_result.embeddings(0).entries(0)));
+  MP_ASSERT_OK_AND_ASSIGN(double similarity, ImageEmbedder::CosineSimilarity(
+                                                 image_result.embeddings[0],
+                                                 crop_result.embeddings[0]));
   double expected_similarity = 0.925519;
   EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
 }
@@ -297,19 +290,18 @@ TEST_F(ImageModeTest, SucceedsWithQuantization) {
                       JoinPath("./", kTestDataDirectory, "burger_crop.jpg")));
 
   // Extract both embeddings.
-  MP_ASSERT_OK_AND_ASSIGN(const EmbeddingResult& image_result,
+  MP_ASSERT_OK_AND_ASSIGN(const ImageEmbedderResult& image_result,
                           image_embedder->Embed(image));
-  MP_ASSERT_OK_AND_ASSIGN(const EmbeddingResult& crop_result,
+  MP_ASSERT_OK_AND_ASSIGN(const ImageEmbedderResult& crop_result,
                           image_embedder->Embed(crop));
 
   // Check results.
   CheckMobileNetV3Result(image_result, true);
   CheckMobileNetV3Result(crop_result, true);
   // CheckCosineSimilarity.
-  MP_ASSERT_OK_AND_ASSIGN(
-      double similarity,
-      ImageEmbedder::CosineSimilarity(image_result.embeddings(0).entries(0),
-                                      crop_result.embeddings(0).entries(0)));
+  MP_ASSERT_OK_AND_ASSIGN(double similarity, ImageEmbedder::CosineSimilarity(
+                                                 image_result.embeddings[0],
+                                                 crop_result.embeddings[0]));
   double expected_similarity = 0.926791;
   EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
 }
@@ -333,19 +325,18 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterest) {
 
   // Extract both embeddings.
   MP_ASSERT_OK_AND_ASSIGN(
-      const EmbeddingResult& image_result,
+      const ImageEmbedderResult& image_result,
       image_embedder->Embed(image, image_processing_options));
-  MP_ASSERT_OK_AND_ASSIGN(const EmbeddingResult& crop_result,
+  MP_ASSERT_OK_AND_ASSIGN(const ImageEmbedderResult& crop_result,
                           image_embedder->Embed(crop));
 
   // Check results.
   CheckMobileNetV3Result(image_result, false);
   CheckMobileNetV3Result(crop_result, false);
   // CheckCosineSimilarity.
-  MP_ASSERT_OK_AND_ASSIGN(
-      double similarity,
-      ImageEmbedder::CosineSimilarity(image_result.embeddings(0).entries(0),
-                                      crop_result.embeddings(0).entries(0)));
+  MP_ASSERT_OK_AND_ASSIGN(double similarity, ImageEmbedder::CosineSimilarity(
+                                                 image_result.embeddings[0],
+                                                 crop_result.embeddings[0]));
   double expected_similarity = 0.999931;
   EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
 }
@@ -367,20 +358,19 @@ TEST_F(ImageModeTest, SucceedsWithRotation) {
   image_processing_options.rotation_degrees = -90;
 
   // Extract both embeddings.
-  MP_ASSERT_OK_AND_ASSIGN(const EmbeddingResult& image_result,
+  MP_ASSERT_OK_AND_ASSIGN(const ImageEmbedderResult& image_result,
                           image_embedder->Embed(image));
   MP_ASSERT_OK_AND_ASSIGN(
-      const EmbeddingResult& rotated_result,
+      const ImageEmbedderResult& rotated_result,
       image_embedder->Embed(rotated, image_processing_options));
 
   // Check results.
   CheckMobileNetV3Result(image_result, false);
   CheckMobileNetV3Result(rotated_result, false);
   // CheckCosineSimilarity.
-  MP_ASSERT_OK_AND_ASSIGN(
-      double similarity,
-      ImageEmbedder::CosineSimilarity(image_result.embeddings(0).entries(0),
-                                      rotated_result.embeddings(0).entries(0)));
+  MP_ASSERT_OK_AND_ASSIGN(double similarity, ImageEmbedder::CosineSimilarity(
+                                                 image_result.embeddings[0],
+                                                 rotated_result.embeddings[0]));
   double expected_similarity = 0.572265;
   EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
 }
@@ -403,20 +393,19 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
                                                   /*rotation_degrees=*/-90};
 
   // Extract both embeddings.
-  MP_ASSERT_OK_AND_ASSIGN(const EmbeddingResult& crop_result,
+  MP_ASSERT_OK_AND_ASSIGN(const ImageEmbedderResult& crop_result,
                           image_embedder->Embed(crop));
   MP_ASSERT_OK_AND_ASSIGN(
-      const EmbeddingResult& rotated_result,
+      const ImageEmbedderResult& rotated_result,
       image_embedder->Embed(rotated, image_processing_options));
 
   // Check results.
   CheckMobileNetV3Result(crop_result, false);
   CheckMobileNetV3Result(rotated_result, false);
   // CheckCosineSimilarity.
-  MP_ASSERT_OK_AND_ASSIGN(
-      double similarity,
-      ImageEmbedder::CosineSimilarity(crop_result.embeddings(0).entries(0),
-                                      rotated_result.embeddings(0).entries(0)));
+  MP_ASSERT_OK_AND_ASSIGN(double similarity, ImageEmbedder::CosineSimilarity(
+                                                 crop_result.embeddings[0],
+                                                 rotated_result.embeddings[0]));
   double expected_similarity = 0.62838;
   EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
 }
@@ -487,16 +476,16 @@ TEST_F(VideoModeTest, Succeeds) {
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageEmbedder> image_embedder,
                           ImageEmbedder::Create(std::move(options)));
 
-  EmbeddingResult previous_results;
+  ImageEmbedderResult previous_results;
   for (int i = 0; i < iterations; ++i) {
     MP_ASSERT_OK_AND_ASSIGN(auto results,
                             image_embedder->EmbedForVideo(image, i));
     CheckMobileNetV3Result(results, false);
     if (i > 0) {
-      MP_ASSERT_OK_AND_ASSIGN(double similarity,
-                              ImageEmbedder::CosineSimilarity(
-                                  results.embeddings(0).entries(0),
-                                  previous_results.embeddings(0).entries(0)));
+      MP_ASSERT_OK_AND_ASSIGN(
+          double similarity,
+          ImageEmbedder::CosineSimilarity(results.embeddings[0],
+                                          previous_results.embeddings[0]));
       double expected_similarity = 1.000000;
       EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
     }
@@ -515,7 +504,7 @@ TEST_F(LiveStreamModeTest, FailsWithCallingWrongMethod) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kMobileNetV3Embedder);
   options->running_mode = core::RunningMode::LIVE_STREAM;
-  options->result_callback = [](absl::StatusOr<EmbeddingResult>,
+  options->result_callback = [](absl::StatusOr<ImageEmbedderResult>,
                                 const Image& image, int64 timestamp_ms) {};
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageEmbedder> image_embedder,
                           ImageEmbedder::Create(std::move(options)));
@@ -546,7 +535,7 @@ TEST_F(LiveStreamModeTest, FailsWithOutOfOrderInputTimestamps) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kMobileNetV3Embedder);
   options->running_mode = core::RunningMode::LIVE_STREAM;
-  options->result_callback = [](absl::StatusOr<EmbeddingResult>,
+  options->result_callback = [](absl::StatusOr<ImageEmbedderResult>,
                                 const Image& image, int64 timestamp_ms) {};
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageEmbedder> image_embedder,
                           ImageEmbedder::Create(std::move(options)));
@@ -564,7 +553,7 @@ TEST_F(LiveStreamModeTest, FailsWithOutOfOrderInputTimestamps) {
 }
 
 struct LiveStreamModeResults {
-  EmbeddingResult embedding_result;
+  ImageEmbedderResult embedding_result;
   std::pair<int, int> image_size;
   int64 timestamp_ms;
 };
@@ -580,7 +569,7 @@ TEST_F(LiveStreamModeTest, Succeeds) {
       JoinPath("./", kTestDataDirectory, kMobileNetV3Embedder);
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->result_callback =
-      [&results](absl::StatusOr<EmbeddingResult> embedding_result,
+      [&results](absl::StatusOr<ImageEmbedderResult> embedding_result,
                  const Image& image, int64 timestamp_ms) {
         MP_ASSERT_OK(embedding_result.status());
         results.push_back(
@@ -612,8 +601,8 @@ TEST_F(LiveStreamModeTest, Succeeds) {
       MP_ASSERT_OK_AND_ASSIGN(
           double similarity,
           ImageEmbedder::CosineSimilarity(
-              result.embedding_result.embeddings(0).entries(0),
-              results[i - 1].embedding_result.embeddings(0).entries(0)));
+              result.embedding_result.embeddings[0],
+              results[i - 1].embedding_result.embeddings[0]));
       double expected_similarity = 1.000000;
       EXPECT_LE(abs(similarity - expected_similarity), kSimilarityTolerancy);
     }

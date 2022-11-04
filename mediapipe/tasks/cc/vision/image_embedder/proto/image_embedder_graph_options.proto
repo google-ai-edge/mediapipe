@@ -18,7 +18,7 @@ syntax = "proto2";
 package mediapipe.tasks.vision.image_embedder.proto;
 
 import "mediapipe/framework/calculator.proto";
-import "mediapipe/tasks/cc/components/proto/embedder_options.proto";
+import "mediapipe/tasks/cc/components/processors/proto/embedder_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
 message ImageEmbedderGraphOptions {
@@ -31,5 +31,5 @@ message ImageEmbedderGraphOptions {
 
   // Options for configuring the embedder behavior, such as normalization or
   // quantization.
-  optional components.proto.EmbedderOptions embedder_options = 2;
+  optional components.processors.proto.EmbedderOptions embedder_options = 2;
 }

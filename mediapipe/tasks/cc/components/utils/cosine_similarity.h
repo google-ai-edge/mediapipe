@@ -17,22 +17,20 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_CC_COMPONENTS_UTILS_COSINE_SIMILARITY_H_
 
 #include "absl/status/statusor.h"
-#include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
+#include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace components {
 namespace utils {
 
-// Utility function to compute cosine similarity [1] between two embedding
-// entries. May return an InvalidArgumentError if e.g. the feature vectors are
-// of different types (quantized vs. float), have different sizes, or have a
-// an L2-norm of 0.
+// Utility function to compute cosine similarity [1] between two embeddings. May
+// return an InvalidArgumentError if e.g. the embeddings are of different types
+// (quantized vs. float), have different sizes, or have a an L2-norm of 0.
 //
 // [1]: https://en.wikipedia.org/wiki/Cosine_similarity
-absl::StatusOr<double> CosineSimilarity(
-    const containers::proto::EmbeddingEntry& u,
-    const containers::proto::EmbeddingEntry& v);
+absl::StatusOr<double> CosineSimilarity(const containers::Embedding& u,
+                                        const containers::Embedding& v);
 
 }  // namespace utils
 }  // namespace components

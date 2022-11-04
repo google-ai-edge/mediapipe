@@ -163,7 +163,7 @@ mediapipe_proto_library(
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
-        "//mediapipe/tasks/cc/components/proto:embedder_options_proto",
+        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_proto",
     ],
 )
 
@@ -178,7 +178,7 @@ cc_library(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
-        "//mediapipe/tasks/cc/components/proto:embedder_options_cc_proto",
+        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:str_format",
     ],

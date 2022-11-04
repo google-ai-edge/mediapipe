@@ -30,30 +30,31 @@ message QuantizedEmbedding {
   optional bytes values = 1;
 }
 
-// Floating-point or scalar-quantized embedding with an optional timestamp.
-message EmbeddingEntry {
-  // The actual embedding, either floating-point or scalar-quantized.
+// Embedding result for a given embedder head.
+message Embedding {
+  // The actual embedding, either floating-point or quantized.
   oneof embedding {
     FloatEmbedding float_embedding = 1;
     QuantizedEmbedding quantized_embedding = 2;
   }
-  // The optional timestamp (in milliseconds) associated to the embedding entry.
-  // This is useful for time series use cases, e.g. audio embedding.
-  optional int64 timestamp_ms = 3;
-}
-
-// Embeddings for a given embedder head.
-message Embeddings {
-  repeated EmbeddingEntry entries = 1;
   // The index of the embedder head that produced this embedding. This is useful
   // for multi-head models.
-  optional int32 head_index = 2;
+  optional int32 head_index = 3;
   // The name of the embedder head, which is the corresponding tensor metadata
   // name (if any). This is useful for multi-head models.
-  optional string head_name = 3;
+  optional string head_name = 4;
 }
 
-// Contains one set of results per embedder head.
+// Embedding results for a given embedder model.
 message EmbeddingResult {
-  repeated Embeddings embeddings = 1;
+  // The embedding results for each model head, i.e. one for each output tensor.
+  repeated Embedding embeddings = 1;
+  // The optional timestamp (in milliseconds) of the start of the chunk of data
+  // corresponding to these results.
+  //
+  // This is only used for embedding extraction on time series (e.g. audio
+  // embedding). In these use cases, the amount of data to process might
+  // exceed the maximum size that the model can process: to solve this, the
+  // input data is split into multiple chunks starting at different timestamps.
+  optional int64 timestamp_ms = 2;
 }
