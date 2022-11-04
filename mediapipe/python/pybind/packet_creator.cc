@@ -602,8 +602,11 @@ void PublicPacketCreators(pybind11::module* m) {
       // TODO: Should take "const Eigen::Ref<const Eigen::MatrixXf>&"
       // as the input argument. Investigate why bazel non-optimized mode
       // triggers a memory allocation bug in Eigen::internal::aligned_free().
-      [](const Eigen::MatrixXf& matrix) {
+      [](const Eigen::MatrixXf& matrix, bool transpose) {
         // MakePacket copies the data.
+        if (transpose) {
+          return MakePacket<Matrix>(matrix.transpose());
+        }
         return MakePacket<Matrix>(matrix);
       },
       R"doc(Create a MediaPipe Matrix Packet from a 2d numpy float ndarray.
@@ -613,6 +616,8 @@ void PublicPacketCreators(pybind11::module* m) {
 
   Args:
     matrix: A 2d numpy float ndarray.
+    transpose: A boolean to indicate if the input matrix needs to be transposed.
+      Default to False.
 
   Returns:
     A MediaPipe Matrix Packet.
@@ -625,6 +630,7 @@ void PublicPacketCreators(pybind11::module* m) {
         np.array([[.1, .2, .3], [.4, .5, .6]])
     matrix = mp.packet_getter.get_matrix(packet)
 )doc",
+      py::arg("matrix"), py::arg("transpose") = false,
       py::return_value_policy::move);
 }  // NOLINT(readability/fn_size)
 
