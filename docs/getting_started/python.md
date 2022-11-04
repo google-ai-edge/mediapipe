@@ -141,3 +141,4 @@ Nvidia Jetson and Raspberry Pi, please read
     ```bash
     (mp_env)mediapipe$ python3 setup.py bdist_wheel
     ```
+7. Exit from the MediaPipe repo directory and launch the Python interpreter.
