@@ -65,6 +65,7 @@ cc_library(
         "//mediapipe/tasks/cc/audio/core:audio_task_api_factory",
         "//mediapipe/tasks/cc/audio/core:base_audio_task_api",
         "//mediapipe/tasks/cc/audio/core:running_mode",
+        "//mediapipe/tasks/cc/components/containers:classification_result",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
         "//mediapipe/tasks/cc/components/processors:classifier_options",
         "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",

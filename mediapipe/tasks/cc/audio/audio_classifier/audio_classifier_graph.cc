@@ -16,6 +16,7 @@ limitations under the License.
 #include <stdint.h>
 
 #include <utility>
+#include <vector>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -57,11 +58,19 @@ using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 
 constexpr char kAtPrestreamTag[] = "AT_PRESTREAM";
 constexpr char kAudioTag[] = "AUDIO";
-constexpr char kClassificationResultTag[] = "CLASSIFICATION_RESULT";
+constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
+constexpr char kTimestampedClassificationsTag[] = "TIMESTAMPED_CLASSIFICATIONS";
 constexpr char kPacketTag[] = "PACKET";
 constexpr char kSampleRateTag[] = "SAMPLE_RATE";
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kTimestampsTag[] = "TIMESTAMPS";
+
+// Struct holding the different output streams produced by the audio classifier
+// graph.
+struct AudioClassifierOutputStreams {
+  Source<ClassificationResult> classifications;
+  Source<std::vector<ClassificationResult>> timestamped_classifications;
+};
 
 absl::Status SanityCheckOptions(
     const proto::AudioClassifierGraphOptions& options) {
@@ -124,16 +133,20 @@ void ConfigureAudioToTensorCalculator(
 //     series stream header with sample rate info.
 //
 // Outputs:
-//   CLASSIFICATION_RESULT - ClassificationResult
-//     The aggregated classification result object that has 3 dimensions:
-//     (classification head, classification timestamp, classification category).
+//   CLASSIFICATIONS - ClassificationResult @Optional
+//     The classification results aggregated by head. Only produces results if
+//     the graph if the 'use_stream_mode' option is true.
+//   TIMESTAMPED_CLASSIFICATIONS - std::vector<ClassificationResult> @Optional
+//     The classification result aggregated by timestamp, then by head. Only
+//     produces results if the graph if the 'use_stream_mode' option is false.
 //
 // Example:
 // node {
 //   calculator: "mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph"
 //   input_stream: "AUDIO:audio_in"
 //   input_stream: "SAMPLE_RATE:sample_rate_in"
-//   output_stream: "CLASSIFICATION_RESULT:classification_result_out"
+//   output_stream: "CLASSIFICATIONS:classifications"
+//   output_stream: "TIMESTAMPED_CLASSIFICATIONS:timestamped_classifications"
 //   options {
 //     [mediapipe.tasks.audio.audio_classifier.proto.AudioClassifierGraphOptions.ext]
 //     {
@@ -162,7 +175,7 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
             .base_options()
             .use_stream_mode();
     ASSIGN_OR_RETURN(
-        auto classification_result_out,
+        auto output_streams,
         BuildAudioClassificationTask(
             sc->Options<proto::AudioClassifierGraphOptions>(), *model_resources,
             graph[Input<Matrix>(kAudioTag)],
@@ -170,8 +183,11 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
                 ? absl::nullopt
                 : absl::make_optional(graph[Input<double>(kSampleRateTag)]),
             graph));
-    classification_result_out >>
-        graph[Output<ClassificationResult>(kClassificationResultTag)];
+    output_streams.classifications >>
+        graph[Output<ClassificationResult>(kClassificationsTag)];
+    output_streams.timestamped_classifications >>
+        graph[Output<std::vector<ClassificationResult>>(
+            kTimestampedClassificationsTag)];
     return graph.GetConfig();
   }
 
@@ -187,7 +203,7 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
   // audio_in: (mediapipe::Matrix) stream to run audio classification on.
   // sample_rate_in: (double) optional stream of the input audio sample rate.
   // graph: the mediapipe builder::Graph instance to be updated.
-  absl::StatusOr<Source<ClassificationResult>> BuildAudioClassificationTask(
+  absl::StatusOr<AudioClassifierOutputStreams> BuildAudioClassificationTask(
       const proto::AudioClassifierGraphOptions& task_options,
       const core::ModelResources& model_resources, Source<Matrix> audio_in,
       absl::optional<Source<double>> sample_rate_in, Graph& graph) {
@@ -250,16 +266,20 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
     inference.Out(kTensorsTag) >> postprocessing.In(kTensorsTag);
 
     // Time aggregation is only needed for performing audio classification on
-    // audio files. Disables time aggregration by not connecting the
+    // audio files. Disables timestamp aggregation by not connecting the
     // "TIMESTAMPS" streams.
     if (!use_stream_mode) {
       audio_to_tensor.Out(kTimestampsTag) >> postprocessing.In(kTimestampsTag);
     }
 
-    // Outputs the aggregated classification result as the subgraph output
-    // stream.
-    return postprocessing[Output<ClassificationResult>(
-        kClassificationResultTag)];
+    // Output both streams as graph output streams/
+    return AudioClassifierOutputStreams{
+        /*classifications=*/postprocessing[Output<ClassificationResult>(
+            kClassificationsTag)],
+        /*timestamped_classifications=*/
+        postprocessing[Output<std::vector<ClassificationResult>>(
+            kTimestampedClassificationsTag)],
+    };
   }
 };
 

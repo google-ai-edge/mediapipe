@@ -32,13 +32,11 @@ limitations under the License.
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/parse_text_proto.h"
-#include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/audio/core/running_mode.h"
 #include "mediapipe/tasks/cc/audio/utils/test_utils.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/containers/proto/category.pb.h"
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/category.h"
+#include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "tensorflow/lite/core/shims/cc/shims_test_util.h"
 
 namespace mediapipe {
@@ -49,7 +47,6 @@ namespace {
 
 using ::absl::StatusOr;
 using ::mediapipe::file::JoinPath;
-using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::testing::HasSubstr;
 using ::testing::Optional;
 
@@ -73,95 +70,86 @@ Matrix GetAudioData(absl::string_view filename) {
   return matrix_mapping.matrix();
 }
 
-void CheckSpeechClassificationResult(const ClassificationResult& result) {
-  EXPECT_THAT(result.classifications_size(), testing::Eq(1));
-  EXPECT_EQ(result.classifications(0).head_name(), "scores");
-  EXPECT_EQ(result.classifications(0).head_index(), 0);
-  EXPECT_THAT(result.classifications(0).entries_size(), testing::Eq(5));
+void CheckSpeechResult(const std::vector<AudioClassifierResult>& result,
+                       int expected_num_categories = 521) {
+  EXPECT_EQ(result.size(), 5);
+  // Ignore last result, which operates on a too small chunk to return relevant
+  // results.
   std::vector<int64> timestamps_ms = {0, 975, 1950, 2925};
   for (int i = 0; i < timestamps_ms.size(); i++) {
-    EXPECT_THAT(result.classifications(0).entries(0).categories_size(),
-                testing::Eq(521));
-    const auto* top_category =
-        &result.classifications(0).entries(0).categories(0);
-    EXPECT_THAT(top_category->category_name(), testing::Eq("Speech"));
-    EXPECT_GT(top_category->score(), 0.9f);
-    EXPECT_EQ(result.classifications(0).entries(i).timestamp_ms(),
-              timestamps_ms[i]);
+    EXPECT_EQ(result[i].timestamp_ms, timestamps_ms[i]);
+    EXPECT_EQ(result[i].classifications.size(), 1);
+    auto classifications = result[i].classifications[0];
+    EXPECT_EQ(classifications.head_index, 0);
+    EXPECT_EQ(classifications.head_name, "scores");
+    EXPECT_EQ(classifications.categories.size(), expected_num_categories);
+    auto category = classifications.categories[0];
+    EXPECT_EQ(category.index, 0);
+    EXPECT_EQ(category.category_name, "Speech");
+    EXPECT_GT(category.score, 0.9f);
   }
 }
 
-void CheckTwoHeadsClassificationResult(const ClassificationResult& result) {
-  EXPECT_THAT(result.classifications_size(), testing::Eq(2));
-  // Checks classification head #1.
-  EXPECT_EQ(result.classifications(0).head_name(), "yamnet_classification");
-  EXPECT_EQ(result.classifications(0).head_index(), 0);
-  EXPECT_THAT(result.classifications(0).entries(0).categories_size(),
-              testing::Eq(521));
-  const auto* top_category =
-      &result.classifications(0).entries(0).categories(0);
-  EXPECT_THAT(top_category->category_name(),
-              testing::Eq("Environmental noise"));
-  EXPECT_GT(top_category->score(), 0.5f);
-  EXPECT_EQ(result.classifications(0).entries(0).timestamp_ms(), 0);
-  if (result.classifications(0).entries_size() == 2) {
-    top_category = &result.classifications(0).entries(1).categories(0);
-    EXPECT_THAT(top_category->category_name(), testing::Eq("Silence"));
-    EXPECT_GT(top_category->score(), 0.99f);
-    EXPECT_EQ(result.classifications(0).entries(1).timestamp_ms(), 975);
+void CheckTwoHeadsResult(const std::vector<AudioClassifierResult>& result) {
+  EXPECT_GE(result.size(), 1);
+  EXPECT_LE(result.size(), 2);
+  // Check first result.
+  EXPECT_EQ(result[0].timestamp_ms, 0);
+  EXPECT_EQ(result[0].classifications.size(), 2);
+  // Check first head.
+  EXPECT_EQ(result[0].classifications[0].head_index, 0);
+  EXPECT_EQ(result[0].classifications[0].head_name, "yamnet_classification");
+  EXPECT_EQ(result[0].classifications[0].categories.size(), 521);
+  EXPECT_EQ(result[0].classifications[0].categories[0].index, 508);
+  EXPECT_EQ(result[0].classifications[0].categories[0].category_name,
+            "Environmental noise");
+  EXPECT_GT(result[0].classifications[0].categories[0].score, 0.5f);
+  // Check second head.
+  EXPECT_EQ(result[0].classifications[1].head_index, 1);
+  EXPECT_EQ(result[0].classifications[1].head_name, "bird_classification");
+  EXPECT_EQ(result[0].classifications[1].categories.size(), 5);
+  EXPECT_EQ(result[0].classifications[1].categories[0].index, 4);
+  EXPECT_EQ(result[0].classifications[1].categories[0].category_name,
+            "Chestnut-crowned Antpitta");
+  EXPECT_GT(result[0].classifications[1].categories[0].score, 0.9f);
+  // Check second result, if present.
+  if (result.size() == 2) {
+    EXPECT_EQ(result[1].timestamp_ms, 975);
+    EXPECT_EQ(result[1].classifications.size(), 2);
+    // Check first head.
+    EXPECT_EQ(result[1].classifications[0].head_index, 0);
+    EXPECT_EQ(result[1].classifications[0].head_name, "yamnet_classification");
+    EXPECT_EQ(result[1].classifications[0].categories.size(), 521);
+    EXPECT_EQ(result[1].classifications[0].categories[0].index, 494);
+    EXPECT_EQ(result[1].classifications[0].categories[0].category_name,
+              "Silence");
+    EXPECT_GT(result[1].classifications[0].categories[0].score, 0.99f);
+    // Check second head.
+    EXPECT_EQ(result[1].classifications[1].head_index, 1);
+    EXPECT_EQ(result[1].classifications[1].head_name, "bird_classification");
+    EXPECT_EQ(result[1].classifications[1].categories.size(), 5);
+    EXPECT_EQ(result[1].classifications[1].categories[0].index, 1);
+    EXPECT_EQ(result[1].classifications[1].categories[0].category_name,
+              "White-breasted Wood-Wren");
+    EXPECT_GT(result[1].classifications[1].categories[0].score, 0.99f);
   }
-  // Checks classification head #2.
-  EXPECT_EQ(result.classifications(1).head_name(), "bird_classification");
-  EXPECT_EQ(result.classifications(1).head_index(), 1);
-  EXPECT_THAT(result.classifications(1).entries(0).categories_size(),
-              testing::Eq(5));
-  top_category = &result.classifications(1).entries(0).categories(0);
-  EXPECT_THAT(top_category->category_name(),
-              testing::Eq("Chestnut-crowned Antpitta"));
-  EXPECT_GT(top_category->score(), 0.9f);
-  EXPECT_EQ(result.classifications(1).entries(0).timestamp_ms(), 0);
 }
 
-ClassificationResult GenerateSpeechClassificationResult() {
-  return ParseTextProtoOrDie<ClassificationResult>(
-      R"pb(classifications {
-             head_index: 0
-             head_name: "scores"
-             entries {
-               categories { index: 0 score: 0.94140625 category_name: "Speech" }
-               timestamp_ms: 0
-             }
-             entries {
-               categories { index: 0 score: 0.9921875 category_name: "Speech" }
-               timestamp_ms: 975
-             }
-             entries {
-               categories { index: 0 score: 0.98828125 category_name: "Speech" }
-               timestamp_ms: 1950
-             }
-             entries {
-               categories { index: 0 score: 0.99609375 category_name: "Speech" }
-               timestamp_ms: 2925
-             }
-             entries {
-               # categories are filtered out due to the low scores.
-               timestamp_ms: 3900
-             }
-           })pb");
-}
-
-void CheckStreamingModeClassificationResult(
-    std::vector<ClassificationResult> outputs) {
-  ASSERT_TRUE(outputs.size() == 5 || outputs.size() == 6);
-  auto expected_results = GenerateSpeechClassificationResult();
-  for (int i = 0; i < outputs.size() - 1; ++i) {
-    EXPECT_THAT(outputs[i].classifications(0).entries(0),
-                EqualsProto(expected_results.classifications(0).entries(i)));
+void CheckStreamingModeResults(std::vector<AudioClassifierResult> outputs) {
+  EXPECT_EQ(outputs.size(), 5);
+  // Ignore last result, which operates on a too small chunk to return relevant
+  // results.
+  for (int i = 0; i < outputs.size() - 1; i++) {
+    EXPECT_FALSE(outputs[i].timestamp_ms.has_value());
+    EXPECT_EQ(outputs[i].classifications.size(), 1);
+    EXPECT_EQ(outputs[i].classifications[0].head_index, 0);
+    EXPECT_EQ(outputs[i].classifications[0].head_name, "scores");
+    EXPECT_EQ(outputs[i].classifications[0].categories.size(), 1);
+    EXPECT_EQ(outputs[i].classifications[0].categories[0].index, 0);
+    EXPECT_EQ(outputs[i].classifications[0].categories[0].category_name,
+              "Speech");
+    EXPECT_GT(outputs[i].classifications[0].categories[0].score, 0.9f);
   }
-  int last_elem_index = outputs.size() - 1;
-  EXPECT_EQ(
-      mediapipe::Timestamp::Done().Value() / 1000,
-      outputs[last_elem_index].classifications(0).entries(0).timestamp_ms());
 }
 
 class CreateFromOptionsTest : public tflite_shims::testing::Test {};
@@ -264,7 +252,7 @@ TEST_F(CreateFromOptionsTest, FailsWithUnnecessaryCallback) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kModelWithoutMetadata);
   options->result_callback =
-      [](absl::StatusOr<ClassificationResult> status_or_result) {};
+      [](absl::StatusOr<AudioClassifierResult> status_or_result) {};
   StatusOr<std::unique_ptr<AudioClassifier>> audio_classifier_or =
       AudioClassifier::Create(std::move(options));
 
@@ -284,7 +272,7 @@ TEST_F(CreateFromOptionsTest, FailsWithMissingDefaultInputAudioSampleRate) {
       JoinPath("./", kTestDataDirectory, kModelWithoutMetadata);
   options->running_mode = core::RunningMode::AUDIO_STREAM;
   options->result_callback =
-      [](absl::StatusOr<ClassificationResult> status_or_result) {};
+      [](absl::StatusOr<AudioClassifierResult> status_or_result) {};
   StatusOr<std::unique_ptr<AudioClassifier>> audio_classifier_or =
       AudioClassifier::Create(std::move(options));
 
@@ -310,7 +298,7 @@ TEST_F(ClassifyTest, Succeeds) {
       auto result, audio_classifier->Classify(std::move(audio_buffer),
                                               /*audio_sample_rate=*/16000));
   MP_ASSERT_OK(audio_classifier->Close());
-  CheckSpeechClassificationResult(result);
+  CheckSpeechResult(result);
 }
 
 TEST_F(ClassifyTest, SucceedsWithResampling) {
@@ -324,7 +312,7 @@ TEST_F(ClassifyTest, SucceedsWithResampling) {
       auto result, audio_classifier->Classify(std::move(audio_buffer),
                                               /*audio_sample_rate=*/48000));
   MP_ASSERT_OK(audio_classifier->Close());
-  CheckSpeechClassificationResult(result);
+  CheckSpeechResult(result);
 }
 
 TEST_F(ClassifyTest, SucceedsWithInputsAtDifferentSampleRates) {
@@ -339,13 +327,13 @@ TEST_F(ClassifyTest, SucceedsWithInputsAtDifferentSampleRates) {
       auto result_16k_hz,
       audio_classifier->Classify(std::move(audio_buffer_16k_hz),
                                  /*audio_sample_rate=*/16000));
-  CheckSpeechClassificationResult(result_16k_hz);
+  CheckSpeechResult(result_16k_hz);
   MP_ASSERT_OK_AND_ASSIGN(
       auto result_48k_hz,
       audio_classifier->Classify(std::move(audio_buffer_48k_hz),
                                  /*audio_sample_rate=*/48000));
   MP_ASSERT_OK(audio_classifier->Close());
-  CheckSpeechClassificationResult(result_48k_hz);
+  CheckSpeechResult(result_48k_hz);
 }
 
 TEST_F(ClassifyTest, SucceedsWithInsufficientData) {
@@ -361,15 +349,16 @@ TEST_F(ClassifyTest, SucceedsWithInsufficientData) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto result, audio_classifier->Classify(std::move(zero_matrix), 16000));
   MP_ASSERT_OK(audio_classifier->Close());
-  EXPECT_THAT(result.classifications_size(), testing::Eq(1));
-  EXPECT_THAT(result.classifications(0).entries_size(), testing::Eq(1));
-  EXPECT_THAT(result.classifications(0).entries(0).categories_size(),
-              testing::Eq(521));
-  EXPECT_THAT(
-      result.classifications(0).entries(0).categories(0).category_name(),
-      testing::Eq("Silence"));
-  EXPECT_THAT(result.classifications(0).entries(0).categories(0).score(),
-              testing::FloatEq(.800781f));
+  EXPECT_EQ(result.size(), 1);
+  EXPECT_EQ(result[0].timestamp_ms, 0);
+  EXPECT_EQ(result[0].classifications.size(), 1);
+  EXPECT_EQ(result[0].classifications[0].head_index, 0);
+  EXPECT_EQ(result[0].classifications[0].head_name, "scores");
+  EXPECT_EQ(result[0].classifications[0].categories.size(), 521);
+  EXPECT_EQ(result[0].classifications[0].categories[0].index, 494);
+  EXPECT_EQ(result[0].classifications[0].categories[0].category_name,
+            "Silence");
+  EXPECT_FLOAT_EQ(result[0].classifications[0].categories[0].score, 0.800781f);
 }
 
 TEST_F(ClassifyTest, SucceedsWithMultiheadsModel) {
@@ -383,7 +372,7 @@ TEST_F(ClassifyTest, SucceedsWithMultiheadsModel) {
       auto result, audio_classifier->Classify(std::move(audio_buffer),
                                               /*audio_sample_rate=*/16000));
   MP_ASSERT_OK(audio_classifier->Close());
-  CheckTwoHeadsClassificationResult(result);
+  CheckTwoHeadsResult(result);
 }
 
 TEST_F(ClassifyTest, SucceedsWithMultiheadsModelAndResampling) {
@@ -397,7 +386,7 @@ TEST_F(ClassifyTest, SucceedsWithMultiheadsModelAndResampling) {
       auto result, audio_classifier->Classify(std::move(audio_buffer),
                                               /*audio_sample_rate=*/44100));
   MP_ASSERT_OK(audio_classifier->Close());
-  CheckTwoHeadsClassificationResult(result);
+  CheckTwoHeadsResult(result);
 }
 
 TEST_F(ClassifyTest,
@@ -413,13 +402,13 @@ TEST_F(ClassifyTest,
       auto result_44k_hz,
       audio_classifier->Classify(std::move(audio_buffer_44k_hz),
                                  /*audio_sample_rate=*/44100));
-  CheckTwoHeadsClassificationResult(result_44k_hz);
+  CheckTwoHeadsResult(result_44k_hz);
   MP_ASSERT_OK_AND_ASSIGN(
       auto result_16k_hz,
       audio_classifier->Classify(std::move(audio_buffer_16k_hz),
                                  /*audio_sample_rate=*/16000));
   MP_ASSERT_OK(audio_classifier->Close());
-  CheckTwoHeadsClassificationResult(result_16k_hz);
+  CheckTwoHeadsResult(result_16k_hz);
 }
 
 TEST_F(ClassifyTest, SucceedsWithMaxResultOption) {
@@ -428,14 +417,13 @@ TEST_F(ClassifyTest, SucceedsWithMaxResultOption) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kModelWithMetadata);
   options->classifier_options.max_results = 1;
-  options->classifier_options.score_threshold = 0.35f;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<AudioClassifier> audio_classifier,
                           AudioClassifier::Create(std::move(options)));
   MP_ASSERT_OK_AND_ASSIGN(
       auto result, audio_classifier->Classify(std::move(audio_buffer),
                                               /*audio_sample_rate=*/48000));
   MP_ASSERT_OK(audio_classifier->Close());
-  EXPECT_THAT(result, EqualsProto(GenerateSpeechClassificationResult()));
+  CheckSpeechResult(result, /*expected_num_categories=*/1);
 }
 
 TEST_F(ClassifyTest, SucceedsWithScoreThresholdOption) {
@@ -450,7 +438,7 @@ TEST_F(ClassifyTest, SucceedsWithScoreThresholdOption) {
       auto result, audio_classifier->Classify(std::move(audio_buffer),
                                               /*audio_sample_rate=*/48000));
   MP_ASSERT_OK(audio_classifier->Close());
-  EXPECT_THAT(result, EqualsProto(GenerateSpeechClassificationResult()));
+  CheckSpeechResult(result, /*expected_num_categories=*/1);
 }
 
 TEST_F(ClassifyTest, SucceedsWithCategoryAllowlist) {
@@ -466,7 +454,7 @@ TEST_F(ClassifyTest, SucceedsWithCategoryAllowlist) {
       auto result, audio_classifier->Classify(std::move(audio_buffer),
                                               /*audio_sample_rate=*/48000));
   MP_ASSERT_OK(audio_classifier->Close());
-  EXPECT_THAT(result, EqualsProto(GenerateSpeechClassificationResult()));
+  CheckSpeechResult(result, /*expected_num_categories=*/1);
 }
 
 TEST_F(ClassifyTest, SucceedsWithCategoryDenylist) {
@@ -482,16 +470,16 @@ TEST_F(ClassifyTest, SucceedsWithCategoryDenylist) {
       auto result, audio_classifier->Classify(std::move(audio_buffer),
                                               /*audio_sample_rate=*/48000));
   MP_ASSERT_OK(audio_classifier->Close());
-  // All categroies with the "Speech" label are filtered out.
-  EXPECT_THAT(result, EqualsProto(R"pb(classifications {
-                                         head_index: 0
-                                         head_name: "scores"
-                                         entries { timestamp_ms: 0 }
-                                         entries { timestamp_ms: 975 }
-                                         entries { timestamp_ms: 1950 }
-                                         entries { timestamp_ms: 2925 }
-                                         entries { timestamp_ms: 3900 }
-                                       })pb"));
+  // All categories with the "Speech" label are filtered out.
+  std::vector<int64> timestamps_ms = {0, 975, 1950, 2925};
+  for (int i = 0; i < timestamps_ms.size(); i++) {
+    EXPECT_EQ(result[i].timestamp_ms, timestamps_ms[i]);
+    EXPECT_EQ(result[i].classifications.size(), 1);
+    auto classifications = result[i].classifications[0];
+    EXPECT_EQ(classifications.head_index, 0);
+    EXPECT_EQ(classifications.head_name, "scores");
+    EXPECT_TRUE(classifications.categories.empty());
+  }
 }
 
 class ClassifyAsyncTest : public tflite_shims::testing::Test {};
@@ -506,9 +494,9 @@ TEST_F(ClassifyAsyncTest, Succeeds) {
   options->classifier_options.score_threshold = 0.3f;
   options->running_mode = core::RunningMode::AUDIO_STREAM;
   options->sample_rate = kSampleRateHz;
-  std::vector<ClassificationResult> outputs;
+  std::vector<AudioClassifierResult> outputs;
   options->result_callback =
-      [&outputs](absl::StatusOr<ClassificationResult> status_or_result) {
+      [&outputs](absl::StatusOr<AudioClassifierResult> status_or_result) {
         MP_ASSERT_OK_AND_ASSIGN(outputs.emplace_back(), status_or_result);
       };
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<AudioClassifier> audio_classifier,
@@ -523,7 +511,7 @@ TEST_F(ClassifyAsyncTest, Succeeds) {
     start_col += kYamnetNumOfAudioSamples * 3;
   }
   MP_ASSERT_OK(audio_classifier->Close());
-  CheckStreamingModeClassificationResult(outputs);
+  CheckStreamingModeResults(outputs);
 }
 
 TEST_F(ClassifyAsyncTest, SucceedsWithNonDeterministicNumAudioSamples) {
@@ -536,9 +524,9 @@ TEST_F(ClassifyAsyncTest, SucceedsWithNonDeterministicNumAudioSamples) {
   options->classifier_options.score_threshold = 0.3f;
   options->running_mode = core::RunningMode::AUDIO_STREAM;
   options->sample_rate = kSampleRateHz;
-  std::vector<ClassificationResult> outputs;
+  std::vector<AudioClassifierResult> outputs;
   options->result_callback =
-      [&outputs](absl::StatusOr<ClassificationResult> status_or_result) {
+      [&outputs](absl::StatusOr<AudioClassifierResult> status_or_result) {
         MP_ASSERT_OK_AND_ASSIGN(outputs.emplace_back(), status_or_result);
       };
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<AudioClassifier> audio_classifier,
@@ -555,7 +543,7 @@ TEST_F(ClassifyAsyncTest, SucceedsWithNonDeterministicNumAudioSamples) {
     start_col += num_samples;
   }
   MP_ASSERT_OK(audio_classifier->Close());
-  CheckStreamingModeClassificationResult(outputs);
+  CheckStreamingModeResults(outputs);
 }
 
 }  // namespace
