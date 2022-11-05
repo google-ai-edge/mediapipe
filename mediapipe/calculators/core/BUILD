@@ -936,6 +936,7 @@ cc_test(
         "//mediapipe/framework/tool:simulation_clock",
         "//mediapipe/framework/tool:simulation_clock_executor",
         "//mediapipe/framework/tool:sink",
+        "//mediapipe/util:packet_test_util",
         "@com_google_absl//absl/time",
     ],
 )

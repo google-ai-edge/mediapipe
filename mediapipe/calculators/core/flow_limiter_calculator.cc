@@ -18,7 +18,6 @@
 
 #include "mediapipe/calculators/core/flow_limiter_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/header_util.h"
 
@@ -68,7 +67,7 @@ constexpr char kOptionsTag[] = "OPTIONS";
 // FlowLimiterCalculator provides limited support for multiple input streams.
 // The first input stream is treated as the main input stream and successive
 // input streams are treated as auxiliary input streams.  The auxiliary input
-// streams are limited to timestamps passed on the main input stream.
+// streams are limited to timestamps allowed by the "ALLOW" stream.
 //
 class FlowLimiterCalculator : public CalculatorBase {
  public:
@@ -100,62 +99,9 @@ class FlowLimiterCalculator : public CalculatorBase {
           cc->InputSidePackets().Tag(kMaxInFlightTag).Get<int>());
     }
     input_queues_.resize(cc->Inputs().NumEntries(""));
+    allowed_[Timestamp::Unset()] = true;
     RET_CHECK_OK(CopyInputHeadersToOutputs(cc->Inputs(), &(cc->Outputs())));
     return absl::OkStatus();
-  }
-
-  // Returns true if an additional frame can be released for processing.
-  // The "ALLOW" output stream indicates this condition at each input frame.
-  bool ProcessingAllowed() {
-    return frames_in_flight_.size() < options_.max_in_flight();
-  }
-
-  // Outputs a packet indicating whether a frame was sent or dropped.
-  void SendAllow(bool allow, Timestamp ts, CalculatorContext* cc) {
-    if (cc->Outputs().HasTag(kAllowTag)) {
-      cc->Outputs().Tag(kAllowTag).AddPacket(MakePacket<bool>(allow).At(ts));
-    }
-  }
-
-  // Sets the timestamp bound or closes an output stream.
-  void SetNextTimestampBound(Timestamp bound, OutputStream* stream) {
-    if (bound > Timestamp::Max()) {
-      stream->Close();
-    } else {
-      stream->SetNextTimestampBound(bound);
-    }
-  }
-
-  // Returns true if a certain timestamp is being processed.
-  bool IsInFlight(Timestamp timestamp) {
-    return std::find(frames_in_flight_.begin(), frames_in_flight_.end(),
-                     timestamp) != frames_in_flight_.end();
-  }
-
-  // Releases input packets up to the latest settled input timestamp.
-  void ProcessAuxiliaryInputs(CalculatorContext* cc) {
-    Timestamp settled_bound = cc->Outputs().Get("", 0).NextTimestampBound();
-    for (int i = 1; i < cc->Inputs().NumEntries(""); ++i) {
-      // Release settled frames from each input queue.
-      while (!input_queues_[i].empty() &&
-             input_queues_[i].front().Timestamp() < settled_bound) {
-        Packet packet = input_queues_[i].front();
-        input_queues_[i].pop_front();
-        if (IsInFlight(packet.Timestamp())) {
-          cc->Outputs().Get("", i).AddPacket(packet);
-        }
-      }
-
-      // Propagate each input timestamp bound.
-      if (!input_queues_[i].empty()) {
-        Timestamp bound = input_queues_[i].front().Timestamp();
-        SetNextTimestampBound(bound, &cc->Outputs().Get("", i));
-      } else {
-        Timestamp bound =
-            cc->Inputs().Get("", i).Value().Timestamp().NextAllowedInStream();
-        SetNextTimestampBound(bound, &cc->Outputs().Get("", i));
-      }
-    }
   }
 
   // Releases input packets allowed by the max_in_flight constraint.
@@ -224,13 +170,97 @@ class FlowLimiterCalculator : public CalculatorBase {
     }
 
     ProcessAuxiliaryInputs(cc);
+
+    // Discard old ALLOW ranges.
+    Timestamp input_bound = InputTimestampBound(cc);
+    auto first_range = std::prev(allowed_.upper_bound(input_bound));
+    allowed_.erase(allowed_.begin(), first_range);
     return absl::OkStatus();
+  }
+
+  int LedgerSize() {
+    int result = frames_in_flight_.size() + allowed_.size();
+    for (const auto& queue : input_queues_) {
+      result += queue.size();
+    }
+    return result;
+  }
+
+ private:
+  // Returns true if an additional frame can be released for processing.
+  // The "ALLOW" output stream indicates this condition at each input frame.
+  bool ProcessingAllowed() {
+    return frames_in_flight_.size() < options_.max_in_flight();
+  }
+
+  // Outputs a packet indicating whether a frame was sent or dropped.
+  void SendAllow(bool allow, Timestamp ts, CalculatorContext* cc) {
+    if (cc->Outputs().HasTag(kAllowTag)) {
+      cc->Outputs().Tag(kAllowTag).AddPacket(MakePacket<bool>(allow).At(ts));
+    }
+    allowed_[ts] = allow;
+  }
+
+  // Returns true if a timestamp falls within a range of allowed timestamps.
+  bool IsAllowed(Timestamp timestamp) {
+    auto it = allowed_.upper_bound(timestamp);
+    return std::prev(it)->second;
+  }
+
+  // Sets the timestamp bound or closes an output stream.
+  void SetNextTimestampBound(Timestamp bound, OutputStream* stream) {
+    if (bound > Timestamp::Max()) {
+      stream->Close();
+    } else {
+      stream->SetNextTimestampBound(bound);
+    }
+  }
+
+  // Returns the lowest unprocessed input Timestamp.
+  Timestamp InputTimestampBound(CalculatorContext* cc) {
+    Timestamp result = Timestamp::Done();
+    for (int i = 0; i < input_queues_.size(); ++i) {
+      auto& queue = input_queues_[i];
+      auto& stream = cc->Inputs().Get("", i);
+      Timestamp bound = queue.empty()
+                            ? stream.Value().Timestamp().NextAllowedInStream()
+                            : queue.front().Timestamp();
+      result = std::min(result, bound);
+    }
+    return result;
+  }
+
+  // Releases input packets up to the latest settled input timestamp.
+  void ProcessAuxiliaryInputs(CalculatorContext* cc) {
+    Timestamp settled_bound = cc->Outputs().Get("", 0).NextTimestampBound();
+    for (int i = 1; i < cc->Inputs().NumEntries(""); ++i) {
+      // Release settled frames from each input queue.
+      while (!input_queues_[i].empty() &&
+             input_queues_[i].front().Timestamp() < settled_bound) {
+        Packet packet = input_queues_[i].front();
+        input_queues_[i].pop_front();
+        if (IsAllowed(packet.Timestamp())) {
+          cc->Outputs().Get("", i).AddPacket(packet);
+        }
+      }
+
+      // Propagate each input timestamp bound.
+      if (!input_queues_[i].empty()) {
+        Timestamp bound = input_queues_[i].front().Timestamp();
+        SetNextTimestampBound(bound, &cc->Outputs().Get("", i));
+      } else {
+        Timestamp bound =
+            cc->Inputs().Get("", i).Value().Timestamp().NextAllowedInStream();
+        SetNextTimestampBound(bound, &cc->Outputs().Get("", i));
+      }
+    }
   }
 
  private:
   FlowLimiterCalculatorOptions options_;
   std::vector<std::deque<Packet>> input_queues_;
   std::deque<Timestamp> frames_in_flight_;
+  std::map<Timestamp, bool> allowed_;
 };
 REGISTER_CALCULATOR(FlowLimiterCalculator);
 
