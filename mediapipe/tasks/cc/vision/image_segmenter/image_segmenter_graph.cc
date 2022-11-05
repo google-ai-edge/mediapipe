@@ -287,10 +287,9 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
             tensor_to_images[Output<Image>::Multiple(kSegmentationTag)][i]));
       }
     }
-    return {{
-        .segmented_masks = segmented_masks,
-        .image = preprocessing[Output<Image>(kImageTag)],
-    }};
+    return ImageSegmenterOutputs{
+        /*segmented_masks=*/segmented_masks,
+        /*image=*/preprocessing[Output<Image>(kImageTag)]};
   }
 };
 

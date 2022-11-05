@@ -144,10 +144,10 @@ Rect CalculateBound(const NormalizedLandmarkList& list) {
   }
 
   // Populate normalized non rotated face bounding box
-  return {.left = bounding_box_left,
-          .top = bounding_box_top,
-          .right = bounding_box_right,
-          .bottom = bounding_box_bottom};
+  return Rect{/*left=*/bounding_box_left,
+              /*top=*/bounding_box_top,
+              /*right=*/bounding_box_right,
+              /*bottom=*/bounding_box_bottom};
 }
 
 // Uses IoU and distance of some corresponding hand landmarks to detect

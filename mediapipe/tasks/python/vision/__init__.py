@@ -15,17 +15,25 @@
 """MediaPipe Tasks Vision API."""
 
 import mediapipe.tasks.python.vision.core
+import mediapipe.tasks.python.vision.gesture_recognizer
 import mediapipe.tasks.python.vision.image_classifier
+import mediapipe.tasks.python.vision.image_segmenter
 import mediapipe.tasks.python.vision.object_detector
 
+GestureRecognizer = gesture_recognizer.GestureRecognizer
+GestureRecognizerOptions = gesture_recognizer.GestureRecognizerOptions
 ImageClassifier = image_classifier.ImageClassifier
 ImageClassifierOptions = image_classifier.ImageClassifierOptions
+ImageSegmenter = image_segmenter.ImageSegmenter
+ImageSegmenterOptions = image_segmenter.ImageSegmenterOptions
 ObjectDetector = object_detector.ObjectDetector
 ObjectDetectorOptions = object_detector.ObjectDetectorOptions
 RunningMode = core.vision_task_running_mode.VisionTaskRunningMode
 
 # Remove unnecessary modules to avoid duplication in API docs.
 del core
+del gesture_recognizer
 del image_classifier
+del image_segmenter
 del object_detector
 del mediapipe

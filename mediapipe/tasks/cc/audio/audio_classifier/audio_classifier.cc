@@ -18,12 +18,14 @@ limitations under the License.
 #include <map>
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/tasks/cc/audio/audio_classifier/proto/audio_classifier_graph_options.pb.h"
 #include "mediapipe/tasks/cc/audio/core/audio_task_api_factory.h"
+#include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
@@ -38,12 +40,16 @@ namespace audio_classifier {
 
 namespace {
 
+using ::mediapipe::tasks::components::containers::ConvertToClassificationResult;
 using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 
 constexpr char kAudioStreamName[] = "audio_in";
 constexpr char kAudioTag[] = "AUDIO";
-constexpr char kClassificationResultStreamName[] = "classification_result_out";
-constexpr char kClassificationResultTag[] = "CLASSIFICATION_RESULT";
+constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
+constexpr char kClassificationsName[] = "classifications_out";
+constexpr char kTimestampedClassificationsTag[] = "TIMESTAMPED_CLASSIFICATIONS";
+constexpr char kTimestampedClassificationsName[] =
+    "timestamped_classifications_out";
 constexpr char kSampleRateName[] = "sample_rate_in";
 constexpr char kSampleRateTag[] = "SAMPLE_RATE";
 constexpr char kSubgraphTypeName[] =
@@ -63,9 +69,11 @@ CalculatorGraphConfig CreateGraphConfig(
   }
   subgraph.GetOptions<proto::AudioClassifierGraphOptions>().Swap(
       options_proto.get());
-  subgraph.Out(kClassificationResultTag)
-          .SetName(kClassificationResultStreamName) >>
-      graph.Out(kClassificationResultTag);
+  subgraph.Out(kClassificationsTag).SetName(kClassificationsName) >>
+      graph.Out(kClassificationsTag);
+  subgraph.Out(kTimestampedClassificationsTag)
+          .SetName(kTimestampedClassificationsName) >>
+      graph.Out(kTimestampedClassificationsTag);
   return graph.GetConfig();
 }
 
@@ -91,13 +99,30 @@ ConvertAudioClassifierOptionsToProto(AudioClassifierOptions* options) {
   return options_proto;
 }
 
-absl::StatusOr<ClassificationResult> ConvertOutputPackets(
+absl::StatusOr<std::vector<AudioClassifierResult>> ConvertOutputPackets(
     absl::StatusOr<tasks::core::PacketMap> status_or_packets) {
   if (!status_or_packets.ok()) {
     return status_or_packets.status();
   }
-  return status_or_packets.value()[kClassificationResultStreamName]
-      .Get<ClassificationResult>();
+  auto classification_results =
+      status_or_packets.value()[kTimestampedClassificationsName]
+          .Get<std::vector<ClassificationResult>>();
+  std::vector<AudioClassifierResult> results;
+  results.reserve(classification_results.size());
+  for (const auto& classification_result : classification_results) {
+    results.emplace_back(ConvertToClassificationResult(classification_result));
+  }
+  return results;
+}
+
+absl::StatusOr<AudioClassifierResult> ConvertAsyncOutputPackets(
+    absl::StatusOr<tasks::core::PacketMap> status_or_packets) {
+  if (!status_or_packets.ok()) {
+    return status_or_packets.status();
+  }
+  return ConvertToClassificationResult(
+      status_or_packets.value()[kClassificationsName]
+          .Get<ClassificationResult>());
 }
 }  // namespace
 
@@ -118,7 +143,7 @@ absl::StatusOr<std::unique_ptr<AudioClassifier>> AudioClassifier::Create(
     auto result_callback = options->result_callback;
     packets_callback =
         [=](absl::StatusOr<tasks::core::PacketMap> status_or_packets) {
-          result_callback(ConvertOutputPackets(status_or_packets));
+          result_callback(ConvertAsyncOutputPackets(status_or_packets));
         };
   }
   return core::AudioTaskApiFactory::Create<AudioClassifier,
@@ -128,7 +153,7 @@ absl::StatusOr<std::unique_ptr<AudioClassifier>> AudioClassifier::Create(
       std::move(packets_callback));
 }
 
-absl::StatusOr<ClassificationResult> AudioClassifier::Classify(
+absl::StatusOr<std::vector<AudioClassifierResult>> AudioClassifier::Classify(
     Matrix audio_clip, double audio_sample_rate) {
   return ConvertOutputPackets(ProcessAudioClip(
       {{kAudioStreamName, MakePacket<Matrix>(std::move(audio_clip))},

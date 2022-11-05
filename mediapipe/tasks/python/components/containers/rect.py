@@ -19,80 +19,49 @@ from typing import Any, Optional
 from mediapipe.framework.formats import rect_pb2
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
-_RectProto = rect_pb2.Rect
 _NormalizedRectProto = rect_pb2.NormalizedRect
 
 
 @dataclasses.dataclass
 class Rect:
-  """A rectangle with rotation in image coordinates.
+  """A rectangle, used as part of detection results or as input region-of-interest.
 
-  Attributes: x_center : The X coordinate of the top-left corner, in pixels.
-  y_center : The Y coordinate of the top-left corner, in pixels.
-    width: The width of the rectangle, in pixels.
-    height: The height of the rectangle, in pixels.
-    rotation: Rotation angle is clockwise in radians.
-    rect_id:  Optional unique id to help associate different rectangles to each
-    other.
+  The coordinates are normalized wrt the image dimensions, i.e. generally in
+  [0,1] but they may exceed these bounds if describing a region overlapping the
+  image. The origin is on the top-left corner of the image.
+
+  Attributes:
+    left: The X coordinate of the left side of the rectangle.
+    top: The Y coordinate of the top of the rectangle.
+    right: The X coordinate of the right side of the rectangle.
+    bottom: The Y coordinate of the bottom of the rectangle.
   """
 
-  x_center: int
-  y_center: int
-  width: int
-  height: int
-  rotation: Optional[float] = 0.0
-  rect_id: Optional[int] = None
-
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _RectProto:
-    """Generates a Rect protobuf object."""
-    return _RectProto(
-        x_center=self.x_center,
-        y_center=self.y_center,
-        width=self.width,
-        height=self.height,
-    )
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _RectProto) -> 'Rect':
-    """Creates a `Rect` object from the given protobuf object."""
-    return Rect(
-        x_center=pb2_obj.x_center,
-        y_center=pb2_obj.y_center,
-        width=pb2_obj.width,
-        height=pb2_obj.height)
-
-  def __eq__(self, other: Any) -> bool:
-    """Checks if this object is equal to the given object.
-
-    Args:
-      other: The object to be compared with.
-
-    Returns:
-      True if the objects are equal.
-    """
-    if not isinstance(other, Rect):
-      return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
+  left: float
+  top: float
+  right: float
+  bottom: float
 
 
 @dataclasses.dataclass
 class NormalizedRect:
   """A rectangle with rotation in normalized coordinates.
 
-  The values of box
+  Location of the center of the rectangle in image coordinates. The (0.0, 0.0)
+  point is at the (top, left) corner.
 
-    center location and size are within [0, 1].
+  The values of box center location and size are within [0, 1].
 
-  Attributes: x_center : The X normalized coordinate of the top-left corner.
-  y_center : The Y normalized coordinate of the top-left corner.
+  Attributes:
+    x_center: The normalized X coordinate of the rectangle, in image
+      coordinates.
+    y_center: The normalized Y coordinate of the rectangle, in image
+      coordinates.
     width: The width of the rectangle.
     height: The height of the rectangle.
     rotation: Rotation angle is clockwise in radians.
-    rect_id:  Optional unique id to help associate different rectangles to each
-    other.
+    rect_id: Optional unique id to help associate different rectangles to each
+      other.
   """
 
   x_center: float

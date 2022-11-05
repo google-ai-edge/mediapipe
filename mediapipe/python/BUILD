@@ -87,6 +87,7 @@ cc_library(
 cc_library(
     name = "builtin_task_graphs",
     deps = [
+        "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_graph",
         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",

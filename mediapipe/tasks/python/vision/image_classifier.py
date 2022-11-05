@@ -30,6 +30,7 @@ from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.vision.core import base_vision_task_api
+from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode
 
 _NormalizedRect = rect.NormalizedRect
@@ -37,6 +38,7 @@ _BaseOptions = base_options_module.BaseOptions
 _ImageClassifierGraphOptionsProto = image_classifier_graph_options_pb2.ImageClassifierGraphOptions
 _ClassifierOptions = classifier_options.ClassifierOptions
 _RunningMode = vision_task_running_mode.VisionTaskRunningMode
+_ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _TaskInfo = task_info_module.TaskInfo
 
 _CLASSIFICATION_RESULT_OUT_STREAM_NAME = 'classification_result_out'
@@ -44,15 +46,10 @@ _CLASSIFICATION_RESULT_TAG = 'CLASSIFICATION_RESULT'
 _IMAGE_IN_STREAM_NAME = 'image_in'
 _IMAGE_OUT_STREAM_NAME = 'image_out'
 _IMAGE_TAG = 'IMAGE'
-_NORM_RECT_NAME = 'norm_rect_in'
+_NORM_RECT_STREAM_NAME = 'norm_rect_in'
 _NORM_RECT_TAG = 'NORM_RECT'
 _TASK_GRAPH_NAME = 'mediapipe.tasks.vision.image_classifier.ImageClassifierGraph'
 _MICRO_SECONDS_PER_MILLISECOND = 1000
-
-
-def _build_full_image_norm_rect() -> _NormalizedRect:
-  # Builds a NormalizedRect covering the entire image.
-  return _NormalizedRect(x_center=0.5, y_center=0.5, width=1, height=1)
 
 
 @dataclasses.dataclass
@@ -156,7 +153,7 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
         task_graph=_TASK_GRAPH_NAME,
         input_streams=[
             ':'.join([_IMAGE_TAG, _IMAGE_IN_STREAM_NAME]),
-            ':'.join([_NORM_RECT_TAG, _NORM_RECT_NAME]),
+            ':'.join([_NORM_RECT_TAG, _NORM_RECT_STREAM_NAME]),
         ],
         output_streams=[
             ':'.join([
@@ -171,17 +168,16 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
             _RunningMode.LIVE_STREAM), options.running_mode,
         packets_callback if options.result_callback else None)
 
-  # TODO: Replace _NormalizedRect with ImageProcessingOption
   def classify(
       self,
       image: image_module.Image,
-      roi: Optional[_NormalizedRect] = None
+      image_processing_options: Optional[_ImageProcessingOptions] = None
   ) -> classifications.ClassificationResult:
     """Performs image classification on the provided MediaPipe Image.
 
     Args:
       image: MediaPipe Image.
-      roi: The region of interest.
+      image_processing_options: Options for image processing.
 
     Returns:
       A classification result object that contains a list of classifications.
@@ -190,10 +186,12 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If image classification failed to run.
     """
-    norm_rect = roi if roi is not None else _build_full_image_norm_rect()
+    normalized_rect = self.convert_to_normalized_rect(image_processing_options)
     output_packets = self._process_image_data({
-        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
-        _NORM_RECT_NAME: packet_creator.create_proto(norm_rect.to_pb2())
+        _IMAGE_IN_STREAM_NAME:
+            packet_creator.create_image(image),
+        _NORM_RECT_STREAM_NAME:
+            packet_creator.create_proto(normalized_rect.to_pb2())
     })
 
     classification_result_proto = classifications_pb2.ClassificationResult()
@@ -210,7 +208,7 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
       self,
       image: image_module.Image,
       timestamp_ms: int,
-      roi: Optional[_NormalizedRect] = None
+      image_processing_options: Optional[_ImageProcessingOptions] = None
   ) -> classifications.ClassificationResult:
     """Performs image classification on the provided video frames.
 
@@ -222,7 +220,7 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
     Args:
       image: MediaPipe Image.
       timestamp_ms: The timestamp of the input video frame in milliseconds.
-      roi: The region of interest.
+      image_processing_options: Options for image processing.
 
     Returns:
       A classification result object that contains a list of classifications.
@@ -231,13 +229,13 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If image classification failed to run.
     """
-    norm_rect = roi if roi is not None else _build_full_image_norm_rect()
+    normalized_rect = self.convert_to_normalized_rect(image_processing_options)
     output_packets = self._process_video_data({
         _IMAGE_IN_STREAM_NAME:
             packet_creator.create_image(image).at(
                 timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-        _NORM_RECT_NAME:
-            packet_creator.create_proto(norm_rect.to_pb2()).at(
+        _NORM_RECT_STREAM_NAME:
+            packet_creator.create_proto(normalized_rect.to_pb2()).at(
                 timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
     })
 
@@ -251,10 +249,12 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
         for classification in classification_result_proto.classifications
     ])
 
-  def classify_async(self,
-                     image: image_module.Image,
-                     timestamp_ms: int,
-                     roi: Optional[_NormalizedRect] = None) -> None:
+  def classify_async(
+      self,
+      image: image_module.Image,
+      timestamp_ms: int,
+      image_processing_options: Optional[_ImageProcessingOptions] = None
+  ) -> None:
     """Sends live image data (an Image with a unique timestamp) to perform image classification.
 
     Only use this method when the ImageClassifier is created with the live
@@ -275,18 +275,18 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
     Args:
       image: MediaPipe Image.
       timestamp_ms: The timestamp of the input image in milliseconds.
-      roi: The region of interest.
+      image_processing_options: Options for image processing.
 
     Raises:
       ValueError: If the current input timestamp is smaller than what the image
         classifier has already processed.
     """
-    norm_rect = roi if roi is not None else _build_full_image_norm_rect()
+    normalized_rect = self.convert_to_normalized_rect(image_processing_options)
     self._send_live_stream_data({
         _IMAGE_IN_STREAM_NAME:
             packet_creator.create_image(image).at(
                 timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-        _NORM_RECT_NAME:
-            packet_creator.create_proto(norm_rect.to_pb2()).at(
+        _NORM_RECT_STREAM_NAME:
+            packet_creator.create_proto(normalized_rect.to_pb2()).at(
                 timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
     })

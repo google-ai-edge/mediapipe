@@ -14,7 +14,7 @@
 """Category data class."""
 
 import dataclasses
-from typing import Any
+from typing import Any, Optional
 
 from mediapipe.tasks.cc.components.containers.proto import category_pb2
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
@@ -39,10 +39,10 @@ class Category:
     category_name: The label of this category object.
   """
 
-  index: int
-  score: float
-  display_name: str
-  category_name: str
+  index: Optional[int] = None
+  score: Optional[float] = None
+  display_name: Optional[str] = None
+  category_name: Optional[str] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _CategoryProto:

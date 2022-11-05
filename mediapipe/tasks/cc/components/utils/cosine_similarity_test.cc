@@ -22,7 +22,7 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
+#include "mediapipe/tasks/cc/components/containers/embedding_result.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -30,29 +30,27 @@ namespace components {
 namespace utils {
 namespace {
 
-using ::mediapipe::tasks::components::containers::proto::EmbeddingEntry;
+using ::mediapipe::tasks::components::containers::Embedding;
 using ::testing::HasSubstr;
 
-// Helper function to generate float EmbeddingEntry.
-EmbeddingEntry BuildFloatEntry(std::vector<float> values) {
-  EmbeddingEntry entry;
-  for (const float value : values) {
-    entry.mutable_float_embedding()->add_values(value);
-  }
-  return entry;
+// Helper function to generate float Embedding.
+Embedding BuildFloatEmbedding(std::vector<float> values) {
+  Embedding embedding;
+  embedding.float_embedding = values;
+  return embedding;
 }
 
-// Helper function to generate quantized EmbeddingEntry.
-EmbeddingEntry BuildQuantizedEntry(std::vector<int8_t> values) {
-  EmbeddingEntry entry;
-  entry.mutable_quantized_embedding()->set_values(
-      reinterpret_cast<uint8_t*>(values.data()), values.size());
-  return entry;
+// Helper function to generate quantized Embedding.
+Embedding BuildQuantizedEmbedding(std::vector<int8_t> values) {
+  Embedding embedding;
+  uint8_t* data = reinterpret_cast<uint8_t*>(values.data());
+  embedding.quantized_embedding = {data, data + values.size()};
+  return embedding;
 }
 
 TEST(CosineSimilarity, FailsWithQuantizedAndFloatEmbeddings) {
-  auto u = BuildFloatEntry({0.1, 0.2});
-  auto v = BuildQuantizedEntry({0, 1});
+  auto u = BuildFloatEmbedding({0.1, 0.2});
+  auto v = BuildQuantizedEmbedding({0, 1});
 
   auto status = CosineSimilarity(u, v);
 
@@ -63,8 +61,8 @@ TEST(CosineSimilarity, FailsWithQuantizedAndFloatEmbeddings) {
 }
 
 TEST(CosineSimilarity, FailsWithZeroNorm) {
-  auto u = BuildFloatEntry({0.1, 0.2});
-  auto v = BuildFloatEntry({0.0, 0.0});
+  auto u = BuildFloatEmbedding({0.1, 0.2});
+  auto v = BuildFloatEmbedding({0.0, 0.0});
 
   auto status = CosineSimilarity(u, v);
 
@@ -75,8 +73,8 @@ TEST(CosineSimilarity, FailsWithZeroNorm) {
 }
 
 TEST(CosineSimilarity, FailsWithDifferentSizes) {
-  auto u = BuildFloatEntry({0.1, 0.2});
-  auto v = BuildFloatEntry({0.1, 0.2, 0.3});
+  auto u = BuildFloatEmbedding({0.1, 0.2});
+  auto v = BuildFloatEmbedding({0.1, 0.2, 0.3});
 
   auto status = CosineSimilarity(u, v);
 
@@ -87,8 +85,8 @@ TEST(CosineSimilarity, FailsWithDifferentSizes) {
 }
 
 TEST(CosineSimilarity, SucceedsWithFloatEntries) {
-  auto u = BuildFloatEntry({1.0, 0.0, 0.0, 0.0});
-  auto v = BuildFloatEntry({0.5, 0.5, 0.5, 0.5});
+  auto u = BuildFloatEmbedding({1.0, 0.0, 0.0, 0.0});
+  auto v = BuildFloatEmbedding({0.5, 0.5, 0.5, 0.5});
 
   MP_ASSERT_OK_AND_ASSIGN(auto result, CosineSimilarity(u, v));
 
@@ -96,8 +94,8 @@ TEST(CosineSimilarity, SucceedsWithFloatEntries) {
 }
 
 TEST(CosineSimilarity, SucceedsWithQuantizedEntries) {
-  auto u = BuildQuantizedEntry({127, 0, 0, 0});
-  auto v = BuildQuantizedEntry({-128, 0, 0, 0});
+  auto u = BuildQuantizedEmbedding({127, 0, 0, 0});
+  auto v = BuildQuantizedEmbedding({-128, 0, 0, 0});
 
   MP_ASSERT_OK_AND_ASSIGN(auto result, CosineSimilarity(u, v));
 

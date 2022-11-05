@@ -26,7 +26,7 @@ cc_library(
     hdrs = ["cosine_similarity.h"],
     deps = [
         "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
@@ -39,7 +39,7 @@ cc_test(
     deps = [
         ":cosine_similarity",
         "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
     ],
 )
 

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import filecmp
 import os
 
 from absl.testing import parameterized
@@ -19,6 +20,7 @@ import numpy as np
 import tensorflow as tf
 
 from mediapipe.model_maker.python.vision import image_classifier
+from mediapipe.tasks.python.test import test_utils
 
 
 def _fill_image(rgb, image_size):
@@ -86,7 +88,7 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
         validation_data=self.test_data)
     self._test_accuracy(model)
 
-  def test_efficientnetlite0_model_with_model_maker_retraining_lib(self):
+  def test_efficientnetlite0_model_train_and_export(self):
     hparams = image_classifier.HParams(
         train_epochs=1, batch_size=1, shuffle=True)
     model = image_classifier.ImageClassifier.create(
@@ -95,6 +97,19 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
         hparams=hparams,
         validation_data=self.test_data)
     self._test_accuracy(model)
+
+    # Test export_model
+    model.export_model()
+    output_metadata_file = os.path.join(hparams.model_dir, 'metadata.json')
+    output_tflite_file = os.path.join(hparams.model_dir, 'model.tflite')
+    expected_metadata_file = test_utils.get_test_data_path('metadata.json')
+
+    self.assertTrue(os.path.exists(output_tflite_file))
+    self.assertGreater(os.path.getsize(output_tflite_file), 0)
+
+    self.assertTrue(os.path.exists(output_metadata_file))
+    self.assertGreater(os.path.getsize(output_metadata_file), 0)
+    self.assertTrue(filecmp.cmp(output_metadata_file, expected_metadata_file))
 
   def _test_accuracy(self, model, threshold=0.0):
     _, accuracy = model.evaluate(self.test_data)

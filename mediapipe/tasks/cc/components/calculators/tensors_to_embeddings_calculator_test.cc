@@ -55,7 +55,7 @@ TEST(TensorsToEmbeddingsCalculatorTest, FailsWithInvalidHeadNamesNumber) {
   CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
     calculator: "TensorsToEmbeddingsCalculator"
     input_stream: "TENSORS:tensors"
-    output_stream: "EMBEDDING_RESULT:embeddings"
+    output_stream: "EMBEDDINGS:embeddings"
     options {
       [mediapipe.TensorsToEmbeddingsCalculatorOptions.ext] { head_names: "foo" }
     }
@@ -73,7 +73,7 @@ TEST(TensorsToEmbeddingsCalculatorTest, SucceedsWithoutHeadNames) {
   CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
     calculator: "TensorsToEmbeddingsCalculator"
     input_stream: "TENSORS:tensors"
-    output_stream: "EMBEDDING_RESULT:embeddings"
+    output_stream: "EMBEDDINGS:embeddings"
     options {
       [mediapipe.TensorsToEmbeddingsCalculatorOptions.ext] {
         embedder_options { l2_normalize: false quantize: false }
@@ -84,28 +84,24 @@ TEST(TensorsToEmbeddingsCalculatorTest, SucceedsWithoutHeadNames) {
   BuildGraph(&runner, {{0.1, 0.2}, {-0.2, -0.3}});
   MP_ASSERT_OK(runner.Run());
 
-  const EmbeddingResult& result = runner.Outputs()
-                                      .Get("EMBEDDING_RESULT", 0)
-                                      .packets[0]
-                                      .Get<EmbeddingResult>();
-  EXPECT_THAT(
-      result,
-      EqualsProto(ParseTextProtoOrDie<EmbeddingResult>(
-          R"pb(embeddings {
-                 entries { float_embedding { values: 0.1 values: 0.2 } }
-                 head_index: 0
-               }
-               embeddings {
-                 entries { float_embedding { values: -0.2 values: -0.3 } }
-                 head_index: 1
-               })pb")));
+  const EmbeddingResult& result =
+      runner.Outputs().Get("EMBEDDINGS", 0).packets[0].Get<EmbeddingResult>();
+  EXPECT_THAT(result, EqualsProto(ParseTextProtoOrDie<EmbeddingResult>(
+                          R"pb(embeddings {
+                                 float_embedding { values: 0.1 values: 0.2 }
+                                 head_index: 0
+                               }
+                               embeddings {
+                                 float_embedding { values: -0.2 values: -0.3 }
+                                 head_index: 1
+                               })pb")));
 }
 
 TEST(TensorsToEmbeddingsCalculatorTest, SucceedsWithHeadNames) {
   CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
     calculator: "TensorsToEmbeddingsCalculator"
     input_stream: "TENSORS:tensors"
-    output_stream: "EMBEDDING_RESULT:embeddings"
+    output_stream: "EMBEDDINGS:embeddings"
     options {
       [mediapipe.TensorsToEmbeddingsCalculatorOptions.ext] {
         embedder_options { l2_normalize: false quantize: false }
@@ -118,30 +114,26 @@ TEST(TensorsToEmbeddingsCalculatorTest, SucceedsWithHeadNames) {
   BuildGraph(&runner, {{0.1, 0.2}, {-0.2, -0.3}});
   MP_ASSERT_OK(runner.Run());
 
-  const EmbeddingResult& result = runner.Outputs()
-                                      .Get("EMBEDDING_RESULT", 0)
-                                      .packets[0]
-                                      .Get<EmbeddingResult>();
-  EXPECT_THAT(
-      result,
-      EqualsProto(ParseTextProtoOrDie<EmbeddingResult>(
-          R"pb(embeddings {
-                 entries { float_embedding { values: 0.1 values: 0.2 } }
-                 head_index: 0
-                 head_name: "foo"
-               }
-               embeddings {
-                 entries { float_embedding { values: -0.2 values: -0.3 } }
-                 head_index: 1
-                 head_name: "bar"
-               })pb")));
+  const EmbeddingResult& result =
+      runner.Outputs().Get("EMBEDDINGS", 0).packets[0].Get<EmbeddingResult>();
+  EXPECT_THAT(result, EqualsProto(ParseTextProtoOrDie<EmbeddingResult>(
+                          R"pb(embeddings {
+                                 float_embedding { values: 0.1 values: 0.2 }
+                                 head_index: 0
+                                 head_name: "foo"
+                               }
+                               embeddings {
+                                 float_embedding { values: -0.2 values: -0.3 }
+                                 head_index: 1
+                                 head_name: "bar"
+                               })pb")));
 }
 
 TEST(TensorsToEmbeddingsCalculatorTest, SucceedsWithNormalization) {
   CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
     calculator: "TensorsToEmbeddingsCalculator"
     input_stream: "TENSORS:tensors"
-    output_stream: "EMBEDDING_RESULT:embeddings"
+    output_stream: "EMBEDDINGS:embeddings"
     options {
       [mediapipe.TensorsToEmbeddingsCalculatorOptions.ext] {
         embedder_options { l2_normalize: true quantize: false }
@@ -152,23 +144,17 @@ TEST(TensorsToEmbeddingsCalculatorTest, SucceedsWithNormalization) {
   BuildGraph(&runner, {{0.1, 0.2}, {-0.2, -0.3}});
   MP_ASSERT_OK(runner.Run());
 
-  const EmbeddingResult& result = runner.Outputs()
-                                      .Get("EMBEDDING_RESULT", 0)
-                                      .packets[0]
-                                      .Get<EmbeddingResult>();
+  const EmbeddingResult& result =
+      runner.Outputs().Get("EMBEDDINGS", 0).packets[0].Get<EmbeddingResult>();
   EXPECT_THAT(
       result,
       EqualsProto(ParseTextProtoOrDie<EmbeddingResult>(
           R"pb(embeddings {
-                 entries {
-                   float_embedding { values: 0.44721356 values: 0.8944271 }
-                 }
+                 float_embedding { values: 0.44721356 values: 0.8944271 }
                  head_index: 0
                }
                embeddings {
-                 entries {
-                   float_embedding { values: -0.5547002 values: -0.8320503 }
-                 }
+                 float_embedding { values: -0.5547002 values: -0.8320503 }
                  head_index: 1
                })pb")));
 }
@@ -177,7 +163,7 @@ TEST(TensorsToEmbeddingsCalculatorTest, SucceedsWithQuantization) {
   CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
     calculator: "TensorsToEmbeddingsCalculator"
     input_stream: "TENSORS:tensors"
-    output_stream: "EMBEDDING_RESULT:embeddings"
+    output_stream: "EMBEDDINGS:embeddings"
     options {
       [mediapipe.TensorsToEmbeddingsCalculatorOptions.ext] {
         embedder_options { l2_normalize: false quantize: true }
@@ -188,22 +174,16 @@ TEST(TensorsToEmbeddingsCalculatorTest, SucceedsWithQuantization) {
   BuildGraph(&runner, {{0.1, 0.2}, {-0.2, -0.3}});
   MP_ASSERT_OK(runner.Run());
 
-  const EmbeddingResult& result = runner.Outputs()
-                                      .Get("EMBEDDING_RESULT", 0)
-                                      .packets[0]
-                                      .Get<EmbeddingResult>();
+  const EmbeddingResult& result =
+      runner.Outputs().Get("EMBEDDINGS", 0).packets[0].Get<EmbeddingResult>();
   EXPECT_THAT(result,
               EqualsProto(ParseTextProtoOrDie<EmbeddingResult>(
                   R"pb(embeddings {
-                         entries {
-                           quantized_embedding { values: "\x0d\x1a" }  # 13,26
-                         }
+                         quantized_embedding { values: "\x0d\x1a" }  # 13,26
                          head_index: 0
                        }
                        embeddings {
-                         entries {
-                           quantized_embedding { values: "\xe6\xda" }  # -26,-38
-                         }
+                         quantized_embedding { values: "\xe6\xda" }  # -26,-38
                          head_index: 1
                        })pb")));
 }
@@ -213,7 +193,7 @@ TEST(TensorsToEmbeddingsCalculatorTest,
   CalculatorRunner runner(ParseTextProtoOrDie<Node>(R"pb(
     calculator: "TensorsToEmbeddingsCalculator"
     input_stream: "TENSORS:tensors"
-    output_stream: "EMBEDDING_RESULT:embeddings"
+    output_stream: "EMBEDDINGS:embeddings"
     options {
       [mediapipe.TensorsToEmbeddingsCalculatorOptions.ext] {
         embedder_options { l2_normalize: true quantize: true }
@@ -224,25 +204,18 @@ TEST(TensorsToEmbeddingsCalculatorTest,
   BuildGraph(&runner, {{0.1, 0.2}, {-0.2, -0.3}});
   MP_ASSERT_OK(runner.Run());
 
-  const EmbeddingResult& result = runner.Outputs()
-                                      .Get("EMBEDDING_RESULT", 0)
-                                      .packets[0]
-                                      .Get<EmbeddingResult>();
-  EXPECT_THAT(
-      result,
-      EqualsProto(ParseTextProtoOrDie<EmbeddingResult>(
-          R"pb(embeddings {
-                 entries {
-                   quantized_embedding { values: "\x39\x72" }  # 57,114
-                 }
-                 head_index: 0
-               }
-               embeddings {
-                 entries {
-                   quantized_embedding { values: "\xb9\x95" }  # -71,-107
-                 }
-                 head_index: 1
-               })pb")));
+  const EmbeddingResult& result =
+      runner.Outputs().Get("EMBEDDINGS", 0).packets[0].Get<EmbeddingResult>();
+  EXPECT_THAT(result,
+              EqualsProto(ParseTextProtoOrDie<EmbeddingResult>(
+                  R"pb(embeddings {
+                         quantized_embedding { values: "\x39\x72" }  # 57,114
+                         head_index: 0
+                       }
+                       embeddings {
+                         quantized_embedding { values: "\xb9\x95" }  # -71,-107
+                         head_index: 1
+                       })pb")));
 }
 
 }  // namespace

@@ -18,12 +18,13 @@ limitations under the License.
 
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/tasks/cc/audio/core/base_audio_task_api.h"
 #include "mediapipe/tasks/cc/audio/core/running_mode.h"
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 
@@ -31,6 +32,10 @@ namespace mediapipe {
 namespace tasks {
 namespace audio {
 namespace audio_classifier {
+
+// Alias the shared ClassificationResult struct as result type.
+using AudioClassifierResult =
+    ::mediapipe::tasks::components::containers::ClassificationResult;
 
 // The options for configuring a mediapipe audio classifier task.
 struct AudioClassifierOptions {
@@ -59,9 +64,8 @@ struct AudioClassifierOptions {
   // The user-defined result callback for processing audio stream data.
   // The result callback should only be specified when the running mode is set
   // to RunningMode::AUDIO_STREAM.
-  std::function<void(
-      absl::StatusOr<components::containers::proto::ClassificationResult>)>
-      result_callback = nullptr;
+  std::function<void(absl::StatusOr<AudioClassifierResult>)> result_callback =
+      nullptr;
 };
 
 // Performs audio classification on audio clips or audio stream.
@@ -117,23 +121,36 @@ class AudioClassifier : tasks::audio::core::BaseAudioTaskApi {
   // required to provide the corresponding audio sample rate along with the
   // input audio clips.
   //
-  // For each audio clip, the output classifications are grouped in a
-  // ClassificationResult object that has three dimensions:
-  //   Classification head:
-  //     The prediction heads targeting different audio classification tasks
-  //     such as audio event classification and bird sound classification.
-  //   Classification timestamp:
-  //     The start time (in milliseconds) of each audio clip that is sent to the
-  //     model for audio classification. As the audio classification models take
-  //     a fixed number of audio samples, long audio clips will be framed to
-  //     multiple buffers (with the desired number of audio samples) during
-  //     preprocessing.
-  //   Classification category:
-  //     The list of the classification categories that model predicts per
-  //     framed audio clip.
+  // The input audio clip may be longer than what the model is able to process
+  // in a single inference. When this occurs, the input audio clip is split into
+  // multiple chunks starting at different timestamps. For this reason, this
+  // function returns a vector of ClassificationResult objects, each associated
+  // with a timestamp corresponding to the start (in milliseconds) of the chunk
+  // data that was classified, e.g:
+  //
+  // ClassificationResult #0 (first chunk of data):
+  //  timestamp_ms: 0 (starts at 0ms)
+  //  classifications #0 (single head model):
+  //   category #0:
+  //    category_name: "Speech"
+  //    score: 0.6
+  //   category #1:
+  //    category_name: "Music"
+  //    score: 0.2
+  // ClassificationResult #1 (second chunk of data):
+  //  timestamp_ms: 800 (starts at 800ms)
+  //  classifications #0 (single head model):
+  //   category #0:
+  //    category_name: "Speech"
+  //    score: 0.5
+  //   category #1:
+  //    category_name: "Silence"
+  //    score: 0.1
+  //  ...
+  //
   // TODO: Use `sample_rate` in AudioClassifierOptions by default
   // and makes `audio_sample_rate` optional.
-  absl::StatusOr<components::containers::proto::ClassificationResult> Classify(
+  absl::StatusOr<std::vector<AudioClassifierResult>> Classify(
       mediapipe::Matrix audio_clip, double audio_sample_rate);
 
   // Sends audio data (a block in a continuous audio stream) to perform audio
@@ -147,17 +164,10 @@ class AudioClassifier : tasks::audio::core::BaseAudioTaskApi {
   // milliseconds) to indicate the start time of the input audio block. The
   // timestamps must be monotonically increasing.
   //
-  // The output classifications are grouped in a ClassificationResult object
-  // that has three dimensions:
-  //   Classification head:
-  //     The prediction heads targeting different audio classification tasks
-  //     such as audio event classification and bird sound classification.
-  //   Classification timestamp :
-  //     The start time (in milliseconds) of the framed audio block that is sent
-  //     to the model for audio classification.
-  //   Classification category:
-  //     The list of the classification categories that model predicts per
-  //     framed audio clip.
+  // The input audio block may be longer than what the model is able to process
+  // in a single inference. When this occurs, the input audio block is split
+  // into multiple chunks. For this reason, the callback may be called multiple
+  // times (once per chunk) for each call to this function.
   absl::Status ClassifyAsync(mediapipe::Matrix audio_block, int64 timestamp_ms);
 
   // Shuts down the AudioClassifier when all works are done.
