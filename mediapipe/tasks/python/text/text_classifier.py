@@ -36,7 +36,6 @@ _CLASSIFICATION_RESULT_TAG = 'CLASSIFICATION_RESULT'
 _TEXT_IN_STREAM_NAME = 'text_in'
 _TEXT_TAG = 'TEXT'
 _TASK_GRAPH_NAME = 'mediapipe.tasks.text.text_classifier.TextClassifierGraph'
-_MICRO_SECONDS_PER_MILLISECOND = 1000
 
 
 @dataclasses.dataclass
