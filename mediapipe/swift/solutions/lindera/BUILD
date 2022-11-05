@@ -20,10 +20,13 @@ genrule(
     srcs = [
         "//mediapipe/objc/solutions/posetracking_gpu:MPPoseTrackingHeaderPatched",
         "LinderaDetection.podspec",
+        "@ios_opencv//:OpencvFrameworkContents",
     ] + glob(["*.swift"]),
     outs = ["LinderaDetection.zip"],
     cmd = """
+
     mkdir mediapipe/swift/solutions/lindera/frameworks
+    cp -r external/ios_opencv/opencv2.framework mediapipe/swift/solutions/lindera/frameworks
     unzip $(location //mediapipe/objc/solutions/posetracking_gpu:MPPoseTrackingHeaderPatched) -d mediapipe/swift/solutions/lindera/frameworks
     cd mediapipe/swift/solutions/lindera/
 

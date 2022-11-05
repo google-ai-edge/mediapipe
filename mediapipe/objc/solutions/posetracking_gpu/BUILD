@@ -7,6 +7,10 @@ load(
     "ios_unit_test",
 )
 load(
+    "@build_bazel_rules_apple//apple:apple.bzl",
+    "apple_static_xcframework",
+)
+load(
     "//mediapipe/examples/ios:bundle_id.bzl",
     "BUNDLE_ID_PREFIX",
     "example_provisioning",
@@ -67,10 +71,22 @@ ios_static_framework(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/objc/solutions/posetracking_gpu:posetracking_gpu_solution",
-        "//mediapipe/calculators/core:flow_limiter_calculator",
 
         #        "//third_party:opencv",
-        "@ios_opencv//:OpencvFramework",
+        #        "@ios_opencv//:OpencvFramework",
+    ],
+)
+
+apple_static_xcframework(
+    name = "MPPoseTrackingXC",
+    bundle_name = "MPPoseTracking",
+    minimum_os_versions = {"ios": "12.0"},
+    public_hdrs = MPP_HEADERS + MP_GEN_IOS_HEADERS,
+    deps = [
+        "//mediapipe/objc/solutions/posetracking_gpu:posetracking_gpu_solution",
+
+        #        "//third_party:opencv",
+        #        "@ios_opencv//:OpencvFramework",
     ],
 )
 
@@ -133,10 +149,15 @@ genrule(
 
 objc_library(
     name = "posetracking_gpu_solution",
-    srcs = glob([
-        "*.h",
-        "*.mm",
-    ]),
+    srcs = [
+        "PoseTrackingOptions.mm",
+        "PoseTrackingResults.mm",
+        "PoseTracking.mm",
+    ] + select({
+        "//mediapipe:ios_i386": [],
+        "//mediapipe:ios_x86_64": [],
+        "//conditions:default": [],
+    }),
     hdrs = MPP_HEADERS + MP_GEN_IOS_HEADERS,
     copts = [
         "-Wno-shorten-64-to-32",
@@ -168,13 +189,13 @@ objc_library(
         "//mediapipe/objc:mediapipe_framework_ios",
         "//mediapipe/objc:mediapipe_input_sources_ios",
         "//mediapipe/objc:mediapipe_layer_renderer",
+        "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "calculator_registry",
     ] + select({
         "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
-            "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps",
-            "//mediapipe/framework/formats:landmark_cc_proto",
-            "calculator_registry",
         ],
     }),
     alwayslink = True,

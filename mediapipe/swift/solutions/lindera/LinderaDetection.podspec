@@ -16,15 +16,15 @@ Pod::Spec.new do |spec|
   #
 
   spec.name         = "LinderaDetection"
-  spec.version      = "0.0.1"
-  spec.summary      = "LinderaDetection is a simple yet powerful interface to run AI Health Solutions"
+  spec.version      = "0.0.2"
+  spec.summary      = "LinderaDetection is a simple yet powerful interface to run AI Fitness Solutions"
 
   # This description is used to generate tags and improve search results.
   #   * Think: What does it do? Why did you write it? What is the focus?
   #   * Try to keep it short, snappy and to the point.
   #   * Write the description between the DESC delimiters below.
   #   * Finally, don't worry about the indent, CocoaPods strips it!
-  spec.description  = "LinderaDetection is a simple yet powerful interface to run AI Health Solutions"
+  spec.description  = "LinderaDetection is a simple yet powerful interface to run AI Fitness Solutions. It is powered by Mediapipe."
 
   spec.homepage     = "https://github.com/udamaster/mediapipe"
   # spec.screenshots  = "www.example.com/screenshots_1.gif", "www.example.com/screenshots_2.gif"
@@ -37,8 +37,11 @@ Pod::Spec.new do |spec|
   #  Popular ones are 'MIT', 'BSD' and 'Apache License, Version 2.0'.
   #
 
-  spec.license      = "MIT (example)"
-  spec.license      = { :type => "MIT"}
+  spec.license = { :type => 'MIT', :text => <<-LICENSE
+                   Copyright 2012
+                   Permission is granted to...
+                 LICENSE
+               }
 
 
   # ――― Author Metadata  ――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
@@ -59,7 +62,7 @@ Pod::Spec.new do |spec|
   #  If this Pod runs only on iOS or OS X, then specify the platform and
   #  the deployment target. You can optionally include the target after the platform.
   #
-
+  spec.swift_versions = ["4.0"]
   # spec.platform     = :ios
   spec.platform     = :ios, "12.0"
 
@@ -74,9 +77,12 @@ Pod::Spec.new do |spec|
   #
   #  Specify the location from where the source should be retrieved.
   #  Supports git, hg, bzr, svn and HTTP.
-  #
+  
+  spec.source = { :http => 'https://github.com/copper-labs/iOSFramework/releases/download/0.1.0/LinderaDetection.zip' }
 
-  spec.source = { :http => 'https://edge-engine-store.s3.amazonaws.com/libs/ios/EdgeEngine/pod/EdgeEngine.zip' }
+  # for quickly testing locally
+  # spec.source = { :http => 'http://127.0.0.1:8000/LinderaDetection.zip' }
+  
 
   # ――― Source Code ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #
   #
@@ -128,14 +134,21 @@ Pod::Spec.new do |spec|
   # spec.requires_arc = true
 
   # spec.xcconfig = { "HEADER_SEARCH_PATHS" => "$(SDKROOT)/usr/include/libxml2" }
-  spec.dependency "OpenCV", "3.2"
+  # spec.dependency "OpenCV", "3.2"
   spec.static_framework = true
-
+  # spec.preserve_paths = "frameworks/**/*"
   spec.ios.vendored_frameworks = 'frameworks/*.framework'
-  # spec.pod_target_xcconfig = { 'OTHER_LDFLAGS' => '-lc++' }
-  # spec.user_target_xcconfig = {'OTHER_LDFLAGS' => '-lc++' }
+  spec.pod_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' ,
+    'OTHER_LDFLAGS' => '$(inherited) -force_load $(PODS_ROOT)/LinderaDetection/frameworks/MPPoseTracking.framework/MPPoseTracking' }
+  spec.user_target_xcconfig = {
+    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' ,
+    'OTHER_LDFLAGS' => '$(inherited) -force_load $(PODS_ROOT)/LinderaDetection/frameworks/MPPoseTracking.framework/MPPoseTracking' }
   spec.libraries = 'stdc++'
-  # ――― Temporary Architecture fixes
-  spec.user_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
-  spec.pod_target_xcconfig = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
+
+
+  # spec.xcconfig = {
+  #       'FRAMEWORK_SEARCH_PATH[sdk=iphoneos*]' => '$(inherited) "$(PODS_ROOT)/frameworks"',
+  #       'OTHERCFLAGS[sdk=iphoneos*]' => '$(inherited) -iframework "$(PODS_ROOT)/frameworks"',
+  #       'OTHER_LDFLAGS[sdk=iphoneos*]' => '$(inherited) -framework frameworks'
+  #   }
 end

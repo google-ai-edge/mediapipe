@@ -10,6 +10,12 @@ load(
     "apple_static_framework_import",
 )
 
+filegroup(
+    name = "OpencvFrameworkContents",
+    srcs = glob(["opencv2.framework/**"]),
+    visibility = ["//visibility:public"],
+)
+
 apple_static_framework_import(
     name = "OpencvFramework",
     framework_imports = glob(["opencv2.framework/**"]),
