@@ -130,7 +130,7 @@ class Subgraph {
 using SubgraphRegistry = GlobalFactoryRegistry<std::unique_ptr<Subgraph>>;
 
 #define REGISTER_MEDIAPIPE_GRAPH(name)                             \
-  REGISTER_FACTORY_FUNCTION_QUALIFIED(mediapipe::SubgraphRegistry, \
+  REGISTER_FACTORY_FUNCTION_QUALIFIED(::mediapipe::SubgraphRegistry, \
                                       subgraph_registration, name, \
                                       absl::make_unique<name>)
 

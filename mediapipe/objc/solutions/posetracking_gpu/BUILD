@@ -1,4 +1,16 @@
-load("@build_bazel_rules_apple//apple:ios.bzl", "ios_application", "ios_framework", "ios_static_framework", "ios_unit_test")
+load(
+    "@build_bazel_rules_apple//apple:ios.bzl",
+    "ios_application",
+    "ios_dynamic_framework",
+    "ios_framework",
+    "ios_static_framework",
+    "ios_unit_test",
+)
+load(
+    "//mediapipe/examples/ios:bundle_id.bzl",
+    "BUNDLE_ID_PREFIX",
+    "example_provisioning",
+)
 
 MPP_HEADERS = [
     "PoseTracking.h",
@@ -49,6 +61,7 @@ ios_static_framework(
         #        "--no-whole-archive",
         #        "-all_load",
         #        "-Wl",
+        "-force_load",
     ],
     minimum_os_version = "12.0",
     visibility = ["//visibility:public"],
@@ -57,8 +70,50 @@ ios_static_framework(
         "//mediapipe/calculators/core:flow_limiter_calculator",
 
         #        "//third_party:opencv",
-        #        "@ios_opencv//:OpencvFramework",
+        "@ios_opencv//:OpencvFramework",
     ],
+)
+
+ios_framework(
+    name = "MPPoseTrackingDynamic",
+    hdrs = MPP_HEADERS + MP_GEN_IOS_HEADERS + ["MPPoseTracking.h"],
+    bundle_id = BUNDLE_ID_PREFIX + ".MPPPoseTracking",
+    bundle_name = "MPPoseTracking",
+    families = [
+        "iphone",
+        "ipad",
+    ],
+    infoplists = ["Info.plist"],
+    linkopts = [
+        #        "--no-whole-archive",
+        #        "-all_load",
+        #        "-Wl",
+        #        "-force_load",
+    ],
+    minimum_os_version = "10.0",
+    resources = ["modulemap/module.modulemap"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/objc/solutions/posetracking_gpu:posetracking_gpu_solution",
+        #        "//mediapipe/calculators/core:flow_limiter_calculator",
+
+        #        "//third_party:opencv",
+        "@ios_opencv//:OpencvFramework",
+    ],
+)
+
+genrule(
+    name = "PatchedMPPosetrackingDynamic",
+    srcs = [":MPPoseTrackingDynamic"],
+    outs = [
+        "MPPoseTracking.framework",
+        "MPPoseTracking.framework.dSYM",
+    ],
+    cmd = """
+        bash $(location patch_ios_framework.sh) "$(SRCS)" "$(OUTS)"
+    """,
+    output_to_bindir = 1,
+    tools = ["patch_ios_framework.sh"],
 )
 
 # Custom Bazel Rule that patches headers of framework to flatten header imports
@@ -97,24 +152,41 @@ objc_library(
     linkopts = [
         #        "--no-whole-archive",
         #        "-all_load",
+        #        "-force_load",
         #        "-Wl",
     ],
     module_name = "MPPoseTracking",
-    sdk_frameworks = ["Accelerate"],
+    sdk_frameworks = [
+        "Accelerate",
+        "AVFoundation",
+        "CoreGraphics",
+        "CoreMedia",
+        "UIKit",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/objc:mediapipe_framework_ios",
         "//mediapipe/objc:mediapipe_input_sources_ios",
         "//mediapipe/objc:mediapipe_layer_renderer",
-        "//mediapipe/calculators/core:flow_limiter_calculator",
     ] + select({
         "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
             "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps",
             "//mediapipe/framework/formats:landmark_cc_proto",
+            "calculator_registry",
         ],
     }),
+    alwayslink = True,
+)
+
+cc_library(
+    name = "calculator_registry",
+    srcs = [
+        "registry/calculator_registry.cpp",
+        "registry/calculator_registry.h",
+    ],
+    deps = ["//mediapipe/graphs/pose_tracking:pose_tracking_gpu_deps"],
     alwayslink = True,
 )
 

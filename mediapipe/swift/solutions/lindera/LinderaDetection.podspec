@@ -128,7 +128,7 @@ Pod::Spec.new do |spec|
   # spec.requires_arc = true
 
   # spec.xcconfig = { "HEADER_SEARCH_PATHS" => "$(SDKROOT)/usr/include/libxml2" }
-#  spec.dependency "OpenCV", "~> 3.4"
+  spec.dependency "OpenCV", "3.2"
   spec.static_framework = true
 
   spec.ios.vendored_frameworks = 'frameworks/*.framework'
