@@ -1,0 +1,81 @@
+# Copyright 2021 The MediaPipe Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+licenses(["notice"])
+
+android_library(
+    name = "copperlabs-pose-api",
+    srcs = glob(["src/main/**/*.java"]),
+    javacopts = ["-Acom.google.auto.value.AutoBuilderIsUnstable"],
+    manifest = "src/main/AndroidManifest.xml",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/formats:detection_java_proto_lite",
+        "//mediapipe/framework/formats:landmark_java_proto_lite",
+        "//mediapipe/framework/formats:location_data_java_proto_lite",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/java/com/google/mediapipe/solutioncore:camera_input",
+        "//mediapipe/java/com/google/mediapipe/solutioncore:solution_base",
+        "//mediapipe/java/com/google/mediapipe/solutioncore:solution_rendering",
+        "//third_party:androidx_appcompat",
+        "//third_party:androidx_constraint_layout",
+        "//third_party:autovalue",
+        "@com_google_protobuf//:protobuf_javalite",
+        "@maven//:androidx_activity_activity",
+        "@maven//:androidx_annotation_annotation",
+        "@maven//:androidx_concurrent_concurrent_futures",
+        "@maven//:androidx_exifinterface_exifinterface",
+        "@maven//:androidx_fragment_fragment",
+        "@maven//:com_google_code_findbugs_jsr305",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "copperlabs-pose-landmark",
+    srcs = [],
+    assets = [
+        "//mediapipe/modules/pose_landmark:pose_landmark_heavy.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_lite.tflite",
+    ],
+    assets_dir = "",
+    manifest = ":AndroidManifest.xml",
+    visibility = ["//visibility:public"],
+    deps = [],
+)
+
+android_library(
+    name = "copperlabs-pose-detection",
+    srcs = [],
+    assets = [
+        "//mediapipe/modules/pose_detection:pose_detection.tflite",
+    ],
+    assets_dir = "",
+    manifest = ":AndroidManifest.xml",
+    visibility = ["//visibility:public"],
+    deps = [],
+)
+
+android_library(
+    name = "copperlabs-pose-graph",
+    srcs = [],
+    assets = [
+        "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_image.binarypb",
+    ],
+    assets_dir = "",
+    manifest = ":AndroidManifest.xml",
+    visibility = ["//visibility:public"],
+    deps = [],
+)

@@ -1,0 +1,21 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "posetracking"
+include ':app'
+include ':copperlabs-pose-api'
+include ':copperlabs-lindera'
+include ':copperlabs-pose-landmark'
+include ':copperlabs-pose-detection'
+include ':copperlabs-pose-graph'
