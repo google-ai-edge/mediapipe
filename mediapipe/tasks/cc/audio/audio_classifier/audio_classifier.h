@@ -52,14 +52,9 @@ struct AudioClassifierOptions {
   // 1) The audio clips mode for running classification on independent audio
   //    clips.
   // 2) The audio stream mode for running classification on the audio stream,
-  //    such as from microphone. In this mode, the "sample_rate" below must be
-  //    provided, and the "result_callback" below must be specified to receive
-  //    the classification results asynchronously.
+  //    such as from microphone. In this mode, the "result_callback" below must
+  //    be specified to receive the classification results asynchronously.
   core::RunningMode running_mode = core::RunningMode::AUDIO_CLIPS;
-
-  // The sample rate of the input audios. Must be set when the running mode is
-  // set to RunningMode::AUDIO_STREAM.
-  double sample_rate = -1.0;
 
   // The user-defined result callback for processing audio stream data.
   // The result callback should only be specified when the running mode is set
@@ -160,15 +155,17 @@ class AudioClassifier : tasks::audio::core::BaseAudioTaskApi {
   // The audio block is represented as a MediaPipe Matrix that has the number
   // of channels rows and the number of samples per channel columns. The audio
   // data will be resampled, accumulated, and framed to the proper size for the
-  // underlying model to consume. It's required to provide a timestamp (in
-  // milliseconds) to indicate the start time of the input audio block. The
+  // underlying model to consume. It's required to provide the corresponding
+  // audio sample rate along with the input audio block as well as a timestamp
+  // (in milliseconds) to indicate the start time of the input audio block. The
   // timestamps must be monotonically increasing.
   //
   // The input audio block may be longer than what the model is able to process
   // in a single inference. When this occurs, the input audio block is split
   // into multiple chunks. For this reason, the callback may be called multiple
   // times (once per chunk) for each call to this function.
-  absl::Status ClassifyAsync(mediapipe::Matrix audio_block, int64 timestamp_ms);
+  absl::Status ClassifyAsync(mediapipe::Matrix audio_block,
+                             double audio_sample_rate, int64 timestamp_ms);
 
   // Shuts down the AudioClassifier when all works are done.
   absl::Status Close() { return runner_->Close(); }

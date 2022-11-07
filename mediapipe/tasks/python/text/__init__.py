@@ -11,3 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""MediaPipe Tasks Text API."""
+
+import mediapipe.tasks.python.text.text_classifier
+
+TextClassifier = text_classifier.TextClassifier
+TextClassifierOptions = text_classifier.TextClassifierOptions
+
+# Remove unnecessary modules to avoid duplication in API docs.
+del mediapipe
+del text_classifier

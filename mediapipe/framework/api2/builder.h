@@ -1,8 +1,10 @@
 #ifndef MEDIAPIPE_FRAMEWORK_API2_BUILDER_H_
 #define MEDIAPIPE_FRAMEWORK_API2_BUILDER_H_
 
+#include <memory>
 #include <string>
 #include <type_traits>
+#include <vector>
 
 #include "absl/container/btree_map.h"
 #include "absl/strings/string_view.h"
@@ -74,6 +76,7 @@ class TagIndexMap {
 
 class Graph;
 class NodeBase;
+class PacketGenerator;
 
 // These structs are used internally to store information about the endpoints
 // of a connection.
@@ -146,6 +149,7 @@ template <bool IsSide, typename T>
 class SourceImpl {
  public:
   using Base = SourceBase;
+  using PayloadT = T;
 
   // Src is used as the return type of fluent methods below. Since these are
   // single-port methods, it is desirable to always decay to a reference to the
@@ -201,10 +205,61 @@ class SourceImpl {
 // when building the graph.
 template <typename T = internal::Generic>
 using Source = SourceImpl<false, T>;
+
+// Represents a stream of packets of a particular type.
+//
+// The intended use:
+// - decouple input/output streams from graph/node during graph construction
+// - pass streams around and connect them as needed, extracting reusable parts
+//   to utility/convenience functions or classes.
+//
+// For example:
+//   Stream<Image> Resize(Stream<Image> image, const Size& size, Graph& graph) {
+//     auto& scaler_node = graph.AddNode("GlScalerCalculator");
+//     auto& opts = scaler_node.GetOptions<GlScalerCalculatorOptions>();
+//     opts.set_output_width(size.width);
+//     opts.set_output_height(size.height);
+//     a >> scaler_node.In("IMAGE");
+//     return scaler_node.Out("IMAGE").Cast<Image>();
+//   }
+//
+// Where graph can use it as:
+//   Graph graph;
+//   Stream<Image> input_image = graph.In("INPUT_IMAGE").Cast<Image>();
+//   Stream<Image> resized_image = Resize(input_image, {64, 64}, graph);
+template <typename T>
+using Stream = Source<T>;
+
 template <typename T = internal::Generic>
 using MultiSource = MultiPort<Source<T>>;
+
 template <typename T = internal::Generic>
 using SideSource = SourceImpl<true, T>;
+
+// Represents a side packet of a particular type.
+//
+// The intended use:
+// - decouple input/output side packets from graph/node during graph
+//   construction
+// - pass side packets around and connect them as needed, extracting reusable
+//   parts utility/convenience functions or classes.
+//
+// For example:
+//   SidePacket<TfLiteModelPtr> GetModel(SidePacket<std::string> model_blob,
+//                                       Graph& graph) {
+//     auto& model_node = graph.AddNode("TfLiteModelCalculator");
+//     model_blob >> model_node.SideIn("MODEL_BLOB");
+//     return model_node.SideOut("MODEL").Cast<TfLiteModelPtr>();
+//   }
+//
+// Where graph can use it as:
+//   Graph graph;
+//   SidePacket<std::string> model_blob =
+//     graph.SideIn("MODEL_BLOB").Cast<std::string>();
+//   SidePacket<TfLiteModelPtr> model = GetModel(model_blob, graph);
+template <typename T>
+using SidePacket = SideSource<T>;
+
 template <typename T = internal::Generic>
 using MultiSideSource = MultiPort<SideSource<T>>;
 

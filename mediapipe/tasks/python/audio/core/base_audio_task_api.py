@@ -16,14 +16,17 @@
 from typing import Callable, Mapping, Optional
 
 from mediapipe.framework import calculator_pb2
+from mediapipe.python import packet_creator
 from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.python._framework_bindings import task_runner as task_runner_module
+from mediapipe.python._framework_bindings import timestamp as timestamp_module
 from mediapipe.tasks.python.audio.core import audio_task_running_mode as running_mode_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _TaskRunner = task_runner_module.TaskRunner
 _Packet = packet_module.Packet
 _RunningMode = running_mode_module.AudioTaskRunningMode
+_Timestamp = timestamp_module.Timestamp
 
 
 class BaseAudioTaskApi(object):
@@ -59,6 +62,7 @@ class BaseAudioTaskApi(object):
           'callback should not be provided.')
     self._runner = _TaskRunner.create(graph_config, packet_callback)
     self._running_mode = running_mode
+    self._default_sample_rate = None
 
   def _process_audio_clip(
       self, inputs: Mapping[str, _Packet]) -> Mapping[str, _Packet]:
@@ -81,6 +85,27 @@ class BaseAudioTaskApi(object):
           'Task is not initialized with the audio clips mode. Current running mode:'
           + self._running_mode.name)
     return self._runner.process(inputs)
+
+  def _set_sample_rate(self, sample_rate_stream_name: str,
+                       sample_rate: float) -> None:
+    """An asynchronous method to set audio sample rate in the audio stream mode.
+
+    Args:
+      sample_rate_stream_name: The audio sample rate stream name.
+      sample_rate: The audio sample rate.
+
+    Raises:
+      ValueError: If the task's running mode is not set to the audio stream
+      mode.
+    """
+    if self._running_mode != _RunningMode.AUDIO_STREAM:
+      raise ValueError(
+          'Task is not initialized with the audio stream mode. Current running mode:'
+          + self._running_mode.name)
+    self._runner.send({
+        sample_rate_stream_name:
+            packet_creator.create_double(sample_rate).at(_Timestamp.PRESTREAM)
+    })
 
   def _send_audio_stream_data(self, inputs: Mapping[str, _Packet]) -> None:
     """An asynchronous method to send audio stream data to the runner.

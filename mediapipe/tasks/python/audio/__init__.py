@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""MediaPipe Tasks API."""
+"""MediaPipe Tasks Audio API."""
 
-from . import audio
-from . import components
-from . import core
-from . import text
-from . import vision
+import mediapipe.tasks.python.audio.core
+import mediapipe.tasks.python.audio.audio_classifier
 
-BaseOptions = core.base_options.BaseOptions
+AudioClassifier = audio_classifier.AudioClassifier
+AudioClassifierOptions = audio_classifier.AudioClassifierOptions
+RunningMode = core.audio_task_running_mode.AudioTaskRunningMode
 
 # Remove unnecessary modules to avoid duplication in API docs.
+del audio_classifier
 del core
+del mediapipe

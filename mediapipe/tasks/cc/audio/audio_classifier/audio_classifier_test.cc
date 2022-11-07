@@ -70,6 +70,8 @@ Matrix GetAudioData(absl::string_view filename) {
   return matrix_mapping.matrix();
 }
 
+// TODO: Compares the exact score values to capture unexpected
+// changes in the inference pipeline.
 void CheckSpeechResult(const std::vector<AudioClassifierResult>& result,
                        int expected_num_categories = 521) {
   EXPECT_EQ(result.size(), 5);
@@ -90,13 +92,15 @@ void CheckSpeechResult(const std::vector<AudioClassifierResult>& result,
   }
 }
 
+// TODO: Compares the exact score values to capture unexpected
+// changes in the inference pipeline.
 void CheckTwoHeadsResult(const std::vector<AudioClassifierResult>& result) {
   EXPECT_GE(result.size(), 1);
   EXPECT_LE(result.size(), 2);
-  // Check first result.
+  // Check the first result.
   EXPECT_EQ(result[0].timestamp_ms, 0);
   EXPECT_EQ(result[0].classifications.size(), 2);
-  // Check first head.
+  // Check the first head.
   EXPECT_EQ(result[0].classifications[0].head_index, 0);
   EXPECT_EQ(result[0].classifications[0].head_name, "yamnet_classification");
   EXPECT_EQ(result[0].classifications[0].categories.size(), 521);
@@ -104,19 +108,19 @@ void CheckTwoHeadsResult(const std::vector<AudioClassifierResult>& result) {
   EXPECT_EQ(result[0].classifications[0].categories[0].category_name,
             "Environmental noise");
   EXPECT_GT(result[0].classifications[0].categories[0].score, 0.5f);
-  // Check second head.
+  // Check the second head.
   EXPECT_EQ(result[0].classifications[1].head_index, 1);
   EXPECT_EQ(result[0].classifications[1].head_name, "bird_classification");
   EXPECT_EQ(result[0].classifications[1].categories.size(), 5);
   EXPECT_EQ(result[0].classifications[1].categories[0].index, 4);
   EXPECT_EQ(result[0].classifications[1].categories[0].category_name,
             "Chestnut-crowned Antpitta");
-  EXPECT_GT(result[0].classifications[1].categories[0].score, 0.9f);
-  // Check second result, if present.
+  EXPECT_GT(result[0].classifications[1].categories[0].score, 0.93f);
+  // Check the second result, if present.
   if (result.size() == 2) {
     EXPECT_EQ(result[1].timestamp_ms, 975);
     EXPECT_EQ(result[1].classifications.size(), 2);
-    // Check first head.
+    // Check the first head.
     EXPECT_EQ(result[1].classifications[0].head_index, 0);
     EXPECT_EQ(result[1].classifications[0].head_name, "yamnet_classification");
     EXPECT_EQ(result[1].classifications[0].categories.size(), 521);
@@ -124,7 +128,7 @@ void CheckTwoHeadsResult(const std::vector<AudioClassifierResult>& result) {
     EXPECT_EQ(result[1].classifications[0].categories[0].category_name,
               "Silence");
     EXPECT_GT(result[1].classifications[0].categories[0].score, 0.99f);
-    // Check second head.
+    // Check the second head.
     EXPECT_EQ(result[1].classifications[1].head_index, 1);
     EXPECT_EQ(result[1].classifications[1].head_name, "bird_classification");
     EXPECT_EQ(result[1].classifications[1].categories.size(), 5);
@@ -234,7 +238,6 @@ TEST_F(CreateFromOptionsTest, FailsWithMissingCallback) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kModelWithoutMetadata);
   options->running_mode = core::RunningMode::AUDIO_STREAM;
-  options->sample_rate = 16000;
   StatusOr<std::unique_ptr<AudioClassifier>> audio_classifier_or =
       AudioClassifier::Create(std::move(options));
 
@@ -261,25 +264,6 @@ TEST_F(CreateFromOptionsTest, FailsWithUnnecessaryCallback) {
   EXPECT_THAT(
       audio_classifier_or.status().message(),
       HasSubstr("a user-defined result callback shouldn't be provided"));
-  EXPECT_THAT(audio_classifier_or.status().GetPayload(kMediaPipeTasksPayload),
-              Optional(absl::Cord(absl::StrCat(
-                  MediaPipeTasksStatus::kInvalidTaskGraphConfigError))));
-}
-
-TEST_F(CreateFromOptionsTest, FailsWithMissingDefaultInputAudioSampleRate) {
-  auto options = std::make_unique<AudioClassifierOptions>();
-  options->base_options.model_asset_path =
-      JoinPath("./", kTestDataDirectory, kModelWithoutMetadata);
-  options->running_mode = core::RunningMode::AUDIO_STREAM;
-  options->result_callback =
-      [](absl::StatusOr<AudioClassifierResult> status_or_result) {};
-  StatusOr<std::unique_ptr<AudioClassifier>> audio_classifier_or =
-      AudioClassifier::Create(std::move(options));
-
-  EXPECT_EQ(audio_classifier_or.status().code(),
-            absl::StatusCode::kInvalidArgument);
-  EXPECT_THAT(audio_classifier_or.status().message(),
-              HasSubstr("the sample rate must be specified"));
   EXPECT_THAT(audio_classifier_or.status().GetPayload(kMediaPipeTasksPayload),
               Optional(absl::Cord(absl::StrCat(
                   MediaPipeTasksStatus::kInvalidTaskGraphConfigError))));
@@ -493,7 +477,6 @@ TEST_F(ClassifyAsyncTest, Succeeds) {
   options->classifier_options.max_results = 1;
   options->classifier_options.score_threshold = 0.3f;
   options->running_mode = core::RunningMode::AUDIO_STREAM;
-  options->sample_rate = kSampleRateHz;
   std::vector<AudioClassifierResult> outputs;
   options->result_callback =
       [&outputs](absl::StatusOr<AudioClassifierResult> status_or_result) {
@@ -506,7 +489,7 @@ TEST_F(ClassifyAsyncTest, Succeeds) {
     int num_samples = std::min((int)(audio_buffer.cols() - start_col),
                                kYamnetNumOfAudioSamples * 3);
     MP_ASSERT_OK(audio_classifier->ClassifyAsync(
-        audio_buffer.block(0, start_col, 1, num_samples),
+        audio_buffer.block(0, start_col, 1, num_samples), kSampleRateHz,
         start_col * kMilliSecondsPerSecond / kSampleRateHz));
     start_col += kYamnetNumOfAudioSamples * 3;
   }
@@ -523,7 +506,6 @@ TEST_F(ClassifyAsyncTest, SucceedsWithNonDeterministicNumAudioSamples) {
   options->classifier_options.max_results = 1;
   options->classifier_options.score_threshold = 0.3f;
   options->running_mode = core::RunningMode::AUDIO_STREAM;
-  options->sample_rate = kSampleRateHz;
   std::vector<AudioClassifierResult> outputs;
   options->result_callback =
       [&outputs](absl::StatusOr<AudioClassifierResult> status_or_result) {
@@ -538,7 +520,7 @@ TEST_F(ClassifyAsyncTest, SucceedsWithNonDeterministicNumAudioSamples) {
         std::min((int)(audio_buffer.cols() - start_col),
                  rand_r(&rseed) % 10 + kYamnetNumOfAudioSamples * 3);
     MP_ASSERT_OK(audio_classifier->ClassifyAsync(
-        audio_buffer.block(0, start_col, 1, num_samples),
+        audio_buffer.block(0, start_col, 1, num_samples), kSampleRateHz,
         start_col * kMilliSecondsPerSecond / kSampleRateHz));
     start_col += num_samples;
   }

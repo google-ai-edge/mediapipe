@@ -11,16 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-"""MediaPipe Tasks API."""
-
-from . import audio
-from . import components
-from . import core
-from . import text
-from . import vision
-
-BaseOptions = core.base_options.BaseOptions
-
-# Remove unnecessary modules to avoid duplication in API docs.
-del core

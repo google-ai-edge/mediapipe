@@ -63,10 +63,8 @@ CalculatorGraphConfig CreateGraphConfig(
   api2::builder::Graph graph;
   auto& subgraph = graph.AddNode(kSubgraphTypeName);
   graph.In(kAudioTag).SetName(kAudioStreamName) >> subgraph.In(kAudioTag);
-  if (!options_proto->base_options().use_stream_mode()) {
-    graph.In(kSampleRateTag).SetName(kSampleRateName) >>
-        subgraph.In(kSampleRateTag);
-  }
+  graph.In(kSampleRateTag).SetName(kSampleRateName) >>
+      subgraph.In(kSampleRateTag);
   subgraph.GetOptions<proto::AudioClassifierGraphOptions>().Swap(
       options_proto.get());
   subgraph.Out(kClassificationsTag).SetName(kClassificationsName) >>
@@ -93,9 +91,6 @@ ConvertAudioClassifierOptionsToProto(AudioClassifierOptions* options) {
               &(options->classifier_options)));
   options_proto->mutable_classifier_options()->Swap(
       classifier_options_proto.get());
-  if (options->sample_rate > 0) {
-    options_proto->set_default_input_audio_sample_rate(options->sample_rate);
-  }
   return options_proto;
 }
 
@@ -129,14 +124,6 @@ absl::StatusOr<AudioClassifierResult> ConvertAsyncOutputPackets(
 /* static */
 absl::StatusOr<std::unique_ptr<AudioClassifier>> AudioClassifier::Create(
     std::unique_ptr<AudioClassifierOptions> options) {
-  if (options->running_mode == core::RunningMode::AUDIO_STREAM &&
-      options->sample_rate < 0) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "The audio classifier is in audio stream mode, the sample rate must be "
-        "specified in the AudioClassifierOptions.",
-        MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
-  }
   auto options_proto = ConvertAudioClassifierOptionsToProto(options.get());
   tasks::core::PacketsCallback packets_callback = nullptr;
   if (options->result_callback) {
@@ -161,7 +148,9 @@ absl::StatusOr<std::vector<AudioClassifierResult>> AudioClassifier::Classify(
 }
 
 absl::Status AudioClassifier::ClassifyAsync(Matrix audio_block,
+                                            double audio_sample_rate,
                                             int64 timestamp_ms) {
+  MP_RETURN_IF_ERROR(CheckOrSetSampleRate(kSampleRateName, audio_sample_rate));
   return SendAudioStreamData(
       {{kAudioStreamName,
         MakePacket<Matrix>(std::move(audio_block))

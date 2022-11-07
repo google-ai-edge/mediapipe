@@ -19,20 +19,23 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 py_library(
-    name = "audio_task_running_mode",
-    srcs = ["audio_task_running_mode.py"],
-)
-
-py_library(
-    name = "base_audio_task_api",
+    name = "audio_classifier",
     srcs = [
-        "base_audio_task_api.py",
+        "audio_classifier.py",
     ],
     deps = [
-        ":audio_task_running_mode",
-        "//mediapipe/framework:calculator_py_pb2",
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/audio/audio_classifier/proto:audio_classifier_graph_options_py_pb2",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_py_pb2",
+        "//mediapipe/tasks/python/audio/core:audio_task_running_mode",
+        "//mediapipe/tasks/python/audio/core:base_audio_task_api",
+        "//mediapipe/tasks/python/components/containers:audio_data",
+        "//mediapipe/tasks/python/components/containers:classification_result",
+        "//mediapipe/tasks/python/components/processors:classifier_options",
+        "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
     ],
 )

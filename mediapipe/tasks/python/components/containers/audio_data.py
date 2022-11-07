@@ -20,7 +20,7 @@ import numpy as np
 
 
 @dataclasses.dataclass
-class AudioFormat:
+class AudioDataFormat:
   """Audio format metadata.
 
   Attributes:
@@ -35,8 +35,10 @@ class AudioData(object):
   """MediaPipe Tasks' audio container."""
 
   def __init__(
-      self, buffer_length: int,
-      audio_format: AudioFormat = AudioFormat()) -> None:
+      self,
+      buffer_length: int,
+      audio_format: AudioDataFormat = AudioDataFormat()
+  ) -> None:
     """Initializes the `AudioData` object.
 
     Args:
@@ -113,14 +115,14 @@ class AudioData(object):
     """
     obj = cls(
         buffer_length=src.shape[0],
-        audio_format=AudioFormat(
+        audio_format=AudioDataFormat(
             num_channels=1 if len(src.shape) == 1 else src.shape[1],
             sample_rate=sample_rate))
     obj.load_from_array(src)
     return obj
 
   @property
-  def audio_format(self) -> AudioFormat:
+  def audio_format(self) -> AudioDataFormat:
     """Gets the audio format of the audio."""
     return self._audio_format
 
