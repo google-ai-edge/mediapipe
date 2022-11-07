@@ -16,9 +16,9 @@
 import numpy as np
 
 from mediapipe.tasks.python.components.containers import embeddings
-from mediapipe.tasks.python.components.proto import embedder_options
+from mediapipe.tasks.python.components.processors import embedder_options
 
-_EmbeddingEntry = embeddings.EmbeddingEntry
+_Embedding = embeddings.Embedding
 _EmbedderOptions = embedder_options.EmbedderOptions
 
 
@@ -36,15 +36,15 @@ def _compute_cosine_similarity(u, v):
   return np.dot(u.embedding, v.embedding.T) / (norm_u * norm_v)
 
 
-def cosine_similarity(u: _EmbeddingEntry, v: _EmbeddingEntry) -> float:
-  """Utility function to compute cosine similarity between two embedding
-  entries. May return an InvalidArgumentError if e.g. the feature vectors are
-  of different types (quantized vs. float), have different sizes, or have an
+def cosine_similarity(u: _Embedding, v: _Embedding) -> float:
+  """Utility function to compute cosine similarity between two embedding.
+  May return an InvalidArgumentError if e.g. the feature vectors are of
+  different types (quantized vs. float), have different sizes, or have an
   L2-norm of 0.
 
   Args:
-    u: An embedding entry.
-    v: An embedding entry.
+    u: An embedding.
+    v: An embedding.
   """
   if len(u.embedding) != len(v.embedding):
     raise ValueError(f"Cannot compute cosine similarity between embeddings "

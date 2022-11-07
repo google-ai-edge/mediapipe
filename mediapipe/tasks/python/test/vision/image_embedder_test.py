@@ -22,7 +22,7 @@ from absl.testing import absltest
 from absl.testing import parameterized
 
 from mediapipe.python._framework_bindings import image as image_module
-from mediapipe.tasks.python.components.proto import embedder_options as embedder_options_module
+from mediapipe.tasks.python.components.processors import embedder_options as embedder_options_module
 from mediapipe.tasks.python.components.containers import embeddings as embeddings_module
 from mediapipe.tasks.python.components.containers import rect
 from mediapipe.tasks.python.core import base_options as base_options_module
@@ -36,8 +36,7 @@ _BaseOptions = base_options_module.BaseOptions
 _EmbedderOptions = embedder_options_module.EmbedderOptions
 _FloatEmbedding = embeddings_module.FloatEmbedding
 _QuantizedEmbedding = embeddings_module.QuantizedEmbedding
-_EmbeddingEntry = embeddings_module.EmbeddingEntry
-_Embeddings = embeddings_module.Embeddings
+_Embedding = embeddings_module.Embedding
 _EmbeddingResult = embeddings_module.EmbeddingResult
 _Image = image_module.Image
 _ImageEmbedder = image_embedder.ImageEmbedder
@@ -81,12 +80,12 @@ class ImageEmbedderTest(parameterized.TestCase):
     # Check embedding sizes.
     def _check_embedding_size(result):
       self.assertLen(result.embeddings, 1)
-      embedding_entry = result.embeddings[0].entries[0]
-      self.assertLen(embedding_entry.embedding, 1024)
+      embedding_result = result.embeddings[0]
+      self.assertLen(embedding_result.embedding, 1024)
       if quantize:
-        self.assertEqual(embedding_entry.embedding.dtype, np.uint8)
+        self.assertEqual(embedding_result.embedding.dtype, np.uint8)
       else:
-        self.assertEqual(embedding_entry.embedding.dtype, float)
+        self.assertEqual(embedding_result.embedding.dtype, float)
 
     # Checks results sizes.
     _check_embedding_size(result0)
@@ -94,7 +93,7 @@ class ImageEmbedderTest(parameterized.TestCase):
 
     # Checks cosine similarity.
     similarity = _ImageEmbedder.cosine_similarity(
-        result0.embeddings[0].entries[0], result1.embeddings[0].entries[0])
+        result0.embeddings[0], result1.embeddings[0])
     self.assertAlmostEqual(similarity, expected_similarity,
                            delta=_SIMILARITY_TOLERANCE)
 
@@ -134,7 +133,7 @@ class ImageEmbedderTest(parameterized.TestCase):
     crop_result = embedder.embed(self.test_cropped_image)
 
     # Check embedding value.
-    self.assertAlmostEqual(image_result.embeddings[0].entries[0].embedding[0],
+    self.assertAlmostEqual(image_result.embeddings[0].embedding[0],
                            expected_first_value)
 
     # Checks cosine similarity.

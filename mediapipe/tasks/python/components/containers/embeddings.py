@@ -22,8 +22,7 @@ from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _FloatEmbeddingProto = embeddings_pb2.FloatEmbedding
 _QuantizedEmbeddingProto = embeddings_pb2.QuantizedEmbedding
-_EmbeddingEntryProto = embeddings_pb2.EmbeddingEntry
-_EmbeddingsProto = embeddings_pb2.Embeddings
+_EmbeddingProto = embeddings_pb2.Embedding
 _EmbeddingResultProto = embeddings_pb2.EmbeddingResult
 
 
@@ -99,28 +98,34 @@ class QuantizedEmbedding:
 
 
 @dataclasses.dataclass
-class EmbeddingEntry:
-  """Floating-point or scalar-quantized embedding with an optional timestamp.
+class Embedding:
+  """Embedding result for a given embedder head.
 
   Attributes:
     embedding: The actual embedding, either floating-point or scalar-quantized.
-    timestamp_ms: The optional timestamp (in milliseconds) associated to the
-      embedding entry. This is useful for time series use cases, e.g. audio
-      embedding.
+    head_index: The index of the embedder head that produced this embedding.
+      This is useful for multi-head models.
+    head_name: The name of the embedder head, which is the corresponding tensor
+      metadata name (if any). This is useful for multi-head models.
   """
 
   embedding: np.ndarray
-  timestamp_ms: Optional[int] = None
+  head_index: int
+  head_name: str
 
   @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _EmbeddingEntryProto:
-    """Generates a EmbeddingEntry protobuf object."""
+  def to_pb2(self) -> _EmbeddingProto:
+    """Generates a Embedding protobuf object."""
 
     if self.embedding.dtype == float:
-      return _EmbeddingEntryProto(float_embedding=self.embedding)
+      return _EmbeddingProto(float_embedding=self.embedding,
+                             head_index=self.head_index,
+                             head_name=self.head_name)
 
     elif self.embedding.dtype == np.uint8:
-      return _EmbeddingEntryProto(quantized_embedding=bytes(self.embedding))
+      return _EmbeddingProto(quantized_embedding=bytes(self.embedding),
+                             head_index=self.head_index,
+                             head_name=self.head_name)
 
     else:
       raise ValueError("Invalid dtype. Only float and np.uint8 are supported.")
@@ -128,17 +133,21 @@ class EmbeddingEntry:
   @classmethod
   @doc_controls.do_not_generate_docs
   def create_from_pb2(
-      cls, pb2_obj: _EmbeddingEntryProto) -> 'EmbeddingEntry':
-    """Creates a `EmbeddingEntry` object from the given protobuf object."""
+      cls, pb2_obj: _EmbeddingProto) -> 'Embedding':
+    """Creates a `Embedding` object from the given protobuf object."""
 
     quantized_embedding = np.array(
         bytearray(pb2_obj.quantized_embedding.values))
     float_embedding = np.array(pb2_obj.float_embedding.values, dtype=float)
 
     if len(quantized_embedding) == 0:
-      return EmbeddingEntry(embedding=float_embedding)
+      return Embedding(embedding=float_embedding,
+                       head_index=pb2_obj.head_index,
+                       head_name=pb2_obj.head_name)
     else:
-      return EmbeddingEntry(embedding=quantized_embedding)
+      return Embedding(embedding=quantized_embedding,
+                       head_index=pb2_obj.head_index,
+                       head_name=pb2_obj.head_name)
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.
@@ -147,55 +156,7 @@ class EmbeddingEntry:
     Returns:
       True if the objects are equal.
     """
-    if not isinstance(other, EmbeddingEntry):
-      return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
-
-
-@dataclasses.dataclass
-class Embeddings:
-  """Embeddings for a given embedder head.
-  Attributes:
-    entries: A list of `ClassificationEntry` objects.
-    head_index: The index of the embedder head that produced this embedding.
-      This is useful for multi-head models.
-    head_name: The name of the embedder head, which is the corresponding tensor
-      metadata name (if any). This is useful for multi-head models.
-  """
-
-  entries: List[EmbeddingEntry]
-  head_index: int
-  head_name: str
-
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _EmbeddingsProto:
-    """Generates a Embeddings protobuf object."""
-    return _EmbeddingsProto(
-        entries=[entry.to_pb2() for entry in self.entries],
-        head_index=self.head_index,
-        head_name=self.head_name)
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _EmbeddingsProto) -> 'Embeddings':
-    """Creates a `Embeddings` object from the given protobuf object."""
-    return Embeddings(
-        entries=[
-            EmbeddingEntry.create_from_pb2(entry)
-            for entry in pb2_obj.entries
-        ],
-        head_index=pb2_obj.head_index,
-        head_name=pb2_obj.head_name)
-
-  def __eq__(self, other: Any) -> bool:
-    """Checks if this object is equal to the given object.
-    Args:
-      other: The object to be compared with.
-    Returns:
-      True if the objects are equal.
-    """
-    if not isinstance(other, Embeddings):
+    if not isinstance(other, Embedding):
       return False
 
     return self.to_pb2().__eq__(other.to_pb2())
@@ -203,12 +164,12 @@ class Embeddings:
 
 @dataclasses.dataclass
 class EmbeddingResult:
-  """Contains one set of results per embedder head.
+  """Embedding results for a given embedder model.
   Attributes:
-    embeddings: A list of `Embeddings` objects.
+    embeddings: A list of `Embedding` objects.
   """
 
-  embeddings: List[Embeddings]
+  embeddings: List[Embedding]
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _EmbeddingResultProto:
@@ -225,7 +186,7 @@ class EmbeddingResult:
     """Creates a `EmbeddingResult` object from the given protobuf object."""
     return EmbeddingResult(
         embeddings=[
-            Embeddings.create_from_pb2(embedding)
+            Embedding.create_from_pb2(embedding)
             for embedding in pb2_obj.embeddings
         ])
 

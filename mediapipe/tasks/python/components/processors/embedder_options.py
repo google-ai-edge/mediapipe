@@ -16,7 +16,7 @@
 import dataclasses
 from typing import Any, Optional
 
-from mediapipe.tasks.cc.components.proto import embedder_options_pb2
+from mediapipe.tasks.cc.components.processors.proto import embedder_options_pb2
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
 _EmbedderOptionsProto = embedder_options_pb2.EmbedderOptions

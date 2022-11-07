@@ -22,7 +22,7 @@ from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.python._framework_bindings import task_runner as task_runner_module
 from mediapipe.tasks.cc.vision.image_embedder.proto import image_embedder_graph_options_pb2
-from mediapipe.tasks.python.components.proto import embedder_options
+from mediapipe.tasks.python.components.processors import embedder_options
 from mediapipe.tasks.python.components.utils import cosine_similarity
 from mediapipe.tasks.python.components.containers import embeddings as embeddings_module
 from mediapipe.tasks.python.core import base_options as base_options_module
@@ -32,6 +32,7 @@ from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
+_ImageEmbedderResult = embeddings_module.EmbeddingResult
 _BaseOptions = base_options_module.BaseOptions
 _ImageEmbedderGraphOptionsProto = image_embedder_graph_options_pb2.ImageEmbedderGraphOptions
 _EmbedderOptions = embedder_options.EmbedderOptions
@@ -40,8 +41,8 @@ _TaskInfo = task_info_module.TaskInfo
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _TaskRunner = task_runner_module.TaskRunner
 
-_EMBEDDING_RESULT_OUT_STREAM_NAME = 'embedding_result_out'
-_EMBEDDING_RESULT_TAG = 'EMBEDDING_RESULT'
+_EMBEDDINGS_OUT_STREAM_NAME = 'embeddings_out'
+_EMBEDDINGS_TAG = 'EMBEDDINGS'
 _IMAGE_IN_STREAM_NAME = 'image_in'
 _IMAGE_OUT_STREAM_NAME = 'image_out'
 _IMAGE_TAG = 'IMAGE'
@@ -140,15 +141,15 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
         return
       embedding_result_proto = packet_getter.get_proto(
-          output_packets[_EMBEDDING_RESULT_OUT_STREAM_NAME])
+          output_packets[_EMBEDDINGS_OUT_STREAM_NAME])
 
-      embedding_result = embeddings_module.EmbeddingResult([
-          embeddings_module.Embeddings.create_from_pb2(embedding)
+      embeddings = embeddings_module.EmbeddingResult([
+          embeddings_module.Embedding.create_from_pb2(embedding)
           for embedding in embedding_result_proto.embeddings
       ])
       image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
       timestamp = output_packets[_IMAGE_OUT_STREAM_NAME].timestamp
-      options.result_callback(embedding_result, image,
+      options.result_callback(embeddings, image,
                               timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
 
     task_info = _TaskInfo(
@@ -158,8 +159,8 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
             ':'.join([_NORM_RECT_TAG, _NORM_RECT_STREAM_NAME]),
         ],
         output_streams=[
-            ':'.join([_EMBEDDING_RESULT_TAG,
-                      _EMBEDDING_RESULT_OUT_STREAM_NAME]),
+            ':'.join([_EMBEDDINGS_TAG,
+                      _EMBEDDINGS_OUT_STREAM_NAME]),
             ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME])
         ],
         task_options=options)
@@ -173,7 +174,7 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       self,
       image: image_module.Image,
       image_processing_options: Optional[_ImageProcessingOptions] = None
-  ) -> embeddings_module.EmbeddingResult:
+  ) -> _ImageEmbedderResult:
     """Performs image embedding extraction on the provided MediaPipe Image.
      Extraction is performed on the region of interest specified by the `roi`
      argument if provided, or on the entire image otherwise.
@@ -195,18 +196,18 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
         _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
             normalized_rect.to_pb2())})
     embedding_result_proto = packet_getter.get_proto(
-        output_packets[_EMBEDDING_RESULT_OUT_STREAM_NAME])
+      output_packets[_EMBEDDINGS_OUT_STREAM_NAME])
 
     return embeddings_module.EmbeddingResult([
-        embeddings_module.Embeddings.create_from_pb2(embedding)
-        for embedding in embedding_result_proto.embeddings
+      embeddings_module.Embedding.create_from_pb2(embedding)
+      for embedding in embedding_result_proto.embeddings
     ])
 
   def embed_for_video(
       self, image: image_module.Image,
       timestamp_ms: int,
       image_processing_options: Optional[_ImageProcessingOptions] = None
-  ) -> embeddings_module.EmbeddingResult:
+  ) -> _ImageEmbedderResult:
     """Performs image embedding extraction on the provided video frames.
     Extraction is performed on the region of interested specified by the `roi`
     argument if provided, or on the entire image otherwise.
@@ -237,11 +238,11 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
                 timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
     })
     embedding_result_proto = packet_getter.get_proto(
-      output_packets[_EMBEDDING_RESULT_OUT_STREAM_NAME])
+      output_packets[_EMBEDDINGS_OUT_STREAM_NAME])
 
     return embeddings_module.EmbeddingResult([
-        embeddings_module.Embeddings.create_from_pb2(embedding)
-        for embedding in embedding_result_proto.embeddings
+      embeddings_module.Embedding.create_from_pb2(embedding)
+      for embedding in embedding_result_proto.embeddings
     ])
 
   def embed_async(
@@ -289,8 +290,8 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
     })
 
   @staticmethod
-  def cosine_similarity(u: embeddings_module.EmbeddingEntry,
-                        v: embeddings_module.EmbeddingEntry) -> float:
+  def cosine_similarity(u: embeddings_module.Embedding,
+                        v: embeddings_module.Embedding) -> float:
     """Utility function to compute cosine similarity [1] between two embedding
     entries. May return an InvalidArgumentError if e.g. the feature vectors are
     of different types (quantized vs. float), have different sizes, or have a

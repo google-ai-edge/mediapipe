@@ -28,3 +28,12 @@ py_library(
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
+
+py_library(
+    name = "embedder_options",
+    srcs = ["embedder_options.py"],
+    deps = [
+        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_py_pb2",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)

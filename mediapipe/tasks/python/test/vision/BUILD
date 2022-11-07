@@ -83,7 +83,7 @@ py_test(
     ],
     deps = [
         "//mediapipe/python:_framework_bindings",
-        "//mediapipe/tasks/python/components/proto:embedder_options",
+        "//mediapipe/tasks/python/components/processors:embedder_options",
         "//mediapipe/tasks/python/components/utils:cosine_similarity",
         "//mediapipe/tasks/python/components/containers:embeddings",
         "//mediapipe/tasks/python/components/containers:rect",

@@ -23,6 +23,6 @@ py_library(
     srcs = ["cosine_similarity.py"],
     deps = [
         "//mediapipe/tasks/python/components/containers:embeddings",
-        "//mediapipe/tasks/python/components/proto:embedder_options",
+        "//mediapipe/tasks/python/components/processors:embedder_options",
     ],
 )
