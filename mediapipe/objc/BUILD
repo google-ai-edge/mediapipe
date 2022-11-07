@@ -286,3 +286,14 @@ exports_files(
         "//mediapipe:__subpackages__",
     ],
 )
+
+exports_files(
+    [
+        "MPPCameraInputSource.h",
+        "MPPLayerRenderer.h",
+        "MPPPlayerInputSource.h",
+        "MPPInputSource.h",
+        "MPPGLViewRenderer.h",
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -6,6 +6,7 @@
 //
 import UIKit
 import LinderaDetection
+//import LinderaDetection
 
 
 class ViewController: UIViewController {

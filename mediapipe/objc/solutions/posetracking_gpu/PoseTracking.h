@@ -10,6 +10,7 @@
 #import "mediapipe/objc/MPPPlayerInputSource.h"
 #import "PoseTrackingOptions.h"
 #import "PoseTrackingResults.h"
+
 @interface PoseTracking : NSObject<MPPInputSourceDelegate>
 
 // The MediaPipe graph currently in use. Initialized in viewDidLoad, started in

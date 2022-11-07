@@ -23,6 +23,9 @@
 #define REGISTER_CALCULATOR(name)                                       \
   REGISTER_FACTORY_FUNCTION_QUALIFIED(                                  \
       mediapipe::CalculatorBaseRegistry, calculator_registration, name, \
-      absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<name>>)
+      absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<name>>); \
+      void register_##name(){typeid(name);};
 
 #endif  // MEDIAPIPE_FRAMEWORK_CALCULATOR_REGISTRY_H_
+
+

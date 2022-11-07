@@ -1,0 +1,5 @@
+framework module MPPoseTracking {
+  umbrella header "MPPoseTracking.h"
+  export *
+  module * { export * }
+}

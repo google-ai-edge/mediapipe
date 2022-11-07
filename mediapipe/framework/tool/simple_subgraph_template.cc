@@ -25,11 +25,11 @@ static const char binary_graph[] =
 #include "{{SUBGRAPH_INC_FILE_PATH}}"
     ;  // NOLINT(whitespace/semicolon)
 
-class {{SUBGRAPH_CLASS_NAME}} : public Subgraph {
+class {{SUBGRAPH_CLASS_NAME}} : public ::mediapipe::Subgraph {
  public:
-  absl::StatusOr<CalculatorGraphConfig> GetConfig(
+  absl::StatusOr<::mediapipe::CalculatorGraphConfig> GetConfig(
         const SubgraphOptions& /*options*/) {
-    CalculatorGraphConfig config;
+      ::mediapipe::CalculatorGraphConfig config;
     // Note: this is a binary protobuf serialization, and may include NUL
     // bytes. The trailing NUL added to the string literal should be excluded.
     if (config.ParseFromArray(binary_graph, sizeof(binary_graph) - 1)) {

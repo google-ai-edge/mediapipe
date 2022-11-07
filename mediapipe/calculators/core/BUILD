@@ -728,7 +728,7 @@ cc_library(
 
 cc_library(
     name = "flow_limiter_calculator",
-    srcs = ["flow_limiter_calculator.cc"],
+    srcs = ["flow_limiter_calculator.h"],
     visibility = ["//visibility:public"],
     deps = [
         ":flow_limiter_calculator_cc_proto",
@@ -1217,7 +1217,7 @@ cc_test(
 
 cc_library(
     name = "constant_side_packet_calculator",
-    srcs = ["constant_side_packet_calculator.cc"],
+    srcs = ["constant_side_packet_calculator.h"],
     visibility = ["//visibility:public"],
     deps = [
         ":constant_side_packet_calculator_cc_proto",

@@ -383,7 +383,7 @@ class GlobalFactoryRegistry {
 
 #define REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, name, ...) \
   static auto* REGISTRY_STATIC_VAR(var_name, __LINE__) =                       \
-      new mediapipe::RegistrationToken(                                        \
+      new ::mediapipe::RegistrationToken(                                        \
           RegistryType::Register(#name, __VA_ARGS__))
 
 }  // namespace mediapipe
