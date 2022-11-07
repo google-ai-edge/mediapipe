@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/time/clock.h"
@@ -32,6 +33,7 @@
 #include "mediapipe/framework/tool/simulation_clock.h"
 #include "mediapipe/framework/tool/simulation_clock_executor.h"
 #include "mediapipe/framework/tool/sink.h"
+#include "mediapipe/util/packet_test_util.h"
 
 namespace mediapipe {
 
@@ -75,6 +77,77 @@ std::vector<T> PacketValues(const std::vector<Packet>& packets) {
     result.push_back(packet.Get<T>());
   }
   return result;
+}
+
+template <typename T>
+std::vector<Packet> MakePackets(std::vector<std::pair<Timestamp, T>> contents) {
+  std::vector<Packet> result;
+  for (auto& entry : contents) {
+    result.push_back(MakePacket<T>(entry.second).At(entry.first));
+  }
+  return result;
+}
+
+std::string SourceString(Timestamp t) {
+  return (t.IsSpecialValue())
+             ? t.DebugString()
+             : absl::StrCat("Timestamp(", t.DebugString(), ")");
+}
+
+template <typename PacketContainer, typename PacketContent>
+class PacketsEqMatcher
+    : public ::testing::MatcherInterface<const PacketContainer&> {
+ public:
+  PacketsEqMatcher(PacketContainer packets) : packets_(packets) {}
+  void DescribeTo(::std::ostream* os) const override {
+    *os << "The expected packet contents: \n";
+    Print(packets_, os);
+  }
+  bool MatchAndExplain(
+      const PacketContainer& value,
+      ::testing::MatchResultListener* listener) const override {
+    if (!Equals(packets_, value)) {
+      if (listener->IsInterested()) {
+        *listener << "The actual packet contents: \n";
+        Print(value, listener->stream());
+      }
+      return false;
+    }
+    return true;
+  }
+
+ private:
+  bool Equals(const PacketContainer& c1, const PacketContainer& c2) const {
+    if (c1.size() != c2.size()) {
+      return false;
+    }
+    for (auto i1 = c1.begin(), i2 = c2.begin(); i1 != c1.end(); ++i1, ++i2) {
+      Packet p1 = *i1, p2 = *i2;
+      if (p1.Timestamp() != p2.Timestamp() ||
+          p1.Get<PacketContent>() != p2.Get<PacketContent>()) {
+        return false;
+      }
+    }
+    return true;
+  }
+  void Print(const PacketContainer& packets, ::std::ostream* os) const {
+    for (auto it = packets.begin(); it != packets.end(); ++it) {
+      const Packet& packet = *it;
+      *os << (it == packets.begin() ? "{" : "") << "{"
+          << SourceString(packet.Timestamp()) << ", "
+          << packet.Get<PacketContent>() << "}"
+          << (std::next(it) == packets.end() ? "}" : ", ");
+    }
+  }
+
+  const PacketContainer packets_;
+};
+
+template <typename PacketContainer, typename PacketContent>
+::testing::Matcher<const PacketContainer&> PackestEq(
+    const PacketContainer& packets) {
+  return MakeMatcher(
+      new PacketsEqMatcher<PacketContainer, PacketContent>(packets));
 }
 
 // A Calculator::Process callback function.
@@ -651,11 +724,12 @@ TEST_F(FlowLimiterCalculatorTest, TwoInputStreams) {
       input_packets_[17], input_packets_[19], input_packets_[20],
   };
   EXPECT_EQ(out_1_packets_, expected_output);
-  // Exactly the timestamps released by FlowLimiterCalculator for in_1_sampled.
+  // The timestamps released by FlowLimiterCalculator for in_1_sampled,
+  // plus input_packets_[21].
   std::vector<Packet> expected_output_2 = {
       input_packets_[0],  input_packets_[2],  input_packets_[4],
       input_packets_[14], input_packets_[17], input_packets_[19],
-      input_packets_[20],
+      input_packets_[20], input_packets_[21],
   };
   EXPECT_EQ(out_2_packets, expected_output_2);
 }
@@ -665,6 +739,9 @@ TEST_F(FlowLimiterCalculatorTest, TwoInputStreams) {
 // The processing time "sleep_time" is reduced from 22ms to 12ms to create
 // the same frame rate as FlowLimiterCalculatorTest::TwoInputStreams.
 TEST_F(FlowLimiterCalculatorTest, ZeroQueue) {
+  auto BoolPackestEq = PackestEq<std::vector<Packet>, bool>;
+  auto IntPackestEq = PackestEq<std::vector<Packet>, int>;
+
   // Configure the test.
   SetUpInputData();
   SetUpSimulationClock();
@@ -699,11 +776,10 @@ TEST_F(FlowLimiterCalculatorTest, ZeroQueue) {
         }
       )pb");
 
-  auto limiter_options = ParseTextProtoOrDie<FlowLimiterCalculatorOptions>(R"pb(
-    max_in_flight: 1
-    max_in_queue: 0
-    in_flight_timeout: 100000  # 100 ms
-  )pb");
+  auto limiter_options = ParseTextProtoOrDie<FlowLimiterCalculatorOptions>(
+      R"pb(
+        max_in_flight: 1 max_in_queue: 0 in_flight_timeout: 100000  # 100 ms
+      )pb");
   std::map<std::string, Packet> side_packets = {
       {"limiter_options",
        MakePacket<FlowLimiterCalculatorOptions>(limiter_options)},
@@ -759,13 +835,131 @@ TEST_F(FlowLimiterCalculatorTest, ZeroQueue) {
       input_packets_[0],  input_packets_[2],  input_packets_[15],
       input_packets_[17], input_packets_[19],
   };
-  EXPECT_EQ(out_1_packets_, expected_output);
+  EXPECT_THAT(out_1_packets_, IntPackestEq(expected_output));
   // Exactly the timestamps released by FlowLimiterCalculator for in_1_sampled.
   std::vector<Packet> expected_output_2 = {
       input_packets_[0],  input_packets_[2],  input_packets_[4],
       input_packets_[15], input_packets_[17], input_packets_[19],
   };
-  EXPECT_EQ(out_2_packets, expected_output_2);
+  EXPECT_THAT(out_2_packets, IntPackestEq(expected_output_2));
+
+  // Validate the ALLOW stream output.
+  std::vector<Packet> expected_allow = MakePackets<bool>(  //
+      {{Timestamp(0), true},       {Timestamp(10000), false},
+       {Timestamp(20000), true},   {Timestamp(30000), false},
+       {Timestamp(40000), true},   {Timestamp(50000), false},
+       {Timestamp(60000), false},  {Timestamp(70000), false},
+       {Timestamp(80000), false},  {Timestamp(90000), false},
+       {Timestamp(100000), false}, {Timestamp(110000), false},
+       {Timestamp(120000), false}, {Timestamp(130000), false},
+       {Timestamp(140000), false}, {Timestamp(150000), true},
+       {Timestamp(160000), false}, {Timestamp(170000), true},
+       {Timestamp(180000), false}, {Timestamp(190000), true},
+       {Timestamp(200000), false}});
+  EXPECT_THAT(allow_packets_, BoolPackestEq(expected_allow));
+}
+
+// Shows how FlowLimiterCalculator releases auxiliary input packets.
+// In this test, auxiliary input packets arrive at twice the primary rate.
+TEST_F(FlowLimiterCalculatorTest, AuxiliaryInputs) {
+  auto BoolPackestEq = PackestEq<std::vector<Packet>, bool>;
+  auto IntPackestEq = PackestEq<std::vector<Packet>, int>;
+
+  // Configure the test.
+  SetUpInputData();
+  SetUpSimulationClock();
+  CalculatorGraphConfig graph_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: 'in_1'
+        input_stream: 'in_2'
+        node {
+          calculator: 'FlowLimiterCalculator'
+          input_side_packet: 'OPTIONS:limiter_options'
+          input_stream: 'in_1'
+          input_stream: 'in_2'
+          input_stream: 'FINISHED:out_1'
+          input_stream_info: { tag_index: 'FINISHED' back_edge: true }
+          output_stream: 'in_1_sampled'
+          output_stream: 'in_2_sampled'
+          output_stream: 'ALLOW:allow'
+        }
+        node {
+          calculator: 'SleepCalculator'
+          input_side_packet: 'WARMUP_TIME:warmup_time'
+          input_side_packet: 'SLEEP_TIME:sleep_time'
+          input_side_packet: 'CLOCK:clock'
+          input_stream: 'PACKET:in_1_sampled'
+          output_stream: 'PACKET:out_1'
+        }
+      )pb");
+
+  auto limiter_options = ParseTextProtoOrDie<FlowLimiterCalculatorOptions>(
+      R"pb(
+        max_in_flight: 1 max_in_queue: 0 in_flight_timeout: 1000000  # 1s
+      )pb");
+  std::map<std::string, Packet> side_packets = {
+      {"limiter_options",
+       MakePacket<FlowLimiterCalculatorOptions>(limiter_options)},
+      {"warmup_time", MakePacket<int64>(22000)},
+      {"sleep_time", MakePacket<int64>(22000)},
+      {"clock", MakePacket<mediapipe::Clock*>(clock_)},
+  };
+
+  // Start the graph.
+  MP_ASSERT_OK(graph_.Initialize(graph_config));
+  MP_EXPECT_OK(graph_.ObserveOutputStream("out_1", [this](Packet p) {
+    out_1_packets_.push_back(p);
+    return absl::OkStatus();
+  }));
+  std::vector<Packet> out_2_packets;
+  MP_EXPECT_OK(graph_.ObserveOutputStream("in_2_sampled", [&](Packet p) {
+    out_2_packets.push_back(p);
+    return absl::OkStatus();
+  }));
+  MP_EXPECT_OK(graph_.ObserveOutputStream("allow", [this](Packet p) {
+    allow_packets_.push_back(p);
+    return absl::OkStatus();
+  }));
+  simulation_clock_->ThreadStart();
+  MP_ASSERT_OK(graph_.StartRun(side_packets));
+
+  // Add packets 2,4,6,8 to stream in_1 and 1..9 to stream in_2.
+  clock_->Sleep(absl::Microseconds(10000));
+  for (int i = 1; i < 10; ++i) {
+    if (i % 2 == 0) {
+      MP_EXPECT_OK(graph_.AddPacketToInputStream("in_1", input_packets_[i]));
+    }
+    MP_EXPECT_OK(graph_.AddPacketToInputStream("in_2", input_packets_[i]));
+    clock_->Sleep(absl::Microseconds(10000));
+  }
+
+  // Finish the graph run.
+  MP_EXPECT_OK(graph_.CloseAllPacketSources());
+  clock_->Sleep(absl::Microseconds(40000));
+  MP_EXPECT_OK(graph_.WaitUntilDone());
+  simulation_clock_->ThreadFinish();
+
+  // Validate the output.
+  // Input packets 4 and 8 are dropped due to max_in_flight.
+  std::vector<Packet> expected_output = {
+      input_packets_[2],
+      input_packets_[6],
+  };
+  EXPECT_THAT(out_1_packets_, IntPackestEq(expected_output));
+  // Packets following input packets 2 and 6, and not input packets 4 and 8.
+  std::vector<Packet> expected_output_2 = {
+      input_packets_[1], input_packets_[2], input_packets_[3],
+      input_packets_[6], input_packets_[7],
+  };
+  EXPECT_THAT(out_2_packets, IntPackestEq(expected_output_2));
+
+  // Validate the ALLOW stream output.
+  std::vector<Packet> expected_allow =
+      MakePackets<bool>({{Timestamp(20000), 1},
+                         {Timestamp(40000), 0},
+                         {Timestamp(60000), 1},
+                         {Timestamp(80000), 0}});
+  EXPECT_THAT(allow_packets_, BoolPackestEq(expected_allow));
 }
 
 }  // anonymous namespace

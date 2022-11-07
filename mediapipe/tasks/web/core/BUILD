@@ -13,6 +13,18 @@ mediapipe_ts_library(
 )
 
 mediapipe_ts_library(
+    name = "task_runner",
+    srcs = [
+        "task_runner.ts",
+    ],
+    deps = [
+        "//mediapipe/web/graph_runner:register_model_resources_graph_service_ts",
+        "//mediapipe/web/graph_runner:wasm_mediapipe_image_lib_ts",
+        "//mediapipe/web/graph_runner:wasm_mediapipe_lib_ts",
+    ],
+)
+
+mediapipe_ts_library(
     name = "classifier_options",
     srcs = [
         "classifier_options.d.ts",

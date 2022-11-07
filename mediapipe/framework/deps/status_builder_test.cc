@@ -33,10 +33,49 @@ TEST(StatusBuilder, OkStatusRvalue) {
   ASSERT_EQ(status, absl::OkStatus());
 }
 
+TEST(StatusBuilder, OkStatusFileAndLineRvalueStatus) {
+  absl::Status status = StatusBuilder(absl::OkStatus(), "hello.cc", 1234)
+                        << "annotated message1 "
+                        << "annotated message2";
+  ASSERT_EQ(status, absl::OkStatus());
+}
+
+TEST(StatusBuilder, OkStatusFileAndLineLvalueStatus) {
+  const auto original_status = absl::OkStatus();
+  absl::Status status = StatusBuilder(original_status, "hello.cc", 1234)
+                        << "annotated message1 "
+                        << "annotated message2";
+  ASSERT_EQ(status, absl::OkStatus());
+}
+
 TEST(StatusBuilder, AnnotateMode) {
   absl::Status status = StatusBuilder(absl::Status(absl::StatusCode::kNotFound,
                                                    "original message"),
                                       MEDIAPIPE_LOC)
+                        << "annotated message1 "
+                        << "annotated message2";
+  ASSERT_FALSE(status.ok());
+  EXPECT_EQ(status.code(), absl::StatusCode::kNotFound);
+  EXPECT_EQ(status.message(),
+            "original message; annotated message1 annotated message2");
+}
+
+TEST(StatusBuilder, AnnotateModeFileAndLineRvalueStatus) {
+  absl::Status status = StatusBuilder(absl::Status(absl::StatusCode::kNotFound,
+                                                   "original message"),
+                                      "hello.cc", 1234)
+                        << "annotated message1 "
+                        << "annotated message2";
+  ASSERT_FALSE(status.ok());
+  EXPECT_EQ(status.code(), absl::StatusCode::kNotFound);
+  EXPECT_EQ(status.message(),
+            "original message; annotated message1 annotated message2");
+}
+
+TEST(StatusBuilder, AnnotateModeFileAndLineLvalueStatus) {
+  const auto original_status =
+      absl::Status(absl::StatusCode::kNotFound, "original message");
+  absl::Status status = StatusBuilder(original_status, "hello.cc", 1234)
                         << "annotated message1 "
                         << "annotated message2";
   ASSERT_FALSE(status.ok());

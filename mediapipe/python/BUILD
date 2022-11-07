@@ -93,6 +93,13 @@ cc_library(
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
     ],
+    ] + select({
+        # TODO: Build text_classifier_graph on Windows.
+        "//mediapipe:windows": [],
+        "//conditions:default": [
+            "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+        ],
+    }),
 )
 
 py_library(

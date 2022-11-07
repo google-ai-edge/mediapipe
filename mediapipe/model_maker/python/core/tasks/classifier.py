@@ -29,21 +29,16 @@ from mediapipe.model_maker.python.core.tasks import custom_model
 class Classifier(custom_model.CustomModel):
   """An abstract base class that represents a TensorFlow classifier."""
 
-  def __init__(self, model_spec: Any, label_names: List[str], shuffle: bool,
-               full_train: bool):
+  def __init__(self, model_spec: Any, label_names: List[str], shuffle: bool):
     """Initilizes a classifier with its specifications.
 
     Args:
         model_spec: Specification for the model.
         label_names: A list of label names for the classes.
         shuffle: Whether the dataset should be shuffled.
-        full_train: If true, train the model end-to-end including the backbone
-          and the classification layers on top. Otherwise, only train the top
-          classification layers.
     """
     super(Classifier, self).__init__(model_spec, shuffle)
     self._label_names = label_names
-    self._full_train = full_train
     self._num_classes = len(label_names)
 
   def evaluate(self, data: dataset.Dataset, batch_size: int = 32) -> Any:

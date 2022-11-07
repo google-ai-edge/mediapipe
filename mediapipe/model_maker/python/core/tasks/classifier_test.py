@@ -38,10 +38,7 @@ class ClassifierTest(tf.test.TestCase):
     super(ClassifierTest, self).setUp()
     label_names = ['cat', 'dog']
     self.model = MockClassifier(
-        model_spec=None,
-        label_names=label_names,
-        shuffle=False,
-        full_train=False)
+        model_spec=None, label_names=label_names, shuffle=False)
     self.model.model = test_util.build_model(input_shape=[4], num_classes=2)
 
   def _check_nonempty_file(self, filepath):

@@ -48,7 +48,7 @@ public abstract class BaseOptions {
     public abstract Builder setModelAssetBuffer(ByteBuffer value);
 
     /**
-     * Sets device Delegate to run the MediaPipe pipeline. If the delegate is not set, default
+     * Sets device delegate to run the MediaPipe pipeline. If the delegate is not set, the default
      * delegate CPU is used.
      */
     public abstract Builder setDelegate(Delegate delegate);

@@ -31,13 +31,13 @@ namespace core {
 
 // Base options for MediaPipe C++ Tasks.
 struct BaseOptions {
-  // The model asset file contents as as string.
+  // The model asset file contents as a string.
   std::unique_ptr<std::string> model_asset_buffer;
 
   // The path to the model asset to open and mmap in memory.
   std::string model_asset_path = "";
 
-  // The delegate to run MediaPipe. If the delegate is not set, default
+  // The delegate to run MediaPipe. If the delegate is not set, the default
   // delegate CPU is used.
   enum Delegate {
     CPU = 0,

@@ -44,10 +44,7 @@ class ImageClassifier(classifier.Classifier):
       hparams: The hyperparameters for training image classifier.
     """
     super().__init__(
-        model_spec=model_spec,
-        label_names=label_names,
-        shuffle=hparams.shuffle,
-        full_train=hparams.do_fine_tuning)
+        model_spec=model_spec, label_names=label_names, shuffle=hparams.shuffle)
     self._hparams = hparams
     self._preprocess = image_preprocessing.Preprocessor(
         input_shape=self._model_spec.input_image_shape,
