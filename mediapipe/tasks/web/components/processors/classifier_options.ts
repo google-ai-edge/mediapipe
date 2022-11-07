@@ -29,31 +29,31 @@ export function convertClassifierOptionsToProto(
     baseOptions?: ClassifierOptionsProto): ClassifierOptionsProto {
   const classifierOptions =
       baseOptions ? baseOptions.clone() : new ClassifierOptionsProto();
-  if (options.displayNamesLocale) {
+  if (options.displayNamesLocale !== undefined) {
     classifierOptions.setDisplayNamesLocale(options.displayNamesLocale);
   } else if (options.displayNamesLocale === undefined) {
     classifierOptions.clearDisplayNamesLocale();
   }
 
-  if (options.maxResults) {
+  if (options.maxResults !== undefined) {
     classifierOptions.setMaxResults(options.maxResults);
   } else if ('maxResults' in options) {  // Check for undefined
     classifierOptions.clearMaxResults();
   }
 
-  if (options.scoreThreshold) {
+  if (options.scoreThreshold !== undefined) {
     classifierOptions.setScoreThreshold(options.scoreThreshold);
   } else if ('scoreThreshold' in options) {  // Check for undefined
     classifierOptions.clearScoreThreshold();
   }
 
-  if (options.categoryAllowlist) {
+  if (options.categoryAllowlist !== undefined) {
     classifierOptions.setCategoryAllowlistList(options.categoryAllowlist);
   } else if ('categoryAllowlist' in options) {  // Check for undefined
     classifierOptions.clearCategoryAllowlistList();
   }
 
-  if (options.categoryDenylist) {
+  if (options.categoryDenylist !== undefined) {
     classifierOptions.setCategoryDenylistList(options.categoryDenylist);
   } else if ('categoryDenylist' in options) {  // Check for undefined
     classifierOptions.clearCategoryDenylistList();
