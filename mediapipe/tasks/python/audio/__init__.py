@@ -11,3 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""MediaPipe Tasks Audio API."""
+
+import mediapipe.tasks.python.audio.core
+import mediapipe.tasks.python.audio.audio_classifier
+
+AudioClassifier = audio_classifier.AudioClassifier
+AudioClassifierOptions = audio_classifier.AudioClassifierOptions
+RunningMode = core.audio_task_running_mode.AudioTaskRunningMode
+
+# Remove unnecessary modules to avoid duplication in API docs.
+del audio_classifier
+del core
+del mediapipe

@@ -14,8 +14,10 @@
 
 """MediaPipe Tasks API."""
 
+from . import audio
 from . import components
 from . import core
+from . import text
 from . import vision
 
 BaseOptions = core.base_options.BaseOptions
