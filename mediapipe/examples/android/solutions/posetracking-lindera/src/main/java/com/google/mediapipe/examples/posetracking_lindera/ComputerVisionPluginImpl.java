@@ -125,7 +125,7 @@ public class ComputerVisionPluginImpl implements ComputerVisionPlugin {
 
 
     @Override
-    public void bodyJoints(long timestamp, BodyJoints bodyJoints) {
+    public void bodyJoints(Long timestamp, BodyJoints bodyJoints) {
         if (isLogging){
             this.bodyJointsEventList.add(new BodyJointsEvent(timestamp,bodyJoints));
 
