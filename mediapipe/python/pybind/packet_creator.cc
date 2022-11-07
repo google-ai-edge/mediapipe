@@ -361,7 +361,7 @@ void PublicPacketCreators(pybind11::module* m) {
     packet = mp.packet_creator.create_float(0.1)
     data = mp.packet_getter.get_float(packet)
 )doc",
-      py::arg().noconvert(), py::return_value_policy::move);
+      py::return_value_policy::move);
 
   m->def(
       "create_double", [](double data) { return MakePacket<double>(data); },
@@ -380,7 +380,7 @@ void PublicPacketCreators(pybind11::module* m) {
     packet = mp.packet_creator.create_double(0.1)
     data = mp.packet_getter.get_float(packet)
 )doc",
-      py::arg().noconvert(), py::return_value_policy::move);
+      py::return_value_policy::move);
 
   m->def(
       "create_int_array",

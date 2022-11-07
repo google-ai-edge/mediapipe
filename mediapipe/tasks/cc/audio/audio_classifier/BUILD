@@ -37,7 +37,6 @@ cc_library(
         "//mediapipe/tasks/cc/audio/utils:audio_tensor_specs",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
         "//mediapipe/tasks/cc/components/processors:classification_postprocessing_graph",
-        "//mediapipe/tasks/cc/components/processors:classifier_options",
         "//mediapipe/tasks/cc/components/processors/proto:classification_postprocessing_graph_options_cc_proto",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/core:model_task_graph",

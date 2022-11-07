@@ -72,8 +72,39 @@ class BaseAudioTaskApi : public tasks::core::BaseTaskApi {
     return runner_->Send(std::move(inputs));
   }
 
+  // Checks or sets the sample rate in the audio stream mode.
+  absl::Status CheckOrSetSampleRate(std::string sample_rate_stream_name,
+                                    double sample_rate) {
+    if (running_mode_ != RunningMode::AUDIO_STREAM) {
+      return CreateStatusWithPayload(
+          absl::StatusCode::kInvalidArgument,
+          absl::StrCat("Task is not initialized with the audio stream mode. "
+                       "Current running mode:",
+                       GetRunningModeName(running_mode_)),
+          MediaPipeTasksStatus::kRunnerApiCalledInWrongModeError);
+    }
+    if (default_sample_rate_ > 0) {
+      if (std::fabs(sample_rate - default_sample_rate_) >
+          std::numeric_limits<double>::epsilon()) {
+        return CreateStatusWithPayload(
+            absl::StatusCode::kInvalidArgument,
+            absl::StrCat("The input audio sample rate: ", sample_rate,
+                         " is inconsistent with the previously provided: ",
+                         default_sample_rate_),
+            MediaPipeTasksStatus::kInvalidArgumentError);
+      }
+    } else {
+      default_sample_rate_ = sample_rate;
+      MP_RETURN_IF_ERROR(runner_->Send(
+          {{sample_rate_stream_name, MakePacket<double>(default_sample_rate_)
+                                         .At(Timestamp::PreStream())}}));
+    }
+    return absl::OkStatus();
+  }
+
  private:
   RunningMode running_mode_;
+  double default_sample_rate_ = -1.0;
 };
 
 }  // namespace core

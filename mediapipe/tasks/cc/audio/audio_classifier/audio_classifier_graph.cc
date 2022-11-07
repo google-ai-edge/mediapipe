@@ -72,18 +72,6 @@ struct AudioClassifierOutputStreams {
   Source<std::vector<ClassificationResult>> timestamped_classifications;
 };
 
-absl::Status SanityCheckOptions(
-    const proto::AudioClassifierGraphOptions& options) {
-  if (options.base_options().use_stream_mode() &&
-      !options.has_default_input_audio_sample_rate()) {
-    return CreateStatusWithPayload(absl::StatusCode::kInvalidArgument,
-                                   "In the streaming mode, the default input "
-                                   "audio sample rate must be set.",
-                                   MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  return absl::OkStatus();
-}
-
 // Builds an AudioTensorSpecs for configuring the preprocessing calculators.
 absl::StatusOr<AudioTensorSpecs> BuildPreprocessingSpecs(
     const core::ModelResources& model_resources) {
@@ -170,19 +158,12 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
         const auto* model_resources,
         CreateModelResources<proto::AudioClassifierGraphOptions>(sc));
     Graph graph;
-    const bool use_stream_mode =
-        sc->Options<proto::AudioClassifierGraphOptions>()
-            .base_options()
-            .use_stream_mode();
     ASSIGN_OR_RETURN(
         auto output_streams,
         BuildAudioClassificationTask(
             sc->Options<proto::AudioClassifierGraphOptions>(), *model_resources,
             graph[Input<Matrix>(kAudioTag)],
-            use_stream_mode
-                ? absl::nullopt
-                : absl::make_optional(graph[Input<double>(kSampleRateTag)]),
-            graph));
+            absl::make_optional(graph[Input<double>(kSampleRateTag)]), graph));
     output_streams.classifications >>
         graph[Output<ClassificationResult>(kClassificationsTag)];
     output_streams.timestamped_classifications >>
@@ -207,7 +188,6 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
       const proto::AudioClassifierGraphOptions& task_options,
       const core::ModelResources& model_resources, Source<Matrix> audio_in,
       absl::optional<Source<double>> sample_rate_in, Graph& graph) {
-    MP_RETURN_IF_ERROR(SanityCheckOptions(task_options));
     const bool use_stream_mode = task_options.base_options().use_stream_mode();
     const auto* metadata_extractor = model_resources.GetMetadataExtractor();
     // Checks that metadata is available.
