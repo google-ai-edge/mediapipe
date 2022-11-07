@@ -157,7 +157,7 @@ def _normalize_number_fields(pb):
                        descriptor.FieldDescriptor.TYPE_ENUM):
       normalized_values = [int(x) for x in values]
     elif desc.type == descriptor.FieldDescriptor.TYPE_FLOAT:
-      normalized_values = [round(x, 5) for x in values]
+      normalized_values = [round(x, 4) for x in values]
     elif desc.type == descriptor.FieldDescriptor.TYPE_DOUBLE:
       normalized_values = [round(float(x), 6) for x in values]
 
