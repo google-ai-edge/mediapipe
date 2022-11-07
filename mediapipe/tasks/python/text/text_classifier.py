@@ -26,7 +26,7 @@ from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.text.core import base_text_task_api
 
-TextClassificationResult = classifications.ClassificationResult
+TextClassifierResult = classifications.ClassificationResult
 _BaseOptions = base_options_module.BaseOptions
 _TextClassifierGraphOptionsProto = text_classifier_graph_options_pb2.TextClassifierGraphOptions
 _ClassifierOptions = classifier_options.ClassifierOptions
@@ -112,14 +112,14 @@ class TextClassifier(base_text_task_api.BaseTextTaskApi):
         task_options=options)
     return cls(task_info.generate_graph_config())
 
-  def classify(self, text: str) -> TextClassificationResult:
+  def classify(self, text: str) -> TextClassifierResult:
     """Performs classification on the input `text`.
 
     Args:
       text: The input text.
 
     Returns:
-      A `TextClassificationResult` object that contains a list of text
+      A `TextClassifierResult` object that contains a list of text
       classifications.
 
     Raises:
@@ -134,7 +134,7 @@ class TextClassifier(base_text_task_api.BaseTextTaskApi):
         packet_getter.get_proto(
             output_packets[_CLASSIFICATION_RESULT_OUT_STREAM_NAME]))
 
-    return TextClassificationResult([
+    return TextClassifierResult([
         classifications.Classifications.create_from_pb2(classification)
         for classification in classification_result_proto.classifications
     ])

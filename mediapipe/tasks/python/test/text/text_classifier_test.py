@@ -31,7 +31,7 @@ _ClassifierOptions = classifier_options.ClassifierOptions
 _Category = category.Category
 _ClassificationEntry = classifications_module.ClassificationEntry
 _Classifications = classifications_module.Classifications
-_TextClassificationResult = classifications_module.ClassificationResult
+_TextClassifierResult = classifications_module.ClassificationResult
 _TextClassifier = text_classifier.TextClassifier
 _TextClassifierOptions = text_classifier.TextClassifierOptions
 
@@ -43,7 +43,7 @@ _NEGATIVE_TEXT = 'What a waste of my time.'
 _POSITIVE_TEXT = ('This is the best movie I’ve seen in recent years.'
                   'Strongly recommend it!')
 
-_BERT_NEGATIVE_RESULTS = _TextClassificationResult(classifications=[
+_BERT_NEGATIVE_RESULTS = _TextClassifierResult(classifications=[
     _Classifications(
         entries=[
             _ClassificationEntry(
@@ -64,7 +64,7 @@ _BERT_NEGATIVE_RESULTS = _TextClassificationResult(classifications=[
         head_index=0,
         head_name='probability')
 ])
-_BERT_POSITIVE_RESULTS = _TextClassificationResult(classifications=[
+_BERT_POSITIVE_RESULTS = _TextClassifierResult(classifications=[
     _Classifications(
         entries=[
             _ClassificationEntry(
@@ -85,7 +85,7 @@ _BERT_POSITIVE_RESULTS = _TextClassificationResult(classifications=[
         head_index=0,
         head_name='probability')
 ])
-_REGEX_NEGATIVE_RESULTS = _TextClassificationResult(classifications=[
+_REGEX_NEGATIVE_RESULTS = _TextClassifierResult(classifications=[
     _Classifications(
         entries=[
             _ClassificationEntry(
@@ -106,7 +106,7 @@ _REGEX_NEGATIVE_RESULTS = _TextClassificationResult(classifications=[
         head_index=0,
         head_name='probability')
 ])
-_REGEX_POSITIVE_RESULTS = _TextClassificationResult(classifications=[
+_REGEX_POSITIVE_RESULTS = _TextClassifierResult(classifications=[
     _Classifications(
         entries=[
             _ClassificationEntry(
