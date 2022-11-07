@@ -157,8 +157,8 @@ public class PoseTrackingResult extends ImageSolutionResult {
         landmarks.add(getPelvis(originalLandmarks));
         // spine assuming it is 2/3rd of distance b/w shoulders and pelvis
         landmarks.add(getSpinePoint(originalLandmarks, 2 / 3f));
-        // thorax assuming it is 1/3rd of distance b/w shoulders and pelvis
-        landmarks.add(getSpinePoint(originalLandmarks, 1 / 3f));
+        // thorax assuming it is b/w shoulders
+        landmarks.add(getJointBetweenPoints(landmarks.get(LEFT_SHOULDER),landmarks.get(RIGHT_SHOULDER),0.5f));
         // head top
         landmarks.add(getHeadTop(originalLandmarks));
 
