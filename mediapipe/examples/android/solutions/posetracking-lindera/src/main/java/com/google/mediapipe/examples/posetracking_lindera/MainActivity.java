@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.button_set_model).setVisibility(View.GONE);
         findViewById(R.id.button_toggle_landmarks).setVisibility(View.GONE);
-        findViewById(R.id.button_start_capture).setVisibility(View.GONE);
+        findViewById(R.id.button_capture_logging).setVisibility(View.GONE);
         setupLiveDemoUiComponents();
         plugin = new ComputerVisionPluginImpl();
 
@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
         Button startDetectionButton = findViewById(R.id.button_start_detection);
         Button toggleLandmarks = findViewById(R.id.button_toggle_landmarks);
         Button modelComplexity = findViewById(R.id.button_set_model);
-        Button startCapture = findViewById(R.id.button_start_capture);
+        Button startCapture = findViewById(R.id.button_capture_logging);
         FrameLayout frameLayout = findViewById(R.id.preview_display_layout);
 
         startDetectionButton.setOnClickListener(
@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
                             startDetectionButton.setVisibility(View.GONE);
                             findViewById(R.id.button_set_model).setVisibility(View.VISIBLE);
                             findViewById(R.id.button_toggle_landmarks).setVisibility(View.VISIBLE);
-                            findViewById(R.id.button_start_capture).setVisibility(View.VISIBLE);
+                            findViewById(R.id.button_capture_logging).setVisibility(View.VISIBLE);
 
                             updateLandmarkButtonText();
                             updateModelComplexityButtonText();

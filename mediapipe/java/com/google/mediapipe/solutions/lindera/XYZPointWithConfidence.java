@@ -5,6 +5,7 @@ public class XYZPointWithConfidence {
     public float y = 0;
     public float z = 0;
     public float confidence = 0;
+    public float presence = 0;
 
 
 

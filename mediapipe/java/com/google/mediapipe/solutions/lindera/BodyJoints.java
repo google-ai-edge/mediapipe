@@ -1,7 +1,7 @@
 package com.google.mediapipe.solutions.lindera;
 
 public class BodyJoints {
-    public XYZPointWithConfidence nose;
+    public XYZPointWithConfidence neckNose;
     
     public XYZPointWithConfidence leftEyeInner;
     public XYZPointWithConfidence leftEye;
@@ -52,16 +52,15 @@ public class BodyJoints {
     public XYZPointWithConfidence leftFoot;
     
     
-//    public XYZPointWithConfidence pelvis;
-//
-//    public XYZPointWithConfidence spine;
-//    public XYZPointWithConfidence thorax;
-//    public XYZPointWithConfidence neckNose;
-//    public XYZPointWithConfidence headTop;
+    public XYZPointWithConfidence pelvis;
+
+    public XYZPointWithConfidence spine;
+    public XYZPointWithConfidence thorax;
+    public XYZPointWithConfidence headTop;
 
 
     public BodyJoints() {
-         nose = new XYZPointWithConfidence();
+         neckNose = new XYZPointWithConfidence();
 
          leftEyeInner= new XYZPointWithConfidence();
          leftEye= new XYZPointWithConfidence();
@@ -110,6 +109,11 @@ public class BodyJoints {
 
          rightFoot= new XYZPointWithConfidence();
          leftFoot= new XYZPointWithConfidence();
+
+        pelvis = new XYZPointWithConfidence();
+         spine = new XYZPointWithConfidence();
+         thorax = new XYZPointWithConfidence();
+         headTop = new XYZPointWithConfidence();
 
     }
 }

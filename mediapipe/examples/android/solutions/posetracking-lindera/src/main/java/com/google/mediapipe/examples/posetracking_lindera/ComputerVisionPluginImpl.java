@@ -1,5 +1,7 @@
 package com.google.mediapipe.examples.posetracking_lindera;
 
+import static java.lang.Math.min;
+
 import com.google.mediapipe.solutions.lindera.BodyJoints;
 import com.google.mediapipe.solutions.lindera.ComputerVisionPlugin;
 import com.google.mediapipe.solutions.lindera.XYZPointWithConfidence;
@@ -9,8 +11,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Locale;
+import java.util.Map;
 
 public class ComputerVisionPluginImpl implements ComputerVisionPlugin {
 
@@ -76,6 +80,18 @@ public class ComputerVisionPluginImpl implements ComputerVisionPlugin {
                         }
                     }
                     abbrev = abbrev.toUpperCase(Locale.ROOT);
+                    // correct abbreviations here
+                    switch (abbrev) {
+                        case "P":
+                            abbrev = "PE";
+                            break;
+                        case "T":
+                            abbrev = "TH";
+                            break;
+                        case "S":
+                            abbrev = "SP";
+                            break;
+                    }
                     XYZPointWithConfidence data = (XYZPointWithConfidence) field.get(bodyJoints);
                     assert data != null;
                     bodyJointsString = bodyJointsString.concat(String.format(abbrev+":%f,%f,%f=",data.x,data.y,data.z));
@@ -102,8 +118,14 @@ public class ComputerVisionPluginImpl implements ComputerVisionPlugin {
     }
 
 
+
+
+
+
+
+
     @Override
-    public void bodyJoints(int timestamp, BodyJoints bodyJoints) {
+    public void bodyJoints(long timestamp, BodyJoints bodyJoints) {
         if (isLogging){
             this.bodyJointsEventList.add(new BodyJointsEvent(timestamp,bodyJoints));
 

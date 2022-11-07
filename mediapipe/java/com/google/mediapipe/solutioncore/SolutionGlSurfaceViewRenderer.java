@@ -49,6 +49,9 @@ public class SolutionGlSurfaceViewRenderer<T extends ImageSolutionResult>
   public void setSolutionResultRenderer(ResultGlRenderer<T> resultGlRenderer) {
     this.resultGlRenderer = resultGlRenderer;
   }
+  public ResultGlRenderer<T> getSolutionResultRenderer(){
+    return this.resultGlRenderer;
+  }
 
   /**
    * Sets the next input {@link TextureFrame} and solution result to render.
