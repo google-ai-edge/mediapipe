@@ -80,7 +80,7 @@ class ModelFileType(enum.Enum):
   FILE_NAME = 2
 
 
-class GestureRecognizerTest(parameterized.TestCase):
+class HandLandmarkerTest(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
