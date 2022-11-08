@@ -1,0 +1,34 @@
+{
+  "subgraph_metadata": [
+    {
+      "input_tensor_metadata": [
+        {
+          "name": "input text",
+          "description": "The input string.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {
+            }
+          },
+          "process_units": [
+            {
+              "options_type": "RegexTokenizerOptions",
+              "options": {
+                "delim_regex_pattern": "[^\\w\\']+",
+                "vocab_file": [
+                  {
+                    "name": "vocab.txt",
+                    "description": "Vocabulary file to convert natural language words to embedding vectors.",
+                    "type": "VOCABULARY"
+                  }
+                ]
+              }
+            }
+          ],
+          "stats": {
+          }
+        }
+      ]
+    }
+  ]
+}

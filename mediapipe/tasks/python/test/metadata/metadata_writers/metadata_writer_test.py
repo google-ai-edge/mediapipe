@@ -113,7 +113,7 @@ class MetadataWriterForTaskTest(absltest.TestCase):
   def test_initialize_and_populate(self):
     writer = metadata_writer.MetadataWriter.create(
         self.image_classifier_model_buffer)
-    writer.add_genernal_info(
+    writer.add_general_info(
         model_name='my_image_model', model_description='my_description')
     tflite_model, metadata_json = writer.populate()
     self.assertLen(tflite_model, 1882986)
@@ -142,7 +142,7 @@ class MetadataWriterForTaskTest(absltest.TestCase):
   def test_add_feature_input_output(self):
     writer = metadata_writer.MetadataWriter.create(
         self.image_classifier_model_buffer)
-    writer.add_genernal_info(
+    writer.add_general_info(
         model_name='my_model', model_description='my_description')
     writer.add_feature_input(
         name='input_tesnor', description='a feature input tensor')
@@ -191,7 +191,7 @@ class MetadataWriterForTaskTest(absltest.TestCase):
   def test_image_classifier(self):
     writer = metadata_writer.MetadataWriter.create(
         self.image_classifier_model_buffer)
-    writer.add_genernal_info(
+    writer.add_general_info(
         model_name='image_classifier',
         model_description='Imagenet classification model')
     writer.add_image_input(
@@ -282,7 +282,7 @@ class MetadataWriterForTaskTest(absltest.TestCase):
 
   def test_image_classifier_with_locale_and_score_calibration(self):
     writer = metadata_writer.MetadataWriter(self.image_classifier_model_buffer)
-    writer.add_genernal_info(
+    writer.add_general_info(
         model_name='image_classifier',
         model_description='Classify the input image.')
     writer.add_image_input(

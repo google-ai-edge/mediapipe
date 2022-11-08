@@ -43,3 +43,9 @@ py_library(
     srcs = ["image_classifier.py"],
     deps = [":metadata_writer"],
 )
+
+py_library(
+    name = "text_classifier",
+    srcs = ["text_classifier.py"],
+    deps = [":metadata_writer"],
+)

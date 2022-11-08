@@ -347,6 +347,18 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_input_text_tensor_default_meta_json",
+        sha256 = "9723e59960b0e6ca60d120494c32e798b054ea6e5a441b359c84f759bd2b3a36",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/input_text_tensor_default_meta.json?generation=1667855382021347"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_input_text_tensor_meta_json",
+        sha256 = "c6782f676220e2cc89b70bacccb649fc848c18e33bedc449bf49f5d839b3cc6c",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/input_text_tensor_meta.json?generation=1667855384891533"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_iris_and_gaze_tflite",
         sha256 = "b6dcb860a92a3c7264a8e50786f46cecb529672cdafc17d39c78931257da661d",
         urls = ["https://storage.googleapis.com/mediapipe-assets/iris_and_gaze.tflite?generation=1661875774291949"],
@@ -390,8 +402,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_labels_txt",
-        sha256 = "536feacc519de3d418de26b2effb4d75694a8c4c0063e36499a46fa8061e2da9",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/labels.txt?generation=1665988394538324"],
+        sha256 = "4b9b26392f765e7a872372131cd4cee8ad7c02e496b5a1228279619b138c4b7a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/labels.txt?generation=1667855388142641"],
     )
 
     http_file(
@@ -536,6 +548,18 @@ def external_files():
         name = "com_google_mediapipe_model_without_metadata_tflite",
         sha256 = "05c5aea7ae00aeed0053a85f2b2e896b4ea272c5219052d32c06b655fbf5cc9b",
         urls = ["https://storage.googleapis.com/mediapipe-assets/model_without_metadata.tflite?generation=1661875850966737"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_movie_review_json",
+        sha256 = "89ad347ad1cb7c587da144de6efbadec1d3e8ff0cd13e379dd16661a8186fbb5",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/movie_review.json?generation=1667855392734031"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_movie_review_tflite",
+        sha256 = "3935ee73b13d435327d05af4d6f37dc3c146e117e1c3d572ae4d2ae0f5f412fe",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/movie_review.tflite?generation=1667855395736217"],
     )
 
     http_file(
