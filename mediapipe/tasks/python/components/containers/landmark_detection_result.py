@@ -53,19 +53,29 @@ class LandmarksDetectionResult:
   def to_pb2(self) -> _LandmarksDetectionResultProto:
     """Generates a LandmarksDetectionResult protobuf object."""
 
+    landmarks = _NormalizedLandmarkListProto()
+    landmarks.landmark.extend([
+      landmark.to_pb2() for landmark in self.landmarks
+    ])
+
     classifications = _ClassificationListProto()
-    for category in self.categories:
-      classifications.classification.append(
-          _ClassificationProto(
-              index=category.index,
-              score=category.score,
-              label=category.category_name,
-              display_name=category.display_name))
+    classifications.classification.extend([
+      _ClassificationProto(
+        index=category.index,
+        score=category.score,
+        label=category.category_name,
+        display_name=category.display_name) for category in self.categories
+    ])
+
+    world_landmarks = _LandmarkListProto()
+    world_landmarks.landmark.extend([
+      world_landmark.to_pb2() for world_landmark in self.world_landmarks
+    ])
 
     return _LandmarksDetectionResultProto(
-        landmarks=_NormalizedLandmarkListProto(self.landmarks),
+        landmarks=landmarks,
         classifications=classifications,
-        world_landmarks=_LandmarkListProto(self.world_landmarks),
+        world_landmarks=world_landmarks,
         rect=self.rect.to_pb2())
 
   @classmethod
