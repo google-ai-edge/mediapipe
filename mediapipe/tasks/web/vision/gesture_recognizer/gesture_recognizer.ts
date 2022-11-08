@@ -171,8 +171,8 @@ export class GestureRecognizer extends TaskRunner {
    */
   async setOptions(options: GestureRecognizerOptions): Promise<void> {
     if (options.baseOptions) {
-      const baseOptionsProto =
-          await convertBaseOptionsToProto(options.baseOptions);
+      const baseOptionsProto = await convertBaseOptionsToProto(
+          options.baseOptions, this.options.getBaseOptions());
       this.options.setBaseOptions(baseOptionsProto);
     }
 

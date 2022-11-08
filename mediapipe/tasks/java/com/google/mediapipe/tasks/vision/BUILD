@@ -84,8 +84,8 @@ android_library(
 android_library(
     name = "imageclassifier",
     srcs = [
-        "imageclassifier/ImageClassificationResult.java",
         "imageclassifier/ImageClassifier.java",
+        "imageclassifier/ImageClassifierResult.java",
     ],
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",
@@ -100,9 +100,7 @@ android_library(
         "//mediapipe/tasks/cc/components/containers/proto:classifications_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_java_proto_lite",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classification_entry",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classifications",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:classifieroptions",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",

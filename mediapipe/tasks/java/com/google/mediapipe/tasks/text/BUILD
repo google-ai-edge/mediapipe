@@ -37,8 +37,8 @@ cc_library(
 android_library(
     name = "textclassifier",
     srcs = [
-        "textclassifier/TextClassificationResult.java",
         "textclassifier/TextClassifier.java",
+        "textclassifier/TextClassifierResult.java",
     ],
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",
@@ -51,9 +51,7 @@ android_library(
         "//mediapipe/tasks/cc/components/containers/proto:classifications_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_java_proto_lite",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classification_entry",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classifications",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:classifieroptions",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/text:libmediapipe_tasks_text_jni_lib",
