@@ -26,22 +26,23 @@ public abstract class BaseOptions {
   @AutoValue.Builder
   public abstract static class Builder {
     /**
-     * Sets the model path to a tflite model with metadata in the assets.
+     * Sets the model path to a model asset file (a tflite model or a model asset bundle file) in
+     * the Android app assets folder.
      *
      * <p>Note: when model path is set, both model file descriptor and model buffer should be empty.
      */
     public abstract Builder setModelAssetPath(String value);
 
     /**
-     * Sets the native fd int of a tflite model with metadata.
+     * Sets the native fd int of a model asset file (a tflite model or a model asset bundle file).
      *
      * <p>Note: when model file descriptor is set, both model path and model buffer should be empty.
      */
     public abstract Builder setModelAssetFileDescriptor(Integer value);
 
     /**
-     * Sets either the direct {@link ByteBuffer} or the {@link MappedByteBuffer} of a tflite model
-     * with metadata.
+     * Sets either the direct {@link ByteBuffer} or the {@link MappedByteBuffer} of a model asset
+     * file (a tflite model or a model asset bundle file).
      *
      * <p>Note: when model buffer is set, both model file and model file descriptor should be empty.
      */
