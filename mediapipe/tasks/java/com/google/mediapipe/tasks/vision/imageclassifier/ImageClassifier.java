@@ -25,6 +25,7 @@ import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.ProtoUtil;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
+import com.google.mediapipe.tasks.components.containers.ClassificationResult;
 import com.google.mediapipe.tasks.components.containers.proto.ClassificationsProto;
 import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
 import com.google.mediapipe.tasks.core.BaseOptions;
@@ -96,8 +97,8 @@ public final class ImageClassifier extends BaseVisionTaskApi {
           Arrays.asList("IMAGE:" + IMAGE_IN_STREAM_NAME, "NORM_RECT:" + NORM_RECT_IN_STREAM_NAME));
   private static final List<String> OUTPUT_STREAMS =
       Collections.unmodifiableList(
-          Arrays.asList("CLASSIFICATION_RESULT:classification_result_out", "IMAGE:image_out"));
-  private static final int CLASSIFICATION_RESULT_OUT_STREAM_INDEX = 0;
+          Arrays.asList("CLASSIFICATIONS:classifications_out", "IMAGE:image_out"));
+  private static final int CLASSIFICATIONS_OUT_STREAM_INDEX = 0;
   private static final int IMAGE_OUT_STREAM_INDEX = 1;
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.image_classifier.ImageClassifierGraph";
@@ -164,17 +165,18 @@ public final class ImageClassifier extends BaseVisionTaskApi {
    * @throws MediaPipeException if there is an error during {@link ImageClassifier} creation.
    */
   public static ImageClassifier createFromOptions(Context context, ImageClassifierOptions options) {
-    OutputHandler<ImageClassificationResult, MPImage> handler = new OutputHandler<>();
+    OutputHandler<ImageClassifierResult, MPImage> handler = new OutputHandler<>();
     handler.setOutputPacketConverter(
-        new OutputHandler.OutputPacketConverter<ImageClassificationResult, MPImage>() {
+        new OutputHandler.OutputPacketConverter<ImageClassifierResult, MPImage>() {
           @Override
-          public ImageClassificationResult convertToTaskResult(List<Packet> packets) {
+          public ImageClassifierResult convertToTaskResult(List<Packet> packets) {
             try {
-              return ImageClassificationResult.create(
-                  PacketGetter.getProto(
-                      packets.get(CLASSIFICATION_RESULT_OUT_STREAM_INDEX),
-                      ClassificationsProto.ClassificationResult.getDefaultInstance()),
-                  packets.get(CLASSIFICATION_RESULT_OUT_STREAM_INDEX).getTimestamp());
+              return ImageClassifierResult.create(
+                  ClassificationResult.createFromProto(
+                      PacketGetter.getProto(
+                          packets.get(CLASSIFICATIONS_OUT_STREAM_INDEX),
+                          ClassificationsProto.ClassificationResult.getDefaultInstance())),
+                  packets.get(CLASSIFICATIONS_OUT_STREAM_INDEX).getTimestamp());
             } catch (IOException e) {
               throw new MediaPipeException(
                   MediaPipeException.StatusCode.INTERNAL.ordinal(), e.getMessage());
@@ -229,7 +231,7 @@ public final class ImageClassifier extends BaseVisionTaskApi {
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @throws MediaPipeException if there is an internal error.
    */
-  public ImageClassificationResult classify(MPImage image) {
+  public ImageClassifierResult classify(MPImage image) {
     return classify(image, ImageProcessingOptions.builder().build());
   }
 
@@ -248,9 +250,9 @@ public final class ImageClassifier extends BaseVisionTaskApi {
    *     input image before running inference.
    * @throws MediaPipeException if there is an internal error.
    */
-  public ImageClassificationResult classify(
+  public ImageClassifierResult classify(
       MPImage image, ImageProcessingOptions imageProcessingOptions) {
-    return (ImageClassificationResult) processImageData(image, imageProcessingOptions);
+    return (ImageClassifierResult) processImageData(image, imageProcessingOptions);
   }
 
   /**
@@ -271,7 +273,7 @@ public final class ImageClassifier extends BaseVisionTaskApi {
    * @param timestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error.
    */
-  public ImageClassificationResult classifyForVideo(MPImage image, long timestampMs) {
+  public ImageClassifierResult classifyForVideo(MPImage image, long timestampMs) {
     return classifyForVideo(image, ImageProcessingOptions.builder().build(), timestampMs);
   }
 
@@ -294,9 +296,9 @@ public final class ImageClassifier extends BaseVisionTaskApi {
    * @param timestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error.
    */
-  public ImageClassificationResult classifyForVideo(
+  public ImageClassifierResult classifyForVideo(
       MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
-    return (ImageClassificationResult) processVideoData(image, imageProcessingOptions, timestampMs);
+    return (ImageClassifierResult) processVideoData(image, imageProcessingOptions, timestampMs);
   }
 
   /**
@@ -383,7 +385,7 @@ public final class ImageClassifier extends BaseVisionTaskApi {
        * the image classifier is in the live stream mode.
        */
       public abstract Builder setResultListener(
-          ResultListener<ImageClassificationResult, MPImage> resultListener);
+          ResultListener<ImageClassifierResult, MPImage> resultListener);
 
       /** Sets an optional {@link ErrorListener}. */
       public abstract Builder setErrorListener(ErrorListener errorListener);
@@ -420,7 +422,7 @@ public final class ImageClassifier extends BaseVisionTaskApi {
 
     abstract Optional<ClassifierOptions> classifierOptions();
 
-    abstract Optional<ResultListener<ImageClassificationResult, MPImage>> resultListener();
+    abstract Optional<ResultListener<ImageClassifierResult, MPImage>> resultListener();
 
     abstract Optional<ErrorListener> errorListener();
 

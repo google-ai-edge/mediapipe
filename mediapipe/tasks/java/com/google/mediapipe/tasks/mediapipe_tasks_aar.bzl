@@ -234,7 +234,7 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
             "//mediapipe/framework/formats:rect_java_proto_lite",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
-            "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classification_entry",
+            "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classifications",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:classifieroptions",

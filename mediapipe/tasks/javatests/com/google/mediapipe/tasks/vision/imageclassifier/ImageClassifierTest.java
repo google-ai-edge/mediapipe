@@ -91,11 +91,12 @@ public class ImageClassifierTest {
       ImageClassifier imageClassifier =
           ImageClassifier.createFromFile(
               ApplicationProvider.getApplicationContext(), FLOAT_MODEL_FILE);
-      ImageClassificationResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
+      ImageClassifierResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
 
-      assertHasOneHeadAndOneTimestamp(results, 0);
-      assertThat(results.classifications().get(0).entries().get(0).categories()).hasSize(1001);
-      assertThat(results.classifications().get(0).entries().get(0).categories().get(0))
+      assertHasOneHead(results);
+      assertThat(results.classificationResult().classifications().get(0).categories())
+          .hasSize(1001);
+      assertThat(results.classificationResult().classifications().get(0).categories().get(0))
           .isEqualTo(Category.create(0.7952058f, 934, "cheeseburger", ""));
     }
 
@@ -108,9 +109,9 @@ public class ImageClassifierTest {
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ImageClassificationResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
+      ImageClassifierResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
 
-      assertHasOneHeadAndOneTimestamp(results, 0);
+      assertHasOneHead(results);
       assertCategoriesAre(
           results,
           Arrays.asList(
@@ -128,9 +129,9 @@ public class ImageClassifierTest {
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ImageClassificationResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
+      ImageClassifierResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
 
-      assertHasOneHeadAndOneTimestamp(results, 0);
+      assertHasOneHead(results);
       assertCategoriesAre(
           results, Arrays.asList(Category.create(0.97265625f, 934, "cheeseburger", "")));
     }
@@ -144,9 +145,9 @@ public class ImageClassifierTest {
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ImageClassificationResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
+      ImageClassifierResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
 
-      assertHasOneHeadAndOneTimestamp(results, 0);
+      assertHasOneHead(results);
       assertCategoriesAre(
           results,
           Arrays.asList(
@@ -166,9 +167,9 @@ public class ImageClassifierTest {
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ImageClassificationResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
+      ImageClassifierResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
 
-      assertHasOneHeadAndOneTimestamp(results, 0);
+      assertHasOneHead(results);
       assertCategoriesAre(
           results,
           Arrays.asList(
@@ -190,9 +191,9 @@ public class ImageClassifierTest {
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ImageClassificationResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
+      ImageClassifierResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
 
-      assertHasOneHeadAndOneTimestamp(results, 0);
+      assertHasOneHead(results);
       assertCategoriesAre(
           results,
           Arrays.asList(
@@ -214,10 +215,10 @@ public class ImageClassifierTest {
       RectF roi = new RectF(0.450f, 0.308f, 0.614f, 0.734f);
       ImageProcessingOptions imageProcessingOptions =
           ImageProcessingOptions.builder().setRegionOfInterest(roi).build();
-      ImageClassificationResult results =
+      ImageClassifierResult results =
           imageClassifier.classify(getImageFromAsset(MULTI_OBJECTS_IMAGE), imageProcessingOptions);
 
-      assertHasOneHeadAndOneTimestamp(results, 0);
+      assertHasOneHead(results);
       assertCategoriesAre(
           results, Arrays.asList(Category.create(0.9969325f, 806, "soccer ball", "")));
     }
@@ -233,10 +234,10 @@ public class ImageClassifierTest {
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       ImageProcessingOptions imageProcessingOptions =
           ImageProcessingOptions.builder().setRotationDegrees(-90).build();
-      ImageClassificationResult results =
+      ImageClassifierResult results =
           imageClassifier.classify(getImageFromAsset(BURGER_ROTATED_IMAGE), imageProcessingOptions);
 
-      assertHasOneHeadAndOneTimestamp(results, 0);
+      assertHasOneHead(results);
       assertCategoriesAre(
           results,
           Arrays.asList(
@@ -258,11 +259,11 @@ public class ImageClassifierTest {
       RectF roi = new RectF(0.0f, 0.1763f, 0.5642f, 0.3049f);
       ImageProcessingOptions imageProcessingOptions =
           ImageProcessingOptions.builder().setRegionOfInterest(roi).setRotationDegrees(-90).build();
-      ImageClassificationResult results =
+      ImageClassifierResult results =
           imageClassifier.classify(
               getImageFromAsset(MULTI_OBJECTS_ROTATED_IMAGE), imageProcessingOptions);
 
-      assertHasOneHeadAndOneTimestamp(results, 0);
+      assertHasOneHead(results);
       assertCategoriesAre(
           results, Arrays.asList(Category.create(0.686824f, 560, "folding chair", "")));
     }
@@ -391,9 +392,9 @@ public class ImageClassifierTest {
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ImageClassificationResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
+      ImageClassifierResult results = imageClassifier.classify(getImageFromAsset(BURGER_IMAGE));
 
-      assertHasOneHeadAndOneTimestamp(results, 0);
+      assertHasOneHead(results);
       assertCategoriesAre(
           results, Arrays.asList(Category.create(0.7952058f, 934, "cheeseburger", "")));
     }
@@ -410,9 +411,8 @@ public class ImageClassifierTest {
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       for (int i = 0; i < 3; i++) {
-        ImageClassificationResult results =
-            imageClassifier.classifyForVideo(image, /*timestampMs=*/ i);
-        assertHasOneHeadAndOneTimestamp(results, i);
+        ImageClassifierResult results = imageClassifier.classifyForVideo(image, /*timestampMs=*/ i);
+        assertHasOneHead(results);
         assertCategoriesAre(
             results, Arrays.asList(Category.create(0.7952058f, 934, "cheeseburger", "")));
       }
@@ -478,24 +478,17 @@ public class ImageClassifierTest {
     return new BitmapImageBuilder(BitmapFactory.decodeStream(istr)).build();
   }
 
-  private static void assertHasOneHeadAndOneTimestamp(
-      ImageClassificationResult results, long timestampMs) {
-    assertThat(results.classifications()).hasSize(1);
-    assertThat(results.classifications().get(0).headIndex()).isEqualTo(0);
-    assertThat(results.classifications().get(0).headName()).isEqualTo("probability");
-    assertThat(results.classifications().get(0).entries()).hasSize(1);
-    assertThat(results.classifications().get(0).entries().get(0).timestampMs())
-        .isEqualTo(timestampMs);
+  private static void assertHasOneHead(ImageClassifierResult results) {
+    assertThat(results.classificationResult().classifications()).hasSize(1);
+    assertThat(results.classificationResult().classifications().get(0).headIndex()).isEqualTo(0);
+    assertThat(results.classificationResult().classifications().get(0).headName().get())
+        .isEqualTo("probability");
   }
 
   private static void assertCategoriesAre(
-      ImageClassificationResult results, List<Category> categories) {
-    assertThat(results.classifications().get(0).entries().get(0).categories())
-        .hasSize(categories.size());
-    for (int i = 0; i < categories.size(); i++) {
-      assertThat(results.classifications().get(0).entries().get(0).categories().get(i))
-          .isEqualTo(categories.get(i));
-    }
+      ImageClassifierResult results, List<Category> categories) {
+    assertThat(results.classificationResult().classifications().get(0).categories())
+        .isEqualTo(categories);
   }
 
   private static void assertImageSizeIsExpected(MPImage inputImage) {

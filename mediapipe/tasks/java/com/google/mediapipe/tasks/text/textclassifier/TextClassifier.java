@@ -22,6 +22,7 @@ import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.ProtoUtil;
+import com.google.mediapipe.tasks.components.containers.ClassificationResult;
 import com.google.mediapipe.tasks.components.containers.proto.ClassificationsProto;
 import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
 import com.google.mediapipe.tasks.core.BaseOptions;
@@ -86,10 +87,9 @@ public final class TextClassifier implements AutoCloseable {
 
   @SuppressWarnings("ConstantCaseForConstants")
   private static final List<String> OUTPUT_STREAMS =
-      Collections.unmodifiableList(
-          Arrays.asList("CLASSIFICATION_RESULT:classification_result_out"));
+      Collections.unmodifiableList(Arrays.asList("CLASSIFICATIONS:classifications_out"));
 
-  private static final int CLASSIFICATION_RESULT_OUT_STREAM_INDEX = 0;
+  private static final int CLASSIFICATIONS_OUT_STREAM_INDEX = 0;
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.text.text_classifier.TextClassifierGraph";
   private final TaskRunner runner;
@@ -142,17 +142,18 @@ public final class TextClassifier implements AutoCloseable {
    * @throws MediaPipeException if there is an error during {@link TextClassifier} creation.
    */
   public static TextClassifier createFromOptions(Context context, TextClassifierOptions options) {
-    OutputHandler<TextClassificationResult, Void> handler = new OutputHandler<>();
+    OutputHandler<TextClassifierResult, Void> handler = new OutputHandler<>();
     handler.setOutputPacketConverter(
-        new OutputHandler.OutputPacketConverter<TextClassificationResult, Void>() {
+        new OutputHandler.OutputPacketConverter<TextClassifierResult, Void>() {
           @Override
-          public TextClassificationResult convertToTaskResult(List<Packet> packets) {
+          public TextClassifierResult convertToTaskResult(List<Packet> packets) {
             try {
-              return TextClassificationResult.create(
-                  PacketGetter.getProto(
-                      packets.get(CLASSIFICATION_RESULT_OUT_STREAM_INDEX),
-                      ClassificationsProto.ClassificationResult.getDefaultInstance()),
-                  packets.get(CLASSIFICATION_RESULT_OUT_STREAM_INDEX).getTimestamp());
+              return TextClassifierResult.create(
+                  ClassificationResult.createFromProto(
+                      PacketGetter.getProto(
+                          packets.get(CLASSIFICATIONS_OUT_STREAM_INDEX),
+                          ClassificationsProto.ClassificationResult.getDefaultInstance())),
+                  packets.get(CLASSIFICATIONS_OUT_STREAM_INDEX).getTimestamp());
             } catch (IOException e) {
               throw new MediaPipeException(
                   MediaPipeException.StatusCode.INTERNAL.ordinal(), e.getMessage());
@@ -192,10 +193,10 @@ public final class TextClassifier implements AutoCloseable {
    *
    * @param inputText a {@link String} for processing.
    */
-  public TextClassificationResult classify(String inputText) {
+  public TextClassifierResult classify(String inputText) {
     Map<String, Packet> inputPackets = new HashMap<>();
     inputPackets.put(TEXT_IN_STREAM_NAME, runner.getPacketCreator().createString(inputText));
-    return (TextClassificationResult) runner.process(inputPackets);
+    return (TextClassifierResult) runner.process(inputPackets);
   }
 
   /** Closes and cleans up the {@link TextClassifier}. */

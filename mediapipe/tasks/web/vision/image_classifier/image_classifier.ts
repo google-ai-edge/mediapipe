@@ -114,8 +114,8 @@ export class ImageClassifier extends TaskRunner {
    */
   async setOptions(options: ImageClassifierOptions): Promise<void> {
     if (options.baseOptions) {
-      const baseOptionsProto =
-          await convertBaseOptionsToProto(options.baseOptions);
+      const baseOptionsProto = await convertBaseOptionsToProto(
+          options.baseOptions, this.options.getBaseOptions());
       this.options.setBaseOptions(baseOptionsProto);
     }
 
