@@ -35,7 +35,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
-#include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_options.pb.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 #include "mediapipe/util/label_map.pb.h"
 #include "mediapipe/util/label_map_util.h"
@@ -44,6 +44,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace image_segmenter {
 
 namespace {
 
@@ -55,7 +56,8 @@ using ::mediapipe::api2::builder::MultiSource;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::proto::SegmenterOptions;
 using ::mediapipe::tasks::metadata::ModelMetadataExtractor;
-using ::mediapipe::tasks::vision::image_segmenter::proto::ImageSegmenterOptions;
+using ::mediapipe::tasks::vision::image_segmenter::proto::
+    ImageSegmenterGraphOptions;
 using ::tflite::Tensor;
 using ::tflite::TensorMetadata;
 using LabelItems = mediapipe::proto_ns::Map<int64, ::mediapipe::LabelMapItem>;
@@ -77,7 +79,7 @@ struct ImageSegmenterOutputs {
 
 }  // namespace
 
-absl::Status SanityCheckOptions(const ImageSegmenterOptions& options) {
+absl::Status SanityCheckOptions(const ImageSegmenterGraphOptions& options) {
   if (options.segmenter_options().output_type() ==
       SegmenterOptions::UNSPECIFIED) {
     return CreateStatusWithPayload(absl::StatusCode::kInvalidArgument,
@@ -112,7 +114,7 @@ absl::StatusOr<LabelItems> GetLabelItemsIfAny(
 }
 
 absl::Status ConfigureTensorsToSegmentationCalculator(
-    const ImageSegmenterOptions& segmenter_option,
+    const ImageSegmenterGraphOptions& segmenter_option,
     const core::ModelResources& model_resources,
     TensorsToSegmentationCalculatorOptions* options) {
   *options->mutable_segmenter_options() = segmenter_option.segmenter_options();
@@ -181,7 +183,7 @@ absl::StatusOr<const Tensor*> GetOutputTensor(
 //   input_stream: "IMAGE:image"
 //   output_stream: "SEGMENTATION:segmented_masks"
 //   options {
-//     [mediapipe.tasks.vision.image_segmenter.proto.ImageSegmenterOptions.ext]
+//     [mediapipe.tasks.vision.image_segmenter.proto.ImageSegmenterGraphOptions.ext]
 //     {
 //       base_options {
 //         model_asset {
@@ -200,12 +202,12 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
     ASSIGN_OR_RETURN(const auto* model_resources,
-                     CreateModelResources<ImageSegmenterOptions>(sc));
+                     CreateModelResources<ImageSegmenterGraphOptions>(sc));
     Graph graph;
     ASSIGN_OR_RETURN(
         auto output_streams,
         BuildSegmentationTask(
-            sc->Options<ImageSegmenterOptions>(), *model_resources,
+            sc->Options<ImageSegmenterGraphOptions>(), *model_resources,
             graph[Input<Image>(kImageTag)],
             graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
 
@@ -228,13 +230,13 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
   // builder::Graph instance. The segmentation pipeline takes images
   // (mediapipe::Image) as the input and returns segmented image mask as output.
   //
-  // task_options: the mediapipe tasks ImageSegmenterOptions proto.
+  // task_options: the mediapipe tasks ImageSegmenterGraphOptions proto.
   // model_resources: the ModelSources object initialized from a segmentation
   // model file with model metadata.
   // image_in: (mediapipe::Image) stream to run segmentation on.
   // graph: the mediapipe builder::Graph instance to be updated.
   absl::StatusOr<ImageSegmenterOutputs> BuildSegmentationTask(
-      const ImageSegmenterOptions& task_options,
+      const ImageSegmenterGraphOptions& task_options,
       const core::ModelResources& model_resources, Source<Image> image_in,
       Source<NormalizedRect> norm_rect_in, Graph& graph) {
     MP_RETURN_IF_ERROR(SanityCheckOptions(task_options));
@@ -293,8 +295,10 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
   }
 };
 
-REGISTER_MEDIAPIPE_GRAPH(::mediapipe::tasks::vision::ImageSegmenterGraph);
+REGISTER_MEDIAPIPE_GRAPH(
+    ::mediapipe::tasks::vision::image_segmenter::ImageSegmenterGraph);
 
+}  // namespace image_segmenter
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

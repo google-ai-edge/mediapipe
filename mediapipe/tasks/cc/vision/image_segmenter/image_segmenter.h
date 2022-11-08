@@ -26,12 +26,12 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
-#include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_options.pb.h"
 #include "tensorflow/lite/kernels/register.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace image_segmenter {
 
 // The options for configuring a mediapipe image segmenter task.
 struct ImageSegmenterOptions {
@@ -191,6 +191,7 @@ class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
   absl::Status Close() { return runner_->Close(); }
 };
 
+}  // namespace image_segmenter
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

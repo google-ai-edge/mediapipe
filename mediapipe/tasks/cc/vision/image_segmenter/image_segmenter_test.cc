@@ -33,7 +33,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
-#include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_options.pb.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/core/shims/cc/shims_test_util.h"
 #include "tensorflow/lite/kernels/builtin_op_kernels.h"
@@ -42,6 +42,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace image_segmenter {
 namespace {
 
 using ::mediapipe::Image;
@@ -547,6 +548,7 @@ TEST_F(LiveStreamModeTest, Succeeds) {
 // TODO: Add test for hair segmentation model.
 
 }  // namespace
+}  // namespace image_segmenter
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe
