@@ -122,19 +122,21 @@ def _build_recognition_result(
   for proto in hand_landmarks_proto_list:
     hand_landmarks = landmark_pb2.NormalizedLandmarkList()
     hand_landmarks.MergeFrom(proto)
-    hand_landmarks_results.append([
-        landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
-        for hand_landmark in hand_landmarks.landmark
-    ])
+    hand_landmarks_list = []
+    for hand_landmark in hand_landmarks.landmark:
+      hand_landmarks_list.append(
+        landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark))
+    hand_landmarks_results.append(hand_landmarks_list)
 
   hand_world_landmarks_results = []
   for proto in hand_world_landmarks_proto_list:
     hand_world_landmarks = landmark_pb2.LandmarkList()
     hand_world_landmarks.MergeFrom(proto)
-    hand_world_landmarks_results.append([
-        landmark_module.Landmark.create_from_pb2(hand_world_landmark)
-        for hand_world_landmark in hand_world_landmarks.landmark
-    ])
+    hand_world_landmarks_list = []
+    for hand_world_landmark in hand_world_landmarks.landmark:
+      hand_world_landmarks_list.append(
+        landmark_module.Landmark.create_from_pb2(hand_world_landmark))
+    hand_world_landmarks_results.append(hand_world_landmarks_list)
 
   return GestureRecognitionResult(gesture_results, handedness_results,
                                   hand_landmarks_results,
