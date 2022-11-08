@@ -15,6 +15,7 @@
 import filecmp
 import os
 
+from unittest import mock
 from absl.testing import parameterized
 import numpy as np
 import tensorflow as tf
@@ -54,54 +55,59 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
     super(ImageClassifierTest, self).setUp()
     all_data = self._gen_cmy_data()
     # Splits data, 90% data for training, 10% for testing
-    self.train_data, self.test_data = all_data.split(0.9)
+    self._train_data, self._test_data = all_data.split(0.9)
 
   @parameterized.named_parameters(
       dict(
           testcase_name='mobilenet_v2',
-          model_spec=image_classifier.SupportedModels.MOBILENET_V2,
-          hparams=image_classifier.HParams(
-              train_epochs=1, batch_size=1, shuffle=True)),
+          options=image_classifier.ImageClassifierOptions(
+              supported_model=image_classifier.SupportedModels.MOBILENET_V2,
+              hparams=image_classifier.HParams(
+                  epochs=1, batch_size=1, shuffle=True))),
       dict(
           testcase_name='efficientnet_lite0',
-          model_spec=image_classifier.SupportedModels.EFFICIENTNET_LITE0,
-          hparams=image_classifier.HParams(
-              train_epochs=1, batch_size=1, shuffle=True)),
+          options=image_classifier.ImageClassifierOptions(
+              supported_model=(
+                  image_classifier.SupportedModels.EFFICIENTNET_LITE0),
+              hparams=image_classifier.HParams(
+                  epochs=1, batch_size=1, shuffle=True))),
+      dict(
+          testcase_name='efficientnet_lite0_change_dropout_rate',
+          options=image_classifier.ImageClassifierOptions(
+              supported_model=(
+                  image_classifier.SupportedModels.EFFICIENTNET_LITE0),
+              model_options=image_classifier.ModelOptions(dropout_rate=0.1),
+              hparams=image_classifier.HParams(
+                  epochs=1, batch_size=1, shuffle=True))),
       dict(
           testcase_name='efficientnet_lite2',
-          model_spec=image_classifier.SupportedModels.EFFICIENTNET_LITE2,
-          hparams=image_classifier.HParams(
-              train_epochs=1, batch_size=1, shuffle=True)),
+          options=image_classifier.ImageClassifierOptions(
+              supported_model=(
+                  image_classifier.SupportedModels.EFFICIENTNET_LITE2),
+              hparams=image_classifier.HParams(
+                  epochs=1, batch_size=1, shuffle=True))),
       dict(
           testcase_name='efficientnet_lite4',
-          model_spec=image_classifier.SupportedModels.EFFICIENTNET_LITE4,
-          hparams=image_classifier.HParams(
-              train_epochs=1, batch_size=1, shuffle=True)),
+          options=image_classifier.ImageClassifierOptions(
+              supported_model=(
+                  image_classifier.SupportedModels.EFFICIENTNET_LITE4),
+              hparams=image_classifier.HParams(
+                  epochs=1, batch_size=1, shuffle=True))),
   )
-  def test_create_and_train_model(self,
-                                  model_spec: image_classifier.SupportedModels,
-                                  hparams: image_classifier.HParams):
+  def test_create_and_train_model(
+      self, options: image_classifier.ImageClassifierOptions):
     model = image_classifier.ImageClassifier.create(
-        model_spec=model_spec,
-        train_data=self.train_data,
-        hparams=hparams,
-        validation_data=self.test_data)
-    self._test_accuracy(model)
-
-  def test_efficientnetlite0_model_train_and_export(self):
-    hparams = image_classifier.HParams(
-        train_epochs=1, batch_size=1, shuffle=True)
-    model = image_classifier.ImageClassifier.create(
-        model_spec=image_classifier.SupportedModels.EFFICIENTNET_LITE0,
-        train_data=self.train_data,
-        hparams=hparams,
-        validation_data=self.test_data)
+        train_data=self._train_data,
+        validation_data=self._test_data,
+        options=options)
     self._test_accuracy(model)
 
     # Test export_model
     model.export_model()
-    output_metadata_file = os.path.join(hparams.model_dir, 'metadata.json')
-    output_tflite_file = os.path.join(hparams.model_dir, 'model.tflite')
+    output_metadata_file = os.path.join(options.hparams.export_dir,
+                                        'metadata.json')
+    output_tflite_file = os.path.join(options.hparams.export_dir,
+                                      'model.tflite')
     expected_metadata_file = test_utils.get_test_data_path('metadata.json')
 
     self.assertTrue(os.path.exists(output_tflite_file))
@@ -112,8 +118,29 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
     self.assertTrue(filecmp.cmp(output_metadata_file, expected_metadata_file))
 
   def _test_accuracy(self, model, threshold=0.0):
-    _, accuracy = model.evaluate(self.test_data)
+    _, accuracy = model.evaluate(self._test_data)
     self.assertGreaterEqual(accuracy, threshold)
+
+  @mock.patch.object(
+      image_classifier.hyperparameters,
+      'HParams',
+      autospec=True,
+      return_value=image_classifier.HParams(epochs=1))
+  @mock.patch.object(
+      image_classifier.model_options,
+      'ImageClassifierModelOptions',
+      autospec=True,
+      return_value=image_classifier.ModelOptions())
+  def test_create_hparams_and_model_options_if_none_in_image_classifier_options(
+      self, mock_hparams, mock_model_options):
+    options = image_classifier.ImageClassifierOptions(
+        supported_model=(image_classifier.SupportedModels.EFFICIENTNET_LITE0))
+    image_classifier.ImageClassifier.create(
+        train_data=self._train_data,
+        validation_data=self._test_data,
+        options=options)
+    mock_hparams.assert_called_once()
+    mock_model_options.assert_called_once()
 
 
 if __name__ == '__main__':

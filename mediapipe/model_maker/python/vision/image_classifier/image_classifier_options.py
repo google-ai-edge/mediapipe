@@ -11,19 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""MediaPipe Model Maker Python Public API For Image Classifier."""
+"""Options for building image classifier."""
 
-from mediapipe.model_maker.python.vision.image_classifier import dataset
+import dataclasses
+from typing import Optional
+
 from mediapipe.model_maker.python.vision.image_classifier import hyperparameters
-from mediapipe.model_maker.python.vision.image_classifier import image_classifier
-from mediapipe.model_maker.python.vision.image_classifier import image_classifier_options
-from mediapipe.model_maker.python.vision.image_classifier import model_options
+from mediapipe.model_maker.python.vision.image_classifier import model_options as model_opt
 from mediapipe.model_maker.python.vision.image_classifier import model_spec
 
-ImageClassifier = image_classifier.ImageClassifier
-HParams = hyperparameters.HParams
-Dataset = dataset.Dataset
-ModelOptions = model_options.ImageClassifierModelOptions
-ModelSpec = model_spec.ModelSpec
-SupportedModels = model_spec.SupportedModels
-ImageClassifierOptions = image_classifier_options.ImageClassifierOptions
+
+@dataclasses.dataclass
+class ImageClassifierOptions:
+  """Configurable options for building image classifier.
+
+  Attributes:
+    supported_model: A model from the SupportedModels enum.
+    model_options: A set of options for configuring the selected model.
+    hparams: A set of hyperparameters used to train the image classifier.
+  """
+  supported_model: model_spec.SupportedModels
+  model_options: Optional[model_opt.ImageClassifierModelOptions] = None
+  hparams: Optional[hyperparameters.HParams] = None

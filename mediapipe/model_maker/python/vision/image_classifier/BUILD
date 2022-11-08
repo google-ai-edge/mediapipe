@@ -28,6 +28,8 @@ py_library(
         ":dataset",
         ":hyperparameters",
         ":image_classifier",
+        ":image_classifier_options",
+        ":model_options",
         ":model_spec",
     ],
 )
@@ -58,6 +60,24 @@ py_test(
 py_library(
     name = "hyperparameters",
     srcs = ["hyperparameters.py"],
+    deps = [
+        "//mediapipe/model_maker/python/core:hyperparameters",
+    ],
+)
+
+py_library(
+    name = "model_options",
+    srcs = ["model_options.py"],
+)
+
+py_library(
+    name = "image_classifier_options",
+    srcs = ["image_classifier_options.py"],
+    deps = [
+        ":hyperparameters",
+        ":model_options",
+        ":model_spec",
+    ],
 )
 
 py_library(
@@ -74,6 +94,8 @@ py_library(
     srcs = ["image_classifier.py"],
     deps = [
         ":hyperparameters",
+        ":image_classifier_options",
+        ":model_options",
         ":model_spec",
         ":train_image_classifier_lib",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
@@ -99,6 +121,7 @@ py_library(
 
 py_test(
     name = "image_classifier_test",
+    size = "large",
     srcs = ["image_classifier_test.py"],
     shard_count = 2,
     tags = ["requires-net:external"],

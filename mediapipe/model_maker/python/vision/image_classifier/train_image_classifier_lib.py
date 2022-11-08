@@ -49,13 +49,14 @@ def _create_optimizer(init_lr: float, decay_steps: int,
   return optimizer
 
 
-def _get_default_callbacks(model_dir: str) -> List[tf.keras.callbacks.Callback]:
+def _get_default_callbacks(
+    export_dir: str) -> List[tf.keras.callbacks.Callback]:
   """Gets default callbacks."""
-  summary_dir = os.path.join(model_dir, 'summaries')
+  summary_dir = os.path.join(export_dir, 'summaries')
   summary_callback = tf.keras.callbacks.TensorBoard(summary_dir)
   # Save checkpoint every 20 epochs.
 
-  checkpoint_path = os.path.join(model_dir, 'checkpoint')
+  checkpoint_path = os.path.join(export_dir, 'checkpoint')
   checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
       checkpoint_path, save_weights_only=True, period=20)
   return [summary_callback, checkpoint_callback]
@@ -81,7 +82,8 @@ def train_model(model: tf.keras.Model, hparams: hp.HParams,
   learning_rate = hparams.learning_rate * hparams.batch_size / 256
 
   # Get decay steps.
-  total_training_steps = hparams.steps_per_epoch * hparams.train_epochs
+  # NOMUTANTS--(b/256493858):Plan to test it in the unified training library.
+  total_training_steps = hparams.steps_per_epoch * hparams.epochs
   default_decay_steps = hparams.decay_samples // hparams.batch_size
   decay_steps = max(total_training_steps, default_decay_steps)
 
@@ -92,11 +94,11 @@ def train_model(model: tf.keras.Model, hparams: hp.HParams,
   loss = tf.keras.losses.CategoricalCrossentropy(
       label_smoothing=hparams.label_smoothing)
   model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
-  callbacks = _get_default_callbacks(hparams.model_dir)
+  callbacks = _get_default_callbacks(export_dir=hparams.export_dir)
 
   # Train the model.
   return model.fit(
       x=train_ds,
-      epochs=hparams.train_epochs,
+      epochs=hparams.epochs,
       validation_data=validation_ds,
       callbacks=callbacks)

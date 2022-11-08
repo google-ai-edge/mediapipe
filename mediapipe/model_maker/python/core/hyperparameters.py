@@ -19,7 +19,6 @@ import tempfile
 from typing import Optional
 
 
-# TODO: Integrate this class into ImageClassifier and other tasks.
 @dataclasses.dataclass
 class BaseHParams:
   """Hyperparameters used for training models.
