@@ -17,6 +17,7 @@ licenses(["notice"])
 android_library(
     name = "copperlabs-pose-api",
     srcs = glob(["src/main/**/*.java"]),
+    custom_package = "com.google.mediapipe.solutions",
     javacopts = ["-Acom.google.auto.value.AutoBuilderIsUnstable"],
     manifest = "src/main/AndroidManifest.xml",
     visibility = ["//visibility:public"],
@@ -51,7 +52,8 @@ android_library(
         "//mediapipe/modules/pose_landmark:pose_landmark_lite.tflite",
     ],
     assets_dir = "",
-    manifest = ":AndroidManifest.xml",
+    custom_package = "com.google.mediapipe.solutions",
+    manifest = "src/main/AndroidManifest.xml",
     visibility = ["//visibility:public"],
     deps = [],
 )
@@ -63,7 +65,8 @@ android_library(
         "//mediapipe/modules/pose_detection:pose_detection.tflite",
     ],
     assets_dir = "",
-    manifest = ":AndroidManifest.xml",
+    custom_package = "com.google.mediapipe.solutions",
+    manifest = "src/main/AndroidManifest.xml",
     visibility = ["//visibility:public"],
     deps = [],
 )
@@ -75,7 +78,8 @@ android_library(
         "//mediapipe/graphs/pose_tracking:pose_tracking_gpu_image.binarypb",
     ],
     assets_dir = "",
-    manifest = ":AndroidManifest.xml",
+    custom_package = "com.google.mediapipe.solutions",
+    manifest = "src/main/AndroidManifest.xml",
     visibility = ["//visibility:public"],
     deps = [],
 )

@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.google.mediapipe.apps.posetracking_lindera"
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -38,6 +38,8 @@ dependencies {
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
+
 
     // Mediapipe dependencies
     implementation 'com.google.protobuf:protobuf-javalite:3.19.1'

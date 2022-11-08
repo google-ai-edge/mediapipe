@@ -1,4 +1,4 @@
-POSE_TRACKING_OUTPUT_DIR=bazel-bin/mediapipe/java/com/google/mediapipe/solutions/posetracking
+POSE_TRACKING_OUTPUT_DIR=bazel-bin/mediapipe/java/com/google/mediapipe/solutions/copperlabs/copperlabs-pose-api
 GRADLE_LIBS_DIR=mediapipe/examples/android/solutions/posetracking-lindera/libs
 #
 bazel build     -c opt --strip=ALWAYS\
@@ -14,12 +14,12 @@ bazel build     -c opt --strip=ALWAYS\
                 --copt=-fomit-frame-pointer \
                 --copt=-DABSL_MIN_LOG_LEVEL=2 \
                 --linkopt=-Wl,--gc-sections,--strip-all \
-                //mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-api.aar \
-                //mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-landmark.aar \
-                //mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-detection.aar \
-                //mediapipe/java/com/google/mediapipe/solutions/posetracking:copperlabs-pose-graph.aar \
-                //mediapipe/java/com/google/mediapipe/solutions/lindera:copperlabs-lindera.aar \
-                //mediapipe/java/com/google/mediapipe/solutioncore:copperlabs-mediapipe
+        //mediapipe/java/com/google/mediapipe/solutions/copperlabs/copperlabs-lindera:copperlabs-lindera.aar \
+       //mediapipe/java/com/google/mediapipe/solutions/copperlabs/copperlabs-pose-api:copperlabs-pose-api.aar \
+        //mediapipe/java/com/google/mediapipe/solutions/copperlabs/copperlabs-pose-api:copperlabs-pose-detection.aar \
+        //mediapipe/java/com/google/mediapipe/solutions/copperlabs/copperlabs-pose-api:copperlabs-pose-graph.aar \
+        //mediapipe/java/com/google/mediapipe/solutions/copperlabs/copperlabs-pose-api:copperlabs-pose-landmark.aar \
+#                //mediapipe/java/com/google/mediapipe/solutioncore:copperlabs-mediapipe
 
 
 
@@ -30,6 +30,6 @@ rm -f $GRADLE_LIBS_DIR/copperlabs-*.aar
 \cp $POSE_TRACKING_OUTPUT_DIR/copperlabs-pose-detection.aar $GRADLE_LIBS_DIR
 \cp $POSE_TRACKING_OUTPUT_DIR/copperlabs-pose-graph.aar $GRADLE_LIBS_DIR
 \cp $POSE_TRACKING_OUTPUT_DIR/copperlabs-pose-landmark.aar $GRADLE_LIBS_DIR
-\cp bazel-bin/mediapipe/java/com/google/mediapipe/solutions/lindera/copperlabs-lindera.aar $GRADLE_LIBS_DIR
+\cp bazel-bin/mediapipe/java/com/google/mediapipe/solutions/copperlabs/copperlabs-lindera/copperlabs-lindera.aar $GRADLE_LIBS_DIR
 \cp bazel-bin/mediapipe/java/com/google/mediapipe/solutioncore/copperlabs-mediapipe.aar $GRADLE_LIBS_DIR
 
