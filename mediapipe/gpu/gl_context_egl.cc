@@ -38,20 +38,18 @@ static pthread_key_t egl_release_thread_key;
 static pthread_once_t egl_release_key_once = PTHREAD_ONCE_INIT;
 
 static void EglThreadExitCallback(void* key_value) {
-#if defined(__ANDROID__)
-  eglMakeCurrent(EGL_NO_DISPLAY, EGL_NO_SURFACE, EGL_NO_SURFACE,
-                 EGL_NO_CONTEXT);
-#else
-  // Some implementations have chosen to allow EGL_NO_DISPLAY as a valid display
-  // parameter for eglMakeCurrent. This behavior is not portable to all EGL
-  // implementations, and should be considered as an undocumented vendor
-  // extension.
-  // https://www.khronos.org/registry/EGL/sdk/docs/man/html/eglMakeCurrent.xhtml
-  //
-  // NOTE: crashes on some Android devices (occurs with libGLES_meow.so).
-  eglMakeCurrent(eglGetDisplay(EGL_DEFAULT_DISPLAY), EGL_NO_SURFACE,
-                 EGL_NO_SURFACE, EGL_NO_CONTEXT);
-#endif
+  EGLDisplay current_display = eglGetCurrentDisplay();
+  if (current_display != EGL_NO_DISPLAY) {
+    // Some implementations have chosen to allow EGL_NO_DISPLAY as a valid
+    // display parameter for eglMakeCurrent. This behavior is not portable to
+    // all EGL implementations, and should be considered as an undocumented
+    // vendor extension.
+    // https://www.khronos.org/registry/EGL/sdk/docs/man/html/eglMakeCurrent.xhtml
+    // Instead, to release the current context, we pass the current display.
+    // If the current display is already EGL_NO_DISPLAY, no context is current.
+    eglMakeCurrent(current_display, EGL_NO_SURFACE, EGL_NO_SURFACE,
+                   EGL_NO_CONTEXT);
+  }
   eglReleaseThread();
 }
 
