@@ -176,8 +176,7 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
   def create_from_model_path(cls, model_path: str) -> 'HandLandmarker':
     """Creates an `HandLandmarker` object from a TensorFlow Lite model and the default `HandLandmarkerOptions`.
 
-    Note that the created `HandLandmarker` instance is in image mode, for
-    detecting hand landmarks on single image inputs.
+    Note that the created `HandLandmarker` instance is in image mode, for detecting hand landmarks on single image inputs.
 
     Args:
       model_path: Path to the model.
