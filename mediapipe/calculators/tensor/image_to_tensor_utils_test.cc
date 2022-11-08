@@ -172,7 +172,7 @@ constexpr char kValidIntProto[] = R"(
   output_tensor_height: 200
 )";
 
-TEST(ValidateOptionOutputDims, ValidProtos) {
+TEST(ValidateOptionOutputDims, ImageToTensorCalcOptions) {
   const auto float_options =
       mediapipe::ParseTextProtoOrDie<mediapipe::ImageToTensorCalculatorOptions>(
           kValidFloatProto);
@@ -202,7 +202,7 @@ TEST(ValidateOptionOutputDims, EmptyProto) {
                        HasSubstr("Valid output tensor width is required")));
 }
 
-TEST(GetOutputTensorParams, SetValues) {
+TEST(GetOutputTensorParams, ImageToTensorCalcOptionsSetValues) {
   // Test int range with ImageToTensorCalculatorOptions.
   const auto int_options =
       mediapipe::ParseTextProtoOrDie<mediapipe::ImageToTensorCalculatorOptions>(

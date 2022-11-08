@@ -1324,6 +1324,7 @@ cc_test(
     name = "image_to_tensor_utils_test",
     srcs = ["image_to_tensor_utils_test.cc"],
     deps = [
+        ":image_to_tensor_calculator_cc_proto",
         ":image_to_tensor_utils",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:gtest_main",

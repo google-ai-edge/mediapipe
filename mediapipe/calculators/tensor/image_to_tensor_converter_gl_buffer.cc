@@ -330,9 +330,8 @@ class GlProcessor : public ImageToTensorConverter {
   absl::Status ValidateTensorShape(const Tensor::Shape& output_shape) {
     RET_CHECK_EQ(output_shape.dims.size(), 4)
         << "Wrong output dims size: " << output_shape.dims.size();
-    RET_CHECK_EQ(output_shape.dims[0], 1)
-        << "Handling batch dimension not equal to 1 is not implemented in this "
-           "converter.";
+    RET_CHECK_GE(output_shape.dims[0], 1)
+        << "The batch dimension needs to be greater or equal to 1.";
     RET_CHECK_EQ(output_shape.dims[3], 3)
         << "Wrong output channel: " << output_shape.dims[3];
     return absl::OkStatus();
