@@ -144,8 +144,13 @@ filegroup(
 )
 
 # Gestures related models. Visible to model_maker.
+# TODO: Upload canned gesture model and gesture embedding model to GCS after Model Card approval
 filegroup(
     name = "test_gesture_models",
+    srcs = [
+        "hand_landmark_full.tflite",
+        "palm_detection_full.tflite",
+    ],
     visibility = [
         "//mediapipe/model_maker:__subpackages__",
         "//mediapipe/tasks:internal",
