@@ -97,8 +97,7 @@ class LandmarksDetectionResult:
       landmarks.append(_NormalizedLandmark.create_from_pb2(landmark))
 
     for landmark in pb2_obj.world_landmarks.landmark:
-      world_landmarks.append(_Landmark.create_from_pb2(landmark)
-                             )
+      world_landmarks.append(_Landmark.create_from_pb2(landmark))
     return LandmarksDetectionResult(
         landmarks=landmarks,
         categories=categories,
