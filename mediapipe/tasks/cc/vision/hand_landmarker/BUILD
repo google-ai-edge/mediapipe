@@ -110,4 +110,38 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "hand_landmarker",
+    srcs = ["hand_landmarker.cc"],
+    hdrs = ["hand_landmarker.h"],
+    deps = [
+        ":hand_landmarker_graph",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components:image_preprocessing",
+        "//mediapipe/tasks/cc/components/containers:hand_landmarks_detection_result",
+        "//mediapipe/tasks/cc/components/processors:classifier_options",
+        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:base_task_api",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
+        "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/cc/vision/core:image_processing_options",
+        "//mediapipe/tasks/cc/vision/core:running_mode",
+        "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
+        "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_cc_proto",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
 # TODO: Enable this test
