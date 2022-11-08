@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
         lindera = new Lindera(plugin);
         List<String> cameras = lindera.getAvailableCameras();
         // FRONT or BACK
-        lindera.setCamera("FRONT");
+        lindera.setCamera("BACK");
         lindera.setCameraRotation(CameraRotation.AUTOMATIC);
 
         lindera.fpsHelper.onFpsUpdate = new Consumer<Double>() {

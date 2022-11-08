@@ -95,7 +95,7 @@ public class PoseTrackingResultGlRenderer implements ResultGlRenderer<PoseTracki
     GLES20.glUniform1f(pointSizeHandle, KEYPOINT_SIZE);
     ImmutableList<LandmarkProto.Landmark> originalLandmarks = result.multiPoseLandmarks();
     List<LandmarkProto.Landmark> landmarks = originalLandmarks.stream().filter((landmark -> {
-      return landmark.getVisibility() > 0.25 || landmark.getPresence()>0.25;
+      return landmark.getVisibility() > 0.35 || landmark.getPresence()>0.35;
     })).collect(Collectors.toList());
 
 

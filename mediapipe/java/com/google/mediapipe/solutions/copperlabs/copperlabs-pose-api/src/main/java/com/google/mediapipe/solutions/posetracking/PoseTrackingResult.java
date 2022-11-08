@@ -80,6 +80,7 @@ public class PoseTrackingResult extends ImageSolutionResult {
     public static final int SPINE = 34;
     public static final int THORAX = 35;
     public static final int HEAD_TOP = 36;
+    public static final int NECK = 37;
 
 
     PoseTrackingResult(
@@ -148,6 +149,12 @@ public class PoseTrackingResult extends ImageSolutionResult {
         // 2 times the distance b/w nose and eyes
         return getJointBetweenPoints(midlower, midupper, 2.5f);
     }
+    LandmarkProto.Landmark getNeck(ImmutableList<LandmarkProto.Landmark> landmarks){
+        LandmarkProto.Landmark midLips = getJointBetweenPoints(landmarks.get(LEFT_EAR), landmarks.get(RIGHT_EAR), 0.5f);
+        LandmarkProto.Landmark midShoulders= getJointBetweenPoints(landmarks.get(LEFT_SHOULDER),landmarks.get(RIGHT_SHOULDER),0.5f);
+        return getJointBetweenPoints(midShoulders,midLips,0.6f);
+
+    }
 
     ImmutableList<LandmarkProto.Landmark> getAdditionalLandmarksByInterpolation(ImmutableList<LandmarkProto.Landmark> originalLandmarks) {
 
@@ -155,13 +162,14 @@ public class PoseTrackingResult extends ImageSolutionResult {
         List<LandmarkProto.Landmark> landmarks = new ArrayList<>(originalLandmarks);
         // pelvis
         landmarks.add(getPelvis(originalLandmarks));
-        // spine assuming it is 2/3rd of distance b/w shoulders and pelvis
-        landmarks.add(getSpinePoint(originalLandmarks, 2 / 3f));
-        // thorax assuming it is b/w shoulders
-        landmarks.add(getJointBetweenPoints(landmarks.get(LEFT_SHOULDER),landmarks.get(RIGHT_SHOULDER),0.5f));
+        // spine
+        landmarks.add(getSpinePoint(originalLandmarks, 0.45f));
+        // thorax assuming it is slightly above shoulders
+        landmarks.add(getSpinePoint(originalLandmarks,-0.1f));
         // head top
         landmarks.add(getHeadTop(originalLandmarks));
-
+        // neck
+        landmarks.add(getNeck(originalLandmarks));
 
         return ImmutableList.copyOf(landmarks);
 

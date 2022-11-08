@@ -194,7 +194,7 @@ public class Lindera {
     }
 
     private void landmarksToBodyJoints(ImmutableList<LandmarkProto.Landmark> landmarks , BodyJoints bodyJoints){
-        landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.NOSE), bodyJoints.neckNose);
+        landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.NECK), bodyJoints.neckNose);
 
         landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.LEFT_EYE_INNER), bodyJoints.leftEyeInner);
         landmarkToXYZPointWithConfidence(landmarks.get(PoseTrackingResult.LEFT_EYE), bodyJoints.leftEye);
