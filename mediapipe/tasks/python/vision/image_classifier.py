@@ -23,7 +23,7 @@ from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet
 from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
 from mediapipe.tasks.cc.vision.image_classifier.proto import image_classifier_graph_options_pb2
-from mediapipe.tasks.python.components.containers import classifications
+from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
 from mediapipe.tasks.python.components.containers import rect
 from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.core import base_options as base_options_module
@@ -33,6 +33,7 @@ from mediapipe.tasks.python.vision.core import base_vision_task_api
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode
 
+ImageClassifierResult = classification_result_module.ClassificationResult
 _NormalizedRect = rect.NormalizedRect
 _BaseOptions = base_options_module.BaseOptions
 _ImageClassifierGraphOptionsProto = image_classifier_graph_options_pb2.ImageClassifierGraphOptions
@@ -41,8 +42,8 @@ _RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _TaskInfo = task_info_module.TaskInfo
 
-_CLASSIFICATION_RESULT_OUT_STREAM_NAME = 'classification_result_out'
-_CLASSIFICATION_RESULT_TAG = 'CLASSIFICATION_RESULT'
+_CLASSIFICATIONS_STREAM_NAME = 'classifications_out'
+_CLASSIFICATIONS_TAG = 'CLASSIFICATIONS'
 _IMAGE_IN_STREAM_NAME = 'image_in'
 _IMAGE_OUT_STREAM_NAME = 'image_out'
 _IMAGE_TAG = 'IMAGE'
@@ -72,7 +73,7 @@ class ImageClassifierOptions:
   running_mode: _RunningMode = _RunningMode.IMAGE
   classifier_options: _ClassifierOptions = _ClassifierOptions()
   result_callback: Optional[
-      Callable[[classifications.ClassificationResult, image_module.Image, int],
+      Callable[[ImageClassifierResult, image_module.Image, int],
                None]] = None
 
   @doc_controls.do_not_generate_docs
@@ -137,17 +138,13 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
 
       classification_result_proto = classifications_pb2.ClassificationResult()
       classification_result_proto.CopyFrom(
-          packet_getter.get_proto(
-              output_packets[_CLASSIFICATION_RESULT_OUT_STREAM_NAME]))
-
-      classification_result = classifications.ClassificationResult([
-          classifications.Classifications.create_from_pb2(classification)
-          for classification in classification_result_proto.classifications
-      ])
+        packet_getter.get_proto(output_packets[_CLASSIFICATIONS_STREAM_NAME]))
       image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
       timestamp = output_packets[_IMAGE_OUT_STREAM_NAME].timestamp
-      options.result_callback(classification_result, image,
-                              timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
+      options.result_callback(
+          ImageClassifierResult.create_from_pb2(classification_result_proto),
+          image,
+          timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
 
     task_info = _TaskInfo(
         task_graph=_TASK_GRAPH_NAME,
@@ -157,8 +154,8 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
         ],
         output_streams=[
             ':'.join([
-                _CLASSIFICATION_RESULT_TAG,
-                _CLASSIFICATION_RESULT_OUT_STREAM_NAME
+                _CLASSIFICATIONS_TAG,
+                _CLASSIFICATIONS_STREAM_NAME
             ]), ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME])
         ],
         task_options=options)
@@ -172,7 +169,7 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
       self,
       image: image_module.Image,
       image_processing_options: Optional[_ImageProcessingOptions] = None
-  ) -> classifications.ClassificationResult:
+  ) -> ImageClassifierResult:
     """Performs image classification on the provided MediaPipe Image.
 
     Args:
@@ -196,20 +193,16 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
 
     classification_result_proto = classifications_pb2.ClassificationResult()
     classification_result_proto.CopyFrom(
-        packet_getter.get_proto(
-            output_packets[_CLASSIFICATION_RESULT_OUT_STREAM_NAME]))
+      packet_getter.get_proto(output_packets[_CLASSIFICATIONS_STREAM_NAME]))
 
-    return classifications.ClassificationResult([
-        classifications.Classifications.create_from_pb2(classification)
-        for classification in classification_result_proto.classifications
-    ])
+    return ImageClassifierResult.create_from_pb2(classification_result_proto)
 
   def classify_for_video(
       self,
       image: image_module.Image,
       timestamp_ms: int,
       image_processing_options: Optional[_ImageProcessingOptions] = None
-  ) -> classifications.ClassificationResult:
+  ) -> ImageClassifierResult:
     """Performs image classification on the provided video frames.
 
     Only use this method when the ImageClassifier is created with the video
@@ -241,13 +234,9 @@ class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
 
     classification_result_proto = classifications_pb2.ClassificationResult()
     classification_result_proto.CopyFrom(
-        packet_getter.get_proto(
-            output_packets[_CLASSIFICATION_RESULT_OUT_STREAM_NAME]))
+      packet_getter.get_proto(output_packets[_CLASSIFICATIONS_STREAM_NAME]))
 
-    return classifications.ClassificationResult([
-        classifications.Classifications.create_from_pb2(classification)
-        for classification in classification_result_proto.classifications
-    ])
+    return ImageClassifierResult.create_from_pb2(classification_result_proto)
 
   def classify_async(
       self,
