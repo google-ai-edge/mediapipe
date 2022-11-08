@@ -68,7 +68,10 @@ class ImageClassifier(classifier.Classifier):
   ) -> 'ImageClassifier':
     """Creates and trains an image classifier.
 
-    Loads data and trains the model based on data for image classification.
+    Loads data and trains the model based on data for image classification. If a
+    checkpoint file exists in the {options.hparams.export_dir}/checkpoint/
+    directory, the training process will load the weight from the checkpoint
+    file for continual training.
 
     Args:
       train_data: Training data.

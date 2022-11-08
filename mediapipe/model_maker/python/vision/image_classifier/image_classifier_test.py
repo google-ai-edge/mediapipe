@@ -13,10 +13,13 @@
 # limitations under the License.
 
 import filecmp
+import io
 import os
+import tempfile
 
-from unittest import mock
+from unittest import mock as unittest_mock
 from absl.testing import parameterized
+import mock
 import numpy as np
 import tensorflow as tf
 
@@ -63,14 +66,20 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
           options=image_classifier.ImageClassifierOptions(
               supported_model=image_classifier.SupportedModels.MOBILENET_V2,
               hparams=image_classifier.HParams(
-                  epochs=1, batch_size=1, shuffle=True))),
+                  epochs=1,
+                  batch_size=1,
+                  shuffle=True,
+                  export_dir=tempfile.mkdtemp()))),
       dict(
           testcase_name='efficientnet_lite0',
           options=image_classifier.ImageClassifierOptions(
               supported_model=(
                   image_classifier.SupportedModels.EFFICIENTNET_LITE0),
               hparams=image_classifier.HParams(
-                  epochs=1, batch_size=1, shuffle=True))),
+                  epochs=1,
+                  batch_size=1,
+                  shuffle=True,
+                  export_dir=tempfile.mkdtemp()))),
       dict(
           testcase_name='efficientnet_lite0_change_dropout_rate',
           options=image_classifier.ImageClassifierOptions(
@@ -78,21 +87,30 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
                   image_classifier.SupportedModels.EFFICIENTNET_LITE0),
               model_options=image_classifier.ModelOptions(dropout_rate=0.1),
               hparams=image_classifier.HParams(
-                  epochs=1, batch_size=1, shuffle=True))),
+                  epochs=1,
+                  batch_size=1,
+                  shuffle=True,
+                  export_dir=tempfile.mkdtemp()))),
       dict(
           testcase_name='efficientnet_lite2',
           options=image_classifier.ImageClassifierOptions(
               supported_model=(
                   image_classifier.SupportedModels.EFFICIENTNET_LITE2),
               hparams=image_classifier.HParams(
-                  epochs=1, batch_size=1, shuffle=True))),
+                  epochs=1,
+                  batch_size=1,
+                  shuffle=True,
+                  export_dir=tempfile.mkdtemp()))),
       dict(
           testcase_name='efficientnet_lite4',
           options=image_classifier.ImageClassifierOptions(
               supported_model=(
                   image_classifier.SupportedModels.EFFICIENTNET_LITE4),
               hparams=image_classifier.HParams(
-                  epochs=1, batch_size=1, shuffle=True))),
+                  epochs=1,
+                  batch_size=1,
+                  shuffle=True,
+                  export_dir=tempfile.mkdtemp()))),
   )
   def test_create_and_train_model(
       self, options: image_classifier.ImageClassifierOptions):
@@ -117,16 +135,35 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
     self.assertGreater(os.path.getsize(output_metadata_file), 0)
     self.assertTrue(filecmp.cmp(output_metadata_file, expected_metadata_file))
 
+  def test_continual_training_by_loading_checkpoint(self):
+    mock_stdout = io.StringIO()
+    with mock.patch('sys.stdout', mock_stdout):
+      options = image_classifier.ImageClassifierOptions(
+          supported_model=image_classifier.SupportedModels.EFFICIENTNET_LITE0,
+          hparams=image_classifier.HParams(
+              epochs=5, batch_size=1, shuffle=True))
+      model = image_classifier.ImageClassifier.create(
+          train_data=self._train_data,
+          validation_data=self._test_data,
+          options=options)
+      model = image_classifier.ImageClassifier.create(
+          train_data=self._train_data,
+          validation_data=self._test_data,
+          options=options)
+      self._test_accuracy(model)
+
+    self.assertRegex(mock_stdout.getvalue(), 'Resuming from')
+
   def _test_accuracy(self, model, threshold=0.0):
     _, accuracy = model.evaluate(self._test_data)
     self.assertGreaterEqual(accuracy, threshold)
 
-  @mock.patch.object(
+  @unittest_mock.patch.object(
       image_classifier.hyperparameters,
       'HParams',
       autospec=True,
       return_value=image_classifier.HParams(epochs=1))
-  @mock.patch.object(
+  @unittest_mock.patch.object(
       image_classifier.model_options,
       'ImageClassifierModelOptions',
       autospec=True,
