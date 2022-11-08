@@ -48,15 +48,13 @@ class Classifications:
   def to_pb2(self) -> _ClassificationsProto:
     """Generates a Classifications protobuf object."""
     classification_list_proto = _ClassificationListProto()
-    classification_list_proto.classification.extend([
-        _ClassificationProto(
-            index=category.index,
-            score=category.score,
-            label=category.category_name,
-            display_name=category.display_name
-        )
-        for category in self.categories
-    ])
+    for category in self.categories:
+      classification_proto = _ClassificationProto(
+          index=category.index,
+          score=category.score,
+          label=category.category_name,
+          display_name=category.display_name)
+      classification_list_proto.classification.append(classification_proto)
     return _ClassificationsProto(
         classification_list=classification_list_proto,
         head_index=self.head_index,
