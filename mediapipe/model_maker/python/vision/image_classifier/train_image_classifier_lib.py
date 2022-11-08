@@ -13,9 +13,6 @@
 # limitations under the License.
 """Library to train model."""
 
-import os
-from typing import List
-
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.utils import model_util
@@ -47,19 +44,6 @@ def _create_optimizer(init_lr: float, decay_steps: int,
       learning_rate=learning_rate_fn, rho=0.9, momentum=0.9, epsilon=0.001)
 
   return optimizer
-
-
-def _get_default_callbacks(
-    export_dir: str) -> List[tf.keras.callbacks.Callback]:
-  """Gets default callbacks."""
-  summary_dir = os.path.join(export_dir, 'summaries')
-  summary_callback = tf.keras.callbacks.TensorBoard(summary_dir)
-  # Save checkpoint every 20 epochs.
-
-  checkpoint_path = os.path.join(export_dir, 'checkpoint')
-  checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-      checkpoint_path, save_weights_only=True, period=20)
-  return [summary_callback, checkpoint_callback]
 
 
 def train_model(model: tf.keras.Model, hparams: hp.HParams,
@@ -94,7 +78,7 @@ def train_model(model: tf.keras.Model, hparams: hp.HParams,
   loss = tf.keras.losses.CategoricalCrossentropy(
       label_smoothing=hparams.label_smoothing)
   model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
-  callbacks = _get_default_callbacks(export_dir=hparams.export_dir)
+  callbacks = model_util.get_default_callbacks(export_dir=hparams.export_dir)
 
   # Train the model.
   return model.fit(

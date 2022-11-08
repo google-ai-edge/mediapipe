@@ -19,7 +19,7 @@ from __future__ import print_function
 
 import os
 import tempfile
-from typing import Any, Callable, Dict, List, Optional, Text, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 # Dependency imports
 
@@ -32,6 +32,19 @@ from mediapipe.model_maker.python.core.utils import quantization
 
 DEFAULT_SCALE, DEFAULT_ZERO_POINT = 0, 0
 ESTIMITED_STEPS_PER_EPOCH = 1000
+
+
+def get_default_callbacks(
+    export_dir: str) -> Sequence[tf.keras.callbacks.Callback]:
+  """Gets default callbacks."""
+  summary_dir = os.path.join(export_dir, 'summaries')
+  summary_callback = tf.keras.callbacks.TensorBoard(summary_dir)
+  # Save checkpoint every 20 epochs.
+
+  checkpoint_path = os.path.join(export_dir, 'checkpoint')
+  checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+      checkpoint_path, save_weights_only=True, period=20)
+  return [summary_callback, checkpoint_callback]
 
 
 def load_keras_model(model_path: str,
@@ -174,7 +187,7 @@ class WarmUp(tf.keras.optimizers.schedules.LearningRateSchedule):
           lambda: self.decay_schedule_fn(step),
           name=name)
 
-  def get_config(self) -> Dict[Text, Any]:
+  def get_config(self) -> Dict[str, Any]:
     return {
         'initial_learning_rate': self.initial_learning_rate,
         'decay_schedule_fn': self.decay_schedule_fn,
