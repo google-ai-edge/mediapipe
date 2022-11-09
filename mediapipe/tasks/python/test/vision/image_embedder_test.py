@@ -48,6 +48,9 @@ _MODEL_FILE = 'mobilenet_v3_small_100_224_embedder.tflite'
 _BURGER_IMAGE_FILE = 'burger.jpg'
 _BURGER_CROPPED_IMAGE_FILE = 'burger_crop.jpg'
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/vision'
+# Tolerance for embedding vector coordinate values.
+_EPSILON = 1e-4
+# Tolerance for cosine similarity evaluation.
 _SIMILARITY_TOLERANCE = 1e-6
 
 
@@ -162,7 +165,7 @@ class ImageEmbedderTest(parameterized.TestCase):
 
     # Check embedding value.
     self.assertAlmostEqual(image_result.embeddings[0].embedding[0],
-                           expected_first_value)
+                           expected_first_value, delta=_EPSILON)
 
     # Checks cosine similarity.
     self._check_cosine_similarity(image_result, crop_result, quantize,
