@@ -3,8 +3,21 @@
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_library")
 load("@build_bazel_rules_nodejs//:index.bzl", "pkg_npm")
 load("@npm//@bazel/rollup:index.bzl", "rollup_bundle")
+load(
+    "//mediapipe/framework/tool:mediapipe_files.bzl",
+    "mediapipe_files",
+)
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
+
+mediapipe_files(srcs = [
+    "wasm/audio_wasm_internal.js",
+    "wasm/audio_wasm_internal.wasm",
+    "wasm/text_wasm_internal.js",
+    "wasm/text_wasm_internal.wasm",
+    "wasm/vision_wasm_internal.js",
+    "wasm/vision_wasm_internal.wasm",
+])
 
 # Audio
 
@@ -28,15 +41,18 @@ rollup_bundle(
 
 pkg_npm(
     name = "audio_pkg",
-    package_name = "__PACKAGE_NAME__",
+    package_name = "@mediapipe/tasks-__NAME__",
     srcs = ["package.json"],
     substitutions = {
-        "__PACKAGE_NAME__": "@mediapipe/tasks-audio",
+        "__NAME__": "audio",
         "__DESCRIPTION__": "MediaPipe Audio Tasks",
-        "__BUNDLE__": "audio_bundle.js",
     },
     tgz = "audio.tgz",
-    deps = [":audio_bundle"],
+    deps = [
+        "wasm/audio_wasm_internal.js",
+        "wasm/audio_wasm_internal.wasm",
+        ":audio_bundle",
+    ],
 )
 
 # Text
@@ -61,15 +77,18 @@ rollup_bundle(
 
 pkg_npm(
     name = "text_pkg",
-    package_name = "__PACKAGE_NAME__",
+    package_name = "@mediapipe/tasks-__NAME__",
     srcs = ["package.json"],
     substitutions = {
-        "__PACKAGE_NAME__": "@mediapipe/tasks-text",
+        "__NAME__": "text",
         "__DESCRIPTION__": "MediaPipe Text Tasks",
-        "__BUNDLE__": "text_bundle.js",
     },
     tgz = "text.tgz",
-    deps = [":text_bundle"],
+    deps = [
+        "wasm/text_wasm_internal.js",
+        "wasm/text_wasm_internal.wasm",
+        ":text_bundle",
+    ],
 )
 
 # Vision
@@ -94,13 +113,16 @@ rollup_bundle(
 
 pkg_npm(
     name = "vision_pkg",
-    package_name = "__PACKAGE_NAME__",
+    package_name = "@mediapipe/tasks-__NAME__",
     srcs = ["package.json"],
     substitutions = {
-        "__PACKAGE_NAME__": "@mediapipe/tasks-vision",
+        "__NAME__": "vision",
         "__DESCRIPTION__": "MediaPipe Vision Tasks",
-        "__BUNDLE__": "vision_bundle.js",
     },
-    tgz = "vision.tgz",
-    deps = [":vision_bundle"],
+    tgz = "vision_pkg.tgz",
+    deps = [
+        "wasm/vision_wasm_internal.js",
+        "wasm/vision_wasm_internal.wasm",
+        ":vision_bundle",
+    ],
 )
