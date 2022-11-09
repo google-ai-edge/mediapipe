@@ -24,7 +24,7 @@ from mediapipe.model_maker.python.core.utils import test_util
 
 class ModelUtilTest(tf.test.TestCase, parameterized.TestCase):
 
-  def test_load_model(self):
+  def test_load_keras_model(self):
     input_dim = 4
     model = test_util.build_model(input_shape=[input_dim], num_classes=2)
     saved_model_path = os.path.join(self.get_temp_dir(), 'saved_model')
@@ -35,6 +35,19 @@ class ModelUtilTest(tf.test.TestCase, parameterized.TestCase):
     model_output = model.predict_on_batch(input_tensors)
     loaded_model_output = loaded_model.predict_on_batch(input_tensors)
     self.assertTrue((model_output == loaded_model_output).all())
+
+  def test_load_tflite_model_buffer(self):
+    input_dim = 4
+    model = test_util.build_model(input_shape=[input_dim], num_classes=2)
+    tflite_model = model_util.convert_to_tflite(model)
+    tflite_file = os.path.join(self.get_temp_dir(), 'model.tflite')
+    model_util.save_tflite(tflite_model=tflite_model, tflite_file=tflite_file)
+
+    tflite_model_buffer = model_util.load_tflite_model_buffer(tflite_file)
+    test_util.test_tflite(
+        keras_model=model,
+        tflite_model=tflite_model_buffer,
+        size=[1, input_dim])
 
   @parameterized.named_parameters(
       dict(

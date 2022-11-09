@@ -13,8 +13,8 @@ mediapipe_ts_library(
     name = "gesture_recognizer",
     srcs = [
         "gesture_recognizer.ts",
-        "gesture_recognizer_options.d.ts",
-        "gesture_recognizer_result.d.ts",
+        "gesture_recognizer_options.ts",
+        "gesture_recognizer_result.ts",
     ],
     deps = [
         "//mediapipe/framework:calculator_jspb_proto",

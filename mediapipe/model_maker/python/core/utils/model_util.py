@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Utilities for keras models."""
+"""Utilities for models."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -26,8 +26,8 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import tensorflow as tf
 
-# resources dependency
 from mediapipe.model_maker.python.core.data import dataset
+from mediapipe.model_maker.python.core.utils import file_util
 from mediapipe.model_maker.python.core.utils import quantization
 
 DEFAULT_SCALE, DEFAULT_ZERO_POINT = 0, 0
@@ -39,11 +39,10 @@ def get_default_callbacks(
   """Gets default callbacks."""
   summary_dir = os.path.join(export_dir, 'summaries')
   summary_callback = tf.keras.callbacks.TensorBoard(summary_dir)
-  # Save checkpoint every 20 epochs.
 
   checkpoint_path = os.path.join(export_dir, 'checkpoint')
   checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-      checkpoint_path, save_weights_only=True, period=20)
+      checkpoint_path, save_weights_only=True)
   return [summary_callback, checkpoint_callback]
 
 
@@ -62,14 +61,24 @@ def load_keras_model(model_path: str,
   Returns:
     A tensorflow Keras model.
   """
-  # Extract the file path before mediapipe/ as the `base_dir`. By joining it
-  # with the `model_path` which defines the relative path under mediapipe/, it
-  # yields to the aboslution path of the model files directory.
-  cwd = os.path.dirname(__file__)
-  base_dir = cwd[:cwd.rfind('mediapipe')]
-  absolute_path = os.path.join(base_dir, model_path)
+  absolute_path = file_util.get_absolute_path(model_path)
   return tf.keras.models.load_model(
       absolute_path, custom_objects={'tf': tf}, compile=compile_on_load)
+
+
+def load_tflite_model_buffer(model_path: str) -> bytearray:
+  """Loads a TFLite model buffer from file.
+
+  Args:
+    model_path: Relative path to a TFLite file
+
+  Returns:
+    A TFLite model buffer
+  """
+  absolute_path = file_util.get_absolute_path(model_path)
+  with tf.io.gfile.GFile(absolute_path, 'rb') as f:
+    tflite_model_buffer = f.read()
+  return tflite_model_buffer
 
 
 def get_steps_per_epoch(steps_per_epoch: Optional[int] = None,

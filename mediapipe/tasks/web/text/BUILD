@@ -2,6 +2,8 @@
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_library")
 
+package(default_visibility = ["//mediapipe/tasks:internal"])
+
 mediapipe_ts_library(
     name = "text_lib",
     srcs = ["index.ts"],

@@ -13,8 +13,8 @@ mediapipe_ts_library(
     name = "text_classifier",
     srcs = [
         "text_classifier.ts",
-        "text_classifier_options.d.ts",
-        "text_classifier_result.d.ts",
+        "text_classifier_options.ts",
+        "text_classifier_result.ts",
     ],
     deps = [
         "//mediapipe/framework:calculator_jspb_proto",
