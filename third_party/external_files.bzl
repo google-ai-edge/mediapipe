@@ -29,9 +29,33 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_bert_text_classifier_no_metadata_tflite",
+        sha256 = "9b4554f6e28a72a3f40511964eed1ccf4e74cc074f81543cacca4faf169a173e",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/bert_text_classifier_no_metadata.tflite?generation=1667948360250899"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_bert_text_classifier_tflite",
         sha256 = "1e5a550c09bff0a13e61858bcfac7654d7fcc6d42106b4f15e11117695069600",
         urls = ["https://storage.googleapis.com/mediapipe-assets/bert_text_classifier.tflite?generation=1666144699858747"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_bert_text_classifier_with_bert_tokenizer_json",
+        sha256 = "49f148a13a4e3b486b1d3c2400e46e5ebd0d375674c0154278b835760e873a95",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/bert_text_classifier_with_bert_tokenizer.json?generation=1667948363241334"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_bert_text_classifier_with_sentence_piece_json",
+        sha256 = "113091f3892691de57e379387256b2ce0cc18a1b5185af866220a46da8221f26",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/bert_text_classifier_with_sentence_piece.json?generation=1667948366009530"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_bert_tokenizer_meta_json",
+        sha256 = "116d70c7c3ef413a8bff54ab758f9ed3d6e51fdc5621d8c920ad2f0035831804",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/bert_tokenizer_meta.json?generation=1667948368809108"],
     )
 
     http_file(
@@ -788,6 +812,12 @@ def external_files():
         name = "com_google_mediapipe_selfie_segmentation_tflite",
         sha256 = "8d13b7fae74af625c641226813616a2117bd6bca19eb3b75574621fc08557f27",
         urls = ["https://storage.googleapis.com/mediapipe-assets/selfie_segmentation.tflite?generation=1661875931201364"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_sentence_piece_tokenizer_meta_json",
+        sha256 = "416bfe231710502e4a93e1b1950c0c6e5db49cffb256d241ef3d3f2d0d57718b",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/sentence_piece_tokenizer_meta.json?generation=1667948375508564"],
     )
 
     http_file(

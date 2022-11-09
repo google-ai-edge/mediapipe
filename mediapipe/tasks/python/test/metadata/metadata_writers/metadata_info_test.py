@@ -367,6 +367,42 @@ class ScoreThresholdingMdTest(absltest.TestCase):
     self.assertEqual(metadata_json, expected_json)
 
 
+class BertTokenizerMdTest(absltest.TestCase):
+
+  _VOCAB_FILE = "vocab.txt"
+  _EXPECTED_TENSOR_JSON = test_utils.get_test_data_path(
+      os.path.join(_TEST_DATA_DIR, "bert_tokenizer_meta.json"))
+
+  def test_create_metadata_should_succeed(self):
+    tokenizer_md = metadata_info.BertTokenizerMd(self._VOCAB_FILE)
+    tokenizer_metadata = tokenizer_md.create_metadata()
+
+    metadata_json = _metadata.convert_to_json(
+        _create_dummy_model_metadata_with_process_uint(tokenizer_metadata))
+    with open(self._EXPECTED_TENSOR_JSON, "r") as f:
+      expected_json = f.read()
+    self.assertEqual(metadata_json, expected_json)
+
+
+class SentencePieceTokenizerMdTest(absltest.TestCase):
+
+  _VOCAB_FILE = "vocab.txt"
+  _SP_MODEL = "sp.model"
+  _EXPECTED_TENSOR_JSON = test_utils.get_test_data_path(
+      os.path.join(_TEST_DATA_DIR, "sentence_piece_tokenizer_meta.json"))
+
+  def test_create_metadata_should_succeed(self):
+    tokenizer_md = metadata_info.SentencePieceTokenizerMd(
+        self._SP_MODEL, self._VOCAB_FILE)
+    tokenizer_metadata = tokenizer_md.create_metadata()
+
+    metadata_json = _metadata.convert_to_json(
+        _create_dummy_model_metadata_with_process_uint(tokenizer_metadata))
+    with open(self._EXPECTED_TENSOR_JSON, "r") as f:
+      expected_json = f.read()
+    self.assertEqual(metadata_json, expected_json)
+
+
 def _create_dummy_model_metadata_with_tensor(
     tensor_metadata: _metadata_fb.TensorMetadataT) -> bytes:
   # Create a dummy model using the tensor metadata.

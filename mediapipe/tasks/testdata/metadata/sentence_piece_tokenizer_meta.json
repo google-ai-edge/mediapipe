@@ -1,0 +1,26 @@
+{
+  "subgraph_metadata": [
+    {
+      "input_process_units": [
+        {
+          "options_type": "SentencePieceTokenizerOptions",
+          "options": {
+            "sentencePiece_model": [
+              {
+                "name": "sp.model",
+                "description": "The sentence piece model file."
+              }
+            ],
+            "vocab_file": [
+              {
+                "name": "vocab.txt",
+                "description": "Vocabulary file to convert natural language words to embedding vectors. This file is optional during tokenization, while the sentence piece model is mandatory.",
+                "type": "VOCABULARY"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

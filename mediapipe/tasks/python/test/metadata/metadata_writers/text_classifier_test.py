@@ -21,28 +21,64 @@ from mediapipe.tasks.python.metadata.metadata_writers import text_classifier
 from mediapipe.tasks.python.test import test_utils
 
 _TEST_DIR = "mediapipe/tasks/testdata/metadata/"
-_MODEL = test_utils.get_test_data_path(_TEST_DIR + "movie_review.tflite")
+_REGEX_MODEL = test_utils.get_test_data_path(_TEST_DIR + "movie_review.tflite")
 _LABEL_FILE = test_utils.get_test_data_path(_TEST_DIR +
                                             "movie_review_labels.txt")
-_VOCAB_FILE = test_utils.get_test_data_path(_TEST_DIR + "regex_vocab.txt")
+_REGEX_VOCAB_FILE = test_utils.get_test_data_path(_TEST_DIR + "regex_vocab.txt")
 _DELIM_REGEX_PATTERN = r"[^\w\']+"
-_JSON_FILE = test_utils.get_test_data_path("movie_review.json")
+_REGEX_JSON_FILE = test_utils.get_test_data_path("movie_review.json")
+
+_BERT_MODEL = test_utils.get_test_data_path(
+    _TEST_DIR + "bert_text_classifier_no_metadata.tflite")
+_BERT_VOCAB_FILE = test_utils.get_test_data_path(_TEST_DIR +
+                                                 "mobilebert_vocab.txt")
+_SP_MODEL_FILE = test_utils.get_test_data_path(_TEST_DIR + "30k-clean.model")
+_BERT_JSON_FILE = test_utils.get_test_data_path(
+    _TEST_DIR + "bert_text_classifier_with_bert_tokenizer.json")
+_SENTENCE_PIECE_JSON_FILE = test_utils.get_test_data_path(
+    _TEST_DIR + "bert_text_classifier_with_sentence_piece.json")
 
 
 class TextClassifierTest(absltest.TestCase):
 
-  def test_write_metadata(self,):
-    with open(_MODEL, "rb") as f:
+  def test_write_metadata_for_regex_model(self):
+    with open(_REGEX_MODEL, "rb") as f:
       model_buffer = f.read()
     writer = text_classifier.MetadataWriter.create_for_regex_model(
         model_buffer,
         regex_tokenizer=metadata_writer.RegexTokenizer(
             delim_regex_pattern=_DELIM_REGEX_PATTERN,
-            vocab_file_path=_VOCAB_FILE),
+            vocab_file_path=_REGEX_VOCAB_FILE),
         labels=metadata_writer.Labels().add_from_file(_LABEL_FILE))
     _, metadata_json = writer.populate()
 
-    with open(_JSON_FILE, "r") as f:
+    with open(_REGEX_JSON_FILE, "r") as f:
+      expected_json = f.read()
+    self.assertEqual(metadata_json, expected_json)
+
+  def test_write_metadata_for_bert(self):
+    with open(_BERT_MODEL, "rb") as f:
+      model_buffer = f.read()
+    writer = text_classifier.MetadataWriter.create_for_bert_model(
+        model_buffer,
+        tokenizer=metadata_writer.BertTokenizer(_BERT_VOCAB_FILE),
+        labels=metadata_writer.Labels().add_from_file(_LABEL_FILE))
+    _, metadata_json = writer.populate()
+
+    with open(_BERT_JSON_FILE, "r") as f:
+      expected_json = f.read()
+    self.assertEqual(metadata_json, expected_json)
+
+  def test_write_metadata_for_sentence_piece(self):
+    with open(_BERT_MODEL, "rb") as f:
+      model_buffer = f.read()
+    writer = text_classifier.MetadataWriter.create_for_bert_model(
+        model_buffer,
+        tokenizer=metadata_writer.SentencePieceTokenizer(_SP_MODEL_FILE),
+        labels=metadata_writer.Labels().add_from_file(_LABEL_FILE))
+    _, metadata_json = writer.populate()
+
+    with open(_SENTENCE_PIECE_JSON_FILE, "r") as f:
       expected_json = f.read()
     self.assertEqual(metadata_json, expected_json)
 
