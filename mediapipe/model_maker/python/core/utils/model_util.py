@@ -39,11 +39,10 @@ def get_default_callbacks(
   """Gets default callbacks."""
   summary_dir = os.path.join(export_dir, 'summaries')
   summary_callback = tf.keras.callbacks.TensorBoard(summary_dir)
-  # Save checkpoint every 20 epochs.
 
   checkpoint_path = os.path.join(export_dir, 'checkpoint')
   checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-      checkpoint_path, save_weights_only=True, period=20)
+      checkpoint_path, save_weights_only=True)
   return [summary_callback, checkpoint_callback]
 
 
