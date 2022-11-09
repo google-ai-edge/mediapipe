@@ -167,7 +167,7 @@ class ImageEmbedderTest(parameterized.TestCase):
     # Checks cosine similarity.
     self._check_cosine_similarity(image_result, crop_result, quantize,
                                   expected_similarity)
-    # Closes the embedder explicitly when the classifier is not used in
+    # Closes the embedder explicitly when the embedder is not used in
     # a context.
     embedder.close()
 
@@ -315,7 +315,7 @@ class ImageEmbedderTest(parameterized.TestCase):
                                   r'not initialized with the image mode'):
         embedder.embed(self.test_image)
 
-  def test_calling_classify_for_video_in_live_stream_mode(self):
+  def test_calling_embed_for_video_in_live_stream_mode(self):
     options = _ImageEmbedderOptions(
       base_options=_BaseOptions(model_asset_path=self.model_path),
       running_mode=_RUNNING_MODE.LIVE_STREAM,
@@ -325,7 +325,7 @@ class ImageEmbedderTest(parameterized.TestCase):
                                   r'not initialized with the video mode'):
         embedder.embed_for_video(self.test_image, 0)
 
-  def test_classify_async_calls_with_illegal_timestamp(self):
+  def test_embed_async_calls_with_illegal_timestamp(self):
     options = _ImageEmbedderOptions(
       base_options=_BaseOptions(model_asset_path=self.model_path),
       running_mode=_RUNNING_MODE.LIVE_STREAM,
@@ -365,7 +365,7 @@ class ImageEmbedderTest(parameterized.TestCase):
       for timestamp in range(0, 300, 30):
         embedder.embed_async(self.test_image, timestamp)
 
-  def test_classify_async_succeeds_with_region_of_interest(self):
+  def test_embed_async_succeeds_with_region_of_interest(self):
     # Get the embedding result for the cropped image.
     options = _ImageEmbedderOptions(
       base_options=_BaseOptions(model_asset_path=self.model_path),
