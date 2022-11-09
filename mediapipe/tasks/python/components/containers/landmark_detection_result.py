@@ -53,7 +53,13 @@ class LandmarksDetectionResult:
   def to_pb2(self) -> _LandmarksDetectionResultProto:
     """Generates a LandmarksDetectionResult protobuf object."""
 
+    landmarks = _NormalizedLandmarkListProto()
     classifications = _ClassificationListProto()
+    world_landmarks = _LandmarkListProto()
+
+    for landmark in self.landmarks:
+      landmarks.landmark.append(landmark.to_pb2())
+
     for category in self.categories:
       classifications.classification.append(
           _ClassificationProto(
@@ -63,9 +69,9 @@ class LandmarksDetectionResult:
               display_name=category.display_name))
 
     return _LandmarksDetectionResultProto(
-        landmarks=_NormalizedLandmarkListProto(self.landmarks),
+        landmarks=landmarks,
         classifications=classifications,
-        world_landmarks=_LandmarkListProto(self.world_landmarks),
+        world_landmarks=world_landmarks,
         rect=self.rect.to_pb2())
 
   @classmethod
@@ -73,9 +79,11 @@ class LandmarksDetectionResult:
   def create_from_pb2(
       cls,
       pb2_obj: _LandmarksDetectionResultProto) -> 'LandmarksDetectionResult':
-    """Creates a `LandmarksDetectionResult` object from the given protobuf object.
-    """
+    """Creates a `LandmarksDetectionResult` object from the given protobuf object."""
     categories = []
+    landmarks = []
+    world_landmarks = []
+
     for classification in pb2_obj.classifications.classification:
       categories.append(
           category_module.Category(
@@ -83,14 +91,14 @@ class LandmarksDetectionResult:
               index=classification.index,
               category_name=classification.label,
               display_name=classification.display_name))
+
+    for landmark in pb2_obj.landmarks.landmark:
+      landmarks.append(_NormalizedLandmark.create_from_pb2(landmark))
+
+    for landmark in pb2_obj.world_landmarks.landmark:
+      world_landmarks.append(_Landmark.create_from_pb2(landmark))
     return LandmarksDetectionResult(
-        landmarks=[
-            _NormalizedLandmark.create_from_pb2(landmark)
-            for landmark in pb2_obj.landmarks.landmark
-        ],
+        landmarks=landmarks,
         categories=categories,
-        world_landmarks=[
-            _Landmark.create_from_pb2(landmark)
-            for landmark in pb2_obj.world_landmarks.landmark
-        ],
+        world_landmarks=world_landmarks,
         rect=_NormalizedRect.create_from_pb2(pb2_obj.rect))
