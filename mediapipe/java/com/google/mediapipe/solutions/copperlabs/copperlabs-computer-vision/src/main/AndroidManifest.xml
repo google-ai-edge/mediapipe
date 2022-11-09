@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="ca.copperlabs.mediapipe.posetracking">
-    <uses-sdk android:minSdkVersion="24"
+          package="ca.copperlabs.cv">
+
+    <uses-sdk android:minSdkVersion="21"
               android:targetSdkVersion="27" />
 </manifest>

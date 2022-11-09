@@ -17,7 +17,7 @@ licenses(["notice"])
 android_library(
     name = "copperlabs-pose-api",
     srcs = glob(["src/main/**/*.java"]),
-    custom_package = "com.google.mediapipe.solutions",
+    custom_package = "ca.copperlabs.mediapipe.posetracking",
     javacopts = ["-Acom.google.auto.value.AutoBuilderIsUnstable"],
     manifest = "src/main/AndroidManifest.xml",
     visibility = ["//visibility:public"],

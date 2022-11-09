@@ -30,7 +30,7 @@ android {
 
 dependencies {
 
-    implementation project(':copperlabs-lindera')
+    implementation project(':copperlabs-computer-vision')
     implementation project(':copperlabs-pose-api')
     implementation project(':copperlabs-pose-detection')
     implementation project(':copperlabs-pose-landmark')

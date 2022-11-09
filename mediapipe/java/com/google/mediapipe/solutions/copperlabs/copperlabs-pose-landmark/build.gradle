@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'com.google.copperlabs_pose_landmark'
+    namespace 'ca.copperlabs.mediapipe.pose_landmark'
     compileSdk 32
 
     defaultConfig {

@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'com.google.copperlabs_pose_detection'
+    namespace 'ca.copperlabs.mediapipe.pose_detection'
     compileSdk 32
 
     defaultConfig {

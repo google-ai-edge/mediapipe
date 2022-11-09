@@ -22,7 +22,7 @@
         android:theme="@style/Theme.Posetracking"
         tools:targetApi="31">
         <activity
-            android:name=".examples.posetracking_lindera.MainActivity"
+            android:name="ca.copperlabs.mediapipe.examples.posetracking_lindera.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

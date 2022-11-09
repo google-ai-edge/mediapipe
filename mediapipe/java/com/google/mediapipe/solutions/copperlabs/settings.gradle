@@ -15,7 +15,7 @@ dependencyResolutionManagement {
 rootProject.name = "posetracking"
 include ':app'
 include ':copperlabs-pose-api'
-include ':copperlabs-lindera'
+include ':copperlabs-computer-vision'
 include ':copperlabs-pose-landmark'
 include ':copperlabs-pose-detection'
 include ':copperlabs-pose-graph'
