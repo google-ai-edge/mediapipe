@@ -33,9 +33,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.mediapipe.R;
-import com.google.mediapipe.solutions.lindera.BodyJoints;
 import com.google.mediapipe.solutions.lindera.CameraRotation;
-import com.google.mediapipe.solutions.lindera.ComputerVisionPlugin;
+import com.google.mediapipe.solutions.lindera.InputSource;
 import com.google.mediapipe.solutions.lindera.Lindera;
 
 import org.json.JSONException;
@@ -80,11 +79,11 @@ public class MainActivity extends AppCompatActivity {
 
 
         lindera = new Lindera(plugin);
+        lindera.setupVideoPicker(this);
         List<String> cameras = lindera.getAvailableCameras();
         // FRONT or BACK
         lindera.setCamera("FRONT");
         lindera.setCameraRotation(CameraRotation.AUTOMATIC);
-
         lindera.fpsHelper.onFpsUpdate = new Consumer<Double>() {
             @Override
             public void accept(Double fps) {
@@ -99,36 +98,55 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private void startDetectionPipeline(InputSource inputSource){
+        if (!isLinderaInitialized) {
+            modelLoadAsyncDialogue(()->{
+                if (inputSource==InputSource.VIDEO){
+                    lindera.setInputSource(InputSource.VIDEO);
+                }
+                lindera.initialize(findViewById(R.id.preview_display_layout), MainActivity.this);
+                isLinderaInitialized = true;
+                findViewById(R.id.button_start_video).setVisibility(View.GONE);
+                findViewById(R.id.button_start_camera).setVisibility(View.GONE);
+                findViewById(R.id.button_set_model).setVisibility(View.VISIBLE);
+                findViewById(R.id.button_toggle_landmarks).setVisibility(View.VISIBLE);
+                findViewById(R.id.button_capture_logging).setVisibility(View.VISIBLE);
+
+                updateLandmarkButtonText();
+                updateModelComplexityButtonText();
+                if (inputSource==InputSource.VIDEO) {
+                    lindera.pickVideo();
+                }
+
+            });
+
+
+        }
+        isDetectionStarted = !isDetectionStarted;
+    }
     /**
      * Sets up the UI components for the live demo with camera input.
      */
     private void setupLiveDemoUiComponents() {
 
-        Button startDetectionButton = findViewById(R.id.button_start_detection);
+        Button startCameraButton = findViewById(R.id.button_start_camera);
+        Button startVideoButton = findViewById(R.id.button_start_video);
         Button toggleLandmarks = findViewById(R.id.button_toggle_landmarks);
         Button modelComplexity = findViewById(R.id.button_set_model);
         Button startCapture = findViewById(R.id.button_capture_logging);
         FrameLayout frameLayout = findViewById(R.id.preview_display_layout);
 
-        startDetectionButton.setOnClickListener(
+        startCameraButton.setOnClickListener(
                 v -> {
-//                    startCameraButton.setVisibility(View.GONE);
-                    if (!isLinderaInitialized) {
-                        modelLoadAsyncDialogue(()->{
-                            lindera.initialize(frameLayout, MainActivity.this);
-                            isLinderaInitialized = true;
-                            startDetectionButton.setVisibility(View.GONE);
-                            findViewById(R.id.button_set_model).setVisibility(View.VISIBLE);
-                            findViewById(R.id.button_toggle_landmarks).setVisibility(View.VISIBLE);
-                            findViewById(R.id.button_capture_logging).setVisibility(View.VISIBLE);
-
-                            updateLandmarkButtonText();
-                            updateModelComplexityButtonText();
-                        });
+                  startDetectionPipeline(InputSource.CAMERA);
 
 
-                    }
-                    isDetectionStarted = !isDetectionStarted;
+
+                });
+        startVideoButton.setOnClickListener(
+                v -> {
+                    startDetectionPipeline(InputSource.VIDEO);
+
 
 
                 });

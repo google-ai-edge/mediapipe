@@ -15,11 +15,18 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/button_start_detection"
+            android:id="@+id/button_start_camera"
             style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Start Detection" />
+            android:text="Start Camera" />
+
+        <Button
+            android:id="@+id/button_start_video"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start Video" />
 
         <Button
             android:id="@+id/button_toggle_landmarks"
