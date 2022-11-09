@@ -23,6 +23,7 @@ import mediapipe.tasks.python.vision.object_detector
 
 GestureRecognizer = gesture_recognizer.GestureRecognizer
 GestureRecognizerOptions = gesture_recognizer.GestureRecognizerOptions
+GestureRecognizerResult = gesture_recognizer.GestureRecognizerResult
 HandLandmarker = hand_landmarker.HandLandmarker
 HandLandmarkerOptions = hand_landmarker.HandLandmarkerOptions
 HandLandmarkerResult = hand_landmarker.HandLandmarkerResult
