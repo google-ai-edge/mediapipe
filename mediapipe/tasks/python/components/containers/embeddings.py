@@ -110,8 +110,8 @@ class Embedding:
   """
 
   embedding: np.ndarray
-  head_index: int
-  head_name: str
+  head_index: Optional[int] = None
+  head_name: Optional[str] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _EmbeddingProto:
@@ -167,9 +167,16 @@ class EmbeddingResult:
   """Embedding results for a given embedder model.
   Attributes:
     embeddings: A list of `Embedding` objects.
+    timestamp_ms: The optional timestamp (in milliseconds) of the start of the
+      chunk of data corresponding to these results. This is only used for
+      embedding extraction on time series (e.g. audio embedding). In these use
+      cases, the amount of data to process might exceed the maximum size that
+      the model can process: to solve this, the input data is split into
+      multiple chunks starting at different timestamps.
   """
 
   embeddings: List[Embedding]
+  timestamp_ms: Optional[int] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _EmbeddingResultProto:
