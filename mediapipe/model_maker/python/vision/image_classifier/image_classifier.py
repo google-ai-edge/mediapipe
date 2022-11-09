@@ -68,7 +68,10 @@ class ImageClassifier(classifier.Classifier):
   ) -> 'ImageClassifier':
     """Creates and trains an image classifier.
 
-    Loads data and trains the model based on data for image classification.
+    Loads data and trains the model based on data for image classification. If a
+    checkpoint file exists in the {options.hparams.export_dir}/checkpoint/
+    directory, the training process will load the weight from the checkpoint
+    file for continual training.
 
     Args:
       train_data: Training data.
@@ -190,7 +193,7 @@ class ImageClassifier(classifier.Classifier):
         tflite_model,
         self._model_spec.mean_rgb,
         self._model_spec.stddev_rgb,
-        labels=metadata_writer.Labels().add(self._label_names))
+        labels=metadata_writer.Labels().add(list(self._label_names)))
     tflite_model_with_metadata, metadata_json = writer.populate()
     model_util.save_tflite(tflite_model_with_metadata, tflite_file)
     with open(metadata_file, 'w') as f:

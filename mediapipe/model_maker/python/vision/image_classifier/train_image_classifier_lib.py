@@ -13,6 +13,7 @@
 # limitations under the License.
 """Library to train model."""
 
+import os
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.utils import model_util
@@ -78,11 +79,24 @@ def train_model(model: tf.keras.Model, hparams: hp.HParams,
   loss = tf.keras.losses.CategoricalCrossentropy(
       label_smoothing=hparams.label_smoothing)
   model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
-  callbacks = model_util.get_default_callbacks(export_dir=hparams.export_dir)
+
+  summary_dir = os.path.join(hparams.export_dir, 'summaries')
+  summary_callback = tf.keras.callbacks.TensorBoard(summary_dir)
+  # Save checkpoint every 5 epochs.
+  checkpoint_path = os.path.join(hparams.export_dir, 'checkpoint')
+  checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+      os.path.join(checkpoint_path, 'model-{epoch:04d}'),
+      save_weights_only=True,
+      period=5)
+
+  latest_checkpoint = tf.train.latest_checkpoint(checkpoint_path)
+  if latest_checkpoint:
+    print(f'Resuming from {latest_checkpoint}')
+    model.load_weights(latest_checkpoint)
 
   # Train the model.
   return model.fit(
       x=train_ds,
       epochs=hparams.epochs,
       validation_data=validation_ds,
-      callbacks=callbacks)
+      callbacks=[summary_callback, checkpoint_callback])

@@ -35,6 +35,7 @@ py_library(
     name = "model_util",
     srcs = ["model_util.py"],
     deps = [
+        ":file_util",
         ":quantization",
         "//mediapipe/model_maker/python/core/data:dataset",
     ],
@@ -48,6 +49,18 @@ py_test(
         ":quantization",
         ":test_util",
     ],
+)
+
+py_library(
+    name = "file_util",
+    srcs = ["file_util.py"],
+)
+
+py_test(
+    name = "file_util_test",
+    srcs = ["file_util_test.py"],
+    data = ["//mediapipe/model_maker/python/core/utils/testdata"],
+    deps = [":file_util"],
 )
 
 py_library(

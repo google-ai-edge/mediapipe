@@ -13,8 +13,8 @@ mediapipe_ts_library(
     name = "object_detector",
     srcs = [
         "object_detector.ts",
-        "object_detector_options.d.ts",
-        "object_detector_result.d.ts",
+        "object_detector_options.ts",
+        "object_detector_result.ts",
     ],
     deps = [
         "//mediapipe/framework:calculator_jspb_proto",

@@ -198,7 +198,7 @@ export class AudioClassifier extends TaskRunner {
     classifierNode.addInputStream('AUDIO:' + AUDIO_STREAM);
     classifierNode.addInputStream('SAMPLE_RATE:' + SAMPLE_RATE_STREAM);
     classifierNode.addOutputStream(
-        'CLASSIFICATION_RESULT:' + CLASSIFICATION_RESULT_STREAM);
+        'CLASSIFICATIONS:' + CLASSIFICATION_RESULT_STREAM);
     classifierNode.setOptions(calculatorOptions);
 
     graphConfig.addNode(classifierNode);
