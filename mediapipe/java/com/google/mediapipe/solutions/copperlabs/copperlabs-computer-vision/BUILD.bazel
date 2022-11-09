@@ -1,7 +1,7 @@
 android_library(
     name = "copperlabs-lindera",
     srcs = glob(["src/main/**/*.java"]),
-    custom_package = "com.google.mediapipe.solutions",
+    custom_package = "ca.copperlabs.cv",
     manifest = "src/main/AndroidManifest.xml",
     visibility = ["//visibility:public"],
     deps = [
