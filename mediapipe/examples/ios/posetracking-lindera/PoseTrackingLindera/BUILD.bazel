@@ -12,7 +12,7 @@ MIN_IOS_VERSION = "14.0"
 swift_library(
     name = "lindera_app_lib",
     srcs = glob(["**/*.swift"]),
-    data =[
+    data = [
         "Base.lproj/LaunchScreen.storyboard",
         "Base.lproj/Main.storyboard",
     ],
@@ -62,7 +62,7 @@ ios_application(
         "ipad",
     ],
     infoplists = [
-        "Info.plist",
+        "Infobazel.plist",
         "//mediapipe/examples/ios/common:Info.plist",
     ],
     linkopts = [

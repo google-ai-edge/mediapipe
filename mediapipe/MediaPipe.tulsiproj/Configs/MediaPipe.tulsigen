@@ -23,8 +23,7 @@
     "mediapipe/objc/testing/app/BUILD"
   ],
   "buildTargets" : [
-    "//mediapipe/examples/ios/posetracking-lindera/PoseTrackingLindera:posetracking-lindera",
-    "//mediapipe/swift/solutions/lindera:lindera"
+    "//mediapipe/examples/ios/posetracking-lindera/PoseTrackingLindera:posetracking-lindera"
   ],
   "optionSet" : {
     "BazelBuildOptionsDebug" : {

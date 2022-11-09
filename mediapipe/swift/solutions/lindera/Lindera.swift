@@ -2,6 +2,12 @@
 import UIKit
 #if arch(arm64)
 import MPPoseTracking
+import AVFoundation
+
+public enum InputSource {
+    case CAMERA,VIDEO
+}
+
 
 
 /// A helper class to run the Pose Tracking API
@@ -20,7 +26,45 @@ public final class Lindera{
     public func setFpsDelegate(fpsDelegate: @escaping (_ fps:Double)->Void){
         fpsHelper.onFpsUpdate = fpsDelegate;
     }
+    
+    public func startVideo(asset:AVAsset){
+        self.videoSource = MPPPlayerInputSource(avAsset: asset)
+        self.videoSource.setDelegate(self.poseTracking, queue: self.poseTracking.videoQueue)
+        DispatchQueue.main.async { [weak self] in
+        
+            if let self = self {
+                // set our rendering layer frame according to cameraView boundry
+                self.poseTracking.renderer.layer.frame = self.cameraView.layer.bounds
+                // attach render CALayer on cameraView to render output to
+                self.cameraView.layer.addSublayer(self.poseTracking.renderer.layer)
+        }
+        }
+        
+        self.poseTracking.videoQueue.async(execute:{ [weak self] in
+            self?.videoSource.start()
 
+            
+
+        })
+
+    }
+
+    public func setInputSource(inputSource:InputSource){
+        if (self.inputSource==inputSource) {return}
+        switch(inputSource){
+            
+        case .CAMERA:
+            self.cameraSource.setDelegate(self.poseTracking, queue: self.poseTracking.videoQueue)
+            break
+
+        case .VIDEO:
+            break
+        }
+        
+        
+        self.inputSource = inputSource
+
+    }
     // Get the camera UI View that may contain landmarks drawing
     public var cameraView: UIView {
         return self.linderaExerciseSession
@@ -57,6 +101,7 @@ public final class Lindera{
         startPoseTracking()
     }
 
+    
 
     public func startCamera(_ completion: ((Result<Void, Error>) -> Void)? = nil) {
         // set our rendering layer frame according to cameraView boundry
@@ -182,8 +227,9 @@ public final class Lindera{
 
     // attach Mediapipe camera helper to our class
     let cameraSource = MPPCameraInputSource()
+    var videoSource = MPPPlayerInputSource()
 
-
+    var inputSource:InputSource = InputSource.CAMERA
 
 }
 
