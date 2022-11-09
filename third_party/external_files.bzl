@@ -403,7 +403,7 @@ def external_files():
     http_file(
         name = "com_google_mediapipe_labels_txt",
         sha256 = "536feacc519de3d418de26b2effb4d75694a8c4c0063e36499a46fa8061e2da9",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/labels.txt?generation=1667888034706429"],
+        urls = ["https://storage.googleapis.com/mediapipe-assets/labels.txt?generation=1667892497527642"],
     )
 
     http_file(
@@ -553,13 +553,13 @@ def external_files():
     http_file(
         name = "com_google_mediapipe_movie_review_json",
         sha256 = "c09b88af05844cad5133b49744fed3a0bd514d4a1c75b9d2f23e9a40bd7bc04e",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/movie_review.json?generation=1667888039053188"],
+        urls = ["https://storage.googleapis.com/mediapipe-assets/movie_review.json?generation=1667892501695336"],
     )
 
     http_file(
         name = "com_google_mediapipe_movie_review_labels_txt",
         sha256 = "4b9b26392f765e7a872372131cd4cee8ad7c02e496b5a1228279619b138c4b7a",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/movie_review_labels.txt?generation=1667888041670721"],
+        urls = ["https://storage.googleapis.com/mediapipe-assets/movie_review_labels.txt?generation=1667892504334882"],
     )
 
     http_file(
@@ -703,7 +703,7 @@ def external_files():
     http_file(
         name = "com_google_mediapipe_regex_vocab_txt",
         sha256 = "b1134b10927a53ce4224bbc30ccf075c9969c94ebf40c368966d1dcf445ca923",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/regex_vocab.txt?generation=1667888047885461"],
+        urls = ["https://storage.googleapis.com/mediapipe-assets/regex_vocab.txt?generation=1667892507770551"],
     )
 
     http_file(
