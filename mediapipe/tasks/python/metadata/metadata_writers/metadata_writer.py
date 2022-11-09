@@ -29,6 +29,9 @@ from mediapipe.tasks.python.metadata.metadata_writers import writer_utils
 
 _INPUT_IMAGE_NAME = 'image'
 _INPUT_IMAGE_DESCRIPTION = 'Input image to be processed.'
+_INPUT_REGEX_TEXT_NAME = 'input_text'
+_INPUT_REGEX_TEXT_DESCRIPTION = ('Embedding vectors representing the input '
+                                 'text to be processed.')
 _OUTPUT_CLASSIFICATION_NAME = 'score'
 _OUTPUT_CLASSIFICATION_DESCRIPTION = 'Score of the labels respectively.'
 
@@ -80,6 +83,22 @@ class ScoreThresholding:
     https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L468
   """
   global_score_threshold: float
+
+
+@dataclasses.dataclass
+class RegexTokenizer:
+  """Parameters of the Regex tokenizer [1] metadata information.
+
+  [1]:
+    https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L500
+
+  Attributes:
+    delim_regex_pattern: the regular expression to segment strings and create
+      tokens.
+    vocab_file_path: path to the vocabulary file.
+  """
+  delim_regex_pattern: str
+  vocab_file_path: str
 
 
 class Labels(object):
@@ -355,11 +374,11 @@ class MetadataWriter(object):
     if os.path.exists(self._temp_folder.name):
       self._temp_folder.cleanup()
 
-  def add_genernal_info(
+  def add_general_info(
       self,
       model_name: str,
       model_description: Optional[str] = None) -> 'MetadataWriter':
-    """Adds a genernal info metadata for the general metadata informantion."""
+    """Adds a general info metadata for the general metadata informantion."""
     # Will overwrite the previous `self._general_md` if exists.
     self._general_md = metadata_info.GeneralMd(
         name=model_name, description=model_description)
@@ -413,6 +432,34 @@ class MetadataWriter(object):
         tensor_type=self._input_tensor_type(len(self._input_mds)))
 
     self._input_mds.append(input_md)
+    return self
+
+  def add_regex_text_input(
+      self,
+      regex_tokenizer: RegexTokenizer,
+      name: str = _INPUT_REGEX_TEXT_NAME,
+      description: str = _INPUT_REGEX_TEXT_DESCRIPTION) -> 'MetadataWriter':
+    """Adds an input text metadata for the text input with regex tokenizer.
+
+    Args:
+      regex_tokenizer: information of the regex tokenizer [1] used to process
+        the input string.
+      name: Name of the input tensor.
+      description: Description of the input tensor.
+
+    Returns:
+      The MetaWriter instance, can be used for chained operation.
+
+    [1]:
+      https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L500
+    """
+    tokenizer_md = metadata_info.RegexTokenizerMd(
+        delim_regex_pattern=regex_tokenizer.delim_regex_pattern,
+        vocab_file_path=regex_tokenizer.vocab_file_path)
+    input_md = metadata_info.InputTextTensorMd(
+        name=name, description=description, tokenizer_md=tokenizer_md)
+    self._input_mds.append(input_md)
+    self._associated_files.append(regex_tokenizer.vocab_file_path)
     return self
 
   def add_classification_output(

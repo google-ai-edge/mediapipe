@@ -22,7 +22,7 @@ from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet
 from mediapipe.tasks.cc.components.proto import segmenter_options_pb2
-from mediapipe.tasks.cc.vision.image_segmenter.proto import image_segmenter_options_pb2
+from mediapipe.tasks.cc.vision.image_segmenter.proto import image_segmenter_graph_options_pb2
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
@@ -31,7 +31,7 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode
 
 _BaseOptions = base_options_module.BaseOptions
 _SegmenterOptionsProto = segmenter_options_pb2.SegmenterOptions
-_ImageSegmenterOptionsProto = image_segmenter_options_pb2.ImageSegmenterOptions
+_ImageSegmenterGraphOptionsProto = image_segmenter_graph_options_pb2.ImageSegmenterGraphOptions
 _RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _TaskInfo = task_info_module.TaskInfo
 
@@ -40,7 +40,7 @@ _SEGMENTATION_TAG = 'GROUPED_SEGMENTATION'
 _IMAGE_IN_STREAM_NAME = 'image_in'
 _IMAGE_OUT_STREAM_NAME = 'image_out'
 _IMAGE_TAG = 'IMAGE'
-_TASK_GRAPH_NAME = 'mediapipe.tasks.vision.ImageSegmenterGraph'
+_TASK_GRAPH_NAME = 'mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph'
 _MICRO_SECONDS_PER_MILLISECOND = 1000
 
 
@@ -81,13 +81,13 @@ class ImageSegmenterOptions:
       [List[image_module.Image], image_module.Image, int], None]] = None
 
   @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _ImageSegmenterOptionsProto:
+  def to_pb2(self) -> _ImageSegmenterGraphOptionsProto:
     """Generates an ImageSegmenterOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
     base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.IMAGE else True
     segmenter_options_proto = _SegmenterOptionsProto(
         output_type=self.output_type.value, activation=self.activation.value)
-    return _ImageSegmenterOptionsProto(
+    return _ImageSegmenterGraphOptionsProto(
         base_options=base_options_proto,
         segmenter_options=segmenter_options_proto)
 

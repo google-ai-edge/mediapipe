@@ -17,6 +17,9 @@ syntax = "proto2";
 
 package mediapipe.tasks.components.proto;
 
+option java_package = "com.google.mediapipe.tasks.components.proto";
+option java_outer_classname = "SegmenterOptionsProto";
+
 // Shared options used by image segmentation tasks.
 message SegmenterOptions {
   // Optional output mask type.

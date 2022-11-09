@@ -23,10 +23,12 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+namespace image_segmenter {
 namespace {
 
 constexpr char kSegmentationStreamName[] = "segmented_mask_out";
@@ -37,23 +39,24 @@ constexpr char kImageTag[] = "IMAGE";
 constexpr char kNormRectStreamName[] = "norm_rect_in";
 constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kSubgraphTypeName[] =
-    "mediapipe.tasks.vision.ImageSegmenterGraph";
+    "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
 
 using ::mediapipe::CalculatorGraphConfig;
 using ::mediapipe::Image;
 using ::mediapipe::tasks::components::proto::SegmenterOptions;
-using ImageSegmenterOptionsProto =
-    image_segmenter::proto::ImageSegmenterOptions;
+using ImageSegmenterGraphOptionsProto = ::mediapipe::tasks::vision::
+    image_segmenter::proto::ImageSegmenterGraphOptions;
 
 // Creates a MediaPipe graph config that only contains a single subgraph node of
-// "mediapipe.tasks.vision.ImageSegmenterGraph".
+// "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph".
 CalculatorGraphConfig CreateGraphConfig(
-    std::unique_ptr<ImageSegmenterOptionsProto> options,
+    std::unique_ptr<ImageSegmenterGraphOptionsProto> options,
     bool enable_flow_limiting) {
   api2::builder::Graph graph;
   auto& task_subgraph = graph.AddNode(kSubgraphTypeName);
-  task_subgraph.GetOptions<ImageSegmenterOptionsProto>().Swap(options.get());
+  task_subgraph.GetOptions<ImageSegmenterGraphOptionsProto>().Swap(
+      options.get());
   graph.In(kImageTag).SetName(kImageInStreamName);
   graph.In(kNormRectTag).SetName(kNormRectStreamName);
   task_subgraph.Out(kGroupedSegmentationTag).SetName(kSegmentationStreamName) >>
@@ -72,9 +75,9 @@ CalculatorGraphConfig CreateGraphConfig(
 
 // Converts the user-facing ImageSegmenterOptions struct to the internal
 // ImageSegmenterOptions proto.
-std::unique_ptr<ImageSegmenterOptionsProto> ConvertImageSegmenterOptionsToProto(
-    ImageSegmenterOptions* options) {
-  auto options_proto = std::make_unique<ImageSegmenterOptionsProto>();
+std::unique_ptr<ImageSegmenterGraphOptionsProto>
+ConvertImageSegmenterOptionsToProto(ImageSegmenterOptions* options) {
+  auto options_proto = std::make_unique<ImageSegmenterGraphOptionsProto>();
   auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
       tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
@@ -137,7 +140,7 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
         };
   }
   return core::VisionTaskApiFactory::Create<ImageSegmenter,
-                                            ImageSegmenterOptionsProto>(
+                                            ImageSegmenterGraphOptionsProto>(
       CreateGraphConfig(
           std::move(options_proto),
           options->running_mode == core::RunningMode::LIVE_STREAM),
@@ -211,6 +214,7 @@ absl::Status ImageSegmenter::SegmentAsync(
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
 }
 
+}  // namespace image_segmenter
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

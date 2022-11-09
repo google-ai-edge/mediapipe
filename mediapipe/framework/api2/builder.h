@@ -106,6 +106,13 @@ class MultiPort : public Single {
     return Single{&GetWithAutoGrow(&vec_, index)};
   }
 
+  template <typename U>
+  auto Cast() {
+    using SingleCastT =
+        std::invoke_result_t<decltype(&Single::template Cast<U>), Single*>;
+    return MultiPort<SingleCastT>(&vec_);
+  }
+
  private:
   std::vector<std::unique_ptr<Base>>& vec_;
 };

@@ -62,10 +62,10 @@ class MetadataWriter(metadata_writer.MetadataWriterBase):
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L456
 
     Returns:
-      An MetadataWrite object.
+      A MetadataWriter object.
     """
     writer = metadata_writer.MetadataWriter(model_buffer)
-    writer.add_genernal_info(_MODEL_NAME, _MODEL_DESCRIPTION)
+    writer.add_general_info(_MODEL_NAME, _MODEL_DESCRIPTION)
     writer.add_image_input(input_norm_mean, input_norm_std)
     writer.add_classification_output(labels, score_calibration)
     return cls(writer)

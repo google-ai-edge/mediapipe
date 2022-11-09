@@ -20,3 +20,10 @@ package_group(
         "//mediapipe/model_maker/...",
     ],
 )
+
+package_group(
+    name = "1p_client",
+    packages = [
+        "//research/privacy/learning/fl_eval/pcvr/...",
+    ],
+)

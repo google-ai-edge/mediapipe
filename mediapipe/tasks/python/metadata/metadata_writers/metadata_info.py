@@ -228,6 +228,45 @@ class ScoreThresholdingMd:
     return score_thresholding
 
 
+class RegexTokenizerMd:
+  """A container for the Regex tokenizer [1] metadata information.
+
+  [1]:
+    https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L500
+  """
+
+  def __init__(self, delim_regex_pattern: str, vocab_file_path: str):
+    """Initializes a RegexTokenizerMd object.
+
+    Args:
+      delim_regex_pattern: the regular expression to segment strings and create
+        tokens.
+      vocab_file_path: path to the vocabulary file.
+    """
+    self._delim_regex_pattern = delim_regex_pattern
+    self._vocab_file_path = vocab_file_path
+
+  def create_metadata(self) -> _metadata_fb.ProcessUnitT:
+    """Creates the Regex tokenizer metadata based on the information.
+
+    Returns:
+      A Flatbuffers Python object of the Regex tokenizer metadata.
+    """
+    vocab = _metadata_fb.AssociatedFileT()
+    vocab.name = self._vocab_file_path
+    vocab.description = _VOCAB_FILE_DESCRIPTION
+    vocab.type = _metadata_fb.AssociatedFileType.VOCABULARY
+
+    # Create the RegexTokenizer.
+    tokenizer = _metadata_fb.ProcessUnitT()
+    tokenizer.optionsType = (
+        _metadata_fb.ProcessUnitOptions.RegexTokenizerOptions)
+    tokenizer.options = _metadata_fb.RegexTokenizerOptionsT()
+    tokenizer.options.delimRegexPattern = self._delim_regex_pattern
+    tokenizer.options.vocabFile = [vocab]
+    return tokenizer
+
+
 class TensorMd:
   """A container for common tensor metadata information.
 
@@ -394,6 +433,56 @@ class InputImageTensorMd(TensorMd):
       normalization.options.mean = self.norm_mean
       normalization.options.std = self.norm_std
       tensor_metadata.processUnits = [normalization]
+    return tensor_metadata
+
+
+class InputTextTensorMd(TensorMd):
+  """A container for the input text tensor metadata information.
+
+  Attributes:
+    tokenizer_md: information of the tokenizer in the input text tensor, if any.
+  """
+
+  def __init__(self,
+               name: Optional[str] = None,
+               description: Optional[str] = None,
+               tokenizer_md: Optional[RegexTokenizerMd] = None):
+    """Initializes the instance of InputTextTensorMd.
+
+    Args:
+      name: name of the tensor.
+      description: description of what the tensor is.
+      tokenizer_md: information of the tokenizer in the input text tensor, if
+        any. Only `RegexTokenizer` [1] is currenly supported. If the tokenizer
+        is `BertTokenizer` [2] or `SentencePieceTokenizer` [3], refer to
+        `BertInputTensorsMd` class.
+      [1]:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L500
+      [2]:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L477
+      [3]:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L485
+    """
+    super().__init__(name, description)
+    self.tokenizer_md = tokenizer_md
+
+  def create_metadata(self) -> _metadata_fb.TensorMetadataT:
+    """Creates the input text metadata based on the information.
+
+    Returns:
+      A Flatbuffers Python object of the input text metadata.
+
+    Raises:
+      ValueError: if the type of tokenizer_md is unsupported.
+    """
+    if not isinstance(self.tokenizer_md, (type(None), RegexTokenizerMd)):
+      raise ValueError(
+          f"The type of tokenizer_options, {type(self.tokenizer_md)}, is "
+          f"unsupported")
+
+    tensor_metadata = super().create_metadata()
+    if self.tokenizer_md:
+      tensor_metadata.processUnits = [self.tokenizer_md.create_metadata()]
     return tensor_metadata
 
 

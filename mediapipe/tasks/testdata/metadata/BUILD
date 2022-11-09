@@ -31,6 +31,7 @@ mediapipe_files(srcs = [
     "mobilenet_v2_1.0_224_quant.tflite",
     "mobilenet_v2_1.0_224_quant_without_metadata.tflite",
     "mobilenet_v2_1.0_224_without_metadata.tflite",
+    "movie_review.tflite",
 ])
 
 exports_files([
@@ -54,6 +55,11 @@ exports_files([
     "labels.txt",
     "mobilenet_v2_1.0_224.json",
     "mobilenet_v2_1.0_224_quant.json",
+    "input_text_tensor_meta.json",
+    "input_text_tensor_default_meta.json",
+    "movie_review_labels.txt",
+    "regex_vocab.txt",
+    "movie_review.json",
 ])
 
 filegroup(
@@ -67,6 +73,7 @@ filegroup(
         "mobilenet_v2_1.0_224_quant.tflite",
         "mobilenet_v2_1.0_224_quant_without_metadata.tflite",
         "mobilenet_v2_1.0_224_without_metadata.tflite",
+        "movie_review.tflite",
     ],
 )
 
@@ -86,9 +93,14 @@ filegroup(
         "input_image_tensor_float_meta.json",
         "input_image_tensor_uint8_meta.json",
         "input_image_tensor_unsupported_meta.json",
+        "input_text_tensor_default_meta.json",
+        "input_text_tensor_meta.json",
         "labels.txt",
         "mobilenet_v2_1.0_224.json",
         "mobilenet_v2_1.0_224_quant.json",
+        "movie_review.json",
+        "movie_review_labels.txt",
+        "regex_vocab.txt",
         "score_calibration.txt",
         "score_calibration_file_meta.json",
         "score_calibration_tensor_meta.json",

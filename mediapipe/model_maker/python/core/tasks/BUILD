@@ -45,7 +45,10 @@ py_library(
     srcs = ["classifier.py"],
     deps = [
         ":custom_model",
+        "//mediapipe/model_maker/python/core:hyperparameters",
+        "//mediapipe/model_maker/python/core/data:classification_dataset",
         "//mediapipe/model_maker/python/core/data:dataset",
+        "//mediapipe/model_maker/python/core/utils:model_util",
     ],
 )
 

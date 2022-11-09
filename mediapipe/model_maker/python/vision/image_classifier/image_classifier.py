@@ -25,6 +25,8 @@ from mediapipe.model_maker.python.core.utils import model_util
 from mediapipe.model_maker.python.core.utils import quantization
 from mediapipe.model_maker.python.vision.core import image_preprocessing
 from mediapipe.model_maker.python.vision.image_classifier import hyperparameters as hp
+from mediapipe.model_maker.python.vision.image_classifier import image_classifier_options
+from mediapipe.model_maker.python.vision.image_classifier import model_options as model_opt
 from mediapipe.model_maker.python.vision.image_classifier import model_spec as ms
 from mediapipe.model_maker.python.vision.image_classifier import train_image_classifier_lib
 from mediapipe.tasks.python.metadata.metadata_writers import image_classifier as image_classifier_writer
@@ -35,17 +37,20 @@ class ImageClassifier(classifier.Classifier):
   """ImageClassifier for building image classification model."""
 
   def __init__(self, model_spec: ms.ModelSpec, label_names: List[str],
-               hparams: hp.HParams):
+               hparams: hp.HParams,
+               model_options: model_opt.ImageClassifierModelOptions):
     """Initializes ImageClassifier class.
 
     Args:
       model_spec: Specification for the model.
       label_names: A list of label names for the classes.
       hparams: The hyperparameters for training image classifier.
+      model_options: Model options for creating image classifier.
     """
     super().__init__(
         model_spec=model_spec, label_names=label_names, shuffle=hparams.shuffle)
     self._hparams = hparams
+    self._model_options = model_options
     self._preprocess = image_preprocessing.Preprocessor(
         input_shape=self._model_spec.input_image_shape,
         num_classes=self._num_classes,
@@ -57,30 +62,37 @@ class ImageClassifier(classifier.Classifier):
   @classmethod
   def create(
       cls,
-      model_spec: ms.SupportedModels,
       train_data: classification_ds.ClassificationDataset,
       validation_data: classification_ds.ClassificationDataset,
-      hparams: Optional[hp.HParams] = None,
+      options: image_classifier_options.ImageClassifierOptions,
   ) -> 'ImageClassifier':
     """Creates and trains an image classifier.
 
-    Loads data and trains the model based on data for image classification.
+    Loads data and trains the model based on data for image classification. If a
+    checkpoint file exists in the {options.hparams.export_dir}/checkpoint/
+    directory, the training process will load the weight from the checkpoint
+    file for continual training.
 
     Args:
-      model_spec: Specification for the model.
       train_data: Training data.
       validation_data: Validation data.
-      hparams: Hyperparameters for training image classifier.
+      options: configuration to create image classifier.
 
     Returns:
       An instance based on ImageClassifier.
     """
-    if hparams is None:
-      hparams = hp.HParams()
+    if options.hparams is None:
+      options.hparams = hp.HParams()
 
-    spec = ms.SupportedModels.get(model_spec)
+    if options.model_options is None:
+      options.model_options = model_opt.ImageClassifierModelOptions()
+
+    spec = ms.SupportedModels.get(options.supported_model)
     image_classifier = cls(
-        model_spec=spec, label_names=train_data.label_names, hparams=hparams)
+        model_spec=spec,
+        label_names=train_data.label_names,
+        hparams=options.hparams,
+        model_options=options.model_options)
 
     image_classifier._create_model()
 
@@ -90,6 +102,7 @@ class ImageClassifier(classifier.Classifier):
 
     return image_classifier
 
+  # TODO: Migrate to the shared training library of Model Maker.
   def _train(self, train_data: classification_ds.ClassificationDataset,
              validation_data: classification_ds.ClassificationDataset):
     """Trains the model with input train_data.
@@ -142,7 +155,7 @@ class ImageClassifier(classifier.Classifier):
 
     self._model = tf.keras.Sequential([
         tf.keras.Input(shape=(image_size[0], image_size[1], 3)), module_layer,
-        tf.keras.layers.Dropout(rate=self._hparams.dropout_rate),
+        tf.keras.layers.Dropout(rate=self._model_options.dropout_rate),
         tf.keras.layers.Dense(
             units=self._num_classes,
             activation='softmax',
@@ -167,10 +180,10 @@ class ImageClassifier(classifier.Classifier):
         path is {self._hparams.model_dir}/{model_name}.
       quantization_config: The configuration for model quantization.
     """
-    if not tf.io.gfile.exists(self._hparams.model_dir):
-      tf.io.gfile.makedirs(self._hparams.model_dir)
-    tflite_file = os.path.join(self._hparams.model_dir, model_name)
-    metadata_file = os.path.join(self._hparams.model_dir, 'metadata.json')
+    if not tf.io.gfile.exists(self._hparams.export_dir):
+      tf.io.gfile.makedirs(self._hparams.export_dir)
+    tflite_file = os.path.join(self._hparams.export_dir, model_name)
+    metadata_file = os.path.join(self._hparams.export_dir, 'metadata.json')
 
     tflite_model = model_util.convert_to_tflite(
         model=self._model,
@@ -180,7 +193,7 @@ class ImageClassifier(classifier.Classifier):
         tflite_model,
         self._model_spec.mean_rgb,
         self._model_spec.stddev_rgb,
-        labels=metadata_writer.Labels().add(self._label_names))
+        labels=metadata_writer.Labels().add(list(self._label_names)))
     tflite_model_with_metadata, metadata_json = writer.populate()
     model_util.save_tflite(tflite_model_with_metadata, tflite_file)
     with open(metadata_file, 'w') as f:

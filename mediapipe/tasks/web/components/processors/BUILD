@@ -26,6 +26,8 @@ mediapipe_ts_library(
     name = "base_options",
     srcs = ["base_options.ts"],
     deps = [
+        "//mediapipe/calculators/tensor:inference_calculator_jspb_proto",
+        "//mediapipe/tasks/cc/core/proto:acceleration_jspb_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/core/proto:external_file_jspb_proto",
         "//mediapipe/tasks/web/core",

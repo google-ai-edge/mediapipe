@@ -191,6 +191,43 @@ class InputImageTensorMdTest(parameterized.TestCase):
         f"{len(norm_mean)} and {len(norm_std)}", str(error.exception))
 
 
+class InputTextTensorMdTest(absltest.TestCase):
+
+  _NAME = "input text"
+  _DESCRIPTION = "The input string."
+  _VOCAB_FILE = "vocab.txt"
+  _DELIM_REGEX_PATTERN = r"[^\w\']+"
+  _EXPECTED_TENSOR_JSON = test_utils.get_test_data_path(
+      os.path.join(_TEST_DATA_DIR, "input_text_tensor_meta.json"))
+  _EXPECTED_TENSOR_DEFAULT_JSON = test_utils.get_test_data_path(
+      os.path.join(_TEST_DATA_DIR, "input_text_tensor_default_meta.json"))
+
+  def test_create_metadata_should_succeed(self):
+    regex_tokenizer_md = metadata_info.RegexTokenizerMd(
+        self._DELIM_REGEX_PATTERN, self._VOCAB_FILE)
+
+    text_tensor_md = metadata_info.InputTextTensorMd(self._NAME,
+                                                     self._DESCRIPTION,
+                                                     regex_tokenizer_md)
+
+    metadata_json = _metadata.convert_to_json(
+        _create_dummy_model_metadata_with_tensor(
+            text_tensor_md.create_metadata()))
+    with open(self._EXPECTED_TENSOR_JSON, "r") as f:
+      expected_json = f.read()
+    self.assertEqual(metadata_json, expected_json)
+
+  def test_create_metadata_by_default_should_succeed(self):
+    text_tensor_md = metadata_info.InputTextTensorMd()
+
+    metadata_json = _metadata.convert_to_json(
+        _create_dummy_model_metadata_with_tensor(
+            text_tensor_md.create_metadata()))
+    with open(self._EXPECTED_TENSOR_DEFAULT_JSON, "r") as f:
+      expected_json = f.read()
+    self.assertEqual(metadata_json, expected_json)
+
+
 class ClassificationTensorMdTest(parameterized.TestCase):
 
   _NAME = "probability"

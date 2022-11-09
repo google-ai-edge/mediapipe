@@ -15,8 +15,12 @@
 package com.google.mediapipe.tasks.components.containers;
 
 import com.google.auto.value.AutoValue;
+import com.google.mediapipe.formats.proto.ClassificationProto;
+import com.google.mediapipe.tasks.components.containers.proto.ClassificationsProto;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Represents the list of classification for a given classifier head. Typically used as a result for
@@ -28,25 +32,41 @@ public abstract class Classifications {
   /**
    * Creates a {@link Classifications} instance.
    *
-   * @param entries the list of {@link ClassificationEntry} objects containing the predicted
-   *     categories.
+   * @param categories the list of {@link Category} objects containing the predicted categories.
    * @param headIndex the index of the classifier head.
-   * @param headName the name of the classifier head.
+   * @param headName the optional name of the classifier head.
    */
   public static Classifications create(
-      List<ClassificationEntry> entries, int headIndex, String headName) {
+      List<Category> categories, int headIndex, Optional<String> headName) {
     return new AutoValue_Classifications(
-        Collections.unmodifiableList(entries), headIndex, headName);
+        Collections.unmodifiableList(categories), headIndex, headName);
   }
 
-  /** A list of {@link ClassificationEntry} objects. */
-  public abstract List<ClassificationEntry> entries();
+  /**
+   * Creates a {@link Classifications} object from a {@link ClassificationsProto.Classifications}
+   * protobuf message.
+   *
+   * @param proto the {@link ClassificationsProto.Classifications} protobuf message to convert.
+   */
+  public static Classifications createFromProto(ClassificationsProto.Classifications proto) {
+    List<Category> categories = new ArrayList<>();
+    for (ClassificationProto.Classification classificationProto :
+        proto.getClassificationList().getClassificationList()) {
+      categories.add(Category.createFromProto(classificationProto));
+    }
+    Optional<String> headName =
+        proto.hasHeadName() ? Optional.of(proto.getHeadName()) : Optional.empty();
+    return create(categories, proto.getHeadIndex(), headName);
+  }
+
+  /** A list of {@link Category} objects. */
+  public abstract List<Category> categories();
 
   /**
    * The index of the classifier head these entries refer to. This is useful for multi-head models.
    */
   public abstract int headIndex();
 
-  /** The name of the classifier head, which is the corresponding tensor metadata name. */
-  public abstract String headName();
+  /** The optional name of the classifier head, which is the corresponding tensor metadata name. */
+  public abstract Optional<String> headName();
 }

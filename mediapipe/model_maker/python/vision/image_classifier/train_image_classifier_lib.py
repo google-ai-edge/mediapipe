@@ -14,8 +14,6 @@
 """Library to train model."""
 
 import os
-from typing import List
-
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.utils import model_util
@@ -49,18 +47,6 @@ def _create_optimizer(init_lr: float, decay_steps: int,
   return optimizer
 
 
-def _get_default_callbacks(model_dir: str) -> List[tf.keras.callbacks.Callback]:
-  """Gets default callbacks."""
-  summary_dir = os.path.join(model_dir, 'summaries')
-  summary_callback = tf.keras.callbacks.TensorBoard(summary_dir)
-  # Save checkpoint every 20 epochs.
-
-  checkpoint_path = os.path.join(model_dir, 'checkpoint')
-  checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-      checkpoint_path, save_weights_only=True, period=20)
-  return [summary_callback, checkpoint_callback]
-
-
 def train_model(model: tf.keras.Model, hparams: hp.HParams,
                 train_ds: tf.data.Dataset,
                 validation_ds: tf.data.Dataset) -> tf.keras.callbacks.History:
@@ -81,7 +67,8 @@ def train_model(model: tf.keras.Model, hparams: hp.HParams,
   learning_rate = hparams.learning_rate * hparams.batch_size / 256
 
   # Get decay steps.
-  total_training_steps = hparams.steps_per_epoch * hparams.train_epochs
+  # NOMUTANTS--(b/256493858):Plan to test it in the unified training library.
+  total_training_steps = hparams.steps_per_epoch * hparams.epochs
   default_decay_steps = hparams.decay_samples // hparams.batch_size
   decay_steps = max(total_training_steps, default_decay_steps)
 
@@ -92,11 +79,24 @@ def train_model(model: tf.keras.Model, hparams: hp.HParams,
   loss = tf.keras.losses.CategoricalCrossentropy(
       label_smoothing=hparams.label_smoothing)
   model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
-  callbacks = _get_default_callbacks(hparams.model_dir)
+
+  summary_dir = os.path.join(hparams.export_dir, 'summaries')
+  summary_callback = tf.keras.callbacks.TensorBoard(summary_dir)
+  # Save checkpoint every 5 epochs.
+  checkpoint_path = os.path.join(hparams.export_dir, 'checkpoint')
+  checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+      os.path.join(checkpoint_path, 'model-{epoch:04d}'),
+      save_weights_only=True,
+      period=5)
+
+  latest_checkpoint = tf.train.latest_checkpoint(checkpoint_path)
+  if latest_checkpoint:
+    print(f'Resuming from {latest_checkpoint}')
+    model.load_weights(latest_checkpoint)
 
   # Train the model.
   return model.fit(
       x=train_ds,
-      epochs=hparams.train_epochs,
+      epochs=hparams.epochs,
       validation_data=validation_ds,
-      callbacks=callbacks)
+      callbacks=[summary_callback, checkpoint_callback])

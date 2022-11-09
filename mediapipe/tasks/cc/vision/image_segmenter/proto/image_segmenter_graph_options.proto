@@ -21,9 +21,12 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/components/proto/segmenter_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
-message ImageSegmenterOptions {
+option java_package = "com.google.mediapipe.tasks.vision.imagesegmenter.proto";
+option java_outer_classname = "ImageSegmenterGraphOptionsProto";
+
+message ImageSegmenterGraphOptions {
   extend mediapipe.CalculatorOptions {
-    optional ImageSegmenterOptions ext = 458105758;
+    optional ImageSegmenterGraphOptions ext = 458105758;
   }
   // Base options for configuring MediaPipe Tasks, such as specifying the TfLite
   // model file with metadata, accelerator options, etc.

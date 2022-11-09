@@ -53,3 +53,17 @@ py_test(
         "//mediapipe/tasks/python/test:test_utils",
     ],
 )
+
+py_test(
+    name = "text_classifier_test",
+    srcs = ["text_classifier_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/metadata:data_files",
+        "//mediapipe/tasks/testdata/metadata:model_files",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
+        "//mediapipe/tasks/python/metadata/metadata_writers:text_classifier",
+        "//mediapipe/tasks/python/test:test_utils",
+    ],
+)
