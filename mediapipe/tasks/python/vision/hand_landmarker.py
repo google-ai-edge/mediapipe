@@ -54,8 +54,8 @@ _MICRO_SECONDS_PER_MILLISECOND = 1000
 
 
 @dataclasses.dataclass
-class HandLandmarksDetectionResult:
-  """The hand landmarks detection result from HandLandmarker, where each vector
+class HandLandmarkerResult:
+  """The hand landmarks result from HandLandmarker, where each vector
   element represents a single hand detected in the image.
 
   Attributes:
@@ -69,9 +69,9 @@ class HandLandmarksDetectionResult:
   hand_world_landmarks: List[List[landmark_module.Landmark]]
 
 
-def _build_detection_result(
+def _build_landmarker_result(
     output_packets: Mapping[str,packet_module.Packet]
-) -> HandLandmarksDetectionResult:
+) -> HandLandmarkerResult:
   """Constructs a `HandLandmarksDetectionResult` from output packets."""
   handedness_proto_list = packet_getter.get_proto_list(
       output_packets[_HANDEDNESS_STREAM_NAME])
@@ -114,9 +114,9 @@ def _build_detection_result(
           landmark_module.Landmark.create_from_pb2(hand_world_landmark))
     hand_world_landmarks_results.append(hand_world_landmarks_list)
 
-  return HandLandmarksDetectionResult(handedness_results,
-                                      hand_landmarks_results,
-                                      hand_world_landmarks_results)
+  return HandLandmarkerResult(handedness_results,
+                              hand_landmarks_results,
+                              hand_world_landmarks_results)
 
 
 @dataclasses.dataclass
@@ -151,7 +151,7 @@ class HandLandmarkerOptions:
   min_hand_presence_confidence: Optional[float] = 0.5
   min_tracking_confidence: Optional[float] = 0.5
   result_callback: Optional[Callable[
-      [HandLandmarksDetectionResult, image_module.Image, int], None]] = None
+    [HandLandmarkerResult, image_module.Image, int], None]] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _HandLandmarkerGraphOptionsProto:
@@ -221,11 +221,11 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
       if output_packets[_HAND_LANDMARKS_STREAM_NAME].is_empty():
         empty_packet = output_packets[_HAND_LANDMARKS_STREAM_NAME]
         options.result_callback(
-            HandLandmarksDetectionResult([], [], []), image,
+            HandLandmarkerResult([], [], []), image,
             empty_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
         return
 
-      hand_landmarks_detection_result = _build_detection_result(output_packets)
+      hand_landmarks_detection_result = _build_landmarker_result(output_packets)
       timestamp = output_packets[_HAND_LANDMARKS_STREAM_NAME].timestamp
       options.result_callback(hand_landmarks_detection_result, image,
                               timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
@@ -255,7 +255,7 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
       self,
       image: image_module.Image,
       image_processing_options: Optional[_ImageProcessingOptions] = None
-  ) -> HandLandmarksDetectionResult:
+  ) -> HandLandmarkerResult:
     """Performs hand landmarks detection on the given image.
 
   Only use this method when the HandLandmarker is created with the image
@@ -286,16 +286,16 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
     })
 
     if output_packets[_HAND_LANDMARKS_STREAM_NAME].is_empty():
-      return HandLandmarksDetectionResult([], [], [])
+      return HandLandmarkerResult([], [], [])
 
-    return _build_detection_result(output_packets)
+    return _build_landmarker_result(output_packets)
 
   def detect_for_video(
       self,
       image: image_module.Image,
       timestamp_ms: int,
       image_processing_options: Optional[_ImageProcessingOptions] = None
-  ) -> HandLandmarksDetectionResult:
+  ) -> HandLandmarkerResult:
     """Performs hand landmarks detection on the provided video frame.
 
     Only use this method when the HandLandmarker is created with the video
@@ -330,9 +330,9 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
     })
 
     if output_packets[_HAND_LANDMARKS_STREAM_NAME].is_empty():
-      return HandLandmarksDetectionResult([], [], [])
+      return HandLandmarkerResult([], [], [])
 
-    return _build_detection_result(output_packets)
+    return _build_landmarker_result(output_packets)
 
   def detect_async(
       self,

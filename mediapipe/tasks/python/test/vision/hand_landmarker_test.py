@@ -41,7 +41,7 @@ _LandmarksDetectionResult = landmark_detection_result_module.LandmarksDetectionR
 _Image = image_module.Image
 _HandLandmarker = hand_landmarker.HandLandmarker
 _HandLandmarkerOptions = hand_landmarker.HandLandmarkerOptions
-_HandLandmarksDetectionResult = hand_landmarker.HandLandmarksDetectionResult
+_HandLandmarkerResult = hand_landmarker.HandLandmarkerResult
 _RUNNING_MODE = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 
@@ -58,8 +58,8 @@ _LANDMARKS_ERROR_TOLERANCE = 0.03
 _HANDEDNESS_MARGIN = 0.05
 
 
-def _get_expected_hand_landmarks_detection_result(
-    file_path: str) -> _HandLandmarksDetectionResult:
+def _get_expected_hand_landmarker_result(
+    file_path: str) -> _HandLandmarkerResult:
   landmarks_detection_result_file_path = test_utils.get_test_data_path(
     file_path)
   with open(landmarks_detection_result_file_path, "rb") as f:
@@ -69,7 +69,7 @@ def _get_expected_hand_landmarks_detection_result(
     text_format.Parse(f.read(), landmarks_detection_result_proto)
     landmarks_detection_result = _LandmarksDetectionResult.create_from_pb2(
         landmarks_detection_result_proto)
-  return _HandLandmarksDetectionResult(
+  return _HandLandmarkerResult(
       handedness=[landmarks_detection_result.categories],
       hand_landmarks=[landmarks_detection_result.landmarks],
       hand_world_landmarks=[landmarks_detection_result.world_landmarks])
@@ -91,8 +91,8 @@ class HandLandmarkerTest(parameterized.TestCase):
 
   def _assert_actual_result_approximately_matches_expected_result(
       self,
-      actual_result: _HandLandmarksDetectionResult,
-      expected_result: _HandLandmarksDetectionResult
+      actual_result: _HandLandmarkerResult,
+      expected_result: _HandLandmarkerResult
   ):
     # Expects to have the same number of hands detected.
     self.assertLen(actual_result.hand_landmarks,
@@ -150,10 +150,10 @@ class HandLandmarkerTest(parameterized.TestCase):
       self.assertIsInstance(landmarker, _HandLandmarker)
 
   @parameterized.parameters(
-      (ModelFileType.FILE_NAME, _get_expected_hand_landmarks_detection_result(
+      (ModelFileType.FILE_NAME, _get_expected_hand_landmarker_result(
           _THUMB_UP_LANDMARKS
       )),
-      (ModelFileType.FILE_CONTENT, _get_expected_hand_landmarks_detection_result(
+      (ModelFileType.FILE_CONTENT, _get_expected_hand_landmarker_result(
           _THUMB_UP_LANDMARKS
       )))
   def test_detect(self, model_file_type, expected_detection_result):
@@ -181,10 +181,10 @@ class HandLandmarkerTest(parameterized.TestCase):
     landmarker.close()
 
   @parameterized.parameters(
-      (ModelFileType.FILE_NAME, _get_expected_hand_landmarks_detection_result(
+      (ModelFileType.FILE_NAME, _get_expected_hand_landmarker_result(
           _THUMB_UP_LANDMARKS
       )),
-      (ModelFileType.FILE_CONTENT, _get_expected_hand_landmarks_detection_result(
+      (ModelFileType.FILE_CONTENT, _get_expected_hand_landmarker_result(
           _THUMB_UP_LANDMARKS
       )))
   def test_detect_in_context(self, model_file_type, expected_detection_result):
@@ -233,7 +233,7 @@ class HandLandmarkerTest(parameterized.TestCase):
       # Performs hand landmarks detection on the input.
       detection_result = landmarker.detect(test_image,
                                            image_processing_options)
-      expected_detection_result = _get_expected_hand_landmarks_detection_result(
+      expected_detection_result = _get_expected_hand_landmarker_result(
           _POINTING_UP_ROTATED_LANDMARKS)
       # Comparing results.
       self._assert_actual_result_approximately_matches_expected_result(
@@ -332,14 +332,14 @@ class HandLandmarkerTest(parameterized.TestCase):
         landmarker.detect_for_video(self.test_image, 0)
 
   @parameterized.parameters(
-      (_THUMB_UP_IMAGE, 0, _get_expected_hand_landmarks_detection_result(
+      (_THUMB_UP_IMAGE, 0, _get_expected_hand_landmarker_result(
           _THUMB_UP_LANDMARKS)),
-      (_POINTING_UP_IMAGE, 0, _get_expected_hand_landmarks_detection_result(
+      (_POINTING_UP_IMAGE, 0, _get_expected_hand_landmarker_result(
          _POINTING_UP_LANDMARKS)),
       (_POINTING_UP_ROTATED_IMAGE, -90,
-          _get_expected_hand_landmarks_detection_result(
+       _get_expected_hand_landmarker_result(
               _POINTING_UP_ROTATED_LANDMARKS)),
-      (_NO_HANDS_IMAGE, 0, _HandLandmarksDetectionResult([], [], [])))
+      (_NO_HANDS_IMAGE, 0, _HandLandmarkerResult([], [], [])))
   def test_detect_for_video(self, image_path, rotation, expected_result):
     test_image = _Image.create_from_file(
       test_utils.get_test_data_path(image_path))
@@ -392,14 +392,14 @@ class HandLandmarkerTest(parameterized.TestCase):
         landmarker.detect_async(self.test_image, 0)
 
   @parameterized.parameters(
-      (_THUMB_UP_IMAGE, 0, _get_expected_hand_landmarks_detection_result(
+      (_THUMB_UP_IMAGE, 0, _get_expected_hand_landmarker_result(
           _THUMB_UP_LANDMARKS)),
-      (_POINTING_UP_IMAGE, 0, _get_expected_hand_landmarks_detection_result(
+      (_POINTING_UP_IMAGE, 0, _get_expected_hand_landmarker_result(
           _POINTING_UP_LANDMARKS)),
       (_POINTING_UP_ROTATED_IMAGE, -90,
-          _get_expected_hand_landmarks_detection_result(
+       _get_expected_hand_landmarker_result(
               _POINTING_UP_ROTATED_LANDMARKS)),
-      (_NO_HANDS_IMAGE, 0, _HandLandmarksDetectionResult([], [], [])))
+      (_NO_HANDS_IMAGE, 0, _HandLandmarkerResult([], [], [])))
   def test_detect_async_calls(self, image_path, rotation, expected_result):
     test_image = _Image.create_from_file(
         test_utils.get_test_data_path(image_path))
@@ -407,7 +407,7 @@ class HandLandmarkerTest(parameterized.TestCase):
     image_processing_options = _ImageProcessingOptions(rotation_degrees=rotation)
     observed_timestamp_ms = -1
 
-    def check_result(result: _HandLandmarksDetectionResult,
+    def check_result(result: _HandLandmarkerResult,
                      output_image: _Image,
                      timestamp_ms: int):
       if result.hand_landmarks and result.hand_world_landmarks and \
