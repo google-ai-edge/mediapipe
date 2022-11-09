@@ -1,15 +1,21 @@
 package com.google.mediapipe.solutions.lindera;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.common.collect.ImmutableList;
 import com.google.mediapipe.formats.proto.LandmarkProto;
 import com.google.mediapipe.solutioncore.CameraInput;
 import com.google.mediapipe.solutioncore.SolutionGlSurfaceView;
+import com.google.mediapipe.solutioncore.VideoInput;
 import com.google.mediapipe.solutions.posetracking.PoseTracking;
 import com.google.mediapipe.solutions.posetracking.PoseTrackingOptions;
 import com.google.mediapipe.solutions.posetracking.PoseTrackingResult;
@@ -24,7 +30,7 @@ public class Lindera {
     private ComputerVisionPlugin plugin;
     public FpsHelper fpsHelper = new FpsHelper();
     private PoseTracking poseTracking;
-    
+    private InputSource inputSource = InputSource.CAMERA;
     private CameraRotation cameraRotation = CameraRotation.AUTOMATIC;
     
     // Live camera demo UI and camera components.
@@ -34,7 +40,9 @@ public class Lindera {
     private AppCompatActivity appCompatActivity;
     private  ViewGroup computerVisionContainerView;
     private PoseTrackingResultGlRenderer solutionRenderer;
-    
+    private VideoInput videoInput;
+    private ActivityResultLauncher<Intent> videoGetter;
+
     public Lindera(ComputerVisionPlugin plugin){
         this.plugin = plugin;
     }
@@ -72,13 +80,41 @@ public class Lindera {
 
         this.computerVisionContainerView = computerVisionContainerView;
         this.appCompatActivity = appCompatActivity;
+
         startDetection();
     }
 
     public void setCameraRotation(CameraRotation cameraRotation){
         this.cameraRotation = cameraRotation;
     }
+    public void setInputSource(InputSource source){
+        this.inputSource = source;
+    }
 
+    /**
+     * Required for picking videos
+     * @param appCompatActivity
+     */
+    public void setupVideoPicker(AppCompatActivity appCompatActivity){
+        videoGetter =
+                appCompatActivity.registerForActivityResult(
+                        new ActivityResultContracts.StartActivityForResult(),
+                        result -> {
+                            Intent resultIntent = result.getData();
+                            if (resultIntent != null) {
+                                if (result.getResultCode() == Activity.RESULT_OK) {
+                                    glSurfaceView.post(
+                                            () ->
+                                                    videoInput.start(
+                                                            appCompatActivity,
+                                                            resultIntent.getData(),
+                                                            poseTracking.getGlContext(),
+                                                            glSurfaceView.getWidth(),
+                                                            glSurfaceView.getHeight()));
+                                }
+                            }
+                        });
+    }
     private void setupEventListener() {
         poseTracking.setResultListener(
             poseTrackingResult -> {
@@ -132,6 +168,12 @@ public class Lindera {
                 );    
     }
 
+    public void pickVideo(){
+        inputSource = InputSource.VIDEO;
+        Intent pickVideoIntent = new Intent(Intent.ACTION_PICK);
+        pickVideoIntent.setDataAndType(MediaStore.Video.Media.INTERNAL_CONTENT_URI, "video/*");
+        videoGetter.launch(pickVideoIntent);
+    }
     public void startDetection(PoseTrackingOptions options){
         // ensure that class is initalized
         assert (appCompatActivity != null);
@@ -142,10 +184,14 @@ public class Lindera {
                         options);
         poseTracking.setErrorListener(
                 (message, e) -> Log.e("Lindera", "MediaPipe Pose Tracking error:" + message));
-        cameraInput = new CameraInput(appCompatActivity);
+        if (inputSource==InputSource.CAMERA) {
+            cameraInput = new CameraInput(appCompatActivity);
 
-        cameraInput.setNewFrameListener(textureFrame -> poseTracking.send(textureFrame));
-
+            cameraInput.setNewFrameListener(textureFrame -> poseTracking.send(textureFrame));
+        }else if (inputSource==InputSource.VIDEO){
+            videoInput = new VideoInput(appCompatActivity);
+            videoInput.setNewFrameListener(textureFrame -> poseTracking.send(textureFrame));
+        }
         // Initializes a new Gl surface view with a user-defined PoseTrackingResultGlRenderer.
         glSurfaceView = 
             new SolutionGlSurfaceView<>(
@@ -162,7 +208,9 @@ public class Lindera {
         
         // The runnable to start camera after the gl surface view is attached.
         // For video input source, videoInput.start() will be called when the video uri is available.
-        glSurfaceView.post(this::startCamera);
+        if (inputSource==InputSource.CAMERA) {
+            glSurfaceView.post(this::startCamera);
+        }
         // Updates the preview layout.
 
         computerVisionContainerView.removeAllViewsInLayout();
@@ -178,6 +226,10 @@ public class Lindera {
         }
         if (glSurfaceView != null) {
             glSurfaceView.setVisibility(View.GONE);
+        }
+        if (videoInput != null) {
+            videoInput.setNewFrameListener(null);
+            videoInput.close();
         }
         if (poseTracking != null) {
             poseTracking.close();

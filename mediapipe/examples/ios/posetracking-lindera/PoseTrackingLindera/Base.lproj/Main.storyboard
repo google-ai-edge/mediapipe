@@ -56,6 +56,38 @@
                                 <color key="textColor" systemColor="secondarySystemGroupedBackgroundColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xio-lL-zFK">
+                                <rect key="frame" x="20" y="133" width="374" height="212"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <subviews>
+                                    <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="yeq-1E-9PL">
+                                        <rect key="frame" x="8" y="104" width="151" height="43"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="gray" title="Start Camera"/>
+                                        <connections>
+                                            <action selector="startCamera" destination="BYZ-38-t0r" eventType="touchDown" id="bJ0-NK-Tiy"/>
+                                        </connections>
+                                    </button>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Please Select Input Source" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="qIp-Q6-AgF">
+                                        <rect key="frame" x="78" y="8" width="218" height="58"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <nil key="textColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="SV7-hA-BsP">
+                                        <rect key="frame" x="215" y="104" width="151" height="43"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <state key="normal" title="Button"/>
+                                        <buttonConfiguration key="configuration" style="gray" title="Pick Video"/>
+                                        <connections>
+                                            <action selector="pickVideo" destination="BYZ-38-t0r" eventType="touchDown" id="YSl-m6-lbI"/>
+                                        </connections>
+                                    </button>
+                                </subviews>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                            </view>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
@@ -63,8 +95,10 @@
                     <connections>
                         <outlet property="chooseModelButton" destination="oaC-Ax-V0a" id="Knp-ll-Zgu"/>
                         <outlet property="fpsLabel" destination="hSQ-so-ykH" id="sw5-ik-ro9"/>
+                        <outlet property="inputSourceView" destination="xio-lL-zFK" id="uiz-Te-v97"/>
                         <outlet property="liveView" destination="8bC-Xf-vdC" id="COw-5j-lAL"/>
                         <outlet property="showLandmarksButton" destination="dv5-h1-tjP" id="xXW-UG-aSR"/>
+                        <outlet property="startCameraButton" destination="yeq-1E-9PL" id="D90-1U-dYK"/>
                         <outlet property="titleview" destination="1BO-kg-lOt" id="uP4-0G-Gix"/>
                     </connections>
                 </viewController>

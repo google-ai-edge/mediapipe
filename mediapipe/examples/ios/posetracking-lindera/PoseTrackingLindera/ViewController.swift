@@ -7,9 +7,34 @@
 import UIKit
 import LinderaDetection
 //import LinderaDetection
+import PhotosUI
 
+class ViewController: UIViewController, PHPickerViewControllerDelegate {
+    
+    // Video Picker
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        
+        for result in results {
+            result.itemProvider.loadFileRepresentation(forTypeIdentifier: UTType.movie.identifier){url,err in
+                if let url = url {
+                    DispatchQueue.main.async {
+                        [weak self] in
 
-class ViewController: UIViewController {
+                        picker.dismiss(animated: true)
+                        self?.inputSourceView.isHidden = true
+                        
+                    }
+                    let asset  = AVAsset(url: url)
+                    self.lindera.startVideo(asset: asset)
+                    
+                }
+            }
+        }
+        
+//
+        
+    }
+    
     
     //MARK: - UI Elements
     
@@ -17,11 +42,30 @@ class ViewController: UIViewController {
     @IBOutlet  var liveView : UIView!
     @IBOutlet var showLandmarksButton: UIButton!
     @IBOutlet var chooseModelButton: UIButton!
+    @IBOutlet var startCameraButton: UIButton!
     @IBOutlet var titleview: UIView!
     @IBOutlet var fpsLabel: UILabel!
-    
+    @IBOutlet var inputSourceView: UIView!
     
     //MARK: - UI Actions
+    @IBAction func startCamera(){
+        lindera.startCamera()
+        inputSourceView.isHidden = true
+    
+
+        
+    }
+    
+    @IBAction func pickVideo(){
+        var configuration = PHPickerConfiguration(photoLibrary: .shared())
+        let filter = PHPickerFilter.any(of: [ .videos])
+        configuration.filter = filter
+        configuration.selectionLimit = 1
+        let picker = PHPickerViewController(configuration: configuration)
+        picker.delegate = self
+        present(picker, animated: true)
+        
+    }
     
     @IBAction func setModelComplexity(){
         let alert = UIAlertController(
@@ -150,12 +194,16 @@ class ViewController: UIViewController {
         // Otherwise they are hidden
         self.liveView.bringSubviewToFront(titleview)
         self.liveView.bringSubviewToFront(fpsLabel)
-        
+        self.liveView.bringSubviewToFront(inputSourceView)
         // Make the Landmarks and Model button text reflect the state in lindera object
         updateLandmarksButtonText()
         updateModelButtonText()
         
-        lindera.startCamera()
+
+    
+
+
+        
 
         
     }
