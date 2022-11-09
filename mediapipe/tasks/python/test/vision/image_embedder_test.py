@@ -23,7 +23,7 @@ from absl.testing import parameterized
 
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.python.components.processors import embedder_options as embedder_options_module
-from mediapipe.tasks.python.components.containers import embeddings as embeddings_module
+from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
 from mediapipe.tasks.python.components.containers import rect
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
@@ -31,13 +31,13 @@ from mediapipe.tasks.python.vision import image_embedder
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
+ImageEmbedderResult = embedding_result_module.EmbeddingResult
 _Rect = rect.Rect
 _BaseOptions = base_options_module.BaseOptions
 _EmbedderOptions = embedder_options_module.EmbedderOptions
-_FloatEmbedding = embeddings_module.FloatEmbedding
-_QuantizedEmbedding = embeddings_module.QuantizedEmbedding
-_Embedding = embeddings_module.Embedding
-_EmbeddingResult = embeddings_module.EmbeddingResult
+_FloatEmbedding = embedding_result_module.FloatEmbedding
+_QuantizedEmbedding = embedding_result_module.QuantizedEmbedding
+_Embedding = embedding_result_module.Embedding
 _Image = image_module.Image
 _ImageEmbedder = image_embedder.ImageEmbedder
 _ImageEmbedderOptions = image_embedder.ImageEmbedderOptions
@@ -346,7 +346,7 @@ class ImageEmbedderTest(parameterized.TestCase):
 
     observed_timestamp_ms = -1
 
-    def check_result(result: _EmbeddingResult, output_image: _Image,
+    def check_result(result: ImageEmbedderResult, output_image: _Image,
                      timestamp_ms: int):
       # Checks cosine similarity.
       self._check_cosine_similarity(result, crop_result, quantize=False,
@@ -378,7 +378,7 @@ class ImageEmbedderTest(parameterized.TestCase):
     image_processing_options = _ImageProcessingOptions(roi)
     observed_timestamp_ms = -1
 
-    def check_result(result: _EmbeddingResult, output_image: _Image,
+    def check_result(result: ImageEmbedderResult, output_image: _Image,
                      timestamp_ms: int):
       # Checks cosine similarity.
       self._check_cosine_similarity(result, crop_result, quantize=False,

@@ -85,7 +85,7 @@ py_test(
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/processors:embedder_options",
         "//mediapipe/tasks/python/components/utils:cosine_similarity",
-        "//mediapipe/tasks/python/components/containers:embeddings",
+        "//mediapipe/tasks/python/components/containers:embedding_result",
         "//mediapipe/tasks/python/components/containers:rect",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",

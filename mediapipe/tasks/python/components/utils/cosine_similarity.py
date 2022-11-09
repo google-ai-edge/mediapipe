@@ -15,10 +15,10 @@
 
 import numpy as np
 
-from mediapipe.tasks.python.components.containers import embeddings
+from mediapipe.tasks.python.components.containers import embedding_result
 from mediapipe.tasks.python.components.processors import embedder_options
 
-_Embedding = embeddings.Embedding
+_Embedding = embedding_result.Embedding
 _EmbedderOptions = embedder_options.EmbedderOptions
 
 

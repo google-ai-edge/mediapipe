@@ -106,8 +106,8 @@ py_library(
 )
 
 py_library(
-    name = "embeddings",
-    srcs = ["embeddings.py"],
+    name = "embedding_result",
+    srcs = ["embedding_result.py"],
     deps = [
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
