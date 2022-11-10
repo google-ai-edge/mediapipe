@@ -18,7 +18,7 @@ import {BaseOptions} from '../../../../tasks/web/core/base_options';
 import {ClassifierOptions} from '../../../../tasks/web/core/classifier_options';
 
 /** Options to configure the MediaPipe Gesture Recognizer Task */
-export interface GestureRecognizerOptions {
+export declare interface GestureRecognizerOptions {
   /** Options to configure the loading of the model assets. */
   baseOptions?: BaseOptions;
 
