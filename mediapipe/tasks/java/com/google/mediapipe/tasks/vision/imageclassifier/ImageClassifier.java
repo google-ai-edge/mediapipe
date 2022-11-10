@@ -176,7 +176,8 @@ public final class ImageClassifier extends BaseVisionTaskApi {
                       PacketGetter.getProto(
                           packets.get(CLASSIFICATIONS_OUT_STREAM_INDEX),
                           ClassificationsProto.ClassificationResult.getDefaultInstance())),
-                  packets.get(CLASSIFICATIONS_OUT_STREAM_INDEX).getTimestamp());
+                  BaseVisionTaskApi.generateResultTimestampMs(
+                      options.runningMode(), packets.get(CLASSIFICATIONS_OUT_STREAM_INDEX)));
             } catch (IOException e) {
               throw new MediaPipeException(
                   MediaPipeException.StatusCode.INTERNAL.ordinal(), e.getMessage());

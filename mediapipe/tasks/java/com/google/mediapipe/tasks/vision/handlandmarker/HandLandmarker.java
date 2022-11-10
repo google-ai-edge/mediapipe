@@ -165,7 +165,8 @@ public final class HandLandmarker extends BaseVisionTaskApi {
                     packets.get(WORLD_LANDMARKS_OUT_STREAM_INDEX), LandmarkList.parser()),
                 PacketGetter.getProtoVector(
                     packets.get(HANDEDNESS_OUT_STREAM_INDEX), ClassificationList.parser()),
-                packets.get(LANDMARKS_OUT_STREAM_INDEX).getTimestamp());
+                BaseVisionTaskApi.generateResultTimestampMs(
+                    landmarkerOptions.runningMode(), packets.get(LANDMARKS_OUT_STREAM_INDEX)));
           }
 
           @Override
