@@ -98,6 +98,7 @@ cc_library(
         "//conditions:default": [
             "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
             "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+            "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
         ],
     }),
 )
