@@ -119,12 +119,6 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
       } else {
         Log.e(TAG, "Error occurs when getting MediaPipe task result. " + e);
       }
-    } finally {
-      for (Packet packet : packets) {
-        if (packet != null) {
-          packet.release();
-        }
-      }
     }
   }
 }
