@@ -20,7 +20,6 @@ from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
-from mediapipe.python._framework_bindings import task_runner as task_runner_module
 from mediapipe.tasks.cc.vision.image_embedder.proto import image_embedder_graph_options_pb2
 from mediapipe.tasks.cc.components.containers.proto import embeddings_pb2
 from mediapipe.tasks.python.components.processors import embedder_options
@@ -40,7 +39,6 @@ _EmbedderOptions = embedder_options.EmbedderOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _TaskInfo = task_info_module.TaskInfo
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
-_TaskRunner = task_runner_module.TaskRunner
 
 _EMBEDDINGS_OUT_STREAM_NAME = 'embeddings_out'
 _EMBEDDINGS_TAG = 'EMBEDDINGS'
@@ -112,7 +110,7 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       `ImageEmbedderOptions`.
 
     Raises:
-      ValueError: If failed to create `ImageClassifier` object from the provided
+      ValueError: If failed to create `ImageEmbedder` object from the provided
         file such as invalid file path.
       RuntimeError: If other types of error occurred.
     """
@@ -185,7 +183,7 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       image_processing_options: Options for image processing.
 
     Returns:
-      A embedding result object that contains a list of embeddings.
+      An embedding result object that contains a list of embeddings.
 
     Raises:
       ValueError: If any of the input arguments is invalid.
@@ -223,7 +221,7 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
       image_processing_options: Options for image processing.
 
     Returns:
-      A embedding result object that contains a list of embeddings.
+      An embedding result object that contains a list of embeddings.
 
     Raises:
       ValueError: If any of the input arguments is invalid.
@@ -265,7 +263,7 @@ class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
     per input image.
 
     The `result_callback` provides:
-      - A embedding result object that contains a list of embeddings.
+      - An embedding result object that contains a list of embeddings.
       - The input image that the image embedder runs on.
       - The input timestamp in milliseconds.
 
