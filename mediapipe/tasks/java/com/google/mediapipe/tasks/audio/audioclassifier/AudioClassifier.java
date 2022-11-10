@@ -188,7 +188,7 @@ public final class AudioClassifier extends BaseAudioTaskApi {
         });
     if (options.resultListener().isPresent()) {
       ResultListener<AudioClassifierResult, Void> resultListener =
-          new ResultListener<>() {
+          new ResultListener<AudioClassifierResult, Void>() {
             @Override
             public void run(AudioClassifierResult audioClassifierResult, Void input) {
               options.resultListener().get().run(audioClassifierResult);

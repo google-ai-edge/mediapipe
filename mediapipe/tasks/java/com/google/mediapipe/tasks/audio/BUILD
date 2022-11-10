@@ -25,7 +25,7 @@ android_library(
     deps = [
         ":libmediapipe_tasks_audio_jni_lib",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:audio_data",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:audiodata",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "@maven//:com_google_guava_guava",
     ],
@@ -66,11 +66,19 @@ android_library(
         "//mediapipe/tasks/cc/audio/audio_classifier/proto:audio_classifier_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:audio_data",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:audiodata",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:classifieroptions",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
+)
+
+load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_tasks_audio_aar")
+
+mediapipe_tasks_audio_aar(
+    name = "tasks_audio",
+    srcs = glob(["**/*.java"]),
+    native_library = ":libmediapipe_tasks_audio_jni_lib",
 )
