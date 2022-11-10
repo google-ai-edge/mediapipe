@@ -287,6 +287,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_gesture_recognizer_task",
+        sha256 = "a966b1d4e774e0423c19c8aa71f070e5a72fe7a03c2663dd2f3cb0b0095ee3e1",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/gesture_recognizer.task?generation=1668100501451433"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_golden_json_json",
         sha256 = "55c0c88748d099aa379930504df62c6c8f1d8874ea52d2f8a925f352c4c7f09c",
         urls = ["https://storage.googleapis.com/mediapipe-assets/golden_json.json?generation=1664340169675228"],
