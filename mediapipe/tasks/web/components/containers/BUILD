@@ -10,8 +10,8 @@ mediapipe_ts_library(
 )
 
 mediapipe_ts_library(
-    name = "classifications",
-    srcs = ["classifications.d.ts"],
+    name = "classification_result",
+    srcs = ["classification_result.d.ts"],
     deps = [":category"],
 )
 

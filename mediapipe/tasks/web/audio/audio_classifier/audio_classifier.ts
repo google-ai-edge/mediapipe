@@ -27,7 +27,7 @@ import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/wasm
 // Placeholder for internal dependency on trusted resource url
 
 import {AudioClassifierOptions} from './audio_classifier_options';
-import {Classifications} from './audio_classifier_result';
+import {AudioClassifierResult} from './audio_classifier_result';
 
 const MEDIAPIPE_GRAPH =
     'mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph';
@@ -38,14 +38,14 @@ const MEDIAPIPE_GRAPH =
 // implementation
 const AUDIO_STREAM = 'input_audio';
 const SAMPLE_RATE_STREAM = 'sample_rate';
-const CLASSIFICATION_RESULT_STREAM = 'classification_result';
+const TIMESTAMPED_CLASSIFICATIONS_STREAM = 'timestamped_classifications';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
 /** Performs audio classification. */
 export class AudioClassifier extends TaskRunner {
-  private classifications: Classifications[] = [];
+  private classificationResults: AudioClassifierResult[] = [];
   private defaultSampleRate = 48000;
   private readonly options = new AudioClassifierGraphOptions();
 
@@ -150,7 +150,8 @@ export class AudioClassifier extends TaskRunner {
    *     `48000` if no custom default was set.
    * @return The classification result of the audio datas
    */
-  classify(audioData: Float32Array, sampleRate?: number): Classifications[] {
+  classify(audioData: Float32Array, sampleRate?: number):
+      AudioClassifierResult[] {
     sampleRate = sampleRate ?? this.defaultSampleRate;
 
     // Configures the number of samples in the WASM layer. We re-configure the
@@ -164,20 +165,22 @@ export class AudioClassifier extends TaskRunner {
     this.addDoubleToStream(sampleRate, SAMPLE_RATE_STREAM, timestamp);
     this.addAudioToStream(audioData, timestamp);
 
-    this.classifications = [];
+    this.classificationResults = [];
     this.finishProcessing();
-    return [...this.classifications];
+    return [...this.classificationResults];
   }
 
   /**
-   * Internal function for converting raw data into a classification, and
-   * adding it to our classfications list.
+   * Internal function for converting raw data into classification results, and
+   * adding them to our classfication results list.
    **/
-  private addJsAudioClassification(binaryProto: Uint8Array): void {
-    const classificationResult =
-        ClassificationResult.deserializeBinary(binaryProto);
-    this.classifications.push(
-        ...convertFromClassificationResultProto(classificationResult));
+  private addJsAudioClassificationResults(binaryProtos: Uint8Array[]): void {
+    binaryProtos.forEach(binaryProto => {
+      const classificationResult =
+          ClassificationResult.deserializeBinary(binaryProto);
+      this.classificationResults.push(
+          convertFromClassificationResultProto(classificationResult));
+    });
   }
 
   /** Updates the MediaPipe graph configuration. */
@@ -185,7 +188,7 @@ export class AudioClassifier extends TaskRunner {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(AUDIO_STREAM);
     graphConfig.addInputStream(SAMPLE_RATE_STREAM);
-    graphConfig.addOutputStream(CLASSIFICATION_RESULT_STREAM);
+    graphConfig.addOutputStream(TIMESTAMPED_CLASSIFICATIONS_STREAM);
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
@@ -198,14 +201,15 @@ export class AudioClassifier extends TaskRunner {
     classifierNode.addInputStream('AUDIO:' + AUDIO_STREAM);
     classifierNode.addInputStream('SAMPLE_RATE:' + SAMPLE_RATE_STREAM);
     classifierNode.addOutputStream(
-        'CLASSIFICATIONS:' + CLASSIFICATION_RESULT_STREAM);
+        'TIMESTAMPED_CLASSIFICATIONS:' + TIMESTAMPED_CLASSIFICATIONS_STREAM);
     classifierNode.setOptions(calculatorOptions);
 
     graphConfig.addNode(classifierNode);
 
-    this.attachProtoListener(CLASSIFICATION_RESULT_STREAM, binaryProto => {
-      this.addJsAudioClassification(binaryProto);
-    });
+    this.attachProtoVectorListener(
+        TIMESTAMPED_CLASSIFICATIONS_STREAM, binaryProtos => {
+          this.addJsAudioClassificationResults(binaryProtos);
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

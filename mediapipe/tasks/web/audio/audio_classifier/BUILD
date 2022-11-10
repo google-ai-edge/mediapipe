@@ -21,7 +21,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/cc/audio/audio_classifier/proto:audio_classifier_graph_options_jspb_proto",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_jspb_proto",
         "//mediapipe/tasks/web/components/containers:category",
-        "//mediapipe/tasks/web/components/containers:classifications",
+        "//mediapipe/tasks/web/components/containers:classification_result",
         "//mediapipe/tasks/web/components/processors:base_options",
         "//mediapipe/tasks/web/components/processors:classifier_options",
         "//mediapipe/tasks/web/components/processors:classifier_result",

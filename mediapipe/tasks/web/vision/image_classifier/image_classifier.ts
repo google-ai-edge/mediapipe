@@ -27,12 +27,12 @@ import {createMediaPipeLib, FileLocator, ImageSource} from '../../../../web/grap
 // Placeholder for internal dependency on trusted resource url
 
 import {ImageClassifierOptions} from './image_classifier_options';
-import {Classifications} from './image_classifier_result';
+import {ImageClassifierResult} from './image_classifier_result';
 
 const IMAGE_CLASSIFIER_GRAPH =
     'mediapipe.tasks.vision.image_classifier.ImageClassifierGraph';
 const INPUT_STREAM = 'input_image';
-const CLASSIFICATION_RESULT_STREAM = 'classification_result';
+const CLASSIFICATIONS_STREAM = 'classifications';
 
 export {ImageSource};  // Used in the public API
 
@@ -41,7 +41,7 @@ export {ImageSource};  // Used in the public API
 
 /** Performs classification on images. */
 export class ImageClassifier extends TaskRunner {
-  private classifications: Classifications[] = [];
+  private classificationResult: ImageClassifierResult = {classifications: []};
   private readonly options = new ImageClassifierGraphOptions();
 
   /**
@@ -133,31 +133,21 @@ export class ImageClassifier extends TaskRunner {
    *     provided, defaults to `performance.now()`.
    * @return The classification result of the image
    */
-  classify(imageSource: ImageSource, timestamp?: number): Classifications[] {
-    // Get classification classes by running our MediaPipe graph.
-    this.classifications = [];
+  classify(imageSource: ImageSource, timestamp?: number):
+      ImageClassifierResult {
+    // Get classification result by running our MediaPipe graph.
+    this.classificationResult = {classifications: []};
     this.addGpuBufferAsImageToStream(
         imageSource, INPUT_STREAM, timestamp ?? performance.now());
     this.finishProcessing();
-    return [...this.classifications];
-  }
-
-  /**
-   * Internal function for converting raw data into a classification, and
-   * adding it to our classfications list.
-   **/
-  private addJsImageClassification(binaryProto: Uint8Array): void {
-    const classificationResult =
-        ClassificationResult.deserializeBinary(binaryProto);
-    this.classifications.push(
-        ...convertFromClassificationResultProto(classificationResult));
+    return this.classificationResult;
   }
 
   /** Updates the MediaPipe graph configuration. */
   private refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(INPUT_STREAM);
-    graphConfig.addOutputStream(CLASSIFICATION_RESULT_STREAM);
+    graphConfig.addOutputStream(CLASSIFICATIONS_STREAM);
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
@@ -168,14 +158,14 @@ export class ImageClassifier extends TaskRunner {
     const classifierNode = new CalculatorGraphConfig.Node();
     classifierNode.setCalculator(IMAGE_CLASSIFIER_GRAPH);
     classifierNode.addInputStream('IMAGE:' + INPUT_STREAM);
-    classifierNode.addOutputStream(
-        'CLASSIFICATION_RESULT:' + CLASSIFICATION_RESULT_STREAM);
+    classifierNode.addOutputStream('CLASSIFICATIONS:' + CLASSIFICATIONS_STREAM);
     classifierNode.setOptions(calculatorOptions);
 
     graphConfig.addNode(classifierNode);
 
-    this.attachProtoListener(CLASSIFICATION_RESULT_STREAM, binaryProto => {
-      this.addJsImageClassification(binaryProto);
+    this.attachProtoListener(CLASSIFICATIONS_STREAM, binaryProto => {
+      this.classificationResult = convertFromClassificationResultProto(
+          ClassificationResult.deserializeBinary(binaryProto));
     });
 
     const binaryGraph = graphConfig.serializeBinary();

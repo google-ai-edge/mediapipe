@@ -15,4 +15,4 @@
  */
 
 export {Category} from '../../../../tasks/web/components/containers/category';
-export {ClassificationEntry, Classifications} from '../../../../tasks/web/components/containers/classifications';
+export {ClassificationResult as TextClassifierResult, Classifications} from '../../../../tasks/web/components/containers/classification_result';

@@ -14,48 +14,46 @@
  * limitations under the License.
  */
 
-import {ClassificationEntry as ClassificationEntryProto, ClassificationResult} from '../../../../tasks/cc/components/containers/proto/classifications_pb';
-import {ClassificationEntry, Classifications} from '../../../../tasks/web/components/containers/classifications';
+import {ClassificationResult as ClassificationResultProto, Classifications as ClassificationsProto} from '../../../../tasks/cc/components/containers/proto/classifications_pb';
+import {ClassificationResult, Classifications} from '../../../../tasks/web/components/containers/classification_result';
 
 const DEFAULT_INDEX = -1;
 const DEFAULT_SCORE = 0.0;
 
 /**
- * Converts a ClassificationEntry proto to the ClassificationEntry result
- * type.
+ * Converts a Classifications proto to a Classifications object.
  */
-function convertFromClassificationEntryProto(source: ClassificationEntryProto):
-    ClassificationEntry {
-  const categories = source.getCategoriesList().map(category => {
-    return {
-      index: category.getIndex() ?? DEFAULT_INDEX,
-      score: category.getScore() ?? DEFAULT_SCORE,
-      displayName: category.getDisplayName() ?? '',
-      categoryName: category.getCategoryName() ?? '',
-    };
-  });
-
+function convertFromClassificationsProto(source: ClassificationsProto):
+    Classifications {
+  const categories =
+      source.getClassificationList()?.getClassificationList().map(
+          classification => {
+            return {
+              index: classification.getIndex() ?? DEFAULT_INDEX,
+              score: classification.getScore() ?? DEFAULT_SCORE,
+              categoryName: classification.getLabel() ?? '',
+              displayName: classification.getDisplayName() ?? '',
+            };
+          }) ??
+      [];
   return {
     categories,
-    timestampMs: source.getTimestampMs(),
+    headIndex: source.getHeadIndex() ?? DEFAULT_INDEX,
+    headName: source.getHeadName() ?? '',
   };
 }
 
 /**
- * Converts a ClassificationResult proto to a list of classifications.
+ * Converts a ClassificationResult proto to a ClassificationResult object.
  */
 export function convertFromClassificationResultProto(
-    classificationResult: ClassificationResult) : Classifications[] {
-  const result: Classifications[] = [];
-  for (const classificationsProto of
-           classificationResult.getClassificationsList()) {
-    const classifications: Classifications = {
-      entries: classificationsProto.getEntriesList().map(
-          entry => convertFromClassificationEntryProto(entry)),
-      headIndex: classificationsProto.getHeadIndex() ?? DEFAULT_INDEX,
-      headName: classificationsProto.getHeadName() ?? '',
-    };
-    result.push(classifications);
+    source: ClassificationResultProto): ClassificationResult {
+  const result: ClassificationResult = {
+    classifications: source.getClassificationsList().map(
+        classififications => convertFromClassificationsProto(classififications))
+  };
+  if (source.hasTimestampMs()) {
+    result.timestampMs = source.getTimestampMs();
   }
   return result;
 }
