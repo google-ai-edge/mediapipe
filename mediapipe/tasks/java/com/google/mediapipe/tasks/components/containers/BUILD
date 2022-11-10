@@ -89,3 +89,30 @@ filegroup(
     srcs = glob(["*.java"]),
     visibility = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/core:__subpackages__"],
 )
+
+android_library(
+    name = "embedding",
+    srcs = ["Embedding.java"],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    deps = [
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_java_proto_lite",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "embeddingresult",
+    srcs = ["EmbeddingResult.java"],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    deps = [
+        ":embedding",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_java_proto_lite",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
