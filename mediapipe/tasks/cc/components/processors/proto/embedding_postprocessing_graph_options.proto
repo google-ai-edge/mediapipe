@@ -32,7 +32,4 @@ message EmbeddingPostprocessingGraphOptions {
 
   // Whether output tensors are quantized (kTfLiteUint8) or not (kFloat32).
   optional bool has_quantized_outputs = 2;
-
-  // TODO: add options to control whether timestamp aggregation
-  // should be used or not.
 }

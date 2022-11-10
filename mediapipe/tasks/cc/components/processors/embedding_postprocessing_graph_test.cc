@@ -20,11 +20,20 @@ limitations under the License.
 #include "absl/flags/flag.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
+#include "mediapipe/framework/api2/builder.h"
+#include "mediapipe/framework/api2/port.h"
+#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/graph_runner.h"
+#include "mediapipe/framework/output_stream_poller.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/timestamp.h"
+#include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
@@ -37,7 +46,12 @@ namespace components {
 namespace processors {
 namespace {
 
+using ::mediapipe::api2::Input;
+using ::mediapipe::api2::Output;
+using ::mediapipe::api2::builder::Graph;
+using ::mediapipe::api2::builder::Source;
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
 using ::mediapipe::tasks::core::ModelResources;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/";
@@ -51,6 +65,16 @@ constexpr char kQuantizedImageClassifierWithoutMetadata[] =
     "vision/mobilenet_v1_0.25_192_quantized_1_default_1.tflite";
 
 constexpr char kTestModelResourcesTag[] = "test_model_resources";
+constexpr int kMobileNetV3EmbedderEmbeddingSize = 1024;
+
+constexpr char kTensorsTag[] = "TENSORS";
+constexpr char kTensorsName[] = "tensors";
+constexpr char kTimestampsTag[] = "TIMESTAMPS";
+constexpr char kTimestampsName[] = "timestamps";
+constexpr char kEmbeddingsTag[] = "EMBEDDINGS";
+constexpr char kEmbeddingsName[] = "embeddings";
+constexpr char kTimestampedEmbeddingsTag[] = "TIMESTAMPED_EMBEDDINGS";
+constexpr char kTimestampedEmbeddingsName[] = "timestamped_embeddings";
 
 // Helper function to get ModelResources.
 absl::StatusOr<std::unique_ptr<ModelResources>> CreateModelResourcesForModel(
@@ -128,8 +152,171 @@ TEST_F(ConfigureTest, SucceedsWithFloatModelWithMetadata) {
                    has_quantized_outputs: false)pb")));
 }
 
-// TODO: add E2E Postprocessing tests once timestamp aggregation is
-// supported.
+class PostprocessingTest : public tflite_shims::testing::Test {
+ protected:
+  absl::StatusOr<OutputStreamPoller> BuildGraph(
+      absl::string_view model_name, const proto::EmbedderOptions& options,
+      bool connect_timestamps = false) {
+    ASSIGN_OR_RETURN(auto model_resources,
+                     CreateModelResourcesForModel(model_name));
+
+    Graph graph;
+    auto& postprocessing = graph.AddNode(
+        "mediapipe.tasks.components.processors."
+        "EmbeddingPostprocessingGraph");
+    MP_RETURN_IF_ERROR(ConfigureEmbeddingPostprocessing(
+        *model_resources, options,
+        &postprocessing
+             .GetOptions<proto::EmbeddingPostprocessingGraphOptions>()));
+    graph[Input<std::vector<Tensor>>(kTensorsTag)].SetName(kTensorsName) >>
+        postprocessing.In(kTensorsTag);
+    if (connect_timestamps) {
+      graph[Input<std::vector<Timestamp>>(kTimestampsTag)].SetName(
+          kTimestampsName) >>
+          postprocessing.In(kTimestampsTag);
+      postprocessing.Out(kTimestampedEmbeddingsTag)
+              .SetName(kTimestampedEmbeddingsName) >>
+          graph[Output<std::vector<EmbeddingResult>>(
+              kTimestampedEmbeddingsTag)];
+    } else {
+      postprocessing.Out(kEmbeddingsTag).SetName(kEmbeddingsName) >>
+          graph[Output<EmbeddingResult>(kEmbeddingsTag)];
+    }
+
+    MP_RETURN_IF_ERROR(calculator_graph_.Initialize(graph.GetConfig()));
+    if (connect_timestamps) {
+      ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
+                                        kTimestampedEmbeddingsName));
+      MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
+      return poller;
+    }
+    ASSIGN_OR_RETURN(auto poller,
+                     calculator_graph_.AddOutputStreamPoller(kEmbeddingsName));
+    MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
+    return poller;
+  }
+
+  template <typename T>
+  void AddTensor(
+      const std::vector<T>& tensor, const Tensor::ElementType& element_type,
+      const Tensor::QuantizationParameters& quantization_parameters = {}) {
+    tensors_->emplace_back(element_type,
+                           Tensor::Shape{1, static_cast<int>(tensor.size())},
+                           quantization_parameters);
+    auto view = tensors_->back().GetCpuWriteView();
+    T* buffer = view.buffer<T>();
+    std::copy(tensor.begin(), tensor.end(), buffer);
+  }
+
+  absl::Status Run(
+      std::optional<std::vector<int>> aggregation_timestamps = std::nullopt,
+      int timestamp = 0) {
+    MP_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
+        kTensorsName, Adopt(tensors_.release()).At(Timestamp(timestamp))));
+    // Reset tensors for future calls.
+    tensors_ = absl::make_unique<std::vector<Tensor>>();
+    if (aggregation_timestamps.has_value()) {
+      auto packet = absl::make_unique<std::vector<Timestamp>>();
+      for (const auto& timestamp : *aggregation_timestamps) {
+        packet->emplace_back(Timestamp(timestamp));
+      }
+      MP_RETURN_IF_ERROR(calculator_graph_.AddPacketToInputStream(
+          kTimestampsName, Adopt(packet.release()).At(Timestamp(timestamp))));
+    }
+    return absl::OkStatus();
+  }
+
+  template <typename T>
+  absl::StatusOr<T> GetResult(OutputStreamPoller& poller) {
+    MP_RETURN_IF_ERROR(calculator_graph_.WaitUntilIdle());
+    MP_RETURN_IF_ERROR(calculator_graph_.CloseAllInputStreams());
+
+    Packet packet;
+    if (!poller.Next(&packet)) {
+      return absl::InternalError("Unable to get output packet");
+    }
+    auto result = packet.Get<T>();
+    MP_RETURN_IF_ERROR(calculator_graph_.WaitUntilDone());
+    return result;
+  }
+
+ private:
+  CalculatorGraph calculator_graph_;
+  std::unique_ptr<std::vector<Tensor>> tensors_ =
+      absl::make_unique<std::vector<Tensor>>();
+};
+
+TEST_F(PostprocessingTest, SucceedsWithoutTimestamps) {
+  // Build graph.
+  proto::EmbedderOptions options;
+  MP_ASSERT_OK_AND_ASSIGN(auto poller,
+                          BuildGraph(kMobileNetV3Embedder, options));
+  // Build input tensor.
+  std::vector<float> tensor(kMobileNetV3EmbedderEmbeddingSize, 0);
+  tensor[0] = 1.0;
+
+  // Send tensor and get results.
+  AddTensor(tensor, Tensor::ElementType::kFloat32);
+  MP_ASSERT_OK(Run());
+  MP_ASSERT_OK_AND_ASSIGN(auto results, GetResult<EmbeddingResult>(poller));
+
+  // Validate results.
+  EXPECT_FALSE(results.has_timestamp_ms());
+  EXPECT_EQ(results.embeddings_size(), 1);
+  EXPECT_EQ(results.embeddings(0).head_index(), 0);
+  EXPECT_EQ(results.embeddings(0).head_name(), "feature");
+  EXPECT_EQ(results.embeddings(0).float_embedding().values_size(),
+            kMobileNetV3EmbedderEmbeddingSize);
+  EXPECT_FLOAT_EQ(results.embeddings(0).float_embedding().values(0), 1.0);
+  for (int i = 1; i < kMobileNetV3EmbedderEmbeddingSize; ++i) {
+    EXPECT_FLOAT_EQ(results.embeddings(0).float_embedding().values(i), 0.0);
+  }
+}
+
+TEST_F(PostprocessingTest, SucceedsWithTimestamps) {
+  // Build graph.
+  proto::EmbedderOptions options;
+  MP_ASSERT_OK_AND_ASSIGN(auto poller, BuildGraph(kMobileNetV3Embedder, options,
+                                                  /*connect_timestamps=*/true));
+  // Build input tensors.
+  std::vector<float> tensor_0(kMobileNetV3EmbedderEmbeddingSize, 0);
+  tensor_0[0] = 1.0;
+  std::vector<float> tensor_1(kMobileNetV3EmbedderEmbeddingSize, 0);
+  tensor_1[0] = 2.0;
+
+  // Send tensors and get results.
+  AddTensor(tensor_0, Tensor::ElementType::kFloat32);
+  MP_ASSERT_OK(Run());
+  AddTensor(tensor_1, Tensor::ElementType::kFloat32);
+  MP_ASSERT_OK(Run(
+      /*aggregation_timestamps=*/std::optional<std::vector<int>>({0, 1000}),
+      /*timestamp=*/1000));
+  MP_ASSERT_OK_AND_ASSIGN(auto results,
+                          GetResult<std::vector<EmbeddingResult>>(poller));
+
+  // Validate results.
+  EXPECT_EQ(results.size(), 2);
+  // First timestamp.
+  EXPECT_EQ(results[0].timestamp_ms(), 0);
+  EXPECT_EQ(results[0].embeddings(0).head_index(), 0);
+  EXPECT_EQ(results[0].embeddings(0).head_name(), "feature");
+  EXPECT_EQ(results[0].embeddings(0).float_embedding().values_size(),
+            kMobileNetV3EmbedderEmbeddingSize);
+  EXPECT_FLOAT_EQ(results[0].embeddings(0).float_embedding().values(0), 1.0);
+  for (int i = 1; i < kMobileNetV3EmbedderEmbeddingSize; ++i) {
+    EXPECT_FLOAT_EQ(results[0].embeddings(0).float_embedding().values(i), 0.0);
+  }
+  // Second timestamp.
+  EXPECT_EQ(results[1].timestamp_ms(), 1);
+  EXPECT_EQ(results[1].embeddings(0).head_index(), 0);
+  EXPECT_EQ(results[1].embeddings(0).head_name(), "feature");
+  EXPECT_EQ(results[1].embeddings(0).float_embedding().values_size(),
+            kMobileNetV3EmbedderEmbeddingSize);
+  EXPECT_FLOAT_EQ(results[1].embeddings(0).float_embedding().values(0), 2.0);
+  for (int i = 1; i < kMobileNetV3EmbedderEmbeddingSize; ++i) {
+    EXPECT_FLOAT_EQ(results[1].embeddings(0).float_embedding().values(i), 0.0);
+  }
+}
 
 }  // namespace
 }  // namespace processors

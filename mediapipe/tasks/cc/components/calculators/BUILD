@@ -200,3 +200,38 @@ cc_test(
         "@com_google_absl//absl/status",
     ],
 )
+
+cc_library(
+    name = "embedding_aggregation_calculator",
+    srcs = ["embedding_aggregation_calculator.cc"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "@com_google_absl//absl/status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "embedding_aggregation_calculator_test",
+    srcs = ["embedding_aggregation_calculator_test.cc"],
+    deps = [
+        ":embedding_aggregation_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:output_stream_poller",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@org_tensorflow//tensorflow/lite/core/shims:cc_shims_test_util",
+    ],
+)
