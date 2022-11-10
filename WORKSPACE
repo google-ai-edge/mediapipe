@@ -155,6 +155,7 @@ http_archive(
     name = "com_google_audio_tools",
     strip_prefix = "multichannel-audio-tools-master",
     urls = ["https://github.com/google/multichannel-audio-tools/archive/master.zip"],
+    repo_mapping = {"@com_github_glog_glog" : "@com_github_glog_glog_no_gflags"},
 )
 
 http_archive(
