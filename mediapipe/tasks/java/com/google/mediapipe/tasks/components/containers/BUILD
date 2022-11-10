@@ -17,6 +17,15 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 android_library(
+    name = "audio_data",
+    srcs = ["AudioData.java"],
+    deps = [
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
     name = "category",
     srcs = ["Category.java"],
     deps = [
