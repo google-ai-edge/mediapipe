@@ -1,9 +1,14 @@
 {
-  "name": "__PACKAGE_NAME__",
+  "name": "@mediapipe/tasks-__NAME__",
   "version": "__VERSION__",
   "description": "__DESCRIPTION__",
-  "main": "__BUNDLE__",
-  "module": "__BUNDLE__",
+  "main": "__NAME__bundle.js",
+  "module":  "__NAME__bundle.js",
+  "exports": {
+    ".": "./__NAME__bundle.js",
+    "./loader": "./wasm/__NAME__wasm_internal.js",
+    "./wasm": "./wasm/__NAME__wasm_internal.wasm"
+  },
   "author": "mediapipe@google.com",
   "license": "Apache-2.0",
   "type": "module",

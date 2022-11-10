@@ -14,12 +14,14 @@
 # ==============================================================================
 """Helper classes for common model metadata information."""
 
+import collections
 import csv
 import os
-from typing import List, Optional, Type
+from typing import List, Optional, Type, Union
 
 from mediapipe.tasks.metadata import metadata_schema_py_generated as _metadata_fb
 from mediapipe.tasks.metadata import schema_py_generated as _schema_fb
+from mediapipe.tasks.python.metadata.metadata_writers import writer_utils
 
 # Min and max values for UINT8 tensors.
 _MIN_UINT8 = 0
@@ -267,6 +269,86 @@ class RegexTokenizerMd:
     return tokenizer
 
 
+class BertTokenizerMd:
+  """A container for the Bert tokenizer [1] metadata information.
+
+  [1]:
+    https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L477
+  """
+
+  def __init__(self, vocab_file_path: str):
+    """Initializes a BertTokenizerMd object.
+
+    Args:
+      vocab_file_path: path to the vocabulary file.
+    """
+    self._vocab_file_path = vocab_file_path
+
+  def create_metadata(self) -> _metadata_fb.ProcessUnitT:
+    """Creates the Bert tokenizer metadata based on the information.
+
+    Returns:
+      A Flatbuffers Python object of the Bert tokenizer metadata.
+    """
+    vocab = _metadata_fb.AssociatedFileT()
+    vocab.name = self._vocab_file_path
+    vocab.description = _VOCAB_FILE_DESCRIPTION
+    vocab.type = _metadata_fb.AssociatedFileType.VOCABULARY
+    tokenizer = _metadata_fb.ProcessUnitT()
+    tokenizer.optionsType = _metadata_fb.ProcessUnitOptions.BertTokenizerOptions
+    tokenizer.options = _metadata_fb.BertTokenizerOptionsT()
+    tokenizer.options.vocabFile = [vocab]
+    return tokenizer
+
+
+class SentencePieceTokenizerMd:
+  """A container for the sentence piece tokenizer [1] metadata information.
+
+  [1]:
+    https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L485
+  """
+
+  _SP_MODEL_DESCRIPTION = "The sentence piece model file."
+  _SP_VOCAB_FILE_DESCRIPTION = _VOCAB_FILE_DESCRIPTION + (
+      " This file is optional during tokenization, while the sentence piece "
+      "model is mandatory.")
+
+  def __init__(self,
+               sentence_piece_model_path: str,
+               vocab_file_path: Optional[str] = None):
+    """Initializes a SentencePieceTokenizerMd object.
+
+    Args:
+      sentence_piece_model_path: path to the sentence piece model file.
+      vocab_file_path: path to the vocabulary file.
+    """
+    self._sentence_piece_model_path = sentence_piece_model_path
+    self._vocab_file_path = vocab_file_path
+
+  def create_metadata(self) -> _metadata_fb.ProcessUnitT:
+    """Creates the sentence piece tokenizer metadata based on the information.
+
+    Returns:
+      A Flatbuffers Python object of the sentence piece tokenizer metadata.
+    """
+    tokenizer = _metadata_fb.ProcessUnitT()
+    tokenizer.optionsType = (
+        _metadata_fb.ProcessUnitOptions.SentencePieceTokenizerOptions)
+    tokenizer.options = _metadata_fb.SentencePieceTokenizerOptionsT()
+
+    sp_model = _metadata_fb.AssociatedFileT()
+    sp_model.name = self._sentence_piece_model_path
+    sp_model.description = self._SP_MODEL_DESCRIPTION
+    tokenizer.options.sentencePieceModel = [sp_model]
+    if self._vocab_file_path:
+      vocab = _metadata_fb.AssociatedFileT()
+      vocab.name = self._vocab_file_path
+      vocab.description = self._SP_VOCAB_FILE_DESCRIPTION
+      vocab.type = _metadata_fb.AssociatedFileType.VOCABULARY
+      tokenizer.options.vocabFile = [vocab]
+    return tokenizer
+
+
 class TensorMd:
   """A container for common tensor metadata information.
 
@@ -484,6 +566,145 @@ class InputTextTensorMd(TensorMd):
     if self.tokenizer_md:
       tensor_metadata.processUnits = [self.tokenizer_md.create_metadata()]
     return tensor_metadata
+
+
+def _get_file_paths(files: List[_metadata_fb.AssociatedFileT]) -> List[str]:
+  """Gets file paths from a list of associated files."""
+  if not files:
+    return []
+  return [file.name for file in files]
+
+
+def _get_tokenizer_associated_files(
+    tokenizer_options: Optional[
+        Union[_metadata_fb.BertTokenizerOptionsT,
+              _metadata_fb.SentencePieceTokenizerOptionsT]]
+) -> List[str]:
+  """Gets a list of associated files packed in the tokenizer_options.
+
+  Args:
+    tokenizer_options: a tokenizer metadata object. Support the following
+      tokenizer types:
+      1. BertTokenizerOptions:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L477
+      2. SentencePieceTokenizerOptions:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L485
+
+  Returns:
+    A list of associated files included in tokenizer_options.
+  """
+
+  if not tokenizer_options:
+    return []
+
+  if isinstance(tokenizer_options, _metadata_fb.BertTokenizerOptionsT):
+    return _get_file_paths(tokenizer_options.vocabFile)
+  elif isinstance(tokenizer_options,
+                  _metadata_fb.SentencePieceTokenizerOptionsT):
+    return _get_file_paths(tokenizer_options.vocabFile) + _get_file_paths(
+        tokenizer_options.sentencePieceModel)
+  else:
+    return []
+
+
+class BertInputTensorsMd:
+  """A container for the input tensor metadata information of Bert models."""
+
+  _IDS_NAME = "ids"
+  _IDS_DESCRIPTION = "Tokenized ids of the input text."
+  _MASK_NAME = "mask"
+  _MASK_DESCRIPTION = ("Mask with 1 for real tokens and 0 for padding "
+                       "tokens.")
+  _SEGMENT_IDS_NAME = "segment_ids"
+  _SEGMENT_IDS_DESCRIPTION = (
+      "0 for the first sequence, 1 for the second sequence if exists.")
+
+  def __init__(self,
+               model_buffer: bytearray,
+               ids_name: str,
+               mask_name: str,
+               segment_name: str,
+               tokenizer_md: Union[None, BertTokenizerMd,
+                                   SentencePieceTokenizerMd] = None):
+    """Initializes a BertInputTensorsMd object.
+
+    `ids_name`, `mask_name`, and `segment_name` correspond to the `Tensor.name`
+    in the TFLite schema, which help to determine the tensor order when
+    populating metadata.
+
+    Args:
+      model_buffer: valid buffer of the model file.
+      ids_name: name of the ids tensor, which represents the tokenized ids of
+        the input text.
+      mask_name: name of the mask tensor, which represents the mask with `1` for
+        real tokens and `0` for padding tokens.
+      segment_name: name of the segment ids tensor, where `0` stands for the
+        first sequence, and `1` stands for the second sequence if exists.
+      tokenizer_md: information of the tokenizer used to process the input
+        string, if any. Supported tokenizers are: `BertTokenizer` [1] and
+        `SentencePieceTokenizer` [2]. If the tokenizer is `RegexTokenizer` [3],
+        refer to `InputTensorsMd`.
+      [1]:
+        https://github.com/tensorflow/tflite-support/blob/b80289c4cd1224d0e1836c7654e82f070f9eefaa/tensorflow_lite_support/metadata/metadata_schema.fbs#L436
+      [2]:
+        https://github.com/tensorflow/tflite-support/blob/b80289c4cd1224d0e1836c7654e82f070f9eefaa/tensorflow_lite_support/metadata/metadata_schema.fbs#L473
+      [3]:
+        https://github.com/tensorflow/tflite-support/blob/b80289c4cd1224d0e1836c7654e82f070f9eefaa/tensorflow_lite_support/metadata/metadata_schema.fbs#L475
+    """
+    # Verify that tflite_input_names (read from the model) and
+    # input_name (collected from users) are aligned.
+    tflite_input_names = writer_utils.get_input_tensor_names(model_buffer)
+    input_names = [ids_name, mask_name, segment_name]
+    if collections.Counter(tflite_input_names) != collections.Counter(
+        input_names):
+      raise ValueError(
+          f"The input tensor names ({input_names}) do not match the tensor "
+          f"names read from the model ({tflite_input_names}).")
+
+    ids_md = TensorMd(
+        name=self._IDS_NAME,
+        description=self._IDS_DESCRIPTION,
+        tensor_name=ids_name)
+
+    mask_md = TensorMd(
+        name=self._MASK_NAME,
+        description=self._MASK_DESCRIPTION,
+        tensor_name=mask_name)
+
+    segment_ids_md = TensorMd(
+        name=self._SEGMENT_IDS_NAME,
+        description=self._SEGMENT_IDS_DESCRIPTION,
+        tensor_name=segment_name)
+
+    self._input_md = [ids_md, mask_md, segment_ids_md]
+
+    if not isinstance(tokenizer_md,
+                      (type(None), BertTokenizerMd, SentencePieceTokenizerMd)):
+      raise ValueError(
+          f"The type of tokenizer_options, {type(tokenizer_md)}, is unsupported"
+      )
+
+    self._tokenizer_md = tokenizer_md
+
+  def create_input_process_unit_metadata(
+      self) -> List[_metadata_fb.ProcessUnitT]:
+    """Creates the input process unit metadata."""
+    if self._tokenizer_md:
+      return [self._tokenizer_md.create_metadata()]
+    else:
+      return []
+
+  def get_tokenizer_associated_files(self) -> List[str]:
+    """Gets the associated files that are packed in the tokenizer."""
+    if self._tokenizer_md:
+      return _get_tokenizer_associated_files(
+          self._tokenizer_md.create_metadata().options)
+    else:
+      return []
+
+  @property
+  def input_md(self) -> List[TensorMd]:
+    return self._input_md
 
 
 class ClassificationTensorMd(TensorMd):

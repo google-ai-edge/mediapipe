@@ -22,7 +22,6 @@ limitations under the License.
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/containers/hand_landmarks_detection_result.h"
 #include "mediapipe/tasks/cc/components/image_preprocessing.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/base_task_api.h"
@@ -34,6 +33,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/hand_detector/proto/hand_detector_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/hand_landmarker/hand_landmarker_result.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
 
@@ -46,8 +46,6 @@ namespace {
 
 using HandLandmarkerGraphOptionsProto = ::mediapipe::tasks::vision::
     hand_landmarker::proto::HandLandmarkerGraphOptions;
-
-using ::mediapipe::tasks::components::containers::HandLandmarksDetectionResult;
 
 constexpr char kHandLandmarkerGraphTypeName[] =
     "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph";
@@ -145,7 +143,7 @@ absl::StatusOr<std::unique_ptr<HandLandmarker>> HandLandmarker::Create(
         Packet empty_packet =
             status_or_packets.value()[kHandLandmarksStreamName];
         result_callback(
-            {HandLandmarksDetectionResult()}, image_packet.Get<Image>(),
+            {HandLandmarkerResult()}, image_packet.Get<Image>(),
             empty_packet.Timestamp().Value() / kMicroSecondsPerMilliSecond);
         return;
       }
@@ -173,7 +171,7 @@ absl::StatusOr<std::unique_ptr<HandLandmarker>> HandLandmarker::Create(
       std::move(packets_callback));
 }
 
-absl::StatusOr<HandLandmarksDetectionResult> HandLandmarker::Detect(
+absl::StatusOr<HandLandmarkerResult> HandLandmarker::Detect(
     mediapipe::Image image,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
@@ -192,7 +190,7 @@ absl::StatusOr<HandLandmarksDetectionResult> HandLandmarker::Detect(
            {kNormRectStreamName,
             MakePacket<NormalizedRect>(std::move(norm_rect))}}));
   if (output_packets[kHandLandmarksStreamName].IsEmpty()) {
-    return {HandLandmarksDetectionResult()};
+    return {HandLandmarkerResult()};
   }
   return {{/* handedness= */
            {output_packets[kHandednessStreamName]
@@ -205,7 +203,7 @@ absl::StatusOr<HandLandmarksDetectionResult> HandLandmarker::Detect(
                 .Get<std::vector<mediapipe::LandmarkList>>()}}};
 }
 
-absl::StatusOr<HandLandmarksDetectionResult> HandLandmarker::DetectForVideo(
+absl::StatusOr<HandLandmarkerResult> HandLandmarker::DetectForVideo(
     mediapipe::Image image, int64 timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
@@ -227,7 +225,7 @@ absl::StatusOr<HandLandmarksDetectionResult> HandLandmarker::DetectForVideo(
             MakePacket<NormalizedRect>(std::move(norm_rect))
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
   if (output_packets[kHandLandmarksStreamName].IsEmpty()) {
-    return {HandLandmarksDetectionResult()};
+    return {HandLandmarkerResult()};
   }
   return {
       {/* handedness= */

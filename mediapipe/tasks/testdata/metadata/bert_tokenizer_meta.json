@@ -1,0 +1,20 @@
+{
+  "subgraph_metadata": [
+    {
+      "input_process_units": [
+        {
+          "options_type": "BertTokenizerOptions",
+          "options": {
+            "vocab_file": [
+              {
+                "name": "vocab.txt",
+                "description": "Vocabulary file to convert natural language words to embedding vectors.",
+                "type": "VOCABULARY"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

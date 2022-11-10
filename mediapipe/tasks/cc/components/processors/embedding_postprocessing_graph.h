@@ -44,12 +44,20 @@ namespace processors {
 //   TENSORS - std::vector<Tensor>
 //     The output tensors of an InferenceCalculator, to convert into
 //     EmbeddingResult objects. Expected to be of type kFloat32 or kUInt8.
+//   TIMESTAMPS - std::vector<Timestamp> @Optional
+//     The collection of the timestamps that this calculator should aggregate.
+//     This stream is optional: if provided then the TIMESTAMPED_EMBEDDINGS
+//     output is used for results. Otherwise as no timestamp aggregation is
+//     required the EMBEDDINGS output is used for results.
 // Outputs:
-//   EMBEDDINGS - EmbeddingResult
-//     The output EmbeddingResult.
-//
-// TODO: add support for additional optional "TIMESTAMPS" input for
-// embeddings aggregation.
+//   EMBEDDINGS - EmbeddingResult @Optional
+//     The embedding results aggregated by head. Must be connected if the
+//     TIMESTAMPS input is not connected, as it signals that timestamp
+//     aggregation is not required.
+//   TIMESTAMPED_EMBEDDINGS - std::vector<EmbeddingResult> @Optional
+//     The embedding result aggregated by timestamp, then by head. Must be
+//     connected if the TIMESTAMPS input is connected, as it signals that
+//     timestamp aggregation is required.
 absl::Status ConfigureEmbeddingPostprocessing(
     const tasks::core::ModelResources& model_resources,
     const proto::EmbedderOptions& embedder_options,

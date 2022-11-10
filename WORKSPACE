@@ -546,3 +546,6 @@ rules_proto_toolchains()
 
 load("//third_party:external_files.bzl", "external_files")
 external_files()
+
+load("//third_party:wasm_files.bzl", "wasm_files")
+wasm_files()

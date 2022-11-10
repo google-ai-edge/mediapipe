@@ -82,6 +82,7 @@ cc_library(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/tool:options_map",
         "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components/calculators:embedding_aggregation_calculator",
         "//mediapipe/tasks/cc/components/calculators:tensors_to_embeddings_calculator",
         "//mediapipe/tasks/cc/components/calculators:tensors_to_embeddings_calculator_cc_proto",
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",

@@ -111,11 +111,21 @@ cc_library(
 )
 
 cc_library(
+    name = "hand_landmarker_result",
+    hdrs = ["hand_landmarker_result.h"],
+    deps = [
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+    ],
+)
+
+cc_library(
     name = "hand_landmarker",
     srcs = ["hand_landmarker.cc"],
     hdrs = ["hand_landmarker.h"],
     deps = [
         ":hand_landmarker_graph",
+        ":hand_landmarker_result",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:classification_cc_proto",
@@ -124,7 +134,6 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/components:image_preprocessing",
-        "//mediapipe/tasks/cc/components/containers:hand_landmarks_detection_result",
         "//mediapipe/tasks/cc/components/processors:classifier_options",
         "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
         "//mediapipe/tasks/cc/core:base_options",

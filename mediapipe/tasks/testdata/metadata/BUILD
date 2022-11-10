@@ -23,10 +23,13 @@ package(
 )
 
 mediapipe_files(srcs = [
+    "30k-clean.model",
+    "bert_text_classifier_no_metadata.tflite",
     "mobile_ica_8bit-with-metadata.tflite",
     "mobile_ica_8bit-with-unsupported-metadata-version.tflite",
     "mobile_ica_8bit-without-model-metadata.tflite",
     "mobile_object_classifier_v0_2_3-metadata-no-name.tflite",
+    "mobilebert_vocab.txt",
     "mobilenet_v1_0.25_224_1_default_1.tflite",
     "mobilenet_v2_1.0_224_quant.tflite",
     "mobilenet_v2_1.0_224_quant_without_metadata.tflite",
@@ -60,11 +63,17 @@ exports_files([
     "movie_review_labels.txt",
     "regex_vocab.txt",
     "movie_review.json",
+    "bert_tokenizer_meta.json",
+    "bert_text_classifier_with_sentence_piece.json",
+    "sentence_piece_tokenizer_meta.json",
+    "bert_text_classifier_with_bert_tokenizer.json",
 ])
 
 filegroup(
     name = "model_files",
     srcs = [
+        "30k-clean.model",
+        "bert_text_classifier_no_metadata.tflite",
         "mobile_ica_8bit-with-metadata.tflite",
         "mobile_ica_8bit-with-unsupported-metadata-version.tflite",
         "mobile_ica_8bit-without-model-metadata.tflite",
@@ -81,6 +90,9 @@ filegroup(
     name = "data_files",
     srcs = [
         "associated_file_meta.json",
+        "bert_text_classifier_with_bert_tokenizer.json",
+        "bert_text_classifier_with_sentence_piece.json",
+        "bert_tokenizer_meta.json",
         "bounding_box_tensor_meta.json",
         "classification_tensor_float_meta.json",
         "classification_tensor_uint8_meta.json",
@@ -96,6 +108,7 @@ filegroup(
         "input_text_tensor_default_meta.json",
         "input_text_tensor_meta.json",
         "labels.txt",
+        "mobilebert_vocab.txt",
         "mobilenet_v2_1.0_224.json",
         "mobilenet_v2_1.0_224_quant.json",
         "movie_review.json",
@@ -105,5 +118,6 @@ filegroup(
         "score_calibration_file_meta.json",
         "score_calibration_tensor_meta.json",
         "score_thresholding_meta.json",
+        "sentence_piece_tokenizer_meta.json",
     ],
 )

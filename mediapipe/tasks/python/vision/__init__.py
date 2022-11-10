@@ -16,12 +16,17 @@
 
 import mediapipe.tasks.python.vision.core
 import mediapipe.tasks.python.vision.gesture_recognizer
+import mediapipe.tasks.python.vision.hand_landmarker
 import mediapipe.tasks.python.vision.image_classifier
 import mediapipe.tasks.python.vision.image_segmenter
 import mediapipe.tasks.python.vision.object_detector
 
 GestureRecognizer = gesture_recognizer.GestureRecognizer
 GestureRecognizerOptions = gesture_recognizer.GestureRecognizerOptions
+GestureRecognizerResult = gesture_recognizer.GestureRecognizerResult
+HandLandmarker = hand_landmarker.HandLandmarker
+HandLandmarkerOptions = hand_landmarker.HandLandmarkerOptions
+HandLandmarkerResult = hand_landmarker.HandLandmarkerResult
 ImageClassifier = image_classifier.ImageClassifier
 ImageClassifierOptions = image_classifier.ImageClassifierOptions
 ImageSegmenter = image_segmenter.ImageSegmenter
@@ -33,6 +38,7 @@ RunningMode = core.vision_task_running_mode.VisionTaskRunningMode
 # Remove unnecessary modules to avoid duplication in API docs.
 del core
 del gesture_recognizer
+del hand_landmarker
 del image_classifier
 del image_segmenter
 del object_detector

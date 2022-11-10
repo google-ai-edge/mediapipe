@@ -12,9 +12,9 @@ py_library(
     srcs = [
         "metadata_info.py",
     ],
-    srcs_version = "PY3",
     visibility = ["//visibility:public"],
     deps = [
+        ":writer_utils",
         "//mediapipe/tasks/metadata:metadata_schema_py",
         "//mediapipe/tasks/metadata:schema_py",
     ],

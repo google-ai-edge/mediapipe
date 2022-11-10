@@ -56,6 +56,14 @@ using TensorsSource =
 
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kEmbeddingsTag[] = "EMBEDDINGS";
+constexpr char kTimestampedEmbeddingsTag[] = "TIMESTAMPED_EMBEDDINGS";
+constexpr char kTimestampsTag[] = "TIMESTAMPS";
+
+// Struct holding the different output streams produced by the graph.
+struct EmbeddingPostprocessingOutputStreams {
+  Source<EmbeddingResult> embeddings;
+  Source<std::vector<EmbeddingResult>> timestamped_embeddings;
+};
 
 // Identifies whether or not the model has quantized outputs, and performs
 // sanity checks.
@@ -168,27 +176,39 @@ absl::Status ConfigureEmbeddingPostprocessing(
 //   TENSORS - std::vector<Tensor>
 //     The output tensors of an InferenceCalculator, to convert into
 //     EmbeddingResult objects. Expected to be of type kFloat32 or kUInt8.
+//   TIMESTAMPS - std::vector<Timestamp> @Optional
+//     The collection of the timestamps that this calculator should aggregate.
+//     This stream is optional: if provided then the TIMESTAMPED_EMBEDDINGS
+//     output is used for results. Otherwise as no timestamp aggregation is
+//     required the EMBEDDINGS output is used for results.
+//
 // Outputs:
-//   EMBEDDING_RESULT - EmbeddingResult
-//     The output EmbeddingResult.
+//   EMBEDDINGS - EmbeddingResult @Optional
+//     The embedding results aggregated by head. Must be connected if the
+//     TIMESTAMPS input is not connected, as it signals that timestamp
+//     aggregation is not required.
+//   TIMESTAMPED_EMBEDDINGS - std::vector<EmbeddingResult> @Optional
+//     The embedding result aggregated by timestamp, then by head. Must be
+//     connected if the TIMESTAMPS input is connected, as it signals that
+//     timestamp aggregation is required.
 //
 // The recommended way of using this graph is through the GraphBuilder API using
 // the 'ConfigureEmbeddingPostprocessing()' function. See header file for more
 // details.
-//
-// TODO: add support for additional optional "TIMESTAMPS" input for
-// embeddings aggregation.
 class EmbeddingPostprocessingGraph : public mediapipe::Subgraph {
  public:
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
     Graph graph;
     ASSIGN_OR_RETURN(
-        auto embedding_result_out,
+        auto output_streams,
         BuildEmbeddingPostprocessing(
             sc->Options<proto::EmbeddingPostprocessingGraphOptions>(),
-            graph[Input<std::vector<Tensor>>(kTensorsTag)], graph));
-    embedding_result_out >> graph[Output<EmbeddingResult>(kEmbeddingsTag)];
+            graph[Input<std::vector<Tensor>>(kTensorsTag)],
+            graph[Input<std::vector<Timestamp>>(kTimestampsTag)], graph));
+    output_streams.embeddings >> graph[Output<EmbeddingResult>(kEmbeddingsTag)];
+    output_streams.timestamped_embeddings >>
+        graph[Output<std::vector<EmbeddingResult>>(kTimestampedEmbeddingsTag)];
     return graph.GetConfig();
   }
 
@@ -200,10 +220,14 @@ class EmbeddingPostprocessingGraph : public mediapipe::Subgraph {
   //
   // options: the on-device EmbeddingPostprocessingGraphOptions
   // tensors_in: (std::vector<mediapipe::Tensor>) tensors to postprocess.
+  // timestamps_in: (std::vector<mediapipe::Timestamp>) optional collection of
+  //   timestamps that should be used to aggregate embedding results.
   // graph: the mediapipe builder::Graph instance to be updated.
-  absl::StatusOr<Source<EmbeddingResult>> BuildEmbeddingPostprocessing(
+  absl::StatusOr<EmbeddingPostprocessingOutputStreams>
+  BuildEmbeddingPostprocessing(
       const proto::EmbeddingPostprocessingGraphOptions options,
-      Source<std::vector<Tensor>> tensors_in, Graph& graph) {
+      Source<std::vector<Tensor>> tensors_in,
+      Source<std::vector<Timestamp>> timestamps_in, Graph& graph) {
     // If output tensors are quantized, they must be dequantized first.
     TensorsSource dequantized_tensors(&tensors_in);
     if (options.has_quantized_outputs()) {
@@ -220,7 +244,20 @@ class EmbeddingPostprocessingGraph : public mediapipe::Subgraph {
         .GetOptions<mediapipe::TensorsToEmbeddingsCalculatorOptions>()
         .CopyFrom(options.tensors_to_embeddings_options());
     dequantized_tensors >> tensors_to_embeddings_node.In(kTensorsTag);
-    return tensors_to_embeddings_node[Output<EmbeddingResult>(kEmbeddingsTag)];
+
+    // Adds EmbeddingAggregationCalculator.
+    GenericNode& aggregation_node =
+        graph.AddNode("EmbeddingAggregationCalculator");
+    tensors_to_embeddings_node[Output<EmbeddingResult>(kEmbeddingsTag)] >>
+        aggregation_node.In(kEmbeddingsTag);
+    timestamps_in >> aggregation_node.In(kTimestampsTag);
+
+    // Connects outputs.
+    return EmbeddingPostprocessingOutputStreams{
+        /*embeddings=*/aggregation_node[Output<EmbeddingResult>(
+            kEmbeddingsTag)],
+        /*timestamped_embeddings=*/aggregation_node
+            [Output<std::vector<EmbeddingResult>>(kTimestampedEmbeddingsTag)]};
   }
 };
 REGISTER_MEDIAPIPE_GRAPH(

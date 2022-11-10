@@ -24,12 +24,12 @@ limitations under the License.
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
-#include "mediapipe/tasks/cc/components/containers/hand_landmarks_detection_result.h"
 #include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
+#include "mediapipe/tasks/cc/vision/hand_landmarker/hand_landmarker_result.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -70,9 +70,7 @@ struct HandLandmarkerOptions {
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
   // to RunningMode::LIVE_STREAM.
-  std::function<void(
-      absl::StatusOr<components::containers::HandLandmarksDetectionResult>,
-      const Image&, int64)>
+  std::function<void(absl::StatusOr<HandLandmarkerResult>, const Image&, int64)>
       result_callback = nullptr;
 };
 
@@ -92,7 +90,7 @@ struct HandLandmarkerOptions {
 //       'y_center', 'width' and 'height' fields is NOT supported and will
 //       result in an invalid argument error being returned.
 // Outputs:
-//   HandLandmarksDetectionResult
+//   HandLandmarkerResult
 //     - The hand landmarks detection results.
 class HandLandmarker : tasks::vision::core::BaseVisionTaskApi {
  public:
@@ -129,7 +127,7 @@ class HandLandmarker : tasks::vision::core::BaseVisionTaskApi {
   // The image can be of any size with format RGB or RGBA.
   // TODO: Describes how the input image will be preprocessed
   // after the yuv support is implemented.
-  absl::StatusOr<components::containers::HandLandmarksDetectionResult> Detect(
+  absl::StatusOr<HandLandmarkerResult> Detect(
       Image image,
       std::optional<core::ImageProcessingOptions> image_processing_options =
           std::nullopt);
@@ -147,10 +145,10 @@ class HandLandmarker : tasks::vision::core::BaseVisionTaskApi {
   // The image can be of any size with format RGB or RGBA. It's required to
   // provide the video frame's timestamp (in milliseconds). The input timestamps
   // must be monotonically increasing.
-  absl::StatusOr<components::containers::HandLandmarksDetectionResult>
-  DetectForVideo(Image image, int64 timestamp_ms,
-                 std::optional<core::ImageProcessingOptions>
-                     image_processing_options = std::nullopt);
+  absl::StatusOr<HandLandmarkerResult> DetectForVideo(
+      Image image, int64 timestamp_ms,
+      std::optional<core::ImageProcessingOptions> image_processing_options =
+          std::nullopt);
 
   // Sends live image data to perform hand landmarks detection, and the results
   // will be available via the "result_callback" provided in the
@@ -169,7 +167,7 @@ class HandLandmarker : tasks::vision::core::BaseVisionTaskApi {
   // invalid argument error being returned.
   //
   // The "result_callback" provides
-  //   - A vector of HandLandmarksDetectionResult, each is the detected results
+  //   - A vector of HandLandmarkerResult, each is the detected results
   //     for a input frame.
   //   - The const reference to the corresponding input image that the hand
   //     landmarker runs on. Note that the const reference to the image will no

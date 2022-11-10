@@ -16,26 +16,13 @@
 
 import {Category} from '../../../../tasks/web/components/containers/category';
 
-/** List of predicted categories with an optional timestamp. */
-export interface ClassificationEntry {
+/** Classification results for a given classifier head. */
+export interface Classifications {
   /**
    * The array of predicted categories, usually sorted by descending scores,
    * e.g., from high to low probability.
    */
   categories: Category[];
-
-  /**
-   * The optional timestamp (in milliseconds) associated to the classification
-   * entry. This is useful for time series use cases, e.g., audio
-   * classification.
-   */
-  timestampMs?: number;
-}
-
-/** Classifications for a given classifier head. */
-export interface Classifications {
-  /** A list of classification entries. */
-  entries: ClassificationEntry[];
 
   /**
    * The index of the classifier head these categories refer to. This is
@@ -45,7 +32,24 @@ export interface Classifications {
 
   /**
    * The name of the classifier head, which is the corresponding tensor
-   * metadata name.
+   * metadata name. Defaults to an empty string if there is no such metadata.
    */
   headName: string;
+}
+
+/** Classification results of a model. */
+export interface ClassificationResult {
+  /** The classification results for each head of the model. */
+  classifications: Classifications[];
+
+  /**
+   * The optional timestamp (in milliseconds) of the start of the chunk of data
+   * corresponding to these results.
+   *
+   * This is only used for classification on time series (e.g. audio
+   * classification). In these use cases, the amount of data to process might
+   * exceed the maximum size that the model can process: to solve this, the
+   * input data is split into multiple chunks starting at different timestamps.
+   */
+  timestampMs?: number;
 }

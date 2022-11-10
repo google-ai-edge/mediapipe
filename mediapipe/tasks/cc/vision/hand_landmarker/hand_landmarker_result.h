@@ -13,20 +13,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_HAND_LANDMARKS_DETECTION_RESULT_H_
-#define MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_HAND_LANDMARKS_DETECTION_RESULT_H_
+#ifndef MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_HAND_LANDMARKER_RESULT_H_
+#define MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_HAND_LANDMARKER_RESULT_H_
 
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 
 namespace mediapipe {
 namespace tasks {
-namespace components {
-namespace containers {
+namespace vision {
+namespace hand_landmarker {
 
 // The hand landmarks detection result from HandLandmarker, where each vector
 // element represents a single hand detected in the image.
-struct HandLandmarksDetectionResult {
+struct HandLandmarkerResult {
   // Classification of handedness.
   std::vector<mediapipe::ClassificationList> handedness;
   // Detected hand landmarks in normalized image coordinates.
@@ -35,9 +35,9 @@ struct HandLandmarksDetectionResult {
   std::vector<mediapipe::LandmarkList> hand_world_landmarks;
 };
 
-}  // namespace containers
-}  // namespace components
+}  // namespace hand_landmarker
+}  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_HAND_LANDMARKS_DETECTION_RESULT_H_
+#endif  // MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_HAND_LANDMARKER_RESULT_H_
