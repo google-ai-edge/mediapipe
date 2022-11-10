@@ -32,12 +32,12 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/containers/hand_landmarks_detection_result.h"
 #include "mediapipe/tasks/cc/components/containers/proto/landmarks_detection_result.pb.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/cc/vision/hand_landmarker/hand_landmarker_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/core/shims/cc/shims_test_util.h"
 
@@ -50,7 +50,6 @@ namespace {
 
 using ::file::Defaults;
 using ::mediapipe::file::JoinPath;
-using ::mediapipe::tasks::components::containers::HandLandmarksDetectionResult;
 using ::mediapipe::tasks::components::containers::Rect;
 using ::mediapipe::tasks::containers::proto::LandmarksDetectionResult;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
@@ -95,9 +94,9 @@ LandmarksDetectionResult GetLandmarksDetectionResult(
   return result;
 }
 
-HandLandmarksDetectionResult GetExpectedHandLandmarksDetectionResult(
+HandLandmarkerResult GetExpectedHandLandmarkerResult(
     const std::vector<absl::string_view>& landmarks_file_names) {
-  HandLandmarksDetectionResult expected_results;
+  HandLandmarkerResult expected_results;
   for (const auto& file_name : landmarks_file_names) {
     const auto landmarks_detection_result =
         GetLandmarksDetectionResult(file_name);
@@ -109,9 +108,9 @@ HandLandmarksDetectionResult GetExpectedHandLandmarksDetectionResult(
   return expected_results;
 }
 
-void ExpectHandLandmarksDetectionResultsCorrect(
-    const HandLandmarksDetectionResult& actual_results,
-    const HandLandmarksDetectionResult& expected_results) {
+void ExpectHandLandmarkerResultsCorrect(
+    const HandLandmarkerResult& actual_results,
+    const HandLandmarkerResult& expected_results) {
   const auto& actual_landmarks = actual_results.hand_landmarks;
   const auto& actual_handedness = actual_results.handedness;
 
@@ -145,7 +144,7 @@ struct TestParams {
   // clockwise.
   int rotation;
   // Expected results from the hand landmarker model output.
-  HandLandmarksDetectionResult expected_results;
+  HandLandmarkerResult expected_results;
 };
 
 class ImageModeTest : public testing::TestWithParam<TestParams> {};
@@ -213,7 +212,7 @@ TEST_P(ImageModeTest, Succeeds) {
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<HandLandmarker> hand_landmarker,
                           HandLandmarker::Create(std::move(options)));
-  HandLandmarksDetectionResult hand_landmarker_results;
+  HandLandmarkerResult hand_landmarker_results;
   if (GetParam().rotation != 0) {
     ImageProcessingOptions image_processing_options;
     image_processing_options.rotation_degrees = GetParam().rotation;
@@ -224,8 +223,8 @@ TEST_P(ImageModeTest, Succeeds) {
     MP_ASSERT_OK_AND_ASSIGN(hand_landmarker_results,
                             hand_landmarker->Detect(image));
   }
-  ExpectHandLandmarksDetectionResultsCorrect(hand_landmarker_results,
-                                             GetParam().expected_results);
+  ExpectHandLandmarkerResultsCorrect(hand_landmarker_results,
+                                     GetParam().expected_results);
   MP_ASSERT_OK(hand_landmarker->Close());
 }
 
@@ -237,8 +236,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* test_model_file= */ kHandLandmarkerBundleAsset,
                /* rotation= */ 0,
                /* expected_results = */
-               GetExpectedHandLandmarksDetectionResult(
-                   {kThumbUpLandmarksFilename}),
+               GetExpectedHandLandmarkerResult({kThumbUpLandmarksFilename}),
            },
            TestParams{
                /* test_name= */ "LandmarksPointingUp",
@@ -246,8 +244,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* test_model_file= */ kHandLandmarkerBundleAsset,
                /* rotation= */ 0,
                /* expected_results = */
-               GetExpectedHandLandmarksDetectionResult(
-                   {kPointingUpLandmarksFilename}),
+               GetExpectedHandLandmarkerResult({kPointingUpLandmarksFilename}),
            },
            TestParams{
                /* test_name= */ "LandmarksPointingUpRotated",
@@ -255,7 +252,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* test_model_file= */ kHandLandmarkerBundleAsset,
                /* rotation= */ -90,
                /* expected_results = */
-               GetExpectedHandLandmarksDetectionResult(
+               GetExpectedHandLandmarkerResult(
                    {kPointingUpRotatedLandmarksFilename}),
            },
            TestParams{
@@ -315,7 +312,7 @@ TEST_P(VideoModeTest, Succeeds) {
                           HandLandmarker::Create(std::move(options)));
   const auto expected_results = GetParam().expected_results;
   for (int i = 0; i < iterations; ++i) {
-    HandLandmarksDetectionResult hand_landmarker_results;
+    HandLandmarkerResult hand_landmarker_results;
     if (GetParam().rotation != 0) {
       ImageProcessingOptions image_processing_options;
       image_processing_options.rotation_degrees = GetParam().rotation;
@@ -326,8 +323,8 @@ TEST_P(VideoModeTest, Succeeds) {
       MP_ASSERT_OK_AND_ASSIGN(hand_landmarker_results,
                               hand_landmarker->DetectForVideo(image, i));
     }
-    ExpectHandLandmarksDetectionResultsCorrect(hand_landmarker_results,
-                                               expected_results);
+    ExpectHandLandmarkerResultsCorrect(hand_landmarker_results,
+                                       expected_results);
   }
   MP_ASSERT_OK(hand_landmarker->Close());
 }
@@ -340,8 +337,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* test_model_file= */ kHandLandmarkerBundleAsset,
                /* rotation= */ 0,
                /* expected_results = */
-               GetExpectedHandLandmarksDetectionResult(
-                   {kThumbUpLandmarksFilename}),
+               GetExpectedHandLandmarkerResult({kThumbUpLandmarksFilename}),
            },
            TestParams{
                /* test_name= */ "LandmarksPointingUp",
@@ -349,8 +345,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* test_model_file= */ kHandLandmarkerBundleAsset,
                /* rotation= */ 0,
                /* expected_results = */
-               GetExpectedHandLandmarksDetectionResult(
-                   {kPointingUpLandmarksFilename}),
+               GetExpectedHandLandmarkerResult({kPointingUpLandmarksFilename}),
            },
            TestParams{
                /* test_name= */ "LandmarksPointingUpRotated",
@@ -358,7 +353,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* test_model_file= */ kHandLandmarkerBundleAsset,
                /* rotation= */ -90,
                /* expected_results = */
-               GetExpectedHandLandmarksDetectionResult(
+               GetExpectedHandLandmarkerResult(
                    {kPointingUpRotatedLandmarksFilename}),
            },
            TestParams{
@@ -383,9 +378,8 @@ TEST_F(LiveStreamModeTest, FailsWithCallingWrongMethod) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kHandLandmarkerBundleAsset);
   options->running_mode = core::RunningMode::LIVE_STREAM;
-  options->result_callback =
-      [](absl::StatusOr<HandLandmarksDetectionResult> results,
-         const Image& image, int64 timestamp_ms) {};
+  options->result_callback = [](absl::StatusOr<HandLandmarkerResult> results,
+                                const Image& image, int64 timestamp_ms) {};
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<HandLandmarker> hand_landmarker,
                           HandLandmarker::Create(std::move(options)));
@@ -416,23 +410,23 @@ TEST_P(LiveStreamModeTest, Succeeds) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, GetParam().test_model_file);
   options->running_mode = core::RunningMode::LIVE_STREAM;
-  std::vector<HandLandmarksDetectionResult> hand_landmarker_results;
+  std::vector<HandLandmarkerResult> hand_landmarker_results;
   std::vector<std::pair<int, int>> image_sizes;
   std::vector<int64> timestamps;
-  options->result_callback =
-      [&hand_landmarker_results, &image_sizes, &timestamps](
-          absl::StatusOr<HandLandmarksDetectionResult> results,
-          const Image& image, int64 timestamp_ms) {
-        MP_ASSERT_OK(results.status());
-        hand_landmarker_results.push_back(std::move(results.value()));
-        image_sizes.push_back({image.width(), image.height()});
-        timestamps.push_back(timestamp_ms);
-      };
+  options->result_callback = [&hand_landmarker_results, &image_sizes,
+                              &timestamps](
+                                 absl::StatusOr<HandLandmarkerResult> results,
+                                 const Image& image, int64 timestamp_ms) {
+    MP_ASSERT_OK(results.status());
+    hand_landmarker_results.push_back(std::move(results.value()));
+    image_sizes.push_back({image.width(), image.height()});
+    timestamps.push_back(timestamp_ms);
+  };
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<HandLandmarker> hand_landmarker,
                           HandLandmarker::Create(std::move(options)));
   for (int i = 0; i < iterations; ++i) {
-    HandLandmarksDetectionResult hand_landmarker_results;
+    HandLandmarkerResult hand_landmarker_results;
     if (GetParam().rotation != 0) {
       ImageProcessingOptions image_processing_options;
       image_processing_options.rotation_degrees = GetParam().rotation;
@@ -450,8 +444,8 @@ TEST_P(LiveStreamModeTest, Succeeds) {
 
   const auto expected_results = GetParam().expected_results;
   for (int i = 0; i < hand_landmarker_results.size(); ++i) {
-    ExpectHandLandmarksDetectionResultsCorrect(hand_landmarker_results[i],
-                                               expected_results);
+    ExpectHandLandmarkerResultsCorrect(hand_landmarker_results[i],
+                                       expected_results);
   }
   for (const auto& image_size : image_sizes) {
     EXPECT_EQ(image_size.first, image.width());
@@ -472,8 +466,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* test_model_file= */ kHandLandmarkerBundleAsset,
                /* rotation= */ 0,
                /* expected_results = */
-               GetExpectedHandLandmarksDetectionResult(
-                   {kThumbUpLandmarksFilename}),
+               GetExpectedHandLandmarkerResult({kThumbUpLandmarksFilename}),
            },
            TestParams{
                /* test_name= */ "LandmarksPointingUp",
@@ -481,8 +474,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* test_model_file= */ kHandLandmarkerBundleAsset,
                /* rotation= */ 0,
                /* expected_results = */
-               GetExpectedHandLandmarksDetectionResult(
-                   {kPointingUpLandmarksFilename}),
+               GetExpectedHandLandmarkerResult({kPointingUpLandmarksFilename}),
            },
            TestParams{
                /* test_name= */ "LandmarksPointingUpRotated",
@@ -490,7 +482,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* test_model_file= */ kHandLandmarkerBundleAsset,
                /* rotation= */ -90,
                /* expected_results = */
-               GetExpectedHandLandmarksDetectionResult(
+               GetExpectedHandLandmarkerResult(
                    {kPointingUpRotatedLandmarksFilename}),
            },
            TestParams{
