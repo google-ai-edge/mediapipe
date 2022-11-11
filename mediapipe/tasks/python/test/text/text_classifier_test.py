@@ -125,7 +125,7 @@ class ModelFileType(enum.Enum):
   FILE_NAME = 2
 
 
-class ImageClassifierTest(parameterized.TestCase):
+class TextClassifierTest(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
