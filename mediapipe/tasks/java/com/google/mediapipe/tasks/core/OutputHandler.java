@@ -31,9 +31,20 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
     InputT convertToTaskInput(List<Packet> packets);
   }
 
-  /** Interface for the customizable MediaPipe task result listener. */
+  /**
+   * Interface for the customizable MediaPipe task result listener that can reteive both task result
+   * objects and the correpsonding input data.
+   */
   public interface ResultListener<OutputT extends TaskResult, InputT> {
     void run(OutputT result, InputT input);
+  }
+
+  /**
+   * Interface for the customizable MediaPipe task result listener that can only reteive task result
+   * objects.
+   */
+  public interface PureResultListener<OutputT extends TaskResult> {
+    void run(OutputT result);
   }
 
   private static final String TAG = "OutputHandler";
@@ -45,6 +56,8 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
   protected ErrorListener errorListener;
   // The cached task result for non latency sensitive use cases.
   protected OutputT cachedTaskResult;
+  // The latest output timestamp.
+  protected long latestOutputTimestamp = -1;
   // Whether the output handler should react to timestamp-bound changes by outputting empty packets.
   private boolean handleTimestampBoundChanges = false;
 
@@ -98,6 +111,11 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
     return taskResult;
   }
 
+  /* Returns the latest output timestamp. */
+  public long getLatestOutputTimestamp() {
+    return latestOutputTimestamp;
+  }
+
   /**
    * Handles a list of output {@link Packet}s. Invoked when a packet list become available.
    *
@@ -109,6 +127,7 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
       taskResult = outputPacketConverter.convertToTaskResult(packets);
       if (resultListener == null) {
         cachedTaskResult = taskResult;
+        latestOutputTimestamp = packets.get(0).getTimestamp();
       } else {
         InputT taskInput = outputPacketConverter.convertToTaskInput(packets);
         resultListener.run(taskResult, taskInput);
@@ -118,12 +137,6 @@ public class OutputHandler<OutputT extends TaskResult, InputT> {
         errorListener.onError(e);
       } else {
         Log.e(TAG, "Error occurs when getting MediaPipe task result. " + e);
-      }
-    } finally {
-      for (Packet packet : packets) {
-        if (packet != null) {
-          packet.release();
-        }
       }
     }
   }

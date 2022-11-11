@@ -35,7 +35,7 @@ import {createMediaPipeLib, FileLocator, ImageSource, WasmModule} from '../../..
 // Placeholder for internal dependency on trusted resource url
 
 import {GestureRecognizerOptions} from './gesture_recognizer_options';
-import {GestureRecognitionResult} from './gesture_recognizer_result';
+import {GestureRecognizerResult} from './gesture_recognizer_result';
 
 export {ImageSource};
 
@@ -237,7 +237,7 @@ export class GestureRecognizer extends TaskRunner {
    * @return The detected gestures.
    */
   recognize(imageSource: ImageSource, timestamp: number = performance.now()):
-      GestureRecognitionResult {
+      GestureRecognizerResult {
     this.gestures = [];
     this.landmarks = [];
     this.worldLandmarks = [];

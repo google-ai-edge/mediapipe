@@ -750,17 +750,10 @@ objc_library(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "scale_mode_proto",
     srcs = ["scale_mode.proto"],
     visibility = ["//visibility:public"],
-)
-
-mediapipe_cc_proto_library(
-    name = "scale_mode_cc_proto",
-    srcs = ["scale_mode.proto"],
-    visibility = ["//visibility:public"],
-    deps = [":scale_mode_proto"],
 )
 
 cc_library(

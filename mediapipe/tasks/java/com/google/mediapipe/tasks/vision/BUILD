@@ -111,8 +111,8 @@ android_library(
 android_library(
     name = "gesturerecognizer",
     srcs = [
-        "gesturerecognizer/GestureRecognitionResult.java",
         "gesturerecognizer/GestureRecognizer.java",
+        "gesturerecognizer/GestureRecognizerResult.java",
     ],
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",

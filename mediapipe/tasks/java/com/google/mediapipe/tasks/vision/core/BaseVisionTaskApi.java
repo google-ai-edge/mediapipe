@@ -160,4 +160,18 @@ public class BaseVisionTaskApi implements AutoCloseable {
         .setRotation(-(float) Math.PI * imageProcessingOptions.rotationDegrees() / 180.0f)
         .build();
   }
+
+  /**
+   * Generates the timestamp of a vision task result object from the vision task running mode and
+   * the output packet.
+   *
+   * @param runningMode MediaPipe Vision Tasks {@link RunningMode}.
+   * @param packet the output {@link Packet}.
+   */
+  public static long generateResultTimestampMs(RunningMode runningMode, Packet packet) {
+    if (runningMode == RunningMode.IMAGE) {
+      return -1;
+    }
+    return packet.getTimestamp() / MICROSECONDS_PER_MILLISECOND;
+  }
 }

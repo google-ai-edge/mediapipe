@@ -47,7 +47,7 @@ py_test(
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:category",
-        "//mediapipe/tasks/python/components/containers:classifications",
+        "//mediapipe/tasks/python/components/containers:classification_result",
         "//mediapipe/tasks/python/components/containers:rect",
         "//mediapipe/tasks/python/components/processors:classifier_options",
         "//mediapipe/tasks/python/core:base_options",

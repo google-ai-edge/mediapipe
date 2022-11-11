@@ -21,6 +21,9 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/components/processors/proto/classifier_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
+option java_package = "com.google.mediapipe.tasks.audio.audioclassifier.proto";
+option java_outer_classname = "AudioClassifierGraphOptionsProto";
+
 message AudioClassifierGraphOptions {
   extend mediapipe.CalculatorOptions {
     optional AudioClassifierGraphOptions ext = 451755788;

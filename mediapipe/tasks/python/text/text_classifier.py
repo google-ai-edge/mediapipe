@@ -19,21 +19,21 @@ from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
 from mediapipe.tasks.cc.text.text_classifier.proto import text_classifier_graph_options_pb2
-from mediapipe.tasks.python.components.containers import classifications
+from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
 from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 from mediapipe.tasks.python.text.core import base_text_task_api
 
-TextClassifierResult = classifications.ClassificationResult
+TextClassifierResult = classification_result_module.ClassificationResult
 _BaseOptions = base_options_module.BaseOptions
 _TextClassifierGraphOptionsProto = text_classifier_graph_options_pb2.TextClassifierGraphOptions
 _ClassifierOptions = classifier_options.ClassifierOptions
 _TaskInfo = task_info_module.TaskInfo
 
-_CLASSIFICATION_RESULT_OUT_STREAM_NAME = 'classification_result_out'
-_CLASSIFICATION_RESULT_TAG = 'CLASSIFICATION_RESULT'
+_CLASSIFICATIONS_STREAM_NAME = 'classifications_out'
+_CLASSIFICATIONS_TAG = 'CLASSIFICATIONS'
 _TEXT_IN_STREAM_NAME = 'text_in'
 _TEXT_TAG = 'TEXT'
 _TASK_GRAPH_NAME = 'mediapipe.tasks.text.text_classifier.TextClassifierGraph'
@@ -104,10 +104,7 @@ class TextClassifier(base_text_task_api.BaseTextTaskApi):
         task_graph=_TASK_GRAPH_NAME,
         input_streams=[':'.join([_TEXT_TAG, _TEXT_IN_STREAM_NAME])],
         output_streams=[
-            ':'.join([
-                _CLASSIFICATION_RESULT_TAG,
-                _CLASSIFICATION_RESULT_OUT_STREAM_NAME
-            ])
+            ':'.join([_CLASSIFICATIONS_TAG, _CLASSIFICATIONS_STREAM_NAME])
         ],
         task_options=options)
     return cls(task_info.generate_graph_config())
@@ -131,10 +128,6 @@ class TextClassifier(base_text_task_api.BaseTextTaskApi):
 
     classification_result_proto = classifications_pb2.ClassificationResult()
     classification_result_proto.CopyFrom(
-        packet_getter.get_proto(
-            output_packets[_CLASSIFICATION_RESULT_OUT_STREAM_NAME]))
+        packet_getter.get_proto(output_packets[_CLASSIFICATIONS_STREAM_NAME]))
 
-    return TextClassifierResult([
-        classifications.Classifications.create_from_pb2(classification)
-        for classification in classification_result_proto.classifications
-    ])
+    return TextClassifierResult.create_from_pb2(classification_result_proto)

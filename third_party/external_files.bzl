@@ -89,6 +89,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_canned_gesture_classifier_tflite",
+        sha256 = "2fc7e279966a7a9e15fc869223793e390791fc61fdc0062f9bc7d0eef6be98a2",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/canned_gesture_classifier.tflite?generation=1668124189331326"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_cat_jpg",
         sha256 = "2533197401eebe9410ea4d063f86c43fbd2666f3e8165a38aca155c0d09c21be",
         urls = ["https://storage.googleapis.com/mediapipe-assets/cat.jpg?generation=1661875672441459"],
@@ -284,6 +290,18 @@ def external_files():
         name = "com_google_mediapipe_general_meta_json",
         sha256 = "b95363e4bae89b9c2af484498312aaad4efc7ff57c7eadcc4e5e7adca641445f",
         urls = ["https://storage.googleapis.com/mediapipe-assets/general_meta.json?generation=1665422822603848"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_gesture_embedder_tflite",
+        sha256 = "54abe78de1d1cd5e3cdaa0dab01db18e3ec7e09a76e7c3b5fa278572f7a60977",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/gesture_embedder.tflite?generation=1668124192126494"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_gesture_recognizer_task",
+        sha256 = "a966b1d4e774e0423c19c8aa71f070e5a72fe7a03c2663dd2f3cb0b0095ee3e1",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/gesture_recognizer.task?generation=1668100501451433"],
     )
 
     http_file(
@@ -715,7 +733,7 @@ def external_files():
     http_file(
         name = "com_google_mediapipe_README_md",
         sha256 = "a96d08c9c70cd9717207ed72c926e02e5eada751f00bdc5d3a7e82e3492b72cb",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/README.md?generation=1661875904887163"],
+        urls = ["https://storage.googleapis.com/mediapipe-assets/README.md?generation=1668124179156767"],
     )
 
     http_file(
@@ -965,6 +983,18 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_gesture_embedder_keras_metadata_pb",
+        sha256 = "24268b69429be4e307f9ab099ba20d1de7c40e4191a53f6a92dcbbd97a7047d3",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/gesture_embedder/keras_metadata.pb?generation=1668124196996131"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_gesture_embedder_saved_model_pb",
+        sha256 = "f3a2870ba3ef537a4f6a5889ffc5b7061ad98f9fd96ec431a62116892f100659",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/gesture_embedder/saved_model.pb?generation=1668124199460071"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_object_detection_saved_model_model_ckpt_data-00000-of-00001",
         sha256 = "ad2f733f271dd5000a8c7f926bfea1083e6408b34d4f3b60679e5a6f96251c97",
         urls = ["https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/model.ckpt.data-00000-of-00001?generation=1661875984176294"],
@@ -998,4 +1028,16 @@ def external_files():
         name = "com_google_mediapipe_object_detection_saved_model_saved_model_pb",
         sha256 = "f29606cf218397d5580c496e50fd28cddf66e2f59b819ab9c761b72270a5adf3",
         urls = ["https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/saved_model.pb?generation=1661875999264354"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_gesture_embedder_variables_variables_data-00000-of-00001",
+        sha256 = "9fdb750c4bac67afb9c0f61916510930b496cc47e7f89449aee2bec6b6ed0af8",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/gesture_embedder/variables/variables.data-00000-of-00001?generation=1668124201918980"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_gesture_embedder_variables_variables_index",
+        sha256 = "3ccbcee9488fec4627d496abd9837997276b32b839a4d0ae434bd806fe380b86",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/gesture_embedder/variables/variables.index?generation=1668124204353848"],
     )

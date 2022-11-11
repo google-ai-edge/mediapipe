@@ -156,6 +156,7 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_audio_tools//audio/dsp:window_functions",
     ],
 )
 

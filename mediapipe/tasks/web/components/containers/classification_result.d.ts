@@ -17,7 +17,7 @@
 import {Category} from '../../../../tasks/web/components/containers/category';
 
 /** Classification results for a given classifier head. */
-export interface Classifications {
+export declare interface Classifications {
   /**
    * The array of predicted categories, usually sorted by descending scores,
    * e.g., from high to low probability.

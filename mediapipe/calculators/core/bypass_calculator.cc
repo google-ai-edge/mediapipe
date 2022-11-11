@@ -130,7 +130,7 @@ class BypassCalculator : public Node {
       pass_out.insert(entry.second);
       auto& packet = cc->Inputs().Get(entry.first).Value();
       if (packet.Timestamp() == cc->InputTimestamp()) {
-        cc->Outputs().Get(entry.first).AddPacket(packet);
+        cc->Outputs().Get(entry.second).AddPacket(packet);
       }
     }
     Timestamp bound = cc->InputTimestamp().NextAllowedInStream();
