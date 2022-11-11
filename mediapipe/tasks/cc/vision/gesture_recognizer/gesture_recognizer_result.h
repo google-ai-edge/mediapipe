@@ -13,20 +13,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_GESTURE_RECOGNITION_RESULT_H_
-#define MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_GESTURE_RECOGNITION_RESULT_H_
+#ifndef MEDIAPIPE_TASKS_CC_VISION_GESTURE_RECOGNIZER_GESTURE_RECOGNIZER_RESULT_H_
+#define MEDIAPIPE_TASKS_CC_VISION_GESTURE_RECOGNIZER_GESTURE_RECOGNIZER_RESULT_H_
 
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 
 namespace mediapipe {
 namespace tasks {
-namespace components {
-namespace containers {
+namespace vision {
+namespace gesture_recognizer {
 
 // The gesture recognition result from GestureRecognizer, where each vector
 // element represents a single hand detected in the image.
-struct GestureRecognitionResult {
+struct GestureRecognizerResult {
   // Recognized hand gestures with sorted order such that the winning label is
   // the first item in the list.
   std::vector<mediapipe::ClassificationList> gestures;
@@ -38,9 +38,9 @@ struct GestureRecognitionResult {
   std::vector<mediapipe::LandmarkList> hand_world_landmarks;
 };
 
-}  // namespace containers
-}  // namespace components
+}  // namespace gesture_recognizer
+}  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_GESTURE_RECOGNITION_RESULT_H_
+#endif  // MEDIAPIPE_TASKS_CC_VISION_GESTURE_RECOGNIZER_GESTURE_RECOGNIZER_RESULT_H_

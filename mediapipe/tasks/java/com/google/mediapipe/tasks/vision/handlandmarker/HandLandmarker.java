@@ -242,8 +242,7 @@ public final class HandLandmarker extends BaseVisionTaskApi {
    *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public HandLandmarkerResult detect(
-      MPImage image, ImageProcessingOptions imageProcessingOptions) {
+  public HandLandmarkerResult detect(MPImage image, ImageProcessingOptions imageProcessingOptions) {
     validateImageProcessingOptions(imageProcessingOptions);
     return (HandLandmarkerResult) processImageData(image, imageProcessingOptions);
   }
@@ -296,8 +295,7 @@ public final class HandLandmarker extends BaseVisionTaskApi {
   public HandLandmarkerResult detectForVideo(
       MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
     validateImageProcessingOptions(imageProcessingOptions);
-    return (HandLandmarkerResult)
-        processVideoData(image, imageProcessingOptions, timestampMs);
+    return (HandLandmarkerResult) processVideoData(image, imageProcessingOptions, timestampMs);
   }
 
   /**

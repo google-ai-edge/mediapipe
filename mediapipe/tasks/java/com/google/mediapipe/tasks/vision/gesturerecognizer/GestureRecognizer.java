@@ -64,9 +64,9 @@ import java.util.Optional;
  *       <ul>
  *         <li>The image that gesture recognition runs on.
  *       </ul>
- *   <li>Output GestureRecognitionResult {@link GestureRecognitionResult}
+ *   <li>Output GestureRecognizerResult {@link GestureRecognizerResult}
  *       <ul>
- *         <li>A GestureRecognitionResult containing hand landmarks and recognized hand gestures.
+ *         <li>A GestureRecognizerResult containing hand landmarks and recognized hand gestures.
  *       </ul>
  * </ul>
  */
@@ -152,21 +152,21 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
   public static GestureRecognizer createFromOptions(
       Context context, GestureRecognizerOptions recognizerOptions) {
     // TODO: Consolidate OutputHandler and TaskRunner.
-    OutputHandler<GestureRecognitionResult, MPImage> handler = new OutputHandler<>();
+    OutputHandler<GestureRecognizerResult, MPImage> handler = new OutputHandler<>();
     handler.setOutputPacketConverter(
-        new OutputHandler.OutputPacketConverter<GestureRecognitionResult, MPImage>() {
+        new OutputHandler.OutputPacketConverter<GestureRecognizerResult, MPImage>() {
           @Override
-          public GestureRecognitionResult convertToTaskResult(List<Packet> packets) {
+          public GestureRecognizerResult convertToTaskResult(List<Packet> packets) {
             // If there is no hands detected in the image, just returns empty lists.
             if (packets.get(HAND_GESTURES_OUT_STREAM_INDEX).isEmpty()) {
-              return GestureRecognitionResult.create(
+              return GestureRecognizerResult.create(
                   new ArrayList<>(),
                   new ArrayList<>(),
                   new ArrayList<>(),
                   new ArrayList<>(),
                   packets.get(HAND_GESTURES_OUT_STREAM_INDEX).getTimestamp());
             }
-            return GestureRecognitionResult.create(
+            return GestureRecognizerResult.create(
                 PacketGetter.getProtoVector(
                     packets.get(LANDMARKS_OUT_STREAM_INDEX), NormalizedLandmarkList.parser()),
                 PacketGetter.getProtoVector(
@@ -228,7 +228,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @throws MediaPipeException if there is an internal error.
    */
-  public GestureRecognitionResult recognize(MPImage image) {
+  public GestureRecognizerResult recognize(MPImage image) {
     return recognize(image, ImageProcessingOptions.builder().build());
   }
 
@@ -252,10 +252,10 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public GestureRecognitionResult recognize(
+  public GestureRecognizerResult recognize(
       MPImage image, ImageProcessingOptions imageProcessingOptions) {
     validateImageProcessingOptions(imageProcessingOptions);
-    return (GestureRecognitionResult) processImageData(image, imageProcessingOptions);
+    return (GestureRecognizerResult) processImageData(image, imageProcessingOptions);
   }
 
   /**
@@ -276,7 +276,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    * @param timestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error.
    */
-  public GestureRecognitionResult recognizeForVideo(MPImage image, long timestampMs) {
+  public GestureRecognizerResult recognizeForVideo(MPImage image, long timestampMs) {
     return recognizeForVideo(image, ImageProcessingOptions.builder().build(), timestampMs);
   }
 
@@ -303,10 +303,10 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
    *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public GestureRecognitionResult recognizeForVideo(
+  public GestureRecognizerResult recognizeForVideo(
       MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
     validateImageProcessingOptions(imageProcessingOptions);
-    return (GestureRecognitionResult) processVideoData(image, imageProcessingOptions, timestampMs);
+    return (GestureRecognizerResult) processVideoData(image, imageProcessingOptions, timestampMs);
   }
 
   /**
@@ -425,7 +425,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
        * recognizer is in the live stream mode.
        */
       public abstract Builder setResultListener(
-          ResultListener<GestureRecognitionResult, MPImage> value);
+          ResultListener<GestureRecognizerResult, MPImage> value);
 
       /** Sets an optional error listener. */
       public abstract Builder setErrorListener(ErrorListener value);
@@ -472,7 +472,7 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
 
     abstract Optional<ClassifierOptions> customGesturesClassifierOptions();
 
-    abstract Optional<ResultListener<GestureRecognitionResult, MPImage>> resultListener();
+    abstract Optional<ResultListener<GestureRecognizerResult, MPImage>> resultListener();
 
     abstract Optional<ErrorListener> errorListener();
 

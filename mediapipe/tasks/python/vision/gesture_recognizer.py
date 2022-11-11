@@ -80,7 +80,7 @@ class GestureRecognizerResult:
 def _build_recognition_result(
     output_packets: Mapping[str,
                             packet_module.Packet]) -> GestureRecognizerResult:
-  """Consturcts a `GestureRecognizerResult` from output packets."""
+  """Constructs a `GestureRecognizerResult` from output packets."""
   gestures_proto_list = packet_getter.get_proto_list(
       output_packets[_HAND_GESTURE_STREAM_NAME])
   handedness_proto_list = packet_getter.get_proto_list(
@@ -270,9 +270,9 @@ class GestureRecognizer(base_vision_task_api.BaseVisionTaskApi):
             empty_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
         return
 
-      gesture_recognition_result = _build_recognition_result(output_packets)
+      gesture_recognizer_result = _build_recognition_result(output_packets)
       timestamp = output_packets[_HAND_GESTURE_STREAM_NAME].timestamp
-      options.result_callback(gesture_recognition_result, image,
+      options.result_callback(gesture_recognizer_result, image,
                               timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
 
     task_info = _TaskInfo(

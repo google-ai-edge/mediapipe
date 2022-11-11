@@ -125,11 +125,21 @@ cc_library(
 )
 
 cc_library(
+    name = "gesture_recognizer_result",
+    hdrs = ["gesture_recognizer_result.h"],
+    deps = [
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+    ],
+)
+
+cc_library(
     name = "gesture_recognizer",
     srcs = ["gesture_recognizer.cc"],
     hdrs = ["gesture_recognizer.h"],
     deps = [
         ":gesture_recognizer_graph",
+        ":gesture_recognizer_result",
         ":hand_gesture_recognizer_graph",
         "//mediapipe/framework:packet",
         "//mediapipe/framework/api2:builder",
@@ -140,7 +150,6 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/components:image_preprocessing",
-        "//mediapipe/tasks/cc/components/containers:gesture_recognition_result",
         "//mediapipe/tasks/cc/components/processors:classifier_options",
         "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
         "//mediapipe/tasks/cc/core:base_options",
