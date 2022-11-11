@@ -42,10 +42,10 @@ constexpr char kTestGraphConfig1[] = R"pb(
   node {
     calculator: "BypassCalculator"
     input_stream: "PASS:appearances"
-    input_stream: "TRUNCATE:0:video_frame"
-    input_stream: "TRUNCATE:1:feature_config"
+    input_stream: "IGNORE:0:video_frame"
+    input_stream: "IGNORE:1:feature_config"
     output_stream: "PASS:passthrough_appearances"
-    output_stream: "TRUNCATE:passthrough_federated_gaze_output"
+    output_stream: "IGNORE:passthrough_federated_gaze_output"
     node_options: {
       [type.googleapis.com/mediapipe.BypassCalculatorOptions] {
         pass_input_stream: "PASS"

@@ -15,7 +15,7 @@
  */
 
 /** A classification category. */
-export interface Category {
+export declare interface Category {
   /** The probability score of this label category. */
   score: number;
 

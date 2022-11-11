@@ -20,18 +20,17 @@ from absl.testing import absltest
 from absl.testing import parameterized
 
 from mediapipe.tasks.python.components.containers import category
-from mediapipe.tasks.python.components.containers import classifications as classifications_module
+from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
 from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.text import text_classifier
 
+TextClassifierResult = classification_result_module.ClassificationResult
 _BaseOptions = base_options_module.BaseOptions
 _ClassifierOptions = classifier_options.ClassifierOptions
 _Category = category.Category
-_ClassificationEntry = classifications_module.ClassificationEntry
-_Classifications = classifications_module.Classifications
-_TextClassifierResult = classifications_module.ClassificationResult
+_Classifications = classification_result_module.Classifications
 _TextClassifier = text_classifier.TextClassifier
 _TextClassifierOptions = text_classifier.TextClassifierOptions
 
@@ -43,90 +42,82 @@ _NEGATIVE_TEXT = 'What a waste of my time.'
 _POSITIVE_TEXT = ('This is the best movie I’ve seen in recent years.'
                   'Strongly recommend it!')
 
-_BERT_NEGATIVE_RESULTS = _TextClassifierResult(classifications=[
-    _Classifications(
-        entries=[
-            _ClassificationEntry(
-                categories=[
-                    _Category(
-                        index=0,
-                        score=0.999479,
-                        display_name='',
-                        category_name='negative'),
-                    _Category(
-                        index=1,
-                        score=0.00052154,
-                        display_name='',
-                        category_name='positive')
-                ],
-                timestamp_ms=0)
-        ],
-        head_index=0,
-        head_name='probability')
-])
-_BERT_POSITIVE_RESULTS = _TextClassifierResult(classifications=[
-    _Classifications(
-        entries=[
-            _ClassificationEntry(
-                categories=[
-                    _Category(
-                        index=1,
-                        score=0.999466,
-                        display_name='',
-                        category_name='positive'),
-                    _Category(
-                        index=0,
-                        score=0.000533596,
-                        display_name='',
-                        category_name='negative')
-                ],
-                timestamp_ms=0)
-        ],
-        head_index=0,
-        head_name='probability')
-])
-_REGEX_NEGATIVE_RESULTS = _TextClassifierResult(classifications=[
-    _Classifications(
-        entries=[
-            _ClassificationEntry(
-                categories=[
-                    _Category(
-                        index=0,
-                        score=0.81313,
-                        display_name='',
-                        category_name='Negative'),
-                    _Category(
-                        index=1,
-                        score=0.1868704,
-                        display_name='',
-                        category_name='Positive')
-                ],
-                timestamp_ms=0)
-        ],
-        head_index=0,
-        head_name='probability')
-])
-_REGEX_POSITIVE_RESULTS = _TextClassifierResult(classifications=[
-    _Classifications(
-        entries=[
-            _ClassificationEntry(
-                categories=[
-                    _Category(
-                        index=1,
-                        score=0.5134273,
-                        display_name='',
-                        category_name='Positive'),
-                    _Category(
-                        index=0,
-                        score=0.486573,
-                        display_name='',
-                        category_name='Negative')
-                ],
-                timestamp_ms=0)
-        ],
-        head_index=0,
-        head_name='probability')
-])
+_BERT_NEGATIVE_RESULTS = TextClassifierResult(
+    classifications=[
+        _Classifications(
+            categories=[
+                _Category(
+                    index=0,
+                    score=0.999479,
+                    display_name='',
+                    category_name='negative'),
+                _Category(
+                    index=1,
+                    score=0.00052154,
+                    display_name='',
+                    category_name='positive')
+            ],
+            head_index=0,
+            head_name='probability')
+    ],
+    timestamp_ms=0)
+_BERT_POSITIVE_RESULTS = TextClassifierResult(
+    classifications=[
+        _Classifications(
+            categories=[
+                _Category(
+                    index=1,
+                    score=0.999466,
+                    display_name='',
+                    category_name='positive'),
+                _Category(
+                    index=0,
+                    score=0.000533596,
+                    display_name='',
+                    category_name='negative')
+            ],
+            head_index=0,
+            head_name='probability')
+    ],
+    timestamp_ms=0)
+_REGEX_NEGATIVE_RESULTS = TextClassifierResult(
+    classifications=[
+        _Classifications(
+            categories=[
+                _Category(
+                    index=0,
+                    score=0.81313,
+                    display_name='',
+                    category_name='Negative'),
+                _Category(
+                    index=1,
+                    score=0.1868704,
+                    display_name='',
+                    category_name='Positive')
+            ],
+            head_index=0,
+            head_name='probability')
+    ],
+    timestamp_ms=0)
+_REGEX_POSITIVE_RESULTS = TextClassifierResult(
+    classifications=[
+        _Classifications(
+            categories=[
+                _Category(
+                    index=1,
+                    score=0.5134273,
+                    display_name='',
+                    category_name='Positive'),
+                _Category(
+                    index=0,
+                    score=0.486573,
+                    display_name='',
+                    category_name='Negative')
+            ],
+            head_index=0,
+            head_name='probability')
+    ],
+    timestamp_ms=0)
 
 
 class ModelFileType(enum.Enum):

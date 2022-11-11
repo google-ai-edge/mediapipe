@@ -23,8 +23,8 @@ from absl.testing import parameterized
 import numpy as np
 
 from mediapipe.python._framework_bindings import image
-from mediapipe.tasks.python.components.containers import category
-from mediapipe.tasks.python.components.containers import classifications as classifications_module
+from mediapipe.tasks.python.components.containers import category as category_module
+from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
 from mediapipe.tasks.python.components.containers import rect
 from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.core import base_options as base_options_module
@@ -33,13 +33,12 @@ from mediapipe.tasks.python.vision import image_classifier
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode
 
+ImageClassifierResult = classification_result_module.ClassificationResult
 _Rect = rect.Rect
 _BaseOptions = base_options_module.BaseOptions
 _ClassifierOptions = classifier_options.ClassifierOptions
-_Category = category.Category
-_ClassificationEntry = classifications_module.ClassificationEntry
-_Classifications = classifications_module.Classifications
-_ClassificationResult = classifications_module.ClassificationResult
+_Category = category_module.Category
+_Classifications = classification_result_module.Classifications
 _Image = image.Image
 _ImageClassifier = image_classifier.ImageClassifier
 _ImageClassifierOptions = image_classifier.ImageClassifierOptions
@@ -55,68 +54,62 @@ _MAX_RESULTS = 3
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/vision'
 
 
-def _generate_empty_results(timestamp_ms: int) -> _ClassificationResult:
-  return _ClassificationResult(classifications=[
-      _Classifications(
-          entries=[
-              _ClassificationEntry(categories=[], timestamp_ms=timestamp_ms)
-          ],
-          head_index=0,
-          head_name='probability')
-  ])
+def _generate_empty_results() -> ImageClassifierResult:
+  return ImageClassifierResult(
+      classifications=[
+          _Classifications(
+              categories=[], head_index=0, head_name='probability')
+      ],
+      timestamp_ms=0)
 
 
-def _generate_burger_results(timestamp_ms: int) -> _ClassificationResult:
-  return _ClassificationResult(classifications=[
-      _Classifications(
-          entries=[
-              _ClassificationEntry(
-                  categories=[
-                      _Category(
-                          index=934,
-                          score=0.793959,
-                          display_name='',
-                          category_name='cheeseburger'),
-                      _Category(
-                          index=932,
-                          score=0.0273929,
-                          display_name='',
-                          category_name='bagel'),
-                      _Category(
-                          index=925,
-                          score=0.0193408,
-                          display_name='',
-                          category_name='guacamole'),
-                      _Category(
-                          index=963,
-                          score=0.00632786,
-                          display_name='',
-                          category_name='meat loaf')
-                  ],
-                  timestamp_ms=timestamp_ms)
-          ],
-          head_index=0,
-          head_name='probability')
-  ])
+def _generate_burger_results() -> ImageClassifierResult:
+  return ImageClassifierResult(
+      classifications=[
+          _Classifications(
+              categories=[
+                  _Category(
+                      index=934,
+                      score=0.793959,
+                      display_name='',
+                      category_name='cheeseburger'),
+                  _Category(
+                      index=932,
+                      score=0.0273929,
+                      display_name='',
+                      category_name='bagel'),
+                  _Category(
+                      index=925,
+                      score=0.0193408,
+                      display_name='',
+                      category_name='guacamole'),
+                  _Category(
+                      index=963,
+                      score=0.00632786,
+                      display_name='',
+                      category_name='meat loaf')
+              ],
+              head_index=0,
+              head_name='probability')
+      ],
+      timestamp_ms=0)
 
 
-def _generate_soccer_ball_results(timestamp_ms: int) -> _ClassificationResult:
-  return _ClassificationResult(classifications=[
-      _Classifications(
-          entries=[
-              _ClassificationEntry(
-                  categories=[
-                      _Category(
-                          index=806,
-                          score=0.996527,
-                          display_name='',
-                          category_name='soccer ball')
-                  ],
-                  timestamp_ms=timestamp_ms)
-          ],
-          head_index=0,
-          head_name='probability')
-  ])
+def _generate_soccer_ball_results() -> ImageClassifierResult:
+  return ImageClassifierResult(
+      classifications=[
+          _Classifications(
+              categories=[
+                  _Category(
+                      index=806,
+                      score=0.996527,
+                      display_name='',
+                      category_name='soccer ball')
+              ],
+              head_index=0,
+              head_name='probability')
+      ],
+      timestamp_ms=0)
 
 
 class ModelFileType(enum.Enum):
@@ -163,8 +156,8 @@ class ImageClassifierTest(parameterized.TestCase):
       self.assertIsInstance(classifier, _ImageClassifier)
 
   @parameterized.parameters(
-      (ModelFileType.FILE_NAME, 4, _generate_burger_results(0)),
-      (ModelFileType.FILE_CONTENT, 4, _generate_burger_results(0)))
+      (ModelFileType.FILE_NAME, 4, _generate_burger_results()),
+      (ModelFileType.FILE_CONTENT, 4, _generate_burger_results()))
   def test_classify(self, model_file_type, max_results,
                     expected_classification_result):
     # Creates classifier.
@@ -193,8 +186,8 @@ class ImageClassifierTest(parameterized.TestCase):
     classifier.close()
 
   @parameterized.parameters(
-      (ModelFileType.FILE_NAME, 4, _generate_burger_results(0)),
-      (ModelFileType.FILE_CONTENT, 4, _generate_burger_results(0)))
+      (ModelFileType.FILE_NAME, 4, _generate_burger_results()),
+      (ModelFileType.FILE_CONTENT, 4, _generate_burger_results()))
   def test_classify_in_context(self, model_file_type, max_results,
                                expected_classification_result):
     if model_file_type is ModelFileType.FILE_NAME:
@@ -234,7 +227,7 @@ class ImageClassifierTest(parameterized.TestCase):
       image_result = classifier.classify(test_image, image_processing_options)
       # Comparing results.
       test_utils.assert_proto_equals(self, image_result.to_pb2(),
-                                     _generate_soccer_ball_results(0).to_pb2())
+                                     _generate_soccer_ball_results().to_pb2())
 
   def test_score_threshold_option(self):
     custom_classifier_options = _ClassifierOptions(
@@ -248,8 +241,8 @@ class ImageClassifierTest(parameterized.TestCase):
       classifications = image_result.classifications
 
       for classification in classifications:
-        for entry in classification.entries:
-          score = entry.categories[0].score
+        for category in classification.categories:
+          score = category.score
           self.assertGreaterEqual(
               score, _SCORE_THRESHOLD,
               f'Classification with score lower than threshold found. '
@@ -264,7 +257,7 @@ class ImageClassifierTest(parameterized.TestCase):
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
-      categories = image_result.classifications[0].entries[0].categories
+      categories = image_result.classifications[0].categories
 
       self.assertLessEqual(
           len(categories), _MAX_RESULTS, 'Too many results returned.')
@@ -281,8 +274,8 @@ class ImageClassifierTest(parameterized.TestCase):
       classifications = image_result.classifications
 
       for classification in classifications:
-        for entry in classification.entries:
-          label = entry.categories[0].category_name
+        for category in classification.categories:
+          label = category.category_name
           self.assertIn(label, _ALLOW_LIST,
                         f'Label {label} found but not in label allow list')
 
@@ -297,8 +290,8 @@ class ImageClassifierTest(parameterized.TestCase):
       classifications = image_result.classifications
 
       for classification in classifications:
-        for entry in classification.entries:
-          label = entry.categories[0].category_name
+        for category in classification.categories:
+          label = category.category_name
           self.assertNotIn(label, _DENY_LIST,
                            f'Label {label} found but in deny list.')
 
@@ -324,7 +317,7 @@ class ImageClassifierTest(parameterized.TestCase):
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
-      self.assertEmpty(image_result.classifications[0].entries[0].categories)
+      self.assertEmpty(image_result.classifications[0].categories)
 
   def test_missing_result_callback(self):
     options = _ImageClassifierOptions(
@@ -402,9 +395,8 @@ class ImageClassifierTest(parameterized.TestCase):
       for timestamp in range(0, 300, 30):
         classification_result = classifier.classify_for_video(
             self.test_image, timestamp)
-        test_utils.assert_proto_equals(
-            self, classification_result.to_pb2(),
-            _generate_burger_results(timestamp).to_pb2())
+        test_utils.assert_proto_equals(self, classification_result.to_pb2(),
+                                       _generate_burger_results().to_pb2())
 
   def test_classify_for_video_succeeds_with_region_of_interest(self):
     custom_classifier_options = _ClassifierOptions(max_results=1)
@@ -423,9 +415,8 @@ class ImageClassifierTest(parameterized.TestCase):
       for timestamp in range(0, 300, 30):
         classification_result = classifier.classify_for_video(
             test_image, timestamp, image_processing_options)
-        test_utils.assert_proto_equals(
-            self, classification_result.to_pb2(),
-            _generate_soccer_ball_results(timestamp).to_pb2())
+        test_utils.assert_proto_equals(self, classification_result.to_pb2(),
+                                       _generate_soccer_ball_results().to_pb2())
 
   def test_calling_classify_in_live_stream_mode(self):
     options = _ImageClassifierOptions(
@@ -460,15 +451,15 @@ class ImageClassifierTest(parameterized.TestCase):
           ValueError, r'Input timestamp must be monotonically increasing'):
         classifier.classify_async(self.test_image, 0)
 
-  @parameterized.parameters((0, _generate_burger_results),
-                            (1, _generate_empty_results))
-  def test_classify_async_calls(self, threshold, expected_result_fn):
+  @parameterized.parameters((0, _generate_burger_results()),
+                            (1, _generate_empty_results()))
+  def test_classify_async_calls(self, threshold, expected_result):
     observed_timestamp_ms = -1
 
-    def check_result(result: _ClassificationResult, output_image: _Image,
+    def check_result(result: ImageClassifierResult, output_image: _Image,
                      timestamp_ms: int):
       test_utils.assert_proto_equals(self, result.to_pb2(),
-                                     expected_result_fn(timestamp_ms).to_pb2())
+                                     expected_result.to_pb2())
       self.assertTrue(
           np.array_equal(output_image.numpy_view(),
                          self.test_image.numpy_view()))
@@ -496,11 +487,10 @@ class ImageClassifierTest(parameterized.TestCase):
     image_processing_options = _ImageProcessingOptions(roi)
     observed_timestamp_ms = -1
 
-    def check_result(result: _ClassificationResult, output_image: _Image,
+    def check_result(result: ImageClassifierResult, output_image: _Image,
                      timestamp_ms: int):
-      test_utils.assert_proto_equals(
-          self, result.to_pb2(),
-          _generate_soccer_ball_results(timestamp_ms).to_pb2())
+      test_utils.assert_proto_equals(self, result.to_pb2(),
+                                     _generate_soccer_ball_results().to_pb2())
       self.assertEqual(output_image.width, test_image.width)
       self.assertEqual(output_image.height, test_image.height)
       self.assertLess(observed_timestamp_ms, timestamp_ms)

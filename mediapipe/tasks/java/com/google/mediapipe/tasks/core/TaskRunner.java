@@ -93,6 +93,7 @@ public class TaskRunner implements AutoCloseable {
   public synchronized TaskResult process(Map<String, Packet> inputs) {
     addPackets(inputs, generateSyntheticTimestamp());
     graph.waitUntilGraphIdle();
+    lastSeenTimestamp = outputHandler.getLatestOutputTimestamp();
     return outputHandler.retrieveCachedTaskResult();
   }
 

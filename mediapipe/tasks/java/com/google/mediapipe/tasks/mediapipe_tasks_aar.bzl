@@ -30,6 +30,10 @@ _CORE_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/core/proto:external_file_java_proto_lite",
 ]
 
+_AUDIO_TASKS_JAVA_PROTO_LITE_TARGETS = [
+    "//mediapipe/tasks/cc/audio/audio_classifier/proto:audio_classifier_graph_options_java_proto_lite",
+]
+
 _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_java_proto_lite",
@@ -58,6 +62,11 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
 
     mediapipe_tasks_java_proto_srcs = []
     for target in _CORE_TASKS_JAVA_PROTO_LITE_TARGETS:
+        mediapipe_tasks_java_proto_srcs.append(
+            _mediapipe_tasks_java_proto_src_extractor(target = target),
+        )
+
+    for target in _AUDIO_TASKS_JAVA_PROTO_LITE_TARGETS:
         mediapipe_tasks_java_proto_srcs.append(
             _mediapipe_tasks_java_proto_src_extractor(target = target),
         )
@@ -119,9 +128,43 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
                    "@maven//:com_google_flogger_flogger_system_backend",
                    "@maven//:com_google_code_findbugs_jsr305",
                ] +
+               _AUDIO_TASKS_JAVA_PROTO_LITE_TARGETS +
                _CORE_TASKS_JAVA_PROTO_LITE_TARGETS +
-               _VISION_TASKS_JAVA_PROTO_LITE_TARGETS +
-               _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS,
+               _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS +
+               _VISION_TASKS_JAVA_PROTO_LITE_TARGETS,
+    )
+
+def mediapipe_tasks_audio_aar(name, srcs, native_library):
+    """Builds medaipipe tasks audio AAR.
+
+    Args:
+      name: The bazel target name.
+      srcs: MediaPipe Audio Tasks' source files.
+      native_library: The native library that contains audio tasks' graph and calculators.
+    """
+
+    native.genrule(
+        name = name + "tasks_manifest_generator",
+        outs = ["AndroidManifest.xml"],
+        cmd = """
+cat > $(OUTS) <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.google.mediapipe.tasks.audio">
+    <uses-sdk
+        android:minSdkVersion="24"
+        android:targetSdkVersion="30" />
+</manifest>
+EOF
+""",
+    )
+
+    _mediapipe_tasks_aar(
+        name = name,
+        srcs = srcs,
+        manifest = "AndroidManifest.xml",
+        java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _AUDIO_TASKS_JAVA_PROTO_LITE_TARGETS,
+        native_library = native_library,
     )
 
 def mediapipe_tasks_vision_aar(name, srcs, native_library):
@@ -232,6 +275,7 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
             "//mediapipe/framework/formats:landmark_java_proto_lite",
             "//mediapipe/framework/formats:location_data_java_proto_lite",
             "//mediapipe/framework/formats:rect_java_proto_lite",
+            "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:audiodata",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",

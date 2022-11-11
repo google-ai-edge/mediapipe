@@ -17,7 +17,7 @@
 import {BaseOptions} from '../../../tasks/web/core/base_options';
 
 /** Options to configure the Mediapipe Classifier Task. */
-export interface ClassifierOptions {
+export declare interface ClassifierOptions {
   /** Options to configure the loading of the model assets. */
   baseOptions?: BaseOptions;
 

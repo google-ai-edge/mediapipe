@@ -17,7 +17,7 @@
 import {Category} from '../../../../tasks/web/components/containers/category';
 
 /** An integer bounding box, axis aligned. */
-export interface BoundingBox {
+export declare interface BoundingBox {
   /** The X coordinate of the top-left corner, in pixels. */
   originX: number;
   /** The Y coordinate of the top-left corner, in pixels. */
@@ -29,7 +29,7 @@ export interface BoundingBox {
 }
 
 /** Represents one object detected by the `ObjectDetector`. */
-export interface Detection {
+export declare interface Detection {
   /** A list of `Category` objects. */
   categories: Category[];
 

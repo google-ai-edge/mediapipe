@@ -44,6 +44,7 @@ mediapipe_tasks_core_aar(
     srcs = glob(["*.java"]) + [
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:java_src",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:java_src",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:java_src",
         "//mediapipe/java/com/google/mediapipe/framework/image:java_src",
     ],
     manifest = "AndroidManifest.xml",

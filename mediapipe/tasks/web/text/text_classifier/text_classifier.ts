@@ -27,10 +27,10 @@ import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/wasm
 // Placeholder for internal dependency on trusted resource url
 
 import {TextClassifierOptions} from './text_classifier_options';
-import {Classifications} from './text_classifier_result';
+import {TextClassifierResult} from './text_classifier_result';
 
 const INPUT_STREAM = 'text_in';
-const CLASSIFICATION_RESULT_STREAM = 'classification_result_out';
+const CLASSIFICATIONS_STREAM = 'classifications_out';
 const TEXT_CLASSIFIER_GRAPH =
     'mediapipe.tasks.text.text_classifier.TextClassifierGraph';
 
@@ -39,7 +39,7 @@ const TEXT_CLASSIFIER_GRAPH =
 
 /** Performs Natural Language classification. */
 export class TextClassifier extends TaskRunner {
-  private classifications: Classifications[] = [];
+  private classificationResult: TextClassifierResult = {classifications: []};
   private readonly options = new TextClassifierGraphOptions();
 
   /**
@@ -129,30 +129,20 @@ export class TextClassifier extends TaskRunner {
    * @param text The text to process.
    * @return The classification result of the text
    */
-  classify(text: string): Classifications[] {
-    // Get classification classes by running our MediaPipe graph.
-    this.classifications = [];
+  classify(text: string): TextClassifierResult {
+    // Get classification result by running our MediaPipe graph.
+    this.classificationResult = {classifications: []};
     this.addStringToStream(
         text, INPUT_STREAM, /* timestamp= */ performance.now());
     this.finishProcessing();
-    return [...this.classifications];
-  }
-
-  // Internal function for converting raw data into a classification, and
-  // adding it to our classifications list.
-  private addJsTextClassification(binaryProto: Uint8Array): void {
-    const classificationResult =
-        ClassificationResult.deserializeBinary(binaryProto);
-    console.log(classificationResult.toObject());
-    this.classifications.push(
-        ...convertFromClassificationResultProto(classificationResult));
+    return this.classificationResult;
   }
 
   /** Updates the MediaPipe graph configuration. */
   private refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(INPUT_STREAM);
-    graphConfig.addOutputStream(CLASSIFICATION_RESULT_STREAM);
+    graphConfig.addOutputStream(CLASSIFICATIONS_STREAM);
 
     const calculatorOptions = new CalculatorOptions();
     calculatorOptions.setExtension(
@@ -161,14 +151,14 @@ export class TextClassifier extends TaskRunner {
     const classifierNode = new CalculatorGraphConfig.Node();
     classifierNode.setCalculator(TEXT_CLASSIFIER_GRAPH);
     classifierNode.addInputStream('TEXT:' + INPUT_STREAM);
-    classifierNode.addOutputStream(
-        'CLASSIFICATION_RESULT:' + CLASSIFICATION_RESULT_STREAM);
+    classifierNode.addOutputStream('CLASSIFICATIONS:' + CLASSIFICATIONS_STREAM);
     classifierNode.setOptions(calculatorOptions);
 
     graphConfig.addNode(classifierNode);
 
-    this.attachProtoListener(CLASSIFICATION_RESULT_STREAM, binaryProto => {
-      this.addJsTextClassification(binaryProto);
+    this.attachProtoListener(CLASSIFICATIONS_STREAM, binaryProto => {
+      this.classificationResult = convertFromClassificationResultProto(
+          ClassificationResult.deserializeBinary(binaryProto));
     });
 
     const binaryGraph = graphConfig.serializeBinary();

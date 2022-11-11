@@ -277,6 +277,7 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:time_series_test_util",
+        "@com_google_audio_tools//audio/dsp/mfcc",
         "@eigen_archive//:eigen3",
     ],
 )
@@ -352,6 +353,8 @@ cc_test(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:validate_type",
         "//mediapipe/util:time_series_test_util",
+        "@com_google_audio_tools//audio/dsp:resampler",
+        "@com_google_audio_tools//audio/dsp:resampler_q",
         "@com_google_audio_tools//audio/dsp:signal_vector_util",
         "@eigen_archive//:eigen3",
     ],

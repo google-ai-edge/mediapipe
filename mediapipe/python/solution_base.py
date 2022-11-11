@@ -40,7 +40,6 @@ from mediapipe.calculators.util import landmarks_smoothing_calculator_pb2
 from mediapipe.calculators.util import logic_calculator_pb2
 from mediapipe.calculators.util import thresholding_calculator_pb2
 from mediapipe.framework import calculator_pb2
-from mediapipe.framework.formats import body_rig_pb2
 from mediapipe.framework.formats import classification_pb2
 from mediapipe.framework.formats import detection_pb2
 from mediapipe.framework.formats import landmark_pb2

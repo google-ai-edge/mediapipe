@@ -17,6 +17,15 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 android_library(
+    name = "audiodata",
+    srcs = ["AudioData.java"],
+    deps = [
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
     name = "category",
     srcs = ["Category.java"],
     deps = [
@@ -79,4 +88,31 @@ filegroup(
     name = "java_src",
     srcs = glob(["*.java"]),
     visibility = ["//mediapipe/tasks/java/com/google/mediapipe/tasks/core:__subpackages__"],
+)
+
+android_library(
+    name = "embedding",
+    srcs = ["Embedding.java"],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    deps = [
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_java_proto_lite",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "embeddingresult",
+    srcs = ["EmbeddingResult.java"],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    deps = [
+        ":embedding",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_java_proto_lite",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
 )

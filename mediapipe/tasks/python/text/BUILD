@@ -28,7 +28,7 @@ py_library(
         "//mediapipe/python:packet_getter",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_py_pb2",
         "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_py_pb2",
-        "//mediapipe/tasks/python/components/containers:classifications",
+        "//mediapipe/tasks/python/components/containers:classification_result",
         "//mediapipe/tasks/python/components/processors:classifier_options",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:optional_dependencies",

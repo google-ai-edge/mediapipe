@@ -165,7 +165,8 @@ public final class HandLandmarker extends BaseVisionTaskApi {
                     packets.get(WORLD_LANDMARKS_OUT_STREAM_INDEX), LandmarkList.parser()),
                 PacketGetter.getProtoVector(
                     packets.get(HANDEDNESS_OUT_STREAM_INDEX), ClassificationList.parser()),
-                packets.get(LANDMARKS_OUT_STREAM_INDEX).getTimestamp());
+                BaseVisionTaskApi.generateResultTimestampMs(
+                    landmarkerOptions.runningMode(), packets.get(LANDMARKS_OUT_STREAM_INDEX)));
           }
 
           @Override
@@ -241,8 +242,7 @@ public final class HandLandmarker extends BaseVisionTaskApi {
    *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public HandLandmarkerResult detect(
-      MPImage image, ImageProcessingOptions imageProcessingOptions) {
+  public HandLandmarkerResult detect(MPImage image, ImageProcessingOptions imageProcessingOptions) {
     validateImageProcessingOptions(imageProcessingOptions);
     return (HandLandmarkerResult) processImageData(image, imageProcessingOptions);
   }
@@ -295,8 +295,7 @@ public final class HandLandmarker extends BaseVisionTaskApi {
   public HandLandmarkerResult detectForVideo(
       MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
     validateImageProcessingOptions(imageProcessingOptions);
-    return (HandLandmarkerResult)
-        processVideoData(image, imageProcessingOptions, timestampMs);
+    return (HandLandmarkerResult) processVideoData(image, imageProcessingOptions, timestampMs);
   }
 
   /**
