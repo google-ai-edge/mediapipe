@@ -613,6 +613,7 @@ cc_library(
     deps = [
         ":tensorflow_session",
         ":tensorflow_session_from_saved_model_generator_cc_proto",
+        "@com_google_absl//absl/status",
         "//mediapipe/framework:packet_generator",
         "//mediapipe/framework:packet_type",
         "//mediapipe/framework/tool:status_util",
