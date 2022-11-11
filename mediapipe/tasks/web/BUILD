@@ -31,6 +31,7 @@ rollup_bundle(
     name = "audio_bundle",
     config_file = "rollup.config.mjs",
     entry_point = "audio.ts",
+    format = "cjs",
     output_dir = False,
     deps = [
         ":audio_lib",
@@ -67,6 +68,7 @@ rollup_bundle(
     name = "text_bundle",
     config_file = "rollup.config.mjs",
     entry_point = "text.ts",
+    format = "cjs",
     output_dir = False,
     deps = [
         ":text_lib",
@@ -103,6 +105,7 @@ rollup_bundle(
     name = "vision_bundle",
     config_file = "rollup.config.mjs",
     entry_point = "vision.ts",
+    format = "cjs",
     output_dir = False,
     deps = [
         ":vision_lib",
