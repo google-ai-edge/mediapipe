@@ -20,6 +20,10 @@ from absl import flags
 
 from tensorflow_docs.api_generator import gen_java
 
+_JAVA_ROOT = flags.DEFINE_string('java_src', None,
+                                 'Override the Java source path.',
+                                 required=False)
+
 _OUT_DIR = flags.DEFINE_string('output_dir', '/tmp/mp_java/',
                                'Write docs here.')
 
@@ -35,14 +39,17 @@ _ = flags.DEFINE_bool(
 
 
 def main(_) -> None:
-  mp_root = pathlib.Path(__file__)
-  while (mp_root := mp_root.parent).name != 'mediapipe':
-    # Find the nearest `mediapipe` dir.
-    pass
+  if not (java_root := _JAVA_ROOT.value):
+    # Default to using a relative path to find the Java source.
+    mp_root = pathlib.Path(__file__)
+    while (mp_root := mp_root.parent).name != 'mediapipe':
+      # Find the nearest `mediapipe` dir.
+      pass
+    java_root = mp_root / 'tasks/java'
 
   gen_java.gen_java_docs(
       package='com.google.mediapipe',
-      source_path=mp_root / 'java',
+      source_path=pathlib.Path(java_root),
       output_dir=pathlib.Path(_OUT_DIR.value),
       site_path=pathlib.Path(_SITE_PATH.value))
 
