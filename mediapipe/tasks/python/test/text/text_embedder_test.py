@@ -50,7 +50,7 @@ class ModelFileType(enum.Enum):
   FILE_NAME = 2
 
 
-class ImageEmbedderTest(parameterized.TestCase):
+class TextEmbedderTest(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
