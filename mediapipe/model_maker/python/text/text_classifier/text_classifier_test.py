@@ -1,0 +1,138 @@
+# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import csv
+import filecmp
+import os
+
+import tensorflow as tf
+
+from mediapipe.model_maker.python.core import hyperparameters as hp
+from mediapipe.model_maker.python.text.text_classifier import dataset
+from mediapipe.model_maker.python.text.text_classifier import model_options as mo
+from mediapipe.model_maker.python.text.text_classifier import model_spec as ms
+from mediapipe.model_maker.python.text.text_classifier import text_classifier
+from mediapipe.model_maker.python.text.text_classifier import text_classifier_options
+from mediapipe.tasks.python.test import test_utils
+
+
+class TextClassifierTest(tf.test.TestCase):
+
+  _AVERAGE_WORD_EMBEDDING_JSON_FILE = (
+      test_utils.get_test_data_path('average_word_embedding_metadata.json'))
+
+  def _get_data(self):
+    labels_and_text = (('pos', 'super good'), (('neg', 'really bad')))
+    csv_file = os.path.join(self.get_temp_dir(), 'data.csv')
+    if os.path.exists(csv_file):
+      return csv_file
+    fieldnames = ['text', 'label']
+    with open(csv_file, 'w') as f:
+      writer = csv.DictWriter(f, fieldnames=fieldnames)
+      writer.writeheader()
+      for label, text in labels_and_text:
+        writer.writerow({'text': text, 'label': label})
+    csv_params = dataset.CSVParameters(text_column='text', label_column='label')
+    all_data = dataset.Dataset.from_csv(
+        filename=csv_file, csv_params=csv_params)
+    return all_data.split(0.5)
+
+  def test_create_and_train_average_word_embedding_model(self):
+    train_data, validation_data = self._get_data()
+    options = text_classifier_options.TextClassifierOptions(
+        supported_model=ms.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER,
+        hparams=hp.BaseHParams(epochs=1, batch_size=1, learning_rate=0))
+    average_word_embedding_classifier = text_classifier.TextClassifier.create(
+        train_data, validation_data, options)
+
+    _, accuracy = average_word_embedding_classifier.evaluate(validation_data)
+    self.assertGreaterEqual(accuracy, 0.0)
+
+    # Test export_model
+    average_word_embedding_classifier.export_model()
+    output_metadata_file = os.path.join(options.hparams.export_dir,
+                                        'metadata.json')
+    output_tflite_file = os.path.join(options.hparams.export_dir,
+                                      'model.tflite')
+
+    self.assertTrue(os.path.exists(output_tflite_file))
+    self.assertGreater(os.path.getsize(output_tflite_file), 0)
+
+    self.assertTrue(os.path.exists(output_metadata_file))
+    self.assertGreater(os.path.getsize(output_metadata_file), 0)
+    self.assertTrue(
+        filecmp.cmp(output_metadata_file,
+                    self._AVERAGE_WORD_EMBEDDING_JSON_FILE))
+
+  def test_create_and_train_bert(self):
+    train_data, validation_data = self._get_data()
+    options = text_classifier_options.TextClassifierOptions(
+        supported_model=ms.SupportedModels.MOBILEBERT_CLASSIFIER,
+        model_options=mo.BertClassifierOptions(do_fine_tuning=False, seq_len=2),
+        hparams=hp.BaseHParams(
+            epochs=1,
+            batch_size=1,
+            learning_rate=3e-5,
+            distribution_strategy='off'))
+    bert_classifier = text_classifier.TextClassifier.create(
+        train_data, validation_data, options)
+
+    _, accuracy = bert_classifier.evaluate(validation_data)
+    self.assertGreaterEqual(accuracy, 0.0)
+    # TODO: Add a unit test that does not run OOM.
+
+  def test_label_mismatch(self):
+    options = (
+        text_classifier_options.TextClassifierOptions(
+            supported_model=ms.SupportedModels.MOBILEBERT_CLASSIFIER))
+    train_tf_dataset = tf.data.Dataset.from_tensor_slices([[0]])
+    train_data = dataset.Dataset(train_tf_dataset, 1, ['foo'])
+    validation_tf_dataset = tf.data.Dataset.from_tensor_slices([[0]])
+    validation_data = dataset.Dataset(validation_tf_dataset, 1, ['bar'])
+    with self.assertRaisesRegex(
+        ValueError,
+        'Training data label names .* not equal to validation data label names'
+    ):
+      text_classifier.TextClassifier.create(train_data, validation_data,
+                                            options)
+
+  def test_options_mismatch(self):
+    train_data, validation_data = self._get_data()
+
+    avg_options = (
+        text_classifier_options.TextClassifierOptions(
+            supported_model=ms.SupportedModels.MOBILEBERT_CLASSIFIER,
+            model_options=mo.AverageWordEmbeddingClassifierOptions()))
+    with self.assertRaisesRegex(
+        ValueError, 'Expected AVERAGE_WORD_EMBEDDING_CLASSIFIER, got'
+        ' SupportedModels.MOBILEBERT_CLASSIFIER'):
+      text_classifier.TextClassifier.create(train_data, validation_data,
+                                            avg_options)
+
+    bert_options = (
+        text_classifier_options.TextClassifierOptions(
+            supported_model=(
+                ms.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER),
+            model_options=mo.BertClassifierOptions()))
+    with self.assertRaisesRegex(
+        ValueError, 'Expected MOBILEBERT_CLASSIFIER, got'
+        ' SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER'):
+      text_classifier.TextClassifier.create(train_data, validation_data,
+                                            bert_options)
+
+
+if __name__ == '__main__':
+  # Load compressed models from tensorflow_hub
+  os.environ['TFHUB_MODEL_LOAD_FORMAT'] = 'COMPRESSED'
+  tf.test.main()

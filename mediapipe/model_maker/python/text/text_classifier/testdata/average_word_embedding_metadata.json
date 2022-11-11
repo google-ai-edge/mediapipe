@@ -1,0 +1,63 @@
+{
+  "name": "TextClassifier",
+  "description": "Classify the input text into a set of known categories.",
+  "subgraph_metadata": [
+    {
+      "input_tensor_metadata": [
+        {
+          "name": "input_text",
+          "description": "Embedding vectors representing the input text to be processed.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {
+            }
+          },
+          "process_units": [
+            {
+              "options_type": "RegexTokenizerOptions",
+              "options": {
+                "delim_regex_pattern": "[^\\w\\']+",
+                "vocab_file": [
+                  {
+                    "name": "vocab.txt",
+                    "description": "Vocabulary file to convert natural language words to embedding vectors.",
+                    "type": "VOCABULARY"
+                  }
+                ]
+              }
+            }
+          ],
+          "stats": {
+          }
+        }
+      ],
+      "output_tensor_metadata": [
+        {
+          "name": "score",
+          "description": "Score of the labels respectively.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {
+            }
+          },
+          "stats": {
+            "max": [
+              1.0
+            ],
+            "min": [
+              0.0
+            ]
+          },
+          "associated_files": [
+            {
+              "name": "labels.txt",
+              "description": "Labels for categories that the model can recognize.",
+              "type": "TENSOR_AXIS_LABELS"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "min_parser_version": "1.2.1"
+}
