@@ -1,0 +1,56 @@
+{
+  "name": "HandGestureRecognition",
+  "description": "Recognize the hand gesture in the image.",
+  "subgraph_metadata": [
+    {
+      "input_tensor_metadata": [
+        {
+          "name": "embedding",
+          "description": "Embedding feature vector from gesture embedder.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {
+            }
+          },
+          "stats": {
+          }
+        }
+      ],
+      "output_tensor_metadata": [
+        {
+          "name": "scores",
+          "description": "Hand gesture category scores.",
+          "content": {
+            "content_properties_type": "FeatureProperties",
+            "content_properties": {
+            }
+          },
+          "process_units": [
+            {
+              "options_type": "ScoreThresholdingOptions",
+              "options": {
+                "global_score_threshold": 0.5
+              }
+            }
+          ],
+          "stats": {
+            "max": [
+              1.0
+            ],
+            "min": [
+              0.0
+            ]
+          },
+          "associated_files": [
+            {
+              "name": "labels.txt",
+              "description": "Labels for categories that the model can recognize.",
+              "type": "TENSOR_AXIS_LABELS"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "min_parser_version": "1.0.0"
+}
