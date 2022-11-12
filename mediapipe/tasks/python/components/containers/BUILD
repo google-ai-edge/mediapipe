@@ -95,3 +95,12 @@ py_library(
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )
+
+py_library(
+    name = "embedding_result",
+    srcs = ["embedding_result.py"],
+    deps = [
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_py_pb2",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)

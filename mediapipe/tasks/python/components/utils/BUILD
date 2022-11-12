@@ -21,19 +21,10 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 py_library(
-    name = "classifier_options",
-    srcs = ["classifier_options.py"],
+    name = "cosine_similarity",
+    srcs = ["cosine_similarity.py"],
     deps = [
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_py_pb2",
-        "//mediapipe/tasks/python/core:optional_dependencies",
-    ],
-)
-
-py_library(
-    name = "embedder_options",
-    srcs = ["embedder_options.py"],
-    deps = [
-        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_py_pb2",
-        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/components/containers:embedding_result",
+        "//mediapipe/tasks/python/components/processors:embedder_options",
     ],
 )
