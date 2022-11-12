@@ -11,3 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""MediaPipe Public Python API for Text Classifier."""
+
+from mediapipe.model_maker.python.core import hyperparameters
+from mediapipe.model_maker.python.text.text_classifier import dataset
+from mediapipe.model_maker.python.text.text_classifier import model_options
+from mediapipe.model_maker.python.text.text_classifier import model_spec
+from mediapipe.model_maker.python.text.text_classifier import text_classifier
+from mediapipe.model_maker.python.text.text_classifier import text_classifier_options
+
+HParams = hyperparameters.BaseHParams
+CSVParams = dataset.CSVParameters
+Dataset = dataset.Dataset
+AverageWordEmbeddingClassifierModelOptions = (
+    model_options.AverageWordEmbeddingClassifierModelOptions)
+BertClassifierModelOptions = model_options.BertClassifierModelOptions
+SupportedModels = model_spec.SupportedModels
+TextClassifier = text_classifier.TextClassifier
+TextClassifierOptions = text_classifier_options.TextClassifierOptions

@@ -177,7 +177,7 @@ http_archive(
         "//third_party:com_google_sentencepiece_no_gflag_no_gtest.diff",
     ],
     patch_args = ["-p1"],
-    repo_mapping = {"@com_google_glog" : "@com_github_glog_glog"},
+    repo_mapping = {"@com_google_glog" : "@com_github_glog_glog_no_gflags"},
 )
 
 http_archive(

@@ -14,7 +14,7 @@
 """Embeddings data class."""
 
 import dataclasses
-from typing import Any, Optional, List
+from typing import Optional, List
 
 import numpy as np
 from mediapipe.tasks.cc.components.containers.proto import embeddings_pb2
@@ -36,29 +36,11 @@ class FloatEmbedding:
 
   values: np.ndarray
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _FloatEmbeddingProto:
-    """Generates a FloatEmbedding protobuf object."""
-    return _FloatEmbeddingProto(values=self.values)
-
   @classmethod
   @doc_controls.do_not_generate_docs
-  def create_from_pb2(
-      cls, pb2_obj: _FloatEmbeddingProto) -> 'FloatEmbedding':
+  def create_from_pb2(cls, pb2_obj: _FloatEmbeddingProto) -> 'FloatEmbedding':
     """Creates a `FloatEmbedding` object from the given protobuf object."""
-    return FloatEmbedding(values=np.array(pb2_obj.value_float, dtype=float))
-
-  def __eq__(self, other: Any) -> bool:
-    """Checks if this object is equal to the given object.
-    Args:
-      other: The object to be compared with.
-    Returns:
-      True if the objects are equal.
-    """
-    if not isinstance(other, FloatEmbedding):
-      return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
+    return FloatEmbedding(values=np.array(pb2_obj.values, dtype=float))
 
 
 @dataclasses.dataclass
@@ -71,30 +53,13 @@ class QuantizedEmbedding:
 
   values: np.ndarray
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _QuantizedEmbeddingProto:
-    """Generates a QuantizedEmbedding protobuf object."""
-    return _QuantizedEmbeddingProto(values=self.values)
-
   @classmethod
   @doc_controls.do_not_generate_docs
   def create_from_pb2(
       cls, pb2_obj: _QuantizedEmbeddingProto) -> 'QuantizedEmbedding':
     """Creates a `QuantizedEmbedding` object from the given protobuf object."""
     return QuantizedEmbedding(
-        values=np.array(bytearray(pb2_obj.value_string), dtype=np.uint8))
-
-  def __eq__(self, other: Any) -> bool:
-    """Checks if this object is equal to the given object.
-    Args:
-      other: The object to be compared with.
-    Returns:
-      True if the objects are equal.
-    """
-    if not isinstance(other, QuantizedEmbedding):
-      return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
+        values=np.array(bytearray(pb2_obj.values), dtype=np.uint8))
 
 
 @dataclasses.dataclass
@@ -113,58 +78,31 @@ class Embedding:
   head_index: Optional[int] = None
   head_name: Optional[str] = None
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _EmbeddingProto:
-    """Generates a Embedding protobuf object."""
-
-    if self.embedding.dtype == float:
-      return _EmbeddingProto(float_embedding=self.embedding,
-                             head_index=self.head_index,
-                             head_name=self.head_name)
-
-    elif self.embedding.dtype == np.uint8:
-      return _EmbeddingProto(quantized_embedding=bytes(self.embedding),
-                             head_index=self.head_index,
-                             head_name=self.head_name)
-
-    else:
-      raise ValueError("Invalid dtype. Only float and np.uint8 are supported.")
-
   @classmethod
   @doc_controls.do_not_generate_docs
-  def create_from_pb2(
-      cls, pb2_obj: _EmbeddingProto) -> 'Embedding':
+  def create_from_pb2(cls, pb2_obj: _EmbeddingProto) -> 'Embedding':
     """Creates a `Embedding` object from the given protobuf object."""
 
     quantized_embedding = np.array(
         bytearray(pb2_obj.quantized_embedding.values))
     float_embedding = np.array(pb2_obj.float_embedding.values, dtype=float)
 
-    if len(quantized_embedding) == 0:
-      return Embedding(embedding=float_embedding,
-                       head_index=pb2_obj.head_index,
-                       head_name=pb2_obj.head_name)
+    if not quantized_embedding:
+      return Embedding(
+          embedding=float_embedding,
+          head_index=pb2_obj.head_index,
+          head_name=pb2_obj.head_name)
     else:
-      return Embedding(embedding=quantized_embedding,
-                       head_index=pb2_obj.head_index,
-                       head_name=pb2_obj.head_name)
-
-  def __eq__(self, other: Any) -> bool:
-    """Checks if this object is equal to the given object.
-    Args:
-      other: The object to be compared with.
-    Returns:
-      True if the objects are equal.
-    """
-    if not isinstance(other, Embedding):
-      return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
+      return Embedding(
+          embedding=quantized_embedding,
+          head_index=pb2_obj.head_index,
+          head_name=pb2_obj.head_name)
 
 
 @dataclasses.dataclass
 class EmbeddingResult:
   """Embedding results for a given embedder model.
+
   Attributes:
     embeddings: A list of `Embedding` objects.
     timestamp_ms: The optional timestamp (in milliseconds) of the start of the
@@ -178,33 +116,10 @@ class EmbeddingResult:
   embeddings: List[Embedding]
   timestamp_ms: Optional[int] = None
 
-  @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _EmbeddingResultProto:
-    """Generates a EmbeddingResult protobuf object."""
-    return _EmbeddingResultProto(
-        embeddings=[
-            embedding.to_pb2() for embedding in self.embeddings
-        ])
-
   @classmethod
   @doc_controls.do_not_generate_docs
-  def create_from_pb2(
-      cls, pb2_obj: _EmbeddingResultProto) -> 'EmbeddingResult':
+  def create_from_pb2(cls, pb2_obj: _EmbeddingResultProto) -> 'EmbeddingResult':
     """Creates a `EmbeddingResult` object from the given protobuf object."""
-    return EmbeddingResult(
-        embeddings=[
-            Embedding.create_from_pb2(embedding)
-            for embedding in pb2_obj.embeddings
-        ])
-
-  def __eq__(self, other: Any) -> bool:
-    """Checks if this object is equal to the given object.
-    Args:
-      other: The object to be compared with.
-    Returns:
-      True if the objects are equal.
-    """
-    if not isinstance(other, EmbeddingResult):
-      return False
-
-    return self.to_pb2().__eq__(other.to_pb2())
+    return EmbeddingResult(embeddings=[
+        Embedding.create_from_pb2(embedding) for embedding in pb2_obj.embeddings
+    ])

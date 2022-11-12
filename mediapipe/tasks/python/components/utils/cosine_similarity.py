@@ -23,6 +23,8 @@ _EmbedderOptions = embedder_options.EmbedderOptions
 
 
 def _compute_cosine_similarity(u, v):
+  """Computes cosine similarity between two embeddings."""
+
   if len(u.embedding) <= 0:
     raise ValueError("Cannot compute cosing similarity on empty embeddings.")
 
@@ -38,6 +40,7 @@ def _compute_cosine_similarity(u, v):
 
 def cosine_similarity(u: _Embedding, v: _Embedding) -> float:
   """Utility function to compute cosine similarity between two embedding.
+
   May return an InvalidArgumentError if e.g. the feature vectors are of
   different types (quantized vs. float), have different sizes, or have an
   L2-norm of 0.
@@ -45,6 +48,9 @@ def cosine_similarity(u: _Embedding, v: _Embedding) -> float:
   Args:
     u: An embedding.
     v: An embedding.
+
+  Returns:
+    Cosine similarity value.
   """
   if len(u.embedding) != len(v.embedding):
     raise ValueError(f"Cannot compute cosine similarity between embeddings "

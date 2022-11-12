@@ -32,17 +32,23 @@ namespace mediapipe {
 
 // Thin wrapper over AAssetManager provided by JNI. This class is meant to be
 // used as a singleton.
-// Usage: Call InitializeFromActivity from a JNI function that has access to the
-// Java activity in the Android application. This initializes the asset manager
-// and now files bundled in the assets folder can be read using ReadFile().
+//
+// Usage: Call one of Initialize* functions from a JNI function that has access
+// to a context/activity/etc. This initializes the asset manager and now files
+// bundled in the assets folder can be read using ReadFile().
+//
+// NOTE: initialization should happen strictly once and guaranteed to complete
+// before any possible use, otherwise it cannot be used safely across multiple
+// threads.
 class AssetManager {
  public:
   AssetManager(const AssetManager&) = delete;
   AssetManager& operator=(const AssetManager&) = delete;
 
-  // Returns the asset manager if it has been set by a call to
-  // InitializeFromActivity, otherwise returns nullptr.
+  // Returns the asset manager if it has been set by one of Initialize*
+  // functions, otherwise returns nullptr.
   AAssetManager* GetAssetManager();
+
   // Returns true if AAssetManager was successfully initialized.
   bool InitializeFromAssetManager(JNIEnv* env, jobject local_asset_manager,
                                   const std::string& cache_dir_path);
@@ -55,7 +61,7 @@ class AssetManager {
                               const std::string& cache_dir_path);
 
   // Returns true if AAssetManager was successfully initialized.
-  ABSL_DEPRECATED("Use InitializeFromActivity instead.")
+  ABSL_DEPRECATED("Use one of alternate Initialize* functions instead.")
   bool InitializeFromAssetManager(JNIEnv* env, jobject local_asset_manager);
 
   // Returns true if AAssetManager was successfully initialized.
@@ -79,12 +85,14 @@ class AssetManager {
                               std::string* output);
 
   // Returns the path to the Android cache directory. Will be empty if
-  // InitializeFromActivity has not been called.
+  // AssetManager hasn't been initialized.
   const std::string& GetCacheDirPath();
 
   // Caches the contents of the given asset as a file, and returns a path to
   // that file. This can be used to pass an asset to APIs that require a path
   // to a filesystem file.
+  // NOTE: this is _not_ thread-safe, e.g. if two threads are requesting the
+  // same file
   absl::StatusOr<std::string> CachedFileFromAsset(
       const std::string& asset_path);
 

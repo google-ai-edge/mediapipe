@@ -18,12 +18,7 @@ import os
 
 import tensorflow as tf
 
-from mediapipe.model_maker.python.core import hyperparameters as hp
-from mediapipe.model_maker.python.text.text_classifier import dataset
-from mediapipe.model_maker.python.text.text_classifier import model_options as mo
-from mediapipe.model_maker.python.text.text_classifier import model_spec as ms
-from mediapipe.model_maker.python.text.text_classifier import text_classifier
-from mediapipe.model_maker.python.text.text_classifier import text_classifier_options
+from mediapipe.model_maker.python.text import text_classifier
 from mediapipe.tasks.python.test import test_utils
 
 
@@ -43,18 +38,23 @@ class TextClassifierTest(tf.test.TestCase):
       writer.writeheader()
       for label, text in labels_and_text:
         writer.writerow({'text': text, 'label': label})
-    csv_params = dataset.CSVParameters(text_column='text', label_column='label')
-    all_data = dataset.Dataset.from_csv(
+    csv_params = text_classifier.CSVParams(
+        text_column='text', label_column='label')
+    all_data = text_classifier.Dataset.from_csv(
         filename=csv_file, csv_params=csv_params)
     return all_data.split(0.5)
 
   def test_create_and_train_average_word_embedding_model(self):
     train_data, validation_data = self._get_data()
-    options = text_classifier_options.TextClassifierOptions(
-        supported_model=ms.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER,
-        hparams=hp.BaseHParams(epochs=1, batch_size=1, learning_rate=0))
-    average_word_embedding_classifier = text_classifier.TextClassifier.create(
-        train_data, validation_data, options)
+    options = (
+        text_classifier.TextClassifierOptions(
+            supported_model=(text_classifier.SupportedModels
+                             .AVERAGE_WORD_EMBEDDING_CLASSIFIER),
+            hparams=text_classifier.HParams(
+                epochs=1, batch_size=1, learning_rate=0)))
+    average_word_embedding_classifier = (
+        text_classifier.TextClassifier.create(train_data, validation_data,
+                                              options))
 
     _, accuracy = average_word_embedding_classifier.evaluate(validation_data)
     self.assertGreaterEqual(accuracy, 0.0)
@@ -77,10 +77,11 @@ class TextClassifierTest(tf.test.TestCase):
 
   def test_create_and_train_bert(self):
     train_data, validation_data = self._get_data()
-    options = text_classifier_options.TextClassifierOptions(
-        supported_model=ms.SupportedModels.MOBILEBERT_CLASSIFIER,
-        model_options=mo.BertClassifierOptions(do_fine_tuning=False, seq_len=2),
-        hparams=hp.BaseHParams(
+    options = text_classifier.TextClassifierOptions(
+        supported_model=text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER,
+        model_options=text_classifier.BertClassifierModelOptions(
+            do_fine_tuning=False, seq_len=2),
+        hparams=text_classifier.HParams(
             epochs=1,
             batch_size=1,
             learning_rate=3e-5,
@@ -94,12 +95,13 @@ class TextClassifierTest(tf.test.TestCase):
 
   def test_label_mismatch(self):
     options = (
-        text_classifier_options.TextClassifierOptions(
-            supported_model=ms.SupportedModels.MOBILEBERT_CLASSIFIER))
+        text_classifier.TextClassifierOptions(
+            supported_model=(
+                text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER)))
     train_tf_dataset = tf.data.Dataset.from_tensor_slices([[0]])
-    train_data = dataset.Dataset(train_tf_dataset, 1, ['foo'])
+    train_data = text_classifier.Dataset(train_tf_dataset, 1, ['foo'])
     validation_tf_dataset = tf.data.Dataset.from_tensor_slices([[0]])
-    validation_data = dataset.Dataset(validation_tf_dataset, 1, ['bar'])
+    validation_data = text_classifier.Dataset(validation_tf_dataset, 1, ['bar'])
     with self.assertRaisesRegex(
         ValueError,
         'Training data label names .* not equal to validation data label names'
@@ -111,9 +113,11 @@ class TextClassifierTest(tf.test.TestCase):
     train_data, validation_data = self._get_data()
 
     avg_options = (
-        text_classifier_options.TextClassifierOptions(
-            supported_model=ms.SupportedModels.MOBILEBERT_CLASSIFIER,
-            model_options=mo.AverageWordEmbeddingClassifierOptions()))
+        text_classifier.TextClassifierOptions(
+            supported_model=(
+                text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER),
+            model_options=(
+                text_classifier.AverageWordEmbeddingClassifierModelOptions())))
     with self.assertRaisesRegex(
         ValueError, 'Expected AVERAGE_WORD_EMBEDDING_CLASSIFIER, got'
         ' SupportedModels.MOBILEBERT_CLASSIFIER'):
@@ -121,10 +125,10 @@ class TextClassifierTest(tf.test.TestCase):
                                             avg_options)
 
     bert_options = (
-        text_classifier_options.TextClassifierOptions(
-            supported_model=(
-                ms.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER),
-            model_options=mo.BertClassifierOptions()))
+        text_classifier.TextClassifierOptions(
+            supported_model=(text_classifier.SupportedModels
+                             .AVERAGE_WORD_EMBEDDING_CLASSIFIER),
+            model_options=text_classifier.BertClassifierModelOptions()))
     with self.assertRaisesRegex(
         ValueError, 'Expected MOBILEBERT_CLASSIFIER, got'
         ' SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER'):

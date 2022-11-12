@@ -18,6 +18,7 @@ import mediapipe.tasks.python.vision.core
 import mediapipe.tasks.python.vision.gesture_recognizer
 import mediapipe.tasks.python.vision.hand_landmarker
 import mediapipe.tasks.python.vision.image_classifier
+import mediapipe.tasks.python.vision.image_embedder
 import mediapipe.tasks.python.vision.image_segmenter
 import mediapipe.tasks.python.vision.object_detector
 
@@ -29,6 +30,10 @@ HandLandmarkerOptions = hand_landmarker.HandLandmarkerOptions
 HandLandmarkerResult = hand_landmarker.HandLandmarkerResult
 ImageClassifier = image_classifier.ImageClassifier
 ImageClassifierOptions = image_classifier.ImageClassifierOptions
+ImageClassifierResult = image_classifier.ImageClassifierResult
+ImageEmbedder = image_embedder.ImageEmbedder
+ImageEmbedderOptions = image_embedder.ImageEmbedderOptions
+ImageEmbedderResult = image_embedder.ImageEmbedderResult
 ImageSegmenter = image_segmenter.ImageSegmenter
 ImageSegmenterOptions = image_segmenter.ImageSegmenterOptions
 ObjectDetector = object_detector.ObjectDetector
@@ -40,6 +45,7 @@ del core
 del gesture_recognizer
 del hand_landmarker
 del image_classifier
+del image_embedder
 del image_segmenter
 del object_detector
 del mediapipe

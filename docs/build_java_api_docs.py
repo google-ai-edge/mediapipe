@@ -45,6 +45,12 @@ def main(_) -> None:
     while (mp_root := mp_root.parent).name != 'mediapipe':
       # Find the nearest `mediapipe` dir.
       pass
+
+    # Externally, parts of the repo are nested inside a mediapipe/ directory
+    # that does not exist internally. Support both.
+    if (mp_root / 'mediapipe').exists():
+      mp_root = mp_root / 'mediapipe'
+
     java_root = mp_root / 'tasks/java'
 
   gen_java.gen_java_docs(

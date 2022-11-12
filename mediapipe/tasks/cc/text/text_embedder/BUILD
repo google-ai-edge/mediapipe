@@ -82,6 +82,7 @@ cc_test(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@com_google_sentencepiece//src:sentencepiece_processor",
         "@org_tensorflow//tensorflow/lite/core/shims:cc_shims_test_util",
     ],
 )

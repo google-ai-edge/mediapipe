@@ -46,6 +46,40 @@ constexpr char kOutputFrameTagGpu[] = "IMAGE_GPU";
 constexpr int kNumChannelsRGBA = 4;
 
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
+
+// Combines an RGB cv::Mat and a single-channel alpha cv::Mat of the same
+// dimensions into an RGBA cv::Mat. Alpha may be read as uint8 or as another
+// numeric type; in the latter case, it is upscaled to values between 0 and 255
+// from an assumed input range of [0, 1). RGB and RGBA Mat's must be uchar.
+template <typename AlphaType>
+absl::Status MergeRGBA8Image(const cv::Mat input_mat, const cv::Mat& alpha_mat,
+                             cv::Mat& output_mat) {
+  RET_CHECK_EQ(input_mat.rows, alpha_mat.rows);
+  RET_CHECK_EQ(input_mat.cols, alpha_mat.cols);
+  RET_CHECK_EQ(input_mat.rows, output_mat.rows);
+  RET_CHECK_EQ(input_mat.cols, output_mat.cols);
+
+  for (int i = 0; i < output_mat.rows; ++i) {
+    const uchar* in_ptr = input_mat.ptr<uchar>(i);
+    const AlphaType* alpha_ptr = alpha_mat.ptr<AlphaType>(i);
+    uchar* out_ptr = output_mat.ptr<uchar>(i);
+    for (int j = 0; j < output_mat.cols; ++j) {
+      const int out_idx = j * kNumChannelsRGBA;
+      const int in_idx = j * input_mat.channels();
+      const int alpha_idx = j * alpha_mat.channels();
+      out_ptr[out_idx + 0] = in_ptr[in_idx + 0];
+      out_ptr[out_idx + 1] = in_ptr[in_idx + 1];
+      out_ptr[out_idx + 2] = in_ptr[in_idx + 2];
+      if constexpr (std::is_same<AlphaType, uchar>::value) {
+        out_ptr[out_idx + 3] = alpha_ptr[alpha_idx + 0];
+      } else {
+        const AlphaType alpha = alpha_ptr[alpha_idx + 0];
+        out_ptr[out_idx + 3] = static_cast<uchar>(round(alpha * 255.0f));
+      }
+    }
+  }
+  return absl::OkStatus();
+}
 }  // namespace
 
 // A calculator for setting the alpha channel of an RGBA image.
@@ -250,28 +284,22 @@ absl::Status SetAlphaCalculator::RenderCpu(CalculatorContext* cc) {
 
   const bool has_alpha_mask = cc->Inputs().HasTag(kInputAlphaTag) &&
                               !cc->Inputs().Tag(kInputAlphaTag).IsEmpty();
-  const bool use_alpa_mask = alpha_value_ < 0 && has_alpha_mask;
+  const bool use_alpha_mask = alpha_value_ < 0 && has_alpha_mask;
 
   // Setup alpha image and Update image in CPU.
-  if (use_alpa_mask) {
+  if (use_alpha_mask) {
     const auto& alpha_mask = cc->Inputs().Tag(kInputAlphaTag).Get<ImageFrame>();
     cv::Mat alpha_mat = mediapipe::formats::MatView(&alpha_mask);
-    RET_CHECK_EQ(input_mat.rows, alpha_mat.rows);
-    RET_CHECK_EQ(input_mat.cols, alpha_mat.cols);
 
-    for (int i = 0; i < output_mat.rows; ++i) {
-      const uchar* in_ptr = input_mat.ptr<uchar>(i);
-      uchar* alpha_ptr = alpha_mat.ptr<uchar>(i);
-      uchar* out_ptr = output_mat.ptr<uchar>(i);
-      for (int j = 0; j < output_mat.cols; ++j) {
-        const int out_idx = j * kNumChannelsRGBA;
-        const int in_idx = j * input_mat.channels();
-        const int alpha_idx = j * alpha_mat.channels();
-        out_ptr[out_idx + 0] = in_ptr[in_idx + 0];
-        out_ptr[out_idx + 1] = in_ptr[in_idx + 1];
-        out_ptr[out_idx + 2] = in_ptr[in_idx + 2];
-        out_ptr[out_idx + 3] = alpha_ptr[alpha_idx + 0];  // channel 0 of mask
-      }
+    const bool alpha_is_float = alpha_mat.type() == CV_32FC1;
+    RET_CHECK(alpha_is_float || alpha_mat.type() == CV_8UC1);
+
+    if (alpha_is_float) {
+      MP_RETURN_IF_ERROR(
+          MergeRGBA8Image<float>(input_mat, alpha_mat, output_mat));
+    } else {
+      MP_RETURN_IF_ERROR(
+          MergeRGBA8Image<uchar>(input_mat, alpha_mat, output_mat));
     }
   } else {
     const uchar alpha_value = std::min(std::max(0.0f, alpha_value_), 255.0f);

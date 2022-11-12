@@ -14,6 +14,8 @@
 
 #include <algorithm>
 
+#include "absl/status/status.h"
+
 #if !defined(__ANDROID__)
 #include "mediapipe/framework/port/file_helpers.h"
 #endif
@@ -37,6 +39,8 @@ namespace {
 constexpr char kSessionTag[] = "SESSION";
 
 static constexpr char kStringSavedModelPath[] = "STRING_SAVED_MODEL_PATH";
+
+static constexpr char kStringSignatureName[] = "STRING_SIGNATURE_NAME";
 
 // Given the path to a directory containing multiple tensorflow saved models
 // in subdirectories, replaces path with the alphabetically last subdirectory.
@@ -104,6 +108,10 @@ class TensorFlowSessionFromSavedModelGenerator : public PacketGenerator {
     if (input_side_packets->HasTag(kStringSavedModelPath)) {
       input_side_packets->Tag(kStringSavedModelPath).Set<std::string>();
     }
+    // Set Signature_def.
+    if (input_side_packets->HasTag(kStringSignatureName)) {
+      input_side_packets->Tag(kStringSignatureName).Set<std::string>();
+    }
     // A TensorFlow model loaded and ready for use along with tensor
     output_side_packets->Tag(kSessionTag).Set<TensorFlowSession>();
     return absl::OkStatus();
@@ -146,9 +154,19 @@ class TensorFlowSessionFromSavedModelGenerator : public PacketGenerator {
     auto session = absl::make_unique<TensorFlowSession>();
     session->session = std::move(saved_model->session);
 
-    RET_CHECK(!options.signature_name().empty());
+    // Use input side packet to overwrite signature name in options.
+    std::string signature_name =
+        input_side_packets.HasTag(kStringSignatureName)
+            ? input_side_packets.Tag(kStringSignatureName).Get<std::string>()
+            : options.signature_name();
+    RET_CHECK(!signature_name.empty());
     const auto& signature_def_map = saved_model->meta_graph_def.signature_def();
-    const auto& signature_def = signature_def_map.at(options.signature_name());
+    if (signature_def_map.find(signature_name) == signature_def_map.end()) {
+      return absl::NotFoundError(absl::StrFormat(
+          "Signature name '%s' does not exist in the loaded signature def",
+          signature_name));
+    }
+    const auto& signature_def = signature_def_map.at(signature_name);
     for (const auto& input_signature : signature_def.inputs()) {
       session->tag_to_tensor_map[MaybeConvertSignatureToTag(
           input_signature.first, options)] = input_signature.second.name();

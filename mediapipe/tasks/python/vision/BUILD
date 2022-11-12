@@ -80,6 +80,29 @@ py_library(
 )
 
 py_library(
+    name = "image_embedder",
+    srcs = [
+        "image_embedder.py",
+    ],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_py_pb2",
+        "//mediapipe/tasks/cc/vision/image_embedder/proto:image_embedder_graph_options_py_pb2",
+        "//mediapipe/tasks/python/components/containers:embedding_result",
+        "//mediapipe/tasks/python/components/processors:embedder_options",
+        "//mediapipe/tasks/python/components/utils:cosine_similarity",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)
+
+py_library(
     name = "gesture_recognizer",
     srcs = [
         "gesture_recognizer.py",

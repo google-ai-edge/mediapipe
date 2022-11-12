@@ -18,12 +18,12 @@ from typing import Union
 
 from mediapipe.model_maker.python.text.core import bert_model_options
 
-# BERT text classifier options inherited from BertModelOptions.
-BertClassifierOptions = bert_model_options.BertModelOptions
+# BERT text classifier model options inherited from BertModelOptions.
+BertClassifierModelOptions = bert_model_options.BertModelOptions
 
 
 @dataclasses.dataclass
-class AverageWordEmbeddingClassifierOptions:
+class AverageWordEmbeddingClassifierModelOptions:
   """Configurable model options for an Average Word Embedding classifier.
 
   Attributes:
@@ -41,5 +41,5 @@ class AverageWordEmbeddingClassifierOptions:
   dropout_rate: float = 0.2
 
 
-TextClassifierModelOptions = Union[AverageWordEmbeddingClassifierOptions,
-                                   BertClassifierOptions]
+TextClassifierModelOptions = Union[AverageWordEmbeddingClassifierModelOptions,
+                                   BertClassifierModelOptions]
