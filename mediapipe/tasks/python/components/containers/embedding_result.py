@@ -51,7 +51,7 @@ class Embedding:
         bytearray(pb2_obj.quantized_embedding.values))
     float_embedding = np.array(pb2_obj.float_embedding.values, dtype=float)
 
-    if not quantized_embedding:
+    if not pb2_obj.quantized_embedding.values:
       return Embedding(
           embedding=float_embedding,
           head_index=pb2_obj.head_index,
