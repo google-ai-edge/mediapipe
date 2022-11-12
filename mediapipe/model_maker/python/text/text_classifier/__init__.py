@@ -23,9 +23,9 @@ from mediapipe.model_maker.python.text.text_classifier import text_classifier_op
 HParams = hyperparameters.BaseHParams
 CSVParams = dataset.CSVParameters
 Dataset = dataset.Dataset
-AverageWordEmbeddingClassifierModelOptions = (
-    model_options.AverageWordEmbeddingClassifierModelOptions)
-BertClassifierModelOptions = model_options.BertClassifierModelOptions
+AverageWordEmbeddingModelOptions = (
+    model_options.AverageWordEmbeddingModelOptions)
+BertModelOptions = model_options.BertModelOptions
 SupportedModels = model_spec.SupportedModels
 TextClassifier = text_classifier.TextClassifier
 TextClassifierOptions = text_classifier_options.TextClassifierOptions

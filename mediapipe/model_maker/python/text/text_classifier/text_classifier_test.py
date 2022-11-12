@@ -79,7 +79,7 @@ class TextClassifierTest(tf.test.TestCase):
     train_data, validation_data = self._get_data()
     options = text_classifier.TextClassifierOptions(
         supported_model=text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER,
-        model_options=text_classifier.BertClassifierModelOptions(
+        model_options=text_classifier.BertModelOptions(
             do_fine_tuning=False, seq_len=2),
         hparams=text_classifier.HParams(
             epochs=1,
@@ -116,8 +116,7 @@ class TextClassifierTest(tf.test.TestCase):
         text_classifier.TextClassifierOptions(
             supported_model=(
                 text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER),
-            model_options=(
-                text_classifier.AverageWordEmbeddingClassifierModelOptions())))
+            model_options=text_classifier.AverageWordEmbeddingModelOptions()))
     with self.assertRaisesRegex(
         ValueError, 'Expected AVERAGE_WORD_EMBEDDING_CLASSIFIER, got'
         ' SupportedModels.MOBILEBERT_CLASSIFIER'):
@@ -128,7 +127,7 @@ class TextClassifierTest(tf.test.TestCase):
         text_classifier.TextClassifierOptions(
             supported_model=(text_classifier.SupportedModels
                              .AVERAGE_WORD_EMBEDDING_CLASSIFIER),
-            model_options=text_classifier.BertClassifierModelOptions()))
+            model_options=text_classifier.BertModelOptions()))
     with self.assertRaisesRegex(
         ValueError, 'Expected MOBILEBERT_CLASSIFIER, got'
         ' SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER'):

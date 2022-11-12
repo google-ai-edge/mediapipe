@@ -50,13 +50,12 @@ def _validate(options: text_classifier_options.TextClassifierOptions):
   if options.model_options is None:
     return
 
-  if (isinstance(options.model_options,
-                 mo.AverageWordEmbeddingClassifierModelOptions) and
+  if (isinstance(options.model_options, mo.AverageWordEmbeddingModelOptions) and
       (options.supported_model !=
        ms.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER)):
     raise ValueError("Expected AVERAGE_WORD_EMBEDDING_CLASSIFIER,"
                      f" got {options.supported_model}")
-  if (isinstance(options.model_options, mo.BertClassifierModelOptions) and
+  if (isinstance(options.model_options, mo.BertModelOptions) and
       (options.supported_model != ms.SupportedModels.MOBILEBERT_CLASSIFIER)):
     raise ValueError(
         f"Expected MOBILEBERT_CLASSIFIER, got {options.supported_model}")
@@ -194,7 +193,7 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
   _DELIM_REGEX_PATTERN = r"[^\w\']+"
 
   def __init__(self, model_spec: ms.AverageWordEmbeddingClassifierSpec,
-               model_options: mo.AverageWordEmbeddingClassifierModelOptions,
+               model_options: mo.AverageWordEmbeddingModelOptions,
                hparams: hp.BaseHParams, label_names: Sequence[str]):
     super().__init__(model_spec, hparams, label_names)
     self._model_options = model_options
@@ -304,8 +303,8 @@ class _BertClassifier(TextClassifier):
   _INITIALIZER_RANGE = 0.02
 
   def __init__(self, model_spec: ms.BertClassifierSpec,
-               model_options: mo.BertClassifierModelOptions,
-               hparams: hp.BaseHParams, label_names: Sequence[str]):
+               model_options: mo.BertModelOptions, hparams: hp.BaseHParams,
+               label_names: Sequence[str]):
     super().__init__(model_spec, hparams, label_names)
     self._model_options = model_options
     self._loss_function = tf.keras.losses.SparseCategoricalCrossentropy()

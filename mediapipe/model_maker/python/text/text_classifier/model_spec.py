@@ -38,8 +38,8 @@ class AverageWordEmbeddingClassifierSpec:
   # `learning_rate` is unused for the average word embedding model
   hparams: hp.BaseHParams = hp.BaseHParams(
       epochs=10, batch_size=32, learning_rate=0)
-  model_options: mo.AverageWordEmbeddingClassifierModelOptions = (
-      mo.AverageWordEmbeddingClassifierModelOptions())
+  model_options: mo.AverageWordEmbeddingModelOptions = (
+      mo.AverageWordEmbeddingModelOptions())
   name: str = 'AverageWordEmbedding'
 
 
