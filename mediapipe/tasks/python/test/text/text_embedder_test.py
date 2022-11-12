@@ -15,7 +15,6 @@
 
 import enum
 import os
-from unittest import mock
 
 import numpy as np
 from absl.testing import absltest
@@ -30,8 +29,6 @@ from mediapipe.tasks.python.text import text_embedder
 ImageEmbedderResult = embedding_result_module.EmbeddingResult
 _BaseOptions = base_options_module.BaseOptions
 _EmbedderOptions = embedder_options_module.EmbedderOptions
-_FloatEmbedding = embedding_result_module.FloatEmbedding
-_QuantizedEmbedding = embedding_result_module.QuantizedEmbedding
 _Embedding = embedding_result_module.Embedding
 _TextEmbedder = text_embedder.TextEmbedder
 _TextEmbedderOptions = text_embedder.TextEmbedderOptions
