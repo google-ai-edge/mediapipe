@@ -14,11 +14,9 @@
 """MediaPipe text embedder task."""
 
 import dataclasses
-from typing import Callable, Mapping, Optional
 
 from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
-from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.tasks.cc.text.text_embedder.proto import text_embedder_graph_options_pb2
 from mediapipe.tasks.cc.components.containers.proto import embeddings_pb2
 from mediapipe.tasks.python.components.processors import embedder_options
@@ -70,7 +68,7 @@ class TextEmbedder(base_text_task_api.BaseTextTaskApi):
   """Class that performs embedding extraction on text."""
 
   @classmethod
-  def create_from_model_path(cls, model_path: str) -> 'ImageEmbedder':
+  def create_from_model_path(cls, model_path: str) -> 'TextEmbedder':
     """Creates an `TextEmbedder` object from a TensorFlow Lite model and the
       default `TextEmbedderOptions`.
 
@@ -147,7 +145,9 @@ class TextEmbedder(base_text_task_api.BaseTextTaskApi):
   def cosine_similarity(u: embedding_result_module.Embedding,
                         v: embedding_result_module.Embedding) -> float:
     """Utility function to compute cosine similarity [1] between two embedding
-    entries. May return an InvalidArgumentError if e.g. the feature vectors are
+    entries.
+
+    May return an InvalidArgumentError if e.g. the feature vectors are
     of different types (quantized vs. float), have different sizes, or have a
     an L2-norm of 0.
 

@@ -43,7 +43,6 @@ py_library(
         "text_embedder.py",
     ],
     deps = [
-        "//mediapipe/python:_framework_bindings",
         "//mediapipe/python:packet_creator",
         "//mediapipe/python:packet_getter",
         "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_py_pb2",
