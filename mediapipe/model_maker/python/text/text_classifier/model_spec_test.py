@@ -40,7 +40,7 @@ class ModelSpecTest(tf.test.TestCase):
         })
     self.assertEqual(
         model_spec_obj.model_options,
-        classifier_model_options.BertClassifierOptions(
+        classifier_model_options.BertClassifierModelOptions(
             seq_len=128, do_fine_tuning=True, dropout_rate=0.1))
     self.assertEqual(
         model_spec_obj.hparams,
@@ -57,7 +57,7 @@ class ModelSpecTest(tf.test.TestCase):
     self.assertEqual(model_spec_obj.name, 'AverageWordEmbedding')
     self.assertEqual(
         model_spec_obj.model_options,
-        classifier_model_options.AverageWordEmbeddingClassifierOptions(
+        classifier_model_options.AverageWordEmbeddingClassifierModelOptions(
             seq_len=256,
             wordvec_dim=16,
             do_lower_case=True,
@@ -77,7 +77,7 @@ class ModelSpecTest(tf.test.TestCase):
 
   def test_custom_bert_spec(self):
     custom_bert_classifier_options = (
-        classifier_model_options.BertClassifierOptions(
+        classifier_model_options.BertClassifierModelOptions(
             seq_len=512, do_fine_tuning=False, dropout_rate=0.3))
     model_spec_obj = (
         ms.SupportedModels.MOBILEBERT_CLASSIFIER.value(
@@ -97,7 +97,7 @@ class ModelSpecTest(tf.test.TestCase):
         num_gpus=3,
         tpu='tpu/address')
     custom_average_word_embedding_model_options = (
-        classifier_model_options.AverageWordEmbeddingClassifierOptions(
+        classifier_model_options.AverageWordEmbeddingClassifierModelOptions(
             seq_len=512,
             wordvec_dim=32,
             do_lower_case=False,

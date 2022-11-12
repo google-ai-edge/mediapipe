@@ -23,12 +23,8 @@ from absl import flags
 from absl import logging
 import tensorflow as tf
 
-from mediapipe.model_maker.python.core import hyperparameters as hp
 from mediapipe.model_maker.python.core.utils import quantization
-from mediapipe.model_maker.python.text.text_classifier import dataset as text_ds
-from mediapipe.model_maker.python.text.text_classifier import model_spec as ms
-from mediapipe.model_maker.python.text.text_classifier import text_classifier
-from mediapipe.model_maker.python.text.text_classifier import text_classifier_options
+from mediapipe.model_maker.python.text import text_classifier
 
 FLAGS = flags.FLAGS
 
@@ -53,31 +49,34 @@ def download_demo_data():
 
 def run(data_dir,
         export_dir=tempfile.mkdtemp(),
-        supported_model=ms.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER):
+        supported_model=(
+            text_classifier.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER)):
   """Runs demo."""
 
   # Gets training data and validation data.
-  csv_params = text_ds.CSVParameters(
+  csv_params = text_classifier.CSVParams(
       text_column='sentence', label_column='label', delimiter='\t')
-  train_data = text_ds.Dataset.from_csv(
+  train_data = text_classifier.Dataset.from_csv(
       filename=os.path.join(os.path.join(data_dir, 'train.tsv')),
       csv_params=csv_params)
-  validation_data = text_ds.Dataset.from_csv(
+  validation_data = text_classifier.Dataset.from_csv(
       filename=os.path.join(os.path.join(data_dir, 'dev.tsv')),
       csv_params=csv_params)
 
   quantization_config = None
-  if supported_model == ms.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER:
-    hparams = hp.BaseHParams(
+  if (supported_model ==
+      text_classifier.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER):
+    hparams = text_classifier.HParams(
         epochs=10, batch_size=32, learning_rate=0, export_dir=export_dir)
   # Warning: This takes extremely long to run on CPU
-  elif supported_model == ms.SupportedModels.MOBILEBERT_CLASSIFIER:
+  elif (
+      supported_model == text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER):
     quantization_config = quantization.QuantizationConfig.for_dynamic()
-    hparams = hp.BaseHParams(
+    hparams = text_classifier.HParams(
         epochs=3, batch_size=48, learning_rate=3e-5, export_dir=export_dir)
 
   # Fine-tunes the model.
-  options = text_classifier_options.TextClassifierOptions(
+  options = text_classifier.TextClassifierOptions(
       supported_model=supported_model, hparams=hparams)
   model = text_classifier.TextClassifier.create(train_data, validation_data,
                                                 options)
@@ -96,9 +95,10 @@ def main(_):
   export_dir = os.path.expanduser(FLAGS.export_dir)
 
   if FLAGS.supported_model == 'average_word_embedding':
-    supported_model = ms.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER
+    supported_model = (
+        text_classifier.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER)
   elif FLAGS.supported_model == 'bert':
-    supported_model = ms.SupportedModels.MOBILEBERT_CLASSIFIER
+    supported_model = text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER
 
   run(data_dir, export_dir, supported_model)
 

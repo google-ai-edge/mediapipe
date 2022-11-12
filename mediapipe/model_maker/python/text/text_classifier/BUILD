@@ -22,6 +22,19 @@ package(
 licenses(["notice"])
 
 py_library(
+    name = "text_classifier_import",
+    srcs = ["__init__.py"],
+    deps = [
+        ":dataset",
+        ":model_options",
+        ":model_spec",
+        ":text_classifier",
+        ":text_classifier_options",
+        "//mediapipe/model_maker/python/core:hyperparameters",
+    ],
+)
+
+py_library(
     name = "model_options",
     srcs = ["model_options.py"],
     deps = ["//mediapipe/model_maker/python/text/core:bert_model_options"],
@@ -114,12 +127,7 @@ py_test(
     ],
     tags = ["requires-net:external"],
     deps = [
-        ":dataset",
-        ":model_options",
-        ":model_spec",
-        ":text_classifier",
-        ":text_classifier_options",
-        "//mediapipe/model_maker/python/core:hyperparameters",
+        ":text_classifier_import",
         "//mediapipe/tasks/python/test:test_utils",
     ],
 )
@@ -128,11 +136,7 @@ py_library(
     name = "text_classifier_demo_lib",
     srcs = ["text_classifier_demo.py"],
     deps = [
-        ":dataset",
-        ":model_spec",
-        ":text_classifier",
-        ":text_classifier_options",
-        "//mediapipe/model_maker/python/core:hyperparameters",
+        ":text_classifier_import",
         "//mediapipe/model_maker/python/core/utils:quantization",
     ],
 )
