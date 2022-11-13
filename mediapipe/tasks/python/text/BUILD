@@ -36,3 +36,23 @@ py_library(
         "//mediapipe/tasks/python/text/core:base_text_task_api",
     ],
 )
+
+py_library(
+    name = "text_embedder",
+    srcs = [
+        "text_embedder.py",
+    ],
+    deps = [
+        "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_py_pb2",
+        "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_py_pb2",
+        "//mediapipe/tasks/python/components/containers:embedding_result",
+        "//mediapipe/tasks/python/components/processors:embedder_options",
+        "//mediapipe/tasks/python/components/utils:cosine_similarity",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/text/core:base_text_task_api",
+    ],
+)

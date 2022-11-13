@@ -27,42 +27,6 @@ _EmbeddingResultProto = embeddings_pb2.EmbeddingResult
 
 
 @dataclasses.dataclass
-class FloatEmbedding:
-  """Defines a dense floating-point embedding.
-
-  Attributes:
-    values: A NumPy array indicating the raw output of the embedding layer.
-  """
-
-  values: np.ndarray
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _FloatEmbeddingProto) -> 'FloatEmbedding':
-    """Creates a `FloatEmbedding` object from the given protobuf object."""
-    return FloatEmbedding(values=np.array(pb2_obj.values, dtype=float))
-
-
-@dataclasses.dataclass
-class QuantizedEmbedding:
-  """Defines a dense scalar-quantized embedding.
-
-  Attributes:
-    values: A NumPy array indicating the raw output of the embedding layer.
-  """
-
-  values: np.ndarray
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(
-      cls, pb2_obj: _QuantizedEmbeddingProto) -> 'QuantizedEmbedding':
-    """Creates a `QuantizedEmbedding` object from the given protobuf object."""
-    return QuantizedEmbedding(
-        values=np.array(bytearray(pb2_obj.values), dtype=np.uint8))
-
-
-@dataclasses.dataclass
 class Embedding:
   """Embedding result for a given embedder head.
 
@@ -87,7 +51,7 @@ class Embedding:
         bytearray(pb2_obj.quantized_embedding.values))
     float_embedding = np.array(pb2_obj.float_embedding.values, dtype=float)
 
-    if not quantized_embedding:
+    if not pb2_obj.quantized_embedding.values:
       return Embedding(
           embedding=float_embedding,
           head_index=pb2_obj.head_index,

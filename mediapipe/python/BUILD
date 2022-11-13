@@ -93,12 +93,13 @@ cc_library(
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
     ] + select({
-        # TODO: Build text_classifier_graph on Windows.
+        # TODO: Build text_classifier_graph and text_embedder_graph on Windows.
         # TODO: Build audio_classifier_graph on Windows.
         "//mediapipe:windows": [],
         "//conditions:default": [
             "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
             "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+            "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
         ],
     }),
 )
