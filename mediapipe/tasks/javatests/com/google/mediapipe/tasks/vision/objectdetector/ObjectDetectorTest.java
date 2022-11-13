@@ -50,7 +50,7 @@ public class ObjectDetectorTest {
   private static final int IMAGE_WIDTH = 1200;
   private static final int IMAGE_HEIGHT = 600;
   private static final float CAT_SCORE = 0.69f;
-  private static final RectF CAT_BOUNDING_BOX = new RectF(611, 164, 986, 596);
+  private static final RectF CAT_BOUNDING_BOX = new RectF(611, 164, 993, 596);
   // TODO: Figure out why android_x86 and android_arm tests have slightly different
   // scores (0.6875 vs 0.69921875).
   private static final float SCORE_DIFF_TOLERANCE = 0.01f;
