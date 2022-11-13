@@ -941,6 +941,8 @@ absl::Status TfLiteInferenceCalculator::LoadDelegate(CalculatorContext* cc) {
     if (use_xnnpack) {
       auto xnnpack_opts = TfLiteXNNPackDelegateOptionsDefault();
       xnnpack_opts.num_threads = GetXnnpackNumThreads(calculator_opts);
+      // TODO Remove once XNNPACK is enabled by default.
+      xnnpack_opts.flags |= TFLITE_XNNPACK_DELEGATE_FLAG_QU8;
       delegate_ = TfLiteDelegatePtr(TfLiteXNNPackDelegateCreate(&xnnpack_opts),
                                     &TfLiteXNNPackDelegateDelete);
       RET_CHECK_EQ(interpreter_->ModifyGraphWithDelegate(delegate_.get()),
