@@ -31,3 +31,11 @@ mediapipe_ts_library(
     ],
     deps = [":core"],
 )
+
+mediapipe_ts_library(
+    name = "embedder_options",
+    srcs = [
+        "embedder_options.d.ts",
+    ],
+    deps = [":core"],
+)

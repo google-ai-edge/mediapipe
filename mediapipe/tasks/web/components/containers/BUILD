@@ -19,3 +19,8 @@ mediapipe_ts_library(
     name = "landmark",
     srcs = ["landmark.d.ts"],
 )
+
+mediapipe_ts_library(
+    name = "embedding_result",
+    srcs = ["embedding_result.d.ts"],
+)
