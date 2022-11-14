@@ -176,21 +176,39 @@ class SourceImpl {
       : SourceImpl(&GetWithAutoGrow(vec, 0)) {}
   explicit SourceImpl(SourceBase* base) : base_(base) {}
 
+  // Connects MediaPipe stream or side packet to a destination:
+  // - node input (input stream) / side input (input side packet)
+  // - graph output (output stream) / side output (output side packet).
+  //
+  // MediaPipe streams and side packets can be connected to multiple
+  // destinations. Side packets and packets added to streams are sent to all
+  // connected destinations.
   template <typename U,
             typename std::enable_if<AllowConnection<U>{}, int>::type = 0>
-  Src& AddTarget(const Dst<U>& dest) {
+  Src& ConnectTo(const Dst<U>& dest) {
     CHECK(dest.base_.source == nullptr);
     dest.base_.source = base_;
     base_->dests_.emplace_back(&dest.base_);
     return *this;
   }
+
+  // Shortcut for `ConnectTo`.
+  //
+  // Connects MediaPipe stream or side packet to a destination:
+  // - node input (input stream) / side input (input side packet)
+  // - graph output (output stream) / side output (output side packet).
+  //
+  // MediaPipe streams and side packets can be connected to multiple
+  // destinations. Side packets and packets added to streams are sent to all
+  // connected destinations.
+  template <typename U>
+  Src& operator>>(const Dst<U>& dest) {
+    return ConnectTo(dest);
+  }
+
   Src& SetName(std::string name) {
     base_->name_ = std::move(name);
     return *this;
-  }
-  template <typename U>
-  Src& operator>>(const Dst<U>& dest) {
-    return AddTarget(dest);
   }
 
   template <typename U,
