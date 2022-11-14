@@ -3,7 +3,7 @@
 # This task takes video frames and outputs synchronized frames along with
 # the detection results for one or more gesture categories, using Gesture Recognizer.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -11,12 +11,9 @@ licenses(["notice"])
 
 mediapipe_ts_library(
     name = "gesture_recognizer",
-    srcs = [
-        "gesture_recognizer.ts",
-        "gesture_recognizer_options.ts",
-        "gesture_recognizer_result.ts",
-    ],
+    srcs = ["gesture_recognizer.ts"],
     deps = [
+        ":gesture_recognizer_types",
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/framework:calculator_options_jspb_proto",
         "//mediapipe/framework/formats:classification_jspb_proto",
@@ -36,5 +33,19 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/core:classifier_options",
         "//mediapipe/tasks/web/core:task_runner",
         "//mediapipe/web/graph_runner:wasm_mediapipe_lib_ts",
+    ],
+)
+
+mediapipe_ts_declaration(
+    name = "gesture_recognizer_types",
+    srcs = [
+        "gesture_recognizer_options.d.ts",
+        "gesture_recognizer_result.d.ts",
+    ],
+    deps = [
+        "//mediapipe/tasks/web/components/containers:category",
+        "//mediapipe/tasks/web/components/containers:landmark",
+        "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:classifier_options",
     ],
 )

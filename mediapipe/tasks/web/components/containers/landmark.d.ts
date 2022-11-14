@@ -20,7 +20,7 @@
  * dimension of image, and the coordinates values are in the range of [0,1].
  * Otherwise, it represenet a point in world coordinates.
  */
-export declare class Landmark {
+export declare interface Landmark {
   /** The x coordinates of the landmark. */
   x: number;
 

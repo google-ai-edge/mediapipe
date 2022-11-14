@@ -21,7 +21,7 @@
  * contain data, based on whether or not the embedder was configured to perform
  * scalar quantization.
  */
-export interface Embedding {
+export declare interface Embedding {
   /**
    *  Floating-point embedding. Empty if the embedder was configured to perform
    * scalar-quantization.

@@ -37,6 +37,8 @@ import {createMediaPipeLib, FileLocator, ImageSource, WasmModule} from '../../..
 import {GestureRecognizerOptions} from './gesture_recognizer_options';
 import {GestureRecognizerResult} from './gesture_recognizer_result';
 
+export * from './gesture_recognizer_options';
+export * from './gesture_recognizer_result';
 export {ImageSource};
 
 // The OSS JS API does not support the builder pattern.

@@ -33,6 +33,8 @@ import {createMediaPipeLib, FileLocator, ImageSource, WasmModule} from '../../..
 import {HandLandmarkerOptions} from './hand_landmarker_options';
 import {HandLandmarkerResult} from './hand_landmarker_result';
 
+export * from './hand_landmarker_options';
+export * from './hand_landmarker_result';
 export {ImageSource};
 
 // The OSS JS API does not support the builder pattern.

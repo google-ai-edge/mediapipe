@@ -33,6 +33,8 @@ const OBJECT_DETECTOR_GRAPH = 'mediapipe.tasks.vision.ObjectDetectorGraph';
 
 const DEFAULT_CATEGORY_INDEX = -1;
 
+export * from './object_detector_options';
+export * from './object_detector_result';
 export {ImageSource};  // Used in the public API
 
 // The OSS JS API does not support the builder pattern.

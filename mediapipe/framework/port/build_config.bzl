@@ -214,10 +214,10 @@ def mediapipe_ts_library(
     """Generate ts_project for MediaPipe open source version.
 
     Args:
-      name: the name of the cc_proto_library.
-      srcs: the .proto files of the cc_proto_library for Bazel use.
+      name: the name of the mediapipe_ts_library.
+      srcs: the .ts files of the mediapipe_ts_library for Bazel use.
       visibility: visibility of this target.
-      deps: a list of dependency labels for Bazel use; must be cc_proto_library.
+      deps: a list of dependency labels for Bazel use.
       testonly: test only or not.
       allow_unoptimized_namespaces: ignored, used only internally
     """
@@ -235,3 +235,36 @@ def mediapipe_ts_library(
         declaration = True,
         tsconfig = "//:tsconfig.json",
     ))
+
+def mediapipe_ts_declaration(
+        name,
+        srcs,
+        visibility = None,
+        deps = []):
+    """Generate ts_declaration for MediaPipe open source version.
+
+    Args:
+      name: the name of the mediapipe_ts_declaration.
+      srcs: the .d.ts files of the mediapipe_ts_declaration for Bazel use.
+      visibility: visibility of this target.
+      deps: a list of dependency labels for Bazel use
+    """
+
+    # Bazel does not create JS files for .d.ts files, which leads to import
+    # failures in our open source build. We simply re-name the .d.ts files
+    # to .ts to work around this problem.
+    for src in srcs:
+        native.genrule(
+            name = replace_suffix(src, ".d.ts", "_d_ts"),
+            srcs = [src],
+            outs = [replace_suffix(src, ".d.ts", ".ts")],
+            visibility = visibility,
+            cmd = "cp -n $< $@;",
+        )
+
+    mediapipe_ts_library(
+        name = name,
+        srcs = [replace_suffix(src, ".d.ts", "_d_ts") for src in srcs],
+        visibility = visibility,
+        deps = deps,
+    )
