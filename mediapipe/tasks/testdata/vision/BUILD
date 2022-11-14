@@ -40,6 +40,7 @@ mediapipe_files(srcs = [
     "fist.jpg",
     "hand_landmark_full.tflite",
     "hand_landmark_lite.tflite",
+    "hand_landmarker.task",
     "left_hands.jpg",
     "left_hands_rotated.jpg",
     "mobilenet_v1_0.25_192_quantized_1_default_1.tflite",

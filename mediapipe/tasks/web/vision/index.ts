@@ -24,6 +24,11 @@ export * from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer_o
 export * from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer_result';
 export * from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer';
 
+// Hand Landmarker
+export * from '../../../tasks/web/vision/hand_landmarker/hand_landmarker_options';
+export * from '../../../tasks/web/vision/hand_landmarker/hand_landmarker_result';
+export * from '../../../tasks/web/vision/hand_landmarker/hand_landmarker';
+
 // Object Detector
 export * from '../../../tasks/web/vision/object_detector/object_detector_options';
 export * from '../../../tasks/web/vision/object_detector/object_detector_result';
