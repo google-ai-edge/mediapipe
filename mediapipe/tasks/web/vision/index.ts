@@ -19,6 +19,11 @@ export * from '../../../tasks/web/vision/image_classifier/image_classifier_optio
 export * from '../../../tasks/web/vision/image_classifier/image_classifier_result';
 export * from '../../../tasks/web/vision/image_classifier/image_classifier';
 
+// Image Embedder
+export * from '../../../tasks/web/vision/image_embedder/image_embedder_options';
+export * from '../../../tasks/web/vision/image_embedder/image_embedder_result';
+export * from '../../../tasks/web/vision/image_embedder/image_embedder';
+
 // Gesture Recognizer
 export * from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer_options';
 export * from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer_result';
