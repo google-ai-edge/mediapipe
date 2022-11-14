@@ -21,6 +21,9 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/tasks/cc/components/processors/proto/embedder_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
+option java_package = "com.google.mediapipe.tasks.text.textembedder.proto";
+option java_outer_classname = "TextEmbedderGraphOptionsProto";
+
 message TextEmbedderGraphOptions {
   extend mediapipe.CalculatorOptions {
     optional TextEmbedderGraphOptions ext = 477589892;

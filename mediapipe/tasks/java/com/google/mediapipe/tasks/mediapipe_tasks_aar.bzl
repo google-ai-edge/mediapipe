@@ -49,6 +49,7 @@ _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
 
 _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/text/text_classifier/proto:text_embedder_graph_options_java_proto_lite",
 ]
 
 def mediapipe_tasks_core_aar(name, srcs, manifest):

@@ -67,9 +67,7 @@ public class TextClassifierTest {
                     ApplicationProvider.getApplicationContext(), options));
     // TODO: Make MediaPipe InferenceCalculator report the detailed.
     // interpreter errors (e.g., "Encountered unresolved custom op").
-    assertThat(exception)
-        .hasMessageThat()
-        .contains("interpreter_builder(&interpreter) == kTfLiteOk");
+    assertThat(exception).hasMessageThat().contains("== kTfLiteOk");
   }
 
   @Test

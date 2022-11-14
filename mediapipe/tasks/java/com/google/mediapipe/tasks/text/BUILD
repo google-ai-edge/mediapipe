@@ -24,6 +24,7 @@ cc_binary(
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+        "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
 )
@@ -53,6 +54,33 @@ android_library(
         "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:classifieroptions",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/text:libmediapipe_tasks_text_jni_lib",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "textembedder",
+    srcs = [
+        "textembedder/TextEmbedder.java",
+        "textembedder/TextEmbedderResult.java",
+    ],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    manifest = "textembedder/AndroidManifest.xml",
+    deps = [
+        "//mediapipe/framework:calculator_options_java_proto_lite",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_java_proto_lite",
+        "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
+        "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_java_proto_lite",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embedding",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:embedderoptions",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/text:libmediapipe_tasks_text_jni_lib",
         "//third_party:autovalue",

@@ -58,8 +58,8 @@ public abstract class TaskOptions {
         AccelerationProto.Acceleration.newBuilder();
     switch (options.delegate()) {
       case CPU:
-        accelerationBuilder.setXnnpack(
-            InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.Xnnpack
+        accelerationBuilder.setTflite(
+            InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.TfLite
                 .getDefaultInstance());
         break;
       case GPU:
