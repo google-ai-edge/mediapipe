@@ -384,9 +384,9 @@ class Tensor {
   mutable void* cpu_buffer_ = nullptr;
   void AllocateCpuBuffer() const;
 #if MEDIAPIPE_METAL_ENABLED
-  mutable id<MTLCommandBuffer> command_buffer_;
-  mutable id<MTLDevice> device_;
-  mutable id<MTLBuffer> metal_buffer_;
+  mutable id<MTLCommandBuffer> command_buffer_ = nil;
+  mutable id<MTLDevice> device_ = nil;
+  mutable id<MTLBuffer> metal_buffer_ = nil;
   void AllocateMtlBuffer(id<MTLDevice> device) const;
 #endif  // MEDIAPIPE_METAL_ENABLED
 

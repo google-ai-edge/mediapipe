@@ -387,7 +387,9 @@ void Tensor::Move(Tensor* src) {
   src->cpu_buffer_ = nullptr;
 #if MEDIAPIPE_METAL_ENABLED
   device_ = src->device_;
+  src->device_ = nil;
   command_buffer_ = src->command_buffer_;
+  src->command_buffer_ = nil;
   metal_buffer_ = src->metal_buffer_;
   src->metal_buffer_ = nil;
 #endif  //  MEDIAPIPE_METAL_ENABLED
@@ -431,6 +433,8 @@ void Tensor::Invalidate() {
       DeallocateVirtualMemory(cpu_buffer_, AlignToPageSize(bytes()));
     }
     metal_buffer_ = nil;
+    command_buffer_ = nil;
+    device_ = nil;
     cpu_buffer_ = nullptr;
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
     // Don't need to wait for the resource to be deleted bacause if will be
