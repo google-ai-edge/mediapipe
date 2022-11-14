@@ -971,7 +971,7 @@ async function runScript(scriptUrl: string) {
     importScripts(scriptUrl.toString());
   } else {
     const script = document.createElement('script');
-    script.setAttribute('url', scriptUrl);
+    script.setAttribute('src', scriptUrl);
     script.setAttribute('crossorigin', 'anonymous');
     return new Promise<void>((resolve) => {
       script.addEventListener('load', () => {
