@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""MediaPipe audio classifier task."""
+"""MediaPipe audio embedder task."""
 
 import dataclasses
 from typing import Callable, Mapping, List, Optional
@@ -19,128 +19,129 @@ from typing import Callable, Mapping, List, Optional
 from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import packet
-from mediapipe.tasks.cc.audio.audio_classifier.proto import audio_classifier_graph_options_pb2
-from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
+from mediapipe.tasks.cc.audio.audio_embedder.proto import audio_embedder_graph_options_pb2
+from mediapipe.tasks.cc.components.containers.proto import embeddings_pb2
 from mediapipe.tasks.python.audio.core import audio_task_running_mode as running_mode_module
 from mediapipe.tasks.python.audio.core import base_audio_task_api
 from mediapipe.tasks.python.components.containers import audio_data as audio_data_module
-from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
-from mediapipe.tasks.python.components.processors import classifier_options as classifier_options_module
+from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
+from mediapipe.tasks.python.components.processors import embedder_options as embedder_options_module
+from mediapipe.tasks.python.components.utils import cosine_similarity
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
-AudioClassifierResult = classification_result_module.ClassificationResult
-_AudioClassifierGraphOptionsProto = audio_classifier_graph_options_pb2.AudioClassifierGraphOptions
+AudioEmbedderResult = embedding_result_module.EmbeddingResult
+_AudioEmbedderGraphOptionsProto = audio_embedder_graph_options_pb2.AudioEmbedderGraphOptions
 _AudioData = audio_data_module.AudioData
 _BaseOptions = base_options_module.BaseOptions
-_ClassifierOptions = classifier_options_module.ClassifierOptions
+_EmbedderOptions = embedder_options_module.EmbedderOptions
 _RunningMode = running_mode_module.AudioTaskRunningMode
 _TaskInfo = task_info_module.TaskInfo
 
 _AUDIO_IN_STREAM_NAME = 'audio_in'
 _AUDIO_TAG = 'AUDIO'
-_CLASSIFICATIONS_STREAM_NAME = 'classifications_out'
-_CLASSIFICATIONS_TAG = 'CLASSIFICATIONS'
+_EMBEDDINGS_STREAM_NAME = 'embeddings_out'
+_EMBEDDINGS_TAG = 'EMBEDDINGS'
 _SAMPLE_RATE_IN_STREAM_NAME = 'sample_rate_in'
 _SAMPLE_RATE_TAG = 'SAMPLE_RATE'
-_TASK_GRAPH_NAME = 'mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph'
-_TIMESTAMPED_CLASSIFICATIONS_STREAM_NAME = 'timestamped_classifications_out'
-_TIMESTAMPED_CLASSIFICATIONS_TAG = 'TIMESTAMPED_CLASSIFICATIONS'
+_TASK_GRAPH_NAME = 'mediapipe.tasks.audio.audio_embedder.AudioEmbedderGraph'
+_TIMESTAMPTED_EMBEDDINGS_STREAM_NAME = 'timestamped_embeddings_out'
+_TIMESTAMPTED_EMBEDDINGS_TAG = 'TIMESTAMPED_EMBEDDINGS'
 _MICRO_SECONDS_PER_MILLISECOND = 1000
 
 
 @dataclasses.dataclass
-class AudioClassifierOptions:
-  """Options for the audio classifier task.
+class AudioEmbedderOptions:
+  """Options for the audio embedder task.
 
   Attributes:
-    base_options: Base options for the audio classifier task.
+    base_options: Base options for the audio embedder task.
     running_mode: The running mode of the task. Default to the audio clips mode.
-      Audio classifier task has two running modes: 1) The audio clips mode for
-      running classification on independent audio clips. 2) The audio stream
-      mode for running classification on the audio stream, such as from
-      microphone. In this mode,  the "result_callback" below must be specified
-      to receive the classification results asynchronously.
-    classifier_options: Options for configuring the classifier behavior, such as
-      score threshold, number of results, etc.
+      Audio embedder task has two running modes: 1) The audio clips mode for
+      running embedding extraction on independent audio clips. 2) The audio
+      stream mode for running embedding extraction on the audio stream, such as
+      from microphone. In this mode,  the "result_callback" below must be
+      specified to receive the embedding results asynchronously.
+    embedder_options: Options for configuring the embedder behavior, such as
+      l2_normalize and quantize.
     result_callback: The user-defined result callback for processing audio
       stream data. The result callback should only be specified when the running
       mode is set to the audio stream mode.
   """
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.AUDIO_CLIPS
-  classifier_options: _ClassifierOptions = _ClassifierOptions()
-  result_callback: Optional[Callable[[AudioClassifierResult, int], None]] = None
+  embedder_options: _EmbedderOptions = _EmbedderOptions()
+  result_callback: Optional[Callable[[AudioEmbedderResult, int], None]] = None
 
   @doc_controls.do_not_generate_docs
-  def to_pb2(self) -> _AudioClassifierGraphOptionsProto:
-    """Generates an AudioClassifierOptions protobuf object."""
+  def to_pb2(self) -> _AudioEmbedderGraphOptionsProto:
+    """Generates an AudioEmbedderOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
     base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.AUDIO_CLIPS else True
-    classifier_options_proto = self.classifier_options.to_pb2()
+    embedder_options_proto = self.embedder_options.to_pb2()
 
-    return _AudioClassifierGraphOptionsProto(
+    return _AudioEmbedderGraphOptionsProto(
         base_options=base_options_proto,
-        classifier_options=classifier_options_proto)
+        embedder_options=embedder_options_proto)
 
 
-class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
-  """Class that performs audio classification on audio data."""
+class AudioEmbedder(base_audio_task_api.BaseAudioTaskApi):
+  """Class that performs embedding extraction on audio clips or audio stream."""
 
   @classmethod
-  def create_from_model_path(cls, model_path: str) -> 'AudioClassifier':
-    """Creates an `AudioClassifier` object from a TensorFlow Lite model and the default `AudioClassifierOptions`.
+  def create_from_model_path(cls, model_path: str) -> 'AudioEmbedder':
+    """Creates an `AudioEmbedder` object from a TensorFlow Lite model and the default `AudioEmbedderOptions`.
 
-    Note that the created `AudioClassifier` instance is in audio clips mode, for
-    classifying on independent audio clips.
+    Note that the created `AudioEmbedder` instance is in audio clips mode, for
+    embedding extraction on the independent audio clips.
 
     Args:
       model_path: Path to the model.
 
     Returns:
-      `AudioClassifier` object that's created from the model file and the
-      default `AudioClassifierOptions`.
+      `AudioEmbedder` object that's created from the model file and the
+      default `AudioEmbedderOptions`.
 
     Raises:
-      ValueError: If failed to create `AudioClassifier` object from the provided
+      ValueError: If failed to create `AudioEmbedder` object from the provided
         file such as invalid file path.
       RuntimeError: If other types of error occurred.
     """
     base_options = _BaseOptions(model_asset_path=model_path)
-    options = AudioClassifierOptions(
+    options = AudioEmbedderOptions(
         base_options=base_options, running_mode=_RunningMode.AUDIO_CLIPS)
     return cls.create_from_options(options)
 
   @classmethod
   def create_from_options(cls,
-                          options: AudioClassifierOptions) -> 'AudioClassifier':
-    """Creates the `AudioClassifier` object from audio classifier options.
+                          options: AudioEmbedderOptions) -> 'AudioEmbedder':
+    """Creates the `AudioEmbedder` object from audio embedder options.
 
     Args:
-      options: Options for the audio classifier task.
+      options: Options for the audio embedder task.
 
     Returns:
-      `AudioClassifier` object that's created from `options`.
+      `AudioEmbedder` object that's created from `options`.
 
     Raises:
-      ValueError: If failed to create `AudioClassifier` object from
-        `AudioClassifierOptions` such as missing the model.
+      ValueError: If failed to create `AudioEmbedder` object from
+        `AudioEmbedderOptions` such as missing the model.
       RuntimeError: If other types of error occurred.
     """
 
     def packets_callback(output_packets: Mapping[str, packet.Packet]):
       timestamp_ms = output_packets[
-          _CLASSIFICATIONS_STREAM_NAME].timestamp.value // _MICRO_SECONDS_PER_MILLISECOND
-      if output_packets[_CLASSIFICATIONS_STREAM_NAME].is_empty():
+          _EMBEDDINGS_STREAM_NAME].timestamp.value // _MICRO_SECONDS_PER_MILLISECOND
+      if output_packets[_EMBEDDINGS_STREAM_NAME].is_empty():
         options.result_callback(
-            AudioClassifierResult(classifications=[]), timestamp_ms)
+            AudioEmbedderResult(embeddings=[]), timestamp_ms)
         return
-      classification_result_proto = classifications_pb2.ClassificationResult()
-      classification_result_proto.CopyFrom(
-          packet_getter.get_proto(output_packets[_CLASSIFICATIONS_STREAM_NAME]))
+      embedding_result_proto = embeddings_pb2.EmbeddingResult()
+      embedding_result_proto.CopyFrom(
+          packet_getter.get_proto(output_packets[_EMBEDDINGS_STREAM_NAME]))
       options.result_callback(
-          AudioClassifierResult.create_from_pb2(classification_result_proto),
+          AudioEmbedderResult.create_from_pb2(embedding_result_proto),
           timestamp_ms)
 
     task_info = _TaskInfo(
@@ -150,10 +151,10 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
             ':'.join([_SAMPLE_RATE_TAG, _SAMPLE_RATE_IN_STREAM_NAME])
         ],
         output_streams=[
-            ':'.join([_CLASSIFICATIONS_TAG, _CLASSIFICATIONS_STREAM_NAME]),
+            ':'.join([_EMBEDDINGS_TAG, _EMBEDDINGS_STREAM_NAME]),
             ':'.join([
-                _TIMESTAMPED_CLASSIFICATIONS_TAG,
-                _TIMESTAMPED_CLASSIFICATIONS_STREAM_NAME
+                _TIMESTAMPTED_EMBEDDINGS_TAG,
+                _TIMESTAMPTED_EMBEDDINGS_STREAM_NAME
             ])
         ],
         task_options=options)
@@ -164,8 +165,8 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
         options.running_mode,
         packets_callback if options.result_callback else None)
 
-  def classify(self, audio_clip: _AudioData) -> List[AudioClassifierResult]:
-    """Performs audio classification on the provided audio clip.
+  def embed(self, audio_clip: _AudioData) -> List[AudioEmbedderResult]:
+    """Performs embedding extraction on the provided audio clips.
 
     The audio clip is represented as a MediaPipe AudioData. The method accepts
     audio clips with various length and audio sample rate. It's required to
@@ -174,42 +175,23 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
     The input audio clip may be longer than what the model is able to process
     in a single inference. When this occurs, the input audio clip is split into
     multiple chunks starting at different timestamps. For this reason, this
-    function returns a vector of ClassificationResult objects, each associated
+    function returns a vector of EmbeddingResult objects, each associated
     ith a timestamp corresponding to the start (in milliseconds) of the chunk
-    data that was classified, e.g:
-
-    ClassificationResult #0 (first chunk of data):
-      timestamp_ms: 0 (starts at 0ms)
-      classifications #0 (single head model):
-        category #0:
-          category_name: "Speech"
-          score: 0.6
-        category #1:
-          category_name: "Music"
-          score: 0.2
-    ClassificationResult #1 (second chunk of data):
-      timestamp_ms: 800 (starts at 800ms)
-      classifications #0 (single head model):
-        category #0:
-          category_name: "Speech"
-          score: 0.5
-       category #1:
-         category_name: "Silence"
-         score: 0.1
+    data on which embedding extraction was carried out.
 
     Args:
       audio_clip: MediaPipe AudioData.
 
     Returns:
-      An `AudioClassifierResult` object that contains a list of
-      classification result objects, each associated with a timestamp
-      corresponding to the start (in milliseconds) of the chunk data that was
-      classified.
+      An `AudioEmbedderResult` object that contains a list of embedding result
+      objects, each associated with a timestamp corresponding to the start
+      (in milliseconds) of the chunk data on which embedding extraction was
+      carried out.
 
     Raises:
       ValueError: If any of the input arguments is invalid, such as the sample
         rate is not provided in the `AudioData` object.
-      RuntimeError: If audio classification failed to run.
+      RuntimeError: If audio embedding extraction failed to run.
     """
     if not audio_clip.audio_format.sample_rate:
       raise ValueError('Must provide the audio sample rate in audio data.')
@@ -220,24 +202,24 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
             packet_creator.create_double(audio_clip.audio_format.sample_rate)
     })
     output_list = []
-    classification_result_proto_list = packet_getter.get_proto_list(
-        output_packets[_TIMESTAMPED_CLASSIFICATIONS_STREAM_NAME])
-    for proto in classification_result_proto_list:
-      classification_result_proto = classifications_pb2.ClassificationResult()
-      classification_result_proto.CopyFrom(proto)
+    embeddings_proto_list = packet_getter.get_proto_list(
+        output_packets[_TIMESTAMPTED_EMBEDDINGS_STREAM_NAME])
+    for proto in embeddings_proto_list:
+      embedding_result_proto = embeddings_pb2.EmbeddingResult()
+      embedding_result_proto.CopyFrom(proto)
       output_list.append(
-          AudioClassifierResult.create_from_pb2(classification_result_proto))
+          AudioEmbedderResult.create_from_pb2(embedding_result_proto))
     return output_list
 
-  def classify_async(self, audio_block: _AudioData, timestamp_ms: int) -> None:
-    """Sends audio data (a block in a continuous audio stream) to perform audio classification.
+  def embed_async(self, audio_block: _AudioData, timestamp_ms: int) -> None:
+    """Sends audio data (a block in a continuous audio stream) to perform audio embedding extraction.
 
-    Only use this method when the AudioClassifier is created with the audio
+    Only use this method when the AudioEmbedder is created with the audio
     stream running mode. The input timestamps should be monotonically increasing
     for adjacent calls of this method. This method will return immediately after
     the input audio data is accepted. The results will be available via the
-    `result_callback` provided in the `AudioClassifierOptions`. The
-    `classify_async` method is designed to process auido stream data such as
+    `result_callback` provided in the `AudioEmbedderOptions`. The
+    `embed_async` method is designed to process auido stream data such as
     microphone input.
 
     The input audio data may be longer than what the model is able to process
@@ -246,8 +228,8 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
     times (once per chunk) for each call to this function.
 
     The `result_callback` provides:
-      - An `AudioClassifierResult` object that contains a list of
-        classifications.
+      - An `AudioEmbedderResult` object that contains a list of
+        embeddings.
       - The input timestamp in milliseconds.
 
     Args:
@@ -259,7 +241,7 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
         1) The sample rate is not provided in the `AudioData` object or the
         provided sample rate is inconsistent with the previously received.
         2) The current input timestamp is smaller than what the audio
-        classifier has already processed.
+        embedder has already processed.
     """
     if not audio_block.audio_format.sample_rate:
       raise ValueError('Must provide the audio sample rate in audio data.')
@@ -278,3 +260,26 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
             packet_creator.create_matrix(audio_block.buffer, transpose=True).at(
                 timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
     })
+
+  @classmethod
+  def cosine_similarity(cls, u: embedding_result_module.Embedding,
+                        v: embedding_result_module.Embedding) -> float:
+    """Utility function to compute cosine similarity between two embedding entries.
+
+    May return an InvalidArgumentError if e.g. the feature vectors are
+    of different types (quantized vs. float), have different sizes, or have a
+    an L2-norm of 0.
+
+    Args:
+      u: An embedding entry.
+      v: An embedding entry.
+
+    Returns:
+      The cosine similarity for the two embeddings.
+
+    Raises:
+      ValueError: May return an error if e.g. the feature vectors are of
+        different types (quantized vs. float), have different sizes, or have
+        an L2-norm of 0.
+    """
+    return cosine_similarity.cosine_similarity(u, v)
