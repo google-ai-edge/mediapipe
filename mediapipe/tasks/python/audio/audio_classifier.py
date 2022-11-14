@@ -257,7 +257,7 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
     Raises:
       ValueError: If any of the followings:
         1) The sample rate is not provided in the `AudioData` object or the
-        provided sample rate is inconsisent with the previously recevied.
+        provided sample rate is inconsistent with the previously received.
         2) The current input timestamp is smaller than what the audio
         classifier has already processed.
     """
@@ -270,7 +270,7 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
     elif audio_block.audio_format.sample_rate != self._default_sample_rate:
       raise ValueError(
           f'The audio sample rate provided in audio data: '
-          f'{audio_block.audio_format.sample_rate} is inconsisent with '
+          f'{audio_block.audio_format.sample_rate} is inconsistent with '
           f'the previously received: {self._default_sample_rate}.')
 
     self._send_audio_stream_data({
