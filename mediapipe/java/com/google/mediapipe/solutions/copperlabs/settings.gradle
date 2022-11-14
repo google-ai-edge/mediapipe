@@ -5,7 +5,10 @@ pluginManagement {
         gradlePluginPortal()
         google()
         mavenCentral()
-        mavenLocal()
+        flatDir {
+            dirs 'common_libs'
+        }
+//        mavenLocal()
 
         maven {
             name = "GitHubPackages"
@@ -23,6 +26,7 @@ pluginManagement {
                 password = System.getenv("TOKEN")
             }
         }
+
 
     }
 }
@@ -32,7 +36,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        mavenLocal()
+        flatDir {
+            dirs 'common_libs'
+        }
+//        mavenLocal()
 
         maven {
             name = "GitHubPackages"
@@ -50,6 +57,7 @@ dependencyResolutionManagement {
                 password = System.getenv("TOKEN")
             }
         }
+
     }
 }
 rootProject.name = "posetracking"
@@ -59,3 +67,4 @@ include ':copperlabs-computer-vision'
 include ':copperlabs-pose-landmark'
 include ':copperlabs-pose-detection'
 include ':copperlabs-pose-graph'
+include ':copperlabs-mediapipe'

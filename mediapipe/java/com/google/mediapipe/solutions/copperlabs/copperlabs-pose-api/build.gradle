@@ -7,7 +7,7 @@ plugins {
 
 
 def getVersionName = { ->
-    return "0.0.1" // Replace with version Name
+    return "0.0.2" // Replace with version Name
 }
 
 def getArtificatId = { ->
@@ -22,7 +22,7 @@ publishing {
             groupId getGroupId()
             artifactId getArtificatId()
             version getVersionName()
-            artifact("$buildDir/outputs/aar/${getArtificatId()}-release.aar")
+            artifact("$buildDir/outputs/aar/${getArtificatId()}-local-release.aar")
             //generate .pom file with transitive dependencies
             pom.withXml {
                 final dependenciesNode = asNode().appendNode('dependencies')
@@ -50,6 +50,8 @@ publishing {
                 configurations.compileOnly.getDependencies().each { dep -> addDependency(dep, "compile") }
                 configurations.api.getDependencies().each { dep -> addDependency(dep, "compile") }
                 configurations.implementation.getDependencies().each { dep -> addDependency(dep, "runtime") }
+                configurations.mavenImplementation.getDependencies().each { dep -> addDependency(dep, "runtime") }
+
             }
         }
     }
@@ -95,10 +97,20 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    flavorDimensions 'source'
+    productFlavors {
+        local {
+            dimension 'source'
+        }
+        maven {
+            dimension 'source'
+        }
+    }
 }
 
 dependencies {
-    compileOnly fileTree(dir: '../common_libs', include: ['*.jar', '*.aar'])
+    localCompileOnly fileTree(dir: '../common_libs', include: ['*.jar', '*.aar'])
+    mavenImplementation "com.google.mediapipe:copperlabs-mediapipe:latest.release"
 
     // Mediapipe dependencies
     implementation 'com.google.protobuf:protobuf-javalite:3.19.1'
