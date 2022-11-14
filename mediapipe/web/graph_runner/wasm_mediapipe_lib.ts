@@ -970,8 +970,17 @@ async function runScript(scriptUrl: string) {
   if (typeof importScripts === 'function') {
     importScripts(scriptUrl.toString());
   } else {
-    await new Promise((resolve, reject) => {
-      fetch(scriptUrl).then(response => response.text()).then(text => Function(text)).then(resolve, reject);
+    const script = document.createElement('script');
+    script.setAttribute('url', scriptUrl);
+    script.setAttribute('crossorigin', 'anonymous');
+    return new Promise<void>((resolve) => {
+      script.addEventListener('load', () => {
+        resolve();
+      }, false);
+      script.addEventListener('error', () => {
+        resolve();
+      }, false);
+      document.body.appendChild(script);
     });
   }
 }
