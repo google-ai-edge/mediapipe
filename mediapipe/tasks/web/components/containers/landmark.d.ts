@@ -18,9 +18,9 @@
  * Landmark represents a point in 3D space with x, y, z coordinates. If
  * normalized is true, the landmark coordinates is normalized respect to the
  * dimension of image, and the coordinates values are in the range of [0,1].
- * Otherwise, it represents a point in world coordinates.
+ * Otherwise, it represenet a point in world coordinates.
  */
-export declare interface Landmark {
+export declare class Landmark {
   /** The x coordinates of the landmark. */
   x: number;
 

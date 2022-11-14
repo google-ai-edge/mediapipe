@@ -154,6 +154,10 @@ export class GestureRecognizer extends TaskRunner {
         this.handGestureRecognizerGraphOptions);
 
     this.initDefaults();
+
+    // Disables the automatic render-to-screen code, which allows for pure
+    // CPU processing.
+    this.setAutoRenderToScreen(false);
   }
 
   /**

@@ -17,7 +17,7 @@
 import {BaseOptions} from '../../../../tasks/web/core/base_options';
 
 /** Options to configure the MediaPipe Object Detector Task */
-export declare interface ObjectDetectorOptions {
+export interface ObjectDetectorOptions {
   /** Options to configure the loading of the model assets. */
   baseOptions?: BaseOptions;
 
