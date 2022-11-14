@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
 }
 
+
 android {
     namespace 'com.google.mediapipe'
     compileSdk 32
@@ -26,11 +27,24 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    flavorDimensions 'source'
+    productFlavors {
+        local {
+            dimension 'source'
+            applicationIdSuffix '.local'
+        }
+        maven {
+            dimension 'source'
+            applicationIdSuffix '.maven'
+        }
+    }
 }
 
 dependencies {
 
-    implementation project(':copperlabs-computer-vision')
+    mavenImplementation 'ca.copperlabs.cv:copperlabs-computer-vision:0.0.1-alpha'
+
+    localImplementation project(':copperlabs-computer-vision')
     implementation project(':copperlabs-pose-api')
     implementation project(':copperlabs-pose-detection')
     implementation project(':copperlabs-pose-landmark')
