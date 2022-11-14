@@ -63,7 +63,27 @@ class TextEmbedderOptions:
 
 
 class TextEmbedder(base_text_task_api.BaseTextTaskApi):
-  """Class that performs embedding extraction on text."""
+  """Class that performs embedding extraction on text.
+
+  This API expects a TFLite model with TFLite Model Metadata that contains the
+  mandatory (described below) input tensors and output tensors. Metadata should
+  contain the input process unit for the model's Tokenizer as well as input /
+  output tensor metadata.
+
+  Input tensors:
+    (kTfLiteInt32)
+    - 3 input tensors of size `[batch_size x bert_max_seq_len]` with names
+      "ids", "mask", and "segment_ids" representing the input ids, mask ids, and
+      segment ids respectively.
+    - or 1 input tensor of size `[batch_size x max_seq_len]` representing the
+      input ids.
+
+  At least one output tensor with:
+    (kTfLiteFloat32)
+    - `N` components corresponding to the `N` dimensions of the returned
+      feature vector for this output layer.
+    - Either 2 or 4 dimensions, i.e. `[1 x N]` or `[1 x 1 x 1 x N]`.
+  """
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'TextEmbedder':

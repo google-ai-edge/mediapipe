@@ -87,7 +87,40 @@ class ImageClassifierOptions:
 
 
 class ImageClassifier(base_vision_task_api.BaseVisionTaskApi):
-  """Class that performs image classification on images."""
+  """Class that performs image classification on images.
+
+  The API expects a TFLite model with optional, but strongly recommended,
+  TFLite Model Metadata.
+
+  Input tensor:
+    (kTfLiteUInt8/kTfLiteFloat32)
+    - image input of size `[batch x height x width x channels]`.
+    - batch inference is not supported (`batch` is required to be 1).
+    - only RGB inputs are supported (`channels` is required to be 3).
+    - if type is kTfLiteFloat32, NormalizationOptions are required to be
+      attached to the metadata for input normalization.
+  At least one output tensor with:
+    (kTfLiteUInt8/kTfLiteFloat32)
+    - `N `classes and either 2 or 4 dimensions, i.e. `[1 x N]` or
+      `[1 x 1 x 1 x N]`
+    - optional (but recommended) label map(s) as AssociatedFiles with type
+      TENSOR_AXIS_LABELS, containing one label per line. The first such
+      AssociatedFile (if any) is used to fill the `class_name` field of the
+      results. The `display_name` field is filled from the AssociatedFile (if
+      any) whose locale matches the `display_names_locale` field of the
+      `ImageClassifierOptions` used at creation time ("en" by default, i.e.
+      English). If none of these are available, only the `index` field of the
+      results will be filled.
+    - optional score calibration can be attached using ScoreCalibrationOptions
+      and an AssociatedFile with type TENSOR_AXIS_SCORE_CALIBRATION. See
+      metadata_schema.fbs [1] for more details.
+
+  An example of such model can be found at:
+  https://tfhub.dev/bohemian-visual-recognition-alliance/lite-model/models/mushroom-identification_v1/1
+
+  [1]:
+  https://github.com/google/mediapipe/blob/6cdc6443b6a7ed662744e2a2ce2d58d9c83e6d6f/mediapipe/tasks/metadata/metadata_schema.fbs#L456
+  """
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'ImageClassifier':

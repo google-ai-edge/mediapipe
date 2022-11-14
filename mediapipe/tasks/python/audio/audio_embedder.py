@@ -87,7 +87,24 @@ class AudioEmbedderOptions:
 
 
 class AudioEmbedder(base_audio_task_api.BaseAudioTaskApi):
-  """Class that performs embedding extraction on audio clips or audio stream."""
+  """Class that performs embedding extraction on audio clips or audio stream.
+
+  This API expects a TFLite model with mandatory TFLite Model Metadata that
+  contains the mandatory AudioProperties of the solo input audio tensor and the
+  optional (but recommended) label items as AssociatedFiles with type
+  TENSOR_AXIS_LABELS per output embedding tensor.
+
+  Input tensor:
+    (kTfLiteFloat32)
+    - input audio buffer of size `[batch * samples]`.
+    - batch inference is not supported (`batch` is required to be 1).
+    - for multi-channel models, the channels must be interleaved.
+  At least one output tensor with:
+    (kTfLiteUInt8/kTfLiteFloat32)
+    - `N` components corresponding to the `N` dimensions of the returned
+    feature vector for this output layer.
+    - Either 2 or 4 dimensions, i.e. `[1 x N]` or `[1 x 1 x 1 x N]`.
+  """
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'AudioEmbedder':

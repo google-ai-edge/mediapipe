@@ -86,7 +86,30 @@ class AudioClassifierOptions:
 
 
 class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
-  """Class that performs audio classification on audio data."""
+  """Class that performs audio classification on audio data.
+
+  This API expects a TFLite model with mandatory TFLite Model Metadata that
+  contains the mandatory AudioProperties of the solo input audio tensor and the
+  optional (but recommended) category labels as AssociatedFiles with type
+  TENSOR_AXIS_LABELS per output classification tensor.
+
+  Input tensor:
+    (kTfLiteFloat32)
+    - input audio buffer of size `[batch * samples]`.
+    - batch inference is not supported (`batch` is required to be 1).
+    - for multi-channel models, the channels must be interleaved.
+  At least one output tensor with:
+    (kTfLiteFloat32)
+    - `[1 x N]` array with `N` represents the number of categories.
+    - optional (but recommended) category labels as AssociatedFiles with type
+      TENSOR_AXIS_LABELS, containing one label per line. The first such
+      AssociatedFile (if any) is used to fill the `category_name` field of the
+      results. The `display_name` field is filled from the AssociatedFile (if
+      any) whose locale matches the `display_names_locale` field of the
+      `AudioClassifierOptions` used at creation time ("en" by default, i.e.
+      English). If none of these are available, only the `index` field of the
+      results will be filled.
+  """
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'AudioClassifier':

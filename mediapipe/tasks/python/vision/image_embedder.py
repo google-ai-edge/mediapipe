@@ -86,7 +86,24 @@ class ImageEmbedderOptions:
 
 
 class ImageEmbedder(base_vision_task_api.BaseVisionTaskApi):
-  """Class that performs embedding extraction on images."""
+  """Class that performs embedding extraction on images.
+
+  The API expects a TFLite model with optional, but strongly recommended,
+  TFLite Model Metadata.
+
+  Input tensor:
+    (kTfLiteUInt8/kTfLiteFloat32)
+    - image input of size `[batch x height x width x channels]`.
+    - batch inference is not supported (`batch` is required to be 1).
+    - only RGB inputs are supported (`channels` is required to be 3).
+    - if type is kTfLiteFloat32, NormalizationOptions are required to be
+      attached to the metadata for input normalization.
+  At least one output tensor with:
+    (kTfLiteUInt8/kTfLiteFloat32)
+    - `N` components corresponding to the `N` dimensions of the returned
+      feature vector for this output layer.
+    - Either 2 or 4 dimensions, i.e. `[1 x N]` or `[1 x 1 x 1 x N]`.
+  """
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'ImageEmbedder':
