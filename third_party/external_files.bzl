@@ -983,6 +983,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_yamnet_embedding_metadata_tflite",
+        sha256 = "7baa72708e3919bae5a5dc78d932847bc28008af14febd083eff62d28af9c72a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/yamnet_embedding_metadata.tflite?generation=1668295071595506"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_gesture_embedder_keras_metadata_pb",
         sha256 = "24268b69429be4e307f9ab099ba20d1de7c40e4191a53f6a92dcbbd97a7047d3",
         urls = ["https://storage.googleapis.com/mediapipe-assets/gesture_embedder/keras_metadata.pb?generation=1668124196996131"],
