@@ -42,15 +42,21 @@ android {
 
 dependencies {
 
-    mavenImplementation 'ca.copperlabs.cv:copperlabs-computer-vision:0.0.1-alpha'
+    mavenImplementation 'ca.copperlabs.cv:copperlabs-computer-vision:latest.release'
     localImplementation project(':copperlabs-computer-vision')
 
-    mavenImplementation "ca.copperlabs.mediapipe.posetracking:copperlabs-pose-api:0.0.1-alpha"
+    mavenImplementation "ca.copperlabs.mediapipe.posetracking:copperlabs-pose-api:latest.release"
     localImplementation project(':copperlabs-pose-api')
 
-    implementation project(':copperlabs-pose-detection')
-    implementation project(':copperlabs-pose-landmark')
-    implementation project(':copperlabs-pose-graph')
+    mavenImplementation "ca.copperlabs.mediapipe.pose_detection:copperlabs-pose-detection:latest.release"
+    localImplementation project(':copperlabs-pose-detection')
+
+    mavenImplementation "ca.copperlabs.mediapipe.pose_landmark:copperlabs-pose-landmark:latest.release"
+    localImplementation project(':copperlabs-pose-landmark')
+
+    mavenImplementation "ca.copperlabs.mediapipe.pose_graph:copperlabs-pose-graph:latest.release"
+    localImplementation project(':copperlabs-pose-graph')
+
 
     implementation fileTree(dir: '../common_libs', include: ['*.jar', '*.aar'])
 

@@ -22,7 +22,7 @@ publishing {
             groupId getGroupId()
             artifactId getArtificatId()
             version getVersionName()
-            artifact("$buildDir/outputs/aar/${getArtificatId()}-release.aar")
+            artifact("$buildDir/outputs/aar/${getArtificatId()}-local-release.aar")
             //generate .pom file with transitive dependencies
             pom.withXml {
                 final dependenciesNode = asNode().appendNode('dependencies')
@@ -119,7 +119,7 @@ dependencies {
     compileOnly fileTree(dir: '../common_libs', include: ['*.jar', '*.aar'])
 
     localImplementation project(':copperlabs-pose-api')
-    mavenImplementation "ca.copperlabs.mediapipe.posetracking:copperlabs-pose-api:0.0.1-alpha"
+    mavenImplementation "ca.copperlabs.mediapipe.posetracking:copperlabs-pose-api:latest.release"
 
     // Mediapipe dependencies
     implementation 'com.google.protobuf:protobuf-javalite:3.19.1'
