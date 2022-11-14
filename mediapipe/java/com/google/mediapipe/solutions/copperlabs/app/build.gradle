@@ -43,9 +43,11 @@ android {
 dependencies {
 
     mavenImplementation 'ca.copperlabs.cv:copperlabs-computer-vision:0.0.1-alpha'
-
     localImplementation project(':copperlabs-computer-vision')
-    implementation project(':copperlabs-pose-api')
+
+    mavenImplementation "ca.copperlabs.mediapipe.posetracking:copperlabs-pose-api:0.0.1-alpha"
+    localImplementation project(':copperlabs-pose-api')
+
     implementation project(':copperlabs-pose-detection')
     implementation project(':copperlabs-pose-landmark')
     implementation project(':copperlabs-pose-graph')

@@ -4,8 +4,7 @@ plugins {
     id 'com.android.library' version '7.3.1' apply false
 
 }
-def githubProperties = new Properties()
-githubProperties.load(new FileInputStream(rootProject.file("github.properties")))
+
 
 
 

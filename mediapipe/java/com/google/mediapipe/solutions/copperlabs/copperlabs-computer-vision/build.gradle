@@ -5,8 +5,6 @@ plugins {
 }
 
 
-def githubProperties = new Properties()
-githubProperties.load(new FileInputStream(rootProject.file("github.properties"))) //Set env variable GPR_USER & GPR_API_KEY if not adding a properties file
 
 def getVersionName = { ->
     return "0.0.1-alpha" // Replace with version Name
@@ -32,8 +30,13 @@ publishing {
                     if (dep.group == null || dep.version == null || dep.name == null || dep.name == "unspecified")
                         return
                     final dependencyNode = dependenciesNode.appendNode('dependency')
+
                     dependencyNode.appendNode('groupId', dep.group)
+//                    if (dep.name=='copperlabs-pose-api'){
+//                        dependencyNode.appendNode('artifactId', 'ca.copperlabs.mediapipe.posetracking')
+//                    }else {
                     dependencyNode.appendNode('artifactId', dep.name)
+//                    }
                     dependencyNode.appendNode('version', dep.version)
                     dependencyNode.appendNode('scope', scope)
                     if (!dep.transitive) {
@@ -51,6 +54,8 @@ publishing {
 
                 configurations.compileOnly.getDependencies().each { dep -> addDependency(dep, "compile") }
                 configurations.api.getDependencies().each { dep -> addDependency(dep, "compile") }
+
+                configurations.mavenImplementation.getDependencies().each { dep -> addDependency(dep, "runtime") }
                 configurations.implementation.getDependencies().each { dep -> addDependency(dep, "runtime") }
             }
         }
@@ -69,8 +74,8 @@ publishing {
                  ** gpr.usr=GITHUB_USER_ID & gpr.key=PERSONAL_ACCESS_TOKEN
                  ** Set env variable GPR_USER & GPR_API_KEY if not adding a properties file**/
 
-                username = githubProperties['gpr.usr'] ?: System.getenv("GPR_USER")
-                password = githubProperties['gpr.key'] ?: System.getenv("GPR_API_KEY")
+                username = System.getenv("USERNAME")
+                password = System.getenv("TOKEN")
             }
         }
     }
@@ -99,11 +104,22 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    flavorDimensions 'source'
+    productFlavors {
+        local {
+            dimension 'source'
+        }
+        maven {
+            dimension 'source'
+        }
+    }
 }
 
 dependencies {
     compileOnly fileTree(dir: '../common_libs', include: ['*.jar', '*.aar'])
-    implementation project(':copperlabs-pose-api')
+
+    localImplementation project(':copperlabs-pose-api')
+    mavenImplementation "ca.copperlabs.mediapipe.posetracking:copperlabs-pose-api:0.0.1-alpha"
 
     // Mediapipe dependencies
     implementation 'com.google.protobuf:protobuf-javalite:3.19.1'

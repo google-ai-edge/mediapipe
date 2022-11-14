@@ -5,6 +5,8 @@ pluginManagement {
         gradlePluginPortal()
         google()
         mavenCentral()
+        mavenLocal()
+
         maven {
             name = "GitHubPackages"
             /*  Configure path to the library hosted on GitHub Packages Registry
@@ -21,6 +23,7 @@ pluginManagement {
                 password = System.getenv("TOKEN")
             }
         }
+
     }
 }
 
@@ -29,6 +32,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        mavenLocal()
+
         maven {
             name = "GitHubPackages"
             /*  Configure path to the library hosted on GitHub Packages Registry
