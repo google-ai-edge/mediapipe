@@ -164,7 +164,9 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
                   new ArrayList<>(),
                   new ArrayList<>(),
                   new ArrayList<>(),
-                  packets.get(HAND_GESTURES_OUT_STREAM_INDEX).getTimestamp());
+                  BaseVisionTaskApi.generateResultTimestampMs(
+                      recognizerOptions.runningMode(),
+                      packets.get(HAND_GESTURES_OUT_STREAM_INDEX)));
             }
             return GestureRecognizerResult.create(
                 PacketGetter.getProtoVector(
