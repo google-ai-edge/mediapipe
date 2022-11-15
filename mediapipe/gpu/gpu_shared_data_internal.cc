@@ -85,7 +85,12 @@ GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context) {
   named_executors_[kGpuExecutorName] =
       std::make_shared<GlContextExecutor>(gl_context.get());
 #if __APPLE__
-  gpu_buffer_pool().RegisterTextureCache(gl_context->cv_texture_cache());
+  texture_caches_ = std::make_shared<CvTextureCacheManager>();
+  gpu_buffer_pool().SetFlushPlatformCaches(
+      [tc = texture_caches_] { tc->FlushTextureCaches(); });
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+  texture_caches_->RegisterTextureCache(gl_context->cv_texture_cache());
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   ios_gpu_data_ = [[MPPGraphGPUData alloc] initWithContext:gl_context.get()
                                                  multiPool:&gpu_buffer_pool_];
 #endif  // __APPLE__
@@ -98,10 +103,12 @@ GpuResources::~GpuResources() {
 #if !__has_feature(objc_arc)
 #error This file must be built with ARC.
 #endif
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   for (auto& kv : gl_key_context_) {
-    gpu_buffer_pool().UnregisterTextureCache(kv.second->cv_texture_cache());
+    texture_caches_->UnregisterTextureCache(kv.second->cv_texture_cache());
   }
-#endif
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#endif  // __APPLE__
 }
 
 absl::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
@@ -174,9 +181,9 @@ GlContext::StatusOrGlContext GpuResources::GetOrCreateGlContext(
                      GlContext::Create(*gl_key_context_[SharedContextKey()],
                                        kGlContextUseDedicatedThread));
     it = gl_key_context_.emplace(key, new_context).first;
-#if __APPLE__
-    gpu_buffer_pool_.RegisterTextureCache(it->second->cv_texture_cache());
-#endif
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+    texture_caches_->RegisterTextureCache(it->second->cv_texture_cache());
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   }
   return it->second;
 }

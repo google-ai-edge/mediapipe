@@ -345,6 +345,18 @@ cc_library(
 )
 
 cc_library(
+    name = "cv_texture_cache_manager",
+    srcs = ["cv_texture_cache_manager.cc"],
+    hdrs = ["cv_texture_cache_manager.h"],
+    deps = [
+        ":pixel_buffer_pool_util",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/objc:CFHolder",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+cc_library(
     name = "gpu_buffer_storage_image_frame",
     hdrs = ["gpu_buffer_storage_image_frame.h"],
     visibility = ["//visibility:public"],
@@ -440,6 +452,7 @@ objc_library(
         ":gpu_buffer_multi_pool",
         ":gpu_shared_data_header",
         ":graph_support",
+        ":cv_texture_cache_manager",
         "//mediapipe/gpu:gl_context_options_cc_proto",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework/port:ret_check",
@@ -555,6 +568,7 @@ cc_library(
         "//conditions:default": [],
         "//mediapipe:apple": [
             ":MPPGraphGPUData",
+            ":cv_texture_cache_manager",
         ],
     }),
 )
@@ -617,11 +631,13 @@ cc_library(
             ":gl_texture_buffer_pool",
         ],
         "//mediapipe:ios": [
+            ":cv_texture_cache_manager",
             ":pixel_buffer_pool_util",
             "//mediapipe/objc:CFHolder",
             "//mediapipe/objc:util",
         ],
         "//mediapipe:macos": [
+            ":cv_texture_cache_manager",
             ":pixel_buffer_pool_util",
             ":gl_texture_buffer",
             ":gl_texture_buffer_pool",

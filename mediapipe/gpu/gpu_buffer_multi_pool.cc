@@ -106,20 +106,9 @@ GpuBuffer GpuBufferMultiPool::GetBufferWithoutPool(const BufferSpec& spec) {
   return GpuBuffer(MakeCFHolderAdopting(buffer));
 }
 
-void GpuBufferMultiPool::FlushTextureCaches() {
-  absl::MutexLock lock(&mutex_);
-  for (const auto& cache : texture_caches_) {
-#if TARGET_OS_OSX
-    CVOpenGLTextureCacheFlush(*cache, 0);
-#else
-    CVOpenGLESTextureCacheFlush(*cache, 0);
-#endif  // TARGET_OS_OSX
-  }
-}
-
 GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
     BufferSpec spec, GpuBufferMultiPool::SimplePool& pool) {
-  return pool.GetBuffer([this]() { FlushTextureCaches(); });
+  return pool.GetBuffer(flush_platform_caches_);
 }
 
 #else
@@ -172,32 +161,5 @@ GpuBuffer GpuBufferMultiPool::GetBuffer(int width, int height,
     return GetBufferWithoutPool(key);
   }
 }
-
-GpuBufferMultiPool::~GpuBufferMultiPool() {
-#ifdef __APPLE__
-  CHECK_EQ(texture_caches_.size(), 0)
-      << "Failed to unregister texture caches before deleting pool";
-#endif  // defined(__APPLE__)
-}
-
-#ifdef __APPLE__
-void GpuBufferMultiPool::RegisterTextureCache(CVTextureCacheType cache) {
-  absl::MutexLock lock(&mutex_);
-
-  CHECK(std::find(texture_caches_.begin(), texture_caches_.end(), cache) ==
-        texture_caches_.end())
-      << "Attempting to register a texture cache twice";
-  texture_caches_.emplace_back(cache);
-}
-
-void GpuBufferMultiPool::UnregisterTextureCache(CVTextureCacheType cache) {
-  absl::MutexLock lock(&mutex_);
-
-  auto it = std::find(texture_caches_.begin(), texture_caches_.end(), cache);
-  CHECK(it != texture_caches_.end())
-      << "Attempting to unregister an unknown texture cache";
-  texture_caches_.erase(it);
-}
-#endif  // defined(__APPLE__)
 
 }  // namespace mediapipe

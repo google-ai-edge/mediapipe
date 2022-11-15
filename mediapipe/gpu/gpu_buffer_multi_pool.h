@@ -43,25 +43,14 @@ class CvPixelBufferPoolWrapper;
 class GpuBufferMultiPool {
  public:
   GpuBufferMultiPool() {}
-  explicit GpuBufferMultiPool(void* ignored) {}
-  ~GpuBufferMultiPool();
 
   // Obtains a buffer. May either be reused or created anew.
   GpuBuffer GetBuffer(int width, int height,
                       GpuBufferFormat format = GpuBufferFormat::kBGRA32);
 
-#ifdef __APPLE__
-  // TODO: add tests for the texture cache registration.
-
-  // Inform the pool of a cache that should be flushed when it is low on
-  // reusable buffers.
-  void RegisterTextureCache(CVTextureCacheType cache);
-
-  // Remove a texture cache from the list of caches to be flushed.
-  void UnregisterTextureCache(CVTextureCacheType cache);
-
-  void FlushTextureCaches();
-#endif  // defined(__APPLE__)
+  void SetFlushPlatformCaches(std::function<void(void)> flush_platform_caches) {
+    flush_platform_caches_ = flush_platform_caches;
+  }
 
   // This class is not intended as part of the public api of this class. It is
   // public only because it is used as a map key type, and the map
@@ -98,15 +87,10 @@ class GpuBufferMultiPool {
   GpuBuffer GetBufferWithoutPool(const BufferSpec& spec);
 
   absl::Mutex mutex_;
-  mediapipe::ResourceCache<BufferSpec, std::shared_ptr<SimplePool>,
-                           absl::Hash<BufferSpec>>
-      cache_ ABSL_GUARDED_BY(mutex_);
-
-#ifdef __APPLE__
-  // Texture caches used with this pool.
-  std::vector<CFHolder<CVTextureCacheType>> texture_caches_
+  mediapipe::ResourceCache<BufferSpec, std::shared_ptr<SimplePool>> cache_
       ABSL_GUARDED_BY(mutex_);
-#endif  // defined(__APPLE__)
+  // This is used to hook up the TextureCacheManager on Apple platforms.
+  std::function<void(void)> flush_platform_caches_;
 };
 
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER

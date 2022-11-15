@@ -30,6 +30,7 @@
 #include "mediapipe/gpu/gpu_buffer_multi_pool.h"
 
 #ifdef __APPLE__
+#include "mediapipe/gpu/cv_texture_cache_manager.h"
 #ifdef __OBJC__
 @class MPPGraphGPUData;
 #else
@@ -91,6 +92,8 @@ class GpuResources {
   GpuBufferMultiPool gpu_buffer_pool_;
 
 #ifdef __APPLE__
+  std::shared_ptr<CvTextureCacheManager> texture_caches_;
+
   // Note that this is an Objective-C object.
   MPPGraphGPUData* ios_gpu_data_;
 #endif  // defined(__APPLE__)
