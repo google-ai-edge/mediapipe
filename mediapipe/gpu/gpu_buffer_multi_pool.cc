@@ -90,8 +90,8 @@ std::string CvPixelBufferPoolWrapper::GetDebugString() const {
 
 void CvPixelBufferPoolWrapper::Flush() { CVPixelBufferPoolFlush(*pool_, 0); }
 
-GpuBufferMultiPool::SimplePool GpuBufferMultiPool::MakeSimplePool(
-    const GpuBufferMultiPool::BufferSpec& spec) {
+std::shared_ptr<GpuBufferMultiPool::SimplePool>
+GpuBufferMultiPool::MakeSimplePool(const GpuBufferMultiPool::BufferSpec& spec) {
   return std::make_shared<CvPixelBufferPoolWrapper>(spec,
                                                     kMaxInactiveBufferAge);
 }
@@ -123,7 +123,7 @@ void GpuBufferMultiPool::FlushTextureCaches() {
 #define FORCE_CONTIGUOUS_PIXEL_BUFFER_ON_IPHONE_SIMULATOR 0
 
 GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
-    BufferSpec spec, const GpuBufferMultiPool::SimplePool& pool) {
+    BufferSpec spec, GpuBufferMultiPool::SimplePool& pool) {
 #if TARGET_IPHONE_SIMULATOR && FORCE_CONTIGUOUS_PIXEL_BUFFER_ON_IPHONE_SIMULATOR
   // On the simulator, syncing the texture with the pixelbuffer does not work,
   // and we have to use glReadPixels. Since GL_UNPACK_ROW_LENGTH is not
@@ -134,14 +134,14 @@ GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
   // pool to give us contiguous data.
   return GetBufferWithoutPool(spec);
 #else
-  return pool->GetBuffer([this]() { FlushTextureCaches(); });
+  return pool.GetBuffer([this]() { FlushTextureCaches(); });
 #endif  // TARGET_IPHONE_SIMULATOR
 }
 
 #else
 
-GpuBufferMultiPool::SimplePool GpuBufferMultiPool::MakeSimplePool(
-    const BufferSpec& spec) {
+std::shared_ptr<GpuBufferMultiPool::SimplePool>
+GpuBufferMultiPool::MakeSimplePool(const BufferSpec& spec) {
   return GlTextureBufferPool::Create(spec.width, spec.height, spec.format,
                                      kKeepCount);
 }
@@ -152,16 +152,16 @@ GpuBuffer GpuBufferMultiPool::GetBufferWithoutPool(const BufferSpec& spec) {
 }
 
 GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
-    BufferSpec spec, const GpuBufferMultiPool::SimplePool& pool) {
-  return GpuBuffer(pool->GetBuffer());
+    BufferSpec spec, GpuBufferMultiPool::SimplePool& pool) {
+  return GpuBuffer(pool.GetBuffer());
 }
 
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-GpuBufferMultiPool::SimplePool GpuBufferMultiPool::RequestPool(
+std::shared_ptr<GpuBufferMultiPool::SimplePool> GpuBufferMultiPool::RequestPool(
     const BufferSpec& spec) {
-  SimplePool pool;
-  std::vector<SimplePool> evicted;
+  std::shared_ptr<SimplePool> pool;
+  std::vector<std::shared_ptr<SimplePool>> evicted;
   {
     absl::MutexLock lock(&mutex_);
     pool =
@@ -180,10 +180,10 @@ GpuBufferMultiPool::SimplePool GpuBufferMultiPool::RequestPool(
 GpuBuffer GpuBufferMultiPool::GetBuffer(int width, int height,
                                         GpuBufferFormat format) {
   BufferSpec key(width, height, format);
-  SimplePool pool = RequestPool(key);
+  std::shared_ptr<SimplePool> pool = RequestPool(key);
   if (pool) {
     // Note: we release our multipool lock before accessing the simple pool.
-    return GetBufferFromSimplePool(key, pool);
+    return GetBufferFromSimplePool(key, *pool);
   } else {
     return GetBufferWithoutPool(key);
   }

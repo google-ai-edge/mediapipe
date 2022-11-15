@@ -83,22 +83,23 @@ class GpuBufferMultiPool {
 
  private:
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  using SimplePool = std::shared_ptr<CvPixelBufferPoolWrapper>;
+  using SimplePool = CvPixelBufferPoolWrapper;
 #else
-  using SimplePool = std::shared_ptr<GlTextureBufferPool>;
+  using SimplePool = GlTextureBufferPool;
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-  SimplePool MakeSimplePool(const BufferSpec& spec);
+  std::shared_ptr<SimplePool> MakeSimplePool(const BufferSpec& spec);
   // Requests a simple buffer pool for the given spec. This may return nullptr
   // if we have not yet reached a sufficient number of requests to allocate a
   // pool, in which case the caller should invoke GetBufferWithoutPool instead
   // of GetBufferFromSimplePool.
-  SimplePool RequestPool(const BufferSpec& spec);
-  GpuBuffer GetBufferFromSimplePool(BufferSpec spec, const SimplePool& pool);
+  std::shared_ptr<SimplePool> RequestPool(const BufferSpec& spec);
+  GpuBuffer GetBufferFromSimplePool(BufferSpec spec, SimplePool& pool);
   GpuBuffer GetBufferWithoutPool(const BufferSpec& spec);
 
   absl::Mutex mutex_;
-  mediapipe::ResourceCache<BufferSpec, SimplePool, absl::Hash<BufferSpec>>
+  mediapipe::ResourceCache<BufferSpec, std::shared_ptr<SimplePool>,
+                           absl::Hash<BufferSpec>>
       cache_ ABSL_GUARDED_BY(mutex_);
 
 #ifdef __APPLE__
