@@ -23,7 +23,7 @@
 #define MEDIAPIPE_GPU_CV_PIXEL_BUFFER_POOL_WRAPPER_H_
 
 #include "CoreFoundation/CFBase.h"
-#include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/pixel_buffer_pool_util.h"
 #include "mediapipe/objc/CFHolder.h"
 
@@ -33,12 +33,15 @@ class CvPixelBufferPoolWrapper {
  public:
   CvPixelBufferPoolWrapper(int width, int height, GpuBufferFormat format,
                            CFTimeInterval maxAge);
-  GpuBuffer GetBuffer(std::function<void(void)> flush);
+  CFHolder<CVPixelBufferRef> GetBuffer(std::function<void(void)> flush);
 
   int GetBufferCount() const { return count_; }
   std::string GetDebugString() const;
 
   void Flush();
+
+  static CFHolder<CVPixelBufferRef> CreateBufferWithoutPool(
+      int width, int height, GpuBufferFormat format);
 
  private:
   CFHolder<CVPixelBufferPoolRef> pool_;

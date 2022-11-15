@@ -51,19 +51,9 @@ GpuBufferMultiPool::MakeSimplePool(const GpuBufferMultiPool::BufferSpec& spec) {
       spec.width, spec.height, spec.format, kMaxInactiveBufferAge);
 }
 
-GpuBuffer GpuBufferMultiPool::GetBufferWithoutPool(const BufferSpec& spec) {
-  OSType cv_format = CVPixelFormatForGpuBufferFormat(spec.format);
-  CHECK_NE(cv_format, -1) << "unsupported pixel format";
-  CVPixelBufferRef buffer;
-  CVReturn err = CreateCVPixelBufferWithoutPool(spec.width, spec.height,
-                                                cv_format, &buffer);
-  CHECK(!err) << "Error creating pixel buffer: " << err;
-  return GpuBuffer(MakeCFHolderAdopting(buffer));
-}
-
 GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
     BufferSpec spec, GpuBufferMultiPool::SimplePool& pool) {
-  return pool.GetBuffer(flush_platform_caches_);
+  return GpuBuffer(pool.GetBuffer(flush_platform_caches_));
 }
 
 #else
@@ -72,11 +62,6 @@ std::shared_ptr<GpuBufferMultiPool::SimplePool>
 GpuBufferMultiPool::MakeSimplePool(const BufferSpec& spec) {
   return GlTextureBufferPool::Create(spec.width, spec.height, spec.format,
                                      kKeepCount);
-}
-
-GpuBuffer GpuBufferMultiPool::GetBufferWithoutPool(const BufferSpec& spec) {
-  return GpuBuffer(
-      GlTextureBuffer::Create(spec.width, spec.height, spec.format));
 }
 
 GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
@@ -115,6 +100,11 @@ GpuBuffer GpuBufferMultiPool::GetBuffer(int width, int height,
   } else {
     return GetBufferWithoutPool(key);
   }
+}
+
+GpuBuffer GpuBufferMultiPool::GetBufferWithoutPool(const BufferSpec& spec) {
+  return GpuBuffer(SimplePool::CreateBufferWithoutPool(spec.width, spec.height,
+                                                       spec.format));
 }
 
 }  // namespace mediapipe

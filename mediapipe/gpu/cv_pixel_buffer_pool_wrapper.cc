@@ -19,6 +19,7 @@
 #include "CoreFoundation/CFBase.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/objc/CFHolder.h"
+#include "mediapipe/objc/util.h"
 
 namespace mediapipe {
 
@@ -32,7 +33,8 @@ CvPixelBufferPoolWrapper::CvPixelBufferPoolWrapper(int width, int height,
       CreateCVPixelBufferPool(width, height, cv_format, 0, maxAge));
 }
 
-GpuBuffer CvPixelBufferPoolWrapper::GetBuffer(std::function<void(void)> flush) {
+CFHolder<CVPixelBufferRef> CvPixelBufferPoolWrapper::GetBuffer(
+    std::function<void(void)> flush) {
   CVPixelBufferRef buffer;
   int threshold = 1;
   NSMutableDictionary* auxAttributes =
@@ -58,7 +60,7 @@ GpuBuffer CvPixelBufferPoolWrapper::GetBuffer(std::function<void(void)> flush) {
   }
   CHECK(!err) << "Error creating pixel buffer: " << err;
   count_ = threshold;
-  return GpuBuffer(MakeCFHolderAdopting(buffer));
+  return MakeCFHolderAdopting(buffer);
 }
 
 std::string CvPixelBufferPoolWrapper::GetDebugString() const {
@@ -67,5 +69,16 @@ std::string CvPixelBufferPoolWrapper::GetDebugString() const {
 }
 
 void CvPixelBufferPoolWrapper::Flush() { CVPixelBufferPoolFlush(*pool_, 0); }
+
+CFHolder<CVPixelBufferRef> CvPixelBufferPoolWrapper::CreateBufferWithoutPool(
+    int width, int height, GpuBufferFormat format) {
+  OSType cv_format = CVPixelFormatForGpuBufferFormat(format);
+  CHECK_NE(cv_format, -1) << "unsupported pixel format";
+  CVPixelBufferRef buffer;
+  CVReturn err =
+      CreateCVPixelBufferWithoutPool(width, height, cv_format, &buffer);
+  CHECK(!err) << "Error creating pixel buffer: " << err;
+  return MakeCFHolderAdopting(buffer);
+}
 
 }  // namespace mediapipe

@@ -368,10 +368,11 @@ cc_library(
         ],
     }),
     deps = [
-        ":gpu_buffer",
+        ":gpu_buffer_format",
         ":pixel_buffer_pool_util",
         "//mediapipe/framework/port:logging",
         "//mediapipe/objc:CFHolder",
+        "//mediapipe/objc:util",
         "@com_google_absl//absl/synchronization",
     ],
 )

@@ -51,6 +51,11 @@ class GlTextureBufferPool
   // This method is meant for testing.
   std::pair<int, int> GetInUseAndAvailableCounts();
 
+  static GlTextureBufferSharedPtr CreateBufferWithoutPool(
+      int width, int height, GpuBufferFormat format) {
+    return GlTextureBuffer::Create(width, height, format);
+  }
+
  private:
   GlTextureBufferPool(int width, int height, GpuBufferFormat format,
                       int keep_count);
