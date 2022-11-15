@@ -63,6 +63,7 @@ pkg_npm(
     substitutions = {
         "__NAME__": "audio",
         "__DESCRIPTION__": "MediaPipe Audio Tasks",
+        "__TYPES__": "audio.d.ts",
     },
     tgz = "audio.tgz",
     deps = [
@@ -117,6 +118,7 @@ pkg_npm(
     substitutions = {
         "__NAME__": "text",
         "__DESCRIPTION__": "MediaPipe Text Tasks",
+        "__TYPES__": "text.d.ts",
     },
     tgz = "text.tgz",
     deps = [
@@ -171,6 +173,7 @@ pkg_npm(
     substitutions = {
         "__NAME__": "vision",
         "__DESCRIPTION__": "MediaPipe Vision Tasks",
+        "__TYPES__": "vision.d.ts",
     },
     tgz = "vision_pkg.tgz",
     deps = [

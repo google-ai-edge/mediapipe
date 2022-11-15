@@ -12,6 +12,7 @@
   },
   "author": "mediapipe@google.com",
   "license": "Apache-2.0",
+  "types": "__TYPES__",
   "dependencies": {
     "google-protobuf": "^3.21.2"
   },
