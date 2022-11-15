@@ -177,7 +177,7 @@ class ImageClassifier(classifier.Classifier):
 
     Args:
       model_name: File name to save TFLite model with metadata. The full export
-        path is {self._hparams.model_dir}/{model_name}.
+        path is {self._hparams.export_dir}/{model_name}.
       quantization_config: The configuration for model quantization.
     """
     if not tf.io.gfile.exists(self._hparams.export_dir):
