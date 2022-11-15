@@ -161,6 +161,8 @@ objc_library(
     hdrs = MPP_HEADERS + MP_GEN_IOS_HEADERS,
     copts = [
         "-Wno-shorten-64-to-32",
+        "--std=c++17",
+
         #        "-all_load",
     ],
     data = [
