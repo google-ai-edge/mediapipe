@@ -31,9 +31,11 @@
 #include "mediapipe/gpu/pixel_buffer_pool_util.h"
 #endif  // __APPLE__
 
-#if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#include "mediapipe/gpu/cv_pixel_buffer_pool_wrapper.h"
+#else
 #include "mediapipe/gpu/gl_texture_buffer_pool.h"
-#endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 namespace mediapipe {
 
@@ -92,24 +94,6 @@ class GpuBufferMultiPool {
   // This is used to hook up the TextureCacheManager on Apple platforms.
   std::function<void(void)> flush_platform_caches_;
 };
-
-#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-class CvPixelBufferPoolWrapper {
- public:
-  CvPixelBufferPoolWrapper(const GpuBufferMultiPool::BufferSpec& spec,
-                           CFTimeInterval maxAge);
-  GpuBuffer GetBuffer(std::function<void(void)> flush);
-
-  int GetBufferCount() const { return count_; }
-  std::string GetDebugString() const;
-
-  void Flush();
-
- private:
-  CFHolder<CVPixelBufferPoolRef> pool_;
-  int count_ = 0;
-};
-#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 // BufferSpec equality operators
 inline bool operator==(const GpuBufferMultiPool::BufferSpec& lhs,

@@ -45,55 +45,10 @@ static constexpr int kRequestCountScrubInterval = 50;
 
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-CvPixelBufferPoolWrapper::CvPixelBufferPoolWrapper(
-    const GpuBufferMultiPool::BufferSpec& spec, CFTimeInterval maxAge) {
-  OSType cv_format = CVPixelFormatForGpuBufferFormat(spec.format);
-  CHECK_NE(cv_format, -1) << "unsupported pixel format";
-  pool_ = MakeCFHolderAdopting(
-      /* keep count is 0 because the age param keeps buffers around anyway */
-      CreateCVPixelBufferPool(spec.width, spec.height, cv_format, 0, maxAge));
-}
-
-GpuBuffer CvPixelBufferPoolWrapper::GetBuffer(std::function<void(void)> flush) {
-  CVPixelBufferRef buffer;
-  int threshold = 1;
-  NSMutableDictionary* auxAttributes =
-      [NSMutableDictionary dictionaryWithCapacity:1];
-  CVReturn err;
-  bool tried_flushing = false;
-  while (1) {
-    auxAttributes[(id)kCVPixelBufferPoolAllocationThresholdKey] = @(threshold);
-    err = CVPixelBufferPoolCreatePixelBufferWithAuxAttributes(
-        kCFAllocatorDefault, *pool_, (__bridge CFDictionaryRef)auxAttributes,
-        &buffer);
-    if (err != kCVReturnWouldExceedAllocationThreshold) break;
-    if (flush && !tried_flushing) {
-      // Call the flush function to potentially release old holds on buffers
-      // and try again to create a pixel buffer.
-      // This is used to flush CV texture caches, which may retain buffers until
-      // flushed.
-      flush();
-      tried_flushing = true;
-    } else {
-      ++threshold;
-    }
-  }
-  CHECK(!err) << "Error creating pixel buffer: " << err;
-  count_ = threshold;
-  return GpuBuffer(MakeCFHolderAdopting(buffer));
-}
-
-std::string CvPixelBufferPoolWrapper::GetDebugString() const {
-  auto description = MakeCFHolderAdopting(CFCopyDescription(*pool_));
-  return [(__bridge NSString*)*description UTF8String];
-}
-
-void CvPixelBufferPoolWrapper::Flush() { CVPixelBufferPoolFlush(*pool_, 0); }
-
 std::shared_ptr<GpuBufferMultiPool::SimplePool>
 GpuBufferMultiPool::MakeSimplePool(const GpuBufferMultiPool::BufferSpec& spec) {
-  return std::make_shared<CvPixelBufferPoolWrapper>(spec,
-                                                    kMaxInactiveBufferAge);
+  return std::make_shared<CvPixelBufferPoolWrapper>(
+      spec.width, spec.height, spec.format, kMaxInactiveBufferAge);
 }
 
 GpuBuffer GpuBufferMultiPool::GetBufferWithoutPool(const BufferSpec& spec) {

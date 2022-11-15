@@ -357,6 +357,26 @@ cc_library(
 )
 
 cc_library(
+    name = "cv_pixel_buffer_pool_wrapper",
+    srcs = ["cv_pixel_buffer_pool_wrapper.cc"],
+    hdrs = ["cv_pixel_buffer_pool_wrapper.h"],
+    copts = select({
+        "//conditions:default": [],
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",
+        ],
+    }),
+    deps = [
+        ":gpu_buffer",
+        ":pixel_buffer_pool_util",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/objc:CFHolder",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+cc_library(
     name = "gpu_buffer_storage_image_frame",
     hdrs = ["gpu_buffer_storage_image_frame.h"],
     visibility = ["//visibility:public"],
@@ -631,12 +651,14 @@ cc_library(
             ":gl_texture_buffer_pool",
         ],
         "//mediapipe:ios": [
+            ":cv_pixel_buffer_pool_wrapper",
             ":cv_texture_cache_manager",
             ":pixel_buffer_pool_util",
             "//mediapipe/objc:CFHolder",
             "//mediapipe/objc:util",
         ],
         "//mediapipe:macos": [
+            ":cv_pixel_buffer_pool_wrapper",
             ":cv_texture_cache_manager",
             ":pixel_buffer_pool_util",
             ":gl_texture_buffer",
