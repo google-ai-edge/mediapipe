@@ -17,7 +17,7 @@ Example:
 
 load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto", "generate_proto_descriptor_set")
 load("//mediapipe/framework:transitive_protos.bzl", "transitive_protos")
-load("//mediapipe/framework/deps:expand_template.bzl", "expand_template")
+load("//mediapipe/framework/deps:expand_template.bzl", "expand_template", "expand_template_list")
 load("//mediapipe/framework/tool:build_defs.bzl", "clean_dep")
 load("//mediapipe/framework/deps:descriptor_set.bzl", "direct_descriptor_set", "transitive_descriptor_set")
 load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
@@ -130,9 +130,14 @@ def mediapipe_simple_subgraph(
         outs = [graph_base_name + ".inc"],
     )
 
+    gen_cpp_file = select({
+        "//mediapipe:ios": [name + "_linked.h"],
+        "//conditions:default": [name + "_linked.cc"],
+    })
+
     # cc_library for a linked mediapipe graph.
     expand_template(
-        name = name + "_linked_cc",
+        name = name + "_linked_h",
         template = clean_dep("//mediapipe/framework/tool:simple_subgraph_template.cc"),
         out = name + "_linked.h",
         substitutions = {
@@ -141,13 +146,23 @@ def mediapipe_simple_subgraph(
         },
         testonly = testonly,
     )
+    expand_template(
+        name = name + "_linked_cc",
+        template = clean_dep("//mediapipe/framework/tool:simple_subgraph_template.cc"),
+        out = name + "_linked.cc",
+        substitutions = {
+            "{{SUBGRAPH_CLASS_NAME}}": register_as,
+            "{{SUBGRAPH_INC_FILE_PATH}}": native.package_name() + "/" + graph_base_name + ".inc",
+        },
+        testonly = testonly,
+    )
+
     if not tflite_deps:
         native.cc_library(
             name = name,
             srcs = [
-                name + "_linked.h",
                 graph_base_name + ".inc",
-            ],
+            ] + gen_cpp_file,
             deps = [
                 clean_dep("//mediapipe/framework:calculator_framework"),
                 clean_dep("//mediapipe/framework:subgraph"),
@@ -161,9 +176,8 @@ def mediapipe_simple_subgraph(
         cc_library_with_tflite(
             name = name,
             srcs = [
-                name + "_linked.h",
                 graph_base_name + ".inc",
-            ],
+            ] + gen_cpp_file,
             tflite_deps = tflite_deps,
             deps = [
                 clean_dep("//mediapipe/framework:calculator_framework"),
