@@ -17,7 +17,7 @@ Example:
 
 load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto", "generate_proto_descriptor_set")
 load("//mediapipe/framework:transitive_protos.bzl", "transitive_protos")
-load("//mediapipe/framework/deps:expand_template.bzl", "expand_template", "expand_template_list")
+load("//mediapipe/framework/deps:expand_template.bzl", "expand_template")
 load("//mediapipe/framework/tool:build_defs.bzl", "clean_dep")
 load("//mediapipe/framework/deps:descriptor_set.bzl", "direct_descriptor_set", "transitive_descriptor_set")
 load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
