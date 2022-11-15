@@ -258,11 +258,8 @@ std::string GetTestFilePath(absl::string_view relative_path) {
   return file::JoinPath(GetTestRootDir(), relative_path);
 }
 
-absl::StatusOr<std::unique_ptr<ImageFrame>> LoadTestImage(
-    absl::string_view path, ImageFormat::Format format) {
-  std::string encoded;
-  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(path, &encoded));
-
+absl::StatusOr<std::unique_ptr<ImageFrame>> DecodeTestImage(
+    absl::string_view encoded, ImageFormat::Format format) {
   // stbi_load determines the output pixel format based on the desired channels.
   // 0 means "use whatever's in the file".
   int desired_channels = format == ImageFormat::UNKNOWN ? 0
@@ -274,10 +271,10 @@ absl::StatusOr<std::unique_ptr<ImageFrame>> LoadTestImage(
       << "unsupported output format requested: " << format;
 
   int width, height, channels_in_file;
-  auto data = stbi_load_from_memory(reinterpret_cast<stbi_uc*>(encoded.data()),
-                                    encoded.size(), &width, &height,
-                                    &channels_in_file, desired_channels);
-  RET_CHECK(data) << "failed to decode image data from: " << path;
+  auto data = stbi_load_from_memory(
+      reinterpret_cast<const stbi_uc*>(encoded.data()), encoded.size(), &width,
+      &height, &channels_in_file, desired_channels);
+  RET_CHECK(data) << "failed to decode image data";
 
   // If we didn't specify a desired format, it will be determined by what the
   // file contains.
@@ -293,6 +290,13 @@ absl::StatusOr<std::unique_ptr<ImageFrame>> LoadTestImage(
 
   return absl::make_unique<ImageFrame>(
       format, width, height, width * output_channels, data, stbi_image_free);
+}
+
+absl::StatusOr<std::unique_ptr<ImageFrame>> LoadTestImage(
+    absl::string_view path, ImageFormat::Format format) {
+  std::string encoded;
+  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(path, &encoded));
+  return DecodeTestImage(encoded, format);
 }
 
 std::unique_ptr<ImageFrame> LoadTestPng(absl::string_view path,

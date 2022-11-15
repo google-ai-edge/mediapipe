@@ -81,6 +81,10 @@ std::string GetTestDataDir(absl::string_view package_base_path);
 // Loads a binary graph from path. Returns true iff successful.
 bool LoadTestGraph(CalculatorGraphConfig* proto, const std::string& path);
 
+// Loads an image from memory.
+absl::StatusOr<std::unique_ptr<ImageFrame>> DecodeTestImage(
+    absl::string_view encoded, ImageFormat::Format format = ImageFormat::SRGBA);
+
 // Loads an image from path.
 absl::StatusOr<std::unique_ptr<ImageFrame>> LoadTestImage(
     absl::string_view path, ImageFormat::Format format = ImageFormat::SRGBA);
