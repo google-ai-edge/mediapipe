@@ -117,25 +117,9 @@ void GpuBufferMultiPool::FlushTextureCaches() {
   }
 }
 
-// Turning this on disables the pixel buffer pools when using the simulator.
-// It is no longer necessary, since the helper code now supports non-contiguous
-// buffers. We leave the code in for now for the sake of documentation.
-#define FORCE_CONTIGUOUS_PIXEL_BUFFER_ON_IPHONE_SIMULATOR 0
-
 GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
     BufferSpec spec, GpuBufferMultiPool::SimplePool& pool) {
-#if TARGET_IPHONE_SIMULATOR && FORCE_CONTIGUOUS_PIXEL_BUFFER_ON_IPHONE_SIMULATOR
-  // On the simulator, syncing the texture with the pixelbuffer does not work,
-  // and we have to use glReadPixels. Since GL_UNPACK_ROW_LENGTH is not
-  // available in OpenGL ES 2, we should create the buffer so the pixels are
-  // contiguous.
-  //
-  // TODO: verify if we can use kIOSurfaceBytesPerRow to force the
-  // pool to give us contiguous data.
-  return GetBufferWithoutPool(spec);
-#else
   return pool.GetBuffer([this]() { FlushTextureCaches(); });
-#endif  // TARGET_IPHONE_SIMULATOR
 }
 
 #else
