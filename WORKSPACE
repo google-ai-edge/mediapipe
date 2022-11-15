@@ -212,14 +212,14 @@ http_archive(
     sha256 = "75922da3a1bdb417d820398eb03d4e9bd067c4905a4246d35a44c01d62154d91",
 )
 
-# Point to the commit that deprecates the usage of Eigen::MappedSparseMatrix.
+# 2022-10-20
 http_archive(
     name = "pybind11",
     urls = [
-        "https://github.com/pybind/pybind11/archive/70a58c577eaf067748c2ec31bfd0b0a614cffba6.zip",
+        "https://github.com/pybind/pybind11/archive/v2.10.1.zip",
     ],
-    sha256 = "b971842fab1b5b8f3815a2302331782b7d137fef0e06502422bc4bc360f4956c",
-    strip_prefix = "pybind11-70a58c577eaf067748c2ec31bfd0b0a614cffba6",
+    sha256 = "fcf94065efcfd0a7a828bacf118fa11c43f6390d0c805e3e6342ac119f2e9976",
+    strip_prefix = "pybind11-2.10.1",
     build_file = "@pybind11_bazel//:pybind11.BUILD",
 )
 
