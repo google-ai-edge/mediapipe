@@ -23,18 +23,18 @@
 
 namespace mediapipe {
 
-CvPixelBufferPoolWrapper::CvPixelBufferPoolWrapper(int width, int height,
-                                                   GpuBufferFormat format,
-                                                   CFTimeInterval maxAge) {
+CvPixelBufferPoolWrapper::CvPixelBufferPoolWrapper(
+    int width, int height, GpuBufferFormat format, CFTimeInterval maxAge,
+    std::function<void(void)> flush_texture_caches) {
   OSType cv_format = CVPixelFormatForGpuBufferFormat(format);
   CHECK_NE(cv_format, -1) << "unsupported pixel format";
   pool_ = MakeCFHolderAdopting(
       /* keep count is 0 because the age param keeps buffers around anyway */
       CreateCVPixelBufferPool(width, height, cv_format, 0, maxAge));
+  flush_texture_caches_ = std::move(flush_texture_caches);
 }
 
-CFHolder<CVPixelBufferRef> CvPixelBufferPoolWrapper::GetBuffer(
-    std::function<void(void)> flush) {
+CFHolder<CVPixelBufferRef> CvPixelBufferPoolWrapper::GetBuffer() {
   CVPixelBufferRef buffer;
   int threshold = 1;
   NSMutableDictionary* auxAttributes =
@@ -47,12 +47,12 @@ CFHolder<CVPixelBufferRef> CvPixelBufferPoolWrapper::GetBuffer(
         kCFAllocatorDefault, *pool_, (__bridge CFDictionaryRef)auxAttributes,
         &buffer);
     if (err != kCVReturnWouldExceedAllocationThreshold) break;
-    if (flush && !tried_flushing) {
+    if (flush_texture_caches_ && !tried_flushing) {
       // Call the flush function to potentially release old holds on buffers
       // and try again to create a pixel buffer.
       // This is used to flush CV texture caches, which may retain buffers until
       // flushed.
-      flush();
+      flush_texture_caches_();
       tried_flushing = true;
     } else {
       ++threshold;

@@ -32,8 +32,9 @@ namespace mediapipe {
 class CvPixelBufferPoolWrapper {
  public:
   CvPixelBufferPoolWrapper(int width, int height, GpuBufferFormat format,
-                           CFTimeInterval maxAge);
-  CFHolder<CVPixelBufferRef> GetBuffer(std::function<void(void)> flush);
+                           CFTimeInterval maxAge,
+                           std::function<void(void)> flush_texture_caches);
+  CFHolder<CVPixelBufferRef> GetBuffer();
 
   int GetBufferCount() const { return count_; }
   std::string GetDebugString() const;
@@ -46,6 +47,7 @@ class CvPixelBufferPoolWrapper {
  private:
   CFHolder<CVPixelBufferPoolRef> pool_;
   int count_ = 0;
+  std::function<void(void)> flush_texture_caches_;
 };
 
 }  // namespace mediapipe

@@ -48,12 +48,8 @@ static constexpr int kRequestCountScrubInterval = 50;
 std::shared_ptr<GpuBufferMultiPool::SimplePool>
 GpuBufferMultiPool::MakeSimplePool(const GpuBufferMultiPool::BufferSpec& spec) {
   return std::make_shared<CvPixelBufferPoolWrapper>(
-      spec.width, spec.height, spec.format, kMaxInactiveBufferAge);
-}
-
-GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
-    BufferSpec spec, GpuBufferMultiPool::SimplePool& pool) {
-  return GpuBuffer(pool.GetBuffer(flush_platform_caches_));
+      spec.width, spec.height, spec.format, kMaxInactiveBufferAge,
+      flush_platform_caches_);
 }
 
 #else
@@ -62,11 +58,6 @@ std::shared_ptr<GpuBufferMultiPool::SimplePool>
 GpuBufferMultiPool::MakeSimplePool(const BufferSpec& spec) {
   return GlTextureBufferPool::Create(spec.width, spec.height, spec.format,
                                      kKeepCount);
-}
-
-GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
-    BufferSpec spec, GpuBufferMultiPool::SimplePool& pool) {
-  return GpuBuffer(pool.GetBuffer());
 }
 
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
@@ -100,6 +91,11 @@ GpuBuffer GpuBufferMultiPool::GetBuffer(int width, int height,
   } else {
     return GetBufferWithoutPool(key);
   }
+}
+
+GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
+    BufferSpec spec, GpuBufferMultiPool::SimplePool& pool) {
+  return GpuBuffer(pool.GetBuffer());
 }
 
 GpuBuffer GpuBufferMultiPool::GetBufferWithoutPool(const BufferSpec& spec) {
