@@ -43,6 +43,7 @@ cc_binary(
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
         "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_graph",
         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
+        "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
@@ -166,6 +167,34 @@ android_library(
         "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "imageembedder",
+    srcs = [
+        "imageembedder/ImageEmbedder.java",
+        "imageembedder/ImageEmbedderResult.java",
+    ],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    manifest = "imageembedder/AndroidManifest.xml",
+    deps = [
+        ":core",
+        "//mediapipe/framework:calculator_options_java_proto_lite",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/java/com/google/mediapipe/framework/image",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_java_proto_lite",
+        "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/image_embedder/proto:image_embedder_graph_options_java_proto_lite",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embedding",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:embedderoptions",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
