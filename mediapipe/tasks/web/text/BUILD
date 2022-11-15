@@ -9,5 +9,6 @@ mediapipe_ts_library(
     srcs = ["index.ts"],
     deps = [
         "//mediapipe/tasks/web/text/text_classifier",
+        "//mediapipe/tasks/web/text/text_embedder",
     ],
 )

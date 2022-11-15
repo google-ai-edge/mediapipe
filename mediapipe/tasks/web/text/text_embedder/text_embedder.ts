@@ -29,6 +29,8 @@ import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/wasm
 import {TextEmbedderOptions} from './text_embedder_options';
 import {TextEmbedderResult} from './text_embedder_result';
 
+export * from './text_embedder_options';
+export * from './text_embedder_result';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern

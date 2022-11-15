@@ -29,6 +29,9 @@ import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/wasm
 import {AudioClassifierOptions} from './audio_classifier_options';
 import {AudioClassifierResult} from './audio_classifier_result';
 
+export * from './audio_classifier_options';
+export * from './audio_classifier_result';
+
 const MEDIAPIPE_GRAPH =
     'mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph';
 

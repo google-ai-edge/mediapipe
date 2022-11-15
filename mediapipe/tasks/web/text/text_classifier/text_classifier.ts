@@ -29,6 +29,9 @@ import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/wasm
 import {TextClassifierOptions} from './text_classifier_options';
 import {TextClassifierResult} from './text_classifier_result';
 
+export * from './text_classifier_options';
+export * from './text_classifier_result';
+
 const INPUT_STREAM = 'text_in';
 const CLASSIFICATIONS_STREAM = 'classifications_out';
 const TEXT_CLASSIFIER_GRAPH =
