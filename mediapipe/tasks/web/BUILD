@@ -28,8 +28,8 @@ mediapipe_ts_library(
 )
 
 rollup_bundle(
-    name = "audio_bundle",
-    config_file = "rollup.config.mjs",
+    name = "audio_cjs_bundle",
+    config_file = "rollup.config.cjs.mjs",
     entry_point = "audio.ts",
     format = "cjs",
     output_dir = False,
@@ -37,6 +37,22 @@ rollup_bundle(
         ":audio_lib",
         "@npm//@rollup/plugin-commonjs",
         "@npm//@rollup/plugin-node-resolve",
+        "@npm//@rollup/plugin-replace",
+    ],
+)
+
+rollup_bundle(
+    name = "audio_iife_bundle",
+    config_file = "rollup.config.iife.mjs",
+    entry_point = "audio.ts",
+    format = "iife",
+    output_dir = False,
+    deps = [
+        ":audio_lib",
+        "@npm//@rollup/plugin-commonjs",
+        "@npm//@rollup/plugin-node-resolve",
+        "@npm//@rollup/plugin-replace",
+        "@npm//@rollup/plugin-terser",
     ],
 )
 
@@ -52,7 +68,8 @@ pkg_npm(
     deps = [
         "wasm/audio_wasm_internal.js",
         "wasm/audio_wasm_internal.wasm",
-        ":audio_bundle",
+        ":audio_cjs_bundle",
+        ":audio_iife_bundle",
     ],
 )
 
@@ -65,8 +82,8 @@ mediapipe_ts_library(
 )
 
 rollup_bundle(
-    name = "text_bundle",
-    config_file = "rollup.config.mjs",
+    name = "text_cjs_bundle",
+    config_file = "rollup.config.cjs.mjs",
     entry_point = "text.ts",
     format = "cjs",
     output_dir = False,
@@ -74,6 +91,22 @@ rollup_bundle(
         ":text_lib",
         "@npm//@rollup/plugin-commonjs",
         "@npm//@rollup/plugin-node-resolve",
+        "@npm//@rollup/plugin-replace",
+    ],
+)
+
+rollup_bundle(
+    name = "text_iife_bundle",
+    config_file = "rollup.config.iife.mjs",
+    entry_point = "text.ts",
+    format = "iife",
+    output_dir = False,
+    deps = [
+        ":text_lib",
+        "@npm//@rollup/plugin-commonjs",
+        "@npm//@rollup/plugin-node-resolve",
+        "@npm//@rollup/plugin-replace",
+        "@npm//@rollup/plugin-terser",
     ],
 )
 
@@ -89,7 +122,8 @@ pkg_npm(
     deps = [
         "wasm/text_wasm_internal.js",
         "wasm/text_wasm_internal.wasm",
-        ":text_bundle",
+        ":text_cjs_bundle",
+        ":text_iife_bundle",
     ],
 )
 
@@ -102,8 +136,8 @@ mediapipe_ts_library(
 )
 
 rollup_bundle(
-    name = "vision_bundle",
-    config_file = "rollup.config.mjs",
+    name = "vision_cjs_bundle",
+    config_file = "rollup.config.cjs.mjs",
     entry_point = "vision.ts",
     format = "cjs",
     output_dir = False,
@@ -111,6 +145,22 @@ rollup_bundle(
         ":vision_lib",
         "@npm//@rollup/plugin-commonjs",
         "@npm//@rollup/plugin-node-resolve",
+        "@npm//@rollup/plugin-replace",
+    ],
+)
+
+rollup_bundle(
+    name = "vision_iife_bundle",
+    config_file = "rollup.config.iife.mjs",
+    entry_point = "vision.ts",
+    format = "iife",
+    output_dir = False,
+    deps = [
+        ":vision_lib",
+        "@npm//@rollup/plugin-commonjs",
+        "@npm//@rollup/plugin-node-resolve",
+        "@npm//@rollup/plugin-replace",
+        "@npm//@rollup/plugin-terser",
     ],
 )
 
@@ -126,6 +176,7 @@ pkg_npm(
     deps = [
         "wasm/vision_wasm_internal.js",
         "wasm/vision_wasm_internal.wasm",
-        ":vision_bundle",
+        ":vision_cjs_bundle",
+        ":vision_iife_bundle",
     ],
 )

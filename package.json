@@ -7,6 +7,8 @@
     "@bazel/typescript": "^5.7.1",
     "@rollup/plugin-commonjs": "^23.0.2",
     "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-replace": "^5.0.1",
+    "@rollup/plugin-terser": "^0.1.0",
     "@types/google-protobuf": "^3.15.6",
     "@types/offscreencanvas": "^2019.7.0",
     "google-protobuf": "^3.21.2",

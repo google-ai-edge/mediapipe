@@ -2,10 +2,11 @@
   "name": "@mediapipe/tasks-__NAME__",
   "version": "__VERSION__",
   "description": "__DESCRIPTION__",
-  "main": "__NAME___bundle.js",
-  "module":  "__NAME___bundle.js",
+  "main": "__NAME___cjs_bundle.js",
+  "module":  "__NAME___cjs_bundle.js",
+  "jsdeliver":  "__NAME___iife_bundle.js",
   "exports": {
-    ".": "./__NAME___bundle.js",
+    ".": "./__NAME___cjs_bundle.js",
     "./loader": "./wasm/__NAME___wasm_internal.js",
     "./wasm": "./wasm/__NAME___wasm_internal.wasm"
   },
