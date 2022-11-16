@@ -82,11 +82,8 @@ class GpuBufferMultiPool {
   std::shared_ptr<SimplePool> MakeSimplePool(const BufferSpec& spec);
   // Requests a simple buffer pool for the given spec. This may return nullptr
   // if we have not yet reached a sufficient number of requests to allocate a
-  // pool, in which case the caller should invoke GetBufferWithoutPool instead
-  // of GetBufferFromSimplePool.
+  // pool, in which case the caller should invoke CreateBufferWithoutPool.
   std::shared_ptr<SimplePool> RequestPool(const BufferSpec& spec);
-  GpuBuffer GetBufferFromSimplePool(BufferSpec spec, SimplePool& pool);
-  GpuBuffer GetBufferWithoutPool(const BufferSpec& spec);
 
   absl::Mutex mutex_;
   mediapipe::ResourceCache<BufferSpec, std::shared_ptr<SimplePool>> cache_

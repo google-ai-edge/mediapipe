@@ -21,12 +21,6 @@
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 
-#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-#include "CoreFoundation/CFBase.h"
-#include "mediapipe/objc/CFHolder.h"
-#include "mediapipe/objc/util.h"
-#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-
 namespace mediapipe {
 
 // Keep this many buffers allocated for a given frame size.
@@ -87,20 +81,11 @@ GpuBuffer GpuBufferMultiPool::GetBuffer(int width, int height,
   std::shared_ptr<SimplePool> pool = RequestPool(key);
   if (pool) {
     // Note: we release our multipool lock before accessing the simple pool.
-    return GetBufferFromSimplePool(key, *pool);
+    return GpuBuffer(pool->GetBuffer());
   } else {
-    return GetBufferWithoutPool(key);
+    return GpuBuffer(
+        SimplePool::CreateBufferWithoutPool(width, height, format));
   }
-}
-
-GpuBuffer GpuBufferMultiPool::GetBufferFromSimplePool(
-    BufferSpec spec, GpuBufferMultiPool::SimplePool& pool) {
-  return GpuBuffer(pool.GetBuffer());
-}
-
-GpuBuffer GpuBufferMultiPool::GetBufferWithoutPool(const BufferSpec& spec) {
-  return GpuBuffer(SimplePool::CreateBufferWithoutPool(spec.width, spec.height,
-                                                       spec.format));
 }
 
 }  // namespace mediapipe
