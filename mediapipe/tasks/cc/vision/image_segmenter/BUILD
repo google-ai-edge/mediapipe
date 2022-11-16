@@ -20,6 +20,9 @@ cc_library(
     name = "image_segmenter",
     srcs = ["image_segmenter.cc"],
     hdrs = ["image_segmenter.h"],
+    visibility = [
+        "//mediapipe/tasks:internal",
+    ],
     deps = [
         ":image_segmenter_graph",
         "//mediapipe/framework/api2:builder",
