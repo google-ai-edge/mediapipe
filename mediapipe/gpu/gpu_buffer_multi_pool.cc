@@ -23,26 +23,12 @@
 
 namespace mediapipe {
 
-// Keep this many buffers allocated for a given frame size.
-static constexpr int kKeepCount = 2;
-// The maximum size of the GpuBufferMultiPool. When the limit is reached, the
-// oldest BufferSpec will be dropped.
-static constexpr int kMaxPoolCount = 10;
-// Time in seconds after which an inactive buffer can be dropped from the pool.
-// Currently only used with CVPixelBufferPool.
-static constexpr float kMaxInactiveBufferAge = 0.25;
-// Skip allocating a buffer pool until at least this many requests have been
-// made for a given BufferSpec.
-static constexpr int kMinRequestsBeforePool = 2;
-// Do a deeper flush every this many requests.
-static constexpr int kRequestCountScrubInterval = 50;
-
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 std::shared_ptr<GpuBufferMultiPool::SimplePool>
 GpuBufferMultiPool::MakeSimplePool(const GpuBufferMultiPool::BufferSpec& spec) {
   return std::make_shared<CvPixelBufferPoolWrapper>(
-      spec.width, spec.height, spec.format, kMaxInactiveBufferAge,
+      spec.width, spec.height, spec.format, options_.max_inactive_buffer_age,
       flush_platform_caches_);
 }
 
@@ -51,7 +37,7 @@ GpuBufferMultiPool::MakeSimplePool(const GpuBufferMultiPool::BufferSpec& spec) {
 std::shared_ptr<GpuBufferMultiPool::SimplePool>
 GpuBufferMultiPool::MakeSimplePool(const BufferSpec& spec) {
   return GlTextureBufferPool::Create(spec.width, spec.height, spec.format,
-                                     kKeepCount);
+                                     options_.keep_count);
 }
 
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
@@ -64,11 +50,12 @@ std::shared_ptr<GpuBufferMultiPool::SimplePool> GpuBufferMultiPool::RequestPool(
     absl::MutexLock lock(&mutex_);
     pool =
         cache_.Lookup(spec, [this](const BufferSpec& spec, int request_count) {
-          return (request_count >= kMinRequestsBeforePool)
+          return (request_count >= options_.min_requests_before_pool)
                      ? MakeSimplePool(spec)
                      : nullptr;
         });
-    evicted = cache_.Evict(kMaxPoolCount, kRequestCountScrubInterval);
+    evicted = cache_.Evict(options_.max_pool_count,
+                           options_.request_count_scrub_interval);
   }
   // Evicted pools, and their buffers, will be released without holding the
   // lock.

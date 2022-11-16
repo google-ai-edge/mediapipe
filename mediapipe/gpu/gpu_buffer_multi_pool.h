@@ -42,9 +42,28 @@ namespace mediapipe {
 struct GpuSharedData;
 class CvPixelBufferPoolWrapper;
 
+struct MultiPoolOptions {
+  // Keep this many buffers allocated for a given frame size.
+  int keep_count = 2;
+  // The maximum size of the GpuBufferMultiPool. When the limit is reached, the
+  // oldest BufferSpec will be dropped.
+  int max_pool_count = 10;
+  // Time in seconds after which an inactive buffer can be dropped from the
+  // pool. Currently only used with CVPixelBufferPool.
+  float max_inactive_buffer_age = 0.25;
+  // Skip allocating a buffer pool until at least this many requests have been
+  // made for a given BufferSpec.
+  int min_requests_before_pool = 2;
+  // Do a deeper flush every this many requests.
+  int request_count_scrub_interval = 50;
+};
+
+static constexpr MultiPoolOptions kDefaultMultiPoolOptions;
+
 class GpuBufferMultiPool {
  public:
-  GpuBufferMultiPool() {}
+  GpuBufferMultiPool(MultiPoolOptions options = kDefaultMultiPoolOptions)
+      : options_(options) {}
 
   // Obtains a buffer. May either be reused or created anew.
   GpuBuffer GetBuffer(int width, int height,
@@ -85,6 +104,7 @@ class GpuBufferMultiPool {
   // pool, in which case the caller should invoke CreateBufferWithoutPool.
   std::shared_ptr<SimplePool> RequestPool(const BufferSpec& spec);
 
+  MultiPoolOptions options_;
   absl::Mutex mutex_;
   mediapipe::ResourceCache<BufferSpec, std::shared_ptr<SimplePool>> cache_
       ABSL_GUARDED_BY(mutex_);
