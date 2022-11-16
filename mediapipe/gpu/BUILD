@@ -369,6 +369,7 @@ cc_library(
     }),
     deps = [
         ":gpu_buffer_format",
+        ":multi_pool",
         ":pixel_buffer_pool_util",
         "//mediapipe/framework/port:logging",
         "//mediapipe/objc:CFHolder",
@@ -604,12 +605,18 @@ cc_library(
         ":gl_texture_buffer",
         ":gpu_buffer",
         ":gpu_shared_data_header",
+        ":multi_pool",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
     ],
+)
+
+cc_library(
+    name = "multi_pool",
+    hdrs = ["multi_pool.h"],
 )
 
 cc_library(
@@ -639,6 +646,7 @@ cc_library(
         ":gl_base",
         ":gpu_buffer",
         ":gpu_shared_data_header",
+        ":multi_pool",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework/port:logging",

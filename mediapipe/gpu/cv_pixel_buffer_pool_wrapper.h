@@ -24,6 +24,7 @@
 
 #include "CoreFoundation/CFBase.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
+#include "mediapipe/gpu/multi_pool.h"
 #include "mediapipe/gpu/pixel_buffer_pool_util.h"
 #include "mediapipe/objc/CFHolder.h"
 
@@ -34,6 +35,16 @@ class CvPixelBufferPoolWrapper {
   CvPixelBufferPoolWrapper(int width, int height, GpuBufferFormat format,
                            CFTimeInterval maxAge,
                            std::function<void(void)> flush_texture_caches);
+
+  static std::shared_ptr<CvPixelBufferPoolWrapper> Create(
+      int width, int height, GpuBufferFormat format,
+      const MultiPoolOptions& options,
+      std::function<void(void)> flush_texture_caches = nullptr) {
+    return std::make_shared<CvPixelBufferPoolWrapper>(
+        width, height, format, options.max_inactive_buffer_age,
+        flush_texture_caches);
+  }
+
   CFHolder<CVPixelBufferRef> GetBuffer();
 
   int GetBufferCount() const { return count_; }

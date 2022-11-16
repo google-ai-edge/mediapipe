@@ -23,6 +23,7 @@
 
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/gpu/gl_texture_buffer.h"
+#include "mediapipe/gpu/multi_pool.h"
 
 namespace mediapipe {
 
@@ -38,6 +39,12 @@ class GlTextureBufferPool
                                                      int keep_count) {
     return std::shared_ptr<GlTextureBufferPool>(
         new GlTextureBufferPool(width, height, format, keep_count));
+  }
+
+  static std::shared_ptr<GlTextureBufferPool> Create(
+      int width, int height, GpuBufferFormat format,
+      const MultiPoolOptions& options) {
+    return Create(width, height, format, options.keep_count);
   }
 
   // Obtains a buffers. May either be reused or created anew.

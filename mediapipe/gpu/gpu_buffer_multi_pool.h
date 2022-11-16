@@ -25,6 +25,7 @@
 #include "absl/hash/hash.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/gpu/multi_pool.h"
 #include "mediapipe/util/resource_cache.h"
 
 #ifdef __APPLE__
@@ -41,24 +42,6 @@ namespace mediapipe {
 
 struct GpuSharedData;
 class CvPixelBufferPoolWrapper;
-
-struct MultiPoolOptions {
-  // Keep this many buffers allocated for a given frame size.
-  int keep_count = 2;
-  // The maximum size of the GpuBufferMultiPool. When the limit is reached, the
-  // oldest BufferSpec will be dropped.
-  int max_pool_count = 10;
-  // Time in seconds after which an inactive buffer can be dropped from the
-  // pool. Currently only used with CVPixelBufferPool.
-  float max_inactive_buffer_age = 0.25;
-  // Skip allocating a buffer pool until at least this many requests have been
-  // made for a given BufferSpec.
-  int min_requests_before_pool = 2;
-  // Do a deeper flush every this many requests.
-  int request_count_scrub_interval = 50;
-};
-
-static constexpr MultiPoolOptions kDefaultMultiPoolOptions;
 
 class GpuBufferMultiPool {
  public:
@@ -98,7 +81,10 @@ class GpuBufferMultiPool {
   using SimplePool = GlTextureBufferPool;
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-  std::shared_ptr<SimplePool> MakeSimplePool(const BufferSpec& spec);
+  std::shared_ptr<SimplePool> MakeSimplePool(
+      const GpuBufferMultiPool::BufferSpec& spec,
+      const MultiPoolOptions& options);
+
   // Requests a simple buffer pool for the given spec. This may return nullptr
   // if we have not yet reached a sufficient number of requests to allocate a
   // pool, in which case the caller should invoke CreateBufferWithoutPool.

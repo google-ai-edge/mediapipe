@@ -23,24 +23,17 @@
 
 namespace mediapipe {
 
+std::shared_ptr<GpuBufferMultiPool::SimplePool>
+GpuBufferMultiPool::MakeSimplePool(const GpuBufferMultiPool::BufferSpec& spec,
+                                   const MultiPoolOptions& options) {
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-
-std::shared_ptr<GpuBufferMultiPool::SimplePool>
-GpuBufferMultiPool::MakeSimplePool(const GpuBufferMultiPool::BufferSpec& spec) {
-  return std::make_shared<CvPixelBufferPoolWrapper>(
-      spec.width, spec.height, spec.format, options_.max_inactive_buffer_age,
-      flush_platform_caches_);
-}
-
+  return CvPixelBufferPoolWrapper::Create(spec.width, spec.height, spec.format,
+                                          options, flush_platform_caches_);
 #else
-
-std::shared_ptr<GpuBufferMultiPool::SimplePool>
-GpuBufferMultiPool::MakeSimplePool(const BufferSpec& spec) {
   return GlTextureBufferPool::Create(spec.width, spec.height, spec.format,
-                                     options_.keep_count);
-}
-
+                                     options);
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+}
 
 std::shared_ptr<GpuBufferMultiPool::SimplePool> GpuBufferMultiPool::RequestPool(
     const BufferSpec& spec) {
@@ -51,7 +44,7 @@ std::shared_ptr<GpuBufferMultiPool::SimplePool> GpuBufferMultiPool::RequestPool(
     pool =
         cache_.Lookup(spec, [this](const BufferSpec& spec, int request_count) {
           return (request_count >= options_.min_requests_before_pool)
-                     ? MakeSimplePool(spec)
+                     ? MakeSimplePool(spec, options_)
                      : nullptr;
         });
     evicted = cache_.Evict(options_.max_pool_count,
