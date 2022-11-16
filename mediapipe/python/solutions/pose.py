@@ -159,7 +159,7 @@ class Pose(SolutionBase):
             'poselandmarkbyroicpu__tensorstoposelandmarksandsegmentation__ThresholdingCalculator.threshold':
                 min_tracking_confidence,
         },
-        outputs=['pose_landmarks', 'pose_world_landmarks', 'segmentation_mask'])
+        outputs=['pose_landmarks', 'pose_world_landmarks', 'segmentation_mask', 'pose_detection'])
 
   def process(self, image: np.ndarray) -> NamedTuple:
     """Processes an RGB image and returns the pose landmarks on the most prominent person detected.
