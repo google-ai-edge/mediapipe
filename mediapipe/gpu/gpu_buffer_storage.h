@@ -84,11 +84,17 @@ class GpuBufferStorageRegistry {
 
   template <class Storage, class F>
   RegistryToken RegisterFactory(F&& factory) {
+    if constexpr (kDisableRegistration<Storage>) {
+      return {};
+    }
     return Register(factory, Storage::GetProviderTypes());
   }
 
   template <class StorageFrom, class StorageTo, class F>
   RegistryToken RegisterConverter(F&& converter) {
+    if constexpr (kDisableRegistration<StorageTo>) {
+      return {};
+    }
     return Register(
         [converter](std::shared_ptr<GpuBufferStorage> source)
             -> std::shared_ptr<GpuBufferStorage> {
@@ -119,6 +125,13 @@ class GpuBufferStorageRegistry {
     return std::make_shared<Storage>(args...);
   }
 
+  // Temporary workaround: a Storage class can define a static constexpr
+  // kDisableGpuBufferRegistration member to true to prevent registering any
+  // factory of converter that would produce it.
+  // TODO: better solution for storage priorities.
+  template <class Storage, typename = void>
+  static constexpr bool kDisableRegistration = false;
+
   RegistryToken Register(StorageFactory factory,
                          std::vector<TypeId> provider_hashes);
   RegistryToken Register(StorageConverter converter,
@@ -129,6 +142,13 @@ class GpuBufferStorageRegistry {
   absl::flat_hash_map<std::pair<TypeId, TypeId>, StorageConverter>
       converter_for_view_provider_and_existing_storage_;
 };
+
+// Putting this outside the class body to work around a GCC bug.
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=71954
+template <class Storage>
+constexpr bool GpuBufferStorageRegistry::kDisableRegistration<
+    Storage, std::void_t<decltype(&Storage::kDisableGpuBufferRegistration)>> =
+    Storage::kDisableGpuBufferRegistration;
 
 // Defining a member of this type causes P to be ODR-used, which forces its
 // instantiation if it's a static member of a template.

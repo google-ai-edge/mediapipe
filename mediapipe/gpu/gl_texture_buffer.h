@@ -143,6 +143,10 @@ class GlTextureBuffer
     return producer_context_;
   }
 
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+  static constexpr bool kDisableGpuBufferRegistration = true;
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+
  private:
   // Creates a texture of dimensions width x height and allocates space for it.
   // If data is provided, it is uploaded to the texture; otherwise, it can be
