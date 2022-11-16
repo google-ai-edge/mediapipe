@@ -360,7 +360,7 @@ static std::shared_ptr<GpuBufferStorageImageFrame> ConvertToImageFrame(
       absl::make_unique<ImageFrame>(image_format, buf->width(), buf->height(),
                                     ImageFrame::kGlDefaultAlignmentBoundary);
   buf->GetProducerContext()->Run([buf, &output] {
-    auto view = buf->GetReadView(internal::types<GlTextureView>{}, 0);
+    auto view = buf->GetReadView(internal::types<GlTextureView>{}, /*plane=*/0);
     ReadTexture(view, buf->format(), output->MutablePixelData(),
                 output->PixelDataSize());
   });
@@ -389,8 +389,9 @@ static std::shared_ptr<GpuBufferStorageCvPixelBuffer> ConvertToCvPixelBuffer(
       buf->width(), buf->height(), buf->format());
   buf->GetProducerContext()->Run([buf, &output] {
     TempGlFramebuffer framebuffer;
-    auto src = buf->GetReadView(internal::types<GlTextureView>{}, 0);
-    auto dst = output->GetWriteView(internal::types<GlTextureView>{}, 0);
+    auto src = buf->GetReadView(internal::types<GlTextureView>{}, /*plane=*/0);
+    auto dst =
+        output->GetWriteView(internal::types<GlTextureView>{}, /*plane=*/0);
     CopyGlTexture(src, dst);
     glFlush();
   });
