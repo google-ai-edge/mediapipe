@@ -93,7 +93,7 @@ class GestureRecognizerTest(tf.test.TestCase):
         tflite_file=gesture_classifier_tflite_file,
         size=[1, model.embedding_size])
 
-  def _test_accuracy(self, model, threshold=0.5):
+  def _test_accuracy(self, model, threshold=0.25):
     # Test on _train_data because of our limited dataset size
     _, accuracy = model.evaluate(self._train_data)
     tf.compat.v1.logging.info(f'train accuracy: {accuracy}')
