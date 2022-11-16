@@ -784,6 +784,7 @@ cc_library(
         ":shader_util",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_cc_proto",
+        "@com_google_absl//absl/base:core_headers",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework:calculator_contract",
