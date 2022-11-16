@@ -71,6 +71,11 @@ class GlTextureBuffer
   // Create a texture with a copy of the data in image_frame.
   static std::unique_ptr<GlTextureBuffer> Create(const ImageFrame& image_frame);
 
+  static std::unique_ptr<GlTextureBuffer> Create(
+      const internal::GpuBufferSpec& spec) {
+    return Create(spec.width, spec.height, spec.format);
+  }
+
   // Wraps an existing texture, but does not take ownership of it.
   // deletion_callback is invoked when the GlTextureBuffer is released, so
   // the caller knows that the texture is no longer in use.

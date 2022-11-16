@@ -607,10 +607,21 @@ cc_library(
         ":gpu_buffer",
         ":gpu_shared_data_header",
         ":multi_pool",
+        ":reusable_pool",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+cc_library(
+    name = "reusable_pool",
+    hdrs = ["reusable_pool.h"],
+    deps = [
+        ":multi_pool",
+        "@com_google_absl//absl/functional:any_invocable",
         "@com_google_absl//absl/synchronization",
     ],
 )
