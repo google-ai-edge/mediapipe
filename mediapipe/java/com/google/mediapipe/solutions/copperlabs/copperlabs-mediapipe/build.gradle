@@ -75,7 +75,7 @@ publishing {
 }
 
 android {
-    namespace getGroupId()
+    namespace "com.google.mediapipe.dummy"
     compileSdk 32
 
     defaultConfig {
