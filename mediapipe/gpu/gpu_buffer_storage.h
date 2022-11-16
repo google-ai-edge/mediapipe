@@ -18,6 +18,28 @@ namespace internal {
 template <class... T>
 struct types {};
 
+// This template must be specialized for each view type V. Each specialization
+// should define a pair of virtual methods called GetReadView and GetWriteView,
+// whose first argument is a types<V> tag object. The result type and optional
+// further arguments will depend on the view type.
+//
+// Example:
+//   template <>
+//   class ViewProvider<MyView> {
+//    public:
+//     virtual ~ViewProvider() = default;
+//     virtual MyView GetReadView(types<MyView>) const = 0;
+//     virtual MyView GetWriteView(types<MyView>) = 0;
+//   };
+//
+// The additional arguments and result type are reflected in GpuBuffer's
+// GetReadView and GetWriteView methods.
+//
+// Using a type tag for the first argument allows the methods to be overloaded,
+// so that a single storage can implement provider methods for multiple views.
+// Since these methods are not template methods, they can (and should) be
+// virtual, which allows storage classes to override them, enforcing that all
+// storages providing a given view type implement the same interface.
 template <class V>
 class ViewProvider;
 
