@@ -33,7 +33,6 @@
 
 namespace mediapipe {
 
-class GlCalculatorHelperImpl;
 class GlTexture;
 class GpuResources;
 struct GpuSharedData;
@@ -161,15 +160,30 @@ class GlCalculatorHelper {
   // TODO: do we need an unbind method too?
   void BindFramebuffer(const GlTexture& dst);
 
-  GlContext& GetGlContext() const;
+  GlContext& GetGlContext() const { return *gl_context_; }
 
-  GlVersion GetGlVersion() const;
+  GlVersion GetGlVersion() const { return gl_context_->GetGlVersion(); }
 
   // Check if the calculator helper has been previously initialized.
-  bool Initialized() { return impl_ != nullptr; }
+  bool Initialized() { return gpu_resources_ != nullptr; }
 
  private:
-  std::unique_ptr<GlCalculatorHelperImpl> impl_;
+  void InitializeInternal(CalculatorContext* cc, GpuResources* gpu_resources);
+
+  absl::Status RunInGlContext(std::function<absl::Status(void)> gl_func,
+                              CalculatorContext* calculator_context);
+
+  // Makes a GpuBuffer accessible as a texture in the GL context.
+  GlTexture MapGpuBuffer(const GpuBuffer& gpu_buffer, GlTextureView view);
+
+  // Create the framebuffer for rendering.
+  void CreateFramebuffer();
+
+  std::shared_ptr<GlContext> gl_context_;
+
+  GLuint framebuffer_ = 0;
+
+  GpuResources* gpu_resources_ = nullptr;
 };
 
 // Represents an OpenGL texture, and is a 'view' into the memory pool.
@@ -204,7 +218,7 @@ class GlTexture {
   explicit GlTexture(GlTextureView view, GpuBuffer gpu_buffer)
       : gpu_buffer_(std::move(gpu_buffer)),
         view_(std::make_shared<GlTextureView>(std::move(view))) {}
-  friend class GlCalculatorHelperImpl;
+  friend class GlCalculatorHelper;
   // We store the GpuBuffer to support GetFrame, and to ensure that the storage
   // outlives the view.
   GpuBuffer gpu_buffer_;

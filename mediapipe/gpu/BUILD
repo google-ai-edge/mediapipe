@@ -749,11 +749,9 @@ cc_library(
     name = "gl_calculator_helper",
     srcs = [
         "gl_calculator_helper.cc",
-        "gl_calculator_helper_impl_common.cc",
     ],
     hdrs = [
         "gl_calculator_helper.h",
-        "gl_calculator_helper_impl.h",
     ],
     linkopts = select({
         "//conditions:default": [],
