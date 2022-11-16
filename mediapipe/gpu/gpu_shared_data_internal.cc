@@ -200,4 +200,34 @@ GpuSharedData::GpuSharedData() : GpuSharedData(kPlatformGlContextNone) {}
 MPPGraphGPUData* GpuResources::ios_gpu_data() { return ios_gpu_data_; }
 #endif  // __APPLE__
 
+extern const GraphService<GpuResources> kGpuService;
+
+#if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+static std::shared_ptr<GlTextureBuffer> GetGlTextureBufferFromPool(
+    int width, int height, GpuBufferFormat format) {
+  std::shared_ptr<GlTextureBuffer> texture_buffer;
+  const auto cc = LegacyCalculatorSupport::Scoped<CalculatorContext>::current();
+
+  if (cc && cc->Service(kGpuService).IsAvailable()) {
+    GpuBufferMultiPool* pool =
+        &cc->Service(kGpuService).GetObject().gpu_buffer_pool();
+    // Note that the "gpu_buffer_pool" serves GlTextureBuffers on non-Apple
+    // platforms. TODO: refactor into storage pools.
+    texture_buffer = pool->GetBuffer(width, height, format)
+                         .internal_storage<GlTextureBuffer>();
+  } else {
+    texture_buffer = GlTextureBuffer::Create(width, height, format);
+  }
+  return texture_buffer;
+}
+
+static auto kGlTextureBufferPoolRegistration = [] {
+  // Ensure that the GlTextureBuffer's own factory is already registered, so we
+  // can override it.
+  GlTextureBuffer::RegisterOnce();
+  return internal::GpuBufferStorageRegistry::Get()
+      .RegisterFactory<GlTextureBuffer>(GetGlTextureBufferFromPool);
+}();
+#endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+
 }  // namespace mediapipe

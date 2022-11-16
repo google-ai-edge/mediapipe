@@ -74,13 +74,17 @@ class GpuBufferStorageRegistry {
 
   template <class Storage>
   RegistryToken Register() {
-    return Register(
+    return RegisterFactory<Storage>(
         [](int width, int height,
            GpuBufferFormat format) -> std::shared_ptr<Storage> {
           return CreateStorage<Storage>(overload_priority<10>{}, width, height,
                                         format);
-        },
-        Storage::GetProviderTypes());
+        });
+  }
+
+  template <class Storage, class F>
+  RegistryToken RegisterFactory(F&& factory) {
+    return Register(factory, Storage::GetProviderTypes());
   }
 
   template <class StorageFrom, class StorageTo, class F>
@@ -148,6 +152,13 @@ class GpuBufferStorageImpl : public GpuBufferStorage, public U... {
     return kHashes;
   }
 
+  // Exposing this as a function allows dependent initializers to call this to
+  // ensure proper ordering.
+  static GpuBufferStorageRegistry::RegistryToken RegisterOnce() {
+    static auto registration = GpuBufferStorageRegistry::Get().Register<T>();
+    return registration;
+  }
+
  private:
   virtual const void* down_cast(TypeId to) const override {
     return down_cast_impl(to, types<T, U...>{});
@@ -161,8 +172,7 @@ class GpuBufferStorageImpl : public GpuBufferStorage, public U... {
     return down_cast_impl(to, types<W...>{});
   }
 
-  inline static auto registration =
-      GpuBufferStorageRegistry::Get().Register<T>();
+  inline static auto registration = RegisterOnce();
   using RequireStatics = ForceStaticInstantiation<&registration>;
 };
 
