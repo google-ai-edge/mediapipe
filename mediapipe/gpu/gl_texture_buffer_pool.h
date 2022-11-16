@@ -42,9 +42,8 @@ class GlTextureBufferPool
   }
 
   static std::shared_ptr<GlTextureBufferPool> Create(
-      int width, int height, GpuBufferFormat format,
-      const MultiPoolOptions& options) {
-    return Create(width, height, format, options.keep_count);
+      const internal::GpuBufferSpec& spec, const MultiPoolOptions& options) {
+    return Create(spec.width, spec.height, spec.format, options.keep_count);
   }
 
   // Obtains a buffers. May either be reused or created anew.
@@ -59,8 +58,8 @@ class GlTextureBufferPool
   std::pair<int, int> GetInUseAndAvailableCounts();
 
   static GlTextureBufferSharedPtr CreateBufferWithoutPool(
-      int width, int height, GpuBufferFormat format) {
-    return GlTextureBuffer::Create(width, height, format);
+      const internal::GpuBufferSpec& spec) {
+    return GlTextureBuffer::Create(spec.width, spec.height, spec.format);
   }
 
  private:

@@ -12,15 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This class lets calculators allocate GpuBuffers of various sizes, caching
-// and reusing them as needed. It does so by automatically creating and using
-// platform-specific buffer pools for the requested sizes.
-//
-// This class is not meant to be used directly by calculators, but is instead
-// used by GlCalculatorHelper to allocate buffers.
-
 #ifndef MEDIAPIPE_GPU_MULTI_POOL_H_
 #define MEDIAPIPE_GPU_MULTI_POOL_H_
+
+#include "mediapipe/util/resource_cache.h"
 
 namespace mediapipe {
 
@@ -41,6 +36,81 @@ struct MultiPoolOptions {
 };
 
 static constexpr MultiPoolOptions kDefaultMultiPoolOptions;
+
+// MultiPool is a generic class for vending reusable resources of type Item,
+// which are assumed to be relatively expensive to create, so that reusing them
+// is beneficial.
+// Items are classified by Spec; when an item with a given Spec is requested,
+// an old Item with the same Spec can be reused, if available; otherwise a new
+// Item will be created. When user code is done with an Item, it is returned
+// to the pool for reuse.
+// In order to manage this, a MultiPool contains a map of Specs to SimplePool;
+// each SimplePool manages Items with the same Spec, which are thus considered
+// interchangeable.
+// Item retention and eviction policies are controlled by options.
+// A concrete example would be a pool of GlTextureBuffer, grouped by dimensions
+// and format.
+template <class SimplePool, class Spec, class Item>
+class MultiPool {
+ public:
+  using SimplePoolFactory = std::function<std::shared_ptr<SimplePool>(
+      const Spec& spec, const MultiPoolOptions& options)>;
+
+  MultiPool(SimplePoolFactory factory = DefaultMakeSimplePool,
+            MultiPoolOptions options = kDefaultMultiPoolOptions)
+      : create_simple_pool_(factory), options_(options) {}
+
+  // Obtains an item. May either be reused or created anew.
+  Item Get(const Spec& spec);
+
+ private:
+  static std::shared_ptr<SimplePool> DefaultMakeSimplePool(
+      const Spec& spec, const MultiPoolOptions& options) {
+    return SimplePool::Create(spec, options);
+  }
+
+  // Requests a simple buffer pool for the given spec. This may return nullptr
+  // if we have not yet reached a sufficient number of requests to allocate a
+  // pool, in which case the caller should invoke CreateBufferWithoutPool.
+  std::shared_ptr<SimplePool> RequestPool(const Spec& spec);
+
+  absl::Mutex mutex_;
+  mediapipe::ResourceCache<Spec, std::shared_ptr<SimplePool>> cache_
+      ABSL_GUARDED_BY(mutex_);
+  SimplePoolFactory create_simple_pool_ = DefaultMakeSimplePool;
+  MultiPoolOptions options_;
+};
+
+template <class SimplePool, class Spec, class Item>
+std::shared_ptr<SimplePool> MultiPool<SimplePool, Spec, Item>::RequestPool(
+    const Spec& spec) {
+  std::shared_ptr<SimplePool> pool;
+  std::vector<std::shared_ptr<SimplePool>> evicted;
+  {
+    absl::MutexLock lock(&mutex_);
+    pool = cache_.Lookup(spec, [this](const Spec& spec, int request_count) {
+      return (request_count >= options_.min_requests_before_pool)
+                 ? create_simple_pool_(spec, options_)
+                 : nullptr;
+    });
+    evicted = cache_.Evict(options_.max_pool_count,
+                           options_.request_count_scrub_interval);
+  }
+  // Evicted pools, and their buffers, will be released without holding the
+  // lock.
+  return pool;
+}
+
+template <class SimplePool, class Spec, class Item>
+Item MultiPool<SimplePool, Spec, Item>::Get(const Spec& spec) {
+  std::shared_ptr<SimplePool> pool = RequestPool(spec);
+  if (pool) {
+    // Note: we release our multipool lock before accessing the simple pool.
+    return Item(pool->GetBuffer());
+  } else {
+    return Item(SimplePool::CreateBufferWithoutPool(spec));
+  }
+}
 
 }  // namespace mediapipe
 

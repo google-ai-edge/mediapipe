@@ -71,12 +71,12 @@ std::string CvPixelBufferPoolWrapper::GetDebugString() const {
 void CvPixelBufferPoolWrapper::Flush() { CVPixelBufferPoolFlush(*pool_, 0); }
 
 CFHolder<CVPixelBufferRef> CvPixelBufferPoolWrapper::CreateBufferWithoutPool(
-    int width, int height, GpuBufferFormat format) {
-  OSType cv_format = CVPixelFormatForGpuBufferFormat(format);
+    const internal::GpuBufferSpec& spec) {
+  OSType cv_format = CVPixelFormatForGpuBufferFormat(spec.format);
   CHECK_NE(cv_format, -1) << "unsupported pixel format";
   CVPixelBufferRef buffer;
-  CVReturn err =
-      CreateCVPixelBufferWithoutPool(width, height, cv_format, &buffer);
+  CVReturn err = CreateCVPixelBufferWithoutPool(spec.width, spec.height,
+                                                cv_format, &buffer);
   CHECK(!err) << "Error creating pixel buffer: " << err;
   return MakeCFHolderAdopting(buffer);
 }

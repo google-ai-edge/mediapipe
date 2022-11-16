@@ -38,11 +38,11 @@ class CvPixelBufferPoolWrapper {
                            CvTextureCacheManager* texture_caches);
 
   static std::shared_ptr<CvPixelBufferPoolWrapper> Create(
-      int width, int height, GpuBufferFormat format,
-      const MultiPoolOptions& options,
+      const internal::GpuBufferSpec& spec, const MultiPoolOptions& options,
       CvTextureCacheManager* texture_caches = nullptr) {
     return std::make_shared<CvPixelBufferPoolWrapper>(
-        width, height, format, options.max_inactive_buffer_age, texture_caches);
+        spec.width, spec.height, spec.format, options.max_inactive_buffer_age,
+        texture_caches);
   }
 
   CFHolder<CVPixelBufferRef> GetBuffer();
@@ -53,7 +53,7 @@ class CvPixelBufferPoolWrapper {
   void Flush();
 
   static CFHolder<CVPixelBufferRef> CreateBufferWithoutPool(
-      int width, int height, GpuBufferFormat format);
+      const internal::GpuBufferSpec& spec);
 
  private:
   CFHolder<CVPixelBufferPoolRef> pool_;

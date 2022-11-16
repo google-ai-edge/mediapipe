@@ -22,15 +22,9 @@
 #ifndef MEDIAPIPE_GPU_GPU_BUFFER_MULTI_POOL_H_
 #define MEDIAPIPE_GPU_GPU_BUFFER_MULTI_POOL_H_
 
-#include "absl/hash/hash.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/gpu/multi_pool.h"
-#include "mediapipe/util/resource_cache.h"
-
-#ifdef __APPLE__
-#include "mediapipe/gpu/pixel_buffer_pool_util.h"
-#endif  // __APPLE__
 
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 #include "mediapipe/gpu/cv_pixel_buffer_pool_wrapper.h"
@@ -40,76 +34,23 @@
 
 namespace mediapipe {
 
-struct GpuSharedData;
 class CvPixelBufferPoolWrapper;
 
-class GpuBufferMultiPool {
- public:
-  GpuBufferMultiPool(MultiPoolOptions options = kDefaultMultiPoolOptions)
-      : options_(options) {}
-
-  // Obtains a buffer. May either be reused or created anew.
-  GpuBuffer GetBuffer(int width, int height,
-                      GpuBufferFormat format = GpuBufferFormat::kBGRA32);
-
-  // This class is not intended as part of the public api of this class. It is
-  // public only because it is used as a map key type, and the map
-  // implementation needs access to, e.g., the equality operator.
-  struct BufferSpec {
-    BufferSpec(int w, int h, mediapipe::GpuBufferFormat f)
-        : width(w), height(h), format(f) {}
-
-    template <typename H>
-    friend H AbslHashValue(H h, const BufferSpec& spec) {
-      return H::combine(std::move(h), spec.width, spec.height,
-                        static_cast<uint32_t>(spec.format));
-    }
-
-    int width;
-    int height;
-    mediapipe::GpuBufferFormat format;
-  };
-
+class GpuBufferMultiPool : public MultiPool<
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  using SimplePool = CvPixelBufferPoolWrapper;
+                               CvPixelBufferPoolWrapper,
 #else
-  using SimplePool = GlTextureBufferPool;
+                               GlTextureBufferPool,
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+                               internal::GpuBufferSpec, GpuBuffer> {
+ public:
+  using MultiPool::MultiPool;
 
-  using SimplePoolFactory = std::function<std::shared_ptr<SimplePool>(
-      const BufferSpec& spec, const MultiPoolOptions& options)>;
-
-  void SetSimplePoolFactory(SimplePoolFactory create_simple_pool) {
-    create_simple_pool_ = create_simple_pool;
+  GpuBuffer GetBuffer(int width, int height,
+                      GpuBufferFormat format = GpuBufferFormat::kBGRA32) {
+    return Get(internal::GpuBufferSpec(width, height, format));
   }
-
- private:
-  static std::shared_ptr<SimplePool> DefaultMakeSimplePool(
-      const GpuBufferMultiPool::BufferSpec& spec,
-      const MultiPoolOptions& options);
-
-  // Requests a simple buffer pool for the given spec. This may return nullptr
-  // if we have not yet reached a sufficient number of requests to allocate a
-  // pool, in which case the caller should invoke CreateBufferWithoutPool.
-  std::shared_ptr<SimplePool> RequestPool(const BufferSpec& spec);
-
-  MultiPoolOptions options_;
-  absl::Mutex mutex_;
-  mediapipe::ResourceCache<BufferSpec, std::shared_ptr<SimplePool>> cache_
-      ABSL_GUARDED_BY(mutex_);
-  SimplePoolFactory create_simple_pool_ = DefaultMakeSimplePool;
 };
-
-// BufferSpec equality operators
-inline bool operator==(const GpuBufferMultiPool::BufferSpec& lhs,
-                       const GpuBufferMultiPool::BufferSpec& rhs) {
-  return lhs.width == rhs.width && lhs.height == rhs.height &&
-         lhs.format == rhs.format;
-}
-inline bool operator!=(const GpuBufferMultiPool::BufferSpec& lhs,
-                       const GpuBufferMultiPool::BufferSpec& rhs) {
-  return !operator==(lhs, rhs);
-}
 
 }  // namespace mediapipe
 

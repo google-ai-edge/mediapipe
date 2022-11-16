@@ -80,18 +80,20 @@ GpuResources::StatusOrGpuResources GpuResources::Create(
   return gpu_resources;
 }
 
-GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context) {
+GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context)
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+    : texture_caches_(std::make_shared<CvTextureCacheManager>()),
+      gpu_buffer_pool_(
+          [tc = texture_caches_](const internal::GpuBufferSpec& spec,
+                                 const MultiPoolOptions& options) {
+            return CvPixelBufferPoolWrapper::Create(spec, options, tc.get());
+          })
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+{
   gl_key_context_[SharedContextKey()] = gl_context;
   named_executors_[kGpuExecutorName] =
       std::make_shared<GlContextExecutor>(gl_context.get());
 #if __APPLE__
-  texture_caches_ = std::make_shared<CvTextureCacheManager>();
-  gpu_buffer_pool().SetSimplePoolFactory(
-      [tc = texture_caches_](const GpuBufferMultiPool::BufferSpec& spec,
-                             const MultiPoolOptions& options) {
-        return CvPixelBufferPoolWrapper::Create(spec.width, spec.height,
-                                                spec.format, options, tc.get());
-      });
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   texture_caches_->RegisterTextureCache(gl_context->cv_texture_cache());
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER

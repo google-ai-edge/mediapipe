@@ -618,6 +618,7 @@ cc_library(
 cc_library(
     name = "multi_pool",
     hdrs = ["multi_pool.h"],
+    deps = ["//mediapipe/util:resource_cache"],
 )
 
 cc_library(
