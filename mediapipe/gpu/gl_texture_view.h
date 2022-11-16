@@ -25,8 +25,6 @@
 namespace mediapipe {
 
 class GlContext;
-class GlTextureViewManager;
-class GpuBuffer;
 
 class GlTextureView {
  public:
@@ -60,7 +58,6 @@ class GlTextureView {
   using DoneWritingFn = std::function<void(const GlTextureView&)>;
 
  private:
-  friend class GpuBuffer;
   friend class GlTextureBuffer;
   friend class GpuBufferStorageCvPixelBuffer;
   friend class GpuBufferStorageAhwb;

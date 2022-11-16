@@ -13,7 +13,6 @@
 #include "mediapipe/gpu/gpu_buffer_format.h"
 
 namespace mediapipe {
-class GpuBuffer;
 namespace internal {
 
 template <class... T>
