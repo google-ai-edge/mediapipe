@@ -690,6 +690,17 @@ cc_library(
 )
 
 cc_library(
+    name = "gl_texture_util",
+    srcs = ["gl_texture_util.cc"],
+    hdrs = ["gl_texture_util.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_base",
+        ":gl_texture_view",
+    ],
+)
+
+cc_library(
     name = "shader_util",
     srcs = ["shader_util.cc"],
     hdrs = ["shader_util.h"],

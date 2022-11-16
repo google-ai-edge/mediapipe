@@ -18,6 +18,7 @@
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/tool/test_util.h"
+#include "mediapipe/gpu/gl_texture_util.h"
 #include "mediapipe/gpu/gpu_buffer_storage_ahwb.h"
 #include "mediapipe/gpu/gpu_buffer_storage_image_frame.h"
 #include "mediapipe/gpu/gpu_test_base.h"
@@ -40,47 +41,6 @@ void FillImageFrameRGBA(ImageFrame& image, uint8 r, uint8 g, uint8 b, uint8 a) {
     }
   }
 }
-
-// Assumes a framebuffer is already set up
-void CopyGlTexture(const GlTextureView& src, GlTextureView& dst) {
-  glViewport(0, 0, src.width(), src.height());
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, src.target(),
-                         src.name(), 0);
-
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(dst.target(), dst.name());
-  glCopyTexSubImage2D(dst.target(), 0, 0, 0, 0, 0, dst.width(), dst.height());
-
-  glBindTexture(dst.target(), 0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, src.target(), 0,
-                         0);
-}
-
-void FillGlTextureRgba(GlTextureView& view, float r, float g, float b,
-                       float a) {
-  glViewport(0, 0, view.width(), view.height());
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, view.target(),
-                         view.name(), 0);
-  glClearColor(r, g, b, a);
-  glClear(GL_COLOR_BUFFER_BIT);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, view.target(), 0,
-                         0);
-}
-
-class TempGlFramebuffer {
- public:
-  TempGlFramebuffer() {
-    glGenFramebuffers(1, &framebuffer_);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
-  }
-  ~TempGlFramebuffer() {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDeleteFramebuffers(1, &framebuffer_);
-  }
-
- private:
-  GLuint framebuffer_;
-};
 
 class GpuBufferTest : public GpuTestBase {};
 
@@ -127,7 +87,7 @@ TEST_F(GpuBufferTest, GlTextureView) {
   ImageFrame red(ImageFormat::SRGBA, 300, 200);
   FillImageFrameRGBA(red, 255, 0, 0, 255);
 
-  EXPECT_TRUE(mediapipe::CompareImageFrames(*view, red, 0.0, 0.0));
+  EXPECT_TRUE(CompareImageFrames(*view, red, 0.0, 0.0));
   MP_EXPECT_OK(SavePngTestOutput(red, "gltv_red_gold"));
   MP_EXPECT_OK(SavePngTestOutput(*view, "gltv_red_view"));
 }
@@ -162,7 +122,7 @@ TEST_F(GpuBufferTest, ImageFrame) {
     ImageFrame red(ImageFormat::SRGBA, 300, 200);
     FillImageFrameRGBA(red, 255, 0, 0, 255);
 
-    EXPECT_TRUE(mediapipe::CompareImageFrames(*view, red, 0.0, 0.0));
+    EXPECT_TRUE(CompareImageFrames(*view, red, 0.0, 0.0));
     MP_EXPECT_OK(SavePngTestOutput(red, "if_red_gold"));
     MP_EXPECT_OK(SavePngTestOutput(*view, "if_red_view"));
   }
@@ -196,7 +156,7 @@ TEST_F(GpuBufferTest, Overwrite) {
     ImageFrame red(ImageFormat::SRGBA, 300, 200);
     FillImageFrameRGBA(red, 255, 0, 0, 255);
 
-    EXPECT_TRUE(mediapipe::CompareImageFrames(*view, red, 0.0, 0.0));
+    EXPECT_TRUE(CompareImageFrames(*view, red, 0.0, 0.0));
     MP_EXPECT_OK(SavePngTestOutput(red, "ow_red_gold"));
     MP_EXPECT_OK(SavePngTestOutput(*view, "ow_red_view"));
   }
@@ -230,7 +190,7 @@ TEST_F(GpuBufferTest, Overwrite) {
     ImageFrame green(ImageFormat::SRGBA, 300, 200);
     FillImageFrameRGBA(green, 0, 255, 0, 255);
 
-    EXPECT_TRUE(mediapipe::CompareImageFrames(*view, green, 0.0, 0.0));
+    EXPECT_TRUE(CompareImageFrames(*view, green, 0.0, 0.0));
     MP_EXPECT_OK(SavePngTestOutput(green, "ow_green_gold"));
     MP_EXPECT_OK(SavePngTestOutput(*view, "ow_green_view"));
   }
@@ -240,7 +200,7 @@ TEST_F(GpuBufferTest, Overwrite) {
     ImageFrame blue(ImageFormat::SRGBA, 300, 200);
     FillImageFrameRGBA(blue, 0, 0, 255, 255);
 
-    EXPECT_TRUE(mediapipe::CompareImageFrames(*view, blue, 0.0, 0.0));
+    EXPECT_TRUE(CompareImageFrames(*view, blue, 0.0, 0.0));
     MP_EXPECT_OK(SavePngTestOutput(blue, "ow_blue_gold"));
     MP_EXPECT_OK(SavePngTestOutput(*view, "ow_blue_view"));
   }
