@@ -179,6 +179,10 @@ class GpuBuffer {
   // This is mutable because view methods that do not change the contents may
   // still need to allocate new storages.
   mutable std::vector<std::shared_ptr<internal::GpuBufferStorage>> storages_;
+
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+  friend CVPixelBufferRef GetCVPixelBufferRef(const GpuBuffer& buffer);
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 };
 
 inline bool GpuBuffer::operator==(std::nullptr_t other) const {

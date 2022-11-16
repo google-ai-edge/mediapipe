@@ -93,8 +93,11 @@ internal::GpuBufferStorage& GpuBuffer::GetStorageForViewOrDie(
 #if !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 CVPixelBufferRef GetCVPixelBufferRef(const GpuBuffer& buffer) {
-  auto p = buffer.internal_storage<GpuBufferStorageCvPixelBuffer>();
-  if (p) return **p;
+  if (buffer.GetStorageForView(
+          kTypeId<internal::ViewProvider<CVPixelBufferRef>>,
+          /*for_writing=*/false) != nullptr) {
+    return *buffer.GetReadView<CVPixelBufferRef>();
+  }
   return nullptr;
 }
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER

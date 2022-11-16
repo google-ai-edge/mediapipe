@@ -12,10 +12,27 @@ namespace mediapipe {
 
 class GlContext;
 
+namespace internal {
+
+template <>
+class ViewProvider<CVPixelBufferRef> {
+ public:
+  virtual ~ViewProvider() = default;
+  virtual CFHolder<CVPixelBufferRef> GetReadView(
+      internal::types<CVPixelBufferRef>,
+      std::shared_ptr<GpuBuffer> gpu_buffer) const = 0;
+  virtual CFHolder<CVPixelBufferRef> GetWriteView(
+      internal::types<CVPixelBufferRef>,
+      std::shared_ptr<GpuBuffer> gpu_buffer) = 0;
+};
+
+}  // namespace internal
+
 class GpuBufferStorageCvPixelBuffer
     : public internal::GpuBufferStorageImpl<
           GpuBufferStorageCvPixelBuffer, internal::ViewProvider<GlTextureView>,
-          internal::ViewProvider<ImageFrame>>,
+          internal::ViewProvider<ImageFrame>,
+          internal::ViewProvider<CVPixelBufferRef>>,
       public CFHolder<CVPixelBufferRef> {
  public:
   using CFHolder<CVPixelBufferRef>::CFHolder;
@@ -44,12 +61,28 @@ class GpuBufferStorageCvPixelBuffer
   std::shared_ptr<ImageFrame> GetWriteView(
       internal::types<ImageFrame>,
       std::shared_ptr<GpuBuffer> gpu_buffer) override;
+  CFHolder<CVPixelBufferRef> GetReadView(
+      internal::types<CVPixelBufferRef>,
+      std::shared_ptr<GpuBuffer> gpu_buffer) const override;
+  CFHolder<CVPixelBufferRef> GetWriteView(
+      internal::types<CVPixelBufferRef>,
+      std::shared_ptr<GpuBuffer> gpu_buffer) override;
 
  private:
   GlTextureView GetTexture(std::shared_ptr<GpuBuffer> gpu_buffer, int plane,
                            GlTextureView::DoneWritingFn done_writing) const;
   void ViewDoneWriting(const GlTextureView& view);
 };
+
+inline CFHolder<CVPixelBufferRef> GpuBufferStorageCvPixelBuffer::GetReadView(
+    internal::types<CVPixelBufferRef>,
+    std::shared_ptr<GpuBuffer> gpu_buffer) const {
+  return *this;
+}
+inline CFHolder<CVPixelBufferRef> GpuBufferStorageCvPixelBuffer::GetWriteView(
+    internal::types<CVPixelBufferRef>, std::shared_ptr<GpuBuffer> gpu_buffer) {
+  return *this;
+}
 
 namespace internal {
 // These functions enable backward-compatible construction of a GpuBuffer from
