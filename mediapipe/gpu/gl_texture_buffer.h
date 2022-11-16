@@ -95,10 +95,8 @@ class GlTextureBuffer
   GpuBufferFormat format() const { return format_; }
 
   GlTextureView GetReadView(internal::types<GlTextureView>,
-                            std::shared_ptr<GpuBuffer> gpu_buffer,
                             int plane) const override;
   GlTextureView GetWriteView(internal::types<GlTextureView>,
-                             std::shared_ptr<GpuBuffer> gpu_buffer,
                              int plane) override;
 
   // If this texture is going to be used outside of the context that produced

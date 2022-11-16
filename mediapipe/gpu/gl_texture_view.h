@@ -65,8 +65,8 @@ class GlTextureView {
   friend class GpuBufferStorageCvPixelBuffer;
   friend class GpuBufferStorageAhwb;
   GlTextureView(GlContext* context, GLenum target, GLuint name, int width,
-                int height, std::shared_ptr<GpuBuffer> gpu_buffer, int plane,
-                DetachFn detach, DoneWritingFn done_writing)
+                int height, int plane, DetachFn detach,
+                DoneWritingFn done_writing)
       : gl_context_(context),
         target_(target),
         name_(name),
@@ -108,12 +108,8 @@ class ViewProvider<GlTextureView> {
   // the same view implement the same signature.
   // Note that we allow different views to have custom signatures, providing
   // additional view-specific arguments that may be needed.
-  virtual GlTextureView GetReadView(types<GlTextureView>,
-                                    std::shared_ptr<GpuBuffer> gpu_buffer,
-                                    int plane) const = 0;
-  virtual GlTextureView GetWriteView(types<GlTextureView>,
-                                     std::shared_ptr<GpuBuffer> gpu_buffer,
-                                     int plane) = 0;
+  virtual GlTextureView GetReadView(types<GlTextureView>, int plane) const = 0;
+  virtual GlTextureView GetWriteView(types<GlTextureView>, int plane) = 0;
 };
 
 }  // namespace internal

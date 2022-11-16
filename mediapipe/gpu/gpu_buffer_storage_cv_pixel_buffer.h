@@ -19,11 +19,9 @@ class ViewProvider<CVPixelBufferRef> {
  public:
   virtual ~ViewProvider() = default;
   virtual CFHolder<CVPixelBufferRef> GetReadView(
-      internal::types<CVPixelBufferRef>,
-      std::shared_ptr<GpuBuffer> gpu_buffer) const = 0;
+      internal::types<CVPixelBufferRef>) const = 0;
   virtual CFHolder<CVPixelBufferRef> GetWriteView(
-      internal::types<CVPixelBufferRef>,
-      std::shared_ptr<GpuBuffer> gpu_buffer) = 0;
+      internal::types<CVPixelBufferRef>) = 0;
 };
 
 }  // namespace internal
@@ -50,37 +48,30 @@ class GpuBufferStorageCvPixelBuffer
         CVPixelBufferGetPixelFormatType(**this));
   }
   GlTextureView GetReadView(internal::types<GlTextureView>,
-                            std::shared_ptr<GpuBuffer> gpu_buffer,
                             int plane) const override;
   GlTextureView GetWriteView(internal::types<GlTextureView>,
-                             std::shared_ptr<GpuBuffer> gpu_buffer,
                              int plane) override;
   std::shared_ptr<const ImageFrame> GetReadView(
-      internal::types<ImageFrame>,
-      std::shared_ptr<GpuBuffer> gpu_buffer) const override;
+      internal::types<ImageFrame>) const override;
   std::shared_ptr<ImageFrame> GetWriteView(
-      internal::types<ImageFrame>,
-      std::shared_ptr<GpuBuffer> gpu_buffer) override;
+      internal::types<ImageFrame>) override;
   CFHolder<CVPixelBufferRef> GetReadView(
-      internal::types<CVPixelBufferRef>,
-      std::shared_ptr<GpuBuffer> gpu_buffer) const override;
+      internal::types<CVPixelBufferRef>) const override;
   CFHolder<CVPixelBufferRef> GetWriteView(
-      internal::types<CVPixelBufferRef>,
-      std::shared_ptr<GpuBuffer> gpu_buffer) override;
+      internal::types<CVPixelBufferRef>) override;
 
  private:
-  GlTextureView GetTexture(std::shared_ptr<GpuBuffer> gpu_buffer, int plane,
+  GlTextureView GetTexture(int plane,
                            GlTextureView::DoneWritingFn done_writing) const;
   void ViewDoneWriting(const GlTextureView& view);
 };
 
 inline CFHolder<CVPixelBufferRef> GpuBufferStorageCvPixelBuffer::GetReadView(
-    internal::types<CVPixelBufferRef>,
-    std::shared_ptr<GpuBuffer> gpu_buffer) const {
+    internal::types<CVPixelBufferRef>) const {
   return *this;
 }
 inline CFHolder<CVPixelBufferRef> GpuBufferStorageCvPixelBuffer::GetWriteView(
-    internal::types<CVPixelBufferRef>, std::shared_ptr<GpuBuffer> gpu_buffer) {
+    internal::types<CVPixelBufferRef>) {
   return *this;
 }
 

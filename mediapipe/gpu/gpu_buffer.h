@@ -106,8 +106,7 @@ class GpuBuffer {
   template <class View, class... Args>
   decltype(auto) GetReadView(Args... args) const {
     return GetViewProviderOrDie<View>(false).GetReadView(
-        internal::types<View>{}, std::make_shared<GpuBuffer>(*this),
-        std::forward<Args>(args)...);
+        internal::types<View>{}, std::forward<Args>(args)...);
   }
 
   // Gets a write view of the specified type. The arguments depend on the
@@ -115,8 +114,7 @@ class GpuBuffer {
   template <class View, class... Args>
   decltype(auto) GetWriteView(Args... args) {
     return GetViewProviderOrDie<View>(true).GetWriteView(
-        internal::types<View>{}, std::make_shared<GpuBuffer>(*this),
-        std::forward<Args>(args)...);
+        internal::types<View>{}, std::forward<Args>(args)...);
   }
 
   // Attempts to access an underlying storage object of the specified type.
