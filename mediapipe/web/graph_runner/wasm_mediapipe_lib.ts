@@ -406,7 +406,7 @@ export class WasmMediaPipeLib {
    */
   setVectorListener<T>(
       outputStreamName: string, callbackFcn: (data: T[]) => void) {
-    const buffer: T[] = [];
+    let buffer: T[] = [];
     this.wasmModule.vectorListeners = this.wasmModule.vectorListeners || {};
     this.wasmModule.vectorListeners[outputStreamName] =
         (data: unknown, index: number, length: number) => {
@@ -419,6 +419,7 @@ export class WasmMediaPipeLib {
             // the underlying data elements once we leave the scope of the
             // listener.
             callbackFcn(buffer);
+            buffer = [];
           }
         };
   }
