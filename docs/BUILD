@@ -17,6 +17,7 @@ py_binary(
     name = "build_java_api_docs",
     srcs = ["build_java_api_docs.py"],
     data = [
+        "//third_party/android/sdk:api/26.txt",
         "//third_party/java/doclava/current:doclava.jar",
         "//third_party/java/jsilver:jsilver_jar",
     ],
