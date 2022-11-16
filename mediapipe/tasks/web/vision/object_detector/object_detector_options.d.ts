@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-import {BaseOptions} from '../../../../tasks/web/core/base_options';
+import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_options';
 
 /** Options to configure the MediaPipe Object Detector Task */
-export interface ObjectDetectorOptions {
-  /** Options to configure the loading of the model assets. */
-  baseOptions?: BaseOptions;
-
+export interface ObjectDetectorOptions extends VisionTaskOptions {
   /**
    * The locale to use for display names specified through the TFLite Model
    * Metadata, if any. Defaults to English.

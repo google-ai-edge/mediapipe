@@ -15,17 +15,8 @@
  */
 
 import {EmbedderOptions} from '../../../../tasks/web/core/embedder_options';
-import {RunningMode} from '../../../../tasks/web/vision/core/running_mode';
+import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_options';
 
 /** The options for configuring a MediaPipe image embedder task. */
-export declare interface ImageEmbedderOptions extends EmbedderOptions {
-  /**
-   * The running mode of the task. Default to the image mode.
-   * Image embedder has three running modes:
-   * 1) The image mode for embedding image on single image inputs.
-   * 2) The video mode for embedding image on the decoded frames of a video.
-   * 3) The live stream mode for embedding image on the live stream of input
-   * data, such as from camera.
-   */
-  runningMode?: RunningMode;
-}
+export declare interface ImageEmbedderOptions extends EmbedderOptions,
+                                                      VisionTaskOptions {}

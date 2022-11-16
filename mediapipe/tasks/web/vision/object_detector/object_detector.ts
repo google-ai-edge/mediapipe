@@ -17,10 +17,10 @@
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {Detection as DetectionProto} from '../../../../framework/formats/detection_pb';
+import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {ObjectDetectorOptions as ObjectDetectorOptionsProto} from '../../../../tasks/cc/vision/object_detector/proto/object_detector_options_pb';
-import {convertBaseOptionsToProto} from '../../../../tasks/web/components/processors/base_options';
-import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
+import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {createMediaPipeLib, FileLocator, ImageSource} from '../../../../web/graph_runner/wasm_mediapipe_lib';
 // Placeholder for internal dependency on trusted resource url
 
@@ -41,7 +41,7 @@ export {ImageSource};  // Used in the public API
 // tslint:disable:jspb-use-builder-pattern
 
 /** Performs object detection on images. */
-export class ObjectDetector extends TaskRunner {
+export class ObjectDetector extends VisionTaskRunner<Detection[]> {
   private detections: Detection[] = [];
   private readonly options = new ObjectDetectorOptionsProto();
 
@@ -103,6 +103,14 @@ export class ObjectDetector extends TaskRunner {
         wasmLoaderOptions, new Uint8Array(graphData));
   }
 
+  protected override get baseOptions(): BaseOptionsProto|undefined {
+    return this.options.getBaseOptions();
+  }
+
+  protected override set baseOptions(proto: BaseOptionsProto|undefined) {
+    this.options.setBaseOptions(proto);
+  }
+
   /**
    * Sets new options for the object detector.
    *
@@ -112,12 +120,8 @@ export class ObjectDetector extends TaskRunner {
    *
    * @param options The options for the object detector.
    */
-  async setOptions(options: ObjectDetectorOptions): Promise<void> {
-    if (options.baseOptions) {
-      const baseOptionsProto = await convertBaseOptionsToProto(
-          options.baseOptions, this.options.getBaseOptions());
-      this.options.setBaseOptions(baseOptionsProto);
-    }
+  override async setOptions(options: ObjectDetectorOptions): Promise<void> {
+    await super.setOptions(options);
 
     // Note that we have to support both JSPB and ProtobufJS, hence we
     // have to expliclity clear the values instead of setting them to
@@ -158,12 +162,27 @@ export class ObjectDetector extends TaskRunner {
   /**
    * Performs object detection on the provided single image and waits
    * synchronously for the response.
-   * @param imageSource An image source to process.
-   * @param timestamp The timestamp of the current frame, in ms. If not
-   *    provided, defaults to `performance.now()`.
+   * @param image An image to process.
    * @return The list of detected objects
    */
-  detect(imageSource: ImageSource, timestamp?: number): Detection[] {
+  detect(image: ImageSource): Detection[] {
+    return this.processImageData(image);
+  }
+
+  /**
+   * Performs object detection on the provided vidoe frame and waits
+   * synchronously for the response.
+   * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
+   * @return The list of detected objects
+   */
+  detectForVideo(videoFrame: ImageSource, timestamp: number): Detection[] {
+    return this.processVideoData(videoFrame, timestamp);
+  }
+
+  /** Runs the object detector graph and blocks on the response. */
+  protected override process(imageSource: ImageSource, timestamp: number):
+      Detection[] {
     // Get detections by running our MediaPipe graph.
     this.detections = [];
     this.addGpuBufferAsImageToStream(

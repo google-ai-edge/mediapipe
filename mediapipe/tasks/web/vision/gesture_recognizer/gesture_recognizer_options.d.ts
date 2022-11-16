@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-import {BaseOptions} from '../../../../tasks/web/core/base_options';
 import {ClassifierOptions} from '../../../../tasks/web/core/classifier_options';
+import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_options';
 
 /** Options to configure the MediaPipe Gesture Recognizer Task */
-export declare interface GestureRecognizerOptions {
-  /** Options to configure the loading of the model assets. */
-  baseOptions?: BaseOptions;
-
+export declare interface GestureRecognizerOptions extends VisionTaskOptions {
   /**
    * The maximum number of hands can be detected by the GestureRecognizer.
    * Defaults to 1.

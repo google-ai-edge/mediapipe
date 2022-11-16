@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 
-import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
+import {BaseOptions} from '../../../../tasks/web/core/base_options';
 
 /**
- * The running mode of a task.
+ * The two running modes of a video task.
  * 1) The image mode for processing single image inputs.
  * 2) The video mode for processing decoded frames of a video.
  */
 export type RunningMode = 'image'|'video';
 
-/** Configues the `useStreamMode` option . */
-export function configureRunningMode(
-    options: {runningMode?: RunningMode},
-    proto?: BaseOptionsProto): BaseOptionsProto {
-  proto = proto ?? new BaseOptionsProto();
-  if ('runningMode' in options) {
-    const useStreamMode = options.runningMode === 'video';
-    proto.setUseStreamMode(useStreamMode);
-  }
-  return proto;
+
+/** The options for configuring a MediaPipe vision task. */
+export declare interface VisionTaskOptions {
+  /** Options to configure the loading of the model assets. */
+  baseOptions?: BaseOptions;
+
+  /**
+   * The running mode of the task. Default to the image mode.
+   * Vision tasks have two running modes:
+   * 1) The image mode for processing single image inputs.
+   * 2) The video mode for processing decoded frames of a video.
+   */
+  runningMode?: RunningMode;
 }

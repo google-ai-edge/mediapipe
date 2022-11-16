@@ -14,4 +14,9 @@
  * limitations under the License.
  */
 
-export {ClassifierOptions as ImageClassifierOptions} from '../../../../tasks/web/core/classifier_options';
+import {ClassifierOptions} from '../../../../tasks/web/core/classifier_options';
+import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_options';
+
+/** Ooptions to configure the image classifier task. */
+export declare interface ImageClassifierOptions extends ClassifierOptions,
+                                                        VisionTaskOptions {}

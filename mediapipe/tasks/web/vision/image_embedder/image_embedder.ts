@@ -17,13 +17,12 @@
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {EmbeddingResult} from '../../../../tasks/cc/components/containers/proto/embeddings_pb';
+import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {ImageEmbedderGraphOptions} from '../../../../tasks/cc/vision/image_embedder/proto/image_embedder_graph_options_pb';
-import {convertBaseOptionsToProto} from '../../../../tasks/web/components/processors/base_options';
 import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/processors/embedder_options';
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
-import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
-import {configureRunningMode} from '../../../../tasks/web/vision/core/running_mode';
+import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {createMediaPipeLib, FileLocator, ImageSource} from '../../../../web/graph_runner/wasm_mediapipe_lib';
 // Placeholder for internal dependency on trusted resource url
 
@@ -43,7 +42,7 @@ export * from './image_embedder_result';
 export {ImageSource};  // Used in the public API
 
 /** Performs embedding extraction on images. */
-export class ImageEmbedder extends TaskRunner {
+export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
   private readonly options = new ImageEmbedderGraphOptions();
   private embeddings: ImageEmbedderResult = {embeddings: []};
 
@@ -105,6 +104,14 @@ export class ImageEmbedder extends TaskRunner {
         wasmLoaderOptions, new Uint8Array(graphData));
   }
 
+  protected override get baseOptions(): BaseOptionsProto|undefined {
+    return this.options.getBaseOptions();
+  }
+
+  protected override set baseOptions(proto: BaseOptionsProto|undefined) {
+    this.options.setBaseOptions(proto);
+  }
+
   /**
    * Sets new options for the image embedder.
    *
@@ -114,24 +121,16 @@ export class ImageEmbedder extends TaskRunner {
    *
    * @param options The options for the image embedder.
    */
-  async setOptions(options: ImageEmbedderOptions): Promise<void> {
-    let baseOptionsProto = this.options.getBaseOptions();
-    if (options.baseOptions) {
-      baseOptionsProto = await convertBaseOptionsToProto(
-          options.baseOptions, baseOptionsProto);
-    }
-    baseOptionsProto = configureRunningMode(options, baseOptionsProto);
-    this.options.setBaseOptions(baseOptionsProto);
-
+  override async setOptions(options: ImageEmbedderOptions): Promise<void> {
+    await super.setOptions(options);
     this.options.setEmbedderOptions(convertEmbedderOptionsToProto(
         options, this.options.getEmbedderOptions()));
-
     this.refreshGraph();
   }
 
   /**
-   * Performs embedding extraction on the provided image and waits synchronously
-   * for the response.
+   * Performs embedding extraction on the provided single image and waits
+   * synchronously for the response.
    *
    * Only use this method when the `useStreamMode` option is not set or
    * expliclity set to `false`.
@@ -140,12 +139,7 @@ export class ImageEmbedder extends TaskRunner {
    * @return The classification result of the image
    */
   embed(image: ImageSource): ImageEmbedderResult {
-    if (!!this.options.getBaseOptions()?.getUseStreamMode()) {
-      throw new Error(
-          'Task is not initialized with image mode. ' +
-          '\'runningMode\' must be set to \'image\'.');
-    }
-    return this.performEmbeddingExtraction(image, performance.now());
+    return this.processImageData(image);
   }
 
   /**
@@ -160,16 +154,11 @@ export class ImageEmbedder extends TaskRunner {
    */
   embedForVideo(imageFrame: ImageSource, timestamp: number):
       ImageEmbedderResult {
-    if (!this.options.getBaseOptions()?.getUseStreamMode()) {
-      throw new Error(
-          'Task is not initialized with video mode. ' +
-          '\'runningMode\' must be set to \'video\' or \'live_stream\'.');
-    }
-    return this.performEmbeddingExtraction(imageFrame, timestamp);
+    return this.processVideoData(imageFrame, timestamp);
   }
 
-  /** Runs the embedding extractio and blocks on the response. */
-  private performEmbeddingExtraction(image: ImageSource, timestamp: number):
+  /** Runs the embedding extraction and blocks on the response. */
+  protected process(image: ImageSource, timestamp: number):
       ImageEmbedderResult {
     // Get embeddings by running our MediaPipe graph.
     this.addGpuBufferAsImageToStream(

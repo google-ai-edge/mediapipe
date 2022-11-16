@@ -19,14 +19,14 @@ mediapipe_ts_library(
         "//mediapipe/framework/formats:classification_jspb_proto",
         "//mediapipe/framework/formats:landmark_jspb_proto",
         "//mediapipe/framework/formats:rect_jspb_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_jspb_proto",
         "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_jspb_proto",
         "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_jspb_proto",
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/components/containers:landmark",
-        "//mediapipe/tasks/web/components/processors:base_options",
         "//mediapipe/tasks/web/core",
-        "//mediapipe/tasks/web/core:task_runner",
+        "//mediapipe/tasks/web/vision/core:vision_task_runner",
         "//mediapipe/web/graph_runner:wasm_mediapipe_lib_ts",
     ],
 )
@@ -41,5 +41,6 @@ mediapipe_ts_declaration(
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/components/containers:landmark",
         "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/vision/core:vision_task_options",
     ],
 )

@@ -19,6 +19,7 @@ import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {ClassificationList} from '../../../../framework/formats/classification_pb';
 import {LandmarkList, NormalizedLandmarkList} from '../../../../framework/formats/landmark_pb';
 import {NormalizedRect} from '../../../../framework/formats/rect_pb';
+import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {GestureClassifierGraphOptions} from '../../../../tasks/cc/vision/gesture_recognizer/proto/gesture_classifier_graph_options_pb';
 import {GestureRecognizerGraphOptions} from '../../../../tasks/cc/vision/gesture_recognizer/proto/gesture_recognizer_graph_options_pb';
 import {HandGestureRecognizerGraphOptions} from '../../../../tasks/cc/vision/gesture_recognizer/proto/hand_gesture_recognizer_graph_options_pb';
@@ -27,10 +28,9 @@ import {HandLandmarkerGraphOptions} from '../../../../tasks/cc/vision/hand_landm
 import {HandLandmarksDetectorGraphOptions} from '../../../../tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options_pb';
 import {Category} from '../../../../tasks/web/components/containers/category';
 import {Landmark} from '../../../../tasks/web/components/containers/landmark';
-import {convertBaseOptionsToProto} from '../../../../tasks/web/components/processors/base_options';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
-import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
+import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {createMediaPipeLib, FileLocator, ImageSource, WasmModule} from '../../../../web/graph_runner/wasm_mediapipe_lib';
 // Placeholder for internal dependency on trusted resource url
 
@@ -64,7 +64,8 @@ FULL_IMAGE_RECT.setWidth(1);
 FULL_IMAGE_RECT.setHeight(1);
 
 /** Performs hand gesture recognition on images. */
-export class GestureRecognizer extends TaskRunner {
+export class GestureRecognizer extends
+    VisionTaskRunner<GestureRecognizerResult> {
   private gestures: Category[][] = [];
   private landmarks: Landmark[][] = [];
   private worldLandmarks: Landmark[][] = [];
@@ -156,10 +157,14 @@ export class GestureRecognizer extends TaskRunner {
         this.handGestureRecognizerGraphOptions);
 
     this.initDefaults();
+  }
 
-    // Disables the automatic render-to-screen code, which allows for pure
-    // CPU processing.
-    this.setAutoRenderToScreen(false);
+  protected override get baseOptions(): BaseOptionsProto|undefined {
+    return this.options.getBaseOptions();
+  }
+
+  protected override set baseOptions(proto: BaseOptionsProto|undefined) {
+    this.options.setBaseOptions(proto);
   }
 
   /**
@@ -171,12 +176,8 @@ export class GestureRecognizer extends TaskRunner {
    *
    * @param options The options for the gesture recognizer.
    */
-  async setOptions(options: GestureRecognizerOptions): Promise<void> {
-    if (options.baseOptions) {
-      const baseOptionsProto = await convertBaseOptionsToProto(
-          options.baseOptions, this.options.getBaseOptions());
-      this.options.setBaseOptions(baseOptionsProto);
-    }
+  override async setOptions(options: GestureRecognizerOptions): Promise<void> {
+    await super.setOptions(options);
 
     if ('numHands' in options) {
       this.handDetectorGraphOptions.setNumHands(
@@ -233,12 +234,27 @@ export class GestureRecognizer extends TaskRunner {
   /**
    * Performs gesture recognition on the provided single image and waits
    * synchronously for the response.
-   * @param imageSource An image source to process.
-   * @param timestamp The timestamp of the current frame, in ms. If not
-   *    provided, defaults to `performance.now()`.
+   * @param image A single image to process.
    * @return The detected gestures.
    */
-  recognize(imageSource: ImageSource, timestamp: number = performance.now()):
+  recognize(image: ImageSource): GestureRecognizerResult {
+    return this.processImageData(image);
+  }
+
+  /**
+   * Performs gesture recognition on the provided video frame and waits
+   * synchronously for the response.
+   * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
+   * @return The detected gestures.
+   */
+  recognizeForVideo(videoFrame: ImageSource, timestamp: number):
+      GestureRecognizerResult {
+    return this.processVideoData(videoFrame, timestamp);
+  }
+
+  /** Runs the gesture recognition and blocks on the response. */
+  protected override process(imageSource: ImageSource, timestamp: number):
       GestureRecognizerResult {
     this.gestures = [];
     this.landmarks = [];
