@@ -105,7 +105,7 @@ class GpuBuffer {
   // specific view type; see the corresponding ViewProvider.
   template <class View, class... Args>
   decltype(auto) GetReadView(Args... args) const {
-    return GetViewProvider<View>(false)->GetReadView(
+    return GetViewProviderOrDie<View>(false).GetReadView(
         internal::types<View>{}, std::make_shared<GpuBuffer>(*this),
         std::forward<Args>(args)...);
   }
@@ -114,7 +114,7 @@ class GpuBuffer {
   // specific view type; see the corresponding ViewProvider.
   template <class View, class... Args>
   decltype(auto) GetWriteView(Args... args) {
-    return GetViewProvider<View>(true)->GetWriteView(
+    return GetViewProviderOrDie<View>(true).GetWriteView(
         internal::types<View>{}, std::make_shared<GpuBuffer>(*this),
         std::forward<Args>(args)...);
   }
@@ -147,13 +147,17 @@ class GpuBuffer {
     GpuBufferFormat format_ = GpuBufferFormat::kUnknown;
   };
 
-  internal::GpuBufferStorage& GetStorageForView(TypeId view_provider_type,
+  internal::GpuBufferStorage* GetStorageForView(TypeId view_provider_type,
                                                 bool for_writing) const;
 
+  internal::GpuBufferStorage& GetStorageForViewOrDie(TypeId view_provider_type,
+                                                     bool for_writing) const;
+
   template <class View>
-  internal::ViewProvider<View>* GetViewProvider(bool for_writing) const {
+  internal::ViewProvider<View>& GetViewProviderOrDie(bool for_writing) const {
     using VP = internal::ViewProvider<View>;
-    return GetStorageForView(kTypeId<VP>, for_writing).template down_cast<VP>();
+    return *GetStorageForViewOrDie(kTypeId<VP>, for_writing)
+                .template down_cast<VP>();
   }
 
   std::shared_ptr<internal::GpuBufferStorage>& no_storage() const {
