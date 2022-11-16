@@ -22,13 +22,27 @@ struct types {};
 template <class V>
 class ViewProvider;
 
-// Interface for a backing storage for GpuBuffer.
+// Generic interface for a backing storage for GpuBuffer.
+//
+// GpuBuffer is an opaque handle to an image. Its contents are handled by
+// Storage classes. Application code does not interact with the storages
+// directly; to access the data, it asks the GpuBuffer for a View, and in turn
+// GpuBuffer looks for a storage that can provide that view.
+// This architecture decouples application code from the underlying storage,
+// making it possible to use platform-specific optimized storage systems, e.g.
+// for zero-copy data sharing between CPU and GPU.
+//
+// Storage implementations should inherit from GpuBufferStorageImpl. See that
+// class for details.
 class GpuBufferStorage {
  public:
   virtual ~GpuBufferStorage() = default;
+
+  // Concrete storage types should override the following three accessors.
   virtual int width() const = 0;
   virtual int height() const = 0;
   virtual GpuBufferFormat format() const = 0;
+
   // We can't use dynamic_cast since we want to support building without RTTI.
   // The public methods delegate to the type-erased private virtual method.
   template <class T>
@@ -72,6 +86,8 @@ class GpuBufferStorageRegistry {
     return *registry;
   }
 
+  // Registers a storage type by automatically creating a factory for it.
+  // This is normally called by GpuBufferImpl.
   template <class Storage>
   RegistryToken Register() {
     return RegisterFactory<Storage>(
@@ -82,6 +98,7 @@ class GpuBufferStorageRegistry {
         });
   }
 
+  // Registers a new factory for a storage type.
   template <class Storage, class F>
   RegistryToken RegisterFactory(F&& factory) {
     if constexpr (kDisableRegistration<Storage>) {
@@ -90,6 +107,7 @@ class GpuBufferStorageRegistry {
     return Register(factory, Storage::GetProviderTypes());
   }
 
+  // Registers a new converter from storage type StorageFrom to StorageTo.
   template <class StorageFrom, class StorageTo, class F>
   RegistryToken RegisterConverter(F&& converter) {
     if constexpr (kDisableRegistration<StorageTo>) {
@@ -162,14 +180,26 @@ struct ForceStaticInstantiation {
 #endif  // _MSC_VER
 };
 
-// T: storage type
-// U...: ViewProvider<SomeView>
+// Inherit from this class to define a new storage type. The storage type itself
+// should be passed as the first template argument (CRTP), followed by one or
+// more specializations of ViewProvider.
+//
+// Concrete storage types should implement the basic accessors from
+// GpuBufferStorage, plus the view read/write getters for each ViewProvider they
+// implement. This class handles the rest.
+//
+// Arguments:
+//   T: storage type
+//   U...: ViewProvider<SomeView>
+// Example:
+//   class MyStorage : public GpuBufferStorageImpl<
+//                                MyStorage, ViewProvider<GlTextureView>>
 template <class T, class... U>
 class GpuBufferStorageImpl : public GpuBufferStorage, public U... {
  public:
   static const std::vector<TypeId>& GetProviderTypes() {
-    static std::vector<TypeId> kHashes{kTypeId<U>...};
-    return kHashes;
+    static std::vector<TypeId> kProviderIds{kTypeId<U>...};
+    return kProviderIds;
   }
 
   // Exposing this as a function allows dependent initializers to call this to
@@ -180,10 +210,11 @@ class GpuBufferStorageImpl : public GpuBufferStorage, public U... {
   }
 
  private:
-  virtual const void* down_cast(TypeId to) const override {
+  // Allows a down_cast to any of the view provider types in U.
+  const void* down_cast(TypeId to) const final {
     return down_cast_impl(to, types<T, U...>{});
   }
-  TypeId storage_type() const override { return kTypeId<T>; }
+  TypeId storage_type() const final { return kTypeId<T>; }
 
   const void* down_cast_impl(TypeId to, types<>) const { return nullptr; }
   template <class V, class... W>
