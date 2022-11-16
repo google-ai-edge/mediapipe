@@ -43,7 +43,6 @@ class GlTextureView {
     name_ = other.name_;
     width_ = other.width_;
     height_ = other.height_;
-    gpu_buffer_ = std::move(other.gpu_buffer_);
     plane_ = other.plane_;
     detach_ = std::exchange(other.detach_, nullptr);
     done_writing_ = std::exchange(other.done_writing_, nullptr);
@@ -55,7 +54,6 @@ class GlTextureView {
   int height() const { return height_; }
   GLenum target() const { return target_; }
   GLuint name() const { return name_; }
-  const GpuBuffer& gpu_buffer() const { return *gpu_buffer_; }
   int plane() const { return plane_; }
 
   using DetachFn = std::function<void(GlTextureView&)>;
@@ -74,7 +72,6 @@ class GlTextureView {
         name_(name),
         width_(width),
         height_(height),
-        gpu_buffer_(std::move(gpu_buffer)),
         plane_(plane),
         detach_(std::move(detach)),
         done_writing_(std::move(done_writing)) {}
@@ -93,7 +90,6 @@ class GlTextureView {
   // Note: when scale is not 1, we still give the nominal size of the image.
   int width_ = 0;
   int height_ = 0;
-  std::shared_ptr<GpuBuffer> gpu_buffer_;  // using shared_ptr temporarily
   int plane_ = 0;
   DetachFn detach_;
   mutable DoneWritingFn done_writing_;

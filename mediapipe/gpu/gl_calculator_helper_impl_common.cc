@@ -101,7 +101,7 @@ GlTexture GlCalculatorHelperImpl::MapGpuBuffer(const GpuBuffer& gpu_buffer,
     glBindTexture(view.target(), 0);
   }
 
-  return GlTexture(std::move(view));
+  return GlTexture(std::move(view), gpu_buffer);
 }
 
 GlTexture GlCalculatorHelperImpl::CreateSourceTexture(
@@ -143,7 +143,7 @@ template <>
 std::unique_ptr<ImageFrame> GlTexture::GetFrame<ImageFrame>() const {
   view_->DoneWriting();
   std::shared_ptr<const ImageFrame> view =
-      view_->gpu_buffer().GetReadView<ImageFrame>();
+      gpu_buffer_.GetReadView<ImageFrame>();
   auto copy = absl::make_unique<ImageFrame>();
   copy->CopyFrom(*view, ImageFrame::kDefaultAlignmentBoundary);
   return copy;
@@ -151,17 +151,8 @@ std::unique_ptr<ImageFrame> GlTexture::GetFrame<ImageFrame>() const {
 
 template <>
 std::unique_ptr<GpuBuffer> GlTexture::GetFrame<GpuBuffer>() const {
-  auto gpu_buffer = view_->gpu_buffer();
-#ifdef __EMSCRIPTEN__
-  // When WebGL is used, the GL context may be spontaneously lost which can
-  // cause GpuBuffer allocations to fail. In that case, return a dummy buffer
-  // to allow processing of the current frame complete.
-  if (!gpu_buffer) {
-    return std::make_unique<GpuBuffer>();
-  }
-#endif  // __EMSCRIPTEN__
   view_->DoneWriting();
-  return absl::make_unique<GpuBuffer>(gpu_buffer);
+  return absl::make_unique<GpuBuffer>(gpu_buffer_);
 }
 
 GlTexture GlCalculatorHelperImpl::CreateDestinationTexture(

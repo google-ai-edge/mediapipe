@@ -7,7 +7,6 @@ void GlTextureView::Release() {
   if (detach_) detach_(*this);
   detach_ = nullptr;
   gl_context_ = nullptr;
-  gpu_buffer_ = nullptr;
   plane_ = 0;
   name_ = 0;
   width_ = 0;

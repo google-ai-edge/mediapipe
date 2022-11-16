@@ -201,9 +201,13 @@ class GlTexture {
   void Release() { view_ = std::make_shared<GlTextureView>(); }
 
  private:
-  explicit GlTexture(GlTextureView view)
-      : view_(std::make_shared<GlTextureView>(std::move(view))) {}
+  explicit GlTexture(GlTextureView view, GpuBuffer gpu_buffer)
+      : gpu_buffer_(std::move(gpu_buffer)),
+        view_(std::make_shared<GlTextureView>(std::move(view))) {}
   friend class GlCalculatorHelperImpl;
+  // We store the GpuBuffer to support GetFrame, and to ensure that the storage
+  // outlives the view.
+  GpuBuffer gpu_buffer_;
   std::shared_ptr<GlTextureView> view_;
 };
 
