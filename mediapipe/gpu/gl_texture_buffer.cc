@@ -18,6 +18,11 @@
 #include "mediapipe/gpu/gl_texture_view.h"
 #include "mediapipe/gpu/gpu_buffer_storage_image_frame.h"
 
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#include "mediapipe/gpu/gl_texture_util.h"
+#include "mediapipe/gpu/gpu_buffer_storage_cv_pixel_buffer.h"
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+
 namespace mediapipe {
 
 std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Wrap(
@@ -379,5 +384,29 @@ static auto kConverterRegistration2 =
     internal::GpuBufferStorageRegistry::Get()
         .RegisterConverter<GpuBufferStorageImageFrame, GlTextureBuffer>(
             ConvertFromImageFrame);
+
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+
+static std::shared_ptr<GpuBufferStorageCvPixelBuffer> ConvertToCvPixelBuffer(
+    std::shared_ptr<GlTextureBuffer> buf) {
+  auto output = absl::make_unique<GpuBufferStorageCvPixelBuffer>(
+      buf->width(), buf->height(), buf->format());
+  buf->GetProducerContext()->Run([buf, &output] {
+    TempGlFramebuffer framebuffer;
+    auto src = buf->GetReadView(internal::types<GlTextureView>{}, nullptr, 0);
+    auto dst =
+        output->GetWriteView(internal::types<GlTextureView>{}, nullptr, 0);
+    CopyGlTexture(src, dst);
+    glFlush();
+  });
+  return output;
+}
+
+static auto kConverterRegistrationCvpb =
+    internal::GpuBufferStorageRegistry::Get()
+        .RegisterConverter<GlTextureBuffer, GpuBufferStorageCvPixelBuffer>(
+            ConvertToCvPixelBuffer);
+
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 }  // namespace mediapipe

@@ -226,7 +226,13 @@ cc_library(
         # depend on having an indirect image_frame dependency, need to be
         # fixed first.
         "//mediapipe/framework/formats:image_frame",
-    ],
+    ] + select({
+        "//conditions:default": [],
+        ":platform_ios_with_gpu": [
+            ":gl_texture_util",
+            ":gpu_buffer_storage_cv_pixel_buffer",
+        ],
+    }),
 )
 
 cc_library(
@@ -341,6 +347,25 @@ cc_library(
         ":image_frame_view",
         "//mediapipe/objc:CFHolder",
         "//mediapipe/objc:util",
+    ],
+)
+
+mediapipe_cc_test(
+    name = "gpu_buffer_storage_cv_pixel_buffer_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["gpu_buffer_storage_cv_pixel_buffer_test.cc"],
+    platforms = ["ios"],
+    deps = [
+        ":gl_texture_buffer",
+        ":gl_texture_util",
+        ":gpu_buffer",
+        ":gpu_buffer_storage_cv_pixel_buffer",
+        ":gpu_test_base",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/tool:test_util",
+        "//mediapipe/objc:util",
+        "@com_google_absl//absl/strings",
     ],
 )
 
