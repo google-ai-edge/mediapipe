@@ -52,10 +52,6 @@ class GpuBufferMultiPool {
   GpuBuffer GetBuffer(int width, int height,
                       GpuBufferFormat format = GpuBufferFormat::kBGRA32);
 
-  void SetFlushPlatformCaches(std::function<void(void)> flush_platform_caches) {
-    flush_platform_caches_ = flush_platform_caches;
-  }
-
   // This class is not intended as part of the public api of this class. It is
   // public only because it is used as a map key type, and the map
   // implementation needs access to, e.g., the equality operator.
@@ -74,14 +70,21 @@ class GpuBufferMultiPool {
     mediapipe::GpuBufferFormat format;
   };
 
- private:
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   using SimplePool = CvPixelBufferPoolWrapper;
 #else
   using SimplePool = GlTextureBufferPool;
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
-  std::shared_ptr<SimplePool> MakeSimplePool(
+  using SimplePoolFactory = std::function<std::shared_ptr<SimplePool>(
+      const BufferSpec& spec, const MultiPoolOptions& options)>;
+
+  void SetSimplePoolFactory(SimplePoolFactory create_simple_pool) {
+    create_simple_pool_ = create_simple_pool;
+  }
+
+ private:
+  static std::shared_ptr<SimplePool> DefaultMakeSimplePool(
       const GpuBufferMultiPool::BufferSpec& spec,
       const MultiPoolOptions& options);
 
@@ -94,8 +97,7 @@ class GpuBufferMultiPool {
   absl::Mutex mutex_;
   mediapipe::ResourceCache<BufferSpec, std::shared_ptr<SimplePool>> cache_
       ABSL_GUARDED_BY(mutex_);
-  // This is used to hook up the TextureCacheManager on Apple platforms.
-  std::function<void(void)> flush_platform_caches_;
+  SimplePoolFactory create_simple_pool_ = DefaultMakeSimplePool;
 };
 
 // BufferSpec equality operators

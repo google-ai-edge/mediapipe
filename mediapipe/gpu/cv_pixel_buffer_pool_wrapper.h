@@ -23,6 +23,7 @@
 #define MEDIAPIPE_GPU_CV_PIXEL_BUFFER_POOL_WRAPPER_H_
 
 #include "CoreFoundation/CFBase.h"
+#include "mediapipe/gpu/cv_texture_cache_manager.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/multi_pool.h"
 #include "mediapipe/gpu/pixel_buffer_pool_util.h"
@@ -34,15 +35,14 @@ class CvPixelBufferPoolWrapper {
  public:
   CvPixelBufferPoolWrapper(int width, int height, GpuBufferFormat format,
                            CFTimeInterval maxAge,
-                           std::function<void(void)> flush_texture_caches);
+                           CvTextureCacheManager* texture_caches);
 
   static std::shared_ptr<CvPixelBufferPoolWrapper> Create(
       int width, int height, GpuBufferFormat format,
       const MultiPoolOptions& options,
-      std::function<void(void)> flush_texture_caches = nullptr) {
+      CvTextureCacheManager* texture_caches = nullptr) {
     return std::make_shared<CvPixelBufferPoolWrapper>(
-        width, height, format, options.max_inactive_buffer_age,
-        flush_texture_caches);
+        width, height, format, options.max_inactive_buffer_age, texture_caches);
   }
 
   CFHolder<CVPixelBufferRef> GetBuffer();
@@ -58,7 +58,7 @@ class CvPixelBufferPoolWrapper {
  private:
   CFHolder<CVPixelBufferPoolRef> pool_;
   int count_ = 0;
-  std::function<void(void)> flush_texture_caches_;
+  CvTextureCacheManager* texture_caches_;
 };
 
 }  // namespace mediapipe

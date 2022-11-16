@@ -368,6 +368,7 @@ cc_library(
         ],
     }),
     deps = [
+        ":cv_texture_cache_manager",
         ":gpu_buffer_format",
         ":multi_pool",
         ":pixel_buffer_pool_util",

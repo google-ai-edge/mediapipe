@@ -24,15 +24,10 @@
 namespace mediapipe {
 
 std::shared_ptr<GpuBufferMultiPool::SimplePool>
-GpuBufferMultiPool::MakeSimplePool(const GpuBufferMultiPool::BufferSpec& spec,
-                                   const MultiPoolOptions& options) {
-#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  return CvPixelBufferPoolWrapper::Create(spec.width, spec.height, spec.format,
-                                          options, flush_platform_caches_);
-#else
-  return GlTextureBufferPool::Create(spec.width, spec.height, spec.format,
-                                     options);
-#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+GpuBufferMultiPool::DefaultMakeSimplePool(
+    const GpuBufferMultiPool::BufferSpec& spec,
+    const MultiPoolOptions& options) {
+  return SimplePool::Create(spec.width, spec.height, spec.format, options);
 }
 
 std::shared_ptr<GpuBufferMultiPool::SimplePool> GpuBufferMultiPool::RequestPool(
@@ -44,7 +39,7 @@ std::shared_ptr<GpuBufferMultiPool::SimplePool> GpuBufferMultiPool::RequestPool(
     pool =
         cache_.Lookup(spec, [this](const BufferSpec& spec, int request_count) {
           return (request_count >= options_.min_requests_before_pool)
-                     ? MakeSimplePool(spec, options_)
+                     ? create_simple_pool_(spec, options_)
                      : nullptr;
         });
     evicted = cache_.Evict(options_.max_pool_count,
