@@ -97,39 +97,24 @@ absl::Status StatusBuilder::Impl::JoinMessageToStatus() {
   }());
 }
 
-StatusBuilder::Impl::Impl(const absl::Status& status, const char* file,
-                          int line)
-    : status(status), line(line), file(file), stream() {}
-
-StatusBuilder::Impl::Impl(absl::Status&& status, const char* file, int line)
-    : status(std::move(status)), line(line), file(file), stream() {}
-
 StatusBuilder::Impl::Impl(const absl::Status& status,
                           mediapipe::source_location location)
-    : status(status),
-      line(location.line()),
-      file(location.file_name()),
-      stream() {}
+    : status(status), location(location), stream() {}
 
 StatusBuilder::Impl::Impl(absl::Status&& status,
                           mediapipe::source_location location)
-    : status(std::move(status)),
-      line(location.line()),
-      file(location.file_name()),
-      stream() {}
+    : status(std::move(status)), location(location), stream() {}
 
 StatusBuilder::Impl::Impl(const Impl& other)
     : status(other.status),
-      line(other.line),
-      file(other.file),
+      location(other.location),
       no_logging(other.no_logging),
       stream(other.stream.str()),
       join_style(other.join_style) {}
 
 StatusBuilder::Impl& StatusBuilder::Impl::operator=(const Impl& other) {
   status = other.status;
-  line = other.line;
-  file = other.file;
+  location = other.location;
   no_logging = other.no_logging;
   stream = std::ostringstream(other.stream.str());
   join_style = other.join_style;
