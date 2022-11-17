@@ -36,6 +36,7 @@ mediapipe_ts_declaration(
         "audio_classifier_result.d.ts",
     ],
     deps = [
+        "//mediapipe/tasks/web/audio/core:audio_task_options",
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/components/containers:classification_result",
         "//mediapipe/tasks/web/core",

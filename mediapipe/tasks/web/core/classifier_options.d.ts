@@ -16,11 +16,8 @@
 
 import {BaseOptions} from '../../../tasks/web/core/base_options';
 
-/** Options to configure the Mediapipe Classifier Task. */
+/** Options to configure a MediaPipe Classifier Task. */
 export declare interface ClassifierOptions {
-  /** Options to configure the loading of the model assets. */
-  baseOptions?: BaseOptions;
-
   /**
    * The locale to use for display names specified through the TFLite Model
    * Metadata, if any. Defaults to English.

@@ -14,4 +14,9 @@
  * limitations under the License.
  */
 
-export {ClassifierOptions as AudioClassifierOptions} from '../../../../tasks/web/core/classifier_options';
+import {AudioTaskOptions} from '../../../../tasks/web/audio/core/audio_task_options';
+import {ClassifierOptions} from '../../../../tasks/web/core/classifier_options';
+
+/** Options to configure the MediaPipe Audio Classifier Task */
+export declare interface AudioClassifierOptions extends ClassifierOptions,
+                                                        AudioTaskOptions {}

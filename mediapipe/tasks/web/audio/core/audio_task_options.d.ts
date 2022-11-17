@@ -17,23 +17,28 @@
 import {BaseOptions} from '../../../../tasks/web/core/base_options';
 
 /**
- * The two running modes of a vision task.
- * 1) The image mode for processing single image inputs.
- * 2) The video mode for processing decoded frames of a video.
+ * MediaPipe audio task running mode. A MediaPipe audio task can be run with
+ * two different modes:
+ * - audio_clips:  The mode for running a mediapipe audio task on independent
+ *                 audio clips.
+ * - audio_stream: The mode for running a mediapipe audio task on an audio
+ *                 stream, such as from a microphone.
+ * </ul>
  */
-export type RunningMode = 'image'|'video';
+export type RunningMode = 'audio_clips'|'audio_stream';
 
-
-/** The options for configuring a MediaPipe vision task. */
-export declare interface VisionTaskOptions {
+/** The options for configuring a MediaPipe Audio Task. */
+export declare interface AudioTaskOptions {
   /** Options to configure the loading of the model assets. */
   baseOptions?: BaseOptions;
 
   /**
-   * The running mode of the task. Default to the image mode.
-   * Vision tasks have two running modes:
-   * 1) The image mode for processing single image inputs.
-   * 2) The video mode for processing decoded frames of a video.
+   * The running mode of the task. Default to the audio_clips mode.
+   * Audio tasks have two running modes:
+   * 1) The mode for running a mediapipe audio task on independent
+   *    audio clips.
+   * 2) The mode for running a mediapipe audio task on an audio
+   *    stream, such as from a microphone.
    */
   runningMode?: RunningMode;
 }

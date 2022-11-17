@@ -39,5 +39,6 @@ mediapipe_ts_declaration(
         "//mediapipe/tasks/web/components/containers:embedding_result",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:embedder_options",
+        "//mediapipe/tasks/web/text/core:text_task_options",
     ],
 )

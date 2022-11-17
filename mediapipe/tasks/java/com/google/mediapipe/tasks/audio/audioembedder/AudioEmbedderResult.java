@@ -65,8 +65,8 @@ public abstract class AudioEmbedderResult implements TaskResult {
 
   /**
    * Contains one set of results per classifier head. A {@link EmbeddingResult} usually represents
-   * one audio embedding result in an audio stream, and s only available when running with the audio
-   * stream mode.
+   * one audio embedding result in an audio stream, and is only available when running with the
+   * audio stream mode.
    */
   public abstract Optional<EmbeddingResult> embeddingResult();
 

@@ -1,4 +1,4 @@
-# This package contains options shared by all MediaPipe Tasks for Web.
+# This package contains options shared by all MediaPipe Vision Tasks for Web.
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
 

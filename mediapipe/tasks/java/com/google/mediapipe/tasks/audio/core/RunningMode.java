@@ -20,7 +20,7 @@ package com.google.mediapipe.tasks.audio.core;
  * <ul>
  *   <li>AUDIO_CLIPS: The mode for running a mediapipe audio task on independent audio clips.
  *   <li>AUDIO_STREAM: The mode for running a mediapipe audio task on an audio stream, such as from
- *       microphone.
+ *       a microphone.
  * </ul>
  */
 public enum RunningMode {
