@@ -85,75 +85,6 @@ std::string SourceString(Timestamp t) {
              : absl::StrCat("Timestamp(", t.DebugString(), ")");
 }
 
-template <typename T>
-std::string SourceString(Packet packet) {
-  std::ostringstream oss;
-  if (packet.IsEmpty()) {
-    oss << "Packet()";
-  } else {
-    oss << "MakePacket<" << MediaPipeTypeStringOrDemangled<T>() << ">("
-        << packet.Get<T>() << ")";
-  }
-  oss << ".At(" << SourceString(packet.Timestamp()) << ")";
-  return oss.str();
-}
-
-template <typename PacketContainer, typename PacketContent>
-class PacketsEqMatcher
-    : public ::testing::MatcherInterface<const PacketContainer&> {
- public:
-  PacketsEqMatcher(PacketContainer packets) : packets_(packets) {}
-  void DescribeTo(::std::ostream* os) const override {
-    *os << "The expected packet contents: \n";
-    Print(packets_, os);
-  }
-  bool MatchAndExplain(
-      const PacketContainer& value,
-      ::testing::MatchResultListener* listener) const override {
-    if (!Equals(packets_, value)) {
-      if (listener->IsInterested()) {
-        *listener << "The actual packet contents: \n";
-        Print(value, listener->stream());
-      }
-      return false;
-    }
-    return true;
-  }
-
- private:
-  bool Equals(const PacketContainer& c1, const PacketContainer& c2) const {
-    if (c1.size() != c2.size()) {
-      return false;
-    }
-    for (auto i1 = c1.begin(), i2 = c2.begin(); i1 != c1.end(); ++i1, ++i2) {
-      Packet p1 = *i1, p2 = *i2;
-      if (p1.Timestamp() != p2.Timestamp() || p1.IsEmpty() != p2.IsEmpty() ||
-          (!p1.IsEmpty() &&
-           p1.Get<PacketContent>() != p2.Get<PacketContent>())) {
-        return false;
-      }
-    }
-    return true;
-  }
-  void Print(const PacketContainer& packets, ::std::ostream* os) const {
-    for (auto it = packets.begin(); it != packets.end(); ++it) {
-      const Packet& packet = *it;
-      *os << (it == packets.begin() ? "{" : "");
-      *os << SourceString<PacketContent>(packet);
-      *os << (std::next(it) == packets.end() ? "}" : ", ");
-    }
-  }
-
-  const PacketContainer packets_;
-};
-
-template <typename PacketContainer, typename PacketContent>
-::testing::Matcher<const PacketContainer&> PacketsEq(
-    const PacketContainer& packets) {
-  return MakeMatcher(
-      new PacketsEqMatcher<PacketContainer, PacketContent>(packets));
-}
-
 // A Calculator::Process callback function.
 typedef std::function<absl::Status(const InputStreamShardSet&,
                                    OutputStreamShardSet*)>
@@ -743,9 +674,6 @@ TEST_F(FlowLimiterCalculatorTest, TwoInputStreams) {
 // The processing time "sleep_time" is reduced from 22ms to 12ms to create
 // the same frame rate as FlowLimiterCalculatorTest::TwoInputStreams.
 TEST_F(FlowLimiterCalculatorTest, ZeroQueue) {
-  auto BoolPacketsEq = PacketsEq<std::vector<Packet>, bool>;
-  auto IntPacketsEq = PacketsEq<std::vector<Packet>, int>;
-
   // Configure the test.
   SetUpInputData();
   SetUpSimulationClock();
@@ -839,13 +767,16 @@ TEST_F(FlowLimiterCalculatorTest, ZeroQueue) {
       input_packets_[0],  input_packets_[2],  input_packets_[15],
       input_packets_[17], input_packets_[19],
   };
-  EXPECT_THAT(out_1_packets_, IntPacketsEq(expected_output));
+  EXPECT_THAT(out_1_packets_,
+              ElementsAreArray(PacketMatchers<int>(expected_output)));
+
   // Exactly the timestamps released by FlowLimiterCalculator for in_1_sampled.
   std::vector<Packet> expected_output_2 = {
       input_packets_[0],  input_packets_[2],  input_packets_[4],
       input_packets_[15], input_packets_[17], input_packets_[19],
   };
-  EXPECT_THAT(out_2_packets, IntPacketsEq(expected_output_2));
+  EXPECT_THAT(out_2_packets,
+              ElementsAreArray(PacketMatchers<int>(expected_output_2)));
 
   // Validate the ALLOW stream output.
   std::vector<Packet> expected_allow = {
@@ -871,7 +802,8 @@ TEST_F(FlowLimiterCalculatorTest, ZeroQueue) {
       MakePacket<bool>(true).At(Timestamp(190000)),
       MakePacket<bool>(false).At(Timestamp(200000)),
   };
-  EXPECT_THAT(allow_packets_, BoolPacketsEq(expected_allow));
+  EXPECT_THAT(allow_packets_,
+              ElementsAreArray(PacketMatchers<bool>(expected_allow)));
 }
 
 std::vector<Packet> StripBoundsUpdates(const std::vector<Packet>& packets,
@@ -891,9 +823,6 @@ std::vector<Packet> StripBoundsUpdates(const std::vector<Packet>& packets,
 // Shows how FlowLimiterCalculator releases auxiliary input packets.
 // In this test, auxiliary input packets arrive at twice the primary rate.
 TEST_F(FlowLimiterCalculatorTest, AuxiliaryInputs) {
-  auto BoolPacketsEq = PacketsEq<std::vector<Packet>, bool>;
-  auto IntPacketsEq = PacketsEq<std::vector<Packet>, int>;
-
   // Configure the test.
   SetUpInputData();
   SetUpSimulationClock();
@@ -1011,7 +940,8 @@ TEST_F(FlowLimiterCalculatorTest, AuxiliaryInputs) {
       MakePacket<int>(6).At(Timestamp(60000)),
       Packet().At(Timestamp(80000)),
   };
-  EXPECT_THAT(out_1_packets_, IntPacketsEq(expected_output));
+  EXPECT_THAT(out_1_packets_,
+              ElementsAreArray(PacketMatchers<int>(expected_output)));
 
   // Packets following input packets 2 and 6, and not input packets 4 and 8.
   std::vector<Packet> expected_auxiliary_output = {
@@ -1031,12 +961,13 @@ TEST_F(FlowLimiterCalculatorTest, AuxiliaryInputs) {
   };
   std::vector<Packet> actual_2 =
       StripBoundsUpdates(out_2_packets, Timestamp(90000));
-  EXPECT_THAT(actual_2, IntPacketsEq(expected_auxiliary_output));
+  EXPECT_THAT(actual_2,
+              ElementsAreArray(PacketMatchers<int>(expected_auxiliary_output)));
   std::vector<Packet> expected_3 =
       StripBoundsUpdates(expected_auxiliary_output, Timestamp(39999));
   std::vector<Packet> actual_3 =
       StripBoundsUpdates(out_3_packets, Timestamp(39999));
-  EXPECT_THAT(actual_3, IntPacketsEq(expected_3));
+  EXPECT_THAT(actual_3, ElementsAreArray(PacketMatchers<int>(expected_3)));
 
   // Validate the ALLOW stream output.
   std::vector<Packet> expected_allow = {
@@ -1045,7 +976,8 @@ TEST_F(FlowLimiterCalculatorTest, AuxiliaryInputs) {
       MakePacket<bool>(true).At(Timestamp(60000)),
       MakePacket<bool>(false).At(Timestamp(80000)),
   };
-  EXPECT_THAT(allow_packets_, BoolPacketsEq(expected_allow));
+  EXPECT_THAT(allow_packets_,
+              ElementsAreArray(PacketMatchers<bool>(expected_allow)));
 }
 
 }  // anonymous namespace

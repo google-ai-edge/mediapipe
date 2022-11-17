@@ -257,6 +257,10 @@ class CalculatorGraph {
   absl::Status AddPacketToInputStream(const std::string& stream_name,
                                       Packet&& packet);
 
+  // Indicates that input will arrive no earlier than a certain timestamp.
+  absl::Status SetInputStreamTimestampBound(const std::string& stream_name,
+                                            Timestamp timestamp);
+
   // Sets the queue size of a graph input stream, overriding the graph default.
   absl::Status SetInputStreamMaxQueueSize(const std::string& stream_name,
                                           int max_queue_size);
@@ -424,6 +428,8 @@ class CalculatorGraph {
     void AddPacket(const Packet& packet) { shard_.AddPacket(packet); }
 
     void AddPacket(Packet&& packet) { shard_.AddPacket(std::move(packet)); }
+
+    void SetNextTimestampBound(Timestamp timestamp);
 
     void PropagateUpdatesToMirrors();
 

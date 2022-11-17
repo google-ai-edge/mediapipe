@@ -1469,6 +1469,7 @@ cc_test(
         "//mediapipe/framework/stream_handler:mux_input_stream_handler",
         "//mediapipe/framework/stream_handler:sync_set_input_stream_handler",
         "//mediapipe/framework/tool:sink",
+        "//mediapipe/util:packet_test_util",
         "@com_google_absl//absl/strings",
     ],
 )
