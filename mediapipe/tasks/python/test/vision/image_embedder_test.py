@@ -125,8 +125,8 @@ class ImageEmbedderTest(parameterized.TestCase):
        (-0.2101883, -0.193027)),
       (True, False, False, ModelFileType.FILE_NAME, 0.925519, 1024,
        (-0.0142344, -0.0131606)),
-      # (False, True, False, ModelFileType.FILE_NAME,
-      #  0.926791, 1024, (229, 231)),
+      (False, True, False, ModelFileType.FILE_NAME,
+       0.906201, 1024, (229, 231)),
       (False, False, True, ModelFileType.FILE_CONTENT, 0.999931, 1024,
        (-0.195062, -0.193027)))
   def test_embed(self, l2_normalize, quantize, with_roi, model_file_type,
@@ -169,231 +169,231 @@ class ImageEmbedderTest(parameterized.TestCase):
     # Closes the embedder explicitly when the embedder is not used in
     # a context.
     embedder.close()
-
-  @parameterized.parameters(
-      (False, False, ModelFileType.FILE_NAME, 0.925519),
-      (False, False, ModelFileType.FILE_CONTENT, 0.925519))
-  def test_embed_in_context(self, l2_normalize, quantize, model_file_type,
-                            expected_similarity):
-    # Creates embedder.
-    if model_file_type is ModelFileType.FILE_NAME:
-      base_options = _BaseOptions(model_asset_path=self.model_path)
-    elif model_file_type is ModelFileType.FILE_CONTENT:
-      with open(self.model_path, 'rb') as f:
-        model_content = f.read()
-      base_options = _BaseOptions(model_asset_buffer=model_content)
-    else:
-      # Should never happen
-      raise ValueError('model_file_type is invalid.')
-
-    embedder_options = _EmbedderOptions(
-        l2_normalize=l2_normalize, quantize=quantize)
-    options = _ImageEmbedderOptions(
-        base_options=base_options, embedder_options=embedder_options)
-
-    with _ImageEmbedder.create_from_options(options) as embedder:
-      # Extracts both embeddings.
-      image_result = embedder.embed(self.test_image)
-      crop_result = embedder.embed(self.test_cropped_image)
-
-      # Checks cosine similarity.
-      self._check_cosine_similarity(image_result, crop_result,
-                                    expected_similarity)
-
-  def test_missing_result_callback(self):
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.LIVE_STREAM)
-    with self.assertRaisesRegex(ValueError,
-                                r'result callback must be provided'):
-      with _ImageEmbedder.create_from_options(options) as unused_embedder:
-        pass
-
-  @parameterized.parameters((_RUNNING_MODE.IMAGE), (_RUNNING_MODE.VIDEO))
-  def test_illegal_result_callback(self, running_mode):
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=running_mode,
-        result_callback=mock.MagicMock())
-    with self.assertRaisesRegex(ValueError,
-                                r'result callback should not be provided'):
-      with _ImageEmbedder.create_from_options(options) as unused_embedder:
-        pass
-
-  def test_calling_embed_for_video_in_image_mode(self):
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.IMAGE)
-    with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the video mode'):
-        embedder.embed_for_video(self.test_image, 0)
-
-  def test_calling_embed_async_in_image_mode(self):
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.IMAGE)
-    with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the live stream mode'):
-        embedder.embed_async(self.test_image, 0)
-
-  def test_calling_embed_in_video_mode(self):
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.VIDEO)
-    with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the image mode'):
-        embedder.embed(self.test_image)
-
-  def test_calling_embed_async_in_video_mode(self):
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.VIDEO)
-    with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the live stream mode'):
-        embedder.embed_async(self.test_image, 0)
-
-  def test_embed_for_video_with_out_of_order_timestamp(self):
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.VIDEO)
-    with _ImageEmbedder.create_from_options(options) as embedder:
-      unused_result = embedder.embed_for_video(self.test_image, 1)
-      with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'):
-        embedder.embed_for_video(self.test_image, 0)
-
-  def test_embed_for_video(self):
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.VIDEO)
-    with _ImageEmbedder.create_from_options(options) as embedder0, \
-         _ImageEmbedder.create_from_options(options) as embedder1:
-      for timestamp in range(0, 300, 30):
-        # Extracts both embeddings.
-        image_result = embedder0.embed_for_video(self.test_image, timestamp)
-        crop_result = embedder1.embed_for_video(self.test_cropped_image,
-                                                timestamp)
-        # Checks cosine similarity.
-        self._check_cosine_similarity(
-            image_result, crop_result, expected_similarity=0.925519)
-
-  def test_embed_for_video_succeeds_with_region_of_interest(self):
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.VIDEO)
-    with _ImageEmbedder.create_from_options(options) as embedder0, \
-         _ImageEmbedder.create_from_options(options) as embedder1:
-      # Region-of-interest in "burger.jpg" corresponding to "burger_crop.jpg".
-      roi = _Rect(left=0, top=0, right=0.833333, bottom=1)
-      image_processing_options = _ImageProcessingOptions(roi)
-
-      for timestamp in range(0, 300, 30):
-        # Extracts both embeddings.
-        image_result = embedder0.embed_for_video(self.test_image, timestamp,
-                                                 image_processing_options)
-        crop_result = embedder1.embed_for_video(self.test_cropped_image,
-                                                timestamp)
-
-        # Checks cosine similarity.
-        self._check_cosine_similarity(
-            image_result, crop_result, expected_similarity=0.999931)
-
-  def test_calling_embed_in_live_stream_mode(self):
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.LIVE_STREAM,
-        result_callback=mock.MagicMock())
-    with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the image mode'):
-        embedder.embed(self.test_image)
-
-  def test_calling_embed_for_video_in_live_stream_mode(self):
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.LIVE_STREAM,
-        result_callback=mock.MagicMock())
-    with _ImageEmbedder.create_from_options(options) as embedder:
-      with self.assertRaisesRegex(ValueError,
-                                  r'not initialized with the video mode'):
-        embedder.embed_for_video(self.test_image, 0)
-
-  def test_embed_async_calls_with_illegal_timestamp(self):
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.LIVE_STREAM,
-        result_callback=mock.MagicMock())
-    with _ImageEmbedder.create_from_options(options) as embedder:
-      embedder.embed_async(self.test_image, 100)
-      with self.assertRaisesRegex(
-          ValueError, r'Input timestamp must be monotonically increasing'):
-        embedder.embed_async(self.test_image, 0)
-
-  def test_embed_async_calls(self):
-    # Get the embedding result for the cropped image.
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.IMAGE)
-    with _ImageEmbedder.create_from_options(options) as embedder:
-      crop_result = embedder.embed(self.test_cropped_image)
-
-    observed_timestamp_ms = -1
-
-    def check_result(result: _ImageEmbedderResult, output_image: _Image,
-                     timestamp_ms: int):
-      # Checks cosine similarity.
-      self._check_cosine_similarity(
-          result, crop_result, expected_similarity=0.925519)
-      self.assertTrue(
-          np.array_equal(output_image.numpy_view(),
-                         self.test_image.numpy_view()))
-      self.assertLess(observed_timestamp_ms, timestamp_ms)
-      self.observed_timestamp_ms = timestamp_ms
-
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.LIVE_STREAM,
-        result_callback=check_result)
-    with _ImageEmbedder.create_from_options(options) as embedder:
-      for timestamp in range(0, 300, 30):
-        embedder.embed_async(self.test_image, timestamp)
-
-  def test_embed_async_succeeds_with_region_of_interest(self):
-    # Get the embedding result for the cropped image.
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.IMAGE)
-    with _ImageEmbedder.create_from_options(options) as embedder:
-      crop_result = embedder.embed(self.test_cropped_image)
-
-    # Region-of-interest in "burger.jpg" corresponding to "burger_crop.jpg".
-    roi = _Rect(left=0, top=0, right=0.833333, bottom=1)
-    image_processing_options = _ImageProcessingOptions(roi)
-    observed_timestamp_ms = -1
-
-    def check_result(result: _ImageEmbedderResult, output_image: _Image,
-                     timestamp_ms: int):
-      # Checks cosine similarity.
-      self._check_cosine_similarity(
-          result, crop_result, expected_similarity=0.999931)
-      self.assertTrue(
-          np.array_equal(output_image.numpy_view(),
-                         self.test_image.numpy_view()))
-      self.assertLess(observed_timestamp_ms, timestamp_ms)
-      self.observed_timestamp_ms = timestamp_ms
-
-    options = _ImageEmbedderOptions(
-        base_options=_BaseOptions(model_asset_path=self.model_path),
-        running_mode=_RUNNING_MODE.LIVE_STREAM,
-        result_callback=check_result)
-    with _ImageEmbedder.create_from_options(options) as embedder:
-      for timestamp in range(0, 300, 30):
-        embedder.embed_async(self.test_image, timestamp,
-                             image_processing_options)
+  #
+  # @parameterized.parameters(
+  #     (False, False, ModelFileType.FILE_NAME, 0.925519),
+  #     (False, False, ModelFileType.FILE_CONTENT, 0.925519))
+  # def test_embed_in_context(self, l2_normalize, quantize, model_file_type,
+  #                           expected_similarity):
+  #   # Creates embedder.
+  #   if model_file_type is ModelFileType.FILE_NAME:
+  #     base_options = _BaseOptions(model_asset_path=self.model_path)
+  #   elif model_file_type is ModelFileType.FILE_CONTENT:
+  #     with open(self.model_path, 'rb') as f:
+  #       model_content = f.read()
+  #     base_options = _BaseOptions(model_asset_buffer=model_content)
+  #   else:
+  #     # Should never happen
+  #     raise ValueError('model_file_type is invalid.')
+  #
+  #   embedder_options = _EmbedderOptions(
+  #       l2_normalize=l2_normalize, quantize=quantize)
+  #   options = _ImageEmbedderOptions(
+  #       base_options=base_options, embedder_options=embedder_options)
+  #
+  #   with _ImageEmbedder.create_from_options(options) as embedder:
+  #     # Extracts both embeddings.
+  #     image_result = embedder.embed(self.test_image)
+  #     crop_result = embedder.embed(self.test_cropped_image)
+  #
+  #     # Checks cosine similarity.
+  #     self._check_cosine_similarity(image_result, crop_result,
+  #                                   expected_similarity)
+  #
+  # def test_missing_result_callback(self):
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.LIVE_STREAM)
+  #   with self.assertRaisesRegex(ValueError,
+  #                               r'result callback must be provided'):
+  #     with _ImageEmbedder.create_from_options(options) as unused_embedder:
+  #       pass
+  #
+  # @parameterized.parameters((_RUNNING_MODE.IMAGE), (_RUNNING_MODE.VIDEO))
+  # def test_illegal_result_callback(self, running_mode):
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=running_mode,
+  #       result_callback=mock.MagicMock())
+  #   with self.assertRaisesRegex(ValueError,
+  #                               r'result callback should not be provided'):
+  #     with _ImageEmbedder.create_from_options(options) as unused_embedder:
+  #       pass
+  #
+  # def test_calling_embed_for_video_in_image_mode(self):
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.IMAGE)
+  #   with _ImageEmbedder.create_from_options(options) as embedder:
+  #     with self.assertRaisesRegex(ValueError,
+  #                                 r'not initialized with the video mode'):
+  #       embedder.embed_for_video(self.test_image, 0)
+  #
+  # def test_calling_embed_async_in_image_mode(self):
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.IMAGE)
+  #   with _ImageEmbedder.create_from_options(options) as embedder:
+  #     with self.assertRaisesRegex(ValueError,
+  #                                 r'not initialized with the live stream mode'):
+  #       embedder.embed_async(self.test_image, 0)
+  #
+  # def test_calling_embed_in_video_mode(self):
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.VIDEO)
+  #   with _ImageEmbedder.create_from_options(options) as embedder:
+  #     with self.assertRaisesRegex(ValueError,
+  #                                 r'not initialized with the image mode'):
+  #       embedder.embed(self.test_image)
+  #
+  # def test_calling_embed_async_in_video_mode(self):
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.VIDEO)
+  #   with _ImageEmbedder.create_from_options(options) as embedder:
+  #     with self.assertRaisesRegex(ValueError,
+  #                                 r'not initialized with the live stream mode'):
+  #       embedder.embed_async(self.test_image, 0)
+  #
+  # def test_embed_for_video_with_out_of_order_timestamp(self):
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.VIDEO)
+  #   with _ImageEmbedder.create_from_options(options) as embedder:
+  #     unused_result = embedder.embed_for_video(self.test_image, 1)
+  #     with self.assertRaisesRegex(
+  #         ValueError, r'Input timestamp must be monotonically increasing'):
+  #       embedder.embed_for_video(self.test_image, 0)
+  #
+  # def test_embed_for_video(self):
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.VIDEO)
+  #   with _ImageEmbedder.create_from_options(options) as embedder0, \
+  #        _ImageEmbedder.create_from_options(options) as embedder1:
+  #     for timestamp in range(0, 300, 30):
+  #       # Extracts both embeddings.
+  #       image_result = embedder0.embed_for_video(self.test_image, timestamp)
+  #       crop_result = embedder1.embed_for_video(self.test_cropped_image,
+  #                                               timestamp)
+  #       # Checks cosine similarity.
+  #       self._check_cosine_similarity(
+  #           image_result, crop_result, expected_similarity=0.925519)
+  #
+  # def test_embed_for_video_succeeds_with_region_of_interest(self):
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.VIDEO)
+  #   with _ImageEmbedder.create_from_options(options) as embedder0, \
+  #        _ImageEmbedder.create_from_options(options) as embedder1:
+  #     # Region-of-interest in "burger.jpg" corresponding to "burger_crop.jpg".
+  #     roi = _Rect(left=0, top=0, right=0.833333, bottom=1)
+  #     image_processing_options = _ImageProcessingOptions(roi)
+  #
+  #     for timestamp in range(0, 300, 30):
+  #       # Extracts both embeddings.
+  #       image_result = embedder0.embed_for_video(self.test_image, timestamp,
+  #                                                image_processing_options)
+  #       crop_result = embedder1.embed_for_video(self.test_cropped_image,
+  #                                               timestamp)
+  #
+  #       # Checks cosine similarity.
+  #       self._check_cosine_similarity(
+  #           image_result, crop_result, expected_similarity=0.999931)
+  #
+  # def test_calling_embed_in_live_stream_mode(self):
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.LIVE_STREAM,
+  #       result_callback=mock.MagicMock())
+  #   with _ImageEmbedder.create_from_options(options) as embedder:
+  #     with self.assertRaisesRegex(ValueError,
+  #                                 r'not initialized with the image mode'):
+  #       embedder.embed(self.test_image)
+  #
+  # def test_calling_embed_for_video_in_live_stream_mode(self):
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.LIVE_STREAM,
+  #       result_callback=mock.MagicMock())
+  #   with _ImageEmbedder.create_from_options(options) as embedder:
+  #     with self.assertRaisesRegex(ValueError,
+  #                                 r'not initialized with the video mode'):
+  #       embedder.embed_for_video(self.test_image, 0)
+  #
+  # def test_embed_async_calls_with_illegal_timestamp(self):
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.LIVE_STREAM,
+  #       result_callback=mock.MagicMock())
+  #   with _ImageEmbedder.create_from_options(options) as embedder:
+  #     embedder.embed_async(self.test_image, 100)
+  #     with self.assertRaisesRegex(
+  #         ValueError, r'Input timestamp must be monotonically increasing'):
+  #       embedder.embed_async(self.test_image, 0)
+  #
+  # def test_embed_async_calls(self):
+  #   # Get the embedding result for the cropped image.
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.IMAGE)
+  #   with _ImageEmbedder.create_from_options(options) as embedder:
+  #     crop_result = embedder.embed(self.test_cropped_image)
+  #
+  #   observed_timestamp_ms = -1
+  #
+  #   def check_result(result: _ImageEmbedderResult, output_image: _Image,
+  #                    timestamp_ms: int):
+  #     # Checks cosine similarity.
+  #     self._check_cosine_similarity(
+  #         result, crop_result, expected_similarity=0.925519)
+  #     self.assertTrue(
+  #         np.array_equal(output_image.numpy_view(),
+  #                        self.test_image.numpy_view()))
+  #     self.assertLess(observed_timestamp_ms, timestamp_ms)
+  #     self.observed_timestamp_ms = timestamp_ms
+  #
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.LIVE_STREAM,
+  #       result_callback=check_result)
+  #   with _ImageEmbedder.create_from_options(options) as embedder:
+  #     for timestamp in range(0, 300, 30):
+  #       embedder.embed_async(self.test_image, timestamp)
+  #
+  # def test_embed_async_succeeds_with_region_of_interest(self):
+  #   # Get the embedding result for the cropped image.
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.IMAGE)
+  #   with _ImageEmbedder.create_from_options(options) as embedder:
+  #     crop_result = embedder.embed(self.test_cropped_image)
+  #
+  #   # Region-of-interest in "burger.jpg" corresponding to "burger_crop.jpg".
+  #   roi = _Rect(left=0, top=0, right=0.833333, bottom=1)
+  #   image_processing_options = _ImageProcessingOptions(roi)
+  #   observed_timestamp_ms = -1
+  #
+  #   def check_result(result: _ImageEmbedderResult, output_image: _Image,
+  #                    timestamp_ms: int):
+  #     # Checks cosine similarity.
+  #     self._check_cosine_similarity(
+  #         result, crop_result, expected_similarity=0.999931)
+  #     self.assertTrue(
+  #         np.array_equal(output_image.numpy_view(),
+  #                        self.test_image.numpy_view()))
+  #     self.assertLess(observed_timestamp_ms, timestamp_ms)
+  #     self.observed_timestamp_ms = timestamp_ms
+  #
+  #   options = _ImageEmbedderOptions(
+  #       base_options=_BaseOptions(model_asset_path=self.model_path),
+  #       running_mode=_RUNNING_MODE.LIVE_STREAM,
+  #       result_callback=check_result)
+  #   with _ImageEmbedder.create_from_options(options) as embedder:
+  #     for timestamp in range(0, 300, 30):
+  #       embedder.embed_async(self.test_image, timestamp,
+  #                            image_processing_options)
 
 
 if __name__ == '__main__':
