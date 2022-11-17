@@ -826,10 +826,14 @@ std::shared_ptr<GlSyncPoint> GlContext::CreateSyncToken() {
   return token;
 }
 
-bool GlContext::IsAnyContextCurrent() {
+PlatformGlContext GlContext::GetCurrentNativeContext() {
   ContextBinding ctx;
   GetCurrentContextBinding(&ctx);
-  return ctx.context != kPlatformGlContextNone;
+  return ctx.context;
+}
+
+bool GlContext::IsAnyContextCurrent() {
+  return GetCurrentNativeContext() != kPlatformGlContextNone;
 }
 
 std::shared_ptr<GlSyncPoint>
