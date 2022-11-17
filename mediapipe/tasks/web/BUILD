@@ -24,35 +24,25 @@ mediapipe_files(srcs = [
 mediapipe_ts_library(
     name = "audio_lib",
     srcs = ["audio.ts"],
-    deps = ["//mediapipe/tasks/web/audio:audio_lib"],
-)
-
-rollup_bundle(
-    name = "audio_cjs_bundle",
-    config_file = "rollup.config.cjs.mjs",
-    entry_point = "audio.ts",
-    format = "cjs",
-    output_dir = False,
     deps = [
-        ":audio_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-replace",
+        "//mediapipe/tasks/web/audio/audio_classifier",
     ],
 )
 
 rollup_bundle(
-    name = "audio_iife_bundle",
-    config_file = "rollup.config.iife.mjs",
+    name = "audio_bundle",
+    config_file = "rollup.config.mjs",
     entry_point = "audio.ts",
-    format = "iife",
+    format = "esm",
     output_dir = False,
+    sourcemap = "false",
     deps = [
         ":audio_lib",
         "@npm//@rollup/plugin-commonjs",
         "@npm//@rollup/plugin-node-resolve",
         "@npm//@rollup/plugin-replace",
         "@npm//@rollup/plugin-terser",
+        "@npm//google-protobuf",
     ],
 )
 
@@ -69,8 +59,7 @@ pkg_npm(
     deps = [
         "wasm/audio_wasm_internal.js",
         "wasm/audio_wasm_internal.wasm",
-        ":audio_cjs_bundle",
-        ":audio_iife_bundle",
+        ":audio_bundle",
     ],
 )
 
@@ -79,35 +68,26 @@ pkg_npm(
 mediapipe_ts_library(
     name = "text_lib",
     srcs = ["text.ts"],
-    deps = ["//mediapipe/tasks/web/text:text_lib"],
-)
-
-rollup_bundle(
-    name = "text_cjs_bundle",
-    config_file = "rollup.config.cjs.mjs",
-    entry_point = "text.ts",
-    format = "cjs",
-    output_dir = False,
     deps = [
-        ":text_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-replace",
+        "//mediapipe/tasks/web/text/text_classifier",
+        "//mediapipe/tasks/web/text/text_embedder",
     ],
 )
 
 rollup_bundle(
-    name = "text_iife_bundle",
-    config_file = "rollup.config.iife.mjs",
+    name = "text_bundle",
+    config_file = "rollup.config.mjs",
     entry_point = "text.ts",
-    format = "iife",
+    format = "esm",
     output_dir = False,
+    sourcemap = "false",
     deps = [
         ":text_lib",
         "@npm//@rollup/plugin-commonjs",
         "@npm//@rollup/plugin-node-resolve",
         "@npm//@rollup/plugin-replace",
         "@npm//@rollup/plugin-terser",
+        "@npm//google-protobuf",
     ],
 )
 
@@ -124,8 +104,7 @@ pkg_npm(
     deps = [
         "wasm/text_wasm_internal.js",
         "wasm/text_wasm_internal.wasm",
-        ":text_cjs_bundle",
-        ":text_iife_bundle",
+        ":text_bundle",
     ],
 )
 
@@ -134,35 +113,29 @@ pkg_npm(
 mediapipe_ts_library(
     name = "vision_lib",
     srcs = ["vision.ts"],
-    deps = ["//mediapipe/tasks/web/vision:vision_lib"],
-)
-
-rollup_bundle(
-    name = "vision_cjs_bundle",
-    config_file = "rollup.config.cjs.mjs",
-    entry_point = "vision.ts",
-    format = "cjs",
-    output_dir = False,
     deps = [
-        ":vision_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-replace",
+        "//mediapipe/tasks/web/vision/gesture_recognizer",
+        "//mediapipe/tasks/web/vision/hand_landmarker",
+        "//mediapipe/tasks/web/vision/image_classifier",
+        "//mediapipe/tasks/web/vision/image_embedder",
+        "//mediapipe/tasks/web/vision/object_detector",
     ],
 )
 
 rollup_bundle(
-    name = "vision_iife_bundle",
-    config_file = "rollup.config.iife.mjs",
+    name = "vision_bundle",
+    config_file = "rollup.config.mjs",
     entry_point = "vision.ts",
-    format = "iife",
+    format = "esm",
     output_dir = False,
+    sourcemap = "false",
     deps = [
         ":vision_lib",
         "@npm//@rollup/plugin-commonjs",
         "@npm//@rollup/plugin-node-resolve",
         "@npm//@rollup/plugin-replace",
         "@npm//@rollup/plugin-terser",
+        "@npm//google-protobuf",
     ],
 )
 
@@ -179,7 +152,6 @@ pkg_npm(
     deps = [
         "wasm/vision_wasm_internal.js",
         "wasm/vision_wasm_internal.wasm",
-        ":vision_cjs_bundle",
-        ":vision_iife_bundle",
+        ":vision_bundle",
     ],
 )

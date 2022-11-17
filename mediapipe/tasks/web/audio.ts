@@ -14,4 +14,10 @@
  * limitations under the License.
  */
 
-export * from '../../tasks/web/audio/index';
+import {AudioClassifier as AudioClassifierImpl} from '../../tasks/web/audio/audio_classifier/audio_classifier';
+
+// Declare the variables locally so that Rollup in OSS includes them explcilty
+// as exports.
+const AudioClassifier = AudioClassifierImpl;
+
+export {AudioClassifier};
