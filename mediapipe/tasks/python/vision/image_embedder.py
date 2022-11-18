@@ -69,7 +69,8 @@ class ImageEmbedderOptions:
   """
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
-  embedder_options: _EmbedderOptions = _EmbedderOptions()
+  embedder_options: Optional[_EmbedderOptions] = dataclasses.field(
+      default_factory=_EmbedderOptions)
   result_callback: Optional[Callable[
       [ImageEmbedderResult, image_module.Image, int], None]] = None
 

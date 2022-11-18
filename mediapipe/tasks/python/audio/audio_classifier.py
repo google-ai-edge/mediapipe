@@ -70,7 +70,8 @@ class AudioClassifierOptions:
   """
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.AUDIO_CLIPS
-  classifier_options: _ClassifierOptions = _ClassifierOptions()
+  classifier_options: Optional[_ClassifierOptions] = dataclasses.field(
+      default_factory=_ClassifierOptions)
   result_callback: Optional[Callable[[AudioClassifierResult, int], None]] = None
 
   @doc_controls.do_not_generate_docs
