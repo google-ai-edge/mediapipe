@@ -290,8 +290,15 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
     // some Emscripten cases), there might be some existing tripped error.
     ForceClearExistingGlErrors();
 
-    absl::string_view version_string(
-        reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+    absl::string_view version_string;
+    const GLubyte* version_string_ptr = glGetString(GL_VERSION);
+    if (version_string_ptr != nullptr) {
+      version_string = reinterpret_cast<const char*>(version_string_ptr);
+    } else {
+      // This may happen when using SwiftShader, but the numeric versions are
+      // available and will be used instead.
+      LOG(WARNING) << "failed to get GL_VERSION string";
+    }
 
     // We will decide later whether we want to use the version numbers we query
     // for, or instead derive that information from the context creation result,
@@ -333,7 +340,7 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
     }
 
     LOG(INFO) << "GL version: " << gl_major_version_ << "." << gl_minor_version_
-              << " (" << glGetString(GL_VERSION) << ")";
+              << " (" << version_string << ")";
     {
       auto status = GetGlExtensions();
       if (!status.ok()) {
