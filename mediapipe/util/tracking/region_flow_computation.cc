@@ -30,6 +30,7 @@
 #include "absl/container/node_hash_set.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_features2d_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/opencv_video_inc.h"
@@ -935,12 +936,13 @@ bool RegionFlowComputation::InitFrame(const cv::Mat& source,
     // Area based method best for downsampling.
     // For color images to temporary buffer.
     cv::Mat& resized = source.channels() == 1 ? dest_frame : *curr_color_image_;
-    cv::resize(source, resized, resized.size(), 0, 0, CV_INTER_AREA);
+    cv::resize(source, resized, resized.size(), 0, 0, cv::INTER_AREA);
     source_ptr = &resized;
     // Resize feature extraction mask if needed.
     if (!source_mask.empty()) {
       dest_mask.create(resized.rows, resized.cols, CV_8UC1);
-      cv::resize(source_mask, dest_mask, dest_mask.size(), 0, 0, CV_INTER_NN);
+      cv::resize(source_mask, dest_mask, dest_mask.size(), 0, 0,
+                 cv::INTER_NEAREST);
     }
   } else if (!source_mask.empty()) {
     source_mask.copyTo(dest_mask);
@@ -954,7 +956,7 @@ bool RegionFlowComputation::InitFrame(const cv::Mat& source,
     const int dimension = visual_options.tiny_image_dimension();
     data->tiny_image.create(dimension, dimension, type);
     cv::resize(*source_ptr, data->tiny_image, data->tiny_image.size(), 0, 0,
-               CV_INTER_AREA);
+               cv::INTER_AREA);
   }
 
   if (source_ptr->channels() == 1 &&
@@ -2286,7 +2288,7 @@ void RegionFlowComputation::ExtractFeatures(
   // Initialize mask from frame's feature extraction mask, by downsampling and
   // negating the latter mask.
   if (!data->mask.empty()) {
-    cv::resize(data->mask, mask, mask.size(), 0, 0, CV_INTER_NN);
+    cv::resize(data->mask, mask, mask.size(), 0, 0, cv::INTER_NEAREST);
     for (int y = 0; y < mask.rows; ++y) {
       uint8* mask_ptr = mask.ptr<uint8>(y);
       for (int x = 0; x < mask.cols; ++x) {
@@ -2589,12 +2591,6 @@ void RegionFlowComputation::TrackFeatures(FrameTrackingData* from_data_ptr,
   cv::_InputArray input_frame1(data1.pyramid);
   cv::_InputArray input_frame2(data2.pyramid);
 #endif
-
-  // Using old c-interface for OpenCV's 2.2 tracker.
-  CvTermCriteria criteria;
-  criteria.type = CV_TERMCRIT_EPS | CV_TERMCRIT_ITER;
-  criteria.max_iter = options_.tracking_options().tracking_iterations();
-  criteria.epsilon = 0.02f;
 
   feature_track_error_.resize(num_features);
   feature_status_.resize(num_features);
