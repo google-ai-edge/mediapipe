@@ -100,6 +100,46 @@ void ConfigureAudioToTensorCalculator(
 }
 }  // namespace
 
+// An "AudioEmebdderGraph" performs embedding extractions.
+// - Accepts CPU audio buffer and outputs embedding results on CPU.
+//
+// Inputs:
+//   AUDIO - Matrix
+//     Audio buffer to perform classification on.
+//   SAMPLE_RATE - double @Optional
+//     The sample rate of the corresponding audio data in the "AUDIO" stream.
+//     If sample rate is not provided, the "AUDIO" stream must carry a time
+//     series stream header with sample rate info.
+//
+// Outputs:
+//   EMBEDDINGS - EmbeddingResult @Optional
+//     The embedding results aggregated by head. Only produces results if
+//     the graph if the 'use_stream_mode' option is true.
+//   TIMESTAMPED_EMBEDDINGS - std::vector<EmbeddingResult> @Optional
+//     The embedding result aggregated by timestamp, then by head. Only
+//     produces results if the graph if the 'use_stream_mode' option is false.
+//
+// Example:
+// node {
+//   calculator: "mediapipe.tasks.audio.audio_embedder.AudioEmbedderGraph"
+//   input_stream: "AUDIO:audio_in"
+//   input_stream: "SAMPLE_RATE:sample_rate_in"
+//   output_stream: "EMBEDDINGS:embeddings_out"
+//   output_stream: "TIMESTAMPED_EMBEDDINGS:timestamped_embeddings_out"
+//   options {
+//     [mediapipe.tasks.audio.audio_embedder.proto.AudioEmbedderGraphOptions.ext]
+//     {
+//       base_options {
+//         model_asset {
+//           file_name: "/path/to/model.tflite"
+//         }
+//       }
+//       embedder_options {
+//         l2_normalize: true
+//       }
+//     }
+//   }
+// }
 class AudioEmbedderGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
