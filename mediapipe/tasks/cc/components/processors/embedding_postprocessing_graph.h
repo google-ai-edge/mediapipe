@@ -58,7 +58,7 @@ namespace processors {
 //     The embedding result aggregated by timestamp, then by head. Must be
 //     connected if the TIMESTAMPS input is connected, as it signals that
 //     timestamp aggregation is required.
-absl::Status ConfigureEmbeddingPostprocessing(
+absl::Status ConfigureEmbeddingPostprocessingGraph(
     const tasks::core::ModelResources& model_resources,
     const proto::EmbedderOptions& embedder_options,
     proto::EmbeddingPostprocessingGraphOptions* options);

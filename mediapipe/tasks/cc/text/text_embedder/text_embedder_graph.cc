@@ -128,10 +128,12 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
     // inference results.
     auto& postprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors.EmbeddingPostprocessingGraph");
-    MP_RETURN_IF_ERROR(components::processors::ConfigureEmbeddingPostprocessing(
-        model_resources, task_options.embedder_options(),
-        &postprocessing.GetOptions<components::processors::proto::
-                                       EmbeddingPostprocessingGraphOptions>()));
+    MP_RETURN_IF_ERROR(
+        components::processors::ConfigureEmbeddingPostprocessingGraph(
+            model_resources, task_options.embedder_options(),
+            &postprocessing
+                 .GetOptions<components::processors::proto::
+                                 EmbeddingPostprocessingGraphOptions>()));
     inference.Out(kTensorsTag) >> postprocessing.In(kTensorsTag);
 
     // Outputs the embedding result.
