@@ -23,7 +23,7 @@ import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/pr
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
-import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/wasm_mediapipe_lib';
+import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {TextEmbedderOptions} from './text_embedder_options';

@@ -27,7 +27,7 @@ import {Category} from '../../../../tasks/web/components/containers/category';
 import {Landmark} from '../../../../tasks/web/components/containers/landmark';
 import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
 import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {createMediaPipeLib, FileLocator, ImageSource, WasmModule} from '../../../../web/graph_runner/wasm_mediapipe_lib';
+import {createMediaPipeLib, FileLocator, ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {HandLandmarkerOptions} from './hand_landmarker_options';

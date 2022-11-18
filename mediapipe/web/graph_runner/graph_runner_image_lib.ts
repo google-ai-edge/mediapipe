@@ -1,12 +1,12 @@
-import {ImageSource, WasmMediaPipeLib} from './wasm_mediapipe_lib';
+import {ImageSource, GraphRunner} from './graph_runner';
 
 /**
- * We extend from a WasmMediaPipeLib constructor. This ensures our mixin has
+ * We extend from a GraphRunner constructor. This ensures our mixin has
  * access to the wasmModule, among other things. The `any` type is required for
  * mixin constructors.
  */
 // tslint:disable-next-line:no-any
-type LibConstructor = new (...args: any[]) => WasmMediaPipeLib;
+type LibConstructor = new (...args: any[]) => GraphRunner;
 
 /**
  * Declarations for Emscripten's WebAssembly Module behavior, so TS compiler
@@ -19,10 +19,10 @@ export declare interface WasmImageModule {
 }
 
 /**
- * An implementation of WasmMediaPipeLib that supports binding GPU image data as
+ * An implementation of GraphRunner that supports binding GPU image data as
  * `mediapipe::Image` instances. We implement as a proper TS mixin, to allow for
  * effective multiple inheritance. Example usage:
- * `const WasmMediaPipeImageLib = SupportImage(WasmMediaPipeLib);`
+ * `const WasmMediaPipeImageLib = SupportImage(GraphRunner);`
  */
 // tslint:disable-next-line:enforce-name-casing
 export function SupportImage<TBase extends LibConstructor>(Base: TBase) {

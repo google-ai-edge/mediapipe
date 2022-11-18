@@ -23,7 +23,7 @@ import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
-import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/wasm_mediapipe_lib';
+import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {AudioClassifierOptions} from './audio_classifier_options';

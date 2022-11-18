@@ -15,12 +15,12 @@
  */
 
 import {SupportModelResourcesGraphService} from '../../../web/graph_runner/register_model_resources_graph_service';
-import {SupportImage} from '../../../web/graph_runner/wasm_mediapipe_image_lib';
-import {WasmMediaPipeLib, WasmModule} from '../../../web/graph_runner/wasm_mediapipe_lib';
+import {SupportImage} from '../../../web/graph_runner/graph_runner_image_lib';
+import {GraphRunner, WasmModule} from '../../../web/graph_runner/graph_runner';
 
 // tslint:disable-next-line:enforce-name-casing
 const WasmMediaPipeImageLib =
-    SupportModelResourcesGraphService(SupportImage(WasmMediaPipeLib));
+    SupportModelResourcesGraphService(SupportImage(GraphRunner));
 
 /** Base class for all MediaPipe Tasks. */
 export abstract class TaskRunner extends WasmMediaPipeImageLib {

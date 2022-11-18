@@ -129,7 +129,7 @@ declare global {
 declare function importScripts(...urls: Array<string|URL>): void;
 
 /**
- * Valid types of image sources which we can run our WasmMediaPipeLib over.
+ * Valid types of image sources which we can run our GraphRunner over.
  */
 export type ImageSource =
     HTMLCanvasElement|HTMLVideoElement|HTMLImageElement|ImageData|ImageBitmap;
@@ -138,7 +138,7 @@ export type ImageSource =
 /** A listener that will be invoked with an absl::StatusCode and message. */
 export type ErrorListener = (code: number, message: string) => void;
 
-// Internal type of constructors used for initializing WasmMediaPipeLib and
+// Internal type of constructors used for initializing GraphRunner and
 // subclasses.
 type WasmMediaPipeConstructor<LibType> =
     (new (
@@ -151,7 +151,7 @@ type WasmMediaPipeConstructor<LibType> =
  * into canvas, or else return the output WebGLTexture. Takes a WebAssembly
  * Module (must be instantiated to self.Module).
  */
-export class WasmMediaPipeLib {
+export class GraphRunner {
   // TODO: These should be protected/private, but are left exposed for
   //   now so that we can use proper TS mixins with this class as a base. This
   //   should be somewhat fixed when we create our .d.ts files.
@@ -989,7 +989,7 @@ async function runScript(scriptUrl: string) {
 /**
  * Global function to initialize Wasm blob and load runtime assets for a
  *     specialized MediaPipe library. This allows us to create a requested
- *     subclass inheriting from WasmMediaPipeLib.
+ *     subclass inheriting from GraphRunner.
  * @param constructorFcn The name of the class to instantiate via "new".
  * @param wasmLoaderScript Url for the wasm-runner script; produced by the build
  *     process.
@@ -1043,12 +1043,12 @@ export async function createMediaPipeLib<LibType>(
  * @return promise A promise which will resolve when initialization has
  *     completed successfully.
  */
-export async function createWasmMediaPipeLib(
+export async function createGraphRunner(
     wasmLoaderScript?: string,
     assetLoaderScript?: string,
     glCanvas?: HTMLCanvasElement|OffscreenCanvas|null,
-    fileLocator?: FileLocator): Promise<WasmMediaPipeLib> {
+    fileLocator?: FileLocator): Promise<GraphRunner> {
   return createMediaPipeLib(
-      WasmMediaPipeLib, wasmLoaderScript, assetLoaderScript, glCanvas,
+      GraphRunner, wasmLoaderScript, assetLoaderScript, glCanvas,
       fileLocator);
 }

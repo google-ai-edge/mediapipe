@@ -27,7 +27,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/components/containers:landmark",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
-        "//mediapipe/web/graph_runner:wasm_mediapipe_lib_ts",
+        "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )
 

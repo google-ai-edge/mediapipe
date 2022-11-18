@@ -17,7 +17,7 @@
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {convertBaseOptionsToProto} from '../../../../tasks/web/components/processors/base_options';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
-import {ImageSource} from '../../../../web/graph_runner/wasm_mediapipe_lib';
+import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 
 import {VisionTaskOptions} from './vision_task_options';
 

@@ -18,9 +18,9 @@ mediapipe_ts_library(
         "task_runner.ts",
     ],
     deps = [
+        "//mediapipe/web/graph_runner:graph_runner_image_lib_ts",
+        "//mediapipe/web/graph_runner:graph_runner_ts",
         "//mediapipe/web/graph_runner:register_model_resources_graph_service_ts",
-        "//mediapipe/web/graph_runner:wasm_mediapipe_image_lib_ts",
-        "//mediapipe/web/graph_runner:wasm_mediapipe_lib_ts",
     ],
 )
 
