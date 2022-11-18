@@ -91,6 +91,10 @@ class Classifier(custom_model.CustomModel):
     self._history = self._model.fit(
         x=train_dataset,
         epochs=self._hparams.epochs,
+        # `steps_per_epoch` is intentionally set to None in case the dataset
+        # is not repeated. Otherwise, the training process will stop when the
+        # dataset is exhausted even if there are epochs remaining.
+        steps_per_epoch=None,
         validation_data=validation_dataset,
         callbacks=self._callbacks)
 
