@@ -147,7 +147,7 @@ objc_library(
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         ":mediapipe_framework_ios",
-        "//mediapipe/gpu:gl_calculator_helper_ios",
+        "//mediapipe/gpu:gl_calculator_helper",
         "//mediapipe/gpu:gl_quad_renderer",
         "//mediapipe/gpu:gl_simple_shaders",
     ],
@@ -173,7 +173,7 @@ objc_library(
     deps = [
         ":mediapipe_framework_ios",
         ":mediapipe_gl_view_renderer",
-        "//mediapipe/gpu:gl_calculator_helper_ios",
+        "//mediapipe/gpu:gl_calculator_helper",
     ],
 )
 

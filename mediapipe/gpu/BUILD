@@ -810,20 +810,6 @@ cc_library(
     }),
 )
 
-# TODO: remove
-objc_library(
-    name = "gl_calculator_helper_ios",
-    copts = [
-        "-Wno-shorten-64-to-32",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":gl_calculator_helper",
-        "//mediapipe/objc:mediapipe_framework_ios",
-        "//mediapipe/objc:util",
-    ],
-)
-
 objc_library(
     name = "MPPMetalHelper",
     srcs = ["MPPMetalHelper.mm"],
