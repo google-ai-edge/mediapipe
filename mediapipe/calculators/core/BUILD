@@ -341,7 +341,6 @@ cc_test(
     srcs = ["concatenate_proto_list_calculator_test.cc"],
     deps = [
         ":concatenate_proto_list_calculator",
-        ":concatenate_vector_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework:timestamp",
@@ -403,7 +402,6 @@ cc_test(
     srcs = ["clip_vector_size_calculator_test.cc"],
     deps = [
         ":clip_vector_size_calculator",
-        "//mediapipe/calculators/core:packet_resampler_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework:timestamp",
@@ -956,10 +954,10 @@ cc_library(
     deps = [
         ":split_vector_calculator_cc_proto",
         "//mediapipe/framework/formats:detection_cc_proto",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",

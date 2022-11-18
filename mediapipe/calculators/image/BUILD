@@ -159,8 +159,8 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":set_alpha_calculator_cc_proto",
-        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
@@ -186,8 +186,8 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":bilateral_filter_calculator_cc_proto",
-        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework:calculator_options_cc_proto",
         "@com_google_absl//absl/strings",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
@@ -290,10 +290,10 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":image_cropping_calculator_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
-        "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
@@ -361,12 +361,12 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":recolor_calculator_cc_proto",
+        "//mediapipe/util:color_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/util:color_cc_proto",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
     ] + select({
@@ -630,8 +630,8 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":segmentation_smoothing_calculator_cc_proto",
-        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image",

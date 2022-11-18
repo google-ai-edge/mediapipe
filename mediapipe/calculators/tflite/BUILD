@@ -289,8 +289,8 @@ cc_library(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/util/tflite:config",
         ":tflite_converter_calculator_cc_proto",
+        "//mediapipe/util/tflite:config",
         "//mediapipe/util:resource_util",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
@@ -410,15 +410,15 @@ cc_library(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/util/tflite:config",
         ":tflite_tensors_to_detections_calculator_cc_proto",
         "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats/object_detection:anchor_cc_proto",
+        "//mediapipe/util/tflite:config",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:location",
-        "//mediapipe/framework/formats/object_detection:anchor_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "@org_tensorflow//tensorflow/lite:framework",
     ] + selects.with_or({

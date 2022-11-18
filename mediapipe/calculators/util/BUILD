@@ -23,8 +23,8 @@ cc_library(
     srcs = ["alignment_points_to_rects_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        ":detections_to_rects_calculator_cc_proto",
         "//mediapipe/calculators/util:detections_to_rects_calculator",
-        "//mediapipe/calculators/util:detections_to_rects_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:detection_cc_proto",
@@ -266,8 +266,8 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":annotation_overlay_calculator_cc_proto",
-        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/util:color_cc_proto",
         "@com_google_absl//absl/strings",
         "//mediapipe/framework:calculator_framework",
@@ -755,7 +755,6 @@ cc_library(
     deps = [
         ":labels_to_render_data_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:video_stream_header",
         "//mediapipe/framework/port:ret_check",
@@ -1313,8 +1312,8 @@ cc_library(
     srcs = ["to_image_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:image_frame",
@@ -1336,8 +1335,8 @@ cc_library(
     srcs = ["from_image_calculator.cc"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image",

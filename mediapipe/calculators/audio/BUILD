@@ -197,7 +197,6 @@ cc_library(
         ":spectrogram_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:matrix",
-        "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",

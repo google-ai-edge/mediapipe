@@ -342,12 +342,12 @@ cc_library(
         "//mediapipe/framework/port:opencv_features2d",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/util/tracking:box_tracker_cc_proto",
+        "//mediapipe/util/tracking:flow_packager_cc_proto",
         "//mediapipe/util:resource_util",
         "//mediapipe/util/tracking",
         "//mediapipe/util/tracking:box_detector",
         "//mediapipe/util/tracking:box_tracker",
-        "//mediapipe/util/tracking:box_tracker_cc_proto",
-        "//mediapipe/util/tracking:flow_packager_cc_proto",
         "//mediapipe/util/tracking:tracking_visualization_utilities",
     ] + select({
         "//mediapipe:android": [

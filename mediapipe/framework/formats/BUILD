@@ -133,9 +133,9 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
+        ":affine_transform_data_cc_proto",
         "//mediapipe/framework:port",
         "//mediapipe/framework:type_map",
-        "//mediapipe/framework/formats:affine_transform_data_cc_proto",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:point",
@@ -209,8 +209,8 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "@com_google_protobuf//:protobuf",
-        "//mediapipe/framework/formats:location_data_cc_proto",
         "//mediapipe/framework/formats/annotation:locus_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
@@ -241,6 +241,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":location",
+        "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
         "//mediapipe/framework/port:opencv_imgproc",
     ],
     alwayslink = 1,
@@ -251,6 +252,7 @@ cc_test(
     srcs = ["location_opencv_test.cc"],
     deps = [
         ":location_opencv",
+        "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:rectangle",
     ],
@@ -346,8 +348,8 @@ cc_library(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
         "@com_google_absl//absl/synchronization",
         "//mediapipe/framework:port",
         "//mediapipe/framework:type_map",

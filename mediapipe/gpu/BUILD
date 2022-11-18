@@ -783,7 +783,6 @@ cc_library(
         ":image_frame_view",
         ":shader_util",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:calculator_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
