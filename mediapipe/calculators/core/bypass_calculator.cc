@@ -111,6 +111,10 @@ class BypassCalculator : public Node {
         cc->Outputs().Get(id).SetAny();
       }
     }
+    for (auto id = cc->InputSidePackets().BeginId();
+         id != cc->InputSidePackets().EndId(); ++id) {
+      cc->InputSidePackets().Get(id).SetAny();
+    }
     return absl::OkStatus();
   }
 
