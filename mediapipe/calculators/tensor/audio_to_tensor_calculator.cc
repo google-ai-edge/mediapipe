@@ -43,6 +43,7 @@ namespace api2 {
 namespace {
 
 using Options = ::mediapipe::AudioToTensorCalculatorOptions;
+using DftTensorFormat = Options::DftTensorFormat;
 using FlushMode = Options::FlushMode;
 
 std::vector<float> HannWindow(int window_size, bool sqrt_hann) {
@@ -188,6 +189,8 @@ class AudioToTensorCalculator : public Node {
   int padding_samples_before_;
   int padding_samples_after_;
   FlushMode flush_mode_;
+  DftTensorFormat dft_tensor_format_;
+
   Timestamp initial_timestamp_ = Timestamp::Unstarted();
   int64 cumulative_input_samples_ = 0;
   Timestamp next_output_timestamp_ = Timestamp::Unstarted();
@@ -273,6 +276,7 @@ absl::Status AudioToTensorCalculator::Open(CalculatorContext* cc) {
   }
   padding_samples_before_ = options.padding_samples_before();
   padding_samples_after_ = options.padding_samples_after();
+  dft_tensor_format_ = options.dft_tensor_format();
   flush_mode_ = options.flush_mode();
 
   RET_CHECK(kAudioSampleRateIn(cc).IsConnected() ^
@@ -492,14 +496,43 @@ absl::Status AudioToTensorCalculator::OutputTensor(const Matrix& block,
       kDcAndNyquistOut(cc).Send(std::make_pair(fft_output_[0], fft_output_[1]),
                                 timestamp);
     }
-    Matrix fft_output_matrix =
-        Eigen::Map<const Matrix>(fft_output_.data() + 2, 1, fft_size_ - 2);
-    fft_output_matrix.conservativeResize(Eigen::NoChange, fft_size_);
-    // The last two elements are the DFT Nyquist values.
-    fft_output_matrix(fft_size_ - 2) = fft_output_[1];  // Nyquist real part
-    fft_output_matrix(fft_size_ - 1) = 0.0f;            // Nyquist imagery part
-    ASSIGN_OR_RETURN(output_tensor,
-                     ConvertToTensor(fft_output_matrix, {2, fft_size_ / 2}));
+    switch (dft_tensor_format_) {
+      case Options::WITH_NYQUIST: {
+        Matrix fft_output_matrix =
+            Eigen::Map<const Matrix>(fft_output_.data() + 2, 1, fft_size_ - 2);
+        fft_output_matrix.conservativeResize(Eigen::NoChange, fft_size_);
+        // The last two elements are Nyquist component.
+        fft_output_matrix(fft_size_ - 2) = fft_output_[1];  // Nyquist real part
+        fft_output_matrix(fft_size_ - 1) = 0.0f;  // Nyquist imagery part
+        ASSIGN_OR_RETURN(output_tensor, ConvertToTensor(fft_output_matrix,
+                                                        {2, fft_size_ / 2}));
+        break;
+      }
+      case Options::WITH_DC_AND_NYQUIST: {
+        Matrix fft_output_matrix =
+            Eigen::Map<const Matrix>(fft_output_.data(), 1, fft_size_);
+        fft_output_matrix.conservativeResize(Eigen::NoChange, fft_size_ + 2);
+        fft_output_matrix(1) = 0.0f;  // DC imagery part.
+        // The last two elements are  Nyquist component.
+        fft_output_matrix(fft_size_) = fft_output_[1];  // Nyquist real part
+        fft_output_matrix(fft_size_ + 1) = 0.0f;        // Nyquist imagery part
+        ASSIGN_OR_RETURN(
+            output_tensor,
+            ConvertToTensor(fft_output_matrix, {2, (fft_size_ + 2) / 2}));
+        break;
+      }
+      case Options::WITHOUT_DC_AND_NYQUIST: {
+        Matrix fft_output_matrix =
+            Eigen::Map<const Matrix>(fft_output_.data() + 2, 1, fft_size_ - 2);
+        ASSIGN_OR_RETURN(
+            output_tensor,
+            ConvertToTensor(fft_output_matrix, {2, (fft_size_ - 2) / 2}));
+        break;
+      }
+      default:
+        return absl::InvalidArgumentError("Unsupported dft tensor format.");
+    }
+
   } else {
     ASSIGN_OR_RETURN(output_tensor,
                      ConvertToTensor(block, {num_channels_, num_samples_}));
