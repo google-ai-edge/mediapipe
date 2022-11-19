@@ -48,15 +48,19 @@ class OpenCvProcessor : public ImageToTensorConverter {
     switch (tensor_type_) {
       case Tensor::ElementType::kInt8:
         mat_type_ = CV_8SC3;
+        mat_gray_type_ = CV_8SC1;
         break;
       case Tensor::ElementType::kFloat32:
         mat_type_ = CV_32FC3;
+        mat_gray_type_ = CV_32FC1;
         break;
       case Tensor::ElementType::kUInt8:
         mat_type_ = CV_8UC3;
+        mat_gray_type_ = CV_8UC1;
         break;
       default:
         mat_type_ = -1;
+        mat_gray_type_ = -1;
     }
   }
 
@@ -64,11 +68,13 @@ class OpenCvProcessor : public ImageToTensorConverter {
                        float range_min, float range_max,
                        int tensor_buffer_offset,
                        Tensor& output_tensor) override {
-    if (input.image_format() != mediapipe::ImageFormat::SRGB &&
-        input.image_format() != mediapipe::ImageFormat::SRGBA) {
-      return InvalidArgumentError(
-          absl::StrCat("Only RGBA/RGB formats are supported, passed format: ",
-                       static_cast<uint32_t>(input.image_format())));
+    const bool is_supported_format =
+        input.image_format() == mediapipe::ImageFormat::SRGB ||
+        input.image_format() == mediapipe::ImageFormat::SRGBA ||
+        input.image_format() == mediapipe::ImageFormat::GRAY8;
+    if (!is_supported_format) {
+      return InvalidArgumentError(absl::StrCat(
+          "Unsupported format: ", static_cast<uint32_t>(input.image_format())));
     }
     // TODO: Remove the check once tensor_buffer_offset > 0 is
     // supported.
@@ -82,17 +88,18 @@ class OpenCvProcessor : public ImageToTensorConverter {
     const int output_channels = output_shape.dims[3];
     auto buffer_view = output_tensor.GetCpuWriteView();
     cv::Mat dst;
+    const int dst_data_type = output_channels == 1 ? mat_gray_type_ : mat_type_;
     switch (tensor_type_) {
       case Tensor::ElementType::kInt8:
-        dst = cv::Mat(output_height, output_width, mat_type_,
+        dst = cv::Mat(output_height, output_width, dst_data_type,
                       buffer_view.buffer<int8>());
         break;
       case Tensor::ElementType::kFloat32:
-        dst = cv::Mat(output_height, output_width, mat_type_,
+        dst = cv::Mat(output_height, output_width, dst_data_type,
                       buffer_view.buffer<float>());
         break;
       case Tensor::ElementType::kUInt8:
-        dst = cv::Mat(output_height, output_width, mat_type_,
+        dst = cv::Mat(output_height, output_width, dst_data_type,
                       buffer_view.buffer<uint8>());
         break;
       default:
@@ -137,7 +144,8 @@ class OpenCvProcessor : public ImageToTensorConverter {
         auto transform,
         GetValueRangeTransformation(kInputImageRangeMin, kInputImageRangeMax,
                                     range_min, range_max));
-    transformed.convertTo(dst, mat_type_, transform.scale, transform.offset);
+    transformed.convertTo(dst, dst_data_type, transform.scale,
+                          transform.offset);
     return absl::OkStatus();
   }
 
@@ -148,7 +156,7 @@ class OpenCvProcessor : public ImageToTensorConverter {
     RET_CHECK_EQ(output_shape.dims[0], 1)
         << "Handling batch dimension not equal to 1 is not implemented in this "
            "converter.";
-    RET_CHECK_EQ(output_shape.dims[3], 3)
+    RET_CHECK(output_shape.dims[3] == 3 || output_shape.dims[3] == 1)
         << "Wrong output channel: " << output_shape.dims[3];
     return absl::OkStatus();
   }
@@ -156,6 +164,7 @@ class OpenCvProcessor : public ImageToTensorConverter {
   enum cv::BorderTypes border_mode_;
   Tensor::ElementType tensor_type_;
   int mat_type_;
+  int mat_gray_type_;
 };
 
 }  // namespace

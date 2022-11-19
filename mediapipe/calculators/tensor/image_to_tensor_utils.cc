@@ -253,8 +253,11 @@ int GetNumOutputChannels(const mediapipe::Image& image) {
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU
-  // All of the processors except for Metal expect 3 channels.
-  return 3;
+  // The output tensor channel is 1 for the input image with 1 channel; And the
+  // output tensor channels is 3 for the input image with 3 or 4 channels.
+  // TODO: Add a unittest here to test the behavior on GPU, i.e.
+  // failure.
+  return image.channels() == 1 ? 1 : 3;
 }
 
 absl::StatusOr<std::shared_ptr<const mediapipe::Image>> GetInputImage(
