@@ -260,13 +260,18 @@ GlTextureView GlTextureBuffer::GetReadView(internal::types<GlTextureView>,
   auto gl_context = GlContext::GetCurrent();
   CHECK(gl_context);
   CHECK_EQ(plane, 0);
+  // Note that this method is only supposed to be called by GpuBuffer, which
+  // ensures this condition is satisfied.
+  DCHECK(!weak_from_this().expired())
+      << "GlTextureBuffer must be held in shared_ptr to get a GlTextureView";
   // Insert wait call to sync with the producer.
   WaitOnGpu();
-  GlTextureView::DetachFn detach = [this](GlTextureView& texture) {
-    // Inform the GlTextureBuffer that we have finished accessing its
-    // contents, and create a consumer sync point.
-    DidRead(texture.gl_context()->CreateSyncToken());
-  };
+  GlTextureView::DetachFn detach =
+      [texbuf = shared_from_this()](GlTextureView& texture) {
+        // Inform the GlTextureBuffer that we have finished accessing its
+        // contents, and create a consumer sync point.
+        texbuf->DidRead(texture.gl_context()->CreateSyncToken());
+      };
   return GlTextureView(gl_context.get(), target(), name(), width(), height(),
                        plane, std::move(detach), nullptr);
 }
@@ -276,12 +281,18 @@ GlTextureView GlTextureBuffer::GetWriteView(internal::types<GlTextureView>,
   auto gl_context = GlContext::GetCurrent();
   CHECK(gl_context);
   CHECK_EQ(plane, 0);
+  // Note that this method is only supposed to be called by GpuBuffer, which
+  // ensures this condition is satisfied.
+  DCHECK(!weak_from_this().expired())
+      << "GlTextureBuffer must be held in shared_ptr to get a GlTextureView";
   // Insert wait call to sync with the producer.
   WaitOnGpu();
   Reuse();  // TODO: the producer wait should probably be part of Reuse in the
             // case when there are no consumers.
   GlTextureView::DoneWritingFn done_writing =
-      [this](const GlTextureView& texture) { ViewDoneWriting(texture); };
+      [texbuf = shared_from_this()](const GlTextureView& texture) {
+        texbuf->ViewDoneWriting(texture);
+      };
   return GlTextureView(gl_context.get(), target(), name(), width(), height(),
                        plane, nullptr, std::move(done_writing));
 }

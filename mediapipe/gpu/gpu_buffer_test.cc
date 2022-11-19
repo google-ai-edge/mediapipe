@@ -14,6 +14,8 @@
 
 #include "mediapipe/gpu/gpu_buffer.h"
 
+#include <utility>
+
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -204,6 +206,26 @@ TEST_F(GpuBufferTest, Overwrite) {
     MP_EXPECT_OK(SavePngTestOutput(blue, "ow_blue_gold"));
     MP_EXPECT_OK(SavePngTestOutput(*view, "ow_blue_view"));
   }
+}
+
+TEST_F(GpuBufferTest, GlTextureViewRetainsWhatItNeeds) {
+  GpuBuffer buffer(300, 200, GpuBufferFormat::kBGRA32);
+  {
+    std::shared_ptr<ImageFrame> view = buffer.GetWriteView<ImageFrame>();
+    EXPECT_EQ(view->Width(), 300);
+    EXPECT_EQ(view->Height(), 200);
+    FillImageFrameRGBA(*view, 255, 0, 0, 255);
+  }
+
+  RunInGlContext([buffer = std::move(buffer)]() mutable {
+    // This is not a recommended pattern, but let's make sure that we don't
+    // crash if the buffer is released before the view. The view can hold
+    // callbacks into its underlying storage.
+    auto view = buffer.GetReadView<GlTextureView>(0);
+    buffer = nullptr;
+  });
+  // We're really checking that we haven't crashed.
+  EXPECT_TRUE(true);
 }
 
 }  // anonymous namespace
