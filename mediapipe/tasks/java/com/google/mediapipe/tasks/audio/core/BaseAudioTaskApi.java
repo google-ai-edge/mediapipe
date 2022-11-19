@@ -116,6 +116,7 @@ public class BaseAudioTaskApi implements AutoCloseable {
       defaultSampleRate = sampleRate;
     }
   }
+
   /**
    * An asynchronous method to send audio stream data to the {@link TaskRunner}. The results will be
    * available in the user-defined result listener.
