@@ -26,6 +26,7 @@ mediapipe_ts_library(
     srcs = ["audio.ts"],
     deps = [
         "//mediapipe/tasks/web/audio/audio_classifier",
+        "//mediapipe/tasks/web/audio/audio_embedder",
     ],
 )
 

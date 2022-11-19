@@ -14,12 +14,4 @@
  * limitations under the License.
  */
 
-import {AudioClassifier as AudioClassifierImpl} from '../../tasks/web/audio/audio_classifier/audio_classifier';
-import {AudioEmbedder as AudioEmbedderImpl} from '../../tasks/web/audio/audio_embedder/audio_embedder';
-
-// Declare the variables locally so that Rollup in OSS includes them explcilty
-// as exports.
-const AudioClassifier = AudioClassifierImpl;
-const AudioEmbedder = AudioEmbedderImpl;
-
-export {AudioClassifier, AudioEmbedder};
+export {Embedding, EmbeddingResult as AudioEmbedderResult} from '../../../../tasks/web/components/containers/embedding_result';

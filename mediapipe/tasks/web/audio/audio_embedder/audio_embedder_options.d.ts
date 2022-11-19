@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-import {AudioClassifier as AudioClassifierImpl} from '../../tasks/web/audio/audio_classifier/audio_classifier';
-import {AudioEmbedder as AudioEmbedderImpl} from '../../tasks/web/audio/audio_embedder/audio_embedder';
+import {AudioTaskOptions} from '../../../../tasks/web/audio/core/audio_task_options';
+import {EmbedderOptions} from '../../../../tasks/web/core/embedder_options';
 
-// Declare the variables locally so that Rollup in OSS includes them explcilty
-// as exports.
-const AudioClassifier = AudioClassifierImpl;
-const AudioEmbedder = AudioEmbedderImpl;
-
-export {AudioClassifier, AudioEmbedder};
+/** Options to configure the MediaPipe Audio Embedder Task */
+export declare interface AudioEmbedderOptions extends EmbedderOptions,
+                                                      AudioTaskOptions {}
