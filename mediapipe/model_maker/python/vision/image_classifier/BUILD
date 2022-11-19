@@ -21,9 +21,16 @@ package(
     default_visibility = ["//mediapipe:__subpackages__"],
 )
 
+######################################################################
+# Public target of the MediaPipe Model Maker ImageClassifier APIs.
+
+# Please see https://developers.google.com/mediapipe/solutions/vision/image_classifier/customize for
+# more information about the MediaPipe Model Maker ImageClassifier APIs.
+######################################################################
 py_library(
     name = "image_classifier_import",
     srcs = ["__init__.py"],
+    visibility = ["//visibility:public"],
     deps = [
         ":dataset",
         ":hyperparameters",

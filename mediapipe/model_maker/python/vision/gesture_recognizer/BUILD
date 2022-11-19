@@ -103,9 +103,16 @@ py_library(
     ],
 )
 
+######################################################################
+# Public target of the MediaPipe Model Maker GestureRecognizer APIs.
+
+# Please see https://developers.google.com/mediapipe/solutions/vision/gesture_recognizer/customize
+# for more information about the MediaPipe Model Maker GestureRecognizer APIs.
+######################################################################
 py_library(
     name = "gesture_recognizer_import",
     srcs = ["__init__.py"],
+    visibility = ["//visibility:public"],
     deps = [
         ":dataset",
         ":gesture_recognizer",
