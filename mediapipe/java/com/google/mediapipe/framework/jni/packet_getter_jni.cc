@@ -14,6 +14,7 @@
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/packet_getter_jni.h"
 
+#include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -299,34 +300,38 @@ JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
                : GetFromNativeHandle<mediapipe::ImageFrame>(packet);
 
   int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
+  void* buffer_data = env->GetDirectBufferAddress(byte_buffer);
+  if (buffer_data == nullptr || buffer_size < 0) {
+    ThrowIfError(env, absl::InvalidArgumentError(
+                          "input buffer does not support direct access"));
+    return false;
+  }
 
   // Assume byte buffer stores pixel data contiguously.
   const int expected_buffer_size = image.Width() * image.Height() *
                                    image.ByteDepth() * image.NumberOfChannels();
   if (buffer_size != expected_buffer_size) {
-    LOG(ERROR) << "Expected buffer size " << expected_buffer_size
-               << " got: " << buffer_size << ", width " << image.Width()
-               << ", height " << image.Height() << ", channels "
-               << image.NumberOfChannels();
+    ThrowIfError(
+        env, absl::InvalidArgumentError(absl::StrCat(
+                 "Expected buffer size ", expected_buffer_size,
+                 " got: ", buffer_size, ", width ", image.Width(), ", height ",
+                 image.Height(), ", channels ", image.NumberOfChannels())));
     return false;
   }
 
   switch (image.ByteDepth()) {
     case 1: {
-      uint8* data =
-          static_cast<uint8*>(env->GetDirectBufferAddress(byte_buffer));
+      uint8* data = static_cast<uint8*>(buffer_data);
       image.CopyToBuffer(data, expected_buffer_size);
       break;
     }
     case 2: {
-      uint16* data =
-          static_cast<uint16*>(env->GetDirectBufferAddress(byte_buffer));
+      uint16* data = static_cast<uint16*>(buffer_data);
       image.CopyToBuffer(data, expected_buffer_size);
       break;
     }
     case 4: {
-      float* data =
-          static_cast<float*>(env->GetDirectBufferAddress(byte_buffer));
+      float* data = static_cast<float*>(buffer_data);
       image.CopyToBuffer(data, expected_buffer_size);
       break;
     }
@@ -351,12 +356,19 @@ JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetRgbaFromRgb)(
   uint8_t* rgba_data =
       static_cast<uint8_t*>(env->GetDirectBufferAddress(byte_buffer));
   int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
+  if (rgba_data == nullptr || buffer_size < 0) {
+    ThrowIfError(env, absl::InvalidArgumentError(
+                          "input buffer does not support direct access"));
+    return false;
+  }
   if (buffer_size != image.Width() * image.Height() * 4) {
-    LOG(ERROR) << "Buffer size has to be width*height*4\n"
-               << "Image width: " << image.Width()
-               << ", Image height: " << image.Height()
-               << ", Buffer size: " << buffer_size << ", Buffer size needed: "
-               << image.Width() * image.Height() * 4;
+    ThrowIfError(env,
+                 absl::InvalidArgumentError(absl::StrCat(
+                     "Buffer size has to be width*height*4\n"
+                     "Image width: ",
+                     image.Width(), ", Image height: ", image.Height(),
+                     ", Buffer size: ", buffer_size, ", Buffer size needed: ",
+                     image.Width() * image.Height() * 4)));
     return false;
   }
   mediapipe::android::RgbToRgba(image.PixelData(), image.WidthStep(),
