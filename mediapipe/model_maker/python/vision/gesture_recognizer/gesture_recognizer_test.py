@@ -14,7 +14,6 @@
 
 import io
 import os
-import random
 import tempfile
 from unittest import mock as unittest_mock
 import zipfile
@@ -27,6 +26,7 @@ from mediapipe.model_maker.python.vision import gesture_recognizer
 from mediapipe.tasks.python.test import test_utils
 
 _TEST_DATA_DIR = 'mediapipe/model_maker/python/vision/gesture_recognizer/test_data'
+tf.keras.backend.experimental.enable_tf_random_generator()
 
 
 class GestureRecognizerTest(tf.test.TestCase):
@@ -42,7 +42,7 @@ class GestureRecognizerTest(tf.test.TestCase):
 
   def setUp(self):
     super().setUp()
-    random.seed(1234)
+    tf.keras.utils.set_random_seed(87654321)
     all_data = self._load_data()
     # Splits data, 90% data for training, 10% for validation
     self._train_data, self._validation_data = all_data.split(0.9)
