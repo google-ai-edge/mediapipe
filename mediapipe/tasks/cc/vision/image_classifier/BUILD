@@ -16,33 +16,13 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-cc_library(
-    name = "image_classifier_graph",
-    srcs = ["image_classifier_graph.cc"],
-    deps = [
-        "//mediapipe/calculators/tensor:inference_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/api2:builder",
-        "//mediapipe/framework/api2:port",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:rect_cc_proto",
-        "//mediapipe/tasks/cc/components:image_preprocessing",
-        "//mediapipe/tasks/cc/components:image_preprocessing_options_cc_proto",
-        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
-        "//mediapipe/tasks/cc/components/processors:classification_postprocessing_graph",
-        "//mediapipe/tasks/cc/components/processors/proto:classification_postprocessing_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/core:model_resources",
-        "//mediapipe/tasks/cc/core:model_task_graph",
-        "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_cc_proto",
-        "@com_google_absl//absl/status:statusor",
-    ],
-    alwayslink = 1,
-)
-
+# Docs for Mediapipe Tasks Image Classifier
+# https://developers.google.com/mediapipe/solutions/vision/image_classifier
 cc_library(
     name = "image_classifier",
     srcs = ["image_classifier.cc"],
     hdrs = ["image_classifier.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":image_classifier_graph",
         "//mediapipe/framework:packet",
@@ -67,6 +47,29 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
     ],
+)
+
+cc_library(
+    name = "image_classifier_graph",
+    srcs = ["image_classifier_graph.cc"],
+    deps = [
+        "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/cc/components:image_preprocessing",
+        "//mediapipe/tasks/cc/components:image_preprocessing_options_cc_proto",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
+        "//mediapipe/tasks/cc/components/processors:classification_postprocessing_graph",
+        "//mediapipe/tasks/cc/components/processors/proto:classification_postprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core:model_task_graph",
+        "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_cc_proto",
+        "@com_google_absl//absl/status:statusor",
+    ],
+    alwayslink = 1,
 )
 
 # TODO: This test fails in OSS

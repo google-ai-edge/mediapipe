@@ -21,3 +21,10 @@ package_group(
         "//mediapipe/tasks/...",
     ],
 )
+
+package_group(
+    name = "users",
+    includes = [
+        ":internal",
+    ],
+)

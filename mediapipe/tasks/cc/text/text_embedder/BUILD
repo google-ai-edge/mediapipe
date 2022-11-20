@@ -16,10 +16,13 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+# Docs for Mediapipe Tasks Text Embedder
+# https://developers.google.com/mediapipe/solutions/text/text_embedder
 cc_library(
     name = "text_embedder",
     srcs = ["text_embedder.cc"],
     hdrs = ["text_embedder.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":text_embedder_graph",
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",

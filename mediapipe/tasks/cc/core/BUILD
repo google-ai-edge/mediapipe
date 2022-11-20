@@ -22,9 +22,7 @@ cc_library(
     name = "base_options",
     srcs = ["base_options.cc"],
     hdrs = ["base_options.h"],
-    visibility = [
-        "//mediapipe/tasks:internal",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":mediapipe_builtin_op_resolver",
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",

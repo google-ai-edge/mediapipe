@@ -16,33 +16,13 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-cc_library(
-    name = "image_embedder_graph",
-    srcs = ["image_embedder_graph.cc"],
-    deps = [
-        "//mediapipe/calculators/tensor:inference_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/api2:builder",
-        "//mediapipe/framework/api2:port",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:rect_cc_proto",
-        "//mediapipe/tasks/cc/components:image_preprocessing",
-        "//mediapipe/tasks/cc/components:image_preprocessing_options_cc_proto",
-        "//mediapipe/tasks/cc/components/calculators:tensors_to_embeddings_calculator",
-        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
-        "//mediapipe/tasks/cc/components/processors:embedding_postprocessing_graph",
-        "//mediapipe/tasks/cc/components/processors/proto:embedding_postprocessing_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/core:model_task_graph",
-        "//mediapipe/tasks/cc/vision/image_embedder/proto:image_embedder_graph_options_cc_proto",
-        "@com_google_absl//absl/status:statusor",
-    ],
-    alwayslink = 1,
-)
-
+# Docs for Mediapipe Tasks Image Embedder
+# https://developers.google.com/mediapipe/solutions/vision/image_embedder
 cc_library(
     name = "image_embedder",
     srcs = ["image_embedder.cc"],
     hdrs = ["image_embedder.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":image_embedder_graph",
         "//mediapipe/framework/api2:builder",
@@ -65,6 +45,29 @@ cc_library(
         "//mediapipe/tasks/cc/vision/image_embedder/proto:image_embedder_graph_options_cc_proto",
         "@com_google_absl//absl/status:statusor",
     ],
+)
+
+cc_library(
+    name = "image_embedder_graph",
+    srcs = ["image_embedder_graph.cc"],
+    deps = [
+        "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/cc/components:image_preprocessing",
+        "//mediapipe/tasks/cc/components:image_preprocessing_options_cc_proto",
+        "//mediapipe/tasks/cc/components/calculators:tensors_to_embeddings_calculator",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "//mediapipe/tasks/cc/components/processors:embedding_postprocessing_graph",
+        "//mediapipe/tasks/cc/components/processors/proto:embedding_postprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/core:model_task_graph",
+        "//mediapipe/tasks/cc/vision/image_embedder/proto:image_embedder_graph_options_cc_proto",
+        "@com_google_absl//absl/status:statusor",
+    ],
+    alwayslink = 1,
 )
 
 # TODO: This test fails in OSS

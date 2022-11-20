@@ -16,6 +16,41 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+# Docs for Mediapipe Tasks Object Detector
+# https://developers.google.com/mediapipe/solutions/vision/object_detector
+cc_library(
+    name = "object_detector",
+    srcs = ["object_detector.cc"],
+    hdrs = ["object_detector.h"],
+    visibility = [
+        "//mediapipe/tasks:users",
+    ],
+    deps = [
+        ":object_detector_graph",
+        "//mediapipe/calculators/core:concatenate_vector_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
+        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
+        "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/cc/vision/core:image_processing_options",
+        "//mediapipe/tasks/cc/vision/core:running_mode",
+        "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
+        "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+    ],
+)
+
 cc_library(
     name = "object_detector_graph",
     srcs = ["object_detector_graph.cc"],
@@ -54,36 +89,6 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
     ],
     alwayslink = 1,
-)
-
-cc_library(
-    name = "object_detector",
-    srcs = ["object_detector.cc"],
-    hdrs = ["object_detector.h"],
-    deps = [
-        ":object_detector_graph",
-        "//mediapipe/calculators/core:concatenate_vector_calculator",
-        "//mediapipe/calculators/core:split_vector_calculator",
-        "//mediapipe/framework/api2:builder",
-        "//mediapipe/framework/formats:detection_cc_proto",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:rect_cc_proto",
-        "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator",
-        "//mediapipe/tasks/cc/core:base_options",
-        "//mediapipe/tasks/cc/core:utils",
-        "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
-        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
-        "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
-        "//mediapipe/tasks/cc/vision/core:image_processing_options",
-        "//mediapipe/tasks/cc/vision/core:running_mode",
-        "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
-        "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_cc_proto",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
-    ],
 )
 
 # TODO: This test fails in OSS

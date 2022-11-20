@@ -16,13 +16,13 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+# Docs for Mediapipe Tasks Image Segmenter
+# https://developers.google.com/mediapipe/solutions/vision/image_segmenter
 cc_library(
     name = "image_segmenter",
     srcs = ["image_segmenter.cc"],
     hdrs = ["image_segmenter.h"],
-    visibility = [
-        "//mediapipe/tasks:internal",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":image_segmenter_graph",
         "//mediapipe/framework/api2:builder",

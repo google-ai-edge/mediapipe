@@ -16,6 +16,33 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+# Docs for Mediapipe Tasks Text Classifier
+# https://developers.google.com/mediapipe/solutions/text/text_classifier
+cc_library(
+    name = "text_classifier",
+    srcs = ["text_classifier.cc"],
+    hdrs = ["text_classifier.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":text_classifier_graph",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/tasks/cc/components/containers:category",
+        "//mediapipe/tasks/cc/components/containers:classification_result",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
+        "//mediapipe/tasks/cc/components/processors:classifier_options",
+        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:base_task_api",
+        "//mediapipe/tasks/cc/core:task_api_factory",
+        "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+    ],
+)
+
 cc_library(
     name = "text_classifier_graph",
     srcs = ["text_classifier_graph.cc"],
@@ -39,30 +66,6 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
     ],
     alwayslink = 1,
-)
-
-cc_library(
-    name = "text_classifier",
-    srcs = ["text_classifier.cc"],
-    hdrs = ["text_classifier.h"],
-    deps = [
-        ":text_classifier_graph",
-        "//mediapipe/framework:packet",
-        "//mediapipe/framework/api2:builder",
-        "//mediapipe/tasks/cc/components/containers:category",
-        "//mediapipe/tasks/cc/components/containers:classification_result",
-        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
-        "//mediapipe/tasks/cc/components/processors:classifier_options",
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
-        "//mediapipe/tasks/cc/core:base_options",
-        "//mediapipe/tasks/cc/core:base_task_api",
-        "//mediapipe/tasks/cc/core:task_api_factory",
-        "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_cc_proto",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
-    ],
 )
 
 cc_test(
