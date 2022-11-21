@@ -47,7 +47,6 @@ using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 
 constexpr float kDefaultScoreThreshold = std::numeric_limits<float>::lowest();
 
-constexpr char kClassificationResultTag[] = "CLASSIFICATION_RESULT";
 constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kNormRectTag[] = "NORM_RECT";
@@ -56,7 +55,6 @@ constexpr char kTensorsTag[] = "TENSORS";
 // Struct holding the different output streams produced by the image classifier
 // subgraph.
 struct ImageClassifierOutputStreams {
-  Source<ClassificationResult> classification_result;
   Source<ClassificationResult> classifications;
   Source<Image> image;
 };
@@ -77,9 +75,6 @@ struct ImageClassifierOutputStreams {
 //     The classification results aggregated by classifier head.
 //   IMAGE - Image
 //     The image that object detection runs on.
-// TODO: remove this output once Java API migration is over.
-//   CLASSIFICATION_RESULT - (DEPRECATED) ClassificationResult @Optional
-//     The aggregated classification result.
 //
 // Example:
 // node {
@@ -117,8 +112,6 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
             sc->Options<proto::ImageClassifierGraphOptions>(), *model_resources,
             graph[Input<Image>(kImageTag)],
             graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
-    output_streams.classification_result >>
-        graph[Output<ClassificationResult>(kClassificationResultTag)];
     output_streams.classifications >>
         graph[Output<ClassificationResult>(kClassificationsTag)];
     output_streams.image >> graph[Output<Image>(kImageTag)];
@@ -174,8 +167,6 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
     // Outputs the aggregated classification result as the subgraph output
     // stream.
     return ImageClassifierOutputStreams{
-        /*classification_result=*/postprocessing[Output<ClassificationResult>(
-            kClassificationResultTag)],
         /*classifications=*/
         postprocessing[Output<ClassificationResult>(kClassificationsTag)],
         /*image=*/preprocessing[Output<Image>(kImageTag)]};

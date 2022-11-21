@@ -68,7 +68,7 @@ py_library(
     name = "category",
     srcs = ["category.py"],
     deps = [
-        "//mediapipe/tasks/cc/components/containers/proto:category_py_pb2",
+        "//mediapipe/framework/formats:classification_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
     ],
 )

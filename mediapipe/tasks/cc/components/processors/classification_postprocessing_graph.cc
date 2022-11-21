@@ -73,7 +73,6 @@ using TensorsSource = mediapipe::tasks::SourceOrNodeOutput<std::vector<Tensor>>;
 constexpr float kDefaultScoreThreshold = std::numeric_limits<float>::lowest();
 
 constexpr char kCalibratedScoresTag[] = "CALIBRATED_SCORES";
-constexpr char kClassificationResultTag[] = "CLASSIFICATION_RESULT";
 constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
 constexpr char kScoresTag[] = "SCORES";
 constexpr char kTensorsTag[] = "TENSORS";
@@ -82,7 +81,6 @@ constexpr char kTimestampedClassificationsTag[] = "TIMESTAMPED_CLASSIFICATIONS";
 
 // Struct holding the different output streams produced by the graph.
 struct ClassificationPostprocessingOutputStreams {
-  Source<ClassificationResult> classification_result;
   Source<ClassificationResult> classifications;
   Source<std::vector<ClassificationResult>> timestamped_classifications;
 };
@@ -400,9 +398,6 @@ absl::Status ConfigureClassificationPostprocessingGraph(
 //     The classification result aggregated by timestamp, then by head. Must be
 //     connected if the TIMESTAMPS input is connected, as it signals that
 //     timestamp aggregation is required.
-//   // TODO: remove output once migration is over.
-//   CLASSIFICATION_RESULT - (DEPRECATED) ClassificationResult @Optional
-//     The aggregated classification result.
 //
 // The recommended way of using this graph is through the GraphBuilder API
 // using the 'ConfigureClassificationPostprocessingGraph()' function. See header
@@ -418,8 +413,6 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
             sc->Options<proto::ClassificationPostprocessingGraphOptions>(),
             graph[Input<std::vector<Tensor>>(kTensorsTag)],
             graph[Input<std::vector<Timestamp>>(kTimestampsTag)], graph));
-    output_streams.classification_result >>
-        graph[Output<ClassificationResult>(kClassificationResultTag)];
     output_streams.classifications >>
         graph[Output<ClassificationResult>(kClassificationsTag)];
     output_streams.timestamped_classifications >>
@@ -536,8 +529,6 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
 
     // Connects output.
     ClassificationPostprocessingOutputStreams output_streams{
-        /*classification_result=*/result_aggregation
-            [Output<ClassificationResult>(kClassificationResultTag)],
         /*classifications=*/
         result_aggregation[Output<ClassificationResult>(kClassificationsTag)],
         /*timestamped_classifications=*/

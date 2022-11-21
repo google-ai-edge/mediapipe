@@ -97,7 +97,6 @@ android_library(
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/framework/image",
-        "//mediapipe/tasks/cc/components/containers/proto:category_java_proto_lite",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_java_proto_lite",
