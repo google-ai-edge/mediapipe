@@ -241,9 +241,9 @@ absl::Status InferenceCalculatorGlAdvancedImpl::OnDiskCacheHelper::Init(
                           gpu_delegate_options.has_model_token();
 
   if (use_kernel_caching_) {
-    cached_kernel_filename_ = gpu_delegate_options.cached_kernel_path() +
-                              mediapipe::File::Basename(options.model_path()) +
-                              ".ker";
+    cached_kernel_filename_ = mediapipe::file::JoinPath(
+        gpu_delegate_options.cached_kernel_path(),
+        mediapipe::File::Basename(options.model_path()) + ".ker");
   }
   if (use_serialized_model_) {
     serialized_model_path_ =
