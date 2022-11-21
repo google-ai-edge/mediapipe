@@ -30,6 +30,7 @@ exports_files(
     glob(["testdata/image_to_tensor/*"]),
     visibility = [
         "//mediapipe/calculators/image:__subpackages__",
+        "//mediapipe/util:__subpackages__",
     ],
 )
 
@@ -1133,6 +1134,7 @@ cc_test(
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/util:image_test_utils",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",

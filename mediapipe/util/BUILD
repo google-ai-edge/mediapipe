@@ -368,3 +368,21 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
     ],
 )
+
+cc_library(
+    name = "image_test_utils",
+    testonly = 1,
+    srcs = ["image_test_utils.cc"],
+    hdrs = ["image_test_utils.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgcodecs",
+        "//mediapipe/framework/port:opencv_imgproc",
+    ],
+)
