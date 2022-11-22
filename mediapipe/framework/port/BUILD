@@ -312,6 +312,17 @@ cc_library(
 )
 
 cc_library(
+    name = "opencv_videoio",
+    hdrs = ["opencv_videoio_inc.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":opencv_core",
+        "//mediapipe/framework:port",
+        "//third_party:opencv",
+    ],
+)
+
+cc_library(
     name = "parse_text_proto",
     hdrs = [
         "parse_text_proto.h",
