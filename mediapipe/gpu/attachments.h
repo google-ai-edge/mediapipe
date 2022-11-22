@@ -31,8 +31,8 @@ class AttachmentBase {};
 template <class Context, class T>
 class Attachment : public AttachmentBase<Context> {
  public:
-  using FactoryT = std::function<AttachmentPtr<T>(Context&)>;
-  Attachment(FactoryT factory) : factory_(factory) {}
+  using FactoryT = AttachmentPtr<T> (*)(Context&);
+  explicit constexpr Attachment(FactoryT factory) : factory_(factory) {}
 
   Attachment(const Attachment&) = delete;
   Attachment(Attachment&&) = delete;
