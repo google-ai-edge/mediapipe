@@ -15,6 +15,7 @@
 #include "mediapipe/gpu/gl_texture_buffer.h"
 
 #include "mediapipe/framework/formats/image_frame.h"
+#include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_texture_view.h"
 #include "mediapipe/gpu/gpu_buffer_storage_image_frame.h"
 
@@ -333,8 +334,8 @@ void GlTextureBuffer::ViewDoneWriting(const GlTextureView& view) {
 #endif  // __ANDROID__
 }
 
-static void ReadTexture(const GlTextureView& view, GpuBufferFormat format,
-                        void* output, size_t size) {
+static void ReadTexture(GlContext& ctx, const GlTextureView& view,
+                        GpuBufferFormat format, void* output, size_t size) {
   // TODO: check buffer size? We could use glReadnPixels where available
   // (OpenGL ES 3.2, i.e. nowhere). Note that, to fully check that the read
   // won't overflow the buffer with glReadPixels, we'd also need to check or
@@ -347,10 +348,7 @@ static void ReadTexture(const GlTextureView& view, GpuBufferFormat format,
   GLint previous_fbo;
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previous_fbo);
 
-  // We use a temp fbo to avoid depending on the app having an existing one.
-  // TODO: keep a utility fbo around in the context?
-  GLuint fbo = 0;
-  glGenFramebuffers(1, &fbo);
+  GLuint fbo = kUtilityFramebuffer.Get(ctx);
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, view.target(),
                          view.name(), 0);
@@ -360,7 +358,6 @@ static void ReadTexture(const GlTextureView& view, GpuBufferFormat format,
                          0);
   // TODO: just set the binding to 0 to avoid the get call?
   glBindFramebuffer(GL_FRAMEBUFFER, previous_fbo);
-  glDeleteFramebuffers(1, &fbo);
 }
 
 static std::shared_ptr<GpuBufferStorageImageFrame> ConvertToImageFrame(
@@ -370,9 +367,10 @@ static std::shared_ptr<GpuBufferStorageImageFrame> ConvertToImageFrame(
   auto output =
       absl::make_unique<ImageFrame>(image_format, buf->width(), buf->height(),
                                     ImageFrame::kGlDefaultAlignmentBoundary);
-  buf->GetProducerContext()->Run([buf, &output] {
+  auto ctx = buf->GetProducerContext();
+  ctx->Run([buf, &output, &ctx] {
     auto view = buf->GetReadView(internal::types<GlTextureView>{}, /*plane=*/0);
-    ReadTexture(view, buf->format(), output->MutablePixelData(),
+    ReadTexture(*ctx, view, buf->format(), output->MutablePixelData(),
                 output->PixelDataSize());
   });
   return std::make_shared<GpuBufferStorageImageFrame>(std::move(output));
