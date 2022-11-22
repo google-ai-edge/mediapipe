@@ -345,9 +345,6 @@ static void ReadTexture(GlContext& ctx, const GlTextureView& view,
   GlTextureInfo info = GlTextureInfoForGpuBufferFormat(
       format, view.plane(), view.gl_context()->GetGlVersion());
 
-  GLint previous_fbo;
-  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previous_fbo);
-
   GLuint fbo = kUtilityFramebuffer.Get(ctx);
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, view.target(),
@@ -356,8 +353,7 @@ static void ReadTexture(GlContext& ctx, const GlTextureView& view,
                output);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0,
                          0);
-  // TODO: just set the binding to 0 to avoid the get call?
-  glBindFramebuffer(GL_FRAMEBUFFER, previous_fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 static std::shared_ptr<GpuBufferStorageImageFrame> ConvertToImageFrame(
