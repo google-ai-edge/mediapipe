@@ -1054,4 +1054,16 @@ void GlContext::SetStandardTextureParams(GLenum target, GLint internal_format) {
   glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
+const GlContext::Attachment<GLuint> kUtilityFramebuffer(
+    [](GlContext&) -> GlContext::Attachment<GLuint>::Ptr {
+      GLuint framebuffer;
+      glGenFramebuffers(1, &framebuffer);
+      if (!framebuffer) return nullptr;
+      return {new GLuint(framebuffer), [](void* ptr) {
+                GLuint* fb = static_cast<GLuint*>(ptr);
+                glDeleteFramebuffers(1, fb);
+                delete fb;
+              }};
+    });
+
 }  // namespace mediapipe

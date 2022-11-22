@@ -474,6 +474,12 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   bool destructing_ = false;
 };
 
+// A framebuffer that the framework can use to attach textures for rendering
+// etc.
+// This could just be a member of GlContext, but it serves as a basic example
+// of an attachment.
+ABSL_CONST_INIT extern const GlContext::Attachment<GLuint> kUtilityFramebuffer;
+
 // For backward compatibility. TODO: migrate remaining callers.
 ABSL_DEPRECATED(
     "Prefer passing an explicit GlVersion argument (use "
