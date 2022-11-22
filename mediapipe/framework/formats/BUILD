@@ -312,9 +312,7 @@ mediapipe_register_type(
 mediapipe_proto_library(
     name = "landmark_proto",
     srcs = ["landmark.proto"],
-    visibility = [
-        "//visibility:public",
-    ],
+    visibility = ["//visibility:public"],
 )
 
 mediapipe_register_type(
