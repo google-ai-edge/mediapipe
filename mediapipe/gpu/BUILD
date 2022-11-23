@@ -901,6 +901,8 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_calculator_helper",
+        ":gpu_buffer_storage_image_frame",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:status",
