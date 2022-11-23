@@ -176,10 +176,14 @@ export class GraphRunner {
 
     if (glCanvas !== undefined) {
       this.wasmModule.canvas = glCanvas;
-    } else {
+    } else if (typeof OffscreenCanvas !== 'undefined') {
       // If no canvas is provided, assume Chrome/Firefox and just make an
       // OffscreenCanvas for GPU processing.
       this.wasmModule.canvas = new OffscreenCanvas(1, 1);
+    } else {
+      console.warn('OffscreenCanvas not detected and GraphRunner constructor '
+                 + 'glCanvas parameter is undefined. Creating backup canvas.');
+      this.wasmModule.canvas = document.createElement('canvas');
     }
   }
 
