@@ -22,6 +22,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/components/processors:base_options",
         "//mediapipe/tasks/web/components/processors:embedder_options",
         "//mediapipe/tasks/web/components/processors:embedder_result",
+        "//mediapipe/tasks/web/components/utils:cosine_similarity",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:embedder_options",
         "//mediapipe/tasks/web/core:task_runner",

@@ -18,9 +18,11 @@ import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {EmbeddingResult} from '../../../../tasks/cc/components/containers/proto/embeddings_pb';
 import {TextEmbedderGraphOptions as TextEmbedderGraphOptionsProto} from '../../../../tasks/cc/text/text_embedder/proto/text_embedder_graph_options_pb';
+import {Embedding} from '../../../../tasks/web/components/containers/embedding_result';
 import {convertBaseOptionsToProto} from '../../../../tasks/web/components/processors/base_options';
 import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/processors/embedder_options';
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
+import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
 import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/graph_runner';
@@ -141,6 +143,19 @@ export class TextEmbedder extends TaskRunner {
         text, INPUT_STREAM, /* timestamp= */ performance.now());
     this.finishProcessing();
     return this.embeddingResult;
+  }
+
+  /**
+   * Utility function to compute cosine similarity[1] between two `Embedding`
+   * objects.
+   *
+   * [1]: https://en.wikipedia.org/wiki/Cosine_similarity
+   *
+   * @throws if the embeddings are of different types(float vs. quantized), have
+   *     different sizes, or have an L2-norm of 0.
+   */
+  static cosineSimilarity(u: Embedding, v: Embedding): number {
+    return computeCosineSimilarity(u, v);
   }
 
   /** Updates the MediaPipe graph configuration. */
