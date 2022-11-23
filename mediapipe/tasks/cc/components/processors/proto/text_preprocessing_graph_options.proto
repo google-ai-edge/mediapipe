@@ -15,7 +15,7 @@ limitations under the License.
 
 syntax = "proto2";
 
-package mediapipe.tasks.components.proto;
+package mediapipe.tasks.components.processors.proto;
 
 import "mediapipe/framework/calculator.proto";
 

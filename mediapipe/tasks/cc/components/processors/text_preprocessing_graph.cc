@@ -12,7 +12,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
-#include "mediapipe/tasks/cc/components/text_preprocessing_graph.h"
+#include "mediapipe/tasks/cc/components/processors/text_preprocessing_graph.h"
 
 #include <string>
 
@@ -25,13 +25,14 @@ limitations under the License.
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/subgraph.h"
-#include "mediapipe/tasks/cc/components/proto/text_preprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/text_preprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace components {
+namespace processors {
 
 namespace {
 
@@ -41,7 +42,8 @@ using ::mediapipe::api2::SideInput;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::SideSource;
 using ::mediapipe::api2::builder::Source;
-using ::mediapipe::tasks::components::proto::TextPreprocessingGraphOptions;
+using ::mediapipe::tasks::components::processors::proto::
+    TextPreprocessingGraphOptions;
 using ::mediapipe::tasks::core::ModelResources;
 using ::mediapipe::tasks::metadata::ModelMetadataExtractor;
 
@@ -169,7 +171,7 @@ absl::StatusOr<int> GetMaxSeqLen(const tflite::SubGraph& model_graph) {
 }
 }  // namespace
 
-absl::Status ConfigureTextPreprocessingSubgraph(
+absl::Status ConfigureTextPreprocessingGraph(
     const ModelResources& model_resources,
     TextPreprocessingGraphOptions& options) {
   if (model_resources.GetTfLiteModel()->subgraphs()->size() != 1) {
@@ -200,8 +202,7 @@ absl::Status ConfigureTextPreprocessingSubgraph(
   return absl::OkStatus();
 }
 
-// A "mediapipe.tasks.components.TextPreprocessingSubgraph" performs text
-// preprocessing.
+// A TextPreprocessingGraph performs text preprocessing.
 // - Accepts a std::string input and outputs CPU tensors.
 //
 // Inputs:
@@ -216,9 +217,9 @@ absl::Status ConfigureTextPreprocessingSubgraph(
 //     Vector containing the preprocessed input tensors for the TFLite model.
 //
 // The recommended way of using this subgraph is through the GraphBuilder API
-// using the 'ConfigureTextPreprocessing()' function. See header file for more
-// details.
-class TextPreprocessingSubgraph : public mediapipe::Subgraph {
+// using the 'ConfigureTextPreprocessingGraph()' function. See header file for
+// more details.
+class TextPreprocessingGraph : public mediapipe::Subgraph {
  public:
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
@@ -267,8 +268,9 @@ class TextPreprocessingSubgraph : public mediapipe::Subgraph {
   }
 };
 REGISTER_MEDIAPIPE_GRAPH(
-    ::mediapipe::tasks::components::TextPreprocessingSubgraph);
+    ::mediapipe::tasks::components::processors::TextPreprocessingGraph);
 
+}  // namespace processors
 }  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe

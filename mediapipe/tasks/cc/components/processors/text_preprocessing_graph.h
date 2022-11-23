@@ -13,26 +13,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_TEXT_PREPROCESSING_H_
-#define MEDIAPIPE_TASKS_CC_COMPONENTS_TEXT_PREPROCESSING_H_
+#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_TEXT_PREPROCESSING_GRAPH_H_
+#define MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_TEXT_PREPROCESSING_GRAPH_H_
 
 #include "absl/status/status.h"
-#include "mediapipe/tasks/cc/components/proto/text_preprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/text_preprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 
-// Configures a TextPreprocessing subgraph using the provided `model_resources`
+namespace mediapipe {
+namespace tasks {
+namespace components {
+namespace processors {
+
+// Configures a TextPreprocessingGraph using the provided `model_resources`
 // and TextPreprocessingGraphOptions.
 // - Accepts a std::string input and outputs CPU tensors.
 //
 // Example usage:
 //
 //   auto& preprocessing =
-//       graph.AddNode("mediapipe.tasks.components.TextPreprocessingSubgraph");
+//       graph.AddNode("mediapipe.tasks.components.processors.TextPreprocessingSubgraph");
 //   MP_RETURN_IF_ERROR(ConfigureTextPreprocessingSubgraph(
 //       model_resources,
 //       &preprocessing.GetOptions<TextPreprocessingGraphOptions>()));
 //
-// The resulting TextPreprocessing subgraph has the following I/O:
+// The resulting TextPreprocessingGraph has the following I/O:
 // Inputs:
 //   TEXT - std::string
 //     The text to preprocess.
@@ -43,16 +48,13 @@ limitations under the License.
 // Outputs:
 //   TENSORS - std::vector<Tensor>
 //     Vector containing the preprocessed input tensors for the TFLite model.
-namespace mediapipe {
-namespace tasks {
-namespace components {
+absl::Status ConfigureTextPreprocessingGraph(
+    const core::ModelResources& model_resources,
+    proto::TextPreprocessingGraphOptions& options);
 
-absl::Status ConfigureTextPreprocessingSubgraph(
-    const tasks::core::ModelResources& model_resources,
-    tasks::components::proto::TextPreprocessingGraphOptions& options);
-
+}  // namespace processors
 }  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_TEXT_PREPROCESSING_H_
+#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_TEXT_PREPROCESSING_GRAPH_H_
