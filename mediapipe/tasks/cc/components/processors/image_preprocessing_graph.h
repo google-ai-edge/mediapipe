@@ -13,35 +13,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_IMAGE_PREPROCESSING_H_
-#define MEDIAPIPE_TASKS_CC_COMPONENTS_IMAGE_PREPROCESSING_H_
+#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_IMAGE_PREPROCESSING_GRAPH_H_
+#define MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_IMAGE_PREPROCESSING_GRAPH_H_
 
 #include "absl/status/status.h"
-#include "mediapipe/tasks/cc/components/image_preprocessing_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/image_preprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace components {
+namespace processors {
 
-// Configures an ImagePreprocessing subgraph using the provided model resources
+// Configures an ImagePreprocessingGraph using the provided model resources
 // When use_gpu is true, use GPU as backend to convert image to tensor.
 // - Accepts CPU input images and outputs CPU tensors.
 //
 // Example usage:
 //
 //   auto& preprocessing =
-//       graph.AddNode("mediapipe.tasks.components.ImagePreprocessingSubgraph");
+//       graph.AddNode("mediapipe.tasks.components.processors.ImagePreprocessingGraph");
 //   core::proto::Acceleration acceleration;
 //   acceleration.mutable_xnnpack();
 //   bool use_gpu = DetermineImagePreprocessingGpuBackend(acceleration);
-//   MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
+//   MP_RETURN_IF_ERROR(ConfigureImagePreprocessingGraph(
 //       model_resources,
 //       use_gpu,
-//       &preprocessing.GetOptions<ImagePreprocessingOptions>()));
+//       &preprocessing.GetOptions<ImagePreprocessingGraphOptions>()));
 //
-// The resulting ImagePreprocessing subgraph has the following I/O:
+// The resulting ImagePreprocessingGraph has the following I/O:
 // Inputs:
 //   IMAGE - Image
 //     The image to preprocess.
@@ -61,17 +62,18 @@ namespace components {
 //   IMAGE - Image @Optional
 //     The image that has the pixel data stored on the target storage (CPU vs
 //     GPU).
-absl::Status ConfigureImagePreprocessing(
+absl::Status ConfigureImagePreprocessingGraph(
     const core::ModelResources& model_resources, bool use_gpu,
-    ImagePreprocessingOptions* options);
+    proto::ImagePreprocessingGraphOptions* options);
 
-// Determine if the image preprocessing subgraph should use GPU as the backend
+// Determine if the image preprocessing graph should use GPU as the backend
 // according to the given acceleration setting.
 bool DetermineImagePreprocessingGpuBackend(
     const core::proto::Acceleration& acceleration);
 
+}  // namespace processors
 }  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_IMAGE_PREPROCESSING_H_
+#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_PROCESSORS_IMAGE_PREPROCESSING_GRAPH_H_

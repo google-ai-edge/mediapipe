@@ -15,14 +15,14 @@ limitations under the License.
 
 syntax = "proto2";
 
-package mediapipe.tasks.components;
+package mediapipe.tasks.components.processors.proto;
 
 import "mediapipe/calculators/tensor/image_to_tensor_calculator.proto";
 import "mediapipe/framework/calculator.proto";
 
-message ImagePreprocessingOptions {
+message ImagePreprocessingGraphOptions {
   extend mediapipe.CalculatorOptions {
-    optional ImagePreprocessingOptions ext = 456882436;
+    optional ImagePreprocessingGraphOptions ext = 456882436;
   }
 
   // Options for the ImageToTensor calculator encapsulated by the

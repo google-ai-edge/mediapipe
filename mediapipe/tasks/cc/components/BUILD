@@ -12,54 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
-
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
-
-mediapipe_proto_library(
-    name = "image_preprocessing_options_proto",
-    srcs = ["image_preprocessing_options.proto"],
-    deps = [
-        "//mediapipe/calculators/tensor:image_to_tensor_calculator_proto",
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
-    ],
-)
-
-cc_library(
-    name = "image_preprocessing",
-    srcs = ["image_preprocessing.cc"],
-    hdrs = ["image_preprocessing.h"],
-    deps = [
-        ":image_preprocessing_options_cc_proto",
-        "//mediapipe/calculators/core:pass_through_calculator",
-        "//mediapipe/calculators/image:image_clone_calculator",
-        "//mediapipe/calculators/image:image_clone_calculator_cc_proto",
-        "//mediapipe/calculators/image:image_properties_calculator",
-        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
-        "//mediapipe/calculators/tensor:image_to_tensor_calculator_cc_proto",
-        "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/api2:builder",
-        "//mediapipe/framework/api2:port",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:rect_cc_proto",
-        "//mediapipe/framework/formats:tensor",
-        "//mediapipe/gpu:gpu_origin_cc_proto",
-        "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/core:model_resources",
-        "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
-        "//mediapipe/tasks/cc/vision/utils:image_tensor_specs",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
-    ],
-    alwayslink = 1,
-)
-
-# TODO: Enable this test
 
 # TODO: Investigate rewriting the build rule to only link
 # the Bert Preprocessor if it's needed.

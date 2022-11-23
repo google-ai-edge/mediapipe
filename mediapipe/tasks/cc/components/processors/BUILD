@@ -100,3 +100,36 @@ cc_library(
     ],
     alwayslink = 1,
 )
+
+cc_library(
+    name = "image_preprocessing_graph",
+    srcs = ["image_preprocessing_graph.cc"],
+    hdrs = ["image_preprocessing_graph.h"],
+    deps = [
+        "//mediapipe/calculators/core:pass_through_calculator",
+        "//mediapipe/calculators/image:image_clone_calculator",
+        "//mediapipe/calculators/image:image_clone_calculator_cc_proto",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/gpu:gpu_origin_cc_proto",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components/processors/proto:image_preprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
+        "//mediapipe/tasks/cc/vision/utils:image_tensor_specs",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
+    ],
+    alwayslink = 1,
+)
+
+# TODO: Enable this test

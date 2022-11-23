@@ -35,7 +35,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/image_preprocessing.h"
+#include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
@@ -226,21 +226,23 @@ class HandDetectorGraph : public core::ModelTaskGraph {
       Source<NormalizedRect> norm_rect_in, Graph& graph) {
     // Add image preprocessing subgraph. The model expects aspect ratio
     // unchanged.
-    auto& preprocessing =
-        graph.AddNode("mediapipe.tasks.components.ImagePreprocessingSubgraph");
+    auto& preprocessing = graph.AddNode(
+        "mediapipe.tasks.components.processors.ImagePreprocessingGraph");
     auto& image_to_tensor_options =
         *preprocessing
-             .GetOptions<tasks::components::ImagePreprocessingOptions>()
+             .GetOptions<components::processors::proto::
+                             ImagePreprocessingGraphOptions>()
              .mutable_image_to_tensor_options();
     image_to_tensor_options.set_keep_aspect_ratio(true);
     image_to_tensor_options.set_border_mode(
         mediapipe::ImageToTensorCalculatorOptions::BORDER_ZERO);
-    bool use_gpu = components::DetermineImagePreprocessingGpuBackend(
-        subgraph_options.base_options().acceleration());
-    MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
+    bool use_gpu =
+        components::processors::DetermineImagePreprocessingGpuBackend(
+            subgraph_options.base_options().acceleration());
+    MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
         model_resources, use_gpu,
-        &preprocessing
-             .GetOptions<tasks::components::ImagePreprocessingOptions>()));
+        &preprocessing.GetOptions<
+            components::processors::proto::ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In("IMAGE");
     norm_rect_in >> preprocessing.In("NORM_RECT");
     auto preprocessed_tensors = preprocessing.Out("TENSORS");

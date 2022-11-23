@@ -12,7 +12,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
-#include "mediapipe/tasks/cc/components/image_preprocessing.h"
+#include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
 
 #include <array>
 #include <complex>
@@ -33,7 +33,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/image_preprocessing_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/image_preprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
@@ -42,6 +42,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace components {
+namespace processors {
 namespace {
 
 using ::mediapipe::Tensor;
@@ -144,9 +145,9 @@ bool DetermineImagePreprocessingGpuBackend(
   return acceleration.has_gpu();
 }
 
-absl::Status ConfigureImagePreprocessing(const ModelResources& model_resources,
-                                         bool use_gpu,
-                                         ImagePreprocessingOptions* options) {
+absl::Status ConfigureImagePreprocessingGraph(
+    const ModelResources& model_resources, bool use_gpu,
+    proto::ImagePreprocessingGraphOptions* options) {
   ASSIGN_OR_RETURN(auto image_tensor_specs,
                    BuildImageTensorSpecs(model_resources));
   MP_RETURN_IF_ERROR(ConfigureImageToTensorCalculator(
@@ -154,9 +155,9 @@ absl::Status ConfigureImagePreprocessing(const ModelResources& model_resources,
   // The GPU backend isn't able to process int data. If the input tensor is
   // quantized, forces the image preprocessing graph to use CPU backend.
   if (use_gpu && image_tensor_specs.tensor_type != tflite::TensorType_UINT8) {
-    options->set_backend(ImagePreprocessingOptions::GPU_BACKEND);
+    options->set_backend(proto::ImagePreprocessingGraphOptions::GPU_BACKEND);
   } else {
-    options->set_backend(ImagePreprocessingOptions::CPU_BACKEND);
+    options->set_backend(proto::ImagePreprocessingGraphOptions::CPU_BACKEND);
   }
   return absl::OkStatus();
 }
@@ -170,8 +171,7 @@ Source<Image> AddDataConverter(Source<Image> image_in, Graph& graph,
   return image_converter[Output<Image>("")];
 }
 
-// A "mediapipe.tasks.components.ImagePreprocessingSubgraph" performs image
-// preprocessing.
+// An ImagePreprocessingGraph performs image preprocessing.
 // - Accepts CPU input images and outputs CPU tensors.
 //
 // Inputs:
@@ -192,7 +192,7 @@ Source<Image> AddDataConverter(Source<Image> image_in, Graph& graph,
 //     An std::array<float, 4> representing the letterbox padding from the 4
 //     sides ([left, top, right, bottom]) of the output image, normalized to
 //     [0.f, 1.f] by the output dimensions. The padding values are non-zero only
-//     when the "keep_aspect_ratio" is true in ImagePreprocessingOptions.
+//     when the "keep_aspect_ratio" is true in ImagePreprocessingGraphOptions.
 //   IMAGE_SIZE - std::pair<int,int> @Optional
 //     The size of the original input image as a <width, height> pair.
 //   IMAGE - Image @Optional
@@ -200,15 +200,15 @@ Source<Image> AddDataConverter(Source<Image> image_in, Graph& graph,
 //     GPU).
 //
 // The recommended way of using this subgraph is through the GraphBuilder API
-// using the 'ConfigureImagePreprocessing()' function. See header file for more
-// details.
-class ImagePreprocessingSubgraph : public Subgraph {
+// using the 'ConfigureImagePreprocessingGraph()' function. See header file for
+// more details.
+class ImagePreprocessingGraph : public Subgraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     Graph graph;
     auto output_streams = BuildImagePreprocessing(
-        sc->Options<ImagePreprocessingOptions>(),
+        sc->Options<proto::ImagePreprocessingGraphOptions>(),
         graph[Input<Image>(kImageTag)],
         graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph);
     output_streams.tensors >> graph[Output<std::vector<Tensor>>(kTensorsTag)];
@@ -233,24 +233,25 @@ class ImagePreprocessingSubgraph : public Subgraph {
   //   - the image that has pixel data stored on the target storage
   //     (mediapipe::Image).
   //
-  // options: the mediapipe tasks ImagePreprocessingOptions.
+  // options: the mediapipe tasks ImagePreprocessingGraphOptions.
   // image_in: (mediapipe::Image) stream to preprocess.
   // graph: the mediapipe builder::Graph instance to be updated.
   ImagePreprocessingOutputStreams BuildImagePreprocessing(
-      const ImagePreprocessingOptions& options, Source<Image> image_in,
-      Source<NormalizedRect> norm_rect_in, Graph& graph) {
+      const proto::ImagePreprocessingGraphOptions& options,
+      Source<Image> image_in, Source<NormalizedRect> norm_rect_in,
+      Graph& graph) {
     // Convert image to tensor.
     auto& image_to_tensor = graph.AddNode("ImageToTensorCalculator");
     image_to_tensor.GetOptions<mediapipe::ImageToTensorCalculatorOptions>()
         .CopyFrom(options.image_to_tensor_options());
     switch (options.backend()) {
-      case ImagePreprocessingOptions::CPU_BACKEND: {
+      case proto::ImagePreprocessingGraphOptions::CPU_BACKEND: {
         auto cpu_image =
             AddDataConverter(image_in, graph, /*output_on_gpu=*/false);
         cpu_image >> image_to_tensor.In(kImageTag);
         break;
       }
-      case ImagePreprocessingOptions::GPU_BACKEND: {
+      case proto::ImagePreprocessingGraphOptions::GPU_BACKEND: {
         auto gpu_image =
             AddDataConverter(image_in, graph, /*output_on_gpu=*/true);
         gpu_image >> image_to_tensor.In(kImageTag);
@@ -284,8 +285,9 @@ class ImagePreprocessingSubgraph : public Subgraph {
   }
 };
 REGISTER_MEDIAPIPE_GRAPH(
-    ::mediapipe::tasks::components::ImagePreprocessingSubgraph);
+    ::mediapipe::tasks::components::processors::ImagePreprocessingGraph);
 
+}  // namespace processors
 }  // namespace components
 }  // namespace tasks
 }  // namespace mediapipe
