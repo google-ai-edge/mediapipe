@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import {TextClassifier as TextClassifierImpl} from '../../tasks/web/text/text_classifier/text_classifier';
-import {TextEmbedder as TextEmbedderImpl} from '../../tasks/web/text/text_embedder/text_embedder';
+import {TextClassifier as TextClassifierImpl, TextEmbedder as TextEmbedderImpl} from '../../tasks/web/text/index';
 
 // Declare the variables locally so that Rollup in OSS includes them explcilty
 // as exports.

@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-import {GestureRecognizer as GestureRecognizerImpl} from '../../tasks/web/vision/gesture_recognizer/gesture_recognizer';
-import {HandLandmarker as HandLandmarkerImpl} from '../../tasks/web/vision/hand_landmarker/hand_landmarker';
-import {ImageClassifier as ImageClassifierImpl} from '../../tasks/web/vision/image_classifier/image_classifier';
-import {ImageEmbedder as ImageEmbedderImpl} from '../../tasks/web/vision/image_embedder/image_embedder';
-import {ObjectDetector as ObjectDetectorImpl} from '../../tasks/web/vision/object_detector/object_detector';
+import {GestureRecognizer as GestureRecognizerImpl, HandLandmarker as HandLandmarkerImpl, ImageClassifier as ImageClassifierImpl, ImageEmbedder as ImageEmbedderImpl, ObjectDetector as ObjectDetectorImpl} from '../../tasks/web/vision/index';
 
 // Declare the variables locally so that Rollup in OSS includes them explcilty
 // as exports.

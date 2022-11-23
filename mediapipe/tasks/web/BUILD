@@ -24,10 +24,7 @@ mediapipe_files(srcs = [
 mediapipe_ts_library(
     name = "audio_lib",
     srcs = ["audio.ts"],
-    deps = [
-        "//mediapipe/tasks/web/audio/audio_classifier",
-        "//mediapipe/tasks/web/audio/audio_embedder",
-    ],
+    deps = ["//mediapipe/tasks/web/audio:audio_lib"],
 )
 
 rollup_bundle(
@@ -69,10 +66,7 @@ pkg_npm(
 mediapipe_ts_library(
     name = "text_lib",
     srcs = ["text.ts"],
-    deps = [
-        "//mediapipe/tasks/web/text/text_classifier",
-        "//mediapipe/tasks/web/text/text_embedder",
-    ],
+    deps = ["//mediapipe/tasks/web/text:text_lib"],
 )
 
 rollup_bundle(
@@ -114,13 +108,7 @@ pkg_npm(
 mediapipe_ts_library(
     name = "vision_lib",
     srcs = ["vision.ts"],
-    deps = [
-        "//mediapipe/tasks/web/vision/gesture_recognizer",
-        "//mediapipe/tasks/web/vision/hand_landmarker",
-        "//mediapipe/tasks/web/vision/image_classifier",
-        "//mediapipe/tasks/web/vision/image_embedder",
-        "//mediapipe/tasks/web/vision/object_detector",
-    ],
+    deps = ["//mediapipe/tasks/web/vision:vision_lib"],
 )
 
 rollup_bundle(
