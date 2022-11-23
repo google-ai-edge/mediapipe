@@ -470,12 +470,9 @@ objc_library(
 )
 
 objc_library(
-    name = "MPPGraphGPUData",
-    srcs = [
-        "MPPGraphGPUData.mm",
-        "gpu_shared_data_internal.cc",
-    ],
-    hdrs = ["MPPGraphGPUData.h"],
+    name = "metal_shared_resources",
+    srcs = ["metal_shared_resources.mm"],
+    hdrs = ["metal_shared_resources.h"],
     copts = [
         "-x objective-c++",
         "-Wno-shorten-64-to-32",
@@ -484,25 +481,9 @@ objc_library(
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
-    ] + select({
-        "//conditions:default": [
-            "OpenGLES",
-        ],
-        "//mediapipe:macos": [
-            "OpenGL",
-            "AppKit",
-        ],
-    }),
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_base",
-        ":gl_context",
-        ":gpu_buffer_multi_pool",
-        ":gpu_shared_data_header",
-        ":graph_support",
-        ":cv_texture_cache_manager",
-        "//mediapipe/gpu:gl_context_options_cc_proto",
-        "//mediapipe/framework:calculator_context",
         "//mediapipe/framework/port:ret_check",
         "@google_toolbox_for_mac//:GTM_Defines",
     ] + [
@@ -584,16 +565,19 @@ cc_library(
 
 cc_library(
     name = "gpu_shared_data_internal_actual",
-    srcs = select({
-        "//conditions:default": [
-            "gpu_shared_data_internal.cc",
-        ],
-        # iOS uses an Objective-C++ version of this, built in MPPGraphGPUData.
-        "//mediapipe:apple": [],
-    }),
+    srcs = [
+        "gpu_shared_data_internal.cc",
+    ],
     hdrs = [
         "gpu_shared_data_internal.h",
     ],
+    copts = select({
+        "//conditions:default": [],
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+    }),
     visibility = ["//visibility:private"],
     deps = [
         "//mediapipe/gpu:gl_context_options_cc_proto",
@@ -610,7 +594,7 @@ cc_library(
     ] + select({
         "//conditions:default": [],
         "//mediapipe:apple": [
-            ":MPPGraphGPUData",
+            ":metal_shared_resources",
             ":cv_texture_cache_manager",
         ],
     }),
@@ -1139,8 +1123,8 @@ objc_library(
     name = "gl_ios_test_lib",
     testonly = 1,
     srcs = [
-        "MPPGraphGPUDataTests.mm",
         "gl_ios_test.mm",
+        "metal_shared_resources_test.mm",
     ],
     copts = [
         "-Wno-shorten-64-to-32",
@@ -1150,7 +1134,7 @@ objc_library(
     ],
     features = ["-layering_check"],
     deps = [
-        ":MPPGraphGPUData",
+        ":metal_shared_resources",
         ":gl_scaler_calculator",
         ":gpu_buffer_to_image_frame_calculator",
         ":gpu_shared_data_internal",
