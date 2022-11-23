@@ -24,7 +24,6 @@
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/graph_service.h"
-#include "mediapipe/gpu/MPPGraphGPUData.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 #include "mediapipe/objc/util.h"

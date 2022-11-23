@@ -550,12 +550,7 @@ cc_library(
     name = "gpu_shared_data_header",
     textual_hdrs = [
         "gpu_shared_data_internal.h",
-    ] + select({
-        "//conditions:default": [],
-        "//mediapipe:apple": [
-            "MPPGraphGPUData.h",
-        ],
-    }),
+    ],
     visibility = ["//visibility:private"],
     deps = [
         ":gl_base",

@@ -14,10 +14,16 @@
 
 #import "mediapipe/gpu/MPPMetalHelper.h"
 
+#import "mediapipe/gpu/MPPGraphGPUData.h"
 #import "mediapipe/gpu/graph_support.h"
 #import "GTMDefines.h"
 
 #include "mediapipe/framework/port/ret_check.h"
+
+@interface MPPMetalHelper () {
+  MPPGraphGPUData* _gpuShared;
+}
+@end
 
 namespace mediapipe {
 
