@@ -363,7 +363,8 @@ static std::shared_ptr<GpuBufferStorageImageFrame> ConvertToImageFrame(
   auto output =
       absl::make_unique<ImageFrame>(image_format, buf->width(), buf->height(),
                                     ImageFrame::kGlDefaultAlignmentBoundary);
-  auto ctx = buf->GetProducerContext();
+  auto ctx = GlContext::GetCurrent();
+  if (!ctx) ctx = buf->GetProducerContext();
   ctx->Run([buf, &output, &ctx] {
     auto view = buf->GetReadView(internal::types<GlTextureView>{}, /*plane=*/0);
     ReadTexture(*ctx, view, buf->format(), output->MutablePixelData(),
@@ -392,7 +393,9 @@ static std::shared_ptr<GpuBufferStorageCvPixelBuffer> ConvertToCvPixelBuffer(
     std::shared_ptr<GlTextureBuffer> buf) {
   auto output = absl::make_unique<GpuBufferStorageCvPixelBuffer>(
       buf->width(), buf->height(), buf->format());
-  buf->GetProducerContext()->Run([buf, &output] {
+  auto ctx = GlContext::GetCurrent();
+  if (!ctx) ctx = buf->GetProducerContext();
+  ctx->Run([buf, &output] {
     TempGlFramebuffer framebuffer;
     auto src = buf->GetReadView(internal::types<GlTextureView>{}, /*plane=*/0);
     auto dst =
