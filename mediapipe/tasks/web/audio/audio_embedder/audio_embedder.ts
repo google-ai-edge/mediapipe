@@ -35,11 +35,7 @@ export * from './audio_embedder_result';
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
-// Note: `input_audio` is hardcoded in 'gl_graph_runner_internal_audio' cannot
-// be changed
-// TODO: Change this to `audio_in` to match the name in the CC
-// implementation
-const AUDIO_STREAM = 'input_audio';
+const AUDIO_STREAM = 'audio_in';
 const SAMPLE_RATE_STREAM = 'sample_rate';
 const EMBEDDINGS_STREAM = 'embeddings_out';
 const TIMESTAMPED_EMBEDDINGS_STREAM = 'timestamped_embeddings_out';
@@ -151,14 +147,8 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
   protected override process(
       audioData: Float32Array, sampleRate: number,
       timestampMs: number): AudioEmbedderResult[] {
-    // Configures the number of samples in the WASM layer. We re-configure the
-    // number of samples and the sample rate for every frame, but ignore other
-    // side effects of this function (such as sending the input side packet and
-    // the input stream header).
-    this.configureAudio(
-        /* numChannels= */ 1, /* numSamples= */ audioData.length, sampleRate);
     this.addDoubleToStream(sampleRate, SAMPLE_RATE_STREAM, timestampMs);
-    this.addAudioToStream(audioData, timestampMs);
+    this.addAudioToStreamWithShape(audioData, /* numChannels= */ 1, /* numSamples= */ audioData.length, AUDIO_STREAM, timestampMs);
 
     this.embeddingResults = [];
     this.finishProcessing();

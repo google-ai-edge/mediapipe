@@ -35,11 +35,7 @@ export * from './audio_classifier_result';
 const MEDIAPIPE_GRAPH =
     'mediapipe.tasks.audio.audio_classifier.AudioClassifierGraph';
 
-// Note: `input_audio` is hardcoded in 'gl_graph_runner_internal_audio' and
-// cannot be changed
-// TODO: Change this to `audio_in` to match the name in the CC
-// implementation
-const AUDIO_STREAM = 'input_audio';
+const AUDIO_STREAM = 'audio_in';
 const SAMPLE_RATE_STREAM = 'sample_rate';
 const TIMESTAMPED_CLASSIFICATIONS_STREAM = 'timestamped_classifications';
 
@@ -154,14 +150,8 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
   protected override process(
       audioData: Float32Array, sampleRate: number,
       timestampMs: number): AudioClassifierResult[] {
-    // Configures the number of samples in the WASM layer. We re-configure the
-    // number of samples and the sample rate for every frame, but ignore other
-    // side effects of this function (such as sending the input side packet and
-    // the input stream header).
-    this.configureAudio(
-        /* numChannels= */ 1, /* numSamples= */ audioData.length, sampleRate);
     this.addDoubleToStream(sampleRate, SAMPLE_RATE_STREAM, timestampMs);
-    this.addAudioToStream(audioData, timestampMs);
+    this.addAudioToStreamWithShape(audioData, /* numChannels= */ 1, /* numSamples= */ audioData.length, AUDIO_STREAM, timestampMs);
 
     this.classificationResults = [];
     this.finishProcessing();
