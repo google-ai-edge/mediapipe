@@ -70,25 +70,9 @@ GlTextureView GpuBufferStorageCvPixelBuffer::GetReadView(
   return GetTexture(plane, nullptr);
 }
 
-GlTextureView GpuBufferStorageCvPixelBuffer::GetWriteView(
-    internal::types<GlTextureView>, int plane) {
-  return GetTexture(plane, [this](const mediapipe::GlTextureView& view) {
-    ViewDoneWriting(view);
-  });
-}
-
-std::shared_ptr<const ImageFrame> GpuBufferStorageCvPixelBuffer::GetReadView(
-    internal::types<ImageFrame>) const {
-  return CreateImageFrameForCVPixelBuffer(**this);
-}
-std::shared_ptr<ImageFrame> GpuBufferStorageCvPixelBuffer::GetWriteView(
-    internal::types<ImageFrame>) {
-  return CreateImageFrameForCVPixelBuffer(**this);
-}
-
-void GpuBufferStorageCvPixelBuffer::ViewDoneWriting(const GlTextureView& view) {
 #if TARGET_IPHONE_SIMULATOR
-  CVPixelBufferRef pixel_buffer = **this;
+static void ViewDoneWritingSimulatorWorkaround(CVPixelBufferRef pixel_buffer,
+                                               const GlTextureView& view) {
   CHECK(pixel_buffer);
   CVReturn err = CVPixelBufferLockBaseAddress(pixel_buffer, 0);
   CHECK(err == kCVReturnSuccess)
@@ -126,7 +110,30 @@ void GpuBufferStorageCvPixelBuffer::ViewDoneWriting(const GlTextureView& view) {
   err = CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
   CHECK(err == kCVReturnSuccess)
       << "CVPixelBufferUnlockBaseAddress failed: " << err;
-#endif
+}
+#endif  // TARGET_IPHONE_SIMULATOR
+
+GlTextureView GpuBufferStorageCvPixelBuffer::GetWriteView(
+    internal::types<GlTextureView>, int plane) {
+  return GetTexture(plane,
+#if TARGET_IPHONE_SIMULATOR
+                    [pixel_buffer = CFHolder<CVPixelBufferRef>(*this)](
+                        const mediapipe::GlTextureView& view) {
+                      ViewDoneWritingSimulatorWorkaround(*pixel_buffer, view);
+                    }
+#else
+      nullptr
+#endif  // TARGET_IPHONE_SIMULATOR
+  );
+}
+
+std::shared_ptr<const ImageFrame> GpuBufferStorageCvPixelBuffer::GetReadView(
+    internal::types<ImageFrame>) const {
+  return CreateImageFrameForCVPixelBuffer(**this);
+}
+std::shared_ptr<ImageFrame> GpuBufferStorageCvPixelBuffer::GetWriteView(
+    internal::types<ImageFrame>) {
+  return CreateImageFrameForCVPixelBuffer(**this);
 }
 
 static std::shared_ptr<GpuBufferStorageCvPixelBuffer> ConvertFromImageFrame(
