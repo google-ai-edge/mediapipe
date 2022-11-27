@@ -1299,6 +1299,7 @@ cc_library(
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",

@@ -15,6 +15,7 @@
 #include "mediapipe/calculators/core/get_vector_item_calculator.h"
 
 #include "mediapipe/framework/formats/classification.pb.h"
+#include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 
 namespace mediapipe {
@@ -31,6 +32,10 @@ REGISTER_CALCULATOR(GetNormalizedLandmarkListVectorItemCalculator);
 using GetClassificationListVectorItemCalculator =
     GetVectorItemCalculator<mediapipe::ClassificationList>;
 REGISTER_CALCULATOR(GetClassificationListVectorItemCalculator);
+
+using GetDetectionVectorItemCalculator =
+    GetVectorItemCalculator<mediapipe::Detection>;
+REGISTER_CALCULATOR(GetDetectionVectorItemCalculator);
 
 }  // namespace api2
 }  // namespace mediapipe
