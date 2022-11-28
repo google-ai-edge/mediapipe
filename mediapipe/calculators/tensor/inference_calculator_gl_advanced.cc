@@ -258,9 +258,9 @@ InferenceCalculatorGlAdvancedImpl::OnDiskCacheHelper::SaveGpuCaches(
     tflite::gpu::TFLiteGPURunner* gpu_runner) const {
   if (use_kernel_caching_) {
     // Save kernel file.
-    auto kernel_cache = absl::make_unique<std::vector<uint8_t>>(
-        gpu_runner->GetSerializedBinaryCache());
-    std::string cache_str(kernel_cache->begin(), kernel_cache->end());
+    ASSIGN_OR_RETURN(std::vector<uint8_t> kernel_cache,
+                     gpu_runner->GetSerializedBinaryCache());
+    std::string cache_str(kernel_cache.begin(), kernel_cache.end());
     MP_RETURN_IF_ERROR(
         mediapipe::file::SetContents(cached_kernel_filename_, cache_str));
   }
