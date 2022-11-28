@@ -13,10 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_LANDMARK_H_
-#define MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_LANDMARK_H_
+#ifndef MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_HAND_LANDMARK_H_
+#define MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_HAND_LANDMARK_H_
 
-namespace mediapipe::tasks::components::containers {
+namespace mediapipe::tasks::vision::hand_landmarker {
 
 // The 21 hand landmarks.
 enum HandLandmark {
@@ -43,6 +43,6 @@ enum HandLandmark {
   PINKY_TIP = 20
 };
 
-}  // namespace mediapipe::tasks::components::containers
+}  // namespace mediapipe::tasks::vision::hand_landmarker
 
-#endif  // MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_LANDMARK_H_
+#endif  // MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_HAND_LANDMARK_H_

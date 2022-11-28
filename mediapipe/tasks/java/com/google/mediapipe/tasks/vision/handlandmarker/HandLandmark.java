@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.mediapipe.tasks.components.containers;
+package com.google.mediapipe.tasks.vision.handlandmarker;
 
 import androidx.annotation.IntDef;
 

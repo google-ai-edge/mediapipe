@@ -55,6 +55,12 @@ cc_library(
 )
 
 cc_library(
+    name = "hand_landmark",
+    hdrs = ["hand_landmark.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "hand_landmarks_detector_graph",
     srcs = ["hand_landmarks_detector_graph.cc"],
     deps = [

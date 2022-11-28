@@ -75,18 +75,6 @@ android_library(
 )
 
 android_library(
-    name = "handlandmark",
-    srcs = ["HandLandmark.java"],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
-    deps = [
-        "@maven//:androidx_annotation_annotation",
-        "@maven//:com_google_guava_guava",
-    ],
-)
-
-android_library(
     name = "landmark",
     srcs = ["Landmark.java"],
     deps = [

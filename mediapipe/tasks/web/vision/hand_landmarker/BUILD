@@ -34,6 +34,7 @@ mediapipe_ts_library(
 mediapipe_ts_declaration(
     name = "hand_landmarker_types",
     srcs = [
+        "hand_landmark.d.ts",
         "hand_landmarker_options.d.ts",
         "hand_landmarker_result.d.ts",
     ],

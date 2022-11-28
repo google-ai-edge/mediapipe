@@ -145,6 +145,7 @@ android_library(
 android_library(
     name = "handlandmarker",
     srcs = [
+        "handlandmarker/HandLandmark.java",
         "handlandmarker/HandLandmarker.java",
         "handlandmarker/HandLandmarkerResult.java",
     ],
@@ -168,6 +169,7 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
+        "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
     ],
 )
