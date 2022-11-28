@@ -19,3 +19,4 @@ export * from '../../../tasks/web/vision/image_embedder/image_embedder';
 export * from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer';
 export * from '../../../tasks/web/vision/hand_landmarker/hand_landmarker';
 export * from '../../../tasks/web/vision/object_detector/object_detector';
+export * from '../../../tasks/web/core/fileset_resolver';

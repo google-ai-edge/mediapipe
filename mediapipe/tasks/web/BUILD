@@ -13,10 +13,16 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 mediapipe_files(srcs = [
     "wasm/audio_wasm_internal.js",
     "wasm/audio_wasm_internal.wasm",
+    "wasm/audio_wasm_nosimd_internal.js",
+    "wasm/audio_wasm_nosimd_internal.wasm",
     "wasm/text_wasm_internal.js",
     "wasm/text_wasm_internal.wasm",
+    "wasm/text_wasm_nosimd_internal.js",
+    "wasm/text_wasm_nosimd_internal.wasm",
     "wasm/vision_wasm_internal.js",
     "wasm/vision_wasm_internal.wasm",
+    "wasm/vision_wasm_nosimd_internal.js",
+    "wasm/vision_wasm_nosimd_internal.wasm",
 ])
 
 # Audio
@@ -57,6 +63,8 @@ pkg_npm(
     deps = [
         "wasm/audio_wasm_internal.js",
         "wasm/audio_wasm_internal.wasm",
+        "wasm/audio_wasm_nosimd_internal.js",
+        "wasm/audio_wasm_nosimd_internal.wasm",
         ":audio_bundle",
     ],
 )
@@ -99,6 +107,8 @@ pkg_npm(
     deps = [
         "wasm/text_wasm_internal.js",
         "wasm/text_wasm_internal.wasm",
+        "wasm/text_wasm_nosimd_internal.js",
+        "wasm/text_wasm_nosimd_internal.wasm",
         ":text_bundle",
     ],
 )
@@ -141,6 +151,8 @@ pkg_npm(
     deps = [
         "wasm/vision_wasm_internal.js",
         "wasm/vision_wasm_internal.wasm",
+        "wasm/vision_wasm_nosimd_internal.js",
+        "wasm/vision_wasm_nosimd_internal.wasm",
         ":vision_bundle",
     ],
 )

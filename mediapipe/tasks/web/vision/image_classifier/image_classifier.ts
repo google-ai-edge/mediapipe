@@ -21,9 +21,9 @@ import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/b
 import {ImageClassifierGraphOptions} from '../../../../tasks/cc/vision/image_classifier/proto/image_classifier_graph_options_pb';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
-import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
+import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {createMediaPipeLib, FileLocator, ImageSource} from '../../../../web/graph_runner/graph_runner';
+import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {ImageClassifierOptions} from './image_classifier_options';
@@ -49,28 +49,17 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
   /**
    * Initializes the Wasm runtime and creates a new image classifier from the
    * provided options.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location
+   *     Wasm binary and its loader.
    * @param imageClassifierOptions The options for the image classifier. Note
    *     that either a path to the model asset or a model buffer needs to be
    *     provided (via `baseOptions`).
    */
   static async createFromOptions(
-      wasmLoaderOptions: WasmLoaderOptions,
-      imageClassifierOptions: ImageClassifierOptions):
+      wasmFileset: WasmFileset, imageClassifierOptions: ImageClassifierOptions):
       Promise<ImageClassifier> {
-    // Create a file locator based on the loader options
-    const fileLocator: FileLocator = {
-      locateFile() {
-        // The only file we load is the Wasm binary
-        return wasmLoaderOptions.wasmBinaryPath.toString();
-      }
-    };
-
-    const classifier = await createMediaPipeLib(
-        ImageClassifier, wasmLoaderOptions.wasmLoaderPath,
-        /* assetLoaderScript= */ undefined,
-        /* glCanvas= */ undefined, fileLocator);
+    const classifier = await VisionTaskRunner.createInstance(
+        ImageClassifier, /* initializeCanvas= */ true, wasmFileset);
     await classifier.setOptions(imageClassifierOptions);
     return classifier;
   }
@@ -78,31 +67,31 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
   /**
    * Initializes the Wasm runtime and creates a new image classifier based on
    * the provided model asset buffer.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
    */
   static createFromModelBuffer(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ImageClassifier> {
     return ImageClassifier.createFromOptions(
-        wasmLoaderOptions, {baseOptions: {modelAssetBuffer}});
+        wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
    * Initializes the Wasm runtime and creates a new image classifier based on
    * the path to the model asset.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
    */
   static async createFromModelPath(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ImageClassifier> {
     const response = await fetch(modelAssetPath.toString());
     const graphData = await response.arrayBuffer();
     return ImageClassifier.createFromModelBuffer(
-        wasmLoaderOptions, new Uint8Array(graphData));
+        wasmFileset, new Uint8Array(graphData));
   }
 
   protected override get baseOptions(): BaseOptionsProto|undefined {

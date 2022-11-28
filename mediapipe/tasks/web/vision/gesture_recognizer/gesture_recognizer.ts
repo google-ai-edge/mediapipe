@@ -29,9 +29,9 @@ import {HandLandmarksDetectorGraphOptions} from '../../../../tasks/cc/vision/han
 import {Category} from '../../../../tasks/web/components/containers/category';
 import {Landmark} from '../../../../tasks/web/components/containers/landmark';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
-import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
+import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {createMediaPipeLib, FileLocator, ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
+import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {GestureRecognizerOptions} from './gesture_recognizer_options';
@@ -82,28 +82,18 @@ export class GestureRecognizer extends
   /**
    * Initializes the Wasm runtime and creates a new gesture recognizer from the
    * provided options.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param gestureRecognizerOptions The options for the gesture recognizer.
    *     Note that either a path to the model asset or a model buffer needs to
    *     be provided (via `baseOptions`).
    */
   static async createFromOptions(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       gestureRecognizerOptions: GestureRecognizerOptions):
       Promise<GestureRecognizer> {
-    // Create a file locator based on the loader options
-    const fileLocator: FileLocator = {
-      locateFile() {
-        // The only file we load via this mechanism is the Wasm binary
-        return wasmLoaderOptions.wasmBinaryPath.toString();
-      }
-    };
-
-    const recognizer = await createMediaPipeLib(
-        GestureRecognizer, wasmLoaderOptions.wasmLoaderPath,
-        /* assetLoaderScript= */ undefined,
-        /* glCanvas= */ undefined, fileLocator);
+    const recognizer = await VisionTaskRunner.createInstance(
+        GestureRecognizer, /* initializeCanvas= */ true, wasmFileset);
     await recognizer.setOptions(gestureRecognizerOptions);
     return recognizer;
   }
@@ -111,35 +101,37 @@ export class GestureRecognizer extends
   /**
    * Initializes the Wasm runtime and creates a new gesture recognizer based on
    * the provided model asset buffer.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
    */
   static createFromModelBuffer(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<GestureRecognizer> {
     return GestureRecognizer.createFromOptions(
-        wasmLoaderOptions, {baseOptions: {modelAssetBuffer}});
+        wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
    * Initializes the Wasm runtime and creates a new gesture recognizer based on
    * the path to the model asset.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
    */
   static async createFromModelPath(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<GestureRecognizer> {
     const response = await fetch(modelAssetPath.toString());
     const graphData = await response.arrayBuffer();
     return GestureRecognizer.createFromModelBuffer(
-        wasmLoaderOptions, new Uint8Array(graphData));
+        wasmFileset, new Uint8Array(graphData));
   }
 
-  constructor(wasmModule: WasmModule) {
-    super(wasmModule);
+  constructor(
+      wasmModule: WasmModule,
+      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    super(wasmModule, glCanvas);
 
     this.options = new GestureRecognizerGraphOptions();
     this.handLandmarkerGraphOptions = new HandLandmarkerGraphOptions();

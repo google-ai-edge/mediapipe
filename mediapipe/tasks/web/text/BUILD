@@ -8,6 +8,7 @@ mediapipe_ts_library(
     name = "text_lib",
     srcs = ["index.ts"],
     deps = [
+        "//mediapipe/tasks/web/core:fileset_resolver",
         "//mediapipe/tasks/web/text/text_classifier",
         "//mediapipe/tasks/web/text/text_embedder",
     ],

@@ -23,9 +23,9 @@ import {Embedding} from '../../../../tasks/web/components/containers/embedding_r
 import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/processors/embedder_options';
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
 import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
-import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
+import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {createMediaPipeLib, FileLocator, ImageSource} from '../../../../web/graph_runner/graph_runner';
+import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {ImageEmbedderOptions} from './image_embedder_options';
@@ -51,27 +51,17 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
   /**
    * Initializes the Wasm runtime and creates a new image embedder from the
    * provided options.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param imageEmbedderOptions The options for the image embedder. Note that
    *     either a path to the TFLite model or the model itself needs to be
    *     provided (via `baseOptions`).
    */
   static async createFromOptions(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       imageEmbedderOptions: ImageEmbedderOptions): Promise<ImageEmbedder> {
-    // Create a file locator based on the loader options
-    const fileLocator: FileLocator = {
-      locateFile() {
-        // The only file we load is the Wasm binary
-        return wasmLoaderOptions.wasmBinaryPath.toString();
-      }
-    };
-
-    const embedder = await createMediaPipeLib(
-        ImageEmbedder, wasmLoaderOptions.wasmLoaderPath,
-        /* assetLoaderScript= */ undefined,
-        /* glCanvas= */ undefined, fileLocator);
+    const embedder = await VisionTaskRunner.createInstance(
+        ImageEmbedder, /* initializeCanvas= */ true, wasmFileset);
     await embedder.setOptions(imageEmbedderOptions);
     return embedder;
   }
@@ -79,31 +69,31 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
   /**
    * Initializes the Wasm runtime and creates a new image embedder based on the
    * provided model asset buffer.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the TFLite model.
    */
   static createFromModelBuffer(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ImageEmbedder> {
     return ImageEmbedder.createFromOptions(
-        wasmLoaderOptions, {baseOptions: {modelAssetBuffer}});
+        wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
    * Initializes the Wasm runtime and creates a new image embedder based on the
    * path to the model asset.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetPath The path to the TFLite model.
    */
   static async createFromModelPath(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ImageEmbedder> {
     const response = await fetch(modelAssetPath.toString());
     const graphData = await response.arrayBuffer();
     return ImageEmbedder.createFromModelBuffer(
-        wasmLoaderOptions, new Uint8Array(graphData));
+        wasmFileset, new Uint8Array(graphData));
   }
 
   protected override get baseOptions(): BaseOptionsProto|undefined {

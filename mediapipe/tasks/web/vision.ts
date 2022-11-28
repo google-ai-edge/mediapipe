@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import {GestureRecognizer as GestureRecognizerImpl, HandLandmarker as HandLandmarkerImpl, ImageClassifier as ImageClassifierImpl, ImageEmbedder as ImageEmbedderImpl, ObjectDetector as ObjectDetectorImpl} from '../../tasks/web/vision/index';
+import {FilesetResolver as FilesetResolverImpl, GestureRecognizer as GestureRecognizerImpl, HandLandmarker as HandLandmarkerImpl, ImageClassifier as ImageClassifierImpl, ImageEmbedder as ImageEmbedderImpl, ObjectDetector as ObjectDetectorImpl} from '../../tasks/web/vision/index';
 
 // Declare the variables locally so that Rollup in OSS includes them explcilty
 // as exports.
+const FilesetResolver = FilesetResolverImpl;
 const GestureRecognizer = GestureRecognizerImpl;
 const HandLandmarker = HandLandmarkerImpl;
 const ImageClassifier = ImageClassifierImpl;
@@ -25,6 +26,7 @@ const ImageEmbedder = ImageEmbedderImpl;
 const ObjectDetector = ObjectDetectorImpl;
 
 export {
+  FilesetResolver,
   GestureRecognizer,
   HandLandmarker,
   ImageClassifier,

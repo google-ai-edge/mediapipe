@@ -22,8 +22,7 @@ import {convertBaseOptionsToProto} from '../../../../tasks/web/components/proces
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
-import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
-import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/graph_runner';
+import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 // Placeholder for internal dependency on trusted resource url
 
 import {TextClassifierOptions} from './text_classifier_options';
@@ -48,27 +47,17 @@ export class TextClassifier extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new text classifier from the
    * provided options.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param textClassifierOptions The options for the text classifier. Note that
    *     either a path to the TFLite model or the model itself needs to be
    *     provided (via `baseOptions`).
    */
   static async createFromOptions(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       textClassifierOptions: TextClassifierOptions): Promise<TextClassifier> {
-    // Create a file locator based on the loader options
-    const fileLocator: FileLocator = {
-      locateFile() {
-        // The only file we load is the Wasm binary
-        return wasmLoaderOptions.wasmBinaryPath.toString();
-      }
-    };
-
-    const classifier = await createMediaPipeLib(
-        TextClassifier, wasmLoaderOptions.wasmLoaderPath,
-        /* assetLoaderScript= */ undefined,
-        /* glCanvas= */ undefined, fileLocator);
+    const classifier = await TaskRunner.createInstance(
+        TextClassifier, /* initializeCanvas= */ false, wasmFileset);
     await classifier.setOptions(textClassifierOptions);
     return classifier;
   }
@@ -76,31 +65,31 @@ export class TextClassifier extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new text classifier based on the
    * provided model asset buffer.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
    */
   static createFromModelBuffer(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<TextClassifier> {
     return TextClassifier.createFromOptions(
-        wasmLoaderOptions, {baseOptions: {modelAssetBuffer}});
+        wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
    * Initializes the Wasm runtime and creates a new text classifier based on the
    * path to the model asset.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
    */
   static async createFromModelPath(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<TextClassifier> {
     const response = await fetch(modelAssetPath.toString());
     const graphData = await response.arrayBuffer();
     return TextClassifier.createFromModelBuffer(
-        wasmLoaderOptions, new Uint8Array(graphData));
+        wasmFileset, new Uint8Array(graphData));
   }
 
   /**

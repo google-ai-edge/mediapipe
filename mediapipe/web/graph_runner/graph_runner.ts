@@ -133,9 +133,11 @@ export type ImageSource =
 /** A listener that will be invoked with an absl::StatusCode and message. */
 export type ErrorListener = (code: number, message: string) => void;
 
-// Internal type of constructors used for initializing GraphRunner and
-// subclasses.
-type WasmMediaPipeConstructor<LibType> =
+/**
+ * Internal type of constructors used for initializing GraphRunner and
+ * subclasses.
+ */
+export type WasmMediaPipeConstructor<LibType> =
     (new (
          module: WasmModule, canvas?: HTMLCanvasElement|OffscreenCanvas|null) =>
          LibType);

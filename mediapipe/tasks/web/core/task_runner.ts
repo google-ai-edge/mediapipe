@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-import {SupportModelResourcesGraphService} from '../../../web/graph_runner/register_model_resources_graph_service';
+import {createMediaPipeLib, FileLocator, GraphRunner, WasmMediaPipeConstructor, WasmModule} from '../../../web/graph_runner/graph_runner';
 import {SupportImage} from '../../../web/graph_runner/graph_runner_image_lib';
-import {GraphRunner, WasmModule} from '../../../web/graph_runner/graph_runner';
+import {SupportModelResourcesGraphService} from '../../../web/graph_runner/register_model_resources_graph_service';
+
+import {WasmFileset} from './wasm_fileset';
+
+// None of the MP Tasks ship bundle assets.
+const NO_ASSETS = undefined;
 
 // tslint:disable-next-line:enforce-name-casing
 const WasmMediaPipeImageLib =
@@ -26,8 +31,40 @@ const WasmMediaPipeImageLib =
 export abstract class TaskRunner extends WasmMediaPipeImageLib {
   private processingErrors: Error[] = [];
 
-  constructor(wasmModule: WasmModule) {
-    super(wasmModule);
+  /**
+   * Creates a new instance of a Mediapipe Task. Determines if SIMD is
+   * supported and loads the relevant WASM binary.
+   * @return A fully instantiated instance of `T`.
+   */
+  protected static async createInstance<T extends TaskRunner>(
+      type: WasmMediaPipeConstructor<T>, initializeCanvas: boolean,
+      fileset: WasmFileset): Promise<T> {
+    const fileLocator: FileLocator = {
+      locateFile() {
+        // The only file loaded with this mechanism is the Wasm binary
+        return fileset.wasmBinaryPath.toString();
+      }
+    };
+
+    if (initializeCanvas) {
+      // Fall back to an OffscreenCanvas created by the GraphRunner if
+      // OffscreenCanvas is available
+      const canvas = typeof OffscreenCanvas === 'undefined' ?
+          document.createElement('canvas') :
+          undefined;
+      return createMediaPipeLib(
+          type, fileset.wasmLoaderPath, NO_ASSETS, canvas, fileLocator);
+    } else {
+      return createMediaPipeLib(
+          type, fileset.wasmLoaderPath, NO_ASSETS, /* glCanvas= */ null,
+          fileLocator);
+    }
+  }
+
+  constructor(
+      wasmModule: WasmModule,
+      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    super(wasmModule, glCanvas);
 
     // Disables the automatic render-to-screen code, which allows for pure
     // CPU processing.

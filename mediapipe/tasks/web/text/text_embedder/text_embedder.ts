@@ -24,8 +24,7 @@ import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/pr
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
 import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
-import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
-import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/graph_runner';
+import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 // Placeholder for internal dependency on trusted resource url
 
 import {TextEmbedderOptions} from './text_embedder_options';
@@ -52,27 +51,17 @@ export class TextEmbedder extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new text embedder from the
    * provided options.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param textEmbedderOptions The options for the text embedder. Note that
    *     either a path to the TFLite model or the model itself needs to be
    *     provided (via `baseOptions`).
    */
   static async createFromOptions(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       textEmbedderOptions: TextEmbedderOptions): Promise<TextEmbedder> {
-    // Create a file locator based on the loader options
-    const fileLocator: FileLocator = {
-      locateFile() {
-        // The only file we load is the Wasm binary
-        return wasmLoaderOptions.wasmBinaryPath.toString();
-      }
-    };
-
-    const embedder = await createMediaPipeLib(
-        TextEmbedder, wasmLoaderOptions.wasmLoaderPath,
-        /* assetLoaderScript= */ undefined,
-        /* glCanvas= */ undefined, fileLocator);
+    const embedder = await TaskRunner.createInstance(
+        TextEmbedder, /* initializeCanvas= */ false, wasmFileset);
     await embedder.setOptions(textEmbedderOptions);
     return embedder;
   }
@@ -80,31 +69,31 @@ export class TextEmbedder extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new text embedder based on the
    * provided model asset buffer.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the TFLite model.
    */
   static createFromModelBuffer(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<TextEmbedder> {
     return TextEmbedder.createFromOptions(
-        wasmLoaderOptions, {baseOptions: {modelAssetBuffer}});
+        wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
    * Initializes the Wasm runtime and creates a new text embedder based on the
    * path to the model asset.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetPath The path to the TFLite model.
    */
   static async createFromModelPath(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<TextEmbedder> {
     const response = await fetch(modelAssetPath.toString());
     const graphData = await response.arrayBuffer();
     return TextEmbedder.createFromModelBuffer(
-        wasmLoaderOptions, new Uint8Array(graphData));
+        wasmFileset, new Uint8Array(graphData));
   }
 
   /**
@@ -122,13 +111,10 @@ export class TextEmbedder extends TaskRunner {
           options.baseOptions, this.options.getBaseOptions());
       this.options.setBaseOptions(baseOptionsProto);
     }
-
     this.options.setEmbedderOptions(convertEmbedderOptionsToProto(
         options, this.options.getEmbedderOptions()));
-
     this.refreshGraph();
   }
-
 
   /**
    * Performs embeding extraction on the provided text and waits synchronously

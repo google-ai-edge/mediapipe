@@ -19,9 +19,9 @@ import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {Detection as DetectionProto} from '../../../../framework/formats/detection_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {ObjectDetectorOptions as ObjectDetectorOptionsProto} from '../../../../tasks/cc/vision/object_detector/proto/object_detector_options_pb';
-import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
+import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {createMediaPipeLib, FileLocator, ImageSource} from '../../../../web/graph_runner/graph_runner';
+import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {ObjectDetectorOptions} from './object_detector_options';
@@ -48,27 +48,17 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
   /**
    * Initializes the Wasm runtime and creates a new object detector from the
    * provided options.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param objectDetectorOptions The options for the Object Detector. Note that
    *     either a path to the model asset or a model buffer needs to be
    *     provided (via `baseOptions`).
    */
   static async createFromOptions(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       objectDetectorOptions: ObjectDetectorOptions): Promise<ObjectDetector> {
-    // Create a file locator based on the loader options
-    const fileLocator: FileLocator = {
-      locateFile() {
-        // The only file we load is the Wasm binary
-        return wasmLoaderOptions.wasmBinaryPath.toString();
-      }
-    };
-
-    const detector = await createMediaPipeLib(
-        ObjectDetector, wasmLoaderOptions.wasmLoaderPath,
-        /* assetLoaderScript= */ undefined,
-        /* glCanvas= */ undefined, fileLocator);
+    const detector = await VisionTaskRunner.createInstance(
+        ObjectDetector, /* initializeCanvas= */ true, wasmFileset);
     await detector.setOptions(objectDetectorOptions);
     return detector;
   }
@@ -76,31 +66,31 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
   /**
    * Initializes the Wasm runtime and creates a new object detector based on the
    * provided model asset buffer.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
    */
   static createFromModelBuffer(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ObjectDetector> {
     return ObjectDetector.createFromOptions(
-        wasmLoaderOptions, {baseOptions: {modelAssetBuffer}});
+        wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
    * Initializes the Wasm runtime and creates a new object detector based on the
    * path to the model asset.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
    */
   static async createFromModelPath(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ObjectDetector> {
     const response = await fetch(modelAssetPath.toString());
     const graphData = await response.arrayBuffer();
     return ObjectDetector.createFromModelBuffer(
-        wasmLoaderOptions, new Uint8Array(graphData));
+        wasmFileset, new Uint8Array(graphData));
   }
 
   protected override get baseOptions(): BaseOptionsProto|undefined {

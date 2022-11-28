@@ -16,8 +16,8 @@
 
 // Placeholder for internal dependency on trusted resource url
 
-/** An object containing the locations of all Wasm assets */
-export declare interface WasmLoaderOptions {
+/** An object containing the locations of the Wasm assets */
+export declare interface WasmFileset {
   /** The path to the Wasm loader script. */
   wasmLoaderPath: string;
   /** The path to the Wasm binary. */
