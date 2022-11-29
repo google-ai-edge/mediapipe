@@ -139,7 +139,7 @@ mediapipe_proto_library(
     name = "test_calculators_proto",
     testonly = 1,
     srcs = ["test_calculators.proto"],
-    visibility = ["//visibility:public"],
+    visibility = [":mediapipe_internal"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
