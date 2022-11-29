@@ -1085,8 +1085,8 @@ async function runScript(scriptUrl: string) {
  */
 export async function createMediaPipeLib<LibType>(
     constructorFcn: WasmMediaPipeConstructor<LibType>,
-    wasmLoaderScript?: string,
-    assetLoaderScript?: string,
+    wasmLoaderScript?: string|null,
+    assetLoaderScript?: string|null,
     glCanvas?: HTMLCanvasElement|OffscreenCanvas|null,
     fileLocator?: FileLocator): Promise<LibType> {
   const scripts = [];
