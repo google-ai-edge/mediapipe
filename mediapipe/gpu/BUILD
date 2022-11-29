@@ -176,6 +176,16 @@ cc_library(
             "-fobjc-arc",  # enable reference-counting
         ],
     }),
+    linkopts = select({
+        "//conditions:default": [],
+        "//mediapipe:ios": [
+            "-framework OpenGLES",
+        ],
+        "//mediapipe:macos": [
+            "-framework OpenGL",
+            "-framework AppKit",
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         ":attachments",
@@ -204,8 +214,10 @@ cc_library(
     }) + select({
         "//conditions:default": [
         ],
-        "//mediapipe:ios": [],
-        "//mediapipe:macos": [],
+        "//mediapipe:ios": [
+        ],
+        "//mediapipe:macos": [
+        ],
     }),
 )
 
