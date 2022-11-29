@@ -325,6 +325,10 @@ export class GraphRunner {
     if ((imageSource as HTMLVideoElement).videoWidth) {
       width = (imageSource as HTMLVideoElement).videoWidth;
       height = (imageSource as HTMLVideoElement).videoHeight;
+    } else if ((imageSource as HTMLImageElement).naturalWidth) {
+      // TODO: Ensure this works with SVG images
+      width = (imageSource as HTMLImageElement).naturalWidth;
+      height = (imageSource as HTMLImageElement).naturalHeight;
     } else {
       width = imageSource.width;
       height = imageSource.height;
