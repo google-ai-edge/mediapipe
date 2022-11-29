@@ -236,14 +236,21 @@ absl::Status InferenceCalculatorGlAdvancedImpl::OnDiskCacheHelper::Init(
     const mediapipe::InferenceCalculatorOptions& options,
     const mediapipe::InferenceCalculatorOptions::Delegate::Gpu&
         gpu_delegate_options) {
-  use_kernel_caching_ = gpu_delegate_options.has_cached_kernel_path();
+  // The kernel cache needs a unique filename based on either model_path or the
+  // model token, to prevent the cache from being overwritten if the graph has
+  // more than one model.
+  use_kernel_caching_ =
+      gpu_delegate_options.has_cached_kernel_path() &&
+      (options.has_model_path() || gpu_delegate_options.has_model_token());
   use_serialized_model_ = gpu_delegate_options.has_serialized_model_dir() &&
                           gpu_delegate_options.has_model_token();
 
   if (use_kernel_caching_) {
+    std::string basename = options.has_model_path()
+                               ? mediapipe::File::Basename(options.model_path())
+                               : gpu_delegate_options.model_token();
     cached_kernel_filename_ = mediapipe::file::JoinPath(
-        gpu_delegate_options.cached_kernel_path(),
-        mediapipe::File::Basename(options.model_path()) + ".ker");
+        gpu_delegate_options.cached_kernel_path(), basename + ".ker");
   }
   if (use_serialized_model_) {
     serialized_model_path_ =
