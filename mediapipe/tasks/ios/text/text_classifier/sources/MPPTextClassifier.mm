@@ -24,18 +24,6 @@ static NSString *const kTextInStreamName = @"text_in";
 static NSString *const kTextTag = @"TEXT";
 static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.TextClassifierGraph";
 
-@implementation MPPTextClassifierOptions
-
-- (instancetype)initWithModelPath:(NSString *)modelPath {
-  self = [super initWithModelPath:modelPath];
-  if (self) {
-    _classifierOptions = [[MPPClassifierOptions alloc] init];
-  }
-  return self;
-}
-
-@end
-
 @implementation MPPTextClassifier
 
 - (instancetype)initWithOptions:(MPPTextClassifierOptions *)options error:(NSError **)error {
