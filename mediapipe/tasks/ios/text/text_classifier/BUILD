@@ -36,7 +36,7 @@ objc_library(
 
 objc_library(
     name = "MPPTextClassifierOptions",
-    srcs = ["sources/MPPTextClassifierOptions.mm"],
+    srcs = ["sources/MPPTextClassifierOptions.m"],
     hdrs = ["sources/MPPTextClassifierOptions.h"],
     copts = [
         "-ObjC++",
