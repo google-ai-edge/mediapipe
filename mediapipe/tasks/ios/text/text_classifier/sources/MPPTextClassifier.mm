@@ -18,11 +18,11 @@
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierOptions+Helpers.h"
 
-NSString *kClassificationsStreamName = @"classifications_out";
-NSString *kClassificationsTag = @"classifications";
-NSString *kTextInStreamName = @"text_in";
-NSString *kTextTag = @"TEXT";
-NSString *kTaskGraphName = @"mediapipe.tasks.text.text_classifier.TextClassifierGraph";
+static NSString *const kClassificationsStreamName = @"classifications_out";
+static NSString *const kClassificationsTag = @"classifications";
+static NSString *const kTextInStreamName = @"text_in";
+static NSString *const kTextTag = @"TEXT";
+static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.TextClassifierGraph";
 
 @implementation MPPTextClassifierOptions
 
