@@ -16,15 +16,15 @@
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 
 /** Error domain of TensorFlow Lite Support related errors. */
-NSString *const TFLSupportTaskErrorDomain = @"org.tensorflow.lite.tasks";
+NSString *const MPPTasksErrorDomain = @"org.mediapipe.tasks";
 
-@implementation TFLCommonUtils
+@implementation MPPCommonUtils
 
 + (void)createCustomError:(NSError **)error
                  withCode:(NSUInteger)code
               description:(NSString *)description {
-  [TFLCommonUtils createCustomError:error
-                         withDomain:TFLSupportTaskErrorDomain
+  [MPPCommonUtils createCustomError:error
+                         withDomain:MPPTasksErrorDomain
                                code:code
                         description:description];
 }
@@ -42,7 +42,7 @@ NSString *const TFLSupportTaskErrorDomain = @"org.tensorflow.lite.tasks";
 
 + (void *)mallocWithSize:(size_t)memSize error:(NSError **)error {
   if (!memSize) {
-    [TFLCommonUtils createCustomError:error
+    [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInvalidArgumentError
                           description:@"memSize cannot be zero."];
     return NULL;
@@ -60,12 +60,12 @@ NSString *const TFLSupportTaskErrorDomain = @"org.tensorflow.lite.tasks";
   if (status.ok()) {
     return YES;
   }
-  // Payload of absl::Status created by the tflite task library stores an appropriate value of the
-  // enum TfLiteSupportStatus. The integer value corresponding to the TfLiteSupportStatus enum
+  // Payload of absl::Status created by the Media Pipe task library stores an appropriate value of the
+  // enum MPPiteSupportStatus. The integer value corresponding to the MPPiteSupportStatus enum
   // stored in the payload is extracted here to later map to the appropriate error code to be
   // returned. In cases where the enum is not stored in (payload is NULL or the payload string
   // cannot be converted to an integer), we set the error code value to be 1
-  // (TFLSupportErrorCodeUnspecifiedError of TFLSupportErrorCode used in the iOS library to signify
+  // (MPPSupportErrorCodeUnspecifiedError of MPPSupportErrorCode used in the iOS library to signify
   // any errors not falling into other categories.) Since payload is of type absl::Cord that can be
   // type cast into an absl::optional<std::string>, we use the std::stoi function to convert it into
   // an integer code if possible.
@@ -73,7 +73,7 @@ NSString *const TFLSupportTaskErrorDomain = @"org.tensorflow.lite.tasks";
   NSUInteger errorCode;
   try {
     // Try converting payload to integer if payload is not empty. Otherwise convert a string
-    // signifying generic error code TFLSupportErrorCodeUnspecifiedError to integer.
+    // signifying generic error code MPPSupportErrorCodeUnspecifiedError to integer.
     errorCode =
         (NSUInteger)std::stoi(static_cast<absl::optional<std::string>>(
                                   status.GetPayload(mediapipe::tasks::kMediaPipeTasksPayload))
@@ -122,7 +122,7 @@ NSString *const TFLSupportTaskErrorDomain = @"org.tensorflow.lite.tasks";
   NSString *description = [NSString
       stringWithCString:status.ToString(absl::StatusToStringMode::kWithNoExtraData).c_str()
                encoding:NSUTF8StringEncoding];
-  [TFLCommonUtils createCustomError:error withCode:errorCode description:description];
+  [MPPCommonUtils createCustomError:error withCode:errorCode description:description];
   return NO;
 }
 
