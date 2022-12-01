@@ -25,7 +25,7 @@ from mediapipe.model_maker.python.core.utils import test_util
 from mediapipe.model_maker.python.vision import gesture_recognizer
 from mediapipe.tasks.python.test import test_utils
 
-_TEST_DATA_DIR = 'mediapipe/model_maker/python/vision/gesture_recognizer/test_data'
+_TEST_DATA_DIR = 'mediapipe/model_maker/python/vision/gesture_recognizer/testdata'
 tf.keras.backend.experimental.enable_tf_random_generator()
 
 

@@ -23,7 +23,7 @@ from mediapipe.model_maker.python.vision.gesture_recognizer import metadata_writ
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer as base_metadata_writer
 from mediapipe.tasks.python.test import test_utils
 
-_TEST_DATA_DIR = "mediapipe/model_maker/python/vision/gesture_recognizer/test_data/metadata"
+_TEST_DATA_DIR = "mediapipe/model_maker/python/vision/gesture_recognizer/testdata/metadata"
 
 _EXPECTED_JSON = test_utils.get_test_data_path(
     os.path.join(_TEST_DATA_DIR, "custom_gesture_classifier_meta.json"))

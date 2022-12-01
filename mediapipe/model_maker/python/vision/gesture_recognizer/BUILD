@@ -24,9 +24,9 @@ package(
 # TODO: Remove the unncessary test data once the demo data are moved to an open-sourced
 # directory.
 filegroup(
-    name = "test_data",
+    name = "testdata",
     srcs = glob([
-        "test_data/**",
+        "testdata/**",
     ]),
 )
 
@@ -53,7 +53,7 @@ py_test(
     name = "dataset_test",
     srcs = ["dataset_test.py"],
     data = [
-        ":test_data",
+        ":testdata",
         "//mediapipe/model_maker/models/gesture_recognizer:models",
     ],
     deps = [
@@ -136,7 +136,7 @@ py_test(
     size = "large",
     srcs = ["gesture_recognizer_test.py"],
     data = [
-        ":test_data",
+        ":testdata",
         "//mediapipe/model_maker/models/gesture_recognizer:models",
     ],
     shard_count = 2,
@@ -151,7 +151,7 @@ py_test(
     name = "metadata_writer_test",
     srcs = ["metadata_writer_test.py"],
     data = [
-        ":test_data",
+        ":testdata",
     ],
     deps = [
         ":metadata_writer",
@@ -164,7 +164,7 @@ py_binary(
     name = "gesture_recognizer_demo",
     srcs = ["gesture_recognizer_demo.py"],
     data = [
-        ":test_data",
+        ":testdata",
         "//mediapipe/model_maker/models/gesture_recognizer:models",
     ],
     python_version = "PY3",
