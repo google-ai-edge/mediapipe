@@ -48,8 +48,8 @@ cc_library(
     name = "text_embedder_graph",
     srcs = ["text_embedder_graph.cc"],
     deps = [
-        "//mediapipe/calculators/tensor:inference_calculator",
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:inference_calculator_cpu",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",
