@@ -35,6 +35,7 @@ mediapipe_ts_declaration(
     deps = [
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:classifier_options",
         "//mediapipe/tasks/web/vision/core:vision_task_options",
     ],
 )

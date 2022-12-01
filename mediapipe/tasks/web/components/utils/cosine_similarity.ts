@@ -36,6 +36,7 @@ export function computeCosineSimilarity(u: Embedding, v: Embedding): number {
   throw new Error(
       'Cannot compute cosine similarity between quantized and float embeddings.');
 }
+
 function convertToBytes(data: Uint8Array): number[] {
   return Array.from(data, v => v - 128);
 }
