@@ -120,7 +120,8 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
 
   /**
    * Performs image classification on the provided single image and waits
-   * synchronously for the response.
+   * synchronously for the response. Only use this method when the
+   * ImageClassifier is created with running mode `image`.
    *
    * @param image An image to process.
    * @return The classification result of the image
@@ -131,7 +132,8 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
 
   /**
    * Performs image classification on the provided video frame and waits
-   * synchronously for the response.
+   * synchronously for the response. Only use this method when the
+   * ImageClassifier is created with running mode `video`.
    *
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.

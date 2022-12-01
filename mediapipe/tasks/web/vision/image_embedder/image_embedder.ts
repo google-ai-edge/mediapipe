@@ -122,10 +122,8 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
 
   /**
    * Performs embedding extraction on the provided single image and waits
-   * synchronously for the response.
-   *
-   * Only use this method when the `useStreamMode` option is not set or
-   * expliclity set to `false`.
+   * synchronously for the response. Only use this method when the
+   * ImageEmbedder is created with running mode `image`.
    *
    * @param image The image to process.
    * @return The classification result of the image
@@ -136,9 +134,8 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
 
   /**
    * Performs embedding extraction on the provided video frame and waits
-   * synchronously for the response.
-   *
-   * Only use this method when the `useStreamMode` option is set to `true`.
+   * synchronously for the response. Only use this method when the
+   * ImageEmbedder is created with running mode `video`.
    *
    * @param imageFrame The image frame to process.
    * @param timestamp The timestamp of the current frame, in ms.

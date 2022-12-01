@@ -177,7 +177,9 @@ export class HandLandmarker extends VisionTaskRunner<HandLandmarkerResult> {
 
   /**
    * Performs hand landmarks detection on the provided single image and waits
-   * synchronously for the response.
+   * synchronously for the response. Only use this method when the
+   * HandLandmarker is created with running mode `image`.
+   *
    * @param image An image to process.
    * @return The detected hand landmarks.
    */
@@ -187,7 +189,9 @@ export class HandLandmarker extends VisionTaskRunner<HandLandmarkerResult> {
 
   /**
    * Performs hand landmarks detection on the provided video frame and waits
-   * synchronously for the response.
+   * synchronously for the response. Only use this method when the
+   * HandLandmarker is created with running mode `video`.
+   *
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @return The detected hand landmarks.

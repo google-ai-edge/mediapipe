@@ -151,7 +151,9 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
 
   /**
    * Performs object detection on the provided single image and waits
-   * synchronously for the response.
+   * synchronously for the response. Only use this method when the
+   * ObjectDetector is created with running mode `image`.
+   *
    * @param image An image to process.
    * @return The list of detected objects
    */
@@ -161,7 +163,9 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
 
   /**
    * Performs object detection on the provided vidoe frame and waits
-   * synchronously for the response.
+   * synchronously for the response. Only use this method when the
+   * ObjectDetector is created with running mode `video`.
+   *
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @return The list of detected objects

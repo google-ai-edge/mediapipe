@@ -225,7 +225,9 @@ export class GestureRecognizer extends
 
   /**
    * Performs gesture recognition on the provided single image and waits
-   * synchronously for the response.
+   * synchronously for the response. Only use this method when the
+   * GestureRecognizer is created with running mode `image`.
+   *
    * @param image A single image to process.
    * @return The detected gestures.
    */
@@ -235,7 +237,9 @@ export class GestureRecognizer extends
 
   /**
    * Performs gesture recognition on the provided video frame and waits
-   * synchronously for the response.
+   * synchronously for the response. Only use this method when the
+   * GestureRecognizer is created with running mode `video`.
+   *
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @return The detected gestures.
