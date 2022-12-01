@@ -354,7 +354,9 @@ NodeReadiness SyncSet::GetReadiness(Timestamp* min_stream_timestamp) {
     }
   }
   *min_stream_timestamp = std::min(min_packet, min_bound);
-  if (*min_stream_timestamp == Timestamp::Done()) {
+  if (*min_stream_timestamp >= Timestamp::OneOverPostStream()) {
+    // Either OneOverPostStream or Done indicates no more packets.
+    *min_stream_timestamp = Timestamp::Done();
     last_processed_ts_ = Timestamp::Done().PreviousAllowedInStream();
     return NodeReadiness::kReadyForClose;
   }
