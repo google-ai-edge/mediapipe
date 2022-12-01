@@ -27,7 +27,7 @@ import com.google.mediapipe.tasks.audio.core.BaseAudioTaskApi;
 import com.google.mediapipe.tasks.audio.core.RunningMode;
 import com.google.mediapipe.tasks.components.containers.AudioData;
 import com.google.mediapipe.tasks.components.containers.proto.ClassificationsProto;
-import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
+import com.google.mediapipe.tasks.components.processors.proto.ClassifierOptionsProto;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -266,7 +266,7 @@ public final class AudioClassifier extends BaseAudioTaskApi {
 
   /*
    * Sends audio data (a block in a continuous audio stream) to perform audio classification, and
-   * the results will be available via the {@link ResultListener} provided in the 
+   * the results will be available via the {@link ResultListener} provided in the
    * {@link AudioClassifierOptions}. Only use this method when the AudioClassifier is created with
    * the audio stream mode.
    *
@@ -320,10 +320,42 @@ public final class AudioClassifier extends BaseAudioTaskApi {
       public abstract Builder setRunningMode(RunningMode runningMode);
 
       /**
-       * Sets the optional {@link ClassifierOptions} controling classification behavior, such as
-       * score threshold, number of results, etc.
+       * Sets the optional locale to use for display names specified through the TFLite Model
+       * Metadata, if any.
        */
-      public abstract Builder setClassifierOptions(ClassifierOptions classifierOptions);
+      public abstract Builder setDisplayNamesLocale(String locale);
+
+      /**
+       * Sets the optional maximum number of top-scored classification results to return.
+       *
+       * <p>If not set, all available results are returned. If set, must be > 0.
+       */
+      public abstract Builder setMaxResults(Integer maxResults);
+
+      /**
+       * Sets the optional score threshold. Results with score below this value are rejected.
+       *
+       * <p>Overrides the score threshold specified in the TFLite Model Metadata, if any.
+       */
+      public abstract Builder setScoreThreshold(Float scoreThreshold);
+
+      /**
+       * Sets the optional allowlist of category names.
+       *
+       * <p>If non-empty, detection results whose category name is not in this set will be filtered
+       * out. Duplicate or unknown category names are ignored. Mutually exclusive with {@code
+       * categoryDenylist}.
+       */
+      public abstract Builder setCategoryAllowlist(List<String> categoryAllowlist);
+
+      /**
+       * Sets the optional denylist of category names.
+       *
+       * <p>If non-empty, detection results whose category name is in this set will be filtered out.
+       * Duplicate or unknown category names are ignored. Mutually exclusive with {@code
+       * categoryAllowlist}.
+       */
+      public abstract Builder setCategoryDenylist(List<String> categoryDenylist);
 
       /**
        * Sets the {@link ResultListener} to receive the classification results asynchronously when
@@ -340,9 +372,7 @@ public final class AudioClassifier extends BaseAudioTaskApi {
       /**
        * Validates and builds the {@link AudioClassifierOptions} instance.
        *
-       * @throws IllegalArgumentException if the result listener and the running mode are not
-       *     properly configured. The result listener should only be set when the audio classifier
-       *     is in the audio stream mode.
+       * @throws IllegalArgumentException if any of the set options are invalid.
        */
       public final AudioClassifierOptions build() {
         AudioClassifierOptions options = autoBuild();
@@ -357,6 +387,13 @@ public final class AudioClassifier extends BaseAudioTaskApi {
               "The audio classifier is in the audio clips mode, a user-defined result listener"
                   + " shouldn't be provided in AudioClassifierOptions.");
         }
+        if (options.maxResults().isPresent() && options.maxResults().get() <= 0) {
+          throw new IllegalArgumentException("If specified, maxResults must be > 0.");
+        }
+        if (!options.categoryAllowlist().isEmpty() && !options.categoryDenylist().isEmpty()) {
+          throw new IllegalArgumentException(
+              "Category allowlist and denylist are mutually exclusive.");
+        }
         return options;
       }
     }
@@ -365,7 +402,15 @@ public final class AudioClassifier extends BaseAudioTaskApi {
 
     abstract RunningMode runningMode();
 
-    abstract Optional<ClassifierOptions> classifierOptions();
+    abstract Optional<String> displayNamesLocale();
+
+    abstract Optional<Integer> maxResults();
+
+    abstract Optional<Float> scoreThreshold();
+
+    abstract List<String> categoryAllowlist();
+
+    abstract List<String> categoryDenylist();
 
     abstract Optional<PureResultListener<AudioClassifierResult>> resultListener();
 
@@ -373,7 +418,9 @@ public final class AudioClassifier extends BaseAudioTaskApi {
 
     public static Builder builder() {
       return new AutoValue_AudioClassifier_AudioClassifierOptions.Builder()
-          .setRunningMode(RunningMode.AUDIO_CLIPS);
+          .setRunningMode(RunningMode.AUDIO_CLIPS)
+          .setCategoryAllowlist(Collections.emptyList())
+          .setCategoryDenylist(Collections.emptyList());
     }
 
     /**
@@ -385,12 +432,21 @@ public final class AudioClassifier extends BaseAudioTaskApi {
           BaseOptionsProto.BaseOptions.newBuilder();
       baseOptionsBuilder.setUseStreamMode(runningMode() == RunningMode.AUDIO_STREAM);
       baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions()));
+      ClassifierOptionsProto.ClassifierOptions.Builder classifierOptionsBuilder =
+          ClassifierOptionsProto.ClassifierOptions.newBuilder();
+      displayNamesLocale().ifPresent(classifierOptionsBuilder::setDisplayNamesLocale);
+      maxResults().ifPresent(classifierOptionsBuilder::setMaxResults);
+      scoreThreshold().ifPresent(classifierOptionsBuilder::setScoreThreshold);
+      if (!categoryAllowlist().isEmpty()) {
+        classifierOptionsBuilder.addAllCategoryAllowlist(categoryAllowlist());
+      }
+      if (!categoryDenylist().isEmpty()) {
+        classifierOptionsBuilder.addAllCategoryDenylist(categoryDenylist());
+      }
       AudioClassifierGraphOptionsProto.AudioClassifierGraphOptions.Builder taskOptionsBuilder =
           AudioClassifierGraphOptionsProto.AudioClassifierGraphOptions.newBuilder()
-              .setBaseOptions(baseOptionsBuilder);
-      if (classifierOptions().isPresent()) {
-        taskOptionsBuilder.setClassifierOptions(classifierOptions().get().convertToProto());
-      }
+              .setBaseOptions(baseOptionsBuilder)
+              .setClassifierOptions(classifierOptionsBuilder);
       return CalculatorOptions.newBuilder()
           .setExtension(
               AudioClassifierGraphOptionsProto.AudioClassifierGraphOptions.ext,
