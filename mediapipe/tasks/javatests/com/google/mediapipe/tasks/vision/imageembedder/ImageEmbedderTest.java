@@ -25,7 +25,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
-import com.google.mediapipe.tasks.components.processors.EmbedderOptions;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.TestUtils;
 import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
@@ -92,8 +91,8 @@ public class ImageEmbedderTest {
       ImageEmbedderResult resultCrop = imageEmbedder.embed(getImageFromAsset(BURGER_CROP_IMAGE));
 
       // Check results.
-      assertHasOneHeadAndCorrectDimension(result, /*quantized=*/ false);
-      assertHasOneHeadAndCorrectDimension(resultCrop, /*quantized=*/ false);
+      assertHasOneHeadAndCorrectDimension(result, /* quantized= */ false);
+      assertHasOneHeadAndCorrectDimension(resultCrop, /* quantized= */ false);
       // Check similarity.
       double similarity =
           ImageEmbedder.cosineSimilarity(
@@ -105,12 +104,8 @@ public class ImageEmbedderTest {
     @Test
     public void embed_succeedsWithL2Normalization() throws Exception {
       BaseOptions baseOptions = BaseOptions.builder().setModelAssetPath(MOBILENET_EMBEDDER).build();
-      EmbedderOptions embedderOptions = EmbedderOptions.builder().setL2Normalize(true).build();
       ImageEmbedderOptions options =
-          ImageEmbedderOptions.builder()
-              .setBaseOptions(baseOptions)
-              .setEmbedderOptions(embedderOptions)
-              .build();
+          ImageEmbedderOptions.builder().setBaseOptions(baseOptions).setL2Normalize(true).build();
 
       ImageEmbedder imageEmbedder =
           ImageEmbedder.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -118,8 +113,8 @@ public class ImageEmbedderTest {
       ImageEmbedderResult resultCrop = imageEmbedder.embed(getImageFromAsset(BURGER_CROP_IMAGE));
 
       // Check results.
-      assertHasOneHeadAndCorrectDimension(result, /*quantized=*/ false);
-      assertHasOneHeadAndCorrectDimension(resultCrop, /*quantized=*/ false);
+      assertHasOneHeadAndCorrectDimension(result, /* quantized= */ false);
+      assertHasOneHeadAndCorrectDimension(resultCrop, /* quantized= */ false);
       // Check similarity.
       double similarity =
           ImageEmbedder.cosineSimilarity(
@@ -131,12 +126,8 @@ public class ImageEmbedderTest {
     @Test
     public void embed_succeedsWithQuantization() throws Exception {
       BaseOptions baseOptions = BaseOptions.builder().setModelAssetPath(MOBILENET_EMBEDDER).build();
-      EmbedderOptions embedderOptions = EmbedderOptions.builder().setQuantize(true).build();
       ImageEmbedderOptions options =
-          ImageEmbedderOptions.builder()
-              .setBaseOptions(baseOptions)
-              .setEmbedderOptions(embedderOptions)
-              .build();
+          ImageEmbedderOptions.builder().setBaseOptions(baseOptions).setQuantize(true).build();
 
       ImageEmbedder imageEmbedder =
           ImageEmbedder.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -144,8 +135,8 @@ public class ImageEmbedderTest {
       ImageEmbedderResult resultCrop = imageEmbedder.embed(getImageFromAsset(BURGER_CROP_IMAGE));
 
       // Check results.
-      assertHasOneHeadAndCorrectDimension(result, /*quantized=*/ true);
-      assertHasOneHeadAndCorrectDimension(resultCrop, /*quantized=*/ true);
+      assertHasOneHeadAndCorrectDimension(result, /* quantized= */ true);
+      assertHasOneHeadAndCorrectDimension(resultCrop, /* quantized= */ true);
       // Check similarity.
       double similarity =
           ImageEmbedder.cosineSimilarity(
@@ -168,8 +159,8 @@ public class ImageEmbedderTest {
       ImageEmbedderResult resultCrop = imageEmbedder.embed(getImageFromAsset(BURGER_CROP_IMAGE));
 
       // Check results.
-      assertHasOneHeadAndCorrectDimension(resultRoi, /*quantized=*/ false);
-      assertHasOneHeadAndCorrectDimension(resultCrop, /*quantized=*/ false);
+      assertHasOneHeadAndCorrectDimension(resultRoi, /* quantized= */ false);
+      assertHasOneHeadAndCorrectDimension(resultCrop, /* quantized= */ false);
       // Check similarity.
       double similarity =
           ImageEmbedder.cosineSimilarity(
@@ -190,8 +181,8 @@ public class ImageEmbedderTest {
           imageEmbedder.embed(getImageFromAsset(BURGER_ROTATED_IMAGE), imageProcessingOptions);
 
       // Check results.
-      assertHasOneHeadAndCorrectDimension(result, /*quantized=*/ false);
-      assertHasOneHeadAndCorrectDimension(resultRotated, /*quantized=*/ false);
+      assertHasOneHeadAndCorrectDimension(result, /* quantized= */ false);
+      assertHasOneHeadAndCorrectDimension(resultRotated, /* quantized= */ false);
       // Check similarity.
       double similarity =
           ImageEmbedder.cosineSimilarity(
@@ -214,8 +205,8 @@ public class ImageEmbedderTest {
       ImageEmbedderResult resultCrop = imageEmbedder.embed(getImageFromAsset(BURGER_CROP_IMAGE));
 
       // Check results.
-      assertHasOneHeadAndCorrectDimension(resultRoiRotated, /*quantized=*/ false);
-      assertHasOneHeadAndCorrectDimension(resultCrop, /*quantized=*/ false);
+      assertHasOneHeadAndCorrectDimension(resultRoiRotated, /* quantized= */ false);
+      assertHasOneHeadAndCorrectDimension(resultCrop, /* quantized= */ false);
       // Check similarity.
       double similarity =
           ImageEmbedder.cosineSimilarity(
@@ -277,12 +268,14 @@ public class ImageEmbedderTest {
           assertThrows(
               MediaPipeException.class,
               () ->
-                  imageEmbedder.embedForVideo(getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 0));
+                  imageEmbedder.embedForVideo(
+                      getImageFromAsset(BURGER_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
       exception =
           assertThrows(
               MediaPipeException.class,
-              () -> imageEmbedder.embedAsync(getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 0));
+              () ->
+                  imageEmbedder.embedAsync(getImageFromAsset(BURGER_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -303,7 +296,8 @@ public class ImageEmbedderTest {
       exception =
           assertThrows(
               MediaPipeException.class,
-              () -> imageEmbedder.embedAsync(getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 0));
+              () ->
+                  imageEmbedder.embedAsync(getImageFromAsset(BURGER_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -327,7 +321,8 @@ public class ImageEmbedderTest {
           assertThrows(
               MediaPipeException.class,
               () ->
-                  imageEmbedder.embedForVideo(getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 0));
+                  imageEmbedder.embedForVideo(
+                      getImageFromAsset(BURGER_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
     }
 
@@ -340,8 +335,8 @@ public class ImageEmbedderTest {
       ImageEmbedderResult resultCrop = imageEmbedder.embed(getImageFromAsset(BURGER_CROP_IMAGE));
 
       // Check results.
-      assertHasOneHeadAndCorrectDimension(result, /*quantized=*/ false);
-      assertHasOneHeadAndCorrectDimension(resultCrop, /*quantized=*/ false);
+      assertHasOneHeadAndCorrectDimension(result, /* quantized= */ false);
+      assertHasOneHeadAndCorrectDimension(resultCrop, /* quantized= */ false);
       // Check similarity.
       double similarity =
           ImageEmbedder.cosineSimilarity(
@@ -363,8 +358,8 @@ public class ImageEmbedderTest {
 
       for (int i = 0; i < 3; ++i) {
         ImageEmbedderResult result =
-            imageEmbedder.embedForVideo(getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ i);
-        assertHasOneHeadAndCorrectDimension(result, /*quantized=*/ false);
+            imageEmbedder.embedForVideo(getImageFromAsset(BURGER_IMAGE), /* timestampMs= */ i);
+        assertHasOneHeadAndCorrectDimension(result, /* quantized= */ false);
       }
     }
 
@@ -378,17 +373,18 @@ public class ImageEmbedderTest {
               .setRunningMode(RunningMode.LIVE_STREAM)
               .setResultListener(
                   (imageEmbedderResult, inputImage) -> {
-                    assertHasOneHeadAndCorrectDimension(imageEmbedderResult, /*quantized=*/ false);
+                    assertHasOneHeadAndCorrectDimension(
+                        imageEmbedderResult, /* quantized= */ false);
                     assertImageSizeIsExpected(inputImage);
                   })
               .build();
       try (ImageEmbedder imageEmbedder =
           ImageEmbedder.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
-        imageEmbedder.embedAsync(getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 1);
+        imageEmbedder.embedAsync(getImageFromAsset(BURGER_IMAGE), /* timestampMs= */ 1);
         MediaPipeException exception =
             assertThrows(
                 MediaPipeException.class,
-                () -> imageEmbedder.embedAsync(image, /*timestampMs=*/ 0));
+                () -> imageEmbedder.embedAsync(image, /* timestampMs= */ 0));
         assertThat(exception)
             .hasMessageThat()
             .contains("having a smaller timestamp than the processed timestamp");
@@ -405,14 +401,15 @@ public class ImageEmbedderTest {
               .setRunningMode(RunningMode.LIVE_STREAM)
               .setResultListener(
                   (imageEmbedderResult, inputImage) -> {
-                    assertHasOneHeadAndCorrectDimension(imageEmbedderResult, /*quantized=*/ false);
+                    assertHasOneHeadAndCorrectDimension(
+                        imageEmbedderResult, /* quantized= */ false);
                     assertImageSizeIsExpected(inputImage);
                   })
               .build();
       try (ImageEmbedder imageEmbedder =
           ImageEmbedder.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
         for (int i = 0; i < 3; ++i) {
-          imageEmbedder.embedAsync(image, /*timestampMs=*/ i);
+          imageEmbedder.embedAsync(image, /* timestampMs= */ i);
         }
       }
     }

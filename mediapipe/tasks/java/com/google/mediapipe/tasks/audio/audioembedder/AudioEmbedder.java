@@ -28,7 +28,7 @@ import com.google.mediapipe.tasks.audio.core.RunningMode;
 import com.google.mediapipe.tasks.components.containers.AudioData;
 import com.google.mediapipe.tasks.components.containers.Embedding;
 import com.google.mediapipe.tasks.components.containers.proto.EmbeddingsProto;
-import com.google.mediapipe.tasks.components.processors.EmbedderOptions;
+import com.google.mediapipe.tasks.components.processors.proto.EmbedderOptionsProto;
 import com.google.mediapipe.tasks.components.utils.CosineSimilarity;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
@@ -309,10 +309,24 @@ public final class AudioEmbedder extends BaseAudioTaskApi {
       public abstract Builder setRunningMode(RunningMode runningMode);
 
       /**
-       * Sets the optional {@link EmbedderOptions} controling embedding behavior, such as score
-       * threshold, number of results, etc.
+       * Sets whether L2 normalization should be performed on the returned embeddings. Use this
+       * option only if the model does not already contain a native <code>L2_NORMALIZATION</code> TF
+       * Lite Op. In most cases, this is already the case and L2 norm is thus achieved through TF
+       * Lite inference.
+       *
+       * <p>False by default.
        */
-      public abstract Builder setEmbedderOptions(EmbedderOptions embedderOptions);
+      public abstract Builder setL2Normalize(boolean l2Normalize);
+
+      /**
+       * Sets whether the returned embedding should be quantized to bytes via scalar quantization.
+       * Embeddings are implicitly assumed to be unit-norm and therefore any dimensions is
+       * guaranteed to have value in <code>[-1.0, 1.0]</code>. Use {@link #setL2Normalize(boolean)}
+       * if this is not the case.
+       *
+       * <p>False by default.
+       */
+      public abstract Builder setQuantize(boolean quantize);
 
       /**
        * Sets the {@link ResultListener} to receive the embedding results asynchronously when the
@@ -354,7 +368,9 @@ public final class AudioEmbedder extends BaseAudioTaskApi {
 
     abstract RunningMode runningMode();
 
-    abstract Optional<EmbedderOptions> embedderOptions();
+    abstract boolean l2Normalize();
+
+    abstract boolean quantize();
 
     abstract Optional<PureResultListener<AudioEmbedderResult>> resultListener();
 
@@ -362,7 +378,9 @@ public final class AudioEmbedder extends BaseAudioTaskApi {
 
     public static Builder builder() {
       return new AutoValue_AudioEmbedder_AudioEmbedderOptions.Builder()
-          .setRunningMode(RunningMode.AUDIO_CLIPS);
+          .setRunningMode(RunningMode.AUDIO_CLIPS)
+          .setL2Normalize(false)
+          .setQuantize(false);
     }
 
     /** Converts a {@link AudioEmbedderOptions} to a {@link CalculatorOptions} protobuf message. */
@@ -372,12 +390,14 @@ public final class AudioEmbedder extends BaseAudioTaskApi {
           BaseOptionsProto.BaseOptions.newBuilder();
       baseOptionsBuilder.setUseStreamMode(runningMode() == RunningMode.AUDIO_STREAM);
       baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions()));
+      EmbedderOptionsProto.EmbedderOptions.Builder embedderOptionsBuilder =
+          EmbedderOptionsProto.EmbedderOptions.newBuilder();
+      embedderOptionsBuilder.setL2Normalize(l2Normalize());
+      embedderOptionsBuilder.setQuantize(quantize());
       AudioEmbedderGraphOptionsProto.AudioEmbedderGraphOptions.Builder taskOptionsBuilder =
           AudioEmbedderGraphOptionsProto.AudioEmbedderGraphOptions.newBuilder()
-              .setBaseOptions(baseOptionsBuilder);
-      if (embedderOptions().isPresent()) {
-        taskOptionsBuilder.setEmbedderOptions(embedderOptions().get().convertToProto());
-      }
+              .setBaseOptions(baseOptionsBuilder)
+              .setEmbedderOptions(embedderOptionsBuilder);
       return CalculatorOptions.newBuilder()
           .setExtension(
               AudioEmbedderGraphOptionsProto.AudioEmbedderGraphOptions.ext,
