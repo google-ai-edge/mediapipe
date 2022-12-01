@@ -289,6 +289,7 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:embedderoptions",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+            "//third_party:androidx_annotation",
             "//third_party:autovalue",
             "@maven//:com_google_guava_guava",
         ] + select({
