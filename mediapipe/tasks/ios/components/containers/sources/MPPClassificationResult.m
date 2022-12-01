@@ -39,8 +39,9 @@ limitations under the License.
   NSArray<MPPClassifications *> *_classifications;
 }
 
-- (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications {
-  self = [super init];
+- (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications
+                              timeStamp:(long)timeStamp {
+  self = [super initWithTimeStamp:timeStamp];
   if (self) {
     _classifications = classifications;
   }

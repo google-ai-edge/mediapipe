@@ -12,9 +12,9 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  ==============================================================================*/
-#import "mediapipe/tasks/ios/components/containers/sources/TFLCategory.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPCategory.h"
 
-@implementation TFLCategory
+@implementation MPPCategory
 
 - (instancetype)initWithIndex:(NSInteger)index
                         score:(float)score

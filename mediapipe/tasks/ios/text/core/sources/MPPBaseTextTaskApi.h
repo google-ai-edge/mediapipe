@@ -15,6 +15,7 @@
 #import <Foundation/Foundation.h>
 
 #include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/tasks/cc/core/task_runner.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -22,7 +23,10 @@ NS_ASSUME_NONNULL_BEGIN
  * The base class of the user-facing iOS mediapipe text task api classes.
  */
 NS_SWIFT_NAME(BaseTextTaskApi)
-@interface MPPBaseTextTaskApi : NSObject
+@interface MPPBaseTextTaskApi : NSObject {
+ @protected
+  std::unique_ptr<mediapipe::tasks::core::TaskRunner> cppTaskRunner;
+}
 
 /**
  * Initializes a new `MPPBaseTextTaskApi` with the mediapipe text task graph config proto.

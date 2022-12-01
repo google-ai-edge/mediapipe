@@ -15,8 +15,19 @@
 #import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifier.h"
 
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
+#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
+#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
+#import "mediapipe/tasks/ios/core/sources/MPPPacketCreator.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierOptions+Helpers.h"
+
+#include "absl/status/statusor.h"
+
+namespace {
+using ::mediapipe::Packet;
+using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
+using ::mediapipe::tasks::core::PacketMap;
+}  // namespace
 
 static NSString *const kClassificationsStreamName = @"classifications_out";
 static NSString *const kClassificationsTag = @"classifications";
@@ -48,6 +59,20 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
       [[MPPTextClassifierOptions alloc] initWithModelPath:modelPath];
 
   return [self initWithOptions:options error:error];
+}
+
+- (MPPClassificationResult *)classifyWithText:(NSString *)text error:(NSError **)error {
+  Packet packet = [MPPPacketCreator createWithText:text];
+  absl::StatusOr<PacketMap> output_packet_map =
+      cppTaskRunner->Process({{kTextInStreamName.cppString, packet}});
+
+  if (![MPPCommonUtils checkCppError:output_packet_map.status() toError:error]) {
+    return nil;
+  }
+
+  return [MPPClassificationResult
+      classificationResultWithProto:output_packet_map.value()[kClassificationsStreamName.cppString]
+                                        .Get<ClassificationResult>()];
 }
 
 @end

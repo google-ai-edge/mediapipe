@@ -65,3 +65,23 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPPacketCreator",
+    srcs = ["sources/MPPPacketCreator.mm"],
+    hdrs = ["sources/MPPPacketCreator.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+    ],
+)
+
+objc_library(
+    name = "MPPTaskResult",
+    srcs = ["sources/MPPTaskResult.m"],
+    hdrs = ["sources/MPPTaskResult.h"],
+)
+

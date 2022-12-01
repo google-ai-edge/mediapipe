@@ -17,17 +17,17 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 objc_library(
-    name = "MPPCategory",
-    srcs = ["sources/MPPCategory.m"],
-    hdrs = ["sources/MPPCategory.h"],
-)
-
-objc_library(
-    name = "MPPClassificationResult",
-    srcs = ["sources/MPPClassificationResult.m"],
-    hdrs = ["sources/MPPClassificationResult.h"],
+    name = "MPPBaseTextTaskApi",
+    srcs = ["sources/MPPBaseTextTaskApi.mm"],
+    hdrs = ["sources/MPPBaseTextTaskApi.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
     deps = [
-        ":MPPCategory",
-        "//mediapipe/tasks/ios/core:MPPTaskResult",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
     ],
 )
+

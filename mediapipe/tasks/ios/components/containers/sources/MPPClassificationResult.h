@@ -13,7 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 #import <Foundation/Foundation.h>
-#import "mediapipe/tasks/ios/task/components/containers/sources/MPPCategory.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPCategory.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -71,7 +72,7 @@ NS_SWIFT_NAME(Classifications)
 
 /** Encapsulates results of any classification task. */
 NS_SWIFT_NAME(ClassificationResult)
-@interface MPPClassificationResult : NSObject
+@interface MPPClassificationResult : MPPTaskResult
 
 /** Array of MPPClassifications objects containing classifier predictions per image classifier
  * head.
@@ -87,7 +88,8 @@ NS_SWIFT_NAME(ClassificationResult)
  * @return An instance of MPPClassificationResult initialized with the given array of
  * classifications.
  */
-- (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications;
+- (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications
+                              timeStamp:(long)timeStamp;
 
 @end
 

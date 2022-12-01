@@ -12,16 +12,16 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  ==============================================================================*/
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskResult.h"
 
-@implementation NSString (Helpers)
+@implementation MPPTaskResult
 
-- (std::string)cppString {
-  return std::string(self.UTF8String, [self lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-}
-
-+ (NSString *)stringWithCppString:(std::string)text {
-  return [NSString stringWithCString:text.c_str() encoding:[NSString defaultCStringEncoding]];
+- (instancetype)initWithTimeStamp:(long)timeStamp {
+  self = [self init];
+  if (self) {
+    _timeStamp = timeStamp;
+  }
+  return self;
 }
 
 @end

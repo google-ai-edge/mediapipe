@@ -12,16 +12,24 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  ==============================================================================*/
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPClassificationResult.h"
 
-@implementation NSString (Helpers)
+NS_ASSUME_NONNULL_BEGIN
 
-- (std::string)cppString {
-  return std::string(self.UTF8String, [self lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-}
+@interface MPPClassifications (Helpers)
 
-+ (NSString *)stringWithCppString:(std::string)text {
-  return [NSString stringWithCString:text.c_str() encoding:[NSString defaultCStringEncoding]];
-}
++ (MPPClassifications *)classificationsWithProto:
+    (const mediapipe::tasks::components::containers::proto::Classifications &)classificationsProto;
 
 @end
+
+@interface MPPClassificationResult (Helpers)
+
++ (MPPClassificationResult *)classificationResultWithProto:
+    (const mediapipe::tasks::components::containers::proto::ClassificationResult &)
+        classificationResultProto;
+
+@end
+
+NS_ASSUME_NONNULL_END

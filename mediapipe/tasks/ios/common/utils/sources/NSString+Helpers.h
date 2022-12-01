@@ -22,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(readonly) std::string cppString;
 
++ (NSString *)stringWithCppString:(std::string)text;
+
 @end
 
 NS_ASSUME_NONNULL_END

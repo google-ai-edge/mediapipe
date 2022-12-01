@@ -13,18 +13,18 @@
  limitations under the License.
  ==============================================================================*/
 #import "mediapipe/tasks/ios/text/core/sources/MPPBaseTextTaskApi.h"
-
-#include "mediapipe/tasks/cc/core/task_runner.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 
 namespace {
 using ::mediapipe::CalculatorGraphConfig;
+using ::mediapipe::Packet;
+using ::mediapipe::tasks::core::PacketMap;
 using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 }  // namespace
 
 @interface MPPBaseTextTaskApi () {
   /** TextSearcher backed by C++ API */
-  std::unique_ptr<TaskRunnerCpp> _taskRunner;
+  std::unique_ptr<TaskRunnerCpp> _cppTaskRunner;
 }
 @end
 
@@ -40,13 +40,13 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
       return nil;
     }
 
-    _taskRunner = std::move(taskRunnerResult.value());
+    _cppTaskRunner = std::move(taskRunnerResult.value());
   }
   return self;
 }
 
 - (void)close {
-  _taskRunner->Close();
+  _cppTaskRunner->Close();
 }
 
 @end

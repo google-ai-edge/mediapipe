@@ -1,27 +1,31 @@
 /* Copyright 2022 The TensorFlow Authors. All Rights Reserved.
-
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
-
  http://www.apache.org/licenses/LICENSE-2.0
-
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.
  ==============================================================================*/
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
+#import <Foundation/Foundation.h>
 
-@implementation NSString (Helpers)
+NS_ASSUME_NONNULL_BEGIN
 
-- (std::string)cppString {
-  return std::string(self.UTF8String, [self lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-}
+/**
+ * MediaPipe Tasks options base class. Any MediaPipe task-specific options class should extend
+ * this class.
+ */
+NS_SWIFT_NAME(TaskResult)
+@interface MPPTaskResult : NSObject <NSCopying>
+/**
+ * Base options for configuring the Mediapipe task.
+ */
+@property(nonatomic, assign, readonly) long timeStamp;
 
-+ (NSString *)stringWithCppString:(std::string)text {
-  return [NSString stringWithCString:text.c_str() encoding:[NSString defaultCStringEncoding]];
-}
+- (instancetype)initWithTimeStamp:(long)timeStamp;
 
 @end
+
+NS_ASSUME_NONNULL_END

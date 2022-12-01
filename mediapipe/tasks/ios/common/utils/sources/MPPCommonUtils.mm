@@ -13,7 +13,15 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
+
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
+
+#include <string>
+
+#include "absl/status/status.h"  // from @com_google_absl
+#include "absl/strings/cord.h"   // from @com_google_absl
+
+#include "mediapipe/tasks/cc/common.h"
 
 /** Error domain of TensorFlow Lite Support related errors. */
 NSString *const MPPTasksErrorDomain = @"org.mediapipe.tasks";
@@ -60,8 +68,8 @@ NSString *const MPPTasksErrorDomain = @"org.mediapipe.tasks";
   if (status.ok()) {
     return YES;
   }
-  // Payload of absl::Status created by the Media Pipe task library stores an appropriate value of the
-  // enum MPPiteSupportStatus. The integer value corresponding to the MPPiteSupportStatus enum
+  // Payload of absl::Status created by the Media Pipe task library stores an appropriate value of
+  // the enum MPPiteSupportStatus. The integer value corresponding to the MPPiteSupportStatus enum
   // stored in the payload is extracted here to later map to the appropriate error code to be
   // returned. In cases where the enum is not stored in (payload is NULL or the payload string
   // cannot be converted to an integer), we set the error code value to be 1
