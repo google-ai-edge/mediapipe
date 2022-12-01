@@ -99,11 +99,21 @@ const tflite::Model* ModelResources::GetTfLiteModel() const {
 
 absl::Status ModelResources::BuildModelFromExternalFileProto() {
   if (model_file_->has_file_name()) {
+#ifdef __EMSCRIPTEN__
+    // In browsers, the model file may require a custom ResourceProviderFn to
+    // provide the model content. The open() method may not work in this case.
+    // Thus, loading the model content from the model file path in advance with
+    // the help of GetResourceContents.
+    MP_RETURN_IF_ERROR(mediapipe::GetResourceContents(
+        model_file_->file_name(), model_file_->mutable_file_content()));
+    model_file_->clear_file_name();
+#else
     // If the model file name is a relative path, searches the file in a
     // platform-specific location and returns the absolute path on success.
     ASSIGN_OR_RETURN(std::string path_to_resource,
                      mediapipe::PathToResourceAsFile(model_file_->file_name()));
     model_file_->set_file_name(path_to_resource);
+#endif  // __EMSCRIPTEN__
   }
   ASSIGN_OR_RETURN(
       model_file_handler_,
