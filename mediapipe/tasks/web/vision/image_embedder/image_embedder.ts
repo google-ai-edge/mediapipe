@@ -25,7 +25,7 @@ import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/
 import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {ImageSource} from '../../../../web/graph_runner/graph_runner';
+import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {ImageEmbedderOptions} from './image_embedder_options';
@@ -57,13 +57,12 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
    *     either a path to the TFLite model or the model itself needs to be
    *     provided (via `baseOptions`).
    */
-  static async createFromOptions(
+  static createFromOptions(
       wasmFileset: WasmFileset,
       imageEmbedderOptions: ImageEmbedderOptions): Promise<ImageEmbedder> {
-    const embedder = await VisionTaskRunner.createInstance(
-        ImageEmbedder, /* initializeCanvas= */ true, wasmFileset);
-    await embedder.setOptions(imageEmbedderOptions);
-    return embedder;
+    return VisionTaskRunner.createInstance(
+        ImageEmbedder, /* initializeCanvas= */ true, wasmFileset,
+        imageEmbedderOptions);
   }
 
   /**
@@ -76,8 +75,9 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ImageEmbedder> {
-    return ImageEmbedder.createFromOptions(
-        wasmFileset, {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createInstance(
+        ImageEmbedder, /* initializeCanvas= */ true, wasmFileset,
+        {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -87,20 +87,26 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the TFLite model.
    */
-  static async createFromModelPath(
+  static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ImageEmbedder> {
-    const response = await fetch(modelAssetPath.toString());
-    const graphData = await response.arrayBuffer();
-    return ImageEmbedder.createFromModelBuffer(
-        wasmFileset, new Uint8Array(graphData));
+    return VisionTaskRunner.createInstance(
+        ImageEmbedder, /* initializeCanvas= */ true, wasmFileset,
+        {baseOptions: {modelAssetPath}});
   }
 
-  protected override get baseOptions(): BaseOptionsProto|undefined {
-    return this.options.getBaseOptions();
+  constructor(
+      wasmModule: WasmModule,
+      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    super(wasmModule, glCanvas);
+    this.options.setBaseOptions(new BaseOptionsProto());
   }
 
-  protected override set baseOptions(proto: BaseOptionsProto|undefined) {
+  protected override get baseOptions(): BaseOptionsProto {
+    return this.options.getBaseOptions()!;
+  }
+
+  protected override set baseOptions(proto: BaseOptionsProto) {
     this.options.setBaseOptions(proto);
   }
 

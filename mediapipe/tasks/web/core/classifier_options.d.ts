@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import {BaseOptions} from '../../../tasks/web/core/base_options';
-
 /** Options to configure a MediaPipe Classifier Task. */
 export declare interface ClassifierOptions {
   /**

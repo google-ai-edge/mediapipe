@@ -17,7 +17,6 @@ mediapipe_ts_library(
     name = "classifier_result",
     srcs = ["classifier_result.ts"],
     deps = [
-        "//mediapipe/framework/formats:classification_jspb_proto",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_jspb_proto",
         "//mediapipe/tasks/web/components/containers:classification_result",
     ],

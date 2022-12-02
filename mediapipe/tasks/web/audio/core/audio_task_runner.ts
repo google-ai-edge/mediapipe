@@ -14,25 +14,12 @@
  * limitations under the License.
  */
 
-import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
-import {convertBaseOptionsToProto} from '../../../../tasks/web/components/processors/base_options';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
-
-import {AudioTaskOptions} from './audio_task_options';
+import {TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options';
 
 /** Base class for all MediaPipe Audio Tasks. */
-export abstract class AudioTaskRunner<T> extends TaskRunner {
-  protected abstract baseOptions?: BaseOptionsProto|undefined;
+export abstract class AudioTaskRunner<T> extends TaskRunner<TaskRunnerOptions> {
   private defaultSampleRate = 48000;
-
-  /** Configures the shared options of an audio task. */
-  async setOptions(options: AudioTaskOptions): Promise<void> {
-    this.baseOptions = this.baseOptions ?? new BaseOptionsProto();
-    if (options.baseOptions) {
-      this.baseOptions = await convertBaseOptionsToProto(
-          options.baseOptions, this.baseOptions);
-    }
-  }
 
   /**
    * Sets the sample rate for API calls that omit an explicit sample rate.

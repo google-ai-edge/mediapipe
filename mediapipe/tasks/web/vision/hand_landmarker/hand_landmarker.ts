@@ -77,13 +77,12 @@ export class HandLandmarker extends VisionTaskRunner<HandLandmarkerResult> {
    *     Note that either a path to the model asset or a model buffer needs to
    *     be provided (via `baseOptions`).
    */
-  static async createFromOptions(
+  static createFromOptions(
       wasmFileset: WasmFileset,
       handLandmarkerOptions: HandLandmarkerOptions): Promise<HandLandmarker> {
-    const landmarker = await VisionTaskRunner.createInstance(
-        HandLandmarker, /* initializeCanvas= */ true, wasmFileset);
-    await landmarker.setOptions(handLandmarkerOptions);
-    return landmarker;
+    return VisionTaskRunner.createInstance(
+        HandLandmarker, /* initializeCanvas= */ true, wasmFileset,
+        handLandmarkerOptions);
   }
 
   /**
@@ -96,8 +95,9 @@ export class HandLandmarker extends VisionTaskRunner<HandLandmarkerResult> {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<HandLandmarker> {
-    return HandLandmarker.createFromOptions(
-        wasmFileset, {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createInstance(
+        HandLandmarker, /* initializeCanvas= */ true, wasmFileset,
+        {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -107,13 +107,12 @@ export class HandLandmarker extends VisionTaskRunner<HandLandmarkerResult> {
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
    */
-  static async createFromModelPath(
+  static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<HandLandmarker> {
-    const response = await fetch(modelAssetPath.toString());
-    const graphData = await response.arrayBuffer();
-    return HandLandmarker.createFromModelBuffer(
-        wasmFileset, new Uint8Array(graphData));
+    return VisionTaskRunner.createInstance(
+        HandLandmarker, /* initializeCanvas= */ true, wasmFileset,
+        {baseOptions: {modelAssetPath}});
   }
 
   constructor(
@@ -122,6 +121,7 @@ export class HandLandmarker extends VisionTaskRunner<HandLandmarkerResult> {
     super(wasmModule, glCanvas);
 
     this.options = new HandLandmarkerGraphOptions();
+    this.options.setBaseOptions(new BaseOptionsProto());
     this.handLandmarksDetectorGraphOptions =
         new HandLandmarksDetectorGraphOptions();
     this.options.setHandLandmarksDetectorGraphOptions(
@@ -132,11 +132,11 @@ export class HandLandmarker extends VisionTaskRunner<HandLandmarkerResult> {
     this.initDefaults();
   }
 
-  protected override get baseOptions(): BaseOptionsProto|undefined {
-    return this.options.getBaseOptions();
+  protected override get baseOptions(): BaseOptionsProto {
+    return this.options.getBaseOptions()!;
   }
 
-  protected override set baseOptions(proto: BaseOptionsProto|undefined) {
+  protected override set baseOptions(proto: BaseOptionsProto) {
     this.options.setBaseOptions(proto);
   }
 

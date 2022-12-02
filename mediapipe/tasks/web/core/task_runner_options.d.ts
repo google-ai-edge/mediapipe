@@ -14,10 +14,28 @@
  * limitations under the License.
  */
 
-import {BaseOptions} from '../../../../tasks/web/core/base_options';
+// Placeholder for internal dependency on trusted resource url
 
-/** The options for configuring a MediaPipe Text task. */
-export declare interface TextTaskOptions {
+/** Options to configure MediaPipe model loading and processing. */
+export declare interface BaseOptions {
+  /**
+   * The model path to the model asset file. Only one of `modelAssetPath` or
+   * `modelAssetBuffer` can be set.
+   */
+  modelAssetPath?: string|undefined;
+
+  /**
+   * A buffer containing the model aaset. Only one of `modelAssetPath` or
+   * `modelAssetBuffer` can be set.
+   */
+  modelAssetBuffer?: Uint8Array|undefined;
+
+  /** Overrides the default backend to use for the provided model. */
+  delegate?: 'cpu'|'gpu'|undefined;
+}
+
+/** Options to configure MediaPipe Tasks in general. */
+export declare interface TaskRunnerOptions {
   /** Options to configure the loading of the model assets. */
   baseOptions?: BaseOptions;
 }

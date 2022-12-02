@@ -17,14 +17,15 @@
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {EmbeddingResult} from '../../../../tasks/cc/components/containers/proto/embeddings_pb';
+import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {TextEmbedderGraphOptions as TextEmbedderGraphOptionsProto} from '../../../../tasks/cc/text/text_embedder/proto/text_embedder_graph_options_pb';
 import {Embedding} from '../../../../tasks/web/components/containers/embedding_result';
-import {convertBaseOptionsToProto} from '../../../../tasks/web/components/processors/base_options';
 import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/processors/embedder_options';
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
 import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {TextEmbedderOptions} from './text_embedder_options';
@@ -44,7 +45,7 @@ const TEXT_EMBEDDER_CALCULATOR =
 /**
  * Performs embedding extraction on text.
  */
-export class TextEmbedder extends TaskRunner {
+export class TextEmbedder extends TaskRunner<TextEmbedderOptions> {
   private embeddingResult: TextEmbedderResult = {embeddings: []};
   private readonly options = new TextEmbedderGraphOptionsProto();
 
@@ -57,13 +58,12 @@ export class TextEmbedder extends TaskRunner {
    *     either a path to the TFLite model or the model itself needs to be
    *     provided (via `baseOptions`).
    */
-  static async createFromOptions(
+  static createFromOptions(
       wasmFileset: WasmFileset,
       textEmbedderOptions: TextEmbedderOptions): Promise<TextEmbedder> {
-    const embedder = await TaskRunner.createInstance(
-        TextEmbedder, /* initializeCanvas= */ false, wasmFileset);
-    await embedder.setOptions(textEmbedderOptions);
-    return embedder;
+    return TaskRunner.createInstance(
+        TextEmbedder, /* initializeCanvas= */ false, wasmFileset,
+        textEmbedderOptions);
   }
 
   /**
@@ -76,8 +76,9 @@ export class TextEmbedder extends TaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<TextEmbedder> {
-    return TextEmbedder.createFromOptions(
-        wasmFileset, {baseOptions: {modelAssetBuffer}});
+    return TaskRunner.createInstance(
+        TextEmbedder, /* initializeCanvas= */ false, wasmFileset,
+        {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -87,13 +88,19 @@ export class TextEmbedder extends TaskRunner {
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the TFLite model.
    */
-  static async createFromModelPath(
+  static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<TextEmbedder> {
-    const response = await fetch(modelAssetPath.toString());
-    const graphData = await response.arrayBuffer();
-    return TextEmbedder.createFromModelBuffer(
-        wasmFileset, new Uint8Array(graphData));
+    return TaskRunner.createInstance(
+        TextEmbedder, /* initializeCanvas= */ false, wasmFileset,
+        {baseOptions: {modelAssetPath}});
+  }
+
+  constructor(
+      wasmModule: WasmModule,
+      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    super(wasmModule, glCanvas);
+    this.options.setBaseOptions(new BaseOptionsProto());
   }
 
   /**
@@ -105,15 +112,19 @@ export class TextEmbedder extends TaskRunner {
    *
    * @param options The options for the text embedder.
    */
-  async setOptions(options: TextEmbedderOptions): Promise<void> {
-    if (options.baseOptions) {
-      const baseOptionsProto = await convertBaseOptionsToProto(
-          options.baseOptions, this.options.getBaseOptions());
-      this.options.setBaseOptions(baseOptionsProto);
-    }
+  override async setOptions(options: TextEmbedderOptions): Promise<void> {
+    await super.setOptions(options);
     this.options.setEmbedderOptions(convertEmbedderOptionsToProto(
         options, this.options.getEmbedderOptions()));
     this.refreshGraph();
+  }
+
+  protected override get baseOptions(): BaseOptionsProto {
+    return this.options.getBaseOptions()!;
+  }
+
+  protected override set baseOptions(proto: BaseOptionsProto) {
+    this.options.setBaseOptions(proto);
   }
 
   /**

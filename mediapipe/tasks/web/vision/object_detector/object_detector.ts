@@ -21,7 +21,7 @@ import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/b
 import {ObjectDetectorOptions as ObjectDetectorOptionsProto} from '../../../../tasks/cc/vision/object_detector/proto/object_detector_options_pb';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {ImageSource} from '../../../../web/graph_runner/graph_runner';
+import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {ObjectDetectorOptions} from './object_detector_options';
@@ -54,13 +54,12 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
    *     either a path to the model asset or a model buffer needs to be
    *     provided (via `baseOptions`).
    */
-  static async createFromOptions(
+  static createFromOptions(
       wasmFileset: WasmFileset,
       objectDetectorOptions: ObjectDetectorOptions): Promise<ObjectDetector> {
-    const detector = await VisionTaskRunner.createInstance(
-        ObjectDetector, /* initializeCanvas= */ true, wasmFileset);
-    await detector.setOptions(objectDetectorOptions);
-    return detector;
+    return VisionTaskRunner.createInstance(
+        ObjectDetector, /* initializeCanvas= */ true, wasmFileset,
+        objectDetectorOptions);
   }
 
   /**
@@ -73,8 +72,9 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ObjectDetector> {
-    return ObjectDetector.createFromOptions(
-        wasmFileset, {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createInstance(
+        ObjectDetector, /* initializeCanvas= */ true, wasmFileset,
+        {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -87,17 +87,23 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
   static async createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ObjectDetector> {
-    const response = await fetch(modelAssetPath.toString());
-    const graphData = await response.arrayBuffer();
-    return ObjectDetector.createFromModelBuffer(
-        wasmFileset, new Uint8Array(graphData));
+    return VisionTaskRunner.createInstance(
+        ObjectDetector, /* initializeCanvas= */ true, wasmFileset,
+        {baseOptions: {modelAssetPath}});
   }
 
-  protected override get baseOptions(): BaseOptionsProto|undefined {
-    return this.options.getBaseOptions();
+  constructor(
+      wasmModule: WasmModule,
+      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    super(wasmModule, glCanvas);
+    this.options.setBaseOptions(new BaseOptionsProto());
   }
 
-  protected override set baseOptions(proto: BaseOptionsProto|undefined) {
+  protected override get baseOptions(): BaseOptionsProto {
+    return this.options.getBaseOptions()!;
+  }
+
+  protected override set baseOptions(proto: BaseOptionsProto) {
     this.options.setBaseOptions(proto);
   }
 

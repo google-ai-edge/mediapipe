@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import {AudioTaskOptions} from '../../../../tasks/web/audio/core/audio_task_options';
 import {EmbedderOptions} from '../../../../tasks/web/core/embedder_options';
+import {TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options';
 
 /** Options to configure the MediaPipe Audio Embedder Task */
 export declare interface AudioEmbedderOptions extends EmbedderOptions,
-                                                      AudioTaskOptions {}
+                                                      TaskRunnerOptions {}

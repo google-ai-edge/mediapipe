@@ -25,7 +25,7 @@ import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/pr
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
 import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
-import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/graph_runner';
+import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {AudioEmbedderOptions} from './audio_embedder_options';
@@ -58,23 +58,12 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
    *     either a path to the TFLite model or the model itself needs to be
    *     provided (via `baseOptions`).
    */
-  static async createFromOptions(
+  static createFromOptions(
       wasmFileset: WasmFileset,
       audioEmbedderOptions: AudioEmbedderOptions): Promise<AudioEmbedder> {
-    // Create a file locator based on the loader options
-    const fileLocator: FileLocator = {
-      locateFile() {
-        // The only file we load is the Wasm binary
-        return wasmFileset.wasmBinaryPath.toString();
-      }
-    };
-
-    const embedder = await createMediaPipeLib(
-        AudioEmbedder, wasmFileset.wasmLoaderPath,
-        /* assetLoaderScript= */ undefined,
-        /* glCanvas= */ undefined, fileLocator);
-    await embedder.setOptions(audioEmbedderOptions);
-    return embedder;
+    return AudioTaskRunner.createInstance(
+        AudioEmbedder, /* initializeCanvas= */ false, wasmFileset,
+        audioEmbedderOptions);
   }
 
   /**
@@ -87,8 +76,9 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<AudioEmbedder> {
-    return AudioEmbedder.createFromOptions(
-        wasmFileset, {baseOptions: {modelAssetBuffer}});
+    return AudioTaskRunner.createInstance(
+        AudioEmbedder, /* initializeCanvas= */ false, wasmFileset,
+        {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -98,20 +88,26 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the TFLite model.
    */
-  static async createFromModelPath(
+  static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<AudioEmbedder> {
-    const response = await fetch(modelAssetPath.toString());
-    const graphData = await response.arrayBuffer();
-    return AudioEmbedder.createFromModelBuffer(
-        wasmFileset, new Uint8Array(graphData));
+    return AudioTaskRunner.createInstance(
+        AudioEmbedder, /* initializeCanvas= */ false, wasmFileset,
+        {baseOptions: {modelAssetPath}});
   }
 
-  protected override get baseOptions(): BaseOptionsProto|undefined {
-    return this.options.getBaseOptions();
+  constructor(
+      wasmModule: WasmModule,
+      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    super(wasmModule, glCanvas);
+    this.options.setBaseOptions(new BaseOptionsProto());
   }
 
-  protected override set baseOptions(proto: BaseOptionsProto|undefined) {
+  protected override get baseOptions(): BaseOptionsProto {
+    return this.options.getBaseOptions()!;
+  }
+
+  protected override set baseOptions(proto: BaseOptionsProto) {
     this.options.setBaseOptions(proto);
   }
 

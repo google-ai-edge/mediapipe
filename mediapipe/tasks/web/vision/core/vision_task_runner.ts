@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
-import {convertBaseOptionsToProto} from '../../../../tasks/web/components/processors/base_options';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 
 import {VisionTaskOptions} from './vision_task_options';
 
 /** Base class for all MediaPipe Vision Tasks. */
-export abstract class VisionTaskRunner<T> extends TaskRunner {
-  protected abstract baseOptions?: BaseOptionsProto|undefined;
-
+export abstract class VisionTaskRunner<T> extends
+    TaskRunner<VisionTaskOptions> {
   /** Configures the shared options of a vision task. */
-  async setOptions(options: VisionTaskOptions): Promise<void> {
-    this.baseOptions = this.baseOptions ?? new BaseOptionsProto();
-    if (options.baseOptions) {
-      this.baseOptions = await convertBaseOptionsToProto(
-          options.baseOptions, this.baseOptions);
-    }
+  override async setOptions(options: VisionTaskOptions): Promise<void> {
+    await super.setOptions(options);
     if ('runningMode' in options) {
       const useStreamMode =
           !!options.runningMode && options.runningMode !== 'image';

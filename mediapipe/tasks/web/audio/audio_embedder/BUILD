@@ -36,7 +36,6 @@ mediapipe_ts_declaration(
         "audio_embedder_result.d.ts",
     ],
     deps = [
-        "//mediapipe/tasks/web/audio/core:audio_task_options",
         "//mediapipe/tasks/web/components/containers:embedding_result",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:embedder_options",

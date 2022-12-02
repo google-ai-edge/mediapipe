@@ -22,8 +22,8 @@ import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/b
 import {AudioTaskRunner} from '../../../../tasks/web/audio/core/audio_task_runner';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
-import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {AudioClassifierOptions} from './audio_classifier_options';
@@ -56,13 +56,12 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
    *     that either a path to the model asset or a model buffer needs to be
    *     provided (via `baseOptions`).
    */
-  static async createFromOptions(
+  static createFromOptions(
       wasmFileset: WasmFileset, audioClassifierOptions: AudioClassifierOptions):
       Promise<AudioClassifier> {
-    const classifier = await TaskRunner.createInstance(
-        AudioClassifier, /* initializeCanvas= */ false, wasmFileset);
-    await classifier.setOptions(audioClassifierOptions);
-    return classifier;
+    return AudioTaskRunner.createInstance(
+        AudioClassifier, /* initializeCanvas= */ false, wasmFileset,
+        audioClassifierOptions);
   }
 
   /**
@@ -75,8 +74,9 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<AudioClassifier> {
-    return AudioClassifier.createFromOptions(
-        wasmFileset, {baseOptions: {modelAssetBuffer}});
+    return AudioTaskRunner.createInstance(
+        AudioClassifier, /* initializeCanvas= */ false, wasmFileset,
+        {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -86,20 +86,26 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
    */
-  static async createFromModelPath(
+  static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<AudioClassifier> {
-    const response = await fetch(modelAssetPath.toString());
-    const graphData = await response.arrayBuffer();
-    return AudioClassifier.createFromModelBuffer(
-        wasmFileset, new Uint8Array(graphData));
+    return AudioTaskRunner.createInstance(
+        AudioClassifier, /* initializeCanvas= */ false, wasmFileset,
+        {baseOptions: {modelAssetPath}});
   }
 
-  protected override get baseOptions(): BaseOptionsProto|undefined {
-    return this.options.getBaseOptions();
+  constructor(
+      wasmModule: WasmModule,
+      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    super(wasmModule, glCanvas);
+    this.options.setBaseOptions(new BaseOptionsProto());
   }
 
-  protected override set baseOptions(proto: BaseOptionsProto|undefined) {
+  protected override get baseOptions(): BaseOptionsProto {
+    return this.options.getBaseOptions()!;
+  }
+
+  protected override set baseOptions(proto: BaseOptionsProto) {
     this.options.setBaseOptions(proto);
   }
 

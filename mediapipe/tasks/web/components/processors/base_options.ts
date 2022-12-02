@@ -18,7 +18,7 @@ import {InferenceCalculatorOptions} from '../../../../calculators/tensor/inferen
 import {Acceleration} from '../../../../tasks/cc/core/proto/acceleration_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {ExternalFile} from '../../../../tasks/cc/core/proto/external_file_pb';
-import {BaseOptions} from '../../../../tasks/web/core/base_options';
+import {BaseOptions} from '../../../../tasks/web/core/task_runner_options';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern

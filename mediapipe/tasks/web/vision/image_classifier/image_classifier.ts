@@ -23,7 +23,7 @@ import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
-import {ImageSource} from '../../../../web/graph_runner/graph_runner';
+import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {ImageClassifierOptions} from './image_classifier_options';
@@ -55,13 +55,12 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
    *     that either a path to the model asset or a model buffer needs to be
    *     provided (via `baseOptions`).
    */
-  static async createFromOptions(
+  static createFromOptions(
       wasmFileset: WasmFileset, imageClassifierOptions: ImageClassifierOptions):
       Promise<ImageClassifier> {
-    const classifier = await VisionTaskRunner.createInstance(
-        ImageClassifier, /* initializeCanvas= */ true, wasmFileset);
-    await classifier.setOptions(imageClassifierOptions);
-    return classifier;
+    return VisionTaskRunner.createInstance(
+        ImageClassifier, /* initializeCanvas= */ true, wasmFileset,
+        imageClassifierOptions);
   }
 
   /**
@@ -74,8 +73,9 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ImageClassifier> {
-    return ImageClassifier.createFromOptions(
-        wasmFileset, {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createInstance(
+        ImageClassifier, /* initializeCanvas= */ true, wasmFileset,
+        {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -85,20 +85,26 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
    */
-  static async createFromModelPath(
+  static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ImageClassifier> {
-    const response = await fetch(modelAssetPath.toString());
-    const graphData = await response.arrayBuffer();
-    return ImageClassifier.createFromModelBuffer(
-        wasmFileset, new Uint8Array(graphData));
+    return VisionTaskRunner.createInstance(
+        ImageClassifier, /* initializeCanvas= */ true, wasmFileset,
+        {baseOptions: {modelAssetPath}});
   }
 
-  protected override get baseOptions(): BaseOptionsProto|undefined {
-    return this.options.getBaseOptions();
+  constructor(
+      wasmModule: WasmModule,
+      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    super(wasmModule, glCanvas);
+    this.options.setBaseOptions(new BaseOptionsProto());
   }
 
-  protected override set baseOptions(proto: BaseOptionsProto|undefined) {
+  protected override get baseOptions(): BaseOptionsProto {
+    return this.options.getBaseOptions()!;
+  }
+
+  protected override set baseOptions(proto: BaseOptionsProto) {
     this.options.setBaseOptions(proto);
   }
 

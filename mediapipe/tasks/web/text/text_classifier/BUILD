@@ -17,15 +17,16 @@ mediapipe_ts_library(
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/framework:calculator_options_jspb_proto",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_jspb_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_jspb_proto",
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/components/containers:classification_result",
-        "//mediapipe/tasks/web/components/processors:base_options",
         "//mediapipe/tasks/web/components/processors:classifier_options",
         "//mediapipe/tasks/web/components/processors:classifier_result",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:classifier_options",
         "//mediapipe/tasks/web/core:task_runner",
+        "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )
 
@@ -38,7 +39,7 @@ mediapipe_ts_declaration(
     deps = [
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/components/containers:classification_result",
+        "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:classifier_options",
-        "//mediapipe/tasks/web/text/core:text_task_options",
     ],
 )

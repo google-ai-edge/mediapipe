@@ -17,8 +17,6 @@ mediapipe_ts_library(
     srcs = ["vision_task_runner.ts"],
     deps = [
         ":vision_task_options",
-        "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
-        "//mediapipe/tasks/web/components/processors:base_options",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner",
         "//mediapipe/web/graph_runner:graph_runner_ts",

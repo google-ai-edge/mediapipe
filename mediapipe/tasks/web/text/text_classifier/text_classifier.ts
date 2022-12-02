@@ -17,12 +17,13 @@
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {ClassificationResult} from '../../../../tasks/cc/components/containers/proto/classifications_pb';
+import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {TextClassifierGraphOptions} from '../../../../tasks/cc/text/text_classifier/proto/text_classifier_graph_options_pb';
-import {convertBaseOptionsToProto} from '../../../../tasks/web/components/processors/base_options';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {TextClassifierOptions} from './text_classifier_options';
@@ -40,7 +41,7 @@ const TEXT_CLASSIFIER_GRAPH =
 // tslint:disable:jspb-use-builder-pattern
 
 /** Performs Natural Language classification. */
-export class TextClassifier extends TaskRunner {
+export class TextClassifier extends TaskRunner<TextClassifierOptions> {
   private classificationResult: TextClassifierResult = {classifications: []};
   private readonly options = new TextClassifierGraphOptions();
 
@@ -53,13 +54,12 @@ export class TextClassifier extends TaskRunner {
    *     either a path to the TFLite model or the model itself needs to be
    *     provided (via `baseOptions`).
    */
-  static async createFromOptions(
+  static createFromOptions(
       wasmFileset: WasmFileset,
       textClassifierOptions: TextClassifierOptions): Promise<TextClassifier> {
-    const classifier = await TaskRunner.createInstance(
-        TextClassifier, /* initializeCanvas= */ false, wasmFileset);
-    await classifier.setOptions(textClassifierOptions);
-    return classifier;
+    return TaskRunner.createInstance(
+        TextClassifier, /* initializeCanvas= */ false, wasmFileset,
+        textClassifierOptions);
   }
 
   /**
@@ -72,8 +72,9 @@ export class TextClassifier extends TaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<TextClassifier> {
-    return TextClassifier.createFromOptions(
-        wasmFileset, {baseOptions: {modelAssetBuffer}});
+    return TaskRunner.createInstance(
+        TextClassifier, /* initializeCanvas= */ false, wasmFileset,
+        {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -83,13 +84,19 @@ export class TextClassifier extends TaskRunner {
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
    */
-  static async createFromModelPath(
+  static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<TextClassifier> {
-    const response = await fetch(modelAssetPath.toString());
-    const graphData = await response.arrayBuffer();
-    return TextClassifier.createFromModelBuffer(
-        wasmFileset, new Uint8Array(graphData));
+    return TaskRunner.createInstance(
+        TextClassifier, /* initializeCanvas= */ false, wasmFileset,
+        {baseOptions: {modelAssetPath}});
+  }
+
+  constructor(
+      wasmModule: WasmModule,
+      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    super(wasmModule, glCanvas);
+    this.options.setBaseOptions(new BaseOptionsProto());
   }
 
   /**
@@ -101,18 +108,20 @@ export class TextClassifier extends TaskRunner {
    *
    * @param options The options for the text classifier.
    */
-  async setOptions(options: TextClassifierOptions): Promise<void> {
-    if (options.baseOptions) {
-      const baseOptionsProto = await convertBaseOptionsToProto(
-          options.baseOptions, this.options.getBaseOptions());
-      this.options.setBaseOptions(baseOptionsProto);
-    }
-
+  override async setOptions(options: TextClassifierOptions): Promise<void> {
+    await super.setOptions(options);
     this.options.setClassifierOptions(convertClassifierOptionsToProto(
         options, this.options.getClassifierOptions()));
     this.refreshGraph();
   }
 
+  protected override get baseOptions(): BaseOptionsProto {
+    return this.options.getBaseOptions()!;
+  }
+
+  protected override set baseOptions(proto: BaseOptionsProto) {
+    this.options.setBaseOptions(proto);
+  }
 
   /**
    * Performs Natural Language classification on the provided text and waits

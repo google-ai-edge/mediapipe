@@ -17,15 +17,16 @@ mediapipe_ts_library(
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/framework:calculator_options_jspb_proto",
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_jspb_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_jspb_proto",
         "//mediapipe/tasks/web/components/containers:embedding_result",
-        "//mediapipe/tasks/web/components/processors:base_options",
         "//mediapipe/tasks/web/components/processors:embedder_options",
         "//mediapipe/tasks/web/components/processors:embedder_result",
         "//mediapipe/tasks/web/components/utils:cosine_similarity",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:embedder_options",
         "//mediapipe/tasks/web/core:task_runner",
+        "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )
 
@@ -39,6 +40,5 @@ mediapipe_ts_declaration(
         "//mediapipe/tasks/web/components/containers:embedding_result",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:embedder_options",
-        "//mediapipe/tasks/web/text/core:text_task_options",
     ],
 )
