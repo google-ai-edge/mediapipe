@@ -48,16 +48,16 @@ async function createFileset(
   if (await isSimdSupported()) {
     return {
       wasmLoaderPath:
-          `/${basePath}/${taskName}_wasm_internal.js`,
+          `${basePath}/${taskName}_wasm_internal.js`,
       wasmBinaryPath:
-          `/${basePath}/${taskName}_wasm_internal.wasm`,
+          `${basePath}/${taskName}_wasm_internal.wasm`,
     };
   } else {
     return {
       wasmLoaderPath:
-          `/${basePath}/${taskName}_wasm_nosimd_internal.js`,
-      wasmBinaryPath: `/${basePath}/${
-          taskName}_wasm_nosimd_internal.wasm`,
+          `${basePath}/${taskName}_wasm_nosimd_internal.js`,
+      wasmBinaryPath:
+          `${basePath}/${taskName}_wasm_nosimd_internal.wasm`,
     };
   }
 }
