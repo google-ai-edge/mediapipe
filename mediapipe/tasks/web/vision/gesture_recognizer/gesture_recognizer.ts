@@ -27,7 +27,7 @@ import {HandDetectorGraphOptions} from '../../../../tasks/cc/vision/hand_detecto
 import {HandLandmarkerGraphOptions} from '../../../../tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options_pb';
 import {HandLandmarksDetectorGraphOptions} from '../../../../tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options_pb';
 import {Category} from '../../../../tasks/web/components/containers/category';
-import {Landmark} from '../../../../tasks/web/components/containers/landmark';
+import {Landmark, NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
@@ -67,7 +67,7 @@ FULL_IMAGE_RECT.setHeight(1);
 export class GestureRecognizer extends
     VisionTaskRunner<GestureRecognizerResult> {
   private gestures: Category[][] = [];
-  private landmarks: Landmark[][] = [];
+  private landmarks: NormalizedLandmark[][] = [];
   private worldLandmarks: Landmark[][] = [];
   private handednesses: Category[][] = [];
 
@@ -306,13 +306,12 @@ export class GestureRecognizer extends
     for (const binaryProto of data) {
       const handLandmarksProto =
           NormalizedLandmarkList.deserializeBinary(binaryProto);
-      const landmarks: Landmark[] = [];
+      const landmarks: NormalizedLandmark[] = [];
       for (const handLandmarkProto of handLandmarksProto.getLandmarkList()) {
         landmarks.push({
           x: handLandmarkProto.getX() ?? 0,
           y: handLandmarkProto.getY() ?? 0,
-          z: handLandmarkProto.getZ() ?? 0,
-          normalized: true
+          z: handLandmarkProto.getZ() ?? 0
         });
       }
       this.landmarks.push(landmarks);
@@ -333,8 +332,7 @@ export class GestureRecognizer extends
         worldLandmarks.push({
           x: handWorldLandmarkProto.getX() ?? 0,
           y: handWorldLandmarkProto.getY() ?? 0,
-          z: handWorldLandmarkProto.getZ() ?? 0,
-          normalized: false
+          z: handWorldLandmarkProto.getZ() ?? 0
         });
       }
       this.worldLandmarks.push(worldLandmarks);

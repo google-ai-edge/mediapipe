@@ -18,33 +18,34 @@ import com.google.auto.value.AutoValue;
 import java.util.Objects;
 
 /**
- * Landmark represents a point in 3D space with x, y, z coordinates. The landmark coordinates are in
- * meters. z represents the landmark depth, and the smaller the value the closer the world landmark
- * is to the camera.
+ * Normalized Landmark represents a point in 3D space with x, y, z coordinates. x and y are
+ * normalized to [0.0, 1.0] by the image width and height respectively. z represents the landmark
+ * depth, and the smaller the value the closer the landmark is to the camera. The magnitude of z
+ * uses roughly the same scale as x.
  */
 @AutoValue
-public abstract class Landmark {
+public abstract class NormalizedLandmark {
   private static final float TOLERANCE = 1e-6f;
 
-  public static Landmark create(float x, float y, float z) {
-    return new AutoValue_Landmark(x, y, z);
+  public static NormalizedLandmark create(float x, float y, float z) {
+    return new AutoValue_NormalizedLandmark(x, y, z);
   }
 
-  // The x coordinates of the landmark.
+  // The x coordinates of the normalized landmark.
   public abstract float x();
 
-  // The y coordinates of the landmark.
+  // The y coordinates of the normalized landmark.
   public abstract float y();
 
-  // The z coordinates of the landmark.
+  // The z coordinates of the normalized landmark.
   public abstract float z();
 
   @Override
   public final boolean equals(Object o) {
-    if (!(o instanceof Landmark)) {
+    if (!(o instanceof NormalizedLandmark)) {
       return false;
     }
-    Landmark other = (Landmark) o;
+    NormalizedLandmark other = (NormalizedLandmark) o;
     return Math.abs(other.x() - this.x()) < TOLERANCE
         && Math.abs(other.x() - this.y()) < TOLERANCE
         && Math.abs(other.x() - this.z()) < TOLERANCE;
@@ -57,6 +58,6 @@ public abstract class Landmark {
 
   @Override
   public final String toString() {
-    return "<Landmark (x=" + x() + " y=" + y() + " z=" + z() + ")>";
+    return "<Normalized Landmark (x=" + x() + " y=" + y() + " z=" + z() + ")>";
   }
 }

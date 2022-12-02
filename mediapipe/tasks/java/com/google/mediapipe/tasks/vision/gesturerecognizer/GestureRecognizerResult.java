@@ -15,13 +15,12 @@
 package com.google.mediapipe.tasks.vision.gesturerecognizer;
 
 import com.google.auto.value.AutoValue;
-import com.google.mediapipe.formats.proto.LandmarkProto.Landmark;
-import com.google.mediapipe.formats.proto.LandmarkProto.LandmarkList;
-import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
-import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
+import com.google.mediapipe.formats.proto.LandmarkProto;
 import com.google.mediapipe.formats.proto.ClassificationProto.Classification;
 import com.google.mediapipe.formats.proto.ClassificationProto.ClassificationList;
 import com.google.mediapipe.tasks.components.containers.Category;
+import com.google.mediapipe.tasks.components.containers.Landmark;
+import com.google.mediapipe.tasks.components.containers.NormalizedLandmark;
 import com.google.mediapipe.tasks.core.TaskResult;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,41 +42,36 @@ public abstract class GestureRecognizerResult implements TaskResult {
    * @param gesturesProto a List of {@link ClassificationList}
    */
   static GestureRecognizerResult create(
-      List<NormalizedLandmarkList> landmarksProto,
-      List<LandmarkList> worldLandmarksProto,
+      List<LandmarkProto.NormalizedLandmarkList> landmarksProto,
+      List<LandmarkProto.LandmarkList> worldLandmarksProto,
       List<ClassificationList> handednessesProto,
       List<ClassificationList> gesturesProto,
       long timestampMs) {
-    List<List<com.google.mediapipe.tasks.components.containers.Landmark>> multiHandLandmarks =
-        new ArrayList<>();
-    List<List<com.google.mediapipe.tasks.components.containers.Landmark>> multiHandWorldLandmarks =
-        new ArrayList<>();
+    List<List<NormalizedLandmark>> multiHandLandmarks = new ArrayList<>();
+    List<List<Landmark>> multiHandWorldLandmarks = new ArrayList<>();
     List<List<Category>> multiHandHandednesses = new ArrayList<>();
     List<List<Category>> multiHandGestures = new ArrayList<>();
-    for (NormalizedLandmarkList handLandmarksProto : landmarksProto) {
-      List<com.google.mediapipe.tasks.components.containers.Landmark> handLandmarks =
-          new ArrayList<>();
+    for (LandmarkProto.NormalizedLandmarkList handLandmarksProto : landmarksProto) {
+      List<NormalizedLandmark> handLandmarks = new ArrayList<>();
       multiHandLandmarks.add(handLandmarks);
-      for (NormalizedLandmark handLandmarkProto : handLandmarksProto.getLandmarkList()) {
+      for (LandmarkProto.NormalizedLandmark handLandmarkProto :
+          handLandmarksProto.getLandmarkList()) {
         handLandmarks.add(
-            com.google.mediapipe.tasks.components.containers.Landmark.create(
-                handLandmarkProto.getX(),
-                handLandmarkProto.getY(),
-                handLandmarkProto.getZ(),
-                true));
+            com.google.mediapipe.tasks.components.containers.NormalizedLandmark.create(
+                handLandmarkProto.getX(), handLandmarkProto.getY(), handLandmarkProto.getZ()));
       }
     }
-    for (LandmarkList handWorldLandmarksProto : worldLandmarksProto) {
+    for (LandmarkProto.LandmarkList handWorldLandmarksProto : worldLandmarksProto) {
       List<com.google.mediapipe.tasks.components.containers.Landmark> handWorldLandmarks =
           new ArrayList<>();
       multiHandWorldLandmarks.add(handWorldLandmarks);
-      for (Landmark handWorldLandmarkProto : handWorldLandmarksProto.getLandmarkList()) {
+      for (LandmarkProto.Landmark handWorldLandmarkProto :
+          handWorldLandmarksProto.getLandmarkList()) {
         handWorldLandmarks.add(
             com.google.mediapipe.tasks.components.containers.Landmark.create(
                 handWorldLandmarkProto.getX(),
                 handWorldLandmarkProto.getY(),
-                handWorldLandmarkProto.getZ(),
-                false));
+                handWorldLandmarkProto.getZ()));
       }
     }
     for (ClassificationList handednessProto : handednessesProto) {
@@ -118,11 +112,10 @@ public abstract class GestureRecognizerResult implements TaskResult {
   public abstract long timestampMs();
 
   /** Hand landmarks of detected hands. */
-  public abstract List<List<com.google.mediapipe.tasks.components.containers.Landmark>> landmarks();
+  public abstract List<List<NormalizedLandmark>> landmarks();
 
   /** Hand landmarks in world coordniates of detected hands. */
-  public abstract List<List<com.google.mediapipe.tasks.components.containers.Landmark>>
-      worldLandmarks();
+  public abstract List<List<Landmark>> worldLandmarks();
 
   /** Handedness of detected hands. */
   public abstract List<List<Category>> handednesses();
