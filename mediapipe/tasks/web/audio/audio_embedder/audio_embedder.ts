@@ -158,8 +158,11 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
   protected override process(
       audioData: Float32Array, sampleRate: number,
       timestampMs: number): AudioEmbedderResult[] {
-    this.addDoubleToStream(sampleRate, SAMPLE_RATE_STREAM, timestampMs);
-    this.addAudioToStreamWithShape(audioData, /* numChannels= */ 1, /* numSamples= */ audioData.length, AUDIO_STREAM, timestampMs);
+    this.graphRunner.addDoubleToStream(
+        sampleRate, SAMPLE_RATE_STREAM, timestampMs);
+    this.graphRunner.addAudioToStreamWithShape(
+        audioData, /* numChannels= */ 1, /* numSamples= */ audioData.length,
+        AUDIO_STREAM, timestampMs);
 
     this.embeddingResults = [];
     this.finishProcessing();
@@ -189,19 +192,21 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
 
     graphConfig.addNode(embedderNode);
 
-    this.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
+    this.graphRunner.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
       const embeddingResult = EmbeddingResult.deserializeBinary(binaryProto);
       this.embeddingResults.push(
           convertFromEmbeddingResultProto(embeddingResult));
     });
 
-    this.attachProtoVectorListener(TIMESTAMPED_EMBEDDINGS_STREAM, data => {
-      for (const binaryProto of data) {
-        const embeddingResult = EmbeddingResult.deserializeBinary(binaryProto);
-        this.embeddingResults.push(
-            convertFromEmbeddingResultProto(embeddingResult));
-      }
-    });
+    this.graphRunner.attachProtoVectorListener(
+        TIMESTAMPED_EMBEDDINGS_STREAM, data => {
+          for (const binaryProto of data) {
+            const embeddingResult =
+                EmbeddingResult.deserializeBinary(binaryProto);
+            this.embeddingResults.push(
+                convertFromEmbeddingResultProto(embeddingResult));
+          }
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

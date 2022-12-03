@@ -27,13 +27,15 @@ import {WasmFileset} from './wasm_fileset';
 const NO_ASSETS = undefined;
 
 // tslint:disable-next-line:enforce-name-casing
-const WasmMediaPipeImageLib =
+const GraphRunnerImageLibType =
     SupportModelResourcesGraphService(SupportImage(GraphRunner));
+/** An implementation of the GraphRunner that supports image operations */
+export class GraphRunnerImageLib extends GraphRunnerImageLibType {}
 
 /** Base class for all MediaPipe Tasks. */
-export abstract class TaskRunner<O extends TaskRunnerOptions> extends
-    WasmMediaPipeImageLib {
+export abstract class TaskRunner<O extends TaskRunnerOptions> {
   protected abstract baseOptions: BaseOptionsProto;
+  protected graphRunner: GraphRunnerImageLib;
   private processingErrors: Error[] = [];
 
   /**
@@ -67,14 +69,14 @@ export abstract class TaskRunner<O extends TaskRunnerOptions> extends
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    super(wasmModule, glCanvas);
+    this.graphRunner = new GraphRunnerImageLib(wasmModule, glCanvas);
 
     // Disables the automatic render-to-screen code, which allows for pure
     // CPU processing.
-    this.setAutoRenderToScreen(false);
+    this.graphRunner.setAutoRenderToScreen(false);
 
     // Enables use of our model resource caching graph service.
-    this.registerModelResourcesGraphService();
+    this.graphRunner.registerModelResourcesGraphService();
   }
 
   /** Configures the shared options of a MediaPipe Task. */
@@ -95,11 +97,11 @@ export abstract class TaskRunner<O extends TaskRunnerOptions> extends
    * @param isBinary This should be set to true if the graph is in
    *     binary format, and false if it is in human-readable text format.
    */
-  override setGraph(graphData: Uint8Array, isBinary: boolean): void {
-    this.attachErrorListener((code, message) => {
+  protected setGraph(graphData: Uint8Array, isBinary: boolean): void {
+    this.graphRunner.attachErrorListener((code, message) => {
       this.processingErrors.push(new Error(message));
     });
-    super.setGraph(graphData, isBinary);
+    this.graphRunner.setGraph(graphData, isBinary);
     this.handleErrors();
   }
 
@@ -108,8 +110,8 @@ export abstract class TaskRunner<O extends TaskRunnerOptions> extends
    * far as possible, performing all processing until no more processing can be
    * done.
    */
-  override finishProcessing(): void {
-    super.finishProcessing();
+  protected finishProcessing(): void {
+    this.graphRunner.finishProcessing();
     this.handleErrors();
   }
 

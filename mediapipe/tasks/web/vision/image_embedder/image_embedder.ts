@@ -169,7 +169,7 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
   protected process(image: ImageSource, timestamp: number):
       ImageEmbedderResult {
     // Get embeddings by running our MediaPipe graph.
-    this.addGpuBufferAsImageToStream(
+    this.graphRunner.addGpuBufferAsImageToStream(
         image, INPUT_STREAM, timestamp ?? performance.now());
     this.finishProcessing();
     return this.embeddings;
@@ -201,7 +201,7 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
 
     graphConfig.addNode(embedderNode);
 
-    this.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
+    this.graphRunner.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
       this.addJsImageEmdedding(binaryProto);
     });
 

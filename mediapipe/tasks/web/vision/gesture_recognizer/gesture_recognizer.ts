@@ -257,8 +257,9 @@ export class GestureRecognizer extends
     this.worldLandmarks = [];
     this.handednesses = [];
 
-    this.addGpuBufferAsImageToStream(imageSource, IMAGE_STREAM, timestamp);
-    this.addProtoToStream(
+    this.graphRunner.addGpuBufferAsImageToStream(
+        imageSource, IMAGE_STREAM, timestamp);
+    this.graphRunner.addProtoToStream(
         FULL_IMAGE_RECT.serializeBinary(), 'mediapipe.NormalizedRect',
         NORM_RECT_STREAM, timestamp);
     this.finishProcessing();
@@ -365,18 +366,22 @@ export class GestureRecognizer extends
 
     graphConfig.addNode(recognizerNode);
 
-    this.attachProtoVectorListener(LANDMARKS_STREAM, binaryProto => {
-      this.addJsLandmarks(binaryProto);
-    });
-    this.attachProtoVectorListener(WORLD_LANDMARKS_STREAM, binaryProto => {
-      this.adddJsWorldLandmarks(binaryProto);
-    });
-    this.attachProtoVectorListener(HAND_GESTURES_STREAM, binaryProto => {
-      this.gestures.push(...this.toJsCategories(binaryProto));
-    });
-    this.attachProtoVectorListener(HANDEDNESS_STREAM, binaryProto => {
-      this.handednesses.push(...this.toJsCategories(binaryProto));
-    });
+    this.graphRunner.attachProtoVectorListener(
+        LANDMARKS_STREAM, binaryProto => {
+          this.addJsLandmarks(binaryProto);
+        });
+    this.graphRunner.attachProtoVectorListener(
+        WORLD_LANDMARKS_STREAM, binaryProto => {
+          this.adddJsWorldLandmarks(binaryProto);
+        });
+    this.graphRunner.attachProtoVectorListener(
+        HAND_GESTURES_STREAM, binaryProto => {
+          this.gestures.push(...this.toJsCategories(binaryProto));
+        });
+    this.graphRunner.attachProtoVectorListener(
+        HANDEDNESS_STREAM, binaryProto => {
+          this.handednesses.push(...this.toJsCategories(binaryProto));
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

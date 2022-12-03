@@ -136,7 +136,7 @@ export class TextEmbedder extends TaskRunner<TextEmbedderOptions> {
    */
   embed(text: string): TextEmbedderResult {
     // Get text embeddings by running our MediaPipe graph.
-    this.addStringToStream(
+    this.graphRunner.addStringToStream(
         text, INPUT_STREAM, /* timestamp= */ performance.now());
     this.finishProcessing();
     return this.embeddingResult;
@@ -173,7 +173,7 @@ export class TextEmbedder extends TaskRunner<TextEmbedderOptions> {
 
     graphConfig.addNode(embedderNode);
 
-    this.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
+    this.graphRunner.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
       const embeddingResult = EmbeddingResult.deserializeBinary(binaryProto);
       this.embeddingResult = convertFromEmbeddingResultProto(embeddingResult);
     });

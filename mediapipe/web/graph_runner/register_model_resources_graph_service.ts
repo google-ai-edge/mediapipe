@@ -20,8 +20,8 @@ export declare interface WasmModuleRegisterModelResources {
  * An implementation of GraphRunner that supports registering model
  * resources to a cache, in the form of a GraphService C++-side. We implement as
  * a proper TS mixin, to allow for effective multiple inheritance. Sample usage:
- * `const WasmMediaPipeImageLib = SupportModelResourcesGraphService(
- *     GraphRunner);`
+ * `const GraphRunnerWithModelResourcesLib =
+ *      SupportModelResourcesGraphService(GraphRunner);`
  */
 // tslint:disable:enforce-name-casing
 export function SupportModelResourcesGraphService<TBase extends LibConstructor>(

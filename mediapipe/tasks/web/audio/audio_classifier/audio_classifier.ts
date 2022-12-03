@@ -145,8 +145,11 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
   protected override process(
       audioData: Float32Array, sampleRate: number,
       timestampMs: number): AudioClassifierResult[] {
-    this.addDoubleToStream(sampleRate, SAMPLE_RATE_STREAM, timestampMs);
-    this.addAudioToStreamWithShape(audioData, /* numChannels= */ 1, /* numSamples= */ audioData.length, AUDIO_STREAM, timestampMs);
+    this.graphRunner.addDoubleToStream(
+        sampleRate, SAMPLE_RATE_STREAM, timestampMs);
+    this.graphRunner.addAudioToStreamWithShape(
+        audioData, /* numChannels= */ 1, /* numSamples= */ audioData.length,
+        AUDIO_STREAM, timestampMs);
 
     this.classificationResults = [];
     this.finishProcessing();
@@ -189,7 +192,7 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
 
     graphConfig.addNode(classifierNode);
 
-    this.attachProtoVectorListener(
+    this.graphRunner.attachProtoVectorListener(
         TIMESTAMPED_CLASSIFICATIONS_STREAM, binaryProtos => {
           this.addJsAudioClassificationResults(binaryProtos);
         });

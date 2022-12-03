@@ -185,7 +185,7 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
       Detection[] {
     // Get detections by running our MediaPipe graph.
     this.detections = [];
-    this.addGpuBufferAsImageToStream(
+    this.graphRunner.addGpuBufferAsImageToStream(
         imageSource, INPUT_STREAM, timestamp ?? performance.now());
     this.finishProcessing();
     return [...this.detections];
@@ -242,9 +242,10 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
 
     graphConfig.addNode(detectorNode);
 
-    this.attachProtoVectorListener(DETECTIONS_STREAM, binaryProto => {
-      this.addJsObjectDetections(binaryProto);
-    });
+    this.graphRunner.attachProtoVectorListener(
+        DETECTIONS_STREAM, binaryProto => {
+          this.addJsObjectDetections(binaryProto);
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

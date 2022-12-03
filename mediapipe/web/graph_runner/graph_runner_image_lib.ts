@@ -22,7 +22,7 @@ export declare interface WasmImageModule {
  * An implementation of GraphRunner that supports binding GPU image data as
  * `mediapipe::Image` instances. We implement as a proper TS mixin, to allow for
  * effective multiple inheritance. Example usage:
- * `const WasmMediaPipeImageLib = SupportImage(GraphRunner);`
+ * `const GraphRunnerImageLib = SupportImage(GraphRunner);`
  */
 // tslint:disable-next-line:enforce-name-casing
 export function SupportImage<TBase extends LibConstructor>(Base: TBase) {

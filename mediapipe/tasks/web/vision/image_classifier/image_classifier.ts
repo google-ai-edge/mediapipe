@@ -155,7 +155,7 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
       ImageClassifierResult {
     // Get classification result by running our MediaPipe graph.
     this.classificationResult = {classifications: []};
-    this.addGpuBufferAsImageToStream(
+    this.graphRunner.addGpuBufferAsImageToStream(
         imageSource, INPUT_STREAM, timestamp ?? performance.now());
     this.finishProcessing();
     return this.classificationResult;
@@ -181,10 +181,11 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
 
     graphConfig.addNode(classifierNode);
 
-    this.attachProtoListener(CLASSIFICATIONS_STREAM, binaryProto => {
-      this.classificationResult = convertFromClassificationResultProto(
-          ClassificationResult.deserializeBinary(binaryProto));
-    });
+    this.graphRunner.attachProtoListener(
+        CLASSIFICATIONS_STREAM, binaryProto => {
+          this.classificationResult = convertFromClassificationResultProto(
+              ClassificationResult.deserializeBinary(binaryProto));
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
