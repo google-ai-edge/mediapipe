@@ -1,10 +1,30 @@
-load("@org_tensorflow//tensorflow/lite/ios:ios.bzl", "TFL_DEFAULT_TAGS", "TFL_DISABLED_SANITIZER_TAGS", "TFL_MINIMUM_OS_VERSION")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load("@org_tensorflow//tensorflow/lite:special_rules.bzl", "tflite_ios_lab_runner")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
+
+TFL_MINIMUM_OS_VERSION = "11.0"
+# LINT.ThenChange(
+#   TensorFlowLiteC.podspec.template,
+#   TensorFlowLiteSelectTfOps.podspec.template,
+#   ../objc/TensorFlowLiteObjC.podspec.template,
+#   ../swift/TensorFlowLiteSwift.podspec.template
+# )
+
+# Default tags for filtering iOS targets. Targets are restricted to Apple platforms.
+TFL_DEFAULT_TAGS = [
+    "apple",
+]
+
+# Following sanitizer tests are not supported by iOS test targets.
+TFL_DISABLED_SANITIZER_TAGS = [
+    "noasan",
+    "nomsan",
+    "notsan",
+]
+
 
 objc_library(
     name = "MPPTextClassifierObjcTestLibrary",
