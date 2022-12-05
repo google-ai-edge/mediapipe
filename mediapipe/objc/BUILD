@@ -83,11 +83,11 @@ objc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/port:threadpool",
-        "//mediapipe/gpu:MPPGraphGPUData",
         "//mediapipe/gpu:gl_base",
         "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/gpu:gpu_shared_data_internal",
         "//mediapipe/gpu:graph_support",
+        "//mediapipe/gpu:metal_shared_resources",
         "//mediapipe/gpu:pixel_buffer_pool_util",
         "//mediapipe/util:cpu_util",
         "@com_google_absl//absl/base:core_headers",
@@ -147,7 +147,7 @@ objc_library(
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         ":mediapipe_framework_ios",
-        "//mediapipe/gpu:gl_calculator_helper_ios",
+        "//mediapipe/gpu:gl_calculator_helper",
         "//mediapipe/gpu:gl_quad_renderer",
         "//mediapipe/gpu:gl_simple_shaders",
     ],
@@ -173,7 +173,7 @@ objc_library(
     deps = [
         ":mediapipe_framework_ios",
         ":mediapipe_gl_view_renderer",
-        "//mediapipe/gpu:gl_calculator_helper_ios",
+        "//mediapipe/gpu:gl_calculator_helper",
     ],
 )
 

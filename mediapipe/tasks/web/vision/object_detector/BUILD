@@ -17,12 +17,12 @@ mediapipe_ts_library(
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/framework:calculator_options_jspb_proto",
         "//mediapipe/framework/formats:detection_jspb_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_jspb_proto",
         "//mediapipe/tasks/web/components/containers:category",
-        "//mediapipe/tasks/web/components/processors:base_options",
         "//mediapipe/tasks/web/core",
-        "//mediapipe/tasks/web/core:task_runner",
-        "//mediapipe/web/graph_runner:wasm_mediapipe_lib_ts",
+        "//mediapipe/tasks/web/vision/core:vision_task_runner",
+        "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )
 
@@ -35,5 +35,7 @@ mediapipe_ts_declaration(
     deps = [
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:classifier_options",
+        "//mediapipe/tasks/web/vision/core:vision_task_options",
     ],
 )

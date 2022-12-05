@@ -16,6 +16,36 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+# Docs for Mediapipe Tasks Audio Embedder
+# https://developers.google.com/mediapipe/solutions/audio/audio_embedder
+cc_library(
+    name = "audio_embedder",
+    srcs = ["audio_embedder.cc"],
+    hdrs = ["audio_embedder.h"],
+    visibility = [
+        "//mediapipe/tasks:users",
+    ],
+    deps = [
+        ":audio_embedder_graph",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/tasks/cc/audio/audio_embedder/proto:audio_embedder_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/audio/core:audio_task_api_factory",
+        "//mediapipe/tasks/cc/audio/core:base_audio_task_api",
+        "//mediapipe/tasks/cc/audio/core:running_mode",
+        "//mediapipe/tasks/cc/components/containers:embedding_result",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
+        "//mediapipe/tasks/cc/components/processors:embedder_options",
+        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_cc_proto",
+        "//mediapipe/tasks/cc/components/utils:cosine_similarity",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
+        "@com_google_absl//absl/status:statusor",
+        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
+    ],
+)
+
 cc_library(
     name = "audio_embedder_graph",
     srcs = ["audio_embedder_graph.cc"],
@@ -26,7 +56,7 @@ cc_library(
         "//mediapipe/calculators/core:side_packet_to_stream_calculator",
         "//mediapipe/calculators/tensor:audio_to_tensor_calculator",
         "//mediapipe/calculators/tensor:audio_to_tensor_calculator_cc_proto",
-        "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:inference_calculator_cpu",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",
@@ -49,31 +79,6 @@ cc_library(
         "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
     ],
     alwayslink = 1,
-)
-
-cc_library(
-    name = "audio_embedder",
-    srcs = ["audio_embedder.cc"],
-    hdrs = ["audio_embedder.h"],
-    deps = [
-        ":audio_embedder_graph",
-        "//mediapipe/framework/api2:builder",
-        "//mediapipe/framework/formats:matrix",
-        "//mediapipe/tasks/cc/audio/audio_embedder/proto:audio_embedder_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/audio/core:audio_task_api_factory",
-        "//mediapipe/tasks/cc/audio/core:base_audio_task_api",
-        "//mediapipe/tasks/cc/audio/core:running_mode",
-        "//mediapipe/tasks/cc/components/containers:embedding_result",
-        "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
-        "//mediapipe/tasks/cc/components/processors:embedder_options",
-        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_cc_proto",
-        "//mediapipe/tasks/cc/components/utils:cosine_similarity",
-        "//mediapipe/tasks/cc/core:base_options",
-        "//mediapipe/tasks/cc/core:task_runner",
-        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
-        "@com_google_absl//absl/status:statusor",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
-    ],
 )
 
 # TODO: mediapipe/tasks/cc/audio/utils:test_utils does not compile in the OSS build

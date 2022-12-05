@@ -21,9 +21,16 @@ package(
 
 licenses(["notice"])
 
+######################################################################
+# Public target of the MediaPipe Model Maker TextCassifier APIs.
+
+# Please see https://developers.google.com/mediapipe/solutions/text/text_classifier/customize for
+# more information about the MediaPipe Model Maker TextCassifier APIs.
+######################################################################
 py_library(
     name = "text_classifier_import",
     srcs = ["__init__.py"],
+    visibility = ["//visibility:public"],
     deps = [
         ":dataset",
         ":model_options",

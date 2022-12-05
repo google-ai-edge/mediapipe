@@ -2,20 +2,10 @@
   "name": "@mediapipe/tasks-__NAME__",
   "version": "__VERSION__",
   "description": "__DESCRIPTION__",
-  "main": "__NAME___cjs_bundle.js",
-  "module":  "__NAME___cjs_bundle.js",
-  "jsdeliver":  "__NAME___iife_bundle.js",
-  "exports": {
-    ".": "./__NAME___cjs_bundle.js",
-    "./loader": "./wasm/__NAME___wasm_internal.js",
-    "./wasm": "./wasm/__NAME___wasm_internal.wasm"
-  },
+  "main": "__NAME___bundle.js",
   "author": "mediapipe@google.com",
   "license": "Apache-2.0",
   "types": "__TYPES__",
-  "dependencies": {
-    "google-protobuf": "^3.21.2"
-  },
   "homepage": "http://mediapipe.dev",
   "keywords": [ "AR", "ML", "Augmented", "MediaPipe", "MediaPipe Tasks" ]
 }

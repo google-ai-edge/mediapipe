@@ -22,7 +22,6 @@ limitations under the License.
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/image_preprocessing.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/base_task_api.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"

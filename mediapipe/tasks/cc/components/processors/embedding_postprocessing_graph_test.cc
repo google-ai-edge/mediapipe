@@ -95,8 +95,8 @@ TEST_F(ConfigureTest, SucceedsWithQuantizedModelWithMetadata) {
   options_in.set_l2_normalize(true);
 
   proto::EmbeddingPostprocessingGraphOptions options_out;
-  MP_ASSERT_OK(ConfigureEmbeddingPostprocessing(*model_resources, options_in,
-                                                &options_out));
+  MP_ASSERT_OK(ConfigureEmbeddingPostprocessingGraph(*model_resources,
+                                                     options_in, &options_out));
 
   EXPECT_THAT(
       options_out,
@@ -117,8 +117,8 @@ TEST_F(ConfigureTest, SucceedsWithQuantizedModelWithoutMetadata) {
   options_in.set_quantize(true);
 
   proto::EmbeddingPostprocessingGraphOptions options_out;
-  MP_ASSERT_OK(ConfigureEmbeddingPostprocessing(*model_resources, options_in,
-                                                &options_out));
+  MP_ASSERT_OK(ConfigureEmbeddingPostprocessingGraph(*model_resources,
+                                                     options_in, &options_out));
 
   EXPECT_THAT(
       options_out,
@@ -138,8 +138,8 @@ TEST_F(ConfigureTest, SucceedsWithFloatModelWithMetadata) {
   options_in.set_l2_normalize(true);
 
   proto::EmbeddingPostprocessingGraphOptions options_out;
-  MP_ASSERT_OK(ConfigureEmbeddingPostprocessing(*model_resources, options_in,
-                                                &options_out));
+  MP_ASSERT_OK(ConfigureEmbeddingPostprocessingGraph(*model_resources,
+                                                     options_in, &options_out));
 
   EXPECT_THAT(
       options_out,
@@ -164,7 +164,7 @@ class PostprocessingTest : public tflite_shims::testing::Test {
     auto& postprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors."
         "EmbeddingPostprocessingGraph");
-    MP_RETURN_IF_ERROR(ConfigureEmbeddingPostprocessing(
+    MP_RETURN_IF_ERROR(ConfigureEmbeddingPostprocessingGraph(
         *model_resources, options,
         &postprocessing
              .GetOptions<proto::EmbeddingPostprocessingGraphOptions>()));

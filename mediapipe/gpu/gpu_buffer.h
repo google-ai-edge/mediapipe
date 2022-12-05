@@ -105,18 +105,16 @@ class GpuBuffer {
   // specific view type; see the corresponding ViewProvider.
   template <class View, class... Args>
   decltype(auto) GetReadView(Args... args) const {
-    return GetViewProvider<View>(false)->GetReadView(
-        internal::types<View>{}, std::make_shared<GpuBuffer>(*this),
-        std::forward<Args>(args)...);
+    return GetViewProviderOrDie<View>(false).GetReadView(
+        internal::types<View>{}, std::forward<Args>(args)...);
   }
 
   // Gets a write view of the specified type. The arguments depend on the
   // specific view type; see the corresponding ViewProvider.
   template <class View, class... Args>
   decltype(auto) GetWriteView(Args... args) {
-    return GetViewProvider<View>(true)->GetWriteView(
-        internal::types<View>{}, std::make_shared<GpuBuffer>(*this),
-        std::forward<Args>(args)...);
+    return GetViewProviderOrDie<View>(true).GetWriteView(
+        internal::types<View>{}, std::forward<Args>(args)...);
   }
 
   // Attempts to access an underlying storage object of the specified type.
@@ -147,13 +145,17 @@ class GpuBuffer {
     GpuBufferFormat format_ = GpuBufferFormat::kUnknown;
   };
 
-  internal::GpuBufferStorage& GetStorageForView(TypeId view_provider_type,
+  internal::GpuBufferStorage* GetStorageForView(TypeId view_provider_type,
                                                 bool for_writing) const;
 
+  internal::GpuBufferStorage& GetStorageForViewOrDie(TypeId view_provider_type,
+                                                     bool for_writing) const;
+
   template <class View>
-  internal::ViewProvider<View>* GetViewProvider(bool for_writing) const {
+  internal::ViewProvider<View>& GetViewProviderOrDie(bool for_writing) const {
     using VP = internal::ViewProvider<View>;
-    return GetStorageForView(kTypeId<VP>, for_writing).template down_cast<VP>();
+    return *GetStorageForViewOrDie(kTypeId<VP>, for_writing)
+                .template down_cast<VP>();
   }
 
   std::shared_ptr<internal::GpuBufferStorage>& no_storage() const {
@@ -175,6 +177,10 @@ class GpuBuffer {
   // This is mutable because view methods that do not change the contents may
   // still need to allocate new storages.
   mutable std::vector<std::shared_ptr<internal::GpuBufferStorage>> storages_;
+
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+  friend CVPixelBufferRef GetCVPixelBufferRef(const GpuBuffer& buffer);
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 };
 
 inline bool GpuBuffer::operator==(std::nullptr_t other) const {

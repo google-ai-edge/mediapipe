@@ -17,14 +17,15 @@
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {EmbeddingResult} from '../../../../tasks/cc/components/containers/proto/embeddings_pb';
+import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {ImageEmbedderGraphOptions} from '../../../../tasks/cc/vision/image_embedder/proto/image_embedder_graph_options_pb';
-import {convertBaseOptionsToProto} from '../../../../tasks/web/components/processors/base_options';
+import {Embedding} from '../../../../tasks/web/components/containers/embedding_result';
 import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/processors/embedder_options';
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
-import {TaskRunner} from '../../../../tasks/web/core/task_runner';
-import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
-import {configureRunningMode} from '../../../../tasks/web/vision/core/running_mode';
-import {createMediaPipeLib, FileLocator, ImageSource} from '../../../../web/graph_runner/wasm_mediapipe_lib';
+import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
+import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {ImageEmbedderOptions} from './image_embedder_options';
@@ -38,69 +39,75 @@ const EMBEDDINGS_STREAM = 'embeddings_out';
 const TEXT_EMBEDDER_CALCULATOR =
     'mediapipe.tasks.vision.image_embedder.ImageEmbedderGraph';
 
+export * from './image_embedder_options';
+export * from './image_embedder_result';
 export {ImageSource};  // Used in the public API
 
 /** Performs embedding extraction on images. */
-export class ImageEmbedder extends TaskRunner {
+export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
   private readonly options = new ImageEmbedderGraphOptions();
   private embeddings: ImageEmbedderResult = {embeddings: []};
 
   /**
    * Initializes the Wasm runtime and creates a new image embedder from the
    * provided options.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param imageEmbedderOptions The options for the image embedder. Note that
    *     either a path to the TFLite model or the model itself needs to be
    *     provided (via `baseOptions`).
    */
-  static async createFromOptions(
-      wasmLoaderOptions: WasmLoaderOptions,
+  static createFromOptions(
+      wasmFileset: WasmFileset,
       imageEmbedderOptions: ImageEmbedderOptions): Promise<ImageEmbedder> {
-    // Create a file locator based on the loader options
-    const fileLocator: FileLocator = {
-      locateFile() {
-        // The only file we load is the Wasm binary
-        return wasmLoaderOptions.wasmBinaryPath.toString();
-      }
-    };
-
-    const embedder = await createMediaPipeLib(
-        ImageEmbedder, wasmLoaderOptions.wasmLoaderPath,
-        /* assetLoaderScript= */ undefined,
-        /* glCanvas= */ undefined, fileLocator);
-    await embedder.setOptions(imageEmbedderOptions);
-    return embedder;
+    return VisionTaskRunner.createInstance(
+        ImageEmbedder, /* initializeCanvas= */ true, wasmFileset,
+        imageEmbedderOptions);
   }
 
   /**
    * Initializes the Wasm runtime and creates a new image embedder based on the
    * provided model asset buffer.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the TFLite model.
    */
   static createFromModelBuffer(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ImageEmbedder> {
-    return ImageEmbedder.createFromOptions(
-        wasmLoaderOptions, {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createInstance(
+        ImageEmbedder, /* initializeCanvas= */ true, wasmFileset,
+        {baseOptions: {modelAssetBuffer}});
   }
 
   /**
    * Initializes the Wasm runtime and creates a new image embedder based on the
    * path to the model asset.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetPath The path to the TFLite model.
    */
-  static async createFromModelPath(
-      wasmLoaderOptions: WasmLoaderOptions,
+  static createFromModelPath(
+      wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ImageEmbedder> {
-    const response = await fetch(modelAssetPath.toString());
-    const graphData = await response.arrayBuffer();
-    return ImageEmbedder.createFromModelBuffer(
-        wasmLoaderOptions, new Uint8Array(graphData));
+    return VisionTaskRunner.createInstance(
+        ImageEmbedder, /* initializeCanvas= */ true, wasmFileset,
+        {baseOptions: {modelAssetPath}});
+  }
+
+  constructor(
+      wasmModule: WasmModule,
+      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    super(wasmModule, glCanvas);
+    this.options.setBaseOptions(new BaseOptionsProto());
+  }
+
+  protected override get baseOptions(): BaseOptionsProto {
+    return this.options.getBaseOptions()!;
+  }
+
+  protected override set baseOptions(proto: BaseOptionsProto) {
+    this.options.setBaseOptions(proto);
   }
 
   /**
@@ -112,45 +119,29 @@ export class ImageEmbedder extends TaskRunner {
    *
    * @param options The options for the image embedder.
    */
-  async setOptions(options: ImageEmbedderOptions): Promise<void> {
-    let baseOptionsProto = this.options.getBaseOptions();
-    if (options.baseOptions) {
-      baseOptionsProto = await convertBaseOptionsToProto(
-          options.baseOptions, baseOptionsProto);
-    }
-    baseOptionsProto = configureRunningMode(options, baseOptionsProto);
-    this.options.setBaseOptions(baseOptionsProto);
-
+  override async setOptions(options: ImageEmbedderOptions): Promise<void> {
+    await super.setOptions(options);
     this.options.setEmbedderOptions(convertEmbedderOptionsToProto(
         options, this.options.getEmbedderOptions()));
-
     this.refreshGraph();
   }
 
   /**
-   * Performs embedding extraction on the provided image and waits synchronously
-   * for the response.
-   *
-   * Only use this method when the `useStreamMode` option is not set or
-   * expliclity set to `false`.
+   * Performs embedding extraction on the provided single image and waits
+   * synchronously for the response. Only use this method when the
+   * ImageEmbedder is created with running mode `image`.
    *
    * @param image The image to process.
    * @return The classification result of the image
    */
   embed(image: ImageSource): ImageEmbedderResult {
-    if (!!this.options.getBaseOptions()?.getUseStreamMode()) {
-      throw new Error(
-          'Task is not initialized with image mode. ' +
-          '\'runningMode\' must be set to \'image\'.');
-    }
-    return this.performEmbeddingExtraction(image, performance.now());
+    return this.processImageData(image);
   }
 
   /**
    * Performs embedding extraction on the provided video frame and waits
-   * synchronously for the response.
-   *
-   * Only use this method when the `useStreamMode` option is set to `true`.
+   * synchronously for the response. Only use this method when the
+   * ImageEmbedder is created with running mode `video`.
    *
    * @param imageFrame The image frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
@@ -158,19 +149,27 @@ export class ImageEmbedder extends TaskRunner {
    */
   embedForVideo(imageFrame: ImageSource, timestamp: number):
       ImageEmbedderResult {
-    if (!this.options.getBaseOptions()?.getUseStreamMode()) {
-      throw new Error(
-          'Task is not initialized with video mode. ' +
-          '\'runningMode\' must be set to \'video\' or \'live_stream\'.');
-    }
-    return this.performEmbeddingExtraction(imageFrame, timestamp);
+    return this.processVideoData(imageFrame, timestamp);
   }
 
-  /** Runs the embedding extractio and blocks on the response. */
-  private performEmbeddingExtraction(image: ImageSource, timestamp: number):
+  /**
+   * Utility function to compute cosine similarity[1] between two `Embedding`
+   * objects.
+   *
+   * [1]: https://en.wikipedia.org/wiki/Cosine_similarity
+   *
+   * @throws if the embeddings are of different types(float vs. quantized), have
+   *     different sizes, or have an L2-norm of 0.
+   */
+  static cosineSimilarity(u: Embedding, v: Embedding): number {
+    return computeCosineSimilarity(u, v);
+  }
+
+  /** Runs the embedding extraction and blocks on the response. */
+  protected process(image: ImageSource, timestamp: number):
       ImageEmbedderResult {
     // Get embeddings by running our MediaPipe graph.
-    this.addGpuBufferAsImageToStream(
+    this.graphRunner.addGpuBufferAsImageToStream(
         image, INPUT_STREAM, timestamp ?? performance.now());
     this.finishProcessing();
     return this.embeddings;
@@ -202,7 +201,7 @@ export class ImageEmbedder extends TaskRunner {
 
     graphConfig.addNode(embedderNode);
 
-    this.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
+    this.graphRunner.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
       this.addJsImageEmdedding(binaryProto);
     });
 

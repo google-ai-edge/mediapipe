@@ -22,12 +22,3 @@ mediapipe_proto_library(
     name = "segmenter_options_proto",
     srcs = ["segmenter_options.proto"],
 )
-
-mediapipe_proto_library(
-    name = "text_preprocessing_graph_options_proto",
-    srcs = ["text_preprocessing_graph_options.proto"],
-    deps = [
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
-    ],
-)

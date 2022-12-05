@@ -14,4 +14,9 @@
  * limitations under the License.
  */
 
-export {ClassifierOptions as ImageClassifierOptions} from '../../../../tasks/web/core/classifier_options';
+import {ClassifierOptions} from '../../../../tasks/web/core/classifier_options';
+import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_options';
+
+/** Options to configure the MediaPipe Image Classifier Task. */
+export declare interface ImageClassifierOptions extends ClassifierOptions,
+                                                        VisionTaskOptions {}

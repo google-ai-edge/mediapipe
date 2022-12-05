@@ -29,19 +29,6 @@ android_library(
     ],
 )
 
-android_library(
-    name = "embedderoptions",
-    srcs = ["EmbedderOptions.java"],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
-    deps = [
-        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_java_proto_lite",
-        "//third_party:autovalue",
-        "@maven//:com_google_guava_guava",
-    ],
-)
-
 # Expose the java source files for building mediapipe tasks core AAR.
 filegroup(
     name = "java_src",

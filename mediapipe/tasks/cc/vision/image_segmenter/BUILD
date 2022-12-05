@@ -16,10 +16,13 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+# Docs for Mediapipe Tasks Image Segmenter
+# https://developers.google.com/mediapipe/solutions/vision/image_segmenter
 cc_library(
     name = "image_segmenter",
     srcs = ["image_segmenter.cc"],
     hdrs = ["image_segmenter.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":image_segmenter_graph",
         "//mediapipe/framework/api2:builder",
@@ -53,10 +56,10 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/components:image_preprocessing",
-        "//mediapipe/tasks/cc/components:image_preprocessing_options_cc_proto",
         "//mediapipe/tasks/cc/components/calculators/tensor:tensors_to_segmentation_calculator",
         "//mediapipe/tasks/cc/components/calculators/tensor:tensors_to_segmentation_calculator_cc_proto",
+        "//mediapipe/tasks/cc/components/processors:image_preprocessing_graph",
+        "//mediapipe/tasks/cc/components/processors/proto:image_preprocessing_graph_options_cc_proto",
         "//mediapipe/tasks/cc/components/proto:segmenter_options_cc_proto",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/core:model_task_graph",

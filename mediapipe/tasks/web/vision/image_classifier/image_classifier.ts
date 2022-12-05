@@ -17,13 +17,13 @@
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {ClassificationResult} from '../../../../tasks/cc/components/containers/proto/classifications_pb';
+import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {ImageClassifierGraphOptions} from '../../../../tasks/cc/vision/image_classifier/proto/image_classifier_graph_options_pb';
-import {convertBaseOptionsToProto} from '../../../../tasks/web/components/processors/base_options';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
-import {TaskRunner} from '../../../../tasks/web/core/task_runner';
-import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
-import {createMediaPipeLib, FileLocator, ImageSource} from '../../../../web/graph_runner/wasm_mediapipe_lib';
+import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {ImageClassifierOptions} from './image_classifier_options';
@@ -42,67 +42,70 @@ export {ImageSource};  // Used in the public API
 // tslint:disable:jspb-use-builder-pattern
 
 /** Performs classification on images. */
-export class ImageClassifier extends TaskRunner {
+export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
   private classificationResult: ImageClassifierResult = {classifications: []};
   private readonly options = new ImageClassifierGraphOptions();
 
   /**
    * Initializes the Wasm runtime and creates a new image classifier from the
    * provided options.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location
+   *     Wasm binary and its loader.
    * @param imageClassifierOptions The options for the image classifier. Note
    *     that either a path to the model asset or a model buffer needs to be
    *     provided (via `baseOptions`).
    */
-  static async createFromOptions(
-      wasmLoaderOptions: WasmLoaderOptions,
-      imageClassifierOptions: ImageClassifierOptions):
+  static createFromOptions(
+      wasmFileset: WasmFileset, imageClassifierOptions: ImageClassifierOptions):
       Promise<ImageClassifier> {
-    // Create a file locator based on the loader options
-    const fileLocator: FileLocator = {
-      locateFile() {
-        // The only file we load is the Wasm binary
-        return wasmLoaderOptions.wasmBinaryPath.toString();
-      }
-    };
-
-    const classifier = await createMediaPipeLib(
-        ImageClassifier, wasmLoaderOptions.wasmLoaderPath,
-        /* assetLoaderScript= */ undefined,
-        /* glCanvas= */ undefined, fileLocator);
-    await classifier.setOptions(imageClassifierOptions);
-    return classifier;
+    return VisionTaskRunner.createInstance(
+        ImageClassifier, /* initializeCanvas= */ true, wasmFileset,
+        imageClassifierOptions);
   }
 
   /**
    * Initializes the Wasm runtime and creates a new image classifier based on
    * the provided model asset buffer.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
    */
   static createFromModelBuffer(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ImageClassifier> {
-    return ImageClassifier.createFromOptions(
-        wasmLoaderOptions, {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createInstance(
+        ImageClassifier, /* initializeCanvas= */ true, wasmFileset,
+        {baseOptions: {modelAssetBuffer}});
   }
 
   /**
    * Initializes the Wasm runtime and creates a new image classifier based on
    * the path to the model asset.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
    */
-  static async createFromModelPath(
-      wasmLoaderOptions: WasmLoaderOptions,
+  static createFromModelPath(
+      wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ImageClassifier> {
-    const response = await fetch(modelAssetPath.toString());
-    const graphData = await response.arrayBuffer();
-    return ImageClassifier.createFromModelBuffer(
-        wasmLoaderOptions, new Uint8Array(graphData));
+    return VisionTaskRunner.createInstance(
+        ImageClassifier, /* initializeCanvas= */ true, wasmFileset,
+        {baseOptions: {modelAssetPath}});
+  }
+
+  constructor(
+      wasmModule: WasmModule,
+      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    super(wasmModule, glCanvas);
+    this.options.setBaseOptions(new BaseOptionsProto());
+  }
+
+  protected override get baseOptions(): BaseOptionsProto {
+    return this.options.getBaseOptions()!;
+  }
+
+  protected override set baseOptions(proto: BaseOptionsProto) {
+    this.options.setBaseOptions(proto);
   }
 
   /**
@@ -114,32 +117,45 @@ export class ImageClassifier extends TaskRunner {
    *
    * @param options The options for the image classifier.
    */
-  async setOptions(options: ImageClassifierOptions): Promise<void> {
-    if (options.baseOptions) {
-      const baseOptionsProto = await convertBaseOptionsToProto(
-          options.baseOptions, this.options.getBaseOptions());
-      this.options.setBaseOptions(baseOptionsProto);
-    }
-
+  override async setOptions(options: ImageClassifierOptions): Promise<void> {
+    await super.setOptions(options);
     this.options.setClassifierOptions(convertClassifierOptionsToProto(
         options, this.options.getClassifierOptions()));
     this.refreshGraph();
   }
 
   /**
-   * Performs image classification on the provided image and waits synchronously
-   * for the response.
+   * Performs image classification on the provided single image and waits
+   * synchronously for the response. Only use this method when the
+   * ImageClassifier is created with running mode `image`.
    *
-   * @param imageSource An image source to process.
-   * @param timestamp The timestamp of the current frame, in ms. If not
-   *     provided, defaults to `performance.now()`.
+   * @param image An image to process.
    * @return The classification result of the image
    */
-  classify(imageSource: ImageSource, timestamp?: number):
+  classify(image: ImageSource): ImageClassifierResult {
+    return this.processImageData(image);
+  }
+
+  /**
+   * Performs image classification on the provided video frame and waits
+   * synchronously for the response. Only use this method when the
+   * ImageClassifier is created with running mode `video`.
+   *
+   * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
+   * @return The classification result of the image
+   */
+  classifyForVideo(videoFrame: ImageSource, timestamp: number):
+      ImageClassifierResult {
+    return this.processVideoData(videoFrame, timestamp);
+  }
+
+  /** Runs the image classification graph and blocks on the response. */
+  protected override process(imageSource: ImageSource, timestamp: number):
       ImageClassifierResult {
     // Get classification result by running our MediaPipe graph.
     this.classificationResult = {classifications: []};
-    this.addGpuBufferAsImageToStream(
+    this.graphRunner.addGpuBufferAsImageToStream(
         imageSource, INPUT_STREAM, timestamp ?? performance.now());
     this.finishProcessing();
     return this.classificationResult;
@@ -165,10 +181,11 @@ export class ImageClassifier extends TaskRunner {
 
     graphConfig.addNode(classifierNode);
 
-    this.attachProtoListener(CLASSIFICATIONS_STREAM, binaryProto => {
-      this.classificationResult = convertFromClassificationResultProto(
-          ClassificationResult.deserializeBinary(binaryProto));
-    });
+    this.graphRunner.attachProtoListener(
+        CLASSIFICATIONS_STREAM, binaryProto => {
+          this.classificationResult = convertFromClassificationResultProto(
+              ClassificationResult.deserializeBinary(binaryProto));
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

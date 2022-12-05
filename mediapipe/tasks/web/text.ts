@@ -14,4 +14,12 @@
  * limitations under the License.
  */
 
-export * from '../../tasks/web/text/index';
+import {FilesetResolver as FilesetResolverImpl, TextClassifier as TextClassifierImpl, TextEmbedder as TextEmbedderImpl} from '../../tasks/web/text/index';
+
+// Declare the variables locally so that Rollup in OSS includes them explcilty
+// as exports.
+const FilesetResolver = FilesetResolverImpl;
+const TextClassifier = TextClassifierImpl;
+const TextEmbedder = TextEmbedderImpl;
+
+export {FilesetResolver, TextClassifier, TextEmbedder};

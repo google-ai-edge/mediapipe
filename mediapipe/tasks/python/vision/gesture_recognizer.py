@@ -181,9 +181,11 @@ class GestureRecognizerOptions:
   min_hand_presence_confidence: Optional[float] = 0.5
   min_tracking_confidence: Optional[float] = 0.5
   canned_gesture_classifier_options: Optional[
-      _ClassifierOptions] = _ClassifierOptions()
+      _ClassifierOptions] = dataclasses.field(
+          default_factory=_ClassifierOptions)
   custom_gesture_classifier_options: Optional[
-      _ClassifierOptions] = _ClassifierOptions()
+      _ClassifierOptions] = dataclasses.field(
+          default_factory=_ClassifierOptions)
   result_callback: Optional[Callable[
       [GestureRecognizerResult, image_module.Image, int], None]] = None
 

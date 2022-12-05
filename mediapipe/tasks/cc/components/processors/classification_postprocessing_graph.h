@@ -58,9 +58,6 @@ namespace processors {
 //     The classification result aggregated by timestamp, then by head. Must be
 //     connected if the TIMESTAMPS input is connected, as it signals that
 //     timestamp aggregation is required.
-//   // TODO: remove output once migration is over.
-//   CLASSIFICATION_RESULT - (DEPRECATED) ClassificationResult @Optional
-//     The aggregated classification result.
 absl::Status ConfigureClassificationPostprocessingGraph(
     const tasks::core::ModelResources& model_resources,
     const proto::ClassifierOptions& classifier_options,

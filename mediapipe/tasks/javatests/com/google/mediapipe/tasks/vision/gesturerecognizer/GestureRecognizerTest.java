@@ -28,7 +28,7 @@ import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.Category;
-import com.google.mediapipe.tasks.components.containers.Landmark;
+import com.google.mediapipe.tasks.components.containers.NormalizedLandmark;
 import com.google.mediapipe.tasks.components.containers.proto.LandmarksDetectionResultProto.LandmarksDetectionResult;
 import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
 import com.google.mediapipe.tasks.core.BaseOptions;
@@ -603,7 +603,7 @@ public class GestureRecognizerTest {
     assertThat(actualResult.landmarks().get(0))
         .comparingElementsUsing(
             Correspondence.from(
-                (Correspondence.BinaryPredicate<Landmark, Landmark>)
+                (Correspondence.BinaryPredicate<NormalizedLandmark, NormalizedLandmark>)
                     (actual, expected) -> {
                       return Correspondence.tolerance(LANDMARKS_ERROR_TOLERANCE)
                               .compare(actual.x(), expected.x())

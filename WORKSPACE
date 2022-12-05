@@ -26,7 +26,7 @@ versions.check(minimum_bazel_version = "3.7.2")
 http_archive(
     name = "com_google_absl",
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20210324.2.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20220623.1.tar.gz",
     ],
     # Remove after https://github.com/abseil/abseil-cpp/issues/326 is solved.
     patches = [
@@ -35,8 +35,8 @@ http_archive(
     patch_args = [
         "-p1",
     ],
-    strip_prefix = "abseil-cpp-20210324.2",
-    sha256 = "59b862f50e710277f8ede96f083a5bb8d7c9595376146838b9580be90374ee1f"
+    strip_prefix = "abseil-cpp-20220623.1",
+    sha256 = "91ac87d30cc6d79f9ab974c51874a704de9c2647c40f6932597329a282217ba8"
 )
 
 http_archive(
@@ -212,14 +212,14 @@ http_archive(
     sha256 = "75922da3a1bdb417d820398eb03d4e9bd067c4905a4246d35a44c01d62154d91",
 )
 
-# Point to the commit that deprecates the usage of Eigen::MappedSparseMatrix.
+# 2022-10-20
 http_archive(
     name = "pybind11",
     urls = [
-        "https://github.com/pybind/pybind11/archive/70a58c577eaf067748c2ec31bfd0b0a614cffba6.zip",
+        "https://github.com/pybind/pybind11/archive/v2.10.1.zip",
     ],
-    sha256 = "b971842fab1b5b8f3815a2302331782b7d137fef0e06502422bc4bc360f4956c",
-    strip_prefix = "pybind11-70a58c577eaf067748c2ec31bfd0b0a614cffba6",
+    sha256 = "fcf94065efcfd0a7a828bacf118fa11c43f6390d0c805e3e6342ac119f2e9976",
+    strip_prefix = "pybind11-2.10.1",
     build_file = "@pybind11_bazel//:pybind11.BUILD",
 )
 

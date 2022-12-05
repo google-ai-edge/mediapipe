@@ -14,4 +14,9 @@
  * limitations under the License.
  */
 
-export {EmbedderOptions as TextEmbedderOptions} from '../../../../tasks/web/core/embedder_options';
+import {EmbedderOptions} from '../../../../tasks/web/core/embedder_options';
+import {TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options';
+
+/** Options to configure the MediaPipe Text Embedder Task */
+export declare interface TextEmbedderOptions extends EmbedderOptions,
+                                                     TaskRunnerOptions {}

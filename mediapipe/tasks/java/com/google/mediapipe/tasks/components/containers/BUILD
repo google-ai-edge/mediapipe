@@ -83,6 +83,15 @@ android_library(
     ],
 )
 
+android_library(
+    name = "normalized_landmark",
+    srcs = ["NormalizedLandmark.java"],
+    deps = [
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
 # Expose the java source files for building mediapipe tasks core AAR.
 filegroup(
     name = "java_src",

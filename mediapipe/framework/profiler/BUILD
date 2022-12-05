@@ -334,6 +334,10 @@ cc_library(
         "graph_profiler_stub.h",
     ],
     visibility = ["//mediapipe/framework:__pkg__"],
+    deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_profile_cc_proto",
+    ],
 )
 
 cc_test(

@@ -14,6 +14,7 @@
 """MediaPipe text embedder task."""
 
 import dataclasses
+from typing import Optional
 
 from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
@@ -49,7 +50,8 @@ class TextEmbedderOptions:
     embedder_options: Options for the text embedder task.
   """
   base_options: _BaseOptions
-  embedder_options: _EmbedderOptions = _EmbedderOptions()
+  embedder_options: Optional[_EmbedderOptions] = dataclasses.field(
+      default_factory=_EmbedderOptions)
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _TextEmbedderGraphOptionsProto:

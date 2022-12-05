@@ -23,8 +23,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #include "mediapipe/tasks/cc/components/processors/embedding_postprocessing_graph.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
-#include "mediapipe/tasks/cc/components/proto/text_preprocessing_graph_options.pb.h"
-#include "mediapipe/tasks/cc/components/text_preprocessing_graph.h"
+#include "mediapipe/tasks/cc/components/processors/proto/text_preprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/text_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/model_resources_calculator.pb.h"
@@ -107,12 +107,12 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
       Graph& graph) {
     // Adds preprocessing calculators and connects them to the text input
     // stream.
-    auto& preprocessing =
-        graph.AddNode("mediapipe.tasks.components.TextPreprocessingSubgraph");
-    MP_RETURN_IF_ERROR(components::ConfigureTextPreprocessingSubgraph(
+    auto& preprocessing = graph.AddNode(
+        "mediapipe.tasks.components.processors.TextPreprocessingGraph");
+    MP_RETURN_IF_ERROR(components::processors::ConfigureTextPreprocessingGraph(
         model_resources,
         preprocessing.GetOptions<
-            tasks::components::proto::TextPreprocessingGraphOptions>()));
+            components::processors::proto::TextPreprocessingGraphOptions>()));
     text_in >> preprocessing.In(kTextTag);
 
     // Adds both InferenceCalculator and ModelResourcesCalculator.
@@ -128,10 +128,12 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
     // inference results.
     auto& postprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors.EmbeddingPostprocessingGraph");
-    MP_RETURN_IF_ERROR(components::processors::ConfigureEmbeddingPostprocessing(
-        model_resources, task_options.embedder_options(),
-        &postprocessing.GetOptions<components::processors::proto::
-                                       EmbeddingPostprocessingGraphOptions>()));
+    MP_RETURN_IF_ERROR(
+        components::processors::ConfigureEmbeddingPostprocessingGraph(
+            model_resources, task_options.embedder_options(),
+            &postprocessing
+                 .GetOptions<components::processors::proto::
+                                 EmbeddingPostprocessingGraphOptions>()));
     inference.Out(kTensorsTag) >> postprocessing.In(kTensorsTag);
 
     // Outputs the embedding result.

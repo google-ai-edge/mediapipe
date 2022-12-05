@@ -231,8 +231,6 @@ int64_t Graph::AddSurfaceOutput(const std::string& output_stream_name) {
       *graph_config(), absl::StrCat("egl_surface_sink_", output_stream_name)));
   sink_node->set_calculator("GlSurfaceSinkCalculator");
   sink_node->add_input_stream(output_stream_name);
-  sink_node->add_input_side_packet(
-      absl::StrCat(kGpuSharedTagName, ":", kGpuSharedSidePacketName));
 
   const std::string input_side_packet_name =
       mediapipe::tool::GetUnusedSidePacketName(

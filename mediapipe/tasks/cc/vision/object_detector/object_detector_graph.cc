@@ -33,7 +33,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/calculators/score_calibration_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/calculators/score_calibration_utils.h"
-#include "mediapipe/tasks/cc/components/image_preprocessing.h"
+#include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/components/utils/source_or_node_output.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
@@ -561,14 +561,15 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
 
     // Adds preprocessing calculators and connects them to the graph input image
     // stream.
-    auto& preprocessing =
-        graph.AddNode("mediapipe.tasks.components.ImagePreprocessingSubgraph");
-    bool use_gpu = components::DetermineImagePreprocessingGpuBackend(
-        task_options.base_options().acceleration());
-    MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
+    auto& preprocessing = graph.AddNode(
+        "mediapipe.tasks.components.processors.ImagePreprocessingGraph");
+    bool use_gpu =
+        components::processors::DetermineImagePreprocessingGpuBackend(
+            task_options.base_options().acceleration());
+    MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
         model_resources, use_gpu,
-        &preprocessing
-             .GetOptions<tasks::components::ImagePreprocessingOptions>()));
+        &preprocessing.GetOptions<tasks::components::processors::proto::
+                                      ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In(kImageTag);
     norm_rect_in >> preprocessing.In(kNormRectTag);
 

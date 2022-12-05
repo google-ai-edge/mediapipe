@@ -55,7 +55,11 @@ public class PacketCreator {
   public Packet createRgbImage(ByteBuffer buffer, int width, int height) {
     int widthStep = (((width * 3) + 3) / 4) * 4;
     if (widthStep * height != buffer.capacity()) {
-      throw new RuntimeException("The size of the buffer should be: " + widthStep * height);
+      throw new IllegalArgumentException(
+          "The size of the buffer should be: "
+              + widthStep * height
+              + " but is "
+              + buffer.capacity());
     }
     return Packet.create(
         nativeCreateRgbImage(mediapipeGraph.getNativeHandle(), buffer, width, height));
@@ -123,7 +127,11 @@ public class PacketCreator {
    */
   public Packet createRgbImageFromRgba(ByteBuffer buffer, int width, int height) {
     if (width * height * 4 != buffer.capacity()) {
-      throw new RuntimeException("The size of the buffer should be: " + width * height * 4);
+      throw new IllegalArgumentException(
+          "The size of the buffer should be: "
+              + width * height * 4
+              + " but is "
+              + buffer.capacity());
     }
     return Packet.create(
         nativeCreateRgbImageFromRgba(mediapipeGraph.getNativeHandle(), buffer, width, height));
@@ -136,7 +144,7 @@ public class PacketCreator {
    */
   public Packet createGrayscaleImage(ByteBuffer buffer, int width, int height) {
     if (width * height != buffer.capacity()) {
-      throw new RuntimeException(
+      throw new IllegalArgumentException(
           "The size of the buffer should be: " + width * height + " but is " + buffer.capacity());
     }
     return Packet.create(
@@ -150,7 +158,11 @@ public class PacketCreator {
    */
   public Packet createRgbaImageFrame(ByteBuffer buffer, int width, int height) {
     if (buffer.capacity() != width * height * 4) {
-      throw new RuntimeException("buffer doesn't have the correct size.");
+      throw new IllegalArgumentException(
+          "The size of the buffer should be: "
+              + width * height * 4
+              + " but is "
+              + buffer.capacity());
     }
     return Packet.create(
         nativeCreateRgbaImageFrame(mediapipeGraph.getNativeHandle(), buffer, width, height));
@@ -163,7 +175,11 @@ public class PacketCreator {
    */
   public Packet createFloatImageFrame(FloatBuffer buffer, int width, int height) {
     if (buffer.capacity() != width * height * 4) {
-      throw new RuntimeException("buffer doesn't have the correct size.");
+      throw new IllegalArgumentException(
+          "The size of the buffer should be: "
+              + width * height * 4
+              + " but is "
+              + buffer.capacity());
     }
     return Packet.create(
         nativeCreateFloatImageFrame(mediapipeGraph.getNativeHandle(), buffer, width, height));
@@ -354,25 +370,24 @@ public class PacketCreator {
    * <p>For 3 and 4 channel images, the pixel rows should have 4-byte alignment.
    */
   public Packet createImage(ByteBuffer buffer, int width, int height, int numChannels) {
+    int widthStep;
     if (numChannels == 4) {
-      if (buffer.capacity() != width * height * 4) {
-        throw new RuntimeException("buffer doesn't have the correct size.");
-      }
+      widthStep = width * 4;
     } else if (numChannels == 3) {
-      int widthStep = (((width * 3) + 3) / 4) * 4;
-      if (widthStep * height != buffer.capacity()) {
-        throw new RuntimeException("The size of the buffer should be: " + widthStep * height);
-      }
+      widthStep = (((width * 3) + 3) / 4) * 4;
     } else if (numChannels == 1) {
-      if (width * height != buffer.capacity()) {
-        throw new RuntimeException(
-            "The size of the buffer should be: " + width * height + " but is " + buffer.capacity());
-      }
+      widthStep = width;
     } else {
-      throw new RuntimeException("Channels should be: 1, 3, or 4, but is " + numChannels);
+      throw new IllegalArgumentException("Channels should be: 1, 3, or 4, but is " + numChannels);
+    }
+    int expectedSize = widthStep * height;
+    if (buffer.capacity() != expectedSize) {
+      throw new IllegalArgumentException(
+          "The size of the buffer should be: " + expectedSize + " but is " + buffer.capacity());
     }
     return Packet.create(
-        nativeCreateCpuImage(mediapipeGraph.getNativeHandle(), buffer, width, height, numChannels));
+        nativeCreateCpuImage(
+            mediapipeGraph.getNativeHandle(), buffer, width, height, widthStep, numChannels));
   }
 
   /** Helper callback adaptor to create the Java {@link GlSyncToken}. This is called by JNI code. */
@@ -430,7 +445,7 @@ public class PacketCreator {
       long context, int name, int width, int height, TextureReleaseCallback releaseCallback);
 
   private native long nativeCreateCpuImage(
-      long context, ByteBuffer buffer, int width, int height, int numChannels);
+      long context, ByteBuffer buffer, int width, int height, int rowBytes, int numChannels);
 
   private native long nativeCreateInt32Array(long context, int[] data);
 

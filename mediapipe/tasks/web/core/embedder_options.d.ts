@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-import {BaseOptions} from '../../../tasks/web/core/base_options';
-
-/** Options to configure the MediaPipe Embedder Task */
+/** Options to configure a MediaPipe Embedder Task */
 export declare interface EmbedderOptions {
-  /** Options to configure the loading of the model assets. */
-  baseOptions?: BaseOptions;
-
   /**
    * Whether to normalize the returned feature vector with L2 norm. Use this
    * option only if the model does not already contain a native L2_NORMALIZATION

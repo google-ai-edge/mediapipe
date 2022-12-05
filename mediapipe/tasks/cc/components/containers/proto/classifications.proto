@@ -18,27 +18,12 @@ syntax = "proto2";
 package mediapipe.tasks.components.containers.proto;
 
 import "mediapipe/framework/formats/classification.proto";
-import "mediapipe/tasks/cc/components/containers/proto/category.proto";
 
 option java_package = "com.google.mediapipe.tasks.components.containers.proto";
 option java_outer_classname = "ClassificationsProto";
 
-// TODO: deprecate this message once migration is over.
-// List of predicted categories with an optional timestamp.
-message ClassificationEntry {
-  // The array of predicted categories, usually sorted by descending scores,
-  // e.g., from high to low probability.
-  repeated Category categories = 1;
-  // The optional timestamp (in milliseconds) associated to the classifcation
-  // entry. This is useful for time series use cases, e.g., audio
-  // classification.
-  optional int64 timestamp_ms = 2;
-}
-
 // Classifications for a given classifier head, i.e. for a given output tensor.
 message Classifications {
-  // TODO: deprecate this field once migration is over.
-  repeated ClassificationEntry entries = 1;
   // The classification results for this head.
   optional mediapipe.ClassificationList classification_list = 4;
   // The index of the classifier head these categories refer to. This is useful
@@ -48,6 +33,8 @@ message Classifications {
   // name.
   // TODO: Add github link to metadata_schema.fbs.
   optional string head_name = 3;
+  // Reserved fields.
+  reserved 1;
 }
 
 // Classifications for a given classifier model.

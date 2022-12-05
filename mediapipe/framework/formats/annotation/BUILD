@@ -16,7 +16,7 @@
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
-package(default_visibility = ["//visibility:private"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -24,12 +24,10 @@ mediapipe_proto_library(
     name = "locus_proto",
     srcs = ["locus.proto"],
     portable_deps = ["//mediapipe/framework/formats/annotation:rasterization_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework/formats/annotation:rasterization_proto"],
 )
 
 mediapipe_proto_library(
     name = "rasterization_proto",
     srcs = ["rasterization.proto"],
-    visibility = ["//visibility:public"],
 )

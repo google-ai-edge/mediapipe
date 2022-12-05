@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-// Audio Classifier
-export * from '../../../tasks/web/audio/audio_classifier/audio_classifier_options';
-export * from '../../../tasks/web/audio/audio_classifier/audio_classifier_result';
 export * from '../../../tasks/web/audio/audio_classifier/audio_classifier';
+export * from '../../../tasks/web/audio/audio_embedder/audio_embedder';
+export * from '../../../tasks/web/core/fileset_resolver';

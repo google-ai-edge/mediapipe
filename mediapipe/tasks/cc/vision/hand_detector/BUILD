@@ -46,7 +46,7 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/components:image_preprocessing",
+        "//mediapipe/tasks/cc/components/processors:image_preprocessing_graph",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/core:model_task_graph",
         "//mediapipe/tasks/cc/core:utils",

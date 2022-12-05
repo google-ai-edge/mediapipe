@@ -25,14 +25,12 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/tasks/cc/components/calculators/classification_aggregation_calculator.pb.h"
-#include "mediapipe/tasks/cc/components/containers/proto/category.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 
 namespace mediapipe {
 namespace api2 {
 
 using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
-using ::mediapipe::tasks::components::containers::proto::Classifications;
 
 // Aggregates ClassificationLists into either a ClassificationResult object
 // representing the classification results aggregated by classifier head, or
@@ -57,9 +55,6 @@ using ::mediapipe::tasks::components::containers::proto::Classifications;
 //     The classification result aggregated by timestamp, then by head. Must be
 //     connected if the TIMESTAMPS input is connected, as it signals that
 //     timestamp aggregation is required.
-//   // TODO: remove output once migration is over.
-//   CLASSIFICATION_RESULT - (DEPRECATED) ClassificationResult @Optional
-//     The aggregated classification result.
 //
 // Example without timestamp aggregation:
 // node {
@@ -122,9 +117,6 @@ class ClassificationAggregationCalculator : public Node {
   ClassificationResult ConvertToClassificationResult(CalculatorContext* cc);
   std::vector<ClassificationResult> ConvertToTimestampedClassificationResults(
       CalculatorContext* cc);
-  // TODO: deprecate this function once migration is over.
-  ClassificationResult LegacyConvertToClassificationResult(
-      CalculatorContext* cc);
 };
 
 absl::Status ClassificationAggregationCalculator::UpdateContract(
@@ -137,10 +129,11 @@ absl::Status ClassificationAggregationCalculator::UpdateContract(
         << "The size of classifications input streams should match the "
            "size of head names specified in the calculator options";
   }
-  // TODO: enforce connecting TIMESTAMPED_CLASSIFICATIONS if
-  // TIMESTAMPS is connected, and connecting CLASSIFICATIONS if TIMESTAMPS is
-  // not connected. All dependent tasks must be updated to use these outputs
-  // first.
+  if (kTimestampsIn(cc).IsConnected()) {
+    RET_CHECK(kTimestampedClassificationsOut(cc).IsConnected());
+  } else {
+    RET_CHECK(kClassificationsOut(cc).IsConnected());
+  }
   return absl::OkStatus();
 }
 
@@ -170,11 +163,9 @@ absl::Status ClassificationAggregationCalculator::Process(
     if (kTimestampsIn(cc).IsEmpty()) {
       return absl::OkStatus();
     }
-    classification_result = LegacyConvertToClassificationResult(cc);
     kTimestampedClassificationsOut(cc).Send(
         ConvertToTimestampedClassificationResults(cc));
   } else {
-    classification_result = LegacyConvertToClassificationResult(cc);
     kClassificationsOut(cc).Send(ConvertToClassificationResult(cc));
   }
   kClassificationResultOut(cc).Send(classification_result);
@@ -224,55 +215,6 @@ ClassificationAggregationCalculator::ConvertToTimestampedClassificationResults(
     results.push_back(std::move(result));
   }
   return results;
-}
-
-ClassificationResult
-ClassificationAggregationCalculator::LegacyConvertToClassificationResult(
-    CalculatorContext* cc) {
-  ClassificationResult result;
-  Timestamp first_timestamp(0);
-  std::vector<Timestamp> timestamps;
-  if (time_aggregation_enabled_) {
-    timestamps = kTimestampsIn(cc).Get();
-    first_timestamp = timestamps[0];
-  } else {
-    timestamps = {cc->InputTimestamp()};
-  }
-  for (Timestamp timestamp : timestamps) {
-    int count = cached_classifications_[timestamp.Value()].size();
-    for (int i = 0; i < count; ++i) {
-      Classifications* c;
-      if (result.classifications_size() <= i) {
-        c = result.add_classifications();
-        if (!head_names_.empty()) {
-          c->set_head_index(i);
-          c->set_head_name(head_names_[i]);
-        }
-      } else {
-        c = result.mutable_classifications(i);
-      }
-      auto* entry = c->add_entries();
-      for (const auto& elem :
-           cached_classifications_[timestamp.Value()][i].classification()) {
-        auto* category = entry->add_categories();
-        if (elem.has_index()) {
-          category->set_index(elem.index());
-        }
-        if (elem.has_score()) {
-          category->set_score(elem.score());
-        }
-        if (elem.has_label()) {
-          category->set_category_name(elem.label());
-        }
-        if (elem.has_display_name()) {
-          category->set_display_name(elem.display_name());
-        }
-      }
-      entry->set_timestamp_ms((timestamp.Value() - first_timestamp.Value()) /
-                              1000);
-    }
-  }
-  return result;
 }
 
 MEDIAPIPE_REGISTER_NODE(ClassificationAggregationCalculator);

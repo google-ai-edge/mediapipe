@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/strings/str_format.h"
 #include "mediapipe/calculators/tensor/inference_calculator.h"
 #import "mediapipe/gpu/MPPMetalHelper.h"
 #include "mediapipe/gpu/MPPMetalUtil.h"
@@ -245,6 +246,9 @@ absl::Status InferenceCalculatorMetalImpl::CreateConverters(
   const auto& input_indices = interpreter_->inputs();
   for (int i = 0; i < input_indices.size(); ++i) {
     const TfLiteTensor* tensor = interpreter_->tensor(input_indices[i]);
+    RET_CHECK(tensor->dims->size > 0) << absl::StrFormat(
+        "Input tensor at index [%d] doesn't specify dimensions.",
+        input_indices[i]);
     // Create and bind input buffer.
     std::vector<int> dims{tensor->dims->data,
                           tensor->dims->data + tensor->dims->size};
@@ -266,6 +270,9 @@ absl::Status InferenceCalculatorMetalImpl::CreateConverters(
   output_shapes_.resize(output_indices.size());
   for (int i = 0; i < output_shapes_.size(); ++i) {
     const TfLiteTensor* tensor = interpreter_->tensor(output_indices[i]);
+    RET_CHECK(tensor->dims->size > 0) << absl::StrFormat(
+        "Output tensor at index [%d] doesn't specify dimensions.",
+        output_indices[i]);
     RET_CHECK(tensor->dims->size <= 4);
     // Create and bind output buffers.
     // Channels are always padded to multiple of 4.

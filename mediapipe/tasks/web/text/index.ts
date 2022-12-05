@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-// Text Classifier
-export * from '../../../tasks/web/text/text_classifier/text_classifier_options';
-export * from '../../../tasks/web/text/text_classifier/text_classifier_result';
 export * from '../../../tasks/web/text/text_classifier/text_classifier';
+export * from '../../../tasks/web/text/text_embedder/text_embedder';
+export * from '../../../tasks/web/core/fileset_resolver';

@@ -26,7 +26,6 @@ import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.Category;
-import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.TestUtils;
 import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
@@ -54,6 +53,37 @@ public class ImageClassifierTest {
 
   @RunWith(AndroidJUnit4.class)
   public static final class General extends ImageClassifierTest {
+
+    @Test
+    public void options_failsWithNegativeMaxResults() throws Exception {
+      IllegalArgumentException exception =
+          assertThrows(
+              IllegalArgumentException.class,
+              () ->
+                  ImageClassifierOptions.builder()
+                      .setBaseOptions(
+                          BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
+                      .setMaxResults(-1)
+                      .build());
+      assertThat(exception).hasMessageThat().contains("If specified, maxResults must be > 0");
+    }
+
+    @Test
+    public void options_failsWithBothAllowlistAndDenylist() throws Exception {
+      IllegalArgumentException exception =
+          assertThrows(
+              IllegalArgumentException.class,
+              () ->
+                  ImageClassifierOptions.builder()
+                      .setBaseOptions(
+                          BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
+                      .setCategoryAllowlist(Arrays.asList("foo"))
+                      .setCategoryDenylist(Arrays.asList("bar"))
+                      .build());
+      assertThat(exception)
+          .hasMessageThat()
+          .contains("Category allowlist and denylist are mutually exclusive");
+    }
 
     @Test
     public void create_failsWithMissingModel() throws Exception {
@@ -105,7 +135,7 @@ public class ImageClassifierTest {
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
-              .setClassifierOptions(ClassifierOptions.builder().setMaxResults(3).build())
+              .setMaxResults(3)
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -125,7 +155,7 @@ public class ImageClassifierTest {
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(QUANTIZED_MODEL_FILE).build())
-              .setClassifierOptions(ClassifierOptions.builder().setMaxResults(1).build())
+              .setMaxResults(1)
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -141,7 +171,7 @@ public class ImageClassifierTest {
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
-              .setClassifierOptions(ClassifierOptions.builder().setScoreThreshold(0.02f).build())
+              .setScoreThreshold(0.02f)
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -160,10 +190,7 @@ public class ImageClassifierTest {
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
-              .setClassifierOptions(
-                  ClassifierOptions.builder()
-                      .setCategoryAllowlist(Arrays.asList("cheeseburger", "guacamole", "meat loaf"))
-                      .build())
+              .setCategoryAllowlist(Arrays.asList("cheeseburger", "guacamole", "meat loaf"))
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -183,11 +210,8 @@ public class ImageClassifierTest {
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
-              .setClassifierOptions(
-                  ClassifierOptions.builder()
-                      .setMaxResults(3)
-                      .setCategoryDenylist(Arrays.asList("bagel"))
-                      .build())
+              .setMaxResults(3)
+              .setCategoryDenylist(Arrays.asList("bagel"))
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -207,7 +231,7 @@ public class ImageClassifierTest {
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
-              .setClassifierOptions(ClassifierOptions.builder().setMaxResults(1).build())
+              .setMaxResults(1)
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -228,7 +252,7 @@ public class ImageClassifierTest {
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
-              .setClassifierOptions(ClassifierOptions.builder().setMaxResults(3).build())
+              .setMaxResults(3)
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -251,7 +275,7 @@ public class ImageClassifierTest {
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
-              .setClassifierOptions(ClassifierOptions.builder().setMaxResults(1).build())
+              .setMaxResults(1)
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -322,14 +346,14 @@ public class ImageClassifierTest {
               MediaPipeException.class,
               () ->
                   imageClassifier.classifyForVideo(
-                      getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 0));
+                      getImageFromAsset(BURGER_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
       exception =
           assertThrows(
               MediaPipeException.class,
               () ->
                   imageClassifier.classifyAsync(
-                      getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 0));
+                      getImageFromAsset(BURGER_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -353,7 +377,7 @@ public class ImageClassifierTest {
               MediaPipeException.class,
               () ->
                   imageClassifier.classifyAsync(
-                      getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 0));
+                      getImageFromAsset(BURGER_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -379,7 +403,7 @@ public class ImageClassifierTest {
               MediaPipeException.class,
               () ->
                   imageClassifier.classifyForVideo(
-                      getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 0));
+                      getImageFromAsset(BURGER_IMAGE), /* timestampMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
     }
 
@@ -388,7 +412,7 @@ public class ImageClassifierTest {
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
-              .setClassifierOptions(ClassifierOptions.builder().setMaxResults(1).build())
+              .setMaxResults(1)
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -405,13 +429,14 @@ public class ImageClassifierTest {
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
-              .setClassifierOptions(ClassifierOptions.builder().setMaxResults(1).build())
+              .setMaxResults(1)
               .setRunningMode(RunningMode.VIDEO)
               .build();
       ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       for (int i = 0; i < 3; i++) {
-        ImageClassifierResult results = imageClassifier.classifyForVideo(image, /*timestampMs=*/ i);
+        ImageClassifierResult results =
+            imageClassifier.classifyForVideo(image, /* timestampMs= */ i);
         assertHasOneHead(results);
         assertCategoriesAre(
             results, Arrays.asList(Category.create(0.7952058f, 934, "cheeseburger", "")));
@@ -424,7 +449,7 @@ public class ImageClassifierTest {
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
-              .setClassifierOptions(ClassifierOptions.builder().setMaxResults(1).build())
+              .setMaxResults(1)
               .setRunningMode(RunningMode.LIVE_STREAM)
               .setResultListener(
                   (imageClassificationResult, inputImage) -> {
@@ -436,11 +461,11 @@ public class ImageClassifierTest {
               .build();
       try (ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
-        imageClassifier.classifyAsync(getImageFromAsset(BURGER_IMAGE), /*timestampMs=*/ 1);
+        imageClassifier.classifyAsync(getImageFromAsset(BURGER_IMAGE), /* timestampMs= */ 1);
         MediaPipeException exception =
             assertThrows(
                 MediaPipeException.class,
-                () -> imageClassifier.classifyAsync(image, /*timestampMs=*/ 0));
+                () -> imageClassifier.classifyAsync(image, /* timestampMs= */ 0));
         assertThat(exception)
             .hasMessageThat()
             .contains("having a smaller timestamp than the processed timestamp");
@@ -453,7 +478,7 @@ public class ImageClassifierTest {
       ImageClassifierOptions options =
           ImageClassifierOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(FLOAT_MODEL_FILE).build())
-              .setClassifierOptions(ClassifierOptions.builder().setMaxResults(1).build())
+              .setMaxResults(1)
               .setRunningMode(RunningMode.LIVE_STREAM)
               .setResultListener(
                   (imageClassificationResult, inputImage) -> {
@@ -466,7 +491,7 @@ public class ImageClassifierTest {
       try (ImageClassifier imageClassifier =
           ImageClassifier.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
         for (int i = 0; i < 3; ++i) {
-          imageClassifier.classifyAsync(image, /*timestampMs=*/ i);
+          imageClassifier.classifyAsync(image, /* timestampMs= */ i);
         }
       }
     }

@@ -25,7 +25,7 @@ import com.google.mediapipe.framework.ProtoUtil;
 import com.google.mediapipe.tasks.components.containers.Embedding;
 import com.google.mediapipe.tasks.components.containers.EmbeddingResult;
 import com.google.mediapipe.tasks.components.containers.proto.EmbeddingsProto;
-import com.google.mediapipe.tasks.components.processors.EmbedderOptions;
+import com.google.mediapipe.tasks.components.processors.proto.EmbedderOptionsProto;
 import com.google.mediapipe.tasks.components.utils.CosineSimilarity;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -41,7 +41,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Performs embedding extraction on text.
@@ -218,20 +217,38 @@ public final class TextEmbedder implements AutoCloseable {
       public abstract Builder setBaseOptions(BaseOptions value);
 
       /**
-       * Sets the optional {@link EmbedderOptions} controling embedder behavior, such as
-       * L2-normalization and scalar quantization.
+       * Sets whether L2 normalization should be performed on the returned embeddings. Use this
+       * option only if the model does not already contain a native <code>L2_NORMALIZATION</code> TF
+       * Lite Op. In most cases, this is already the case and L2 norm is thus achieved through TF
+       * Lite inference.
+       *
+       * <p>False by default.
        */
-      public abstract Builder setEmbedderOptions(EmbedderOptions embedderOptions);
+      public abstract Builder setL2Normalize(boolean l2Normalize);
+
+      /**
+       * Sets whether the returned embedding should be quantized to bytes via scalar quantization.
+       * Embeddings are implicitly assumed to be unit-norm and therefore any dimensions is
+       * guaranteed to have value in <code>[-1.0, 1.0]</code>. Use {@link #setL2Normalize(boolean)}
+       * if this is not the case.
+       *
+       * <p>False by default.
+       */
+      public abstract Builder setQuantize(boolean quantize);
 
       public abstract TextEmbedderOptions build();
     }
 
     abstract BaseOptions baseOptions();
 
-    abstract Optional<EmbedderOptions> embedderOptions();
+    abstract boolean l2Normalize();
+
+    abstract boolean quantize();
 
     public static Builder builder() {
-      return new AutoValue_TextEmbedder_TextEmbedderOptions.Builder();
+      return new AutoValue_TextEmbedder_TextEmbedderOptions.Builder()
+          .setL2Normalize(false)
+          .setQuantize(false);
     }
 
     /** Converts a {@link TextEmbedderOptions} to a {@link CalculatorOptions} protobuf message. */
@@ -240,12 +257,14 @@ public final class TextEmbedder implements AutoCloseable {
       BaseOptionsProto.BaseOptions.Builder baseOptionsBuilder =
           BaseOptionsProto.BaseOptions.newBuilder();
       baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions()));
+      EmbedderOptionsProto.EmbedderOptions.Builder embedderOptionsBuilder =
+          EmbedderOptionsProto.EmbedderOptions.newBuilder();
+      embedderOptionsBuilder.setL2Normalize(l2Normalize());
+      embedderOptionsBuilder.setQuantize(quantize());
       TextEmbedderGraphOptionsProto.TextEmbedderGraphOptions.Builder taskOptionsBuilder =
           TextEmbedderGraphOptionsProto.TextEmbedderGraphOptions.newBuilder()
-              .setBaseOptions(baseOptionsBuilder);
-      if (embedderOptions().isPresent()) {
-        taskOptionsBuilder.setEmbedderOptions(embedderOptions().get().convertToProto());
-      }
+              .setBaseOptions(baseOptionsBuilder)
+              .setEmbedderOptions(embedderOptionsBuilder);
       return CalculatorOptions.newBuilder()
           .setExtension(
               TextEmbedderGraphOptionsProto.TextEmbedderGraphOptions.ext,

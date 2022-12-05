@@ -153,6 +153,34 @@ inline GpuBufferFormat GpuBufferFormatForCVPixelFormat(OSType format) {
 
 #endif  // __APPLE__
 
+namespace internal {
+
+struct GpuBufferSpec {
+  GpuBufferSpec(int w, int h, GpuBufferFormat f)
+      : width(w), height(h), format(f) {}
+
+  template <typename H>
+  friend H AbslHashValue(H h, const GpuBufferSpec& spec) {
+    return H::combine(std::move(h), spec.width, spec.height,
+                      static_cast<uint32_t>(spec.format));
+  }
+
+  int width;
+  int height;
+  GpuBufferFormat format;
+};
+
+// BufferSpec equality operators
+inline bool operator==(const GpuBufferSpec& lhs, const GpuBufferSpec& rhs) {
+  return lhs.width == rhs.width && lhs.height == rhs.height &&
+         lhs.format == rhs.format;
+}
+inline bool operator!=(const GpuBufferSpec& lhs, const GpuBufferSpec& rhs) {
+  return !operator==(lhs, rhs);
+}
+
+}  // namespace internal
+
 }  // namespace mediapipe
 
 #endif  // MEDIAPIPE_GPU_GPU_BUFFER_FORMAT_H_

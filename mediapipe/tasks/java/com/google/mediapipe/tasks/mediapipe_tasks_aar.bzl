@@ -18,7 +18,6 @@ load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_build
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 
 _CORE_TASKS_JAVA_PROTO_LITE_TARGETS = [
-    "//mediapipe/tasks/cc/components/containers/proto:category_java_proto_lite",
     "//mediapipe/tasks/cc/components/containers/proto:classifications_java_proto_lite",
     "//mediapipe/tasks/cc/components/containers/proto:embeddings_java_proto_lite",
     "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_java_proto_lite",
@@ -42,6 +41,7 @@ _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_embedder_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_recognizer_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:hand_gesture_recognizer_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/image_embedder/proto:image_embedder_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_java_proto_lite",
@@ -286,9 +286,9 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:classifieroptions",
-            "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:embedderoptions",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+            "//third_party:androidx_annotation",
             "//third_party:autovalue",
             "@maven//:com_google_guava_guava",
         ] + select({

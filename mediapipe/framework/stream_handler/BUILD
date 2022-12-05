@@ -13,40 +13,36 @@
 # limitations under the License.
 #
 
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+
 licenses(["notice"])
 
 package(
-    default_visibility = ["//visibility:private"],
+    default_visibility = ["//visibility:public"],
     features = ["-layering_check"],
 )
-
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
 proto_library(
     name = "default_input_stream_handler_proto",
     srcs = ["default_input_stream_handler.proto"],
-    visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
 )
 
 proto_library(
     name = "fixed_size_input_stream_handler_proto",
     srcs = ["fixed_size_input_stream_handler.proto"],
-    visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
 )
 
 proto_library(
     name = "sync_set_input_stream_handler_proto",
     srcs = ["sync_set_input_stream_handler.proto"],
-    visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
 )
 
 proto_library(
     name = "timestamp_align_input_stream_handler_proto",
     srcs = ["timestamp_align_input_stream_handler.proto"],
-    visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
 )
 
@@ -54,7 +50,6 @@ mediapipe_cc_proto_library(
     name = "default_input_stream_handler_cc_proto",
     srcs = ["default_input_stream_handler.proto"],
     cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = [":default_input_stream_handler_proto"],
 )
 
@@ -62,7 +57,6 @@ mediapipe_cc_proto_library(
     name = "fixed_size_input_stream_handler_cc_proto",
     srcs = ["fixed_size_input_stream_handler.proto"],
     cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = [":fixed_size_input_stream_handler_proto"],
 )
 
@@ -70,7 +64,6 @@ mediapipe_cc_proto_library(
     name = "sync_set_input_stream_handler_cc_proto",
     srcs = ["sync_set_input_stream_handler.proto"],
     cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = [":sync_set_input_stream_handler_proto"],
 )
 
@@ -78,14 +71,12 @@ mediapipe_cc_proto_library(
     name = "timestamp_align_input_stream_handler_cc_proto",
     srcs = ["timestamp_align_input_stream_handler.proto"],
     cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = [":timestamp_align_input_stream_handler_proto"],
 )
 
 cc_library(
     name = "barrier_input_stream_handler",
     srcs = ["barrier_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:input_stream_handler",
     ],
@@ -96,7 +87,6 @@ cc_library(
     name = "default_input_stream_handler",
     srcs = ["default_input_stream_handler.cc"],
     hdrs = ["default_input_stream_handler.h"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:input_stream_handler",
         "//mediapipe/framework/stream_handler:default_input_stream_handler_cc_proto",
@@ -108,7 +98,6 @@ cc_library(
 cc_library(
     name = "early_close_input_stream_handler",
     srcs = ["early_close_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:input_stream_handler",
         "@com_google_absl//absl/strings",
@@ -119,7 +108,6 @@ cc_library(
 cc_library(
     name = "fixed_size_input_stream_handler",
     srcs = ["fixed_size_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         ":default_input_stream_handler",
         "//mediapipe/framework:input_stream_handler",
@@ -131,7 +119,6 @@ cc_library(
 cc_library(
     name = "immediate_input_stream_handler",
     srcs = ["immediate_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:input_stream_handler",
     ],
@@ -142,7 +129,6 @@ cc_library(
     name = "in_order_output_stream_handler",
     srcs = ["in_order_output_stream_handler.cc"],
     hdrs = ["in_order_output_stream_handler.h"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:collection",
         "//mediapipe/framework:collection_item_id",
@@ -160,7 +146,6 @@ cc_library(
 cc_library(
     name = "mux_input_stream_handler",
     srcs = ["mux_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:input_stream_handler",
         "//mediapipe/framework/port:logging",
@@ -173,7 +158,6 @@ cc_library(
 cc_library(
     name = "sync_set_input_stream_handler",
     srcs = ["sync_set_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:collection",
         "//mediapipe/framework:collection_item_id",
@@ -192,7 +176,6 @@ cc_library(
 cc_library(
     name = "timestamp_align_input_stream_handler",
     srcs = ["timestamp_align_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:collection_item_id",
         "//mediapipe/framework:input_stream_handler",

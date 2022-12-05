@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-import {BaseOptions} from '../../../../tasks/web/core/base_options';
+import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_options';
 
 /** Options to configure the MediaPipe HandLandmarker Task */
-export declare interface HandLandmarkerOptions {
-  /** Options to configure the loading of the model assets. */
-  baseOptions?: BaseOptions;
-
+export declare interface HandLandmarkerOptions extends VisionTaskOptions {
   /**
    * The maximum number of hands can be detected by the HandLandmarker.
    * Defaults to 1.

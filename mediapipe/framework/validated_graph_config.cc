@@ -1048,6 +1048,14 @@ absl::Status ValidatedGraphConfig::ValidateRequiredSidePacketTypes(
   for (const auto& required_item : required_side_packets_) {
     auto iter = side_packet_types.find(required_item.first);
     if (iter == side_packet_types.end()) {
+      bool is_optional = true;
+      for (int index : required_item.second) {
+        is_optional &= input_side_packets_[index].packet_type->IsOptional();
+      }
+      if (is_optional) {
+        // Side packets that are optional and not provided are ignored.
+        continue;
+      }
       statuses.push_back(mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
                          << "Side packet \"" << required_item.first
                          << "\" is required but was not provided.");

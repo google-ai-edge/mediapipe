@@ -9,5 +9,7 @@ mediapipe_ts_library(
     srcs = ["index.ts"],
     deps = [
         "//mediapipe/tasks/web/audio/audio_classifier",
+        "//mediapipe/tasks/web/audio/audio_embedder",
+        "//mediapipe/tasks/web/core:fileset_resolver",
     ],
 )

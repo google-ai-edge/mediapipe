@@ -14,39 +14,9 @@
  * limitations under the License.
  */
 
-import {BaseOptions} from '../../../../tasks/web/core/base_options';
+import {ClassifierOptions} from '../../../../tasks/web/core/classifier_options';
+import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_options';
 
 /** Options to configure the MediaPipe Object Detector Task */
-export interface ObjectDetectorOptions {
-  /** Options to configure the loading of the model assets. */
-  baseOptions?: BaseOptions;
-
-  /**
-   * The locale to use for display names specified through the TFLite Model
-   * Metadata, if any. Defaults to English.
-   */
-  displayNamesLocale?: string|undefined;
-
-  /** The maximum number of top-scored detection results to return. */
-  maxResults?: number|undefined;
-
-  /**
-   * Overrides the value provided in the model metadata. Results below this
-   * value are rejected.
-   */
-  scoreThreshold?: number|undefined;
-
-  /**
-   * Allowlist of category names. If non-empty, detection results whose category
-   * name is not in this set will be filtered out. Duplicate or unknown category
-   * names are ignored. Mutually exclusive with `categoryDenylist`.
-   */
-  categoryAllowlist?: string[]|undefined;
-
-  /**
-   * Denylist of category names. If non-empty, detection results whose category
-   * name is in this set will be filtered out. Duplicate or unknown category
-   * names are ignored. Mutually exclusive with `categoryAllowlist`.
-   */
-  categoryDenylist?: string[]|undefined;
-}
+export interface ObjectDetectorOptions extends VisionTaskOptions,
+                                               ClassifierOptions {}

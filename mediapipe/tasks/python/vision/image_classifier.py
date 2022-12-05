@@ -70,7 +70,8 @@ class ImageClassifierOptions:
   """
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
-  classifier_options: _ClassifierOptions = _ClassifierOptions()
+  classifier_options: Optional[_ClassifierOptions] = dataclasses.field(
+      default_factory=_ClassifierOptions)
   result_callback: Optional[Callable[
       [ImageClassifierResult, image_module.Image, int], None]] = None
 

@@ -13,10 +13,16 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 mediapipe_files(srcs = [
     "wasm/audio_wasm_internal.js",
     "wasm/audio_wasm_internal.wasm",
+    "wasm/audio_wasm_nosimd_internal.js",
+    "wasm/audio_wasm_nosimd_internal.wasm",
     "wasm/text_wasm_internal.js",
     "wasm/text_wasm_internal.wasm",
+    "wasm/text_wasm_nosimd_internal.js",
+    "wasm/text_wasm_nosimd_internal.wasm",
     "wasm/vision_wasm_internal.js",
     "wasm/vision_wasm_internal.wasm",
+    "wasm/vision_wasm_nosimd_internal.js",
+    "wasm/vision_wasm_nosimd_internal.wasm",
 ])
 
 # Audio
@@ -28,31 +34,19 @@ mediapipe_ts_library(
 )
 
 rollup_bundle(
-    name = "audio_cjs_bundle",
-    config_file = "rollup.config.cjs.mjs",
+    name = "audio_bundle",
+    config_file = "rollup.config.mjs",
     entry_point = "audio.ts",
-    format = "cjs",
+    format = "esm",
     output_dir = False,
-    deps = [
-        ":audio_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-replace",
-    ],
-)
-
-rollup_bundle(
-    name = "audio_iife_bundle",
-    config_file = "rollup.config.iife.mjs",
-    entry_point = "audio.ts",
-    format = "iife",
-    output_dir = False,
+    sourcemap = "false",
     deps = [
         ":audio_lib",
         "@npm//@rollup/plugin-commonjs",
         "@npm//@rollup/plugin-node-resolve",
         "@npm//@rollup/plugin-replace",
         "@npm//@rollup/plugin-terser",
+        "@npm//google-protobuf",
     ],
 )
 
@@ -69,8 +63,9 @@ pkg_npm(
     deps = [
         "wasm/audio_wasm_internal.js",
         "wasm/audio_wasm_internal.wasm",
-        ":audio_cjs_bundle",
-        ":audio_iife_bundle",
+        "wasm/audio_wasm_nosimd_internal.js",
+        "wasm/audio_wasm_nosimd_internal.wasm",
+        ":audio_bundle",
     ],
 )
 
@@ -83,31 +78,19 @@ mediapipe_ts_library(
 )
 
 rollup_bundle(
-    name = "text_cjs_bundle",
-    config_file = "rollup.config.cjs.mjs",
+    name = "text_bundle",
+    config_file = "rollup.config.mjs",
     entry_point = "text.ts",
-    format = "cjs",
+    format = "esm",
     output_dir = False,
-    deps = [
-        ":text_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-replace",
-    ],
-)
-
-rollup_bundle(
-    name = "text_iife_bundle",
-    config_file = "rollup.config.iife.mjs",
-    entry_point = "text.ts",
-    format = "iife",
-    output_dir = False,
+    sourcemap = "false",
     deps = [
         ":text_lib",
         "@npm//@rollup/plugin-commonjs",
         "@npm//@rollup/plugin-node-resolve",
         "@npm//@rollup/plugin-replace",
         "@npm//@rollup/plugin-terser",
+        "@npm//google-protobuf",
     ],
 )
 
@@ -124,8 +107,9 @@ pkg_npm(
     deps = [
         "wasm/text_wasm_internal.js",
         "wasm/text_wasm_internal.wasm",
-        ":text_cjs_bundle",
-        ":text_iife_bundle",
+        "wasm/text_wasm_nosimd_internal.js",
+        "wasm/text_wasm_nosimd_internal.wasm",
+        ":text_bundle",
     ],
 )
 
@@ -138,31 +122,19 @@ mediapipe_ts_library(
 )
 
 rollup_bundle(
-    name = "vision_cjs_bundle",
-    config_file = "rollup.config.cjs.mjs",
+    name = "vision_bundle",
+    config_file = "rollup.config.mjs",
     entry_point = "vision.ts",
-    format = "cjs",
+    format = "esm",
     output_dir = False,
-    deps = [
-        ":vision_lib",
-        "@npm//@rollup/plugin-commonjs",
-        "@npm//@rollup/plugin-node-resolve",
-        "@npm//@rollup/plugin-replace",
-    ],
-)
-
-rollup_bundle(
-    name = "vision_iife_bundle",
-    config_file = "rollup.config.iife.mjs",
-    entry_point = "vision.ts",
-    format = "iife",
-    output_dir = False,
+    sourcemap = "false",
     deps = [
         ":vision_lib",
         "@npm//@rollup/plugin-commonjs",
         "@npm//@rollup/plugin-node-resolve",
         "@npm//@rollup/plugin-replace",
         "@npm//@rollup/plugin-terser",
+        "@npm//google-protobuf",
     ],
 )
 
@@ -179,7 +151,8 @@ pkg_npm(
     deps = [
         "wasm/vision_wasm_internal.js",
         "wasm/vision_wasm_internal.wasm",
-        ":vision_cjs_bundle",
-        ":vision_iife_bundle",
+        "wasm/vision_wasm_nosimd_internal.js",
+        "wasm/vision_wasm_nosimd_internal.wasm",
+        ":vision_bundle",
     ],
 )

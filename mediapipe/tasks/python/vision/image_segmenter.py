@@ -110,7 +110,7 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
     - list of segmented masks.
     - if `output_type` is CATEGORY_MASK, uint8 Image, Image vector of size 1.
     - if `output_type` is CONFIDENCE_MASK, float32 Image list of size
-      `cahnnels`.
+      `channels`.
     - batch is always 1
 
   An example of such model can be found at:

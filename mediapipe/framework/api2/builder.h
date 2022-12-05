@@ -412,11 +412,11 @@ using GenericNode = Node<internal::Generic>;
 template <class Calc>
 class Node : public NodeBase {
  public:
-  Node() : NodeBase(Calc::kCalculatorName) {}
+  Node() : NodeBase(std::string(Calc::kCalculatorName)) {}
   // Overrides the built-in calculator type string with the provided argument.
   // Can be used to create nodes from pure interfaces.
   // TODO: only use this for pure interfaces
-  Node(const std::string& type_override) : NodeBase(type_override) {}
+  Node(std::string type_override) : NodeBase(std::move(type_override)) {}
 
   // These methods only allow access to ports declared in the contract.
   // The argument must be a tag object created with the MPP_TAG macro.

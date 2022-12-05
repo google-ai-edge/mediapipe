@@ -13,10 +13,13 @@
 # limitations under the License.
 
 import os
+from typing import Optional
+from unittest import mock as unittest_mock
 
 from absl.testing import parameterized
 import tensorflow as tf
 
+from mediapipe.model_maker.python.core.utils import file_util
 from mediapipe.model_maker.python.core.utils import model_util
 from mediapipe.model_maker.python.core.utils import quantization
 from mediapipe.model_maker.python.core.utils import test_util
@@ -24,11 +27,15 @@ from mediapipe.model_maker.python.core.utils import test_util
 
 class ModelUtilTest(tf.test.TestCase, parameterized.TestCase):
 
-  def test_load_keras_model(self):
+  @unittest_mock.patch.object(file_util, 'get_absolute_path', autospec=True)
+  def test_load_keras_model(self, mock_get_absolute_path):
     input_dim = 4
     model = test_util.build_model(input_shape=[input_dim], num_classes=2)
     saved_model_path = os.path.join(self.get_temp_dir(), 'saved_model')
     model.save(saved_model_path)
+    # model_util.load_keras_model takes in a relative path to files within the
+    # model_maker dir, so we patch the function for testing
+    mock_get_absolute_path.return_value = saved_model_path
     loaded_model = model_util.load_keras_model(saved_model_path)
 
     input_tensors = test_util.create_random_sample(size=[1, input_dim])
@@ -36,13 +43,16 @@ class ModelUtilTest(tf.test.TestCase, parameterized.TestCase):
     loaded_model_output = loaded_model.predict_on_batch(input_tensors)
     self.assertTrue((model_output == loaded_model_output).all())
 
-  def test_load_tflite_model_buffer(self):
+  @unittest_mock.patch.object(file_util, 'get_absolute_path', autospec=True)
+  def test_load_tflite_model_buffer(self, mock_get_absolute_path):
     input_dim = 4
     model = test_util.build_model(input_shape=[input_dim], num_classes=2)
     tflite_model = model_util.convert_to_tflite(model)
     tflite_file = os.path.join(self.get_temp_dir(), 'model.tflite')
     model_util.save_tflite(tflite_model=tflite_model, tflite_file=tflite_file)
-
+    # model_util.load_tflite_model_buffer takes in a relative path to files
+    # within the model_maker dir, so we patch the function for testing
+    mock_get_absolute_path.return_value = tflite_file
     tflite_model_buffer = model_util.load_tflite_model_buffer(tflite_file)
     test_util.test_tflite(
         keras_model=model,
@@ -76,8 +86,10 @@ class ModelUtilTest(tf.test.TestCase, parameterized.TestCase):
           train_data=tf.data.Dataset.from_tensor_slices([[0, 1], [1, 1], [0, 0],
                                                          [1, 0]]),
           expected_steps_per_epoch=2))
-  def test_get_steps_per_epoch(self, steps_per_epoch, batch_size, train_data,
-                               expected_steps_per_epoch):
+  def test_get_steps_per_epoch(self, steps_per_epoch: Optional[int],
+                               batch_size: Optional[int],
+                               train_data: Optional[tf.data.Dataset],
+                               expected_steps_per_epoch: int):
     estimated_steps_per_epoch = model_util.get_steps_per_epoch(
         steps_per_epoch=steps_per_epoch,
         batch_size=batch_size,
@@ -130,7 +142,9 @@ class ModelUtilTest(tf.test.TestCase, parameterized.TestCase):
           testcase_name='float16_quantize',
           config=quantization.QuantizationConfig.for_float16(),
           model_size=1468))
-  def test_convert_to_tflite_quantized(self, config, model_size):
+  def test_convert_to_tflite_quantized(self,
+                                       config: quantization.QuantizationConfig,
+                                       model_size: int):
     input_dim = 16
     num_classes = 2
     max_input_value = 5
@@ -156,6 +170,7 @@ class ModelUtilTest(tf.test.TestCase, parameterized.TestCase):
     model_util.save_tflite(tflite_model=tflite_model, tflite_file=tflite_file)
     test_util.test_tflite_file(
         keras_model=model, tflite_file=tflite_file, size=[1, input_dim])
+
 
 if __name__ == '__main__':
   tf.test.main()

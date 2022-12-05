@@ -30,7 +30,7 @@ from tensorflow_docs.api_generator import public_api
 
 try:
   # mediapipe has not been set up to work with bazel yet, so catch & report.
-  import mediapipe  # pytype: disable=import-error
+  import mediapipe as mp  # pytype: disable=import-error
 except ImportError as e:
   raise ImportError('Please `pip install mediapipe`.') from e
 
@@ -58,11 +58,13 @@ _SITE_PATH = flags.DEFINE_string('site_path', '/mediapipe/api_docs/python',
 
 def gen_api_docs():
   """Generates API docs for the mediapipe package."""
+  if hasattr(mp, 'solutions'):
+    del mp.solutions
 
   doc_generator = generate_lib.DocGenerator(
       root_title=PROJECT_FULL_NAME,
-      py_modules=[(PROJECT_SHORT_NAME, mediapipe)],
-      base_dir=os.path.dirname(mediapipe.__file__),
+      py_modules=[(PROJECT_SHORT_NAME, mp)],
+      base_dir=os.path.dirname(mp.__file__),
       code_url_prefix=_URL_PREFIX.value,
       search_hints=_SEARCH_HINTS.value,
       site_path=_SITE_PATH.value,

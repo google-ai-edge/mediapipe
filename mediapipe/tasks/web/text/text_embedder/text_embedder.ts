@@ -17,18 +17,22 @@
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {EmbeddingResult} from '../../../../tasks/cc/components/containers/proto/embeddings_pb';
+import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {TextEmbedderGraphOptions as TextEmbedderGraphOptionsProto} from '../../../../tasks/cc/text/text_embedder/proto/text_embedder_graph_options_pb';
-import {convertBaseOptionsToProto} from '../../../../tasks/web/components/processors/base_options';
+import {Embedding} from '../../../../tasks/web/components/containers/embedding_result';
 import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/processors/embedder_options';
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
+import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
-import {WasmLoaderOptions} from '../../../../tasks/web/core/wasm_loader_options';
-import {createMediaPipeLib, FileLocator} from '../../../../web/graph_runner/wasm_mediapipe_lib';
+import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {TextEmbedderOptions} from './text_embedder_options';
 import {TextEmbedderResult} from './text_embedder_result';
 
+export * from './text_embedder_options';
+export * from './text_embedder_result';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -41,66 +45,62 @@ const TEXT_EMBEDDER_CALCULATOR =
 /**
  * Performs embedding extraction on text.
  */
-export class TextEmbedder extends TaskRunner {
+export class TextEmbedder extends TaskRunner<TextEmbedderOptions> {
   private embeddingResult: TextEmbedderResult = {embeddings: []};
   private readonly options = new TextEmbedderGraphOptionsProto();
 
   /**
    * Initializes the Wasm runtime and creates a new text embedder from the
    * provided options.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param textEmbedderOptions The options for the text embedder. Note that
    *     either a path to the TFLite model or the model itself needs to be
    *     provided (via `baseOptions`).
    */
-  static async createFromOptions(
-      wasmLoaderOptions: WasmLoaderOptions,
+  static createFromOptions(
+      wasmFileset: WasmFileset,
       textEmbedderOptions: TextEmbedderOptions): Promise<TextEmbedder> {
-    // Create a file locator based on the loader options
-    const fileLocator: FileLocator = {
-      locateFile() {
-        // The only file we load is the Wasm binary
-        return wasmLoaderOptions.wasmBinaryPath.toString();
-      }
-    };
-
-    const embedder = await createMediaPipeLib(
-        TextEmbedder, wasmLoaderOptions.wasmLoaderPath,
-        /* assetLoaderScript= */ undefined,
-        /* glCanvas= */ undefined, fileLocator);
-    await embedder.setOptions(textEmbedderOptions);
-    return embedder;
+    return TaskRunner.createInstance(
+        TextEmbedder, /* initializeCanvas= */ false, wasmFileset,
+        textEmbedderOptions);
   }
 
   /**
    * Initializes the Wasm runtime and creates a new text embedder based on the
    * provided model asset buffer.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the TFLite model.
    */
   static createFromModelBuffer(
-      wasmLoaderOptions: WasmLoaderOptions,
+      wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<TextEmbedder> {
-    return TextEmbedder.createFromOptions(
-        wasmLoaderOptions, {baseOptions: {modelAssetBuffer}});
+    return TaskRunner.createInstance(
+        TextEmbedder, /* initializeCanvas= */ false, wasmFileset,
+        {baseOptions: {modelAssetBuffer}});
   }
 
   /**
    * Initializes the Wasm runtime and creates a new text embedder based on the
    * path to the model asset.
-   * @param wasmLoaderOptions A configuration object that provides the location
-   *     of the Wasm binary and its loader.
+   * @param wasmFileset A configuration object that provides the location of the
+   *     Wasm binary and its loader.
    * @param modelAssetPath The path to the TFLite model.
    */
-  static async createFromModelPath(
-      wasmLoaderOptions: WasmLoaderOptions,
+  static createFromModelPath(
+      wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<TextEmbedder> {
-    const response = await fetch(modelAssetPath.toString());
-    const graphData = await response.arrayBuffer();
-    return TextEmbedder.createFromModelBuffer(
-        wasmLoaderOptions, new Uint8Array(graphData));
+    return TaskRunner.createInstance(
+        TextEmbedder, /* initializeCanvas= */ false, wasmFileset,
+        {baseOptions: {modelAssetPath}});
+  }
+
+  constructor(
+      wasmModule: WasmModule,
+      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
+    super(wasmModule, glCanvas);
+    this.options.setBaseOptions(new BaseOptionsProto());
   }
 
   /**
@@ -112,19 +112,20 @@ export class TextEmbedder extends TaskRunner {
    *
    * @param options The options for the text embedder.
    */
-  async setOptions(options: TextEmbedderOptions): Promise<void> {
-    if (options.baseOptions) {
-      const baseOptionsProto = await convertBaseOptionsToProto(
-          options.baseOptions, this.options.getBaseOptions());
-      this.options.setBaseOptions(baseOptionsProto);
-    }
-
+  override async setOptions(options: TextEmbedderOptions): Promise<void> {
+    await super.setOptions(options);
     this.options.setEmbedderOptions(convertEmbedderOptionsToProto(
         options, this.options.getEmbedderOptions()));
-
     this.refreshGraph();
   }
 
+  protected override get baseOptions(): BaseOptionsProto {
+    return this.options.getBaseOptions()!;
+  }
+
+  protected override set baseOptions(proto: BaseOptionsProto) {
+    this.options.setBaseOptions(proto);
+  }
 
   /**
    * Performs embeding extraction on the provided text and waits synchronously
@@ -135,10 +136,23 @@ export class TextEmbedder extends TaskRunner {
    */
   embed(text: string): TextEmbedderResult {
     // Get text embeddings by running our MediaPipe graph.
-    this.addStringToStream(
+    this.graphRunner.addStringToStream(
         text, INPUT_STREAM, /* timestamp= */ performance.now());
     this.finishProcessing();
     return this.embeddingResult;
+  }
+
+  /**
+   * Utility function to compute cosine similarity[1] between two `Embedding`
+   * objects.
+   *
+   * [1]: https://en.wikipedia.org/wiki/Cosine_similarity
+   *
+   * @throws if the embeddings are of different types(float vs. quantized), have
+   *     different sizes, or have an L2-norm of 0.
+   */
+  static cosineSimilarity(u: Embedding, v: Embedding): number {
+    return computeCosineSimilarity(u, v);
   }
 
   /** Updates the MediaPipe graph configuration. */
@@ -159,7 +173,7 @@ export class TextEmbedder extends TaskRunner {
 
     graphConfig.addNode(embedderNode);
 
-    this.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
+    this.graphRunner.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
       const embeddingResult = EmbeddingResult.deserializeBinary(binaryProto);
       this.embeddingResult = convertFromEmbeddingResultProto(embeddingResult);
     });

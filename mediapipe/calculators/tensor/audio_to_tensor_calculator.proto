@@ -68,4 +68,17 @@ message AudioToTensorCalculatorOptions {
   }
 
   optional FlushMode flush_mode = 10 [default = ENTIRE_TAIL_AT_TIMESTAMP_MAX];
+
+  enum DftTensorFormat {
+    DFT_TENSOR_FORMAT_UNKNOWN = 0;
+    // The output dft tensor without dc and nyquist components.
+    WITHOUT_DC_AND_NYQUIST = 1;
+    // The output dft tensor contains the nyquist component as the last
+    // two values.
+    WITH_NYQUIST = 2;
+    // The output dft tensor contains the dc component as the first two values
+    // and the nyquist component as the last two values.
+    WITH_DC_AND_NYQUIST = 3;
+  }
+  optional DftTensorFormat dft_tensor_format = 11 [default = WITH_NYQUIST];
 }

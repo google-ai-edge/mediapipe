@@ -21,37 +21,35 @@
 
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"
-#include "mediapipe/gpu/MPPGraphGPUData.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPMetalHelper : NSObject {
-  MPPGraphGPUData* _gpuShared;
 }
 
 - (instancetype)init NS_UNAVAILABLE;
 
 /// Initialize. This initializer is recommended for calculators.
-- (instancetype)initWithCalculatorContext:(mediapipe::CalculatorContext*)cc;
+- (instancetype)initWithCalculatorContext:(mediapipe::CalculatorContext *)cc;
 
 /// Initialize.
-- (instancetype)initWithGpuResources:(mediapipe::GpuResources*)gpuResources
+- (instancetype)initWithGpuResources:(mediapipe::GpuResources *)gpuResources
     NS_DESIGNATED_INITIALIZER;
 
 /// Configures a calculator's contract for accessing GPU resources.
 /// Calculators should use this in GetContract.
-+ (absl::Status)updateContract:(mediapipe::CalculatorContract*)cc;
++ (absl::Status)updateContract:(mediapipe::CalculatorContract *)cc;
 
 /// Deprecated initializer.
-- (instancetype)initWithSidePackets:(const mediapipe::PacketSet&)inputSidePackets;
+- (instancetype)initWithSidePackets:(const mediapipe::PacketSet &)inputSidePackets;
 
 /// Deprecated initializer.
-- (instancetype)initWithGpuSharedData:(mediapipe::GpuSharedData*)gpuShared;
+- (instancetype)initWithGpuSharedData:(mediapipe::GpuSharedData *)gpuShared;
 
 /// Configures a calculator's side packets for accessing GPU resources.
 /// Calculators should use this in FillExpectations.
-+ (absl::Status)setupInputSidePackets:(mediapipe::PacketTypeSet*)inputSidePackets;
++ (absl::Status)setupInputSidePackets:(mediapipe::PacketTypeSet *)inputSidePackets;
 
 /// Get a metal command buffer.
 /// Calculators should use this method instead of getting a buffer from the
@@ -63,23 +61,23 @@ NS_ASSUME_NONNULL_BEGIN
 /// Creates a CVMetalTextureRef linked to the provided GpuBuffer.
 /// Ownership follows the copy rule, so the caller is responsible for
 /// releasing the CVMetalTextureRef.
-- (CVMetalTextureRef)copyCVMetalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer;
+- (CVMetalTextureRef)copyCVMetalTextureWithGpuBuffer:(const mediapipe::GpuBuffer &)gpuBuffer;
 
 /// Creates a CVMetalTextureRef linked to the provided GpuBuffer given a specific plane.
 /// Ownership follows the copy rule, so the caller is responsible for
 /// releasing the CVMetalTextureRef.
-- (CVMetalTextureRef)copyCVMetalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer
+- (CVMetalTextureRef)copyCVMetalTextureWithGpuBuffer:(const mediapipe::GpuBuffer &)gpuBuffer
                                                plane:(size_t)plane;
 
 /// Returns a MTLTexture linked to the provided GpuBuffer.
 /// A calculator can freely use it as a rendering source, but it should not
 /// use it as a rendering target if the GpuBuffer was provided as an input.
-- (id<MTLTexture>)metalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer;
+- (id<MTLTexture>)metalTextureWithGpuBuffer:(const mediapipe::GpuBuffer &)gpuBuffer;
 
 /// Returns a MTLTexture linked to the provided GpuBuffer given a specific plane.
 /// A calculator can freely use it as a rendering source, but it should not
 /// use it as a rendering target if the GpuBuffer was provided as an input.
-- (id<MTLTexture>)metalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer
+- (id<MTLTexture>)metalTextureWithGpuBuffer:(const mediapipe::GpuBuffer &)gpuBuffer
                                       plane:(size_t)plane;
 
 /// Obtains a new GpuBuffer to be used as an output destination.
@@ -91,7 +89,7 @@ NS_ASSUME_NONNULL_BEGIN
                                              format:(mediapipe::GpuBufferFormat)format;
 
 /// Convenience method to load a Metal library stored as a bundle resource.
-- (id<MTLLibrary>)newLibraryWithResourceName:(NSString*)name error:(NSError* _Nullable*)error;
+- (id<MTLLibrary>)newLibraryWithResourceName:(NSString *)name error:(NSError *_Nullable *)error;
 
 /// Shared Metal resources.
 @property(readonly) id<MTLDevice> mtlDevice;

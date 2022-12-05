@@ -71,7 +71,8 @@ class AudioEmbedderOptions:
   """
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.AUDIO_CLIPS
-  embedder_options: _EmbedderOptions = _EmbedderOptions()
+  embedder_options: Optional[_EmbedderOptions] = dataclasses.field(
+      default_factory=_EmbedderOptions)
   result_callback: Optional[Callable[[AudioEmbedderResult, int], None]] = None
 
   @doc_controls.do_not_generate_docs
