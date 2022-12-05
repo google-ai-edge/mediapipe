@@ -97,7 +97,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/formats:image_file_properties_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
