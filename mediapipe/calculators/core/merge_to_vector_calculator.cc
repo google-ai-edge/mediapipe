@@ -23,5 +23,9 @@ namespace api2 {
 typedef MergeToVectorCalculator<mediapipe::Image> MergeImagesToVectorCalculator;
 MEDIAPIPE_REGISTER_NODE(MergeImagesToVectorCalculator);
 
+typedef MergeToVectorCalculator<mediapipe::GpuBuffer>
+    MergeGpuBuffersToVectorCalculator;
+MEDIAPIPE_REGISTER_NODE(MergeGpuBuffersToVectorCalculator);
+
 }  // namespace api2
 }  // namespace mediapipe
