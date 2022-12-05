@@ -366,6 +366,9 @@ cc_test(
 cc_library(
     name = "universal_sentence_encoder_preprocessor_calculator",
     srcs = ["universal_sentence_encoder_preprocessor_calculator.cc"],
+    visibility = [
+        "//mediapipe/framework:mediapipe_internal",
+    ],
     deps = [
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
