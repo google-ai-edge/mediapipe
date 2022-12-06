@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-// TODO consolidate TensorsToSegmentationCalculator.
 #include <algorithm>
 #include <cstdint>
 #include <memory>
@@ -35,14 +34,14 @@ limitations under the License.
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status_macros.h"
-#include "mediapipe/tasks/cc/components/calculators/tensor/tensors_to_segmentation_calculator.pb.h"
-#include "mediapipe/tasks/cc/components/proto/segmenter_options.pb.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "mediapipe/util/label_map.pb.h"
 
+// TODO: consolidate TensorToSegmentationCalculator.
 namespace mediapipe {
 namespace tasks {
-
 namespace {
 
 using ::mediapipe::Image;
@@ -51,9 +50,9 @@ using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Node;
 using ::mediapipe::api2::Output;
 using ::mediapipe::tasks::TensorsToSegmentationCalculatorOptions;
-using ::mediapipe::tasks::components::proto::SegmenterOptions;
 using ::mediapipe::tasks::vision::GetImageLikeTensorShape;
 using ::mediapipe::tasks::vision::Shape;
+using ::mediapipe::tasks::vision::image_segmenter::proto::SegmenterOptions;
 
 void StableSoftmax(absl::Span<const float> values,
                    absl::Span<float> activated_values) {
@@ -90,7 +89,7 @@ void Sigmoid(absl::Span<const float> values,
 //            the size to resize masks to.
 //
 // Output:
-//   Segmentation: Segmenation proto.
+//   Segmentation: Segmentation proto.
 //
 // Options:
 //   See tensors_to_segmentation_calculator.proto
@@ -132,8 +131,7 @@ class TensorsToSegmentationCalculator : public Node {
 
 absl::Status TensorsToSegmentationCalculator::Open(
     mediapipe::CalculatorContext* cc) {
-  options_ =
-      cc->Options<mediapipe::tasks::TensorsToSegmentationCalculatorOptions>();
+  options_ = cc->Options<TensorsToSegmentationCalculatorOptions>();
   RET_CHECK_NE(options_.segmenter_options().output_type(),
                SegmenterOptions::UNSPECIFIED)
       << "Must specify output_type as one of [CONFIDENCE_MASK|CATEGORY_MASK].";

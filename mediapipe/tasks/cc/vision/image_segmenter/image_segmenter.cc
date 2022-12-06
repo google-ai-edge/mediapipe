@@ -18,12 +18,12 @@ limitations under the License.
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "mediapipe/tasks/cc/components/proto/segmenter_options.pb.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.pb.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -44,7 +44,7 @@ constexpr int kMicroSecondsPerMilliSecond = 1000;
 
 using ::mediapipe::CalculatorGraphConfig;
 using ::mediapipe::Image;
-using ::mediapipe::tasks::components::proto::SegmenterOptions;
+using ::mediapipe::tasks::vision::image_segmenter::proto::SegmenterOptions;
 using ImageSegmenterGraphOptionsProto = ::mediapipe::tasks::vision::
     image_segmenter::proto::ImageSegmenterGraphOptions;
 
