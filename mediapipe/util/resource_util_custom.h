@@ -10,6 +10,9 @@ namespace mediapipe {
 typedef std::function<absl::Status(const std::string&, std::string*)>
     ResourceProviderFn;
 
+// Returns true if files are provided via a custom resource provider.
+bool HasCustomGlobalResourceProvider();
+
 // Overrides the behavior of GetResourceContents.
 void SetCustomGlobalResourceProvider(ResourceProviderFn fn);
 

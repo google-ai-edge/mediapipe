@@ -117,6 +117,7 @@ cc_library_with_tflite(
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "//mediapipe/util:resource_util",
+        "//mediapipe/util:resource_util_custom",
         "//mediapipe/util/tflite:error_reporter",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
