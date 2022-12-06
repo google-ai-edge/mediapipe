@@ -26,7 +26,6 @@ from scipy.io import wavfile
 from mediapipe.tasks.python.audio import audio_embedder
 from mediapipe.tasks.python.audio.core import audio_task_running_mode
 from mediapipe.tasks.python.components.containers import audio_data as audio_data_module
-from mediapipe.tasks.python.components.processors import embedder_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 
@@ -35,7 +34,6 @@ _AudioEmbedderOptions = audio_embedder.AudioEmbedderOptions
 _AudioEmbedderResult = audio_embedder.AudioEmbedderResult
 _AudioData = audio_data_module.AudioData
 _BaseOptions = base_options_module.BaseOptions
-_EmbedderOptions = embedder_options.EmbedderOptions
 _RUNNING_MODE = audio_task_running_mode.AudioTaskRunningMode
 
 _YAMNET_MODEL_FILE = 'yamnet_embedding_metadata.tflite'
@@ -172,9 +170,7 @@ class AudioEmbedderTest(parameterized.TestCase):
       raise ValueError('model_file_type is invalid.')
 
     options = _AudioEmbedderOptions(
-        base_options=base_options,
-        embedder_options=_EmbedderOptions(
-            l2_normalize=l2_normalize, quantize=quantize))
+        base_options=base_options, l2_normalize=l2_normalize, quantize=quantize)
 
     with _AudioEmbedder.create_from_options(options) as embedder:
       embedding_result0_list = embedder.embed(self._read_wav_file(audio_file0))
@@ -291,8 +287,8 @@ class AudioEmbedderTest(parameterized.TestCase):
     options = _AudioEmbedderOptions(
         base_options=_BaseOptions(model_asset_path=self.yamnet_model_path),
         running_mode=_RUNNING_MODE.AUDIO_STREAM,
-        embedder_options=_EmbedderOptions(
-            l2_normalize=l2_normalize, quantize=quantize),
+        l2_normalize=l2_normalize,
+        quantize=quantize,
         result_callback=save_result)
 
     with _AudioEmbedder.create_from_options(options) as embedder:
