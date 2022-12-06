@@ -1,6 +1,6 @@
 ---
 name: "Model Maker Issue"
-about: Use this template for assistance with a specific task, such as "Gesture Recognition" or "Object Detection", including inference model usage/training etc.
+about: Use this template for assistance with using MediaPipe Model Maker to create custom on-device ML solutions.
 labels: type:support
 
 ---
