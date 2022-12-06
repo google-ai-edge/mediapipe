@@ -59,14 +59,16 @@ class ModelTaskGraph : public Subgraph {
   // creates a local model resources object that can only be used in the graph
   // construction stage. The returned model resources pointer will provide graph
   // authors with the access to the metadata extractor and the tflite model.
+  // If more than one model resources are created in a graph, the model
+  // resources graph service add the tag_suffix to support multiple resources.
   template <typename Options>
   absl::StatusOr<const ModelResources*> CreateModelResources(
-      SubgraphContext* sc) {
+      SubgraphContext* sc, std::string tag_suffix = "") {
     auto external_file = std::make_unique<proto::ExternalFile>();
     external_file->Swap(sc->MutableOptions<Options>()
                             ->mutable_base_options()
                             ->mutable_model_asset());
-    return CreateModelResources(sc, std::move(external_file));
+    return CreateModelResources(sc, std::move(external_file), tag_suffix);
   }
 
   // If the model resources graph service is available, creates a model
@@ -83,7 +85,7 @@ class ModelTaskGraph : public Subgraph {
   // resources.
   absl::StatusOr<const ModelResources*> CreateModelResources(
       SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file,
-      const std::string tag_suffix = "");
+      std::string tag_suffix = "");
 
   // If the model resources graph service is available, creates a model asset
   // bundle resources object from the subgraph context, and caches the created
