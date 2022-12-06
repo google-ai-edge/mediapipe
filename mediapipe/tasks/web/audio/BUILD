@@ -7,6 +7,7 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 mediapipe_ts_library(
     name = "audio_lib",
     srcs = ["index.ts"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/web/audio/audio_classifier",
         "//mediapipe/tasks/web/audio/audio_embedder",

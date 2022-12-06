@@ -7,6 +7,7 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 mediapipe_ts_library(
     name = "vision_lib",
     srcs = ["index.ts"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/web/core:fileset_resolver",
         "//mediapipe/tasks/web/vision/gesture_recognizer",

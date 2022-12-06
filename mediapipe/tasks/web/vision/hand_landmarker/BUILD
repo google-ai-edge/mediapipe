@@ -12,6 +12,7 @@ licenses(["notice"])
 mediapipe_ts_library(
     name = "hand_landmarker",
     srcs = ["hand_landmarker.ts"],
+    visibility = ["//visibility:public"],
     deps = [
         ":hand_landmarker_types",
         "//mediapipe/framework:calculator_jspb_proto",
@@ -38,6 +39,7 @@ mediapipe_ts_declaration(
         "hand_landmarker_options.d.ts",
         "hand_landmarker_result.d.ts",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/components/containers:landmark",

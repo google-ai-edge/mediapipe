@@ -28,6 +28,7 @@ mediapipe_ts_library(
 mediapipe_ts_library(
     name = "fileset_resolver",
     srcs = ["fileset_resolver.ts"],
+    visibility = ["//visibility:public"],
     deps = [":core"],
 )
 

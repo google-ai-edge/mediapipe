@@ -12,6 +12,7 @@ licenses(["notice"])
 mediapipe_ts_library(
     name = "text_classifier",
     srcs = ["text_classifier.ts"],
+    visibility = ["//visibility:public"],
     deps = [
         ":text_classifier_types",
         "//mediapipe/framework:calculator_jspb_proto",
@@ -36,6 +37,7 @@ mediapipe_ts_declaration(
         "text_classifier_options.d.ts",
         "text_classifier_result.d.ts",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/components/containers:classification_result",

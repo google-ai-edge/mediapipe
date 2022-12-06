@@ -12,6 +12,7 @@ licenses(["notice"])
 mediapipe_ts_library(
     name = "gesture_recognizer",
     srcs = ["gesture_recognizer.ts"],
+    visibility = ["//visibility:public"],
     deps = [
         ":gesture_recognizer_types",
         "//mediapipe/framework:calculator_jspb_proto",
@@ -42,6 +43,7 @@ mediapipe_ts_declaration(
         "gesture_recognizer_options.d.ts",
         "gesture_recognizer_result.d.ts",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/components/containers:landmark",

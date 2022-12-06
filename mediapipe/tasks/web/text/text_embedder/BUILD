@@ -12,6 +12,7 @@ licenses(["notice"])
 mediapipe_ts_library(
     name = "text_embedder",
     srcs = ["text_embedder.ts"],
+    visibility = ["//visibility:public"],
     deps = [
         ":text_embedder_types",
         "//mediapipe/framework:calculator_jspb_proto",
@@ -36,6 +37,7 @@ mediapipe_ts_declaration(
         "text_embedder_options.d.ts",
         "text_embedder_result.d.ts",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/web/components/containers:embedding_result",
         "//mediapipe/tasks/web/core",

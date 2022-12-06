@@ -11,6 +11,7 @@ licenses(["notice"])
 mediapipe_ts_library(
     name = "image_embedder",
     srcs = ["image_embedder.ts"],
+    visibility = ["//visibility:public"],
     deps = [
         ":image_embedder_types",
         "//mediapipe/framework:calculator_jspb_proto",
@@ -36,6 +37,7 @@ mediapipe_ts_declaration(
         "image_embedder_options.d.ts",
         "image_embedder_result.d.ts",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/web/components/containers:embedding_result",
         "//mediapipe/tasks/web/core",

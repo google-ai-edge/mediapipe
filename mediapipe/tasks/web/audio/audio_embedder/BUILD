@@ -11,6 +11,7 @@ licenses(["notice"])
 mediapipe_ts_library(
     name = "audio_embedder",
     srcs = ["audio_embedder.ts"],
+    visibility = ["//visibility:public"],
     deps = [
         ":audio_embedder_types",
         "//mediapipe/framework:calculator_jspb_proto",
@@ -35,6 +36,7 @@ mediapipe_ts_declaration(
         "audio_embedder_options.d.ts",
         "audio_embedder_result.d.ts",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/web/components/containers:embedding_result",
         "//mediapipe/tasks/web/core",

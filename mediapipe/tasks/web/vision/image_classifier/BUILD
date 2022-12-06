@@ -11,6 +11,7 @@ licenses(["notice"])
 mediapipe_ts_library(
     name = "image_classifier",
     srcs = ["image_classifier.ts"],
+    visibility = ["//visibility:public"],
     deps = [
         ":image_classifier_types",
         "//mediapipe/framework:calculator_jspb_proto",
@@ -35,6 +36,7 @@ mediapipe_ts_declaration(
         "image_classifier_options.d.ts",
         "image_classifier_result.d.ts",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/components/containers:classification_result",

@@ -12,6 +12,7 @@ licenses(["notice"])
 mediapipe_ts_library(
     name = "object_detector",
     srcs = ["object_detector.ts"],
+    visibility = ["//visibility:public"],
     deps = [
         ":object_detector_types",
         "//mediapipe/framework:calculator_jspb_proto",
@@ -32,6 +33,7 @@ mediapipe_ts_declaration(
         "object_detector_options.d.ts",
         "object_detector_result.d.ts",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/core",
