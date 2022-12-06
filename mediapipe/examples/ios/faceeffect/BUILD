@@ -73,13 +73,11 @@ objc_library(
         "//mediapipe/modules/face_landmark:face_landmark.tflite",
     ],
     features = ["-layering_check"],
-    sdk_frameworks = [
-        "AVFoundation",
-        "CoreGraphics",
-        "CoreMedia",
-        "UIKit",
-    ],
     deps = [
+        "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:CoreGraphics",
+        "//third_party/apple_frameworks:CoreMedia",
+        "//third_party/apple_frameworks:UIKit",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//mediapipe/objc:mediapipe_input_sources_ios",
         "//mediapipe/objc:mediapipe_layer_renderer",
