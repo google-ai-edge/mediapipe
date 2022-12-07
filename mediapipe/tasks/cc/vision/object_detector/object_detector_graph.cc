@@ -532,8 +532,7 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
     MP_RETURN_IF_ERROR(SanityCheckOptions(task_options));
     // Checks that the model has 4 outputs.
     auto& model = *model_resources.GetTfLiteModel();
-    if (model.subgraphs()->size() != 1 ||
-        (*model.subgraphs())[0]->outputs()->size() != 4) {
+    if (model.subgraphs()->size() != 1) {
       return CreateStatusWithPayload(
           absl::StatusCode::kInvalidArgument,
           absl::StrFormat("Expected a model with a single subgraph, found %d.",
