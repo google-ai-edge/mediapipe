@@ -215,10 +215,15 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
   CHECK(ahwb_ || !(valid_ & kValidOpenGlBuffer))
       << "Interoperability bettween OpenGL buffer and AHardwareBuffer is not "
          "supported on targe system.";
+  bool transfer = !ahwb_;
   CHECK(AllocateAHardwareBuffer())
       << "AHardwareBuffer is not supported on the target system.";
   valid_ |= kValidAHardwareBuffer;
-  if (valid_ & kValidOpenGlBuffer) CreateEglSyncAndFd();
+  if (transfer) {
+    MoveCpuOrSsboToAhwb();
+  } else {
+    if (valid_ & kValidOpenGlBuffer) CreateEglSyncAndFd();
+  }
   return {ahwb_,
           ssbo_written_,
           &fence_fd_,  // The FD is created for SSBO -> AHWB synchronization.
@@ -301,6 +306,39 @@ bool Tensor::AllocateAhwbMapToSsbo() const {
     }
   }
   return false;
+}
+
+// Moves Cpu/Ssbo resource under the Ahwb backed memory.
+void Tensor::MoveCpuOrSsboToAhwb() const {
+  void* dest = nullptr;
+  if (__builtin_available(android 26, *)) {
+    auto error = AHardwareBuffer_lock(
+        ahwb_, AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY, -1, nullptr, &dest);
+    CHECK(error == 0) << "AHardwareBuffer_lock " << error;
+  }
+  if (valid_ & kValidOpenGlBuffer) {
+    gl_context_->Run([this, dest]() {
+      glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
+      const void* src = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bytes(),
+                                         GL_MAP_READ_BIT);
+      std::memcpy(dest, src, bytes());
+      glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+      glDeleteBuffers(1, &opengl_buffer_);
+    });
+    opengl_buffer_ = GL_INVALID_INDEX;
+    gl_context_ = nullptr;
+  } else if (valid_ & kValidCpu) {
+    std::memcpy(dest, cpu_buffer_, bytes());
+    // Free CPU memory because next time AHWB is mapped instead.
+    free(cpu_buffer_);
+    cpu_buffer_ = nullptr;
+  } else {
+    LOG(FATAL) << "Can't convert tensor with mask " << valid_ << " into AHWB.";
+  }
+  if (__builtin_available(android 26, *)) {
+    auto error = AHardwareBuffer_unlock(ahwb_, nullptr);
+    CHECK(error == 0) << "AHardwareBuffer_unlock " << error;
+  }
 }
 
 // SSBO is created on top of AHWB. A fence is inserted into the GPU queue before

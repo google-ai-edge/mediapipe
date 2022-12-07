@@ -418,6 +418,7 @@ class Tensor {
   void ReleaseAhwbStuff();
   void* MapAhwbToCpuRead() const;
   void* MapAhwbToCpuWrite() const;
+  void MoveCpuOrSsboToAhwb() const;
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   mutable std::shared_ptr<mediapipe::GlContext> gl_context_;
