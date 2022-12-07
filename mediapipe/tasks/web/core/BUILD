@@ -1,6 +1,7 @@
 # This package contains options shared by all MediaPipe Tasks for Web.
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -30,6 +31,38 @@ mediapipe_ts_library(
     srcs = ["fileset_resolver.ts"],
     visibility = ["//visibility:public"],
     deps = [":core"],
+)
+
+mediapipe_ts_library(
+    name = "task_runner_test_utils",
+    testonly = True,
+    srcs = [
+        "task_runner_test_utils.ts",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/web/graph_runner:graph_runner_ts",
+        "//mediapipe/web/graph_runner:register_model_resources_graph_service_ts",
+    ],
+)
+
+mediapipe_ts_library(
+    name = "task_runner_test_lib",
+    testonly = True,
+    srcs = [
+        "task_runner_test.ts",
+    ],
+    deps = [
+        ":task_runner",
+        ":task_runner_test_utils",
+        "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
+        "//mediapipe/web/graph_runner:graph_runner_ts",
+    ],
+)
+
+jasmine_node_test(
+    name = "task_runner_test",
+    deps = [":task_runner_test_lib"],
 )
 
 mediapipe_ts_declaration(

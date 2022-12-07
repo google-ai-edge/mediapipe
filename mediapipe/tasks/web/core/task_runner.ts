@@ -77,9 +77,10 @@ export abstract class TaskRunner {
   }
 
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    this.graphRunner = new GraphRunnerImageLib(wasmModule, glCanvas);
+      wasmModule: WasmModule, glCanvas?: HTMLCanvasElement|OffscreenCanvas|null,
+      graphRunner?: GraphRunnerImageLib) {
+    this.graphRunner =
+        graphRunner ?? new GraphRunnerImageLib(wasmModule, glCanvas);
 
     // Disables the automatic render-to-screen code, which allows for pure
     // CPU processing.
