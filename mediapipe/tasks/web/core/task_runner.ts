@@ -37,10 +37,9 @@ export class GraphRunnerImageLib extends GraphRunnerImageLibType {}
  * supported and loads the relevant WASM binary.
  * @return A fully instantiated instance of `T`.
  */
-export async function
-createTaskRunner<T extends TaskRunner<O>, O extends TaskRunnerOptions>(
+export async function createTaskRunner<T extends TaskRunner>(
     type: WasmMediaPipeConstructor<T>, initializeCanvas: boolean,
-    fileset: WasmFileset, options: O): Promise<T> {
+    fileset: WasmFileset, options: TaskRunnerOptions): Promise<T> {
   const fileLocator: FileLocator = {
     locateFile() {
       // The only file loaded with this mechanism is the Wasm binary
@@ -61,7 +60,7 @@ createTaskRunner<T extends TaskRunner<O>, O extends TaskRunnerOptions>(
 }
 
 /** Base class for all MediaPipe Tasks. */
-export abstract class TaskRunner<O extends TaskRunnerOptions> {
+export abstract class TaskRunner {
   protected abstract baseOptions: BaseOptionsProto;
   protected graphRunner: GraphRunnerImageLib;
   private processingErrors: Error[] = [];
@@ -71,10 +70,9 @@ export abstract class TaskRunner<O extends TaskRunnerOptions> {
    * supported and loads the relevant WASM binary.
    * @return A fully instantiated instance of `T`.
    */
-  protected static async createInstance<T extends TaskRunner<O>,
-                                                  O extends TaskRunnerOptions>(
+  protected static async createInstance<T extends TaskRunner>(
       type: WasmMediaPipeConstructor<T>, initializeCanvas: boolean,
-      fileset: WasmFileset, options: O): Promise<T> {
+      fileset: WasmFileset, options: TaskRunnerOptions): Promise<T> {
     return createTaskRunner(type, initializeCanvas, fileset, options);
   }
 
@@ -92,7 +90,7 @@ export abstract class TaskRunner<O extends TaskRunnerOptions> {
   }
 
   /** Configures the shared options of a MediaPipe Task. */
-  async setOptions(options: O): Promise<void> {
+  async setOptions(options: TaskRunnerOptions): Promise<void> {
     if (options.baseOptions) {
       this.baseOptions = await convertBaseOptionsToProto(
           options.baseOptions, this.baseOptions);

@@ -20,8 +20,7 @@ import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 import {VisionTaskOptions} from './vision_task_options';
 
 /** Base class for all MediaPipe Vision Tasks. */
-export abstract class VisionTaskRunner<T> extends
-    TaskRunner<VisionTaskOptions> {
+export abstract class VisionTaskRunner<T> extends TaskRunner {
   /** Configures the shared options of a vision task. */
   override async setOptions(options: VisionTaskOptions): Promise<void> {
     await super.setOptions(options);

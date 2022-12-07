@@ -45,7 +45,7 @@ const TEXT_EMBEDDER_CALCULATOR =
 /**
  * Performs embedding extraction on text.
  */
-export class TextEmbedder extends TaskRunner<TextEmbedderOptions> {
+export class TextEmbedder extends TaskRunner {
   private embeddingResult: TextEmbedderResult = {embeddings: []};
   private readonly options = new TextEmbedderGraphOptionsProto();
 

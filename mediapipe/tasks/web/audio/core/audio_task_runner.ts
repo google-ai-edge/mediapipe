@@ -15,10 +15,9 @@
  */
 
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
-import {TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options';
 
 /** Base class for all MediaPipe Audio Tasks. */
-export abstract class AudioTaskRunner<T> extends TaskRunner<TaskRunnerOptions> {
+export abstract class AudioTaskRunner<T> extends TaskRunner {
   private defaultSampleRate = 48000;
 
   /**
