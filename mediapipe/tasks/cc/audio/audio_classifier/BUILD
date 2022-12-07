@@ -22,9 +22,7 @@ cc_library(
     name = "audio_classifier",
     srcs = ["audio_classifier.cc"],
     hdrs = ["audio_classifier.h"],
-    visibility = [
-        "//mediapipe/tasks:users",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":audio_classifier_graph",
         "//mediapipe/framework/api2:builder",

@@ -22,9 +22,7 @@ cc_library(
     name = "object_detector",
     srcs = ["object_detector.cc"],
     hdrs = ["object_detector.h"],
-    visibility = [
-        "//mediapipe/tasks:users",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":object_detector_graph",
         "//mediapipe/calculators/core:concatenate_vector_calculator",
