@@ -309,7 +309,10 @@ cc_library(
     name = "utils",
     srcs = ["utils.cc"],
     hdrs = ["utils.h"],
-    visibility = ["//mediapipe/framework:mediapipe_internal"],
+    visibility = [
+        "//mediapipe/calculators:__subpackages__",
+        "//mediapipe/tasks:internal",
+    ],
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",
         "//mediapipe/framework:calculator_cc_proto",
