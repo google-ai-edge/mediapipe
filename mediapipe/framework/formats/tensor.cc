@@ -551,7 +551,7 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
       });
     } else
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-
+    {
       // Transfer data from texture if not transferred from SSBO/MTLBuffer
       // yet.
       if (valid_ & kValidOpenGlTexture2d) {
@@ -582,6 +582,7 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
           }
         });
       }
+    }
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
     valid_ |= kValidCpu;
   }
