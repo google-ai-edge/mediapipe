@@ -291,9 +291,7 @@ cc_library(
             "-ObjC++",
         ],
     }),
-    visibility = [
-        "//mediapipe/framework:mediapipe_internal",
-    ],
+    visibility = ["//visibility:private"],
     deps = [
         "@com_google_absl//absl/flags:flag",
         "//mediapipe/framework/port:logging",
