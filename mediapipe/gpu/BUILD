@@ -289,7 +289,9 @@ cc_library(
     deps = [
         ":gpu_buffer_format",
         ":gpu_buffer_storage",
+        "@com_google_absl//absl/functional:bind_front",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:logging",
         ":gpu_buffer_storage_image_frame",
