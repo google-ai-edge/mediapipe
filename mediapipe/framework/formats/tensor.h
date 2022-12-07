@@ -39,10 +39,9 @@
 #endif  // MEDIAPIPE_NO_JNI
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <android/hardware_buffer.h>
-
-#include "third_party/GL/gl/include/EGL/egl.h"
-#include "third_party/GL/gl/include/EGL/eglext.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
