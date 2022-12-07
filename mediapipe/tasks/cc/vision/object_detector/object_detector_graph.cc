@@ -662,11 +662,16 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
     detection_transformation.Out(kPixelDetectionsTag) >>
         detection_label_id_to_text.In("");
 
+    // Deduplicate Detections with same bounding box coordinates.
+    auto& detections_deduplicate =
+        graph.AddNode("DetectionsDeduplicateCalculator");
+    detection_label_id_to_text.Out("") >> detections_deduplicate.In("");
+
     // Outputs the labeled detections and the processed image as the subgraph
     // output streams.
     return {{
         /* detections= */
-        detection_label_id_to_text[Output<std::vector<Detection>>("")],
+        detections_deduplicate[Output<std::vector<Detection>>("")],
         /* image= */ preprocessing[Output<Image>(kImageTag)],
     }};
   }

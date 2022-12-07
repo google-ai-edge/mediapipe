@@ -63,6 +63,7 @@ cc_library(
         "//mediapipe/calculators/util:detection_label_id_to_text_calculator_cc_proto",
         "//mediapipe/calculators/util:detection_projection_calculator",
         "//mediapipe/calculators/util:detection_transformation_calculator",
+        "//mediapipe/calculators/util:detections_deduplicate_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
