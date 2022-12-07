@@ -20,7 +20,9 @@ load(
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe:__subpackages__"])
+package(default_visibility = [
+    "//mediapipe:__subpackages__",
+])
 
 filegroup(
     name = "test_graph",
@@ -40,7 +42,6 @@ mediapipe_simple_subgraph(
     testonly = 1,
     graph = "dub_quad_test_subgraph.pbtxt",
     register_as = "DubQuadTestSubgraph",
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:test_calculators",
     ],
@@ -51,7 +52,7 @@ mediapipe_simple_subgraph(
     testonly = 1,
     graph = "nested_test_subgraph.pbtxt",
     register_as = "NestedTestSubgraph",
-    visibility = ["//visibility:public"],
+    visibility = ["//mediapipe/framework:__subpackages__"],
     deps = [
         ":dub_quad_test_subgraph",
         "//mediapipe/framework:test_calculators",

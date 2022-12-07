@@ -20,7 +20,9 @@ load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:private"])
+package(default_visibility = [
+    "//mediapipe:__subpackages__",
+])
 
 bzl_library(
     name = "expand_template_bzl",
@@ -50,13 +52,11 @@ mediapipe_proto_library(
 cc_library(
     name = "aligned_malloc_and_free",
     hdrs = ["aligned_malloc_and_free.h"],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
     name = "cleanup",
     hdrs = ["cleanup.h"],
-    visibility = ["//visibility:public"],
     deps = ["@com_google_absl//absl/base:core_headers"],
 )
 
@@ -86,7 +86,6 @@ cc_library(
     # Use this library through "mediapipe/framework/port:gtest_main".
     visibility = [
         "//mediapipe/framework/port:__pkg__",
-        "//third_party/visionai/algorithms/tracking:__pkg__",
     ],
     deps = [
         "//mediapipe/framework/port:core_proto",
@@ -108,7 +107,6 @@ cc_library(
     name = "file_helpers",
     srcs = ["file_helpers.cc"],
     hdrs = ["file_helpers.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":file_path",
         "//mediapipe/framework/port:status",
@@ -134,7 +132,6 @@ cc_library(
 cc_library(
     name = "image_resizer",
     hdrs = ["image_resizer.h"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/port:opencv_imgproc",
     ],
@@ -151,7 +148,9 @@ cc_library(
 cc_library(
     name = "mathutil",
     hdrs = ["mathutil.h"],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//mediapipe:__subpackages__",
+    ],
     deps = [
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
@@ -171,7 +170,6 @@ cc_library(
 cc_library(
     name = "no_destructor",
     hdrs = ["no_destructor.h"],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -190,7 +188,6 @@ cc_library(
 cc_library(
     name = "random",
     hdrs = ["random_base.h"],
-    visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework/port:integral_types"],
 )
 
@@ -211,14 +208,12 @@ cc_library(
     name = "registration_token",
     srcs = ["registration_token.cc"],
     hdrs = ["registration_token.h"],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
     name = "registration",
     srcs = ["registration.cc"],
     hdrs = ["registration.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":registration_token",
         "//mediapipe/framework/port:logging",
@@ -279,7 +274,6 @@ cc_library(
     hdrs = [
         "re2.h",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -310,7 +304,6 @@ cc_library(
 cc_library(
     name = "thread_options",
     hdrs = ["thread_options.h"],
-    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -356,7 +349,6 @@ cc_library(
 cc_test(
     name = "mathutil_unittest",
     srcs = ["mathutil_unittest.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         ":mathutil",
         "//mediapipe/framework/port:benchmark",
@@ -368,7 +360,6 @@ cc_test(
     name = "registration_token_test",
     srcs = ["registration_token_test.cc"],
     linkstatic = 1,
-    visibility = ["//visibility:public"],
     deps = [
         ":registration_token",
         "//mediapipe/framework/port:gtest_main",
@@ -381,7 +372,6 @@ cc_test(
     timeout = "long",
     srcs = ["safe_int_test.cc"],
     linkstatic = 1,
-    visibility = ["//visibility:public"],
     deps = [
         ":intops",
         "//mediapipe/framework/port:gtest_main",
@@ -393,7 +383,6 @@ cc_test(
     name = "monotonic_clock_test",
     srcs = ["monotonic_clock_test.cc"],
     linkstatic = 1,
-    visibility = ["//visibility:public"],
     deps = [
         ":clock",
         "//mediapipe/framework/port:gtest_main",
