@@ -4,6 +4,7 @@
 # the detection results for one or more gesture categories, using Gesture Recognizer.
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -51,4 +52,28 @@ mediapipe_ts_declaration(
         "//mediapipe/tasks/web/core:classifier_options",
         "//mediapipe/tasks/web/vision/core:vision_task_options",
     ],
+)
+
+mediapipe_ts_library(
+    name = "gesture_recognizer_test_lib",
+    testonly = True,
+    srcs = [
+        "gesture_recognizer_test.ts",
+    ],
+    deps = [
+        ":gesture_recognizer",
+        ":gesture_recognizer_types",
+        "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/framework/formats:classification_jspb_proto",
+        "//mediapipe/framework/formats:landmark_jspb_proto",
+        "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:task_runner",
+        "//mediapipe/tasks/web/core:task_runner_test_utils",
+    ],
+)
+
+jasmine_node_test(
+    name = "gesture_recognizer_test",
+    tags = ["nomsan"],
+    deps = [":gesture_recognizer_test_lib"],
 )

@@ -4,6 +4,7 @@
 # the detection results for one or more hand categories, using Hand Landmarker.
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -46,4 +47,28 @@ mediapipe_ts_declaration(
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/vision/core:vision_task_options",
     ],
+)
+
+mediapipe_ts_library(
+    name = "hand_landmarker_test_lib",
+    testonly = True,
+    srcs = [
+        "hand_landmarker_test.ts",
+    ],
+    deps = [
+        ":hand_landmarker",
+        ":hand_landmarker_types",
+        "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/framework/formats:classification_jspb_proto",
+        "//mediapipe/framework/formats:landmark_jspb_proto",
+        "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:task_runner",
+        "//mediapipe/tasks/web/core:task_runner_test_utils",
+    ],
+)
+
+jasmine_node_test(
+    name = "hand_landmarker_test",
+    tags = ["nomsan"],
+    deps = [":hand_landmarker_test_lib"],
 )

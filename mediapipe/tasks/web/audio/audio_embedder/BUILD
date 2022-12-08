@@ -3,6 +3,7 @@
 # This task takes audio input and performs embedding.
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -42,4 +43,24 @@ mediapipe_ts_declaration(
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:embedder_options",
     ],
+)
+
+mediapipe_ts_library(
+    name = "audio_embedder_test_lib",
+    testonly = True,
+    srcs = [
+        "audio_embedder_test.ts",
+    ],
+    deps = [
+        ":audio_embedder",
+        "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/tasks/cc/components/containers/proto:embeddings_jspb_proto",
+        "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:task_runner_test_utils",
+    ],
+)
+
+jasmine_node_test(
+    name = "audio_embedder_test",
+    deps = [":audio_embedder_test_lib"],
 )

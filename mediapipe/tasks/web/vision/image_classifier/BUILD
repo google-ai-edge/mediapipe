@@ -3,6 +3,7 @@
 # This task takes video or image frames and outputs the classification result.
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -43,4 +44,27 @@ mediapipe_ts_declaration(
         "//mediapipe/tasks/web/core:classifier_options",
         "//mediapipe/tasks/web/vision/core:vision_task_options",
     ],
+)
+
+mediapipe_ts_library(
+    name = "image_classifier_test_lib",
+    testonly = True,
+    srcs = [
+        "image_classifier_test.ts",
+    ],
+    deps = [
+        ":image_classifier",
+        ":image_classifier_types",
+        "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/framework/formats:classification_jspb_proto",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_jspb_proto",
+        "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:task_runner_test_utils",
+    ],
+)
+
+jasmine_node_test(
+    name = "image_classifier_test",
+    tags = ["nomsan"],
+    deps = [":image_classifier_test_lib"],
 )
