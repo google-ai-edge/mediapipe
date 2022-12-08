@@ -61,9 +61,15 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
+    name = "text_model_type_proto",
+    srcs = ["text_model_type.proto"],
+)
+
+mediapipe_proto_library(
     name = "text_preprocessing_graph_options_proto",
     srcs = ["text_preprocessing_graph_options.proto"],
     deps = [
+        ":text_model_type_proto",
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],

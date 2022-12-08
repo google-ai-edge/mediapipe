@@ -43,3 +43,43 @@ cc_test(
         "@com_google_absl//absl/container:node_hash_map",
     ],
 )
+
+cc_library(
+    name = "text_model_utils",
+    srcs = ["text_model_utils.cc"],
+    hdrs = ["text_model_utils.h"],
+    deps = [
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components/processors/proto:text_model_type_cc_proto",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
+    ],
+)
+
+cc_test(
+    name = "text_model_utils_test",
+    srcs = ["text_model_utils_test.cc"],
+    data = [
+        "//mediapipe/tasks/testdata/text:bert_text_classifier_models",
+        "//mediapipe/tasks/testdata/text:mobilebert_embedding_model",
+        "//mediapipe/tasks/testdata/text:regex_embedding_with_metadata",
+        "//mediapipe/tasks/testdata/text:text_classifier_models",
+    ],
+    deps = [
+        ":text_model_utils",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/tasks/cc/components/processors/proto:text_model_type_cc_proto",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/lite/core/shims:cc_shims_test_util",
+    ],
+)

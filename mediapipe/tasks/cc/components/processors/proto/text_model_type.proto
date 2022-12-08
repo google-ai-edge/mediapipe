@@ -17,17 +17,15 @@ syntax = "proto2";
 
 package mediapipe.tasks.components.processors.proto;
 
-import "mediapipe/framework/calculator.proto";
-import "mediapipe/tasks/cc/components/processors/proto/text_model_type.proto";
-
-message TextPreprocessingGraphOptions {
-  extend mediapipe.CalculatorOptions {
-    optional TextPreprocessingGraphOptions ext = 476978751;
+message TextModelType {
+  // TFLite text models supported by MediaPipe tasks.
+  enum ModelType {
+    UNSPECIFIED_MODEL = 0;
+    // A BERT-based model.
+    BERT_MODEL = 1;
+    // A model expecting input passed through a regex-based tokenizer.
+    REGEX_MODEL = 2;
+    // A model taking a string tensor input.
+    STRING_MODEL = 3;
   }
-
-  optional TextModelType.ModelType model_type = 1;
-
-  // The maximum input sequence length for the TFLite model. Used with
-  // BERT_MODEL and REGEX_MODEL.
-  optional int32 max_seq_len = 2;
 }
