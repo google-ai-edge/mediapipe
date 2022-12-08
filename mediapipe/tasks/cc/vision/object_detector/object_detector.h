@@ -27,6 +27,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/tasks/cc/components/containers/detection_result.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
@@ -35,6 +36,10 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace vision {
+
+// Alias the shared DetectionResult struct as result typo.
+using ObjectDetectorResult =
+    ::mediapipe::tasks::components::containers::DetectionResult;
 
 // The options for configuring a mediapipe object detector task.
 struct ObjectDetectorOptions {
@@ -79,8 +84,7 @@ struct ObjectDetectorOptions {
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
   // to RunningMode::LIVE_STREAM.
-  std::function<void(absl::StatusOr<std::vector<mediapipe::Detection>>,
-                     const Image&, int64)>
+  std::function<void(absl::StatusOr<ObjectDetectorResult>, const Image&, int64)>
       result_callback = nullptr;
 };
 
@@ -165,7 +169,7 @@ class ObjectDetector : tasks::vision::core::BaseVisionTaskApi {
   // underlying image data.
   // TODO: Describes the output bounding boxes for gpu input
   // images after enabling the gpu support in MediaPipe Tasks.
-  absl::StatusOr<std::vector<mediapipe::Detection>> Detect(
+  absl::StatusOr<ObjectDetectorResult> Detect(
       mediapipe::Image image,
       std::optional<core::ImageProcessingOptions> image_processing_options =
           std::nullopt);
@@ -188,7 +192,7 @@ class ObjectDetector : tasks::vision::core::BaseVisionTaskApi {
   // unrotated input frame of reference coordinates system, i.e. in `[0,
   // image_width) x [0, image_height)`, which are the dimensions of the
   // underlying image data.
-  absl::StatusOr<std::vector<mediapipe::Detection>> DetectForVideo(
+  absl::StatusOr<ObjectDetectorResult> DetectForVideo(
       mediapipe::Image image, int64 timestamp_ms,
       std::optional<core::ImageProcessingOptions> image_processing_options =
           std::nullopt);

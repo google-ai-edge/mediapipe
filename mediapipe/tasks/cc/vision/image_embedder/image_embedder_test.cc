@@ -41,7 +41,7 @@ namespace image_embedder {
 namespace {
 
 using ::mediapipe::file::JoinPath;
-using ::mediapipe::tasks::components::containers::Rect;
+using ::mediapipe::tasks::components::containers::RectF;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::HasSubstr;
 using ::testing::Optional;
@@ -320,7 +320,7 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterest) {
       Image crop, DecodeImageFromFile(
                       JoinPath("./", kTestDataDirectory, "burger_crop.jpg")));
   // Region-of-interest in "burger.jpg" corresponding to "burger_crop.jpg".
-  Rect roi{/*left=*/0, /*top=*/0, /*right=*/0.833333, /*bottom=*/1};
+  RectF roi{/*left=*/0, /*top=*/0, /*right=*/0.833333, /*bottom=*/1};
   ImageProcessingOptions image_processing_options{roi, /*rotation_degrees=*/0};
 
   // Extract both embeddings.
@@ -388,7 +388,7 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
                           DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
                                                        "burger_rotated.jpg")));
   // Region-of-interest corresponding to burger_crop.jpg.
-  Rect roi{/*left=*/0, /*top=*/0, /*right=*/1, /*bottom=*/0.8333333};
+  RectF roi{/*left=*/0, /*top=*/0, /*right=*/1, /*bottom=*/0.8333333};
   ImageProcessingOptions image_processing_options{roi,
                                                   /*rotation_degrees=*/-90};
 
