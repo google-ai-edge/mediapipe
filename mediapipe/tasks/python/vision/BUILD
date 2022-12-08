@@ -131,6 +131,10 @@ py_library(
     srcs = [
         "hand_landmarker.py",
     ],
+    visibility = [
+        "//mediapipe/model_maker/python/vision/gesture_recognizer:__subpackages__",
+        "//mediapipe/tasks:internal",
+    ],
     deps = [
         "//mediapipe/framework/formats:classification_py_pb2",
         "//mediapipe/framework/formats:landmark_py_pb2",
