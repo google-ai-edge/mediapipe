@@ -1323,6 +1323,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:image",
         "@com_google_absl//absl/status",
     ],
