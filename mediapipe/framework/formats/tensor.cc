@@ -361,7 +361,7 @@ void Tensor::AllocateOpenGlBuffer() const {
     LOG_IF(FATAL, !gl_context_) << "GlContext is not bound to the thread.";
     glGenBuffers(1, &opengl_buffer_);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
-    if (!AllocateAhwbMapToSsbo()) {
+    if (!use_ahwb_ || !AllocateAhwbMapToSsbo()) {
       glBufferData(GL_SHADER_STORAGE_BUFFER, bytes(), NULL, GL_STREAM_COPY);
     }
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -610,7 +610,7 @@ Tensor::CpuWriteView Tensor::GetCpuWriteView() const {
 void Tensor::AllocateCpuBuffer() const {
   if (!cpu_buffer_) {
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
-    if (AllocateAHardwareBuffer()) return;
+    if (use_ahwb_ && AllocateAHardwareBuffer()) return;
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 #if MEDIAPIPE_METAL_ENABLED
     cpu_buffer_ = AllocateVirtualMemory(bytes());

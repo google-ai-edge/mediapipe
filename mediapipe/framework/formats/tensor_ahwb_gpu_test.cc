@@ -136,6 +136,34 @@ TEST_F(TensorAhwbGpuTest, TestGpuToCpuFloat16) {
               testing::Pointwise(NearWithPrecision(0.001), reference));
 }
 
+TEST_F(TensorAhwbGpuTest, TestReplacingCpuByAhwb) {
+  // Request the CPU view to get the memory to be allocated.
+  // Request Ahwb view then to transform the storage into Ahwb.
+  Tensor::SetPreferredStorageType(Tensor::StorageType::kDefault);
+  constexpr size_t num_elements = 20;
+  Tensor tensor{Tensor::ElementType::kFloat32, Tensor::Shape({num_elements})};
+  {
+    auto ptr = tensor.GetCpuWriteView().buffer<float>();
+    EXPECT_NE(ptr, nullptr);
+    for (int i = 0; i < num_elements; i++) {
+      ptr[i] = static_cast<float>(i) / 10.0f;
+    }
+  }
+  {
+    auto view = tensor.GetAHardwareBufferReadView();
+    EXPECT_NE(view.handle(), nullptr);
+  }
+  auto ptr = tensor.GetCpuReadView().buffer<float>();
+  EXPECT_NE(ptr, nullptr);
+  std::vector<float> reference;
+  reference.resize(num_elements);
+  for (int i = 0; i < num_elements; i++) {
+    reference[i] = static_cast<float>(i) / 10.0f;
+  }
+  EXPECT_THAT(absl::Span<const float>(ptr, num_elements),
+              testing::Pointwise(testing::FloatEq(), reference));
+}
+
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 }  // namespace
 

@@ -214,7 +214,7 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
          "supported.";
   CHECK(ahwb_ || !(valid_ & kValidOpenGlBuffer))
       << "Interoperability bettween OpenGL buffer and AHardwareBuffer is not "
-         "supported on targe system.";
+         "supported on target system.";
   bool transfer = !ahwb_;
   CHECK(AllocateAHardwareBuffer())
       << "AHardwareBuffer is not supported on the target system.";
@@ -268,7 +268,6 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView(
 }
 
 bool Tensor::AllocateAHardwareBuffer(int size_alignment) const {
-  if (!use_ahwb_) return false;
   if (__builtin_available(android 26, *)) {
     if (ahwb_ == nullptr) {
       AHardwareBuffer_Desc desc = {};
