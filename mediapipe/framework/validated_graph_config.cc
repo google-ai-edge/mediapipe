@@ -369,6 +369,7 @@ absl::Status ValidatedGraphConfig::Initialize(
     input_side_packets_.clear();
     output_side_packets_.clear();
     stream_to_producer_.clear();
+    output_streams_to_consumer_nodes_.clear();
     input_streams_.clear();
     output_streams_.clear();
     owned_packet_types_.clear();
@@ -717,6 +718,15 @@ absl::Status ValidatedGraphConfig::AddInputStreamsForNode(
                << node_index << " name "
                << node_type_info->Contract().GetNodeName()
                << " does not have a corresponding output stream.";
+      }
+    }
+    // Add this node as a consumer of this edge's output stream.
+    if (edge_info.upstream > -1) {
+      auto parent_node = output_streams_[edge_info.upstream].parent_node;
+      if (parent_node.type == NodeTypeInfo::NodeType::CALCULATOR) {
+        int this_idx = node_type_info->Node().index;
+        output_streams_to_consumer_nodes_[edge_info.upstream].push_back(
+            this_idx);
       }
     }
 
