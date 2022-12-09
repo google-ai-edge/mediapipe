@@ -232,6 +232,11 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
 
   const ProfilerConfig& profiler_config() { return profiler_config_; }
 
+  // Helper method to expose the config to other profilers.
+  const ValidatedGraphConfig* GetValidatedGraphConfig() {
+    return validated_graph_;
+  }
+
  private:
   // This can be used to add packet info for the input streams to the graph.
   // It treats the stream defined by |stream_name| as a stream produced by a
