@@ -346,6 +346,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:statusor",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -506,6 +507,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":proto_util_lite",
+        "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/deps:proto_descriptor_cc_proto",
         "//mediapipe/framework/port:advanced_proto",
         "//mediapipe/framework/port:integral_types",

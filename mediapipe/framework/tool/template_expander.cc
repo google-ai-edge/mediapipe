@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "absl/strings/ascii.h"
+#include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
@@ -44,6 +45,7 @@ using WireFormatLite = ProtoUtilLite::WireFormatLite;
 using FieldValue = ProtoUtilLite::FieldValue;
 using FieldType = ProtoUtilLite::FieldType;
 using ProtoPath = ProtoUtilLite::ProtoPath;
+using ProtoPathEntry = ProtoUtilLite::ProtoPathEntry;
 
 namespace {
 
@@ -84,38 +86,92 @@ std::unique_ptr<MessageLite> CloneMessage(const MessageLite& message) {
   return result;
 }
 
-// Returns the (tag, index) pairs in a field path.
-// For example, returns {{1, 1}, {2, 1}, {3, 1}} for path "/1[1]/2[1]/3[1]".
-absl::Status ProtoPathSplit(const std::string& path, ProtoPath* result) {
-  absl::Status status;
-  std::vector<std::string> ids = absl::StrSplit(path, '/');
-  for (const std::string& id : ids) {
-    if (id.length() > 0) {
-      std::pair<std::string, std::string> id_pair =
-          absl::StrSplit(id, absl::ByAnyChar("[]"));
-      int tag = 0;
-      int index = 0;
-      bool ok = absl::SimpleAtoi(id_pair.first, &tag) &&
-                absl::SimpleAtoi(id_pair.second, &index);
-      if (!ok) {
-        status.Update(absl::InvalidArgumentError(path));
-      }
-      result->push_back(std::make_pair(tag, index));
+// Parses one ProtoPathEntry.
+// The parsed entry is appended to `result` and removed from `path`.
+// ProtoPathEntry::key_value stores map key text.  Use SetMapKeyTypes
+// to serialize the key text to protobuf wire format.
+absl::Status ParseEntry(absl::string_view& path, ProtoPath* result) {
+  bool ok = true;
+  int sb = path.find('[');
+  int eb = path.find(']');
+  int field_id = -1;
+  ok &= absl::SimpleAtoi(path.substr(0, sb), &field_id);
+  auto selector = path.substr(sb + 1, eb - 1 - sb);
+  if (absl::StartsWith(selector, "@")) {
+    int eq = selector.find('=');
+    int key_id = -1;
+    ok &= absl::SimpleAtoi(selector.substr(1, eq - 1), &key_id);
+    auto key_text = selector.substr(eq + 1);
+    FieldType key_type = FieldType::TYPE_STRING;
+    result->push_back({field_id, key_id, key_type, std::string(key_text)});
+  } else {
+    int index = 0;
+    ok &= absl::SimpleAtoi(selector, &index);
+    result->push_back({field_id, index});
+  }
+  int end = path.find('/', eb);
+  if (end == std::string::npos) {
+    path = "";
+  } else {
+    path = path.substr(end + 1);
+  }
+  return ok ? absl::OkStatus()
+            : absl::InvalidArgumentError(
+                  absl::StrCat("Failed to parse ProtoPath entry: ", path));
+}
+
+// Specifies the FieldTypes for protobuf map keys in a ProtoPath.
+// Each ProtoPathEntry::key_value is converted from text to the protobuf
+// wire format for its key type.
+absl::Status SetMapKeyTypes(const std::vector<FieldType>& key_types,
+                            ProtoPath* result) {
+  int i = 0;
+  for (ProtoPathEntry& entry : *result) {
+    if (entry.map_id >= 0) {
+      FieldType key_type = key_types[i++];
+      std::vector<FieldValue> key_value;
+      MP_RETURN_IF_ERROR(
+          ProtoUtilLite::Serialize({entry.key_value}, key_type, &key_value));
+      entry.key_type = key_type;
+      entry.key_value = key_value.front();
     }
   }
-  return status;
+  return absl::OkStatus();
+}
+
+// Returns the (tag, index) pairs in a field path.
+// For example, returns {{1, 1}, {2, 1}, {3, 1}} for "/1[1]/2[1]/3[1]",
+// returns {{1, 1}, {2, 1, "INPUT_FRAMES"}} for "/1[1]/2[@1=INPUT_FRAMES]".
+absl::Status ProtoPathSplit(const std::string& path, ProtoPath* result) {
+  result->clear();
+  absl::string_view rest = path;
+  if (absl::StartsWith(rest, "/")) {
+    rest = rest.substr(1);
+  }
+  while (!rest.empty()) {
+    MP_RETURN_IF_ERROR(ParseEntry(rest, result));
+  }
+  return absl::OkStatus();
+}
+
+// Parse the TemplateExpression.path field into a ProtoPath struct.
+absl::Status ParseProtoPath(const TemplateExpression& rule,
+                            std::string base_path, ProtoPath* result) {
+  ProtoPath base_entries;
+  MP_RETURN_IF_ERROR(ProtoPathSplit(base_path, &base_entries));
+  MP_RETURN_IF_ERROR(ProtoPathSplit(rule.path(), result));
+  std::vector<FieldType> key_types;
+  for (int type : rule.key_type()) {
+    key_types.push_back(static_cast<FieldType>(type));
+  }
+  MP_RETURN_IF_ERROR(SetMapKeyTypes(key_types, result));
+  result->erase(result->begin(), result->begin() + base_entries.size());
+  return absl::OkStatus();
 }
 
 // Returns true if one proto path is prefix by another.
 bool ProtoPathStartsWith(const std::string& path, const std::string& prefix) {
   return absl::StartsWith(path, prefix);
-}
-
-// Returns the part of one proto path after a prefix proto path.
-std::string ProtoPathRelative(const std::string& field_path,
-                              const std::string& base_path) {
-  CHECK(ProtoPathStartsWith(field_path, base_path));
-  return field_path.substr(base_path.length());
 }
 
 // Returns the target ProtoUtilLite::FieldType of a rule.
@@ -126,19 +182,10 @@ FieldType GetFieldType(const TemplateExpression& rule) {
 // Returns the count of field values at a ProtoPath.
 int FieldCount(const FieldValue& base, ProtoPath field_path,
                FieldType field_type) {
-  int field_id, index;
-  std::tie(field_id, index) = field_path.back();
-  field_path.pop_back();
-  std::vector<FieldValue> parent;
-  if (field_path.empty()) {
-    parent.push_back(base);
-  } else {
-    MEDIAPIPE_CHECK_OK(ProtoUtilLite::GetFieldRange(
-        base, field_path, 1, WireFormatLite::TYPE_MESSAGE, &parent));
-  }
-  ProtoUtilLite::FieldAccess access(field_id, field_type);
-  MEDIAPIPE_CHECK_OK(access.SetMessage(parent[0]));
-  return access.mutable_field_values()->size();
+  int result = 0;
+  CHECK(
+      ProtoUtilLite::GetFieldCount(base, field_path, field_type, &result).ok());
+  return result;
 }
 
 }  // namespace
@@ -229,9 +276,7 @@ class TemplateExpanderImpl {
       return absl::OkStatus();
     }
     ProtoPath field_path;
-    absl::Status status =
-        ProtoPathSplit(ProtoPathRelative(rule.path(), base_path), &field_path);
-    if (!status.ok()) return status;
+    MP_RETURN_IF_ERROR(ParseProtoPath(rule, base_path, &field_path));
     return ProtoUtilLite::GetFieldRange(output, field_path, 1,
                                         GetFieldType(rule), base);
   }
@@ -242,12 +287,13 @@ class TemplateExpanderImpl {
                                 const std::vector<FieldValue>& field_values,
                                 FieldValue* output) {
     if (!rule.has_path()) {
-      *output = field_values[0];
+      if (!field_values.empty()) {
+        *output = field_values[0];
+      }
       return absl::OkStatus();
     }
     ProtoPath field_path;
-    RET_CHECK_OK(
-        ProtoPathSplit(ProtoPathRelative(rule.path(), base_path), &field_path));
+    MP_RETURN_IF_ERROR(ParseProtoPath(rule, base_path, &field_path));
     int field_count = 1;
     if (rule.has_field_value()) {
       // For a non-repeated field, only one value can be specified.
@@ -257,7 +303,7 @@ class TemplateExpanderImpl {
             "Multiple values specified for non-repeated field: ", rule.path()));
       }
       // For a non-repeated field, the field value is stored only in the rule.
-      field_path[field_path.size() - 1].second = 0;
+      field_path[field_path.size() - 1].index = 0;
       field_count = 0;
     }
     return ProtoUtilLite::ReplaceFieldRange(output, field_path, field_count,

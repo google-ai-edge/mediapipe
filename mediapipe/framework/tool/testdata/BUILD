@@ -17,6 +17,7 @@ load(
     "//mediapipe/framework/tool:mediapipe_graph.bzl",
     "mediapipe_simple_subgraph",
 )
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
@@ -56,5 +57,14 @@ mediapipe_simple_subgraph(
     deps = [
         ":dub_quad_test_subgraph",
         "//mediapipe/framework:test_calculators",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "frozen_generator_proto",
+    srcs = ["frozen_generator.proto"],
+    visibility = ["//mediapipe/framework:__subpackages__"],
+    deps = [
+        "//mediapipe/framework:packet_generator_proto",
     ],
 )

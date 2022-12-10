@@ -26,6 +26,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/deps/proto_descriptor.pb.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/integral_types.h"
@@ -45,6 +46,9 @@ using mediapipe::proto_ns::Message;
 using mediapipe::proto_ns::OneofDescriptor;
 using mediapipe::proto_ns::Reflection;
 using mediapipe::proto_ns::TextFormat;
+using ProtoPath = mediapipe::tool::ProtoUtilLite::ProtoPath;
+using FieldType = mediapipe::tool::ProtoUtilLite::FieldType;
+using FieldValue = mediapipe::tool::ProtoUtilLite::FieldValue;
 
 namespace mediapipe {
 
@@ -1357,7 +1361,7 @@ absl::Status ProtoPathSplit(const std::string& path,
       if (!ok) {
         status.Update(absl::InvalidArgumentError(path));
       }
-      result->push_back(std::make_pair(tag, index));
+      result->push_back({tag, index});
     }
   }
   return status;
@@ -1381,7 +1385,7 @@ void StowFieldValue(Message* message, TemplateExpression* expression) {
   const Descriptor* descriptor = message->GetDescriptor();
   ProtoUtilLite::ProtoPath path;
   MEDIAPIPE_CHECK_OK(ProtoPathSplit(expression->path(), &path));
-  int field_number = path[path.size() - 1].first;
+  int field_number = path[path.size() - 1].field_id;
   const FieldDescriptor* field = descriptor->FindFieldByNumber(field_number);
   if (!field->is_repeated()) {
     std::vector<ProtoUtilLite::FieldValue> field_values;
@@ -1402,6 +1406,124 @@ static void StripQuotes(std::string* str) {
   }
 }
 
+// Returns the field or extension for field number.
+const FieldDescriptor* FindFieldByNumber(const Message* message,
+                                         int field_num) {
+  const FieldDescriptor* result =
+      message->GetDescriptor()->FindFieldByNumber(field_num);
+  if (result == nullptr) {
+    result = message->GetReflection()->FindKnownExtensionByNumber(field_num);
+  }
+  return result;
+}
+
+// Returns the message value from a field at an index.
+const Message* GetFieldMessage(const Message& message,
+                               const FieldDescriptor* field, int index) {
+  if (field->type() != FieldDescriptor::TYPE_MESSAGE) {
+    return nullptr;
+  }
+  if (!field->is_repeated()) {
+    return &message.GetReflection()->GetMessage(message, field);
+  }
+  if (index < message.GetReflection()->FieldSize(message, field)) {
+    return &message.GetReflection()->GetRepeatedMessage(message, field, index);
+  }
+  return nullptr;
+}
+
+// Serialize a ProtoPath as a readable string.
+// For example, {{1, 1}, {2, 1}, {3, 1}} returns "/1[1]/2[1]/3[1]",
+// and {{1, 1}, {2, 1, "INPUT_FRAMES"}} returns "/1[1]/2[@1=INPUT_FRAMES]".
+std::string ProtoPathJoin(ProtoPath path) {
+  std::string result;
+  for (ProtoUtilLite::ProtoPathEntry& e : path) {
+    if (e.field_id >= 0) {
+      absl::StrAppend(&result, "/", e.field_id, "[", e.index, "]");
+    } else if (e.map_id >= 0) {
+      absl::StrAppend(&result, "/", e.map_id, "[@", e.key_id, "=", e.key_value,
+                      "]");
+    }
+  }
+  return result;
+}
+
+// Returns the protobuf map key types from a ProtoPath.
+std::vector<FieldType> ProtoPathKeyTypes(ProtoPath path) {
+  std::vector<FieldType> result;
+  for (auto& entry : path) {
+    if (entry.map_id >= 0) {
+      result.push_back(entry.key_type);
+    }
+  }
+  return result;
+}
+
+// Returns the text value for a string or numeric protobuf map key.
+std::string GetMapKey(const Message& map_entry) {
+  auto key_field = map_entry.GetDescriptor()->FindFieldByName("key");
+  auto reflection = map_entry.GetReflection();
+  if (key_field->type() == FieldDescriptor::TYPE_STRING) {
+    return reflection->GetString(map_entry, key_field);
+  } else if (key_field->type() == FieldDescriptor::TYPE_INT32) {
+    return absl::StrCat(reflection->GetInt32(map_entry, key_field));
+  } else if (key_field->type() == FieldDescriptor::TYPE_INT64) {
+    return absl::StrCat(reflection->GetInt64(map_entry, key_field));
+  }
+  return "";
+}
+
+// Adjusts map-entries from indexes to keys.
+// Protobuf map-entry order is intentionally not preserved.
+mediapipe::Status KeyProtoMapEntries(Message* source) {
+  // Copy the rules from the source CalculatorGraphTemplate.
+  mediapipe::CalculatorGraphTemplate rules;
+  rules.ParsePartialFromString(source->SerializePartialAsString());
+  // Only the "source" Message knows all extension types.
+  Message* config_0 = source->GetReflection()->MutableMessage(
+      source, source->GetDescriptor()->FindFieldByName("config"), nullptr);
+  for (int i = 0; i < rules.rule().size(); ++i) {
+    TemplateExpression* rule = rules.mutable_rule()->Mutable(i);
+    const Message* message = config_0;
+    ProtoPath path;
+    MP_RETURN_IF_ERROR(ProtoPathSplit(rule->path(), &path));
+    for (int j = 0; j < path.size(); ++j) {
+      int field_id = path[j].field_id;
+      int field_index = path[j].index;
+      const FieldDescriptor* field = FindFieldByNumber(message, field_id);
+      if (field->is_map()) {
+        const Message* map_entry =
+            GetFieldMessage(*message, field, path[j].index);
+        int key_id =
+            map_entry->GetDescriptor()->FindFieldByName("key")->number();
+        FieldType key_type = static_cast<ProtoUtilLite::FieldType>(
+            map_entry->GetDescriptor()->FindFieldByName("key")->type());
+        std::string key_value = GetMapKey(*map_entry);
+        path[j] = {field_id, key_id, key_type, key_value};
+      }
+      message = GetFieldMessage(*message, field, field_index);
+      if (!message) {
+        break;
+      }
+    }
+    if (!rule->path().empty()) {
+      *rule->mutable_path() = ProtoPathJoin(path);
+      for (FieldType key_type : ProtoPathKeyTypes(path)) {
+        *rule->mutable_key_type()->Add() = key_type;
+      }
+    }
+  }
+  // Copy the rules back into the source CalculatorGraphTemplate.
+  auto source_rules =
+      source->GetReflection()->GetMutableRepeatedFieldRef<Message>(
+          source, source->GetDescriptor()->FindFieldByName("rule"));
+  source_rules.Clear();
+  for (auto& rule : rules.rule()) {
+    source_rules.Add(rule);
+  }
+  return absl::OkStatus();
+}
+
 }  // namespace
 
 class TemplateParser::Parser::MediaPipeParserImpl
@@ -1416,6 +1538,8 @@ class TemplateParser::Parser::MediaPipeParserImpl
 
     // Copy the template rules into the output template "rule" field.
     success &= MergeFields(template_rules_, output).ok();
+    // Replace map-entry indexes with map keys.
+    success &= KeyProtoMapEntries(output).ok();
     return success;
   }
 
