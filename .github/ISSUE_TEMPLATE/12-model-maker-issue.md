@@ -1,6 +1,6 @@
 ---
 name: "Model Maker Issue"
-about: Use this template for assistance with using MediaPipe Model Maker to create custom on-device ML solutions.
+about: Use this template for assistance with using MediaPipe Model Maker (developers.google.com/mediapipe/solutions) to create custom on-device ML solutions.
 labels: type:support
 
 ---
