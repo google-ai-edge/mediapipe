@@ -96,6 +96,7 @@ export class TextEmbedder extends TaskRunner {
         {baseOptions: {modelAssetPath}});
   }
 
+  /** @hideconstructor */
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {

@@ -127,6 +127,7 @@ export class GestureRecognizer extends
         {baseOptions: {modelAssetPath}});
   }
 
+  /** @hideconstructor */
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {

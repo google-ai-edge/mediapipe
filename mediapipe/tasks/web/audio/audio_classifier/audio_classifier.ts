@@ -94,6 +94,7 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
         {baseOptions: {modelAssetPath}});
   }
 
+  /** @hideconstructor */
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {

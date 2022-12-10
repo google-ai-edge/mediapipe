@@ -76,6 +76,7 @@ export abstract class TaskRunner {
     return createTaskRunner(type, initializeCanvas, fileset, options);
   }
 
+  /** @hideconstructor protected */
   constructor(
       wasmModule: WasmModule, glCanvas?: HTMLCanvasElement|OffscreenCanvas|null,
       graphRunner?: GraphRunnerImageLib) {

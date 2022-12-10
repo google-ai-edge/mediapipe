@@ -92,6 +92,7 @@ export class TextClassifier extends TaskRunner {
         {baseOptions: {modelAssetPath}});
   }
 
+  /** @hideconstructor */
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
