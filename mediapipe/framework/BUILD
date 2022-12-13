@@ -21,6 +21,7 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
+# The MediaPipe internal package group. No mediapipe users should be added to this group.
 package_group(
     name = "mediapipe_internal",
     packages = [
