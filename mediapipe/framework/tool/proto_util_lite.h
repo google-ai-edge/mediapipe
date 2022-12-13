@@ -48,11 +48,16 @@ class ProtoUtilLite {
           key_id(key_id),
           key_type(key_type),
           key_value(std::move(key_value)) {}
+    bool operator==(const ProtoPathEntry& o) const {
+      return field_id == o.field_id && index == o.index && map_id == o.map_id &&
+             key_id == o.key_id && key_type == o.key_type &&
+             key_value == o.key_value;
+    }
     int field_id = -1;
     int index = -1;
     int map_id = -1;
     int key_id = -1;
-    FieldType key_type;
+    FieldType key_type = FieldType::MAX_FIELD_TYPE;
     FieldValue key_value;
   };
 
