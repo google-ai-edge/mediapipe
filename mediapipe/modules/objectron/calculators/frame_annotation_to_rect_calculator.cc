@@ -34,6 +34,8 @@ namespace {
 constexpr char kInputFrameAnnotationTag[] = "FRAME_ANNOTATION";
 constexpr char kOutputNormRectsTag[] = "NORM_RECTS";
 
+using ::mediapipe::NormalizedRect;
+
 }  // namespace
 
 // A calculator that converts FrameAnnotation proto to NormalizedRect.

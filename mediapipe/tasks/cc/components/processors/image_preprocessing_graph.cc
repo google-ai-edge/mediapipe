@@ -45,6 +45,7 @@ namespace components {
 namespace processors {
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::Tensor;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;

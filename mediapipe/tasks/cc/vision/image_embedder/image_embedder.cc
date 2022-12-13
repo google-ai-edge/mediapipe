@@ -54,6 +54,7 @@ constexpr char kGraphTypeName[] =
     "mediapipe.tasks.vision.image_embedder.ImageEmbedderGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::tasks::components::containers::ConvertToEmbeddingResult;
 using ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
 using ::mediapipe::tasks::core::PacketMap;

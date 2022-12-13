@@ -28,6 +28,9 @@ constexpr char kRectTag[] = "RECT";
 constexpr char kRectsTag[] = "RECTS";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 
+using ::mediapipe::NormalizedRect;
+using ::mediapipe::Rect;
+
 // Wraps around an angle in radians to within -M_PI and M_PI.
 inline float NormalizeRadians(float angle) {
   return angle - 2 * M_PI * std::floor((angle - (-M_PI)) / (2 * M_PI));

@@ -26,6 +26,8 @@ limitations under the License.
 namespace mediapipe {
 namespace {
 
+using ::mediapipe::NormalizedRect;
+
 class HandAssociationCalculatorTest : public testing::Test {
  protected:
   HandAssociationCalculatorTest() {

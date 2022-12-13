@@ -57,6 +57,8 @@ namespace {
 using GestureRecognizerGraphOptionsProto = ::mediapipe::tasks::vision::
     gesture_recognizer::proto::GestureRecognizerGraphOptions;
 
+using ::mediapipe::NormalizedRect;
+
 constexpr char kHandGestureSubgraphTypeName[] =
     "mediapipe.tasks.vision.gesture_recognizer.GestureRecognizerGraph";
 

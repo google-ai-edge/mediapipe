@@ -37,7 +37,8 @@ enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
 namespace mediapipe {
 
 namespace {
-
+using ::mediapipe::NormalizedRect;
+using ::mediapipe::Rect;
 #if !MEDIAPIPE_DISABLE_GPU
 
 #endif  // !MEDIAPIPE_DISABLE_GPU

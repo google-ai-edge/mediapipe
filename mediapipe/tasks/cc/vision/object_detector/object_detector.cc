@@ -57,6 +57,7 @@ constexpr char kSubgraphTypeName[] =
     "mediapipe.tasks.vision.ObjectDetectorGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::tasks::components::containers::ConvertToDetectionResult;
 using ObjectDetectorOptionsProto =
     object_detector::proto::ObjectDetectorOptions;

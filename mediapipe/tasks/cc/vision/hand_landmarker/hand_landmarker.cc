@@ -46,6 +46,8 @@ namespace {
 using HandLandmarkerGraphOptionsProto = ::mediapipe::tasks::vision::
     hand_landmarker::proto::HandLandmarkerGraphOptions;
 
+using ::mediapipe::NormalizedRect;
+
 constexpr char kHandLandmarkerGraphTypeName[] =
     "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph";
 
