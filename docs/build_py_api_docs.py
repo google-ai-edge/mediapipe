@@ -44,14 +44,14 @@ _OUTPUT_DIR = flags.DEFINE_string(
 
 _URL_PREFIX = flags.DEFINE_string(
     'code_url_prefix',
-    'https://github.com/google/mediapipe/tree/master/mediapipe',
+    'https://github.com/google/mediapipe/blob/master/mediapipe',
     'The url prefix for links to code.')
 
 _SEARCH_HINTS = flags.DEFINE_bool(
     'search_hints', True,
     'Include metadata search hints in the generated files')
 
-_SITE_PATH = flags.DEFINE_string('site_path', '/mediapipe/api_docs/python',
+_SITE_PATH = flags.DEFINE_string('site_path', '/mediapipe/api/solutions/python',
                                  'Path prefix in the _toc.yaml')
 
 
