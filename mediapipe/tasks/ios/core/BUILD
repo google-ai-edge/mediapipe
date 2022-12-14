@@ -21,3 +21,12 @@ objc_library(
     srcs = ["sources/MPPBaseOptions.m"],
     hdrs = ["sources/MPPBaseOptions.h"],
 )
+
+objc_library(
+    name = "MPPTaskOptions",
+    srcs = ["sources/MPPTaskOptions.m"],
+    hdrs = ["sources/MPPTaskOptions.h"],
+    deps = [
+        ":MPPBaseOptions",
+    ],
+)
