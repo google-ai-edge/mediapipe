@@ -117,7 +117,7 @@ void Scheduler::SubmitWaitingTasksOnQueues() {
 // Note: state_mutex_ is held when this function is entered or
 // exited.
 void Scheduler::HandleIdle() {
-  if (handling_idle_) {
+  if (++handling_idle_ > 1) {
     // Someone is already inside this method.
     // Note: This can happen in the sections below where we unlock the mutex
     // and make more nodes runnable: the nodes can run and become idle again
@@ -127,7 +127,6 @@ void Scheduler::HandleIdle() {
     VLOG(2) << "HandleIdle: already in progress";
     return;
   }
-  handling_idle_ = true;
 
   while (IsIdle() && (state_ == STATE_RUNNING || state_ == STATE_CANCELLING)) {
     // Remove active sources that are closed.
@@ -165,11 +164,17 @@ void Scheduler::HandleIdle() {
       }
     }
 
+    // If HandleIdle has been called again, then continue scheduling.
+    if (handling_idle_ > 1) {
+      handling_idle_ = 1;
+      continue;
+    }
+
     // Nothing left to do.
     break;
   }
 
-  handling_idle_ = false;
+  handling_idle_ = 0;
 }
 
 // Note: state_mutex_ is held when this function is entered or exited.
