@@ -36,6 +36,7 @@ public class GraphTextureFrame implements TextureFrame {
   // when calling getTextureName().
   private final boolean deferredSync;
   private final Set<Long> activeConsumerContextHandleSet = new HashSet<>();
+  private int refCount = 1;
 
   GraphTextureFrame(long nativeHandle, long timestamp) {
     this(nativeHandle, timestamp, false);
@@ -94,6 +95,17 @@ public class GraphTextureFrame implements TextureFrame {
     return timestamp;
   }
 
+  @Override
+  public boolean supportsRetain() {
+    return true;
+  }
+
+  @Override
+  public synchronized void retain() {
+    // TODO: check that refCount is > 0 and handle is not 0.
+    refCount++;
+  }
+
   /**
    * Releases a reference to the underlying buffer.
    *
@@ -121,22 +133,32 @@ public class GraphTextureFrame implements TextureFrame {
    * currently cannot create a GlSyncToken, so they cannot call this method.
    */
   @Override
-  public void release(GlSyncToken consumerSyncToken) {
-    if (nativeBufferHandle != 0) {
-      long token = consumerSyncToken == null ? 0 : consumerSyncToken.nativeToken();
-      nativeReleaseBuffer(nativeBufferHandle, token);
-      nativeBufferHandle = 0;
-    } else if (consumerSyncToken != null) {
-      logger.atWarning().log("release with sync token, but handle is 0");
+  public synchronized void release(GlSyncToken consumerSyncToken) {
+    if (nativeBufferHandle == 0) {
+      if (consumerSyncToken != null) {
+        logger.atWarning().log("release with sync token, but handle is 0");
+      }
+      return;
     }
+
     if (consumerSyncToken != null) {
+      long token = consumerSyncToken.nativeToken();
+      nativeDidRead(nativeBufferHandle, token);
+      // We should remove the token's context from activeConsumerContextHandleSet here, but for now
+      // we do it in the release(void) overload.
       consumerSyncToken.release();
+    }
+
+    refCount--;
+    if (refCount <= 0) {
+      nativeReleaseBuffer(nativeBufferHandle);
+      nativeBufferHandle = 0;
     }
   }
 
   @Override
   protected void finalize() throws Throwable {
-    if (nativeBufferHandle != 0) {
+    if (refCount >= 0 || nativeBufferHandle != 0) {
       logger.atWarning().log("release was not called before finalize");
     }
     if (!activeConsumerContextHandleSet.isEmpty()) {
@@ -144,7 +166,7 @@ public class GraphTextureFrame implements TextureFrame {
     }
   }
 
-  private native void nativeReleaseBuffer(long nativeHandle, long consumerSyncToken);
+  private native void nativeReleaseBuffer(long nativeHandle);
 
   private native int nativeGetTextureName(long nativeHandle);
   private native int nativeGetWidth(long nativeHandle);
@@ -155,4 +177,6 @@ public class GraphTextureFrame implements TextureFrame {
   private native long nativeCreateSyncTokenForCurrentExternalContext(long nativeHandle);
 
   private native long nativeGetCurrentExternalContextHandle();
+
+  private native void nativeDidRead(long nativeHandle, long consumerSyncToken);
 }

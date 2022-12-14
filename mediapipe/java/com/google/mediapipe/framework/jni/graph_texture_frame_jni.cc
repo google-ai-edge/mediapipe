@@ -22,14 +22,9 @@
 using mediapipe::GlTextureBufferSharedPtr;
 
 JNIEXPORT void JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeReleaseBuffer)(
-    JNIEnv* env, jobject thiz, jlong nativeHandle, jlong consumerSyncToken) {
+    JNIEnv* env, jobject thiz, jlong nativeHandle) {
   GlTextureBufferSharedPtr* buffer =
       reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
-  if (consumerSyncToken) {
-    mediapipe::GlSyncToken& token =
-        *reinterpret_cast<mediapipe::GlSyncToken*>(consumerSyncToken);
-    (*buffer)->DidRead(token);
-  }
   delete buffer;
 }
 
@@ -90,4 +85,13 @@ JNIEXPORT jlong JNICALL GRAPH_TEXTURE_FRAME_METHOD(
     nativeGetCurrentExternalContextHandle)(JNIEnv* env, jobject thiz) {
   return reinterpret_cast<jlong>(
       mediapipe::GlContext::GetCurrentNativeContext());
+}
+
+JNIEXPORT void JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeDidRead)(
+    JNIEnv* env, jobject thiz, jlong nativeHandle, jlong consumerSyncToken) {
+  GlTextureBufferSharedPtr* buffer =
+      reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
+  mediapipe::GlSyncToken& token =
+      *reinterpret_cast<mediapipe::GlSyncToken*>(consumerSyncToken);
+  (*buffer)->DidRead(token);
 }

@@ -59,4 +59,18 @@ public interface TextureFrame extends TextureReleaseCallback {
    */
   @Override
   void release(GlSyncToken syncToken);
+
+  /**
+   * If this method returns true, this object supports the retain method, and can be used with
+   * multiple consumers. Call retain for each additional consumer beyond the first; each consumer
+   * should call release.
+   */
+  default boolean supportsRetain() {
+    return false;
+  }
+
+  /** Increments the reference count. Only available with some implementations of TextureFrame. */
+  default void retain() {
+    throw new UnsupportedOperationException();
+  }
 }
