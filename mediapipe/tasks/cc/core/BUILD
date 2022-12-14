@@ -117,6 +117,7 @@ cc_library_with_tflite(
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "//mediapipe/util:resource_util",
+        "//mediapipe/util:resource_util_custom",
         "//mediapipe/util/tflite:error_reporter",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
@@ -308,7 +309,10 @@ cc_library(
     name = "utils",
     srcs = ["utils.cc"],
     hdrs = ["utils.h"],
-    visibility = ["//mediapipe/framework:mediapipe_internal"],
+    visibility = [
+        "//mediapipe/calculators:__subpackages__",
+        "//mediapipe/tasks:internal",
+    ],
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",
         "//mediapipe/framework:calculator_cc_proto",

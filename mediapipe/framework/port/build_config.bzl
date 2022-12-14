@@ -228,6 +228,8 @@ def mediapipe_ts_library(
         srcs = srcs,
         visibility = visibility,
         deps = deps + [
+            "@npm//@types/jasmine",
+            "@npm//@types/node",
             "@npm//@types/offscreencanvas",
             "@npm//@types/google-protobuf",
         ],

@@ -10,7 +10,7 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "strict": true,
-    "types": ["@types/offscreencanvas"],
+    "types": ["@types/offscreencanvas", "@types/jasmine", "node"],
     "rootDirs": [
       ".",
       "./bazel-out/host/bin",

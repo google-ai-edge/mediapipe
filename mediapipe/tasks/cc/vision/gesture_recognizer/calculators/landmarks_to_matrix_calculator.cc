@@ -35,6 +35,8 @@ limitations under the License.
 namespace mediapipe {
 namespace api2 {
 
+using ::mediapipe::NormalizedRect;
+
 namespace {
 
 constexpr char kLandmarksTag[] = "LANDMARKS";

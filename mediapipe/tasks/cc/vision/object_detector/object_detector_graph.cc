@@ -52,6 +52,7 @@ namespace vision {
 
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
@@ -532,8 +533,7 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
     MP_RETURN_IF_ERROR(SanityCheckOptions(task_options));
     // Checks that the model has 4 outputs.
     auto& model = *model_resources.GetTfLiteModel();
-    if (model.subgraphs()->size() != 1 ||
-        (*model.subgraphs())[0]->outputs()->size() != 4) {
+    if (model.subgraphs()->size() != 1) {
       return CreateStatusWithPayload(
           absl::StatusCode::kInvalidArgument,
           absl::StrFormat("Expected a model with a single subgraph, found %d.",
@@ -663,11 +663,16 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
     detection_transformation.Out(kPixelDetectionsTag) >>
         detection_label_id_to_text.In("");
 
+    // Deduplicate Detections with same bounding box coordinates.
+    auto& detections_deduplicate =
+        graph.AddNode("DetectionsDeduplicateCalculator");
+    detection_label_id_to_text.Out("") >> detections_deduplicate.In("");
+
     // Outputs the labeled detections and the processed image as the subgraph
     // output streams.
     return {{
         /* detections= */
-        detection_label_id_to_text[Output<std::vector<Detection>>("")],
+        detections_deduplicate[Output<std::vector<Detection>>("")],
         /* image= */ preprocessing[Output<Image>(kImageTag)],
     }};
   }

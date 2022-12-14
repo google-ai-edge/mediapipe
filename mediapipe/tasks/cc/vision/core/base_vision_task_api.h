@@ -129,13 +129,13 @@ class BaseVisionTaskApi : public tasks::core::BaseTaskApi {
       if (roi.left >= roi.right || roi.top >= roi.bottom) {
         return CreateStatusWithPayload(
             absl::StatusCode::kInvalidArgument,
-            "Expected Rect with left < right and top < bottom.",
+            "Expected RectF with left < right and top < bottom.",
             MediaPipeTasksStatus::kImageProcessingInvalidArgumentError);
       }
       if (roi.left < 0 || roi.top < 0 || roi.right > 1 || roi.bottom > 1) {
         return CreateStatusWithPayload(
             absl::StatusCode::kInvalidArgument,
-            "Expected Rect values to be in [0,1].",
+            "Expected RectF values to be in [0,1].",
             MediaPipeTasksStatus::kImageProcessingInvalidArgumentError);
       }
       normalized_rect.set_x_center((roi.left + roi.right) / 2.0);

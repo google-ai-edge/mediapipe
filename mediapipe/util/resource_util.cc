@@ -37,6 +37,8 @@ absl::Status GetResourceContents(const std::string& path, std::string* output,
   return internal::DefaultGetResourceContents(path, output, read_as_binary);
 }
 
+bool HasCustomGlobalResourceProvider() { return resource_provider_ != nullptr; }
+
 void SetCustomGlobalResourceProvider(ResourceProviderFn fn) {
   resource_provider_ = std::move(fn);
 }

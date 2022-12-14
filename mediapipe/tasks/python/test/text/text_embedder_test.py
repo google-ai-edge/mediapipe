@@ -21,13 +21,11 @@ from absl.testing import parameterized
 import numpy as np
 
 from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
-from mediapipe.tasks.python.components.processors import embedder_options as embedder_options_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.text import text_embedder
 
 _BaseOptions = base_options_module.BaseOptions
-_EmbedderOptions = embedder_options_module.EmbedderOptions
 _Embedding = embedding_result_module.Embedding
 _TextEmbedder = text_embedder.TextEmbedder
 _TextEmbedderOptions = text_embedder.TextEmbedderOptions
@@ -128,10 +126,8 @@ class TextEmbedderTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
-    embedder_options = _EmbedderOptions(
-        l2_normalize=l2_normalize, quantize=quantize)
     options = _TextEmbedderOptions(
-        base_options=base_options, embedder_options=embedder_options)
+        base_options=base_options, l2_normalize=l2_normalize, quantize=quantize)
     embedder = _TextEmbedder.create_from_options(options)
 
     # Extracts both embeddings.
@@ -178,10 +174,8 @@ class TextEmbedderTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
-    embedder_options = _EmbedderOptions(
-        l2_normalize=l2_normalize, quantize=quantize)
     options = _TextEmbedderOptions(
-        base_options=base_options, embedder_options=embedder_options)
+        base_options=base_options, l2_normalize=l2_normalize, quantize=quantize)
     with _TextEmbedder.create_from_options(options) as embedder:
       # Extracts both embeddings.
       positive_text0 = "it's a charming and often affecting journey"

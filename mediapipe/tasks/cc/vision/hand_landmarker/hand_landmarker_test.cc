@@ -50,7 +50,7 @@ namespace {
 
 using ::file::Defaults;
 using ::mediapipe::file::JoinPath;
-using ::mediapipe::tasks::components::containers::Rect;
+using ::mediapipe::tasks::components::containers::RectF;
 using ::mediapipe::tasks::containers::proto::LandmarksDetectionResult;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::EqualsProto;
@@ -188,7 +188,7 @@ TEST_F(ImageModeTest, FailsWithRegionOfInterest) {
   options->running_mode = core::RunningMode::IMAGE;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<HandLandmarker> hand_landmarker,
                           HandLandmarker::Create(std::move(options)));
-  Rect roi{/*left=*/0.1, /*top=*/0, /*right=*/0.9, /*bottom=*/1};
+  RectF roi{/*left=*/0.1, /*top=*/0, /*right=*/0.9, /*bottom=*/1};
   ImageProcessingOptions image_processing_options{roi, /*rotation_degrees=*/0};
 
   auto results = hand_landmarker->Detect(image, image_processing_options);

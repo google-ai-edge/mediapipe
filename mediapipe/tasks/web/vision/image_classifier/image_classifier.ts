@@ -93,6 +93,7 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
         {baseOptions: {modelAssetPath}});
   }
 
+  /** @hideconstructor */
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {

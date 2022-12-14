@@ -24,6 +24,8 @@ constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 constexpr char kRenderScaleTag[] = "RENDER_SCALE";
 
+using ::mediapipe::NormalizedRect;
+
 }  // namespace
 
 // A calculator to get scale for RenderData primitives.

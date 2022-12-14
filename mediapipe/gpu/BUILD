@@ -289,7 +289,9 @@ cc_library(
     deps = [
         ":gpu_buffer_format",
         ":gpu_buffer_storage",
+        "@com_google_absl//absl/functional:bind_front",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:logging",
         ":gpu_buffer_storage_image_frame",
@@ -472,13 +474,13 @@ objc_library(
     copts = [
         "-Wno-shorten-64-to-32",
     ],
-    sdk_frameworks = [
-        "Accelerate",
-        "CoreGraphics",
-        "CoreVideo",
-    ],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/objc:util"],
+    deps = [
+        "//mediapipe/objc:util",
+        "//third_party/apple_frameworks:Accelerate",
+        "//third_party/apple_frameworks:CoreGraphics",
+        "//third_party/apple_frameworks:CoreVideo",
+    ],
 )
 
 objc_library(
@@ -510,13 +512,11 @@ objc_library(
         "-x objective-c++",
         "-Wno-shorten-64-to-32",
     ],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
         "@com_google_absl//absl/time",
         "@google_toolbox_for_mac//:GTM_Defines",
     ],
@@ -808,15 +808,13 @@ objc_library(
         "-Wno-shorten-64-to-32",
     ],
     features = ["-layering_check"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gpu_shared_data_internal",
         ":graph_support",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
         "@google_toolbox_for_mac//:GTM_Defines",
     ],
 )
@@ -1020,16 +1018,14 @@ objc_library(
     name = "metal_copy_calculator",
     srcs = ["MetalCopyCalculator.mm"],
     features = ["-layering_check"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
         ":simple_shaders_mtl",
         "//mediapipe/gpu:copy_calculator_cc_proto",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
     ],
     alwayslink = 1,
 )
@@ -1038,15 +1034,13 @@ objc_library(
     name = "metal_rgb_weight_calculator",
     srcs = ["MetalRgbWeightCalculator.mm"],
     features = ["-layering_check"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
         ":simple_shaders_mtl",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
     ],
     alwayslink = 1,
 )
@@ -1055,15 +1049,13 @@ objc_library(
     name = "metal_sobel_calculator",
     srcs = ["MetalSobelCalculator.mm"],
     features = ["-layering_check"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
         ":simple_shaders_mtl",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
     ],
     alwayslink = 1,
 )
@@ -1072,15 +1064,13 @@ objc_library(
     name = "metal_sobel_compute_calculator",
     srcs = ["MetalSobelComputeCalculator.mm"],
     features = ["-layering_check"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
         ":simple_shaders_mtl",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
     ],
     alwayslink = 1,
 )
@@ -1090,15 +1080,13 @@ objc_library(
     srcs = ["MPSSobelCalculator.mm"],
     copts = ["-std=c++17"],
     features = ["-layering_check"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-        "MetalPerformanceShaders",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
+        "//third_party/apple_frameworks:MetalPerformanceShaders",
     ],
     alwayslink = 1,
 )
@@ -1106,15 +1094,13 @@ objc_library(
 objc_library(
     name = "mps_threshold_calculator",
     srcs = ["MPSThresholdCalculator.mm"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-        "MetalPerformanceShaders",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
+        "//third_party/apple_frameworks:MetalPerformanceShaders",
     ],
     alwayslink = 1,
 )

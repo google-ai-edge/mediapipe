@@ -67,12 +67,12 @@ objc_library(
     ],
     deps = [
         "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",
+        "//mediapipe/framework/formats:landmark_cc_proto",
     ] + select({
         "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
         "//conditions:default": [
             "//mediapipe/graphs/face_mesh:mobile_calculators",
-            "//mediapipe/framework/formats:landmark_cc_proto",
         ],
     }),
 )

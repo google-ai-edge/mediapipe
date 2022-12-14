@@ -92,6 +92,7 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
         {baseOptions: {modelAssetPath}});
   }
 
+  /** @hideconstructor */
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {

@@ -39,10 +39,9 @@
 #endif  // MEDIAPIPE_NO_JNI
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <android/hardware_buffer.h>
-
-#include "third_party/GL/gl/include/EGL/egl.h"
-#include "third_party/GL/gl/include/EGL/eglext.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
@@ -410,8 +409,8 @@ class Tensor {
   bool AllocateAHardwareBuffer(int size_alignment = 0) const;
   void CreateEglSyncAndFd() const;
   // Use Ahwb for other views: OpenGL / CPU buffer.
-  static inline bool use_ahwb_ = false;
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
+  static inline bool use_ahwb_ = false;
   // Expects the target SSBO to be already bound.
   bool AllocateAhwbMapToSsbo() const;
   bool InsertAhwbToSsboFence() const;
@@ -419,6 +418,7 @@ class Tensor {
   void ReleaseAhwbStuff();
   void* MapAhwbToCpuRead() const;
   void* MapAhwbToCpuWrite() const;
+  void MoveCpuOrSsboToAhwb() const;
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   mutable std::shared_ptr<mediapipe::GlContext> gl_context_;

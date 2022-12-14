@@ -14,7 +14,7 @@
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 # The native library of all MediaPipe text tasks.
 cc_binary(

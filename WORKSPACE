@@ -320,12 +320,30 @@ http_archive(
     ],
 )
 
-# iOS basic build deps.
+# Load Zlib before initializing TensorFlow and the iOS build rules to guarantee
+# that the target @zlib//:mini_zlib is available
+http_archive(
+    name = "zlib",
+    build_file = "//third_party:zlib.BUILD",
+    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
+    strip_prefix = "zlib-1.2.11",
+    urls = [
+        "http://mirror.bazel.build/zlib.net/fossils/zlib-1.2.11.tar.gz",
+        "http://zlib.net/fossils/zlib-1.2.11.tar.gz",  # 2017-01-15
+    ],
+    patches = [
+        "@//third_party:zlib.diff",
+    ],
+    patch_args = [
+        "-p1",
+    ],
+)
 
+# iOS basic build deps.
 http_archive(
     name = "build_bazel_rules_apple",
-    sha256 = "77e8bf6fda706f420a55874ae6ee4df0c9d95da6c7838228b26910fc82eea5a2",
-    url = "https://github.com/bazelbuild/rules_apple/releases/download/0.32.0/rules_apple.0.32.0.tar.gz",
+    sha256 = "f94e6dddf74739ef5cb30f000e13a2a613f6ebfa5e63588305a71fce8a8a9911",
+    url = "https://github.com/bazelbuild/rules_apple/releases/download/1.1.3/rules_apple.1.1.3.tar.gz",
     patches = [
         # Bypass checking ios unit test runner when building MP ios applications.
         "@//third_party:build_bazel_rules_apple_bypass_test_runner_check.diff"
@@ -339,29 +357,24 @@ load(
     "@build_bazel_rules_apple//apple:repositories.bzl",
     "apple_rules_dependencies",
 )
-
 apple_rules_dependencies()
 
 load(
     "@build_bazel_rules_swift//swift:repositories.bzl",
     "swift_rules_dependencies",
 )
-
 swift_rules_dependencies()
 
-http_archive(
-    name = "build_bazel_apple_support",
-    sha256 = "741366f79d900c11e11d8efd6cc6c66a31bfb2451178b58e0b5edc6f1db17b35",
-    urls = [
-        "https://github.com/bazelbuild/apple_support/releases/download/0.10.0/apple_support.0.10.0.tar.gz"
-    ],
+load(
+    "@build_bazel_rules_swift//swift:extras.bzl",
+    "swift_rules_extra_dependencies",
 )
+swift_rules_extra_dependencies()
 
 load(
     "@build_bazel_apple_support//lib:repositories.bzl",
     "apple_support_dependencies",
 )
-
 apple_support_dependencies()
 
 # More iOS deps.
@@ -439,25 +452,6 @@ http_archive(
     urls = [
         "http://mirror.tensorflow.org/github.com/bazelbuild/rules_closure/archive/cf1e44edb908e9616030cc83d085989b8e6cd6df.tar.gz",
         "https://github.com/bazelbuild/rules_closure/archive/cf1e44edb908e9616030cc83d085989b8e6cd6df.tar.gz",  # 2019-04-04
-    ],
-)
-
-# Load Zlib before initializing TensorFlow to guarantee that the target
-# @zlib//:mini_zlib is available
-http_archive(
-    name = "zlib",
-    build_file = "//third_party:zlib.BUILD",
-    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
-    strip_prefix = "zlib-1.2.11",
-    urls = [
-        "http://mirror.bazel.build/zlib.net/fossils/zlib-1.2.11.tar.gz",
-        "http://zlib.net/fossils/zlib-1.2.11.tar.gz",  # 2017-01-15
-    ],
-    patches = [
-        "@//third_party:zlib.diff",
-    ],
-    patch_args = [
-        "-p1",
     ],
 )
 

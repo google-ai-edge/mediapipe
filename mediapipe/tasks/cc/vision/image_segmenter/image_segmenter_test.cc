@@ -28,11 +28,11 @@ limitations under the License.
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "mediapipe/tasks/cc/components/calculators/tensor/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/core/shims/cc/shims_test_util.h"
@@ -47,7 +47,7 @@ namespace {
 
 using ::mediapipe::Image;
 using ::mediapipe::file::JoinPath;
-using ::mediapipe::tasks::components::containers::Rect;
+using ::mediapipe::tasks::components::containers::RectF;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::HasSubstr;
 using ::testing::Optional;
@@ -299,7 +299,7 @@ TEST_F(ImageModeTest, FailsWithRegionOfInterest) {
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
-  Rect roi{/*left=*/0.1, /*top=*/0, /*right=*/0.9, /*bottom=*/1};
+  RectF roi{/*left=*/0.1, /*top=*/0, /*right=*/0.9, /*bottom=*/1};
   ImageProcessingOptions image_processing_options{roi, /*rotation_degrees=*/0};
 
   auto results = segmenter->Segment(image, image_processing_options);

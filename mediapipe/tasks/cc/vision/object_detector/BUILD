@@ -22,9 +22,7 @@ cc_library(
     name = "object_detector",
     srcs = ["object_detector.cc"],
     hdrs = ["object_detector.h"],
-    visibility = [
-        "//mediapipe/tasks:users",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":object_detector_graph",
         "//mediapipe/calculators/core:concatenate_vector_calculator",
@@ -35,6 +33,7 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator",
+        "//mediapipe/tasks/cc/components/containers:detection_result",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
@@ -63,6 +62,7 @@ cc_library(
         "//mediapipe/calculators/util:detection_label_id_to_text_calculator_cc_proto",
         "//mediapipe/calculators/util:detection_projection_calculator",
         "//mediapipe/calculators/util:detection_transformation_calculator",
+        "//mediapipe/calculators/util:detections_deduplicate_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",

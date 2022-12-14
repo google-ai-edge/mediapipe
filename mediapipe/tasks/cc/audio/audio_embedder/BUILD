@@ -22,9 +22,7 @@ cc_library(
     name = "audio_embedder",
     srcs = ["audio_embedder.cc"],
     hdrs = ["audio_embedder.h"],
-    visibility = [
-        "//mediapipe/tasks:users",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         ":audio_embedder_graph",
         "//mediapipe/framework/api2:builder",

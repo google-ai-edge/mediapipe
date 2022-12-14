@@ -32,8 +32,35 @@ const GraphRunnerImageLibType =
 /** An implementation of the GraphRunner that supports image operations */
 export class GraphRunnerImageLib extends GraphRunnerImageLibType {}
 
+/**
+ * Creates a new instance of a Mediapipe Task. Determines if SIMD is
+ * supported and loads the relevant WASM binary.
+ * @return A fully instantiated instance of `T`.
+ */
+export async function createTaskRunner<T extends TaskRunner>(
+    type: WasmMediaPipeConstructor<T>, initializeCanvas: boolean,
+    fileset: WasmFileset, options: TaskRunnerOptions): Promise<T> {
+  const fileLocator: FileLocator = {
+    locateFile() {
+      // The only file loaded with this mechanism is the Wasm binary
+      return fileset.wasmBinaryPath.toString();
+    }
+  };
+
+  // Initialize a canvas if requested. If OffscreenCanvas is availble, we
+  // let the graph runner initialize it by passing `undefined`.
+  const canvas = initializeCanvas ? (typeof OffscreenCanvas === 'undefined' ?
+                                         document.createElement('canvas') :
+                                         undefined) :
+                                    null;
+  const instance = await createMediaPipeLib(
+      type, fileset.wasmLoaderPath, NO_ASSETS, canvas, fileLocator);
+  await instance.setOptions(options);
+  return instance;
+}
+
 /** Base class for all MediaPipe Tasks. */
-export abstract class TaskRunner<O extends TaskRunnerOptions> {
+export abstract class TaskRunner {
   protected abstract baseOptions: BaseOptionsProto;
   protected graphRunner: GraphRunnerImageLib;
   private processingErrors: Error[] = [];
@@ -43,33 +70,18 @@ export abstract class TaskRunner<O extends TaskRunnerOptions> {
    * supported and loads the relevant WASM binary.
    * @return A fully instantiated instance of `T`.
    */
-  protected static async createInstance<T extends TaskRunner<O>,
-                                                  O extends TaskRunnerOptions>(
+  protected static async createInstance<T extends TaskRunner>(
       type: WasmMediaPipeConstructor<T>, initializeCanvas: boolean,
-      fileset: WasmFileset, options: O): Promise<T> {
-    const fileLocator: FileLocator = {
-      locateFile() {
-        // The only file loaded with this mechanism is the Wasm binary
-        return fileset.wasmBinaryPath.toString();
-      }
-    };
-
-    // Initialize a canvas if requested. If OffscreenCanvas is availble, we
-    // let the graph runner initialize it by passing `undefined`.
-    const canvas = initializeCanvas ? (typeof OffscreenCanvas === 'undefined' ?
-                                           document.createElement('canvas') :
-                                           undefined) :
-                                      null;
-    const instance = await createMediaPipeLib(
-        type, fileset.wasmLoaderPath, NO_ASSETS, canvas, fileLocator);
-    await instance.setOptions(options);
-    return instance;
+      fileset: WasmFileset, options: TaskRunnerOptions): Promise<T> {
+    return createTaskRunner(type, initializeCanvas, fileset, options);
   }
 
+  /** @hideconstructor protected */
   constructor(
-      wasmModule: WasmModule,
-      glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    this.graphRunner = new GraphRunnerImageLib(wasmModule, glCanvas);
+      wasmModule: WasmModule, glCanvas?: HTMLCanvasElement|OffscreenCanvas|null,
+      graphRunner?: GraphRunnerImageLib) {
+    this.graphRunner =
+        graphRunner ?? new GraphRunnerImageLib(wasmModule, glCanvas);
 
     // Disables the automatic render-to-screen code, which allows for pure
     // CPU processing.
@@ -80,7 +92,7 @@ export abstract class TaskRunner<O extends TaskRunnerOptions> {
   }
 
   /** Configures the shared options of a MediaPipe Task. */
-  async setOptions(options: O): Promise<void> {
+  async setOptions(options: TaskRunnerOptions): Promise<void> {
     if (options.baseOptions) {
       this.baseOptions = await convertBaseOptionsToProto(
           options.baseOptions, this.baseOptions);

@@ -18,8 +18,9 @@ syntax = "proto2";
 package mediapipe.tasks.vision.image_segmenter.proto;
 
 import "mediapipe/framework/calculator.proto";
-import "mediapipe/tasks/cc/components/proto/segmenter_options.proto";
+import "mediapipe/framework/calculator_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
+import "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.proto";
 
 option java_package = "com.google.mediapipe.tasks.vision.imagesegmenter.proto";
 option java_outer_classname = "ImageSegmenterGraphOptionsProto";
@@ -37,5 +38,5 @@ message ImageSegmenterGraphOptions {
   optional string display_names_locale = 2 [default = "en"];
 
   // Segmentation output options.
-  optional components.proto.SegmenterOptions segmenter_options = 3;
+  optional SegmenterOptions segmenter_options = 3;
 }

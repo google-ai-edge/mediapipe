@@ -282,7 +282,6 @@ cc_library(
     srcs = ["motion_models_cv.cc"],
     hdrs = ["motion_models_cv.h"],
     deps = [
-        ":camera_motion_cc_proto",
         ":motion_models",
         ":motion_models_cc_proto",
         "//mediapipe/framework/port:opencv_core",

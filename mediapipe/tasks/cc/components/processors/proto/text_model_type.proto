@@ -15,19 +15,17 @@ limitations under the License.
 
 syntax = "proto2";
 
-package mediapipe.tasks;
+package mediapipe.tasks.components.processors.proto;
 
-import "mediapipe/framework/calculator.proto";
-import "mediapipe/tasks/cc/components/proto/segmenter_options.proto";
-import "mediapipe/util/label_map.proto";
-
-message TensorsToSegmentationCalculatorOptions {
-  extend mediapipe.CalculatorOptions {
-    optional TensorsToSegmentationCalculatorOptions ext = 458105876;
+message TextModelType {
+  // TFLite text models supported by MediaPipe tasks.
+  enum ModelType {
+    UNSPECIFIED_MODEL = 0;
+    // A BERT-based model.
+    BERT_MODEL = 1;
+    // A model expecting input passed through a regex-based tokenizer.
+    REGEX_MODEL = 2;
+    // A model taking a string tensor input.
+    STRING_MODEL = 3;
   }
-
-  optional components.proto.SegmenterOptions segmenter_options = 1;
-
-  // Identifying information for each classification label.
-  map<int64, mediapipe.LabelMapItem> label_items = 2;
 }

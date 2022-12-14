@@ -32,18 +32,21 @@ CalculatorRunner MakeRunnerWithStream() {
   )");
 }
 
-CalculatorRunner MakeRunnerWithOptions(int set_index) {
-  return CalculatorRunner(absl::StrFormat(R"(
+CalculatorRunner MakeRunnerWithOptions(int set_index,
+                                       bool output_empty_on_oob = false) {
+  return CalculatorRunner(
+      absl::StrFormat(R"(
     calculator: "TestGetIntVectorItemCalculator"
     input_stream: "VECTOR:vector_stream"
     output_stream: "ITEM:item_stream"
     options {
       [mediapipe.GetVectorItemCalculatorOptions.ext] {
         item_index: %d
+        output_empty_on_oob: %s
       }
     }
   )",
-                                          set_index));
+                      set_index, output_empty_on_oob ? "true" : "false"));
 }
 
 void AddInputVector(CalculatorRunner& runner, const std::vector<int>& inputs,
@@ -140,8 +143,7 @@ TEST(TestGetIntVectorItemCalculatorTest, StreamIndexBoundsCheckFail1) {
 
   absl::Status status = runner.Run();
   ASSERT_FALSE(status.ok());
-  EXPECT_THAT(status.message(),
-              testing::HasSubstr("idx >= 0 && idx < items.size()"));
+  EXPECT_THAT(status.message(), testing::HasSubstr("idx >= 0"));
 }
 
 TEST(TestGetIntVectorItemCalculatorTest, StreamIndexBoundsCheckFail2) {
@@ -155,7 +157,8 @@ TEST(TestGetIntVectorItemCalculatorTest, StreamIndexBoundsCheckFail2) {
   absl::Status status = runner.Run();
   ASSERT_FALSE(status.ok());
   EXPECT_THAT(status.message(),
-              testing::HasSubstr("idx >= 0 && idx < items.size()"));
+              testing::HasSubstr(
+                  "options.output_empty_on_oob() || idx < items.size()"));
 }
 
 TEST(TestGetIntVectorItemCalculatorTest, OptionsIndexBoundsCheckFail1) {
@@ -167,8 +170,7 @@ TEST(TestGetIntVectorItemCalculatorTest, OptionsIndexBoundsCheckFail1) {
 
   absl::Status status = runner.Run();
   ASSERT_FALSE(status.ok());
-  EXPECT_THAT(status.message(),
-              testing::HasSubstr("idx >= 0 && idx < items.size()"));
+  EXPECT_THAT(status.message(), testing::HasSubstr("idx >= 0"));
 }
 
 TEST(TestGetIntVectorItemCalculatorTest, OptionsIndexBoundsCheckFail2) {
@@ -181,7 +183,21 @@ TEST(TestGetIntVectorItemCalculatorTest, OptionsIndexBoundsCheckFail2) {
   absl::Status status = runner.Run();
   ASSERT_FALSE(status.ok());
   EXPECT_THAT(status.message(),
-              testing::HasSubstr("idx >= 0 && idx < items.size()"));
+              testing::HasSubstr(
+                  "options.output_empty_on_oob() || idx < items.size()"));
+}
+
+TEST(TestGetIntVectorItemCalculatorTest, OptionsIndexBoundsCheckFail3) {
+  const int try_index = 3;
+  CalculatorRunner runner = MakeRunnerWithOptions(try_index, true);
+  const std::vector<int> inputs = {1, 2, 3};
+
+  AddInputVector(runner, inputs, 1);
+
+  MP_ASSERT_OK(runner.Run());
+
+  const std::vector<Packet>& outputs = runner.Outputs().Tag("ITEM").packets;
+  EXPECT_THAT(outputs, testing::ElementsAre());
 }
 
 TEST(TestGetIntVectorItemCalculatorTest, IndexStreamTwoTimestamps) {

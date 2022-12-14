@@ -35,7 +35,8 @@ struct ImageProcessingOptions {
   // the full image is used.
   //
   // Coordinates must be in [0,1] with 'left' < 'right' and 'top' < bottom.
-  std::optional<components::containers::Rect> region_of_interest = std::nullopt;
+  std::optional<components::containers::RectF> region_of_interest =
+      std::nullopt;
 
   // The rotation to apply to the image (or cropped region-of-interest), in
   // degrees clockwise.

@@ -95,6 +95,7 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
         {baseOptions: {modelAssetPath}});
   }
 
+  /** @hideconstructor */
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {

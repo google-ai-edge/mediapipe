@@ -140,7 +140,7 @@ cc_library(
     name = "circular_buffer",
     hdrs = ["circular_buffer.h"],
     visibility = [
-        "//visibility:public",
+        "//mediapipe:__subpackages__",
     ],
     deps = [
         "//mediapipe/framework/port:integral_types",
@@ -151,7 +151,6 @@ cc_test(
     name = "circular_buffer_test",
     size = "small",
     srcs = ["circular_buffer_test.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         ":circular_buffer",
         "//mediapipe/framework/port:gtest_main",
@@ -164,7 +163,7 @@ cc_library(
     name = "trace_buffer",
     srcs = ["trace_buffer.h"],
     hdrs = ["trace_buffer.h"],
-    visibility = ["//visibility:public"],
+    visibility = ["//mediapipe/framework/profiler:__subpackages__"],
     deps = [
         ":circular_buffer",
         "//mediapipe/framework:calculator_profile_cc_proto",
@@ -292,9 +291,7 @@ cc_library(
             "-ObjC++",
         ],
     }),
-    visibility = [
-        "//mediapipe/framework:mediapipe_internal",
-    ],
+    visibility = ["//visibility:private"],
     deps = [
         "@com_google_absl//absl/flags:flag",
         "//mediapipe/framework/port:logging",

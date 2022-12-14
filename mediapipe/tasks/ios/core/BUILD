@@ -17,22 +17,6 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 objc_library(
-    name = "MPPExternalFile",
-    srcs = ["sources/MPPExternalFile.m"],
-    hdrs = ["sources/MPPExternalFile.h"],
-)
-
-objc_library(
-    name = "MPPBaseOptions",
-    srcs = ["sources/MPPBaseOptions.m"],
-    hdrs = ["sources/MPPBaseOptions.h"],
-    deps = [
-        ":MPPExternalFile",
-
-    ],
-)
-
-objc_library(
     name = "MPPTaskOptions",
     srcs = ["sources/MPPTaskOptions.m"],
     hdrs = ["sources/MPPTaskOptions.h"],
@@ -85,3 +69,8 @@ objc_library(
     hdrs = ["sources/MPPTaskResult.h"],
 )
 
+objc_library(
+    name = "MPPBaseOptions",
+    srcs = ["sources/MPPBaseOptions.m"],
+    hdrs = ["sources/MPPBaseOptions.h"],
+)

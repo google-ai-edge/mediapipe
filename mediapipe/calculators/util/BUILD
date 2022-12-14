@@ -457,6 +457,23 @@ cc_library(
 )
 
 cc_library(
+    name = "detections_deduplicate_calculator",
+    srcs = [
+        "detections_deduplicate_calculator.cc",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "rect_transformation_calculator",
     srcs = ["rect_transformation_calculator.cc"],
     deps = [

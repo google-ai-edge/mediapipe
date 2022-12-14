@@ -18,6 +18,7 @@ licenses(["notice"])
 
 cc_library(
     name = "rect",
+    srcs = ["rect.cc"],
     hdrs = ["rect.h"],
 )
 
@@ -38,6 +39,18 @@ cc_library(
         ":category",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
+    ],
+)
+
+cc_library(
+    name = "detection_result",
+    srcs = ["detection_result.cc"],
+    hdrs = ["detection_result.h"],
+    deps = [
+        ":category",
+        ":rect",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
     ],
 )
 

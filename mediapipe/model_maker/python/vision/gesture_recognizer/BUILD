@@ -35,20 +35,21 @@ py_library(
     srcs = ["constants.py"],
 )
 
-# TODO: Change to py_library after migrating the MediaPipe hand solution
-# library to MediaPipe hand task library.
 py_library(
     name = "dataset",
     srcs = ["dataset.py"],
     deps = [
         ":constants",
+        ":metadata_writer",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
-        "//mediapipe/model_maker/python/core/data:data_util",
         "//mediapipe/model_maker/python/core/utils:model_util",
-        "//mediapipe/python/solutions:hands",
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/vision:hand_landmarker",
     ],
 )
 
+# TODO: Remove notsan tag once tasks no longer has race condition issue
 py_test(
     name = "dataset_test",
     srcs = ["dataset_test.py"],
@@ -56,10 +57,11 @@ py_test(
         ":testdata",
         "//mediapipe/model_maker/models/gesture_recognizer:models",
     ],
+    tags = ["notsan"],
     deps = [
         ":dataset",
-        "//mediapipe/python/solutions:hands",
         "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:hand_landmarker",
     ],
 )
 
@@ -131,6 +133,7 @@ py_library(
     ],
 )
 
+# TODO: Remove notsan tag once tasks no longer has race condition issue
 py_test(
     name = "gesture_recognizer_test",
     size = "large",
@@ -140,6 +143,7 @@ py_test(
         "//mediapipe/model_maker/models/gesture_recognizer:models",
     ],
     shard_count = 2,
+    tags = ["notsan"],
     deps = [
         ":gesture_recognizer_import",
         "//mediapipe/model_maker/python/core/utils:test_util",

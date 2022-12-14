@@ -115,6 +115,7 @@ export class HandLandmarker extends VisionTaskRunner<HandLandmarkerResult> {
         {baseOptions: {modelAssetPath}});
   }
 
+  /** @hideconstructor */
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {

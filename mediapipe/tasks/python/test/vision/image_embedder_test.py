@@ -24,7 +24,6 @@ import numpy as np
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
 from mediapipe.tasks.python.components.containers import rect
-from mediapipe.tasks.python.components.processors import embedder_options as embedder_options_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import image_embedder
@@ -33,7 +32,6 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode as runni
 
 _Rect = rect.Rect
 _BaseOptions = base_options_module.BaseOptions
-_EmbedderOptions = embedder_options_module.EmbedderOptions
 _Embedding = embedding_result_module.Embedding
 _Image = image_module.Image
 _ImageEmbedder = image_embedder.ImageEmbedder
@@ -142,10 +140,8 @@ class ImageEmbedderTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
-    embedder_options = _EmbedderOptions(
-        l2_normalize=l2_normalize, quantize=quantize)
     options = _ImageEmbedderOptions(
-        base_options=base_options, embedder_options=embedder_options)
+        base_options=base_options, l2_normalize=l2_normalize, quantize=quantize)
     embedder = _ImageEmbedder.create_from_options(options)
 
     image_processing_options = None
@@ -186,10 +182,8 @@ class ImageEmbedderTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
-    embedder_options = _EmbedderOptions(
-        l2_normalize=l2_normalize, quantize=quantize)
     options = _ImageEmbedderOptions(
-        base_options=base_options, embedder_options=embedder_options)
+        base_options=base_options, l2_normalize=l2_normalize, quantize=quantize)
 
     with _ImageEmbedder.create_from_options(options) as embedder:
       # Extracts both embeddings.

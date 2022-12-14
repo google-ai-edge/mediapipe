@@ -29,6 +29,9 @@ constexpr char kNormRectsTag[] = "NORM_RECTS";
 constexpr char kRectsTag[] = "RECTS";
 constexpr char kRenderDataTag[] = "RENDER_DATA";
 
+using ::mediapipe::NormalizedRect;
+using ::mediapipe::Rect;
+
 RenderAnnotation::Rectangle* NewRect(
     const RectToRenderDataCalculatorOptions& options, RenderData* render_data) {
   auto* annotation = render_data->add_render_annotations();

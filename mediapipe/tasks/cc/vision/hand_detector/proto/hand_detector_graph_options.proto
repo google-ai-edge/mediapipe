@@ -18,6 +18,7 @@ syntax = "proto2";
 package mediapipe.tasks.vision.hand_detector.proto;
 
 import "mediapipe/framework/calculator.proto";
+import "mediapipe/framework/calculator_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 
 option java_package = "com.google.mediapipe.tasks.vision.handdetector.proto";

@@ -4,6 +4,7 @@
 # BERT-based text classification).
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -12,6 +13,7 @@ licenses(["notice"])
 mediapipe_ts_library(
     name = "text_classifier",
     srcs = ["text_classifier.ts"],
+    visibility = ["//visibility:public"],
     deps = [
         ":text_classifier_types",
         "//mediapipe/framework:calculator_jspb_proto",
@@ -36,10 +38,32 @@ mediapipe_ts_declaration(
         "text_classifier_options.d.ts",
         "text_classifier_result.d.ts",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/components/containers:classification_result",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:classifier_options",
     ],
+)
+
+mediapipe_ts_library(
+    name = "text_classifier_test_lib",
+    testonly = True,
+    srcs = [
+        "text_classifier_test.ts",
+    ],
+    deps = [
+        ":text_classifier",
+        "//mediapipe/framework:calculator_jspb_proto",
+        "//mediapipe/framework/formats:classification_jspb_proto",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_jspb_proto",
+        "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:task_runner_test_utils",
+    ],
+)
+
+jasmine_node_test(
+    name = "text_classifier_test",
+    deps = [":text_classifier_test_lib"],
 )

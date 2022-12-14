@@ -41,7 +41,7 @@ const TEXT_CLASSIFIER_GRAPH =
 // tslint:disable:jspb-use-builder-pattern
 
 /** Performs Natural Language classification. */
-export class TextClassifier extends TaskRunner<TextClassifierOptions> {
+export class TextClassifier extends TaskRunner {
   private classificationResult: TextClassifierResult = {classifications: []};
   private readonly options = new TextClassifierGraphOptions();
 
@@ -92,6 +92,7 @@ export class TextClassifier extends TaskRunner<TextClassifierOptions> {
         {baseOptions: {modelAssetPath}});
   }
 
+  /** @hideconstructor */
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {

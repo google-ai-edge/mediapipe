@@ -11,3 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+
+from mediapipe.model_maker.python.core.utils import quantization
+from mediapipe.model_maker.python.vision import image_classifier
+from mediapipe.model_maker.python.vision import gesture_recognizer
+from mediapipe.model_maker.python.text import text_classifier

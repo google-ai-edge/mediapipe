@@ -96,6 +96,7 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
         {baseOptions: {modelAssetPath}});
   }
 
+  /** @hideconstructor */
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {

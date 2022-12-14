@@ -27,6 +27,8 @@ limitations under the License.
 
 namespace mediapipe::api2 {
 
+using ::mediapipe::NormalizedRect;
+
 // HandAssociationCalculator accepts multiple inputs of vectors of
 // NormalizedRect. The output is a vector of NormalizedRect that contains
 // rects from the input vectors that don't overlap with each other. When two

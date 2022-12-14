@@ -127,6 +127,8 @@ class OutputStreamShard : public OutputStream {
   friend class GraphProfiler;
   // Accesses OutputStreamShard for profiling.
   friend class GraphTracer;
+  // Accesses OutputStreamShard for profiling.
+  friend class PerfettoTraceScope;
   // Accesses OutputStreamShard for post processing.
   friend class OutputStreamManager;
 };

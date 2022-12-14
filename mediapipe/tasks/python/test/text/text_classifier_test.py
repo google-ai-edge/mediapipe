@@ -21,14 +21,12 @@ from absl.testing import parameterized
 
 from mediapipe.tasks.python.components.containers import category
 from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
-from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.text import text_classifier
 
 TextClassifierResult = classification_result_module.ClassificationResult
 _BaseOptions = base_options_module.BaseOptions
-_ClassifierOptions = classifier_options.ClassifierOptions
 _Category = category.Category
 _Classifications = classification_result_module.Classifications
 _TextClassifier = text_classifier.TextClassifier

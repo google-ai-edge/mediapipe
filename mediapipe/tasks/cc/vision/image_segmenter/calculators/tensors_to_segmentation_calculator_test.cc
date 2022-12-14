@@ -33,10 +33,9 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
-#include "mediapipe/tasks/cc/components/calculators/tensor/tensors_to_segmentation_calculator.pb.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
 
 namespace mediapipe {
-namespace api2 {
 
 namespace {
 
@@ -374,5 +373,4 @@ TEST(TensorsToSegmentationCalculatorTest, SucceedsCategoryMaskResize) {
                                             expected_index, buffer_indices)));
 }
 
-}  // namespace api2
 }  // namespace mediapipe

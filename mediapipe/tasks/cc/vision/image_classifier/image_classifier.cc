@@ -58,6 +58,7 @@ constexpr char kSubgraphTypeName[] =
     "mediapipe.tasks.vision.image_classifier.ImageClassifierGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::tasks::components::containers::ConvertToClassificationResult;
 using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::mediapipe::tasks::core::PacketMap;

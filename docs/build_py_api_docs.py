@@ -26,7 +26,6 @@ from absl import app
 from absl import flags
 
 from tensorflow_docs.api_generator import generate_lib
-from tensorflow_docs.api_generator import public_api
 
 try:
   # mediapipe has not been set up to work with bazel yet, so catch & report.
@@ -45,14 +44,14 @@ _OUTPUT_DIR = flags.DEFINE_string(
 
 _URL_PREFIX = flags.DEFINE_string(
     'code_url_prefix',
-    'https://github.com/google/mediapipe/tree/master/mediapipe',
+    'https://github.com/google/mediapipe/blob/master/mediapipe',
     'The url prefix for links to code.')
 
 _SEARCH_HINTS = flags.DEFINE_bool(
     'search_hints', True,
     'Include metadata search hints in the generated files')
 
-_SITE_PATH = flags.DEFINE_string('site_path', '/mediapipe/api_docs/python',
+_SITE_PATH = flags.DEFINE_string('site_path', '/mediapipe/api/solutions/python',
                                  'Path prefix in the _toc.yaml')
 
 
@@ -68,10 +67,7 @@ def gen_api_docs():
       code_url_prefix=_URL_PREFIX.value,
       search_hints=_SEARCH_HINTS.value,
       site_path=_SITE_PATH.value,
-      # This callback ensures that docs are only generated for objects that
-      # are explicitly imported in your __init__.py files. There are other
-      # options but this is a good starting point.
-      callbacks=[public_api.explicit_package_contents_filter],
+      callbacks=[],
   )
 
   doc_generator.build(_OUTPUT_DIR.value)

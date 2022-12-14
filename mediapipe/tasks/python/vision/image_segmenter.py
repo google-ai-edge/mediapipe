@@ -21,8 +21,8 @@ from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet
-from mediapipe.tasks.cc.components.proto import segmenter_options_pb2
 from mediapipe.tasks.cc.vision.image_segmenter.proto import image_segmenter_graph_options_pb2
+from mediapipe.tasks.cc.vision.image_segmenter.proto import segmenter_options_pb2
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls

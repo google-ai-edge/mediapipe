@@ -15,12 +15,9 @@
 """MediaPipe Tasks Components Processors API."""
 
 import mediapipe.tasks.python.components.processors.classifier_options
-import mediapipe.tasks.python.components.processors.embedder_options
 
 ClassifierOptions = classifier_options.ClassifierOptions
-EmbedderOptions = embedder_options.EmbedderOptions
 
 # Remove unnecessary modules to avoid duplication in API docs.
 del classifier_options
-del embedder_options
 del mediapipe

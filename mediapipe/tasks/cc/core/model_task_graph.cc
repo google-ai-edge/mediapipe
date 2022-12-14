@@ -186,7 +186,7 @@ absl::StatusOr<const ModelResources*> ModelTaskGraph::CreateModelResources(
 absl::StatusOr<const ModelAssetBundleResources*>
 ModelTaskGraph::CreateModelAssetBundleResources(
     SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file,
-    const std::string tag_suffix) {
+    std::string tag_suffix) {
   auto model_resources_cache_service = sc->Service(kModelResourcesCacheService);
   bool has_file_pointer_meta = external_file->has_file_pointer_meta();
   // if external file is set by file pointer, no need to add the model asset

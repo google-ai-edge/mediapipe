@@ -60,7 +60,14 @@ node {
     tag_index: "LOOP"
     back_edge: true
   }
-  output_stream: "PREV_LOOP:previous_hair_mask"
+  output_stream: "PREV_LOOP:previous_hair_mask_rgb"
+}
+
+# Converts the 4 channel hair mask to a single channel mask
+node {
+  calculator: "ColorConvertCalculator"
+  input_stream: "RGB_IN:previous_hair_mask_rgb"
+  output_stream: "GRAY_OUT:previous_hair_mask"
 }
 
 # Embeds the hair mask generated from the previous round of hair segmentation
