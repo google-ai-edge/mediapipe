@@ -57,12 +57,12 @@ mediapipe_proto_library(
     srcs = ["calculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:mediapipe_options_proto",
-        "//mediapipe/framework:packet_factory_proto",
-        "//mediapipe/framework:packet_generator_proto",
-        "//mediapipe/framework:status_handler_proto",
-        "//mediapipe/framework:stream_handler_proto",
+        ":calculator_options_proto",
+        ":mediapipe_options_proto",
+        ":packet_factory_proto",
+        ":packet_generator_proto",
+        ":status_handler_proto",
+        ":stream_handler_proto",
         "@com_google_protobuf//:any_proto",
     ],
 )
@@ -79,8 +79,8 @@ mediapipe_proto_library(
     srcs = ["calculator_contract_test.proto"],
     visibility = ["//mediapipe/framework:__subpackages__"],
     deps = [
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
+        ":calculator_options_proto",
+        ":calculator_proto",
     ],
 )
 
@@ -89,8 +89,8 @@ mediapipe_proto_library(
     srcs = ["calculator_profile.proto"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
+        ":calculator_options_proto",
+        ":calculator_proto",
     ],
 )
 
@@ -126,14 +126,14 @@ mediapipe_proto_library(
     name = "status_handler_proto",
     srcs = ["status_handler.proto"],
     visibility = [":mediapipe_internal"],
-    deps = ["//mediapipe/framework:mediapipe_options_proto"],
+    deps = [":mediapipe_options_proto"],
 )
 
 mediapipe_proto_library(
     name = "stream_handler_proto",
     srcs = ["stream_handler.proto"],
     visibility = [":mediapipe_internal"],
-    deps = ["//mediapipe/framework:mediapipe_options_proto"],
+    deps = [":mediapipe_options_proto"],
 )
 
 mediapipe_proto_library(
@@ -142,8 +142,8 @@ mediapipe_proto_library(
     srcs = ["test_calculators.proto"],
     visibility = [":mediapipe_internal"],
     deps = [
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
+        ":calculator_options_proto",
+        ":calculator_proto",
     ],
 )
 
@@ -151,7 +151,7 @@ mediapipe_proto_library(
     name = "thread_pool_executor_proto",
     srcs = ["thread_pool_executor.proto"],
     visibility = [":mediapipe_internal"],
-    deps = ["//mediapipe/framework:mediapipe_options_proto"],
+    deps = [":mediapipe_options_proto"],
 )
 
 # It is for pure-native Android builds where the library can't have any dependency on libandroid.so
