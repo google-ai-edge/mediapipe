@@ -30,3 +30,9 @@ objc_library(
         ":MPPBaseOptions",
     ],
 )
+
+objc_library(
+    name = "MPPTaskResult",
+    srcs = ["sources/MPPTaskResult.m"],
+    hdrs = ["sources/MPPTaskResult.h"],
+)
