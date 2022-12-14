@@ -25,7 +25,6 @@ objc_library(
         "-std=c++17",
     ],
     deps = [
-        "//mediapipe/framework:calculator_options_cc_proto",
         ":MPPBaseOptions",
     ],
 )
@@ -73,4 +72,12 @@ objc_library(
     name = "MPPBaseOptions",
     srcs = ["sources/MPPBaseOptions.m"],
     hdrs = ["sources/MPPBaseOptions.h"],
+)
+
+objc_library(
+    name = "MPPTaskOptionsProtocol",
+    hdrs = ["sources/MPPTaskOptionsProtocol.h"],
+    deps = [
+            "//mediapipe/framework:calculator_options_cc_proto",
+    ],
 )

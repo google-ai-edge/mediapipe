@@ -23,8 +23,8 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifierOptions",
         "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",
         "//mediapipe/tasks/ios/components/processors/utils:MPPClassifierOptionsHelpers",
         "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_cc_proto",
-        "//mediapipe/framework:calculator_options_cc_proto",
     ],
 )

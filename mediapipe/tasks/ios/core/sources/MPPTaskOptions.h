@@ -10,7 +10,6 @@
  limitations under the License.
  ==============================================================================*/
 #import <Foundation/Foundation.h>
-#include "mediapipe/framework/calculator_options.pb.h"
 #import "mediapipe/tasks/ios/core/sources/MPPBaseOptions.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -40,18 +39,6 @@ NS_SWIFT_NAME(TaskOptions)
  * @return An instance of `MPPTaskOptions` initialized to the given model path.
  */
 - (instancetype)initWithModelPath:(NSString *)modelPath;
-
-@end
-
-/**
- * Any mediapipe task options should confirm to this protocol.
- */
-@protocol MPPTaskOptionsProtocol
-
-/**
- * Copies the iOS Mediapipe task options to an object of mediapipe::CalculatorOptions proto.
- */
-- (void)copyToProto:(mediapipe::CalculatorOptions *)optionsProto;
 
 @end
 
