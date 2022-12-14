@@ -16,7 +16,6 @@
 
 #import "mediapipe/tasks/ios/components/containers/sources/MPPClassificationResult.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
-#import "mediapipe/tasks/ios/text/core/sources/MPPBaseTextTaskApi.h"
 #import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierOptions.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -25,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
  * A Mediapipe iOS Text Classifier.
  */
 NS_SWIFT_NAME(TextClassifier)
-@interface MPPTextClassifier : MPPBaseTextTaskApi
+@interface MPPTextClassifier : NSObject
 
 /**
  * Creates a new instance of `MPPTextClassifier` from an absolute path to a TensorFlow Lite model
@@ -53,7 +52,7 @@ NS_SWIFT_NAME(TextClassifier)
  */
 - (instancetype)initWithOptions:(MPPTextClassifierOptions *)options error:(NSError **)error;
 
-- (MPPClassificationResult *)classifyWithText:(NSString *)text error:(NSError **)error;
+- (nullable MPPClassificationResult *)classifyWithText:(NSString *)text error:(NSError **)error;
 
 - (instancetype)init NS_UNAVAILABLE;
 

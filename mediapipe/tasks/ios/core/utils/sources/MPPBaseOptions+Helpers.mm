@@ -21,8 +21,8 @@ using BaseOptionsProto = ::mediapipe::tasks::core::proto::BaseOptions;
 @implementation MPPBaseOptions (Helpers)
 
 - (void)copyToProto:(BaseOptionsProto *)baseOptionsProto {
-  if (self.modelAssetFile.filePath) {
-    baseOptionsProto->mutable_model_asset()->set_file_name(self.modelAssetFile.filePath.UTF8String);
+  if (self.modelAssetPath) {
+    baseOptionsProto->mutable_model_asset()->set_file_name(self.modelAssetPath.UTF8String);
   }
 
   switch (self.delegate) {

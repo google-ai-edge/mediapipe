@@ -27,7 +27,7 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
-        "//mediapipe/tasks/ios/text/core:MPPBaseTextTaskApi",
+        "//mediapipe/tasks/ios/core:MPPTaskManager",
         "//mediapipe/tasks/ios/core:MPPPacketCreator",
         "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierOptionsHelpers",
         "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",

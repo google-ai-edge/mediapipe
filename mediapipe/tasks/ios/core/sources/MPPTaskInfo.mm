@@ -37,7 +37,6 @@ using FlowLimiterCalculatorOptions = ::mediapipe::FlowLimiterCalculatorOptions;
                           taskOptions:(id<MPPTaskOptionsProtocol>)taskOptions
                    enableFlowLimiting:(BOOL)enableFlowLimiting
                                 error:(NSError **)error {
-  self = [super init];
   if (!taskGraphName || !inputStreams.count || !outputStreams.count) {
     [MPPCommonUtils
         createCustomError:error
@@ -45,6 +44,8 @@ using FlowLimiterCalculatorOptions = ::mediapipe::FlowLimiterCalculatorOptions;
               description:
                   @"Task graph's name, input streams, and output streams should be non-empty."];
   }
+
+  self = [super init];
 
   if (self) {
     _taskGraphName = taskGraphName;

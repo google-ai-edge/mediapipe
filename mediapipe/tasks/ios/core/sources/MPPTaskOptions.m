@@ -28,7 +28,7 @@
 - (instancetype)initWithModelPath:(NSString *)modelPath {
   self = [self init];
   if (self) {
-    _baseOptions.modelAssetFile.filePath = modelPath;
+    _baseOptions.modelAssetPath = modelPath;
   }
   return self;
 }
