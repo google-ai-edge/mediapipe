@@ -22,6 +22,7 @@ package(default_visibility = ["//visibility:public"])
 mediapipe_proto_library(
     name = "gl_animation_overlay_calculator_proto",
     srcs = ["gl_animation_overlay_calculator.proto"],
+    def_options_lib = False,
     visibility = ["//visibility:public"],
     exports = [
         "//mediapipe/gpu:gl_animation_overlay_calculator_proto",
