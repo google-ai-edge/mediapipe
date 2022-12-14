@@ -14,6 +14,10 @@
 
 package com.google.mediapipe.framework;
 
+import com.google.common.flogger.FluentLogger;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * A {@link TextureFrame} that represents a texture produced by MediaPipe.
  *
@@ -21,6 +25,7 @@ package com.google.mediapipe.framework;
  * method.
  */
 public class GraphTextureFrame implements TextureFrame {
+  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
   private long nativeBufferHandle;
   // We cache these to be able to get them without a JNI call.
   private int textureName;
@@ -30,6 +35,7 @@ public class GraphTextureFrame implements TextureFrame {
   // True when created with PacketGetter.getTextureFrameDeferredSync(). This will result in gpuWait
   // when calling getTextureName().
   private final boolean deferredSync;
+  private final Set<Long> activeConsumerContextHandleSet = new HashSet<>();
 
   GraphTextureFrame(long nativeHandle, long timestamp) {
     this(nativeHandle, timestamp, false);
@@ -54,17 +60,19 @@ public class GraphTextureFrame implements TextureFrame {
    * condition if release() is called after the if-check for nativeBufferHandle is already passed.
    */
   @Override
-  public int getTextureName() {
+  public synchronized int getTextureName() {
     // Return special texture id 0 if handle is 0 i.e. frame is already released.
     if (nativeBufferHandle == 0) {
       return 0;
     }
-    // Gpu wait only if deferredSync is true, such as when this GraphTextureFrame is created using
-    // PacketGetter.getTextureFrameDeferredSync().
-    if (deferredSync) {
-      // Note that, if a CPU wait has already been done, the sync point will have been
-      // cleared and this will turn into a no-op. See GlFenceSyncPoint::Wait.
-      nativeGpuWait(nativeBufferHandle);
+    if (activeConsumerContextHandleSet.add(nativeGetCurrentExternalContextHandle())) {
+      // Gpu wait only if deferredSync is true, such as when this GraphTextureFrame is created using
+      // PacketGetter.getTextureFrameDeferredSync().
+      if (deferredSync) {
+        // Note that, if a CPU wait has already been done, the sync point will have been
+        // cleared and this will turn into a no-op. See GlFenceSyncPoint::Wait.
+        nativeGpuWait(nativeBufferHandle);
+      }
     }
     return textureName;
   }
@@ -92,9 +100,14 @@ public class GraphTextureFrame implements TextureFrame {
    * <p>The consumer calls this when it is done using the texture.
    */
   @Override
-  public void release() {
-    GlSyncToken consumerToken =
-        new GraphGlSyncToken(nativeCreateSyncTokenForCurrentExternalContext(nativeBufferHandle));
+  public synchronized void release() {
+    GlSyncToken consumerToken = null;
+    // Note that this remove should be moved to the other overload of release when b/68808951 is
+    // addressed.
+    if (activeConsumerContextHandleSet.remove(nativeGetCurrentExternalContextHandle())) {
+      consumerToken =
+          new GraphGlSyncToken(nativeCreateSyncTokenForCurrentExternalContext(nativeBufferHandle));
+    }
     release(consumerToken);
   }
 
@@ -113,9 +126,21 @@ public class GraphTextureFrame implements TextureFrame {
       long token = consumerSyncToken == null ? 0 : consumerSyncToken.nativeToken();
       nativeReleaseBuffer(nativeBufferHandle, token);
       nativeBufferHandle = 0;
+    } else if (consumerSyncToken != null) {
+      logger.atWarning().log("release with sync token, but handle is 0");
     }
     if (consumerSyncToken != null) {
       consumerSyncToken.release();
+    }
+  }
+
+  @Override
+  protected void finalize() throws Throwable {
+    if (nativeBufferHandle != 0) {
+      logger.atWarning().log("release was not called before finalize");
+    }
+    if (!activeConsumerContextHandleSet.isEmpty()) {
+      logger.atWarning().log("active consumers did not release with sync before finalize");
     }
   }
 
@@ -128,4 +153,6 @@ public class GraphTextureFrame implements TextureFrame {
   private native void nativeGpuWait(long nativeHandle);
 
   private native long nativeCreateSyncTokenForCurrentExternalContext(long nativeHandle);
+
+  private native long nativeGetCurrentExternalContextHandle();
 }

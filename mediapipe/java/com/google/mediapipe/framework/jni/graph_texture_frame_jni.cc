@@ -15,6 +15,7 @@
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph_texture_frame_jni.h"
 
 #include "mediapipe/gpu/gl_calculator_helper.h"
+#include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_texture_buffer.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 
@@ -83,4 +84,10 @@ JNIEXPORT jlong JNICALL GRAPH_TEXTURE_FRAME_METHOD(
     }
   }
   return reinterpret_cast<jlong>(token);
+}
+
+JNIEXPORT jlong JNICALL GRAPH_TEXTURE_FRAME_METHOD(
+    nativeGetCurrentExternalContextHandle)(JNIEnv* env, jobject thiz) {
+  return reinterpret_cast<jlong>(
+      mediapipe::GlContext::GetCurrentNativeContext());
 }

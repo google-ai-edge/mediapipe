@@ -44,6 +44,9 @@ JNIEXPORT jlong JNICALL GRAPH_TEXTURE_FRAME_METHOD(
     nativeCreateSyncTokenForCurrentExternalContext)(JNIEnv* env, jobject thiz,
                                                     jlong nativeHandle);
 
+JNIEXPORT jlong JNICALL GRAPH_TEXTURE_FRAME_METHOD(
+    nativeGetCurrentExternalContextHandle)(JNIEnv* env, jobject thiz);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus
