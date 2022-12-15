@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
  * this class.
  */
 NS_SWIFT_NAME(TaskOptions)
+
 @interface MPPTaskOptions : NSObject <NSCopying>
 /**
  * Base options for configuring the Mediapipe task.
@@ -32,10 +33,9 @@ NS_SWIFT_NAME(TaskOptions)
  * Initializes a new `MPPTaskOptions` with the absolute path to the model file
  * stored locally on the device, set to the given the model path.
  *
- * @discussion The external model file must be a single standalone TFLite file. It could be packed
- * with TFLite Model Metadata[1] and associated files if they exist. Failure to provide the
- * necessary metadata and associated files might result in errors. Check the [documentation]
- * (https://www.tensorflow.org/lite/convert/metadata) for each task about the specific requirement.
+ * @discussion The external model file must be a single standalone TFLite file. It must be packed
+ * with TFLite Model Metadata[1] and associated files. Failure to provide the
+ * necessary metadata and associated files will result in errors.
  *
  * @param modelPath An absolute path to a TensorFlow Lite model file stored locally on the device.
  *
