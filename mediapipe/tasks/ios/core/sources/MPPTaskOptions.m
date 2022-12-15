@@ -25,12 +25,4 @@
   return self;
 }
 
-- (instancetype)initWithModelPath:(NSString *)modelPath {
-  self = [self init];
-  if (self) {
-    _baseOptions.modelAssetPath = modelPath;
-  }
-  return self;
-}
-
 @end

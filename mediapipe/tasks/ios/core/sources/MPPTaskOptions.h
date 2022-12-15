@@ -29,20 +29,6 @@ NS_SWIFT_NAME(TaskOptions)
  */
 @property(nonatomic, copy) MPPBaseOptions *baseOptions;
 
-/**
- * Initializes a new `MPPTaskOptions` with the absolute path to the model file
- * stored locally on the device, set to the given the model path.
- *
- * @discussion The external model file must be a single standalone TFLite file. It must be packed
- * with TFLite Model Metadata[1] and associated files. Failure to provide the
- * necessary metadata and associated files will result in errors.
- *
- * @param modelPath An absolute path to a TensorFlow Lite model file stored locally on the device.
- *
- * @return An instance of `MPPTaskOptions` initialized to the given model path.
- */
-- (instancetype)initWithModelPath:(NSString *)modelPath;
-
 @end
 
 NS_ASSUME_NONNULL_END
