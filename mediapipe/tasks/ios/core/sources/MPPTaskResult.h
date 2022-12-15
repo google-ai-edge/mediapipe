@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
  * this class.
  */
 NS_SWIFT_NAME(TaskResult)
+
 @interface MPPTaskResult : NSObject <NSCopying>
 /**
  * Base options for configuring the Mediapipe task.
