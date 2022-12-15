@@ -17,14 +17,14 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * MediaPipe Tasks options base class. Any MediaPipe task-specific options class should extend
+ * MediaPipe Tasks result base class. Any MediaPipe task result class should extend
  * this class.
  */
 NS_SWIFT_NAME(TaskResult)
 
 @interface MPPTaskResult : NSObject <NSCopying>
 /**
- * Base options for configuring the Mediapipe task.
+ * Timestamp that is associated with the task result object.
  */
 @property(nonatomic, assign, readonly) long timeStamp;
 
