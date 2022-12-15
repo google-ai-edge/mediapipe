@@ -159,6 +159,7 @@ public final class TextEmbedder implements AutoCloseable {
         TaskRunner.create(
             context,
             TaskInfo.<TextEmbedderOptions>builder()
+                .setTaskName(TextEmbedder.class.getSimpleName())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)

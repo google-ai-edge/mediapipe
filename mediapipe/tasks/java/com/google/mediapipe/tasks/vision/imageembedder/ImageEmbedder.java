@@ -180,6 +180,8 @@ public final class ImageEmbedder extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<ImageEmbedderOptions>builder()
+                .setTaskName(ImageEmbedder.class.getSimpleName())
+                .setTaskRunningModeName(options.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)

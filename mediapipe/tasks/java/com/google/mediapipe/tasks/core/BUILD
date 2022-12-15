@@ -22,6 +22,7 @@ android_library(
     ],
     manifest = "AndroidManifest.xml",
     deps = [
+        ":logging",
         "//mediapipe/calculators/core:flow_limiter_calculator_java_proto_lite",
         "//mediapipe/calculators/tensor:inference_calculator_java_proto_lite",
         "//mediapipe/framework:calculator_java_proto_lite",
@@ -33,6 +34,17 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
         "//third_party:autovalue",
         "@com_google_protobuf//:protobuf_javalite",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "logging",
+    srcs = glob(
+        ["logging/*.java"],
+    ),
+    deps = [
+        "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
 )

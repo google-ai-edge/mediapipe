@@ -32,6 +32,12 @@ public abstract class TaskInfo<T extends TaskOptions> {
   /** Builder for {@link TaskInfo}. */
   @AutoValue.Builder
   public abstract static class Builder<T extends TaskOptions> {
+    /** Sets the MediaPipe task name. */
+    public abstract Builder<T> setTaskName(String value);
+
+    /** Sets the MediaPipe task running mode name. */
+    public abstract Builder<T> setTaskRunningModeName(String value);
+
     /** Sets the MediaPipe task graph name. */
     public abstract Builder<T> setTaskGraphName(String value);
 
@@ -71,6 +77,10 @@ public abstract class TaskInfo<T extends TaskOptions> {
     }
   }
 
+  abstract String taskName();
+
+  abstract String taskRunningModeName();
+
   abstract String taskGraphName();
 
   abstract T taskOptions();
@@ -82,7 +92,7 @@ public abstract class TaskInfo<T extends TaskOptions> {
   abstract Boolean enableFlowLimiting();
 
   public static <T extends TaskOptions> Builder<T> builder() {
-    return new AutoValue_TaskInfo.Builder<T>();
+    return new AutoValue_TaskInfo.Builder<T>().setTaskName("").setTaskRunningModeName("");
   }
 
   /* Returns a list of the output stream names without the stream tags. */

@@ -194,6 +194,8 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<GestureRecognizerOptions>builder()
+                .setTaskName(GestureRecognizer.class.getSimpleName())
+                .setTaskRunningModeName(recognizerOptions.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)
