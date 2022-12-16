@@ -52,14 +52,15 @@ void ImageSubmodule(pybind11::module* module) {
   ```python
   import cv2
   cv_mat = cv2.imread(input_file)[:, :, ::-1]
-  rgb_frame = mp.Image(format=ImageFormat.SRGB, data=cv_mat)
+  rgb_frame = mp.Image(image_format=ImageFormat.SRGB, data=cv_mat)
   gray_frame = mp.Image(
-      format=ImageFormat.GRAY, data=cv2.cvtColor(cv_mat, cv2.COLOR_RGB2GRAY))
+      image_format=ImageFormat.GRAY,
+      data=cv2.cvtColor(cv_mat, cv2.COLOR_RGB2GRAY))
 
   from PIL import Image
   pil_img = Image.new('RGB', (60, 30), color = 'red')
   image = mp.Image(
-      format=mp.ImageFormat.SRGB, data=np.asarray(pil_img))
+      image_format=mp.ImageFormat.SRGB, data=np.asarray(pil_img))
   ```
 
   The pixel data in an Image can be retrieved as a numpy ndarray by calling
