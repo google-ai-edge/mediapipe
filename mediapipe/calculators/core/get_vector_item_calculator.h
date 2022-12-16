@@ -47,7 +47,7 @@ namespace api2 {
 //     calculator: "Get{SpecificType}VectorItemCalculator"
 //     input_stream: "VECTOR:vector"
 //     input_stream: "INDEX:index"
-//     input_stream: "ITEM:item"
+//     output_stream: "ITEM:item"
 //     options {
 //       [mediapipe.GetVectorItemCalculatorOptions.ext] {
 //         item_index: 5
