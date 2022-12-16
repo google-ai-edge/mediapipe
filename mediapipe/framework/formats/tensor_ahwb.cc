@@ -212,9 +212,6 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
   CHECK(!(valid_ & kValidOpenGlTexture2d))
       << "Tensor conversion between OpenGL texture and AHardwareBuffer is not "
          "supported.";
-  CHECK(ahwb_ || !(valid_ & kValidOpenGlBuffer))
-      << "Interoperability bettween OpenGL buffer and AHardwareBuffer is not "
-         "supported on target system.";
   bool transfer = !ahwb_;
   CHECK(AllocateAHardwareBuffer())
       << "AHardwareBuffer is not supported on the target system.";
@@ -315,7 +312,13 @@ void Tensor::MoveCpuOrSsboToAhwb() const {
         ahwb_, AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY, -1, nullptr, &dest);
     CHECK(error == 0) << "AHardwareBuffer_lock " << error;
   }
-  if (valid_ & kValidOpenGlBuffer) {
+  if (valid_ & kValidCpu) {
+    std::memcpy(dest, cpu_buffer_, bytes());
+    // Free CPU memory because next time AHWB is mapped instead.
+    free(cpu_buffer_);
+    cpu_buffer_ = nullptr;
+    valid_ &= ~kValidCpu;
+  } else if (valid_ & kValidOpenGlBuffer) {
     gl_context_->Run([this, dest]() {
       glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
       const void* src = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bytes(),
@@ -326,11 +329,9 @@ void Tensor::MoveCpuOrSsboToAhwb() const {
     });
     opengl_buffer_ = GL_INVALID_INDEX;
     gl_context_ = nullptr;
-  } else if (valid_ & kValidCpu) {
-    std::memcpy(dest, cpu_buffer_, bytes());
-    // Free CPU memory because next time AHWB is mapped instead.
-    free(cpu_buffer_);
-    cpu_buffer_ = nullptr;
+    // Reset OpenGL Buffer validness. The OpenGL buffer will be allocated on top
+    // of the Ahwb at the next request to the OpenGlBufferView.
+    valid_ &= ~kValidOpenGlBuffer;
   } else {
     LOG(FATAL) << "Can't convert tensor with mask " << valid_ << " into AHWB.";
   }

@@ -152,6 +152,36 @@ TEST_F(TensorAhwbGpuTest, TestReplacingCpuByAhwb) {
   {
     auto view = tensor.GetAHardwareBufferReadView();
     EXPECT_NE(view.handle(), nullptr);
+    view.SetReadingFinishedFunc([](bool) { return true; });
+  }
+  auto ptr = tensor.GetCpuReadView().buffer<float>();
+  EXPECT_NE(ptr, nullptr);
+  std::vector<float> reference;
+  reference.resize(num_elements);
+  for (int i = 0; i < num_elements; i++) {
+    reference[i] = static_cast<float>(i) / 10.0f;
+  }
+  EXPECT_THAT(absl::Span<const float>(ptr, num_elements),
+              testing::Pointwise(testing::FloatEq(), reference));
+}
+
+TEST_F(TensorAhwbGpuTest, TestReplacingGpuByAhwb) {
+  // Request the GPU view to get the ssbo allocated internally.
+  // Request Ahwb view then to transform the storage into Ahwb.
+  Tensor::SetPreferredStorageType(Tensor::StorageType::kDefault);
+  constexpr size_t num_elements = 20;
+  Tensor tensor{Tensor::ElementType::kFloat32, Tensor::Shape({num_elements})};
+  RunInGlContext([&tensor] {
+    auto ssbo_view = tensor.GetOpenGlBufferWriteView();
+    auto ssbo_name = ssbo_view.name();
+    EXPECT_GT(ssbo_name, 0);
+    FillGpuBuffer(ssbo_name, tensor.shape().num_elements(),
+                  tensor.element_type());
+  });
+  {
+    auto view = tensor.GetAHardwareBufferReadView();
+    EXPECT_NE(view.handle(), nullptr);
+    view.SetReadingFinishedFunc([](bool) { return true; });
   }
   auto ptr = tensor.GetCpuReadView().buffer<float>();
   EXPECT_NE(ptr, nullptr);

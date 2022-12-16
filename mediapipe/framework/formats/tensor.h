@@ -408,8 +408,8 @@ class Tensor {
   mutable std::function<void()> release_callback_;
   bool AllocateAHardwareBuffer(int size_alignment = 0) const;
   void CreateEglSyncAndFd() const;
-  // Use Ahwb for other views: OpenGL / CPU buffer.
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
+  // Use Ahwb for other views: OpenGL / CPU buffer.
   static inline bool use_ahwb_ = false;
   // Expects the target SSBO to be already bound.
   bool AllocateAhwbMapToSsbo() const;
