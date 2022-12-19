@@ -60,6 +60,32 @@ class GestureRecognizerTest(tf.test.TestCase):
 
     self._test_accuracy(model)
 
+  @unittest_mock.patch.object(
+      tf.keras.layers, 'Dense', wraps=tf.keras.layers.Dense)
+  def test_gesture_recognizer_model_layer_widths(self, mock_dense):
+    layer_widths = [64, 32]
+    model_options = gesture_recognizer.ModelOptions(layer_widths=layer_widths)
+    hparams = gesture_recognizer.HParams(
+        export_dir=tempfile.mkdtemp(), epochs=2)
+    gesture_recognizer_options = gesture_recognizer.GestureRecognizerOptions(
+        model_options=model_options, hparams=hparams)
+    model = gesture_recognizer.GestureRecognizer.create(
+        train_data=self._train_data,
+        validation_data=self._validation_data,
+        options=gesture_recognizer_options)
+    expected_calls = [
+        unittest_mock.call(w, name=f'custom_gesture_recognizer_{i}')
+        for i, w in enumerate(layer_widths)
+    ]
+    expected_calls.append(
+        unittest_mock.call(
+            len(self._train_data.label_names),
+            activation='softmax',
+            name='custom_gesture_recognizer_out'))
+    self.assertLen(mock_dense.call_args_list, len(expected_calls))
+    mock_dense.assert_has_calls(expected_calls)
+    self._test_accuracy(model)
+
   def test_export_gesture_recognizer_model(self):
     model_options = gesture_recognizer.ModelOptions()
     hparams = gesture_recognizer.HParams(

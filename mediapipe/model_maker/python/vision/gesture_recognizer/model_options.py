@@ -14,6 +14,7 @@
 """Configurable model options for gesture recognizer models."""
 
 import dataclasses
+from typing import List
 
 
 @dataclasses.dataclass
@@ -23,5 +24,10 @@ class GestureRecognizerModelOptions:
   Attributes:
     dropout_rate: The fraction of the input units to drop, used in dropout
       layer.
+    layer_widths: A list of hidden layer widths for the gesture model. Each
+      element in the list will create a new hidden layer with the specified
+      width. The hidden layers are separated with BatchNorm, Dropout, and ReLU.
+      Defaults to an empty list(no hidden layers).
   """
   dropout_rate: float = 0.05
+  layer_widths: List[int] = dataclasses.field(default_factory=list)
