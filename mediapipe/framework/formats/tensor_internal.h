@@ -18,8 +18,6 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "mediapipe/framework/tool/type_util.h"
-
 namespace mediapipe {
 
 // Generates unique view id at compile-time using FILE and LINE.
@@ -41,10 +39,12 @@ namespace tensor_internal {
 // https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
 constexpr uint64_t kFnvPrime = 0x00000100000001B3;
 constexpr uint64_t kFnvOffsetBias = 0xcbf29ce484222325;
-constexpr uint64_t FnvHash64(const char* str, uint64_t hash = kFnvOffsetBias) {
-  return (str[0] == 0) ? hash : FnvHash64(str + 1, (hash ^ str[0]) * kFnvPrime);
+constexpr uint64_t FnvHash64(uint64_t value1, uint64_t value2) {
+  return (value2 ^ value1) * kFnvPrime;
 }
-
+constexpr uint64_t FnvHash64(const char* str, uint64_t hash = kFnvOffsetBias) {
+  return (str[0] == 0) ? hash : FnvHash64(str + 1, FnvHash64(hash, str[0]));
+}
 template <typename... Ts>
 struct TypeList {
   static constexpr std::size_t size{sizeof...(Ts)};

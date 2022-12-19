@@ -246,10 +246,10 @@ Tensor::OpenGlTexture2dView::GetLayoutDimensions(const Tensor::Shape& shape,
       return Tensor::OpenGlTexture2dView::Layout::kAligned;
     }
   }
-  // The best performance of a compute shader can be achived with textures'
+  // The best performance of a compute shader can be achieved with textures'
   // width multiple of 256. Making minimum fixed width of 256 waste memory for
   // small tensors. The optimal balance memory-vs-performance is power of 2.
-  // The texture width and height are choosen to be closer to square.
+  // The texture width and height are chosen to be closer to square.
   float power = std::log2(std::sqrt(static_cast<float>(num_pixels)));
   w = 1 << static_cast<int>(power);
   int h = (num_pixels + w - 1) / w;
@@ -326,7 +326,7 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
   auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
   AllocateOpenGlBuffer();
   if (!(valid_ & kValidOpenGlBuffer)) {
-    // If the call succeds then AHWB -> SSBO are synchronized so any usage of
+    // If the call succeeds then AHWB -> SSBO are synchronized so any usage of
     // the SSBO is correct after this call.
     if (!InsertAhwbToSsboFence()) {
       glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
@@ -348,8 +348,10 @@ Tensor::OpenGlBufferView Tensor::GetOpenGlBufferReadView() const {
   };
 }
 
-Tensor::OpenGlBufferView Tensor::GetOpenGlBufferWriteView() const {
+Tensor::OpenGlBufferView Tensor::GetOpenGlBufferWriteView(
+    uint64_t source_location_hash) const {
   auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
+  TrackAhwbUsage(source_location_hash);
   AllocateOpenGlBuffer();
   valid_ = kValidOpenGlBuffer;
   return {opengl_buffer_, std::move(lock), nullptr};
@@ -385,6 +387,7 @@ void Tensor::Move(Tensor* src) {
   src->element_type_ = ElementType::kNone;  // Mark as invalidated.
   cpu_buffer_ = src->cpu_buffer_;
   src->cpu_buffer_ = nullptr;
+  ahwb_tracking_key_ = src->ahwb_tracking_key_;
 #if MEDIAPIPE_METAL_ENABLED
   device_ = src->device_;
   src->device_ = nil;
@@ -589,8 +592,10 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
   return {cpu_buffer_, std::move(lock)};
 }
 
-Tensor::CpuWriteView Tensor::GetCpuWriteView() const {
+Tensor::CpuWriteView Tensor::GetCpuWriteView(
+    uint64_t source_location_hash) const {
   auto lock = absl::make_unique<absl::MutexLock>(&view_mutex_);
+  TrackAhwbUsage(source_location_hash);
   AllocateCpuBuffer();
   valid_ = kValidCpu;
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
@@ -618,26 +623,6 @@ void Tensor::AllocateCpuBuffer() const {
     cpu_buffer_ = malloc(bytes());
 #endif  // MEDIAPIPE_METAL_ENABLED
   }
-}
-
-void Tensor::SetPreferredStorageType(StorageType type) {
-#ifdef MEDIAPIPE_TENSOR_USE_AHWB
-  if (__builtin_available(android 26, *)) {
-    use_ahwb_ = type == StorageType::kAhwb;
-    VLOG(4) << "Tensor: use of AHardwareBuffer is "
-            << (use_ahwb_ ? "allowed" : "not allowed");
-  }
-#else
-  VLOG(4) << "Tensor: use of AHardwareBuffer is not allowed";
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB
-}
-
-Tensor::StorageType Tensor::GetPreferredStorageType() {
-#ifdef MEDIAPIPE_TENSOR_USE_AHWB
-  return use_ahwb_ ? StorageType::kAhwb : StorageType::kDefault;
-#else
-  return StorageType::kDefault;
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB
 }
 
 }  // namespace mediapipe

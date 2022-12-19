@@ -428,7 +428,10 @@ cc_library(
             "tensor.cc",
             "tensor_ahwb.cc",
         ],
-    hdrs = ["tensor.h"],
+    hdrs = [
+        "tensor.h",
+        "tensor_internal.h",
+    ],
     copts = select({
         "//mediapipe:apple": [
             "-x objective-c++",
@@ -452,6 +455,7 @@ cc_library(
         ],
     }),
     deps = [
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
         "//mediapipe/framework:port",

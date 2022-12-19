@@ -24,8 +24,9 @@
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/formats/tensor_internal.h"
 #include "mediapipe/framework/port.h"
 
 #if MEDIAPIPE_METAL_ENABLED
@@ -48,6 +49,22 @@
 #include "mediapipe/gpu/gl_context.h"
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 
+#if defined __has_builtin
+#if __has_builtin(__builtin_LINE)
+#define builtin_LINE __builtin_LINE
+#endif
+#if __has_builtin(__builtin_FILE)
+#define builtin_FILE __builtin_FILE
+#endif
+#endif
+
+#ifndef builtin_LINE
+#define builtin_LINE() 0
+#endif
+#ifndef builtin_FILE
+#define builtin_FILE() ""
+#endif
+
 namespace mediapipe {
 
 // Tensor is a container of multi-dimensional data that supports sharing the
@@ -65,7 +82,7 @@ namespace mediapipe {
 // GLuint buffer = view.buffer();
 // Then the buffer can be bound to the GPU command buffer.
 // ...binding the buffer to the command buffer...
-// ...commiting command buffer and releasing the view...
+// ...committing command buffer and releasing the view...
 //
 // The following request for the CPU view will be blocked until the GPU view is
 // released and the GPU task is finished.
@@ -161,7 +178,9 @@ class Tensor {
   using CpuReadView = CpuView<const void>;
   CpuReadView GetCpuReadView() const;
   using CpuWriteView = CpuView<void>;
-  CpuWriteView GetCpuWriteView() const;
+  CpuWriteView GetCpuWriteView(
+      uint64_t source_location_hash =
+          tensor_internal::FnvHash64(builtin_FILE(), builtin_LINE())) const;
 
 #if MEDIAPIPE_METAL_ENABLED
   // TODO: id<MTLBuffer> vs. MtlBufferView.
@@ -305,7 +324,9 @@ class Tensor {
   // A valid OpenGL context must be bound to the calling thread due to possible
   // GPU resource allocation.
   OpenGlBufferView GetOpenGlBufferReadView() const;
-  OpenGlBufferView GetOpenGlBufferWriteView() const;
+  OpenGlBufferView GetOpenGlBufferWriteView(
+      uint64_t source_location_hash =
+          tensor_internal::FnvHash64(builtin_FILE(), builtin_LINE())) const;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
   const Shape& shape() const { return shape_; }
@@ -410,7 +431,11 @@ class Tensor {
   void CreateEglSyncAndFd() const;
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
   // Use Ahwb for other views: OpenGL / CPU buffer.
-  static inline bool use_ahwb_ = false;
+  mutable bool use_ahwb_ = false;
+  mutable uint64_t ahwb_tracking_key_ = 0;
+  // TODO: Tracks all unique tensors. Can grow to a large number. LRU
+  // can be more predicted.
+  static inline absl::flat_hash_set<uint64_t> ahwb_usage_track_;
   // Expects the target SSBO to be already bound.
   bool AllocateAhwbMapToSsbo() const;
   bool InsertAhwbToSsboFence() const;
@@ -419,6 +444,8 @@ class Tensor {
   void* MapAhwbToCpuRead() const;
   void* MapAhwbToCpuWrite() const;
   void MoveCpuOrSsboToAhwb() const;
+  // Set current tracking key, set "use ahwb" if the key is already marked.
+  void TrackAhwbUsage(uint64_t key) const;
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   mutable std::shared_ptr<mediapipe::GlContext> gl_context_;
