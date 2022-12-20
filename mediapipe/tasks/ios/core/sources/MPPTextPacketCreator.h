@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,18 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/core/sources/MPPPacketCreator.h"
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
+#import <Foundation/Foundation.h>
 
-namespace {
-using ::mediapipe::MakePacket;
-using ::mediapipe::Packet;
-}  // namespace
+#include "mediapipe/framework/packet.h"
 
-@implementation MPPPacketCreator
+/* This class is an Objective-C wrapper around a MediaPipe graph object, and
+ * helps interface it with iOS technologies such as AVFoundation.
+ */
+@interface MPPTextPacketCreator : NSObject
 
-+ (Packet)createWithText:(NSString *)text {
-  return MakePacket<std::string>(text.cppString);
-}
++ (mediapipe::Packet)createWithText:(NSString *)text;
 
 @end

@@ -50,9 +50,9 @@ objc_library(
 )
 
 objc_library(
-    name = "MPPPacketCreator",
-    srcs = ["sources/MPPPacketCreator.mm"],
-    hdrs = ["sources/MPPPacketCreator.h"],
+    name = "MPPTextPacketCreator",
+    srcs = ["sources/MPPTextPacketCreator.mm"],
+    hdrs = ["sources/MPPTextPacketCreator.h"],
     copts = [
         "-ObjC++",
         "-std=c++17",
