@@ -23,7 +23,7 @@
 
 #include "mediapipe/tasks/cc/common.h"
 
-/** Error domain of TensorFlow Lite Support related errors. */
+/** Error domain of MediaPipe task library errors. */
 NSString *const MPPTasksErrorDomain = @"org.mediapipe.tasks";
 
 @implementation MPPCommonUtils
@@ -69,11 +69,11 @@ NSString *const MPPTasksErrorDomain = @"org.mediapipe.tasks";
     return YES;
   }
   // Payload of absl::Status created by the Media Pipe task library stores an appropriate value of
-  // the enum MPPiteSupportStatus. The integer value corresponding to the MPPiteSupportStatus enum
+  // the enum MediaPipeTasksStatus. The integer value corresponding to the MediaPipeTasksStatus enum
   // stored in the payload is extracted here to later map to the appropriate error code to be
   // returned. In cases where the enum is not stored in (payload is NULL or the payload string
   // cannot be converted to an integer), we set the error code value to be 1
-  // (MPPSupportErrorCodeUnspecifiedError of MPPSupportErrorCode used in the iOS library to signify
+  // (MPPTasksErrorCodeError of MPPTasksErrorCode used in the iOS library to signify
   // any errors not falling into other categories.) Since payload is of type absl::Cord that can be
   // type cast into an absl::optional<std::string>, we use the std::stoi function to convert it into
   // an integer code if possible.
@@ -81,7 +81,7 @@ NSString *const MPPTasksErrorDomain = @"org.mediapipe.tasks";
   NSUInteger errorCode;
   try {
     // Try converting payload to integer if payload is not empty. Otherwise convert a string
-    // signifying generic error code MPPSupportErrorCodeUnspecifiedError to integer.
+    // signifying generic error code MPPTasksErrorCodeError to integer.
     errorCode =
         (NSUInteger)std::stoi(static_cast<absl::optional<std::string>>(
                                   status.GetPayload(mediapipe::tasks::kMediaPipeTasksPayload))
@@ -92,12 +92,12 @@ NSString *const MPPTasksErrorDomain = @"org.mediapipe.tasks";
   }
 
   // If errorCode is outside the range of enum values possible or is
-  // TFLSupportErrorCodeUnspecifiedError, we try to map the absl::Status::code() to assign
-  // appropriate TFLSupportErrorCode or TFLSupportErrorCodeUnspecifiedError in default cases. Note:
+  // MPPTasksErrorCodeError, we try to map the absl::Status::code() to assign
+  // appropriate MPPTasksErrorCode in default cases. Note:
   // The mapping to absl::Status::code() is done to generate a more specific error code than
-  // TFLSupportErrorCodeUnspecifiedError in cases when the payload can't be mapped to
-  // TfLiteSupportStatus. This can happen when absl::Status returned by TfLite are in turn returned
-  // without moodification by TfLite Support Methods.
+  // MPPTasksErrorCodeError in cases when the payload can't be mapped to
+  // MPPTasksErrorCode. This can happen when absl::Status returned by TFLite library are in turn returned
+  // without modification by Mediapipe cc library methods.
   if (errorCode > MPPTasksErrorCodeLast || errorCode <= MPPTasksErrorCodeFirst) {
     switch (status.code()) {
       case absl::StatusCode::kInternal:
@@ -116,11 +116,11 @@ NSString *const MPPTasksErrorDomain = @"org.mediapipe.tasks";
   }
 
   // Creates the NSEror with the appropriate error
-  // TFLSupportErrorCode and message. TFLSupportErrorCode has a one to one
-  // mapping with TfLiteSupportStatus starting from the value 1(TFLSupportErrorCodeUnspecifiedError)
+  // MPPTasksErrorCode and message. MPPTasksErrorCode has a one to one
+  // mapping with MediaPipeTasksStatus starting from the value 1(MPPTasksErrorCodeError)
   // and hence will be correctly initialized if directly cast from the integer code derived from
-  // TfLiteSupportStatus stored in its payload. TFLSupportErrorCode omits kOk = 0 of
-  // TfLiteSupportStatus.
+  // MediaPipeTasksStatus stored in its payload. MPPTasksErrorCode omits kOk = 0 of
+  // MediaPipeTasksStatusx.
   //
   // Stores a string including absl status code and message(if non empty) as the
   // error message See
