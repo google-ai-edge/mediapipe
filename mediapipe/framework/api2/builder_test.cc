@@ -55,16 +55,16 @@ TEST(BuilderTest, BuildGraph) {
 
 TEST(BuilderTest, CopyableSource) {
   Graph graph;
-  Source<int> a = graph[Input<int>("A")];
+  Source<int> a = graph.In("A").Cast<int>();
   a.SetName("a");
-  Source<int> b = graph[Input<int>("B")];
+  Source<int> b = graph.In("B").Cast<int>();
   b.SetName("b");
-  SideSource<float> side_a = graph[SideInput<float>("SIDE_A")];
+  SideSource<float> side_a = graph.SideIn("SIDE_A").Cast<float>();
   side_a.SetName("side_a");
-  SideSource<float> side_b = graph[SideInput<float>("SIDE_B")];
+  SideSource<float> side_b = graph.SideIn("SIDE_B").Cast<float>();
   side_b.SetName("side_b");
-  Destination<int> out = graph[Output<int>("OUT")];
-  SideDestination<float> side_out = graph[SideOutput<float>("SIDE_OUT")];
+  Destination<int> out = graph.Out("OUT").Cast<int>();
+  SideDestination<float> side_out = graph.SideOut("SIDE_OUT").Cast<float>();
 
   Source<int> input = a;
   input = b;
@@ -89,28 +89,28 @@ TEST(BuilderTest, CopyableSource) {
 TEST(BuilderTest, BuildGraphWithFunctions) {
   Graph graph;
 
-  Source<int> base = graph[Input<int>("IN")];
+  Source<int> base = graph.In("IN").Cast<int>();
   base.SetName("base");
-  SideSource<float> side = graph[SideInput<float>("SIDE")];
+  SideSource<float> side = graph.SideIn("SIDE").Cast<float>();
   side.SetName("side");
 
   auto foo_fn = [](Source<int> base, SideSource<float> side, Graph& graph) {
     auto& foo = graph.AddNode("Foo");
-    base >> foo[Input<int>("BASE")];
-    side >> foo[SideInput<float>("SIDE")];
-    return foo[Output<double>("OUT")];
+    base >> foo.In("BASE");
+    side >> foo.SideIn("SIDE");
+    return foo.Out("OUT")[0].Cast<double>();
   };
   Source<double> foo_out = foo_fn(base, side, graph);
 
   auto bar_fn = [](Source<double> in, Graph& graph) {
     auto& bar = graph.AddNode("Bar");
-    in >> bar[Input<double>("IN")];
-    return bar[Output<double>("OUT")];
+    in >> bar.In("IN");
+    return bar.Out("OUT")[0].Cast<double>();
   };
   Source<double> bar_out = bar_fn(foo_out, graph);
   bar_out.SetName("out");
 
-  bar_out >> graph[Output<double>("OUT")];
+  bar_out >> graph.Out("OUT");
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
@@ -229,10 +229,10 @@ TEST(BuilderTest, TypedByPorts) {
   auto& foo = graph.AddNode<test::Foo>();
   auto& adder = graph.AddNode<FloatAdder>();
 
-  graph[FooBar1::kIn].SetName("base") >> foo[Foo::kBase];
+  graph.In(FooBar1::kIn).SetName("base") >> foo[Foo::kBase];
   foo[Foo::kOut] >> adder[FloatAdder::kIn][0];
   foo[Foo::kOut] >> adder[FloatAdder::kIn][1];
-  adder[FloatAdder::kOut].SetName("out") >> graph[FooBar1::kOut];
+  adder[FloatAdder::kOut].SetName("out") >> graph.Out(FooBar1::kOut);
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
@@ -380,8 +380,8 @@ class AnyAndSameTypeCalculator : public NodeIntf {
 
 TEST(BuilderTest, AnyAndSameTypeHandledProperly) {
   Graph graph;
-  Source<AnyType> any_input = graph[Input<AnyType>{"GRAPH_ANY_INPUT"}];
-  Source<int> int_input = graph[Input<int>{"GRAPH_INT_INPUT"}];
+  Source<AnyType> any_input = graph.In("GRAPH_ANY_INPUT");
+  Source<int> int_input = graph.In("GRAPH_INT_INPUT").Cast<int>();
 
   auto& node = graph.AddNode("AnyAndSameTypeCalculator");
   any_input >> node[AnyAndSameTypeCalculator::kAnyTypeInput];
