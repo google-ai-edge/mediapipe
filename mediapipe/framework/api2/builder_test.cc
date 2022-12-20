@@ -55,14 +55,12 @@ TEST(BuilderTest, BuildGraph) {
 
 TEST(BuilderTest, CopyableSource) {
   Graph graph;
-  Source<int> a = graph.In("A").Cast<int>();
-  a.SetName("a");
-  Source<int> b = graph.In("B").Cast<int>();
-  b.SetName("b");
-  SideSource<float> side_a = graph.SideIn("SIDE_A").Cast<float>();
-  side_a.SetName("side_a");
-  SideSource<float> side_b = graph.SideIn("SIDE_B").Cast<float>();
-  side_b.SetName("side_b");
+  Source<int> a = graph.In("A").SetName("a").Cast<int>();
+  Source<int> b = graph.In("B").SetName("b").Cast<int>();
+  SideSource<float> side_a =
+      graph.SideIn("SIDE_A").SetName("side_a").Cast<float>();
+  SideSource<float> side_b =
+      graph.SideIn("SIDE_B").SetName("side_b").Cast<float>();
   Destination<int> out = graph.Out("OUT").Cast<int>();
   SideDestination<float> side_out = graph.SideOut("SIDE_OUT").Cast<float>();
 
@@ -89,10 +87,8 @@ TEST(BuilderTest, CopyableSource) {
 TEST(BuilderTest, BuildGraphWithFunctions) {
   Graph graph;
 
-  Source<int> base = graph.In("IN").Cast<int>();
-  base.SetName("base");
-  SideSource<float> side = graph.SideIn("SIDE").Cast<float>();
-  side.SetName("side");
+  Source<int> base = graph.In("IN").SetName("base").Cast<int>();
+  SideSource<float> side = graph.SideIn("SIDE").SetName("side").Cast<float>();
 
   auto foo_fn = [](Source<int> base, SideSource<float> side, Graph& graph) {
     auto& foo = graph.AddNode("Foo");
@@ -108,9 +104,8 @@ TEST(BuilderTest, BuildGraphWithFunctions) {
     return bar.Out("OUT")[0].Cast<double>();
   };
   Source<double> bar_out = bar_fn(foo_out, graph);
-  bar_out.SetName("out");
 
-  bar_out >> graph.Out("OUT");
+  bar_out.SetName("out") >> graph.Out("OUT");
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
@@ -429,8 +424,9 @@ TEST(BuilderTest, AnyTypeCanBeCast) {
   auto& node = graph.AddNode("AnyAndSameTypeCalculator");
   any_input >> node[AnyAndSameTypeCalculator::kAnyTypeInput];
   Source<double> any_type_output =
-      node[AnyAndSameTypeCalculator::kAnyTypeOutput].Cast<double>();
-  any_type_output.SetName("any_type_output");
+      node[AnyAndSameTypeCalculator::kAnyTypeOutput]
+          .SetName("any_type_output")
+          .Cast<double>();
 
   any_type_output >> graph.Out("GRAPH_ANY_OUTPUT").Cast<double>();
 
