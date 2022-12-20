@@ -15,12 +15,17 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
-namespace mediapipe {
-namespace api2 {
-namespace test {
+namespace mediapipe::api2::builder {
+namespace {
+
+using ::mediapipe::api2::test::Bar;
+using ::mediapipe::api2::test::FloatAdder;
+using ::mediapipe::api2::test::Foo;
+using ::mediapipe::api2::test::Foo2;
+using ::mediapipe::api2::test::FooBar1;
 
 TEST(BuilderTest, BuildGraph) {
-  builder::Graph graph;
+  Graph graph;
   auto& foo = graph.AddNode("Foo");
   auto& bar = graph.AddNode("Bar");
   graph.In("IN").SetName("base") >> foo.In("BASE");
@@ -49,22 +54,21 @@ TEST(BuilderTest, BuildGraph) {
 }
 
 TEST(BuilderTest, CopyableSource) {
-  builder::Graph graph;
-  builder::Source<int> a = graph[Input<int>("A")];
+  Graph graph;
+  Source<int> a = graph[Input<int>("A")];
   a.SetName("a");
-  builder::Source<int> b = graph[Input<int>("B")];
+  Source<int> b = graph[Input<int>("B")];
   b.SetName("b");
-  builder::SideSource<float> side_a = graph[SideInput<float>("SIDE_A")];
+  SideSource<float> side_a = graph[SideInput<float>("SIDE_A")];
   side_a.SetName("side_a");
-  builder::SideSource<float> side_b = graph[SideInput<float>("SIDE_B")];
+  SideSource<float> side_b = graph[SideInput<float>("SIDE_B")];
   side_b.SetName("side_b");
-  builder::Destination<int> out = graph[Output<int>("OUT")];
-  builder::SideDestination<float> side_out =
-      graph[SideOutput<float>("SIDE_OUT")];
+  Destination<int> out = graph[Output<int>("OUT")];
+  SideDestination<float> side_out = graph[SideOutput<float>("SIDE_OUT")];
 
-  builder::Source<int> input = a;
+  Source<int> input = a;
   input = b;
-  builder::SideSource<float> side_input = side_b;
+  SideSource<float> side_input = side_b;
   side_input = side_a;
 
   input >> out;
@@ -83,28 +87,27 @@ TEST(BuilderTest, CopyableSource) {
 }
 
 TEST(BuilderTest, BuildGraphWithFunctions) {
-  builder::Graph graph;
+  Graph graph;
 
-  builder::Source<int> base = graph[Input<int>("IN")];
+  Source<int> base = graph[Input<int>("IN")];
   base.SetName("base");
-  builder::SideSource<float> side = graph[SideInput<float>("SIDE")];
+  SideSource<float> side = graph[SideInput<float>("SIDE")];
   side.SetName("side");
 
-  auto foo_fn = [](builder::Source<int> base, builder::SideSource<float> side,
-                   builder::Graph& graph) {
+  auto foo_fn = [](Source<int> base, SideSource<float> side, Graph& graph) {
     auto& foo = graph.AddNode("Foo");
     base >> foo[Input<int>("BASE")];
     side >> foo[SideInput<float>("SIDE")];
     return foo[Output<double>("OUT")];
   };
-  builder::Source<double> foo_out = foo_fn(base, side, graph);
+  Source<double> foo_out = foo_fn(base, side, graph);
 
-  auto bar_fn = [](builder::Source<double> in, builder::Graph& graph) {
+  auto bar_fn = [](Source<double> in, Graph& graph) {
     auto& bar = graph.AddNode("Bar");
     in >> bar[Input<double>("IN")];
     return bar[Output<double>("OUT")];
   };
-  builder::Source<double> bar_out = bar_fn(foo_out, graph);
+  Source<double> bar_out = bar_fn(foo_out, graph);
   bar_out.SetName("out");
 
   bar_out >> graph[Output<double>("OUT")];
@@ -131,7 +134,7 @@ TEST(BuilderTest, BuildGraphWithFunctions) {
 
 template <class FooT>
 void BuildGraphTypedTest() {
-  builder::Graph graph;
+  Graph graph;
   auto& foo = graph.AddNode<FooT>();
   auto& bar = graph.AddNode<Bar>();
   graph.In("IN").SetName("base") >> foo.In(MPP_TAG("BASE"));
@@ -161,12 +164,12 @@ void BuildGraphTypedTest() {
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }
 
-TEST(BuilderTest, BuildGraphTyped) { BuildGraphTypedTest<Foo>(); }
+TEST(BuilderTest, BuildGraphTyped) { BuildGraphTypedTest<test::Foo>(); }
 
-TEST(BuilderTest, BuildGraphTyped2) { BuildGraphTypedTest<Foo2>(); }
+TEST(BuilderTest, BuildGraphTyped2) { BuildGraphTypedTest<test::Foo2>(); }
 
 TEST(BuilderTest, FanOut) {
-  builder::Graph graph;
+  Graph graph;
   auto& foo = graph.AddNode("Foo");
   auto& adder = graph.AddNode("FloatAdder");
   graph.In("IN").SetName("base") >> foo.In("BASE");
@@ -194,9 +197,9 @@ TEST(BuilderTest, FanOut) {
 }
 
 TEST(BuilderTest, TypedMultiple) {
-  builder::Graph graph;
-  auto& foo = graph.AddNode<Foo>();
-  auto& adder = graph.AddNode<FloatAdder>();
+  Graph graph;
+  auto& foo = graph.AddNode<test::Foo>();
+  auto& adder = graph.AddNode<test::FloatAdder>();
   graph.In("IN").SetName("base") >> foo.In(MPP_TAG("BASE"));
   foo.Out(MPP_TAG("OUT")) >> adder.In(MPP_TAG("IN"))[0];
   foo.Out(MPP_TAG("OUT")) >> adder.In(MPP_TAG("IN"))[1];
@@ -222,8 +225,8 @@ TEST(BuilderTest, TypedMultiple) {
 }
 
 TEST(BuilderTest, TypedByPorts) {
-  builder::Graph graph;
-  auto& foo = graph.AddNode<Foo>();
+  Graph graph;
+  auto& foo = graph.AddNode<test::Foo>();
   auto& adder = graph.AddNode<FloatAdder>();
 
   graph[FooBar1::kIn].SetName("base") >> foo[Foo::kBase];
@@ -251,7 +254,7 @@ TEST(BuilderTest, TypedByPorts) {
 }
 
 TEST(BuilderTest, PacketGenerator) {
-  builder::Graph graph;
+  Graph graph;
   auto& generator = graph.AddPacketGenerator("FloatGenerator");
   graph.SideIn("IN") >> generator.SideIn("IN");
   generator.SideOut("OUT") >> graph.SideOut("OUT");
@@ -270,7 +273,7 @@ TEST(BuilderTest, PacketGenerator) {
 }
 
 TEST(BuilderTest, EmptyTag) {
-  builder::Graph graph;
+  Graph graph;
   auto& foo = graph.AddNode("Foo");
   graph.In("A").SetName("a") >> foo.In("")[0];
   graph.In("C").SetName("c") >> foo.In("")[2];
@@ -302,7 +305,7 @@ TEST(BuilderTest, StringLikeTags) {
   const std::string kB = "B";
   constexpr absl::string_view kC = "C";
 
-  builder::Graph graph;
+  Graph graph;
   auto& foo = graph.AddNode("Foo");
   graph.In(kA).SetName("a") >> foo.In(kA);
   graph.In(kB).SetName("b") >> foo.In(kB);
@@ -324,7 +327,7 @@ TEST(BuilderTest, StringLikeTags) {
 }
 
 TEST(BuilderTest, GraphIndexes) {
-  builder::Graph graph;
+  Graph graph;
   auto& foo = graph.AddNode("Foo");
   graph.In(0).SetName("a") >> foo.In("")[0];
   graph.In(1).SetName("c") >> foo.In("")[2];
@@ -376,28 +379,27 @@ class AnyAndSameTypeCalculator : public NodeIntf {
 };
 
 TEST(BuilderTest, AnyAndSameTypeHandledProperly) {
-  builder::Graph graph;
-  builder::Source<AnyType> any_input = graph[Input<AnyType>{"GRAPH_ANY_INPUT"}];
-  builder::Source<int> int_input = graph[Input<int>{"GRAPH_INT_INPUT"}];
+  Graph graph;
+  Source<AnyType> any_input = graph[Input<AnyType>{"GRAPH_ANY_INPUT"}];
+  Source<int> int_input = graph[Input<int>{"GRAPH_INT_INPUT"}];
 
   auto& node = graph.AddNode("AnyAndSameTypeCalculator");
   any_input >> node[AnyAndSameTypeCalculator::kAnyTypeInput];
   int_input >> node[AnyAndSameTypeCalculator::kIntInput];
 
-  builder::Source<AnyType> any_type_output =
+  Source<AnyType> any_type_output =
       node[AnyAndSameTypeCalculator::kAnyTypeOutput];
   any_type_output.SetName("any_type_output");
 
-  builder::Source<AnyType> same_type_output =
+  Source<AnyType> same_type_output =
       node[AnyAndSameTypeCalculator::kSameTypeOutput];
   same_type_output.SetName("same_type_output");
-  builder::Source<AnyType> recursive_same_type_output =
+  Source<AnyType> recursive_same_type_output =
       node[AnyAndSameTypeCalculator::kRecursiveSameTypeOutput];
   recursive_same_type_output.SetName("recursive_same_type_output");
-  builder::Source<int> same_int_output =
-      node[AnyAndSameTypeCalculator::kSameIntOutput];
+  Source<int> same_int_output = node[AnyAndSameTypeCalculator::kSameIntOutput];
   same_int_output.SetName("same_int_output");
-  builder::Source<int> recursive_same_int_type_output =
+  Source<int> recursive_same_int_type_output =
       node[AnyAndSameTypeCalculator::kRecursiveSameIntOutput];
   recursive_same_int_type_output.SetName("recursive_same_int_type_output");
 
@@ -420,13 +422,13 @@ TEST(BuilderTest, AnyAndSameTypeHandledProperly) {
 }
 
 TEST(BuilderTest, AnyTypeCanBeCast) {
-  builder::Graph graph;
-  builder::Source<std::string> any_input =
+  Graph graph;
+  Source<std::string> any_input =
       graph.In("GRAPH_ANY_INPUT").Cast<std::string>();
 
   auto& node = graph.AddNode("AnyAndSameTypeCalculator");
   any_input >> node[AnyAndSameTypeCalculator::kAnyTypeInput];
-  builder::Source<double> any_type_output =
+  Source<double> any_type_output =
       node[AnyAndSameTypeCalculator::kAnyTypeOutput].Cast<double>();
   any_type_output.SetName("any_type_output");
 
@@ -446,11 +448,11 @@ TEST(BuilderTest, AnyTypeCanBeCast) {
 }
 
 TEST(BuilderTest, MultiPortIsCastToMultiPort) {
-  builder::Graph graph;
-  builder::MultiSource<AnyType> any_input = graph.In("ANY_INPUT");
-  builder::MultiSource<int> int_input = any_input.Cast<int>();
-  builder::MultiDestination<AnyType> any_output = graph.Out("ANY_OUTPUT");
-  builder::MultiDestination<int> int_output = any_output.Cast<int>();
+  Graph graph;
+  MultiSource<AnyType> any_input = graph.In("ANY_INPUT");
+  MultiSource<int> int_input = any_input.Cast<int>();
+  MultiDestination<AnyType> any_output = graph.Out("ANY_OUTPUT");
+  MultiDestination<int> int_output = any_output.Cast<int>();
   int_input >> int_output;
 
   CalculatorGraphConfig expected =
@@ -462,11 +464,11 @@ TEST(BuilderTest, MultiPortIsCastToMultiPort) {
 }
 
 TEST(BuilderTest, MultiPortCanBeSlicedToSinglePort) {
-  builder::Graph graph;
-  builder::MultiSource<AnyType> any_multi_input = graph.In("ANY_INPUT");
-  builder::Source<AnyType> any_input = any_multi_input;
-  builder::MultiDestination<AnyType> any_multi_output = graph.Out("ANY_OUTPUT");
-  builder::Destination<AnyType> any_output = any_multi_output;
+  Graph graph;
+  MultiSource<AnyType> any_multi_input = graph.In("ANY_INPUT");
+  Source<AnyType> any_input = any_multi_input;
+  MultiDestination<AnyType> any_multi_output = graph.Out("ANY_OUTPUT");
+  Destination<AnyType> any_output = any_multi_output;
   any_input >> any_output;
 
   CalculatorGraphConfig expected =
@@ -478,11 +480,11 @@ TEST(BuilderTest, MultiPortCanBeSlicedToSinglePort) {
 }
 
 TEST(BuilderTest, SinglePortAccessWorksThroughSlicing) {
-  builder::Graph graph;
-  builder::Source<int> int_input = graph.In("INT_INPUT").Cast<int>();
-  builder::Source<AnyType> any_input = graph.In("ANY_OUTPUT");
-  builder::Destination<int> int_output = graph.Out("INT_OUTPUT").Cast<int>();
-  builder::Destination<AnyType> any_output = graph.Out("ANY_OUTPUT");
+  Graph graph;
+  Source<int> int_input = graph.In("INT_INPUT").Cast<int>();
+  Source<AnyType> any_input = graph.In("ANY_OUTPUT");
+  Destination<int> int_output = graph.Out("INT_OUTPUT").Cast<int>();
+  Destination<AnyType> any_output = graph.Out("ANY_OUTPUT");
   int_input >> int_output;
   any_input >> any_output;
 
@@ -496,6 +498,5 @@ TEST(BuilderTest, SinglePortAccessWorksThroughSlicing) {
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }
 
-}  // namespace test
-}  // namespace api2
-}  // namespace mediapipe
+}  // namespace
+}  // namespace mediapipe::api2::builder
