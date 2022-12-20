@@ -86,7 +86,7 @@ describe('convertBaseOptionsToProto()', () => {
   it('can enable CPU delegate', async () => {
     const baseOptionsProto = await convertBaseOptionsToProto({
       modelAssetBuffer: new Uint8Array(mockBytes),
-      delegate: 'cpu',
+      delegate: 'CPU',
     });
     expect(baseOptionsProto.toObject()).toEqual(mockBytesResult);
   });
@@ -94,7 +94,7 @@ describe('convertBaseOptionsToProto()', () => {
   it('can enable GPU delegate', async () => {
     const baseOptionsProto = await convertBaseOptionsToProto({
       modelAssetBuffer: new Uint8Array(mockBytes),
-      delegate: 'gpu',
+      delegate: 'GPU',
     });
     expect(baseOptionsProto.toObject()).toEqual({
       ...mockBytesResult,
@@ -117,7 +117,7 @@ describe('convertBaseOptionsToProto()', () => {
   it('can reset delegate', async () => {
     let baseOptionsProto = await convertBaseOptionsToProto({
       modelAssetBuffer: new Uint8Array(mockBytes),
-      delegate: 'gpu',
+      delegate: 'GPU',
     });
     // Clear backend
     baseOptionsProto =
