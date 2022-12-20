@@ -1,5 +1,5 @@
 absl-py
-mediapipe==0.9.1
+mediapipe==0.9.0.1
 numpy
 opencv-python
 tensorflow>=2.10
