@@ -38,10 +38,16 @@ NS_SWIFT_NAME(ClassifierOptions)
  */
 @property(nonatomic) float scoreThreshold;
 
-/** If set, all classes not in this list will be filtered out from the results. */
+/** The allowlist of category names. If non-empty, detection results whose
+ * category name is not in this set will be filtered out. Duplicate or unknown
+ * category names are ignored. Mutually exclusive with categoryDenylist.
+ */
 @property(nonatomic, copy) NSArray<NSString *> *categoryAllowlist;
 
-/** If set, all classes  in this list will be filtered out from the results. */
+/** The denylist of category names. If non-empty, detection results whose
+ * category name is in this set will be filtered out. Duplicate or unknown
+ * category names are ignored. Mutually exclusive with categoryAllowlist.
+ */
 @property(nonatomic, copy) NSArray<NSString *> *categoryDenylist;
 
 @end
