@@ -36,10 +36,10 @@ NS_SWIFT_NAME(ClassifierOptions)
 @property(nonatomic) float scoreThreshold;
 
 /** If set, all classes not in this list will be filtered out from the results. */
-@property(nonatomic, copy) NSArray<NSString *> *labelAllowList;
+@property(nonatomic, copy) NSArray<NSString *> *categoryAllowList;
 
 /** If set, all classes  in this list will be filtered out from the results. */
-@property(nonatomic, copy) NSArray<NSString *> *labelDenyList;
+@property(nonatomic, copy) NSArray<NSString *> *categoryDenyList;
 
 @end
 

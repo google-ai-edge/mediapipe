@@ -30,11 +30,11 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
 
   classifierOptionsProto->set_score_threshold(self.scoreThreshold);
 
-  for (NSString *category in self.labelAllowList) {
+  for (NSString *category in self.categoryAllowList) {
     classifierOptionsProto->add_category_allowlist(category.cppString);
   }
 
-  for (NSString *category in self.labelDenyList) {
+  for (NSString *category in self.categoryDenyList) {
     classifierOptionsProto->add_category_denylist(category.cppString);
   }
 }
