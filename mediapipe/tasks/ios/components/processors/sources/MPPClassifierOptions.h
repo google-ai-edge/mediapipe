@@ -30,7 +30,9 @@ NS_SWIFT_NAME(ClassifierOptions)
 /** Limit to the number of classes that can be returned in results. */
 @property(nonatomic) NSInteger maxResults;
 
-/** Results with score threshold greater than this value are returned. */
+/** Score threshold to override the one provided in the model metadata (if any). 
+ * Results below this value are rejected. 
+ */
 @property(nonatomic) float scoreThreshold;
 
 /** If set, all classes not in this list will be filtered out from the results. */
