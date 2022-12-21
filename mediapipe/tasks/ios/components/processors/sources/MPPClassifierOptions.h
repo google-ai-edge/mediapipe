@@ -17,7 +17,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * Holds settings for any single iOS Mediapipe classification task.
+ * Holds settings for any single iOS MediaPipe classification task.
  */
 NS_SWIFT_NAME(ClassifierOptions)
 @interface MPPClassifierOptions : NSObject <NSCopying>
