@@ -39,9 +39,8 @@
 
 namespace mediapipe {
 
-constexpr char kTopKClassificationTag[] = "TOP_K_CLASSIFICATION";
 constexpr char kSummaryTag[] = "SUMMARY";
-constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
+constexpr char kTopKClassificationsTag[] = "TOP_K_CLASSIFICATIONS";
 constexpr char kTopKLabelsTag[] = "TOP_K_LABELS";
 constexpr char kTopKScoresTag[] = "TOP_K_SCORES";
 constexpr char kTopKIndexesTag[] = "TOP_K_INDEXES";
@@ -98,8 +97,8 @@ absl::Status TopKScoresCalculator::GetContract(CalculatorContract* cc) {
   if (cc->Outputs().HasTag(kTopKLabelsTag)) {
     cc->Outputs().Tag(kTopKLabelsTag).Set<std::vector<std::string>>();
   }
-  if (cc->Outputs().HasTag(kClassificationsTag)) {
-    cc->Outputs().Tag(kClassificationsTag).Set<ClassificationList>();
+  if (cc->Outputs().HasTag(kTopKClassificationsTag)) {
+    cc->Outputs().Tag(kTopKClassificationsTag).Set<ClassificationList>();
   }
   if (cc->Outputs().HasTag(kSummaryTag)) {
     cc->Outputs().Tag(kSummaryTag).Set<std::string>();
@@ -210,7 +209,7 @@ absl::Status TopKScoresCalculator::Process(CalculatorContext* cc) {
                        .At(cc->InputTimestamp()));
   }
 
-  if (cc->Outputs().HasTag(kTopKClassificationTag)) {
+  if (cc->Outputs().HasTag(kTopKClassificationsTag)) {
     auto classification_list = absl::make_unique<ClassificationList>();
     for (int index = 0; index < top_k_indexes.size(); ++index) {
       Classification* classification =
@@ -221,6 +220,9 @@ absl::Status TopKScoresCalculator::Process(CalculatorContext* cc) {
         classification->set_label(top_k_labels[index]);
       }
     }
+
+    cc->Outputs().Tag(kTopKClassificationsTag).Add(
+        classification_list.release(), cc->InputTimestamp());
   }
   return absl::OkStatus();
 }
