@@ -369,7 +369,7 @@ cc_library(
     visibility = [":mediapipe_internal"],
     deps = [
         ":graph_service",
-        "//mediapipe/framework:packet",
+        ":packet",
         "@com_google_absl//absl/status",
     ],
 )
@@ -379,7 +379,7 @@ cc_test(
     srcs = ["graph_service_manager_test.cc"],
     deps = [
         ":graph_service_manager",
-        "//mediapipe/framework:packet",
+        ":packet",
         "//mediapipe/framework/port:gtest_main",
     ],
 )
