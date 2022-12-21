@@ -22,22 +22,22 @@ NS_ASSUME_NONNULL_BEGIN
 NS_SWIFT_NAME(ClassifierOptions)
 @interface MPPClassifierOptions : NSObject <NSCopying>
 
-/** If set, all classes  in this list will be filtered out from the results. */
-@property(nonatomic, copy) NSArray<NSString *> *labelDenyList;
-
-/** If set, all classes not in this list will be filtered out from the results. */
-@property(nonatomic, copy) NSArray<NSString *> *labelAllowList;
-
 /** The locale to use for display names specified through the TFLite Model 
  * Metadata, if any. Defaults to English. 
  */
 @property(nonatomic, copy) NSString *displayNamesLocale;
 
+/** Limit to the number of classes that can be returned in results. */
+@property(nonatomic) NSInteger maxResults;
+
 /** Results with score threshold greater than this value are returned. */
 @property(nonatomic) float scoreThreshold;
 
-/** Limit to the number of classes that can be returned in results. */
-@property(nonatomic) NSInteger maxResults;
+/** If set, all classes not in this list will be filtered out from the results. */
+@property(nonatomic, copy) NSArray<NSString *> *labelAllowList;
+
+/** If set, all classes  in this list will be filtered out from the results. */
+@property(nonatomic, copy) NSArray<NSString *> *labelDenyList;
 
 @end
 
