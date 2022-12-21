@@ -24,7 +24,7 @@ extern NSString *const MPPTasksErrorDomain;
 @interface MPPCommonUtils : NSObject
 
 /**
- * Creates and saves an NSError in the Mediapipe task library domain, with the given code and
+ * Creates and saves an NSError in the MediPipe task library domain, with the given code and
  * description.
  *
  * @param code Error code.
