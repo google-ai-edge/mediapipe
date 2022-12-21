@@ -18,12 +18,12 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * Any mediapipe task options should confirm to this protocol.
+ * Any MediaPipe task options should confirm to this protocol.
  */
 @protocol MPPTaskOptionsProtocol
 
 /**
- * Copies the iOS Mediapipe task options to an object of mediapipe::CalculatorOptions proto.
+ * Copies the iOS MediaPipe task options to an object of mediapipe::CalculatorOptions proto.
  */
 - (void)copyToProto:(mediapipe::CalculatorOptions *)optionsProto;
 
