@@ -27,7 +27,10 @@ NS_SWIFT_NAME(ClassifierOptions)
  */
 @property(nonatomic, copy) NSString *displayNamesLocale;
 
-/** Limit to the number of classes that can be returned in results. */
+/** The maximum number of top-scored classification results to return. If < 0,
+ * all available results will be returned. If 0, an invalid argument error is
+ * returned. 
+ */
 @property(nonatomic) NSInteger maxResults;
 
 /** Score threshold to override the one provided in the model metadata (if any). 
