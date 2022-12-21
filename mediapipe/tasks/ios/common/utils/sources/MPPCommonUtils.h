@@ -51,9 +51,9 @@ extern NSString *const MPPTasksErrorDomain;
               description:(NSString *)description;
 
 /**
- * Converts an absl status to an NSError.
+ * Converts an absl::Status to an NSError.
  *
- * @param status absl status.
+ * @param status absl::Status.
  * @param error Pointer to the memory location where the created error should be saved. If `nil`,
  * no error will be saved.
  */
@@ -68,7 +68,7 @@ extern NSString *const MPPTasksErrorDomain;
  * @param error Pointer to the memory location where errors if any should be saved. If `nil`, no
  * error will be saved.
  *
- * @return Pointer to the allocated block of memory on successfull allocation. nil in case as
+ * @return Pointer to the allocated block of memory on successfull allocation. `nil` in case as
  * error is encountered because of invalid memSize. If failure is due to any other reason, method
  * terminates program execution.
  */
