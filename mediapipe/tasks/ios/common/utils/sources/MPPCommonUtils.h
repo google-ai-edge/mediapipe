@@ -61,7 +61,7 @@ extern NSString *const MPPTasksErrorDomain;
 
 /**
  * Allocates a block of memory with the specified size and returns a pointer to it. If memory
- * cannot be allocated because of an invalid memSize, it saves an error. In other cases, it
+ * cannot be allocated because of an invalid `memSize`, it saves an error. In other cases, it
  * terminates program execution.
  *
  * @param memSize size of memory to be allocated
@@ -69,7 +69,7 @@ extern NSString *const MPPTasksErrorDomain;
  * error will be saved.
  *
  * @return Pointer to the allocated block of memory on successfull allocation. `nil` in case as
- * error is encountered because of invalid memSize. If failure is due to any other reason, method
+ * error is encountered because of invalid `memSize`. If failure is due to any other reason, method
  * terminates program execution.
  */
 + (void *)mallocWithSize:(size_t)memSize error:(NSError **)error;
