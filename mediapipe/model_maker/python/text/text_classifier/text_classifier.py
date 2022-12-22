@@ -33,7 +33,6 @@ from mediapipe.model_maker.python.text.text_classifier import preprocessor
 from mediapipe.model_maker.python.text.text_classifier import text_classifier_options
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer
 from mediapipe.tasks.python.metadata.metadata_writers import text_classifier as text_classifier_writer
-from official.nlp import optimization
 
 
 def _validate(options: text_classifier_options.TextClassifierOptions):
@@ -424,7 +423,7 @@ class _BertClassifier(TextClassifier):
         end_learning_rate=0.0,
         power=1.0)
     if warmup_steps:
-      lr_schedule = optimization.WarmUp(
+      lr_schedule = model_util.WarmUp(
           initial_learning_rate=initial_lr,
           decay_schedule_fn=lr_schedule,
           warmup_steps=warmup_steps)
