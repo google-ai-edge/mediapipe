@@ -146,6 +146,8 @@ py_test(
     tags = ["notsan"],
     deps = [
         ":gesture_recognizer_import",
+        ":hyperparameters",
+        ":model_options",
         "//mediapipe/model_maker/python/core/utils:test_util",
         "//mediapipe/tasks/python/test:test_utils",
     ],

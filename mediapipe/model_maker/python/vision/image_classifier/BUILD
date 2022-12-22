@@ -121,7 +121,9 @@ py_library(
     srcs = ["image_classifier_test.py"],
     data = ["//mediapipe/model_maker/python/vision/image_classifier/testdata"],
     deps = [
+        ":hyperparameters",
         ":image_classifier_import",
+        ":model_options",
         "//mediapipe/tasks/python/test:test_utils",
     ],
 )
