@@ -22,6 +22,8 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
 @implementation MPPClassifierOptions (Helpers)
 
 - (void)copyToProto:(ClassifierOptionsProto *)classifierOptionsProto {
+  classifierOptionsProto->Clear();
+  
   if (self.displayNamesLocale) {
     classifierOptionsProto->set_display_names_locale(self.displayNamesLocale.cppString);
   }
