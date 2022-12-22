@@ -17,7 +17,6 @@
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 
-
 NS_ASSUME_NONNULL_BEGIN
 
 /**
@@ -36,7 +35,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
                                         error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
-- (absl::StatusOr<mediapipe::tasks::core::PacketMap>)process:(const mediapipe::tasks::core::PacketMap&)packetMap error:(NSError **)error;
+- (absl::StatusOr<mediapipe::tasks::core::PacketMap>)
+    process:(const mediapipe::tasks::core::PacketMap &)packetMap
+      error:(NSError **)error;
 
 - (void)close;
 

@@ -17,7 +17,6 @@
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
 
-
 NS_ASSUME_NONNULL_BEGIN
 
 /**

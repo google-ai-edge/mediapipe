@@ -45,7 +45,7 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
   return self;
 }
 
-- (absl::StatusOr<PacketMap>)process:(const PacketMap&)packetMap {
+- (absl::StatusOr<PacketMap>)process:(const PacketMap &)packetMap {
   return _cppTaskRunner->Process(packetMap);
 }
 
