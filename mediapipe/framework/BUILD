@@ -1060,7 +1060,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":calculator_framework",
-        "//mediapipe/framework:test_calculators_cc_proto",
+        ":test_calculators_cc_proto",
         "//mediapipe/framework/deps:mathutil",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:integral_types",
