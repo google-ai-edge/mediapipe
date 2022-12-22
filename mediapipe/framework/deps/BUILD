@@ -20,9 +20,14 @@ load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 
 licenses(["notice"])
 
-package(default_visibility = [
-    "//mediapipe:__subpackages__",
-])
+package_group(
+    name = "mediapipe_internal",
+    packages = [
+        "//mediapipe/...",
+    ],
+)
+
+package(default_visibility = ["mediapipe_internal"])
 
 bzl_library(
     name = "expand_template_bzl",
@@ -214,6 +219,9 @@ cc_library(
     name = "registration",
     srcs = ["registration.cc"],
     hdrs = ["registration.h"],
+    visibility = [
+        "mediapipe_internal",
+    ],
     deps = [
         ":registration_token",
         "//mediapipe/framework/port:logging",
