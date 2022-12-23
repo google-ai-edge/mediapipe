@@ -28,3 +28,13 @@ objc_library(
         "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_cc_proto",
     ],
 )
+
+objc_library(
+    name = "MPPTextClassifierResultHelpers",
+    srcs = ["sources/MPPTextClassifierResult+Helpers.mm"],
+    hdrs = ["sources/MPPTextClassifierResult+Helpers.h"],
+    deps = [
+        "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifierResult",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
+    ],
+)

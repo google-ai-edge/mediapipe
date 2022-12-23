@@ -31,20 +31,20 @@ NS_SWIFT_NAME(TextClassifierOptions)
  */
 @property(nonatomic, copy) MPPClassifierOptions *classifierOptions;
 
-/**
- * Initializes a new `MPPTextClassifierOptions` with the absolute path to the model file
- * stored locally on the device, set to the given the model path.
- *
- * @discussion The external model file must be a single standalone TFLite file. It could be packed
- * with TFLite Model Metadata[1] and associated files if they exist. Failure to provide the
- * necessary metadata and associated files might result in errors. Check the [documentation]
- * (https://www.tensorflow.org/lite/convert/metadata) for each task about the specific requirement.
- *
- * @param modelPath An absolute path to a TensorFlow Lite model file stored locally on the device.
- *
- * @return An instance of `MPPTextClassifierOptions` initialized to the given model path.
- */
-- (instancetype)initWithModelPath:(NSString *)modelPath;
+// /**
+//  * Initializes a new `MPPTextClassifierOptions` with the absolute path to the model file
+//  * stored locally on the device, set to the given the model path.
+//  *
+//  * @discussion The external model file must be a single standalone TFLite file. It could be packed
+//  * with TFLite Model Metadata[1] and associated files if they exist. Failure to provide the
+//  * necessary metadata and associated files might result in errors. Check the [documentation]
+//  * (https://www.tensorflow.org/lite/convert/metadata) for each task about the specific requirement.
+//  *
+//  * @param modelPath An absolute path to a TensorFlow Lite model file stored locally on the device.
+//  *
+//  * @return An instance of `MPPTextClassifierOptions` initialized to the given model path.
+//  */
+// - (instancetype)initWithModelPath:(NSString *)modelPath;
 
 @end
 

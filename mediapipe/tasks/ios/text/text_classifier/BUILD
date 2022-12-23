@@ -27,10 +27,10 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
-        "//mediapipe/tasks/ios/core:MPPTaskManager",
-        "//mediapipe/tasks/ios/core:MPPPacketCreator",
+        "//mediapipe/tasks/ios/core:MPPTaskRunner",
+        "//mediapipe/tasks/ios/core:MPPTextPacketCreator",
         "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierOptionsHelpers",
-        "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
+        "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierResultHelpers",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         ":MPPTextClassifierOptions",
@@ -51,3 +51,12 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPTextClassifierResult",
+    srcs = ["sources/MPPTextClassifierResult.m"],
+    hdrs = ["sources/MPPTextClassifierResult.h"],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPTaskResult",
+        "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+    ],
+)

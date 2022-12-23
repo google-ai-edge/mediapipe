@@ -39,9 +39,9 @@
   NSArray<MPPClassifications *> *_classifications;
 }
 
-- (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications
-                              timeStamp:(long)timeStamp {
-  self = [super initWithTimeStamp:timeStamp];
+- (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications {
+  
+  self = [super init];
   if (self) {
     _classifications = classifications;
   }

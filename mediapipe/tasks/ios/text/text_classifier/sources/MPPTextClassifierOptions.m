@@ -16,12 +16,12 @@
 
 @implementation MPPTextClassifierOptions
 
-- (instancetype)initWithModelPath:(NSString *)modelPath {
-  self = [super initWithModelPath:modelPath];
-  if (self) {
-    _classifierOptions = [[MPPClassifierOptions alloc] init];
-  }
-  return self;
-}
+// - (instancetype)initWithModelPath:(NSString *)modelPath {
+//   self = [super initWithModelPath:modelPath];
+//   if (self) {
+//     _classifierOptions = [[MPPClassifierOptions alloc] init];
+//   }
+//   return self;
+// }
 
 @end

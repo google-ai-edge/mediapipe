@@ -15,9 +15,9 @@
 #import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifier.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
-#import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
-#import "mediapipe/tasks/ios/core/sources/MPPPacketCreator.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskManager.h"
+#import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierResult+Helpers.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTextPacketCreator.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierOptions+Helpers.h"
 
@@ -30,14 +30,14 @@ using ::mediapipe::tasks::core::PacketMap;
 }  // namespace
 
 static NSString *const kClassificationsStreamName = @"classifications_out";
-static NSString *const kClassificationsTag = @"classifications";
+static NSString *const kClassificationsTag = @"CLASSIFICATIONS";
 static NSString *const kTextInStreamName = @"text_in";
 static NSString *const kTextTag = @"TEXT";
 static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.TextClassifierGraph";
 
 @interface MPPTextClassifier () {
   /** TextSearcher backed by C++ API */
-  MPPTaskManager *_taskManager;
+  MPPTaskRunner *_taskRunner;
 }
 @end
 
@@ -47,8 +47,8 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
 
   MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
       initWithTaskGraphName:kTaskGraphName
-               inputStreams:@[ [NSString stringWithFormat:@"@:@", kTextTag, kTextInStreamName] ]
-              outputStreams:@[ [NSString stringWithFormat:@"@:@", kClassificationsTag,
+               inputStreams:@[ [NSString stringWithFormat:@"%@:%@", kTextTag, kTextInStreamName] ]
+              outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kClassificationsTag,
                                                           kClassificationsStreamName] ]
                 taskOptions:options
          enableFlowLimiting:NO
@@ -58,7 +58,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
     return nil;
   }
 
-  _taskManager = [[MPPTaskManager alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig] error:error];
+  _taskRunner = [[MPPTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig] error:error];
 
   self = [super init];
   
@@ -66,22 +66,23 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
 }
 
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
-  MPPTextClassifierOptions *options =
-      [[MPPTextClassifierOptions alloc] initWithModelPath:modelPath];
+  MPPTextClassifierOptions *options = [[MPPTextClassifierOptions alloc] init];
+
+  options.baseOptions.modelAssetPath = modelPath;
 
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPClassificationResult *)classifyWithText:(NSString *)text error:(NSError **)error {
-  Packet packet = [MPPPacketCreator createWithText:text];
+- (nullable MPPTextClassifierResult *)classifyWithText:(NSString *)text error:(NSError **)error {
+  Packet packet = [MPPTextPacketCreator createWithText:text];
 
-  absl::StatusOr<PacketMap> output_packet_map = [_taskManager process:{{kTextInStreamName.cppString, packet}} error:error];
+  absl::StatusOr<PacketMap> output_packet_map = [_taskRunner process:{{kTextInStreamName.cppString, packet}} error:error];
   if (![MPPCommonUtils checkCppError:output_packet_map.status() toError:error]) {
     return nil;
   }
 
-  return [MPPClassificationResult
-      classificationResultWithProto:output_packet_map.value()[kClassificationsStreamName.cppString]
+  return [MPPTextClassifierResult
+      textClassifierResultWithProto:output_packet_map.value()[kClassificationsStreamName.cppString]
                                         .Get<ClassificationResult>()];
 }
 

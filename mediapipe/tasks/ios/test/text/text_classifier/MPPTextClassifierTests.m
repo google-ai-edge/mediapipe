@@ -19,6 +19,28 @@
 NS_ASSUME_NONNULL_BEGIN
 
 static NSString *const kBertTextClassifierModelName = @"bert_text_classifier";
+static NSString *const kNegativeText = @"unflinchingly bleak and desperate";
+
+#define VerifyCategory(category, expectedIndex, expectedScore, expectedLabel, expectedDisplayName) \
+  XCTAssertEqual(category.index, expectedIndex);                                                   \
+  XCTAssertEqualWithAccuracy(category.score, expectedScore, 1e-6);                                 \
+  XCTAssertEqualObjects(category.label, expectedLabel);                                            \
+  XCTAssertEqualObjects(category.displayName, expectedDisplayName);
+
+#define VerifyClassifications(classifications, expectedHeadIndex, expectedCategoryCount) \
+  XCTAssertEqual(classifications.categories.count, expectedCategoryCount);               
+
+#define VerifyClassificationResult(classificationResult, expectedClassificationsCount) \
+  XCTAssertNotNil(classificationResult);                                               \
+  XCTAssertEqual(classificationResult.classifications.count, expectedClassificationsCount)
+
+#define AssertClassificationResultHasOneHead(classificationResult) \
+  XCTAssertNotNil(classificationResult);                                               \
+  XCTAssertEqual(classificationResult.classifications.count, 1);
+  XCTAssertEqual(classificationResult.classifications[0].headIndex, 1);
+
+#define AssertTextClassifierResultIsNotNil(textClassifierResult) \
+  XCTAssertNotNil(textClassifierResult);                                          
 
 @interface MPPTextClassifierTests : XCTestCase
 @end
@@ -41,15 +63,25 @@ static NSString *const kBertTextClassifierModelName = @"bert_text_classifier";
 - (MPPTextClassifierOptions *)textClassifierOptionsWithModelName:(NSString *)modelName {
   NSString *modelPath = [self filePathWithName:modelName extension:@"tflite"];
   MPPTextClassifierOptions *textClassifierOptions =
-      [[MPPTextClassifierOptions alloc] initWithModelPath:modelPath];
+      [[MPPTextClassifierOptions alloc] init];
+  textClassifierOptions.baseOptions.modelAssetPath = modelPath;
 
   return textClassifierOptions;
 }
 
-- (void)testCreateTextClassifierOptionsSucceeds {
-  MPPTextClassifierOptions *options = [self textClassifierOptionsWithModelName:kBertTextClassifierModelName];
+kBertTextClassifierModelName
+
+- (MPPTextClassifier *)createTextClassifierFromOptionsWithModelName:(NSString *)modelName {
+  MPPTextClassifierOptions *options = [self textClassifierOptionsWithModelName:modelName];
   MPPTextClassifier *textClassifier = [[MPPTextClassifier alloc] initWithOptions:options error:nil];
   XCTAssertNotNil(textClassifier);
+
+  return textClassifier
+}
+
+- (void)classifyWithBertSucceeds {
+  MPPTextClassifier *textClassifier = [self createTextClassifierWithModelName:kBertTextClassifierModelName];
+  MPPTextClassifierResult *textClassifierResult = [textClassifier classifyWithText:kNegativeText];
 }
 
 @end

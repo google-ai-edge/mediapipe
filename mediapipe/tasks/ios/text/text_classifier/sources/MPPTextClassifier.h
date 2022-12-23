@@ -14,7 +14,7 @@
  ==============================================================================*/
 #import <Foundation/Foundation.h>
 
-#import "mediapipe/tasks/ios/components/containers/sources/MPPClassificationResult.h"
+#import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierResult.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
 #import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierOptions.h"
 
@@ -52,7 +52,7 @@ NS_SWIFT_NAME(TextClassifier)
  */
 - (instancetype)initWithOptions:(MPPTextClassifierOptions *)options error:(NSError **)error;
 
-- (nullable MPPClassificationResult *)classifyWithText:(NSString *)text error:(NSError **)error;
+- (nullable MPPTextClassifierResult *)classifyWithText:(NSString *)text error:(NSError **)error;
 
 - (instancetype)init NS_UNAVAILABLE;
 

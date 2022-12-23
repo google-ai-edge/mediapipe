@@ -28,6 +28,5 @@ objc_library(
     hdrs = ["sources/MPPClassificationResult.h"],
     deps = [
         ":MPPCategory",
-        "//mediapipe/tasks/ios/core:MPPTaskResult",
     ],
 )

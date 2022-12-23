@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierOptions.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+#import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface MPPTextClassifierOptions (Helpers) <MPPTaskOptionsProtocol>
+@interface MPPTextClassifierResult (Helpers)
 
-- (void)copyToProto:(mediapipe::CalculatorOptions *)optionsProto;
++ (MPPTextClassifierResult *)textClassifierResultWithProto:
+    (const mediapipe::tasks::components::containers::proto::ClassificationResult &)
+        classificationResultProto;
 
 @end
 

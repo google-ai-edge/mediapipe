@@ -53,14 +53,7 @@ using ClassificationResultProto =
     [classifications addObject:[MPPClassifications classificationsWithProto:classifications_proto]];
   }
 
-  long timeStamp;
-
-  if (classificationResultProto.has_timestamp_ms()) {
-    timeStamp = classificationResultProto.timestamp_ms();
-  }
-
-  return [[MPPClassificationResult alloc] initWithClassifications:classifications
-                                                        timeStamp:timeStamp];
+  return [[MPPClassificationResult alloc] initWithClassifications:classifications];
 }
 
 @end
