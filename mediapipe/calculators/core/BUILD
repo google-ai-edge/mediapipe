@@ -567,7 +567,7 @@ cc_library(
     name = "packet_thinner_calculator",
     srcs = ["packet_thinner_calculator.cc"],
     deps = [
-        "//mediapipe/calculators/core:packet_thinner_calculator_cc_proto",
+        ":packet_thinner_calculator_cc_proto",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:video_stream_header",
@@ -584,7 +584,7 @@ cc_test(
     srcs = ["packet_thinner_calculator_test.cc"],
     deps = [
         ":packet_thinner_calculator",
-        "//mediapipe/calculators/core:packet_thinner_calculator_cc_proto",
+        ":packet_thinner_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/formats:video_stream_header",
@@ -762,7 +762,7 @@ cc_library(
     srcs = ["packet_resampler_calculator.cc"],
     hdrs = ["packet_resampler_calculator.h"],
     deps = [
-        "//mediapipe/calculators/core:packet_resampler_calculator_cc_proto",
+        ":packet_resampler_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:collection_item_id",
         "//mediapipe/framework/deps:mathutil",
@@ -786,7 +786,7 @@ cc_test(
     ],
     deps = [
         ":packet_resampler_calculator",
-        "//mediapipe/calculators/core:packet_resampler_calculator_cc_proto",
+        ":packet_resampler_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/formats:video_stream_header",
@@ -852,10 +852,10 @@ cc_test(
     name = "flow_limiter_calculator_test",
     srcs = ["flow_limiter_calculator_test.cc"],
     deps = [
+        ":counting_source_calculator",
         ":flow_limiter_calculator",
         ":flow_limiter_calculator_cc_proto",
-        "//mediapipe/calculators/core:counting_source_calculator",
-        "//mediapipe/calculators/core:pass_through_calculator",
+        ":pass_through_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework:test_calculators",
@@ -1302,7 +1302,7 @@ cc_test(
     srcs = ["packet_sequencer_calculator_test.cc"],
     deps = [
         ":packet_sequencer_calculator",
-        "//mediapipe/calculators/core:pass_through_calculator",
+        ":pass_through_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:subgraph",

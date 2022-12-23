@@ -68,8 +68,8 @@ class GlProcessor : public ImageToTensorConverter {
 
       constexpr GLchar kExtractSubRectVertexShader[] = R"(
             in vec4 position;
-            in mediump vec4 texture_coordinate;
-            out mediump vec2 sample_coordinate;
+            in highp vec4 texture_coordinate;
+            out highp vec2 sample_coordinate;
             uniform mat4 transform_matrix;
 
             void main() {
@@ -86,7 +86,7 @@ class GlProcessor : public ImageToTensorConverter {
           )";
 
       constexpr GLchar kExtractSubRectFragBody[] = R"(
-            DEFAULT_PRECISION(mediump, float)
+            DEFAULT_PRECISION(highp, float)
 
             // Provided by kExtractSubRectVertexShader.
             in vec2 sample_coordinate;

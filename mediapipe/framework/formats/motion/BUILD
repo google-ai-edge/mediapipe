@@ -38,11 +38,11 @@ cc_library(
     srcs = ["optical_flow_field.cc"],
     hdrs = ["optical_flow_field.h"],
     deps = [
+        ":optical_flow_field_data_cc_proto",
         "//mediapipe/framework:type_map",
         "//mediapipe/framework/deps:mathutil",
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/formats:location_opencv",
-        "//mediapipe/framework/formats/motion:optical_flow_field_data_cc_proto",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",

@@ -71,7 +71,7 @@ async function configureExternalFile(
 /** Configues the `acceleration` option. */
 function configureAcceleration(options: BaseOptions, proto: BaseOptionsProto) {
   const acceleration = proto.getAcceleration() ?? new Acceleration();
-  if (options.delegate === 'gpu') {
+  if (options.delegate === 'GPU') {
     acceleration.setGpu(new InferenceCalculatorOptions.Delegate.Gpu());
   } else {
     acceleration.setTflite(new InferenceCalculatorOptions.Delegate.TfLite());

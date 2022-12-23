@@ -378,8 +378,8 @@ cc_library(
     name = "scale_image_calculator",
     srcs = ["scale_image_calculator.cc"],
     deps = [
+        ":scale_image_calculator_cc_proto",
         ":scale_image_utils",
-        "//mediapipe/calculators/image:scale_image_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
@@ -747,8 +747,8 @@ cc_test(
     tags = ["desktop_only_test"],
     deps = [
         ":affine_transformation",
+        ":image_transformation_calculator",
         ":warp_affine_calculator",
-        "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_converter",
         "//mediapipe/calculators/tensor:image_to_tensor_utils",
         "//mediapipe/calculators/util:from_image_calculator",

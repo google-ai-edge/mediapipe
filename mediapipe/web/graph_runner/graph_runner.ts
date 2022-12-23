@@ -1028,7 +1028,9 @@ export class GraphRunner {
     // Set up our TS listener to receive any packets for this stream, and
     // additionally reformat our Uint8Array into a Float32Array for the user.
     this.setListener(outputStreamName, (data: Uint8Array) => {
-      const floatArray = new Float32Array(data.buffer);  // Should be very fast
+      // Should be very fast
+      const floatArray =
+          new Float32Array(data.buffer, data.byteOffset, data.length / 4);
       callbackFcn(floatArray);
     });
 

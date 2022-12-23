@@ -564,6 +564,7 @@ cc_library(
     name = "gpu_shared_data_internal_stub",
     visibility = ["//visibility:private"],
     deps = [
+        ":gl_context_options_cc_proto",
         ":graph_support",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
@@ -571,7 +572,6 @@ cc_library(
         "//mediapipe/framework:port",
         "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/gpu:gl_context_options_cc_proto",
     ],
 )
 
@@ -592,7 +592,7 @@ cc_library(
     }),
     visibility = ["//visibility:private"],
     deps = [
-        "//mediapipe/gpu:gl_context_options_cc_proto",
+        ":gl_context_options_cc_proto",
         ":graph_support",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:executor",
@@ -833,10 +833,10 @@ cc_library(
     deps = [
         ":gl_base",
         ":gl_simple_shaders",
+        ":scale_mode_cc_proto",
         ":shader_util",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/gpu:scale_mode_cc_proto",
     ],
 )
 
@@ -907,8 +907,8 @@ proto_library(
     srcs = ["gl_scaler_calculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
+        ":scale_mode_proto",
         "//mediapipe/framework:calculator_proto",
-        "//mediapipe/gpu:scale_mode_proto",
     ],
 )
 
@@ -930,6 +930,7 @@ cc_library(
     deps = [
         ":gl_calculator_helper",
         ":gl_quad_renderer",
+        ":gl_scaler_calculator_cc_proto",
         ":gl_simple_shaders",
         ":shader_util",
         "//mediapipe/framework:calculator_framework",
@@ -937,7 +938,6 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:options_util",
-        "//mediapipe/gpu:gl_scaler_calculator_cc_proto",
     ],
     alwayslink = 1,
 )
@@ -950,13 +950,13 @@ cc_library(
         ":egl_surface_holder",
         ":gl_calculator_helper",
         ":gl_quad_renderer",
+        ":gl_surface_sink_calculator_cc_proto",
         ":gpu_buffer",
         ":shader_util",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/gpu:gl_surface_sink_calculator_cc_proto",
         "@com_google_absl//absl/synchronization",
     ],
     alwayslink = 1,
@@ -966,8 +966,8 @@ proto_library(
     name = "gl_surface_sink_calculator_proto",
     srcs = ["gl_surface_sink_calculator.proto"],
     deps = [
+        ":scale_mode_proto",
         "//mediapipe/framework:calculator_proto",
-        "//mediapipe/gpu:scale_mode_proto",
     ],
 )
 
