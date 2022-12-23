@@ -398,7 +398,7 @@ template <class Calc = internal::Generic>
 class Node;
 #if __cplusplus >= 201703L
 // Deduction guide to silence -Wctad-maybe-unsupported.
-explicit Node()->Node<internal::Generic>;
+explicit Node() -> Node<internal::Generic>;
 #endif  // C++17
 
 template <>
