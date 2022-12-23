@@ -17,7 +17,6 @@
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
 
-
 NS_ASSUME_NONNULL_BEGIN
 
 /**
@@ -55,7 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
                         outputStreams:(NSArray<NSString *> *)outputStreams
                           taskOptions:(id<MPPTaskOptionsProtocol>)taskOptions
                    enableFlowLimiting:(BOOL)enableFlowLimiting
-                                error:(NSError **)error;
+                                error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
  * Creates a MediaPipe Task  protobuf message from the MPPTaskInfo instance.

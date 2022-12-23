@@ -44,22 +44,14 @@ async function isSimdSupported(): Promise<boolean> {
 }
 
 async function createFileset(
-    taskName: string, basePath: string = '.'): Promise<WasmFileset> {
-  if (await isSimdSupported()) {
-    return {
-      wasmLoaderPath:
-          `${basePath}/${taskName}_wasm_internal.js`,
-      wasmBinaryPath:
-          `${basePath}/${taskName}_wasm_internal.wasm`,
-    };
-  } else {
-    return {
-      wasmLoaderPath:
-          `${basePath}/${taskName}_wasm_nosimd_internal.js`,
-      wasmBinaryPath:
-          `${basePath}/${taskName}_wasm_nosimd_internal.wasm`,
-    };
-  }
+    taskName: string, basePath: string = ''): Promise<WasmFileset> {
+  const suffix =
+      await isSimdSupported() ? 'wasm_internal' : 'wasm_nosimd_internal';
+
+  return {
+    wasmLoaderPath: `${basePath}/${taskName}_${suffix}.js`,
+    wasmBinaryPath: `${basePath}/${taskName}_${suffix}.wasm`,
+  };
 }
 
 // tslint:disable:class-as-namespace

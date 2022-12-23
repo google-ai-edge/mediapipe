@@ -48,16 +48,20 @@ void ImageSubmodule(pybind11::module* module) {
   become immutable after creation.
 
   Creation examples:
-    import cv2
-    cv_mat = cv2.imread(input_file)[:, :, ::-1]
-    rgb_frame = mp.Image(format=ImageFormat.SRGB, data=cv_mat)
-    gray_frame = mp.Image(
-        format=ImageFormat.GRAY, data=cv2.cvtColor(cv_mat, cv2.COLOR_RGB2GRAY))
 
-    from PIL import Image
-    pil_img = Image.new('RGB', (60, 30), color = 'red')
-    image = mp.Image(
-        format=mp.ImageFormat.SRGB, data=np.asarray(pil_img))
+  ```python
+  import cv2
+  cv_mat = cv2.imread(input_file)[:, :, ::-1]
+  rgb_frame = mp.Image(image_format=ImageFormat.SRGB, data=cv_mat)
+  gray_frame = mp.Image(
+      image_format=ImageFormat.GRAY,
+      data=cv2.cvtColor(cv_mat, cv2.COLOR_RGB2GRAY))
+
+  from PIL import Image
+  pil_img = Image.new('RGB', (60, 30), color = 'red')
+  image = mp.Image(
+      image_format=mp.ImageFormat.SRGB, data=np.asarray(pil_img))
+  ```
 
   The pixel data in an Image can be retrieved as a numpy ndarray by calling
   `Image.numpy_view()`. The returned numpy ndarray is a reference to the
@@ -65,15 +69,18 @@ void ImageSubmodule(pybind11::module* module) {
   numpy ndarray, it's required to obtain a copy of it.
 
   Pixel data retrieval examples:
-    for channel in range(num_channel):
-      for col in range(width):
-        for row in range(height):
-          print(image[row, col, channel])
 
-    output_ndarray = image.numpy_view()
-    print(output_ndarray[0, 0, 0])
-    copied_ndarray = np.copy(output_ndarray)
-    copied_ndarray[0,0,0] = 0
+  ```python
+  for channel in range(num_channel):
+    for col in range(width):
+      for row in range(height):
+        print(image[row, col, channel])
+
+  output_ndarray = image.numpy_view()
+  print(output_ndarray[0, 0, 0])
+  copied_ndarray = np.copy(output_ndarray)
+  copied_ndarray[0,0,0] = 0
+  ```
   )doc",
       py::dynamic_attr());
 
@@ -156,9 +163,11 @@ void ImageSubmodule(pybind11::module* module) {
     An unwritable numpy ndarray.
 
   Examples:
+    ```
     output_ndarray = image.numpy_view()
     copied_ndarray = np.copy(output_ndarray)
     copied_ndarray[0,0,0] = 0
+    ```
 )doc");
 
   image.def(
@@ -191,10 +200,12 @@ void ImageSubmodule(pybind11::module* module) {
     IndexError: If the index is invalid or out of bounds.
 
   Examples:
+    ```
     for channel in range(num_channel):
       for col in range(width):
         for row in range(height):
           print(image[row, col, channel])
+    ```
 )doc");
 
   image
@@ -224,7 +235,9 @@ void ImageSubmodule(pybind11::module* module) {
     A boolean.
 
   Examples:
+    ```
     image.is_aligned(16)
+    ```
 )doc");
 
   image.def_static(

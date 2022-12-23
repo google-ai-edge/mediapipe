@@ -20,17 +20,23 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
 }
 
 @implementation MPPClassifierOptions (Helpers)
+
 - (void)copyToProto:(ClassifierOptionsProto *)classifierOptionsProto {
+  classifierOptionsProto->Clear();
+  
   if (self.displayNamesLocale) {
     classifierOptionsProto->set_display_names_locale(self.displayNamesLocale.cppString);
   }
+
   classifierOptionsProto->set_max_results((int)self.maxResults);
+
   classifierOptionsProto->set_score_threshold(self.scoreThreshold);
-  for (NSString *category in self.labelAllowList) {
+
+  for (NSString *category in self.categoryAllowlist) {
     classifierOptionsProto->add_category_allowlist(category.cppString);
   }
 
-  for (NSString *category in self.labelDenyList) {
+  for (NSString *category in self.categoryDenylist) {
     classifierOptionsProto->add_category_denylist(category.cppString);
   }
 }

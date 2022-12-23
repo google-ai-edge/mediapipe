@@ -212,9 +212,6 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferReadView() const {
   CHECK(!(valid_ & kValidOpenGlTexture2d))
       << "Tensor conversion between OpenGL texture and AHardwareBuffer is not "
          "supported.";
-  CHECK(ahwb_ || !(valid_ & kValidOpenGlBuffer))
-      << "Interoperability bettween OpenGL buffer and AHardwareBuffer is not "
-         "supported on target system.";
   bool transfer = !ahwb_;
   CHECK(AllocateAHardwareBuffer())
       << "AHardwareBuffer is not supported on the target system.";
@@ -268,6 +265,10 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView(
 }
 
 bool Tensor::AllocateAHardwareBuffer(int size_alignment) const {
+  // Mark current tracking key as Ahwb-use.
+  ahwb_usage_track_.insert(ahwb_tracking_key_);
+  use_ahwb_ = true;
+
   if (__builtin_available(android 26, *)) {
     if (ahwb_ == nullptr) {
       AHardwareBuffer_Desc desc = {};
@@ -315,7 +316,13 @@ void Tensor::MoveCpuOrSsboToAhwb() const {
         ahwb_, AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY, -1, nullptr, &dest);
     CHECK(error == 0) << "AHardwareBuffer_lock " << error;
   }
-  if (valid_ & kValidOpenGlBuffer) {
+  if (valid_ & kValidCpu) {
+    std::memcpy(dest, cpu_buffer_, bytes());
+    // Free CPU memory because next time AHWB is mapped instead.
+    free(cpu_buffer_);
+    cpu_buffer_ = nullptr;
+    valid_ &= ~kValidCpu;
+  } else if (valid_ & kValidOpenGlBuffer) {
     gl_context_->Run([this, dest]() {
       glBindBuffer(GL_SHADER_STORAGE_BUFFER, opengl_buffer_);
       const void* src = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, bytes(),
@@ -326,11 +333,9 @@ void Tensor::MoveCpuOrSsboToAhwb() const {
     });
     opengl_buffer_ = GL_INVALID_INDEX;
     gl_context_ = nullptr;
-  } else if (valid_ & kValidCpu) {
-    std::memcpy(dest, cpu_buffer_, bytes());
-    // Free CPU memory because next time AHWB is mapped instead.
-    free(cpu_buffer_);
-    cpu_buffer_ = nullptr;
+    // Reset OpenGL Buffer validness. The OpenGL buffer will be allocated on top
+    // of the Ahwb at the next request to the OpenGlBufferView.
+    valid_ &= ~kValidOpenGlBuffer;
   } else {
     LOG(FATAL) << "Can't convert tensor with mask " << valid_ << " into AHWB.";
   }
@@ -446,6 +451,16 @@ void* Tensor::MapAhwbToCpuWrite() const {
   return nullptr;
 }
 
+void Tensor::TrackAhwbUsage(uint64_t source_location_hash) const {
+  if (ahwb_tracking_key_ == 0) {
+    ahwb_tracking_key_ = source_location_hash;
+    for (int dim : shape_.dims) {
+      ahwb_tracking_key_ = tensor_internal::FnvHash64(ahwb_tracking_key_, dim);
+    }
+  }
+  use_ahwb_ = ahwb_usage_track_.contains(ahwb_tracking_key_);
+}
+
 #else  // MEDIAPIPE_TENSOR_USE_AHWB
 
 bool Tensor::AllocateAhwbMapToSsbo() const { return false; }
@@ -454,6 +469,7 @@ void Tensor::MoveAhwbStuff(Tensor* src) {}
 void Tensor::ReleaseAhwbStuff() {}
 void* Tensor::MapAhwbToCpuRead() const { return nullptr; }
 void* Tensor::MapAhwbToCpuWrite() const { return nullptr; }
+void Tensor::TrackAhwbUsage(uint64_t key) const {}
 
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 

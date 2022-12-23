@@ -183,6 +183,8 @@ public final class HandLandmarker extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<HandLandmarkerOptions>builder()
+                .setTaskName(HandLandmarker.class.getSimpleName())
+                .setTaskRunningModeName(landmarkerOptions.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)

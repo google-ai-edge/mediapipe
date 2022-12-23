@@ -203,6 +203,8 @@ public final class AudioClassifier extends BaseAudioTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<AudioClassifierOptions>builder()
+                .setTaskName(AudioClassifier.class.getSimpleName())
+                .setTaskRunningModeName(options.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)

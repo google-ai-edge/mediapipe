@@ -22,8 +22,8 @@ cc_library(
     name = "alignment_points_to_rects_calculator",
     srcs = ["alignment_points_to_rects_calculator.cc"],
     deps = [
+        ":detections_to_rects_calculator",
         ":detections_to_rects_calculator_cc_proto",
-        "//mediapipe/calculators/util:detections_to_rects_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:detection_cc_proto",

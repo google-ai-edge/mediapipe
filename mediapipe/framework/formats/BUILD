@@ -26,7 +26,7 @@ licenses(["notice"])
 mediapipe_proto_library(
     name = "detection_proto",
     srcs = ["detection.proto"],
-    deps = ["//mediapipe/framework/formats:location_data_proto"],
+    deps = [":location_data_proto"],
 )
 
 mediapipe_register_type(
@@ -38,7 +38,7 @@ mediapipe_register_type(
         "::std::vector<::mediapipe::Detection>",
         "::std::vector<::mediapipe::DetectionList>",
     ],
-    deps = ["//mediapipe/framework/formats:detection_cc_proto"],
+    deps = [":detection_cc_proto"],
 )
 
 mediapipe_proto_library(
@@ -105,8 +105,8 @@ cc_library(
     srcs = ["matrix.cc"],
     hdrs = ["matrix.h"],
     deps = [
+        ":matrix_data_cc_proto",
         "//mediapipe/framework:port",
-        "//mediapipe/framework/formats:matrix_data_cc_proto",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
@@ -142,7 +142,7 @@ cc_library(
     srcs = ["image_frame.cc"],
     hdrs = ["image_frame.h"],
     deps = [
-        "//mediapipe/framework/formats:image_format_cc_proto",
+        ":image_format_cc_proto",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
@@ -166,8 +166,8 @@ cc_library(
     srcs = ["image_frame_opencv.cc"],
     hdrs = ["image_frame_opencv.h"],
     deps = [
+        ":image_format_cc_proto",
         ":image_frame",
-        "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/port:opencv_core",
     ],
 )
@@ -194,7 +194,7 @@ cc_library(
     deps = [
         "@com_google_protobuf//:protobuf",
         "//mediapipe/framework/formats/annotation:locus_cc_proto",
-        "//mediapipe/framework/formats:location_data_cc_proto",
+        ":location_data_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
@@ -245,7 +245,7 @@ cc_library(
     name = "video_stream_header",
     hdrs = ["video_stream_header.h"],
     deps = [
-        "//mediapipe/framework/formats:image_format_cc_proto",
+        ":image_format_cc_proto",
     ],
 )
 
@@ -263,9 +263,9 @@ cc_test(
     size = "small",
     srcs = ["image_frame_opencv_test.cc"],
     deps = [
+        ":image_format_cc_proto",
         ":image_frame",
         ":image_frame_opencv",
-        "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
@@ -324,8 +324,8 @@ cc_library(
         "//conditions:default": [],
     }),
     deps = [
-        "//mediapipe/framework/formats:image_format_cc_proto",
-        "//mediapipe/framework/formats:image_frame",
+        ":image_format_cc_proto",
+        ":image_frame",
         "@com_google_absl//absl/synchronization",
         "//mediapipe/framework:port",
         "//mediapipe/framework:type_map",
@@ -354,7 +354,7 @@ cc_library(
     hdrs = ["image_multi_pool.h"],
     deps = [
         ":image",
-        "//mediapipe/framework/formats:image_frame_pool",
+        ":image_frame_pool",
         "//mediapipe/framework:port",
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/memory",
@@ -390,7 +390,7 @@ cc_library(
     ],
     deps = [
         ":image",
-        "//mediapipe/framework/formats:image_format_cc_proto",
+        ":image_format_cc_proto",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:statusor",
@@ -428,7 +428,10 @@ cc_library(
             "tensor.cc",
             "tensor_ahwb.cc",
         ],
-    hdrs = ["tensor.h"],
+    hdrs = [
+        "tensor.h",
+        "tensor_internal.h",
+    ],
     copts = select({
         "//mediapipe:apple": [
             "-x objective-c++",
@@ -452,6 +455,7 @@ cc_library(
         ],
     }),
     deps = [
+        "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
         "//mediapipe/framework:port",

@@ -169,6 +169,7 @@ public final class TextClassifier implements AutoCloseable {
         TaskRunner.create(
             context,
             TaskInfo.<TextClassifierOptions>builder()
+                .setTaskName(TextClassifier.class.getSimpleName())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)

@@ -23,4 +23,3 @@ objc_library(
     ],
     module_name = "MPPCommon",
 )
-

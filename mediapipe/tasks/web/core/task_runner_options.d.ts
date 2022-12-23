@@ -31,7 +31,7 @@ export declare interface BaseOptions {
   modelAssetBuffer?: Uint8Array|undefined;
 
   /** Overrides the default backend to use for the provided model. */
-  delegate?: 'cpu'|'gpu'|undefined;
+  delegate?: 'CPU'|'GPU'|undefined;
 }
 
 /** Options to configure MediaPipe Tasks in general. */

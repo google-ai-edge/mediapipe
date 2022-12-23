@@ -24,7 +24,7 @@ extern NSString *const MPPTasksErrorDomain;
 @interface MPPCommonUtils : NSObject
 
 /**
- * Creates and saves an NSError in the Mediapipe task library domain, with the given code and
+ * Creates and saves an NSError in the MediPipe task library domain, with the given code and
  * description.
  *
  * @param code Error code.
@@ -51,9 +51,9 @@ extern NSString *const MPPTasksErrorDomain;
               description:(NSString *)description;
 
 /**
- * Converts an absl status to an NSError.
+ * Converts an absl::Status to an NSError.
  *
- * @param status absl status.
+ * @param status absl::Status.
  * @param error Pointer to the memory location where the created error should be saved. If `nil`,
  * no error will be saved.
  */
@@ -61,15 +61,15 @@ extern NSString *const MPPTasksErrorDomain;
 
 /**
  * Allocates a block of memory with the specified size and returns a pointer to it. If memory
- * cannot be allocated because of an invalid memSize, it saves an error. In other cases, it
+ * cannot be allocated because of an invalid `memSize`, it saves an error. In other cases, it
  * terminates program execution.
  *
  * @param memSize size of memory to be allocated
  * @param error Pointer to the memory location where errors if any should be saved. If `nil`, no
  * error will be saved.
  *
- * @return Pointer to the allocated block of memory on successfull allocation. nil in case as
- * error is encountered because of invalid memSize. If failure is due to any other reason, method
+ * @return Pointer to the allocated block of memory on successfull allocation. `nil` in case as
+ * error is encountered because of invalid `memSize`. If failure is due to any other reason, method
  * terminates program execution.
  */
 + (void *)mallocWithSize:(size_t)memSize error:(NSError **)error;

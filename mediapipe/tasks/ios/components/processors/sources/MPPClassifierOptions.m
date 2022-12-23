@@ -30,8 +30,8 @@
 
   classifierOptions.scoreThreshold = self.scoreThreshold;
   classifierOptions.maxResults = self.maxResults;
-  classifierOptions.labelDenyList = self.labelDenyList;
-  classifierOptions.labelAllowList = self.labelAllowList;
+  classifierOptions.categoryDenylist = self.categoryDenylist;
+  classifierOptions.categoryAllowlist = self.categoryAllowlist;
   classifierOptions.displayNamesLocale = self.displayNamesLocale;
 
   return classifierOptions;

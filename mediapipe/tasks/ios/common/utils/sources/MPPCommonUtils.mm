@@ -24,7 +24,7 @@
 #include "mediapipe/tasks/cc/common.h"
 
 /** Error domain of MediaPipe task library errors. */
-NSString *const MPPTasksErrorDomain = @"org.mediapipe.tasks";
+NSString *const MPPTasksErrorDomain = @"com.google.mediapipe.tasks";
 
 @implementation MPPCommonUtils
 
@@ -68,7 +68,7 @@ NSString *const MPPTasksErrorDomain = @"org.mediapipe.tasks";
   if (status.ok()) {
     return YES;
   }
-  // Payload of absl::Status created by the Media Pipe task library stores an appropriate value of
+  // Payload of absl::Status created by the MediaPipe task library stores an appropriate value of
   // the enum MediaPipeTasksStatus. The integer value corresponding to the MediaPipeTasksStatus enum
   // stored in the payload is extracted here to later map to the appropriate error code to be
   // returned. In cases where the enum is not stored in (payload is NULL or the payload string

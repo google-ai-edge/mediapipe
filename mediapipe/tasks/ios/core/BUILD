@@ -17,15 +17,31 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 objc_library(
+    name = "MPPBaseOptions",
+    srcs = ["sources/MPPBaseOptions.m"],
+    hdrs = ["sources/MPPBaseOptions.h"],
+)
+
+objc_library(
     name = "MPPTaskOptions",
     srcs = ["sources/MPPTaskOptions.m"],
     hdrs = ["sources/MPPTaskOptions.h"],
-    copts = [
-        "-ObjC++",
-        "-std=c++17",
-    ],
     deps = [
         ":MPPBaseOptions",
+    ],
+)
+
+objc_library(
+    name = "MPPTaskResult",
+    srcs = ["sources/MPPTaskResult.m"],
+    hdrs = ["sources/MPPTaskResult.h"],
+)
+
+objc_library(
+    name = "MPPTaskOptionsProtocol",
+    hdrs = ["sources/MPPTaskOptionsProtocol.h"],
+    deps = [
+        "//mediapipe/framework:calculator_options_cc_proto",
     ],
 )
 
@@ -64,32 +80,12 @@ objc_library(
 )
 
 objc_library(
-    name = "MPPTaskResult",
-    srcs = ["sources/MPPTaskResult.m"],
-    hdrs = ["sources/MPPTaskResult.h"],
-)
-
-objc_library(
-    name = "MPPBaseOptions",
-    srcs = ["sources/MPPBaseOptions.m"],
-    hdrs = ["sources/MPPBaseOptions.h"],
-)
-
-objc_library(
-    name = "MPPTaskOptionsProtocol",
-    hdrs = ["sources/MPPTaskOptionsProtocol.h"],
-    deps = [
-            "//mediapipe/framework:calculator_options_cc_proto",
-    ],
-)
-
-objc_library(
-    name = "MPPTaskManager",
-    srcs = ["sources/MPPTaskManager.mm"],
-    hdrs = ["sources/MPPTaskManager.h"],
+    name = "MPPTaskRunner",
+    srcs = ["sources/MPPTaskRunner.mm"],
+    hdrs = ["sources/MPPTaskRunner.h"],
     deps = [
        "//mediapipe/tasks/cc/core:task_runner",
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+       "//mediapipe/framework:calculator_cc_proto",
+       "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
     ],
 )

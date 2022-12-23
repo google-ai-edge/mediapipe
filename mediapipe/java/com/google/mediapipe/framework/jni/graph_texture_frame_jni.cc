@@ -15,20 +15,16 @@
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph_texture_frame_jni.h"
 
 #include "mediapipe/gpu/gl_calculator_helper.h"
+#include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_texture_buffer.h"
 #include "mediapipe/java/com/google/mediapipe/framework/jni/jni_util.h"
 
 using mediapipe::GlTextureBufferSharedPtr;
 
 JNIEXPORT void JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeReleaseBuffer)(
-    JNIEnv* env, jobject thiz, jlong nativeHandle, jlong consumerSyncToken) {
+    JNIEnv* env, jobject thiz, jlong nativeHandle) {
   GlTextureBufferSharedPtr* buffer =
       reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
-  if (consumerSyncToken) {
-    mediapipe::GlSyncToken& token =
-        *reinterpret_cast<mediapipe::GlSyncToken*>(consumerSyncToken);
-    (*buffer)->DidRead(token);
-  }
   delete buffer;
 }
 
@@ -83,4 +79,19 @@ JNIEXPORT jlong JNICALL GRAPH_TEXTURE_FRAME_METHOD(
     }
   }
   return reinterpret_cast<jlong>(token);
+}
+
+JNIEXPORT jlong JNICALL GRAPH_TEXTURE_FRAME_METHOD(
+    nativeGetCurrentExternalContextHandle)(JNIEnv* env, jobject thiz) {
+  return reinterpret_cast<jlong>(
+      mediapipe::GlContext::GetCurrentNativeContext());
+}
+
+JNIEXPORT void JNICALL GRAPH_TEXTURE_FRAME_METHOD(nativeDidRead)(
+    JNIEnv* env, jobject thiz, jlong nativeHandle, jlong consumerSyncToken) {
+  GlTextureBufferSharedPtr* buffer =
+      reinterpret_cast<GlTextureBufferSharedPtr*>(nativeHandle);
+  mediapipe::GlSyncToken& token =
+      *reinterpret_cast<mediapipe::GlSyncToken*>(consumerSyncToken);
+  (*buffer)->DidRead(token);
 }
