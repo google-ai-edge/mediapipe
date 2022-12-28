@@ -458,7 +458,8 @@ void Tensor::TrackAhwbUsage(uint64_t source_location_hash) const {
       ahwb_tracking_key_ = tensor_internal::FnvHash64(ahwb_tracking_key_, dim);
     }
   }
-  use_ahwb_ = ahwb_usage_track_.contains(ahwb_tracking_key_);
+  // Keep flag value if it was set previously.
+  use_ahwb_ = use_ahwb_ || ahwb_usage_track_.contains(ahwb_tracking_key_);
 }
 
 #else  // MEDIAPIPE_TENSOR_USE_AHWB

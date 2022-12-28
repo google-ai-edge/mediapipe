@@ -1,34 +1,28 @@
 #include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/gpu/gpu_test_base.h"
 #include "testing/base/public/gmock.h"
 #include "testing/base/public/gunit.h"
 
-#ifdef MEDIAPIPE_TENSOR_USE_AHWB
-#if !MEDIAPIPE_DISABLE_GPU
-
 namespace mediapipe {
 
-class TensorAhwbTest : public mediapipe::GpuTestBase {
- public:
-};
-
-TEST_F(TensorAhwbTest, TestCpuThenAHWB) {
+TEST(TensorAhwbTest, TestCpuThenAHWB) {
   Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
   {
     auto ptr = tensor.GetCpuWriteView().buffer<float>();
     EXPECT_NE(ptr, nullptr);
   }
   {
-    auto ahwb = tensor.GetAHardwareBufferReadView().handle();
-    EXPECT_NE(ahwb, nullptr);
+    auto view = tensor.GetAHardwareBufferReadView();
+    EXPECT_NE(view.handle(), nullptr);
+    view.SetReadingFinishedFunc([](bool) { return true; });
   }
 }
 
-TEST_F(TensorAhwbTest, TestAHWBThenCpu) {
+TEST(TensorAhwbTest, TestAHWBThenCpu) {
   Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
   {
-    auto ahwb = tensor.GetAHardwareBufferWriteView().handle();
-    EXPECT_NE(ahwb, nullptr);
+    auto view = tensor.GetAHardwareBufferWriteView();
+    EXPECT_NE(view.handle(), nullptr);
+    view.SetWritingFinishedFD(-1, [](bool) { return true; });
   }
   {
     auto ptr = tensor.GetCpuReadView().buffer<float>();
@@ -36,21 +30,4 @@ TEST_F(TensorAhwbTest, TestAHWBThenCpu) {
   }
 }
 
-TEST_F(TensorAhwbTest, TestCpuThenGl) {
-  RunInGlContext([] {
-    Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{1});
-    {
-      auto ptr = tensor.GetCpuWriteView().buffer<float>();
-      EXPECT_NE(ptr, nullptr);
-    }
-    {
-      auto ssbo = tensor.GetOpenGlBufferReadView().name();
-      EXPECT_GT(ssbo, 0);
-    }
-  });
-}
-
 }  // namespace mediapipe
-
-#endif  // !MEDIAPIPE_DISABLE_GPU
-#endif  // MEDIAPIPE_TENSOR_USE_AHWB

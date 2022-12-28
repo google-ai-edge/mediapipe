@@ -92,9 +92,14 @@ class TensorAhwbGpuTest : public mediapipe::GpuTestBase {
 };
 
 TEST_F(TensorAhwbGpuTest, TestGpuToCpuFloat32) {
-  Tensor::SetPreferredStorageType(Tensor::StorageType::kAhwb);
   constexpr size_t num_elements = 20;
   Tensor tensor{Tensor::ElementType::kFloat32, Tensor::Shape({num_elements})};
+  {
+    // Request Ahwb first to get Ahwb storage allocated internally.
+    auto view = tensor.GetAHardwareBufferWriteView();
+    EXPECT_NE(view.handle(), nullptr);
+    view.SetWritingFinishedFD(-1, [](bool) { return true; });
+  }
   RunInGlContext([&tensor] {
     auto ssbo_view = tensor.GetOpenGlBufferWriteView();
     auto ssbo_name = ssbo_view.name();
@@ -114,9 +119,14 @@ TEST_F(TensorAhwbGpuTest, TestGpuToCpuFloat32) {
 }
 
 TEST_F(TensorAhwbGpuTest, TestGpuToCpuFloat16) {
-  Tensor::SetPreferredStorageType(Tensor::StorageType::kAhwb);
   constexpr size_t num_elements = 20;
   Tensor tensor{Tensor::ElementType::kFloat16, Tensor::Shape({num_elements})};
+  {
+    // Request Ahwb first to get Ahwb storage allocated internally.
+    auto view = tensor.GetAHardwareBufferWriteView();
+    EXPECT_NE(view.handle(), nullptr);
+    view.SetReadingFinishedFunc([](bool) { return true; });
+  }
   RunInGlContext([&tensor] {
     auto ssbo_view = tensor.GetOpenGlBufferWriteView();
     auto ssbo_name = ssbo_view.name();
@@ -139,7 +149,6 @@ TEST_F(TensorAhwbGpuTest, TestGpuToCpuFloat16) {
 TEST_F(TensorAhwbGpuTest, TestReplacingCpuByAhwb) {
   // Request the CPU view to get the memory to be allocated.
   // Request Ahwb view then to transform the storage into Ahwb.
-  Tensor::SetPreferredStorageType(Tensor::StorageType::kDefault);
   constexpr size_t num_elements = 20;
   Tensor tensor{Tensor::ElementType::kFloat32, Tensor::Shape({num_elements})};
   {
@@ -168,7 +177,6 @@ TEST_F(TensorAhwbGpuTest, TestReplacingCpuByAhwb) {
 TEST_F(TensorAhwbGpuTest, TestReplacingGpuByAhwb) {
   // Request the GPU view to get the ssbo allocated internally.
   // Request Ahwb view then to transform the storage into Ahwb.
-  Tensor::SetPreferredStorageType(Tensor::StorageType::kDefault);
   constexpr size_t num_elements = 20;
   Tensor tensor{Tensor::ElementType::kFloat32, Tensor::Shape({num_elements})};
   RunInGlContext([&tensor] {
