@@ -135,7 +135,9 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
 
     self.assertTrue(os.path.exists(output_metadata_file))
     self.assertGreater(os.path.getsize(output_metadata_file), 0)
-    self.assertTrue(filecmp.cmp(output_metadata_file, expected_metadata_file))
+    self.assertTrue(
+        filecmp.cmp(
+            output_metadata_file, expected_metadata_file, shallow=False))
 
   def test_continual_training_by_loading_checkpoint(self):
     mock_stdout = io.StringIO()
