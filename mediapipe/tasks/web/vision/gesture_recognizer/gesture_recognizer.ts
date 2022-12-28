@@ -169,9 +169,7 @@ export class GestureRecognizer extends
    *
    * @param options The options for the gesture recognizer.
    */
-  override async setOptions(options: GestureRecognizerOptions): Promise<void> {
-    await super.setOptions(options);
-
+  override setOptions(options: GestureRecognizerOptions): Promise<void> {
     if ('numHands' in options) {
       this.handDetectorGraphOptions.setNumHands(
           options.numHands ?? DEFAULT_NUM_HANDS);
@@ -221,7 +219,7 @@ export class GestureRecognizer extends
           ?.clearClassifierOptions();
     }
 
-    this.refreshGraph();
+    return this.applyOptions(options);
   }
 
   /**
@@ -342,7 +340,7 @@ export class GestureRecognizer extends
   }
 
   /** Updates the MediaPipe graph configuration. */
-  private refreshGraph(): void {
+  protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(IMAGE_STREAM);
     graphConfig.addInputStream(NORM_RECT_STREAM);

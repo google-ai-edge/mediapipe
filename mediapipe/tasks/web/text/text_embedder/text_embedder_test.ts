@@ -56,7 +56,8 @@ describe('TextEmbedder', () => {
   beforeEach(async () => {
     addJasmineCustomFloatEqualityTester();
     textEmbedder = new TextEmbedderFake();
-    await textEmbedder.setOptions({});  // Initialize graph
+    await textEmbedder.setOptions(
+        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
   it('initializes graph', async () => {

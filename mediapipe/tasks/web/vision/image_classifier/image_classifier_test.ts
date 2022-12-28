@@ -61,7 +61,8 @@ describe('ImageClassifier', () => {
   beforeEach(async () => {
     addJasmineCustomFloatEqualityTester();
     imageClassifier = new ImageClassifierFake();
-    await imageClassifier.setOptions({});  // Initialize graph
+    await imageClassifier.setOptions(
+        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
   it('initializes graph', async () => {

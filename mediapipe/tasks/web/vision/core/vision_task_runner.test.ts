@@ -20,6 +20,7 @@ import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/b
 import {createSpyWasmModule} from '../../../../tasks/web/core/task_runner_test_utils';
 import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 
+import {VisionTaskOptions} from './vision_task_options';
 import {VisionTaskRunner} from './vision_task_runner';
 
 class VisionTaskRunnerFake extends VisionTaskRunner<void> {
@@ -31,6 +32,12 @@ class VisionTaskRunnerFake extends VisionTaskRunner<void> {
 
   protected override process(): void {}
 
+  protected override refreshGraph(): void {}
+
+  override setOptions(options: VisionTaskOptions): Promise<void> {
+    return this.applyOptions(options);
+  }
+
   override processImageData(image: ImageSource): void {
     super.processImageData(image);
   }
@@ -41,32 +48,24 @@ class VisionTaskRunnerFake extends VisionTaskRunner<void> {
 }
 
 describe('VisionTaskRunner', () => {
-  const streamMode = {
-    modelAsset: undefined,
-    useStreamMode: true,
-    acceleration: undefined,
-  };
-
-  const imageMode = {
-    modelAsset: undefined,
-    useStreamMode: false,
-    acceleration: undefined,
-  };
-
   let visionTaskRunner: VisionTaskRunnerFake;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     visionTaskRunner = new VisionTaskRunnerFake();
+    await visionTaskRunner.setOptions(
+        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
   it('can enable image mode', async () => {
     await visionTaskRunner.setOptions({runningMode: 'image'});
-    expect(visionTaskRunner.baseOptions.toObject()).toEqual(imageMode);
+    expect(visionTaskRunner.baseOptions.toObject())
+        .toEqual(jasmine.objectContaining({useStreamMode: false}));
   });
 
   it('can enable video mode', async () => {
     await visionTaskRunner.setOptions({runningMode: 'video'});
-    expect(visionTaskRunner.baseOptions.toObject()).toEqual(streamMode);
+    expect(visionTaskRunner.baseOptions.toObject())
+        .toEqual(jasmine.objectContaining({useStreamMode: true}));
   });
 
   it('can clear running mode', async () => {
@@ -74,7 +73,8 @@ describe('VisionTaskRunner', () => {
 
     // Clear running mode
     await visionTaskRunner.setOptions({runningMode: undefined});
-    expect(visionTaskRunner.baseOptions.toObject()).toEqual(imageMode);
+    expect(visionTaskRunner.baseOptions.toObject())
+        .toEqual(jasmine.objectContaining({useStreamMode: false}));
   });
 
   it('cannot process images with video mode', async () => {

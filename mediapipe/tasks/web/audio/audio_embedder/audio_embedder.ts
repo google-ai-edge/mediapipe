@@ -121,11 +121,10 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
    *
    * @param options The options for the audio embedder.
    */
-  override async setOptions(options: AudioEmbedderOptions): Promise<void> {
-    await super.setOptions(options);
+  override setOptions(options: AudioEmbedderOptions): Promise<void> {
     this.options.setEmbedderOptions(convertEmbedderOptionsToProto(
         options, this.options.getEmbedderOptions()));
-    this.refreshGraph();
+    return this.applyOptions(options);
   }
 
   /**
@@ -171,7 +170,7 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
   }
 
   /** Updates the MediaPipe graph configuration. */
-  private refreshGraph(): void {
+  protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(AUDIO_STREAM);
     graphConfig.addInputStream(SAMPLE_RATE_STREAM);

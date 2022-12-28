@@ -61,7 +61,8 @@ describe('ObjectDetector', () => {
   beforeEach(async () => {
     addJasmineCustomFloatEqualityTester();
     objectDetector = new ObjectDetectorFake();
-    await objectDetector.setOptions({});  // Initialize graph
+    await objectDetector.setOptions(
+        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
   it('initializes graph', async () => {

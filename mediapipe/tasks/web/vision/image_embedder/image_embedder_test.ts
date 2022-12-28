@@ -57,7 +57,8 @@ describe('ImageEmbedder', () => {
   beforeEach(async () => {
     addJasmineCustomFloatEqualityTester();
     imageEmbedder = new ImageEmbedderFake();
-    await imageEmbedder.setOptions({});  // Initialize graph
+    await imageEmbedder.setOptions(
+        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
   it('initializes graph', async () => {

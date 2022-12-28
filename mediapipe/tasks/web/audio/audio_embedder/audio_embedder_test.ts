@@ -70,7 +70,8 @@ describe('AudioEmbedder', () => {
   beforeEach(async () => {
     addJasmineCustomFloatEqualityTester();
     audioEmbedder = new AudioEmbedderFake();
-    await audioEmbedder.setOptions({});  // Initialize graph
+    await audioEmbedder.setOptions(
+        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
   it('initializes graph', () => {

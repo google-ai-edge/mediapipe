@@ -109,7 +109,8 @@ describe('GestureRecognizer', () => {
   beforeEach(async () => {
     addJasmineCustomFloatEqualityTester();
     gestureRecognizer = new GestureRecognizerFake();
-    await gestureRecognizer.setOptions({});  // Initialize graph
+    await gestureRecognizer.setOptions(
+        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
   it('initializes graph', async () => {

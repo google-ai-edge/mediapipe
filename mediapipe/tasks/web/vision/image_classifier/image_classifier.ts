@@ -118,11 +118,10 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
    *
    * @param options The options for the image classifier.
    */
-  override async setOptions(options: ImageClassifierOptions): Promise<void> {
-    await super.setOptions(options);
+  override setOptions(options: ImageClassifierOptions): Promise<void> {
     this.options.setClassifierOptions(convertClassifierOptionsToProto(
         options, this.options.getClassifierOptions()));
-    this.refreshGraph();
+    return this.applyOptions(options);
   }
 
   /**
@@ -163,7 +162,7 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
   }
 
   /** Updates the MediaPipe graph configuration. */
-  private refreshGraph(): void {
+  protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(INPUT_STREAM);
     graphConfig.addOutputStream(CLASSIFICATIONS_STREAM);
