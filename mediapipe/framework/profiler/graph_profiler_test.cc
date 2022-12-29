@@ -442,6 +442,32 @@ TEST_F(GraphProfilerTestPeer, InitializeMultipleTimes) {
                "Cannot initialize .* multiple times.");
 }
 
+// Tests that graph identifiers are not reused, even after destruction.
+TEST_F(GraphProfilerTestPeer, InitializeMultipleProfilers) {
+  auto raw_graph_config = R"(
+    profiler_config {
+      enable_profiler: true
+    }
+    input_stream: "input_stream"
+    node {
+      calculator: "DummyTestCalculator"
+      input_stream: "input_stream"
+    })";
+  const int n_iterations = 100;
+  absl::flat_hash_set<int> seen_ids;
+  for (int i = 0; i < n_iterations; ++i) {
+    std::shared_ptr<ProfilingContext> profiler =
+        std::make_shared<ProfilingContext>();
+    auto graph_config = CreateGraphConfig(raw_graph_config);
+    mediapipe::ValidatedGraphConfig validated_graph;
+    QCHECK_OK(validated_graph.Initialize(graph_config));
+    profiler->Initialize(validated_graph);
+
+    int id = profiler->GetGraphId();
+    ASSERT_THAT(seen_ids, testing::Not(testing::Contains(id)));
+    seen_ids.insert(id);
+  }
+}
 // Tests that Pause(), Resume(), and Reset() works.
 TEST_F(GraphProfilerTestPeer, PauseResumeReset) {
   InitializeProfilerWithGraphConfig(R"(
