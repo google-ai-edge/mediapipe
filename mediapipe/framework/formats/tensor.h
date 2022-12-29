@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include "absl/container/flat_hash_set.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/formats/tensor_internal.h"
 #include "mediapipe/framework/port.h"
@@ -434,8 +434,9 @@ class Tensor {
   mutable bool use_ahwb_ = false;
   mutable uint64_t ahwb_tracking_key_ = 0;
   // TODO: Tracks all unique tensors. Can grow to a large number. LRU
-  // can be more predicted.
-  static inline absl::flat_hash_set<uint64_t> ahwb_usage_track_;
+  // (Least Recently Used) can be more predicted.
+  // The value contains the size alignment parameter.
+  static inline absl::flat_hash_map<uint64_t, int> ahwb_usage_track_;
   // Expects the target SSBO to be already bound.
   bool AllocateAhwbMapToSsbo() const;
   bool InsertAhwbToSsboFence() const;
