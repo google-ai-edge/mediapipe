@@ -36,3 +36,60 @@ objc_library(
     srcs = ["sources/MPPTaskResult.m"],
     hdrs = ["sources/MPPTaskResult.h"],
 )
+
+objc_library(
+    name = "MPPTaskOptionsProtocol",
+    hdrs = ["sources/MPPTaskOptionsProtocol.h"],
+    deps = [
+        "//mediapipe/framework:calculator_options_cc_proto",
+    ],
+)
+
+objc_library(
+    name = "MPPTaskInfo",
+    srcs = ["sources/MPPTaskInfo.mm"],
+    hdrs = ["sources/MPPTaskInfo.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        ":MPPTaskOptions",
+        ":MPPTaskOptionsProtocol",
+        "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+    ],
+)
+
+objc_library(
+    name = "MPPTextPacketCreator",
+    srcs = ["sources/MPPTextPacketCreator.mm"],
+    hdrs = ["sources/MPPTextPacketCreator.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+    ],
+)
+
+objc_library(
+    name = "MPPTaskRunner",
+    srcs = ["sources/MPPTaskRunner.mm"],
+    hdrs = ["sources/MPPTaskRunner.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+    ],
+)
