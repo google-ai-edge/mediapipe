@@ -44,10 +44,10 @@ export function createSpyWasmModule(): SpyWasmModule {
  * Sets up our equality testing to use a custom float equality checking function
  * to avoid incorrect test results due to minor floating point inaccuracies.
  */
-export function addJasmineCustomFloatEqualityTester() {
+export function addJasmineCustomFloatEqualityTester(tolerance = 5e-8) {
   jasmine.addCustomEqualityTester((a, b) => {  // Custom float equality
     if (a === +a && b === +b && (a !== (a | 0) || b !== (b | 0))) {
-      return Math.abs(a - b) < 5e-8;
+      return Math.abs(a - b) < tolerance;
     }
     return;
   });
