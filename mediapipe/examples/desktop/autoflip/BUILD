@@ -30,6 +30,10 @@ proto_library(
 
 java_lite_proto_library(
     name = "autoflip_messages_java_proto_lite",
+    visibility = [
+        "//java/com/google/android/apps/photos:__subpackages__",
+        "//javatests/com/google/android/apps/photos:__subpackages__",
+    ],
     deps = [
         ":autoflip_messages_proto",
     ],
