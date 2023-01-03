@@ -272,7 +272,7 @@ describe('GestureRecognizer', () => {
     expect(gestures).toEqual({
       'gestures': [[{
         'score': 0.2,
-        'index': 2,
+        'index': -1,
         'categoryName': 'gesture_label',
         'displayName': 'gesture_display_name'
       }]],
@@ -304,5 +304,26 @@ describe('GestureRecognizer', () => {
     // Verify that gestures2 is not a concatenation of all previously returned
     // gestures.
     expect(gestures2).toEqual(gestures1);
+  });
+
+  it('returns empty results when no gestures are detected', async () => {
+    // Pass the test data to our listener
+    gestureRecognizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      verifyListenersRegistered(gestureRecognizer);
+      gestureRecognizer.listeners.get('hand_landmarks')!(createLandmarks());
+      gestureRecognizer.listeners.get('world_hand_landmarks')!
+          (createWorldLandmarks());
+      gestureRecognizer.listeners.get('handedness')!(createHandednesses());
+      gestureRecognizer.listeners.get('hand_gestures')!([]);
+    });
+
+    // Invoke the gesture recognizer
+    const gestures = gestureRecognizer.recognize({} as HTMLImageElement);
+    expect(gestures).toEqual({
+      'gestures': [],
+      'landmarks': [],
+      'worldLandmarks': [],
+      'handednesses': []
+    });
   });
 });
