@@ -74,42 +74,51 @@ GlTextureView GpuBufferStorageCvPixelBuffer::GetReadView(
 static void ViewDoneWritingSimulatorWorkaround(CVPixelBufferRef pixel_buffer,
                                                const GlTextureView& view) {
   CHECK(pixel_buffer);
-  CVReturn err = CVPixelBufferLockBaseAddress(pixel_buffer, 0);
-  CHECK(err == kCVReturnSuccess)
-      << "CVPixelBufferLockBaseAddress failed: " << err;
-  OSType pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
-  size_t bytes_per_row = CVPixelBufferGetBytesPerRow(pixel_buffer);
-  uint8_t* pixel_ptr =
-      static_cast<uint8_t*>(CVPixelBufferGetBaseAddress(pixel_buffer));
-  if (pixel_format == kCVPixelFormatType_32BGRA) {
-    // TODO: restore previous framebuffer? Move this to helper so we
-    // can use BindFramebuffer?
-    glViewport(0, 0, view.width(), view.height());
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, view.target(),
-                           view.name(), 0);
+  auto ctx = GlContext::GetCurrent().get();
+  if (!ctx) ctx = view.gl_context();
+  ctx->Run([pixel_buffer, &view, ctx] {
+    CVReturn err = CVPixelBufferLockBaseAddress(pixel_buffer, 0);
+    CHECK(err == kCVReturnSuccess)
+        << "CVPixelBufferLockBaseAddress failed: " << err;
+    OSType pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
+    size_t bytes_per_row = CVPixelBufferGetBytesPerRow(pixel_buffer);
+    uint8_t* pixel_ptr =
+        static_cast<uint8_t*>(CVPixelBufferGetBaseAddress(pixel_buffer));
+    if (pixel_format == kCVPixelFormatType_32BGRA) {
+      glBindFramebuffer(GL_FRAMEBUFFER, kUtilityFramebuffer.Get(*ctx));
+      glViewport(0, 0, view.width(), view.height());
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             view.target(), view.name(), 0);
 
-    size_t contiguous_bytes_per_row = view.width() * 4;
-    if (bytes_per_row == contiguous_bytes_per_row) {
-      glReadPixels(0, 0, view.width(), view.height(), GL_BGRA, GL_UNSIGNED_BYTE,
-                   pixel_ptr);
-    } else {
-      std::vector<uint8_t> contiguous_buffer(contiguous_bytes_per_row *
-                                             view.height());
-      uint8_t* temp_ptr = contiguous_buffer.data();
-      glReadPixels(0, 0, view.width(), view.height(), GL_BGRA, GL_UNSIGNED_BYTE,
-                   temp_ptr);
-      for (int i = 0; i < view.height(); ++i) {
-        memcpy(pixel_ptr, temp_ptr, contiguous_bytes_per_row);
-        temp_ptr += contiguous_bytes_per_row;
-        pixel_ptr += bytes_per_row;
+      size_t contiguous_bytes_per_row = view.width() * 4;
+      if (bytes_per_row == contiguous_bytes_per_row) {
+        glReadPixels(0, 0, view.width(), view.height(), GL_BGRA,
+                     GL_UNSIGNED_BYTE, pixel_ptr);
+      } else {
+        // TODO: use GL_PACK settings for row length. We can expect
+        // GLES 3.0 on iOS now.
+        std::vector<uint8_t> contiguous_buffer(contiguous_bytes_per_row *
+                                               view.height());
+        uint8_t* temp_ptr = contiguous_buffer.data();
+        glReadPixels(0, 0, view.width(), view.height(), GL_BGRA,
+                     GL_UNSIGNED_BYTE, temp_ptr);
+        for (int i = 0; i < view.height(); ++i) {
+          memcpy(pixel_ptr, temp_ptr, contiguous_bytes_per_row);
+          temp_ptr += contiguous_bytes_per_row;
+          pixel_ptr += bytes_per_row;
+        }
       }
+      // TODO: restore previous framebuffer?
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             view.target(), 0, 0);
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    } else {
+      LOG(ERROR) << "unsupported pixel format: " << pixel_format;
     }
-  } else {
-    LOG(ERROR) << "unsupported pixel format: " << pixel_format;
-  }
-  err = CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
-  CHECK(err == kCVReturnSuccess)
-      << "CVPixelBufferUnlockBaseAddress failed: " << err;
+    err = CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
+    CHECK(err == kCVReturnSuccess)
+        << "CVPixelBufferUnlockBaseAddress failed: " << err;
+  });
 }
 #endif  // TARGET_IPHONE_SIMULATOR
 
