@@ -98,7 +98,8 @@ describe('HandLandmarker', () => {
   beforeEach(async () => {
     addJasmineCustomFloatEqualityTester();
     handLandmarker = new HandLandmarkerFake();
-    await handLandmarker.setOptions({});  // Initialize graph
+    await handLandmarker.setOptions(
+        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
   it('initializes graph', async () => {

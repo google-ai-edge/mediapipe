@@ -71,9 +71,12 @@ class TextClassifierTest(tf.test.TestCase):
 
     self.assertTrue(os.path.exists(output_metadata_file))
     self.assertGreater(os.path.getsize(output_metadata_file), 0)
+    filecmp.clear_cache()
     self.assertTrue(
-        filecmp.cmp(output_metadata_file,
-                    self._AVERAGE_WORD_EMBEDDING_JSON_FILE))
+        filecmp.cmp(
+            output_metadata_file,
+            self._AVERAGE_WORD_EMBEDDING_JSON_FILE,
+            shallow=False))
 
   def test_create_and_train_bert(self):
     train_data, validation_data = self._get_data()

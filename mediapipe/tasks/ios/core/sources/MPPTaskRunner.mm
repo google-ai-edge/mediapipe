@@ -17,7 +17,6 @@
 
 namespace {
 using ::mediapipe::CalculatorGraphConfig;
-using ::mediapipe::Packet;
 using ::mediapipe::tasks::core::PacketMap;
 using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 }  // namespace
@@ -49,8 +48,8 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
   return _cppTaskRunner->Process(packetMap);
 }
 
-- (void)close {
-  _cppTaskRunner->Close();
+- (absl::Status)close {
+  return _cppTaskRunner->Close();
 }
 
 @end

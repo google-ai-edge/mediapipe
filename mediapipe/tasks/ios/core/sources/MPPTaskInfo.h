@@ -13,7 +13,9 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
+
 #include "mediapipe/framework/calculator.pb.h"
+
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
 
@@ -59,7 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Creates a MediaPipe Task  protobuf message from the MPPTaskInfo instance.
  */
-- (mediapipe::CalculatorGraphConfig)generateGraphConfig;
+- (::mediapipe::CalculatorGraphConfig)generateGraphConfig;
 
 - (instancetype)init NS_UNAVAILABLE;
 

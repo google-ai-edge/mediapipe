@@ -21,9 +21,8 @@ objc_library(
     srcs = ["sources/MPPClassifierOptions+Helpers.mm"],
     hdrs = ["sources/MPPClassifierOptions+Helpers.h"],
     deps = [
-       "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
-       "//mediapipe/tasks/ios/components/processors:MPPClassifierOptions",
-       "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-    ]
+        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/processors:MPPClassifierOptions",
+    ],
 )
-

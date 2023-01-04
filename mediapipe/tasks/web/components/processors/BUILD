@@ -103,29 +103,3 @@ jasmine_node_test(
     name = "embedder_options_test",
     deps = [":embedder_options_test_lib"],
 )
-
-mediapipe_ts_library(
-    name = "base_options",
-    srcs = [
-        "base_options.ts",
-    ],
-    deps = [
-        "//mediapipe/calculators/tensor:inference_calculator_jspb_proto",
-        "//mediapipe/tasks/cc/core/proto:acceleration_jspb_proto",
-        "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
-        "//mediapipe/tasks/cc/core/proto:external_file_jspb_proto",
-        "//mediapipe/tasks/web/core",
-    ],
-)
-
-mediapipe_ts_library(
-    name = "base_options_test_lib",
-    testonly = True,
-    srcs = ["base_options.test.ts"],
-    deps = [":base_options"],
-)
-
-jasmine_node_test(
-    name = "base_options_test",
-    deps = [":base_options_test_lib"],
-)

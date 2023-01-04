@@ -22,7 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * This class is used to create and call appropriate methods on the C++ Task Runner.
  */
-
 @interface MPPTaskRunner : NSObject
 
 /**
@@ -35,11 +34,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
                                         error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
-- (absl::StatusOr<mediapipe::tasks::core::PacketMap>)
-    process:(const mediapipe::tasks::core::PacketMap &)packetMap
-      error:(NSError **)error;
+- (absl::StatusOr<mediapipe::tasks::core::PacketMap>)process:
+    (const mediapipe::tasks::core::PacketMap &)packetMap;
 
-- (void)close;
+- (absl::Status)close;
 
 - (instancetype)init NS_UNAVAILABLE;
 

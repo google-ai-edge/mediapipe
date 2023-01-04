@@ -56,7 +56,8 @@ describe('TextClassifier', () => {
   beforeEach(async () => {
     addJasmineCustomFloatEqualityTester();
     textClassifier = new TextClassifierFake();
-    await textClassifier.setOptions({});  // Initialize graph
+    await textClassifier.setOptions(
+        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
   it('initializes graph', async () => {

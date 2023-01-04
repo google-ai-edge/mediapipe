@@ -79,7 +79,8 @@ describe('AudioClassifier', () => {
   beforeEach(async () => {
     addJasmineCustomFloatEqualityTester();
     audioClassifier = new AudioClassifierFake();
-    await audioClassifier.setOptions({});  // Initialize graph
+    await audioClassifier.setOptions(
+        {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
   it('initializes graph', async () => {

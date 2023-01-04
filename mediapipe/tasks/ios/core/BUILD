@@ -54,14 +54,14 @@ objc_library(
         "-std=c++17",
     ],
     deps = [
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework:calculator_options_cc_proto",
-        "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",
         ":MPPTaskOptions",
         ":MPPTaskOptionsProtocol",
+        "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-        "//mediapipe/tasks/ios/common:MPPCommon",
     ],
 )
 
@@ -83,9 +83,13 @@ objc_library(
     name = "MPPTaskRunner",
     srcs = ["sources/MPPTaskRunner.mm"],
     hdrs = ["sources/MPPTaskRunner.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
     deps = [
-       "//mediapipe/tasks/cc/core:task_runner",
-       "//mediapipe/framework:calculator_cc_proto",
-       "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
     ],
 )

@@ -19,8 +19,8 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
-    self.maxResults = -1;
-    self.scoreThreshold = 0;
+    _maxResults = -1;
+    _scoreThreshold = 0;
   }
   return self;
 }

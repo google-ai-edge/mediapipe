@@ -23,13 +23,12 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
 
 - (void)copyToProto:(ClassifierOptionsProto *)classifierOptionsProto {
   classifierOptionsProto->Clear();
-  
+
   if (self.displayNamesLocale) {
     classifierOptionsProto->set_display_names_locale(self.displayNamesLocale.cppString);
   }
 
   classifierOptionsProto->set_max_results((int)self.maxResults);
-
   classifierOptionsProto->set_score_threshold(self.scoreThreshold);
 
   for (NSString *category in self.categoryAllowlist) {

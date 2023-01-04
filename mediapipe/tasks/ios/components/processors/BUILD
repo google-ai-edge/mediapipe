@@ -21,4 +21,3 @@ objc_library(
     srcs = ["sources/MPPClassifierOptions.m"],
     hdrs = ["sources/MPPClassifierOptions.h"],
 )
-

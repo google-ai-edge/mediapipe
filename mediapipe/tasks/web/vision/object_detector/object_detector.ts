@@ -117,9 +117,7 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
    *
    * @param options The options for the object detector.
    */
-  override async setOptions(options: ObjectDetectorOptions): Promise<void> {
-    await super.setOptions(options);
-
+  override setOptions(options: ObjectDetectorOptions): Promise<void> {
     // Note that we have to support both JSPB and ProtobufJS, hence we
     // have to expliclity clear the values instead of setting them to
     // `undefined`.
@@ -153,7 +151,7 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
       this.options.clearCategoryDenylistList();
     }
 
-    this.refreshGraph();
+    return this.applyOptions(options);
   }
 
   /**
@@ -226,7 +224,7 @@ export class ObjectDetector extends VisionTaskRunner<Detection[]> {
   }
 
   /** Updates the MediaPipe graph configuration. */
-  private refreshGraph(): void {
+  protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(INPUT_STREAM);
     graphConfig.addOutputStream(DETECTIONS_STREAM);

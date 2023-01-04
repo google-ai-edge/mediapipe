@@ -150,9 +150,7 @@ export class HandLandmarker extends VisionTaskRunner<HandLandmarkerResult> {
    *
    * @param options The options for the hand landmarker.
    */
-  override async setOptions(options: HandLandmarkerOptions): Promise<void> {
-    await super.setOptions(options);
-
+  override setOptions(options: HandLandmarkerOptions): Promise<void> {
     // Configure hand detector options.
     if ('numHands' in options) {
       this.handDetectorGraphOptions.setNumHands(
@@ -173,7 +171,7 @@ export class HandLandmarker extends VisionTaskRunner<HandLandmarkerResult> {
           options.minHandPresenceConfidence ?? DEFAULT_SCORE_THRESHOLD);
     }
 
-    this.refreshGraph();
+    return this.applyOptions(options);
   }
 
   /**
@@ -291,7 +289,7 @@ export class HandLandmarker extends VisionTaskRunner<HandLandmarkerResult> {
   }
 
   /** Updates the MediaPipe graph configuration. */
-  private refreshGraph(): void {
+  protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(IMAGE_STREAM);
     graphConfig.addInputStream(NORM_RECT_STREAM);

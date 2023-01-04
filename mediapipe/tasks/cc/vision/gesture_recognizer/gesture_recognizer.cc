@@ -151,11 +151,11 @@ ConvertGestureRecognizerGraphOptionsProto(GestureRecognizerOptions* options) {
   auto custom_gestures_classifier_options_proto =
       std::make_unique<components::processors::proto::ClassifierOptions>(
           components::processors::ConvertClassifierOptionsToProto(
-              &(options->canned_gestures_classifier_options)));
+              &(options->custom_gestures_classifier_options)));
   hand_gesture_recognizer_graph_options
       ->mutable_custom_gesture_classifier_graph_options()
       ->mutable_classifier_options()
-      ->Swap(canned_gestures_classifier_options_proto.get());
+      ->Swap(custom_gestures_classifier_options_proto.get());
   return options_proto;
 }
 

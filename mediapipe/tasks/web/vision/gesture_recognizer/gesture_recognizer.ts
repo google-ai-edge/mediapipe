@@ -169,9 +169,7 @@ export class GestureRecognizer extends
    *
    * @param options The options for the gesture recognizer.
    */
-  override async setOptions(options: GestureRecognizerOptions): Promise<void> {
-    await super.setOptions(options);
-
+  override setOptions(options: GestureRecognizerOptions): Promise<void> {
     if ('numHands' in options) {
       this.handDetectorGraphOptions.setNumHands(
           options.numHands ?? DEFAULT_NUM_HANDS);
@@ -221,7 +219,7 @@ export class GestureRecognizer extends
           ?.clearClassifierOptions();
     }
 
-    this.refreshGraph();
+    return this.applyOptions(options);
   }
 
   /**
@@ -265,12 +263,22 @@ export class GestureRecognizer extends
         NORM_RECT_STREAM, timestamp);
     this.finishProcessing();
 
-    return {
-      gestures: this.gestures,
-      landmarks: this.landmarks,
-      worldLandmarks: this.worldLandmarks,
-      handednesses: this.handednesses
-    };
+    if (this.gestures.length === 0) {
+      // If no gestures are detected in the image, just return an empty list
+      return {
+        gestures: [],
+        landmarks: [],
+        worldLandmarks: [],
+        handednesses: [],
+      };
+    } else {
+      return {
+        gestures: this.gestures,
+        landmarks: this.landmarks,
+        worldLandmarks: this.worldLandmarks,
+        handednesses: this.handednesses
+      };
+    }
   }
 
   /** Sets the default values for the graph. */
@@ -285,15 +293,19 @@ export class GestureRecognizer extends
   }
 
   /** Converts the proto data to a Category[][] structure. */
-  private toJsCategories(data: Uint8Array[]): Category[][] {
+  private toJsCategories(data: Uint8Array[], populateIndex = true):
+      Category[][] {
     const result: Category[][] = [];
     for (const binaryProto of data) {
       const inputList = ClassificationList.deserializeBinary(binaryProto);
       const outputList: Category[] = [];
       for (const classification of inputList.getClassificationList()) {
+        const index = populateIndex && classification.hasIndex() ?
+            classification.getIndex()! :
+            DEFAULT_CATEGORY_INDEX;
         outputList.push({
           score: classification.getScore() ?? 0,
-          index: classification.getIndex() ?? DEFAULT_CATEGORY_INDEX,
+          index,
           categoryName: classification.getLabel() ?? '',
           displayName: classification.getDisplayName() ?? '',
         });
@@ -342,7 +354,7 @@ export class GestureRecognizer extends
   }
 
   /** Updates the MediaPipe graph configuration. */
-  private refreshGraph(): void {
+  protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(IMAGE_STREAM);
     graphConfig.addInputStream(NORM_RECT_STREAM);
@@ -377,7 +389,10 @@ export class GestureRecognizer extends
         });
     this.graphRunner.attachProtoVectorListener(
         HAND_GESTURES_STREAM, binaryProto => {
-          this.gestures.push(...this.toJsCategories(binaryProto));
+          // Gesture index is not used, because the final gesture result comes
+          // from multiple classifiers.
+          this.gestures.push(
+              ...this.toJsCategories(binaryProto, /* populateIndex= */ false));
         });
     this.graphRunner.attachProtoVectorListener(
         HANDEDNESS_STREAM, binaryProto => {

@@ -20,7 +20,6 @@
 
 #include "absl/status/status.h"  // from @com_google_absl
 #include "absl/strings/cord.h"   // from @com_google_absl
-
 #include "mediapipe/tasks/cc/common.h"
 
 /** Error domain of MediaPipe task library errors. */
@@ -96,8 +95,8 @@ NSString *const MPPTasksErrorDomain = @"com.google.mediapipe.tasks";
   // appropriate MPPTasksErrorCode in default cases. Note:
   // The mapping to absl::Status::code() is done to generate a more specific error code than
   // MPPTasksErrorCodeError in cases when the payload can't be mapped to
-  // MPPTasksErrorCode. This can happen when absl::Status returned by TFLite library are in turn returned
-  // without modification by Mediapipe cc library methods.
+  // MPPTasksErrorCode. This can happen when absl::Status returned by TFLite library are in turn
+  // returned without modification by Mediapipe cc library methods.
   if (errorCode > MPPTasksErrorCodeLast || errorCode <= MPPTasksErrorCodeFirst) {
     switch (status.code()) {
       case absl::StatusCode::kInternal:

@@ -119,11 +119,10 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
    *
    * @param options The options for the audio classifier.
    */
-  override async setOptions(options: AudioClassifierOptions): Promise<void> {
-    await super.setOptions(options);
+  override setOptions(options: AudioClassifierOptions): Promise<void> {
     this.options.setClassifierOptions(convertClassifierOptionsToProto(
         options, this.options.getClassifierOptions()));
-    this.refreshGraph();
+    return this.applyOptions(options);
   }
 
   /**
@@ -171,7 +170,7 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
   }
 
   /** Updates the MediaPipe graph configuration. */
-  private refreshGraph(): void {
+  protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(AUDIO_STREAM);
     graphConfig.addInputStream(SAMPLE_RATE_STREAM);

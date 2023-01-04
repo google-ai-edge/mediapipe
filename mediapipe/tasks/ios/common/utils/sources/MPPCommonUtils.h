@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
+
 #include "mediapipe/tasks/cc/common.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -56,6 +57,7 @@ extern NSString *const MPPTasksErrorDomain;
  * @param status absl::Status.
  * @param error Pointer to the memory location where the created error should be saved. If `nil`,
  * no error will be saved.
+ * @return YES when there is no error, NO otherwise.
  */
 + (BOOL)checkCppError:(const absl::Status &)status toError:(NSError **)error;
 

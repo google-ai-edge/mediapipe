@@ -109,11 +109,10 @@ export class TextClassifier extends TaskRunner {
    *
    * @param options The options for the text classifier.
    */
-  override async setOptions(options: TextClassifierOptions): Promise<void> {
-    await super.setOptions(options);
+  override setOptions(options: TextClassifierOptions): Promise<void> {
     this.options.setClassifierOptions(convertClassifierOptionsToProto(
         options, this.options.getClassifierOptions()));
-    this.refreshGraph();
+    return this.applyOptions(options);
   }
 
   protected override get baseOptions(): BaseOptionsProto {
@@ -141,7 +140,7 @@ export class TextClassifier extends TaskRunner {
   }
 
   /** Updates the MediaPipe graph configuration. */
-  private refreshGraph(): void {
+  protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(INPUT_STREAM);
     graphConfig.addOutputStream(CLASSIFICATIONS_STREAM);

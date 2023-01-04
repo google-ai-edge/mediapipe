@@ -120,11 +120,10 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
    *
    * @param options The options for the image embedder.
    */
-  override async setOptions(options: ImageEmbedderOptions): Promise<void> {
-    await super.setOptions(options);
+  override setOptions(options: ImageEmbedderOptions): Promise<void> {
     this.options.setEmbedderOptions(convertEmbedderOptionsToProto(
         options, this.options.getEmbedderOptions()));
-    this.refreshGraph();
+    return this.applyOptions(options);
   }
 
   /**
@@ -186,7 +185,7 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
   }
 
   /** Updates the MediaPipe graph configuration. */
-  private refreshGraph(): void {
+  protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(INPUT_STREAM);
     graphConfig.addOutputStream(EMBEDDINGS_STREAM);

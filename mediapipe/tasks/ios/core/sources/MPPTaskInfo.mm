@@ -24,7 +24,6 @@
 namespace {
 using CalculatorGraphConfig = ::mediapipe::CalculatorGraphConfig;
 using Node = ::mediapipe::CalculatorGraphConfig::Node;
-using ::mediapipe::CalculatorOptions;
 using ::mediapipe::FlowLimiterCalculatorOptions;
 using ::mediapipe::InputStreamInfo;
 }  // namespace

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
+
 #import "mediapipe/tasks/ios/components/processors/sources/MPPClassifierOptions.h"
 
 NS_ASSUME_NONNULL_BEGIN

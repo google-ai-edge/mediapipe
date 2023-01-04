@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+import {InferenceCalculatorOptions} from '../../../calculators/tensor/inference_calculator_pb';
+import {Acceleration} from '../../../tasks/cc/core/proto/acceleration_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../tasks/cc/core/proto/base_options_pb';
-import {convertBaseOptionsToProto} from '../../../tasks/web/components/processors/base_options';
-import {TaskRunnerOptions} from '../../../tasks/web/core/task_runner_options';
+import {ExternalFile} from '../../../tasks/cc/core/proto/external_file_pb';
+import {BaseOptions, TaskRunnerOptions} from '../../../tasks/web/core/task_runner_options';
 import {createMediaPipeLib, FileLocator, GraphRunner, WasmMediaPipeConstructor, WasmModule} from '../../../web/graph_runner/graph_runner';
 import {SupportImage} from '../../../web/graph_runner/graph_runner_image_lib';
 import {SupportModelResourcesGraphService} from '../../../web/graph_runner/register_model_resources_graph_service';
@@ -91,13 +93,51 @@ export abstract class TaskRunner {
     this.graphRunner.registerModelResourcesGraphService();
   }
 
-  /** Configures the shared options of a MediaPipe Task. */
-  async setOptions(options: TaskRunnerOptions): Promise<void> {
-    if (options.baseOptions) {
-      this.baseOptions = await convertBaseOptionsToProto(
-          options.baseOptions, this.baseOptions);
+  /** Configures the task with custom options. */
+  abstract setOptions(options: TaskRunnerOptions): Promise<void>;
+
+  /**
+   * Applies the current set of options, including any base options that have
+   * not been processed by the task implementation. The options are applied
+   * synchronously unless a `modelAssetPath` is provided. This ensures that
+   * for most use cases options are applied directly and immediately affect
+   * the next inference.
+   */
+  protected applyOptions(options: TaskRunnerOptions): Promise<void> {
+    const baseOptions: BaseOptions = options.baseOptions || {};
+
+    // Validate that exactly one model is configured
+    if (options.baseOptions?.modelAssetBuffer &&
+        options.baseOptions?.modelAssetPath) {
+      throw new Error(
+          'Cannot set both baseOptions.modelAssetPath and baseOptions.modelAssetBuffer');
+    } else if (!(this.baseOptions.getModelAsset()?.hasFileContent() ||
+                 options.baseOptions?.modelAssetBuffer ||
+                 options.baseOptions?.modelAssetPath)) {
+      throw new Error(
+          'Either baseOptions.modelAssetPath or baseOptions.modelAssetBuffer must be set');
+    }
+
+    this.setAcceleration(baseOptions);
+    if (baseOptions.modelAssetPath) {
+      // We don't use `await` here since we want to apply most settings
+      // synchronously.
+      return fetch(baseOptions.modelAssetPath.toString())
+          .then(response => response.arrayBuffer())
+          .then(buffer => {
+            this.setExternalFile(new Uint8Array(buffer));
+            this.refreshGraph();
+          });
+    } else {
+      // Apply the setting synchronously.
+      this.setExternalFile(baseOptions.modelAssetBuffer);
+      this.refreshGraph();
+      return Promise.resolve();
     }
   }
+
+  /** Appliest the current options to the MediaPipe graph. */
+  protected abstract refreshGraph(): void;
 
   /**
    * Takes the raw data from a MediaPipe graph, and passes it to C++ to be run
@@ -139,6 +179,27 @@ export abstract class TaskRunner {
           this.processingErrors.map(e => e.message).join(', '));
     }
     this.processingErrors = [];
+  }
+
+  /** Configures the `externalFile` option */
+  private setExternalFile(modelAssetBuffer?: Uint8Array): void {
+    const externalFile = this.baseOptions.getModelAsset() || new ExternalFile();
+    if (modelAssetBuffer) {
+      externalFile.setFileContent(modelAssetBuffer);
+    }
+    this.baseOptions.setModelAsset(externalFile);
+  }
+
+  /** Configures the `acceleration` option. */
+  private setAcceleration(options: BaseOptions) {
+    const acceleration =
+        this.baseOptions.getAcceleration() ?? new Acceleration();
+    if (options.delegate === 'GPU') {
+      acceleration.setGpu(new InferenceCalculatorOptions.Delegate.Gpu());
+    } else {
+      acceleration.setTflite(new InferenceCalculatorOptions.Delegate.TfLite());
+    }
+    this.baseOptions.setAcceleration(acceleration);
   }
 }
 

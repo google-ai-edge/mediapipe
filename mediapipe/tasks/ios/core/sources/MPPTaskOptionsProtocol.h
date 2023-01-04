@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
+
 #include "mediapipe/framework/calculator_options.pb.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -25,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Copies the iOS MediaPipe task options to an object of mediapipe::CalculatorOptions proto.
  */
-- (void)copyToProto:(mediapipe::CalculatorOptions *)optionsProto;
+- (void)copyToProto:(::mediapipe::CalculatorOptions *)optionsProto;
 
 @end
 

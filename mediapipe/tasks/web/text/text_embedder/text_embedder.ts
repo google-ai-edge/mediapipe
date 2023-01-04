@@ -113,11 +113,10 @@ export class TextEmbedder extends TaskRunner {
    *
    * @param options The options for the text embedder.
    */
-  override async setOptions(options: TextEmbedderOptions): Promise<void> {
-    await super.setOptions(options);
+  override setOptions(options: TextEmbedderOptions): Promise<void> {
     this.options.setEmbedderOptions(convertEmbedderOptionsToProto(
         options, this.options.getEmbedderOptions()));
-    this.refreshGraph();
+    return this.applyOptions(options);
   }
 
   protected override get baseOptions(): BaseOptionsProto {
@@ -157,7 +156,7 @@ export class TextEmbedder extends TaskRunner {
   }
 
   /** Updates the MediaPipe graph configuration. */
-  private refreshGraph(): void {
+  protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
     graphConfig.addInputStream(INPUT_STREAM);
     graphConfig.addOutputStream(EMBEDDINGS_STREAM);

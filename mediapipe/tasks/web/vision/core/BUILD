@@ -29,6 +29,7 @@ mediapipe_ts_library(
     testonly = True,
     srcs = ["vision_task_runner.test.ts"],
     deps = [
+        ":vision_task_options",
         ":vision_task_runner",
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/web/core:task_runner_test_utils",

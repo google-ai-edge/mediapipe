@@ -13,13 +13,14 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
+
 #include <string>
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface NSString (Helpers)
 
-@property(readonly) std::string cppString;
+@property(readonly, nonatomic) std::string cppString;
 
 + (NSString *)stringWithCppString:(std::string)text;
 

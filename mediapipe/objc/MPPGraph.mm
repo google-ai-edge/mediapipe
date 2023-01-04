@@ -230,15 +230,16 @@ if ([wrapper.delegate
 }
 
 - (absl::Status)performStart {
-  absl::Status status = _graph->Initialize(_config);
-  if (!status.ok()) {
-    return status;
-  }
+  absl::Status status;
   for (const auto& service_packet : _servicePackets) {
     status = _graph->SetServicePacket(*service_packet.first, service_packet.second);
     if (!status.ok()) {
       return status;
     }
+  }
+  status = _graph->Initialize(_config);
+  if (!status.ok()) {
+    return status;
   }
   status = _graph->StartRun(_inputSidePackets, _streamHeaders);
   if (!status.ok()) {

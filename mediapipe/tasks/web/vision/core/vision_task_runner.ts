@@ -22,13 +22,13 @@ import {VisionTaskOptions} from './vision_task_options';
 /** Base class for all MediaPipe Vision Tasks. */
 export abstract class VisionTaskRunner<T> extends TaskRunner {
   /** Configures the shared options of a vision task. */
-  override async setOptions(options: VisionTaskOptions): Promise<void> {
-    await super.setOptions(options);
+  override applyOptions(options: VisionTaskOptions): Promise<void> {
     if ('runningMode' in options) {
       const useStreamMode =
           !!options.runningMode && options.runningMode !== 'image';
       this.baseOptions.setUseStreamMode(useStreamMode);
     }
+    return super.applyOptions(options);
   }
 
   /** Sends an image packet to the graph and awaits results. */

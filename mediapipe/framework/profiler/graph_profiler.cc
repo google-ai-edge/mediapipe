@@ -194,6 +194,7 @@ void GraphProfiler::Initialize(
         "Calculator \"$0\" has already been added.", node_name);
   }
   profile_builder_ = std::make_unique<GraphProfileBuilder>(this);
+  graph_id_ = ++next_instance_id_;
 
   is_initialized_ = true;
 }

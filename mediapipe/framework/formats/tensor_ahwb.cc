@@ -266,7 +266,12 @@ Tensor::AHardwareBufferView Tensor::GetAHardwareBufferWriteView(
 
 bool Tensor::AllocateAHardwareBuffer(int size_alignment) const {
   // Mark current tracking key as Ahwb-use.
-  ahwb_usage_track_.insert(ahwb_tracking_key_);
+  if (auto it = ahwb_usage_track_.find(ahwb_tracking_key_);
+      it != ahwb_usage_track_.end()) {
+    size_alignment = it->second;
+  } else if (ahwb_tracking_key_ != 0) {
+    ahwb_usage_track_.insert({ahwb_tracking_key_, size_alignment});
+  }
   use_ahwb_ = true;
 
   if (__builtin_available(android 26, *)) {
@@ -458,7 +463,8 @@ void Tensor::TrackAhwbUsage(uint64_t source_location_hash) const {
       ahwb_tracking_key_ = tensor_internal::FnvHash64(ahwb_tracking_key_, dim);
     }
   }
-  use_ahwb_ = ahwb_usage_track_.contains(ahwb_tracking_key_);
+  // Keep flag value if it was set previously.
+  use_ahwb_ = use_ahwb_ || ahwb_usage_track_.contains(ahwb_tracking_key_);
 }
 
 #else  // MEDIAPIPE_TENSOR_USE_AHWB
