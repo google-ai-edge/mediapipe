@@ -83,8 +83,8 @@ void FillGpuBuffer(GLuint name, std::size_t size,
       TFLITE_GPU_CALL_GL(glBindBufferBase, GL_SHADER_STORAGE_BUFFER, 0, name));
   MP_ASSERT_OK(TFLITE_GPU_CALL_GL(glUseProgram, to_buffer_program));
   MP_ASSERT_OK(TFLITE_GPU_CALL_GL(glDispatchCompute, size / 2, 1, 1));
-  MP_ASSERT_OK(TFLITE_GPU_CALL_GL(glBindBuffer, GL_SHADER_STORAGE_BUFFER, 0));
-  MP_ASSERT_OK(TFLITE_GPU_CALL_GL(glDeleteProgram, to_buffer_program));
+  MP_EXPECT_OK(TFLITE_GPU_CALL_GL(glBindBuffer, GL_SHADER_STORAGE_BUFFER, 0));
+  MP_EXPECT_OK(TFLITE_GPU_CALL_GL(glDeleteProgram, to_buffer_program));
 }
 
 class TensorAhwbGpuTest : public mediapipe::GpuTestBase {
@@ -97,18 +97,18 @@ TEST_F(TensorAhwbGpuTest, TestGpuToCpuFloat32) {
   {
     // Request Ahwb first to get Ahwb storage allocated internally.
     auto view = tensor.GetAHardwareBufferWriteView();
-    EXPECT_NE(view.handle(), nullptr);
+    ASSERT_NE(view.handle(), nullptr);
     view.SetWritingFinishedFD(-1, [](bool) { return true; });
   }
   RunInGlContext([&tensor] {
     auto ssbo_view = tensor.GetOpenGlBufferWriteView();
     auto ssbo_name = ssbo_view.name();
-    EXPECT_GT(ssbo_name, 0);
+    ASSERT_GT(ssbo_name, 0);
     FillGpuBuffer(ssbo_name, tensor.shape().num_elements(),
                   tensor.element_type());
   });
   auto ptr = tensor.GetCpuReadView().buffer<float>();
-  EXPECT_NE(ptr, nullptr);
+  ASSERT_NE(ptr, nullptr);
   std::vector<float> reference;
   reference.resize(num_elements);
   for (int i = 0; i < num_elements; i++) {
@@ -124,18 +124,18 @@ TEST_F(TensorAhwbGpuTest, TestGpuToCpuFloat16) {
   {
     // Request Ahwb first to get Ahwb storage allocated internally.
     auto view = tensor.GetAHardwareBufferWriteView();
-    EXPECT_NE(view.handle(), nullptr);
+    ASSERT_NE(view.handle(), nullptr);
     view.SetReadingFinishedFunc([](bool) { return true; });
   }
   RunInGlContext([&tensor] {
     auto ssbo_view = tensor.GetOpenGlBufferWriteView();
     auto ssbo_name = ssbo_view.name();
-    EXPECT_GT(ssbo_name, 0);
+    ASSERT_GT(ssbo_name, 0);
     FillGpuBuffer(ssbo_name, tensor.shape().num_elements(),
                   tensor.element_type());
   });
   auto ptr = tensor.GetCpuReadView().buffer<Float16>();
-  EXPECT_NE(ptr, nullptr);
+  ASSERT_NE(ptr, nullptr);
   std::vector<Float16> reference;
   reference.resize(num_elements);
   for (int i = 0; i < num_elements; i++) {
@@ -153,18 +153,18 @@ TEST_F(TensorAhwbGpuTest, TestReplacingCpuByAhwb) {
   Tensor tensor{Tensor::ElementType::kFloat32, Tensor::Shape({num_elements})};
   {
     auto ptr = tensor.GetCpuWriteView().buffer<float>();
-    EXPECT_NE(ptr, nullptr);
+    ASSERT_NE(ptr, nullptr);
     for (int i = 0; i < num_elements; i++) {
       ptr[i] = static_cast<float>(i) / 10.0f;
     }
   }
   {
     auto view = tensor.GetAHardwareBufferReadView();
-    EXPECT_NE(view.handle(), nullptr);
+    ASSERT_NE(view.handle(), nullptr);
     view.SetReadingFinishedFunc([](bool) { return true; });
   }
   auto ptr = tensor.GetCpuReadView().buffer<float>();
-  EXPECT_NE(ptr, nullptr);
+  ASSERT_NE(ptr, nullptr);
   std::vector<float> reference;
   reference.resize(num_elements);
   for (int i = 0; i < num_elements; i++) {
@@ -182,17 +182,17 @@ TEST_F(TensorAhwbGpuTest, TestReplacingGpuByAhwb) {
   RunInGlContext([&tensor] {
     auto ssbo_view = tensor.GetOpenGlBufferWriteView();
     auto ssbo_name = ssbo_view.name();
-    EXPECT_GT(ssbo_name, 0);
+    ASSERT_GT(ssbo_name, 0);
     FillGpuBuffer(ssbo_name, tensor.shape().num_elements(),
                   tensor.element_type());
   });
   {
     auto view = tensor.GetAHardwareBufferReadView();
-    EXPECT_NE(view.handle(), nullptr);
+    ASSERT_NE(view.handle(), nullptr);
     view.SetReadingFinishedFunc([](bool) { return true; });
   }
   auto ptr = tensor.GetCpuReadView().buffer<float>();
-  EXPECT_NE(ptr, nullptr);
+  ASSERT_NE(ptr, nullptr);
   std::vector<float> reference;
   reference.resize(num_elements);
   for (int i = 0; i < num_elements; i++) {
