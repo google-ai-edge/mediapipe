@@ -71,6 +71,7 @@ class TextClassifierTest(tf.test.TestCase):
 
     self.assertTrue(os.path.exists(output_metadata_file))
     self.assertGreater(os.path.getsize(output_metadata_file), 0)
+    filecmp.clear_cache()
     self.assertTrue(
         filecmp.cmp(
             output_metadata_file,
