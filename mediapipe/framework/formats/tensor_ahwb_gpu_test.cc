@@ -68,8 +68,9 @@ void FillGpuBuffer(GLuint name, std::size_t size,
     MP_ASSERT_OK(TFLITE_GPU_CALL_GL(glGetShaderiv, shader, GL_INFO_LOG_LENGTH,
                                     &max_length));
     std::vector<GLchar> error_log(max_length);
-    glGetShaderInfoLog(shader, max_length, &max_length, error_log.data());
-    glDeleteShader(shader);
+    MP_ASSERT_OK(TFLITE_GPU_CALL_GL(glGetShaderInfoLog, shader, max_length,
+                                    &max_length, error_log.data()));
+    MP_EXPECT_OK(TFLITE_GPU_CALL_GL(glDeleteShader, shader));
     FAIL() << error_log.data();
     return;
   }
