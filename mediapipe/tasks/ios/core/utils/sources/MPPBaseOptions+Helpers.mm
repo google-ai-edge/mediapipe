@@ -21,6 +21,8 @@ using BaseOptionsProto = ::mediapipe::tasks::core::proto::BaseOptions;
 @implementation MPPBaseOptions (Helpers)
 
 - (void)copyToProto:(BaseOptionsProto *)baseOptionsProto {
+  baseOptionsProto->Clear();
+
   if (self.modelAssetPath) {
     baseOptionsProto->mutable_model_asset()->set_file_name(self.modelAssetPath.UTF8String);
   }
@@ -31,6 +33,7 @@ using BaseOptionsProto = ::mediapipe::tasks::core::proto::BaseOptions;
       break;
     }
     case MPPDelegateGPU:
+      // TODO: Provide an implementation for GPU Delegate.
       break;
     default:
       break;
