@@ -18,6 +18,8 @@ licenses(["notice"])
 
 package(default_visibility = [
     "//mediapipe/examples:__subpackages__",
+    "//photos/editing/mobile/mediapipe/calculators:__subpackages__",
+    "//photos/editing/mobile/mediapipe/proto:__subpackages__",
 ])
 
 proto_library(
@@ -45,6 +47,8 @@ mediapipe_cc_proto_library(
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
     visibility = [
         "//mediapipe/examples:__subpackages__",
+        "//photos/editing/mobile/mediapipe/calculators:__pkg__",
+        "//photos/editing/mobile/mediapipe/calculators:__subpackages__",
     ],
     deps = [":autoflip_messages_proto"],
 )

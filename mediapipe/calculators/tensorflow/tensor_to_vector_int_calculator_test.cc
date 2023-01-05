@@ -28,7 +28,8 @@ namespace tf = ::tensorflow;
 class TensorToVectorIntCalculatorTest : public ::testing::Test {
  protected:
   void SetUpRunner(const bool tensor_is_2d, const bool flatten_nd,
-                   const bool tensor_is_token = false) {
+                   const bool tensor_is_token = false,
+                   const int32_t overlap = 0) {
     CalculatorGraphConfig::Node config;
     config.set_calculator("TensorToVectorIntCalculator");
     config.add_input_stream("input_tensor");
@@ -38,6 +39,7 @@ class TensorToVectorIntCalculatorTest : public ::testing::Test {
     options->set_tensor_is_2d(tensor_is_2d);
     options->set_flatten_nd(flatten_nd);
     options->set_tensor_is_token(tensor_is_token);
+    options->set_overlap(overlap);
     runner_ = absl::make_unique<CalculatorRunner>(config);
   }
 
@@ -185,6 +187,55 @@ TEST_F(TensorToVectorIntCalculatorTest, FlattenShouldTakeAllDimensions) {
   for (int i = 0; i < 2 * 2 * 2; ++i) {
     const int64 expected = static_cast<int64>(1 << i);
     EXPECT_EQ(expected, output_vector[i]);
+  }
+}
+
+TEST_F(TensorToVectorIntCalculatorTest, Overlap) {
+  SetUpRunner(false, false, false, 2);
+  for (int time = 0; time < 3; ++time) {
+    const tf::TensorShape tensor_shape(std::vector<tf::int64>{5});
+    auto tensor = absl::make_unique<tf::Tensor>(tf::DT_INT64, tensor_shape);
+    auto tensor_vec = tensor->vec<int64>();
+    for (int i = 0; i < 5; ++i) {
+      // 2^i can be represented exactly in floating point numbers if 'i' is
+      // small.
+      tensor_vec(i) = static_cast<int64>(time + (1 << i));
+    }
+
+    runner_->MutableInputs()->Index(0).packets.push_back(
+        Adopt(tensor.release()).At(Timestamp(time)));
+  }
+
+  ASSERT_TRUE(runner_->Run().ok());
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Index(0).packets;
+  EXPECT_EQ(3, output_packets.size());
+
+  {
+    // First vector in full.
+    int time = 0;
+    EXPECT_EQ(time, output_packets[time].Timestamp().Value());
+    const std::vector<int64>& output_vector =
+        output_packets[time].Get<std::vector<int64>>();
+
+    EXPECT_EQ(5, output_vector.size());
+    for (int i = 0; i < 5; ++i) {
+      const int64 expected = static_cast<int64>(time + (1 << i));
+      EXPECT_EQ(expected, output_vector[i]);
+    }
+  }
+
+  // All following vectors the overlap removed
+  for (int time = 1; time < 3; ++time) {
+    EXPECT_EQ(time, output_packets[time].Timestamp().Value());
+    const std::vector<int64>& output_vector =
+        output_packets[time].Get<std::vector<int64>>();
+
+    EXPECT_EQ(3, output_vector.size());
+    for (int i = 0; i < 3; ++i) {
+      const int64 expected = static_cast<int64>(time + (1 << (i + 2)));
+      EXPECT_EQ(expected, output_vector[i]);
+    }
   }
 }
 

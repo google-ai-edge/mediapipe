@@ -37,8 +37,10 @@ class TensorToVectorIntCalculator : public CalculatorBase {
 
  private:
   void TokenizeVector(std::vector<int64>* vector) const;
+  void RemoveOverlapVector(std::vector<int64>* vector);
 
   TensorToVectorIntCalculatorOptions options_;
+  int32_t overlapping_values_;
 };
 REGISTER_CALCULATOR(TensorToVectorIntCalculator);
 
@@ -66,6 +68,7 @@ absl::Status TensorToVectorIntCalculator::GetContract(CalculatorContract* cc) {
 
 absl::Status TensorToVectorIntCalculator::Open(CalculatorContext* cc) {
   options_ = cc->Options<TensorToVectorIntCalculatorOptions>();
+  overlapping_values_ = 0;
 
   // Inform mediapipe that this calculator produces an output at time t for
   // each input received at time t (i.e. this calculator does not buffer
@@ -106,6 +109,7 @@ absl::Status TensorToVectorIntCalculator::Process(CalculatorContext* cc) {
         }
       }
       TokenizeVector(&instance_output);
+      RemoveOverlapVector(&instance_output);
     }
     cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
   } else {
@@ -128,10 +132,26 @@ absl::Status TensorToVectorIntCalculator::Process(CalculatorContext* cc) {
       }
     }
     TokenizeVector(output.get());
+    RemoveOverlapVector(output.get());
     cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
   }
 
   return absl::OkStatus();
+}
+
+void TensorToVectorIntCalculator::RemoveOverlapVector(
+    std::vector<int64>* vector) {
+  if (options_.overlap() <= 0) {
+    return;
+  }
+  if (overlapping_values_ > 0) {
+    if (vector->size() < overlapping_values_) {
+      vector->clear();
+    } else {
+      vector->erase(vector->begin(), vector->begin() + overlapping_values_);
+    }
+  }
+  overlapping_values_ = options_.overlap();
 }
 
 void TensorToVectorIntCalculator::TokenizeVector(

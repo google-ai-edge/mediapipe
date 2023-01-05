@@ -34,7 +34,7 @@ TEST(TensorAhwbTest, TestAhwbAlignment) {
   Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape{5});
   {
     auto view = tensor.GetAHardwareBufferWriteView(16);
-    EXPECT_NE(view.handle(), nullptr);
+    ASSERT_NE(view.handle(), nullptr);
     if (__builtin_available(android 26, *)) {
       AHardwareBuffer_Desc desc;
       AHardwareBuffer_describe(view.handle(), &desc);

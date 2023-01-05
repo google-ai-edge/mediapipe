@@ -91,8 +91,8 @@ objc_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",
-        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
     ],
 )
 
