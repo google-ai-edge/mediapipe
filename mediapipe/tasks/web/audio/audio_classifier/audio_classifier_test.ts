@@ -34,7 +34,8 @@ class AudioClassifierFake extends AudioClassifier implements
   attachListenerSpies: jasmine.Spy[] = [];
   graph: CalculatorGraphConfig|undefined;
 
-  private protoVectorListener: ((binaryProtos: Uint8Array[]) => void)|undefined;
+  private protoVectorListener:
+      ((binaryProtos: Uint8Array[], timestamp: number) => void)|undefined;
   private resultProtoVector: ClassificationResult[] = [];
 
   constructor() {
@@ -59,8 +60,10 @@ class AudioClassifierFake extends AudioClassifier implements
             });
     spyOn(this.graphRunner, 'finishProcessing').and.callFake(() => {
       if (!this.protoVectorListener) return;
-      this.protoVectorListener(this.resultProtoVector.map(
-          classificationResult => classificationResult.serializeBinary()));
+      this.protoVectorListener(
+          this.resultProtoVector.map(
+              classificationResult => classificationResult.serializeBinary()),
+          1337);
     });
     spyOn(this.graphRunner, 'setGraph').and.callFake(binaryGraph => {
       this.graph = CalculatorGraphConfig.deserializeBinary(binaryGraph);
@@ -138,12 +141,12 @@ describe('AudioClassifier', () => {
     classifcations.setHeadIndex(1);
     classifcations.setHeadName('headName');
     let classificationList = new ClassificationList();
-    let clasification = new Classification();
-    clasification.setIndex(1);
-    clasification.setScore(0.2);
-    clasification.setDisplayName('displayName');
-    clasification.setLabel('categoryName');
-    classificationList.addClassification(clasification);
+    let classification = new Classification();
+    classification.setIndex(1);
+    classification.setScore(0.2);
+    classification.setDisplayName('displayName');
+    classification.setLabel('categoryName');
+    classificationList.addClassification(classification);
     classifcations.setClassificationList(classificationList);
     classificationResult.addClassifications(classifcations);
     resultProtoVector.push(classificationResult);
@@ -152,10 +155,10 @@ describe('AudioClassifier', () => {
     classificationResult.setTimestampMs(1);
     classifcations = new Classifications();
     classificationList = new ClassificationList();
-    clasification = new Classification();
-    clasification.setIndex(2);
-    clasification.setScore(0.3);
-    classificationList.addClassification(clasification);
+    classification = new Classification();
+    classification.setIndex(2);
+    classification.setScore(0.3);
+    classificationList.addClassification(classification);
     classifcations.setClassificationList(classificationList);
     classificationResult.addClassifications(classifcations);
     resultProtoVector.push(classificationResult);
@@ -191,8 +194,8 @@ describe('AudioClassifier', () => {
     const classificationResult = new ClassificationResult();
     const classifcations = new Classifications();
     const classificationList = new ClassificationList();
-    const clasification = new Classification();
-    classificationList.addClassification(clasification);
+    const classification = new Classification();
+    classificationList.addClassification(classification);
     classifcations.setClassificationList(classificationList);
     classificationResult.addClassifications(classifcations);
 

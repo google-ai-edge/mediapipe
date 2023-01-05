@@ -26,7 +26,7 @@ import {GestureRecognizer, GestureRecognizerOptions} from './gesture_recognizer'
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
-type ProtoListener = ((binaryProtos: Uint8Array[]) => void);
+type ProtoListener = ((binaryProtos: Uint8Array[], timestamp: number) => void);
 
 function createHandednesses(): Uint8Array[] {
   const handsProto = new ClassificationList();
@@ -254,11 +254,13 @@ describe('GestureRecognizer', () => {
     // Pass the test data to our listener
     gestureRecognizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       verifyListenersRegistered(gestureRecognizer);
-      gestureRecognizer.listeners.get('hand_landmarks')!(createLandmarks());
+      gestureRecognizer.listeners.get('hand_landmarks')!
+          (createLandmarks(), 1337);
       gestureRecognizer.listeners.get('world_hand_landmarks')!
-          (createWorldLandmarks());
-      gestureRecognizer.listeners.get('handedness')!(createHandednesses());
-      gestureRecognizer.listeners.get('hand_gestures')!(createGestures());
+          (createWorldLandmarks(), 1337);
+      gestureRecognizer.listeners.get('handedness')!
+          (createHandednesses(), 1337);
+      gestureRecognizer.listeners.get('hand_gestures')!(createGestures(), 1337);
     });
 
     // Invoke the gesture recognizer
@@ -290,11 +292,13 @@ describe('GestureRecognizer', () => {
   it('clears results between invoations', async () => {
     // Pass the test data to our listener
     gestureRecognizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {
-      gestureRecognizer.listeners.get('hand_landmarks')!(createLandmarks());
+      gestureRecognizer.listeners.get('hand_landmarks')!
+          (createLandmarks(), 1337);
       gestureRecognizer.listeners.get('world_hand_landmarks')!
-          (createWorldLandmarks());
-      gestureRecognizer.listeners.get('handedness')!(createHandednesses());
-      gestureRecognizer.listeners.get('hand_gestures')!(createGestures());
+          (createWorldLandmarks(), 1337);
+      gestureRecognizer.listeners.get('handedness')!
+          (createHandednesses(), 1337);
+      gestureRecognizer.listeners.get('hand_gestures')!(createGestures(), 1337);
     });
 
     // Invoke the gesture recognizer twice
@@ -310,11 +314,13 @@ describe('GestureRecognizer', () => {
     // Pass the test data to our listener
     gestureRecognizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       verifyListenersRegistered(gestureRecognizer);
-      gestureRecognizer.listeners.get('hand_landmarks')!(createLandmarks());
+      gestureRecognizer.listeners.get('hand_landmarks')!
+          (createLandmarks(), 1337);
       gestureRecognizer.listeners.get('world_hand_landmarks')!
-          (createWorldLandmarks());
-      gestureRecognizer.listeners.get('handedness')!(createHandednesses());
-      gestureRecognizer.listeners.get('hand_gestures')!([]);
+          (createWorldLandmarks(), 1337);
+      gestureRecognizer.listeners.get('handedness')!
+          (createHandednesses(), 1337);
+      gestureRecognizer.listeners.get('hand_gestures')!([], 1337);
     });
 
     // Invoke the gesture recognizer

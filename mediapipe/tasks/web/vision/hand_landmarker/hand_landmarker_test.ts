@@ -27,7 +27,7 @@ import {HandLandmarkerOptions} from './hand_landmarker_options';
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
-type ProtoListener = ((binaryProtos: Uint8Array[]) => void);
+type ProtoListener = ((binaryProtos: Uint8Array[], timestamp: number) => void);
 
 function createHandednesses(): Uint8Array[] {
   const handsProto = new ClassificationList();
@@ -206,10 +206,10 @@ describe('HandLandmarker', () => {
     // Pass the test data to our listener
     handLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       verifyListenersRegistered(handLandmarker);
-      handLandmarker.listeners.get('hand_landmarks')!(createLandmarks());
+      handLandmarker.listeners.get('hand_landmarks')!(createLandmarks(), 1337);
       handLandmarker.listeners.get('world_hand_landmarks')!
-          (createWorldLandmarks());
-      handLandmarker.listeners.get('handedness')!(createHandednesses());
+          (createWorldLandmarks(), 1337);
+      handLandmarker.listeners.get('handedness')!(createHandednesses(), 1337);
     });
 
     // Invoke the hand landmarker
@@ -235,10 +235,10 @@ describe('HandLandmarker', () => {
   it('clears results between invoations', async () => {
     // Pass the test data to our listener
     handLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
-      handLandmarker.listeners.get('hand_landmarks')!(createLandmarks());
+      handLandmarker.listeners.get('hand_landmarks')!(createLandmarks(), 1337);
       handLandmarker.listeners.get('world_hand_landmarks')!
-          (createWorldLandmarks());
-      handLandmarker.listeners.get('handedness')!(createHandednesses());
+          (createWorldLandmarks(), 1337);
+      handLandmarker.listeners.get('handedness')!(createHandednesses(), 1337);
     });
 
     // Invoke the hand landmarker twice

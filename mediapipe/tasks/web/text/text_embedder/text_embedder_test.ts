@@ -31,7 +31,8 @@ class TextEmbedderFake extends TextEmbedder implements MediapipeTasksFake {
   graph: CalculatorGraphConfig|undefined;
   attachListenerSpies: jasmine.Spy[] = [];
   fakeWasmModule: SpyWasmModule;
-  protoListener: ((binaryProtos: Uint8Array) => void)|undefined;
+  protoListener:
+      ((binaryProtos: Uint8Array, timestamp: number) => void)|undefined;
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
@@ -120,7 +121,7 @@ describe('TextEmbedder', () => {
     // Pass the test data to our listener
     textEmbedder.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       verifyListenersRegistered(textEmbedder);
-      textEmbedder.protoListener!(resultProto.serializeBinary());
+      textEmbedder.protoListener!(resultProto.serializeBinary(), 1337);
     });
 
     // Invoke the text embedder
@@ -149,7 +150,7 @@ describe('TextEmbedder', () => {
     // Pass the test data to our listener
     textEmbedder.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       verifyListenersRegistered(textEmbedder);
-      textEmbedder.protoListener!(resultProto.serializeBinary());
+      textEmbedder.protoListener!(resultProto.serializeBinary(), 1337);
     });
 
     // Invoke the text embedder
