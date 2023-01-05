@@ -85,16 +85,9 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
     return nil;
   }
 
-  Packet classifications_packet =
-      status_or_output_packet_map.value()[kClassificationsStreamName.cppString];
-
   return [MPPTextClassifierResult
       textClassifierResultWithClassificationsPacket:status_or_output_packet_map.value()
                                                         [kClassificationsStreamName.cppString]];
-
-  // return [MPPTextClassifierResult
-  //     textClassifierResultWithClassificationsPacket:output_packet_map.value()[kClassificationsStreamName.cppString]
-  //                                       .Get<ClassificationResult>()];
 }
 
 @end
