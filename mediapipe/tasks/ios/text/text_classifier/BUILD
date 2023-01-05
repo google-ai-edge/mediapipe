@@ -35,3 +35,25 @@ objc_library(
         "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
     ],
 )
+
+objc_library(
+    name = "MPPTextClassifier",
+    srcs = ["sources/MPPTextClassifier.mm"],
+    hdrs = ["sources/MPPTextClassifier.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
+        "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
+        "//mediapipe/tasks/ios/core:MPPTextPacketCreator",
+        "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierOptionsHelpers",
+        "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierResultHelpers",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        ":MPPTextClassifierOptions",
+    ],
+)
