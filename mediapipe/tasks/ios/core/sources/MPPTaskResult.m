@@ -16,16 +16,16 @@
 
 @implementation MPPTaskResult
 
-- (instancetype)initWithTimestamp:(long)timestamp {
+- (instancetype)initWithTimestampMs:(NSInteger)timestampMs {
   self = [super init];
   if (self) {
-    _timestamp = timestamp;
+    _timestampMs = timestampMs;
   }
   return self;
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-  return [[MPPTaskResult alloc] initWithTimestamp:self.timestamp];
+  return [[MPPTaskResult alloc] initWithTimestampMs:self.timestampMs];
 }
 
 @end
