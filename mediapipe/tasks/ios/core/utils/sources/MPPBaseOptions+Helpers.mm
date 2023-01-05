@@ -32,9 +32,10 @@ using BaseOptionsProto = ::mediapipe::tasks::core::proto::BaseOptions;
       baseOptionsProto->mutable_acceleration()->mutable_tflite();
       break;
     }
-    case MPPDelegateGPU:
+    case MPPDelegateGPU: {
       // TODO: Provide an implementation for GPU Delegate.
-      break;
+      [NSException raise:@"Invalid value for delegate" format:@"GPU Delegate is not implemented."];
+    }
     default:
       break;
   }
