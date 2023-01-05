@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,28 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierResult+Helpers.h"
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
+#import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierResult+Helpers.h"
+
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
+
+static const int kMicroSecondsPerMilliSecond = 1000;
 
 namespace {
 using ClassificationResultProto =
     ::mediapipe::tasks::components::containers::proto::ClassificationResult;
+using ::mediapipe::Packet;
 }  // namespace
+
+#define int kMicroSecondsPerMilliSecond = 1000;
 
 @implementation MPPTextClassifierResult (Helpers)
 
-+ (MPPTextClassifierResult *)textClassifierResultWithProto:
-    (const ClassificationResultProto &)classificationResultProto {
-  long timeStamp;
++ (MPPTextClassifierResult *)textClassifierResultWithClassificationsPacket:(const Packet &)packet {
+  MPPClassificationResult *classificationResult = [MPPClassificationResult
+      classificationResultWithProto:packet.Get<ClassificationResultProto>()];
 
-  if (classificationResultProto.has_timestamp_ms()) {
-    timeStamp = classificationResultProto.timestamp_ms();
-  }
-
-  MPPClassificationResult *classificationResult = [MPPClassificationResult classificationResultWithProto:classificationResultProto];
-
-  return [[MPPTextClassifierResult alloc] initWithClassificationResult:classificationResult
-                                                        timeStamp:timeStamp];
+  return [[MPPTextClassifierResult alloc]
+      initWithClassificationResult:classificationResult
+                       timestampMs:(NSInteger)(packet.Timestamp().Value() /
+                                               kMicroSecondsPerMilliSecond)];
 }
 
 @end

@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,5 +36,6 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifierResult",
         "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
+        "//mediapipe/framework:packet",
     ],
 )

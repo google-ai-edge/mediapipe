@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 @implementation MPPTextClassifierResult
 
 - (instancetype)initWithClassificationResult:(MPPClassificationResult *)classificationResult
-                              timeStamp:(long)timeStamp {
-  self = [super initWithTimestamp:timeStamp];
+                                 timestampMs:(NSInteger)timestampMs {
+  self = [super initWithTimestampMs:timestampMs];
   if (self) {
     _classificationResult = classificationResult;
   }

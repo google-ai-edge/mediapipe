@@ -13,22 +13,24 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
-
-#import "mediapipe/tasks/ios/components/processors/sources/MPPClassifierOptions.h"
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
+#import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * Options for setting up a `MPPTextClassifierOptions`.
+ * This class is used to create and call appropriate methods on the C++ Task Runner to initialize, execute and terminate any Mediapipe text task. 
  */
-NS_SWIFT_NAME(TextClassifierOptions)
-@interface MPPTextClassifierOptions : MPPTaskOptions
+@interface MPPTextTaskRunner : MPPTaskRunner
 
 /**
- * Options for configuring the classifier behavior, such as score threshold, number of results, etc.
+ * Initializes a new `MPPTextTaskRunner` with the mediapipe task graph config proto.
+ *
+ * @param graphConfig A mediapipe task graph config proto.
+ *
+ * @return An instance of `MPPTextTaskRunner` initialized to the given graph config proto.
  */
-@property(nonatomic, copy) MPPClassifierOptions *classifierOptions;
+- (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
+                                        error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 @end
 

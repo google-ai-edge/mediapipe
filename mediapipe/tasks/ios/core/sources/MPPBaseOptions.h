@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 typedef NS_ENUM(NSUInteger, MPPDelegate) {
   /** CPU. */
   MPPDelegateCPU,
-  
+
   /** GPU. */
   MPPDelegateGPU
 } NS_SWIFT_NAME(Delegate);
@@ -46,4 +46,3 @@ NS_SWIFT_NAME(BaseOptions)
 @end
 
 NS_ASSUME_NONNULL_END
-

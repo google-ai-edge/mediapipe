@@ -1,17 +1,14 @@
 load(
-    "//mediapipe/tasks:ios/ios.bzl",
-    "MPP_TASK_MINIMUM_OS_VERSION",
-    "MPP_TASK_DEFAULT_TAGS",
-    "MPP_TASK_DISABLED_SANITIZER_TAGS",
-)
-load(
-    "@build_bazel_rules_apple//apple:ios.bzl", 
+    "@build_bazel_rules_apple//apple:ios.bzl",
     "ios_unit_test",
 )
 load(
-    "@org_tensorflow//tensorflow/lite:special_rules.bzl", 
+    "@org_tensorflow//tensorflow/lite:special_rules.bzl",
     "tflite_ios_lab_runner"
 )
+
+load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
+
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -25,7 +22,7 @@ objc_library(
         "//mediapipe/tasks/testdata/text:bert_text_classifier_models",
         "//mediapipe/tasks/testdata/text:text_classifier_models",
     ],
-    tags = MPP_TASK_DEFAULT_TAGS,
+    tags = [],
     copts = [
         "-ObjC++",
         "-std=c++17",
@@ -38,10 +35,27 @@ objc_library(
 
 ios_unit_test(
     name = "MPPTextClassifierObjcTest",
-    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
+    minimum_os_version = "11.0",
     runner = tflite_ios_lab_runner("IOS_LATEST"),
-    tags = MPP_TASK_DEFAULT_TAGS + MPP_TASK_DISABLED_SANITIZER_TAGS,
+    tags =[],
     deps = [
         ":MPPTextClassifierObjcTestLibrary",
+    ],
+)
+
+swift_library(
+    name = "MPPTextClassifierSwiftTestLibrary",
+    testonly = 1,
+    srcs = ["TextClassifierTests.swift"],
+    tags = [],
+)
+
+ios_unit_test(
+    name = "MPPTextClassifierSwiftTest",
+    minimum_os_version = "11.0",
+    runner = tflite_ios_lab_runner("IOS_LATEST"),
+    tags = [],
+    deps = [
+        ":MPPTextClassifierSwiftTestLibrary",
     ],
 )

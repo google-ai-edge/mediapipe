@@ -26,11 +26,11 @@ NS_SWIFT_NAME(TaskResult)
 /**
  * Timestamp that is associated with the task result object.
  */
-@property(nonatomic, assign, readonly) long timestamp;
+@property(nonatomic, assign, readonly) NSInteger timestampMs;
 
 - (instancetype)init NS_UNAVAILABLE;
 
-- (instancetype)initWithTimestamp:(long)timestamp NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithTimestampMs:(NSInteger)timestampMs NS_DESIGNATED_INITIALIZER;
 
 @end
 

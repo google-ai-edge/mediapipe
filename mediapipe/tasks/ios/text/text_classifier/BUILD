@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,15 +25,20 @@ objc_library(
         "-std=c++17",
     ],
     deps = [
+        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
-        "//mediapipe/tasks/ios/core:MPPTaskRunner",
+        "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
         "//mediapipe/tasks/ios/core:MPPTextPacketCreator",
         "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierOptionsHelpers",
         "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierResultHelpers",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         ":MPPTextClassifierOptions",
+    ],
+    sdk_frameworks = [
+        "MetalKit",
     ],
 )
 

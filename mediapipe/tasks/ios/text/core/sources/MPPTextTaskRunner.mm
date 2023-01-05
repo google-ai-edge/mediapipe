@@ -12,15 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptionsProtocol.h"
-#import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierOptions.h"
+#import "mediapipe/tasks/ios/text/core/sources/MPPTextTaskRunner.h"
 
-NS_ASSUME_NONNULL_BEGIN
+namespace {
+using ::mediapipe::CalculatorGraphConfig;
+}  // namespace
 
-@interface MPPTextClassifierOptions (Helpers) <MPPTaskOptionsProtocol>
+@implementation MPPTextTaskRunner
 
-- (void)copyToProto:(mediapipe::CalculatorOptions *)optionsProto;
+- (instancetype)initWithCalculatorGraphConfig:(CalculatorGraphConfig)graphConfig
+                                        error:(NSError **)error {
+  self = [super initWithCalculatorGraphConfig:graphConfig packetsCallback:nullptr error:error];
+  return self;
+}
 
 @end
-
-NS_ASSUME_NONNULL_END

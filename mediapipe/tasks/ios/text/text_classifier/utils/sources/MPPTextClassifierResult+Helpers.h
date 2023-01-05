@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierResult.h"
+
+#include "mediapipe/framework/packet.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPTextClassifierResult (Helpers)
 
-+ (MPPTextClassifierResult *)textClassifierResultWithProto:
-    (const mediapipe::tasks::components::containers::proto::ClassificationResult &)
-        classificationResultProto;
++ (MPPTextClassifierResult *)textClassifierResultWithClassificationsPacket:
+    (const mediapipe::Packet &)packet;
 
 @end
 

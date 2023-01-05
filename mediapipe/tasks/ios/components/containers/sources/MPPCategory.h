@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,41 +16,44 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/** Encapsulates information about a class in the classification results. */
+/** Category is a util class, contains a label, its display name, a float value as score, and the
+ * index of the label in the corresponding label file. Typically it's used as the result of
+ * classification tasks. */
 NS_SWIFT_NAME(ClassificationCategory)
 @interface MPPCategory : NSObject
 
-/** Index of the class in the corresponding label map, usually packed in the TFLite Model
- * Metadata. */
+/** The index of the label in the corresponding label file. It takes the value -1 if the index is
+ * not set. */
 @property(nonatomic, readonly) NSInteger index;
 
 /** Confidence score for this class . */
 @property(nonatomic, readonly) float score;
 
-/** Class name of the class. */
-@property(nonatomic, readonly, nullable) NSString *label;
+/** The label of this category object. */
+@property(nonatomic, readonly, nullable) NSString *categoryName;
 
-/** Display name of the class. */
+/** The display name of the label, which may be translated for different locales. For example, a
+ * label, "apple", may be translated into Spanish for display purpose, so that the display name is
+ * "manzana". */
 @property(nonatomic, readonly, nullable) NSString *displayName;
 
 /**
- * Initializes a new `TFLCategory` with the given index, score, label and display name.
+ * Initializes a new `MPPCategory` with the given index, score, category name and display name.
  *
- * @param index Index of the class in the corresponding label map, usually packed in the TFLite
- * Model Metadata.
+ * @param index The index of the label in the corresponding label file.
  *
- * @param score Confidence score for this class.
+ * @param score The probability score of this label category.
  *
- * @param label Class name of the class.
+ * @param categoryName The label of this category object..
  *
- * @param displayName Display name of the class.
+ * @param displayName The display name of the label.
  *
- * @return An instance of `TFLCategory` initialized with the given index, score, label and display
- * name.
+ * @return An instance of `MPPCategory` initialized with the given index, score, category name and
+ * display name.
  */
 - (instancetype)initWithIndex:(NSInteger)index
                         score:(float)score
-                        label:(nullable NSString *)label
+                 categoryName:(nullable NSString *)categoryName
                   displayName:(nullable NSString *)displayName;
 
 - (instancetype)init NS_UNAVAILABLE;

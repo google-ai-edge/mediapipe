@@ -17,17 +17,15 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 objc_library(
-    name = "MPPBaseTextTaskApi",
-    srcs = ["sources/MPPBaseTextTaskApi.mm"],
-    hdrs = ["sources/MPPBaseTextTaskApi.h"],
+    name = "MPPTextTaskRunner",
+    srcs = ["sources/MPPTextTaskRunner.mm"],
+    hdrs = ["sources/MPPTextTaskRunner.h"],
     copts = [
         "-ObjC++",
         "-std=c++17",
     ],
     deps = [
-        "//mediapipe/tasks/cc/core:task_runner",
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/core:MPPTaskRunner",
     ],
 )
 

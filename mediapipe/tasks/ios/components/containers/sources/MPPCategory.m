@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@
 
 - (instancetype)initWithIndex:(NSInteger)index
                         score:(float)score
-                        label:(nullable NSString *)label
+                 categoryName:(nullable NSString *)categoryName
                   displayName:(nullable NSString *)displayName {
   self = [super init];
   if (self) {
     _index = index;
     _score = score;
-    _label = label;
+    _categoryName = categoryName;
     _displayName = displayName;
   }
   return self;
