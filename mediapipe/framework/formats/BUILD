@@ -430,7 +430,7 @@ cc_library(
         ],
     hdrs = [
         "tensor.h",
-        "tensor_internal.h",
+        "//mediapipe/framework/formats/tensor:internal.h",
     ],
     copts = select({
         "//mediapipe:apple": [

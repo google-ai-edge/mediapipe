@@ -7,7 +7,7 @@
 #include <cstdint>
 
 #include "mediapipe/framework/formats/tensor.h"
-#include "mediapipe/framework/formats/tensor_data_types.h"
+#include "mediapipe/framework/formats/tensor/views/data_types.h"
 #include "mediapipe/gpu/gpu_test_base.h"
 #include "mediapipe/gpu/shader_util.h"
 #include "tensorflow/lite/delegates/gpu/gl/gl_call.h"
