@@ -142,6 +142,9 @@ absl::Status FindOutputDimensions(int input_width,             //
                                       static_cast<double>(input_height));
     try_width = (try_width / 2) * 2;
     try_height = (try_height / 2) * 2;
+    // The output width/height should be greater than 0.
+    try_width = std::max(try_width, 1);
+    try_height = std::max(try_height, 1);
 
     if (target_height <= 0 || try_height <= target_height) {
       // The resulting height based on the target width and aspect ratio
@@ -160,6 +163,9 @@ absl::Status FindOutputDimensions(int input_width,             //
                                      static_cast<double>(input_width));
     try_width = (try_width / 2) * 2;
     try_height = (try_height / 2) * 2;
+    // The output width/height should be greater than 0.
+    try_width = std::max(try_width, 1);
+    try_height = std::max(try_height, 1);
 
     if (target_width <= 0 || try_width <= target_width) {
       // The resulting width based on the target width and aspect ratio
