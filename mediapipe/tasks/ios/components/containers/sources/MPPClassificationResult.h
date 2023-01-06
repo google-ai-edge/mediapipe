@@ -114,7 +114,11 @@ NS_SWIFT_NAME(ClassificationResult)
  * classifications and timestampMs.
  **/
 - (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications
-                            timestampMs:(NSInteger)timestampMs;
+                            timestampMs:(NSInteger)timestampMs NS_DESIGNATED_INITIALIZER;
+
+- (instancetype)init NS_UNAVAILABLE;
+
++ (instancetype)new NS_UNAVAILABLE;
 
 @end
 
