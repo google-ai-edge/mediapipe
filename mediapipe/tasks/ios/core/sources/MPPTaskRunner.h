@@ -64,7 +64,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * A synchronous method for processing batch data or offline streaming data. This method is designed
  * for processing either batch data such as unrelated images and texts or offline streaming data
- * such as the decoded frames from a video file and an audio file. The call blocks the current
+ * such as the decoded frames from a video file or audio file. The call blocks the current
  * thread until a failure status or a successful result is returned. If the input packets have no
  * timestamp, an internal timestamp will be assigend per invocation. Otherwise, when the timestamp
  * is set in the input packets, the caller must ensure that the input packet timestamps are greater
