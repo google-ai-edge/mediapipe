@@ -35,7 +35,8 @@ class ObjectDetectorFake extends ObjectDetector implements MediapipeTasksFake {
   graph: CalculatorGraphConfig|undefined;
 
   fakeWasmModule: SpyWasmModule;
-  protoListener: ((binaryProtos: Uint8Array[]) => void)|undefined;
+  protoListener:
+      ((binaryProtos: Uint8Array[], timestamp: number) => void)|undefined;
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
@@ -200,7 +201,7 @@ describe('ObjectDetector', () => {
     // Pass the test data to our listener
     objectDetector.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       verifyListenersRegistered(objectDetector);
-      objectDetector.protoListener!(detectionProtos);
+      objectDetector.protoListener!(detectionProtos, 1337);
     });
 
     // Invoke the object detector

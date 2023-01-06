@@ -35,7 +35,8 @@ class ImageClassifierFake extends ImageClassifier implements
   graph: CalculatorGraphConfig|undefined;
 
   fakeWasmModule: SpyWasmModule;
-  protoListener: ((binaryProto: Uint8Array) => void)|undefined;
+  protoListener:
+      ((binaryProto: Uint8Array, timestamp: number) => void)|undefined;
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
@@ -128,7 +129,8 @@ describe('ImageClassifier', () => {
     // Pass the test data to our listener
     imageClassifier.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       verifyListenersRegistered(imageClassifier);
-      imageClassifier.protoListener!(classificationResult.serializeBinary());
+      imageClassifier.protoListener!
+          (classificationResult.serializeBinary(), 1337);
     });
 
     // Invoke the image classifier

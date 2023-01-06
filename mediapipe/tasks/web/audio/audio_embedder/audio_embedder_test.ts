@@ -34,8 +34,10 @@ class AudioEmbedderFake extends AudioEmbedder implements MediapipeTasksFake {
   attachListenerSpies: jasmine.Spy[] = [];
   fakeWasmModule: SpyWasmModule;
 
-  protoListener: ((binaryProto: Uint8Array) => void)|undefined;
-  protoVectorListener: ((binaryProtos: Uint8Array[]) => void)|undefined;
+  protoListener:
+      ((binaryProto: Uint8Array, timestamp: number) => void)|undefined;
+  protoVectorListener:
+      ((binaryProtos: Uint8Array[], timestamp: number) => void)|undefined;
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
@@ -163,7 +165,7 @@ describe('AudioEmbedder', () => {
       audioEmbedder.fakeWasmModule._waitUntilIdle.and.callFake(() => {
         verifyListenersRegistered(audioEmbedder);
         // Pass the test data to our listener
-        audioEmbedder.protoListener!(resultProto.serializeBinary());
+        audioEmbedder.protoListener!(resultProto.serializeBinary(), 1337);
       });
 
       // Invoke the audio embedder
@@ -175,7 +177,8 @@ describe('AudioEmbedder', () => {
       audioEmbedder.fakeWasmModule._waitUntilIdle.and.callFake(() => {
         verifyListenersRegistered(audioEmbedder);
         // Pass the test data to our listener
-        audioEmbedder.protoVectorListener!([resultProto.serializeBinary()]);
+        audioEmbedder.protoVectorListener!
+            ([resultProto.serializeBinary()], 1337);
       });
 
       // Invoke the audio embedder

@@ -31,7 +31,8 @@ class ImageEmbedderFake extends ImageEmbedder implements MediapipeTasksFake {
   graph: CalculatorGraphConfig|undefined;
   attachListenerSpies: jasmine.Spy[] = [];
   fakeWasmModule: SpyWasmModule;
-  protoListener: ((binaryProtos: Uint8Array) => void)|undefined;
+  protoListener:
+      ((binaryProtos: Uint8Array, timestamp: number) => void)|undefined;
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
@@ -125,7 +126,7 @@ describe('ImageEmbedder', () => {
       // Pass the test data to our listener
       imageEmbedder.fakeWasmModule._waitUntilIdle.and.callFake(() => {
         verifyListenersRegistered(imageEmbedder);
-        imageEmbedder.protoListener!(resultProto.serializeBinary());
+        imageEmbedder.protoListener!(resultProto.serializeBinary(), 1337);
       });
     });
 
