@@ -34,6 +34,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
                                         error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
+- (instancetype)init NS_UNAVAILABLE;
+
++ (instancetype)new NS_UNAVAILABLE;
+
 @end
 
 NS_ASSUME_NONNULL_END
