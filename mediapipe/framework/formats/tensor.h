@@ -26,7 +26,7 @@
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
-#include "mediapipe/framework/formats/tensor_internal.h"
+#include "mediapipe/framework/formats/tensor/internal.h"
 #include "mediapipe/framework/port.h"
 
 #if MEDIAPIPE_METAL_ENABLED

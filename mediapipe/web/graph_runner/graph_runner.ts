@@ -73,10 +73,11 @@ export declare interface WasmModule {
 
   // Wasm Module output listener entrypoints.  Also built as part of
   // gl_graph_runner_internal_multi_input.
-  simpleListeners?: {[outputStreamName: string]: (data: unknown) => void};
+  simpleListeners?:
+      {[outputStreamName: string]: (data: unknown, timestamp: number) => void};
   vectorListeners?: {
     [outputStreamName: string]: (
-        data: unknown, index: number, length: number) => void
+        data: unknown, index: number, length: number, timestamp: number) => void
   };
   _attachBoolListener: (streamNamePtr: number) => void;
   _attachBoolVectorListener: (streamNamePtr: number) => void;
@@ -418,10 +419,12 @@ export class GraphRunner {
    * Ensures existence of the simple listeners table and registers the callback.
    * Intended for internal usage.
    */
-  setListener<T>(outputStreamName: string, callbackFcn: (data: T) => void) {
+  setListener<T>(
+      outputStreamName: string,
+      callbackFcn: (data: T, timestamp: number) => void) {
     this.wasmModule.simpleListeners = this.wasmModule.simpleListeners || {};
     this.wasmModule.simpleListeners[outputStreamName] =
-        callbackFcn as (data: unknown) => void;
+        callbackFcn as (data: unknown, timestamp: number) => void;
   }
 
   /**
@@ -429,11 +432,12 @@ export class GraphRunner {
    * Intended for internal usage.
    */
   setVectorListener<T>(
-      outputStreamName: string, callbackFcn: (data: T[]) => void) {
+      outputStreamName: string,
+      callbackFcn: (data: T[], timestamp: number) => void) {
     let buffer: T[] = [];
     this.wasmModule.vectorListeners = this.wasmModule.vectorListeners || {};
     this.wasmModule.vectorListeners[outputStreamName] =
-        (data: unknown, index: number, length: number) => {
+        (data: unknown, index: number, length: number, timestamp: number) => {
           // The Wasm listener gets invoked once for each element. Once we
           // receive all elements, we invoke the registered callback with the
           // full array.
@@ -442,7 +446,7 @@ export class GraphRunner {
             // Invoke the user callback directly, as the Wasm layer may clean up
             // the underlying data elements once we leave the scope of the
             // listener.
-            callbackFcn(buffer);
+            callbackFcn(buffer, timestamp);
             buffer = [];
           }
         };
@@ -740,7 +744,8 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachBoolListener(
-      outputStreamName: string, callbackFcn: (data: boolean) => void): void {
+      outputStreamName: string,
+      callbackFcn: (data: boolean, timestamp: number) => void): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -760,7 +765,8 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachBoolVectorListener(
-      outputStreamName: string, callbackFcn: (data: boolean[]) => void): void {
+      outputStreamName: string,
+      callbackFcn: (data: boolean[], timestamp: number) => void): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -780,7 +786,8 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachIntListener(
-      outputStreamName: string, callbackFcn: (data: number) => void): void {
+      outputStreamName: string,
+      callbackFcn: (data: number, timestamp: number) => void): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -800,7 +807,8 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachIntVectorListener(
-      outputStreamName: string, callbackFcn: (data: number[]) => void): void {
+      outputStreamName: string,
+      callbackFcn: (data: number[], timestamp: number) => void): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -820,7 +828,8 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachDoubleListener(
-      outputStreamName: string, callbackFcn: (data: number) => void): void {
+      outputStreamName: string,
+      callbackFcn: (data: number, timestamp: number) => void): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -840,7 +849,8 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachDoubleVectorListener(
-      outputStreamName: string, callbackFcn: (data: number[]) => void): void {
+      outputStreamName: string,
+      callbackFcn: (data: number[], timestamp: number) => void): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -860,7 +870,8 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachFloatListener(
-      outputStreamName: string, callbackFcn: (data: number) => void): void {
+      outputStreamName: string,
+      callbackFcn: (data: number, timestamp: number) => void): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -880,7 +891,8 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachFloatVectorListener(
-      outputStreamName: string, callbackFcn: (data: number[]) => void): void {
+      outputStreamName: string,
+      callbackFcn: (data: number[], timestamp: number) => void): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -900,7 +912,8 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachStringListener(
-      outputStreamName: string, callbackFcn: (data: string) => void): void {
+      outputStreamName: string,
+      callbackFcn: (data: string, timestamp: number) => void): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
 
@@ -920,7 +933,8 @@ export class GraphRunner {
    *     should not perform overly complicated (or any async) behavior.
    */
   attachStringVectorListener(
-      outputStreamName: string, callbackFcn: (data: string[]) => void): void {
+      outputStreamName: string,
+      callbackFcn: (data: string[], timestamp: number) => void): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
 
@@ -950,7 +964,8 @@ export class GraphRunner {
    *     with it).
    */
   attachProtoListener(
-      outputStreamName: string, callbackFcn: (data: Uint8Array) => void,
+      outputStreamName: string,
+      callbackFcn: (data: Uint8Array, timestamp: number) => void,
       makeDeepCopy?: boolean): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setListener(outputStreamName, callbackFcn);
@@ -984,7 +999,8 @@ export class GraphRunner {
    *     with it).
    */
   attachProtoVectorListener(
-      outputStreamName: string, callbackFcn: (data: Uint8Array[]) => void,
+      outputStreamName: string,
+      callbackFcn: (data: Uint8Array[], timestamp: number) => void,
       makeDeepCopy?: boolean): void {
     // Set up our TS listener to receive any packets for this stream.
     this.setVectorListener(outputStreamName, callbackFcn);
@@ -1017,8 +1033,10 @@ export class GraphRunner {
    *     up automatically by JS garbage collection whenever the user is finished
    *     with it).
    */
-  attachAudioListener(outputStreamName: string,
-      callbackFcn: (data: Float32Array) => void, makeDeepCopy?: boolean): void {
+  attachAudioListener(
+      outputStreamName: string,
+      callbackFcn: (data: Float32Array, timestamp: number) => void,
+      makeDeepCopy?: boolean): void {
     if (!this.wasmModule._attachAudioListener) {
       console.warn(
           'Attempting to use attachAudioListener without support for ' +
@@ -1027,12 +1045,13 @@ export class GraphRunner {
 
     // Set up our TS listener to receive any packets for this stream, and
     // additionally reformat our Uint8Array into a Float32Array for the user.
-    this.setListener(outputStreamName, (data: Uint8Array) => {
-      // Should be very fast
-      const floatArray =
-          new Float32Array(data.buffer, data.byteOffset, data.length / 4);
-      callbackFcn(floatArray);
-    });
+    this.setListener(
+        outputStreamName, (data: Uint8Array, timestamp: number) => {
+          // Should be very fast
+          const floatArray =
+              new Float32Array(data.buffer, data.byteOffset, data.length / 4);
+          callbackFcn(floatArray, timestamp);
+        });
 
     // Tell our graph to listen for string packets on this stream.
     this.wrapStringPtr(outputStreamName, (outputStreamNamePtr: number) => {
