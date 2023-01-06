@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * This class is used to create and call appropriate methods on the C++ Task Runner to initialize,
- * execute and terminate any Mediapipe task. 
+ * execute and terminate any MediaPipe task. 
  * 
  * An instance of the newly created C++ task runner will
  * be stored until this class is destroyed. When methods are called for processing (performing
@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
  * You can pass `nullptr` for `packetsCallback` in case the mode of operation
  * requested by the user is synchronous. 
  * 
- * If the task is operating in asynchronous mode, any iOS Mediapipe task that uses the `MPPTaskRunner` 
+ * If the task is operating in asynchronous mode, any iOS MediaPipe task that uses the `MPPTaskRunner` 
  * must define a C++ callback function to obtain the results of inference asynchronously and deliver
  * the results to the user. To accomplish this, callback function will in turn invoke the block 
  * provided by the user in the task options supplied to create the task. 

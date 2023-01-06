@@ -18,7 +18,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * This class is used to create and call appropriate methods on the C++ Task Runner to initialize, execute and terminate any Mediapipe text task. 
+ * This class is used to create and call appropriate methods on the C++ Task Runner to initialize, execute and terminate any MediaPipe text task. 
  */
 @interface MPPTextTaskRunner : MPPTaskRunner
 
