@@ -13,8 +13,10 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
-#include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
+
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
+
+#include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
 namespace {

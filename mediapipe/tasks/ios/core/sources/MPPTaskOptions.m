@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
+
 #import "mediapipe/tasks/ios/core/sources/MPPBaseOptions.h"
 
 @implementation MPPTaskOptions

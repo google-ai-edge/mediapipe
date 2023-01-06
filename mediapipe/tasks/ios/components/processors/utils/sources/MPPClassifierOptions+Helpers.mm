@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/components/processors/utils/sources/MPPClassifierOptions+Helpers.h"
+
+#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 
 namespace {
 using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto::ClassifierOptions;

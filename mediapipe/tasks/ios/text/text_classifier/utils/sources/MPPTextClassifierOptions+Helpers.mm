@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/tasks/cc/text/text_classifier/proto/text_classifier_graph_options.pb.h"
+#import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierOptions+Helpers.h"
+
 #import "mediapipe/tasks/ios/components/processors/utils/sources/MPPClassifierOptions+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
-#import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierOptions+Helpers.h"
+
+#include "mediapipe/tasks/cc/text/text_classifier/proto/text_classifier_graph_options.pb.h"
 
 namespace {
 using CalculatorOptionsProto = ::mediapipe::CalculatorOptions;

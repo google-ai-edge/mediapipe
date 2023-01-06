@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifier.h"
+
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
@@ -21,9 +22,8 @@
 #import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierOptions+Helpers.h"
 #import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierResult+Helpers.h"
 
-#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
-
 #include "absl/status/statusor.h"
+#include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 
 namespace {
 using ::mediapipe::Packet;

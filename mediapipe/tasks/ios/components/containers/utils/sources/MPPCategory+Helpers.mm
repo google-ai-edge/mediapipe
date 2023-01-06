@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPCategory+Helpers.h"
+
+#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 
 namespace {
 using ClassificationProto = ::mediapipe::Classification;

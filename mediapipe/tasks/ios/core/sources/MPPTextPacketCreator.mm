@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/core/sources/MPPTextPacketCreator.h"
+
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 
 namespace {
