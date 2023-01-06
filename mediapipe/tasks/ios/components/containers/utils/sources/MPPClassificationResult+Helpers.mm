@@ -32,7 +32,6 @@ using ClassificationResultProto =
   }
 
   NSString *headName;
-
   if (classificationsProto.has_head_name()) {
     headName = [NSString stringWithCppString:classificationsProto.head_name()];
   }
@@ -49,13 +48,11 @@ using ClassificationResultProto =
 + (MPPClassificationResult *)classificationResultWithProto:
     (const ClassificationResultProto &)classificationResultProto {
   NSMutableArray *classifications = [[NSMutableArray alloc] init];
-  for (const auto &classifications_proto : classificationResultProto.classifications()) {
-    [classifications addObject:[MPPClassifications classificationsWithProto:classifications_proto]];
+  for (const auto &classificationsProto : classificationResultProto.classifications()) {
+    [classifications addObject:[MPPClassifications classificationsWithProto:classificationsProto]];
   }
 
-  MPPClassificationResult *classificationResult;
   NSInteger timestampMs;
-
   if (classificationResultProto.has_timestamp_ms()) {
     timestampMs = (NSInteger)classificationResultProto.timestamp_ms();
   }
