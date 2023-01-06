@@ -18,18 +18,20 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /** Represents the list of classification for a given classifier head. Typically used as a result
- * for classification tasks. */
+ * for classification tasks.
+ **/
 NS_SWIFT_NAME(Classifications)
 @interface MPPClassifications : NSObject
 
-/** The index of the classifier head these entries refer to. This is useful for multi-head models.
- */
+/**
+ * The index of the classifier head these entries refer to. This is useful for multi-head models.
+ **/
 @property(nonatomic, readonly) NSInteger headIndex;
 
-/** The optional name of the classifier head, which is the corresponding tensor metadata name. */
+/** The optional name of the classifier head, which is the corresponding tensor metadata name. **/
 @property(nonatomic, readonly, nullable) NSString *headName;
 
-/** An array of `MPPCategory` objects containing the predicted categories. */
+/** An array of `MPPCategory` objects containing the predicted categories. **/
 @property(nonatomic, readonly) NSArray<MPPCategory *> *categories;
 
 /**
@@ -41,7 +43,7 @@ NS_SWIFT_NAME(Classifications)
  *
  * @return An instance of `MPPClassifications` initialized with the given head index and
  * array of categories.
- */
+ **/
 - (instancetype)initWithHeadIndex:(NSInteger)headIndex
                        categories:(NSArray<MPPCategory *> *)categories;
 
@@ -56,7 +58,7 @@ NS_SWIFT_NAME(Classifications)
  *
  * @return An object of `MPPClassifications` initialized with the given head index, head name and
  * array of categories.
- */
+ **/
 - (instancetype)initWithHeadIndex:(NSInteger)headIndex
                          headName:(nullable NSString *)headName
                        categories:(NSArray<MPPCategory *> *)categories;
@@ -66,19 +68,21 @@ NS_SWIFT_NAME(Classifications)
 /**
  * Represents the classification results of a model. Typically used as a result for classification
  * tasks.
- */
+ **/
 NS_SWIFT_NAME(ClassificationResult)
 @interface MPPClassificationResult : NSObject
 
 /** An Array of `MPPClassifications` objects containing the predicted categories for each head of
- * the model. */
+ * the model. 
+ **/
 @property(nonatomic, readonly) NSArray<MPPClassifications *> *classifications;
 
 /** The optional timestamp (in milliseconds) of the start of the chunk of data corresponding to
  * these results. If it is set to the value -1, it signifies the absence of a time stamp. This is
  * only used for classification on time series (e.g. audio classification). In these use cases, the
  * amount of data to process might exceed the maximum size that the model can process: to solve
- * this, the input data is split into multiple chunks starting at different timestamps. */
+ * this, the input data is split into multiple chunks starting at different timestamps.
+ **/
 @property(nonatomic, readonly) NSInteger timestampMs;
 
 /**
@@ -90,7 +94,7 @@ NS_SWIFT_NAME(ClassificationResult)
  *
  * @return An instance of MPPClassificationResult initialized with the given array of
  * classifications.
- */
+ **/
 - (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications;
 
 /**
@@ -105,7 +109,7 @@ NS_SWIFT_NAME(ClassificationResult)
  *
  * @return An instance of `MPPClassificationResult` initialized with the given array of
  * classifications and timestampMs.
- */
+ **/
 - (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications
                             timestampMs:(NSInteger)timestampMs;
 
