@@ -50,7 +50,6 @@ NS_ASSUME_NONNULL_BEGIN
  * asynchronous modes of operation.
  *
  * @param graphConfig A mediapipe task graph config proto.
- *
  * @param packetsCallback An optional C++ callback function that takes a list of output packets as
  * the input argument. If provided, the callback must in turn call the block provided by the user in
  * the appropriate task options.

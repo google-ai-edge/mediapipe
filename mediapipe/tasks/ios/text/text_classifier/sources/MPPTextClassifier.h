@@ -58,7 +58,6 @@ NS_SWIFT_NAME(TextClassifier)
  * file stored locally on the device and the default `MPPTextClassifierOptions`.
  *
  * @param modelPath An absolute path to a TensorFlow Lite model file stored locally on the device.
- *
  * @param error An optional error parameter populated when there is an error in initializing
  * the text classifier.
  *
@@ -72,7 +71,6 @@ NS_SWIFT_NAME(TextClassifier)
  *
  * @param options The options of type `MPPTextClassifierOptions` to use for configuring the
  * `MPPTextClassifier`.
- *
  * @param error An optional error parameter populated when there is an error in initializing
  * the text classifier.
  *
@@ -85,7 +83,6 @@ NS_SWIFT_NAME(TextClassifier)
  * Performs classification on the input text.
  *
  * @param text The `NSString` on which classification is to be performed.
- *
  * @param error An optional error parameter populated when there is an error in performing
  * classification on the input text.
  *

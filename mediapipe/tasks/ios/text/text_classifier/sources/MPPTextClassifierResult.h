@@ -31,7 +31,6 @@ NS_SWIFT_NAME(TextClassifierResult)
  *
  * @param classificationResult The `MPPClassificationResult` instance containing one set of results
  * per classifier head.
- *
  * @param timeStampMs The time stamp for this result.
  *
  * @return An instance of `MPPTextClassifierResult` initialized with the given

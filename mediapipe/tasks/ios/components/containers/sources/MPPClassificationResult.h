@@ -103,7 +103,6 @@ NS_SWIFT_NAME(ClassificationResult)
  *
  * @param classifications An Array of `MPPClassifications` objects containing the predicted
  * categories for each head of the model.
- *
  * @param timeStampMs The timestamp (in milliseconds) of the start of the chunk of data
  * corresponding to these results.
  *
