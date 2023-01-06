@@ -56,12 +56,12 @@ objc_library(
     deps = [
         ":MPPTaskOptions",
         ":MPPTaskOptionsProtocol",
-        "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_options_cc_proto",
     ],
 )
 
@@ -88,8 +88,10 @@ objc_library(
         "-std=c++17",
     ],
     deps = [
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
     ],
 )
