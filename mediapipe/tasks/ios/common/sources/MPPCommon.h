@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * @enum MPPTasksErrorCode
- * This enum specifies  error codes for Mediapipe Task Library.
+ * This enum specifies  error codes for MediaPipe Task Library.
  * It maintains a 1:1 mapping to MediaPipeTasksStatus of the C ++libray.
  */
 typedef NS_ENUM(NSUInteger, MPPTasksErrorCode) {
