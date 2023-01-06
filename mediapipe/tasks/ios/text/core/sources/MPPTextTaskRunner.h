@@ -23,9 +23,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPTextTaskRunner : MPPTaskRunner
 
 /**
- * Initializes a new `MPPTextTaskRunner` with the mediapipe task graph config proto.
+ * Initializes a new `MPPTextTaskRunner` with the MediaPipe task graph config proto.
  *
- * @param graphConfig A mediapipe task graph config proto.
+ * @param graphConfig A MediaPipe task graph config proto.
  *
  * @return An instance of `MPPTextTaskRunner` initialized to the given graph config proto.
  */

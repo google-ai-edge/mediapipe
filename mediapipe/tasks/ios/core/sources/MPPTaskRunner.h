@@ -36,7 +36,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPTaskRunner : NSObject
 
 /**
- * Initializes a new `MPPTaskRunner` with the mediapipe task graph config proto and an optional C++
+ * Initializes a new `MPPTaskRunner` with the MediaPipe calculator configuration proto and an optional C++
  * packets callback. 
  * 
  * You can pass `nullptr` for `packetsCallback` in case the mode of operation
