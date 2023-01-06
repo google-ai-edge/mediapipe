@@ -18,7 +18,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/** Error domain of Mediapipe Task related errors. */
+/** Error domain of MediaPipe Task related errors. */
 extern NSString *const MPPTasksErrorDomain;
 
 /** Helper utility for the all tasks which encapsulates common functionality. */
