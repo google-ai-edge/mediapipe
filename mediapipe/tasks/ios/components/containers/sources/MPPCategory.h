@@ -16,41 +16,47 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/** Category is a util class, contains a label, its display name, a float value as score, and the
+/**
+ * Category is a util class that contains a label, its display name, a float value as score, and the
  * index of the label in the corresponding label file. Typically it's used as the result of
- * classification tasks. */
+ * classification tasks.
+ **/
 NS_SWIFT_NAME(ClassificationCategory)
 @interface MPPCategory : NSObject
 
-/** The index of the label in the corresponding label file. It takes the value -1 if the index is
- * not set. */
+/**
+  * The index of the label in the corresponding label file. It takes the value -1 if the index is
+  * not set.
+  **/
 @property(nonatomic, readonly) NSInteger index;
 
-/** Confidence score for this class . */
+/** Confidence score for this class . **/
 @property(nonatomic, readonly) float score;
 
-/** The label of this category object. */
+/** The label of this category object. **/
 @property(nonatomic, readonly, nullable) NSString *categoryName;
 
-/** The display name of the label, which may be translated for different locales. For example, a
- * label, "apple", may be translated into Spanish for display purpose, so that the display name is
- * "manzana". */
+/**
+  * The display name of the label, which may be translated for different locales. For example, a
+  * label, "apple", may be translated into Spanish for display purpose, so that the display name is
+  * "manzana".
+  **/
 @property(nonatomic, readonly, nullable) NSString *displayName;
 
 /**
- * Initializes a new `MPPCategory` with the given index, score, category name and display name.
- *
- * @param index The index of the label in the corresponding label file.
- *
- * @param score The probability score of this label category.
- *
- * @param categoryName The label of this category object..
- *
- * @param displayName The display name of the label.
- *
- * @return An instance of `MPPCategory` initialized with the given index, score, category name and
- * display name.
- */
+  * Initializes a new `MPPCategory` with the given index, score, category name and display name.
+  *
+  * @param index The index of the label in the corresponding label file.
+  *
+  * @param score The probability score of this label category.
+  *
+  * @param categoryName The label of this category object.
+  *
+  * @param displayName The display name of the label.
+  *
+  * @return An instance of `MPPCategory` initialized with the given index, score, category name and
+  * display name.
+  **/
 - (instancetype)initWithIndex:(NSInteger)index
                         score:(float)score
                  categoryName:(nullable NSString *)categoryName
