@@ -25,7 +25,7 @@ NS_SWIFT_NAME(TaskOptions)
 
 @interface MPPTaskOptions : NSObject <NSCopying>
 /**
- * Base options for configuring the Mediapipe task.
+ * Base options for configuring the MediaPipe task.
  */
 @property(nonatomic, copy) MPPBaseOptions *baseOptions;
 
