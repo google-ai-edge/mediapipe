@@ -57,7 +57,7 @@ NS_SWIFT_NAME(ClassificationCategory)
 - (instancetype)initWithIndex:(NSInteger)index
                         score:(float)score
                  categoryName:(nullable NSString *)categoryName
-                  displayName:(nullable NSString *)displayName;
+                  displayName:(nullable NSString *)displayName NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 
