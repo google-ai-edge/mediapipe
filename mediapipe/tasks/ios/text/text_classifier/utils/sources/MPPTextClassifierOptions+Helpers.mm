@@ -27,10 +27,10 @@ using TextClassifierGraphOptionsProto =
 @implementation MPPTextClassifierOptions (Helpers)
 
 - (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
-  TextClassifierGraphOptionsProto *graph_options =
+  TextClassifierGraphOptionsProto *graphOptions =
       optionsProto->MutableExtension(TextClassifierGraphOptionsProto::ext);
-  [self.baseOptions copyToProto:graph_options->mutable_base_options()];
-  [self.classifierOptions copyToProto:graph_options->mutable_classifier_options()];
+  [self.baseOptions copyToProto:graphOptions->mutable_base_options()];
+  [self.classifierOptions copyToProto:graphOptions->mutable_classifier_options()];
 }
 
 @end
