@@ -43,10 +43,10 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * If the task is operating in asynchronous mode, any iOS MediaPipe task that uses the
  * `MPPTaskRunner` must define a C++ callback function to obtain the results of inference
- * asynchronously and deliver the results to the user. To accomplish this, callback function will in
- * turn invoke the block provided by the user in the task options supplied to create the task.
- * Please see the documentation of the C++ Task Runner for more information on the synchronous and
- * asynchronous modes of operation.
+ * asynchronously and deliver the results to the user. To accomplish this, the callback function
+ * should in turn invoke the block provided by the user in the task options supplied to create the
+ * task. Please see the documentation of the C++ Task Runner for more information on the synchronous
+ * and asynchronous modes of operation.
  *
  * @param graphConfig A mediapipe task graph config proto.
  * @param packetsCallback An optional C++ callback function that takes a list of output packets as
