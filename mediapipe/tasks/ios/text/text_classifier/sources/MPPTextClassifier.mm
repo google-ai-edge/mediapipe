@@ -80,7 +80,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPTextClassifierResult *)classifyWithText:(NSString *)text error:(NSError **)error {
+- (nullable MPPTextClassifierResult *)classifyText:(NSString *)text error:(NSError **)error {
   Packet packet = [MPPTextPacketCreator createWithText:text];
 
   std::map<std::string, Packet> packetMap = {{kTextInStreamName.cppString, packet}};

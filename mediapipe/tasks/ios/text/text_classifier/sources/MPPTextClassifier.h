@@ -92,7 +92,7 @@ NS_SWIFT_NAME(TextClassifier)
  *
  * @return  A `MPPTextClassifierResult` object that contains a list of text classifications.
  **/
-- (nullable MPPTextClassifierResult *)classifyWithText:(NSString *)text error:(NSError **)error;
+- (nullable MPPTextClassifierResult *)classifyText:(NSString *)text error:(NSError **)error;
 
 - (instancetype)init NS_UNAVAILABLE;
 
