@@ -23,15 +23,14 @@ NS_ASSUME_NONNULL_BEGIN
  * This class is used to create and call appropriate methods on the C++ Task Runner to initialize,
  * execute and terminate any MediaPipe task. 
  * 
- * An instance of the newly created C++ task runner will
- * be stored until this class is destroyed. When methods are called for processing (performing
- * inference), closing etc., on this class, internally the appropriate methods will be called on the
- * C++ task runner instance to execute the appropriate actions. For each type of task, a subclass of
- * this class must be defined to add any additional functionality. For eg:, vision tasks must create
- * an `MPPVisionTaskRunner` and provide additional functionality. An instance of
- * `MPPVisionTaskRunner` can in turn be used by the each vision task for creation and execution of
- * the task. Please see the documentation for the C++ Task Runner for more details on how the taks
- * runner operates.
+ * An instance of the newly created C++ task runner will be stored until this class is destroyed. 
+ * When methods are called for processing (performing inference), closing etc., on this class, 
+ * internally the appropriate methods will be called on the C++ task runner instance to execute 
+ * the appropriate actions. For each type of task, a subclass of this class must be defined to add 
+ * any additional functionality. For eg:, vision tasks must create an `MPPVisionTaskRunner` and 
+ * provide additional functionality. An instance of `MPPVisionTaskRunner` can in turn be used by 
+ * the each vision task for creation and execution of the task. Please see the documentation for 
+ * the C++ Task Runner for more details on how the taks runner operates.
  **/
 @interface MPPTaskRunner : NSObject
 
