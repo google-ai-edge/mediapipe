@@ -17,7 +17,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/** Represents the list of classification for a given classifier head. Typically used as a result
+/** 
+ * Represents the list of classification for a given classifier head. Typically used as a result
  * for classification tasks.
  **/
 NS_SWIFT_NAME(Classifications)
@@ -76,12 +77,14 @@ NS_SWIFT_NAME(Classifications)
 NS_SWIFT_NAME(ClassificationResult)
 @interface MPPClassificationResult : NSObject
 
-/** An Array of `MPPClassifications` objects containing the predicted categories for each head of
+/** 
+ * An Array of `MPPClassifications` objects containing the predicted categories for each head of
  * the model. 
  **/
 @property(nonatomic, readonly) NSArray<MPPClassifications *> *classifications;
 
-/** The optional timestamp (in milliseconds) of the start of the chunk of data corresponding to
+/** 
+ * The optional timestamp (in milliseconds) of the start of the chunk of data corresponding to
  * these results. If it is set to the value -1, it signifies the absence of a timestamp. This is
  * only used for classification on time series (e.g. audio classification). In these use cases, the
  * amount of data to process might exceed the maximum size that the model can process: to solve
