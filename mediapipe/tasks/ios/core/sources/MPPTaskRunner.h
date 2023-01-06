@@ -32,12 +32,12 @@ NS_ASSUME_NONNULL_BEGIN
  * `MPPVisionTaskRunner` can in turn be used by the each vision task for creation and execution of
  * the task. Please see the documentation for the C++ Task Runner for more details on how the taks
  * runner operates.
- */
+ **/
 @interface MPPTaskRunner : NSObject
 
 /**
- * Initializes a new `MPPTaskRunner` with the MediaPipe calculator configuration proto and an optional C++
- * packets callback. 
+ * Initializes a new `MPPTaskRunner` with the MediaPipe calculator configuration proto and an optional 
+ * C++ packets callback. 
  * 
  * You can pass `nullptr` for `packetsCallback` in case the mode of operation
  * requested by the user is synchronous. 
@@ -56,26 +56,29 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * @return An instance of `MPPTaskRunner` initialized to the given graph config proto and optional
  * packetsCallback.
- */
+ **/
 - (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
                               packetsCallback:
                                   (mediapipe::tasks::core::PacketsCallback)packetsCallback
                                         error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /** A synchronous method for processing batch data or offline streaming data. This method is
-designed for processing either batch data such as unrelated images and texts or offline streaming
-data such as the decoded frames from a video file and an audio file. The call blocks the current
-thread until a failure status or a successful result is returned. If the input packets have no
-timestamp, an internal timestamp will be assigend per invocation. Otherwise, when the timestamp is
-set in the input packets, the caller must ensure that the input packet timestamps are greater than
-the timestamps of the previous invocation. This method is thread-unsafe and it is the caller's
-responsibility to synchronize access to this method across multiple threads and to ensure that the
-input packet timestamps are in order.*/
+ * designed for processing either batch data such as unrelated images and texts or offline streaming
+ * data such as the decoded frames from a video file and an audio file. The call blocks the current
+ * thread until a failure status or a successful result is returned. If the input packets have no 
+ * timestamp, an internal timestamp will be assigend per invocation. Otherwise, when the timestamp is
+ * set in the input packets, the caller must ensure that the input packet timestamps are greater than
+ * the timestamps of the previous invocation. This method is thread-unsafe and it is the caller's
+ * responsibility to synchronize access to this method across multiple threads and to ensure that the
+ * input packet timestamps are in order.
+ **/
 - (absl::StatusOr<mediapipe::tasks::core::PacketMap>)process:
     (const mediapipe::tasks::core::PacketMap &)packetMap;
 
-/** Shuts down the C++ task runner. After the runner is closed, any calls that send input data to
- * the runner are illegal and will receive errors. */
+/** 
+ * Shuts down the C++ task runner. After the runner is closed, any calls that send input data to
+ * the runner are illegal and will receive errors. 
+ **/
 - (absl::Status)close;
 
 - (instancetype)init NS_UNAVAILABLE;
