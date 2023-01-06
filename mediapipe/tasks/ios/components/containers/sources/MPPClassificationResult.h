@@ -61,7 +61,11 @@ NS_SWIFT_NAME(Classifications)
  **/
 - (instancetype)initWithHeadIndex:(NSInteger)headIndex
                          headName:(nullable NSString *)headName
-                       categories:(NSArray<MPPCategory *> *)categories;
+                       categories:(NSArray<MPPCategory *> *)categories NS_DESIGNATED_INITIALIZER;
+
+- (instancetype)init NS_UNAVAILABLE;
+
++ (instancetype)new NS_UNAVAILABLE;                       
 
 @end
 
