@@ -14,7 +14,7 @@
 
 #import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierOptions+Helpers.h"
 
-#import "mediapipe/tasks/ios/components/processors/utils/sources/MPPClassifierOptions+Helpers.h"
+#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
 #include "mediapipe/tasks/cc/text/text_classifier/proto/text_classifier_graph_options.pb.h"
@@ -23,7 +23,7 @@ namespace {
 using CalculatorOptionsProto = ::mediapipe::CalculatorOptions;
 using TextClassifierGraphOptionsProto =
     ::mediapipe::tasks::text::text_classifier::proto::TextClassifierGraphOptions;
-
+using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto::ClassifierOptions;
 }  // namespace
 
 @implementation MPPTextClassifierOptions (Helpers)
@@ -32,7 +32,25 @@ using TextClassifierGraphOptionsProto =
   TextClassifierGraphOptionsProto *graphOptions =
       optionsProto->MutableExtension(TextClassifierGraphOptionsProto::ext);
   [self.baseOptions copyToProto:graphOptions->mutable_base_options()];
-  [self.classifierOptions copyToProto:graphOptions->mutable_classifier_options()];
+
+  ClassifierOptionsProto *classifierOptionsProto = graphOptions->mutable_classifier_options();
+  classifierOptionsProto->Clear();
+
+  if (self.displayNamesLocale) {
+    classifierOptionsProto->set_display_names_locale(self.displayNamesLocale.cppString);
+  }
+
+  classifierOptionsProto->set_max_results((int)self.maxResults);
+  classifierOptionsProto->set_score_threshold(self.scoreThreshold);
+
+  for (NSString *category in self.categoryAllowlist) {
+    classifierOptionsProto->add_category_allowlist(category.cppString);
+  }
+
+  for (NSString *category in self.categoryDenylist) {
+    classifierOptionsProto->add_category_denylist(category.cppString);
+  }
+
 }
 
 @end

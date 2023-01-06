@@ -19,9 +19,22 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _classifierOptions = [[MPPClassifierOptions alloc] init];
+    _maxResults = -1;
+    _scoreThreshold = 0;
   }
   return self;
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+  MPPTextClassifierOptions *textClassifierOptions = [super copyWithZone:zone];
+
+  textClassifierOptions.scoreThreshold = self.scoreThreshold;
+  textClassifierOptions.maxResults = self.maxResults;
+  textClassifierOptions.categoryDenylist = self.categoryDenylist;
+  textClassifierOptions.categoryAllowlist = self.categoryAllowlist;
+  textClassifierOptions.displayNamesLocale = self.displayNamesLocale;
+
+  return textClassifierOptions;
 }
 
 @end

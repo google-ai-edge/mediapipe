@@ -22,7 +22,6 @@ objc_library(
     hdrs = ["sources/MPPTextClassifierOptions.h"],
     deps = [
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
-        "//mediapipe/tasks/ios/components/processors:MPPClassifierOptions",
     ],
 )
 
