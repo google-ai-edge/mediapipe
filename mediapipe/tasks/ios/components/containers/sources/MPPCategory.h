@@ -17,10 +17,10 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * Category is a util class that contains a label, its display name, a float value as score, and the
- * index of the label in the corresponding label file. Typically it's used as the result of
- * classification tasks.
- **/
+  * Category is a util class that contains a label, its display name, a float value as score, and the
+  * index of the label in the corresponding label file. Typically it's used as the result of
+  * classification tasks.
+  **/
 NS_SWIFT_NAME(ClassificationCategory)
 @interface MPPCategory : NSObject
 
