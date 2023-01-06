@@ -25,7 +25,7 @@ NS_SWIFT_NAME(ClassificationCategory)
 @interface MPPCategory : NSObject
 
 /**
-  * The index of the label in the corresponding label file. It takes the value -1 if the index is
+  * The index of the label in the corresponding label file. Set to -1 if the index is
   * not set.
   **/
 @property(nonatomic, readonly) NSInteger index;
