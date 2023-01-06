@@ -27,7 +27,7 @@ using ClassificationResultProto =
 
 + (MPPClassifications *)classificationsWithProto:
     (const ClassificationsProto &)classificationsProto {
-  NSMutableArray *categories = [[NSMutableArray alloc] init];
+  NSMutableArray<MPPCategory *> *categories = [NSMutableArray arrayWithCapacity:(NSUInteger)classificationsProto.classification_list().classification_size()];
   for (const auto &classification : classificationsProto.classification_list().classification()) {
     [categories addObject:[MPPCategory categoryWithProto:classification]];
   }
@@ -48,7 +48,7 @@ using ClassificationResultProto =
 
 + (MPPClassificationResult *)classificationResultWithProto:
     (const ClassificationResultProto &)classificationResultProto {
-  NSMutableArray *classifications = [[NSMutableArray alloc] init];
+  NSMutableArray *classifications = [NSMutableArray arrayWithCapacity:(NSUInteger)classificationResultProto.classifications_size()];
   for (const auto &classificationsProto : classificationResultProto.classifications()) {
     [classifications addObject:[MPPClassifications classificationsWithProto:classificationsProto]];
   }
