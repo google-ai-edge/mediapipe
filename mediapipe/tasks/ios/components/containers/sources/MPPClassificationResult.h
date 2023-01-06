@@ -90,18 +90,6 @@ NS_SWIFT_NAME(ClassificationResult)
 @property(nonatomic, readonly) NSInteger timestampMs;
 
 /**
- * Initializes a new `MPPClassificationResult` with the given array of classifications. This method
- * must be used when no time stamp needs to be specified. It sets the property `timestampMs` to -1.
- *
- * @param classifications An Aaray of `MPPClassifications` objects containing classifier
- * predictions per classifier head.
- *
- * @return An instance of MPPClassificationResult initialized with the given array of
- * classifications.
- **/
-- (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications;
-
-/**
  * Initializes a new `MPPClassificationResult` with the given array of classifications and time
  * stamp (in milliseconds).
  *

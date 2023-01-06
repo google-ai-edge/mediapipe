@@ -54,15 +54,13 @@ using ClassificationResultProto =
   }
 
   MPPClassificationResult *classificationResult;
+  NSInteger timeStampMs;
 
   if (classificationResultProto.has_timestamp_ms()) {
-    classificationResult = [[MPPClassificationResult alloc] initWithClassifications:classifications timestampMs:(NSInteger)classificationResultProto.timestamp_ms()];
+    timeStampMs = (NSInteger)classificationResultProto.timestamp_ms();
   }
-  else {
-    classificationResult = [[MPPClassificationResult alloc] initWithClassifications:classifications];
-  }
-
-  return classificationResult;
+  
+  return [[MPPClassificationResult alloc] initWithClassifications:classifications timestampMs:timeStampMs];;
 }
 
 @end

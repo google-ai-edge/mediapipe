@@ -48,10 +48,4 @@
   return self;
 }
 
-- (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications {
-  return [self initWithClassifications:classifications timestampMs:-1];
-
-  return self;
-}
-
 @end
