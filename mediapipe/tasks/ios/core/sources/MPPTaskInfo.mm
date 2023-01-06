@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
+
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
@@ -69,59 +70,59 @@ using ::mediapipe::InputStreamInfo;
 }
 
 - (CalculatorGraphConfig)generateGraphConfig {
-  CalculatorGraphConfig graph_config;
+  CalculatorGraphConfig graphConfig;
 
-  Node *task_subgraph_node = graph_config.add_node();
-  task_subgraph_node->set_calculator(self.taskGraphName.cppString);
-  [self.taskOptions copyToProto:task_subgraph_node->mutable_options()];
+  Node *taskSubgraphNode = graphConfig.add_node();
+  taskSubgraphNode->set_calculator(self.taskGraphName.cppString);
+  [self.taskOptions copyToProto:taskSubgraphNode->mutable_options()];
 
   for (NSString *outputStream in self.outputStreams) {
-    auto cpp_output_stream = std::string(outputStream.cppString);
-    task_subgraph_node->add_output_stream(cpp_output_stream);
-    graph_config.add_output_stream(cpp_output_stream);
+    auto cppOutputStream = std::string(outputStream.cppString);
+    taskSubgraphNode->add_output_stream(cppOutputStream);
+    graphConfig.add_output_stream(cppOutputStream);
   }
 
   if (!self.enableFlowLimiting) {
     for (NSString *inputStream in self.inputStreams) {
-      auto cpp_input_stream = inputStream.cppString;
-      task_subgraph_node->add_input_stream(cpp_input_stream);
-      graph_config.add_input_stream(cpp_input_stream);
+      auto cppInputStream = inputStream.cppString;
+      taskSubgraphNode->add_input_stream(cppInputStream);
+      graphConfig.add_input_stream(cppInputStream);
     }
-    return graph_config;
+    return graphConfig;
   }
 
-  Node *flow_limit_calculator_node = graph_config.add_node();
+  Node *flowLimitCalculatorNode = graphConfig.add_node();
 
-  flow_limit_calculator_node->set_calculator("FlowLimiterCalculator");
+  flowLimitCalculatorNode->set_calculator("FlowLimiterCalculator");
 
-  InputStreamInfo *input_stream_info = flow_limit_calculator_node->add_input_stream_info();
-  input_stream_info->set_tag_index("FINISHED");
-  input_stream_info->set_back_edge(true);
+  InputStreamInfo *inputStreamInfo = flowLimitCalculatorNode->add_input_stream_info();
+  inputStreamInfo->set_tag_index("FINISHED");
+  inputStreamInfo->set_back_edge(true);
 
-  FlowLimiterCalculatorOptions *flow_limit_calculator_options =
-      flow_limit_calculator_node->mutable_options()->MutableExtension(
+  FlowLimiterCalculatorOptions *flowLimitCalculatorOptions =
+      flowLimitCalculatorNode->mutable_options()->MutableExtension(
           FlowLimiterCalculatorOptions::ext);
-  flow_limit_calculator_options->set_max_in_flight(1);
-  flow_limit_calculator_options->set_max_in_queue(1);
+  flowLimitCalculatorOptions->set_max_in_flight(1);
+  flowLimitCalculatorOptions->set_max_in_queue(1);
 
   for (NSString *inputStream in self.inputStreams) {
-    graph_config.add_input_stream(inputStream.cppString);
+    graphConfig.add_input_stream(inputStream.cppString);
 
     NSString *strippedInputStream = [MPPTaskInfo stripTagIndex:inputStream];
-    flow_limit_calculator_node->add_input_stream(strippedInputStream.cppString);
+    flowLimitCalculatorNode->add_input_stream(strippedInputStream.cppString);
 
     NSString *taskInputStream = [MPPTaskInfo addStreamNamePrefix:inputStream];
-    task_subgraph_node->add_input_stream(taskInputStream.cppString);
+    taskSubgraphNode->add_input_stream(taskInputStream.cppString);
 
     NSString *strippedTaskInputStream = [MPPTaskInfo stripTagIndex:taskInputStream];
-    flow_limit_calculator_node->add_output_stream(strippedTaskInputStream.cppString);
+    flowLimitCalculatorNode->add_output_stream(strippedTaskInputStream.cppString);
   }
 
   NSString *firstOutputStream = self.outputStreams[0];
-  auto finished_output_stream = "FINISHED:" + firstOutputStream.cppString;
-  flow_limit_calculator_node->add_input_stream(finished_output_stream);
+  auto finishedOutputStream = "FINISHED:" + firstOutputStream.cppString;
+  flowLimitCalculatorNode->add_input_stream(finishedOutputStream);
 
-  return graph_config;
+  return graphConfig;
 }
 
 + (NSString *)stripTagIndex:(NSString *)tagIndexName {
