@@ -24,6 +24,7 @@ import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/pr
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
 import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
@@ -31,10 +32,12 @@ import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner
 import {ImageEmbedderOptions} from './image_embedder_options';
 import {ImageEmbedderResult} from './image_embedder_result';
 
+
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
-const INPUT_STREAM = 'image_in';
+const IMAGE_STREAM = 'image_in';
+const NORM_RECT_STREAM = 'norm_rect';
 const EMBEDDINGS_STREAM = 'embeddings_out';
 const TEXT_EMBEDDER_CALCULATOR =
     'mediapipe.tasks.vision.image_embedder.ImageEmbedderGraph';
@@ -44,7 +47,7 @@ export * from './image_embedder_result';
 export {ImageSource};  // Used in the public API
 
 /** Performs embedding extraction on images. */
-export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
+export class ImageEmbedder extends VisionTaskRunner {
   private readonly options = new ImageEmbedderGraphOptions();
   private embeddings: ImageEmbedderResult = {embeddings: []};
 
@@ -99,7 +102,9 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    super(new VisionGraphRunner(wasmModule, glCanvas));
+    super(
+        new VisionGraphRunner(wasmModule, glCanvas), IMAGE_STREAM,
+        NORM_RECT_STREAM);
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 
@@ -132,10 +137,14 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
    * ImageEmbedder is created with running mode `image`.
    *
    * @param image The image to process.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
    * @return The classification result of the image
    */
-  embed(image: ImageSource): ImageEmbedderResult {
-    return this.processImageData(image);
+  embed(image: ImageSource, imageProcessingOptions?: ImageProcessingOptions):
+      ImageEmbedderResult {
+    this.processImageData(image, imageProcessingOptions);
+    return this.embeddings;
   }
 
   /**
@@ -145,11 +154,15 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
    *
    * @param imageFrame The image frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
    * @return The classification result of the image
    */
-  embedForVideo(imageFrame: ImageSource, timestamp: number):
-      ImageEmbedderResult {
-    return this.processVideoData(imageFrame, timestamp);
+  embedForVideo(
+      imageFrame: ImageSource, timestamp: number,
+      imageProcessingOptions?: ImageProcessingOptions): ImageEmbedderResult {
+    this.processVideoData(imageFrame, imageProcessingOptions, timestamp);
+    return this.embeddings;
   }
 
   /**
@@ -165,16 +178,6 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
     return computeCosineSimilarity(u, v);
   }
 
-  /** Runs the embedding extraction and blocks on the response. */
-  protected process(image: ImageSource, timestamp: number):
-      ImageEmbedderResult {
-    // Get embeddings by running our MediaPipe graph.
-    this.graphRunner.addGpuBufferAsImageToStream(
-        image, INPUT_STREAM, timestamp ?? performance.now());
-    this.finishProcessing();
-    return this.embeddings;
-  }
-
   /**
    * Internal function for converting raw data into an embedding, and setting it
    * as our embeddings result.
@@ -187,7 +190,8 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
   /** Updates the MediaPipe graph configuration. */
   protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
-    graphConfig.addInputStream(INPUT_STREAM);
+    graphConfig.addInputStream(IMAGE_STREAM);
+    graphConfig.addInputStream(NORM_RECT_STREAM);
     graphConfig.addOutputStream(EMBEDDINGS_STREAM);
 
     const calculatorOptions = new CalculatorOptions();
@@ -195,7 +199,8 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
 
     const embedderNode = new CalculatorGraphConfig.Node();
     embedderNode.setCalculator(TEXT_EMBEDDER_CALCULATOR);
-    embedderNode.addInputStream('IMAGE:' + INPUT_STREAM);
+    embedderNode.addInputStream('IMAGE:' + IMAGE_STREAM);
+    embedderNode.addInputStream('NORM_RECT:' + NORM_RECT_STREAM);
     embedderNode.addOutputStream('EMBEDDINGS:' + EMBEDDINGS_STREAM);
     embedderNode.setOptions(calculatorOptions);
 

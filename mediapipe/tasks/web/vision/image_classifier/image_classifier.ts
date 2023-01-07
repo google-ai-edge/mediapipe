@@ -22,6 +22,7 @@ import {ImageClassifierGraphOptions} from '../../../../tasks/cc/vision/image_cla
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {convertFromClassificationResultProto} from '../../../../tasks/web/components/processors/classifier_result';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
@@ -31,7 +32,8 @@ import {ImageClassifierResult} from './image_classifier_result';
 
 const IMAGE_CLASSIFIER_GRAPH =
     'mediapipe.tasks.vision.image_classifier.ImageClassifierGraph';
-const INPUT_STREAM = 'input_image';
+const IMAGE_STREAM = 'input_image';
+const NORM_RECT_STREAM = 'norm_rect';
 const CLASSIFICATIONS_STREAM = 'classifications';
 
 export * from './image_classifier_options';
@@ -42,7 +44,7 @@ export {ImageSource};  // Used in the public API
 // tslint:disable:jspb-use-builder-pattern
 
 /** Performs classification on images. */
-export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
+export class ImageClassifier extends VisionTaskRunner {
   private classificationResult: ImageClassifierResult = {classifications: []};
   private readonly options = new ImageClassifierGraphOptions();
 
@@ -97,7 +99,9 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    super(new VisionGraphRunner(wasmModule, glCanvas));
+    super(
+        new VisionGraphRunner(wasmModule, glCanvas), IMAGE_STREAM,
+        NORM_RECT_STREAM);
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 
@@ -130,10 +134,15 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
    * ImageClassifier is created with running mode `image`.
    *
    * @param image An image to process.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
    * @return The classification result of the image
    */
-  classify(image: ImageSource): ImageClassifierResult {
-    return this.processImageData(image);
+  classify(image: ImageSource, imageProcessingOptions?: ImageProcessingOptions):
+      ImageClassifierResult {
+    this.classificationResult = {classifications: []};
+    this.processImageData(image, imageProcessingOptions);
+    return this.classificationResult;
   }
 
   /**
@@ -143,28 +152,23 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
    *
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
    * @return The classification result of the image
    */
-  classifyForVideo(videoFrame: ImageSource, timestamp: number):
-      ImageClassifierResult {
-    return this.processVideoData(videoFrame, timestamp);
-  }
-
-  /** Runs the image classification graph and blocks on the response. */
-  protected override process(imageSource: ImageSource, timestamp: number):
-      ImageClassifierResult {
-    // Get classification result by running our MediaPipe graph.
+  classifyForVideo(
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptions?: ImageProcessingOptions): ImageClassifierResult {
     this.classificationResult = {classifications: []};
-    this.graphRunner.addGpuBufferAsImageToStream(
-        imageSource, INPUT_STREAM, timestamp ?? performance.now());
-    this.finishProcessing();
+    this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
     return this.classificationResult;
   }
 
   /** Updates the MediaPipe graph configuration. */
   protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
-    graphConfig.addInputStream(INPUT_STREAM);
+    graphConfig.addInputStream(IMAGE_STREAM);
+    graphConfig.addInputStream(NORM_RECT_STREAM);
     graphConfig.addOutputStream(CLASSIFICATIONS_STREAM);
 
     const calculatorOptions = new CalculatorOptions();
@@ -175,7 +179,8 @@ export class ImageClassifier extends VisionTaskRunner<ImageClassifierResult> {
     // are built-in.
     const classifierNode = new CalculatorGraphConfig.Node();
     classifierNode.setCalculator(IMAGE_CLASSIFIER_GRAPH);
-    classifierNode.addInputStream('IMAGE:' + INPUT_STREAM);
+    classifierNode.addInputStream('IMAGE:' + IMAGE_STREAM);
+    classifierNode.addInputStream('NORM_RECT:' + NORM_RECT_STREAM);
     classifierNode.addOutputStream('CLASSIFICATIONS:' + CLASSIFICATIONS_STREAM);
     classifierNode.setOptions(calculatorOptions);
 

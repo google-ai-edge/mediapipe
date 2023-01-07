@@ -23,6 +23,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_jspb_proto",
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/vision/core:image_processing_options",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],

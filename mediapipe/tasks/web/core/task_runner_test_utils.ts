@@ -32,12 +32,14 @@ export declare type SpyWasmModule = jasmine.SpyObj<SpyWasmModuleInternal>;
  * in pure JS/TS (and optionally spy on the calls).
  */
 export function createSpyWasmModule(): SpyWasmModule {
-  return jasmine.createSpyObj<SpyWasmModuleInternal>([
+  const spyWasmModule = jasmine.createSpyObj<SpyWasmModuleInternal>([
     '_setAutoRenderToScreen', 'stringToNewUTF8', '_attachProtoListener',
     '_attachProtoVectorListener', '_free', '_waitUntilIdle',
     '_addStringToInputStream', '_registerModelResourcesGraphService',
-    '_configureAudio'
+    '_configureAudio', '_malloc', '_addProtoToInputStream'
   ]);
+  spyWasmModule.HEAPU8 = jasmine.createSpyObj<Uint8Array>(['set']);
+  return spyWasmModule;
 }
 
 /**

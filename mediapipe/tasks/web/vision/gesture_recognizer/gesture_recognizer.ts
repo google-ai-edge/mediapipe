@@ -18,7 +18,6 @@ import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {ClassificationList} from '../../../../framework/formats/classification_pb';
 import {LandmarkList, NormalizedLandmarkList} from '../../../../framework/formats/landmark_pb';
-import {NormalizedRect} from '../../../../framework/formats/rect_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {GestureClassifierGraphOptions} from '../../../../tasks/cc/vision/gesture_recognizer/proto/gesture_classifier_graph_options_pb';
 import {GestureRecognizerGraphOptions} from '../../../../tasks/cc/vision/gesture_recognizer/proto/gesture_recognizer_graph_options_pb';
@@ -30,6 +29,7 @@ import {Category} from '../../../../tasks/web/components/containers/category';
 import {Landmark, NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
@@ -57,15 +57,8 @@ const DEFAULT_NUM_HANDS = 1;
 const DEFAULT_SCORE_THRESHOLD = 0.5;
 const DEFAULT_CATEGORY_INDEX = -1;
 
-const FULL_IMAGE_RECT = new NormalizedRect();
-FULL_IMAGE_RECT.setXCenter(0.5);
-FULL_IMAGE_RECT.setYCenter(0.5);
-FULL_IMAGE_RECT.setWidth(1);
-FULL_IMAGE_RECT.setHeight(1);
-
 /** Performs hand gesture recognition on images. */
-export class GestureRecognizer extends
-    VisionTaskRunner<GestureRecognizerResult> {
+export class GestureRecognizer extends VisionTaskRunner {
   private gestures: Category[][] = [];
   private landmarks: NormalizedLandmark[][] = [];
   private worldLandmarks: Landmark[][] = [];
@@ -131,7 +124,9 @@ export class GestureRecognizer extends
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    super(new VisionGraphRunner(wasmModule, glCanvas));
+    super(
+        new VisionGraphRunner(wasmModule, glCanvas), IMAGE_STREAM,
+        NORM_RECT_STREAM);
 
     this.options = new GestureRecognizerGraphOptions();
     this.options.setBaseOptions(new BaseOptionsProto());
@@ -228,10 +223,16 @@ export class GestureRecognizer extends
    * GestureRecognizer is created with running mode `image`.
    *
    * @param image A single image to process.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
    * @return The detected gestures.
    */
-  recognize(image: ImageSource): GestureRecognizerResult {
-    return this.processImageData(image);
+  recognize(
+      image: ImageSource, imageProcessingOptions?: ImageProcessingOptions):
+      GestureRecognizerResult {
+    this.resetResults();
+    this.processImageData(image, imageProcessingOptions);
+    return this.processResults();
   }
 
   /**
@@ -241,28 +242,27 @@ export class GestureRecognizer extends
    *
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
    * @return The detected gestures.
    */
-  recognizeForVideo(videoFrame: ImageSource, timestamp: number):
+  recognizeForVideo(
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptions?: ImageProcessingOptions):
       GestureRecognizerResult {
-    return this.processVideoData(videoFrame, timestamp);
+    this.resetResults();
+    this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
+    return this.processResults();
   }
 
-  /** Runs the gesture recognition and blocks on the response. */
-  protected override process(imageSource: ImageSource, timestamp: number):
-      GestureRecognizerResult {
+  private resetResults(): void {
     this.gestures = [];
     this.landmarks = [];
     this.worldLandmarks = [];
     this.handednesses = [];
+  }
 
-    this.graphRunner.addGpuBufferAsImageToStream(
-        imageSource, IMAGE_STREAM, timestamp);
-    this.graphRunner.addProtoToStream(
-        FULL_IMAGE_RECT.serializeBinary(), 'mediapipe.NormalizedRect',
-        NORM_RECT_STREAM, timestamp);
-    this.finishProcessing();
-
+  private processResults(): GestureRecognizerResult {
     if (this.gestures.length === 0) {
       // If no gestures are detected in the image, just return an empty list
       return {

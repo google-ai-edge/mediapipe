@@ -28,7 +28,7 @@ namespace core {
 // Options for image processing.
 //
 // If both region-or-interest and rotation are specified, the crop around the
-// region-of-interest is extracted first, the the specified rotation is applied
+// region-of-interest is extracted first, then the specified rotation is applied
 // to the crop.
 struct ImageProcessingOptions {
   // The optional region-of-interest to crop from the image. If not specified,

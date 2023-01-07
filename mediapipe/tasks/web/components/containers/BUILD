@@ -24,3 +24,8 @@ mediapipe_ts_declaration(
     name = "embedding_result",
     srcs = ["embedding_result.d.ts"],
 )
+
+mediapipe_ts_declaration(
+    name = "rect",
+    srcs = ["rect.d.ts"],
+)
