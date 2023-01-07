@@ -18,11 +18,12 @@ import 'jasmine';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {Classification, ClassificationList} from '../../../../framework/formats/classification_pb';
 import {Landmark, LandmarkList, NormalizedLandmark, NormalizedLandmarkList} from '../../../../framework/formats/landmark_pb';
-import {GraphRunnerImageLib} from '../../../../tasks/web/core/task_runner';
 import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph, verifyListenersRegistered} from '../../../../tasks/web/core/task_runner_test_utils';
+import {VisionGraphRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 
 import {HandLandmarker} from './hand_landmarker';
 import {HandLandmarkerOptions} from './hand_landmarker_options';
+
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -87,7 +88,7 @@ class HandLandmarkerFake extends HandLandmarker implements MediapipeTasksFake {
     spyOn(this.graphRunner, 'addProtoToStream');
   }
 
-  getGraphRunner(): GraphRunnerImageLib {
+  getGraphRunner(): VisionGraphRunner {
     return this.graphRunner;
   }
 }

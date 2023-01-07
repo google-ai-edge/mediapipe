@@ -62,8 +62,8 @@ mediapipe_ts_library(
         "//mediapipe/framework/formats:classification_jspb_proto",
         "//mediapipe/framework/formats:landmark_jspb_proto",
         "//mediapipe/tasks/web/core",
-        "//mediapipe/tasks/web/core:task_runner",
         "//mediapipe/tasks/web/core:task_runner_test_utils",
+        "//mediapipe/tasks/web/vision/core:vision_task_runner",
     ],
 )
 

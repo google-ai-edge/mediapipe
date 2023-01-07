@@ -26,7 +26,7 @@ import {HandLandmarksDetectorGraphOptions} from '../../../../tasks/cc/vision/han
 import {Category} from '../../../../tasks/web/components/containers/category';
 import {Landmark, NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
-import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
@@ -119,7 +119,7 @@ export class HandLandmarker extends VisionTaskRunner<HandLandmarkerResult> {
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    super(wasmModule, glCanvas);
+    super(new VisionGraphRunner(wasmModule, glCanvas));
 
     this.options = new HandLandmarkerGraphOptions();
     this.options.setBaseOptions(new BaseOptionsProto());

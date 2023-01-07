@@ -19,8 +19,7 @@ import {Acceleration} from '../../../tasks/cc/core/proto/acceleration_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../tasks/cc/core/proto/base_options_pb';
 import {ExternalFile} from '../../../tasks/cc/core/proto/external_file_pb';
 import {BaseOptions, TaskRunnerOptions} from '../../../tasks/web/core/task_runner_options';
-import {createMediaPipeLib, FileLocator, GraphRunner, WasmMediaPipeConstructor, WasmModule} from '../../../web/graph_runner/graph_runner';
-import {SupportImage} from '../../../web/graph_runner/graph_runner_image_lib';
+import {createMediaPipeLib, FileLocator, GraphRunner, WasmMediaPipeConstructor} from '../../../web/graph_runner/graph_runner';
 import {SupportModelResourcesGraphService} from '../../../web/graph_runner/register_model_resources_graph_service';
 
 import {WasmFileset} from './wasm_fileset';
@@ -29,10 +28,12 @@ import {WasmFileset} from './wasm_fileset';
 const NO_ASSETS = undefined;
 
 // tslint:disable-next-line:enforce-name-casing
-const GraphRunnerImageLibType =
-    SupportModelResourcesGraphService(SupportImage(GraphRunner));
-/** An implementation of the GraphRunner that supports image operations */
-export class GraphRunnerImageLib extends GraphRunnerImageLibType {}
+const CachedGraphRunnerType = SupportModelResourcesGraphService(GraphRunner);
+/**
+ * An implementation of the GraphRunner that exposes the resource graph
+ * service.
+ */
+export class CachedGraphRunner extends CachedGraphRunnerType {}
 
 /**
  * Creates a new instance of a Mediapipe Task. Determines if SIMD is
@@ -64,7 +65,6 @@ export async function createTaskRunner<T extends TaskRunner>(
 /** Base class for all MediaPipe Tasks. */
 export abstract class TaskRunner {
   protected abstract baseOptions: BaseOptionsProto;
-  protected graphRunner: GraphRunnerImageLib;
   private processingErrors: Error[] = [];
 
   /**
@@ -79,12 +79,7 @@ export abstract class TaskRunner {
   }
 
   /** @hideconstructor protected */
-  constructor(
-      wasmModule: WasmModule, glCanvas?: HTMLCanvasElement|OffscreenCanvas|null,
-      graphRunner?: GraphRunnerImageLib) {
-    this.graphRunner =
-        graphRunner ?? new GraphRunnerImageLib(wasmModule, glCanvas);
-
+  constructor(protected readonly graphRunner: CachedGraphRunner) {
     // Disables the automatic render-to-screen code, which allows for pure
     // CPU processing.
     this.graphRunner.setAutoRenderToScreen(false);

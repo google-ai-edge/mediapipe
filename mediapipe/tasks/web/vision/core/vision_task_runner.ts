@@ -15,12 +15,25 @@
  */
 
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
-import {ImageSource} from '../../../../web/graph_runner/graph_runner';
+import {GraphRunner, ImageSource} from '../../../../web/graph_runner/graph_runner';
+import {SupportImage} from '../../../../web/graph_runner/graph_runner_image_lib';
+import {SupportModelResourcesGraphService} from '../../../../web/graph_runner/register_model_resources_graph_service';
 
 import {VisionTaskOptions} from './vision_task_options';
 
+// tslint:disable-next-line:enforce-name-casing
+const GraphRunnerVisionType =
+    SupportModelResourcesGraphService(SupportImage(GraphRunner));
+/** An implementation of the GraphRunner that supports image operations */
+export class VisionGraphRunner extends GraphRunnerVisionType {}
+
 /** Base class for all MediaPipe Vision Tasks. */
 export abstract class VisionTaskRunner<T> extends TaskRunner {
+  /** @hideconstructor protected */
+  constructor(protected override readonly graphRunner: VisionGraphRunner) {
+    super(graphRunner);
+  }
+
   /** Configures the shared options of a vision task. */
   override applyOptions(options: VisionTaskOptions): Promise<void> {
     if ('runningMode' in options) {

@@ -27,6 +27,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/components/processors:classifier_result",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:classifier_options",
+        "//mediapipe/tasks/web/core:task_runner",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )

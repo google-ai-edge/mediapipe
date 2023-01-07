@@ -27,6 +27,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/components/utils:cosine_similarity",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:embedder_options",
+        "//mediapipe/tasks/web/core:task_runner",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )

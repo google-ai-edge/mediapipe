@@ -18,11 +18,10 @@ import 'jasmine';
 // Placeholder for internal dependency on encodeByteArray
 import {BaseOptions as BaseOptionsProto} from '../../../tasks/cc/core/proto/base_options_pb';
 import {TaskRunner} from '../../../tasks/web/core/task_runner';
-import {createSpyWasmModule, SpyWasmModule} from '../../../tasks/web/core/task_runner_test_utils';
 import {ErrorListener} from '../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource URL builder
 
-import {GraphRunnerImageLib} from './task_runner';
+import {CachedGraphRunner} from './task_runner';
 import {TaskRunnerOptions} from './task_runner_options.d';
 
 class TaskRunnerFake extends TaskRunner {
@@ -32,18 +31,15 @@ class TaskRunnerFake extends TaskRunner {
   baseOptions = new BaseOptionsProto();
 
   static createFake(): TaskRunnerFake {
-    const wasmModule = createSpyWasmModule();
-    return new TaskRunnerFake(wasmModule);
+    return new TaskRunnerFake();
   }
 
-  constructor(wasmModuleFake: SpyWasmModule) {
-    super(
-        wasmModuleFake, /* glCanvas= */ null,
-        jasmine.createSpyObj<GraphRunnerImageLib>([
-          'setAutoRenderToScreen', 'setGraph', 'finishProcessing',
-          'registerModelResourcesGraphService', 'attachErrorListener'
-        ]));
-    const graphRunner = this.graphRunner as jasmine.SpyObj<GraphRunnerImageLib>;
+  constructor() {
+    super(jasmine.createSpyObj<CachedGraphRunner>([
+      'setAutoRenderToScreen', 'setGraph', 'finishProcessing',
+      'registerModelResourcesGraphService', 'attachErrorListener'
+    ]));
+    const graphRunner = this.graphRunner as jasmine.SpyObj<CachedGraphRunner>;
     expect(graphRunner.registerModelResourcesGraphService).toHaveBeenCalled();
     expect(graphRunner.setAutoRenderToScreen).toHaveBeenCalled();
     graphRunner.attachErrorListener.and.callFake(listener => {

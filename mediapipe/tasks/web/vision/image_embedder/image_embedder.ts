@@ -24,7 +24,7 @@ import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/pr
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
 import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
-import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
@@ -99,7 +99,7 @@ export class ImageEmbedder extends VisionTaskRunner<ImageEmbedderResult> {
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    super(wasmModule, glCanvas);
+    super(new VisionGraphRunner(wasmModule, glCanvas));
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 

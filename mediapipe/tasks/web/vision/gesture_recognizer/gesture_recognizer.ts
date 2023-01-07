@@ -30,7 +30,7 @@ import {Category} from '../../../../tasks/web/components/containers/category';
 import {Landmark, NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
 import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/processors/classifier_options';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
-import {VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
@@ -131,7 +131,7 @@ export class GestureRecognizer extends
   constructor(
       wasmModule: WasmModule,
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
-    super(wasmModule, glCanvas);
+    super(new VisionGraphRunner(wasmModule, glCanvas));
 
     this.options = new GestureRecognizerGraphOptions();
     this.options.setBaseOptions(new BaseOptionsProto());

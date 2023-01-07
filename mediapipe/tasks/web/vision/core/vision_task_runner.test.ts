@@ -21,13 +21,13 @@ import {createSpyWasmModule} from '../../../../tasks/web/core/task_runner_test_u
 import {ImageSource} from '../../../../web/graph_runner/graph_runner';
 
 import {VisionTaskOptions} from './vision_task_options';
-import {VisionTaskRunner} from './vision_task_runner';
+import {VisionGraphRunner, VisionTaskRunner} from './vision_task_runner';
 
 class VisionTaskRunnerFake extends VisionTaskRunner<void> {
   baseOptions = new BaseOptionsProto();
 
   constructor() {
-    super(createSpyWasmModule(), /* glCanvas= */ null);
+    super(new VisionGraphRunner(createSpyWasmModule(), /* glCanvas= */ null));
   }
 
   protected override process(): void {}
