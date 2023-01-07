@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/components/processors/sources/MPPClassifierOptions.h"
+#import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierOptions.h"
 
-@implementation MPPClassifierOptions
+@implementation MPPTextClassifierOptions
 
 - (instancetype)init {
   self = [super init];
@@ -26,15 +26,15 @@
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-  MPPClassifierOptions *classifierOptions = [[MPPClassifierOptions alloc] init];
+  MPPTextClassifierOptions *textClassifierOptions = [super copyWithZone:zone];
 
-  classifierOptions.scoreThreshold = self.scoreThreshold;
-  classifierOptions.maxResults = self.maxResults;
-  classifierOptions.categoryDenylist = self.categoryDenylist;
-  classifierOptions.categoryAllowlist = self.categoryAllowlist;
-  classifierOptions.displayNamesLocale = self.displayNamesLocale;
+  textClassifierOptions.scoreThreshold = self.scoreThreshold;
+  textClassifierOptions.maxResults = self.maxResults;
+  textClassifierOptions.categoryDenylist = self.categoryDenylist;
+  textClassifierOptions.categoryAllowlist = self.categoryAllowlist;
+  textClassifierOptions.displayNamesLocale = self.displayNamesLocale;
 
-  return classifierOptions;
+  return textClassifierOptions;
 }
 
 @end

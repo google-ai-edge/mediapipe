@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,26 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
-
+#include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #import "mediapipe/tasks/ios/core/sources/MPPBaseOptions.h"
 
-@implementation MPPTaskOptions
+NS_ASSUME_NONNULL_BEGIN
 
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    _baseOptions = [[MPPBaseOptions alloc] init];
-  }
-  return self;
-}
+@interface MPPBaseOptions (Helpers)
 
-- (id)copyWithZone:(NSZone *)zone {
-  MPPTaskOptions *taskOptions = [[MPPTaskOptions alloc] init];
-
-  taskOptions.baseOptions = self.baseOptions;
-
-  return taskOptions;
-}
+- (void)copyToProto:(mediapipe::tasks::core::proto::BaseOptions *)baseOptionsProto;
 
 @end
+
+NS_ASSUME_NONNULL_END

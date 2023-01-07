@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,13 +14,15 @@
 
 #import <Foundation/Foundation.h>
 
+#import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * Holds settings for any single iOS MediaPipe classification task.
+ * Options for setting up a `MPPTextClassifierOptions`.
  */
-NS_SWIFT_NAME(ClassifierOptions)
-@interface MPPClassifierOptions : NSObject <NSCopying>
+NS_SWIFT_NAME(TextClassifierOptions)
+@interface MPPTextClassifierOptions : MPPTaskOptions <NSCopying>
 
 /**
  * The locale to use for display names specified through the TFLite Model

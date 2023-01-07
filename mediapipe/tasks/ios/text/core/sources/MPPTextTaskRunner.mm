@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,26 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
+#import "mediapipe/tasks/ios/text/core/sources/MPPTextTaskRunner.h"
 
-#import "mediapipe/tasks/ios/core/sources/MPPBaseOptions.h"
+namespace {
+using ::mediapipe::CalculatorGraphConfig;
+}  // namespace
 
-@implementation MPPTaskOptions
+@implementation MPPTextTaskRunner
 
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    _baseOptions = [[MPPBaseOptions alloc] init];
-  }
+- (instancetype)initWithCalculatorGraphConfig:(CalculatorGraphConfig)graphConfig
+                                        error:(NSError **)error {
+  self = [super initWithCalculatorGraphConfig:graphConfig packetsCallback:nullptr error:error];
   return self;
-}
-
-- (id)copyWithZone:(NSZone *)zone {
-  MPPTaskOptions *taskOptions = [[MPPTaskOptions alloc] init];
-
-  taskOptions.baseOptions = self.baseOptions;
-
-  return taskOptions;
 }
 
 @end

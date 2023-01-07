@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,26 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
+#include "mediapipe/framework/formats/classification.pb.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPCategory.h"
 
-#import "mediapipe/tasks/ios/core/sources/MPPBaseOptions.h"
+NS_ASSUME_NONNULL_BEGIN
 
-@implementation MPPTaskOptions
+@interface MPPCategory (Helpers)
 
-- (instancetype)init {
-  self = [super init];
-  if (self) {
-    _baseOptions = [[MPPBaseOptions alloc] init];
-  }
-  return self;
-}
-
-- (id)copyWithZone:(NSZone *)zone {
-  MPPTaskOptions *taskOptions = [[MPPTaskOptions alloc] init];
-
-  taskOptions.baseOptions = self.baseOptions;
-
-  return taskOptions;
-}
++ (MPPCategory *)categoryWithProto:(const mediapipe::Classification &)classificationProto;
 
 @end
+
+NS_ASSUME_NONNULL_END
