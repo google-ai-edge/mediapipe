@@ -13,11 +13,20 @@
 # limitations under the License.
 #
 
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
+
+selects.config_setting_group(
+    name = "ios_or_disable_gpu",
+    match_any = [
+        "//mediapipe/gpu:disable_gpu",
+        "//mediapipe:ios",
+    ],
+)
 
 mediapipe_proto_library(
     name = "concatenate_vector_calculator_proto",
@@ -899,8 +908,7 @@ cc_library(
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ] + select({
-        "//mediapipe/gpu:disable_gpu": [],
-        "//mediapipe:ios": [],
+        ":ios_or_disable_gpu": [],
         "//conditions:default": [
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_buffer",
         ],
