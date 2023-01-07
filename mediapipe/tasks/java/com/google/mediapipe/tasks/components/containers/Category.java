@@ -19,9 +19,9 @@ import com.google.mediapipe.formats.proto.ClassificationProto;
 import java.util.Objects;
 
 /**
- * Category is a util class, contains a category name, its display name, a float value as score, and
- * the index of the label in the corresponding label file. Typically it's used as result of
- * classification or detection tasks.
+ * Category is a util class, that contains a category name, its display name, a float value as
+ * score, and the index of the label in the corresponding label file. Typically it's used as result
+ * of classification or detection tasks.
  */
 @AutoValue
 public abstract class Category {
