@@ -36,8 +36,11 @@ export abstract class AudioTaskRunner<T> extends TaskRunner {
 
   /** Sends a single audio clip to the graph and awaits results. */
   protected processAudioClip(audioData: Float32Array, sampleRate?: number): T {
+    // Increment the timestamp by 1 millisecond to guarantee that we send
+    // monotonically increasing timestamps to the graph.
+    const syntheticTimestamp = this.getLatestOutputTimestamp() + 1;
     return this.process(
-        audioData, sampleRate ?? this.defaultSampleRate, performance.now());
+        audioData, sampleRate ?? this.defaultSampleRate, syntheticTimestamp);
   }
 }
 

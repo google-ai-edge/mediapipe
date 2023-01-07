@@ -126,6 +126,8 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
     return this.applyOptions(options);
   }
 
+  // TODO: Add a classifyStream() that takes a timestamp
+
   /**
    * Performs audio classification on the provided audio clip and waits
    * synchronously for the response.
@@ -194,8 +196,9 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
     graphConfig.addNode(classifierNode);
 
     this.graphRunner.attachProtoVectorListener(
-        TIMESTAMPED_CLASSIFICATIONS_STREAM, binaryProtos => {
+        TIMESTAMPED_CLASSIFICATIONS_STREAM, (binaryProtos, timestamp) => {
           this.addJsAudioClassificationResults(binaryProtos);
+          this.setLatestOutputTimestamp(timestamp);
         });
 
     const binaryGraph = graphConfig.serializeBinary();

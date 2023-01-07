@@ -135,9 +135,10 @@ export class TextEmbedder extends TaskRunner {
    * @return The embedding resuls of the text
    */
   embed(text: string): TextEmbedderResult {
-    // Get text embeddings by running our MediaPipe graph.
-    this.graphRunner.addStringToStream(
-        text, INPUT_STREAM, /* timestamp= */ performance.now());
+    // Increment the timestamp by 1 millisecond to guarantee that we send
+    // monotonically increasing timestamps to the graph.
+    const syntheticTimestamp = this.getLatestOutputTimestamp() + 1;
+    this.graphRunner.addStringToStream(text, INPUT_STREAM, syntheticTimestamp);
     this.finishProcessing();
     return this.embeddingResult;
   }
@@ -173,10 +174,14 @@ export class TextEmbedder extends TaskRunner {
 
     graphConfig.addNode(embedderNode);
 
-    this.graphRunner.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
-      const embeddingResult = EmbeddingResult.deserializeBinary(binaryProto);
-      this.embeddingResult = convertFromEmbeddingResultProto(embeddingResult);
-    });
+    this.graphRunner.attachProtoListener(
+        EMBEDDINGS_STREAM, (binaryProto, timestamp) => {
+          const embeddingResult =
+              EmbeddingResult.deserializeBinary(binaryProto);
+          this.embeddingResult =
+              convertFromEmbeddingResultProto(embeddingResult);
+          this.setLatestOutputTimestamp(timestamp);
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

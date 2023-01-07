@@ -380,23 +380,27 @@ export class GestureRecognizer extends VisionTaskRunner {
     graphConfig.addNode(recognizerNode);
 
     this.graphRunner.attachProtoVectorListener(
-        LANDMARKS_STREAM, binaryProto => {
+        LANDMARKS_STREAM, (binaryProto, timestamp) => {
           this.addJsLandmarks(binaryProto);
+          this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachProtoVectorListener(
-        WORLD_LANDMARKS_STREAM, binaryProto => {
+        WORLD_LANDMARKS_STREAM, (binaryProto, timestamp) => {
           this.adddJsWorldLandmarks(binaryProto);
+          this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachProtoVectorListener(
-        HAND_GESTURES_STREAM, binaryProto => {
+        HAND_GESTURES_STREAM, (binaryProto, timestamp) => {
           // Gesture index is not used, because the final gesture result comes
           // from multiple classifiers.
           this.gestures.push(
               ...this.toJsCategories(binaryProto, /* populateIndex= */ false));
+          this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachProtoVectorListener(
-        HANDEDNESS_STREAM, binaryProto => {
+        HANDEDNESS_STREAM, (binaryProto, timestamp) => {
           this.handednesses.push(...this.toJsCategories(binaryProto));
+          this.setLatestOutputTimestamp(timestamp);
         });
 
     const binaryGraph = graphConfig.serializeBinary();

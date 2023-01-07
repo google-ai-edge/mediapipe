@@ -50,7 +50,7 @@ export async function createTaskRunner<T extends TaskRunner>(
     }
   };
 
-  // Initialize a canvas if requested. If OffscreenCanvas is availble, we
+  // Initialize a canvas if requested. If OffscreenCanvas is available, we
   // let the graph runner initialize it by passing `undefined`.
   const canvas = initializeCanvas ? (typeof OffscreenCanvas === 'undefined' ?
                                          document.createElement('canvas') :
@@ -66,6 +66,7 @@ export async function createTaskRunner<T extends TaskRunner>(
 export abstract class TaskRunner {
   protected abstract baseOptions: BaseOptionsProto;
   private processingErrors: Error[] = [];
+  private latestOutputTimestamp = 0;
 
   /**
    * Creates a new instance of a Mediapipe Task. Determines if SIMD is
@@ -160,6 +161,21 @@ export abstract class TaskRunner {
   protected finishProcessing(): void {
     this.graphRunner.finishProcessing();
     this.handleErrors();
+  }
+
+  /*
+   * Sets the latest output timestamp received from the graph (in ms).
+   * Timestamps that are smaller than the currently latest output timestamp are
+   * ignored.
+   */
+  protected setLatestOutputTimestamp(timestamp: number): void {
+    this.latestOutputTimestamp =
+        Math.max(this.latestOutputTimestamp, timestamp);
+  }
+
+  /** Returns the latest output timestamp. */
+  protected getLatestOutputTimestamp() {
+    return this.latestOutputTimestamp;
   }
 
   /** Throws the error from the error listener if an error was raised. */

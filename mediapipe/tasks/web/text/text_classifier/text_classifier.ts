@@ -131,10 +131,11 @@ export class TextClassifier extends TaskRunner {
    * @return The classification result of the text
    */
   classify(text: string): TextClassifierResult {
-    // Get classification result by running our MediaPipe graph.
+    // Increment the timestamp by 1 millisecond to guarantee that we send
+    // monotonically increasing timestamps to the graph.
+    const syntheticTimestamp = this.getLatestOutputTimestamp() + 1;
     this.classificationResult = {classifications: []};
-    this.graphRunner.addStringToStream(
-        text, INPUT_STREAM, /* timestamp= */ performance.now());
+    this.graphRunner.addStringToStream(text, INPUT_STREAM, syntheticTimestamp);
     this.finishProcessing();
     return this.classificationResult;
   }
@@ -158,9 +159,10 @@ export class TextClassifier extends TaskRunner {
     graphConfig.addNode(classifierNode);
 
     this.graphRunner.attachProtoListener(
-        CLASSIFICATIONS_STREAM, binaryProto => {
+        CLASSIFICATIONS_STREAM, (binaryProto, timestamp) => {
           this.classificationResult = convertFromClassificationResultProto(
               ClassificationResult.deserializeBinary(binaryProto));
+          this.setLatestOutputTimestamp(timestamp);
         });
 
     const binaryGraph = graphConfig.serializeBinary();

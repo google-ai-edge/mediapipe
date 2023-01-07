@@ -176,7 +176,7 @@ export class ObjectDetector extends VisionTaskRunner {
   }
 
   /**
-   * Performs object detection on the provided vidoe frame and waits
+   * Performs object detection on the provided video frame and waits
    * synchronously for the response. Only use this method when the
    * ObjectDetector is created with running mode `video`.
    *
@@ -248,8 +248,9 @@ export class ObjectDetector extends VisionTaskRunner {
     graphConfig.addNode(detectorNode);
 
     this.graphRunner.attachProtoVectorListener(
-        DETECTIONS_STREAM, binaryProto => {
+        DETECTIONS_STREAM, (binaryProto, timestamp) => {
           this.addJsObjectDetections(binaryProto);
+          this.setLatestOutputTimestamp(timestamp);
         });
 
     const binaryGraph = graphConfig.serializeBinary();

@@ -71,7 +71,11 @@ export abstract class VisionTaskRunner extends TaskRunner {
           'Task is not initialized with image mode. ' +
           '\'runningMode\' must be set to \'image\'.');
     }
-    this.process(image, imageProcessingOptions, performance.now());
+
+    // Increment the timestamp by 1 millisecond to guarantee that we send
+    // monotonically increasing timestamps to the graph.
+    const syntheticTimestamp = this.getLatestOutputTimestamp() + 1;
+    this.process(image, imageProcessingOptions, syntheticTimestamp);
   }
 
   /** Sends a single video frame to the graph and awaits results. */

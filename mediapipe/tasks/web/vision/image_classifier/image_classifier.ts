@@ -187,9 +187,10 @@ export class ImageClassifier extends VisionTaskRunner {
     graphConfig.addNode(classifierNode);
 
     this.graphRunner.attachProtoListener(
-        CLASSIFICATIONS_STREAM, binaryProto => {
+        CLASSIFICATIONS_STREAM, (binaryProto, timestamp) => {
           this.classificationResult = convertFromClassificationResultProto(
               ClassificationResult.deserializeBinary(binaryProto));
+          this.setLatestOutputTimestamp(timestamp);
         });
 
     const binaryGraph = graphConfig.serializeBinary();

@@ -313,16 +313,19 @@ export class HandLandmarker extends VisionTaskRunner {
     graphConfig.addNode(landmarkerNode);
 
     this.graphRunner.attachProtoVectorListener(
-        LANDMARKS_STREAM, binaryProto => {
+        LANDMARKS_STREAM, (binaryProto, timestamp) => {
           this.addJsLandmarks(binaryProto);
+          this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachProtoVectorListener(
-        WORLD_LANDMARKS_STREAM, binaryProto => {
+        WORLD_LANDMARKS_STREAM, (binaryProto, timestamp) => {
           this.adddJsWorldLandmarks(binaryProto);
+          this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachProtoVectorListener(
-        HANDEDNESS_STREAM, binaryProto => {
+        HANDEDNESS_STREAM, (binaryProto, timestamp) => {
           this.handednesses.push(...this.toJsCategories(binaryProto));
+          this.setLatestOutputTimestamp(timestamp);
         });
 
     const binaryGraph = graphConfig.serializeBinary();

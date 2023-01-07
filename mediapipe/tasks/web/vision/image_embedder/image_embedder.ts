@@ -206,9 +206,11 @@ export class ImageEmbedder extends VisionTaskRunner {
 
     graphConfig.addNode(embedderNode);
 
-    this.graphRunner.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
-      this.addJsImageEmdedding(binaryProto);
-    });
+    this.graphRunner.attachProtoListener(
+        EMBEDDINGS_STREAM, (binaryProto, timestamp) => {
+          this.addJsImageEmdedding(binaryProto);
+          this.setLatestOutputTimestamp(timestamp);
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

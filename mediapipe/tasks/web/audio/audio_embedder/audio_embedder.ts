@@ -128,6 +128,8 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
     return this.applyOptions(options);
   }
 
+  // TODO: Add a classifyStream() that takes a timestamp
+
   /**
    * Performs embeding extraction on the provided audio clip and waits
    * synchronously for the response.
@@ -193,20 +195,24 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
 
     graphConfig.addNode(embedderNode);
 
-    this.graphRunner.attachProtoListener(EMBEDDINGS_STREAM, binaryProto => {
-      const embeddingResult = EmbeddingResult.deserializeBinary(binaryProto);
-      this.embeddingResults.push(
-          convertFromEmbeddingResultProto(embeddingResult));
-    });
+    this.graphRunner.attachProtoListener(
+        EMBEDDINGS_STREAM, (binaryProto, timestamp) => {
+          const embeddingResult =
+              EmbeddingResult.deserializeBinary(binaryProto);
+          this.embeddingResults.push(
+              convertFromEmbeddingResultProto(embeddingResult));
+          this.setLatestOutputTimestamp(timestamp);
+        });
 
     this.graphRunner.attachProtoVectorListener(
-        TIMESTAMPED_EMBEDDINGS_STREAM, data => {
+        TIMESTAMPED_EMBEDDINGS_STREAM, (data, timestamp) => {
           for (const binaryProto of data) {
             const embeddingResult =
                 EmbeddingResult.deserializeBinary(binaryProto);
             this.embeddingResults.push(
                 convertFromEmbeddingResultProto(embeddingResult));
           }
+          this.setLatestOutputTimestamp(timestamp);
         });
 
     const binaryGraph = graphConfig.serializeBinary();
