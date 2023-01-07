@@ -164,16 +164,19 @@ export abstract class TaskRunner {
 
   /** Throws the error from the error listener if an error was raised. */
   private handleErrors() {
-    const errorCount = this.processingErrors.length;
-    if (errorCount === 1) {
-      // Re-throw error to get a more meaningful stacktrace
-      throw new Error(this.processingErrors[0].message);
-    } else if (errorCount > 1) {
-      throw new Error(
-          'Encountered multiple errors: ' +
-          this.processingErrors.map(e => e.message).join(', '));
+    try {
+      const errorCount = this.processingErrors.length;
+      if (errorCount === 1) {
+        // Re-throw error to get a more meaningful stacktrace
+        throw new Error(this.processingErrors[0].message);
+      } else if (errorCount > 1) {
+        throw new Error(
+            'Encountered multiple errors: ' +
+            this.processingErrors.map(e => e.message).join(', '));
+      }
+    } finally {
+      this.processingErrors = [];
     }
-    this.processingErrors = [];
   }
 
   /** Configures the `externalFile` option */

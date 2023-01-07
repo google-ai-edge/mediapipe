@@ -139,6 +139,18 @@ describe('TaskRunner', () => {
     }).toThrowError(/Test error 1, Test error 2/);
   });
 
+  it('clears errors once thrown', () => {
+    taskRunner.enqueueError('Test error');
+
+    expect(() => {
+      taskRunner.setGraph(new Uint8Array(0), /* isBinary= */ true);
+    }).toThrowError(/Test error/);
+
+    expect(() => {
+      taskRunner.setGraph(new Uint8Array(0), /* isBinary= */ true);
+    }).not.toThrow();
+  });
+
   it('verifies that at least one model asset option is provided', () => {
     expect(() => {
       taskRunner.setOptions({});
