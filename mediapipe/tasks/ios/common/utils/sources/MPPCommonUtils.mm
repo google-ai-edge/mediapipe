@@ -96,7 +96,7 @@ NSString *const MPPTasksErrorDomain = @"com.google.mediapipe.tasks";
   // The mapping to absl::Status::code() is done to generate a more specific error code than
   // MPPTasksErrorCodeError in cases when the payload can't be mapped to
   // MPPTasksErrorCode. This can happen when absl::Status returned by TFLite library are in turn
-  // returned without modification by Mediapipe cc library methods.
+  // returned without modification by MediaPipe cc library methods.
   if (errorCode > MPPTasksErrorCodeLast || errorCode <= MPPTasksErrorCodeFirst) {
     switch (status.code()) {
       case absl::StatusCode::kInternal:
