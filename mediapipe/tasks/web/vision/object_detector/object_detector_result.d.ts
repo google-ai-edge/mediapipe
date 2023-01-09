@@ -16,6 +16,8 @@
 
 import {Category} from '../../../../tasks/web/components/containers/category';
 
+export {Category};
+
 /** An integer bounding box, axis aligned. */
 export declare interface BoundingBox {
   /** The X coordinate of the top-left corner, in pixels. */
