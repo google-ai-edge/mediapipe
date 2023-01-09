@@ -65,6 +65,7 @@ pkg_npm(
         "wasm/audio_wasm_nosimd_internal.js",
         "wasm/audio_wasm_nosimd_internal.wasm",
         ":audio_bundle",
+        "//mediapipe/tasks/web/audio:README.md",
     ],
 )
 
@@ -108,6 +109,7 @@ pkg_npm(
         "wasm/text_wasm_nosimd_internal.js",
         "wasm/text_wasm_nosimd_internal.wasm",
         ":text_bundle",
+        "//mediapipe/tasks/web/text:README.md",
     ],
 )
 
@@ -151,5 +153,6 @@ pkg_npm(
         "wasm/vision_wasm_nosimd_internal.js",
         "wasm/vision_wasm_nosimd_internal.wasm",
         ":vision_bundle",
+        "//mediapipe/tasks/web/vision:README.md",
     ],
 )
