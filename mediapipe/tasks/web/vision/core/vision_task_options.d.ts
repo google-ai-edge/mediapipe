@@ -21,7 +21,7 @@ import {TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options'
  * 1) The image mode for processing single image inputs.
  * 2) The video mode for processing decoded frames of a video.
  */
-export type RunningMode = 'image'|'video';
+export type RunningMode = 'IMAGE'|'VIDEO';
 
 /** The options for configuring a MediaPipe vision task. */
 export declare interface VisionTaskOptions extends TaskRunnerOptions {

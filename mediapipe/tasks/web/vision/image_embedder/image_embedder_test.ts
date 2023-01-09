@@ -143,7 +143,7 @@ describe('ImageEmbedder', () => {
     });
 
     it('for video mode', async () => {
-      await imageEmbedder.setOptions({runningMode: 'video'});
+      await imageEmbedder.setOptions({runningMode: 'VIDEO'});
 
       // Invoke the video embedder
       const embeddingResult =

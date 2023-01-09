@@ -56,7 +56,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
   override applyOptions(options: VisionTaskOptions): Promise<void> {
     if ('runningMode' in options) {
       const useStreamMode =
-          !!options.runningMode && options.runningMode !== 'image';
+          !!options.runningMode && options.runningMode !== 'IMAGE';
       this.baseOptions.setUseStreamMode(useStreamMode);
     }
     return super.applyOptions(options);
@@ -69,7 +69,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
     if (!!this.baseOptions?.getUseStreamMode()) {
       throw new Error(
           'Task is not initialized with image mode. ' +
-          '\'runningMode\' must be set to \'image\'.');
+          '\'runningMode\' must be set to \'IMAGE\'.');
     }
 
     // Increment the timestamp by 1 millisecond to guarantee that we send
@@ -86,7 +86,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
     if (!this.baseOptions?.getUseStreamMode()) {
       throw new Error(
           'Task is not initialized with video mode. ' +
-          '\'runningMode\' must be set to \'video\'.');
+          '\'runningMode\' must be set to \'VIDEO\'.');
     }
     this.process(imageFrame, imageProcessingOptions, timestamp);
   }

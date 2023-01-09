@@ -118,19 +118,19 @@ describe('VisionTaskRunner', () => {
   });
 
   it('can enable image mode', async () => {
-    await visionTaskRunner.setOptions({runningMode: 'image'});
+    await visionTaskRunner.setOptions({runningMode: 'IMAGE'});
     expect(visionTaskRunner.baseOptions.toObject())
         .toEqual(jasmine.objectContaining({useStreamMode: false}));
   });
 
   it('can enable video mode', async () => {
-    await visionTaskRunner.setOptions({runningMode: 'video'});
+    await visionTaskRunner.setOptions({runningMode: 'VIDEO'});
     expect(visionTaskRunner.baseOptions.toObject())
         .toEqual(jasmine.objectContaining({useStreamMode: true}));
   });
 
   it('can clear running mode', async () => {
-    await visionTaskRunner.setOptions({runningMode: 'video'});
+    await visionTaskRunner.setOptions({runningMode: 'VIDEO'});
 
     // Clear running mode
     await visionTaskRunner.setOptions(
@@ -140,7 +140,7 @@ describe('VisionTaskRunner', () => {
   });
 
   it('cannot process images with video mode', async () => {
-    await visionTaskRunner.setOptions({runningMode: 'video'});
+    await visionTaskRunner.setOptions({runningMode: 'VIDEO'});
     expect(() => {
       visionTaskRunner.processImageData(
           IMAGE, /* imageProcessingOptions= */ undefined);
@@ -155,7 +155,7 @@ describe('VisionTaskRunner', () => {
     }).toThrowError(/Task is not initialized with video mode./);
 
     // Explicitly set to image mode
-    await visionTaskRunner.setOptions({runningMode: 'image'});
+    await visionTaskRunner.setOptions({runningMode: 'IMAGE'});
     expect(() => {
       visionTaskRunner.processVideoData(
           IMAGE, /* imageProcessingOptions= */ undefined, TIMESTAMP);
@@ -163,7 +163,7 @@ describe('VisionTaskRunner', () => {
   });
 
   it('sends packets to graph', async () => {
-    await visionTaskRunner.setOptions({runningMode: 'video'});
+    await visionTaskRunner.setOptions({runningMode: 'VIDEO'});
 
     visionTaskRunner.expectImage(IMAGE);
     visionTaskRunner.expectNormalizedRect(0.5, 0.5, 1, 1);
@@ -172,7 +172,7 @@ describe('VisionTaskRunner', () => {
   });
 
   it('sends packets to graph with image processing options', async () => {
-    await visionTaskRunner.setOptions({runningMode: 'video'});
+    await visionTaskRunner.setOptions({runningMode: 'VIDEO'});
 
     visionTaskRunner.expectImage(IMAGE);
     visionTaskRunner.expectNormalizedRect(0.3, 0.6, 0.2, 0.4);
