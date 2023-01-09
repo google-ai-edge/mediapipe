@@ -287,6 +287,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_fist_png",
+        sha256 = "4397b3d3f590c88a8de7d21c08d73a0df4a97fd93f92cbd086eef37fd246daaa",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/fist.png?generation=1672952068696274"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_general_meta_json",
         sha256 = "b95363e4bae89b9c2af484498312aaad4efc7ff57c7eadcc4e5e7adca641445f",
         urls = ["https://storage.googleapis.com/mediapipe-assets/general_meta.json?generation=1665422822603848"],

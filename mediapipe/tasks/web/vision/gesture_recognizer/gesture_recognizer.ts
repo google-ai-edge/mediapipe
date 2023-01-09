@@ -54,7 +54,7 @@ const GESTURE_RECOGNIZER_GRAPH =
     'mediapipe.tasks.vision.gesture_recognizer.GestureRecognizerGraph';
 
 const DEFAULT_NUM_HANDS = 1;
-const DEFAULT_SCORE_THRESHOLD = 0.5;
+const DEFAULT_CONFIDENCE = 0.5;
 const DEFAULT_CATEGORY_INDEX = -1;
 
 /** Performs hand gesture recognition on images. */
@@ -143,8 +143,6 @@ export class GestureRecognizer extends VisionTaskRunner {
         new HandGestureRecognizerGraphOptions();
     this.options.setHandGestureRecognizerGraphOptions(
         this.handGestureRecognizerGraphOptions);
-
-    this.initDefaults();
   }
 
   protected override get baseOptions(): BaseOptionsProto {
@@ -165,22 +163,14 @@ export class GestureRecognizer extends VisionTaskRunner {
    * @param options The options for the gesture recognizer.
    */
   override setOptions(options: GestureRecognizerOptions): Promise<void> {
-    if ('numHands' in options) {
-      this.handDetectorGraphOptions.setNumHands(
-          options.numHands ?? DEFAULT_NUM_HANDS);
-    }
-    if ('minHandDetectionConfidence' in options) {
-      this.handDetectorGraphOptions.setMinDetectionConfidence(
-          options.minHandDetectionConfidence ?? DEFAULT_SCORE_THRESHOLD);
-    }
-    if ('minHandPresenceConfidence' in options) {
-      this.handLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-          options.minHandPresenceConfidence ?? DEFAULT_SCORE_THRESHOLD);
-    }
-    if ('minTrackingConfidence' in options) {
-      this.handLandmarkerGraphOptions.setMinTrackingConfidence(
-          options.minTrackingConfidence ?? DEFAULT_SCORE_THRESHOLD);
-    }
+    this.handDetectorGraphOptions.setNumHands(
+        options.numHands ?? DEFAULT_NUM_HANDS);
+    this.handDetectorGraphOptions.setMinDetectionConfidence(
+        options.minHandDetectionConfidence ?? DEFAULT_CONFIDENCE);
+    this.handLandmarkerGraphOptions.setMinTrackingConfidence(
+        options.minTrackingConfidence ?? DEFAULT_CONFIDENCE);
+    this.handLandmarksDetectorGraphOptions.setMinDetectionConfidence(
+        options.minHandPresenceConfidence ?? DEFAULT_CONFIDENCE);
 
     if (options.cannedGesturesClassifierOptions) {
       // Note that we have to support both JSPB and ProtobufJS and cannot
@@ -279,17 +269,6 @@ export class GestureRecognizer extends VisionTaskRunner {
         handednesses: this.handednesses
       };
     }
-  }
-
-  /** Sets the default values for the graph. */
-  private initDefaults(): void {
-    this.handDetectorGraphOptions.setNumHands(DEFAULT_NUM_HANDS);
-    this.handDetectorGraphOptions.setMinDetectionConfidence(
-        DEFAULT_SCORE_THRESHOLD);
-    this.handLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-        DEFAULT_SCORE_THRESHOLD);
-    this.handLandmarkerGraphOptions.setMinTrackingConfidence(
-        DEFAULT_SCORE_THRESHOLD);
   }
 
   /** Converts the proto data to a Category[][] structure. */
