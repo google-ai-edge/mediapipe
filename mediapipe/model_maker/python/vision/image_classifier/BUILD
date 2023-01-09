@@ -88,15 +88,6 @@ py_library(
 )
 
 py_library(
-    name = "train_image_classifier_lib",
-    srcs = ["train_image_classifier_lib.py"],
-    deps = [
-        ":hyperparameters",
-        "//mediapipe/model_maker/python/core/utils:model_util",
-    ],
-)
-
-py_library(
     name = "image_classifier",
     srcs = ["image_classifier.py"],
     deps = [
@@ -104,7 +95,6 @@ py_library(
         ":image_classifier_options",
         ":model_options",
         ":model_spec",
-        ":train_image_classifier_lib",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
         "//mediapipe/model_maker/python/core/tasks:classifier",
         "//mediapipe/model_maker/python/core/utils:model_util",

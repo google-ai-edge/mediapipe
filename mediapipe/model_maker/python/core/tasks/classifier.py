@@ -48,11 +48,12 @@ class Classifier(custom_model.CustomModel):
     self._hparams: hp.BaseHParams = None
     self._history: tf.keras.callbacks.History = None
 
-  # TODO: Integrate this into all Model Maker tasks.
+  # TODO: Integrate this into GestureRecognizer.
   def _train_model(self,
                    train_data: classification_ds.ClassificationDataset,
                    validation_data: classification_ds.ClassificationDataset,
-                   preprocessor: Optional[Callable[..., bool]] = None):
+                   preprocessor: Optional[Callable[..., bool]] = None,
+                   checkpoint_path: Optional[str] = None):
     """Trains the classifier model.
 
     Compiles and fits the tf.keras `_model` and records the `_history`.
@@ -62,6 +63,9 @@ class Classifier(custom_model.CustomModel):
       validation_data: Validation data.
       preprocessor: An optional data preprocessor that can be used when
         generating a tf.data.Dataset.
+      checkpoint_path: An optional directory for the checkpoint file to support
+        continual training. If provided, loads model weights from the latest
+        checkpoint in the directory.
     """
     tf.compat.v1.logging.info('Training the models...')
     if len(train_data) < self._hparams.batch_size:
@@ -88,6 +92,14 @@ class Classifier(custom_model.CustomModel):
         optimizer=self._optimizer,
         loss=self._loss_function,
         metrics=[self._metric_function])
+
+    latest_checkpoint = (
+        tf.train.latest_checkpoint(checkpoint_path)
+        if checkpoint_path else None)
+    if latest_checkpoint:
+      print(f'Resuming from {latest_checkpoint}')
+      self._model.load_weights(latest_checkpoint)
+
     self._history = self._model.fit(
         x=train_dataset,
         epochs=self._hparams.epochs,

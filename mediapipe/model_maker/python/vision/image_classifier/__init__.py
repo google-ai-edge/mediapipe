@@ -35,4 +35,3 @@ del image_classifier
 del image_classifier_options
 del model_options
 del model_spec
-del train_image_classifier_lib  # pylint: disable=undefined-variable
