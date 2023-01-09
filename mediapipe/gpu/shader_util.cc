@@ -140,7 +140,7 @@ GLint GlhCreateProgram(const GLchar* vert_src, const GLchar* frag_src,
       glBindAttribLocation(*program, attr_locations[i], attr_names[i]);
     }
 
-    ok = GlhLinkProgram(*program);
+    ok = GlhLinkProgram(*program, force_log_errors);
   }
 
   if (vert_shader) glDeleteShader(vert_shader);
