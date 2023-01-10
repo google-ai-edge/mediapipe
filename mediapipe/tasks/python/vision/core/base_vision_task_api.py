@@ -31,6 +31,7 @@ _RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 
 
+@doc_controls.do_not_generate_docs
 class BaseVisionTaskApi(object):
   """The base class of the user-facing mediapipe vision task api classes."""
 
@@ -178,12 +179,10 @@ class BaseVisionTaskApi(object):
     """
     self._runner.close()
 
-  @doc_controls.do_not_generate_docs
   def __enter__(self):
     """Return `self` upon entering the runtime context."""
     return self
 
-  @doc_controls.do_not_generate_docs
   def __exit__(self, unused_exc_type, unused_exc_value, unused_traceback):
     """Shuts down the mediapipe vision task instance on exit of the context manager.
 

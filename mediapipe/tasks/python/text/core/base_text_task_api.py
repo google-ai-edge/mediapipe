@@ -20,6 +20,7 @@ from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 _TaskRunner = task_runner.TaskRunner
 
 
+@doc_controls.do_not_generate_docs
 class BaseTextTaskApi(object):
   """The base class of the user-facing mediapipe text task api classes."""
 
@@ -40,12 +41,10 @@ class BaseTextTaskApi(object):
     """
     self._runner.close()
 
-  @doc_controls.do_not_generate_docs
   def __enter__(self):
     """Returns `self` upon entering the runtime context."""
     return self
 
-  @doc_controls.do_not_generate_docs
   def __exit__(self, unused_exc_type, unused_exc_value, unused_traceback):
     """Shuts down the mediapipe text task instance on exit of the context manager.
 

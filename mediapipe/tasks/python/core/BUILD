@@ -43,6 +43,7 @@ py_library(
     name = "task_info",
     srcs = ["task_info.py"],
     deps = [
+        ":optional_dependencies",
         "//mediapipe/calculators/core:flow_limiter_calculator_py_pb2",
         "//mediapipe/framework:calculator_options_py_pb2",
         "//mediapipe/framework:calculator_py_pb2",
