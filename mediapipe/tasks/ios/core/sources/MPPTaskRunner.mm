@@ -15,9 +15,13 @@
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 
+#include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
+
 namespace {
 using ::mediapipe::CalculatorGraphConfig;
+using ::mediapipe::tasks::core::MediaPipeBuiltinOpResolver;
 using ::mediapipe::tasks::core::PacketMap;
+using ::mediapipe::tasks::core::PacketsCallback;
 using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 }  // namespace
 
@@ -30,15 +34,17 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 @implementation MPPTaskRunner
 
 - (instancetype)initWithCalculatorGraphConfig:(CalculatorGraphConfig)graphConfig
+                              packetsCallback:(PacketsCallback)packetsCallback
                                         error:(NSError **)error {
   self = [super init];
   if (self) {
-    auto taskRunnerResult = TaskRunnerCpp::Create(std::move(graphConfig));
+    auto taskRunnerResult = TaskRunnerCpp::Create(std::move(graphConfig),
+                                                  absl::make_unique<MediaPipeBuiltinOpResolver>(),
+                                                  std::move(packetsCallback));
 
     if (![MPPCommonUtils checkCppError:taskRunnerResult.status() toError:error]) {
       return nil;
     }
-
     _cppTaskRunner = std::move(taskRunnerResult.value());
   }
   return self;
