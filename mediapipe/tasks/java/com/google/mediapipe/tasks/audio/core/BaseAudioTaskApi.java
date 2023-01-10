@@ -14,6 +14,9 @@
 
 package com.google.mediapipe.tasks.audio.core;
 
+import android.media.AudioFormat;
+import android.media.AudioRecord;
+import android.media.MediaRecorder;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.tasks.components.containers.AudioData;
@@ -148,5 +151,72 @@ public class BaseAudioTaskApi implements AutoCloseable {
   @Override
   public void close() {
     runner.close();
+  }
+
+  /**
+   * Creates an {@link android.media.AudioRecord} instance to record audio stream. The returned
+   * AudioRecord instance is initialized and client needs to call {@link
+   * android.media.AudioRecord#startRecording} method to start recording.
+   *
+   * <p>Note that MediaPipe Audio tasks will up/down sample automatically to fit the sample rate
+   * required by the model. The default sample rate of the MediaPipe pretrained audio model, Yamnet,
+   * is 16kHz.
+   *
+   * @param numChannels the number of audio channels.
+   * @param sampleRate the audio sample rate.
+   * @return an {@link android.media.AudioRecord} instance in {@link
+   *     android.media.AudioRecord#STATE_INITIALIZED}
+   * @throws IllegalArgumentException if the model required channel count is unsupported
+   * @throws IllegalStateException if AudioRecord instance failed to initialize
+   */
+  public static AudioRecord createAudioRecord(int numChannels, int sampleRate) {
+    int channelConfig = 0;
+    switch (numChannels) {
+      case 1:
+        channelConfig = AudioFormat.CHANNEL_IN_MONO;
+        break;
+      case 2:
+        channelConfig = AudioFormat.CHANNEL_IN_STEREO;
+        break;
+      default:
+        throw new IllegalArgumentException(
+            "getAudioRecord method only supports 1 or 2 audio channels.");
+    }
+
+    int bufferSizeInBytes =
+        AudioRecord.getMinBufferSize(sampleRate, channelConfig, AudioFormat.ENCODING_PCM_FLOAT);
+    if (bufferSizeInBytes == AudioRecord.ERROR
+        || bufferSizeInBytes == AudioRecord.ERROR_BAD_VALUE) {
+      throw new IllegalStateException(
+          String.format("AudioRecord.getMinBufferSize failed. Returned: %d", bufferSizeInBytes));
+    }
+    AudioRecord audioRecord =
+        new AudioRecord(
+            // including MIC, UNPROCESSED, and CAMCORDER.
+            MediaRecorder.AudioSource.VOICE_RECOGNITION,
+            sampleRate,
+            channelConfig,
+            AudioFormat.ENCODING_PCM_FLOAT,
+            bufferSizeInBytes);
+    if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
+      throw new IllegalStateException(String.format("AudioRecordfailed to initialize"));
+    }
+    return audioRecord;
+  }
+
+  /**
+   * Creates an {@link android.media.AudioRecord} instance to record audio stream that has mono
+   * channel at sample rate at sample rate 16kHz, the sample rate required for models like Yamnet.
+   * The returned AudioRecord instance is initialized and client needs to call {@link
+   * android.media.AudioRecord#startRecording} method to start recording.
+   *
+   * @return an {@link android.media.AudioRecord} instance in {@link
+   *     android.media.AudioRecord#STATE_INITIALIZED}
+   * @throws IllegalArgumentException if the model required channel count is unsupported
+   * @throws IllegalStateException if AudioRecord instance failed to initialize
+   */
+  public static AudioRecord createAudioRecord() {
+    // TODO: Support creating AudioRecord based on the model specifications.
+    return createAudioRecord(1, 16000);
   }
 }
