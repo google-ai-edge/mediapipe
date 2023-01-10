@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
+#import "mediapipe/tasks/ios/components/containers/sources/MPPCategory.h"
 
-#import "mediapipe/tasks/ios/components/processors/sources/MPPClassifierOptions.h"
+@implementation MPPCategory
 
-NS_ASSUME_NONNULL_BEGIN
+- (instancetype)initWithIndex:(NSInteger)index
+                        score:(float)score
+                 categoryName:(nullable NSString *)categoryName
+                  displayName:(nullable NSString *)displayName {
+  self = [super init];
+  if (self) {
+    _index = index;
+    _score = score;
+    _categoryName = categoryName;
+    _displayName = displayName;
+  }
+  return self;
+}
 
-@interface MPPClassifierOptions (Helpers)
-- (void)copyToProto:
-    (mediapipe::tasks::components::processors::proto::ClassifierOptions *)classifierOptionsProto;
 @end
-
-NS_ASSUME_NONNULL_END

@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,18 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 objc_library(
-    name = "MPPClassifierOptions",
-    srcs = ["sources/MPPClassifierOptions.m"],
-    hdrs = ["sources/MPPClassifierOptions.h"],
+    name = "MPPCategory",
+    srcs = ["sources/MPPCategory.m"],
+    hdrs = ["sources/MPPCategory.h"],
+    deps = ["//third_party/apple_frameworks:Foundation"],
+)
+
+objc_library(
+    name = "MPPClassificationResult",
+    srcs = ["sources/MPPClassificationResult.m"],
+    hdrs = ["sources/MPPClassificationResult.h"],
+    deps = [
+        ":MPPCategory",
+        "//third_party/apple_frameworks:Foundation",
+    ],
 )
