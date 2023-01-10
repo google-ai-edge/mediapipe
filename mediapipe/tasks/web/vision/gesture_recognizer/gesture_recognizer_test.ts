@@ -147,7 +147,7 @@ describe('GestureRecognizer', () => {
     ]);
   });
 
-  describe('setOptions() ', () => {
+  describe('setOptions()', () => {
     interface TestCase {
       optionPath: [keyof GestureRecognizerOptions, ...string[]];
       fieldPath: string[];

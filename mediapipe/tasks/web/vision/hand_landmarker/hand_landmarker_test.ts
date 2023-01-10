@@ -129,7 +129,7 @@ describe('HandLandmarker', () => {
     ]);
   });
 
-  describe('setOptions() ', () => {
+  describe('setOptions()', () => {
     interface TestCase {
       optionPath: [keyof HandLandmarkerOptions, ...string[]];
       fieldPath: string[];

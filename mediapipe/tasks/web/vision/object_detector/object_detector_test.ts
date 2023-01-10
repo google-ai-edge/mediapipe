@@ -111,7 +111,7 @@ describe('ObjectDetector', () => {
     verifyGraph(objectDetector, ['displayNamesLocale', 'en']);
   });
 
-  describe('setOptions() ', () => {
+  describe('setOptions()', () => {
     interface TestCase {
       optionName: keyof ObjectDetectorOptions;
       protoName: string;
