@@ -50,7 +50,6 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
   for (NSString *category in self.categoryDenylist) {
     classifierOptionsProto->add_category_denylist(category.cppString);
   }
-
 }
 
 @end

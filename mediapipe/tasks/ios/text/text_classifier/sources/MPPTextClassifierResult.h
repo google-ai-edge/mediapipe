@@ -26,7 +26,7 @@ NS_SWIFT_NAME(TextClassifierResult)
 @property(nonatomic, readonly) MPPClassificationResult *classificationResult;
 
 /**
- * Initializes a new `MPPTextClassifierResult` with the given `MPPClassificationResult` and 
+ * Initializes a new `MPPTextClassifierResult` with the given `MPPClassificationResult` and
  * timestamp (in milliseconds).
  *
  * @param classificationResult The `MPPClassificationResult` instance containing one set of results

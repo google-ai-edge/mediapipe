@@ -62,11 +62,11 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_classifier.T
   _textTaskRunner =
       [[MPPTextTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
                                                          error:error];
-  
+
   if (!_textTaskRunner) {
     return nil;
-  }                                                      
-  
+  }
+
   self = [super init];
 
   return self;

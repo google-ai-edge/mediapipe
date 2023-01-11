@@ -22,19 +22,19 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * @brief Performs classification on text.
- * 
+ *
  * This API expects a TFLite model with (optional) [TFLite Model
  * Metadata](https://www.tensorflow.org/lite/convert/metadata")that contains the mandatory
- * (described below) input tensors, output tensor, and the optional (but recommended) label 
+ * (described below) input tensors, output tensor, and the optional (but recommended) label
  * items as AssociatedFiles with type TENSOR_AXIS_LABELS per output classification tensor.
  *
- * Metadata is required for models with int32 input tensors because it contains the input 
- * process unit for the model's Tokenizer. No metadata is required for models with string 
+ * Metadata is required for models with int32 input tensors because it contains the input
+ * process unit for the model's Tokenizer. No metadata is required for models with string
  * input tensors.
  *
  * Input tensors
  *  - Three input tensors `kTfLiteInt32` of shape `[batch_size xbert_max_seq_len]`
- *    representing the input ids, mask ids, and segment ids. This input signature requires 
+ *    representing the input ids, mask ids, and segment ids. This input signature requires
  *    a Bert Tokenizer process unit in the model metadata.
  *  - Or one input tensor `kTfLiteInt32` of shape `[batch_size xmax_seq_len]` representing
  *    the input ids. This input signature requires a Regex Tokenizer process unit in the
@@ -44,12 +44,12 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * At least one output tensor (`kTfLiteFloat32/kBool`) with:
  *  - `N` classes and shape `[1 x N]`
- *  - optional (but recommended) label map(s) as AssociatedFiles with type 
+ *  - optional (but recommended) label map(s) as AssociatedFiles with type
  *    TENSOR_AXIS_LABELS,
- *    containing one label per line. The first such AssociatedFile (if any) is used to fill 
- *    the `categoryName` field of the results. The `displayName` field is filled from the 
- *    AssociatedFile (if any) whose locale matches the `displayNamesLocale` field of the 
- *    `MPPTextClassifierOptions` used at creation time ("en" by default, i.e. English). If 
+ *    containing one label per line. The first such AssociatedFile (if any) is used to fill
+ *    the `categoryName` field of the results. The `displayName` field is filled from the
+ *    AssociatedFile (if any) whose locale matches the `displayNamesLocale` field of the
+ *    `MPPTextClassifierOptions` used at creation time ("en" by default, i.e. English). If
  *    none of these are available, only the `index` field of the results will be filled.
  */
 NS_SWIFT_NAME(TextClassifier)
