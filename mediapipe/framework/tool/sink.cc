@@ -87,7 +87,8 @@ void AddVectorSink(const std::string& stream_name,  //
       node->mutable_options()->MutableExtension(
           CallbackPacketCalculatorOptions::ext);
   options->set_type(CallbackPacketCalculatorOptions::VECTOR_PACKET);
-  char address[17];
+  // Up to 64-bit pointer in hex (16 characters) and an optional "0x" prepended.
+  char address[19];
   int written = snprintf(address, sizeof(address), "%p", dumped_data);
   CHECK(written > 0 && written < sizeof(address));
   options->set_pointer(address);
@@ -112,7 +113,8 @@ void AddPostStreamPacketSink(const std::string& stream_name,
       node->mutable_options()->MutableExtension(
           CallbackPacketCalculatorOptions::ext);
   options->set_type(CallbackPacketCalculatorOptions::POST_STREAM_PACKET);
-  char address[17];
+  // Up to 64-bit pointer in hex (16 characters) and an optional "0x" prepended.
+  char address[19];
   int written = snprintf(address, sizeof(address), "%p", post_stream_packet);
   CHECK(written > 0 && written < sizeof(address));
   options->set_pointer(address);
