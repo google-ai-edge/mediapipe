@@ -30,8 +30,8 @@ objc_library(
     srcs = ["sources/MPPTextClassifierResult.m"],
     hdrs = ["sources/MPPTextClassifierResult.h"],
     deps = [
-        "//mediapipe/tasks/ios/core:MPPTaskResult",
         "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+        "//mediapipe/tasks/ios/core:MPPTaskResult",
     ],
 )
 
@@ -44,15 +44,15 @@ objc_library(
         "-std=c++17",
     ],
     deps = [
+        ":MPPTextClassifierOptions",
         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
-        "//mediapipe/tasks/ios/core:MPPTaskOptions",
-        "//mediapipe/tasks/ios/core:MPPTaskInfo",
-        "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
-        "//mediapipe/tasks/ios/core:MPPTextPacketCreator",
-        "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierOptionsHelpers",
-        "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierResultHelpers",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-        ":MPPTextClassifierOptions",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/core:MPPTextPacketCreator",
+        "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
+        "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierOptionsHelpers",
+        "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierResultHelpers",
     ],
 )

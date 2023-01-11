@@ -21,11 +21,11 @@ objc_library(
     srcs = ["sources/MPPTextClassifierOptions+Helpers.mm"],
     hdrs = ["sources/MPPTextClassifierOptions+Helpers.h"],
     deps = [
-        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
-        "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifierOptions",
-        "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
-        "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",
         "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_cc_proto",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",
+        "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
+        "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifierOptions",
     ],
 )
 
@@ -34,8 +34,8 @@ objc_library(
     srcs = ["sources/MPPTextClassifierResult+Helpers.mm"],
     hdrs = ["sources/MPPTextClassifierResult+Helpers.h"],
     deps = [
-        "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifierResult",
-        "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
         "//mediapipe/framework:packet",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
+        "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifierResult",
     ],
 )
