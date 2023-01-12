@@ -1021,8 +1021,8 @@ objc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
+        ":copy_calculator_cc_proto",
         ":simple_shaders_mtl",
-        "//mediapipe/gpu:copy_calculator_cc_proto",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:Metal",
