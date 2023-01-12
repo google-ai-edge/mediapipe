@@ -81,7 +81,10 @@ def _setup_build_dir():
       file.write(filedata)
 
   # Use bazel to download GCS model files
-  model_build_files = ['models/gesture_recognizer/BUILD']
+  model_build_files = [
+      'models/gesture_recognizer/BUILD',
+      'models/text_classifier/BUILD',
+  ]
   for model_build_file in model_build_files:
     build_target_file = os.path.join(BUILD_MM_DIR, model_build_file)
     os.makedirs(os.path.dirname(build_target_file), exist_ok=True)
@@ -95,7 +98,12 @@ def _setup_build_dir():
       'models/gesture_recognizer/gesture_embedder/saved_model.pb',
       'models/gesture_recognizer/gesture_embedder/variables/variables.data-00000-of-00001',
       'models/gesture_recognizer/gesture_embedder/variables/variables.index',
-    ]
+      'models/text_classifier/mobilebert_tiny/keras_metadata.pb',
+      'models/text_classifier/mobilebert_tiny/saved_model.pb',
+      'models/text_classifier/mobilebert_tiny/assets/vocab.txt',
+      'models/text_classifier/mobilebert_tiny/variables/variables.data-00000-of-00001',
+      'models/text_classifier/mobilebert_tiny/variables/variables.index',
+  ]
   for elem in external_files:
     external_file = os.path.join(f'{SRC_NAME}/mediapipe_model_maker', elem)
     sys.stderr.write('downloading file: %s\n' % external_file)

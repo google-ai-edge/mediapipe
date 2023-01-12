@@ -1007,6 +1007,18 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_mobilebert_tiny_keras_metadata_pb",
+        sha256 = "cef8131a414c602b9d4742ac57f4f90bc5d8a42baec36b65deece884e2d0cf0f",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobilebert_tiny/keras_metadata.pb?generation=1673297965144159"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_mobilebert_tiny_saved_model_pb",
+        sha256 = "323c997cd3e17df1b2e3bdebe3cfe2b17c5ffd9488a26a4afb59ee819196837a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobilebert_tiny/saved_model.pb?generation=1673297968138825"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_object_detection_saved_model_model_ckpt_data-00000-of-00001",
         sha256 = "ad2f733f271dd5000a8c7f926bfea1083e6408b34d4f3b60679e5a6f96251c97",
         urls = ["https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/model.ckpt.data-00000-of-00001?generation=1661875984176294"],
@@ -1052,4 +1064,22 @@ def external_files():
         name = "com_google_mediapipe_gesture_embedder_variables_variables_index",
         sha256 = "76ea482b8da6bdb3d65d3b2ea989c1699c9fa0d6df0cb6d80863d1dc6fe7c4bd",
         urls = ["https://storage.googleapis.com/mediapipe-assets/gesture_embedder/variables/variables.index?generation=1668550490691823"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_mobilebert_tiny_assets_vocab_txt",
+        sha256 = "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobilebert_tiny/assets/vocab.txt?generation=1673297970948751"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_mobilebert_tiny_variables_variables_data-00000-of-00001",
+        sha256 = "c3857370046cd3a2f345657cf1bb259a4e7e09185d7f0808e57803e9d41ebba4",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobilebert_tiny/variables/variables.data-00000-of-00001?generation=1673297975132568"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_mobilebert_tiny_variables_variables_index",
+        sha256 = "4df4d7c0fefe99903ab6ebf44b7478196ce613082d2ca692a5a37a7f24e562ed",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobilebert_tiny/variables/variables.index?generation=1673297977586840"],
     )

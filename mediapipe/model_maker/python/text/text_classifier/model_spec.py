@@ -18,11 +18,14 @@ import enum
 import functools
 
 from mediapipe.model_maker.python.core import hyperparameters as hp
+from mediapipe.model_maker.python.core.utils import file_util
 from mediapipe.model_maker.python.text.core import bert_model_spec
 from mediapipe.model_maker.python.text.text_classifier import model_options as mo
 
 # BERT-based text classifier spec inherited from BertModelSpec
 BertClassifierSpec = bert_model_spec.BertModelSpec
+
+MOBILEBERT_TINY_PATH = 'mediapipe/model_maker/models/text_classifier/mobilebert_tiny/'
 
 
 @dataclasses.dataclass
@@ -49,16 +52,14 @@ average_word_embedding_classifier_spec = functools.partial(
 mobilebert_classifier_spec = functools.partial(
     BertClassifierSpec,
     hparams=hp.BaseHParams(
-        epochs=3,
-        batch_size=48,
-        learning_rate=3e-5,
-        distribution_strategy='off'),
+        epochs=3, batch_size=48, learning_rate=3e-5, distribution_strategy='off'
+    ),
     name='MobileBert',
-    uri='https://tfhub.dev/tensorflow/mobilebert_en_uncased_L-24_H-128_B-512_A-4_F-4_OPT/1',
+    uri=file_util.get_absolute_path(MOBILEBERT_TINY_PATH),
     tflite_input_name={
         'ids': 'serving_default_input_1:0',
         'mask': 'serving_default_input_3:0',
-        'segment_ids': 'serving_default_input_2:0'
+        'segment_ids': 'serving_default_input_2:0',
     },
 )
 

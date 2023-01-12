@@ -269,16 +269,21 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
     """Creates an Average Word Embedding model."""
     self._model = tf.keras.Sequential([
         tf.keras.layers.InputLayer(
-            input_shape=[self._model_options.seq_len], dtype=tf.int32),
+            input_shape=[self._model_options.seq_len],
+            dtype=tf.int32,
+            name="input_ids",
+        ),
         tf.keras.layers.Embedding(
             len(self._text_preprocessor.get_vocab()),
             self._model_options.wordvec_dim,
-            input_length=self._model_options.seq_len),
+            input_length=self._model_options.seq_len,
+        ),
         tf.keras.layers.GlobalAveragePooling1D(),
         tf.keras.layers.Dense(
-            self._model_options.wordvec_dim, activation=tf.nn.relu),
+            self._model_options.wordvec_dim, activation=tf.nn.relu
+        ),
         tf.keras.layers.Dropout(self._model_options.dropout_rate),
-        tf.keras.layers.Dense(self._num_classes, activation="softmax")
+        tf.keras.layers.Dense(self._num_classes, activation="softmax"),
     ])
 
   def _save_vocab(self, vocab_filepath: str):

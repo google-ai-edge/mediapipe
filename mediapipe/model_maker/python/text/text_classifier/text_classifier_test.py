@@ -26,6 +26,9 @@ class TextClassifierTest(tf.test.TestCase):
 
   _AVERAGE_WORD_EMBEDDING_JSON_FILE = (
       test_utils.get_test_data_path('average_word_embedding_metadata.json'))
+  _BERT_CLASSIFIER_JSON_FILE = test_utils.get_test_data_path(
+      'bert_metadata.json'
+  )
 
   def _get_data(self):
     labels_and_text = (('pos', 'super good'), (('neg', 'really bad')))
@@ -94,7 +97,27 @@ class TextClassifierTest(tf.test.TestCase):
 
     _, accuracy = bert_classifier.evaluate(validation_data)
     self.assertGreaterEqual(accuracy, 0.0)
-    # TODO: Add a unit test that does not run OOM.
+
+    # Test export_model
+    bert_classifier.export_model()
+    output_metadata_file = os.path.join(
+        options.hparams.export_dir, 'metadata.json'
+    )
+    output_tflite_file = os.path.join(
+        options.hparams.export_dir, 'model.tflite'
+    )
+
+    self.assertTrue(os.path.exists(output_tflite_file))
+    self.assertGreater(os.path.getsize(output_tflite_file), 0)
+
+    self.assertTrue(os.path.exists(output_metadata_file))
+    self.assertGreater(os.path.getsize(output_metadata_file), 0)
+    filecmp.clear_cache()
+    self.assertTrue(
+        filecmp.cmp(
+            output_metadata_file, self._BERT_CLASSIFIER_JSON_FILE, shallow=False
+        )
+    )
 
   def test_label_mismatch(self):
     options = (

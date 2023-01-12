@@ -12,15 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load(
+    "//mediapipe/framework/tool:mediapipe_files.bzl",
+    "mediapipe_files",
+)
+
+licenses(["notice"])
+
 package(
     default_visibility = ["//mediapipe/model_maker/python/text/text_classifier:__subpackages__"],
-    licenses = ["notice"],  # Apache 2.0
+)
+
+mediapipe_files(
+    srcs = [
+        "mobilebert_tiny/assets/vocab.txt",
+        "mobilebert_tiny/keras_metadata.pb",
+        "mobilebert_tiny/saved_model.pb",
+        "mobilebert_tiny/variables/variables.data-00000-of-00001",
+        "mobilebert_tiny/variables/variables.index",
+    ],
 )
 
 filegroup(
-    name = "testdata",
+    name = "mobilebert_tiny",
     srcs = [
-        "average_word_embedding_metadata.json",
-        "bert_metadata.json",
+        "mobilebert_tiny/assets/vocab.txt",
+        "mobilebert_tiny/keras_metadata.pb",
+        "mobilebert_tiny/saved_model.pb",
+        "mobilebert_tiny/variables/variables.data-00000-of-00001",
+        "mobilebert_tiny/variables/variables.index",
     ],
 )
