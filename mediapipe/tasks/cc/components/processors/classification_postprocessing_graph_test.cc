@@ -534,6 +534,7 @@ TEST_F(PostprocessingTest, SucceedsWithoutMetadata) {
   // Validate results.
   EXPECT_THAT(results,
               EqualsProto(ParseTextProtoOrDie<ClassificationResult>(R"pb(
+                timestamp_ms: 0,
                 classifications {
                   head_index: 0
                   classification_list {
@@ -567,6 +568,7 @@ TEST_F(PostprocessingTest, SucceedsWithMetadata) {
   // Validate results.
   EXPECT_THAT(
       results, EqualsProto(ParseTextProtoOrDie<ClassificationResult>(R"pb(
+        timestamp_ms: 0,
         classifications {
           head_index: 0
           head_name: "probability"
@@ -603,6 +605,7 @@ TEST_F(PostprocessingTest, SucceedsWithScoreCalibration) {
   // Validate results.
   EXPECT_THAT(
       results, EqualsProto(ParseTextProtoOrDie<ClassificationResult>(R"pb(
+        timestamp_ms: 0,
         classifications {
           head_index: 0
           head_name: "probability"
@@ -646,6 +649,7 @@ TEST_F(PostprocessingTest, SucceedsWithMultipleHeads) {
   // Validate results.
   EXPECT_THAT(
       results, EqualsProto(ParseTextProtoOrDie<ClassificationResult>(R"pb(
+        timestamp_ms: 0,
         classifications {
           head_index: 0
           head_name: "yamnet_classification"
