@@ -120,7 +120,7 @@ class EmbeddingAggregationCalculatorTest : public tflite_shims::testing::Test {
   CalculatorGraph calculator_graph_;
 };
 
-TEST_F(EmbeddingAggregationCalculatorTest, SucceedsWithoutTimestamps) {
+TEST_F(EmbeddingAggregationCalculatorTest, SucceedsWithoutAggregation) {
   EmbeddingResult embedding = ParseTextProtoOrDie<EmbeddingResult>(
       R"pb(embeddings { head_index: 0 })pb");
 
@@ -129,10 +129,12 @@ TEST_F(EmbeddingAggregationCalculatorTest, SucceedsWithoutTimestamps) {
   MP_ASSERT_OK(Send(embedding));
   MP_ASSERT_OK_AND_ASSIGN(auto result, GetResult<EmbeddingResult>(poller));
 
-  EXPECT_THAT(result, EqualsProto(embedding));
+  EXPECT_THAT(result, EqualsProto(ParseTextProtoOrDie<EmbeddingResult>(
+                          R"pb(timestamp_ms: 0
+                               embeddings { head_index: 0 })pb")));
 }
 
-TEST_F(EmbeddingAggregationCalculatorTest, SucceedsWithTimestamps) {
+TEST_F(EmbeddingAggregationCalculatorTest, SucceedsWithAggregation) {
   MP_ASSERT_OK_AND_ASSIGN(auto poller, BuildGraph(/*connect_timestamps=*/true));
   MP_ASSERT_OK(Send(ParseTextProtoOrDie<EmbeddingResult>(R"pb(embeddings {
                                                                 head_index: 0
