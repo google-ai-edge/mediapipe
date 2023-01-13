@@ -250,6 +250,14 @@ describe('GestureRecognizer', () => {
     }
   });
 
+  it('doesn\'t support region of interest', () => {
+    expect(() => {
+      gestureRecognizer.recognize(
+          {} as HTMLImageElement,
+          {regionOfInterest: {left: 0, right: 0, top: 0, bottom: 0}});
+    }).toThrowError('This task doesn\'t support region-of-interest.');
+  });
+
   it('transforms results', async () => {
     // Pass the test data to our listener
     gestureRecognizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {

@@ -126,7 +126,7 @@ export class GestureRecognizer extends VisionTaskRunner {
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
     super(
         new VisionGraphRunner(wasmModule, glCanvas), IMAGE_STREAM,
-        NORM_RECT_STREAM);
+        NORM_RECT_STREAM, /* roiAllowed= */ false);
 
     this.options = new GestureRecognizerGraphOptions();
     this.options.setBaseOptions(new BaseOptionsProto());

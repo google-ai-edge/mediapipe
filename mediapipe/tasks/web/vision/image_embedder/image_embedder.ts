@@ -104,7 +104,7 @@ export class ImageEmbedder extends VisionTaskRunner {
       glCanvas?: HTMLCanvasElement|OffscreenCanvas|null) {
     super(
         new VisionGraphRunner(wasmModule, glCanvas), IMAGE_STREAM,
-        NORM_RECT_STREAM);
+        NORM_RECT_STREAM, /* roiAllowed= */ true);
     this.options.setBaseOptions(new BaseOptionsProto());
   }
 

@@ -42,13 +42,16 @@ export abstract class VisionTaskRunner extends TaskRunner {
    * @param normRectStreamName the name of the input normalized rect image
    *     stream used to provide (mandatory) rotation and (optional)
    *     region-of-interest.
+   * @param roiAllowed Whether this task supports Region-Of-Interest
+   *     pre-processing
    *
    * @hideconstructor protected
    */
   constructor(
       protected override readonly graphRunner: VisionGraphRunner,
       private readonly imageStreamName: string,
-      private readonly normRectStreamName: string) {
+      private readonly normRectStreamName: string,
+      private readonly roiAllowed: boolean) {
     super(graphRunner);
   }
 
@@ -96,6 +99,10 @@ export abstract class VisionTaskRunner extends TaskRunner {
     const normalizedRect = new NormalizedRect();
 
     if (imageProcessingOptions?.regionOfInterest) {
+      if (!this.roiAllowed) {
+        throw new Error('This task doesn\'t support region-of-interest.');
+      }
+
       const roi = imageProcessingOptions.regionOfInterest;
 
       if (roi.left >= roi.right || roi.top >= roi.bottom) {
