@@ -96,7 +96,9 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "mediapipe_options_proto",
     srcs = ["mediapipe_options.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = [
+        ":mediapipe_internal",
+    ],
 )
 
 mediapipe_proto_library(
