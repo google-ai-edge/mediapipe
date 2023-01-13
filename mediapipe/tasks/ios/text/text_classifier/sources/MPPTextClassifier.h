@@ -79,7 +79,7 @@ NS_SWIFT_NAME(TextClassifier)
  * error in initializing the text classifier.
  */
 - (nullable instancetype)initWithOptions:(MPPTextClassifierOptions *)options
-                          error:(NSError **)error NS_DESIGNATED_INITIALIZER;
+                                   error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
  * Performs classification on the input text.
@@ -90,8 +90,8 @@ NS_SWIFT_NAME(TextClassifier)
  *
  * @return  A `MPPTextClassifierResult` object that contains a list of text classifications.
  */
-- (nullable MPPTextClassifierResult *)classifyText:(NSString *)text error:(NSError **)error NS_SWIFT_NAME(classify(text:));
-
+- (nullable MPPTextClassifierResult *)classifyText:(NSString *)text
+                                             error:(NSError **)error NS_SWIFT_NAME(classify(text:));
 
 - (instancetype)init NS_UNAVAILABLE;
 
