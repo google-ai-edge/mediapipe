@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
-export * from '../../../tasks/web/text/text_classifier/text_classifier';
-export * from '../../../tasks/web/text/text_embedder/text_embedder';
-export * from '../../../tasks/web/core/fileset_resolver';
+import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fileset_resolver';
+import {TextClassifier as TextClassifierImpl} from '../../../tasks/web/text/text_classifier/text_classifier';
+import {TextEmbedder as TextEmbedderImpl} from '../../../tasks/web/text/text_embedder/text_embedder';
+
+// Declare the variables locally so that Rollup in OSS includes them explcilty
+// as exports.
+const FilesetResolver = FilesetResolverImpl;
+const TextClassifier = TextClassifierImpl;
+const TextEmbedder = TextEmbedderImpl;
+
+export {FilesetResolver, TextClassifier, TextEmbedder};
