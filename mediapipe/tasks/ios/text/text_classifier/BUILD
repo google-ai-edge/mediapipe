@@ -46,6 +46,7 @@ objc_library(
         "-std=c++17",
         "-x objective-c++",
     ],
+    module_name = "MPPTextClassifier",
     deps = [
         ":MPPTextClassifierOptions",
         ":MPPTextClassifierResult",
