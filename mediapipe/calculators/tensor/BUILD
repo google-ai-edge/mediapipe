@@ -207,6 +207,14 @@ mediapipe_proto_library(
 cc_library(
     name = "bert_preprocessor_calculator",
     srcs = ["bert_preprocessor_calculator.cc"],
+    copts = select({
+        # TODO: fix tensor.h not to require this, if possible
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
         ":bert_preprocessor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -259,6 +267,14 @@ mediapipe_proto_library(
 cc_library(
     name = "regex_preprocessor_calculator",
     srcs = ["regex_preprocessor_calculator.cc"],
+    copts = select({
+        # TODO: fix tensor.h not to require this, if possible
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
         ":regex_preprocessor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -300,6 +316,14 @@ cc_test(
 cc_library(
     name = "text_to_tensor_calculator",
     srcs = ["text_to_tensor_calculator.cc"],
+    copts = select({
+        # TODO: fix tensor.h not to require this, if possible
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",

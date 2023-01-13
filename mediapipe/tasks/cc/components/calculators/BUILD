@@ -79,6 +79,14 @@ mediapipe_proto_library(
 cc_library(
     name = "score_calibration_calculator",
     srcs = ["score_calibration_calculator.cc"],
+    copts = select({
+        # TODO: fix tensor.h not to require this, if possible
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
         ":score_calibration_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
