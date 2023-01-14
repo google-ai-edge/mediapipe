@@ -88,6 +88,7 @@ cc_library(
     name = "message_matchers",
     testonly = True,
     hdrs = ["message_matchers.h"],
+
     # Use this library through "mediapipe/framework/port:gtest_main".
     visibility = [
         "//mediapipe/framework/port:__pkg__",
@@ -145,6 +146,7 @@ cc_library(
 cc_library(
     name = "map_util",
     hdrs = ["map_util.h"],
+
     # Use this library through "mediapipe/framework/port:map_util".
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = ["//mediapipe/framework/port:logging"],
@@ -180,6 +182,7 @@ cc_library(
 cc_library(
     name = "point",
     hdrs = ["point2.h"],
+
     # Use this library through "mediapipe/framework/port:point".
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
@@ -199,6 +202,7 @@ cc_library(
 cc_library(
     name = "rectangle",
     hdrs = ["rectangle.h"],
+
     # Use this library through "mediapipe/framework/port:rectangle".
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
@@ -239,6 +243,7 @@ cc_library(
 cc_library(
     name = "singleton",
     hdrs = ["singleton.h"],
+
     # Use this library through "mediapipe/framework/port:singleton".
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
@@ -249,6 +254,7 @@ cc_library(
 cc_library(
     name = "source_location",
     hdrs = ["source_location.h"],
+
     # Use this library through "mediapipe/framework/port:source_location".
     visibility = ["//mediapipe/framework/port:__pkg__"],
 )
@@ -265,6 +271,7 @@ cc_library(
         "status_builder.h",
         "status_macros.h",
     ],
+
     # Use this library through "mediapipe/framework/port:status".
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
@@ -288,6 +295,7 @@ cc_library(
     name = "status_matchers",
     testonly = 1,
     hdrs = ["status_matchers.h"],
+
     # Use this library through "mediapipe/framework/port:gtest_main".
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
@@ -301,6 +309,7 @@ cc_library(
     name = "ret_check",
     srcs = ["ret_check.cc"],
     hdrs = ["ret_check.h"],
+
     # Use this library through "mediapipe/framework/port:ret_check".
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
@@ -321,6 +330,7 @@ cc_library(
         "//conditions:default": ["threadpool_pthread_impl.cc"],
     }),
     hdrs = ["threadpool.h"],
+
     # Use this library through "mediapipe/framework/port:threadpool".
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
@@ -335,6 +345,7 @@ cc_library(
     name = "topologicalsorter",
     srcs = ["topologicalsorter.cc"],
     hdrs = ["topologicalsorter.h"],
+
     # Use this library through "mediapipe/framework/port:topologicalsorter".
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
@@ -345,6 +356,7 @@ cc_library(
 cc_library(
     name = "vector",
     hdrs = ["vector.h"],
+
     # Use this library through "mediapipe/framework/port:vector".
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [

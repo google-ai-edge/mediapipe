@@ -284,6 +284,7 @@ cc_library(
         "//mediapipe:ios": ["profiler_resource_util_ios.cc"],
     }),
     hdrs = ["profiler_resource_util.h"],
+
     # We use Objective-C++ on iOS.
     copts = select({
         "//conditions:default": [],

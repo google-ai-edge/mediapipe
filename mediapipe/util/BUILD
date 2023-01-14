@@ -186,6 +186,7 @@ cc_library(
     hdrs = [
         "resource_util.h",
     ],
+
     # We use Objective-C++ on iOS.
     copts = select({
         "//conditions:default": [],
