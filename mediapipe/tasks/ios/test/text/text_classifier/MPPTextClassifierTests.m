@@ -52,14 +52,6 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 @implementation MPPTextClassifierTests
 
-- (void)setUp {
-}
-
-- (void)tearDown {
-  // Put teardown code here. This method is called after the invocation of each test method in the
-  // class.
-}
-
 + (NSArray<MPPCategory *> *)expectedBertResultCategoriesForNegativeText {
   return @[
     [[MPPCategory alloc] initWithIndex:0 score:0.956187f categoryName:@"negative" displayName:nil],
