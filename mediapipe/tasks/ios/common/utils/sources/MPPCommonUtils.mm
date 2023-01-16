@@ -72,7 +72,7 @@ using absl::StatusCode;
     return YES;
   }
 
-  /** Converts the absl status message to an NSString. */
+  // Converts the absl status message to an NSString.
   NSString *description = [NSString
       stringWithCString:status.ToString(absl::StatusToStringMode::kWithNoExtraData).c_str()
                encoding:NSUTF8StringEncoding];
@@ -81,8 +81,8 @@ using absl::StatusCode;
 
   MPPTasksErrorCode errorCode = genericErrorCode;
 
-  /** Maps the absl::StatusCode to the appropriate MPPTasksErrorCode. Note: MPPTasksErrorCode omits
-   * absl::StatusCode::kOk. */
+  // Maps the absl::StatusCode to the appropriate MPPTasksErrorCode. Note: MPPTasksErrorCode omits 
+  // absl::StatusCode::kOk.
   switch (status.code()) {
     case StatusCode::kCancelled:
       errorCode = MPPTasksErrorCodeCancelledError;
