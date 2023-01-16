@@ -60,33 +60,55 @@ class TextClassifierTests: XCTestCase {
   
   func assertCategoriesAreEqual(
     category: ResultCategory, 
-    expectedCategory: ResultCategory) {
+    expectedCategory: ResultCategory,
+    indexInCategoryList: Int) {
      XCTAssertEqual(
       category.index,
-      expectedCategory.index)
+      expectedCategory.index,
+      String(
+        format: """
+          category[%d].index and expectedCategory[%d].index are not equal.
+          """, indexInCategoryList))
     XCTAssertEqual(
       category.score,
       expectedCategory.score,
-      accuracy:1e-6)
+      accuracy:1e-6,
+      String(
+        format: """
+          category[%d].score and expectedCategory[%d].score are not equal.
+          """, indexInCategoryList))
     XCTAssertEqual(
       category.categoryName,
-      expectedCategory.categoryName)
+      expectedCategory.categoryName,
+      String(
+        format: """
+          category[%d].categoryName and expectedCategory[%d].categoryName are \
+          not equal.
+          """, indexInCategoryList))
     XCTAssertEqual(
       category.displayName,
-      expectedCategory.displayName)
+      expectedCategory.displayName,
+      String(
+        format: """
+          category[%d].displayName and expectedCategory[%d].displayName are \
+          not equal.
+          """, indexInCategoryList))
   }
 
   func assertEqualCategoryArrays(
     categoryArray: [ResultCategory], 
     expectedCategoryArray:[ResultCategory]) {
 
-    XCTAssertEqual(categoryArray.count, expectedCategoryArray.count)
+    XCTAssertEqual(
+      categoryArray.count, 
+      expectedCategoryArray.count)
 
-    for (category, expectedCategory) in 
-      zip(categoryArray, expectedCategoryArray)  {
+    for (index, (category, expectedCategory)) in 
+      zip(categoryArray, expectedCategoryArray).enumerated() {
       assertCategoriesAreEqual(
         category:category, 
-        expectedCategory:expectedCategory)
+        expectedCategory:expectedCategory,
+        indexInCategoryList:index)
     }
   }
   

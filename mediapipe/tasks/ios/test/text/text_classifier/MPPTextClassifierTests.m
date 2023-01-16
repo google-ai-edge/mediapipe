@@ -32,13 +32,16 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
       [error.localizedDescription rangeOfString:expectedError.localizedDescription].location, \
       NSNotFound)
 
-#define AssertEqualCategoryArrays(categories, expectedCategories)                          \
-  XCTAssertEqual(categories.count, expectedCategories.count);                              \
-  for (int i = 0; i < categories.count; i++) {                                             \
-    XCTAssertEqual(categories[i].index, expectedCategories[i].index);                      \
-    XCTAssertEqualWithAccuracy(categories[i].score, expectedCategories[i].score, 1e-6);    \
-    XCTAssertEqualObjects(categories[i].categoryName, expectedCategories[i].categoryName); \
-    XCTAssertEqualObjects(categories[i].displayName, expectedCategories[i].displayName);   \
+#define AssertEqualCategoryArrays(categories, expectedCategories)                         \
+  XCTAssertEqual(categories.count, expectedCategories.count);                             \
+  for (int i = 0; i < categories.count; i++) {                                            \
+    XCTAssertEqual(categories[i].index, expectedCategories[i].index, @"index i = %d", i); \
+    XCTAssertEqualWithAccuracy(categories[i].score, expectedCategories[i].score, 1e-6,    \
+                               @"index i = %d", i);                                       \
+    XCTAssertEqualObjects(categories[i].categoryName, expectedCategories[i].categoryName, \
+                          @"index i = %d", i);                                            \
+    XCTAssertEqualObjects(categories[i].displayName, expectedCategories[i].displayName,   \
+                          @"index i = %d", i);                                            \
   }
 
 #define AssertTextClassifierResultHasOneHead(textClassifierResult)                    \
