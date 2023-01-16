@@ -147,7 +147,7 @@ class TextClassifierTests: XCTestCase {
           """)
   }
 
-  func testCreateTextClassifierWithCategoryAllowlistandDenylistFails() throws {
+  func testCreateTextClassifierWithCategoryAllowlistAndDenylistFails() throws {
 
     let textClassifierOptions = 
       try XCTUnwrap(

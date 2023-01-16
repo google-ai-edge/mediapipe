@@ -43,7 +43,6 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 #define AssertTextClassifierResultHasOneHead(textClassifierResult)                    \
   XCTAssertNotNil(textClassifierResult);                                              \
-  \      
   XCTAssertNotNil(textClassifierResult.classificationResult);                         \
   XCTAssertEqual(textClassifierResult.classificationResult.classifications.count, 1); \
   XCTAssertEqual(textClassifierResult.classificationResult.classifications[0].headIndex, 0);
@@ -156,7 +155,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   AssertEqualErrors(error, expectedError);
 }
 
-- (void)testCreateTextClassifierFailsWithBothAllowListAndDenyList {
+- (void)testCreateTextClassifierFailsWithBothAllowlistAndDenylist {
   MPPTextClassifierOptions *options =
       [self textClassifierOptionsWithModelName:kBertTextClassifierModelName];
   options.categoryAllowlist = @[ @"positive" ];
@@ -233,7 +232,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                         expectedBertResultCategoriesForEdgeCaseTests]];
 }
 
-- (void)testClassifyWithCategoryAllowListSucceeds {
+- (void)testClassifyWithCategoryAllowlistSucceeds {
   MPPTextClassifierOptions *options =
       [self textClassifierOptionsWithModelName:kBertTextClassifierModelName];
   options.categoryAllowlist = @[ @"negative" ];
@@ -250,7 +249,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                         expectedBertResultCategoriesForEdgeCaseTests]];
 }
 
-- (void)testClassifyWithCategoryDenyListSucceeds {
+- (void)testClassifyWithCategoryDenylistSucceeds {
   MPPTextClassifierOptions *options =
       [self textClassifierOptionsWithModelName:kBertTextClassifierModelName];
   options.categoryDenylist = @[ @"positive" ];
