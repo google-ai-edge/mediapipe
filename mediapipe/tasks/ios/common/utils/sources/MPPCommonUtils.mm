@@ -77,9 +77,7 @@ using absl::StatusCode;
       stringWithCString:status.ToString(absl::StatusToStringMode::kWithNoExtraData).c_str()
                encoding:NSUTF8StringEncoding];
 
-  MPPTasksErrorCode genericErrorCode = MPPTasksErrorCodeUnknownError;
-
-  MPPTasksErrorCode errorCode = genericErrorCode;
+  MPPTasksErrorCode errorCode = MPPTasksErrorCodeUnknownError;
 
   // Maps the absl::StatusCode to the appropriate MPPTasksErrorCode. Note: MPPTasksErrorCode omits 
   // absl::StatusCode::kOk.
@@ -133,7 +131,6 @@ using absl::StatusCode;
       errorCode = MPPTasksErrorCodeUnauthenticatedError;
       break;
     default:
-      errorCode = genericErrorCode;
       break;
   }
 
