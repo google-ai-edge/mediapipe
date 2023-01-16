@@ -39,53 +39,70 @@ typedef NS_ENUM(NSUInteger, MPPTasksErrorCode) {
   /** Indicates some requested entity (such as a file or directory) was not found. */
   MPPTasksErrorCodeNotFoundError = 5,
 
-  /** Indicates that the entity a caller attempted to create (such as a file or directory) is
-     already present. */
+  /** 
+   * Indicates that the entity a caller attempted to create (such as a file or directory) is 
+   * already present. 
+   */
   MPPTasksErrorCodeAlreadyExistsError = 6,
 
   /** Indicates that the caller does not have permission to execute the specified operation. */
   MPPTasksErrorCodePermissionDeniedError = 7,
 
-  /** Indicates some resource has been exhausted, perhaps a per-user quota, or perhaps the entire
-     file system is out of space. */
+  /** 
+   * Indicates some resource has been exhausted, perhaps a per-user quota, or perhaps the entire 
+   * file system is out of space. 
+   */
   MPPTasksErrorCodeResourceExhaustedError = 8,
 
-  /** Indicates that the operation was rejected because the system is not in a state required for
-     the operation's execution. For example, a directory to be deleted may be non-empty, an "rmdir"
-     operation is applied to a non-directory, etc. */
+  /** 
+   * Indicates that the operation was rejected because the system is not in a state required for 
+   * the operation's execution. For example, a directory to be deleted may be non-empty, an "rmdir" 
+   * operation is applied to a non-directory, etc. 
+   */
   MPPTasksErrorCodeFailedPreconditionError = 9,
 
-  /** Indicates the operation was aborted, typically due to a concurrency issue such as a sequencer
-     check failure or a failed transaction. */
+  /** 
+   * Indicates the operation was aborted, typically due to a concurrency issue such as a sequencer 
+   * check failure or a failed transaction. 
+   */
   MPPTasksErrorCodeAbortedError = 10,
 
-  /** Indicates the operation was attempted past the valid range, such as seeking or reading past an
-     end-of-file. */
+  /** 
+   * Indicates the operation was attempted past the valid range, such as seeking or reading past an 
+   * end-of-file. 
+   */
   MPPTasksErrorCodeOutOfRangeError = 11,
 
-  /** Indicates the operation is not implemented or supported in this service. In this case, the
-     operation should not be re-attempted. */
+  /** 
+   * Indicates the operation is not implemented or supported in this service. In this case, the
+   * operation should not be re-attempted. 
+   */
   MPPTasksErrorCodeUnimplementedError = 12,
 
-  /** Indicates an internal error has occurred and some invariants expected by the underlying system
-     have not been satisfied. This error code is reserved for serious errors. */
+  /** 
+   * Indicates an internal error has occurred and some invariants expected by the underlying system 
+   * have not been satisfied. This error code is reserved for serious errors. 
+   */
   MPPTasksErrorCodeInternalError = 13,
 
-  /** Indicates the service is currently unavailable and that this is most likely a transient
-     condition. */
+  /** 
+   * Indicates the service is currently unavailable and that this is most likely a transient 
+   * condition. 
+   */
   MPPTasksErrorCodeUnavailableError = 14,
 
   /** Indicates that unrecoverable data loss or corruption has occurred. */
   MPPTasksErrorCodeDataLossError = 15,
 
-  /** Indicates that the request does not have valid authentication credentials for the operation.
+  /** 
+   * Indicates that the request does not have valid authentication credentials for the operation.
    */
   MPPTasksErrorCodeUnauthenticatedError = 16,
 
-  // The first error code in MPPTasksErrorCode (for internal use only).
+  /** The first error code in MPPTasksErrorCode (for internal use only). */
   MPPTasksErrorCodeFirst = MPPTasksErrorCodeCancelledError,
 
-  // The last error code in MPPTasksErrorCode (for internal use only).
+  /** The last error code in MPPTasksErrorCode (for internal use only). */
   MPPTasksErrorCodeLast = MPPTasksErrorCodeUnauthenticatedError,
 
 } NS_SWIFT_NAME(TasksErrorCode);
