@@ -127,6 +127,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:advanced_proto_lite",
         "//mediapipe/framework/tool:name_util",
+        ":web_performance_profiling",
     ] + select({
         "//conditions:default": [],
     }) + select({
@@ -273,6 +274,25 @@ cc_test(
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ],
+)
+
+config_setting(
+    name = "mediapipe_web_profiling_enabled",
+    values = {
+        "define": "MEDIAPIPE_WEB_PROFILING=1",
+    },
+    visibility = ["//visibility:private"],
+)
+
+cc_library(
+    name = "web_performance_profiling",
+    hdrs = ["web_performance_profiling.h"],
+    defines = select({
+        ":mediapipe_web_profiling_enabled": ["MEDIAPIPE_WEB_PROFILING_ENABLED"],
+        "//conditions:default": [],
+    }),
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = ["@com_google_absl//absl/strings"],
 )
 
 cc_library(
