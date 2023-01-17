@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_RECT_H_
 #define MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_RECT_H_
 
+#include <cmath>
 #include <cstdlib>
 
 namespace mediapipe::tasks::components::containers {
@@ -48,10 +49,10 @@ struct RectF {
 };
 
 inline bool operator==(const RectF& lhs, const RectF& rhs) {
-  return abs(lhs.left - rhs.left) < kRectFTolerance &&
-         abs(lhs.top - rhs.top) < kRectFTolerance &&
-         abs(lhs.right - rhs.right) < kRectFTolerance &&
-         abs(lhs.bottom - rhs.bottom) < kRectFTolerance;
+  return std::fabs(lhs.left - rhs.left) < kRectFTolerance &&
+         std::fabs(lhs.top - rhs.top) < kRectFTolerance &&
+         std::fabs(lhs.right - rhs.right) < kRectFTolerance &&
+         std::fabs(lhs.bottom - rhs.bottom) < kRectFTolerance;
 }
 
 RectF ToRectF(const Rect& rect, int image_height, int image_width);
