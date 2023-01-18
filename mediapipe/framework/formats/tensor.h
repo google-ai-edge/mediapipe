@@ -370,13 +370,6 @@ class Tensor {
   bool ready_as_opengl_texture_2d() const {
     return valid_ & kValidOpenGlTexture2d;
   }
-  // Sets the type of underlying resource that is going to be allocated.
-  enum class StorageType {
-    kDefault,
-    kAhwb,
-  };
-  static void SetPreferredStorageType(StorageType type);
-  static StorageType GetPreferredStorageType();
 
  private:
   void Move(Tensor*);
