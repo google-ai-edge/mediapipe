@@ -10,15 +10,24 @@ load(
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
+AUDIO_LIBS = [
+    "//mediapipe/tasks/web/audio/audio_classifier",
+    "//mediapipe/tasks/web/audio/audio_embedder",
+    "//mediapipe/tasks/web/core:fileset_resolver",
+]
+
 mediapipe_ts_library(
     name = "audio_lib",
     srcs = ["index.ts"],
     visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/tasks/web/audio/audio_classifier",
-        "//mediapipe/tasks/web/audio/audio_embedder",
-        "//mediapipe/tasks/web/core:fileset_resolver",
-    ],
+    deps = AUDIO_LIBS,
+)
+
+mediapipe_ts_library(
+    name = "audio_types",
+    srcs = ["types.ts"],
+    visibility = ["//visibility:public"],
+    deps = AUDIO_LIBS,
 )
 
 mediapipe_files(srcs = [

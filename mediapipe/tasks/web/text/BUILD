@@ -17,15 +17,24 @@ mediapipe_files(srcs = [
     "wasm/text_wasm_nosimd_internal.wasm",
 ])
 
+TEXT_LIBS = [
+    "//mediapipe/tasks/web/core:fileset_resolver",
+    "//mediapipe/tasks/web/text/text_classifier",
+    "//mediapipe/tasks/web/text/text_embedder",
+]
+
 mediapipe_ts_library(
     name = "text_lib",
     srcs = ["index.ts"],
     visibility = ["//visibility:public"],
-    deps = [
-        "//mediapipe/tasks/web/core:fileset_resolver",
-        "//mediapipe/tasks/web/text/text_classifier",
-        "//mediapipe/tasks/web/text/text_embedder",
-    ],
+    deps = TEXT_LIBS,
+)
+
+mediapipe_ts_library(
+    name = "text_types",
+    srcs = ["types.ts"],
+    visibility = ["//visibility:public"],
+    deps = TEXT_LIBS,
 )
 
 rollup_bundle(
