@@ -80,7 +80,9 @@ absl::Status RectToRenderScaleCalculator::GetContract(CalculatorContract* cc) {
   cc->Inputs().Tag(kNormRectTag).Set<NormalizedRect>();
   cc->Inputs().Tag(kImageSizeTag).Set<std::pair<int, int>>();
   cc->Outputs().Tag(kRenderScaleTag).Set<float>();
-
+  cc->SetProcessTimestampBounds(
+      cc->Options<RectToRenderScaleCalculatorOptions>()
+          .process_timestamp_bounds());
   return absl::OkStatus();
 }
 
