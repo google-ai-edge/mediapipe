@@ -53,20 +53,20 @@ TEST(BuilderTest, BuildGraph) {
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }
 
-TEST(BuilderTest, CopyableSource) {
+TEST(BuilderTest, CopyableStream) {
   Graph graph;
-  Source<int> a = graph.In("A").SetName("a").Cast<int>();
-  Source<int> b = graph.In("B").SetName("b").Cast<int>();
-  SideSource<float> side_a =
+  Stream<int> a = graph.In("A").SetName("a").Cast<int>();
+  Stream<int> b = graph.In("B").SetName("b").Cast<int>();
+  SidePacket<float> side_a =
       graph.SideIn("SIDE_A").SetName("side_a").Cast<float>();
-  SideSource<float> side_b =
+  SidePacket<float> side_b =
       graph.SideIn("SIDE_B").SetName("side_b").Cast<float>();
   Destination<int> out = graph.Out("OUT").Cast<int>();
   SideDestination<float> side_out = graph.SideOut("SIDE_OUT").Cast<float>();
 
-  Source<int> input = a;
+  Stream<int> input = a;
   input = b;
-  SideSource<float> side_input = side_b;
+  SidePacket<float> side_input = side_b;
   side_input = side_a;
 
   input >> out;
@@ -87,23 +87,23 @@ TEST(BuilderTest, CopyableSource) {
 TEST(BuilderTest, BuildGraphWithFunctions) {
   Graph graph;
 
-  Source<int> base = graph.In("IN").SetName("base").Cast<int>();
-  SideSource<float> side = graph.SideIn("SIDE").SetName("side").Cast<float>();
+  Stream<int> base = graph.In("IN").SetName("base").Cast<int>();
+  SidePacket<float> side = graph.SideIn("SIDE").SetName("side").Cast<float>();
 
-  auto foo_fn = [](Source<int> base, SideSource<float> side, Graph& graph) {
+  auto foo_fn = [](Stream<int> base, SidePacket<float> side, Graph& graph) {
     auto& foo = graph.AddNode("Foo");
     base >> foo.In("BASE");
     side >> foo.SideIn("SIDE");
     return foo.Out("OUT")[0].Cast<double>();
   };
-  Source<double> foo_out = foo_fn(base, side, graph);
+  Stream<double> foo_out = foo_fn(base, side, graph);
 
-  auto bar_fn = [](Source<double> in, Graph& graph) {
+  auto bar_fn = [](Stream<double> in, Graph& graph) {
     auto& bar = graph.AddNode("Bar");
     in >> bar.In("IN");
     return bar.Out("OUT")[0].Cast<double>();
   };
-  Source<double> bar_out = bar_fn(foo_out, graph);
+  Stream<double> bar_out = bar_fn(foo_out, graph);
 
   bar_out.SetName("out") >> graph.Out("OUT");
 
@@ -375,26 +375,26 @@ class AnyAndSameTypeCalculator : public NodeIntf {
 
 TEST(BuilderTest, AnyAndSameTypeHandledProperly) {
   Graph graph;
-  Source<AnyType> any_input = graph.In("GRAPH_ANY_INPUT");
-  Source<int> int_input = graph.In("GRAPH_INT_INPUT").Cast<int>();
+  Stream<AnyType> any_input = graph.In("GRAPH_ANY_INPUT");
+  Stream<int> int_input = graph.In("GRAPH_INT_INPUT").Cast<int>();
 
   auto& node = graph.AddNode("AnyAndSameTypeCalculator");
   any_input >> node[AnyAndSameTypeCalculator::kAnyTypeInput];
   int_input >> node[AnyAndSameTypeCalculator::kIntInput];
 
-  Source<AnyType> any_type_output =
+  Stream<AnyType> any_type_output =
       node[AnyAndSameTypeCalculator::kAnyTypeOutput];
   any_type_output.SetName("any_type_output");
 
-  Source<AnyType> same_type_output =
+  Stream<AnyType> same_type_output =
       node[AnyAndSameTypeCalculator::kSameTypeOutput];
   same_type_output.SetName("same_type_output");
-  Source<AnyType> recursive_same_type_output =
+  Stream<AnyType> recursive_same_type_output =
       node[AnyAndSameTypeCalculator::kRecursiveSameTypeOutput];
   recursive_same_type_output.SetName("recursive_same_type_output");
-  Source<int> same_int_output = node[AnyAndSameTypeCalculator::kSameIntOutput];
+  Stream<int> same_int_output = node[AnyAndSameTypeCalculator::kSameIntOutput];
   same_int_output.SetName("same_int_output");
-  Source<int> recursive_same_int_type_output =
+  Stream<int> recursive_same_int_type_output =
       node[AnyAndSameTypeCalculator::kRecursiveSameIntOutput];
   recursive_same_int_type_output.SetName("recursive_same_int_type_output");
 
@@ -418,12 +418,12 @@ TEST(BuilderTest, AnyAndSameTypeHandledProperly) {
 
 TEST(BuilderTest, AnyTypeCanBeCast) {
   Graph graph;
-  Source<std::string> any_input =
+  Stream<std::string> any_input =
       graph.In("GRAPH_ANY_INPUT").Cast<std::string>();
 
   auto& node = graph.AddNode("AnyAndSameTypeCalculator");
   any_input >> node[AnyAndSameTypeCalculator::kAnyTypeInput];
-  Source<double> any_type_output =
+  Stream<double> any_type_output =
       node[AnyAndSameTypeCalculator::kAnyTypeOutput]
           .SetName("any_type_output")
           .Cast<double>();
@@ -462,7 +462,7 @@ TEST(BuilderTest, MultiPortIsCastToMultiPort) {
 TEST(BuilderTest, MultiPortCanBeSlicedToSinglePort) {
   Graph graph;
   MultiSource<AnyType> any_multi_input = graph.In("ANY_INPUT");
-  Source<AnyType> any_input = any_multi_input;
+  Stream<AnyType> any_input = any_multi_input;
   MultiDestination<AnyType> any_multi_output = graph.Out("ANY_OUTPUT");
   Destination<AnyType> any_output = any_multi_output;
   any_input >> any_output;
@@ -477,8 +477,8 @@ TEST(BuilderTest, MultiPortCanBeSlicedToSinglePort) {
 
 TEST(BuilderTest, SinglePortAccessWorksThroughSlicing) {
   Graph graph;
-  Source<int> int_input = graph.In("INT_INPUT").Cast<int>();
-  Source<AnyType> any_input = graph.In("ANY_OUTPUT");
+  Stream<int> int_input = graph.In("INT_INPUT").Cast<int>();
+  Stream<AnyType> any_input = graph.In("ANY_OUTPUT");
   Destination<int> int_output = graph.Out("INT_OUTPUT").Cast<int>();
   Destination<AnyType> any_output = graph.Out("ANY_OUTPUT");
   int_input >> int_output;
