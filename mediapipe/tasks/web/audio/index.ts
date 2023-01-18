@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
-export * from '../../../tasks/web/audio/audio_classifier/audio_classifier';
-export * from '../../../tasks/web/audio/audio_embedder/audio_embedder';
-export * from '../../../tasks/web/core/fileset_resolver';
+import {AudioClassifier as AudioClassifierImpl} from '../../../tasks/web/audio/audio_classifier/audio_classifier';
+import {AudioEmbedder as AudioEmbedderImpl} from '../../../tasks/web/audio/audio_embedder/audio_embedder';
+import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fileset_resolver';
+
+// Declare the variables locally so that Rollup in OSS includes them explcilty
+// as exports.
+const AudioClassifier = AudioClassifierImpl;
+const AudioEmbedder = AudioEmbedderImpl;
+const FilesetResolver = FilesetResolverImpl;
+
+export {AudioClassifier, AudioEmbedder, FilesetResolver};
