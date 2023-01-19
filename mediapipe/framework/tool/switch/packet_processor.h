@@ -56,7 +56,7 @@ class SidePacketConsumer {
   virtual std::shared_ptr<tool::TagMap> SideInputTags() = 0;
 };
 
-// SidePacketProducer deleivers several tagged constant packets.
+// SidePacketProducer delivers several tagged constant packets.
 class SidePacketProducer {
  public:
   virtual ~SidePacketProducer() = default;

@@ -32,3 +32,29 @@ cc_library(
         "//mediapipe/framework/port:status",
     ],
 )
+
+cc_library(
+    name = "graph_processor",
+    srcs = ["graph_processor.cc"],
+    hdrs = ["graph_processor.h"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        ":packet_processor",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:collection_item_id",
+        "//mediapipe/framework:input_stream_shard",
+        "//mediapipe/framework:output_stream_shard",
+        "//mediapipe/framework:validated_graph_config",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
+        "@com_google_absl//absl/synchronization",
+    ],
+    alwayslink = 1,
+)
