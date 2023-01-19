@@ -94,8 +94,6 @@ one over the other.
 
 *   [TFLite model](https://storage.googleapis.com/mediapipe-assets/ssdlite_object_detection.tflite)
 *   [TFLite model quantized for EdgeTPU/Coral](https://github.com/google/mediapipe/tree/master/mediapipe/examples/coral/models/object-detector-quantized_edgetpu.tflite)
-*   [TensorFlow model](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_saved_model)
-*   [Model information](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_saved_model/README.md)
 
 ### [Objectron](https://google.github.io/mediapipe/solutions/objectron)
 
