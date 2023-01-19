@@ -18,7 +18,7 @@ import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fi
 import {TextClassifier as TextClassifierImpl} from '../../../tasks/web/text/text_classifier/text_classifier';
 import {TextEmbedder as TextEmbedderImpl} from '../../../tasks/web/text/text_embedder/text_embedder';
 
-// Declare the variables locally so that Rollup in OSS includes them explcilty
+// Declare the variables locally so that Rollup in OSS includes them explicitly
 // as exports.
 const FilesetResolver = FilesetResolverImpl;
 const TextClassifier = TextClassifierImpl;

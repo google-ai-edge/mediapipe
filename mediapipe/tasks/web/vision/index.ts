@@ -21,7 +21,7 @@ import {ImageClassifier as ImageClassifierImpl} from '../../../tasks/web/vision/
 import {ImageEmbedder as ImageEmbedderImpl} from '../../../tasks/web/vision/image_embedder/image_embedder';
 import {ObjectDetector as ObjectDetectorImpl} from '../../../tasks/web/vision/object_detector/object_detector';
 
-// Declare the variables locally so that Rollup in OSS includes them explcilty
+// Declare the variables locally so that Rollup in OSS includes them explicitly
 // as exports.
 const FilesetResolver = FilesetResolverImpl;
 const GestureRecognizer = GestureRecognizerImpl;
