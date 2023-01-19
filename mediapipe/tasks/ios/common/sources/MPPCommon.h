@@ -18,160 +18,92 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * @enum MPPTasksErrorCode
- * This enum specifies  error codes for MediaPipe Task Library.
- * It maintains a 1:1 mapping to MediaPipeTasksStatus of the C ++libray.
+ * This enum specifies  error codes for errors thrown by iOS MediaPipe Task Library.
  */
 typedef NS_ENUM(NSUInteger, MPPTasksErrorCode) {
 
   // Generic error codes.
 
-  // Unspecified error.
-  MPPTasksErrorCodeError = 1,
-  // Invalid argument specified.
-  MPPTasksErrorCodeInvalidArgumentError = 2,
-  // Invalid FlatBuffer file or buffer specified.
-  MPPTasksErrorCodeInvalidFlatBufferError = 3,
-  // Model contains a builtin op that isn't supported by the OpResolver or
-  // delegates.
-  MPPTasksErrorCodeUnsupportedBuiltinOp = 4,
-  // Model contains a custom op that isn't supported by the OpResolver or
-  // delegates.
-  MPPTasksErrorCodeUnsupportedCustomOp = 5,
+  /** Indicates the operation was cancelled, typically by the caller. */
+  MPPTasksErrorCodeCancelledError = 1,
 
-  // File I/O error codes.
+  /** Indicates an unknown error occurred. */
+  MPPTasksErrorCodeUnknownError = 2,
 
-  // No such file.
-  MPPTasksErrorCodeFileNotFoundError = 100,
-  // Permission issue.
-  MPPTasksErrorCodeFilePermissionDeniedError,
-  // I/O error when reading file.
-  MPPTasksErrorCodeFileReadError,
-  // I/O error when mmap-ing file.
-  MPPTasksErrorCodeFileMmapError,
-  // ZIP I/O error when unpacking the zip file.
-  MPPTasksErrorCodeFileZipError,
+  /** Indicates the caller specified an invalid argument, such as a malformed filename. */
+  MPPTasksErrorCodeInvalidArgumentError = 3,
 
-  // TensorFlow Lite metadata error codes.
+  /** Indicates a deadline expired before the operation could complete. */
+  MPPTasksErrorCodeDeadlineExceededError = 4,
 
-  // Unexpected schema version (aka file_identifier) in the Metadata FlatBuffer.
-  MPPTasksErrorCodeMetadataInvalidSchemaVersionError = 200,
-  // No such associated file within metadata, or file has not been packed.
-  MPPTasksErrorCodeMetadataAssociatedFileNotFoundError,
-  // ZIP I/O error when unpacking an associated file.
-  MPPTasksErrorCodeMetadataAssociatedFileZipError,
-  // Inconsistency error between the metadata and actual TF Lite model.
-  // E.g.: number of labels and output tensor values differ.
-  MPPTasksErrorCodeMetadataInconsistencyError,
-  // Invalid process units specified.
-  // E.g.: multiple ProcessUnits with the same type for a given tensor.
-  MPPTasksErrorCodeMetadataInvalidProcessUnitsError,
-  // Inconsistency error with the number of labels.
-  // E.g.: label files for different locales have a different number of labels.
-  MPPTasksErrorCodeMetadataNumLabelsMismatchError,
-  // Score calibration parameters parsing error.
-  // E.g.: too many parameters provided in the corresponding associated file.
-  MPPTasksErrorCodeMetadataMalformedScoreCalibrationError,
-  // Unexpected number of subgraphs for the current task.
-  // E.g.: image classification expects a single subgraph.
-  MPPTasksErrorCodeMetadataInvalidNumSubgraphsError,
-  // A given tensor requires NormalizationOptions but none were found.
-  // E.g.: float input tensor requires normalization to preprocess input images.
-  MPPTasksErrorCodeMetadataMissingNormalizationOptionsError,
-  // Invalid ContentProperties specified.
-  // E.g. expected ImageProperties, got BoundingBoxProperties.
-  MPPTasksErrorCodeMetadataInvalidContentPropertiesError,
-  // Metadata is mandatory but was not found.
-  // E.g. current task requires TFLite Model Metadata but none was found.
-  MPPTasksErrorCodeMetadataNotFoundError,
-  // Associated TENSOR_AXIS_LABELS or TENSOR_VALUE_LABELS file is mandatory but
-  // none was found or it was empty.
-  // E.g. current task requires labels but none were found.
-  MPPTasksErrorCodeMetadataMissingLabelsError,
-  // The ProcessingUnit for tokenizer is not correctly configured.
-  // E.g BertTokenizer doesn't have a valid vocab file associated.
-  MPPTasksErrorCodeMetadataInvalidTokenizerError,
+  /** Indicates some requested entity (such as a file or directory) was not found. */
+  MPPTasksErrorCodeNotFoundError = 5,
 
-  // Input tensor(s) error codes.
+  /**
+   * Indicates that the entity a caller attempted to create (such as a file or directory) is
+   * already present.
+   */
+  MPPTasksErrorCodeAlreadyExistsError = 6,
 
-  // Unexpected number of input tensors for the current task.
-  // E.g. current task expects a single input tensor.
-  MPPTasksErrorCodeInvalidNumInputTensorsError = 300,
-  // Unexpected input tensor dimensions for the current task.
-  // E.g.: only 4D input tensors supported.
-  MPPTasksErrorCodeInvalidInputTensorDimensionsError,
-  // Unexpected input tensor type for the current task.
-  // E.g.: current task expects a uint8 pixel image as input.
-  MPPTasksErrorCodeInvalidInputTensorTypeError,
-  // Unexpected input tensor bytes size.
-  // E.g.: size in bytes does not correspond to the expected number of pixels.
-  MPPTasksErrorCodeInvalidInputTensorSizeError,
-  // No correct input tensor found for the model.
-  // E.g.: input tensor name is not part of the text model's input tensors.
-  MPPTasksErrorCodeInputTensorNotFoundError,
+  /** Indicates that the caller does not have permission to execute the specified operation. */
+  MPPTasksErrorCodePermissionDeniedError = 7,
 
-  // Output tensor(s) error codes.
+  /**
+   * Indicates some resource has been exhausted, perhaps a per-user quota, or perhaps the entire
+   * file system is out of space.
+   */
+  MPPTasksErrorCodeResourceExhaustedError = 8,
 
-  // Unexpected output tensor dimensions for the current task.
-  // E.g.: only a batch size of 1 is supported.
-  MPPTasksErrorCodeInvalidOutputTensorDimensionsError = 400,
-  // Unexpected input tensor type for the current task.
-  // E.g.: multi-head model with different output tensor types.
-  MPPTasksErrorCodeInvalidOutputTensorTypeError,
-  // No correct output tensor found for the model.
-  // E.g.: output tensor name is not part of the text model's output tensors.
-  MPPTasksErrorCodeOutputTensorNotFoundError,
-  // Unexpected number of output tensors for the current task.
-  // E.g.: current task expects a single output tensor.
-  MPPTasksErrorCodeInvalidNumOutputTensorsError,
+  /**
+   * Indicates that the operation was rejected because the system is not in a state required for
+   * the operation's execution. For example, a directory to be deleted may be non-empty, an "rmdir"
+   * operation is applied to a non-directory, etc.
+   */
+  MPPTasksErrorCodeFailedPreconditionError = 9,
 
-  // Image processing error codes.
+  /**
+   * Indicates the operation was aborted, typically due to a concurrency issue such as a sequencer
+   * check failure or a failed transaction.
+   */
+  MPPTasksErrorCodeAbortedError = 10,
 
-  // Unspecified image processing failures.
-  MPPTasksErrorCodeImageProcessingError = 500,
-  // Unexpected input or output buffer metadata.
-  // E.g.: rotate RGBA buffer to Grayscale buffer by 90 degrees.
-  MPPTasksErrorCodeImageProcessingInvalidArgumentError,
-  // Image processing operation failures.
-  // E.g. libyuv rotation failed for an unknown reason.
-  MPPTasksErrorCodeImageProcessingBackendError,
+  /**
+   * Indicates the operation was attempted past the valid range, such as seeking or reading past an
+   * end-of-file.
+   */
+  MPPTasksErrorCodeOutOfRangeError = 11,
 
-  // Task runner error codes.
-  MPPTasksErrorCodeRunnerError = 600,
-  // Task runner is not initialized.
-  MPPTasksErrorCodeRunnerInitializationError,
-  // Task runner is not started successfully.
-  MPPTasksErrorCodeRunnerFailsToStartError,
-  // Task runner is not started.
-  MPPTasksErrorCodeRunnerNotStartedError,
-  // Task runner API is called in the wrong processing mode.
-  MPPTasksErrorCodeRunnerApiCalledInWrongModeError,
-  // Task runner receives/produces invalid MediaPipe packet timestamp.
-  MPPTasksErrorCodeRunnerInvalidTimestampError,
-  // Task runner receives unexpected MediaPipe graph input packet.
-  // E.g. The packet type doesn't match the graph input stream's data type.
-  MPPTasksErrorCodeRunnerUnexpectedInputError,
-  // Task runner produces unexpected MediaPipe graph output packet.
-  // E.g. The number of output packets is not equal to the number of graph
-  // output streams.
-  MPPTasksErrorCodeRunnerUnexpectedOutputError,
-  // Task runner is not closed successfully.
-  MPPTasksErrorCodeRunnerFailsToCloseError,
-  // Task runner's model resources cache service is unavailable or the
-  // targeting model resources bundle is not found.
-  MPPTasksErrorCodeRunnerModelResourcesCacheServiceError,
+  /**
+   * Indicates the operation is not implemented or supported in this service. In this case, the
+   * operation should not be re-attempted.
+   */
+  MPPTasksErrorCodeUnimplementedError = 12,
 
-  // Task graph error codes.
-  MPPTasksErrorCodeGraphError = 700,
-  // Task graph is not implemented.
-  MPPTasksErrorCodeTaskGraphNotImplementedError,
-  // Task graph config is invalid.
-  MPPTasksErrorCodeInvalidTaskGraphConfigError,
+  /**
+   * Indicates an internal error has occurred and some invariants expected by the underlying system
+   * have not been satisfied. This error code is reserved for serious errors.
+   */
+  MPPTasksErrorCodeInternalError = 13,
 
-  // The first error code in MPPTasksErrorCode (for internal use only).
-  MPPTasksErrorCodeFirst = MPPTasksErrorCodeError,
+  /**
+   * Indicates the service is currently unavailable and that this is most likely a transient
+   * condition.
+   */
+  MPPTasksErrorCodeUnavailableError = 14,
 
-  // The last error code in MPPTasksErrorCode (for internal use only).
-  MPPTasksErrorCodeLast = MPPTasksErrorCodeInvalidTaskGraphConfigError,
+  /** Indicates that unrecoverable data loss or corruption has occurred. */
+  MPPTasksErrorCodeDataLossError = 15,
+
+  /**
+   * Indicates that the request does not have valid authentication credentials for the operation.
+   */
+  MPPTasksErrorCodeUnauthenticatedError = 16,
+
+  /** The first error code in MPPTasksErrorCode (for internal use only). */
+  MPPTasksErrorCodeFirst = MPPTasksErrorCodeCancelledError,
+
+  /** The last error code in MPPTasksErrorCode (for internal use only). */
+  MPPTasksErrorCodeLast = MPPTasksErrorCodeUnauthenticatedError,
 
 } NS_SWIFT_NAME(TasksErrorCode);
 

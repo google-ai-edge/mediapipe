@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
  * index of the label in the corresponding label file. Typically it's used as the result of
  * classification tasks.
  */
-NS_SWIFT_NAME(ClassificationCategory)
+NS_SWIFT_NAME(ResultCategory)
 @interface MPPCategory : NSObject
 
 /**

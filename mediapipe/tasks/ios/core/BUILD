@@ -26,9 +26,7 @@ objc_library(
     name = "MPPTaskOptions",
     srcs = ["sources/MPPTaskOptions.m"],
     hdrs = ["sources/MPPTaskOptions.h"],
-    deps = [
-        ":MPPBaseOptions",
-    ],
+    deps = [":MPPBaseOptions"],
 )
 
 objc_library(
@@ -40,9 +38,7 @@ objc_library(
 objc_library(
     name = "MPPTaskOptionsProtocol",
     hdrs = ["sources/MPPTaskOptionsProtocol.h"],
-    deps = [
-        "//mediapipe/framework:calculator_options_cc_proto",
-    ],
+    deps = ["//mediapipe/framework:calculator_options_cc_proto"],
 )
 
 objc_library(
@@ -92,6 +88,5 @@ objc_library(
         "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",
         "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )

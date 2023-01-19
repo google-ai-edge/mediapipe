@@ -20,15 +20,11 @@ objc_library(
     name = "MPPCategory",
     srcs = ["sources/MPPCategory.m"],
     hdrs = ["sources/MPPCategory.h"],
-    deps = ["//third_party/apple_frameworks:Foundation"],
 )
 
 objc_library(
     name = "MPPClassificationResult",
     srcs = ["sources/MPPClassificationResult.m"],
     hdrs = ["sources/MPPClassificationResult.h"],
-    deps = [
-        ":MPPCategory",
-        "//third_party/apple_frameworks:Foundation",
-    ],
+    deps = [":MPPCategory"],
 )
