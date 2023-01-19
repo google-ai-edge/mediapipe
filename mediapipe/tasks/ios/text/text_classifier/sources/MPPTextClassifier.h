@@ -21,6 +21,10 @@
 #import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierOptions.h"
 #import "mediapipe/tasks/ios/text/text_classifier/sources/MPPTextClassifierResult.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif  // __cplusplus
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
@@ -102,5 +106,9 @@ NS_SWIFT_NAME(TextClassifier)
 @end
 
 NS_ASSUME_NONNULL_END
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif  // __cplusplus
 
 #endif // MEDIAPIPE_TASKS_IOS_TEXT_TEXT_CLASSIFIER_SOURCES_MPP_TEXT_CLASSIFIER_H_
