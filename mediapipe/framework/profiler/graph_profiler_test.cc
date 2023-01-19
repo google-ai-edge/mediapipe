@@ -39,13 +39,15 @@ constexpr char kDummyTestCalculatorName[] = "DummyTestCalculator";
 CalculatorGraphConfig::Node CreateNodeConfig(
     const std::string& raw_node_config) {
   CalculatorGraphConfig::Node node_config;
-  QCHECK(proto2::TextFormat::ParseFromString(raw_node_config, &node_config));
+  QCHECK(google::protobuf::TextFormat::ParseFromString(raw_node_config,
+                                                       &node_config));
   return node_config;
 }
 
 CalculatorGraphConfig CreateGraphConfig(const std::string& raw_graph_config) {
   CalculatorGraphConfig graph_config;
-  QCHECK(proto2::TextFormat::ParseFromString(raw_graph_config, &graph_config));
+  QCHECK(google::protobuf::TextFormat::ParseFromString(raw_graph_config,
+                                                       &graph_config));
   return graph_config;
 }
 
@@ -1167,7 +1169,7 @@ TEST_F(GraphProfilerTestPeer, AddProcessSampleWithStreamLatency) {
 TEST(GraphProfilerTest, ParallelReads) {
   // A graph that processes a certain number of packets before finishing.
   CalculatorGraphConfig config;
-  QCHECK(proto2::TextFormat::ParseFromString(R"(
+  QCHECK(google::protobuf::TextFormat::ParseFromString(R"(
     profiler_config {
      enable_profiler: true
     }
@@ -1189,7 +1191,7 @@ TEST(GraphProfilerTest, ParallelReads) {
     }
     output_stream: "OUT:0:the_integers"
     )",
-                                             &config));
+                                                       &config));
 
   // Start running the graph on its own threads.
   absl::Mutex out_1_mutex;
@@ -1246,7 +1248,7 @@ std::set<std::string> GetCalculatorNames(const CalculatorGraphConfig& config) {
 
 TEST(GraphProfilerTest, CalculatorProfileFilter) {
   CalculatorGraphConfig config;
-  QCHECK(proto2::TextFormat::ParseFromString(R"(
+  QCHECK(google::protobuf::TextFormat::ParseFromString(R"(
     profiler_config {
      enable_profiler: true
     }
@@ -1268,7 +1270,7 @@ TEST(GraphProfilerTest, CalculatorProfileFilter) {
     }
     output_stream: "OUT:0:the_integers"
     )",
-                                             &config));
+                                                       &config));
 
   std::set<std::string> expected_names;
   expected_names = {"RangeCalculator", "PassThroughCalculator"};
@@ -1295,7 +1297,7 @@ TEST(GraphProfilerTest, CalculatorProfileFilter) {
 
 TEST(GraphProfilerTest, CaptureProfilePopulateConfig) {
   CalculatorGraphConfig config;
-  QCHECK(proto2::TextFormat::ParseFromString(R"(
+  QCHECK(google::protobuf::TextFormat::ParseFromString(R"(
     profiler_config {
       enable_profiler: true
       trace_enabled: true
@@ -1310,7 +1312,7 @@ TEST(GraphProfilerTest, CaptureProfilePopulateConfig) {
       input_stream: "input_stream"
     }
     )",
-                                             &config));
+                                                       &config));
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   GraphProfile profile;

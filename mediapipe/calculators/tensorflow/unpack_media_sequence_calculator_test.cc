@@ -647,7 +647,7 @@ TEST_F(UnpackMediaSequenceCalculatorTest, GetAudioDecoderOptionsOverride) {
 
 TEST_F(UnpackMediaSequenceCalculatorTest, GetPacketResamplingOptions) {
   // TODO: Suport proto3 proto.Any in CalculatorOptions.
-  // TODO: Avoid proto2 extensions in "RESAMPLER_OPTIONS".
+  // TODO: Avoid google::protobuf extensions in "RESAMPLER_OPTIONS".
   CalculatorOptions options;
   options.MutableExtension(UnpackMediaSequenceCalculatorOptions::ext)
       ->set_padding_before_label(1);
