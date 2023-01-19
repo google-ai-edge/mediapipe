@@ -1,0 +1,20 @@
+Pod::Spec.new do |s|
+  s.name             = 'MediaPipeTaskText'
+  s.version          = '${MPP_BUILD_VERSION}'
+  s.authors          = 'Google Inc.'
+  s.license          = { :type => 'Apache',:file => "LICENSE" }
+  s.homepage         = 'https://github.com/google/mediapipe'
+  s.source           = { :http => '${MPP_DOWNLOAD_URL}' }
+  s.summary          = 'MediaPipe Task Library - Text'
+  s.description      = 'The Natural Language APIs of the MediaPipe Task Library'
+
+  s.ios.deployment_target = '10.0'
+
+  s.module_name = 'MediaPipeTaskText'
+  s.static_framework = true
+  s.pod_target_xcconfig = {
+    'VALID_ARCHS' => 'x86_64, arm64, armv7',
+  }
+  s.library = 'c++'
+  s.vendored_frameworks = 'Frameworks/MediaPipeTaskText.framework'
+end
