@@ -13,11 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_HAND_LANDMARKER_RESULT_H_
-#define MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_HAND_LANDMARKER_RESULT_H_
+#include "mediapipe/tasks/cc/vision/hand_landmarker/hand_landmarker_result.h"
+
+#include <algorithm>
 
 #include "mediapipe/framework/formats/classification.pb.h"
-#include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "mediapipe/tasks/cc/components/containers/landmark.h"
 
@@ -26,25 +26,31 @@ namespace tasks {
 namespace vision {
 namespace hand_landmarker {
 
-// The hand landmarks detection result from HandLandmarker, where each vector
-// element represents a single hand detected in the image.
-struct HandLandmarkerResult {
-  // Classification of handedness.
-  std::vector<components::containers::Classifications> handedness;
-  // Detected hand landmarks in normalized image coordinates.
-  std::vector<components::containers::NormalizedLandmarks> hand_landmarks;
-  // Detected hand landmarks in world coordinates.
-  std::vector<components::containers::Landmarks> hand_world_landmarks;
-};
-
 HandLandmarkerResult ConvertToHandLandmarkerResult(
     const std::vector<mediapipe::ClassificationList>& handedness_proto,
     const std::vector<mediapipe::NormalizedLandmarkList>& hand_landmarks_proto,
-    const std::vector<mediapipe::LandmarkList>& hand_world_landmarks_proto);
+    const std::vector<mediapipe::LandmarkList>& hand_world_landmarks_proto) {
+  HandLandmarkerResult result;
+  result.handedness.resize(handedness_proto.size());
+  result.hand_landmarks.resize(hand_landmarks_proto.size());
+  result.hand_world_landmarks.resize(hand_world_landmarks_proto.size());
+  std::transform(handedness_proto.begin(), handedness_proto.end(),
+                 result.handedness.begin(),
+                 [](const mediapipe::ClassificationList& classification_list) {
+                   return components::containers::ConvertToClassifications(
+                       classification_list);
+                 });
+  std::transform(hand_landmarks_proto.begin(), hand_landmarks_proto.end(),
+                 result.hand_landmarks.begin(),
+                 components::containers::ConvertToNormalizedLandmarks);
+  std::transform(hand_world_landmarks_proto.begin(),
+                 hand_world_landmarks_proto.end(),
+                 result.hand_world_landmarks.begin(),
+                 components::containers::ConvertToLandmarks);
+  return result;
+}
 
 }  // namespace hand_landmarker
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe
-
-#endif  // MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_HAND_LANDMARKER_RESULT_H_

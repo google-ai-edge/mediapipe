@@ -40,6 +40,19 @@ Classifications ConvertToClassifications(const proto::Classifications& proto) {
   return classifications;
 }
 
+Classifications ConvertToClassifications(
+    const mediapipe::ClassificationList& proto, int head_index,
+    std::optional<std::string> head_name) {
+  Classifications classifications;
+  classifications.categories.reserve(proto.classification_size());
+  for (const auto& classification : proto.classification()) {
+    classifications.categories.push_back(ConvertToCategory(classification));
+  }
+  classifications.head_index = head_index;
+  classifications.head_name = head_name;
+  return classifications;
+}
+
 ClassificationResult ConvertToClassificationResult(
     const proto::ClassificationResult& proto) {
   ClassificationResult classification_result;

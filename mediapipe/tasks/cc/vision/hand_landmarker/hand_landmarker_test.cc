@@ -32,6 +32,8 @@ limitations under the License.
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/components/containers/classification_result.h"
+#include "mediapipe/tasks/cc/components/containers/landmark.h"
 #include "mediapipe/tasks/cc/components/containers/proto/landmarks_detection_result.pb.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
@@ -50,18 +52,16 @@ namespace {
 
 using ::file::Defaults;
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::components::containers::ConvertToClassifications;
+using ::mediapipe::tasks::components::containers::ConvertToNormalizedLandmarks;
 using ::mediapipe::tasks::components::containers::RectF;
 using ::mediapipe::tasks::containers::proto::LandmarksDetectionResult;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
-using ::testing::EqualsProto;
 using ::testing::HasSubstr;
 using ::testing::Optional;
-using ::testing::Pointwise;
 using ::testing::TestParamInfo;
 using ::testing::TestWithParam;
 using ::testing::Values;
-using ::testing::proto::Approximately;
-using ::testing::proto::Partially;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kHandLandmarkerBundleAsset[] = "hand_landmarker.task";
@@ -74,7 +74,6 @@ constexpr char kPointingUpImage[] = "pointing_up.jpg";
 constexpr char kPointingUpRotatedImage[] = "pointing_up_rotated.jpg";
 constexpr char kNoHandsImage[] = "cats_and_dogs.jpg";
 
-constexpr float kLandmarksFractionDiff = 0.03;  // percentage
 constexpr float kLandmarksAbsMargin = 0.03;
 constexpr float kHandednessMargin = 0.05;
 
@@ -101,11 +100,45 @@ HandLandmarkerResult GetExpectedHandLandmarkerResult(
     const auto landmarks_detection_result =
         GetLandmarksDetectionResult(file_name);
     expected_results.hand_landmarks.push_back(
-        landmarks_detection_result.landmarks());
+        ConvertToNormalizedLandmarks(landmarks_detection_result.landmarks()));
     expected_results.handedness.push_back(
-        landmarks_detection_result.classifications());
+        ConvertToClassifications(landmarks_detection_result.classifications()));
   }
   return expected_results;
+}
+
+MATCHER_P2(HandednessMatches, expected_handedness, tolerance, "") {
+  for (int i = 0; i < arg.size(); i++) {
+    for (int j = 0; j < arg[i].categories.size(); j++) {
+      if (arg[i].categories[j].index !=
+          expected_handedness[i].categories[j].index) {
+        return false;
+      }
+      if (std::abs(arg[i].categories[j].score -
+                   expected_handedness[i].categories[j].score) > tolerance) {
+        return false;
+      }
+      if (arg[i].categories[j].category_name !=
+          expected_handedness[i].categories[j].category_name) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+MATCHER_P2(LandmarksMatches, expected_landmarks, toleration, "") {
+  for (int i = 0; i < arg.size(); i++) {
+    for (int j = 0; j < arg[i].landmarks.size(); j++) {
+      if (std::abs(arg[i].landmarks[j].x -
+                   expected_landmarks[i].landmarks[j].x) > toleration ||
+          std::abs(arg[i].landmarks[j].y -
+                   expected_landmarks[i].landmarks[j].y) > toleration) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 void ExpectHandLandmarkerResultsCorrect(
@@ -119,16 +152,15 @@ void ExpectHandLandmarkerResultsCorrect(
 
   ASSERT_EQ(actual_landmarks.size(), expected_landmarks.size());
   ASSERT_EQ(actual_handedness.size(), expected_handedness.size());
+  if (actual_landmarks.empty()) {
+    return;
+  }
+  ASSERT_GE(actual_landmarks.size(), 1);
 
-  EXPECT_THAT(
-      actual_handedness,
-      Pointwise(Approximately(Partially(EqualsProto()), kHandednessMargin),
-                expected_handedness));
+  EXPECT_THAT(actual_handedness,
+              HandednessMatches(expected_handedness, kHandednessMargin));
   EXPECT_THAT(actual_landmarks,
-              Pointwise(Approximately(Partially(EqualsProto()),
-                                      /*margin=*/kLandmarksAbsMargin,
-                                      /*fraction=*/kLandmarksFractionDiff),
-                        expected_landmarks));
+              LandmarksMatches(expected_landmarks, kLandmarksAbsMargin));
 }
 
 }  // namespace

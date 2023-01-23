@@ -154,11 +154,14 @@ cc_library(
 
 cc_library(
     name = "hand_landmarker_result",
+    srcs = ["hand_landmarker_result.cc"],
     hdrs = ["hand_landmarker_result.h"],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/tasks/cc/components/containers:classification_result",
+        "//mediapipe/tasks/cc/components/containers:landmark",
     ],
 )
 

@@ -62,3 +62,12 @@ cc_library(
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
     ],
 )
+
+cc_library(
+    name = "landmark",
+    srcs = ["landmark.cc"],
+    hdrs = ["landmark.h"],
+    deps = [
+        "//mediapipe/framework/formats:landmark_cc_proto",
+    ],
+)
