@@ -84,12 +84,6 @@ ExternalFileHandler::CreateFromExternalFile(
 }
 
 absl::Status ExternalFileHandler::MapExternalFile() {
-// TODO: Add Windows support
-#ifdef _WIN32
-  return CreateStatusWithPayload(StatusCode::kFailedPrecondition,
-                                 "File loading is not yet supported on Windows",
-                                 MediaPipeTasksStatus::kFileReadError);
-#else
   if (!external_file_.file_content().empty()) {
     return absl::OkStatus();
   } else if (external_file_.has_file_pointer_meta()) {
@@ -106,6 +100,13 @@ absl::Status ExternalFileHandler::MapExternalFile() {
     }
     return absl::OkStatus();
   }
+
+// TODO: Add Windows support
+#ifdef _WIN32
+  return CreateStatusWithPayload(StatusCode::kFailedPrecondition,
+                                 "File loading is not yet supported on Windows",
+                                 MediaPipeTasksStatus::kFileReadError);
+#else
   if (external_file_.file_name().empty() &&
       !external_file_.has_file_descriptor_meta()) {
     return CreateStatusWithPayload(
