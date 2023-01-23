@@ -25,8 +25,11 @@
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 
 #if MEDIAPIPE_METAL_ENABLED
+#import <Metal/Metal.h>
 #include <mach/mach_init.h>
 #include <mach/vm_map.h>
+
+#include "mediapipe/framework/formats/tensor_mtl_buffer_view.h"
 #else
 #include <cstdlib>
 #endif  // MEDIAPIPE_METAL_ENABLED
@@ -61,6 +64,12 @@ int BhwcDepthFromShape(const Tensor::Shape& shape) {
 // 3) pad/"unpad" the bitmap after transfer CPU <-> GPU
 
 #if MEDIAPIPE_METAL_ENABLED
+// No ODR violation here because this file compiled just once per project.
+struct MtlResources {
+  id<MTLCommandBuffer> command_buffer = nil;
+  id<MTLDevice> device = nil;
+  id<MTLBuffer> metal_buffer = nil;
+};
 namespace {
 // MTLBuffer can use existing properly aligned and allocated CPU memory.
 size_t AlignToPageSize(size_t size) {
@@ -83,52 +92,56 @@ void DeallocateVirtualMemory(void* pointer, size_t size) {
 }
 }  // namespace
 
-Tensor::MtlBufferView Tensor::GetMtlBufferReadView(
-    id<MTLCommandBuffer> command_buffer) const {
-  LOG_IF(FATAL, valid_ == kValidNone)
+void MtlBufferView::AllocateMtlBuffer(const Tensor& tensor,
+                                      id<MTLDevice> device) {
+  tensor.mtl_resources_->device = device;
+  if (!tensor.cpu_buffer_) {
+    // It also means that the metal buffer is not allocated yet.
+    tensor.cpu_buffer_ = AllocateVirtualMemory(tensor.bytes());
+  }
+  if (!tensor.mtl_resources_->metal_buffer) {
+    tensor.mtl_resources_->metal_buffer = [tensor.mtl_resources_->device
+        newBufferWithBytesNoCopy:tensor.cpu_buffer_
+                          length:AlignToPageSize(tensor.bytes())
+                         options:MTLResourceStorageModeShared |
+                                 MTLResourceCPUCacheModeDefaultCache
+                     deallocator:^(void* pointer, NSUInteger length) {
+                       DeallocateVirtualMemory(pointer, length);
+                     }];
+  }
+}
+
+MtlBufferView MtlBufferView::GetReadView(const Tensor& tensor,
+                                         id<MTLCommandBuffer> command_buffer) {
+  LOG_IF(FATAL, tensor.valid_ == Tensor::kValidNone)
       << "Tensor must be written prior to read from.";
-  LOG_IF(FATAL, !(valid_ & (kValidCpu | kValidMetalBuffer)))
+  LOG_IF(FATAL,
+         !(tensor.valid_ & (Tensor::kValidCpu | Tensor::kValidMetalBuffer)))
       << "Tensor conversion between different GPU resources is not supported "
          "yet.";
-  auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
-  valid_ |= kValidMetalBuffer;
-  AllocateMtlBuffer([command_buffer device]);
-  return {metal_buffer_, std::move(lock)};
+  auto lock(absl::make_unique<absl::MutexLock>(&tensor.view_mutex_));
+  tensor.valid_ |= Tensor::kValidMetalBuffer;
+  AllocateMtlBuffer(tensor, [command_buffer device]);
+  return {tensor.mtl_resources_->metal_buffer, std::move(lock)};
 }
 
-Tensor::MtlBufferView Tensor::GetMtlBufferWriteView(
-    id<MTLCommandBuffer> command_buffer) const {
+MtlBufferView MtlBufferView::GetWriteView(const Tensor& tensor,
+                                          id<MTLCommandBuffer> command_buffer) {
   // Don't overwrite command buffer at which the metal buffer has been written
   // so we can wait until completed.
-  command_buffer_ = command_buffer;
-  return GetMtlBufferWriteView([command_buffer device]);
+  tensor.mtl_resources_->command_buffer = command_buffer;
+  return GetWriteView(tensor, [command_buffer device]);
 }
 
-Tensor::MtlBufferView Tensor::GetMtlBufferWriteView(
-    id<MTLDevice> device) const {
-  auto lock(absl::make_unique<absl::MutexLock>(&view_mutex_));
-  valid_ = kValidMetalBuffer;
-  AllocateMtlBuffer(device);
-  return {metal_buffer_, std::move(lock)};
+MtlBufferView MtlBufferView::GetWriteView(const Tensor& tensor,
+                                          id<MTLDevice> device) {
+  auto lock(absl::make_unique<absl::MutexLock>(&tensor.view_mutex_));
+  tensor.valid_ = Tensor::kValidMetalBuffer;
+  AllocateMtlBuffer(tensor, device);
+  return {tensor.mtl_resources_->metal_buffer, std::move(lock)};
 }
-
-void Tensor::AllocateMtlBuffer(id<MTLDevice> device) const {
-  device_ = device;
-  if (!cpu_buffer_) {
-    // It also means that the metal buffer is not allocated yet.
-    cpu_buffer_ = AllocateVirtualMemory(bytes());
-  }
-  if (!metal_buffer_) {
-    metal_buffer_ =
-        [device_ newBufferWithBytesNoCopy:cpu_buffer_
-                                   length:AlignToPageSize(bytes())
-                                  options:MTLResourceStorageModeShared |
-                                          MTLResourceCPUCacheModeDefaultCache
-                              deallocator:^(void* pointer, NSUInteger length) {
-                                DeallocateVirtualMemory(pointer, length);
-                              }];
-  }
-}
+#else
+struct MtlResources {};
 #endif  // MEDIAPIPE_METAL_ENABLED
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
@@ -379,6 +392,9 @@ Tensor& Tensor::operator=(Tensor&& src) {
   return *this;
 }
 
+Tensor::Tensor(Tensor&& src) { Move(&src); }
+Tensor::~Tensor() { Invalidate(); }
+
 void Tensor::Move(Tensor* src) {
   valid_ = src->valid_;
   src->valid_ = kValidNone;
@@ -388,15 +404,7 @@ void Tensor::Move(Tensor* src) {
   cpu_buffer_ = src->cpu_buffer_;
   src->cpu_buffer_ = nullptr;
   ahwb_tracking_key_ = src->ahwb_tracking_key_;
-#if MEDIAPIPE_METAL_ENABLED
-  device_ = src->device_;
-  src->device_ = nil;
-  command_buffer_ = src->command_buffer_;
-  src->command_buffer_ = nil;
-  metal_buffer_ = src->metal_buffer_;
-  src->metal_buffer_ = nil;
-#endif  //  MEDIAPIPE_METAL_ENABLED
-
+  mtl_resources_ = std::move(src->mtl_resources_);
   MoveAhwbStuff(src);
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
@@ -415,12 +423,15 @@ void Tensor::Move(Tensor* src) {
 }
 
 Tensor::Tensor(ElementType element_type, const Shape& shape)
-    : element_type_(element_type), shape_(shape) {}
+    : element_type_(element_type),
+      shape_(shape),
+      mtl_resources_(std::make_unique<MtlResources>()) {}
 Tensor::Tensor(ElementType element_type, const Shape& shape,
                const QuantizationParameters& quantization_parameters)
     : element_type_(element_type),
       shape_(shape),
-      quantization_parameters_(quantization_parameters) {}
+      quantization_parameters_(quantization_parameters),
+      mtl_resources_(std::make_unique<MtlResources>()) {}
 
 #if MEDIAPIPE_METAL_ENABLED
 void Tensor::Invalidate() {
@@ -432,13 +443,16 @@ void Tensor::Invalidate() {
     absl::MutexLock lock(&view_mutex_);
     // If memory is allocated and not owned by the metal buffer.
     // TODO: Re-design cpu buffer memory management.
-    if (cpu_buffer_ && !metal_buffer_) {
+    if (cpu_buffer_ && !mtl_resources_->metal_buffer) {
       DeallocateVirtualMemory(cpu_buffer_, AlignToPageSize(bytes()));
     }
-    metal_buffer_ = nil;
-    command_buffer_ = nil;
-    device_ = nil;
     cpu_buffer_ = nullptr;
+    // This becomes NULL if the tensor is moved.
+    if (mtl_resources_) {
+      mtl_resources_->metal_buffer = nil;
+      mtl_resources_->command_buffer = nil;
+      mtl_resources_->device = nil;
+    }
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
     // Don't need to wait for the resource to be deleted bacause if will be
     // released on last reference deletion inside the OpenGL driver.
@@ -532,10 +546,11 @@ Tensor::CpuReadView Tensor::GetCpuReadView() const {
     // GPU-to-CPU synchronization and read-back.
 #if MEDIAPIPE_METAL_ENABLED
     if (valid_ & kValidMetalBuffer) {
-      LOG_IF(FATAL, !command_buffer_) << "Metal -> CPU synchronization "
-                                         "requires MTLCommandBuffer to be set.";
-      if (command_buffer_) {
-        [command_buffer_ waitUntilCompleted];
+      LOG_IF(FATAL, !mtl_resources_->command_buffer)
+          << "Metal -> CPU synchronization "
+             "requires MTLCommandBuffer to be set.";
+      if (mtl_resources_->command_buffer) {
+        [mtl_resources_->command_buffer waitUntilCompleted];
       }
     }
 #endif  // MEDIAPIPE_METAL_ENABLED

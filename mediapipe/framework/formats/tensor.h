@@ -29,9 +29,6 @@
 #include "mediapipe/framework/formats/tensor/internal.h"
 #include "mediapipe/framework/port.h"
 
-#if MEDIAPIPE_METAL_ENABLED
-#import <Metal/Metal.h>
-#endif  // MEDIAPIPE_METAL_ENABLED
 #ifndef MEDIAPIPE_NO_JNI
 #if __ANDROID_API__ >= 26 || defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
 #define MEDIAPIPE_TENSOR_USE_AHWB 1
@@ -66,7 +63,6 @@
 #endif
 
 namespace mediapipe {
-
 // Tensor is a container of multi-dimensional data that supports sharing the
 // content across different backends and APIs, currently: CPU / Metal / OpenGL.
 // Texture2DView is limited to 4 dimensions.
@@ -91,6 +87,7 @@ namespace mediapipe {
 // float* pointer = view.buffer<float>();
 // ...reading the cpu memory...
 
+struct MtlResources;
 class Tensor {
   class View {
    public:
@@ -144,9 +141,9 @@ class Tensor {
   Tensor(const Tensor&) = delete;
   Tensor& operator=(const Tensor&) = delete;
   // Move-only.
-  Tensor(Tensor&& src) { Move(&src); }
+  Tensor(Tensor&& src);
   Tensor& operator=(Tensor&&);
-  ~Tensor() { Invalidate(); }
+  ~Tensor();
 
   template <typename T>
   class CpuView : public View {
@@ -181,33 +178,6 @@ class Tensor {
   CpuWriteView GetCpuWriteView(
       uint64_t source_location_hash =
           tensor_internal::FnvHash64(builtin_FILE(), builtin_LINE())) const;
-
-#if MEDIAPIPE_METAL_ENABLED
-  // TODO: id<MTLBuffer> vs. MtlBufferView.
-  class MtlBufferView : public View {
-   public:
-    id<MTLBuffer> buffer() const { return buffer_; }
-    MtlBufferView(MtlBufferView&& src)
-        : View(std::move(src)), buffer_(src.buffer_) {
-      src.buffer_ = nil;
-    }
-
-   protected:
-    friend class Tensor;
-    MtlBufferView(id<MTLBuffer> buffer, std::unique_ptr<absl::MutexLock>&& lock)
-        : View(std::move(lock)), buffer_(buffer) {}
-    id<MTLBuffer> buffer_;
-  };
-  // The command buffer status is checked for completeness if GPU-to-CPU
-  // synchronization is required.
-  // TODO: Design const and non-const view acquiring.
-  MtlBufferView GetMtlBufferReadView(id<MTLCommandBuffer> command_buffer) const;
-  MtlBufferView GetMtlBufferWriteView(
-      id<MTLCommandBuffer> command_buffer) const;
-  // Allocate new buffer.
-  // TODO: GPU-to-CPU design considerations.
-  MtlBufferView GetMtlBufferWriteView(id<MTLDevice> device) const;
-#endif  // MEDIAPIPE_METAL_ENABLED
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   using FinishingFunc = std::function<bool(bool)>;
@@ -372,6 +342,7 @@ class Tensor {
   }
 
  private:
+  friend class MtlBufferView;
   void Move(Tensor*);
   void Invalidate();
 
@@ -396,12 +367,9 @@ class Tensor {
 
   mutable void* cpu_buffer_ = nullptr;
   void AllocateCpuBuffer() const;
-#if MEDIAPIPE_METAL_ENABLED
-  mutable id<MTLCommandBuffer> command_buffer_ = nil;
-  mutable id<MTLDevice> device_ = nil;
-  mutable id<MTLBuffer> metal_buffer_ = nil;
-  void AllocateMtlBuffer(id<MTLDevice> device) const;
-#endif  // MEDIAPIPE_METAL_ENABLED
+  // Forward declaration of the MtlResources provides compile-time verification
+  // of ODR if this header includes any actual code that uses MtlResources.
+  mutable std::unique_ptr<MtlResources> mtl_resources_;
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   mutable AHardwareBuffer* ahwb_ = nullptr;

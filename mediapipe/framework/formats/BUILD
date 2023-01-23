@@ -431,7 +431,10 @@ cc_library(
     hdrs = [
         "tensor.h",
         "//mediapipe/framework/formats/tensor:internal.h",
-    ],
+    ] + select({
+        "//mediapipe:ios": ["tensor_mtl_buffer_view.h"],
+        "//conditions:default": [],
+    }),
     copts = select({
         "//mediapipe:apple": [
             "-x objective-c++",

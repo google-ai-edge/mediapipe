@@ -53,6 +53,7 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 
+#include "mediapipe/framework/formats/tensor_mtl_buffer_view.h"
 #import "mediapipe/gpu/MPPMetalHelper.h"
 #include "mediapipe/gpu/MPPMetalUtil.h"
 #endif  // MEDIAPIPE_METAL_ENABLED
@@ -485,7 +486,8 @@ absl::Status TensorsToSegmentationCalculator::ProcessGpu(
         [command_buffer computeCommandEncoder];
     [command_encoder setComputePipelineState:mask_program_];
 
-    auto read_view = input_tensors[0].GetMtlBufferReadView(command_buffer);
+    auto read_view =
+        MtlBufferView::GetReadView(input_tensors[0], command_buffer);
     [command_encoder setBuffer:read_view.buffer() offset:0 atIndex:0];
 
     mediapipe::GpuBuffer small_mask_buffer = [metal_helper_

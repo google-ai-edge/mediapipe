@@ -53,14 +53,6 @@ mediapipe_proto_library(
 cc_library(
     name = "audio_to_tensor_calculator",
     srcs = ["audio_to_tensor_calculator.cc"],
-    copts = select({
-        # b/215212850
-        "//mediapipe:apple": [
-            "-x objective-c++",
-            "-fobjc-arc",
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":audio_to_tensor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -161,14 +153,6 @@ mediapipe_proto_library(
 cc_library(
     name = "feedback_tensors_calculator",
     srcs = ["feedback_tensors_calculator.cc"],
-    copts = select({
-        # b/215212850
-        "//mediapipe:apple": [
-            "-x objective-c++",
-            "-fobjc-arc",
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":feedback_tensors_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -207,14 +191,6 @@ mediapipe_proto_library(
 cc_library(
     name = "bert_preprocessor_calculator",
     srcs = ["bert_preprocessor_calculator.cc"],
-    copts = select({
-        # TODO: fix tensor.h not to require this, if possible
-        "//mediapipe:apple": [
-            "-x objective-c++",
-            "-fobjc-arc",  # enable reference-counting
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":bert_preprocessor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -267,14 +243,6 @@ mediapipe_proto_library(
 cc_library(
     name = "regex_preprocessor_calculator",
     srcs = ["regex_preprocessor_calculator.cc"],
-    copts = select({
-        # TODO: fix tensor.h not to require this, if possible
-        "//mediapipe:apple": [
-            "-x objective-c++",
-            "-fobjc-arc",  # enable reference-counting
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":regex_preprocessor_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -316,14 +284,6 @@ cc_test(
 cc_library(
     name = "text_to_tensor_calculator",
     srcs = ["text_to_tensor_calculator.cc"],
-    copts = select({
-        # TODO: fix tensor.h not to require this, if possible
-        "//mediapipe:apple": [
-            "-x objective-c++",
-            "-fobjc-arc",  # enable reference-counting
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
@@ -414,14 +374,6 @@ cc_library(
     name = "inference_calculator_interface",
     srcs = ["inference_calculator.cc"],
     hdrs = ["inference_calculator.h"],
-    copts = select({
-        # TODO: fix tensor.h not to require this, if possible
-        "//mediapipe:apple": [
-            "-x objective-c++",
-            "-fobjc-arc",  # enable reference-counting
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":inference_calculator_cc_proto",
         ":inference_calculator_options_lib",
@@ -495,6 +447,7 @@ cc_library(
     tags = ["ios"],
     deps = [
         "inference_calculator_interface",
+        "//mediapipe/framework/formats:tensor",
         "//mediapipe/gpu:MPPMetalHelper",
         "//mediapipe/gpu:MPPMetalUtil",
         "//mediapipe/gpu:gpu_buffer",
@@ -513,14 +466,6 @@ cc_library(
 cc_library(
     name = "inference_runner",
     hdrs = ["inference_runner.h"],
-    copts = select({
-        # TODO: fix tensor.h not to require this, if possible
-        "//mediapipe:apple": [
-            "-x objective-c++",
-            "-fobjc-arc",  # enable reference-counting
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework/formats:tensor",
@@ -532,14 +477,6 @@ cc_library(
     name = "inference_interpreter_delegate_runner",
     srcs = ["inference_interpreter_delegate_runner.cc"],
     hdrs = ["inference_interpreter_delegate_runner.h"],
-    copts = select({
-        # TODO: fix tensor.h not to require this, if possible
-        "//mediapipe:apple": [
-            "-x objective-c++",
-            "-fobjc-arc",  # enable reference-counting
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":inference_runner",
         "//mediapipe/framework:mediapipe_profiling",
@@ -561,14 +498,6 @@ cc_library(
     srcs = [
         "inference_calculator_cpu.cc",
     ],
-    copts = select({
-        # TODO: fix tensor.h not to require this, if possible
-        "//mediapipe:apple": [
-            "-x objective-c++",
-            "-fobjc-arc",  # enable reference-counting
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":inference_calculator_interface",
         ":inference_calculator_utils",
@@ -607,14 +536,6 @@ cc_library(
     srcs = [
         "inference_calculator_xnnpack.cc",
     ],
-    copts = select({
-        # TODO: fix tensor.h not to require this, if possible
-        "//mediapipe:apple": [
-            "-x objective-c++",
-            "-fobjc-arc",  # enable reference-counting
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":inference_calculator_interface",
         ":inference_calculator_utils",
