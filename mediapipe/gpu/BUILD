@@ -902,6 +902,17 @@ cc_library(
     alwayslink = 1,
 )
 
+### Simple calculators
+
+mediapipe_proto_library(
+    name = "gl_animation_overlay_calculator_proto",
+    srcs = ["gl_animation_overlay_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
 proto_library(
     name = "gl_scaler_calculator_proto",
     srcs = ["gl_scaler_calculator.proto"],
