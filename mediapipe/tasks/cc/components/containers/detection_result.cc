@@ -15,8 +15,6 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/components/containers/detection_result.h"
 
-#include <strings.h>
-
 #include <optional>
 #include <string>
 #include <vector>
