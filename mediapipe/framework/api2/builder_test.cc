@@ -494,5 +494,51 @@ TEST(BuilderTest, SinglePortAccessWorksThroughSlicing) {
   EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }
 
+TEST(BuilderTest, TestStreamEqualsNotEqualsOperators) {
+  Graph graph;
+  Stream<AnyType> input0 = graph.In(0);
+  EXPECT_TRUE(input0 == input0);
+  EXPECT_FALSE(input0 != input0);
+
+  EXPECT_TRUE(input0 == input0.Cast<int>());
+  EXPECT_FALSE(input0.Cast<float>() != input0);
+
+  EXPECT_TRUE(input0.Cast<float>() == input0.Cast<int>());
+  EXPECT_FALSE(input0.Cast<float>() != input0.Cast<int>());
+
+  Stream<AnyType> input1 = graph.In(1);
+  EXPECT_FALSE(input0 == input1);
+  EXPECT_TRUE(input0 != input1);
+
+  input1 = input0;
+  EXPECT_TRUE(input0 == input1);
+  EXPECT_FALSE(input0 != input1);
+  EXPECT_TRUE(input0.Cast<int>() == input1.Cast<int>());
+  EXPECT_FALSE(input0.Cast<float>() != input1.Cast<float>());
+}
+
+TEST(BuilderTest, TestSidePacketEqualsNotEqualsOperators) {
+  Graph graph;
+  SidePacket<AnyType> side_input0 = graph.SideIn(0);
+  EXPECT_TRUE(side_input0 == side_input0);
+  EXPECT_FALSE(side_input0 != side_input0);
+
+  EXPECT_TRUE(side_input0 == side_input0.Cast<int>());
+  EXPECT_FALSE(side_input0.Cast<float>() != side_input0);
+
+  EXPECT_TRUE(side_input0.Cast<float>() == side_input0.Cast<int>());
+  EXPECT_FALSE(side_input0.Cast<float>() != side_input0.Cast<int>());
+
+  SidePacket<AnyType> side_input1 = graph.SideIn(1);
+  EXPECT_FALSE(side_input0 == side_input1);
+  EXPECT_TRUE(side_input0 != side_input1);
+
+  side_input1 = side_input0;
+  EXPECT_TRUE(side_input0 == side_input1);
+  EXPECT_FALSE(side_input0 != side_input1);
+  EXPECT_TRUE(side_input0.Cast<int>() == side_input1.Cast<int>());
+  EXPECT_FALSE(side_input0.Cast<float>() != side_input1.Cast<float>());
+}
+
 }  // namespace
 }  // namespace mediapipe::api2::builder

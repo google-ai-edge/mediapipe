@@ -206,6 +206,16 @@ class SourceImpl {
     return ConnectTo(dest);
   }
 
+  template <typename U>
+  bool operator==(const SourceImpl<IsSide, U>& other) {
+    return base_ == other.base_;
+  }
+
+  template <typename U>
+  bool operator!=(const SourceImpl<IsSide, U>& other) {
+    return !(*this == other);
+  }
+
   Src& SetName(std::string name) {
     base_->name_ = std::move(name);
     return *this;
@@ -218,6 +228,9 @@ class SourceImpl {
   }
 
  private:
+  template <bool, typename U>
+  friend class SourceImpl;
+
   // Never null.
   SourceBase* base_;
 };
