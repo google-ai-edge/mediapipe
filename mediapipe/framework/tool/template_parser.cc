@@ -330,7 +330,7 @@ class TemplateParser::Parser::ParserImpl {
     return suc && LookingAtType(io::Tokenizer::TYPE_END);
   }
 
-  void ReportError(int line, int col, const std::string& message) {
+  void ReportError(int line, int col, absl::string_view message) {
     had_errors_ = true;
     if (error_collector_ == NULL) {
       if (line >= 0) {
@@ -342,11 +342,11 @@ class TemplateParser::Parser::ParserImpl {
                    << root_message_type_->full_name() << ": " << message;
       }
     } else {
-      error_collector_->AddError(line, col, message);
+      error_collector_->AddError(line, col, std::string(message));
     }
   }
 
-  void ReportWarning(int line, int col, const std::string& message) {
+  void ReportWarning(int line, int col, absl::string_view message) {
     if (error_collector_ == NULL) {
       if (line >= 0) {
         LOG(WARNING) << "Warning parsing text-format "
@@ -357,21 +357,21 @@ class TemplateParser::Parser::ParserImpl {
                      << root_message_type_->full_name() << ": " << message;
       }
     } else {
-      error_collector_->AddWarning(line, col, message);
+      error_collector_->AddWarning(line, col, std::string(message));
     }
   }
 
  protected:
   // Reports an error with the given message with information indicating
   // the position (as derived from the current token).
-  void ReportError(const std::string& message) {
+  void ReportError(absl::string_view message) {
     ReportError(tokenizer_.current().line, tokenizer_.current().column,
                 message);
   }
 
   // Reports a warning with the given message with information indicating
   // the position (as derived from the current token).
-  void ReportWarning(const std::string& message) {
+  void ReportWarning(absl::string_view message) {
     ReportWarning(tokenizer_.current().line, tokenizer_.current().column,
                   message);
   }
@@ -379,7 +379,7 @@ class TemplateParser::Parser::ParserImpl {
   // Consumes the specified message with the given starting delimiter.
   // This method checks to see that the end delimiter at the conclusion of
   // the consumption matches the starting delimiter passed in here.
-  bool ConsumeMessage(Message* message, const std::string delimiter) {
+  bool ConsumeMessage(Message* message, absl::string_view delimiter) {
     while (!LookingAt(">") && !LookingAt("}")) {
       if (LookingAt("%")) {
         DO(ConsumeFieldTemplate(message));
@@ -407,7 +407,7 @@ class TemplateParser::Parser::ParserImpl {
 #ifndef PROTO2_OPENSOURCE
   // Consumes a string value and parses it as a packed repeated field into
   // the given field of the given message.
-  bool ConsumePackedFieldAsString(const std::string& field_name,
+  bool ConsumePackedFieldAsString(absl::string_view field_name,
                                   const FieldDescriptor* field,
                                   Message* message) {
     std::string packed;
@@ -431,8 +431,8 @@ class TemplateParser::Parser::ParserImpl {
     io::ArrayInputStream array_input(tagged.data(), tagged.size());
     io::CodedInputStream coded_input(&array_input);
     if (!message->MergePartialFromCodedStream(&coded_input)) {
-      ReportError("Could not parse packed field \"" + field_name +
-                  "\" as wire-encoded string.");
+      ReportError(absl::StrCat("Could not parse packed field \"", field_name,
+                               "\" as wire-encoded string."));
       return false;
     }
 
@@ -1219,12 +1219,12 @@ class TemplateParser::Parser::ParserImpl {
   // Consumes a token and confirms that it matches that specified in the
   // value parameter. Returns false if the token found does not match that
   // which was specified.
-  bool Consume(const std::string& value) {
+  bool Consume(absl::string_view value) {
     const std::string& current_value = tokenizer_.current().text;
 
     if (current_value != value) {
-      ReportError("Expected \"" + value + "\", found \"" + current_value +
-                  "\".");
+      ReportError(absl::StrCat("Expected \"", value, "\", found \"",
+                               current_value, "\"."));
       return false;
     }
 
