@@ -106,7 +106,7 @@ class MetadataPopulator(object):
 
   The metadata file (or buffer) should be generated based on the metadata
   schema:
-  third_party/tensorflow/lite/schema/metadata_schema.fbs
+  mediapipe/tasks/metadata/metadata_schema.fbs
 
   Example usage:
   Populate matadata and label file into an image classifier model.
