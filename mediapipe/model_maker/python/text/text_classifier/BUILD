@@ -140,7 +140,11 @@ py_test(
         "//mediapipe/model_maker/models/text_classifier:mobilebert_tiny",
         "//mediapipe/model_maker/python/text/text_classifier/testdata",
     ],
-    tags = ["requires-net:external"],
+    tags = [
+        "notsan",
+        "requires-mem:16g",
+        "requires-net:external",
+    ],
     deps = [
         ":text_classifier_import",
         "//mediapipe/tasks/python/test:test_utils",
