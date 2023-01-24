@@ -93,6 +93,7 @@ class GraphProfilerStub {
       PopulateGraphConfig populate_config = PopulateGraphConfig::kNo) {
     return absl::OkStatus();
   }
+  inline absl::Status WriteProfile() { return absl::OkStatus(); }
   inline void Pause() {}
   inline void Resume() {}
   inline void Reset() {}

@@ -802,7 +802,7 @@ TEST(MediaSequenceTest, ReconcileMetadataImages) {
   tensorflow::SequenceExample sequence;
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {}));
   std::string encoded_image(bytes.begin(), bytes.end());
   AddImageEncoded(encoded_image, &sequence);
   AddImageEncoded(encoded_image, &sequence);
@@ -843,7 +843,7 @@ TEST(MediaSequenceTest, ReconcileMetadataFlowEncoded) {
   tensorflow::SequenceExample sequence;
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {}));
   std::string encoded_flow(bytes.begin(), bytes.end());
 
   AddForwardFlowEncoded(encoded_flow, &sequence);

@@ -20,9 +20,7 @@ android_library(
     name = "image",
     srcs = glob(["*.java"]),
     manifest = "AndroidManifest.xml",
-    visibility = [
-        "//mediapipe:__subpackages__",
-    ],
+    visibility = ["//visibility:public"],
     deps = [
         "//third_party:androidx_legacy_support_v4",
         "//third_party:autovalue",

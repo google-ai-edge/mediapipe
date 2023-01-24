@@ -18,6 +18,48 @@ package(default_visibility = [
 
 licenses(["notice"])
 
+# Docs for Mediapipe Tasks Hand Landmarker
+# https://developers.google.com/mediapipe/solutions/vision/hand_landmarker
+cc_library(
+    name = "hand_landmarker",
+    srcs = ["hand_landmarker.cc"],
+    hdrs = ["hand_landmarker.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":hand_landmarker_graph",
+        ":hand_landmarker_result",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components/processors:classifier_options",
+        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:base_task_api",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
+        "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/cc/vision/core:image_processing_options",
+        "//mediapipe/tasks/cc/vision/core:running_mode",
+        "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
+        "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_cc_proto",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_library(
+    name = "hand_landmark",
+    hdrs = ["hand_landmark.h"],
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "hand_landmarks_detector_graph",
     srcs = ["hand_landmarks_detector_graph.cc"],
@@ -52,7 +94,7 @@ cc_library(
         "//mediapipe/modules/hand_landmark/calculators:hand_landmarks_to_rect_calculator",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/components/utils:gate",
-        "//mediapipe/tasks/cc/components:image_preprocessing",
+        "//mediapipe/tasks/cc/components/processors:image_preprocessing_graph",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/core:model_task_graph",
         "//mediapipe/tasks/cc/core:utils",
@@ -112,44 +154,14 @@ cc_library(
 
 cc_library(
     name = "hand_landmarker_result",
+    srcs = ["hand_landmarker_result.cc"],
     hdrs = ["hand_landmarker_result.h"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
-    ],
-)
-
-cc_library(
-    name = "hand_landmarker",
-    srcs = ["hand_landmarker.cc"],
-    hdrs = ["hand_landmarker.h"],
-    deps = [
-        ":hand_landmarker_graph",
-        ":hand_landmarker_result",
-        "//mediapipe/framework/api2:builder",
-        "//mediapipe/framework/api2:port",
-        "//mediapipe/framework/formats:classification_cc_proto",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:landmark_cc_proto",
-        "//mediapipe/framework/formats:rect_cc_proto",
-        "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/components:image_preprocessing",
-        "//mediapipe/tasks/cc/components/processors:classifier_options",
-        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_cc_proto",
-        "//mediapipe/tasks/cc/core:base_options",
-        "//mediapipe/tasks/cc/core:base_task_api",
-        "//mediapipe/tasks/cc/core:model_resources",
-        "//mediapipe/tasks/cc/core:task_runner",
-        "//mediapipe/tasks/cc/core:utils",
-        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
-        "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
-        "//mediapipe/tasks/cc/vision/core:image_processing_options",
-        "//mediapipe/tasks/cc/vision/core:running_mode",
-        "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
-        "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_cc_proto",
-        "@com_google_absl//absl/status:statusor",
+        "//mediapipe/tasks/cc/components/containers:classification_result",
+        "//mediapipe/tasks/cc/components/containers:landmark",
     ],
 )
 

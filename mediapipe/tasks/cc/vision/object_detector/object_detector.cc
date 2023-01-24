@@ -30,6 +30,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/components/containers/detection_result.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
@@ -56,6 +57,8 @@ constexpr char kSubgraphTypeName[] =
     "mediapipe.tasks.vision.ObjectDetectorGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
 
+using ::mediapipe::NormalizedRect;
+using ::mediapipe::tasks::components::containers::ConvertToDetectionResult;
 using ObjectDetectorOptionsProto =
     object_detector::proto::ObjectDetectorOptions;
 
@@ -129,7 +132,8 @@ absl::StatusOr<std::unique_ptr<ObjectDetector>> ObjectDetector::Create(
           Packet detections_packet =
               status_or_packets.value()[kDetectionsOutStreamName];
           Packet image_packet = status_or_packets.value()[kImageOutStreamName];
-          result_callback(detections_packet.Get<std::vector<Detection>>(),
+          result_callback(ConvertToDetectionResult(
+                              detections_packet.Get<std::vector<Detection>>()),
                           image_packet.Get<Image>(),
                           detections_packet.Timestamp().Value() /
                               kMicroSecondsPerMilliSecond);
@@ -144,7 +148,7 @@ absl::StatusOr<std::unique_ptr<ObjectDetector>> ObjectDetector::Create(
       std::move(packets_callback));
 }
 
-absl::StatusOr<std::vector<Detection>> ObjectDetector::Detect(
+absl::StatusOr<ObjectDetectorResult> ObjectDetector::Detect(
     mediapipe::Image image,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
@@ -161,10 +165,11 @@ absl::StatusOr<std::vector<Detection>> ObjectDetector::Detect(
       ProcessImageData(
           {{kImageInStreamName, MakePacket<Image>(std::move(image))},
            {kNormRectName, MakePacket<NormalizedRect>(std::move(norm_rect))}}));
-  return output_packets[kDetectionsOutStreamName].Get<std::vector<Detection>>();
+  return ConvertToDetectionResult(
+      output_packets[kDetectionsOutStreamName].Get<std::vector<Detection>>());
 }
 
-absl::StatusOr<std::vector<Detection>> ObjectDetector::DetectForVideo(
+absl::StatusOr<ObjectDetectorResult> ObjectDetector::DetectForVideo(
     mediapipe::Image image, int64 timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
@@ -185,7 +190,8 @@ absl::StatusOr<std::vector<Detection>> ObjectDetector::DetectForVideo(
            {kNormRectName,
             MakePacket<NormalizedRect>(std::move(norm_rect))
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
-  return output_packets[kDetectionsOutStreamName].Get<std::vector<Detection>>();
+  return ConvertToDetectionResult(
+      output_packets[kDetectionsOutStreamName].Get<std::vector<Detection>>());
 }
 
 absl::Status ObjectDetector::DetectAsync(

@@ -45,6 +45,7 @@ py_test(
     name = "model_util_test",
     srcs = ["model_util_test.py"],
     deps = [
+        ":file_util",
         ":model_util",
         ":quantization",
         ":test_util",

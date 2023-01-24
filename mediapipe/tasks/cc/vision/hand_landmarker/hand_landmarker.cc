@@ -22,7 +22,6 @@ limitations under the License.
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/image_preprocessing.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/base_task_api.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
@@ -46,6 +45,8 @@ namespace {
 
 using HandLandmarkerGraphOptionsProto = ::mediapipe::tasks::vision::
     hand_landmarker::proto::HandLandmarkerGraphOptions;
+
+using ::mediapipe::NormalizedRect;
 
 constexpr char kHandLandmarkerGraphTypeName[] =
     "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph";
@@ -154,9 +155,13 @@ absl::StatusOr<std::unique_ptr<HandLandmarker>> HandLandmarker::Create(
       Packet hand_world_landmarks_packet =
           status_or_packets.value()[kHandWorldLandmarksStreamName];
       result_callback(
-          {{handedness_packet.Get<std::vector<ClassificationList>>(),
-            hand_landmarks_packet.Get<std::vector<NormalizedLandmarkList>>(),
-            hand_world_landmarks_packet.Get<std::vector<LandmarkList>>()}},
+          ConvertToHandLandmarkerResult(
+              /* handedness= */ handedness_packet
+                  .Get<std::vector<ClassificationList>>(),
+              /* hand_landmarks= */
+              hand_landmarks_packet.Get<std::vector<NormalizedLandmarkList>>(),
+              /* hand_world_landmarks= */
+              hand_world_landmarks_packet.Get<std::vector<LandmarkList>>()),
           image_packet.Get<Image>(),
           hand_landmarks_packet.Timestamp().Value() /
               kMicroSecondsPerMilliSecond);
@@ -192,15 +197,21 @@ absl::StatusOr<HandLandmarkerResult> HandLandmarker::Detect(
   if (output_packets[kHandLandmarksStreamName].IsEmpty()) {
     return {HandLandmarkerResult()};
   }
-  return {{/* handedness= */
-           {output_packets[kHandednessStreamName]
-                .Get<std::vector<mediapipe::ClassificationList>>()},
-           /* hand_landmarks= */
-           {output_packets[kHandLandmarksStreamName]
-                .Get<std::vector<mediapipe::NormalizedLandmarkList>>()},
-           /* hand_world_landmarks */
-           {output_packets[kHandWorldLandmarksStreamName]
-                .Get<std::vector<mediapipe::LandmarkList>>()}}};
+  return ConvertToHandLandmarkerResult(/* handedness= */
+                                       output_packets[kHandednessStreamName]
+                                           .Get<std::vector<
+                                               mediapipe::
+                                                   ClassificationList>>(),
+                                       /* hand_landmarks= */
+                                       output_packets[kHandLandmarksStreamName]
+                                           .Get<std::vector<
+                                               mediapipe::
+                                                   NormalizedLandmarkList>>(),
+                                       /* hand_world_landmarks */
+                                       output_packets
+                                           [kHandWorldLandmarksStreamName]
+                                               .Get<std::vector<
+                                                   mediapipe::LandmarkList>>());
 }
 
 absl::StatusOr<HandLandmarkerResult> HandLandmarker::DetectForVideo(
@@ -227,17 +238,21 @@ absl::StatusOr<HandLandmarkerResult> HandLandmarker::DetectForVideo(
   if (output_packets[kHandLandmarksStreamName].IsEmpty()) {
     return {HandLandmarkerResult()};
   }
-  return {
-      {/* handedness= */
-       {output_packets[kHandednessStreamName]
-            .Get<std::vector<mediapipe::ClassificationList>>()},
-       /* hand_landmarks= */
-       {output_packets[kHandLandmarksStreamName]
-            .Get<std::vector<mediapipe::NormalizedLandmarkList>>()},
-       /* hand_world_landmarks */
-       {output_packets[kHandWorldLandmarksStreamName]
-            .Get<std::vector<mediapipe::LandmarkList>>()}},
-  };
+  return ConvertToHandLandmarkerResult(/* handedness= */
+                                       output_packets[kHandednessStreamName]
+                                           .Get<std::vector<
+                                               mediapipe::
+                                                   ClassificationList>>(),
+                                       /* hand_landmarks= */
+                                       output_packets[kHandLandmarksStreamName]
+                                           .Get<std::vector<
+                                               mediapipe::
+                                                   NormalizedLandmarkList>>(),
+                                       /* hand_world_landmarks */
+                                       output_packets
+                                           [kHandWorldLandmarksStreamName]
+                                               .Get<std::vector<
+                                                   mediapipe::LandmarkList>>());
 }
 
 absl::Status HandLandmarker::DetectAsync(

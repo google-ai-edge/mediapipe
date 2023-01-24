@@ -41,6 +41,10 @@ class MuxCalculator : public Node {
                           StreamHandler("MuxInputStreamHandler"));
 
   absl::Status Process(CalculatorContext* cc) final {
+    if (kSelect(cc).IsStream() && kSelect(cc).IsEmpty()) {
+      return absl::OkStatus();
+    }
+
     int select = *kSelect(cc);
     RET_CHECK(0 <= select && select < kIn(cc).Count());
     if (!kIn(cc)[select].IsEmpty()) {

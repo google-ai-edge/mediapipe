@@ -41,6 +41,7 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 
+#include "mediapipe/framework/formats/tensor_mtl_buffer_view.h"
 #import "mediapipe/gpu/MPPMetalHelper.h"
 #include "mediapipe/gpu/MPPMetalUtil.h"
 #endif  // MEDIAPIPE_METAL_ENABLED
@@ -536,10 +537,11 @@ absl::Status TensorsToDetectionsCalculator::ProcessGPU(
     if (input_tensors.size() == kNumInputTensorsWithAnchors) {
       RET_CHECK_EQ(input_tensors.size(), kNumInputTensorsWithAnchors);
       auto command_buffer = [gpu_helper_ commandBuffer];
-      auto src_buffer = input_tensors[tensor_mapping_.anchors_tensor_index()]
-                            .GetMtlBufferReadView(command_buffer);
+      auto src_buffer = MtlBufferView::GetReadView(
+          input_tensors[tensor_mapping_.anchors_tensor_index()],
+          command_buffer);
       auto dest_buffer =
-          raw_anchors_buffer_->GetMtlBufferWriteView(command_buffer);
+          MtlBufferView::GetWriteView(*raw_anchors_buffer_, command_buffer);
       id<MTLBlitCommandEncoder> blit_command =
           [command_buffer blitCommandEncoder];
       [blit_command copyFromBuffer:src_buffer.buffer()
@@ -571,15 +573,16 @@ absl::Status TensorsToDetectionsCalculator::ProcessGPU(
   [command_encoder setComputePipelineState:decode_program_];
   {
     auto scored_boxes_view =
-        scored_boxes_buffer_->GetMtlBufferWriteView(command_buffer);
+        MtlBufferView::GetWriteView(*scored_boxes_buffer_, command_buffer);
     auto decoded_boxes_view =
-        decoded_boxes_buffer_->GetMtlBufferWriteView(command_buffer);
+        MtlBufferView::GetWriteView(*decoded_boxes_buffer_, command_buffer);
     [command_encoder setBuffer:decoded_boxes_view.buffer() offset:0 atIndex:0];
-    auto input0_view = input_tensors[tensor_mapping_.detections_tensor_index()]
-                           .GetMtlBufferReadView(command_buffer);
+    auto input0_view = MtlBufferView::GetReadView(
+        input_tensors[tensor_mapping_.detections_tensor_index()],
+        command_buffer);
     [command_encoder setBuffer:input0_view.buffer() offset:0 atIndex:1];
     auto raw_anchors_view =
-        raw_anchors_buffer_->GetMtlBufferReadView(command_buffer);
+        MtlBufferView::GetReadView(*raw_anchors_buffer_, command_buffer);
     [command_encoder setBuffer:raw_anchors_view.buffer() offset:0 atIndex:2];
     MTLSize decode_threads_per_group = MTLSizeMake(1, 1, 1);
     MTLSize decode_threadgroups = MTLSizeMake(num_boxes_, 1, 1);
@@ -588,8 +591,8 @@ absl::Status TensorsToDetectionsCalculator::ProcessGPU(
 
     [command_encoder setComputePipelineState:score_program_];
     [command_encoder setBuffer:scored_boxes_view.buffer() offset:0 atIndex:0];
-    auto input1_view = input_tensors[tensor_mapping_.scores_tensor_index()]
-                           .GetMtlBufferReadView(command_buffer);
+    auto input1_view = MtlBufferView::GetReadView(
+        input_tensors[tensor_mapping_.scores_tensor_index()], command_buffer);
     [command_encoder setBuffer:input1_view.buffer() offset:0 atIndex:1];
     MTLSize score_threads_per_group = MTLSizeMake(1, num_classes_, 1);
     MTLSize score_threadgroups = MTLSizeMake(num_boxes_, 1, 1);

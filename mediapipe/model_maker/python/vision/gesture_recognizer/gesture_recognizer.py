@@ -173,15 +173,20 @@ class GestureRecognizer(classifier.Classifier):
         batch_size=None,
         dtype=tf.float32,
         name='hand_embedding')
-
-    x = tf.keras.layers.BatchNormalization()(inputs)
-    x = tf.keras.layers.ReLU()(x)
+    x = inputs
     dropout_rate = self._model_options.dropout_rate
-    x = tf.keras.layers.Dropout(rate=dropout_rate, name='dropout')(x)
+    for i, width in enumerate(self._model_options.layer_widths):
+      x = tf.keras.layers.BatchNormalization()(x)
+      x = tf.keras.layers.ReLU()(x)
+      x = tf.keras.layers.Dropout(rate=dropout_rate)(x)
+      x = tf.keras.layers.Dense(width, name=f'custom_gesture_recognizer_{i}')(x)
+    x = tf.keras.layers.BatchNormalization()(x)
+    x = tf.keras.layers.ReLU()(x)
+    x = tf.keras.layers.Dropout(rate=dropout_rate)(x)
     outputs = tf.keras.layers.Dense(
         self._num_classes,
         activation='softmax',
-        name='custom_gesture_recognizer')(
+        name='custom_gesture_recognizer_out')(
             x)
 
     self._model = tf.keras.Model(inputs=inputs, outputs=outputs)

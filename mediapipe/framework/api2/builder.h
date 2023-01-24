@@ -206,6 +206,16 @@ class SourceImpl {
     return ConnectTo(dest);
   }
 
+  template <typename U>
+  bool operator==(const SourceImpl<IsSide, U>& other) {
+    return base_ == other.base_;
+  }
+
+  template <typename U>
+  bool operator!=(const SourceImpl<IsSide, U>& other) {
+    return !(*this == other);
+  }
+
   Src& SetName(std::string name) {
     base_->name_ = std::move(name);
     return *this;
@@ -218,6 +228,9 @@ class SourceImpl {
   }
 
  private:
+  template <bool, typename U>
+  friend class SourceImpl;
+
   // Never null.
   SourceBase* base_;
 };
@@ -398,7 +411,7 @@ template <class Calc = internal::Generic>
 class Node;
 #if __cplusplus >= 201703L
 // Deduction guide to silence -Wctad-maybe-unsupported.
-explicit Node()->Node<internal::Generic>;
+explicit Node() -> Node<internal::Generic>;
 #endif  // C++17
 
 template <>

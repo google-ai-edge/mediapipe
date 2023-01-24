@@ -19,6 +19,7 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 cc_library(
     name = "running_mode",
     hdrs = ["running_mode.h"],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(

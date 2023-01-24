@@ -14,10 +14,17 @@
 
 #import "mediapipe/gpu/MPPMetalHelper.h"
 
+#import "mediapipe/gpu/gpu_buffer.h"
 #import "mediapipe/gpu/graph_support.h"
+#import "mediapipe/gpu/metal_shared_resources.h"
 #import "GTMDefines.h"
 
 #include "mediapipe/framework/port/ret_check.h"
+
+@interface MPPMetalHelper () {
+  mediapipe::GpuResources* _gpuResources;
+}
+@end
 
 namespace mediapipe {
 
@@ -40,7 +47,7 @@ class MetalHelperLegacySupport {
 - (instancetype)initWithGpuResources:(mediapipe::GpuResources*)gpuResources {
   self = [super init];
   if (self) {
-    _gpuShared = gpuResources->ios_gpu_data();
+    _gpuResources = gpuResources;
   }
   return self;
 }
@@ -105,19 +112,19 @@ class MetalHelperLegacySupport {
 }
 
 - (id<MTLDevice>)mtlDevice {
-  return _gpuShared.mtlDevice;
+  return _gpuResources->metal_shared().resources().mtlDevice;
 }
 
 - (id<MTLCommandQueue>)mtlCommandQueue {
-  return _gpuShared.mtlCommandQueue;
+  return _gpuResources->metal_shared().resources().mtlCommandQueue;
 }
 
 - (CVMetalTextureCacheRef)mtlTextureCache {
-  return _gpuShared.mtlTextureCache;
+  return _gpuResources->metal_shared().resources().mtlTextureCache;
 }
 
 - (id<MTLCommandBuffer>)commandBuffer {
-  return [_gpuShared.mtlCommandQueue commandBuffer];
+  return [_gpuResources->metal_shared().resources().mtlCommandQueue commandBuffer];
 }
 
 - (CVMetalTextureRef)copyCVMetalTextureWithGpuBuffer:(const mediapipe::GpuBuffer&)gpuBuffer
@@ -169,8 +176,9 @@ class MetalHelperLegacySupport {
 
   CVMetalTextureRef texture;
   CVReturn err = CVMetalTextureCacheCreateTextureFromImage(
-      NULL, _gpuShared.mtlTextureCache, mediapipe::GetCVPixelBufferRef(gpuBuffer), NULL,
-      metalPixelFormat, width, height, plane, &texture);
+      NULL, _gpuResources->metal_shared().resources().mtlTextureCache,
+      mediapipe::GetCVPixelBufferRef(gpuBuffer), NULL, metalPixelFormat, width, height, plane,
+      &texture);
   CHECK_EQ(err, kCVReturnSuccess);
   return texture;
 }
@@ -191,19 +199,20 @@ class MetalHelperLegacySupport {
 }
 
 - (mediapipe::GpuBuffer)mediapipeGpuBufferWithWidth:(int)width height:(int)height {
-  return _gpuShared.gpuBufferPool->GetBuffer(width, height);
+  return _gpuResources->gpu_buffer_pool().GetBuffer(width, height);
 }
 
 - (mediapipe::GpuBuffer)mediapipeGpuBufferWithWidth:(int)width
                                          height:(int)height
                                          format:(mediapipe::GpuBufferFormat)format {
-  return _gpuShared.gpuBufferPool->GetBuffer(width, height, format);
+  return _gpuResources->gpu_buffer_pool().GetBuffer(width, height, format);
 }
 
 - (id<MTLLibrary>)newLibraryWithResourceName:(NSString*)name error:(NSError * _Nullable *)error {
-  return [_gpuShared.mtlDevice newLibraryWithFile:[[NSBundle bundleForClass:[self class]]
-                                                   pathForResource:name ofType:@"metallib"]
-                                            error:error];
+  return [_gpuResources->metal_shared().resources().mtlDevice
+      newLibraryWithFile:[[NSBundle bundleForClass:[self class]] pathForResource:name
+                                                                          ofType:@"metallib"]
+                   error:error];
 }
 
 @end

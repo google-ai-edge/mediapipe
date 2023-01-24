@@ -18,16 +18,16 @@ import com.google.auto.value.AutoValue;
 import java.util.Objects;
 
 /**
- * Landmark represents a point in 3D space with x, y, z coordinates. If normalized is true, the
- * landmark coordinates is normalized respect to the dimension of image, and the coordinates values
- * are in the range of [0,1]. Otherwise, it represenet a point in world coordinates.
+ * Landmark represents a point in 3D space with x, y, z coordinates. The landmark coordinates are in
+ * meters. z represents the landmark depth, and the smaller the value the closer the world landmark
+ * is to the camera.
  */
 @AutoValue
 public abstract class Landmark {
   private static final float TOLERANCE = 1e-6f;
 
-  public static Landmark create(float x, float y, float z, boolean normalized) {
-    return new AutoValue_Landmark(x, y, z, normalized);
+  public static Landmark create(float x, float y, float z) {
+    return new AutoValue_Landmark(x, y, z);
   }
 
   // The x coordinates of the landmark.
@@ -39,28 +39,24 @@ public abstract class Landmark {
   // The z coordinates of the landmark.
   public abstract float z();
 
-  // Whether this landmark is normalized with respect to the image size.
-  public abstract boolean normalized();
-
   @Override
   public final boolean equals(Object o) {
     if (!(o instanceof Landmark)) {
       return false;
     }
     Landmark other = (Landmark) o;
-    return other.normalized() == this.normalized()
-        && Math.abs(other.x() - this.x()) < TOLERANCE
+    return Math.abs(other.x() - this.x()) < TOLERANCE
         && Math.abs(other.x() - this.y()) < TOLERANCE
         && Math.abs(other.x() - this.z()) < TOLERANCE;
   }
 
   @Override
   public final int hashCode() {
-    return Objects.hash(x(), y(), z(), normalized());
+    return Objects.hash(x(), y(), z());
   }
 
   @Override
   public final String toString() {
-    return "<Landmark (x=" + x() + " y=" + y() + " z=" + z() + " normalized=" + normalized() + ")>";
+    return "<Landmark (x=" + x() + " y=" + y() + " z=" + z() + ")>";
   }
 }

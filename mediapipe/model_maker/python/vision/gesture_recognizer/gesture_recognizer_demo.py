@@ -31,7 +31,7 @@ FLAGS = flags.FLAGS
 
 # TODO: Move hand gesture recognizer demo dataset to an
 # open-sourced directory.
-TEST_DATA_DIR = 'mediapipe/model_maker/python/vision/gesture_recognizer/test_data/raw_data'
+TEST_DATA_DIR = 'mediapipe/model_maker/python/vision/gesture_recognizer/testdata/raw_data'
 
 
 def define_flags():

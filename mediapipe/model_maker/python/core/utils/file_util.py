@@ -19,7 +19,7 @@ import os
 
 
 def get_absolute_path(file_path: str) -> str:
-  """Gets the absolute path of a file.
+  """Gets the absolute path of a file in the model_maker directory.
 
   Args:
     file_path: The path to a file relative to the `mediapipe` dir
@@ -27,10 +27,17 @@ def get_absolute_path(file_path: str) -> str:
   Returns:
    The full path of the file
   """
-  # Extract the file path before mediapipe/ as the `base_dir`. By joining it
-  # with the `path` which defines the relative path under mediapipe/, it
-  # yields to the absolute path of the model files directory.
+  # Extract the file path before and including 'model_maker' as the
+  # `mm_base_dir`. By joining it with the `path` after 'model_maker/', it
+  # yields to the absolute path of the model files directory. We must join
+  # on 'model_maker' because in the pypi package, the 'model_maker' directory
+  # is renamed to 'mediapipe_model_maker'. So we have to join on model_maker
+  # to ensure that the `mm_base_dir` path includes the renamed
+  # 'mediapipe_model_maker' directory.
   cwd = os.path.dirname(__file__)
-  base_dir = cwd[:cwd.rfind('mediapipe')]
-  absolute_path = os.path.join(base_dir, file_path)
+  cwd_stop_idx = cwd.rfind('model_maker') + len('model_maker')
+  mm_base_dir = cwd[:cwd_stop_idx]
+  file_path_start_idx = file_path.find('model_maker') + len('model_maker') + 1
+  mm_relative_path = file_path[file_path_start_idx:]
+  absolute_path = os.path.join(mm_base_dir, mm_relative_path)
   return absolute_path

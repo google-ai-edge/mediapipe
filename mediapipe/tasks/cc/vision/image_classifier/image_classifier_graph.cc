@@ -23,10 +23,10 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
-#include "mediapipe/tasks/cc/components/image_preprocessing.h"
-#include "mediapipe/tasks/cc/components/image_preprocessing_options.pb.h"
 #include "mediapipe/tasks/cc/components/processors/classification_postprocessing_graph.h"
+#include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/image_preprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/vision/image_classifier/proto/image_classifier_graph_options.pb.h"
@@ -38,6 +38,7 @@ namespace image_classifier {
 
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::GenericNode;
@@ -47,7 +48,6 @@ using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 
 constexpr float kDefaultScoreThreshold = std::numeric_limits<float>::lowest();
 
-constexpr char kClassificationResultTag[] = "CLASSIFICATION_RESULT";
 constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kNormRectTag[] = "NORM_RECT";
@@ -56,7 +56,6 @@ constexpr char kTensorsTag[] = "TENSORS";
 // Struct holding the different output streams produced by the image classifier
 // subgraph.
 struct ImageClassifierOutputStreams {
-  Source<ClassificationResult> classification_result;
   Source<ClassificationResult> classifications;
   Source<Image> image;
 };
@@ -77,9 +76,6 @@ struct ImageClassifierOutputStreams {
 //     The classification results aggregated by classifier head.
 //   IMAGE - Image
 //     The image that object detection runs on.
-// TODO: remove this output once Java API migration is over.
-//   CLASSIFICATION_RESULT - (DEPRECATED) ClassificationResult @Optional
-//     The aggregated classification result.
 //
 // Example:
 // node {
@@ -117,8 +113,6 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
             sc->Options<proto::ImageClassifierGraphOptions>(), *model_resources,
             graph[Input<Image>(kImageTag)],
             graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
-    output_streams.classification_result >>
-        graph[Output<ClassificationResult>(kClassificationResultTag)];
     output_streams.classifications >>
         graph[Output<ClassificationResult>(kClassificationsTag)];
     output_streams.image >> graph[Output<Image>(kImageTag)];
@@ -142,14 +136,15 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
       Source<NormalizedRect> norm_rect_in, Graph& graph) {
     // Adds preprocessing calculators and connects them to the graph input image
     // stream.
-    auto& preprocessing =
-        graph.AddNode("mediapipe.tasks.components.ImagePreprocessingSubgraph");
-    bool use_gpu = components::DetermineImagePreprocessingGpuBackend(
-        task_options.base_options().acceleration());
-    MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
+    auto& preprocessing = graph.AddNode(
+        "mediapipe.tasks.components.processors.ImagePreprocessingGraph");
+    bool use_gpu =
+        components::processors::DetermineImagePreprocessingGpuBackend(
+            task_options.base_options().acceleration());
+    MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
         model_resources, use_gpu,
-        &preprocessing
-             .GetOptions<tasks::components::ImagePreprocessingOptions>()));
+        &preprocessing.GetOptions<tasks::components::processors::proto::
+                                      ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In(kImageTag);
     norm_rect_in >> preprocessing.In(kNormRectTag);
 
@@ -174,8 +169,6 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
     // Outputs the aggregated classification result as the subgraph output
     // stream.
     return ImageClassifierOutputStreams{
-        /*classification_result=*/postprocessing[Output<ClassificationResult>(
-            kClassificationResultTag)],
         /*classifications=*/
         postprocessing[Output<ClassificationResult>(kClassificationsTag)],
         /*image=*/preprocessing[Output<Image>(kImageTag)]};

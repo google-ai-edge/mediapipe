@@ -253,7 +253,7 @@ class FunctionRegistry {
     if (names[0].empty()) {
       names.erase(names.begin());
     } else {
-      CHECK_EQ(1, names.size())
+      CHECK_EQ(1u, names.size())
           << "A registered class name must be either fully qualified "
           << "with a leading :: or unqualified, got: " << name << ".";
     }

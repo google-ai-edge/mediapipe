@@ -14,17 +14,17 @@
 """MediaPipe image classifier task."""
 
 import dataclasses
-from typing import Callable, Mapping, Optional
+from typing import Callable, Mapping, Optional, List
 
 from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet
 from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
+from mediapipe.tasks.cc.components.processors.proto import classifier_options_pb2
 from mediapipe.tasks.cc.vision.image_classifier.proto import image_classifier_graph_options_pb2
 from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
 from mediapipe.tasks.python.components.containers import rect
-from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
@@ -36,7 +36,7 @@ ImageClassifierResult = classification_result_module.ClassificationResult
 _NormalizedRect = rect.NormalizedRect
 _BaseOptions = base_options_module.BaseOptions
 _ImageClassifierGraphOptionsProto = image_classifier_graph_options_pb2.ImageClassifierGraphOptions
-_ClassifierOptions = classifier_options.ClassifierOptions
+_ClassifierOptionsProto = classifier_options_pb2.ClassifierOptions
 _RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _TaskInfo = task_info_module.TaskInfo
@@ -63,14 +63,31 @@ class ImageClassifierOptions:
       objects on single image inputs. 2) The video mode for classifying objects
       on the decoded frames of a video. 3) The live stream mode for classifying
       objects on a live stream of input data, such as from camera.
-    classifier_options: Options for the image classification task.
+    display_names_locale: The locale to use for display names specified through
+      the TFLite Model Metadata.
+    max_results: The maximum number of top-scored classification results to
+      return.
+    score_threshold: Overrides the ones provided in the model metadata. Results
+      below this value are rejected.
+    category_allowlist: Allowlist of category names. If non-empty,
+      classification results whose category name is not in this set will be
+      filtered out. Duplicate or unknown category names are ignored. Mutually
+      exclusive with `category_denylist`.
+    category_denylist: Denylist of category names. If non-empty, classification
+      results whose category name is in this set will be filtered out. Duplicate
+      or unknown category names are ignored. Mutually exclusive with
+      `category_allowlist`.
     result_callback: The user-defined result callback for processing live stream
       data. The result callback should only be specified when the running mode
       is set to the live stream mode.
   """
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
-  classifier_options: _ClassifierOptions = _ClassifierOptions()
+  display_names_locale: Optional[str] = None
+  max_results: Optional[int] = None
+  score_threshold: Optional[float] = None
+  category_allowlist: Optional[List[str]] = None
+  category_denylist: Optional[List[str]] = None
   result_callback: Optional[Callable[
       [ImageClassifierResult, image_module.Image, int], None]] = None
 
@@ -79,7 +96,12 @@ class ImageClassifierOptions:
     """Generates an ImageClassifierOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
     base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.IMAGE else True
-    classifier_options_proto = self.classifier_options.to_pb2()
+    classifier_options_proto = _ClassifierOptionsProto(
+        score_threshold=self.score_threshold,
+        category_allowlist=self.category_allowlist,
+        category_denylist=self.category_denylist,
+        display_names_locale=self.display_names_locale,
+        max_results=self.max_results)
 
     return _ImageClassifierGraphOptionsProto(
         base_options=base_options_proto,

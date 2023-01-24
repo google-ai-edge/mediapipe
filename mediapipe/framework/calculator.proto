@@ -382,7 +382,7 @@ message CalculatorGraphConfig {
   // is empty and no other nodes are running (to prevent possible deadlocks due
   // to a incorrectly specified value). This global parameter is set to 100
   // packets by default to enable pipelining. If any node indicates that it
-  // buffers packets before emitting them, then the max(node_buffer_size,
+  // buffers packets before emitting them, then the max(buffer_size_hint,
   // max_queue_size) is used. Set this parameter to -1 to disable throttling
   // (i.e. the graph will use as much memory as it requires). If not specified,
   // the limit is 100 packets.

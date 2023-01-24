@@ -14,6 +14,7 @@
 """Base options for MediaPipe Task APIs."""
 
 import dataclasses
+import os
 from typing import Any, Optional
 
 from mediapipe.tasks.cc.core.proto import base_options_pb2
@@ -49,10 +50,14 @@ class BaseOptions:
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _BaseOptionsProto:
     """Generates a BaseOptions protobuf object."""
+    if self.model_asset_path is not None:
+      full_path = os.path.abspath(self.model_asset_path)
+    else:
+      full_path = None
+
     return _BaseOptionsProto(
         model_asset=_ExternalFileProto(
-            file_name=self.model_asset_path,
-            file_content=self.model_asset_buffer))
+            file_name=full_path, file_content=self.model_asset_buffer))
 
   @classmethod
   @doc_controls.do_not_generate_docs

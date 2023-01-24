@@ -230,6 +230,43 @@ TEST_F(ImmediateInputStreamHandlerTest, StreamDoneReady) {
   input_stream_handler_->ClearCurrentInputs(cc_);
 }
 
+// This test checks that the state is ReadyForClose after all streams reach
+// Timestamp::Max.
+TEST_F(ImmediateInputStreamHandlerTest, ReadyForCloseAfterTimestampMax) {
+  Timestamp min_stream_timestamp;
+  std::list<Packet> packets;
+
+  // One packet arrives, ready for process.
+  packets.push_back(Adopt(new std::string("packet 1")).At(Timestamp(10)));
+  input_stream_handler_->AddPackets(name_to_id_["input_a"], packets);
+  EXPECT_TRUE(input_stream_handler_->ScheduleInvocations(
+      /*max_allowance=*/1, &min_stream_timestamp));
+  EXPECT_EQ(Timestamp(10), cc_->InputTimestamp());
+  input_stream_handler_->FinalizeInputSet(cc_->InputTimestamp(),
+                                          &cc_->Inputs());
+  input_stream_handler_->ClearCurrentInputs(cc_);
+
+  // No packets arrive, not ready.
+  EXPECT_FALSE(input_stream_handler_->ScheduleInvocations(
+      /*max_allowance=*/1, &min_stream_timestamp));
+  EXPECT_EQ(Timestamp::Unset(), cc_->InputTimestamp());
+
+  // Timestamp::Max arrives, ready for close.
+  input_stream_handler_->SetNextTimestampBound(
+      name_to_id_["input_a"], Timestamp::Max().NextAllowedInStream());
+  input_stream_handler_->SetNextTimestampBound(
+      name_to_id_["input_b"], Timestamp::Max().NextAllowedInStream());
+  input_stream_handler_->SetNextTimestampBound(
+      name_to_id_["input_c"], Timestamp::Max().NextAllowedInStream());
+
+  EXPECT_TRUE(input_stream_handler_->ScheduleInvocations(
+      /*max_allowance=*/1, &min_stream_timestamp));
+  EXPECT_EQ(Timestamp::Done(), cc_->InputTimestamp());
+  input_stream_handler_->FinalizeInputSet(cc_->InputTimestamp(),
+                                          &cc_->Inputs());
+  input_stream_handler_->ClearCurrentInputs(cc_);
+}
+
 // This test checks that when any stream is done, the state is ready to close.
 TEST_F(ImmediateInputStreamHandlerTest, ReadyForClose) {
   Timestamp min_stream_timestamp;

@@ -63,7 +63,6 @@ class GpuBufferStorageCvPixelBuffer
  private:
   GlTextureView GetTexture(int plane,
                            GlTextureView::DoneWritingFn done_writing) const;
-  void ViewDoneWriting(const GlTextureView& view);
 };
 
 inline CFHolder<CVPixelBufferRef> GpuBufferStorageCvPixelBuffer::GetReadView(

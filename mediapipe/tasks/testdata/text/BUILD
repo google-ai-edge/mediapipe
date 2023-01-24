@@ -18,7 +18,10 @@ load(
 )
 
 package(
-    default_visibility = ["//mediapipe/framework:mediapipe_internal"],
+    default_visibility = [
+        "//mediapipe/calculators/tensor:__subpackages__",
+        "//mediapipe/tasks:__subpackages__",
+    ],
     licenses = ["notice"],  # Apache 2.0
 )
 

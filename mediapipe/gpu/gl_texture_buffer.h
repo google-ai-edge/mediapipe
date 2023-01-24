@@ -35,7 +35,8 @@ class GlCalculatorHelperImpl;
 // Implements a GPU memory buffer as an OpenGL texture. For internal use.
 class GlTextureBuffer
     : public internal::GpuBufferStorageImpl<
-          GlTextureBuffer, internal::ViewProvider<GlTextureView>> {
+          GlTextureBuffer, internal::ViewProvider<GlTextureView>>,
+      public std::enable_shared_from_this<GlTextureBuffer> {
  public:
   // This is called when the texture buffer is deleted. It is passed a sync
   // token created at that time on the GlContext. If the GlTextureBuffer has

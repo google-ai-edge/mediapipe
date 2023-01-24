@@ -236,14 +236,21 @@ absl::Status InferenceCalculatorGlAdvancedImpl::OnDiskCacheHelper::Init(
     const mediapipe::InferenceCalculatorOptions& options,
     const mediapipe::InferenceCalculatorOptions::Delegate::Gpu&
         gpu_delegate_options) {
-  use_kernel_caching_ = gpu_delegate_options.has_cached_kernel_path();
+  // The kernel cache needs a unique filename based on either model_path or the
+  // model token, to prevent the cache from being overwritten if the graph has
+  // more than one model.
+  use_kernel_caching_ =
+      gpu_delegate_options.has_cached_kernel_path() &&
+      (options.has_model_path() || gpu_delegate_options.has_model_token());
   use_serialized_model_ = gpu_delegate_options.has_serialized_model_dir() &&
                           gpu_delegate_options.has_model_token();
 
   if (use_kernel_caching_) {
-    cached_kernel_filename_ = gpu_delegate_options.cached_kernel_path() +
-                              mediapipe::File::Basename(options.model_path()) +
-                              ".ker";
+    std::string basename = options.has_model_path()
+                               ? mediapipe::File::Basename(options.model_path())
+                               : gpu_delegate_options.model_token();
+    cached_kernel_filename_ = mediapipe::file::JoinPath(
+        gpu_delegate_options.cached_kernel_path(), basename + ".ker");
   }
   if (use_serialized_model_) {
     serialized_model_path_ =
@@ -258,9 +265,9 @@ InferenceCalculatorGlAdvancedImpl::OnDiskCacheHelper::SaveGpuCaches(
     tflite::gpu::TFLiteGPURunner* gpu_runner) const {
   if (use_kernel_caching_) {
     // Save kernel file.
-    auto kernel_cache = absl::make_unique<std::vector<uint8_t>>(
-        gpu_runner->GetSerializedBinaryCache());
-    std::string cache_str(kernel_cache->begin(), kernel_cache->end());
+    ASSIGN_OR_RETURN(std::vector<uint8_t> kernel_cache,
+                     gpu_runner->GetSerializedBinaryCache());
+    std::string cache_str(kernel_cache.begin(), kernel_cache.end());
     MP_RETURN_IF_ERROR(
         mediapipe::file::SetContents(cached_kernel_filename_, cache_str));
   }

@@ -29,6 +29,7 @@ _RunningMode = running_mode_module.AudioTaskRunningMode
 _Timestamp = timestamp_module.Timestamp
 
 
+@doc_controls.do_not_generate_docs
 class BaseAudioTaskApi(object):
   """The base class of the user-facing mediapipe audio task api classes."""
 
@@ -133,12 +134,10 @@ class BaseAudioTaskApi(object):
     """
     self._runner.close()
 
-  @doc_controls.do_not_generate_docs
   def __enter__(self):
     """Return `self` upon entering the runtime context."""
     return self
 
-  @doc_controls.do_not_generate_docs
   def __exit__(self, unused_exc_type, unused_exc_value, unused_traceback):
     """Shuts down the mediapipe audio task instance on exit of the context manager.
 

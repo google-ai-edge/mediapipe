@@ -52,7 +52,7 @@ namespace {
 using ::mediapipe::file::JoinPath;
 using ::mediapipe::tasks::components::containers::Category;
 using ::mediapipe::tasks::components::containers::Classifications;
-using ::mediapipe::tasks::components::containers::Rect;
+using ::mediapipe::tasks::components::containers::RectF;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::HasSubstr;
 using ::testing::Optional;
@@ -472,7 +472,7 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterest) {
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
   // Region-of-interest around the soccer ball.
-  Rect roi{/*left=*/0.45, /*top=*/0.3075, /*right=*/0.614, /*bottom=*/0.7345};
+  RectF roi{/*left=*/0.45, /*top=*/0.3075, /*right=*/0.614, /*bottom=*/0.7345};
   ImageProcessingOptions image_processing_options{roi, /*rotation_degrees=*/0};
 
   MP_ASSERT_OK_AND_ASSIGN(auto results, image_classifier->Classify(
@@ -526,7 +526,8 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
   // Region-of-interest around the chair, with 90° anti-clockwise rotation.
-  Rect roi{/*left=*/0.006, /*top=*/0.1763, /*right=*/0.5702, /*bottom=*/0.3049};
+  RectF roi{/*left=*/0.006, /*top=*/0.1763, /*right=*/0.5702,
+            /*bottom=*/0.3049};
   ImageProcessingOptions image_processing_options{roi,
                                                   /*rotation_degrees=*/-90};
 
@@ -554,13 +555,13 @@ TEST_F(ImageModeTest, FailsWithInvalidImageProcessingOptions) {
                           ImageClassifier::Create(std::move(options)));
 
   // Invalid: left > right.
-  Rect roi{/*left=*/0.9, /*top=*/0, /*right=*/0.1, /*bottom=*/1};
+  RectF roi{/*left=*/0.9, /*top=*/0, /*right=*/0.1, /*bottom=*/1};
   ImageProcessingOptions image_processing_options{roi,
                                                   /*rotation_degrees=*/0};
   auto results = image_classifier->Classify(image, image_processing_options);
   EXPECT_EQ(results.status().code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(results.status().message(),
-              HasSubstr("Expected Rect with left < right and top < bottom"));
+              HasSubstr("Expected RectF with left < right and top < bottom"));
   EXPECT_THAT(
       results.status().GetPayload(kMediaPipeTasksPayload),
       Optional(absl::Cord(absl::StrCat(
@@ -573,7 +574,7 @@ TEST_F(ImageModeTest, FailsWithInvalidImageProcessingOptions) {
   results = image_classifier->Classify(image, image_processing_options);
   EXPECT_EQ(results.status().code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(results.status().message(),
-              HasSubstr("Expected Rect with left < right and top < bottom"));
+              HasSubstr("Expected RectF with left < right and top < bottom"));
   EXPECT_THAT(
       results.status().GetPayload(kMediaPipeTasksPayload),
       Optional(absl::Cord(absl::StrCat(
@@ -586,7 +587,7 @@ TEST_F(ImageModeTest, FailsWithInvalidImageProcessingOptions) {
   results = image_classifier->Classify(image, image_processing_options);
   EXPECT_EQ(results.status().code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(results.status().message(),
-              HasSubstr("Expected Rect values to be in [0,1]"));
+              HasSubstr("Expected RectF values to be in [0,1]"));
   EXPECT_THAT(
       results.status().GetPayload(kMediaPipeTasksPayload),
       Optional(absl::Cord(absl::StrCat(
@@ -695,7 +696,7 @@ TEST_F(VideoModeTest, SucceedsWithRegionOfInterest) {
                           ImageClassifier::Create(std::move(options)));
   // Crop around the soccer ball.
   // Region-of-interest around the soccer ball.
-  Rect roi{/*left=*/0.45, /*top=*/0.3075, /*right=*/0.614, /*bottom=*/0.7345};
+  RectF roi{/*left=*/0.45, /*top=*/0.3075, /*right=*/0.614, /*bottom=*/0.7345};
   ImageProcessingOptions image_processing_options{roi, /*rotation_degrees=*/0};
 
   for (int i = 0; i < iterations; ++i) {
@@ -837,7 +838,7 @@ TEST_F(LiveStreamModeTest, SucceedsWithRegionOfInterest) {
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
   // Crop around the soccer ball.
-  Rect roi{/*left=*/0.45, /*top=*/0.3075, /*right=*/0.614, /*bottom=*/0.7345};
+  RectF roi{/*left=*/0.45, /*top=*/0.3075, /*right=*/0.614, /*bottom=*/0.7345};
   ImageProcessingOptions image_processing_options{roi, /*rotation_degrees=*/0};
 
   for (int i = 0; i < iterations; ++i) {

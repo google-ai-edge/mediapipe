@@ -15,8 +15,8 @@
  */
 
 import {ClassifierOptions} from '../../../../tasks/web/core/classifier_options';
-import {TextTaskOptions} from '../../../../tasks/web/text/core/text_task_options';
+import {TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options';
 
 /** Options to configure the MediaPipe Text Classifier Task */
 export declare interface TextClassifierOptions extends ClassifierOptions,
-                                                       TextTaskOptions {}
+                                                       TaskRunnerOptions {}

@@ -66,26 +66,28 @@ std::string GetFieldString(const FieldData& message_data,
 void RegisterDescriptorProtos(
     absl::flat_hash_map<std::string, Descriptor>& result) {
   std::vector<Descriptor> descriptors = {
-      {"proto2.FileDescriptorSet",
+      {"google::protobuf.FileDescriptorSet",
        {
-           {"file", 1, FieldType::TYPE_MESSAGE, "proto2.FileDescriptorProto"},
+           {"file", 1, FieldType::TYPE_MESSAGE,
+            "google::protobuf.FileDescriptorProto"},
        }},
-      {"proto2.FileDescriptorProto",
+      {"google::protobuf.FileDescriptorProto",
        {
            {"package", 2, FieldType::TYPE_STRING, ""},
            {"message_type", 4, FieldType::TYPE_MESSAGE,
-            "proto2.DescriptorProto"},
+            "google::protobuf.DescriptorProto"},
        }},
-      {"proto2.DescriptorProto",
+      {"google::protobuf.DescriptorProto",
        {
            {"name", 1, FieldType::TYPE_STRING, ""},
-           {"field", 2, FieldType::TYPE_MESSAGE, "proto2.FieldDescriptorProto"},
+           {"field", 2, FieldType::TYPE_MESSAGE,
+            "google::protobuf.FieldDescriptorProto"},
            {"extension", 6, FieldType::TYPE_MESSAGE,
-            "proto2.FieldDescriptorProto"},
+            "google::protobuf.FieldDescriptorProto"},
            {"nested_type", 3, FieldType::TYPE_MESSAGE,
-            "proto2.DescriptorProto"},
+            "google::protobuf.DescriptorProto"},
        }},
-      {"proto2.FieldDescriptorProto",
+      {"google::protobuf.FieldDescriptorProto",
        {
            {"name", 1, FieldType::TYPE_STRING, ""},
            {"number", 3, FieldType::TYPE_INT32, ""},
@@ -140,7 +142,7 @@ void OptionsRegistry::Register(const FieldData& message_type,
 
 const Descriptor* OptionsRegistry::GetProtobufDescriptor(
     const std::string& type_name) {
-  if (descriptors().count("proto2.DescriptorProto") == 0) {
+  if (descriptors().count("google::protobuf.DescriptorProto") == 0) {
     RegisterDescriptorProtos(descriptors());
   }
   absl::ReaderMutexLock lock(&mutex());

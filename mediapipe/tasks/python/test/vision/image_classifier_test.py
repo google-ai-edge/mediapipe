@@ -26,7 +26,6 @@ from mediapipe.python._framework_bindings import image
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
 from mediapipe.tasks.python.components.containers import rect
-from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import image_classifier
@@ -36,7 +35,6 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode
 ImageClassifierResult = classification_result_module.ClassificationResult
 _Rect = rect.Rect
 _BaseOptions = base_options_module.BaseOptions
-_ClassifierOptions = classifier_options.ClassifierOptions
 _Category = category_module.Category
 _Classifications = classification_result_module.Classifications
 _Image = image.Image
@@ -63,7 +61,7 @@ def _generate_empty_results() -> ImageClassifierResult:
       timestamp_ms=0)
 
 
-def _generate_burger_results() -> ImageClassifierResult:
+def _generate_burger_results(timestamp_ms=0) -> ImageClassifierResult:
   return ImageClassifierResult(
       classifications=[
           _Classifications(
@@ -72,30 +70,36 @@ def _generate_burger_results() -> ImageClassifierResult:
                       index=934,
                       score=0.793959,
                       display_name='',
-                      category_name='cheeseburger'),
+                      category_name='cheeseburger',
+                  ),
                   _Category(
                       index=932,
                       score=0.0273929,
                       display_name='',
-                      category_name='bagel'),
+                      category_name='bagel',
+                  ),
                   _Category(
                       index=925,
                       score=0.0193408,
                       display_name='',
-                      category_name='guacamole'),
+                      category_name='guacamole',
+                  ),
                   _Category(
                       index=963,
                       score=0.00632786,
                       display_name='',
-                      category_name='meat loaf')
+                      category_name='meat loaf',
+                  ),
               ],
               head_index=0,
-              head_name='probability')
+              head_name='probability',
+          )
       ],
-      timestamp_ms=0)
+      timestamp_ms=timestamp_ms,
+  )
 
 
-def _generate_soccer_ball_results() -> ImageClassifierResult:
+def _generate_soccer_ball_results(timestamp_ms=0) -> ImageClassifierResult:
   return ImageClassifierResult(
       classifications=[
           _Classifications(
@@ -104,12 +108,15 @@ def _generate_soccer_ball_results() -> ImageClassifierResult:
                       index=806,
                       score=0.996527,
                       display_name='',
-                      category_name='soccer ball')
+                      category_name='soccer ball',
+                  )
               ],
               head_index=0,
-              head_name='probability')
+              head_name='probability',
+          )
       ],
-      timestamp_ms=0)
+      timestamp_ms=timestamp_ms,
+  )
 
 
 class ModelFileType(enum.Enum):
@@ -171,9 +178,8 @@ class ImageClassifierTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
-    custom_classifier_options = _ClassifierOptions(max_results=max_results)
     options = _ImageClassifierOptions(
-        base_options=base_options, classifier_options=custom_classifier_options)
+        base_options=base_options, max_results=max_results)
     classifier = _ImageClassifier.create_from_options(options)
 
     # Performs image classification on the input.
@@ -200,9 +206,8 @@ class ImageClassifierTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
-    custom_classifier_options = _ClassifierOptions(max_results=max_results)
     options = _ImageClassifierOptions(
-        base_options=base_options, classifier_options=custom_classifier_options)
+        base_options=base_options, max_results=max_results)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
@@ -212,9 +217,7 @@ class ImageClassifierTest(parameterized.TestCase):
 
   def test_classify_succeeds_with_region_of_interest(self):
     base_options = _BaseOptions(model_asset_path=self.model_path)
-    custom_classifier_options = _ClassifierOptions(max_results=1)
-    options = _ImageClassifierOptions(
-        base_options=base_options, classifier_options=custom_classifier_options)
+    options = _ImageClassifierOptions(base_options=base_options, max_results=1)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Load the test image.
       test_image = _Image.create_from_file(
@@ -230,11 +233,9 @@ class ImageClassifierTest(parameterized.TestCase):
                                      _generate_soccer_ball_results().to_pb2())
 
   def test_score_threshold_option(self):
-    custom_classifier_options = _ClassifierOptions(
-        score_threshold=_SCORE_THRESHOLD)
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
-        classifier_options=custom_classifier_options)
+        score_threshold=_SCORE_THRESHOLD)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
@@ -249,11 +250,9 @@ class ImageClassifierTest(parameterized.TestCase):
               f'{classification}')
 
   def test_max_results_option(self):
-    custom_classifier_options = _ClassifierOptions(
-        score_threshold=_SCORE_THRESHOLD)
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
-        classifier_options=custom_classifier_options)
+        score_threshold=_SCORE_THRESHOLD)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
@@ -263,11 +262,9 @@ class ImageClassifierTest(parameterized.TestCase):
           len(categories), _MAX_RESULTS, 'Too many results returned.')
 
   def test_allow_list_option(self):
-    custom_classifier_options = _ClassifierOptions(
-        category_allowlist=_ALLOW_LIST)
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
-        classifier_options=custom_classifier_options)
+        category_allowlist=_ALLOW_LIST)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
@@ -280,10 +277,9 @@ class ImageClassifierTest(parameterized.TestCase):
                         f'Label {label} found but not in label allow list')
 
   def test_deny_list_option(self):
-    custom_classifier_options = _ClassifierOptions(category_denylist=_DENY_LIST)
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
-        classifier_options=custom_classifier_options)
+        category_denylist=_DENY_LIST)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
@@ -301,19 +297,17 @@ class ImageClassifierTest(parameterized.TestCase):
         ValueError,
         r'`category_allowlist` and `category_denylist` are mutually '
         r'exclusive options.'):
-      custom_classifier_options = _ClassifierOptions(
-          category_allowlist=['foo'], category_denylist=['bar'])
       options = _ImageClassifierOptions(
           base_options=_BaseOptions(model_asset_path=self.model_path),
-          classifier_options=custom_classifier_options)
+          category_allowlist=['foo'],
+          category_denylist=['bar'])
       with _ImageClassifier.create_from_options(options) as unused_classifier:
         pass
 
   def test_empty_classification_outputs(self):
-    custom_classifier_options = _ClassifierOptions(score_threshold=1)
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
-        classifier_options=custom_classifier_options)
+        score_threshold=1)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Performs image classification on the input.
       image_result = classifier.classify(self.test_image)
@@ -386,24 +380,25 @@ class ImageClassifierTest(parameterized.TestCase):
         classifier.classify_for_video(self.test_image, 0)
 
   def test_classify_for_video(self):
-    custom_classifier_options = _ClassifierOptions(max_results=4)
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.VIDEO,
-        classifier_options=custom_classifier_options)
+        max_results=4)
     with _ImageClassifier.create_from_options(options) as classifier:
       for timestamp in range(0, 300, 30):
         classification_result = classifier.classify_for_video(
             self.test_image, timestamp)
-        test_utils.assert_proto_equals(self, classification_result.to_pb2(),
-                                       _generate_burger_results().to_pb2())
+        test_utils.assert_proto_equals(
+            self,
+            classification_result.to_pb2(),
+            _generate_burger_results(timestamp).to_pb2(),
+        )
 
   def test_classify_for_video_succeeds_with_region_of_interest(self):
-    custom_classifier_options = _ClassifierOptions(max_results=1)
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.VIDEO,
-        classifier_options=custom_classifier_options)
+        max_results=1)
     with _ImageClassifier.create_from_options(options) as classifier:
       # Load the test image.
       test_image = _Image.create_from_file(
@@ -415,8 +410,11 @@ class ImageClassifierTest(parameterized.TestCase):
       for timestamp in range(0, 300, 30):
         classification_result = classifier.classify_for_video(
             test_image, timestamp, image_processing_options)
-        test_utils.assert_proto_equals(self, classification_result.to_pb2(),
-                                       _generate_soccer_ball_results().to_pb2())
+        test_utils.assert_proto_equals(
+            self,
+            classification_result.to_pb2(),
+            _generate_soccer_ball_results(timestamp).to_pb2(),
+        )
 
   def test_calling_classify_in_live_stream_mode(self):
     options = _ImageClassifierOptions(
@@ -439,11 +437,10 @@ class ImageClassifierTest(parameterized.TestCase):
         classifier.classify_for_video(self.test_image, 0)
 
   def test_classify_async_calls_with_illegal_timestamp(self):
-    custom_classifier_options = _ClassifierOptions(max_results=4)
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.LIVE_STREAM,
-        classifier_options=custom_classifier_options,
+        max_results=4,
         result_callback=mock.MagicMock())
     with _ImageClassifier.create_from_options(options) as classifier:
       classifier.classify_async(self.test_image, 100)
@@ -466,16 +463,14 @@ class ImageClassifierTest(parameterized.TestCase):
       self.assertLess(observed_timestamp_ms, timestamp_ms)
       self.observed_timestamp_ms = timestamp_ms
 
-    custom_classifier_options = _ClassifierOptions(
-        max_results=4, score_threshold=threshold)
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.LIVE_STREAM,
-        classifier_options=custom_classifier_options,
+        max_results=4,
+        score_threshold=threshold,
         result_callback=check_result)
     with _ImageClassifier.create_from_options(options) as classifier:
-      for timestamp in range(0, 300, 30):
-        classifier.classify_async(self.test_image, timestamp)
+      classifier.classify_async(self.test_image, 0)
 
   def test_classify_async_succeeds_with_region_of_interest(self):
     # Load the test image.
@@ -489,23 +484,21 @@ class ImageClassifierTest(parameterized.TestCase):
 
     def check_result(result: ImageClassifierResult, output_image: _Image,
                      timestamp_ms: int):
-      test_utils.assert_proto_equals(self, result.to_pb2(),
-                                     _generate_soccer_ball_results().to_pb2())
+      test_utils.assert_proto_equals(
+          self, result.to_pb2(), _generate_soccer_ball_results(100).to_pb2()
+      )
       self.assertEqual(output_image.width, test_image.width)
       self.assertEqual(output_image.height, test_image.height)
       self.assertLess(observed_timestamp_ms, timestamp_ms)
       self.observed_timestamp_ms = timestamp_ms
 
-    custom_classifier_options = _ClassifierOptions(max_results=1)
     options = _ImageClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
         running_mode=_RUNNING_MODE.LIVE_STREAM,
-        classifier_options=custom_classifier_options,
+        max_results=1,
         result_callback=check_result)
     with _ImageClassifier.create_from_options(options) as classifier:
-      for timestamp in range(0, 300, 30):
-        classifier.classify_async(test_image, timestamp,
-                                  image_processing_options)
+      classifier.classify_async(test_image, 100, image_processing_options)
 
 
 if __name__ == '__main__':

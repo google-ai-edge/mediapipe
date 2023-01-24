@@ -13,6 +13,13 @@
 # limitations under the License.
 """MediaPipe Tasks' common but optional dependencies."""
 
-doc_controls = lambda: None
-no_op = lambda x: x
-setattr(doc_controls, 'do_not_generate_docs', no_op)
+# TensorFlow isn't a dependency of mediapipe pip package. It's only
+# required in the API docgen pipeline so we'll ignore it if tensorflow is not
+# installed.
+try:
+  from tensorflow.tools.docs import doc_controls
+except ModuleNotFoundError:
+  # Replace the real doc_controls.do_not_generate_docs with an no-op
+  doc_controls = lambda: None
+  no_op = lambda x: x
+  setattr(doc_controls, 'do_not_generate_docs', no_op)

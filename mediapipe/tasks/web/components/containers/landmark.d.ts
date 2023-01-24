@@ -15,10 +15,27 @@
  */
 
 /**
- * Landmark represents a point in 3D space with x, y, z coordinates. If
- * normalized is true, the landmark coordinates is normalized respect to the
- * dimension of image, and the coordinates values are in the range of [0,1].
- * Otherwise, it represenet a point in world coordinates.
+ * Normalized Landmark represents a point in 3D space with x, y, z coordinates.
+ * x and y are normalized to [0.0, 1.0] by the image width and height
+ * respectively. z represents the landmark depth, and the smaller the value the
+ * closer the landmark is to the camera. The magnitude of z uses roughly the
+ * same scale as x.
+ */
+export declare interface NormalizedLandmark {
+  /** The x coordinates of the normalized landmark. */
+  x: number;
+
+  /** The y coordinates of the normalized landmark. */
+  y: number;
+
+  /** The z coordinates of the normalized landmark. */
+  z: number;
+}
+
+/**
+ * Landmark represents a point in 3D space with x, y, z coordinates. The
+ * landmark coordinates are in meters. z represents the landmark depth,
+ * and the smaller the value the closer the world landmark is to the camera.
  */
 export declare interface Landmark {
   /** The x coordinates of the landmark. */
@@ -29,7 +46,4 @@ export declare interface Landmark {
 
   /** The z coordinates of the landmark. */
   z: number;
-
-  /** Whether this landmark is normalized with respect to the image size. */
-  normalized: boolean;
 }

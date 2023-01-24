@@ -24,13 +24,14 @@ namespace mediapipe {
 
 class GpuTestBase : public ::testing::Test {
  protected:
-  GpuTestBase() { helper_.InitializeForTest(&gpu_shared_); }
+  GpuTestBase() { helper_.InitializeForTest(gpu_resources_.get()); }
 
   void RunInGlContext(std::function<void(void)> gl_func) {
     helper_.RunInGlContext(std::move(gl_func));
   }
 
   GpuSharedData gpu_shared_;
+  std::shared_ptr<GpuResources> gpu_resources_ = gpu_shared_.gpu_resources;
   GlCalculatorHelper helper_;
 };
 

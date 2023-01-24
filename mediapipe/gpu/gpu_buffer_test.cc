@@ -14,10 +14,13 @@
 
 #include "mediapipe/gpu/gpu_buffer.h"
 
+#include <utility>
+
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/tool/test_util.h"
+#include "mediapipe/gpu/gl_texture_buffer.h"
 #include "mediapipe/gpu/gl_texture_util.h"
 #include "mediapipe/gpu/gpu_buffer_storage_ahwb.h"
 #include "mediapipe/gpu/gpu_buffer_storage_image_frame.h"
@@ -204,6 +207,47 @@ TEST_F(GpuBufferTest, Overwrite) {
     MP_EXPECT_OK(SavePngTestOutput(blue, "ow_blue_gold"));
     MP_EXPECT_OK(SavePngTestOutput(*view, "ow_blue_view"));
   }
+}
+
+TEST_F(GpuBufferTest, GlTextureViewRetainsWhatItNeeds) {
+  GpuBuffer buffer(300, 200, GpuBufferFormat::kBGRA32);
+  {
+    std::shared_ptr<ImageFrame> view = buffer.GetWriteView<ImageFrame>();
+    EXPECT_EQ(view->Width(), 300);
+    EXPECT_EQ(view->Height(), 200);
+    FillImageFrameRGBA(*view, 255, 0, 0, 255);
+  }
+
+  RunInGlContext([buffer = std::move(buffer)]() mutable {
+    // This is not a recommended pattern, but let's make sure that we don't
+    // crash if the buffer is released before the view. The view can hold
+    // callbacks into its underlying storage.
+    auto view = buffer.GetReadView<GlTextureView>(0);
+    buffer = nullptr;
+  });
+  // We're really checking that we haven't crashed.
+  EXPECT_TRUE(true);
+}
+
+TEST_F(GpuBufferTest, CopiesShareConversions) {
+  GpuBuffer buffer(300, 200, GpuBufferFormat::kBGRA32);
+  {
+    std::shared_ptr<ImageFrame> view = buffer.GetWriteView<ImageFrame>();
+    FillImageFrameRGBA(*view, 255, 0, 0, 255);
+  }
+
+  GpuBuffer other_handle = buffer;
+  RunInGlContext([&buffer] {
+    TempGlFramebuffer fb;
+    auto view = buffer.GetReadView<GlTextureView>(0);
+  });
+
+  // Check that other_handle also sees the same GlTextureBuffer as buffer.
+  // Note that this is deliberately written so that it still passes on platforms
+  // where we use another storage for GL textures (they will both be null).
+  // TODO: expose more accessors for testing?
+  EXPECT_EQ(other_handle.internal_storage<GlTextureBuffer>(),
+            buffer.internal_storage<GlTextureBuffer>());
 }
 
 }  // anonymous namespace

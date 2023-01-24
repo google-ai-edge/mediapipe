@@ -23,7 +23,7 @@ from mediapipe.model_maker.python.vision.gesture_recognizer import metadata_writ
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer as base_metadata_writer
 from mediapipe.tasks.python.test import test_utils
 
-_TEST_DATA_DIR = "mediapipe/model_maker/python/vision/gesture_recognizer/test_data/metadata"
+_TEST_DATA_DIR = "mediapipe/model_maker/python/vision/gesture_recognizer/testdata/metadata"
 
 _EXPECTED_JSON = test_utils.get_test_data_path(
     os.path.join(_TEST_DATA_DIR, "custom_gesture_classifier_meta.json"))
@@ -32,6 +32,23 @@ _CUSTOM_GESTURE_CLASSIFIER_PATH = test_utils.get_test_data_path(
 
 
 class MetadataWriterTest(tf.test.TestCase):
+
+  def test_hand_landmarker_metadata_writer(self):
+    # Use dummy model buffer for unit test only.
+    hand_detector_model_buffer = b"\x11\x12"
+    hand_landmarks_detector_model_buffer = b"\x22"
+    writer = metadata_writer.HandLandmarkerMetadataWriter(
+        hand_detector_model_buffer, hand_landmarks_detector_model_buffer)
+    model_bundle_content = writer.populate()
+    model_bundle_filepath = os.path.join(self.get_temp_dir(),
+                                         "hand_landmarker.task")
+    with open(model_bundle_filepath, "wb") as f:
+      f.write(model_bundle_content)
+
+    with zipfile.ZipFile(model_bundle_filepath) as zf:
+      self.assertEqual(
+          set(zf.namelist()),
+          set(["hand_landmarks_detector.tflite", "hand_detector.tflite"]))
 
   def test_write_metadata_and_create_model_asset_bundle_successful(self):
     # Use dummy model buffer for unit test only.

@@ -55,7 +55,7 @@ absl::Status GetLatestDirectory(std::string* path) {
 }
 
 // If options.convert_signature_to_tags() is set, will convert letters to
-// uppercase and replace /'s and -'s with _'s. This enables the standard
+// uppercase and replace /, -, . and :'s with _'s. This enables the standard
 // SavedModel classification, regression, and prediction signatures to be used
 // as uppercase INPUTS and OUTPUTS tags for streams and supports other common
 // patterns.
@@ -67,9 +67,8 @@ const std::string MaybeConvertSignatureToTag(
     output.resize(name.length());
     std::transform(name.begin(), name.end(), output.begin(),
                    [](unsigned char c) { return std::toupper(c); });
-    output = absl::StrReplaceAll(output, {{"/", "_"}});
-    output = absl::StrReplaceAll(output, {{"-", "_"}});
-    output = absl::StrReplaceAll(output, {{".", "_"}});
+    output = absl::StrReplaceAll(
+        output, {{"/", "_"}, {"-", "_"}, {".", "_"}, {":", "_"}});
     LOG(INFO) << "Renamed TAG from: " << name << " to " << output;
     return output;
   } else {

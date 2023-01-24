@@ -280,6 +280,13 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
       audio_dsp::HammingWindow().GetPeriodicSamples(frame_duration_samples_,
                                                     &window);
       break;
+    case SpectrogramCalculatorOptions::SQRT_HANN: {
+      audio_dsp::HannWindow().GetPeriodicSamples(frame_duration_samples_,
+                                                 &window);
+      absl::c_transform(window, window.begin(),
+                        [](double x) { return std::sqrt(x); });
+      break;
+    }
   }
 
   // Propagate settings down to the actual Spectrogram object.

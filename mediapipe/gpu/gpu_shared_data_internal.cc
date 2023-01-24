@@ -21,7 +21,7 @@
 #include "mediapipe/gpu/graph_support.h"
 
 #if __APPLE__
-#import "mediapipe/gpu/MPPGraphGPUData.h"
+#include "mediapipe/gpu/metal_shared_resources.h"
 #endif  // __APPLE__
 
 namespace mediapipe {
@@ -97,15 +97,14 @@ GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context)
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   texture_caches_->RegisterTextureCache(gl_context->cv_texture_cache());
 #endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
-  ios_gpu_data_ = [[MPPGraphGPUData alloc] initWithContext:gl_context.get()
-                                                 multiPool:&gpu_buffer_pool_];
+  metal_shared_ = std::make_unique<MetalSharedResources>();
 #endif  // __APPLE__
 }
 
 GpuResources::~GpuResources() {
 #if __APPLE__
-  // Note: on Apple platforms, this object contains Objective-C objects. The
-  // destructor will release them, but ARC must be on.
+  // Note: on Apple platforms, this object contains Objective-C objects.
+  // The destructor will release them, but ARC must be on.
 #if !__has_feature(objc_arc)
 #error This file must be built with ARC.
 #endif
@@ -195,10 +194,6 @@ GlContext::StatusOrGlContext GpuResources::GetOrCreateGlContext(
 }
 
 GpuSharedData::GpuSharedData() : GpuSharedData(kPlatformGlContextNone) {}
-
-#if __APPLE__
-MPPGraphGPUData* GpuResources::ios_gpu_data() { return ios_gpu_data_; }
-#endif  // __APPLE__
 
 extern const GraphService<GpuResources> kGpuService;
 

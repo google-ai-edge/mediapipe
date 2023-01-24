@@ -59,6 +59,8 @@ class MultiPool {
   MultiPool(SimplePoolFactory factory = DefaultMakeSimplePool,
             MultiPoolOptions options = kDefaultMultiPoolOptions)
       : create_simple_pool_(factory), options_(options) {}
+  explicit MultiPool(MultiPoolOptions options)
+      : MultiPool(DefaultMakeSimplePool, options) {}
 
   // Obtains an item. May either be reused or created anew.
   Item Get(const Spec& spec);

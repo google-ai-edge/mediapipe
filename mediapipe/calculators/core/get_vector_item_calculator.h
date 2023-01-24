@@ -47,7 +47,7 @@ namespace api2 {
 //     calculator: "Get{SpecificType}VectorItemCalculator"
 //     input_stream: "VECTOR:vector"
 //     input_stream: "INDEX:index"
-//     input_stream: "ITEM:item"
+//     output_stream: "ITEM:item"
 //     options {
 //       [mediapipe.GetVectorItemCalculatorOptions.ext] {
 //         item_index: 5
@@ -65,6 +65,7 @@ class GetVectorItemCalculator : public Node {
   MEDIAPIPE_NODE_CONTRACT(kIn, kIdx, kOut);
 
   absl::Status Open(CalculatorContext* cc) final {
+    cc->SetOffset(mediapipe::TimestampDiff(0));
     auto& options = cc->Options<mediapipe::GetVectorItemCalculatorOptions>();
     RET_CHECK(kIdx(cc).IsConnected() || options.has_item_index());
     return absl::OkStatus();
@@ -90,8 +91,12 @@ class GetVectorItemCalculator : public Node {
       return absl::OkStatus();
     }
 
-    RET_CHECK(idx >= 0 && idx < items.size());
-    kOut(cc).Send(items[idx]);
+    RET_CHECK(idx >= 0);
+    RET_CHECK(options.output_empty_on_oob() || idx < items.size());
+
+    if (idx < items.size()) {
+      kOut(cc).Send(items[idx]);
+    }
 
     return absl::OkStatus();
   }

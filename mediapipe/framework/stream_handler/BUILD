@@ -13,40 +13,36 @@
 # limitations under the License.
 #
 
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+
 licenses(["notice"])
 
 package(
-    default_visibility = ["//visibility:private"],
+    default_visibility = ["//visibility:public"],
     features = ["-layering_check"],
 )
-
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
 proto_library(
     name = "default_input_stream_handler_proto",
     srcs = ["default_input_stream_handler.proto"],
-    visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
 )
 
 proto_library(
     name = "fixed_size_input_stream_handler_proto",
     srcs = ["fixed_size_input_stream_handler.proto"],
-    visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
 )
 
 proto_library(
     name = "sync_set_input_stream_handler_proto",
     srcs = ["sync_set_input_stream_handler.proto"],
-    visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
 )
 
 proto_library(
     name = "timestamp_align_input_stream_handler_proto",
     srcs = ["timestamp_align_input_stream_handler.proto"],
-    visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
 )
 
@@ -54,7 +50,6 @@ mediapipe_cc_proto_library(
     name = "default_input_stream_handler_cc_proto",
     srcs = ["default_input_stream_handler.proto"],
     cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = [":default_input_stream_handler_proto"],
 )
 
@@ -62,7 +57,6 @@ mediapipe_cc_proto_library(
     name = "fixed_size_input_stream_handler_cc_proto",
     srcs = ["fixed_size_input_stream_handler.proto"],
     cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = [":fixed_size_input_stream_handler_proto"],
 )
 
@@ -70,7 +64,6 @@ mediapipe_cc_proto_library(
     name = "sync_set_input_stream_handler_cc_proto",
     srcs = ["sync_set_input_stream_handler.proto"],
     cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = [":sync_set_input_stream_handler_proto"],
 )
 
@@ -78,14 +71,12 @@ mediapipe_cc_proto_library(
     name = "timestamp_align_input_stream_handler_cc_proto",
     srcs = ["timestamp_align_input_stream_handler.proto"],
     cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = [":timestamp_align_input_stream_handler_proto"],
 )
 
 cc_library(
     name = "barrier_input_stream_handler",
     srcs = ["barrier_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:input_stream_handler",
     ],
@@ -96,10 +87,9 @@ cc_library(
     name = "default_input_stream_handler",
     srcs = ["default_input_stream_handler.cc"],
     hdrs = ["default_input_stream_handler.h"],
-    visibility = ["//visibility:public"],
     deps = [
+        ":default_input_stream_handler_cc_proto",
         "//mediapipe/framework:input_stream_handler",
-        "//mediapipe/framework/stream_handler:default_input_stream_handler_cc_proto",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -108,7 +98,6 @@ cc_library(
 cc_library(
     name = "early_close_input_stream_handler",
     srcs = ["early_close_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:input_stream_handler",
         "@com_google_absl//absl/strings",
@@ -119,11 +108,10 @@ cc_library(
 cc_library(
     name = "fixed_size_input_stream_handler",
     srcs = ["fixed_size_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         ":default_input_stream_handler",
+        ":fixed_size_input_stream_handler_cc_proto",
         "//mediapipe/framework:input_stream_handler",
-        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler_cc_proto",
     ],
     alwayslink = 1,
 )
@@ -131,7 +119,6 @@ cc_library(
 cc_library(
     name = "immediate_input_stream_handler",
     srcs = ["immediate_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:input_stream_handler",
     ],
@@ -142,7 +129,6 @@ cc_library(
     name = "in_order_output_stream_handler",
     srcs = ["in_order_output_stream_handler.cc"],
     hdrs = ["in_order_output_stream_handler.h"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:collection",
         "//mediapipe/framework:collection_item_id",
@@ -160,7 +146,6 @@ cc_library(
 cc_library(
     name = "mux_input_stream_handler",
     srcs = ["mux_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:input_stream_handler",
         "//mediapipe/framework/port:logging",
@@ -173,15 +158,14 @@ cc_library(
 cc_library(
     name = "sync_set_input_stream_handler",
     srcs = ["sync_set_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
+        ":sync_set_input_stream_handler_cc_proto",
         "//mediapipe/framework:collection",
         "//mediapipe/framework:collection_item_id",
         "//mediapipe/framework:input_stream_handler",
         "//mediapipe/framework:mediapipe_options_cc_proto",
         "//mediapipe/framework:packet_set",
         "//mediapipe/framework:timestamp",
-        "//mediapipe/framework/stream_handler:sync_set_input_stream_handler_cc_proto",
         "//mediapipe/framework/tool:tag_map",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
@@ -192,12 +176,11 @@ cc_library(
 cc_library(
     name = "timestamp_align_input_stream_handler",
     srcs = ["timestamp_align_input_stream_handler.cc"],
-    visibility = ["//visibility:public"],
     deps = [
+        ":timestamp_align_input_stream_handler_cc_proto",
         "//mediapipe/framework:collection_item_id",
         "//mediapipe/framework:input_stream_handler",
         "//mediapipe/framework:timestamp",
-        "//mediapipe/framework/stream_handler:timestamp_align_input_stream_handler_cc_proto",
         "//mediapipe/framework/tool:validate_name",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
@@ -260,6 +243,7 @@ cc_test(
     srcs = ["set_input_stream_handler_test.cc"],
     deps = [
         ":fixed_size_input_stream_handler",
+        ":fixed_size_input_stream_handler_cc_proto",
         ":mux_input_stream_handler",
         "//mediapipe/calculators/core:mux_calculator",
         "//mediapipe/calculators/core:pass_through_calculator",
@@ -268,7 +252,6 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler_cc_proto",
     ],
 )
 
@@ -289,13 +272,13 @@ cc_test(
     srcs = ["fixed_size_input_stream_handler_test.cc"],
     deps = [
         ":fixed_size_input_stream_handler",
+        ":fixed_size_input_stream_handler_cc_proto",
         "//mediapipe/calculators/core:counting_source_calculator",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/synchronization",
     ],
@@ -306,11 +289,11 @@ cc_test(
     srcs = ["sync_set_input_stream_handler_test.cc"],
     deps = [
         ":sync_set_input_stream_handler",
+        ":sync_set_input_stream_handler_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:test_calculators",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/stream_handler:sync_set_input_stream_handler_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",

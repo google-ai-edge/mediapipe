@@ -23,6 +23,8 @@ namespace {
 constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kNormReferenceRectTag[] = "NORM_REFERENCE_RECT";
 
+using ::mediapipe::NormalizedRect;
+
 }  // namespace
 
 // Projects rectangle from reference coordinate system (defined by reference

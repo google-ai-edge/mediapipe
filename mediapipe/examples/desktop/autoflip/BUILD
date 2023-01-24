@@ -18,6 +18,8 @@ licenses(["notice"])
 
 package(default_visibility = [
     "//mediapipe/examples:__subpackages__",
+    "//photos/editing/mobile/mediapipe/calculators:__subpackages__",
+    "//photos/editing/mobile/mediapipe/proto:__subpackages__",
 ])
 
 proto_library(
@@ -30,6 +32,10 @@ proto_library(
 
 java_lite_proto_library(
     name = "autoflip_messages_java_proto_lite",
+    visibility = [
+        "//java/com/google/android/apps/photos:__subpackages__",
+        "//javatests/com/google/android/apps/photos:__subpackages__",
+    ],
     deps = [
         ":autoflip_messages_proto",
     ],
@@ -41,6 +47,8 @@ mediapipe_cc_proto_library(
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
     visibility = [
         "//mediapipe/examples:__subpackages__",
+        "//photos/editing/mobile/mediapipe/calculators:__pkg__",
+        "//photos/editing/mobile/mediapipe/calculators:__subpackages__",
     ],
     deps = [":autoflip_messages_proto"],
 )

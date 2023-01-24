@@ -26,4 +26,7 @@ message GetVectorItemCalculatorOptions {
   // Index of vector item to get. INDEX input stream can be used instead, or to
   // override.
   optional int32 item_index = 1;
+
+  // Set to true to output an empty packet when the index is out of bounds.
+  optional bool output_empty_on_oob = 2;
 }

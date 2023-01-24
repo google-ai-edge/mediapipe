@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-import {BaseOptions} from '../../../../tasks/web/core/base_options';
+import {TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options';
 
 /**
  * The two running modes of a vision task.
  * 1) The image mode for processing single image inputs.
  * 2) The video mode for processing decoded frames of a video.
  */
-export type RunningMode = 'image'|'video';
-
+export type RunningMode = 'IMAGE'|'VIDEO';
 
 /** The options for configuring a MediaPipe vision task. */
-export declare interface VisionTaskOptions {
-  /** Options to configure the loading of the model assets. */
-  baseOptions?: BaseOptions;
-
+export declare interface VisionTaskOptions extends TaskRunnerOptions {
   /**
    * The running mode of the task. Default to the image mode.
    * Vision tasks have two running modes:

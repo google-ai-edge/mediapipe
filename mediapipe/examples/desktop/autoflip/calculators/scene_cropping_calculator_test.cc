@@ -920,6 +920,41 @@ TEST(SceneCroppingCalculatorTest, OutputsCropMessageKinematicPathNoVideo) {
     EXPECT_EQ(ext_render_message.render_to_location().height(), 1124);
   }
 }
+
+// Checks external render message with default poly path solver using
+// normalized crops.
+TEST(SceneCroppingCalculatorTest, OutputsCropMessagePolyPathNormalized) {
+  const CalculatorGraphConfig::Node config =
+      ParseTextProtoOrDie<CalculatorGraphConfig::Node>(
+          absl::Substitute(kExternalRenderConfig, kTargetWidth, kTargetHeight));
+  auto runner = absl::make_unique<CalculatorRunner>(config);
+  const int num_frames = kSceneSize;
+  AddScene(0, num_frames, kInputFrameWidth, kInputFrameHeight, kKeyFrameWidth,
+           kKeyFrameHeight, 1, runner->MutableInputs());
+
+  MP_EXPECT_OK(runner->Run());
+  const auto& outputs = runner->Outputs();
+  const auto& ext_render_per_frame =
+      outputs.Tag(kExternalRenderingPerFrameTag).packets;
+  EXPECT_EQ(ext_render_per_frame.size(), num_frames);
+
+  for (int i = 0; i < num_frames - 1; ++i) {
+    const auto& ext_render_message =
+        ext_render_per_frame[i].Get<ExternalRenderFrame>();
+    EXPECT_EQ(ext_render_message.timestamp_us(), i * 20000);
+    EXPECT_EQ(ext_render_message.normalized_crop_from_location().x(),
+              725 / static_cast<float>(kInputFrameWidth));
+    EXPECT_EQ(ext_render_message.normalized_crop_from_location().y(), 0);
+    EXPECT_EQ(ext_render_message.normalized_crop_from_location().width(),
+              461 / static_cast<float>(kInputFrameWidth));
+    EXPECT_EQ(ext_render_message.normalized_crop_from_location().height(),
+              720 / static_cast<float>(kInputFrameHeight));
+    EXPECT_EQ(ext_render_message.render_to_location().x(), 0);
+    EXPECT_EQ(ext_render_message.render_to_location().y(), 0);
+    EXPECT_EQ(ext_render_message.render_to_location().width(), 720);
+    EXPECT_EQ(ext_render_message.render_to_location().height(), 1124);
+  }
+}
 }  // namespace
 }  // namespace autoflip
 }  // namespace mediapipe

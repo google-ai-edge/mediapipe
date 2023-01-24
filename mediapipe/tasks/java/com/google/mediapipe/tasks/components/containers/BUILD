@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -77,6 +77,15 @@ android_library(
 android_library(
     name = "landmark",
     srcs = ["Landmark.java"],
+    deps = [
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "normalized_landmark",
+    srcs = ["NormalizedLandmark.java"],
     deps = [
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",

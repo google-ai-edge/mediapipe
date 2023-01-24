@@ -21,9 +21,9 @@ from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.tasks.cc.components.containers.proto import embeddings_pb2
+from mediapipe.tasks.cc.components.processors.proto import embedder_options_pb2
 from mediapipe.tasks.cc.vision.image_embedder.proto import image_embedder_graph_options_pb2
 from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
-from mediapipe.tasks.python.components.processors import embedder_options
 from mediapipe.tasks.python.components.utils import cosine_similarity
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
@@ -35,7 +35,7 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode as runni
 ImageEmbedderResult = embedding_result_module.EmbeddingResult
 _BaseOptions = base_options_module.BaseOptions
 _ImageEmbedderGraphOptionsProto = image_embedder_graph_options_pb2.ImageEmbedderGraphOptions
-_EmbedderOptions = embedder_options.EmbedderOptions
+_EmbedderOptionsProto = embedder_options_pb2.EmbedderOptions
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _TaskInfo = task_info_module.TaskInfo
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
@@ -62,14 +62,22 @@ class ImageEmbedderOptions:
       image on single image inputs. 2) The video mode for embedding image on the
       decoded frames of a video. 3) The live stream mode for embedding image on
       a live stream of input data, such as from camera.
-    embedder_options: Options for the image embedder task.
+    l2_normalize: Whether to normalize the returned feature vector with L2 norm.
+      Use this option only if the model does not already contain a native
+      L2_NORMALIZATION TF Lite Op. In most cases, this is already the case and
+      L2 norm is thus achieved through TF Lite inference.
+    quantize: Whether the returned embedding should be quantized to bytes via
+      scalar quantization. Embeddings are implicitly assumed to be unit-norm and
+      therefore any dimension is guaranteed to have a value in [-1.0, 1.0]. Use
+      the l2_normalize option if this is not the case.
     result_callback: The user-defined result callback for processing live stream
       data. The result callback should only be specified when the running mode
       is set to the live stream mode.
   """
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
-  embedder_options: _EmbedderOptions = _EmbedderOptions()
+  l2_normalize: Optional[bool] = None
+  quantize: Optional[bool] = None
   result_callback: Optional[Callable[
       [ImageEmbedderResult, image_module.Image, int], None]] = None
 
@@ -78,7 +86,8 @@ class ImageEmbedderOptions:
     """Generates an ImageEmbedderOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
     base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.IMAGE else True
-    embedder_options_proto = self.embedder_options.to_pb2()
+    embedder_options_proto = _EmbedderOptionsProto(
+        l2_normalize=self.l2_normalize, quantize=self.quantize)
 
     return _ImageEmbedderGraphOptionsProto(
         base_options=base_options_proto,

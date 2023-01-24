@@ -35,7 +35,9 @@ constexpr char kObjectScaleRoiTag[] = "OBJECT_SCALE_ROI";
 constexpr char kNormalizedFilteredLandmarksTag[] = "NORM_FILTERED_LANDMARKS";
 constexpr char kFilteredLandmarksTag[] = "FILTERED_LANDMARKS";
 
+using ::mediapipe::NormalizedRect;
 using mediapipe::OneEuroFilter;
+using ::mediapipe::Rect;
 using mediapipe::RelativeVelocityFilter;
 
 void NormalizedLandmarksToLandmarks(

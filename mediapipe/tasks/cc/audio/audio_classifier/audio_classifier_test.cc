@@ -143,8 +143,9 @@ void CheckStreamingModeResults(std::vector<AudioClassifierResult> outputs) {
   EXPECT_EQ(outputs.size(), 5);
   // Ignore last result, which operates on a too small chunk to return relevant
   // results.
+  std::vector<int64> timestamps_ms = {0, 975, 1950, 2925};
   for (int i = 0; i < outputs.size() - 1; i++) {
-    EXPECT_FALSE(outputs[i].timestamp_ms.has_value());
+    EXPECT_EQ(outputs[i].timestamp_ms.value(), timestamps_ms[i]);
     EXPECT_EQ(outputs[i].classifications.size(), 1);
     EXPECT_EQ(outputs[i].classifications[0].head_index, 0);
     EXPECT_EQ(outputs[i].classifications[0].head_name, "scores");

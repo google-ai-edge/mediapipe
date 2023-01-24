@@ -14,13 +14,14 @@
 """MediaPipe text embedder task."""
 
 import dataclasses
+from typing import Optional
 
 from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.tasks.cc.components.containers.proto import embeddings_pb2
+from mediapipe.tasks.cc.components.processors.proto import embedder_options_pb2
 from mediapipe.tasks.cc.text.text_embedder.proto import text_embedder_graph_options_pb2
 from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
-from mediapipe.tasks.python.components.processors import embedder_options
 from mediapipe.tasks.python.components.utils import cosine_similarity
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
@@ -30,7 +31,7 @@ from mediapipe.tasks.python.text.core import base_text_task_api
 TextEmbedderResult = embedding_result_module.EmbeddingResult
 _BaseOptions = base_options_module.BaseOptions
 _TextEmbedderGraphOptionsProto = text_embedder_graph_options_pb2.TextEmbedderGraphOptions
-_EmbedderOptions = embedder_options.EmbedderOptions
+_EmbedderOptionsProto = embedder_options_pb2.EmbedderOptions
 _TaskInfo = task_info_module.TaskInfo
 
 _EMBEDDINGS_OUT_STREAM_NAME = 'embeddings_out'
@@ -46,16 +47,25 @@ class TextEmbedderOptions:
 
   Attributes:
     base_options: Base options for the text embedder task.
-    embedder_options: Options for the text embedder task.
+    l2_normalize: Whether to normalize the returned feature vector with L2 norm.
+      Use this option only if the model does not already contain a native
+      L2_NORMALIZATION TF Lite Op. In most cases, this is already the case and
+      L2 norm is thus achieved through TF Lite inference.
+    quantize: Whether the returned embedding should be quantized to bytes via
+      scalar quantization. Embeddings are implicitly assumed to be unit-norm and
+      therefore any dimension is guaranteed to have a value in [-1.0, 1.0]. Use
+      the l2_normalize option if this is not the case.
   """
   base_options: _BaseOptions
-  embedder_options: _EmbedderOptions = _EmbedderOptions()
+  l2_normalize: Optional[bool] = None
+  quantize: Optional[bool] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _TextEmbedderGraphOptionsProto:
     """Generates an TextEmbedderOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
-    embedder_options_proto = self.embedder_options.to_pb2()
+    embedder_options_proto = _EmbedderOptionsProto(
+        l2_normalize=self.l2_normalize, quantize=self.quantize)
 
     return _TextEmbedderGraphOptionsProto(
         base_options=base_options_proto,

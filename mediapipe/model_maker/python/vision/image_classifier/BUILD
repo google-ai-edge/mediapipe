@@ -21,9 +21,16 @@ package(
     default_visibility = ["//mediapipe:__subpackages__"],
 )
 
+######################################################################
+# Public target of the MediaPipe Model Maker ImageClassifier APIs.
+
+# Please see https://developers.google.com/mediapipe/solutions/vision/image_classifier/customize for
+# more information about the MediaPipe Model Maker ImageClassifier APIs.
+######################################################################
 py_library(
     name = "image_classifier_import",
     srcs = ["__init__.py"],
+    visibility = ["//visibility:public"],
     deps = [
         ":dataset",
         ":hyperparameters",
@@ -81,15 +88,6 @@ py_library(
 )
 
 py_library(
-    name = "train_image_classifier_lib",
-    srcs = ["train_image_classifier_lib.py"],
-    deps = [
-        ":hyperparameters",
-        "//mediapipe/model_maker/python/core/utils:model_util",
-    ],
-)
-
-py_library(
     name = "image_classifier",
     srcs = ["image_classifier.py"],
     deps = [
@@ -97,7 +95,6 @@ py_library(
         ":image_classifier_options",
         ":model_options",
         ":model_spec",
-        ":train_image_classifier_lib",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
         "//mediapipe/model_maker/python/core/tasks:classifier",
         "//mediapipe/model_maker/python/core/utils:model_util",
@@ -114,7 +111,9 @@ py_library(
     srcs = ["image_classifier_test.py"],
     data = ["//mediapipe/model_maker/python/vision/image_classifier/testdata"],
     deps = [
+        ":hyperparameters",
         ":image_classifier_import",
+        ":model_options",
         "//mediapipe/tasks/python/test:test_utils",
     ],
 )

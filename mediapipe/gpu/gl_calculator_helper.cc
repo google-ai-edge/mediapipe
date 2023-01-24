@@ -27,19 +27,7 @@ namespace mediapipe {
 
 GlCalculatorHelper::GlCalculatorHelper() {}
 
-GlCalculatorHelper::~GlCalculatorHelper() {
-  if (!Initialized()) return;
-  RunInGlContext(
-      [this] {
-        if (framebuffer_) {
-          glDeleteFramebuffers(1, &framebuffer_);
-          framebuffer_ = 0;
-        }
-        return absl::OkStatus();
-      },
-      /*calculator_context=*/nullptr)
-      .IgnoreError();
-}
+GlCalculatorHelper::~GlCalculatorHelper() {}
 
 void GlCalculatorHelper::InitializeInternal(CalculatorContext* cc,
                                             GpuResources* gpu_resources) {
@@ -125,9 +113,9 @@ void GlCalculatorHelper::CreateFramebuffer() {
   // Our framebuffer will have a color attachment but no depth attachment,
   // so it's important that the depth test be off. It is disabled by default,
   // but we wanted to be explicit.
-  // TODO: move this to glBindFramebuffer?
+  // TODO: move this to glBindFramebuffer? Or just remove.
   glDisable(GL_DEPTH_TEST);
-  glGenFramebuffers(1, &framebuffer_);
+  framebuffer_ = kUtilityFramebuffer.Get(*gl_context_);
 }
 
 void GlCalculatorHelper::BindFramebuffer(const GlTexture& dst) {

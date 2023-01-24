@@ -21,8 +21,8 @@ from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet
-from mediapipe.tasks.cc.components.proto import segmenter_options_pb2
 from mediapipe.tasks.cc.vision.image_segmenter.proto import image_segmenter_graph_options_pb2
+from mediapipe.tasks.cc.vision.image_segmenter.proto import segmenter_options_pb2
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
@@ -110,7 +110,7 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
     - list of segmented masks.
     - if `output_type` is CATEGORY_MASK, uint8 Image, Image vector of size 1.
     - if `output_type` is CONFIDENCE_MASK, float32 Image list of size
-      `cahnnels`.
+      `channels`.
     - batch is always 1
 
   An example of such model can be found at:

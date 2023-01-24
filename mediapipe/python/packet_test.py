@@ -157,7 +157,7 @@ class PacketTest(absltest.TestCase):
     p.timestamp = 0
     self.assertAlmostEqual(packet_getter.get_float(p), 0.42)
     self.assertEqual(p.timestamp, 0)
-    p2 = packet_creator.create_float(np.float(0.42))
+    p2 = packet_creator.create_float(float(0.42))
     p2.timestamp = 0
     self.assertAlmostEqual(packet_getter.get_float(p2), 0.42)
     self.assertEqual(p2.timestamp, 0)

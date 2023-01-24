@@ -24,7 +24,6 @@
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/graph_service.h"
-#include "mediapipe/gpu/MPPGraphGPUData.h"
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gpu_shared_data_internal.h"
 #include "mediapipe/objc/util.h"
@@ -231,15 +230,16 @@ if ([wrapper.delegate
 }
 
 - (absl::Status)performStart {
-  absl::Status status = _graph->Initialize(_config);
-  if (!status.ok()) {
-    return status;
-  }
+  absl::Status status;
   for (const auto& service_packet : _servicePackets) {
     status = _graph->SetServicePacket(*service_packet.first, service_packet.second);
     if (!status.ok()) {
       return status;
     }
+  }
+  status = _graph->Initialize(_config);
+  if (!status.ok()) {
+    return status;
   }
   status = _graph->StartRun(_inputSidePackets, _streamHeaders);
   if (!status.ok()) {

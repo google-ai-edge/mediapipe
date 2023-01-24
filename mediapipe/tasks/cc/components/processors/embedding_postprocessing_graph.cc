@@ -150,7 +150,7 @@ absl::StatusOr<std::vector<std::string>> GetHeadNames(
 
 }  // namespace
 
-absl::Status ConfigureEmbeddingPostprocessing(
+absl::Status ConfigureEmbeddingPostprocessingGraph(
     const ModelResources& model_resources,
     const proto::EmbedderOptions& embedder_options,
     proto::EmbeddingPostprocessingGraphOptions* options) {
@@ -193,8 +193,8 @@ absl::Status ConfigureEmbeddingPostprocessing(
 //     timestamp aggregation is required.
 //
 // The recommended way of using this graph is through the GraphBuilder API using
-// the 'ConfigureEmbeddingPostprocessing()' function. See header file for more
-// details.
+// the 'ConfigureEmbeddingPostprocessingGraph()' function. See header file for
+// more details.
 class EmbeddingPostprocessingGraph : public mediapipe::Subgraph {
  public:
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(

@@ -439,7 +439,7 @@ TEST(MuxCalculatorTest, HandlesCloseGracefully) {
   EXPECT_TRUE(output_packets.empty());
 }
 
-TEST(MuxCalculatorTest, CrashesOnCloseWithDeafultInputStreamHandler) {
+TEST(MuxCalculatorTest, HandlesCloseGracefullyWithDeafultInputStreamHandler) {
   CalculatorGraphConfig config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           R"pb(
@@ -480,15 +480,11 @@ TEST(MuxCalculatorTest, CrashesOnCloseWithDeafultInputStreamHandler) {
   MP_ASSERT_OK(graph.AddPacketToInputStream(
       "value_0", MakePacket<int>(0).At(Timestamp(1000))));
   MP_ASSERT_OK(graph.WaitUntilIdle());
-  // Currently MuxCalculator crashes with a correct packet set from
-  // DefaultInputStreamHandler.  The SELECT packet is missing at Timestamp 1000,
-  // and an empty packet is the correct representation of that.
-  EXPECT_DEATH(
-      {
-        (void)graph.CloseAllInputStreams();
-        (void)graph.WaitUntilDone();
-      },
-      "Check failed: payload_");
+  MP_ASSERT_OK(graph.CloseAllInputStreams());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+
+  ASSERT_EQ(output_packets.size(), 1);
+  EXPECT_TRUE(output_packets[0].IsEmpty());
 }
 
 }  // namespace

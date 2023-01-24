@@ -25,8 +25,8 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #include "mediapipe/tasks/cc/components/processors/classification_postprocessing_graph.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
-#include "mediapipe/tasks/cc/components/proto/text_preprocessing_graph_options.pb.h"
-#include "mediapipe/tasks/cc/components/text_preprocessing_graph.h"
+#include "mediapipe/tasks/cc/components/processors/proto/text_preprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/text_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/model_resources_calculator.pb.h"
@@ -46,18 +46,10 @@ using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::containers::proto::ClassificationResult;
 using ::mediapipe::tasks::core::ModelResources;
 
-constexpr char kClassificationResultTag[] = "CLASSIFICATION_RESULT";
 constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
 constexpr char kTextTag[] = "TEXT";
 constexpr char kMetadataExtractorTag[] = "METADATA_EXTRACTOR";
 constexpr char kTensorsTag[] = "TENSORS";
-
-// TODO: remove once Java API migration is over.
-// Struct holding the different output streams produced by the text classifier.
-struct TextClassifierOutputStreams {
-  Source<ClassificationResult> classification_result;
-  Source<ClassificationResult> classifications;
-};
 
 }  // namespace
 
@@ -72,10 +64,6 @@ struct TextClassifierOutputStreams {
 // Outputs:
 //   CLASSIFICATIONS - ClassificationResult @Optional
 //     The classification results aggregated by classifier head.
-// TODO: remove once Java API migration is over.
-//   CLASSIFICATION_RESULT - (DEPRECATED) ClassificationResult @Optional
-//     The aggregated classification result object that has 3 dimensions:
-//     (classification head, classification timestamp, classification category).
 //
 // Example:
 // node {
@@ -102,14 +90,11 @@ class TextClassifierGraph : public core::ModelTaskGraph {
         CreateModelResources<proto::TextClassifierGraphOptions>(sc));
     Graph graph;
     ASSIGN_OR_RETURN(
-        auto output_streams,
+        auto classifications,
         BuildTextClassifierTask(
             sc->Options<proto::TextClassifierGraphOptions>(), *model_resources,
             graph[Input<std::string>(kTextTag)], graph));
-    output_streams.classification_result >>
-        graph[Output<ClassificationResult>(kClassificationResultTag)];
-    output_streams.classifications >>
-        graph[Output<ClassificationResult>(kClassificationsTag)];
+    classifications >> graph[Output<ClassificationResult>(kClassificationsTag)];
     return graph.GetConfig();
   }
 
@@ -124,18 +109,18 @@ class TextClassifierGraph : public core::ModelTaskGraph {
   //   TextClassifier model file with model metadata.
   // text_in: (std::string) stream to run text classification on.
   // graph: the mediapipe builder::Graph instance to be updated.
-  absl::StatusOr<TextClassifierOutputStreams> BuildTextClassifierTask(
+  absl::StatusOr<Source<ClassificationResult>> BuildTextClassifierTask(
       const proto::TextClassifierGraphOptions& task_options,
       const ModelResources& model_resources, Source<std::string> text_in,
       Graph& graph) {
     // Adds preprocessing calculators and connects them to the text input
     // stream.
-    auto& preprocessing =
-        graph.AddNode("mediapipe.tasks.components.TextPreprocessingSubgraph");
-    MP_RETURN_IF_ERROR(components::ConfigureTextPreprocessingSubgraph(
+    auto& preprocessing = graph.AddNode(
+        "mediapipe.tasks.components.processors.TextPreprocessingGraph");
+    MP_RETURN_IF_ERROR(components::processors::ConfigureTextPreprocessingGraph(
         model_resources,
         preprocessing.GetOptions<
-            tasks::components::proto::TextPreprocessingGraphOptions>()));
+            components::processors::proto::TextPreprocessingGraphOptions>()));
     text_in >> preprocessing.In(kTextTag);
 
     // Adds both InferenceCalculator and ModelResourcesCalculator.
@@ -161,11 +146,7 @@ class TextClassifierGraph : public core::ModelTaskGraph {
 
     // Outputs the aggregated classification result as the subgraph output
     // stream.
-    return TextClassifierOutputStreams{
-        /*classification_result=*/postprocessing[Output<ClassificationResult>(
-            kClassificationResultTag)],
-        /*classifications=*/postprocessing[Output<ClassificationResult>(
-            kClassificationsTag)]};
+    return postprocessing[Output<ClassificationResult>(kClassificationsTag)];
   }
 };
 

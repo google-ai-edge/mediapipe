@@ -15,8 +15,8 @@
  */
 
 import {EmbedderOptions} from '../../../../tasks/web/core/embedder_options';
-import {TextTaskOptions} from '../../../../tasks/web/text/core/text_task_options';
+import {TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options';
 
 /** Options to configure the MediaPipe Text Embedder Task */
 export declare interface TextEmbedderOptions extends EmbedderOptions,
-                                                     TextTaskOptions {}
+                                                     TaskRunnerOptions {}

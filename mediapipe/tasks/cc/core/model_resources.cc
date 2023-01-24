@@ -33,6 +33,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/util/resource_util.h"
+#include "mediapipe/util/resource_util_custom.h"
 #include "mediapipe/util/tflite/error_reporter.h"
 #include "tensorflow/lite/core/api/error_reporter.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -99,11 +100,20 @@ const tflite::Model* ModelResources::GetTfLiteModel() const {
 
 absl::Status ModelResources::BuildModelFromExternalFileProto() {
   if (model_file_->has_file_name()) {
-    // If the model file name is a relative path, searches the file in a
-    // platform-specific location and returns the absolute path on success.
-    ASSIGN_OR_RETURN(std::string path_to_resource,
-                     mediapipe::PathToResourceAsFile(model_file_->file_name()));
-    model_file_->set_file_name(path_to_resource);
+    if (HasCustomGlobalResourceProvider()) {
+      // If the model contents are provided via a custom ResourceProviderFn, the
+      // open() method may not work. Thus, loads the model content from the
+      // model file path in advance with the help of GetResourceContents.
+      MP_RETURN_IF_ERROR(GetResourceContents(
+          model_file_->file_name(), model_file_->mutable_file_content()));
+      model_file_->clear_file_name();
+    } else {
+      // If the model file name is a relative path, searches the file in a
+      // platform-specific location and returns the absolute path on success.
+      ASSIGN_OR_RETURN(std::string path_to_resource,
+                       PathToResourceAsFile(model_file_->file_name()));
+      model_file_->set_file_name(path_to_resource);
+    }
   }
   ASSIGN_OR_RETURN(
       model_file_handler_,

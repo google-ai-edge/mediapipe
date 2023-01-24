@@ -14,52 +14,143 @@
  * limitations under the License.
  */
 
-import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
-import {convertBaseOptionsToProto} from '../../../../tasks/web/components/processors/base_options';
+import {NormalizedRect} from '../../../../framework/formats/rect_pb';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
-import {ImageSource} from '../../../../web/graph_runner/wasm_mediapipe_lib';
+import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
+import {GraphRunner, ImageSource} from '../../../../web/graph_runner/graph_runner';
+import {SupportImage} from '../../../../web/graph_runner/graph_runner_image_lib';
+import {SupportModelResourcesGraphService} from '../../../../web/graph_runner/register_model_resources_graph_service';
 
 import {VisionTaskOptions} from './vision_task_options';
 
-/** Base class for all MediaPipe Vision Tasks. */
-export abstract class VisionTaskRunner<T> extends TaskRunner {
-  protected abstract baseOptions?: BaseOptionsProto|undefined;
+// tslint:disable-next-line:enforce-name-casing
+const GraphRunnerVisionType =
+    SupportModelResourcesGraphService(SupportImage(GraphRunner));
+/** An implementation of the GraphRunner that supports image operations */
+export class VisionGraphRunner extends GraphRunnerVisionType {}
 
-  /** Configures the shared options of a vision task. */
-  async setOptions(options: VisionTaskOptions): Promise<void> {
-    this.baseOptions = this.baseOptions ?? new BaseOptionsProto();
-    if (options.baseOptions) {
-      this.baseOptions = await convertBaseOptionsToProto(
-          options.baseOptions, this.baseOptions);
-    }
-    if ('runningMode' in options) {
-      const useStreamMode =
-          !!options.runningMode && options.runningMode !== 'image';
-      this.baseOptions.setUseStreamMode(useStreamMode);
-    }
+// The OSS JS API does not support the builder pattern.
+// tslint:disable:jspb-use-builder-pattern
+
+/** Base class for all MediaPipe Vision Tasks. */
+export abstract class VisionTaskRunner extends TaskRunner {
+  /**
+   * Constructor to initialize a `VisionTaskRunner`.
+   *
+   * @param graphRunner the graph runner for this task.
+   * @param imageStreamName the name of the input image stream.
+   * @param normRectStreamName the name of the input normalized rect image
+   *     stream used to provide (mandatory) rotation and (optional)
+   *     region-of-interest.
+   * @param roiAllowed Whether this task supports Region-Of-Interest
+   *     pre-processing
+   *
+   * @hideconstructor protected
+   */
+  constructor(
+      protected override readonly graphRunner: VisionGraphRunner,
+      private readonly imageStreamName: string,
+      private readonly normRectStreamName: string,
+      private readonly roiAllowed: boolean) {
+    super(graphRunner);
   }
 
-  /** Sends an image packet to the graph and awaits results. */
-  protected abstract process(input: ImageSource, timestamp: number): T;
+  /** Configures the shared options of a vision task. */
+  override applyOptions(options: VisionTaskOptions): Promise<void> {
+    if ('runningMode' in options) {
+      const useStreamMode =
+          !!options.runningMode && options.runningMode !== 'IMAGE';
+      this.baseOptions.setUseStreamMode(useStreamMode);
+    }
+    return super.applyOptions(options);
+  }
 
   /** Sends a single image to the graph and awaits results. */
-  protected processImageData(image: ImageSource): T {
+  protected processImageData(
+      image: ImageSource,
+      imageProcessingOptions: ImageProcessingOptions|undefined): void {
     if (!!this.baseOptions?.getUseStreamMode()) {
       throw new Error(
           'Task is not initialized with image mode. ' +
-          '\'runningMode\' must be set to \'image\'.');
+          '\'runningMode\' must be set to \'IMAGE\'.');
     }
-    return this.process(image, performance.now());
+
+    // Increment the timestamp by 1 millisecond to guarantee that we send
+    // monotonically increasing timestamps to the graph.
+    const syntheticTimestamp = this.getLatestOutputTimestamp() + 1;
+    this.process(image, imageProcessingOptions, syntheticTimestamp);
   }
 
   /** Sends a single video frame to the graph and awaits results. */
-  protected processVideoData(imageFrame: ImageSource, timestamp: number): T {
+  protected processVideoData(
+      imageFrame: ImageSource,
+      imageProcessingOptions: ImageProcessingOptions|undefined,
+      timestamp: number): void {
     if (!this.baseOptions?.getUseStreamMode()) {
       throw new Error(
           'Task is not initialized with video mode. ' +
-          '\'runningMode\' must be set to \'video\'.');
+          '\'runningMode\' must be set to \'VIDEO\'.');
     }
-    return this.process(imageFrame, timestamp);
+    this.process(imageFrame, imageProcessingOptions, timestamp);
+  }
+
+  private convertToNormalizedRect(imageProcessingOptions?:
+                                      ImageProcessingOptions): NormalizedRect {
+    const normalizedRect = new NormalizedRect();
+
+    if (imageProcessingOptions?.regionOfInterest) {
+      if (!this.roiAllowed) {
+        throw new Error('This task doesn\'t support region-of-interest.');
+      }
+
+      const roi = imageProcessingOptions.regionOfInterest;
+
+      if (roi.left >= roi.right || roi.top >= roi.bottom) {
+        throw new Error('Expected RectF with left < right and top < bottom.');
+      }
+      if (roi.left < 0 || roi.top < 0 || roi.right > 1 || roi.bottom > 1) {
+        throw new Error('Expected RectF values to be in [0,1].');
+      }
+
+      normalizedRect.setXCenter((roi.left + roi.right) / 2.0);
+      normalizedRect.setYCenter((roi.top + roi.bottom) / 2.0);
+      normalizedRect.setWidth(roi.right - roi.left);
+      normalizedRect.setHeight(roi.bottom - roi.top);
+      return normalizedRect;
+    } else {
+      normalizedRect.setXCenter(0.5);
+      normalizedRect.setYCenter(0.5);
+      normalizedRect.setWidth(1);
+      normalizedRect.setHeight(1);
+    }
+
+    if (imageProcessingOptions?.rotationDegrees) {
+      if (imageProcessingOptions?.rotationDegrees % 90 !== 0) {
+        throw new Error(
+            'Expected rotation to be a multiple of 90°.',
+        );
+      }
+
+      // Convert to radians anti-clockwise.
+      normalizedRect.setRotation(
+          -Math.PI * imageProcessingOptions.rotationDegrees / 180.0);
+    }
+
+    return normalizedRect;
+  }
+
+  /** Runs the graph and blocks on the response. */
+  private process(
+      imageSource: ImageSource,
+      imageProcessingOptions: ImageProcessingOptions|undefined,
+      timestamp: number): void {
+    const normalizedRect = this.convertToNormalizedRect(imageProcessingOptions);
+    this.graphRunner.addProtoToStream(
+        normalizedRect.serializeBinary(), 'mediapipe.NormalizedRect',
+        this.normRectStreamName, timestamp);
+    this.graphRunner.addGpuBufferAsImageToStream(
+        imageSource, this.imageStreamName, timestamp ?? performance.now());
+    this.finishProcessing();
   }
 }
 

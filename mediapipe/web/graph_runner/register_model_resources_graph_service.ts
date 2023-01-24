@@ -1,12 +1,12 @@
-import {WasmMediaPipeLib} from './wasm_mediapipe_lib';
+import {GraphRunner} from './graph_runner';
 
 /**
- * We extend from a WasmMediaPipeLib constructor. This ensures our mixin has
+ * We extend from a GraphRunner constructor. This ensures our mixin has
  * access to the wasmModule, among other things. The `any` type is required for
  * mixin constructors.
  */
 // tslint:disable-next-line:no-any
-type LibConstructor = new (...args: any[]) => WasmMediaPipeLib;
+type LibConstructor = new (...args: any[]) => GraphRunner;
 
 /**
  * Declarations for Emscripten's WebAssembly Module behavior, so TS compiler
@@ -17,11 +17,11 @@ export declare interface WasmModuleRegisterModelResources {
 }
 
 /**
- * An implementation of WasmMediaPipeLib that supports registering model
+ * An implementation of GraphRunner that supports registering model
  * resources to a cache, in the form of a GraphService C++-side. We implement as
  * a proper TS mixin, to allow for effective multiple inheritance. Sample usage:
- * `const WasmMediaPipeImageLib = SupportModelResourcesGraphService(
- *     WasmMediaPipeLib);`
+ * `const GraphRunnerWithModelResourcesLib =
+ *      SupportModelResourcesGraphService(GraphRunner);`
  */
 // tslint:disable:enforce-name-casing
 export function SupportModelResourcesGraphService<TBase extends LibConstructor>(
