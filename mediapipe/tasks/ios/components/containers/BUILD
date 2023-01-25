@@ -35,3 +35,9 @@ objc_library(
     hdrs = ["sources/MPPEmbedding.h"],
 )
 
+objc_library(
+    name = "MPPEmbeddingResult",
+    srcs = ["sources/MPPEmbeddingResult.m"],
+    hdrs = ["sources/MPPEmbeddingResult.h"],
+    deps = [":MPPEmbedding"],
+)
