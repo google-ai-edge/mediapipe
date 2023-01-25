@@ -37,7 +37,7 @@ class Classifier(custom_model.CustomModel):
         label_names: A list of label names for the classes.
         shuffle: Whether the dataset should be shuffled.
     """
-    super(Classifier, self).__init__(model_spec, shuffle)
+    super().__init__(model_spec, shuffle)
     self._label_names = label_names
     self._num_classes = len(label_names)
     self._model: tf.keras.Model = None
@@ -48,7 +48,6 @@ class Classifier(custom_model.CustomModel):
     self._hparams: hp.BaseHParams = None
     self._history: tf.keras.callbacks.History = None
 
-  # TODO: Integrate this into GestureRecognizer.
   def _train_model(self,
                    train_data: classification_ds.ClassificationDataset,
                    validation_data: classification_ds.ClassificationDataset,
