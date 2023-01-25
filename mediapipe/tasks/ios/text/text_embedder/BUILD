@@ -23,5 +23,12 @@ objc_library(
     deps = ["//mediapipe/tasks/ios/core:MPPTaskOptions"],
 )
 
+objc_library(
+    name = "MPPTextEmbedderResult",
+    srcs = ["sources/MPPTextEmbedderResult.m"],
+    hdrs = ["sources/MPPTextEmbedderResult.h"],
+    deps = [
+        "//mediapipe/tasks/ios/components/containers:MPPEmbeddingResult",
+        "//mediapipe/tasks/ios/core:MPPTaskResult",
     ],
 )
