@@ -19,7 +19,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * Options for setting up a `MPPTextClassifierOptions`.
+ * Options for setting up a `MPPTextClassifier`.
  */
 NS_SWIFT_NAME(TextClassifierOptions)
 @interface MPPTextClassifierOptions : MPPTaskOptions <NSCopying>
