@@ -26,12 +26,21 @@ using ::mediapipe::api2::test::FooBar1;
 
 TEST(BuilderTest, BuildGraph) {
   Graph graph;
+  // Graph inputs.
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+  SidePacket<AnyType> side = graph.SideIn("SIDE").SetName("side");
+
   auto& foo = graph.AddNode("Foo");
+  base >> foo.In("BASE");
+  side >> foo.SideIn("SIDE");
+  Stream<AnyType> foo_out = foo.Out("OUT");
+
   auto& bar = graph.AddNode("Bar");
-  graph.In("IN").SetName("base") >> foo.In("BASE");
-  graph.SideIn("SIDE").SetName("side") >> foo.SideIn("SIDE");
-  foo.Out("OUT") >> bar.In("IN");
-  bar.Out("OUT").SetName("out") >> graph.Out("OUT");
+  foo_out >> bar.In("IN");
+  Stream<AnyType> bar_out = bar.Out("OUT");
+
+  // Graph outputs.
+  bar_out.SetName("out") >> graph.Out("OUT");
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
@@ -87,6 +96,7 @@ TEST(BuilderTest, CopyableStream) {
 TEST(BuilderTest, BuildGraphWithFunctions) {
   Graph graph;
 
+  // Graph inputs.
   Stream<int> base = graph.In("IN").SetName("base").Cast<int>();
   SidePacket<float> side = graph.SideIn("SIDE").SetName("side").Cast<float>();
 
@@ -105,6 +115,7 @@ TEST(BuilderTest, BuildGraphWithFunctions) {
   };
   Stream<double> bar_out = bar_fn(foo_out, graph);
 
+  // Graph outputs.
   bar_out.SetName("out") >> graph.Out("OUT");
 
   CalculatorGraphConfig expected =
@@ -130,12 +141,21 @@ TEST(BuilderTest, BuildGraphWithFunctions) {
 template <class FooT>
 void BuildGraphTypedTest() {
   Graph graph;
+  // Graph inputs.
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+  SidePacket<AnyType> side = graph.SideIn("SIDE").SetName("side");
+
   auto& foo = graph.AddNode<FooT>();
+  base >> foo.In(MPP_TAG("BASE"));
+  side >> foo.SideIn(MPP_TAG("BIAS"));
+  Stream<float> foo_out = foo.Out(MPP_TAG("OUT"));
+
   auto& bar = graph.AddNode<Bar>();
-  graph.In("IN").SetName("base") >> foo.In(MPP_TAG("BASE"));
-  graph.SideIn("SIDE").SetName("side") >> foo.SideIn(MPP_TAG("BIAS"));
-  foo.Out(MPP_TAG("OUT")) >> bar.In(MPP_TAG("IN"));
-  bar.Out(MPP_TAG("OUT")).SetName("out") >> graph.Out("OUT");
+  foo_out >> bar.In(MPP_TAG("IN"));
+  Stream<AnyType> bar_out = bar.Out(MPP_TAG("OUT"));
+
+  // Graph outputs.
+  bar_out.SetName("out") >> graph.Out("OUT");
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
@@ -165,12 +185,20 @@ TEST(BuilderTest, BuildGraphTyped2) { BuildGraphTypedTest<test::Foo2>(); }
 
 TEST(BuilderTest, FanOut) {
   Graph graph;
+  // Graph inputs.
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+
   auto& foo = graph.AddNode("Foo");
+  base >> foo.In("BASE");
+  Stream<AnyType> foo_out = foo.Out("OUT");
+
   auto& adder = graph.AddNode("FloatAdder");
-  graph.In("IN").SetName("base") >> foo.In("BASE");
-  foo.Out("OUT") >> adder.In("IN")[0];
-  foo.Out("OUT") >> adder.In("IN")[1];
-  adder.Out("OUT").SetName("out") >> graph.Out("OUT");
+  foo_out >> adder.In("IN")[0];
+  foo_out >> adder.In("IN")[1];
+  Stream<AnyType> out = adder.Out("OUT");
+
+  // Graph outputs.
+  out.SetName("out") >> graph.Out("OUT");
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
@@ -193,12 +221,20 @@ TEST(BuilderTest, FanOut) {
 
 TEST(BuilderTest, TypedMultiple) {
   Graph graph;
-  auto& foo = graph.AddNode<test::Foo>();
-  auto& adder = graph.AddNode<test::FloatAdder>();
-  graph.In("IN").SetName("base") >> foo.In(MPP_TAG("BASE"));
-  foo.Out(MPP_TAG("OUT")) >> adder.In(MPP_TAG("IN"))[0];
-  foo.Out(MPP_TAG("OUT")) >> adder.In(MPP_TAG("IN"))[1];
-  adder.Out(MPP_TAG("OUT")).SetName("out") >> graph.Out("OUT");
+  // Graph inputs.
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+
+  auto& foo = graph.AddNode<Foo>();
+  base >> foo.In(MPP_TAG("BASE"));
+  Stream<float> foo_out = foo.Out(MPP_TAG("OUT"));
+
+  auto& adder = graph.AddNode<FloatAdder>();
+  foo_out >> adder.In(MPP_TAG("IN"))[0];
+  foo_out >> adder.In(MPP_TAG("IN"))[1];
+  Stream<float> out = adder.Out(MPP_TAG("OUT"));
+
+  // Graph outputs.
+  out.SetName("out") >> graph.Out("OUT");
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
@@ -221,13 +257,20 @@ TEST(BuilderTest, TypedMultiple) {
 
 TEST(BuilderTest, TypedByPorts) {
   Graph graph;
-  auto& foo = graph.AddNode<test::Foo>();
-  auto& adder = graph.AddNode<FloatAdder>();
+  // Graph inputs.
+  Stream<int> base = graph.In(FooBar1::kIn).SetName("base");
 
-  graph.In(FooBar1::kIn).SetName("base") >> foo[Foo::kBase];
-  foo[Foo::kOut] >> adder[FloatAdder::kIn][0];
-  foo[Foo::kOut] >> adder[FloatAdder::kIn][1];
-  adder[FloatAdder::kOut].SetName("out") >> graph.Out(FooBar1::kOut);
+  auto& foo = graph.AddNode<test::Foo>();
+  base >> foo[Foo::kBase];
+  Stream<float> foo_out = foo[Foo::kOut];
+
+  auto& adder = graph.AddNode<FloatAdder>();
+  foo_out >> adder[FloatAdder::kIn][0];
+  foo_out >> adder[FloatAdder::kIn][1];
+  Stream<float> out = adder[FloatAdder::kOut];
+
+  // Graph outputs.
+  out.SetName("out") >> graph.Out(FooBar1::kOut);
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
@@ -250,9 +293,15 @@ TEST(BuilderTest, TypedByPorts) {
 
 TEST(BuilderTest, PacketGenerator) {
   Graph graph;
+  // Graph inputs.
+  SidePacket<AnyType> side_in = graph.SideIn("IN");
+
   auto& generator = graph.AddPacketGenerator("FloatGenerator");
-  graph.SideIn("IN") >> generator.SideIn("IN");
-  generator.SideOut("OUT") >> graph.SideOut("OUT");
+  side_in >> generator.SideIn("IN");
+  SidePacket<AnyType> side_out = generator.SideOut("OUT");
+
+  // Graph outputs.
+  side_out >> graph.SideOut("OUT");
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
@@ -269,12 +318,21 @@ TEST(BuilderTest, PacketGenerator) {
 
 TEST(BuilderTest, EmptyTag) {
   Graph graph;
+  // Graph inputs.
+  Stream<AnyType> a = graph.In("A").SetName("a");
+  Stream<AnyType> c = graph.In("C").SetName("c");
+  Stream<AnyType> b = graph.In("B").SetName("b");
+
   auto& foo = graph.AddNode("Foo");
-  graph.In("A").SetName("a") >> foo.In("")[0];
-  graph.In("C").SetName("c") >> foo.In("")[2];
-  graph.In("B").SetName("b") >> foo.In("")[1];
-  foo.Out("")[0].SetName("x") >> graph.Out("ONE");
-  foo.Out("")[1].SetName("y") >> graph.Out("TWO");
+  a >> foo.In("")[0];
+  c >> foo.In("")[2];
+  b >> foo.In("")[1];
+  Stream<AnyType> x = foo.Out("")[0];
+  Stream<AnyType> y = foo.Out("")[1];
+
+  // Graph outputs.
+  x.SetName("x") >> graph.Out("ONE");
+  y.SetName("y") >> graph.Out("TWO");
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
@@ -301,10 +359,17 @@ TEST(BuilderTest, StringLikeTags) {
   constexpr absl::string_view kC = "C";
 
   Graph graph;
+  // Graph inputs.
+  Stream<AnyType> a = graph.In(kA).SetName("a");
+  Stream<AnyType> b = graph.In(kB).SetName("b");
+
   auto& foo = graph.AddNode("Foo");
-  graph.In(kA).SetName("a") >> foo.In(kA);
-  graph.In(kB).SetName("b") >> foo.In(kB);
-  foo.Out(kC).SetName("c") >> graph.Out(kC);
+  a >> foo.In(kA);
+  b >> foo.In(kB);
+  Stream<AnyType> c = foo.Out(kC);
+
+  // Graph outputs.
+  c.SetName("c") >> graph.Out(kC);
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
@@ -323,12 +388,21 @@ TEST(BuilderTest, StringLikeTags) {
 
 TEST(BuilderTest, GraphIndexes) {
   Graph graph;
+  // Graph inputs.
+  Stream<AnyType> a = graph.In(0).SetName("a");
+  Stream<AnyType> c = graph.In(1).SetName("c");
+  Stream<AnyType> b = graph.In(2).SetName("b");
+
   auto& foo = graph.AddNode("Foo");
-  graph.In(0).SetName("a") >> foo.In("")[0];
-  graph.In(1).SetName("c") >> foo.In("")[2];
-  graph.In(2).SetName("b") >> foo.In("")[1];
-  foo.Out("")[0].SetName("x") >> graph.Out(1);
-  foo.Out("")[1].SetName("y") >> graph.Out(0);
+  a >> foo.In("")[0];
+  c >> foo.In("")[2];
+  b >> foo.In("")[1];
+  Stream<AnyType> x = foo.Out("")[0];
+  Stream<AnyType> y = foo.Out("")[1];
+
+  // Graph outputs.
+  x.SetName("x") >> graph.Out(1);
+  y.SetName("y") >> graph.Out(0);
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
@@ -381,21 +455,20 @@ TEST(BuilderTest, AnyAndSameTypeHandledProperly) {
   auto& node = graph.AddNode("AnyAndSameTypeCalculator");
   any_input >> node[AnyAndSameTypeCalculator::kAnyTypeInput];
   int_input >> node[AnyAndSameTypeCalculator::kIntInput];
-
   Stream<AnyType> any_type_output =
       node[AnyAndSameTypeCalculator::kAnyTypeOutput];
-  any_type_output.SetName("any_type_output");
-
   Stream<AnyType> same_type_output =
       node[AnyAndSameTypeCalculator::kSameTypeOutput];
-  same_type_output.SetName("same_type_output");
   Stream<AnyType> recursive_same_type_output =
       node[AnyAndSameTypeCalculator::kRecursiveSameTypeOutput];
-  recursive_same_type_output.SetName("recursive_same_type_output");
   Stream<int> same_int_output = node[AnyAndSameTypeCalculator::kSameIntOutput];
-  same_int_output.SetName("same_int_output");
   Stream<int> recursive_same_int_type_output =
       node[AnyAndSameTypeCalculator::kRecursiveSameIntOutput];
+
+  any_type_output.SetName("any_type_output");
+  same_type_output.SetName("same_type_output");
+  recursive_same_type_output.SetName("recursive_same_type_output");
+  same_int_output.SetName("same_int_output");
   recursive_same_int_type_output.SetName("recursive_same_int_type_output");
 
   CalculatorGraphConfig expected = mediapipe::ParseTextProtoOrDie<
@@ -424,11 +497,10 @@ TEST(BuilderTest, AnyTypeCanBeCast) {
   auto& node = graph.AddNode("AnyAndSameTypeCalculator");
   any_input >> node[AnyAndSameTypeCalculator::kAnyTypeInput];
   Stream<double> any_type_output =
-      node[AnyAndSameTypeCalculator::kAnyTypeOutput]
-          .SetName("any_type_output")
-          .Cast<double>();
+      node[AnyAndSameTypeCalculator::kAnyTypeOutput].Cast<double>();
 
-  any_type_output >> graph.Out("GRAPH_ANY_OUTPUT").Cast<double>();
+  any_type_output.SetName("any_type_output") >>
+      graph.Out("GRAPH_ANY_OUTPUT").Cast<double>();
 
   CalculatorGraphConfig expected =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
