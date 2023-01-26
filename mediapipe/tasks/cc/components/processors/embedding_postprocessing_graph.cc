@@ -31,7 +31,6 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
-#include "mediapipe/tasks/cc/components/utils/source_or_node_output.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "tensorflow/lite/schema/schema_generated.h"
@@ -51,8 +50,6 @@ using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
 using ::mediapipe::tasks::core::ModelResources;
-using TensorsSource =
-    ::mediapipe::tasks::SourceOrNodeOutput<std::vector<Tensor>>;
 
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kEmbeddingsTag[] = "EMBEDDINGS";
@@ -229,12 +226,13 @@ class EmbeddingPostprocessingGraph : public mediapipe::Subgraph {
       Source<std::vector<Tensor>> tensors_in,
       Source<std::vector<Timestamp>> timestamps_in, Graph& graph) {
     // If output tensors are quantized, they must be dequantized first.
-    TensorsSource dequantized_tensors(&tensors_in);
+    Source<std::vector<Tensor>> dequantized_tensors = tensors_in;
     if (options.has_quantized_outputs()) {
       GenericNode& tensors_dequantization_node =
           graph.AddNode("TensorsDequantizationCalculator");
       tensors_in >> tensors_dequantization_node.In(kTensorsTag);
-      dequantized_tensors = {&tensors_dequantization_node, kTensorsTag};
+      dequantized_tensors = tensors_dequantization_node.Out(kTensorsTag)
+                                .Cast<std::vector<Tensor>>();
     }
 
     // Adds TensorsToEmbeddingsCalculator.

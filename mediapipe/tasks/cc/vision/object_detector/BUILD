@@ -74,7 +74,6 @@ cc_library(
         "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator_cc_proto",
         "//mediapipe/tasks/cc/components/calculators:score_calibration_utils",
         "//mediapipe/tasks/cc/components/processors:image_preprocessing_graph",
-        "//mediapipe/tasks/cc/components/utils:source_or_node_output",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/core:model_task_graph",
         "//mediapipe/tasks/cc/core:utils",
