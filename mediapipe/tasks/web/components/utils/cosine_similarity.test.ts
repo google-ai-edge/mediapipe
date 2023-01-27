@@ -70,12 +70,12 @@ describe('computeCosineSimilarity', () => {
 
   it('succeeds with quantized embeddings', () => {
     const u: Embedding = {
-      quantizedEmbedding: new Uint8Array([255, 128, 128, 128]),
+      quantizedEmbedding: new Uint8Array([127, 0, 0, 0]),
       headIndex: 0,
       headName: ''
     };
     const v: Embedding = {
-      quantizedEmbedding: new Uint8Array([0, 128, 128, 128]),
+      quantizedEmbedding: new Uint8Array([128, 0, 0, 0]),
       headIndex: 0,
       headName: ''
     };
