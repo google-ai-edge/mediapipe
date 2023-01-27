@@ -29,7 +29,7 @@ NS_SWIFT_NAME(TextEmbedderptions)
  * Use this option only if the model does not already contain a native L2_NORMALIZATION TF Lite Op.
  * In most cases, this is already the case and L2 norm is thus achieved through TF Lite inference.
  *
- * NO by default.
+ * `NO` by default.
  */
 @property(nonatomic) BOOL l2Normalize;
 
@@ -38,7 +38,7 @@ NS_SWIFT_NAME(TextEmbedderptions)
  * Embeddings are implicitly assumed to be unit-norm and therefore any dimensions is guaranteed to
  * have value in [-1.0, 1.0]. Use the `l2Normalize` property if this is not the case.
  *
- * NO by default.
+ * `NO` by default.
  */
 @property(nonatomic) BOOL quantize;
 

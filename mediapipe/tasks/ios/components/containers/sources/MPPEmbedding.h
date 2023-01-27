@@ -54,7 +54,6 @@ NS_SWIFT_NAME(Embedding)
  *
  * @return An instance of `MPPEmbedding` initialized with the given float embedding, quantized
  * embedding, head index and head name.
- *
  */
 - (instancetype)initWithFloatEmbedding:(nullable float *)floatEmbedding
                     quantizedEmbedding:(nullable char *)quantizedEmbedding

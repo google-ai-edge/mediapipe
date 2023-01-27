@@ -30,7 +30,7 @@ NS_SWIFT_NAME(EmbeddingResult)
  * @brief The optional timestamp (in milliseconds) of the start of the chunk of data corresponding
  * to these results.
  * This is only used for embedding extraction on time series (e.g. audio embedder). In these use
- * cases, the amount of data to process might exceed the maximum size that the model can process: to
+ * cases, the amount of data to process might exceed the maximum size that the model can process. To
  * solve this, the input data is split into multiple chunks starting at different timestamps.
  */
 @property(nonatomic, readonly) NSInteger timestampMs;

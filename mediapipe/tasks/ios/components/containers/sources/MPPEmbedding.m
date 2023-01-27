@@ -20,7 +20,6 @@
                     quantizedEmbedding:(nullable char *)quantizedEmbedding
                              headIndex:(NSInteger)headIndex
                               headName:(nullable NSString *)headName {
-  // TODO: Should null check for embeddings be done here ?
   self = [super init];
   if (self) {
     _headIndex = headIndex;
