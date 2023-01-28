@@ -1054,6 +1054,7 @@ cc_test(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/util:packet_test_util",
         "@org_tensorflow//tensorflow/core:framework",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
     ],
