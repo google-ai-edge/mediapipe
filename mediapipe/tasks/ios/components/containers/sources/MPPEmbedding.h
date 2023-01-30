@@ -29,13 +29,13 @@ NS_SWIFT_NAME(Embedding)
  * @brief The Floating-point embedding.
  * Empty if the embedder was configured to perform scalar quantization.
  */
-@property(nonatomic, readonly, nullable) float *floatEmbedding;
+@property(nonatomic, readonly, nullable) NSArray<NSNumber *> *floatEmbedding;
 
 /**
  * @brief The Quantized embedding.
  * Empty if the embedder was not configured to perform scalar quantization.
  */
-@property(nonatomic, readonly, nullable) char *quantizedEmbedding;
+@property(nonatomic, readonly, nullable) NSData *quantizedEmbedding;
 
 /** The index of the embedder head these entries refer to. This is useful for multi-head models. */
 @property(nonatomic, readonly) NSInteger headIndex;
@@ -55,8 +55,8 @@ NS_SWIFT_NAME(Embedding)
  * @return An instance of `MPPEmbedding` initialized with the given float embedding, quantized
  * embedding, head index and head name.
  */
-- (instancetype)initWithFloatEmbedding:(nullable float *)floatEmbedding
-                    quantizedEmbedding:(nullable char *)quantizedEmbedding
+- (instancetype)initWithFloatEmbedding:(nullable NSArray<NSNumber *> *)floatEmbedding
+                    quantizedEmbedding:(nullable NSData *)quantizedEmbedding
                              headIndex:(NSInteger)headIndex
                               headName:(nullable NSString *)headName NS_DESIGNATED_INITIALIZER;
 

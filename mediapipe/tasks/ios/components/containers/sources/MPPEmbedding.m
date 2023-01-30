@@ -16,8 +16,8 @@
 
 @implementation MPPEmbedding
 
-- (instancetype)initWithFloatEmbedding:(nullable float *)floatEmbedding
-                    quantizedEmbedding:(nullable char *)quantizedEmbedding
+- (instancetype)initWithFloatEmbedding:(nullable NSArray<NSNumber *> *)floatEmbedding
+                    quantizedEmbedding:(nullable NSData *)quantizedEmbedding
                              headIndex:(NSInteger)headIndex
                               headName:(nullable NSString *)headName {
   self = [super init];
