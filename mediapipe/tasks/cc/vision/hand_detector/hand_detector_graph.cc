@@ -150,9 +150,9 @@ void ConfigureRectTransformationCalculator(
 // Inputs:
 //   IMAGE - Image
 //     Image to perform detection on.
-//   NORM_RECT - NormalizedRect
-//     Describes image rotation and region of image to perform detection
-//     on.
+//   NORM_RECT - NormalizedRect @Optional
+//     Describes image rotation and region of image to perform detection on. If
+//     not provided, whole image is used for hand detection.
 //
 // Outputs:
 //   PALM_DETECTIONS - std::vector<Detection>
@@ -197,11 +197,12 @@ class HandDetectorGraph : public core::ModelTaskGraph {
     ASSIGN_OR_RETURN(const auto* model_resources,
                      CreateModelResources<HandDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(auto hand_detection_outs,
-                     BuildHandDetectionSubgraph(
-                         sc->Options<HandDetectorGraphOptions>(),
-                         *model_resources, graph[Input<Image>(kImageTag)],
-                         graph[Input<NormalizedRect>(kNormRectTag)], graph));
+    ASSIGN_OR_RETURN(
+        auto hand_detection_outs,
+        BuildHandDetectionSubgraph(
+            sc->Options<HandDetectorGraphOptions>(), *model_resources,
+            graph[Input<Image>(kImageTag)],
+            graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
     hand_detection_outs.palm_detections >>
         graph[Output<std::vector<Detection>>(kPalmDetectionsTag)];
     hand_detection_outs.hand_rects >>

@@ -243,11 +243,12 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
         const auto* model_resources,
         CreateModelResources<HandLandmarksDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(auto hand_landmark_detection_outs,
-                     BuildSingleHandLandmarksDetectorGraph(
-                         sc->Options<HandLandmarksDetectorGraphOptions>(),
-                         *model_resources, graph[Input<Image>(kImageTag)],
-                         graph[Input<NormalizedRect>(kHandRectTag)], graph));
+    ASSIGN_OR_RETURN(
+        auto hand_landmark_detection_outs,
+        BuildSingleHandLandmarksDetectorGraph(
+            sc->Options<HandLandmarksDetectorGraphOptions>(), *model_resources,
+            graph[Input<Image>(kImageTag)],
+            graph[Input<NormalizedRect>::Optional(kHandRectTag)], graph));
     hand_landmark_detection_outs.hand_landmarks >>
         graph[Output<NormalizedLandmarkList>(kLandmarksTag)];
     hand_landmark_detection_outs.world_hand_landmarks >>
