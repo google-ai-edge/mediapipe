@@ -17,27 +17,18 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 objc_library(
-    name = "MPPCategory",
-    srcs = ["sources/MPPCategory.m"],
-    hdrs = ["sources/MPPCategory.h"],
+    name = "MPPTextEmbedderOptions",
+    srcs = ["sources/MPPTextEmbedderOptions.m"],
+    hdrs = ["sources/MPPTextEmbedderOptions.h"],
+    deps = ["//mediapipe/tasks/ios/core:MPPTaskOptions"],
 )
 
 objc_library(
-    name = "MPPClassificationResult",
-    srcs = ["sources/MPPClassificationResult.m"],
-    hdrs = ["sources/MPPClassificationResult.h"],
-    deps = [":MPPCategory"],
-)
-
-objc_library(
-    name = "MPPEmbedding",
-    srcs = ["sources/MPPEmbedding.m"],
-    hdrs = ["sources/MPPEmbedding.h"],
-)
-
-objc_library(
-    name = "MPPEmbeddingResult",
-    srcs = ["sources/MPPEmbeddingResult.m"],
-    hdrs = ["sources/MPPEmbeddingResult.h"],
-    deps = [":MPPEmbedding"],
+    name = "MPPTextEmbedderResult",
+    srcs = ["sources/MPPTextEmbedderResult.m"],
+    hdrs = ["sources/MPPTextEmbedderResult.h"],
+    deps = [
+        "//mediapipe/tasks/ios/components/containers:MPPEmbeddingResult",
+        "//mediapipe/tasks/ios/core:MPPTaskResult",
+    ],
 )
