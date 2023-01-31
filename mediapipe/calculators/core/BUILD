@@ -1329,6 +1329,7 @@ cc_library(
     hdrs = ["merge_to_vector_calculator.h"],
     deps = [
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:packet",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:detection_cc_proto",

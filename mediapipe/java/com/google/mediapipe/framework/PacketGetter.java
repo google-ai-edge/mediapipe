@@ -199,6 +199,28 @@ public final class PacketGetter {
     return nativeGetImageData(packet.getNativeHandle(), buffer);
   }
 
+  /** Returns the size of Image list. This helps to determine size of allocated ByteBuffer array. */
+  public static int getImageListSize(final Packet packet) {
+    return nativeGetImageListSize(packet.getNativeHandle());
+  }
+
+  /**
+   * Assign the native image buffer array in given ByteBuffer array. It assumes given ByteBuffer
+   * array has the the same size of image list packet, and assumes the output buffer stores pixels
+   * contiguously. It returns false if this assumption does not hold.
+   *
+   * <p>If deepCopy is true, it assumes the given buffersArray has allocated the required size of
+   * ByteBuffer to copy image data to. If false, the ByteBuffer will wrap the memory address of
+   * MediaPipe ImageFrame of graph output, and the ByteBuffer data is available only when MediaPipe
+   * graph is alive.
+   *
+   * <p>Note: this function does not assume the pixel format.
+   */
+  public static boolean getImageList(
+      final Packet packet, ByteBuffer[] buffersArray, boolean deepCopy) {
+    return nativeGetImageList(packet.getNativeHandle(), buffersArray, deepCopy);
+  }
+
   /**
    * Converts an RGB mediapipe image frame packet to an RGBA Byte buffer.
    *
@@ -316,7 +338,8 @@ public final class PacketGetter {
   public static GraphTextureFrame getTextureFrameDeferredSync(final Packet packet) {
     return new GraphTextureFrame(
         nativeGetGpuBuffer(packet.getNativeHandle(), /* waitOnCpu= */ false),
-        packet.getTimestamp(), /* deferredSync= */true);
+        packet.getTimestamp(),
+        /* deferredSync= */ true);
   }
 
   private static native long nativeGetPacketFromReference(long nativePacketHandle);
@@ -362,6 +385,11 @@ public final class PacketGetter {
   private static native int nativeGetImageHeight(long nativePacketHandle);
 
   private static native boolean nativeGetImageData(long nativePacketHandle, ByteBuffer buffer);
+
+  private static native int nativeGetImageListSize(long nativePacketHandle);
+
+  private static native boolean nativeGetImageList(
+      long nativePacketHandle, ByteBuffer[] bufferArray, boolean deepCopy);
 
   private static native boolean nativeGetRgbaFromRgb(long nativePacketHandle, ByteBuffer buffer);
   // Retrieves the values that are in the VideoHeader.

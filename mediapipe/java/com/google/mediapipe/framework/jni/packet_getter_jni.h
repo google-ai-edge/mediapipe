@@ -106,6 +106,17 @@ JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageHeight)(JNIEnv* env,
 JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
     JNIEnv* env, jobject thiz, jlong packet, jobject byte_buffer);
 
+// Return the vector size of std::vector<Image>.
+JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageListSize)(
+    JNIEnv* env, jobject thiz, jlong packet);
+
+// Fill ByteBuffer[] from the Packet of std::vector<Image>.
+// Before calling this, the byte_buffer_array needs to have the correct
+// allocated size.
+JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageList)(
+    JNIEnv* env, jobject thiz, jlong packet, jobjectArray byte_buffer_array,
+    jboolean deep_copy);
+
 // Before calling this, the byte_buffer needs to have the correct allocated
 // size.
 JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetRgbaFromRgb)(
