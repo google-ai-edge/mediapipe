@@ -139,5 +139,32 @@ TEST_F(EmbedderTest, SucceedsWithQuantization) {
   MP_ASSERT_OK(text_embedder->Close());
 }
 
+TEST_F(EmbedderTest, SucceedsWithMobileBertAndDifferentThemes) {
+  auto options = std::make_unique<TextEmbedderOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kMobileBert);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextEmbedder> text_embedder,
+                          TextEmbedder::Create(std::move(options)));
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      TextEmbedderResult result0,
+      text_embedder->Embed("When you go to this restaurant, they hold the "
+                           "pancake upside-down before they hand it "
+                           "to you. It's a great gimmick."));
+  MP_ASSERT_OK_AND_ASSIGN(
+      TextEmbedderResult result1,
+      text_embedder->Embed(
+          "Let's make a plan to steal the declaration of independence."));
+
+  // Check cosine similarity.
+  MP_ASSERT_OK_AND_ASSIGN(
+      double similarity, TextEmbedder::CosineSimilarity(result0.embeddings[0],
+                                                        result1.embeddings[0]));
+  // TODO: The similarity should likely be lower
+  EXPECT_NEAR(similarity, 0.98088, kSimilarityTolerancy);
+
+  MP_ASSERT_OK(text_embedder->Close());
+}
+
 }  // namespace
 }  // namespace mediapipe::tasks::text::text_embedder

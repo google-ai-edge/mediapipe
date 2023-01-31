@@ -192,6 +192,36 @@ class TextEmbedderTest(parameterized.TestCase):
       self._check_embedding_value(result1, expected_result1_value)
       self._check_cosine_similarity(result0, result1, expected_similarity)
 
+  def test_embed_with_mobile_bert_and_different_themes(self):
+    # Creates embedder.
+    model_path = test_utils.get_test_data_path(
+        os.path.join(_TEST_DATA_DIR, _BERT_MODEL_FILE)
+    )
+    base_options = _BaseOptions(model_asset_path=model_path)
+    options = _TextEmbedderOptions(base_options=base_options)
+    embedder = _TextEmbedder.create_from_options(options)
+
+    # Extracts both embeddings.
+    text0 = (
+        'When you go to this restaurant, they hold the pancake upside-down '
+        "before they hand it to you. It's a great gimmick."
+    )
+    result0 = embedder.embed(text0)
+
+    text1 = "Let's make a plan to steal the declaration of independence."
+    result1 = embedder.embed(text1)
+
+    similarity = _TextEmbedder.cosine_similarity(
+        result0.embeddings[0], result1.embeddings[0]
+    )
+
+    # TODO: The similarity should likely be lower
+    self.assertAlmostEqual(similarity, 0.980880, delta=_SIMILARITY_TOLERANCE)
+
+    # Closes the embedder explicitly when the embedder is not used in
+    # a context.
+    embedder.close()
+
 
 if __name__ == '__main__':
   absltest.main()
