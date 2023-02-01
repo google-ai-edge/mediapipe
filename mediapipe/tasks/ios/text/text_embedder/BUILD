@@ -32,3 +32,29 @@ objc_library(
         "//mediapipe/tasks/ios/core:MPPTaskResult",
     ],
 )
+
+objc_library(
+    name = "MPPTextEmbedder",
+    srcs = ["sources/MPPTextEmbedder.mm"],
+    hdrs = ["sources/MPPTextEmbedder.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    module_name = "MPPTextEmbedder",
+    deps = [
+        ":MPPTextEmbedderOptions",
+        ":MPPTextEmbedderResult",
+        "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/core:MPPTextPacketCreator",
+        "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
+        "//mediapipe/tasks/ios/text/text_embedder/utils:MPPTextEmbedderOptionsHelpers",
+        "//mediapipe/tasks/ios/text/text_embedder/utils:MPPTextEmbedderResultHelpers",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
