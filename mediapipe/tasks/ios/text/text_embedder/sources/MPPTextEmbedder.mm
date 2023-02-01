@@ -89,8 +89,8 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_embedder.Tex
   }
 
   return [MPPTextEmbedderResult
-      textEmbedderResultWithOutputPacket:statusOrOutputPacketMap.value()
-                                                        [kEmbeddingsOutStreamName.cppString]];
+      textEmbedderResultWithOutputPacket:statusOrOutputPacketMap
+                                             .value()[kEmbeddingsOutStreamName.cppString]];
 }
 
 @end

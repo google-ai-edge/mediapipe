@@ -17,8 +17,8 @@
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/utils/sources/MPPBaseOptions+Helpers.h"
 
-#include "mediapipe/tasks/cc/text/text_embedder/proto/text_embedder_graph_options.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
+#include "mediapipe/tasks/cc/text/text_embedder/proto/text_embedder_graph_options.pb.h"
 
 namespace {
 using CalculatorOptionsProto = ::mediapipe::CalculatorOptions;

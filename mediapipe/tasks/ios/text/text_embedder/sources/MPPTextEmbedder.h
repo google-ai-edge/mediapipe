@@ -23,7 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * @brief Performs embedding extraction on text.
  *
- * This API expects a TFLite model with (optional) [TFLite Model Metadata](https://www.tensorflow.org/lite/convert/metadata").
+ * This API expects a TFLite model with (optional) [TFLite Model
+ * Metadata](https://www.tensorflow.org/lite/convert/metadata").
  *
  * Metadata is required for models with int32 input tensors because it contains the input process
  * unit for the model's Tokenizer. No metadata is required for models with string input tensors.
@@ -38,7 +39,8 @@ NS_ASSUME_NONNULL_BEGIN
  *  - Or one input tensor (`kTfLiteString`) that is shapeless or has shape `[1]` containing
  *    the input string.
  *
- * At least one output tensor (`kTfLiteFloat32`/`kTfLiteUint8`) with shape `[1 x N]` where `N` is the number of dimensions in the produced embeddings.
+ * At least one output tensor (`kTfLiteFloat32`/`kTfLiteUint8`) with shape `[1 x N]` where `N` is
+ * the number of dimensions in the produced embeddings.
  */
 NS_SWIFT_NAME(TextEmbedder)
 @interface MPPTextEmbedder : NSObject
@@ -80,7 +82,7 @@ NS_SWIFT_NAME(TextEmbedder)
  * @return  A `MPPTextEmbedderResult` object that contains a list of embeddings.
  */
 - (nullable MPPTextEmbedderResult *)embedText:(NSString *)text
-                                             error:(NSError **)error NS_SWIFT_NAME(embed(text:));
+                                        error:(NSError **)error NS_SWIFT_NAME(embed(text:));
 
 - (instancetype)init NS_UNAVAILABLE;
 

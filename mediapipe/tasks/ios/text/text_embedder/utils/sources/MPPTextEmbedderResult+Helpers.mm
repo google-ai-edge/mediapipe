@@ -20,8 +20,7 @@
 static const int kMicroSecondsPerMilliSecond = 1000;
 
 namespace {
-using EmbeddingResultProto =
-    ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
+using EmbeddingResultProto = ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
 using ::mediapipe::Packet;
 }  // namespace
 
@@ -30,13 +29,13 @@ using ::mediapipe::Packet;
 @implementation MPPTextEmbedderResult (Helpers)
 
 + (MPPTextEmbedderResult *)textEmbedderResultWithOutputPacket:(const Packet &)packet {
-  MPPEmbeddingResult *embeddingResult = [MPPEmbeddingResult
-      embeddingResultWithProto:packet.Get<EmbeddingResultProto>()];
+  MPPEmbeddingResult *embeddingResult =
+      [MPPEmbeddingResult embeddingResultWithProto:packet.Get<EmbeddingResultProto>()];
 
   return [[MPPTextEmbedderResult alloc]
       initWithEmbeddingResult:embeddingResult
-                       timestampMs:(NSInteger)(packet.Timestamp().Value() /
-                                               kMicroSecondsPerMilliSecond)];
+                  timestampMs:(NSInteger)(packet.Timestamp().Value() /
+                                          kMicroSecondsPerMilliSecond)];
 }
 
 @end

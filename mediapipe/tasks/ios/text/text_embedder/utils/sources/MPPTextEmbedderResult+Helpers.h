@@ -20,8 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPTextEmbedderResult (Helpers)
 
-+ (MPPTextEmbedderResult *)textEmbedderResultWithOutputPacket:
-    (const mediapipe::Packet &)packet;
++ (MPPTextEmbedderResult *)textEmbedderResultWithOutputPacket:(const mediapipe::Packet &)packet;
 
 @end
 
