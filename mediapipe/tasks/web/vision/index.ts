@@ -19,6 +19,7 @@ import {GestureRecognizer as GestureRecognizerImpl} from '../../../tasks/web/vis
 import {HandLandmarker as HandLandmarkerImpl} from '../../../tasks/web/vision/hand_landmarker/hand_landmarker';
 import {ImageClassifier as ImageClassifierImpl} from '../../../tasks/web/vision/image_classifier/image_classifier';
 import {ImageEmbedder as ImageEmbedderImpl} from '../../../tasks/web/vision/image_embedder/image_embedder';
+import {ImageSegmenter as ImageSegementerImpl} from '../../../tasks/web/vision/image_segmenter/image_segmenter';
 import {ObjectDetector as ObjectDetectorImpl} from '../../../tasks/web/vision/object_detector/object_detector';
 
 // Declare the variables locally so that Rollup in OSS includes them explicitly
@@ -28,6 +29,7 @@ const GestureRecognizer = GestureRecognizerImpl;
 const HandLandmarker = HandLandmarkerImpl;
 const ImageClassifier = ImageClassifierImpl;
 const ImageEmbedder = ImageEmbedderImpl;
+const ImageSegmenter = ImageSegementerImpl;
 const ObjectDetector = ObjectDetectorImpl;
 
 export {
@@ -36,5 +38,6 @@ export {
   HandLandmarker,
   ImageClassifier,
   ImageEmbedder,
+  ImageSegmenter,
   ObjectDetector
 };

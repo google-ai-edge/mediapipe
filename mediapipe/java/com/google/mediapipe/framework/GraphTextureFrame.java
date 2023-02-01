@@ -158,7 +158,7 @@ public class GraphTextureFrame implements TextureFrame {
 
   @Override
   protected void finalize() throws Throwable {
-    if (refCount >= 0 || nativeBufferHandle != 0) {
+    if (refCount > 0 || nativeBufferHandle != 0) {
       logger.atWarning().log("release was not called before finalize");
     }
     if (!activeConsumerContextHandleSet.isEmpty()) {

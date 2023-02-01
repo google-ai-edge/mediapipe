@@ -33,6 +33,7 @@ export declare interface Embedding {
    * perform scalar quantization.
    */
   quantizedEmbedding?: Uint8Array;
+
   /**
    * The index of the classifier head these categories refer to. This is
    * useful for multi-head models.

@@ -92,7 +92,7 @@ bool GraphRegistry::IsRegistered(const std::string& ns,
 }
 
 absl::StatusOr<CalculatorGraphConfig> GraphRegistry::CreateByName(
-    const std::string& ns, const std::string& type_name,
+    absl::string_view ns, absl::string_view type_name,
     SubgraphContext* context) const {
   absl::StatusOr<std::unique_ptr<Subgraph>> maker =
       local_factories_.IsRegistered(ns, type_name)

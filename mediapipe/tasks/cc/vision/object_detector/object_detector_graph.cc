@@ -34,7 +34,6 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/calculators/score_calibration_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/calculators/score_calibration_utils.h"
 #include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
-#include "mediapipe/tasks/cc/components/utils/source_or_node_output.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
@@ -69,7 +68,7 @@ using LabelItems = mediapipe::proto_ns::Map<int64, ::mediapipe::LabelMapItem>;
 using ObjectDetectorOptionsProto =
     object_detector::proto::ObjectDetectorOptions;
 using TensorsSource =
-    mediapipe::tasks::SourceOrNodeOutput<std::vector<mediapipe::Tensor>>;
+    mediapipe::api2::builder::Source<std::vector<mediapipe::Tensor>>;
 
 constexpr int kDefaultLocationsIndex = 0;
 constexpr int kDefaultCategoriesIndex = 1;
@@ -584,7 +583,8 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
         auto post_processing_specs,
         BuildPostProcessingSpecs(task_options, metadata_extractor));
     // Calculators to perform score calibration, if specified in the metadata.
-    TensorsSource calibrated_tensors = {&inference, kTensorTag};
+    TensorsSource calibrated_tensors =
+        inference.Out(kTensorTag).Cast<std::vector<Tensor>>();
     if (post_processing_specs.score_calibration_options.has_value()) {
       // Split tensors.
       auto* split_tensor_vector_node =
@@ -623,7 +623,8 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
               concatenate_tensor_vector_node->In(i);
         }
       }
-      calibrated_tensors = {concatenate_tensor_vector_node, 0};
+      calibrated_tensors =
+          concatenate_tensor_vector_node->Out(0).Cast<std::vector<Tensor>>();
     }
     // Calculator to convert output tensors to a detection proto vector.
     // Connects TensorsToDetectionsCalculator's input stream to the output

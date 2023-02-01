@@ -50,7 +50,10 @@ public class ByteBufferExtractor {
     switch (container.getImageProperties().getStorageType()) {
       case MPImage.STORAGE_TYPE_BYTEBUFFER:
         ByteBufferImageContainer byteBufferImageContainer = (ByteBufferImageContainer) container;
-        return byteBufferImageContainer.getByteBuffer().asReadOnlyBuffer();
+        return byteBufferImageContainer
+            .getByteBuffer()
+            .asReadOnlyBuffer()
+            .order(ByteOrder.nativeOrder());
       default:
         throw new IllegalArgumentException(
             "Extract ByteBuffer from a MPImage created by objects other than Bytebuffer is not"
@@ -74,7 +77,7 @@ public class ByteBufferExtractor {
    * @throws IllegalArgumentException when the extraction requires unsupported format or data type
    *     conversions.
    */
-  static ByteBuffer extract(MPImage image, @MPImageFormat int targetFormat) {
+  public static ByteBuffer extract(MPImage image, @MPImageFormat int targetFormat) {
     MPImageContainer container;
     MPImageProperties byteBufferProperties =
         MPImageProperties.builder()
@@ -83,12 +86,16 @@ public class ByteBufferExtractor {
             .build();
     if ((container = image.getContainer(byteBufferProperties)) != null) {
       ByteBufferImageContainer byteBufferImageContainer = (ByteBufferImageContainer) container;
-      return byteBufferImageContainer.getByteBuffer().asReadOnlyBuffer();
+      return byteBufferImageContainer
+          .getByteBuffer()
+          .asReadOnlyBuffer()
+          .order(ByteOrder.nativeOrder());
     } else if ((container = image.getContainer(MPImage.STORAGE_TYPE_BYTEBUFFER)) != null) {
       ByteBufferImageContainer byteBufferImageContainer = (ByteBufferImageContainer) container;
       @MPImageFormat int sourceFormat = byteBufferImageContainer.getImageFormat();
       return convertByteBuffer(byteBufferImageContainer.getByteBuffer(), sourceFormat, targetFormat)
-          .asReadOnlyBuffer();
+          .asReadOnlyBuffer()
+          .order(ByteOrder.nativeOrder());
     } else if ((container = image.getContainer(MPImage.STORAGE_TYPE_BITMAP)) != null) {
       BitmapImageContainer bitmapImageContainer = (BitmapImageContainer) container;
       ByteBuffer byteBuffer =

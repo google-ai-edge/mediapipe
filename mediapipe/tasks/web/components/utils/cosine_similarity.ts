@@ -38,7 +38,7 @@ export function computeCosineSimilarity(u: Embedding, v: Embedding): number {
 }
 
 function convertToBytes(data: Uint8Array): number[] {
-  return Array.from(data, v => v - 128);
+  return Array.from(data, v => v > 127 ? v - 256 : v);
 }
 
 function compute(u: number[], v: number[]) {

@@ -442,6 +442,21 @@ cc_library(
 )
 
 cc_library(
+    name = "gpu_buffer_storage_yuv_image",
+    srcs = ["gpu_buffer_storage_yuv_image.cc"],
+    hdrs = ["gpu_buffer_storage_yuv_image.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gpu_buffer_format",
+        ":gpu_buffer_storage",
+        "//mediapipe/framework/formats:yuv_image",
+        "//third_party/libyuv",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+    ],
+)
+
+cc_library(
     name = "gpu_buffer_storage_ahwb",
     srcs = ["gpu_buffer_storage_ahwb.cc"],
     hdrs = ["gpu_buffer_storage_ahwb.h"],
@@ -1184,6 +1199,20 @@ mediapipe_cc_test(
     deps = [
         ":gpu_buffer_format",
         ":gpu_buffer_storage_ahwb",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
+mediapipe_cc_test(
+    name = "gpu_buffer_storage_yuv_image_test",
+    size = "small",
+    srcs = ["gpu_buffer_storage_yuv_image_test.cc"],
+    exclude_platforms = [
+        "ios",
+    ],
+    deps = [
+        ":gpu_buffer_format",
+        ":gpu_buffer_storage_yuv_image",
         "//mediapipe/framework/port:gtest_main",
     ],
 )

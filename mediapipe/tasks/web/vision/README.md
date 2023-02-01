@@ -39,6 +39,23 @@ const classifications = imageClassifier.classify(image);
 
 For more information, refer to the [Image Classification](https://developers.google.com/mediapipe/solutions/vision/image_classifier/web_js) documentation.
 
+## Image Segmentation
+
+The MediaPipe Image Segmenter lets you segment an image into categories.
+
+```
+const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+);
+const imageSegmenter = await ImageSegmenter.createFromModelPath(vision,
+    "model.tflite"
+);
+const image = document.getElementById("image") as HTMLImageElement;
+imageSegmenter.segment(image, (masks, width, height) => {
+  ...
+});
+```
+
 ## Gesture Recognition
 
 The MediaPipe Gesture Recognizer task lets you recognize hand gestures in real

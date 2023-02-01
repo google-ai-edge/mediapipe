@@ -14,6 +14,7 @@
 
 #include "mediapipe/java/com/google/mediapipe/framework/jni/packet_getter_jni.h"
 
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/formats/image.h"
@@ -39,6 +40,52 @@ template <typename T>
 const T& GetFromNativeHandle(int64_t packet_handle) {
   return mediapipe::android::Graph::GetPacketFromHandle(packet_handle).Get<T>();
 }
+
+bool CopyImageDataToByteBuffer(JNIEnv* env, const mediapipe::ImageFrame& image,
+                               jobject byte_buffer) {
+  int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
+  void* buffer_data = env->GetDirectBufferAddress(byte_buffer);
+  if (buffer_data == nullptr || buffer_size < 0) {
+    ThrowIfError(env, absl::InvalidArgumentError(
+                          "input buffer does not support direct access"));
+    return false;
+  }
+
+  // Assume byte buffer stores pixel data contiguously.
+  const int expected_buffer_size = image.Width() * image.Height() *
+                                   image.ByteDepth() * image.NumberOfChannels();
+  if (buffer_size != expected_buffer_size) {
+    ThrowIfError(
+        env, absl::InvalidArgumentError(absl::StrCat(
+                 "Expected buffer size ", expected_buffer_size,
+                 " got: ", buffer_size, ", width ", image.Width(), ", height ",
+                 image.Height(), ", channels ", image.NumberOfChannels())));
+    return false;
+  }
+
+  switch (image.ByteDepth()) {
+    case 1: {
+      uint8* data = static_cast<uint8*>(buffer_data);
+      image.CopyToBuffer(data, expected_buffer_size);
+      break;
+    }
+    case 2: {
+      uint16* data = static_cast<uint16*>(buffer_data);
+      image.CopyToBuffer(data, expected_buffer_size);
+      break;
+    }
+    case 4: {
+      float* data = static_cast<float*>(buffer_data);
+      image.CopyToBuffer(data, expected_buffer_size);
+      break;
+    }
+    default: {
+      return false;
+    }
+  }
+  return true;
+}
+
 }  // namespace
 
 JNIEXPORT jlong JNICALL PACKET_GETTER_METHOD(nativeGetPacketFromReference)(
@@ -298,45 +345,50 @@ JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
                       .GetImageFrameSharedPtr()
                       .get()
                : GetFromNativeHandle<mediapipe::ImageFrame>(packet);
+  return CopyImageDataToByteBuffer(env, image, byte_buffer);
+}
 
-  int64_t buffer_size = env->GetDirectBufferCapacity(byte_buffer);
-  void* buffer_data = env->GetDirectBufferAddress(byte_buffer);
-  if (buffer_data == nullptr || buffer_size < 0) {
-    ThrowIfError(env, absl::InvalidArgumentError(
-                          "input buffer does not support direct access"));
+JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageListSize)(
+    JNIEnv* env, jobject thiz, jlong packet) {
+  const auto& image_list =
+      GetFromNativeHandle<std::vector<mediapipe::Image>>(packet);
+  return image_list.size();
+}
+
+JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageList)(
+    JNIEnv* env, jobject thiz, jlong packet, jobjectArray byte_buffer_array,
+    jboolean deep_copy) {
+  const auto& image_list =
+      GetFromNativeHandle<std::vector<mediapipe::Image>>(packet);
+  if (env->GetArrayLength(byte_buffer_array) != image_list.size()) {
+    ThrowIfError(env, absl::InvalidArgumentError(absl::StrCat(
+                          "Expected ByteBuffer array size: ", image_list.size(),
+                          " but get ByteBuffer array size: ",
+                          env->GetArrayLength(byte_buffer_array))));
     return false;
   }
-
-  // Assume byte buffer stores pixel data contiguously.
-  const int expected_buffer_size = image.Width() * image.Height() *
-                                   image.ByteDepth() * image.NumberOfChannels();
-  if (buffer_size != expected_buffer_size) {
-    ThrowIfError(
-        env, absl::InvalidArgumentError(absl::StrCat(
-                 "Expected buffer size ", expected_buffer_size,
-                 " got: ", buffer_size, ", width ", image.Width(), ", height ",
-                 image.Height(), ", channels ", image.NumberOfChannels())));
-    return false;
-  }
-
-  switch (image.ByteDepth()) {
-    case 1: {
-      uint8* data = static_cast<uint8*>(buffer_data);
-      image.CopyToBuffer(data, expected_buffer_size);
-      break;
-    }
-    case 2: {
-      uint16* data = static_cast<uint16*>(buffer_data);
-      image.CopyToBuffer(data, expected_buffer_size);
-      break;
-    }
-    case 4: {
-      float* data = static_cast<float*>(buffer_data);
-      image.CopyToBuffer(data, expected_buffer_size);
-      break;
-    }
-    default: {
+  for (int i = 0; i < image_list.size(); ++i) {
+    auto& image = *image_list[i].GetImageFrameSharedPtr().get();
+    if (!image.IsContiguous()) {
+      ThrowIfError(
+          env, absl::InternalError("ImageFrame must store data contiguously to "
+                                   "be allocated as ByteBuffer."));
       return false;
+    }
+    if (deep_copy) {
+      jobject byte_buffer = reinterpret_cast<jobject>(
+          env->GetObjectArrayElement(byte_buffer_array, i));
+      if (!CopyImageDataToByteBuffer(env, image, byte_buffer)) {
+        return false;
+      }
+    } else {
+      // Assume byte buffer stores pixel data contiguously.
+      const int expected_buffer_size = image.Width() * image.Height() *
+                                       image.ByteDepth() *
+                                       image.NumberOfChannels();
+      jobject image_data_byte_buffer = env->NewDirectByteBuffer(
+          image.MutablePixelData(), expected_buffer_size);
+      env->SetObjectArrayElement(byte_buffer_array, i, image_data_byte_buffer);
     }
   }
   return true;
@@ -415,7 +467,8 @@ JNIEXPORT jbyteArray JNICALL PACKET_GETTER_METHOD(nativeGetAudioData)(
       int16 value =
           static_cast<int16>(audio_mat(channel, sample) * kMultiplier);
       // The java and native has the same byte order, by default is little
-      // Endian, we can safely copy data directly, we have tests to cover this.
+      // Endian, we can safely copy data directly, we have tests to cover
+      // this.
       env->SetByteArrayRegion(byte_data, offset, 2,
                               reinterpret_cast<const jbyte*>(&value));
       offset += 2;

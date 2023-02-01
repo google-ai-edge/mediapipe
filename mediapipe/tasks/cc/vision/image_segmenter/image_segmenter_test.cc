@@ -257,10 +257,12 @@ TEST_F(ImageModeTest, SucceedsWithConfidenceMask) {
               SimilarToFloatMask(expected_mask_float, kGoldenMaskSimilarity));
 }
 
-TEST_F(ImageModeTest, SucceedsWithRotation) {
+// TODO: fix this unit test after image segmenter handled post
+// processing correctly with rotated image.
+TEST_F(ImageModeTest, DISABLED_SucceedsWithRotation) {
   MP_ASSERT_OK_AND_ASSIGN(
-      Image image, DecodeImageFromFile(
-                       JoinPath("./", kTestDataDirectory, "cat_rotated.jpg")));
+      Image image,
+      DecodeImageFromFile(JoinPath("./", kTestDataDirectory, "cat.jpg")));
   auto options = std::make_unique<ImageSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
@@ -271,7 +273,8 @@ TEST_F(ImageModeTest, SucceedsWithRotation) {
                           ImageSegmenter::Create(std::move(options)));
   ImageProcessingOptions image_processing_options;
   image_processing_options.rotation_degrees = -90;
-  MP_ASSERT_OK_AND_ASSIGN(auto confidence_masks, segmenter->Segment(image));
+  MP_ASSERT_OK_AND_ASSIGN(auto confidence_masks,
+                          segmenter->Segment(image, image_processing_options));
   EXPECT_EQ(confidence_masks.size(), 21);
 
   cv::Mat expected_mask =

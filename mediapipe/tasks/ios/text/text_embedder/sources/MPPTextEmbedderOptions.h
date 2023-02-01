@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Options for setting up a `MPPTextEmbedder`.
  */
-NS_SWIFT_NAME(TextEmbedderptions)
+NS_SWIFT_NAME(TextEmbedderOptions)
 @interface MPPTextEmbedderOptions : MPPTaskOptions <NSCopying>
 
 /**
