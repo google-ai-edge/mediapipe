@@ -40,16 +40,19 @@ cc_library(
     srcs = ["external_file_handler.cc"],
     hdrs = ["external_file_handler.h"],
     deps = [
-        "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:status",
-        "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-    ],
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
+    ] + select({
+        "//mediapipe:windows": ["@bazel_tools//tools/cpp/runfiles"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(
