@@ -31,7 +31,8 @@ using EmbeddingProto = ::mediapipe::tasks::components::containers::proto::Embedd
   NSData *quantizedEmbedding;
 
   if (embeddingProto.has_float_embedding()) {
-    floatEmbedding = [NSMutableArray arrayWithCapacity:embeddingProto.float_embedding().values_size()];
+    floatEmbedding =
+        [NSMutableArray arrayWithCapacity:embeddingProto.float_embedding().values_size()];
     const auto floatEmbeddingValues = embeddingProto.float_embedding().values();
 
     for (const auto value : embeddingProto.float_embedding().values()) {
@@ -40,11 +41,11 @@ using EmbeddingProto = ::mediapipe::tasks::components::containers::proto::Embedd
   }
 
   if (embeddingProto.has_quantized_embedding()) {
-    const std::string& cppQuantizedEmbedding =
-        embeddingProto.quantized_embedding().values().data();
+    const std::string &cppQuantizedEmbedding = embeddingProto.quantized_embedding().values().data();
 
     const char *cppQuantizedEmbeddingCString = cppQuantizedEmbedding.c_str();
-    quantizedEmbedding = [NSData dataWithBytes:cppQuantizedEmbeddingCString length:sizeof(cppQuantizedEmbeddingCString)];
+    quantizedEmbedding = [NSData dataWithBytes:cppQuantizedEmbeddingCString
+                                        length:sizeof(cppQuantizedEmbeddingCString)];
   }
 
   NSString *headName;
@@ -54,9 +55,9 @@ using EmbeddingProto = ::mediapipe::tasks::components::containers::proto::Embedd
   }
 
   return [[MPPEmbedding alloc] initWithFloatEmbedding:floatEmbedding
-                        quantizedEmbedding:quantizedEmbedding
-                             headIndex:embeddingProto.head_index()
-                             headName:headName];
+                                   quantizedEmbedding:quantizedEmbedding
+                                            headIndex:embeddingProto.head_index()
+                                             headName:headName];
 }
 
 @end

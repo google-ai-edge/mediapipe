@@ -23,9 +23,10 @@ using EmbeddingResultProto = ::mediapipe::tasks::components::containers::proto::
 
 @implementation MPPEmbeddingResult (Helpers)
 
-+ (MPPEmbeddingResult *)embeddingResultWithProto:(const EmbeddingResultProto &)embeddingResultProto {
-  NSMutableArray *embeddings = [NSMutableArray
-      arrayWithCapacity:(NSUInteger)embeddingResultProto.embeddings_size()];
++ (MPPEmbeddingResult *)embeddingResultWithProto:
+    (const EmbeddingResultProto &)embeddingResultProto {
+  NSMutableArray *embeddings =
+      [NSMutableArray arrayWithCapacity:(NSUInteger)embeddingResultProto.embeddings_size()];
   for (const auto &embeddingProto : embeddingResultProto.embeddings()) {
     [embeddings addObject:[MPPEmbedding embeddingWithProto:embeddingProto]];
   }
@@ -35,8 +36,7 @@ using EmbeddingResultProto = ::mediapipe::tasks::components::containers::proto::
     timestampMs = (NSInteger)embeddingResultProto.timestamp_ms();
   }
 
-  return [[MPPEmbeddingResult alloc] initWithEmbeddings:embeddings
-                                                      timestampMs:timestampMs];
+  return [[MPPEmbeddingResult alloc] initWithEmbeddings:embeddings timestampMs:timestampMs];
 }
 
 @end

@@ -19,7 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPEmbedding (Helpers)
 
-+ (MPPEmbedding *)embeddingWithProto:(const ::mediapipe::tasks::components::containers::proto::Embedding &)embeddingProto;
++ (MPPEmbedding *)embeddingWithProto:
+    (const ::mediapipe::tasks::components::containers::proto::Embedding &)embeddingProto;
 
 @end
 
