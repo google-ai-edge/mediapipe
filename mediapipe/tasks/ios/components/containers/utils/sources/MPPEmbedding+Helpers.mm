@@ -28,12 +28,11 @@ using EmbeddingProto = ::mediapipe::tasks::components::containers::proto::Embedd
   NSString *displayName;
 
   NSMutableArray<NSNumber *> *floatEmbedding;
-  NSData *quantizedEmbedding;
+  NSMutableArray<NSNumber *> *quantizedEmbedding;
 
   if (embeddingProto.has_float_embedding()) {
     floatEmbedding =
         [NSMutableArray arrayWithCapacity:embeddingProto.float_embedding().values_size()];
-    const auto floatEmbeddingValues = embeddingProto.float_embedding().values();
 
     for (const auto value : embeddingProto.float_embedding().values()) {
       [floatEmbedding addObject:[NSNumber numberWithFloat:value]];
@@ -41,11 +40,12 @@ using EmbeddingProto = ::mediapipe::tasks::components::containers::proto::Embedd
   }
 
   if (embeddingProto.has_quantized_embedding()) {
-    const std::string &cppQuantizedEmbedding = embeddingProto.quantized_embedding().values().data();
+    const std::string &cppQuantizedEmbedding = embeddingProto.quantized_embedding().values();
+    quantizedEmbedding = [NSMutableArray arrayWithCapacity:cppQuantizedEmbedding.length()];
 
-    const char *cppQuantizedEmbeddingCString = cppQuantizedEmbedding.c_str();
-    quantizedEmbedding = [NSData dataWithBytes:cppQuantizedEmbeddingCString
-                                        length:sizeof(cppQuantizedEmbeddingCString)];
+    for (char ch : cppQuantizedEmbedding) {
+      [quantizedEmbedding addObject:[NSNumber numberWithChar:ch]];
+    }
   }
 
   NSString *headName;
