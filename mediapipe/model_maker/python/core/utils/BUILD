@@ -61,6 +61,7 @@ py_test(
     name = "file_util_test",
     srcs = ["file_util_test.py"],
     data = ["//mediapipe/model_maker/python/core/utils/testdata"],
+    tags = ["requires-net:external"],
     deps = [":file_util"],
 )
 
