@@ -29,7 +29,7 @@ Solution                    | NPM Package                             | Example
 Click on a solution link above for more information, including API and code
 snippets.
 
-### Supported plaforms:
+### Supported platforms:
 
 | Browser | Platform                | Notes                                  |
 | ------- | ----------------------- | -------------------------------------- |
