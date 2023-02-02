@@ -1,7 +1,7 @@
 ---
 name: "Tasks Issue"
 about: Use this template for assistance with using MediaPipe Tasks (developers.google.com/mediapipe/solutions) to deploy on-device ML solutions (e.g. gesture recognition etc.) on supported platforms.
-labels: type:support
+labels: type:tasks
 
 ---
 <em>Please make sure that this is a [Tasks](https://developers.google.com/mediapipe/solutions) issue.<em>
