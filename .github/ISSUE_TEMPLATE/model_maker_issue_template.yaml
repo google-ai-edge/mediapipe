@@ -67,7 +67,7 @@ body:
     id: other_info
     attributes:
       label: Other info / Complete Logs 
-      description: Include any logs or source code that would be helpful to diagnose the problem. If including tracebacks, please include the full traceback. Large logs and files should be attached
+      description: Include any logs or source code that would be helpful to diagnose the problem. If including tracebacks, please include the full traceback. Large logs and files should be attached
       render: shell
     validations:
       required: false
