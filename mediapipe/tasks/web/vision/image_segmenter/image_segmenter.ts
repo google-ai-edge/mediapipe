@@ -291,6 +291,10 @@ export class ImageSegmenter extends VisionTaskRunner {
           }
           this.setLatestOutputTimestamp(timestamp);
         });
+    this.graphRunner.attachEmptyPacketListener(
+        GROUPED_SEGMENTATIONS_STREAM, timestamp => {
+          this.setLatestOutputTimestamp(timestamp);
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

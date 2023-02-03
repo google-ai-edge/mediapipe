@@ -182,6 +182,9 @@ export class TextEmbedder extends TaskRunner {
               convertFromEmbeddingResultProto(embeddingResult);
           this.setLatestOutputTimestamp(timestamp);
         });
+    this.graphRunner.attachEmptyPacketListener(EMBEDDINGS_STREAM, timestamp => {
+      this.setLatestOutputTimestamp(timestamp);
+    });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

@@ -363,11 +363,20 @@ export class GestureRecognizer extends VisionTaskRunner {
           this.addJsLandmarks(binaryProto);
           this.setLatestOutputTimestamp(timestamp);
         });
+    this.graphRunner.attachEmptyPacketListener(LANDMARKS_STREAM, timestamp => {
+      this.setLatestOutputTimestamp(timestamp);
+    });
+
     this.graphRunner.attachProtoVectorListener(
         WORLD_LANDMARKS_STREAM, (binaryProto, timestamp) => {
           this.adddJsWorldLandmarks(binaryProto);
           this.setLatestOutputTimestamp(timestamp);
         });
+    this.graphRunner.attachEmptyPacketListener(
+        WORLD_LANDMARKS_STREAM, timestamp => {
+          this.setLatestOutputTimestamp(timestamp);
+        });
+
     this.graphRunner.attachProtoVectorListener(
         HAND_GESTURES_STREAM, (binaryProto, timestamp) => {
           // Gesture index is not used, because the final gesture result comes
@@ -376,11 +385,19 @@ export class GestureRecognizer extends VisionTaskRunner {
               ...this.toJsCategories(binaryProto, /* populateIndex= */ false));
           this.setLatestOutputTimestamp(timestamp);
         });
+    this.graphRunner.attachEmptyPacketListener(
+        HAND_GESTURES_STREAM, timestamp => {
+          this.setLatestOutputTimestamp(timestamp);
+        });
+
     this.graphRunner.attachProtoVectorListener(
         HANDEDNESS_STREAM, (binaryProto, timestamp) => {
           this.handednesses.push(...this.toJsCategories(binaryProto));
           this.setLatestOutputTimestamp(timestamp);
         });
+    this.graphRunner.attachEmptyPacketListener(HANDEDNESS_STREAM, timestamp => {
+      this.setLatestOutputTimestamp(timestamp);
+    });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

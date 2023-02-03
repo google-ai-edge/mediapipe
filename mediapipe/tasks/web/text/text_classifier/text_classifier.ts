@@ -164,6 +164,10 @@ export class TextClassifier extends TaskRunner {
               ClassificationResult.deserializeBinary(binaryProto));
           this.setLatestOutputTimestamp(timestamp);
         });
+    this.graphRunner.attachEmptyPacketListener(
+        CLASSIFICATIONS_STREAM, timestamp => {
+          this.setLatestOutputTimestamp(timestamp);
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

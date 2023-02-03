@@ -252,6 +252,10 @@ export class ObjectDetector extends VisionTaskRunner {
           this.addJsObjectDetections(binaryProto);
           this.setLatestOutputTimestamp(timestamp);
         });
+    this.graphRunner.attachEmptyPacketListener(
+        DETECTIONS_STREAM, timestamp => {
+          this.setLatestOutputTimestamp(timestamp);
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

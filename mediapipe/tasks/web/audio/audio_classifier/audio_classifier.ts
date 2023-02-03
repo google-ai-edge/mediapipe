@@ -200,6 +200,10 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
           this.addJsAudioClassificationResults(binaryProtos);
           this.setLatestOutputTimestamp(timestamp);
         });
+    this.graphRunner.attachEmptyPacketListener(
+        TIMESTAMPED_CLASSIFICATIONS_STREAM, timestamp => {
+          this.setLatestOutputTimestamp(timestamp);
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

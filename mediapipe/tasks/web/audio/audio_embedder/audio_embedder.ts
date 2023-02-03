@@ -203,6 +203,9 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
               convertFromEmbeddingResultProto(embeddingResult));
           this.setLatestOutputTimestamp(timestamp);
         });
+    this.graphRunner.attachEmptyPacketListener(EMBEDDINGS_STREAM, timestamp => {
+      this.setLatestOutputTimestamp(timestamp);
+    });
 
     this.graphRunner.attachProtoVectorListener(
         TIMESTAMPED_EMBEDDINGS_STREAM, (data, timestamp) => {
@@ -212,6 +215,10 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
             this.embeddingResults.push(
                 convertFromEmbeddingResultProto(embeddingResult));
           }
+          this.setLatestOutputTimestamp(timestamp);
+        });
+    this.graphRunner.attachEmptyPacketListener(
+        TIMESTAMPED_EMBEDDINGS_STREAM, timestamp => {
           this.setLatestOutputTimestamp(timestamp);
         });
 
