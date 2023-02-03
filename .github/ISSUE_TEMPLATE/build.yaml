@@ -70,10 +70,10 @@ body:
     attributes:
       label: Android AAR(if android)
       options:
-        - Yes
-        - No
+        - 'Yes'
+        - 'No'
     validations:
-      required: true    
+      required: false    
   - type: input
     id: opencvversion
     attributes:
