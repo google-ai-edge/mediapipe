@@ -17,6 +17,11 @@ import XCTest
 
 @testable import MPPTextEmbedder
 
+/** These tests are only for validating the Swift function signatures of the TextEmbedder. 
+  * Objective C tests of the TextEmbedder provide more coverage with unit tests for 
+  * different models and text embedder options. They can be found here: 
+  * /mediapipe/tasks/ios/test/text/text_embedder/MPPTextEmbedderTests.m
+  */
 class TextEmbedderTests: XCTestCase {
 
   static let bundle = Bundle(for: TextEmbedderTests.self)
