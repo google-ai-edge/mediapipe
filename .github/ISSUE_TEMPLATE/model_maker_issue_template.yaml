@@ -19,15 +19,13 @@ body:
     id: os
     attributes:
       label: OS Platform and Distribution
-      description: 
       placeholder: e.g. Linux Ubuntu 16.04, Android 11, iOS 14.4
     validations:
       required: true     
   - type: input
     id: pythonver
     attributes:
-      label: Python Version
-      description: 
+      label: Python Version 
       placeholder: e.g. 3.7, 3.8
     validations:
       required: true
@@ -35,16 +33,12 @@ body:
     id: modelmakerver
     attributes:
       label: [MediaPipe Model Maker version](https://pypi.org/project/mediapipe-model-maker/)
-      description: 
-      placeholder: 
     validations:
       required: false  
    - type: input
      id: taskname
     attributes:
-      label: Task name (e.g. Image classification, Gesture recognition etc.)
-      description: 
-      placeholder: 
+      label: Task name (e.g. Image classification, Gesture recognition etc.) 
     validations:
       required: true
    - type: textarea
