@@ -85,7 +85,7 @@ body:
     id: what-happened
     attributes:
       label: Describe the problem
-      description: Provide the exact sequence of commands / steps that you executed before running into the problem(https://google.github.io/mediapipe/getting_started/getting_started.html) :
+      description: Provide the exact sequence of commands / steps that you executed before running into the problem(https://google.github.io/mediapipe/getting_started/getting_started.html)
       placeholder: Tell us what you see!
       value: "A bug happened!"
       render: shell
