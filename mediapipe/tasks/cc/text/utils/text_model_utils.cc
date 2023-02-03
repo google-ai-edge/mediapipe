@@ -35,6 +35,7 @@ using ::mediapipe::tasks::metadata::ModelMetadataExtractor;
 constexpr int kNumInputTensorsForBert = 3;
 constexpr int kNumInputTensorsForRegex = 1;
 constexpr int kNumInputTensorsForStringPreprocessor = 1;
+constexpr int kNumInputTensorsForUSE = 3;
 
 // Determines the ModelType for a model with int32 input tensors based
 // on the number of input tensors. Returns an error if there is missing metadata
@@ -78,12 +79,16 @@ absl::StatusOr<TextModelType::ModelType> GetStringTensorModelType(
     return TextModelType::STRING_MODEL;
   }
 
+  if (num_input_tensors == kNumInputTensorsForUSE) {
+    return TextModelType::USE_MODEL;
+  }
+
   return CreateStatusWithPayload(
       absl::StatusCode::kInvalidArgument,
       absl::Substitute("Models with string input tensors should take exactly "
-                       "$0 tensors, but found $1",
+                       "$0 or $1 input tensors, but found $2",
                        kNumInputTensorsForStringPreprocessor,
-                       num_input_tensors),
+                       kNumInputTensorsForUSE, num_input_tensors),
       MediaPipeTasksStatus::kInvalidNumInputTensorsError);
 }
 }  // namespace

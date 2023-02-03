@@ -57,6 +57,8 @@ constexpr absl::string_view kRegexOneEmbeddingModel =
 // Classification model that takes a string tensor and outputs a bool tensor.
 constexpr absl::string_view kStringToBoolModelPath =
     "test_model_text_classifier_bool_output.tflite";
+constexpr char kUniversalSentenceEncoderModel[] =
+    "universal_sentence_encoder_qa_with_metadata.tflite";
 
 std::string GetFullPath(absl::string_view file_name) {
   return JoinPath("./", kTestDataDirectory, file_name);
@@ -103,6 +105,12 @@ TEST_F(TextModelUtilsTest, StringInputModelTest) {
   MP_ASSERT_OK_AND_ASSIGN(auto model_type,
                           GetModelTypeFromFile(kStringToBoolModelPath));
   ASSERT_EQ(model_type, TextModelType::STRING_MODEL);
+}
+
+TEST_F(TextModelUtilsTest, USEModelTest) {
+  MP_ASSERT_OK_AND_ASSIGN(auto model_type,
+                          GetModelTypeFromFile(kUniversalSentenceEncoderModel));
+  ASSERT_EQ(model_type, TextModelType::USE_MODEL);
 }
 
 }  // namespace mediapipe::tasks::text::utils

@@ -27,5 +27,7 @@ message TextModelType {
     REGEX_MODEL = 2;
     // A model taking a string tensor input.
     STRING_MODEL = 3;
+    // A UniversalSentenceEncoder-based model.
+    USE_MODEL = 4;
   }
 }

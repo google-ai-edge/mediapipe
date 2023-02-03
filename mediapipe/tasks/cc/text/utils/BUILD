@@ -69,6 +69,7 @@ cc_test(
         "//mediapipe/tasks/testdata/text:mobilebert_embedding_model",
         "//mediapipe/tasks/testdata/text:regex_embedding_with_metadata",
         "//mediapipe/tasks/testdata/text:text_classifier_models",
+        "//mediapipe/tasks/testdata/text:universal_sentence_encoder_qa",
     ],
     deps = [
         ":text_model_utils",
