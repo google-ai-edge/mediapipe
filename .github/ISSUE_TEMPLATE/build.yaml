@@ -65,12 +65,13 @@ body:
       placeholder:
     validations:
       required: false  
-  - type: input
+  - type: dropdown
     id: androidaar
     attributes:
-      label: Android [AAR](https://google.github.io/mediapipe/getting_started/android_archive_library.html) (if android)
-      description: 
-      placeholder:
+      label: Android AAR(if android)
+      options:
+        - Yes
+        - No
     validations:
       required: false    
   - type: input
