@@ -9,8 +9,7 @@ body:
   - type: markdown
     id: url
     attributes:
-      value: URL(s) with the issue
-      description: Please provide a link to the documentation entry, for example https://github.com/google/mediapipe/blob/master/docs/solutions/face_mesh.md#models
+      value: URL(s) with the issue Please provide a link to the documentation entry, for example https://github.com/google/mediapipe/blob/master/docs/solutions/face_mesh.md#models
   - type: input
     id: compilerversion
     attributes:
