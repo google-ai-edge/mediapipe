@@ -54,4 +54,11 @@ body:
       label: Please specify the use cases for this feature
       render: shell
     validations:
-      required: true
+       required: true
+  - type: textarea
+    id: info_other
+    attributes:
+      label: Any Other info:
+      render: shell
+    validations:
+      required: false    
