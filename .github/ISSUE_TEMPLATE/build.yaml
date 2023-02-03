@@ -73,7 +73,7 @@ body:
         - Yes
         - No
     validations:
-      required: false    
+      required: true    
   - type: input
     id: opencvversion
     attributes:
