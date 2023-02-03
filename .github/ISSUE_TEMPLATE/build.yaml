@@ -1,6 +1,6 @@
 name: Build/Install Issue
 description: Use this template to report build/install issue
-labels: 'type:task'
+labels: 'type:build/install'
 body:
   - type: input
     id: os
@@ -61,7 +61,7 @@ body:
   - type: input
     id: sdkndkversion
     attributes:
-      label: Android SDK and NDK versions(if abdroid)
+      label: Android SDK and NDK versions(if android)
       description: 
       placeholder:
     validations:
