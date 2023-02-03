@@ -3,7 +3,6 @@ description: Use this template for assistance with using MediaPipe Model Maker (
 labels: 'type:modelmaker'
 body:
   - type: markdown
-    id: link
     attributes:
       value: Please make sure that this is a [Model Maker](https://developers.google.com/mediapipe/solutions) issue.
   - type: dropdown
