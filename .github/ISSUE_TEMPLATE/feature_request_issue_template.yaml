@@ -51,7 +51,7 @@ body:
   - type: textarea
     id: use_case
     attributes:
-      label: Please specify the use cases for this feature: 
+      label: Please specify the use cases for this feature
       render: shell
     validations:
       required: true
