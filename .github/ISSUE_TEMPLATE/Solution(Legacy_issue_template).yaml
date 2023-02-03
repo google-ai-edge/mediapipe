@@ -37,13 +37,15 @@ body:
   - type: input
     id: solution
     attributes:
-      label: Solution (e.g. C++, Python, Java)
+      label: Solution
+      placeholder: e.g. FaceMesh, Pose, Holistic 
     validations:
       required: false
   - type: input
     id: programminglang
     attributes:
-      label: Programming Language and version (e.g. C++, Python, Java)
+      label: Programming Language and version
+      placeholder: e.g. C++, Python, Java
     validations:
       required: false
   - type: textarea
@@ -52,7 +54,7 @@ body:
       label: Describe the actual behavior
       render: shell
     validations:
-      required: true    
+      required: false   
   - type: textarea
     id: expected_model
     attributes:
