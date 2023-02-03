@@ -95,7 +95,7 @@ body:
     id: code-to-reproduce
     attributes:
       label: Complete Logs 
-      description: Include Complete Log information or source code that would be helpful to diagnose the problem. If including tracebacks, please include the full traceback. Large logs and files should be attached:
+      description: Include Complete Log information or source code that would be helpful to diagnose the problem. If including tracebacks, please include the full traceback. Large logs and files should be attached
       placeholder: Tell us what you see!
       value: 
       render: shell
