@@ -106,7 +106,7 @@ class MetadataPopulator(object):
 
   The metadata file (or buffer) should be generated based on the metadata
   schema:
-  third_party/tensorflow/lite/schema/metadata_schema.fbs
+  mediapipe/tasks/metadata/metadata_schema.fbs
 
   Example usage:
   Populate matadata and label file into an image classifier model.
@@ -860,6 +860,8 @@ def get_metadata_buffer(model_buf):
     if meta.Name().decode("utf-8") == MetadataPopulator.METADATA_FIELD_NAME:
       buffer_index = meta.Buffer()
       metadata = tflite_model.Buffers(buffer_index)
+      if metadata.DataLength() == 0:
+        continue
       return metadata.DataAsNumpy().tobytes()
 
   return None

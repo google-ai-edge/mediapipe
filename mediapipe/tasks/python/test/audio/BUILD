@@ -30,7 +30,23 @@ py_test(
         "//mediapipe/tasks/python/audio/core:audio_task_running_mode",
         "//mediapipe/tasks/python/components/containers:audio_data",
         "//mediapipe/tasks/python/components/containers:classification_result",
-        "//mediapipe/tasks/python/components/processors:classifier_options",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+    ],
+)
+
+py_test(
+    name = "audio_embedder_test",
+    srcs = ["audio_embedder_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/audio:test_audio_clips",
+        "//mediapipe/tasks/testdata/audio:test_models",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/audio:audio_embedder",
+        "//mediapipe/tasks/python/audio/core:audio_task_running_mode",
+        "//mediapipe/tasks/python/components/containers:audio_data",
+        "//mediapipe/tasks/python/components/containers:embedding_result",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
     ],

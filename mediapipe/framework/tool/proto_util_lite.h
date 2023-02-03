@@ -34,14 +34,35 @@ class ProtoUtilLite {
   // Defines field types and tag formats.
   using WireFormatLite = proto_ns::internal::WireFormatLite;
 
-  // Defines a sequence of nested field-number field-index pairs.
-  using ProtoPath = std::vector<std::pair<int, int>>;
-
   // The serialized value for a protobuf field.
   using FieldValue = std::string;
 
   // The serialized data type for a protobuf field.
   using FieldType = WireFormatLite::FieldType;
+
+  // A field-id and index, or a map-id and key, or both.
+  struct ProtoPathEntry {
+    ProtoPathEntry(int id, int index) : field_id(id), index(index) {}
+    ProtoPathEntry(int id, int key_id, FieldType key_type, FieldValue key_value)
+        : map_id(id),
+          key_id(key_id),
+          key_type(key_type),
+          key_value(std::move(key_value)) {}
+    bool operator==(const ProtoPathEntry& o) const {
+      return field_id == o.field_id && index == o.index && map_id == o.map_id &&
+             key_id == o.key_id && key_type == o.key_type &&
+             key_value == o.key_value;
+    }
+    int field_id = -1;
+    int index = -1;
+    int map_id = -1;
+    int key_id = -1;
+    FieldType key_type = FieldType::MAX_FIELD_TYPE;
+    FieldValue key_value;
+  };
+
+  // Defines a sequence of nested field-number field-index pairs.
+  using ProtoPath = std::vector<ProtoPathEntry>;
 
   class FieldAccess {
    public:
@@ -57,9 +78,11 @@ class ProtoUtilLite {
     // Returns the serialized values of the protobuf field.
     std::vector<FieldValue>* mutable_field_values();
 
+    uint32 field_id() const { return field_id_; }
+
    private:
-    const uint32 field_id_;
-    const FieldType field_type_;
+    uint32 field_id_;
+    FieldType field_type_;
     std::string message_;
     std::vector<FieldValue> field_values_;
   };

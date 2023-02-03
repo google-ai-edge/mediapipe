@@ -16,22 +16,20 @@
 # Description:
 #   Working with dense optical flow in mediapipe.
 
-licenses(["notice"])
-
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
-package(default_visibility = ["//visibility:private"])
+licenses(["notice"])
+
+package(default_visibility = ["//visibility:public"])
 
 proto_library(
     name = "optical_flow_field_data_proto",
     srcs = ["optical_flow_field_data.proto"],
-    visibility = ["//visibility:public"],
 )
 
 mediapipe_cc_proto_library(
     name = "optical_flow_field_data_cc_proto",
     srcs = ["optical_flow_field_data.proto"],
-    visibility = ["//visibility:public"],
     deps = [":optical_flow_field_data_proto"],
 )
 
@@ -39,15 +37,12 @@ cc_library(
     name = "optical_flow_field",
     srcs = ["optical_flow_field.cc"],
     hdrs = ["optical_flow_field.h"],
-    visibility = [
-        "//visibility:public",
-    ],
     deps = [
+        ":optical_flow_field_data_cc_proto",
         "//mediapipe/framework:type_map",
         "//mediapipe/framework/deps:mathutil",
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/formats:location_opencv",
-        "//mediapipe/framework/formats/motion:optical_flow_field_data_cc_proto",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",

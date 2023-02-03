@@ -20,6 +20,7 @@
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
+#include "absl/strings/str_format.h"
 #include "mediapipe/calculators/tensor/inference_calculator.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/calculator_context.h"
@@ -154,6 +155,10 @@ absl::Status InferenceCalculatorGlImpl::GpuInferenceRunner::LoadDelegate(
   const auto& input_indices = interpreter_->inputs();
   for (int i = 0; i < input_indices.size(); ++i) {
     const TfLiteTensor* tensor = interpreter_->tensor(input_indices[i]);
+    RET_CHECK(tensor->dims->size > 0) << absl::StrFormat(
+        "Input tensor at index [%d] doesn't specify dimensions.",
+        input_indices[i]);
+
     gpu_buffers_in_.emplace_back(absl::make_unique<Tensor>(
         Tensor::ElementType::kFloat32,
         Tensor::Shape{std::vector<int>{
@@ -171,6 +176,9 @@ absl::Status InferenceCalculatorGlImpl::GpuInferenceRunner::LoadDelegate(
   // Create and bind output buffers.
   for (int i = 0; i < output_size_; ++i) {
     const TfLiteTensor* tensor = interpreter_->tensor(output_indices[i]);
+    RET_CHECK(tensor->dims->size > 0) << absl::StrFormat(
+        "Output tensor at index [%d] doesn't specify dimensions.",
+        output_indices[i]);
     gpu_buffers_out_.emplace_back(absl::make_unique<Tensor>(
         Tensor::ElementType::kFloat32,
         Tensor::Shape{std::vector<int>{

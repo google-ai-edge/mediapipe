@@ -16,10 +16,13 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+# Docs for Mediapipe Tasks Text Embedder
+# https://developers.google.com/mediapipe/solutions/text/text_embedder
 cc_library(
     name = "text_embedder",
     srcs = ["text_embedder.cc"],
     hdrs = ["text_embedder.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":text_embedder_graph",
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
@@ -45,17 +48,17 @@ cc_library(
     name = "text_embedder_graph",
     srcs = ["text_embedder_graph.cc"],
     deps = [
-        "//mediapipe/calculators/tensor:inference_calculator",
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:inference_calculator_cpu",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
-        "//mediapipe/tasks/cc/components:text_preprocessing_graph",
         "//mediapipe/tasks/cc/components/containers/proto:embeddings_cc_proto",
         "//mediapipe/tasks/cc/components/processors:embedding_postprocessing_graph",
+        "//mediapipe/tasks/cc/components/processors:text_preprocessing_graph",
         "//mediapipe/tasks/cc/components/processors/proto:embedding_postprocessing_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/components/proto:text_preprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/components/processors/proto:text_preprocessing_graph_options_cc_proto",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/core:model_task_graph",
         "//mediapipe/tasks/cc/core/proto:model_resources_calculator_cc_proto",

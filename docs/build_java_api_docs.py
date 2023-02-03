@@ -20,10 +20,6 @@ from absl import flags
 
 from tensorflow_docs.api_generator import gen_java
 
-_JAVA_ROOT = flags.DEFINE_string('java_src', None,
-                                 'Override the Java source path.',
-                                 required=False)
-
 _OUT_DIR = flags.DEFINE_string('output_dir', '/tmp/mp_java/',
                                'Write docs here.')
 
@@ -37,27 +33,30 @@ _ = flags.DEFINE_bool(
     'search_hints', True,
     '[UNUSED] Include metadata search hints in the generated files')
 
+_ANDROID_SDK = pathlib.Path('android/sdk/api/26.txt')
+
 
 def main(_) -> None:
-  if not (java_root := _JAVA_ROOT.value):
-    # Default to using a relative path to find the Java source.
-    mp_root = pathlib.Path(__file__)
-    while (mp_root := mp_root.parent).name != 'mediapipe':
-      # Find the nearest `mediapipe` dir.
-      pass
+  # Default to using a relative path to find the Java source.
+  mp_root = pathlib.Path(__file__)
+  while (mp_root := mp_root.parent).name != 'mediapipe':
+    # Find the nearest `mediapipe` dir.
+    pass
 
-    # Externally, parts of the repo are nested inside a mediapipe/ directory
-    # that does not exist internally. Support both.
-    if (mp_root / 'mediapipe').exists():
-      mp_root = mp_root / 'mediapipe'
+  # Find the root from which all packages are relative.
+  root = mp_root.parent
 
-    java_root = mp_root / 'tasks/java'
+  # Externally, parts of the repo are nested inside a mediapipe/ directory
+  # that does not exist internally. Support both.
+  if (mp_root / 'mediapipe').exists():
+    mp_root = mp_root / 'mediapipe'
 
   gen_java.gen_java_docs(
       package='com.google.mediapipe',
-      source_path=pathlib.Path(java_root),
+      source_path=mp_root / 'tasks/java',
       output_dir=pathlib.Path(_OUT_DIR.value),
-      site_path=pathlib.Path(_SITE_PATH.value))
+      site_path=pathlib.Path(_SITE_PATH.value),
+      federated_docs={'https://developer.android.com': root / _ANDROID_SDK})
 
 
 if __name__ == '__main__':

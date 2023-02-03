@@ -16,15 +16,12 @@
 
 # Placeholder for internal Python strict library and test compatibility macro.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
 py_library(
     name = "cosine_similarity",
     srcs = ["cosine_similarity.py"],
-    deps = [
-        "//mediapipe/tasks/python/components/containers:embedding_result",
-        "//mediapipe/tasks/python/components/processors:embedder_options",
-    ],
+    deps = ["//mediapipe/tasks/python/components/containers:embedding_result"],
 )

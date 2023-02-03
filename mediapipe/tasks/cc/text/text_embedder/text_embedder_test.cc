@@ -75,7 +75,11 @@ TEST_F(EmbedderTest, SucceedsWithMobileBert) {
       text_embedder->Embed("it's a charming and often affecting journey"));
   ASSERT_EQ(result0.embeddings.size(), 1);
   ASSERT_EQ(result0.embeddings[0].float_embedding.size(), 512);
+#ifdef _WIN32
+  ASSERT_NEAR(result0.embeddings[0].float_embedding[0], 21.2148f, kEpsilon);
+#else
   ASSERT_NEAR(result0.embeddings[0].float_embedding[0], 19.9016f, kEpsilon);
+#endif  // _WIN32
 
   MP_ASSERT_OK_AND_ASSIGN(
       auto result1, text_embedder->Embed("what a great and fantastic trip"));
@@ -87,7 +91,11 @@ TEST_F(EmbedderTest, SucceedsWithMobileBert) {
   MP_ASSERT_OK_AND_ASSIGN(
       double similarity, TextEmbedder::CosineSimilarity(result0.embeddings[0],
                                                         result1.embeddings[0]));
+#ifdef _WIN32
+  EXPECT_NEAR(similarity, 0.971417, kSimilarityTolerancy);
+#else
   EXPECT_NEAR(similarity, 0.969514, kSimilarityTolerancy);
+#endif  // _WIN32
 
   MP_ASSERT_OK(text_embedder->Close());
 }
@@ -135,6 +143,37 @@ TEST_F(EmbedderTest, SucceedsWithQuantization) {
       text_embedder->Embed("it's a charming and often affecting journey"));
   ASSERT_EQ(result.embeddings.size(), 1);
   ASSERT_EQ(result.embeddings[0].quantized_embedding.size(), 512);
+
+  MP_ASSERT_OK(text_embedder->Close());
+}
+
+TEST_F(EmbedderTest, SucceedsWithMobileBertAndDifferentThemes) {
+  auto options = std::make_unique<TextEmbedderOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kMobileBert);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextEmbedder> text_embedder,
+                          TextEmbedder::Create(std::move(options)));
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      TextEmbedderResult result0,
+      text_embedder->Embed("When you go to this restaurant, they hold the "
+                           "pancake upside-down before they hand it "
+                           "to you. It's a great gimmick."));
+  MP_ASSERT_OK_AND_ASSIGN(
+      TextEmbedderResult result1,
+      text_embedder->Embed(
+          "Let's make a plan to steal the declaration of independence."));
+
+  // Check cosine similarity.
+  MP_ASSERT_OK_AND_ASSIGN(
+      double similarity, TextEmbedder::CosineSimilarity(result0.embeddings[0],
+                                                        result1.embeddings[0]));
+  // TODO: These similarity should likely be lower
+#ifdef _WIN32
+  EXPECT_NEAR(similarity, 0.98152, kSimilarityTolerancy);
+#else
+  EXPECT_NEAR(similarity, 0.98088, kSimilarityTolerancy);
+#endif  // _WIN32
 
   MP_ASSERT_OK(text_embedder->Close());
 }

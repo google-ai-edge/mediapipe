@@ -285,7 +285,7 @@ class GlProcessor : public ImageToTensorConverter {
           auto source_texture = gl_helper_.CreateSourceTexture(input);
           tflite::gpu::gl::GlTexture input_texture(
               GL_TEXTURE_2D, source_texture.name(),
-              input_num_channels == 4 ? GL_RGB : GL_RGBA,
+              input_num_channels == 4 ? GL_RGBA : GL_RGB,
               source_texture.width() * source_texture.height() *
                   input_num_channels * sizeof(uint8_t),
               /*layer=*/0,

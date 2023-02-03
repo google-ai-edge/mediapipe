@@ -156,7 +156,8 @@ public final class HandLandmarker extends BaseVisionTaskApi {
                   new ArrayList<>(),
                   new ArrayList<>(),
                   new ArrayList<>(),
-                  packets.get(LANDMARKS_OUT_STREAM_INDEX).getTimestamp());
+                  BaseVisionTaskApi.generateResultTimestampMs(
+                      landmarkerOptions.runningMode(), packets.get(LANDMARKS_OUT_STREAM_INDEX)));
             }
             return HandLandmarkerResult.create(
                 PacketGetter.getProtoVector(
@@ -182,6 +183,8 @@ public final class HandLandmarker extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<HandLandmarkerOptions>builder()
+                .setTaskName(HandLandmarker.class.getSimpleName())
+                .setTaskRunningModeName(landmarkerOptions.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)

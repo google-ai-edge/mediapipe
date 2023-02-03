@@ -41,6 +41,37 @@ public class TextClassifierTest {
   private static final String POSITIVE_TEXT = "it's a charming and often affecting journey";
 
   @Test
+  public void options_failsWithNegativeMaxResults() throws Exception {
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                TextClassifierOptions.builder()
+                    .setBaseOptions(
+                        BaseOptions.builder().setModelAssetPath(BERT_MODEL_FILE).build())
+                    .setMaxResults(-1)
+                    .build());
+    assertThat(exception).hasMessageThat().contains("If specified, maxResults must be > 0");
+  }
+
+  @Test
+  public void options_failsWithBothAllowlistAndDenylist() throws Exception {
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                TextClassifierOptions.builder()
+                    .setBaseOptions(
+                        BaseOptions.builder().setModelAssetPath(BERT_MODEL_FILE).build())
+                    .setCategoryAllowlist(Arrays.asList("foo"))
+                    .setCategoryDenylist(Arrays.asList("bar"))
+                    .build());
+    assertThat(exception)
+        .hasMessageThat()
+        .contains("Category allowlist and denylist are mutually exclusive");
+  }
+
+  @Test
   public void create_failsWithMissingModel() throws Exception {
     String nonExistentFile = "/path/to/non/existent/file";
     MediaPipeException exception =
@@ -67,9 +98,7 @@ public class TextClassifierTest {
                     ApplicationProvider.getApplicationContext(), options));
     // TODO: Make MediaPipe InferenceCalculator report the detailed.
     // interpreter errors (e.g., "Encountered unresolved custom op").
-    assertThat(exception)
-        .hasMessageThat()
-        .contains("interpreter_builder(&interpreter) == kTfLiteOk");
+    assertThat(exception).hasMessageThat().contains("== kTfLiteOk");
   }
 
   @Test

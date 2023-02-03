@@ -36,6 +36,10 @@
 #include "tensorflow/lite/delegates/gpu/common/shape.h"
 #include "tensorflow/lite/delegates/gpu/common/types.h"
 
+#if MEDIAPIPE_METAL_ENABLED
+#include "mediapipe/framework/formats/tensor_mtl_buffer_view.h"
+#endif  // MEDIAPIPE_METAL_ENABLED
+
 namespace mediapipe {
 
 namespace {
@@ -376,7 +380,7 @@ class MetalProcessor : public ImageToTensorConverter {
 
       id<MTLCommandBuffer> command_buffer = [metal_helper_ commandBuffer];
       const auto& buffer_view =
-          output_tensor.GetMtlBufferWriteView(command_buffer);
+          MtlBufferView::GetWriteView(output_tensor, command_buffer);
       MP_RETURN_IF_ERROR(extractor_->Execute(
           texture, roi,
           /*flip_horizontaly=*/false, transform.scale, transform.offset,

@@ -32,6 +32,8 @@
 namespace mediapipe {
 namespace {
 
+using ::mediapipe::NormalizedRect;
+
 constexpr int kDetectionUpdateTimeOutMS = 5000;
 constexpr char kDetectionsTag[] = "DETECTIONS";
 constexpr char kDetectionBoxesTag[] = "DETECTION_BOXES";

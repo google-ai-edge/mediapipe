@@ -27,3 +27,11 @@ ModelOptions = model_options.ImageClassifierModelOptions
 ModelSpec = model_spec.ModelSpec
 SupportedModels = model_spec.SupportedModels
 ImageClassifierOptions = image_classifier_options.ImageClassifierOptions
+
+# Remove duplicated and non-public API
+del dataset
+del hyperparameters
+del image_classifier
+del image_classifier_options
+del model_options
+del model_spec

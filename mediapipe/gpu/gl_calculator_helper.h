@@ -17,6 +17,7 @@
 
 #include <memory>
 
+#include "absl/base/attributes.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
@@ -33,7 +34,6 @@
 
 namespace mediapipe {
 
-class GlCalculatorHelperImpl;
 class GlTexture;
 class GpuResources;
 struct GpuSharedData;
@@ -62,6 +62,7 @@ class GlCalculatorHelper {
   // Can be used to initialize the helper outside of a calculator. Useful for
   // testing.
   void InitializeForTest(GpuResources* gpu_resources);
+  ABSL_DEPRECATED("Use InitializeForTest(GpuResources)")
   void InitializeForTest(GpuSharedData* gpu_shared);
 
   // This method can be called from GetContract to set up the needed GPU
@@ -70,6 +71,7 @@ class GlCalculatorHelper {
 
   // This method can be called from FillExpectations to set the correct types
   // for the shared GL input side packet(s).
+  ABSL_DEPRECATED("Use UpdateContract")
   static absl::Status SetupInputSidePackets(PacketTypeSet* input_side_packets);
 
   // Execute the provided function within the helper's GL context. On some
@@ -161,15 +163,30 @@ class GlCalculatorHelper {
   // TODO: do we need an unbind method too?
   void BindFramebuffer(const GlTexture& dst);
 
-  GlContext& GetGlContext() const;
+  GlContext& GetGlContext() const { return *gl_context_; }
 
-  GlVersion GetGlVersion() const;
+  GlVersion GetGlVersion() const { return gl_context_->GetGlVersion(); }
 
   // Check if the calculator helper has been previously initialized.
-  bool Initialized() { return impl_ != nullptr; }
+  bool Initialized() { return gpu_resources_ != nullptr; }
 
  private:
-  std::unique_ptr<GlCalculatorHelperImpl> impl_;
+  void InitializeInternal(CalculatorContext* cc, GpuResources* gpu_resources);
+
+  absl::Status RunInGlContext(std::function<absl::Status(void)> gl_func,
+                              CalculatorContext* calculator_context);
+
+  // Makes a GpuBuffer accessible as a texture in the GL context.
+  GlTexture MapGpuBuffer(const GpuBuffer& gpu_buffer, GlTextureView view);
+
+  // Create the framebuffer for rendering.
+  void CreateFramebuffer();
+
+  std::shared_ptr<GlContext> gl_context_;
+
+  GLuint framebuffer_ = 0;
+
+  GpuResources* gpu_resources_ = nullptr;
 };
 
 // Represents an OpenGL texture, and is a 'view' into the memory pool.
@@ -201,9 +218,13 @@ class GlTexture {
   void Release() { view_ = std::make_shared<GlTextureView>(); }
 
  private:
-  explicit GlTexture(GlTextureView view)
-      : view_(std::make_shared<GlTextureView>(std::move(view))) {}
-  friend class GlCalculatorHelperImpl;
+  explicit GlTexture(GlTextureView view, GpuBuffer gpu_buffer)
+      : gpu_buffer_(std::move(gpu_buffer)),
+        view_(std::make_shared<GlTextureView>(std::move(view))) {}
+  friend class GlCalculatorHelper;
+  // We store the GpuBuffer to support GetFrame, and to ensure that the storage
+  // outlives the view.
+  GpuBuffer gpu_buffer_;
   std::shared_ptr<GlTextureView> view_;
 };
 
@@ -217,12 +238,14 @@ class GlTexture {
 // it is better to keep const-safety and accept having two versions of the
 // same thing.
 template <typename T>
+ABSL_DEPRECATED("Only for legacy calculators")
 auto TagOrIndex(const T& collection, const std::string& tag, int index)
     -> decltype(collection.Tag(tag)) {
   return collection.UsesTags() ? collection.Tag(tag) : collection.Index(index);
 }
 
 template <typename T>
+ABSL_DEPRECATED("Only for legacy calculators")
 auto TagOrIndex(T* collection, const std::string& tag, int index)
     -> decltype(collection->Tag(tag)) {
   return collection->UsesTags() ? collection->Tag(tag)
@@ -230,12 +253,14 @@ auto TagOrIndex(T* collection, const std::string& tag, int index)
 }
 
 template <typename T>
+ABSL_DEPRECATED("Only for legacy calculators")
 bool HasTagOrIndex(const T& collection, const std::string& tag, int index) {
   return collection.UsesTags() ? collection.HasTag(tag)
                                : index < collection.NumEntries();
 }
 
 template <typename T>
+ABSL_DEPRECATED("Only for legacy calculators")
 bool HasTagOrIndex(T* collection, const std::string& tag, int index) {
   return collection->UsesTags() ? collection->HasTag(tag)
                                 : index < collection->NumEntries();

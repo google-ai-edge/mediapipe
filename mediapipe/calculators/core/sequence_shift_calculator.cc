@@ -66,12 +66,16 @@ class SequenceShiftCalculator : public Node {
   // The number of packets or timestamps we need to store to output packet[i] at
   // the timestamp of packet[i + packet_offset]; equal to abs(packet_offset).
   int cache_size_;
+  bool emit_empty_packets_before_first_packet_ = false;
 };
 MEDIAPIPE_REGISTER_NODE(SequenceShiftCalculator);
 
 absl::Status SequenceShiftCalculator::Open(CalculatorContext* cc) {
   packet_offset_ = kOffset(cc).GetOr(
       cc->Options<mediapipe::SequenceShiftCalculatorOptions>().packet_offset());
+  emit_empty_packets_before_first_packet_ =
+      cc->Options<mediapipe::SequenceShiftCalculatorOptions>()
+          .emit_empty_packets_before_first_packet();
   cache_size_ = abs(packet_offset_);
   // An offset of zero is a no-op, but someone might still request it.
   if (packet_offset_ == 0) {
@@ -96,6 +100,8 @@ void SequenceShiftCalculator::ProcessPositiveOffset(CalculatorContext* cc) {
     // Ready to output oldest packet with current timestamp.
     kOut(cc).Send(packet_cache_.front().At(cc->InputTimestamp()));
     packet_cache_.pop_front();
+  } else if (emit_empty_packets_before_first_packet_) {
+    LOG(FATAL) << "Not supported yet";
   }
   // Store current packet for later output.
   packet_cache_.push_back(kIn(cc).packet());

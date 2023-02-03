@@ -68,6 +68,7 @@ message SpectrogramCalculatorOptions {
     HANN = 0;
     HAMMING = 1;
     COSINE = 2;
+    SQRT_HANN = 4;
   }
   optional WindowType window_type = 6 [default = HANN];
 

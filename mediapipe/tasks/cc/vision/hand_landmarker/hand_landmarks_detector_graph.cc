@@ -33,7 +33,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/image_preprocessing.h"
+#include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/components/utils/gate.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
@@ -53,6 +53,7 @@ namespace hand_landmarker {
 
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
@@ -242,11 +243,12 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
         const auto* model_resources,
         CreateModelResources<HandLandmarksDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(auto hand_landmark_detection_outs,
-                     BuildSingleHandLandmarksDetectorGraph(
-                         sc->Options<HandLandmarksDetectorGraphOptions>(),
-                         *model_resources, graph[Input<Image>(kImageTag)],
-                         graph[Input<NormalizedRect>(kHandRectTag)], graph));
+    ASSIGN_OR_RETURN(
+        auto hand_landmark_detection_outs,
+        BuildSingleHandLandmarksDetectorGraph(
+            sc->Options<HandLandmarksDetectorGraphOptions>(), *model_resources,
+            graph[Input<Image>(kImageTag)],
+            graph[Input<NormalizedRect>::Optional(kHandRectTag)], graph));
     hand_landmark_detection_outs.hand_landmarks >>
         graph[Output<NormalizedLandmarkList>(kLandmarksTag)];
     hand_landmark_detection_outs.world_hand_landmarks >>
@@ -281,14 +283,15 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
       Source<NormalizedRect> hand_rect, Graph& graph) {
     MP_RETURN_IF_ERROR(SanityCheckOptions(subgraph_options));
 
-    auto& preprocessing =
-        graph.AddNode("mediapipe.tasks.components.ImagePreprocessingSubgraph");
-    bool use_gpu = components::DetermineImagePreprocessingGpuBackend(
-        subgraph_options.base_options().acceleration());
-    MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
+    auto& preprocessing = graph.AddNode(
+        "mediapipe.tasks.components.processors.ImagePreprocessingGraph");
+    bool use_gpu =
+        components::processors::DetermineImagePreprocessingGpuBackend(
+            subgraph_options.base_options().acceleration());
+    MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
         model_resources, use_gpu,
-        &preprocessing
-             .GetOptions<tasks::components::ImagePreprocessingOptions>()));
+        &preprocessing.GetOptions<tasks::components::processors::proto::
+                                      ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In("IMAGE");
     hand_rect >> preprocessing.In("NORM_RECT");
     auto image_size = preprocessing[Output<std::pair<int, int>>("IMAGE_SIZE")];

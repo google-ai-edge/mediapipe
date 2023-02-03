@@ -21,9 +21,16 @@ package(
 
 licenses(["notice"])
 
+######################################################################
+# Public target of the MediaPipe Model Maker TextCassifier APIs.
+
+# Please see https://developers.google.com/mediapipe/solutions/text/text_classifier/customize for
+# more information about the MediaPipe Model Maker TextCassifier APIs.
+######################################################################
 py_library(
     name = "text_classifier_import",
     srcs = ["__init__.py"],
+    visibility = ["//visibility:public"],
     deps = [
         ":dataset",
         ":model_options",
@@ -46,6 +53,7 @@ py_library(
     deps = [
         ":model_options",
         "//mediapipe/model_maker/python/core:hyperparameters",
+        "//mediapipe/model_maker/python/core/utils:file_util",
         "//mediapipe/model_maker/python/text/core:bert_model_spec",
     ],
 )
@@ -81,6 +89,9 @@ py_library(
 py_test(
     name = "preprocessor_test",
     srcs = ["preprocessor_test.py"],
+    data = [
+        "//mediapipe/model_maker/models/text_classifier:mobilebert_tiny",
+    ],
     tags = ["requires-net:external"],
     deps = [
         ":dataset",
@@ -102,6 +113,9 @@ py_library(
 py_library(
     name = "text_classifier",
     srcs = ["text_classifier.py"],
+    data = [
+        "//mediapipe/model_maker/models/text_classifier:mobilebert_tiny",
+    ],
     deps = [
         ":dataset",
         ":model_options",
@@ -123,9 +137,14 @@ py_test(
     size = "large",
     srcs = ["text_classifier_test.py"],
     data = [
+        "//mediapipe/model_maker/models/text_classifier:mobilebert_tiny",
         "//mediapipe/model_maker/python/text/text_classifier/testdata",
     ],
-    tags = ["requires-net:external"],
+    tags = [
+        "notsan",
+        "requires-mem:16g",
+        "requires-net:external",
+    ],
     deps = [
         ":text_classifier_import",
         "//mediapipe/tasks/python/test:test_utils",
@@ -144,6 +163,9 @@ py_library(
 py_binary(
     name = "text_classifier_demo",
     srcs = ["text_classifier_demo.py"],
+    data = [
+        "//mediapipe/model_maker/models/text_classifier:mobilebert_tiny",
+    ],
     deps = [
         ":text_classifier_demo_lib",
     ],

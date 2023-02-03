@@ -18,6 +18,7 @@ syntax = "proto2";
 package mediapipe.tasks.vision.image_classifier.proto;
 
 import "mediapipe/framework/calculator.proto";
+import "mediapipe/framework/calculator_options.proto";
 import "mediapipe/tasks/cc/components/processors/proto/classifier_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 

@@ -25,8 +25,6 @@
 namespace mediapipe {
 
 class GlContext;
-class GlTextureViewManager;
-class GpuBuffer;
 
 class GlTextureView {
  public:
@@ -43,7 +41,6 @@ class GlTextureView {
     name_ = other.name_;
     width_ = other.width_;
     height_ = other.height_;
-    gpu_buffer_ = std::move(other.gpu_buffer_);
     plane_ = other.plane_;
     detach_ = std::exchange(other.detach_, nullptr);
     done_writing_ = std::exchange(other.done_writing_, nullptr);
@@ -55,26 +52,23 @@ class GlTextureView {
   int height() const { return height_; }
   GLenum target() const { return target_; }
   GLuint name() const { return name_; }
-  const GpuBuffer& gpu_buffer() const { return *gpu_buffer_; }
   int plane() const { return plane_; }
 
   using DetachFn = std::function<void(GlTextureView&)>;
   using DoneWritingFn = std::function<void(const GlTextureView&)>;
 
  private:
-  friend class GpuBuffer;
   friend class GlTextureBuffer;
   friend class GpuBufferStorageCvPixelBuffer;
   friend class GpuBufferStorageAhwb;
   GlTextureView(GlContext* context, GLenum target, GLuint name, int width,
-                int height, std::shared_ptr<GpuBuffer> gpu_buffer, int plane,
-                DetachFn detach, DoneWritingFn done_writing)
+                int height, int plane, DetachFn detach,
+                DoneWritingFn done_writing)
       : gl_context_(context),
         target_(target),
         name_(name),
         width_(width),
         height_(height),
-        gpu_buffer_(std::move(gpu_buffer)),
         plane_(plane),
         detach_(std::move(detach)),
         done_writing_(std::move(done_writing)) {}
@@ -93,7 +87,6 @@ class GlTextureView {
   // Note: when scale is not 1, we still give the nominal size of the image.
   int width_ = 0;
   int height_ = 0;
-  std::shared_ptr<GpuBuffer> gpu_buffer_;  // using shared_ptr temporarily
   int plane_ = 0;
   DetachFn detach_;
   mutable DoneWritingFn done_writing_;
@@ -112,12 +105,8 @@ class ViewProvider<GlTextureView> {
   // the same view implement the same signature.
   // Note that we allow different views to have custom signatures, providing
   // additional view-specific arguments that may be needed.
-  virtual GlTextureView GetReadView(types<GlTextureView>,
-                                    std::shared_ptr<GpuBuffer> gpu_buffer,
-                                    int plane) const = 0;
-  virtual GlTextureView GetWriteView(types<GlTextureView>,
-                                     std::shared_ptr<GpuBuffer> gpu_buffer,
-                                     int plane) = 0;
+  virtual GlTextureView GetReadView(types<GlTextureView>, int plane) const = 0;
+  virtual GlTextureView GetWriteView(types<GlTextureView>, int plane) = 0;
 };
 
 }  // namespace internal

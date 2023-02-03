@@ -21,13 +21,11 @@ from absl.testing import parameterized
 import numpy as np
 
 from mediapipe.tasks.python.components.containers import embedding_result as embedding_result_module
-from mediapipe.tasks.python.components.processors import embedder_options as embedder_options_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.text import text_embedder
 
 _BaseOptions = base_options_module.BaseOptions
-_EmbedderOptions = embedder_options_module.EmbedderOptions
 _Embedding = embedding_result_module.Embedding
 _TextEmbedder = text_embedder.TextEmbedder
 _TextEmbedderOptions = text_embedder.TextEmbedderOptions
@@ -128,10 +126,8 @@ class TextEmbedderTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
-    embedder_options = _EmbedderOptions(
-        l2_normalize=l2_normalize, quantize=quantize)
     options = _TextEmbedderOptions(
-        base_options=base_options, embedder_options=embedder_options)
+        base_options=base_options, l2_normalize=l2_normalize, quantize=quantize)
     embedder = _TextEmbedder.create_from_options(options)
 
     # Extracts both embeddings.
@@ -178,10 +174,8 @@ class TextEmbedderTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
-    embedder_options = _EmbedderOptions(
-        l2_normalize=l2_normalize, quantize=quantize)
     options = _TextEmbedderOptions(
-        base_options=base_options, embedder_options=embedder_options)
+        base_options=base_options, l2_normalize=l2_normalize, quantize=quantize)
     with _TextEmbedder.create_from_options(options) as embedder:
       # Extracts both embeddings.
       positive_text0 = "it's a charming and often affecting journey"
@@ -197,6 +191,36 @@ class TextEmbedderTest(parameterized.TestCase):
       self._check_embedding_value(result0, expected_result0_value)
       self._check_embedding_value(result1, expected_result1_value)
       self._check_cosine_similarity(result0, result1, expected_similarity)
+
+  def test_embed_with_mobile_bert_and_different_themes(self):
+    # Creates embedder.
+    model_path = test_utils.get_test_data_path(
+        os.path.join(_TEST_DATA_DIR, _BERT_MODEL_FILE)
+    )
+    base_options = _BaseOptions(model_asset_path=model_path)
+    options = _TextEmbedderOptions(base_options=base_options)
+    embedder = _TextEmbedder.create_from_options(options)
+
+    # Extracts both embeddings.
+    text0 = (
+        'When you go to this restaurant, they hold the pancake upside-down '
+        "before they hand it to you. It's a great gimmick."
+    )
+    result0 = embedder.embed(text0)
+
+    text1 = "Let's make a plan to steal the declaration of independence."
+    result1 = embedder.embed(text1)
+
+    similarity = _TextEmbedder.cosine_similarity(
+        result0.embeddings[0], result1.embeddings[0]
+    )
+
+    # TODO: The similarity should likely be lower
+    self.assertAlmostEqual(similarity, 0.980880, delta=_SIMILARITY_TOLERANCE)
+
+    # Closes the embedder explicitly when the embedder is not used in
+    # a context.
+    embedder.close()
 
 
 if __name__ == '__main__':

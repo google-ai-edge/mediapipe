@@ -557,8 +557,8 @@ class OutputSidePacketAccess {
     if (output_) output_->Set(ToOldPacket(std::move(packet)));
   }
 
-  void Set(const T& payload) { Set(MakePacket<T>(payload)); }
-  void Set(T&& payload) { Set(MakePacket<T>(std::move(payload))); }
+  void Set(const T& payload) { Set(api2::MakePacket<T>(payload)); }
+  void Set(T&& payload) { Set(api2::MakePacket<T>(std::move(payload))); }
 
  private:
   OutputSidePacketAccess(OutputSidePacket* output) : output_(output) {}

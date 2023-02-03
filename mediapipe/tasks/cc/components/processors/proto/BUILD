@@ -49,3 +49,28 @@ mediapipe_proto_library(
         "//mediapipe/tasks/cc/components/calculators:tensors_to_embeddings_calculator_proto",
     ],
 )
+
+mediapipe_proto_library(
+    name = "image_preprocessing_graph_options_proto",
+    srcs = ["image_preprocessing_graph_options.proto"],
+    deps = [
+        "//mediapipe/calculators/tensor:image_to_tensor_calculator_proto",
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+mediapipe_proto_library(
+    name = "text_model_type_proto",
+    srcs = ["text_model_type.proto"],
+)
+
+mediapipe_proto_library(
+    name = "text_preprocessing_graph_options_proto",
+    srcs = ["text_preprocessing_graph_options.proto"],
+    deps = [
+        ":text_model_type_proto",
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)

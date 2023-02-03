@@ -28,9 +28,10 @@ class ModelSpecTest(tf.test.TestCase):
     model_spec_obj = ms.SupportedModels.MOBILEBERT_CLASSIFIER.value()
     self.assertIsInstance(model_spec_obj, ms.BertClassifierSpec)
     self.assertEqual(model_spec_obj.name, 'MobileBert')
-    self.assertEqual(
-        model_spec_obj.uri, 'https://tfhub.dev/tensorflow/'
-        'mobilebert_en_uncased_L-24_H-128_B-512_A-4_F-4_OPT/1')
+    self.assertIn(
+        'mediapipe/model_maker/models/text_classifier/mobilebert_tiny',
+        model_spec_obj.uri,
+    )
     self.assertTrue(model_spec_obj.do_lower_case)
     self.assertEqual(
         model_spec_obj.tflite_input_name, {

@@ -21,8 +21,8 @@ from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet
-from mediapipe.tasks.cc.components.proto import segmenter_options_pb2
 from mediapipe.tasks.cc.vision.image_segmenter.proto import image_segmenter_graph_options_pb2
+from mediapipe.tasks.cc.vision.image_segmenter.proto import segmenter_options_pb2
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
@@ -93,7 +93,29 @@ class ImageSegmenterOptions:
 
 
 class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
-  """Class that performs image segmentation on images."""
+  """Class that performs image segmentation on images.
+
+  The API expects a TFLite model with mandatory TFLite Model Metadata.
+
+  Input tensor:
+    (kTfLiteUInt8/kTfLiteFloat32)
+    - image input of size `[batch x height x width x channels]`.
+    - batch inference is not supported (`batch` is required to be 1).
+    - RGB and greyscale inputs are supported (`channels` is required to be
+      1 or 3).
+    - if type is kTfLiteFloat32, NormalizationOptions are required to be
+      attached to the metadata for input normalization.
+  Output tensors:
+    (kTfLiteUInt8/kTfLiteFloat32)
+    - list of segmented masks.
+    - if `output_type` is CATEGORY_MASK, uint8 Image, Image vector of size 1.
+    - if `output_type` is CONFIDENCE_MASK, float32 Image list of size
+      `channels`.
+    - batch is always 1
+
+  An example of such model can be found at:
+  https://tfhub.dev/tensorflow/lite-model/deeplabv3/1/metadata/2
+  """
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'ImageSegmenter':

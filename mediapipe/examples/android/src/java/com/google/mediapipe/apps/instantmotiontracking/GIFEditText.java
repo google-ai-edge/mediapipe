@@ -18,7 +18,7 @@ import android.content.ClipDescription;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v7.widget.AppCompatEditText;
+import androidx.appcompat.widget.AppCompatEditText;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.inputmethod.EditorInfo;

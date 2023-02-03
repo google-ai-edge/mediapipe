@@ -33,6 +33,8 @@ namespace mediapipe {
 
 namespace {
 
+using ::mediapipe::NormalizedRect;
+
 constexpr char kLandmarksTag[] = "LANDMARKS";
 constexpr char kWorldLandmarksTag[] = "WORLD_LANDMARKS";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";

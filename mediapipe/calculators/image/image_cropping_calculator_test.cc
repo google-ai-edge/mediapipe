@@ -195,11 +195,11 @@ TEST(ImageCroppingCalculatorTest, RedundantSpecWithInputStream) {
   auto cc = absl::make_unique<CalculatorContext>(
       calculator_state.get(), inputTags, tool::CreateTagMap({}).value());
   auto& inputs = cc->Inputs();
-  mediapipe::Rect rect = ParseTextProtoOrDie<mediapipe::Rect>(
+  Rect rect = ParseTextProtoOrDie<Rect>(
       R"pb(
         width: 1 height: 1 x_center: 40 y_center: 40 rotation: 0.5
       )pb");
-  inputs.Tag(kRectTag).Value() = MakePacket<mediapipe::Rect>(rect);
+  inputs.Tag(kRectTag).Value() = MakePacket<Rect>(rect);
   RectSpec expectRect = {
       .width = 1,
       .height = 1,

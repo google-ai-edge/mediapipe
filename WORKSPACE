@@ -22,21 +22,20 @@ bazel_skylib_workspace()
 load("@bazel_skylib//lib:versions.bzl", "versions")
 versions.check(minimum_bazel_version = "3.7.2")
 
-# ABSL cpp library lts_2021_03_24, patch 2.
+# ABSL cpp library lts_2023_01_25.
 http_archive(
     name = "com_google_absl",
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20210324.2.tar.gz",
+        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.0.tar.gz",
     ],
-    # Remove after https://github.com/abseil/abseil-cpp/issues/326 is solved.
     patches = [
-        "@//third_party:com_google_absl_f863b622fe13612433fdf43f76547d5edda0c93001.diff"
+        "@//third_party:com_google_absl_windows_patch.diff"
     ],
     patch_args = [
         "-p1",
     ],
-    strip_prefix = "abseil-cpp-20210324.2",
-    sha256 = "59b862f50e710277f8ede96f083a5bb8d7c9595376146838b9580be90374ee1f"
+    strip_prefix = "abseil-cpp-20230125.0",
+    sha256 = "3ea49a7d97421b88a8c48a0de16c16048e17725c7ec0f1d3ea2683a2a75adc21"
 )
 
 http_archive(
@@ -212,14 +211,14 @@ http_archive(
     sha256 = "75922da3a1bdb417d820398eb03d4e9bd067c4905a4246d35a44c01d62154d91",
 )
 
-# Point to the commit that deprecates the usage of Eigen::MappedSparseMatrix.
+# 2022-10-20
 http_archive(
     name = "pybind11",
     urls = [
-        "https://github.com/pybind/pybind11/archive/70a58c577eaf067748c2ec31bfd0b0a614cffba6.zip",
+        "https://github.com/pybind/pybind11/archive/v2.10.1.zip",
     ],
-    sha256 = "b971842fab1b5b8f3815a2302331782b7d137fef0e06502422bc4bc360f4956c",
-    strip_prefix = "pybind11-70a58c577eaf067748c2ec31bfd0b0a614cffba6",
+    sha256 = "fcf94065efcfd0a7a828bacf118fa11c43f6390d0c805e3e6342ac119f2e9976",
+    strip_prefix = "pybind11-2.10.1",
     build_file = "@pybind11_bazel//:pybind11.BUILD",
 )
 
@@ -320,12 +319,30 @@ http_archive(
     ],
 )
 
-# iOS basic build deps.
+# Load Zlib before initializing TensorFlow and the iOS build rules to guarantee
+# that the target @zlib//:mini_zlib is available
+http_archive(
+    name = "zlib",
+    build_file = "//third_party:zlib.BUILD",
+    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
+    strip_prefix = "zlib-1.2.11",
+    urls = [
+        "http://mirror.bazel.build/zlib.net/fossils/zlib-1.2.11.tar.gz",
+        "http://zlib.net/fossils/zlib-1.2.11.tar.gz",  # 2017-01-15
+    ],
+    patches = [
+        "@//third_party:zlib.diff",
+    ],
+    patch_args = [
+        "-p1",
+    ],
+)
 
+# iOS basic build deps.
 http_archive(
     name = "build_bazel_rules_apple",
-    sha256 = "77e8bf6fda706f420a55874ae6ee4df0c9d95da6c7838228b26910fc82eea5a2",
-    url = "https://github.com/bazelbuild/rules_apple/releases/download/0.32.0/rules_apple.0.32.0.tar.gz",
+    sha256 = "f94e6dddf74739ef5cb30f000e13a2a613f6ebfa5e63588305a71fce8a8a9911",
+    url = "https://github.com/bazelbuild/rules_apple/releases/download/1.1.3/rules_apple.1.1.3.tar.gz",
     patches = [
         # Bypass checking ios unit test runner when building MP ios applications.
         "@//third_party:build_bazel_rules_apple_bypass_test_runner_check.diff"
@@ -339,29 +356,24 @@ load(
     "@build_bazel_rules_apple//apple:repositories.bzl",
     "apple_rules_dependencies",
 )
-
 apple_rules_dependencies()
 
 load(
     "@build_bazel_rules_swift//swift:repositories.bzl",
     "swift_rules_dependencies",
 )
-
 swift_rules_dependencies()
 
-http_archive(
-    name = "build_bazel_apple_support",
-    sha256 = "741366f79d900c11e11d8efd6cc6c66a31bfb2451178b58e0b5edc6f1db17b35",
-    urls = [
-        "https://github.com/bazelbuild/apple_support/releases/download/0.10.0/apple_support.0.10.0.tar.gz"
-    ],
+load(
+    "@build_bazel_rules_swift//swift:extras.bzl",
+    "swift_rules_extra_dependencies",
 )
+swift_rules_extra_dependencies()
 
 load(
     "@build_bazel_apple_support//lib:repositories.bzl",
     "apple_support_dependencies",
 )
-
 apple_support_dependencies()
 
 # More iOS deps.
@@ -439,25 +451,6 @@ http_archive(
     urls = [
         "http://mirror.tensorflow.org/github.com/bazelbuild/rules_closure/archive/cf1e44edb908e9616030cc83d085989b8e6cd6df.tar.gz",
         "https://github.com/bazelbuild/rules_closure/archive/cf1e44edb908e9616030cc83d085989b8e6cd6df.tar.gz",  # 2019-04-04
-    ],
-)
-
-# Load Zlib before initializing TensorFlow to guarantee that the target
-# @zlib//:mini_zlib is available
-http_archive(
-    name = "zlib",
-    build_file = "//third_party:zlib.BUILD",
-    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
-    strip_prefix = "zlib-1.2.11",
-    urls = [
-        "http://mirror.bazel.build/zlib.net/fossils/zlib-1.2.11.tar.gz",
-        "http://zlib.net/fossils/zlib-1.2.11.tar.gz",  # 2017-01-15
-    ],
-    patches = [
-        "@//third_party:zlib.diff",
-    ],
-    patch_args = [
-        "-p1",
     ],
 )
 

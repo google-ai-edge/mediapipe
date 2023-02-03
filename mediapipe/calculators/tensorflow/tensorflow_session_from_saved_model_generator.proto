@@ -33,8 +33,8 @@ message TensorFlowSessionFromSavedModelGeneratorOptions {
   // The name of the generic signature to load into the mapping from tags to
   // tensor names.
   optional string signature_name = 2 [default = "serving_default"];
-  // Whether to convert the signature keys to uppercase as well as switch /'s
-  // and -'s to _'s, which enables common signatures to be used as Tags.
+  // Whether to convert the signature keys to uppercase, as well as switch /'s
+  // -'s, .'s, and :'s to _'s, enabling common signatures to be used as Tags.
   optional bool convert_signature_to_tags = 3 [default = true];
   // If true, saved_model_path can have multiple exported models in
   // subdirectories saved_model_path/%08d and the alphabetically last (i.e.,

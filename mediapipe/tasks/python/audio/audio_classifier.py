@@ -21,11 +21,11 @@ from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import packet
 from mediapipe.tasks.cc.audio.audio_classifier.proto import audio_classifier_graph_options_pb2
 from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
+from mediapipe.tasks.cc.components.processors.proto import classifier_options_pb2
 from mediapipe.tasks.python.audio.core import audio_task_running_mode as running_mode_module
 from mediapipe.tasks.python.audio.core import base_audio_task_api
 from mediapipe.tasks.python.components.containers import audio_data as audio_data_module
 from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
-from mediapipe.tasks.python.components.processors import classifier_options as classifier_options_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
@@ -34,7 +34,7 @@ AudioClassifierResult = classification_result_module.ClassificationResult
 _AudioClassifierGraphOptionsProto = audio_classifier_graph_options_pb2.AudioClassifierGraphOptions
 _AudioData = audio_data_module.AudioData
 _BaseOptions = base_options_module.BaseOptions
-_ClassifierOptions = classifier_options_module.ClassifierOptions
+_ClassifierOptionsProto = classifier_options_pb2.ClassifierOptions
 _RunningMode = running_mode_module.AudioTaskRunningMode
 _TaskInfo = task_info_module.TaskInfo
 
@@ -62,15 +62,31 @@ class AudioClassifierOptions:
       mode for running classification on the audio stream, such as from
       microphone. In this mode,  the "result_callback" below must be specified
       to receive the classification results asynchronously.
-    classifier_options: Options for configuring the classifier behavior, such as
-      score threshold, number of results, etc.
+    display_names_locale: The locale to use for display names specified through
+      the TFLite Model Metadata.
+    max_results: The maximum number of top-scored classification results to
+      return.
+    score_threshold: Overrides the ones provided in the model metadata. Results
+      below this value are rejected.
+    category_allowlist: Allowlist of category names. If non-empty,
+      classification results whose category name is not in this set will be
+      filtered out. Duplicate or unknown category names are ignored. Mutually
+      exclusive with `category_denylist`.
+    category_denylist: Denylist of category names. If non-empty, classification
+      results whose category name is in this set will be filtered out. Duplicate
+      or unknown category names are ignored. Mutually exclusive with
+      `category_allowlist`.
     result_callback: The user-defined result callback for processing audio
       stream data. The result callback should only be specified when the running
       mode is set to the audio stream mode.
   """
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.AUDIO_CLIPS
-  classifier_options: _ClassifierOptions = _ClassifierOptions()
+  display_names_locale: Optional[str] = None
+  max_results: Optional[int] = None
+  score_threshold: Optional[float] = None
+  category_allowlist: Optional[List[str]] = None
+  category_denylist: Optional[List[str]] = None
   result_callback: Optional[Callable[[AudioClassifierResult, int], None]] = None
 
   @doc_controls.do_not_generate_docs
@@ -78,7 +94,12 @@ class AudioClassifierOptions:
     """Generates an AudioClassifierOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
     base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.AUDIO_CLIPS else True
-    classifier_options_proto = self.classifier_options.to_pb2()
+    classifier_options_proto = _ClassifierOptionsProto(
+        score_threshold=self.score_threshold,
+        category_allowlist=self.category_allowlist,
+        category_denylist=self.category_denylist,
+        display_names_locale=self.display_names_locale,
+        max_results=self.max_results)
 
     return _AudioClassifierGraphOptionsProto(
         base_options=base_options_proto,
@@ -86,7 +107,30 @@ class AudioClassifierOptions:
 
 
 class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
-  """Class that performs audio classification on audio data."""
+  """Class that performs audio classification on audio data.
+
+  This API expects a TFLite model with mandatory TFLite Model Metadata that
+  contains the mandatory AudioProperties of the solo input audio tensor and the
+  optional (but recommended) category labels as AssociatedFiles with type
+  TENSOR_AXIS_LABELS per output classification tensor.
+
+  Input tensor:
+    (kTfLiteFloat32)
+    - input audio buffer of size `[batch * samples]`.
+    - batch inference is not supported (`batch` is required to be 1).
+    - for multi-channel models, the channels must be interleaved.
+  At least one output tensor with:
+    (kTfLiteFloat32)
+    - `[1 x N]` array with `N` represents the number of categories.
+    - optional (but recommended) category labels as AssociatedFiles with type
+      TENSOR_AXIS_LABELS, containing one label per line. The first such
+      AssociatedFile (if any) is used to fill the `category_name` field of the
+      results. The `display_name` field is filled from the AssociatedFile (if
+      any) whose locale matches the `display_names_locale` field of the
+      `AudioClassifierOptions` used at creation time ("en" by default, i.e.
+      English). If none of these are available, only the `index` field of the
+      results will be filled.
+  """
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'AudioClassifier':
@@ -257,7 +301,7 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
     Raises:
       ValueError: If any of the followings:
         1) The sample rate is not provided in the `AudioData` object or the
-        provided sample rate is inconsisent with the previously recevied.
+        provided sample rate is inconsistent with the previously received.
         2) The current input timestamp is smaller than what the audio
         classifier has already processed.
     """
@@ -270,7 +314,7 @@ class AudioClassifier(base_audio_task_api.BaseAudioTaskApi):
     elif audio_block.audio_format.sample_rate != self._default_sample_rate:
       raise ValueError(
           f'The audio sample rate provided in audio data: '
-          f'{audio_block.audio_format.sample_rate} is inconsisent with '
+          f'{audio_block.audio_format.sample_rate} is inconsistent with '
           f'the previously received: {self._default_sample_rate}.')
 
     self._send_audio_stream_data({

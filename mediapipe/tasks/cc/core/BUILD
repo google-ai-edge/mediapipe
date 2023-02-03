@@ -22,6 +22,7 @@ cc_library(
     name = "base_options",
     srcs = ["base_options.cc"],
     hdrs = ["base_options.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":mediapipe_builtin_op_resolver",
         "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
@@ -39,16 +40,19 @@ cc_library(
     srcs = ["external_file_handler.cc"],
     hdrs = ["external_file_handler.h"],
     deps = [
-        "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:status",
-        "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-    ],
+        "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
+    ] + select({
+        "//mediapipe:windows": ["@bazel_tools//tools/cpp/runfiles"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(
@@ -116,6 +120,7 @@ cc_library_with_tflite(
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "//mediapipe/util:resource_util",
+        "//mediapipe/util:resource_util_custom",
         "//mediapipe/util/tflite:error_reporter",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
@@ -307,7 +312,10 @@ cc_library(
     name = "utils",
     srcs = ["utils.cc"],
     hdrs = ["utils.h"],
-    visibility = ["//mediapipe/framework:mediapipe_internal"],
+    visibility = [
+        "//mediapipe/calculators:__subpackages__",
+        "//mediapipe/tasks:internal",
+    ],
     deps = [
         "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",
         "//mediapipe/framework:calculator_cc_proto",

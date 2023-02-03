@@ -253,7 +253,14 @@ int GetNumOutputChannels(const mediapipe::Image& image) {
   }
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU
-  // All of the processors except for Metal expect 3 channels.
+  // TODO: Add a unittest here to test the behavior on GPU, i.e.
+  // failure.
+  // Only output channel == 1 when running on CPU and the input image channel
+  // is 1. Ideally, we want to also support GPU for output channel == 1. But
+  // setting this on the safer side to prevent unintentional failure.
+  if (!image.UsesGpu() && image.channels() == 1) {
+    return 1;
+  }
   return 3;
 }
 

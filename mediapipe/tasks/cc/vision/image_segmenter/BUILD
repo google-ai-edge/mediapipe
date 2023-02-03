@@ -16,16 +16,18 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
+# Docs for Mediapipe Tasks Image Segmenter
+# https://developers.google.com/mediapipe/solutions/vision/image_segmenter
 cc_library(
     name = "image_segmenter",
     srcs = ["image_segmenter.cc"],
     hdrs = ["image_segmenter.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":image_segmenter_graph",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:rect_cc_proto",
-        "//mediapipe/tasks/cc/components/proto:segmenter_options_cc_proto",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
@@ -33,6 +35,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/core:running_mode",
         "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_cc_proto",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status:statusor",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
@@ -53,17 +56,17 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/components:image_preprocessing",
-        "//mediapipe/tasks/cc/components:image_preprocessing_options_cc_proto",
-        "//mediapipe/tasks/cc/components/calculators/tensor:tensors_to_segmentation_calculator",
-        "//mediapipe/tasks/cc/components/calculators/tensor:tensors_to_segmentation_calculator_cc_proto",
-        "//mediapipe/tasks/cc/components/proto:segmenter_options_cc_proto",
+        "//mediapipe/tasks/cc/components/processors:image_preprocessing_graph",
+        "//mediapipe/tasks/cc/components/processors/proto:image_preprocessing_graph_options_cc_proto",
         "//mediapipe/tasks/cc/core:model_resources",
         "//mediapipe/tasks/cc/core:model_task_graph",
         "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
         "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator",
+        "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_cc_proto",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_cc_proto",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "//mediapipe/util:label_map_cc_proto",
         "//mediapipe/util:label_map_util",

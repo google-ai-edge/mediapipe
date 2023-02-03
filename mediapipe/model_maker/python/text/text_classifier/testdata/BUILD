@@ -19,5 +19,8 @@ package(
 
 filegroup(
     name = "testdata",
-    srcs = ["average_word_embedding_metadata.json"],
+    srcs = [
+        "average_word_embedding_metadata.json",
+        "bert_metadata.json",
+    ],
 )

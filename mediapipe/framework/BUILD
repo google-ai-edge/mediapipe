@@ -1,4 +1,3 @@
-#
 # Copyright 2019 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +20,7 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
+# The MediaPipe internal package group. No mediapipe users should be added to this group.
 package_group(
     name = "mediapipe_internal",
     packages = [
@@ -56,12 +56,12 @@ mediapipe_proto_library(
     srcs = ["calculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:mediapipe_options_proto",
-        "//mediapipe/framework:packet_factory_proto",
-        "//mediapipe/framework:packet_generator_proto",
-        "//mediapipe/framework:status_handler_proto",
-        "//mediapipe/framework:stream_handler_proto",
+        ":calculator_options_proto",
+        ":mediapipe_options_proto",
+        ":packet_factory_proto",
+        ":packet_generator_proto",
+        ":status_handler_proto",
+        ":stream_handler_proto",
         "@com_google_protobuf//:any_proto",
     ],
 )
@@ -78,8 +78,8 @@ mediapipe_proto_library(
     srcs = ["calculator_contract_test.proto"],
     visibility = ["//mediapipe/framework:__subpackages__"],
     deps = [
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
+        ":calculator_options_proto",
+        ":calculator_proto",
     ],
 )
 
@@ -88,15 +88,17 @@ mediapipe_proto_library(
     srcs = ["calculator_profile.proto"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
+        ":calculator_options_proto",
+        ":calculator_proto",
     ],
 )
 
 mediapipe_proto_library(
     name = "mediapipe_options_proto",
     srcs = ["mediapipe_options.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = [
+        ":mediapipe_internal",
+    ],
 )
 
 mediapipe_proto_library(
@@ -125,24 +127,24 @@ mediapipe_proto_library(
     name = "status_handler_proto",
     srcs = ["status_handler.proto"],
     visibility = [":mediapipe_internal"],
-    deps = ["//mediapipe/framework:mediapipe_options_proto"],
+    deps = [":mediapipe_options_proto"],
 )
 
 mediapipe_proto_library(
     name = "stream_handler_proto",
     srcs = ["stream_handler.proto"],
     visibility = [":mediapipe_internal"],
-    deps = ["//mediapipe/framework:mediapipe_options_proto"],
+    deps = [":mediapipe_options_proto"],
 )
 
 mediapipe_proto_library(
     name = "test_calculators_proto",
     testonly = 1,
     srcs = ["test_calculators.proto"],
-    visibility = ["//visibility:public"],
+    visibility = [":mediapipe_internal"],
     deps = [
-        "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
+        ":calculator_options_proto",
+        ":calculator_proto",
     ],
 )
 
@@ -150,7 +152,7 @@ mediapipe_proto_library(
     name = "thread_pool_executor_proto",
     srcs = ["thread_pool_executor.proto"],
     visibility = [":mediapipe_internal"],
-    deps = ["//mediapipe/framework:mediapipe_options_proto"],
+    deps = [":mediapipe_options_proto"],
 )
 
 # It is for pure-native Android builds where the library can't have any dependency on libandroid.so
@@ -226,13 +228,13 @@ cc_library(
         ":mediapipe_internal",
     ],
     deps = [
+        ":calculator_cc_proto",
         ":graph_service",
+        ":mediapipe_options_cc_proto",
+        ":packet_generator_cc_proto",
         ":packet_type",
         ":port",
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework:mediapipe_options_cc_proto",
-        "//mediapipe/framework:packet_generator_cc_proto",
-        "//mediapipe/framework:status_handler_cc_proto",
+        ":status_handler_cc_proto",
         "//mediapipe/framework/port:any_proto",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:options_map",
@@ -328,10 +330,10 @@ cc_library(
         ":thread_pool_executor",
         ":timestamp",
         ":validated_graph_config",
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework:packet_generator_cc_proto",
-        "//mediapipe/framework:status_handler_cc_proto",
-        "//mediapipe/framework:thread_pool_executor_cc_proto",
+        ":calculator_cc_proto",
+        ":packet_generator_cc_proto",
+        ":status_handler_cc_proto",
+        ":thread_pool_executor_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:fixed_array",
         "@com_google_absl//absl/container:flat_hash_map",
@@ -369,7 +371,7 @@ cc_library(
     visibility = [":mediapipe_internal"],
     deps = [
         ":graph_service",
-        "//mediapipe/framework:packet",
+        ":packet",
         "@com_google_absl//absl/status",
     ],
 )
@@ -379,7 +381,7 @@ cc_test(
     srcs = ["graph_service_manager_test.cc"],
     deps = [
         ":graph_service_manager",
-        "//mediapipe/framework:packet",
+        ":packet",
         "//mediapipe/framework/port:gtest_main",
     ],
 )
@@ -391,6 +393,7 @@ cc_library(
     visibility = [":mediapipe_internal"],
     deps = [
         ":calculator_base",
+        ":calculator_cc_proto",
         ":calculator_context",
         ":calculator_context_manager",
         ":calculator_state",
@@ -407,10 +410,9 @@ cc_library(
         ":packet_set",
         ":packet_type",
         ":port",
+        ":stream_handler_cc_proto",
         ":timestamp",
         ":validated_graph_config",
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework:stream_handler_cc_proto",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
@@ -466,6 +468,7 @@ cc_library(
     hdrs = ["calculator_state.h"],
     visibility = [":mediapipe_internal"],
     deps = [
+        ":calculator_cc_proto",
         ":counter",
         ":counter_factory",
         ":graph_service",
@@ -475,7 +478,6 @@ cc_library(
         ":packet",
         ":packet_set",
         ":port",
-        "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/port:any_proto",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/tool:options_map",
@@ -583,7 +585,7 @@ cc_library(
     hdrs = ["executor.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework:mediapipe_options_cc_proto",
+        ":mediapipe_options_cc_proto",
         "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
@@ -670,11 +672,11 @@ cc_library(
         ":collection_item_id",
         ":input_stream_manager",
         ":input_stream_shard",
+        ":mediapipe_options_cc_proto",
         ":mediapipe_profiling",
         ":packet",
         ":packet_set",
         ":packet_type",
-        "//mediapipe/framework:mediapipe_options_cc_proto",
         "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
@@ -784,12 +786,12 @@ cc_library(
         ":calculator_context_manager",
         ":collection",
         ":collection_item_id",
+        ":mediapipe_options_cc_proto",
         ":output_stream_manager",
         ":output_stream_shard",
         ":packet_set",
         ":packet_type",
         ":timestamp",
-        "//mediapipe/framework:mediapipe_options_cc_proto",
         "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
@@ -875,10 +877,10 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":packet",
+        ":packet_generator_cc_proto",
         ":packet_set",
         ":packet_type",
         ":port",
-        "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:status",
@@ -896,13 +898,13 @@ cc_library(
         ":delegating_executor",
         ":executor",
         ":packet",
+        ":packet_factory_cc_proto",
         ":packet_generator",
+        ":packet_generator_cc_proto",
         ":packet_type",
         ":port",
         ":thread_pool_executor",
         ":validated_graph_config",
-        "//mediapipe/framework:packet_factory_cc_proto",
-        "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
@@ -1019,10 +1021,10 @@ cc_library(
     hdrs = ["status_handler.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":mediapipe_options_cc_proto",
         ":packet_set",
         ":packet_type",
         ":port",
-        "//mediapipe/framework:mediapipe_options_cc_proto",
         "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/memory",
@@ -1035,11 +1037,10 @@ cc_library(
     hdrs = ["subgraph.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":calculator_cc_proto",
         ":graph_service",
         ":graph_service_manager",
         ":port",
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework:mediapipe_options_cc_proto",
         "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
@@ -1050,6 +1051,7 @@ cc_library(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/types:optional",
     ],
 )
@@ -1061,7 +1063,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":calculator_framework",
-        "//mediapipe/framework:test_calculators_cc_proto",
+        ":test_calculators_cc_proto",
         "//mediapipe/framework/deps:mathutil",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:integral_types",
@@ -1098,7 +1100,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":executor",
-        "//mediapipe/framework:thread_pool_executor_cc_proto",
+        ":thread_pool_executor_cc_proto",
         "//mediapipe/framework/deps:thread_options",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
@@ -1163,22 +1165,22 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":calculator_base",
+        ":calculator_cc_proto",
         ":calculator_contract",
         ":graph_service_manager",
         ":legacy_calculator_support",
         ":packet",
         ":packet_generator",
+        ":packet_generator_cc_proto",
         ":packet_set",
         ":packet_type",
         ":port",
         ":status_handler",
+        ":status_handler_cc_proto",
+        ":stream_handler_cc_proto",
         ":subgraph",
+        ":thread_pool_executor_cc_proto",
         ":timestamp",
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework:packet_generator_cc_proto",
-        "//mediapipe/framework:status_handler_cc_proto",
-        "//mediapipe/framework:stream_handler_cc_proto",
-        "//mediapipe/framework:thread_pool_executor_cc_proto",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
@@ -1203,11 +1205,11 @@ cc_test(
     name = "validated_graph_config_test",
     srcs = ["validated_graph_config_test.cc"],
     deps = [
+        ":calculator_cc_proto",
         ":calculator_framework",
         ":graph_service",
         ":graph_service_manager",
         ":validated_graph_config",
-        "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/port:gtest_main",
@@ -1234,6 +1236,7 @@ cc_test(
     linkstatic = 1,
     deps = [
         ":calculator_base",
+        ":calculator_cc_proto",
         ":calculator_context",
         ":calculator_context_manager",
         ":calculator_registry",
@@ -1243,7 +1246,6 @@ cc_test(
         ":output_stream_shard",
         ":packet_set",
         ":packet_type",
-        "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
@@ -1257,11 +1259,11 @@ cc_test(
     srcs = ["calculator_contract_test.cc"],
     linkstatic = 1,
     deps = [
+        ":calculator_cc_proto",
         ":calculator_contract",
         ":calculator_contract_test_cc_proto",
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework:packet_generator_cc_proto",
-        "//mediapipe/framework:status_handler_cc_proto",
+        ":packet_generator_cc_proto",
+        ":status_handler_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
     ],
@@ -1369,6 +1371,7 @@ cc_test(
     srcs = ["calculator_context_test.cc"],
     linkstatic = 1,
     deps = [
+        ":calculator_cc_proto",
         ":calculator_context",
         ":calculator_context_manager",
         ":calculator_state",
@@ -1377,7 +1380,6 @@ cc_test(
         ":output_stream_shard",
         ":packet_set",
         ":packet_type",
-        "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
@@ -1404,6 +1406,7 @@ cc_test(
         ":executor",
         ":input_stream_handler",
         ":lifetime_tracker",
+        ":mediapipe_options_cc_proto",
         ":output_stream_poller",
         ":packet_set",
         ":packet_type",
@@ -1411,13 +1414,12 @@ cc_test(
         ":subgraph",
         ":test_calculators",
         ":thread_pool_executor",
+        ":thread_pool_executor_cc_proto",
         ":timestamp",
         ":type_map",
         "//mediapipe/calculators/core:counting_source_calculator",
         "//mediapipe/calculators/core:mux_calculator",
         "//mediapipe/calculators/core:pass_through_calculator",
-        "//mediapipe/framework:mediapipe_options_cc_proto",
-        "//mediapipe/framework:thread_pool_executor_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:parse_text_proto",
@@ -1469,6 +1471,7 @@ cc_test(
         "//mediapipe/framework/stream_handler:mux_input_stream_handler",
         "//mediapipe/framework/stream_handler:sync_set_input_stream_handler",
         "//mediapipe/framework/tool:sink",
+        "//mediapipe/util:packet_test_util",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -1481,12 +1484,12 @@ cc_test(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":calculator_cc_proto",
         ":calculator_framework",
         ":test_calculators",
         "//mediapipe/calculators/core:counting_source_calculator",
         "//mediapipe/calculators/core:mux_calculator",
         "//mediapipe/calculators/core:pass_through_calculator",
-        "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:parse_text_proto",
@@ -1630,8 +1633,8 @@ cc_test(
     srcs = ["packet_generator_test.cc"],
     deps = [
         ":packet_generator",
+        ":packet_generator_cc_proto",
         ":packet_type",
-        "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/tool:validate_type",
         "@com_google_absl//absl/strings",
@@ -1659,9 +1662,6 @@ cc_test(
         "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/calculators/core:default_side_packet_calculator",
         "//mediapipe/calculators/core:pass_through_calculator",
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework:packet_generator_cc_proto",
-        "//mediapipe/framework:status_handler_cc_proto",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:template_parser",

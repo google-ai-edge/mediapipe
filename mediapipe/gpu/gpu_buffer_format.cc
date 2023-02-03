@@ -212,6 +212,10 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
     case GpuBufferFormat::kTwoComponentHalf16:
     case GpuBufferFormat::kRGBAHalf64:
     case GpuBufferFormat::kRGBAFloat128:
+    case GpuBufferFormat::kNV12:
+    case GpuBufferFormat::kNV21:
+    case GpuBufferFormat::kI420:
+    case GpuBufferFormat::kYV12:
     case GpuBufferFormat::kUnknown:
       return ImageFormat::UNKNOWN;
   }

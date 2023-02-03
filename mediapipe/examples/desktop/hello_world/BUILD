@@ -14,12 +14,11 @@
 
 licenses(["notice"])
 
-package(default_visibility = ["//mediapipe/examples:__subpackages__"])
+package(default_visibility = ["//visibility:public"])
 
 cc_binary(
     name = "hello_world",
     srcs = ["hello_world.cc"],
-    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/framework:calculator_graph",

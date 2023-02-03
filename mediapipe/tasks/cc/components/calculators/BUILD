@@ -37,7 +37,6 @@ cc_library(
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:classification_cc_proto",
-        "//mediapipe/tasks/cc/components/containers/proto:category_cc_proto",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
         "@com_google_absl//absl/status",
     ],

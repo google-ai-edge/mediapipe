@@ -33,8 +33,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/calculators/score_calibration_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/calculators/score_calibration_utils.h"
-#include "mediapipe/tasks/cc/components/image_preprocessing.h"
-#include "mediapipe/tasks/cc/components/utils/source_or_node_output.h"
+#include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
@@ -52,6 +51,7 @@ namespace vision {
 
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
@@ -68,7 +68,7 @@ using LabelItems = mediapipe::proto_ns::Map<int64, ::mediapipe::LabelMapItem>;
 using ObjectDetectorOptionsProto =
     object_detector::proto::ObjectDetectorOptions;
 using TensorsSource =
-    mediapipe::tasks::SourceOrNodeOutput<std::vector<mediapipe::Tensor>>;
+    mediapipe::api2::builder::Source<std::vector<mediapipe::Tensor>>;
 
 constexpr int kDefaultLocationsIndex = 0;
 constexpr int kDefaultCategoriesIndex = 1;
@@ -532,8 +532,7 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
     MP_RETURN_IF_ERROR(SanityCheckOptions(task_options));
     // Checks that the model has 4 outputs.
     auto& model = *model_resources.GetTfLiteModel();
-    if (model.subgraphs()->size() != 1 ||
-        (*model.subgraphs())[0]->outputs()->size() != 4) {
+    if (model.subgraphs()->size() != 1) {
       return CreateStatusWithPayload(
           absl::StatusCode::kInvalidArgument,
           absl::StrFormat("Expected a model with a single subgraph, found %d.",
@@ -561,14 +560,15 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
 
     // Adds preprocessing calculators and connects them to the graph input image
     // stream.
-    auto& preprocessing =
-        graph.AddNode("mediapipe.tasks.components.ImagePreprocessingSubgraph");
-    bool use_gpu = components::DetermineImagePreprocessingGpuBackend(
-        task_options.base_options().acceleration());
-    MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
+    auto& preprocessing = graph.AddNode(
+        "mediapipe.tasks.components.processors.ImagePreprocessingGraph");
+    bool use_gpu =
+        components::processors::DetermineImagePreprocessingGpuBackend(
+            task_options.base_options().acceleration());
+    MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
         model_resources, use_gpu,
-        &preprocessing
-             .GetOptions<tasks::components::ImagePreprocessingOptions>()));
+        &preprocessing.GetOptions<tasks::components::processors::proto::
+                                      ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In(kImageTag);
     norm_rect_in >> preprocessing.In(kNormRectTag);
 
@@ -583,7 +583,8 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
         auto post_processing_specs,
         BuildPostProcessingSpecs(task_options, metadata_extractor));
     // Calculators to perform score calibration, if specified in the metadata.
-    TensorsSource calibrated_tensors = {&inference, kTensorTag};
+    TensorsSource calibrated_tensors =
+        inference.Out(kTensorTag).Cast<std::vector<Tensor>>();
     if (post_processing_specs.score_calibration_options.has_value()) {
       // Split tensors.
       auto* split_tensor_vector_node =
@@ -622,7 +623,8 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
               concatenate_tensor_vector_node->In(i);
         }
       }
-      calibrated_tensors = {concatenate_tensor_vector_node, 0};
+      calibrated_tensors =
+          concatenate_tensor_vector_node->Out(0).Cast<std::vector<Tensor>>();
     }
     // Calculator to convert output tensors to a detection proto vector.
     // Connects TensorsToDetectionsCalculator's input stream to the output
@@ -662,11 +664,16 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
     detection_transformation.Out(kPixelDetectionsTag) >>
         detection_label_id_to_text.In("");
 
+    // Deduplicate Detections with same bounding box coordinates.
+    auto& detections_deduplicate =
+        graph.AddNode("DetectionsDeduplicateCalculator");
+    detection_label_id_to_text.Out("") >> detections_deduplicate.In("");
+
     // Outputs the labeled detections and the processed image as the subgraph
     // output streams.
     return {{
         /* detections= */
-        detection_label_id_to_text[Output<std::vector<Detection>>("")],
+        detections_deduplicate[Output<std::vector<Detection>>("")],
         /* image= */ preprocessing[Output<Image>(kImageTag)],
     }};
   }

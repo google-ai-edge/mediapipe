@@ -40,7 +40,6 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
-#include "mediapipe/tasks/cc/components/utils/source_or_node_output.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
@@ -68,12 +67,11 @@ using ::mediapipe::tasks::metadata::ModelMetadataExtractor;
 using ::tflite::ProcessUnit;
 using ::tflite::TensorMetadata;
 using LabelItems = mediapipe::proto_ns::Map<int64, ::mediapipe::LabelMapItem>;
-using TensorsSource = mediapipe::tasks::SourceOrNodeOutput<std::vector<Tensor>>;
+using TensorsSource = mediapipe::api2::builder::Source<std::vector<Tensor>>;
 
 constexpr float kDefaultScoreThreshold = std::numeric_limits<float>::lowest();
 
 constexpr char kCalibratedScoresTag[] = "CALIBRATED_SCORES";
-constexpr char kClassificationResultTag[] = "CLASSIFICATION_RESULT";
 constexpr char kClassificationsTag[] = "CLASSIFICATIONS";
 constexpr char kScoresTag[] = "SCORES";
 constexpr char kTensorsTag[] = "TENSORS";
@@ -82,7 +80,6 @@ constexpr char kTimestampedClassificationsTag[] = "TIMESTAMPED_CLASSIFICATIONS";
 
 // Struct holding the different output streams produced by the graph.
 struct ClassificationPostprocessingOutputStreams {
-  Source<ClassificationResult> classification_result;
   Source<ClassificationResult> classifications;
   Source<std::vector<ClassificationResult>> timestamped_classifications;
 };
@@ -400,9 +397,6 @@ absl::Status ConfigureClassificationPostprocessingGraph(
 //     The classification result aggregated by timestamp, then by head. Must be
 //     connected if the TIMESTAMPS input is connected, as it signals that
 //     timestamp aggregation is required.
-//   // TODO: remove output once migration is over.
-//   CLASSIFICATION_RESULT - (DEPRECATED) ClassificationResult @Optional
-//     The aggregated classification result.
 //
 // The recommended way of using this graph is through the GraphBuilder API
 // using the 'ConfigureClassificationPostprocessingGraph()' function. See header
@@ -418,8 +412,6 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
             sc->Options<proto::ClassificationPostprocessingGraphOptions>(),
             graph[Input<std::vector<Tensor>>(kTensorsTag)],
             graph[Input<std::vector<Timestamp>>(kTimestampsTag)], graph));
-    output_streams.classification_result >>
-        graph[Output<ClassificationResult>(kClassificationResultTag)];
     output_streams.classifications >>
         graph[Output<ClassificationResult>(kClassificationsTag)];
     output_streams.timestamped_classifications >>
@@ -462,12 +454,13 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
     }
 
     // If output tensors are quantized, they must be dequantized first.
-    TensorsSource dequantized_tensors(&tensors_in);
+    TensorsSource dequantized_tensors = tensors_in;
     if (options.has_quantized_outputs()) {
       GenericNode* tensors_dequantization_node =
           &graph.AddNode("TensorsDequantizationCalculator");
       tensors_in >> tensors_dequantization_node->In(kTensorsTag);
-      dequantized_tensors = {tensors_dequantization_node, kTensorsTag};
+      dequantized_tensors = tensors_dequantization_node->Out(kTensorsTag)
+                                .Cast<std::vector<Tensor>>();
     }
 
     // If there are multiple classification heads, the output tensors need to be
@@ -484,7 +477,8 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
         auto* range = split_tensor_vector_options.add_ranges();
         range->set_begin(i);
         range->set_end(i + 1);
-        split_tensors.emplace_back(split_tensor_vector_node, i);
+        split_tensors.push_back(
+            split_tensor_vector_node->Out(i).Cast<std::vector<Tensor>>());
       }
       dequantized_tensors >> split_tensor_vector_node->In(0);
     } else {
@@ -501,8 +495,9 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
         score_calibration_node->GetOptions<ScoreCalibrationCalculatorOptions>()
             .CopyFrom(options.score_calibration_options().at(i));
         split_tensors[i] >> score_calibration_node->In(kScoresTag);
-        calibrated_tensors.emplace_back(score_calibration_node,
-                                        kCalibratedScoresTag);
+        calibrated_tensors.push_back(
+            score_calibration_node->Out(kCalibratedScoresTag)
+                .Cast<std::vector<Tensor>>());
       } else {
         calibrated_tensors.emplace_back(split_tensors[i]);
       }
@@ -536,8 +531,6 @@ class ClassificationPostprocessingGraph : public mediapipe::Subgraph {
 
     // Connects output.
     ClassificationPostprocessingOutputStreams output_streams{
-        /*classification_result=*/result_aggregation
-            [Output<ClassificationResult>(kClassificationResultTag)],
         /*classifications=*/
         result_aggregation[Output<ClassificationResult>(kClassificationsTag)],
         /*timestamped_classifications=*/

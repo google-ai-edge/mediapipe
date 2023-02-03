@@ -68,7 +68,6 @@ objc_library(
     copts = [
         "-Wno-shorten-64-to-32",
     ],
-    sdk_frameworks = ["Accelerate"],
     # This build rule is public to allow external customers to build their own iOS apps.
     visibility = ["//visibility:public"],
     deps = [
@@ -83,13 +82,14 @@ objc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/port:threadpool",
-        "//mediapipe/gpu:MPPGraphGPUData",
         "//mediapipe/gpu:gl_base",
         "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/gpu:gpu_shared_data_internal",
         "//mediapipe/gpu:graph_support",
+        "//mediapipe/gpu:metal_shared_resources",
         "//mediapipe/gpu:pixel_buffer_pool_util",
         "//mediapipe/util:cpu_util",
+        "//third_party/apple_frameworks:Accelerate",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
@@ -120,13 +120,13 @@ objc_library(
         ],
         "//conditions:default": [],
     }),
-    sdk_frameworks = [
-        "AVFoundation",
-        "CoreVideo",
-        "Foundation",
-    ],
     # This build rule is public to allow external customers to build their own iOS apps.
     visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Foundation",
+    ],
 )
 
 objc_library(
@@ -140,16 +140,14 @@ objc_library(
     copts = [
         "-Wno-shorten-64-to-32",
     ],
-    sdk_frameworks = [
-        "Foundation",
-        "GLKit",
-    ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         ":mediapipe_framework_ios",
-        "//mediapipe/gpu:gl_calculator_helper_ios",
+        "//mediapipe/gpu:gl_calculator_helper",
         "//mediapipe/gpu:gl_quad_renderer",
         "//mediapipe/gpu:gl_simple_shaders",
+        "//third_party/apple_frameworks:Foundation",
+        "//third_party/apple_frameworks:GLKit",
     ],
 )
 
@@ -164,16 +162,14 @@ objc_library(
     copts = [
         "-Wno-shorten-64-to-32",
     ],
-    sdk_frameworks = [
-        "Foundation",
-        "GLKit",
-    ],
     # This build rule is public to allow external customers to build their own iOS apps.
     visibility = ["//visibility:public"],
     deps = [
         ":mediapipe_framework_ios",
         ":mediapipe_gl_view_renderer",
-        "//mediapipe/gpu:gl_calculator_helper_ios",
+        "//mediapipe/gpu:gl_calculator_helper",
+        "//third_party/apple_frameworks:Foundation",
+        "//third_party/apple_frameworks:GLKit",
     ],
 )
 
@@ -188,13 +184,11 @@ objc_library(
     copts = [
         "-Wno-shorten-64-to-32",
     ],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Foundation",
-    ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         ":mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Foundation",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -211,23 +205,21 @@ objc_library(
     copts = [
         "-Wno-shorten-64-to-32",
     ],
-    sdk_frameworks = [
-        "AVFoundation",
-        "Accelerate",
-        "CoreGraphics",
-        "CoreMedia",
-        "CoreVideo",
-        "GLKit",
-        "OpenGLES",
-        "QuartzCore",
-        "UIKit",
-    ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         ":CGImageRefUtils",
         ":Weakify",
         ":mediapipe_framework_ios",
         "//mediapipe/framework:calculator_framework",
+        "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:Accelerate",
+        "//third_party/apple_frameworks:CoreGraphics",
+        "//third_party/apple_frameworks:CoreMedia",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:GLKit",
+        "//third_party/apple_frameworks:OpenGLES",
+        "//third_party/apple_frameworks:QuartzCore",
+        "//third_party/apple_frameworks:UIKit",
     ],
 )
 
@@ -245,16 +237,6 @@ objc_library(
     data = [
         "testdata/googlelogo_color_272x92dp.png",
     ],
-    sdk_frameworks = [
-        "AVFoundation",
-        "Accelerate",
-        "CoreGraphics",
-        "CoreMedia",
-        "CoreVideo",
-        "GLKit",
-        "QuartzCore",
-        "UIKit",
-    ],
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         ":CGImageRefUtils",
@@ -263,6 +245,14 @@ objc_library(
         ":mediapipe_framework_ios",
         ":mediapipe_input_sources_ios",
         "//mediapipe/calculators/core:pass_through_calculator",
+        "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:Accelerate",
+        "//third_party/apple_frameworks:CoreGraphics",
+        "//third_party/apple_frameworks:CoreMedia",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:GLKit",
+        "//third_party/apple_frameworks:QuartzCore",
+        "//third_party/apple_frameworks:UIKit",
     ],
 )
 

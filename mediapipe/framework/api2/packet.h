@@ -181,7 +181,7 @@ template <typename T = internal::Generic>
 class Packet;
 #if __cplusplus >= 201703L
 // Deduction guide to silence -Wctad-maybe-unsupported.
-explicit Packet()->Packet<internal::Generic>;
+explicit Packet() -> Packet<internal::Generic>;
 #endif  // C++17
 
 template <>

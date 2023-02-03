@@ -98,7 +98,49 @@ class ObjectDetectorOptions:
 
 
 class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
-  """Class that performs object detection on images."""
+  """Class that performs object detection on images.
+
+  The API expects a TFLite model with mandatory TFLite Model Metadata.
+
+  Input tensor:
+    (kTfLiteUInt8/kTfLiteFloat32)
+    - image input of size `[batch x height x width x channels]`.
+    - batch inference is not supported (`batch` is required to be 1).
+    - only RGB inputs are supported (`channels` is required to be 3).
+    - if type is kTfLiteFloat32, NormalizationOptions are required to be
+      attached to the metadata for input normalization.
+  Output tensors must be the 4 outputs of a `DetectionPostProcess` op, i.e:
+    (kTfLiteFloat32)
+    - locations tensor of size `[num_results x 4]`, the inner array
+      representing bounding boxes in the form [top, left, right, bottom].
+    - BoundingBoxProperties are required to be attached to the metadata
+      and must specify type=BOUNDARIES and coordinate_type=RATIO.
+    (kTfLiteFloat32)
+    - classes tensor of size `[num_results]`, each value representing the
+      integer index of a class.
+    - optional (but recommended) label map(s) can be attached as
+      AssociatedFile-s with type TENSOR_VALUE_LABELS, containing one label per
+      line. The first such AssociatedFile (if any) is used to fill the
+      `class_name` field of the results. The `display_name` field is filled
+      from the AssociatedFile (if any) whose locale matches the
+      `display_names_locale` field of the `ObjectDetectorOptions` used at
+      creation time ("en" by default, i.e. English). If none of these are
+      available, only the `index` field of the results will be filled.
+    (kTfLiteFloat32)
+    - scores tensor of size `[num_results]`, each value representing the score
+      of the detected object.
+    - optional score calibration can be attached using ScoreCalibrationOptions
+      and an AssociatedFile with type TENSOR_AXIS_SCORE_CALIBRATION. See
+      metadata_schema.fbs [1] for more details.
+    (kTfLiteFloat32)
+    - integer num_results as a tensor of size `[1]`
+
+  An example of such model can be found at:
+  https://tfhub.dev/google/lite-model/object_detection/mobile_object_localizer_v1/1/metadata/1
+
+  [1]:
+  https://github.com/google/mediapipe/blob/6cdc6443b6a7ed662744e2a2ce2d58d9c83e6d6f/mediapipe/tasks/metadata/metadata_schema.fbs#L456
+  """
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'ObjectDetector':

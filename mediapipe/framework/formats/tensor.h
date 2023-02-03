@@ -24,13 +24,11 @@
 #include <utility>
 #include <vector>
 
-#include "absl/memory/memory.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/formats/tensor/internal.h"
 #include "mediapipe/framework/port.h"
 
-#if MEDIAPIPE_METAL_ENABLED
-#import <Metal/Metal.h>
-#endif  // MEDIAPIPE_METAL_ENABLED
 #ifndef MEDIAPIPE_NO_JNI
 #if __ANDROID_API__ >= 26 || defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
 #define MEDIAPIPE_TENSOR_USE_AHWB 1
@@ -39,18 +37,32 @@
 #endif  // MEDIAPIPE_NO_JNI
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <android/hardware_buffer.h>
-
-#include "third_party/GL/gl/include/EGL/egl.h"
-#include "third_party/GL/gl/include/EGL/eglext.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 #include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
 
-namespace mediapipe {
+#if defined __has_builtin
+#if __has_builtin(__builtin_LINE)
+#define builtin_LINE __builtin_LINE
+#endif
+#if __has_builtin(__builtin_FILE)
+#define builtin_FILE __builtin_FILE
+#endif
+#endif
 
+#ifndef builtin_LINE
+#define builtin_LINE() 0
+#endif
+#ifndef builtin_FILE
+#define builtin_FILE() ""
+#endif
+
+namespace mediapipe {
 // Tensor is a container of multi-dimensional data that supports sharing the
 // content across different backends and APIs, currently: CPU / Metal / OpenGL.
 // Texture2DView is limited to 4 dimensions.
@@ -66,7 +78,7 @@ namespace mediapipe {
 // GLuint buffer = view.buffer();
 // Then the buffer can be bound to the GPU command buffer.
 // ...binding the buffer to the command buffer...
-// ...commiting command buffer and releasing the view...
+// ...committing command buffer and releasing the view...
 //
 // The following request for the CPU view will be blocked until the GPU view is
 // released and the GPU task is finished.
@@ -75,6 +87,7 @@ namespace mediapipe {
 // float* pointer = view.buffer<float>();
 // ...reading the cpu memory...
 
+struct MtlResources;
 class Tensor {
   class View {
    public:
@@ -128,9 +141,9 @@ class Tensor {
   Tensor(const Tensor&) = delete;
   Tensor& operator=(const Tensor&) = delete;
   // Move-only.
-  Tensor(Tensor&& src) { Move(&src); }
+  Tensor(Tensor&& src);
   Tensor& operator=(Tensor&&);
-  ~Tensor() { Invalidate(); }
+  ~Tensor();
 
   template <typename T>
   class CpuView : public View {
@@ -162,34 +175,9 @@ class Tensor {
   using CpuReadView = CpuView<const void>;
   CpuReadView GetCpuReadView() const;
   using CpuWriteView = CpuView<void>;
-  CpuWriteView GetCpuWriteView() const;
-
-#if MEDIAPIPE_METAL_ENABLED
-  // TODO: id<MTLBuffer> vs. MtlBufferView.
-  class MtlBufferView : public View {
-   public:
-    id<MTLBuffer> buffer() const { return buffer_; }
-    MtlBufferView(MtlBufferView&& src)
-        : View(std::move(src)), buffer_(src.buffer_) {
-      src.buffer_ = nil;
-    }
-
-   protected:
-    friend class Tensor;
-    MtlBufferView(id<MTLBuffer> buffer, std::unique_ptr<absl::MutexLock>&& lock)
-        : View(std::move(lock)), buffer_(buffer) {}
-    id<MTLBuffer> buffer_;
-  };
-  // The command buffer status is checked for completeness if GPU-to-CPU
-  // synchronization is required.
-  // TODO: Design const and non-const view acquiring.
-  MtlBufferView GetMtlBufferReadView(id<MTLCommandBuffer> command_buffer) const;
-  MtlBufferView GetMtlBufferWriteView(
-      id<MTLCommandBuffer> command_buffer) const;
-  // Allocate new buffer.
-  // TODO: GPU-to-CPU design considerations.
-  MtlBufferView GetMtlBufferWriteView(id<MTLDevice> device) const;
-#endif  // MEDIAPIPE_METAL_ENABLED
+  CpuWriteView GetCpuWriteView(
+      uint64_t source_location_hash =
+          tensor_internal::FnvHash64(builtin_FILE(), builtin_LINE())) const;
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   using FinishingFunc = std::function<bool(bool)>;
@@ -306,7 +294,9 @@ class Tensor {
   // A valid OpenGL context must be bound to the calling thread due to possible
   // GPU resource allocation.
   OpenGlBufferView GetOpenGlBufferReadView() const;
-  OpenGlBufferView GetOpenGlBufferWriteView() const;
+  OpenGlBufferView GetOpenGlBufferWriteView(
+      uint64_t source_location_hash =
+          tensor_internal::FnvHash64(builtin_FILE(), builtin_LINE())) const;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
   const Shape& shape() const { return shape_; }
@@ -350,15 +340,9 @@ class Tensor {
   bool ready_as_opengl_texture_2d() const {
     return valid_ & kValidOpenGlTexture2d;
   }
-  // Sets the type of underlying resource that is going to be allocated.
-  enum class StorageType {
-    kDefault,
-    kAhwb,
-  };
-  static void SetPreferredStorageType(StorageType type);
-  static StorageType GetPreferredStorageType();
 
  private:
+  friend class MtlBufferView;
   void Move(Tensor*);
   void Invalidate();
 
@@ -383,12 +367,9 @@ class Tensor {
 
   mutable void* cpu_buffer_ = nullptr;
   void AllocateCpuBuffer() const;
-#if MEDIAPIPE_METAL_ENABLED
-  mutable id<MTLCommandBuffer> command_buffer_;
-  mutable id<MTLDevice> device_;
-  mutable id<MTLBuffer> metal_buffer_;
-  void AllocateMtlBuffer(id<MTLDevice> device) const;
-#endif  // MEDIAPIPE_METAL_ENABLED
+  // Forward declaration of the MtlResources provides compile-time verification
+  // of ODR if this header includes any actual code that uses MtlResources.
+  mutable std::unique_ptr<MtlResources> mtl_resources_;
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
   mutable AHardwareBuffer* ahwb_ = nullptr;
@@ -409,9 +390,14 @@ class Tensor {
   mutable std::function<void()> release_callback_;
   bool AllocateAHardwareBuffer(int size_alignment = 0) const;
   void CreateEglSyncAndFd() const;
-  // Use Ahwb for other views: OpenGL / CPU buffer.
-  static inline bool use_ahwb_ = false;
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
+  // Use Ahwb for other views: OpenGL / CPU buffer.
+  mutable bool use_ahwb_ = false;
+  mutable uint64_t ahwb_tracking_key_ = 0;
+  // TODO: Tracks all unique tensors. Can grow to a large number. LRU
+  // (Least Recently Used) can be more predicted.
+  // The value contains the size alignment parameter.
+  static inline absl::flat_hash_map<uint64_t, int> ahwb_usage_track_;
   // Expects the target SSBO to be already bound.
   bool AllocateAhwbMapToSsbo() const;
   bool InsertAhwbToSsboFence() const;
@@ -419,6 +405,9 @@ class Tensor {
   void ReleaseAhwbStuff();
   void* MapAhwbToCpuRead() const;
   void* MapAhwbToCpuWrite() const;
+  void MoveCpuOrSsboToAhwb() const;
+  // Set current tracking key, set "use ahwb" if the key is already marked.
+  void TrackAhwbUsage(uint64_t key) const;
 
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
   mutable std::shared_ptr<mediapipe::GlContext> gl_context_;

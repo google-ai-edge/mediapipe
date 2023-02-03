@@ -259,6 +259,7 @@ mp_holistic = mp.solutions.holistic
 
 # For static images:
 IMAGE_FILES = []
+BG_COLOR = (192, 192, 192) # gray
 with mp_holistic.Holistic(
     static_image_mode=True,
     model_complexity=2,

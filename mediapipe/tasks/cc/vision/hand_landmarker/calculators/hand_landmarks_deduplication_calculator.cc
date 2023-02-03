@@ -41,10 +41,11 @@ limitations under the License.
 namespace mediapipe::api2 {
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Source;
-using ::mediapipe::tasks::components::containers::Rect;
+using ::mediapipe::tasks::components::containers::RectF;
 using ::mediapipe::tasks::vision::utils::CalculateIOU;
 using ::mediapipe::tasks::vision::utils::DuplicatesFinder;
 
@@ -126,7 +127,7 @@ absl::StatusOr<float> HandBaselineDistance(
   return distance;
 }
 
-Rect CalculateBound(const NormalizedLandmarkList& list) {
+RectF CalculateBound(const NormalizedLandmarkList& list) {
   constexpr float kMinInitialValue = std::numeric_limits<float>::max();
   constexpr float kMaxInitialValue = std::numeric_limits<float>::lowest();
 
@@ -144,10 +145,10 @@ Rect CalculateBound(const NormalizedLandmarkList& list) {
   }
 
   // Populate normalized non rotated face bounding box
-  return Rect{/*left=*/bounding_box_left,
-              /*top=*/bounding_box_top,
-              /*right=*/bounding_box_right,
-              /*bottom=*/bounding_box_bottom};
+  return RectF{/*left=*/bounding_box_left,
+               /*top=*/bounding_box_top,
+               /*right=*/bounding_box_right,
+               /*bottom=*/bounding_box_bottom};
 }
 
 // Uses IoU and distance of some corresponding hand landmarks to detect
@@ -172,7 +173,7 @@ class HandDuplicatesFinder : public DuplicatesFinder {
     const int num = multi_landmarks.size();
     std::vector<float> baseline_distances;
     baseline_distances.reserve(num);
-    std::vector<Rect> bounds;
+    std::vector<RectF> bounds;
     bounds.reserve(num);
     for (const NormalizedLandmarkList& list : multi_landmarks) {
       ASSIGN_OR_RETURN(const float baseline_distance,

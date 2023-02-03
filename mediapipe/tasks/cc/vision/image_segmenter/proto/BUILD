@@ -19,12 +19,17 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 mediapipe_proto_library(
+    name = "segmenter_options_proto",
+    srcs = ["segmenter_options.proto"],
+)
+
+mediapipe_proto_library(
     name = "image_segmenter_graph_options_proto",
     srcs = ["image_segmenter_graph_options.proto"],
     deps = [
+        ":segmenter_options_proto",
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
-        "//mediapipe/tasks/cc/components/proto:segmenter_options_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_proto",
     ],
 )

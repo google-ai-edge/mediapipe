@@ -33,7 +33,6 @@ from mediapipe.model_maker.python.text.text_classifier import preprocessor
 from mediapipe.model_maker.python.text.text_classifier import text_classifier_options
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer
 from mediapipe.tasks.python.metadata.metadata_writers import text_classifier as text_classifier_writer
-from official.nlp import optimization
 
 
 def _validate(options: text_classifier_options.TextClassifierOptions):
@@ -270,16 +269,21 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
     """Creates an Average Word Embedding model."""
     self._model = tf.keras.Sequential([
         tf.keras.layers.InputLayer(
-            input_shape=[self._model_options.seq_len], dtype=tf.int32),
+            input_shape=[self._model_options.seq_len],
+            dtype=tf.int32,
+            name="input_ids",
+        ),
         tf.keras.layers.Embedding(
             len(self._text_preprocessor.get_vocab()),
             self._model_options.wordvec_dim,
-            input_length=self._model_options.seq_len),
+            input_length=self._model_options.seq_len,
+        ),
         tf.keras.layers.GlobalAveragePooling1D(),
         tf.keras.layers.Dense(
-            self._model_options.wordvec_dim, activation=tf.nn.relu),
+            self._model_options.wordvec_dim, activation=tf.nn.relu
+        ),
         tf.keras.layers.Dropout(self._model_options.dropout_rate),
-        tf.keras.layers.Dense(self._num_classes, activation="softmax")
+        tf.keras.layers.Dense(self._num_classes, activation="softmax"),
     ])
 
   def _save_vocab(self, vocab_filepath: str):
@@ -417,8 +421,22 @@ class _BertClassifier(TextClassifier):
     total_steps = self._hparams.steps_per_epoch * self._hparams.epochs
     warmup_steps = int(total_steps * 0.1)
     initial_lr = self._hparams.learning_rate
-    self._optimizer = optimization.create_optimizer(initial_lr, total_steps,
-                                                    warmup_steps)
+    # Implements linear decay of the learning rate.
+    lr_schedule = tf.keras.optimizers.schedules.PolynomialDecay(
+        initial_learning_rate=initial_lr,
+        decay_steps=total_steps,
+        end_learning_rate=0.0,
+        power=1.0)
+    if warmup_steps:
+      lr_schedule = model_util.WarmUp(
+          initial_learning_rate=initial_lr,
+          decay_schedule_fn=lr_schedule,
+          warmup_steps=warmup_steps)
+
+    self._optimizer = tf.keras.optimizers.experimental.AdamW(
+        lr_schedule, weight_decay=0.01, epsilon=1e-6, global_clipnorm=1.0)
+    self._optimizer.exclude_from_weight_decay(
+        var_names=["LayerNorm", "layer_norm", "bias"])
 
   def _save_vocab(self, vocab_filepath: str):
     tf.io.gfile.copy(

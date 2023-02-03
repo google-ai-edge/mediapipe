@@ -176,6 +176,16 @@ cc_library(
             "-fobjc-arc",  # enable reference-counting
         ],
     }),
+    linkopts = select({
+        "//conditions:default": [],
+        "//mediapipe:ios": [
+            "-framework OpenGLES",
+        ],
+        "//mediapipe:macos": [
+            "-framework OpenGL",
+            "-framework AppKit",
+        ],
+    }),
     visibility = ["//visibility:public"],
     deps = [
         ":attachments",
@@ -204,8 +214,10 @@ cc_library(
     }) + select({
         "//conditions:default": [
         ],
-        "//mediapipe:ios": [],
-        "//mediapipe:macos": [],
+        "//mediapipe:ios": [
+        ],
+        "//mediapipe:macos": [
+        ],
     }),
 )
 
@@ -221,12 +233,18 @@ cc_library(
         ":gpu_buffer_format",
         ":gpu_buffer_storage",
         ":gpu_buffer_storage_image_frame",
+        "@com_google_absl//absl/memory",
         # TODO: remove this dependency. Some other teams' tests
         # depend on having an indirect image_frame dependency, need to be
         # fixed first.
         "//mediapipe/framework/formats:image_frame",
-        "@com_google_absl//absl/memory",
-    ],
+    ] + select({
+        "//conditions:default": [],
+        ":platform_ios_with_gpu": [
+            ":gl_texture_util",
+            ":gpu_buffer_storage_cv_pixel_buffer",
+        ],
+    }),
 )
 
 cc_library(
@@ -271,7 +289,9 @@ cc_library(
     deps = [
         ":gpu_buffer_format",
         ":gpu_buffer_storage",
+        "@com_google_absl//absl/functional:bind_front",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:logging",
         ":gpu_buffer_storage_image_frame",
@@ -344,6 +364,60 @@ cc_library(
     ],
 )
 
+mediapipe_cc_test(
+    name = "gpu_buffer_storage_cv_pixel_buffer_test",
+    size = "small",
+    timeout = "moderate",
+    srcs = ["gpu_buffer_storage_cv_pixel_buffer_test.cc"],
+    platforms = ["ios"],
+    deps = [
+        ":gl_texture_buffer",
+        ":gl_texture_util",
+        ":gpu_buffer",
+        ":gpu_buffer_storage_cv_pixel_buffer",
+        ":gpu_test_base",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/tool:test_util",
+        "//mediapipe/objc:util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "cv_texture_cache_manager",
+    srcs = ["cv_texture_cache_manager.cc"],
+    hdrs = ["cv_texture_cache_manager.h"],
+    deps = [
+        ":pixel_buffer_pool_util",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/objc:CFHolder",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+cc_library(
+    name = "cv_pixel_buffer_pool_wrapper",
+    srcs = ["cv_pixel_buffer_pool_wrapper.cc"],
+    hdrs = ["cv_pixel_buffer_pool_wrapper.h"],
+    copts = select({
+        "//conditions:default": [],
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",
+        ],
+    }),
+    deps = [
+        ":cv_texture_cache_manager",
+        ":gpu_buffer_format",
+        ":multi_pool",
+        ":pixel_buffer_pool_util",
+        "//mediapipe/framework/port:logging",
+        "//mediapipe/objc:CFHolder",
+        "//mediapipe/objc:util",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
 cc_library(
     name = "gpu_buffer_storage_image_frame",
     hdrs = ["gpu_buffer_storage_image_frame.h"],
@@ -364,6 +438,21 @@ cc_library(
         ":gpu_buffer_format",
         ":gpu_buffer_storage",
         "//mediapipe/framework/formats:image_frame",
+    ],
+)
+
+cc_library(
+    name = "gpu_buffer_storage_yuv_image",
+    srcs = ["gpu_buffer_storage_yuv_image.cc"],
+    hdrs = ["gpu_buffer_storage_yuv_image.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gpu_buffer_format",
+        ":gpu_buffer_storage",
+        "//mediapipe/framework/formats:yuv_image",
+        "//third_party/libyuv",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -400,22 +489,19 @@ objc_library(
     copts = [
         "-Wno-shorten-64-to-32",
     ],
-    sdk_frameworks = [
-        "Accelerate",
-        "CoreGraphics",
-        "CoreVideo",
-    ],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/objc:util"],
+    deps = [
+        "//mediapipe/objc:util",
+        "//third_party/apple_frameworks:Accelerate",
+        "//third_party/apple_frameworks:CoreGraphics",
+        "//third_party/apple_frameworks:CoreVideo",
+    ],
 )
 
 objc_library(
-    name = "MPPGraphGPUData",
-    srcs = [
-        "MPPGraphGPUData.mm",
-        "gpu_shared_data_internal.cc",
-    ],
-    hdrs = ["MPPGraphGPUData.h"],
+    name = "metal_shared_resources",
+    srcs = ["metal_shared_resources.mm"],
+    hdrs = ["metal_shared_resources.h"],
     copts = [
         "-x objective-c++",
         "-Wno-shorten-64-to-32",
@@ -424,24 +510,9 @@ objc_library(
     sdk_frameworks = [
         "CoreVideo",
         "Metal",
-    ] + select({
-        "//conditions:default": [
-            "OpenGLES",
-        ],
-        "//mediapipe:macos": [
-            "OpenGL",
-            "AppKit",
-        ],
-    }),
+    ],
     visibility = ["//visibility:public"],
     deps = [
-        ":gl_base",
-        ":gl_context",
-        ":gpu_buffer_multi_pool",
-        ":gpu_shared_data_header",
-        ":graph_support",
-        "//mediapipe/gpu:gl_context_options_cc_proto",
-        "//mediapipe/framework:calculator_context",
         "//mediapipe/framework/port:ret_check",
         "@google_toolbox_for_mac//:GTM_Defines",
     ] + [
@@ -456,13 +527,11 @@ objc_library(
         "-x objective-c++",
         "-Wno-shorten-64-to-32",
     ],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
         "@com_google_absl//absl/time",
         "@google_toolbox_for_mac//:GTM_Defines",
     ],
@@ -489,12 +558,7 @@ cc_library(
     name = "gpu_shared_data_header",
     textual_hdrs = [
         "gpu_shared_data_internal.h",
-    ] + select({
-        "//conditions:default": [],
-        "//mediapipe:apple": [
-            "MPPGraphGPUData.h",
-        ],
-    }),
+    ],
     visibility = ["//visibility:private"],
     deps = [
         ":gl_base",
@@ -515,6 +579,7 @@ cc_library(
     name = "gpu_shared_data_internal_stub",
     visibility = ["//visibility:private"],
     deps = [
+        ":gl_context_options_cc_proto",
         ":graph_support",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
@@ -522,25 +587,27 @@ cc_library(
         "//mediapipe/framework:port",
         "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/gpu:gl_context_options_cc_proto",
     ],
 )
 
 cc_library(
     name = "gpu_shared_data_internal_actual",
-    srcs = select({
-        "//conditions:default": [
-            "gpu_shared_data_internal.cc",
-        ],
-        # iOS uses an Objective-C++ version of this, built in MPPGraphGPUData.
-        "//mediapipe:apple": [],
-    }),
+    srcs = [
+        "gpu_shared_data_internal.cc",
+    ],
     hdrs = [
         "gpu_shared_data_internal.h",
     ],
+    copts = select({
+        "//conditions:default": [],
+        "//mediapipe:apple": [
+            "-x objective-c++",
+            "-fobjc-arc",  # enable reference-counting
+        ],
+    }),
     visibility = ["//visibility:private"],
     deps = [
-        "//mediapipe/gpu:gl_context_options_cc_proto",
+        ":gl_context_options_cc_proto",
         ":graph_support",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:executor",
@@ -554,7 +621,8 @@ cc_library(
     ] + select({
         "//conditions:default": [],
         "//mediapipe:apple": [
-            ":MPPGraphGPUData",
+            ":metal_shared_resources",
+            ":cv_texture_cache_manager",
         ],
     }),
 )
@@ -569,12 +637,30 @@ cc_library(
         ":gl_texture_buffer",
         ":gpu_buffer",
         ":gpu_shared_data_header",
+        ":multi_pool",
+        ":reusable_pool",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
     ],
+)
+
+cc_library(
+    name = "reusable_pool",
+    hdrs = ["reusable_pool.h"],
+    deps = [
+        ":multi_pool",
+        "@com_google_absl//absl/functional:any_invocable",
+        "@com_google_absl//absl/synchronization",
+    ],
+)
+
+cc_library(
+    name = "multi_pool",
+    hdrs = ["multi_pool.h"],
+    deps = ["//mediapipe/util:resource_cache"],
 )
 
 cc_library(
@@ -604,6 +690,7 @@ cc_library(
         ":gl_base",
         ":gpu_buffer",
         ":gpu_shared_data_header",
+        ":multi_pool",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework/port:logging",
@@ -617,16 +704,31 @@ cc_library(
             ":gl_texture_buffer_pool",
         ],
         "//mediapipe:ios": [
+            ":cv_pixel_buffer_pool_wrapper",
+            ":cv_texture_cache_manager",
             ":pixel_buffer_pool_util",
             "//mediapipe/objc:CFHolder",
             "//mediapipe/objc:util",
         ],
         "//mediapipe:macos": [
+            ":cv_pixel_buffer_pool_wrapper",
+            ":cv_texture_cache_manager",
             ":pixel_buffer_pool_util",
             ":gl_texture_buffer",
             ":gl_texture_buffer_pool",
         ],
     }),
+)
+
+cc_library(
+    name = "gl_texture_util",
+    srcs = ["gl_texture_util.cc"],
+    hdrs = ["gl_texture_util.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gl_base",
+        ":gl_texture_view",
+    ],
 )
 
 cc_library(
@@ -653,11 +755,9 @@ cc_library(
     name = "gl_calculator_helper",
     srcs = [
         "gl_calculator_helper.cc",
-        "gl_calculator_helper_impl_common.cc",
     ],
     hdrs = [
         "gl_calculator_helper.h",
-        "gl_calculator_helper_impl.h",
     ],
     linkopts = select({
         "//conditions:default": [],
@@ -689,7 +789,7 @@ cc_library(
         ":image_frame_view",
         ":shader_util",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:calculator_cc_proto",
+        "@com_google_absl//absl/base:core_headers",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework:calculator_contract",
@@ -715,20 +815,6 @@ cc_library(
     }),
 )
 
-# TODO: remove
-objc_library(
-    name = "gl_calculator_helper_ios",
-    copts = [
-        "-Wno-shorten-64-to-32",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":gl_calculator_helper",
-        "//mediapipe/objc:mediapipe_framework_ios",
-        "//mediapipe/objc:util",
-    ],
-)
-
 objc_library(
     name = "MPPMetalHelper",
     srcs = ["MPPMetalHelper.mm"],
@@ -737,15 +823,13 @@ objc_library(
         "-Wno-shorten-64-to-32",
     ],
     features = ["-layering_check"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":gpu_shared_data_internal",
         ":graph_support",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
         "@google_toolbox_for_mac//:GTM_Defines",
     ],
 )
@@ -764,10 +848,10 @@ cc_library(
     deps = [
         ":gl_base",
         ":gl_simple_shaders",
+        ":scale_mode_cc_proto",
         ":shader_util",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/gpu:scale_mode_cc_proto",
     ],
 )
 
@@ -821,6 +905,8 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_calculator_helper",
+        ":gpu_buffer_storage_image_frame",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:status",
@@ -831,13 +917,24 @@ cc_library(
     alwayslink = 1,
 )
 
+### Simple calculators
+
+mediapipe_proto_library(
+    name = "gl_animation_overlay_calculator_proto",
+    srcs = ["gl_animation_overlay_calculator.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
 proto_library(
     name = "gl_scaler_calculator_proto",
     srcs = ["gl_scaler_calculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
+        ":scale_mode_proto",
         "//mediapipe/framework:calculator_proto",
-        "//mediapipe/gpu:scale_mode_proto",
     ],
 )
 
@@ -859,6 +956,7 @@ cc_library(
     deps = [
         ":gl_calculator_helper",
         ":gl_quad_renderer",
+        ":gl_scaler_calculator_cc_proto",
         ":gl_simple_shaders",
         ":shader_util",
         "//mediapipe/framework:calculator_framework",
@@ -866,7 +964,6 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:options_util",
-        "//mediapipe/gpu:gl_scaler_calculator_cc_proto",
     ],
     alwayslink = 1,
 )
@@ -879,13 +976,13 @@ cc_library(
         ":egl_surface_holder",
         ":gl_calculator_helper",
         ":gl_quad_renderer",
+        ":gl_surface_sink_calculator_cc_proto",
         ":gpu_buffer",
         ":shader_util",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/gpu:gl_surface_sink_calculator_cc_proto",
         "@com_google_absl//absl/synchronization",
     ],
     alwayslink = 1,
@@ -895,8 +992,8 @@ proto_library(
     name = "gl_surface_sink_calculator_proto",
     srcs = ["gl_surface_sink_calculator.proto"],
     deps = [
+        ":scale_mode_proto",
         "//mediapipe/framework:calculator_proto",
-        "//mediapipe/gpu:scale_mode_proto",
     ],
 )
 
@@ -947,16 +1044,14 @@ objc_library(
     name = "metal_copy_calculator",
     srcs = ["MetalCopyCalculator.mm"],
     features = ["-layering_check"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
+        ":copy_calculator_cc_proto",
         ":simple_shaders_mtl",
-        "//mediapipe/gpu:copy_calculator_cc_proto",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
     ],
     alwayslink = 1,
 )
@@ -965,15 +1060,13 @@ objc_library(
     name = "metal_rgb_weight_calculator",
     srcs = ["MetalRgbWeightCalculator.mm"],
     features = ["-layering_check"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
         ":simple_shaders_mtl",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
     ],
     alwayslink = 1,
 )
@@ -982,15 +1075,13 @@ objc_library(
     name = "metal_sobel_calculator",
     srcs = ["MetalSobelCalculator.mm"],
     features = ["-layering_check"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
         ":simple_shaders_mtl",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
     ],
     alwayslink = 1,
 )
@@ -999,15 +1090,13 @@ objc_library(
     name = "metal_sobel_compute_calculator",
     srcs = ["MetalSobelComputeCalculator.mm"],
     features = ["-layering_check"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
         ":simple_shaders_mtl",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
     ],
     alwayslink = 1,
 )
@@ -1017,15 +1106,13 @@ objc_library(
     srcs = ["MPSSobelCalculator.mm"],
     copts = ["-std=c++17"],
     features = ["-layering_check"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-        "MetalPerformanceShaders",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
+        "//third_party/apple_frameworks:MetalPerformanceShaders",
     ],
     alwayslink = 1,
 )
@@ -1033,15 +1120,13 @@ objc_library(
 objc_library(
     name = "mps_threshold_calculator",
     srcs = ["MPSThresholdCalculator.mm"],
-    sdk_frameworks = [
-        "CoreVideo",
-        "Metal",
-        "MetalPerformanceShaders",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         ":MPPMetalHelper",
         "//mediapipe/objc:mediapipe_framework_ios",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:Metal",
+        "//third_party/apple_frameworks:MetalPerformanceShaders",
     ],
     alwayslink = 1,
 )
@@ -1062,8 +1147,8 @@ objc_library(
     name = "gl_ios_test_lib",
     testonly = 1,
     srcs = [
-        "MPPGraphGPUDataTests.mm",
         "gl_ios_test.mm",
+        "metal_shared_resources_test.mm",
     ],
     copts = [
         "-Wno-shorten-64-to-32",
@@ -1073,7 +1158,7 @@ objc_library(
     ],
     features = ["-layering_check"],
     deps = [
-        ":MPPGraphGPUData",
+        ":metal_shared_resources",
         ":gl_scaler_calculator",
         ":gpu_buffer_to_image_frame_calculator",
         ":gpu_shared_data_internal",
@@ -1114,6 +1199,20 @@ mediapipe_cc_test(
     deps = [
         ":gpu_buffer_format",
         ":gpu_buffer_storage_ahwb",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
+mediapipe_cc_test(
+    name = "gpu_buffer_storage_yuv_image_test",
+    size = "small",
+    srcs = ["gpu_buffer_storage_yuv_image_test.cc"],
+    exclude_platforms = [
+        "ios",
+    ],
+    deps = [
+        ":gpu_buffer_format",
+        ":gpu_buffer_storage_yuv_image",
         "//mediapipe/framework/port:gtest_main",
     ],
 )

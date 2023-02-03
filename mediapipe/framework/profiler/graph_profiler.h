@@ -232,6 +232,14 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
 
   const ProfilerConfig& profiler_config() { return profiler_config_; }
 
+  // Helper method to expose the config to other profilers.
+  const ValidatedGraphConfig* GetValidatedGraphConfig() {
+    return validated_graph_;
+  }
+
+  // Gets a numerical identifier for this GraphProfiler object.
+  uint64_t GetGraphId() { return graph_id_; }
+
  private:
   // This can be used to add packet info for the input streams to the graph.
   // It treats the stream defined by |stream_name| as a stream produced by a
@@ -351,6 +359,12 @@ class GraphProfiler : public std::enable_shared_from_this<ProfilingContext> {
   // A private resource for creating GraphProfiles.
   class GraphProfileBuilder;
   std::unique_ptr<GraphProfileBuilder> profile_builder_;
+
+  // The globally incrementing identifier for all graphs in a process.
+  static inline std::atomic_int next_instance_id_ = 0;
+
+  // A unique identifier for this object. Only unique within a process.
+  uint64_t graph_id_;
 
   // For testing.
   friend GraphProfilerTestPeer;

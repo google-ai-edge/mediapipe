@@ -21,7 +21,7 @@
 #include "mediapipe/gpu/graph_support.h"
 
 #if __APPLE__
-#import "mediapipe/gpu/MPPGraphGPUData.h"
+#include "mediapipe/gpu/metal_shared_resources.h"
 #endif  // __APPLE__
 
 namespace mediapipe {
@@ -80,28 +80,40 @@ GpuResources::StatusOrGpuResources GpuResources::Create(
   return gpu_resources;
 }
 
-GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context) {
+GpuResources::GpuResources(std::shared_ptr<GlContext> gl_context)
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+    : texture_caches_(std::make_shared<CvTextureCacheManager>()),
+      gpu_buffer_pool_(
+          [tc = texture_caches_](const internal::GpuBufferSpec& spec,
+                                 const MultiPoolOptions& options) {
+            return CvPixelBufferPoolWrapper::Create(spec, options, tc.get());
+          })
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+{
   gl_key_context_[SharedContextKey()] = gl_context;
   named_executors_[kGpuExecutorName] =
       std::make_shared<GlContextExecutor>(gl_context.get());
 #if __APPLE__
-  gpu_buffer_pool().RegisterTextureCache(gl_context->cv_texture_cache());
-  ios_gpu_data_ = [[MPPGraphGPUData alloc] initWithContext:gl_context.get()
-                                                 multiPool:&gpu_buffer_pool_];
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+  texture_caches_->RegisterTextureCache(gl_context->cv_texture_cache());
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+  metal_shared_ = std::make_unique<MetalSharedResources>();
 #endif  // __APPLE__
 }
 
 GpuResources::~GpuResources() {
 #if __APPLE__
-  // Note: on Apple platforms, this object contains Objective-C objects. The
-  // destructor will release them, but ARC must be on.
+  // Note: on Apple platforms, this object contains Objective-C objects.
+  // The destructor will release them, but ARC must be on.
 #if !__has_feature(objc_arc)
 #error This file must be built with ARC.
 #endif
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   for (auto& kv : gl_key_context_) {
-    gpu_buffer_pool().UnregisterTextureCache(kv.second->cv_texture_cache());
+    texture_caches_->UnregisterTextureCache(kv.second->cv_texture_cache());
   }
-#endif
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+#endif  // __APPLE__
 }
 
 absl::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
@@ -174,17 +186,43 @@ GlContext::StatusOrGlContext GpuResources::GetOrCreateGlContext(
                      GlContext::Create(*gl_key_context_[SharedContextKey()],
                                        kGlContextUseDedicatedThread));
     it = gl_key_context_.emplace(key, new_context).first;
-#if __APPLE__
-    gpu_buffer_pool_.RegisterTextureCache(it->second->cv_texture_cache());
-#endif
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+    texture_caches_->RegisterTextureCache(it->second->cv_texture_cache());
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   }
   return it->second;
 }
 
 GpuSharedData::GpuSharedData() : GpuSharedData(kPlatformGlContextNone) {}
 
-#if __APPLE__
-MPPGraphGPUData* GpuResources::ios_gpu_data() { return ios_gpu_data_; }
-#endif  // __APPLE__
+extern const GraphService<GpuResources> kGpuService;
+
+#if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+static std::shared_ptr<GlTextureBuffer> GetGlTextureBufferFromPool(
+    int width, int height, GpuBufferFormat format) {
+  std::shared_ptr<GlTextureBuffer> texture_buffer;
+  const auto cc = LegacyCalculatorSupport::Scoped<CalculatorContext>::current();
+
+  if (cc && cc->Service(kGpuService).IsAvailable()) {
+    GpuBufferMultiPool* pool =
+        &cc->Service(kGpuService).GetObject().gpu_buffer_pool();
+    // Note that the "gpu_buffer_pool" serves GlTextureBuffers on non-Apple
+    // platforms. TODO: refactor into storage pools.
+    texture_buffer = pool->GetBuffer(width, height, format)
+                         .internal_storage<GlTextureBuffer>();
+  } else {
+    texture_buffer = GlTextureBuffer::Create(width, height, format);
+  }
+  return texture_buffer;
+}
+
+static auto kGlTextureBufferPoolRegistration = [] {
+  // Ensure that the GlTextureBuffer's own factory is already registered, so we
+  // can override it.
+  GlTextureBuffer::RegisterOnce();
+  return internal::GpuBufferStorageRegistry::Get()
+      .RegisterFactory<GlTextureBuffer>(GetGlTextureBufferFromPool);
+}();
+#endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 
 }  // namespace mediapipe

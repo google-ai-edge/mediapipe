@@ -49,6 +49,7 @@ namespace hand_landmarker {
 
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
@@ -135,9 +136,10 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
 // Inputs:
 //   IMAGE - Image
 //     Image to perform hand landmarks detection on.
-//   NORM_RECT - NormalizedRect
+//   NORM_RECT - NormalizedRect @Optional
 //     Describes image rotation and region of image to perform landmarks
-//     detection on.
+//     detection on. If not provided, whole image is used for hand landmarks
+//     detection.
 //
 // Outputs:
 //   LANDMARKS: - std::vector<NormalizedLandmarkList>
@@ -217,11 +219,12 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
           !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
                .IsAvailable()));
     }
-    ASSIGN_OR_RETURN(auto hand_landmarker_outputs,
-                     BuildHandLandmarkerGraph(
-                         sc->Options<HandLandmarkerGraphOptions>(),
-                         graph[Input<Image>(kImageTag)],
-                         graph[Input<NormalizedRect>(kNormRectTag)], graph));
+    ASSIGN_OR_RETURN(
+        auto hand_landmarker_outputs,
+        BuildHandLandmarkerGraph(
+            sc->Options<HandLandmarkerGraphOptions>(),
+            graph[Input<Image>(kImageTag)],
+            graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
     hand_landmarker_outputs.landmark_lists >>
         graph[Output<std::vector<NormalizedLandmarkList>>(kLandmarksTag)];
     hand_landmarker_outputs.world_landmark_lists >>

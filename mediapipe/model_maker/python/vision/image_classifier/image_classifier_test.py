@@ -24,6 +24,8 @@ import numpy as np
 import tensorflow as tf
 
 from mediapipe.model_maker.python.vision import image_classifier
+from mediapipe.model_maker.python.vision.image_classifier import hyperparameters
+from mediapipe.model_maker.python.vision.image_classifier import model_options
 from mediapipe.tasks.python.test import test_utils
 
 
@@ -133,7 +135,10 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
 
     self.assertTrue(os.path.exists(output_metadata_file))
     self.assertGreater(os.path.getsize(output_metadata_file), 0)
-    self.assertTrue(filecmp.cmp(output_metadata_file, expected_metadata_file))
+    filecmp.clear_cache()
+    self.assertTrue(
+        filecmp.cmp(
+            output_metadata_file, expected_metadata_file, shallow=False))
 
   def test_continual_training_by_loading_checkpoint(self):
     mock_stdout = io.StringIO()
@@ -159,15 +164,15 @@ class ImageClassifierTest(tf.test.TestCase, parameterized.TestCase):
     self.assertGreaterEqual(accuracy, threshold)
 
   @unittest_mock.patch.object(
-      image_classifier.hyperparameters,
+      hyperparameters,
       'HParams',
       autospec=True,
-      return_value=image_classifier.HParams(epochs=1))
+      return_value=hyperparameters.HParams(epochs=1))
   @unittest_mock.patch.object(
-      image_classifier.model_options,
+      model_options,
       'ImageClassifierModelOptions',
       autospec=True,
-      return_value=image_classifier.ModelOptions())
+      return_value=model_options.ImageClassifierModelOptions())
   def test_create_hparams_and_model_options_if_none_in_image_classifier_options(
       self, mock_hparams, mock_model_options):
     options = image_classifier.ImageClassifierOptions(

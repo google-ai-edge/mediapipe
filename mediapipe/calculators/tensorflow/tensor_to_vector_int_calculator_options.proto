@@ -36,4 +36,8 @@ message TensorToVectorIntCalculatorOptions {
   optional bool tensor_is_token = 3 [default = false];
   // Threshold for the token generation.
   optional float token_threshold = 4 [default = 0.5];
+
+  // Values which overlap between timely following vectors. They are removed
+  // from the output to reduce redundancy.
+  optional int32 overlap = 5 [default = 0];
 }

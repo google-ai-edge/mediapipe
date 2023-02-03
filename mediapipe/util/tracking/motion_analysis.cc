@@ -791,7 +791,7 @@ void MotionAnalysis::VisualizeBlurAnalysisRegions(cv::Mat* input_view) {
   region_flow_computation_->ComputeBlurMask(*input_view, &corner_values, &mask);
 
   cv::Mat mask_3c;
-  cv::cvtColor(mask, mask_3c, CV_GRAY2RGB);
+  cv::cvtColor(mask, mask_3c, cv::COLOR_GRAY2RGB);
   cv::addWeighted(*input_view, 0.5, mask_3c, 0.5, -128, *input_view);
 }
 

@@ -134,7 +134,6 @@ proto_library(
 mediapipe_cc_proto_library(
     name = "tone_models_cc_proto",
     srcs = ["tone_models.proto"],
-    visibility = ["//visibility:public"],
     deps = [":tone_models_proto"],
 )
 
@@ -142,7 +141,6 @@ mediapipe_cc_proto_library(
     name = "tone_estimation_cc_proto",
     srcs = ["tone_estimation.proto"],
     cc_deps = [":tone_models_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = [":tone_estimation_proto"],
 )
 
@@ -153,21 +151,18 @@ mediapipe_cc_proto_library(
         ":tone_estimation_cc_proto",
         ":tone_models_cc_proto",
     ],
-    visibility = ["//visibility:public"],
     deps = [":region_flow_computation_proto"],
 )
 
 mediapipe_cc_proto_library(
     name = "motion_saliency_cc_proto",
     srcs = ["motion_saliency.proto"],
-    visibility = ["//visibility:public"],
     deps = [":motion_saliency_proto"],
 )
 
 mediapipe_cc_proto_library(
     name = "motion_estimation_cc_proto",
     srcs = ["motion_estimation.proto"],
-    visibility = ["//visibility:public"],
     deps = [":motion_estimation_proto"],
 )
 
@@ -179,7 +174,6 @@ mediapipe_cc_proto_library(
         ":motion_saliency_cc_proto",
         ":region_flow_computation_cc_proto",
     ],
-    visibility = ["//visibility:public"],
     deps = [":motion_analysis_proto"],
 )
 
@@ -187,14 +181,12 @@ mediapipe_cc_proto_library(
     name = "region_flow_cc_proto",
     srcs = ["region_flow.proto"],
     cc_deps = [":motion_models_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = [":region_flow_proto"],
 )
 
 mediapipe_cc_proto_library(
     name = "motion_models_cc_proto",
     srcs = ["motion_models.proto"],
-    visibility = ["//visibility:public"],
     deps = [":motion_models_proto"],
 )
 
@@ -202,21 +194,18 @@ mediapipe_cc_proto_library(
     name = "camera_motion_cc_proto",
     srcs = ["camera_motion.proto"],
     cc_deps = [":motion_models_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = [":camera_motion_proto"],
 )
 
 mediapipe_cc_proto_library(
     name = "push_pull_filtering_cc_proto",
     srcs = ["push_pull_filtering.proto"],
-    visibility = ["//visibility:public"],
     deps = [":push_pull_filtering_proto"],
 )
 
 mediapipe_cc_proto_library(
     name = "frame_selection_solution_evaluator_cc_proto",
     srcs = ["frame_selection_solution_evaluator.proto"],
-    visibility = ["//visibility:public"],
     deps = [":frame_selection_solution_evaluator_proto"],
 )
 
@@ -228,7 +217,6 @@ mediapipe_cc_proto_library(
         ":frame_selection_solution_evaluator_cc_proto",
         ":region_flow_cc_proto",
     ],
-    visibility = ["//visibility:public"],
     deps = [":frame_selection_proto"],
 )
 
@@ -239,7 +227,6 @@ mediapipe_cc_proto_library(
         ":motion_models_cc_proto",
         ":region_flow_cc_proto",
     ],
-    visibility = ["//visibility:public"],
     deps = [":flow_packager_proto"],
 )
 
@@ -247,7 +234,6 @@ mediapipe_cc_proto_library(
     name = "tracking_cc_proto",
     srcs = ["tracking.proto"],
     cc_deps = [":motion_models_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = [":tracking_proto"],
 )
 
@@ -255,14 +241,12 @@ mediapipe_cc_proto_library(
     name = "box_tracker_cc_proto",
     srcs = ["box_tracker.proto"],
     cc_deps = [":tracking_cc_proto"],
-    visibility = ["//visibility:public"],
     deps = [":box_tracker_proto"],
 )
 
 mediapipe_cc_proto_library(
     name = "tracked_detection_manager_config_cc_proto",
     srcs = ["tracked_detection_manager_config.proto"],
-    visibility = ["//visibility:public"],
     deps = [":tracked_detection_manager_config_proto"],
 )
 
@@ -273,7 +257,6 @@ mediapipe_cc_proto_library(
         ":box_tracker_cc_proto",
         ":region_flow_cc_proto",
     ],
-    visibility = ["//visibility:public"],
     deps = [":box_detector_proto"],
 )
 
@@ -299,7 +282,6 @@ cc_library(
     srcs = ["motion_models_cv.cc"],
     hdrs = ["motion_models_cv.h"],
     deps = [
-        ":camera_motion_cc_proto",
         ":motion_models",
         ":motion_models_cc_proto",
         "//mediapipe/framework/port:opencv_core",
@@ -458,7 +440,6 @@ cc_library(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
-        "//mediapipe/framework/port:opencv_highgui",
     ],
 )
 
@@ -739,7 +720,7 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
-        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",

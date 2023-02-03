@@ -14,17 +14,30 @@
  * limitations under the License.
  */
 
-// Image Classifier
-export * from '../../../tasks/web/vision/image_classifier/image_classifier_options';
-export * from '../../../tasks/web/vision/image_classifier/image_classifier_result';
-export * from '../../../tasks/web/vision/image_classifier/image_classifier';
+import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fileset_resolver';
+import {GestureRecognizer as GestureRecognizerImpl} from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer';
+import {HandLandmarker as HandLandmarkerImpl} from '../../../tasks/web/vision/hand_landmarker/hand_landmarker';
+import {ImageClassifier as ImageClassifierImpl} from '../../../tasks/web/vision/image_classifier/image_classifier';
+import {ImageEmbedder as ImageEmbedderImpl} from '../../../tasks/web/vision/image_embedder/image_embedder';
+import {ImageSegmenter as ImageSegementerImpl} from '../../../tasks/web/vision/image_segmenter/image_segmenter';
+import {ObjectDetector as ObjectDetectorImpl} from '../../../tasks/web/vision/object_detector/object_detector';
 
-// Gesture Recognizer
-export * from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer_options';
-export * from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer_result';
-export * from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer';
+// Declare the variables locally so that Rollup in OSS includes them explicitly
+// as exports.
+const FilesetResolver = FilesetResolverImpl;
+const GestureRecognizer = GestureRecognizerImpl;
+const HandLandmarker = HandLandmarkerImpl;
+const ImageClassifier = ImageClassifierImpl;
+const ImageEmbedder = ImageEmbedderImpl;
+const ImageSegmenter = ImageSegementerImpl;
+const ObjectDetector = ObjectDetectorImpl;
 
-// Object Detector
-export * from '../../../tasks/web/vision/object_detector/object_detector_options';
-export * from '../../../tasks/web/vision/object_detector/object_detector_result';
-export * from '../../../tasks/web/vision/object_detector/object_detector';
+export {
+  FilesetResolver,
+  GestureRecognizer,
+  HandLandmarker,
+  ImageClassifier,
+  ImageEmbedder,
+  ImageSegmenter,
+  ObjectDetector
+};

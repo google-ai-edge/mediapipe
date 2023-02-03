@@ -58,9 +58,12 @@ struct AudioEmbedderOptions {
       nullptr;
 };
 
-// Performs embedding extraction on audio clips or audio stream.
+// Performs audio embedding extraction on audio clips or audio stream.
 //
-// The API expects a TFLite model with TFLite Model Metadata.
+// This API expects a TFLite model with mandatory TFLite Model Metadata that
+// contains the mandatory AudioProperties of the solo input audio tensor and the
+// optional (but recommended) label items as AssociatedFiles with type
+// TENSOR_AXIS_LABELS per output embedding tensor.
 //
 // Input tensor:
 //   (kTfLiteFloat32)

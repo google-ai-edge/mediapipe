@@ -150,14 +150,15 @@ class ClassificationAggregationCalculatorTest
   CalculatorGraph calculator_graph_;
 };
 
-TEST_F(ClassificationAggregationCalculatorTest, SucceedsWithoutTimestamps) {
+TEST_F(ClassificationAggregationCalculatorTest, SucceedsWithoutAggregation) {
   MP_ASSERT_OK_AND_ASSIGN(auto poller, BuildGraph());
   MP_ASSERT_OK(Send({MakeClassificationList(0), MakeClassificationList(1)}));
   MP_ASSERT_OK_AND_ASSIGN(auto result, GetResult<ClassificationResult>(poller));
 
   EXPECT_THAT(result,
               EqualsProto(ParseTextProtoOrDie<ClassificationResult>(
-                  R"pb(classifications {
+                  R"pb(timestamp_ms: 0,
+                       classifications {
                          head_index: 0
                          head_name: "foo"
                          classification_list { classification { index: 0 } }
@@ -169,7 +170,7 @@ TEST_F(ClassificationAggregationCalculatorTest, SucceedsWithoutTimestamps) {
                        })pb")));
 }
 
-TEST_F(ClassificationAggregationCalculatorTest, SucceedsWithTimestamps) {
+TEST_F(ClassificationAggregationCalculatorTest, SucceedsWithAggregation) {
   MP_ASSERT_OK_AND_ASSIGN(auto poller, BuildGraph(/*connect_timestamps=*/true));
   MP_ASSERT_OK(Send({MakeClassificationList(0), MakeClassificationList(1)}));
   MP_ASSERT_OK(Send(

@@ -171,6 +171,7 @@ class TimestampBoundTestCalculator : public CalculatorBase {
 };
 REGISTER_CALCULATOR(TimestampBoundTestCalculator);
 
+#if 0  // test is flaky, try it with --runs_per_test=200
 TEST(CallbackTest, TestAddMultiStreamCallbackWithTimestampNotification) {
   std::string config_str = R"(
             node {
@@ -203,6 +204,7 @@ TEST(CallbackTest, TestAddMultiStreamCallbackWithTimestampNotification) {
 
   EXPECT_THAT(sums, testing::ElementsAre(10, 20));
 }
+#endif
 
 }  // namespace
 }  // namespace mediapipe

@@ -38,10 +38,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/text/text_classifier/text_classifier_test_utils.h"
 #include "tensorflow/lite/core/shims/cc/shims_test_util.h"
 
-namespace mediapipe {
-namespace tasks {
-namespace text {
-namespace text_classifier {
+namespace mediapipe::tasks::text::text_classifier {
 namespace {
 
 using ::mediapipe::file::JoinPath;
@@ -87,6 +84,8 @@ void ExpectApproximatelyEqual(const TextClassifierResult& actual,
     }
   }
 }
+
+}  // namespace
 
 class TextClassifierTest : public tflite_shims::testing::Test {};
 
@@ -136,28 +135,46 @@ TEST_F(TextClassifierTest, TextClassifierWithBert) {
   options->base_options.model_asset_path = GetFullPath(kTestBertModelPath);
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextClassifier> classifier,
                           TextClassifier::Create(std::move(options)));
-  MP_ASSERT_OK_AND_ASSIGN(
-      TextClassifierResult negative_result,
-      classifier->Classify("unflinchingly bleak and desperate"));
+
   TextClassifierResult negative_expected;
+  TextClassifierResult positive_expected;
+
+#ifdef _WIN32
+  negative_expected.classifications.emplace_back(Classifications{
+      /*categories=*/{
+          {/*index=*/0, /*score=*/0.956124, /*category_name=*/"negative"},
+          {/*index=*/1, /*score=*/0.043875, /*category_name=*/"positive"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+  positive_expected.classifications.emplace_back(Classifications{
+      /*categories=*/{
+          {/*index=*/1, /*score=*/0.999951, /*category_name=*/"positive"},
+          {/*index=*/0, /*score=*/0.000048, /*category_name=*/"negative"}},
+      /*head_index=*/0,
+      /*head_name=*/"probability"});
+#else
   negative_expected.classifications.emplace_back(Classifications{
       /*categories=*/{
           {/*index=*/0, /*score=*/0.956317, /*category_name=*/"negative"},
           {/*index=*/1, /*score=*/0.043683, /*category_name=*/"positive"}},
       /*head_index=*/0,
       /*head_name=*/"probability"});
-  ExpectApproximatelyEqual(negative_result, negative_expected);
-
-  MP_ASSERT_OK_AND_ASSIGN(
-      TextClassifierResult positive_result,
-      classifier->Classify("it's a charming and often affecting journey"));
-  TextClassifierResult positive_expected;
   positive_expected.classifications.emplace_back(Classifications{
       /*categories=*/{
           {/*index=*/1, /*score=*/0.999945, /*category_name=*/"positive"},
           {/*index=*/0, /*score=*/0.000056, /*category_name=*/"negative"}},
       /*head_index=*/0,
       /*head_name=*/"probability"});
+#endif  // _WIN32
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      TextClassifierResult negative_result,
+      classifier->Classify("unflinchingly bleak and desperate"));
+  ExpectApproximatelyEqual(negative_result, negative_expected);
+
+  MP_ASSERT_OK_AND_ASSIGN(
+      TextClassifierResult positive_result,
+      classifier->Classify("it's a charming and often affecting journey"));
   ExpectApproximatelyEqual(positive_result, positive_expected);
 
   MP_ASSERT_OK(classifier->Close());
@@ -217,8 +234,47 @@ TEST_F(TextClassifierTest, TextClassifierWithStringToBool) {
   MP_ASSERT_OK(classifier->Close());
 }
 
-}  // namespace
-}  // namespace text_classifier
-}  // namespace text
-}  // namespace tasks
-}  // namespace mediapipe
+TEST_F(TextClassifierTest, BertLongPositive) {
+  std::stringstream ss_for_positive_review;
+  ss_for_positive_review
+      << "it's a charming and often affecting journey and this is a long";
+  for (int i = 0; i < kMaxSeqLen; ++i) {
+    ss_for_positive_review << " long";
+  }
+  ss_for_positive_review << " movie review";
+  auto options = std::make_unique<TextClassifierOptions>();
+  options->base_options.model_asset_path = GetFullPath(kTestBertModelPath);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<TextClassifier> classifier,
+                          TextClassifier::Create(std::move(options)));
+  MP_ASSERT_OK_AND_ASSIGN(TextClassifierResult result,
+                          classifier->Classify(ss_for_positive_review.str()));
+  TextClassifierResult expected;
+  std::vector<Category> categories;
+
+// Predicted scores are slightly different across platforms.
+#ifdef __APPLE__
+  categories.push_back(
+      {/*index=*/1, /*score=*/0.974181, /*category_name=*/"positive"});
+  categories.push_back(
+      {/*index=*/0, /*score=*/0.025819, /*category_name=*/"negative"});
+#elif defined _WIN32
+  categories.push_back(
+      {/*index=*/1, /*score=*/0.976686, /*category_name=*/"positive"});
+  categories.push_back(
+      {/*index=*/0, /*score=*/0.023313, /*category_name=*/"negative"});
+#else
+  categories.push_back(
+      {/*index=*/1, /*score=*/0.985889, /*category_name=*/"positive"});
+  categories.push_back(
+      {/*index=*/0, /*score=*/0.014112, /*category_name=*/"negative"});
+#endif  // __APPLE__
+
+  expected.classifications.emplace_back(
+      Classifications{/*categories=*/categories,
+                      /*head_index=*/0,
+                      /*head_name=*/"probability"});
+  ExpectApproximatelyEqual(result, expected);
+  MP_ASSERT_OK(classifier->Close());
+}
+
+}  // namespace mediapipe::tasks::text::text_classifier

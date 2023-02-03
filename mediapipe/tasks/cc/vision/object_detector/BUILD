@@ -16,50 +16,13 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-cc_library(
-    name = "object_detector_graph",
-    srcs = ["object_detector_graph.cc"],
-    deps = [
-        "//mediapipe/calculators/core:split_vector_calculator_cc_proto",
-        "//mediapipe/calculators/tensor:inference_calculator",
-        "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
-        "//mediapipe/calculators/tensor:tensors_to_detections_calculator_cc_proto",
-        "//mediapipe/calculators/util:detection_label_id_to_text_calculator",
-        "//mediapipe/calculators/util:detection_label_id_to_text_calculator_cc_proto",
-        "//mediapipe/calculators/util:detection_projection_calculator",
-        "//mediapipe/calculators/util:detection_transformation_calculator",
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework/api2:builder",
-        "//mediapipe/framework/api2:port",
-        "//mediapipe/framework/formats:detection_cc_proto",
-        "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:rect_cc_proto",
-        "//mediapipe/framework/formats:tensor",
-        "//mediapipe/tasks/cc:common",
-        "//mediapipe/tasks/cc/components:image_preprocessing",
-        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator_cc_proto",
-        "//mediapipe/tasks/cc/components/calculators:score_calibration_utils",
-        "//mediapipe/tasks/cc/components/utils:source_or_node_output",
-        "//mediapipe/tasks/cc/core:model_resources",
-        "//mediapipe/tasks/cc/core:model_task_graph",
-        "//mediapipe/tasks/cc/core:utils",
-        "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
-        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
-        "//mediapipe/tasks/cc/metadata:metadata_extractor",
-        "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_cc_proto",
-        "//mediapipe/tasks/metadata:metadata_schema_cc",
-        "//mediapipe/util:label_map_cc_proto",
-        "//mediapipe/util:label_map_util",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-    ],
-    alwayslink = 1,
-)
-
+# Docs for Mediapipe Tasks Object Detector
+# https://developers.google.com/mediapipe/solutions/vision/object_detector
 cc_library(
     name = "object_detector",
     srcs = ["object_detector.cc"],
     hdrs = ["object_detector.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":object_detector_graph",
         "//mediapipe/calculators/core:concatenate_vector_calculator",
@@ -70,6 +33,7 @@ cc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator",
+        "//mediapipe/tasks/cc/components/containers:detection_result",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
@@ -84,6 +48,46 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
     ],
+)
+
+cc_library(
+    name = "object_detector_graph",
+    srcs = ["object_detector_graph.cc"],
+    deps = [
+        "//mediapipe/calculators/core:split_vector_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_detections_calculator_cc_proto",
+        "//mediapipe/calculators/util:detection_label_id_to_text_calculator",
+        "//mediapipe/calculators/util:detection_label_id_to_text_calculator_cc_proto",
+        "//mediapipe/calculators/util:detection_projection_calculator",
+        "//mediapipe/calculators/util:detection_transformation_calculator",
+        "//mediapipe/calculators/util:detections_deduplicate_calculator",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator_cc_proto",
+        "//mediapipe/tasks/cc/components/calculators:score_calibration_utils",
+        "//mediapipe/tasks/cc/components/processors:image_preprocessing_graph",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core:model_task_graph",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
+        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
+        "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_cc_proto",
+        "//mediapipe/tasks/metadata:metadata_schema_cc",
+        "//mediapipe/util:label_map_cc_proto",
+        "//mediapipe/util:label_map_util",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+    alwayslink = 1,
 )
 
 # TODO: This test fails in OSS

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -24,19 +24,6 @@ android_library(
     ],
     deps = [
         "//mediapipe/tasks/cc/components/processors/proto:classifier_options_java_proto_lite",
-        "//third_party:autovalue",
-        "@maven//:com_google_guava_guava",
-    ],
-)
-
-android_library(
-    name = "embedderoptions",
-    srcs = ["EmbedderOptions.java"],
-    javacopts = [
-        "-Xep:AndroidJdkLibsChecker:OFF",
-    ],
-    deps = [
-        "//mediapipe/tasks/cc/components/processors/proto:embedder_options_java_proto_lite",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],

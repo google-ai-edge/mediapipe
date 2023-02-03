@@ -27,7 +27,7 @@ import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.components.containers.ClassificationResult;
 import com.google.mediapipe.tasks.components.containers.proto.ClassificationsProto;
-import com.google.mediapipe.tasks.components.processors.ClassifierOptions;
+import com.google.mediapipe.tasks.components.processors.proto.ClassifierOptionsProto;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -197,6 +197,8 @@ public final class ImageClassifier extends BaseVisionTaskApi {
         TaskRunner.create(
             context,
             TaskInfo.<ImageClassifierOptions>builder()
+                .setTaskName(ImageClassifier.class.getSimpleName())
+                .setTaskRunningModeName(options.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)
@@ -376,10 +378,42 @@ public final class ImageClassifier extends BaseVisionTaskApi {
       public abstract Builder setRunningMode(RunningMode runningMode);
 
       /**
-       * Sets the optional {@link ClassifierOptions} controling classification behavior, such as
-       * score threshold, number of results, etc.
+       * Sets the optional locale to use for display names specified through the TFLite Model
+       * Metadata, if any.
        */
-      public abstract Builder setClassifierOptions(ClassifierOptions classifierOptions);
+      public abstract Builder setDisplayNamesLocale(String locale);
+
+      /**
+       * Sets the optional maximum number of top-scored classification results to return.
+       *
+       * <p>If not set, all available results are returned. If set, must be > 0.
+       */
+      public abstract Builder setMaxResults(Integer maxResults);
+
+      /**
+       * Sets the optional score threshold. Results with score below this value are rejected.
+       *
+       * <p>Overrides the score threshold specified in the TFLite Model Metadata, if any.
+       */
+      public abstract Builder setScoreThreshold(Float scoreThreshold);
+
+      /**
+       * Sets the optional allowlist of category names.
+       *
+       * <p>If non-empty, detection results whose category name is not in this set will be filtered
+       * out. Duplicate or unknown category names are ignored. Mutually exclusive with {@code
+       * categoryDenylist}.
+       */
+      public abstract Builder setCategoryAllowlist(List<String> categoryAllowlist);
+
+      /**
+       * Sets the optional denylist of category names.
+       *
+       * <p>If non-empty, detection results whose category name is in this set will be filtered out.
+       * Duplicate or unknown category names are ignored. Mutually exclusive with {@code
+       * categoryAllowlist}.
+       */
+      public abstract Builder setCategoryDenylist(List<String> categoryDenylist);
 
       /**
        * Sets the {@link ResultListener} to receive the classification results asynchronously when
@@ -396,9 +430,7 @@ public final class ImageClassifier extends BaseVisionTaskApi {
       /**
        * Validates and builds the {@link ImageClassifierOptions} instance. *
        *
-       * @throws IllegalArgumentException if the result listener and the running mode are not
-       *     properly configured. The result listener should only be set when the image classifier
-       *     is in the live stream mode.
+       * @throws IllegalArgumentException if any of the set options are invalid.
        */
       public final ImageClassifierOptions build() {
         ImageClassifierOptions options = autoBuild();
@@ -413,6 +445,13 @@ public final class ImageClassifier extends BaseVisionTaskApi {
               "The image classifier is in the image or video mode, a user-defined result listener"
                   + " shouldn't be provided in ImageClassifierOptions.");
         }
+        if (options.maxResults().isPresent() && options.maxResults().get() <= 0) {
+          throw new IllegalArgumentException("If specified, maxResults must be > 0.");
+        }
+        if (!options.categoryAllowlist().isEmpty() && !options.categoryDenylist().isEmpty()) {
+          throw new IllegalArgumentException(
+              "Category allowlist and denylist are mutually exclusive.");
+        }
         return options;
       }
     }
@@ -421,7 +460,15 @@ public final class ImageClassifier extends BaseVisionTaskApi {
 
     abstract RunningMode runningMode();
 
-    abstract Optional<ClassifierOptions> classifierOptions();
+    abstract Optional<String> displayNamesLocale();
+
+    abstract Optional<Integer> maxResults();
+
+    abstract Optional<Float> scoreThreshold();
+
+    abstract List<String> categoryAllowlist();
+
+    abstract List<String> categoryDenylist();
 
     abstract Optional<ResultListener<ImageClassifierResult, MPImage>> resultListener();
 
@@ -429,7 +476,9 @@ public final class ImageClassifier extends BaseVisionTaskApi {
 
     public static Builder builder() {
       return new AutoValue_ImageClassifier_ImageClassifierOptions.Builder()
-          .setRunningMode(RunningMode.IMAGE);
+          .setRunningMode(RunningMode.IMAGE)
+          .setCategoryAllowlist(Collections.emptyList())
+          .setCategoryDenylist(Collections.emptyList());
     }
 
     /**
@@ -441,12 +490,21 @@ public final class ImageClassifier extends BaseVisionTaskApi {
           BaseOptionsProto.BaseOptions.newBuilder();
       baseOptionsBuilder.setUseStreamMode(runningMode() != RunningMode.IMAGE);
       baseOptionsBuilder.mergeFrom(convertBaseOptionsToProto(baseOptions()));
+      ClassifierOptionsProto.ClassifierOptions.Builder classifierOptionsBuilder =
+          ClassifierOptionsProto.ClassifierOptions.newBuilder();
+      displayNamesLocale().ifPresent(classifierOptionsBuilder::setDisplayNamesLocale);
+      maxResults().ifPresent(classifierOptionsBuilder::setMaxResults);
+      scoreThreshold().ifPresent(classifierOptionsBuilder::setScoreThreshold);
+      if (!categoryAllowlist().isEmpty()) {
+        classifierOptionsBuilder.addAllCategoryAllowlist(categoryAllowlist());
+      }
+      if (!categoryDenylist().isEmpty()) {
+        classifierOptionsBuilder.addAllCategoryDenylist(categoryDenylist());
+      }
       ImageClassifierGraphOptionsProto.ImageClassifierGraphOptions.Builder taskOptionsBuilder =
           ImageClassifierGraphOptionsProto.ImageClassifierGraphOptions.newBuilder()
-              .setBaseOptions(baseOptionsBuilder);
-      if (classifierOptions().isPresent()) {
-        taskOptionsBuilder.setClassifierOptions(classifierOptions().get().convertToProto());
-      }
+              .setBaseOptions(baseOptionsBuilder)
+              .setClassifierOptions(classifierOptionsBuilder);
       return CalculatorOptions.newBuilder()
           .setExtension(
               ImageClassifierGraphOptionsProto.ImageClassifierGraphOptions.ext,

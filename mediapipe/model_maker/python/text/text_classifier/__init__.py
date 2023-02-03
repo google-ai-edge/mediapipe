@@ -29,3 +29,12 @@ BertModelOptions = model_options.BertModelOptions
 SupportedModels = model_spec.SupportedModels
 TextClassifier = text_classifier.TextClassifier
 TextClassifierOptions = text_classifier_options.TextClassifierOptions
+
+# Remove duplicated and non-public API
+del hyperparameters
+del dataset
+del model_options
+del model_spec
+del preprocessor  # pylint: disable=undefined-variable
+del text_classifier
+del text_classifier_options

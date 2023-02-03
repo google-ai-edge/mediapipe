@@ -15,10 +15,16 @@
 """MediaPipe Tasks Text API."""
 
 import mediapipe.tasks.python.text.text_classifier
+import mediapipe.tasks.python.text.text_embedder
 
 TextClassifier = text_classifier.TextClassifier
 TextClassifierOptions = text_classifier.TextClassifierOptions
+TextClassifierResult = text_classifier.TextClassifierResult
+TextEmbedder = text_embedder.TextEmbedder
+TextEmbedderOptions = text_embedder.TextEmbedderOptions
+TextEmbedderResult = text_embedder.TextEmbedderResult
 
 # Remove unnecessary modules to avoid duplication in API docs.
 del mediapipe
 del text_classifier
+del text_embedder

@@ -98,14 +98,13 @@ void CalculatorGraph::GraphInputStream::SetHeader(const Packet& header) {
   manager_->LockIntroData();
 }
 
+void CalculatorGraph::GraphInputStream::SetNextTimestampBound(
+    Timestamp timestamp) {
+  shard_.SetNextTimestampBound(timestamp);
+}
+
 void CalculatorGraph::GraphInputStream::PropagateUpdatesToMirrors() {
-  // Since GraphInputStream doesn't allow SetOffset() and
-  // SetNextTimestampBound(), the timestamp bound to propagate is only
-  // determined by the timestamp of the output packets.
-  CHECK(!shard_.IsEmpty()) << "Shard with name \"" << manager_->Name()
-                           << "\" failed";
-  manager_->PropagateUpdatesToMirrors(
-      shard_.LastAddedPacketTimestamp().NextAllowedInStream(), &shard_);
+  manager_->PropagateUpdatesToMirrors(shard_.NextTimestampBound(), &shard_);
 }
 
 void CalculatorGraph::GraphInputStream::Close() {
@@ -866,6 +865,19 @@ absl::Status CalculatorGraph::AddPacketToInputStream(
 absl::Status CalculatorGraph::AddPacketToInputStream(
     const std::string& stream_name, Packet&& packet) {
   return AddPacketToInputStreamInternal(stream_name, std::move(packet));
+}
+
+absl::Status CalculatorGraph::SetInputStreamTimestampBound(
+    const std::string& stream_name, Timestamp timestamp) {
+  std::unique_ptr<GraphInputStream>* stream =
+      mediapipe::FindOrNull(graph_input_streams_, stream_name);
+  RET_CHECK(stream).SetNoLogging() << absl::Substitute(
+      "SetInputStreamTimestampBound called on input stream \"$0\" which is not "
+      "a graph input stream.",
+      stream_name);
+  (*stream)->SetNextTimestampBound(timestamp);
+  (*stream)->PropagateUpdatesToMirrors();
+  return absl::OkStatus();
 }
 
 // We avoid having two copies of this code for AddPacketToInputStream(

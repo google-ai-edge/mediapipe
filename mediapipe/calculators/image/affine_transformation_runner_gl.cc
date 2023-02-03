@@ -92,8 +92,8 @@ class GlTextureWarpAffineRunner
 
       constexpr GLchar kVertShader[] = R"(
             in vec4 position;
-            in mediump vec4 texture_coordinate;
-            out mediump vec2 sample_coordinate;
+            in highp vec4 texture_coordinate;
+            out highp vec2 sample_coordinate;
             uniform mat4 transform_matrix;
 
             void main() {
@@ -104,7 +104,7 @@ class GlTextureWarpAffineRunner
           )";
 
       constexpr GLchar kFragShader[] = R"(
-            DEFAULT_PRECISION(mediump, float)
+            DEFAULT_PRECISION(highp, float)
             in vec2 sample_coordinate;
             uniform sampler2D input_texture;
 

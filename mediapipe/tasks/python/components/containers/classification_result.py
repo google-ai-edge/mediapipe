@@ -49,11 +49,7 @@ class Classifications:
     """Generates a Classifications protobuf object."""
     classification_list_proto = _ClassificationListProto()
     for category in self.categories:
-      classification_proto = _ClassificationProto(
-          index=category.index,
-          score=category.score,
-          label=category.category_name,
-          display_name=category.display_name)
+      classification_proto = category.to_pb2()
       classification_list_proto.classification.append(classification_proto)
     return _ClassificationsProto(
         classification_list=classification_list_proto,
@@ -65,14 +61,9 @@ class Classifications:
   def create_from_pb2(cls, pb2_obj: _ClassificationsProto) -> 'Classifications':
     """Creates a `Classifications` object from the given protobuf object."""
     categories = []
-    for entry in pb2_obj.classification_list.classification:
+    for classification in pb2_obj.classification_list.classification:
       categories.append(
-          category_module.Category(
-              index=entry.index,
-              score=entry.score,
-              display_name=entry.display_name,
-              category_name=entry.label))
-
+          category_module.Category.create_from_pb2(classification))
     return Classifications(
         categories=categories,
         head_index=pb2_obj.head_index,

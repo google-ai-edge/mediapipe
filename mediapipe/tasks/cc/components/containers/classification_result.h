@@ -20,6 +20,7 @@ limitations under the License.
 #include <string>
 #include <vector>
 
+#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/tasks/cc/components/containers/category.h"
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 
@@ -57,6 +58,12 @@ struct ClassificationResult {
 // Utility function to convert from Classifications proto to
 // Classifications struct.
 Classifications ConvertToClassifications(const proto::Classifications& proto);
+
+// Utility function to convert from ClassificationList proto to
+// Classifications struct.
+Classifications ConvertToClassifications(
+    const mediapipe::ClassificationList& proto, int head_index = 0,
+    std::optional<std::string> head_name = std::nullopt);
 
 // Utility function to convert from ClassificationResult proto to
 // ClassificationResult struct.

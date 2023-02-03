@@ -42,7 +42,9 @@ def get_default_callbacks(
 
   checkpoint_path = os.path.join(export_dir, 'checkpoint')
   checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-      checkpoint_path, save_weights_only=True)
+      os.path.join(checkpoint_path, 'model-{epoch:04d}'),
+      save_weights_only=True,
+      period=5)
   return [summary_callback, checkpoint_callback]
 
 

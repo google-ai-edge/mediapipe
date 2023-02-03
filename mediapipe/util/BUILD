@@ -186,6 +186,7 @@ cc_library(
     hdrs = [
         "resource_util.h",
     ],
+
     # We use Objective-C++ on iOS.
     copts = select({
         "//conditions:default": [],
@@ -228,6 +229,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/functional:function_ref",
     ],
 )
@@ -365,5 +367,23 @@ cc_test(
     deps = [
         ":rectangle_util",
         "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "image_test_utils",
+    testonly = 1,
+    srcs = ["image_test_utils.cc"],
+    hdrs = ["image_test_utils.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgcodecs",
+        "//mediapipe/framework/port:opencv_imgproc",
     ],
 )

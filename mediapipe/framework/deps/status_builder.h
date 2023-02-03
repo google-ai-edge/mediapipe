@@ -60,17 +60,6 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
                   ? nullptr
                   : std::make_unique<Impl>(absl::Status(code, ""), location)) {}
 
-  StatusBuilder(const absl::Status& original_status, const char* file, int line)
-      : impl_(original_status.ok()
-                  ? nullptr
-                  : std::make_unique<Impl>(original_status, file, line)) {}
-
-  StatusBuilder(absl::Status&& original_status, const char* file, int line)
-      : impl_(original_status.ok()
-                  ? nullptr
-                  : std::make_unique<Impl>(std::move(original_status), file,
-                                           line)) {}
-
   bool ok() const { return !impl_; }
 
   StatusBuilder& SetAppend() &;
@@ -109,8 +98,6 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
       kPrepend,
     };
 
-    Impl(const absl::Status& status, const char* file, int line);
-    Impl(absl::Status&& status, const char* file, int line);
     Impl(const absl::Status& status, mediapipe::source_location location);
     Impl(absl::Status&& status, mediapipe::source_location location);
     Impl(const Impl&);
@@ -120,10 +107,8 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
 
     // The status that the result will be based on.
     absl::Status status;
-    // The line to record if this file is logged.
-    int line;
-    // Not-owned: The file to record if this status is logged.
-    const char* file;
+    // The source location to record if this file is logged.
+    mediapipe::source_location location;
     // Logging disabled if true.
     bool no_logging = false;
     // The additional messages added with `<<`.  This is nullptr when status_ is

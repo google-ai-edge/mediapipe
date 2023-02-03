@@ -369,6 +369,7 @@ absl::Status ValidatedGraphConfig::Initialize(
     input_side_packets_.clear();
     output_side_packets_.clear();
     stream_to_producer_.clear();
+    output_streams_to_consumer_nodes_.clear();
     input_streams_.clear();
     output_streams_.clear();
     owned_packet_types_.clear();
@@ -719,6 +720,15 @@ absl::Status ValidatedGraphConfig::AddInputStreamsForNode(
                << " does not have a corresponding output stream.";
       }
     }
+    // Add this node as a consumer of this edge's output stream.
+    if (edge_info.upstream > -1) {
+      auto parent_node = output_streams_[edge_info.upstream].parent_node;
+      if (parent_node.type == NodeTypeInfo::NodeType::CALCULATOR) {
+        int this_idx = node_type_info->Node().index;
+        output_streams_to_consumer_nodes_[edge_info.upstream].push_back(
+            this_idx);
+      }
+    }
 
     edge_info.parent_node = node_type_info->Node();
     edge_info.name = name;
@@ -1048,6 +1058,14 @@ absl::Status ValidatedGraphConfig::ValidateRequiredSidePacketTypes(
   for (const auto& required_item : required_side_packets_) {
     auto iter = side_packet_types.find(required_item.first);
     if (iter == side_packet_types.end()) {
+      bool is_optional = true;
+      for (int index : required_item.second) {
+        is_optional &= input_side_packets_[index].packet_type->IsOptional();
+      }
+      if (is_optional) {
+        // Side packets that are optional and not provided are ignored.
+        continue;
+      }
       statuses.push_back(mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
                          << "Side packet \"" << required_item.first
                          << "\" is required but was not provided.");

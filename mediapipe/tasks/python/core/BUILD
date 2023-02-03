@@ -14,7 +14,7 @@
 
 # Placeholder for internal Python strict library and test compatibility macro.
 
-package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -23,14 +23,15 @@ py_library(
     srcs = [
         "optional_dependencies.py",
     ],
-    deps = [
-        "@org_tensorflow//tensorflow/tools/docs:doc_controls",
-    ],
 )
 
 py_library(
     name = "base_options",
     srcs = ["base_options.py"],
+    visibility = [
+        "//mediapipe/model_maker/python/vision/gesture_recognizer:__subpackages__",
+        "//mediapipe/tasks:users",
+    ],
     deps = [
         ":optional_dependencies",
         "//mediapipe/tasks/cc/core/proto:base_options_py_pb2",
@@ -42,6 +43,7 @@ py_library(
     name = "task_info",
     srcs = ["task_info.py"],
     deps = [
+        ":optional_dependencies",
         "//mediapipe/calculators/core:flow_limiter_calculator_py_pb2",
         "//mediapipe/framework:calculator_options_py_pb2",
         "//mediapipe/framework:calculator_py_pb2",

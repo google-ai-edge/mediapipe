@@ -35,7 +35,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "mediapipe/tasks/cc/components/image_preprocessing.h"
+#include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
@@ -50,6 +50,7 @@ namespace hand_detector {
 
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
@@ -149,9 +150,9 @@ void ConfigureRectTransformationCalculator(
 // Inputs:
 //   IMAGE - Image
 //     Image to perform detection on.
-//   NORM_RECT - NormalizedRect
-//     Describes image rotation and region of image to perform detection
-//     on.
+//   NORM_RECT - NormalizedRect @Optional
+//     Describes image rotation and region of image to perform detection on. If
+//     not provided, whole image is used for hand detection.
 //
 // Outputs:
 //   PALM_DETECTIONS - std::vector<Detection>
@@ -196,11 +197,12 @@ class HandDetectorGraph : public core::ModelTaskGraph {
     ASSIGN_OR_RETURN(const auto* model_resources,
                      CreateModelResources<HandDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(auto hand_detection_outs,
-                     BuildHandDetectionSubgraph(
-                         sc->Options<HandDetectorGraphOptions>(),
-                         *model_resources, graph[Input<Image>(kImageTag)],
-                         graph[Input<NormalizedRect>(kNormRectTag)], graph));
+    ASSIGN_OR_RETURN(
+        auto hand_detection_outs,
+        BuildHandDetectionSubgraph(
+            sc->Options<HandDetectorGraphOptions>(), *model_resources,
+            graph[Input<Image>(kImageTag)],
+            graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
     hand_detection_outs.palm_detections >>
         graph[Output<std::vector<Detection>>(kPalmDetectionsTag)];
     hand_detection_outs.hand_rects >>
@@ -226,21 +228,23 @@ class HandDetectorGraph : public core::ModelTaskGraph {
       Source<NormalizedRect> norm_rect_in, Graph& graph) {
     // Add image preprocessing subgraph. The model expects aspect ratio
     // unchanged.
-    auto& preprocessing =
-        graph.AddNode("mediapipe.tasks.components.ImagePreprocessingSubgraph");
+    auto& preprocessing = graph.AddNode(
+        "mediapipe.tasks.components.processors.ImagePreprocessingGraph");
     auto& image_to_tensor_options =
         *preprocessing
-             .GetOptions<tasks::components::ImagePreprocessingOptions>()
+             .GetOptions<components::processors::proto::
+                             ImagePreprocessingGraphOptions>()
              .mutable_image_to_tensor_options();
     image_to_tensor_options.set_keep_aspect_ratio(true);
     image_to_tensor_options.set_border_mode(
         mediapipe::ImageToTensorCalculatorOptions::BORDER_ZERO);
-    bool use_gpu = components::DetermineImagePreprocessingGpuBackend(
-        subgraph_options.base_options().acceleration());
-    MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
+    bool use_gpu =
+        components::processors::DetermineImagePreprocessingGpuBackend(
+            subgraph_options.base_options().acceleration());
+    MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
         model_resources, use_gpu,
-        &preprocessing
-             .GetOptions<tasks::components::ImagePreprocessingOptions>()));
+        &preprocessing.GetOptions<
+            components::processors::proto::ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In("IMAGE");
     norm_rect_in >> preprocessing.In("NORM_RECT");
     auto preprocessed_tensors = preprocessing.Out("TENSORS");

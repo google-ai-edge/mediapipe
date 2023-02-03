@@ -307,6 +307,10 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // the GlContext class, is current.
   static bool IsAnyContextCurrent();
 
+  // Returns the current native context, whether managed by this class or not.
+  // Useful as a cross-platform way to get the current PlatformGlContext.
+  static PlatformGlContext GetCurrentNativeContext();
+
   // Creates a synchronization token for the current, non-GlContext-owned
   // context. This can be passed to MediaPipe so it can synchronize with the
   // commands issued in the external context up to this point.
@@ -469,6 +473,12 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
 
   bool destructing_ = false;
 };
+
+// A framebuffer that the framework can use to attach textures for rendering
+// etc.
+// This could just be a member of GlContext, but it serves as a basic example
+// of an attachment.
+ABSL_CONST_INIT extern const GlContext::Attachment<GLuint> kUtilityFramebuffer;
 
 // For backward compatibility. TODO: migrate remaining callers.
 ABSL_DEPRECATED(

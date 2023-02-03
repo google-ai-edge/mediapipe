@@ -26,7 +26,7 @@ namespace mediapipe {
 namespace tasks {
 namespace core {
 
-// The base calss of the user-facing mediapipe tasks api classes.
+// The base class of the user-facing mediapipe tasks api classes.
 class BaseTaskApi {
  public:
   // Constructor.

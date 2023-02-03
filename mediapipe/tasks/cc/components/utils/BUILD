@@ -15,12 +15,6 @@
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 cc_library(
-    name = "source_or_node_output",
-    hdrs = ["source_or_node_output.h"],
-    deps = ["//mediapipe/framework/api2:builder"],
-)
-
-cc_library(
     name = "cosine_similarity",
     srcs = ["cosine_similarity.cc"],
     hdrs = ["cosine_similarity.h"],

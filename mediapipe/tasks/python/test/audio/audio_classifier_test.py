@@ -27,7 +27,6 @@ from mediapipe.tasks.python.audio import audio_classifier
 from mediapipe.tasks.python.audio.core import audio_task_running_mode
 from mediapipe.tasks.python.components.containers import audio_data as audio_data_module
 from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
-from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 
@@ -36,7 +35,6 @@ _AudioClassifierOptions = audio_classifier.AudioClassifierOptions
 _AudioClassifierResult = classification_result_module.ClassificationResult
 _AudioData = audio_data_module.AudioData
 _BaseOptions = base_options_module.BaseOptions
-_ClassifierOptions = classifier_options.ClassifierOptions
 _RUNNING_MODE = audio_task_running_mode.AudioTaskRunningMode
 
 _YAMNET_MODEL_FILE = 'yamnet_audio_classifier_with_metadata.tflite'
@@ -210,8 +208,7 @@ class AudioClassifierTest(parameterized.TestCase):
     with _AudioClassifier.create_from_options(
         _AudioClassifierOptions(
             base_options=_BaseOptions(model_asset_path=self.yamnet_model_path),
-            classifier_options=_ClassifierOptions(
-                max_results=1))) as classifier:
+            max_results=1)) as classifier:
       for audio_file in [_SPEECH_WAV_16K_MONO, _SPEECH_WAV_16K_MONO]:
         classification_result_list = classifier.classify(
             self._read_wav_file(audio_file))
@@ -222,8 +219,7 @@ class AudioClassifierTest(parameterized.TestCase):
     with _AudioClassifier.create_from_options(
         _AudioClassifierOptions(
             base_options=_BaseOptions(model_asset_path=self.yamnet_model_path),
-            classifier_options=_ClassifierOptions(
-                score_threshold=0.9))) as classifier:
+            score_threshold=0.9)) as classifier:
       for audio_file in [_SPEECH_WAV_16K_MONO, _SPEECH_WAV_16K_MONO]:
         classification_result_list = classifier.classify(
             self._read_wav_file(audio_file))
@@ -234,8 +230,7 @@ class AudioClassifierTest(parameterized.TestCase):
     with _AudioClassifier.create_from_options(
         _AudioClassifierOptions(
             base_options=_BaseOptions(model_asset_path=self.yamnet_model_path),
-            classifier_options=_ClassifierOptions(
-                category_allowlist=['Speech']))) as classifier:
+            category_allowlist=['Speech'])) as classifier:
       for audio_file in [_SPEECH_WAV_16K_MONO, _SPEECH_WAV_16K_MONO]:
         classification_result_list = classifier.classify(
             self._read_wav_file(audio_file))
@@ -250,8 +245,8 @@ class AudioClassifierTest(parameterized.TestCase):
         r'exclusive options.'):
       options = _AudioClassifierOptions(
           base_options=_BaseOptions(model_asset_path=self.yamnet_model_path),
-          classifier_options=_ClassifierOptions(
-              category_allowlist=['foo'], category_denylist=['bar']))
+          category_allowlist=['foo'],
+          category_denylist=['bar'])
       with _AudioClassifier.create_from_options(options) as unused_classifier:
         pass
 
@@ -278,8 +273,7 @@ class AudioClassifierTest(parameterized.TestCase):
         _AudioClassifierOptions(
             base_options=_BaseOptions(
                 model_asset_path=self.two_heads_model_path),
-            classifier_options=_ClassifierOptions(
-                max_results=1))) as classifier:
+            max_results=1)) as classifier:
       for audio_file in [_TWO_HEADS_WAV_16K_MONO, _TWO_HEADS_WAV_44K_MONO]:
         classification_result_list = classifier.classify(
             self._read_wav_file(audio_file))
@@ -364,7 +358,7 @@ class AudioClassifierTest(parameterized.TestCase):
     options = _AudioClassifierOptions(
         base_options=_BaseOptions(model_asset_path=self.yamnet_model_path),
         running_mode=_RUNNING_MODE.AUDIO_STREAM,
-        classifier_options=_ClassifierOptions(max_results=1),
+        max_results=1,
         result_callback=save_result)
     classifier = _AudioClassifier.create_from_options(options)
     audio_data_list = self._read_wav_file_as_stream(audio_file)

@@ -120,7 +120,9 @@ absl::Status EmbeddingAggregationCalculator::Process(CalculatorContext* cc) {
     }
     kTimestampedEmbeddingsOut(cc).Send(std::move(results));
   } else {
-    kEmbeddingsOut(cc).Send(kEmbeddingsIn(cc));
+    auto result = kEmbeddingsIn(cc).Get();
+    result.set_timestamp_ms(cc->InputTimestamp().Value() / 1000);
+    kEmbeddingsOut(cc).Send(result);
   }
   RET_CHECK(cached_embeddings_.empty());
   return absl::OkStatus();

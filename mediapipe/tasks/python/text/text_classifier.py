@@ -14,13 +14,14 @@
 """MediaPipe text classifier task."""
 
 import dataclasses
+from typing import Optional, List
 
 from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.tasks.cc.components.containers.proto import classifications_pb2
+from mediapipe.tasks.cc.components.processors.proto import classifier_options_pb2
 from mediapipe.tasks.cc.text.text_classifier.proto import text_classifier_graph_options_pb2
 from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
-from mediapipe.tasks.python.components.processors import classifier_options
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
@@ -29,7 +30,7 @@ from mediapipe.tasks.python.text.core import base_text_task_api
 TextClassifierResult = classification_result_module.ClassificationResult
 _BaseOptions = base_options_module.BaseOptions
 _TextClassifierGraphOptionsProto = text_classifier_graph_options_pb2.TextClassifierGraphOptions
-_ClassifierOptions = classifier_options.ClassifierOptions
+_ClassifierOptionsProto = classifier_options_pb2.ClassifierOptions
 _TaskInfo = task_info_module.TaskInfo
 
 _CLASSIFICATIONS_STREAM_NAME = 'classifications_out'
@@ -45,16 +46,38 @@ class TextClassifierOptions:
 
   Attributes:
     base_options: Base options for the text classifier task.
-    classifier_options: Options for the text classification task.
+    display_names_locale: The locale to use for display names specified through
+      the TFLite Model Metadata.
+    max_results: The maximum number of top-scored classification results to
+      return.
+    score_threshold: Overrides the ones provided in the model metadata. Results
+      below this value are rejected.
+    category_allowlist: Allowlist of category names. If non-empty,
+      classification results whose category name is not in this set will be
+      filtered out. Duplicate or unknown category names are ignored. Mutually
+      exclusive with `category_denylist`.
+    category_denylist: Denylist of category names. If non-empty, classification
+      results whose category name is in this set will be filtered out. Duplicate
+      or unknown category names are ignored. Mutually exclusive with
+      `category_allowlist`.
   """
   base_options: _BaseOptions
-  classifier_options: _ClassifierOptions = _ClassifierOptions()
+  display_names_locale: Optional[str] = None
+  max_results: Optional[int] = None
+  score_threshold: Optional[float] = None
+  category_allowlist: Optional[List[str]] = None
+  category_denylist: Optional[List[str]] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _TextClassifierGraphOptionsProto:
     """Generates an TextClassifierOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
-    classifier_options_proto = self.classifier_options.to_pb2()
+    classifier_options_proto = _ClassifierOptionsProto(
+        score_threshold=self.score_threshold,
+        category_allowlist=self.category_allowlist,
+        category_denylist=self.category_denylist,
+        display_names_locale=self.display_names_locale,
+        max_results=self.max_results)
 
     return _TextClassifierGraphOptionsProto(
         base_options=base_options_proto,
@@ -62,7 +85,38 @@ class TextClassifierOptions:
 
 
 class TextClassifier(base_text_task_api.BaseTextTaskApi):
-  """Class that performs classification on text."""
+  """Class that performs classification on text.
+
+  This API expects a TFLite model with (optional) TFLite Model Metadata that
+  contains the mandatory (described below) input tensors, output tensor,
+  and the optional (but recommended) category labels as AssociatedFiles with
+  type
+  TENSOR_AXIS_LABELS per output classification tensor. Metadata is required for
+  models with int32 input tensors because it contains the input process unit
+  for the model's Tokenizer. No metadata is required for models with string
+  input tensors.
+
+  Input tensors:
+    (kTfLiteInt32)
+    - 3 input tensors of size `[batch_size x bert_max_seq_len]` representing
+      the input ids, segment ids, and mask ids
+    - or 1 input tensor of size `[batch_size x max_seq_len]` representing the
+      input ids
+    or (kTfLiteString)
+    - 1 input tensor that is shapeless or has shape [1] containing the input
+      string
+  At least one output tensor with:
+    (kTfLiteFloat32/kBool)
+    - `[1 x N]` array with `N` represents the number of categories.
+    - optional (but recommended) category labels as AssociatedFiles with type
+      TENSOR_AXIS_LABELS, containing one label per line. The first such
+      AssociatedFile (if any) is used to fill the `category_name` field of the
+      results. The `display_name` field is filled from the AssociatedFile (if
+      any) whose locale matches the `display_names_locale` field of the
+      `TextClassifierOptions` used at creation time ("en" by default, i.e.
+      English). If none of these are available, only the `index` field of the
+      results will be filled.
+  """
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'TextClassifier':

@@ -16,35 +16,13 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-cc_library(
-    name = "text_classifier_graph",
-    srcs = ["text_classifier_graph.cc"],
-    deps = [
-        "//mediapipe/calculators/tensor:inference_calculator",
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/api2:builder",
-        "//mediapipe/framework/api2:port",
-        "//mediapipe/tasks/cc/components:text_preprocessing_graph",
-        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
-        "//mediapipe/tasks/cc/components/processors:classification_postprocessing_graph",
-        "//mediapipe/tasks/cc/components/processors/proto:classification_postprocessing_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/components/proto:text_preprocessing_graph_options_cc_proto",
-        "//mediapipe/tasks/cc/core:model_resources",
-        "//mediapipe/tasks/cc/core:model_resources_calculator",
-        "//mediapipe/tasks/cc/core:model_task_graph",
-        "//mediapipe/tasks/cc/core/proto:model_resources_calculator_cc_proto",
-        "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_cc_proto",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-    ],
-    alwayslink = 1,
-)
-
+# Docs for Mediapipe Tasks Text Classifier
+# https://developers.google.com/mediapipe/solutions/text/text_classifier
 cc_library(
     name = "text_classifier",
     srcs = ["text_classifier.cc"],
     hdrs = ["text_classifier.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":text_classifier_graph",
         "//mediapipe/framework:packet",
@@ -63,6 +41,31 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
     ],
+)
+
+cc_library(
+    name = "text_classifier_graph",
+    srcs = ["text_classifier_graph.cc"],
+    deps = [
+        "//mediapipe/calculators/tensor:inference_calculator_cpu",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
+        "//mediapipe/tasks/cc/components/processors:classification_postprocessing_graph",
+        "//mediapipe/tasks/cc/components/processors:text_preprocessing_graph",
+        "//mediapipe/tasks/cc/components/processors/proto:classification_postprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/components/processors/proto:text_preprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core:model_resources_calculator",
+        "//mediapipe/tasks/cc/core:model_task_graph",
+        "//mediapipe/tasks/cc/core/proto:model_resources_calculator_cc_proto",
+        "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+    alwayslink = 1,
 )
 
 cc_test(

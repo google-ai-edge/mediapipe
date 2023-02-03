@@ -29,13 +29,11 @@ class GpuBufferStorageImageFrame
   std::shared_ptr<const ImageFrame> image_frame() const { return image_frame_; }
   std::shared_ptr<ImageFrame> image_frame() { return image_frame_; }
   std::shared_ptr<const ImageFrame> GetReadView(
-      internal::types<ImageFrame>,
-      std::shared_ptr<GpuBuffer> gpu_buffer) const override {
+      internal::types<ImageFrame>) const override {
     return image_frame_;
   }
   std::shared_ptr<ImageFrame> GetWriteView(
-      internal::types<ImageFrame>,
-      std::shared_ptr<GpuBuffer> gpu_buffer) override {
+      internal::types<ImageFrame>) override {
     return image_frame_;
   }
 

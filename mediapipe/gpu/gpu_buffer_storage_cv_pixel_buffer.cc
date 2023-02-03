@@ -26,8 +26,7 @@ GpuBufferStorageCvPixelBuffer::GpuBufferStorageCvPixelBuffer(
 }
 
 GlTextureView GpuBufferStorageCvPixelBuffer::GetTexture(
-    std::shared_ptr<GpuBuffer> gpu_buffer, int plane,
-    GlTextureView::DoneWritingFn done_writing) const {
+    int plane, GlTextureView::DoneWritingFn done_writing) const {
   CVReturn err;
   auto gl_context = GlContext::GetCurrent();
   CHECK(gl_context);
@@ -60,77 +59,90 @@ GlTextureView GpuBufferStorageCvPixelBuffer::GetTexture(
   cv_texture.adopt(cv_texture_temp);
   return GlTextureView(
       gl_context.get(), CVOpenGLESTextureGetTarget(*cv_texture),
-      CVOpenGLESTextureGetName(*cv_texture), width(), height(),
-      std::move(gpu_buffer), plane,
+      CVOpenGLESTextureGetName(*cv_texture), width(), height(), plane,
       [cv_texture](mediapipe::GlTextureView&) { /* only retains cv_texture */ },
       done_writing);
 #endif  // TARGET_OS_OSX
 }
 
 GlTextureView GpuBufferStorageCvPixelBuffer::GetReadView(
-    internal::types<GlTextureView>, std::shared_ptr<GpuBuffer> gpu_buffer,
-    int plane) const {
-  return GetTexture(std::move(gpu_buffer), plane, nullptr);
+    internal::types<GlTextureView>, int plane) const {
+  return GetTexture(plane, nullptr);
 }
 
+#if TARGET_IPHONE_SIMULATOR
+static void ViewDoneWritingSimulatorWorkaround(CVPixelBufferRef pixel_buffer,
+                                               const GlTextureView& view) {
+  CHECK(pixel_buffer);
+  auto ctx = GlContext::GetCurrent().get();
+  if (!ctx) ctx = view.gl_context();
+  ctx->Run([pixel_buffer, &view, ctx] {
+    CVReturn err = CVPixelBufferLockBaseAddress(pixel_buffer, 0);
+    CHECK(err == kCVReturnSuccess)
+        << "CVPixelBufferLockBaseAddress failed: " << err;
+    OSType pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
+    size_t bytes_per_row = CVPixelBufferGetBytesPerRow(pixel_buffer);
+    uint8_t* pixel_ptr =
+        static_cast<uint8_t*>(CVPixelBufferGetBaseAddress(pixel_buffer));
+    if (pixel_format == kCVPixelFormatType_32BGRA) {
+      glBindFramebuffer(GL_FRAMEBUFFER, kUtilityFramebuffer.Get(*ctx));
+      glViewport(0, 0, view.width(), view.height());
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             view.target(), view.name(), 0);
+
+      size_t contiguous_bytes_per_row = view.width() * 4;
+      if (bytes_per_row == contiguous_bytes_per_row) {
+        glReadPixels(0, 0, view.width(), view.height(), GL_BGRA,
+                     GL_UNSIGNED_BYTE, pixel_ptr);
+      } else {
+        // TODO: use GL_PACK settings for row length. We can expect
+        // GLES 3.0 on iOS now.
+        std::vector<uint8_t> contiguous_buffer(contiguous_bytes_per_row *
+                                               view.height());
+        uint8_t* temp_ptr = contiguous_buffer.data();
+        glReadPixels(0, 0, view.width(), view.height(), GL_BGRA,
+                     GL_UNSIGNED_BYTE, temp_ptr);
+        for (int i = 0; i < view.height(); ++i) {
+          memcpy(pixel_ptr, temp_ptr, contiguous_bytes_per_row);
+          temp_ptr += contiguous_bytes_per_row;
+          pixel_ptr += bytes_per_row;
+        }
+      }
+      // TODO: restore previous framebuffer?
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                             view.target(), 0, 0);
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    } else {
+      LOG(ERROR) << "unsupported pixel format: " << pixel_format;
+    }
+    err = CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
+    CHECK(err == kCVReturnSuccess)
+        << "CVPixelBufferUnlockBaseAddress failed: " << err;
+  });
+}
+#endif  // TARGET_IPHONE_SIMULATOR
+
 GlTextureView GpuBufferStorageCvPixelBuffer::GetWriteView(
-    internal::types<GlTextureView>, std::shared_ptr<GpuBuffer> gpu_buffer,
-    int plane) {
-  return GetTexture(
-      std::move(gpu_buffer), plane,
-      [this](const mediapipe::GlTextureView& view) { ViewDoneWriting(view); });
+    internal::types<GlTextureView>, int plane) {
+  return GetTexture(plane,
+#if TARGET_IPHONE_SIMULATOR
+                    [pixel_buffer = CFHolder<CVPixelBufferRef>(*this)](
+                        const mediapipe::GlTextureView& view) {
+                      ViewDoneWritingSimulatorWorkaround(*pixel_buffer, view);
+                    }
+#else
+      nullptr
+#endif  // TARGET_IPHONE_SIMULATOR
+  );
 }
 
 std::shared_ptr<const ImageFrame> GpuBufferStorageCvPixelBuffer::GetReadView(
-    internal::types<ImageFrame>, std::shared_ptr<GpuBuffer> gpu_buffer) const {
+    internal::types<ImageFrame>) const {
   return CreateImageFrameForCVPixelBuffer(**this);
 }
 std::shared_ptr<ImageFrame> GpuBufferStorageCvPixelBuffer::GetWriteView(
-    internal::types<ImageFrame>, std::shared_ptr<GpuBuffer> gpu_buffer) {
+    internal::types<ImageFrame>) {
   return CreateImageFrameForCVPixelBuffer(**this);
-}
-
-void GpuBufferStorageCvPixelBuffer::ViewDoneWriting(const GlTextureView& view) {
-#if TARGET_IPHONE_SIMULATOR
-  CVPixelBufferRef pixel_buffer = **this;
-  CHECK(pixel_buffer);
-  CVReturn err = CVPixelBufferLockBaseAddress(pixel_buffer, 0);
-  CHECK(err == kCVReturnSuccess)
-      << "CVPixelBufferLockBaseAddress failed: " << err;
-  OSType pixel_format = CVPixelBufferGetPixelFormatType(pixel_buffer);
-  size_t bytes_per_row = CVPixelBufferGetBytesPerRow(pixel_buffer);
-  uint8_t* pixel_ptr =
-      static_cast<uint8_t*>(CVPixelBufferGetBaseAddress(pixel_buffer));
-  if (pixel_format == kCVPixelFormatType_32BGRA) {
-    // TODO: restore previous framebuffer? Move this to helper so we
-    // can use BindFramebuffer?
-    glViewport(0, 0, view.width(), view.height());
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, view.target(),
-                           view.name(), 0);
-
-    size_t contiguous_bytes_per_row = view.width() * 4;
-    if (bytes_per_row == contiguous_bytes_per_row) {
-      glReadPixels(0, 0, view.width(), view.height(), GL_BGRA, GL_UNSIGNED_BYTE,
-                   pixel_ptr);
-    } else {
-      std::vector<uint8_t> contiguous_buffer(contiguous_bytes_per_row *
-                                             view.height());
-      uint8_t* temp_ptr = contiguous_buffer.data();
-      glReadPixels(0, 0, view.width(), view.height(), GL_BGRA, GL_UNSIGNED_BYTE,
-                   temp_ptr);
-      for (int i = 0; i < view.height(); ++i) {
-        memcpy(pixel_ptr, temp_ptr, contiguous_bytes_per_row);
-        temp_ptr += contiguous_bytes_per_row;
-        pixel_ptr += bytes_per_row;
-      }
-    }
-  } else {
-    LOG(ERROR) << "unsupported pixel format: " << pixel_format;
-  }
-  err = CVPixelBufferUnlockBaseAddress(pixel_buffer, 0);
-  CHECK(err == kCVReturnSuccess)
-      << "CVPixelBufferUnlockBaseAddress failed: " << err;
-#endif
 }
 
 static std::shared_ptr<GpuBufferStorageCvPixelBuffer> ConvertFromImageFrame(

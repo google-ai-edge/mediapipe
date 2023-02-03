@@ -21,6 +21,7 @@
 
 #include "absl/status/status.h"
 #include "mediapipe/framework/port.h"
+#include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -89,7 +90,8 @@ class TFLiteGPURunner {
     serialized_binary_cache_ = std::move(cache);
   }
 
-  std::vector<uint8_t> GetSerializedBinaryCache() {
+  absl::StatusOr<std::vector<uint8_t>> GetSerializedBinaryCache() {
+    RET_CHECK(cl_environment_) << "CL environment is not initialized.";
     return cl_environment_->GetSerializedBinaryCache();
   }
 

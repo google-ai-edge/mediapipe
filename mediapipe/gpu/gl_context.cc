@@ -290,8 +290,15 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
     // some Emscripten cases), there might be some existing tripped error.
     ForceClearExistingGlErrors();
 
-    absl::string_view version_string(
-        reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+    absl::string_view version_string;
+    const GLubyte* version_string_ptr = glGetString(GL_VERSION);
+    if (version_string_ptr != nullptr) {
+      version_string = reinterpret_cast<const char*>(version_string_ptr);
+    } else {
+      // This may happen when using SwiftShader, but the numeric versions are
+      // available and will be used instead.
+      LOG(WARNING) << "failed to get GL_VERSION string";
+    }
 
     // We will decide later whether we want to use the version numbers we query
     // for, or instead derive that information from the context creation result,
@@ -333,7 +340,7 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
     }
 
     LOG(INFO) << "GL version: " << gl_major_version_ << "." << gl_minor_version_
-              << " (" << glGetString(GL_VERSION) << ")";
+              << " (" << version_string << ")";
     {
       auto status = GetGlExtensions();
       if (!status.ok()) {
@@ -826,10 +833,14 @@ std::shared_ptr<GlSyncPoint> GlContext::CreateSyncToken() {
   return token;
 }
 
-bool GlContext::IsAnyContextCurrent() {
+PlatformGlContext GlContext::GetCurrentNativeContext() {
   ContextBinding ctx;
   GetCurrentContextBinding(&ctx);
-  return ctx.context != kPlatformGlContextNone;
+  return ctx.context;
+}
+
+bool GlContext::IsAnyContextCurrent() {
+  return GetCurrentNativeContext() != kPlatformGlContextNone;
 }
 
 std::shared_ptr<GlSyncPoint>
@@ -1042,5 +1053,17 @@ void GlContext::SetStandardTextureParams(GLenum target, GLint internal_format) {
   glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
+
+const GlContext::Attachment<GLuint> kUtilityFramebuffer(
+    [](GlContext&) -> GlContext::Attachment<GLuint>::Ptr {
+      GLuint framebuffer;
+      glGenFramebuffers(1, &framebuffer);
+      if (!framebuffer) return nullptr;
+      return {new GLuint(framebuffer), [](void* ptr) {
+                GLuint* fb = static_cast<GLuint*>(ptr);
+                glDeleteFramebuffers(1, fb);
+                delete fb;
+              }};
+    });
 
 }  // namespace mediapipe

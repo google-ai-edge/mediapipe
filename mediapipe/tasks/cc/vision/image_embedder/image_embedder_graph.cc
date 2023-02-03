@@ -20,10 +20,10 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
-#include "mediapipe/tasks/cc/components/image_preprocessing.h"
-#include "mediapipe/tasks/cc/components/image_preprocessing_options.pb.h"
 #include "mediapipe/tasks/cc/components/processors/embedding_postprocessing_graph.h"
+#include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/image_preprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/vision/image_embedder/proto/image_embedder_graph_options.pb.h"
 
@@ -34,6 +34,7 @@ namespace image_embedder {
 
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::GenericNode;
@@ -130,14 +131,15 @@ class ImageEmbedderGraph : public core::ModelTaskGraph {
       Source<NormalizedRect> norm_rect_in, Graph& graph) {
     // Adds preprocessing calculators and connects them to the graph input image
     // stream.
-    auto& preprocessing =
-        graph.AddNode("mediapipe.tasks.components.ImagePreprocessingSubgraph");
-    bool use_gpu = components::DetermineImagePreprocessingGpuBackend(
-        task_options.base_options().acceleration());
-    MP_RETURN_IF_ERROR(ConfigureImagePreprocessing(
+    auto& preprocessing = graph.AddNode(
+        "mediapipe.tasks.components.processors.ImagePreprocessingGraph");
+    bool use_gpu =
+        components::processors::DetermineImagePreprocessingGpuBackend(
+            task_options.base_options().acceleration());
+    MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
         model_resources, use_gpu,
-        &preprocessing
-             .GetOptions<tasks::components::ImagePreprocessingOptions>()));
+        &preprocessing.GetOptions<tasks::components::processors::proto::
+                                      ImagePreprocessingGraphOptions>()));
     image_in >> preprocessing.In(kImageTag);
     norm_rect_in >> preprocessing.In(kNormRectTag);
 
@@ -151,10 +153,12 @@ class ImageEmbedderGraph : public core::ModelTaskGraph {
     // inference results.
     auto& postprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors.EmbeddingPostprocessingGraph");
-    MP_RETURN_IF_ERROR(components::processors::ConfigureEmbeddingPostprocessing(
-        model_resources, task_options.embedder_options(),
-        &postprocessing.GetOptions<components::processors::proto::
-                                       EmbeddingPostprocessingGraphOptions>()));
+    MP_RETURN_IF_ERROR(
+        components::processors::ConfigureEmbeddingPostprocessingGraph(
+            model_resources, task_options.embedder_options(),
+            &postprocessing
+                 .GetOptions<components::processors::proto::
+                                 EmbeddingPostprocessingGraphOptions>()));
     inference.Out(kTensorsTag) >> postprocessing.In(kTensorsTag);
 
     // Outputs the embedding results.

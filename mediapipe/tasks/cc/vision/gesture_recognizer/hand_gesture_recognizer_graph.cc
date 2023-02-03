@@ -29,8 +29,6 @@ limitations under the License.
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/processors/classification_postprocessing_graph.h"
-#include "mediapipe/tasks/cc/components/processors/proto/classification_postprocessing_graph_options.pb.h"
-#include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
@@ -54,6 +52,7 @@ namespace gesture_recognizer {
 
 namespace {
 
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
