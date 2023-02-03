@@ -1,5 +1,6 @@
-name: MediaPipe Issue Template
+name: Build/Install Issue
 description: Use this template to report build/install issue
+label: 'type:build/install'
 body:
   - type: input
     id: os
