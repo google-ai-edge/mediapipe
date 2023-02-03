@@ -13,7 +13,7 @@ body:
   - type: markdown
     id: description
     attributes:
-      values: "Description of issue (what needs changing)"    
+      value: "Description of issue (what needs changing)"    
   - type: input
     id: programminglang
     attributes:
