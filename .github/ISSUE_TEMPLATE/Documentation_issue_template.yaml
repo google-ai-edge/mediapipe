@@ -1,4 +1,4 @@
-name: Build/Install Issue1
+name: documentation issue
 description: Use this template to report build/install issue
 labels: 'type:doc-bug'
 body:
@@ -15,89 +15,59 @@ body:
     attributes:
       label: Description of issue (what needs changing)
       description: Kinds of documentation problems
-      label: asgdh
   - type: input
-    id: programminglang
+    id: clear_desc
     attributes:
-      label: Programming Language and version
-      description: 
-      placeholder: e.g. C++ 14, Python 3.6, Java
+      label: Clear description
+      description: For example, why should someone use this method? How is it useful?
     validations:
       required: true
   - type: input
-    id: virtualenv
+    id: link
     attributes:
-      label: Installed using virtualenv? pip? Conda?(if python)
-      description: 
-      placeholder: 
-    validations:
-      required: false  
-  - type: input
-    id: mediapipever
-    attributes:
-      label: MediaPipe version
-      description: 
-      placeholder: e.g. 0.8.11, 0.9.1
-    validations:
-      required: false   
-  - type: input
-    id: bazelver
-    attributes:
-      label: Bazel version
-      description: 
-      placeholder: e.g. 5.0, 5.1
+      label: Correct links
+      description: Is the link to the source code correct?
     validations:
       required: false
   - type: input
-    id: xcodeversion
+    id: parameter
     attributes:
-      label: XCode and Tulsi versions(if iOS)
-      description: 
-      placeholder:
+      label: Parameters defined
+      description: Are all parameters defined and formatted correctly?
     validations:
-      required: false   
+      required: false
   - type: input
-    id: sdkndkversion
+    id: returns
     attributes:
-      label: Android SDK and NDK versions(if android)
-      description: 
-      placeholder:
+      label: Returns defined
+      description: Are return values defined?
     validations:
       required: false  
-  - type: dropdown
-    id: androidaar
-    attributes:
-      label: Android AAR(if android)
-      options:
-        - 'Yes'
-        - 'No'
-    validations:
-      required: false    
   - type: input
-    id: opencvversion
+    id: raises
     attributes:
-      label: OpenCV version(if running on desktop)
-      description: 
-      placeholder:
+      label: Raises listed and defined
+      description: Are the errors defined? For example,
     validations:
-      required: false   
-  - type: textarea
-    id: what-happened
+      required: false  
+  - type: input
+    id: usage
     attributes:
-      label: Describe the problem
-      description: Provide the exact sequence of commands / steps that you executed before running into the [problem](https://google.github.io/mediapipe/getting_started/getting_started.html)
-      placeholder: Tell us what you see!
-      value: "A bug happened!"
-      render: shell
+      label: Usage example
+      description: Is there a usage example? See the API guide-on how to write testable usage examples.
     validations:
-      required: true
-  - type: textarea
-    id: code-to-reproduce
-    attributes:
-      label: Complete Logs 
-      description: Include Complete Log information or source code that would be helpful to diagnose the problem. If including tracebacks, please include the full traceback. Large logs and files should be attached
-      placeholder: Tell us what you see!
-      value: 
-      render: shell
-    validations:
-      required: true
+      required: false 
+   - type: input
+     id: visual
+     attributes:
+       label: Request visuals, if applicable
+       description: Are there currently visuals? If not, will it clarify the content?
+     validations:
+      required: false
+    - type: input
+     id: pull
+     attributes:
+       label: Submit a pull request?
+       description: Are you planning to also submit a pull request to fix the issue? See the [docs](https://github.com/google/mediapipe/blob/master/CONTRIBUTING.md)
+     validations:
+      required: false
