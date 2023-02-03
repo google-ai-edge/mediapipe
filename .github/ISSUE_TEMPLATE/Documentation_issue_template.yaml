@@ -10,14 +10,10 @@ body:
     id: url
     attributes:
       value: URL(s) with the issue Please provide a link to the documentation entry, for example https://github.com/google/mediapipe/blob/master/docs/solutions/face_mesh.md#models
-  - type: input
-    id: compilerversion
+  - type: markdown
+    id: description
     attributes:
-      label: Description of issue (what needs changing)/Kinds of documentation problems
-      description: 
-      placeholder: e.g. gcc/g++ 8 /Apple clang version 12.0.0
-    validations:
-      required: false      
+      values: "Description of issue (what needs changing)"    
   - type: input
     id: programminglang
     attributes:
