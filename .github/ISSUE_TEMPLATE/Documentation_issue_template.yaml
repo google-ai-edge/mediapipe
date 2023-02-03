@@ -64,10 +64,10 @@ body:
       description: Are there currently visuals? If not, will it clarify the content?
     validations:
       required: false
-   - type: input
-     id: pull
-     attributes:
+  - type: input
+    id: pull
+    attributes:
        label: Submit a pull request?
        description: Are you planning to also submit a pull request to fix the issue? See the [docs](https://github.com/google/mediapipe/blob/master/CONTRIBUTING.md)
-     validations:
+    validations:
       required: false
