@@ -13,7 +13,7 @@ body:
   - type: input
     id: compilerversion
     attributes:
-      label: Description of issue (what needs changing):
+      label: Description of issue (what needs changing)
       description: 
       placeholder: e.g. gcc/g++ 8 /Apple clang version 12.0.0
     validations:
