@@ -442,13 +442,25 @@ cc_library(
 )
 
 cc_library(
+    name = "frame_buffer_view",
+    hdrs = ["frame_buffer_view.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":gpu_buffer_storage",
+        "//mediapipe/framework/formats:frame_buffer",
+    ],
+)
+
+cc_library(
     name = "gpu_buffer_storage_yuv_image",
     srcs = ["gpu_buffer_storage_yuv_image.cc"],
     hdrs = ["gpu_buffer_storage_yuv_image.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":frame_buffer_view",
         ":gpu_buffer_format",
         ":gpu_buffer_storage",
+        "//mediapipe/framework/formats:frame_buffer",
         "//mediapipe/framework/formats:yuv_image",
         "//third_party/libyuv",
         "@com_google_absl//absl/log",
