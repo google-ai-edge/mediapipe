@@ -68,7 +68,6 @@ body:
     attributes:
       label: Other info / Complete Logs 
       description: Include any logs or source code that would be helpful to diagnose the problem. If including tracebacks, please include the full traceback. Large logs and files should be attached
-      value: 
       render: shell
     validations:
       required: false
