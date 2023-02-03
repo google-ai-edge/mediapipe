@@ -1,4 +1,4 @@
-name: Bug Issue
+name: Bug Issues
 description: Use this template for reporting a bug. If this doesn’t look right, choose a different type.
 labels: 'type:bug'
 body:
