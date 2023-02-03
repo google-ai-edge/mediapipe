@@ -14,7 +14,7 @@ body:
         - 'Yes'
         - 'No'
     validations:
-      required: false 
+      required: false
   - type: input
     id: browserver
     attributes:
