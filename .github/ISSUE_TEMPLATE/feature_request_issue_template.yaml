@@ -12,9 +12,9 @@ body:
       label: MediaPipe Solution (you are using)
     validations:
       required: false 
-   - type: input
-     id: pgmlang
-     attributes:
+  - type: input
+    id: pgmlang
+    attributes:
       label: Programming language
       placeholder: C++/typescript/Python/Objective C/Android Java
     validations:
