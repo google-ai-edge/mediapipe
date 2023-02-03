@@ -12,7 +12,7 @@ body:
       label: OS Platform and Distribution
       placeholder: e.g. Linux Ubuntu 16.04, Android 11, iOS 14.4
     validations:
-      required: true  
+      required: false 
   - type: input
     id: browserver
     attributes:
