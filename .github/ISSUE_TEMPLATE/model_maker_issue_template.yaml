@@ -35,39 +35,39 @@ body:
       label: MediaPipe Model Maker version
     validations:
       required: false  
-   - type: input
-     id: taskname
+  - type: input
+    id: taskname
     attributes:
       label: Task name (e.g. Image classification, Gesture recognition etc.) 
     validations:
       required: true
-   - type: textarea
-     id: current
-     attributes:
+  - type: textarea
+    id: current
+    attributes:
       label: Describe the actual behavior
       render: shell
-     validations:
-       required: true    
-   - type: textarea
-     id: expected
-     attributes:
+    validations:
+      required: true    
+  - type: textarea
+    id: expected
+    attributes:
       label: Describe the expected behaviour
       render: shell
-     validations:
-       required: true
-   - type: textarea
-     id: what-happened
-     attributes:
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
       label: Standalone code/steps you may have used to try to get what you need
-      description: If there is a problem, provide a reproducible test case that is the bare minimum necessary to generate the problem. If possible, please share a link to Colab, GitHub repo link or anything that we can use to reproduce the problem:
+      description: If there is a problem, provide a reproducible test case that is the bare minimum necessary to generate the problem. If possible, please share a link to Colab, GitHub repo link or anything that we can use to reproduce the problem
       render: shell
-     validations:
+    validations:
        required: true
   - type: textarea
     id: other_info
     attributes:
       label: Other info / Complete Logs 
-      description: Include any logs or source code that would be helpful to diagnose the problem. If including tracebacks, please include the full traceback. Large logs and files should be attached:
+      description: Include any logs or source code that would be helpful to diagnose the problem. If including tracebacks, please include the full traceback. Large logs and files should be attached
       value: 
       render: shell
     validations:
