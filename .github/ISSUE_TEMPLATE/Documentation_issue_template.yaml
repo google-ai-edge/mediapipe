@@ -14,6 +14,7 @@ body:
     id: description
     attributes:
       label: Description of issue (what needs changing)
+      description: Kinds of documentation problems
   - type: input
     id: programminglang
     attributes:
