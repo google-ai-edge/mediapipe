@@ -77,7 +77,7 @@ body:
   - type: input
     id: xcode_ver
     attributes:
-      label: Xcode & Tulsi version (if issue is related to building for iOS):
+      label: Xcode & Tulsi version (if issue is related to building for iOS)
     validations:
       required: false  
   - type: textarea
