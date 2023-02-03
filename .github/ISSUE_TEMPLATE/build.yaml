@@ -4,7 +4,7 @@ body:
   - type: input
     id: os
     attributes:
-      label: OS Platform and Distribution:
+      label: OS Platform and Distribution
       description: 
       placeholder: e.g. Linux Ubuntu 16.04, Android 11, iOS 14.4
     validations:
