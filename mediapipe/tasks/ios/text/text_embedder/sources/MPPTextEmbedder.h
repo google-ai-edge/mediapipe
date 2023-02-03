@@ -86,7 +86,8 @@ NS_SWIFT_NAME(TextEmbedder)
 
 - (instancetype)init NS_UNAVAILABLE;
 
-/** Utility function to compute[cosine similarity](https://en.wikipedia.org/wiki/Cosine_similarity)
+/** 
+ * Utility function to compute[cosine similarity](https://en.wikipedia.org/wiki/Cosine_similarity)
  * between two `MPPEmbedding` objects.
  *
  * @param embedding1 One of the two `MPPEmbedding`s between whom cosine similarity is to be
