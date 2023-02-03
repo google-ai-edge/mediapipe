@@ -13,7 +13,7 @@ body:
   - type: input
     id: description
     attributes:
-      value: Description of issue (what needs changing)
+      label: Description of issue (what needs changing)
   - type: input
     id: programminglang
     attributes:
