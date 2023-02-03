@@ -162,6 +162,21 @@ TEST(PacketTest, PacketAdopting) {
   EXPECT_FALSE(p.IsEmpty());
 }
 
+TEST(PacketTest, PacketSharingOwnership) {
+  bool deleted = false;
+  std::shared_ptr<const int> object(new int(42), [&deleted](const int* p) {
+    delete p;
+    deleted = true;
+  });
+  Packet<int> p = PacketSharingOwnership(object);
+  EXPECT_FALSE(p.IsEmpty());
+  EXPECT_EQ(p.Get(), 42);
+  object = nullptr;
+  EXPECT_FALSE(deleted);  // Packet keeps it alive.
+  p = {};
+  ASSERT_TRUE(deleted);  // last owner expired.
+}
+
 TEST(PacketTest, PacketGeneric) {
   // With C++17, Packet<> could be written simply as Packet.
   Packet<> p = PacketAdopting(new float(1.0));
@@ -279,6 +294,24 @@ TEST(PacketTest, PolymorphismAbstract) {
   Packet<AbstractBase> base =
       PacketAdopting<AbstractBase>(absl::make_unique<ConcreteDerived>());
   EXPECT_EQ(base->name(), "ConcreteDerived");
+}
+
+TEST(PacketTest, ShareSubobjectOwnership) {
+  // Create a packet that contains a vector and tracks deletion.
+  bool deleted = false;
+  std::shared_ptr<const std::vector<int>> ints(new std::vector<int>{0, 1, 2, 3},
+                                               [&deleted](std::vector<int>* p) {
+                                                 delete p;
+                                                 deleted = true;
+                                               });
+  auto vector_packet = PacketSharingOwnership(std::move(ints));
+  // Create a packet that references one of the items in the vector.
+  Packet<int> item_packet = PacketSharingOwnership(std::shared_ptr<const int>(
+      SharedPtrWithPacket(vector_packet), &vector_packet.Get()[1]));
+  vector_packet = {};
+  ASSERT_FALSE(deleted);  // item_packet keeps it alive
+  item_packet = {};
+  ASSERT_TRUE(deleted);
 }
 
 }  // namespace
