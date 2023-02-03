@@ -15,6 +15,7 @@ body:
     attributes:
       label: Description of issue (what needs changing)
       description: Kinds of documentation problems
+      label: asgdh
   - type: input
     id: programminglang
     attributes:
