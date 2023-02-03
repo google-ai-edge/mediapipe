@@ -7,7 +7,7 @@ body:
     attributes:
       value: Please make sure that this is a [Model Maker](https://developers.google.com/mediapipe/solutions) issue
   - type: dropdown
-    id: customcode
+    id: customcode_model
     attributes:
       label: Have I written custom code (as opposed to using a stock example script provided in MediaPipe)
       options:
