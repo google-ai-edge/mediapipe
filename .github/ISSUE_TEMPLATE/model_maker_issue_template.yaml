@@ -4,7 +4,7 @@ labels: 'type:modelmaker'
 body:
   - type: markdown
     attributes:
-      value: Please make sure that this is a [Model Maker](https://developers.google.com/mediapipe/solutions) issue.
+      value: Please make sure that this is a [Model Maker](https://developers.google.com/mediapipe/solutions) issue
   - type: dropdown
     id: customcode
     attributes:
