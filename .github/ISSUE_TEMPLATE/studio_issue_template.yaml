@@ -1,0 +1,65 @@
+name: Studio Issue
+description: Use this template for assistance with the MediaPipe Studio application. If this doesn’t look right, choose a different type.
+labels: 'type:support'
+body:
+  - type: markdown
+    id: linkmodel
+    attributes:
+      value: Please make sure that this is a MediaPipe Studio issue.
+  - type: dropdown
+    id: customcode_model
+    attributes:
+      label: Have I written custom code (as opposed to using a stock example script provided in MediaPipe)
+      options:
+        - 'Yes'
+        - 'No'
+    validations:
+      required: false 
+  - type: input
+    id: browserver
+    attributes:
+      label: Browser and Version
+    validations:
+      required: false    
+  - type: input
+    id: hardware
+    attributes:
+      label: Any microphone or camera hardware
+    validations:
+      required: false  
+  - type: input
+    id: url
+    attributes:
+      label: URL that shows the problem
+    validations:
+      required: false   
+  - type: textarea
+    id: current_model
+    attributes:
+      label: Describe the actual behavior
+      render: shell
+    validations:
+      required: false   
+  - type: textarea
+    id: expected_model
+    attributes:
+      label: Describe the expected behaviour
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: what-happened_model
+    attributes:
+      label: Standalone code/steps you may have used to try to get what you need
+      description: If there is a problem, provide a reproducible test case that is the bare minimum necessary to generate the problem. If possible, please share a link to Colab, GitHub repo link or anything that we can use to reproduce the problem
+      render: shell
+    validations:
+       required: false
+  - type: textarea
+    id: other_info
+    attributes:
+      label: Other info / Complete Logs 
+      description: Include any logs or source code that would be helpful to diagnose the problem. If including tracebacks, please include the full traceback. Large logs and files should be attached
+      render: shell
+    validations:
+      required: false
