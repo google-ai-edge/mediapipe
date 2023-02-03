@@ -10,7 +10,7 @@ body:
     id: url
     attributes:
       label: URL(s) with the issue
-      description: Please provide a link to the documentation entry, for example: https://github.com/google/mediapipe/blob/master/docs/solutions/face_mesh.md#models
+      description: Please provide a link to the documentation entry, for example https://github.com/google/mediapipe/blob/master/docs/solutions/face_mesh.md#models
   - type: input
     id: compilerversion
     attributes:
