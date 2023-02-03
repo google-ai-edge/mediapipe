@@ -4,7 +4,7 @@ labels: 'type:build/install'
 body:
   - type: markdown
   attributes:
-    value: "Please make sure that this is a build/installation issue and also refer to the [troubleshooting](https://google.github.io/mediapipe/getting_started/troubleshooting.html) documentation before raising any issues."
+    value: Please make sure that this is a build/installation issue and also refer to the [troubleshooting](https://google.github.io/mediapipe/getting_started/troubleshooting.html) documentation before raising any issues.
   - type: input
     id: os
     attributes:
