@@ -28,17 +28,17 @@ body:
   - type: input
     id: virtualenv
     attributes:
-      label: Installed using virtualenv? pip? Conda?
+      label: Installed using virtualenv? pip? Conda?(if python)
       description: 
-      placeholder: if python
+      placeholder: 
     validations:
       required: false  
   - type: input
     id: mediapipever
     attributes:
-      label: MediaPipe version
+      label: MediaPipe version(https://github.com/google/mediapipe/releases)
       description: 
-      placeholder: https://github.com/google/mediapipe/releases
+      placeholder: 
     validations:
       required: false   
   - type: input
@@ -52,40 +52,40 @@ body:
   - type: input
     id: xcodeversion
     attributes:
-      label: XCode and Tulsi versions
+      label: XCode and Tulsi versions(if iOS)
       description: 
-      placeholder: if iOS
+      placeholder:
     validations:
       required: false   
   - type: input
     id: sdkndkversion
     attributes:
-      label: Android SDK and NDK versions
+      label: Android SDK and NDK versions(if abdroid)
       description: 
-      placeholder: if android
+      placeholder:
     validations:
       required: false  
   - type: input
     id: androidaar
     attributes:
-      label: Android [AAR] https://google.github.io/mediapipe/getting_started/android_archive_library.html
+      label: Android [AAR](https://google.github.io/mediapipe/getting_started/android_archive_library.html)(if android)
       description: 
-      placeholder: if android
+      placeholder:
     validations:
       required: false    
   - type: input
     id: opencvversion
     attributes:
-      label: OpenCV version
+      label: OpenCV version(if running on desktop)
       description: 
-      placeholder: if running on desktop
+      placeholder:
     validations:
       required: false   
   - type: textarea
     id: what-happened
     attributes:
       label: Describe the problem
-      description: Provide the exact sequence of commands / steps that you executed before running into the problem(https://google.github.io/mediapipe/getting_started/getting_started.html)
+      description: Provide the exact sequence of commands / steps that you executed before running into the [problem](https://google.github.io/mediapipe/getting_started/getting_started.html)
       placeholder: Tell us what you see!
       value: "A bug happened!"
       render: shell
