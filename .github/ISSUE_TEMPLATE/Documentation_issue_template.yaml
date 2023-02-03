@@ -57,14 +57,14 @@ body:
       description: Is there a usage example? See the API guide-on how to write testable usage examples.
     validations:
       required: false 
-   - type: input
-     id: visual
-     attributes:
-       label: Request visuals, if applicable
-       description: Are there currently visuals? If not, will it clarify the content?
-     validations:
+  - type: input
+    id: visual
+    attributes:
+      label: Request visuals, if applicable
+      description: Are there currently visuals? If not, will it clarify the content?
+    validations:
       required: false
-    - type: input
+   - type: input
      id: pull
      attributes:
        label: Submit a pull request?
