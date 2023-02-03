@@ -1,6 +1,4 @@
-import {GraphRunner, ImageSource} from './graph_runner';
-
-
+import {GraphRunner, ImageSource, SimpleListener} from './graph_runner';
 
 /**
  * We extend from a GraphRunner constructor. This ensures our mixin has
@@ -76,7 +74,7 @@ export function SupportImage<TBase extends LibConstructor>(Base: TBase) {
      */
     attachImageListener(
         outputStreamName: string,
-        callbackFcn: (data: WasmImage, timestamp: number) => void): void {
+        callbackFcn: SimpleListener<WasmImage>): void {
       // Set up our TS listener to receive any packets for this stream.
       this.setListener(outputStreamName, callbackFcn);
 
@@ -99,7 +97,7 @@ export function SupportImage<TBase extends LibConstructor>(Base: TBase) {
      */
     attachImageVectorListener(
         outputStreamName: string,
-        callbackFcn: (data: WasmImage[], timestamp: number) => void): void {
+        callbackFcn: SimpleListener<WasmImage[]>): void {
       // Set up our TS listener to receive any packets for this stream.
       this.setVectorListener(outputStreamName, callbackFcn);
 
