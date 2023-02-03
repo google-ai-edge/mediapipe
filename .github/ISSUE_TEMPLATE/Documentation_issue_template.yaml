@@ -1,5 +1,5 @@
 name: Documentation issue
-description: Use this template to report build/install issue
+description: Use this template for documentation related issues. If this doesn’t look right, choose a different type.
 labels: 'type:doc-bug'
 body:
   - type: markdown
