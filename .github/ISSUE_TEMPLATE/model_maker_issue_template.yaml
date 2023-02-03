@@ -32,7 +32,7 @@ body:
   - type: input
     id: modelmakerver
     attributes:
-      label: [MediaPipe Model Maker version](https://pypi.org/project/mediapipe-model-maker/)
+      label: MediaPipe Model Maker version
     validations:
       required: false  
    - type: input
