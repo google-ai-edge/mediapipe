@@ -10,7 +10,7 @@ body:
     id: url
     attributes:
       value: URL(s) with the issue Please provide a link to the documentation entry, for example https://github.com/google/mediapipe/blob/master/docs/solutions/face_mesh.md#models
-  - type: markdown
+  - type: input
     id: description
     attributes:
       value: Description of issue (what needs changing)
