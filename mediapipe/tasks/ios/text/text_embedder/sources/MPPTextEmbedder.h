@@ -102,7 +102,6 @@ NS_SWIFT_NAME(TextEmbedder)
 + (nullable NSNumber *)cosineSimilarityBetweenEmbedding1:(MPPEmbedding *)embedding1
                                            andEmbedding2:(MPPEmbedding *)embedding2
                                                    error:(NSError **)error NS_SWIFT_NAME(cosineSimilarity(embedding1:embedding2:));
-    // NS_SWIFT_NAME(cosineSimilarity(embedding1: embedding2:));
 
 + (instancetype)new NS_UNAVAILABLE;
 
