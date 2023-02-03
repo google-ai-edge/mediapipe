@@ -1,4 +1,4 @@
-name: Build/Install Issue
+name: Build/Install Issue1
 description: Use this template to report build/install issue
 labels: 'type:doc-bug'
 body:
