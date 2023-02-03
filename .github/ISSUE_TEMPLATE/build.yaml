@@ -12,7 +12,7 @@ body:
   - type: input
     id: compilerversion
     attributes:
-      label: Compiler version:
+      label: Compiler version
       description: 
       placeholder: e.g. gcc/g++ 8 /Apple clang version 12.0.0
     validations:
@@ -20,7 +20,7 @@ body:
   - type: input
     id: programminglang
     attributes:
-      label: Programming Language and version:
+      label: Programming Language and version
       description: 
       placeholder: e.g. C++ 14, Python 3.6, Java
     validations:
@@ -28,7 +28,7 @@ body:
   - type: input
     id: virtualenv
     attributes:
-      label: Installed using virtualenv? pip? Conda?:
+      label: Installed using virtualenv? pip? Conda?
       description: 
       placeholder: if python
     validations:
@@ -36,7 +36,7 @@ body:
   - type: input
     id: mediapipever
     attributes:
-      label: MediaPipe version:
+      label: MediaPipe version
       description: 
       placeholder: https://github.com/google/mediapipe/releases
     validations:
@@ -44,7 +44,7 @@ body:
   - type: input
     id: bazelver
     attributes:
-      label: Bazel version:
+      label: Bazel version
       description: 
       placeholder: e.g. 5.0, 5.1 etc.
     validations:
@@ -52,7 +52,7 @@ body:
   - type: input
     id: xcodeversion
     attributes:
-      label: XCode and Tulsi versions :
+      label: XCode and Tulsi versions
       description: 
       placeholder: if iOS
     validations:
@@ -60,7 +60,7 @@ body:
   - type: input
     id: sdkndkversion
     attributes:
-      label: Android SDK and NDK versions :
+      label: Android SDK and NDK versions
       description: 
       placeholder: if android
     validations:
@@ -68,7 +68,7 @@ body:
   - type: input
     id: androidaar
     attributes:
-      label: Android [AAR] https://google.github.io/mediapipe/getting_started/android_archive_library.html :
+      label: Android [AAR] https://google.github.io/mediapipe/getting_started/android_archive_library.html
       description: 
       placeholder: if android
     validations:
@@ -76,7 +76,7 @@ body:
   - type: input
     id: opencvversion
     attributes:
-      label: OpenCV version :
+      label: OpenCV version
       description: 
       placeholder: if running on desktop
     validations:
@@ -84,7 +84,7 @@ body:
   - type: textarea
     id: what-happened
     attributes:
-      label: Describe the problem :
+      label: Describe the problem
       description: Provide the exact sequence of commands / steps that you executed before running into the problem(https://google.github.io/mediapipe/getting_started/getting_started.html) :
       placeholder: Tell us what you see!
       value: "A bug happened!"
@@ -94,7 +94,7 @@ body:
   - type: textarea
     id: code-to-reproduce
     attributes:
-      label: Complete Logs :
+      label: Complete Logs 
       description: Include Complete Log information or source code that would be helpful to diagnose the problem. If including tracebacks, please include the full traceback. Large logs and files should be attached:
       placeholder: Tell us what you see!
       value: 
