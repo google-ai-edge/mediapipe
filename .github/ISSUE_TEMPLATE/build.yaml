@@ -3,6 +3,7 @@ description: Use this template to report build/install issue
 labels: 'type:build/install'
 body:
   - type: markdown
+    id: link
   attributes:
     value: Please make sure that this is a build/installation issue and also refer to the [troubleshooting](https://google.github.io/mediapipe/getting_started/troubleshooting.html) documentation before raising any issues.
   - type: input
