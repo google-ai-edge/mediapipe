@@ -36,9 +36,9 @@ body:
   - type: input
     id: mediapipever
     attributes:
-      label: MediaPipe version(https://github.com/google/mediapipe/releases)
+      label: MediaPipe version
       description: 
-      placeholder: 
+      placeholder: e.g. 0.8.11, 0.9.1
     validations:
       required: false   
   - type: input
@@ -46,7 +46,7 @@ body:
     attributes:
       label: Bazel version
       description: 
-      placeholder: e.g. 5.0, 5.1 etc.
+      placeholder: e.g. 5.0, 5.1
     validations:
       required: false
   - type: input
@@ -68,7 +68,7 @@ body:
   - type: input
     id: androidaar
     attributes:
-      label: Android [AAR](https://google.github.io/mediapipe/getting_started/android_archive_library.html)(if android)
+      label: Android [AAR](https://google.github.io/mediapipe/getting_started/android_archive_library.html) (if android)
       description: 
       placeholder:
     validations:
