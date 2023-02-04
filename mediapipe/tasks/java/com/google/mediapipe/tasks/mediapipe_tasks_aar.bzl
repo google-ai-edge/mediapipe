@@ -14,7 +14,7 @@
 
 """Building MediaPipe Tasks AARs."""
 
-load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_java_proto_src_extractor", "mediapipe_java_proto_srcs")
+load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_java_proto_src_extractor", "mediapipe_java_proto_srcs", "mediapipe_logging_java_proto_srcs")
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 
 _CORE_TASKS_JAVA_PROTO_LITE_TARGETS = [
@@ -62,6 +62,17 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
       manifest: The Android manifest.
     """
 
+    # When "--define ENABLE_TASKS_USAGE_LOGGING=1" is set in the build command,
+    # the mediapipe tasks usage logging component will be added into the AAR.
+    # This flag is for internal use only.
+    native.config_setting(
+        name = "enable_tasks_usage_logging",
+        define_values = {
+            "ENABLE_TASKS_USAGE_LOGGING": "1",
+        },
+        visibility = ["//visibility:public"],
+    )
+
     mediapipe_tasks_java_proto_srcs = []
     for target in _CORE_TASKS_JAVA_PROTO_LITE_TARGETS:
         mediapipe_tasks_java_proto_srcs.append(
@@ -98,7 +109,11 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
         srcs = srcs + [
                    "//mediapipe/java/com/google/mediapipe/framework:java_src",
                ] + mediapipe_java_proto_srcs() +
-               mediapipe_tasks_java_proto_srcs,
+               mediapipe_tasks_java_proto_srcs +
+               select({
+                   "//conditions:default": [],
+                   "enable_tasks_usage_logging": mediapipe_logging_java_proto_srcs(),
+               }),
         javacopts = [
             "-Xep:AndroidJdkLibsChecker:OFF",
         ],
@@ -133,7 +148,15 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
                _AUDIO_TASKS_JAVA_PROTO_LITE_TARGETS +
                _CORE_TASKS_JAVA_PROTO_LITE_TARGETS +
                _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS +
-               _VISION_TASKS_JAVA_PROTO_LITE_TARGETS,
+               _VISION_TASKS_JAVA_PROTO_LITE_TARGETS +
+               select({
+                   "//conditions:default": [],
+                   "enable_tasks_usage_logging": [
+                       "@maven//:com_google_android_datatransport_transport_api",
+                       "@maven//:com_google_android_datatransport_transport_backend_cct",
+                       "@maven//:com_google_android_datatransport_transport_runtime",
+                   ],
+               }),
     )
 
 def mediapipe_tasks_audio_aar(name, srcs, native_library):
