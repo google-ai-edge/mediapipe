@@ -242,8 +242,6 @@ class Packet : public Packet<internal::Generic> {
   friend Packet<U> PacketAdopting(const U* ptr);
   template <typename U>
   friend Packet<U> PacketAdopting(std::unique_ptr<U> ptr);
-  template <typename U>
-  friend Packet<U> PacketSharingOwnership(std::shared_ptr<const U> ptr);
 };
 
 namespace internal {
@@ -464,17 +462,6 @@ Packet<T> PacketAdopting(const T* ptr) {
 template <typename T>
 Packet<T> PacketAdopting(std::unique_ptr<T> ptr) {
   return Packet<T>(std::make_shared<packet_internal::Holder<T>>(ptr.release()));
-}
-
-template <typename T>
-Packet<T> PacketSharingOwnership(std::shared_ptr<const T> ptr) {
-  return Packet<T>(
-      std::make_shared<packet_internal::ForeignHolder<T>>(std::move(ptr)));
-}
-
-template <typename T>
-std::shared_ptr<const T> SharedPtrWithPacket(Packet<T> packet) {
-  return mediapipe::SharedPtrWithPacket<T>(std::move(packet));
 }
 
 }  // namespace api2

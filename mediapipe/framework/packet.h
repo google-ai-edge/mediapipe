@@ -242,12 +242,6 @@ Packet Adopt(const T* ptr);
 // returned Packet but also all of its copies. The timestamp of the returned
 // Packet is Timestamp::Unset(). To set the timestamp, the caller should do
 // PointToForeign(...).At(...).
-// TODO: deprecate PointToForeign in favor of
-// MakePacketSharingOwnership. Currently, we have to provide two separate
-// implementations for handling static array vs. non static array types as
-// the shared_ptr does not work with static array for backward compatibility.
-// Eventually we should encourage the clients to deprecate the usage of these
-// functions.
 template <typename T>
 Packet PointToForeign(const T* ptr);
 
@@ -329,17 +323,6 @@ Packet MakePacket(Args&&... args) {  // NOLINT(build/c++11)
   return Adopt(reinterpret_cast<T*>(
       new T{std::forward<typename std::remove_extent<T>::type>(args)...}));
 }
-
-// Returns a Packet that shares ownership of its data. The packet will hold a
-// reference to the provided shared_ptr throughout its lifetime. Since the
-// payload of packets is expected to be immutable, the caller MUST ensure that
-// the data does not change as long as the Packet is alive.
-// Unlike PointToForeign, which takes a raw pointer, this allows the caller to
-// know when MediaPipe (as well as any other owners) is done using the data.
-// The timestamp of the returned Packet is Timestamp::Unset(). To set the
-// timestamp, the caller should do MakePacketSharingOwnership(...).At(...).
-template <typename T>
-Packet MakePacketSharingOwnership(std::shared_ptr<const T> ptr);
 
 // Returns a mutable pointer to the data in a unique_ptr in a packet. This
 // is useful in combination with AdoptAsUniquePtr.  The caller must
@@ -596,14 +579,11 @@ class Holder : public HolderBase {
   }
 };
 
-// Like Holder, but does not exclusively own its data.
+// Like Holder, but does not own its data.
 template <typename T>
 class ForeignHolder : public Holder<T> {
  public:
-  explicit ForeignHolder(std::shared_ptr<const T> ptr)
-      : Holder<T>(reinterpret_cast<const T*>(ptr.get())),
-        owner_(std::move(ptr)) {}
-
+  using Holder<T>::Holder;
   ~ForeignHolder() override {
     // Null out ptr_ so it doesn't get deleted by ~Holder.
     // Note that ~Holder cannot call HasForeignOwner because the subclass's
@@ -611,9 +591,6 @@ class ForeignHolder : public Holder<T> {
     this->ptr_ = nullptr;
   }
   bool HasForeignOwner() const final { return true; }
-
- protected:
-  const std::shared_ptr<const T> owner_;
 };
 
 template <typename T>
@@ -791,22 +768,7 @@ Packet Adopt(const T* ptr) {
 template <typename T>
 Packet PointToForeign(const T* ptr) {
   CHECK(ptr != nullptr);
-  using U = typename std::shared_ptr<T>::element_type;
-  // The reinterpret_cast is required here and in the ForeignHolder constructor
-  // in order to handle the type decay introduced by the shared_ptr for the
-  // statically allocated array.
-  return packet_internal::Create(new packet_internal::ForeignHolder<T>(
-      std::shared_ptr<const T>(reinterpret_cast<const U*>(ptr), [](const U*) {
-        // Note: PointToForeign does not own its data in any way, so
-        // the deleter does nothing.
-      })));
-}
-
-template <typename T>
-Packet MakePacketSharingOwnership(std::shared_ptr<const T> ptr) {
-  CHECK(ptr != nullptr);
-  return packet_internal::Create(
-      new packet_internal::ForeignHolder<T>(std::move(ptr)));
+  return packet_internal::Create(new packet_internal::ForeignHolder<T>(ptr));
 }
 
 // Equal Packets refer to the same memory contents, like equal pointers.

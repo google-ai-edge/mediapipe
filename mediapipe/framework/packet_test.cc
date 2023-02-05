@@ -14,7 +14,6 @@
 
 #include "mediapipe/framework/packet.h"
 
-#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
@@ -261,68 +260,6 @@ TEST(PacketTest, MakePacketOfIntVector) {
       MakePacket<std::vector<int>>(std::initializer_list<int>({1, 2, 3}));
   EXPECT_EQ(vector_packet1.Get<std::vector<int>>(),
             vector_packet2.Get<std::vector<int>>());
-}
-
-TEST(PacketTest, MakePacketSharingOwnership) {
-  bool deleted = false;
-  std::shared_ptr<const int> object(new int(42), [&deleted](const int* p) {
-    delete p;
-    deleted = true;
-  });
-  Packet packet = MakePacketSharingOwnership(object);
-  MP_ASSERT_OK(packet.ValidateAsType<int>());
-  EXPECT_EQ(packet.Get<int>(), 42);
-  EXPECT_FALSE(deleted);
-  object = nullptr;
-  EXPECT_FALSE(deleted);  // Packet keeps it alive.
-  packet = {};
-  EXPECT_TRUE(deleted);  // last owner expired.
-}
-
-TEST(PacketTest, ShareSubobjectOwnership) {
-  // Create a packet that contains a vector and tracks deletion.
-  bool deleted = false;
-  std::shared_ptr<const std::vector<int>> ints(new std::vector<int>{0, 1, 2, 3},
-                                               [&deleted](std::vector<int>* p) {
-                                                 delete p;
-                                                 deleted = true;
-                                               });
-  Packet vector_packet = MakePacketSharingOwnership(std::move(ints));
-  // Create a packet that references one of the items in the vector.
-  Packet item_packet = MakePacketSharingOwnership(std::shared_ptr<const int>(
-      SharedPtrWithPacket<std::vector<int>>(vector_packet),
-      &vector_packet.Get<std::vector<int>>()[1]));
-  vector_packet = {};
-  ASSERT_FALSE(deleted);  // item_packet keeps it alive
-  item_packet = {};
-  ASSERT_TRUE(deleted);
-}
-
-TEST(PacketTest, PointToForeignDynamicArray) {
-  int* input_translation = new int[2];
-  input_translation[0] = 0;
-  input_translation[1] = 1;
-  Packet packet = PointToForeign(&input_translation);
-  const auto& content = packet.Get<int*>();
-  // The packet content should point to the array.
-  EXPECT_EQ(content[0], 0);
-  EXPECT_EQ(content[1], 1);
-  packet = {};
-  // The vector values should be unaffected.
-  EXPECT_EQ(input_translation[0], 0);
-  EXPECT_EQ(input_translation[1], 1);
-  delete[] input_translation;
-}
-
-TEST(PacketTest, PointToForeignStaticArray) {
-  const int input_translation[] = {0, 1};
-  auto packet = PointToForeign(&input_translation);
-  const auto& content = packet.Get<int[2]>();
-  // The packet content should point to the array.
-  EXPECT_THAT(content, testing::ElementsAre(0, 1));
-  packet = {};
-  // The vector values should be unaffected.
-  EXPECT_THAT(input_translation, testing::ElementsAre(0, 1));
 }
 
 TEST(PacketTest, TestPacketMoveConstructor) {
