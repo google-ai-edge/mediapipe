@@ -19,13 +19,13 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /** Types of image sources. */
-typedef NSInteger GMLImageSourceType NS_TYPED_ENUM NS_SWIFT_NAME(MLImageSourceType);
+typedef NSInteger MPPTaskImageSourceType NS_TYPED_ENUM NS_SWIFT_NAME(MLImageSourceType);
 /** Image source is a `UIImage`. */
-static const GMLImageSourceType MPPTaskImageSourceTypeImage = 0;
+static const MPPTaskImageSourceType MPPTaskImageSourceTypeImage = 0;
 /** Image source is a `CVPixelBuffer`. */
-static const GMLImageSourceType MPPTaskImageSourceTypePixelBuffer = 1;
+static const MPPTaskImageSourceType MPPTaskImageSourceTypePixelBuffer = 1;
 /** Image source is a `CMSampleBuffer`. */
-static const GMLImageSourceType MPPTaskImageSourceTypeSampleBuffer = 2;
+static const MPPTaskImageSourceType MPPTaskImageSourceTypeSampleBuffer = 2;
 
 /** An image used in on-device machine learning using MediaPipe Task library. */
 NS_SWIFT_NAME(MPPTaskImage)
@@ -47,7 +47,7 @@ NS_SWIFT_NAME(MPPTaskImage)
 @property(nonatomic, readonly) UIImageOrientation orientation;
 
 /** The type of the image source. */
-@property(nonatomic, readonly) GMLImageSourceType imageSourceType;
+@property(nonatomic, readonly) MPPTaskImageSourceType imageSourceType;
 
 /** The source image. `nil` if `imageSourceType` is not `.image`. */
 @property(nonatomic, readonly, nullable) UIImage *image;
