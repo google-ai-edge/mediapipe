@@ -16,6 +16,7 @@
 
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
+#import "mediapipe/tasks/ios/components/utils/sources/MPPCosineSimilarity.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTextPacketCreator.h"
 #import "mediapipe/tasks/ios/text/core/sources/MPPTextTaskRunner.h"
@@ -91,6 +92,14 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.text.text_embedder.Tex
   return [MPPTextEmbedderResult
       textEmbedderResultWithOutputPacket:statusOrOutputPacketMap
                                              .value()[kEmbeddingsOutStreamName.cppString]];
+}
+
++ (nullable NSNumber *)cosineSimilarityBetweenEmbedding1:(MPPEmbedding *)embedding1
+                                           andEmbedding2:(MPPEmbedding *)embedding2
+                                                   error:(NSError **)error {
+  return [MPPCosineSimilarity computeBetweenEmbedding1:embedding1
+                                         andEmbedding2:embedding2
+                                                 error:error];
 }
 
 @end
