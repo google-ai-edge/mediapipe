@@ -251,13 +251,8 @@ TEST_F(TextClassifierTest, BertLongPositive) {
   TextClassifierResult expected;
   std::vector<Category> categories;
 
-// Predicted scores are slightly different across platforms.
-#ifdef __APPLE__
-  categories.push_back(
-      {/*index=*/1, /*score=*/0.974181, /*category_name=*/"positive"});
-  categories.push_back(
-      {/*index=*/0, /*score=*/0.025819, /*category_name=*/"negative"});
-#elif defined _WIN32
+// Predicted scores are slightly different on Windows.
+#ifdef _WIN32
   categories.push_back(
       {/*index=*/1, /*score=*/0.976686, /*category_name=*/"positive"});
   categories.push_back(
@@ -267,7 +262,7 @@ TEST_F(TextClassifierTest, BertLongPositive) {
       {/*index=*/1, /*score=*/0.985889, /*category_name=*/"positive"});
   categories.push_back(
       {/*index=*/0, /*score=*/0.014112, /*category_name=*/"negative"});
-#endif  // __APPLE__
+#endif  // _WIN32
 
   expected.classifications.emplace_back(
       Classifications{/*categories=*/categories,
