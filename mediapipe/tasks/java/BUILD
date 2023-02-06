@@ -13,3 +13,7 @@
 # limitations under the License.
 
 licenses(["notice"])
+
+exports_files([
+    "version_script.lds",
+])

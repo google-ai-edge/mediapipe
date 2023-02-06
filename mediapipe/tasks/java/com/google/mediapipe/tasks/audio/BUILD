@@ -34,12 +34,17 @@ android_library(
 # The native library of all MediaPipe audio tasks.
 cc_binary(
     name = "libmediapipe_tasks_audio_jni.so",
+    linkopts = [
+        "-Wl,--no-undefined",
+        "-Wl,--version-script,$(location //mediapipe/tasks/java:version_script.lds)",
+    ],
     linkshared = 1,
     linkstatic = 1,
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
         "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
         "//mediapipe/tasks/cc/audio/audio_embedder:audio_embedder_graph",
+        "//mediapipe/tasks/java:version_script.lds",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
 )
