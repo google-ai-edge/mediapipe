@@ -19,7 +19,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /** Types of image sources. */
-typedef NSInteger MPPTaskImageSourceType NS_TYPED_ENUM NS_SWIFT_NAME(MLImageSourceType);
+typedef NSInteger MPPTaskImageSourceType NS_TYPED_ENUM NS_SWIFT_NAME(TaskImageSourceType);
 /** Image source is a `UIImage`. */
 static const MPPTaskImageSourceType MPPTaskImageSourceTypeImage = 0;
 /** Image source is a `CVPixelBuffer`. */
