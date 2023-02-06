@@ -73,7 +73,7 @@ NS_SWIFT_NAME(MPPTaskImage)
  * `image` is `nil` or invalid.
  */
 - (nullable instancetype)initWithUIImage:(UIImage *)image
-                                   error:(NSError **)error NS_DESIGNATED_INITIALIZER;
+                                   error:(NSError **)error;
 
 /**
  * Initializes an `MPPTaskImage` object with the given `UIImabe` and orientation.
@@ -111,7 +111,7 @@ NS_SWIFT_NAME(MPPTaskImage)
  * given pixel buffer is `nil` or invalid.
  */
 - (nullable instancetype)initWithPixelBuffer:(CVPixelBufferRef)pixelBuffer
-                                       error:(NSError **)error NS_DESIGNATED_INITIALIZER;
+                                       error:(NSError **)error;
 
 /**
  * Initializes an `MPPTaskImage` object with the given pixel buffer and orientation.
@@ -148,7 +148,7 @@ NS_SWIFT_NAME(MPPTaskImage)
  * given sample buffer is `nil` or invalid.
  */
 - (nullable instancetype)initWithSampleBuffer:(CMSampleBufferRef)sampleBuffer
-                                        error:(NSError **)error NS_DESIGNATED_INITIALIZER;
+                                        error:(NSError **)error;
 
 /**
  * Initializes an `MPPTaskImage` object with the given sample buffer and orientation.
