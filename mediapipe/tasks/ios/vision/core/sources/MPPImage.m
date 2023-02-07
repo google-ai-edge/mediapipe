@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/vision/core/sources/MPPTaskImage.h"
+#import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@implementation MPPTaskImage
+@implementation MPPImage
 
 - (nullable instancetype)initWithUIImage:(UIImage *)image error:(NSError **)error {
   return [self initWithUIImage:image orientation:image.orientation error:error];

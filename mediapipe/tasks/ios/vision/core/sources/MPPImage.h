@@ -19,17 +19,17 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /** Types of image sources. */
-typedef NSInteger MPPTaskImageSourceType NS_TYPED_ENUM NS_SWIFT_NAME(TaskImageSourceType);
+typedef NSInteger MPPImageSourceType NS_TYPED_ENUM NS_SWIFT_NAME(MPImageSourceType);
 /** Image source is a `UIImage`. */
-static const MPPTaskImageSourceType MPPTaskImageSourceTypeImage = 0;
+static const MPPImageSourceType MPPImageSourceTypeImage = 0;
 /** Image source is a `CVPixelBuffer`. */
-static const MPPTaskImageSourceType MPPTaskImageSourceTypePixelBuffer = 1;
+static const MPPImageSourceType MPPImageSourceTypePixelBuffer = 1;
 /** Image source is a `CMSampleBuffer`. */
-static const MPPTaskImageSourceType MPPTaskImageSourceTypeSampleBuffer = 2;
+static const MPPImageSourceType MPPImageSourceTypeSampleBuffer = 2;
 
 /** An image used in on-device machine learning using MediaPipe Task library. */
-NS_SWIFT_NAME(MPPTaskImage)
-@interface MPPTaskImage : NSObject
+NS_SWIFT_NAME(MPImage)
+@interface MPPImage : NSObject
 
 /** Width of the image in pixels. */
 @property(nonatomic, readonly) CGFloat width;
@@ -38,16 +38,16 @@ NS_SWIFT_NAME(MPPTaskImage)
 @property(nonatomic, readonly) CGFloat height;
 
 /**
- * The display orientation of the image. If `imageSourceType` is `MPPTaskImageSourceTypeImage`, the
+ * The display orientation of the image. If `imageSourceType` is `MPPImageSourceTypeImage`, the
  * default value is `image.imageOrientation`; otherwise the default value is `UIImageOrientationUp`.
- * If the `MPPTaskImage` is being used as input for any MediaPipe vision tasks and is set to any
+ * If the `MPPImage` is being used as input for any MediaPipe vision tasks and is set to any
  * orientation other than `UIImageOrientationUp`, inference will be performed on a rotated copy of
  * the image according to the orientation.
  */
 @property(nonatomic, readonly) UIImageOrientation orientation;
 
 /** The type of the image source. */
-@property(nonatomic, readonly) MPPTaskImageSourceType imageSourceType;
+@property(nonatomic, readonly) MPPImageSourceType imageSourceType;
 
 /** The source image. `nil` if `imageSourceType` is not `.image`. */
 @property(nonatomic, readonly, nullable) UIImage *image;
@@ -59,35 +59,35 @@ NS_SWIFT_NAME(MPPTaskImage)
 @property(nonatomic, readonly, nullable) CMSampleBufferRef sampleBuffer;
 
 /**
- * Initializes an `MPPTaskImage` object with the given `UIImage`.
- * The orientation of the newly created `MPPTaskImage` will be `UIImageOrientationUp`.
+ * Initializes an `MPPImage` object with the given `UIImage`.
+ * The orientation of the newly created `MPPImage` will be `UIImageOrientationUp`.
  * Hence, if this image is used as input for any MediaPipe vision tasks, inference will be performed
- * on the it without any rotation. To create an `MPPTaskImage` with a different orientation, please
- * use `[MPPTaskImage initWithImage:orientation:error:]`.
+ * on the it without any rotation. To create an `MPPImage` with a different orientation, please
+ * use `[MPPImage initWithImage:orientation:error:]`.
  *
  * @param image The image to use as the source. Its `CGImage` property must not be `NULL`.
  * @param error An optional error parameter populated when there is an error in initializing the
- * `MPPTaskImage`.
+ * `MPPImage`.
  *
- * @return A new `MPPTaskImage` instance with the given image as the source. `nil` if the given
+ * @return A new `MPPImage` instance with the given image as the source. `nil` if the given
  * `image` is `nil` or invalid.
  */
 - (nullable instancetype)initWithUIImage:(UIImage *)image
                                    error:(NSError **)error;
 
 /**
- * Initializes an `MPPTaskImage` object with the given `UIImabe` and orientation.
+ * Initializes an `MPPImage` object with the given `UIImabe` and orientation.
  *
- * If the newly created `MPPTaskImage` is used as input for any MediaPipe vision tasks, inference
+ * If the newly created `MPPImage` is used as input for any MediaPipe vision tasks, inference
  * will be performed on a copy of the image rotated according to the orientation.
  *
  * @param image The image to use as the source. Its `CGImage` property must not be `NULL`.
  * @param orientation The display orientation of the image. This will be stored in the property
- * `orientation`. `MPPTaskImage`.
+ * `orientation`. `MPPImage`.
  * @param error An optional error parameter populated when there is an error in initializing the
- * `MPPTaskImage`.
+ * `MPPImage`.
  *
- * @return A new `MPPTaskImage` instance with the given image as the source. `nil` if the given
+ * @return A new `MPPImage` instance with the given image as the source. `nil` if the given
  * `image` is `nil` or invalid.
  */
 - (nullable instancetype)initWithUIImage:(UIImage *)image
@@ -95,37 +95,37 @@ NS_SWIFT_NAME(MPPTaskImage)
                                    error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
- * Initializes an `MPPTaskImage` object with the given pixel buffer.
+ * Initializes an `MPPImage` object with the given pixel buffer.
  *
- * The orientation of the newly created `MPPTaskImage` will be `UIImageOrientationUp`.
+ * The orientation of the newly created `MPPImage` will be `UIImageOrientationUp`.
  * Hence, if this image is used as input for any MediaPipe vision tasks, inference will be performed
- * on the it without any rotation. To create an `MPPTaskImage` with a different orientation, please
- * use `[MPPTaskImage initWithPixelBuffer:orientation:error:]`.
+ * on the it without any rotation. To create an `MPPImage` with a different orientation, please
+ * use `[MPPImage initWithPixelBuffer:orientation:error:]`.
  *
  * @param pixelBuffer The pixel buffer to use as the source. It will be retained by the new
- *     `MPPTaskImage` instance for the duration of its lifecycle.
+ *     `MPPImage` instance for the duration of its lifecycle.
  * @param error An optional error parameter populated when there is an error in initializing the
- * `MPPTaskImage`.
+ * `MPPImage`.
  *
- * @return A new `MPPTaskImage` instance with the given pixel buffer as the source. `nil` if the
+ * @return A new `MPPImage` instance with the given pixel buffer as the source. `nil` if the
  * given pixel buffer is `nil` or invalid.
  */
 - (nullable instancetype)initWithPixelBuffer:(CVPixelBufferRef)pixelBuffer
                                        error:(NSError **)error;
 
 /**
- * Initializes an `MPPTaskImage` object with the given pixel buffer and orientation.
+ * Initializes an `MPPImage` object with the given pixel buffer and orientation.
  *
- * If the newly created `MPPTaskImage` is used as input for any MediaPipe vision tasks, inference
+ * If the newly created `MPPImage` is used as input for any MediaPipe vision tasks, inference
  * will be performed on a copy of the image rotated according to the orientation.
  *
  * @param pixelBuffer The pixel buffer to use as the source. It will be retained by the new
- *     `MPPTaskImage` instance for the duration of its lifecycle.
+ *     `MPPImage` instance for the duration of its lifecycle.
  * @param orientation The display orientation of the image.
  * @param error An optional error parameter populated when there is an error in initializing the
- * `MPPTaskImage`.
+ * `MPPImage`.
  *
- * @return A new `MPPTaskImage` instance with the given orientation and pixel buffer as the source.
+ * @return A new `MPPImage` instance with the given orientation and pixel buffer as the source.
  * `nil` if the given pixel buffer is `nil` or invalid.
  */
 - (nullable instancetype)initWithPixelBuffer:(CVPixelBufferRef)pixelBuffer
@@ -133,35 +133,35 @@ NS_SWIFT_NAME(MPPTaskImage)
     NS_DESIGNATED_INITIALIZER;
 
 /**
- * Initializes an `MPPTaskImage` object with the given sample buffer.
+ * Initializes an `MPPImage` object with the given sample buffer.
  *
- * The orientation of the newly created `MPPTaskImage` will be `UIImageOrientationUp`.
+ * The orientation of the newly created `MPPImage` will be `UIImageOrientationUp`.
  * Hence, if this image is used as input for any MediaPipe vision tasks, inference will be performed
- * on the it without any rotation. To create an `MPPTaskImage` with a different orientation, please
- * use `[MPPTaskImage initWithSampleBuffer:orientation:error:]`.
+ * on the it without any rotation. To create an `MPPImage` with a different orientation, please
+ * use `[MPPImage initWithSampleBuffer:orientation:error:]`.
  *
  * @param sampleBuffer The sample buffer to use as the source. It will be retained by the new
- *     `MPPTaskImage` instance for the duration of its lifecycle. The sample buffer must be based on
+ *     `MPPImage` instance for the duration of its lifecycle. The sample buffer must be based on
  * a pixel buffer (not compressed data). In practice, it should be the video output of the camera on
  * an iOS device, not other arbitrary types of `CMSampleBuffer`s.
- * @return A new `MPPTaskImage` instance with the given sample buffer as the source. `nil` if the
+ * @return A new `MPPImage` instance with the given sample buffer as the source. `nil` if the
  * given sample buffer is `nil` or invalid.
  */
 - (nullable instancetype)initWithSampleBuffer:(CMSampleBufferRef)sampleBuffer
                                         error:(NSError **)error;
 
 /**
- * Initializes an `MPPTaskImage` object with the given sample buffer and orientation.
+ * Initializes an `MPPImage` object with the given sample buffer and orientation.
  *
- * If the newly created `MPPTaskImage` is used as input for any MediaPipe vision tasks, inference
+ * If the newly created `MPPImage` is used as input for any MediaPipe vision tasks, inference
  * will be performed on a copy of the image rotated according to the orientation.
  *
  * @param sampleBuffer The sample buffer to use as the source. It will be retained by the new
- *     `MPPTaskImage` instance for the duration of its lifecycle. The sample buffer must be based on
+ *     `MPPImage` instance for the duration of its lifecycle. The sample buffer must be based on
  * a pixel buffer (not compressed data). In practice, it should be the video output of the camera on
  * an iOS device, not other arbitrary types of `CMSampleBuffer`s.
  * @param orientation The display orientation of the image.
- * @return A new `MPPTaskImage` instance with the given orientation and sample buffer as the source.
+ * @return A new `MPPImage` instance with the given orientation and sample buffer as the source.
  * `nil` if the given sample buffer is `nil` or invalid.
  */
 - (nullable instancetype)initWithSampleBuffer:(CMSampleBufferRef)sampleBuffer
