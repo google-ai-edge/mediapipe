@@ -84,8 +84,8 @@ TEST_P(HandednessToMatrixCalculatorTest, OutputsCorrectResult) {
 INSTANTIATE_TEST_CASE_P(
     HandednessToMatrixCalculatorTests, HandednessToMatrixCalculatorTest,
     testing::ValuesIn<HandednessToMatrixCalculatorTestCase>(
-        {{.test_name = "TestWithRightHand", .handedness = 0.01f},
-         {.test_name = "TestWithLeftHand", .handedness = 0.99f}}),
+        {{/* test_name= */ "TestWithRightHand", /* handedness= */ 0.01f},
+         {/* test_name= */ "TestWithLeftHand", /* handedness= */ 0.99f}}),
     [](const testing::TestParamInfo<
         HandednessToMatrixCalculatorTest::ParamType>& info) {
       return info.param.test_name;

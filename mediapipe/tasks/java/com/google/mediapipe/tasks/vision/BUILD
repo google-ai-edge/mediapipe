@@ -36,6 +36,10 @@ android_library(
 # The native library of all MediaPipe vision tasks.
 cc_binary(
     name = "libmediapipe_tasks_vision_jni.so",
+    linkopts = [
+        "-Wl,--no-undefined",
+        "-Wl,--version-script,$(location //mediapipe/tasks/java:version_script.lds)",
+    ],
     linkshared = 1,
     linkstatic = 1,
     deps = [
@@ -46,6 +50,7 @@ cc_binary(
         "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
+        "//mediapipe/tasks/java:version_script.lds",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
 )

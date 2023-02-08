@@ -81,4 +81,8 @@ message AudioToTensorCalculatorOptions {
     WITH_DC_AND_NYQUIST = 3;
   }
   optional DftTensorFormat dft_tensor_format = 11 [default = WITH_NYQUIST];
+
+  // The volume gain, measured in dB.
+  // Scale the input audio amplitude by 10^(volume_gain_db/20).
+  optional double volume_gain_db = 12;
 }

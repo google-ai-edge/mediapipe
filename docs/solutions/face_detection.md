@@ -54,6 +54,25 @@ used for its improved inference speed. Please refer to the
 [model cards](./models.md#face_detection) for details. Default to `0` if not
 specified.
 
+Note: Not available for JavaScript (use "model" instead).
+
+#### model
+
+A string value to indicate which model should be used. Use "short" to
+select a short-range model that works best for faces within 2 meters from the
+camera, and "full" for a full-range model best for faces within 5 meters. For
+the full-range option, a sparse model is used for its improved inference speed.
+Please refer to the model cards for details. Default to empty string.
+
+Note: Valid only for JavaScript solution.
+
+#### selfie_mode
+
+A boolean value to indicate whether to flip the images/video frames
+horizontally or not. Default to `false`.
+
+Note: Valid only for JavaScript solution.
+
 #### min_detection_confidence
 
 Minimum confidence value (`[0.0, 1.0]`) from the face detection model for the
@@ -146,9 +165,9 @@ Please first see general [introduction](../getting_started/javascript.md) on
 MediaPipe in JavaScript, then learn more in the companion [web demo](#resources)
 and the following usage example.
 
-Supported configuration options:
-
-*   [modelSelection](#model_selection)
+Supported face detection options:
+*   [selfieMode](#selfie_mode)
+*   [model](#model)
 *   [minDetectionConfidence](#min_detection_confidence)
 
 ```html
@@ -176,6 +195,7 @@ Supported configuration options:
 const videoElement = document.getElementsByClassName('input_video')[0];
 const canvasElement = document.getElementsByClassName('output_canvas')[0];
 const canvasCtx = canvasElement.getContext('2d');
+const drawingUtils = window;
 
 function onResults(results) {
   // Draw the overlays.
@@ -199,7 +219,7 @@ const faceDetection = new FaceDetection({locateFile: (file) => {
   return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.0/${file}`;
 }});
 faceDetection.setOptions({
-  modelSelection: 0,
+  model: 'short',
   minDetectionConfidence: 0.5
 });
 faceDetection.onResults(onResults);

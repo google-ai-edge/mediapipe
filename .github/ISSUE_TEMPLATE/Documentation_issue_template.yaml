@@ -1,0 +1,73 @@
+name: Documentation issue
+description: Use this template for documentation related issues. If this doesn’t look right, choose a different type.
+labels: 'type:doc-bug'
+body:
+  - type: markdown
+    id: link
+    attributes:
+      value: Thank you for submitting a MediaPipe documentation issue. The MediaPipe docs are open source! To get involved, read the documentation Contributor Guide
+  - type: markdown
+    id: url
+    attributes:
+      value: URL(s) with the issue Please provide a link to the documentation entry, for example https://github.com/google/mediapipe/blob/master/docs/solutions/face_mesh.md#models
+  - type: input
+    id: description
+    attributes:
+      label: Description of issue (what needs changing)
+      description: Kinds of documentation problems
+  - type: input
+    id: clear_desc
+    attributes:
+      label: Clear description
+      description: For example, why should someone use this method? How is it useful?
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Correct links
+      description: Is the link to the source code correct?
+    validations:
+      required: false
+  - type: input
+    id: parameter
+    attributes:
+      label: Parameters defined
+      description: Are all parameters defined and formatted correctly?
+    validations:
+      required: false
+  - type: input
+    id: returns
+    attributes:
+      label: Returns defined
+      description: Are return values defined?
+    validations:
+      required: false
+  - type: input
+    id: raises
+    attributes:
+      label: Raises listed and defined
+      description: Are the errors defined? For example,
+    validations:
+      required: false
+  - type: input
+    id: usage
+    attributes:
+      label: Usage example
+      description: Is there a usage example? See the API guide-on how to write testable usage examples.
+    validations:
+      required: false
+  - type: input
+    id: visual
+    attributes:
+      label: Request visuals, if applicable
+      description: Are there currently visuals? If not, will it clarify the content?
+    validations:
+      required: false
+  - type: input
+    id: pull
+    attributes:
+       label: Submit a pull request?
+       description: Are you planning to also submit a pull request to fix the issue? See the [docs](https://github.com/google/mediapipe/blob/master/CONTRIBUTING.md)
+    validations:
+      required: false

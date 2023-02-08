@@ -19,12 +19,17 @@ package(default_visibility = ["//visibility:public"])
 # The native library of all MediaPipe text tasks.
 cc_binary(
     name = "libmediapipe_tasks_text_jni.so",
+    linkopts = [
+        "-Wl,--no-undefined",
+        "-Wl,--version-script,$(location //mediapipe/tasks/java:version_script.lds)",
+    ],
     linkshared = 1,
     linkstatic = 1,
     deps = [
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
         "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
+        "//mediapipe/tasks/java:version_script.lds",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
     ],
 )

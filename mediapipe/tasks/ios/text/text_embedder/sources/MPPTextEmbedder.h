@@ -86,6 +86,24 @@ NS_SWIFT_NAME(TextEmbedder)
 
 - (instancetype)init NS_UNAVAILABLE;
 
+/**
+ * Utility function to compute[cosine similarity](https://en.wikipedia.org/wiki/Cosine_similarity)
+ * between two `MPPEmbedding` objects.
+ *
+ * @param embedding1 One of the two `MPPEmbedding`s between whom cosine similarity is to be
+ * computed.
+ * @param embedding2 One of the two `MPPEmbedding`s between whom cosine similarity is to be
+ * computed.
+ * @param error An optional error parameter populated when there is an error in calculating cosine
+ * similarity between two embeddings.
+ *
+ * @return An `NSNumber` which holds the cosine similarity of type `double`.
+ */
++ (nullable NSNumber *)cosineSimilarityBetweenEmbedding1:(MPPEmbedding *)embedding1
+                                           andEmbedding2:(MPPEmbedding *)embedding2
+                                                   error:(NSError **)error
+    NS_SWIFT_NAME(cosineSimilarity(embedding1:embedding2:));
+
 + (instancetype)new NS_UNAVAILABLE;
 
 @end

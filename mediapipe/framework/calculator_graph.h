@@ -53,13 +53,9 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/scheduler.h"
 #include "mediapipe/framework/thread_pool_executor.pb.h"
+#include "mediapipe/gpu/gpu_service.h"
 
 namespace mediapipe {
-
-#if !MEDIAPIPE_DISABLE_GPU
-class GpuResources;
-struct GpuSharedData;
-#endif  // !MEDIAPIPE_DISABLE_GPU
 
 typedef absl::StatusOr<OutputStreamPoller> StatusOrPoller;
 

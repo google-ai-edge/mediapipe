@@ -1,7 +1,7 @@
-diff --git a/tensorflow/core/lib/monitoring/percentile_sampler.cc b/tensorflow/core/lib/monitoring/percentile_sampler.cc
+diff --git a/tensorflow/tsl/lib/monitoring/percentile_sampler.cc b/tensorflow/tsl/lib/monitoring/percentile_sampler.cc
 index b7c22ae77ba..d0ba7b48b4b 100644
---- a/tensorflow/core/lib/monitoring/percentile_sampler.cc
-+++ b/tensorflow/core/lib/monitoring/percentile_sampler.cc
+--- a/tensorflow/tsl/lib/monitoring/percentile_sampler.cc
++++ b/tensorflow/tsl/lib/monitoring/percentile_sampler.cc
 @@ -29,7 +29,8 @@ namespace monitoring {
  void PercentileSamplerCell::Add(double sample) {
    uint64 nstime = EnvTime::NowNanos();
@@ -23,18 +23,6 @@ index b7c22ae77ba..d0ba7b48b4b 100644
        pct_samples.points.push_back(pct);
      }
    }
-diff --git a/tensorflow/core/platform/test.h b/tensorflow/core/platform/test.h
-index b598b6ee1e4..51c013a2d62 100644
---- a/tensorflow/core/platform/test.h
-+++ b/tensorflow/core/platform/test.h
-@@ -40,7 +40,6 @@ limitations under the License.
- // better error messages, more maintainable tests and more test coverage.
- #if !defined(PLATFORM_GOOGLE) && !defined(PLATFORM_GOOGLE_ANDROID) && \
-     !defined(PLATFORM_CHROMIUMOS)
--#include <gmock/gmock-generated-matchers.h>
- #include <gmock/gmock-matchers.h>
- #include <gmock/gmock-more-matchers.h>
- #endif
 diff --git a/third_party/eigen3/eigen_archive.BUILD b/third_party/eigen3/eigen_archive.BUILD
 index 5514f774c35..1a38f76f4e9 100644
 --- a/third_party/eigen3/eigen_archive.BUILD

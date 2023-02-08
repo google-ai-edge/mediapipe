@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+package(default_visibility = ["//mediapipe/tasks:internal"])
+
 licenses(["notice"])
 
-exports_files([
-    "version_script.lds",
-])
+objc_library(
+    name = "MPPCosineSimilarity",
+    srcs = ["sources/MPPCosineSimilarity.mm"],
+    hdrs = ["sources/MPPCosineSimilarity.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    deps = [
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/components/containers:MPPEmbedding",
+    ],
+)

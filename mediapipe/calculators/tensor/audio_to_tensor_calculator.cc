@@ -203,6 +203,7 @@ class AudioToTensorCalculator : public Node {
   std::unique_ptr<audio_dsp::QResampler<float>> resampler_;
   Matrix sample_buffer_;
   int processed_buffer_cols_ = 0;
+  double gain_ = 1.0;
 
   // The internal state of the FFT library.
   PFFFT_Setup* fft_state_ = nullptr;
@@ -278,7 +279,9 @@ absl::Status AudioToTensorCalculator::Open(CalculatorContext* cc) {
   padding_samples_after_ = options.padding_samples_after();
   dft_tensor_format_ = options.dft_tensor_format();
   flush_mode_ = options.flush_mode();
-
+  if (options.has_volume_gain_db()) {
+    gain_ = pow(10, options.volume_gain_db() / 20.0);
+  }
   RET_CHECK(kAudioSampleRateIn(cc).IsConnected() ^
             !kAudioIn(cc).Header().IsEmpty())
       << "Must either specify the time series header of the \"AUDIO\" stream "
@@ -344,6 +347,10 @@ absl::Status AudioToTensorCalculator::Process(CalculatorContext* cc) {
   const Matrix& input = channels_match ? input_frame
                                        // Mono mixdown.
                                        : input_frame.colwise().mean();
+  if (gain_ != 1.0) {
+    return stream_mode_ ? ProcessStreamingData(cc, input * gain_)
+                        : ProcessNonStreamingData(cc, input * gain_);
+  }
   return stream_mode_ ? ProcessStreamingData(cc, input)
                       : ProcessNonStreamingData(cc, input);
 }
