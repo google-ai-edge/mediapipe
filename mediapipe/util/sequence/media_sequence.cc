@@ -160,6 +160,10 @@ absl::Status ReconcileMetadataFeatureFloats(
     const std::string& key = key_value.first;
     if (absl::StrContains(key, kFeatureFloatsKey)) {
       const auto prefix = key.substr(0, key.find(kFeatureFloatsKey) - 1);
+      if (GetFeatureFloatsSize(prefix, *sequence) < 1) {
+        // Unable to determine the feature dimensions as no data is provided.
+        continue;
+      }
       int number_of_elements = GetFeatureFloatsAt(prefix, *sequence, 0).size();
       if (HasFeatureDimensions(prefix, *sequence) &&
           !GetFeatureDimensions(prefix, *sequence).empty()) {

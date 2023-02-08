@@ -23,6 +23,7 @@
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "tensorflow/core/example/example.pb.h"
+#include "tensorflow/core/example/feature.pb.h"
 
 namespace mediapipe {
 namespace mediasequence {
@@ -867,6 +868,8 @@ TEST(MediaSequenceTest, ReconcileMetadataFloats) {
   AddFeatureFloats(feature_name, vf, &sequence);
   AddFeatureTimestamp(feature_name, 1000000, &sequence);
   AddFeatureTimestamp(feature_name, 2000000, &sequence);
+  sequence.mutable_feature_lists()->mutable_feature_list()->insert(
+      {"EMPTY/feature/floats", tensorflow::FeatureList()});
 
   MP_ASSERT_OK(ReconcileMetadata(true, false, &sequence));
   ASSERT_EQ(GetFeatureDimensions(feature_name, sequence).size(), 1);
