@@ -32,4 +32,8 @@ message TensorsToEmbeddingsCalculatorOptions {
 
   // The embedder head names.
   repeated string head_names = 2;
+
+  // Names of output heads that should not be included in the embeddings.
+  // Only applies if `head_names` is non-empty.
+  repeated string ignored_head_names = 3;
 }

@@ -33,6 +33,7 @@ limitations under the License.
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/timestamp.h"
+#include "mediapipe/tasks/cc/components/calculators/tensors_to_embeddings_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
@@ -156,7 +157,8 @@ class PostprocessingTest : public tflite_shims::testing::Test {
  protected:
   absl::StatusOr<OutputStreamPoller> BuildGraph(
       absl::string_view model_name, const proto::EmbedderOptions& options,
-      bool connect_timestamps = false) {
+      bool connect_timestamps = false,
+      const std::vector<absl::string_view>& ignored_head_names = {}) {
     ASSIGN_OR_RETURN(auto model_resources,
                      CreateModelResourcesForModel(model_name));
 
@@ -164,10 +166,15 @@ class PostprocessingTest : public tflite_shims::testing::Test {
     auto& postprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors."
         "EmbeddingPostprocessingGraph");
-    MP_RETURN_IF_ERROR(ConfigureEmbeddingPostprocessingGraph(
-        *model_resources, options,
+    auto* postprocessing_options =
         &postprocessing
-             .GetOptions<proto::EmbeddingPostprocessingGraphOptions>()));
+             .GetOptions<proto::EmbeddingPostprocessingGraphOptions>();
+    for (const absl::string_view head_name : ignored_head_names) {
+      postprocessing_options->mutable_tensors_to_embeddings_options()
+          ->add_ignored_head_names(std::string(head_name));
+    }
+    MP_RETURN_IF_ERROR(ConfigureEmbeddingPostprocessingGraph(
+        *model_resources, options, postprocessing_options));
     graph[Input<std::vector<Tensor>>(kTensorsTag)].SetName(kTensorsName) >>
         postprocessing.In(kTensorsTag);
     if (connect_timestamps) {
@@ -272,6 +279,28 @@ TEST_F(PostprocessingTest, SucceedsWithoutAggregation) {
   for (int i = 1; i < kMobileNetV3EmbedderEmbeddingSize; ++i) {
     EXPECT_FLOAT_EQ(results.embeddings(0).float_embedding().values(i), 0.0);
   }
+}
+
+TEST_F(PostprocessingTest, SucceedsWithFilter) {
+  // Build graph.
+  proto::EmbedderOptions options;
+  MP_ASSERT_OK_AND_ASSIGN(
+      auto poller,
+      BuildGraph(kMobileNetV3Embedder, options, /*connect_timestamps=*/false,
+                 /*ignored_head_names=*/{"feature"}));
+  // Build input tensor.
+  std::vector<float> tensor(kMobileNetV3EmbedderEmbeddingSize, 0);
+  tensor[0] = 1.0;
+
+  // Send tensor and get results.
+  AddTensor(tensor, Tensor::ElementType::kFloat32);
+  MP_ASSERT_OK(Run());
+  MP_ASSERT_OK_AND_ASSIGN(auto results, GetResult<EmbeddingResult>(poller));
+
+  // Validate results.
+  EXPECT_TRUE(results.has_timestamp_ms());
+  EXPECT_EQ(results.timestamp_ms(), 0);
+  EXPECT_EQ(results.embeddings_size(), 0);
 }
 
 TEST_F(PostprocessingTest, SucceedsWithAggregation) {

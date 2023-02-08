@@ -144,6 +144,7 @@ cc_library(
         "//mediapipe/calculators/tensor:regex_preprocessor_calculator",
         "//mediapipe/calculators/tensor:regex_preprocessor_calculator_cc_proto",
         "//mediapipe/calculators/tensor:text_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:universal_sentence_encoder_preprocessor_calculator",
         "//mediapipe/framework:subgraph",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
