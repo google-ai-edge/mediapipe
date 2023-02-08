@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#import <Foundation/Foundation.h>
+
 #import <CoreMedia/CoreMedia.h>
 #import <CoreVideo/CoreVideo.h>
 #import <UIKit/UIKit.h>
@@ -72,8 +74,7 @@ NS_SWIFT_NAME(MPImage)
  * @return A new `MPPImage` instance with the given image as the source. `nil` if the given
  * `image` is `nil` or invalid.
  */
-- (nullable instancetype)initWithUIImage:(UIImage *)image
-                                   error:(NSError **)error;
+- (nullable instancetype)initWithUIImage:(UIImage *)image error:(NSError **)error;
 
 /**
  * Initializes an `MPPImage` object with the given `UIImabe` and orientation.
@@ -110,8 +111,7 @@ NS_SWIFT_NAME(MPImage)
  * @return A new `MPPImage` instance with the given pixel buffer as the source. `nil` if the
  * given pixel buffer is `nil` or invalid.
  */
-- (nullable instancetype)initWithPixelBuffer:(CVPixelBufferRef)pixelBuffer
-                                       error:(NSError **)error;
+- (nullable instancetype)initWithPixelBuffer:(CVPixelBufferRef)pixelBuffer error:(NSError **)error;
 
 /**
  * Initializes an `MPPImage` object with the given pixel buffer and orientation.
@@ -130,7 +130,7 @@ NS_SWIFT_NAME(MPImage)
  */
 - (nullable instancetype)initWithPixelBuffer:(CVPixelBufferRef)pixelBuffer
                                  orientation:(UIImageOrientation)orientation
-    NS_DESIGNATED_INITIALIZER;
+                                       error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
  * Initializes an `MPPImage` object with the given sample buffer.
@@ -166,7 +166,7 @@ NS_SWIFT_NAME(MPImage)
  */
 - (nullable instancetype)initWithSampleBuffer:(CMSampleBufferRef)sampleBuffer
                                   orientation:(UIImageOrientation)orientation
-    NS_DESIGNATED_INITIALIZER;
+                                        error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /** Unavailable. */
 - (instancetype)init NS_UNAVAILABLE;
