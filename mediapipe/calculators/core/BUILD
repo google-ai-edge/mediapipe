@@ -117,6 +117,7 @@ mediapipe_proto_library(
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/framework/formats:classification_proto",
         "//mediapipe/framework/formats:landmark_proto",
+        "//mediapipe/framework/formats:time_series_header_proto",
     ],
 )
 
@@ -1158,6 +1159,7 @@ cc_library(
         "//mediapipe/framework:collection_item_id",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",

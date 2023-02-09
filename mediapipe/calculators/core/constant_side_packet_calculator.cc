@@ -19,6 +19,7 @@
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/framework/formats/time_series_header.pb.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -84,6 +85,8 @@ class ConstantSidePacketCalculator : public CalculatorBase {
         packet.Set<LandmarkList>();
       } else if (packet_options.has_double_value()) {
         packet.Set<double>();
+      } else if (packet_options.has_time_series_header_value()) {
+        packet.Set<TimeSeriesHeader>();
       } else {
         return absl::InvalidArgumentError(
             "None of supported values were specified in options.");
@@ -118,6 +121,9 @@ class ConstantSidePacketCalculator : public CalculatorBase {
             MakePacket<LandmarkList>(packet_options.landmark_list_value()));
       } else if (packet_options.has_double_value()) {
         packet.Set(MakePacket<double>(packet_options.double_value()));
+      } else if (packet_options.has_time_series_header_value()) {
+        packet.Set(MakePacket<TimeSeriesHeader>(
+            packet_options.time_series_header_value()));
       } else {
         return absl::InvalidArgumentError(
             "None of supported values were specified in options.");
