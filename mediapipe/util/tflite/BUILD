@@ -13,6 +13,8 @@
 # limitations under the License.
 #
 
+load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
+
 licenses(["notice"])
 
 package(default_visibility = [
@@ -110,10 +112,13 @@ cc_library(
     ],
 )
 
-cc_library(
+cc_library_with_tflite(
     name = "tflite_model_loader",
     srcs = ["tflite_model_loader.cc"],
     hdrs = ["tflite_model_loader.h"],
+    tflite_deps = [
+        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/api2:packet",
@@ -121,6 +126,5 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/util:resource_util",
-        "@org_tensorflow//tensorflow/lite:framework",
     ],
 )

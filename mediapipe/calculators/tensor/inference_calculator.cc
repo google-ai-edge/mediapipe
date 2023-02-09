@@ -94,8 +94,8 @@ InferenceCalculator::GetOpResolverAsPacket(CalculatorContext* cc) {
     return kSideInCustomOpResolver(cc).As<tflite::OpResolver>();
   }
   return PacketAdopting<tflite::OpResolver>(
-      std::make_unique<
-          tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates>());
+      std::make_unique<tflite_shims::ops::builtin::
+                           BuiltinOpResolverWithoutDefaultDelegates>());
 }
 
 }  // namespace api2

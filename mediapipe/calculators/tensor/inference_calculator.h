@@ -26,7 +26,7 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/kernels/register.h"
+#include "tensorflow/lite/core/shims/cc/kernels/register.h"
 
 namespace mediapipe {
 namespace api2 {
@@ -97,8 +97,8 @@ class InferenceCalculator : public NodeIntf {
   // Deprecated. Prefers to use "OP_RESOLVER" input side packet instead.
   // TODO: Removes the "CUSTOM_OP_RESOLVER" side input after the
   // migration.
-  static constexpr SideInput<tflite::ops::builtin::BuiltinOpResolver>::Optional
-      kSideInCustomOpResolver{"CUSTOM_OP_RESOLVER"};
+  static constexpr SideInput<tflite_shims::ops::builtin::BuiltinOpResolver>::
+      Optional kSideInCustomOpResolver{"CUSTOM_OP_RESOLVER"};
   static constexpr SideInput<tflite::OpResolver>::Optional kSideInOpResolver{
       "OP_RESOLVER"};
   static constexpr SideInput<TfLiteModelPtr>::Optional kSideInModel{"MODEL"};
@@ -112,7 +112,8 @@ class InferenceCalculator : public NodeIntf {
 
  protected:
   using TfLiteDelegatePtr =
-      std::unique_ptr<TfLiteDelegate, std::function<void(TfLiteDelegate*)>>;
+      std::unique_ptr<TfLiteOpaqueDelegate,
+                      std::function<void(TfLiteOpaqueDelegate*)>>;
 
   static absl::StatusOr<Packet<TfLiteModelPtr>> GetModelAsPacket(
       CalculatorContext* cc);

@@ -24,7 +24,7 @@
 #include "mediapipe/calculators/tensor/inference_calculator_utils.h"
 #include "mediapipe/calculators/tensor/inference_interpreter_delegate_runner.h"
 #include "mediapipe/calculators/tensor/inference_runner.h"
-#include "tensorflow/lite/interpreter.h"
+#include "tensorflow/lite/core/shims/cc/interpreter.h"
 #if defined(MEDIAPIPE_ANDROID)
 #include "tensorflow/lite/delegates/nnapi/nnapi_delegate.h"
 #endif  // ANDROID

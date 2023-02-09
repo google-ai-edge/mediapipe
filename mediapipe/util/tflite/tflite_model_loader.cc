@@ -19,6 +19,8 @@
 
 namespace mediapipe {
 
+using FlatBufferModel = ::tflite_shims::FlatBufferModel;
+
 absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
     const std::string& path) {
   std::string model_path = path;
@@ -36,12 +38,12 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
         mediapipe::GetResourceContents(resolved_path, &model_blob));
   }
 
-  auto model = tflite::FlatBufferModel::VerifyAndBuildFromBuffer(
-      model_blob.data(), model_blob.size());
+  auto model = FlatBufferModel::VerifyAndBuildFromBuffer(model_blob.data(),
+                                                         model_blob.size());
   RET_CHECK(model) << "Failed to load model from path " << model_path;
   return api2::MakePacket<TfLiteModelPtr>(
       model.release(),
-      [model_blob = std::move(model_blob)](tflite::FlatBufferModel* model) {
+      [model_blob = std::move(model_blob)](FlatBufferModel* model) {
         // It's required that model_blob is deleted only after
         // model is deleted, hence capturing model_blob.
         delete model;

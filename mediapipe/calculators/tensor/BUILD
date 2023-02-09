@@ -21,6 +21,7 @@ load(
 )
 load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto")
+load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 
 licenses(["notice"])
 
@@ -370,10 +371,15 @@ mediapipe_proto_library(
 # size concerns), depend on those implementations directly, and do not depend on
 # :inference_calculator.
 # In all cases, use "InferenceCalulator" in your graphs.
-cc_library(
+cc_library_with_tflite(
     name = "inference_calculator_interface",
     srcs = ["inference_calculator.cc"],
     hdrs = ["inference_calculator.h"],
+    tflite_deps = [
+        "//mediapipe/util/tflite:tflite_model_loader",
+        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
+        "@org_tensorflow//tensorflow/lite/core/shims:builtin_ops",
+    ],
     deps = [
         ":inference_calculator_cc_proto",
         ":inference_calculator_options_lib",
@@ -384,12 +390,9 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
         "//mediapipe/framework/tool:subgraph_expansion",
-        "//mediapipe/util/tflite:tflite_model_loader",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
-        "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
     alwayslink = 1,
 )
@@ -473,22 +476,24 @@ cc_library(
     ],
 )
 
-cc_library(
+cc_library_with_tflite(
     name = "inference_interpreter_delegate_runner",
     srcs = ["inference_interpreter_delegate_runner.cc"],
     hdrs = ["inference_interpreter_delegate_runner.h"],
+    tflite_deps = [
+        "//mediapipe/util/tflite:tflite_model_loader",
+        "@org_tensorflow//tensorflow/lite/core/shims:c_api_types",
+        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
+    ],
     deps = [
         ":inference_runner",
         "//mediapipe/framework:mediapipe_profiling",
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/util/tflite:tflite_model_loader",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@org_tensorflow//tensorflow/lite:framework_stable",
         "@org_tensorflow//tensorflow/lite:string_util",
-        "@org_tensorflow//tensorflow/lite/c:c_api_types",
         "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
     ],
 )
@@ -506,9 +511,9 @@ cc_library(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
+        "@org_tensorflow//tensorflow/lite/core/shims:c_api_types",
+        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
         "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
-        "@org_tensorflow//tensorflow/lite:framework_stable",
-        "@org_tensorflow//tensorflow/lite/c:c_api_types",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:android": ["@org_tensorflow//tensorflow/lite/delegates/nnapi:nnapi_delegate"],
