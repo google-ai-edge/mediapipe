@@ -213,7 +213,7 @@ cc_library(
         "//conditions:default": [
         ],
         "//mediapipe:android": [],
-        "//mediapipe:apple": [],
+        "//mediapipe:ios": [],
     }),
     alwayslink = 1,
 )
