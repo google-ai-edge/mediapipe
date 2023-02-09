@@ -61,6 +61,7 @@ py_library(
 py_test(
     name = "model_spec_test",
     srcs = ["model_spec_test.py"],
+    tags = ["requires-net:external"],
     deps = [
         ":model_options",
         ":model_spec",
@@ -89,9 +90,6 @@ py_library(
 py_test(
     name = "preprocessor_test",
     srcs = ["preprocessor_test.py"],
-    data = [
-        "//mediapipe/model_maker/models/text_classifier:mobilebert_tiny",
-    ],
     tags = ["requires-net:external"],
     deps = [
         ":dataset",
@@ -113,9 +111,6 @@ py_library(
 py_library(
     name = "text_classifier",
     srcs = ["text_classifier.py"],
-    data = [
-        "//mediapipe/model_maker/models/text_classifier:mobilebert_tiny",
-    ],
     deps = [
         ":dataset",
         ":model_options",
@@ -137,7 +132,6 @@ py_test(
     size = "large",
     srcs = ["text_classifier_test.py"],
     data = [
-        "//mediapipe/model_maker/models/text_classifier:mobilebert_tiny",
         "//mediapipe/model_maker/python/text/text_classifier/testdata",
     ],
     tags = [
@@ -163,9 +157,6 @@ py_library(
 py_binary(
     name = "text_classifier_demo",
     srcs = ["text_classifier_demo.py"],
-    data = [
-        "//mediapipe/model_maker/models/text_classifier:mobilebert_tiny",
-    ],
     deps = [
         ":text_classifier_demo_lib",
     ],

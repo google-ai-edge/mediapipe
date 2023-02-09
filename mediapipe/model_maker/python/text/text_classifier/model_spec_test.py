@@ -14,6 +14,8 @@
 """Tests for model_spec."""
 
 import os
+import tempfile
+from unittest import mock as unittest_mock
 
 import tensorflow as tf
 
@@ -24,14 +26,24 @@ from mediapipe.model_maker.python.text.text_classifier import model_spec as ms
 
 class ModelSpecTest(tf.test.TestCase):
 
+  def setUp(self):
+    super().setUp()
+    # Mock tempfile.gettempdir() to be unique for each test to avoid race
+    # condition when downloading model since these tests may run in parallel.
+    mock_gettempdir = unittest_mock.patch.object(
+        tempfile,
+        'gettempdir',
+        return_value=self.create_tempdir(),
+        autospec=True,
+    )
+    self.mock_gettempdir = mock_gettempdir.start()
+    self.addCleanup(mock_gettempdir.stop)
+
   def test_predefined_bert_spec(self):
     model_spec_obj = ms.SupportedModels.MOBILEBERT_CLASSIFIER.value()
     self.assertIsInstance(model_spec_obj, ms.BertClassifierSpec)
     self.assertEqual(model_spec_obj.name, 'MobileBert')
-    self.assertIn(
-        'mediapipe/model_maker/models/text_classifier/mobilebert_tiny',
-        model_spec_obj.uri,
-    )
+    self.assertTrue(os.path.exists(model_spec_obj.downloaded_files.get_path()))
     self.assertTrue(model_spec_obj.do_lower_case)
     self.assertEqual(
         model_spec_obj.tflite_input_name, {

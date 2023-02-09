@@ -18,8 +18,6 @@ Setup for Mediapipe-Model-Maker package with setuptools.
 import glob
 import os
 import shutil
-import subprocess
-import sys
 import setuptools
 
 
@@ -38,16 +36,6 @@ def _parse_requirements(path):
         for line in f
         if not (line.isspace() or line.startswith('#'))
     ]
-
-
-def _copy_to_pip_src_dir(file):
-  """Copy a file from bazel-bin to the pip_src dir."""
-  dst = file
-  dst_dir = os.path.dirname(dst)
-  if not os.path.exists(dst_dir):
-    os.makedirs(dst_dir)
-  src_file = os.path.join('../../bazel-bin/mediapipe/model_maker', file)
-  shutil.copyfile(src_file, file)
 
 
 def _setup_build_dir():
@@ -79,33 +67,6 @@ def _setup_build_dir():
     os.makedirs(os.path.dirname(build_target_file), exist_ok=True)
     with open(build_target_file, 'w') as file:
       file.write(filedata)
-
-  # Use bazel to download GCS model files
-  model_build_files = [
-      'models/text_classifier/BUILD',
-  ]
-  for model_build_file in model_build_files:
-    build_target_file = os.path.join(BUILD_MM_DIR, model_build_file)
-    os.makedirs(os.path.dirname(build_target_file), exist_ok=True)
-    shutil.copy(model_build_file, build_target_file)
-  external_files = [
-      'models/text_classifier/mobilebert_tiny/keras_metadata.pb',
-      'models/text_classifier/mobilebert_tiny/saved_model.pb',
-      'models/text_classifier/mobilebert_tiny/assets/vocab.txt',
-      'models/text_classifier/mobilebert_tiny/variables/variables.data-00000-of-00001',
-      'models/text_classifier/mobilebert_tiny/variables/variables.index',
-  ]
-  for elem in external_files:
-    external_file = os.path.join(f'{SRC_NAME}/mediapipe_model_maker', elem)
-    sys.stderr.write('downloading file: %s\n' % external_file)
-    fetch_model_command = [
-        'bazel',
-        'build',
-        external_file,
-    ]
-    if subprocess.call(fetch_model_command) != 0:
-      sys.exit(-1)
-    _copy_to_pip_src_dir(external_file)
 
 _setup_build_dir()
 

@@ -17,6 +17,7 @@ import dataclasses
 from typing import Dict
 
 from mediapipe.model_maker.python.core import hyperparameters as hp
+from mediapipe.model_maker.python.core.utils import file_util
 from mediapipe.model_maker.python.text.core import bert_model_options
 
 _DEFAULT_TFLITE_INPUT_NAME = {
@@ -34,16 +35,17 @@ class BertModelSpec:
   Transformers for Language Understanding) for more details.
 
     Attributes:
+      downloaded_files: A DownloadedFiles object of the model files
       hparams: Hyperparameters used for training.
       model_options: Configurable options for a BERT model.
       do_lower_case: boolean, whether to lower case the input text. Should be
         True / False for uncased / cased models respectively, where the models
-        are specified by the `uri`.
+        are specified by `downloaded_files`.
       tflite_input_name: Dict, input names for the TFLite model.
-      uri: URI for the BERT module.
       name: The name of the object.
   """
 
+  downloaded_files: file_util.DownloadedFiles
   hparams: hp.BaseHParams = hp.BaseHParams(
       epochs=3,
       batch_size=32,
@@ -54,5 +56,4 @@ class BertModelSpec:
   do_lower_case: bool = True
   tflite_input_name: Dict[str, str] = dataclasses.field(
       default_factory=lambda: _DEFAULT_TFLITE_INPUT_NAME)
-  uri: str = 'https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/1'
   name: str = 'Bert'

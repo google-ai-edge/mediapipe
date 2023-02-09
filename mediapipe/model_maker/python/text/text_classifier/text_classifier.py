@@ -369,7 +369,8 @@ class _BertClassifier(TextClassifier):
     self._text_preprocessor = preprocessor.BertClassifierPreprocessor(
         seq_len=self._model_options.seq_len,
         do_lower_case=self._model_spec.do_lower_case,
-        uri=self._model_spec.uri)
+        uri=self._model_spec.downloaded_files.get_path(),
+    )
     return (self._text_preprocessor.preprocess(train_data),
             self._text_preprocessor.preprocess(validation_data))
 
@@ -388,7 +389,9 @@ class _BertClassifier(TextClassifier):
             shape=(self._model_options.seq_len,), dtype=tf.int32),
     )
     encoder = hub.KerasLayer(
-        self._model_spec.uri, trainable=self._model_options.do_fine_tuning)
+        self._model_spec.downloaded_files.get_path(),
+        trainable=self._model_options.do_fine_tuning,
+    )
     encoder_outputs = encoder(encoder_inputs)
     pooled_output = encoder_outputs["pooled_output"]
 

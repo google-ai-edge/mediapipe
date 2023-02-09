@@ -31,5 +31,6 @@ py_library(
     deps = [
         ":bert_model_options",
         "//mediapipe/model_maker/python/core:hyperparameters",
+        "//mediapipe/model_maker/python/core/utils:file_util",
     ],
 )

@@ -14,6 +14,8 @@
 
 import csv
 import os
+import tempfile
+from unittest import mock as unittest_mock
 
 import numpy as np
 import numpy.testing as npt
@@ -27,6 +29,19 @@ from mediapipe.model_maker.python.text.text_classifier import preprocessor
 class PreprocessorTest(tf.test.TestCase):
   CSV_PARAMS_ = text_classifier_ds.CSVParameters(
       text_column='text', label_column='label')
+
+  def setUp(self):
+    super().setUp()
+    # Mock tempfile.gettempdir() to be unique for each test to avoid race
+    # condition when downloading model since these tests may run in parallel.
+    mock_gettempdir = unittest_mock.patch.object(
+        tempfile,
+        'gettempdir',
+        return_value=self.create_tempdir(),
+        autospec=True,
+    )
+    self.mock_gettempdir = mock_gettempdir.start()
+    self.addCleanup(mock_gettempdir.stop)
 
   def _get_csv_file(self):
     labels_and_text = (('pos', 'super super super super good'),
@@ -71,7 +86,10 @@ class PreprocessorTest(tf.test.TestCase):
         filename=csv_file, csv_params=self.CSV_PARAMS_)
     bert_spec = model_spec.SupportedModels.MOBILEBERT_CLASSIFIER.value()
     bert_preprocessor = preprocessor.BertClassifierPreprocessor(
-        seq_len=5, do_lower_case=bert_spec.do_lower_case, uri=bert_spec.uri)
+        seq_len=5,
+        do_lower_case=bert_spec.do_lower_case,
+        uri=bert_spec.downloaded_files.get_path(),
+    )
     preprocessed_dataset = bert_preprocessor.preprocess(dataset)
     labels = []
     input_masks = []

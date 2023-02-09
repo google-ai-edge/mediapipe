@@ -21,8 +21,6 @@ import tarfile
 import tempfile
 import requests
 
-# resources dependency
-
 
 _TEMPDIR_FOLDER = 'model_maker'
 
@@ -97,29 +95,3 @@ class DownloadedFiles:
         with open(absolute_path, 'wb') as f:
           f.write(r.content)
     return str(absolute_path)
-
-
-# TODO Remove after text_classifier supports downloading on demand.
-def get_absolute_path(file_path: str) -> str:
-  """Gets the absolute path of a file in the model_maker directory.
-
-  Args:
-    file_path: The path to a file relative to the `mediapipe` dir
-
-  Returns:
-   The full path of the file
-  """
-  # Extract the file path before and including 'model_maker' as the
-  # `mm_base_dir`. By joining it with the `path` after 'model_maker/', it
-  # yields to the absolute path of the model files directory. We must join
-  # on 'model_maker' because in the pypi package, the 'model_maker' directory
-  # is renamed to 'mediapipe_model_maker'. So we have to join on model_maker
-  # to ensure that the `mm_base_dir` path includes the renamed
-  # 'mediapipe_model_maker' directory.
-  cwd = os.path.dirname(__file__)
-  cwd_stop_idx = cwd.rfind('model_maker') + len('model_maker')
-  mm_base_dir = cwd[:cwd_stop_idx]
-  file_path_start_idx = file_path.find('model_maker') + len('model_maker') + 1
-  mm_relative_path = file_path[file_path_start_idx:]
-  absolute_path = os.path.join(mm_base_dir, mm_relative_path)
-  return absolute_path

@@ -15,6 +15,8 @@
 import csv
 import filecmp
 import os
+import tempfile
+from unittest import mock as unittest_mock
 
 import tensorflow as tf
 
@@ -29,6 +31,19 @@ class TextClassifierTest(tf.test.TestCase):
   _BERT_CLASSIFIER_JSON_FILE = test_utils.get_test_data_path(
       'bert_metadata.json'
   )
+
+  def setUp(self):
+    super().setUp()
+    # Mock tempfile.gettempdir() to be unique for each test to avoid race
+    # condition when downloading model since these tests may run in parallel.
+    mock_gettempdir = unittest_mock.patch.object(
+        tempfile,
+        'gettempdir',
+        return_value=self.create_tempdir(),
+        autospec=True,
+    )
+    self.mock_gettempdir = mock_gettempdir.start()
+    self.addCleanup(mock_gettempdir.stop)
 
   def _get_data(self):
     labels_and_text = (('pos', 'super good'), (('neg', 'really bad')))

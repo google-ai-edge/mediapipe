@@ -74,11 +74,6 @@ class FileUtilTest(absltest.TestCase):
     self.assertEqual(model_path, model_path_2)
     self.assertEqual(mock_get.call_count, 1)
 
-  def test_get_absolute_path(self):
-    test_file = 'mediapipe/model_maker/python/core/utils/testdata/test.txt'
-    absolute_path = file_util.get_absolute_path(test_file)
-    self.assertTrue(os.path.exists(absolute_path))
-
 
 if __name__ == '__main__':
   absltest.main()

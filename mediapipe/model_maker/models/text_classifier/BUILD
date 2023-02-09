@@ -32,14 +32,3 @@ mediapipe_files(
         "mobilebert_tiny/variables/variables.index",
     ],
 )
-
-filegroup(
-    name = "mobilebert_tiny",
-    srcs = [
-        "mobilebert_tiny/assets/vocab.txt",
-        "mobilebert_tiny/keras_metadata.pb",
-        "mobilebert_tiny/saved_model.pb",
-        "mobilebert_tiny/variables/variables.data-00000-of-00001",
-        "mobilebert_tiny/variables/variables.index",
-    ],
-)

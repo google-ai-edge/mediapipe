@@ -25,7 +25,11 @@ from mediapipe.model_maker.python.text.text_classifier import model_options as m
 # BERT-based text classifier spec inherited from BertModelSpec
 BertClassifierSpec = bert_model_spec.BertModelSpec
 
-MOBILEBERT_TINY_PATH = 'mediapipe/model_maker/models/text_classifier/mobilebert_tiny/'
+MOBILEBERT_TINY_FILES = file_util.DownloadedFiles(
+    'text_classifier/mobilebert_tiny',
+    'https://storage.googleapis.com/mediapipe-assets/mobilebert_tiny.tar.gz',
+    is_folder=True,
+)
 
 
 @dataclasses.dataclass
@@ -51,11 +55,11 @@ average_word_embedding_classifier_spec = functools.partial(
 
 mobilebert_classifier_spec = functools.partial(
     BertClassifierSpec,
+    downloaded_files=MOBILEBERT_TINY_FILES,
     hparams=hp.BaseHParams(
         epochs=3, batch_size=48, learning_rate=3e-5, distribution_strategy='off'
     ),
     name='MobileBert',
-    uri=file_util.get_absolute_path(MOBILEBERT_TINY_PATH),
     tflite_input_name={
         'ids': 'serving_default_input_1:0',
         'mask': 'serving_default_input_3:0',
