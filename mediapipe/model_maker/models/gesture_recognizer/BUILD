@@ -35,17 +35,3 @@ mediapipe_files(
         "palm_detection_full.tflite",
     ],
 )
-
-filegroup(
-    name = "models",
-    srcs = [
-        "canned_gesture_classifier.tflite",
-        "gesture_embedder.tflite",
-        "gesture_embedder/keras_metadata.pb",
-        "gesture_embedder/saved_model.pb",
-        "gesture_embedder/variables/variables.data-00000-of-00001",
-        "gesture_embedder/variables/variables.index",
-        "hand_landmark_full.tflite",
-        "palm_detection_full.tflite",
-    ],
-)

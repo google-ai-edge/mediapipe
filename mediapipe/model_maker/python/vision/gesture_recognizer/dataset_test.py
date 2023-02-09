@@ -14,8 +14,9 @@
 
 import os
 import shutil
+import tempfile
 from typing import NamedTuple
-import unittest
+from unittest import mock as unittest_mock
 
 from absl.testing import parameterized
 import tensorflow as tf
@@ -28,6 +29,19 @@ _TEST_DATA_DIRNAME = 'raw_data'
 
 
 class DatasetTest(tf.test.TestCase, parameterized.TestCase):
+
+  def setUp(self):
+    super().setUp()
+    # Mock tempfile.gettempdir() to be unique for each test to avoid race
+    # condition when downloading model since these tests may run in parallel.
+    mock_gettempdir = unittest_mock.patch.object(
+        tempfile,
+        'gettempdir',
+        return_value=self.create_tempdir(),
+        autospec=True,
+    )
+    self.mock_gettempdir = mock_gettempdir.start()
+    self.addCleanup(mock_gettempdir.stop)
 
   def test_split(self):
     input_data_dir = test_utils.get_test_data_path(_TEST_DATA_DIRNAME)
@@ -135,8 +149,9 @@ class DatasetTest(tf.test.TestCase, parameterized.TestCase):
               handedness=[[1]], hand_landmarks=[[2]], hand_world_landmarks=[])),
   )
   def test_create_dataset_from_invalid_hand_data(self, hand: NamedTuple):
-    with unittest.mock.patch.object(
-        hand_landmarker.HandLandmarker, 'detect', return_value=hand):
+    with unittest_mock.patch.object(
+        hand_landmarker.HandLandmarker, 'detect', return_value=hand
+    ):
       input_data_dir = test_utils.get_test_data_path(_TEST_DATA_DIRNAME)
       with self.assertRaisesRegex(ValueError, 'No valid hand is detected'):
         dataset.Dataset.from_folder(

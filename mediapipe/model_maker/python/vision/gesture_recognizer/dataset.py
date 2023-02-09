@@ -98,9 +98,11 @@ def _get_hand_data(all_image_paths: List[str],
   """
   hand_data_result = []
   hand_detector_model_buffer = model_util.load_tflite_model_buffer(
-      constants.HAND_DETECTOR_TFLITE_MODEL_FILE)
+      constants.HAND_DETECTOR_TFLITE_MODEL_FILE.get_path()
+  )
   hand_landmarks_detector_model_buffer = model_util.load_tflite_model_buffer(
-      constants.HAND_LANDMARKS_DETECTOR_TFLITE_MODEL_FILE)
+      constants.HAND_LANDMARKS_DETECTOR_TFLITE_MODEL_FILE.get_path()
+  )
   hand_landmarker_writer = metadata_writer.HandLandmarkerMetadataWriter(
       hand_detector_model_buffer, hand_landmarks_detector_model_buffer)
   hand_landmarker_options = _HandLandmarkerOptions(
@@ -221,7 +223,8 @@ class Dataset(classification_dataset.ClassificationDataset):
     hand_ds = tf.data.Dataset.from_tensor_slices(hand_data_dict)
 
     embedder_model = model_util.load_keras_model(
-        constants.GESTURE_EMBEDDER_KERAS_MODEL_PATH)
+        constants.GESTURE_EMBEDDER_KERAS_MODEL_FILES.get_path()
+    )
 
     hand_ds = hand_ds.batch(batch_size=1)
     hand_embedding_ds = hand_ds.map(

@@ -33,6 +33,9 @@ filegroup(
 py_library(
     name = "constants",
     srcs = ["constants.py"],
+    deps = [
+        "//mediapipe/model_maker/python/core/utils:file_util",
+    ],
 )
 
 py_library(
@@ -53,11 +56,11 @@ py_library(
 py_test(
     name = "dataset_test",
     srcs = ["dataset_test.py"],
-    data = [
-        ":testdata",
-        "//mediapipe/model_maker/models/gesture_recognizer:models",
+    data = [":testdata"],
+    tags = [
+        "notsan",
+        "requires-net:external",
     ],
-    tags = ["notsan"],
     deps = [
         ":dataset",
         "//mediapipe/tasks/python/test:test_utils",
@@ -90,7 +93,6 @@ py_library(
 py_library(
     name = "gesture_recognizer",
     srcs = ["gesture_recognizer.py"],
-    data = ["//mediapipe/model_maker/models/gesture_recognizer:models"],
     deps = [
         ":constants",
         ":gesture_recognizer_options",
@@ -138,12 +140,12 @@ py_test(
     name = "gesture_recognizer_test",
     size = "large",
     srcs = ["gesture_recognizer_test.py"],
-    data = [
-        ":testdata",
-        "//mediapipe/model_maker/models/gesture_recognizer:models",
-    ],
+    data = [":testdata"],
     shard_count = 2,
-    tags = ["notsan"],
+    tags = [
+        "notsan",
+        "requires-net:external",
+    ],
     deps = [
         ":gesture_recognizer_import",
         ":hyperparameters",
@@ -156,9 +158,7 @@ py_test(
 py_test(
     name = "metadata_writer_test",
     srcs = ["metadata_writer_test.py"],
-    data = [
-        ":testdata",
-    ],
+    data = [":testdata"],
     deps = [
         ":metadata_writer",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
@@ -169,10 +169,8 @@ py_test(
 py_binary(
     name = "gesture_recognizer_demo",
     srcs = ["gesture_recognizer_demo.py"],
-    data = [
-        ":testdata",
-        "//mediapipe/model_maker/models/gesture_recognizer:models",
-    ],
+    data = [":testdata"],
     python_version = "PY3",
+    tags = ["requires-net:external"],
     deps = [":gesture_recognizer_import"],
 )

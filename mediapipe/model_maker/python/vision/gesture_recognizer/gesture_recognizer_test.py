@@ -48,6 +48,16 @@ class GestureRecognizerTest(tf.test.TestCase):
     all_data = self._load_data()
     # Splits data, 90% data for training, 10% for validation
     self._train_data, self._validation_data = all_data.split(0.9)
+    # Mock tempfile.gettempdir() to be unique for each test to avoid race
+    # condition when downloading model since these tests may run in parallel.
+    mock_gettempdir = unittest_mock.patch.object(
+        tempfile,
+        'gettempdir',
+        return_value=self.create_tempdir(),
+        autospec=True,
+    )
+    self.mock_gettempdir = mock_gettempdir.start()
+    self.addCleanup(mock_gettempdir.stop)
 
   def test_gesture_recognizer_model(self):
     mo = gesture_recognizer.ModelOptions()

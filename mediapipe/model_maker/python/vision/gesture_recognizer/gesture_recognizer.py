@@ -197,13 +197,17 @@ class GestureRecognizer(classifier.Classifier):
     """
     # TODO: Convert keras embedder model instead of using tflite
     gesture_embedding_model_buffer = model_util.load_tflite_model_buffer(
-        constants.GESTURE_EMBEDDER_TFLITE_MODEL_FILE)
+        constants.GESTURE_EMBEDDER_TFLITE_MODEL_FILE.get_path()
+    )
     hand_detector_model_buffer = model_util.load_tflite_model_buffer(
-        constants.HAND_DETECTOR_TFLITE_MODEL_FILE)
+        constants.HAND_DETECTOR_TFLITE_MODEL_FILE.get_path()
+    )
     hand_landmarks_detector_model_buffer = model_util.load_tflite_model_buffer(
-        constants.HAND_LANDMARKS_DETECTOR_TFLITE_MODEL_FILE)
+        constants.HAND_LANDMARKS_DETECTOR_TFLITE_MODEL_FILE.get_path()
+    )
     canned_gesture_model_buffer = model_util.load_tflite_model_buffer(
-        constants.CANNED_GESTURE_CLASSIFIER_TFLITE_MODEL_FILE)
+        constants.CANNED_GESTURE_CLASSIFIER_TFLITE_MODEL_FILE.get_path()
+    )
 
     if not tf.io.gfile.exists(self._hparams.export_dir):
       tf.io.gfile.makedirs(self._hparams.export_dir)

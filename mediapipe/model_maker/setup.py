@@ -82,7 +82,6 @@ def _setup_build_dir():
 
   # Use bazel to download GCS model files
   model_build_files = [
-      'models/gesture_recognizer/BUILD',
       'models/text_classifier/BUILD',
   ]
   for model_build_file in model_build_files:
@@ -90,14 +89,6 @@ def _setup_build_dir():
     os.makedirs(os.path.dirname(build_target_file), exist_ok=True)
     shutil.copy(model_build_file, build_target_file)
   external_files = [
-      'models/gesture_recognizer/canned_gesture_classifier.tflite',
-      'models/gesture_recognizer/gesture_embedder.tflite',
-      'models/gesture_recognizer/hand_landmark_full.tflite',
-      'models/gesture_recognizer/palm_detection_full.tflite',
-      'models/gesture_recognizer/gesture_embedder/keras_metadata.pb',
-      'models/gesture_recognizer/gesture_embedder/saved_model.pb',
-      'models/gesture_recognizer/gesture_embedder/variables/variables.data-00000-of-00001',
-      'models/gesture_recognizer/gesture_embedder/variables/variables.index',
       'models/text_classifier/mobilebert_tiny/keras_metadata.pb',
       'models/text_classifier/mobilebert_tiny/saved_model.pb',
       'models/text_classifier/mobilebert_tiny/assets/vocab.txt',
