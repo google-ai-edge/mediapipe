@@ -416,7 +416,7 @@ build issues.
 3.  Checkout MediaPipe repository.
 
     ```bash
-    $ git clone -–depth 1 https://github.com/google/mediapipe.git
+    $ git clone --depth 1 https://github.com/google/mediapipe.git
 
     $ cd mediapipe
     ```
