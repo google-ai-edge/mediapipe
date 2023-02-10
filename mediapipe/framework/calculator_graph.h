@@ -147,7 +147,9 @@ class CalculatorGraph {
 
   // Observes the named output stream. packet_callback will be invoked on every
   // packet emitted by the output stream. Can only be called before Run() or
-  // StartRun().
+  // StartRun(). It is possible for packet_callback to be called until the
+  // object is destroyed, even if e.g. Cancel() or WaitUntilDone() have already
+  // been called. After this object is destroyed so is packet_callback.
   // TODO: Rename to AddOutputStreamCallback.
   absl::Status ObserveOutputStream(
       const std::string& stream_name,
@@ -179,13 +181,14 @@ class CalculatorGraph {
   // Run the graph without adding any input side packets.
   absl::Status Run() { return Run({}); }
 
-  // Start a run of the graph.  StartRun, WaitUntilDone, HasError,
+  // Start a run of the graph.  StartRun, WaitUntilDone, Cancel, HasError,
   // AddPacketToInputStream, and CloseInputStream allow more control over
   // the execution of the graph run.  You can insert packets directly into
   // a stream while the graph is running. Once StartRun has been called,
-  // the graph will continue to run until WaitUntilDone() is called.
-  // If StartRun returns an error, then the graph is not started and a
-  // subsequent call to StartRun can be attempted.
+  // the graph will continue to run until all work is either done or canceled,
+  // meaning that either WaitUntilDone() or Cancel() has been called and has
+  // completed. If StartRun returns an error, then the graph is not started and
+  // a subsequent call to StartRun can be attempted.
   //
   // Example:
   //   MP_RETURN_IF_ERROR(graph.StartRun(...));
@@ -212,7 +215,11 @@ class CalculatorGraph {
   // Wait for the current run to finish (block the current thread
   // until all source calculators have returned StatusStop(), all
   // graph_input_streams_ have been closed, and no more calculators can
-  // be run). This function can be called only after StartRun().
+  // be run). This function can be called only after StartRun(). If you want to
+  // stop the run quickly, without waiting for all the work in progress to
+  // finish, see Cancel(). The graph cannot be destroyed until all work is
+  // either done or canceled, meaning that either WaitUntilDone() or Cancel()
+  // has been called and completed.
   absl::Status WaitUntilDone();
 
   // Wait until the running graph is in the idle mode, which is when nothing can
@@ -318,7 +325,12 @@ class CalculatorGraph {
   // Set the mode for adding packets to an input stream.
   void SetGraphInputStreamAddMode(GraphInputStreamAddMode mode);
 
-  // Aborts the scheduler if the graph is not terminated; no-op otherwise.
+  // Aborts the scheduler if the graph is not terminated; no-op otherwise. Does
+  // not wait for all work in progress to finish. To stop the run and wait for
+  // work in progress to finish, see CloseAllInputStreams() and WaitUntilDone().
+  // The graph cannot be destroyed until all work is either done or canceled,
+  // meaning that either WaitUntilDone() or Cancel() has been called and
+  // completed.
   void Cancel();
 
   // Pauses the scheduler. Only used by calculator graph testing.
