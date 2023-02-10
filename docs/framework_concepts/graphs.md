@@ -36,6 +36,7 @@ passthrough calculators :
 # This graph named main_pass_throughcals_nosubgraph.pbtxt contains 4
 # passthrough calculators.
 input_stream: "in"
+output_stream: "out"
 node {
     calculator: "PassThroughCalculator"
     input_stream: "in"
@@ -54,9 +55,38 @@ node {
 node {
     calculator: "PassThroughCalculator"
     input_stream: "out3"
-    output_stream: "out4"
+    output_stream: "out"
 }
 ```
+
+MediaPipe offers an alternative `C++` representation for complex graphs (e.g. ML pipelines, handling model metadata, optional nodes, etc.). The above graph may look like:
+
+```c++
+CalculatorGraphConfig BuildGraphConfig() {
+  Graph graph;
+
+  // Graph inputs
+  Stream<AnyType> in = graph.In(0).SetName("in");
+
+  auto pass_through_fn = [](Stream<AnyType> in,
+                            Graph& graph) -> Stream<AnyType> {
+    auto& node = graph.AddNode("PassThroughCalculator");
+    in.ConnectTo(node.In(0));
+    return node.Out(0);
+  };
+
+  Stream<AnyType> out1 = pass_through_fn(in, graph);
+  Stream<AnyType> out2 = pass_through_fn(out1, graph);
+  Stream<AnyType> out3 = pass_through_fn(out2, graph);
+  Stream<AnyType> out4 = pass_through_fn(out3, graph);
+
+  // Graph outputs
+  out4.SetName("out").ConnectTo(graph.Out(0));
+
+  return graph.GetConfig();
+}
+```
+See more details in [Building Graphs in C++](building_graphs_cpp.md)
 
 ## Subgraph
 
