@@ -15,7 +15,6 @@
 #ifndef MEDIAPIPE_CALCULATORS_CORE_BEGIN_LOOP_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_CORE_BEGIN_LOOP_CALCULATOR_H_
 
-#include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -24,6 +23,7 @@
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/status_macros.h"
 
 namespace mediapipe {
 
@@ -112,13 +112,38 @@ class BeginLoopCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) final {
     Timestamp last_timestamp = loop_internal_timestamp_;
     if (!cc->Inputs().Tag("ITERABLE").IsEmpty()) {
-      const IterableT& collection =
-          cc->Inputs().Tag("ITERABLE").template Get<IterableT>();
-      for (const auto& item : collection) {
-        cc->Outputs().Tag("ITEM").AddPacket(
-            MakePacket<ItemT>(item).At(loop_internal_timestamp_));
-        ForwardClonePackets(cc, loop_internal_timestamp_);
-        ++loop_internal_timestamp_;
+      // Try to consume the ITERABLE packet if possible to obtain the ownership
+      // and emit the item packets by moving them.
+      // If the ITERABLE packet is not consumable, then try to copy each item
+      // instead. If the ITEM type is not copy constructible, an error will be
+      // returned.
+      auto iterable_ptr_or =
+          cc->Inputs().Tag("ITERABLE").Value().Consume<IterableT>();
+      if (iterable_ptr_or.ok()) {
+        for (auto& item : *iterable_ptr_or.value()) {
+          Packet item_packet = MakePacket<ItemT>(std::move(item));
+          cc->Outputs().Tag("ITEM").AddPacket(
+              item_packet.At(loop_internal_timestamp_));
+          ForwardClonePackets(cc, loop_internal_timestamp_);
+          ++loop_internal_timestamp_;
+        }
+      } else {
+        if constexpr (std::is_copy_constructible<ItemT>()) {
+          const IterableT& collection =
+              cc->Inputs().Tag("ITERABLE").template Get<IterableT>();
+          for (const auto& item : collection) {
+            cc->Outputs().Tag("ITEM").AddPacket(
+                MakePacket<ItemT>(item).At(loop_internal_timestamp_));
+            ForwardClonePackets(cc, loop_internal_timestamp_);
+            ++loop_internal_timestamp_;
+          }
+        } else {
+          return absl::InternalError(
+              "The element type is not copiable. Consider making the "
+              "BeginLoopCalculator the sole owner of the input packet so that "
+              "the "
+              "items can be consumed and moved.");
+        }
       }
     }
 
@@ -138,7 +163,6 @@ class BeginLoopCalculator : public CalculatorBase {
         .Tag("BATCH_END")
         .AddPacket(MakePacket<Timestamp>(cc->InputTimestamp())
                        .At(Timestamp(loop_internal_timestamp_ - 1)));
-
     return absl::OkStatus();
   }
 
