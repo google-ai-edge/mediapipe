@@ -84,9 +84,6 @@ export abstract class TaskRunner {
     // Disables the automatic render-to-screen code, which allows for pure
     // CPU processing.
     this.graphRunner.setAutoRenderToScreen(false);
-
-    // Enables use of our model resource caching graph service.
-    this.graphRunner.registerModelResourcesGraphService();
   }
 
   /** Configures the task with custom options. */
@@ -149,6 +146,11 @@ export abstract class TaskRunner {
     this.graphRunner.attachErrorListener((code, message) => {
       this.processingErrors.push(new Error(message));
     });
+
+    // Enables use of our model resource caching graph service; we apply this to
+    // every MediaPipe graph we run.
+    this.graphRunner.registerModelResourcesGraphService();
+
     this.graphRunner.setGraph(graphData, isBinary);
     this.handleErrors();
   }

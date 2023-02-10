@@ -40,7 +40,6 @@ class TaskRunnerFake extends TaskRunner {
       'registerModelResourcesGraphService', 'attachErrorListener'
     ]));
     const graphRunner = this.graphRunner as jasmine.SpyObj<CachedGraphRunner>;
-    expect(graphRunner.registerModelResourcesGraphService).toHaveBeenCalled();
     expect(graphRunner.setAutoRenderToScreen).toHaveBeenCalled();
     graphRunner.attachErrorListener.and.callFake(listener => {
       this.errorListener = listener;
@@ -65,6 +64,8 @@ class TaskRunnerFake extends TaskRunner {
 
   override setGraph(graphData: Uint8Array, isBinary: boolean): void {
     super.setGraph(graphData, isBinary);
+    expect(this.graphRunner.registerModelResourcesGraphService)
+        .toHaveBeenCalled();
   }
 
   setOptions(options: TaskRunnerOptions): Promise<void> {
