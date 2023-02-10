@@ -15,20 +15,24 @@ limitations under the License.
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/tasks/cc/components/calculators/tensors_to_embeddings_calculator.pb.h"
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #include "mediapipe/tasks/cc/components/processors/embedding_postprocessing_graph.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
+#include "mediapipe/tasks/cc/components/processors/proto/text_model_type.pb.h"
 #include "mediapipe/tasks/cc/components/processors/proto/text_preprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/components/processors/text_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/proto/model_resources_calculator.pb.h"
 #include "mediapipe/tasks/cc/text/text_embedder/proto/text_embedder_graph_options.pb.h"
+#include "mediapipe/tasks/cc/text/utils/text_model_utils.h"
 
 namespace mediapipe::tasks::text::text_embedder {
 namespace {
@@ -38,12 +42,16 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::components::containers::proto::EmbeddingResult;
+using ::mediapipe::tasks::components::processors::proto::TextModelType;
 using ::mediapipe::tasks::core::ModelResources;
+using ::mediapipe::tasks::text::utils::GetModelType;
 
 constexpr char kEmbeddingsTag[] = "EMBEDDINGS";
 constexpr char kTextTag[] = "TEXT";
 constexpr char kMetadataExtractorTag[] = "METADATA_EXTRACTOR";
 constexpr char kTensorsTag[] = "TENSORS";
+
+constexpr char kUSEQueryTensorName[] = "query_encoding";
 
 }  // namespace
 
@@ -128,12 +136,22 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
     // inference results.
     auto& postprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors.EmbeddingPostprocessingGraph");
+    auto* postprocessing_options = &postprocessing.GetOptions<
+        components::processors::proto::EmbeddingPostprocessingGraphOptions>();
+
+    // The UniversalSentenceEncoder model has an extraneous output head.
+    std::vector<absl::string_view> filtered_head_names;
+    ASSIGN_OR_RETURN(TextModelType::ModelType model_type,
+                     GetModelType(model_resources));
+    if (model_type == TextModelType::USE_MODEL) {
+      postprocessing_options->mutable_tensors_to_embeddings_options()
+          ->add_ignored_head_names(kUSEQueryTensorName);
+    }
+
     MP_RETURN_IF_ERROR(
         components::processors::ConfigureEmbeddingPostprocessingGraph(
             model_resources, task_options.embedder_options(),
-            &postprocessing
-                 .GetOptions<components::processors::proto::
-                                 EmbeddingPostprocessingGraphOptions>()));
+            postprocessing_options));
     inference.Out(kTensorsTag) >> postprocessing.In(kTensorsTag);
 
     // Outputs the embedding result.

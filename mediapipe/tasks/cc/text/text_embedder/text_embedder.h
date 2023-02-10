@@ -46,24 +46,30 @@ struct TextEmbedderOptions {
 // Performs embedding extraction on text.
 //
 // This API expects a TFLite model with TFLite Model Metadata that contains the
-// mandatory (described below) input tensors and output tensors. Metadata should
-// contain the input process unit for the model's Tokenizer as well as input /
-// output tensor metadata.
+// mandatory (described below) input tensors and output tensors.
 //
-// TODO: Support Universal Sentence Encoder.
-// Input tensors:
-//   (kTfLiteInt32)
-//    - 3 input tensors of size `[batch_size x bert_max_seq_len]` with names
-//    "ids", "mask", and "segment_ids" representing the input ids, mask ids, and
-//    segment ids respectively
-//    - or 1 input tensor of size `[batch_size x max_seq_len]` representing the
-//      input ids
-//
-// At least one output tensor with:
-//   (kTfLiteFloat32)
-//    - `N` components corresponding to the `N` dimensions of the returned
-//      feature vector for this output layer.
-//    - Either 2 or 4 dimensions, i.e. `[1 x N]` or `[1 x 1 x 1 x N]`.
+// 1. BERT-based model
+//    - 3 input tensors of size `[batch_size x bert_max_seq_len]` and type
+//      kTfLiteInt32 with names "ids", "mask", and "segment_ids" representing
+//      the input ids, mask ids, and segment ids respectively
+//    - at least one output tensor (all of type kTfLiteFloat32) with `N`
+//      components corresponding to the `N` dimensions of the returned
+//      feature vector for this output layer and with either 2 or 4 dimensions,
+//      i.e. `[1 x N]` or `[1 x 1 x 1 x N]`
+//    - input process units for a BertTokenizer or SentencePieceTokenizer
+// 2. Regex-based model
+//    - 1 input tensor of size `[batch_size x max_seq_len]` and type
+//      kTfLiteInt32 representing the input ids
+//    - at least one output tensor (all of type kTfLiteFloat32) with `N`
+//      components corresponding to the `N` dimensions of the returned
+//      feature vector for this output layer and with either 2 or 4 dimensions,
+//      i.e. `[1 x N]` or `[1 x 1 x 1 x N]`
+//    - input process units for a RegexTokenizer
+// 3. UniversalSentenceEncoder-based model
+//    - 3 input tensors with names "inp_text", "res_context" and "res_text"
+//    - 2 output tensors with names "query_encoding" and "response_encoding" of
+//      type kTfLiteFloat32. The "query_encoding" is filtered and only the other
+//      output tensor is used for the embedding.
 class TextEmbedder : core::BaseTaskApi {
  public:
   using BaseTaskApi::BaseTaskApi;
