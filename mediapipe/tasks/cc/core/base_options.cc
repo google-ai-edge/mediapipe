@@ -33,8 +33,8 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
         base_options->model_asset_path);
   }
   if (base_options->model_asset_buffer) {
-    base_options_proto.mutable_model_asset()->mutable_file_content()->swap(
-        *base_options->model_asset_buffer.release());
+    base_options_proto.mutable_model_asset()->set_file_content(
+        std::move(*base_options->model_asset_buffer));
   }
   if (base_options->model_asset_descriptor_meta.fd > 0) {
     auto* file_descriptor_meta_proto = base_options_proto.mutable_model_asset()
