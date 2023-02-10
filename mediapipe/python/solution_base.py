@@ -367,8 +367,7 @@ class SolutionBase:
     # output stream names.
     solution_outputs = collections.namedtuple(
           'SolutionOutputs', self._output_stream_type_info.keys())
-    empty_list = [[] for _ in range(len(solution_outputs._fields))]
-    results = solution_outputs(*(empty_list))
+    results = solution_outputs(*([""] * len(solution_outputs._fields)))
     for stream_name in self._output_stream_type_info.keys():
         if stream_name in self._graph_outputs:
             results = results._replace(**{stream_name: self._get_packet_content(
