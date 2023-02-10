@@ -1228,7 +1228,7 @@ bool CalculatorGraph::UnthrottleSources() {
           "Detected a deadlock due to input throttling for: \"", stream->Name(),
           "\". All calculators are idle while packet sources remain active "
           "and throttled.  Consider adjusting \"max_queue_size\" or "
-          "\"resolve_deadlock\".")));
+          "\"report_deadlock\".")));
       continue;
     }
     int new_size = stream->QueueSize() + 1;
