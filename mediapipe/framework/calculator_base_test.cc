@@ -183,7 +183,8 @@ TEST(CalculatorTest, CreateByNameWhitelisted) {
   CalculatorBaseRegistry::Register(
       "::mediapipe::test_ns::whitelisted_ns::DeadCalculator",
       absl::make_unique<internal::CalculatorBaseFactoryFor<
-          mediapipe::test_ns::whitelisted_ns::DeadCalculator>>);
+          mediapipe::test_ns::whitelisted_ns::DeadCalculator>>,
+      __FILE__, __LINE__);
 
   // A whitelisted calculator can be found in its own namespace.
   MP_EXPECT_OK(CalculatorBaseRegistry::CreateByNameInNamespace(  //

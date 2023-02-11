@@ -88,7 +88,8 @@ struct NodeRegistrationStatic {
   static mediapipe::RegistrationToken Make() {
     return mediapipe::CalculatorBaseRegistry::Register(
         T::kCalculatorName,
-        absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<T>>);
+        absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<T>>,
+        __FILE__, __LINE__);
   }
 
   using RequireStatics = ForceStaticInstantiation<&registration>;
@@ -104,8 +105,8 @@ struct SubgraphRegistrationImpl {
   static NoDestructor<mediapipe::RegistrationToken> registration;
 
   static mediapipe::RegistrationToken Make() {
-    return mediapipe::SubgraphRegistry::Register(T::kCalculatorName,
-                                                 absl::make_unique<T>);
+    return mediapipe::SubgraphRegistry::Register(
+        T::kCalculatorName, absl::make_unique<T>, __FILE__, __LINE__);
   }
 
   using RequireStatics = ForceStaticInstantiation<&registration>;
@@ -223,12 +224,13 @@ class SubgraphImpl : public Subgraph, public Intf {
 
 // This macro is used to register a calculator that does not use automatic
 // registration. Deprecated.
-#define MEDIAPIPE_NODE_IMPLEMENTATION(Impl)                                  \
-  static mediapipe::NoDestructor<mediapipe::RegistrationToken>               \
-  REGISTRY_STATIC_VAR(calculator_registration,                               \
-                      __LINE__)(mediapipe::CalculatorBaseRegistry::Register( \
-      Impl::kCalculatorName,                                                 \
-      absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<Impl>>))
+#define MEDIAPIPE_NODE_IMPLEMENTATION(Impl)                                   \
+  static mediapipe::NoDestructor<mediapipe::RegistrationToken>                \
+  REGISTRY_STATIC_VAR(calculator_registration,                                \
+                      __LINE__)(mediapipe::CalculatorBaseRegistry::Register(  \
+      Impl::kCalculatorName,                                                  \
+      absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<Impl>>, \
+      __FILE__, __LINE__))
 
 // This macro is used to register a non-split-contract calculator. Deprecated.
 #define MEDIAPIPE_REGISTER_NODE(name) REGISTER_CALCULATOR(name)
@@ -239,7 +241,7 @@ class SubgraphImpl : public Subgraph, public Intf {
   static mediapipe::NoDestructor<mediapipe::RegistrationToken>         \
   REGISTRY_STATIC_VAR(subgraph_registration,                           \
                       __LINE__)(mediapipe::SubgraphRegistry::Register( \
-      Impl::kCalculatorName, absl::make_unique<Impl>))
+      Impl::kCalculatorName, absl::make_unique<Impl>, __FILE__, __LINE__))
 
 }  // namespace api2
 }  // namespace mediapipe

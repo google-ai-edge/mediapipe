@@ -16,6 +16,7 @@
 #define MEDIAPIPE_DEPS_REGISTRATION_H_
 
 #include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <string>
 #include <tuple>
@@ -161,7 +162,8 @@ class FunctionRegistry {
   FunctionRegistry(const FunctionRegistry&) = delete;
   FunctionRegistry& operator=(const FunctionRegistry&) = delete;
 
-  RegistrationToken Register(absl::string_view name, Function func)
+  RegistrationToken Register(absl::string_view name, Function func,
+                             std::string filename, uint64_t line)
       ABSL_LOCKS_EXCLUDED(lock_) {
     std::string normalized_name = GetNormalizedName(name);
     absl::WriterMutexLock lock(&lock_);
@@ -171,10 +173,21 @@ class FunctionRegistry {
     }
     if (functions_.insert(std::make_pair(normalized_name, std::move(func)))
             .second) {
+#ifndef NDEBUG
+      locations_.emplace(normalized_name,
+                         std::make_pair(std::move(filename), line));
+#endif
       return RegistrationToken(
           [this, normalized_name]() { Unregister(normalized_name); });
     }
+#ifndef NDEBUG
+    LOG(FATAL) << "Function with name " << name << " already registered."
+               << " First registration at "
+               << locations_.at(normalized_name).first << ":"
+               << locations_.at(normalized_name).second;
+#else
     LOG(FATAL) << "Function with name " << name << " already registered.";
+#endif
     return RegistrationToken([]() {});
   }
 
@@ -291,6 +304,11 @@ class FunctionRegistry {
  private:
   mutable absl::Mutex lock_;
   absl::flat_hash_map<std::string, Function> functions_ ABSL_GUARDED_BY(lock_);
+#ifndef NDEBUG
+  // Stores filename and line number for useful debug log.
+  absl::flat_hash_map<std::string, std::pair<std::string, uint32_t>> locations_
+      ABSL_GUARDED_BY(lock_);
+#endif
 
   // For names included in NamespaceAllowlist, strips the namespace.
   std::string GetAdjustedName(absl::string_view name) {
@@ -321,8 +339,10 @@ class GlobalFactoryRegistry {
 
  public:
   static RegistrationToken Register(absl::string_view name,
-                                    typename Functions::Function func) {
-    return functions()->Register(name, std::move(func));
+                                    typename Functions::Function func,
+                                    std::string filename, uint64_t line) {
+    return functions()->Register(name, std::move(func), std::move(filename),
+                                 line);
   }
 
   // Invokes the specified factory function and returns the result.
@@ -382,12 +402,12 @@ class GlobalFactoryRegistry {
 #define MEDIAPIPE_REGISTER_FACTORY_FUNCTION(RegistryType, name, ...) \
   static auto* REGISTRY_STATIC_VAR(registration_##name, __LINE__) =  \
       new mediapipe::RegistrationToken(                              \
-          RegistryType::Register(#name, __VA_ARGS__))
+          RegistryType::Register(#name, __VA_ARGS__, __FILE__, __LINE__))
 
 #define REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, name, ...) \
   static auto* REGISTRY_STATIC_VAR(var_name, __LINE__) =                       \
       new mediapipe::RegistrationToken(                                        \
-          RegistryType::Register(#name, __VA_ARGS__))
+          RegistryType::Register(#name, __VA_ARGS__, __FILE__, __LINE__))
 
 }  // namespace mediapipe
 
