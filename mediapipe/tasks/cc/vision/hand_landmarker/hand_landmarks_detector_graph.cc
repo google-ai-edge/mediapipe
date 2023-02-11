@@ -109,32 +109,6 @@ absl::Status SanityCheckOptions(
   return absl::OkStatus();
 }
 
-// Builds an ImageTensorSpecs for configuring the image preprocessing subgraph.
-absl::StatusOr<ImageTensorSpecs> BuildImageTensorSpecs(
-    const ModelResources& model_resources) {
-  const tflite::Model& model = *model_resources.GetTfLiteModel();
-  if (model.subgraphs()->size() != 1) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Hand landmark model is assumed to have a single subgraph.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  const auto* primary_subgraph = (*model.subgraphs())[0];
-  if (primary_subgraph->inputs()->size() != 1) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Hand landmark model is assumed to have a single input.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  const auto* input_tensor =
-      (*primary_subgraph->tensors())[(*primary_subgraph->inputs())[0]];
-  ASSIGN_OR_RETURN(const auto* image_tensor_metadata,
-                   vision::GetImageTensorMetadataIfAny(
-                       *model_resources.GetMetadataExtractor(), 0));
-  return vision::BuildInputImageTensorSpecs(*input_tensor,
-                                            image_tensor_metadata);
-}
-
 // Split hand landmark detection model output tensor into four parts,
 // representing landmarks, presence scores, handedness, and world landmarks,
 // respectively.
@@ -297,7 +271,7 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto image_size = preprocessing[Output<std::pair<int, int>>("IMAGE_SIZE")];
 
     ASSIGN_OR_RETURN(auto image_tensor_specs,
-                     BuildImageTensorSpecs(model_resources));
+                     BuildInputImageTensorSpecs(model_resources));
 
     auto& inference = AddInference(
         model_resources, subgraph_options.base_options().acceleration(), graph);

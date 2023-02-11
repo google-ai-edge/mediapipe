@@ -236,6 +236,32 @@ absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
   return result;
 }
 
+// Builds an ImageTensorSpecs for configuring the preprocessing calculators.
+absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
+    const core::ModelResources& model_resources) {
+  const tflite::Model& model = *model_resources.GetTfLiteModel();
+  if (model.subgraphs()->size() != 1) {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        "Image tflite models are assumed to have a single subgraph.",
+        MediaPipeTasksStatus::kInvalidArgumentError);
+  }
+  const auto* primary_subgraph = (*model.subgraphs())[0];
+  if (primary_subgraph->inputs()->size() != 1) {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        "Image tflite models are assumed to have a single input.",
+        MediaPipeTasksStatus::kInvalidArgumentError);
+  }
+  const auto* input_tensor =
+      (*primary_subgraph->tensors())[(*primary_subgraph->inputs())[0]];
+  ASSIGN_OR_RETURN(const auto* image_tensor_metadata,
+                   vision::GetImageTensorMetadataIfAny(
+                       *model_resources.GetMetadataExtractor(), 0));
+  return vision::BuildInputImageTensorSpecs(*input_tensor,
+                                            image_tensor_metadata);
+}
+
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe

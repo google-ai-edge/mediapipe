@@ -71,32 +71,6 @@ struct ImagePreprocessingOutputStreams {
   Source<Image> image;
 };
 
-// Builds an ImageTensorSpecs for configuring the preprocessing calculators.
-absl::StatusOr<ImageTensorSpecs> BuildImageTensorSpecs(
-    const ModelResources& model_resources) {
-  const tflite::Model& model = *model_resources.GetTfLiteModel();
-  if (model.subgraphs()->size() != 1) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Image tflite models are assumed to have a single subgraph.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  const auto* primary_subgraph = (*model.subgraphs())[0];
-  if (primary_subgraph->inputs()->size() != 1) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Image tflite models are assumed to have a single input.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-  const auto* input_tensor =
-      (*primary_subgraph->tensors())[(*primary_subgraph->inputs())[0]];
-  ASSIGN_OR_RETURN(const auto* image_tensor_metadata,
-                   vision::GetImageTensorMetadataIfAny(
-                       *model_resources.GetMetadataExtractor(), 0));
-  return vision::BuildInputImageTensorSpecs(*input_tensor,
-                                            image_tensor_metadata);
-}
-
 // Fills in the ImageToTensorCalculatorOptions based on the ImageTensorSpecs.
 absl::Status ConfigureImageToTensorCalculator(
     const ImageTensorSpecs& image_tensor_specs,
@@ -150,7 +124,7 @@ absl::Status ConfigureImagePreprocessingGraph(
     const ModelResources& model_resources, bool use_gpu,
     proto::ImagePreprocessingGraphOptions* options) {
   ASSIGN_OR_RETURN(auto image_tensor_specs,
-                   BuildImageTensorSpecs(model_resources));
+                   vision::BuildInputImageTensorSpecs(model_resources));
   MP_RETURN_IF_ERROR(ConfigureImageToTensorCalculator(
       image_tensor_specs, options->mutable_image_to_tensor_options()));
   // The GPU backend isn't able to process int data. If the input tensor is

@@ -171,6 +171,28 @@ TEST_F(ImageTensorSpecsTest,
   EXPECT_EQ(input_specs.normalization_options, absl::nullopt);
 }
 
+TEST_F(ImageTensorSpecsTest, BuildInputImageTensorSpecsFromModelResources) {
+  auto model_file = std::make_unique<core::proto::ExternalFile>();
+  model_file->set_file_name(
+      JoinPath("./", kTestDataDirectory, kMobileNetQuantizedPartialMetadata));
+  MP_ASSERT_OK_AND_ASSIGN(auto model_resources,
+                          core::ModelResources::Create(kTestModelResourcesTag,
+                                                       std::move(model_file)));
+  const tflite::Model* model = model_resources->GetTfLiteModel();
+  CHECK(model != nullptr);
+  absl::StatusOr<ImageTensorSpecs> input_specs_or =
+      BuildInputImageTensorSpecs(*model_resources);
+  MP_ASSERT_OK(input_specs_or);
+
+  const ImageTensorSpecs& input_specs = input_specs_or.value();
+  EXPECT_EQ(input_specs.image_width, 224);
+  EXPECT_EQ(input_specs.image_height, 224);
+  EXPECT_EQ(input_specs.color_space, ColorSpaceType_RGB);
+  EXPECT_STREQ(EnumNameTensorType(input_specs.tensor_type),
+               EnumNameTensorType(tflite::TensorType_UINT8));
+  EXPECT_EQ(input_specs.normalization_options, absl::nullopt);
+}
+
 }  // namespace
 }  // namespace vision
 }  // namespace tasks
