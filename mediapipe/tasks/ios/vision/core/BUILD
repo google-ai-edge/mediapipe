@@ -20,3 +20,10 @@ objc_library(
         "-std=c++17",
     ],
 )
+
+objc_library(
+    name = "MPPRunningMode",
+    hdrs = ["sources/MPPRunningMode.h"],
+    module_name = "MPPRunningMode",
+)
+
