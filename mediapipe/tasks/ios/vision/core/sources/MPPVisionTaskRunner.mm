@@ -58,8 +58,14 @@ using ::mediapipe::CalculatorGraphConfig;
       }
       break;
     }
-    default:
-      break
+    default: {
+      [MPPCommonUtils
+        createCustomError:error
+                 withCode:MPPTasksErrorCodeInvalidArgumentError
+              description:
+                  @"Unrecognized running mode"];
+        return nil;
+    }
   }
   
   _runningMode = runningMode;
