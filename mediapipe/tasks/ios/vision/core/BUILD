@@ -14,8 +14,9 @@ objc_library(
     ],
     deps = [
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//third_party/apple_frameworks:CoreMedia",
-        "//third_party/apple_frameworks:CoreVideo",
-        "//third_party/apple_frameworks:UIKit",
+    ],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
     ],
 )
