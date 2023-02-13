@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ limitations under the License.
 #include <vector>
 
 #include "absl/log/check.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/port/integral_types.h"
 
 namespace mediapipe {
@@ -118,6 +119,20 @@ class FrameBuffer {
     int Size() const { return width * height; }
   };
 
+  // YUV data structure.
+  struct YuvData {
+    const uint8* y_buffer;
+    const uint8* u_buffer;
+    const uint8* v_buffer;
+    // Y buffer row stride in bytes.
+    int y_row_stride;
+    // U/V buffer row stride in bytes.
+    int uv_row_stride;
+    // U/V pixel stride in bytes. This is the distance between two consecutive
+    // u/v pixel values in a row.
+    int uv_pixel_stride;
+  };
+
   // Builds a FrameBuffer object from a row-major backing buffer.
   //
   // The FrameBuffer does not take ownership of the backing buffer. The caller
@@ -149,6 +164,12 @@ class FrameBuffer {
 
   // Returns FrameBuffer format.
   Format format() const { return format_; }
+
+  // Returns YuvData which contains the Y, U, and V buffer and their
+  // stride info from the input `source` FrameBuffer which is in the YUV family
+  // formats (e.g NV12, NV21, YV12, and YV21).
+  static absl::StatusOr<YuvData> GetYuvDataFromFrameBuffer(
+      const FrameBuffer& source);
 
  private:
   std::vector<Plane> planes_;
