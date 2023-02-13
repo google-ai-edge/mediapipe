@@ -27,3 +27,16 @@ objc_library(
     module_name = "MPPRunningMode",
 )
 
+objc_library(
+    name = "MPPVisionTaskRunner",
+    srcs = ["sources/MPPVisionTaskRunner.mm"],
+    hdrs = ["sources/MPPVisionTaskRunner.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        ":MPPRunningMode",
+        "//mediapipe/tasks/ios/core:MPPTaskRunner",
+    ],
+)
