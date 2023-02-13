@@ -12,8 +12,6 @@ nav_order: 1
 {:toc}
 ---
 
-## C++ Graph Builder
-
 C++ graph builder is a powerful tool for:
 
 *   Building complex graphs
@@ -25,7 +23,7 @@ C++ graph builder is a powerful tool for:
 *   Supporting optional graph inputs/outputs
 *   Customizing graphs per platform
 
-### Basic Usage
+## Basic Usage
 
 Let's see how C++ graph builder can be used for a simple graph:
 
@@ -95,9 +93,9 @@ Short summary:
         unleashing graph builder capabilities and improving your graphs
         readability.
 
-### Advanced Usage
+## Advanced Usage
 
-#### Utility Functions
+### Utility Functions
 
 Let's extract inference construction code into a dedicated utility function to
 help for readability and code reuse:
@@ -162,7 +160,7 @@ graphs construction code and helps automatically pull in calculator dependencies
 (e.g. no need to manually add `:inference_calculator` dep, just let your IDE
 include `inference.h` and build cleaner pull in corresponding dependency).
 
-#### Utility Classes
+### Utility Classes
 
 And surely, it's not only about functions, in some cases it's beneficial to
 introduce utility classes which can help making your graph construction code
