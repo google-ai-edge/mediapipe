@@ -162,6 +162,21 @@ class SsdAnchorsCalculator : public CalculatorBase {
         cc->Options<SsdAnchorsCalculatorOptions>();
 
     auto anchors = absl::make_unique<std::vector<Anchor>>();
+    if (!options.fixed_anchors().empty()) {
+      // Check fields for generating anchors are not set.
+      if (options.has_input_size_height() || options.has_input_size_width() ||
+          options.has_min_scale() || options.has_max_scale() ||
+          options.has_num_layers() || options.multiscale_anchor_generation()) {
+        return absl::InvalidArgumentError(
+            "Fixed anchors are provided, but fields are set for generating "
+            "anchors. When fixed anchors are set, fields for generating "
+            "anchors must not be set.");
+      }
+      anchors->assign(options.fixed_anchors().begin(),
+                      options.fixed_anchors().end());
+      cc->OutputSidePackets().Index(0).Set(Adopt(anchors.release()));
+      return absl::OkStatus();
+    }
     MP_RETURN_IF_ERROR(GenerateAnchors(anchors.get(), options));
     cc->OutputSidePackets().Index(0).Set(Adopt(anchors.release()));
     return absl::OkStatus();

@@ -17,6 +17,7 @@ syntax = "proto2";
 package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
+import "mediapipe/framework/formats/object_detection/anchor.proto";
 
 // Options to generate anchors for SSD object detection models.
 message SsdAnchorsCalculatorOptions {
@@ -24,20 +25,22 @@ message SsdAnchorsCalculatorOptions {
     optional SsdAnchorsCalculatorOptions ext = 247258239;
   }
   // Size of input images.
-  optional int32 input_size_width = 1;   // required
-  optional int32 input_size_height = 2;  // required
+  optional int32 input_size_width = 1;   // required for generating anchors.
+  optional int32 input_size_height = 2;  // required for generating anchros.
 
   // Min and max scales for generating anchor boxes on feature maps.
-  optional float min_scale = 3;  // required
-  optional float max_scale = 4;  // required
+  optional float min_scale = 3;  // required for generating anchors.
+  optional float max_scale = 4;  // required for generating anchors.
 
   // The offset for the center of anchors. The value is in the scale of stride.
   // E.g. 0.5 meaning 0.5 * |current_stride| in pixels.
-  optional float anchor_offset_x = 5 [default = 0.5];  // required
-  optional float anchor_offset_y = 6 [default = 0.5];  // required
+  optional float anchor_offset_x = 5
+      [default = 0.5];  // required for generating anchors.
+  optional float anchor_offset_y = 6
+      [default = 0.5];  // required for generating anchors.
 
   // Number of output feature maps to generate the anchors on.
-  optional int32 num_layers = 7;  // required
+  optional int32 num_layers = 7;  // required for generating anchors.
   // Sizes of output feature maps to create anchors. Either feature_map size or
   // stride should be provided.
   repeated int32 feature_map_width = 8;
@@ -86,4 +89,8 @@ message SsdAnchorsCalculatorOptions {
   // Whether to produce anchors in normalized coordinates.
   // for multiscale_anchor_generation only!
   optional bool normalize_coordinates = 20 [default = true];
+
+  // Fixed list of anchors. If set, all the other options to generate anchors
+  // are ignored.
+  repeated Anchor fixed_anchors = 21;
 }
