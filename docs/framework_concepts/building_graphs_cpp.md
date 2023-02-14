@@ -294,6 +294,8 @@ CalculatorGraphConfig BuildGraph() {
   Stream<B> b = graph.In(1).SetName("b").Cast<B>()  // Bad.
   Stream<D> d = RunSomething(a, b, graph);
   // ...
+
+  return graph.GetConfig();
 }
 
 ```
@@ -304,18 +306,20 @@ In the above code:
 *   Can be error prone overall and hard to maintain in future (e.g. is it a
     correct index? name? what if some inputs are removed or made optional?
     etc.).
+*   `RunSomething` reuse is limited because other graphs may have different
+    inputs
 
-Instead, simply define your graph inputs at the very beginning of your graph
-builder:
+Instead, define your graph inputs at the very beginning of your graph builder:
 
 ```c++ {.good}
-Stream<int> RunSomething(Stream<A> a, Stream<B> b, Stream<C> c, Graph& graph) {
+Stream<D> RunSomething(Stream<A> a, Stream<B> b, Stream<C> c, Graph& graph) {
   // ...
 }
 
 CalculatorGraphConfig BuildGraph() {
   Graph graph;
 
+  // Inputs.
   Stream<A> a = graph.In(0).SetName("a").Cast<A>();
   Stream<B> b = graph.In(1).SetName("b").Cast<B>();
   Stream<C> c = graph.In(2).SetName("c").Cast<C>();
@@ -323,11 +327,13 @@ CalculatorGraphConfig BuildGraph() {
   // 10/100/N lines of code.
   Stream<D> d = RunSomething(a, b, c, graph);
   // ...
+
+  return graph.GetConfig();
 }
 ```
 
-And if you have an input stream or side packet that is not always defined -
-simply use `std::optional` and put it at the very beginning as well:
+Use `std::optional` if you have an input stream or side packet that is not
+always defined and put it at the very beginning:
 
 ```c++ {.good}
 std::optional<Stream<A>> a;
@@ -341,3 +347,65 @@ where calling `RunSomething1(..., graph)`, ..., `RunSomethingN(..., graph)` is
 **intended to add new inputs**, so afterwards you can iterate over them and feed
 only added inputs into the graph. However, in any case, try to make it easy for
 readers to find out what graph inputs it has or may have.
+
+### Define graph outputs at the very end
+
+```c++ {.bad}
+void RunSomething(Stream<Input> input, Graph& graph) {
+  // ...
+  node.Out("OUTPUT_F")
+      .SetName("output_f").ConnectTo(graph.Out(2));  // Bad.
+}
+
+CalculatorGraphConfig BuildGraph() {
+  Graph graph;
+
+  // 10/100/N lines of code.
+  node.Out("OUTPUT_D")
+      .SetName("output_d").ConnectTo(graph.Out(0));  // Bad.
+  // 10/100/N lines of code.
+  node.Out("OUTPUT_E")
+      .SetName("output_e").ConnectTo(graph.Out(1));  // Bad.
+  // 10/100/N lines of code.
+  RunSomething(input, graph);
+  // ...
+
+  return graph.GetConfig();
+}
+```
+
+In the above code:
+
+*   It can be hard to guess how many outputs you have in the graph.
+*   Can be error prone overall and hard to maintain in future (e.g. is it a
+    correct index? name? what if some outpus are removed or made optional?
+    etc.).
+*   `RunSomething` reuse is limited as other graphs may have different outputs
+
+Instead, define your graph outputs at the very end of your graph builder:
+
+```c++ {.good}
+Stream<F> RunSomething(Stream<Input> input, Graph& graph) {
+  // ...
+  return node.Out("OUTPUT_F").Cast<F>();
+}
+
+CalculatorGraphConfig BuildGraph() {
+  Graph graph;
+
+  // 10/100/N lines of code.
+  Stream<D> d = node.Out("OUTPUT_D").Cast<D>();
+  // 10/100/N lines of code.
+  Stream<E> e = node.Out("OUTPUT_E").Cast<E>();
+  // 10/100/N lines of code.
+  Stream<F> f = RunSomething(input, graph);
+  // ...
+
+  // Outputs.
+  d.SetName("output_d").ConnectTo(graph.Out(0));
+  e.SetName("output_e").ConnectTo(graph.Out(1));
+  f.SetName("output_f").ConnectTo(graph.Out(2));
+
+  return graph.GetConfig();
+}
+```
