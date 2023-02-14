@@ -24,7 +24,7 @@
 
 @interface MPPPixelDataUtils : NSObject
 
-+ (uint8_t *)rgbPixelDatafromPixelData:(uint8_t *)pixelData
++ (uint8_t *)rgbPixelDataFromPixelData:(uint8_t *)pixelData
                              withWidth:(size_t)width
                                 height:(size_t)height
                                 stride:(size_t)stride
@@ -55,7 +55,7 @@
 
 @implementation MPPPixelDataUtils : NSObject
 
-+ (uint8_t *)rgbPixelDatafromPixelData:(uint8_t *)pixelData
++ (uint8_t *)rgbPixelDataFromPixelData:(uint8_t *)pixelData
                              withWidth:(size_t)width
                                 height:(size_t)height
                                 stride:(size_t)stride
@@ -120,11 +120,11 @@
 
 @implementation MPPCVPixelBufferUtils
 
-+ (uint8_t *)rgbPixelDatafromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer error:(NSError **)error {
++ (uint8_t *)rgbPixelDataFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer error:(NSError **)error {
   CVPixelBufferLockBaseAddress(pixelBuffer, 0);
 
   uint8_t *rgbPixelData = [MPPPixelDataUtils
-      rgbPixelDatafromPixelData:(uint8_t *)CVPixelBufferGetBaseAddress(pixelBuffer)
+      rgbPixelDataFromPixelData:(uint8_t *)CVPixelBufferGetBaseAddress(pixelBuffer)
                       withWidth:CVPixelBufferGetWidth(pixelBuffer)
                          height:CVPixelBufferGetHeight(pixelBuffer)
                          stride:CVPixelBufferGetBytesPerRow(pixelBuffer)
@@ -144,7 +144,7 @@
 
   switch (pixelBufferFormat) {
     case kCVPixelFormatType_32BGRA: {
-      pixelData = [MPPCVPixelBufferUtils rgbPixelDatafromCVPixelBuffer:pixelBuffer error:error];
+      pixelData = [MPPCVPixelBufferUtils rgbPixelDataFromCVPixelBuffer:pixelBuffer error:error];
       break;
     }
     default: {
@@ -191,7 +191,7 @@
     if (srcData) {
       // We have drawn the image as an RGBA image with 8 bitsPerComponent and hence can safely input
       // a pixel format of type kCVPixelFormatType_32RGBA for conversion by vImage.
-      pixel_data_to_return = [MPPPixelDataUtils rgbPixelDatafromPixelData:srcData
+      pixel_data_to_return = [MPPPixelDataUtils rgbPixelDataFromPixelData:srcData
                                                                 withWidth:width
                                                                    height:height
                                                                    stride:bytesPerRow

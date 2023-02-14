@@ -18,12 +18,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/** Helper utility for performing operations on MPPImage specific to the
- * MediaPipe Vision library.
+/** 
+ * Helper utility for performing operations on MPPImage specific to the MediaPipe Vision library.
  */
 @interface MPPImage (Utils)
 
-// /** Bitmap size of the image. */
+/** Bitmap size of the image. */
 @property(nonatomic, readonly) CGSize bitmapSize;
 
 /**
