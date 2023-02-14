@@ -27,12 +27,12 @@ typedef NS_ENUM(NSUInteger, MPPRunningMode) {
   /** The mode for running a mediapipe vision task on single image inputs. */
   MPPRunningModeImage,
 
-  /**mThe mode for running a mediapipe vision task on the decoded frames of a video. */
+  /** The mode for running a mediapipe vision task on the decoded frames of a video. */
   MPPRunningModeVideo,
 
- /** The mode for running a mediapipe vision task on a live stream of input data, 
-  * such as from camera. 
-  */
+  /** The mode for running a mediapipe vision task on a live stream of input data, such as from
+   * camera. 
+   */
   MPPRunningModeLiveStream,
 
 } NS_SWIFT_NAME(RunningMode);

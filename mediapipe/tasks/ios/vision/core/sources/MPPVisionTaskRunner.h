@@ -26,7 +26,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPVisionTaskRunner : MPPTaskRunner
 
 /**
- * Initializes a new `MPPVisionTaskRunner` with the MediaPipe calculator config protol running mode and packetsCallback.
+ * Initializes a new `MPPVisionTaskRunner` with the MediaPipe calculator config protol running mode
+ * and packetsCallback.
  *
  * @param graphConfig A MediaPipe calculator config proto.
  * @param runningMode MediaPipe vision task running mode.
@@ -40,10 +41,10 @@ NS_ASSUME_NONNULL_BEGIN
  * proto, running mode and packets callback.
  */
 - (nullable instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
-                              runningMode:(MPPRunningMode)runningMode
-                              packetsCallback:
-                                  (mediapipe::tasks::core::PacketsCallback)packetsCallback
-                                        error:(NSError **)error;
+                                           runningMode:(MPPRunningMode)runningMode
+                                       packetsCallback:
+                                           (mediapipe::tasks::core::PacketsCallback)packetsCallback
+                                                 error:(NSError **)error;
 
 - (instancetype)init NS_UNAVAILABLE;
 

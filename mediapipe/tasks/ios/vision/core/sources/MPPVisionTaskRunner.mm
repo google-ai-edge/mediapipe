@@ -29,45 +29,40 @@ using ::mediapipe::CalculatorGraphConfig;
 @implementation MPPVisionTaskRunner
 
 - (nullable instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
-                              runningMode:(MPPRunningMode)runningMode
-                              packetsCallback:
-                                  (mediapipe::tasks::core::PacketsCallback)packetsCallback
-                                        error:(NSError **)error {
-
+                                           runningMode:(MPPRunningMode)runningMode
+                                       packetsCallback:
+                                           (mediapipe::tasks::core::PacketsCallback)packetsCallback
+                                                 error:(NSError **)error {
   switch (runningMode) {
     case MPPRunningModeImage:
     case MPPRunningModeVideo: {
       if (packetsCallback) {
-        [MPPCommonUtils
-        createCustomError:error
-                 withCode:MPPTasksErrorCodeInvalidArgumentError
-              description:
-                  @"The vision task is in image or video mode, a user-defined result callback should not be provided."];
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInvalidArgumentError
+                              description:@"The vision task is in image or video mode, a "
+                                          @"user-defined result callback should not be provided."];
         return nil;
       }
       break;
     }
     case MPPRunningModeLiveStream: {
       if (!packetsCallback) {
-        [MPPCommonUtils
-        createCustomError:error
-                 withCode:MPPTasksErrorCodeInvalidArgumentError
-              description:
-                  @"The vision task is in live stream mode, a user-defined result callback must be provided."];
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInvalidArgumentError
+                              description:@"The vision task is in live stream mode, a user-defined "
+                                          @"result callback must be provided."];
         return nil;
       }
       break;
     }
     default: {
-      [MPPCommonUtils
-        createCustomError:error
-                 withCode:MPPTasksErrorCodeInvalidArgumentError
-              description:
-                  @"Unrecognized running mode"];
-        return nil;
+      [MPPCommonUtils createCustomError:error
+                               withCode:MPPTasksErrorCodeInvalidArgumentError
+                            description:@"Unrecognized running mode"];
+      return nil;
     }
   }
-  
+
   _runningMode = runningMode;
   self = [super initWithCalculatorGraphConfig:graphConfig
                               packetsCallback:packetsCallback
