@@ -26,14 +26,22 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPVisionTaskRunner : MPPTaskRunner
 
 /**
- * Initializes a new `MPPVisionTaskRunner` with the MediaPipe calculator config protol running mode
+ * Initializes a new `MPPVisionTaskRunner` with the MediaPipe calculator config proto running mode
  * and packetsCallback.
+ * Make sure that the packets callback is set properly based on the vision task's running mode.
+ * In case of live stream running mode, a C++ packets callback that is intended to deliver inference
+ * results must be provided. In case of image or video running mode, packets callback must be set to
+ * nil.
  *
  * @param graphConfig A MediaPipe calculator config proto.
  * @param runningMode MediaPipe vision task running mode.
  * @param packetsCallback An optional C++ callback function that takes a list of output packets as
  * the input argument. If provided, the callback must in turn call the block provided by the user in
- * the appropriate task options.
+ * the appropriate task options. Make sure that the packets callback is set properly based on the
+ * vision task's running mode. In case of live stream running mode, a C++ packets callback that is
+ * intended to deliver inference results must be provided. In case of image or video running mode,
+ * packets callback must be set to nil.
+ *
  * @param error Pointer to the memory location where errors if any should be
  * saved. If @c NULL, no error will be saved.
  *
