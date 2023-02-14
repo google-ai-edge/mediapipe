@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
+#import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -20,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @implementation MPPImage
 
 - (nullable instancetype)initWithUIImage:(UIImage *)image error:(NSError **)error {
-  return [self initWithUIImage:image orientation:image.orientation error:error];
+  return [self initWithUIImage:image orientation:image.imageOrientation error:error];
 }
 
 - (nullable instancetype)initWithUIImage:(UIImage *)image
@@ -30,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInvalidArgumentError
                           description:@"Image cannot be nil."];
+    return nil;
   }
   if (image.CGImage == NULL) {
     [MPPCommonUtils createCustomError:error
@@ -41,7 +43,7 @@ NS_ASSUME_NONNULL_BEGIN
 
   self = [super init];
   if (self) {
-    _imageSourceType = MPPTaskImageSourceTypeImage;
+    _imageSourceType = MPPImageSourceTypeImage;
     _orientation = orientation;
     _image = image;
     _width = image.size.width * image.scale;
@@ -66,7 +68,7 @@ NS_ASSUME_NONNULL_BEGIN
 
   self = [super init];
   if (self != nil) {
-    _imageSourceType = MPPTaskImageSourceTypePixelBuffer;
+    _imageSourceType = MPPImageSourceTypePixelBuffer;
     _orientation = orientation;
     CVPixelBufferRetain(pixelBuffer);
     _pixelBuffer = pixelBuffer;
@@ -78,7 +80,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable instancetype)initWithSampleBuffer:(CMSampleBufferRef)sampleBuffer
                                         error:(NSError **)error {
-  return [self initWithSampleBuffer:sampleBuffer orientation:UIImageOrientation error:error];
+  return [self initWithSampleBuffer:sampleBuffer orientation:UIImageOrientationUp error:error];
 }
 
 - (nullable instancetype)initWithSampleBuffer:(CMSampleBufferRef)sampleBuffer
@@ -99,7 +101,7 @@ NS_ASSUME_NONNULL_BEGIN
 
   self = [super init];
   if (self != nil) {
-    _imageSourceType = MPPTaskImageSourceTypeSampleBuffer;
+    _imageSourceType = MPPImageSourceTypeSampleBuffer;
     _orientation = orientation;
     CFRetain(sampleBuffer);
     _sampleBuffer = sampleBuffer;
