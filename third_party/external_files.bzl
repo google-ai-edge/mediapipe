@@ -258,8 +258,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_face_landmark_tflite",
-        sha256 = "c603fa6149219a3e9487dc9abd7a0c24474c77263273d24868378cdf40aa26d1",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/face_landmark.tflite?generation=1662063817995673"],
+        sha256 = "1055cb9d4a9ca8b8c688902a3a5194311138ba256bcc94e336d8373a5f30c814",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/face_landmark.tflite?generation=1676316347980492"],
     )
 
     http_file(
@@ -716,6 +716,12 @@ def external_files():
         name = "com_google_mediapipe_portrait_expected_detection_pbtxt",
         sha256 = "bb54e08e87844ef14bb185d5cb808908eb6011bfa6db48bd22d9650f6fda338b",
         urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_expected_detection.pbtxt?generation=1674261627835475"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_portrait_expected_face_landmarks_pbtxt",
+        sha256 = "4ac8587379bd072c36cda0d7345f5e592fae51b30522475e0b49c18aab108ce7",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_expected_face_landmarks.pbtxt?generation=1676316357333369"],
     )
 
     http_file(
