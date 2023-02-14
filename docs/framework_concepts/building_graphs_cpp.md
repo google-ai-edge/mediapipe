@@ -12,8 +12,6 @@ nav_order: 1
 {:toc}
 ---
 
-## C++ Graph Builder
-
 C++ graph builder is a powerful tool for:
 
 *   Building complex graphs
@@ -25,7 +23,7 @@ C++ graph builder is a powerful tool for:
 *   Supporting optional graph inputs/outputs
 *   Customizing graphs per platform
 
-### Basic Usage
+## Basic Usage
 
 Let's see how C++ graph builder can be used for a simple graph:
 
@@ -95,9 +93,9 @@ Short summary:
         unleashing graph builder capabilities and improving your graphs
         readability.
 
-### Advanced Usage
+## Advanced Usage
 
-#### Utility Functions
+### Utility Functions
 
 Let's extract inference construction code into a dedicated utility function to
 help for readability and code reuse:
@@ -162,7 +160,7 @@ graphs construction code and helps automatically pull in calculator dependencies
 (e.g. no need to manually add `:inference_calculator` dep, just let your IDE
 include `inference.h` and build cleaner pull in corresponding dependency).
 
-#### Utility Classes
+### Utility Classes
 
 And surely, it's not only about functions, in some cases it's beneficial to
 introduce utility classes which can help making your graph construction code
@@ -277,3 +275,69 @@ Tip: the same as for the `RunInference` function, extracting
 `PassThroughNodeBuilder` and similar utility classes into dedicated modules
 enables reuse in graph construction code and helps to automatically pull in the
 corresponding calculator dependencies.
+
+## Dos and Don'ts
+
+### Define graph inputs at the very beginning if possible
+
+```c++ {.bad}
+Stream<D> RunSomething(Stream<A> a, Stream<B> b, Graph& graph) {
+  Stream<C> c = graph.In(2).SetName("c").Cast<C>();  // Bad.
+  // ...
+}
+
+CalculatorGraphConfig BuildGraph() {
+  Graph graph;
+
+  Stream<A> a = graph.In(0).SetName("a").Cast<A>();
+  // 10/100/N lines of code.
+  Stream<B> b = graph.In(1).SetName("b").Cast<B>()  // Bad.
+  Stream<D> d = RunSomething(a, b, graph);
+  // ...
+}
+
+```
+
+In the above code:
+
+*   It can be hard to guess how many inputs you have in the graph.
+*   Can be error prone overall and hard to maintain in future (e.g. is it a
+    correct index? name? what if some inputs are removed or made optional?
+    etc.).
+
+Instead, simply define your graph inputs at the very beginning of your graph
+builder:
+
+```c++ {.good}
+Stream<int> RunSomething(Stream<A> a, Stream<B> b, Stream<C> c, Graph& graph) {
+  // ...
+}
+
+CalculatorGraphConfig BuildGraph() {
+  Graph graph;
+
+  Stream<A> a = graph.In(0).SetName("a").Cast<A>();
+  Stream<B> b = graph.In(1).SetName("b").Cast<B>();
+  Stream<C> c = graph.In(2).SetName("c").Cast<C>();
+
+  // 10/100/N lines of code.
+  Stream<D> d = RunSomething(a, b, c, graph);
+  // ...
+}
+```
+
+And if you have an input stream or side packet that is not always defined -
+simply use `std::optional` and put it at the very beginning as well:
+
+```c++ {.good}
+std::optional<Stream<A>> a;
+if (needs_a) {
+  a = graph.In(0).SetName(a).Cast<A>();
+}
+```
+
+Note: of course, there can be exceptions - for example, there can be a use case
+where calling `RunSomething1(..., graph)`, ..., `RunSomethingN(..., graph)` is
+**intended to add new inputs**, so afterwards you can iterate over them and feed
+only added inputs into the graph. However, in any case, try to make it easy for
+readers to find out what graph inputs it has or may have.
