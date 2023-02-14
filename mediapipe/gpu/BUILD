@@ -549,19 +549,11 @@ objc_library(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "gl_context_options_proto",
     srcs = ["gl_context_options.proto"],
     visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework:calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "gl_context_options_cc_proto",
-    srcs = ["gl_context_options.proto"],
-    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
-    visibility = ["//visibility:public"],
-    deps = [":gl_context_options_proto"],
 )
 
 # This is a hack needed to work around some issues with strict hdrs_check.
