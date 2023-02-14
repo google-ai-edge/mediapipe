@@ -31,7 +31,7 @@ typedef NS_ENUM(NSUInteger, MPPRunningMode) {
   MPPRunningModeVideo,
 
   /** The mode for running a mediapipe vision task on a live stream of input data, such as from
-   * camera. 
+   * camera.
    */
   MPPRunningModeLiveStream,
 
