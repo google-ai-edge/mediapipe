@@ -44,7 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
                                            runningMode:(MPPRunningMode)runningMode
                                        packetsCallback:
                                            (mediapipe::tasks::core::PacketsCallback)packetsCallback
-                                                 error:(NSError **)error;
+                                                 error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 
