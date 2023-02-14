@@ -409,3 +409,187 @@ CalculatorGraphConfig BuildGraph() {
   return graph.GetConfig();
 }
 ```
+
+### Keep nodes decoupled from each other
+
+In MediaPipe, packet streams and side packets are as meaningful as processing
+nodes. And any node input requirements and output products are expressed clearly
+and independently in terms of the streams and side packets it consumes and
+produces.
+
+```c++ {.bad}
+CalculatorGraphConfig BuildGraph() {
+  Graph graph;
+
+  // Inputs.
+  Stream<A> a = graph.In(0).Cast<A>();
+
+  auto& node1 = graph.AddNode("Calculator1");
+  a.ConnectTo(node1.In("INPUT"));
+
+  auto& node2 = graph.AddNode("Calculator2");
+  node1.Out("OUTPUT").ConnectTo(node2.In("INPUT"));  // Bad.
+
+  auto& node3 = graph.AddNode("Calculator3");
+  node1.Out("OUTPUT").ConnectTo(node3.In("INPUT_B"));  // Bad.
+  node2.Out("OUTPUT").ConnectTo(node3.In("INPUT_C"));  // Bad.
+
+  auto& node4 = graph.AddNode("Calculator4");
+  node1.Out("OUTPUT").ConnectTo(node4.In("INPUT_B"));  // Bad.
+  node2.Out("OUTPUT").ConnectTo(node4.In("INPUT_C"));  // Bad.
+  node3.Out("OUTPUT").ConnectTo(node4.In("INPUT_D"));  // Bad.
+
+  // Outputs.
+  node1.Out("OUTPUT").SetName("b").ConnectTo(graph.Out(0));  // Bad.
+  node2.Out("OUTPUT").SetName("c").ConnectTo(graph.Out(1));  // Bad.
+  node3.Out("OUTPUT").SetName("d").ConnectTo(graph.Out(2));  // Bad.
+  node4.Out("OUTPUT").SetName("e").ConnectTo(graph.Out(3));  // Bad.
+
+  return graph.GetConfig();
+}
+```
+
+In the above code:
+
+*   Nodes are coupled to each other, e.g. `node4` knows where its inputs are
+    coming from (`node1`, `node2`, `node3`) and it complicates refactoring,
+    maintenance and code reuse
+    *   Such usage pattern is a downgrade from proto representation, where nodes
+        are decoupled by default.
+*   `node#.Out("OUTPUT")` calls are duplicated and readability suffers as you
+    could use cleaner names instead and also provide an actual type.
+
+So, to fix the above issues you can write the following graph construction code:
+
+```c++ {.good}
+CalculatorGraphConfig BuildGraph() {
+  Graph graph;
+
+  // Inputs.
+  Stream<A> a = graph.In(0).Cast<A>();
+
+  // `node1` usage is limited to 3 lines below.
+  auto& node1 = graph.AddNode("Calculator1");
+  a.ConnectTo(node1.In("INPUT"));
+  Stream<B> b = node1.Out("OUTPUT").Cast<B>();
+
+  // `node2` usage is limited to 3 lines below.
+  auto& node2 = graph.AddNode("Calculator2");
+  b.ConnectTo(node2.In("INPUT"));
+  Stream<C> c = node2.Out("OUTPUT").Cast<C>();
+
+  // `node3` usage is limited to 4 lines below.
+  auto& node3 = graph.AddNode("Calculator3");
+  b.ConnectTo(node3.In("INPUT_B"));
+  c.ConnectTo(node3.In("INPUT_C"));
+  Stream<D> d = node3.Out("OUTPUT").Cast<D>();
+
+  // `node4` usage is limited to 5 lines below.
+  auto& node4 = graph.AddNode("Calculator4");
+  b.ConnectTo(node4.In("INPUT_B"));
+  c.ConnectTo(node4.In("INPUT_C"));
+  d.ConnectTo(node4.In("INPUT_D"));
+  Stream<E> e = node4.Out("OUTPUT").Cast<E>();
+
+  // Outputs.
+  b.SetName("b").ConnectTo(graph.Out(0));
+  c.SetName("c").ConnectTo(graph.Out(1));
+  d.SetName("d").ConnectTo(graph.Out(2));
+  e.SetName("e").ConnectTo(graph.Out(3));
+
+  return graph.GetConfig();
+}
+```
+
+Now, if needed, you can easily remove `node1` and make `b` a graph input and no
+updates are needed to `node2`, `node3`, `node4` (same as in proto representation
+by the way), because they are decoupled from each other.
+
+Overall, the above code replicates the proto graph more closely:
+
+```proto
+input_stream: "a"
+
+node {
+  calculator: "Calculator1"
+  input_stream: "INPUT:a"
+  output_stream: "OUTPUT:b"
+}
+
+node {
+  calculator: "Calculator2"
+  input_stream: "INPUT:b"
+  output_stream: "OUTPUT:C"
+}
+
+node {
+  calculator: "Calculator3"
+  input_stream: "INPUT_B:b"
+  input_stream: "INPUT_C:c"
+  output_stream: "OUTPUT:d"
+}
+
+node {
+  calculator: "Calculator4"
+  input_stream: "INPUT_B:b"
+  input_stream: "INPUT_C:c"
+  input_stream: "INPUT_D:d"
+  output_stream: "OUTPUT:e"
+}
+
+output_stream: "b"
+output_stream: "c"
+output_stream: "d"
+output_stream: "e"
+```
+
+On top of that, now you can extract utility functions for further reuse in other graphs:
+
+```c++ {.good}
+Stream<B> RunCalculator1(Stream<A> a, Graph& graph) {
+  auto& node = graph.AddNode("Calculator1");
+  a.ConnectTo(node.In("INPUT"));
+  return node.Out("OUTPUT").Cast<B>();
+}
+
+Stream<C> RunCalculator2(Stream<B> b, Graph& graph) {
+  auto& node = graph.AddNode("Calculator2");
+  b.ConnectTo(node.In("INPUT"));
+  return node.Out("OUTPUT").Cast<C>();
+}
+
+Stream<D> RunCalculator3(Stream<B> b, Stream<C> c, Graph& graph) {
+  auto& node = graph.AddNode("Calculator3");
+  b.ConnectTo(node.In("INPUT_B"));
+  c.ConnectTo(node.In("INPUT_C"));
+  return node.Out("OUTPUT").Cast<D>();
+}
+
+Stream<E> RunCalculator4(Stream<B> b, Stream<C> c, Stream<D> d, Graph& graph) {
+  auto& node = graph.AddNode("Calculator4");
+  b.ConnectTo(node.In("INPUT_B"));
+  c.ConnectTo(node.In("INPUT_C"));
+  d.ConnectTo(node.In("INPUT_D"));
+  return node.Out("OUTPUT").Cast<E>();
+}
+
+CalculatorGraphConfig BuildGraph() {
+  Graph graph;
+
+  // Inputs.
+  Stream<A> a = graph.In(0).Cast<A>();
+
+  Stream<B> b = RunCalculator1(a, graph);
+  Stream<C> c = RunCalculator2(b, graph);
+  Stream<D> d = RunCalculator3(b, c, graph);
+  Stream<E> e = RunCalculator4(b, c, d, graph);
+
+  // Outputs.
+  b.SetName("b").ConnectTo(graph.Out(0));
+  c.SetName("c").ConnectTo(graph.Out(1));
+  d.SetName("d").ConnectTo(graph.Out(2));
+  e.SetName("e").ConnectTo(graph.Out(3));
+
+  return graph.GetConfig();
+}
+```
