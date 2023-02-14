@@ -28,11 +28,11 @@ C++ graph builder is a powerful tool for:
 Let's see how C++ graph builder can be used for a simple graph:
 
 ```proto
-// Graph inputs.
+# Graph inputs.
 input_stream: "input_tensors"
 input_side_packet: "model"
 
-// Graph outputs.
+# Graph outputs.
 output_stream: "output_tensors"
 
 node {
@@ -183,7 +183,7 @@ node {
   input_stream: "float_value"
   input_stream: "int_value"
   input_stream: "bool_value"
-  // The order must be the same as for inputs (or you can use explicit indexes)
+  # The order must be the same as for inputs (or you can use explicit indexes)
   output_stream: "passed_float_value"
   output_stream: "passed_int_value"
   output_stream: "passed_bool_value"
