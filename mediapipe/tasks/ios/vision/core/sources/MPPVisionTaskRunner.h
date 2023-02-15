@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
-
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPRunningMode.h"
 
@@ -42,8 +41,8 @@ NS_ASSUME_NONNULL_BEGIN
  * intended to deliver inference results must be provided. In case of image or video running mode,
  * packets callback must be set to nil.
  *
- * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
- * error will be saved.
+ * @param error Pointer to the memory location where errors if any should be
+ * saved. If @c NULL, no error will be saved.
  *
  * @return An instance of `MPPVisionTaskRunner` initialized to the given MediaPipe calculator config
  * proto, running mode and packets callback.
@@ -53,11 +52,6 @@ NS_ASSUME_NONNULL_BEGIN
                                        packetsCallback:
                                            (mediapipe::tasks::core::PacketsCallback)packetsCallback
                                                  error:(NSError **)error NS_DESIGNATED_INITIALIZER;
-
-- (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
-                              packetsCallback:
-                                  (mediapipe::tasks::core::PacketsCallback)packetsCallback
-                                        error:(NSError **)error NS_UNAVAILABLE;
 
 - (instancetype)init NS_UNAVAILABLE;
 

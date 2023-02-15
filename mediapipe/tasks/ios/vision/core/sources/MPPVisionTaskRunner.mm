@@ -19,7 +19,8 @@
 
 namespace {
 using ::mediapipe::CalculatorGraphConfig;
-using ::mediapipe::tasks::core::PacketsCallback;
+using ::mediapipe::Packet;
+using ::mediapipe::tasks::core::PacketMap;
 }  // namespace
 
 @interface MPPVisionTaskRunner () {
@@ -29,9 +30,10 @@ using ::mediapipe::tasks::core::PacketsCallback;
 
 @implementation MPPVisionTaskRunner
 
-- (nullable instancetype)initWithCalculatorGraphConfig:(CalculatorGraphConfig)graphConfig
+- (nullable instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
                                            runningMode:(MPPRunningMode)runningMode
-                                       packetsCallback:(PacketsCallback)packetsCallback
+                                       packetsCallback:
+                                           (mediapipe::tasks::core::PacketsCallback)packetsCallback
                                                  error:(NSError **)error {
   switch (runningMode) {
     case MPPRunningModeImage:

@@ -38,9 +38,11 @@ objc_library(
     ],
     deps = [
         ":MPPRunningMode",
-        "//mediapipe/tasks/ios/common:MPPCommon",
-        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
+        "//mediapipe/tasks/ios/core:MPPVisionPacketCreator",
+    ],
+)
+
 objc_library(
     name = "MPPVisionPacketCreator",
     srcs = ["sources/MPPVisionPacketCreator.mm"],
