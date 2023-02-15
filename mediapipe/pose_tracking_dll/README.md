@@ -73,20 +73,21 @@ Otherwise, please also read the guidelines on the official Mediapipe website: ht
   )
   ```
 - Edit the `MEDIAPIPEDIR\mediapipe\pose_tracking_dll\build.bat` file
-  - Must change:
+  - Must change
 	- `BAZEL_PATH` -> path to bazel.exe (No default)
-  - Build configuration
+  - Build configuration selection
     - `MEDIAPIPE_CONFIGURATION` -> Release (Default, `opt`) or Debug (`dbg`)
-  - Verify:
+  - Verify these settings
 	- `MYSYS_PATH` -> path to `MSYS2DIR\usr\bin` (Default: `C:\msys64\usr\bin`)
 	- `BAZEL_SH` -> path to bash.exe (Default: `%MYSYS_PATH%\bash.exe`)
 	- `BAZEL_VS_VERSION` -> Visual Studio version (Default: `2019`)
 	- `BAZEL_VC_FULL_VERSION` -> Visual Studio Build Tools full version. Depends on the version installed. See `See C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC`
 	- `BAZEL_WINSDK_FULL_VERSION` -> WinSDK version (Default: `10.0.19041.0`)
 	- `BAZEL_PYTHON_PATH` -> Path to python.exe (Default: `%LOCALAPPDATA_FORWARDSLASH%/Programs/Python/Python311/python.exe`)
-  - Optional
+  - Optional settings
 	- `BAZEL_TMP_BUILD_DIR` -> A temporary build folder
-	- `TARGET_PATH` -> A target folder to copy the relevant files to, i.e. the mediapipe/version folder of the external repo
+	- `EXTERNAL_PATH` -> The path to the "external repository" to copy the output files
+	- `MEDIAPIPE_VERSION` -> The current Mediapipe version (to create/use the according subfolder in `EXTERNAL_PATH`)
 
 # Build
 

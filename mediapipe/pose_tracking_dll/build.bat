@@ -20,6 +20,9 @@ set "LOCALAPPDATA_FORWARDSLASH=%LOCALAPPDATA:\=/%"
 :: path to bazel.exe
 SET BAZEL_PATH=E:\repos\bazel\5.4.0
 
+:: Release [opt] or Debug [dbg]
+SET MEDIAPIPE_CONFIGURATION=dbg
+
 :: path to msys 
 SET MYSYS_PATH=C:\msys64\usr\bin
 
@@ -44,11 +47,10 @@ SET BAZEL_PYTHON_PATH=%LOCALAPPDATA_FORWARDSLASH%/Programs/Python/Python311/pyth
 :: Optional: temporary build path
 SET BAZEL_TMP_BUILD_DIR=E:\repos\mp_output
 
-:: Release [opt] or Debug [dbg]
-SET MEDIAPIPE_CONFIGURATION=opt
-
-:: Optional: A target path to copy the relevant files after build, i.e. the version folder of the external repo
-SET TARGET_PATH=C:\Users\ChristophNiederberge\source\repos\CodeReviews\external\mediapipe\0.8.10.2_x64
+:: Optional: The path to the external repository to copy the output files
+SET EXTERNAL_PATH=C:\Users\ChristophNiederberge\source\repos\CodeReviews\external
+:: The current Mediapipe version to set the correct external subfolder name
+SET MEDIAPIPE_VERSION=0.9.1
 
 :: ----------------------------------------------------------
 :: Build posetracking DLL
@@ -64,20 +66,22 @@ IF NOT [%BAZEL_TMP_BUILD_DIR%]==[] (
 :: ----------------------------------------------------------
 :: Copy files to target folder (optional)
 :: ----------------------------------------------------------
-IF NOT [%TARGET_PATH%]==[] (
+IF NOT [%EXTERNAL_PATH%]==[] (
 	IF [%MEDIAPIPE_CONFIGURATION%]==[opt] (
-		ECHO Copy files to %TARGET_PATH%\x64\Release ... 
-		mkdir %TARGET_PATH%\x64\Release
-		copy bazel-bin\mediapipe\pose_tracking_dll\pose_tracking_lib.dll %TARGET_PATH%\x64\Release
-		copy bazel-bin\mediapipe\pose_tracking_dll\pose_tracking_lib.dll.if.lib %TARGET_PATH%\x64\Release
-		copy bazel-bin\mediapipe\pose_tracking_dll\opencv_world3410.dll %TARGET_PATH%\x64\Release
+		SET TARGET_PATH = %EXTERNAL_PATH%\mediapipe\%MEDIAPIPE_VERSION%_x64\x64\Release
+		ECHO Copy files to %TARGET_PATH% ... 
+		mkdir %TARGET_PATH% 
+		copy bazel-bin\mediapipe\pose_tracking_dll\pose_tracking_lib.dll %TARGET_PATH% 
+		copy bazel-bin\mediapipe\pose_tracking_dll\pose_tracking_lib.dll.if.lib %TARGET_PATH% 
+		copy bazel-bin\mediapipe\pose_tracking_dll\opencv_world3410.dll %TARGET_PATH% 
 	) 
 	IF [%MEDIAPIPE_CONFIGURATION%]==[dbg] (
-		ECHO Copy files to %TARGET_PATH%\x64\Debug ... 
-		mkdir %TARGET_PATH%\x64\Debug
-		copy bazel-bin\mediapipe\pose_tracking_dll\pose_tracking_lib.dll %TARGET_PATH%\x64\Debug
-		copy bazel-bin\mediapipe\pose_tracking_dll\pose_tracking_lib.dll.if.lib %TARGET_PATH%\x64\Debug
-		copy bazel-bin\mediapipe\pose_tracking_dll\pose_tracking_lib.pdb %TARGET_PATH%\x64\Debug
-		copy bazel-bin\mediapipe\pose_tracking_dll\opencv_world3410d.dll %TARGET_PATH%\x64\Debug
+		SET TARGET_PATH = %EXTERNAL_PATH%\mediapipe\%MEDIAPIPE_VERSION%_x64\x64\Debug
+		ECHO Copy files to %TARGET_PATH% ... 
+		mkdir %TARGET_PATH% 
+		copy bazel-bin\mediapipe\pose_tracking_dll\pose_tracking_lib.dll %TARGET_PATH% 
+		copy bazel-bin\mediapipe\pose_tracking_dll\pose_tracking_lib.dll.if.lib %TARGET_PATH% 
+		copy bazel-bin\mediapipe\pose_tracking_dll\pose_tracking_lib.pdb %TARGET_PATH% 
+		copy bazel-bin\mediapipe\pose_tracking_dll\opencv_world3410d.dll %TARGET_PATH% 
 	) 
 )
