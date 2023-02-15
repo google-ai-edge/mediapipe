@@ -91,6 +91,10 @@ allows you to make use of automatic provisioning (see later section).
     This will install `Tulsi.app` inside the `Applications` directory in your
     home directory.
 
+    **Note**: Please ensure the `xcode_version` in the
+    [`build_and_run.sh`](https://github.com/bazelbuild/tulsi/blob/b1d0108e6a93dbe8ab01529b2c607b6b651f0759/build_and_run.sh#L26)
+    file in tulsi repo is the same version as installed in your system.
+
 2.  Open `mediapipe/Mediapipe.tulsiproj` using the Tulsi app.
 
     Tip: If Tulsi displays an error saying "Bazel could not be found", press the
