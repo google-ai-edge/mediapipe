@@ -54,6 +54,7 @@ message TensorsToDetectionsCalculatorOptions {
   // Whether to reverse the order of predicted x, y from output.
   // If false, the order is [y_center, x_center, h, w], if true the order is
   // [x_center, y_center, w, h].
+  // DEPRECATED. Use `box_format` instead.
   optional bool reverse_output_order = 14 [default = false];
   // The ids of classes that should be ignored during decoding the score for
   // each predicted box. Can be overridden with IGNORE_CLASSES side packet.
@@ -112,4 +113,18 @@ message TensorsToDetectionsCalculatorOptions {
   oneof box_indices {
     BoxBoundariesIndices box_boundaries_indices = 23;
   }
+
+  // Tells the calculator how to convert the detector output to bounding boxes.
+  // Replaces `reverse_output_order` to support more bbox output formats.
+  enum BoxFormat {
+    // if UNSPECIFIED, the calculator assumes YXHW
+    UNSPECIFIED = 0;
+    // [y_center, x_center, height, width]
+    YXHW = 1;
+    // [x_center, y_center, width, height]
+    XYWH = 2;
+    // [xmin, ymin, xmax, ymax]
+    XYXY = 3;
+  }
+  optional BoxFormat box_format = 24 [default = UNSPECIFIED];
 }
