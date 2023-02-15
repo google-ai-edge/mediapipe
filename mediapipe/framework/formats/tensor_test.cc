@@ -42,7 +42,8 @@ TEST(Cpu, TestMemoryAllocation) {
 }
 
 TEST(Cpu, TestTensorMove) {
-  Tensor t1(Tensor::ElementType::kFloat32, Tensor::Shape{4, 3, 2, 3});
+  Tensor t1(Tensor::ElementType::kFloat32, Tensor::Shape{4, 3, 2, 3},
+            Tensor::QuantizationParameters(0.5, 127));
   void* p1 = t1.GetCpuWriteView().buffer<float>();
   EXPECT_NE(p1, nullptr);
   Tensor t2(std::move(t1));
@@ -50,6 +51,10 @@ TEST(Cpu, TestTensorMove) {
   EXPECT_EQ(t1.bytes(), 0);  // NOLINT
   void* p2 = t2.GetCpuWriteView().buffer<float>();
   EXPECT_EQ(p1, p2);
+  EXPECT_EQ(t1.quantization_parameters().scale,
+            t2.quantization_parameters().scale);
+  EXPECT_EQ(t1.quantization_parameters().zero_point,
+            t2.quantization_parameters().zero_point);
 }
 
 TEST(Cpu, TestViewMove) {

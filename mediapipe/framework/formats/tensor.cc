@@ -399,6 +399,7 @@ void Tensor::Move(Tensor* src) {
   valid_ = src->valid_;
   src->valid_ = kValidNone;
   shape_ = src->shape();
+  quantization_parameters_ = src->quantization_parameters();
   element_type_ = src->element_type();
   src->element_type_ = ElementType::kNone;  // Mark as invalidated.
   cpu_buffer_ = src->cpu_buffer_;
