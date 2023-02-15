@@ -14,7 +14,7 @@
 
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
 
-#import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+ImageFrameUtils.h"
+#import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Utils.h"
 
 #include "mediapipe/framework/formats/image.h"
 

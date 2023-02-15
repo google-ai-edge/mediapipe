@@ -54,6 +54,6 @@ objc_library(
     deps = [
         "//mediapipe/framework:packet",
         "//mediapipe/framework/formats:image",
-        "//mediapipe/tasks/ios/vision/core/utils:MPPImageFrameUtils",
+        "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
     ],
 )
