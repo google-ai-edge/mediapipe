@@ -19,9 +19,6 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//third_party/apple_frameworks:CoreMedia",
-        "//third_party/apple_frameworks:CoreVideo",
-        "//third_party/apple_frameworks:UIKit",
     ],
 )
 
@@ -44,5 +41,17 @@ objc_library(
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
+objc_library(
+    name = "MPPVisionPacketCreator",
+    srcs = ["sources/MPPVisionPacketCreator.mm"],
+    hdrs = ["sources/MPPVisionPacketCreator.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/tasks/ios/vision/core/utils:MPPImageFrameUtils",
     ],
 )
