@@ -26,3 +26,13 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPImageClassifierOptions",
+    srcs = ["sources/MPPImageClassifierOptions.m"],
+    hdrs = ["sources/MPPImageClassifierOptions.h"],
+    deps = [
+        ":MPPImageClassifierResult",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
+    ],
+)
