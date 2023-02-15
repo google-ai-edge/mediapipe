@@ -28,8 +28,9 @@ NS_SWIFT_NAME(ImageClassifierOptions)
 
 @property(nonatomic) MPPRunningMode runningMode;
 
-/** 
- * The user-defined result callback for processing live stream data. The result callback should only be specified when the running mode is set to the live stream mode.
+/**
+ * The user-defined result callback for processing live stream data. The result callback should only
+ * be specified when the running mode is set to the live stream mode.
  */
 @property(nonatomic, copy) void (^completion)(MPPImageClassifierResult *result, NSError *error);
 

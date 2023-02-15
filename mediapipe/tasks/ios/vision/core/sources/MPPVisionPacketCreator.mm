@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,19 +19,18 @@
 #include "mediapipe/framework/formats/image.h"
 
 namespace {
+using ::mediapipe::Image;
 using ::mediapipe::MakePacket;
 using ::mediapipe::Packet;
-using ::mediapipe::Image;
 }  // namespace
 
 struct freeDeleter {
-  void operator()(void* ptr) { free(ptr); }
+  void operator()(void *ptr) { free(ptr); }
 }
 
 @implementation MPPVisionPacketCreator
 
 + (Packet)createWithMPPImage:(MPPImage *)image error:(NSError **)error {
-  
   std::unique_ptr<ImageFrame> imageFrame = [image imageFrameWithError:error];
 
   if (!imageFrame) {

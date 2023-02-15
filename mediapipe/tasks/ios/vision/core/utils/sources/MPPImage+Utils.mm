@@ -25,7 +25,7 @@
 #include "mediapipe/framework/formats/image_format.pb.h"
 
 namespace {
-  using ::mediapipe::ImageFrame;
+using ::mediapipe::ImageFrame;
 }
 
 @interface MPPPixelDataUtils : NSObject
@@ -41,7 +41,8 @@ namespace {
 
 @interface MPPCVPixelBufferUtils : NSObject
 
-+ (std::unique_ptr<ImageFrame>)imageFrameFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer error:(NSError **)error;
++ (std::unique_ptr<ImageFrame>)imageFrameFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
+                                                     error:(NSError **)error;
 
 @end
 
@@ -124,14 +125,13 @@ namespace {
 
 @implementation MPPCVPixelBufferUtils
 
-+ (std::unique_ptr<ImageFrame>)rgbImageFrameFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer error:(NSError **)error {
++ (std::unique_ptr<ImageFrame>)rgbImageFrameFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
+                                                        error:(NSError **)error {
   CVPixelBufferLockBaseAddress(pixelBuffer, 0);
 
   size_t width = CVPixelBufferGetWidth(pixelBuffer);
   size_t height = CVPixelBufferGetHeight(pixelBuffer);
   size_t stride = CVPixelBufferGetBytesPerRow(pixelBuffer);
-
-
 
   uint8_t *rgbPixelData = [MPPPixelDataUtils
       rgbPixelDataFromPixelData:(uint8_t *)CVPixelBufferGetBaseAddress(pixelBuffer)
@@ -146,17 +146,17 @@ namespace {
   if (!rgbPixelData) {
     return nullptr;
   }
-  
-  std::unique_ptr<ImageFrame> imageFrame = absl::make_unique<ImageFrame>(
-      ::mediapipe::ImageFormat::SRGB, /*width=*/width, /*height=*/height, stride,
-      static_cast<uint8*>(rgbPixelData),
-      /*deleter=*/free);
+
+  std::unique_ptr<ImageFrame> imageFrame =
+      absl::make_unique<ImageFrame>(::mediapipe::ImageFormat::SRGB, /*width=*/width,
+                                    /*height=*/height, stride, static_cast<uint8 *>(rgbPixelData),
+                                    /*deleter=*/free);
 
   return imageFrame;
 }
 
 + (std::unique_ptr<ImageFrame>)imageFrameFromCVPixelBuffer:(CVPixelBufferRef)pixelBuffer
-                                           error:(NSError **)error {
+                                                     error:(NSError **)error {
   uint8_t *pixelData = NULL;
 
   OSType pixelBufferFormat = CVPixelBufferGetPixelFormatType(pixelBuffer);
@@ -210,11 +210,11 @@ namespace {
       // We have drawn the image as an RGBA image with 8 bitsPerComponent and hence can safely input
       // a pixel format of type kCVPixelFormatType_32RGBA for conversion by vImage.
       pixelDataToReturn = [MPPPixelDataUtils rgbPixelDataFromPixelData:srcData
-                                                                withWidth:width
-                                                                   height:height
-                                                                   stride:bytesPerRow
-                                                        pixelBufferFormat:kCVPixelFormatType_32RGBA
-                                                                    error:error];
+                                                             withWidth:width
+                                                                height:height
+                                                                stride:bytesPerRow
+                                                     pixelBufferFormat:kCVPixelFormatType_32RGBA
+                                                                 error:error];
     }
 
     CGContextRelease(context);
@@ -224,7 +224,7 @@ namespace {
 
   std::unique_ptr<ImageFrame> imageFrame = absl::make_unique<ImageFrame>(
       mediapipe::ImageFormat::SRGB, /*width=*/(int)width, /*height=*/(int)height, (int)bytesPerRow,
-      static_cast<uint8*>(pixelDataToReturn),
+      static_cast<uint8 *>(pixelDataToReturn),
       /*deleter=*/free);
 
   return imageFrame;
@@ -235,10 +235,8 @@ namespace {
 @implementation UIImage (ImageFrameUtils)
 
 - (std::unique_ptr<ImageFrame>)imageFrameFromCIImageWithError:(NSError **)error {
-
   if (self.CIImage.pixelBuffer) {
-    return [MPPCVPixelBufferUtils imageFrameFromCVPixelBuffer:self.CIImage.pixelBuffer
-                                                            error:error];
+    return [MPPCVPixelBufferUtils imageFrameFromCVPixelBuffer:self.CIImage.pixelBuffer error:error];
 
   } else if (self.CIImage.CGImage) {
     return [MPPCGImageUtils imageFrameFromCGImage:self.CIImage.CGImage error:error];
@@ -278,8 +276,7 @@ namespace {
   switch (self.imageSourceType) {
     case MPPImageSourceTypeSampleBuffer: {
       CVPixelBufferRef sampleImagePixelBuffer = CMSampleBufferGetImageBuffer(self.sampleBuffer);
-      return [MPPCVPixelBufferUtils imageFrameFromCVPixelBuffer:sampleImagePixelBuffer
-                                                              error:error];
+      return [MPPCVPixelBufferUtils imageFrameFromCVPixelBuffer:sampleImagePixelBuffer error:error];
     }
     case MPPImageSourceTypePixelBuffer: {
       return [MPPCVPixelBufferUtils imageFrameFromCVPixelBuffer:self.pixelBuffer error:error];

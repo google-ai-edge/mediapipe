@@ -14,19 +14,20 @@
 
 #import <Foundation/Foundation.h>
 
-#import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 #include "mediapipe/framework/formats/image_frame.h"
+#import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-/** 
+/**
  * Helper utility for converting `MPPImage` into a `mediapipe::ImageFrame`.
  */
 @interface MPPImage (Utils)
 /**
  * Converts the `MPPImage` into a `mediapipe::ImageFrame`.
- * Irrespective of whether the underlying buffer is grayscale, RGB, RGBA, BGRA etc., the MPPImage is converted to an RGB format. In case of grayscale images, the mono channel is duplicated
- * in the R, G, B channels.
+ * Irrespective of whether the underlying buffer is grayscale, RGB, RGBA, BGRA etc., the MPPImage is
+ * converted to an RGB format. In case of grayscale images, the mono channel is duplicated in the R,
+ * G, B channels.
  *
  * @param error Pointer to the memory location where errors if any should be
  * saved. If @c NULL, no error will be saved.

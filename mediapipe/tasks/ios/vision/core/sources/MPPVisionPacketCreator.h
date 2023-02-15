@@ -16,7 +16,7 @@
 
 #include "mediapipe/framework/packet.h"
 
-/** 
+/**
  * This class helps create various kinds of packets for Mediapipe Vision Tasks.
  */
 @interface MPPVisionPacketCreator : NSObject
