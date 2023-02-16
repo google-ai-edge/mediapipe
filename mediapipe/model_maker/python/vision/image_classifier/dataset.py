@@ -21,16 +21,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from mediapipe.model_maker.python.core.data import classification_dataset
-
-
-def _load_image(path: str) -> tf.Tensor:
-  """Loads a jpeg/png image and returns an image tensor."""
-  image_raw = tf.io.read_file(path)
-  image_tensor = tf.cond(
-      tf.io.is_jpeg(image_raw),
-      lambda: tf.io.decode_jpeg(image_raw, channels=3),
-      lambda: tf.io.decode_png(image_raw, channels=3))
-  return image_tensor
+from mediapipe.model_maker.python.vision.core import image_utils
 
 
 def _create_data(
@@ -93,7 +84,9 @@ class Dataset(classification_dataset.ClassificationDataset):
 
     path_ds = tf.data.Dataset.from_tensor_slices(all_image_paths)
 
-    image_ds = path_ds.map(_load_image, num_parallel_calls=tf.data.AUTOTUNE)
+    image_ds = path_ds.map(
+        image_utils.load_image, num_parallel_calls=tf.data.AUTOTUNE
+    )
 
     # Load label
     label_ds = tf.data.Dataset.from_tensor_slices(

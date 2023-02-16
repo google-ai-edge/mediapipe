@@ -17,19 +17,9 @@ import random
 import numpy as np
 import tensorflow as tf
 
+from mediapipe.model_maker.python.vision.core import image_utils
+from mediapipe.model_maker.python.vision.core import test_utils
 from mediapipe.model_maker.python.vision.image_classifier import dataset
-
-
-def _fill_image(rgb, image_size):
-  r, g, b = rgb
-  return np.broadcast_to(
-      np.array([[[r, g, b]]], dtype=np.uint8),
-      shape=(image_size, image_size, 3))
-
-
-def _write_filled_jpeg_file(path, rgb, image_size):
-  tf.keras.preprocessing.image.save_img(path, _fill_image(rgb, image_size),
-                                        'channels_last', 'jpeg')
 
 
 class DatasetTest(tf.test.TestCase):
@@ -43,9 +33,11 @@ class DatasetTest(tf.test.TestCase):
     for class_name in ('daisy', 'tulips'):
       class_subdir = os.path.join(self.image_path, class_name)
       os.mkdir(class_subdir)
-      _write_filled_jpeg_file(
+      test_utils.write_filled_jpeg_file(
           os.path.join(class_subdir, '0.jpeg'),
-          [random.uniform(0, 255) for _ in range(3)], 224)
+          [random.uniform(0, 255) for _ in range(3)],
+          224,
+      )
 
   def test_split(self):
     ds = tf.data.Dataset.from_tensor_slices([[0, 1], [1, 1], [0, 0], [1, 0]])
@@ -73,11 +65,13 @@ class DatasetTest(tf.test.TestCase):
     for image, label in data.gen_tf_dataset():
       self.assertTrue(label.numpy() == 1 or label.numpy() == 0)
       if label.numpy() == 0:
-        raw_image_tensor = dataset._load_image(
-            os.path.join(self.image_path, 'daisy', '0.jpeg'))
+        raw_image_tensor = image_utils.load_image(
+            os.path.join(self.image_path, 'daisy', '0.jpeg')
+        )
       else:
-        raw_image_tensor = dataset._load_image(
-            os.path.join(self.image_path, 'tulips', '0.jpeg'))
+        raw_image_tensor = image_utils.load_image(
+            os.path.join(self.image_path, 'tulips', '0.jpeg')
+        )
       self.assertTrue((image.numpy() == raw_image_tensor.numpy()).all())
 
   def test_from_tfds(self):

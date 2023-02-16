@@ -31,3 +31,22 @@ py_test(
     srcs = ["image_preprocessing_test.py"],
     deps = [":image_preprocessing"],
 )
+
+py_library(
+    name = "image_utils",
+    srcs = ["image_utils.py"],
+)
+
+py_test(
+    name = "image_utils_test",
+    srcs = ["image_utils_test.py"],
+    deps = [
+        ":image_utils",
+        ":test_utils",
+    ],
+)
+
+py_library(
+    name = "test_utils",
+    srcs = ["test_utils.py"],
+)

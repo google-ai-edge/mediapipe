@@ -55,13 +55,20 @@ py_test(
 py_library(
     name = "dataset",
     srcs = ["dataset.py"],
-    deps = ["//mediapipe/model_maker/python/core/data:classification_dataset"],
+    deps = [
+        "//mediapipe/model_maker/python/core/data:classification_dataset",
+        "//mediapipe/model_maker/python/vision/core:image_utils",
+    ],
 )
 
 py_test(
     name = "dataset_test",
     srcs = ["dataset_test.py"],
-    deps = [":dataset"],
+    deps = [
+        ":dataset",
+        "//mediapipe/model_maker/python/vision/core:image_utils",
+        "//mediapipe/model_maker/python/vision/core:test_utils",
+    ],
 )
 
 py_library(
