@@ -21,6 +21,16 @@ package(default_visibility = [
 licenses(["notice"])
 
 mediapipe_proto_library(
+    name = "face_blendshapes_graph_options_proto",
+    srcs = ["face_blendshapes_graph_options.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_proto",
+    ],
+)
+
+mediapipe_proto_library(
     name = "face_landmarks_detector_graph_options_proto",
     srcs = ["face_landmarks_detector_graph_options.proto"],
     deps = [

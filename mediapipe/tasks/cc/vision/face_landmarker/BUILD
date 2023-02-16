@@ -19,6 +19,32 @@ package(default_visibility = [
 licenses(["notice"])
 
 cc_library(
+    name = "face_blendshapes_graph",
+    srcs = ["face_blendshapes_graph.cc"],
+    deps = [
+        "//mediapipe/calculators/core:split_proto_list_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/calculators/tensor:landmarks_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:landmarks_to_tensor_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:tensors_to_classification_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_classification_calculator_cc_proto",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/core:model_asset_bundle_resources",
+        "//mediapipe/tasks/cc/core:model_resources_cache",
+        "//mediapipe/tasks/cc/core:model_task_graph",
+        "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_blendshapes_graph_options_cc_proto",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "face_landmarks_detector_graph",
     srcs = ["face_landmarks_detector_graph.cc"],
     deps = [
