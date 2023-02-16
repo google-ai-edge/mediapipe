@@ -115,7 +115,7 @@ InferenceCalculatorCpuImpl::MaybeCreateDelegate(CalculatorContext* cc) {
   const bool opts_has_delegate =
       calculator_opts.has_delegate() || !kDelegate(cc).IsEmpty();
   if (opts_has_delegate && opts_delegate.has_tflite()) {
-    // Default tflite inference requeqsted - no need to modify graph.
+    // Default tflite inference requested - no need to modify graph.
     return nullptr;
   }
 
