@@ -796,11 +796,19 @@ absl::Status TensorsToDetectionsCalculator::DecodeBoxes(
         const int offset = i * num_coords_ + options_.keypoint_coord_offset() +
                            k * options_.num_values_per_keypoint();
 
-        float keypoint_y = raw_boxes[offset];
-        float keypoint_x = raw_boxes[offset + 1];
-        if (options_.reverse_output_order()) {
-          keypoint_x = raw_boxes[offset];
-          keypoint_y = raw_boxes[offset + 1];
+        float keypoint_y = 0.0;
+        float keypoint_x = 0.0;
+        switch (box_output_format_) {
+          case mediapipe::TensorsToDetectionsCalculatorOptions::UNSPECIFIED:
+          case mediapipe::TensorsToDetectionsCalculatorOptions::YXHW:
+            keypoint_y = raw_boxes[offset];
+            keypoint_x = raw_boxes[offset + 1];
+            break;
+          case mediapipe::TensorsToDetectionsCalculatorOptions::XYWH:
+          case mediapipe::TensorsToDetectionsCalculatorOptions::XYXY:
+            keypoint_x = raw_boxes[offset];
+            keypoint_y = raw_boxes[offset + 1];
+            break;
         }
 
         (*boxes)[offset] = keypoint_x / options_.x_scale() * anchors[i].w() +

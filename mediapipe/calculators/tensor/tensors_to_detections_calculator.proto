@@ -116,14 +116,16 @@ message TensorsToDetectionsCalculatorOptions {
 
   // Tells the calculator how to convert the detector output to bounding boxes.
   // Replaces `reverse_output_order` to support more bbox output formats.
+  // As with `reverse_output_order`, this also informs calculator the order
+  // of keypoint predictions.
   enum BoxFormat {
     // if UNSPECIFIED, the calculator assumes YXHW
     UNSPECIFIED = 0;
-    // [y_center, x_center, height, width]
+    // bbox [y_center, x_center, height, width], keypoint [y, x]
     YXHW = 1;
-    // [x_center, y_center, width, height]
+    // bbox [x_center, y_center, width, height], keypoint [x, y]
     XYWH = 2;
-    // [xmin, ymin, xmax, ymax]
+    // bbox [xmin, ymin, xmax, ymax], keypoint [x, y]
     XYXY = 3;
   }
   optional BoxFormat box_format = 24 [default = UNSPECIFIED];
