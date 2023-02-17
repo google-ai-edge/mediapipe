@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "absl/memory/memory.h"
+#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/util/filtering/low_pass_filter.h"
 
@@ -18,7 +19,7 @@ OneEuroFilter::OneEuroFilter(double frequency, double min_cutoff, double beta,
   SetDerivateCutoff(derivate_cutoff);
   x_ = absl::make_unique<LowPassFilter>(GetAlpha(min_cutoff));
   dx_ = absl::make_unique<LowPassFilter>(GetAlpha(derivate_cutoff));
-  last_time_ = 0;
+  last_time_ = kint64min;
 }
 
 double OneEuroFilter::Apply(absl::Duration timestamp, double value_scale,
