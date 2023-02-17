@@ -387,3 +387,26 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
     ],
 )
+
+cc_library(
+    name = "graph_builder_utils",
+    srcs = ["graph_builder_utils.cc"],
+    hdrs = ["graph_builder_utils.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "graph_builder_utils_test",
+    srcs = ["graph_builder_utils_test.cc"],
+    deps = [
+        ":graph_builder_utils",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
