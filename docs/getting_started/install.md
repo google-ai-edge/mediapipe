@@ -67,6 +67,13 @@ install --user six`.
         libopencv-video-dev
     ```
 
+    **Note**. On Debian 11/Ubuntu 21.04 where OpenCV 4.5 is installed with
+    `libopencv-video-dev`, `libopencv-contrib-dev` should also be installed.
+
+    ```bash
+    $ sudo apt-get install -y libopencv-contrib-dev
+    ```
+
     MediaPipe's [`opencv_linux.BUILD`] and [`WORKSPACE`] are already configured
     for OpenCV 2/3 and should work correctly on any architecture:
 
