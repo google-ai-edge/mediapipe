@@ -148,8 +148,8 @@ using ::mediapipe::ImageFrame;
   }
 
   std::unique_ptr<ImageFrame> imageFrame =
-      absl::make_unique<ImageFrame>(::mediapipe::ImageFormat::SRGB, /*width=*/width,
-                                    /*height=*/height, stride, static_cast<uint8 *>(rgbPixelData),
+      absl::make_unique<ImageFrame>(::mediapipe::ImageFormat::SRGB, width,
+                                    height, stride, static_cast<uint8 *>(rgbPixelData),
                                     /*deleter=*/free);
 
   return imageFrame;
@@ -223,7 +223,7 @@ using ::mediapipe::ImageFrame;
   CGColorSpaceRelease(colorSpace);
 
   std::unique_ptr<ImageFrame> imageFrame = absl::make_unique<ImageFrame>(
-      mediapipe::ImageFormat::SRGB, /*width=*/(int)width, /*height=*/(int)height, (int)bytesPerRow,
+      mediapipe::ImageFormat::SRGB, (int)width, (int)height, (int)bytesPerRow,
       static_cast<uint8 *>(pixelDataToReturn),
       /*deleter=*/free);
 
