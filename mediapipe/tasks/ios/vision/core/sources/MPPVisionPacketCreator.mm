@@ -30,7 +30,7 @@ struct freeDeleter {
 
 @implementation MPPVisionPacketCreator
 
-+ (Packet)createWithMPPImage:(MPPImage *)image error:(NSError **)error {
++ (Packet)createPacketWithMPPImage:(MPPImage *)image error:(NSError **)error {
   std::unique_ptr<ImageFrame> imageFrame = [image imageFrameWithError:error];
 
   if (!imageFrame) {

@@ -21,6 +21,6 @@
  */
 @interface MPPVisionPacketCreator : NSObject
 
-+ (Packet)createWithMPPImage:(MPPImage *)image error:(NSError **)error;
++ (Packet)createPacketWithMPPImage:(MPPImage *)image error:(NSError **)error;
 
 @end
