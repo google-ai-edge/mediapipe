@@ -320,7 +320,7 @@ cc_library(
         "//mediapipe/framework:packet",
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status",
-        "@org_tensorflow//tensorflow/lite:framework",
+        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
     ],
     alwayslink = 1,
 )

@@ -15,7 +15,7 @@
 #ifndef MEDIAPIPE_UTIL_TFLITE_CPU_OP_RESOLVER_H_
 #define MEDIAPIPE_UTIL_TFLITE_CPU_OP_RESOLVER_H_
 
-#include "tensorflow/lite/kernels/register.h"
+#include "tensorflow/lite/core/shims/cc/kernels/register.h"
 
 namespace mediapipe {
 
@@ -27,8 +27,8 @@ extern "C" void MediaPipe_RegisterTfLiteOpResolver(tflite::MutableOpResolver*);
 
 // This resolver is used for the custom ops introduced by
 // `MediaPipe_RegisterTfLiteOpResolver` (see above).
-class CpuOpResolver
-    : public tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates {
+class CpuOpResolver : public tflite_shims::ops::builtin::
+                          BuiltinOpResolverWithoutDefaultDelegates {
  public:
   CpuOpResolver() { MediaPipe_RegisterTfLiteOpResolver(this); }
 };

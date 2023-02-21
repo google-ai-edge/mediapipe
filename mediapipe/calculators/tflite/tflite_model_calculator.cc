@@ -21,7 +21,7 @@
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "tensorflow/lite/allocation.h"
-#include "tensorflow/lite/model.h"
+#include "tensorflow/lite/core/shims/cc/model.h"
 
 namespace mediapipe {
 

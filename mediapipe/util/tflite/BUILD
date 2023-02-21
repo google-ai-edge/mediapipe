@@ -44,8 +44,8 @@ cc_library(
         "//mediapipe/util/tflite/operations:transform_tensor_bilinear",
         "//mediapipe/util/tflite/operations:transpose_conv_bias",
         "@org_tensorflow//tensorflow/lite:builtin_op_data",
-        "@org_tensorflow//tensorflow/lite:framework",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@org_tensorflow//tensorflow/lite/core/shims:builtin_ops",
+        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
     ],
     # For using the symbol `MediaPipe_RegisterTfLiteOpResolver` in Python
     # with `tensorflow.lite.python.interpreter.InterpreterWithCustomOps`.
@@ -69,7 +69,7 @@ cc_library(
     hdrs = ["op_resolver.h"],
     deps = [
         "@org_tensorflow//tensorflow/lite:builtin_op_data",
-        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@org_tensorflow//tensorflow/lite/core/shims:builtin_ops",
     ],
 )
 
