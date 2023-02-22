@@ -55,6 +55,21 @@ Detection ConvertToDetectionResult(
         bounding_box_proto.ymin() + bounding_box_proto.height();
   }
   detection.bounding_box = bounding_box;
+  if (!detection_proto.location_data().relative_keypoints().empty()) {
+    detection.keypoints = std::vector<NormalizedKeypoint>();
+    detection.keypoints->reserve(
+        detection_proto.location_data().relative_keypoints_size());
+    for (const auto& keypoint :
+         detection_proto.location_data().relative_keypoints()) {
+      detection.keypoints->push_back(
+          {keypoint.x(), keypoint.y(),
+           keypoint.has_keypoint_label()
+               ? std::make_optional(keypoint.keypoint_label())
+               : std::nullopt,
+           keypoint.has_score() ? std::make_optional(keypoint.score())
+                                : std::nullopt});
+    }
+  }
   return detection;
 }
 

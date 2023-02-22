@@ -26,12 +26,31 @@ limitations under the License.
 
 namespace mediapipe::tasks::components::containers {
 
+// A keypoint, defined by the coordinates (x, y), normalized
+// by the image dimensions.
+struct NormalizedKeypoint {
+  // x in normalized image coordinates.
+  float x;
+  // y in normalized image coordinates.
+  float y;
+  // optional label of the keypoint.
+  std::optional<std::string> label;
+  // optional score of the keypoint.
+  std::optional<float> score;
+};
+
 // Detection for a single bounding box.
 struct Detection {
   // A vector of detected categories.
   std::vector<Category> categories;
   // The bounding box location.
   Rect bounding_box;
+  // Optional list of keypoints associated with the detection. Keypoints
+  // represent interesting points related to the detection. For example, the
+  // keypoints represent the eye, ear and mouth from face detection model. Or
+  // in the template matching detection, e.g. KNIFT, they can represent the
+  // feature points for template matching.
+  std::optional<std::vector<NormalizedKeypoint>> keypoints = std::nullopt;
 };
 
 // Detection results of a model.
