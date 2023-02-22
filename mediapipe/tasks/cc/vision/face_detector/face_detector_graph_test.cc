@@ -74,6 +74,8 @@ constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kFullRangeBlazeFaceModel[] = "face_detection_full_range.tflite";
 constexpr char kFullRangeSparseBlazeFaceModel[] =
     "face_detection_full_range_sparse.tflite";
+constexpr char kShortRangeBlazeFaceModel[] =
+    "face_detection_short_range.tflite";
 constexpr char kPortraitImage[] = "portrait.jpg";
 constexpr char kPortraitExpectedDetection[] =
     "portrait_expected_detection.pbtxt";
@@ -161,17 +163,11 @@ TEST_P(FaceDetectorGraphTest, Succeed) {
 
 INSTANTIATE_TEST_SUITE_P(
     FaceDetectorGraphTest, FaceDetectorGraphTest,
-    Values(TestParams{.test_name = "FullRange",
-                      .face_detection_model_name = kFullRangeBlazeFaceModel,
+    Values(TestParams{.test_name = "ShortRange",
+                      .face_detection_model_name = kShortRangeBlazeFaceModel,
                       .test_image_name = kPortraitImage,
                       .expected_result = {GetExpectedFaceDetectionResult(
-                          kPortraitExpectedDetection)}},
-           TestParams{
-               .test_name = "FullRangeSparse",
-               .face_detection_model_name = kFullRangeSparseBlazeFaceModel,
-               .test_image_name = kPortraitImage,
-               .expected_result = {GetExpectedFaceDetectionResult(
-                   kPortraitExpectedDetection)}}),
+                          kPortraitExpectedDetection)}}),
     [](const TestParamInfo<FaceDetectorGraphTest::ParamType>& info) {
       return info.param.test_name;
     });

@@ -39,4 +39,7 @@ message FaceDetectorGraphOptions {
   // IoU threshold ([0,0, 1.0]) for non-maximu-suppression to be considered
   // duplicate detetions.
   optional float min_suppression_threshold = 3 [default = 0.5];
+
+  // Maximum number of faces to detect in the image.
+  optional int32 num_faces = 4 [default = 1];
 }
