@@ -146,7 +146,7 @@ http_archive(
     ],
 )
 
-load("//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
+load("@//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
 flatbuffers()
 
 http_archive(
@@ -173,7 +173,7 @@ http_archive(
         "https://github.com/google/sentencepiece/archive/1.0.0.zip",
     ],
     patches = [
-        "//third_party:com_google_sentencepiece_no_gflag_no_gtest.diff",
+        "@//third_party:com_google_sentencepiece_no_gflag_no_gtest.diff",
     ],
     patch_args = ["-p1"],
     repo_mapping = {"@com_google_glog" : "@com_github_glog_glog_no_gflags"},
@@ -187,8 +187,8 @@ http_archive(
         "https://github.com/tensorflow/text/archive/v2.2.0.zip",
     ],
     patches = [
-        "//third_party:tensorflow_text_remove_tf_deps.diff",
-        "//third_party:tensorflow_text_a0f49e63.diff",
+        "@//third_party:tensorflow_text_remove_tf_deps.diff",
+        "@//third_party:tensorflow_text_a0f49e63.diff",
     ],
     patch_args = ["-p1"],
     repo_mapping = {"@com_google_re2": "@com_googlesource_code_re2"},
@@ -323,7 +323,7 @@ http_archive(
 # that the target @zlib//:mini_zlib is available
 http_archive(
     name = "zlib",
-    build_file = "//third_party:zlib.BUILD",
+    build_file = "@//third_party:zlib.BUILD",
     sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
     strip_prefix = "zlib-1.2.11",
     urls = [
@@ -511,8 +511,8 @@ load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories", "yarn_install
 node_repositories()
 yarn_install(
     name = "npm",
-    package_json = "//:package.json",
-    yarn_lock = "//:yarn.lock",
+    package_json = "@//:package.json",
+    yarn_lock = "@//:yarn.lock",
 )
 
 # Protobuf for Node dependencies
@@ -538,8 +538,8 @@ load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_
 rules_proto_dependencies()
 rules_proto_toolchains()
 
-load("//third_party:external_files.bzl", "external_files")
+load("@//third_party:external_files.bzl", "external_files")
 external_files()
 
-load("//third_party:wasm_files.bzl", "wasm_files")
+load("@//third_party:wasm_files.bzl", "wasm_files")
 wasm_files()
