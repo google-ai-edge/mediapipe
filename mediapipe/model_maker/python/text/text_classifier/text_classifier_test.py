@@ -47,7 +47,7 @@ class TextClassifierTest(tf.test.TestCase):
 
   def _get_data(self):
     labels_and_text = (('pos', 'super good'), (('neg', 'really bad')))
-    csv_file = os.path.join(self.get_temp_dir(), 'data.csv')
+    csv_file = os.path.join(self.create_tempdir(), 'data.csv')
     if os.path.exists(csv_file):
       return csv_file
     fieldnames = ['text', 'label']

@@ -135,6 +135,7 @@ py_test(
         "//mediapipe/model_maker/python/text/text_classifier/testdata",
     ],
     tags = [
+        "noasan",
         "notsan",
         "requires-mem:16g",
         "requires-net:external",
