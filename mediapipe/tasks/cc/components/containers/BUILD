@@ -17,6 +17,11 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 cc_library(
+    name = "keypoint",
+    hdrs = ["keypoint.h"],
+)
+
+cc_library(
     name = "rect",
     srcs = ["rect.cc"],
     hdrs = ["rect.h"],
@@ -48,6 +53,7 @@ cc_library(
     hdrs = ["detection_result.h"],
     deps = [
         ":category",
+        ":keypoint",
         ":rect",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:location_data_cc_proto",

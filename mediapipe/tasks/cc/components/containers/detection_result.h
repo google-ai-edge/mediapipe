@@ -22,22 +22,10 @@ limitations under the License.
 
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/tasks/cc/components/containers/category.h"
+#include "mediapipe/tasks/cc/components/containers/keypoint.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
 
 namespace mediapipe::tasks::components::containers {
-
-// A keypoint, defined by the coordinates (x, y), normalized
-// by the image dimensions.
-struct NormalizedKeypoint {
-  // x in normalized image coordinates.
-  float x;
-  // y in normalized image coordinates.
-  float y;
-  // optional label of the keypoint.
-  std::optional<std::string> label;
-  // optional score of the keypoint.
-  std::optional<float> score;
-};
 
 // Detection for a single bounding box.
 struct Detection {
