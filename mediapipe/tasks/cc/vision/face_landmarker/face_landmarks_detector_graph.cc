@@ -37,6 +37,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/face_landmarker/proto/tensors_to_face_landmarks_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
 
 namespace mediapipe {
@@ -72,8 +73,10 @@ constexpr char kBatchEndTag[] = "BATCH_END";
 constexpr char kItemTag[] = "ITEM";
 constexpr char kDetectionTag[] = "DETECTION";
 
-constexpr int kLandmarksNum = 468;
-constexpr int kModelOutputTensorSplitNum = 2;
+// a landmarks tensor and a scores tensor
+constexpr int kFaceLandmarksOutputTensorsNum = 2;
+// 6 landmarks tensors and a scores tensor.
+constexpr int kAttentionMeshOutputTensorsNum = 7;
 
 struct SingleFaceLandmarksOutputs {
   Stream<NormalizedLandmarkList> landmarks;
@@ -104,18 +107,28 @@ absl::Status SanityCheckOptions(
 // Split face landmark detection model output tensor into two parts,
 // representing landmarks and face presence scores.
 void ConfigureSplitTensorVectorCalculator(
-    mediapipe::SplitVectorCalculatorOptions* options) {
-  for (int i = 0; i < kModelOutputTensorSplitNum; ++i) {
+    bool is_attention_model, mediapipe::SplitVectorCalculatorOptions* options) {
+  if (is_attention_model) {
     auto* range = options->add_ranges();
-    range->set_begin(i);
-    range->set_end(i + 1);
+    range->set_begin(0);
+    range->set_end(kAttentionMeshOutputTensorsNum - 1);
+    range = options->add_ranges();
+    range->set_begin(kAttentionMeshOutputTensorsNum - 1);
+    range->set_end(kAttentionMeshOutputTensorsNum);
+  } else {
+    auto* range = options->add_ranges();
+    range->set_begin(0);
+    range->set_end(kFaceLandmarksOutputTensorsNum - 1);
+    range = options->add_ranges();
+    range->set_begin(kFaceLandmarksOutputTensorsNum - 1);
+    range->set_end(kFaceLandmarksOutputTensorsNum);
   }
 }
 
-void ConfigureTensorsToLandmarksCalculator(
-    const ImageTensorSpecs& input_image_tensor_spec,
-    mediapipe::TensorsToLandmarksCalculatorOptions* options) {
-  options->set_num_landmarks(kLandmarksNum);
+void ConfigureTensorsToFaceLandmarksGraph(
+    const ImageTensorSpecs& input_image_tensor_spec, bool is_attention_model,
+    proto::TensorsToFaceLandmarksGraphOptions* options) {
+  options->set_is_attention_model(is_attention_model);
   options->set_input_image_height(input_image_tensor_spec.image_height);
   options->set_input_image_width(input_image_tensor_spec.image_width);
 }
@@ -136,6 +149,12 @@ void ConfigureFaceRectTransformationCalculator(
   options->set_scale_x(1.5f);
   options->set_scale_y(1.5f);
   options->set_square_long(true);
+}
+
+bool IsAttentionModel(const core::ModelResources& model_resources) {
+  const auto* model = model_resources.GetTfLiteModel();
+  const auto* primary_subgraph = (*model->subgraphs())[0];
+  return primary_subgraph->outputs()->size() == kAttentionMeshOutputTensorsNum;
 }
 
 }  // namespace
@@ -246,8 +265,10 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto output_tensors = inference.Out(kTensorsTag);
 
     // Split model output tensors to multiple streams.
+    bool is_attention_model = IsAttentionModel(model_resources);
     auto& split_tensors_vector = graph.AddNode("SplitTensorVectorCalculator");
     ConfigureSplitTensorVectorCalculator(
+        is_attention_model,
         &split_tensors_vector
              .GetOptions<mediapipe::SplitVectorCalculatorOptions>());
     output_tensors >> split_tensors_vector.In("");
@@ -256,15 +277,16 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
 
     // Decodes the landmark tensors into a list of landmarks, where the landmark
     // coordinates are normalized by the size of the input image to the model.
-    auto& tensors_to_landmarks = graph.AddNode("TensorsToLandmarksCalculator");
     ASSIGN_OR_RETURN(auto image_tensor_specs,
                      vision::BuildInputImageTensorSpecs(model_resources));
-    ConfigureTensorsToLandmarksCalculator(
-        image_tensor_specs,
-        &tensors_to_landmarks
-             .GetOptions<mediapipe::TensorsToLandmarksCalculatorOptions>());
-    landmark_tensors >> tensors_to_landmarks.In(kTensorsTag);
-    auto landmarks = tensors_to_landmarks.Out(kNormLandmarksTag);
+    auto& tensors_to_face_landmarks = graph.AddNode(
+        "mediapipe.tasks.vision.face_landmarker.TensorsToFaceLandmarksGraph");
+    ConfigureTensorsToFaceLandmarksGraph(
+        image_tensor_specs, is_attention_model,
+        &tensors_to_face_landmarks
+             .GetOptions<proto::TensorsToFaceLandmarksGraphOptions>());
+    landmark_tensors >> tensors_to_face_landmarks.In(kTensorsTag);
+    auto landmarks = tensors_to_face_landmarks.Out(kNormLandmarksTag);
 
     // Converts the presence flag tensor into a float that represents the
     // confidence score of face presence.

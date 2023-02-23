@@ -19,6 +19,27 @@ package(default_visibility = [
 licenses(["notice"])
 
 cc_library(
+    name = "tensors_to_face_landmarks_graph",
+    srcs = ["tensors_to_face_landmarks_graph.cc"],
+    deps = [
+        "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator_cc_proto",
+        "//mediapipe/calculators/util:landmarks_refinement_calculator",
+        "//mediapipe/calculators/util:landmarks_refinement_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:subgraph",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/tasks/cc/vision/face_landmarker/proto:tensors_to_face_landmarks_graph_options_cc_proto",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
     name = "face_blendshapes_graph",
     srcs = ["face_blendshapes_graph.cc"],
     deps = [
@@ -48,6 +69,7 @@ cc_library(
     name = "face_landmarks_detector_graph",
     srcs = ["face_landmarks_detector_graph.cc"],
     deps = [
+        ":tensors_to_face_landmarks_graph",
         "//mediapipe/calculators/core:begin_loop_calculator",
         "//mediapipe/calculators/core:end_loop_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
@@ -80,6 +102,7 @@ cc_library(
         "//mediapipe/tasks/cc/core:model_task_graph",
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/face_landmarker/proto:tensors_to_face_landmarks_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/utils:image_tensor_specs",
     ],
     alwayslink = 1,

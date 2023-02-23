@@ -725,6 +725,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_portrait_expected_face_landmarks_with_attention_pbtxt",
+        sha256 = "f2ccd889654b914996e4aab0d7831a3e73d3b63d6c14f6bac4bec5cd3415bce4",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_expected_face_landmarks_with_attention.pbtxt?generation=1676415475626542"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_portrait_jpg",
         sha256 = "a6f11efaa834706db23f275b6115058fa87fc7f14362681e6abe14e82749de3e",
         urls = ["https://storage.googleapis.com/mediapipe-assets/portrait.jpg?generation=1674261630039907"],

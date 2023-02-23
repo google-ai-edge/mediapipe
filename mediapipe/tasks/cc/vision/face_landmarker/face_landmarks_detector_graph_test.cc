@@ -29,6 +29,7 @@ limitations under the License.
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
@@ -61,10 +62,14 @@ using ::testing::proto::Partially;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kFaceLandmarksDetectionModel[] = "face_landmark.tflite";
+constexpr char kFaceLandmarksDetectionWithAttentionModel[] =
+    "face_landmark_with_attention.tflite";
 constexpr char kPortraitImageName[] = "portrait.jpg";
 constexpr char kCatImageName[] = "cat.jpg";
 constexpr char kPortraitExpectedFaceLandamrksName[] =
     "portrait_expected_face_landmarks.pbtxt";
+constexpr char kPortraitExpectedFaceLandamrksWithAttentionName[] =
+    "portrait_expected_face_landmarks_with_attention.pbtxt";
 
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageName[] = "image";
@@ -117,8 +122,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateSingleFaceLandmarksTaskRunner(
       graph[Output<NormalizedRect>(kFaceRectNextFrameTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(),
-      absl::make_unique<tflite_shims::ops::builtin::BuiltinOpResolver>());
+      graph.GetConfig(), absl::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
 
 // Helper function to create a Multi Face Landmark TaskRunner.
@@ -154,8 +158,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateMultiFaceLandmarksTaskRunner(
       graph[Output<std::vector<NormalizedRect>>(kFaceRectsNextFrameTag)];
 
   return TaskRunner::Create(
-      graph.GetConfig(),
-      absl::make_unique<tflite_shims::ops::builtin::BuiltinOpResolver>());
+      graph.GetConfig(), absl::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
 
 NormalizedLandmarkList GetExpectedLandmarkList(absl::string_view filename) {
@@ -280,14 +283,24 @@ TEST_P(MultiFaceLandmarksDetectionTest, Succeeds) {
 INSTANTIATE_TEST_SUITE_P(
     FaceLandmarksDetectionTest, SingleFaceLandmarksDetectionTest,
     Values(SingeFaceTestParams{
-        /* test_name= */ "Portrait",
-        /*input_model_name= */ kFaceLandmarksDetectionModel,
-        /*test_image_name=*/kPortraitImageName,
-        /*norm_rect= */ MakeNormRect(0.4987, 0.2211, 0.2877, 0.2303, 0),
-        /*expected_presence = */ true,
-        /*expected_landmarks = */
-        GetExpectedLandmarkList(kPortraitExpectedFaceLandamrksName),
-        /*landmarks_diff_threshold = */ kFractionDiff}),
+               /* test_name= */ "Portrait",
+               /*input_model_name= */ kFaceLandmarksDetectionModel,
+               /*test_image_name=*/kPortraitImageName,
+               /*norm_rect= */ MakeNormRect(0.4987, 0.2211, 0.2877, 0.2303, 0),
+               /*expected_presence = */ true,
+               /*expected_landmarks = */
+               GetExpectedLandmarkList(kPortraitExpectedFaceLandamrksName),
+               /*landmarks_diff_threshold = */ kFractionDiff},
+           SingeFaceTestParams{
+               /* test_name= */ "PortraitWithAttention",
+               /*input_model_name= */ kFaceLandmarksDetectionWithAttentionModel,
+               /*test_image_name=*/kPortraitImageName,
+               /*norm_rect= */ MakeNormRect(0.4987, 0.2211, 0.2877, 0.2303, 0),
+               /*expected_presence = */ true,
+               /*expected_landmarks = */
+               GetExpectedLandmarkList(
+                   kPortraitExpectedFaceLandamrksWithAttentionName),
+               /*landmarks_diff_threshold = */ kFractionDiff}),
     [](const TestParamInfo<SingleFaceLandmarksDetectionTest::ParamType>& info) {
       return info.param.test_name;
     });
@@ -303,6 +316,16 @@ INSTANTIATE_TEST_SUITE_P(
             /*expected_presence = */ {true},
             /*expected_landmarks_list = */
             {{GetExpectedLandmarkList(kPortraitExpectedFaceLandamrksName)}},
+            /*landmarks_diff_threshold = */ kFractionDiff},
+        MultiFaceTestParams{
+            /* test_name= */ "PortraitWithAttention",
+            /*input_model_name= */ kFaceLandmarksDetectionWithAttentionModel,
+            /*test_image_name=*/kPortraitImageName,
+            /*norm_rects= */ {MakeNormRect(0.4987, 0.2211, 0.2877, 0.2303, 0)},
+            /*expected_presence = */ {true},
+            /*expected_landmarks_list = */
+            {{GetExpectedLandmarkList(
+                kPortraitExpectedFaceLandamrksWithAttentionName)}},
             /*landmarks_diff_threshold = */ kFractionDiff},
         MultiFaceTestParams{
             /* test_name= */ "NoFace",

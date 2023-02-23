@@ -39,3 +39,13 @@ mediapipe_proto_library(
         "//mediapipe/tasks/cc/core/proto:base_options_proto",
     ],
 )
+
+mediapipe_proto_library(
+    name = "tensors_to_face_landmarks_graph_options_proto",
+    srcs = ["tensors_to_face_landmarks_graph_options.proto"],
+    deps = [
+        "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator_proto",
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
