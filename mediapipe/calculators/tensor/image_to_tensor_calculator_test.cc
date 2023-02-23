@@ -13,10 +13,13 @@
 // limitations under the License.
 
 #include <cmath>
+#include <optional>
+#include <string>
 #include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
@@ -51,13 +54,12 @@ std::string GetFilePath(absl::string_view filename) {
 
 // Image to tensor test template.
 // No processing/assertions should be done after the function is invoked.
-void RunTestWithInputImagePacket(const Packet& input_image_packet,
-                                 cv::Mat expected_result, float range_min,
-                                 float range_max, int tensor_width,
-                                 int tensor_height, bool keep_aspect,
-                                 absl::optional<BorderMode> border_mode,
-                                 const mediapipe::NormalizedRect& roi,
-                                 bool output_int_tensor) {
+void RunTestWithInputImagePacket(
+    const Packet& input_image_packet, cv::Mat expected_result, float range_min,
+    float range_max, std::optional<int> tensor_width,
+    std::optional<int> tensor_height, bool keep_aspect,
+    absl::optional<BorderMode> border_mode,
+    const mediapipe::NormalizedRect& roi, bool output_int_tensor) {
   std::string border_mode_str;
   if (border_mode) {
     switch (*border_mode) {
@@ -93,8 +95,9 @@ void RunTestWithInputImagePacket(const Packet& input_image_packet,
               })",
                                            range_min, range_max);
   }
-  auto graph_config = mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-      absl::Substitute(R"(
+  auto graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(absl::Substitute(
+          R"(
         input_stream: "input_image"
         input_stream: "roi"
         node {
@@ -104,8 +107,8 @@ void RunTestWithInputImagePacket(const Packet& input_image_packet,
           output_stream: "TENSORS:tensor"
           options {
             [mediapipe.ImageToTensorCalculatorOptions.ext] {
-              output_tensor_width: $0
-              output_tensor_height: $1
+              $0 # output tensor width
+              $1 # output tensor height
               keep_aspect_ratio: $2
               $3 # output range
               $4 # border mode
@@ -113,11 +116,16 @@ void RunTestWithInputImagePacket(const Packet& input_image_packet,
           }
         }
         )",
-                       /*$0=*/tensor_width,
-                       /*$1=*/tensor_height,
-                       /*$2=*/keep_aspect ? "true" : "false",
-                       /*$3=*/output_tensor_range,
-                       /*$4=*/border_mode_str));
+          /*$0=*/tensor_width.has_value()
+              ? absl::StrFormat("output_tensor_width: %d", tensor_width.value())
+              : "",
+          /*$1=*/tensor_height.has_value()
+              ? absl::StrFormat("output_tensor_height: %d",
+                                tensor_height.value())
+              : "",
+          /*$2=*/keep_aspect ? "true" : "false",
+          /*$3=*/output_tensor_range,
+          /*$4=*/border_mode_str));
 
   std::vector<Packet> output_packets;
   tool::AddVectorSink("tensor", &graph_config, &output_packets);
@@ -149,18 +157,18 @@ void RunTestWithInputImagePacket(const Packet& input_image_packet,
   if (output_int_tensor) {
     if (range_min < 0) {
       EXPECT_EQ(tensor.element_type(), Tensor::ElementType::kInt8);
-      tensor_mat = cv::Mat(tensor_height, tensor_width,
+      tensor_mat = cv::Mat(expected_result.rows, expected_result.cols,
                            channels == 1 ? CV_8SC1 : CV_8SC3,
                            const_cast<int8*>(view.buffer<int8>()));
     } else {
       EXPECT_EQ(tensor.element_type(), Tensor::ElementType::kUInt8);
-      tensor_mat = cv::Mat(tensor_height, tensor_width,
+      tensor_mat = cv::Mat(expected_result.rows, expected_result.cols,
                            channels == 1 ? CV_8UC1 : CV_8UC3,
                            const_cast<uint8*>(view.buffer<uint8>()));
     }
   } else {
     EXPECT_EQ(tensor.element_type(), Tensor::ElementType::kFloat32);
-    tensor_mat = cv::Mat(tensor_height, tensor_width,
+    tensor_mat = cv::Mat(expected_result.rows, expected_result.cols,
                          channels == 1 ? CV_32FC1 : CV_32FC3,
                          const_cast<float*>(view.buffer<float>()));
   }
@@ -216,9 +224,9 @@ const std::vector<InputType> kInputTypesToTest = {InputType::kImageFrame,
 
 void RunTest(cv::Mat input, cv::Mat expected_result,
              std::vector<std::pair<float, float>> float_ranges,
-             std::vector<std::pair<int, int>> int_ranges, int tensor_width,
-             int tensor_height, bool keep_aspect,
-             absl::optional<BorderMode> border_mode,
+             std::vector<std::pair<int, int>> int_ranges,
+             std::optional<int> tensor_width, std::optional<int> tensor_height,
+             bool keep_aspect, absl::optional<BorderMode> border_mode,
              const mediapipe::NormalizedRect& roi) {
   for (auto input_type : kInputTypesToTest) {
     for (auto float_range : float_ranges) {
@@ -486,5 +494,18 @@ TEST(ImageToTensorCalculatorTest, NoOpExceptRangeBorderZero) {
           BorderMode::kZero, roi);
 }
 
+TEST(ImageToTensorCalculatorTest, NoOpExceptRangeAndUseInputImageDims) {
+  mediapipe::NormalizedRect roi;
+  roi.set_x_center(0.5f);
+  roi.set_y_center(0.5f);
+  roi.set_width(1.0f);
+  roi.set_height(1.0f);
+  RunTest(GetRgb(GetFilePath("input.jpg")),
+          GetRgb(GetFilePath("noop_except_range.png")),
+          /*float_ranges=*/{{-1.0f, 1.0f}},
+          /*int_ranges=*/{{0, 255}, {-128, 127}},
+          /*tensor_width=*/std::nullopt, /*tensor_height=*/std::nullopt,
+          /*keep_aspect=*/false, BorderMode::kZero, roi);
+}
 }  // namespace
 }  // namespace mediapipe

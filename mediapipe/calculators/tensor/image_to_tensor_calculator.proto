@@ -54,6 +54,8 @@ message ImageToTensorCalculatorOptions {
     BORDER_REPLICATE = 2;
   }
 
+  // The width and height of output tensor. The output tensor would have the
+  // input image width/height if not set.
   optional int32 output_tensor_width = 1;
   optional int32 output_tensor_height = 2;
 

@@ -195,8 +195,9 @@ class ImageToTensorCalculator : public Node {
 #endif  // MEDIAPIPE_DISABLE_GPU
 
     RotatedRect roi = GetRoi(image->width(), image->height(), norm_rect);
-    ASSIGN_OR_RETURN(auto padding, PadRoi(options_.output_tensor_width(),
-                                          options_.output_tensor_height(),
+    const int tensor_width = params_.output_width.value_or(image->width());
+    const int tensor_height = params_.output_height.value_or(image->height());
+    ASSIGN_OR_RETURN(auto padding, PadRoi(tensor_width, tensor_height,
                                           options_.keep_aspect_ratio(), &roi));
     if (kOutLetterboxPadding(cc).IsConnected()) {
       kOutLetterboxPadding(cc).Send(padding);
@@ -214,9 +215,8 @@ class ImageToTensorCalculator : public Node {
 
     Tensor::ElementType output_tensor_type =
         GetOutputTensorType(image->UsesGpu(), params_);
-    Tensor tensor(output_tensor_type,
-                  {1, params_.output_height, params_.output_width,
-                   GetNumOutputChannels(*image)});
+    Tensor tensor(output_tensor_type, {1, tensor_height, tensor_width,
+                                       GetNumOutputChannels(*image)});
     MP_RETURN_IF_ERROR((image->UsesGpu() ? gpu_converter_ : cpu_converter_)
                            ->Convert(*image, roi, params_.range_min,
                                      params_.range_max,

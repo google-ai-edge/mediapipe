@@ -16,6 +16,7 @@
 #define MEDIAPIPE_CALCULATORS_TENSOR_IMAGE_TO_TENSOR_UTILS_H_
 
 #include <array>
+#include <optional>
 
 #include "absl/types/optional.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
@@ -51,8 +52,8 @@ enum class BorderMode { kZero, kReplicate };
 // Struct that host commonly accessed parameters used in the
 // ImageTo[Batch]TensorCalculator.
 struct OutputTensorParams {
-  int output_height;
-  int output_width;
+  std::optional<int> output_height;
+  std::optional<int> output_width;
   int output_batch;
   bool is_float_output;
   float range_min;
@@ -161,10 +162,14 @@ absl::Status ValidateOptionOutputDims(const T& options) {
         << "The maximum of the output int tensor range must be less than or "
            "equal to 127.";
   }
-  RET_CHECK_GT(options.output_tensor_width(), 0)
-      << "Valid output tensor width is required.";
-  RET_CHECK_GT(options.output_tensor_height(), 0)
-      << "Valid output tensor height is required.";
+  if (options.has_output_tensor_width()) {
+    RET_CHECK_GT(options.output_tensor_width(), 0)
+        << "Valid output tensor width is required.";
+  }
+  if (options.has_output_tensor_height()) {
+    RET_CHECK_GT(options.output_tensor_height(), 0)
+        << "Valid output tensor height is required.";
+  }
   return absl::OkStatus();
 }
 
@@ -185,8 +190,12 @@ OutputTensorParams GetOutputTensorParams(const T& options) {
     params.range_min = options.output_tensor_float_range().min();
     params.range_max = options.output_tensor_float_range().max();
   }
-  params.output_width = options.output_tensor_width();
-  params.output_height = options.output_tensor_height();
+  if (options.has_output_tensor_width()) {
+    params.output_width = options.output_tensor_width();
+  }
+  if (options.has_output_tensor_height()) {
+    params.output_height = options.output_tensor_height();
+  }
   params.is_float_output = options.has_output_tensor_float_range();
   params.output_batch = 1;
   return params;
