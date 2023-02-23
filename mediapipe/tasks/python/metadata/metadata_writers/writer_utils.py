@@ -14,8 +14,7 @@
 # ==============================================================================
 """Helper methods for writing metadata into TFLite models."""
 
-from typing import Dict, List
-import zipfile
+from typing import List
 
 from mediapipe.tasks.metadata import schema_py_generated as _schema_fb
 
@@ -84,20 +83,3 @@ def get_subgraph(model_buffer: bytearray) -> _schema_fb.SubGraph:
   # multiple subgraphs yet, but models with mini-benchmark may have multiple
   # subgraphs for acceleration evaluation purpose.
   return model.Subgraphs(0)
-
-
-def create_model_asset_bundle(input_models: Dict[str, bytes],
-                              output_path: str) -> None:
-  """Creates the model asset bundle.
-
-  Args:
-    input_models: A dict of input models with key as the model file name and
-      value as the model content.
-    output_path: The output file path to save the model asset bundle.
-  """
-  if not input_models or len(input_models) < 2:
-    raise ValueError("Needs at least two input models for model asset bundle.")
-
-  with zipfile.ZipFile(output_path, mode="w") as zf:
-    for file_name, file_buffer in input_models.items():
-      zf.writestr(file_name, file_buffer)

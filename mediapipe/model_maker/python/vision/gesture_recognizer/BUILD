@@ -131,7 +131,7 @@ py_library(
     srcs = ["metadata_writer.py"],
     deps = [
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
-        "//mediapipe/tasks/python/metadata/metadata_writers:writer_utils",
+        "//mediapipe/tasks/python/metadata/metadata_writers:model_asset_bundle_utils",
     ],
 )
 

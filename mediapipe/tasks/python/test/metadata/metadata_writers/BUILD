@@ -67,3 +67,9 @@ py_test(
         "//mediapipe/tasks/python/test:test_utils",
     ],
 )
+
+py_test(
+    name = "model_asset_bundle_utils_test",
+    srcs = ["model_asset_bundle_utils_test.py"],
+    deps = ["//mediapipe/tasks/python/metadata/metadata_writers:model_asset_bundle_utils"],
+)

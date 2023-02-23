@@ -49,3 +49,8 @@ py_library(
     srcs = ["text_classifier.py"],
     deps = [":metadata_writer"],
 )
+
+py_library(
+    name = "model_asset_bundle_utils",
+    srcs = ["model_asset_bundle_utils.py"],
+)

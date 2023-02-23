@@ -21,7 +21,7 @@ from typing import Union
 
 import tensorflow as tf
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer
-from mediapipe.tasks.python.metadata.metadata_writers import writer_utils
+from mediapipe.tasks.python.metadata.metadata_writers import model_asset_bundle_utils
 
 _HAND_DETECTOR_TFLITE_NAME = "hand_detector.tflite"
 _HAND_LANDMARKS_DETECTOR_TFLITE_NAME = "hand_landmarks_detector.tflite"
@@ -100,8 +100,9 @@ class HandLandmarkerMetadataWriter:
     }
     output_hand_landmarker_path = os.path.join(self._temp_folder.name,
                                                _HAND_LANDMARKER_BUNDLE_NAME)
-    writer_utils.create_model_asset_bundle(landmark_models,
-                                           output_hand_landmarker_path)
+    model_asset_bundle_utils.create_model_asset_bundle(
+        landmark_models, output_hand_landmarker_path
+    )
     hand_landmarker_model_buffer = read_file(output_hand_landmarker_path)
     return hand_landmarker_model_buffer
 
@@ -208,8 +209,9 @@ class MetadataWriter:
     }
     output_hand_gesture_recognizer_path = os.path.join(
         self._temp_folder.name, _HAND_GESTURE_RECOGNIZER_BUNDLE_NAME)
-    writer_utils.create_model_asset_bundle(hand_gesture_recognizer_models,
-                                           output_hand_gesture_recognizer_path)
+    model_asset_bundle_utils.create_model_asset_bundle(
+        hand_gesture_recognizer_models, output_hand_gesture_recognizer_path
+    )
 
     # Creates the model asset bundle for end-to-end hand gesture recognizer
     # graph.
@@ -222,8 +224,9 @@ class MetadataWriter:
 
     output_file_path = os.path.join(self._temp_folder.name,
                                     "gesture_recognizer.task")
-    writer_utils.create_model_asset_bundle(gesture_recognizer_models,
-                                           output_file_path)
+    model_asset_bundle_utils.create_model_asset_bundle(
+        gesture_recognizer_models, output_file_path
+    )
     with open(output_file_path, "rb") as f:
       gesture_recognizer_model_buffer = f.read()
     return gesture_recognizer_model_buffer, custom_gesture_classifier_metadata_json
