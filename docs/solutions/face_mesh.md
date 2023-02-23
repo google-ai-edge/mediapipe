@@ -133,7 +133,7 @@ about the model in this [paper](https://arxiv.org/abs/2006.10962).
 The [Face Landmark Model](#face-landmark-model) performs a single-camera face landmark
 detection in the screen coordinate space: the X- and Y- coordinates are
 normalized screen coordinates, while the Z coordinate is relative and is scaled
-as the X coodinate under the
+as the X coordinate under the
 [weak perspective projection camera model](https://en.wikipedia.org/wiki/3D_projection#Weak_perspective_projection).
 This format is well-suited for some applications, however it does not directly
 enable the full spectrum of augmented reality (AR) features like aligning a
