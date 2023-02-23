@@ -99,7 +99,7 @@ You can also find more details in this
 ### Iris Landmark Model
 
 The iris model takes an image patch of the eye region and estimates both the eye
-landmarks (along the eyelid) and iris landmarks (along ths iris contour). You
+landmarks (along the eyelid) and iris landmarks (along this iris contour). You
 can find more details in this [paper](https://arxiv.org/abs/2006.11341).
 
 ![iris_tracking_eye_and_iris_landmarks.png](https://mediapipe.dev/images/mobile/iris_tracking_eye_and_iris_landmarks.png) |
