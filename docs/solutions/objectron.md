@@ -613,7 +613,7 @@ z_ndc = 1 / Z
 
 ### Pixel Space
 
-In this API we set upper-left coner of an image as the origin of pixel
+In this API we set upper-left corner of an image as the origin of pixel
 coordinate. One can convert from NDC to pixel space as follows:
 
 ```
