@@ -13,6 +13,8 @@ has_toc: false
 {:toc}
 ---
 
+Note: These solutions are no longer actively maintained. Consider using or migrating to the new [MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/guide).
+
 MediaPipe offers open source cross-platform, customizable ML solutions for live
 and streaming media.
 
