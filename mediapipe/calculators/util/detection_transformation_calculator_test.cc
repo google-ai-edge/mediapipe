@@ -161,6 +161,42 @@ TEST(DetectionsTransformationCalculatorTest, WrongLocationDataFormat) {
                                  "RELATIVE_BOUNDING_BOX or BOUNDING_BOX"));
 }
 
+TEST(DetectionsTransformationCalculatorTest, EmptyDetection) {
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+    calculator: "DetectionTransformationCalculator"
+    input_stream: "DETECTION:input_detection"
+    input_stream: "IMAGE_SIZE:image_size"
+    output_stream: "PIXEL_DETECTION:output_detection"
+  )pb"));
+
+  std::pair<int, int> image_size({2000, 1000});
+  runner.MutableInputs()
+      ->Tag(kImageSizeTag)
+      .packets.push_back(
+          MakePacket<std::pair<int, int>>(image_size).At(Timestamp(0)));
+
+  auto status = runner.Run();
+  ASSERT_TRUE(status.ok());
+}
+
+TEST(DetectionsTransformationCalculatorTest, EmptyDetections) {
+  CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
+    calculator: "DetectionTransformationCalculator"
+    input_stream: "DETECTIONS:input_detection"
+    input_stream: "IMAGE_SIZE:image_size"
+    output_stream: "PIXEL_DETECTIONS:output_detection"
+  )pb"));
+
+  std::pair<int, int> image_size({2000, 1000});
+  runner.MutableInputs()
+      ->Tag(kImageSizeTag)
+      .packets.push_back(
+          MakePacket<std::pair<int, int>>(image_size).At(Timestamp(0)));
+
+  auto status = runner.Run();
+  ASSERT_TRUE(status.ok());
+}
+
 TEST(DetectionsTransformationCalculatorTest,
      ConvertBoundingBoxToRelativeBoundingBox) {
   CalculatorRunner runner(ParseTextProtoOrDie<CalculatorGraphConfig::Node>(R"pb(
