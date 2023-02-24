@@ -108,9 +108,9 @@ on how to build MediaPipe examples.
 *   With a TensorFlow Model
 
     This uses the
-    [TensorFlow model](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_saved_model)
+    [TensorFlow model](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection)
     ( see also
-    [model info](https://github.com/google/mediapipe/tree/master/mediapipe/models/object_detection_saved_model/README.md)),
+    [model info](https://github.com/google/mediapipe/tree/master/mediapipe/modules/objectron)),
     and the pipeline is implemented in this
     [graph](https://github.com/google/mediapipe/tree/master/mediapipe/graphs/object_detection/object_detection_mobile_cpu.pbtxt).
 
