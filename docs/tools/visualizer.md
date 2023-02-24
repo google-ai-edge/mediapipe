@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/tools/visualizer
 title: Visualizer
 parent: Tools
 nav_order: 1
