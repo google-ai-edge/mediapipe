@@ -14,6 +14,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include <memory>
+#include <optional>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -41,6 +42,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/hand_landmarker/calculators/hand_association_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarker_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options.pb.h"
+#include "mediapipe/util/graph_builder_utils.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -53,7 +55,7 @@ using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
-using ::mediapipe::api2::builder::Source;
+using ::mediapipe::api2::builder::Stream;
 using ::mediapipe::tasks::components::utils::DisallowIf;
 using ::mediapipe::tasks::core::ModelAssetBundleResources;
 using ::mediapipe::tasks::metadata::SetExternalFile;
@@ -78,40 +80,46 @@ constexpr char kHandLandmarksDetectorTFLiteName[] =
     "hand_landmarks_detector.tflite";
 
 struct HandLandmarkerOutputs {
-  Source<std::vector<NormalizedLandmarkList>> landmark_lists;
-  Source<std::vector<LandmarkList>> world_landmark_lists;
-  Source<std::vector<NormalizedRect>> hand_rects_next_frame;
-  Source<std::vector<ClassificationList>> handednesses;
-  Source<std::vector<NormalizedRect>> palm_rects;
-  Source<std::vector<Detection>> palm_detections;
-  Source<Image> image;
+  Stream<std::vector<NormalizedLandmarkList>> landmark_lists;
+  Stream<std::vector<LandmarkList>> world_landmark_lists;
+  Stream<std::vector<NormalizedRect>> hand_rects_next_frame;
+  Stream<std::vector<ClassificationList>> handednesses;
+  Stream<std::vector<NormalizedRect>> palm_rects;
+  Stream<std::vector<Detection>> palm_detections;
+  Stream<Image> image;
 };
 
 // Sets the base options in the sub tasks.
 absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
                                    HandLandmarkerGraphOptions* options,
                                    bool is_copy) {
-  ASSIGN_OR_RETURN(const auto hand_detector_file,
-                   resources.GetModelFile(kHandDetectorTFLiteName));
   auto* hand_detector_graph_options =
       options->mutable_hand_detector_graph_options();
-  SetExternalFile(hand_detector_file,
-                  hand_detector_graph_options->mutable_base_options()
-                      ->mutable_model_asset(),
-                  is_copy);
+  if (!hand_detector_graph_options->base_options().has_model_asset()) {
+    ASSIGN_OR_RETURN(const auto hand_detector_file,
+                     resources.GetModelFile(kHandDetectorTFLiteName));
+    SetExternalFile(hand_detector_file,
+                    hand_detector_graph_options->mutable_base_options()
+                        ->mutable_model_asset(),
+                    is_copy);
+  }
   hand_detector_graph_options->mutable_base_options()
       ->mutable_acceleration()
       ->CopyFrom(options->base_options().acceleration());
   hand_detector_graph_options->mutable_base_options()->set_use_stream_mode(
       options->base_options().use_stream_mode());
-  ASSIGN_OR_RETURN(const auto hand_landmarks_detector_file,
-                   resources.GetModelFile(kHandLandmarksDetectorTFLiteName));
   auto* hand_landmarks_detector_graph_options =
       options->mutable_hand_landmarks_detector_graph_options();
-  SetExternalFile(hand_landmarks_detector_file,
-                  hand_landmarks_detector_graph_options->mutable_base_options()
-                      ->mutable_model_asset(),
-                  is_copy);
+  if (!hand_landmarks_detector_graph_options->base_options()
+           .has_model_asset()) {
+    ASSIGN_OR_RETURN(const auto hand_landmarks_detector_file,
+                     resources.GetModelFile(kHandLandmarksDetectorTFLiteName));
+    SetExternalFile(
+        hand_landmarks_detector_file,
+        hand_landmarks_detector_graph_options->mutable_base_options()
+            ->mutable_model_asset(),
+        is_copy);
+  }
   hand_landmarks_detector_graph_options->mutable_base_options()
       ->mutable_acceleration()
       ->CopyFrom(options->base_options().acceleration());
@@ -119,7 +127,6 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       ->set_use_stream_mode(options->base_options().use_stream_mode());
   return absl::OkStatus();
 }
-
 }  // namespace
 
 // A "mediapipe.tasks.vision.hand_landmarker.HandLandmarkerGraph" performs hand
@@ -219,12 +226,15 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
           !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
                .IsAvailable()));
     }
+    Stream<Image> image_in = graph.In(kImageTag).Cast<Image>();
+    std::optional<Stream<NormalizedRect>> norm_rect_in;
+    if (HasInput(sc->OriginalNode(), kNormRectTag)) {
+      norm_rect_in = graph.In(kNormRectTag).Cast<NormalizedRect>();
+    }
     ASSIGN_OR_RETURN(
         auto hand_landmarker_outputs,
-        BuildHandLandmarkerGraph(
-            sc->Options<HandLandmarkerGraphOptions>(),
-            graph[Input<Image>(kImageTag)],
-            graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
+        BuildHandLandmarkerGraph(sc->Options<HandLandmarkerGraphOptions>(),
+                                 image_in, norm_rect_in, graph));
     hand_landmarker_outputs.landmark_lists >>
         graph[Output<std::vector<NormalizedLandmarkList>>(kLandmarksTag)];
     hand_landmarker_outputs.world_landmark_lists >>
@@ -262,8 +272,8 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
   // image_in: (mediapipe::Image) stream to run hand landmark detection on.
   // graph: the mediapipe graph instance to be updated.
   absl::StatusOr<HandLandmarkerOutputs> BuildHandLandmarkerGraph(
-      const HandLandmarkerGraphOptions& tasks_options, Source<Image> image_in,
-      Source<NormalizedRect> norm_rect_in, Graph& graph) {
+      const HandLandmarkerGraphOptions& tasks_options, Stream<Image> image_in,
+      std::optional<Stream<NormalizedRect>> norm_rect_in, Graph& graph) {
     const int max_num_hands =
         tasks_options.hand_detector_graph_options().num_hands();
 
@@ -293,10 +303,15 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
       // track the hands from the last frame.
       auto image_for_hand_detector =
           DisallowIf(image_in, has_enough_hands, graph);
-      auto norm_rect_in_for_hand_detector =
-          DisallowIf(norm_rect_in, has_enough_hands, graph);
+      std::optional<Stream<NormalizedRect>> norm_rect_in_for_hand_detector;
+      if (norm_rect_in) {
+        norm_rect_in_for_hand_detector =
+            DisallowIf(norm_rect_in.value(), has_enough_hands, graph);
+      }
       image_for_hand_detector >> hand_detector.In("IMAGE");
-      norm_rect_in_for_hand_detector >> hand_detector.In("NORM_RECT");
+      if (norm_rect_in_for_hand_detector) {
+        norm_rect_in_for_hand_detector.value() >> hand_detector.In("NORM_RECT");
+      }
       auto hand_rects_from_hand_detector = hand_detector.Out("HAND_RECTS");
       auto& hand_association = graph.AddNode("HandAssociationCalculator");
       hand_association.GetOptions<HandAssociationCalculatorOptions>()
@@ -313,7 +328,9 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
       // series, and we don't want to enable the tracking and hand associations
       // between input images. Always use the hand detector graph.
       image_in >> hand_detector.In("IMAGE");
-      norm_rect_in >> hand_detector.In("NORM_RECT");
+      if (norm_rect_in) {
+        norm_rect_in.value() >> hand_detector.In("NORM_RECT");
+      }
       auto hand_rects_from_hand_detector = hand_detector.Out("HAND_RECTS");
       hand_rects_from_hand_detector >> clip_hand_rects.In("");
     }
