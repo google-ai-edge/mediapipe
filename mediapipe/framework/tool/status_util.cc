@@ -18,15 +18,16 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 
 namespace mediapipe {
 namespace tool {
 
-absl::Status StatusInvalid(const std::string& message) {
+absl::Status StatusInvalid(absl::string_view message) {
   return absl::Status(absl::StatusCode::kInvalidArgument, message);
 }
 
-absl::Status StatusFail(const std::string& message) {
+absl::Status StatusFail(absl::string_view message) {
   return absl::Status(absl::StatusCode::kUnknown, message);
 }
 
@@ -35,12 +36,12 @@ absl::Status StatusStop() {
                       "mediapipe::tool::StatusStop()");
 }
 
-absl::Status AddStatusPrefix(const std::string& prefix,
+absl::Status AddStatusPrefix(absl::string_view prefix,
                              const absl::Status& status) {
   return absl::Status(status.code(), absl::StrCat(prefix, status.message()));
 }
 
-absl::Status CombinedStatus(const std::string& general_comment,
+absl::Status CombinedStatus(absl::string_view general_comment,
                             const std::vector<absl::Status>& statuses) {
   // The final error code is absl::StatusCode::kUnknown if not all
   // the error codes are the same.  Otherwise it is the same error code
