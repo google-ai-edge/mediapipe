@@ -15,6 +15,7 @@
 package com.google.mediapipe.components;
 
 import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
@@ -56,6 +57,7 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   private int frameUniform;
   private int textureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
   private int textureTransformUniform;
+  private boolean shouldFitToWidth = false;
   // Controls the alignment between frame size and surface size, 0.5f default is centered.
   private float alignmentHorizontal = 0.5f;
   private float alignmentVertical = 0.5f;
@@ -158,13 +160,17 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     // TODO: compute scale from surfaceTexture size.
     float scaleWidth = frameWidth > 0 ? (float) surfaceWidth / (float) frameWidth : 1.0f;
     float scaleHeight = frameHeight > 0 ? (float) surfaceHeight / (float) frameHeight : 1.0f;
-    // Whichever of the two scales is greater corresponds to the dimension where the image
-    // is proportionally smaller than the view. Dividing both scales by that number results
+    // By default whichever of the two scales is greater corresponds to the dimension where the
+    // image is proportionally smaller than the view. Dividing both scales by that number results
     // in that dimension having scale 1.0, and thus touching the edges of the view, while the
-    // other is cropped proportionally.
-    float maxScale = max(scaleWidth, scaleHeight);
-    scaleWidth /= maxScale;
-    scaleHeight /= maxScale;
+    // other is cropped proportionally. If shouldFitToWidth is set as true, use the min scale
+    // if frame width is greater than frame height.
+    float scale = max(scaleWidth, scaleHeight);
+    if (shouldFitToWidth && (frameWidth > frameHeight)) {
+      scale = min(scaleWidth, scaleHeight);
+    }
+    scaleWidth /= scale;
+    scaleHeight /= scale;
 
     // Alignment controls where the visible section is placed within the full camera frame, with
     // (0, 0) being the bottom left, and (1, 1) being the top right.
@@ -230,6 +236,11 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   public void setFrameSize(int width, int height) {
     frameWidth = width;
     frameHeight = height;
+  }
+
+  /** Supports fit to width when the frame width is greater than the frame height. */
+  public void setShouldFitToWidth(boolean shouldFitToWidth) {
+    this.shouldFitToWidth = shouldFitToWidth;
   }
 
   /**
