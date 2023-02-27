@@ -20,10 +20,8 @@ import {AudioEmbedderGraphOptions as AudioEmbedderGraphOptionsProto} from '../..
 import {EmbeddingResult} from '../../../../tasks/cc/components/containers/proto/embeddings_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {AudioTaskRunner} from '../../../../tasks/web/audio/core/audio_task_runner';
-import {Embedding} from '../../../../tasks/web/components/containers/embedding_result';
 import {convertEmbedderOptionsToProto} from '../../../../tasks/web/components/processors/embedder_options';
 import {convertFromEmbeddingResultProto} from '../../../../tasks/web/components/processors/embedder_result';
-import {computeCosineSimilarity} from '../../../../tasks/web/components/utils/cosine_similarity';
 import {CachedGraphRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {WasmModule} from '../../../../web/graph_runner/graph_runner';
@@ -143,19 +141,6 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
    */
   embed(audioData: Float32Array, sampleRate?: number): AudioEmbedderResult[] {
     return this.processAudioClip(audioData, sampleRate);
-  }
-
-  /**
-   * Utility function to compute cosine similarity[1] between two `Embedding`
-   * objects.
-   *
-   * [1]: https://en.wikipedia.org/wiki/Cosine_similarity
-   *
-   * @throws if the embeddings are of different types(float vs. quantized), have
-   *     different sizes, or have an L2-norm of 0.
-   */
-  static cosineSimilarity(u: Embedding, v: Embedding): number {
-    return computeCosineSimilarity(u, v);
   }
 
   protected override process(

@@ -29,7 +29,6 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/proto/embeddings.pb.h"
 #include "mediapipe/tasks/cc/components/processors/embedder_options.h"
 #include "mediapipe/tasks/cc/components/processors/proto/embedder_options.pb.h"
-#include "mediapipe/tasks/cc/components/utils/cosine_similarity.h"
 #include "mediapipe/tasks/cc/core/proto/inference_subgraph.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -145,12 +144,6 @@ absl::Status AudioEmbedder::EmbedAsync(Matrix audio_block,
       {{kAudioStreamName,
         MakePacket<Matrix>(std::move(audio_block))
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
-}
-
-absl::StatusOr<double> AudioEmbedder::CosineSimilarity(
-    const components::containers::Embedding& u,
-    const components::containers::Embedding& v) {
-  return components::utils::CosineSimilarity(u, v);
 }
 
 }  // namespace mediapipe::tasks::audio::audio_embedder

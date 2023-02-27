@@ -54,8 +54,6 @@ constexpr char kModelWithMetadata[] = "yamnet_embedding_metadata.tflite";
 constexpr char k16kTestWavFilename[] = "speech_16000_hz_mono.wav";
 constexpr char k48kTestWavFilename[] = "speech_48000_hz_mono.wav";
 constexpr char k16kTestWavForTwoHeadsFilename[] = "two_heads_16000_hz_mono.wav";
-constexpr float kSpeechSimilarities[] = {0.985359, 0.994349, 0.993227, 0.996658,
-                                         0.996384};
 constexpr int kMilliSecondsPerSecond = 1000;
 constexpr int kYamnetNumOfAudioSamples = 15600;
 constexpr int kYamnetAudioSampleRate = 16000;
@@ -163,15 +161,9 @@ TEST_F(EmbedTest, SucceedsWithSameAudioAtDifferentSampleRates) {
                           audio_embedder->Embed(audio_buffer1, 16000));
   MP_ASSERT_OK_AND_ASSIGN(auto result2,
                           audio_embedder->Embed(audio_buffer2, 48000));
-  int expected_size = sizeof(kSpeechSimilarities) / sizeof(float);
+  int expected_size = 5;
   ASSERT_EQ(result1.size(), expected_size);
   ASSERT_EQ(result2.size(), expected_size);
-  for (int i = 0; i < expected_size; ++i) {
-    MP_ASSERT_OK_AND_ASSIGN(double similarity, AudioEmbedder::CosineSimilarity(
-                                                   result1[i].embeddings[0],
-                                                   result2[i].embeddings[0]));
-    EXPECT_NEAR(similarity, kSpeechSimilarities[i], 1e-6);
-  }
   MP_EXPECT_OK(audio_embedder->Close());
 }
 
@@ -192,10 +184,6 @@ TEST_F(EmbedTest, SucceedsWithDifferentAudios) {
       audio_embedder->Embed(audio_buffer2, kYamnetAudioSampleRate));
   ASSERT_EQ(result1.size(), 5);
   ASSERT_EQ(result2.size(), 1);
-  MP_ASSERT_OK_AND_ASSIGN(double similarity, AudioEmbedder::CosineSimilarity(
-                                                 result1[0].embeddings[0],
-                                                 result2[0].embeddings[0]));
-  EXPECT_NEAR(similarity, 0.09017f, 1e-6);
   MP_EXPECT_OK(audio_embedder->Close());
 }
 
@@ -258,15 +246,9 @@ TEST_F(EmbedAsyncTest, SucceedsWithSameAudioAtDifferentSampleRates) {
   RunAudioEmbedderInStreamMode(k16kTestWavFilename, 16000, &result1);
   std::vector<AudioEmbedderResult> result2;
   RunAudioEmbedderInStreamMode(k48kTestWavFilename, 48000, &result2);
-  int expected_size = sizeof(kSpeechSimilarities) / sizeof(float);
+  int expected_size = 5;
   ASSERT_EQ(result1.size(), expected_size);
   ASSERT_EQ(result2.size(), expected_size);
-  for (int i = 0; i < expected_size; ++i) {
-    MP_ASSERT_OK_AND_ASSIGN(double similarity, AudioEmbedder::CosineSimilarity(
-                                                   result1[i].embeddings[0],
-                                                   result2[i].embeddings[0]));
-    EXPECT_NEAR(similarity, kSpeechSimilarities[i], 1e-6);
-  }
 }
 
 TEST_F(EmbedAsyncTest, SucceedsWithDifferentAudios) {
@@ -276,10 +258,6 @@ TEST_F(EmbedAsyncTest, SucceedsWithDifferentAudios) {
   RunAudioEmbedderInStreamMode(k16kTestWavForTwoHeadsFilename, 16000, &result2);
   ASSERT_EQ(result1.size(), 5);
   ASSERT_EQ(result2.size(), 1);
-  MP_ASSERT_OK_AND_ASSIGN(double similarity, AudioEmbedder::CosineSimilarity(
-                                                 result1[0].embeddings[0],
-                                                 result2[0].embeddings[0]));
-  EXPECT_NEAR(similarity, 0.09017f, 1e-6);
 }
 
 }  // namespace
