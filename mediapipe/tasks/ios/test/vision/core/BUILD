@@ -34,16 +34,14 @@ objc_library(
     data = [
         "//mediapipe/tasks/testdata/vision:test_images",
     ],
-    sdk_frameworks = [
-        "CoreMedia",
-        "CoreVideo",
-        "CoreGraphics",
-        "UIKit",
-        "Accelerate",
-    ],
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
+        "//third_party/apple_frameworks:Accelerate",
+        "//third_party/apple_frameworks:CoreGraphics",
+        "//third_party/apple_frameworks:CoreMedia",
+        "//third_party/apple_frameworks:CoreVideo",
+        "//third_party/apple_frameworks:UIKit",
     ],
 )
 
