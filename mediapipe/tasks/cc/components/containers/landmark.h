@@ -17,6 +17,7 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_CC_COMPONENTS_CONTAINERS_LANDMARK_H_
 
 #include <cstdlib>
+#include <optional>
 #include <string>
 #include <vector>
 
