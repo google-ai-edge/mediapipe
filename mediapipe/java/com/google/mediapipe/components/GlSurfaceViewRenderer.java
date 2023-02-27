@@ -17,6 +17,7 @@ package com.google.mediapipe.components;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
+import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
@@ -26,9 +27,12 @@ import android.util.Log;
 import com.google.mediapipe.framework.TextureFrame;
 import com.google.mediapipe.glutil.CommonShaders;
 import com.google.mediapipe.glutil.ShaderUtil;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -45,6 +49,13 @@ import javax.microedition.khronos.opengles.GL10;
  * {@link TextureFrame} (call {@link #setNextFrame(TextureFrame)}).
  */
 public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
+  /**
+   * Listener for Bitmap capture requests.
+   */
+  public interface BitmapCaptureListener {
+    void onBitmapCaptured(Bitmap result);
+  }
+
   private static final String TAG = "DemoRenderer";
   private static final int ATTRIB_POSITION = 1;
   private static final int ATTRIB_TEXTURE_COORDINATE = 2;
@@ -64,6 +75,25 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   private float[] textureTransformMatrix = new float[16];
   private SurfaceTexture surfaceTexture = null;
   private final AtomicReference<TextureFrame> nextFrame = new AtomicReference<>();
+  private final AtomicBoolean captureNextFrameBitmap = new AtomicBoolean();
+  private BitmapCaptureListener bitmapCaptureListener;
+
+  /**
+   * Sets the {@link BitmapCaptureListener}.
+   */
+  public void setBitmapCaptureListener(BitmapCaptureListener bitmapCaptureListener) {
+    this.bitmapCaptureListener = bitmapCaptureListener;
+  }
+
+  /**
+   * Request to capture Bitmap of the next frame.
+   *
+   * The result will be provided to the {@link BitmapCaptureListener} if one is set. Please note
+   * this is an expensive operation and the result may not be available for a while.
+   */
+  public void captureNextFrameBitmap() {
+    captureNextFrameBitmap.set(true);
+  }
 
   @Override
   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
@@ -149,6 +179,31 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
 
     GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     ShaderUtil.checkGlError("glDrawArrays");
+
+    // Capture Bitmap if requested.
+    BitmapCaptureListener bitmapCaptureListener = this.bitmapCaptureListener;
+    if (captureNextFrameBitmap.getAndSet(false) && bitmapCaptureListener != null) {
+      int bitmapSize = surfaceWidth * surfaceHeight;
+      ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bitmapSize * 4);
+      byteBuffer.order(ByteOrder.nativeOrder());
+      GLES20.glReadPixels(
+          0, 0, surfaceWidth, surfaceHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, byteBuffer);
+      int[] pixelBuffer = new int[bitmapSize];
+      byteBuffer.asIntBuffer().get(pixelBuffer);
+      for (int i = 0; i < bitmapSize; i++) {
+        // Swap R and B channels.
+        pixelBuffer[i] =
+            (pixelBuffer[i] & 0xff00ff00)
+                | ((pixelBuffer[i] & 0x000000ff) << 16)
+                | ((pixelBuffer[i] & 0x00ff0000) >> 16);
+      }
+      Bitmap bitmap = Bitmap.createBitmap(surfaceWidth, surfaceHeight, Bitmap.Config.ARGB_8888);
+      bitmap.setPixels(
+          pixelBuffer, /* offset= */bitmapSize - surfaceWidth, /* stride= */-surfaceWidth,
+          /* x= */0, /* y= */0, surfaceWidth, surfaceHeight);
+      bitmapCaptureListener.onBitmapCaptured(bitmap);
+    }
+
     GLES20.glBindTexture(textureTarget, 0);
     ShaderUtil.checkGlError("unbind surfaceTexture");
 
