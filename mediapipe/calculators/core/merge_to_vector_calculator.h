@@ -48,7 +48,6 @@ class MergeToVectorCalculator : public Node {
   }
 
   absl::Status Process(CalculatorContext* cc) {
-    const int input_num = kIn(cc).Count();
     std::vector<T> output_vector;
     for (auto it = kIn(cc).begin(); it != kIn(cc).end(); it++) {
       const auto& elem = *it;
