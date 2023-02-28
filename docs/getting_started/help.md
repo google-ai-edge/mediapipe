@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/help
 title: Getting Help
 parent: Getting Started
 nav_order: 8

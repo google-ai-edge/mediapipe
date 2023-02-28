@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/framework_concepts/packets
 title: Packets
 parent: Framework Concepts
 nav_order: 3

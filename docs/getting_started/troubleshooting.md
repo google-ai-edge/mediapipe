@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/troubleshooting
 title: Troubleshooting
 parent: Getting Started
 nav_order: 10
