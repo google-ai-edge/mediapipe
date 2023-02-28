@@ -92,7 +92,7 @@ class TensorsToImageCalculator : public Node {
 
   MEDIAPIPE_NODE_CONTRACT(kInputTensors, kOutputImage);
 
-  static absl::Status GetContract(CalculatorContract* cc);
+  static absl::Status UpdateContract(CalculatorContract* cc);
   absl::Status Open(CalculatorContext* cc);
   absl::Status Process(CalculatorContext* cc);
   absl::Status Close(CalculatorContext* cc);
@@ -124,7 +124,7 @@ class TensorsToImageCalculator : public Node {
 };
 MEDIAPIPE_REGISTER_NODE(::mediapipe::tasks::TensorsToImageCalculator);
 
-absl::Status TensorsToImageCalculator::GetContract(CalculatorContract* cc) {
+absl::Status TensorsToImageCalculator::UpdateContract(CalculatorContract* cc) {
 #if !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_METAL_ENABLED
   MP_RETURN_IF_ERROR([MPPMetalHelper updateContract:cc]);
