@@ -301,7 +301,8 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
               + " ResultListener to process ImageSegmentationResult.");
     }
     validateImageProcessingOptions(imageProcessingOptions);
-    var unused = processImageData(image, imageProcessingOptions);
+    ImageSegmenterResult unused =
+        (ImageSegmenterResult) processImageData(image, imageProcessingOptions);
   }
 
   /**
@@ -415,7 +416,8 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
               + " ResultListener to process ImageSegmentationResult.");
     }
     validateImageProcessingOptions(imageProcessingOptions);
-    var unused = processVideoData(image, imageProcessingOptions, timestampMs);
+    ImageSegmenterResult unused =
+        (ImageSegmenterResult) processVideoData(image, imageProcessingOptions, timestampMs);
   }
 
   /**
