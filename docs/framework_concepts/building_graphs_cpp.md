@@ -593,3 +593,105 @@ CalculatorGraphConfig BuildGraph() {
   return graph.GetConfig();
 }
 ```
+
+### Separate nodes for better readability
+
+```c++ {.bad}
+CalculatorGraphConfig BuildGraph() {
+  Graph graph;
+
+  // Inputs.
+  Stream<A> a = graph.In(0).Cast<A>();
+  auto& node1 = graph.AddNode("Calculator1");
+  a.ConnectTo(node1.In("INPUT"));
+  Stream<B> b = node1.Out("OUTPUT").Cast<B>();
+  auto& node2 = graph.AddNode("Calculator2");
+  b.ConnectTo(node2.In("INPUT"));
+  Stream<C> c = node2.Out("OUTPUT").Cast<C>();
+  auto& node3 = graph.AddNode("Calculator3");
+  b.ConnectTo(node3.In("INPUT_B"));
+  c.ConnectTo(node3.In("INPUT_C"));
+  Stream<D> d = node3.Out("OUTPUT").Cast<D>();
+  auto& node4 = graph.AddNode("Calculator4");
+  b.ConnectTo(node4.In("INPUT_B"));
+  c.ConnectTo(node4.In("INPUT_C"));
+  d.ConnectTo(node4.In("INPUT_D"));
+  Stream<E> e = node4.Out("OUTPUT").Cast<E>();
+  // Outputs.
+  b.SetName("b").ConnectTo(graph.Out(0));
+  c.SetName("c").ConnectTo(graph.Out(1));
+  d.SetName("d").ConnectTo(graph.Out(2));
+  e.SetName("e").ConnectTo(graph.Out(3));
+
+  return graph.GetConfig();
+}
+```
+
+In the above code, it can be hard to grasp the idea where each node begins and
+ends. To improve this and help your code readers, you can simply have blank
+lines before and after each node:
+
+```c++ {.good}
+CalculatorGraphConfig BuildGraph() {
+  Graph graph;
+
+  // Inputs.
+  Stream<A> a = graph.In(0).Cast<A>();
+
+  auto& node1 = graph.AddNode("Calculator1");
+  a.ConnectTo(node1.In("INPUT"));
+  Stream<B> b = node1.Out("OUTPUT").Cast<B>();
+
+  auto& node2 = graph.AddNode("Calculator2");
+  b.ConnectTo(node2.In("INPUT"));
+  Stream<C> c = node2.Out("OUTPUT").Cast<C>();
+
+  auto& node3 = graph.AddNode("Calculator3");
+  b.ConnectTo(node3.In("INPUT_B"));
+  c.ConnectTo(node3.In("INPUT_C"));
+  Stream<D> d = node3.Out("OUTPUT").Cast<D>();
+
+  auto& node4 = graph.AddNode("Calculator4");
+  b.ConnectTo(node4.In("INPUT_B"));
+  c.ConnectTo(node4.In("INPUT_C"));
+  d.ConnectTo(node4.In("INPUT_D"));
+  Stream<E> e = node4.Out("OUTPUT").Cast<E>();
+
+  // Outputs.
+  b.SetName("b").ConnectTo(graph.Out(0));
+  c.SetName("c").ConnectTo(graph.Out(1));
+  d.SetName("d").ConnectTo(graph.Out(2));
+  e.SetName("e").ConnectTo(graph.Out(3));
+
+  return graph.GetConfig();
+}
+```
+
+Also, the above representation matches `CalculatorGraphConfig` proto
+representation better.
+
+If you extract nodes into utility functions, they are scoped within functions
+already and it's clear where they begin and end, so it's completely fine to
+have:
+
+```c++ {.good}
+CalculatorGraphConfig BuildGraph() {
+  Graph graph;
+
+  // Inputs.
+  Stream<A> a = graph.In(0).Cast<A>();
+
+  Stream<B> b = RunCalculator1(a, graph);
+  Stream<C> c = RunCalculator2(b, graph);
+  Stream<D> d = RunCalculator3(b, c, graph);
+  Stream<E> e = RunCalculator4(b, c, d, graph);
+
+  // Outputs.
+  b.SetName("b").ConnectTo(graph.Out(0));
+  c.SetName("c").ConnectTo(graph.Out(1));
+  d.SetName("d").ConnectTo(graph.Out(2));
+  e.SetName("e").ConnectTo(graph.Out(3));
+
+  return graph.GetConfig();
+}
+```
