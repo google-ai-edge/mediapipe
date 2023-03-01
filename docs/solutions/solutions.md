@@ -22,7 +22,8 @@ to a new MediaPipe Solution. The
 [code repository](https://github.com/google/mediapipe/tree/master/mediapipe)
 and prebuilt binaries for all MediaPipe Legacy Solutions will continue to
 be provided on an as-is basis. We encourage you to check out the new MediaPipe
-Solutions at: https://developers.google.com/mediapipe/solutions*
+Solutions at:
+[https://developers.google.com/mediapipe/solutions](https://developers.google.com/mediapipe/solutions)*
 
 *This notice and web page will be removed on June 1, 2023.*
 

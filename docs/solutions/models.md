@@ -20,7 +20,7 @@ as of March 1, 2023. All other
 to a new MediaPipe Solution. The code repository and prebuilt binaries for all
 MediaPipe Legacy Solutions will continue to be provided on an as-is basis.
 We encourage you to check out the new MediaPipe Solutions at:
-https://developers.google.com/mediapipe/solutions*
+[https://developers.google.com/mediapipe/solutions](https://developers.google.com/mediapipe/solutions)*
 
 *This notice and web page will be removed on April 3, 2023.*
 

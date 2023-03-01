@@ -22,7 +22,8 @@ ML solutions for live and streaming media.
 ----
 
 **Attention:** *Thanks for your interest in MediaPipe! We are moving to
-https://developers.google.com/mediapipe as the primary developer documentation
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation
 site for MediaPipe starting April 3, 2023.*
 
 *This notice and web page will be removed on April 3, 2023.*
