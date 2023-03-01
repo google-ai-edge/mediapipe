@@ -18,6 +18,16 @@ nav_order: 6
 </details>
 ---
 
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+As of March 1, 2023, this solution is planned to be upgraded to a new MediaPipe
+Solution. For more information, see the new
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
+site.*
+
+*This notice and web page will be removed on April 3, 2023.*
+
+----
+
 ## Overview
 
 Live perception of simultaneous [human pose](./pose.md),
