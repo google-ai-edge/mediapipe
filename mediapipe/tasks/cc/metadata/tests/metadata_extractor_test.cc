@@ -25,12 +25,14 @@ limitations under the License.
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/core/utils.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace metadata {
 namespace {
 
+using core::LoadBinaryContent;
 using ::testing::Optional;
 
 constexpr char kTestDataDirectory[] = "mediapipe/tasks/testdata/metadata";
@@ -53,8 +55,8 @@ constexpr char kRandomTextFile[] = "external_file";
 
 absl::StatusOr<std::unique_ptr<ModelMetadataExtractor>> CreateMetadataExtractor(
     std::string model_name, std::string* file_contents) {
-  MP_RETURN_IF_ERROR(file::GetContents(
-      file::JoinPath("./", kTestDataDirectory, model_name), file_contents));
+  *file_contents = LoadBinaryContent(
+      file::JoinPath("./", kTestDataDirectory, model_name).c_str());
   return ModelMetadataExtractor::CreateFromModelBuffer(file_contents->data(),
                                                        file_contents->length());
 }
