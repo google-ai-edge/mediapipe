@@ -44,7 +44,7 @@ snippets.
 
 | Browser | Platform                | Notes                                  |
 | ------- | ----------------------- | -------------------------------------- |
-| Chrome  | Android / Windows / Mac | Pixel 4 and older unsupported. Fuschia |
+| Chrome  | Android / Windows / Mac | Pixel 4 and older unsupported. Fuchsia |
 |         |                         | unsupported.                           |
 | Chrome  | iOS                     | Camera unavailable in Chrome on iOS.   |
 | Safari  | iPad/iPhone/Mac         | iOS and Safari on iPad / iPhone /      |

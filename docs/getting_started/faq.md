@@ -60,7 +60,7 @@ The second approach allows up to [`max_in_flight`] invocations of the
 packets from [`CalculatorBase::Process`] are automatically ordered by timestamp
 before they are passed along to downstream calculators.
 
-With either aproach, you must be aware that the calculator running in parallel
+With either approach, you must be aware that the calculator running in parallel
 cannot maintain internal state in the same way as a normal sequential
 calculator.
 
