@@ -208,13 +208,23 @@ export abstract class TaskRunner {
 
   /** Configures the `acceleration` option. */
   private setAcceleration(options: BaseOptions) {
-    const acceleration =
-        this.baseOptions.getAcceleration() ?? new Acceleration();
-    if (options.delegate === 'GPU') {
-      acceleration.setGpu(new InferenceCalculatorOptions.Delegate.Gpu());
-    } else {
+    let acceleration = this.baseOptions.getAcceleration();
+
+    if (!acceleration) {
+      // Create default instance for the initial configuration.
+      acceleration = new Acceleration();
       acceleration.setTflite(new InferenceCalculatorOptions.Delegate.TfLite());
     }
+
+    if ('delegate' in options) {
+      if (options.delegate === 'GPU') {
+        acceleration.setGpu(new InferenceCalculatorOptions.Delegate.Gpu());
+      } else {
+        acceleration.setTflite(
+            new InferenceCalculatorOptions.Delegate.TfLite());
+      }
+    }
+
     this.baseOptions.setAcceleration(acceleration);
   }
 }
