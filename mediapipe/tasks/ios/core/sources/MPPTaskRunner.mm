@@ -52,6 +52,9 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 
 - (absl::StatusOr<PacketMap>)process:(const PacketMap &)packetMap {
   return _cppTaskRunner->Process(packetMap);
+- (BOOL)sendPacketMap:(const PacketMap &)packetMap error:(NSError **)error {
+  absl::Status sendStatus = _cppTaskRunner->Send(packetMap);
+  return [MPPCommonUtils checkCppError:sendStatus toError:error];
 }
 
 - (absl::Status)close {

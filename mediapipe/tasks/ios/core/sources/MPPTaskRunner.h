@@ -74,6 +74,18 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (absl::StatusOr<mediapipe::tasks::core::PacketMap>)process:
     (const mediapipe::tasks::core::PacketMap &)packetMap;
+- (std::optional<mediapipe::tasks::core::PacketMap>)
+    processPacketMap:(const mediapipe::tasks::core::PacketMap &)packetMap
+               error:(NSError **)error;
+
+/**
+ * An asynchronous method that is designed for handling live streaming data such as live camera. A
+ * user-defined PacketsCallback function must be provided in the constructor to receive the output
+ * packets. The caller must ensure that the input packet timestamps are monotonically increasing.
+ * This method is thread-unsafe and it is the caller's responsibility to synchronize access to this
+ * method across multiple threads and to ensure that the input packet timestamps are in order.
+ */
+- (BOOL)sendPacketMap:(const mediapipe::tasks::core::PacketMap &)packetMap error:(NSError **)error;
 
 /**
  * Shuts down the C++ task runner. After the runner is closed, any calls that send input data to the
