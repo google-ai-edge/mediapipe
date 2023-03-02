@@ -91,7 +91,7 @@ NS_ASSUME_NONNULL_BEGIN
  * Shuts down the C++ task runner. After the runner is closed, any calls that send input data to the
  * runner are illegal and will receive errors.
  */
-- (absl::Status)close;
+- (BOOL)closeWithError:(NSError **)error;
 
 - (instancetype)init NS_UNAVAILABLE;
 

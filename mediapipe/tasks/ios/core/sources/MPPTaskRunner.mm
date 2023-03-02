@@ -63,8 +63,9 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
   return [MPPCommonUtils checkCppError:sendStatus toError:error];
 }
 
-- (absl::Status)close {
-  return _cppTaskRunner->Close();
+- (BOOL)closeWithError:(NSError **)error {
+  absl::Status closeStatus = _cppTaskRunner->Close();
+  return [MPPCommonUtils checkCppError:closeStatus toError:error];
 }
 
 @end
