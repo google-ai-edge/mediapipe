@@ -301,12 +301,18 @@ cc_test(
         ":image_cropping_calculator",
         ":image_cropping_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:tag_map",
         "//mediapipe/framework/tool:tag_map_helper",
+        "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
+        "//mediapipe/gpu:image_frame_to_gpu_buffer_calculator",
     ],
 )
 
