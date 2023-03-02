@@ -80,6 +80,9 @@ export declare interface WasmModule {
   _addProtoToInputStream:
       (dataPtr: number, dataSize: number, protoNamePtr: number,
        streamNamePtr: number, timestamp: number) => void;
+  _addEmptyPacketToInputStream:
+      (streamNamePtr: number, timestamp: number) => void;
+
   // Input side packets
   _addBoolToInputSidePacket: (data: boolean, streamNamePtr: number) => void;
   _addDoubleToInputSidePacket: (data: number, streamNamePtr: number) => void;
@@ -679,6 +682,20 @@ export class GraphRunner {
             dataPtr, data.length, protoTypePtr, streamNamePtr, timestamp);
         this.wasmModule._free(dataPtr);
       });
+    });
+  }
+
+  /**
+   * Sends an empty packet into the specified stream at the given timestamp,
+   *     effectively advancing that input stream's timestamp bounds without
+   *     sending additional data packets.
+   * @param streamName The name of the graph input stream to send the empty
+   *     packet into.
+   * @param timestamp The timestamp of the empty packet, in ms.
+   */
+  addEmptyPacketToStream(streamName: string, timestamp: number): void {
+    this.wrapStringPtr(streamName, (streamNamePtr: number) => {
+      this.wasmModule._addEmptyPacketToInputStream(streamNamePtr, timestamp);
     });
   }
 
