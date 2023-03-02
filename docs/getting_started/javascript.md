@@ -12,6 +12,17 @@ nav_order: 4
 {:toc}
 ---
 
+**Attention:** *Thanks for your interest in MediaPipe! We are moving to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation
+site for MediaPipe starting April 3, 2023. This content will not be moved to
+the new site, but will remain available in the source code repository on an
+as-is basis.*
+
+*This notice and web page will be removed on April 3, 2023.*
+
+----
+
 ## Ready-to-use JavaScript Solutions
 
 MediaPipe currently offers the following solutions:
@@ -33,7 +44,7 @@ snippets.
 
 | Browser | Platform                | Notes                                  |
 | ------- | ----------------------- | -------------------------------------- |
-| Chrome  | Android / Windows / Mac | Pixel 4 and older unsupported. Fuschia |
+| Chrome  | Android / Windows / Mac | Pixel 4 and older unsupported. Fuchsia |
 |         |                         | unsupported.                           |
 | Chrome  | iOS                     | Camera unavailable in Chrome on iOS.   |
 | Safari  | iPad/iPhone/Mac         | iOS and Safari on iPad / iPhone /      |

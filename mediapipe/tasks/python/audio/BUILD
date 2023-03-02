@@ -56,7 +56,6 @@ py_library(
         "//mediapipe/tasks/python/audio/core:base_audio_task_api",
         "//mediapipe/tasks/python/components/containers:audio_data",
         "//mediapipe/tasks/python/components/containers:embedding_result",
-        "//mediapipe/tasks/python/components/utils:cosine_similarity",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:optional_dependencies",
         "//mediapipe/tasks/python/core:task_info",

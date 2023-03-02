@@ -44,7 +44,7 @@ async function isSimdSupported(): Promise<boolean> {
 }
 
 async function createFileset(
-    taskName: string, basePath: string = ''): Promise<WasmFileset> {
+    taskName: string, basePath = ''): Promise<WasmFileset> {
   const suffix =
       await isSimdSupported() ? 'wasm_internal' : 'wasm_nosimd_internal';
 

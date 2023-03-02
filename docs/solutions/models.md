@@ -12,6 +12,20 @@ nav_order: 30
 {:toc}
 ---
 
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+We have ended support for
+[these MediaPipe Legacy Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
+as of March 1, 2023. All other
+[MediaPipe Legacy Solutions will be upgraded](https://developers.google.com/mediapipe/solutions/guide#legacy)
+to a new MediaPipe Solution. The code repository and prebuilt binaries for all
+MediaPipe Legacy Solutions will continue to be provided on an as-is basis.
+We encourage you to check out the new MediaPipe Solutions at:
+[https://developers.google.com/mediapipe/solutions](https://developers.google.com/mediapipe/solutions)*
+
+*This notice and web page will be removed on April 3, 2023.*
+
+----
+
 ### [Face Detection](https://google.github.io/mediapipe/solutions/face_detection)
 
 *   Short-range model (best for faces within 2 meters from the camera):

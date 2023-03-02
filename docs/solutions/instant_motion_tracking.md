@@ -18,6 +18,16 @@ nav_order: 11
 </details>
 ---
 
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+We have ended support for this MediaPipe Legacy Solution as of March 1, 2023.
+For more information, see the new
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
+site.*
+
+*This notice and web page will be removed on April 3, 2023.*
+
+----
+
 ## Overview
 
 Augmented Reality (AR) technology creates fun, engaging, and immersive user

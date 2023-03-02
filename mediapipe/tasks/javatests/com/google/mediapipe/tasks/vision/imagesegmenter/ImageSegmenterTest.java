@@ -53,112 +53,108 @@ public class ImageSegmenterTest {
 
   @RunWith(AndroidJUnit4.class)
   public static final class General extends ImageSegmenterTest {
-
     @Test
     public void segment_successWithCategoryMask() throws Exception {
       final String inputImageName = "segmentation_input_rotation0.jpg";
       final String goldenImageName = "segmentation_golden_rotation0.png";
-      MPImage expectedMaskBuffer = getImageFromAsset(goldenImageName);
       ImageSegmenterOptions options =
           ImageSegmenterOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
               .setOutputType(ImageSegmenterOptions.OutputType.CATEGORY_MASK)
-              .setResultListener(
-                  (actualResult, inputImage) -> {
-                    List<MPImage> segmentations = actualResult.segmentations();
-                    assertThat(segmentations.size()).isEqualTo(1);
-                    MPImage actualMaskBuffer = actualResult.segmentations().get(0);
-                    verifyCategoryMask(
-                        actualMaskBuffer,
-                        expectedMaskBuffer,
-                        GOLDEN_MASK_SIMILARITY,
-                        MAGNIFICATION_FACTOR);
-                  })
               .build();
       ImageSegmenter imageSegmenter =
           ImageSegmenter.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      imageSegmenter.segment(getImageFromAsset(inputImageName));
+      ImageSegmenterResult actualResult = imageSegmenter.segment(getImageFromAsset(inputImageName));
+      List<MPImage> segmentations = actualResult.segmentations();
+      assertThat(segmentations.size()).isEqualTo(1);
+      MPImage actualMaskBuffer = actualResult.segmentations().get(0);
+      MPImage expectedMaskBuffer = getImageFromAsset(goldenImageName);
+      verifyCategoryMask(
+          actualMaskBuffer, expectedMaskBuffer, GOLDEN_MASK_SIMILARITY, MAGNIFICATION_FACTOR);
     }
 
     @Test
     public void segment_successWithConfidenceMask() throws Exception {
       final String inputImageName = "cat.jpg";
       final String goldenImageName = "cat_mask.jpg";
-      MPImage expectedMaskBuffer = getImageFromAsset(goldenImageName);
       ImageSegmenterOptions options =
           ImageSegmenterOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
               .setOutputType(ImageSegmenterOptions.OutputType.CONFIDENCE_MASK)
-              .setResultListener(
-                  (actualResult, inputImage) -> {
-                    List<MPImage> segmentations = actualResult.segmentations();
-                    assertThat(segmentations.size()).isEqualTo(21);
-                    // Cat category index 8.
-                    MPImage actualMaskBuffer = actualResult.segmentations().get(8);
-                    verifyConfidenceMask(
-                        actualMaskBuffer, expectedMaskBuffer, GOLDEN_MASK_SIMILARITY);
-                  })
               .build();
       ImageSegmenter imageSegmenter =
           ImageSegmenter.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      imageSegmenter.segment(getImageFromAsset(inputImageName));
+      ImageSegmenterResult actualResult = imageSegmenter.segment(getImageFromAsset(inputImageName));
+      List<MPImage> segmentations = actualResult.segmentations();
+      assertThat(segmentations.size()).isEqualTo(21);
+      // Cat category index 8.
+      MPImage actualMaskBuffer = actualResult.segmentations().get(8);
+      MPImage expectedMaskBuffer = getImageFromAsset(goldenImageName);
+      verifyConfidenceMask(actualMaskBuffer, expectedMaskBuffer, GOLDEN_MASK_SIMILARITY);
     }
 
     @Test
     public void segment_successWith128x128Segmentation() throws Exception {
       final String inputImageName = "mozart_square.jpg";
       final String goldenImageName = "selfie_segm_128_128_3_expected_mask.jpg";
-      MPImage expectedMaskBuffer = getImageFromAsset(goldenImageName);
       ImageSegmenterOptions options =
           ImageSegmenterOptions.builder()
               .setBaseOptions(
                   BaseOptions.builder().setModelAssetPath(SELFIE_128x128_MODEL_FILE).build())
               .setOutputType(ImageSegmenterOptions.OutputType.CONFIDENCE_MASK)
-              .setResultListener(
-                  (actualResult, inputImage) -> {
-                    List<MPImage> segmentations = actualResult.segmentations();
-                    assertThat(segmentations.size()).isEqualTo(2);
-                    // Selfie category index 1.
-                    MPImage actualMaskBuffer = actualResult.segmentations().get(1);
-                    verifyConfidenceMask(
-                        actualMaskBuffer, expectedMaskBuffer, GOLDEN_MASK_SIMILARITY);
-                  })
               .build();
       ImageSegmenter imageSegmenter =
           ImageSegmenter.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      imageSegmenter.segment(getImageFromAsset(inputImageName));
+      ImageSegmenterResult actualResult = imageSegmenter.segment(getImageFromAsset(inputImageName));
+      List<MPImage> segmentations = actualResult.segmentations();
+      assertThat(segmentations.size()).isEqualTo(2);
+      // Selfie category index 1.
+      MPImage actualMaskBuffer = actualResult.segmentations().get(1);
+      MPImage expectedMaskBuffer = getImageFromAsset(goldenImageName);
+      verifyConfidenceMask(actualMaskBuffer, expectedMaskBuffer, GOLDEN_MASK_SIMILARITY);
     }
 
     // TODO: enable this unit test once activation option is supported in metadata.
-    //   @Test
-    //   public void segment_successWith144x256Segmentation() throws Exception {
-    //     final String inputImageName = "mozart_square.jpg";
-    //     final String goldenImageName = "selfie_segm_144_256_3_expected_mask.jpg";
-    //     MPImage expectedMaskBuffer = getImageFromAsset(goldenImageName);
-    //     ImageSegmenterOptions options =
-    //         ImageSegmenterOptions.builder()
-    //             .setBaseOptions(
-    //                 BaseOptions.builder().setModelAssetPath(SELFIE_144x256_MODEL_FILE).build())
-    //             .setOutputType(ImageSegmenterOptions.OutputType.CONFIDENCE_MASK)
-    //             .setActivation(ImageSegmenterOptions.Activation.NONE)
-    //             .setResultListener(
-    //                 (actualResult, inputImage) -> {
-    //                   List<MPImage> segmentations = actualResult.segmentations();
-    //                   assertThat(segmentations.size()).isEqualTo(1);
-    //                   MPImage actualMaskBuffer = actualResult.segmentations().get(0);
-    //                   verifyConfidenceMask(
-    //                       actualMaskBuffer, expectedMaskBuffer, GOLDEN_MASK_SIMILARITY);
-    //                 })
-    //             .build();
-    //     ImageSegmenter imageSegmenter =
-    //         ImageSegmenter.createFromOptions(ApplicationProvider.getApplicationContext(),
-    // options);
-    //     imageSegmenter.segment(getImageFromAsset(inputImageName));
-    //   }
+    // @Test
+    // public void segment_successWith144x256Segmentation() throws Exception {
+    //   final String inputImageName = "mozart_square.jpg";
+    //   final String goldenImageName = "selfie_segm_144_256_3_expected_mask.jpg";
+    //   ImageSegmenterOptions options =
+    //       ImageSegmenterOptions.builder()
+    //           .setBaseOptions(
+    //               BaseOptions.builder().setModelAssetPath(SELFIE_144x256_MODEL_FILE).build())
+    //           .setOutputType(ImageSegmenterOptions.OutputType.CONFIDENCE_MASK)
+    //           .build();
+    //   ImageSegmenter imageSegmenter =
+    //       ImageSegmenter.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+    //   ImageSegmenterResult actualResult =
+    // imageSegmenter.segment(getImageFromAsset(inputImageName));
+    //   List<MPImage> segmentations = actualResult.segmentations();
+    //   assertThat(segmentations.size()).isEqualTo(1);
+    //   MPImage actualMaskBuffer = actualResult.segmentations().get(0);
+    //   MPImage expectedMaskBuffer = getImageFromAsset(goldenImageName);
+    //   verifyConfidenceMask(actualMaskBuffer, expectedMaskBuffer, GOLDEN_MASK_SIMILARITY);
+    // }
   }
 
   @RunWith(AndroidJUnit4.class)
   public static final class RunningModeTest extends ImageSegmenterTest {
+    @Test
+    public void create_failsWithMissingResultListenerInLiveSteamMode() throws Exception {
+      IllegalArgumentException exception =
+          assertThrows(
+              IllegalArgumentException.class,
+              () ->
+                  ImageSegmenterOptions.builder()
+                      .setBaseOptions(
+                          BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
+                      .setRunningMode(RunningMode.LIVE_STREAM)
+                      .build());
+      assertThat(exception)
+          .hasMessageThat()
+          .contains("a user-defined result listener must be provided");
+    }
+
     @Test
     public void segment_failsWithCallingWrongApiInImageMode() throws Exception {
       ImageSegmenterOptions options =
@@ -166,7 +162,6 @@ public class ImageSegmenterTest {
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
               .setRunningMode(RunningMode.IMAGE)
               .build();
-
       ImageSegmenter imageSegmenter =
           ImageSegmenter.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       MediaPipeException exception =
@@ -182,6 +177,13 @@ public class ImageSegmenterTest {
               () ->
                   imageSegmenter.segmentAsync(getImageFromAsset(CAT_IMAGE), /* timestampsMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
+      exception =
+          assertThrows(
+              MediaPipeException.class,
+              () -> imageSegmenter.segmentWithResultListener(getImageFromAsset(CAT_IMAGE)));
+      assertThat(exception)
+          .hasMessageThat()
+          .contains("ResultListener is not set in the ImageSegmenterOptions");
     }
 
     @Test
@@ -191,7 +193,6 @@ public class ImageSegmenterTest {
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
               .setRunningMode(RunningMode.VIDEO)
               .build();
-
       ImageSegmenter imageSegmenter =
           ImageSegmenter.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       MediaPipeException exception =
@@ -204,6 +205,15 @@ public class ImageSegmenterTest {
               () ->
                   imageSegmenter.segmentAsync(getImageFromAsset(CAT_IMAGE), /* timestampsMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
+      exception =
+          assertThrows(
+              MediaPipeException.class,
+              () ->
+                  imageSegmenter.segmentForVideoWithResultListener(
+                      getImageFromAsset(CAT_IMAGE), /* timestampsMs= */ 0));
+      assertThat(exception)
+          .hasMessageThat()
+          .contains("ResultListener is not set in the ImageSegmenterOptions");
     }
 
     @Test
@@ -214,18 +224,18 @@ public class ImageSegmenterTest {
               .setRunningMode(RunningMode.LIVE_STREAM)
               .setResultListener((result, inputImage) -> {})
               .build();
-
       ImageSegmenter imageSegmenter =
           ImageSegmenter.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       MediaPipeException exception =
           assertThrows(
-              MediaPipeException.class, () -> imageSegmenter.segment(getImageFromAsset(CAT_IMAGE)));
+              MediaPipeException.class,
+              () -> imageSegmenter.segmentWithResultListener(getImageFromAsset(CAT_IMAGE)));
       assertThat(exception).hasMessageThat().contains("not initialized with the image mode");
       exception =
           assertThrows(
               MediaPipeException.class,
               () ->
-                  imageSegmenter.segmentForVideo(
+                  imageSegmenter.segmentForVideoWithResultListener(
                       getImageFromAsset(CAT_IMAGE), /* timestampsMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
     }
@@ -234,51 +244,94 @@ public class ImageSegmenterTest {
     public void segment_successWithImageMode() throws Exception {
       final String inputImageName = "cat.jpg";
       final String goldenImageName = "cat_mask.jpg";
+      ImageSegmenterOptions options =
+          ImageSegmenterOptions.builder()
+              .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
+              .setOutputType(ImageSegmenterOptions.OutputType.CONFIDENCE_MASK)
+              .setRunningMode(RunningMode.IMAGE)
+              .build();
+      ImageSegmenter imageSegmenter =
+          ImageSegmenter.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      ImageSegmenterResult actualResult = imageSegmenter.segment(getImageFromAsset(inputImageName));
+      List<MPImage> segmentations = actualResult.segmentations();
+      assertThat(segmentations.size()).isEqualTo(21);
+      // Cat category index 8.
+      MPImage actualMaskBuffer = actualResult.segmentations().get(8);
       MPImage expectedMaskBuffer = getImageFromAsset(goldenImageName);
+      verifyConfidenceMask(actualMaskBuffer, expectedMaskBuffer, GOLDEN_MASK_SIMILARITY);
+    }
+
+    @Test
+    public void segment_successWithImageModeWithResultListener() throws Exception {
+      final String inputImageName = "cat.jpg";
+      final String goldenImageName = "cat_mask.jpg";
+      MPImage expectedResult = getImageFromAsset(goldenImageName);
       ImageSegmenterOptions options =
           ImageSegmenterOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
               .setOutputType(ImageSegmenterOptions.OutputType.CONFIDENCE_MASK)
               .setRunningMode(RunningMode.IMAGE)
               .setResultListener(
-                  (actualResult, inputImage) -> {
-                    List<MPImage> segmentations = actualResult.segmentations();
-                    assertThat(segmentations.size()).isEqualTo(21);
-                    // Cat category index 8.
-                    MPImage actualMaskBuffer = actualResult.segmentations().get(8);
+                  (segmenterResult, inputImage) -> {
                     verifyConfidenceMask(
-                        actualMaskBuffer, expectedMaskBuffer, GOLDEN_MASK_SIMILARITY);
+                        segmenterResult.segmentations().get(8),
+                        expectedResult,
+                        GOLDEN_MASK_SIMILARITY);
                   })
               .build();
       ImageSegmenter imageSegmenter =
           ImageSegmenter.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      imageSegmenter.segment(getImageFromAsset(inputImageName));
+      imageSegmenter.segmentWithResultListener(getImageFromAsset(inputImageName));
     }
 
     @Test
     public void segment_successWithVideoMode() throws Exception {
       final String inputImageName = "cat.jpg";
       final String goldenImageName = "cat_mask.jpg";
+      ImageSegmenterOptions options =
+          ImageSegmenterOptions.builder()
+              .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
+              .setOutputType(ImageSegmenterOptions.OutputType.CONFIDENCE_MASK)
+              .setRunningMode(RunningMode.VIDEO)
+              .build();
+      ImageSegmenter imageSegmenter =
+          ImageSegmenter.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       MPImage expectedMaskBuffer = getImageFromAsset(goldenImageName);
+      for (int i = 0; i < 3; i++) {
+        ImageSegmenterResult actualResult =
+            imageSegmenter.segmentForVideo(
+                getImageFromAsset(inputImageName), /* timestampsMs= */ i);
+        List<MPImage> segmentations = actualResult.segmentations();
+        assertThat(segmentations.size()).isEqualTo(21);
+        // Cat category index 8.
+        MPImage actualMaskBuffer = actualResult.segmentations().get(8);
+        verifyConfidenceMask(actualMaskBuffer, expectedMaskBuffer, GOLDEN_MASK_SIMILARITY);
+      }
+    }
+
+    @Test
+    public void segment_successWithVideoModeWithResultListener() throws Exception {
+      final String inputImageName = "cat.jpg";
+      final String goldenImageName = "cat_mask.jpg";
+      MPImage expectedResult = getImageFromAsset(goldenImageName);
       ImageSegmenterOptions options =
           ImageSegmenterOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
               .setOutputType(ImageSegmenterOptions.OutputType.CONFIDENCE_MASK)
               .setRunningMode(RunningMode.VIDEO)
               .setResultListener(
-                  (actualResult, inputImage) -> {
-                    List<MPImage> segmentations = actualResult.segmentations();
-                    assertThat(segmentations.size()).isEqualTo(21);
-                    // Cat category index 8.
-                    MPImage actualMaskBuffer = actualResult.segmentations().get(8);
+                  (segmenterResult, inputImage) -> {
                     verifyConfidenceMask(
-                        actualMaskBuffer, expectedMaskBuffer, GOLDEN_MASK_SIMILARITY);
+                        segmenterResult.segmentations().get(8),
+                        expectedResult,
+                        GOLDEN_MASK_SIMILARITY);
                   })
               .build();
       ImageSegmenter imageSegmenter =
           ImageSegmenter.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       for (int i = 0; i < 3; i++) {
-        imageSegmenter.segmentForVideo(getImageFromAsset(inputImageName), /* timestampsMs= */ i);
+        imageSegmenter.segmentForVideoWithResultListener(
+            getImageFromAsset(inputImageName), /* timestampsMs= */ i);
       }
     }
 

@@ -83,7 +83,11 @@ TEST(MetadataVersionTest,
                                             builder.GetSize(), &min_version),
             kTfLiteOk);
   // Validates that the version is well-formed (x.y.z).
+#ifdef _WIN32
+  EXPECT_THAT(min_version, MatchesRegex("\\d+\\.\\d+\\.\\d+"));
+#else
   EXPECT_THAT(min_version, MatchesRegex("[0-9]+\\.[0-9]+\\.[0-9]+"));
+#endif  // _WIN32
 }
 
 TEST(MetadataVersionTest,

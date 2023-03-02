@@ -136,6 +136,7 @@ TEST_F(ModelResourcesTest, CreateFromFile) {
   CheckModelResourcesPackets(model_resources.get());
 }
 
+#ifndef _WIN32
 TEST_F(ModelResourcesTest, CreateFromFileDescriptor) {
   const int model_file_descriptor = open(kTestModelPath, O_RDONLY);
   auto model_file = std::make_unique<proto::ExternalFile>();
@@ -145,6 +146,7 @@ TEST_F(ModelResourcesTest, CreateFromFileDescriptor) {
       ModelResources::Create(kTestModelResourcesTag, std::move(model_file)));
   CheckModelResourcesPackets(model_resources.get());
 }
+#endif  // _WIN32
 
 TEST_F(ModelResourcesTest, CreateFromInvalidFile) {
   auto model_file = std::make_unique<proto::ExternalFile>();
@@ -168,6 +170,15 @@ TEST_F(ModelResourcesTest, CreateFromInvalidFileDescriptor) {
   auto status_or_model_resources =
       ModelResources::Create(kTestModelResourcesTag, std::move(model_file));
 
+#ifdef _WIN32
+  EXPECT_EQ(status_or_model_resources.status().code(),
+            absl::StatusCode::kFailedPrecondition);
+  EXPECT_THAT(
+      status_or_model_resources.status().message(),
+      testing::HasSubstr("File descriptors are not supported on Windows."));
+  AssertStatusHasMediaPipeTasksStatusCode(status_or_model_resources.status(),
+                                          MediaPipeTasksStatus::kFileReadError);
+#else
   EXPECT_EQ(status_or_model_resources.status().code(),
             absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(
@@ -176,6 +187,7 @@ TEST_F(ModelResourcesTest, CreateFromInvalidFileDescriptor) {
   AssertStatusHasMediaPipeTasksStatusCode(
       status_or_model_resources.status(),
       MediaPipeTasksStatus::kInvalidArgumentError);
+#endif  // _WIN32
 }
 
 TEST_F(ModelResourcesTest, CreateFailWithCorruptedFile) {

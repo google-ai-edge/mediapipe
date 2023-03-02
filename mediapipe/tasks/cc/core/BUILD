@@ -332,9 +332,11 @@ cc_library(
         "//mediapipe/tasks:internal",
     ],
     deps = [
+        ":external_file_handler",
         "//mediapipe/calculators/core:flow_limiter_calculator_cc_proto",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/api2:builder",
+        "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "@com_google_absl//absl/strings",
         "@flatbuffers//:runtime_cc",
@@ -375,6 +377,5 @@ cc_test(
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "//mediapipe/tasks/cc/metadata/utils:zip_utils",
-        "@org_tensorflow//tensorflow/lite/c:common",
     ],
 )

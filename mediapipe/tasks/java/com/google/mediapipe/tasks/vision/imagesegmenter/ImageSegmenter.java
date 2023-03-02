@@ -47,10 +47,14 @@ import java.util.Optional;
 /**
  * Performs image segmentation on images.
  *
- * <p>Note that, unlike other vision tasks, the output of ImageSegmenter is provided through a
- * user-defined callback function even for the synchronous API. This makes it possible for
- * ImageSegmenter to return the output masks without any copy. {@link ResultListener} must be set in
- * the {@link ImageSegmenterOptions} for all {@link RunningMode}.
+ * <p>Note that, in addition to the standard segmentation API, {@link segment} and {@link
+ * segmentForVideo}, that take an input image and return the outputs, but involves deep copy of the
+ * returns, ImageSegmenter also supports the callback API, {@link segmentWithResultListener} and
+ * {@link segmentForVideoWithResultListener}, which allow you to access the outputs through zero
+ * copy.
+ *
+ * <p>The callback API is available for all {@link RunningMode} in ImageSegmenter. Set {@link
+ * ResultListener} in {@link ImageSegmenterOptions} properly to use the callback API.
  *
  * <p>The API expects a TFLite model with,<a
  * href="https://www.tensorflow.org/lite/convert/metadata">TFLite Model Metadata.</a>.
@@ -85,6 +89,8 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph";
 
+  private boolean hasResultListener = false;
+
   /**
    * Creates an {@link ImageSegmenter} instance from an {@link ImageSegmenterOptions}.
    *
@@ -116,8 +122,19 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
             int imageListSize =
                 PacketGetter.getImageListSize(packets.get(GROUPED_SEGMENTATION_OUT_STREAM_INDEX));
             ByteBuffer[] buffersArray = new ByteBuffer[imageListSize];
+            // If resultListener is not provided, the resulted MPImage is deep copied from mediapipe
+            // graph. If provided, the result MPImage is wrapping the mediapipe packet memory.
+            if (!segmenterOptions.resultListener().isPresent()) {
+              for (int i = 0; i < imageListSize; i++) {
+                buffersArray[i] =
+                    ByteBuffer.allocateDirect(
+                        width * height * (imageFormat == MPImage.IMAGE_FORMAT_VEC32F1 ? 4 : 1));
+              }
+            }
             if (!PacketGetter.getImageList(
-                packets.get(GROUPED_SEGMENTATION_OUT_STREAM_INDEX), buffersArray, false)) {
+                packets.get(GROUPED_SEGMENTATION_OUT_STREAM_INDEX),
+                buffersArray,
+                !segmenterOptions.resultListener().isPresent())) {
               throw new MediaPipeException(
                   MediaPipeException.StatusCode.INTERNAL.ordinal(),
                   "There is an error getting segmented masks. It usually results from incorrect"
@@ -143,7 +160,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
                 .build();
           }
         });
-    handler.setResultListener(segmenterOptions.resultListener());
+    segmenterOptions.resultListener().ifPresent(handler::setResultListener);
     segmenterOptions.errorListener().ifPresent(handler::setErrorListener);
     TaskRunner runner =
         TaskRunner.create(
@@ -158,7 +175,8 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
                 .setEnableFlowLimiting(segmenterOptions.runningMode() == RunningMode.LIVE_STREAM)
                 .build(),
             handler);
-    return new ImageSegmenter(runner, segmenterOptions.runningMode());
+    return new ImageSegmenter(
+        runner, segmenterOptions.runningMode(), segmenterOptions.resultListener().isPresent());
   }
 
   /**
@@ -168,16 +186,17 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    * @param taskRunner a {@link TaskRunner}.
    * @param runningMode a mediapipe vision task {@link RunningMode}.
    */
-  private ImageSegmenter(TaskRunner taskRunner, RunningMode runningMode) {
+  private ImageSegmenter(
+      TaskRunner taskRunner, RunningMode runningMode, boolean hasResultListener) {
     super(taskRunner, runningMode, IMAGE_IN_STREAM_NAME, NORM_RECT_IN_STREAM_NAME);
+    this.hasResultListener = hasResultListener;
   }
 
   /**
    * Performs image segmentation on the provided single image with default image processing options,
-   * i.e. without any rotation applied, and the results will be available via the {@link
-   * ResultListener} provided in the {@link ImageSegmenterOptions}. Only use this method when the
-   * {@link ImageSegmenter} is created with {@link RunningMode.IMAGE}. TODO update java
-   * doc for input image format.
+   * i.e. without any rotation applied. Only use this method when the {@link ImageSegmenter} is
+   * created with {@link RunningMode.IMAGE}. TODO update java doc for input image
+   * format.
    *
    * <p>{@link ImageSegmenter} supports the following color space types:
    *
@@ -186,19 +205,19 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    * </ul>
    *
    * @param image a MediaPipe {@link MPImage} object for processing.
-   * @throws MediaPipeException if there is an internal error.
+   * @throws MediaPipeException if there is an internal error. Or if {@link ImageSegmenter} is
+   *     created with a {@link ResultListener}.
    */
-  public void segment(MPImage image) {
-    segment(image, ImageProcessingOptions.builder().build());
+  public ImageSegmenterResult segment(MPImage image) {
+    return segment(image, ImageProcessingOptions.builder().build());
   }
 
   /**
-   * Performs image segmentation on the provided single image, and the results will be available via
-   * the {@link ResultListener} provided in the {@link ImageSegmenterOptions}. Only use this method
-   * when the {@link ImageSegmenter} is created with {@link RunningMode.IMAGE}. TODO
-   * update java doc for input image format.
+   * Performs image segmentation on the provided single image. Only use this method when the {@link
+   * ImageSegmenter} is created with {@link RunningMode.IMAGE}. TODO update java doc
+   * for input image format.
    *
-   * <p>{@link HandLandmarker} supports the following color space types:
+   * <p>{@link ImageSegmenter} supports the following color space types:
    *
    * <ul>
    *   <li>{@link Bitmap.Config.ARGB_8888}
@@ -211,9 +230,76 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    *     this method throwing an IllegalArgumentException.
    * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
    *     region-of-interest.
-   * @throws MediaPipeException if there is an internal error.
+   * @throws MediaPipeException if there is an internal error. Or if {@link ImageSegmenter} is
+   *     created with a {@link ResultListener}.
    */
-  public void segment(MPImage image, ImageProcessingOptions imageProcessingOptions) {
+  public ImageSegmenterResult segment(
+      MPImage image, ImageProcessingOptions imageProcessingOptions) {
+    if (hasResultListener) {
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          "ResultListener is provided in the ImageSegmenterOptions, but this method will return an"
+              + " ImageSegmentationResult.");
+    }
+    validateImageProcessingOptions(imageProcessingOptions);
+    return (ImageSegmenterResult) processImageData(image, imageProcessingOptions);
+  }
+
+  /**
+   * Performs image segmentation on the provided single image with default image processing options,
+   * i.e. without any rotation applied, and provides zero-copied results via {@link ResultListener}
+   * in {@link ImageSegmenterOptions}. Only use this method when the {@link ImageSegmenter} is
+   * created with {@link RunningMode.IMAGE}.
+   *
+   * <p>TODO update java doc for input image format.
+   *
+   * <p>{@link ImageSegmenter} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
+   *     region-of-interest.
+   * @throws MediaPipeException if there is an internal error. Or if {@link ImageSegmenter} is not
+   *     created wtih {@link ResultListener} set in {@link ImageSegmenterOptions}.
+   */
+  public void segmentWithResultListener(MPImage image) {
+    segmentWithResultListener(image, ImageProcessingOptions.builder().build());
+  }
+
+  /**
+   * Performs image segmentation on the provided single image, and provides zero-copied results via
+   * {@link ResultListener} in {@link ImageSegmenterOptions}. Only use this method when the {@link
+   * ImageSegmenter} is created with {@link RunningMode.IMAGE}.
+   *
+   * <p>TODO update java doc for input image format.
+   *
+   * <p>{@link ImageSegmenter} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
+   *     input image before running inference. Note that region-of-interest is <b>not</b> supported
+   *     by this task: specifying {@link ImageProcessingOptions#regionOfInterest()} will result in
+   *     this method throwing an IllegalArgumentException.
+   * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
+   *     region-of-interest.
+   * @throws MediaPipeException if there is an internal error. Or if {@link ImageSegmenter} is not
+   *     created wtih {@link ResultListener} set in {@link ImageSegmenterOptions}.
+   */
+  public void segmentWithResultListener(
+      MPImage image, ImageProcessingOptions imageProcessingOptions) {
+    if (!hasResultListener) {
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          "ResultListener is not set in the ImageSegmenterOptions, but this method expects a"
+              + " ResultListener to process ImageSegmentationResult.");
+    }
     validateImageProcessingOptions(imageProcessingOptions);
     ImageSegmenterResult unused =
         (ImageSegmenterResult) processImageData(image, imageProcessingOptions);
@@ -221,9 +307,8 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
 
   /**
    * Performs image segmentation on the provided video frame with default image processing options,
-   * i.e. without any rotation applied, and the results will be available via the {@link
-   * ResultListener} provided in the {@link ImageSegmenterOptions}. Only use this method when the
-   * {@link HandLandmarker} is created with {@link RunningMode.VIDEO}.
+   * i.e. without any rotation applied. Only use this method when the {@link ImageSegmenter} is
+   * created with {@link RunningMode.VIDEO}.
    *
    * <p>It's required to provide the video frame's timestamp (in milliseconds). The input timestamps
    * must be monotonically increasing.
@@ -236,21 +321,21 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    *
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @param timestampMs the input timestamp (in milliseconds).
-   * @throws MediaPipeException if there is an internal error.
+   * @throws MediaPipeException if there is an internal error. Or if {@link ImageSegmenter} is
+   *     created with a {@link ResultListener}.
    */
-  public void segmentForVideo(MPImage image, long timestampMs) {
-    segmentForVideo(image, ImageProcessingOptions.builder().build(), timestampMs);
+  public ImageSegmenterResult segmentForVideo(MPImage image, long timestampMs) {
+    return segmentForVideo(image, ImageProcessingOptions.builder().build(), timestampMs);
   }
 
   /**
-   * Performs image segmentation on the provided video frame, and the results will be available via
-   * the {@link ResultListener} provided in the {@link ImageSegmenterOptions}. Only use this method
-   * when the {@link ImageSegmenter} is created with {@link RunningMode.VIDEO}.
+   * Performs image segmentation on the provided video frame. Only use this method when the {@link
+   * ImageSegmenter} is created with {@link RunningMode.VIDEO}.
    *
    * <p>It's required to provide the video frame's timestamp (in milliseconds). The input timestamps
    * must be monotonically increasing.
    *
-   * <p>{@link HandLandmarker} supports the following color space types:
+   * <p>{@link ImageSegmenter} supports the following color space types:
    *
    * <ul>
    *   <li>{@link Bitmap.Config.ARGB_8888}
@@ -264,20 +349,82 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    * @param timestampMs the input timestamp (in milliseconds).
    * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
    *     region-of-interest.
-   * @throws MediaPipeException if there is an internal error.
+   * @throws MediaPipeException if there is an internal error. Or if {@link ImageSegmenter} is
+   *     created with a {@link ResultListener}.
    */
-  public void segmentForVideo(
+  public ImageSegmenterResult segmentForVideo(
       MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
+    if (hasResultListener) {
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          "ResultListener is provided in the ImageSegmenterOptions, but this method will return an"
+              + " ImageSegmentationResult.");
+    }
+    validateImageProcessingOptions(imageProcessingOptions);
+    return (ImageSegmenterResult) processVideoData(image, imageProcessingOptions, timestampMs);
+  }
+
+  /**
+   * Performs image segmentation on the provided video frame with default image processing options,
+   * i.e. without any rotation applied, and provides zero-copied results via {@link ResultListener}
+   * in {@link ImageSegmenterOptions}. Only use this method when the {@link ImageSegmenter} is
+   * created with {@link RunningMode.VIDEO}.
+   *
+   * <p>It's required to provide the video frame's timestamp (in milliseconds). The input timestamps
+   * must be monotonically increasing.
+   *
+   * <p>{@link ImageSegmenter} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws MediaPipeException if there is an internal error. Or if {@link ImageSegmenter} is not
+   *     created wtih {@link ResultListener} set in {@link ImageSegmenterOptions}.
+   */
+  public void segmentForVideoWithResultListener(MPImage image, long timestampMs) {
+    segmentForVideoWithResultListener(image, ImageProcessingOptions.builder().build(), timestampMs);
+  }
+
+  /**
+   * Performs image segmentation on the provided video frame, and provides zero-copied results via
+   * {@link ResultListener} in {@link ImageSegmenterOptions}. Only use this method when the {@link
+   * ImageSegmenter} is created with {@link RunningMode.VIDEO}.
+   *
+   * <p>It's required to provide the video frame's timestamp (in milliseconds). The input timestamps
+   * must be monotonically increasing.
+   *
+   * <p>{@link ImageSegmenter} supports the following color space types:
+   *
+   * <ul>
+   *   <li>{@link Bitmap.Config.ARGB_8888}
+   * </ul>
+   *
+   * @param image a MediaPipe {@link MPImage} object for processing.
+   * @param timestampMs the input timestamp (in milliseconds).
+   * @throws MediaPipeException if there is an internal error. Or if {@link ImageSegmenter} is not
+   *     created wtih {@link ResultListener} set in {@link ImageSegmenterOptions}.
+   */
+  public void segmentForVideoWithResultListener(
+      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
+    if (!hasResultListener) {
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          "ResultListener is not set in the ImageSegmenterOptions, but this method expects a"
+              + " ResultListener to process ImageSegmentationResult.");
+    }
     validateImageProcessingOptions(imageProcessingOptions);
     ImageSegmenterResult unused =
         (ImageSegmenterResult) processVideoData(image, imageProcessingOptions, timestampMs);
   }
 
   /**
-   * Sends live image data to perform hand landmarks detection with default image processing
-   * options, i.e. without any rotation applied, and the results will be available via the {@link
-   * ResultListener} provided in the {@link ImageSegmenterOptions}. Only use this method when the
-   * {@link ImageSegmenter } is created with {@link RunningMode.LIVE_STREAM}.
+   * Sends live image data to perform image segmentation with default image processing options, i.e.
+   * without any rotation applied, and the results will be available via the {@link ResultListener}
+   * provided in the {@link ImageSegmenterOptions}. Only use this method when the {@link
+   * ImageSegmenter } is created with {@link RunningMode.LIVE_STREAM}.
    *
    * <p>It's required to provide a timestamp (in milliseconds) to indicate when the input image is
    * sent to the image segmenter. The input timestamps must be monotonically increasing.
@@ -360,8 +507,8 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
       public abstract Builder setOutputType(OutputType value);
 
       /**
-       * Sets the {@link ResultListener} to receive the segmentation results when the graph pipeline
-       * is done processing an image.
+       * Sets an optional {@link ResultListener} to receive the segmentation results when the graph
+       * pipeline is done processing an image.
        */
       public abstract Builder setResultListener(
           ResultListener<ImageSegmenterResult, MPImage> value);
@@ -375,11 +522,18 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
        * Validates and builds the {@link ImageSegmenterOptions} instance.
        *
        * @throws IllegalArgumentException if the result listener and the running mode are not
-       *     properly configured. The result listener should only be set when the image segmenter is
-       *     in the live stream mode.
+       *     properly configured. The result listener must be set when the image segmenter is in the
+       *     live stream mode.
        */
       public final ImageSegmenterOptions build() {
         ImageSegmenterOptions options = autoBuild();
+        if (options.runningMode() == RunningMode.LIVE_STREAM) {
+          if (!options.resultListener().isPresent()) {
+            throw new IllegalArgumentException(
+                "The image segmenter is in the live stream mode, a user-defined result listener"
+                    + " must be provided in ImageSegmenterOptions.");
+          }
+        }
         return options;
       }
     }
@@ -392,7 +546,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
 
     abstract OutputType outputType();
 
-    abstract ResultListener<ImageSegmenterResult, MPImage> resultListener();
+    abstract Optional<ResultListener<ImageSegmenterResult, MPImage>> resultListener();
 
     abstract Optional<ErrorListener> errorListener();
 
@@ -410,8 +564,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
       return new AutoValue_ImageSegmenter_ImageSegmenterOptions.Builder()
           .setRunningMode(RunningMode.IMAGE)
           .setDisplayNamesLocale("en")
-          .setOutputType(OutputType.CATEGORY_MASK)
-          .setResultListener((result, image) -> {});
+          .setOutputType(OutputType.CATEGORY_MASK);
     }
 
     /**
@@ -437,6 +590,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
         segmenterOptionsBuilder.setOutputType(
             SegmenterOptionsProto.SegmenterOptions.OutputType.CATEGORY_MASK);
       }
+
       // TODO: remove this once activation is handled in metadata and grpah level.
       segmenterOptionsBuilder.setActivation(
           SegmenterOptionsProto.SegmenterOptions.Activation.SOFTMAX);

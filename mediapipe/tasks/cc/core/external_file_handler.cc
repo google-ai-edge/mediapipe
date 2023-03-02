@@ -29,7 +29,7 @@ limitations under the License.
 #include <windows.h>
 #else
 #include <unistd.h>
-#endif
+#endif  // _WIN32
 
 #include <memory>
 #include <string>
@@ -102,9 +102,13 @@ absl::StatusOr<std::string> PathToResourceAsFile(std::string path) {
 #else
   if (absl::StartsWith(path, "./")) {
     path = "mediapipe" + path.substr(1);
+  } else if (path[0] != '/') {
+    path = "mediapipe/" + path;
   }
 
   std::string error;
+  // TODO: We should ideally use `CreateForTests` when this is
+  // accessed from unit tests.
   std::unique_ptr<::bazel::tools::cpp::runfiles::Runfiles> runfiles(
       ::bazel::tools::cpp::runfiles::Runfiles::Create("", &error));
   if (!runfiles) {

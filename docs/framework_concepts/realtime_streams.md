@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/framework_concepts/realtime_streams
 title: Real-time Streams
 parent: Framework Concepts
 nav_order: 6

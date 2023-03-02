@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/framework_concepts/overview
 title: Framework Concepts
 nav_order: 5
 has_children: true

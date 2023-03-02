@@ -14,30 +14,27 @@
 
 #import <Foundation/Foundation.h>
 
+#include "mediapipe/framework/formats/image_frame.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * Helper utility for performing operations on MPPImage specific to the MediaPipe Vision library.
+ * Helper utility for converting `MPPImage` into a `mediapipe::ImageFrame`.
  */
 @interface MPPImage (Utils)
-
-/** Bitmap size of the image. */
-@property(nonatomic, readonly) CGSize bitmapSize;
-
 /**
- * Returns the underlying uint8 pixel buffer of an `MPPImage`.
- * Irrespective of whether the underlying buffer is grayscale, RGB, RGBA, BGRA etc., the pixel
- * data is converted to an RGB format. In case of grayscale images, the mono channel is duplicated
- * in the R, G, B channels.
+ * Converts the `MPPImage` into a `mediapipe::ImageFrame`.
+ * Irrespective of whether the underlying buffer is grayscale, RGB, RGBA, BGRA etc., the MPPImage is
+ * converted to an RGB format. In case of grayscale images, the mono channel is duplicated in the R,
+ * G, B channels.
  *
  * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
  * error will be saved.
  *
- * @return The underlying pixel buffer of the `MPPImage` or nil in case of errors.
+ * @return An std::unique_ptr<mediapipe::ImageFrame> or `nullptr` in case of errors.
  */
-- (nullable uint8_t *)rgbPixelDataWithError:(NSError **)error;
+- (std::unique_ptr<mediapipe::ImageFrame>)imageFrameWithError:(NSError **)error;
 
 @end
 

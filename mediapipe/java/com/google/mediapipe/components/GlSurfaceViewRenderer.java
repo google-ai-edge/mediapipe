@@ -15,7 +15,9 @@
 package com.google.mediapipe.components;
 
 import static java.lang.Math.max;
+import static java.lang.Math.min;
 
+import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
@@ -25,9 +27,12 @@ import android.util.Log;
 import com.google.mediapipe.framework.TextureFrame;
 import com.google.mediapipe.glutil.CommonShaders;
 import com.google.mediapipe.glutil.ShaderUtil;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -44,6 +49,13 @@ import javax.microedition.khronos.opengles.GL10;
  * {@link TextureFrame} (call {@link #setNextFrame(TextureFrame)}).
  */
 public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
+  /**
+   * Listener for Bitmap capture requests.
+   */
+  public interface BitmapCaptureListener {
+    void onBitmapCaptured(Bitmap result);
+  }
+
   private static final String TAG = "DemoRenderer";
   private static final int ATTRIB_POSITION = 1;
   private static final int ATTRIB_TEXTURE_COORDINATE = 2;
@@ -56,12 +68,32 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   private int frameUniform;
   private int textureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
   private int textureTransformUniform;
+  private boolean shouldFitToWidth = false;
   // Controls the alignment between frame size and surface size, 0.5f default is centered.
   private float alignmentHorizontal = 0.5f;
   private float alignmentVertical = 0.5f;
   private float[] textureTransformMatrix = new float[16];
   private SurfaceTexture surfaceTexture = null;
   private final AtomicReference<TextureFrame> nextFrame = new AtomicReference<>();
+  private final AtomicBoolean captureNextFrameBitmap = new AtomicBoolean();
+  private BitmapCaptureListener bitmapCaptureListener;
+
+  /**
+   * Sets the {@link BitmapCaptureListener}.
+   */
+  public void setBitmapCaptureListener(BitmapCaptureListener bitmapCaptureListener) {
+    this.bitmapCaptureListener = bitmapCaptureListener;
+  }
+
+  /**
+   * Request to capture Bitmap of the next frame.
+   *
+   * The result will be provided to the {@link BitmapCaptureListener} if one is set. Please note
+   * this is an expensive operation and the result may not be available for a while.
+   */
+  public void captureNextFrameBitmap() {
+    captureNextFrameBitmap.set(true);
+  }
 
   @Override
   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
@@ -147,6 +179,31 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
 
     GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     ShaderUtil.checkGlError("glDrawArrays");
+
+    // Capture Bitmap if requested.
+    BitmapCaptureListener bitmapCaptureListener = this.bitmapCaptureListener;
+    if (captureNextFrameBitmap.getAndSet(false) && bitmapCaptureListener != null) {
+      int bitmapSize = surfaceWidth * surfaceHeight;
+      ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bitmapSize * 4);
+      byteBuffer.order(ByteOrder.nativeOrder());
+      GLES20.glReadPixels(
+          0, 0, surfaceWidth, surfaceHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, byteBuffer);
+      int[] pixelBuffer = new int[bitmapSize];
+      byteBuffer.asIntBuffer().get(pixelBuffer);
+      for (int i = 0; i < bitmapSize; i++) {
+        // Swap R and B channels.
+        pixelBuffer[i] =
+            (pixelBuffer[i] & 0xff00ff00)
+                | ((pixelBuffer[i] & 0x000000ff) << 16)
+                | ((pixelBuffer[i] & 0x00ff0000) >> 16);
+      }
+      Bitmap bitmap = Bitmap.createBitmap(surfaceWidth, surfaceHeight, Bitmap.Config.ARGB_8888);
+      bitmap.setPixels(
+          pixelBuffer, /* offset= */bitmapSize - surfaceWidth, /* stride= */-surfaceWidth,
+          /* x= */0, /* y= */0, surfaceWidth, surfaceHeight);
+      bitmapCaptureListener.onBitmapCaptured(bitmap);
+    }
+
     GLES20.glBindTexture(textureTarget, 0);
     ShaderUtil.checkGlError("unbind surfaceTexture");
 
@@ -158,13 +215,17 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     // TODO: compute scale from surfaceTexture size.
     float scaleWidth = frameWidth > 0 ? (float) surfaceWidth / (float) frameWidth : 1.0f;
     float scaleHeight = frameHeight > 0 ? (float) surfaceHeight / (float) frameHeight : 1.0f;
-    // Whichever of the two scales is greater corresponds to the dimension where the image
-    // is proportionally smaller than the view. Dividing both scales by that number results
+    // By default whichever of the two scales is greater corresponds to the dimension where the
+    // image is proportionally smaller than the view. Dividing both scales by that number results
     // in that dimension having scale 1.0, and thus touching the edges of the view, while the
-    // other is cropped proportionally.
-    float maxScale = max(scaleWidth, scaleHeight);
-    scaleWidth /= maxScale;
-    scaleHeight /= maxScale;
+    // other is cropped proportionally. If shouldFitToWidth is set as true, use the min scale
+    // if frame width is greater than frame height.
+    float scale = max(scaleWidth, scaleHeight);
+    if (shouldFitToWidth && (frameWidth > frameHeight)) {
+      scale = min(scaleWidth, scaleHeight);
+    }
+    scaleWidth /= scale;
+    scaleHeight /= scale;
 
     // Alignment controls where the visible section is placed within the full camera frame, with
     // (0, 0) being the bottom left, and (1, 1) being the top right.
@@ -230,6 +291,11 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   public void setFrameSize(int width, int height) {
     frameWidth = width;
     frameHeight = height;
+  }
+
+  /** Supports fit to width when the frame width is greater than the frame height. */
+  public void setShouldFitToWidth(boolean shouldFitToWidth) {
+    this.shouldFitToWidth = shouldFitToWidth;
   }
 
   /**

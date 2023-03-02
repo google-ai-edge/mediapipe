@@ -18,6 +18,16 @@ nav_order: 16
 </details>
 ---
 
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+We have ended support for this MediaPipe Legacy Solution as of March 1, 2023.
+For more information, see the new
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
+site.*
+
+*This notice and web page will be removed on April 3, 2023.*
+
+----
+
 MediaPipe is a useful and general framework for media processing that can assist
 with research, development, and deployment of ML models. This example focuses on
 model development by demonstrating how to prepare training data and do model

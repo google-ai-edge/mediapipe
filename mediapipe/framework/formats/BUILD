@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load("//mediapipe/framework:mediapipe_register_type.bzl", "mediapipe_register_type")
 
@@ -22,6 +23,14 @@ package(
 )
 
 licenses(["notice"])
+
+selects.config_setting_group(
+    name = "ios_or_disable_gpu",
+    match_any = [
+        "//mediapipe/gpu:disable_gpu",
+        "//mediapipe:ios",
+    ],
+)
 
 mediapipe_proto_library(
     name = "detection_proto",
@@ -336,9 +345,7 @@ cc_library(
         "//conditions:default": [
             "//mediapipe/gpu:gl_texture_buffer",
         ],
-        "//mediapipe:ios": [
-        ],
-        "//mediapipe/gpu:disable_gpu": [],
+        "ios_or_disable_gpu": [],
     }) + select({
         "//conditions:default": [],
         "//mediapipe:apple": [

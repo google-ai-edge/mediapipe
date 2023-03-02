@@ -11,11 +11,6 @@ objc_library(
         "-std=c++17",
     ],
     module_name = "MPPImage",
-    sdk_frameworks = [
-        "CoreMedia",
-        "CoreVideo",
-        "UIKit",
-    ],
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",

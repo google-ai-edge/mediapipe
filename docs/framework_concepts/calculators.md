@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/framework_concepts/calculators
 title: Calculators
 parent: Framework Concepts
 nav_order: 1

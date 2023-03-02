@@ -88,6 +88,7 @@ TEST(ModelAssetBundleResourcesTest, CreateFromFile) {
           .status());
 }
 
+#ifndef _WIN32
 TEST(ModelAssetBundleResourcesTest, CreateFromFileDescriptor) {
   const int model_file_descriptor = open(kTestModelBundlePath, O_RDONLY);
   auto model_file = std::make_unique<proto::ExternalFile>();
@@ -103,6 +104,7 @@ TEST(ModelAssetBundleResourcesTest, CreateFromFileDescriptor) {
       model_bundle_resources->GetModelFile("dummy_gesture_recognizer.tflite")
           .status());
 }
+#endif  // _WIN32
 
 TEST(ModelAssetBundleResourcesTest, CreateFromFilePointer) {
   auto file_content = LoadBinaryContent(kTestModelBundlePath);
