@@ -29,10 +29,12 @@ export type EmptyPacketListener = (timestamp: number) => void;
 
 /**
  * A listener that receives a single element of vector-returning output packet.
+ * Receives one element at a time (in order). Once all elements are processed,
+ * the listener is invoked with `data` set to `unknown` and `done` set to true.
  * Intended for internal usage.
  */
-export type VectorListener<T> =
-    (data: T, index: number, length: number, timestamp: number) => void;
+export type VectorListener<T> = (data: T, done: boolean, timestamp: number) =>
+    void;
 
 /**
  * Declarations for Emscripten's WebAssembly Module behavior, so TS compiler
@@ -454,17 +456,12 @@ export class GraphRunner {
     let buffer: T[] = [];
     this.wasmModule.simpleListeners = this.wasmModule.simpleListeners || {};
     this.wasmModule.simpleListeners[outputStreamName] =
-        (data: unknown, index: number, length: number, timestamp: number) => {
-          // The Wasm listener gets invoked once for each element. Once we
-          // receive all elements, we invoke the registered callback with
-          // the full array.
-          buffer[index] = data as T;
-          if (index === length - 1) {
-            // Invoke the user callback directly, as the Wasm layer may
-            // clean up the underlying data elements once we leave the scope
-            // of the listener.
+        (data: unknown, done: boolean, timestamp: number) => {
+          if (done) {
             callbackFcn(buffer, timestamp);
             buffer = [];
+          } else {
+            buffer.push(data as T);
           }
         };
   }
