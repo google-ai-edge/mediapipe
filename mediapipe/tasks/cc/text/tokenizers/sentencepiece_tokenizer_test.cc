@@ -32,24 +32,31 @@ constexpr char kTestSPModelPath[] =
     "mediapipe/tasks/testdata/text/30k-clean.model";
 }  // namespace
 
+std::unique_ptr<SentencePieceTokenizer> CreateSentencePieceTokenizer(
+    absl::string_view model_path) {
+  // We are using `LoadBinaryContent()` instead of loading the model direclty
+  // via `SentencePieceTokenizer` so that the file can be located on Windows
+  std::string buffer = LoadBinaryContent(kTestSPModelPath);
+  return absl::make_unique<SentencePieceTokenizer>(buffer.data(),
+                                                   buffer.size());
+}
+
 TEST(SentencePieceTokenizerTest, TestTokenize) {
-  auto tokenizer = absl::make_unique<SentencePieceTokenizer>(kTestSPModelPath);
+  auto tokenizer = CreateSentencePieceTokenizer(kTestSPModelPath);
   auto results = tokenizer->Tokenize("good morning, i'm your teacher.\n");
   EXPECT_THAT(results.subwords, ElementsAre("▁good", "▁morning", ",", "▁i", "'",
                                             "m", "▁your", "▁teacher", "."));
 }
 
 TEST(SentencePieceTokenizerTest, TestTokenizeFromFileBuffer) {
-  std::string buffer = LoadBinaryContent(kTestSPModelPath);
-  auto tokenizer =
-      absl::make_unique<SentencePieceTokenizer>(buffer.data(), buffer.size());
+  auto tokenizer = CreateSentencePieceTokenizer(kTestSPModelPath);
   EXPECT_THAT(tokenizer->Tokenize("good morning, i'm your teacher.\n").subwords,
               ElementsAre("▁good", "▁morning", ",", "▁i", "'", "m", "▁your",
                           "▁teacher", "."));
 }
 
 TEST(SentencePieceTokenizerTest, TestLookupId) {
-  auto tokenizer = absl::make_unique<SentencePieceTokenizer>(kTestSPModelPath);
+  auto tokenizer = CreateSentencePieceTokenizer(kTestSPModelPath);
   std::vector<std::string> subwords = {"▁good", "▁morning", ",", "▁i", "'", "m",
                                        "▁your", "▁teacher", "."};
   std::vector<int> true_ids = {254, 959, 15, 31, 22, 79, 154, 2197, 9};
@@ -61,7 +68,7 @@ TEST(SentencePieceTokenizerTest, TestLookupId) {
 }
 
 TEST(SentencePieceTokenizerTest, TestLookupWord) {
-  auto tokenizer = absl::make_unique<SentencePieceTokenizer>(kTestSPModelPath);
+  auto tokenizer = CreateSentencePieceTokenizer(kTestSPModelPath);
   std::vector<int> ids = {254, 959, 15, 31, 22, 79, 154, 2197, 9};
   std::vector<std::string> subwords = {"▁good", "▁morning", ",", "▁i", "'", "m",
                                        "▁your", "▁teacher", "."};
