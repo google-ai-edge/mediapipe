@@ -23,8 +23,6 @@
 #import "mediapipe/tasks/ios/text/text_embedder/utils/sources/MPPTextEmbedderOptions+Helpers.h"
 #import "mediapipe/tasks/ios/text/text_embedder/utils/sources/MPPTextEmbedderResult+Helpers.h"
 
-#include "absl/status/statusor.h"
-
 namespace {
 using ::mediapipe::Packet;
 using ::mediapipe::tasks::core::PacketMap;

@@ -22,7 +22,6 @@
 #import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierOptions+Helpers.h"
 #import "mediapipe/tasks/ios/text/text_classifier/utils/sources/MPPTextClassifierResult+Helpers.h"
 
-#include "absl/status/statusor.h"
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 
 namespace {
