@@ -14,8 +14,10 @@
 
 #import <Foundation/Foundation.h>
 
-#include "mediapipe/framework/packet.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
+
+#include "mediapipe/framework/packet.h"
+#include "mediapipe/framework/formats/rect.pb.h"
 
 /**
  * This class helps create various kinds of packets for Mediapipe Vision Tasks.
@@ -23,5 +25,14 @@
 @interface MPPVisionPacketCreator : NSObject
 
 + (mediapipe::Packet)createPacketWithMPPImage:(MPPImage *)image error:(NSError **)error;
+
++ (mediapipe::Packet)createPacketWithMPPImage:(MPPImage *)image
+                                  timestampMs:(NSInteger)timestampMs
+                                        error:(NSError **)error;
+
++ (mediapipe::Packet)createPacketWithNormalizedRect:(mediapipe::NormalizedRect &)normalizedRect;
+
++ (mediapipe::Packet)createPacketWithNormalizedRect:(mediapipe::NormalizedRect &)normalizedRect
+                                        timestampMs:(NSInteger)timestampMs;
 
 @end
