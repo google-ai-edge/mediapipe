@@ -23,8 +23,13 @@ cc_library(
         ],
     }),
     hdrs = ["asset_manager_util.h"],
+    defines = select({
+        "//mediapipe/framework:android_no_jni": ["MEDIAPIPE_NO_JNI"],
+        "//conditions:default": [],
+    }),
     linkopts = select({
         "//conditions:default": [],
+        "//mediapipe/framework:android_no_jni": [],
         "//mediapipe:android": ["-landroid"],
     }),
     visibility = ["//visibility:public"],
