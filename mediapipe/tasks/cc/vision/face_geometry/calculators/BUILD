@@ -19,6 +19,28 @@ licenses(["notice"])
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
 mediapipe_proto_library(
+    name = "env_generator_calculator_proto",
+    srcs = ["env_generator_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/tasks/cc/vision/face_geometry/proto:environment_proto",
+    ],
+)
+
+cc_library(
+    name = "env_generator_calculator",
+    srcs = ["env_generator_calculator.cc"],
+    deps = [
+        ":env_generator_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/tasks/cc/vision/face_geometry/libs:validation_utils",
+        "//mediapipe/tasks/cc/vision/face_geometry/proto:environment_cc_proto",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_proto_library(
     name = "geometry_pipeline_calculator_proto",
     srcs = ["geometry_pipeline_calculator.proto"],
     deps = [
