@@ -38,6 +38,7 @@ objc_library(
     deps = [
         "//mediapipe/framework:packet",
         "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
         "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
         "//mediapipe/framework/formats:rect_cc_proto",
