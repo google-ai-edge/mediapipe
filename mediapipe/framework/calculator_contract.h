@@ -69,6 +69,11 @@ class CalculatorContract {
     return options_.Get<T>();
   }
 
+  template <class T>
+  bool HasOptions() const {
+    return options_.Has<T>();
+  }
+
   // Returns the PacketTypeSet for the input streams.
   PacketTypeSet& Inputs() { return *inputs_; }
   const PacketTypeSet& Inputs() const { return *inputs_; }

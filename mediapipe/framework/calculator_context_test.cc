@@ -131,6 +131,13 @@ TEST(CalculatorTest, GetOptions) {
   auto calculator_state_3 = MakeCalculatorState(config.node(3), 3);
   auto cc_3 = MakeCalculatorContext(&*calculator_state_3);
 
+  EXPECT_TRUE(cc_0->HasOptions<NightLightCalculatorOptions>());
+  EXPECT_FALSE(cc_0->HasOptions<SkyLightCalculatorOptions>());
+  EXPECT_TRUE(cc_1->HasOptions<NightLightCalculatorOptions>());
+  EXPECT_FALSE(cc_1->HasOptions<SkyLightCalculatorOptions>());
+  EXPECT_FALSE(cc_3->HasOptions<NightLightCalculatorOptions>());
+  EXPECT_TRUE(cc_3->HasOptions<SkyLightCalculatorOptions>());
+
   // Get a google::protobuf options extension from Node::options.
   EXPECT_EQ(cc_0->Options<NightLightCalculatorOptions>().jitter(), 0.123);
 

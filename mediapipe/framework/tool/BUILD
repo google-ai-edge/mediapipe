@@ -181,6 +181,20 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "options_map_test",
+    srcs = ["options_map_test.cc"],
+    deps = [
+        ":options_map",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/testdata:night_light_calculator_cc_proto",
+        "//mediapipe/framework/testdata:night_light_calculator_options_lib",
+    ],
+)
+
 mediapipe_proto_library(
     name = "field_data_proto",
     srcs = ["field_data.proto"],

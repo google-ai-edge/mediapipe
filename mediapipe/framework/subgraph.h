@@ -62,6 +62,11 @@ class SubgraphContext {
     return options_map_.GetMutable<T>();
   }
 
+  template <typename T>
+  bool HasOptions() {
+    return options_map_.Has<T>();
+  }
+
   const CalculatorGraphConfig::Node& OriginalNode() const {
     return original_node_;
   }
@@ -117,6 +122,11 @@ class Subgraph {
   template <typename T>
   static T GetOptions(const Subgraph::SubgraphOptions& supgraph_options) {
     return tool::OptionsMap().Initialize(supgraph_options).Get<T>();
+  }
+
+  template <typename T>
+  static bool HasOptions(const Subgraph::SubgraphOptions& supgraph_options) {
+    return tool::OptionsMap().Initialize(supgraph_options).Has<T>();
   }
 
   // Returns the CalculatorGraphConfig::Node specifying the subgraph.

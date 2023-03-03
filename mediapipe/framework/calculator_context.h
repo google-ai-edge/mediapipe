@@ -69,6 +69,11 @@ class CalculatorContext {
     return calculator_state_->Options<T>();
   }
 
+  template <class T>
+  bool HasOptions() const {
+    return calculator_state_->HasOptions<T>();
+  }
+
   // Returns a counter using the graph's counter factory. The counter's name is
   // the passed-in name, prefixed by the calculator node's name (if present) or
   // the calculator's type (if not).
