@@ -1676,15 +1676,18 @@ class TemplateParser::Parser::MediaPipeParserImpl
     }
   }
 
-  // Inserts one value into the specified field.
-  static void InsertFieldValue(
+  // Appends one value to the specified field.
+  static void AppendFieldValue(
       Message* message, const FieldDescriptor* field,
       const std::vector<ProtoUtilLite::FieldValue>& args) {
     auto field_type = static_cast<ProtoUtilLite::FieldType>(field->type());
     ProtoUtilLite::FieldValue message_bytes;
     CHECK(message->SerializePartialToString(&message_bytes));
+    int count;
+    MEDIAPIPE_CHECK_OK(ProtoUtilLite::GetFieldCount(
+        message_bytes, {{field->number(), 0}}, field_type, &count));
     MEDIAPIPE_CHECK_OK(ProtoUtilLite::ReplaceFieldRange(
-        &message_bytes, {{field->number(), 0}}, 0, field_type, args));
+        &message_bytes, {{field->number(), count}}, 0, field_type, args));
     CHECK(message->ParsePartialFromString(message_bytes));
   }
 
@@ -1701,7 +1704,7 @@ class TemplateParser::Parser::MediaPipeParserImpl
     // Leave a dummy value in place of the consumed field.
     std::vector<ProtoUtilLite::FieldValue> args;
     GetEmptyFieldValue(field, &args);
-    InsertFieldValue(message, field, args);
+    AppendFieldValue(message, field, args);
     return true;
   }
 
@@ -1718,7 +1721,7 @@ class TemplateParser::Parser::MediaPipeParserImpl
     // Leave a dummy value in place of the consumed field.
     std::vector<ProtoUtilLite::FieldValue> args;
     GetEmptyFieldValue(field, &args);
-    InsertFieldValue(message, field, args);
+    AppendFieldValue(message, field, args);
     return true;
   }
 
