@@ -38,4 +38,23 @@ typedef NS_ENUM(NSUInteger, MPPRunningMode) {
 
 } NS_SWIFT_NAME(RunningMode);
 
+NS_INLINE NSString *MPPRunningModeDisplayName(MPPRunningMode runningMode) {
+
+  if (runningMode > MPPRunningModeLiveStream) {
+      return nil;
+  }
+
+  #define MPPRunningModeDisplayNameMap(mode) [mode] = @#mode
+    
+  NSString *displayNameMap[MPPRunningModeLiveStream + 1] = {
+      MPPRunningModeDisplayNameMap(MPPRunningModeImage),
+      MPPRunningModeDisplayNameMap(MPPRunningModeVideo),
+      MPPRunningModeDisplayNameMap(MPPRunningModeLiveStream),
+  };
+
+  #undef MPPRunningModeDisplayNameMap
+
+  return displayNameMap[runningMode];
+}
+
 NS_ASSUME_NONNULL_END

@@ -116,10 +116,11 @@ using ::mediapipe::tasks::core::PacketsCallback;
       [MPPCommonUtils
           createCustomError:error
                    withCode:MPPTasksErrorCodeInvalidArgumentError
-                description:@"Unsupported UIImageOrientation. `imageOrientation` cannot be equal to "
-                            @"any of the mirrored orientations "
-                            @"(`UIImageOrientationUpMirrored`,`UIImageOrientationDownMirrored`,`"
-                            @"UIImageOrientationLeftMirrored`,`UIImageOrientationRightMirrored`)"];
+                description:
+                    @"Unsupported UIImageOrientation. `imageOrientation` cannot be equal to "
+                    @"any of the mirrored orientations "
+                    @"(`UIImageOrientationUpMirrored`,`UIImageOrientationDownMirrored`,`"
+                    @"UIImageOrientationLeftMirrored`,`UIImageOrientationRightMirrored`)"];
   }
 
   normalizedRect.set_rotation(-rotationDegrees * M_PI / 180.0);
@@ -132,8 +133,9 @@ using ::mediapipe::tasks::core::PacketsCallback;
     [MPPCommonUtils
         createCustomError:error
                  withCode:MPPTasksErrorCodeInvalidArgumentError
-              description:
-                  @"The vision task is not initialized with image mode. Current Running Mode:"];
+              description:[NSString stringWithFormat:@"The vision task is not initialized with "
+                                                     @"image mode. Current Running Mode: %@",
+                                                     MPPRunningModeDisplayName(_runningMode)]];
     return std::nullopt;
   }
 
@@ -146,8 +148,9 @@ using ::mediapipe::tasks::core::PacketsCallback;
     [MPPCommonUtils
         createCustomError:error
                  withCode:MPPTasksErrorCodeInvalidArgumentError
-              description:
-                  @"The vision task is not initialized with image mode. Current Running Mode:"];
+              description:[NSString stringWithFormat:@"The vision task is not initialized with "
+                                                     @"video mode. Current Running Mode: %@",
+                                                     MPPRunningModeDisplayName(_runningMode)]];
     return std::nullopt;
   }
 
@@ -159,8 +162,9 @@ using ::mediapipe::tasks::core::PacketsCallback;
     [MPPCommonUtils
         createCustomError:error
                  withCode:MPPTasksErrorCodeInvalidArgumentError
-              description:
-                  @"The vision task is not initialized with image mode. Current Running Mode:"];
+              description:[NSString stringWithFormat:@"The vision task is not initialized with "
+                                                     @"live stream mode. Current Running Mode: %@",
+                                                     MPPRunningModeDisplayName(_runningMode)]];
     return NO;
   }
 
