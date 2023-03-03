@@ -127,7 +127,7 @@ NS_ASSUME_NONNULL_BEGIN
  * error will be saved.
  *
  * @return A `BOOL` indicating if the live stream data was sent to the C++ task runner successfully.
- * Please note that any errors during processing of the live stream packet will only be available in
+ * Please note that any errors during processing of the live stream packet map will only be available in
  * the user-defined `packetsCallback` that was provided during initialization of the
  * `MPPVisionTaskRunner`.
  */
