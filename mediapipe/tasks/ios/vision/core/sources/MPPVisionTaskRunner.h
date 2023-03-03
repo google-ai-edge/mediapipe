@@ -58,7 +58,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                  error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
- * Creates a `NormalizedRect` from region of interest and image orientation, performing
+ * Creates a `NormalizedRect` from a region of interest and an image orientation, performing
  * sanity checks on-the-fly. If the input region of interest equals `CGRectZero`, returns a default
  * `NormalizedRect` covering the whole image with rotation set according `imageOrientation`. If
  * `roiAllowed` is NO, an error will be returned if the input region of interest is not equal to
@@ -66,11 +66,10 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * @param roi A `CGRect` specifying the region of interest. If the input region of interest equals
  * `CGRectZero`, the returned `NormalizedRect` covers the whole image. Make sure that `roi` equals
- * `CGRectZero` if `roiAllowed` is NO. Otherwise an error will be returned.
+ * `CGRectZero` if `roiAllowed` is NO. Otherwise, an error will be returned.
  * @param imageOrientation A `UIImageOrientation` indicating the rotation to be applied to the
  * image. The resulting `NormalizedRect` will convert the `imageOrientation` to degrees clockwise.
  * @param roiAllowed Indicates if the `roi` field is allowed to be a value other than `CGRectZero`.
- *
  * @param error Pointer to the memory location where errors if any should be
  * saved. If @c NULL, no error will be saved.
  *
@@ -83,7 +82,7 @@ NS_ASSUME_NONNULL_BEGIN
                                  error:(NSError **)error;
 
 /**
- * A synchronous method to invoke the  C++ task runner to process single image inputs. The call
+ * A synchronous method to invoke the C++ task runner to process single image inputs. The call
  * blocks the current thread until a failure status or a successful result is returned.
  *
  * @param packetMap A `PackeMap` containing pairs of input stream name and data packet.
@@ -97,7 +96,7 @@ NS_ASSUME_NONNULL_BEGIN
                     error:(NSError **)error;
 
 /**
- * A synchronous method to invoke the  C++ task runner to process continuous video frames. The call
+ * A synchronous method to invoke the C++ task runner to process continuous video frames. The call
  * blocks the current thread until a failure status or a successful result is returned.
  *
  * @param packetMap A `PackeMap` containing pairs of input stream name and data packet.
