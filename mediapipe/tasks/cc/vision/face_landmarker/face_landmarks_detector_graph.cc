@@ -14,6 +14,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include <memory>
+#include <optional>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -26,6 +27,9 @@ limitations under the License.
 #include "mediapipe/calculators/util/thresholding_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
+#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/calculator_options.pb.h"
+#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
@@ -36,9 +40,11 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/core/utils.h"
+#include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_blendshapes_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/tensors_to_face_landmarks_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
+#include "mediapipe/util/graph_builder_utils.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -72,6 +78,7 @@ constexpr char kIterableTag[] = "ITERABLE";
 constexpr char kBatchEndTag[] = "BATCH_END";
 constexpr char kItemTag[] = "ITEM";
 constexpr char kDetectionTag[] = "DETECTION";
+constexpr char kBlendshapesTag[] = "BLENDSHAPES";
 
 // a landmarks tensor and a scores tensor
 constexpr int kFaceLandmarksOutputTensorsNum = 2;
@@ -83,6 +90,7 @@ struct SingleFaceLandmarksOutputs {
   Stream<NormalizedRect> rect_next_frame;
   Stream<bool> presence;
   Stream<float> presence_score;
+  std::optional<Stream<ClassificationList>> face_blendshapes;
 };
 
 struct MultiFaceLandmarksOutputs {
@@ -90,6 +98,7 @@ struct MultiFaceLandmarksOutputs {
   Stream<std::vector<NormalizedRect>> rects_next_frame;
   Stream<std::vector<bool>> presences;
   Stream<std::vector<float>> presence_scores;
+  std::optional<Stream<std::vector<ClassificationList>>> face_blendshapes;
 };
 
 absl::Status SanityCheckOptions(
@@ -180,6 +189,62 @@ bool IsAttentionModel(const core::ModelResources& model_resources) {
 //     Boolean value indicates whether the face is present.
 //   PRESENCE_SCORE - float
 //     Float value indicates the probability that the face is present.
+//   BLENDSHAPES - ClassificationList @optional
+//     Blendshape classification, available when face_blendshapes_graph_options
+//     is set.
+//     All 52 blendshape coefficients:
+//       0  - _neutral  (ignore it)
+//       1  - browDownLeft
+//       2  - browDownRight
+//       3  - browInnerUp
+//       4  - browOuterUpLeft
+//       5  - browOuterUpRight
+//       6  - cheekPuff
+//       7  - cheekSquintLeft
+//       8  - cheekSquintRight
+//       9  - eyeBlinkLeft
+//       10 - eyeBlinkRight
+//       11 - eyeLookDownLeft
+//       12 - eyeLookDownRight
+//       13 - eyeLookInLeft
+//       14 - eyeLookInRight
+//       15 - eyeLookOutLeft
+//       16 - eyeLookOutRight
+//       17 - eyeLookUpLeft
+//       18 - eyeLookUpRight
+//       19 - eyeSquintLeft
+//       20 - eyeSquintRight
+//       21 - eyeWideLeft
+//       22 - eyeWideRight
+//       23 - jawForward
+//       24 - jawLeft
+//       25 - jawOpen
+//       26 - jawRight
+//       27 - mouthClose
+//       28 - mouthDimpleLeft
+//       29 - mouthDimpleRight
+//       30 - mouthFrownLeft
+//       31 - mouthFrownRight
+//       32 - mouthFunnel
+//       33 - mouthLeft
+//       34 - mouthLowerDownLeft
+//       35 - mouthLowerDownRight
+//       36 - mouthPressLeft
+//       37 - mouthPressRight
+//       38 - mouthPucker
+//       39 - mouthRight
+//       40 - mouthRollLower
+//       41 - mouthRollUpper
+//       42 - mouthShrugLower
+//       43 - mouthShrugUpper
+//       44 - mouthSmileLeft
+//       45 - mouthSmileRight
+//       46 - mouthStretchLeft
+//       47 - mouthStretchRight
+//       48 - mouthUpperUpLeft
+//       49 - mouthUpperUpRight
+//       50 - noseSneerLeft
+//       51 - noseSneerRight
 //
 // Example:
 // node {
@@ -191,6 +256,7 @@ bool IsAttentionModel(const core::ModelResources& model_resources) {
 //   output_stream: "FACE_RECT_NEXT_FRAME:face_rect_next_frame"
 //   output_stream: "PRESENCE:presence"
 //   output_stream: "PRESENCE_SCORE:presence_score"
+//   output_stream: "BLENDSHAPES:blendshapes"
 //   options {
 //     [mediapipe.tasks.vision.face_landmarker.proto.FaceLandmarksDetectorGraphOptions.ext]
 //     {
@@ -200,6 +266,13 @@ bool IsAttentionModel(const core::ModelResources& model_resources) {
 //          }
 //       }
 //       min_detection_confidence: 0.5
+//       face_blendshapes_graph_options {
+//          base_options {
+//            model_asset {
+//              file_name: "face_blendshape.tflite"
+//            }
+//          }
+//       }
 //     }
 //   }
 // }
@@ -214,7 +287,7 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
     ASSIGN_OR_RETURN(
         auto outs,
         BuildSingleFaceLandmarksDetectorGraph(
-            sc->Options<proto::FaceLandmarksDetectorGraphOptions>(),
+            *sc->MutableOptions<proto::FaceLandmarksDetectorGraphOptions>(),
             *model_resources, graph[Input<Image>(kImageTag)],
             graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
     outs.landmarks >>
@@ -223,6 +296,10 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
         graph.Out(kFaceRectNextFrameTag).Cast<NormalizedRect>();
     outs.presence >> graph.Out(kPresenceTag).Cast<bool>();
     outs.presence_score >> graph.Out(kPresenceScoreTag).Cast<float>();
+    if (outs.face_blendshapes) {
+      outs.face_blendshapes.value() >>
+          graph.Out(kBlendshapesTag).Cast<ClassificationList>();
+    }
     return graph.GetConfig();
   }
 
@@ -239,7 +316,7 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
   // graph: the mediapipe graph instance to be updated.
   absl::StatusOr<SingleFaceLandmarksOutputs>
   BuildSingleFaceLandmarksDetectorGraph(
-      const proto::FaceLandmarksDetectorGraphOptions& subgraph_options,
+      proto::FaceLandmarksDetectorGraphOptions& subgraph_options,
       const core::ModelResources& model_resources, Stream<Image> image_in,
       Stream<NormalizedRect> face_rect, Graph& graph) {
     MP_RETURN_IF_ERROR(SanityCheckOptions(subgraph_options));
@@ -351,11 +428,26 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto face_rect_next_frame =
         AllowIf(face_rect_transformation.Out("").Cast<NormalizedRect>(),
                 presence, graph);
+
+    std::optional<Stream<ClassificationList>> face_blendshapes;
+    if (subgraph_options.has_face_blendshapes_graph_options()) {
+      auto& face_blendshapes_graph = graph.AddNode(
+          "mediapipe.tasks.vision.face_landmarker.FaceBlendshapesGraph");
+      face_blendshapes_graph.GetOptions<proto::FaceBlendshapesGraphOptions>()
+          .Swap(subgraph_options.mutable_face_blendshapes_graph_options());
+      projected_landmarks >> face_blendshapes_graph.In(kLandmarksTag);
+      image_size >> face_blendshapes_graph.In(kImageSizeTag);
+      face_blendshapes =
+          std::make_optional(face_blendshapes_graph.Out(kBlendshapesTag)
+                                 .Cast<ClassificationList>());
+    }
+
     return {{
         /* landmarks= */ projected_landmarks,
         /* rect_next_frame= */ face_rect_next_frame,
         /* presence= */ presence,
         /* presence_score= */ presence_score,
+        /* face_blendshapes= */ face_blendshapes,
     }};
   }
 };
@@ -390,6 +482,9 @@ REGISTER_MEDIAPIPE_GRAPH(
 //     Vector of boolean value indicates whether the face is present.
 //   PRESENCE_SCORE - std::vector<float>
 //     Vector of float value indicates the probability that the face is present.
+//   BLENDSHAPES - std::vector<ClassificationList> @optional
+//     Vector of face blendshape classification, available when
+//     face_blendshapes_graph_options is set.
 //
 // Example:
 // node {
@@ -401,6 +496,7 @@ REGISTER_MEDIAPIPE_GRAPH(
 //   output_stream: "FACE_RECTS_NEXT_FRAME:face_rects_next_frame"
 //   output_stream: "PRESENCE:presence"
 //   output_stream: "PRESENCE_SCORE:presence_score"
+//   output_stream: "BLENDSHAPES:blendshapes"
 //   options {
 //     [mediapipe.tasks.vision.face_landmarker.proto.FaceLandmarksDetectorGraphOptions.ext]
 //     {
@@ -410,6 +506,13 @@ REGISTER_MEDIAPIPE_GRAPH(
 //          }
 //       }
 //       min_detection_confidence: 0.5
+//       face_blendshapes_graph_options {
+//          base_options {
+//            model_asset {
+//              file_name: "face_blendshape.tflite"
+//            }
+//          }
+//       }
 //     }
 //   }
 // }
@@ -421,7 +524,7 @@ class MultiFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
     ASSIGN_OR_RETURN(
         auto outs,
         BuildFaceLandmarksDetectorGraph(
-            sc->Options<proto::FaceLandmarksDetectorGraphOptions>(),
+            *sc->MutableOptions<proto::FaceLandmarksDetectorGraphOptions>(),
             graph[Input<Image>(kImageTag)],
             graph[Input<std::vector<NormalizedRect>>(kNormRectTag)], graph));
     outs.landmarks_lists >> graph.Out(kNormLandmarksTag)
@@ -431,13 +534,16 @@ class MultiFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
     outs.presences >> graph.Out(kPresenceTag).Cast<std::vector<bool>>();
     outs.presence_scores >>
         graph.Out(kPresenceScoreTag).Cast<std::vector<float>>();
-
+    if (outs.face_blendshapes) {
+      outs.face_blendshapes.value() >>
+          graph.Out(kBlendshapesTag).Cast<std::vector<ClassificationList>>();
+    }
     return graph.GetConfig();
   }
 
  private:
   absl::StatusOr<MultiFaceLandmarksOutputs> BuildFaceLandmarksDetectorGraph(
-      const proto::FaceLandmarksDetectorGraphOptions& subgraph_options,
+      proto::FaceLandmarksDetectorGraphOptions& subgraph_options,
       Stream<Image> image_in,
       Stream<std::vector<NormalizedRect>> multi_face_rects, Graph& graph) {
     auto& face_landmark_subgraph = graph.AddNode(
@@ -445,7 +551,7 @@ class MultiFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
         "SingleFaceLandmarksDetectorGraph");
     face_landmark_subgraph
         .GetOptions<proto::FaceLandmarksDetectorGraphOptions>()
-        .CopyFrom(subgraph_options);
+        .Swap(&subgraph_options);
 
     auto& begin_loop_multi_face_rects =
         graph.AddNode("BeginLoopNormalizedRectCalculator");
@@ -490,11 +596,27 @@ class MultiFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto face_rects_next_frame = end_loop_rects_next_frame.Out(kIterableTag)
                                      .Cast<std::vector<NormalizedRect>>();
 
+    std::optional<Stream<std::vector<ClassificationList>>>
+        face_blendshapes_vector;
+    if (face_landmark_subgraph
+            .GetOptions<proto::FaceLandmarksDetectorGraphOptions>()
+            .has_face_blendshapes_graph_options()) {
+      auto blendshapes = face_landmark_subgraph.Out(kBlendshapesTag);
+      auto& end_loop_blendshapes =
+          graph.AddNode("EndLoopClassificationListCalculator");
+      batch_end >> end_loop_blendshapes.In(kBatchEndTag);
+      blendshapes >> end_loop_blendshapes.In(kItemTag);
+      face_blendshapes_vector =
+          std::make_optional(end_loop_blendshapes.Out(kIterableTag)
+                                 .Cast<std::vector<ClassificationList>>());
+    }
+
     return {{
         /* landmarks_lists= */ landmark_lists,
         /* face_rects_next_frame= */ face_rects_next_frame,
         /* presences= */ presences,
         /* presence_scores= */ presence_scores,
+        /* face_blendshapes= */ face_blendshapes_vector,
     }};
   }
 };

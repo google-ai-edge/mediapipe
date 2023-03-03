@@ -20,6 +20,7 @@ package mediapipe.tasks.vision.face_landmarker.proto;
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/framework/calculator_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
+import "mediapipe/tasks/cc/vision/face_landmarker/proto/face_blendshapes_graph_options.proto";
 
 option java_package = "com.google.mediapipe.tasks.vision.facelandmarker.proto";
 option java_outer_classname = "FaceLandmarksDetectorGraphOptionsProto";
@@ -35,4 +36,8 @@ message FaceLandmarksDetectorGraphOptions {
   // Minimum confidence value ([0.0, 1.0]) for confidence score to be considered
   // successfully detecting a face in the image.
   optional float min_detection_confidence = 2 [default = 0.5];
+
+  // Optional options for FaceBlendshapeGraph. If this options is set, the
+  // FaceLandmarksDetectorGraph would output the face blendshapes.
+  optional FaceBlendshapesGraphOptions face_blendshapes_graph_options = 3;
 }
