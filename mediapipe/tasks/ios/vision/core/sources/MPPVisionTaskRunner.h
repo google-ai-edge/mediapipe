@@ -70,8 +70,8 @@ NS_ASSUME_NONNULL_BEGIN
  * @param imageOrientation A `UIImageOrientation` indicating the rotation to be applied to the
  * image. The resulting `NormalizedRect` will convert the `imageOrientation` to degrees clockwise.
  * @param roiAllowed Indicates if the `roi` field is allowed to be a value other than `CGRectZero`.
- * @param error Pointer to the memory location where errors if any should be
- * saved. If @c NULL, no error will be saved.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ * error will be saved.
  *
  * @return An optional `NormalizedRect` from the given region of interest and image orientation.
  */
@@ -100,8 +100,8 @@ NS_ASSUME_NONNULL_BEGIN
  * blocks the current thread until a failure status or a successful result is returned.
  *
  * @param packetMap A `PackeMap` containing pairs of input stream name and data packet.
- * @param error Pointer to the memory location where errors if any should be
- * saved. If @c NULL, no error will be saved.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ * error will be saved.
  *
  * @return An optional `PacketMap` containing pairs of output stream name and data packet.
  */
@@ -116,8 +116,8 @@ NS_ASSUME_NONNULL_BEGIN
  * `MPPVisionTaskRunner`.
  *
  * @param packetMap A `PackeMap` containing pairs of input stream name and data packet.
- * @param error Pointer to the memory location where errors if any should be
- * saved. If @c NULL, no error will be saved.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ * error will be saved.
  *
  * @return A `BOOL` indicating if the live stream data was sent to the C++ task runner successfully.
  * Please note that any errors during processing of the live stream packet will only be available in
