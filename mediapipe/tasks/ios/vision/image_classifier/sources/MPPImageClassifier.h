@@ -54,8 +54,8 @@ NS_SWIFT_NAME(ImageClassifier)
 @interface MPPImageClassifier : NSObject
 
 /**
- * Creates a new instance of `MPPImageClassifier` from an absolute path to a TensorFlow Lite
- * model file stored locally on the device and the default `MPPImageClassifierOptions`.
+ * Creates a new instance of `MPPImageClassifier` from an absolute path to a TensorFlow Lite model
+ * file stored locally on the device and the default `MPPImageClassifierOptions`.
  *
  * @param modelPath An absolute path to a TensorFlow Lite model file stored locally on the device.
  * @param error An optional error parameter populated when there is an error in initializing the
@@ -74,8 +74,8 @@ NS_SWIFT_NAME(ImageClassifier)
  * @param error An optional error parameter populated when there is an error in initializing the
  * image classifier.
  *
- * @return A new instance of `MPPImageClassifier` with the given options. `nil` if there is an
- * error in initializing the image classifier.
+ * @return A new instance of `MPPImageClassifier` with the given options. `nil` if there is an error
+ * in initializing the image classifier.
  */
 - (nullable instancetype)initWithOptions:(MPPImageClassifierOptions *)options
                                    error:(NSError **)error NS_DESIGNATED_INITIALIZER;
@@ -87,8 +87,8 @@ NS_SWIFT_NAME(ImageClassifier)
  * `MPPRunningModeImage`.
  *
  * @param image The `MPPImage` on which image classification is to be performed.
- * @param error An optional error parameter populated when there is an error in performing
- * image classification on the input image.
+ * @param error An optional error parameter populated when there is an error in performing image
+ * classification on the input image.
  *
  * @return  A `MPPImageClassifierResult` object that contains a list of image classifications.
  */
@@ -105,8 +105,8 @@ NS_SWIFT_NAME(ImageClassifier)
  * @param image The `MPPImage` on which image classification is to be performed.
  * @param roi A `CGRect` specifying the region of interest within the given `MPPImage`, on which
  * image classification should be performed.
- * @param error An optional error parameter populated when there is an error in performing
- * image classification on the input image.
+ * @param error An optional error parameter populated when there is an error in performing image
+ * classification on the input image.
  *
  * @return  A `MPPImageClassifierResult` object that contains a list of image classifications.
  */
@@ -119,20 +119,20 @@ NS_SWIFT_NAME(ImageClassifier)
  * Performs image classification on the provided video frame of type `MPPImage` using the whole
  * image as region of interest. Rotation will be applied according to the `orientation` property of
  * the provided `MPPImage`. Only use this method when the `MPPImageClassifier` is created with
- * `MPPRunningModeImage`.
+ * `MPPRunningModeVideo`.
  *
  * @param image The `MPPImage` on which image classification is to be performed.
- * @param timeStampMs The video frame's timestamp (in milliseconds). The input timestamps must be
+ * @param timestampMs The video frame's timestamp (in milliseconds). The input timestamps must be
  * monotonically increasing.
- * @param error An optional error parameter populated when there is an error in performing
- * image classification on the input video frame.
+ * @param error An optional error parameter populated when there is an error in performing image
+ * classification on the input video frame.
  *
  * @return  A `MPPImageClassifierResult` object that contains a list of image classifications.
  */
 - (nullable MPPImageClassifierResult *)classifyVideoFrame:(MPPImage *)image
                                               timestampMs:(NSInteger)timestampMs
                                                     error:(NSError **)error
-    NS_SWIFT_NAME(classify(videoFrame:timeStampMs:));
+    NS_SWIFT_NAME(classify(videoFrame:timestampMs:));
 
 /**
  * Performs image classification on the provided video frame of type `MPPImage` cropped to the
@@ -145,12 +145,12 @@ NS_SWIFT_NAME(ImageClassifier)
  *
  * @param image A live stream image data of type `MPPImage` on which image classification is to be
  * performed.
- * @param timeStampMs The video frame's timestamp (in milliseconds). The input timestamps must be
+ * @param timestampMs The video frame's timestamp (in milliseconds). The input timestamps must be
  * monotonically increasing.
  * @param roi A `CGRect` specifying the region of interest within the video frame of type
  * `MPPImage`, on which image classification should be performed.
- * @param error An optional error parameter populated when there is an error in performing
- * image classification on the input video frame.
+ * @param error An optional error parameter populated when there is an error in performing image
+ * classification on the input video frame.
  *
  * @return  A `MPPImageClassifierResult` object that contains a list of image classifications.
  */
@@ -158,7 +158,7 @@ NS_SWIFT_NAME(ImageClassifier)
                                               timestampMs:(NSInteger)timestampMs
                                          regionOfInterest:(CGRect)roi
                                                     error:(NSError **)error
-    NS_SWIFT_NAME(classify(videoFrame:timeStampMs:regionOfInterest:));
+    NS_SWIFT_NAME(classify(videoFrame:timestampMs:regionOfInterest:));
 
 /**
  * Sends live stream image data of type `MPPImage` to perform image classification using the whole
@@ -171,16 +171,16 @@ NS_SWIFT_NAME(ImageClassifier)
  *
  * @param image A live stream image data of type `MPPImage` on which image classification is to be
  * performed.
- * @param timeStampMs The timestamp (in milliseconds) which indicates when the input image is sent
+ * @param timestampMs The timestamp (in milliseconds) which indicates when the input image is sent
  * to the image classifier. The input timestamps must be monotonically increasing.
- * @param error An optional error parameter populated when there is an error in performing
- * image classification on the input live stream image data.
+ * @param error An optional error parameter populated when there is an error in performing image
+ * classification on the input live stream image data.
  *
  * @return  A `MPPImageClassifierResult` object that contains a list of image classifications.
  */
 - (BOOL)classifyAsyncImage:(MPPImage *)image
                timestampMs:(NSInteger)timestampMs
-                     error:(NSError **)error NS_SWIFT_NAME(classifyAsync(image:timeStampMs:));
+                     error:(NSError **)error NS_SWIFT_NAME(classifyAsync(image:timestampMs:));
 
 /**
  * Sends live stream image data of type `MPPImage` to perform image classification, cropped to the
@@ -193,12 +193,12 @@ NS_SWIFT_NAME(ImageClassifier)
  *
  * @param image A live stream image data of type `MPPImage` on which image classification is to be
  * performed.
- * @param timeStampMs The timestamp (in milliseconds) which indicates when the input image is sent
+ * @param timestampMs The timestamp (in milliseconds) which indicates when the input image is sent
  * to the image classifier. The input timestamps must be monotonically increasing.
  * @param roi A `CGRect` specifying the region of interest within the given live stream image data
  * of type `MPPImage`, on which image classification should be performed.
- * @param error An optional error parameter populated when there is an error in performing
- * image classification on the input live stream image data.
+ * @param error An optional error parameter populated when there is an error in performing image
+ * classification on the input live stream image data.
  *
  * @return  A `MPPImageClassifierResult` object that contains a list of image classifications.
  */
@@ -206,7 +206,7 @@ NS_SWIFT_NAME(ImageClassifier)
                timestampMs:(NSInteger)timestampMs
           regionOfInterest:(CGRect)roi
                      error:(NSError **)error
-    NS_SWIFT_NAME(classifyAsync(image:timeStampMs:regionOfInterest:));
+    NS_SWIFT_NAME(classifyAsync(image:timestampMs:regionOfInterest:));
 
 - (instancetype)init NS_UNAVAILABLE;
 
