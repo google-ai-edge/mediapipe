@@ -113,9 +113,13 @@ using ::mediapipe::tasks::core::PacketsCallback;
       break;
     }
     default:
-      [MPPCommonUtils createCustomError:error
-                               withCode:MPPTasksErrorCodeInvalidArgumentError
-                            description:@"Unsupported UIImageOrientation."];
+      [MPPCommonUtils
+          createCustomError:error
+                   withCode:MPPTasksErrorCodeInvalidArgumentError
+                description:@"Unsupported UIImageOrientation. `imageOrientation` cannot be equal to "
+                            @"any of the mirrored orientations "
+                            @"(`UIImageOrientationUpMirrored`,`UIImageOrientationDownMirrored`,`"
+                            @"UIImageOrientationLeftMirrored`,`UIImageOrientationRightMirrored`)"];
   }
 
   normalizedRect.set_rotation(-rotationDegrees * M_PI / 180.0);
