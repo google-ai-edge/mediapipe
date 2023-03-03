@@ -34,6 +34,10 @@ _INPUT_REGEX_TEXT_DESCRIPTION = ('Embedding vectors representing the input '
                                  'text to be processed.')
 _OUTPUT_CLASSIFICATION_NAME = 'score'
 _OUTPUT_CLASSIFICATION_DESCRIPTION = 'Score of the labels respectively.'
+# Detection tensor result to be grouped together.
+_DETECTION_GROUP_NAME = 'detection_result'
+# File name to export score calibration parameters.
+_SCORE_CALIBATION_FILENAME = 'score_calibration.txt'
 
 
 @dataclasses.dataclass
@@ -311,7 +315,8 @@ def _create_metadata_buffer(
     general_md: Optional[metadata_info.GeneralMd] = None,
     input_md: Optional[List[metadata_info.TensorMd]] = None,
     output_md: Optional[List[metadata_info.TensorMd]] = None,
-    input_process_units: Optional[List[metadata_fb.ProcessUnitT]] = None
+    input_process_units: Optional[List[metadata_fb.ProcessUnitT]] = None,
+    output_group_md: Optional[List[metadata_info.TensorGroupMd]] = None,
 ) -> bytearray:
   """Creates a buffer of the metadata.
 
@@ -321,8 +326,11 @@ def _create_metadata_buffer(
     input_md: metadata information of the input tensors.
     output_md: metadata information of the output tensors.
     input_process_units: a lists of metadata of the input process units [1].
-    [1]:
+    output_group_md: a list of metadata of output tensor groups [2]; [1]:
       https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L655
+        [2]:
+      https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L677
+
   Returns:
     A buffer of the metadata.
 
@@ -359,6 +367,10 @@ def _create_metadata_buffer(
   subgraph_metadata.outputTensorMetadata = output_metadata
   if input_process_units:
     subgraph_metadata.inputProcessUnits = input_process_units
+  if output_group_md:
+    subgraph_metadata.outputTensorGroups = [
+        m.create_metadata() for m in output_group_md
+    ]
 
   # Create the whole model metadata.
   if general_md is None:
@@ -402,6 +414,7 @@ class MetadataWriter(object):
     self._input_mds = []
     self._input_process_units = []
     self._output_mds = []
+    self._output_group_mds = []
     self._associated_files = []
     self._temp_folder = tempfile.TemporaryDirectory()
 
@@ -583,27 +596,13 @@ class MetadataWriter(object):
     Returns:
       The current Writer instance to allow chained operation.
     """
-    calibration_md = None
-    if score_calibration:
-      calibration_md = metadata_info.ScoreCalibrationMd(
-          score_transformation_type=score_calibration.transformation_type,
-          default_score=score_calibration.default_score,
-          file_path=self._export_calibration_file('score_calibration.txt',
-                                                  score_calibration.parameters))
+    calibration_md = self._create_score_calibration_md(score_calibration)
     score_thresholding_md = None
     if score_thresholding:
       score_thresholding_md = metadata_info.ScoreThresholdingMd(
           score_thresholding.global_score_threshold)
 
-    label_files = None
-    if labels:
-      label_files = []
-      for item in labels.labels:
-        label_files.append(
-            metadata_info.LabelFileMd(
-                self._export_labels(item.filename, item.names),
-                locale=item.locale))
-
+    label_files = self._create_label_file_md(labels)
     output_md = metadata_info.ClassificationTensorMd(
         name=name,
         description=description,
@@ -613,6 +612,41 @@ class MetadataWriter(object):
         score_thresholding_md=score_thresholding_md,
     )
     self._output_mds.append(output_md)
+    return self
+
+  def add_detection_output(
+      self,
+      labels: Optional[Labels] = None,
+      score_calibration: Optional[ScoreCalibration] = None,
+      group_name: str = _DETECTION_GROUP_NAME,
+  ) -> 'MetadataWriter':
+    """Adds a detection head metadata for detection output tensor.
+
+    Args:
+      labels: an instance of Labels helper class.
+      score_calibration: an instance of ScoreCalibration helper class.
+      group_name: name of output tensor group.
+
+    Returns:
+      The current Writer instance to allow chained operation.
+    """
+    calibration_md = self._create_score_calibration_md(score_calibration)
+    label_files = self._create_label_file_md(labels)
+    detection_output_mds = metadata_info.DetectionOutputTensorsMd(
+        self._model_buffer,
+        label_files=label_files,
+        score_calibration_md=calibration_md,
+    ).output_mds
+    self._output_mds.extend(detection_output_mds)
+    # Outputs are location, category, score, number of detections.
+    if len(detection_output_mds) != 4:
+      raise ValueError('The size of detections output should be 4.')
+    # The first 3 tensors (location, category, score) are grouped.
+    group_md = metadata_info.TensorGroupMd(
+        name=group_name,
+        tensor_names=[output_md.name for output_md in detection_output_mds[:3]],
+    )
+    self._output_group_mds.append(group_md)
     return self
 
   def add_feature_output(self,
@@ -639,7 +673,9 @@ class MetadataWriter(object):
         general_md=self._general_md,
         input_md=self._input_mds,
         output_md=self._output_mds,
-        input_process_units=self._input_process_units)
+        input_process_units=self._input_process_units,
+        output_group_md=self._output_group_mds,
+    )
     populator.load_metadata_buffer(metadata_buffer)
     if self._associated_files:
       populator.load_associated_files(self._associated_files)
@@ -682,6 +718,36 @@ class MetadataWriter(object):
 
     self._associated_files.append(filepath)
     return filepath
+
+  def _create_score_calibration_md(
+      self, score_calibration: ScoreCalibration
+  ) -> Optional[metadata_info.ScoreCalibrationMd]:
+    """Creates the ScoreCalibrationMd object."""
+    if score_calibration is None:
+      return None
+    return metadata_info.ScoreCalibrationMd(
+        score_transformation_type=score_calibration.transformation_type,
+        default_score=score_calibration.default_score,
+        file_path=self._export_calibration_file(
+            _SCORE_CALIBATION_FILENAME, score_calibration.parameters
+        ),
+    )
+
+  def _create_label_file_md(
+      self, labels: Optional[Labels] = None
+  ) -> Optional[List[metadata_info.LabelFileMd]]:
+    """Creates a list of LabelFileMd objects."""
+    label_files = None
+    if labels:
+      label_files = []
+      for item in labels.labels:
+        label_files.append(
+            metadata_info.LabelFileMd(
+                self._export_labels(item.filename, item.names),
+                locale=item.locale,
+            )
+        )
+    return label_files
 
 
 class MetadataWriterBase:

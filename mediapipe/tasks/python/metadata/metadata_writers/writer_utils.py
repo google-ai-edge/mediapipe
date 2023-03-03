@@ -61,6 +61,12 @@ def get_output_tensor_types(
   return tensor_types
 
 
+def get_output_tensor_indices(model_buffer: bytearray) -> List[int]:
+  """Gets a list of the output tensor indices."""
+  subgraph = get_subgraph(model_buffer)
+  return subgraph.OutputsAsNumpy()
+
+
 def get_subgraph(model_buffer: bytearray) -> _schema_fb.SubGraph:
   """Gets the subgraph of the model.
 
