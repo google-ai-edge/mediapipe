@@ -43,7 +43,7 @@ static NSString *const kTaskGraphName =
     @"mediapipe.tasks.vision.image_classifier.ImageClassifierGraph";
 
 @interface MPPImageClassifier () {
-  /** iOS Text Task Runner */
+  /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
 }
 @end
