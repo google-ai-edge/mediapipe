@@ -59,16 +59,23 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * Creates a `NormalizedRect` from a region of interest and an image orientation, performing
- * sanity checks on-the-fly. If the input region of interest equals `CGRectZero`, returns a default
- * `NormalizedRect` covering the whole image with rotation set according `imageOrientation`. If
- * `roiAllowed` is NO, an error will be returned if the input region of interest is not equal to
+ * sanity checks on-the-fly.
+ * If the input region of interest equals `CGRectZero`, returns a default `NormalizedRect` covering
+ * the whole image with rotation set according `imageOrientation`.
+ * If `roiAllowed` is NO, an error will be returned if the input region of interest is not equal to
  * `CGRectZero`.
+ * Mirrored orientations (`UIImageOrientationUpMirrored`,`UIImageOrientationDownMirrored`,
+ * `UIImageOrientationLeftMirrored`,`UIImageOrientationRightMirrored`) are not supported. An error
+ * will be returned if `imageOrientation` is equal to any one of them.
  *
  * @param roi A `CGRect` specifying the region of interest. If the input region of interest equals
  * `CGRectZero`, the returned `NormalizedRect` covers the whole image. Make sure that `roi` equals
  * `CGRectZero` if `roiAllowed` is NO. Otherwise, an error will be returned.
  * @param imageOrientation A `UIImageOrientation` indicating the rotation to be applied to the
  * image. The resulting `NormalizedRect` will convert the `imageOrientation` to degrees clockwise.
+ * Mirrored orientations (`UIImageOrientationUpMirrored`, `UIImageOrientationDownMirrored`,
+ * `UIImageOrientationLeftMirrored`, `UIImageOrientationRightMirrored`) are not supported. An error
+ * will be returned if `imageOrientation` is equal to any one of them.
  * @param roiAllowed Indicates if the `roi` field is allowed to be a value other than `CGRectZero`.
  * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
  * error will be saved.
