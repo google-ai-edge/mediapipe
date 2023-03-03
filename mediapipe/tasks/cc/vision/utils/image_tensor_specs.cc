@@ -182,11 +182,11 @@ absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
                                    "Only RGB color space is supported for now.",
                                    MediaPipeTasksStatus::kInvalidArgumentError);
   }
-  if (batch != 1 || depth != 3) {
+  if (batch != 1 || (depth != 3 && depth != 4)) {
     return CreateStatusWithPayload(
         StatusCode::kInvalidArgument,
         absl::StrCat("The input tensor should have dimensions 1 x height x "
-                     "width x 3. Got ",
+                     "width x depth, where depth = 3 or 4. Got ",
                      batch, " x ", height, " x ", width, " x ", depth, "."),
         MediaPipeTasksStatus::kInvalidInputTensorDimensionsError);
   }
