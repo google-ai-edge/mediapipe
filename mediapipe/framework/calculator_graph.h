@@ -383,6 +383,12 @@ class CalculatorGraph {
   absl::Status SetGpuResources(std::shared_ptr<GpuResources> resources);
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
+  // Sets a service object, essentially a graph-level singleton, which can be
+  // accessed by calculators and subgraphs without requiring an explicit
+  // connection.
+  //
+  // NOTE: must be called before `Initialize`, so subgraphs can access services
+  // as well, as graph expansion happens during initialization.
   template <typename T>
   absl::Status SetServiceObject(const GraphService<T>& service,
                                 std::shared_ptr<T> object) {
@@ -395,6 +401,13 @@ class CalculatorGraph {
     return service_manager_.GetServiceObject(service);
   }
 
+  // Sets a service object, essentially a graph-level singleton, which can be
+  // accessed by calculators and subgraphs without requiring an explicit
+  // connection.
+  //
+  // NOTE: must be called before `Initialize`, so subgraphs can access services
+  // as well, as graph expansion happens during initialization.
+  //
   // Only the Java API should call this directly.
   absl::Status SetServicePacket(const GraphServiceBase& service, Packet p) {
     // TODO: check that the graph has not been started!
