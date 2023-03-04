@@ -343,5 +343,19 @@ TEST(DisallowDefaultInitializationGraphServiceTest,
                        HasSubstr("was not provided and cannot be created")));
 }
 
+TEST(ServiceBindingTest, CrashesWhenGettingNullServiceObject) {
+  ASSERT_DEATH(
+      {
+        ServiceBinding<TestServiceData> binding(nullptr);
+        (void)binding.GetObject();
+      },
+      testing::ContainsRegex("Check failed: [a-z_]* Service is unavailable"));
+}
+
+TEST(ServiceBindingTest, IsAvailableReturnsFalsOnNullServiceObject) {
+  ServiceBinding<TestServiceData> binding(nullptr);
+  EXPECT_FALSE(binding.IsAvailable());
+}
+
 }  // namespace
 }  // namespace mediapipe

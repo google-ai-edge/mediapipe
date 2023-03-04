@@ -107,7 +107,10 @@ template <typename T>
 class ServiceBinding {
  public:
   bool IsAvailable() { return service_ != nullptr; }
-  T& GetObject() { return *service_; }
+  T& GetObject() {
+    CHECK(service_) << "Service is unavailable.";
+    return *service_;
+  }
 
   ServiceBinding() {}
   explicit ServiceBinding(std::shared_ptr<T> service) : service_(service) {}
