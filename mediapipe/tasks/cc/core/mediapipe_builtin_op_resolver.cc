@@ -25,6 +25,7 @@ limitations under the License.
 namespace mediapipe {
 namespace tasks {
 namespace core {
+// TODO: Use separate builtin op-resolvers.
 MediaPipeBuiltinOpResolver::MediaPipeBuiltinOpResolver() {
   AddCustom("MaxPoolingWithArgmax2D",
             mediapipe::tflite_operations::RegisterMaxPoolingWithArgmax2D());
