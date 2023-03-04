@@ -1124,6 +1124,18 @@ async function runScript(scriptUrl: string) {
 }
 
 /**
+ * Helper type macro for use with createMediaPipeLib. Allows us to easily infer
+ * the type of a mixin-extended GraphRunner. Example usage:
+ * const GraphRunnerConstructor =
+ *     SupportImage(SupportSerialization(GraphRunner));
+ * let mediaPipe: ReturnType<typeof GraphRunnerConstructor>;
+ * ...
+ * mediaPipe = await createMediaPipeLib(GraphRunnerConstructor, ...);
+ */
+// tslint:disable-next-line:no-any
+export type ReturnType<T> = T extends (...args: unknown[]) => infer R ? R : any;
+
+/**
  * Global function to initialize Wasm blob and load runtime assets for a
  *     specialized MediaPipe library. This allows us to create a requested
  *     subclass inheriting from GraphRunner.
