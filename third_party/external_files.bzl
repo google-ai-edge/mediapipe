@@ -545,6 +545,18 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_mobile_ica_8bit-with-custom-metadata_tflite",
+        sha256 = "31f34f0dd0dc39e69e9c3deb1e3f3278febeb82ecf57c235834348a75df8fb51",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobile_ica_8bit-with-custom-metadata.tflite?generation=1677906531317767"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_mobile_ica_8bit-with-large-min-parser-version_tflite",
+        sha256 = "53d0ea047682539964820fcfc5dc81f4928957470f453f2065f4c2ab87406803",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobile_ica_8bit-with-large-min-parser-version.tflite?generation=1677906534624784"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_mobile_ica_8bit-with-metadata_tflite",
         sha256 = "4afa3970d3efd6726d147d505e28c7ff1e4fe1c24be7bcda6b5429eb099777a5",
         urls = ["https://storage.googleapis.com/mediapipe-assets/mobile_ica_8bit-with-metadata.tflite?generation=1661875810860490"],

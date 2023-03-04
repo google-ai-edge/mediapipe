@@ -49,8 +49,7 @@ namespace tflite;
 // New fields and types will have associated comments with the schema version
 // for which they were added.
 //
-// TODO: Add LINT change check as needed.
-// Schema Semantic version: 1.4.1
+// Schema Semantic version: 1.5.0
 
 // This indicates the flatbuffer compatibility. The number will bump up when a
 // break change is applied to the schema, such as removing fields or adding new
@@ -69,11 +68,11 @@ file_identifier "M001";
 // 1.3.0 - Added AudioProperties to ContentProperties.
 // 1.4.0 - Added SCANN_INDEX_FILE type to AssociatedFileType.
 // 1.4.1 - Added version to AssociatedFile.
+// 1.5.0 - Added CustomMetadata in SubGraphMetadata.
 
 // File extension of any written files.
 file_extension "tflitemeta";
 
-// TODO: Add LINT change check as needed.
 enum AssociatedFileType : byte {
   UNKNOWN = 0,
 
@@ -609,6 +608,11 @@ table TensorMetadata {
   associated_files:[AssociatedFile];
 }
 
+table CustomMetadata {
+  name:string;
+  data:[ubyte] (force_align: 16);
+}
+
 table SubGraphMetadata {
   // Name of the subgraph.
   //
@@ -676,6 +680,7 @@ table SubGraphMetadata {
   // Added in: 1.2.0
   output_tensor_groups:[TensorGroup];
 
+  custom_metadata:[CustomMetadata];
 }
 
 table ModelMetadata {
@@ -721,5 +726,6 @@ table ModelMetadata {
   // the metadata is populated into a TFLite model.
   min_parser_version:string;
 }
+//     metadata_version.cc)
 
 root_type ModelMetadata;

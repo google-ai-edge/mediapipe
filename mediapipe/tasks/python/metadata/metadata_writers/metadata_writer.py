@@ -317,6 +317,7 @@ def _create_metadata_buffer(
     output_md: Optional[List[metadata_info.TensorMd]] = None,
     input_process_units: Optional[List[metadata_fb.ProcessUnitT]] = None,
     output_group_md: Optional[List[metadata_info.TensorGroupMd]] = None,
+    custom_metadata_md: Optional[List[metadata_info.CustomMetadataMd]] = None,
 ) -> bytearray:
   """Creates a buffer of the metadata.
 
@@ -326,9 +327,11 @@ def _create_metadata_buffer(
     input_md: metadata information of the input tensors.
     output_md: metadata information of the output tensors.
     input_process_units: a lists of metadata of the input process units [1].
-    output_group_md: a list of metadata of output tensor groups [2]; [1]:
+    output_group_md: a list of metadata of output tensor groups [2];
+    custom_metadata_md: a lists of custom metadata.
+    [1]:
       https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L655
-        [2]:
+    [2]:
       https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L677
 
   Returns:
@@ -367,6 +370,10 @@ def _create_metadata_buffer(
   subgraph_metadata.outputTensorMetadata = output_metadata
   if input_process_units:
     subgraph_metadata.inputProcessUnits = input_process_units
+  if custom_metadata_md:
+    subgraph_metadata.customMetadata = [
+        m.create_metadata() for m in custom_metadata_md
+    ]
   if output_group_md:
     subgraph_metadata.outputTensorGroups = [
         m.create_metadata() for m in output_group_md
@@ -416,6 +423,7 @@ class MetadataWriter(object):
     self._output_mds = []
     self._output_group_mds = []
     self._associated_files = []
+    self._custom_metadata_mds = []
     self._temp_folder = tempfile.TemporaryDirectory()
 
   def __del__(self):
@@ -657,6 +665,12 @@ class MetadataWriter(object):
     self._output_mds.append(output_md)
     return self
 
+  def add_custom_metadata(
+      self, custom_metadata_md: metadata_info.CustomMetadataMd
+  ) -> 'MetadataWriter':
+    self._custom_metadata_mds.append(custom_metadata_md)
+    return self
+
   def populate(self) -> Tuple[bytearray, str]:
     """Populates metadata into the TFLite file.
 
@@ -674,6 +688,7 @@ class MetadataWriter(object):
         input_md=self._input_mds,
         output_md=self._output_mds,
         input_process_units=self._input_process_units,
+        custom_metadata_md=self._custom_metadata_mds,
         output_group_md=self._output_group_mds,
     )
     populator.load_metadata_buffer(metadata_buffer)

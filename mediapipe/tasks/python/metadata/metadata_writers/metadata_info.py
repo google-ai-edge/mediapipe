@@ -14,6 +14,7 @@
 # ==============================================================================
 """Helper classes for common model metadata information."""
 
+import abc
 import collections
 import csv
 import os
@@ -377,11 +378,12 @@ class TensorMd:
     tensor_name: name of the corresponding tensor [1] in the TFLite model. It is
       used to locate the corresponding tensor and decide the order of the tensor
       metadata [2] when populating model metadata.
-    content_range_md: information of content range [3]. [1]:
+    content_range_md: information of content range [3].
+    [1]:
       https://github.com/tensorflow/tensorflow/blob/cb67fef35567298b40ac166b0581cd8ad68e5a3a/tensorflow/lite/schema/schema.fbs#L1129-L1136
-        [2]:
+    [2]:
       https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L623-L640
-        [3]:
+    [3]:
       https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L385
   """
 
@@ -777,17 +779,18 @@ class ClassificationTensorMd(TensorMd):
         order of the tensor metadata [4] when populating model metadata.
       score_thresholding_md: information of the score thresholding [5] in the
         classification tensor.
-      content_range_md: information of content range [6]. [1]:
+      content_range_md: information of content range [6].
+      [1]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L99
-          [2]:
+      [2]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L456
-          [3]:
+      [3]:
         https://github.com/tensorflow/tensorflow/blob/cb67fef35567298b40ac166b0581cd8ad68e5a3a/tensorflow/lite/schema/schema.fbs#L1129-L1136
-          [4]:
+      [4]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L623-L640
-          [5]:
+      [5]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L468
-          [6]:
+      [6]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L385
     """
     self.score_calibration_md = score_calibration_md
@@ -890,9 +893,10 @@ class CategoryTensorMd(TensorMd):
       name: name of the tensor.
       description: description of what the tensor is.
       label_files: information of the label files [1] in the category tensor.
-      content_range_md: information of content range [2]. [1]:
+      content_range_md: information of content range [2].
+      [1]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L116
-          [2]:
+      [2]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L385
     """
     # In category tensors, label files are in the type of TENSOR_VALUE_LABELS.
@@ -934,9 +938,10 @@ class DetectionOutputTensorsMd:
       label_files: information of the label files [1] in the classification
         tensor.
       score_calibration_md: information of the score calibration files operation
-        [2] in the classification tensor. [1]:
+        [2] in the classification tensor.
+      [1]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L99
-          [2]:
+      [2]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L456
     """
     content_range_md = ValueRangeMd(
@@ -1010,7 +1015,8 @@ class TensorGroupMd:
     Args:
       name: name of tensor group.
       tensor_names:  Names of the tensors to group together, corresponding to
-        TensorMetadata.name [1]. [1]:
+        TensorMetadata.name [1].
+      [1]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L564
     """
     self.name = name
@@ -1022,3 +1028,14 @@ class TensorGroupMd:
     group.name = self.name
     group.tensorNames = self.tensor_names
     return group
+
+
+class CustomMetadataMd(abc.ABC):
+  """An abstract class of a container for the custom metadata information."""
+
+  def __init__(self, name: Optional[str] = None):
+    self.name = name
+
+  @abc.abstractmethod
+  def create_metadata(self) -> _metadata_fb.CustomMetadataT:
+    """Creates the custom metadata based on the information."""

@@ -21,7 +21,7 @@ namespace metadata {
 
 // The version of the metadata parser that this metadata versioning library is
 // depending on.
-inline constexpr char kMatadataParserVersion[] = "{LATEST_METADATA_PARSER_VERSION}";
+inline constexpr char kMetadataParserVersion[] = "{LATEST_METADATA_PARSER_VERSION}";
 
 }  // namespace metadata
 }  // namespace tasks

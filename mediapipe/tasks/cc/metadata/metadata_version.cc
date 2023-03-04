@@ -57,6 +57,7 @@ enum class SchemaMembers {
   kContentPropertiesAudioProperties = 8,
   kAssociatedFileTypeScannIndexFile = 9,
   kAssociatedFileVersion = 10,
+  kCustomMetadata = 11,
 };
 
 // Helper class to compare semantic versions in terms of three integers, major,
@@ -125,6 +126,8 @@ Version GetMemberVersion(SchemaMembers member) {
       return Version(1, 4, 0);
     case SchemaMembers::kAssociatedFileVersion:
       return Version(1, 4, 1);
+    case SchemaMembers::kCustomMetadata:
+      return Version(1, 5, 0);
     default:
       // Should never happen.
       TFLITE_LOG(FATAL) << "Unsupported schema member: "
@@ -280,6 +283,12 @@ void UpdateMinimumVersionForTable<tflite::SubGraphMetadata>(
     UpdateMinimumVersion(
         GetMemberVersion(SchemaMembers::kSubGraphMetadataOutputTensorGroups),
         min_version);
+  }
+
+  // Checks for the options field.
+  if (table->custom_metadata() != nullptr) {
+    UpdateMinimumVersion(GetMemberVersion(SchemaMembers::kCustomMetadata),
+                         min_version);
   }
 }
 

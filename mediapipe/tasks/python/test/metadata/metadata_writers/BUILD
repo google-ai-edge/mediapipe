@@ -33,6 +33,8 @@ py_test(
         "//mediapipe/tasks/testdata/metadata:model_files",
     ],
     deps = [
+        "//mediapipe/tasks/metadata:metadata_schema_py",
+        "//mediapipe/tasks/python/metadata/metadata_writers:metadata_info",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
         "//mediapipe/tasks/python/test:test_utils",
     ],
