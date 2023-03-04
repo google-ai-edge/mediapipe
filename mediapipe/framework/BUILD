@@ -1533,6 +1533,7 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:status_matchers",
         "//mediapipe/framework/tool:sink",
     ],
 )
