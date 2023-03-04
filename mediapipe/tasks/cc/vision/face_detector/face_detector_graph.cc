@@ -280,17 +280,20 @@ class FaceDetectorGraph : public core::ModelTaskGraph {
     auto& detection_projection = graph.AddNode("DetectionProjectionCalculator");
     nms_detections >> detection_projection.In(kDetectionsTag);
     matrix >> detection_projection.In(kProjectionMatrixTag);
-    auto face_detections = detection_projection.Out(kDetectionsTag);
+    Source<std::vector<Detection>> face_detections =
+        detection_projection.Out(kDetectionsTag).Cast<std::vector<Detection>>();
 
-    // Clip face detections to maximum number of faces;
-    auto& clip_detection_vector_size =
-        graph.AddNode("ClipDetectionVectorSizeCalculator");
-    clip_detection_vector_size
-        .GetOptions<mediapipe::ClipVectorSizeCalculatorOptions>()
-        .set_max_vec_size(subgraph_options.num_faces());
-    face_detections >> clip_detection_vector_size.In("");
-    auto clipped_face_detections =
-        clip_detection_vector_size.Out("").Cast<std::vector<Detection>>();
+    if (subgraph_options.has_num_faces()) {
+      // Clip face detections to maximum number of faces;
+      auto& clip_detection_vector_size =
+          graph.AddNode("ClipDetectionVectorSizeCalculator");
+      clip_detection_vector_size
+          .GetOptions<mediapipe::ClipVectorSizeCalculatorOptions>()
+          .set_max_vec_size(subgraph_options.num_faces());
+      face_detections >> clip_detection_vector_size.In("");
+      face_detections =
+          clip_detection_vector_size.Out("").Cast<std::vector<Detection>>();
+    }
 
     // Converts results of face detection into a rectangle (normalized by image
     // size) that encloses the face and is rotated such that the line connecting
@@ -300,7 +303,7 @@ class FaceDetectorGraph : public core::ModelTaskGraph {
         &detections_to_rects
              .GetOptions<mediapipe::DetectionsToRectsCalculatorOptions>());
     image_size >> detections_to_rects.In(kImageSizeTag);
-    clipped_face_detections >> detections_to_rects.In(kDetectionsTag);
+    face_detections >> detections_to_rects.In(kDetectionsTag);
     auto face_rects = detections_to_rects.Out(kNormRectsTag)
                           .Cast<std::vector<NormalizedRect>>();
 

@@ -58,3 +58,25 @@ cc_library(
     ],
     alwayslink = 1,
 )
+
+cc_library(
+    name = "face_detector",
+    srcs = ["face_detector.cc"],
+    hdrs = ["face_detector.h"],
+    deps = [
+        ":face_detector_graph",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/tasks/cc/components/containers:detection_result",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/cc/vision/core:image_processing_options",
+        "//mediapipe/tasks/cc/vision/core:running_mode",
+        "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
+        "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)

@@ -786,14 +786,26 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_portrait_expected_face_landmarks_with_attention_pbtxt",
-        sha256 = "dae959456f001015278f3a1535bd03c9fa0990a3df951135645ce23293be0613",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_expected_face_landmarks_with_attention.pbtxt?generation=1677522777298874"],
+        sha256 = "f2ccd889654b914996e4aab0d7831a3e73d3b63d6c14f6bac4bec5cd3415bce4",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_expected_face_landmarks_with_attention.pbtxt?generation=1676415475626542"],
     )
 
     http_file(
         name = "com_google_mediapipe_portrait_jpg",
         sha256 = "a6f11efaa834706db23f275b6115058fa87fc7f14362681e6abe14e82749de3e",
         urls = ["https://storage.googleapis.com/mediapipe-assets/portrait.jpg?generation=1674261630039907"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_portrait_rotated_expected_detection_pbtxt",
+        sha256 = "7e680fe0918d1e8409b0e0e4576a982e20afa871e6af9c13b7a626de1d5341a2",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_rotated_expected_detection.pbtxt?generation=1677194677875312"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_portrait_rotated_jpg",
+        sha256 = "f91ca0e4f827b06e9ac037cf58d95f1f3ffbe34238119b7d47eda35456007f33",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_rotated.jpg?generation=1677194680138164"],
     )
 
     http_file(

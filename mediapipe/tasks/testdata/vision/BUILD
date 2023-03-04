@@ -64,6 +64,7 @@ mediapipe_files(srcs = [
     "pointing_up.jpg",
     "pointing_up_rotated.jpg",
     "portrait.jpg",
+    "portrait_rotated.jpg",
     "right_hands.jpg",
     "right_hands_rotated.jpg",
     "segmentation_golden_rotation0.png",
@@ -86,6 +87,7 @@ exports_files(
         "expected_right_up_hand_landmarks.prototxt",
         "gesture_recognizer.task",
         "portrait_expected_detection.pbtxt",
+        "portrait_rotated_expected_detection.pbtxt",
     ],
 )
 
@@ -114,6 +116,7 @@ filegroup(
         "pointing_up.jpg",
         "pointing_up_rotated.jpg",
         "portrait.jpg",
+        "portrait_rotated.jpg",
         "right_hands.jpg",
         "right_hands_rotated.jpg",
         "segmentation_golden_rotation0.png",
@@ -178,6 +181,7 @@ filegroup(
         "portrait_expected_detection.pbtxt",
         "portrait_expected_face_landmarks.pbtxt",
         "portrait_expected_face_landmarks_with_attention.pbtxt",
+        "portrait_rotated_expected_detection.pbtxt",
         "thumb_up_landmarks.pbtxt",
         "thumb_up_rotated_landmarks.pbtxt",
         "victory_landmarks.pbtxt",
