@@ -103,5 +103,5 @@ filegroup(
 
 filegroup(
     name = "universal_sentence_encoder_qa",
-    data = ["universal_sentence_encoder_qa_with_metadata.tflite"],
+    srcs = ["universal_sentence_encoder_qa_with_metadata.tflite"],
 )
