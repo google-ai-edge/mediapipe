@@ -114,3 +114,31 @@ cc_library(
     ],
     alwayslink = 1,
 )
+
+cc_library(
+    name = "face_landmarker_result",
+    srcs = ["face_landmarker_result.cc"],
+    hdrs = ["face_landmarker_result.h"],
+    deps = [
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/formats:matrix_data_cc_proto",
+        "//mediapipe/tasks/cc/components/containers:classification_result",
+        "//mediapipe/tasks/cc/components/containers:landmark",
+    ],
+)
+
+cc_library(
+    name = "face_landmarker_result_cc",
+    srcs = ["face_landmarker_result.cc"],
+    hdrs = ["face_landmarker_result.h"],
+    deps = [
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/formats:matrix_data_cc_proto",
+        "//mediapipe/tasks/cc/components/containers:classification_result",
+        "//mediapipe/tasks/cc/components/containers:landmark",
+    ],
+)
