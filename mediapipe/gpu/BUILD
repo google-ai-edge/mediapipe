@@ -460,7 +460,9 @@ cc_library(
         ":frame_buffer_view",
         ":gpu_buffer_format",
         ":gpu_buffer_storage",
+        ":image_frame_view",
         "//mediapipe/framework/formats:frame_buffer",
+        "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:yuv_image",
         "//third_party/libyuv",
         "@com_google_absl//absl/log",
@@ -1211,8 +1213,12 @@ mediapipe_cc_test(
         "ios",
     ],
     deps = [
+        ":gpu_buffer",
         ":gpu_buffer_format",
         ":gpu_buffer_storage_yuv_image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:yuv_image",
         "//mediapipe/framework/port:gtest_main",
+        "//third_party/libyuv",
     ],
 )
