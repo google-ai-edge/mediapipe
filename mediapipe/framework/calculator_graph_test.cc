@@ -60,7 +60,7 @@
 #include "mediapipe/framework/tool/sink.h"
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/type_map.h"
-#include "mediapipe/gpu/graph_support.h"
+#include "mediapipe/gpu/gpu_service.h"
 
 namespace mediapipe {
 

@@ -50,7 +50,6 @@ cc_library(
     name = "graph_support",
     hdrs = ["graph_support.h"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:graph_service"],
 )
 
 cc_library(
@@ -827,6 +826,7 @@ objc_library(
     features = ["-layering_check"],
     visibility = ["//visibility:public"],
     deps = [
+        ":gpu_service",
         ":gpu_shared_data_internal",
         ":graph_support",
         "//mediapipe/objc:mediapipe_framework_ios",

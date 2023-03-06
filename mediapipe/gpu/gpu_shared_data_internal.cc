@@ -116,6 +116,8 @@ GpuResources::~GpuResources() {
 #endif  // __APPLE__
 }
 
+extern const GraphService<GpuResources> kGpuService;
+
 absl::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
   CHECK(ContainsKey(node->Contract().ServiceRequests(), kGpuService.key));
   std::string node_id = node->GetCalculatorState().NodeName();
@@ -194,8 +196,6 @@ GlContext::StatusOrGlContext GpuResources::GetOrCreateGlContext(
 }
 
 GpuSharedData::GpuSharedData() : GpuSharedData(kPlatformGlContextNone) {}
-
-extern const GraphService<GpuResources> kGpuService;
 
 #if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 static std::shared_ptr<GlTextureBuffer> GetGlTextureBufferFromPool(

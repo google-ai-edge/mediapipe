@@ -27,7 +27,7 @@ namespace mediapipe {
 class GpuResources {
   GpuResources() = delete;
 };
-#endif  // !MEDIAPIPE_DISABLE_GPU
+#endif  // MEDIAPIPE_DISABLE_GPU
 
 extern const GraphService<GpuResources> kGpuService;
 
