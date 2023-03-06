@@ -269,30 +269,6 @@ def external_files():
     )
 
     http_file(
-        name = "com_google_mediapipe_face_blendshapes_generated_graph_pbtxt",
-        sha256 = "92e016a08940e1f81752e749e1931f9e551fa9483786b8fba0624257e9c41d3d",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/face_blendshapes_generated_graph.pbtxt?generation=1677522753449135"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_face_blendshapes_in_landmarks_prototxt",
-        sha256 = "f6a10fa5825f2eee695371a449c605698403c146c270b2cb7574512f3f9e4af8",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/face_blendshapes_in_landmarks.prototxt?generation=1677522757270549"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_face_blendshapes_out_prototxt",
-        sha256 = "ea7740add8b87c9bd375eaa40a05b509eaca04f025cb6bdc7ca486e9fb32dfba",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/face_blendshapes_out.prototxt?generation=1677522761312644"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_face_blendshapes_tflite",
-        sha256 = "4f36dded049db18d76048567439b2a7f58f1daabc00d78bfe8f3ad396a2d2082",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/face_blendshapes.tflite?generation=1677522764748685"],
-    )
-
-    http_file(
         name = "com_google_mediapipe_face_detection_full_range_sparse_tflite",
         sha256 = "2c3728e6da56f21e21a320433396fb06d40d9088f2247c05e5635a688d45dfe1",
         urls = ["https://storage.googleapis.com/mediapipe-assets/face_detection_full_range_sparse.tflite?generation=1674261618323821"],
@@ -308,6 +284,12 @@ def external_files():
         name = "com_google_mediapipe_face_detection_short_range_tflite",
         sha256 = "bbff11cebd1eb27a1e004cae0b0e63ec8c551cbf34a4451148b4908b8db3eca8",
         urls = ["https://storage.googleapis.com/mediapipe-assets/face_detection_short_range.tflite?generation=1677044301978921"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_face_geometry_expected_out_pbtxt",
+        sha256 = "611b203bca40e547ae75bf0822fda0695d512d02940e7af08a70068eaa8524f7",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/face_geometry_expected_out.pbtxt?generation=1677787710308910"],
     )
 
     http_file(
