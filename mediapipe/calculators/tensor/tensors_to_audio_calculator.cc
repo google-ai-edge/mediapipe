@@ -135,6 +135,9 @@ class TensorsToAudioCalculator : public Node {
   // pffft requires memory to work with to avoid using the stack.
   std::vector<float, Eigen::aligned_allocator<float>> fft_workplace_;
   std::vector<float, Eigen::aligned_allocator<float>> fft_output_;
+  std::vector<float, Eigen::aligned_allocator<float>> prev_fft_output_;
+  int overlapping_samples_ = -1;
+  int step_samples_ = -1;
 };
 
 absl::Status TensorsToAudioCalculator::Open(CalculatorContext* cc) {
@@ -153,6 +156,22 @@ absl::Status TensorsToAudioCalculator::Open(CalculatorContext* cc) {
   fft_input_buffer_.resize(fft_size_);
   fft_workplace_.resize(fft_size_);
   fft_output_.resize(fft_size_);
+  if (options.has_num_overlapping_samples()) {
+    RET_CHECK(options.has_num_samples() && options.num_samples() > 0)
+        << "When `num_overlapping_samples` is set, `num_samples` must also be "
+           "specified.";
+    if (options.num_samples() != fft_size_) {
+      return absl::UnimplementedError(
+          "`num_samples` and `fft_size` must be equivalent.");
+    }
+    RET_CHECK(options.num_overlapping_samples() > 0 &&
+              options.num_overlapping_samples() < options.num_samples())
+        << "`num_overlapping_samples` must be greater than 0 and less than "
+           "`num_samples.`";
+    overlapping_samples_ = options.num_overlapping_samples();
+    step_samples_ = options.num_samples() - options.num_overlapping_samples();
+    prev_fft_output_.resize(fft_size_);
+  }
   return absl::OkStatus();
 }
 
@@ -179,8 +198,17 @@ absl::Status TensorsToAudioCalculator::Process(CalculatorContext* cc) {
       fft_output_.begin(), fft_output_.end(), inv_fft_window_.begin(),
       fft_output_.begin(),
       [this](float a, float b) { return a * b * inverse_fft_size_; });
-  Matrix matrix = Eigen::Map<Matrix>(fft_output_.data(), 1, fft_output_.size());
-  kAudioOut(cc).Send(std::move(matrix));
+  if (step_samples_ > 0) {
+    Matrix matrix = Eigen::Map<Matrix>(fft_output_.data(), 1, step_samples_);
+    matrix.leftCols(overlapping_samples_) += Eigen::Map<Matrix>(
+        prev_fft_output_.data() + step_samples_, 1, overlapping_samples_);
+    prev_fft_output_.swap(fft_output_);
+    kAudioOut(cc).Send(std::move(matrix));
+  } else {
+    Matrix matrix =
+        Eigen::Map<Matrix>(fft_output_.data(), 1, fft_output_.size());
+    kAudioOut(cc).Send(std::move(matrix));
+  }
   return absl::OkStatus();
 }
 

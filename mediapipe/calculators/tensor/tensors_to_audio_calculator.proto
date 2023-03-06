@@ -26,4 +26,10 @@ message TensorsToAudioCalculatorOptions {
   // Size of the fft in number of bins. If set, the calculator will do ifft
   // on the input tensor.
   optional int64 fft_size = 1;
+
+  // The number of samples per channel the output audio has.
+  optional int64 num_samples = 2;
+
+  // The number of overlapping samples between adjacent windows.
+  optional int64 num_overlapping_samples = 3 [default = 0];
 }
