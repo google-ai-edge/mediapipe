@@ -64,7 +64,7 @@ import java.util.Optional;
  *       <ul>
  *         <li>The image that image segmenter runs on.
  *       </ul>
- *   <li>Output ImageSegmenterResult {@link ImageSgmenterResult}
+ *   <li>Output ImageSegmenterResult {@link ImageSegmenterResult}
  *       <ul>
  *         <li>An ImageSegmenterResult containing segmented masks.
  *       </ul>
