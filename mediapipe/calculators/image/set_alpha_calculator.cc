@@ -47,10 +47,11 @@ constexpr int kNumChannelsRGBA = 4;
 
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
 
-// Combines an RGB cv::Mat and a single-channel alpha cv::Mat of the same
-// dimensions into an RGBA cv::Mat. Alpha may be read as uint8 or as another
-// numeric type; in the latter case, it is upscaled to values between 0 and 255
-// from an assumed input range of [0, 1). RGB and RGBA Mat's must be uchar.
+// Combines an RGB cv::Mat and an alpha cv::Mat of the same dimensions into an
+// RGBA cv::Mat. Alpha may be read as uint8 or as another numeric type; in the
+// latter case, it is upscaled to values between 0 and 255 from an assumed input
+// range of [0, 1). Only the first channel of Alpha is used. Input & output Mat
+// must be uchar.
 template <typename AlphaType>
 absl::Status MergeRGBA8Image(const cv::Mat input_mat, const cv::Mat& alpha_mat,
                              cv::Mat& output_mat) {
@@ -71,9 +72,9 @@ absl::Status MergeRGBA8Image(const cv::Mat input_mat, const cv::Mat& alpha_mat,
       out_ptr[out_idx + 1] = in_ptr[in_idx + 1];
       out_ptr[out_idx + 2] = in_ptr[in_idx + 2];
       if constexpr (std::is_same<AlphaType, uchar>::value) {
-        out_ptr[out_idx + 3] = alpha_ptr[alpha_idx + 0];
+        out_ptr[out_idx + 3] = alpha_ptr[alpha_idx + 0];  // channel 0 of mask
       } else {
-        const AlphaType alpha = alpha_ptr[alpha_idx + 0];
+        const AlphaType alpha = alpha_ptr[alpha_idx + 0];  // channel 0 of mask
         out_ptr[out_idx + 3] = static_cast<uchar>(round(alpha * 255.0f));
       }
     }
@@ -291,8 +292,8 @@ absl::Status SetAlphaCalculator::RenderCpu(CalculatorContext* cc) {
     const auto& alpha_mask = cc->Inputs().Tag(kInputAlphaTag).Get<ImageFrame>();
     cv::Mat alpha_mat = mediapipe::formats::MatView(&alpha_mask);
 
-    const bool alpha_is_float = alpha_mat.type() == CV_32FC1;
-    RET_CHECK(alpha_is_float || alpha_mat.type() == CV_8UC1);
+    const bool alpha_is_float = CV_MAT_DEPTH(alpha_mat.type()) == CV_32F;
+    RET_CHECK(alpha_is_float || CV_MAT_DEPTH(alpha_mat.type()) == CV_8U);
 
     if (alpha_is_float) {
       MP_RETURN_IF_ERROR(
