@@ -140,6 +140,57 @@ void main() {
   gl_FragColor = vec4(out_value, out_value, out_value, out_value);
 })";
 
+// Quick softmax shader hardcoded to max of N=12 classes. Performs softmax
+// calculations, but renders to one chunk at a time.
+// TODO: For more efficiency, should at least use MRT to render all
+// chunks simultaneously.
+static constexpr char kSoftmaxShader[] = R"(
+DEFAULT_PRECISION(mediump, float)
+in vec2 sample_coordinate;
+uniform sampler2D input_texture0;
+uniform sampler2D input_texture1;
+uniform sampler2D input_texture2;
+uniform int chunk_select;
+
+float max4(vec4 vec) {
+  return max(max(vec.x, vec.y), max(vec.z, vec.w));
+}
+
+vec4 expTransform(vec4 vec, float maxval) {
+  return exp(vec - maxval);
+}
+
+void main() {
+  // Grab all vecs
+  vec4 pixel0 = texture2D(input_texture0, sample_coordinate);
+  vec4 pixel1 = texture2D(input_texture1, sample_coordinate);
+  vec4 pixel2 = texture2D(input_texture2, sample_coordinate);
+
+  // Find maxval amongst all vectors
+  float max0 = max4(pixel0);
+  float max1 = max4(pixel1);
+  float max2 = max4(pixel2);
+  float maxval = max(max(max0, max1), max2);
+
+  vec4 outPixel0 = expTransform(pixel0, maxval);
+  vec4 outPixel1 = expTransform(pixel1, maxval);
+  vec4 outPixel2 = expTransform(pixel2, maxval);
+
+  // Quick hack to sum all components in vec4: dot with <1, 1, 1, 1>
+  vec4 ones = vec4(1.0, 1.0, 1.0, 1.0);
+  float weightSum = dot(ones, outPixel0) + dot(ones, outPixel1) + dot(ones, outPixel2);
+
+  vec4 outPixel;
+  if (chunk_select == 0) {
+    outPixel = outPixel0 / weightSum;
+  } else if (chunk_select == 1) {
+    outPixel = outPixel1 / weightSum;
+  } else {
+    outPixel = outPixel2 / weightSum;
+  }
+  gl_FragColor = outPixel;
+})";
+
 }  // namespace
 
 // static
@@ -170,23 +221,18 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
         "texture_coordinate",
     };
 
-    std::string activation_fn;
+    // Default to passthrough/NONE
+    std::string activation_fn = "vec4 out_value = in_value;";
     switch (options_.segmenter_options().activation()) {
       case SegmenterOptions::SIGMOID:
         LOG(INFO) << "SIGMOID activation function chosen on GPU";
         activation_fn = "vec4 out_value = 1.0 / (exp(-in_value) + 1.0);";
         break;
       case SegmenterOptions::SOFTMAX:
-        LOG(ERROR) << "SOFTMAX activation function not implemented for GPU";
-        // TODO: Softmax algo per-pixel:
-        // (1) Find max of all channels
-        // (2) For each channel do exp(val - max_value) transform
-        // (3) Find sum over all channels
-        // (4) Divide by this sum
+        LOG(WARNING) << "SOFTMAX activation function not yet efficient on GPU";
         break;
       case SegmenterOptions::NONE:
         LOG(INFO) << "NONE activation function chosen on GPU";
-        activation_fn = "vec4 out_value = in_value;";
         break;
     }
 
@@ -196,7 +242,6 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
                             SegmenterOptions::CATEGORY_MASK;
     if (is_category_mask) {
       LOG(INFO) << "CATEGORY_MASK requested; using NONE activation function.";
-      activation_fn = "vec4 out_value = in_value;";
     }
 
     const std::string activation_shader_source =
@@ -217,6 +262,10 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
     const std::string argmax_shader_source =
         absl::StrCat(std::string(mediapipe::kMediaPipeFragmentShaderPreamble),
                      std::string(kArgmaxShader));
+
+    const std::string softmax_shader_source =
+        absl::StrCat(std::string(mediapipe::kMediaPipeFragmentShaderPreamble),
+                     std::string(kSoftmaxShader));
 
     // Compile all our shader programs.
     // Note: we enable `force_log_errors` so that we get full debugging error
@@ -249,6 +298,12 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
                                 &attr_name[0], attr_location, &argmax_program_,
                                 /* force_log_errors */ true);
     RET_CHECK(argmax_program_) << "Problem initializing the argmax program.";
+
+    mediapipe::GlhCreateProgram(kBasicVertexShader,
+                                softmax_shader_source.c_str(), NUM_ATTRIBUTES,
+                                &attr_name[0], attr_location, &softmax_program_,
+                                /* force_log_errors */ true);
+    RET_CHECK(softmax_program_) << "Problem initializing the softmax program.";
 
     // Get uniform locations.
     activation_texture_uniform_ =
@@ -285,6 +340,23 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
         glGetUniformLocation(argmax_program_, "input_texture2");
     RET_CHECK(argmax_texture2_uniform_ > 0)
         << "argmax input_texture2 uniform not found.";
+
+    softmax_texture0_uniform_ =
+        glGetUniformLocation(softmax_program_, "input_texture0");
+    RET_CHECK(softmax_texture0_uniform_ > 0)
+        << "softmax input_texture0 uniform not found.";
+    softmax_texture1_uniform_ =
+        glGetUniformLocation(softmax_program_, "input_texture1");
+    RET_CHECK(softmax_texture1_uniform_ > 0)
+        << "softmax input_texture1 uniform not found.";
+    softmax_texture2_uniform_ =
+        glGetUniformLocation(softmax_program_, "input_texture2");
+    RET_CHECK(softmax_texture2_uniform_ > 0)
+        << "softmax input_texture2 uniform not found.";
+    softmax_chunk_select_uniform_ =
+        glGetUniformLocation(softmax_program_, "chunk_select");
+    RET_CHECK(softmax_chunk_select_uniform_ > 0)
+        << "softmax chunk select uniform not found.";
 
     // TODO: If ES3.0+ only, switch to VAO for handling attributes.
     glGenBuffers(1, &square_vertices_);
@@ -327,6 +399,8 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
 
     bool is_category_mask = options_.segmenter_options().output_type() ==
                             SegmenterOptions::CATEGORY_MASK;
+    bool is_softmax =
+        options_.segmenter_options().activation() == SegmenterOptions::SOFTMAX;
 
     const GpuBufferFormat activation_output_format =
         GpuBufferFormat::kRGBAFloat128;
@@ -401,6 +475,49 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
       glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 
+    std::vector<GlTexture> softmax_chunks;
+    if (is_softmax) {
+      // Step 2.5: For SOFTMAX, apply softmax shader with up to 3 textures to
+      // create softmax-transformed chunks before channel extraction.
+      RET_CHECK(num_chunks <= 3)
+          << "Cannot handle more than 12 classes in softmax shader.";
+
+      glUseProgram(softmax_program_);
+      glUniform1i(softmax_texture0_uniform_, 1);
+      glUniform1i(softmax_texture1_uniform_, 2);
+      glUniform1i(softmax_texture2_uniform_, 3);
+
+      for (int i = 0; i < num_chunks; i++) {
+        glUniform1i(softmax_chunk_select_uniform_, i);
+        softmax_chunks.push_back(helper_.CreateDestinationTexture(
+            output_width, output_height, chunk_output_format));
+        helper_.BindFramebuffer(softmax_chunks.back());
+
+        // Bind however many chunks we have
+        for (int j = 0; j < num_chunks; ++j) {
+          glActiveTexture(GL_TEXTURE1 + j);
+          glBindTexture(GL_TEXTURE_2D, chunks[j].name());
+        }
+
+        for (int j = num_chunks; j < 3; ++j) {  // 3 is hard-coded max chunks
+          glActiveTexture(GL_TEXTURE1 + j);
+          // If texture is unbound, sampling from it should always give zeros.
+          // This is not ideal, but is ok for now for not polluting the argmax
+          // shader results too much.
+          glBindTexture(GL_TEXTURE_2D, 0);
+        }
+
+        glClear(GL_COLOR_BUFFER_BIT);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      }
+
+      // Unbind the extra textures here.
+      for (int i = 0; i < num_chunks; ++i) {
+        glActiveTexture(GL_TEXTURE1 + i);
+        glBindTexture(GL_TEXTURE_2D, 0);
+      }
+    }
+
     std::vector<GlTexture> outputs;
     if (is_category_mask) {
       // Step 3: For CATEGORY, apply argmax shader with up to 3 textures to
@@ -451,7 +568,11 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
 
         // We have to rebind constantly because BindFramebuffer seems to
         // interfere with this.
-        glBindTexture(GL_TEXTURE_2D, chunks[i / 4].name());
+        if (is_softmax) {
+          glBindTexture(GL_TEXTURE_2D, softmax_chunks[i / 4].name());
+        } else {
+          glBindTexture(GL_TEXTURE_2D, chunks[i / 4].name());
+        }
 
         glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -486,12 +607,14 @@ SegmentationPostprocessorGl::~SegmentationPostprocessorGl() {
     glDeleteProgram(activation_program_);
     glDeleteProgram(argmax_program_);
     glDeleteProgram(channel_select_program_);
+    glDeleteProgram(softmax_program_);
     glDeleteProgram(split_program_);
     glDeleteBuffers(1, &square_vertices_);
     glDeleteBuffers(1, &texture_vertices_);
     activation_program_ = 0;
     argmax_program_ = 0;
     channel_select_program_ = 0;
+    softmax_program_ = 0;
     split_program_ = 0;
     square_vertices_ = 0;
     texture_vertices_ = 0;

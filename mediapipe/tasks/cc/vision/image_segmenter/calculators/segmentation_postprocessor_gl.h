@@ -47,6 +47,7 @@ class SegmentationPostprocessorGl {
   GLuint activation_program_ = 0;
   GLuint argmax_program_ = 0;
   GLuint channel_select_program_ = 0;
+  GLuint softmax_program_ = 0;
   GLuint split_program_ = 0;
   GLuint square_vertices_ = 0;
   GLuint texture_vertices_ = 0;
@@ -56,6 +57,10 @@ class SegmentationPostprocessorGl {
   GLint argmax_texture2_uniform_;
   GLint channel_select_texture_uniform_;
   GLint channel_select_index_uniform_;
+  GLint softmax_texture0_uniform_;
+  GLint softmax_texture1_uniform_;
+  GLint softmax_texture2_uniform_;
+  GLint softmax_chunk_select_uniform_;
   GLint split_texture_uniform_;
   GLint split_x_offset_uniform_;
 };
