@@ -55,6 +55,27 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "segmentation_postprocessor_gl",
+    srcs = ["segmentation_postprocessor_gl.cc"],
+    hdrs = ["segmentation_postprocessor_gl.h"],
+    tags = ["nomac"],
+    deps = [
+        ":tensors_to_segmentation_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/gpu:gl_calculator_helper",
+        "//mediapipe/gpu:gl_simple_shaders",
+        "//mediapipe/gpu:shader_util",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/utils:image_utils",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:str_format",
+    ],
+)
+
 cc_test(
     name = "tensors_to_segmentation_calculator_test",
     srcs = ["tensors_to_segmentation_calculator_test.cc"],

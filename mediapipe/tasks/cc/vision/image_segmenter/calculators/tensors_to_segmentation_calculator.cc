@@ -39,6 +39,10 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "mediapipe/util/label_map.pb.h"
 
+#ifdef __EMSCRIPTEN__
+#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/segmentation_postprocessor_gl.h"
+#endif  // __EMSCRIPTEN__
+
 // TODO: consolidate TensorToSegmentationCalculator.
 namespace mediapipe {
 namespace tasks {
@@ -118,16 +122,31 @@ class TensorsToSegmentationCalculator : public Node {
   static constexpr Output<Image>::Multiple kSegmentationOut{"SEGMENTATION"};
   MEDIAPIPE_NODE_CONTRACT(kTensorsIn, kOutputSizeIn, kSegmentationOut);
 
+  static absl::Status UpdateContract(CalculatorContract* cc);
+
   absl::Status Open(CalculatorContext* cc);
   absl::Status Process(CalculatorContext* cc);
 
  private:
-  std::vector<Image> GetSegmentationResult(const Shape& input_shape,
-                                           const Shape& output_shape,
-                                           const float* tensors_buffer);
-
+  std::vector<Image> GetSegmentationResultCpu(const Shape& input_shape,
+                                              const Shape& output_shape,
+                                              const float* tensors_buffer);
   TensorsToSegmentationCalculatorOptions options_;
+
+#ifdef __EMSCRIPTEN__
+  SegmentationPostprocessorGl postprocessor_;
+#endif  // __EMSCRIPTEN__
 };
+
+// static
+absl::Status TensorsToSegmentationCalculator::UpdateContract(
+    CalculatorContract* cc) {
+#ifdef __EMSCRIPTEN__
+  return SegmentationPostprocessorGl::UpdateContract(cc);
+#else
+  return absl::OkStatus();
+#endif  // __EMSCRIPTEN__
+}
 
 absl::Status TensorsToSegmentationCalculator::Open(
     mediapipe::CalculatorContext* cc) {
@@ -135,6 +154,9 @@ absl::Status TensorsToSegmentationCalculator::Open(
   RET_CHECK_NE(options_.segmenter_options().output_type(),
                SegmenterOptions::UNSPECIFIED)
       << "Must specify output_type as one of [CONFIDENCE_MASK|CATEGORY_MASK].";
+#ifdef __EMSCRIPTEN__
+  MP_RETURN_IF_ERROR(postprocessor_.Initialize(cc, options_));
+#endif  // __EMSCRIPTEN__
   return absl::OkStatus();
 }
 
@@ -167,7 +189,29 @@ absl::Status TensorsToSegmentationCalculator::Process(
           ? 1
           : input_shape.channels};
 
-  std::vector<Image> segmented_masks = GetSegmentationResult(
+  // Use GPU postprocessing on web when Tensor is there already and has <= 12
+  // categories.
+#ifdef __EMSCRIPTEN__
+  if (input_tensor.ready_as_opengl_texture_2d() && input_shape.channels <= 12) {
+    std::vector<std::unique_ptr<Image>> segmented_masks =
+        postprocessor_.GetSegmentationResultGpu(input_shape, output_shape,
+                                                input_tensor);
+    for (int i = 0; i < segmented_masks.size(); ++i) {
+      // Real output on GPU.
+      // kSegmentationOut(cc)[i].Send(std::move(segmented_masks[i]));
+
+      // Reformat as CPU for now for testing.
+      // TODO: Switch to real GPU output when GPU output pipeline is
+      //     ready.
+      Image new_image(segmented_masks[i]->GetImageFrameSharedPtr());
+      kSegmentationOut(cc)[i].Send(std::move(new_image));
+    }
+    return absl::OkStatus();
+  }
+#endif  // __EMSCRIPTEN__
+
+  // Otherwise, use CPU postprocessing.
+  std::vector<Image> segmented_masks = GetSegmentationResultCpu(
       input_shape, output_shape, input_tensor.GetCpuReadView().buffer<float>());
   for (int i = 0; i < segmented_masks.size(); ++i) {
     kSegmentationOut(cc)[i].Send(std::move(segmented_masks[i]));
@@ -175,7 +219,7 @@ absl::Status TensorsToSegmentationCalculator::Process(
   return absl::OkStatus();
 }
 
-std::vector<Image> TensorsToSegmentationCalculator::GetSegmentationResult(
+std::vector<Image> TensorsToSegmentationCalculator::GetSegmentationResultCpu(
     const Shape& input_shape, const Shape& output_shape,
     const float* tensors_buffer) {
   std::function<void(absl::Span<const float> values,
