@@ -38,8 +38,12 @@ android_library(
 android_library(
     name = "detection",
     srcs = ["Detection.java"],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
     deps = [
         ":category",
+        ":normalizedkeypoint",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -86,6 +90,18 @@ android_library(
 android_library(
     name = "normalized_landmark",
     srcs = ["NormalizedLandmark.java"],
+    deps = [
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "normalizedkeypoint",
+    srcs = ["NormalizedKeypoint.java"],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
     deps = [
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
