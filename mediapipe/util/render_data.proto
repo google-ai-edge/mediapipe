@@ -18,6 +18,9 @@ package mediapipe;
 
 import "mediapipe/util/color.proto";
 
+option java_package = "com.google.mediapipe.util.proto";
+option java_outer_classname = "RenderDataProto";
+
 // A RenderData is a collection of multiple RenderAnnotations. For example, a
 // face can be rendered using a group of annotations: a bounding box around the
 // face (rectangle) and annotations for various face parts such as eyes, nose
