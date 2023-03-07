@@ -680,6 +680,8 @@ table SubGraphMetadata {
   // Added in: 1.2.0
   output_tensor_groups:[TensorGroup];
 
+  // A list of custom metadata.
+  // Added in: 1.5.0.
   custom_metadata:[CustomMetadata];
 }
 
@@ -726,6 +728,5 @@ table ModelMetadata {
   // the metadata is populated into a TFLite model.
   min_parser_version:string;
 }
-//     metadata_version.cc)
 
 root_type ModelMetadata;

@@ -137,9 +137,6 @@ message GraphTrace {
     TPU_TASK_INVOKE = 17;
     CPU_TASK_INVOKE = 18;
   }
-  //  //depot/mediapipe/framework/mediapipe_profiling.h:profiler_census_tags,
-  //  //depot/mediapipe/framework/profiler/trace_buffer.h:event_type_list,
-  // )
 
   // The timing for one packet set being processed at one caclulator node.
   message CalculatorTrace {

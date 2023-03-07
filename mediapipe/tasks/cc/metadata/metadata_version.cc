@@ -285,7 +285,7 @@ void UpdateMinimumVersionForTable<tflite::SubGraphMetadata>(
         min_version);
   }
 
-  // Checks for the options field.
+  // Checks for the custom metadata field.
   if (table->custom_metadata() != nullptr) {
     UpdateMinimumVersion(GetMemberVersion(SchemaMembers::kCustomMetadata),
                          min_version);
