@@ -477,10 +477,19 @@ cc_library(
 )
 
 cc_library_with_tflite(
+    name = "tflite_delegate_ptr",
+    hdrs = ["tflite_delegate_ptr.h"],
+    tflite_deps = [
+        "@org_tensorflow//tensorflow/lite/core/shims:c_api_types",
+    ],
+)
+
+cc_library_with_tflite(
     name = "inference_interpreter_delegate_runner",
     srcs = ["inference_interpreter_delegate_runner.cc"],
     hdrs = ["inference_interpreter_delegate_runner.h"],
     tflite_deps = [
+        ":tflite_delegate_ptr",
         "//mediapipe/util/tflite:tflite_model_loader",
         "@org_tensorflow//tensorflow/lite/core/shims:c_api_types",
         "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",

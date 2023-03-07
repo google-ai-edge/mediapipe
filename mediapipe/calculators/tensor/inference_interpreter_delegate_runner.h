@@ -20,17 +20,13 @@
 
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/inference_runner.h"
+#include "mediapipe/calculators/tensor/tflite_delegate_ptr.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 #include "tensorflow/lite/core/shims/c/c_api_types.h"
 
 namespace mediapipe {
-
-// TODO: Consider renaming TfLiteDelegatePtr.
-using TfLiteDelegatePtr =
-    std::unique_ptr<TfLiteOpaqueDelegate,
-                    std::function<void(TfLiteOpaqueDelegate*)>>;
 
 // Creates inference runner which run inference using newly initialized
 // interpreter and provided `delegate`.
