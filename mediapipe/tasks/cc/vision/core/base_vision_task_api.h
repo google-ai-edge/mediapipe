@@ -25,12 +25,14 @@ limitations under the License.
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/core/base_task_api.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
+#include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -44,6 +46,42 @@ class BaseVisionTaskApi : public tasks::core::BaseTaskApi {
   explicit BaseVisionTaskApi(std::unique_ptr<tasks::core::TaskRunner> runner,
                              RunningMode running_mode)
       : BaseTaskApi(std::move(runner)), running_mode_(running_mode) {}
+  virtual ~BaseVisionTaskApi() {}
+
+  virtual absl::StatusOr<ImageTensorSpecs> GetInputImageTensorSpecs() {
+    ImageTensorSpecs image_tensor_specs;
+    bool found_image_to_tensor_calculator = false;
+    for (auto& node : runner_->GetGraphConfig().node()) {
+      if (node.calculator() == "ImageToTensorCalculator") {
+        if (!found_image_to_tensor_calculator) {
+          found_image_to_tensor_calculator = true;
+        } else {
+          return absl::Status(CreateStatusWithPayload(
+              absl::StatusCode::kFailedPrecondition,
+              absl::StrCat(
+                  "The graph has more than one ImageToTensorCalculator.")));
+        }
+        mediapipe::ImageToTensorCalculatorOptions options =
+            node.options().GetExtension(
+                mediapipe::ImageToTensorCalculatorOptions::ext);
+        image_tensor_specs.image_width = options.output_tensor_width();
+        image_tensor_specs.image_height = options.output_tensor_height();
+        image_tensor_specs.color_space =
+            tflite::ColorSpaceType::ColorSpaceType_RGB;
+        if (options.has_output_tensor_uint_range()) {
+          image_tensor_specs.tensor_type = tflite::TensorType_UINT8;
+        } else if (options.has_output_tensor_float_range()) {
+          image_tensor_specs.tensor_type = tflite::TensorType_FLOAT32;
+        }
+      }
+    }
+    if (!found_image_to_tensor_calculator) {
+      return absl::Status(CreateStatusWithPayload(
+          absl::StatusCode::kNotFound,
+          absl::StrCat("The graph doesn't contain ImageToTensorCalculator.")));
+    }
+    return image_tensor_specs;
+  }
 
  protected:
   // A synchronous method to process single image inputs.

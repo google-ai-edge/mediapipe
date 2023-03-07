@@ -39,6 +39,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
+#include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -296,6 +297,36 @@ TEST_F(CreateFromOptionsTest, FailsWithMissingCallbackInLiveStreamMode) {
   EXPECT_THAT(object_detector.status().GetPayload(kMediaPipeTasksPayload),
               Optional(absl::Cord(absl::StrCat(
                   MediaPipeTasksStatus::kInvalidTaskGraphConfigError))));
+}
+
+TEST_F(CreateFromOptionsTest, InputTensorSpecsForMobileSsdModel) {
+  auto options = std::make_unique<ObjectDetectorOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kMobileSsdWithMetadata);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ObjectDetector> object_detector,
+                          ObjectDetector::Create(std::move(options)));
+  MP_ASSERT_OK_AND_ASSIGN(auto image_tensor_specs,
+                          object_detector->GetInputImageTensorSpecs());
+  EXPECT_EQ(image_tensor_specs.image_width, 300);
+  EXPECT_EQ(image_tensor_specs.image_height, 300);
+  EXPECT_EQ(image_tensor_specs.color_space,
+            tflite::ColorSpaceType::ColorSpaceType_RGB);
+  EXPECT_EQ(image_tensor_specs.tensor_type, tflite::TensorType_UINT8);
+}
+
+TEST_F(CreateFromOptionsTest, InputTensorSpecsForEfficientDetModel) {
+  auto options = std::make_unique<ObjectDetectorOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kEfficientDetWithMetadata);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ObjectDetector> object_detector,
+                          ObjectDetector::Create(std::move(options)));
+  MP_ASSERT_OK_AND_ASSIGN(auto image_tensor_specs,
+                          object_detector->GetInputImageTensorSpecs());
+  EXPECT_EQ(image_tensor_specs.image_width, 320);
+  EXPECT_EQ(image_tensor_specs.image_height, 320);
+  EXPECT_EQ(image_tensor_specs.color_space,
+            tflite::ColorSpaceType::ColorSpaceType_RGB);
+  EXPECT_EQ(image_tensor_specs.tensor_type, tflite::TensorType_UINT8);
 }
 
 // TODO: Add NumThreadsTest back after having an

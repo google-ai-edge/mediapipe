@@ -94,7 +94,7 @@ absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
 // Build ImageTensorSpec from model resources. The tflite model must contain
 // single subgraph with single input tensor.
 absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
-    const core::ModelResources& model_resources);
+    const tasks::core::ModelResources& model_resources);
 
 }  // namespace vision
 }  // namespace tasks
