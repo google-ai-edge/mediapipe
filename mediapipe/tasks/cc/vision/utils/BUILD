@@ -25,6 +25,7 @@ cc_library_with_tflite(
     tflite_deps = [
         "//mediapipe/tasks/cc/core:model_resources",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:status",
