@@ -44,6 +44,8 @@ android_library(
     deps = [
         ":category",
         ":normalizedkeypoint",
+        "//mediapipe/framework/formats:detection_java_proto_lite",
+        "//mediapipe/framework/formats:location_data_java_proto_lite",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],

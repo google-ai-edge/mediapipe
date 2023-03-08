@@ -75,12 +75,10 @@ android_library(
         ":core",
         "//mediapipe/framework:calculator_options_java_proto_lite",
         "//mediapipe/framework/formats:detection_java_proto_lite",
-        "//mediapipe/framework/formats:location_data_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/framework/image",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_java_proto_lite",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
@@ -228,6 +226,27 @@ android_library(
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embedding",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "facedetector",
+    srcs = [
+        "facedetector/FaceDetectorResult.java",
+    ],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    manifest = "facedetector/AndroidManifest.xml",
+    deps = [
+        ":core",
+        "//mediapipe/framework:calculator_options_java_proto_lite",
+        "//mediapipe/framework/formats:detection_java_proto_lite",
+        "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",

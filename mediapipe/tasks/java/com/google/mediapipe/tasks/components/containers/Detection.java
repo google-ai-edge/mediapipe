@@ -16,6 +16,9 @@ package com.google.mediapipe.tasks.components.containers;
 
 import android.graphics.RectF;
 import com.google.auto.value.AutoValue;
+import com.google.mediapipe.formats.proto.LocationDataProto.LocationData.BoundingBox;
+import com.google.mediapipe.formats.proto.LocationDataProto.LocationData.RelativeKeypoint;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +29,8 @@ import java.util.Optional;
  */
 @AutoValue
 public abstract class Detection {
+
+  private static final int DEFAULT_CATEGORY_INDEX = -1;
 
   /**
    * Creates a {@link Detection} instance from a list of {@link Category} and a bounding box.
@@ -56,6 +61,59 @@ public abstract class Detection {
       List<Category> categories, RectF boundingBox, Optional<List<NormalizedKeypoint>> keypoints) {
     return new AutoValue_Detection(
         Collections.unmodifiableList(categories), boundingBox, keypoints);
+  }
+
+  /**
+   * Creates a {@link Detection} instance from a {@link
+   * com.google.mediapipe.formats.proto.DetectionProto.Detection} protobuf message.
+   *
+   * @param detectionProto a {@link com.google.mediapipe.formats.proto.DetectionProto.Detection}
+   *     protobuf message.
+   */
+  public static Detection createFromProto(
+      com.google.mediapipe.formats.proto.DetectionProto.Detection detectionProto) {
+    List<Category> categories = new ArrayList<>();
+    for (int idx = 0; idx < detectionProto.getScoreCount(); ++idx) {
+      categories.add(
+          Category.create(
+              detectionProto.getScore(idx),
+              detectionProto.getLabelIdCount() > idx
+                  ? detectionProto.getLabelId(idx)
+                  : DEFAULT_CATEGORY_INDEX,
+              detectionProto.getLabelCount() > idx ? detectionProto.getLabel(idx) : "",
+              detectionProto.getDisplayNameCount() > idx
+                  ? detectionProto.getDisplayName(idx)
+                  : ""));
+    }
+    RectF boundingBox = new RectF();
+    if (detectionProto.getLocationData().hasBoundingBox()) {
+      BoundingBox boundingBoxProto = detectionProto.getLocationData().getBoundingBox();
+      boundingBox.set(
+          /* left= */ boundingBoxProto.getXmin(),
+          /* top= */ boundingBoxProto.getYmin(),
+          /* right= */ boundingBoxProto.getXmin() + boundingBoxProto.getWidth(),
+          /* bottom= */ boundingBoxProto.getYmin() + boundingBoxProto.getHeight());
+    }
+    Optional<List<NormalizedKeypoint>> keypoints = Optional.empty();
+    if (!detectionProto.getLocationData().getRelativeKeypointsList().isEmpty()) {
+      keypoints = Optional.of(new ArrayList<>());
+      for (RelativeKeypoint relativeKeypoint :
+          detectionProto.getLocationData().getRelativeKeypointsList()) {
+        keypoints
+            .get()
+            .add(
+                NormalizedKeypoint.create(
+                    relativeKeypoint.getX(),
+                    relativeKeypoint.getY(),
+                    relativeKeypoint.hasKeypointLabel()
+                        ? Optional.of(relativeKeypoint.getKeypointLabel())
+                        : Optional.empty(),
+                    relativeKeypoint.hasScore()
+                        ? Optional.of(relativeKeypoint.getScore())
+                        : Optional.empty()));
+      }
+    }
+    return create(categories, boundingBox, keypoints);
   }
 
   /** A list of {@link Category} objects. */
