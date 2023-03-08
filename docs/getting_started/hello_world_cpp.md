@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/hello_world_cpp
 title: Hello World! in C++
 parent: MediaPipe in C++
 grand_parent: Getting Started

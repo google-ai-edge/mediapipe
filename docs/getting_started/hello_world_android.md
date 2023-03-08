@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/hello_world_android
 title: Hello World! on Android
 parent: MediaPipe on Android
 grand_parent: Getting Started

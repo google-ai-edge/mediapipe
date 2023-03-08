@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/android_archive_library
 title: MediaPipe Android Archive
 parent: MediaPipe on Android
 grand_parent: Getting Started

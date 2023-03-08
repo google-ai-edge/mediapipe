@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/ios
 title: MediaPipe on iOS
 parent: Getting Started
 has_children: true

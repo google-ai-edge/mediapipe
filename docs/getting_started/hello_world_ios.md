@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/hello_world_ios
 title: Hello World! on iOS
 parent: MediaPipe on iOS
 grand_parent: Getting Started

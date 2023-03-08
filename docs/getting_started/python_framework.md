@@ -1,6 +1,6 @@
 ---
-layout: default
-title: MediaPipe Python Framework
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/python_framework
 parent: MediaPipe in Python
 grand_parent: Getting Started
 nav_order: 1

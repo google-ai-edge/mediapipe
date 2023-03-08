@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/framework/getting_started/cpp
 title: MediaPipe in C++
 parent: Getting Started
 has_children: true
