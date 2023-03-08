@@ -60,11 +60,12 @@ class MetadataWriter(metadata_writer.MetadataWriterBase):
         classification tensor [2].
       score_calibration: A container of the score calibration operation [3] in
         the classification tensor. Optional if the model does not use score
-        calibration. [1]:
+        calibration.
+      [1]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L389
-          [2]:
+      [2]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L99
-          [3]:
+      [3]:
         https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L456
 
     Returns:
