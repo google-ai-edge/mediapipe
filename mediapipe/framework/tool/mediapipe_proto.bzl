@@ -2,6 +2,7 @@
 """
 
 load("//mediapipe/framework/tool:mediapipe_graph.bzl", "mediapipe_options_library")
+load("//mediapipe/framework/tool:mediapipe_proto_allowlist.bzl", "rewrite_target_list")
 load("@com_google_protobuf//:protobuf.bzl", "cc_proto_library", "py_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@rules_proto_grpc//js:defs.bzl", "js_proto_library")
@@ -156,6 +157,26 @@ def mediapipe_proto_library_impl(
             compatible_with = compatible_with,
         ))
 
+def SourceName(proto_target):
+    "Returns the proto source file name for a target without extension."
+    words = proto_target.split("_")[:-1]
+    return "_".join(words)
+
+def MessageName(proto_target):
+    "Returns the proto message name for a target."
+    words = proto_target.split("_")[:-1]
+    words_upper = [w.capitalize() for w in words]
+    return "".join(words_upper)
+
+def SubsituteCommand(old, new):
+    "Returns the shell command to replace a regex."
+    old = old.replace("/", "[/]")
+    new = new.replace('"', '\\"')
+    return "awk '{print gensub(/" + old + '/, "' + new + '", "g");}' + "'"
+
+rewrite_source_regex = "|".join([SourceName(t) for t in rewrite_target_list])
+rewrite_message_regex = "|".join([MessageName(t) for t in rewrite_target_list])
+
 # After rewrite, all intra-package references refer to "mediapipe",
 # and all imports refer to rewritten proto source files.
 def rewrite_mediapipe_proto(name, rewrite_proto, source_proto, **kwargs):
@@ -167,28 +188,41 @@ def rewrite_mediapipe_proto(name, rewrite_proto, source_proto, **kwargs):
       source_proto: the old ".proto" source file name.
       **kwargs: the remaining arguments.
     """
-    split_path = r'"\(.*\)/\([^/]*\).proto"'
-    rewrite_package = r"s|package mediapipe;|package mediapipe;|"
-    rewrite_import = r"s|import " + split_path + r'|import "\1/protobuf/\2.proto"|'
-    rewrite_import_public = r"s|import public " + split_path + r'|import public "\1/protobuf/\2.proto"|'
-    rewrite_import_any = r's|import "\(.*\)/protobuf/any.proto"|import "\1/any.proto"|'
-    rewrite_import_status = r's|import "\(.*\)/protobuf/status.proto"|import "\1/status.proto"|'
-    rewrite_ref = r"s|mediapipe\.|mediapipe\.|"
-    rewrite_objc = r's|objc_class_prefix = "MediaPipe"|objc_class_prefix = "MPP"|'
 
+    split_path = r"(.*)/(" + rewrite_source_regex + ").proto"
+    join_path = r"\\1/protobuf/\\2.proto"
+    rewrite_package = SubsituteCommand(
+        "package mediapipe;",
+        "package mediapipe;",
+    )
+    rewrite_import = SubsituteCommand(
+        'import "' + split_path + '";',
+        'import "' + join_path + '";',
+    )
+    rewrite_import_public = SubsituteCommand(
+        'import public "' + split_path + '";',
+        'import public "' + join_path + '";',
+    )
+    rewrite_ref = SubsituteCommand(
+        r"mediapipe\\.(" + rewrite_message_regex + ")",
+        r"mediapipe.\\1",
+    )
+    rewrite_objc = SubsituteCommand(
+        r'objc_class_prefix = "MediaPipe"',
+        r'objc_class_prefix = "MPP"',
+    )
     native.genrule(
         name = name,
         outs = [rewrite_proto],
         srcs = [source_proto],
         cmd = "for OUT in $(OUTS); do \n" +
-              "  cp $(location " + source_proto + ") $$OUT \n" +
-              "  sed -i -e '" + rewrite_package + "' $$OUT \n" +
-              "  sed -i -e '" + rewrite_import + "' $$OUT \n" +
-              "  sed -i -e '" + rewrite_import_public + "' $$OUT \n" +
-              "  sed -i -e '" + rewrite_import_any + "' $$OUT \n" +
-              "  sed -i -e '" + rewrite_import_status + "' $$OUT \n" +
-              "  sed -i -e '" + rewrite_ref + "' $$OUT \n" +
-              "  sed -i -e '" + rewrite_objc + "' $$OUT \n" +
+              "  cat $(location " + source_proto + ") " +
+              "  | " + rewrite_package +
+              "  | " + rewrite_import +
+              "  | " + rewrite_import_public +
+              "  | " + rewrite_ref +
+              "  | " + rewrite_objc +
+              "  > $$OUT \n" +
               "done",
         **kwargs
     )
