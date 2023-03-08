@@ -27,8 +27,10 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
+#include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
+#include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
@@ -59,6 +61,8 @@ constexpr char kSelfie128x128WithMetadata[] = "selfie_segm_128_128_3.tflite";
 
 constexpr char kSelfie144x256WithMetadata[] = "selfie_segm_144_256_3.tflite";
 
+constexpr char kHairSegmentationWithMetadata[] = "hair_segmentation.tflite";
+
 constexpr float kGoldenMaskSimilarity = 0.98;
 
 // Magnification factor used when creating the golden category masks to make
@@ -87,7 +91,21 @@ Image GetSRGBImage(const std::string& image_path) {
   cv::Mat image_mat = cv::imread(image_path);
   mediapipe::ImageFrame image_frame(
       mediapipe::ImageFormat::SRGB, image_mat.cols, image_mat.rows,
-      image_mat.step, image_mat.data, [image_mat](uint8[]) {});
+      image_mat.step, image_mat.data, [image_mat](uint8_t[]) {});
+  Image image(std::make_shared<mediapipe::ImageFrame>(std::move(image_frame)));
+  return image;
+}
+
+Image GetSRGBAImage(const std::string& image_path) {
+  cv::Mat image_mat = cv::imread(image_path);
+  cv::cvtColor(image_mat, image_mat, cv::COLOR_BGR2RGBA);
+  std::vector<cv::Mat> channels(4);
+  cv::split(image_mat, channels);
+  channels[3].setTo(0);
+  cv::merge(channels.data(), 4, image_mat);
+  mediapipe::ImageFrame image_frame(
+      mediapipe::ImageFormat::SRGBA, image_mat.cols, image_mat.rows,
+      image_mat.step, image_mat.data, [image_mat](uint8_t[]) {});
   Image image(std::make_shared<mediapipe::ImageFrame>(std::move(image_frame)));
   return image;
 }
@@ -200,6 +218,30 @@ TEST_F(CreateFromOptionsTest, FailsWithMissingModel) {
   EXPECT_THAT(segmenter_or.status().GetPayload(kMediaPipeTasksPayload),
               Optional(absl::Cord(absl::StrCat(
                   MediaPipeTasksStatus::kRunnerInitializationError))));
+}
+
+TEST_F(CreateFromOptionsTest, FailsWithInputDimsTwoModel) {
+  auto options = std::make_unique<ImageSegmenterOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, "dense.tflite");
+  absl::StatusOr<std::unique_ptr<ImageSegmenter>> result =
+      ImageSegmenter::Create(std::move(options));
+  EXPECT_EQ(result.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(result.status().message(),
+              HasSubstr("Expect segmentation model has input image tensor to "
+                        "be 4 dims."));
+}
+
+TEST_F(CreateFromOptionsTest, FailsWithInputChannelOneModel) {
+  auto options = std::make_unique<ImageSegmenterOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, "conv2d_input_channel_1.tflite");
+  absl::StatusOr<std::unique_ptr<ImageSegmenter>> result =
+      ImageSegmenter::Create(std::move(options));
+  EXPECT_EQ(result.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_THAT(result.status().message(),
+              HasSubstr("Expect segmentation model has input image tensor with "
+                        "channels = 3 or 4."));
 }
 
 class ImageModeTest : public tflite_shims::testing::Test {};
@@ -366,6 +408,31 @@ TEST_F(ImageModeTest, SucceedsSelfie144x256Segmentations) {
   cv::Mat selfie_mask = mediapipe::formats::MatView(
       confidence_masks[0].GetImageFrameSharedPtr().get());
   EXPECT_THAT(selfie_mask,
+              SimilarToFloatMask(expected_mask_float, kGoldenMaskSimilarity));
+}
+
+TEST_F(ImageModeTest, SucceedsHairSegmentation) {
+  Image image =
+      GetSRGBAImage(JoinPath("./", kTestDataDirectory, "portrait.jpg"));
+  auto options = std::make_unique<ImageSegmenterOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kHairSegmentationWithMetadata);
+  options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
+  options->activation = ImageSegmenterOptions::Activation::SOFTMAX;
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
+                          ImageSegmenter::Create(std::move(options)));
+  MP_ASSERT_OK_AND_ASSIGN(auto confidence_masks, segmenter->Segment(image));
+  EXPECT_EQ(confidence_masks.size(), 2);
+
+  cv::Mat hair_mask = mediapipe::formats::MatView(
+      confidence_masks[1].GetImageFrameSharedPtr().get());
+  MP_ASSERT_OK(segmenter->Close());
+  cv::Mat expected_mask = cv::imread(
+      JoinPath("./", kTestDataDirectory, "portrait_hair_expected_mask.jpg"),
+      cv::IMREAD_GRAYSCALE);
+  cv::Mat expected_mask_float;
+  expected_mask.convertTo(expected_mask_float, CV_32FC1, 1 / 255.f);
+  EXPECT_THAT(hair_mask,
               SimilarToFloatMask(expected_mask_float, kGoldenMaskSimilarity));
 }
 
@@ -547,8 +614,6 @@ TEST_F(LiveStreamModeTest, Succeeds) {
     timestamp_ms = timestamp;
   }
 }
-
-// TODO: Add test for hair segmentation model.
 
 }  // namespace
 }  // namespace image_segmenter
