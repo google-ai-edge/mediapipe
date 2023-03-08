@@ -22,6 +22,7 @@ load(
 load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 load("//mediapipe/framework:encode_binary_proto.bzl", "encode_binary_proto")
 load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
+load("//mediapipe/framework:more_selects.bzl", "more_selects")
 
 licenses(["notice"])
 
@@ -32,6 +33,27 @@ exports_files(
     visibility = [
         "//mediapipe/calculators/image:__subpackages__",
         "//mediapipe/util:__subpackages__",
+    ],
+)
+
+config_setting(
+    name = "disable_gpu",
+    define_values = {
+        "MEDIAPIPE_DISABLE_GPU": "1",
+    },
+    visibility = ["//visibility:public"],
+)
+
+more_selects.config_setting_negation(
+    name = "not_disable_gpu",
+    negate = ":disable_gpu",
+)
+
+selects.config_setting_group(
+    name = "platform_ios_with_gpu",
+    match_all = [
+        ":not_disable_gpu",
+        "//mediapipe:ios",
     ],
 )
 
@@ -585,7 +607,7 @@ cc_library(
         ":inference_calculator_cpu",
     ] + select({
         "//conditions:default": [":inference_calculator_gl_if_compute_shader_available"],
-        "//mediapipe:ios": [":inference_calculator_metal"],
+        ":platform_ios_with_gpu": [":inference_calculator_metal"],
     }),
     alwayslink = 1,
 )
