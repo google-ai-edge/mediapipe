@@ -50,6 +50,7 @@ cc_library(
         ":tensors_to_image_calculator_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "//mediapipe/calculators/tensor:image_to_tensor_utils",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/api2:builder",
@@ -57,8 +58,11 @@ cc_library(
         "//mediapipe/framework/api2:packet",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
@@ -105,4 +109,17 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl/converters:util",
         ],
     }),
+)
+
+cc_library(
+    name = "strip_rotation_calculator",
+    srcs = ["strip_rotation_calculator.cc"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:rect_cc_proto",
+    ],
+    alwayslink = 1,
 )

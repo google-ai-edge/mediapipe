@@ -28,4 +28,24 @@ message TensorsToImageCalculatorOptions {
   // to be flipped vertically as tensors are expected to start at top.
   // (DEFAULT or unset interpreted as CONVENTIONAL.)
   optional mediapipe.GpuOrigin.Mode gpu_origin = 1;
+
+  // Range of float values [min, max].
+  // min, must be strictly less than max.
+  message FloatRange {
+    optional float min = 1;
+    optional float max = 2;
+  }
+
+  // Range of uint values [min, max].
+  // min, must be strictly less than max.
+  message UIntRange {
+    optional uint64 min = 1;
+    optional uint64 max = 2;
+  }
+
+  // The input tensor element range/type image pixels are converted from.
+  oneof range {
+    FloatRange input_tensor_float_range = 2;
+    UIntRange input_tensor_uint_range = 3;
+  }
 }
