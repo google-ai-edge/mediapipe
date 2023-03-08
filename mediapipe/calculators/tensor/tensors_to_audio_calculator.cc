@@ -141,6 +141,7 @@ class TensorsToAudioCalculator : public Node {
   int overlapping_samples_ = -1;
   int step_samples_ = -1;
   Options::DftTensorFormat dft_tensor_format_;
+  double gain_ = 1.0;
 };
 
 absl::Status TensorsToAudioCalculator::Open(CalculatorContext* cc) {
@@ -177,6 +178,9 @@ absl::Status TensorsToAudioCalculator::Open(CalculatorContext* cc) {
     overlapping_samples_ = options.num_overlapping_samples();
     step_samples_ = options.num_samples() - options.num_overlapping_samples();
     prev_fft_output_.resize(fft_size_);
+  }
+  if (options.has_volume_gain_db()) {
+    gain_ = pow(10, options.volume_gain_db() / 20.0);
   }
   return absl::OkStatus();
 }
@@ -227,17 +231,19 @@ absl::Status TensorsToAudioCalculator::Process(CalculatorContext* cc) {
       fft_output_.begin(), fft_output_.end(), inv_fft_window_.begin(),
       fft_output_.begin(),
       [this](float a, float b) { return a * b * inverse_fft_size_; });
+  Matrix matrix;
   if (step_samples_ > 0) {
-    Matrix matrix = Eigen::Map<Matrix>(fft_output_.data(), 1, step_samples_);
+    matrix = Eigen::Map<Matrix>(fft_output_.data(), 1, step_samples_);
     matrix.leftCols(overlapping_samples_) += Eigen::Map<Matrix>(
         prev_fft_output_.data() + step_samples_, 1, overlapping_samples_);
     prev_fft_output_.swap(fft_output_);
-    kAudioOut(cc).Send(std::move(matrix));
   } else {
-    Matrix matrix =
-        Eigen::Map<Matrix>(fft_output_.data(), 1, fft_output_.size());
-    kAudioOut(cc).Send(std::move(matrix));
+    matrix = Eigen::Map<Matrix>(fft_output_.data(), 1, fft_output_.size());
   }
+  if (gain_ != 1.0) {
+    matrix *= gain_;
+  }
+  kAudioOut(cc).Send(std::move(matrix));
   return absl::OkStatus();
 }
 
