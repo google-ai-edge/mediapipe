@@ -34,6 +34,8 @@ namespace mediapipe {
 namespace api2 {
 namespace {
 
+using Options = ::mediapipe::TensorsToAudioCalculatorOptions;
+
 std::vector<float> HannWindow(int window_size, bool sqrt_hann) {
   std::vector<float> hann_window(window_size);
   audio_dsp::HannWindow().GetPeriodicSamples(window_size, &hann_window);
@@ -138,11 +140,15 @@ class TensorsToAudioCalculator : public Node {
   std::vector<float, Eigen::aligned_allocator<float>> prev_fft_output_;
   int overlapping_samples_ = -1;
   int step_samples_ = -1;
+  Options::DftTensorFormat dft_tensor_format_;
 };
 
 absl::Status TensorsToAudioCalculator::Open(CalculatorContext* cc) {
   const auto& options =
       cc->Options<mediapipe::TensorsToAudioCalculatorOptions>();
+  dft_tensor_format_ = options.dft_tensor_format();
+  RET_CHECK(dft_tensor_format_ != Options::DFT_TENSOR_FORMAT_UNKNOWN)
+      << "dft tensor format must be specified.";
   RET_CHECK(options.has_fft_size()) << "FFT size must be specified.";
   RET_CHECK(IsValidFftSize(options.fft_size()))
       << "FFT size must be of the form fft_size = (2^a)*(3^b)*(5^c) where b "
@@ -183,14 +189,37 @@ absl::Status TensorsToAudioCalculator::Process(CalculatorContext* cc) {
   RET_CHECK_EQ(input_tensors.size(), 1);
   RET_CHECK(input_tensors[0].element_type() == Tensor::ElementType::kFloat32);
   auto view = input_tensors[0].GetCpuReadView();
-  // DC's real part.
-  input_dft_[0] = kDcAndNyquistIn(cc)->first;
-  // Nyquist's real part is the penultimate element of the tensor buffer.
-  // pffft ignores the Nyquist's imagery part. No need to fetch the last value
-  // from the tensor buffer.
-  input_dft_[1] = *(view.buffer<float>() + (fft_size_ - 2));
-  std::memcpy(input_dft_.data() + 2, view.buffer<float>(),
-              (fft_size_ - 2) * sizeof(float));
+  switch (dft_tensor_format_) {
+    case Options::WITH_NYQUIST: {
+      // DC's real part.
+      input_dft_[0] = kDcAndNyquistIn(cc)->first;
+      // Nyquist's real part is the penultimate element of the tensor buffer.
+      // pffft ignores the Nyquist's imagery part. No need to fetch the last
+      // value from the tensor buffer.
+      input_dft_[1] = *(view.buffer<float>() + (fft_size_ - 2));
+      std::memcpy(input_dft_.data() + 2, view.buffer<float>(),
+                  (fft_size_ - 2) * sizeof(float));
+      break;
+    }
+    case Options::WITH_DC_AND_NYQUIST: {
+      // DC's real part is the first element of the tensor buffer.
+      input_dft_[0] = *(view.buffer<float>());
+      // Nyquist's real part is the penultimate element of the tensor buffer.
+      input_dft_[1] = *(view.buffer<float>() + fft_size_);
+      std::memcpy(input_dft_.data() + 2, view.buffer<float>() + 2,
+                  (fft_size_ - 2) * sizeof(float));
+      break;
+    }
+    case Options::WITHOUT_DC_AND_NYQUIST: {
+      input_dft_[0] = kDcAndNyquistIn(cc)->first;
+      input_dft_[1] = kDcAndNyquistIn(cc)->second;
+      std::memcpy(input_dft_.data() + 2, view.buffer<float>(),
+                  (fft_size_ - 2) * sizeof(float));
+      break;
+    }
+    default:
+      return absl::InvalidArgumentError("Unsupported dft tensor format.");
+  }
   pffft_transform_ordered(fft_state_, input_dft_.data(), fft_output_.data(),
                           fft_workplace_.data(), PFFFT_BACKWARD);
   // Applies the inverse window function.

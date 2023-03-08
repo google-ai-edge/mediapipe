@@ -32,4 +32,17 @@ message TensorsToAudioCalculatorOptions {
 
   // The number of overlapping samples between adjacent windows.
   optional int64 num_overlapping_samples = 3 [default = 0];
+
+  enum DftTensorFormat {
+    DFT_TENSOR_FORMAT_UNKNOWN = 0;
+    // The input dft tensor without dc and nyquist components.
+    WITHOUT_DC_AND_NYQUIST = 1;
+    // The input dft tensor contains the nyquist component as the last
+    // two values.
+    WITH_NYQUIST = 2;
+    // The input dft tensor contains the dc component as the first two values
+    // and the nyquist component as the last two values.
+    WITH_DC_AND_NYQUIST = 3;
+  }
+  optional DftTensorFormat dft_tensor_format = 11 [default = WITH_NYQUIST];
 }
