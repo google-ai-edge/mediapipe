@@ -41,3 +41,16 @@ index 5514f774c35..1a38f76f4e9 100644
  filegroup(
      name = "eigen_header_files",
      srcs = EIGEN_HEADERS,
+diff --git a/tensorflow/lite/delegates/gpu/build_defs.bzl b/tensorflow/lite/delegates/gpu/build_defs.bzl
+index 462ec7c2218..f2b583a4cbd 100644
+--- a/tensorflow/lite/delegates/gpu/build_defs.bzl
++++ b/tensorflow/lite/delegates/gpu/build_defs.bzl
+@@ -9,7 +9,7 @@ def nativewindow_linkopts():
+     # return min_supported_ndk_api("26", ["-lnativewindow"])
+     # copybara:uncomment_end
+     # copybara:comment_begin(oss-only)
+-    return ["-lnativewindow"]
++    return []
+     # copybara:comment_end
+ 
+ def gpu_delegate_linkopts():

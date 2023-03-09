@@ -455,9 +455,9 @@ http_archive(
 )
 
 # TensorFlow repo should always go after the other external dependencies.
-# TF on 2023-02-02.
-_TENSORFLOW_GIT_COMMIT = "581840e12c7762a3deef66b25a549218ca1e3983"
-_TENSORFLOW_SHA256 = "27f8f51e34b5065ac5411332eb4ad02f1d954257036d4863810d0c394d044bc9"
+# TF on 2023-03-08.
+_TENSORFLOW_GIT_COMMIT = "24f7ee636d62e1f8d8330357f8bbd65956dfb84d"
+_TENSORFLOW_SHA256 = "7f8a96dd99215c0cdc77230d3dbce43e60102b64a89203ad04aa09b0a187a4bd"
 http_archive(
     name = "org_tensorflow",
     urls = [
