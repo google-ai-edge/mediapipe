@@ -40,7 +40,7 @@ class NormalizedKeypoint:
   x: Optional[float] = None
   y: Optional[float] = None
   label: Optional[str] = None
-  score: Optional[str] = None
+  score: Optional[float] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _RelativeKeypointProto:
