@@ -28,7 +28,10 @@ halide_library_runtimes()
         name = target_name,
         actual = select({
             "//conditions:default": "@linux_halide//:" + target_name,
-            "@mediapipe//mediapipe:macos": "@macos_halide//:" + target_name,
+            # TODO: this shouldn't be necessary.
+            "@mediapipe//mediapipe:macos_i386": "@macos_x86_64_halide//:" + target_name,
+            "@mediapipe//mediapipe:macos_x86_64": "@macos_x86_64_halide//:" + target_name,
+            "@mediapipe//mediapipe:macos_arm64": "@macos_arm_64_halide//:" + target_name,
             "@mediapipe//mediapipe:windows": "@windows_halide//:" + target_name,
         }),
     )
