@@ -28,10 +28,10 @@ import java.util.Map;
 /** The base class of MediaPipe vision tasks. */
 public class BaseVisionTaskApi implements AutoCloseable {
   private static final long MICROSECONDS_PER_MILLISECOND = 1000;
-  private final TaskRunner runner;
-  private final RunningMode runningMode;
-  private final String imageStreamName;
-  private final String normRectStreamName;
+  protected final TaskRunner runner;
+  protected final RunningMode runningMode;
+  protected final String imageStreamName;
+  protected final String normRectStreamName;
 
   static {
     System.loadLibrary("mediapipe_tasks_vision_jni");
@@ -145,7 +145,7 @@ public class BaseVisionTaskApi implements AutoCloseable {
    * Converts an {@link ImageProcessingOptions} instance into a {@link NormalizedRect} protobuf
    * message.
    */
-  private static NormalizedRect convertToNormalizedRect(
+  protected static NormalizedRect convertToNormalizedRect(
       ImageProcessingOptions imageProcessingOptions) {
     RectF regionOfInterest =
         imageProcessingOptions.regionOfInterest().isPresent()

@@ -33,7 +33,7 @@ public abstract class ImageSegmenterResult implements TaskResult {
    * @param timestampMs a timestamp for this result.
    */
   // TODO: consolidate output formats across platforms.
-  static ImageSegmenterResult create(List<MPImage> segmentations, long timestampMs) {
+  public static ImageSegmenterResult create(List<MPImage> segmentations, long timestampMs) {
     return new AutoValue_ImageSegmenterResult(
         Collections.unmodifiableList(segmentations), timestampMs);
   }
