@@ -50,3 +50,15 @@ mediapipe_proto_library(
         "//mediapipe/framework:calculator_proto",
     ],
 )
+
+mediapipe_proto_library(
+    name = "face_landmarker_graph_options_proto",
+    srcs = ["face_landmarker_graph_options.proto"],
+    deps = [
+        ":face_landmarks_detector_graph_options_proto",
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_proto",
+        "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_proto",
+    ],
+)

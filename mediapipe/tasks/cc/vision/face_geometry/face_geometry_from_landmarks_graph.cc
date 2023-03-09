@@ -97,7 +97,8 @@ void ConfigureFaceGeometryEnvGeneratorCalculator(
 //  SideInputs:
 //   ENVIRONMENT - ENVIRONMENT
 //     Environment that describes the current virtual scene. If not provided, a
-//     default environment will be used which can be applied to common webcam.
+//     default environment will be used which is good enough for most general
+//     use cases.
 //
 //
 // Outputs:
@@ -142,7 +143,7 @@ class FaceGeometryFromLandmarksGraph : public Subgraph {
       std::optional<SidePacket<Environment>> environment, Graph& graph) {
     if (!environment.has_value()) {
       // If there is no provided Environment, use a a default environment which
-      // is good enough for most general use case.
+      // is good enough for most general use cases.
       auto& env_generator = graph.AddNode(
           "mediapipe.tasks.vision.face_geometry."
           "FaceGeometryEnvGeneratorCalculator");

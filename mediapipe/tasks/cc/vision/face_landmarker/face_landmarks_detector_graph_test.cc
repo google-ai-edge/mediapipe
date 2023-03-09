@@ -214,13 +214,13 @@ ClassificationList GetBlendshapes(absl::string_view filename) {
 // Helper function to construct NormalizeRect proto.
 NormalizedRect MakeNormRect(float x_center, float y_center, float width,
                             float height, float rotation) {
-  NormalizedRect hand_rect;
-  hand_rect.set_x_center(x_center);
-  hand_rect.set_y_center(y_center);
-  hand_rect.set_width(width);
-  hand_rect.set_height(height);
-  hand_rect.set_rotation(rotation);
-  return hand_rect;
+  NormalizedRect face_rect;
+  face_rect.set_x_center(x_center);
+  face_rect.set_y_center(y_center);
+  face_rect.set_width(width);
+  face_rect.set_height(height);
+  face_rect.set_rotation(rotation);
+  return face_rect;
 }
 
 // Struct holding the parameters for parameterized FaceLandmarksDetectionTest
@@ -234,9 +234,9 @@ struct SingeFaceTestParams {
   std::optional<std::string> blendshape_model_name;
   // The filename of the test image.
   std::string test_image_name;
-  // RoI on image to detect hands.
+  // RoI on image to detect faces.
   NormalizedRect norm_rect;
-  // Expected hand presence value.
+  // Expected face presence value.
   bool expected_presence;
   // The expected output landmarks positions.
   NormalizedLandmarkList expected_landmarks;
@@ -258,9 +258,9 @@ struct MultiFaceTestParams {
   std::optional<std::string> blendshape_model_name;
   // The filename of the test image.
   std::string test_image_name;
-  // RoI on image to detect hands.
+  // RoI on image to detect faces.
   std::vector<NormalizedRect> norm_rects;
-  // Expected hand presence value.
+  // Expected face presence value.
   std::vector<bool> expected_presence;
   // The expected output landmarks positions.
   std::optional<std::vector<NormalizedLandmarkList>> expected_landmarks_lists;
@@ -299,7 +299,6 @@ TEST_P(SingleFaceLandmarksDetectionTest, Succeeds) {
         (*output_packets)[kNormLandmarksName].Get<NormalizedLandmarkList>();
     const NormalizedLandmarkList& expected_landmarks =
         GetParam().expected_landmarks;
-
     EXPECT_THAT(
         landmarks,
         Approximately(Partially(EqualsProto(expected_landmarks)),
@@ -395,7 +394,9 @@ INSTANTIATE_TEST_SUITE_P(
                kFaceLandmarksDetectionWithAttentionModel,
                /* blendshape_model_name= */ kFaceBlendshapesModel,
                /* test_image_name= */ kPortraitImageName,
-               /* norm_rect= */ MakeNormRect(0.4987, 0.2211, 0.2877, 0.2303, 0),
+               /* norm_rect= */
+               MakeNormRect(0.48906386, 0.22731927, 0.42905223, 0.34357703,
+                            0.008304443),
                /* expected_presence= */ true,
                /* expected_landmarks= */
                GetExpectedLandmarkList(
@@ -444,7 +445,9 @@ INSTANTIATE_TEST_SUITE_P(
             kFaceLandmarksDetectionWithAttentionModel,
             /* blendshape_model_name= */ kFaceBlendshapesModel,
             /* test_image_name= */ kPortraitImageName,
-            /* norm_rects= */ {MakeNormRect(0.4987, 0.2211, 0.2877, 0.2303, 0)},
+            /* norm_rects= */
+            {MakeNormRect(0.48906386, 0.22731927, 0.42905223, 0.34357703,
+                          0.008304443)},
             /* expected_presence= */ {true},
             /* expected_landmarks_list= */
             {{GetExpectedLandmarkList(

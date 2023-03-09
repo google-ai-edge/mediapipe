@@ -322,10 +322,8 @@ class FaceDetectorGraph : public core::ModelTaskGraph {
     // detection bounding boxes.
     auto& detection_transformation =
         graph.AddNode("DetectionTransformationCalculator");
-    detection_projection.Out(kDetectionsTag) >>
-        detection_transformation.In(kDetectionsTag);
-    preprocessing.Out(kImageSizeTag) >>
-        detection_transformation.In(kImageSizeTag);
+    face_detections >> detection_transformation.In(kDetectionsTag);
+    image_size >> detection_transformation.In(kImageSizeTag);
     auto face_pixel_detections =
         detection_transformation.Out(kPixelDetectionsTag)
             .Cast<std::vector<Detection>>();
