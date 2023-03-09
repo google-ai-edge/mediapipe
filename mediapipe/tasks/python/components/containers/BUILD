@@ -74,11 +74,21 @@ py_library(
 )
 
 py_library(
+    name = "keypoint",
+    srcs = ["keypoint.py"],
+    deps = [
+        "//mediapipe/framework/formats:location_data_py_pb2",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+    ],
+)
+
+py_library(
     name = "detections",
     srcs = ["detections.py"],
     deps = [
         ":bounding_box",
         ":category",
+        ":keypoint",
         "//mediapipe/framework/formats:detection_py_pb2",
         "//mediapipe/framework/formats:location_data_py_pb2",
         "//mediapipe/tasks/python/core:optional_dependencies",
