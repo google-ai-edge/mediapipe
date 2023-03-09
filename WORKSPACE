@@ -543,3 +543,35 @@ external_files()
 
 load("@//third_party:wasm_files.bzl", "wasm_files")
 wasm_files()
+
+# Halide
+
+new_local_repository(
+    name = "halide",
+    build_file = "@//third_party/halide:BUILD.bazel",
+    path = "third_party/halide"
+)
+
+http_archive(
+    name = "linux_halide",
+    sha256 = "be3bdd067acb9ee0d37d0830821113cd69174bee46da466a836d8829fef7cf91",
+    strip_prefix = "Halide-14.0.0-x86-64-linux",
+    urls = ["https://github.com/halide/Halide/releases/download/v14.0.0/Halide-14.0.0-x86-64-linux-6b9ed2afd1d6d0badf04986602c943e287d44e46.tar.gz"],
+    build_file = "@//third_party:halide.BUILD",
+)
+
+http_archive(
+    name = "macos_halide",
+    sha256 = "569b1cda858d278d9dd68e072768d8347775e419f2ff39ff34d001ceb299e3c4",
+    strip_prefix = "Halide-14.0.0-x86-64-osx",
+    urls = ["https://github.com/halide/Halide/releases/download/v14.0.0/Halide-14.0.0-x86-64-osx-6b9ed2afd1d6d0badf04986602c943e287d44e46.tar.gz"],
+    build_file = "@//third_party:halide.BUILD",
+)
+
+http_archive(
+    name = "windows_halide",
+    sha256 = "a7a0481af2691ec436d79c20ca441e9a701bfce409f4f763dab75a8f1d740179",
+    strip_prefix = "Halide-14.0.0-x86-64-windows",
+    urls = ["https://github.com/halide/Halide/releases/download/v14.0.0/Halide-14.0.0-x86-64-windows-6b9ed2afd1d6d0badf04986602c943e287d44e46.zip"],
+    build_file = "@//third_party:halide.BUILD",
+)
