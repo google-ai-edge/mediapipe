@@ -209,7 +209,7 @@ class FaceDetectorTest(parameterized.TestCase):
     options = _FaceDetectorOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path))
     with _FaceDetector.create_from_options(options) as detector:
-      # Performs object detection on the input.
+      # Performs face detection on the input.
       detection_result = detector.detect(test_image)
       self.assertEmpty(detection_result.detections)
 
