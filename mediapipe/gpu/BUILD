@@ -273,14 +273,6 @@ selects.config_setting_group(
 )
 
 selects.config_setting_group(
-    name = "platform_ios_without_gpu",
-    match_all = [
-        ":disable_gpu",
-        "//mediapipe:ios",
-    ],
-)
-
-selects.config_setting_group(
     name = "platform_macos_with_gpu",
     match_all = [
         ":not_disable_gpu",
@@ -310,7 +302,6 @@ cc_library(
         ":platform_ios_with_gpu": [
             ":gl_texture_view",
             ":gpu_buffer_storage_cv_pixel_buffer",
-            "//mediapipe/objc:util",
             "//mediapipe/objc:CFHolder",
         ],
         ":platform_macos_with_gpu": [
@@ -318,10 +309,12 @@ cc_library(
             ":gl_texture_view",
             ":gl_texture_buffer",
         ],
-        ":platform_ios_without_gpu": [
+        ":disable_gpu": [],
+    }) + select({
+        "//conditions:default": [],
+        "//mediapipe:ios": [
             "//mediapipe/objc:util",
         ],
-        ":disable_gpu": [],
     }),
 )
 
