@@ -19,7 +19,7 @@ package mediapipe.tasks.vision.face_geometry.proto;
 import "mediapipe/framework/formats/matrix_data.proto";
 import "mediapipe/tasks/cc/vision/face_geometry/proto/mesh_3d.proto";
 
-option java_package = "mediapipe.tasks.vision.facegeometry.proto";
+option java_package = "com.google.mediapipe.tasks.vision.facegeometry.proto";
 option java_outer_classname = "FaceGeometryProto";
 
 // Defines the face geometry pipeline estimation result format.
