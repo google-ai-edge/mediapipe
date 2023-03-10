@@ -12,28 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python strict test compatibility macro.
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//mediapipe/tasks:internal"])
 
 licenses(["notice"])
 
-py_library(
-    name = "audio_task_running_mode",
-    srcs = ["audio_task_running_mode.py"],
-)
-
-py_library(
-    name = "base_audio_task_api",
-    srcs = [
-        "base_audio_task_api.py",
-    ],
+py_test(
+    name = "audio_record_test",
+    srcs = ["audio_record_test.py"],
     deps = [
-        ":audio_task_running_mode",
-        "//mediapipe/framework:calculator_py_pb2",
-        "//mediapipe/python:_framework_bindings",
-        "//mediapipe/python:packet_creator",
-        "//mediapipe/tasks/python/core:optional_dependencies",
         "//mediapipe/tasks/python/components/containers:audio_record",
     ],
 )
