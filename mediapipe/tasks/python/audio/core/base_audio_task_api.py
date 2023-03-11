@@ -127,8 +127,8 @@ class BaseAudioTaskApi(object):
           + self._running_mode.name)
     self._runner.send(inputs)
 
-  @staticmethod
   def create_audio_record(
+      self,
       num_channels: int,
       sample_rate: int,
       required_input_buffer_size: int
