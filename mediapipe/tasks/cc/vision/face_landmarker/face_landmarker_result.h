@@ -40,7 +40,7 @@ struct FaceLandmarkerResult {
   std::optional<std::vector<components::containers::Classifications>>
       face_blendshapes;
   // Optional facial transformation matrix.
-  std::optional<std::vector<Matrix>> facial_transformation_matrix;
+  std::optional<std::vector<Matrix>> facial_transformation_matrixes;
 };
 
 // Convert face landmarks result from proto format to FaceLandmarkerResult.
@@ -49,7 +49,7 @@ FaceLandmarkerResult ConvertToFaceLandmarkerResult(
     std::optional<std::vector<mediapipe::ClassificationList>>
         face_blendshapes_proto = std::nullopt,
     std::optional<std::vector<mediapipe::MatrixData>>
-        facial_transformation_matrix_proto = std::nullopt);
+        facial_transformation_matrixes_proto = std::nullopt);
 
 }  // namespace face_landmarker
 }  // namespace vision
