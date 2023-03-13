@@ -294,7 +294,7 @@ absl::Status TensorsToImageCalculator::MetalProcess(CalculatorContext* cc) {
                   threadsPerThreadgroup:threads_per_group];
   [compute_encoder endEncoding];
   [command_buffer commit];
-
+  [command_buffer waitUntilCompleted];
   kOutputImage(cc).Send(Image(output));
   return absl::OkStatus();
 }
