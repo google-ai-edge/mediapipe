@@ -318,9 +318,9 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
           .set_min_similarity_threshold(
               tasks_options.min_tracking_confidence());
       prev_hand_rects_from_landmarks >>
-          hand_association[Input<std::vector<NormalizedRect>>::Multiple("")][0];
+          hand_association[Input<std::vector<NormalizedRect>>("BASE_RECTS")];
       hand_rects_from_hand_detector >>
-          hand_association[Input<std::vector<NormalizedRect>>::Multiple("")][1];
+          hand_association[Input<std::vector<NormalizedRect>>("RECTS")];
       auto hand_rects = hand_association.Out("");
       hand_rects >> clip_hand_rects.In("");
     } else {
