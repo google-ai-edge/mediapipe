@@ -21,6 +21,11 @@ mediapipe_ts_declaration(
     ],
 )
 
+mediapipe_ts_declaration(
+    name = "types",
+    srcs = ["types.d.ts"],
+)
+
 mediapipe_ts_library(
     name = "vision_task_runner",
     srcs = ["vision_task_runner.ts"],
@@ -49,6 +54,11 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/core:task_runner_test_utils",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
+)
+
+mediapipe_ts_library(
+    name = "render_utils",
+    srcs = ["render_utils.ts"],
 )
 
 jasmine_node_test(

@@ -135,10 +135,8 @@ export class TextEmbedder extends TaskRunner {
    * @return The embedding resuls of the text
    */
   embed(text: string): TextEmbedderResult {
-    // Increment the timestamp by 1 millisecond to guarantee that we send
-    // monotonically increasing timestamps to the graph.
-    const syntheticTimestamp = this.getLatestOutputTimestamp() + 1;
-    this.graphRunner.addStringToStream(text, INPUT_STREAM, syntheticTimestamp);
+    this.graphRunner.addStringToStream(
+        text, INPUT_STREAM, this.getSynctheticTimestamp());
     this.finishProcessing();
     return this.embeddingResult;
   }
