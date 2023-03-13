@@ -24,6 +24,9 @@ mediapipe_ts_declaration(
 mediapipe_ts_declaration(
     name = "types",
     srcs = ["types.d.ts"],
+    deps = [
+        "//mediapipe/tasks/web/components/containers:keypoint",
+    ],
 )
 
 mediapipe_ts_library(

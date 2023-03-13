@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import {NormalizedKeypoint} from '../../../../tasks/web/components/containers/keypoint';
+
 /**
  * The segmentation tasks return the segmentation result as a Uint8Array
  * (when the default mode of `CATEGORY_MASK` is used) or as a Float32Array (for
@@ -32,3 +34,9 @@ export type SegmentationMask = Uint8Array|Float32Array|WebGLTexture;
  */
 export type SegmentationMaskCallback =
     (masks: SegmentationMask[], width: number, height: number) => void;
+
+/** A Region-Of-Interest (ROI) to represent a region within an image. */
+export declare interface RegionOfInterest {
+  /** The ROI in keypoint format. */
+  keypoint: NormalizedKeypoint;
+}
