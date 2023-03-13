@@ -152,7 +152,7 @@ class HandLandmarkerTest(parameterized.TestCase):
        _get_expected_face_landmarks(_PORTRAIT_EXPECTED_FACE_LANDMARKS)),
       (ModelFileType.FILE_CONTENT,
        _get_expected_face_landmarks(_PORTRAIT_EXPECTED_FACE_LANDMARKS)))
-  def test_detect(self, model_file_type, expected_result):
+  def test_detect(self, model_file_type, expected_face_landmarks):
     # Creates face landmarker.
     if model_file_type is ModelFileType.FILE_NAME:
       base_options = _BaseOptions(model_asset_path=self.model_path)
@@ -164,15 +164,14 @@ class HandLandmarkerTest(parameterized.TestCase):
       # Should never happen
       raise ValueError('model_file_type is invalid.')
 
-    options = _FaceLandmarkerOptions(base_options=base_options,
-                                     output_face_blendshapes=True)
+    options = _FaceLandmarkerOptions(base_options=base_options)
     landmarker = _FaceLandmarker.create_from_options(options)
 
     # Performs face landmarks detection on the input.
     detection_result = landmarker.detect(self.test_image)
     # Comparing results.
-    self._expect_landmarks_correct(detection_result.face_landmarks,
-                                   expected_result.face_landmarks)
+    self._expect_landmarks_correct(detection_result.face_landmarks[0],
+                                   expected_face_landmarks)
     # Closes the face landmarker explicitly when the face landmarker is not used
     # in a context.
     landmarker.close()

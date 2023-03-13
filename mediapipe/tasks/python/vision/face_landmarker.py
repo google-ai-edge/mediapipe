@@ -132,10 +132,6 @@ def _build_landmarker_result(
   """Constructs a `FaceLandmarkerResult` from output packets."""
   face_landmarks_proto_list = packet_getter.get_proto_list(
       output_packets[_NORM_LANDMARKS_STREAM_NAME])
-  face_blendshapes_proto_list = packet_getter.get_proto_list(
-      output_packets[_BLENDSHAPES_STREAM_NAME])
-  facial_transformation_matrixes_proto_list = packet_getter.get_proto_list(
-      output_packets[_FACE_GEOMETRY_STREAM_NAME])
 
   face_landmarks_results = []
   for proto in face_landmarks_proto_list:
@@ -143,30 +139,36 @@ def _build_landmarker_result(
     face_landmarks.MergeFrom(proto)
     face_landmarks_list = []
     for face_landmark in face_landmarks.landmark:
-      face_landmarks.append(
+      face_landmarks_list.append(
           landmark_module.NormalizedLandmark.create_from_pb2(face_landmark))
     face_landmarks_results.append(face_landmarks_list)
 
   face_blendshapes_results = []
-  for proto in face_blendshapes_proto_list:
-    face_blendshapes_categories = []
-    face_blendshapes_classifications = classification_pb2.ClassificationList()
-    face_blendshapes_classifications.MergeFrom(proto)
-    for face_blendshapes in face_blendshapes_classifications.classification:
-      face_blendshapes_categories.append(
-        category_module.Category(
-          index=face_blendshapes.index,
-          score=face_blendshapes.score,
-          display_name=face_blendshapes.display_name,
-          category_name=face_blendshapes.label))
-    face_blendshapes_results.append(face_blendshapes_categories)
+  if _BLENDSHAPES_STREAM_NAME in output_packets:
+    face_blendshapes_proto_list = packet_getter.get_proto_list(
+      output_packets[_BLENDSHAPES_STREAM_NAME])
+    for proto in face_blendshapes_proto_list:
+      face_blendshapes_categories = []
+      face_blendshapes_classifications = classification_pb2.ClassificationList()
+      face_blendshapes_classifications.MergeFrom(proto)
+      for face_blendshapes in face_blendshapes_classifications.classification:
+        face_blendshapes_categories.append(
+          category_module.Category(
+            index=face_blendshapes.index,
+            score=face_blendshapes.score,
+            display_name=face_blendshapes.display_name,
+            category_name=face_blendshapes.label))
+      face_blendshapes_results.append(face_blendshapes_categories)
 
   facial_transformation_matrixes_results = []
-  for proto in facial_transformation_matrixes_proto_list:
-    matrix_data = matrix_data_pb2.MatrixData()
-    matrix_data.MergeFrom(proto)
-    matrix = matrix_data_module.MatrixData.create_from_pb2(matrix_data)
-    facial_transformation_matrixes_results.append(matrix)
+  if _FACE_GEOMETRY_STREAM_NAME in output_packets:
+    facial_transformation_matrixes_proto_list = packet_getter.get_proto_list(
+      output_packets[_FACE_GEOMETRY_STREAM_NAME])
+    for proto in facial_transformation_matrixes_proto_list:
+      matrix_data = matrix_data_pb2.MatrixData()
+      matrix_data.MergeFrom(proto)
+      matrix = matrix_data_module.MatrixData.create_from_pb2(matrix_data)
+      facial_transformation_matrixes_results.append(matrix)
 
   return FaceLandmarkerResult(face_landmarks_results, face_blendshapes_results,
                               facial_transformation_matrixes_results)
@@ -298,19 +300,25 @@ class FaceLandmarker(base_vision_task_api.BaseVisionTaskApi):
       options.result_callback(face_landmarks_result, image,
                               timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
 
+    output_streams = [
+      ':'.join([_NORM_LANDMARKS_TAG, _NORM_LANDMARKS_STREAM_NAME]),
+      ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME])
+    ]
+
+    if options.output_face_blendshapes:
+      output_streams.append(
+          ':'.join([_BLENDSHAPES_TAG, _BLENDSHAPES_STREAM_NAME]))
+    if options.output_facial_transformation_matrixes:
+      output_streams.append(
+          ':'.join([_FACE_GEOMETRY_TAG, _FACE_GEOMETRY_STREAM_NAME]))
+
     task_info = _TaskInfo(
         task_graph=_TASK_GRAPH_NAME,
         input_streams=[
             ':'.join([_IMAGE_TAG, _IMAGE_IN_STREAM_NAME]),
             ':'.join([_NORM_RECT_TAG, _NORM_RECT_STREAM_NAME]),
         ],
-        output_streams=[
-            ':'.join([_NORM_LANDMARKS_TAG, _NORM_LANDMARKS_STREAM_NAME]),
-            ':'.join([_BLENDSHAPES_TAG, _BLENDSHAPES_STREAM_NAME]),
-            ':'.join([
-                _FACE_GEOMETRY_TAG, _FACE_GEOMETRY_STREAM_NAME
-            ]), ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME])
-        ],
+        output_streams=output_streams,
         task_options=options)
     return cls(
         task_info.generate_graph_config(
