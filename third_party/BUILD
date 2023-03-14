@@ -171,6 +171,7 @@ cmake_external(
         "-lrt",
     ] + select({
         "//mediapipe:ios": ["-framework Cocoa"],
+        "//mediapipe:macos": ["-framework Cocoa"],
         "//conditions:default": [],
     }),
     shared_libraries = select({
