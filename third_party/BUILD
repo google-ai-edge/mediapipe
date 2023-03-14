@@ -169,7 +169,10 @@ cmake_external(
         "-lm",
         "-lpthread",
         "-lrt",
-    ],
+    ] + select({
+        "//mediapipe:ios": ["-framework Cocoa"],
+        "//conditions:default": [],
+    }),
     shared_libraries = select({
         "@bazel_tools//src/conditions:darwin": ["libopencv_%s.%s.dylib" % (module, OPENCV_SO_VERSION) for module in OPENCV_MODULES],
         # Only the shared objects listed here will be linked in the directory
