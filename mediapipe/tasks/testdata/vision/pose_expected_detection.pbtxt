@@ -1,0 +1,27 @@
+# proto-file: mediapipe/framework/formats/detection.proto
+# proto-message: Detection
+location_data {
+  format: BOUNDING_BOX
+  bounding_box {
+    xmin: 397
+    ymin: 198
+    width: 199
+    height: 199
+  }
+  relative_keypoints {
+    x: 0.4879558
+    y: 0.7013345
+  }
+  relative_keypoints {
+    x: 0.48453212
+    y: 0.32265592
+  }
+  relative_keypoints {
+    x: 0.4992165
+    y: 0.4854874
+  }
+  relative_keypoints {
+    x: 0.50227845
+    y: 0.159788
+  }
+}

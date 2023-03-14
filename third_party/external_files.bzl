@@ -72,8 +72,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_BUILD_orig",
-        sha256 = "64d5343a6a5f9be06db0a5074a2260f9ae63a989fe01702832cd215680dc19c1",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/BUILD.orig?generation=1678323576393653"],
+        sha256 = "d86b98b82e00dd87cd46bd1429bf5eaa007b500c1a24d9316b73309f2e6c8df8",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/BUILD.orig?generation=1678737479599640"],
     )
 
     http_file(
@@ -823,7 +823,7 @@ def external_files():
     http_file(
         name = "com_google_mediapipe_portrait_expected_face_geometry_with_attention_pbtxt",
         sha256 = "7ed1eed98e61e0a10811bb611c895d87c8023f398a36db01b6d9ba2e1ab09e16",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_expected_face_geometry_with_attention.pbtxt?generation=1678505004840652"],
+        urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_expected_face_geometry_with_attention.pbtxt?generation=1678737486927530"],
     )
 
     http_file(
@@ -864,8 +864,20 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_pose_detection_tflite",
-        sha256 = "a63c614bef30d35947f13be361820b1e4e3bec9cfeebf4d11216a18373108e85",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_detection.tflite?generation=1661875889147923"],
+        sha256 = "9ba9dd3d42efaaba86b4ff0122b06f29c4122e756b329d89dca1e297fd8f866c",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_detection.tflite?generation=1678737489600422"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_pose_expected_detection_pbtxt",
+        sha256 = "e0d40e98dd5320a780a642c336d0c8720243ac5bcc0e39c4061ad970a503ae24",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_expected_detection.pbtxt?generation=1678737492211540"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_pose_jpg",
+        sha256 = "c8a830ed683c0276d713dd5aeda28f415f10cd6291972084a40d0d8b934ed62b",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pose.jpg?generation=1678737494661975"],
     )
 
     http_file(
@@ -1224,8 +1236,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_object_detection_saved_model_README_md",
-        sha256 = "fe163cf12fbd017738a2fd360c03d223e964ba6404ac75c635f5918784e9c34d",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/README.md?generation=1661875995856372"],
+        sha256 = "acc23dee09f69210717ac060035c844ba902e8271486f1086f29fb156c236690",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/object_detection_saved_model/README.md?generation=1678737498915254"],
     )
 
     http_file(
