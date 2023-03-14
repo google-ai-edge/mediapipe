@@ -40,8 +40,10 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 #include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/face_geometry/calculators/geometry_pipeline_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/environment.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry.pb.h"
+#include "mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_blendshapes_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarker_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.pb.h"
@@ -93,6 +95,8 @@ constexpr char kFaceDetectorTFLiteName[] = "face_detector.tflite";
 constexpr char kFaceLandmarksDetectorTFLiteName[] =
     "face_landmarks_detector.tflite";
 constexpr char kFaceBlendshapeTFLiteName[] = "face_blendshapes.tflite";
+constexpr char kFaceGeometryPipelineMetadataName[] =
+    "geometry_pipeline_metadata_landmarks.binarypb";
 
 struct FaceLandmarkerOutputs {
   Source<std::vector<NormalizedLandmarkList>> landmark_lists;
@@ -305,6 +309,7 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     Graph graph;
+    bool output_geometry = HasOutput(sc->OriginalNode(), kFaceGeometryTag);
     if (sc->Options<FaceLandmarkerGraphOptions>()
             .base_options()
             .has_model_asset()) {
@@ -318,6 +323,18 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
           sc->MutableOptions<FaceLandmarkerGraphOptions>(),
           !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
                .IsAvailable()));
+      if (output_geometry) {
+        // Set the face geometry metdata file for
+        // FaceGeometryFromLandmarksGraph.
+        ASSIGN_OR_RETURN(auto face_geometry_pipeline_metadata_file,
+                         model_asset_bundle_resources->GetModelFile(
+                             kFaceGeometryPipelineMetadataName));
+        SetExternalFile(face_geometry_pipeline_metadata_file,
+                        sc->MutableOptions<FaceLandmarkerGraphOptions>()
+                            ->mutable_face_geometry_graph_options()
+                            ->mutable_geometry_pipeline_options()
+                            ->mutable_metadata_file());
+      }
     }
     std::optional<SidePacket<Environment>> environment;
     if (HasSideInput(sc->OriginalNode(), kEnvironmentTag)) {
@@ -338,7 +355,6 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
               .face_landmarks_detector_graph_options()
               .has_face_blendshapes_graph_options()));
     }
-    bool output_geometry = HasOutput(sc->OriginalNode(), kFaceGeometryTag);
     ASSIGN_OR_RETURN(
         auto outs,
         BuildFaceLandmarkerGraph(
@@ -481,6 +497,9 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
       auto& face_geometry_from_landmarks = graph.AddNode(
           "mediapipe.tasks.vision.face_geometry."
           "FaceGeometryFromLandmarksGraph");
+      face_geometry_from_landmarks
+          .GetOptions<face_geometry::proto::FaceGeometryGraphOptions>()
+          .Swap(tasks_options.mutable_face_geometry_graph_options());
       if (environment.has_value()) {
         *environment >> face_geometry_from_landmarks.SideIn(kEnvironmentTag);
       }

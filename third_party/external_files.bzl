@@ -67,7 +67,7 @@ def external_files():
     http_file(
         name = "com_google_mediapipe_BUILD",
         sha256 = "d2b2a8346202691d7f831887c84e9642e974f64ed67851d9a58cf15c94b1f6b3",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/BUILD?generation=1661875663693976"],
+        urls = ["https://storage.googleapis.com/mediapipe-assets/BUILD?generation=16618756636939761678323576393653"],
     )
 
     http_file(
@@ -318,8 +318,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_face_landmarker_with_blendshapes_task",
-        sha256 = "a75c1ba70e4b8568000af2ad0b355ed559ab5d5793db50fa9ad241f8dc4fad5f",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/face_landmarker_with_blendshapes.task?generation=1678323586260800"],
+        sha256 = "b44e4cae6f5822456d60f33e7c852640d78c7e342aee7eacc22589451a0b9dc2",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/face_landmarker_with_blendshapes.task?generation=1678504998301299"],
     )
 
     http_file(
@@ -822,8 +822,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_portrait_expected_face_geometry_with_attention_pbtxt",
-        sha256 = "5cc57b8da3ad0527dce581fe1309f6b36043e5837e3f4f5af5e24005a99dc52a",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_expected_face_geometry_with_attention.pbtxt?generation=1678323601064393"],
+        sha256 = "7ed1eed98e61e0a10811bb611c895d87c8023f398a36db01b6d9ba2e1ab09e16",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_expected_face_geometry_with_attention.pbtxt?generation=1678505004840652"],
     )
 
     http_file(
