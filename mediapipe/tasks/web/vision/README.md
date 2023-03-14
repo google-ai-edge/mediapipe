@@ -75,6 +75,24 @@ imageSegmenter.segment(image, (masks, width, height) => {
 });
 ```
 
+## Interactive Segmentation
+
+The MediaPipe Interactive Segmenter lets you select a region of interest to
+segment an image by.
+
+```
+const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+);
+const interactiveSegmenter = await InteractiveSegmenter.createFromModelPath(
+    vision, "model.tflite"
+);
+const image = document.getElementById("image") as HTMLImageElement;
+interactiveSegmenter.segment(image, { keypoint: { x: 0.1, y: 0.2 } },
+    (masks, width, height) => { ... }
+);
+```
+
 ## Object Detection
 
 The MediaPipe Object Detector task lets you detect the presence and location of

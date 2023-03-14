@@ -20,4 +20,5 @@ export * from '../../../tasks/web/vision/hand_landmarker/hand_landmarker';
 export * from '../../../tasks/web/vision/image_classifier/image_classifier';
 export * from '../../../tasks/web/vision/image_embedder/image_embedder';
 export * from '../../../tasks/web/vision/image_segmenter/image_segmenter';
+export * from '../../../tasks/web/vision/interactive_segmenter/interactive_segmenter';
 export * from '../../../tasks/web/vision/object_detector/object_detector';
