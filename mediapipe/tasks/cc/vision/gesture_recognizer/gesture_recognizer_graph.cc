@@ -127,7 +127,7 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
         ->mutable_acceleration()
         ->mutable_xnnpack();
     LOG(WARNING) << "Hand Gesture Recognizer contains CPU only ops. Sets "
-                 << "HandGestureRecognizerGraph acceleartion to Xnnpack.";
+                 << "HandGestureRecognizerGraph acceleration to Xnnpack.";
   }
   hand_gesture_recognizer_graph_options->mutable_base_options()
       ->set_use_stream_mode(options->base_options().use_stream_mode());
