@@ -17,6 +17,7 @@ import dataclasses
 import enum
 from typing import Any, Optional
 
+import numpy as np
 from mediapipe.framework.formats import matrix_data_pb2
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
@@ -32,7 +33,7 @@ class MatrixData:
   Attributes:
     rows: The number of rows in the matrix.
     cols: The number of columns in the matrix.
-    data: The data stored in the matrix.
+    data: The data stored in the matrix as a NumPy array.
     layout: The order in which the data are stored. Defaults to COLUMN_MAJOR.
   """
 
@@ -40,10 +41,10 @@ class MatrixData:
     COLUMN_MAJOR = 0
     ROW_MAJOR = 1
 
-  rows: Optional[int] = None
-  cols: Optional[int] = None
-  data: Optional[float] = None
-  layout: Optional[Layout] = None
+  rows: int = None
+  cols: int = None
+  data: np.ndarray = None
+  layout: Optional[Layout] = Layout.COLUMN_MAJOR
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _MatrixDataProto:
@@ -51,7 +52,7 @@ class MatrixData:
     return _MatrixDataProto(
         rows=self.rows,
         cols=self.cols,
-        data=self.data,
+        data=self.data.tolist(),
         layout=self.layout)
 
   @classmethod
@@ -61,7 +62,7 @@ class MatrixData:
     return MatrixData(
         rows=pb2_obj.rows,
         cols=pb2_obj.cols,
-        data=pb2_obj.data,
+        data=np.array(pb2_obj.data),
         layout=pb2_obj.layout)
 
   def __eq__(self, other: Any) -> bool:

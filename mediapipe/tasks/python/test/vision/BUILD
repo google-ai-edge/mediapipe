@@ -126,10 +126,10 @@ py_test(
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/framework/formats:classification_py_pb2",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:landmark",
         "//mediapipe/tasks/python/components/containers:rect",
-        "//mediapipe/tasks/python/components/containers:classification_result",
         "//mediapipe/tasks/python/components/containers:matrix_data",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/test:test_utils",
