@@ -34,6 +34,10 @@ _INPUT_REGEX_TEXT_DESCRIPTION = ('Embedding vectors representing the input '
                                  'text to be processed.')
 _OUTPUT_CLASSIFICATION_NAME = 'score'
 _OUTPUT_CLASSIFICATION_DESCRIPTION = 'Score of the labels respectively.'
+_OUTPUT_SEGMENTATION_MASKS_NAME = 'segmentation_masks'
+_OUTPUT_SEGMENTATION_MASKS_DESCRIPTION = (
+    'Masks over the target objects with high accuracy.'
+)
 # Detection tensor result to be grouped together.
 _DETECTION_GROUP_NAME = 'detection_result'
 # File name to export score calibration parameters.
@@ -655,6 +659,32 @@ class MetadataWriter(object):
         tensor_names=[output_md.name for output_md in detection_output_mds[:3]],
     )
     self._output_group_mds.append(group_md)
+    return self
+
+  def add_segmentation_output(
+      self,
+      labels: Optional[Labels] = None,
+      name: str = _OUTPUT_SEGMENTATION_MASKS_NAME,
+      description: str = _OUTPUT_SEGMENTATION_MASKS_DESCRIPTION,
+  ) -> 'MetadataWriter':
+    """Adds a segmentation head metadata for segmentation output tensor.
+
+    Args:
+      labels: an instance of Labels helper class.
+      name: Metadata name of the tensor. Note that this is different from tensor
+        name in the flatbuffer.
+      description: human readable description of what the output is.
+
+    Returns:
+      The current Writer instance to allow chained operation.
+    """
+    label_files = self._create_label_file_md(labels)
+    output_md = metadata_info.SegmentationMaskMd(
+        name=name,
+        description=description,
+        label_files=label_files,
+    )
+    self._output_mds.append(output_md)
     return self
 
   def add_feature_output(self,

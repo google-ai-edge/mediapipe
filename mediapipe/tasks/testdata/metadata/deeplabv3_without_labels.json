@@ -1,0 +1,59 @@
+{
+  "name": "ImageSegmenter",
+  "description": "Semantic image segmentation predicts whether each pixel of an image is associated with a certain class.",
+  "subgraph_metadata": [
+    {
+      "input_tensor_metadata": [
+        {
+          "name": "image",
+          "description": "Input image to be processed.",
+          "content": {
+            "content_properties_type": "ImageProperties",
+            "content_properties": {
+              "color_space": "RGB"
+            }
+          },
+          "process_units": [
+            {
+              "options_type": "NormalizationOptions",
+              "options": {
+                "mean": [
+                  127.5
+                ],
+                "std": [
+                  127.5
+                ]
+              }
+            }
+          ],
+          "stats": {
+            "max": [
+              1.0
+            ],
+            "min": [
+              -1.0
+            ]
+          }
+        }
+      ],
+      "output_tensor_metadata": [
+        {
+          "name": "segmentation_masks",
+          "description": "Masks over the target objects with high accuracy.",
+          "content": {
+            "content_properties_type": "ImageProperties",
+            "content_properties": {
+              "color_space": "GRAYSCALE"
+            },
+            "range": {
+              "min": 1,
+              "max": 2
+            }
+          },
+          "stats": {}
+        }
+      ]
+    }
+  ],
+  "min_parser_version": "1.0.0"
+}
