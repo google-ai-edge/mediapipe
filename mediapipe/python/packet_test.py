@@ -28,6 +28,7 @@ from mediapipe.python._framework_bindings import calculator_graph
 from mediapipe.python._framework_bindings import image
 from mediapipe.python._framework_bindings import image_frame
 from mediapipe.python._framework_bindings import packet
+from mediapipe.tasks.cc.vision.face_geometry.proto import face_geometry_pb2
 
 CalculatorGraph = calculator_graph.CalculatorGraph
 Image = image.Image
@@ -176,6 +177,11 @@ class PacketTest(absltest.TestCase):
     detection = detection_pb2.Detection()
     text_format.Parse('score: 0.5', detection)
     p = packet_creator.create_proto(detection).at(100)
+
+  def test_face_geometry_proto_packet(self):
+    face_geometry_in = face_geometry_pb2.FaceGeometry()
+    p = packet_creator.create_proto(face_geometry_in).at(100)
+    face_geometry_out = packet_getter.get_proto(p)
 
   def test_string_packet(self):
     p = packet_creator.create_string('abc').at(100)
