@@ -204,7 +204,7 @@ def rewrite_mediapipe_proto(name, rewrite_proto, source_proto, **kwargs):
         'import public "' + join_path + '";',
     )
     rewrite_ref = SubsituteCommand(
-        r"mediapipe\\.(" + rewrite_message_regex + ")",
+        r"mediapipe\.(" + rewrite_message_regex + ")",
         r"mediapipe.\\1",
     )
     rewrite_objc = SubsituteCommand(
