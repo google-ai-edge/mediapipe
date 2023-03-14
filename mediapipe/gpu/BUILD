@@ -467,6 +467,7 @@ cc_library(
         "//mediapipe/framework/formats:frame_buffer",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:yuv_image",
+        "//mediapipe/util/frame_buffer:frame_buffer_util",
         "//third_party/libyuv",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
