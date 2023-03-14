@@ -41,6 +41,10 @@
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/util/image_test_utils.h"
 
+#if !MEDIAPIPE_DISABLE_GPU && !MEDIAPIPE_METAL_ENABLED
+#include "mediapipe/gpu/gl_context.h"
+#endif  // !MEDIAPIPE_DISABLE_GPU && !MEDIAPIPE_METAL_ENABLED
+
 namespace mediapipe {
 namespace {
 
@@ -507,5 +511,79 @@ TEST(ImageToTensorCalculatorTest, NoOpExceptRangeAndUseInputImageDims) {
           /*tensor_width=*/std::nullopt, /*tensor_height=*/std::nullopt,
           /*keep_aspect=*/false, BorderMode::kZero, roi);
 }
+
+TEST(ImageToTensorCalculatorTest, CanBeUsedWithoutGpuServiceSet) {
+  auto graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "input_image"
+        node {
+          calculator: "ImageToTensorCalculator"
+          input_stream: "IMAGE:input_image"
+          output_stream: "TENSORS:tensor"
+          options {
+            [mediapipe.ImageToTensorCalculatorOptions.ext] {
+              output_tensor_float_range { min: 0.0f max: 1.0f }
+            }
+          }
+        }
+      )pb");
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.DisallowServiceDefaultInitialization());
+  MP_ASSERT_OK(graph.StartRun({}));
+  auto image_frame =
+      std::make_shared<ImageFrame>(ImageFormat::SRGBA, 128, 256, 4);
+  Image image = Image(std::move(image_frame));
+  Packet packet = MakePacket<Image>(std::move(image));
+  MP_ASSERT_OK(
+      graph.AddPacketToInputStream("input_image", packet.At(Timestamp(1))));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
+}
+
+#if !MEDIAPIPE_DISABLE_GPU && !MEDIAPIPE_METAL_ENABLED
+
+TEST(ImageToTensorCalculatorTest,
+     FailsGracefullyWhenGpuServiceNeededButNotAvailable) {
+  auto graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "input_image"
+        node {
+          calculator: "ImageToTensorCalculator"
+          input_stream: "IMAGE:input_image"
+          output_stream: "TENSORS:tensor"
+          options {
+            [mediapipe.ImageToTensorCalculatorOptions.ext] {
+              output_tensor_float_range { min: 0.0f max: 1.0f }
+            }
+          }
+        }
+      )pb");
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.DisallowServiceDefaultInitialization());
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  MP_ASSERT_OK_AND_ASSIGN(auto context,
+                          GlContext::Create(nullptr, /*create_thread=*/true));
+  Packet packet;
+  context->Run([&packet]() {
+    auto image_frame =
+        std::make_shared<ImageFrame>(ImageFormat::SRGBA, 128, 256, 4);
+    Image image = Image(std::move(image_frame));
+    // Ensure image is available on GPU to force ImageToTensorCalculator to
+    // run on GPU.
+    ASSERT_TRUE(image.ConvertToGpu());
+    packet = MakePacket<Image>(std::move(image));
+  });
+  MP_ASSERT_OK(
+      graph.AddPacketToInputStream("input_image", packet.At(Timestamp(1))));
+  EXPECT_THAT(graph.WaitUntilIdle(),
+              StatusIs(absl::StatusCode::kInternal,
+                       HasSubstr("GPU service not available")));
+}
+#endif  // !MEDIAPIPE_DISABLE_GPU && !MEDIAPIPE_METAL_ENABLED
+
 }  // namespace
 }  // namespace mediapipe

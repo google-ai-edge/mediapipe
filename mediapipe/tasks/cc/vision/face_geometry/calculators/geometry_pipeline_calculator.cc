@@ -24,6 +24,8 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/framework/port/statusor.h"
+#include "mediapipe/tasks/cc/core/external_file_handler.h"
+#include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/calculators/geometry_pipeline_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/libs/geometry_pipeline.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/libs/validation_utils.h"
@@ -69,8 +71,8 @@ using ::mediapipe::tasks::vision::face_geometry::proto::
 //     A vector of face geometry data.
 //
 // Options:
-//   metadata_path (`string`, optional):
-//     Defines a path for the geometry pipeline metadata file.
+//   metadata_file (`ExternalFile`, optional):
+//     Defines an ExternalFile for the geometry pipeline metadata file.
 //
 //     The geometry pipeline metadata file format must be the binary
 //     `GeometryPipelineMetadata` proto.
@@ -95,7 +97,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
 
     ASSIGN_OR_RETURN(
         GeometryPipelineMetadata metadata,
-        ReadMetadataFromFile(options.metadata_path()),
+        ReadMetadataFromFile(options.metadata_file()),
         _ << "Failed to read the geometry pipeline metadata from file!");
 
     MP_RETURN_IF_ERROR(ValidateGeometryPipelineMetadata(metadata))
@@ -155,30 +157,17 @@ class GeometryPipelineCalculator : public CalculatorBase {
 
  private:
   static absl::StatusOr<GeometryPipelineMetadata> ReadMetadataFromFile(
-      const std::string& metadata_path) {
-    ASSIGN_OR_RETURN(std::string metadata_blob,
-                     ReadContentBlobFromFile(metadata_path),
-                     _ << "Failed to read a metadata blob from file!");
+      const core::proto::ExternalFile& metadata_file) {
+    ASSIGN_OR_RETURN(
+        const auto file_handler,
+        core::ExternalFileHandler::CreateFromExternalFile(&metadata_file));
 
     GeometryPipelineMetadata metadata;
-    RET_CHECK(metadata.ParseFromString(metadata_blob))
+    RET_CHECK(
+        metadata.ParseFromString(std::string(file_handler->GetFileContent())))
         << "Failed to parse a metadata proto from a binary blob!";
 
     return metadata;
-  }
-
-  static absl::StatusOr<std::string> ReadContentBlobFromFile(
-      const std::string& unresolved_path) {
-    ASSIGN_OR_RETURN(std::string resolved_path,
-                     mediapipe::PathToResourceAsFile(unresolved_path),
-                     _ << "Failed to resolve path! Path = " << unresolved_path);
-
-    std::string content_blob;
-    MP_RETURN_IF_ERROR(
-        mediapipe::GetResourceContents(resolved_path, &content_blob))
-        << "Failed to read content blob! Resolved path = " << resolved_path;
-
-    return content_blob;
   }
 
   std::unique_ptr<GeometryPipeline> geometry_pipeline_;

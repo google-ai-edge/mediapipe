@@ -44,3 +44,12 @@ mediapipe_proto_library(
     name = "mesh_3d_proto",
     srcs = ["mesh_3d.proto"],
 )
+
+mediapipe_proto_library(
+    name = "face_geometry_graph_options_proto",
+    srcs = ["face_geometry_graph_options.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/tasks/cc/vision/face_geometry/calculators:geometry_pipeline_calculator_proto",
+    ],
+)

@@ -14,15 +14,15 @@
 
 syntax = "proto2";
 
-package mediapipe.tasks.vision.face_geometry;
+package mediapipe.tasks.vision.face_geometry.proto;
 
 import "mediapipe/framework/calculator_options.proto";
-import "mediapipe/tasks/cc/core/proto/external_file.proto";
+import "mediapipe/tasks/cc/vision/face_geometry/calculators/geometry_pipeline_calculator.proto";
 
-message FaceGeometryPipelineCalculatorOptions {
+message FaceGeometryGraphOptions {
   extend mediapipe.CalculatorOptions {
-    optional FaceGeometryPipelineCalculatorOptions ext = 512499200;
+    optional FaceGeometryGraphOptions ext = 515723506;
   }
 
-  optional core.proto.ExternalFile metadata_file = 1;
+  optional FaceGeometryPipelineCalculatorOptions geometry_pipeline_options = 1;
 }

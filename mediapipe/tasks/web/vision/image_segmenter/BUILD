@@ -19,8 +19,8 @@ mediapipe_ts_library(
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_jspb_proto",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/vision/core:image_processing_options",
+        "//mediapipe/tasks/web/vision/core:types",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
-        "//mediapipe/web/graph_runner:graph_runner_image_lib_ts",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )
