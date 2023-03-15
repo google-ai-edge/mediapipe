@@ -35,7 +35,7 @@ export {ImageSource};  // Used in the public API
 const IMAGE_STREAM = 'image_in';
 const NORM_RECT_STREAM = 'norm_rect';
 const GROUPED_SEGMENTATIONS_STREAM = 'segmented_masks';
-const IMAGEA_SEGMENTER_GRAPH =
+const IMAGE_SEGMENTER_GRAPH =
     'mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph';
 
 // The OSS JS API does not support the builder pattern.
@@ -255,7 +255,7 @@ export class ImageSegmenter extends VisionTaskRunner {
         ImageSegmenterGraphOptionsProto.ext, this.options);
 
     const segmenterNode = new CalculatorGraphConfig.Node();
-    segmenterNode.setCalculator(IMAGEA_SEGMENTER_GRAPH);
+    segmenterNode.setCalculator(IMAGE_SEGMENTER_GRAPH);
     segmenterNode.addInputStream('IMAGE:' + IMAGE_STREAM);
     segmenterNode.addInputStream('NORM_RECT:' + NORM_RECT_STREAM);
     segmenterNode.addOutputStream(
