@@ -641,9 +641,6 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
             SegmenterOptionsProto.SegmenterOptions.OutputType.CATEGORY_MASK);
       }
 
-      // TODO: remove this once activation is handled in metadata and grpah level.
-      segmenterOptionsBuilder.setActivation(
-          SegmenterOptionsProto.SegmenterOptions.Activation.SOFTMAX);
       taskOptionsBuilder.setSegmenterOptions(segmenterOptionsBuilder);
       return CalculatorOptions.newBuilder()
           .setExtension(

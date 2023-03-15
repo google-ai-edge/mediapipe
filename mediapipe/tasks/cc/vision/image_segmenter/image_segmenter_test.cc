@@ -304,7 +304,6 @@ TEST_F(ImageModeTest, SucceedsWithConfidenceMask) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
   options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
-  options->activation = ImageSegmenterOptions::Activation::SOFTMAX;
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
@@ -333,7 +332,6 @@ TEST_F(ImageModeTest, DISABLED_SucceedsWithRotation) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
   options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
-  options->activation = ImageSegmenterOptions::Activation::SOFTMAX;
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
@@ -364,7 +362,6 @@ TEST_F(ImageModeTest, FailsWithRegionOfInterest) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
   options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
-  options->activation = ImageSegmenterOptions::Activation::SOFTMAX;
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
@@ -388,7 +385,6 @@ TEST_F(ImageModeTest, SucceedsSelfie128x128Segmentation) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kSelfie128x128WithMetadata);
   options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
-  options->activation = ImageSegmenterOptions::Activation::SOFTMAX;
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
@@ -416,7 +412,6 @@ TEST_F(ImageModeTest, SucceedsSelfie144x256Segmentations) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kSelfie144x256WithMetadata);
   options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
-  options->activation = ImageSegmenterOptions::Activation::NONE;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
   MP_ASSERT_OK_AND_ASSIGN(auto confidence_masks, segmenter->Segment(image));
@@ -442,7 +437,6 @@ TEST_F(ImageModeTest, SucceedsPortraitSelfieSegmentationConfidenceMask) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kSelfieSegmentation);
   options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
-  options->activation = ImageSegmenterOptions::Activation::NONE;
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
@@ -470,7 +464,6 @@ TEST_F(ImageModeTest, SucceedsPortraitSelfieSegmentationCategoryMask) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kSelfieSegmentation);
   options->output_type = ImageSegmenterOptions::OutputType::CATEGORY_MASK;
-  options->activation = ImageSegmenterOptions::Activation::NONE;
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
@@ -495,7 +488,6 @@ TEST_F(ImageModeTest, SucceedsPortraitSelfieSegmentationLandscapeCategoryMask) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kSelfieSegmentationLandscape);
   options->output_type = ImageSegmenterOptions::OutputType::CATEGORY_MASK;
-  options->activation = ImageSegmenterOptions::Activation::NONE;
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
@@ -521,7 +513,6 @@ TEST_F(ImageModeTest, SucceedsHairSegmentation) {
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kHairSegmentationWithMetadata);
   options->output_type = ImageSegmenterOptions::OutputType::CONFIDENCE_MASK;
-  options->activation = ImageSegmenterOptions::Activation::SOFTMAX;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
   MP_ASSERT_OK_AND_ASSIGN(auto confidence_masks, segmenter->Segment(image));
