@@ -105,7 +105,7 @@ class ModelFileType(enum.Enum):
   FILE_NAME = 2
 
 
-class HandLandmarkerTest(parameterized.TestCase):
+class FaceLandmarkerTest(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()

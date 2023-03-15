@@ -37,6 +37,7 @@ pybind_extension(
     deps = [
         ":builtin_calculators",
         ":builtin_task_graphs",
+        "//mediapipe/tasks/cc/vision/face_geometry/calculators:geometry_pipeline_calculator",
         "//mediapipe/python/pybind:calculator_graph",
         "//mediapipe/python/pybind:image",
         "//mediapipe/python/pybind:image_frame",
