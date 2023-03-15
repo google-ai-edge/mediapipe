@@ -25,7 +25,7 @@ from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.tasks.cc.vision.face_landmarker.proto import face_landmarker_graph_options_pb2
-# TODO: Remove later.
+# TODO: Remove this later.
 from mediapipe.tasks.cc.vision.face_geometry.proto import face_geometry_pb2
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
@@ -161,12 +161,6 @@ def _build_landmarker_result(
             display_name=face_blendshapes.display_name,
             category_name=face_blendshapes.label))
       face_blendshapes_results.append(face_blendshapes_categories)
-
-  # Creates a dummy FaceGeometry packet to initialize the symbol database.
-  # TODO: Remove later.
-  face_geometry_in = face_geometry_pb2.FaceGeometry()
-  p = packet_creator.create_proto(face_geometry_in).at(100)
-  face_geometry_out = packet_getter.get_proto(p)
 
   facial_transformation_matrixes_results = []
   if _FACE_GEOMETRY_STREAM_NAME in output_packets:
