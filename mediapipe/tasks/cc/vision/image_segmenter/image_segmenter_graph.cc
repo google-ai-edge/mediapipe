@@ -401,7 +401,7 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
     } else {
       ASSIGN_OR_RETURN(const tflite::Tensor* output_tensor,
                        GetOutputTensor(model_resources));
-      const int segmentation_streams_num = *output_tensor->shape()->rbegin();
+      int segmentation_streams_num = *output_tensor->shape()->rbegin();
       for (int i = 0; i < segmentation_streams_num; ++i) {
         segmented_masks.push_back(Source<Image>(
             tensor_to_images[Output<Image>::Multiple(kSegmentationTag)][i]));

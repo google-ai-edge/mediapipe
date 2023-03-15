@@ -887,6 +887,24 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_portrait_selfie_segmentation_expected_category_mask_jpg",
+        sha256 = "d8f20fa746e14067f668dd293f21bbc50ec81196d186386a6ded1278c3ec8f46",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_selfie_segmentation_expected_category_mask.jpg?generation=1678606935088873"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_portrait_selfie_segmentation_expected_confidence_mask_jpg",
+        sha256 = "25b723e90608edaf6ed92f382da703dc904a59c87525b6d271e60d9eed7a90e9",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_selfie_segmentation_expected_confidence_mask.jpg?generation=1678606937358235"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_portrait_selfie_segmentation_landscape_expected_category_mask_jpg",
+        sha256 = "f5c3fa3d93f8e7289b69b8a89c2519276dfa5014dcc50ed6e86e8cd4d4ae7f27",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/portrait_selfie_segmentation_landscape_expected_category_mask.jpg?generation=1678606939469429"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_pose_detection_tflite",
         sha256 = "9ba9dd3d42efaaba86b4ff0122b06f29c4122e756b329d89dca1e297fd8f866c",
         urls = ["https://storage.googleapis.com/mediapipe-assets/pose_detection.tflite?generation=1678737489600422"],
@@ -1014,8 +1032,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_selfie_segm_128_128_3_expected_mask_jpg",
-        sha256 = "a295f3ab394a5e0caff2db5041337da58341ec331f1413ef91f56e0d650b4a1e",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/selfie_segm_128_128_3_expected_mask.jpg?generation=1661875916766416"],
+        sha256 = "1a2a068287d8bcd4184492485b3dbb95a09b763f4653fd729d14a836147eb383",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/selfie_segm_128_128_3_expected_mask.jpg?generation=1678606942616777"],
     )
 
     http_file(
@@ -1026,8 +1044,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_selfie_segm_144_256_3_expected_mask_jpg",
-        sha256 = "cfc699db9670585c04414d0d1a07b289a027ba99d6903d2219f897d34e2c9952",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/selfie_segm_144_256_3_expected_mask.jpg?generation=1661875922646736"],
+        sha256 = "2de433b6e8adabec2aaf80135232db900903ead4f2811c0c9378a6792b2a68b5",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/selfie_segm_144_256_3_expected_mask.jpg?generation=1678606945085676"],
     )
 
     http_file(
