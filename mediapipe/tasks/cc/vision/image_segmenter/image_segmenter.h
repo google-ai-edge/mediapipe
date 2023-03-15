@@ -189,6 +189,18 @@ class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
 
   // Shuts down the ImageSegmenter when all works are done.
   absl::Status Close() { return runner_->Close(); }
+
+  // Get the category label list of the ImageSegmenter can recognize. For
+  // CATEGORY_MASK type, the index in the category mask corresponds to the
+  // category in the label list. For CONFIDENCE_MASK type, the output mask list
+  // at index corresponds to the category in the label list.
+  //
+  // If there is no labelmap provided in the model file, empty label list is
+  // returned.
+  std::vector<std::string> GetLabels() { return labels_; }
+
+ private:
+  std::vector<std::string> labels_;
 };
 
 }  // namespace image_segmenter
