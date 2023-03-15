@@ -162,7 +162,6 @@ def _build_landmarker_result(
 
   facial_transformation_matrixes_results = []
   if _FACE_GEOMETRY_STREAM_NAME in output_packets:
-    print(output_packets[_FACE_GEOMETRY_STREAM_NAME])
     facial_transformation_matrixes_proto_list = packet_getter.get_proto_list(
       output_packets[_FACE_GEOMETRY_STREAM_NAME])
     for proto in facial_transformation_matrixes_proto_list:

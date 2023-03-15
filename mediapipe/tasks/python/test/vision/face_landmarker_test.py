@@ -207,20 +207,20 @@ class HandLandmarkerTest(parameterized.TestCase):
          _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
        _get_expected_face_blendshapes(
          _PORTRAIT_EXPECTED_BLENDSHAPES), None),
-      # (ModelFileType.FILE_NAME,
-      #  _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
-      #  _get_expected_face_landmarks(
-      #    _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
-      #  _get_expected_face_blendshapes(
-      #    _PORTRAIT_EXPECTED_BLENDSHAPES),
-      #  _make_expected_facial_transformation_matrixes()),
-      # (ModelFileType.FILE_CONTENT,
-      #  _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
-      #  _get_expected_face_landmarks(
-      #    _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
-      #  _get_expected_face_blendshapes(
-      #    _PORTRAIT_EXPECTED_BLENDSHAPES),
-      #  _make_expected_facial_transformation_matrixes())
+      (ModelFileType.FILE_NAME,
+       _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
+       _get_expected_face_landmarks(
+         _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
+       _get_expected_face_blendshapes(
+         _PORTRAIT_EXPECTED_BLENDSHAPES),
+       _make_expected_facial_transformation_matrixes()),
+      (ModelFileType.FILE_CONTENT,
+       _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
+       _get_expected_face_landmarks(
+         _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
+       _get_expected_face_blendshapes(
+         _PORTRAIT_EXPECTED_BLENDSHAPES),
+       _make_expected_facial_transformation_matrixes())
   )
   def test_detect(self, model_file_type, model_name, expected_face_landmarks,
                   expected_face_blendshapes, expected_facial_transformation_matrix):
