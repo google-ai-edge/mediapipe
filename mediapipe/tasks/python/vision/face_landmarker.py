@@ -25,6 +25,8 @@ from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.tasks.cc.vision.face_landmarker.proto import face_landmarker_graph_options_pb2
+# TODO: Remove later.
+from mediapipe.tasks.cc.vision.face_geometry.proto import face_geometry_pb2
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
 from mediapipe.tasks.python.components.containers import matrix_data as matrix_data_module
@@ -160,15 +162,22 @@ def _build_landmarker_result(
             category_name=face_blendshapes.label))
       face_blendshapes_results.append(face_blendshapes_categories)
 
+  # Creates a dummy FaceGeometry packet to initialize the symbol database.
+  # TODO: Remove later.
+  face_geometry_in = face_geometry_pb2.FaceGeometry()
+  p = packet_creator.create_proto(face_geometry_in).at(100)
+  face_geometry_out = packet_getter.get_proto(p)
+
   facial_transformation_matrixes_results = []
   if _FACE_GEOMETRY_STREAM_NAME in output_packets:
     facial_transformation_matrixes_proto_list = packet_getter.get_proto_list(
       output_packets[_FACE_GEOMETRY_STREAM_NAME])
     for proto in facial_transformation_matrixes_proto_list:
-      matrix_data = matrix_data_pb2.MatrixData()
-      matrix_data.MergeFrom(proto)
-      matrix = matrix_data_module.MatrixData.create_from_pb2(matrix_data)
-      facial_transformation_matrixes_results.append(matrix)
+      if proto.pose_transform_matrix:
+        matrix_data = matrix_data_pb2.MatrixData()
+        matrix_data.MergeFrom(proto.pose_transform_matrix)
+        matrix = matrix_data_module.MatrixData.create_from_pb2(matrix_data)
+        facial_transformation_matrixes_results.append(matrix)
 
   return FaceLandmarkerResult(face_landmarks_results, face_blendshapes_results,
                               facial_transformation_matrixes_results)

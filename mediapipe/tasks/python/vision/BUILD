@@ -166,6 +166,7 @@ py_library(
         "//mediapipe/python:packet_creator",
         "//mediapipe/python:packet_getter",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_py_pb2",
+        "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_py_pb2",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:landmark",
         "//mediapipe/tasks/python/components/containers:matrix_data",

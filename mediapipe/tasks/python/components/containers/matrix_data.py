@@ -24,6 +24,11 @@ from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 _MatrixDataProto = matrix_data_pb2.MatrixData
 
 
+class Layout(enum.Enum):
+  COLUMN_MAJOR = 0
+  ROW_MAJOR = 1
+
+
 @dataclasses.dataclass
 class MatrixData:
   """This stores the Matrix data.
@@ -37,10 +42,6 @@ class MatrixData:
     layout: The order in which the data are stored. Defaults to COLUMN_MAJOR.
   """
 
-  class Layout(enum.Enum):
-    COLUMN_MAJOR = 0
-    ROW_MAJOR = 1
-
   rows: int = None
   cols: int = None
   data: np.ndarray = None
@@ -52,8 +53,8 @@ class MatrixData:
     return _MatrixDataProto(
         rows=self.rows,
         cols=self.cols,
-        data=self.data.tolist(),
-        layout=self.layout)
+        packed_data=self.data,
+        layout=self.layout.value)
 
   @classmethod
   @doc_controls.do_not_generate_docs
@@ -62,8 +63,8 @@ class MatrixData:
     return MatrixData(
         rows=pb2_obj.rows,
         cols=pb2_obj.cols,
-        data=np.array(pb2_obj.data),
-        layout=pb2_obj.layout)
+        data=np.array(pb2_obj.packed_data),
+        layout=Layout(pb2_obj.layout))
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.
