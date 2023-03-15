@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter.h"
 
+#include <array>
 #include <cstdint>
 #include <memory>
 
@@ -70,6 +71,13 @@ constexpr float kGoldenMaskSimilarity = 0.98;
 // multiplied by this factor, i.e. a value of 10 means class index 1, a value of
 // 20 means class index 2, etc.
 constexpr int kGoldenMaskMagnificationFactor = 10;
+
+constexpr std::array<absl::string_view, 21> kDeeplabLabelNames = {
+    "background", "aeroplane",    "bicycle", "bird",  "boat",
+    "bottle",     "bus",          "car",     "cat",   "chair",
+    "cow",        "dining table", "dog",     "horse", "motorbike",
+    "person",     "potted plant", "sheep",   "sofa",  "train",
+    "tv"};
 
 // Intentionally converting output into CV_8UC1 and then again into CV_32FC1
 // as expected outputs are stored in CV_8UC1, so this conversion allows to do
@@ -242,6 +250,22 @@ TEST_F(CreateFromOptionsTest, FailsWithInputChannelOneModel) {
   EXPECT_THAT(result.status().message(),
               HasSubstr("Expect segmentation model has input image tensor with "
                         "channels = 3 or 4."));
+}
+
+TEST(GetLabelsTest, SucceedsWithLabelsInModel) {
+  auto options = std::make_unique<ImageSegmenterOptions>();
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
+  options->output_type = ImageSegmenterOptions::OutputType::CATEGORY_MASK;
+
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
+                          ImageSegmenter::Create(std::move(options)));
+  const auto& labels = segmenter->GetLabels();
+  ASSERT_FALSE(labels.empty());
+  ASSERT_EQ(labels.size(), kDeeplabLabelNames.size());
+  for (int i = 0; i < labels.size(); ++i) {
+    EXPECT_EQ(labels[i], kDeeplabLabelNames[i]);
+  }
 }
 
 class ImageModeTest : public tflite_shims::testing::Test {};

@@ -34,7 +34,7 @@ constexpr char kTestSPModelPath[] =
 
 std::unique_ptr<SentencePieceTokenizer> CreateSentencePieceTokenizer(
     absl::string_view model_path) {
-  // We are using `LoadBinaryContent()` instead of loading the model direclty
+  // We are using `LoadBinaryContent()` instead of loading the model directly
   // via `SentencePieceTokenizer` so that the file can be located on Windows
   std::string buffer = LoadBinaryContent(kTestSPModelPath);
   return absl::make_unique<SentencePieceTokenizer>(buffer.data(),

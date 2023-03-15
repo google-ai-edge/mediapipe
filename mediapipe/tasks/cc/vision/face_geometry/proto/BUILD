@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+load("//mediapipe/framework:mediapipe_register_type.bzl", "mediapipe_register_type")
 
 licenses(["notice"])
 
@@ -21,6 +22,16 @@ package(default_visibility = ["//visibility:public"])
 mediapipe_proto_library(
     name = "environment_proto",
     srcs = ["environment.proto"],
+)
+
+mediapipe_register_type(
+    base_name = "face_geometry",
+    include_headers = ["mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry.pb.h"],
+    types = [
+        "::mediapipe::tasks::vision::face_geometry::proto::FaceGeometry",
+        "::std::vector<::mediapipe::tasks::vision::face_geometry::proto::FaceGeometry>",
+    ],
+    deps = [":face_geometry_cc_proto"],
 )
 
 mediapipe_proto_library(

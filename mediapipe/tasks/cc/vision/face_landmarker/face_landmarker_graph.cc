@@ -116,7 +116,7 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       options->mutable_face_detector_graph_options();
   if (!face_detector_graph_options->base_options().has_model_asset()) {
     ASSIGN_OR_RETURN(const auto face_detector_file,
-                     resources.GetModelFile(kFaceDetectorTFLiteName));
+                     resources.GetFile(kFaceDetectorTFLiteName));
     SetExternalFile(face_detector_file,
                     face_detector_graph_options->mutable_base_options()
                         ->mutable_model_asset(),
@@ -132,7 +132,7 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   if (!face_landmarks_detector_graph_options->base_options()
            .has_model_asset()) {
     ASSIGN_OR_RETURN(const auto face_landmarks_detector_file,
-                     resources.GetModelFile(kFaceLandmarksDetectorTFLiteName));
+                     resources.GetFile(kFaceLandmarksDetectorTFLiteName));
     SetExternalFile(
         face_landmarks_detector_file,
         face_landmarks_detector_graph_options->mutable_base_options()
@@ -146,7 +146,7 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       ->set_use_stream_mode(options->base_options().use_stream_mode());
 
   absl::StatusOr<absl::string_view> face_blendshape_model =
-      resources.GetModelFile(kFaceBlendshapeTFLiteName);
+      resources.GetFile(kFaceBlendshapeTFLiteName);
   if (face_blendshape_model.ok()) {
     SetExternalFile(*face_blendshape_model,
                     face_landmarks_detector_graph_options
@@ -327,7 +327,7 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
         // Set the face geometry metdata file for
         // FaceGeometryFromLandmarksGraph.
         ASSIGN_OR_RETURN(auto face_geometry_pipeline_metadata_file,
-                         model_asset_bundle_resources->GetModelFile(
+                         model_asset_bundle_resources->GetFile(
                              kFaceGeometryPipelineMetadataName));
         SetExternalFile(face_geometry_pipeline_metadata_file,
                         sc->MutableOptions<FaceLandmarkerGraphOptions>()

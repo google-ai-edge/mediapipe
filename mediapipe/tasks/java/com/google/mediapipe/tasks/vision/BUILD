@@ -197,6 +197,7 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/framework/image",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",

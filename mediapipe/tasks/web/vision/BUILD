@@ -24,6 +24,7 @@ VISION_LIBS = [
     "//mediapipe/tasks/web/vision/image_classifier",
     "//mediapipe/tasks/web/vision/image_embedder",
     "//mediapipe/tasks/web/vision/image_segmenter",
+    "//mediapipe/tasks/web/vision/interactive_segmenter",
     "//mediapipe/tasks/web/vision/object_detector",
 ]
 

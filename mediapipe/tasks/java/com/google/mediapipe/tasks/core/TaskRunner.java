@@ -16,6 +16,7 @@ package com.google.mediapipe.tasks.core;
 
 import android.content.Context;
 import android.util.Log;
+import com.google.mediapipe.proto.CalculatorProto.CalculatorGraphConfig;
 import com.google.mediapipe.framework.AndroidAssetUtil;
 import com.google.mediapipe.framework.AndroidPacketCreator;
 import com.google.mediapipe.framework.Graph;
@@ -199,6 +200,10 @@ public class TaskRunner implements AutoCloseable {
     } catch (MediaPipeException e) {
       reportError(e);
     }
+  }
+
+  public CalculatorGraphConfig getCalculatorGraphConfig() {
+    return graph.getCalculatorGraphConfig();
   }
 
   private synchronized void addPackets(Map<String, Packet> inputs, long inputTimestamp) {

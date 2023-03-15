@@ -34,6 +34,7 @@ import com.google.mediapipe.tasks.vision.imagesegmenter.ImageSegmenter.ImageSegm
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -135,6 +136,45 @@ public class ImageSegmenterTest {
     //   MPImage expectedMaskBuffer = getImageFromAsset(goldenImageName);
     //   verifyConfidenceMask(actualMaskBuffer, expectedMaskBuffer, GOLDEN_MASK_SIMILARITY);
     // }
+
+    @Test
+    public void getLabels_success() throws Exception {
+      final List<String> expectedLabels =
+          Arrays.asList(
+              "background",
+              "aeroplane",
+              "bicycle",
+              "bird",
+              "boat",
+              "bottle",
+              "bus",
+              "car",
+              "cat",
+              "chair",
+              "cow",
+              "dining table",
+              "dog",
+              "horse",
+              "motorbike",
+              "person",
+              "potted plant",
+              "sheep",
+              "sofa",
+              "train",
+              "tv");
+      ImageSegmenterOptions options =
+          ImageSegmenterOptions.builder()
+              .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
+              .setOutputType(ImageSegmenterOptions.OutputType.CONFIDENCE_MASK)
+              .build();
+      ImageSegmenter imageSegmenter =
+          ImageSegmenter.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      List<String> actualLabels = imageSegmenter.getLabels();
+      assertThat(actualLabels.size()).isEqualTo(expectedLabels.size());
+      for (int i = 0; i < actualLabels.size(); i++) {
+        assertThat(actualLabels.get(i)).isEqualTo(expectedLabels.get(i));
+      }
+    }
   }
 
   @RunWith(AndroidJUnit4.class)

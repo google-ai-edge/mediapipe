@@ -7,6 +7,7 @@ VERS_1.0 {
     Java_com_google_mediapipe_framework_Graph_nativeAddPacketToInputStream;
     Java_com_google_mediapipe_framework_Graph_nativeCloseAllPacketSources;
     Java_com_google_mediapipe_framework_Graph_nativeCreateGraph;
+    Java_com_google_mediapipe_framework_Graph_nativeGetCalculatorGraphConfig;
     Java_com_google_mediapipe_framework_Graph_nativeLoadBinaryGraph*;
     Java_com_google_mediapipe_framework_Graph_nativeMovePacketToInputStream;
     Java_com_google_mediapipe_framework_Graph_nativeReleaseGraph;
