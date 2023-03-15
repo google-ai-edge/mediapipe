@@ -60,6 +60,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
+        "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core:external_file_handler",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "//mediapipe/tasks/cc/vision/face_geometry/libs:geometry_pipeline",
@@ -69,6 +70,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/face_geometry/proto:geometry_pipeline_metadata_cc_proto",
         "//mediapipe/util:resource_util",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings:str_format",
     ],
     alwayslink = 1,
 )
