@@ -26,7 +26,6 @@ from mediapipe.framework.formats import classification_pb2
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
-from mediapipe.tasks.python.components.containers import matrix_data as matrix_data_module
 from mediapipe.tasks.python.components.containers import rect as rect_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
@@ -39,7 +38,6 @@ _BaseOptions = base_options_module.BaseOptions
 _Category = category_module.Category
 _Rect = rect_module.Rect
 _Landmark = landmark_module.Landmark
-_MatrixData = matrix_data_module.MatrixData
 _NormalizedLandmark = landmark_module.NormalizedLandmark
 _Image = image_module.Image
 _FaceLandmarker = face_landmarker.FaceLandmarker
@@ -90,14 +88,12 @@ def _get_expected_face_blendshapes(file_path: str):
 
 
 def _make_expected_facial_transformation_matrixes():
-  data = np.array([[0.9995292, -0.005092691, 0.030254554, -0.37340546],
+  matrix = np.array([[0.9995292, -0.005092691, 0.030254554, -0.37340546],
                    [0.0072318087, 0.99744856, -0.07102106, 22.212194],
                    [-0.029815676, 0.07120642, 0.9970159, -64.76358],
                    [0, 0, 0, 1]])
-  rows, cols = len(data), len(data[0])
   facial_transformation_matrixes_results = []
-  facial_transformation_matrix = _MatrixData(rows, cols, data.flatten())
-  facial_transformation_matrixes_results.append(facial_transformation_matrix)
+  facial_transformation_matrixes_results.append(matrix)
   return facial_transformation_matrixes_results
 
 
@@ -111,9 +107,9 @@ class FaceLandmarkerTest(parameterized.TestCase):
   def setUp(self):
     super().setUp()
     self.test_image = _Image.create_from_file(
-        test_utils.get_test_data_path(_PORTRAIT_IMAGE))
+      test_utils.get_test_data_path(_PORTRAIT_IMAGE))
     self.model_path = test_utils.get_test_data_path(
-        _FACE_LANDMARKER_BUNDLE_ASSET_FILE)
+      _FACE_LANDMARKER_BUNDLE_ASSET_FILE)
 
   def _expect_landmarks_correct(self, actual_landmarks, expected_landmarks):
     # Expects to have the same number of faces detected.
@@ -145,11 +141,13 @@ class FaceLandmarkerTest(parameterized.TestCase):
     self.assertLen(actual_matrix_list, len(expected_matrix_list))
 
     for i, rename_me in enumerate(actual_matrix_list):
-      self.assertEqual(rename_me.rows, expected_matrix_list[i].rows)
-      self.assertEqual(rename_me.cols, expected_matrix_list[i].cols)
+      self.assertEqual(rename_me.shape[0],
+                       expected_matrix_list[i].shape[0])
+      self.assertEqual(rename_me.shape[1],
+                       expected_matrix_list[i].shape[1])
       self.assertAlmostEqual(
-        rename_me.data.all(),
-        expected_matrix_list[i].data.all(),
+        rename_me.all(),
+        expected_matrix_list[i].all(),
         delta=_FACIAL_TRANSFORMATION_MATRIX_DIFF_MARGIN)
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
@@ -169,7 +167,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     with self.assertRaisesRegex(
         RuntimeError, 'Unable to open file at /path/to/invalid/model.tflite'):
       base_options = _BaseOptions(
-          model_asset_path='/path/to/invalid/model.tflite')
+        model_asset_path='/path/to/invalid/model.tflite')
       options = _FaceLandmarkerOptions(base_options=base_options)
       _FaceLandmarker.create_from_options(options)
 
@@ -182,46 +180,46 @@ class FaceLandmarkerTest(parameterized.TestCase):
       self.assertIsInstance(landmarker, _FaceLandmarker)
 
   @parameterized.parameters(
-      (ModelFileType.FILE_NAME, _FACE_LANDMARKER_BUNDLE_ASSET_FILE,
-      _get_expected_face_landmarks(
-        _PORTRAIT_EXPECTED_FACE_LANDMARKS), None, None),
-      (ModelFileType.FILE_CONTENT, _FACE_LANDMARKER_BUNDLE_ASSET_FILE,
-       _get_expected_face_landmarks(
-        _PORTRAIT_EXPECTED_FACE_LANDMARKS), None, None),
-      (ModelFileType.FILE_NAME,
-       _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
-       _get_expected_face_landmarks(
-         _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION), None, None),
-      (ModelFileType.FILE_CONTENT,
-       _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
-       _get_expected_face_landmarks(
-         _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION), None, None),
-      (ModelFileType.FILE_NAME,
-       _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
-       _get_expected_face_landmarks(
-         _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
-       _get_expected_face_blendshapes(
-         _PORTRAIT_EXPECTED_BLENDSHAPES), None),
-      (ModelFileType.FILE_CONTENT,
-       _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
-       _get_expected_face_landmarks(
-         _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
-       _get_expected_face_blendshapes(
-         _PORTRAIT_EXPECTED_BLENDSHAPES), None),
-      (ModelFileType.FILE_NAME,
-       _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
-       _get_expected_face_landmarks(
-         _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
-       _get_expected_face_blendshapes(
-         _PORTRAIT_EXPECTED_BLENDSHAPES),
-       _make_expected_facial_transformation_matrixes()),
-      (ModelFileType.FILE_CONTENT,
-       _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
-       _get_expected_face_landmarks(
-         _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
-       _get_expected_face_blendshapes(
-         _PORTRAIT_EXPECTED_BLENDSHAPES),
-       _make_expected_facial_transformation_matrixes()))
+    (ModelFileType.FILE_NAME, _FACE_LANDMARKER_BUNDLE_ASSET_FILE,
+     _get_expected_face_landmarks(
+       _PORTRAIT_EXPECTED_FACE_LANDMARKS), None, None),
+    (ModelFileType.FILE_CONTENT, _FACE_LANDMARKER_BUNDLE_ASSET_FILE,
+     _get_expected_face_landmarks(
+       _PORTRAIT_EXPECTED_FACE_LANDMARKS), None, None),
+    (ModelFileType.FILE_NAME,
+     _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
+     _get_expected_face_landmarks(
+       _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION), None, None),
+    (ModelFileType.FILE_CONTENT,
+     _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
+     _get_expected_face_landmarks(
+       _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION), None, None),
+    (ModelFileType.FILE_NAME,
+     _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
+     _get_expected_face_landmarks(
+       _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
+     _get_expected_face_blendshapes(
+       _PORTRAIT_EXPECTED_BLENDSHAPES), None),
+    (ModelFileType.FILE_CONTENT,
+     _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
+     _get_expected_face_landmarks(
+       _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
+     _get_expected_face_blendshapes(
+       _PORTRAIT_EXPECTED_BLENDSHAPES), None),
+    (ModelFileType.FILE_NAME,
+     _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
+     _get_expected_face_landmarks(
+       _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
+     _get_expected_face_blendshapes(
+       _PORTRAIT_EXPECTED_BLENDSHAPES),
+     _make_expected_facial_transformation_matrixes()),
+    (ModelFileType.FILE_CONTENT,
+     _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
+     _get_expected_face_landmarks(
+       _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
+     _get_expected_face_blendshapes(
+       _PORTRAIT_EXPECTED_BLENDSHAPES),
+     _make_expected_facial_transformation_matrixes()))
   def test_detect(
       self, model_file_type, model_name, expected_face_landmarks,
       expected_face_blendshapes, expected_facial_transformation_matrixes):
@@ -238,10 +236,10 @@ class FaceLandmarkerTest(parameterized.TestCase):
       raise ValueError('model_file_type is invalid.')
 
     options = _FaceLandmarkerOptions(
-        base_options=base_options,
-        output_face_blendshapes=True if expected_face_blendshapes else False,
-        output_facial_transformation_matrixes=True
-        if expected_facial_transformation_matrixes else False)
+      base_options=base_options,
+      output_face_blendshapes=True if expected_face_blendshapes else False,
+      output_facial_transformation_matrixes=True
+      if expected_facial_transformation_matrixes else False)
     landmarker = _FaceLandmarker.create_from_options(options)
 
     # Performs face landmarks detection on the input.
@@ -255,8 +253,8 @@ class FaceLandmarkerTest(parameterized.TestCase):
                                        expected_face_blendshapes)
     if expected_facial_transformation_matrixes is not None:
       self._expect_facial_transformation_matrix_correct(
-          detection_result.facial_transformation_matrixes,
-          expected_facial_transformation_matrixes)
+        detection_result.facial_transformation_matrixes,
+        expected_facial_transformation_matrixes)
 
     # Closes the face landmarker explicitly when the face landmarker is not used
     # in a context.
@@ -342,7 +340,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
   def test_detect_succeeds_with_num_faces(self):
     # Creates face landmarker.
     model_path = test_utils.get_test_data_path(
-        _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE)
+      _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE)
     base_options = _BaseOptions(model_asset_path=model_path)
     options = _FaceLandmarkerOptions(base_options=base_options, num_faces=1,
                                      output_face_blendshapes=True)
@@ -436,7 +434,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
 
   @parameterized.parameters(
     (_FACE_LANDMARKER_BUNDLE_ASSET_FILE, _get_expected_face_landmarks(
-       _PORTRAIT_EXPECTED_FACE_LANDMARKS), None, None),
+      _PORTRAIT_EXPECTED_FACE_LANDMARKS), None, None),
     (_FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
      _get_expected_face_landmarks(
        _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION), None, None),

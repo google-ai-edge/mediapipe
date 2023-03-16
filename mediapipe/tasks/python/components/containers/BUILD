@@ -83,15 +83,6 @@ py_library(
 )
 
 py_library(
-    name = "matrix_data",
-    srcs = ["matrix_data.py"],
-    deps = [
-        "//mediapipe/framework/formats:matrix_data_py_pb2",
-        "//mediapipe/tasks/python/core:optional_dependencies",
-    ],
-)
-
-py_library(
     name = "detections",
     srcs = ["detections.py"],
     deps = [

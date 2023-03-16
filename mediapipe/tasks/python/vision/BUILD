@@ -189,7 +189,6 @@ py_library(
         "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_py_pb2",
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:landmark",
-        "//mediapipe/tasks/python/components/containers:matrix_data",
         "//mediapipe/tasks/python/core:base_options",
         "//mediapipe/tasks/python/core:optional_dependencies",
         "//mediapipe/tasks/python/core:task_info",

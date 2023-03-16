@@ -17,6 +17,7 @@ import dataclasses
 import enum
 from typing import Callable, Mapping, Optional, List
 
+import numpy as np
 from mediapipe.framework.formats import classification_pb2
 from mediapipe.framework.formats import landmark_pb2
 from mediapipe.framework.formats import matrix_data_pb2
@@ -29,7 +30,6 @@ from mediapipe.tasks.cc.vision.face_landmarker.proto import face_landmarker_grap
 from mediapipe.tasks.cc.vision.face_geometry.proto import face_geometry_pb2
 from mediapipe.tasks.python.components.containers import category as category_module
 from mediapipe.tasks.python.components.containers import landmark as landmark_module
-from mediapipe.tasks.python.components.containers import matrix_data as matrix_data_module
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.core import task_info as task_info_module
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
@@ -39,6 +39,7 @@ from mediapipe.tasks.python.vision.core import vision_task_running_mode as runni
 
 _BaseOptions = base_options_module.BaseOptions
 _FaceLandmarkerGraphOptionsProto = face_landmarker_graph_options_pb2.FaceLandmarkerGraphOptions
+_LayoutEnum = matrix_data_pb2.MatrixData.Layout
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _TaskInfo = task_info_module.TaskInfo
@@ -126,7 +127,7 @@ class FaceLandmarkerResult:
 
   face_landmarks: List[List[landmark_module.NormalizedLandmark]]
   face_blendshapes: List[List[category_module.Category]]
-  facial_transformation_matrixes: List[matrix_data_module.MatrixData]
+  facial_transformation_matrixes: List[np.ndarray]
 
 
 def _build_landmarker_result(
@@ -170,7 +171,9 @@ def _build_landmarker_result(
       if proto.pose_transform_matrix:
         matrix_data = matrix_data_pb2.MatrixData()
         matrix_data.MergeFrom(proto.pose_transform_matrix)
-        matrix = matrix_data_module.MatrixData.create_from_pb2(matrix_data)
+        order = 'C' if matrix_data.layout == _LayoutEnum.ROW_MAJOR else 'F'
+        data = np.array(matrix_data.packed_data, order=order)
+        matrix = data.reshape((matrix_data.rows, matrix_data.cols))
         facial_transformation_matrixes_results.append(matrix)
 
   return FaceLandmarkerResult(face_landmarks_results, face_blendshapes_results,
