@@ -87,7 +87,7 @@ def _get_expected_face_blendshapes(file_path: str):
   return face_blendshapes_categories
 
 
-def _make_expected_facial_transformation_matrixes():
+def _get_expected_facial_transformation_matrixes():
   matrix = np.array([[0.9995292, -0.005092691, 0.030254554, -0.37340546],
                     [0.0072318087, 0.99744856, -0.07102106, 22.212194],
                     [-0.029815676, 0.07120642, 0.9970159, -64.76358],
@@ -212,14 +212,14 @@ class FaceLandmarkerTest(parameterized.TestCase):
        _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
      _get_expected_face_blendshapes(
        _PORTRAIT_EXPECTED_BLENDSHAPES),
-     _make_expected_facial_transformation_matrixes()),
+     _get_expected_facial_transformation_matrixes()),
     (ModelFileType.FILE_CONTENT,
      _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
      _get_expected_face_landmarks(
        _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
      _get_expected_face_blendshapes(
        _PORTRAIT_EXPECTED_BLENDSHAPES),
-     _make_expected_facial_transformation_matrixes()))
+     _get_expected_facial_transformation_matrixes()))
   def test_detect(
       self, model_file_type, model_name, expected_face_landmarks,
       expected_face_blendshapes, expected_facial_transformation_matrixes):
@@ -293,14 +293,14 @@ class FaceLandmarkerTest(parameterized.TestCase):
        _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
      _get_expected_face_blendshapes(
        _PORTRAIT_EXPECTED_BLENDSHAPES),
-     _make_expected_facial_transformation_matrixes()),
+     _get_expected_facial_transformation_matrixes()),
     (ModelFileType.FILE_CONTENT,
      _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
      _get_expected_face_landmarks(
        _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
      _get_expected_face_blendshapes(
        _PORTRAIT_EXPECTED_BLENDSHAPES),
-     _make_expected_facial_transformation_matrixes()))
+     _get_expected_facial_transformation_matrixes()))
   def test_detect_in_context(
       self, model_file_type, model_name, expected_face_landmarks,
       expected_face_blendshapes, expected_facial_transformation_matrixes):
