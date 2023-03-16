@@ -15,8 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/interactive_segmenter/interactive_segmenter.h"
 
-#include <cstdint>
 #include <memory>
+#include <string>
 
 #include "absl/flags/flag.h"
 #include "mediapipe/framework/deps/file_path.h"
@@ -28,6 +28,7 @@ limitations under the License.
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/tasks/cc/components/containers/keypoint.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
@@ -47,6 +48,7 @@ namespace {
 
 using ::mediapipe::Image;
 using ::mediapipe::file::JoinPath;
+using ::mediapipe::tasks::components::containers::NormalizedKeypoint;
 using ::mediapipe::tasks::components::containers::RectF;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::HasSubstr;
@@ -55,14 +57,16 @@ using ::testing::Optional;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kPtmModel[] = "ptm_512_hdt_ptm_woid.tflite";
 constexpr char kCatsAndDogsJpg[] = "cats_and_dogs.jpg";
+// Golden mask for the dogs in cats_and_dogs.jpg.
+constexpr char kCatsAndDogsMaskDog1[] = "cats_and_dogs_mask_dog1.png";
+constexpr char kCatsAndDogsMaskDog2[] = "cats_and_dogs_mask_dog2.png";
 
-constexpr float kGoldenMaskSimilarity = 0.98;
+constexpr float kGoldenMaskSimilarity = 0.97;
 
 // Magnification factor used when creating the golden category masks to make
-// them more human-friendly. Each pixel in the golden masks has its value
-// multiplied by this factor, i.e. a value of 10 means class index 1, a value of
-// 20 means class index 2, etc.
-constexpr int kGoldenMaskMagnificationFactor = 10;
+// them more human-friendly. Since interactive segmenter has only 2 categories,
+// the golden mask uses 0 or 255 for each pixel.
+constexpr int kGoldenMaskMagnificationFactor = 255;
 
 // Intentionally converting output into CV_8UC1 and then again into CV_32FC1
 // as expected outputs are stored in CV_8UC1, so this conversion allows to do
@@ -155,16 +159,25 @@ TEST_F(CreateFromOptionsTest, FailsWithMissingModel) {
                   MediaPipeTasksStatus::kRunnerInitializationError))));
 }
 
-class ImageModeTest : public tflite_shims::testing::Test {};
+struct InteractiveSegmenterTestParams {
+  std::string test_name;
+  RegionOfInterest::Format format;
+  NormalizedKeypoint roi;
+  std::string golden_mask_file;
+  float similarity_threshold;
+};
 
-TEST_F(ImageModeTest, SucceedsWithCategoryMask) {
+using SucceedSegmentationWithRoi =
+    ::testing::TestWithParam<InteractiveSegmenterTestParams>;
+
+TEST_P(SucceedSegmentationWithRoi, SucceedsWithCategoryMask) {
+  const InteractiveSegmenterTestParams& params = GetParam();
   MP_ASSERT_OK_AND_ASSIGN(
       Image image,
       DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kCatsAndDogsJpg)));
   RegionOfInterest interaction_roi;
-  interaction_roi.format = RegionOfInterest::KEYPOINT;
-  interaction_roi.keypoint =
-      components::containers::NormalizedKeypoint{0.25, 0.9};
+  interaction_roi.format = params.format;
+  interaction_roi.keypoint = params.roi;
   auto options = std::make_unique<InteractiveSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
@@ -175,16 +188,26 @@ TEST_F(ImageModeTest, SucceedsWithCategoryMask) {
   MP_ASSERT_OK_AND_ASSIGN(auto category_masks,
                           segmenter->Segment(image, interaction_roi));
   EXPECT_EQ(category_masks.size(), 1);
+
+  cv::Mat actual_mask = mediapipe::formats::MatView(
+      category_masks[0].GetImageFrameSharedPtr().get());
+
+  cv::Mat expected_mask =
+      cv::imread(JoinPath("./", kTestDataDirectory, params.golden_mask_file),
+                 cv::IMREAD_GRAYSCALE);
+  EXPECT_THAT(actual_mask,
+              SimilarToUint8Mask(expected_mask, params.similarity_threshold,
+                                 kGoldenMaskMagnificationFactor));
 }
 
-TEST_F(ImageModeTest, SucceedsWithConfidenceMask) {
+TEST_P(SucceedSegmentationWithRoi, SucceedsWithConfidenceMask) {
+  const auto& params = GetParam();
   MP_ASSERT_OK_AND_ASSIGN(
       Image image,
       DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kCatsAndDogsJpg)));
   RegionOfInterest interaction_roi;
-  interaction_roi.format = RegionOfInterest::KEYPOINT;
-  interaction_roi.keypoint =
-      components::containers::NormalizedKeypoint{0.25, 0.9};
+  interaction_roi.format = params.format;
+  interaction_roi.keypoint = params.roi;
   auto options = std::make_unique<InteractiveSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
@@ -196,7 +219,31 @@ TEST_F(ImageModeTest, SucceedsWithConfidenceMask) {
   MP_ASSERT_OK_AND_ASSIGN(auto confidence_masks,
                           segmenter->Segment(image, interaction_roi));
   EXPECT_EQ(confidence_masks.size(), 2);
+
+  cv::Mat expected_mask =
+      cv::imread(JoinPath("./", kTestDataDirectory, params.golden_mask_file),
+                 cv::IMREAD_GRAYSCALE);
+  cv::Mat expected_mask_float;
+  expected_mask.convertTo(expected_mask_float, CV_32FC1, 1 / 255.f);
+
+  cv::Mat actual_mask = mediapipe::formats::MatView(
+      confidence_masks[1].GetImageFrameSharedPtr().get());
+  EXPECT_THAT(actual_mask, SimilarToFloatMask(expected_mask_float,
+                                              params.similarity_threshold));
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    SucceedSegmentationWithRoiTest, SucceedSegmentationWithRoi,
+    ::testing::ValuesIn<InteractiveSegmenterTestParams>(
+        {{"PointToDog1", RegionOfInterest::KEYPOINT,
+          NormalizedKeypoint{0.44, 0.70}, kCatsAndDogsMaskDog1, 0.84f},
+         {"PointToDog2", RegionOfInterest::KEYPOINT,
+          NormalizedKeypoint{0.66, 0.66}, kCatsAndDogsMaskDog2,
+          kGoldenMaskSimilarity}}),
+    [](const ::testing::TestParamInfo<SucceedSegmentationWithRoi::ParamType>&
+           info) { return info.param.test_name; });
+
+class ImageModeTest : public tflite_shims::testing::Test {};
 
 // TODO: fix this unit test after image segmenter handled post
 // processing correctly with rotated image.
@@ -206,8 +253,7 @@ TEST_F(ImageModeTest, DISABLED_SucceedsWithRotation) {
       DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kCatsAndDogsJpg)));
   RegionOfInterest interaction_roi;
   interaction_roi.format = RegionOfInterest::KEYPOINT;
-  interaction_roi.keypoint =
-      components::containers::NormalizedKeypoint{0.25, 0.9};
+  interaction_roi.keypoint = NormalizedKeypoint{0.66, 0.66};
   auto options = std::make_unique<InteractiveSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
@@ -230,8 +276,7 @@ TEST_F(ImageModeTest, FailsWithRegionOfInterest) {
       DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kCatsAndDogsJpg)));
   RegionOfInterest interaction_roi;
   interaction_roi.format = RegionOfInterest::KEYPOINT;
-  interaction_roi.keypoint =
-      components::containers::NormalizedKeypoint{0.25, 0.9};
+  interaction_roi.keypoint = NormalizedKeypoint{0.66, 0.66};
   auto options = std::make_unique<InteractiveSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
