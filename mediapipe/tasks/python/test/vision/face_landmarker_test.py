@@ -136,8 +136,8 @@ class FaceLandmarkerTest(parameterized.TestCase):
         expected_blendshapes[i].score,
         delta=_BLENDSHAPES_DIFF_MARGIN)
 
-  def _expect_facial_transformation_matrix_correct(self, actual_matrix_list,
-                                                   expected_matrix_list):
+  def _expect_facial_transformation_matrixes_correct(self, actual_matrix_list,
+                                                     expected_matrix_list):
     self.assertLen(actual_matrix_list, len(expected_matrix_list))
 
     for i, rename_me in enumerate(actual_matrix_list):
@@ -252,7 +252,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
       self._expect_blendshapes_correct(detection_result.face_blendshapes[0],
                                        expected_face_blendshapes)
     if expected_facial_transformation_matrixes is not None:
-      self._expect_facial_transformation_matrix_correct(
+      self._expect_facial_transformation_matrixes_correct(
         detection_result.facial_transformation_matrixes,
         expected_facial_transformation_matrixes)
 
@@ -333,7 +333,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
         self._expect_blendshapes_correct(detection_result.face_blendshapes[0],
                                          expected_face_blendshapes)
       if expected_facial_transformation_matrixes is not None:
-        self._expect_facial_transformation_matrix_correct(
+        self._expect_facial_transformation_matrixes_correct(
           detection_result.facial_transformation_matrixes,
           expected_facial_transformation_matrixes)
 
@@ -469,7 +469,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
           self._expect_blendshapes_correct(detection_result.face_blendshapes[0],
                                            expected_face_blendshapes)
         if expected_facial_transformation_matrixes is not None:
-          self._expect_facial_transformation_matrix_correct(
+          self._expect_facial_transformation_matrixes_correct(
             detection_result.facial_transformation_matrixes,
             expected_facial_transformation_matrixes)
 
@@ -532,7 +532,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
         self._expect_blendshapes_correct(result.face_blendshapes[0],
                                          expected_face_blendshapes)
       if expected_facial_transformation_matrixes is not None:
-        self._expect_facial_transformation_matrix_correct(
+        self._expect_facial_transformation_matrixes_correct(
           result.facial_transformation_matrixes,
           expected_facial_transformation_matrixes)
       self.assertTrue(
