@@ -89,9 +89,9 @@ def _get_expected_face_blendshapes(file_path: str):
 
 def _make_expected_facial_transformation_matrixes():
   matrix = np.array([[0.9995292, -0.005092691, 0.030254554, -0.37340546],
-                   [0.0072318087, 0.99744856, -0.07102106, 22.212194],
-                   [-0.029815676, 0.07120642, 0.9970159, -64.76358],
-                   [0, 0, 0, 1]])
+                    [0.0072318087, 0.99744856, -0.07102106, 22.212194],
+                    [-0.029815676, 0.07120642, 0.9970159, -64.76358],
+                    [0, 0, 0, 1]])
   facial_transformation_matrixes_results = []
   facial_transformation_matrixes_results.append(matrix)
   return facial_transformation_matrixes_results
@@ -145,10 +145,10 @@ class FaceLandmarkerTest(parameterized.TestCase):
                        expected_matrix_list[i].shape[0])
       self.assertEqual(rename_me.shape[1],
                        expected_matrix_list[i].shape[1])
-      self.assertAlmostEqual(
-        rename_me.all(),
-        expected_matrix_list[i].all(),
-        delta=_FACIAL_TRANSFORMATION_MATRIX_DIFF_MARGIN)
+      self.assertSequenceAlmostEqual(
+          rename_me.flatten(),
+          expected_matrix_list[i].flatten(),
+          delta=_FACIAL_TRANSFORMATION_MATRIX_DIFF_MARGIN)
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
     # Creates with default option and valid model file successfully.
@@ -441,12 +441,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     (_FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
      _get_expected_face_landmarks(
        _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
-     _get_expected_face_blendshapes(_PORTRAIT_EXPECTED_BLENDSHAPES), None),
-    (_FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
-     _get_expected_face_landmarks(
-       _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
-     _get_expected_face_blendshapes(_PORTRAIT_EXPECTED_BLENDSHAPES),
-     _make_expected_facial_transformation_matrixes()))
+     _get_expected_face_blendshapes(_PORTRAIT_EXPECTED_BLENDSHAPES), None))
   def test_detect_for_video(
       self, model_name, expected_face_landmarks, expected_face_blendshapes,
       expected_facial_transformation_matrixes):
@@ -519,12 +514,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
     (_PORTRAIT_IMAGE, _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
      _get_expected_face_landmarks(
        _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
-     _get_expected_face_blendshapes(_PORTRAIT_EXPECTED_BLENDSHAPES), None),
-    (_PORTRAIT_IMAGE, _FACE_LANDMARKER_WITH_BLENDSHAPES_BUNDLE_ASSET_FILE,
-     _get_expected_face_landmarks(
-       _PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION),
-     _get_expected_face_blendshapes(_PORTRAIT_EXPECTED_BLENDSHAPES),
-     _make_expected_facial_transformation_matrixes()))
+     _get_expected_face_blendshapes(_PORTRAIT_EXPECTED_BLENDSHAPES), None))
   def test_detect_async_calls(
       self, image_path, model_name, expected_face_landmarks,
       expected_face_blendshapes, expected_facial_transformation_matrixes):

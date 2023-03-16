@@ -171,9 +171,9 @@ def _build_landmarker_result(
       if proto.pose_transform_matrix:
         matrix_data = matrix_data_pb2.MatrixData()
         matrix_data.MergeFrom(proto.pose_transform_matrix)
-        order = 'C' if matrix_data.layout == _LayoutEnum.ROW_MAJOR else 'F'
-        data = np.array(matrix_data.packed_data, order=order)
-        matrix = data.reshape((matrix_data.rows, matrix_data.cols))
+        matrix = np.array(matrix_data.packed_data)
+        matrix = matrix.reshape((matrix_data.rows, matrix_data.cols))
+        matrix = matrix if matrix_data.layout == _LayoutEnum.ROW_MAJOR else matrix.T
         facial_transformation_matrixes_results.append(matrix)
 
   return FaceLandmarkerResult(face_landmarks_results, face_blendshapes_results,
