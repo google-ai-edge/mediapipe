@@ -42,3 +42,36 @@ cc_test(
         "@org_tensorflow//tensorflow/lite/kernels:test_util",
     ],
 )
+
+cc_library(
+    name = "ngram_hash",
+    srcs = ["ngram_hash.cc"],
+    hdrs = ["ngram_hash.h"],
+    copts = tflite_copts(),
+    deps = [
+        "//mediapipe/tasks/cc/text/language_detector/custom_ops/utils:ngram_hash_ops_utils",
+        "//mediapipe/tasks/cc/text/language_detector/custom_ops/utils/hash:murmur",
+        "@flatbuffers",
+        "@org_tensorflow//tensorflow/lite:string_util",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@org_tensorflow//tensorflow/lite/kernels:kernel_util",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "ngram_hash_test",
+    srcs = ["ngram_hash_test.cc"],
+    deps = [
+        ":ngram_hash",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/tasks/cc/text/language_detector/custom_ops/utils/hash:murmur",
+        "@com_google_absl//absl/types:optional",
+        "@flatbuffers",
+        "@org_tensorflow//tensorflow/lite:framework",
+        "@org_tensorflow//tensorflow/lite:string_util",
+        "@org_tensorflow//tensorflow/lite/c:common",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@org_tensorflow//tensorflow/lite/kernels:test_util",
+    ],
+)

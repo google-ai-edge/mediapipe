@@ -101,20 +101,6 @@ ConvertImageSegmenterOptionsToProto(ImageSegmenterOptions* options) {
           SegmenterOptions::CONFIDENCE_MASK);
       break;
   }
-  switch (options->activation) {
-    case ImageSegmenterOptions::Activation::NONE:
-      options_proto->mutable_segmenter_options()->set_activation(
-          SegmenterOptions::NONE);
-      break;
-    case ImageSegmenterOptions::Activation::SIGMOID:
-      options_proto->mutable_segmenter_options()->set_activation(
-          SegmenterOptions::SIGMOID);
-      break;
-    case ImageSegmenterOptions::Activation::SOFTMAX:
-      options_proto->mutable_segmenter_options()->set_activation(
-          SegmenterOptions::SOFTMAX);
-      break;
-  }
   return options_proto;
 }
 

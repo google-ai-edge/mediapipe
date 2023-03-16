@@ -40,6 +40,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
+#include "mediapipe/tasks/metadata/image_segmenter_metadata_schema_generated.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
 #include "mediapipe/util/label_map.pb.h"
 #include "mediapipe/util/label_map_util.h"
@@ -74,6 +75,7 @@ constexpr char kImageGpuTag[] = "IMAGE_GPU";
 constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kOutputSizeTag[] = "OUTPUT_SIZE";
+constexpr char kSegmentationMetadataName[] = "SEGMENTER_METADATA";
 
 // Struct holding the different output streams produced by the image segmenter
 // subgraph.
@@ -130,7 +132,49 @@ absl::Status ConfigureTensorsToSegmentationCalculator(
     const ImageSegmenterGraphOptions& segmenter_option,
     const core::ModelResources& model_resources,
     TensorsToSegmentationCalculatorOptions* options) {
-  *options->mutable_segmenter_options() = segmenter_option.segmenter_options();
+  // Set default activation function NONE
+  options->mutable_segmenter_options()->set_output_type(
+      segmenter_option.segmenter_options().output_type());
+  options->mutable_segmenter_options()->set_activation(SegmenterOptions::NONE);
+  // Find the custom metadata of ImageSegmenterOptions type in model metadata.
+  const auto* metadata_extractor = model_resources.GetMetadataExtractor();
+  bool found_activation_in_metadata = false;
+  if (metadata_extractor->GetCustomMetadataList() != nullptr &&
+      metadata_extractor->GetCustomMetadataList()->size() > 0) {
+    for (const auto& custom_metadata :
+         *metadata_extractor->GetCustomMetadataList()) {
+      if (custom_metadata->name()->str() == kSegmentationMetadataName) {
+        found_activation_in_metadata = true;
+        auto activation_fb =
+            GetImageSegmenterOptions(custom_metadata->data()->data())
+                ->activation();
+        switch (activation_fb) {
+          case Activation_NONE:
+            options->mutable_segmenter_options()->set_activation(
+                SegmenterOptions::NONE);
+            break;
+          case Activation_SIGMOID:
+            options->mutable_segmenter_options()->set_activation(
+                SegmenterOptions::SIGMOID);
+            break;
+          case Activation_SOFTMAX:
+            options->mutable_segmenter_options()->set_activation(
+                SegmenterOptions::SOFTMAX);
+            break;
+          default:
+            return CreateStatusWithPayload(
+                absl::StatusCode::kInvalidArgument,
+                "Invalid activation type found in CustomMetadata of "
+                "ImageSegmenterOptions type.");
+        }
+      }
+    }
+  }
+  if (!found_activation_in_metadata) {
+    LOG(WARNING)
+        << "No activation type is found in model metadata. Use NONE for "
+           "ImageSegmenterGraph.";
+  }
   const tflite::Model& model = *model_resources.GetTfLiteModel();
   if (model.subgraphs()->size() != 1) {
     return CreateStatusWithPayload(
@@ -146,8 +190,6 @@ absl::Status ConfigureTensorsToSegmentationCalculator(
         MediaPipeTasksStatus::kInvalidArgumentError);
   }
 
-  const ModelMetadataExtractor* metadata_extractor =
-      model_resources.GetMetadataExtractor();
   ASSIGN_OR_RETURN(
       *options->mutable_label_items(),
       GetLabelItemsIfAny(*metadata_extractor,
@@ -401,7 +443,7 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
     } else {
       ASSIGN_OR_RETURN(const tflite::Tensor* output_tensor,
                        GetOutputTensor(model_resources));
-      const int segmentation_streams_num = *output_tensor->shape()->rbegin();
+      int segmentation_streams_num = *output_tensor->shape()->rbegin();
       for (int i = 0; i < segmentation_streams_num; ++i) {
         segmented_masks.push_back(Source<Image>(
             tensor_to_images[Output<Image>::Multiple(kSegmentationTag)][i]));

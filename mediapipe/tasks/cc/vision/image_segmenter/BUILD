@@ -80,6 +80,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_cc_proto",
         "//mediapipe/tasks/cc/vision/utils:image_tensor_specs",
+        "//mediapipe/tasks/metadata:image_segmenter_metadata_schema_cc",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "//mediapipe/util:label_map_cc_proto",
         "//mediapipe/util:label_map_util",

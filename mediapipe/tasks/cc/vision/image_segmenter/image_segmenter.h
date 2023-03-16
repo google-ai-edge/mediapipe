@@ -64,15 +64,6 @@ struct ImageSegmenterOptions {
 
   OutputType output_type = OutputType::CATEGORY_MASK;
 
-  // The activation function used on the raw segmentation model output.
-  enum Activation {
-    NONE = 0,     // No activation function is used.
-    SIGMOID = 1,  // Assumes 1-channel input tensor.
-    SOFTMAX = 2,  // Assumes multi-channel input tensor.
-  };
-
-  Activation activation = Activation::NONE;
-
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
   // to RunningMode::LIVE_STREAM.
