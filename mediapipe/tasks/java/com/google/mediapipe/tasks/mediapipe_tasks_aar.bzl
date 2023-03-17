@@ -41,7 +41,6 @@ _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:hand_gesture_recognizer_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_embedder/proto:image_embedder_graph_options_java_proto_lite",
-    "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_java_proto_lite",
@@ -106,6 +105,11 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
         src_out = "com/google/mediapipe/calculator/proto/InferenceCalculatorProto.java",
     ))
 
+    mediapipe_tasks_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
+        src_out = "com/google/mediapipe/tasks/TensorsToSegmentationCalculatorOptionsProto.java",
+    ))
+
     android_library(
         name = name,
         srcs = srcs + [
@@ -138,6 +142,7 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
                    "//mediapipe/framework/formats:rect_java_proto_lite",
                    "//mediapipe/java/com/google/mediapipe/framework:android_framework",
                    "//mediapipe/java/com/google/mediapipe/framework/image",
+                   "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
                    "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
                    "//third_party:androidx_annotation",
                    "//third_party:autovalue",
