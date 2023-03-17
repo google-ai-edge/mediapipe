@@ -284,7 +284,7 @@ def mediapipe_proto_library(
       def_jspb_proto: define the jspb_proto_library target
       def_go_proto: define the go_proto_library target
       def_options_lib: define the mediapipe_options_library target
-      def_rewrite: define a sibbling mediapipe_proto_library with package "mediapipe"
+      def_rewrite: define a sibling mediapipe_proto_library with package "mediapipe"
     """
 
     mediapipe_proto_library_impl(
