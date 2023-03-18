@@ -228,7 +228,9 @@ EOF
         name = name,
         srcs = srcs,
         manifest = "AndroidManifest.xml",
-        java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _VISION_TASKS_JAVA_PROTO_LITE_TARGETS,
+        java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _VISION_TASKS_JAVA_PROTO_LITE_TARGETS + [
+            "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
+        ],
         native_library = native_library,
     )
 
