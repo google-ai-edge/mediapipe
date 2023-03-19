@@ -179,9 +179,9 @@ TEST_F(ModelResourcesCalculatorTest, EmptyExternalFileProto) {
   auto status = graph.Initialize(graph_config);
   ASSERT_FALSE(status.ok());
   EXPECT_THAT(status.message(),
-              testing::HasSubstr(
-                  "'model_file' must specify at least one of "
-                  "'file_content', 'file_descriptor_meta', or 'file_name'"));
+              testing::HasSubstr("'model_file' must specify at least one of "
+                                 "'file_content', 'file_descriptor_meta', "
+                                 "'file_name', or 'file_pointer_meta'"));
 }
 
 TEST_F(ModelResourcesCalculatorTest, GraphServiceNotAvailable) {
