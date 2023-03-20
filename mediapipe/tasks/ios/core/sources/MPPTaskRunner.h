@@ -17,6 +17,10 @@
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif  // __cplusplus
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
@@ -88,3 +92,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif  // __cplusplus
