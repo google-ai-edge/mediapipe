@@ -96,6 +96,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
+        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
     ] + select({
         # TODO: Build text_classifier_graph and text_embedder_graph on Windows.
         "//mediapipe:windows": [],
