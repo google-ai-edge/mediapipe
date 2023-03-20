@@ -113,6 +113,7 @@ cc_library(
         "//mediapipe:android": [
             "//mediapipe/util/android/file/base",
             "//mediapipe/util/android:asset_manager_util",
+            "//mediapipe/util/android:logging",
         ],
     }) + select({
         "//conditions:default": [
