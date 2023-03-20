@@ -96,7 +96,7 @@ Args:
 Raises:
   RuntimeError: Any of the following:
     a) The graph config proto is invalid.
-    b) The underlying medipaipe graph fails to initilize and start.
+    b) The underlying medipaipe graph fails to initialize and start.
 )doc",
       py::arg("graph_config"), py::arg("packets_callback") = py::none());
 
@@ -120,7 +120,7 @@ This method is designed for processing either batch data such as unrelated
 images and texts or offline streaming data such as the decoded frames from a
 video file and an audio file. The call blocks the current thread until a failure
 status or a successful result is returned.
-If the input packets have no timestamp, an internal timestamp will be assigend
+If the input packets have no timestamp, an internal timestamp will be assigned
 per invocation. Otherwise, when the timestamp is set in the input packets, the
 caller must ensure that the input packet timestamps are greater than the
 timestamps of the previous invocation. This method is thread-unsafe and it is

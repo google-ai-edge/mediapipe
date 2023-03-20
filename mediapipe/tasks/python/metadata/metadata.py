@@ -112,10 +112,10 @@ class MetadataPopulator(object):
   mediapipe/tasks/metadata/metadata_schema.fbs
 
   Example usage:
-  Populate matadata and label file into an image classifier model.
+  Populate metadata and label file into an image classifier model.
 
   First, based on metadata_schema.fbs, generate the metadata for this image
-  classifer model using Flatbuffers API. Attach the label file onto the ouput
+  classifier model using Flatbuffers API. Attach the label file onto the output
   tensor (the tensor of probabilities) in the metadata.
 
   Then, pack the metadata and label file into the model as follows.
@@ -173,7 +173,7 @@ class MetadataPopulator(object):
 
     Raises:
       IOError: File not found.
-      ValueError: the model does not have the expected flatbuffer identifer.
+      ValueError: the model does not have the expected flatbuffer identifier.
     """
     _assert_model_file_identifier(model_file)
     self._model_file = model_file
@@ -193,7 +193,7 @@ class MetadataPopulator(object):
 
     Raises:
       IOError: File not found.
-      ValueError: the model does not have the expected flatbuffer identifer.
+      ValueError: the model does not have the expected flatbuffer identifier.
     """
     return cls(model_file)
 
@@ -210,7 +210,7 @@ class MetadataPopulator(object):
       A MetadataPopulator(_MetadataPopulatorWithBuffer) object.
 
     Raises:
-      ValueError: the model does not have the expected flatbuffer identifer.
+      ValueError: the model does not have the expected flatbuffer identifier.
     """
     return _MetadataPopulatorWithBuffer(model_buf)
 
@@ -293,7 +293,7 @@ class MetadataPopulator(object):
 
     Raises:
       ValueError: The metadata to be populated is empty.
-      ValueError: The metadata does not have the expected flatbuffer identifer.
+      ValueError: The metadata does not have the expected flatbuffer identifier.
       ValueError: Cannot get minimum metadata parser version.
       ValueError: The number of SubgraphMetadata is not 1.
       ValueError: The number of input/output tensors does not match the number
@@ -646,7 +646,7 @@ class MetadataPopulator(object):
 
 
 class _MetadataPopulatorWithBuffer(MetadataPopulator):
-  """Subclass of MetadtaPopulator that populates metadata to a model buffer.
+  """Subclass of MetadataPopulator that populates metadata to a model buffer.
 
   This class is used to populate metadata into a in-memory model buffer. As we
   use Zip API to concatenate associated files after tflite model file, the
@@ -664,7 +664,7 @@ class _MetadataPopulatorWithBuffer(MetadataPopulator):
 
     Raises:
       ValueError: model_buf is empty.
-      ValueError: model_buf does not have the expected flatbuffer identifer.
+      ValueError: model_buf does not have the expected flatbuffer identifier.
     """
     if not model_buf:
       raise ValueError("model_buf cannot be empty.")
@@ -826,7 +826,7 @@ def convert_to_json(
     metadata_buffer: valid metadata buffer in bytes.
     custom_metadata_schema: A dict of custom metadata schema, in which key is
       custom metadata name [1], value is the filepath that defines custom
-      metadata schema. For intance, custom_metadata_schema =
+      metadata schema. For instance, custom_metadata_schema =
       {"SEGMENTER_METADATA": "metadata/vision_tasks_metadata_schema.fbs"}. [1]:
         https://github.com/google/mediapipe/blob/46b5c4012d2ef76c9d92bb0d88a6b107aee83814/mediapipe/tasks/metadata/metadata_schema.fbs#L612
 
@@ -834,7 +834,7 @@ def convert_to_json(
     Metadata in JSON format.
 
   Raises:
-    ValueError: error occured when parsing the metadata schema file.
+    ValueError: error occurred when parsing the metadata schema file.
   """
   opt = _pywrap_flatbuffers.IDLOptions()
   opt.strict_json = True

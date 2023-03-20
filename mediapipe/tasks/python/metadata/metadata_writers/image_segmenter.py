@@ -59,7 +59,7 @@ def convert_to_json(metadata_buffer: bytearray) -> str:
     Metadata in JSON format.
 
   Raises:
-    ValueError: error occured when parsing the metadata schema file.
+    ValueError: error occurred when parsing the metadata schema file.
   """
   return metadata.convert_to_json(
       metadata_buffer,

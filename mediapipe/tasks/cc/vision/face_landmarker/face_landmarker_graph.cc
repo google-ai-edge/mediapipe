@@ -160,7 +160,7 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
         ->mutable_acceleration()
         ->mutable_xnnpack();
     LOG(WARNING) << "Face blendshape model contains CPU only ops. Sets "
-                 << "FaceBlendshapesGraph acceleartion to Xnnpack.";
+                 << "FaceBlendshapesGraph acceleration to Xnnpack.";
   }
 
   return absl::OkStatus();
@@ -180,7 +180,7 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
 // would be triggered to detect faces.
 //
 // FaceGeometryFromLandmarksGraph finds the transformation from canonical face
-// to the detected faces. This transformation is useful for renderring face
+// to the detected faces. This transformation is useful for rendering face
 // effects on the detected faces. This subgraph is added if users request a
 // FaceGeometry Tag.
 //
@@ -324,7 +324,7 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
           !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
                .IsAvailable()));
       if (output_geometry) {
-        // Set the face geometry metdata file for
+        // Set the face geometry metadata file for
         // FaceGeometryFromLandmarksGraph.
         ASSIGN_OR_RETURN(auto face_geometry_pipeline_metadata_file,
                          model_asset_bundle_resources->GetFile(

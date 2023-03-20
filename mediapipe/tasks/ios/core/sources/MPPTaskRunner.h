@@ -30,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
  * additional functionality. For eg:, vision tasks must create an `MPPVisionTaskRunner` and provide
  * additional functionality. An instance of `MPPVisionTaskRunner` can in turn be used by the each
  * vision task for creation and execution of the task. Please see the documentation for the C++ Task
- * Runner for more details on how the taks runner operates.
+ * Runner for more details on how the tasks runner operates.
  */
 @interface MPPTaskRunner : NSObject
 
@@ -66,7 +66,7 @@ NS_ASSUME_NONNULL_BEGIN
  * for processing either batch data such as unrelated images and texts or offline streaming data
  * such as the decoded frames from a video file or audio file. The call blocks the current
  * thread until a failure status or a successful result is returned. If the input packets have no
- * timestamp, an internal timestamp will be assigend per invocation. Otherwise, when the timestamp
+ * timestamp, an internal timestamp will be assigned per invocation. Otherwise, when the timestamp
  * is set in the input packets, the caller must ensure that the input packet timestamps are greater
  * than the timestamps of the previous invocation. This method is thread-unsafe and it is the
  * caller's responsibility to synchronize access to this method across multiple threads and to

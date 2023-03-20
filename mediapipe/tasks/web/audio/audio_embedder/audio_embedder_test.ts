@@ -161,7 +161,7 @@ describe('AudioEmbedder', () => {
               {floatEmbedding: [0.1, 0.9], headIndex: 1, headName: 'headName'});
     }
 
-    it('from embeddings strem', async () => {
+    it('from embeddings stream', async () => {
       audioEmbedder.fakeWasmModule._waitUntilIdle.and.callFake(() => {
         verifyListenersRegistered(audioEmbedder);
         // Pass the test data to our listener

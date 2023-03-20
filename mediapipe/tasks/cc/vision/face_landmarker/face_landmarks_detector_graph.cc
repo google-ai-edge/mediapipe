@@ -462,7 +462,7 @@ REGISTER_MEDIAPIPE_GRAPH(
 // - Accepts an input image and a vector of face rect RoIs to detect the
 //   multiple face landmarks enclosed by the RoIs. Output vectors of
 //   face landmarks related results, where each element in the vectors
-//   corrresponds to the result of the same face.
+//   corresponds to the result of the same face.
 //
 // Inputs:
 //   IMAGE - Image

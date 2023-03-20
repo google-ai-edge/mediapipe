@@ -265,7 +265,7 @@ TEST(MetadataVersionTest,
   metadata_builder.add_subgraph_metadata(subgraphs);
   FinishModelMetadataBuffer(builder, metadata_builder.Finish());
 
-  // Gets the mimimum metadata parser version.
+  // Gets the minimum metadata parser version.
   std::string min_version;
   EXPECT_EQ(GetMinimumMetadataParserVersion(builder.GetBufferPointer(),
                                             builder.GetSize(), &min_version),

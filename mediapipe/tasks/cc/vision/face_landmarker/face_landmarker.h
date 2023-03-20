@@ -109,7 +109,7 @@ class FaceLandmarker : tasks::vision::core::BaseVisionTaskApi {
   // three running modes:
   // 1) Image mode for detecting face landmarks on single image inputs. Users
   //    provide mediapipe::Image to the `Detect` method, and will receive the
-  //    deteced face landmarks results as the return value.
+  //    detected face landmarks results as the return value.
   // 2) Video mode for detecting face landmarks on the decoded frames of a
   //    video. Users call `DetectForVideo` method, and will receive the detected
   //    face landmarks results as the return value.

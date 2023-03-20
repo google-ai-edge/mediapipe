@@ -138,7 +138,7 @@ class InferenceSubgraph : public Subgraph {
         delegate.mutable_tflite()->CopyFrom(acceleration.tflite());
         break;
       case Acceleration::DELEGATE_NOT_SET:
-        // Deafult inference calculator setting.
+        // Default inference calculator setting.
         break;
     }
     return delegate;

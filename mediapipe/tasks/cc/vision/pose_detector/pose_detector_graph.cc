@@ -73,7 +73,7 @@ struct PoseDetectionOuts {
 // detector with model metadata.
 void ConfigureSsdAnchorsCalculator(
     mediapipe::SsdAnchorsCalculatorOptions* options) {
-  // Dervied from
+  // Derived from
   // mediapipe/modules/pose_detection/pose_detection_gpu.pbtxt
   options->set_num_layers(5);
   options->set_min_scale(0.1484375);
@@ -96,7 +96,7 @@ void ConfigureSsdAnchorsCalculator(
 void ConfigureTensorsToDetectionsCalculator(
     const PoseDetectorGraphOptions& tasks_options,
     mediapipe::TensorsToDetectionsCalculatorOptions* options) {
-  // Dervied from
+  // Derived from
   // mediapipe/modules/pose_detection/pose_detection_gpu.pbtxt
   options->set_num_classes(1);
   options->set_num_boxes(2254);

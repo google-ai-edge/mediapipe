@@ -56,7 +56,7 @@ extern "C" {
 int utf_runetochar(char* s, const Rune* r);
 
 // utf_charntorune copies (decodes) at most UTFmax bytes starting at `str` to
-// one rune, pointed to by `rune`, accesss at most `length` bytes of `str`, and
+// one rune, pointed to by `rune`, access at most `length` bytes of `str`, and
 // returns the number of bytes consumed.
 // If the UTF sequence is incomplete within n bytes,
 // utf_charntorune will set *r to Runeerror and return 0. If it is complete
