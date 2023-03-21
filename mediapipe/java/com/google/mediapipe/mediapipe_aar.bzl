@@ -360,7 +360,7 @@ def mediapipe_java_proto_srcs(name = ""):
 
     proto_src_list.append(mediapipe_java_proto_src_extractor(
         target = "//mediapipe/util:color_java_proto_lite",
-        src_out = "com/google/mediapipe/util/proto/Color.java",
+        src_out = "com/google/mediapipe/util/proto/ColorProto.java",
     ))
 
     proto_src_list.append(mediapipe_java_proto_src_extractor(
@@ -370,7 +370,7 @@ def mediapipe_java_proto_srcs(name = ""):
 
     proto_src_list.append(mediapipe_java_proto_src_extractor(
         target = "//mediapipe/util:render_data_java_proto_lite",
-        src_out = "com/google/mediapipe/util/proto/RenderData.java",
+        src_out = "com/google/mediapipe/util/proto/RenderDataProto.java",
     ))
 
     return proto_src_list
