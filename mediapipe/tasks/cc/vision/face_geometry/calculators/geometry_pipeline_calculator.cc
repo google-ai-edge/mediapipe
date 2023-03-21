@@ -169,12 +169,11 @@ class GeometryPipelineCalculator : public CalculatorBase {
   }
 
   absl::Status Process(CalculatorContext* cc) override {
-    // Both the `IMAGE_SIZE` and the `MULTI_FACE_LANDMARKS` streams are required
-    // to have a non-empty packet. In case this requirement is not met, there's
-    // nothing to be processed at the current timestamp.
-    if (cc->Inputs().Tag(kImageSizeTag).IsEmpty() ||
-        (cc->Inputs().Tag(kMultiFaceLandmarksTag).IsEmpty() &&
-         cc->Inputs().Tag(kFaceLandmarksTag).IsEmpty())) {
+    // Both the `IMAGE_SIZE` and either the `FACE_LANDMARKS` or
+    // `MULTI_FACE_LANDMARKS` streams are required to have a non-empty packet.
+    // In case this requirement is not met, there's nothing to be processed at
+    // the current timestamp and we return early (checked here and below).
+    if (cc->Inputs().Tag(kImageSizeTag).IsEmpty()) {
       return absl::OkStatus();
     }
 
@@ -182,6 +181,10 @@ class GeometryPipelineCalculator : public CalculatorBase {
         cc->Inputs().Tag(kImageSizeTag).Get<std::pair<int, int>>();
 
     if (cc->Inputs().HasTag(kMultiFaceLandmarksTag)) {
+      if (cc->Inputs().Tag(kMultiFaceLandmarksTag).IsEmpty()) {
+        return absl::OkStatus();
+      }
+
       const auto& multi_face_landmarks =
           cc->Inputs()
               .Tag(kMultiFaceLandmarksTag)
@@ -202,10 +205,14 @@ class GeometryPipelineCalculator : public CalculatorBase {
           .AddPacket(mediapipe::Adopt<std::vector<FaceGeometry>>(
                          multi_face_geometry.release())
                          .At(cc->InputTimestamp()));
-    } else {
+    } else if (cc->Inputs().HasTag(kFaceLandmarksTag)) {
+      if (cc->Inputs().Tag(kFaceLandmarksTag).IsEmpty()) {
+        return absl::OkStatus();
+      }
+
       const auto& face_landmarks =
           cc->Inputs()
-              .Tag(kMultiFaceLandmarksTag)
+              .Tag(kFaceLandmarksTag)
               .Get<mediapipe::NormalizedLandmarkList>();
 
       ASSIGN_OR_RETURN(
