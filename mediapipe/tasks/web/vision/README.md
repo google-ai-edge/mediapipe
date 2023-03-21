@@ -2,6 +2,21 @@
 
 This package contains the vision tasks for MediaPipe.
 
+## Face Stylizer
+
+The MediaPipe Face Stylizer lets you perform face stylization on images.
+
+```
+const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+);
+const faceStylizer = await FaceStylizer.createFromModelPath(vision,
+    "model.tflite"
+);
+const image = document.getElementById("image") as HTMLImageElement;
+const stylizedImage = faceStylizer.stylize(image);
+```
+
 ## Gesture Recognition
 
 The MediaPipe Gesture Recognizer task lets you recognize hand gestures in real

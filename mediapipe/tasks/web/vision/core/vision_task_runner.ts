@@ -18,7 +18,7 @@ import {NormalizedRect} from '../../../../framework/formats/rect_pb';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {GraphRunner, ImageSource} from '../../../../web/graph_runner/graph_runner';
-import {SupportImage} from '../../../../web/graph_runner/graph_runner_image_lib';
+import {SupportImage, WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
 import {SupportModelResourcesGraphService} from '../../../../web/graph_runner/register_model_resources_graph_service';
 
 import {VisionTaskOptions} from './vision_task_options';
@@ -147,6 +147,31 @@ export abstract class VisionTaskRunner extends TaskRunner {
     this.graphRunner.addGpuBufferAsImageToStream(
         imageSource, this.imageStreamName, timestamp ?? performance.now());
     this.finishProcessing();
+  }
+
+  /** Converts the RGB or RGBA Uint8Array of a WasmImage to ImageData. */
+  protected convertToImageData(wasmImage: WasmImage): ImageData {
+    const {data, width, height} = wasmImage;
+    if (!(data instanceof Uint8ClampedArray)) {
+      throw new Error(
+          'Only Uint8ClampedArray-based images can be converted to ImageData');
+    }
+
+    if (data.length === width * height * 4) {
+      return new ImageData(data, width, height);
+    } else if (data.length === width * height * 3) {
+      const rgba = new Uint8ClampedArray(width * height * 4);
+      for (let i = 0; i < width * height; ++i) {
+        rgba[4 * i] = data[3 * i];
+        rgba[4 * i + 1] = data[3 * i + 1];
+        rgba[4 * i + 2] = data[3 * i + 2];
+        rgba[4 * i + 3] = 255;
+      }
+      return new ImageData(rgba, width, height);
+    } else {
+      throw new Error(
+          `Unsupported channel count: ${data.length / width / height}`);
+    }
   }
 }
 
