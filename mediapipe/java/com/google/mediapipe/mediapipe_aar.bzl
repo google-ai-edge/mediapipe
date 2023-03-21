@@ -359,8 +359,18 @@ def mediapipe_java_proto_srcs(name = ""):
     ))
 
     proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/util:color_java_proto_lite",
+        src_out = "com/google/mediapipe/util/proto/Color.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
         target = "//mediapipe/util:label_map_java_proto_lite",
         src_out = "com/google/mediapipe/util/proto/LabelMapProto.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/util:render_data_java_proto_lite",
+        src_out = "com/google/mediapipe/util/proto/RenderData.java",
     ))
 
     return proto_src_list

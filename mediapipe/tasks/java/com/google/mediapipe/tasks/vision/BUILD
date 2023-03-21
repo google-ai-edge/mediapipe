@@ -50,6 +50,7 @@ cc_binary(
         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
         "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "//mediapipe/tasks/java:version_script.lds",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
@@ -202,6 +203,35 @@ android_library(
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "interactivesegmenter",
+    srcs = [
+        "imagesegmenter/ImageSegmenterResult.java",
+        "interactivesegmenter/InteractiveSegmenter.java",
+    ],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    manifest = "interactivesegmenter/AndroidManifest.xml",
+    deps = [
+        ":core",
+        "//mediapipe/framework:calculator_options_java_proto_lite",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/java/com/google/mediapipe/framework/image",
+        "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_java_proto_lite",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalizedkeypoint",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//mediapipe/util:color_java_proto_lite",
+        "//mediapipe/util:render_data_java_proto_lite",
+        "//third_party:autovalue",
+        "@maven//:androidx_annotation_annotation",
         "@maven//:com_google_guava_guava",
     ],
 )
