@@ -34,7 +34,7 @@ namespace face_landmarker {
 // The face landmarks detection result from FaceLandmarker, where each vector
 // element represents a single face detected in the image.
 struct FaceLandmarkerResult {
-  // Detected hand landmarks in normalized image coordinates.
+  // Detected face landmarks in normalized image coordinates.
   std::vector<components::containers::NormalizedLandmarks> face_landmarks;
   // Optional face blendshapes results.
   std::optional<std::vector<components::containers::Classifications>>
