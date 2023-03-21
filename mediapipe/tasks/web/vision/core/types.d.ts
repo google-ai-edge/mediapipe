@@ -17,17 +17,17 @@
 import {NormalizedKeypoint} from '../../../../tasks/web/components/containers/keypoint';
 
 /**
- * The segmentation tasks return the segmentation result as a Uint8Array
+ * The segmentation tasks return the segmentation result as a Uint8ClampedArray
  * (when the default mode of `CATEGORY_MASK` is used) or as a Float32Array (for
  * output type `CONFIDENCE_MASK`). The `WebGLTexture` output type is reserved
  * for future usage.
  */
-export type SegmentationMask = Uint8Array|Float32Array|WebGLTexture;
+export type SegmentationMask = Uint8ClampedArray|Float32Array|WebGLTexture;
 
 /**
  * A callback that receives the computed masks from the segmentation tasks. The
  * callback either receives a single element array with a category mask (as a
- * `[Uint8Array]`) or multiple confidence masks (as a `Float32Array[]`).
+ * `[Uint8ClampedArray]`) or multiple confidence masks (as a `Float32Array[]`).
  * The returned data is only valid for the duration of the callback. If
  * asynchronous processing is needed, all data needs to be copied before the
  * callback returns.

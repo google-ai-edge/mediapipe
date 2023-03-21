@@ -10,7 +10,7 @@ type LibConstructor = new (...args: any[]) => GraphRunner;
 
 /** An image returned from a MediaPipe graph. */
 export interface WasmImage {
-  data: Uint8Array|Uint8ClampedArray|Float32Array;
+  data: Uint8ClampedArray|Float32Array;
   width: number;
   height: number;
 }

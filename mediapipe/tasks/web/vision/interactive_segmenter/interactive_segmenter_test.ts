@@ -154,7 +154,7 @@ describe('InteractiveSegmenter', () => {
   });
 
   it('supports category masks', (done) => {
-    const mask = new Uint8Array([1, 2, 3, 4]);
+    const mask = new Uint8ClampedArray([1, 2, 3, 4]);
 
     // Pass the test data to our listener
     interactiveSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
