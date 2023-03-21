@@ -14,14 +14,63 @@
 
 #import <Foundation/Foundation.h>
 
-#include "mediapipe/framework/packet.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
+
+#include "mediapipe/framework/formats/rect.pb.h"
+#include "mediapipe/framework/packet.h"
 
 /**
  * This class helps create various kinds of packets for Mediapipe Vision Tasks.
  */
 @interface MPPVisionPacketCreator : NSObject
 
+/**
+ * Creates a MediapPipe Packet wrapping an `MPPImage` that can be send to a graph.
+ *
+ * @param image The image to send to the MediaPipe graph.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ *    error will be saved.
+ *
+ * @return The MediaPipe packet containing the image. An empty packet is returned if an error
+ *    occurred during the conversion.
+ */
 + (mediapipe::Packet)createPacketWithMPPImage:(MPPImage *)image error:(NSError **)error;
+
+/**
+ * Creates a MediapPipe Packet wrapping an `MPPImage` that can be send to a graph at the specified
+ * timestamp.
+ *
+ * @param image The image to send to the MediaPipe graph.
+ * @param timestampMs The timestamp (in milliseconds) to assign to the packet.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ *    error will be saved.
+ *
+ * @return The MediaPipe packet containing the image. An empty packet is returned if an error
+ *    occurred during the conversion.
+ */
++ (mediapipe::Packet)createPacketWithMPPImage:(MPPImage *)image
+                                  timestampMs:(NSInteger)timestampMs
+                                        error:(NSError **)error;
+
+/**
+ * Creates a MediapPipe Packet wrapping a `NormalizedRect` that can be send to a graph.
+ *
+ * @param image The `NormalizedRect` to send to the MediaPipe graph.
+ *
+ * @return The MediaPipe packet containing the normalized rect.
+ */
++ (mediapipe::Packet)createPacketWithNormalizedRect:(mediapipe::NormalizedRect &)normalizedRect;
+
+/**
+ * Creates a MediapPipe Packet wrapping a `NormalizedRect` that can be send to a graph at the
+ * specified timestamp.
+ *
+ * @param image The `NormalizedRect` to send to the MediaPipe graph.
+ * @param timestampMs The timestamp (in milliseconds) to assign to the packet.
+ *
+ * @return The MediaPipe packet containing the normalized rect.
+ */
++ (mediapipe::Packet)createPacketWithNormalizedRect:(mediapipe::NormalizedRect &)normalizedRect
+                                        timestampMs:(NSInteger)timestampMs;
 
 @end

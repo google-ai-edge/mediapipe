@@ -27,6 +27,24 @@ objc_library(
 )
 
 objc_library(
+    name = "MPPVisionPacketCreator",
+    srcs = ["sources/MPPVisionPacketCreator.mm"],
+    hdrs = ["sources/MPPVisionPacketCreator.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        ":MPPImage",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
+    ],
+)
+
+objc_library(
     name = "MPPVisionTaskRunner",
     srcs = ["sources/MPPVisionTaskRunner.mm"],
     hdrs = ["sources/MPPVisionTaskRunner.h"],
@@ -36,8 +54,11 @@ objc_library(
     ],
     deps = [
         ":MPPRunningMode",
+        "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
+        "//third_party/apple_frameworks:UIKit",
+        "@com_google_absl//absl/status:statusor",
     ],
 )

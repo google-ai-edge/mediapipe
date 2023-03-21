@@ -16,17 +16,18 @@
 #import "mediapipe/tasks/ios/vision/core/utils/sources/MPPImage+Utils.h"
 
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/timestamp.h"
+
+static const NSUInteger kMicroSecondsPerMilliSecond = 1000;
 
 namespace {
 using ::mediapipe::Image;
 using ::mediapipe::ImageFrame;
 using ::mediapipe::MakePacket;
+using ::mediapipe::NormalizedRect;
 using ::mediapipe::Packet;
+using ::mediapipe::Timestamp;
 }  // namespace
-
-struct freeDeleter {
-  void operator()(void *ptr) { free(ptr); }
-};
 
 @implementation MPPVisionPacketCreator
 
@@ -38,6 +39,29 @@ struct freeDeleter {
   }
 
   return MakePacket<Image>(std::move(imageFrame));
+}
+
++ (Packet)createPacketWithMPPImage:(MPPImage *)image
+                       timestampMs:(NSInteger)timestampMs
+                             error:(NSError **)error {
+  std::unique_ptr<ImageFrame> imageFrame = [image imageFrameWithError:error];
+
+  if (!imageFrame) {
+    return Packet();
+  }
+
+  return MakePacket<Image>(std::move(imageFrame))
+      .At(Timestamp(int64(timestampMs * kMicroSecondsPerMilliSecond)));
+}
+
++ (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect {
+  return MakePacket<NormalizedRect>(std::move(normalizedRect));
+}
+
++ (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect
+                             timestampMs:(NSInteger)timestampMs {
+  return MakePacket<NormalizedRect>(std::move(normalizedRect))
+      .At(Timestamp(int64(timestampMs * kMicroSecondsPerMilliSecond)));
 }
 
 @end

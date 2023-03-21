@@ -50,12 +50,22 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
   return self;
 }
 
-- (absl::StatusOr<PacketMap>)process:(const PacketMap &)packetMap {
-  return _cppTaskRunner->Process(packetMap);
+- (std::optional<PacketMap>)processPacketMap:(const PacketMap &)packetMap error:(NSError **)error {
+  absl::StatusOr<PacketMap> resultPacketMap = _cppTaskRunner->Process(packetMap);
+  if (![MPPCommonUtils checkCppError:resultPacketMap.status() toError:error]) {
+    return std::nullopt;
+  }
+  return resultPacketMap.value();
 }
 
-- (absl::Status)close {
-  return _cppTaskRunner->Close();
+- (BOOL)sendPacketMap:(const PacketMap &)packetMap error:(NSError **)error {
+  absl::Status sendStatus = _cppTaskRunner->Send(packetMap);
+  return [MPPCommonUtils checkCppError:sendStatus toError:error];
+}
+
+- (BOOL)closeWithError:(NSError **)error {
+  absl::Status closeStatus = _cppTaskRunner->Close();
+  return [MPPCommonUtils checkCppError:closeStatus toError:error];
 }
 
 @end
