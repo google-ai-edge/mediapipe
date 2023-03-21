@@ -21,7 +21,7 @@
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "tensorflow/lite/allocation.h"
-#include "tensorflow/lite/core/shims/cc/model.h"
+#include "tensorflow/lite/model.h"
 
 namespace mediapipe {
 
@@ -82,7 +82,7 @@ class TfLiteModelCalculator : public CalculatorBase {
     }
 
     if (cc->InputSidePackets().HasTag("MODEL_FD")) {
-#ifdef ABSL_HAVE_MMAP
+#if defined(ABSL_HAVE_MMAP) && !TFLITE_WITH_STABLE_ABI
       model_packet = cc->InputSidePackets().Tag("MODEL_FD");
       const auto& model_fd =
           model_packet.Get<std::tuple<int, size_t, size_t>>();
