@@ -65,7 +65,7 @@ constexpr char kFaceLandmarkerWithBlendshapesModelBundleName[] =
 constexpr char kPortraitImageName[] = "portrait.jpg";
 constexpr char kPortraitExpectedFaceLandamrksName[] =
     "portrait_expected_face_landmarks.pbtxt";
-constexpr char kPortraitExpectedFaceLandamrksWithAttentionName[] =
+constexpr char kPortraitExpectedFaceLandmarksWithAttentionName[] =
     "portrait_expected_face_landmarks_with_attention.pbtxt";
 constexpr char kPortraitExpectedBlendshapesName[] =
     "portrait_expected_blendshapes_with_attention.pbtxt";
@@ -250,7 +250,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* expected_result= */
                ConvertToFaceLandmarkerResult(
                    {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandamrksWithAttentionName)})},
+                       kPortraitExpectedFaceLandmarksWithAttentionName)})},
            FaceLandmarkerTestParams{
                /* test_name= */ "PortraitWithBlendshapes",
                /* input_model_name= */
@@ -260,7 +260,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* expected_result= */
                ConvertToFaceLandmarkerResult(
                    {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandamrksWithAttentionName)},
+                       kPortraitExpectedFaceLandmarksWithAttentionName)},
                    {{GetExpectedProto<ClassificationList>(
                        kPortraitExpectedBlendshapesName)}})},
            FaceLandmarkerTestParams{
@@ -273,7 +273,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* expected_result= */
                ConvertToFaceLandmarkerResult(
                    {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandamrksWithAttentionName)},
+                       kPortraitExpectedFaceLandmarksWithAttentionName)},
                    {{GetExpectedProto<ClassificationList>(
                        kPortraitExpectedBlendshapesName)}},
                    {{MakePortraitExpectedFacialTransformationMatrix()}})}),
@@ -336,7 +336,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* expected_result= */
                ConvertToFaceLandmarkerResult(
                    {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandamrksWithAttentionName)})},
+                       kPortraitExpectedFaceLandmarksWithAttentionName)})},
            FaceLandmarkerTestParams{
                /* test_name= */ "PortraitWithBlendshapes",
                /* input_model_name= */
@@ -346,7 +346,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* expected_result= */
                ConvertToFaceLandmarkerResult(
                    {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandamrksWithAttentionName)},
+                       kPortraitExpectedFaceLandmarksWithAttentionName)},
                    {{GetExpectedProto<ClassificationList>(
                        kPortraitExpectedBlendshapesName)}})}),
     [](const TestParamInfo<VideoModeTest::ParamType>& info) {
@@ -431,7 +431,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* expected_result= */
                ConvertToFaceLandmarkerResult(
                    {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandamrksWithAttentionName)})},
+                       kPortraitExpectedFaceLandmarksWithAttentionName)})},
            FaceLandmarkerTestParams{
                /* test_name= */ "PortraitWithBlendshapes",
                /* input_model_name= */
@@ -441,7 +441,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* expected_result= */
                ConvertToFaceLandmarkerResult(
                    {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandamrksWithAttentionName)},
+                       kPortraitExpectedFaceLandmarksWithAttentionName)},
                    {{GetExpectedProto<ClassificationList>(
                        kPortraitExpectedBlendshapesName)}})}),
     [](const TestParamInfo<LiveStreamModeTest::ParamType>& info) {
