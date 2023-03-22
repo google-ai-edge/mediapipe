@@ -183,12 +183,13 @@ absl::Status FindCorrespondingStreams(
 //   name, calculator, input_stream, output_stream, input_side_packet,
 //   output_side_packet, options.
 // All other fields are only applicable to calculators.
+// TODO: Check whether executor is not set in the subgraph node
+// after this issues is properly solved.
 absl::Status ValidateSubgraphFields(
     const CalculatorGraphConfig::Node& subgraph_node) {
   if (subgraph_node.source_layer() || subgraph_node.buffer_size_hint() ||
       subgraph_node.has_output_stream_handler() ||
-      subgraph_node.input_stream_info_size() != 0 ||
-      !subgraph_node.executor().empty()) {
+      subgraph_node.input_stream_info_size() != 0) {
     return mediapipe::InvalidArgumentErrorBuilder(MEDIAPIPE_LOC)
            << "Subgraph \"" << subgraph_node.name()
            << "\" has a field that is only applicable to calculators.";

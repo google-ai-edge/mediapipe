@@ -44,7 +44,7 @@ export declare interface GestureRecognizerOptions extends VisionTaskOptions {
   minTrackingConfidence?: number|undefined;
 
   /**
-   * Sets the optional `ClassifierOptions` controling the canned gestures
+   * Sets the optional `ClassifierOptions` controlling the canned gestures
    * classifier, such as score threshold, allow list and deny list of gestures.
    * The categories for canned gesture
    * classifiers are: ["None", "Closed_Fist", "Open_Palm", "Pointing_Up",

@@ -170,7 +170,7 @@ public class BaseAudioTaskApi implements AutoCloseable {
    * @throws IllegalArgumentException if the model required channel count is unsupported
    * @throws IllegalStateException if AudioRecord instance failed to initialize
    */
-  public static AudioRecord createAudioRecord(
+  public AudioRecord createAudioRecord(
       int numChannels, int sampleRate, int requiredInputBufferSize) {
     int channelConfig = 0;
     switch (numChannels) {
@@ -222,7 +222,7 @@ public class BaseAudioTaskApi implements AutoCloseable {
    * @throws IllegalArgumentException if the model required channel count is unsupported
    * @throws IllegalStateException if AudioRecord instance failed to initialize
    */
-  public static AudioRecord createAudioRecord() {
+  public AudioRecord createAudioRecord() {
     // TODO: Support creating AudioRecord based on the model specifications.
     return createAudioRecord(1, 16000, 16000);
   }

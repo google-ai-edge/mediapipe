@@ -1,0 +1,41 @@
+// Copyright 2023 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// The option proto for the TensorsReadbackCalculator.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message TensorsReadbackCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional TensorsReadbackCalculatorOptions ext = 514750372;
+  }
+
+  // Expected shapes of the input tensors.
+  // The calculator uses these shape to build the GPU programs during
+  // initialization, and check the actual tensor shapes against the expected
+  // shapes during runtime.
+  // Batch size of the tensor is set to be 1. `TensorShape` here can be C, WC,
+  // or HWC.
+  // For example {dims: 1 dims: 2} represents a tensor with batch_size = 1,
+  // width = 1, and num_channels = 2.
+  message TensorShape {
+    repeated int32 dims = 1 [packed = true];
+  }
+  // tensor_shape specifies the shape of each input tensors.
+  repeated TensorShape tensor_shape = 1;
+}

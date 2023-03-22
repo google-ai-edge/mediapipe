@@ -47,6 +47,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/face_stylizer/proto:face_stylizer_graph_options_cc_proto",
         "@com_google_absl//absl/status:statusor",
     ],
+    alwayslink = 1,
 )
 
 cc_library(

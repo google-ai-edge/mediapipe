@@ -17,10 +17,13 @@
 import copy
 import inspect
 import io
+import json
+import logging
 import os
 import shutil
 import sys
 import tempfile
+from typing import Dict, Optional
 import warnings
 import zipfile
 
@@ -109,10 +112,10 @@ class MetadataPopulator(object):
   mediapipe/tasks/metadata/metadata_schema.fbs
 
   Example usage:
-  Populate matadata and label file into an image classifier model.
+  Populate metadata and label file into an image classifier model.
 
   First, based on metadata_schema.fbs, generate the metadata for this image
-  classifer model using Flatbuffers API. Attach the label file onto the ouput
+  classifier model using Flatbuffers API. Attach the label file onto the output
   tensor (the tensor of probabilities) in the metadata.
 
   Then, pack the metadata and label file into the model as follows.
@@ -170,7 +173,7 @@ class MetadataPopulator(object):
 
     Raises:
       IOError: File not found.
-      ValueError: the model does not have the expected flatbuffer identifer.
+      ValueError: the model does not have the expected flatbuffer identifier.
     """
     _assert_model_file_identifier(model_file)
     self._model_file = model_file
@@ -190,7 +193,7 @@ class MetadataPopulator(object):
 
     Raises:
       IOError: File not found.
-      ValueError: the model does not have the expected flatbuffer identifer.
+      ValueError: the model does not have the expected flatbuffer identifier.
     """
     return cls(model_file)
 
@@ -207,7 +210,7 @@ class MetadataPopulator(object):
       A MetadataPopulator(_MetadataPopulatorWithBuffer) object.
 
     Raises:
-      ValueError: the model does not have the expected flatbuffer identifer.
+      ValueError: the model does not have the expected flatbuffer identifier.
     """
     return _MetadataPopulatorWithBuffer(model_buf)
 
@@ -290,7 +293,7 @@ class MetadataPopulator(object):
 
     Raises:
       ValueError: The metadata to be populated is empty.
-      ValueError: The metadata does not have the expected flatbuffer identifer.
+      ValueError: The metadata does not have the expected flatbuffer identifier.
       ValueError: Cannot get minimum metadata parser version.
       ValueError: The number of SubgraphMetadata is not 1.
       ValueError: The number of input/output tensors does not match the number
@@ -643,7 +646,7 @@ class MetadataPopulator(object):
 
 
 class _MetadataPopulatorWithBuffer(MetadataPopulator):
-  """Subclass of MetadtaPopulator that populates metadata to a model buffer.
+  """Subclass of MetadataPopulator that populates metadata to a model buffer.
 
   This class is used to populate metadata into a in-memory model buffer. As we
   use Zip API to concatenate associated files after tflite model file, the
@@ -661,7 +664,7 @@ class _MetadataPopulatorWithBuffer(MetadataPopulator):
 
     Raises:
       ValueError: model_buf is empty.
-      ValueError: model_buf does not have the expected flatbuffer identifer.
+      ValueError: model_buf does not have the expected flatbuffer identifier.
     """
     if not model_buf:
       raise ValueError("model_buf cannot be empty.")
@@ -789,21 +792,50 @@ class MetadataDisplayer(object):
       return []
 
 
+def _get_custom_metadata(metadata_buffer: bytes, name: str):
+  """Gets the custom metadata in metadata_buffer based on the name.
+
+  Args:
+    metadata_buffer: valid metadata buffer in bytes.
+    name: custom metadata name.
+
+  Returns:
+    Index of custom metadata, custom metadata flatbuffer. Returns (None, None)
+    if the custom metadata is not found.
+  """
+  model_metadata = _metadata_fb.ModelMetadata.GetRootAs(metadata_buffer)
+  subgraph = model_metadata.SubgraphMetadata(0)
+  if subgraph is None or subgraph.CustomMetadataIsNone():
+    return None, None
+
+  for i in range(subgraph.CustomMetadataLength()):
+    custom_metadata = subgraph.CustomMetadata(i)
+    if custom_metadata.Name().decode("utf-8") == name:
+      return i, custom_metadata.DataAsNumpy().tobytes()
+  return None, None
+
+
 # Create an individual method for getting the metadata json file, so that it can
 # be used as a standalone util.
-def convert_to_json(metadata_buffer):
+def convert_to_json(
+    metadata_buffer, custom_metadata_schema: Optional[Dict[str, str]] = None
+) -> str:
   """Converts the metadata into a json string.
 
   Args:
     metadata_buffer: valid metadata buffer in bytes.
+    custom_metadata_schema: A dict of custom metadata schema, in which key is
+      custom metadata name [1], value is the filepath that defines custom
+      metadata schema. For instance, custom_metadata_schema =
+      {"SEGMENTER_METADATA": "metadata/vision_tasks_metadata_schema.fbs"}. [1]:
+        https://github.com/google/mediapipe/blob/46b5c4012d2ef76c9d92bb0d88a6b107aee83814/mediapipe/tasks/metadata/metadata_schema.fbs#L612
 
   Returns:
     Metadata in JSON format.
 
   Raises:
-    ValueError: error occured when parsing the metadata schema file.
+    ValueError: error occurred when parsing the metadata schema file.
   """
-
   opt = _pywrap_flatbuffers.IDLOptions()
   opt.strict_json = True
   parser = _pywrap_flatbuffers.Parser(opt)
@@ -811,7 +843,35 @@ def convert_to_json(metadata_buffer):
     metadata_schema_content = f.read()
   if not parser.parse(metadata_schema_content):
     raise ValueError("Cannot parse metadata schema. Reason: " + parser.error)
-  return _pywrap_flatbuffers.generate_text(parser, metadata_buffer)
+  # Json content which may contain binary custom metadata.
+  raw_json_content = _pywrap_flatbuffers.generate_text(parser, metadata_buffer)
+  if not custom_metadata_schema:
+    return raw_json_content
+
+  json_data = json.loads(raw_json_content)
+  # Gets the custom metadata by name and parse the binary custom metadata into
+  # human readable json content.
+  for name, schema_file in custom_metadata_schema.items():
+    idx, custom_metadata = _get_custom_metadata(metadata_buffer, name)
+    if not custom_metadata:
+      logging.info(
+          "No custom metadata with name %s in metadata flatbuffer.", name
+      )
+      continue
+    _assert_file_exist(schema_file)
+    with _open_file(schema_file, "rb") as f:
+      custom_metadata_schema_content = f.read()
+    if not parser.parse(custom_metadata_schema_content):
+      raise ValueError(
+          "Cannot parse custom metadata schema. Reason: " + parser.error
+      )
+    custom_metadata_json = _pywrap_flatbuffers.generate_text(
+        parser, custom_metadata
+    )
+    json_meta = json_data["subgraph_metadata"][0]["custom_metadata"][idx]
+    json_meta["name"] = name
+    json_meta["data"] = json.loads(custom_metadata_json)
+  return json.dumps(json_data, indent=2)
 
 
 def _assert_file_exist(filename):

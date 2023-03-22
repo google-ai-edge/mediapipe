@@ -20,6 +20,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
+#include "absl/strings/substitute.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -31,6 +32,7 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/tool/sink.h"
+#include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/environment.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry.pb.h"
 
@@ -49,6 +51,9 @@ constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kFaceLandmarksFileName[] =
     "face_blendshapes_in_landmarks.prototxt";
 constexpr char kFaceGeometryFileName[] = "face_geometry_expected_out.pbtxt";
+constexpr char kGeometryPipelineMetadataPath[] =
+    "mediapipe/tasks/cc/vision/face_geometry/data/"
+    "geometry_pipeline_metadata_landmarks.binarypb";
 
 std::vector<NormalizedLandmarkList> GetLandmarks(absl::string_view filename) {
   NormalizedLandmarkList landmarks;
@@ -89,17 +94,25 @@ void MakeInputPacketsAndRunGraph(CalculatorGraph& graph) {
 
 TEST(FaceGeometryFromLandmarksGraphTest, DefaultEnvironment) {
   CalculatorGraphConfig graph_config = ParseTextProtoOrDie<
-      CalculatorGraphConfig>(R"pb(
-    input_stream: "FACE_LANDMARKS:face_landmarks"
-    input_stream: "IMAGE_SIZE:image_size"
-    output_stream: "FACE_GEOMETRY:face_geometry"
-    node {
-      calculator: "mediapipe.tasks.vision.face_geometry.FaceGeometryFromLandmarksGraph"
-      input_stream: "FACE_LANDMARKS:face_landmarks"
-      input_stream: "IMAGE_SIZE:image_size"
-      output_stream: "FACE_GEOMETRY:face_geometry"
-    }
-  )pb");
+      CalculatorGraphConfig>(absl::Substitute(
+      R"pb(
+        input_stream: "FACE_LANDMARKS:face_landmarks"
+        input_stream: "IMAGE_SIZE:image_size"
+        output_stream: "FACE_GEOMETRY:face_geometry"
+        node {
+          calculator: "mediapipe.tasks.vision.face_geometry.FaceGeometryFromLandmarksGraph"
+          input_stream: "FACE_LANDMARKS:face_landmarks"
+          input_stream: "IMAGE_SIZE:image_size"
+          output_stream: "FACE_GEOMETRY:face_geometry"
+          options: {
+            [mediapipe.tasks.vision.face_geometry.proto.FaceGeometryGraphOptions
+                 .ext] {
+              geometry_pipeline_options { metadata_file { file_name: "$0" } }
+            }
+          }
+        }
+      )pb",
+      kGeometryPipelineMetadataPath));
   std::vector<Packet> output_packets;
   tool::AddVectorSink("face_geometry", &graph_config, &output_packets);
 
@@ -116,19 +129,27 @@ TEST(FaceGeometryFromLandmarksGraphTest, DefaultEnvironment) {
 
 TEST(FaceGeometryFromLandmarksGraphTest, SideInEnvironment) {
   CalculatorGraphConfig graph_config = ParseTextProtoOrDie<
-      CalculatorGraphConfig>(R"pb(
-    input_stream: "FACE_LANDMARKS:face_landmarks"
-    input_stream: "IMAGE_SIZE:image_size"
-    input_side_packet: "ENVIRONMENT:environment"
-    output_stream: "FACE_GEOMETRY:face_geometry"
-    node {
-      calculator: "mediapipe.tasks.vision.face_geometry.FaceGeometryFromLandmarksGraph"
-      input_stream: "FACE_LANDMARKS:face_landmarks"
-      input_stream: "IMAGE_SIZE:image_size"
-      input_side_packet: "ENVIRONMENT:environment"
-      output_stream: "FACE_GEOMETRY:face_geometry"
-    }
-  )pb");
+      CalculatorGraphConfig>(absl::Substitute(
+      R"pb(
+        input_stream: "FACE_LANDMARKS:face_landmarks"
+        input_stream: "IMAGE_SIZE:image_size"
+        input_side_packet: "ENVIRONMENT:environment"
+        output_stream: "FACE_GEOMETRY:face_geometry"
+        node {
+          calculator: "mediapipe.tasks.vision.face_geometry.FaceGeometryFromLandmarksGraph"
+          input_stream: "FACE_LANDMARKS:face_landmarks"
+          input_stream: "IMAGE_SIZE:image_size"
+          input_side_packet: "ENVIRONMENT:environment"
+          output_stream: "FACE_GEOMETRY:face_geometry"
+          options: {
+            [mediapipe.tasks.vision.face_geometry.proto.FaceGeometryGraphOptions
+                 .ext] {
+              geometry_pipeline_options { metadata_file { file_name: "$0" } }
+            }
+          }
+        }
+      )pb",
+      kGeometryPipelineMetadataPath));
   std::vector<Packet> output_packets;
   tool::AddVectorSink("face_geometry", &graph_config, &output_packets);
 

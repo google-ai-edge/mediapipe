@@ -17,6 +17,7 @@ package com.google.mediapipe.tasks.vision.imagesegmenter;
 import android.content.Context;
 import com.google.auto.value.AutoValue;
 import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
+import com.google.mediapipe.proto.CalculatorProto.CalculatorGraphConfig;
 import com.google.mediapipe.framework.AndroidPacketGetter;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
@@ -24,6 +25,7 @@ import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.ByteBufferImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
+import com.google.mediapipe.tasks.TensorsToSegmentationCalculatorOptionsProto;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -88,8 +90,10 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
   private static final int SEGMENTATION_OUT_STREAM_INDEX = 2;
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph";
-
+  private static final String TENSORS_TO_SEGMENTATION_CALCULATOR_NAME =
+      "mediapipe.tasks.TensorsToSegmentationCalculator";
   private boolean hasResultListener = false;
+  private List<String> labels = new ArrayList<>();
 
   /**
    * Creates an {@link ImageSegmenter} instance from an {@link ImageSegmenterOptions}.
@@ -190,6 +194,41 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
       TaskRunner taskRunner, RunningMode runningMode, boolean hasResultListener) {
     super(taskRunner, runningMode, IMAGE_IN_STREAM_NAME, NORM_RECT_IN_STREAM_NAME);
     this.hasResultListener = hasResultListener;
+    populateLabels();
+  }
+  /**
+   * Populate the labelmap in TensorsToSegmentationCalculator to labels field.
+   *
+   * @throws MediaPipeException if there is an error during finding TensorsToSegmentationCalculator.
+   */
+  private void populateLabels() {
+    CalculatorGraphConfig graphConfig = this.runner.getCalculatorGraphConfig();
+
+    boolean foundTensorsToSegmentation = false;
+    for (CalculatorGraphConfig.Node node : graphConfig.getNodeList()) {
+      if (node.getName().contains(TENSORS_TO_SEGMENTATION_CALCULATOR_NAME)) {
+        if (foundTensorsToSegmentation) {
+          throw new MediaPipeException(
+              MediaPipeException.StatusCode.INTERNAL.ordinal(),
+              "The graph has more than one mediapipe.tasks.TensorsToSegmentationCalculator.");
+        }
+        foundTensorsToSegmentation = true;
+        TensorsToSegmentationCalculatorOptionsProto.TensorsToSegmentationCalculatorOptions options =
+            node.getOptions()
+                .getExtension(
+                    TensorsToSegmentationCalculatorOptionsProto
+                        .TensorsToSegmentationCalculatorOptions.ext);
+        for (int i = 0; i < options.getLabelItemsMap().size(); i++) {
+          Long labelKey = Long.valueOf(i);
+          if (!options.getLabelItemsMap().containsKey(labelKey)) {
+            throw new MediaPipeException(
+                MediaPipeException.StatusCode.INTERNAL.ordinal(),
+                "The lablemap have no expected key: " + labelKey);
+          }
+          labels.add(options.getLabelItemsMap().get(labelKey).getName());
+        }
+      }
+    }
   }
 
   /**
@@ -473,6 +512,17 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
     sendLiveStreamData(image, imageProcessingOptions, timestampMs);
   }
 
+  /**
+   * Get the category label list of the ImageSegmenter can recognize. For CATEGORY_MASK type, the
+   * index in the category mask corresponds to the category in the label list. For CONFIDENCE_MASK
+   * type, the output mask list at index corresponds to the category in the label list.
+   *
+   * <p>If there is no labelmap provided in the model file, empty label list is returned.
+   */
+  List<String> getLabels() {
+    return labels;
+  }
+
   /** Options for setting up an {@link ImageSegmenter}. */
   @AutoValue
   public abstract static class ImageSegmenterOptions extends TaskOptions {
@@ -591,9 +641,6 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
             SegmenterOptionsProto.SegmenterOptions.OutputType.CATEGORY_MASK);
       }
 
-      // TODO: remove this once activation is handled in metadata and grpah level.
-      segmenterOptionsBuilder.setActivation(
-          SegmenterOptionsProto.SegmenterOptions.Activation.SOFTMAX);
       taskOptionsBuilder.setSegmenterOptions(segmenterOptionsBuilder);
       return CalculatorOptions.newBuilder()
           .setExtension(

@@ -21,6 +21,7 @@ import {ImageSegmenterGraphOptions as ImageSegmenterGraphOptionsProto} from '../
 import {SegmenterOptions as SegmenterOptionsProto} from '../../../../tasks/cc/vision/image_segmenter/proto/segmenter_options_pb';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
+import {SegmentationMask, SegmentationMaskCallback} from '../../../../tasks/web/vision/core/types';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
@@ -28,31 +29,13 @@ import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner
 import {ImageSegmenterOptions} from './image_segmenter_options';
 
 export * from './image_segmenter_options';
+export {SegmentationMask, SegmentationMaskCallback};
 export {ImageSource};  // Used in the public API
-
-/**
- * The ImageSegmenter returns the segmentation result as a Uint8Array (when
- * the default mode of `CATEGORY_MASK` is used) or as a Float32Array (for
- * output type `CONFIDENCE_MASK`). The `WebGLTexture` output type is reserved
- * for future usage.
- */
-export type SegmentationMask = Uint8Array|Float32Array|WebGLTexture;
-
-/**
- * A callback that receives the computed masks from the image segmenter. The
- * callback either receives a single element array with a category mask (as a
- * `[Uint8Array]`) or multiple confidence masks (as a `Float32Array[]`).
- * The returned data is only valid for the duration of the callback. If
- * asynchronous processing is needed, all data needs to be copied before the
- * callback returns.
- */
-export type SegmentationMaskCallback =
-    (masks: SegmentationMask[], width: number, height: number) => void;
 
 const IMAGE_STREAM = 'image_in';
 const NORM_RECT_STREAM = 'norm_rect';
 const GROUPED_SEGMENTATIONS_STREAM = 'segmented_masks';
-const IMAGEA_SEGMENTER_GRAPH =
+const IMAGE_SEGMENTER_GRAPH =
     'mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph';
 
 // The OSS JS API does not support the builder pattern.
@@ -272,7 +255,7 @@ export class ImageSegmenter extends VisionTaskRunner {
         ImageSegmenterGraphOptionsProto.ext, this.options);
 
     const segmenterNode = new CalculatorGraphConfig.Node();
-    segmenterNode.setCalculator(IMAGEA_SEGMENTER_GRAPH);
+    segmenterNode.setCalculator(IMAGE_SEGMENTER_GRAPH);
     segmenterNode.addInputStream('IMAGE:' + IMAGE_STREAM);
     segmenterNode.addInputStream('NORM_RECT:' + NORM_RECT_STREAM);
     segmenterNode.addOutputStream(

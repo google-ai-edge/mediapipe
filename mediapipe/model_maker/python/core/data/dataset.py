@@ -18,7 +18,7 @@ from __future__ import division
 from __future__ import print_function
 
 import functools
-from typing import Callable, Optional, Tuple, TypeVar
+from typing import Any, Callable, Optional, Tuple, TypeVar
 
 # Dependency imports
 import tensorflow as tf
@@ -66,12 +66,14 @@ class Dataset(object):
     """
     return self._size
 
-  def gen_tf_dataset(self,
-                     batch_size: int = 1,
-                     is_training: bool = False,
-                     shuffle: bool = False,
-                     preprocess: Optional[Callable[..., bool]] = None,
-                     drop_remainder: bool = False) -> tf.data.Dataset:
+  def gen_tf_dataset(
+      self,
+      batch_size: int = 1,
+      is_training: bool = False,
+      shuffle: bool = False,
+      preprocess: Optional[Callable[..., Any]] = None,
+      drop_remainder: bool = False,
+  ) -> tf.data.Dataset:
     """Generates a batched tf.data.Dataset for training/evaluation.
 
     Args:

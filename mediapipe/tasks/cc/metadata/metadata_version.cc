@@ -213,7 +213,7 @@ void UpdateMinimumVersionForTable<tflite::Content>(const tflite::Content* table,
                                                    Version* min_version) {
   if (table == nullptr) return;
 
-  // Checks the ContenProperties field.
+  // Checks the ContentProperties field.
   if (table->content_properties_type() == ContentProperties_AudioProperties) {
     UpdateMinimumVersion(
         GetMemberVersion(SchemaMembers::kContentPropertiesAudioProperties),

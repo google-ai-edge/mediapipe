@@ -10,10 +10,11 @@ type LibConstructor = new (...args: any[]) => GraphRunner;
 
 /** An image returned from a MediaPipe graph. */
 export interface WasmImage {
-  data: Uint8Array|Float32Array;
+  data: Uint8ClampedArray|Float32Array;
   width: number;
   height: number;
 }
+
 /**
  * Declarations for Emscripten's WebAssembly Module behavior, so TS compiler
  * doesn't break our JS/C++ bridge.

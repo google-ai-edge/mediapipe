@@ -73,9 +73,10 @@ TEST(FaceLandmarkerResultTest, Succeeds) {
                                  std::nullopt));
 
   Matrix expected_matrix{{0, 3, 6}, {1, 4, 7}, {2, 5, 8}};
-  ASSERT_TRUE(face_landmarker_result.facial_transformation_matrix.has_value());
-  EXPECT_EQ(face_landmarker_result.facial_transformation_matrix->size(), 1);
-  EXPECT_EQ(face_landmarker_result.facial_transformation_matrix->at(0),
+  ASSERT_TRUE(
+      face_landmarker_result.facial_transformation_matrixes.has_value());
+  EXPECT_EQ(face_landmarker_result.facial_transformation_matrixes->size(), 1);
+  EXPECT_EQ(face_landmarker_result.facial_transformation_matrixes->at(0),
             expected_matrix);
 }
 

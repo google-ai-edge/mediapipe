@@ -93,6 +93,53 @@ py_test(
 )
 
 py_test(
+    name = "face_detector_test",
+    srcs = ["face_detector_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+        "//mediapipe/tasks/testdata/vision:test_protos",
+    ],
+    deps = [
+        "//mediapipe/framework/formats:detection_py_pb2",
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/components/containers:bounding_box",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:detections",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:face_detector",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_test(
+    name = "face_landmarker_test",
+    srcs = ["face_landmarker_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+        "//mediapipe/tasks/testdata/vision:test_protos",
+    ],
+    deps = [
+        "//mediapipe/framework/formats:classification_py_pb2",
+        "//mediapipe/framework/formats:landmark_py_pb2",
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:landmark",
+        "//mediapipe/tasks/python/components/containers:rect",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:face_landmarker",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_test(
     name = "hand_landmarker_test",
     srcs = ["hand_landmarker_test.py"],
     data = [

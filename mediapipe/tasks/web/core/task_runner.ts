@@ -175,9 +175,13 @@ export abstract class TaskRunner {
         Math.max(this.latestOutputTimestamp, timestamp);
   }
 
-  /** Returns the latest output timestamp. */
-  protected getLatestOutputTimestamp() {
-    return this.latestOutputTimestamp;
+  /**
+   * Gets a syncthethic timestamp in ms that can be used to send data to the
+   * next packet. The timestamp is one millisecond past the last timestamp
+   * received from the graph.
+   */
+  protected getSynctheticTimestamp(): number {
+    return this.latestOutputTimestamp + 1;
   }
 
   /** Throws the error from the error listener if an error was raised. */

@@ -19,7 +19,7 @@ package mediapipe.tasks.vision.face_geometry.proto;
 import "mediapipe/framework/formats/matrix_data.proto";
 import "mediapipe/tasks/cc/vision/face_geometry/proto/mesh_3d.proto";
 
-option java_package = "mediapipe.tasks.vision.facegeometry.proto";
+option java_package = "com.google.mediapipe.tasks.vision.facegeometry.proto";
 option java_outer_classname = "FaceGeometryProto";
 
 // Defines the face geometry pipeline estimation result format.
@@ -28,7 +28,7 @@ message FaceGeometry {
   // the face landmark IDs.
   //
   // XYZ coordinates exist in the right-handed Metric 3D space configured by an
-  // environment. UV coodinates are taken from the canonical face mesh model.
+  // environment. UV coordinates are taken from the canonical face mesh model.
   //
   // XY coordinates are guaranteed to match the screen positions of
   // the input face landmarks after (1) being multiplied by the face pose

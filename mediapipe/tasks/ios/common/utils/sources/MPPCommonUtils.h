@@ -70,7 +70,7 @@ extern NSString *const MPPTasksErrorDomain;
  * @param error Pointer to the memory location where errors if any should be saved. If `nil`, no
  * error will be saved.
  *
- * @return Pointer to the allocated block of memory on successfull allocation. `nil` in case as
+ * @return Pointer to the allocated block of memory on successful allocation. `nil` in case as
  * error is encountered because of invalid `memSize`. If failure is due to any other reason, method
  * terminates program execution.
  */

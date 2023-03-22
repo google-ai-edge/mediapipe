@@ -36,6 +36,7 @@ cc_library(
         ":hand_association_calculator_cc_proto",
         "//mediapipe/calculators/util:association_calculator",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:collection_item_id",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:rectangle",

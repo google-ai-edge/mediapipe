@@ -15,15 +15,21 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter.h"
 
+#include <optional>
+
+#include "absl/strings/str_format.h"
 #include "mediapipe/framework/api2/builder.h"
+#include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.pb.h"
+#include "mediapipe/util/label_map.pb.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -95,21 +101,40 @@ ConvertImageSegmenterOptionsToProto(ImageSegmenterOptions* options) {
           SegmenterOptions::CONFIDENCE_MASK);
       break;
   }
-  switch (options->activation) {
-    case ImageSegmenterOptions::Activation::NONE:
-      options_proto->mutable_segmenter_options()->set_activation(
-          SegmenterOptions::NONE);
-      break;
-    case ImageSegmenterOptions::Activation::SIGMOID:
-      options_proto->mutable_segmenter_options()->set_activation(
-          SegmenterOptions::SIGMOID);
-      break;
-    case ImageSegmenterOptions::Activation::SOFTMAX:
-      options_proto->mutable_segmenter_options()->set_activation(
-          SegmenterOptions::SOFTMAX);
-      break;
-  }
   return options_proto;
+}
+
+absl::StatusOr<std::vector<std::string>> GetLabelsFromGraphConfig(
+    const CalculatorGraphConfig& graph_config) {
+  bool found_tensor_to_segmentation_calculator = false;
+  std::vector<std::string> labels;
+  for (const auto& node : graph_config.node()) {
+    if (node.calculator() ==
+        "mediapipe.tasks.TensorsToSegmentationCalculator") {
+      if (!found_tensor_to_segmentation_calculator) {
+        found_tensor_to_segmentation_calculator = true;
+      } else {
+        return absl::Status(CreateStatusWithPayload(
+            absl::StatusCode::kFailedPrecondition,
+            "The graph has more than one "
+            "mediapipe.tasks.TensorsToSegmentationCalculator."));
+      }
+      TensorsToSegmentationCalculatorOptions options =
+          node.options().GetExtension(
+              TensorsToSegmentationCalculatorOptions::ext);
+      if (!options.label_items().empty()) {
+        for (int i = 0; i < options.label_items_size(); ++i) {
+          if (!options.label_items().contains(i)) {
+            return absl::Status(CreateStatusWithPayload(
+                absl::StatusCode::kFailedPrecondition,
+                absl::StrFormat("The lablemap have no expected key: %d.", i)));
+          }
+          labels.push_back(options.label_items().at(i).name());
+        }
+      }
+    }
+  }
+  return labels;
 }
 
 }  // namespace
@@ -140,13 +165,22 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
                               kMicroSecondsPerMilliSecond);
         };
   }
-  return core::VisionTaskApiFactory::Create<ImageSegmenter,
-                                            ImageSegmenterGraphOptionsProto>(
-      CreateGraphConfig(
-          std::move(options_proto),
-          options->running_mode == core::RunningMode::LIVE_STREAM),
-      std::move(options->base_options.op_resolver), options->running_mode,
-      std::move(packets_callback));
+
+  auto image_segmenter =
+      core::VisionTaskApiFactory::Create<ImageSegmenter,
+                                         ImageSegmenterGraphOptionsProto>(
+          CreateGraphConfig(
+              std::move(options_proto),
+              options->running_mode == core::RunningMode::LIVE_STREAM),
+          std::move(options->base_options.op_resolver), options->running_mode,
+          std::move(packets_callback));
+  if (!image_segmenter.ok()) {
+    return image_segmenter.status();
+  }
+  ASSIGN_OR_RETURN(
+      (*image_segmenter)->labels_,
+      GetLabelsFromGraphConfig((*image_segmenter)->runner_->GetGraphConfig()));
+  return image_segmenter;
 }
 
 absl::StatusOr<std::vector<Image>> ImageSegmenter::Segment(

@@ -52,7 +52,7 @@ constexpr char kMobileNetV3Embedder[] =
 constexpr double kSimilarityTolerancy = 1e-6;
 
 // Utility function to check the sizes, head_index and head_names of a result
-// procuded by kMobileNetV3Embedder.
+// produced by kMobileNetV3Embedder.
 void CheckMobileNetV3Result(const ImageEmbedderResult& result, bool quantized) {
   EXPECT_EQ(result.embeddings.size(), 1);
   EXPECT_EQ(result.embeddings[0].head_index, 0);

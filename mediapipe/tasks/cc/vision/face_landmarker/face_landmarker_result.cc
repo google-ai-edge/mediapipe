@@ -34,7 +34,7 @@ FaceLandmarkerResult ConvertToFaceLandmarkerResult(
     std::optional<std::vector<mediapipe::ClassificationList>>
         face_blendshapes_proto,
     std::optional<std::vector<mediapipe::MatrixData>>
-        facial_transformation_matrix_proto) {
+        facial_transformation_matrixes_proto) {
   FaceLandmarkerResult result;
   result.face_landmarks.resize(face_landmarks_proto.size());
   std::transform(face_landmarks_proto.begin(), face_landmarks_proto.end(),
@@ -52,12 +52,12 @@ FaceLandmarkerResult ConvertToFaceLandmarkerResult(
               classification_list);
         });
   }
-  if (facial_transformation_matrix_proto.has_value()) {
-    result.facial_transformation_matrix =
-        std::vector<Matrix>(facial_transformation_matrix_proto->size());
-    std::transform(facial_transformation_matrix_proto->begin(),
-                   facial_transformation_matrix_proto->end(),
-                   result.facial_transformation_matrix->begin(),
+  if (facial_transformation_matrixes_proto.has_value()) {
+    result.facial_transformation_matrixes =
+        std::vector<Matrix>(facial_transformation_matrixes_proto->size());
+    std::transform(facial_transformation_matrixes_proto->begin(),
+                   facial_transformation_matrixes_proto->end(),
+                   result.facial_transformation_matrixes->begin(),
                    [](const mediapipe::MatrixData& matrix_proto) {
                      mediapipe::Matrix matrix;
                      MatrixFromMatrixDataProto(matrix_proto, &matrix);
