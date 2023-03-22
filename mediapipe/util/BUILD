@@ -198,15 +198,15 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":resource_util_custom",
+        "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:singleton",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
-        "//mediapipe/framework/port:file_helpers",
-        "@com_google_absl//absl/strings",
     ] + select({
         "//conditions:default": [
             "@com_google_absl//absl/flags:flag",
@@ -253,13 +253,13 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:variant",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/formats:location_opencv",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/types:variant",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:map_util",
+        "//mediapipe/framework/port:status",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:framework",

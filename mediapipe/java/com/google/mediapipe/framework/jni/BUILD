@@ -30,11 +30,11 @@ cc_library(
         "compat_jni.cc",
         "graph.cc",
         "graph_jni.cc",
+        "graph_profiler_jni.cc",
         "graph_service_jni.cc",
         "packet_context_jni.cc",
         "packet_creator_jni.cc",
         "packet_getter_jni.cc",
-        "graph_profiler_jni.cc",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:android": [
@@ -54,11 +54,11 @@ cc_library(
         "compat_jni.h",
         "graph.h",
         "graph_jni.h",
+        "graph_profiler_jni.h",
         "graph_service_jni.h",
         "packet_context_jni.h",
         "packet_creator_jni.h",
         "packet_getter_jni.h",
-        "graph_profiler_jni.h",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:android": [
@@ -84,40 +84,40 @@ cc_library(
     deps = [
         ":class_registry",
         ":jni_util",
-        "//mediapipe/framework/formats:image_format_cc_proto",
-        "//mediapipe/framework/formats:time_series_header_cc_proto",
-        "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework:calculator_profile_cc_proto",
-        "//mediapipe/framework:calculator_framework",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
         "@eigen_archive//:eigen3",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_profile_cc_proto",
         "//mediapipe/framework:camera_intrinsics",
         "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/formats:video_stream_header",
-        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
-        "//mediapipe/framework/tool:name_util",
-        "//mediapipe/framework/tool:executor_util",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:threadpool",
         "//mediapipe/framework/port:singleton",
         "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:threadpool",
+        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
+        "//mediapipe/framework/tool:executor_util",
+        "//mediapipe/framework/tool:name_util",
     ] + select({
         "//conditions:default": [
             "//mediapipe/framework/port:file_helpers",
         ],
         "//mediapipe:android": [
-            "//mediapipe/util/android/file/base",
             "//mediapipe/util/android:asset_manager_util",
+            "//mediapipe/util/android/file/base",
         ],
     }) + select({
         "//conditions:default": [
-            "//mediapipe/gpu:gl_quad_renderer",
             "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_quad_renderer",
             "//mediapipe/gpu:gl_surface_sink_calculator",
             "//mediapipe/gpu:gpu_buffer",
             "//mediapipe/gpu:gpu_shared_data_internal",
@@ -153,9 +153,9 @@ cc_library(
     srcs = ["class_registry.cc"],
     hdrs = ["class_registry.h"],
     deps = [
+        "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/container:node_hash_map",
     ] + select({
         "//conditions:default": [
         ],
@@ -172,9 +172,9 @@ cc_library(
         ":class_registry",
         ":loose_headers",
         ":mediapipe_framework_jni",
+        "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/container:node_hash_map",
         "//mediapipe/framework/port:logging",
     ] + select({
         "//conditions:default": [
