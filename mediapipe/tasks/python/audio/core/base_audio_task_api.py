@@ -21,8 +21,8 @@ from mediapipe.python._framework_bindings import packet as packet_module
 from mediapipe.python._framework_bindings import task_runner as task_runner_module
 from mediapipe.python._framework_bindings import timestamp as timestamp_module
 from mediapipe.tasks.python.audio.core import audio_task_running_mode as running_mode_module
+from mediapipe.tasks.python.audio.core import audio_record
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
-from mediapipe.tasks.python.components.containers import audio_record
 
 _TaskRunner = task_runner_module.TaskRunner
 _Packet = packet_module.Packet

@@ -24,11 +24,6 @@ py_library(
 )
 
 py_library(
-    name = "audio_record",
-    srcs = ["audio_record.py"],
-)
-
-py_library(
     name = "bounding_box",
     srcs = ["bounding_box.py"],
     deps = [

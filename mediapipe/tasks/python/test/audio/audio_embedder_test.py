@@ -25,8 +25,8 @@ from scipy.io import wavfile
 
 from mediapipe.tasks.python.audio import audio_embedder
 from mediapipe.tasks.python.audio.core import audio_task_running_mode
+from mediapipe.tasks.python.audio.core import audio_record
 from mediapipe.tasks.python.components.containers import audio_data as audio_data_module
-from mediapipe.tasks.python.components.containers import audio_record
 from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.test import test_utils
 
