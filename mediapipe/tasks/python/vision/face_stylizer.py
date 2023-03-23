@@ -82,7 +82,7 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
   def create_from_model_path(cls, model_path: str) -> 'FaceStylizer':
     """Creates an `FaceStylizer` object from a TensorFlow Lite model and the default `FaceStylizerOptions`.
 
-    Note that the created `FaceDetector` instance is in image mode, for
+    Note that the created `FaceStylizer` instance is in image mode, for
     stylizing faces on single image inputs.
 
     Args:
