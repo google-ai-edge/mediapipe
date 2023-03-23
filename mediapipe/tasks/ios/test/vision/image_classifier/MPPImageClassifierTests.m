@@ -224,23 +224,6 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                        }]];
 }
 
-// - (void)testCreateImageClassifierFailsWithInvalidMaxResults {
-//   MPPImageClassifierOptions *options =
-//       [self imageClassifierOptionsWithModelName:kFloatModelName];
-//   options.maxResults = 0;
-
-//   [self assertCreateImageClassifierWithOptions:options
-//                        failsWithExpectedError:
-//                            [NSError errorWithDomain:kExpectedErrorDomain
-//                                                code:MPPTasksErrorCodeInvalidArgumentError
-//                                            userInfo:@{
-//                                              NSLocalizedDescriptionKey :
-//                                                  @"INVALID_ARGUMENT: Invalid `max_results`
-//                                                  option: "
-//                                                  @"value must be > 0."
-//                                            }]];
-// }
-
 - (void)testClassifyWithModelPathAndFloatModelSucceeds {
   MPPImageClassifier *imageClassifier = [self imageClassifierFromModelFileWithName:kFloatModelName];
 
