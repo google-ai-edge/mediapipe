@@ -14,33 +14,41 @@
 
 #import "mediapipe/tasks/ios/test/vision/utils/sources/MPPImage+TestUtils.h"
 
+@interface UIImage (FileUtils)
+
++(nullable UIImage *)imageFromBundleWithClass:(Class)classObject fileName:(NSString *)name ofType:(NSString *)type;
+
+@end
+
+@implementation UIImage (FileUtils)
+
++(nullable UIImage *)imageFromBundleWithClass:(Class)classObject fileName:(NSString *)name ofType:(NSString *)type {
+
+  NSString *imagePath = [[NSBundle bundleForClass:classObject] pathForResource:name ofType:type];
+  if (!imagePath) return nil;
+
+  return [[UIImage alloc] initWithContentsOfFile:imagePath];
+}
+
+@end
+
 @implementation MPPImage (TestUtils)
 
 + (nullable MPPImage *)imageFromBundleWithClass:(Class)classObject
                               fileName:(NSString *)name
-                                ofType:(NSString *)type
-                                error:(NSError **)error {
-  NSString *imagePath = [[NSBundle bundleForClass:classObject] pathForResource:name ofType:type];
-  if (!imagePath) return nil;
+                                ofType:(NSString *)type {
+  UIImage *image = [UIImage imageFromBundleWithClass:classObject fileName:name ofType:type];
 
-  UIImage *image = [[UIImage alloc] initWithContentsOfFile:imagePath];
-  if (!image) return nil;
-
-  return [[MPPImage alloc] initWithUIImage:image error:error];
+  return [[MPPImage alloc] initWithUIImage:image error:nil];
 }
 
 + (nullable MPPImage *)imageFromBundleWithClass:(Class)classObject
                               fileName:(NSString *)name
                                 ofType:(NSString *)type
-                                orientation:(UIImageOrientation)imageOrientation
-                                error:(NSError **)error {
-  NSString *imagePath = [[NSBundle bundleForClass:classObject] pathForResource:name ofType:type];
-  if (!imagePath) return nil;
+                                orientation:(UIImageOrientation)imageOrientation {
+  UIImage *image = [UIImage imageFromBundleWithClass:classObject fileName:name ofType:type];
 
-  UIImage *image = [[UIImage alloc] initWithContentsOfFile:imagePath];
-  if (!image) return nil;
-
-  return [[MPPImage alloc] initWithUIImage:image orientation:imageOrientation error:error];
+  return [[MPPImage alloc] initWithUIImage:image orientation:imageOrientation error:nil];
 }
 
 @end

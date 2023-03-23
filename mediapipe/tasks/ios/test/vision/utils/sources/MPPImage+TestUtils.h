@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
  * Helper utility for initializing `MPPImage` for MediaPipe iOS vision library tests.
  */
 @interface MPPImage (TestUtils)
+
 /**
  * Loads an image from a file in an app bundle into a `MPPImage` object.
  *
@@ -36,14 +37,24 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable MPPImage *)imageFromBundleWithClass:(Class)classObject
                                        fileName:(NSString *)name
                                          ofType:(NSString *)type
-                                          error:(NSError **)error
     NS_SWIFT_NAME(imageFromBundle(class:filename:type:));
 
+/**
+ * Loads an image from a file in an app bundle into a `MPPImage` object with the specified orientation.
+ *
+ * @param classObject The specified class associated with the bundle containing
+ * the file to be loaded.
+ * @param name Name of the image file.
+ * @param type Extenstion of the image file.
+ * @param orientation Orientation of the image.
+ *
+ * @return The `MPPImage` object contains the loaded image. This method returns
+ * nil if it cannot load the image.
+ */
 + (nullable MPPImage *)imageFromBundleWithClass:(Class)classObject
                               fileName:(NSString *)name
                                 ofType:(NSString *)type
                                 orientation:(UIImageOrientation)imageOrientation
-                                error:(NSError **)error
     NS_SWIFT_NAME(imageFromBundle(class:filename:type:orientation:));                             
 
 @end
