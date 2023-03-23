@@ -207,7 +207,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
                                      HandGestureRecognizerGraphOptions* options,
                                      bool is_copy) {
     ASSIGN_OR_RETURN(const auto gesture_embedder_file,
-                     resources.GetModelFile(kGestureEmbedderTFLiteName));
+                     resources.GetFile(kGestureEmbedderTFLiteName));
     auto* gesture_embedder_graph_options =
         options->mutable_gesture_embedder_graph_options();
     SetExternalFile(gesture_embedder_file,
@@ -218,9 +218,8 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
         options->base_options(),
         gesture_embedder_graph_options->mutable_base_options());
 
-    ASSIGN_OR_RETURN(
-        const auto canned_gesture_classifier_file,
-        resources.GetModelFile(kCannedGestureClassifierTFLiteName));
+    ASSIGN_OR_RETURN(const auto canned_gesture_classifier_file,
+                     resources.GetFile(kCannedGestureClassifierTFLiteName));
     auto* canned_gesture_classifier_graph_options =
         options->mutable_canned_gesture_classifier_graph_options();
     SetExternalFile(
@@ -233,7 +232,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
         canned_gesture_classifier_graph_options->mutable_base_options());
 
     const auto custom_gesture_classifier_file =
-        resources.GetModelFile(kCustomGestureClassifierTFLiteName);
+        resources.GetFile(kCustomGestureClassifierTFLiteName);
     if (custom_gesture_classifier_file.ok()) {
       has_custom_gesture_classifier = true;
       auto* custom_gesture_classifier_graph_options =

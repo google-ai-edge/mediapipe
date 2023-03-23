@@ -273,14 +273,6 @@ selects.config_setting_group(
 )
 
 selects.config_setting_group(
-    name = "platform_ios_without_gpu",
-    match_all = [
-        ":disable_gpu",
-        "//mediapipe:ios",
-    ],
-)
-
-selects.config_setting_group(
     name = "platform_macos_with_gpu",
     match_all = [
         ":not_disable_gpu",
@@ -296,32 +288,33 @@ cc_library(
     deps = [
         ":gpu_buffer_format",
         ":gpu_buffer_storage",
+        ":gpu_buffer_storage_image_frame",
         "@com_google_absl//absl/functional:bind_front",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:logging",
-        ":gpu_buffer_storage_image_frame",
     ] + select({
         "//conditions:default": [
-            ":gl_texture_view",
             ":gl_texture_buffer",
+            ":gl_texture_view",
         ],
         ":platform_ios_with_gpu": [
             ":gl_texture_view",
             ":gpu_buffer_storage_cv_pixel_buffer",
-            "//mediapipe/objc:util",
             "//mediapipe/objc:CFHolder",
         ],
         ":platform_macos_with_gpu": [
-            "//mediapipe/objc:CFHolder",
-            ":gl_texture_view",
             ":gl_texture_buffer",
-        ],
-        ":platform_ios_without_gpu": [
-            "//mediapipe/objc:util",
+            ":gl_texture_view",
+            "//mediapipe/objc:CFHolder",
         ],
         ":disable_gpu": [],
+    }) + select({
+        "//conditions:default": [],
+        "//mediapipe:ios": [
+            "//mediapipe/objc:util",
+        ],
     }),
 )
 
@@ -331,9 +324,9 @@ cc_library(
     hdrs = ["gpu_buffer_format.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/framework/formats:image_format_cc_proto",
         "@com_google_absl//absl/container:flat_hash_map",
         "//mediapipe/framework/deps:no_destructor",
+        "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/port:logging",
     ] + select({
         "//conditions:default": [
@@ -474,6 +467,7 @@ cc_library(
         "//mediapipe/framework/formats:frame_buffer",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:yuv_image",
+        "//mediapipe/util/frame_buffer:frame_buffer_util",
         "//third_party/libyuv",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
@@ -619,22 +613,22 @@ cc_library(
     }),
     visibility = ["//visibility:private"],
     deps = [
-        ":gl_context_options_cc_proto",
-        ":graph_support",
-        "//mediapipe/framework:calculator_context",
-        "//mediapipe/framework:executor",
-        "//mediapipe/framework:calculator_node",
-        "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/deps:no_destructor",
         ":gl_base",
         ":gl_context",
+        ":gl_context_options_cc_proto",
         ":gpu_buffer_multi_pool",
         ":gpu_shared_data_header",
+        ":graph_support",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_node",
+        "//mediapipe/framework:executor",
+        "//mediapipe/framework/deps:no_destructor",
+        "//mediapipe/framework/port:ret_check",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:apple": [
-            ":metal_shared_resources",
             ":cv_texture_cache_manager",
+            ":metal_shared_resources",
         ],
     }),
 )
@@ -703,13 +697,13 @@ cc_library(
         ":gpu_buffer",
         ":gpu_shared_data_header",
         ":multi_pool",
+        "@com_google_absl//absl/hash",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_node",
         "//mediapipe/framework/port:logging",
         "//mediapipe/util:resource_cache",
-        "@com_google_absl//absl/hash",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/synchronization",
     ] + select({
         "//conditions:default": [
             ":gl_texture_buffer",
@@ -725,9 +719,9 @@ cc_library(
         "//mediapipe:macos": [
             ":cv_pixel_buffer_pool_wrapper",
             ":cv_texture_cache_manager",
-            ":pixel_buffer_pool_util",
             ":gl_texture_buffer",
             ":gl_texture_buffer_pool",
+            ":pixel_buffer_pool_util",
         ],
     }),
 )
@@ -795,31 +789,31 @@ cc_library(
         ":gpu_buffer",
         ":gpu_buffer_format",
         ":gpu_buffer_multi_pool",
-        ":gpu_shared_data_internal",
         ":gpu_service",
+        ":gpu_shared_data_internal",
         ":graph_support",
         ":image_frame_view",
         ":shader_util",
-        "//mediapipe/framework:calculator_framework",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
         "//mediapipe/framework:calculator_context",
-        "//mediapipe/framework:calculator_node",
         "//mediapipe/framework:calculator_contract",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_node",
         "//mediapipe/framework:demangle",
         "//mediapipe/framework:legacy_calculator_support",
         "//mediapipe/framework:packet",
         "//mediapipe/framework:packet_set",
         "//mediapipe/framework:packet_type",
         "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/synchronization",
-        "//mediapipe/framework/deps:registration",
-        "//mediapipe/framework/port:map_util",
     ] + select({
         "//conditions:default": [
         ],
@@ -918,8 +912,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":gl_calculator_helper",
-        ":gpu_buffer_storage_image_frame",
-        "//mediapipe/framework/api2:node",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:status",
@@ -941,7 +933,7 @@ mediapipe_proto_library(
     ],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "gl_scaler_calculator_proto",
     srcs = ["gl_scaler_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -949,17 +941,6 @@ proto_library(
         ":scale_mode_proto",
         "//mediapipe/framework:calculator_proto",
     ],
-)
-
-mediapipe_cc_proto_library(
-    name = "gl_scaler_calculator_cc_proto",
-    srcs = ["gl_scaler_calculator.proto"],
-    cc_deps = [
-        ":scale_mode_cc_proto",
-        "//mediapipe/framework:calculator_cc_proto",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [":gl_scaler_calculator_proto"],
 )
 
 cc_library(

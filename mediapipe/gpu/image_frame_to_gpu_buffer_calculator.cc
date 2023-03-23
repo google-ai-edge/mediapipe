@@ -12,63 +12,73 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 
+#ifdef __APPLE__
+#include "mediapipe/objc/util.h"
+#endif
+
 namespace mediapipe {
-namespace api2 {
 
-class ImageFrameToGpuBufferCalculator
-    : public RegisteredNode<ImageFrameToGpuBufferCalculator> {
+// Convert ImageFrame to GpuBuffer.
+class ImageFrameToGpuBufferCalculator : public CalculatorBase {
  public:
-  static constexpr Input<ImageFrame> kIn{""};
-  static constexpr Output<GpuBuffer> kOut{""};
+  ImageFrameToGpuBufferCalculator() {}
 
-  MEDIAPIPE_NODE_INTERFACE(ImageFrameToGpuBufferCalculator, kIn, kOut);
-
-  static absl::Status UpdateContract(CalculatorContract* cc);
+  static absl::Status GetContract(CalculatorContract* cc);
 
   absl::Status Open(CalculatorContext* cc) override;
   absl::Status Process(CalculatorContext* cc) override;
 
  private:
+#if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   GlCalculatorHelper helper_;
+#endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
 };
+REGISTER_CALCULATOR(ImageFrameToGpuBufferCalculator);
 
 // static
-absl::Status ImageFrameToGpuBufferCalculator::UpdateContract(
+absl::Status ImageFrameToGpuBufferCalculator::GetContract(
     CalculatorContract* cc) {
+  cc->Inputs().Index(0).Set<ImageFrame>();
+  cc->Outputs().Index(0).Set<GpuBuffer>();
   // Note: we call this method even on platforms where we don't use the helper,
   // to ensure the calculator's contract is the same. In particular, the helper
   // enables support for the legacy side packet, which several graphs still use.
-  return GlCalculatorHelper::UpdateContract(cc);
+  MP_RETURN_IF_ERROR(GlCalculatorHelper::UpdateContract(cc));
+  return absl::OkStatus();
 }
 
 absl::Status ImageFrameToGpuBufferCalculator::Open(CalculatorContext* cc) {
+  // Inform the framework that we always output at the same timestamp
+  // as we receive a packet at.
+  cc->SetOffset(TimestampDiff(0));
+#if !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   MP_RETURN_IF_ERROR(helper_.Open(cc));
+#endif  // !MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   return absl::OkStatus();
 }
 
 absl::Status ImageFrameToGpuBufferCalculator::Process(CalculatorContext* cc) {
-  auto image_frame = std::const_pointer_cast<ImageFrame>(
-      mediapipe::SharedPtrWithPacket<ImageFrame>(kIn(cc).packet()));
-  auto gpu_buffer = api2::MakePacket<GpuBuffer>(
-                        std::make_shared<mediapipe::GpuBufferStorageImageFrame>(
-                            std::move(image_frame)))
-                        .At(cc->InputTimestamp());
-  // This calculator's behavior has been to do the texture upload eagerly, and
-  // some graphs may rely on running this on a separate GL context to avoid
-  // blocking another context with the read operation. So let's request GPU
-  // access here to ensure that the behavior stays the same.
-  // TODO: have a better way to do this, or defer until later.
-  helper_.RunInGlContext(
-      [&gpu_buffer] { auto view = gpu_buffer->GetReadView<GlTextureView>(0); });
-  kOut(cc).Send(std::move(gpu_buffer));
+#if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
+  CFHolder<CVPixelBufferRef> buffer;
+  MP_RETURN_IF_ERROR(CreateCVPixelBufferForImageFramePacket(
+      cc->Inputs().Index(0).Value(), &buffer));
+  cc->Outputs().Index(0).Add(new GpuBuffer(buffer), cc->InputTimestamp());
+#else
+  const auto& input = cc->Inputs().Index(0).Get<ImageFrame>();
+  helper_.RunInGlContext([this, &input, &cc]() {
+    auto src = helper_.CreateSourceTexture(input);
+    auto output = src.GetFrame<GpuBuffer>();
+    glFlush();
+    cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
+    src.Release();
+  });
+#endif  // MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   return absl::OkStatus();
 }
 
-}  // namespace api2
 }  // namespace mediapipe

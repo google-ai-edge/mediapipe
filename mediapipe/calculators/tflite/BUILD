@@ -14,6 +14,7 @@
 #
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 
 licenses(["notice"])
@@ -312,15 +313,19 @@ cc_library(
     alwayslink = 1,
 )
 
-cc_library(
+# TODO: Re-evaluate which of these libraries we can avoid making
+# cc_library_with_tflite and can be changed back to cc_library.
+cc_library_with_tflite(
     name = "tflite_model_calculator",
     srcs = ["tflite_model_calculator.cc"],
+    tflite_deps = [
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+    ],
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
         "//mediapipe/framework/port:ret_check",
         "@com_google_absl//absl/status",
-        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
     ],
     alwayslink = 1,
 )

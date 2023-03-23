@@ -19,6 +19,7 @@ mediapipe_ts_library(
     deps = [
         ":core",
         "//mediapipe/calculators/tensor:inference_calculator_jspb_proto",
+        "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/tasks/cc/core/proto:acceleration_jspb_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/core/proto:external_file_jspb_proto",

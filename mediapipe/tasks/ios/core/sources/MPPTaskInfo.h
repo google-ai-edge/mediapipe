@@ -22,7 +22,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * Holds all needed informaton to initialize a MediaPipe Task.
+ * Holds all needed information to initialize a MediaPipe Task.
  */
 @interface MPPTaskInfo : NSObject <NSCopying>
 

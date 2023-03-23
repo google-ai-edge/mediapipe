@@ -15,6 +15,7 @@
  */
 
 import {InferenceCalculatorOptions} from '../../../calculators/tensor/inference_calculator_pb';
+import {CalculatorGraphConfig} from '../../../framework/calculator_pb';
 import {Acceleration} from '../../../tasks/cc/core/proto/acceleration_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../tasks/cc/core/proto/base_options_pb';
 import {ExternalFile} from '../../../tasks/cc/core/proto/external_file_pb';
@@ -120,17 +121,37 @@ export abstract class TaskRunner {
           .then(buffer => {
             this.setExternalFile(new Uint8Array(buffer));
             this.refreshGraph();
+            this.onGraphRefreshed();
           });
     } else {
       // Apply the setting synchronously.
       this.setExternalFile(baseOptions.modelAssetBuffer);
       this.refreshGraph();
+      this.onGraphRefreshed();
       return Promise.resolve();
     }
   }
 
   /** Appliest the current options to the MediaPipe graph. */
   protected abstract refreshGraph(): void;
+
+  /**
+   * Callback that gets invoked once a new graph configuration has been
+   * applied.
+   */
+  protected onGraphRefreshed(): void {}
+
+  /** Returns the current CalculatorGraphConfig. */
+  protected getCalculatorGraphConfig(): CalculatorGraphConfig {
+    let config: CalculatorGraphConfig|undefined;
+    this.graphRunner.getCalculatorGraphConfig(binaryData => {
+      config = CalculatorGraphConfig.deserializeBinary(binaryData);
+    });
+    if (!config) {
+      throw new Error('Failed to retrieve CalculatorGraphConfig');
+    }
+    return config;
+  }
 
   /**
    * Takes the raw data from a MediaPipe graph, and passes it to C++ to be run
@@ -175,9 +196,13 @@ export abstract class TaskRunner {
         Math.max(this.latestOutputTimestamp, timestamp);
   }
 
-  /** Returns the latest output timestamp. */
-  protected getLatestOutputTimestamp() {
-    return this.latestOutputTimestamp;
+  /**
+   * Gets a syncthethic timestamp in ms that can be used to send data to the
+   * next packet. The timestamp is one millisecond past the last timestamp
+   * received from the graph.
+   */
+  protected getSynctheticTimestamp(): number {
+    return this.latestOutputTimestamp + 1;
   }
 
   /** Throws the error from the error listener if an error was raised. */

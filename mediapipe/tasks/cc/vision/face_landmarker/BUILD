@@ -130,6 +130,37 @@ cc_library(
 )
 
 cc_library(
+    name = "face_landmarker",
+    srcs = ["face_landmarker.cc"],
+    hdrs = ["face_landmarker.h"],
+    deps = [
+        ":face_landmarker_graph",
+        ":face_landmarker_result",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/formats:matrix_data_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/cc/components/containers:classification_result",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:base_task_api",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/cc/vision/core:image_processing_options",
+        "//mediapipe/tasks/cc/vision/core:running_mode",
+        "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
+        "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_cc_proto",
+        "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_cc_proto",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_library(
     name = "face_landmarker_result_cc",
     srcs = ["face_landmarker_result.cc"],
     hdrs = ["face_landmarker_result.h"],
@@ -179,8 +210,10 @@ cc_library(
         "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
         "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/face_geometry:face_geometry_from_landmarks_graph",
+        "//mediapipe/tasks/cc/vision/face_geometry/calculators:geometry_pipeline_calculator_cc_proto",
         "//mediapipe/tasks/cc/vision/face_geometry/proto:environment_cc_proto",
         "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_cc_proto",
+        "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_blendshapes_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_cc_proto",

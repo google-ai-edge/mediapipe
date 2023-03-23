@@ -30,10 +30,16 @@ cc_library(
     ],
 )
 
-cc_library(
+# TODO: Re-evaluate which of these libraries we can avoid making
+# cc_library_with_tflite and can be changed back to cc_library.
+cc_library_with_tflite(
     name = "cpu_op_resolver",
     srcs = ["cpu_op_resolver.cc"],
     hdrs = ["cpu_op_resolver.h"],
+    tflite_deps = [
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/port:logging",
@@ -44,8 +50,6 @@ cc_library(
         "//mediapipe/util/tflite/operations:transform_tensor_bilinear",
         "//mediapipe/util/tflite/operations:transpose_conv_bias",
         "@org_tensorflow//tensorflow/lite:builtin_op_data",
-        "@org_tensorflow//tensorflow/lite/core/shims:builtin_ops",
-        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
     ],
     # For using the symbol `MediaPipe_RegisterTfLiteOpResolver` in Python
     # with `tensorflow.lite.python.interpreter.InterpreterWithCustomOps`.
@@ -63,13 +67,17 @@ cc_library(
     ],
 )
 
-cc_library(
+# TODO: Re-evaluate which of these libraries we can avoid making
+# cc_library_with_tflite and can be changed back to cc_library.
+cc_library_with_tflite(
     name = "op_resolver",
     srcs = ["op_resolver.cc"],
     hdrs = ["op_resolver.h"],
+    tflite_deps = [
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+    ],
     deps = [
         "@org_tensorflow//tensorflow/lite:builtin_op_data",
-        "@org_tensorflow//tensorflow/lite/core/shims:builtin_ops",
     ],
 )
 

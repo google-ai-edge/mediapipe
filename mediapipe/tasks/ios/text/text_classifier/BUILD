@@ -58,6 +58,5 @@ objc_library(
         "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
         "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierOptionsHelpers",
         "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierResultHelpers",
-        "@com_google_absl//absl/status:statusor",
     ],
 )

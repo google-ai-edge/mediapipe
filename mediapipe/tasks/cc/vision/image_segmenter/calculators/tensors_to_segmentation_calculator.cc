@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <algorithm>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -77,6 +78,133 @@ void Sigmoid(absl::Span<const float> values,
              absl::Span<float> activated_values) {
   std::transform(values.begin(), values.end(), activated_values.begin(),
                  [](float value) { return 1. / (1 + std::exp(-value)); });
+}
+
+std::vector<Image> ProcessForCategoryMaskCpu(const Shape& input_shape,
+                                             const Shape& output_shape,
+                                             const SegmenterOptions& options,
+                                             const float* tensors_buffer) {
+  cv::Mat resized_tensors_mat;
+  cv::Mat tensors_mat_view(
+      input_shape.height, input_shape.width, CV_32FC(input_shape.channels),
+      reinterpret_cast<void*>(const_cast<float*>(tensors_buffer)));
+  if (output_shape.height == input_shape.height &&
+      output_shape.width == input_shape.width) {
+    resized_tensors_mat = tensors_mat_view;
+  } else {
+    // Resize input tensors to output size.
+    // TOOD(b/273633027) Use an efficient way to find values for category mask
+    // instead of resizing the whole tensor .
+    cv::resize(tensors_mat_view, resized_tensors_mat,
+               {output_shape.width, output_shape.height}, 0, 0,
+               cv::INTER_LINEAR);
+  }
+
+  // Category mask Image.
+  ImageFrameSharedPtr image_frame_ptr = std::make_shared<ImageFrame>(
+      ImageFormat::GRAY8, output_shape.width, output_shape.height, 1);
+  Image category_mask(image_frame_ptr);
+
+  // Fill in the maximum category in the category mask image.
+  cv::Mat category_mask_mat_view =
+      mediapipe::formats::MatView(image_frame_ptr.get());
+  const int input_channels = input_shape.channels;
+  category_mask_mat_view.forEach<uint8_t>(
+      [&resized_tensors_mat, &input_channels, &options](uint8_t& pixel,
+                                                        const int position[]) {
+        float* tensors_buffer =
+            resized_tensors_mat.ptr<float>(position[0], position[1]);
+        absl::Span<float> confidence_scores(tensors_buffer, input_channels);
+        // Only process the activation function if it is SIGMOID. If NONE,
+        // we do nothing for activation, If SOFTMAX, it is required
+        // to have input_channels > 1, and for input_channels > 1, we don't need
+        // activation to find the maximum value.
+        if (options.activation() == SegmenterOptions::SIGMOID) {
+          Sigmoid(confidence_scores, confidence_scores);
+        }
+        if (input_channels == 1) {
+          // if the input tensor is a single mask, it is assumed to be a binary
+          // foreground segmentation mask. For such a mask, we make foreground
+          // category 1, and background category 0.
+          pixel = static_cast<uint8_t>(*tensors_buffer > 0.5f);
+        } else {
+          const int maximum_category_idx =
+              std::max_element(confidence_scores.begin(),
+                               confidence_scores.end()) -
+              confidence_scores.begin();
+          pixel = maximum_category_idx;
+        }
+      });
+  return {category_mask};
+}
+
+std::vector<Image> ProcessForConfidenceMaskCpu(const Shape& input_shape,
+                                               const Shape& output_shape,
+                                               const SegmenterOptions& options,
+                                               const float* tensors_buffer) {
+  std::function<void(absl::Span<const float> values,
+                     absl::Span<float> activated_values)>
+      activation_fn;
+  switch (options.activation()) {
+    case SegmenterOptions::SIGMOID:
+      activation_fn = &Sigmoid;
+      break;
+    case SegmenterOptions::SOFTMAX:
+      activation_fn = &StableSoftmax;
+      break;
+    case SegmenterOptions::NONE:
+      // Just copying for NONE activation.
+      activation_fn = [](absl::Span<const float> values,
+                         absl::Span<float> activated_values) {
+        std::copy(values.begin(), values.end(), activated_values.begin());
+      };
+      break;
+  }
+
+  // TODO Use libyuv for resizing instead.
+  std::vector<Image> confidence_masks;
+  std::vector<cv::Mat> confidence_mask_mats;
+  confidence_masks.reserve(input_shape.channels);
+  confidence_mask_mats.reserve(input_shape.channels);
+  for (int i = 0; i < input_shape.channels; ++i) {
+    confidence_masks.push_back(Image(std::make_shared<ImageFrame>(
+        ImageFormat::VEC32F1, input_shape.width, input_shape.height, 1)));
+    confidence_mask_mats.push_back(mediapipe::formats::MatView(
+        confidence_masks.back().GetImageFrameSharedPtr().get()));
+  }
+
+  // Applies activation function.
+  const int tensor_size = input_shape.height * input_shape.width;
+  std::vector<float> activated_values(input_shape.channels);
+  absl::Span<float> activated_values_span(activated_values);
+  for (int i = 0; i < tensor_size; ++i) {
+    activation_fn(absl::MakeConstSpan(&tensors_buffer[i * input_shape.channels],
+                                      input_shape.channels),
+                  activated_values_span);
+    for (int j = 0; j < input_shape.channels; ++j) {
+      confidence_mask_mats[j].at<float>(
+          i / input_shape.width, i % input_shape.width) = activated_values[j];
+    }
+  }
+  if (output_shape.height == input_shape.height &&
+      output_shape.width == input_shape.width) {
+    return confidence_masks;
+  }
+  std::vector<Image> resized_confidence_masks;
+  resized_confidence_masks.reserve(confidence_mask_mats.size());
+  // Resizes segmented masks to required output size.
+  for (int i = 0; i < confidence_mask_mats.size(); i++) {
+    // Pre-allocates ImageFrame memory to avoid copying from cv::Mat
+    // afterward.
+    ImageFrameSharedPtr image_frame_ptr = std::make_shared<ImageFrame>(
+        ImageFormat::VEC32F1, output_shape.width, output_shape.height, 1);
+    cv::Mat resized_mask_mat_view =
+        mediapipe::formats::MatView(image_frame_ptr.get());
+    cv::resize(confidence_mask_mats[i], resized_mask_mat_view,
+               resized_mask_mat_view.size(), 0, 0, cv::INTER_LINEAR);
+    resized_confidence_masks.push_back(Image(image_frame_ptr));
+  }
+  return resized_confidence_masks;
 }
 
 }  // namespace
@@ -222,81 +350,16 @@ absl::Status TensorsToSegmentationCalculator::Process(
 std::vector<Image> TensorsToSegmentationCalculator::GetSegmentationResultCpu(
     const Shape& input_shape, const Shape& output_shape,
     const float* tensors_buffer) {
-  std::function<void(absl::Span<const float> values,
-                     absl::Span<float> activated_values)>
-      activation_fn;
-  switch (options_.segmenter_options().activation()) {
-    case SegmenterOptions::SIGMOID:
-      activation_fn = &Sigmoid;
-      break;
-    case SegmenterOptions::SOFTMAX:
-      activation_fn = &StableSoftmax;
-      break;
-    case SegmenterOptions::NONE:
-      // Just copying for NONE activation.
-      activation_fn = [](absl::Span<const float> values,
-                         absl::Span<float> activated_values) {
-        std::copy(values.begin(), values.end(), activated_values.begin());
-      };
-      break;
-  }
-
-  const bool is_category_mask = options_.segmenter_options().output_type() ==
-                                SegmenterOptions::CATEGORY_MASK;
-  const int cv_mat_type = is_category_mask ? CV_8UC1 : CV_32FC1;
-  const int output_masks_num = output_shape.channels;
-
-  // TODO Use libyuv for resizing instead.
-  std::vector<cv::Mat> segmented_mask_mats;
-  segmented_mask_mats.reserve(output_masks_num);
-  for (int i = 0; i < output_masks_num; ++i) {
-    segmented_mask_mats.push_back(
-        cv::Mat(input_shape.height, input_shape.width, cv_mat_type));
-  }
-
-  // Applies activation function.
-  const int tensor_size = input_shape.height * input_shape.width;
-  if (is_category_mask) {
-    for (int i = 0; i < tensor_size; ++i) {
-      absl::Span<const float> confidence_scores(
-          &tensors_buffer[i * input_shape.channels], input_shape.channels);
-      const int maximum_category_idx =
-          std::max_element(confidence_scores.begin(), confidence_scores.end()) -
-          confidence_scores.begin();
-      segmented_mask_mats[0].at<uint8_t>(
-          i / input_shape.width, i % input_shape.width) = maximum_category_idx;
-    }
+  if (options_.segmenter_options().output_type() ==
+      SegmenterOptions::CATEGORY_MASK) {
+    return ProcessForCategoryMaskCpu(input_shape, output_shape,
+                                     options_.segmenter_options(),
+                                     tensors_buffer);
   } else {
-    std::vector<float> activated_values(input_shape.channels);
-    absl::Span<float> activated_values_span(activated_values);
-    for (int i = 0; i < tensor_size; ++i) {
-      activation_fn(
-          absl::MakeConstSpan(&tensors_buffer[i * input_shape.channels],
-                              input_shape.channels),
-          activated_values_span);
-      for (int j = 0; j < input_shape.channels; ++j) {
-        segmented_mask_mats[j].at<float>(
-            i / input_shape.width, i % input_shape.width) = activated_values[j];
-      }
-    }
+    return ProcessForConfidenceMaskCpu(input_shape, output_shape,
+                                       options_.segmenter_options(),
+                                       tensors_buffer);
   }
-
-  std::vector<Image> segmented_masks;
-  segmented_masks.reserve(output_masks_num);
-  // Resizes segmented masks to required output size.
-  for (int i = 0; i < segmented_mask_mats.size(); i++) {
-    // Pre-allocates ImageFrame memory to avoid copying from cv::Mat afterward.
-    ImageFrameSharedPtr image_frame_ptr = std::make_shared<ImageFrame>(
-        is_category_mask ? ImageFormat::GRAY8 : ImageFormat::VEC32F1,
-        output_shape.width, output_shape.height, 1);
-    cv::Mat resized_mask_mat_view =
-        mediapipe::formats::MatView(image_frame_ptr.get());
-    cv::resize(segmented_mask_mats[i], resized_mask_mat_view,
-               resized_mask_mat_view.size(), 0, 0,
-               cv_mat_type == CV_8UC1 ? cv::INTER_NEAREST : cv::INTER_LINEAR);
-    segmented_masks.push_back(Image(image_frame_ptr));
-  }
-  return segmented_masks;
 }
 
 MEDIAPIPE_REGISTER_NODE(::mediapipe::tasks::TensorsToSegmentationCalculator);

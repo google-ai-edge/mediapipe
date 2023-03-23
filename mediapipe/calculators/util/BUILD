@@ -1270,6 +1270,50 @@ cc_library(
     alwayslink = 1,
 )
 
+mediapipe_proto_library(
+    name = "flat_color_image_calculator_proto",
+    srcs = ["flat_color_image_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util:color_proto",
+    ],
+)
+
+cc_library(
+    name = "flat_color_image_calculator",
+    srcs = ["flat_color_image_calculator.cc"],
+    deps = [
+        ":flat_color_image_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/util:color_cc_proto",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "flat_color_image_calculator_test",
+    srcs = ["flat_color_image_calculator_test.cc"],
+    deps = [
+        ":flat_color_image_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/util:color_cc_proto",
+    ],
+)
+
 cc_library(
     name = "from_image_calculator",
     srcs = ["from_image_calculator.cc"],

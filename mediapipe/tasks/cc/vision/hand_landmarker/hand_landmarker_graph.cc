@@ -97,7 +97,7 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       options->mutable_hand_detector_graph_options();
   if (!hand_detector_graph_options->base_options().has_model_asset()) {
     ASSIGN_OR_RETURN(const auto hand_detector_file,
-                     resources.GetModelFile(kHandDetectorTFLiteName));
+                     resources.GetFile(kHandDetectorTFLiteName));
     SetExternalFile(hand_detector_file,
                     hand_detector_graph_options->mutable_base_options()
                         ->mutable_model_asset(),
@@ -113,7 +113,7 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   if (!hand_landmarks_detector_graph_options->base_options()
            .has_model_asset()) {
     ASSIGN_OR_RETURN(const auto hand_landmarks_detector_file,
-                     resources.GetModelFile(kHandLandmarksDetectorTFLiteName));
+                     resources.GetFile(kHandLandmarksDetectorTFLiteName));
     SetExternalFile(
         hand_landmarks_detector_file,
         hand_landmarks_detector_graph_options->mutable_base_options()
@@ -318,9 +318,9 @@ class HandLandmarkerGraph : public core::ModelTaskGraph {
           .set_min_similarity_threshold(
               tasks_options.min_tracking_confidence());
       prev_hand_rects_from_landmarks >>
-          hand_association[Input<std::vector<NormalizedRect>>::Multiple("")][0];
+          hand_association[Input<std::vector<NormalizedRect>>("BASE_RECTS")];
       hand_rects_from_hand_detector >>
-          hand_association[Input<std::vector<NormalizedRect>>::Multiple("")][1];
+          hand_association[Input<std::vector<NormalizedRect>>("RECTS")];
       auto hand_rects = hand_association.Out("");
       hand_rects >> clip_hand_rects.In("");
     } else {

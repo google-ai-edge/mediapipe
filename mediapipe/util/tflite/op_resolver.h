@@ -15,13 +15,13 @@
 #ifndef MEDIAPIPE_UTIL_TFLITE_OP_RESOLVER_H_
 #define MEDIAPIPE_UTIL_TFLITE_OP_RESOLVER_H_
 
-#include "tensorflow/lite/core/shims/cc/kernels/register.h"
+#include "tensorflow/lite/kernels/register.h"
 
 namespace mediapipe {
 
 // This OpResolver is used for supporting "Convolution2DTransposeBias" on GPU.
-class OpResolver : public tflite_shims::ops::builtin::
-                       BuiltinOpResolverWithoutDefaultDelegates {
+class OpResolver
+    : public tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates {
  public:
   OpResolver();
 };

@@ -409,7 +409,7 @@ REGISTER_MEDIAPIPE_GRAPH(
 // - Accepts CPU input image and a vector of hand rect RoIs to detect the
 //   multiple hands landmarks enclosed by the RoIs. Output vectors of
 //   hand landmarks related results, where each element in the vectors
-//   corrresponds to the result of the same hand.
+//   corresponds to the result of the same hand.
 //
 // Inputs:
 //   IMAGE - Image

@@ -315,11 +315,11 @@ cc_library(
     visibility = ["//visibility:private"],
     deps = [
         "@com_google_absl//absl/flags:flag",
+        "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/port:status",
-        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:statusor",
     ] + select({
         "//conditions:default": [
             "//mediapipe/framework/port:file_helpers",
@@ -328,8 +328,8 @@ cc_library(
             "//mediapipe/framework/port:file_helpers",
         ],
         "//mediapipe:android": [
-            "//mediapipe/java/com/google/mediapipe/framework/jni:jni_util",
             "//mediapipe/framework/port:file_helpers",
+            "//mediapipe/java/com/google/mediapipe/framework/jni:jni_util",
         ],
         "//mediapipe:apple": [
             "//mediapipe/framework/port:file_helpers",

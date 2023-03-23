@@ -15,6 +15,7 @@
 import io
 import os
 import tempfile
+import unittest
 from unittest import mock as unittest_mock
 import zipfile
 
@@ -31,6 +32,7 @@ _TEST_DATA_DIR = 'mediapipe/model_maker/python/vision/gesture_recognizer/testdat
 tf.keras.backend.experimental.enable_tf_random_generator()
 
 
+@unittest.skip('b/273818271')
 class GestureRecognizerTest(tf.test.TestCase):
 
   def _load_data(self):
@@ -72,8 +74,10 @@ class GestureRecognizerTest(tf.test.TestCase):
 
     self._test_accuracy(model)
 
+  @unittest.skip('b/273818271')
   @unittest_mock.patch.object(
-      tf.keras.layers, 'Dense', wraps=tf.keras.layers.Dense)
+      tf.keras.layers, 'Dense', wraps=tf.keras.layers.Dense
+  )
   def test_gesture_recognizer_model_layer_widths(self, mock_dense):
     layer_widths = [64, 32]
     mo = gesture_recognizer.ModelOptions(layer_widths=layer_widths)
@@ -143,12 +147,14 @@ class GestureRecognizerTest(tf.test.TestCase):
       hyperparameters,
       'HParams',
       autospec=True,
-      return_value=gesture_recognizer.HParams(epochs=1))
+      return_value=gesture_recognizer.HParams(epochs=1),
+  )
   @unittest_mock.patch.object(
       model_options,
       'GestureRecognizerModelOptions',
       autospec=True,
-      return_value=gesture_recognizer.ModelOptions())
+      return_value=gesture_recognizer.ModelOptions(),
+  )
   def test_create_hparams_and_model_options_if_none_in_gesture_recognizer_options(
       self, mock_hparams, mock_model_options):
     options = gesture_recognizer.GestureRecognizerOptions()

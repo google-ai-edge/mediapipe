@@ -74,7 +74,7 @@ class FaceDetector : core::BaseVisionTaskApi {
   // three running modes:
   // 1) Image mode for detecting faces on single image inputs. Users
   //    provide mediapipe::Image to the `Detect` method, and will receive the
-  //    deteced face detection results as the return value.
+  //    detected face detection results as the return value.
   // 2) Video mode for detecting faces on the decoded frames of a
   //    video. Users call `DetectForVideo` method, and will receive the detected
   //    face detection results as the return value.

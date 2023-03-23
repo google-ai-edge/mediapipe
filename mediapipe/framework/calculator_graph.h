@@ -405,6 +405,34 @@ class CalculatorGraph {
     return service_manager_.GetServiceObject(service);
   }
 
+  // Disallows/disables default initialization of MediaPipe graph services.
+  //
+  // IMPORTANT: MediaPipe graph serices, essentially a graph-level singletons,
+  // are designed in the way, so they may provide default initialization. For
+  // example, this allows to run OpenGL processing wihtin the graph without
+  // provinging a praticular OpenGL context as it can be provided by
+  // default-initializable `kGpuService`. (One caveat here, you may still need
+  // to initialize it manually to share graph context with external context.)
+  //
+  // Even if calculators require some service optionally
+  // (`calculator_contract->UseService(kSomeService).Optional()`), it will be
+  // still initialized if it allows default initialization.
+  //
+  // So far, in rare cases, this may be unwanted and strict control of what
+  // services are allowed in the graph can be achieved by calling this method,
+  // following `SetServiceObject` call for services which are allowed in the
+  // graph.
+  //
+  // Recommendation: do not use unless you have to (for example, default
+  // initialization has side effects)
+  //
+  // NOTE: must be called before `StartRun`/`Run`, where services are checked
+  // and can be default-initialized.
+  absl::Status DisallowServiceDefaultInitialization() {
+    allow_service_default_initialization_ = false;
+    return absl::OkStatus();
+  }
+
   // Sets a service object, essentially a graph-level singleton, which can be
   // accessed by calculators and subgraphs without requiring an explicit
   // connection.
@@ -643,6 +671,9 @@ class CalculatorGraph {
 
   // Object to manage graph services.
   GraphServiceManager service_manager_;
+
+  // Indicates whether service default initialization is allowed.
+  bool allow_service_default_initialization_ = true;
 
   // Vector of errors encountered while running graph. Always use RecordError()
   // to add an error to this vector.

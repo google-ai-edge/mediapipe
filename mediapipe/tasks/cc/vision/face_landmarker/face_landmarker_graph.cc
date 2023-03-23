@@ -40,8 +40,10 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 #include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/face_geometry/calculators/geometry_pipeline_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/environment.pb.h"
 #include "mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry.pb.h"
+#include "mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_blendshapes_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarker_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.pb.h"
@@ -93,6 +95,8 @@ constexpr char kFaceDetectorTFLiteName[] = "face_detector.tflite";
 constexpr char kFaceLandmarksDetectorTFLiteName[] =
     "face_landmarks_detector.tflite";
 constexpr char kFaceBlendshapeTFLiteName[] = "face_blendshapes.tflite";
+constexpr char kFaceGeometryPipelineMetadataName[] =
+    "geometry_pipeline_metadata_landmarks.binarypb";
 
 struct FaceLandmarkerOutputs {
   Source<std::vector<NormalizedLandmarkList>> landmark_lists;
@@ -112,7 +116,7 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       options->mutable_face_detector_graph_options();
   if (!face_detector_graph_options->base_options().has_model_asset()) {
     ASSIGN_OR_RETURN(const auto face_detector_file,
-                     resources.GetModelFile(kFaceDetectorTFLiteName));
+                     resources.GetFile(kFaceDetectorTFLiteName));
     SetExternalFile(face_detector_file,
                     face_detector_graph_options->mutable_base_options()
                         ->mutable_model_asset(),
@@ -128,7 +132,7 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   if (!face_landmarks_detector_graph_options->base_options()
            .has_model_asset()) {
     ASSIGN_OR_RETURN(const auto face_landmarks_detector_file,
-                     resources.GetModelFile(kFaceLandmarksDetectorTFLiteName));
+                     resources.GetFile(kFaceLandmarksDetectorTFLiteName));
     SetExternalFile(
         face_landmarks_detector_file,
         face_landmarks_detector_graph_options->mutable_base_options()
@@ -142,7 +146,7 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       ->set_use_stream_mode(options->base_options().use_stream_mode());
 
   absl::StatusOr<absl::string_view> face_blendshape_model =
-      resources.GetModelFile(kFaceBlendshapeTFLiteName);
+      resources.GetFile(kFaceBlendshapeTFLiteName);
   if (face_blendshape_model.ok()) {
     SetExternalFile(*face_blendshape_model,
                     face_landmarks_detector_graph_options
@@ -156,7 +160,7 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
         ->mutable_acceleration()
         ->mutable_xnnpack();
     LOG(WARNING) << "Face blendshape model contains CPU only ops. Sets "
-                 << "FaceBlendshapesGraph acceleartion to Xnnpack.";
+                 << "FaceBlendshapesGraph acceleration to Xnnpack.";
   }
 
   return absl::OkStatus();
@@ -176,7 +180,7 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
 // would be triggered to detect faces.
 //
 // FaceGeometryFromLandmarksGraph finds the transformation from canonical face
-// to the detected faces. This transformation is useful for renderring face
+// to the detected faces. This transformation is useful for rendering face
 // effects on the detected faces. This subgraph is added if users request a
 // FaceGeometry Tag.
 //
@@ -305,6 +309,7 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     Graph graph;
+    bool output_geometry = HasOutput(sc->OriginalNode(), kFaceGeometryTag);
     if (sc->Options<FaceLandmarkerGraphOptions>()
             .base_options()
             .has_model_asset()) {
@@ -318,6 +323,18 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
           sc->MutableOptions<FaceLandmarkerGraphOptions>(),
           !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
                .IsAvailable()));
+      if (output_geometry) {
+        // Set the face geometry metadata file for
+        // FaceGeometryFromLandmarksGraph.
+        ASSIGN_OR_RETURN(auto face_geometry_pipeline_metadata_file,
+                         model_asset_bundle_resources->GetFile(
+                             kFaceGeometryPipelineMetadataName));
+        SetExternalFile(face_geometry_pipeline_metadata_file,
+                        sc->MutableOptions<FaceLandmarkerGraphOptions>()
+                            ->mutable_face_geometry_graph_options()
+                            ->mutable_geometry_pipeline_options()
+                            ->mutable_metadata_file());
+      }
     }
     std::optional<SidePacket<Environment>> environment;
     if (HasSideInput(sc->OriginalNode(), kEnvironmentTag)) {
@@ -338,7 +355,6 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
               .face_landmarks_detector_graph_options()
               .has_face_blendshapes_graph_options()));
     }
-    bool output_geometry = HasOutput(sc->OriginalNode(), kFaceGeometryTag);
     ASSIGN_OR_RETURN(
         auto outs,
         BuildFaceLandmarkerGraph(
@@ -481,6 +497,9 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
       auto& face_geometry_from_landmarks = graph.AddNode(
           "mediapipe.tasks.vision.face_geometry."
           "FaceGeometryFromLandmarksGraph");
+      face_geometry_from_landmarks
+          .GetOptions<face_geometry::proto::FaceGeometryGraphOptions>()
+          .Swap(tasks_options.mutable_face_geometry_graph_options());
       if (environment.has_value()) {
         *environment >> face_geometry_from_landmarks.SideIn(kEnvironmentTag);
       }

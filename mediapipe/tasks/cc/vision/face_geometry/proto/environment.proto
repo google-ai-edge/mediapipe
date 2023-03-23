@@ -16,7 +16,7 @@ syntax = "proto2";
 
 package mediapipe.tasks.vision.face_geometry.proto;
 
-option java_package = "mediapipe.tasks.vision.facegeometry.proto";
+option java_package = "com.google.mediapipe.tasks.vision.facegeometry.proto";
 option java_outer_classname = "EnvironmentProto";
 
 // Defines the (0, 0) origin point location of the environment.

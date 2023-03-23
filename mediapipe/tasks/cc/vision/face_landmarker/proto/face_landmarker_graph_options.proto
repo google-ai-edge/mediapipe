@@ -21,6 +21,7 @@ import "mediapipe/framework/calculator.proto";
 import "mediapipe/framework/calculator_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
 import "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.proto";
+import "mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry_graph_options.proto";
 import "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.proto";
 
 option java_package = "com.google.mediapipe.tasks.vision.facelandmarker.proto";
@@ -45,4 +46,8 @@ message FaceLandmarkerGraphOptions {
   // Minimum confidence for face landmarks tracking to be considered
   // successfully.
   optional float min_tracking_confidence = 4 [default = 0.5];
+
+  // Options for FaceGeometryGraph to get facial transformation matrix.
+  optional face_geometry.proto.FaceGeometryGraphOptions
+      face_geometry_graph_options = 5;
 }

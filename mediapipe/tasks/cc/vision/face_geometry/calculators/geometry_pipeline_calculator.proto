@@ -17,11 +17,12 @@ syntax = "proto2";
 package mediapipe.tasks.vision.face_geometry;
 
 import "mediapipe/framework/calculator_options.proto";
+import "mediapipe/tasks/cc/core/proto/external_file.proto";
 
 message FaceGeometryPipelineCalculatorOptions {
   extend mediapipe.CalculatorOptions {
     optional FaceGeometryPipelineCalculatorOptions ext = 512499200;
   }
 
-  optional string metadata_path = 1;
+  optional core.proto.ExternalFile metadata_file = 1;
 }

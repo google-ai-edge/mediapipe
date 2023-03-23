@@ -17,43 +17,30 @@
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
+import {TensorsToSegmentationCalculatorOptions} from '../../../../tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator_pb';
 import {ImageSegmenterGraphOptions as ImageSegmenterGraphOptionsProto} from '../../../../tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options_pb';
 import {SegmenterOptions as SegmenterOptionsProto} from '../../../../tasks/cc/vision/image_segmenter/proto/segmenter_options_pb';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
+import {SegmentationMask, SegmentationMaskCallback} from '../../../../tasks/web/vision/core/types';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {LabelMapItem} from '../../../../util/label_map_pb';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
 import {ImageSegmenterOptions} from './image_segmenter_options';
 
 export * from './image_segmenter_options';
+export {SegmentationMask, SegmentationMaskCallback};
 export {ImageSource};  // Used in the public API
-
-/**
- * The ImageSegmenter returns the segmentation result as a Uint8Array (when
- * the default mode of `CATEGORY_MASK` is used) or as a Float32Array (for
- * output type `CONFIDENCE_MASK`). The `WebGLTexture` output type is reserved
- * for future usage.
- */
-export type SegmentationMask = Uint8Array|Float32Array|WebGLTexture;
-
-/**
- * A callback that receives the computed masks from the image segmenter. The
- * callback either receives a single element array with a category mask (as a
- * `[Uint8Array]`) or multiple confidence masks (as a `Float32Array[]`).
- * The returned data is only valid for the duration of the callback. If
- * asynchronous processing is needed, all data needs to be copied before the
- * callback returns.
- */
-export type SegmentationMaskCallback =
-    (masks: SegmentationMask[], width: number, height: number) => void;
 
 const IMAGE_STREAM = 'image_in';
 const NORM_RECT_STREAM = 'norm_rect';
 const GROUPED_SEGMENTATIONS_STREAM = 'segmented_masks';
-const IMAGEA_SEGMENTER_GRAPH =
+const IMAGE_SEGMENTER_GRAPH =
     'mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph';
+const TENSORS_TO_SEGMENTATION_CALCULATOR_NAME =
+    'mediapipe.tasks.TensorsToSegmentationCalculator';
 
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
@@ -61,6 +48,7 @@ const IMAGEA_SEGMENTER_GRAPH =
 /** Performs image segmentation on images. */
 export class ImageSegmenter extends VisionTaskRunner {
   private userCallback: SegmentationMaskCallback = () => {};
+  private labels: string[] = [];
   private readonly options: ImageSegmenterGraphOptionsProto;
   private readonly segmenterOptions: SegmenterOptionsProto;
 
@@ -163,6 +151,39 @@ export class ImageSegmenter extends VisionTaskRunner {
     return super.applyOptions(options);
   }
 
+  protected override onGraphRefreshed(): void {
+    this.populateLabels();
+  }
+
+  /**
+   * Populate the labelMap in TensorsToSegmentationCalculator to labels field.
+   * @throws Exception if there is an error during finding
+   *     TensorsToSegmentationCalculator.
+   */
+  private populateLabels(): void {
+    const graphConfig = this.getCalculatorGraphConfig();
+    const tensorsToSegmentationCalculators = graphConfig.getNodeList().filter(
+        (n: CalculatorGraphConfig.Node) =>
+            n.getName().includes(TENSORS_TO_SEGMENTATION_CALCULATOR_NAME));
+
+    this.labels = [];
+    if (tensorsToSegmentationCalculators.length > 1) {
+      throw new Error(`The graph has more than one ${
+          TENSORS_TO_SEGMENTATION_CALCULATOR_NAME}.`);
+    } else if (tensorsToSegmentationCalculators.length === 1) {
+      const labelItems =
+          tensorsToSegmentationCalculators[0]
+              .getOptions()
+              ?.getExtension(TensorsToSegmentationCalculatorOptions.ext)
+              ?.getLabelItemsMap() ??
+          new Map<string, LabelMapItem>();
+      labelItems.forEach((value, index) => {
+        // tslint:disable-next-line:no-unnecessary-type-assertion
+        this.labels[Number(index)] = value.getName()!;
+      });
+    }
+  }
+
   /**
    * Performs image segmentation on the provided single image and invokes the
    * callback with the response. The method returns synchronously once the
@@ -206,6 +227,21 @@ export class ImageSegmenter extends VisionTaskRunner {
         callback!;
     this.processImageData(image, imageProcessingOptions);
     this.userCallback = () => {};
+  }
+
+  /**
+   * Get the category label list of the ImageSegmenter can recognize. For
+   * `CATEGORY_MASK` type, the index in the category mask corresponds to the
+   * category in the label list. For `CONFIDENCE_MASK` type, the output mask
+   * list at index corresponds to the category in the label list.
+   *
+   * If there is no labelmap provided in the model file, empty label array is
+   * returned.
+   *
+   * @return The labels used by the current model.
+   */
+  getLabels(): string[] {
+    return this.labels;
   }
 
   /**
@@ -272,7 +308,7 @@ export class ImageSegmenter extends VisionTaskRunner {
         ImageSegmenterGraphOptionsProto.ext, this.options);
 
     const segmenterNode = new CalculatorGraphConfig.Node();
-    segmenterNode.setCalculator(IMAGEA_SEGMENTER_GRAPH);
+    segmenterNode.setCalculator(IMAGE_SEGMENTER_GRAPH);
     segmenterNode.addInputStream('IMAGE:' + IMAGE_STREAM);
     segmenterNode.addInputStream('NORM_RECT:' + NORM_RECT_STREAM);
     segmenterNode.addOutputStream(

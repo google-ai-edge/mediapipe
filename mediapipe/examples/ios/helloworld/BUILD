@@ -56,5 +56,6 @@ objc_library(
     deps = [
         "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",
         "//mediapipe/graphs/edge_detection:mobile_calculators",
+        "//third_party/apple_frameworks:Metal",
     ],
 )

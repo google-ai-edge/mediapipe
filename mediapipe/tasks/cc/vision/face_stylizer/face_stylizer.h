@@ -81,7 +81,7 @@ class FaceStylizer : tasks::vision::core::BaseVisionTaskApi {
   // running mode.
   //
   // The input image can be of any size with format RGB or RGBA.
-  // To ensure that the output image has reasonable quailty, the stylized output
+  // To ensure that the output image has reasonable quality, the stylized output
   // image size is the smaller of the model output size and the size of the
   // 'region_of_interest' specified in 'image_processing_options'.
   absl::StatusOr<mediapipe::Image> Stylize(
@@ -106,7 +106,7 @@ class FaceStylizer : tasks::vision::core::BaseVisionTaskApi {
   // The image can be of any size with format RGB or RGBA. It's required to
   // provide the video frame's timestamp (in milliseconds). The input timestamps
   // must be monotonically increasing.
-  // To ensure that the output image has reasonable quailty, the stylized output
+  // To ensure that the output image has reasonable quality, the stylized output
   // image size is the smaller of the model output size and the size of the
   // 'region_of_interest' specified in 'image_processing_options'.
   absl::StatusOr<mediapipe::Image> StylizeForVideo(

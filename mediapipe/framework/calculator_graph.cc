@@ -631,7 +631,13 @@ absl::Status CalculatorGraph::PrepareServices() {
     for (const auto& [key, request] : node->Contract().ServiceRequests()) {
       auto packet = service_manager_.GetServicePacket(request.Service());
       if (!packet.IsEmpty()) continue;
-      auto packet_or = request.Service().CreateDefaultObject();
+      absl::StatusOr<Packet> packet_or;
+      if (allow_service_default_initialization_) {
+        packet_or = request.Service().CreateDefaultObject();
+      } else {
+        packet_or = absl::FailedPreconditionError(
+            "Service default initialization is disallowed.");
+      }
       if (packet_or.ok()) {
         MP_RETURN_IF_ERROR(service_manager_.SetServicePacket(
             request.Service(), std::move(packet_or).value()));

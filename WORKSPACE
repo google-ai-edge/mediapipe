@@ -270,7 +270,7 @@ new_local_repository(
     # For local MacOS builds, the path should point to an opencv@3 installation.
     # If you edit the path here, you will also need to update the corresponding
     # prefix in "opencv_macos.BUILD".
-    path = "/usr/local",
+    path = "/usr/local",  # e.g. /usr/local/Cellar for HomeBrew
 )
 
 new_local_repository(
@@ -499,8 +499,8 @@ cc_crosstool(name = "crosstool")
 # Node dependencies
 http_archive(
     name = "build_bazel_rules_nodejs",
-    sha256 = "5aae76dced38f784b58d9776e4ab12278bc156a9ed2b1d9fcd3e39921dc88fda",
-    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/5.7.1/rules_nodejs-5.7.1.tar.gz"],
+    sha256 = "94070eff79305be05b7699207fbac5d2608054dd53e6109f7d00d923919ff45a",
+    urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/5.8.2/rules_nodejs-5.8.2.tar.gz"],
 )
 
 load("@build_bazel_rules_nodejs//:repositories.bzl", "build_bazel_rules_nodejs_dependencies")
@@ -543,3 +543,43 @@ external_files()
 
 load("@//third_party:wasm_files.bzl", "wasm_files")
 wasm_files()
+
+# Halide
+
+new_local_repository(
+    name = "halide",
+    build_file = "@//third_party/halide:BUILD.bazel",
+    path = "third_party/halide"
+)
+
+http_archive(
+    name = "linux_halide",
+    sha256 = "f62b2914823d6e33d18693f5b74484f274523bf5402ce51988e24393d123b375",
+    strip_prefix = "Halide-15.0.0-x86-64-linux",
+    urls = ["https://github.com/halide/Halide/releases/download/v15.0.0/Halide-15.0.0-x86-64-linux-d7651f4b32f9dbd764f243134001f7554378d62d.tar.gz"],
+    build_file = "@//third_party:halide.BUILD",
+)
+
+http_archive(
+    name = "macos_x86_64_halide",
+    sha256 = "3d832aed942080ea89aa832462c68fbb906f3055c440b7b6d35093d7c52f6aab",
+    strip_prefix = "Halide-15.0.0-x86-64-osx",
+    urls = ["https://github.com/halide/Halide/releases/download/v15.0.0/Halide-15.0.0-x86-64-osx-d7651f4b32f9dbd764f243134001f7554378d62d.tar.gz"],
+    build_file = "@//third_party:halide.BUILD",
+)
+
+http_archive(
+    name = "macos_arm_64_halide",
+    sha256 = "b1fad3c9810122b187303d7031d9e35fb43761f345d18cc4492c00ed5877f641",
+    strip_prefix = "Halide-15.0.0-arm-64-osx",
+    urls = ["https://github.com/halide/Halide/releases/download/v15.0.0/Halide-15.0.0-arm-64-osx-d7651f4b32f9dbd764f243134001f7554378d62d.tar.gz"],
+    build_file = "@//third_party:halide.BUILD",
+)
+
+http_archive(
+    name = "windows_halide",
+    sha256 = "5acf6fe161dd375856a2b43f4bb0a32815ba958b0585ee312c44e008aa7b0b64",
+    strip_prefix = "Halide-15.0.0-x86-64-windows",
+    urls = ["https://github.com/halide/Halide/releases/download/v15.0.0/Halide-15.0.0-x86-64-windows-d7651f4b32f9dbd764f243134001f7554378d62d.zip"],
+    build_file = "@//third_party:halide.BUILD",
+)

@@ -39,9 +39,22 @@ cv::BorderTypes GetBorderModeForOpenCv(
   }
 }
 
+int GetInterpolationForOpenCv(
+    AffineTransformation::Interpolation interpolation) {
+  switch (interpolation) {
+    case AffineTransformation::Interpolation::kLinear:
+      return cv::INTER_LINEAR;
+    case AffineTransformation::Interpolation::kCubic:
+      return cv::INTER_CUBIC;
+  }
+}
+
 class OpenCvRunner
     : public AffineTransformation::Runner<ImageFrame, ImageFrame> {
  public:
+  OpenCvRunner(AffineTransformation::Interpolation interpolation)
+      : interpolation_(GetInterpolationForOpenCv(interpolation)) {}
+
   absl::StatusOr<ImageFrame> Run(
       const ImageFrame& input, const std::array<float, 16>& matrix,
       const AffineTransformation::Size& size,
@@ -142,19 +155,23 @@ class OpenCvRunner
 
     cv::warpAffine(in_mat, out_mat, cv_affine_transform,
                    cv::Size(out_mat.cols, out_mat.rows),
-                   /*flags=*/cv::INTER_LINEAR | cv::WARP_INVERSE_MAP,
+                   /*flags=*/interpolation_ | cv::WARP_INVERSE_MAP,
                    GetBorderModeForOpenCv(border_mode));
 
     return out_image;
   }
+
+ private:
+  int interpolation_ = cv::INTER_LINEAR;
 };
 
 }  // namespace
 
 absl::StatusOr<
     std::unique_ptr<AffineTransformation::Runner<ImageFrame, ImageFrame>>>
-CreateAffineTransformationOpenCvRunner() {
-  return absl::make_unique<OpenCvRunner>();
+CreateAffineTransformationOpenCvRunner(
+    AffineTransformation::Interpolation interpolation) {
+  return absl::make_unique<OpenCvRunner>(interpolation);
 }
 
 }  // namespace mediapipe

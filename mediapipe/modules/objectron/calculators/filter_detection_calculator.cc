@@ -37,6 +37,7 @@ constexpr char kDetectionTag[] = "DETECTION";
 constexpr char kDetectionsTag[] = "DETECTIONS";
 constexpr char kLabelsTag[] = "LABELS";
 constexpr char kLabelsCsvTag[] = "LABELS_CSV";
+constexpr char kLabelMapTag[] = "LABEL_MAP";
 
 using mediapipe::RE2;
 using Detections = std::vector<Detection>;
@@ -151,6 +152,11 @@ absl::Status FilterDetectionCalculator::GetContract(CalculatorContract* cc) {
   if (cc->InputSidePackets().HasTag(kLabelsCsvTag)) {
     cc->InputSidePackets().Tag(kLabelsCsvTag).Set<std::string>();
   }
+  if (cc->InputSidePackets().HasTag(kLabelMapTag)) {
+    cc->InputSidePackets()
+        .Tag(kLabelMapTag)
+        .Set<std::unique_ptr<std::map<int, std::string>>>();
+  }
   return absl::OkStatus();
 }
 
@@ -158,7 +164,8 @@ absl::Status FilterDetectionCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
   options_ = cc->Options<FilterDetectionCalculatorOptions>();
   limit_labels_ = cc->InputSidePackets().HasTag(kLabelsTag) ||
-                  cc->InputSidePackets().HasTag(kLabelsCsvTag);
+                  cc->InputSidePackets().HasTag(kLabelsCsvTag) ||
+                  cc->InputSidePackets().HasTag(kLabelMapTag);
   if (limit_labels_) {
     Strings allowlist_labels;
     if (cc->InputSidePackets().HasTag(kLabelsCsvTag)) {
@@ -168,8 +175,16 @@ absl::Status FilterDetectionCalculator::Open(CalculatorContext* cc) {
       for (auto& e : allowlist_labels) {
         absl::StripAsciiWhitespace(&e);
       }
-    } else {
+    } else if (cc->InputSidePackets().HasTag(kLabelsTag)) {
       allowlist_labels = cc->InputSidePackets().Tag(kLabelsTag).Get<Strings>();
+    } else if (cc->InputSidePackets().HasTag(kLabelMapTag)) {
+      auto label_map = cc->InputSidePackets()
+                           .Tag(kLabelMapTag)
+                           .Get<std::unique_ptr<std::map<int, std::string>>>()
+                           .get();
+      for (const auto& [_, v] : *label_map) {
+        allowlist_labels.push_back(v);
+      }
     }
     allowed_labels_.insert(allowlist_labels.begin(), allowlist_labels.end());
   }

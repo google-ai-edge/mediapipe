@@ -58,6 +58,5 @@ objc_library(
         "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
         "//mediapipe/tasks/ios/text/text_embedder/utils:MPPTextEmbedderOptionsHelpers",
         "//mediapipe/tasks/ios/text/text_embedder/utils:MPPTextEmbedderResultHelpers",
-        "@com_google_absl//absl/status:statusor",
     ],
 )

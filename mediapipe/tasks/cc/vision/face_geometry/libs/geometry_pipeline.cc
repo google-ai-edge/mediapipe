@@ -99,7 +99,7 @@ class ScreenToMetricSpaceConverter {
   //
   // (3) Use the canonical-to-runtime scale from (2) to unproject the screen
   //     landmarks. The result is referenced as "intermediate landmarks" because
-  //     they are the first estimation of the resuling metric landmarks, but are
+  //     they are the first estimation of the resulting metric landmarks,but are
   //     not quite there yet.
   //
   // (4) Estimate a canonical-to-runtime landmark set scale by running the
@@ -347,7 +347,7 @@ class GeometryPipelineImpl : public GeometryPipeline {
       proto::Mesh3d* mutable_mesh = face_geometry.mutable_mesh();
       // Copy the canonical face mesh as the face geometry mesh.
       mutable_mesh->CopyFrom(canonical_mesh_);
-      // Replace XYZ vertex mesh coodinates with the metric landmark positions.
+      // Replace XYZ vertex mesh coordinates with the metric landmark positions.
       for (int i = 0; i < canonical_mesh_num_vertices_; ++i) {
         uint32_t vertex_buffer_offset = canonical_mesh_vertex_size_ * i +
                                         canonical_mesh_vertex_position_offset_;

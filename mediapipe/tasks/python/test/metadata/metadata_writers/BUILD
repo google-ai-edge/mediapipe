@@ -91,3 +91,18 @@ py_test(
         "//mediapipe/tasks/python/test:test_utils",
     ],
 )
+
+py_test(
+    name = "image_segmenter_test",
+    srcs = ["image_segmenter_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/metadata:data_files",
+        "//mediapipe/tasks/testdata/metadata:model_files",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/metadata",
+        "//mediapipe/tasks/python/metadata/metadata_writers:image_segmenter",
+        "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
+        "//mediapipe/tasks/python/test:test_utils",
+    ],
+)

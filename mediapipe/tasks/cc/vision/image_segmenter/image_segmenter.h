@@ -64,15 +64,6 @@ struct ImageSegmenterOptions {
 
   OutputType output_type = OutputType::CATEGORY_MASK;
 
-  // The activation function used on the raw segmentation model output.
-  enum Activation {
-    NONE = 0,     // No activation function is used.
-    SIGMOID = 1,  // Assumes 1-channel input tensor.
-    SOFTMAX = 2,  // Assumes multi-channel input tensor.
-  };
-
-  Activation activation = Activation::NONE;
-
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
   // to RunningMode::LIVE_STREAM.
@@ -189,6 +180,18 @@ class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
 
   // Shuts down the ImageSegmenter when all works are done.
   absl::Status Close() { return runner_->Close(); }
+
+  // Get the category label list of the ImageSegmenter can recognize. For
+  // CATEGORY_MASK type, the index in the category mask corresponds to the
+  // category in the label list. For CONFIDENCE_MASK type, the output mask list
+  // at index corresponds to the category in the label list.
+  //
+  // If there is no labelmap provided in the model file, empty label list is
+  // returned.
+  std::vector<std::string> GetLabels() { return labels_; }
+
+ private:
+  std::vector<std::string> labels_;
 };
 
 }  // namespace image_segmenter

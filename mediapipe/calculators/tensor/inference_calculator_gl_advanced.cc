@@ -141,7 +141,7 @@ InferenceCalculatorGlAdvancedImpl::GpuInferenceRunner::Process(
         }
         // Run inference.
         {
-          MEDIAPIPE_PROFILING(GPU_TASK_INVOKE, cc);
+          MEDIAPIPE_PROFILING(GPU_TASK_INVOKE_ADVANCED, cc);
           return tflite_gpu_runner_->Invoke();
         }
       }));

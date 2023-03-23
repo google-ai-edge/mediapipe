@@ -48,11 +48,13 @@ class Classifier(custom_model.CustomModel):
     self._hparams: hp.BaseHParams = None
     self._history: tf.keras.callbacks.History = None
 
-  def _train_model(self,
-                   train_data: classification_ds.ClassificationDataset,
-                   validation_data: classification_ds.ClassificationDataset,
-                   preprocessor: Optional[Callable[..., bool]] = None,
-                   checkpoint_path: Optional[str] = None):
+  def _train_model(
+      self,
+      train_data: classification_ds.ClassificationDataset,
+      validation_data: classification_ds.ClassificationDataset,
+      preprocessor: Optional[Callable[..., Any]] = None,
+      checkpoint_path: Optional[str] = None,
+  ):
     """Trains the classifier model.
 
     Compiles and fits the tf.keras `_model` and records the `_history`.

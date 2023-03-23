@@ -66,7 +66,7 @@ class TfLiteCustomOpResolverCalculator : public CalculatorBase {
     } else {
       cc->OutputSidePackets()
           .Index(0)
-          .Set<tflite_shims::ops::builtin::BuiltinOpResolver>();
+          .Set<tflite::ops::builtin::BuiltinOpResolver>();
     }
     return absl::OkStatus();
   }
@@ -77,7 +77,7 @@ class TfLiteCustomOpResolverCalculator : public CalculatorBase {
     const TfLiteCustomOpResolverCalculatorOptions& options =
         cc->Options<TfLiteCustomOpResolverCalculatorOptions>();
 
-    std::unique_ptr<tflite_shims::ops::builtin::BuiltinOpResolver> op_resolver;
+    std::unique_ptr<tflite::ops::builtin::BuiltinOpResolver> op_resolver;
     if (options.use_gpu()) {
       op_resolver = absl::make_unique<mediapipe::OpResolver>();
     } else {

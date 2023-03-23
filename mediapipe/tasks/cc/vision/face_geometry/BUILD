@@ -19,9 +19,6 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 cc_library(
     name = "face_geometry_from_landmarks_graph",
     srcs = ["face_geometry_from_landmarks_graph.cc"],
-    data = [
-        "//mediapipe/tasks/cc/vision/face_geometry/data:geometry_pipeline_metadata_landmarks",
-    ],
     deps = [
         "//mediapipe/calculators/core:begin_loop_calculator",
         "//mediapipe/calculators/core:end_loop_calculator",
@@ -39,6 +36,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/face_geometry/calculators:geometry_pipeline_calculator_cc_proto",
         "//mediapipe/tasks/cc/vision/face_geometry/proto:environment_cc_proto",
         "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_cc_proto",
+        "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_graph_options_cc_proto",
         "//mediapipe/util:graph_builder_utils",
         "@com_google_absl//absl/status:statusor",
     ],
