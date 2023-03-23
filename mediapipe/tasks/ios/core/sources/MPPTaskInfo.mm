@@ -106,12 +106,12 @@ using ::mediapipe::InputStreamInfo;
 
   for (NSString *inputStream in self.inputStreams) {
     graphConfig.add_input_stream(inputStream.cppString);
+    
+    NSString *taskInputStream = [MPPTaskInfo addStreamNamePrefix:inputStream];
+    taskSubgraphNode->add_input_stream(taskInputStream.cppString);
 
     NSString *strippedInputStream = [MPPTaskInfo stripTagIndex:inputStream];
     flowLimitCalculatorNode->add_input_stream(strippedInputStream.cppString);
-
-    NSString *taskInputStream = [MPPTaskInfo addStreamNamePrefix:inputStream];
-    taskSubgraphNode->add_input_stream(taskInputStream.cppString);
 
     NSString *strippedTaskInputStream = [MPPTaskInfo stripTagIndex:taskInputStream];
     flowLimitCalculatorNode->add_output_stream(strippedTaskInputStream.cppString);
