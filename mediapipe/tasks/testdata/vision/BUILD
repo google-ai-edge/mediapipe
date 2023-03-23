@@ -170,7 +170,6 @@ filegroup(
         "face_detection_short_range.tflite",
         "face_landmark.tflite",
         "face_landmark_with_attention.tflite",
-        "face_stylization_dummy.tflite",
         "face_landmarker.task",
         "hair_segmentation.tflite",
         "hand_landmark_full.tflite",
