@@ -22,7 +22,9 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/formats/frame_buffer.h"
+#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/util/frame_buffer/float_buffer.h"
 #include "mediapipe/util/frame_buffer/gray_buffer.h"
 #include "mediapipe/util/frame_buffer/rgb_buffer.h"
 #include "mediapipe/util/frame_buffer/yuv_buffer.h"
@@ -48,6 +50,22 @@ bool IsSupportedYuvBuffer(const FrameBuffer& buffer) {
          buffer.format() == FrameBuffer::Format::kNV12 ||
          buffer.format() == FrameBuffer::Format::kYV12 ||
          buffer.format() == FrameBuffer::Format::kYV21;
+}
+
+// Returns the number of channels for the provided buffer. Returns an error if
+// the buffer is not using an interleaved single-planar format.
+absl::StatusOr<int> NumberOfChannels(const FrameBuffer& buffer) {
+  switch (buffer.format()) {
+    case FrameBuffer::Format::kGRAY:
+      return kGrayChannel;
+    case FrameBuffer::Format::kRGB:
+      return kRgbChannels;
+    case FrameBuffer::Format::kRGBA:
+      return kRgbaChannels;
+    default:
+      return absl::InvalidArgumentError(
+          absl::StrFormat("Unsupported buffer format: %i.", buffer.format()));
+  }
 }
 
 // Shared validation functions.
@@ -216,6 +234,25 @@ absl::Status ValidateConvertFormats(FrameBuffer::Format from_format,
   }
 }
 
+absl::Status ValidateFloatTensorInputs(const FrameBuffer& buffer,
+                                       const Tensor& tensor) {
+  if (tensor.element_type() != Tensor::ElementType::kFloat32) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "Tensor type %i is not supported.", tensor.element_type()));
+  }
+  const auto& shape = tensor.shape();
+  if (shape.dims.size() != 4 || shape.dims[0] != 1) {
+    return absl::InvalidArgumentError("Expected tensor with batch size of 1.");
+  }
+  ASSIGN_OR_RETURN(int channels, NumberOfChannels(buffer));
+  if (shape.dims[2] != buffer.dimension().width ||
+      shape.dims[1] != buffer.dimension().height || shape.dims[3] != channels) {
+    return absl::InvalidArgumentError(
+        "Input buffer and output tensor must have the same dimensions.");
+  }
+  return absl::OkStatus();
+}
+
 // Construct buffer helper functions.
 //------------------------------------------------------------------------------
 
@@ -378,6 +415,19 @@ absl::Status RotateRgb(const FrameBuffer& buffer, int angle,
   return input.Rotate(angle % 360, &output)
              ? absl::OkStatus()
              : absl::UnknownError("Halide rgb[a] rotate operation failed.");
+}
+
+absl::Status ToFloatTensorRgb(const FrameBuffer& buffer, float scale,
+                              float offset, Tensor& tensor) {
+  ASSIGN_OR_RETURN(auto input, CreateRgbBuffer(buffer));
+  ASSIGN_OR_RETURN(int channels, NumberOfChannels(buffer));
+  auto view = tensor.GetCpuWriteView();
+  float* data = view.buffer<float>();
+  FloatBuffer output(data, buffer.dimension().width, buffer.dimension().height,
+                     channels);
+  return input.ToFloat(scale, offset, &output)
+             ? absl::OkStatus()
+             : absl::UnknownError("Halide rgb[a] to float conversion failed.");
 }
 
 // Yuv transformation functions.
@@ -713,6 +763,18 @@ absl::Status Convert(const FrameBuffer& buffer, FrameBuffer* output_buffer) {
       return ConvertYuv(buffer, output_buffer);
     default:
       return absl::InternalError(
+          absl::StrFormat("Format %i is not supported.", buffer.format()));
+  }
+}
+
+absl::Status ToFloatTensor(const FrameBuffer& buffer, float scale, float offset,
+                           Tensor& tensor) {
+  MP_RETURN_IF_ERROR(ValidateFloatTensorInputs(buffer, tensor));
+  switch (buffer.format()) {
+    case FrameBuffer::Format::kRGB:
+      return ToFloatTensorRgb(buffer, scale, offset, tensor);
+    default:
+      return absl::InvalidArgumentError(
           absl::StrFormat("Format %i is not supported.", buffer.format()));
   }
 }

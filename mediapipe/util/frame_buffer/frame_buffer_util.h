@@ -21,6 +21,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/frame_buffer.h"
+#include "mediapipe/framework/formats/tensor.h"
 
 namespace mediapipe {
 namespace frame_buffer {
@@ -97,6 +98,14 @@ absl::Status FlipVertically(const FrameBuffer& buffer,
 // Note the NV21 to RGB/RGBA conversion may downsample by factor of 2 based
 // on the buffer and output_buffer dimensions.
 absl::Status Convert(const FrameBuffer& buffer, FrameBuffer* output_buffer);
+
+// Converts `buffer` into the provided float Tensor. Each value is converted to
+// a float using:
+//   output = input * scale + offset
+//
+// Note that only interleaved single-planar formats support this operation.
+absl::Status ToFloatTensor(const FrameBuffer& buffer, float scale, float offset,
+                           Tensor& tensor);
 
 // Miscellaneous Methods
 // -----------------------------------------------------------------

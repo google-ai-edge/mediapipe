@@ -62,6 +62,12 @@ halide_library(
     generator_name = "rgb_rgb_generator",
 )
 
+halide_library(
+    name = "rgb_float_halide",
+    srcs = ["rgb_float_generator.cc"],
+    generator_name = "rgb_float_generator",
+)
+
 # YUV operations:
 halide_library(
     name = "yuv_flip_halide",

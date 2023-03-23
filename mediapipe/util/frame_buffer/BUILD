@@ -22,6 +22,7 @@ cc_library(
     deps = [
         ":buffer",
         "//mediapipe/framework/formats:frame_buffer",
+        "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
@@ -37,6 +38,7 @@ cc_test(
     deps = [
         ":frame_buffer_util",
         "//mediapipe/framework/formats:frame_buffer",
+        "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status",
     ],
@@ -46,12 +48,14 @@ cc_library(
     name = "buffer",
     srcs = [
         "buffer_common.cc",
+        "float_buffer.cc",
         "gray_buffer.cc",
         "rgb_buffer.cc",
         "yuv_buffer.cc",
     ],
     hdrs = [
         "buffer_common.h",
+        "float_buffer.h",
         "gray_buffer.h",
         "rgb_buffer.h",
         "yuv_buffer.h",
@@ -61,6 +65,7 @@ cc_library(
         "//mediapipe/util/frame_buffer/halide:gray_resize_halide",
         "//mediapipe/util/frame_buffer/halide:gray_rotate_halide",
         "//mediapipe/util/frame_buffer/halide:rgb_flip_halide",
+        "//mediapipe/util/frame_buffer/halide:rgb_float_halide",
         "//mediapipe/util/frame_buffer/halide:rgb_gray_halide",
         "//mediapipe/util/frame_buffer/halide:rgb_resize_halide",
         "//mediapipe/util/frame_buffer/halide:rgb_rgb_halide",
