@@ -106,7 +106,7 @@ using ::mediapipe::InputStreamInfo;
 
   for (NSString *inputStream in self.inputStreams) {
     graphConfig.add_input_stream(inputStream.cppString);
-    
+
     NSString *taskInputStream = [MPPTaskInfo addStreamNamePrefix:inputStream];
     taskSubgraphNode->add_input_stream(taskInputStream.cppString);
 
