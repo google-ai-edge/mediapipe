@@ -23,7 +23,6 @@ mediapipe_proto_library(
     srcs = ["tensors_to_segmentation_calculator.proto"],
     deps = [
         "//mediapipe/framework:calculator_options_proto",
-        "//mediapipe/framework:calculator_proto",
         "//mediapipe/framework/formats:image_format_proto",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_proto",
         "//mediapipe/util:label_map_proto",

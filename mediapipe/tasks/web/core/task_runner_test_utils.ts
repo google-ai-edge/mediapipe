@@ -16,7 +16,7 @@
 import 'jasmine';
 
 import {CalculatorGraphConfig} from '../../../framework/calculator_pb';
-import {WasmModule} from '../../../web/graph_runner/graph_runner';
+import {CALCULATOR_GRAPH_CONFIG_LISTENER_NAME, SimpleListener, WasmModule} from '../../../web/graph_runner/graph_runner';
 import {WasmModuleRegisterModelResources} from '../../../web/graph_runner/register_model_resources_graph_service';
 
 type SpyWasmModuleInternal = WasmModule&WasmModuleRegisterModelResources;
@@ -36,8 +36,13 @@ export function createSpyWasmModule(): SpyWasmModule {
     '_setAutoRenderToScreen', 'stringToNewUTF8', '_attachProtoListener',
     '_attachProtoVectorListener', '_free', '_waitUntilIdle',
     '_addStringToInputStream', '_registerModelResourcesGraphService',
-    '_configureAudio', '_malloc', '_addProtoToInputStream'
+    '_configureAudio', '_malloc', '_addProtoToInputStream', '_getGraphConfig'
   ]);
+  spyWasmModule._getGraphConfig.and.callFake(() => {
+    (spyWasmModule.simpleListeners![CALCULATOR_GRAPH_CONFIG_LISTENER_NAME] as
+     SimpleListener<Uint8Array>)(
+        new CalculatorGraphConfig().serializeBinary(), 0);
+  });
   spyWasmModule.HEAPU8 = jasmine.createSpyObj<Uint8Array>(['set']);
   return spyWasmModule;
 }

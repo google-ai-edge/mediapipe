@@ -18,7 +18,7 @@ syntax = "proto2";
 // TODO: consolidate TensorToSegmentationCalculator.
 package mediapipe.tasks;
 
-import "mediapipe/framework/calculator.proto";
+import "mediapipe/framework/calculator_options.proto";
 import "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.proto";
 import "mediapipe/util/label_map.proto";
 

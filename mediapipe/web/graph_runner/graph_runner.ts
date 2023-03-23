@@ -37,6 +37,17 @@ export type VectorListener<T> = (data: T, done: boolean, timestamp: number) =>
     void;
 
 /**
+ * A listener that receives the CalculatorGraphConfig in binary encoding.
+ */
+export type CalculatorGraphConfigListener = (graphConfig: Uint8Array) => void;
+
+/**
+ * The name of the internal listener that we use to obtain the calculator graph
+ * config. Intended for internal usage. Exported for testing only.
+ */
+export const CALCULATOR_GRAPH_CONFIG_LISTENER_NAME = '__graph_config__';
+
+/**
  * Declarations for Emscripten's WebAssembly Module behavior, so TS compiler
  * doesn't break our JS/C++ bridge.
  */
@@ -123,6 +134,10 @@ export declare interface WasmModule {
       numSamples: number, streamNamePtr: number, timestamp: number) => void;
   _configureAudio: (channels: number, samples: number, sampleRate: number,
       streamNamePtr: number, headerNamePtr: number) => void;
+
+  // Get the graph configuration and invoke the listener configured under
+  // streamNamePtr
+  _getGraphConfig: (streamNamePtr: number, makeDeepCopy?: boolean) => void;
 
   // TODO: Refactor to just use a few numbers (perhaps refactor away
   //   from gl_graph_runner_internal.cc entirely to use something a little more
@@ -435,6 +450,29 @@ export class GraphRunner {
       this.wasmModule._free(uint32ptr);
     }
     this.wasmModule._free(heapSpace);
+  }
+
+  /**
+   * Invokes the callback with the current calculator configuration (in binary
+   * format).
+   *
+   * Consumers must deserialize the binary representation themselves as this
+   * avoids addding a direct dependency on the Protobuf JSPB target in the graph
+   * library.
+   */
+  getCalculatorGraphConfig(
+      callback: CalculatorGraphConfigListener, makeDeepCopy?: boolean): void {
+    const listener = CALCULATOR_GRAPH_CONFIG_LISTENER_NAME;
+
+    // Create a short-lived listener to receive the binary encoded proto
+    this.setListener(listener, (data: Uint8Array) => {
+      callback(data);
+    });
+    this.wrapStringPtr(listener, (outputStreamNamePtr: number) => {
+      this.wasmModule._getGraphConfig(outputStreamNamePtr, makeDeepCopy);
+    });
+
+    delete this.wasmModule.simpleListeners![listener];
   }
 
   /**
