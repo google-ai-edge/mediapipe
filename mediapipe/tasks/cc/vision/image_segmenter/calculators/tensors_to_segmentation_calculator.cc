@@ -325,14 +325,7 @@ absl::Status TensorsToSegmentationCalculator::Process(
         postprocessor_.GetSegmentationResultGpu(input_shape, output_shape,
                                                 input_tensor);
     for (int i = 0; i < segmented_masks.size(); ++i) {
-      // Real output on GPU.
-      // kSegmentationOut(cc)[i].Send(std::move(segmented_masks[i]));
-
-      // Reformat as CPU for now for testing.
-      // TODO: Switch to real GPU output when GPU output pipeline is
-      //     ready.
-      Image new_image(segmented_masks[i]->GetImageFrameSharedPtr());
-      kSegmentationOut(cc)[i].Send(std::move(new_image));
+      kSegmentationOut(cc)[i].Send(std::move(segmented_masks[i]));
     }
     return absl::OkStatus();
   }
