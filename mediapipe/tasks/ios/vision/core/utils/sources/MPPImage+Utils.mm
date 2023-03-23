@@ -133,6 +133,9 @@ using ::mediapipe::ImageFrame;
   size_t height = CVPixelBufferGetHeight(pixelBuffer);
   size_t stride = CVPixelBufferGetBytesPerRow(pixelBuffer);
 
+  size_t destinationChannelCount = 3;
+  size_t destinationStride = destinationChannelCount * width;
+
   uint8_t *rgbPixelData = [MPPPixelDataUtils
       rgbPixelDataFromPixelData:(uint8_t *)CVPixelBufferGetBaseAddress(pixelBuffer)
                       withWidth:CVPixelBufferGetWidth(pixelBuffer)
@@ -148,7 +151,7 @@ using ::mediapipe::ImageFrame;
   }
 
   std::unique_ptr<ImageFrame> imageFrame = absl::make_unique<ImageFrame>(
-      ::mediapipe::ImageFormat::SRGB, width, height, stride, static_cast<uint8 *>(rgbPixelData),
+      ::mediapipe::ImageFormat::SRGB, width, height, destinationStride, static_cast<uint8 *>(rgbPixelData),
       /*deleter=*/free);
 
   return imageFrame;
@@ -183,11 +186,14 @@ using ::mediapipe::ImageFrame;
 
   NSInteger bitsPerComponent = 8;
   NSInteger channelCount = 4;
+  size_t bytesPerRow = channelCount * width;
+
+  NSInteger destinationChannelCount = 3;
+  size_t destinationBytesPerRow = destinationChannelCount * width;
+
   UInt8 *pixelDataToReturn = NULL;
 
   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-  size_t bytesPerRow = channelCount * width;
-
   // iOS infers bytesPerRow if it is set to 0.
   // See https://developer.apple.com/documentation/coregraphics/1455939-cgbitmapcontextcreate
   // But for segmentation test image, this was not the case.
@@ -219,9 +225,13 @@ using ::mediapipe::ImageFrame;
 
   CGColorSpaceRelease(colorSpace);
 
+  if (!pixelDataToReturn) {
+    return nullptr;
+  }
+
   std::unique_ptr<ImageFrame> imageFrame =
       absl::make_unique<ImageFrame>(mediapipe::ImageFormat::SRGB, (int)width, (int)height,
-                                    (int)bytesPerRow, static_cast<uint8 *>(pixelDataToReturn),
+                                    (int)destinationBytesPerRow, static_cast<uint8 *>(pixelDataToReturn),
                                     /*deleter=*/free);
 
   return imageFrame;
