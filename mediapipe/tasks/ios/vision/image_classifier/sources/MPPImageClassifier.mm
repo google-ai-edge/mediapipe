@@ -134,7 +134,6 @@ static NSString *const kTaskGraphName =
 
   PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
 
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processPacketMap:inputPacketMap
                                                                            error:error];
   if (!outputPacketMap.has_value()) {
     return nil;
