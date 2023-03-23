@@ -23,7 +23,8 @@ static NSString *const kQuantizedModelName = @"mobilenet_v1_0.25_224_quant";
 static NSDictionary *const kBurgerImage = @{@"name" : @"burger", @"type" : @"jpg"};
 static NSDictionary *const kBurgerRotatedImage = @{@"name" : @"burger_rotated", @"type" : @"jpg"};
 static NSDictionary *const kMultiObjectsImage = @{@"name" : @"multi_objects", @"type" : @"jpg"};
-static NSDictionary *const kMultiObjectsRotatedImage = @{@"name" : @"multi_objects_rotated", @"type" : @"jpg"};
+static NSDictionary *const kMultiObjectsRotatedImage =
+    @{@"name" : @"multi_objects_rotated", @"type" : @"jpg"};
 static const int kMobileNetCategoriesCount = 1001;
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
@@ -112,7 +113,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 #pragma mark Assert Classify Results
 
--(MPPImage *)imageWithFileInfo:(NSDictionary *)fileInfo {
+- (MPPImage *)imageWithFileInfo:(NSDictionary *)fileInfo {
   MPPImage *image = [MPPImage imageFromBundleWithClass:[MPPImageClassifierTests class]
                                               fileName:fileInfo[@"name"]
                                                 ofType:fileInfo[@"type"]];
@@ -121,11 +122,12 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   return image;
 }
 
--(MPPImage *)imageWithFileInfo:(NSDictionary *)fileInfo orientation:(UIImageOrientation)orientation {
+- (MPPImage *)imageWithFileInfo:(NSDictionary *)fileInfo
+                    orientation:(UIImageOrientation)orientation {
   MPPImage *image = [MPPImage imageFromBundleWithClass:[MPPImageClassifierTests class]
                                               fileName:fileInfo[@"name"]
                                                 ofType:fileInfo[@"type"]
-                                                orientation:orientation];
+                                           orientation:orientation];
   XCTAssertNotNil(image);
 
   return image;
@@ -173,9 +175,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 }
 
 - (void)assertResultsOfClassifyImageWithFileInfo:(NSDictionary *)fileInfo
-                        usingImageClassifier:(MPPImageClassifier *)imageClassifier
-                     expectedCategoriesCount:(NSInteger)expectedCategoriesCount
-                            equalsCategories:(NSArray<MPPCategory *> *)expectedCategories {
+                            usingImageClassifier:(MPPImageClassifier *)imageClassifier
+                         expectedCategoriesCount:(NSInteger)expectedCategoriesCount
+                                equalsCategories:(NSArray<MPPCategory *> *)expectedCategories {
   MPPImage *mppImage = [self imageWithFileInfo:fileInfo];
 
   [self assertResultsOfClassifyImage:mppImage
@@ -242,11 +244,13 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 - (void)testClassifyWithModelPathAndFloatModelSucceeds {
   MPPImageClassifier *imageClassifier = [self imageClassifierFromModelFileWithName:kFloatModelName];
 
-  [self assertResultsOfClassifyImageWithFileInfo:kBurgerImage
-                        usingImageClassifier:imageClassifier
-                     expectedCategoriesCount:kMobileNetCategoriesCount
-                            equalsCategories:[MPPImageClassifierTests
-                                                 expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
+  [self
+      assertResultsOfClassifyImageWithFileInfo:kBurgerImage
+                          usingImageClassifier:imageClassifier
+                       expectedCategoriesCount:kMobileNetCategoriesCount
+                              equalsCategories:
+                                  [MPPImageClassifierTests
+                                      expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
 }
 
 - (void)testClassifyWithOptionsAndFloatModelSucceeds {
@@ -257,11 +261,13 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
   MPPImageClassifier *imageClassifier = [self imageClassifierWithOptionsSucceeds:options];
 
-  [self assertResultsOfClassifyImageWithFileInfo:kBurgerImage
-                        usingImageClassifier:imageClassifier
-                     expectedCategoriesCount:maxResults
-                            equalsCategories:[MPPImageClassifierTests
-                                                 expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
+  [self
+      assertResultsOfClassifyImageWithFileInfo:kBurgerImage
+                          usingImageClassifier:imageClassifier
+                       expectedCategoriesCount:maxResults
+                              equalsCategories:
+                                  [MPPImageClassifierTests
+                                      expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
 }
 
 - (void)testClassifyWithQuantizedModelSucceeds {
@@ -279,9 +285,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                                                          displayName:nil] ];
 
   [self assertResultsOfClassifyImageWithFileInfo:kBurgerImage
-                        usingImageClassifier:imageClassifier
-                     expectedCategoriesCount:maxResults
-                            equalsCategories:expectedCategories];
+                            usingImageClassifier:imageClassifier
+                         expectedCategoriesCount:maxResults
+                                equalsCategories:expectedCategories];
 }
 
 - (void)testClassifyWithScoreThresholdSucceeds {
@@ -297,9 +303,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                                                          displayName:nil] ];
 
   [self assertResultsOfClassifyImageWithFileInfo:kBurgerImage
-                        usingImageClassifier:imageClassifier
-                     expectedCategoriesCount:expectedCategories.count
-                            equalsCategories:expectedCategories];
+                            usingImageClassifier:imageClassifier
+                         expectedCategoriesCount:expectedCategories.count
+                                equalsCategories:expectedCategories];
 }
 
 - (void)testClassifyWithAllowListSucceeds {
@@ -326,9 +332,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   ];
 
   [self assertResultsOfClassifyImageWithFileInfo:kBurgerImage
-                        usingImageClassifier:imageClassifier
-                     expectedCategoriesCount:expectedCategories.count
-                            equalsCategories:expectedCategories];
+                            usingImageClassifier:imageClassifier
+                         expectedCategoriesCount:expectedCategories.count
+                                equalsCategories:expectedCategories];
 }
 
 - (void)testClassifyWithDenyListSucceeds {
@@ -358,9 +364,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   ];
 
   [self assertResultsOfClassifyImageWithFileInfo:kBurgerImage
-                        usingImageClassifier:imageClassifier
-                     expectedCategoriesCount:expectedCategories.count
-                            equalsCategories:expectedCategories];
+                            usingImageClassifier:imageClassifier
+                         expectedCategoriesCount:expectedCategories.count
+                                equalsCategories:expectedCategories];
 }
 
 - (void)testClassifyWithRegionOfInterestSucceeds {
@@ -377,7 +383,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                                                          displayName:nil] ];
 
   MPPImage *image = [self imageWithFileInfo:kMultiObjectsImage];
-                                           
+
   // roi around soccer ball
   MPPImageClassifierResult *imageClassifierResult =
       [imageClassifier classifyImage:image
@@ -412,7 +418,8 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
   ];
 
-  MPPImage *image = [self imageWithFileInfo:kBurgerRotatedImage orientation:UIImageOrientationRight];
+  MPPImage *image = [self imageWithFileInfo:kBurgerRotatedImage
+                                orientation:UIImageOrientationRight];
 
   [self assertResultsOfClassifyImage:image
                 usingImageClassifier:imageClassifier
@@ -434,7 +441,8 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                categoryName:@"folding chair"
                                 displayName:nil] ];
 
-  MPPImage *image = [self imageWithFileInfo:kMultiObjectsRotatedImage orientation:UIImageOrientationRight];
+  MPPImage *image = [self imageWithFileInfo:kMultiObjectsRotatedImage
+                                orientation:UIImageOrientationRight];
 
   // roi around folding chair
   MPPImageClassifierResult *imageClassifierResult =
@@ -606,8 +614,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
   MPPImageClassifier *imageClassifier = [self imageClassifierWithOptionsSucceeds:options];
 
-
-  MPPImage *image = [self imageWithFileInfo:kBurgerImage]; 
+  MPPImage *image = [self imageWithFileInfo:kBurgerImage];
 
   for (int i = 0; i < 3; i++) {
     MPPImageClassifierResult *imageClassifierResult = [imageClassifier classifyVideoFrame:image
@@ -615,8 +622,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                                                                                     error:nil];
     [self assertImageClassifierResult:imageClassifierResult
            hasExpectedCategoriesCount:maxResults
-                   expectedCategories:[MPPImageClassifierTests
-                                          expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
+                   expectedCategories:
+                       [MPPImageClassifierTests
+                           expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
   }
 }
 
@@ -630,13 +638,14 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   options.completion = ^(MPPImageClassifierResult *result, NSError *error) {
     [self assertImageClassifierResult:result
            hasExpectedCategoriesCount:maxResults
-                   expectedCategories:[MPPImageClassifierTests
-                                          expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
+                   expectedCategories:
+                       [MPPImageClassifierTests
+                           expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
   };
 
   MPPImageClassifier *imageClassifier = [self imageClassifierWithOptionsSucceeds:options];
 
-  MPPImage *image = [self imageWithFileInfo:kBurgerImage]; 
+  MPPImage *image = [self imageWithFileInfo:kBurgerImage];
 
   XCTAssertTrue([imageClassifier classifyAsyncImage:image timestampMs:1 error:nil]);
 
@@ -663,16 +672,17 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   options.completion = ^(MPPImageClassifierResult *result, NSError *error) {
     [self assertImageClassifierResult:result
            hasExpectedCategoriesCount:maxResults
-                   expectedCategories:[MPPImageClassifierTests
-                                          expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
+                   expectedCategories:
+                       [MPPImageClassifierTests
+                           expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
   };
 
   MPPImageClassifier *imageClassifier = [self imageClassifierWithOptionsSucceeds:options];
-  
-  // TODO: Mimic initialization from CMSampleBuffer as live stream mode is most likely to be used with the iOS camera.
-  // AVCaptureVideoDataOutput sample buffer delegates provide frames of type `CMSampleBuffer`.
-  MPPImage *image = [self imageWithFileInfo:kBurgerImage]; 
 
+  // TODO: Mimic initialization from CMSampleBuffer as live stream mode is most likely to be used
+  // with the iOS camera. AVCaptureVideoDataOutput sample buffer delegates provide frames of type
+  // `CMSampleBuffer`.
+  MPPImage *image = [self imageWithFileInfo:kBurgerImage];
 
   for (int i = 0; i < 3; i++) {
     XCTAssertTrue([imageClassifier classifyAsyncImage:image timestampMs:i error:nil]);

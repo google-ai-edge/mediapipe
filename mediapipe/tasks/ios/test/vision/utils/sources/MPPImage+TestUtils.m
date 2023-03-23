@@ -16,14 +16,17 @@
 
 @interface UIImage (FileUtils)
 
-+(nullable UIImage *)imageFromBundleWithClass:(Class)classObject fileName:(NSString *)name ofType:(NSString *)type;
++ (nullable UIImage *)imageFromBundleWithClass:(Class)classObject
+                                      fileName:(NSString *)name
+                                        ofType:(NSString *)type;
 
 @end
 
 @implementation UIImage (FileUtils)
 
-+(nullable UIImage *)imageFromBundleWithClass:(Class)classObject fileName:(NSString *)name ofType:(NSString *)type {
-
++ (nullable UIImage *)imageFromBundleWithClass:(Class)classObject
+                                      fileName:(NSString *)name
+                                        ofType:(NSString *)type {
   NSString *imagePath = [[NSBundle bundleForClass:classObject] pathForResource:name ofType:type];
   if (!imagePath) return nil;
 
@@ -35,17 +38,17 @@
 @implementation MPPImage (TestUtils)
 
 + (nullable MPPImage *)imageFromBundleWithClass:(Class)classObject
-                              fileName:(NSString *)name
-                                ofType:(NSString *)type {
+                                       fileName:(NSString *)name
+                                         ofType:(NSString *)type {
   UIImage *image = [UIImage imageFromBundleWithClass:classObject fileName:name ofType:type];
 
   return [[MPPImage alloc] initWithUIImage:image error:nil];
 }
 
 + (nullable MPPImage *)imageFromBundleWithClass:(Class)classObject
-                              fileName:(NSString *)name
-                                ofType:(NSString *)type
-                                orientation:(UIImageOrientation)imageOrientation {
+                                       fileName:(NSString *)name
+                                         ofType:(NSString *)type
+                                    orientation:(UIImageOrientation)imageOrientation {
   UIImage *image = [UIImage imageFromBundleWithClass:classObject fileName:name ofType:type];
 
   return [[MPPImage alloc] initWithUIImage:image orientation:imageOrientation error:nil];

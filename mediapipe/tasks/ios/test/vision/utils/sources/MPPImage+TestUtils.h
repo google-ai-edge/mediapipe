@@ -40,7 +40,8 @@ NS_ASSUME_NONNULL_BEGIN
     NS_SWIFT_NAME(imageFromBundle(class:filename:type:));
 
 /**
- * Loads an image from a file in an app bundle into a `MPPImage` object with the specified orientation.
+ * Loads an image from a file in an app bundle into a `MPPImage` object with the specified
+ * orientation.
  *
  * @param classObject The specified class associated with the bundle containing
  * the file to be loaded.
@@ -52,10 +53,10 @@ NS_ASSUME_NONNULL_BEGIN
  * nil if it cannot load the image.
  */
 + (nullable MPPImage *)imageFromBundleWithClass:(Class)classObject
-                              fileName:(NSString *)name
-                                ofType:(NSString *)type
-                                orientation:(UIImageOrientation)imageOrientation
-    NS_SWIFT_NAME(imageFromBundle(class:filename:type:orientation:));                             
+                                       fileName:(NSString *)name
+                                         ofType:(NSString *)type
+                                    orientation:(UIImageOrientation)imageOrientation
+    NS_SWIFT_NAME(imageFromBundle(class:filename:type:orientation:));
 
 @end
 

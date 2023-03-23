@@ -138,7 +138,7 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
 }
 
 - (std::optional<PacketMap>)processImagePacketMap:(const PacketMap &)packetMap
-                                            error:(NSError **)error {                                              
+                                            error:(NSError **)error {
   if (_runningMode != MPPRunningModeImage) {
     [MPPCommonUtils
         createCustomError:error
