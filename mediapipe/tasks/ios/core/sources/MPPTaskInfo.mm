@@ -117,8 +117,8 @@ using ::mediapipe::InputStreamInfo;
     flowLimitCalculatorNode->add_output_stream(strippedTaskInputStream.cppString);
   }
 
-  NSString *firstOutputStream = self.outputStreams[0];
-  auto finishedOutputStream = "FINISHED:" + firstOutputStream.cppString;
+  NSString *strippedFirstOutputStream = [MPPTaskInfo stripTagIndex:self.outputStreams[0]];
+  auto finishedOutputStream = "FINISHED:" + strippedFirstOutputStream.cppString;
   flowLimitCalculatorNode->add_input_stream(finishedOutputStream);
 
   return graphConfig;
