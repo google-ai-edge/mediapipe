@@ -55,6 +55,7 @@ objc_library(
     deps = [
         ":MPPRunningMode",
         "@ios_opencv//:OpencvFramework",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
