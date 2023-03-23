@@ -69,7 +69,7 @@ static NSString *const kTaskGraphName =
                                   [NSString stringWithFormat:@"%@:%@", kImageTag,
                                                             kImageOutStreamName] ]
                   taskOptions:options
-           enableFlowLimiting:NO
+           enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
                         error:error];
 
     if (!taskInfo) {
