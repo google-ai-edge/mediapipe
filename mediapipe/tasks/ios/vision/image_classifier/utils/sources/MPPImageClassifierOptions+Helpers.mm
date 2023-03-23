@@ -32,8 +32,9 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
 - (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
   ImageClassifierGraphOptionsProto *graphOptions =
       optionsProto->MutableExtension(ImageClassifierGraphOptionsProto::ext);
-  [self.baseOptions copyToProto:graphOptions->mutable_base_options()];
-
+  
+  [self.baseOptions copyToProto:graphOptions->mutable_base_options() withUseStreamMode:self.runningMode != MPPRunningModeImage];
+  
   ClassifierOptionsProto *classifierOptionsProto = graphOptions->mutable_classifier_options();
   classifierOptionsProto->Clear();
 
