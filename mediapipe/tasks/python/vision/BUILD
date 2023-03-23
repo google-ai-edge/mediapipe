@@ -80,6 +80,28 @@ py_library(
 )
 
 py_library(
+    name = "interactive_segmenter",
+    srcs = [
+        "interactive_segmenter.py",
+    ],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_py_pb2",
+        "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_py_pb2",
+        "//mediapipe/tasks/python/components/containers:keypoint",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "//mediapipe/util:render_data_py_pb2",
+    ],
+)
+
+py_library(
     name = "image_embedder",
     srcs = [
         "image_embedder.py",
