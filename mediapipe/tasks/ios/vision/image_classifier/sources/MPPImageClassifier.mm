@@ -36,7 +36,7 @@ static NSString *const kClassificationsTag = @"CLASSIFICATIONS";
 static NSString *const kImageInStreamName = @"image_in";
 static NSString *const kImageOutStreamName = @"image_out";
 static NSString *const kImageTag = @"IMAGE";
-static NSString *const kNormRectName = @"norm_rect_in";
+static NSString *const kNormRectStreamName = @"norm_rect_in";
 static NSString *const kNormRectTag = @"NORM_RECT";
 
 static NSString *const kTaskGraphName =
@@ -44,7 +44,7 @@ static NSString *const kTaskGraphName =
 
 #define InputPacketMap(imagePacket, normalizedRectPacket)                                          \
   {                                                                                                \
-    {kImageInStreamName.cppString, imagePacket}, { kNormRectName.cppString, normalizedRectPacket } \
+    {kImageInStreamName.cppString, imagePacket}, { kNormRectStreamName.cppString, normalizedRectPacket } \
   }
 
 @interface MPPImageClassifier () {
@@ -61,9 +61,13 @@ static NSString *const kTaskGraphName =
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName
                  inputStreams:@[ [NSString
-                                  stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName] ]
+                                  stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
+                                  [NSString
+                                  stringWithFormat:@"%@:%@", kNormRectTag, kNormRectStreamName] ]
                 outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kClassificationsTag,
-                                                            kClassificationsStreamName] ]
+                                                            kClassificationsStreamName],
+                                  [NSString stringWithFormat:@"%@:%@", kImageTag,
+                                                            kImageOutStreamName] ]
                   taskOptions:options
            enableFlowLimiting:NO
                         error:error];
