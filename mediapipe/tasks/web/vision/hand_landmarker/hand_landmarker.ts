@@ -75,9 +75,8 @@ export class HandLandmarker extends VisionTaskRunner {
   static createFromOptions(
       wasmFileset: WasmFileset,
       handLandmarkerOptions: HandLandmarkerOptions): Promise<HandLandmarker> {
-    return VisionTaskRunner.createInstance(
-        HandLandmarker, /* initializeCanvas= */ true, wasmFileset,
-        handLandmarkerOptions);
+    return VisionTaskRunner.createVisionInstance(
+        HandLandmarker, wasmFileset, handLandmarkerOptions);
   }
 
   /**
@@ -90,9 +89,8 @@ export class HandLandmarker extends VisionTaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<HandLandmarker> {
-    return VisionTaskRunner.createInstance(
-        HandLandmarker, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createVisionInstance(
+        HandLandmarker, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -105,9 +103,8 @@ export class HandLandmarker extends VisionTaskRunner {
   static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<HandLandmarker> {
-    return VisionTaskRunner.createInstance(
-        HandLandmarker, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+    return VisionTaskRunner.createVisionInstance(
+        HandLandmarker, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
   /** @hideconstructor */

@@ -58,9 +58,8 @@ export class FaceStylizer extends VisionTaskRunner {
   static createFromOptions(
       wasmFileset: WasmFileset,
       faceStylizerOptions: FaceStylizerOptions): Promise<FaceStylizer> {
-    return VisionTaskRunner.createInstance(
-        FaceStylizer, /* initializeCanvas= */ true, wasmFileset,
-        faceStylizerOptions);
+    return VisionTaskRunner.createVisionInstance(
+        FaceStylizer, wasmFileset, faceStylizerOptions);
   }
 
   /**
@@ -73,9 +72,8 @@ export class FaceStylizer extends VisionTaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<FaceStylizer> {
-    return VisionTaskRunner.createInstance(
-        FaceStylizer, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createVisionInstance(
+        FaceStylizer, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -88,9 +86,8 @@ export class FaceStylizer extends VisionTaskRunner {
   static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<FaceStylizer> {
-    return VisionTaskRunner.createInstance(
-        FaceStylizer, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+    return VisionTaskRunner.createVisionInstance(
+        FaceStylizer, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
   /** @hideconstructor */

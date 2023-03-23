@@ -59,9 +59,8 @@ export class ObjectDetector extends VisionTaskRunner {
   static createFromOptions(
       wasmFileset: WasmFileset,
       objectDetectorOptions: ObjectDetectorOptions): Promise<ObjectDetector> {
-    return VisionTaskRunner.createInstance(
-        ObjectDetector, /* initializeCanvas= */ true, wasmFileset,
-        objectDetectorOptions);
+    return VisionTaskRunner.createVisionInstance(
+        ObjectDetector, wasmFileset, objectDetectorOptions);
   }
 
   /**
@@ -74,9 +73,8 @@ export class ObjectDetector extends VisionTaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ObjectDetector> {
-    return VisionTaskRunner.createInstance(
-        ObjectDetector, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createVisionInstance(
+        ObjectDetector, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -89,9 +87,8 @@ export class ObjectDetector extends VisionTaskRunner {
   static async createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ObjectDetector> {
-    return VisionTaskRunner.createInstance(
-        ObjectDetector, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+    return VisionTaskRunner.createVisionInstance(
+        ObjectDetector, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
   /** @hideconstructor */

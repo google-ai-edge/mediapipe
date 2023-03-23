@@ -60,9 +60,8 @@ export class ImageClassifier extends VisionTaskRunner {
   static createFromOptions(
       wasmFileset: WasmFileset, imageClassifierOptions: ImageClassifierOptions):
       Promise<ImageClassifier> {
-    return VisionTaskRunner.createInstance(
-        ImageClassifier, /* initializeCanvas= */ true, wasmFileset,
-        imageClassifierOptions);
+    return VisionTaskRunner.createVisionInstance(
+        ImageClassifier, wasmFileset, imageClassifierOptions);
   }
 
   /**
@@ -75,9 +74,8 @@ export class ImageClassifier extends VisionTaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ImageClassifier> {
-    return VisionTaskRunner.createInstance(
-        ImageClassifier, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createVisionInstance(
+        ImageClassifier, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -90,9 +88,8 @@ export class ImageClassifier extends VisionTaskRunner {
   static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ImageClassifier> {
-    return VisionTaskRunner.createInstance(
-        ImageClassifier, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+    return VisionTaskRunner.createVisionInstance(
+        ImageClassifier, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
   /** @hideconstructor */

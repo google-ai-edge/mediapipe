@@ -30,6 +30,7 @@ const NO_ASSETS = undefined;
 
 // tslint:disable-next-line:enforce-name-casing
 const CachedGraphRunnerType = SupportModelResourcesGraphService(GraphRunner);
+
 /**
  * An implementation of the GraphRunner that exposes the resource graph
  * service.
@@ -42,7 +43,8 @@ export class CachedGraphRunner extends CachedGraphRunnerType {}
  * @return A fully instantiated instance of `T`.
  */
 export async function createTaskRunner<T extends TaskRunner>(
-    type: WasmMediaPipeConstructor<T>, initializeCanvas: boolean,
+    type: WasmMediaPipeConstructor<T>,
+    canvas: HTMLCanvasElement|OffscreenCanvas|null|undefined,
     fileset: WasmFileset, options: TaskRunnerOptions): Promise<T> {
   const fileLocator: FileLocator = {
     locateFile() {
@@ -51,12 +53,6 @@ export async function createTaskRunner<T extends TaskRunner>(
     }
   };
 
-  // Initialize a canvas if requested. If OffscreenCanvas is available, we
-  // let the graph runner initialize it by passing `undefined`.
-  const canvas = initializeCanvas ? (typeof OffscreenCanvas === 'undefined' ?
-                                         document.createElement('canvas') :
-                                         undefined) :
-                                    null;
   const instance = await createMediaPipeLib(
       type, fileset.wasmLoaderPath, NO_ASSETS, canvas, fileLocator);
   await instance.setOptions(options);
@@ -75,9 +71,10 @@ export abstract class TaskRunner {
    * @return A fully instantiated instance of `T`.
    */
   protected static async createInstance<T extends TaskRunner>(
-      type: WasmMediaPipeConstructor<T>, initializeCanvas: boolean,
+      type: WasmMediaPipeConstructor<T>,
+      canvas: HTMLCanvasElement|OffscreenCanvas|null|undefined,
       fileset: WasmFileset, options: TaskRunnerOptions): Promise<T> {
-    return createTaskRunner(type, initializeCanvas, fileset, options);
+    return createTaskRunner(type, canvas, fileset, options);
   }
 
   /** @hideconstructor protected */

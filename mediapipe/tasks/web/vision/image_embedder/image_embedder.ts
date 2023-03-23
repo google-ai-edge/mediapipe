@@ -63,9 +63,8 @@ export class ImageEmbedder extends VisionTaskRunner {
   static createFromOptions(
       wasmFileset: WasmFileset,
       imageEmbedderOptions: ImageEmbedderOptions): Promise<ImageEmbedder> {
-    return VisionTaskRunner.createInstance(
-        ImageEmbedder, /* initializeCanvas= */ true, wasmFileset,
-        imageEmbedderOptions);
+    return VisionTaskRunner.createVisionInstance(
+        ImageEmbedder, wasmFileset, imageEmbedderOptions);
   }
 
   /**
@@ -78,9 +77,8 @@ export class ImageEmbedder extends VisionTaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ImageEmbedder> {
-    return VisionTaskRunner.createInstance(
-        ImageEmbedder, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createVisionInstance(
+        ImageEmbedder, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -93,9 +91,8 @@ export class ImageEmbedder extends VisionTaskRunner {
   static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ImageEmbedder> {
-    return VisionTaskRunner.createInstance(
-        ImageEmbedder, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+    return VisionTaskRunner.createVisionInstance(
+        ImageEmbedder, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
   /** @hideconstructor */

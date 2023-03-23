@@ -60,9 +60,8 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
   static createFromOptions(
       wasmFileset: WasmFileset, audioClassifierOptions: AudioClassifierOptions):
       Promise<AudioClassifier> {
-    return AudioTaskRunner.createInstance(
-        AudioClassifier, /* initializeCanvas= */ false, wasmFileset,
-        audioClassifierOptions);
+    return AudioTaskRunner.createAudioInstance(
+        AudioClassifier, wasmFileset, audioClassifierOptions);
   }
 
   /**
@@ -75,9 +74,8 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<AudioClassifier> {
-    return AudioTaskRunner.createInstance(
-        AudioClassifier, /* initializeCanvas= */ false, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return AudioTaskRunner.createAudioInstance(
+        AudioClassifier, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -91,7 +89,7 @@ export class AudioClassifier extends AudioTaskRunner<AudioClassifierResult[]> {
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<AudioClassifier> {
     return AudioTaskRunner.createInstance(
-        AudioClassifier, /* initializeCanvas= */ false, wasmFileset,
+        AudioClassifier, /* canvas= */ null, wasmFileset,
         {baseOptions: {modelAssetPath}});
   }
 

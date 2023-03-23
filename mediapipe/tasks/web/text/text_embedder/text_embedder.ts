@@ -62,8 +62,7 @@ export class TextEmbedder extends TaskRunner {
       wasmFileset: WasmFileset,
       textEmbedderOptions: TextEmbedderOptions): Promise<TextEmbedder> {
     return TaskRunner.createInstance(
-        TextEmbedder, /* initializeCanvas= */ false, wasmFileset,
-        textEmbedderOptions);
+        TextEmbedder, /* canvas= */ null, wasmFileset, textEmbedderOptions);
   }
 
   /**
@@ -77,7 +76,7 @@ export class TextEmbedder extends TaskRunner {
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<TextEmbedder> {
     return TaskRunner.createInstance(
-        TextEmbedder, /* initializeCanvas= */ false, wasmFileset,
+        TextEmbedder, /* canvas= */ null, wasmFileset,
         {baseOptions: {modelAssetBuffer}});
   }
 
@@ -92,7 +91,7 @@ export class TextEmbedder extends TaskRunner {
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<TextEmbedder> {
     return TaskRunner.createInstance(
-        TextEmbedder, /* initializeCanvas= */ false, wasmFileset,
+        TextEmbedder, /* canvas= */ null, wasmFileset,
         {baseOptions: {modelAssetPath}});
   }
 

@@ -87,9 +87,8 @@ export class InteractiveSegmenter extends VisionTaskRunner {
       wasmFileset: WasmFileset,
       interactiveSegmenterOptions: InteractiveSegmenterOptions):
       Promise<InteractiveSegmenter> {
-    return VisionTaskRunner.createInstance(
-        InteractiveSegmenter, /* initializeCanvas= */ true, wasmFileset,
-        interactiveSegmenterOptions);
+    return VisionTaskRunner.createVisionInstance(
+        InteractiveSegmenter, wasmFileset, interactiveSegmenterOptions);
   }
 
   /**
@@ -103,9 +102,8 @@ export class InteractiveSegmenter extends VisionTaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<InteractiveSegmenter> {
-    return VisionTaskRunner.createInstance(
-        InteractiveSegmenter, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createVisionInstance(
+        InteractiveSegmenter, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -119,9 +117,8 @@ export class InteractiveSegmenter extends VisionTaskRunner {
   static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<InteractiveSegmenter> {
-    return VisionTaskRunner.createInstance(
-        InteractiveSegmenter, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+    return VisionTaskRunner.createVisionInstance(
+        InteractiveSegmenter, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
   /** @hideconstructor */

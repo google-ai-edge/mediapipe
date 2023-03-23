@@ -85,9 +85,8 @@ export class GestureRecognizer extends VisionTaskRunner {
       wasmFileset: WasmFileset,
       gestureRecognizerOptions: GestureRecognizerOptions):
       Promise<GestureRecognizer> {
-    return VisionTaskRunner.createInstance(
-        GestureRecognizer, /* initializeCanvas= */ true, wasmFileset,
-        gestureRecognizerOptions);
+    return VisionTaskRunner.createVisionInstance(
+        GestureRecognizer, wasmFileset, gestureRecognizerOptions);
   }
 
   /**
@@ -100,9 +99,8 @@ export class GestureRecognizer extends VisionTaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<GestureRecognizer> {
-    return VisionTaskRunner.createInstance(
-        GestureRecognizer, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createVisionInstance(
+        GestureRecognizer, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -115,9 +113,8 @@ export class GestureRecognizer extends VisionTaskRunner {
   static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<GestureRecognizer> {
-    return VisionTaskRunner.createInstance(
-        GestureRecognizer, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+    return VisionTaskRunner.createVisionInstance(
+        GestureRecognizer, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
   /** @hideconstructor */

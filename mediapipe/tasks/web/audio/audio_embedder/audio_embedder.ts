@@ -60,9 +60,8 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
   static createFromOptions(
       wasmFileset: WasmFileset,
       audioEmbedderOptions: AudioEmbedderOptions): Promise<AudioEmbedder> {
-    return AudioTaskRunner.createInstance(
-        AudioEmbedder, /* initializeCanvas= */ false, wasmFileset,
-        audioEmbedderOptions);
+    return AudioTaskRunner.createAudioInstance(
+        AudioEmbedder, wasmFileset, audioEmbedderOptions);
   }
 
   /**
@@ -75,9 +74,8 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<AudioEmbedder> {
-    return AudioTaskRunner.createInstance(
-        AudioEmbedder, /* initializeCanvas= */ false, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return AudioTaskRunner.createAudioInstance(
+        AudioEmbedder, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -90,9 +88,8 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
   static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<AudioEmbedder> {
-    return AudioTaskRunner.createInstance(
-        AudioEmbedder, /* initializeCanvas= */ false, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+    return AudioTaskRunner.createAudioInstance(
+        AudioEmbedder, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
   /** @hideconstructor */
