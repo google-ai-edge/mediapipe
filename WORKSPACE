@@ -299,10 +299,10 @@ http_archive(
 # '-DBUILD_PROTOBUF=OFF -DBUILD_opencv_dnn=OFF'.
 http_archive(
     name = "ios_opencv",
-    sha256 = "7dd536d06f59e6e1156b546bd581523d8df92ce83440002885ec5abc06558de2",
+    sha256 = "94837d953ce1e7f9ae85485bd3fae3a2ffea31721daa973399c67168c77297bd",
     build_file = "@//third_party:opencv_ios.BUILD",
     type = "zip",
-    url = "https://github.com/opencv/opencv/releases/download/3.2.0/opencv-3.2.0-ios-framework.zip",
+    url = "https://dl.dropboxusercontent.com/s/jdhwxi6fudcgfq3/opencv2.framework.zip",
 )
 
 http_archive(
