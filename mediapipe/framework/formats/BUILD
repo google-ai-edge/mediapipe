@@ -160,8 +160,8 @@ cc_library(
         "//mediapipe/framework/port:aligned_malloc_and_free",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/tool:type_util",
     ] + select({
         "//conditions:default": [
@@ -201,15 +201,13 @@ cc_library(
     srcs = ["location.cc"],
     hdrs = ["location.h"],
     deps = [
-        "@com_google_protobuf//:protobuf",
-        "//mediapipe/framework/formats/annotation:locus_cc_proto",
         ":location_data_cc_proto",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "//mediapipe/framework:port",
         "//mediapipe/framework:type_map",
-        "//mediapipe/framework/tool:status_util",
+        "//mediapipe/framework/formats/annotation:locus_cc_proto",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:point",
@@ -217,6 +215,8 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
+        "//mediapipe/framework/tool:status_util",
+        "@com_google_protobuf//:protobuf",
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
     ] + select({
         "//conditions:default": [
@@ -362,15 +362,15 @@ cc_library(
     deps = [
         ":image",
         ":image_frame_pool",
-        "//mediapipe/framework:port",
-        "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/port:logging",
     ] + select({
         "//conditions:default": [
+            "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gl_texture_buffer",
             "//mediapipe/gpu:gl_texture_buffer_pool",
-            "//mediapipe/gpu:gl_base",
             "//mediapipe/gpu:gpu_buffer",
         ],
         "//mediapipe:ios": [
