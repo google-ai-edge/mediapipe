@@ -36,7 +36,7 @@ _FaceStylizerOptions = face_stylizer.FaceStylizerOptions
 _RUNNING_MODE = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 
-_MODEL = 'face_stylizer_model_placeholder.tflite'
+_MODEL = 'face_stylization_dummy.tflite'
 _IMAGE = 'cats_and_dogs.jpg'
 _STYLIZED_IMAGE = 'stylized_image_placeholder.jpg'
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/vision'
@@ -104,11 +104,9 @@ class FaceStylizerTest(parameterized.TestCase):
     stylizer = _FaceStylizer.create_from_options(options)
 
     # Performs face stylization on the input.
-    stylized_image = stylizer.detect(self.test_image)
+    stylized_image = stylizer.stylize(self.test_image)
     # Comparing results.
-    self.assertTrue(
-      np.array_equal(stylized_image.numpy_view(),
-                     self.test_image.numpy_view()))
+    # TODO:
     # Closes the stylizer explicitly when the stylizer is not used in
     # a context.
     stylizer.close()

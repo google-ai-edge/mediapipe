@@ -124,8 +124,10 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
         return
       image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
       stylized_image_packet = output_packets[_STYLIZED_IMAGE_NAME]
+      stylized_image = packet_getter.get_image(stylized_image_packet)
+
       options.result_callback(
-        stylized_image_packet, image,
+        stylized_image, image,
         stylized_image_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
 
     task_info = _TaskInfo(
@@ -173,7 +175,7 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
         _NORM_RECT_STREAM_NAME:
             packet_creator.create_proto(normalized_rect.to_pb2())
     })
-    return output_packets[_STYLIZED_IMAGE_NAME]
+    return packet_getter.get_image(output_packets[_STYLIZED_IMAGE_NAME])
 
   def stylize_for_video(
       self,
@@ -209,7 +211,7 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
             packet_creator.create_proto(normalized_rect.to_pb2()).at(
                 timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
     })
-    return output_packets[_STYLIZED_IMAGE_NAME]
+    return packet_getter.get_image(output_packets[_STYLIZED_IMAGE_NAME])
 
   def stylize_async(
       self,
