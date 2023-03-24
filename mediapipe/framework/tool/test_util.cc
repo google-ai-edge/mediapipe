@@ -214,7 +214,8 @@ absl::Status CompareAndSaveImageOutput(
     const ImageFrameComparisonOptions& options) {
   ASSIGN_OR_RETURN(auto output_img_path, SavePngTestOutput(actual, "output"));
 
-  auto expected = LoadTestImage(GetTestFilePath(golden_image_path));
+  auto expected =
+      LoadTestImage(GetTestFilePath(golden_image_path), ImageFormat::UNKNOWN);
   if (!expected.ok()) {
     return expected.status();
   }
