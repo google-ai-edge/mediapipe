@@ -23,7 +23,7 @@ limitations under the License.
 #include "tensorflow/lite/kernels/internal/tensor_ctypes.h"
 #include "tensorflow/lite/kernels/kernel_util.h"
 
-namespace tflite::ops::custom {
+namespace mediapipe::tflite_operations {
 namespace kmeans_embedding_lookup_op {
 
 namespace {
@@ -32,6 +32,10 @@ constexpr int kInputMessage = 0;
 constexpr int kEncodingTable = 1;
 constexpr int kCodebook = 2;
 constexpr int kOutputLabel = 0;
+
+using ::tflite::GetInput;
+using ::tflite::GetOutput;
+using ::tflite::GetTensorData;
 
 }  // namespace
 
@@ -142,4 +146,4 @@ TfLiteRegistration* Register_KmeansEmbeddingLookup() {
   return &r;
 }
 
-}  // namespace tflite::ops::custom
+}  // namespace mediapipe::tflite_operations

@@ -12,14 +12,14 @@
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/kernels/test_util.h"
 
-namespace tflite::ops::custom {
+namespace mediapipe::tflite_operations {
 namespace {
 
 using ::testing::ElementsAreArray;
 using ::tflite::ArrayFloatNear;
 
 // Helper class for testing the op.
-class KmeansEmbeddingLookupModel : public SingleOpModel {
+class KmeansEmbeddingLookupModel : public tflite::SingleOpModel {
  public:
   explicit KmeansEmbeddingLookupModel(
       std::initializer_list<int> input_shape,
@@ -27,7 +27,7 @@ class KmeansEmbeddingLookupModel : public SingleOpModel {
       std::initializer_list<int> codebook_shape,
       std::initializer_list<int> output_shape) {
     // Setup the model inputs and the interpreter.
-    output_ = AddOutput({TensorType_FLOAT32, output_shape});
+    output_ = AddOutput({tflite::TensorType_FLOAT32, output_shape});
     SetCustomOp("KmeansEmbeddingLookup", std::vector<uint8_t>(),
                 Register_KmeansEmbeddingLookup);
     BuildInterpreter({input_shape, encoding_table_shape, codebook_shape});
@@ -68,9 +68,9 @@ class KmeansEmbeddingLookupModel : public SingleOpModel {
   std::vector<int> GetOutputShape() { return GetTensorShape(output_); }
 
  private:
-  int input_ = AddInput(TensorType_INT32);
-  int encoding_table_ = AddInput(TensorType_UINT8);
-  int codebook_ = AddInput(TensorType_FLOAT32);
+  int input_ = AddInput(tflite::TensorType_INT32);
+  int encoding_table_ = AddInput(tflite::TensorType_UINT8);
+  int codebook_ = AddInput(tflite::TensorType_FLOAT32);
   int output_;
 };
 
@@ -173,4 +173,4 @@ TEST(KmeansEmbeddingLookupTest, ThrowsErrorWhenGivenInvalidInputBatchSize) {
 }
 
 }  // namespace
-}  // namespace tflite::ops::custom
+}  // namespace mediapipe::tflite_operations

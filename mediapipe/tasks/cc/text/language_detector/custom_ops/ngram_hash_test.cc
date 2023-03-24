@@ -32,7 +32,7 @@ limitations under the License.
 #include "tensorflow/lite/model.h"
 #include "tensorflow/lite/string_util.h"
 
-namespace tflite::ops::custom {
+namespace mediapipe::tflite_operations {
 namespace {
 
 using ::flexbuffers::Builder;
@@ -42,7 +42,7 @@ using ::testing::ElementsAreArray;
 using ::testing::Message;
 
 // Helper class for testing the op.
-class NGramHashModel : public SingleOpModel {
+class NGramHashModel : public tflite::SingleOpModel {
  public:
   explicit NGramHashModel(const uint64_t seed,
                           const std::vector<int>& ngram_lengths,
@@ -71,7 +71,7 @@ class NGramHashModel : public SingleOpModel {
     }
     fbb.EndMap(start);
     fbb.Finish();
-    output_ = AddOutput({TensorType_INT32, {}});
+    output_ = AddOutput({tflite::TensorType_INT32, {}});
     SetCustomOp("NGramHash", fbb.GetBuffer(), Register_NGRAM_HASH);
     BuildInterpreter({GetShape(input_)});
   }
@@ -100,7 +100,7 @@ class NGramHashModel : public SingleOpModel {
   std::vector<int> GetOutputShape() { return GetTensorShape(output_); }
 
  private:
-  int input_ = AddInput(TensorType_STRING);
+  int input_ = AddInput(tflite::TensorType_STRING);
   int output_;
 };
 
@@ -173,7 +173,7 @@ TEST(NGramHashTest, ReturnsExpectedValueWhenInputIsSane) {
 
   NGramHashModel m(kSeed, ngram_lengths, vocab_sizes);
   for (int test_idx = 0; test_idx < testcase_inputs.size(); test_idx++) {
-    const string& testcase_input = testcase_inputs[test_idx];
+    const std::string& testcase_input = testcase_inputs[test_idx];
     m.Invoke(testcase_input);
     SCOPED_TRACE(Message() << "Where the testcases' input is: "
                            << testcase_input);
@@ -310,4 +310,4 @@ TEST(NGramHashTest, MismatchNgramLengthsAndVocabSizes) {
 }
 
 }  // namespace
-}  // namespace tflite::ops::custom
+}  // namespace mediapipe::tflite_operations

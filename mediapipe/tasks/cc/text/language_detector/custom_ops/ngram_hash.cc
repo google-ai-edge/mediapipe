@@ -25,7 +25,7 @@ limitations under the License.
 #include "tensorflow/lite/kernels/kernel_util.h"
 #include "tensorflow/lite/string_util.h"
 
-namespace tflite::ops::custom {
+namespace mediapipe::tflite_operations {
 
 namespace ngram_op {
 
@@ -217,21 +217,21 @@ void Free(TfLiteContext* context, void* buffer) {
 }
 
 TfLiteStatus Resize(TfLiteContext* context, TfLiteNode* node) {
-  TfLiteTensor* output = GetOutput(context, node, kOutputLabel);
+  TfLiteTensor* output = tflite::GetOutput(context, node, kOutputLabel);
   TF_LITE_ENSURE(context, output != nullptr);
-  SetTensorToDynamic(output);
+  tflite::SetTensorToDynamic(output);
   return kTfLiteOk;
 }
 
 TfLiteStatus Eval(TfLiteContext* context, TfLiteNode* node) {
   NGramHashParams* params = reinterpret_cast<NGramHashParams*>(node->user_data);
   TF_LITE_ENSURE_OK(
-      context,
-      params->PreprocessInput(GetInput(context, node, kInputMessage), context));
+      context, params->PreprocessInput(
+                   tflite::GetInput(context, node, kInputMessage), context));
 
-  TfLiteTensor* output = GetOutput(context, node, kOutputLabel);
+  TfLiteTensor* output = tflite::GetOutput(context, node, kOutputLabel);
   TF_LITE_ENSURE(context, output != nullptr);
-  if (IsDynamicTensor(output)) {
+  if (tflite::IsDynamicTensor(output)) {
     TfLiteIntArray* output_size = TfLiteIntArrayCreate(3);
     output_size->data[0] = 1;
     output_size->data[1] = params->GetNumNGrams();
@@ -261,4 +261,4 @@ TfLiteRegistration* Register_NGRAM_HASH() {
   return &r;
 }
 
-}  // namespace tflite::ops::custom
+}  // namespace mediapipe::tflite_operations

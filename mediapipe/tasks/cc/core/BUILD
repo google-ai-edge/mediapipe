@@ -75,6 +75,8 @@ cc_library(
     srcs = ["mediapipe_builtin_op_resolver.cc"],
     hdrs = ["mediapipe_builtin_op_resolver.h"],
     deps = [
+        "//mediapipe/tasks/cc/text/language_detector/custom_ops:kmeans_embedding_lookup",
+        "//mediapipe/tasks/cc/text/language_detector/custom_ops:ngram_hash",
         "//mediapipe/util/tflite/operations:landmarks_to_transform_matrix",
         "//mediapipe/util/tflite/operations:max_pool_argmax",
         "//mediapipe/util/tflite/operations:max_unpooling",

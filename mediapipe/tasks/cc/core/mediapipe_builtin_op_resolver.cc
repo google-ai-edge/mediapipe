@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 
+#include "mediapipe/tasks/cc/text/language_detector/custom_ops/kmeans_embedding_lookup.h"
+#include "mediapipe/tasks/cc/text/language_detector/custom_ops/ngram_hash.h"
 #include "mediapipe/util/tflite/operations/landmarks_to_transform_matrix.h"
 #include "mediapipe/util/tflite/operations/max_pool_argmax.h"
 #include "mediapipe/util/tflite/operations/max_unpooling.h"
@@ -43,6 +45,10 @@ MediaPipeBuiltinOpResolver::MediaPipeBuiltinOpResolver() {
       "Landmarks2TransformMatrix",
       mediapipe::tflite_operations::RegisterLandmarksToTransformMatrixV2(),
       /*version=*/2);
+  // For the LanguageDetector model.
+  AddCustom("NGramHash", mediapipe::tflite_operations::Register_NGRAM_HASH());
+  AddCustom("KmeansEmbeddingLookup",
+            mediapipe::tflite_operations::Register_KmeansEmbeddingLookup());
 }
 }  // namespace core
 }  // namespace tasks
