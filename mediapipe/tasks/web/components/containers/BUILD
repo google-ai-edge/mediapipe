@@ -34,3 +34,8 @@ mediapipe_ts_declaration(
     name = "rect",
     srcs = ["rect.d.ts"],
 )
+
+mediapipe_ts_declaration(
+    name = "matrix",
+    srcs = ["matrix.d.ts"],
+)
