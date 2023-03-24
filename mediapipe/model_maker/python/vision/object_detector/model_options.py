@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,13 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Configurable model options for object detector models."""
+
+import dataclasses
 
 
-from mediapipe.model_maker.python.core.utils import quantization
-from mediapipe.model_maker.python.vision import image_classifier
-from mediapipe.model_maker.python.vision import gesture_recognizer
-from mediapipe.model_maker.python.text import text_classifier
-from mediapipe.model_maker.python.vision import object_detector
+@dataclasses.dataclass
+class ObjectDetectorModelOptions:
+  """Configurable options for object detector model.
 
-# Remove duplicated and non-public API
-del python
+  Attributes:
+    l2_weight_decay: L2 regularization penalty used in
+      https://www.tensorflow.org/api_docs/python/tf/keras/regularizers/L2.
+  """
+
+  l2_weight_decay: float = 3.0e-05
