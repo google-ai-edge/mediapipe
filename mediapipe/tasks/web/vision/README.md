@@ -2,6 +2,23 @@
 
 This package contains the vision tasks for MediaPipe.
 
+## Face Landmark Detection
+
+The MediaPipe Face Landmarker task lets you detect the landmarks of faces in
+an image. You can use this Task to localize key points of a face and render
+visual effects over the faces.
+
+```
+const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+);
+const faceLandmarker = await FaceLandmarker.createFromModelPath(vision,
+    "model.task"
+);
+const image = document.getElementById("image") as HTMLImageElement;
+const landmarks = faceLandmarker.detect(image);
+```
+
 ## Face Stylizer
 
 The MediaPipe Face Stylizer lets you perform face stylization on images.
