@@ -35,7 +35,7 @@
 namespace mediapipe {
 
 namespace {
-// Extracts from the BinaryMask, stored as Rasterization in
+// Extracts from the BinaryMask, stored as mediapipe.Rasterization in
 // the location_data, the tightest bounding box, that contains all pixels
 // encoded in the rasterizations.
 Rectangle_i MaskToRectangle(const LocationData& location_data) {

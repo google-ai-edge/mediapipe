@@ -81,7 +81,6 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "location_data_proto",
     srcs = ["location_data.proto"],
-    portable_deps = ["//mediapipe/framework/formats/annotation:rasterization_cc_proto"],
     deps = ["//mediapipe/framework/formats/annotation:rasterization_proto"],
 )
 

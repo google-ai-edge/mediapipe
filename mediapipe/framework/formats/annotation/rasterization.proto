@@ -18,6 +18,7 @@ package mediapipe;
 
 option java_package = "com.google.mediapipe.formats.annotation.proto";
 option java_outer_classname = "RasterizationProto";
+option cc_enable_arenas = true;
 
 // A Region can be represented in each frame as a set of scanlines
 // (compressed RLE, similar to rasterization of polygons).

@@ -33,6 +33,7 @@ def replace_deps(deps, old, new, drop_google_protobuf = True):
         deps = [dep for dep in deps if not dep.startswith("@com_google_protobuf//")]
     deps = [replace_suffix(dep, "any_proto", "cc_wkt_protos") for dep in deps]
 
+    deps = [dep for dep in deps if not dep.endswith("_annotations")]
     deps = [replace_suffix(dep, old, new) for dep in deps]
     return deps
 
