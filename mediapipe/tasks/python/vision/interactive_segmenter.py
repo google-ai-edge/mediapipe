@@ -254,7 +254,8 @@ class InteractiveSegmenter(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If image segmentation failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(image_processing_options)
+    normalized_rect = self.convert_to_normalized_rect(image_processing_options,
+                                                      roi_allowed=False)
     render_data_proto = _convert_roi_to_render_data(roi)
     output_packets = self._process_image_data(
         {
