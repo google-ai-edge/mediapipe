@@ -107,7 +107,7 @@ absl::Status ConfigureImageToTensorCalculator(
     options->mutable_output_tensor_float_range()->set_max((255.0f - mean) /
                                                           std);
   }
-  // TODO: need to support different GPU origin on differnt
+  // TODO: need to support different GPU origin on different
   // platforms or applications.
   options->set_gpu_origin(mediapipe::GpuOrigin::TOP_LEFT);
   return absl::OkStatus();

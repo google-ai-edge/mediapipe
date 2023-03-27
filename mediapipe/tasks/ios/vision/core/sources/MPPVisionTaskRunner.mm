@@ -28,13 +28,13 @@ using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
 }  // namespace
 
-/** Rotation degress for a 90 degree rotation to the right. */
+/** Rotation degrees for a 90 degree rotation to the right. */
 static const NSInteger kMPPOrientationDegreesRight = -90;
 
-/** Rotation degress for a 180 degree rotation. */
+/** Rotation degrees for a 180 degree rotation. */
 static const NSInteger kMPPOrientationDegreesDown = -180;
 
-/** Rotation degress for a 90 degree rotation to the left. */
+/** Rotation degrees for a 90 degree rotation to the left. */
 static const NSInteger kMPPOrientationDegreesLeft = -270;
 
 @interface MPPVisionTaskRunner () {

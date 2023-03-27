@@ -50,7 +50,7 @@ table ImageSegmenterOptions {
 
   // The minimum necessary image segmenter metadata parser version to fully
   // understand all fields in a given metadata flatbuffer. This field is
-  // automaticaly populated by the MetadataPopulator when the metadata is
+  // automatically populated by the MetadataPopulator when the metadata is
   // populated into a TFLite model. This min_parser_version is specific for the
   // image segmenter metadata defined in this schema file.
   min_parser_version:string;
