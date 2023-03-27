@@ -72,6 +72,9 @@ void DoSmokeTest(const std::string& graph_proto) {
     affine_quant->zero_point->data[0] = 0;
     quant.type = kTfLiteAffineQuantization;
     quant.params = affine_quant;
+  } else {
+    quant.type = kTfLiteNoQuantization;
+    quant.params = nullptr;
   }
   interpreter->SetTensorParametersReadWrite(0, tflite::typeToTfLiteType<T>(),
                                             "", {3}, quant);
