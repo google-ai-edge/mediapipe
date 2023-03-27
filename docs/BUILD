@@ -16,11 +16,11 @@ py_binary(
     srcs = ["build_java_api_docs.py"],
     data = [
         "//third_party/android/sdk:api/26.txt",
-        "//third_party/java/doclava/current:doclava.jar",
+        "//third_party/java/doclava:doclet.jar",
         "//third_party/java/jsilver:jsilver_jar",
     ],
     env = {
-        "DOCLAVA_JAR": "$(location //third_party/java/doclava/current:doclava.jar)",
+        "DOCLAVA_JAR": "$(location //third_party/java/doclava:doclet.jar)",
         "JSILVER_JAR": "$(location //third_party/java/jsilver:jsilver_jar)",
     },
     deps = [
