@@ -858,7 +858,7 @@ cc_library(
         ":scale_mode_cc_proto",
         ":shader_util",
         "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ],
 )
 
