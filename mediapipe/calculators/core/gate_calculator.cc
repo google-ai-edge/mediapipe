@@ -125,7 +125,6 @@ class GateCalculator : public CalculatorBase {
     RET_CHECK_OK(CheckAndInitAllowDisallowInputs(cc));
 
     const int num_data_streams = cc->Inputs().NumEntries("");
-    RET_CHECK_GE(num_data_streams, 1);
     RET_CHECK_EQ(cc->Outputs().NumEntries(""), num_data_streams)
         << "Number of data output streams must match with data input streams.";
 
