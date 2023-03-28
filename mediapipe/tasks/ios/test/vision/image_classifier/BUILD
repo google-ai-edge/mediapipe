@@ -1,5 +1,9 @@
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
 load(
+    "@build_bazel_rules_swift//swift:swift.bzl",
+    "swift_library",
+)
+load(
     "//mediapipe/tasks:ios/ios.bzl",
     "MPP_TASK_MINIMUM_OS_VERSION",
 )
@@ -53,3 +57,30 @@ ios_unit_test(
         ":MPPImageClassifierObjcTestLibrary",
     ],
 )
+
+swift_library(
+    name = "MPPImageClassifierSwiftTestLibrary",
+    testonly = 1,
+    srcs = ["ImageClassifierTests.swift"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+    ],
+    tags = TFL_DEFAULT_TAGS,
+    deps = [
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
+        "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
+    ],
+)
+
+ios_unit_test(
+    name = "MPPImageClassifierSwiftTest",
+    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
+    runner = tflite_ios_lab_runner("IOS_LATEST"),
+    tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
+    deps = [
+        ":MPPImageClassifierSwiftTestLibrary",
+    ],
+)
+
