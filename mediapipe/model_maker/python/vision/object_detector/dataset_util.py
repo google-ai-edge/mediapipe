@@ -444,8 +444,8 @@ class PascalVocCacheFilesWriter(CacheFilesWriter):
     images_dir = os.path.join(data_dir, 'images')
     all_annotation_paths = tf.io.gfile.glob(annotations_dir + r'/*.xml')
 
-    data = collections.defaultdict(list)
     for ind, ann_file in enumerate(all_annotation_paths):
+      data = collections.defaultdict(list)
       tree = ET.parse(ann_file)
       root = tree.getroot()
       img_filename = _xml_get(root, 'filename').text
