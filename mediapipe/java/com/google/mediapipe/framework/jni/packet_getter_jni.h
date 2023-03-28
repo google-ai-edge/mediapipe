@@ -101,10 +101,17 @@ JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageHeight)(JNIEnv* env,
                                                                   jobject thiz,
                                                                   jlong packet);
 
+JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageNumChannels)(
+    JNIEnv* env, jobject thiz, jlong packet);
+
 // Before calling this, the byte_buffer needs to have the correct allocated
 // size.
 JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
     JNIEnv* env, jobject thiz, jlong packet, jobject byte_buffer);
+
+// Returns the existing byte buffer of a MediaPipe image.
+JNIEXPORT jobject JNICALL PACKET_GETTER_METHOD(nativeGetImageDataDirect)(
+    JNIEnv* env, jobject thiz, jlong packet);
 
 // Return the vector size of std::vector<Image>.
 JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageListSize)(

@@ -24,6 +24,7 @@ import com.google.protobuf.Parser;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Converts the {@link Packet} to java accessible data types.
@@ -187,6 +188,10 @@ public final class PacketGetter {
     return nativeGetImageHeight(packet.getNativeHandle());
   }
 
+  public static int getImageNumChannels(final Packet packet) {
+    return nativeGetImageNumChannels(packet.getNativeHandle());
+  }
+
   /**
    * Returns the native image buffer in ByteBuffer. It assumes the output buffer stores pixels
    * contiguously. It returns false if this assumption does not hold.
@@ -197,6 +202,18 @@ public final class PacketGetter {
    */
   public static boolean getImageData(final Packet packet, ByteBuffer buffer) {
     return nativeGetImageData(packet.getNativeHandle(), buffer);
+  }
+
+  /**
+   * Returns a read-only view of the native image buffer as a ByteBuffer. As this method does not
+   * copy the data, the result only remains valid while the backing MediaPipe image is on the stack.
+   * The image must store contiguous pixels, otherwise the method returns {@code null}.
+   *
+   * <p>Note: this function does not assume the pixel format.
+   */
+  @Nullable
+  public static ByteBuffer getImageDataDirectly(final Packet packet) {
+    return nativeGetImageDataDirect(packet.getNativeHandle()).asReadOnlyBuffer();
   }
 
   /** Returns the size of Image list. This helps to determine size of allocated ByteBuffer array. */
@@ -384,7 +401,11 @@ public final class PacketGetter {
 
   private static native int nativeGetImageHeight(long nativePacketHandle);
 
+  private static native int nativeGetImageNumChannels(long nativePacketHandle);
+
   private static native boolean nativeGetImageData(long nativePacketHandle, ByteBuffer buffer);
+
+  private static native ByteBuffer nativeGetImageDataDirect(long nativePacketHandle);
 
   private static native int nativeGetImageListSize(long nativePacketHandle);
 

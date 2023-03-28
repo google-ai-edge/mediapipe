@@ -334,6 +334,20 @@ JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageHeight)(
   return image.Height();
 }
 
+JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageNumChannels)(
+    JNIEnv* env, jobject thiz, jlong packet) {
+  mediapipe::Packet mediapipe_packet =
+      mediapipe::android::Graph::GetPacketFromHandle(packet);
+  const bool is_image =
+      mediapipe_packet.ValidateAsType<mediapipe::Image>().ok();
+  const mediapipe::ImageFrame& image =
+      is_image ? *GetFromNativeHandle<mediapipe::Image>(packet)
+                      .GetImageFrameSharedPtr()
+                      .get()
+               : GetFromNativeHandle<mediapipe::ImageFrame>(packet);
+  return image.NumberOfChannels();
+}
+
 JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
     JNIEnv* env, jobject thiz, jlong packet, jobject byte_buffer) {
   mediapipe::Packet mediapipe_packet =
@@ -346,6 +360,31 @@ JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
                       .get()
                : GetFromNativeHandle<mediapipe::ImageFrame>(packet);
   return CopyImageDataToByteBuffer(env, image, byte_buffer);
+}
+
+JNIEXPORT jobject JNICALL PACKET_GETTER_METHOD(nativeGetImageDataDirect)(
+    JNIEnv* env, jobject thiz, jlong packet) {
+  mediapipe::Packet mediapipe_packet =
+      mediapipe::android::Graph::GetPacketFromHandle(packet);
+  const bool is_image =
+      mediapipe_packet.ValidateAsType<mediapipe::Image>().ok();
+  const mediapipe::ImageFrame& image =
+      is_image ? *GetFromNativeHandle<mediapipe::Image>(packet)
+                      .GetImageFrameSharedPtr()
+                      .get()
+               : GetFromNativeHandle<mediapipe::ImageFrame>(packet);
+  if (!image.IsContiguous()) {
+    return NULL;
+  }
+
+  // We need to get a mutable data pointer to create a ByteBuffer in Java. Since
+  // we are returning a read-only ByteBuffer via the API, we essentially retain
+  // the original const qualifier.
+  mediapipe::ImageFrame& mutable_image =
+      const_cast<mediapipe::ImageFrame&>(image);
+  void* unsafe_ptr = static_cast<void*>(mutable_image.MutablePixelData());
+  return env->NewDirectByteBuffer(unsafe_ptr,
+                                  image.PixelDataSizeStoredContiguously());
 }
 
 JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageListSize)(
