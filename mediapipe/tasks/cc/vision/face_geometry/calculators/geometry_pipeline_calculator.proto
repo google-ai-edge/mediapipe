@@ -19,6 +19,9 @@ package mediapipe.tasks.vision.face_geometry;
 import "mediapipe/framework/calculator_options.proto";
 import "mediapipe/tasks/cc/core/proto/external_file.proto";
 
+option java_package = "com.google.mediapipe.tasks.vision.facegeometry.calculators.proto";
+option java_outer_classname = "FaceGeometryPipelineCalculatorOptionsProto";
+
 message FaceGeometryPipelineCalculatorOptions {
   extend mediapipe.CalculatorOptions {
     optional FaceGeometryPipelineCalculatorOptions ext = 512499200;
