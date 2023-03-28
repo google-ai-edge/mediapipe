@@ -194,6 +194,20 @@ objc_library(
 )
 
 objc_library(
+    name = "mediapipe_audio_util",
+    srcs = ["MediaPipeAudioUtil.mm"],
+    hdrs = ["MediaPipeAudioUtil.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/formats:matrix",
+        "//mediapipe/framework/port:statusor",
+        "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:CoreAudio",
+        "//third_party/apple_frameworks:CoreMedia",
+    ],
+)
+
+objc_library(
     name = "MPPGraphTestBase",
     testonly = 1,
     srcs = [
@@ -230,6 +244,7 @@ objc_library(
         "CFHolderTests.mm",
         "MPPDisplayLinkWeakTargetTests.mm",
         "MPPGraphTests.mm",
+        "MediaPipeAudioUtilTests.mm",
     ],
     copts = [
         "-Wno-shorten-64-to-32",
@@ -242,11 +257,13 @@ objc_library(
         ":CGImageRefUtils",
         ":MPPGraphTestBase",
         ":Weakify",
+        ":mediapipe_audio_util",
         ":mediapipe_framework_ios",
         ":mediapipe_input_sources_ios",
         "//mediapipe/calculators/core:pass_through_calculator",
         "//third_party/apple_frameworks:AVFoundation",
         "//third_party/apple_frameworks:Accelerate",
+        "//third_party/apple_frameworks:CoreAudio",
         "//third_party/apple_frameworks:CoreGraphics",
         "//third_party/apple_frameworks:CoreMedia",
         "//third_party/apple_frameworks:CoreVideo",
