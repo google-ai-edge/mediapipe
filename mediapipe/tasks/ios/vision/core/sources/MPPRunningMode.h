@@ -44,9 +44,9 @@ NS_INLINE NSString *MPPRunningModeDisplayName(MPPRunningMode runningMode) {
   }
 
   NSString *displayNameMap[MPPRunningModeLiveStream + 1] = {
-      [MPPRunningModeImage] = @"#MPPRunningModeImage",
-      [MPPRunningModeVideo] = @ "#MPPRunningModeVideo",
-      [MPPRunningModeLiveStream] = @ "#MPPRunningModeLiveStream"};
+      [MPPRunningModeImage] = @"Image",
+      [MPPRunningModeVideo] = @"Video",
+      [MPPRunningModeLiveStream] = @"Live Stream"};
 
   return displayNameMap[runningMode];
 }

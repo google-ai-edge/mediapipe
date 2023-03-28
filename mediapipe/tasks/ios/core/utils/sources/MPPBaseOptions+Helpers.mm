@@ -22,6 +22,11 @@ using BaseOptionsProto = ::mediapipe::tasks::core::proto::BaseOptions;
 
 @implementation MPPBaseOptions (Helpers)
 
+- (void)copyToProto:(BaseOptionsProto *)baseOptionsProto withUseStreamMode:(BOOL)useStreamMode {
+  [self copyToProto:baseOptionsProto];
+  baseOptionsProto->set_use_stream_mode(useStreamMode);
+}
+
 - (void)copyToProto:(BaseOptionsProto *)baseOptionsProto {
   baseOptionsProto->Clear();
 

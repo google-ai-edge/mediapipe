@@ -21,7 +21,7 @@
 #include "mediapipe/tasks/cc/vision/image_classifier/proto/image_classifier_graph_options.pb.h"
 
 namespace {
-using CalculatorOptionsProto = ::mediapipe::CalculatorOptions;
+using CalculatorOptionsProto = mediapipe::CalculatorOptions;
 using ImageClassifierGraphOptionsProto =
     ::mediapipe::tasks::vision::image_classifier::proto::ImageClassifierGraphOptions;
 using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto::ClassifierOptions;
@@ -32,7 +32,9 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
 - (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
   ImageClassifierGraphOptionsProto *graphOptions =
       optionsProto->MutableExtension(ImageClassifierGraphOptionsProto::ext);
-  [self.baseOptions copyToProto:graphOptions->mutable_base_options()];
+
+  [self.baseOptions copyToProto:graphOptions->mutable_base_options()
+              withUseStreamMode:self.runningMode != MPPRunningModeImage];
 
   ClassifierOptionsProto *classifierOptionsProto = graphOptions->mutable_classifier_options();
   classifierOptionsProto->Clear();
