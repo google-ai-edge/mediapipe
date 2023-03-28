@@ -308,6 +308,7 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
             "//mediapipe/framework/formats:detection_java_proto_lite",
             "//mediapipe/framework/formats:landmark_java_proto_lite",
             "//mediapipe/framework/formats:location_data_java_proto_lite",
+            "//mediapipe/framework/formats:matrix_data_java_proto_lite",
             "//mediapipe/framework/formats:rect_java_proto_lite",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:audiodata",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:detection",
