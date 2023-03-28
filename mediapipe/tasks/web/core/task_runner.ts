@@ -114,7 +114,14 @@ export abstract class TaskRunner {
       // We don't use `await` here since we want to apply most settings
       // synchronously.
       return fetch(baseOptions.modelAssetPath.toString())
-          .then(response => response.arrayBuffer())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Failed to fetch model: ${
+                  baseOptions.modelAssetPath} (${response.status})`);
+            } else {
+              return response.arrayBuffer();
+            }
+          })
           .then(buffer => {
             this.setExternalFile(new Uint8Array(buffer));
             this.refreshGraph();
