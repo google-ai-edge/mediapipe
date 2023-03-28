@@ -118,9 +118,10 @@ describe('TaskRunner', () => {
 
   let fetchSpy: jasmine.Spy;
   let taskRunner: TaskRunnerFake;
-  let fetchStatus = 200;
+  let fetchStatus: number;
 
   beforeEach(() => {
+    fetchStatus = 200;
     fetchSpy = jasmine.createSpy().and.callFake(async url => {
       return {
         arrayBuffer: () => mockBytes.buffer,

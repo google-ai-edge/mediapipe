@@ -89,7 +89,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
       this.baseOptions.setUseStreamMode(useStreamMode);
     }
 
-    if ('canvas' in options) {
+    if (options.canvas !== undefined) {
       if (this.graphRunner.wasmModule.canvas !== options.canvas) {
         throw new Error('You must create a new task to reset the canvas.');
       }

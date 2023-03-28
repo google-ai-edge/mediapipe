@@ -185,6 +185,23 @@ describe('VisionTaskRunner', () => {
     }).toThrowError(/You must create a new task to reset the canvas./);
   });
 
+  it('validates that an undefined canvas leaves the graph unmodified',
+     async () => {
+       if (typeof OffscreenCanvas === 'undefined') {
+         console.log('Test is not supported under Node.');
+         return;
+       }
+
+       const visionTaskRunner = new VisionTaskRunnerFake();
+       const canvas = new OffscreenCanvas(1, 1);
+       visionTaskRunner.graphRunner.wasmModule.canvas = canvas;
+
+       await visionTaskRunner.setOptions({canvas});
+       await visionTaskRunner.setOptions({canvas: undefined});
+
+       expect(visionTaskRunner.graphRunner.wasmModule.canvas).toBe(canvas);
+     });
+
   it('sends packets to graph', async () => {
     const visionTaskRunner = new VisionTaskRunnerFake();
     await visionTaskRunner.setOptions({runningMode: 'VIDEO'});
