@@ -57,7 +57,7 @@ public abstract class FaceLandmarkerResult implements TaskResult {
       }
     }
     Optional<List<List<Category>>> multiFaceBlendshapes = Optional.empty();
-    if (!multiFaceBendshapesProto.isEmpty()) {
+    if (multiFaceBendshapesProto.isPresent()) {
       List<List<Category>> blendshapes = new ArrayList<>();
       for (ClassificationList faceBendshapeProto : multiFaceBendshapesProto.get()) {
         List<Category> blendshape = new ArrayList<>();
@@ -74,7 +74,7 @@ public abstract class FaceLandmarkerResult implements TaskResult {
       multiFaceBlendshapes = Optional.of(Collections.unmodifiableList(blendshapes));
     }
     Optional<List<float[]>> multiFaceTransformationMatrixes = Optional.empty();
-    if (!multiFaceTransformationMatrixesProto.isEmpty()) {
+    if (multiFaceTransformationMatrixesProto.isPresent()) {
       List<float[]> matrixes = new ArrayList<>();
       for (MatrixData matrixProto : multiFaceTransformationMatrixesProto.get()) {
         if (matrixProto.getPackedDataCount() != 16) {
