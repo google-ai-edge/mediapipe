@@ -50,6 +50,7 @@ objc_library(
     deps = [
         ":MPPImageClassifierOptions",
         ":MPPImageClassifierResult",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",

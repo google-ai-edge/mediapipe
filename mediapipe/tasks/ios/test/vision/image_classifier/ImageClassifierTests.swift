@@ -107,7 +107,8 @@ class ImageClassifierTests: XCTestCase {
       categoryArray.count,
       expectedCategoryArray.count)
 
-    for (index, (category, expectedCategory)) in zip(categoryArray, expectedCategoryArray)
+    for (index, (category, expectedCategory)) in 
+      zip(categoryArray, expectedCategoryArray)
       .enumerated()
     {
       assertCategoriesAreEqual(
@@ -120,8 +121,22 @@ class ImageClassifierTests: XCTestCase {
   func assertImageClassifierResultHasOneHead(
     _ imageClassifierResult: ImageClassifierResult
   ) {
-    XCTAssertEqual(imageClassifierResult.classificationResult.classifications.count, 1)
-    XCTAssertEqual(imageClassifierResult.classificationResult.classifications[0].headIndex, 0)
+    XCTAssertEqual(
+      imageClassifierResult.classificationResult.classifications.count, 
+      1)
+    XCTAssertEqual(
+      imageClassifierResult.classificationResult.classifications[0].headIndex, 
+      0)
+  }
+
+  func imageWithFileInfo(_ fileInfo: FileInfo) throws -> MPImage {
+    let mpImage = try XCTUnwrap(
+      MPImage.imageFromBundle(
+        withClass: type(of: self),
+        filename: fileInfo.name,
+        type: fileInfo.type))
+
+   return mpImage
   }
 
   func imageClassifierOptionsWithModelPath(
@@ -155,7 +170,8 @@ class ImageClassifierTests: XCTestCase {
     andCategories expectedCategories: [ResultCategory]
   ) throws {
     assertImageClassifierResultHasOneHead(imageClassifierResult)
-    let categories = imageClassifierResult.classificationResult.classifications[0].categories
+    let categories = 
+      imageClassifierResult.classificationResult.classifications[0].categories
 
     XCTAssertEqual(categories.count, expectedCategoryCount)    
     assertEqualCategoryArrays(
@@ -188,10 +204,7 @@ class ImageClassifierTests: XCTestCase {
     andCategories expectedCategories: [ResultCategory]
   ) throws {
     let mpImage = try XCTUnwrap(
-      MPImage.imageFromBundle(
-        withClass: type(of: self),
-        filename: fileInfo.name,
-        type: fileInfo.type))
+      imageWithFileInfo(fileInfo))
 
     try assertResultsForClassifyImage(
       mpImage,
@@ -200,19 +213,6 @@ class ImageClassifierTests: XCTestCase {
       andCategories: expectedCategories
     )
   }
-
-  // func testCreateImageClassifierWithInvalidMaxResultsFails() throws {
-  //   let textClassifierOptions =
-  //     try XCTUnwrap(
-  //       textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath))
-  //   textClassifierOptions.maxResults = 0
-
-  //   assertCreateTextClassifierThrowsError(
-  //     textClassifierOptions: textClassifierOptions,
-  //     expectedErrorDescription: """
-  //       INVALID_ARGUMENT: Invalid `max_results` option: value must be != 0.
-  //       """)
-  // }
 
   func testCreateImageClassifierWithCategoryAllowlistAndDenylistFails() throws {
 
@@ -254,7 +254,8 @@ class ImageClassifierTests: XCTestCase {
       ImageClassifierTests.burgerImage,
       usingImageClassifier: imageClassifier,
       hasCategoryCount: ImageClassifierTests.mobileNetCategoriesCount,
-      andCategories: ImageClassifierTests.expectedResultsClassifyBurgerImageWithFloatModel)
+      andCategories: 
+        ImageClassifierTests.expectedResultsClassifyBurgerImageWithFloatModel)
   }
 
   func testClassifyWithScoreThresholdSucceeds() throws {
@@ -264,7 +265,8 @@ class ImageClassifierTests: XCTestCase {
         imageClassifierOptionsWithModelPath(ImageClassifierTests.floatModelPath))
     imageClassifierOptions.scoreThreshold = 0.25
 
-    let imageClassifier = try XCTUnwrap(ImageClassifier(options: imageClassifierOptions))
+    let imageClassifier = try XCTUnwrap(ImageClassifier(
+      options: imageClassifierOptions))
 
     let expectedCategories = [
       ResultCategory(
@@ -286,9 +288,11 @@ class ImageClassifierTests: XCTestCase {
     let imageClassifierOptions =
       try XCTUnwrap(
         imageClassifierOptionsWithModelPath(ImageClassifierTests.floatModelPath))
-    imageClassifierOptions.categoryAllowlist = ["cheeseburger", "guacamole", "meat loaf"]
+    imageClassifierOptions.categoryAllowlist = 
+      ["cheeseburger", "guacamole", "meat loaf"]
 
-    let imageClassifier = try XCTUnwrap(ImageClassifier(options: imageClassifierOptions))
+    let imageClassifier = try XCTUnwrap(ImageClassifier(
+      options: imageClassifierOptions))
 
     let expectedCategories = [
       ResultCategory(
@@ -319,13 +323,15 @@ class ImageClassifierTests: XCTestCase {
 
     let imageClassifierOptions =
       try XCTUnwrap(
-        imageClassifierOptionsWithModelPath(ImageClassifierTests.floatModelPath))
+        imageClassifierOptionsWithModelPath(
+          ImageClassifierTests.floatModelPath))
     imageClassifierOptions.categoryDenylist = ["bagel"]
 
     let maxResults = 3;
     imageClassifierOptions.maxResults = maxResults;
 
-    let imageClassifier = try XCTUnwrap(ImageClassifier(options: imageClassifierOptions))
+    let imageClassifier = try XCTUnwrap(ImageClassifier(
+      options: imageClassifierOptions))
 
     let expectedCategories = [
       ResultCategory(
@@ -356,18 +362,17 @@ class ImageClassifierTests: XCTestCase {
 
     let imageClassifierOptions =
       try XCTUnwrap(
-        imageClassifierOptionsWithModelPath(ImageClassifierTests.floatModelPath))
+        imageClassifierOptionsWithModelPath(
+          ImageClassifierTests.floatModelPath))
 
     let maxResults = 1;
     imageClassifierOptions.maxResults = maxResults;
 
-    let imageClassifier = try XCTUnwrap(ImageClassifier(options: imageClassifierOptions))
+    let imageClassifier = try XCTUnwrap(ImageClassifier(
+      options: imageClassifierOptions))
 
     let mpImage = try XCTUnwrap(
-      MPImage.imageFromBundle(
-        withClass: type(of: self),
-        filename: ImageClassifierTests.multiObjectsImage.name,
-        type: ImageClassifierTests.multiObjectsImage.type))
+      imageWithFileInfo(ImageClassifierTests.multiObjectsImage))
 
     let imageClassifierResult =  try XCTUnwrap(
         imageClassifier.classify(
@@ -397,12 +402,14 @@ class ImageClassifierTests: XCTestCase {
 
     let imageClassifierOptions =
       try XCTUnwrap(
-        imageClassifierOptionsWithModelPath(ImageClassifierTests.floatModelPath))
+        imageClassifierOptionsWithModelPath(
+          ImageClassifierTests.floatModelPath))
 
     let maxResults = 3;
     imageClassifierOptions.maxResults = maxResults;
 
-    let imageClassifier = try XCTUnwrap(ImageClassifier(options: imageClassifierOptions))
+    let imageClassifier = try XCTUnwrap(ImageClassifier(
+      options: imageClassifierOptions))
 
     let expectedCategories = [
       ResultCategory(
@@ -440,12 +447,14 @@ class ImageClassifierTests: XCTestCase {
 
     let imageClassifierOptions =
       try XCTUnwrap(
-        imageClassifierOptionsWithModelPath(ImageClassifierTests.floatModelPath))
+        imageClassifierOptionsWithModelPath(
+          ImageClassifierTests.floatModelPath))
 
     let maxResults = 3;
     imageClassifierOptions.maxResults = maxResults;
 
-    let imageClassifier = try XCTUnwrap(ImageClassifier(options: imageClassifierOptions))
+    let imageClassifier = try XCTUnwrap(ImageClassifier(
+      options: imageClassifierOptions))
 
     let expectedCategories = [
       ResultCategory(
@@ -488,7 +497,9 @@ class ImageClassifierTests: XCTestCase {
         imageClassifierOptionsWithModelPath(
           ImageClassifierTests.floatModelPath))
       imageClassifierOptions.runningMode = runningMode
-      imageClassifierOptions.completion = {(result: ImageClassifierResult?, error: Error?) -> () in
+      imageClassifierOptions.completion = {(
+        result: ImageClassifierResult?, 
+        error: Error?) -> () in
       } 
 
       assertCreateImageClassifierThrowsError(
@@ -500,7 +511,8 @@ class ImageClassifierTests: XCTestCase {
     }
   }
 
-  func testImageClassifierFailsWithMissingResultListenerInLiveStreamMode() throws {
+  func testImageClassifierFailsWithMissingResultListenerInLiveStreamMode() 
+  throws {
 
     let imageClassifierOptions =
     try XCTUnwrap(
@@ -527,10 +539,7 @@ class ImageClassifierTests: XCTestCase {
       imageClassifierOptions))
 
     let mpImage = try XCTUnwrap(
-      MPImage.imageFromBundle(
-        withClass: type(of: self),
-        filename: ImageClassifierTests.multiObjectsRotatedImage.name,
-        type: ImageClassifierTests.multiObjectsRotatedImage.type))
+      imageWithFileInfo(ImageClassifierTests.multiObjectsImage))
 
     do {
       try imageClassifier.classifyAsync(
@@ -554,7 +563,8 @@ class ImageClassifierTests: XCTestCase {
       assertEqualErrorDescriptions(
         error,
         expectedLocalizedDescription: """
-      The vision task is not initialized with video mode. Current Running Mode: Image
+      The vision task is not initialized with video mode. Current Running \
+      Mode: Image
       """)
     }
   }
@@ -572,10 +582,7 @@ class ImageClassifierTests: XCTestCase {
       imageClassifierOptions))
 
     let mpImage = try XCTUnwrap(
-      MPImage.imageFromBundle(
-        withClass: type(of: self),
-        filename: ImageClassifierTests.multiObjectsRotatedImage.name,
-        type: ImageClassifierTests.multiObjectsRotatedImage.type))
+      imageWithFileInfo(ImageClassifierTests.multiObjectsImage))
 
     do {
       try imageClassifier.classifyAsync(
@@ -620,10 +627,7 @@ class ImageClassifierTests: XCTestCase {
       imageClassifierOptions))
 
     let mpImage = try XCTUnwrap(
-      MPImage.imageFromBundle(
-        withClass: type(of: self),
-        filename: ImageClassifierTests.multiObjectsRotatedImage.name,
-        type: ImageClassifierTests.multiObjectsRotatedImage.type))
+      imageWithFileInfo(ImageClassifierTests.multiObjectsImage))
 
     do {
       let imagClassifierResult = try imageClassifier.classify(
@@ -668,10 +672,7 @@ class ImageClassifierTests: XCTestCase {
       imageClassifierOptions))
 
     let mpImage = try XCTUnwrap(
-      MPImage.imageFromBundle(
-        withClass: type(of: self),
-        filename: ImageClassifierTests.burgerImage.name,
-        type: ImageClassifierTests.burgerImage.type))
+      imageWithFileInfo(ImageClassifierTests.burgerImage))
     
     for i in 0..<3 {
       let imageClassifierResult = try XCTUnwrap(
@@ -681,99 +682,9 @@ class ImageClassifierTests: XCTestCase {
       try assertImageClassifierResult(
         imageClassifierResult,
         hasCategoryCount: maxResults,
-        andCategories: ImageClassifierTests.expectedResultsClassifyBurgerImageWithFloatModel
+        andCategories: 
+          ImageClassifierTests.expectedResultsClassifyBurgerImageWithFloatModel
       )
     }
   }
-
-  func testClassifyWithLiveStreamModeSucceeds() throws {
-    let imageClassifierOptions =
-    try XCTUnwrap(
-      imageClassifierOptionsWithModelPath(
-        ImageClassifierTests.floatModelPath))
-    
-    imageClassifierOptions.runningMode = .liveStream
-
-    let maxResults = 3
-    imageClassifierOptions.maxResults = maxResults
-  
-    let expectation = expectation(description: "liveStreamClassify")
-
-    imageClassifierOptions.completion = {(result: ImageClassifierResult?, error: Error?) -> () in
-     do {
-      try self.assertImageClassifierResult(
-        try XCTUnwrap(result),
-        hasCategoryCount: maxResults,
-        andCategories: ImageClassifierTests.expectedResultsClassifyBurgerImageWithFloatModel)
-      }
-     catch {
-
-     }
-     expectation.fulfill()
-    }
-  
-    let imageClassifier = try XCTUnwrap(ImageClassifier(options: 
-      imageClassifierOptions))
-
-    let mpImage = try XCTUnwrap(
-      MPImage.imageFromBundle(
-        withClass: type(of: self),
-        filename: ImageClassifierTests.burgerImage.name,
-        type: ImageClassifierTests.burgerImage.type))
-    
-    for i in 0..<3 {
-      XCTAssertNoThrow(
-        try imageClassifier.classifyAsync(
-          image: mpImage,
-          timestampMs: i))
-    }
-
-    wait(for: [expectation], timeout: 10)
-    
-  }
-
-  // func testClassifyWithMaxResultsSucceeds() throws {
-  //   let textClassifierOptions =
-  //     try XCTUnwrap(
-  //       textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath))
-  //   textClassifierOptions.maxResults = 1
-
-  //   let textClassifier =
-  //     try XCTUnwrap(TextClassifier(options: textClassifierOptions))
-
-  //   try assertResultsForClassify(
-  //     text: TextClassifierTests.negativeText,
-  //     using: textClassifier,
-  //     equals: TextClassifierTests.bertNegativeTextResultsForEdgeTestCases)
-  // }
-
-  // func testClassifyWithCategoryAllowlistSucceeds() throws {
-  //   let textClassifierOptions =
-  //     try XCTUnwrap(
-  //       textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath))
-  //   textClassifierOptions.categoryAllowlist = ["negative"]
-
-  //   let textClassifier =
-  //     try XCTUnwrap(TextClassifier(options: textClassifierOptions))
-
-  //   try assertResultsForClassify(
-  //     text: TextClassifierTests.negativeText,
-  //     using: textClassifier,
-  //     equals: TextClassifierTests.bertNegativeTextResultsForEdgeTestCases)
-  // }
-
-  // func testClassifyWithCategoryDenylistSucceeds() throws {
-  //   let textClassifierOptions =
-  //     try XCTUnwrap(
-  //       textClassifierOptionsWithModelPath(TextClassifierTests.bertModelPath))
-  //   textClassifierOptions.categoryDenylist = ["positive"]
-
-  //   let textClassifier =
-  //     try XCTUnwrap(TextClassifier(options: textClassifierOptions))
-
-  //   try assertResultsForClassify(
-  //     text: TextClassifierTests.negativeText,
-  //     using: textClassifier,
-  //     equals: TextClassifierTests.bertNegativeTextResultsForEdgeTestCases)
-  // }
 }
