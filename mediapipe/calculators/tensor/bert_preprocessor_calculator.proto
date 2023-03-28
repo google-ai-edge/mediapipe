@@ -24,6 +24,10 @@ message BertPreprocessorCalculatorOptions {
     optional BertPreprocessorCalculatorOptions ext = 462509271;
   }
 
-  // The maximum input sequence length for the calculator's BERT model.
+  // The maximum input sequence length for the calculator's BERT model. Used
+  // if the model's input tensors have static shape.
   optional int32 bert_max_seq_len = 1;
+
+  // Whether the BERT model's input tensors have dynamic shape.
+  optional bool has_dynamic_input_tensors = 2;
 }

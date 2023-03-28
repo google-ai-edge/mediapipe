@@ -237,7 +237,9 @@ cc_library(
 cc_test(
     name = "bert_preprocessor_calculator_test",
     srcs = ["bert_preprocessor_calculator_test.cc"],
-    data = ["//mediapipe/tasks/testdata/text:bert_text_classifier_models"],
+    data = [
+        "//mediapipe/tasks/testdata/text:bert_text_classifier_models",
+    ],
     linkopts = ["-ldl"],
     deps = [
         ":bert_preprocessor_calculator",
@@ -250,7 +252,7 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_sentencepiece//src:sentencepiece_processor",
+        "@com_google_sentencepiece//src:sentencepiece_processor",  # fixdeps: keep
     ],
 )
 
@@ -300,7 +302,7 @@ cc_test(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
-        "@com_google_sentencepiece//src:sentencepiece_processor",
+        "@com_google_sentencepiece//src:sentencepiece_processor",  # fixdeps: keep
     ],
 )
 

@@ -114,6 +114,60 @@ absl::StatusOr<int> GetMaxSeqLen(const tflite::SubGraph& model_graph) {
   }
   return max_seq_len;
 }
+
+// Determines whether the TFLite model for `model_graph` has input tensors with
+// dynamic shape rather than static shape or returns an error if the input
+// tensors have invalid shape signatures. This util assumes that the model has
+// the correct input tensors type and count for the BertPreprocessorCalculator.
+absl::StatusOr<bool> HasDynamicInputTensors(
+    const tflite::SubGraph& model_graph) {
+  const flatbuffers::Vector<int32_t>& input_indices = *model_graph.inputs();
+  const flatbuffers::Vector<flatbuffers::Offset<tflite::Tensor>>&
+      model_tensors = *model_graph.tensors();
+
+  // Static input tensors may have undefined shape signatures.
+  if (absl::c_all_of(input_indices, [&model_tensors](int i) {
+        return model_tensors[i]->shape_signature() == nullptr;
+      })) {
+    return false;
+  } else if (absl::c_any_of(input_indices, [&model_tensors](int i) {
+               return model_tensors[i]->shape_signature() == nullptr;
+             })) {
+    return CreateStatusWithPayload(absl::StatusCode::kInvalidArgument,
+                                   "Input tensors contain a mix of defined and "
+                                   "undefined shape signatures.");
+  }
+
+  for (int i : input_indices) {
+    const tflite::Tensor* tensor = model_tensors[i];
+    if (tensor->shape_signature()->size() != 2) {
+      return CreateStatusWithPayload(
+          absl::StatusCode::kInvalidArgument,
+          absl::Substitute(
+              "Model should take 2-D shape signatures, got dimension: $0",
+              tensor->shape_signature()->size()),
+          MediaPipeTasksStatus::kInvalidInputTensorDimensionsError);
+    }
+  }
+
+  // For dynamic input tensors, the shape_signature entry corresponding to the
+  // input size is -1.
+  if (absl::c_all_of(input_indices, [&model_tensors](int i) {
+        return (*model_tensors[i]->shape_signature())[1] != -1;
+      })) {
+    return false;
+  } else if (absl::c_all_of(input_indices, [&model_tensors](int i) {
+               return (*model_tensors[i]->shape_signature())[1] == -1;
+             })) {
+    return true;
+  } else {
+    return CreateStatusWithPayload(
+        absl::StatusCode::kInvalidArgument,
+        "Input tensors contain a mix of static and dynamic shapes.");
+  }
+  return false;
+}
+
 }  // namespace
 
 absl::Status ConfigureTextPreprocessingGraph(
@@ -128,6 +182,8 @@ absl::Status ConfigureTextPreprocessingGraph(
 
   ASSIGN_OR_RETURN(TextModelType::ModelType model_type,
                    GetModelType(model_resources));
+  const tflite::SubGraph& model_graph =
+      *(*model_resources.GetTfLiteModel()->subgraphs())[0];
   options.set_model_type(model_type);
   switch (model_type) {
     case TextModelType::UNSPECIFIED_MODEL:
@@ -137,13 +193,15 @@ absl::Status ConfigureTextPreprocessingGraph(
     }
     case TextModelType::BERT_MODEL:
     case TextModelType::REGEX_MODEL: {
-      ASSIGN_OR_RETURN(
-          int max_seq_len,
-          GetMaxSeqLen(*(*model_resources.GetTfLiteModel()->subgraphs())[0]));
+      ASSIGN_OR_RETURN(int max_seq_len, GetMaxSeqLen(model_graph));
       options.set_max_seq_len(max_seq_len);
     }
   }
-
+  if (model_type == TextModelType::BERT_MODEL) {
+    ASSIGN_OR_RETURN(bool has_dynamic_input_tensors,
+                     HasDynamicInputTensors(model_graph));
+    options.set_has_dynamic_input_tensors(has_dynamic_input_tensors);
+  }
   return absl::OkStatus();
 }
 
@@ -200,6 +258,8 @@ class TextPreprocessingGraph : public mediapipe::Subgraph {
       case TextModelType::BERT_MODEL: {
         text_preprocessor.GetOptions<BertPreprocessorCalculatorOptions>()
             .set_bert_max_seq_len(options.max_seq_len());
+        text_preprocessor.GetOptions<BertPreprocessorCalculatorOptions>()
+            .set_has_dynamic_input_tensors(options.has_dynamic_input_tensors());
         metadata_extractor_in >>
             text_preprocessor.SideIn(kMetadataExtractorTag);
         break;

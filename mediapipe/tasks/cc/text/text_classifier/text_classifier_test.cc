@@ -49,6 +49,7 @@ using ::testing::HasSubstr;
 using ::testing::Optional;
 
 constexpr int kMaxSeqLen = 128;
+const float kPrecision = 1e-6;
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
 constexpr char kTestBertModelPath[] = "bert_text_classifier.tflite";
 constexpr char kInvalidModelPath[] = "i/do/not/exist.tflite";
@@ -66,7 +67,6 @@ std::string GetFullPath(absl::string_view file_name) {
 // TODO: create shared matcher for ClassificationResult.
 void ExpectApproximatelyEqual(const TextClassifierResult& actual,
                               const TextClassifierResult& expected) {
-  const float kPrecision = 1e-6;
   ASSERT_EQ(actual.classifications.size(), expected.classifications.size());
   for (int i = 0; i < actual.classifications.size(); ++i) {
     const Classifications& a = actual.classifications[i];
