@@ -90,7 +90,6 @@ def mediapipe_proto_library_impl(
             visibility = visibility,
             testonly = testonly,
             compatible_with = compatible_with,
-            alwayslink = alwayslink,
         ))
 
     if def_cc_proto:
