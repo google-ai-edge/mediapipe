@@ -47,6 +47,7 @@ cc_binary(
         "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
         "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
         "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
+        "//mediapipe/tasks/cc/vision/face_stylizer:face_stylizer_graph",
         "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_graph",
         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
         "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
@@ -109,6 +110,29 @@ android_library(
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
+    name = "facestylizer",
+    srcs = [
+        "facestylizer/FaceStylizer.java",
+        "facestylizer/FaceStylizerResult.java",
+    ],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    manifest = "imagesegmenter/AndroidManifest.xml",
+    deps = [
+        ":core",
+        "//mediapipe/framework:calculator_options_java_proto_lite",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/java/com/google/mediapipe/framework/image",
+        "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/face_stylizer/proto:face_stylizer_graph_options_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
