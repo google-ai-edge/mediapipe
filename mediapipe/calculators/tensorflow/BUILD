@@ -553,6 +553,25 @@ cc_library(
 
 cc_library(
     name = "tensorflow_session_from_saved_model_generator",
+    defines = select({
+        "//mediapipe:android": ["__ANDROID__"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":tensorflow_session_from_saved_model_generator_no_envelope_loader",
+    ] + select({
+        "//conditions:default": [
+        ],
+    }),
+    alwayslink = 1,
+)
+
+# Same library as in "tensorflow_session_from_saved_model_generator" but without "envelope_loader"
+# since it caused issues when integrating with Boq. Boq has a built-in "envelope_loader_dev" and
+# conflits with "envelope_loader".
+# See yaqs/1092546221614039040
+cc_library(
+    name = "tensorflow_session_from_saved_model_generator_no_envelope_loader",
     srcs = ["tensorflow_session_from_saved_model_generator.cc"],
     defines = select({
         "//mediapipe:android": ["__ANDROID__"],
