@@ -246,7 +246,6 @@ cc_library(
     srcs = ["annotation_overlay_calculator.cc"],
     deps = [
         ":annotation_overlay_calculator_cc_proto",
-        "@com_google_absl//absl/strings",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_options_cc_proto",
         "//mediapipe/framework/formats:image_format_cc_proto",
@@ -261,6 +260,7 @@ cc_library(
         "//mediapipe/util:annotation_renderer",
         "//mediapipe/util:color_cc_proto",
         "//mediapipe/util:render_data_cc_proto",
+        "@com_google_absl//absl/strings",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
@@ -278,7 +278,6 @@ cc_library(
     srcs = ["detection_label_id_to_text_calculator.cc"],
     deps = [
         ":detection_label_id_to_text_calculator_cc_proto",
-        "@com_google_absl//absl/container:node_hash_map",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
         "//mediapipe/framework/formats:detection_cc_proto",
@@ -287,6 +286,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/util:label_map_cc_proto",
         "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/container:node_hash_map",
     ] + select({
         "//mediapipe:android": [
             "//mediapipe/util/android/file/base",
@@ -309,12 +309,12 @@ cc_library(
     srcs = ["timed_box_list_id_to_label_calculator.cc"],
     deps = [
         ":timed_box_list_id_to_label_calculator_cc_proto",
-        "@com_google_absl//absl/container:node_hash_map",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:resource_util",
         "//mediapipe/util/tracking:box_tracker_cc_proto",
+        "@com_google_absl//absl/container:node_hash_map",
     ] + select({
         "//mediapipe:android": [
             "//mediapipe/util/android/file/base",
@@ -1020,13 +1020,13 @@ cc_library(
     srcs = ["top_k_scores_calculator.cc"],
     deps = [
         ":top_k_scores_calculator_cc_proto",
-        "@com_google_absl//absl/container:node_hash_map",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/container:node_hash_map",
     ] + select({
         "//mediapipe:android": [
             "//mediapipe/util/android/file/base",

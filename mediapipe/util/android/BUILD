@@ -34,12 +34,12 @@ cc_library(
     }),
     visibility = ["//visibility:public"],
     deps = [
-        "@com_google_absl//absl/strings",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:singleton",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/util/android/file/base",
+        "@com_google_absl//absl/strings",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:android": [

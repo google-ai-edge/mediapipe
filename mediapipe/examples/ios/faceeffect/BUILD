@@ -75,14 +75,14 @@ objc_library(
     features = ["-layering_check"],
     deps = [
         "//mediapipe/framework/formats:matrix_data_cc_proto",
-        "//third_party/apple_frameworks:AVFoundation",
-        "//third_party/apple_frameworks:CoreGraphics",
-        "//third_party/apple_frameworks:CoreMedia",
-        "//third_party/apple_frameworks:UIKit",
         "//mediapipe/modules/face_geometry/protos:face_geometry_cc_proto",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//mediapipe/objc:mediapipe_input_sources_ios",
         "//mediapipe/objc:mediapipe_layer_renderer",
+        "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:CoreGraphics",
+        "//third_party/apple_frameworks:CoreMedia",
+        "//third_party/apple_frameworks:UIKit",
     ] + select({
         "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],

@@ -80,12 +80,12 @@ cc_library(
     hdrs = ["cpu_util.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "@com_google_absl//absl/algorithm:container",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/strings",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
+        "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/strings",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:android": [
@@ -198,8 +198,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":resource_util_custom",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:logging",
@@ -207,6 +205,8 @@ cc_library(
         "//mediapipe/framework/port:singleton",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ] + select({
         "//conditions:default": [
             "@com_google_absl//absl/flags:flag",
@@ -253,13 +253,13 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/types:variant",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/formats:location_opencv",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:variant",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:framework",

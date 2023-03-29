@@ -46,7 +46,6 @@ cc_library(
     name = "interactive_segmenter_graph",
     srcs = ["interactive_segmenter_graph.cc"],
     deps = [
-        "@com_google_absl//absl/strings",
         "//mediapipe/calculators/image:set_alpha_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:flat_color_image_calculator",
@@ -65,6 +64,7 @@ cc_library(
         "//mediapipe/util:color_cc_proto",
         "//mediapipe/util:label_map_cc_proto",
         "//mediapipe/util:render_data_cc_proto",
+        "@com_google_absl//absl/strings",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [

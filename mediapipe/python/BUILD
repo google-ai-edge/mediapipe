@@ -90,13 +90,13 @@ cc_library(
     deps = [
         "//mediapipe/tasks/cc/audio/audio_classifier:audio_classifier_graph",
         "//mediapipe/tasks/cc/audio/audio_embedder:audio_embedder_graph",
+        "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
+        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
         "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_graph",
         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
         "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
-        "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
-        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
     ] + select({
         # TODO: Build text_classifier_graph and text_embedder_graph on Windows.
         "//mediapipe:windows": [],

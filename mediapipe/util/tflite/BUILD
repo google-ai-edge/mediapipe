@@ -97,10 +97,10 @@ cc_library(
                "//mediapipe:ios": [],
                "//mediapipe:macos": [],
                "//conditions:default": [
-                   "@com_google_absl//absl/strings",
                    "//mediapipe/framework/port:ret_check",
                    "//mediapipe/framework/port:status",
                    "//mediapipe/framework/port:statusor",
+                   "@com_google_absl//absl/strings",
                    "@org_tensorflow//tensorflow/lite:framework",
                    "@org_tensorflow//tensorflow/lite/delegates/gpu:api",
                    "@org_tensorflow//tensorflow/lite/delegates/gpu/common:model",
@@ -114,8 +114,8 @@ cc_library(
                ],
                "//conditions:default": [],
            }) + [
-        "@com_google_absl//absl/status",
         "//mediapipe/framework:port",
+        "@com_google_absl//absl/status",
         "@org_tensorflow//tensorflow/lite/core/api",
     ],
 )

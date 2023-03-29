@@ -151,10 +151,6 @@ cc_library(
     hdrs = ["image_frame.h"],
     deps = [
         ":image_format_cc_proto",
-        "@com_google_absl//absl/base",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/strings",
         "//mediapipe/framework:port",
         "//mediapipe/framework/port:aligned_malloc_and_free",
         "//mediapipe/framework/port:core_proto",
@@ -162,6 +158,10 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/tool:type_util",
+        "@com_google_absl//absl/base",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
     ] + select({
         "//conditions:default": [
         ],
@@ -201,12 +201,10 @@ cc_library(
     hdrs = ["location.h"],
     deps = [
         ":location_data_cc_proto",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/strings",
         "//mediapipe/framework:port",
         "//mediapipe/framework:type_map",
         "//mediapipe/framework/formats/annotation:locus_cc_proto",
+        "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:point",
@@ -215,8 +213,10 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
-        "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
     ] + select({
         "//conditions:default": [
         ],
@@ -334,12 +334,12 @@ cc_library(
     deps = [
         ":image_format_cc_proto",
         ":image_frame",
-        "@com_google_absl//absl/synchronization",
         "//mediapipe/framework:port",
         "//mediapipe/framework:type_map",
         "//mediapipe/framework/port:logging",
         "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/gpu:gpu_buffer_format",
+        "@com_google_absl//absl/synchronization",
     ] + select({
         "//conditions:default": [
             "//mediapipe/gpu:gl_texture_buffer",
@@ -361,10 +361,10 @@ cc_library(
     deps = [
         ":image",
         ":image_frame_pool",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/synchronization",
         "//mediapipe/framework:port",
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/synchronization",
     ] + select({
         "//conditions:default": [
             "//mediapipe/gpu:gl_base",
@@ -464,11 +464,11 @@ cc_library(
         ],
     }),
     deps = [
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
-        "//mediapipe/framework:port",
-        "//mediapipe/framework/port:logging",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [

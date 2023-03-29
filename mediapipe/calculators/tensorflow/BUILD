@@ -404,11 +404,6 @@ cc_library(
     deps = [
         ":tensorflow_inference_calculator_cc_proto",
         ":tensorflow_session",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/synchronization",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:packet",
@@ -418,6 +413,11 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:framework",
@@ -523,11 +523,11 @@ cc_library(
     deps = [
         ":tensorflow_session",
         ":tensorflow_session_from_saved_model_calculator_cc_proto",
-        "@com_google_absl//absl/strings",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/cc/saved_model:constants",
         "@org_tensorflow//tensorflow/cc/saved_model:loader_lite",
         "@org_tensorflow//tensorflow/cc/saved_model:tag_constants",
@@ -580,14 +580,14 @@ cc_library(
     deps = [
         ":tensorflow_session",
         ":tensorflow_session_from_saved_model_generator_cc_proto",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
         "//mediapipe/framework:packet_generator",
         "//mediapipe/framework:packet_type",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/cc/saved_model:constants",
         "@org_tensorflow//tensorflow/cc/saved_model:loader_lite",
         "@org_tensorflow//tensorflow/cc/saved_model:tag_constants",
@@ -686,11 +686,11 @@ cc_library(
     srcs = ["tensor_to_vector_int_calculator.cc"],
     deps = [
         ":tensor_to_vector_int_calculator_options_cc_proto",
-        "@com_google_absl//absl/base:core_headers",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/base:core_headers",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:framework",
@@ -1194,7 +1194,6 @@ cc_test(
         ":tensorflow_session",
         ":tensorflow_session_from_frozen_graph_generator",
         ":tensorflow_session_from_frozen_graph_generator_cc_proto",
-        "@com_google_absl//absl/flags:flag",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/deps:file_path",
@@ -1202,6 +1201,7 @@ cc_test(
         "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/tool:sink",
         "//mediapipe/framework/tool:validate_type",
+        "@com_google_absl//absl/flags:flag",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:direct_session",

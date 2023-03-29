@@ -202,12 +202,12 @@ cc_library(
     }),
     deps = [
         ":tflite_inference_calculator_cc_proto",
-        "@com_google_absl//absl/memory",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
         "//mediapipe/util/tflite:config",
         "//mediapipe/util/tflite:tflite_model_loader",
+        "@com_google_absl//absl/memory",
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
@@ -335,8 +335,6 @@ cc_library(
     srcs = ["tflite_tensors_to_segmentation_calculator.cc"],
     deps = [
         ":tflite_tensors_to_segmentation_calculator_cc_proto",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/types:span",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
@@ -345,6 +343,8 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:span",
         "@org_tensorflow//tensorflow/lite:framework",
     ] + selects.with_or({
         ":gpu_inference_disabled": [],
@@ -402,8 +402,6 @@ cc_library(
     }),
     deps = [
         ":tflite_tensors_to_detections_calculator_cc_proto",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/types:span",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/formats:detection_cc_proto",
@@ -411,6 +409,8 @@ cc_library(
         "//mediapipe/framework/formats/object_detection:anchor_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util/tflite:config",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:span",
         "@org_tensorflow//tensorflow/lite:framework",
     ] + selects.with_or({
         ":gpu_inference_disabled": [],
@@ -437,14 +437,14 @@ cc_library(
     srcs = ["tflite_tensors_to_classification_calculator.cc"],
     deps = [
         ":tflite_tensors_to_classification_calculator_cc_proto",
-        "@com_google_absl//absl/container:node_hash_map",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/types:span",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/container:node_hash_map",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/types:span",
         "@org_tensorflow//tensorflow/lite:framework",
     ] + select({
         "//mediapipe:android": [

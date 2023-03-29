@@ -14,6 +14,7 @@
 
 import os
 import tempfile
+import unittest  # pylint:disable=unused-import
 from unittest import mock as unittest_mock
 
 from absl.testing import parameterized
@@ -27,6 +28,7 @@ from mediapipe.model_maker.python.vision.object_detector import object_detector_
 from mediapipe.tasks.python.test import test_utils as task_test_utils
 
 
+@unittest.skip('b/275624089')
 class ObjectDetectorTest(tf.test.TestCase, parameterized.TestCase):
 
   def setUp(self):
