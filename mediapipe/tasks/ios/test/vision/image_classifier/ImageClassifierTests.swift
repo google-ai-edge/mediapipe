@@ -28,6 +28,10 @@ class ImageClassifierTests: XCTestCase {
     forResource: "mobilenet_v2_1.0_224",
     ofType: "tflite")
 
+  static let quantizedModelPath = bundle.path(
+    forResource: "mobilenet_v1_0.25_224_quant",
+    ofType: "tflite")
+
   static let burgerImage = FileInfo(name: "burger", type: "jpg")
   static let burgerRotatedImage = FileInfo(name: "burger_rotated", type: "jpg")
   static let multiObjectsImage = FileInfo(name: "multi_objects", type: "jpg")
@@ -256,6 +260,30 @@ class ImageClassifierTests: XCTestCase {
       hasCategoryCount: ImageClassifierTests.mobileNetCategoriesCount,
       andCategories: 
         ImageClassifierTests.expectedResultsClassifyBurgerImageWithFloatModel)
+  }
+
+  func testClassifyWithQuantizedModelSucceeds() throws {
+
+    let imageClassifierOptions =
+      try XCTUnwrap(
+        imageClassifierOptionsWithModelPath(
+          ImageClassifierTests.quantizedModelPath))
+
+    let imageClassifier = try XCTUnwrap(ImageClassifier(options: imageClassifierOptions))
+
+    let expectedCategories = [
+      ResultCategory(
+        index: 934,
+        score: 0.972656,
+        categoryName: "cheeseburger",
+        displayName: nil),
+    ]
+
+    try assertResultsForClassifyImageWithFileInfo(
+      ImageClassifierTests.burgerImage,
+      usingImageClassifier: imageClassifier,
+      hasCategoryCount: ImageClassifierTests.mobileNetCategoriesCount,
+      andCategories: expectedCategories)
   }
 
   func testClassifyWithScoreThresholdSucceeds() throws {
