@@ -114,7 +114,7 @@ void ImageFrameSubmodule(pybind11::module* module) {
   image_frame
       .def(
           py::init([](mediapipe::ImageFormat::Format format,
-                      const py::array_t<uint8, py::array::c_style>& data) {
+                      const py::array_t<uint8_t, py::array::c_style>& data) {
             if (format != mediapipe::ImageFormat::GRAY8 &&
                 format != mediapipe::ImageFormat::SRGB &&
                 format != mediapipe::ImageFormat::SRGBA) {
@@ -122,13 +122,13 @@ void ImageFrameSubmodule(pybind11::module* module) {
                                  "uint8 image data should be one of the GRAY8, "
                                  "SRGB, and SRGBA MediaPipe image formats.");
             }
-            return CreateImageFrame<uint8>(format, data);
+            return CreateImageFrame<uint8_t>(format, data);
           }),
           R"doc(For uint8 data type, valid ImageFormat are GRAY8, SGRB, and SRGBA.)doc",
           py::arg("image_format"), py::arg("data").noconvert())
       .def(
           py::init([](mediapipe::ImageFormat::Format format,
-                      const py::array_t<uint16, py::array::c_style>& data) {
+                      const py::array_t<uint16_t, py::array::c_style>& data) {
             if (format != mediapipe::ImageFormat::GRAY16 &&
                 format != mediapipe::ImageFormat::SRGB48 &&
                 format != mediapipe::ImageFormat::SRGBA64) {
@@ -137,7 +137,7 @@ void ImageFrameSubmodule(pybind11::module* module) {
                   "uint16 image data should be one of the GRAY16, "
                   "SRGB48, and SRGBA64 MediaPipe image formats.");
             }
-            return CreateImageFrame<uint16>(format, data);
+            return CreateImageFrame<uint16_t>(format, data);
           }),
           R"doc(For uint16 data type, valid ImageFormat are GRAY16, SRGB48, and SRGBA64.)doc",
           py::arg("image_format"), py::arg("data").noconvert())
@@ -203,9 +203,9 @@ void ImageFrameSubmodule(pybind11::module* module) {
             py::cast(self, py::return_value_policy::reference);
         switch (self.ByteDepth()) {
           case 1:
-            return GetValue<uint8>(self, pos, py_object);
+            return GetValue<uint8_t>(self, pos, py_object);
           case 2:
-            return GetValue<uint16>(self, pos, py_object);
+            return GetValue<uint16_t>(self, pos, py_object);
           case 4:
             return GetValue<float>(self, pos, py_object);
           default:
