@@ -499,6 +499,7 @@ class ImageClassifierTests: XCTestCase {
       imageClassifierOptions.runningMode = runningMode
       imageClassifierOptions.completion = {(
         result: ImageClassifierResult?, 
+        timestampMs: Int,
         error: Error?) -> () in
       } 
 
@@ -620,6 +621,7 @@ class ImageClassifierTests: XCTestCase {
     imageClassifierOptions.runningMode = .liveStream
     imageClassifierOptions.completion = {(
       result: ImageClassifierResult?, 
+      timestampMs: Int,
       error: Error?) -> () in
     } 
 
@@ -686,5 +688,126 @@ class ImageClassifierTests: XCTestCase {
           ImageClassifierTests.expectedResultsClassifyBurgerImageWithFloatModel
       )
     }
+  }
+
+  func testClassifyWithOutOfOrderTimestampsAndLiveStreamModeSucceeds() throws {
+    let imageClassifierOptions =
+    try XCTUnwrap(
+      imageClassifierOptionsWithModelPath(
+        ImageClassifierTests.floatModelPath))
+    
+    imageClassifierOptions.runningMode = .liveStream
+
+    let maxResults = 3
+    imageClassifierOptions.maxResults = maxResults
+ 
+    let expectation = expectation(
+      description: "classifyWithOutOfOrderTimestampsAndLiveStream")
+    expectation.expectedFulfillmentCount = 1;
+  
+    imageClassifierOptions.completion = {(
+      result: ImageClassifierResult?, 
+      timestampMs: Int, 
+      error: Error?) -> () in
+      do {
+        try self.assertImageClassifierResult(
+          try XCTUnwrap(result),
+          hasCategoryCount: maxResults,
+          andCategories: 
+            ImageClassifierTests
+              .expectedResultsClassifyBurgerImageWithFloatModel)
+      }
+      catch {
+          // Any errors will be thrown by the wait() method of the expectation.
+      }
+     expectation.fulfill()
+    }
+  
+    let imageClassifier = try XCTUnwrap(ImageClassifier(options: 
+      imageClassifierOptions))
+
+    let mpImage = try XCTUnwrap(
+      imageWithFileInfo(ImageClassifierTests.burgerImage))
+
+    XCTAssertNoThrow(
+      try imageClassifier.classifyAsync(
+        image: mpImage,
+        timestampMs: 100))
+      
+    XCTAssertThrowsError(
+      try imageClassifier.classifyAsync(
+        image: mpImage,
+        timestampMs: 0)) {(error) in
+          assertEqualErrorDescriptions(
+          error,
+          expectedLocalizedDescription: """
+          INVALID_ARGUMENT: Input timestamp must be monotonically \
+          increasing.
+          """)
+    }
+   
+    wait(for:[expectation], timeout: 0.1)
+  }
+
+  func testClassifyWithLiveStreamModeSucceeds() throws {
+    let imageClassifierOptions =
+    try XCTUnwrap(
+      imageClassifierOptionsWithModelPath(
+        ImageClassifierTests.floatModelPath))
+    
+    imageClassifierOptions.runningMode = .liveStream
+
+    let maxResults = 3
+    imageClassifierOptions.maxResults = maxResults
+
+    let iterationCount = 100;
+ 
+   // Because of flow limiting, we cannot ensure that the callback will be 
+   // invoked `iterationCount` times.
+   // An normal expectation will fail if expectation.fullfill() is not called 
+   // `expectation.expectedFulfillmentCount` times.
+   // If `expectation.isInverted = true`, the test will only succeed if 
+   // expectation is not fullfilled for the specified `expectedFulfillmentCount`.
+   // Since in our case we cannot predict how many times the expectation is 
+   // supposed to be fullfilled setting,
+   // `expectation.expectedFulfillmentCount` = `iterationCount` and 
+   // `expectation.isInverted = true` ensures that test succeeds if 
+   // expectation is not fullfilled `iterationCount` times.
+    let expectation = expectation(description: "liveStreamClassify")
+    expectation.expectedFulfillmentCount = iterationCount;
+    expectation.isInverted = true;
+  
+    imageClassifierOptions.completion = {(
+      result: ImageClassifierResult?, 
+      timestampMs: Int, 
+      error: Error?) -> () in
+      do {
+        try self.assertImageClassifierResult(
+          try XCTUnwrap(result),
+          hasCategoryCount: maxResults,
+          andCategories: 
+            ImageClassifierTests
+              .expectedResultsClassifyBurgerImageWithFloatModel)
+      }
+      catch {
+          // Any errors will be thrown by the wait() method of the expectation.
+      }
+     expectation.fulfill()
+    }
+  
+    let imageClassifier = try XCTUnwrap(ImageClassifier(options: 
+      imageClassifierOptions))
+
+     let mpImage = try XCTUnwrap(
+      imageWithFileInfo(ImageClassifierTests.burgerImage))
+    
+    for i in 0..<iterationCount {
+      XCTAssertNoThrow(
+        try imageClassifier.classifyAsync(
+          image: mpImage,
+          timestampMs: i))
+    }
+
+    wait(for:[expectation], timeout: 0.5)
   }
 }

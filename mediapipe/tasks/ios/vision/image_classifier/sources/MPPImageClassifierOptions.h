@@ -33,7 +33,7 @@ NS_SWIFT_NAME(ImageClassifierOptions)
  * be specified when the running mode is set to the live stream mode.
  * TODO: Add parameter `MPPImage` in the callback.
  */
-@property(nonatomic, copy) void (^completion)(MPPImageClassifierResult *result, NSError *error);
+@property(nonatomic, copy) void (^completion)(MPPImageClassifierResult *result, NSInteger timestmapMs, NSError *error);
 
 /**
  * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults
