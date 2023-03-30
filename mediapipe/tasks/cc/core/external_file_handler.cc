@@ -44,9 +44,9 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 
-#if defined(_WIN32) && !defined(PY_VERSION)
+#ifdef _WIN32
 #include "tools/cpp/runfiles/runfiles.h"
-#endif  // defined(_WIN32) && !defined(PY_VERSION)
+#endif  // _WIN32
 
 namespace mediapipe {
 namespace tasks {
@@ -97,8 +97,7 @@ ExternalFileHandler::CreateFromExternalFile(
 }
 
 absl::StatusOr<std::string> PathToResourceAsFile(std::string path) {
-#if !defined(_WIN32) || defined(PY_VERSION)
-  // Return the path directly if not on Windows or using Python
+#ifndef _WIN32
   return path;
 #else
   if (absl::StartsWith(path, "./")) {
@@ -116,7 +115,7 @@ absl::StatusOr<std::string> PathToResourceAsFile(std::string path) {
     return absl::InternalError("Unable to initialize runfiles: " + error);
   }
   return runfiles->Rlocation(path);
-#endif  // !defined(_WIN32) || defined(PY_VERSION)
+#endif  // _WIN32
 }
 
 absl::Status ExternalFileHandler::MapExternalFile() {
