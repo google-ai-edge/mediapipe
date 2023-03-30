@@ -1,4 +1,4 @@
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
 # Copyright 2019 The MediaPipe Authors.
 #
@@ -40,13 +40,20 @@ cc_library(
     alwayslink = 1,
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "border_detection_calculator_proto",
     srcs = ["border_detection_calculator.proto"],
-    visibility = ["//mediapipe/examples:__subpackages__"],
     deps = [
         "//mediapipe/framework:calculator_proto",
     ],
+)
+
+mediapipe_cc_proto_library(
+    name = "border_detection_calculator_cc_proto",
+    srcs = ["border_detection_calculator.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = ["//mediapipe/examples:__subpackages__"],
+    deps = [":border_detection_calculator_proto"],
 )
 
 cc_library(
@@ -78,15 +85,27 @@ cc_library(
     alwayslink = 1,
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "content_zooming_calculator_proto",
     srcs = ["content_zooming_calculator.proto"],
+    deps = [
+        "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+mediapipe_cc_proto_library(
+    name = "content_zooming_calculator_cc_proto",
+    srcs = ["content_zooming_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
     visibility = [
         "//mediapipe/examples:__subpackages__",
     ],
     deps = [
-        "//mediapipe/examples/desktop/autoflip/quality:kinematic_path_solver_proto",
-        "//mediapipe/framework:calculator_proto",
+        ":content_zooming_calculator_proto",
     ],
 )
 
@@ -158,13 +177,21 @@ cc_library(
     alwayslink = 1,
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "video_filtering_calculator_proto",
     srcs = ["video_filtering_calculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_proto",
     ],
+)
+
+mediapipe_cc_proto_library(
+    name = "video_filtering_calculator_cc_proto",
+    srcs = ["video_filtering_calculator.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = ["//visibility:public"],
+    deps = [":video_filtering_calculator_proto"],
 )
 
 cc_test(
@@ -182,7 +209,7 @@ cc_test(
     ],
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "scene_cropping_calculator_proto",
     srcs = ["scene_cropping_calculator.proto"],
     visibility = ["//visibility:public"],
@@ -190,6 +217,17 @@ mediapipe_proto_library(
         "//mediapipe/examples/desktop/autoflip/quality:cropping_proto",
         "//mediapipe/framework:calculator_proto",
     ],
+)
+
+mediapipe_cc_proto_library(
+    name = "scene_cropping_calculator_cc_proto",
+    srcs = ["scene_cropping_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/examples/desktop/autoflip/quality:cropping_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":scene_cropping_calculator_proto"],
 )
 
 cc_library(
@@ -258,14 +296,24 @@ cc_library(
     alwayslink = 1,
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "signal_fusing_calculator_proto",
     srcs = ["signal_fusing_calculator.proto"],
-    visibility = ["//mediapipe/examples:__subpackages__"],
     deps = [
         "//mediapipe/examples/desktop/autoflip:autoflip_messages_proto",
         "//mediapipe/framework:calculator_proto",
     ],
+)
+
+mediapipe_cc_proto_library(
+    name = "signal_fusing_calculator_cc_proto",
+    srcs = ["signal_fusing_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//mediapipe/examples:__subpackages__"],
+    deps = [":signal_fusing_calculator_proto"],
 )
 
 cc_test(
@@ -305,11 +353,18 @@ cc_library(
     alwayslink = 1,
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "shot_boundary_calculator_proto",
     srcs = ["shot_boundary_calculator.proto"],
-    visibility = ["//mediapipe/examples:__subpackages__"],
     deps = ["//mediapipe/framework:calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "shot_boundary_calculator_cc_proto",
+    srcs = ["shot_boundary_calculator.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = ["//mediapipe/examples:__subpackages__"],
+    deps = [":shot_boundary_calculator_proto"],
 )
 
 cc_test(
@@ -358,14 +413,24 @@ cc_library(
     alwayslink = 1,
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "face_to_region_calculator_proto",
     srcs = ["face_to_region_calculator.proto"],
-    visibility = ["//mediapipe/examples:__subpackages__"],
     deps = [
         "//mediapipe/examples/desktop/autoflip/quality:visual_scorer_proto",
         "//mediapipe/framework:calculator_proto",
     ],
+)
+
+mediapipe_cc_proto_library(
+    name = "face_to_region_calculator_cc_proto",
+    srcs = ["face_to_region_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/examples/desktop/autoflip/quality:visual_scorer_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//mediapipe/examples:__subpackages__"],
+    deps = [":face_to_region_calculator_proto"],
 )
 
 cc_test(
@@ -389,13 +454,20 @@ cc_test(
     ],
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "localization_to_region_calculator_proto",
     srcs = ["localization_to_region_calculator.proto"],
-    visibility = ["//mediapipe/examples:__subpackages__"],
     deps = [
         "//mediapipe/framework:calculator_proto",
     ],
+)
+
+mediapipe_cc_proto_library(
+    name = "localization_to_region_calculator_cc_proto",
+    srcs = ["localization_to_region_calculator.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = ["//mediapipe/examples:__subpackages__"],
+    deps = [":localization_to_region_calculator_proto"],
 )
 
 cc_library(

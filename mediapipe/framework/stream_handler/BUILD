@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
 
 licenses(["notice"])
 
@@ -22,32 +22,56 @@ package(
     features = ["-layering_check"],
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "default_input_stream_handler_proto",
     srcs = ["default_input_stream_handler.proto"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
-    alwayslink = 1,
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "fixed_size_input_stream_handler_proto",
     srcs = ["fixed_size_input_stream_handler.proto"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
-    alwayslink = 1,
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "sync_set_input_stream_handler_proto",
     srcs = ["sync_set_input_stream_handler.proto"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
-    alwayslink = 1,
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "timestamp_align_input_stream_handler_proto",
     srcs = ["timestamp_align_input_stream_handler.proto"],
     deps = ["//mediapipe/framework:mediapipe_options_proto"],
-    alwayslink = 1,
+)
+
+mediapipe_cc_proto_library(
+    name = "default_input_stream_handler_cc_proto",
+    srcs = ["default_input_stream_handler.proto"],
+    cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
+    deps = [":default_input_stream_handler_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "fixed_size_input_stream_handler_cc_proto",
+    srcs = ["fixed_size_input_stream_handler.proto"],
+    cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
+    deps = [":fixed_size_input_stream_handler_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "sync_set_input_stream_handler_cc_proto",
+    srcs = ["sync_set_input_stream_handler.proto"],
+    cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
+    deps = [":sync_set_input_stream_handler_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "timestamp_align_input_stream_handler_cc_proto",
+    srcs = ["timestamp_align_input_stream_handler.proto"],
+    cc_deps = ["//mediapipe/framework:mediapipe_options_cc_proto"],
+    deps = [":timestamp_align_input_stream_handler_proto"],
 )
 
 cc_library(

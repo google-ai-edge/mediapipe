@@ -15,7 +15,7 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("//mediapipe/gpu:metal.bzl", "metal_library")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library", "mediapipe_proto_library")
 load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 load("//mediapipe/framework:more_selects.bzl", "more_selects")
 
@@ -982,13 +982,24 @@ cc_library(
     alwayslink = 1,
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "gl_surface_sink_calculator_proto",
     srcs = ["gl_surface_sink_calculator.proto"],
     deps = [
         ":scale_mode_proto",
         "//mediapipe/framework:calculator_proto",
     ],
+)
+
+mediapipe_cc_proto_library(
+    name = "gl_surface_sink_calculator_cc_proto",
+    srcs = ["gl_surface_sink_calculator.proto"],
+    cc_deps = [
+        ":scale_mode_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":gl_surface_sink_calculator_proto"],
 )
 
 ### Metal calculators
@@ -1006,11 +1017,21 @@ objc_library(
     deps = [":simple_shaders_mtl"],
 )
 
-mediapipe_proto_library(
+proto_library(
     name = "copy_calculator_proto",
     srcs = ["copy_calculator.proto"],
     visibility = ["//visibility:public"],
     deps = ["//mediapipe/framework:calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "copy_calculator_cc_proto",
+    srcs = ["copy_calculator.proto"],
+    cc_deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":copy_calculator_proto"],
 )
 
 objc_library(
