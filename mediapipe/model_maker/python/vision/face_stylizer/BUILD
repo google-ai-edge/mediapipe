@@ -27,6 +27,40 @@ filegroup(
 )
 
 py_library(
+    name = "hyperparameters",
+    srcs = ["hyperparameters.py"],
+    deps = [
+        "//mediapipe/model_maker/python/core:hyperparameters",
+    ],
+)
+
+py_library(
+    name = "model_options",
+    srcs = ["model_options.py"],
+)
+
+py_library(
+    name = "model_spec",
+    srcs = ["model_spec.py"],
+)
+
+py_test(
+    name = "model_spec_test",
+    srcs = ["model_spec_test.py"],
+    deps = [":model_spec"],
+)
+
+py_library(
+    name = "face_stylizer_options",
+    srcs = ["face_stylizer_options.py"],
+    deps = [
+        ":hyperparameters",
+        ":model_options",
+        ":model_spec",
+    ],
+)
+
+py_library(
     name = "dataset",
     srcs = ["dataset.py"],
     deps = [
