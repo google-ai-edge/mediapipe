@@ -670,13 +670,13 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   // expectation is not fullfilled for the specified `expectedFulfillmentCount`.
   // Since in our case we cannot predict how many times the expectation is
   // supposed to be fullfilled setting,
-  // `expectation.expectedFulfillmentCount` = `iterationCount` and
+  // `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and
   // `expectation.isInverted = true` ensures that test succeeds if
-  // expectation is not fullfilled `iterationCount` times.
+  // expectation is fullfilled <= `iterationCount` times.
   XCTestExpectation *expectation =
       [[XCTestExpectation alloc] initWithDescription:@"classifyWithLiveStream"];
 
-  expectation.expectedFulfillmentCount = iterationCount;
+  expectation.expectedFulfillmentCount = iterationCount + 1;
   expectation.inverted = YES;
 
   options.runningMode = MPPRunningModeLiveStream;

@@ -798,11 +798,12 @@ class ImageClassifierTests: XCTestCase {
    // expectation is not fullfilled for the specified `expectedFulfillmentCount`.
    // Since in our case we cannot predict how many times the expectation is 
    // supposed to be fullfilled setting,
-   // `expectation.expectedFulfillmentCount` = `iterationCount` and 
+   // `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and 
    // `expectation.isInverted = true` ensures that test succeeds if 
-   // expectation is not fullfilled `iterationCount` times.
+   // expectation is fullfilled <= `iterationCount` times.
     let expectation = expectation(description: "liveStreamClassify")
-    expectation.expectedFulfillmentCount = iterationCount;
+    
+    expectation.expectedFulfillmentCount = iterationCount + 1;
     expectation.isInverted = true;
   
     imageClassifierOptions.completion = {(
