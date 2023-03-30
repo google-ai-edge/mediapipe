@@ -30,6 +30,7 @@ import com.google.mediapipe.tasks.core.OutputHandler;
 import com.google.mediapipe.tasks.core.OutputHandler.ResultListener;
 import com.google.mediapipe.tasks.core.TaskInfo;
 import com.google.mediapipe.tasks.core.TaskOptions;
+import com.google.mediapipe.tasks.core.TaskResult;
 import com.google.mediapipe.tasks.core.TaskRunner;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.vision.core.BaseVisionTaskApi;
@@ -292,7 +293,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
           "ResultListener is not set in the FaceStylizerOptions, but this method expects a"
               + " ResultListener to process ImageSegmentationResult.");
     }
-    var unused = processImageData(image, imageProcessingOptions);
+    TaskResult unused = processImageData(image, imageProcessingOptions);
   }
 
   /**
@@ -420,7 +421,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
           "ResultListener is not set in the FaceStylizerOptions, but this method expects a"
               + " ResultListener to process ImageSegmentationResult.");
     }
-    var unused = processVideoData(image, imageProcessingOptions, timestampMs);
+    TaskResult unused = processVideoData(image, imageProcessingOptions, timestampMs);
   }
 
   /**
