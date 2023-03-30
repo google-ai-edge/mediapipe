@@ -16,50 +16,55 @@
 
 #include <limits>
 
+#include "third_party/eigen3/Eigen/Core"
+
 namespace {
+using Eigen::Index;
+using Eigen::Map;
+using Eigen::VectorXf;
+using VectorXi16 = Eigen::Vector<SInt16, Eigen::Dynamic>;
+
 // `float` is 32-bit.
 static_assert(std::numeric_limits<float>::is_iec559);
-using float32_t = float;
 
-template <typename SampleDataType>
-float GetSample(const void* data, int index);
-
-template <>
-float GetSample<float32_t>(const void* data, int index) {
-  return reinterpret_cast<const float32_t*>(data)[index];
+// Reads an array of `size` elements of type `float` at `samples` and writes it into `target`,
+// which is an Eigen expression compatible with a `VectorXf` of size `size`.
+template <typename OutputVector>
+void CopyBufferToFloatVector(const float* samples, CMItemCount size, OutputVector target) {
+  target = Map<const VectorXf>(samples, static_cast<Index>(size));
 };
 
-template <>
-float GetSample<SInt16>(const void* data, int index) {
+// Reads an array of `size` elements of type `SInt16` at `samples` and writes it into `target`,
+// which is an Eigen expression compatible with a `VectorXf` of size `size`.
+template <typename OutputVector>
+void CopyBufferToFloatVector(const SInt16* samples, CMItemCount size, OutputVector target) {
   // Convert to the [-1, 1] range.
-  return static_cast<float>(reinterpret_cast<const SInt16*>(data)[index]) /
-         static_cast<float>(std::numeric_limits<SInt16>::max());
+  constexpr float kRangeMax = static_cast<float>(std::numeric_limits<SInt16>::max());
+  target = Map<const VectorXi16>(samples, static_cast<Index>(size)).cast<float>() / kRangeMax;
 };
 
 template <typename SampleDataType>
-std::unique_ptr<mediapipe::Matrix> MakeMatrix(const AudioBuffer* buffers, int channels,
+std::unique_ptr<mediapipe::Matrix> MakeMatrix(const AudioBuffer* buffers, CMItemCount channels,
                                             CMItemCount frames, bool interleaved) {
   // Create the matrix and fill it accordingly. Its dimensions are `channels x frames`.
   auto matrix = std::make_unique<mediapipe::Matrix>(channels, frames);
-  // Split the case of interleaved and non-interleaved samples (see
+  // Split the cases of interleaved and non-interleaved samples (see
   // https://developer.apple.com/documentation/coremedia/1489723-cmsamplebuffercreate#discussion)
   // - however, the resulting operations coincide when `channels == 1`.
   if (interleaved) {
     // A single buffer contains interleaved samples for all the channels {L, R, L, R, L, R, ...}.
-    const void* samples = buffers[0].mData;
-    for (int channel = 0; channel < channels; ++channel) {
-      for (int frame = 0; frame < frames; ++frame) {
-        (*matrix)(channel, frame) = GetSample<SampleDataType>(samples, channels * frame + channel);
-      }
-    }
+    // This corresponds to Eigen's default column-major matrix layout.
+    const SampleDataType* samples = reinterpret_cast<const SampleDataType*>(buffers[0].mData);
+    CopyBufferToFloatVector(/*samples=*/samples, /*size=*/channels * frames,
+                            /*target=*/matrix->reshaped());
   } else {
     // Non-interleaved audio: each channel's samples are stored in a separate buffer:
     // {{L, L, L, L, ...}, {R, R, R, R, ...}}.
-    for (int channel = 0; channel < channels; ++channel) {
-      const void* samples = buffers[channel].mData;
-      for (int frame = 0; frame < frames; ++frame) {
-        (*matrix)(channel, frame) = GetSample<SampleDataType>(samples, frame);
-      }
+    for (CMItemCount channel = 0; channel < channels; ++channel) {
+      const SampleDataType* samples =
+          reinterpret_cast<const SampleDataType*>(buffers[channel].mData);
+      CopyBufferToFloatVector(/*samples=*/samples, /*size=*/frames,
+                              /*target=*/matrix->row(static_cast<Index>(channel)));
     }
   }
   return matrix;
@@ -89,13 +94,12 @@ absl::StatusOr<std::unique_ptr<mediapipe::Matrix>> MediaPipeConvertAudioBufferLi
 
   if ((streamHeader->mFormatFlags & kAudioFormatFlagIsFloat) &&
       streamHeader->mBitsPerChannel == 32) {
-    return MakeMatrix<float32_t>(audioBufferList->mBuffers, numChannels, numFrames,
-                                 isAudioInterleaved);
+    return MakeMatrix<float>(audioBufferList->mBuffers, numChannels, numFrames, isAudioInterleaved);
   }
   if ((streamHeader->mFormatFlags & kAudioFormatFlagIsSignedInteger) &&
       streamHeader->mBitsPerChannel == 16) {
     return MakeMatrix<SInt16>(audioBufferList->mBuffers, numChannels, numFrames,
                               isAudioInterleaved);
   }
-  return absl::InternalError("Incompatible audio sample storage format");
+  return absl::InternalError("Unsupported audio sample storage format");
 }
