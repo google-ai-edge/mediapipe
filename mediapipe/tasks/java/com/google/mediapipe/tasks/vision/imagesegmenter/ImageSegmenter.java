@@ -519,7 +519,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    *
    * <p>If there is no labelmap provided in the model file, empty label list is returned.
    */
-  List<String> getLabels() {
+  public List<String> getLabels() {
     return labels;
   }
 
