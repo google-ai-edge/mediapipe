@@ -17,6 +17,7 @@ limitations under the License.
 #define MEDIAPIPE_TASKS_CC_VISION_CORE_BASE_VISION_TASK_API_H_
 
 #include <cmath>
+#include <cstdlib>
 #include <memory>
 #include <optional>
 #include <string>
@@ -26,6 +27,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/core/base_task_api.h"
@@ -136,7 +138,8 @@ class BaseVisionTaskApi : public tasks::core::BaseTaskApi {
   // to 0. If 'roi_allowed' is false, an error will be returned if the input
   // ImageProcessingOptions has its 'region_or_interest' field set.
   static absl::StatusOr<mediapipe::NormalizedRect> ConvertToNormalizedRect(
-      std::optional<ImageProcessingOptions> options, bool roi_allowed = true) {
+      std::optional<ImageProcessingOptions> options,
+      const mediapipe::Image& image, bool roi_allowed = true) {
     mediapipe::NormalizedRect normalized_rect;
     normalized_rect.set_rotation(0);
     normalized_rect.set_x_center(0.5);
@@ -181,6 +184,21 @@ class BaseVisionTaskApi : public tasks::core::BaseTaskApi {
       normalized_rect.set_width(roi.right - roi.left);
       normalized_rect.set_height(roi.bottom - roi.top);
     }
+
+    // For 90° and 270° rotations, we need to swap width and height.
+    // This is due to the internal behavior of ImageToTensorCalculator, which:
+    // - first denormalizes the provided rect by multiplying the rect width or
+    //   height by the image width or height, repectively.
+    // - then rotates this by denormalized rect by the provided rotation, and
+    //   uses this for cropping,
+    // - then finally rotates this back.
+    if (std::abs(options->rotation_degrees) % 180 != 0) {
+      float w = normalized_rect.height() * image.height() / image.width();
+      float h = normalized_rect.width() * image.width() / image.height();
+      normalized_rect.set_width(w);
+      normalized_rect.set_height(h);
+    }
+
     return normalized_rect;
   }
 

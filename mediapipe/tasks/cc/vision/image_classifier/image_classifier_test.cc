@@ -505,11 +505,9 @@ TEST_F(ImageModeTest, SucceedsWithRotation) {
   ImageClassifierResult expected;
   expected.classifications.emplace_back(Classifications{
       /*categories=*/{
-          {/*index=*/934, /*score=*/0.6371766,
-           /*category_name=*/"cheeseburger"},
-          {/*index=*/963, /*score=*/0.049443405, /*category_name=*/"meat loaf"},
-          {/*index=*/925, /*score=*/0.047918003,
-           /*category_name=*/"guacamole"}},
+          {/*index=*/934, /*score=*/0.754467, /*category_name=*/"cheeseburger"},
+          {/*index=*/925, /*score=*/0.0288028, /*category_name=*/"guacamole"},
+          {/*index=*/932, /*score=*/0.0286119, /*category_name=*/"bagel"}},
       /*head_index=*/0,
       /*head_name=*/"probability"});
   ExpectApproximatelyEqual(results, expected);
@@ -525,9 +523,10 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
   options->classifier_options.max_results = 1;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
-  // Region-of-interest around the chair, with 90° anti-clockwise rotation.
-  RectF roi{/*left=*/0.006, /*top=*/0.1763, /*right=*/0.5702,
-            /*bottom=*/0.3049};
+  // Region-of-interest around the soccer ball, with 90° anti-clockwise
+  // rotation.
+  RectF roi{/*left=*/0.2655, /*top=*/0.45, /*right=*/0.6925,
+            /*bottom=*/0.614};
   ImageProcessingOptions image_processing_options{roi,
                                                   /*rotation_degrees=*/-90};
 
@@ -536,8 +535,8 @@ TEST_F(ImageModeTest, SucceedsWithRegionOfInterestAndRotation) {
 
   ImageClassifierResult expected;
   expected.classifications.emplace_back(
-      Classifications{/*categories=*/{{/*index=*/560, /*score=*/0.6522213,
-                                       /*category_name=*/"folding chair"}},
+      Classifications{/*categories=*/{{/*index=*/806, /*score=*/0.997684,
+                                       /*category_name=*/"soccer ball"}},
                       /*head_index=*/0,
                       /*head_name=*/"probability"});
   ExpectApproximatelyEqual(results, expected);

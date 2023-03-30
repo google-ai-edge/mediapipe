@@ -138,7 +138,7 @@ absl::StatusOr<Image> FaceStylizer::Stylize(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options));
+                   ConvertToNormalizedRect(image_processing_options, image));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
@@ -157,7 +157,7 @@ absl::StatusOr<Image> FaceStylizer::StylizeForVideo(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options));
+                   ConvertToNormalizedRect(image_processing_options, image));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
@@ -180,7 +180,7 @@ absl::Status FaceStylizer::StylizeAsync(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options));
+                   ConvertToNormalizedRect(image_processing_options, image));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

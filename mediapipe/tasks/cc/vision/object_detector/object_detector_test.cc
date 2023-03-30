@@ -575,7 +575,6 @@ TEST_F(ImageModeTest, SucceedsWithRotation) {
                                                 "cats_and_dogs_rotated.jpg")));
   auto options = std::make_unique<ObjectDetectorOptions>();
   options->max_results = 1;
-  options->category_allowlist.push_back("cat");
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kMobileSsdWithMetadata);
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ObjectDetector> object_detector,
@@ -589,10 +588,10 @@ TEST_F(ImageModeTest, SucceedsWithRotation) {
       results,
       ConvertToDetectionResult({ParseTextProtoOrDie<DetectionProto>(R"pb(
         label: "cat"
-        score: 0.7109375
+        score: 0.69921875
         location_data {
           format: BOUNDING_BOX
-          bounding_box { xmin: 0 ymin: 622 width: 436 height: 276 }
+          bounding_box { xmin: 0 ymin: 608 width: 439 height: 387 }
         })pb")}));
 }
 
