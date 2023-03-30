@@ -319,6 +319,8 @@ TEST_P(MultiPoseLandmarkerTest, Succeeds) {
                 GetParam().expected_landmark_lists));
 }
 // TODO: Add additional tests for MP Tasks Pose Graphs.
+// PoseRects below are based on result from PoseDetectorGraph,
+// mediapipe/tasks/testdata/vision/pose_expected_expanded_rect.pbtxt.
 INSTANTIATE_TEST_SUITE_P(
     PoseLandmarkerTest, PoseLandmarkerTest,
     Values(
@@ -326,7 +328,8 @@ INSTANTIATE_TEST_SUITE_P(
             .test_name = "PoseLandmarkerLiteModel",
             .input_model_name = kPoseLandmarkerLiteModel,
             .test_image_name = kPoseImage,
-            .pose_rect = MakePoseRect(0.25, 0.5, 0.5, 1.0, 0),
+            .pose_rect = MakePoseRect(0.5450622, 0.31605977, 0.5196669,
+                                      0.77911085, 0.50149304),
             .expected_presence = true,
             .expected_landmarks =
                 GetExpectedLandmarkList(kExpectedPoseLandmarksFilename),
@@ -335,7 +338,8 @@ INSTANTIATE_TEST_SUITE_P(
             .test_name = "PoseLandmarkerLiteModelNoPose",
             .input_model_name = kPoseLandmarkerLiteModel,
             .test_image_name = kBurgerImage,
-            .pose_rect = MakePoseRect(0.25, 0.5, 0.5, 1.0, 0),
+            .pose_rect = MakePoseRect(0.5450622, 0.31605977, 0.5196669,
+                                      0.77911085, 0.50149304),
             .expected_presence = false,
             .expected_landmarks = std::nullopt,
             .landmarks_diff_threshold = kLiteModelFractionDiff}),
@@ -349,7 +353,8 @@ INSTANTIATE_TEST_SUITE_P(
         .test_name = "MultiPoseLandmarkerLiteModel",
         .input_model_name = kPoseLandmarkerLiteModel,
         .test_image_name = kPoseImage,
-        .pose_rects = {MakePoseRect(0.25, 0.5, 0.5, 1.0, 0)},
+        .pose_rects = {MakePoseRect(0.5450622, 0.31605977, 0.5196669,
+                                    0.77911085, 0.50149304)},
         .expected_presences = {true},
         .expected_landmark_lists = {GetExpectedLandmarkList(
             kExpectedPoseLandmarksFilename)},

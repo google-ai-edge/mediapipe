@@ -65,6 +65,8 @@ constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kPoseDetectionModel[] = "pose_detection.tflite";
 constexpr char kPortraitImage[] = "pose.jpg";
 constexpr char kPoseExpectedDetection[] = "pose_expected_detection.pbtxt";
+constexpr char kPoseExpectedExpandedRect[] =
+    "pose_expected_expanded_rect.pbtxt";
 
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageName[] = "image";
@@ -72,8 +74,11 @@ constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kNormRectName[] = "norm_rect";
 constexpr char kDetectionsTag[] = "DETECTIONS";
 constexpr char kDetectionsName[] = "detections";
+constexpr char kExpandedPoseRectsTag[] = "EXPANDED_POSE_RECTS";
+constexpr char kExpandedPoseRectsName[] = "expanded_pose_rects";
 
 constexpr float kPoseDetectionMaxDiff = 0.01;
+constexpr float kExpandedPoseRectMaxDiff = 0.01;
 
 // Helper function to create a TaskRunner.
 absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
@@ -99,6 +104,10 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
   pose_detector_graph.Out(kDetectionsTag).SetName(kDetectionsName) >>
       graph[Output<std::vector<Detection>>(kDetectionsTag)];
 
+  pose_detector_graph.Out(kExpandedPoseRectsTag)
+          .SetName(kExpandedPoseRectsName) >>
+      graph[Output<std::vector<NormalizedRect>>(kExpandedPoseRectsTag)];
+
   return TaskRunner::Create(
       graph.GetConfig(), std::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
@@ -111,6 +120,14 @@ Detection GetExpectedPoseDetectionResult(absl::string_view file_name) {
   return detection;
 }
 
+NormalizedRect GetExpectedExpandedPoseRect(absl::string_view file_name) {
+  NormalizedRect expanded_rect;
+  CHECK_OK(GetTextProto(file::JoinPath("./", kTestDataDirectory, file_name),
+                        &expanded_rect, Defaults()))
+      << "Expected expanded pose rect does not exist.";
+  return expanded_rect;
+}
+
 struct TestParams {
   // The name of this test, for convenience when displaying test results.
   std::string test_name;
@@ -119,7 +136,9 @@ struct TestParams {
   // The filename of test image.
   std::string test_image_name;
   // Expected pose detection results.
-  std::vector<Detection> expected_result;
+  std::vector<Detection> expected_detection;
+  // Expected expanded pose rects.
+  std::vector<NormalizedRect> expected_expanded_pose_rect;
 };
 
 class PoseDetectorGraphTest : public testing::TestWithParam<TestParams> {};
@@ -144,16 +163,27 @@ TEST_P(PoseDetectorGraphTest, Succeed) {
       (*output_packets)[kDetectionsName].Get<std::vector<Detection>>();
   EXPECT_THAT(pose_detections, Pointwise(Approximately(Partially(EqualsProto()),
                                                        kPoseDetectionMaxDiff),
-                                         GetParam().expected_result));
+                                         GetParam().expected_detection));
+
+  const std::vector<NormalizedRect>& expanded_pose_rects =
+      (*output_packets)[kExpandedPoseRectsName]
+          .Get<std::vector<NormalizedRect>>();
+  EXPECT_THAT(expanded_pose_rects,
+              Pointwise(Approximately(Partially(EqualsProto()),
+                                      kExpandedPoseRectMaxDiff),
+                        GetParam().expected_expanded_pose_rect));
 }
 
 INSTANTIATE_TEST_SUITE_P(
     PoseDetectorGraphTest, PoseDetectorGraphTest,
-    Values(TestParams{.test_name = "DetectPose",
-                      .pose_detection_model_name = kPoseDetectionModel,
-                      .test_image_name = kPortraitImage,
-                      .expected_result = {GetExpectedPoseDetectionResult(
-                          kPoseExpectedDetection)}}),
+    Values(TestParams{
+        .test_name = "DetectPose",
+        .pose_detection_model_name = kPoseDetectionModel,
+        .test_image_name = kPortraitImage,
+        .expected_detection = {GetExpectedPoseDetectionResult(
+            kPoseExpectedDetection)},
+        .expected_expanded_pose_rect = {GetExpectedExpandedPoseRect(
+            kPoseExpectedExpandedRect)}}),
     [](const TestParamInfo<PoseDetectorGraphTest::ParamType>& info) {
       return info.param.test_name;
     });
