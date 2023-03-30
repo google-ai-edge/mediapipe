@@ -100,10 +100,11 @@ absl::StatusOr<std::string> PathToResourceAsFile(std::string path) {
 #ifndef _WIN32
   return path;
 #else
-  if (absl::StartsWith(path, "./")) {
-    path = "mediapipe" + path.substr(1);
+  std::string qualified_path = path;
+  if (absl::StartsWith(qualified_path, "./")) {
+    qualified_path = "mediapipe" + qualified_path.substr(1);
   } else if (path[0] != '/') {
-    path = "mediapipe/" + path;
+    qualified_path = "mediapipe/" + qualified_path;
   }
 
   std::string error;
@@ -112,9 +113,10 @@ absl::StatusOr<std::string> PathToResourceAsFile(std::string path) {
   std::unique_ptr<::bazel::tools::cpp::runfiles::Runfiles> runfiles(
       ::bazel::tools::cpp::runfiles::Runfiles::Create("", &error));
   if (!runfiles) {
-    return absl::InternalError("Unable to initialize runfiles: " + error);
+    // Return the original path when Runfiles is not available (e.g. for Python)
+    return path;
   }
-  return runfiles->Rlocation(path);
+  return runfiles->Rlocation(qualified_path);
 #endif  // _WIN32
 }
 
