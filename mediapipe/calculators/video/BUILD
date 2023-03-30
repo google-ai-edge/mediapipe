@@ -48,6 +48,7 @@ proto_library(
     name = "flow_packager_calculator_proto",
     srcs = ["flow_packager_calculator.proto"],
     deps = [
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
         "//mediapipe/util/tracking:flow_packager_proto",
     ],
