@@ -1,0 +1,231 @@
+landmark         {
+  x: 0.5033445
+  y: 0.43453366
+  z: 0.14119335
+  visibility: 0.9981027
+  presence: 0.9992255
+}
+landmark {
+  x: 0.49945074
+  y: 0.42642897
+  z: 0.1261509
+  visibility: 0.99845314
+  presence: 0.9988668
+}
+landmark {
+  x: 0.49838358
+  y: 0.42594656
+  z: 0.12615599
+  visibility: 0.9983102
+  presence: 0.9988244
+}
+landmark {
+  x: 0.49738216
+  y: 0.42554975
+  z: 0.12622544
+  visibility: 0.99852186
+  presence: 0.99873894
+}
+landmark {
+  x: 0.5031697
+  y: 0.42662272
+  z: 0.13347684
+  visibility: 0.9978422
+  presence: 0.9989411
+}
+landmark {
+  x: 0.5052138
+  y: 0.42640454
+  z: 0.13340297
+  visibility: 0.9973635
+  presence: 0.99888366
+}
+landmark {
+  x: 0.50699204
+  y: 0.42618936
+  z: 0.13343208
+  visibility: 0.9977912
+  presence: 0.9987791
+}
+landmark {
+  x: 0.50158876
+  y: 0.42372653
+  z: 0.075136274
+  visibility: 0.9976786
+  presence: 0.99851876
+}
+landmark {
+  x: 0.51374334
+  y: 0.42491674
+  z: 0.10752227
+  visibility: 0.99754214
+  presence: 0.99863297
+}
+landmark {
+  x: 0.5059119
+  y: 0.43917143
+  z: 0.12961307
+  visibility: 0.9958307
+  presence: 0.9977532
+}
+landmark {
+  x: 0.5109223
+  y: 0.43983036
+  z: 0.13892516
+  visibility: 0.99557614
+  presence: 0.9976047
+}
+landmark {
+  x: 0.5023406
+  y: 0.45419085
+  z: 0.045139182
+  visibility: 0.99948055
+  presence: 0.99782556
+}
+landmark {
+  x: 0.5593891
+  y: 0.44672203
+  z: 0.09991482
+  visibility: 0.99833965
+  presence: 0.9977375
+}
+landmark {
+  x: 0.49746004
+  y: 0.4821021
+  z: 0.037247833
+  visibility: 0.80266625
+  presence: 0.9972971
+}
+landmark {
+  x: 0.57370883
+  y: 0.47189793
+  z: 0.13776684
+  visibility: 0.5926873
+  presence: 0.9988753
+}
+landmark {
+  x: 0.5110358
+  y: 0.44240227
+  z: 0.040228914
+  visibility: 0.73293996
+  presence: 0.9983026
+}
+landmark {
+  x: 0.55913407
+  y: 0.45325255
+  z: 0.15570506
+  visibility: 0.6228974
+  presence: 0.998798
+}
+landmark {
+  x: 0.5122394
+  y: 0.42851248
+  z: 0.022895059
+  visibility: 0.67662305
+  presence: 0.9976555
+}
+landmark {
+  x: 0.5534328
+  y: 0.45476273
+  z: 0.13998204
+  visibility: 0.5879434
+  presence: 0.99810314
+}
+landmark {
+  x: 0.5166826
+  y: 0.42873073
+  z: 0.013023325
+  visibility: 0.66849846
+  presence: 0.9973978
+}
+landmark {
+  x: 0.54080456
+  y: 0.45333704
+  z: 0.13224734
+  visibility: 0.58104885
+  presence: 0.99810755
+}
+landmark {
+  x: 0.5170599
+  y: 0.43338987
+  z: 0.03576146
+  visibility: 0.65676475
+  presence: 0.99781895
+}
+landmark {
+  x: 0.550342
+  y: 0.4529801
+  z: 0.15014008
+  visibility: 0.57411015
+  presence: 0.9985139
+}
+landmark {
+  x: 0.5236847
+  y: 0.5765062
+  z: -0.03329975
+  visibility: 0.9998833
+  presence: 0.99935263
+}
+landmark {
+  x: 0.55076087
+  y: 0.57722
+  z: 0.033408616
+  visibility: 0.99978465
+  presence: 0.9994066
+}
+landmark {
+  x: 0.56554604
+  y: 0.68362844
+  z: -0.1572319
+  visibility: 0.8825664
+  presence: 0.99819404
+}
+landmark {
+  x: 0.6127089
+  y: 0.6976384
+  z: 0.034268316
+  visibility: 0.6231058
+  presence: 0.9986853
+}
+landmark {
+  x: 0.63440466
+  y: 0.85055786
+  z: -0.21429145
+  visibility: 0.93542594
+  presence: 0.99297804
+}
+landmark {
+  x: 0.68133575
+  y: 0.8420663
+  z: 0.024820065
+  visibility: 0.8150173
+  presence: 0.994477
+}
+landmark {
+  x: 0.65322053
+  y: 0.8746961
+  z: -0.22213714
+  visibility: 0.89239687
+  presence: 0.986766
+}
+landmark {
+  x: 0.69881815
+  y: 0.862424
+  z: 0.018177645
+  visibility: 0.7516772
+  presence: 0.98905355
+}
+landmark {
+  x: 0.62477547
+  y: 0.9208759
+  z: -0.31597853
+  visibility: 0.92574716
+  presence: 0.9792296
+}
+landmark {
+  x: 0.6807446
+  y: 0.8746925
+  z: -0.059982482
+  visibility: 0.8126682
+  presence: 0.98336893
+}
