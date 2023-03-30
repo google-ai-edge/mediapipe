@@ -100,7 +100,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
     // TODO: Consolidate OutputHandler and TaskRunner.
     OutputHandler<FaceStylizerResult, MPImage> handler = new OutputHandler<>();
     handler.setOutputPacketConverter(
-        new OutputHandler.OutputPacketConverter<>() {
+        new OutputHandler.OutputPacketConverter<FaceStylizerResult, MPImage>() {
           @Override
           public FaceStylizerResult convertToTaskResult(List<Packet> packets)
               throws MediaPipeException {
