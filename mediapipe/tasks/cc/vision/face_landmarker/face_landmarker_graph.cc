@@ -20,9 +20,13 @@ limitations under the License.
 
 #include "absl/strings/str_format.h"
 #include "mediapipe/calculators/core/clip_vector_size_calculator.pb.h"
+#include "mediapipe/calculators/core/concatenate_vector_calculator.h"
 #include "mediapipe/calculators/core/gate_calculator.pb.h"
+#include "mediapipe/calculators/core/get_vector_item_calculator.h"
+#include "mediapipe/calculators/core/get_vector_item_calculator.pb.h"
 #include "mediapipe/calculators/util/association_calculator.pb.h"
 #include "mediapipe/calculators/util/collection_has_min_size_calculator.pb.h"
+#include "mediapipe/calculators/util/landmarks_smoothing_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/formats/classification.pb.h"
@@ -91,6 +95,9 @@ constexpr char kEnvironmentTag[] = "ENVIRONMENT";
 constexpr char kBlendshapesTag[] = "BLENDSHAPES";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 constexpr char kSizeTag[] = "SIZE";
+constexpr char kVectorTag[] = "VECTOR";
+constexpr char kItemTag[] = "ITEM";
+constexpr char kNormFilteredLandmarksTag[] = "NORM_FILTERED_LANDMARKS";
 constexpr char kFaceDetectorTFLiteName[] = "face_detector.tflite";
 constexpr char kFaceLandmarksDetectorTFLiteName[] =
     "face_landmarks_detector.tflite";
@@ -166,6 +173,18 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   return absl::OkStatus();
 }
 
+void ConfigureLandmarksSmoothingCalculator(
+    mediapipe::LandmarksSmoothingCalculatorOptions& options) {
+  // Min cutoff 0.05 results into ~0.01 alpha in landmark EMA filter when
+  // landmark is static.
+  options.mutable_one_euro_filter()->set_min_cutoff(0.05f);
+  // Beta 80.0 in combintation with min_cutoff 0.05 results into ~0.94
+  // alpha in landmark EMA filter when landmark is moving fast.
+  options.mutable_one_euro_filter()->set_beta(80.0f);
+  // Derivative cutoff 1.0 results into ~0.17 alpha in landmark velocity
+  // EMA filter.
+  options.mutable_one_euro_filter()->set_derivate_cutoff(1.0f);
+}
 }  // namespace
 
 // A "mediapipe.tasks.vision.face_landmarker.FaceLandmarkerGraph" performs face
@@ -428,12 +447,45 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
     image_in >> face_landmarks_detector_graph.In(kImageTag);
     clipped_face_rects >> face_landmarks_detector_graph.In(kNormRectTag);
 
-    // TODO: add landmarks smoothing calculators.
-    auto landmarks = face_landmarks_detector_graph.Out(kNormLandmarksTag)
+    std::optional<Source<std::vector<NormalizedLandmarkList>>> face_landmarks;
+    face_landmarks = face_landmarks_detector_graph.Out(kNormLandmarksTag)
                          .Cast<std::vector<NormalizedLandmarkList>>();
     auto face_rects_for_next_frame =
         face_landmarks_detector_graph.Out(kFaceRectsNextFrameTag)
             .Cast<std::vector<NormalizedRect>>();
+
+    auto& image_properties = graph.AddNode("ImagePropertiesCalculator");
+    image_in >> image_properties.In(kImageTag);
+    auto image_size = image_properties.Out(kSizeTag);
+
+    // Apply smoothing filter only on the single face landmarks, because
+    // landmakrs smoothing calculator doesn't support multiple landmarks yet.
+    if (tasks_options.face_detector_graph_options().num_faces() == 1) {
+      // Get the single face landmarks
+      auto& get_vector_item =
+          graph.AddNode("GetNormalizedLandmarkListVectorItemCalculator");
+      get_vector_item.GetOptions<mediapipe::GetVectorItemCalculatorOptions>()
+          .set_item_index(0);
+      *face_landmarks >> get_vector_item.In(kVectorTag);
+      auto single_face_landmarks = get_vector_item.Out(kItemTag);
+
+      // Apply smoothing filter on face landmarks.
+      auto& landmarks_smoothing = graph.AddNode("LandmarksSmoothingCalculator");
+      ConfigureLandmarksSmoothingCalculator(
+          landmarks_smoothing
+              .GetOptions<mediapipe::LandmarksSmoothingCalculatorOptions>());
+      single_face_landmarks >> landmarks_smoothing.In(kNormLandmarksTag);
+      image_size >> landmarks_smoothing.In(kImageSizeTag);
+      auto smoothed_single_face_landmarks =
+          landmarks_smoothing.Out(kNormFilteredLandmarksTag);
+
+      // Wrap the single face landmarks into a vector of landmarks.
+      auto& concatenate_vector =
+          graph.AddNode("ConcatenateNormalizedLandmarkListVectorCalculator");
+      smoothed_single_face_landmarks >> concatenate_vector.In("");
+      face_landmarks.emplace(concatenate_vector.Out("")
+                                 .Cast<std::vector<NormalizedLandmarkList>>());
+    }
 
     if (tasks_options.base_options().use_stream_mode()) {
       auto& previous_loopback = graph.AddNode("PreviousLoopbackCalculator");
@@ -491,9 +543,6 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
     // Optional face geometry output.
     std::optional<Source<std::vector<FaceGeometry>>> face_geometry;
     if (output_geometry) {
-      auto& image_properties = graph.AddNode("ImagePropertiesCalculator");
-      image_in >> image_properties.In(kImageTag);
-      auto image_size = image_properties.Out(kSizeTag);
       auto& face_geometry_from_landmarks = graph.AddNode(
           "mediapipe.tasks.vision.face_geometry."
           "FaceGeometryFromLandmarksGraph");
@@ -503,7 +552,7 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
       if (environment.has_value()) {
         *environment >> face_geometry_from_landmarks.SideIn(kEnvironmentTag);
       }
-      landmarks >> face_geometry_from_landmarks.In(kFaceLandmarksTag);
+      *face_landmarks >> face_geometry_from_landmarks.In(kFaceLandmarksTag);
       image_size >> face_geometry_from_landmarks.In(kImageSizeTag);
       face_geometry = face_geometry_from_landmarks.Out(kFaceGeometryTag)
                           .Cast<std::vector<FaceGeometry>>();
@@ -515,7 +564,7 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
     image_in >> pass_through.In("");
 
     return {{
-        /* landmark_lists= */ landmarks,
+        /* landmark_lists= */ *face_landmarks,
         /* face_rects_next_frame= */
         face_rects_for_next_frame,
         /* face_rects= */
