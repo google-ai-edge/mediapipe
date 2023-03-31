@@ -146,6 +146,18 @@ cc_library(
 )
 
 cc_library(
+    name = "pose_util",
+    srcs = ["pose_util.cc"],
+    hdrs = ["pose_util.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+    ],
+)
+
+cc_library(
     name = "annotation_renderer",
     srcs = ["annotation_renderer.cc"],
     hdrs = ["annotation_renderer.h"],
