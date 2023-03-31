@@ -36,3 +36,27 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
     ],
 )
+
+objc_library(
+    name = "MPPObjectDetector",
+    srcs = ["sources/MPPObjectDetector.m"],
+    hdrs = ["sources/MPPObjectDetector.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    deps = [
+        ":MPPObjectDetectorOptions",
+        ":MPPObjectDetectionResult",
+         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
+        "//mediapipe/tasks/ios/vision/core:MPPImage",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionPacketCreator",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
+        "//mediapipe/tasks/ios/vision/object_detector/utils:MPPObjectDetectorOptionsHelpers",
+        "//mediapipe/tasks/ios/vision/object_detector/utils:MPPObjectDetectionResultHelpers",
+    ],
+)
