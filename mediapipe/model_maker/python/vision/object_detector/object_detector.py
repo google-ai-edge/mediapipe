@@ -57,7 +57,6 @@ class ObjectDetector(classifier.Classifier):
     self._preprocessor = preprocessor.Preprocessor(model_spec)
     self._hparams = hparams
     self._model_options = model_options
-    self._optimizer = self._create_optimizer()
     self._is_qat = False
 
   @classmethod
@@ -104,6 +103,11 @@ class ObjectDetector(classifier.Classifier):
       train_data: Training data.
       validation_data: Validation data.
     """
+    self._optimizer = self._create_optimizer(
+        model_util.get_steps_per_epoch(
+            self._hparams.steps_per_epoch,
+        )
+    )
     self._create_model()
     self._train_model(
         train_data, validation_data, preprocessor=self._preprocessor
@@ -333,21 +337,34 @@ class ObjectDetector(classifier.Classifier):
     with open(metadata_file, 'w') as f:
       f.write(metadata_json)
 
-  def _create_optimizer(self) -> tf.keras.optimizers.Optimizer:
+  def _create_optimizer(
+      self, steps_per_epoch: int
+  ) -> tf.keras.optimizers.Optimizer:
     """Creates an optimizer with learning rate schedule for regular training.
 
     Uses Keras PiecewiseConstantDecay schedule by default.
+
+    Args:
+      steps_per_epoch: Steps per epoch to calculate the step boundaries from the
+        learning_rate_epoch_boundaries
 
     Returns:
       A tf.keras.optimizer.Optimizer for model training.
     """
     init_lr = self._hparams.learning_rate * self._hparams.batch_size / 256
-    lr_values = [init_lr] + [
-        init_lr * m for m in self._hparams.learning_rate_decay_multipliers
-    ]
-    learning_rate_fn = tf.keras.optimizers.schedules.PiecewiseConstantDecay(
-        self._hparams.learning_rate_boundaries, lr_values
-    )
+    if self._hparams.learning_rate_epoch_boundaries:
+      lr_values = [init_lr] + [
+          init_lr * m for m in self._hparams.learning_rate_decay_multipliers
+      ]
+      lr_step_boundaries = [
+          steps_per_epoch * epoch_boundary
+          for epoch_boundary in self._hparams.learning_rate_epoch_boundaries
+      ]
+      learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay(
+          lr_step_boundaries, lr_values
+      )
+    else:
+      learning_rate = init_lr
     return tf.keras.optimizers.experimental.SGD(
-        learning_rate=learning_rate_fn, momentum=0.9
+        learning_rate=learning_rate, momentum=0.9
     )
