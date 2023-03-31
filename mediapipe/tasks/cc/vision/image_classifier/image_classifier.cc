@@ -167,7 +167,7 @@ absl::StatusOr<ImageClassifierResult> ImageClassifier::Classify(
 }
 
 absl::StatusOr<ImageClassifierResult> ImageClassifier::ClassifyForVideo(
-    Image image, int64 timestamp_ms,
+    Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -191,7 +191,7 @@ absl::StatusOr<ImageClassifierResult> ImageClassifier::ClassifyForVideo(
 }
 
 absl::Status ImageClassifier::ClassifyAsync(
-    Image image, int64 timestamp_ms,
+    Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(

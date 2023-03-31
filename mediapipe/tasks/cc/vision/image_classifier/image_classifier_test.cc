@@ -233,7 +233,7 @@ TEST_F(CreateTest, FailsWithIllegalCallbackInImageOrVideoMode) {
         JoinPath("./", kTestDataDirectory, kMobileNetQuantizedWithMetadata);
     options->running_mode = running_mode;
     options->result_callback = [](absl::StatusOr<ImageClassifierResult>,
-                                  const Image& image, int64 timestamp_ms) {};
+                                  const Image& image, int64_t timestamp_ms) {};
 
     auto image_classifier = ImageClassifier::Create(std::move(options));
 
@@ -718,7 +718,7 @@ TEST_F(LiveStreamModeTest, FailsWithCallingWrongMethod) {
       JoinPath("./", kTestDataDirectory, kMobileNetFloatWithMetadata);
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->result_callback = [](absl::StatusOr<ImageClassifierResult>,
-                                const Image& image, int64 timestamp_ms) {};
+                                const Image& image, int64_t timestamp_ms) {};
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
 
@@ -749,7 +749,7 @@ TEST_F(LiveStreamModeTest, FailsWithOutOfOrderInputTimestamps) {
       JoinPath("./", kTestDataDirectory, kMobileNetFloatWithMetadata);
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->result_callback = [](absl::StatusOr<ImageClassifierResult>,
-                                const Image& image, int64 timestamp_ms) {};
+                                const Image& image, int64_t timestamp_ms) {};
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageClassifier> image_classifier,
                           ImageClassifier::Create(std::move(options)));
 
@@ -768,7 +768,7 @@ TEST_F(LiveStreamModeTest, FailsWithOutOfOrderInputTimestamps) {
 struct LiveStreamModeResults {
   ImageClassifierResult classification_result;
   std::pair<int, int> image_size;
-  int64 timestamp_ms;
+  int64_t timestamp_ms;
 };
 
 TEST_F(LiveStreamModeTest, Succeeds) {
@@ -784,7 +784,7 @@ TEST_F(LiveStreamModeTest, Succeeds) {
   options->classifier_options.max_results = 3;
   options->result_callback =
       [&results](absl::StatusOr<ImageClassifierResult> classification_result,
-                 const Image& image, int64 timestamp_ms) {
+                 const Image& image, int64_t timestamp_ms) {
         MP_ASSERT_OK(classification_result.status());
         results.push_back(
             {.classification_result = std::move(classification_result).value(),
@@ -803,7 +803,7 @@ TEST_F(LiveStreamModeTest, Succeeds) {
   // number of iterations.
   ASSERT_LE(results.size(), iterations);
   ASSERT_GT(results.size(), 0);
-  int64 timestamp_ms = -1;
+  int64_t timestamp_ms = -1;
   for (const auto& result : results) {
     EXPECT_GT(result.timestamp_ms, timestamp_ms);
     timestamp_ms = result.timestamp_ms;
@@ -827,7 +827,7 @@ TEST_F(LiveStreamModeTest, SucceedsWithRegionOfInterest) {
   options->classifier_options.max_results = 1;
   options->result_callback =
       [&results](absl::StatusOr<ImageClassifierResult> classification_result,
-                 const Image& image, int64 timestamp_ms) {
+                 const Image& image, int64_t timestamp_ms) {
         MP_ASSERT_OK(classification_result.status());
         results.push_back(
             {.classification_result = std::move(classification_result).value(),
@@ -850,7 +850,7 @@ TEST_F(LiveStreamModeTest, SucceedsWithRegionOfInterest) {
   // number of iterations.
   ASSERT_LE(results.size(), iterations);
   ASSERT_GT(results.size(), 0);
-  int64 timestamp_ms = -1;
+  int64_t timestamp_ms = -1;
   for (const auto& result : results) {
     EXPECT_GT(result.timestamp_ms, timestamp_ms);
     timestamp_ms = result.timestamp_ms;
