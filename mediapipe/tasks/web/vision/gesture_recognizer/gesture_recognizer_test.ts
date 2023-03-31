@@ -147,6 +147,18 @@ describe('GestureRecognizer', () => {
     ]);
   });
 
+  it('does not reset default values when not specified', async () => {
+    await gestureRecognizer.setOptions({minHandDetectionConfidence: 0.5});
+    await gestureRecognizer.setOptions({});
+    verifyGraph(gestureRecognizer, [
+      [
+        'handLandmarkerGraphOptions', 'handDetectorGraphOptions',
+        'minDetectionConfidence'
+      ],
+      0.5
+    ]);
+  });
+
   describe('setOptions()', () => {
     interface TestCase {
       optionPath: [keyof GestureRecognizerOptions, ...string[]];
