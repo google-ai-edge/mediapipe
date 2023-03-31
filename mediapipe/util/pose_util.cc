@@ -89,19 +89,6 @@ void DrawPose(const mediapipe::NormalizedLandmarkList& pose, int target_width,
 
   constexpr int draw_line_width = 5;
   constexpr int draw_circle_radius = 7;
-  const int lm = static_cast<int>(PoseLandmarkName::kMouthLeft);
-  const int rm = static_cast<int>(PoseLandmarkName::kMouthRight);
-  const int ls = static_cast<int>(PoseLandmarkName::kLeftShoulder);
-  const int rs = static_cast<int>(PoseLandmarkName::kRightShoulder);
-  if (visible_landmarks.find(lm) != visible_landmarks.end() &&
-      visible_landmarks.find(rm) != visible_landmarks.end() &&
-      visible_landmarks.find(ls) != visible_landmarks.end() &&
-      visible_landmarks.find(rs) != visible_landmarks.end()) {
-    cv::line(*image, (visible_landmarks[lm] + visible_landmarks[rm]) * 0.5f,
-             (visible_landmarks[ls] + visible_landmarks[rs]) * 0.5f,
-             cv::Scalar(255, 255, 255), draw_line_width);
-  }
-
   for (int j = 0; j < 35; ++j) {
     if (visible_landmarks.find(kJointConnection[j][0]) !=
             visible_landmarks.end() &&
@@ -113,6 +100,19 @@ void DrawPose(const mediapipe::NormalizedLandmarkList& pose, int target_width,
                           kConnectionColorMap[j][2]),
                draw_line_width);
     }
+  }
+
+  const int lm = static_cast<int>(PoseLandmarkName::kMouthLeft);
+  const int rm = static_cast<int>(PoseLandmarkName::kMouthRight);
+  const int ls = static_cast<int>(PoseLandmarkName::kLeftShoulder);
+  const int rs = static_cast<int>(PoseLandmarkName::kRightShoulder);
+  if (visible_landmarks.find(lm) != visible_landmarks.end() &&
+      visible_landmarks.find(rm) != visible_landmarks.end() &&
+      visible_landmarks.find(ls) != visible_landmarks.end() &&
+      visible_landmarks.find(rs) != visible_landmarks.end()) {
+    cv::line(*image, (visible_landmarks[lm] + visible_landmarks[rm]) * 0.5f,
+             (visible_landmarks[ls] + visible_landmarks[rs]) * 0.5f,
+             cv::Scalar(255, 255, 255), draw_line_width);
   }
 
   for (const auto& landmark : visible_landmarks) {
