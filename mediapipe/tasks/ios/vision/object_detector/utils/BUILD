@@ -17,6 +17,20 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 objc_library(
+    name = "MPPObjectDetectorOptionsHelpers",
+    srcs = ["sources/MPPObjectDetectorOptions+Helpers.mm"],
+    hdrs = ["sources/MPPObjectDetectorOptions+Helpers.h"],
+    deps = [
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_cc_proto",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",
+        "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
+        "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetectorOptions",
+    ],
+)
+
+objc_library(
     name = "MPPObjectDetectionResultHelpers",
     srcs = ["sources/MPPObjectDetectionResult+Helpers.mm"],
     hdrs = ["sources/MPPObjectDetectionResult+Helpers.h"],
