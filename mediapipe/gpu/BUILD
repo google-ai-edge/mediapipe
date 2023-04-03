@@ -15,7 +15,7 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("//mediapipe/gpu:metal.bzl", "metal_library")
 load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library", "mediapipe_proto_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 load("//mediapipe/framework:more_selects.bzl", "more_selects")
 
@@ -555,7 +555,10 @@ mediapipe_proto_library(
     name = "gl_context_options_proto",
     srcs = ["gl_context_options.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
 )
 
 # This is a hack needed to work around some issues with strict hdrs_check.
@@ -929,6 +932,7 @@ mediapipe_proto_library(
     srcs = ["gl_animation_overlay_calculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
 )
@@ -939,6 +943,7 @@ mediapipe_proto_library(
     visibility = ["//visibility:public"],
     deps = [
         ":scale_mode_proto",
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
 )
@@ -982,24 +987,14 @@ cc_library(
     alwayslink = 1,
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "gl_surface_sink_calculator_proto",
     srcs = ["gl_surface_sink_calculator.proto"],
     deps = [
         ":scale_mode_proto",
+        "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
     ],
-)
-
-mediapipe_cc_proto_library(
-    name = "gl_surface_sink_calculator_cc_proto",
-    srcs = ["gl_surface_sink_calculator.proto"],
-    cc_deps = [
-        ":scale_mode_cc_proto",
-        "//mediapipe/framework:calculator_cc_proto",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [":gl_surface_sink_calculator_proto"],
 )
 
 ### Metal calculators
@@ -1017,21 +1012,14 @@ objc_library(
     deps = [":simple_shaders_mtl"],
 )
 
-proto_library(
+mediapipe_proto_library(
     name = "copy_calculator_proto",
     srcs = ["copy_calculator.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:calculator_proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "copy_calculator_cc_proto",
-    srcs = ["copy_calculator.proto"],
-    cc_deps = [
-        "//mediapipe/framework:calculator_cc_proto",
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
     ],
-    visibility = ["//visibility:public"],
-    deps = [":copy_calculator_proto"],
 )
 
 objc_library(
