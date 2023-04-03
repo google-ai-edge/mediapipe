@@ -399,7 +399,7 @@ cc_library(
 # On android, this calculator is configured to run with lite protos. Therefore,
 # compile your binary with the flag TENSORFLOW_PROTOS=lite.
 cc_library(
-    name = "tensorflow_inference_calculator",
+    name = "tensorflow_inference_calculator_no_envelope_loader",
     srcs = ["tensorflow_inference_calculator.cc"],
     deps = [
         ":tensorflow_inference_calculator_cc_proto",
@@ -428,6 +428,19 @@ cc_library(
         "//mediapipe:ios": [
             "@org_tensorflow//tensorflow/core:portable_tensorflow_lib",
         ],
+    }),
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "tensorflow_inference_calculator",
+    deps = [
+        ":tensorflow_inference_calculator_no_envelope_loader",
+    ] + select({
+        # Since "select" has "exactly one match" rule, we will need default condition to avoid
+        # "no matching conditions" error. Since all necessary dependencies are specified in
+        # "tensorflow_inference_calculator_no_envelope_loader" dependency, it is empty here.
+        "//conditions:default": [],
     }),
     alwayslink = 1,
 )
