@@ -144,7 +144,7 @@ class BaseVisionTaskApi(object):
         set. By default, it's set to True.
 
     Returns:
-      A normalized rect proto that repesents the image processing options.
+      A normalized rect proto that represents the image processing options.
     """
     normalized_rect = _NormalizedRect(
         rotation=0, x_center=0.5, y_center=0.5, width=1, height=1)
