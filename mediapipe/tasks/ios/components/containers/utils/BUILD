@@ -61,3 +61,14 @@ objc_library(
         "//mediapipe/tasks/ios/components/containers:MPPEmbeddingResult",
     ],
 )
+
+objc_library(
+    name = "MPPDetectionHelpers",
+    srcs = ["sources/MPPDetection+Helpers.mm"],
+    hdrs = ["sources/MPPDetection+Helpers.h"],
+    deps = [
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/containers:MPPDetection",
+    ],
+)
