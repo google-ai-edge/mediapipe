@@ -44,3 +44,10 @@ objc_library(
     hdrs = ["sources/MPPEmbeddingResult.h"],
     deps = [":MPPEmbedding"],
 )
+
+objc_library(
+    name = "MPPDetection",
+    srcs = ["sources/MPPDetection.m"],
+    hdrs = ["sources/MPPDetection.h"],
+    deps = [":MPPCategory"],
+)
