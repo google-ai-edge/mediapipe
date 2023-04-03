@@ -191,8 +191,9 @@ absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
         MediaPipeTasksStatus::kInvalidInputTensorDimensionsError);
   }
 
-  size_t byte_depth =
-      tensor_type == tflite::TensorType_FLOAT32 ? sizeof(float) : sizeof(uint8);
+  size_t byte_depth = tensor_type == tflite::TensorType_FLOAT32
+                          ? sizeof(float)
+                          : sizeof(uint8_t);
   int bytes_size = byte_depth * batch * height * width * depth;
   // Sanity checks.
   if (tensor_type == tflite::TensorType_FLOAT32) {
