@@ -13,6 +13,12 @@ nav_order: 6
 {:toc}
 ---
 
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
+
 ## Real-time timestamps
 
 MediaPipe calculator graphs are often used to process streams of video or audio

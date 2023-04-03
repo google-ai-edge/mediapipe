@@ -12,6 +12,11 @@ nav_order: 1
 1. TOC
 {:toc}
 ---
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
 
 The MediaPipe Python framework grants direct access to the core components of
 the MediaPipe C++ framework such as Timestamp, Packet, and CalculatorGraph,

@@ -57,6 +57,27 @@ jasmine_node_test(
 )
 
 mediapipe_ts_library(
+    name = "detection_result",
+    srcs = ["detection_result.ts"],
+    deps = [
+        "//mediapipe/framework/formats:detection_jspb_proto",
+        "//mediapipe/tasks/web/components/containers:detection_result",
+    ],
+)
+
+mediapipe_ts_library(
+    name = "detection_result_test_lib",
+    testonly = True,
+    srcs = ["detection_result.test.ts"],
+    deps = [
+        ":detection_result",
+        "//mediapipe/framework/formats:detection_jspb_proto",
+        "//mediapipe/framework/formats:location_data_jspb_proto",
+        "//mediapipe/tasks/web/components/containers:detection_result",
+    ],
+)
+
+mediapipe_ts_library(
     name = "embedder_result",
     srcs = ["embedder_result.ts"],
     deps = [

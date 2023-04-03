@@ -13,6 +13,12 @@ nav_order: 1
 {:toc}
 ---
 
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+---
+
 To help users understand the structure of their calculator graphs and to
 understand the overall behavior of their machine learning inference pipelines,
 we have built the [MediaPipe Visualizer](https://viz.mediapipe.dev/)

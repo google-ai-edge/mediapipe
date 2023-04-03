@@ -13,6 +13,12 @@ nav_order: 7
 {:toc}
 ---
 
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
+
 ## OpenGL ES Support
 
 MediaPipe supports OpenGL ES up to version 3.2 on Android/Linux and up to ES 3.0
