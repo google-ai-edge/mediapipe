@@ -26,3 +26,13 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPObjectDetectorOptions",
+    srcs = ["sources/MPPObjectDetectorOptions.m"],
+    hdrs = ["sources/MPPObjectDetectorOptions.h"],
+    deps = [
+        ":MPPObjectDetectionResult",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
+    ],
+)
