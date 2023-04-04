@@ -185,7 +185,7 @@ absl::Status ParseTagIndexName(const std::string& tag_index_name,
     tag_status = ValidateTag(v[0]);
     number_status = ValidateNumber(v[1]);
     if (number_status.ok()) {
-      int64 index64;
+      int64_t index64;
       RET_CHECK(absl::SimpleAtoi(v[1], &index64));
       RET_CHECK_LE(index64, internal::kMaxCollectionItemId);
       the_index = index64;
@@ -227,7 +227,7 @@ absl::Status ParseTagIndex(const std::string& tag_index, std::string* tag,
     }
     number_status = ValidateNumber(v[1]);
     if (number_status.ok()) {
-      int64 index64;
+      int64_t index64;
       RET_CHECK(absl::SimpleAtoi(v[1], &index64));
       RET_CHECK_LE(index64, internal::kMaxCollectionItemId);
       the_index = index64;
