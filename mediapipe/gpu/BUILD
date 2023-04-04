@@ -423,12 +423,15 @@ cc_library(
 
 cc_library(
     name = "gpu_buffer_storage_image_frame",
+    srcs = ["gpu_buffer_storage_image_frame.cc"],
     hdrs = ["gpu_buffer_storage_image_frame.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":frame_buffer_view",
         ":gpu_buffer_format",
         ":gpu_buffer_storage",
         ":image_frame_view",
+        "//mediapipe/framework/formats:frame_buffer",
         "//mediapipe/framework/formats:image_frame",
     ],
 )
