@@ -2,7 +2,7 @@
 layout: forward
 target: https://developers.google.com/mediapipe/solutions/vision/hand_landmarker
 title: Hands
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 4
 ---
 

@@ -2,7 +2,7 @@
 layout: forward
 target: https://developers.google.com/mediapipe/solutions/guide#legacy
 title: Box Tracking
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 10
 ---
 

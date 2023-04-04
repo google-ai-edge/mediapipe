@@ -2,7 +2,7 @@
 layout: forward
 target: https://developers.google.com/mediapipe/solutions/guide#legacy
 title: Models and Model Cards
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 30
 ---
 

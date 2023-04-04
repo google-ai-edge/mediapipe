@@ -3,7 +3,7 @@ layout: forward
 target: https://developers.google.com/mediapipe/solutions/vision/pose_landmarker/
 title: Pose Classification
 parent: Pose
-grand_parent: Solutions
+grand_parent: MediaPipe Legacy Solutions
 nav_order: 1
 ---
 

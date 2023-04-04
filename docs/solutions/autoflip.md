@@ -2,7 +2,7 @@
 layout: forward
 target: https://developers.google.com/mediapipe/solutions/guide#legacy
 title: AutoFlip (Saliency-aware Video Cropping)
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 14
 ---
 

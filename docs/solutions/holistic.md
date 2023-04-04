@@ -2,7 +2,7 @@
 layout: forward
 target: https://github.com/google/mediapipe/blob/master/docs/solutions/holistic.md
 title: Holistic
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 6
 ---
 

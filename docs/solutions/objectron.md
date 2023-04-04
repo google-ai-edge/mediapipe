@@ -2,7 +2,7 @@
 layout: forward
 target: https://developers.google.com/mediapipe/solutions/guide#legacy
 title: Objectron (3D Object Detection)
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 12
 ---
 

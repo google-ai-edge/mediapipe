@@ -2,7 +2,7 @@
 layout: forward
 target: https://developers.google.com/mediapipe/solutions/vision/pose_landmarker/
 title: Pose
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 has_children: true
 has_toc: false
 nav_order: 5

@@ -2,7 +2,7 @@
 layout: forward
 target: https://developers.google.com/mediapipe/solutions/vision/object_detector/
 title: Object Detection
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 9
 ---
 

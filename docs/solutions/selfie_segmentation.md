@@ -2,7 +2,7 @@
 layout: forward
 target: https://developers.google.com/mediapipe/solutions/vision/image_segmenter/
 title: Selfie Segmentation
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 7
 ---
 

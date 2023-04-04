@@ -2,7 +2,7 @@
 layout: forward
 target: https://developers.google.com/mediapipe/solutions/guide#legacy
 title: YouTube-8M Feature Extraction and Model Inference
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 16
 ---
 

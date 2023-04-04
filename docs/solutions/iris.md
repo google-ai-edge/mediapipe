@@ -2,7 +2,7 @@
 layout: forward
 target: https://developers.google.com/mediapipe/solutions/vision/face_landmarker/
 title: Iris
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 3
 ---
 
