@@ -19,6 +19,7 @@ package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 cc_binary(
     name = "holistic_tracking_cpu",
     data = [
+        "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
         "//mediapipe/modules/face_landmark:face_landmark.tflite",
         "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",
         "//mediapipe/modules/holistic_landmark:hand_recrop.tflite",
@@ -35,6 +36,7 @@ cc_binary(
 cc_binary(
     name = "holistic_tracking_gpu",
     data = [
+        "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
         "//mediapipe/modules/face_landmark:face_landmark.tflite",
         "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",
         "//mediapipe/modules/holistic_landmark:hand_recrop.tflite",
