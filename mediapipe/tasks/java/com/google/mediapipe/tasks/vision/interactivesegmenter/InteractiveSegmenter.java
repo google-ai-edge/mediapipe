@@ -133,7 +133,6 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
             if (packets.get(GROUPED_SEGMENTATION_OUT_STREAM_INDEX).isEmpty()) {
               return ImageSegmenterResult.create(
                   new ArrayList<>(),
-                  Optional.empty(),
                   packets.get(GROUPED_SEGMENTATION_OUT_STREAM_INDEX).getTimestamp());
             }
             List<MPImage> segmentedMasks = new ArrayList<>();
@@ -173,7 +172,6 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
 
             return ImageSegmenterResult.create(
                 segmentedMasks,
-                Optional.empty(),
                 BaseVisionTaskApi.generateResultTimestampMs(
                     RunningMode.IMAGE, packets.get(GROUPED_SEGMENTATION_OUT_STREAM_INDEX)));
           }
