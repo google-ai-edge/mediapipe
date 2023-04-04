@@ -33,7 +33,7 @@ message SegmenterOptions {
     CONFIDENCE_MASK = 2;
   }
   // Optional output mask type.
-  optional OutputType output_type = 1 [default = CATEGORY_MASK];
+  optional OutputType output_type = 1 [deprecated = true];
 
   // Supported activation functions for filtering.
   enum Activation {
