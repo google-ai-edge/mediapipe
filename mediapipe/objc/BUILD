@@ -89,6 +89,7 @@ objc_library(
         "//mediapipe/gpu:metal_shared_resources",
         "//mediapipe/gpu:pixel_buffer_pool_util",
         "//mediapipe/util:cpu_util",
+        "//third_party/apple_frameworks:AVFoundation",
         "//third_party/apple_frameworks:Accelerate",
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/memory",

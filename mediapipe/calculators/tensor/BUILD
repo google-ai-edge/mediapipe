@@ -467,10 +467,6 @@ cc_library(
         "-x objective-c++",
         "-fobjc-arc",  # enable reference-counting
     ],
-    linkopts = [
-        "-framework CoreVideo",
-        "-framework MetalKit",
-    ],
     tags = ["ios"],
     deps = [
         "inference_calculator_interface",
@@ -486,7 +482,13 @@ cc_library(
         "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate_internal",
         "@org_tensorflow//tensorflow/lite/delegates/gpu/common:shape",
         "@org_tensorflow//tensorflow/lite/delegates/gpu/metal:buffer_convert",
-    ],
+    ] + select({
+        "//mediapipe:apple": [
+            "//third_party/apple_frameworks:CoreVideo",
+            "//third_party/apple_frameworks:MetalKit",
+        ],
+        "//conditions:default": [],
+    }),
     alwayslink = 1,
 )
 
@@ -721,13 +723,6 @@ cc_library(
         "//conditions:default": [],
     }),
     features = ["-layering_check"],  # allow depending on tensors_to_detections_calculator_gpu_deps
-    linkopts = select({
-        "//mediapipe:apple": [
-            "-framework CoreVideo",
-            "-framework MetalKit",
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":tensors_to_detections_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -744,6 +739,12 @@ cc_library(
     ] + selects.with_or({
         ":compute_shader_unavailable": [],
         "//conditions:default": [":tensors_to_detections_calculator_gpu_deps"],
+    }) + select({
+        "//mediapipe:apple": [
+            "//third_party/apple_frameworks:CoreVideo",
+            "//third_party/apple_frameworks:MetalKit",
+        ],
+        "//conditions:default": [],
     }),
     alwayslink = 1,
 )
@@ -1333,6 +1334,7 @@ cc_library(
         "//mediapipe:ios": [
             "//mediapipe/gpu:MPPMetalUtil",
             "//mediapipe/gpu:MPPMetalHelper",
+            "//third_party/apple_frameworks:MetalKit",
         ],
         "//conditions:default": [
             "@org_tensorflow//tensorflow/lite/delegates/gpu:gl_delegate",
