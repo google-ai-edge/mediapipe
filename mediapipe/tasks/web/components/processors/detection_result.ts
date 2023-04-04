@@ -46,5 +46,18 @@ export function convertFromDetectionProto(source: DetectionProto): Detection {
     };
   }
 
+  if (source.getLocationData()?.getRelativeKeypointsList().length) {
+    detection.keypoints = [];
+    for (const keypoint of
+             source.getLocationData()!.getRelativeKeypointsList()) {
+      detection.keypoints.push({
+        x: keypoint.getX() ?? 0.0,
+        y: keypoint.getY() ?? 0.0,
+        score: keypoint.getScore() ?? 0.0,
+        label: keypoint.getKeypointLabel() ?? '',
+      });
+    }
+  }
+
   return detection;
 }

@@ -16,6 +16,7 @@
 
 import {BoundingBox} from '../../../../tasks/web/components/containers/bounding_box';
 import {Category} from '../../../../tasks/web/components/containers/category';
+import {NormalizedKeypoint} from '../../../../tasks/web/components/containers/keypoint';
 
 /** Represents one detection by a detection task. */
 export declare interface Detection {
@@ -24,6 +25,15 @@ export declare interface Detection {
 
   /** The bounding box of the detected objects. */
   boundingBox?: BoundingBox;
+
+  /**
+   * Optional list of keypoints associated with the detection. Keypoints
+   * represent interesting points related to the detection. For example, the
+   * keypoints represent the eye, ear and mouth from face detection model. Or
+   * in the template matching detection, e.g. KNIFT, they can represent the
+   * feature points for template matching.
+   */
+  keypoints?: NormalizedKeypoint[];
 }
 
 /** Detection results of a model. */

@@ -26,6 +26,7 @@ mediapipe_ts_declaration(
     deps = [
         ":bounding_box",
         ":category",
+        ":keypoint",
     ],
 )
 

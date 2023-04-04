@@ -2,6 +2,22 @@
 
 This package contains the vision tasks for MediaPipe.
 
+## Face Detection
+
+The MediaPipe Face Detector task lets you detect the presence and location of
+faces within images or videos.
+
+```
+const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+);
+const faceDetector = await FaceDetector.createFromModelPath(vision,
+    "https://storage.googleapis.com/mediapipe-tasks/object_detector/efficientdet_lite0_uint8.tflite"
+);
+const image = document.getElementById("image") as HTMLImageElement;
+const detections = faceDetector.detect(image);
+```
+
 ## Face Landmark Detection
 
 The MediaPipe Face Landmarker task lets you detect the landmarks of faces in
