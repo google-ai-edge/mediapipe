@@ -105,7 +105,9 @@ class ObjectDetector(classifier.Classifier):
     """
     self._optimizer = self._create_optimizer(
         model_util.get_steps_per_epoch(
-            self._hparams.steps_per_epoch,
+            steps_per_epoch=self._hparams.steps_per_epoch,
+            batch_size=self._hparams.batch_size,
+            train_data=train_data,
         )
     )
     self._create_model()
