@@ -182,12 +182,12 @@ class SpectrogramCalculator : public CalculatorBase {
   int frame_duration_samples_;
   int frame_overlap_samples_;
   // How many samples we've been passed, used for checking input time stamps.
-  int64 cumulative_input_samples_;
+  int64_t cumulative_input_samples_;
   // How many frames we've emitted, used for calculating output time stamps.
-  int64 cumulative_completed_frames_;
+  int64_t cumulative_completed_frames_;
   // How many frames were emitted last, used for estimating the timestamp on
   // Close when use_local_timestamp_ is true;
-  int64 last_completed_frames_;
+  int64_t last_completed_frames_;
   Timestamp initial_input_timestamp_;
   int num_input_channels_;
   // How many frequency bins we emit (=N_FFT/2 + 1).
