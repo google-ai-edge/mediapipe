@@ -125,8 +125,10 @@ objc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/apple_frameworks:AVFoundation",
+        "//third_party/apple_frameworks:CoreAudio",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:Foundation",
+        "//third_party/apple_frameworks:MediaToolbox",
     ],
 )
 

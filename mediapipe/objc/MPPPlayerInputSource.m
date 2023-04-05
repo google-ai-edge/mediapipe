@@ -13,11 +13,13 @@
 // limitations under the License.
 
 #import <CoreVideo/CoreVideo.h>
+#import <MediaToolbox/MediaToolbox.h>
 
 #import "MPPPlayerInputSource.h"
 #if !TARGET_OS_OSX
 #import "mediapipe/objc/MPPDisplayLinkWeakTarget.h"
 #endif
+#import "mediapipe/objc/MPPInputSource.h"
 
 @implementation MPPPlayerInputSource {
   AVAsset* _video;
@@ -35,7 +37,53 @@
   BOOL _playing;
 }
 
+void InitAudio(MTAudioProcessingTapRef tap, void* clientInfo, void** tapStorageOut) {
+  // `clientInfo` comes as a user-defined argument through
+  // `MTAudioProcessingTapCallbacks`; we pass our `MPPPlayerInputSource`
+  // there. Tap processing functions allow for user-defined "storage" - we just
+  // treat our input source as such.
+  *tapStorageOut = clientInfo;
+}
+
+void PrepareAudio(MTAudioProcessingTapRef tap, CMItemCount maxFrames,
+                  const AudioStreamBasicDescription* audioFormat) {
+  // See `InitAudio`.
+  MPPPlayerInputSource* source =
+      (__bridge MPPPlayerInputSource*)MTAudioProcessingTapGetStorage(tap);
+  if ([source.delegate respondsToSelector:@selector(willStartPlayingAudioWithFormat:fromSource:)]) {
+    [source.delegate willStartPlayingAudioWithFormat:audioFormat fromSource:source];
+  }
+}
+
+void ProcessAudio(MTAudioProcessingTapRef tap, CMItemCount numberFrames,
+                  MTAudioProcessingTapFlags flags, AudioBufferList* bufferListInOut,
+                  CMItemCount* numberFramesOut, MTAudioProcessingTapFlags* flagsOut) {
+  CMTimeRange timeRange;
+  OSStatus status = MTAudioProcessingTapGetSourceAudio(tap, numberFrames, bufferListInOut, flagsOut,
+                                                       &timeRange, numberFramesOut);
+  if (status != 0) {
+    NSLog(@"Error from GetSourceAudio: %ld", (long)status);
+    return;
+  }
+
+  // See `InitAudio`.
+  MPPPlayerInputSource* source =
+      (__bridge MPPPlayerInputSource*)MTAudioProcessingTapGetStorage(tap);
+  if ([source.delegate respondsToSelector:@selector(processAudioPacket:
+                                                             numFrames:timestamp:fromSource:)]) {
+    [source.delegate processAudioPacket:bufferListInOut
+                              numFrames:numberFrames
+                              timestamp:timeRange.start
+                             fromSource:source];
+  }
+}
+
 - (instancetype)initWithAVAsset:(AVAsset*)video {
+  return [self initWithAVAsset:video audioProcessingEnabled:NO];
+}
+
+- (instancetype)initWithAVAsset:(AVAsset*)video
+         audioProcessingEnabled:(BOOL)audioProcessingEnabled {
   self = [super init];
   if (self) {
     _video = video;
@@ -67,6 +115,11 @@
     CVDisplayLinkStop(_videoDisplayLink);
     CVDisplayLinkSetOutputCallback(_videoDisplayLink, renderCallback, (__bridge void*)self);
 #endif  // TARGET_OS_OSX
+
+    if (audioProcessingEnabled) {
+      [self setupAudioPlayback];
+    }
+
     _videoPlayer = [AVPlayer playerWithPlayerItem:_videoItem];
     _videoPlayer.actionAtItemEnd = AVPlayerActionAtItemEndNone;
     NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
@@ -86,6 +139,47 @@
                                                 }];
   }
   return self;
+}
+
+- (void)setupAudioPlayback {
+  bool have_audio = false;
+  NSArray<AVAssetTrack*>* audioTracks =
+      [_video tracksWithMediaCharacteristic:AVMediaCharacteristicAudible];
+  if (audioTracks.count != 0) {
+    // We always limit ourselves to the first audio track if there are
+    // multiple (which is a rarity) - note that it can still be e.g. stereo.
+    AVAssetTrack* audioTrack = audioTracks[0];
+    MTAudioProcessingTapCallbacks audioCallbacks;
+    audioCallbacks.version = kMTAudioProcessingTapCallbacksVersion_0;
+    audioCallbacks.clientInfo = (__bridge void*)(self);
+    audioCallbacks.init = InitAudio;
+    audioCallbacks.prepare = PrepareAudio;
+    audioCallbacks.process = ProcessAudio;
+    audioCallbacks.unprepare = NULL;
+    audioCallbacks.finalize = NULL;
+
+    MTAudioProcessingTapRef audioTap;
+    OSStatus status =
+        MTAudioProcessingTapCreate(kCFAllocatorDefault, &audioCallbacks,
+                                   kMTAudioProcessingTapCreationFlag_PreEffects, &audioTap);
+    if (status == noErr && audioTap != NULL) {
+      AVMutableAudioMixInputParameters* audioMixInputParams =
+          [AVMutableAudioMixInputParameters audioMixInputParametersWithTrack:audioTrack];
+      audioMixInputParams.audioTapProcessor = audioTap;
+      CFRelease(audioTap);
+
+      AVMutableAudioMix* audioMix = [AVMutableAudioMix audioMix];
+
+      audioMix.inputParameters = @[ audioMixInputParams ];
+      _videoItem.audioMix = audioMix;
+      have_audio = true;
+    } else {
+      NSLog(@"Error %ld when trying to create the audio processing tap", (long)status);
+    }
+  }
+  if (!have_audio && [self.delegate respondsToSelector:@selector(noAudioAvailableFromSource:)]) {
+    [self.delegate noAudioAvailableFromSource:self];
+  }
 }
 
 - (void)start {
