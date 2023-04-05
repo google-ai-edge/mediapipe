@@ -348,10 +348,7 @@ class BuildExtension(build_ext.build_ext):
       for ext in self.extensions:
         target_name = self.get_ext_fullpath(ext.name)
         # Build x86
-        self._build_binary(
-            ext,
-            ['--cpu=darwin_x86_64', '--ios_multi_cpus=i386,x86_64,armv7,arm64'],
-        )
+        self._build_binary(ext)
         x86_name = self.get_ext_fullpath(ext.name)
         # Build Arm64
         ext.name = ext.name + '.arm64'
