@@ -143,7 +143,7 @@ The landmark model in MediaPipe Pose predicts the location of 33 pose landmarks
 :----------------------------------------------------------------------------------------------: |
 *Fig 4. 33 pose landmarks.*                                                                      |
 
-Optionally, MediaPipe Pose can predicts a full-body
+Optionally, MediaPipe Pose can predict a full-body
 [segmentation mask](#segmentation_mask) represented as a two-class segmentation
 (human or background).
 

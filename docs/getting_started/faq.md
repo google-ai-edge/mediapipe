@@ -53,7 +53,7 @@ calculators need only to be *thread-compatible* and not *thread-safe*.
 In order to enable one calculator to process multiple inputs in parallel, there
 are two possible approaches:
 
-1.  Define multiple calulator nodes and dispatch input packets to all nodes.
+1.  Define multiple calculator nodes and dispatch input packets to all nodes.
 2.  Make the calculator thread-safe and configure its [`max_in_flight`] setting.
 
 The first approach can be followed using the calculators designed to distribute
@@ -95,12 +95,12 @@ while the application is running:
 The first approach has the advantage of leveraging [`CalculatorGraphConfig`]
 processing tools such as "subgraphs". The second approach has the advantage of
 allowing active calculators and packets to remain in-flight while settings
-change. Mediapipe contributors are currently investigating alternative approaches
+change. MediaPipe contributors are currently investigating alternative approaches
 to achieve both of these advantages.
 
 ### How to process realtime input streams
 
-The mediapipe framework can be used to process data streams either online or
+The MediaPipe framework can be used to process data streams either online or
 offline. For offline processing, packets are pushed into the graph as soon as
 calculators are ready to process those packets. For online processing, one
 packet for each frame is pushed into the graph as that frame is recorded.

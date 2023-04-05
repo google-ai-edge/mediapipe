@@ -14,13 +14,8 @@ as the primary developer documentation site for MediaPipe as of April 3, 2023.*
 
 *This notice and web page will be removed on June 1, 2023.*
 
-----
-
-<br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br>
-
 --------------------------------------------------------------------------------
+<br/>
 
 ## Live ML anywhere
 

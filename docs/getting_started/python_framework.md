@@ -81,7 +81,7 @@ np.ndarray                           | mp::Matrix                    | create_ma
 Google Proto Message                 | Google Proto Message          | create_proto(proto)                                                                                                                                          | get_proto(packet)
 List\[Proto\]                        | std::vector\<Proto\>          | n/a                                                                                                                                                          | get_proto_list(packet)
 
-It's not uncommon that users create custom C++ classes and and send those into
+It's not uncommon that users create custom C++ classes and send those into
 the graphs and calculators. To allow the custom classes to be used in Python
 with MediaPipe, you may extend the Packet API for a new data type in the
 following steps:
@@ -234,7 +234,7 @@ three stages: initialization and setup, graph run, and graph shutdown.
             output_packets.append(mp.packet_getter.get_str(packet)))
     ```
 
-    Option 2. Initialize a CalculatorGraph with with a binary protobuf file, and
+    Option 2. Initialize a CalculatorGraph with a binary protobuf file, and
     observe the output stream(s).
 
     ```python

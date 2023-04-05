@@ -75,7 +75,7 @@ previous frame as a guide to the object region on the current one. However,
 during fast movements, the tracker can lose the target, which requires the
 detector to re-localize it in the image. MediaPipe Holistic uses
 [pose](./pose.md) prediction (on every frame) as an additional ROI prior to
-reduce the response time of the pipeline when reacting to fast movements. This
+reducing the response time of the pipeline when reacting to fast movements. This
 also enables the model to retain semantic consistency across the body and its
 parts by preventing a mixup between left and right hands or body parts of one
 person in the frame with another.
