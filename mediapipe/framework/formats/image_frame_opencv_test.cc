@@ -51,8 +51,8 @@ TEST(ImageFrameOpencvTest, ConvertToMat) {
   // Check adding constant images.
   const uint8_t frame1_val = 12;
   const uint8_t frame2_val = 34;
-  SetToColor<uint8>(&frame1_val, &frame1);
-  SetToColor<uint8>(&frame2_val, &frame2);
+  SetToColor<uint8_t>(&frame1_val, &frame1);
+  SetToColor<uint8_t>(&frame2_val, &frame2);
   // Get Mat wrapper around ImageFrame memory (zero copy).
   cv::Mat frame1_mat = formats::MatView(&frame1);
   cv::Mat frame2_mat = formats::MatView(&frame2);
@@ -62,7 +62,7 @@ TEST(ImageFrameOpencvTest, ConvertToMat) {
   EXPECT_EQ(frame_avg, frame1_val + frame2_val);
 
   // Check setting min/max pixels.
-  uint8* frame1_ptr = frame1.MutablePixelData();
+  uint8_t* frame1_ptr = frame1.MutablePixelData();
   frame1_ptr[(i_width - 5) + (i_height - 5) * frame1.WidthStep()] = 1;
   frame1_ptr[(i_width - 6) + (i_height - 6) * frame1.WidthStep()] = 100;
   double min, max;
@@ -84,8 +84,8 @@ TEST(ImageFrameOpencvTest, ConvertToIpl) {
   // Check adding constant images.
   const uint8_t frame1_val = 12;
   const uint8_t frame2_val = 34;
-  SetToColor<uint8>(&frame1_val, &frame1);
-  SetToColor<uint8>(&frame2_val, &frame2);
+  SetToColor<uint8_t>(&frame1_val, &frame1);
+  SetToColor<uint8_t>(&frame2_val, &frame2);
   const cv::Mat frame1_mat = formats::MatView(&frame1);
   const cv::Mat frame2_mat = formats::MatView(&frame2);
   const cv::Mat frame_sum = frame1_mat + frame2_mat;
@@ -93,7 +93,7 @@ TEST(ImageFrameOpencvTest, ConvertToIpl) {
   EXPECT_EQ(frame_avg, frame1_val + frame2_val);
 
   // Check setting min/max pixels.
-  uint8* frame1_ptr = frame1.MutablePixelData();
+  uint8_t* frame1_ptr = frame1.MutablePixelData();
   frame1_ptr[(i_width - 5) + (i_height - 5) * frame1.WidthStep()] = 1;
   frame1_ptr[(i_width - 6) + (i_height - 6) * frame1.WidthStep()] = 100;
   double min, max;

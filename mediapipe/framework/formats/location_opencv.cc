@@ -91,7 +91,7 @@ std::unique_ptr<cv::Mat> GetCvMask(const Location& location) {
       new cv::Mat(mask.height(), mask.width(), CV_8UC1, cv::Scalar(0)));
   for (const auto& interval : location_data.mask().rasterization().interval()) {
     for (int x = interval.left_x(); x <= interval.right_x(); ++x) {
-      mat->at<uint8>(interval.y(), x) = 255;
+      mat->at<uint8_t>(interval.y(), x) = 255;
     }
   }
   return mat;
@@ -174,7 +174,7 @@ void EnlargeLocation(Location& location, const float factor) {
       } else {
         cv::erode(*mask, *mask, morph_element);
       }
-      CreateCvMaskLocation<uint8>(*mask).ConvertToProto(&location_data);
+      CreateCvMaskLocation<uint8_t>(*mask).ConvertToProto(&location_data);
       break;
     }
   }

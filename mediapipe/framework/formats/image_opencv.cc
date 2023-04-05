@@ -96,7 +96,7 @@ std::shared_ptr<cv::Mat> MatView(const mediapipe::Image* image) {
                               image->image_format()))};
   auto owner =
       std::make_shared<MatWithPixelLock>(const_cast<mediapipe::Image*>(image));
-  uint8* data_ptr = owner->lock.Pixels();
+  uint8_t* data_ptr = owner->lock.Pixels();
   CHECK(data_ptr != nullptr);
   // Use Image to initialize in-place. Image still owns memory.
   if (steps[0] == sizes[1] * image->channels() *
