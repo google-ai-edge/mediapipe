@@ -226,7 +226,7 @@ struct AddDetectionFlags {
   std::optional<int> max_zoom_factor_percent;
 };
 
-void AddDetectionFrameSize(const cv::Rect_<float>& position, const int64 time,
+void AddDetectionFrameSize(const cv::Rect_<float>& position, const int64_t time,
                            const int width, const int height,
                            CalculatorRunner* runner,
                            const AddDetectionFlags& flags = {}) {
@@ -275,7 +275,7 @@ void AddDetectionFrameSize(const cv::Rect_<float>& position, const int64 time,
   }
 }
 
-void AddDetection(const cv::Rect_<float>& position, const int64 time,
+void AddDetection(const cv::Rect_<float>& position, const int64_t time,
                   CalculatorRunner* runner) {
   AddDetectionFrameSize(position, time, 1000, 1000, runner);
 }
