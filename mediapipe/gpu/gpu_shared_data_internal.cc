@@ -119,7 +119,7 @@ GpuResources::~GpuResources() {
 extern const GraphService<GpuResources> kGpuService;
 
 absl::Status GpuResources::PrepareGpuNode(CalculatorNode* node) {
-  CHECK(ContainsKey(node->Contract().ServiceRequests(), kGpuService.key));
+  CHECK(node->Contract().ServiceRequests().contains(kGpuService.key));
   std::string node_id = node->GetCalculatorState().NodeName();
   std::string node_type = node->GetCalculatorState().CalculatorType();
   std::string context_key;
