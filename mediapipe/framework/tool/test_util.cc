@@ -191,6 +191,7 @@ absl::Status CompareImageFrames(const ImageFrame& image1,
                                    max_alpha_diff, max_avg_diff, diff_image);
     case ImageFormat::VEC32F1:
     case ImageFormat::VEC32F2:
+    case ImageFormat::VEC32F4:
       return CompareDiff<float>(image1, image2, max_color_diff, max_alpha_diff,
                                 max_avg_diff, diff_image);
     default:

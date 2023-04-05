@@ -280,6 +280,8 @@ int ImageFrame::NumberOfChannelsForFormat(ImageFormat::Format format) {
       return 1;
     case ImageFormat::VEC32F2:
       return 2;
+    case ImageFormat::VEC32F4:
+      return 4;
     case ImageFormat::LAB8:
       return 3;
     case ImageFormat::SBGRA:
@@ -309,6 +311,8 @@ int ImageFrame::ChannelSizeForFormat(ImageFormat::Format format) {
       return sizeof(float);
     case ImageFormat::VEC32F2:
       return sizeof(float);
+    case ImageFormat::VEC32F4:
+      return sizeof(float);
     case ImageFormat::LAB8:
       return sizeof(uint8_t);
     case ImageFormat::SBGRA:
@@ -337,6 +341,8 @@ int ImageFrame::ByteDepthForFormat(ImageFormat::Format format) {
     case ImageFormat::VEC32F1:
       return 4;
     case ImageFormat::VEC32F2:
+      return 4;
+    case ImageFormat::VEC32F4:
       return 4;
     case ImageFormat::LAB8:
       return 1;

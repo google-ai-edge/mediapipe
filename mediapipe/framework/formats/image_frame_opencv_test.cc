@@ -113,6 +113,7 @@ TEST(ImageFrameOpencvTest, ImageFormats) {
   ImageFrame frame_g16(ImageFormat::GRAY16, i_width, i_height);
   ImageFrame frame_v32f1(ImageFormat::VEC32F1, i_width, i_height);
   ImageFrame frame_v32f2(ImageFormat::VEC32F2, i_width, i_height);
+  ImageFrame frame_v32f4(ImageFormat::VEC32F4, i_width, i_height);
   ImageFrame frame_c3(ImageFormat::SRGB, i_width, i_height);
   ImageFrame frame_c4(ImageFormat::SRGBA, i_width, i_height);
 
@@ -120,6 +121,7 @@ TEST(ImageFrameOpencvTest, ImageFormats) {
   cv::Mat mat_g16 = formats::MatView(&frame_g16);
   cv::Mat mat_v32f1 = formats::MatView(&frame_v32f1);
   cv::Mat mat_v32f2 = formats::MatView(&frame_v32f2);
+  cv::Mat mat_v32f4 = formats::MatView(&frame_v32f4);
   cv::Mat mat_c3 = formats::MatView(&frame_c3);
   cv::Mat mat_c4 = formats::MatView(&frame_c4);
 
@@ -127,6 +129,7 @@ TEST(ImageFrameOpencvTest, ImageFormats) {
   EXPECT_EQ(mat_g16.type(), CV_16UC1);
   EXPECT_EQ(mat_v32f1.type(), CV_32FC1);
   EXPECT_EQ(mat_v32f2.type(), CV_32FC2);
+  EXPECT_EQ(mat_v32f4.type(), CV_32FC4);
   EXPECT_EQ(mat_c3.type(), CV_8UC3);
   EXPECT_EQ(mat_c4.type(), CV_8UC4);
 }

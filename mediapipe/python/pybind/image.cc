@@ -120,16 +120,17 @@ void ImageSubmodule(pybind11::module* module) {
           py::init([](mediapipe::ImageFormat::Format format,
                       const py::array_t<float, py::array::c_style>& data) {
             if (format != mediapipe::ImageFormat::VEC32F1 &&
-                format != mediapipe::ImageFormat::VEC32F2) {
+                format != mediapipe::ImageFormat::VEC32F2 &&
+                format != mediapipe::ImageFormat::VEC32F4) {
               throw RaisePyError(
                   PyExc_RuntimeError,
-                  "float image data should be either VEC32F1 or VEC32F2 "
-                  "MediaPipe image formats.");
+                  "float image data should be either VEC32F1, VEC32F2, or "
+                  "VEC32F4 MediaPipe image formats.");
             }
             return Image(std::shared_ptr<ImageFrame>(
                 CreateImageFrame<float>(format, data)));
           }),
-          R"doc(For float data type, valid ImageFormat are VEC32F1 and VEC32F2.)doc",
+          R"doc(For float data type, valid ImageFormat are VEC32F1, VEC32F2, and VEC32F4.)doc",
           py::arg("image_format"), py::arg("data").noconvert());
 
   image.def(

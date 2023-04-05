@@ -204,6 +204,8 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
       return ImageFormat::SRGB;
     case GpuBufferFormat::kTwoComponentFloat32:
       return ImageFormat::VEC32F2;
+    case GpuBufferFormat::kRGBAFloat128:
+      return ImageFormat::VEC32F4;
     case GpuBufferFormat::kRGBA32:
       // TODO: this likely maps to ImageFormat::SRGBA
     case GpuBufferFormat::kGrayHalf16:
@@ -211,7 +213,6 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
     case GpuBufferFormat::kTwoComponent8:
     case GpuBufferFormat::kTwoComponentHalf16:
     case GpuBufferFormat::kRGBAHalf64:
-    case GpuBufferFormat::kRGBAFloat128:
     case GpuBufferFormat::kNV12:
     case GpuBufferFormat::kNV21:
     case GpuBufferFormat::kI420:
@@ -232,6 +233,8 @@ GpuBufferFormat GpuBufferFormatForImageFormat(ImageFormat::Format format) {
       return GpuBufferFormat::kGrayFloat32;
     case ImageFormat::VEC32F2:
       return GpuBufferFormat::kTwoComponentFloat32;
+    case ImageFormat::VEC32F4:
+      return GpuBufferFormat::kRGBAFloat128;
     case ImageFormat::GRAY8:
       return GpuBufferFormat::kOneComponent8;
     case ImageFormat::YCBCR420P:
