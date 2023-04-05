@@ -28,3 +28,14 @@ HParams = hyperparameters.HParams
 QATHParams = hyperparameters.QATHParams
 Dataset = dataset.Dataset
 ObjectDetectorOptions = object_detector_options.ObjectDetectorOptions
+
+# Remove duplicated and non-public API
+del dataset
+del dataset_util  # pylint: disable=undefined-variable
+del hyperparameters
+del model  # pylint: disable=undefined-variable
+del model_options
+del model_spec
+del object_detector
+del object_detector_options
+del preprocessor  # pylint: disable=undefined-variable
