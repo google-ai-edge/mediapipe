@@ -22,7 +22,21 @@ using mediapipe::kBasicVertexShader;
 using ::mediapipe::tasks::vision::Shape;
 using ::mediapipe::tasks::vision::image_segmenter::proto::SegmenterOptions;
 
+// TODO: This part of the setup code is so common, we should really
+// refactor to a helper utility.
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
+const GLint attr_location[NUM_ATTRIBUTES] = {
+    ATTRIB_VERTEX,
+    ATTRIB_TEXTURE_POSITION,
+};
+const GLchar* attr_name[NUM_ATTRIBUTES] = {
+    "position",
+    "texture_coordinate",
+};
+
+// We assume ES3.0+ for some of our shaders here so we can make liberal use of
+// MRT easily.
+static constexpr char kEs30RequirementHeader[] = "#version 300 es\n";
 
 static constexpr char kActivationFragmentShader[] = R"(
 DEFAULT_PRECISION(mediump, float)
@@ -140,55 +154,93 @@ void main() {
   gl_FragColor = vec4(out_value, out_value, out_value, out_value);
 })";
 
-// Quick softmax shader hardcoded to max of N=12 classes. Performs softmax
-// calculations, but renders to one chunk at a time.
-// TODO: For more efficiency, should at least use MRT to render all
-// chunks simultaneously.
-static constexpr char kSoftmaxShader[] = R"(
+// Softmax is in 3 steps:
+// - First we find max over all masks
+// - Then we transform all masks to be exp(val - maxval), and also add to
+//   cumulative-sum image with MRT
+// - Then we normalize all masks by cumulative-sum image
+
+// Part one: max shader
+// To start with, we just do this chunk by chunk, using GL_MAX blend mode so we
+// don't need to tap into the max-so-far texture.
+static constexpr char kMaxShader[] = R"(
 DEFAULT_PRECISION(mediump, float)
 in vec2 sample_coordinate;
-uniform sampler2D input_texture0;
-uniform sampler2D input_texture1;
-uniform sampler2D input_texture2;
-uniform int chunk_select;
+uniform sampler2D current_chunk;
+uniform int num_channels;  // how many channels from current chunk to use (1-4)
 
 float max4(vec4 vec) {
   return max(max(vec.x, vec.y), max(vec.z, vec.w));
 }
-
-vec4 expTransform(vec4 vec, float maxval) {
-  return exp(vec - maxval);
+float max3(vec4 vec) {
+  return max(max(vec.x, vec.y), vec.z);
 }
+float max2(vec4 vec) {
+  return max(vec.x, vec.y);
+}
+void main() {
+    vec4 chunk_pixel = texture2D(current_chunk, sample_coordinate);
+    float new_max;
+    if (num_channels == 1) {
+      new_max = chunk_pixel.x;
+    } else if (num_channels == 2) {
+      new_max = max2(chunk_pixel);
+    } else if (num_channels == 3) {
+      new_max = max3(chunk_pixel);
+    } else {
+      new_max = max4(chunk_pixel);
+    }
+    gl_FragColor = vec4(new_max, 0.0, 0.0, 1.0);
+})";
+
+// Part two: transform-and-sum shader
+// We use GL blending so we can more easily render a cumulative sum texture, and
+// this only costs us a glClear for the output chunk (needed since using MRT).
+static constexpr char kTransformAndSumShader[] = R"(
+DEFAULT_PRECISION(highp, float)
+in vec2 sample_coordinate;
+uniform sampler2D max_value_texture;
+uniform sampler2D current_chunk;
+uniform int num_channels;  // how many channels from current chunk to use (1-4)
+
+layout(location = 0) out vec4 cumulative_sum_texture;
+layout(location = 1) out vec4 out_chunk_texture;
 
 void main() {
-  // Grab all vecs
-  vec4 pixel0 = texture2D(input_texture0, sample_coordinate);
-  vec4 pixel1 = texture2D(input_texture1, sample_coordinate);
-  vec4 pixel2 = texture2D(input_texture2, sample_coordinate);
+    float max_pixel = texture(max_value_texture, sample_coordinate).r;
+    vec4 chunk_pixel = texture(current_chunk, sample_coordinate);
+    vec4 new_chunk_pixel = exp(chunk_pixel - max_pixel);
 
-  // Find maxval amongst all vectors
-  float max0 = max4(pixel0);
-  float max1 = max4(pixel1);
-  float max2 = max4(pixel2);
-  float maxval = max(max(max0, max1), max2);
+    float sum_so_far;
+    if (num_channels == 1) {
+      sum_so_far = new_chunk_pixel.x;
+    } else if (num_channels == 2) {
+      sum_so_far = dot(vec2(1.0, 1.0), new_chunk_pixel.xy);
+    } else if (num_channels == 3) {
+      sum_so_far = dot(vec3(1.0, 1.0, 1.0), new_chunk_pixel.xyz);
+    } else {
+      sum_so_far = dot(vec4(1.0, 1.0, 1.0, 1.0), new_chunk_pixel);
+    }
 
-  vec4 outPixel0 = expTransform(pixel0, maxval);
-  vec4 outPixel1 = expTransform(pixel1, maxval);
-  vec4 outPixel2 = expTransform(pixel2, maxval);
+    cumulative_sum_texture = vec4(sum_so_far, 0.0, 0.0, 1.0);
+    out_chunk_texture = new_chunk_pixel;
+})";
 
-  // Quick hack to sum all components in vec4: dot with <1, 1, 1, 1>
-  vec4 ones = vec4(1.0, 1.0, 1.0, 1.0);
-  float weightSum = dot(ones, outPixel0) + dot(ones, outPixel1) + dot(ones, outPixel2);
+// Part three: normalization shader
+static constexpr char kNormalizationShader[] = R"(
+DEFAULT_PRECISION(mediump, float)
+in vec2 sample_coordinate;
+uniform sampler2D sum_texture;  // cumulative summation value (to normalize by)
+uniform sampler2D current_chunk;  // current chunk
 
-  vec4 outPixel;
-  if (chunk_select == 0) {
-    outPixel = outPixel0 / weightSum;
-  } else if (chunk_select == 1) {
-    outPixel = outPixel1 / weightSum;
-  } else {
-    outPixel = outPixel2 / weightSum;
-  }
-  gl_FragColor = outPixel;
+void main() {
+    float sum_pixel = texture2D(sum_texture, sample_coordinate).r;
+    vec4 chunk_pixel = texture2D(current_chunk, sample_coordinate);
+
+    // NOTE: We assume non-zero sum_pixel here, which is a safe assumption for
+    // result of an exp transform, but not if this shader is extended to other
+    // uses.
+    gl_FragColor = chunk_pixel / sum_pixel;
 })";
 
 }  // namespace
@@ -208,19 +260,38 @@ absl::Status SegmentationPostprocessorGl::Initialize(
   return absl::OkStatus();
 }
 
+absl::Status SegmentationPostprocessorGl::CreateBasicFragmentShaderProgram(
+    std::string const& program_name, std::string const& fragment_shader_source,
+    std::vector<std::string> const& uniform_names, GlShader* shader_struct_ptr,
+    bool is_es30_only = false) {
+  // Format source and create basic ES3.0+ fragment-shader-only program
+  const std::string frag_shader_source =
+      absl::StrCat(is_es30_only ? std::string(kEs30RequirementHeader) : "",
+                   std::string(mediapipe::kMediaPipeFragmentShaderPreamble),
+                   std::string(fragment_shader_source));
+  const std::string vert_shader_source =
+      absl::StrCat(is_es30_only ? std::string(kEs30RequirementHeader) : "",
+                   std::string(kBasicVertexShader));
+  mediapipe::GlhCreateProgram(
+      vert_shader_source.c_str(), frag_shader_source.c_str(), NUM_ATTRIBUTES,
+      &attr_name[0], attr_location, &shader_struct_ptr->program,
+      /* force_log_errors */ true);
+  RET_CHECK(shader_struct_ptr->program)
+      << "Problem initializing the " << program_name << " program.";
+
+  // Hook up all desired uniforms
+  for (const auto& uniform_name : uniform_names) {
+    shader_struct_ptr->uniforms[uniform_name] =
+        glGetUniformLocation(shader_struct_ptr->program, uniform_name.c_str());
+    RET_CHECK(shader_struct_ptr->uniforms[uniform_name] > 0)
+        << uniform_name << " uniform not found for " << program_name
+        << " program";
+  }
+  return absl::OkStatus();
+}
+
 absl::Status SegmentationPostprocessorGl::GlInit() {
   return helper_.RunInGlContext([this]() -> absl::Status {
-    // TODO: This part of the setup code is so common, we should really
-    // refactor to a helper utility.
-    const GLint attr_location[NUM_ATTRIBUTES] = {
-        ATTRIB_VERTEX,
-        ATTRIB_TEXTURE_POSITION,
-    };
-    const GLchar* attr_name[NUM_ATTRIBUTES] = {
-        "position",
-        "texture_coordinate",
-    };
-
     // Default to passthrough/NONE
     std::string activation_fn = "vec4 out_value = in_value;";
     switch (options_.segmenter_options().activation()) {
@@ -263,9 +334,17 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
         absl::StrCat(std::string(mediapipe::kMediaPipeFragmentShaderPreamble),
                      std::string(kArgmaxShader));
 
-    const std::string softmax_shader_source =
-        absl::StrCat(std::string(mediapipe::kMediaPipeFragmentShaderPreamble),
-                     std::string(kSoftmaxShader));
+    // Softmax shaders (Max, Transform+Sum, and Normalization)
+    MP_RETURN_IF_ERROR(CreateBasicFragmentShaderProgram(
+        "softmax max", kMaxShader, {"current_chunk", "num_channels"},
+        &softmax_max_shader_));
+    MP_RETURN_IF_ERROR(CreateBasicFragmentShaderProgram(
+        "softmax transform-and-sum", kTransformAndSumShader,
+        {"max_value_texture", "current_chunk", "num_channels"},
+        &softmax_transform_and_sum_shader_, true /* is_es30_only */));
+    MP_RETURN_IF_ERROR(CreateBasicFragmentShaderProgram(
+        "softmax normalization", kNormalizationShader,
+        {"sum_texture", "current_chunk"}, &softmax_normalization_shader_));
 
     // Compile all our shader programs.
     // Note: we enable `force_log_errors` so that we get full debugging error
@@ -298,12 +377,6 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
                                 &attr_name[0], attr_location, &argmax_program_,
                                 /* force_log_errors */ true);
     RET_CHECK(argmax_program_) << "Problem initializing the argmax program.";
-
-    mediapipe::GlhCreateProgram(kBasicVertexShader,
-                                softmax_shader_source.c_str(), NUM_ATTRIBUTES,
-                                &attr_name[0], attr_location, &softmax_program_,
-                                /* force_log_errors */ true);
-    RET_CHECK(softmax_program_) << "Problem initializing the softmax program.";
 
     // Get uniform locations.
     activation_texture_uniform_ =
@@ -340,23 +413,6 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
         glGetUniformLocation(argmax_program_, "input_texture2");
     RET_CHECK(argmax_texture2_uniform_ > 0)
         << "argmax input_texture2 uniform not found.";
-
-    softmax_texture0_uniform_ =
-        glGetUniformLocation(softmax_program_, "input_texture0");
-    RET_CHECK(softmax_texture0_uniform_ > 0)
-        << "softmax input_texture0 uniform not found.";
-    softmax_texture1_uniform_ =
-        glGetUniformLocation(softmax_program_, "input_texture1");
-    RET_CHECK(softmax_texture1_uniform_ > 0)
-        << "softmax input_texture1 uniform not found.";
-    softmax_texture2_uniform_ =
-        glGetUniformLocation(softmax_program_, "input_texture2");
-    RET_CHECK(softmax_texture2_uniform_ > 0)
-        << "softmax input_texture2 uniform not found.";
-    softmax_chunk_select_uniform_ =
-        glGetUniformLocation(softmax_program_, "chunk_select");
-    RET_CHECK(softmax_chunk_select_uniform_ > 0)
-        << "softmax chunk select uniform not found.";
 
     // TODO: If ES3.0+ only, switch to VAO for handling attributes.
     glGenBuffers(1, &square_vertices_);
@@ -408,6 +464,9 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
 
     // Uint8 pipeline and conversions are lacking, so for now we just use F32
     // textures even for category masks.
+    // TODO: Also, some platforms (like certain iOS devices) do not
+    //   allow for rendering to RGBAF32 textures, so we should switch to using
+    //   F16 textures in those instances.
     const GpuBufferFormat final_output_format = GpuBufferFormat::kGrayFloat32;
     const Tensor::OpenGlTexture2dView read_view =
         tensor.GetOpenGlTexture2dReadView();
@@ -467,7 +526,7 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
                   ((float)i + tex_offset) / (float)(input_width));
       // Technically duplicated, but fine for now; we want this after the bind
       glBindTexture(GL_TEXTURE_2D, activated_texture.name());
-      // Disable HW interpolation
+      // Disable hardware GPU interpolation
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       // Render
@@ -477,45 +536,126 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
 
     std::vector<GlTexture> softmax_chunks;
     if (is_softmax) {
-      // Step 2.5: For SOFTMAX, apply softmax shader with up to 3 textures to
-      // create softmax-transformed chunks before channel extraction.
-      RET_CHECK(num_chunks <= 3)
-          << "Cannot handle more than 12 classes in softmax shader.";
+      // Step 2.5: For SOFTMAX, apply softmax shaders (max, transformAndSum, and
+      // normalization) to create softmax-transformed chunks before channel
+      // extraction.
+      // NOTE: exp(x-C) / sum_over_x(exp(x-C)) = exp(x) / sum_over_x(exp(x)). So
+      //   theoretically we can skip the max shader step entirely. However,
+      //   applying it does bring all our values into a nice (0, 1] range, so it
+      //   will likely be better for precision, especially when dealing with an
+      //   exponential function on arbitrary values. Therefore, we keep it, but
+      //   this is potentially a skippable step for known "good" models, if we
+      //   ever want to provide that as an option.
+      // TODO: For a tiny bit more efficiency, could combine channel
+      // extraction into last step of this via MRT.
 
-      glUseProgram(softmax_program_);
-      glUniform1i(softmax_texture0_uniform_, 1);
-      glUniform1i(softmax_texture1_uniform_, 2);
-      glUniform1i(softmax_texture2_uniform_, 3);
+      // Max
+      glUseProgram(softmax_max_shader_.program);
+      glUniform1i(softmax_max_shader_.uniforms["current_chunk"], 1);
+
+      // We just need one channel, so format will match final output confidence
+      // masks
+      auto max_texture =
+          helper_.CreateDestinationTexture(width, height, final_output_format);
+      helper_.BindFramebuffer(max_texture);
+
+      // We clear our newly-created destination texture to a reasonable minimum.
+      glClearColor(0.0, 0.0, 0.0, 0.0);
+      glClear(GL_COLOR_BUFFER_BIT);
+
+      // We will use hardware GPU blending to apply max to all our writes.
+      glEnable(GL_BLEND);
+      glBlendEquation(GL_MAX);
+
+      glActiveTexture(GL_TEXTURE1);
+      for (int i = 0; i < num_chunks; i++) {
+        int num_channels = 4;
+        if ((i + 1) * 4 > num_outputs) num_channels = num_outputs % 4;
+        glUniform1i(softmax_max_shader_.uniforms["num_channels"], num_channels);
+        glBindTexture(GL_TEXTURE_2D, chunks[i].name());
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      }
+
+      // Transform & Sum
+      std::vector<GlTexture> unnormalized_softmax_chunks;
+      glUseProgram(softmax_transform_and_sum_shader_.program);
+      glUniform1i(softmax_transform_and_sum_shader_.uniforms["current_chunk"],
+                  1);
+      glUniform1i(
+          softmax_transform_and_sum_shader_.uniforms["max_value_texture"], 2);
+
+      auto sum_texture =
+          helper_.CreateDestinationTexture(width, height, final_output_format);
+      helper_.BindFramebuffer(sum_texture);
+      glClear(GL_COLOR_BUFFER_BIT);
+
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, max_texture.name());
+
+      glBlendEquation(GL_FUNC_ADD);
+      glBlendFunc(GL_ONE, GL_ONE);
+      glActiveTexture(GL_TEXTURE1);
+
+      // We use glDrawBuffers to clear only the new texture, then again to
+      // draw to both textures simultaneously for rendering.
+      GLuint both_attachments[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+      GLuint one_attachment[2] = {GL_NONE, GL_COLOR_ATTACHMENT1};
+      for (int i = 0; i < num_chunks; i++) {
+        int num_channels = 4;
+        if ((i + 1) * 4 > num_outputs) num_channels = num_outputs % 4;
+        glUniform1i(softmax_transform_and_sum_shader_.uniforms["num_channels"],
+                    num_channels);
+        unnormalized_softmax_chunks.push_back(helper_.CreateDestinationTexture(
+            width, height, chunk_output_format));
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
+                               GL_TEXTURE_2D,
+                               unnormalized_softmax_chunks.back().name(), 0);
+
+        // Note that we must bind AFTER the CreateDestinationTexture, or else we
+        // end up with (0, 0, 0, 1) data being read from an unbound texture
+        // unit.
+        glBindTexture(GL_TEXTURE_2D, chunks[i].name());
+
+        // Clear *only* the new chunk
+        glDrawBuffers(2, one_attachment);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Then draw into both
+        glDrawBuffers(2, both_attachments);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      }
+
+      // Turn off MRT and blending, and unbind second color attachment
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
+                             GL_TEXTURE_2D, 0, 0);
+      glDrawBuffers(1, both_attachments);
+      glDisable(GL_BLEND);
+
+      // Normalize each chunk into a new chunk as our final step
+      glUseProgram(softmax_normalization_shader_.program);
+      glUniform1i(softmax_normalization_shader_.uniforms["current_chunk"], 1);
+      glUniform1i(softmax_normalization_shader_.uniforms["sum_texture"], 2);
+
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, sum_texture.name());
+      glActiveTexture(GL_TEXTURE1);
 
       for (int i = 0; i < num_chunks; i++) {
-        glUniform1i(softmax_chunk_select_uniform_, i);
         softmax_chunks.push_back(helper_.CreateDestinationTexture(
-            output_width, output_height, chunk_output_format));
+            width, height, chunk_output_format));
         helper_.BindFramebuffer(softmax_chunks.back());
-
-        // Bind however many chunks we have
-        for (int j = 0; j < num_chunks; ++j) {
-          glActiveTexture(GL_TEXTURE1 + j);
-          glBindTexture(GL_TEXTURE_2D, chunks[j].name());
-        }
-
-        for (int j = num_chunks; j < 3; ++j) {  // 3 is hard-coded max chunks
-          glActiveTexture(GL_TEXTURE1 + j);
-          // If texture is unbound, sampling from it should always give zeros.
-          // This is not ideal, but is ok for now for not polluting the argmax
-          // shader results too much.
-          glBindTexture(GL_TEXTURE_2D, 0);
-        }
-
+        glBindTexture(GL_TEXTURE_2D, unnormalized_softmax_chunks[i].name());
         glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
       }
 
-      // Unbind the extra textures here.
-      for (int i = 0; i < num_chunks; ++i) {
-        glActiveTexture(GL_TEXTURE1 + i);
-        glBindTexture(GL_TEXTURE_2D, 0);
-      }
+      // Unbind textures here
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, 0);
+      // We make sure to switch back to texture unit 1, since our confidence
+      // mask extraction code assumes that's our default.
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     std::vector<GlTexture> outputs;
@@ -607,17 +747,19 @@ SegmentationPostprocessorGl::~SegmentationPostprocessorGl() {
     glDeleteProgram(activation_program_);
     glDeleteProgram(argmax_program_);
     glDeleteProgram(channel_select_program_);
-    glDeleteProgram(softmax_program_);
     glDeleteProgram(split_program_);
     glDeleteBuffers(1, &square_vertices_);
     glDeleteBuffers(1, &texture_vertices_);
     activation_program_ = 0;
     argmax_program_ = 0;
     channel_select_program_ = 0;
-    softmax_program_ = 0;
     split_program_ = 0;
     square_vertices_ = 0;
     texture_vertices_ = 0;
+
+    glDeleteProgram(softmax_max_shader_.program);
+    glDeleteProgram(softmax_transform_and_sum_shader_.program);
+    glDeleteProgram(softmax_normalization_shader_.program);
   });
 }
 

@@ -75,17 +75,17 @@ BENCHMARK(BM_IntCast);
 
 static void BM_Int64Cast(benchmark::State& state) {
   double x = 0.1;
-  int64 sum = 0;
+  int64_t sum = 0;
   for (auto _ : state) {
-    sum += static_cast<int64>(x);
+    sum += static_cast<int64_t>(x);
     x += 0.1;
-    sum += static_cast<int64>(x);
+    sum += static_cast<int64_t>(x);
     x += 0.1;
-    sum += static_cast<int64>(x);
+    sum += static_cast<int64_t>(x);
     x += 0.1;
-    sum += static_cast<int64>(x);
+    sum += static_cast<int64_t>(x);
     x += 0.1;
-    sum += static_cast<int64>(x);
+    sum += static_cast<int64_t>(x);
     x += 0.1;
   }
   EXPECT_NE(sum, 0);  // Don't let 'sum' get optimized away.
@@ -134,15 +134,15 @@ static void BM_Int64Round(benchmark::State& state) {
   double x = 0.1;
   int sum = 0;
   for (auto _ : state) {
-    sum += mediapipe::MathUtil::Round<int64>(x);
+    sum += mediapipe::MathUtil::Round<int64_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::Round<int64>(x);
+    sum += mediapipe::MathUtil::Round<int64_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::Round<int64>(x);
+    sum += mediapipe::MathUtil::Round<int64_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::Round<int64>(x);
+    sum += mediapipe::MathUtil::Round<int64_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::Round<int64>(x);
+    sum += mediapipe::MathUtil::Round<int64_t>(x);
     x += 0.1;
   }
   EXPECT_NE(sum, 0);  // Don't let 'sum' get optimized away.
@@ -153,15 +153,15 @@ static void BM_UintRound(benchmark::State& state) {
   double x = 0.1;
   int sum = 0;
   for (auto _ : state) {
-    sum += mediapipe::MathUtil::Round<uint32>(x);
+    sum += mediapipe::MathUtil::Round<uint32_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::Round<uint32>(x);
+    sum += mediapipe::MathUtil::Round<uint32_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::Round<uint32>(x);
+    sum += mediapipe::MathUtil::Round<uint32_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::Round<uint32>(x);
+    sum += mediapipe::MathUtil::Round<uint32_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::Round<uint32>(x);
+    sum += mediapipe::MathUtil::Round<uint32_t>(x);
     x += 0.1;
   }
   EXPECT_NE(sum, 0);  // Don't let 'sum' get optimized away.
@@ -191,15 +191,15 @@ static void BM_SafeInt64Cast(benchmark::State& state) {
   double x = 0.1;
   int sum = 0;
   for (auto _ : state) {
-    sum += mediapipe::MathUtil::SafeCast<int64>(x);
+    sum += mediapipe::MathUtil::SafeCast<int64_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::SafeCast<int64>(x);
+    sum += mediapipe::MathUtil::SafeCast<int64_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::SafeCast<int64>(x);
+    sum += mediapipe::MathUtil::SafeCast<int64_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::SafeCast<int64>(x);
+    sum += mediapipe::MathUtil::SafeCast<int64_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::SafeCast<int64>(x);
+    sum += mediapipe::MathUtil::SafeCast<int64_t>(x);
     x += 0.1;
   }
   EXPECT_NE(sum, 0);  // Don't let 'sum' get optimized away.
@@ -229,15 +229,15 @@ static void BM_SafeInt64Round(benchmark::State& state) {
   double x = 0.1;
   int sum = 0;
   for (auto _ : state) {
-    sum += mediapipe::MathUtil::SafeRound<int64>(x);
+    sum += mediapipe::MathUtil::SafeRound<int64_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::SafeRound<int64>(x);
+    sum += mediapipe::MathUtil::SafeRound<int64_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::SafeRound<int64>(x);
+    sum += mediapipe::MathUtil::SafeRound<int64_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::SafeRound<int64>(x);
+    sum += mediapipe::MathUtil::SafeRound<int64_t>(x);
     x += 0.1;
-    sum += mediapipe::MathUtil::SafeRound<int64>(x);
+    sum += mediapipe::MathUtil::SafeRound<int64_t>(x);
     x += 0.1;
   }
   EXPECT_NE(sum, 0);  // Don't let 'sum' get optimized away.
@@ -262,8 +262,8 @@ TEST(MathUtil, IntRound) {
 
   // A double-precision number has a 53-bit mantissa (52 fraction bits),
   // so the following value can be represented exactly.
-  int64 value64 = static_cast<int64_t>(0x1234567890abcd00);
-  EXPECT_EQ(mediapipe::MathUtil::Round<int64>(static_cast<double>(value64)),
+  int64_t value64 = static_cast<int64_t>(0x1234567890abcd00);
+  EXPECT_EQ(mediapipe::MathUtil::Round<int64_t>(static_cast<double>(value64)),
             value64);
 }
 
@@ -369,7 +369,7 @@ class SafeCastTester {
     if (sizeof(FloatIn) >= 64) {
       // A double-precision number has a 53-bit mantissa (52 fraction bits),
       // so the following value can be represented exactly by a double.
-      int64 value64 = static_cast<int64_t>(0x1234567890abcd00);
+      int64_t value64 = static_cast<int64_t>(0x1234567890abcd00);
       const IntOut expected =
           (sizeof(IntOut) >= 64) ? static_cast<IntOut>(value64) : imax;
       EXPECT_EQ(
@@ -536,22 +536,22 @@ class SafeCastTester {
 };
 
 TEST(MathUtil, SafeCast) {
-  SafeCastTester<float, int8>::Run();
-  SafeCastTester<double, int8>::Run();
-  SafeCastTester<float, int16>::Run();
-  SafeCastTester<double, int16>::Run();
-  SafeCastTester<float, int32>::Run();
-  SafeCastTester<double, int32>::Run();
-  SafeCastTester<float, int64>::Run();
-  SafeCastTester<double, int64>::Run();
-  SafeCastTester<float, uint8>::Run();
-  SafeCastTester<double, uint8>::Run();
-  SafeCastTester<float, uint16>::Run();
-  SafeCastTester<double, uint16>::Run();
-  SafeCastTester<float, uint32>::Run();
-  SafeCastTester<double, uint32>::Run();
-  SafeCastTester<float, uint64>::Run();
-  SafeCastTester<double, uint64>::Run();
+  SafeCastTester<float, int8_t>::Run();
+  SafeCastTester<double, int8_t>::Run();
+  SafeCastTester<float, int16_t>::Run();
+  SafeCastTester<double, int16_t>::Run();
+  SafeCastTester<float, int32_t>::Run();
+  SafeCastTester<double, int32_t>::Run();
+  SafeCastTester<float, int64_t>::Run();
+  SafeCastTester<double, int64_t>::Run();
+  SafeCastTester<float, uint8_t>::Run();
+  SafeCastTester<double, uint8_t>::Run();
+  SafeCastTester<float, uint16_t>::Run();
+  SafeCastTester<double, uint16_t>::Run();
+  SafeCastTester<float, uint32_t>::Run();
+  SafeCastTester<double, uint32_t>::Run();
+  SafeCastTester<float, uint64_t>::Run();
+  SafeCastTester<double, uint64_t>::Run();
 
   // Spot-check SafeCast<int>
   EXPECT_EQ(mediapipe::MathUtil::SafeCast<int>(static_cast<float>(12345.678)),
@@ -682,7 +682,7 @@ class SafeRoundTester {
     if (sizeof(FloatIn) >= 64) {
       // A double-precision number has a 53-bit mantissa (52 fraction bits),
       // so the following value can be represented exactly by a double.
-      int64 value64 = static_cast<int64_t>(0x1234567890abcd00);
+      int64_t value64 = static_cast<int64_t>(0x1234567890abcd00);
       const IntOut expected =
           (sizeof(IntOut) >= 64) ? static_cast<IntOut>(value64) : imax;
       EXPECT_EQ(
@@ -843,22 +843,22 @@ class SafeRoundTester {
 };
 
 TEST(MathUtil, SafeRound) {
-  SafeRoundTester<float, int8>::Run();
-  SafeRoundTester<double, int8>::Run();
-  SafeRoundTester<float, int16>::Run();
-  SafeRoundTester<double, int16>::Run();
-  SafeRoundTester<float, int32>::Run();
-  SafeRoundTester<double, int32>::Run();
-  SafeRoundTester<float, int64>::Run();
-  SafeRoundTester<double, int64>::Run();
-  SafeRoundTester<float, uint8>::Run();
-  SafeRoundTester<double, uint8>::Run();
-  SafeRoundTester<float, uint16>::Run();
-  SafeRoundTester<double, uint16>::Run();
-  SafeRoundTester<float, uint32>::Run();
-  SafeRoundTester<double, uint32>::Run();
-  SafeRoundTester<float, uint64>::Run();
-  SafeRoundTester<double, uint64>::Run();
+  SafeRoundTester<float, int8_t>::Run();
+  SafeRoundTester<double, int8_t>::Run();
+  SafeRoundTester<float, int16_t>::Run();
+  SafeRoundTester<double, int16_t>::Run();
+  SafeRoundTester<float, int32_t>::Run();
+  SafeRoundTester<double, int32_t>::Run();
+  SafeRoundTester<float, int64_t>::Run();
+  SafeRoundTester<double, int64_t>::Run();
+  SafeRoundTester<float, uint8_t>::Run();
+  SafeRoundTester<double, uint8_t>::Run();
+  SafeRoundTester<float, uint16_t>::Run();
+  SafeRoundTester<double, uint16_t>::Run();
+  SafeRoundTester<float, uint32_t>::Run();
+  SafeRoundTester<double, uint32_t>::Run();
+  SafeRoundTester<float, uint64_t>::Run();
+  SafeRoundTester<double, uint64_t>::Run();
 
   // Spot-check SafeRound<int>
   EXPECT_EQ(mediapipe::MathUtil::SafeRound<int>(static_cast<float>(12345.678)),

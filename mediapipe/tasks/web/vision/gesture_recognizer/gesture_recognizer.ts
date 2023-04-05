@@ -85,9 +85,8 @@ export class GestureRecognizer extends VisionTaskRunner {
       wasmFileset: WasmFileset,
       gestureRecognizerOptions: GestureRecognizerOptions):
       Promise<GestureRecognizer> {
-    return VisionTaskRunner.createInstance(
-        GestureRecognizer, /* initializeCanvas= */ true, wasmFileset,
-        gestureRecognizerOptions);
+    return VisionTaskRunner.createVisionInstance(
+        GestureRecognizer, wasmFileset, gestureRecognizerOptions);
   }
 
   /**
@@ -100,9 +99,8 @@ export class GestureRecognizer extends VisionTaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<GestureRecognizer> {
-    return VisionTaskRunner.createInstance(
-        GestureRecognizer, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createVisionInstance(
+        GestureRecognizer, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -115,9 +113,8 @@ export class GestureRecognizer extends VisionTaskRunner {
   static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<GestureRecognizer> {
-    return VisionTaskRunner.createInstance(
-        GestureRecognizer, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+    return VisionTaskRunner.createVisionInstance(
+        GestureRecognizer, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
   /** @hideconstructor */
@@ -143,6 +140,11 @@ export class GestureRecognizer extends VisionTaskRunner {
         new HandGestureRecognizerGraphOptions();
     this.options.setHandGestureRecognizerGraphOptions(
         this.handGestureRecognizerGraphOptions);
+    this.handDetectorGraphOptions.setMinDetectionConfidence(DEFAULT_CONFIDENCE);
+    this.handLandmarkerGraphOptions.setMinTrackingConfidence(
+        DEFAULT_CONFIDENCE);
+    this.handLandmarksDetectorGraphOptions.setMinDetectionConfidence(
+        DEFAULT_CONFIDENCE);
   }
 
   protected override get baseOptions(): BaseOptionsProto {
@@ -165,12 +167,20 @@ export class GestureRecognizer extends VisionTaskRunner {
   override setOptions(options: GestureRecognizerOptions): Promise<void> {
     this.handDetectorGraphOptions.setNumHands(
         options.numHands ?? DEFAULT_NUM_HANDS);
-    this.handDetectorGraphOptions.setMinDetectionConfidence(
-        options.minHandDetectionConfidence ?? DEFAULT_CONFIDENCE);
-    this.handLandmarkerGraphOptions.setMinTrackingConfidence(
-        options.minTrackingConfidence ?? DEFAULT_CONFIDENCE);
-    this.handLandmarksDetectorGraphOptions.setMinDetectionConfidence(
-        options.minHandPresenceConfidence ?? DEFAULT_CONFIDENCE);
+    if ('minHandDetectionConfidence' in options) {
+      this.handDetectorGraphOptions.setMinDetectionConfidence(
+          options.minHandDetectionConfidence ?? DEFAULT_CONFIDENCE);
+    }
+
+    if ('minTrackingConfidence' in options) {
+      this.handLandmarkerGraphOptions.setMinTrackingConfidence(
+          options.minTrackingConfidence ?? DEFAULT_CONFIDENCE);
+    }
+
+    if ('minHandPresenceConfidence' in options) {
+      this.handLandmarksDetectorGraphOptions.setMinDetectionConfidence(
+          options.minHandPresenceConfidence ?? DEFAULT_CONFIDENCE);
+    }
 
     if (options.cannedGesturesClassifierOptions) {
       // Note that we have to support both JSPB and ProtobufJS and cannot

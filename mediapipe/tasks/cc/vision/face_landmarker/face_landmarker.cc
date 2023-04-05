@@ -194,7 +194,7 @@ absl::StatusOr<FaceLandmarkerResult> FaceLandmarker::Detect(
     mediapipe::Image image,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options,
+                   ConvertToNormalizedRect(image_processing_options, image,
                                            /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(
       auto output_packets,
@@ -212,7 +212,7 @@ absl::StatusOr<FaceLandmarkerResult> FaceLandmarker::DetectForVideo(
     mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options,
+                   ConvertToNormalizedRect(image_processing_options, image,
                                            /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(
       auto output_packets,
@@ -233,7 +233,7 @@ absl::Status FaceLandmarker::DetectAsync(
     mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options,
+                   ConvertToNormalizedRect(image_processing_options, image,
                                            /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,

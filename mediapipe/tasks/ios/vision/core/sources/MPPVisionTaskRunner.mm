@@ -28,13 +28,13 @@ using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
 }  // namespace
 
-/** Rotation degress for a 90 degree rotation to the right. */
+/** Rotation degrees for a 90 degree rotation to the right. */
 static const NSInteger kMPPOrientationDegreesRight = -90;
 
-/** Rotation degress for a 180 degree rotation. */
+/** Rotation degrees for a 180 degree rotation. */
 static const NSInteger kMPPOrientationDegreesDown = -180;
 
-/** Rotation degress for a 90 degree rotation to the left. */
+/** Rotation degrees for a 90 degree rotation to the left. */
 static const NSInteger kMPPOrientationDegreesLeft = -270;
 
 @interface MPPVisionTaskRunner () {
@@ -97,7 +97,7 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
     return std::nullopt;
   }
 
-  CGRect calculatedRoi = CGRectEqualToRect(roi, CGRectZero) ? roi : CGRectMake(0.0, 0.0, 1.0, 1.0);
+  CGRect calculatedRoi = CGRectEqualToRect(roi, CGRectZero) ? CGRectMake(0.0, 0.0, 1.0, 1.0) : roi;
 
   NormalizedRect normalizedRect;
   normalizedRect.set_x_center(CGRectGetMidX(calculatedRoi));

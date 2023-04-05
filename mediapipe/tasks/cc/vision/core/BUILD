@@ -39,6 +39,7 @@ cc_library(
         ":running_mode",
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator_cc_proto",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/tasks/cc/components/containers:rect",
         "//mediapipe/tasks/cc/core:base_task_api",

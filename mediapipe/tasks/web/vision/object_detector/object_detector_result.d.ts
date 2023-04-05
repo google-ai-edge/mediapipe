@@ -14,27 +14,6 @@
  * limitations under the License.
  */
 
-import {Category} from '../../../../tasks/web/components/containers/category';
-
-export {Category};
-
-/** An integer bounding box, axis aligned. */
-export declare interface BoundingBox {
-  /** The X coordinate of the top-left corner, in pixels. */
-  originX: number;
-  /** The Y coordinate of the top-left corner, in pixels. */
-  originY: number;
-  /** The width of the bounding box, in pixels. */
-  width: number;
-  /** The height of the bounding box, in pixels. */
-  height: number;
-}
-
-/** Represents one object detected by the `ObjectDetector`. */
-export declare interface Detection {
-  /** A list of `Category` objects. */
-  categories: Category[];
-
-  /** The bounding box of the detected objects. */
-  boundingBox?: BoundingBox;
-}
+export {BoundingBox} from '../../../../tasks/web/components/containers/bounding_box';
+export {Category} from '../../../../tasks/web/components/containers/category';
+export {Detection, DetectionResult as ObjectDetectorResult} from '../../../../tasks/web/components/containers/detection_result';

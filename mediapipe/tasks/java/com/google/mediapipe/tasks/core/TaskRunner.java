@@ -22,8 +22,8 @@ import com.google.mediapipe.framework.AndroidPacketCreator;
 import com.google.mediapipe.framework.Graph;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.Packet;
-import com.google.mediapipe.tasks.core.logging.TasksStatsLogger;
 import com.google.mediapipe.tasks.core.logging.TasksStatsDummyLogger;
+import com.google.mediapipe.tasks.core.logging.TasksStatsLogger;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 

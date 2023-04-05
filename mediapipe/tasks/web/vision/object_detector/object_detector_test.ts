@@ -179,56 +179,29 @@ describe('ObjectDetector', () => {
   });
 
   it('transforms results', async () => {
-    const detectionProtos: Uint8Array[] = [];
-
-    // Add a detection with all optional properties
-    let detection = new DetectionProto();
+    const detection = new DetectionProto();
     detection.addScore(0.1);
-    detection.addLabelId(1);
-    detection.addLabel('foo');
-    detection.addDisplayName('bar');
-    let locationData = new LocationData();
-    let boundingBox = new LocationData.BoundingBox();
-    boundingBox.setXmin(1);
-    boundingBox.setYmin(2);
-    boundingBox.setWidth(3);
-    boundingBox.setHeight(4);
+    const locationData = new LocationData();
+    const boundingBox = new LocationData.BoundingBox();
     locationData.setBoundingBox(boundingBox);
     detection.setLocationData(locationData);
-    detectionProtos.push(detection.serializeBinary());
 
-    // Add a detection without optional properties
-    detection = new DetectionProto();
-    detection.addScore(0.2);
-    locationData = new LocationData();
-    boundingBox = new LocationData.BoundingBox();
-    locationData.setBoundingBox(boundingBox);
-    detection.setLocationData(locationData);
-    detectionProtos.push(detection.serializeBinary());
+    const binaryProto = detection.serializeBinary();
 
     // Pass the test data to our listener
     objectDetector.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       verifyListenersRegistered(objectDetector);
-      objectDetector.protoListener!(detectionProtos, 1337);
+      objectDetector.protoListener!([binaryProto], 1337);
     });
 
     // Invoke the object detector
-    const detections = objectDetector.detect({} as HTMLImageElement);
+    const {detections} = objectDetector.detect({} as HTMLImageElement);
 
     expect(objectDetector.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
-    expect(detections.length).toEqual(2);
+    expect(detections.length).toEqual(1);
     expect(detections[0]).toEqual({
       categories: [{
         score: 0.1,
-        index: 1,
-        categoryName: 'foo',
-        displayName: 'bar',
-      }],
-      boundingBox: {originX: 1, originY: 2, width: 3, height: 4}
-    });
-    expect(detections[1]).toEqual({
-      categories: [{
-        score: 0.2,
         index: -1,
         categoryName: '',
         displayName: '',

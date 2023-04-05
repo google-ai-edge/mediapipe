@@ -352,10 +352,15 @@ export class GraphRunner {
     } else {
       this.wasmModule._bindTextureToStream(streamNamePtr);
     }
-    const gl: any =
-        this.wasmModule.canvas.getContext('webgl2') ||
-        this.wasmModule.canvas.getContext('webgl');
-    console.assert(gl);
+    const gl =
+        (this.wasmModule.canvas.getContext('webgl2') ||
+         this.wasmModule.canvas.getContext('webgl')) as WebGL2RenderingContext |
+        WebGLRenderingContext | null;
+    if (!gl) {
+      throw new Error(
+          'Failed to obtain WebGL context from the provided canvas. ' +
+          '`getContext()` should only be invoked with `webgl` or `webgl2`.');
+    }
     gl.texImage2D(
         gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imageSource);
 

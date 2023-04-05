@@ -20,6 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPBaseOptions (Helpers)
 
 - (void)copyToProto:(mediapipe::tasks::core::proto::BaseOptions *)baseOptionsProto;
+- (void)copyToProto:(mediapipe::tasks::core::proto::BaseOptions *)baseOptionsProto
+    withUseStreamMode:(BOOL)useStreamMode;
 
 @end
 

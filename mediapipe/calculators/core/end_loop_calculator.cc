@@ -18,6 +18,7 @@
 
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/rect.pb.h"
@@ -66,5 +67,9 @@ REGISTER_CALCULATOR(EndLoopMatrixCalculator);
 
 typedef EndLoopCalculator<std::vector<Tensor>> EndLoopTensorCalculator;
 REGISTER_CALCULATOR(EndLoopTensorCalculator);
+
+typedef EndLoopCalculator<std::vector<::mediapipe::Image>>
+    EndLoopImageCalculator;
+REGISTER_CALCULATOR(EndLoopImageCalculator);
 
 }  // namespace mediapipe

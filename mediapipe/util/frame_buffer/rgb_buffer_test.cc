@@ -14,11 +14,13 @@
 
 #include "mediapipe/util/frame_buffer/rgb_buffer.h"
 
+#include <cstdlib>
 #include <utility>
 
 #include "absl/log/log.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/util/frame_buffer/float_buffer.h"
 #include "mediapipe/util/frame_buffer/gray_buffer.h"
 #include "mediapipe/util/frame_buffer/yuv_buffer.h"
 
@@ -87,6 +89,22 @@ bool CompareArray(const uint8_t* lhs_ptr, const uint8_t* rhs_ptr, int width,
   return true;
 }
 
+// Returns true if the data in the two arrays are the same. Otherwise, return
+// false.
+bool CompareArray(const float* lhs_ptr, const float* rhs_ptr, int width,
+                  int height) {
+  constexpr float kTolerancy = 1e-6;
+  for (int i = 0; i < height; ++i) {
+    for (int j = 0; j < width; ++j) {
+      if (std::abs(lhs_ptr[i * width + j] - rhs_ptr[i * width + j]) >
+          kTolerancy) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 // Returns true if the halide buffers of two input GrayBuffer are identical.
 // Otherwise, returns false;
 bool CompareBuffer(const GrayBuffer& lhs, const GrayBuffer& rhs) {
@@ -127,6 +145,20 @@ bool CompareBuffer(const YuvBuffer& lhs, const YuvBuffer& rhs) {
   converted_ptr = const_cast<YuvBuffer&>(rhs).uv_buffer()->host;
   return CompareArray(reference_ptr, converted_ptr, lhs.width(),
                       lhs.height() / 2);
+}
+
+// Returns true if the halide buffers of two input FloatBuffer are identical.
+// Otherwise, returns false;
+bool CompareBuffer(const FloatBuffer& lhs, const FloatBuffer& rhs) {
+  if (lhs.width() != rhs.width() || lhs.height() != rhs.height() ||
+      lhs.channels() != rhs.channels()) {
+    return false;
+  }
+  const float* reference_ptr = reinterpret_cast<const float*>(
+      const_cast<FloatBuffer&>(lhs).buffer()->host);
+  const float* converted_ptr = reinterpret_cast<const float*>(
+      const_cast<FloatBuffer&>(rhs).buffer()->host);
+  return CompareArray(reference_ptr, converted_ptr, lhs.width(), lhs.height());
 }
 
 TEST(RgbBufferTest, Properties) {
@@ -601,6 +633,70 @@ TEST(RgbBufferTest, PaddedRgbaConvertRgb) {
   RgbBuffer rgb_buffer = RgbBuffer(rgb_data, kWidth, kHeight, false);
   EXPECT_TRUE(CompareBuffer(rgb_buffer, result));
 }
+
+TEST(RgbBufferTest, RgbToFloat) {
+  constexpr int kWidth = 2, kHeight = 1, kChannels = 3;
+  constexpr float kScale = 0.01f, kOffset = 0.5f;
+  uint8_t rgb_data[] = {200, 100, 50, 100, 50, 20};
+  RgbBuffer source(rgb_data, kWidth, kHeight, false);
+  FloatBuffer result(kWidth, kHeight, kChannels);
+
+  ASSERT_TRUE(source.ToFloat(kScale, kOffset, &result));
+
+  float float_data[] = {2.5f, 1.5f, 1.0f, 1.5f, 1.0f, 0.7f};
+  FloatBuffer float_buffer =
+      FloatBuffer(float_data, kWidth, kHeight, kChannels);
+  EXPECT_TRUE(CompareBuffer(float_buffer, result));
+}
+
+TEST(RgbBufferTest, PaddedRgbToFloat) {
+  constexpr int kWidth = 4, kHeight = 2, kChannels = 3;
+  constexpr float kScale = 0.01f, kOffset = 0.0f;
+  RgbBuffer source = GetPaddedRgbBuffer();
+  FloatBuffer result(kWidth, kHeight, kChannels);
+
+  ASSERT_TRUE(source.ToFloat(kScale, kOffset, &result));
+
+  float float_data[] = {0.1f, 0.2f, 0.3f, 0.2f, 0.3f, 0.4f, 0.3f, 0.4f,
+                        0.5f, 0.4f, 0.5f, 0.6f, 0.2f, 0.4f, 0.6f, 0.4f,
+                        0.6f, 0.8f, 0.6f, 0.8f, 1.0f, 0.8f, 1.0f, 1.2f};
+  FloatBuffer float_buffer =
+      FloatBuffer(float_data, kWidth, kHeight, kChannels);
+  EXPECT_TRUE(CompareBuffer(float_buffer, result));
+}
+
+TEST(RgbBufferTest, RgbaToFloat) {
+  constexpr int kWidth = 2, kHeight = 1, kChannels = 4;
+  constexpr float kScale = 0.01f, kOffset = 0.5f;
+  uint8_t rgba_data[] = {200, 100, 50, 30, 100, 50, 20, 70};
+  RgbBuffer source(rgba_data, kWidth, kHeight, true);
+  FloatBuffer result(kWidth, kHeight, kChannels);
+
+  ASSERT_TRUE(source.ToFloat(kScale, kOffset, &result));
+
+  float float_data[] = {2.5f, 1.5f, 1.0f, 0.8f, 1.5f, 1.0f, 0.7f, 1.2f};
+  FloatBuffer float_buffer =
+      FloatBuffer(float_data, kWidth, kHeight, kChannels);
+  EXPECT_TRUE(CompareBuffer(float_buffer, result));
+}
+
+TEST(RgbBufferTest, PaddedRgbaToFloat) {
+  constexpr int kWidth = 4, kHeight = 2, kChannels = 4;
+  constexpr float kScale = 0.01f, kOffset = 0.0f;
+  RgbBuffer source = GetPaddedRgbaBuffer();
+  FloatBuffer result(kWidth, kHeight, kChannels);
+
+  ASSERT_TRUE(source.ToFloat(kScale, kOffset, &result));
+
+  float float_data[] = {0.1f, 0.2f, 0.3f, 2.55f, 0.2f, 0.3f, 0.4f, 2.55f,
+                        0.3f, 0.4f, 0.5f, 2.55f, 0.4f, 0.5f, 0.6f, 2.55f,
+                        0.2f, 0.4f, 0.6f, 2.55f, 0.4f, 0.6f, 0.8f, 2.55f,
+                        0.6f, 0.8f, 1.0f, 2.55f, 0.8f, 1.0f, 1.2f, 2.55f};
+  FloatBuffer float_buffer =
+      FloatBuffer(float_data, kWidth, kHeight, kChannels);
+  EXPECT_TRUE(CompareBuffer(float_buffer, result));
+}
+
 }  // namespace
 }  // namespace frame_buffer
 }  // namespace mediapipe

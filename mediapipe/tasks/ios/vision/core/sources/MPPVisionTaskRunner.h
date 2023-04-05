@@ -91,7 +91,7 @@ NS_ASSUME_NONNULL_BEGIN
  * A synchronous method to invoke the C++ task runner to process single image inputs. The call
  * blocks the current thread until a failure status or a successful result is returned.
  *
- * @param packetMap A `PackeMap` containing pairs of input stream name and data packet.
+ * @param packetMap A `PacketMap` containing pairs of input stream name and data packet.
  * @param error Pointer to the memory location where errors if any should be
  * saved. If @c NULL, no error will be saved.
  *
@@ -105,7 +105,7 @@ NS_ASSUME_NONNULL_BEGIN
  * A synchronous method to invoke the C++ task runner to process continuous video frames. The call
  * blocks the current thread until a failure status or a successful result is returned.
  *
- * @param packetMap A `PackeMap` containing pairs of input stream name and data packet.
+ * @param packetMap A `PacketMap` containing pairs of input stream name and data packet.
  * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
  * error will be saved.
  *
@@ -121,7 +121,7 @@ NS_ASSUME_NONNULL_BEGIN
  * available in the user-defined `packetsCallback` that was provided during initialization of the
  * `MPPVisionTaskRunner`.
  *
- * @param packetMap A `PackeMap` containing pairs of input stream name and data packet.
+ * @param packetMap A `PacketMap` containing pairs of input stream name and data packet.
  * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
  * error will be saved.
  *

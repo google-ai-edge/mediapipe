@@ -142,9 +142,9 @@ absl::StatusOr<std::vector<Image>> InteractiveSegmenter::Segment(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(
-      NormalizedRect norm_rect,
-      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   ConvertToNormalizedRect(image_processing_options, image,
+                                           /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(RenderData roi_as_render_data, ConvertRoiToRenderData(roi));
   ASSIGN_OR_RETURN(
       auto output_packets,

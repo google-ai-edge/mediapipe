@@ -52,6 +52,15 @@ class GateCalculatorTest : public ::testing::Test {
     MP_ASSERT_OK(runner_->Run()) << "Calculator execution failed.";
   }
 
+  void RunTimeStepWithoutDataStream(int64_t timestamp,
+                                    const std::string& control_tag,
+                                    bool control) {
+    runner_->MutableInputs()
+        ->Tag(control_tag)
+        .packets.push_back(MakePacket<bool>(control).At(Timestamp(timestamp)));
+    MP_ASSERT_OK(runner_->Run()) << "Calculator execution failed.";
+  }
+
   void SetRunner(const std::string& proto) {
     runner_ = absl::make_unique<CalculatorRunner>(
         ParseTextProtoOrDie<CalculatorGraphConfig::Node>(proto));
@@ -332,6 +341,35 @@ TEST_F(GateCalculatorTest, AllowWithStateChange) {
   EXPECT_EQ(false, output[1].Get<bool>());  // Disallow.
 }
 
+TEST_F(GateCalculatorTest, AllowWithStateChangeNoDataStreams) {
+  SetRunner(R"(
+        calculator: "GateCalculator"
+        input_stream: "ALLOW:gating_stream"
+        output_stream: "STATE_CHANGE:state_changed"
+  )");
+
+  constexpr int64_t kTimestampValue0 = 42;
+  RunTimeStepWithoutDataStream(kTimestampValue0, "ALLOW", false);
+  constexpr int64_t kTimestampValue1 = 43;
+  RunTimeStepWithoutDataStream(kTimestampValue1, "ALLOW", true);
+  constexpr int64_t kTimestampValue2 = 44;
+  RunTimeStepWithoutDataStream(kTimestampValue2, "ALLOW", true);
+  constexpr int64_t kTimestampValue3 = 45;
+  RunTimeStepWithoutDataStream(kTimestampValue3, "ALLOW", false);
+  LOG(INFO) << "a";
+  const std::vector<Packet>& output =
+      runner()->Outputs().Get("STATE_CHANGE", 0).packets;
+  LOG(INFO) << "s";
+  ASSERT_EQ(2, output.size());
+  LOG(INFO) << "d";
+  EXPECT_EQ(kTimestampValue1, output[0].Timestamp().Value());
+  EXPECT_EQ(kTimestampValue3, output[1].Timestamp().Value());
+  LOG(INFO) << "f";
+  EXPECT_EQ(true, output[0].Get<bool>());   // Allow.
+  EXPECT_EQ(false, output[1].Get<bool>());  // Disallow.
+  LOG(INFO) << "g";
+}
+
 TEST_F(GateCalculatorTest, DisallowWithStateChange) {
   SetRunner(R"(
         calculator: "GateCalculator"
@@ -349,6 +387,31 @@ TEST_F(GateCalculatorTest, DisallowWithStateChange) {
   RunTimeStep(kTimestampValue2, "DISALLOW", false);
   constexpr int64 kTimestampValue3 = 45;
   RunTimeStep(kTimestampValue3, "DISALLOW", true);
+
+  const std::vector<Packet>& output =
+      runner()->Outputs().Get("STATE_CHANGE", 0).packets;
+  ASSERT_EQ(2, output.size());
+  EXPECT_EQ(kTimestampValue1, output[0].Timestamp().Value());
+  EXPECT_EQ(kTimestampValue3, output[1].Timestamp().Value());
+  EXPECT_EQ(true, output[0].Get<bool>());   // Allow.
+  EXPECT_EQ(false, output[1].Get<bool>());  // Disallow.
+}
+
+TEST_F(GateCalculatorTest, DisallowWithStateChangeNoDataStreams) {
+  SetRunner(R"(
+        calculator: "GateCalculator"
+        input_stream: "DISALLOW:gating_stream"
+        output_stream: "STATE_CHANGE:state_changed"
+  )");
+
+  constexpr int64_t kTimestampValue0 = 42;
+  RunTimeStepWithoutDataStream(kTimestampValue0, "DISALLOW", true);
+  constexpr int64_t kTimestampValue1 = 43;
+  RunTimeStepWithoutDataStream(kTimestampValue1, "DISALLOW", false);
+  constexpr int64_t kTimestampValue2 = 44;
+  RunTimeStepWithoutDataStream(kTimestampValue2, "DISALLOW", false);
+  constexpr int64_t kTimestampValue3 = 45;
+  RunTimeStepWithoutDataStream(kTimestampValue3, "DISALLOW", true);
 
   const std::vector<Packet>& output =
       runner()->Outputs().Get("STATE_CHANGE", 0).packets;

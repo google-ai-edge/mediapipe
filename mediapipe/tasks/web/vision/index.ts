@@ -15,6 +15,8 @@
  */
 
 import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fileset_resolver';
+import {FaceDetector as FaceDetectorImpl} from '../../../tasks/web/vision/face_detector/face_detector';
+import {FaceLandmarker as FaceLandmarkerImpl} from '../../../tasks/web/vision/face_landmarker/face_landmarker';
 import {FaceStylizer as FaceStylizerImpl} from '../../../tasks/web/vision/face_stylizer/face_stylizer';
 import {GestureRecognizer as GestureRecognizerImpl} from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer';
 import {HandLandmarker as HandLandmarkerImpl} from '../../../tasks/web/vision/hand_landmarker/hand_landmarker';
@@ -27,6 +29,8 @@ import {ObjectDetector as ObjectDetectorImpl} from '../../../tasks/web/vision/ob
 // Declare the variables locally so that Rollup in OSS includes them explicitly
 // as exports.
 const FilesetResolver = FilesetResolverImpl;
+const FaceDetector = FaceDetectorImpl;
+const FaceLandmarker = FaceLandmarkerImpl;
 const FaceStylizer = FaceStylizerImpl;
 const GestureRecognizer = GestureRecognizerImpl;
 const HandLandmarker = HandLandmarkerImpl;
@@ -38,6 +42,8 @@ const ObjectDetector = ObjectDetectorImpl;
 
 export {
   FilesetResolver,
+  FaceDetector,
+  FaceLandmarker,
   FaceStylizer,
   GestureRecognizer,
   HandLandmarker,

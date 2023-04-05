@@ -658,7 +658,7 @@ absl::Status AnnotationOverlayCalculator::GlSetup(CalculatorContext* cc) {
     glBindTexture(GL_TEXTURE_2D, image_mat_tex_);
     // TODO
     // OpenCV only renders to RGB images, not RGBA. Ideally this should be RGBA.
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width_canvas_, height_canvas_, 0,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width_canvas_, height_canvas_, 0,
                  GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

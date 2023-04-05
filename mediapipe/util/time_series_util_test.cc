@@ -186,7 +186,7 @@ TEST(TimeSeriesUtilTest, SecondsToSamples) {
 
 TEST(TimeSeriesUtilTest, SamplesToSeconds) {
   double sample_rate = 32.5;
-  int64 num_samples = 128;
+  int64_t num_samples = 128;
   EXPECT_EQ(num_samples / sample_rate,
             SamplesToSeconds(num_samples, sample_rate));
 }

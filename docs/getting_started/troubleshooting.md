@@ -13,6 +13,12 @@ nav_order: 10
 {:toc}
 ---
 
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
+
 ## Missing Python binary path
 
 The error message:

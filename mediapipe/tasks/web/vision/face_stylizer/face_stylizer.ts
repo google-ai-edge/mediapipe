@@ -58,9 +58,8 @@ export class FaceStylizer extends VisionTaskRunner {
   static createFromOptions(
       wasmFileset: WasmFileset,
       faceStylizerOptions: FaceStylizerOptions): Promise<FaceStylizer> {
-    return VisionTaskRunner.createInstance(
-        FaceStylizer, /* initializeCanvas= */ true, wasmFileset,
-        faceStylizerOptions);
+    return VisionTaskRunner.createVisionInstance(
+        FaceStylizer, wasmFileset, faceStylizerOptions);
   }
 
   /**
@@ -73,9 +72,8 @@ export class FaceStylizer extends VisionTaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<FaceStylizer> {
-    return VisionTaskRunner.createInstance(
-        FaceStylizer, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createVisionInstance(
+        FaceStylizer, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -88,9 +86,8 @@ export class FaceStylizer extends VisionTaskRunner {
   static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<FaceStylizer> {
-    return VisionTaskRunner.createInstance(
-        FaceStylizer, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+    return VisionTaskRunner.createVisionInstance(
+        FaceStylizer, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
   /** @hideconstructor */
@@ -133,7 +130,7 @@ export class FaceStylizer extends VisionTaskRunner {
    * FaceStylizer is created with the image running mode.
    *
    * The input image can be of any size. To ensure that the output image has
-   * reasonable quailty, the stylized output image size is determined by the
+   * reasonable quality, the stylized output image size is determined by the
    * model output size.
    *
    * @param image An image to process.
@@ -157,7 +154,7 @@ export class FaceStylizer extends VisionTaskRunner {
    *  first, then the specified rotation is applied to the crop.
    *
    * The input image can be of any size. To ensure that the output image has
-   * reasonable quailty, the stylized output image size is the smaller of the
+   * reasonable quality, the stylized output image size is the smaller of the
    * model output size and the size of the 'regionOfInterest' specified in
    * 'imageProcessingOptions'.
    *
@@ -224,7 +221,7 @@ export class FaceStylizer extends VisionTaskRunner {
    * frame's timestamp (in milliseconds). The input timestamps must be
    * monotonically increasing.
    *
-   * To ensure that the output image has reasonable quailty, the stylized
+   * To ensure that the output image has reasonable quality, the stylized
    * output image size is the smaller of the model output size and the size of
    * the 'regionOfInterest' specified in 'imageProcessingOptions'.
    *

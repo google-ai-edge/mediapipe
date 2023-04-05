@@ -16,21 +16,15 @@
 # Description:
 #   Working with dense optical flow in mediapipe.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_proto_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-proto_library(
+mediapipe_proto_library(
     name = "optical_flow_field_data_proto",
     srcs = ["optical_flow_field_data.proto"],
-)
-
-mediapipe_cc_proto_library(
-    name = "optical_flow_field_data_cc_proto",
-    srcs = ["optical_flow_field_data.proto"],
-    deps = [":optical_flow_field_data_proto"],
 )
 
 cc_library(

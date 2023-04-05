@@ -31,6 +31,7 @@ from setuptools.command import install
 
 __version__ = 'dev'
 IS_WINDOWS = (platform.system() == 'Windows')
+IS_MAC = (platform.system() == 'Darwin')
 MP_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 MP_DIR_INIT_PY = os.path.join(MP_ROOT_PATH, 'mediapipe/__init__.py')
 MP_THIRD_PARTY_BUILD = os.path.join(MP_ROOT_PATH, 'third_party/BUILD')
@@ -343,11 +344,39 @@ class BuildExtension(build_ext.build_ext):
 
   def run(self):
     _check_bazel()
-    for ext in self.extensions:
-      self._build_binary(ext)
+    if IS_MAC:
+      for ext in self.extensions:
+        target_name = self.get_ext_fullpath(ext.name)
+        # Build x86
+        self._build_binary(
+            ext,
+            ['--cpu=darwin_x86_64', '--ios_multi_cpus=i386,x86_64,armv7,arm64'],
+        )
+        x86_name = self.get_ext_fullpath(ext.name)
+        # Build Arm64
+        ext.name = ext.name + '.arm64'
+        self._build_binary(
+            ext,
+            ['--cpu=darwin_arm64', '--ios_multi_cpus=i386,x86_64,armv7,arm64'],
+        )
+        arm64_name = self.get_ext_fullpath(ext.name)
+        # Merge architectures
+        lipo_command = [
+            'lipo',
+            '-create',
+            '-output',
+            target_name,
+            x86_name,
+            arm64_name,
+        ]
+        if subprocess.call(lipo_command) != 0:
+          sys.exit(-1)
+      else:
+        for ext in self.extensions:
+          self._build_binary(ext)
     build_ext.build_ext.run(self)
 
-  def _build_binary(self, ext):
+  def _build_binary(self, ext, extra_args=None):
     if not os.path.exists(self.build_temp):
       os.makedirs(self.build_temp)
     bazel_command = [
@@ -359,6 +388,8 @@ class BuildExtension(build_ext.build_ext):
         '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         str(ext.bazel_target + '.so'),
     ]
+    if extra_args:
+      bazel_command += extra_args
     if not self.link_opencv and not IS_WINDOWS:
       bazel_command.append('--define=OPENCV=source')
     if subprocess.call(bazel_command) != 0:

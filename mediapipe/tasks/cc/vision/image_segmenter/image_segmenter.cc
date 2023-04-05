@@ -37,8 +37,10 @@ namespace vision {
 namespace image_segmenter {
 namespace {
 
-constexpr char kSegmentationStreamName[] = "segmented_mask_out";
-constexpr char kGroupedSegmentationTag[] = "GROUPED_SEGMENTATION";
+constexpr char kConfidenceMasksTag[] = "CONFIDENCE_MASKS";
+constexpr char kConfidenceMasksStreamName[] = "confidence_masks";
+constexpr char kCategoryMaskTag[] = "CATEGORY_MASK";
+constexpr char kCategoryMaskStreamName[] = "category_mask";
 constexpr char kImageInStreamName[] = "image_in";
 constexpr char kImageOutStreamName[] = "image_out";
 constexpr char kImageTag[] = "IMAGE";
@@ -51,7 +53,6 @@ constexpr int kMicroSecondsPerMilliSecond = 1000;
 using ::mediapipe::CalculatorGraphConfig;
 using ::mediapipe::Image;
 using ::mediapipe::NormalizedRect;
-using ::mediapipe::tasks::vision::image_segmenter::proto::SegmenterOptions;
 using ImageSegmenterGraphOptionsProto = ::mediapipe::tasks::vision::
     image_segmenter::proto::ImageSegmenterGraphOptions;
 
@@ -59,21 +60,24 @@ using ImageSegmenterGraphOptionsProto = ::mediapipe::tasks::vision::
 // "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph".
 CalculatorGraphConfig CreateGraphConfig(
     std::unique_ptr<ImageSegmenterGraphOptionsProto> options,
-    bool enable_flow_limiting) {
+    bool output_category_mask, bool enable_flow_limiting) {
   api2::builder::Graph graph;
   auto& task_subgraph = graph.AddNode(kSubgraphTypeName);
   task_subgraph.GetOptions<ImageSegmenterGraphOptionsProto>().Swap(
       options.get());
   graph.In(kImageTag).SetName(kImageInStreamName);
   graph.In(kNormRectTag).SetName(kNormRectStreamName);
-  task_subgraph.Out(kGroupedSegmentationTag).SetName(kSegmentationStreamName) >>
-      graph.Out(kGroupedSegmentationTag);
+  task_subgraph.Out(kConfidenceMasksTag).SetName(kConfidenceMasksStreamName) >>
+      graph.Out(kConfidenceMasksTag);
+  if (output_category_mask) {
+    task_subgraph.Out(kCategoryMaskTag).SetName(kCategoryMaskStreamName) >>
+        graph.Out(kCategoryMaskTag);
+  }
   task_subgraph.Out(kImageTag).SetName(kImageOutStreamName) >>
       graph.Out(kImageTag);
   if (enable_flow_limiting) {
-    return tasks::core::AddFlowLimiterCalculator(graph, task_subgraph,
-                                                 {kImageTag, kNormRectTag},
-                                                 kGroupedSegmentationTag);
+    return tasks::core::AddFlowLimiterCalculator(
+        graph, task_subgraph, {kImageTag, kNormRectTag}, kConfidenceMasksTag);
   }
   graph.In(kImageTag) >> task_subgraph.In(kImageTag);
   graph.In(kNormRectTag) >> task_subgraph.In(kNormRectTag);
@@ -91,16 +95,6 @@ ConvertImageSegmenterOptionsToProto(ImageSegmenterOptions* options) {
   options_proto->mutable_base_options()->set_use_stream_mode(
       options->running_mode != core::RunningMode::IMAGE);
   options_proto->set_display_names_locale(options->display_names_locale);
-  switch (options->output_type) {
-    case ImageSegmenterOptions::OutputType::CATEGORY_MASK:
-      options_proto->mutable_segmenter_options()->set_output_type(
-          SegmenterOptions::CATEGORY_MASK);
-      break;
-    case ImageSegmenterOptions::OutputType::CONFIDENCE_MASK:
-      options_proto->mutable_segmenter_options()->set_output_type(
-          SegmenterOptions::CONFIDENCE_MASK);
-      break;
-  }
   return options_proto;
 }
 
@@ -145,6 +139,7 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
   tasks::core::PacketsCallback packets_callback = nullptr;
   if (options->result_callback) {
     auto result_callback = options->result_callback;
+    bool output_category_mask = options->output_category_mask;
     packets_callback =
         [=](absl::StatusOr<tasks::core::PacketMap> status_or_packets) {
           if (!status_or_packets.ok()) {
@@ -156,34 +151,41 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
           if (status_or_packets.value()[kImageOutStreamName].IsEmpty()) {
             return;
           }
-          Packet segmented_masks =
-              status_or_packets.value()[kSegmentationStreamName];
+          Packet confidence_masks =
+              status_or_packets.value()[kConfidenceMasksStreamName];
+          std::optional<Image> category_mask;
+          if (output_category_mask) {
+            category_mask =
+                status_or_packets.value()[kCategoryMaskStreamName].Get<Image>();
+          }
           Packet image_packet = status_or_packets.value()[kImageOutStreamName];
-          result_callback(segmented_masks.Get<std::vector<Image>>(),
-                          image_packet.Get<Image>(),
-                          segmented_masks.Timestamp().Value() /
-                              kMicroSecondsPerMilliSecond);
+          result_callback(
+              {{confidence_masks.Get<std::vector<Image>>(), category_mask}},
+              image_packet.Get<Image>(),
+              confidence_masks.Timestamp().Value() /
+                  kMicroSecondsPerMilliSecond);
         };
   }
-
   auto image_segmenter =
       core::VisionTaskApiFactory::Create<ImageSegmenter,
                                          ImageSegmenterGraphOptionsProto>(
           CreateGraphConfig(
-              std::move(options_proto),
+              std::move(options_proto), options->output_category_mask,
               options->running_mode == core::RunningMode::LIVE_STREAM),
           std::move(options->base_options.op_resolver), options->running_mode,
           std::move(packets_callback));
   if (!image_segmenter.ok()) {
     return image_segmenter.status();
   }
+  image_segmenter.value()->output_category_mask_ =
+      options->output_category_mask;
   ASSIGN_OR_RETURN(
       (*image_segmenter)->labels_,
       GetLabelsFromGraphConfig((*image_segmenter)->runner_->GetGraphConfig()));
   return image_segmenter;
 }
 
-absl::StatusOr<std::vector<Image>> ImageSegmenter::Segment(
+absl::StatusOr<ImageSegmenterResult> ImageSegmenter::Segment(
     mediapipe::Image image,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
@@ -192,20 +194,26 @@ absl::StatusOr<std::vector<Image>> ImageSegmenter::Segment(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(
-      NormalizedRect norm_rect,
-      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   ConvertToNormalizedRect(image_processing_options, image,
+                                           /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
           {{kImageInStreamName, mediapipe::MakePacket<Image>(std::move(image))},
            {kNormRectStreamName,
             MakePacket<NormalizedRect>(std::move(norm_rect))}}));
-  return output_packets[kSegmentationStreamName].Get<std::vector<Image>>();
+  std::vector<Image> confidence_masks =
+      output_packets[kConfidenceMasksStreamName].Get<std::vector<Image>>();
+  std::optional<Image> category_mask;
+  if (output_category_mask_) {
+    category_mask = output_packets[kCategoryMaskStreamName].Get<Image>();
+  }
+  return {{confidence_masks, category_mask}};
 }
 
-absl::StatusOr<std::vector<Image>> ImageSegmenter::SegmentForVideo(
-    mediapipe::Image image, int64 timestamp_ms,
+absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
+    mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -213,9 +221,9 @@ absl::StatusOr<std::vector<Image>> ImageSegmenter::SegmentForVideo(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(
-      NormalizedRect norm_rect,
-      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   ConvertToNormalizedRect(image_processing_options, image,
+                                           /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
@@ -225,11 +233,17 @@ absl::StatusOr<std::vector<Image>> ImageSegmenter::SegmentForVideo(
            {kNormRectStreamName,
             MakePacket<NormalizedRect>(std::move(norm_rect))
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
-  return output_packets[kSegmentationStreamName].Get<std::vector<Image>>();
+  std::vector<Image> confidence_masks =
+      output_packets[kConfidenceMasksStreamName].Get<std::vector<Image>>();
+  std::optional<Image> category_mask;
+  if (output_category_mask_) {
+    category_mask = output_packets[kCategoryMaskStreamName].Get<Image>();
+  }
+  return {{confidence_masks, category_mask}};
 }
 
 absl::Status ImageSegmenter::SegmentAsync(
-    Image image, int64 timestamp_ms,
+    Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -237,9 +251,9 @@ absl::Status ImageSegmenter::SegmentAsync(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(
-      NormalizedRect norm_rect,
-      ConvertToNormalizedRect(image_processing_options, /*roi_allowed=*/false));
+  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                   ConvertToNormalizedRect(image_processing_options, image,
+                                           /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

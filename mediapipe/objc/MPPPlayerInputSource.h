@@ -18,7 +18,15 @@
 /// Not meant for batch processing of video.
 @interface MPPPlayerInputSource : MPPInputSource
 
-/// Designated initializer.
+/// Initializes the video source with optional audio processing.
+///
+/// @param video The video asset to play.
+/// @param audioProcessingEnabled If set, indicates that the (first) audio track
+///        should be processed if it exists, and the corresponding methods for
+///        audio will be invoked on the @c delegate.
+- (instancetype)initWithAVAsset:(AVAsset*)video audioProcessingEnabled:(BOOL)audioProcessingEnabled;
+
+/// Initializes the video source to process @c video with audio processing disabled.
 - (instancetype)initWithAVAsset:(AVAsset*)video;
 
 /// Skip into video @c time from beginning (time 0), within error of +/- tolerance to closest time.

@@ -19,6 +19,7 @@ import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {Detection as DetectionProto} from '../../../../framework/formats/detection_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {ObjectDetectorOptions as ObjectDetectorOptionsProto} from '../../../../tasks/cc/vision/object_detector/proto/object_detector_options_pb';
+import {convertFromDetectionProto} from '../../../../tasks/web/components/processors/detection_result';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
@@ -26,14 +27,12 @@ import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner
 // Placeholder for internal dependency on trusted resource url
 
 import {ObjectDetectorOptions} from './object_detector_options';
-import {Detection} from './object_detector_result';
+import {ObjectDetectorResult} from './object_detector_result';
 
 const IMAGE_STREAM = 'input_frame_gpu';
 const NORM_RECT_STREAM = 'norm_rect';
 const DETECTIONS_STREAM = 'detections';
 const OBJECT_DETECTOR_GRAPH = 'mediapipe.tasks.vision.ObjectDetectorGraph';
-
-const DEFAULT_CATEGORY_INDEX = -1;
 
 export * from './object_detector_options';
 export * from './object_detector_result';
@@ -44,7 +43,7 @@ export {ImageSource};  // Used in the public API
 
 /** Performs object detection on images. */
 export class ObjectDetector extends VisionTaskRunner {
-  private detections: Detection[] = [];
+  private result: ObjectDetectorResult = {detections: []};
   private readonly options = new ObjectDetectorOptionsProto();
 
   /**
@@ -59,9 +58,8 @@ export class ObjectDetector extends VisionTaskRunner {
   static createFromOptions(
       wasmFileset: WasmFileset,
       objectDetectorOptions: ObjectDetectorOptions): Promise<ObjectDetector> {
-    return VisionTaskRunner.createInstance(
-        ObjectDetector, /* initializeCanvas= */ true, wasmFileset,
-        objectDetectorOptions);
+    return VisionTaskRunner.createVisionInstance(
+        ObjectDetector, wasmFileset, objectDetectorOptions);
   }
 
   /**
@@ -74,9 +72,8 @@ export class ObjectDetector extends VisionTaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ObjectDetector> {
-    return VisionTaskRunner.createInstance(
-        ObjectDetector, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createVisionInstance(
+        ObjectDetector, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -89,9 +86,8 @@ export class ObjectDetector extends VisionTaskRunner {
   static async createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ObjectDetector> {
-    return VisionTaskRunner.createInstance(
-        ObjectDetector, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+    return VisionTaskRunner.createVisionInstance(
+        ObjectDetector, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
   /** @hideconstructor */
@@ -166,13 +162,13 @@ export class ObjectDetector extends VisionTaskRunner {
    * @param image An image to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
-   * @return The list of detected objects
+   * @return A result containing a list of detected objects.
    */
   detect(image: ImageSource, imageProcessingOptions?: ImageProcessingOptions):
-      Detection[] {
-    this.detections = [];
+      ObjectDetectorResult {
+    this.result = {detections: []};
     this.processImageData(image, imageProcessingOptions);
-    return [...this.detections];
+    return this.result;
   }
 
   /**
@@ -184,46 +180,21 @@ export class ObjectDetector extends VisionTaskRunner {
    * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
-   * @return The list of detected objects
+   * @return A result containing a list of detected objects.
    */
   detectForVideo(
       videoFrame: ImageSource, timestamp: number,
-      imageProcessingOptions?: ImageProcessingOptions): Detection[] {
-    this.detections = [];
+      imageProcessingOptions?: ImageProcessingOptions): ObjectDetectorResult {
+    this.result = {detections: []};
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
-    return [...this.detections];
+    return this.result;
   }
 
   /** Converts raw data into a Detection, and adds it to our detection list. */
   private addJsObjectDetections(data: Uint8Array[]): void {
     for (const binaryProto of data) {
       const detectionProto = DetectionProto.deserializeBinary(binaryProto);
-      const scores = detectionProto.getScoreList();
-      const indexes = detectionProto.getLabelIdList();
-      const labels = detectionProto.getLabelList();
-      const displayNames = detectionProto.getDisplayNameList();
-
-      const detection: Detection = {categories: []};
-      for (let i = 0; i < scores.length; i++) {
-        detection.categories.push({
-          score: scores[i],
-          index: indexes[i] ?? DEFAULT_CATEGORY_INDEX,
-          categoryName: labels[i] ?? '',
-          displayName: displayNames[i] ?? '',
-        });
-      }
-
-      const boundingBox = detectionProto.getLocationData()?.getBoundingBox();
-      if (boundingBox) {
-        detection.boundingBox = {
-          originX: boundingBox.getXmin() ?? 0,
-          originY: boundingBox.getYmin() ?? 0,
-          width: boundingBox.getWidth() ?? 0,
-          height: boundingBox.getHeight() ?? 0
-        };
-      }
-
-      this.detections.push(detection);
+      this.result.detections.push(convertFromDetectionProto(detectionProto));
     }
   }
 

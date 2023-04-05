@@ -19,6 +19,7 @@
 
 #include "HalideBuffer.h"
 #include "HalideRuntime.h"
+#include "mediapipe/util/frame_buffer/float_buffer.h"
 #include "mediapipe/util/frame_buffer/gray_buffer.h"
 #include "mediapipe/util/frame_buffer/yuv_buffer.h"
 
@@ -105,6 +106,9 @@ class RgbBuffer {
 
   // Performs a rgb to rgba / rgba to rgb format conversion.
   bool Convert(RgbBuffer* output);
+
+  // Performs a RGB to float conversion.
+  bool ToFloat(float scale, float offset, FloatBuffer* output);
 
   // Release ownership of the owned backing buffer.
   uint8_t* Release() { return owned_buffer_.release(); }

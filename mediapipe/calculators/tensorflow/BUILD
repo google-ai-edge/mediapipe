@@ -309,11 +309,11 @@ cc_library(
     srcs = ["matrix_to_tensor_calculator.cc"],
     deps = [
         ":matrix_to_tensor_calculator_options_cc_proto",
-        "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:matrix",
-        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:framework",
@@ -399,25 +399,25 @@ cc_library(
 # On android, this calculator is configured to run with lite protos. Therefore,
 # compile your binary with the flag TENSORFLOW_PROTOS=lite.
 cc_library(
-    name = "tensorflow_inference_calculator",
+    name = "tensorflow_inference_calculator_no_envelope_loader",
     srcs = ["tensorflow_inference_calculator.cc"],
     deps = [
         ":tensorflow_inference_calculator_cc_proto",
         ":tensorflow_session",
-        "@com_google_absl//absl/log:check",
-        "//mediapipe/framework:timestamp",
-        "@com_google_absl//absl/base:core_headers",
-        "@com_google_absl//absl/memory",
         "//mediapipe/framework:calculator_context",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/deps:clock",
+        "//mediapipe/framework/port:map_util",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
-        "//mediapipe/framework/deps:clock",
-        "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:ret_check",
-        "//mediapipe/framework/port:map_util",
-        "//mediapipe/framework:packet",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:framework",
@@ -433,6 +433,19 @@ cc_library(
 )
 
 cc_library(
+    name = "tensorflow_inference_calculator",
+    deps = [
+        ":tensorflow_inference_calculator_no_envelope_loader",
+    ] + select({
+        # Since "select" has "exactly one match" rule, we will need default condition to avoid
+        # "no matching conditions" error. Since all necessary dependencies are specified in
+        # "tensorflow_inference_calculator_no_envelope_loader" dependency, it is empty here.
+        "//conditions:default": [],
+    }),
+    alwayslink = 1,
+)
+
+cc_library(
     name = "tensorflow_session",
     hdrs = [
         "tensorflow_session.h",
@@ -440,7 +453,7 @@ cc_library(
     features = ["no_layering_check"],
     deps = select({
         "//conditions:default": [
-            "@org_tensorflow//tensorflow/core:core",
+            "@org_tensorflow//tensorflow/core",
         ],
         "//mediapipe:android": [
             "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
@@ -459,24 +472,24 @@ cc_library(
         ":tensorflow_session",
         "//mediapipe/calculators/tensorflow:tensorflow_session_from_frozen_graph_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/tool:status_util",
         "//mediapipe/framework/deps:clock",
         "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:status_util",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
     ] + select({
         "//conditions:default": [
             "//mediapipe/framework/port:file_helpers",
-            "@org_tensorflow//tensorflow/core:core",
+            "@org_tensorflow//tensorflow/core",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
             "//mediapipe/android/file/base",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
         ],
         "//mediapipe:ios": [
-            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib",
             "//mediapipe/android/file/base",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib",
         ],
     }),
     alwayslink = 1,
@@ -490,24 +503,24 @@ cc_library(
         ":tensorflow_session",
         ":tensorflow_session_from_frozen_graph_generator_cc_proto",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/tool:status_util",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/deps:clock",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/tool:status_util",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
     ] + select({
         "//conditions:default": [
             "//mediapipe/framework/port:file_helpers",
-            "@org_tensorflow//tensorflow/core:core",
+            "@org_tensorflow//tensorflow/core",
         ],
         "//mediapipe:android": [
-            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
             "//mediapipe/android/file/base",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
         ],
         "//mediapipe:ios": [
-            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib",
             "//mediapipe/android/file/base",
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib",
         ],
     }),
     alwayslink = 1,
@@ -524,13 +537,13 @@ cc_library(
         ":tensorflow_session",
         ":tensorflow_session_from_saved_model_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/cc/saved_model:constants",
         "@org_tensorflow//tensorflow/cc/saved_model:loader_lite",
         "@org_tensorflow//tensorflow/cc/saved_model:tag_constants",
-        "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:ret_check",
     ] + select({
         "//conditions:default": [
         ],
@@ -553,6 +566,25 @@ cc_library(
 
 cc_library(
     name = "tensorflow_session_from_saved_model_generator",
+    defines = select({
+        "//mediapipe:android": ["__ANDROID__"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":tensorflow_session_from_saved_model_generator_no_envelope_loader",
+    ] + select({
+        "//conditions:default": [
+        ],
+    }),
+    alwayslink = 1,
+)
+
+# Same library as in "tensorflow_session_from_saved_model_generator" but without "envelope_loader"
+# since it caused issues when integrating with Boq. Boq has a built-in "envelope_loader_dev" and
+# conflits with "envelope_loader".
+# See yaqs/1092546221614039040
+cc_library(
+    name = "tensorflow_session_from_saved_model_generator_no_envelope_loader",
     srcs = ["tensorflow_session_from_saved_model_generator.cc"],
     defines = select({
         "//mediapipe:android": ["__ANDROID__"],
@@ -561,17 +593,17 @@ cc_library(
     deps = [
         ":tensorflow_session",
         ":tensorflow_session_from_saved_model_generator_cc_proto",
-        "@com_google_absl//absl/status",
         "//mediapipe/framework:packet_generator",
         "//mediapipe/framework:packet_type",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@org_tensorflow//tensorflow/cc/saved_model:constants",
         "@org_tensorflow//tensorflow/cc/saved_model:loader_lite",
         "@org_tensorflow//tensorflow/cc/saved_model:tag_constants",
-        "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:ret_check",
     ] + select({
         "//conditions:default": [
             "//mediapipe/framework/port:file_helpers",
@@ -612,11 +644,11 @@ cc_library(
     srcs = ["tensor_to_matrix_calculator.cc"],
     deps = [
         ":tensor_to_matrix_calculator_cc_proto",
-        "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:matrix",
-        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:framework",
@@ -649,8 +681,8 @@ cc_library(
     deps = [
         ":tensor_to_vector_float_calculator_options_cc_proto",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:framework",
@@ -667,11 +699,11 @@ cc_library(
     srcs = ["tensor_to_vector_int_calculator.cc"],
     deps = [
         ":tensor_to_vector_int_calculator_options_cc_proto",
-        "@com_google_absl//absl/base:core_headers",
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/base:core_headers",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:framework",
@@ -687,10 +719,10 @@ cc_library(
     name = "tensor_to_vector_string_calculator",
     srcs = ["tensor_to_vector_string_calculator.cc"],
     deps = [
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/port:status",
-        "//mediapipe/framework/port:ret_check",
         ":tensor_to_vector_string_calculator_options_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:framework",
@@ -1170,25 +1202,25 @@ cc_test(
     data = [":test_frozen_graph"],
     linkstatic = 1,
     deps = [
+        ":tensorflow_inference_calculator",
         ":tensorflow_inference_calculator_cc_proto",
         ":tensorflow_session",
-        ":tensorflow_inference_calculator",
         ":tensorflow_session_from_frozen_graph_generator",
         ":tensorflow_session_from_frozen_graph_generator_cc_proto",
-        "@com_google_absl//absl/flags:flag",
-        "//mediapipe/framework/deps:file_path",
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/tool:sink",
         "//mediapipe/framework/tool:validate_type",
-        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/flags:flag",
     ] + select({
         "//conditions:default": [
-            "@org_tensorflow//tensorflow/core:testlib",
-            "@org_tensorflow//tensorflow/core/kernels:math",
-            "@org_tensorflow//tensorflow/core/kernels:conv_ops",
             "@org_tensorflow//tensorflow/core:direct_session",
+            "@org_tensorflow//tensorflow/core:testlib",
+            "@org_tensorflow//tensorflow/core/kernels:conv_ops",
+            "@org_tensorflow//tensorflow/core/kernels:math",
         ],
         "//mediapipe:android": [
             "@org_tensorflow//tensorflow/core:portable_tensorflow_lib",

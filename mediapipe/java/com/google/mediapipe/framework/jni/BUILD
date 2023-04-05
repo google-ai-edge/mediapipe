@@ -84,10 +84,6 @@ cc_library(
     deps = [
         ":class_registry",
         ":jni_util",
-        "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
-        "@com_google_absl//absl/synchronization",
-        "@eigen_archive//:eigen3",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_profile_cc_proto",
@@ -106,6 +102,10 @@ cc_library(
         "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
         "//mediapipe/framework/tool:executor_util",
         "//mediapipe/framework/tool:name_util",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/synchronization",
+        "@eigen_archive//:eigen3",
     ] + select({
         "//conditions:default": [
             "//mediapipe/framework/port:file_helpers",
@@ -116,13 +116,14 @@ cc_library(
         ],
     }) + select({
         "//conditions:default": [
+            "//mediapipe/gpu:egl_surface_holder",
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_quad_renderer",
             "//mediapipe/gpu:gl_surface_sink_calculator",
+            "//mediapipe/gpu:gl_texture_buffer",
             "//mediapipe/gpu:gpu_buffer",
             "//mediapipe/gpu:gpu_shared_data_internal",
             "//mediapipe/gpu:graph_support",
-            "//mediapipe/gpu:egl_surface_holder",
         ],
         "//mediapipe/gpu:disable_gpu": [
             "//mediapipe/gpu:gpu_shared_data_internal",
@@ -137,9 +138,9 @@ cc_library(
     hdrs = ["jni_util.h"],
     deps = [
         ":class_registry",
-        "@com_google_absl//absl/synchronization",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/synchronization",
     ] + select({
         "//conditions:default": [
         ],
@@ -172,10 +173,10 @@ cc_library(
         ":class_registry",
         ":loose_headers",
         ":mediapipe_framework_jni",
+        "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-        "//mediapipe/framework/port:logging",
     ] + select({
         "//conditions:default": [
         ],

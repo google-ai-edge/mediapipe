@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "mediapipe/framework/formats/frame_buffer.h"
+#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -518,6 +519,27 @@ TEST(FrameBufferUtil, RgbaToRgbConversion) {
   EXPECT_EQ(output_data[3], 0);
   EXPECT_EQ(output_data[4], 200);
   EXPECT_EQ(output_data[5], 100);
+}
+
+TEST(FrameBufferUtil, RgbToFloatTensor) {
+  constexpr FrameBuffer::Dimension kBufferDimension = {.width = 2, .height = 1};
+  constexpr float kScale = 0.1f, kOffset = 0.1f;
+  uint8_t data[] = {1, 2, 3, 4, 5, 6};
+  auto input = CreateFromRgbRawBuffer(data, kBufferDimension);
+  Tensor output(
+      Tensor::ElementType::kFloat32,
+      Tensor::Shape{1, kBufferDimension.height, kBufferDimension.width, 3});
+
+  MP_ASSERT_OK(ToFloatTensor(*input, kScale, kOffset, output));
+
+  auto view = output.GetCpuReadView();
+  const float* output_data = view.buffer<float>();
+  EXPECT_EQ(output_data[0], 0.2f);
+  EXPECT_EQ(output_data[1], 0.3f);
+  EXPECT_EQ(output_data[2], 0.4f);
+  EXPECT_EQ(output_data[3], 0.5f);
+  EXPECT_EQ(output_data[4], 0.6f);
+  EXPECT_EQ(output_data[5], 0.7f);
 }
 
 TEST(FrameBufferUtil, RgbaCrop) {

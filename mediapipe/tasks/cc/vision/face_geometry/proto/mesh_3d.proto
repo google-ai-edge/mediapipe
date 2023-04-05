@@ -17,7 +17,7 @@ syntax = "proto2";
 package mediapipe.tasks.vision.face_geometry.proto;
 
 option java_package = "com.google.mediapipe.tasks.vision.facegeometry.proto";
-option java_outer_classname = "Mesh3dProto";
+option java_outer_classname = "Mesh3DProto";
 
 message Mesh3d {
   enum VertexType {

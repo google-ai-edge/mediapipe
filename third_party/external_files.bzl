@@ -67,7 +67,7 @@ def external_files():
     http_file(
         name = "com_google_mediapipe_BUILD",
         sha256 = "d2b2a8346202691d7f831887c84e9642e974f64ed67851d9a58cf15c94b1f6b3",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/BUILD?generation=166187566369397616783235763936531678737479599640"],
+        urls = ["https://storage.googleapis.com/mediapipe-assets/BUILD?generation=1661875663693976167832357639365316787374795996401679955080207504"],
     )
 
     http_file(
@@ -257,6 +257,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_dynamic_input_classifier_tflite",
+        sha256 = "fb34b05e1cd4081f3c2bb882092f617efb19266b3353d51b3790a172cae09784",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/dynamic_input_classifier.tflite?generation=1680543275416843"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_efficientdet_lite0_v1_json",
         sha256 = "7a9e1fb625a6130a251e612637fc546cfc8cfabfadc7dbdade44c87f1d8996ca",
         urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_v1.json?generation=1677522746026682"],
@@ -296,6 +302,12 @@ def external_files():
         name = "com_google_mediapipe_expected_left_up_hand_rotated_landmarks_prototxt",
         sha256 = "7fb2d33cf69d2da50952a45bad0c0618f30859e608958fee95948a6e0de63ccb",
         urls = ["https://storage.googleapis.com/mediapipe-assets/expected_left_up_hand_rotated_landmarks.prototxt?generation=1666629476401757"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_expected_pose_landmarks_prototxt",
+        sha256 = "0bb27e9d9729c4171419abf7edd746b4234cb91198d663f3a4363248a49dad1a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/expected_pose_landmarks.prototxt?generation=1680543279295598"],
     )
 
     http_file(
@@ -923,9 +935,21 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_pose_expected_expanded_rect_pbtxt",
+        sha256 = "babb2a2d50077f6fa9ee15e30d81abb6e98a920e35acad7542bb3d27b5ce7ffd",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_expected_expanded_rect.pbtxt?generation=1680543294008098"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_pose_jpg",
         sha256 = "c8a830ed683c0276d713dd5aeda28f415f10cd6291972084a40d0d8b934ed62b",
         urls = ["https://storage.googleapis.com/mediapipe-assets/pose.jpg?generation=1678737494661975"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_pose_landmarker_task",
+        sha256 = "ca4137626f0dc04f87893ccf2ad01949a3b1d4b55fa85ba957dde44a29dd956e",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_landmarker.task?generation=1680543298177615"],
     )
 
     http_file(
@@ -942,8 +966,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_pose_landmark_lite_tflite",
-        sha256 = "f17bfbecadb61c3be1baa8b8d851cc6619c870a87167b32848ad20db306b9d61",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_landmark_lite.tflite?generation=1661875901231143"],
+        sha256 = "13628a7d1c1a0f601ae7202c71ec8edc3ac42db9d15f116c494ff24d1afabdd7",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_landmark_lite.tflite?generation=1679955090327685"],
     )
 
     http_file(
@@ -1214,6 +1238,18 @@ def external_files():
         name = "com_google_mediapipe_victory_landmarks_pbtxt",
         sha256 = "b25ab4f222674489f543afb6454396ecbc1437a7ae6213dbf0553029ae939ab0",
         urls = ["https://storage.googleapis.com/mediapipe-assets/victory_landmarks.pbtxt?generation=1666999366036622"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_vit_multiclass_256x256-2022_10_14-xenoformer_f32_tflite",
+        sha256 = "768b7dd613c5b9f263b289cdbe1b9bc716f65e92c51e7ae57fae01f97f9658cd",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/vit_multiclass_256x256-2022_10_14-xenoformer.f32.tflite?generation=1679955093986149"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_vit_multiclass_512x512-2022_12_02_f32_tflite",
+        sha256 = "7ac7f0a037cd451b9be8eb25da86339aaba54fa821a0bd44e18768866ed0205a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/vit_multiclass_512x512-2022_12_02.f32.tflite?generation=1679955096856280"],
     )
 
     http_file(

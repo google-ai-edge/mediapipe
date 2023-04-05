@@ -84,13 +84,13 @@ _HALIDE_TARGET_CONFIG_SETTINGS_MAP = {
     # Android
     "arm-32-android": ["@halide//:halide_config_android_arm"],
     "arm-64-android": ["@halide//:halide_config_android_arm64"],
-    "x86-32-android": ["@halide//:halide_config_android_i386"],
+    "x86-32-android": ["@halide//:halide_config_android_x86_32"],
     "x86-64-android": ["@halide//:halide_config_android_x86_64"],
     # iOS
     "arm-32-ios": ["@halide//:halide_config_ios_arm"],
     "arm-64-ios": ["@halide//:halide_config_ios_arm64"],
     # OSX (or iOS simulator)
-    "x86-32-osx": ["@halide//:halide_config_macos_i386", "@halide//:halide_config_ios_i386"],
+    "x86-32-osx": ["@halide//:halide_config_macos_x86_32", "@halide//:halide_config_ios_x86_32"],
     "x86-64-osx": ["@halide//:halide_config_macos_x86_64", "@halide//:halide_config_ios_x86_64"],
     "arm-64-osx": ["@halide//:halide_config_macos_arm64"],
     # Windows
@@ -620,7 +620,7 @@ def _standard_library_runtime_names():
 def halide_library_runtimes(compatible_with = []):
     # Note that we don't use all of these combinations
     # (and some are invalid), but that's ok.
-    for cpu in ["arm", "arm64", "i386", "x86_64"]:
+    for cpu in ["arm", "arm64", "x86_32", "x86_64"]:
         for os in ["android", "linux", "windows", "ios", "macos"]:
             native.config_setting(
                 name = "halide_config_%s_%s" % (os, cpu),

@@ -388,7 +388,7 @@ class MetadataPopulatorTest(MetadataTest):
     populator = _metadata.MetadataPopulator.with_model_file(self._model_file)
     populator.load_metadata_file(self._metadata_file)
     populator.load_associated_files([self._file1])
-    # Suppose to populate self._file2, because it is recorded in the metadta.
+    # Suppose to populate self._file2, because it is recorded in the metadata.
     with self.assertRaises(ValueError) as error:
       populator.populate()
     self.assertEqual(("File, '{0}', is recorded in the metadata, but has "

@@ -1,0 +1,7 @@
+# proto-file: mediapipe/framework/formats/rect.proto
+# proto-message: NormalizedRect
+x_center: 0.5450622
+y_center: 0.31605977
+width: 0.5196669
+height: 0.77911085
+rotation: 0.50149304

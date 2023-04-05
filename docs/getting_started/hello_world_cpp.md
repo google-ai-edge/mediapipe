@@ -14,6 +14,12 @@ nav_order: 1
 {:toc}
 ---
 
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
+
 1.  Ensure you have a working version of MediaPipe. See
     [installation instructions](./install.md).
 

@@ -15,6 +15,8 @@
 """MediaPipe Tasks Vision API."""
 
 import mediapipe.tasks.python.vision.core
+import mediapipe.tasks.python.vision.face_detector
+import mediapipe.tasks.python.vision.face_landmarker
 import mediapipe.tasks.python.vision.gesture_recognizer
 import mediapipe.tasks.python.vision.hand_landmarker
 import mediapipe.tasks.python.vision.image_classifier
@@ -22,6 +24,12 @@ import mediapipe.tasks.python.vision.image_embedder
 import mediapipe.tasks.python.vision.image_segmenter
 import mediapipe.tasks.python.vision.object_detector
 
+FaceDetector = face_detector.FaceDetector
+FaceDetectorOptions = face_detector.FaceDetectorOptions
+FaceDetectorResult = face_detector.FaceDetectorResult
+FaceLandmarker = face_landmarker.FaceLandmarker
+FaceLandmarkerOptions = face_landmarker.FaceLandmarkerOptions
+FaceLandmarkerResult = face_landmarker.FaceLandmarkerResult
 GestureRecognizer = gesture_recognizer.GestureRecognizer
 GestureRecognizerOptions = gesture_recognizer.GestureRecognizerOptions
 GestureRecognizerResult = gesture_recognizer.GestureRecognizerResult
@@ -42,6 +50,8 @@ RunningMode = core.vision_task_running_mode.VisionTaskRunningMode
 
 # Remove unnecessary modules to avoid duplication in API docs.
 del core
+del face_detector
+del face_landmarker
 del gesture_recognizer
 del hand_landmarker
 del image_classifier

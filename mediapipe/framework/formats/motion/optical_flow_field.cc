@@ -66,12 +66,12 @@ cv::Mat MakeVisualizationHsv(const cv::Mat_<float>& angles,
   cv::Mat hsv(angles.size(), CV_8UC3);
   for (int r = 0; r < hsv.rows; ++r) {
     for (int c = 0; c < hsv.cols; ++c) {
-      const uint8 hue = static_cast<uint8>(255.0f * angles(r, c) / 360.0f);
-      uint8 saturation = 255;
+      const uint8_t hue = static_cast<uint8_t>(255.0f * angles(r, c) / 360.0f);
+      uint8_t saturation = 255;
       if (magnitudes(r, c) < max_mag) {
-        saturation = static_cast<uint8>(255.0f * magnitudes(r, c) / max_mag);
+        saturation = static_cast<uint8_t>(255.0f * magnitudes(r, c) / max_mag);
       }
-      const uint8 value = 255;
+      const uint8_t value = 255;
 
       hsv.at<cv::Vec3b>(r, c) = cv::Vec3b(hue, saturation, value);
     }
@@ -282,7 +282,7 @@ void OpticalFlowField::EstimateMotionConsistencyOcclusions(
 Location OpticalFlowField::FindMotionInconsistentPixels(
     const OpticalFlowField& forward, const OpticalFlowField& backward,
     double spatial_distance_threshold) {
-  const uint8 kOccludedPixelValue = 1;
+  const uint8_t kOccludedPixelValue = 1;
   const double threshold_sq =
       spatial_distance_threshold * spatial_distance_threshold;
   cv::Mat occluded = cv::Mat::zeros(forward.height(), forward.width(), CV_8UC1);
@@ -301,10 +301,10 @@ Location OpticalFlowField::FindMotionInconsistentPixels(
       if (!in_bounds_in_next_frame ||
           Point2_f(x - round_trip_x, y - round_trip_y).ToVector().Norm2() >
               threshold_sq) {
-        occluded.at<uint8>(y, x) = kOccludedPixelValue;
+        occluded.at<uint8_t>(y, x) = kOccludedPixelValue;
       }
     }
   }
-  return CreateCvMaskLocation<uint8>(occluded);
+  return CreateCvMaskLocation<uint8_t>(occluded);
 }
 }  // namespace mediapipe

@@ -46,9 +46,9 @@ MediaPipeBuiltinOpResolver::MediaPipeBuiltinOpResolver() {
       mediapipe::tflite_operations::RegisterLandmarksToTransformMatrixV2(),
       /*version=*/2);
   // For the LanguageDetector model.
-  AddCustom("NGramHash", ::tflite::ops::custom::Register_NGRAM_HASH());
+  AddCustom("NGramHash", mediapipe::tflite_operations::Register_NGRAM_HASH());
   AddCustom("KmeansEmbeddingLookup",
-            ::tflite::ops::custom::Register_KmeansEmbeddingLookup());
+            mediapipe::tflite_operations::Register_KmeansEmbeddingLookup());
 }
 }  // namespace core
 }  // namespace tasks

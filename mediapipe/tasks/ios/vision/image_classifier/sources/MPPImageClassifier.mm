@@ -36,15 +36,17 @@ static NSString *const kClassificationsTag = @"CLASSIFICATIONS";
 static NSString *const kImageInStreamName = @"image_in";
 static NSString *const kImageOutStreamName = @"image_out";
 static NSString *const kImageTag = @"IMAGE";
-static NSString *const kNormRectName = @"norm_rect_in";
+static NSString *const kNormRectStreamName = @"norm_rect_in";
 static NSString *const kNormRectTag = @"NORM_RECT";
 
 static NSString *const kTaskGraphName =
     @"mediapipe.tasks.vision.image_classifier.ImageClassifierGraph";
 
-#define InputPacketMap(imagePacket, normalizedRectPacket)                                          \
-  {                                                                                                \
-    {kImageInStreamName.cppString, imagePacket}, { kNormRectName.cppString, normalizedRectPacket } \
+#define InputPacketMap(imagePacket, normalizedRectPacket) \
+  {                                                       \
+    {kImageInStreamName.cppString, imagePacket}, {        \
+      kNormRectStreamName.cppString, normalizedRectPacket \
+    }                                                     \
   }
 
 @interface MPPImageClassifier () {
@@ -60,12 +62,17 @@ static NSString *const kTaskGraphName =
   if (self) {
     MPPTaskInfo *taskInfo = [[MPPTaskInfo alloc]
         initWithTaskGraphName:kTaskGraphName
-                 inputStreams:@[ [NSString
-                                  stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName] ]
-                outputStreams:@[ [NSString stringWithFormat:@"%@:%@", kClassificationsTag,
-                                                            kClassificationsStreamName] ]
+                 inputStreams:@[
+                   [NSString stringWithFormat:@"%@:%@", kImageTag, kImageInStreamName],
+                   [NSString stringWithFormat:@"%@:%@", kNormRectTag, kNormRectStreamName]
+                 ]
+                outputStreams:@[
+                  [NSString
+                      stringWithFormat:@"%@:%@", kClassificationsTag, kClassificationsStreamName],
+                  [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName]
+                ]
                   taskOptions:options
-           enableFlowLimiting:NO
+           enableFlowLimiting:options.runningMode == MPPRunningModeLiveStream
                         error:error];
 
     if (!taskInfo) {
@@ -130,8 +137,8 @@ static NSString *const kTaskGraphName =
 
   PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
 
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processPacketMap:inputPacketMap
-                                                                           error:error];
+  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImagePacketMap:inputPacketMap
+                                                                                error:error];
   if (!outputPacketMap.has_value()) {
     return nil;
   }

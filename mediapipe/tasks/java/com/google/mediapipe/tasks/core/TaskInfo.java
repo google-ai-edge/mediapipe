@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * {@link TaskInfo} contains all needed informaton to initialize a MediaPipe Task {@link
+ * {@link TaskInfo} contains all needed information to initialize a MediaPipe Task {@link
  * com.google.mediapipe.framework.Graph}.
  */
 @AutoValue

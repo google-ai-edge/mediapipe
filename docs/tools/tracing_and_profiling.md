@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/
 title: Tracing and Profiling
 parent: Tools
 nav_order: 2
@@ -11,6 +12,12 @@ nav_order: 2
 1. TOC
 {:toc}
 ---
+
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
 
 The MediaPipe framework includes a built-in tracer and profiler. The tracer
 records various timing events related to packet processing, including the start

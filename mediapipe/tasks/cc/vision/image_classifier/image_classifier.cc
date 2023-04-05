@@ -156,7 +156,7 @@ absl::StatusOr<ImageClassifierResult> ImageClassifier::Classify(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options));
+                   ConvertToNormalizedRect(image_processing_options, image));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
@@ -167,7 +167,7 @@ absl::StatusOr<ImageClassifierResult> ImageClassifier::Classify(
 }
 
 absl::StatusOr<ImageClassifierResult> ImageClassifier::ClassifyForVideo(
-    Image image, int64 timestamp_ms,
+    Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -176,7 +176,7 @@ absl::StatusOr<ImageClassifierResult> ImageClassifier::ClassifyForVideo(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options));
+                   ConvertToNormalizedRect(image_processing_options, image));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
@@ -191,7 +191,7 @@ absl::StatusOr<ImageClassifierResult> ImageClassifier::ClassifyForVideo(
 }
 
 absl::Status ImageClassifier::ClassifyAsync(
-    Image image, int64 timestamp_ms,
+    Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -200,7 +200,7 @@ absl::Status ImageClassifier::ClassifyAsync(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options));
+                   ConvertToNormalizedRect(image_processing_options, image));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

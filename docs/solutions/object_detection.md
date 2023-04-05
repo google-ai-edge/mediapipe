@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/vision/object_detector/
 title: Object Detection
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 9
 ---
 
@@ -19,12 +20,10 @@ nav_order: 9
 ---
 
 **Attention:** *Thank you for your interest in MediaPipe Solutions.
-As of March 1, 2023, this solution is planned to be upgraded to a new MediaPipe
-Solution. For more information, see the new
-[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
+As of March 1, 2023, this solution was upgraded to a new MediaPipe
+Solution. For more information, see the
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/vision/object_detector/)
 site.*
-
-*This notice and web page will be removed on April 3, 2023.*
 
 ----
 

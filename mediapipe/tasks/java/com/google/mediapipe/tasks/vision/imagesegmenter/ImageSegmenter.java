@@ -302,7 +302,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
    *     region-of-interest.
    * @throws MediaPipeException if there is an internal error. Or if {@link ImageSegmenter} is not
-   *     created wtih {@link ResultListener} set in {@link ImageSegmenterOptions}.
+   *     created with {@link ResultListener} set in {@link ImageSegmenterOptions}.
    */
   public void segmentWithResultListener(MPImage image) {
     segmentWithResultListener(image, ImageProcessingOptions.builder().build());
@@ -329,7 +329,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
    *     region-of-interest.
    * @throws MediaPipeException if there is an internal error. Or if {@link ImageSegmenter} is not
-   *     created wtih {@link ResultListener} set in {@link ImageSegmenterOptions}.
+   *     created with {@link ResultListener} set in {@link ImageSegmenterOptions}.
    */
   public void segmentWithResultListener(
       MPImage image, ImageProcessingOptions imageProcessingOptions) {
@@ -421,7 +421,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @param timestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error. Or if {@link ImageSegmenter} is not
-   *     created wtih {@link ResultListener} set in {@link ImageSegmenterOptions}.
+   *     created with {@link ResultListener} set in {@link ImageSegmenterOptions}.
    */
   public void segmentForVideoWithResultListener(MPImage image, long timestampMs) {
     segmentForVideoWithResultListener(image, ImageProcessingOptions.builder().build(), timestampMs);
@@ -444,7 +444,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @param timestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error. Or if {@link ImageSegmenter} is not
-   *     created wtih {@link ResultListener} set in {@link ImageSegmenterOptions}.
+   *     created with {@link ResultListener} set in {@link ImageSegmenterOptions}.
    */
   public void segmentForVideoWithResultListener(
       MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
@@ -519,7 +519,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    *
    * <p>If there is no labelmap provided in the model file, empty label list is returned.
    */
-  List<String> getLabels() {
+  public List<String> getLabels() {
     return labels;
   }
 

@@ -83,7 +83,7 @@ class EmbeddingAggregationCalculator : public Node {
 
  private:
   bool time_aggregation_enabled_;
-  std::unordered_map<int64, EmbeddingResult> cached_embeddings_;
+  std::unordered_map<int64_t, EmbeddingResult> cached_embeddings_;
 };
 
 absl::Status EmbeddingAggregationCalculator::UpdateContract(

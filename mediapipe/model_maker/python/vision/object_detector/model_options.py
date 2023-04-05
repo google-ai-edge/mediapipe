@@ -11,14 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Configurable model options for object detector models."""
 
-licenses(["notice"])
+import dataclasses
 
-package(default_visibility = ["//mediapipe/model_maker/python/vision/face_stylizer:__subpackages__"])
 
-filegroup(
-    name = "models",
-    srcs = glob([
-        "**",
-    ]),
-)
+@dataclasses.dataclass
+class ObjectDetectorModelOptions:
+  """Configurable options for object detector model.
+
+  Attributes:
+    l2_weight_decay: L2 regularization penalty used in
+      https://www.tensorflow.org/api_docs/python/tf/keras/regularizers/L2.
+  """
+
+  l2_weight_decay: float = 3.0e-05

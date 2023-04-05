@@ -354,6 +354,11 @@ def mediapipe_java_proto_srcs(name = ""):
     ))
 
     proto_src_list.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/framework/formats:matrix_data_java_proto_lite",
+        src_out = "com/google/mediapipe/formats/proto/MatrixDataProto.java",
+    ))
+
+    proto_src_list.append(mediapipe_java_proto_src_extractor(
         target = "//mediapipe/framework/formats:rect_java_proto_lite",
         src_out = "com/google/mediapipe/formats/proto/RectProto.java",
     ))

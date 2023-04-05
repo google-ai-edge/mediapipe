@@ -58,7 +58,7 @@ export class TextClassifier extends TaskRunner {
       wasmFileset: WasmFileset,
       textClassifierOptions: TextClassifierOptions): Promise<TextClassifier> {
     return TaskRunner.createInstance(
-        TextClassifier, /* initializeCanvas= */ false, wasmFileset,
+        TextClassifier, /* canvas= */ null, wasmFileset,
         textClassifierOptions);
   }
 
@@ -73,7 +73,7 @@ export class TextClassifier extends TaskRunner {
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<TextClassifier> {
     return TaskRunner.createInstance(
-        TextClassifier, /* initializeCanvas= */ false, wasmFileset,
+        TextClassifier, /* canvas= */ null, wasmFileset,
         {baseOptions: {modelAssetBuffer}});
   }
 
@@ -88,7 +88,7 @@ export class TextClassifier extends TaskRunner {
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<TextClassifier> {
     return TaskRunner.createInstance(
-        TextClassifier, /* initializeCanvas= */ false, wasmFileset,
+        TextClassifier, /* canvas= */ null, wasmFileset,
         {baseOptions: {modelAssetPath}});
   }
 

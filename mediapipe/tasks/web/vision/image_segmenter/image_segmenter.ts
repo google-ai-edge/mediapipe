@@ -64,9 +64,8 @@ export class ImageSegmenter extends VisionTaskRunner {
   static createFromOptions(
       wasmFileset: WasmFileset,
       imageSegmenterOptions: ImageSegmenterOptions): Promise<ImageSegmenter> {
-    return VisionTaskRunner.createInstance(
-        ImageSegmenter, /* initializeCanvas= */ true, wasmFileset,
-        imageSegmenterOptions);
+    return VisionTaskRunner.createVisionInstance(
+        ImageSegmenter, wasmFileset, imageSegmenterOptions);
   }
 
   /**
@@ -79,9 +78,8 @@ export class ImageSegmenter extends VisionTaskRunner {
   static createFromModelBuffer(
       wasmFileset: WasmFileset,
       modelAssetBuffer: Uint8Array): Promise<ImageSegmenter> {
-    return VisionTaskRunner.createInstance(
-        ImageSegmenter, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetBuffer}});
+    return VisionTaskRunner.createVisionInstance(
+        ImageSegmenter, wasmFileset, {baseOptions: {modelAssetBuffer}});
   }
 
   /**
@@ -94,9 +92,8 @@ export class ImageSegmenter extends VisionTaskRunner {
   static createFromModelPath(
       wasmFileset: WasmFileset,
       modelAssetPath: string): Promise<ImageSegmenter> {
-    return VisionTaskRunner.createInstance(
-        ImageSegmenter, /* initializeCanvas= */ true, wasmFileset,
-        {baseOptions: {modelAssetPath}});
+    return VisionTaskRunner.createVisionInstance(
+        ImageSegmenter, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
   /** @hideconstructor */

@@ -34,6 +34,7 @@ mediapipe_ts_library(
     name = "classifier_result",
     srcs = ["classifier_result.ts"],
     deps = [
+        "//mediapipe/framework/formats:classification_jspb_proto",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_jspb_proto",
         "//mediapipe/tasks/web/components/containers:classification_result",
     ],
@@ -53,6 +54,27 @@ mediapipe_ts_library(
 jasmine_node_test(
     name = "classifier_result_test",
     deps = [":classifier_result_test_lib"],
+)
+
+mediapipe_ts_library(
+    name = "detection_result",
+    srcs = ["detection_result.ts"],
+    deps = [
+        "//mediapipe/framework/formats:detection_jspb_proto",
+        "//mediapipe/tasks/web/components/containers:detection_result",
+    ],
+)
+
+mediapipe_ts_library(
+    name = "detection_result_test_lib",
+    testonly = True,
+    srcs = ["detection_result.test.ts"],
+    deps = [
+        ":detection_result",
+        "//mediapipe/framework/formats:detection_jspb_proto",
+        "//mediapipe/framework/formats:location_data_jspb_proto",
+        "//mediapipe/tasks/web/components/containers:detection_result",
+    ],
 )
 
 mediapipe_ts_library(

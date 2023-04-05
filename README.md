@@ -6,6 +6,20 @@ nav_order: 1
 
 ![MediaPipe](https://mediapipe.dev/images/mediapipe_small.png)
 
+----
+
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+*This notice and web page will be removed on June 1, 2023.*
+
+----
+
+<br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br>
+
 --------------------------------------------------------------------------------
 
 ## Live ML anywhere
@@ -18,15 +32,6 @@ ML solutions for live and streaming media.
 ***End-to-End acceleration***: *Built-in fast ML inference and processing accelerated even on common hardware* | ***Build once, deploy anywhere***: *Unified solution works across Android, iOS, desktop/cloud, web and IoT*
 ![ready_to_use.png](https://mediapipe.dev/images/ready_to_use_small.png)                                                             | ![open_source.png](https://mediapipe.dev/images/open_source_small.png)
 ***Ready-to-use solutions***: *Cutting-edge ML solutions demonstrating full power of the framework*            | ***Free and open source***: *Framework and solutions both under Apache 2.0, fully extensible and customizable*
-
-----
-
-**Attention:** *Thanks for your interest in MediaPipe! We are moving to
-[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
-as the primary developer documentation
-site for MediaPipe starting April 3, 2023.*
-
-*This notice and web page will be removed on April 3, 2023.*
 
 ----
 

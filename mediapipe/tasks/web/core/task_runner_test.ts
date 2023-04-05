@@ -118,12 +118,15 @@ describe('TaskRunner', () => {
 
   let fetchSpy: jasmine.Spy;
   let taskRunner: TaskRunnerFake;
+  let fetchStatus: number;
 
   beforeEach(() => {
+    fetchStatus = 200;
     fetchSpy = jasmine.createSpy().and.callFake(async url => {
-      expect(url).toEqual('foo');
       return {
         arrayBuffer: () => mockBytes.buffer,
+        ok: fetchStatus === 200,
+        status: fetchStatus,
       } as unknown as Response;
     });
     global.fetch = fetchSpy;
@@ -223,6 +226,14 @@ describe('TaskRunner', () => {
     // above Promise
     expect(taskRunner.baseOptions.toObject()).toEqual(mockBytesResult);
     return resolvedPromise;
+  });
+
+  it('returns custom error if model download failed', () => {
+    fetchStatus = 404;
+    return expectAsync(taskRunner.setOptions({
+             baseOptions: {modelAssetPath: `notfound.tflite`}
+           }))
+        .toBeRejectedWithError('Failed to fetch model: notfound.tflite (404)');
   });
 
   it('can enable CPU delegate', async () => {

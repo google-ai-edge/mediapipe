@@ -559,7 +559,7 @@ class InputTextTensorMd(TensorMd):
       name: name of the tensor.
       description: description of what the tensor is.
       tokenizer_md: information of the tokenizer in the input text tensor, if
-        any. Only `RegexTokenizer` [1] is currenly supported. If the tokenizer
+        any. Only `RegexTokenizer` [1] is currently supported. If the tokenizer
         is `BertTokenizer` [2] or `SentencePieceTokenizer` [3], refer to
         `BertInputTensorsMd` class.
       [1]:

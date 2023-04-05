@@ -17,8 +17,10 @@
 #include <utility>
 
 #include "mediapipe/util/frame_buffer/buffer_common.h"
+#include "mediapipe/util/frame_buffer/float_buffer.h"
 #include "mediapipe/util/frame_buffer/gray_buffer.h"
 #include "mediapipe/util/frame_buffer/halide/rgb_flip_halide.h"
+#include "mediapipe/util/frame_buffer/halide/rgb_float_halide.h"
 #include "mediapipe/util/frame_buffer/halide/rgb_gray_halide.h"
 #include "mediapipe/util/frame_buffer/halide/rgb_resize_halide.h"
 #include "mediapipe/util/frame_buffer/halide/rgb_rgb_halide.h"
@@ -119,6 +121,12 @@ bool RgbBuffer::Convert(GrayBuffer* output) {
 
 bool RgbBuffer::Convert(RgbBuffer* output) {
   const int result = rgb_rgb_halide(buffer(), output->buffer());
+  return result == 0;
+}
+
+bool RgbBuffer::ToFloat(float scale, float offset, FloatBuffer* output) {
+  const int result =
+      rgb_float_halide(buffer(), scale, offset, output->buffer());
   return result == 0;
 }
 

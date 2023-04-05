@@ -87,7 +87,7 @@ Status TensorsToDetections(const ::tensorflow::Tensor& num_detections,
       const auto& num_boxes_scalar = num_detections.scalar<float>();
       num_boxes = static_cast<int>(num_boxes_scalar());
     } else {
-      num_boxes = num_detections.scalar<int32>()();
+      num_boxes = num_detections.scalar<int32_t>()();
     }
     if (boxes.dim_size(0) < num_boxes) {
       return InvalidArgumentError(

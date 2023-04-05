@@ -14,6 +14,12 @@ nav_order: 3
 {:toc}
 ---
 
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
+
 ***Experimental Only***
 
 The MediaPipe Android Archive (AAR) library is a convenient way to use MediaPipe
