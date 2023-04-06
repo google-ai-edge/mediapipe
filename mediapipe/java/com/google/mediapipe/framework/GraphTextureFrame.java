@@ -42,7 +42,15 @@ public class GraphTextureFrame implements TextureFrame {
     this(nativeHandle, timestamp, false);
   }
 
-  GraphTextureFrame(long nativeHandle, long timestamp, boolean deferredSync) {
+  /**
+   * Create a GraphTextureFrame based on a raw C++ handle.
+   *
+   * @param nativeHandle C++ pointer a std::shared_ptr<GlTextureBuffer>
+   * @param timestamp Raw packet timestamp obtained by Timestamp.Value()
+   * @param deferredSync If true, a GPU wait will automatically occur when
+   *     GraphTextureFrame#getTextureName is called
+   */
+  public GraphTextureFrame(long nativeHandle, long timestamp, boolean deferredSync) {
     nativeBufferHandle = nativeHandle;
     // TODO: use a single JNI call to fill in all info
     textureName = nativeGetTextureName(nativeBufferHandle);
