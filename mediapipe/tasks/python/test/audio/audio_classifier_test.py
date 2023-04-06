@@ -19,11 +19,11 @@ from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
-
 import numpy as np
 from scipy.io import wavfile
 
 from mediapipe.tasks.python.audio import audio_classifier
+from mediapipe.tasks.python.audio.core import audio_record
 from mediapipe.tasks.python.audio.core import audio_task_running_mode
 from mediapipe.tasks.python.components.containers import audio_data as audio_data_module
 from mediapipe.tasks.python.components.containers import classification_result as classification_result_module
@@ -34,6 +34,7 @@ _AudioClassifier = audio_classifier.AudioClassifier
 _AudioClassifierOptions = audio_classifier.AudioClassifierOptions
 _AudioClassifierResult = classification_result_module.ClassificationResult
 _AudioData = audio_data_module.AudioData
+_AudioRecord = audio_record.AudioRecord
 _BaseOptions = base_options_module.BaseOptions
 _RUNNING_MODE = audio_task_running_mode.AudioTaskRunningMode
 
@@ -203,6 +204,19 @@ class AudioClassifierTest(parameterized.TestCase):
         classification_result_list = classifier.classify(
             self._read_wav_file(audio_file))
         self._check_yamnet_result(classification_result_list)
+
+  @mock.patch('sounddevice.InputStream', return_value=mock.MagicMock())
+  def test_create_audio_record_from_classifier_succeeds(self, _):
+    # Creates AudioRecord instance using the classifier successfully.
+    with _AudioClassifier.create_from_model_path(
+        self.yamnet_model_path
+    ) as classifier:
+      self.assertIsInstance(classifier, _AudioClassifier)
+      record = classifier.create_audio_record(1, 16000, 16000)
+      self.assertIsInstance(record, _AudioRecord)
+      self.assertEqual(record.channels, 1)
+      self.assertEqual(record.sampling_rate, 16000)
+      self.assertEqual(record.buffer_size, 16000)
 
   def test_max_result_options(self):
     with _AudioClassifier.create_from_options(

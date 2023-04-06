@@ -24,11 +24,17 @@ py_library(
 )
 
 py_library(
+    name = "audio_record",
+    srcs = ["audio_record.py"],
+)
+
+py_library(
     name = "base_audio_task_api",
     srcs = [
         "base_audio_task_api.py",
     ],
     deps = [
+        ":audio_record",
         ":audio_task_running_mode",
         "//mediapipe/framework:calculator_py_pb2",
         "//mediapipe/python:_framework_bindings",

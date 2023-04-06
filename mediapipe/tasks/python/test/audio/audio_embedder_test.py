@@ -24,6 +24,7 @@ import numpy as np
 from scipy.io import wavfile
 
 from mediapipe.tasks.python.audio import audio_embedder
+from mediapipe.tasks.python.audio.core import audio_record
 from mediapipe.tasks.python.audio.core import audio_task_running_mode
 from mediapipe.tasks.python.components.containers import audio_data as audio_data_module
 from mediapipe.tasks.python.core import base_options as base_options_module
@@ -33,6 +34,7 @@ _AudioEmbedder = audio_embedder.AudioEmbedder
 _AudioEmbedderOptions = audio_embedder.AudioEmbedderOptions
 _AudioEmbedderResult = audio_embedder.AudioEmbedderResult
 _AudioData = audio_data_module.AudioData
+_AudioRecord = audio_record.AudioRecord
 _BaseOptions = base_options_module.BaseOptions
 _RUNNING_MODE = audio_task_running_mode.AudioTaskRunningMode
 
@@ -164,6 +166,19 @@ class AudioEmbedderTest(parameterized.TestCase):
                                   expected_result1_value)
       self.assertLen(embedding_result0_list, 5)
       self.assertLen(embedding_result1_list, 5)
+
+  @mock.patch('sounddevice.InputStream', return_value=mock.MagicMock())
+  def test_create_audio_record_from_embedder_succeeds(self, _):
+    # Creates AudioRecord instance using the embedder successfully.
+    with _AudioEmbedder.create_from_model_path(
+        self.yamnet_model_path
+    ) as embedder:
+      self.assertIsInstance(embedder, _AudioEmbedder)
+      record = embedder.create_audio_record(1, 16000, 16000)
+      self.assertIsInstance(record, _AudioRecord)
+      self.assertEqual(record.channels, 1)
+      self.assertEqual(record.sampling_rate, 16000)
+      self.assertEqual(record.buffer_size, 16000)
 
   def test_embed_with_yamnet_model_and_different_inputs(self):
     with _AudioEmbedder.create_from_model_path(
