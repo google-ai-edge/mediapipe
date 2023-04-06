@@ -163,12 +163,12 @@ void RunTestWithInputImagePacket(
       EXPECT_EQ(tensor.element_type(), Tensor::ElementType::kInt8);
       tensor_mat = cv::Mat(expected_result.rows, expected_result.cols,
                            channels == 1 ? CV_8SC1 : CV_8SC3,
-                           const_cast<int8*>(view.buffer<int8>()));
+                           const_cast<int8_t*>(view.buffer<int8_t>()));
     } else {
       EXPECT_EQ(tensor.element_type(), Tensor::ElementType::kUInt8);
       tensor_mat = cv::Mat(expected_result.rows, expected_result.cols,
                            channels == 1 ? CV_8UC1 : CV_8UC3,
-                           const_cast<uint8*>(view.buffer<uint8>()));
+                           const_cast<uint8_t*>(view.buffer<uint8_t>()));
     }
   } else {
     EXPECT_EQ(tensor.element_type(), Tensor::ElementType::kFloat32);
@@ -210,14 +210,14 @@ mediapipe::ImageFormat::Format GetImageFormat(int image_channels) {
 
 Packet MakeImageFramePacket(cv::Mat input) {
   ImageFrame input_image(GetImageFormat(input.channels()), input.cols,
-                         input.rows, input.step, input.data, [](uint8*) {});
+                         input.rows, input.step, input.data, [](uint8_t*) {});
   return MakePacket<ImageFrame>(std::move(input_image)).At(Timestamp(0));
 }
 
 Packet MakeImagePacket(cv::Mat input) {
   mediapipe::Image input_image(std::make_shared<mediapipe::ImageFrame>(
       GetImageFormat(input.channels()), input.cols, input.rows, input.step,
-      input.data, [](uint8*) {}));
+      input.data, [](uint8_t*) {}));
   return MakePacket<mediapipe::Image>(std::move(input_image)).At(Timestamp(0));
 }
 

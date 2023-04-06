@@ -192,7 +192,7 @@ class AudioToTensorCalculator : public Node {
   DftTensorFormat dft_tensor_format_;
 
   Timestamp initial_timestamp_ = Timestamp::Unstarted();
-  int64 cumulative_input_samples_ = 0;
+  int64_t cumulative_input_samples_ = 0;
   Timestamp next_output_timestamp_ = Timestamp::Unstarted();
 
   double source_sample_rate_ = -1;

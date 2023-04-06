@@ -160,16 +160,16 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
             Tensor::ElementType::kUInt8, shape,
             Tensor::QuantizationParameters{tensor->params.scale,
                                            tensor->params.zero_point});
-        CopyTensorBufferFromInterpreter<uint8>(interpreter_.get(), i,
-                                               &output_tensors.back());
+        CopyTensorBufferFromInterpreter<uint8_t>(interpreter_.get(), i,
+                                                 &output_tensors.back());
         break;
       case TfLiteType::kTfLiteInt8:
         output_tensors.emplace_back(
             Tensor::ElementType::kInt8, shape,
             Tensor::QuantizationParameters{tensor->params.scale,
                                            tensor->params.zero_point});
-        CopyTensorBufferFromInterpreter<int8>(interpreter_.get(), i,
-                                              &output_tensors.back());
+        CopyTensorBufferFromInterpreter<int8_t>(interpreter_.get(), i,
+                                                &output_tensors.back());
         break;
       case TfLiteType::kTfLiteInt32:
         output_tensors.emplace_back(Tensor::ElementType::kInt32, shape);

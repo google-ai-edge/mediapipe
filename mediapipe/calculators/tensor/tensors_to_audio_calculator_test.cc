@@ -36,7 +36,7 @@ class TensorsToAudioCalculatorFftTest : public ::testing::Test {
  protected:
   // Creates an audio matrix containing a single sample of 1.0 at a specified
   // offset.
-  Matrix CreateImpulseSignalData(int64 num_samples, int impulse_offset_idx) {
+  Matrix CreateImpulseSignalData(int64_t num_samples, int impulse_offset_idx) {
     Matrix impulse = Matrix::Zero(1, num_samples);
     impulse(0, impulse_offset_idx) = 1.0;
     return impulse;

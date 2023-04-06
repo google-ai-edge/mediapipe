@@ -47,7 +47,7 @@ class TensorsToClassificationCalculatorTest : public ::testing::Test {
       tensor_buffer[i] = scores[i];
     }
 
-    int64 stream_timestamp = 0;
+    int64_t stream_timestamp = 0;
     auto& input_stream_packets =
         runner->MutableInputs()->Tag("TENSORS").packets;
 
