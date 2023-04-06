@@ -39,7 +39,7 @@ objc_library(
 
 objc_library(
     name = "MPPObjectDetector",
-    srcs = ["sources/MPPObjectDetector.m"],
+    srcs = ["sources/MPPObjectDetector.mm"],
     hdrs = ["sources/MPPObjectDetector.h"],
     copts = [
         "-ObjC++",
