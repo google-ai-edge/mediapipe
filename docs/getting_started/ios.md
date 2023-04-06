@@ -120,8 +120,8 @@ allows you to make use of automatic provisioning (see later section).
 To install applications on an iOS device, you need a provisioning profile. There
 are two options:
 
-1.  Automatic provisioning. This allows you to build and install an app to your
-    personal device. The provisining profile is managed by Xcode, and has to be
+1.  Automatic provisioning. This allows you to build and install an app on your
+    personal device. The provisioning profile is managed by Xcode, and has to be
     updated often (it is valid for about a week).
 
 2.  Custom provisioning. This uses a provisioning profile associated with an
@@ -186,7 +186,7 @@ Profiles"`. If there are none, generate and download a profile on
 Note: if you had previously set up automatic provisioning, you should remove the
 `provisioning_profile.mobileprovision` symlink in each example's directory,
 since it will take precedence over the common one. You can also overwrite it
-with you own profile if you need a different profile for different apps.
+with your own profile if you need a different profile for different apps.
 
 1.  Open `mediapipe/examples/ios/bundle_id.bzl`, and change the
     `BUNDLE_ID_PREFIX` to a prefix associated with your provisioning profile.
@@ -203,7 +203,7 @@ Note: When you ask Xcode to run an app, by default it will use the Debug
 configuration. Some of our demos are computationally heavy; you may want to use
 the Release configuration for better performance.
 
-Note: Due to an imcoptibility caused by one of our dependencies, MediaPipe
+Note: Due to an incompatibility caused by one of our dependencies, MediaPipe
 cannot be used for apps running on the iPhone Simulator on Apple Silicon (M1).
 
 Tip: To switch build configuration in Xcode, click on the target menu, choose
