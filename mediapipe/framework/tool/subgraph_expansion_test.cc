@@ -527,6 +527,64 @@ TEST(SubgraphExpansionTest, ExecutorFieldOfNodeInSubgraphPreserved) {
   EXPECT_THAT(supergraph, mediapipe::EqualsProto(expected_graph));
 }
 
+// A subgraph that defines and uses an internal executor.
+class NodeWithInternalExecutorSubgraph : public Subgraph {
+ public:
+  absl::StatusOr<CalculatorGraphConfig> GetConfig(
+      const SubgraphOptions& options) override {
+    return mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+      input_stream: "IN:foo"
+      output_stream: "OUT:bar"
+      executor {
+        name: "xyz"
+        type: "ThreadPoolExecutor"
+        options {
+          [mediapipe.ThreadPoolExecutorOptions.ext] { num_threads: 1 }
+        }
+      }
+      node {
+        calculator: "PassThroughCalculator"
+        executor: "xyz"
+        input_stream: "foo"
+        output_stream: "bar"
+      }
+    )pb");
+  }
+};
+REGISTER_MEDIAPIPE_GRAPH(NodeWithInternalExecutorSubgraph);
+
+TEST(SubgraphExpansionTest, ExecutorCanDefinedAndUsedWithinSubgraph) {
+  CalculatorGraphConfig supergraph =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "input"
+        node {
+          calculator: "NodeWithInternalExecutorSubgraph"
+          input_stream: "IN:input"
+          output_stream: "OUT:output"
+        }
+      )pb");
+  CalculatorGraphConfig expected_graph =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "input"
+        executor {
+          name: "xyz"
+          type: "ThreadPoolExecutor"
+          options {
+            [mediapipe.ThreadPoolExecutorOptions.ext] { num_threads: 1 }
+          }
+        }
+        node {
+          calculator: "PassThroughCalculator"
+          name: "nodewithinternalexecutorsubgraph__PassThroughCalculator"
+          input_stream: "input"
+          output_stream: "output"
+          executor: "xyz"
+        }
+      )pb");
+  MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
+  EXPECT_THAT(supergraph, mediapipe::EqualsProto(expected_graph));
+}
+
 const mediapipe::GraphService<std::string> kStringTestService{
     "mediapipe::StringTestService"};
 class GraphServicesClientTestSubgraph : public Subgraph {
