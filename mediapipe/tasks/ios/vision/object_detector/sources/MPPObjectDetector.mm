@@ -92,11 +92,13 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
         }
 
         MPPObjectDetectionResult *result = [MPPObjectDetectionResult
-              objectDetectionResultWithDetectionsPacket:status_or_packets.value()
-                                                            [kDetectionsStreamName.cppString]];
+            objectDetectionResultWithDetectionsPacket:status_or_packets.value()
+                                                          [kDetectionsStreamName.cppString]];
 
-        options.completion(result, outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-                  kMicroSecondsPerMilliSecond, callbackError);
+        options.completion(result,
+                           outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
+                               kMicroSecondsPerMilliSecond,
+                           callbackError);
       };
     }
 
