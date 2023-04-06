@@ -345,7 +345,7 @@ def _coco_annotations_to_lists(
   Args:
     bbox_annotations: List of dicts with keys ['bbox', 'category_id']
     image_height: Height of image
-    image_width: Width of iamge
+    image_width: Width of image
 
   Returns:
     (data, num_annotations_skipped) tuple where data contains the keys:

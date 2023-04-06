@@ -155,8 +155,8 @@ class Dataset(classification_dataset.ClassificationDataset):
       ObjectDetectorDataset object.
     """
     # Get TFRecord Files
-    tfrecord_file_patten = cache_prefix + '*.tfrecord'
-    matched_files = tf.io.gfile.glob(tfrecord_file_patten)
+    tfrecord_file_pattern = cache_prefix + '*.tfrecord'
+    matched_files = tf.io.gfile.glob(tfrecord_file_pattern)
     if not matched_files:
       raise ValueError('TFRecord files are empty.')
 

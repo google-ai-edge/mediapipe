@@ -111,7 +111,7 @@ TEST(MetadataVersionTest,
 TEST(MetadataVersionTest,
      GetMinimumMetadataParserVersionForModelMetadataVocabAssociatedFiles) {
   // Creates a metadata flatbuffer with the field,
-  // ModelMetadata.associated_fiels, populated with the vocabulary file type.
+  // ModelMetadata.associated_fields, populated with the vocabulary file type.
   FlatBufferBuilder builder(1024);
   AssociatedFileBuilder associated_file_builder(builder);
   associated_file_builder.add_type(tflite::AssociatedFileType_VOCABULARY);
@@ -159,8 +159,8 @@ TEST(MetadataVersionTest,
 TEST(MetadataVersionTest,
      GetMinimumMetadataParserVersionForInputMetadataVocabAssociatedFiles) {
   // Creates a metadata flatbuffer with the field,
-  // SubGraphMetadata.input_tensor_metadata.associated_fiels, populated with the
-  // vocabulary file type.
+  // SubGraphMetadata.input_tensor_metadata.associated_fields, populated with
+  // the vocabulary file type.
   FlatBufferBuilder builder(1024);
   AssociatedFileBuilder associated_file_builder(builder);
   associated_file_builder.add_type(tflite::AssociatedFileType_VOCABULARY);
@@ -184,7 +184,7 @@ TEST(MetadataVersionTest,
 TEST(MetadataVersionTest,
      GetMinimumMetadataParserVersionForOutputMetadataVocabAssociatedFiles) {
   // Creates a metadata flatbuffer with the field,
-  // SubGraphMetadata.output_tensor_metadata.associated_fiels, populated with
+  // SubGraphMetadata.output_tensor_metadata.associated_fields, populated with
   // the vocabulary file type.
   FlatBufferBuilder builder(1024);
   AssociatedFileBuilder associated_file_builder(builder);

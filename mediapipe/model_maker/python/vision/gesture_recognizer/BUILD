@@ -21,7 +21,7 @@ package(
     default_visibility = ["//mediapipe:__subpackages__"],
 )
 
-# TODO: Remove the unncessary test data once the demo data are moved to an open-sourced
+# TODO: Remove the unnecessary test data once the demo data are moved to an open-sourced
 # directory.
 filegroup(
     name = "testdata",
