@@ -240,7 +240,7 @@ void SchedulerQueue::RunCalculatorNode(CalculatorNode* node,
   // we should not run any more sources.  Close the node if it is a source.
   if (shared_->stopping && node->IsSource()) {
     VLOG(4) << "Closing " << node->DebugName() << " due to StatusStop().";
-    int64 start_time = shared_->timer.StartNode();
+    int64_t start_time = shared_->timer.StartNode();
     // It's OK to not reset/release the prepared CalculatorContext since a
     // source node always reuses the same CalculatorContext and Close() doesn't
     // access any inputs.
@@ -256,7 +256,7 @@ void SchedulerQueue::RunCalculatorNode(CalculatorNode* node,
   } else {
     // Note that we don't need a lock because only one thread can execute this
     // due to the lock on running_nodes.
-    int64 start_time = shared_->timer.StartNode();
+    int64_t start_time = shared_->timer.StartNode();
     const absl::Status result = node->ProcessNode(cc);
     shared_->timer.EndNode(start_time);
 
@@ -283,7 +283,7 @@ void SchedulerQueue::RunCalculatorNode(CalculatorNode* node,
 
 void SchedulerQueue::OpenCalculatorNode(CalculatorNode* node) {
   VLOG(3) << "Opening " << node->DebugName();
-  int64 start_time = shared_->timer.StartNode();
+  int64_t start_time = shared_->timer.StartNode();
   const absl::Status result = node->OpenNode();
   shared_->timer.EndNode(start_time);
   if (!result.ok()) {
