@@ -18,6 +18,7 @@
 #include <string>
 #include <type_traits>
 
+#include "absl/base/attributes.h"
 #include "absl/base/macros.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/deps/registration.h"
