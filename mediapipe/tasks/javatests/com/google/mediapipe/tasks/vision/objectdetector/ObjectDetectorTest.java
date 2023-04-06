@@ -236,7 +236,6 @@ public class ObjectDetectorTest {
           ObjectDetectorOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(MODEL_FILE).build())
               .setMaxResults(1)
-              .setCategoryAllowlist(Arrays.asList("cat"))
               .build();
       ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -246,7 +245,7 @@ public class ObjectDetectorTest {
           objectDetector.detect(
               getImageFromAsset(CAT_AND_DOG_ROTATED_IMAGE), imageProcessingOptions);
 
-      assertContainsOnlyCat(results, new RectF(22.0f, 611.0f, 452.0f, 890.0f), 0.7109375f);
+      assertContainsOnlyCat(results, new RectF(0.0f, 608.0f, 439.0f, 995.0f), 0.69921875f);
     }
 
     @Test
@@ -326,14 +325,14 @@ public class ObjectDetectorTest {
               MediaPipeException.class,
               () ->
                   objectDetector.detectForVideo(
-                      getImageFromAsset(CAT_AND_DOG_IMAGE), /*timestampsMs=*/ 0));
+                      getImageFromAsset(CAT_AND_DOG_IMAGE), /* timestampsMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
       exception =
           assertThrows(
               MediaPipeException.class,
               () ->
                   objectDetector.detectAsync(
-                      getImageFromAsset(CAT_AND_DOG_IMAGE), /*timestampsMs=*/ 0));
+                      getImageFromAsset(CAT_AND_DOG_IMAGE), /* timestampsMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -357,7 +356,7 @@ public class ObjectDetectorTest {
               MediaPipeException.class,
               () ->
                   objectDetector.detectAsync(
-                      getImageFromAsset(CAT_AND_DOG_IMAGE), /*timestampsMs=*/ 0));
+                      getImageFromAsset(CAT_AND_DOG_IMAGE), /* timestampsMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
     }
 
@@ -383,7 +382,7 @@ public class ObjectDetectorTest {
               MediaPipeException.class,
               () ->
                   objectDetector.detectForVideo(
-                      getImageFromAsset(CAT_AND_DOG_IMAGE), /*timestampsMs=*/ 0));
+                      getImageFromAsset(CAT_AND_DOG_IMAGE), /* timestampsMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
     }
 
@@ -414,7 +413,7 @@ public class ObjectDetectorTest {
       for (int i = 0; i < 3; i++) {
         ObjectDetectionResult results =
             objectDetector.detectForVideo(
-                getImageFromAsset(CAT_AND_DOG_IMAGE), /*timestampsMs=*/ i);
+                getImageFromAsset(CAT_AND_DOG_IMAGE), /* timestampsMs= */ i);
         assertContainsOnlyCat(results, CAT_BOUNDING_BOX, CAT_SCORE);
       }
     }
@@ -435,11 +434,11 @@ public class ObjectDetectorTest {
               .build();
       try (ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
-        objectDetector.detectAsync(image, /*timestampsMs=*/ 1);
+        objectDetector.detectAsync(image, /* timestampsMs= */ 1);
         MediaPipeException exception =
             assertThrows(
                 MediaPipeException.class,
-                () -> objectDetector.detectAsync(image, /*timestampsMs=*/ 0));
+                () -> objectDetector.detectAsync(image, /* timestampsMs= */ 0));
         assertThat(exception)
             .hasMessageThat()
             .contains("having a smaller timestamp than the processed timestamp");
@@ -463,7 +462,7 @@ public class ObjectDetectorTest {
       try (ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options)) {
         for (int i = 0; i < 3; i++) {
-          objectDetector.detectAsync(image, /*timestampsMs=*/ i);
+          objectDetector.detectAsync(image, /* timestampsMs= */ i);
         }
       }
     }

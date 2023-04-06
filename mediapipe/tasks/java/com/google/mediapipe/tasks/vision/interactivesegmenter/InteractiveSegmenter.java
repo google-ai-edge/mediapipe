@@ -550,7 +550,9 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
     inputPackets.put(ROI_IN_STREAM_NAME, runner.getPacketCreator().createProto(renderData));
     inputPackets.put(
         NORM_RECT_IN_STREAM_NAME,
-        runner.getPacketCreator().createProto(convertToNormalizedRect(imageProcessingOptions)));
+        runner
+            .getPacketCreator()
+            .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
     return (ImageSegmenterResult) runner.process(inputPackets);
   }
 }

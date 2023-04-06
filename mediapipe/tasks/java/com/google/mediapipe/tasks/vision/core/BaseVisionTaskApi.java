@@ -79,7 +79,9 @@ public class BaseVisionTaskApi implements AutoCloseable {
     inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
     inputPackets.put(
         normRectStreamName,
-        runner.getPacketCreator().createProto(convertToNormalizedRect(imageProcessingOptions)));
+        runner
+            .getPacketCreator()
+            .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
     return runner.process(inputPackets);
   }
 
@@ -105,7 +107,9 @@ public class BaseVisionTaskApi implements AutoCloseable {
     inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
     inputPackets.put(
         normRectStreamName,
-        runner.getPacketCreator().createProto(convertToNormalizedRect(imageProcessingOptions)));
+        runner
+            .getPacketCreator()
+            .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
     return runner.process(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
   }
 
@@ -131,7 +135,9 @@ public class BaseVisionTaskApi implements AutoCloseable {
     inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
     inputPackets.put(
         normRectStreamName,
-        runner.getPacketCreator().createProto(convertToNormalizedRect(imageProcessingOptions)));
+        runner
+            .getPacketCreator()
+            .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
     runner.send(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
   }
 
@@ -146,16 +152,30 @@ public class BaseVisionTaskApi implements AutoCloseable {
    * message.
    */
   protected static NormalizedRect convertToNormalizedRect(
-      ImageProcessingOptions imageProcessingOptions) {
+      ImageProcessingOptions imageProcessingOptions, MPImage image) {
     RectF regionOfInterest =
         imageProcessingOptions.regionOfInterest().isPresent()
             ? imageProcessingOptions.regionOfInterest().get()
             : new RectF(0, 0, 1, 1);
+    // For 90° and 270° rotations, we need to swap width and height.
+    // This is due to the internal behavior of ImageToTensorCalculator, which:
+    // - first denormalizes the provided rect by multiplying the rect width or
+    //   height by the image width or height, repectively.
+    // - then rotates this by denormalized rect by the provided rotation, and
+    //   uses this for cropping,
+    // - then finally rotates this back.
+    boolean requiresSwap = imageProcessingOptions.rotationDegrees() % 180 != 0;
     return NormalizedRect.newBuilder()
         .setXCenter(regionOfInterest.centerX())
         .setYCenter(regionOfInterest.centerY())
-        .setWidth(regionOfInterest.width())
-        .setHeight(regionOfInterest.height())
+        .setWidth(
+            requiresSwap
+                ? regionOfInterest.height() * image.getHeight() / image.getWidth()
+                : regionOfInterest.width())
+        .setHeight(
+            requiresSwap
+                ? regionOfInterest.width() * image.getWidth() / image.getHeight()
+                : regionOfInterest.height())
         // Convert to radians anti-clockwise.
         .setRotation(-(float) Math.PI * imageProcessingOptions.rotationDegrees() / 180.0f)
         .build();
