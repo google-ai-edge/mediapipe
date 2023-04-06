@@ -227,11 +227,11 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoIntLists) {
 
   int num_timesteps = 2;
   for (int i = 0; i < num_timesteps; ++i) {
-    auto vi_ptr = ::absl::make_unique<std::vector<int64>>(2, 2 << i);
+    auto vi_ptr = ::absl::make_unique<std::vector<int64_t>>(2, 2 << i);
     runner_->MutableInputs()
         ->Tag(kIntFeatureTestTag)
         .packets.push_back(Adopt(vi_ptr.release()).At(Timestamp(i)));
-    vi_ptr = ::absl::make_unique<std::vector<int64>>(2, 2 << i);
+    vi_ptr = ::absl::make_unique<std::vector<int64_t>>(2, 2 << i);
     runner_->MutableInputs()
         ->Tag(kIntFeatureOtherTag)
         .packets.push_back(Adopt(vi_ptr.release()).At(Timestamp(i)));
@@ -257,10 +257,10 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoIntLists) {
   for (int i = 0; i < num_timesteps; ++i) {
     ASSERT_EQ(i, mpms::GetFeatureTimestampAt("TEST", output_sequence, i));
     ASSERT_THAT(mpms::GetFeatureIntsAt("TEST", output_sequence, i),
-                ::testing::ElementsAreArray(std::vector<int64>(2, 2 << i)));
+                ::testing::ElementsAreArray(std::vector<int64_t>(2, 2 << i)));
     ASSERT_EQ(i, mpms::GetFeatureTimestampAt("OTHER", output_sequence, i));
     ASSERT_THAT(mpms::GetFeatureIntsAt("OTHER", output_sequence, i),
-                ::testing::ElementsAreArray(std::vector<int64>(2, 2 << i)));
+                ::testing::ElementsAreArray(std::vector<int64_t>(2, 2 << i)));
   }
 }
 

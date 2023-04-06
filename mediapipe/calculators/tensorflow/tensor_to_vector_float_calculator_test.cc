@@ -53,7 +53,7 @@ TEST_F(TensorToVectorFloatCalculatorTest, ConvertsToVectorFloat) {
     tensor_vec(i) = static_cast<float>(1 << i);
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -82,7 +82,7 @@ TEST_F(TensorToVectorFloatCalculatorTest, ConvertsBatchedToVectorVectorFloat) {
     slice(i) = static_cast<float>(1 << i);
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -112,7 +112,7 @@ TEST_F(TensorToVectorFloatCalculatorTest, FlattenShouldTakeAllDimensions) {
     slice(i) = static_cast<float>(1 << i);
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Index(0).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 

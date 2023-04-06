@@ -39,7 +39,7 @@ constexpr char kAddDimensionOptionsString[] =
 
 namespace tf = tensorflow;
 using RandomEngine = std::mt19937_64;
-const uint32 kSeed = 1234;
+const uint32_t kSeed = 1234;
 const int kNumSizes = 8;
 const int sizes[kNumSizes][2] = {{1, 1}, {12, 1}, {1, 9},   {2, 2},
                                  {5, 3}, {7, 13}, {16, 32}, {101, 2}};
@@ -47,7 +47,7 @@ const int sizes[kNumSizes][2] = {{1, 1}, {12, 1}, {1, 9},   {2, 2},
 class MatrixToTensorCalculatorTest : public ::testing::Test {
  protected:
   // Adds a packet with a matrix filled with random values in [0,1].
-  void AddRandomMatrix(int num_rows, int num_columns, uint32 seed) {
+  void AddRandomMatrix(int num_rows, int num_columns, uint32_t seed) {
     RandomEngine random(kSeed);
     std::uniform_real_distribution<> uniform_dist(0, 1.0);
     auto matrix = ::absl::make_unique<Matrix>();

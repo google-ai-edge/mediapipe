@@ -64,7 +64,7 @@ TYPED_TEST(TensorToImageFrameCalculatorTest, Converts3DTensorToImageFrame) {
     tensor_vec[i] = i % 255;
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner->MutableInputs()->Tag(kTensor).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -79,7 +79,7 @@ TYPED_TEST(TensorToImageFrameCalculatorTest, Converts3DTensorToImageFrame) {
   EXPECT_EQ(kHeight, output_image.Height());
 
   for (int i = 0; i < kWidth * kHeight * 3; ++i) {
-    const uint8 pixel_value = output_image.PixelData()[i];
+    const uint8_t pixel_value = output_image.PixelData()[i];
     EXPECT_EQ(i % 255, pixel_value);
   }
 }
@@ -100,7 +100,7 @@ TYPED_TEST(TensorToImageFrameCalculatorTest, Converts3DTensorToImageFrameGray) {
     tensor_vec[i] = i % 255;
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner->MutableInputs()->Tag(kTensor).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -115,7 +115,7 @@ TYPED_TEST(TensorToImageFrameCalculatorTest, Converts3DTensorToImageFrameGray) {
   EXPECT_EQ(kHeight, output_image.Height());
 
   for (int i = 0; i < kWidth * kHeight; ++i) {
-    const uint8 pixel_value = output_image.PixelData()[i];
+    const uint8_t pixel_value = output_image.PixelData()[i];
     EXPECT_EQ(i % 255, pixel_value);
   }
 }
@@ -137,7 +137,7 @@ TYPED_TEST(TensorToImageFrameCalculatorTest,
     tensor_vec[i] = i % 255;
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner->MutableInputs()->Tag(kTensor).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -152,7 +152,7 @@ TYPED_TEST(TensorToImageFrameCalculatorTest,
   EXPECT_EQ(kHeight, output_image.Height());
 
   for (int i = 0; i < kWidth * kHeight; ++i) {
-    const uint8 pixel_value = output_image.PixelData()[i];
+    const uint8_t pixel_value = output_image.PixelData()[i];
     EXPECT_EQ(i % 255, pixel_value);
   }
 }

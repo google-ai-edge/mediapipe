@@ -89,9 +89,9 @@ namespace mpms = mediapipe::mediasequence;
 //   }
 // }
 namespace {
-uint8 ConvertFloatToByte(const float float_value) {
+uint8_t ConvertFloatToByte(const float float_value) {
   float clamped_value = std::clamp(0.0f, 1.0f, float_value);
-  return static_cast<uint8>(clamped_value * 255.0 + .5f);
+  return static_cast<uint8_t>(clamped_value * 255.0 + .5f);
 }
 }  // namespace
 
@@ -157,7 +157,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         cc->Inputs().Tag(tag).Set<std::vector<float>>();
       }
       if (absl::StartsWith(tag, kIntFeaturePrefixTag)) {
-        cc->Inputs().Tag(tag).Set<std::vector<int64>>();
+        cc->Inputs().Tag(tag).Set<std::vector<int64_t>>();
       }
       if (absl::StartsWith(tag, kBytesFeaturePrefixTag)) {
         cc->Inputs().Tag(tag).Set<std::vector<std::string>>();
@@ -285,7 +285,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
   }
 
   absl::Status VerifySize() {
-    const int64 MAX_PROTO_BYTES = 1073741823;
+    const int64_t MAX_PROTO_BYTES = 1073741823;
     std::string id = mpms::HasExampleId(*sequence_)
                          ? mpms::GetExampleId(*sequence_)
                          : "example";
@@ -434,7 +434,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         mpms::AddFeatureTimestamp(key, cc->InputTimestamp().Value(),
                                   sequence_.get());
         mpms::AddFeatureInts(key,
-                             cc->Inputs().Tag(tag).Get<std::vector<int64>>(),
+                             cc->Inputs().Tag(tag).Get<std::vector<int64_t>>(),
                              sequence_.get());
       }
       if (absl::StartsWith(tag, kBytesFeaturePrefixTag) &&

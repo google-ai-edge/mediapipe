@@ -193,8 +193,9 @@ absl::Status TensorToMatrixCalculator::Process(CalculatorContext* cc) {
   const tf::Tensor& input_tensor = cc->Inputs().Tag(kTensor).Get<tf::Tensor>();
   CHECK(1 == input_tensor.dims() || 2 == input_tensor.dims())
       << "Only 1-D or 2-D Tensors can be converted to matrices.";
-  const int32 length = input_tensor.dim_size(input_tensor.dims() - 1);
-  const int32 width = (1 == input_tensor.dims()) ? 1 : input_tensor.dim_size(0);
+  const int32_t length = input_tensor.dim_size(input_tensor.dims() - 1);
+  const int32_t width =
+      (1 == input_tensor.dims()) ? 1 : input_tensor.dim_size(0);
   if (header_.has_num_channels()) {
     RET_CHECK_EQ(length, header_.num_channels())
         << "The number of channels at runtime does not match the header.";

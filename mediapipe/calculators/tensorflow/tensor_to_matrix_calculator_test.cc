@@ -88,7 +88,7 @@ TEST_F(TensorToMatrixCalculatorTest, Converts1DTensorToMatrix) {
     tensor_vec(i) = static_cast<float>(1 << i);
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Tag(kTensor).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -114,7 +114,7 @@ TEST_F(TensorToMatrixCalculatorTest, Converts2DTensorofWidthOneToMatrix) {
   for (int i = 0; i < 4; ++i) {
     slice(i) = static_cast<float>(1 << i);
   }
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Tag(kTensor).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -143,7 +143,7 @@ TEST_F(TensorToMatrixCalculatorTest, Converts2DTensorToMatrix) {
       slice(i * 4 + j) = static_cast<float>(i * j);
     }
   }
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Tag(kTensor).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -174,7 +174,7 @@ TEST_F(TensorToMatrixCalculatorTest, ConvertsWithReferenceTimeSeriesHeader) {
     tensor_vec(i) = static_cast<float>(1 << i);
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Tag(kTensor).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 
@@ -206,7 +206,7 @@ TEST_F(TensorToMatrixCalculatorTest, TimeSeriesOverridesWork) {
     tensor_vec(i) = static_cast<float>(1 << i);
   }
 
-  const int64 time = 1234;
+  const int64_t time = 1234;
   runner_->MutableInputs()->Tag(kTensor).packets.push_back(
       Adopt(tensor.release()).At(Timestamp(time)));
 

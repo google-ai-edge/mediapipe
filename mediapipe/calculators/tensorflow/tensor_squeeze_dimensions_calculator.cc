@@ -47,7 +47,7 @@ class TensorSqueezeDimensionsCalculator : public CalculatorBase {
         << options_.DebugString();
     if (options_.dim_size() > 0) {
       remove_dims_ =
-          std::vector<int32>(options_.dim().begin(), options_.dim().end());
+          std::vector<int32_t>(options_.dim().begin(), options_.dim().end());
       std::sort(remove_dims_.rbegin(), remove_dims_.rend());
       remove_dims_initialized_ = true;
     }
@@ -87,7 +87,7 @@ class TensorSqueezeDimensionsCalculator : public CalculatorBase {
 
  private:
   TensorSqueezeDimensionsCalculatorOptions options_;
-  std::vector<int32> remove_dims_;
+  std::vector<int32_t> remove_dims_;
   bool remove_dims_initialized_;
 
   void InitializeToRemoveAllSingletonDimensions(
