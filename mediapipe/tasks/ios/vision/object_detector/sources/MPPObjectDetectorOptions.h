@@ -32,7 +32,7 @@ NS_SWIFT_NAME(ObjectDetectorOptions)
  * TODO: Add parameter `MPPImage` in the callback.
  */
 @property(nonatomic, copy) void (^completion)
-    (MPPObjectDetectionResult *result, NSInteger timestampMs, NSError *error);
+    (MPPObjectDetectionResult *__nullable result, NSInteger timestampMs, NSError *error);
 
 /**
  * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults
