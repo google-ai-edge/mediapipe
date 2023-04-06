@@ -27,3 +27,14 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPGestureRecognizerOptions",
+    srcs = ["sources/MPPGestureRecognizerOptions.m"],
+    hdrs = ["sources/MPPGestureRecognizerOptions.h"],
+    deps = [
+        ":MPPGestureRecognizerResult",
+        "//mediapipe/tasks/ios/components/processors:MPPClassifierOptions",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
+    ],
+)
