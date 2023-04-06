@@ -42,6 +42,8 @@ struct BaseOptions {
   enum Delegate {
     CPU = 0,
     GPU = 1,
+    // Edge TPU acceleration using NNAPI delegate.
+    EDGETPU_NNAPI = 2,
   };
 
   Delegate delegate = CPU;

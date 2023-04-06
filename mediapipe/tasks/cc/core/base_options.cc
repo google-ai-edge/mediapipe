@@ -57,6 +57,11 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
     case BaseOptions::Delegate::GPU:
       base_options_proto.mutable_acceleration()->mutable_gpu();
       break;
+    case BaseOptions::Delegate::EDGETPU_NNAPI:
+      base_options_proto.mutable_acceleration()
+          ->mutable_nnapi()
+          ->set_accelerator_name("google-edgetpu");
+      break;
   }
 
   return base_options_proto;

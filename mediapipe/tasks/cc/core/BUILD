@@ -44,7 +44,9 @@ cc_test(
     deps = [
         ":base_options",
         ":utils",
+        "//mediapipe/calculators/tensor:inference_calculator_cc_proto",
         "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "@com_google_googletest//:gtest_main",
     ],

@@ -33,5 +33,6 @@ message Acceleration {
     mediapipe.InferenceCalculatorOptions.Delegate.Xnnpack xnnpack = 1;
     mediapipe.InferenceCalculatorOptions.Delegate.Gpu gpu = 2;
     mediapipe.InferenceCalculatorOptions.Delegate.TfLite tflite = 4;
+    mediapipe.InferenceCalculatorOptions.Delegate.Nnapi nnapi = 5;
   }
 }

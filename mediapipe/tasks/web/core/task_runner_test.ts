@@ -96,6 +96,7 @@ describe('TaskRunner', () => {
       xnnpack: undefined,
       gpu: undefined,
       tflite: {},
+      nnapi: undefined,
     },
   };
   const mockBytesResultWithGpuDelegate = {
@@ -113,6 +114,7 @@ describe('TaskRunner', () => {
                    .SUSTAINED_SPEED,
       },
       tflite: undefined,
+      nnapi: undefined,
     },
   };
 
