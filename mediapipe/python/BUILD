@@ -99,6 +99,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
         "//mediapipe/tasks/cc/vision/image_embedder:image_embedder_graph",
         "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
+        "//mediapipe/tasks/cc/vision/interactive_segmenter:interactive_segmenter_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
     ],
 )
