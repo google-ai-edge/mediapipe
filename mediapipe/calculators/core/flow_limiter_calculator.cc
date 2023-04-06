@@ -15,7 +15,6 @@
 #include <algorithm>
 #include <utility>
 #include <vector>
-#include <iostream>
 
 #include "mediapipe/calculators/core/flow_limiter_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -263,7 +262,6 @@ class FlowLimiterCalculator : public CalculatorBase {
   std::deque<Timestamp> frames_in_flight_;
   std::map<Timestamp, bool> allowed_;
 };
-
 REGISTER_CALCULATOR(FlowLimiterCalculator);
 
 }  // namespace mediapipe
