@@ -20,10 +20,12 @@
 
 static NSString *const kModelName = @"coco_ssd_mobilenet_v1_1.0_quant_2018_06_29";
 static NSDictionary *const kCatsAndDogsImage = @{@"name" : @"cats_and_dogs", @"type" : @"jpg"};
-static NSDictionary *const kCatsAndDogsRotatedImage = @{@"name" : @"cats_and_dogs_rotated", @"type" : @"jpg"};
+static NSDictionary *const kCatsAndDogsRotatedImage =
+    @{@"name" : @"cats_and_dogs_rotated", @"type" : @"jpg"};
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 #define PixelDifferenceTolerance 5.0f
+#define ScoreDifferenceTolerance 1e-2f
 
 #define AssertEqualErrors(error, expectedError)                                               \
   XCTAssertNotNil(error);                                                                     \
@@ -33,40 +35,51 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
       [error.localizedDescription rangeOfString:expectedError.localizedDescription].location, \
       NSNotFound)
 
-#define AssertEqualCategoryArrays(categories, expectedCategories)                         \
-  XCTAssertEqual(categories.count, expectedCategories.count);                             \
-  for (int i = 0; i < categories.count; i++) {                                            \
-    XCTAssertEqual(categories[i].index, expectedCategories[i].index, @"categories index i = %d", i); \
-    XCTAssertEqualWithAccuracy(categories[i].score, expectedCategories[i].score, 1e-3,    \
-                               @"categories index i = %d", i);                                       \
-    XCTAssertEqualObjects(categories[i].categoryName, expectedCategories[i].categoryName, \
-                          @"categories index i = %d", i);                                            \
-    XCTAssertEqualObjects(categories[i].displayName, expectedCategories[i].displayName,   \
-                          @"categories index i = %d", i);                                            \
+#define AssertEqualCategoryArrays(categories, expectedCategories, detectionIndex)               \
+  XCTAssertEqual(categories.count, expectedCategories.count);                                   \
+  for (int j = 0; j < categories.count; j++) {                                                  \
+    XCTAssertEqual(categories[j].index, expectedCategories[j].index,                            \
+                   @"detection Index = %d category array index j = %d", detectionIndex, j);     \
+    XCTAssertEqualWithAccuracy(                                                                 \
+        categories[j].score, expectedCategories[j].score, ScoreDifferenceTolerance,             \
+        @"detection Index = %d, category array index j = %d", detectionIndex, j);               \
+    XCTAssertEqualObjects(categories[j].categoryName, expectedCategories[j].categoryName,       \
+                          @"detection Index = %d, category array index j = %d", detectionIndex, \
+                          j);                                                                   \
+    XCTAssertEqualObjects(categories[j].displayName, expectedCategories[j].displayName,         \
+                          @"detection Index = %d, category array index j = %d", detectionIndex, \
+                          j);                                                                   \
+    \                              
+                                                               \
   }
 
-#define AssertApproximatelyEqualBoundingBoxes(boundingBox, expectedBoundingBox, idx)                            \
-  XCTAssertEqualWithAccuracy(boundingBox.origin.x, expectedBoundingBox.origin.x, PixelDifferenceTolerance, @"index i = %d", idx);     \
-  XCTAssertEqualWithAccuracy(boundingBox.origin.y, expectedBoundingBox.origin.y, PixelDifferenceTolerance,  @"index i = %d", idx);     \
-  XCTAssertEqualWithAccuracy(boundingBox.size.width, expectedBoundingBox.size.width, PixelDifferenceTolerance,  @"index i = %d", idx);     \
-  XCTAssertEqualWithAccuracy(boundingBox.size.height, expectedBoundingBox.size.height, PixelDifferenceTolerance,  @"index i = %d", idx);
+#define AssertApproximatelyEqualBoundingBoxes(boundingBox, expectedBoundingBox, idx)   \
+  XCTAssertEqualWithAccuracy(boundingBox.origin.x, expectedBoundingBox.origin.x,       \
+                             PixelDifferenceTolerance, @"index i = %d", idx);          \
+  XCTAssertEqualWithAccuracy(boundingBox.origin.y, expectedBoundingBox.origin.y,       \
+                             PixelDifferenceTolerance, @"index i = %d", idx);          \
+  XCTAssertEqualWithAccuracy(boundingBox.size.width, expectedBoundingBox.size.width,   \
+                             PixelDifferenceTolerance, @"index i = %d", idx);          \
+  XCTAssertEqualWithAccuracy(boundingBox.size.height, expectedBoundingBox.size.height, \
+                             PixelDifferenceTolerance, @"index i = %d", idx);
 
-#define AssertEqualDetections(detection, expectedDetection, idx)                            \
-  XCTAssertNotNil(detection);                                              \
-  XCTAssertNil(detection.keypoints, @"index i = %d", idx) \
-  AssertEqualCategoryArrays(detection.categories, expectedDetection.categories) \
+#define AssertEqualDetections(detection, expectedDetection, idx)                      \
+  XCTAssertNotNil(detection);                                                         \
+  AssertEqualCategoryArrays(detection.categories, expectedDetection.categories, idx); \
   AssertApproximatelyEqualBoundingBoxes(detection.boundingBox, expectedDetection.boundingBox, idx);
 
-#define AssertEqualDetectionArrays(detections, expectedDetections)                         \
-  XCTAssertEqual(detections.count, expectedDetections.count);                             \
-  for (int i = 0; i < detections.count; i++) {   \
-    AssertEqualDetections(detections[i], expectedDetections[i], i)                                          \
+#define AssertEqualDetectionArrays(detections, expectedDetections)  \
+  XCTAssertEqual(detections.count, expectedDetections.count);       \
+  for (int i = 0; i < detections.count; i++) {                      \
+    AssertEqualDetections(detections[i], expectedDetections[i], i); \
   }
 
-#define AssertEqualObjectDetectionResults(objectDetectionResult, expectedObjectDetectionResult)                   \
-  XCTAssertNotNil(objectDetectionResult);                                              
-  // AssertEqualDetectionArrays(objectDetectionResult.detections, expectedObjectDetectionResult.detections) \
-  // XCTAssertEqual(objectDetectionResult.timestampMs, expectedObjectDetectionResult.timestampMs)
+#define AssertEqualObjectDetectionResults(objectDetectionResult, expectedObjectDetectionResult) \
+  XCTAssertNotNil(objectDetectionResult);                                                       \
+  \                   
+  AssertEqualDetectionArrays(objectDetectionResult.detections,                                  \
+                             expectedObjectDetectionResult.detections);                         \
+  XCTAssertEqual(objectDetectionResult.timestampMs, expectedObjectDetectionResult.timestampMs);
 
 @interface MPPObjectDetectorTests : XCTestCase
 @end
@@ -75,37 +88,32 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 #pragma mark Results
 
-+ (MPPObjectDetectionResult*)expectedDetectionResultForCatsAndDogsImageWithTimestampMs:(NSInteger)timestampMs {
-
-  NSArray<MPPDetection *> * detections = @[
++ (MPPObjectDetectionResult *)expectedDetectionResultForCatsAndDogsImageWithTimestampMs:
+    (NSInteger)timestampMs {
+  NSArray<MPPDetection *> *detections = @[
     [[MPPDetection alloc] initWithCategories:@[
-       [[MPPCategory alloc] initWithIndex:-1
-                                 score:0.69921875f
-                          categoryName:@"cat"
-                           displayName:nil],
-    ] boundingBox:CGRectMake(608, 161, 381, 439) keypoints:nil],
+      [[MPPCategory alloc] initWithIndex:-1 score:0.69921875f categoryName:@"cat" displayName:nil],
+    ]
+                                 boundingBox:CGRectMake(608, 161, 381, 439)
+                                   keypoints:nil],
     [[MPPDetection alloc] initWithCategories:@[
-       [[MPPCategory alloc] initWithIndex:-1
-                                 score:0.64453125f
-                          categoryName:@"cat"
-                           displayName:nil],
-    ] boundingBox:CGRectMake(60, 398, 386, 196) keypoints:nil],
+      [[MPPCategory alloc] initWithIndex:-1 score:0.656250f categoryName:@"cat" displayName:nil],
+    ]
+                                 boundingBox:CGRectMake(57, 398, 392, 196)
+                                   keypoints:nil],
     [[MPPDetection alloc] initWithCategories:@[
-       [[MPPCategory alloc] initWithIndex:-1
-                                 score:0.51171875f
-                          categoryName:@"cat"
-                           displayName:nil],
-    ] boundingBox:CGRectMake(256, 395, 173, 202) keypoints:nil],
+      [[MPPCategory alloc] initWithIndex:-1 score:0.51171875f categoryName:@"cat" displayName:nil],
+    ]
+                                 boundingBox:CGRectMake(257, 395, 173, 202)
+                                   keypoints:nil],
     [[MPPDetection alloc] initWithCategories:@[
-       [[MPPCategory alloc] initWithIndex:-1
-                                 score:0.48828125f
-                          categoryName:@"cat"
-                           displayName:nil],
-    ] boundingBox:CGRectMake(362, 191, 325, 419) keypoints:nil],
+      [[MPPCategory alloc] initWithIndex:-1 score:0.48828125f categoryName:@"cat" displayName:nil],
+    ]
+                                 boundingBox:CGRectMake(363, 195, 330, 412)
+                                   keypoints:nil],
   ];
 
-  MPPObjectDetectionResult *objectDetectionResult = [[MPPObjectDetectionResult alloc] initWithDetections:detections timestampMs:timestampMs];
-  
+  return [[MPPObjectDetectionResult alloc] initWithDetections:detections timestampMs:timestampMs];
 }
 
 #pragma mark File
@@ -158,22 +166,25 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 }
 
 - (void)assertResultsOfDetectInImage:(MPPImage *)mppImage
-                usingObjectDetector:(MPPObjectDetector *)objectDetector
-             equalsObjectDetectionResult:(MPPObjectDetectionResult *)expectedObjectDetectionResult {
+                 usingObjectDetector:(MPPObjectDetector *)objectDetector
+         equalsObjectDetectionResult:(MPPObjectDetectionResult *)expectedObjectDetectionResult {
   MPPObjectDetectionResult *objectDetectionResult = [objectDetector detectInImage:mppImage
-                                                                             error:nil];
+                                                                            error:nil];
 
-  AssertEqualObjectDetectionResults(objectDetectionResult, [MPPObjectDetectorTests expectedDetectionResultForCatsAndDogsImageWithTimestampMs:0]);
+  AssertEqualObjectDetectionResults(
+      objectDetectionResult,
+      [MPPObjectDetectorTests expectedDetectionResultForCatsAndDogsImageWithTimestampMs:0]);
 }
 
 - (void)assertResultsOfDetectInImageWithFileInfo:(NSDictionary *)fileInfo
-                            usingObjectDetector:(MPPObjectDetector *)objectDetector
-                         equalsObjectDetectionResult:(MPPObjectDetectionResult *)expectedObjectDetectionResult {
+                             usingObjectDetector:(MPPObjectDetector *)objectDetector
+                     equalsObjectDetectionResult:
+                         (MPPObjectDetectionResult *)expectedObjectDetectionResult {
   MPPImage *mppImage = [self imageWithFileInfo:fileInfo];
 
   [self assertResultsOfDetectInImage:mppImage
-                usingObjectDetector:objectDetector
-             equalsObjectDetectionResult:expectedObjectDetectionResult];
+                 usingObjectDetector:objectDetector
+         equalsObjectDetectionResult:expectedObjectDetectionResult];
 }
 
 #pragma mark General Tests
@@ -186,12 +197,11 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
   MPPObjectDetector *objectDetector = [self objectDetectorWithOptionsSucceeds:options];
 
-  [self
-      assertResultsOfDetectInImageWithFileInfo:kCatsAndDogsImage
-                          usingObjectDetector:objectDetector
-                              equalsObjectDetectionResult:
-                                  [MPPObjectDetectorTests
-                                      expectedDetectionResultForCatsAndDogsImageWithTimestampMs:0]];
+  [self assertResultsOfDetectInImageWithFileInfo:kCatsAndDogsImage
+                             usingObjectDetector:objectDetector
+                     equalsObjectDetectionResult:
+                         [MPPObjectDetectorTests
+                             expectedDetectionResultForCatsAndDogsImageWithTimestampMs:0]];
 }
 
 @end
