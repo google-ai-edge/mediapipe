@@ -15,7 +15,6 @@
 import io
 import os
 import tempfile
-import unittest
 from unittest import mock as unittest_mock
 import zipfile
 
@@ -32,7 +31,6 @@ _TEST_DATA_DIR = 'mediapipe/model_maker/python/vision/gesture_recognizer/testdat
 tf.keras.backend.experimental.enable_tf_random_generator()
 
 
-@unittest.skip('b/273818271')
 class GestureRecognizerTest(tf.test.TestCase):
 
   def _load_data(self):
@@ -47,9 +45,6 @@ class GestureRecognizerTest(tf.test.TestCase):
   def setUp(self):
     super().setUp()
     tf.keras.utils.set_random_seed(87654321)
-    all_data = self._load_data()
-    # Splits data, 90% data for training, 10% for validation
-    self._train_data, self._validation_data = all_data.split(0.9)
     # Mock tempfile.gettempdir() to be unique for each test to avoid race
     # condition when downloading model since these tests may run in parallel.
     mock_gettempdir = unittest_mock.patch.object(
@@ -60,6 +55,10 @@ class GestureRecognizerTest(tf.test.TestCase):
     )
     self.mock_gettempdir = mock_gettempdir.start()
     self.addCleanup(mock_gettempdir.stop)
+    # Load dataset used by tests
+    all_data = self._load_data()
+    # Splits data, 90% data for training, 10% for validation
+    self._train_data, self._validation_data = all_data.split(0.9)
 
   def test_gesture_recognizer_model(self):
     mo = gesture_recognizer.ModelOptions()
@@ -74,7 +73,6 @@ class GestureRecognizerTest(tf.test.TestCase):
 
     self._test_accuracy(model)
 
-  @unittest.skip('b/273818271')
   @unittest_mock.patch.object(
       tf.keras.layers, 'Dense', wraps=tf.keras.layers.Dense
   )
