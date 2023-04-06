@@ -94,7 +94,7 @@ public class TaskRunner implements AutoCloseable {
    *
    * <p>Note: This method is designed for processing batch data such as unrelated images and texts.
    * The call blocks the current thread until a failure status or a successful result is returned.
-   * An internal timestamp will be assigend per invocation. This method is thread-safe and allows
+   * An internal timestamp will be assigned per invocation. This method is thread-safe and allows
    * clients to call it from different threads.
    *
    * @param inputs a map contains (input stream {@link String}, data {@link Packet}) pairs.

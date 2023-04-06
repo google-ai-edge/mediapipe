@@ -108,7 +108,7 @@ public abstract class FaceLandmarkerResult implements TaskResult {
   public abstract Optional<List<List<Category>>> faceBlendshapes();
 
   /**
-   * Optional facial transformation matrix list from cannonical face to the detected face landmarks.
+   * Optional facial transformation matrix list from canonical face to the detected face landmarks.
    * The 4x4 facial transformation matrix is represetned as a flat column-major float array.
    */
   public abstract Optional<List<float[]>> facialTransformationMatrixes();

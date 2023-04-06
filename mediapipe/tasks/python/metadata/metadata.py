@@ -121,7 +121,7 @@ class MetadataPopulator(object):
   Then, pack the metadata and label file into the model as follows.
 
     ```python
-    # Populating a metadata file (or a metadta buffer) and associated files to
+    # Populating a metadata file (or a metadata buffer) and associated files to
     a model file:
     populator = MetadataPopulator.with_model_file(model_file)
     # For metadata buffer (bytearray read from the metadata file), use:
@@ -332,7 +332,7 @@ class MetadataPopulator(object):
     Raises:
       IOError: File not found.
       ValueError: The metadata to be populated is empty.
-      ValueError: The metadata does not have the expected flatbuffer identifer.
+      ValueError: The metadata does not have the expected flatbuffer identifier.
       ValueError: Cannot get minimum metadata parser version.
       ValueError: The number of SubgraphMetadata is not 1.
       ValueError: The number of input/output tensors does not match the number

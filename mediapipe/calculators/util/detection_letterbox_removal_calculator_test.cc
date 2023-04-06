@@ -40,7 +40,7 @@ LocationData CreateRelativeLocationData(double xmin, double ymin, double width,
 }
 
 Detection CreateDetection(const std::vector<std::string>& labels,
-                          const std::vector<int32>& label_ids,
+                          const std::vector<int32_t>& label_ids,
                           const std::vector<float>& scores,
                           const LocationData& location_data,
                           const std::string& feature_tag) {

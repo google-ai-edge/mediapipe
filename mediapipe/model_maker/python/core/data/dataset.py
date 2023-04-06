@@ -84,7 +84,7 @@ class Dataset(object):
         create randomness during model training.
       preprocess: A function taking three arguments in order, feature, label and
         boolean is_training.
-      drop_remainder: boolean, whether the finaly batch drops remainder.
+      drop_remainder: boolean, whether the finally batch drops remainder.
 
     Returns:
       A TF dataset ready to be consumed by Keras model.

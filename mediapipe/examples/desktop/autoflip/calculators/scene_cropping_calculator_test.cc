@@ -175,7 +175,7 @@ constexpr int kMinNumDetections = 0;
 constexpr int kMaxNumDetections = 10;
 
 constexpr int kDownSampleRate = 4;
-constexpr int64 kTimestampDiff = 20000;
+constexpr int64_t kTimestampDiff = 20000;
 
 // Returns a singleton random engine for generating random values. The seed is
 // fixed for reproducibility.
@@ -254,7 +254,7 @@ std::unique_ptr<ImageFrame> MakeImageFrameFromColor(const cv::Scalar& color,
 // Randomly generates a number of detections in the range of kMinNumDetections
 // and kMaxNumDetections. Optionally add a key image frame of random solid color
 // and given size.
-void AddKeyFrameFeatures(const int64 time_ms, const int key_frame_width,
+void AddKeyFrameFeatures(const int64_t time_ms, const int key_frame_width,
                          const int key_frame_height, bool randomize,
                          CalculatorRunner::StreamContentsSet* inputs) {
   Timestamp timestamp(time_ms);
@@ -286,7 +286,7 @@ void AddScene(const int start_frame_index, const int num_scene_frames,
               const int key_frame_width, const int key_frame_height,
               const int DownSampleRate,
               CalculatorRunner::StreamContentsSet* inputs) {
-  int64 time_ms = start_frame_index * kTimestampDiff;
+  int64_t time_ms = start_frame_index * kTimestampDiff;
   for (int i = 0; i < num_scene_frames; ++i) {
     Timestamp timestamp(time_ms);
     if (inputs->HasTag(kVideoFramesTag)) {
@@ -657,7 +657,7 @@ TEST(SceneCroppingCalculatorTest, PadsWithSolidColorFromStaticFeatures) {
 
   // Add inputs.
   auto* inputs = runner->MutableInputs();
-  int64 time_ms = 0;
+  int64_t time_ms = 0;
   int num_static_features = 0;
   for (int i = 0; i < kSceneSize; ++i) {
     Timestamp timestamp(time_ms);

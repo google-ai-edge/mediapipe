@@ -193,13 +193,6 @@ cc_library(
         ":edge_tpu_pci": ["MEDIAPIPE_EDGE_TPU=pci"],
         ":edge_tpu_all": ["MEDIAPIPE_EDGE_TPU=all"],
     }),
-    linkopts = select({
-        "//mediapipe:ios": [
-            "-framework CoreVideo",
-            "-framework MetalKit",
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":tflite_inference_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -222,6 +215,8 @@ cc_library(
             "@org_tensorflow//tensorflow/lite/delegates/gpu/metal:buffer_convert",
             "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate",
             "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate_internal",
+            "//third_party/apple_frameworks:MetalKit",
+            "//third_party/apple_frameworks:CoreVideo",
         ],
         "//conditions:default": [
             "//mediapipe/util/tflite:tflite_gpu_runner",
@@ -271,13 +266,6 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
-    linkopts = select({
-        "//mediapipe:ios": [
-            "-framework CoreVideo",
-            "-framework MetalKit",
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":tflite_converter_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -296,6 +284,8 @@ cc_library(
             "//mediapipe/gpu:MPPMetalHelper",
             "//mediapipe/objc:mediapipe_framework_ios",
             "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate",
+            "//third_party/apple_frameworks:MetalKit",
+            "//third_party/apple_frameworks:CoreVideo",
         ],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",
@@ -393,13 +383,6 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
-    linkopts = select({
-        "//mediapipe:ios": [
-            "-framework CoreVideo",
-            "-framework MetalKit",
-        ],
-        "//conditions:default": [],
-    }),
     deps = [
         ":tflite_tensors_to_detections_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
@@ -420,6 +403,8 @@ cc_library(
             "//mediapipe/gpu:MPPMetalHelper",
             "//mediapipe/objc:mediapipe_framework_ios",
             "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate",
+            "//third_party/apple_frameworks:MetalKit",
+            "//third_party/apple_frameworks:CoreVideo",
         ],
         "//conditions:default": [
             "//mediapipe/gpu:gl_calculator_helper",

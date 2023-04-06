@@ -39,14 +39,14 @@ class BasicCounter : public Counter {
     value_ += amount;
   }
 
-  int64 Get() ABSL_LOCKS_EXCLUDED(mu_) override {
+  int64_t Get() ABSL_LOCKS_EXCLUDED(mu_) override {
     absl::ReaderMutexLock lock(&mu_);
     return value_;
   }
 
  private:
   absl::Mutex mu_;
-  int64 value_ ABSL_GUARDED_BY(mu_);
+  int64_t value_ ABSL_GUARDED_BY(mu_);
 };
 
 }  // namespace
@@ -73,10 +73,10 @@ Counter* CounterSet::Get(const std::string& name) ABSL_LOCKS_EXCLUDED(mu_) {
   return counters_[name].get();
 }
 
-std::map<std::string, int64> CounterSet::GetCountersValues()
+std::map<std::string, int64_t> CounterSet::GetCountersValues()
     ABSL_LOCKS_EXCLUDED(mu_) {
   absl::ReaderMutexLock lock(&mu_);
-  std::map<std::string, int64> result;
+  std::map<std::string, int64_t> result;
   for (const auto& it : counters_) {
     result[it.first] = it.second->Get();
   }

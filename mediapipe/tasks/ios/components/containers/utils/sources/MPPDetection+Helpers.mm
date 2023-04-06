@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPDetection+Helpers.h"
+#import "mediapipe/framework/formats/location_data.pb.h"
 
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 

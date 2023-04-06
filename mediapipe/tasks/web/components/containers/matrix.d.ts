@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/** A two-dimenionsal matrix. */
+/** A two-dimensional matrix. */
 export declare interface Matrix {
   /** The number of rows. */
   rows: number;

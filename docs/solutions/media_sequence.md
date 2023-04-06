@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/guide#legacy
 title: Dataset Preparation with MediaSequence
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 15
 ---
 
@@ -23,8 +24,6 @@ We have ended support for this MediaPipe Legacy Solution as of March 1, 2023.
 For more information, see the new
 [MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
 site.*
-
-*This notice and web page will be removed on April 3, 2023.*
 
 ----
 

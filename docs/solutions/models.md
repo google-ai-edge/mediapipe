@@ -1,7 +1,8 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/guide#legacy
 title: Models and Model Cards
-parent: Solutions
+parent: MediaPipe Legacy Solutions
 nav_order: 30
 ---
 
@@ -21,8 +22,6 @@ to a new MediaPipe Solution. The code repository and prebuilt binaries for all
 MediaPipe Legacy Solutions will continue to be provided on an as-is basis.
 We encourage you to check out the new MediaPipe Solutions at:
 [https://developers.google.com/mediapipe/solutions](https://developers.google.com/mediapipe/solutions)*
-
-*This notice and web page will be removed on April 3, 2023.*
 
 ----
 

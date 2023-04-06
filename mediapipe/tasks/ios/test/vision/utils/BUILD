@@ -7,7 +7,5 @@ objc_library(
     srcs = ["sources/MPPImage+TestUtils.m"],
     hdrs = ["sources/MPPImage+TestUtils.h"],
     module_name = "MPPImageTestUtils",
-    deps = [
-        "//mediapipe/tasks/ios/vision/core:MPPImage",
-    ],
+    deps = ["//mediapipe/tasks/ios/vision/core:MPPImage"],
 )

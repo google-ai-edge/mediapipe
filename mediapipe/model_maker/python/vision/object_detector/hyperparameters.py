@@ -29,9 +29,9 @@ class HParams(hp.BaseHParams):
     epochs: Number of training iterations over the dataset.
     do_fine_tuning: If true, the base module is trained together with the
       classification layer on top.
-    learning_rate_boundaries: List of epoch boundaries where
-      learning_rate_boundaries[i] is the epoch where the learning rate will
-      decay to learning_rate * learning_rate_decay_multipliers[i].
+    learning_rate_epoch_boundaries: List of epoch boundaries where
+      learning_rate_epoch_boundaries[i] is the epoch where the learning rate
+      will decay to learning_rate * learning_rate_decay_multipliers[i].
     learning_rate_decay_multipliers: List of learning rate multipliers which
       calculates the learning rate at the ith boundary as learning_rate *
       learning_rate_decay_multipliers[i].
@@ -43,35 +43,39 @@ class HParams(hp.BaseHParams):
   epochs: int = 10
 
   # Parameters for learning rate decay
-  learning_rate_boundaries: List[int] = dataclasses.field(
-      default_factory=lambda: [5, 8]
+  learning_rate_epoch_boundaries: List[int] = dataclasses.field(
+      default_factory=lambda: []
   )
   learning_rate_decay_multipliers: List[float] = dataclasses.field(
-      default_factory=lambda: [0.1, 0.01]
+      default_factory=lambda: []
   )
 
   def __post_init__(self):
     # Validate stepwise learning rate parameters
-    lr_boundary_len = len(self.learning_rate_boundaries)
+    lr_boundary_len = len(self.learning_rate_epoch_boundaries)
     lr_decay_multipliers_len = len(self.learning_rate_decay_multipliers)
     if lr_boundary_len != lr_decay_multipliers_len:
       raise ValueError(
-          "Length of learning_rate_boundaries and ",
+          "Length of learning_rate_epoch_boundaries and ",
           "learning_rate_decay_multipliers do not match: ",
           f"{lr_boundary_len}!={lr_decay_multipliers_len}",
       )
-    # Validate learning_rate_boundaries
-    if sorted(self.learning_rate_boundaries) != self.learning_rate_boundaries:
-      raise ValueError(
-          "learning_rate_boundaries is not in ascending order: ",
-          self.learning_rate_boundaries,
-      )
+    # Validate learning_rate_epoch_boundaries
     if (
-        self.learning_rate_boundaries
-        and self.learning_rate_boundaries[-1] > self.epochs
+        sorted(self.learning_rate_epoch_boundaries)
+        != self.learning_rate_epoch_boundaries
     ):
       raise ValueError(
-          "Values in learning_rate_boundaries cannot be greater ", "than epochs"
+          "learning_rate_epoch_boundaries is not in ascending order: ",
+          self.learning_rate_epoch_boundaries,
+      )
+    if (
+        self.learning_rate_epoch_boundaries
+        and self.learning_rate_epoch_boundaries[-1] > self.epochs
+    ):
+      raise ValueError(
+          "Values in learning_rate_epoch_boundaries cannot be greater ",
+          "than epochs",
       )
 
 

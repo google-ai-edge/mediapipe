@@ -94,4 +94,6 @@ class DownloadedFiles:
         pathlib.Path.mkdir(absolute_path.parent, parents=True, exist_ok=True)
         with open(absolute_path, 'wb') as f:
           f.write(r.content)
+    else:
+      print(f'Using existing files at {absolute_path}')
     return str(absolute_path)

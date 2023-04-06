@@ -142,7 +142,7 @@ enum AssociatedFileType : byte {
 
   // TODO: introduce the ScaNN index file with links once the code
   // is released.
-  // Contains on-devide ScaNN index file with LevelDB format.
+  // Contains on-device ScaNN index file with LevelDB format.
   // Added in: 1.4.0
   SCANN_INDEX_FILE = 6,
 }

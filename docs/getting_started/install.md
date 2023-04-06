@@ -13,6 +13,12 @@ nav_order: 6
 {:toc}
 ---
 
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
+
 Note: To interoperate with OpenCV, OpenCV 3.x to 4.1 are preferred. OpenCV
 2.x currently works but interoperability support may be deprecated in the
 future.
@@ -577,7 +583,7 @@ next section.
 
     Option 1. Follow
     [the official Bazel documentation](https://docs.bazel.build/versions/master/install-windows.html)
-    to install Bazel 5.2.0 or higher.
+    to install Bazel 6.1.1 or higher.
 
     Option 2. Follow the official
     [Bazel documentation](https://docs.bazel.build/versions/master/install-bazelisk.html)

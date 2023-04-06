@@ -57,13 +57,13 @@ bool ImageMetadata(const std::string& image_str, std::string* format_string,
 
 // Finds the nearest timestamp in a FeatureList of timestamps. The FeatureList
 // must contain int64 values and only the first value at each step is used.
-int NearestIndex(int64 timestamp,
+int NearestIndex(int64_t timestamp,
                  const tensorflow::FeatureList& int64_feature_list) {
-  int64 closest_distance = std::numeric_limits<int64>::max();
+  int64_t closest_distance = std::numeric_limits<int64_t>::max();
   int index = -1;
   for (int i = 0; i < int64_feature_list.feature_size(); ++i) {
-    int64 current_value = int64_feature_list.feature(i).int64_list().value(0);
-    int64 current_distance = std::abs(current_value - timestamp);
+    int64_t current_value = int64_feature_list.feature(i).int64_list().value(0);
+    int64_t current_distance = std::abs(current_value - timestamp);
     if (current_distance < closest_distance) {
       index = i;
       closest_distance = current_distance;
@@ -74,8 +74,8 @@ int NearestIndex(int64 timestamp,
 
 // Find the numerical sampling rate between two values in seconds if the input
 // timestamps are in microseconds.
-float TimestampsToRate(int64 first_timestamp, int64 second_timestamp) {
-  int64 timestamp_diff = second_timestamp - first_timestamp;
+float TimestampsToRate(int64_t first_timestamp, int64_t second_timestamp) {
+  int64_t timestamp_diff = second_timestamp - first_timestamp;
   // convert from microseconds to seconds.
   float rate = 1.0 / (static_cast<float>(timestamp_diff) / 1000000);
   return rate;
@@ -100,18 +100,18 @@ absl::Status ReconcileAnnotationIndicesByImageTimestamps(
         << "start: " << segment_size
         << ", end: " << GetSegmentEndTimestampSize(*sequence);
 
-    std::vector<int64> start_indices;
+    std::vector<int64_t> start_indices;
     start_indices.reserve(segment_size);
-    for (const int64& timestamp : GetSegmentStartTimestamp(*sequence)) {
+    for (const int64_t& timestamp : GetSegmentStartTimestamp(*sequence)) {
       index = NearestIndex(timestamp,
                            GetFeatureList(*sequence, kImageTimestampKey));
       start_indices.push_back(index);
     }
     SetSegmentStartIndex(start_indices, sequence);
 
-    std::vector<int64> end_indices;
+    std::vector<int64_t> end_indices;
     end_indices.reserve(segment_size);
-    for (const int64& timestamp : GetSegmentEndTimestamp(*sequence)) {
+    for (const int64_t& timestamp : GetSegmentEndTimestamp(*sequence)) {
       index = NearestIndex(timestamp,
                            GetFeatureList(*sequence, kImageTimestampKey));
       end_indices.push_back(index);
@@ -167,8 +167,8 @@ absl::Status ReconcileMetadataFeatureFloats(
       int number_of_elements = GetFeatureFloatsAt(prefix, *sequence, 0).size();
       if (HasFeatureDimensions(prefix, *sequence) &&
           !GetFeatureDimensions(prefix, *sequence).empty()) {
-        int64 product = 1;
-        for (int64 value : GetFeatureDimensions(prefix, *sequence)) {
+        int64_t product = 1;
+        for (int64_t value : GetFeatureDimensions(prefix, *sequence)) {
           product *= value;
         }
         RET_CHECK_EQ(number_of_elements, product)
@@ -249,14 +249,14 @@ absl::Status ReconcileMetadataBoxAnnotations(
     // Collect which timestamps currently match to which indices in timestamps.
     // skip empty timestamps.
     // Requires sorted indices.
-    ::std::vector<int64> box_timestamps(num_bboxes);
+    ::std::vector<int64_t> box_timestamps(num_bboxes);
     int bbox_index = 0;
     std::string timestamp_key = merge_prefix(prefix, kRegionTimestampKey);
     for (auto& feature : GetFeatureList(*sequence, timestamp_key).feature()) {
       box_timestamps[bbox_index] = feature.int64_list().value(0);
       ++bbox_index;
     }
-    ::std::vector<int32> box_is_annotated(num_bboxes);
+    ::std::vector<int32_t> box_is_annotated(num_bboxes);
     bbox_index = 0;
     std::string is_annotated_key = merge_prefix(prefix, kRegionIsAnnotatedKey);
     for (auto& feature :
@@ -264,7 +264,7 @@ absl::Status ReconcileMetadataBoxAnnotations(
       box_is_annotated[bbox_index] = feature.int64_list().value(0);
       ++bbox_index;
     }
-    ::std::vector<int64> image_timestamps(num_frames);
+    ::std::vector<int64_t> image_timestamps(num_frames);
     int frame_index = 0;
     for (auto& feature :
          GetFeatureList(*sequence, kImageTimestampKey).feature()) {

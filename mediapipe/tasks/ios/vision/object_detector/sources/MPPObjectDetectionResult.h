@@ -22,9 +22,11 @@ NS_ASSUME_NONNULL_BEGIN
 NS_SWIFT_NAME(ObjectDetectionResult)
 @interface MPPObjectDetectionResult : MPPTaskResult
 
-/** The array of `MPPDetection` objects each of which has a bounding box that is expressed in the
+/**
+ * The array of `MPPDetection` objects each of which has a bounding box that is expressed in the
  * unrotated input frame of reference coordinates system, i.e. in `[0,image_width) x
- * [0,image_height)`, which are the dimensions of the underlying image data. */
+ * [0,image_height)`, which are the dimensions of the underlying image data.
+ */
 @property(nonatomic, readonly) NSArray<MPPDetection *> *detections;
 
 /**

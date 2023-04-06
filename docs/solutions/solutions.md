@@ -1,12 +1,12 @@
 ---
 layout: default
-title: Solutions
+title: MediaPipe Legacy Solutions
 nav_order: 3
 has_children: true
 has_toc: false
 ---
 
-# Solutions
+# MediaPipe Legacy Solutions
 {: .no_toc }
 
 1. TOC
@@ -26,6 +26,12 @@ Solutions at:
 [https://developers.google.com/mediapipe/solutions](https://developers.google.com/mediapipe/solutions)*
 
 *This notice and web page will be removed on June 1, 2023.*
+
+----
+
+<br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br><br>
 
 ----
 

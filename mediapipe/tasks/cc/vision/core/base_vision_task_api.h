@@ -188,7 +188,7 @@ class BaseVisionTaskApi : public tasks::core::BaseTaskApi {
     // For 90° and 270° rotations, we need to swap width and height.
     // This is due to the internal behavior of ImageToTensorCalculator, which:
     // - first denormalizes the provided rect by multiplying the rect width or
-    //   height by the image width or height, repectively.
+    //   height by the image width or height, respectively.
     // - then rotates this by denormalized rect by the provided rotation, and
     //   uses this for cropping,
     // - then finally rotates this back.

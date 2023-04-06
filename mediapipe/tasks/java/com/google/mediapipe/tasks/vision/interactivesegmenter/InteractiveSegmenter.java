@@ -327,7 +327,7 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
    * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
    *     region-of-interest.
    * @throws MediaPipeException if there is an internal error. Or if {@link InteractiveSegmenter} is
-   *     not created wtih {@link ResultListener} set in {@link InteractiveSegmenterOptions}.
+   *     not created with {@link ResultListener} set in {@link InteractiveSegmenterOptions}.
    */
   public void segmentWithResultListener(MPImage image, RegionOfInterest roi) {
     segmentWithResultListener(image, roi, ImageProcessingOptions.builder().build());
@@ -357,7 +357,7 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
    * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
    *     region-of-interest.
    * @throws MediaPipeException if there is an internal error. Or if {@link InteractiveSegmenter} is
-   *     not created wtih {@link ResultListener} set in {@link InteractiveSegmenterOptions}.
+   *     not created with {@link ResultListener} set in {@link InteractiveSegmenterOptions}.
    */
   public void segmentWithResultListener(
       MPImage image, RegionOfInterest roi, ImageProcessingOptions imageProcessingOptions) {

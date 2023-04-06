@@ -19,7 +19,7 @@ import {NormalizedKeypoint} from '../../../../tasks/web/components/containers/ke
 /**
  * The segmentation tasks return the segmentation either as a WebGLTexture (when
  * the output is on GPU) or as a typed JavaScript arrays for CPU-based
- * category or confidence masks. `Uint8ClampedArray`s are used to represend
+ * category or confidence masks. `Uint8ClampedArray`s are used to represent
  * CPU-based category masks and `Float32Array`s are used for CPU-based
  * confidence masks.
  */

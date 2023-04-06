@@ -67,13 +67,7 @@ def external_files():
     http_file(
         name = "com_google_mediapipe_BUILD",
         sha256 = "d2b2a8346202691d7f831887c84e9642e974f64ed67851d9a58cf15c94b1f6b3",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/BUILD?generation=166187566369397616783235763936531678737479599640"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_BUILD_orig",
-        sha256 = "d86b98b82e00dd87cd46bd1429bf5eaa007b500c1a24d9316b73309f2e6c8df8",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/BUILD.orig?generation=1679955080207504"],
+        urls = ["https://storage.googleapis.com/mediapipe-assets/BUILD?generation=1661875663693976167832357639365316787374795996401679955080207504"],
     )
 
     http_file(
@@ -263,6 +257,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_dynamic_input_classifier_tflite",
+        sha256 = "fb34b05e1cd4081f3c2bb882092f617efb19266b3353d51b3790a172cae09784",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/dynamic_input_classifier.tflite?generation=1680543275416843"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_efficientdet_lite0_v1_json",
         sha256 = "7a9e1fb625a6130a251e612637fc546cfc8cfabfadc7dbdade44c87f1d8996ca",
         urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_v1.json?generation=1677522746026682"],
@@ -306,8 +306,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_expected_pose_landmarks_prototxt",
-        sha256 = "75dfd2825fc23f51e3906f3a0a050caa8ae9f502cc358af1e7c9fda7ea89c9a5",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/expected_pose_landmarks.prototxt?generation=1679955083449778"],
+        sha256 = "0bb27e9d9729c4171419abf7edd746b4234cb91198d663f3a4363248a49dad1a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/expected_pose_landmarks.prototxt?generation=1680543279295598"],
     )
 
     http_file(
@@ -935,9 +935,21 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_pose_expected_expanded_rect_pbtxt",
+        sha256 = "babb2a2d50077f6fa9ee15e30d81abb6e98a920e35acad7542bb3d27b5ce7ffd",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_expected_expanded_rect.pbtxt?generation=1680543294008098"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_pose_jpg",
         sha256 = "c8a830ed683c0276d713dd5aeda28f415f10cd6291972084a40d0d8b934ed62b",
         urls = ["https://storage.googleapis.com/mediapipe-assets/pose.jpg?generation=1678737494661975"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_pose_landmarker_task",
+        sha256 = "ca4137626f0dc04f87893ccf2ad01949a3b1d4b55fa85ba957dde44a29dd956e",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_landmarker.task?generation=1680543298177615"],
     )
 
     http_file(
@@ -1259,12 +1271,6 @@ def external_files():
     )
 
     http_file(
-        name = "com_google_mediapipe_w_avg_npy",
-        sha256 = "a044e35609986d18a972532f2980e939832b5b7d559659959d11ecc752a58bbe",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/w_avg.npy?generation=1679955100435717"],
-    )
-
-    http_file(
         name = "com_google_mediapipe_yamnet_audio_classifier_with_metadata_tflite",
         sha256 = "10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de",
         urls = ["https://storage.googleapis.com/mediapipe-assets/yamnet_audio_classifier_with_metadata.tflite?generation=1661875980774466"],
@@ -1277,60 +1283,6 @@ def external_files():
     )
 
     http_file(
-        name = "com_google_mediapipe_decoder_fingerprint_pb",
-        sha256 = "0bf6239c4855d78edb60f3349b46cdb2c6f83def64f1b31589b6e298e5cbec3c",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/decoder/fingerprint.pb?generation=1679955102906559"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_decoder_keras_metadata_pb",
-        sha256 = "1631ee698455aea52d4467fe6118800718a86ec49c29f4f3c904785b72f425ff",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/decoder/keras_metadata.pb?generation=1679955105294959"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_decoder_saved_model_pb",
-        sha256 = "b424d30c63548e93390b2944b9bd9dc29773a56197bb462d3bd9e7a0bd1270ff",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/decoder/saved_model.pb?generation=1679955107808916"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_discriminator_fingerprint_pb",
-        sha256 = "1fa6201d253c9218f7054138b9ce273266ce431e00cbce2d74d557f6b97223fd",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/discriminator/fingerprint.pb?generation=1679955110094297"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_discriminator_keras_metadata_pb",
-        sha256 = "59a8601790d615dd37ec24e788743ce737e9999ce6ea6593fcf1ee43f674987f",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/discriminator/keras_metadata.pb?generation=1679955112486389"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_discriminator_saved_model_pb",
-        sha256 = "280d6097a9b3d4c3756e028c597fe3d3c76eb14f76f24d49a22ed7b6df1e3878",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/discriminator/saved_model.pb?generation=1679955114873053"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_encoder_fingerprint_pb",
-        sha256 = "06cb4319f8178edf447a7a2442e89303a14a48cc4fc5ae27354eac2ba11ae120",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/encoder/fingerprint.pb?generation=1679955117213209"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_encoder_keras_metadata_pb",
-        sha256 = "8b1429ee95c130fad0c78077b2b544cd03c9e288658aae93e81df4959b84009e",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/encoder/keras_metadata.pb?generation=1679955119546778"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_encoder_saved_model_pb",
-        sha256 = "ce48392c71485ecd9b142b46e54442581a299df5560102337038b76a62e02a09",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/encoder/saved_model.pb?generation=1679955122069362"],
-    )
-
-    http_file(
         name = "com_google_mediapipe_gesture_embedder_keras_metadata_pb",
         sha256 = "c76b856101e2284293a5e5963b7c445e407a0b3e56ec63eb78f64d883e51e3aa",
         urls = ["https://storage.googleapis.com/mediapipe-assets/gesture_embedder/keras_metadata.pb?generation=1668550482128410"],
@@ -1340,24 +1292,6 @@ def external_files():
         name = "com_google_mediapipe_gesture_embedder_saved_model_pb",
         sha256 = "0082d37c5b85487fbf553e00a63f640945faf3da2d561a5f5a24c3194fecda6a",
         urls = ["https://storage.googleapis.com/mediapipe-assets/gesture_embedder/saved_model.pb?generation=1668550484904822"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_mapping_fingerprint_pb",
-        sha256 = "6320890f1b9a57e5f4e50e3b56d96fd39d815aa2de51dd1c9b635aa6107d982b",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/mapping/fingerprint.pb?generation=1679955124430234"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_mapping_keras_metadata_pb",
-        sha256 = "22582a2ec1d4883b52f50e628c1a2d69a2610b38d72a48a0bd9939c26be304f6",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/mapping/keras_metadata.pb?generation=1679955126858694"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_mapping_saved_model_pb",
-        sha256 = "6a79de45d00f49110304bf0a6746bc717c45f77824cad22690f700f2fbdc1470",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/mapping/saved_model.pb?generation=1679955129259768"],
     )
 
     http_file(
@@ -1409,42 +1343,6 @@ def external_files():
     )
 
     http_file(
-        name = "com_google_mediapipe_decoder_variables_variables_data-00000-of-00001",
-        sha256 = "d720ddf354036f17fa210951f9ebfb009453b244913a493f494f1441cfc2eca3",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/decoder/variables/variables.data-00000-of-00001?generation=1679955132326947"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_decoder_variables_variables_index",
-        sha256 = "245f69af6e53fb8b163059fe9936f57b68a7844e15d696393fcddf94c771dfcc",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/decoder/variables/variables.index?generation=1679955134518344"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_discriminator_variables_variables_data-00000-of-00001",
-        sha256 = "50b00e1898a573588fb0d5d24d74346d99b7153b5d79441d0350c2c6ca89fb02",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/discriminator/variables/variables.data-00000-of-00001?generation=1679955138489595"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_discriminator_variables_variables_index",
-        sha256 = "e5cb4be6442a5741504ce7da9487445637ad89b1f4b6a993bb9e762c7bd5621d",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/discriminator/variables/variables.index?generation=1679955140891136"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_encoder_variables_variables_data-00000-of-00001",
-        sha256 = "09bcd1e2f1c6261bd1842af2da95651d54c9b4b9343eb9b8f0004a97f9bc84bf",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/encoder/variables/variables.data-00000-of-00001?generation=1679955144875765"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_encoder_variables_variables_index",
-        sha256 = "964f5ac6ced7b19f76b7856d9dad47594a5b2fa89c52840f82996b809372aec9",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/encoder/variables/variables.index?generation=1679955147123313"],
-    )
-
-    http_file(
         name = "com_google_mediapipe_gesture_embedder_variables_variables_data-00000-of-00001",
         sha256 = "c156c9654c9ffb1091bb9f06c71080bd1e428586276d3f39c33fbab27fe0522d",
         urls = ["https://storage.googleapis.com/mediapipe-assets/gesture_embedder/variables/variables.data-00000-of-00001?generation=1668550487965052"],
@@ -1454,18 +1352,6 @@ def external_files():
         name = "com_google_mediapipe_gesture_embedder_variables_variables_index",
         sha256 = "76ea482b8da6bdb3d65d3b2ea989c1699c9fa0d6df0cb6d80863d1dc6fe7c4bd",
         urls = ["https://storage.googleapis.com/mediapipe-assets/gesture_embedder/variables/variables.index?generation=1668550490691823"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_mapping_variables_variables_data-00000-of-00001",
-        sha256 = "4187055e7f69fcc913ee2b11151a56149dda3017c75621d1e160596bde874c07",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/mapping/variables/variables.data-00000-of-00001?generation=1679955149680908"],
-    )
-
-    http_file(
-        name = "com_google_mediapipe_mapping_variables_variables_index",
-        sha256 = "a04fcae7083715613f93ac89943f5fe1f5ba2e6efb9efd14eee7314f25502e4a",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/mapping/variables/variables.index?generation=1679955152034297"],
     )
 
     http_file(

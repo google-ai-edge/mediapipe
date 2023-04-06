@@ -254,7 +254,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
    *     region-of-interest.
    * @throws MediaPipeException if there is an internal error. Or if {@link FaceStylizer} is not
-   *     created wtih {@link ResultListener} set in {@link FaceStylizerOptions}.
+   *     created with {@link ResultListener} set in {@link FaceStylizerOptions}.
    */
   public void stylizeWithResultListener(MPImage image) {
     stylizeWithResultListener(image, ImageProcessingOptions.builder().build());
@@ -283,7 +283,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
    *     region-of-interest.
    * @throws MediaPipeException if there is an internal error. Or if {@link FaceStylizer} is not
-   *     created wtih {@link ResultListener} set in {@link FaceStylizerOptions}.
+   *     created with {@link ResultListener} set in {@link FaceStylizerOptions}.
    */
   public void stylizeWithResultListener(
       MPImage image, ImageProcessingOptions imageProcessingOptions) {
@@ -384,7 +384,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @param timestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error. Or if {@link FaceStylizer} is not
-   *     created wtih {@link ResultListener} set in {@link FaceStylizerOptions}.
+   *     created with {@link ResultListener} set in {@link FaceStylizerOptions}.
    */
   public void stylizeForVideoWithResultListener(MPImage image, long timestampMs) {
     stylizeForVideoWithResultListener(image, ImageProcessingOptions.builder().build(), timestampMs);
@@ -411,7 +411,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @param timestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error. Or if {@link FaceStylizer} is not
-   *     created wtih {@link ResultListener} set in {@link FaceStylizerOptions}.
+   *     created with {@link ResultListener} set in {@link FaceStylizerOptions}.
    */
   public void stylizeForVideoWithResultListener(
       MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {

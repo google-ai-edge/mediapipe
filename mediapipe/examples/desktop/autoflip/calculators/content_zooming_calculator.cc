@@ -142,7 +142,7 @@ class ContentZoomingCalculator : public CalculatorBase {
   // Stores the first crop rectangle.
   mediapipe::NormalizedRect first_rect_;
   // Stores the time of the last "only_required" input.
-  int64 last_only_required_detection_;
+  int64_t last_only_required_detection_;
   // Rect values of last message with detection(s).
   int last_measured_height_;
   int last_measured_x_offset_;
@@ -500,7 +500,7 @@ bool ContentZoomingCalculator::IsAnimatingToFirstRect(
     return false;
   }
 
-  const int64 delta_us = (timestamp - first_rect_timestamp_).Value();
+  const int64_t delta_us = (timestamp - first_rect_timestamp_).Value();
   return (0 <= delta_us && delta_us <= options_.us_to_first_rect());
 }
 
@@ -522,8 +522,8 @@ absl::StatusOr<mediapipe::Rect> ContentZoomingCalculator::GetAnimationRect(
   RET_CHECK(IsAnimatingToFirstRect(timestamp))
       << "Must only be called if animating to first rect.";
 
-  const int64 delta_us = (timestamp - first_rect_timestamp_).Value();
-  const int64 delay = options_.us_to_first_rect_delay();
+  const int64_t delta_us = (timestamp - first_rect_timestamp_).Value();
+  const int64_t delay = options_.us_to_first_rect_delay();
   const double interpolation = easeInOutQuad(std::max(
       0.0, (delta_us - delay) /
                static_cast<double>(options_.us_to_first_rect() - delay)));

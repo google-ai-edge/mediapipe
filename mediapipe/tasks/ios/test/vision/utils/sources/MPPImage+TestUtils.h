@@ -29,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param classObject The specified class associated with the bundle containing the file to be
  * loaded.
  * @param name Name of the image file.
- * @param type Extenstion of the image file.
+ * @param type Extension of the image file.
  *
  * @return The `MPPImage` object contains the loaded image. This method returns
  * nil if it cannot load the image.
@@ -46,7 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param classObject The specified class associated with the bundle containing the file to be
  * loaded.
  * @param name Name of the image file.
- * @param type Extenstion of the image file.
+ * @param type Extension of the image file.
  * @param orientation Orientation of the image.
  *
  * @return The `MPPImage` object contains the loaded image. This method returns

@@ -49,5 +49,8 @@ objc_library(
     name = "MPPDetection",
     srcs = ["sources/MPPDetection.m"],
     hdrs = ["sources/MPPDetection.h"],
-    deps = [":MPPCategory"],
+    deps = [
+        ":MPPCategory",
+        "//third_party/apple_frameworks:UIKit",
+    ],
 )

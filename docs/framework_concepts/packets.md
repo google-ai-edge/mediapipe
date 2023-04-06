@@ -13,6 +13,12 @@ nav_order: 3
 {:toc}
 ---
 
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+[https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
+
+----
+
 Calculators communicate by sending and receiving packets. Typically a single
 packet is sent along each input stream at each input timestamp. A packet can
 contain any kind of data, such as a single frame of video or a single integer

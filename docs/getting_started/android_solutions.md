@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/
 title: MediaPipe Android Solutions
 parent: MediaPipe on Android
 grand_parent: Getting Started
@@ -13,14 +14,9 @@ nav_order: 2
 {:toc}
 ---
 
-**Attention:** *Thanks for your interest in MediaPipe! We are moving to
+**Attention:** *Thanks for your interest in MediaPipe! We have moved to
 [https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
-as the primary developer documentation
-site for MediaPipe starting April 3, 2023. This content will not be moved to
-the new site, but will remain available in the source code repository on an
-as-is basis.*
-
-*This notice and web page will be removed on April 3, 2023.*
+as the primary developer documentation site for MediaPipe as of April 3, 2023.*
 
 ----
 

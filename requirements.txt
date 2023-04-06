@@ -5,4 +5,4 @@ matplotlib
 numpy
 opencv-contrib-python
 protobuf>=3.11,<4
-sounddevice
+sounddevice>=0.4.4

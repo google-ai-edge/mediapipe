@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 #import "mediapipe/tasks/ios/components/containers/sources/MPPCategory.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -65,10 +66,12 @@ NS_SWIFT_NAME(Detection)
 /** The bounding box of the detected object. */
 @property(nonatomic, readonly) CGRect boundingBox;
 
-/** An optional array of `MPPNormalizedKeypoint` objects associated with the detection. Keypoints
+/**
+ * An optional array of `MPPNormalizedKeypoint` objects associated with the detection. Keypoints
  * represent interesting points related to the detection. For example, the keypoints represent the
- * eyes, ear and mouth from face detection model. Or in the template matching detection, e.g. KNIFT,
- * they can represent the feature points for template matching. */
+ * eyes, ear and mouth from the from detection model. In template matching detection, e.g. KNIFT,
+ * they can instead represent the feature points for template matching.
+ */
 @property(nonatomic, readonly, nullable) NSArray<MPPNormalizedKeypoint *> *keypoints;
 
 /**
@@ -80,8 +83,8 @@ NS_SWIFT_NAME(Detection)
  * @param boundingBox  A `CGRect` that represents the bounding box.
  * @param keypoints: An optional array of `MPPNormalizedKeypoint` objects associated with the
  * detection. Keypoints represent interesting points related to the detection. For example, the
- * keypoints represent the eyes, ear and mouth from face detection model. Or in the template
- * matching detection, e.g. KNIFT, they can represent the feature points for template matching.
+ * keypoints represent the eyes, ear and mouth from the face detection model. In template matching
+ * detection, e.g. KNIFT, they can instead represent the feature points for template matching.
  *
  * @return An instance of `MPPDetection` initialized with the given array of categories, bounding
  * box and `nil` keypoints.

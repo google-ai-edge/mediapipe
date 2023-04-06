@@ -33,6 +33,11 @@ cc_library(
 )
 
 cc_library(
+    name = "MetalKit",
+    linkopts = ["-framework MetalKit"],
+)
+
+cc_library(
     name = "MetalPerformanceShaders",
     linkopts = ["-framework MetalPerformanceShaders"],
 )

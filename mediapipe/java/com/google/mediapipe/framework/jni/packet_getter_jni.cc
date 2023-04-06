@@ -65,12 +65,12 @@ bool CopyImageDataToByteBuffer(JNIEnv* env, const mediapipe::ImageFrame& image,
 
   switch (image.ByteDepth()) {
     case 1: {
-      uint8* data = static_cast<uint8*>(buffer_data);
+      uint8_t* data = static_cast<uint8_t*>(buffer_data);
       image.CopyToBuffer(data, expected_buffer_size);
       break;
     }
     case 2: {
-      uint16* data = static_cast<uint16*>(buffer_data);
+      uint16_t* data = static_cast<uint16_t*>(buffer_data);
       image.CopyToBuffer(data, expected_buffer_size);
       break;
     }
@@ -503,8 +503,8 @@ JNIEXPORT jbyteArray JNICALL PACKET_GETTER_METHOD(nativeGetAudioData)(
   int offset = 0;
   for (int sample = 0; sample < num_samples; ++sample) {
     for (int channel = 0; channel < num_channels; ++channel) {
-      int16 value =
-          static_cast<int16>(audio_mat(channel, sample) * kMultiplier);
+      int16_t value =
+          static_cast<int16_t>(audio_mat(channel, sample) * kMultiplier);
       // The java and native has the same byte order, by default is little
       // Endian, we can safely copy data directly, we have tests to cover
       // this.

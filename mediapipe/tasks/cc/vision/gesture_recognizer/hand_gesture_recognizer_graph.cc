@@ -374,22 +374,22 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
     // Inference for custom gesture classifier if it exists.
     if (has_custom_gesture_classifier) {
       ASSIGN_OR_RETURN(
-          auto gesture_clasification_list,
+          auto gesture_classification_list,
           GetGestureClassificationList(
               sub_task_model_resources.custom_gesture_classifier_model_resource,
               graph_options.custom_gesture_classifier_graph_options(),
               embedding_tensors, graph));
-      gesture_clasification_list >> combine_predictions.In(classifier_nums++);
+      gesture_classification_list >> combine_predictions.In(classifier_nums++);
     }
 
     // Inference for canned gesture classifier.
     ASSIGN_OR_RETURN(
-        auto gesture_clasification_list,
+        auto gesture_classification_list,
         GetGestureClassificationList(
             sub_task_model_resources.canned_gesture_classifier_model_resource,
             graph_options.canned_gesture_classifier_graph_options(),
             embedding_tensors, graph));
-    gesture_clasification_list >> combine_predictions.In(classifier_nums++);
+    gesture_classification_list >> combine_predictions.In(classifier_nums++);
 
     auto combined_classification_list =
         combine_predictions.Out(kPredictionTag).Cast<ClassificationList>();

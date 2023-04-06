@@ -192,8 +192,7 @@ absl::Status CalculatorGraph::InitializeStreams() {
       auto input_tag_map,
       tool::TagMap::Create(validated_graph_->Config().input_stream()));
   for (const auto& stream_name : input_tag_map->Names()) {
-    RET_CHECK(!mediapipe::ContainsKey(graph_input_streams_, stream_name))
-            .SetNoLogging()
+    RET_CHECK(!graph_input_streams_.contains(stream_name)).SetNoLogging()
         << "CalculatorGraph Initialization failed, graph input stream \""
         << stream_name << "\" was specified twice.";
     int output_stream_index = validated_graph_->OutputStreamIndex(stream_name);

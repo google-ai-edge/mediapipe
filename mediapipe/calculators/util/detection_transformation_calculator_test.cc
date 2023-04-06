@@ -39,8 +39,8 @@ constexpr char kPixelDetectionsTag[] = "PIXEL_DETECTIONS";
 constexpr char kRelativeDetectionListTag[] = "RELATIVE_DETECTION_LIST";
 constexpr char kRelativeDetectionsTag[] = "RELATIVE_DETECTIONS";
 
-Detection DetectionWithBoundingBox(int32 xmin, int32 ymin, int32 width,
-                                   int32 height) {
+Detection DetectionWithBoundingBox(int32_t xmin, int32_t ymin, int32_t width,
+                                   int32_t height) {
   Detection detection;
   LocationData* location_data = detection.mutable_location_data();
   location_data->set_format(LocationData::BOUNDING_BOX);

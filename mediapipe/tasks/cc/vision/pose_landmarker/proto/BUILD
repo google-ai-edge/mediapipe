@@ -29,3 +29,15 @@ mediapipe_proto_library(
         "//mediapipe/tasks/cc/core/proto:base_options_proto",
     ],
 )
+
+mediapipe_proto_library(
+    name = "pose_landmarker_graph_options_proto",
+    srcs = ["pose_landmarker_graph_options.proto"],
+    deps = [
+        ":pose_landmarks_detector_graph_options_proto",
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/tasks/cc/core/proto:base_options_proto",
+        "//mediapipe/tasks/cc/vision/pose_detector/proto:pose_detector_graph_options_proto",
+    ],
+)

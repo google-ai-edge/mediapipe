@@ -578,7 +578,7 @@ mediapipe::GpuResources* Graph::GetGpuResources() const {
 }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-absl::Status Graph::SetParentGlContext(int64 java_gl_context) {
+absl::Status Graph::SetParentGlContext(int64_t java_gl_context) {
 #if MEDIAPIPE_DISABLE_GPU
   LOG(FATAL) << "GPU support has been disabled in this build!";
 #else

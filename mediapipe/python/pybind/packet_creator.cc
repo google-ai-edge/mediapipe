@@ -42,7 +42,8 @@ Packet CreateImageFramePacket(mediapipe::ImageFormat::Format format,
              format == mediapipe::ImageFormat::SRGBA64) {
     return Adopt(CreateImageFrame<uint16_t>(format, data, copy).release());
   } else if (format == mediapipe::ImageFormat::VEC32F1 ||
-             format == mediapipe::ImageFormat::VEC32F2) {
+             format == mediapipe::ImageFormat::VEC32F2 ||
+             format == mediapipe::ImageFormat::VEC32F4) {
     return Adopt(CreateImageFrame<float>(format, data, copy).release());
   }
   throw RaisePyError(PyExc_RuntimeError,
@@ -63,7 +64,8 @@ Packet CreateImagePacket(mediapipe::ImageFormat::Format format,
     return MakePacket<Image>(std::shared_ptr<ImageFrame>(
         CreateImageFrame<uint16_t>(format, data, copy)));
   } else if (format == mediapipe::ImageFormat::VEC32F1 ||
-             format == mediapipe::ImageFormat::VEC32F2) {
+             format == mediapipe::ImageFormat::VEC32F2 ||
+             format == mediapipe::ImageFormat::VEC32F4) {
     return MakePacket<Image>(std::shared_ptr<ImageFrame>(
         CreateImageFrame<float>(format, data, copy)));
   }

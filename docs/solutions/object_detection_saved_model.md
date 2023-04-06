@@ -1,4 +1,31 @@
-## TensorFlow/TFLite Object Detection Model
+---
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/vision/object_detector
+title: Object Detection
+parent: MediaPipe Legacy Solutions
+nav_order: 9
+---
+
+# MediaPipe Object Detection
+{: .no_toc }
+
+<details close markdown="block">
+  <summary>
+    Table of contents
+  </summary>
+  {: .text-delta }
+1. TOC
+{:toc}
+</details>
+---
+
+**Attention:** *Thank you for your interest in MediaPipe Solutions.
+As of March 1, 2023, this solution was upgraded to a new MediaPipe
+Solution. For more information, see the
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/vision/object_detector)
+site.*
+
+----
 
 ### TensorFlow model
 

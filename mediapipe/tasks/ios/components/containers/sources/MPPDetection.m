@@ -45,10 +45,8 @@
 
   MPPNormalizedKeypoint *otherKeypoint = (MPPNormalizedKeypoint *)object;
 
-  if (CGPointEqualToPoint(self.location, otherKeypoint.location) &&
-      (self.label == otherKeypoint.label) && (self.score == otherKeypoint.score)) {
-    return YES;
-  }
+  return CGPointEqualToPoint(self.location, otherKeypoint.location) &&
+         (self.label == otherKeypoint.label) && (self.score == otherKeypoint.score);
 }
 
 @end

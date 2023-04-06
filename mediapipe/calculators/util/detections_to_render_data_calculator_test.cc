@@ -43,8 +43,8 @@ void VerifyRenderAnnotationColorThickness(
   EXPECT_EQ(annotation.thickness(), options.thickness());
 }
 
-LocationData CreateLocationData(int32 xmin, int32 ymin, int32 width,
-                                int32 height) {
+LocationData CreateLocationData(int32_t xmin, int32_t ymin, int32_t width,
+                                int32_t height) {
   LocationData location_data;
   location_data.set_format(LocationData::BOUNDING_BOX);
   location_data.mutable_bounding_box()->set_xmin(xmin);
@@ -66,7 +66,7 @@ LocationData CreateRelativeLocationData(double xmin, double ymin, double width,
 }
 
 Detection CreateDetection(const std::vector<std::string>& labels,
-                          const std::vector<int32>& label_ids,
+                          const std::vector<int32_t>& label_ids,
                           const std::vector<float>& scores,
                           const LocationData& location_data,
                           const std::string& feature_tag) {

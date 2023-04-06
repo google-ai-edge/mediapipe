@@ -109,7 +109,7 @@ class TimeSeriesFramerCalculator : public CalculatorBase {
   // Returns the timestamp of a sample on a base, which is usually the time
   // stamp of a packet.
   Timestamp CurrentSampleTimestamp(const Timestamp& timestamp_base,
-                                   int64 number_of_samples) {
+                                   int64_t number_of_samples) {
     return timestamp_base + round(number_of_samples / sample_rate_ *
                                   Timestamp::kTimestampUnitsPerSecond);
   }
@@ -118,10 +118,10 @@ class TimeSeriesFramerCalculator : public CalculatorBase {
   // emitted.
   int next_frame_step_samples() const {
     // All numbers are in input samples.
-    const int64 current_output_frame_start = static_cast<int64>(
+    const int64_t current_output_frame_start = static_cast<int64_t>(
         round(cumulative_output_frames_ * average_frame_step_samples_));
     CHECK_EQ(current_output_frame_start, cumulative_completed_samples_);
-    const int64 next_output_frame_start = static_cast<int64>(
+    const int64_t next_output_frame_start = static_cast<int64_t>(
         round((cumulative_output_frames_ + 1) * average_frame_step_samples_));
     return next_output_frame_start - current_output_frame_start;
   }
@@ -134,11 +134,11 @@ class TimeSeriesFramerCalculator : public CalculatorBase {
   // emulate_fractional_frame_overlap is true.
   double average_frame_step_samples_;
   int samples_still_to_drop_;
-  int64 cumulative_output_frames_;
+  int64_t cumulative_output_frames_;
   // "Completed" samples are samples that are no longer needed because
   // the framer has completely stepped past them (taking into account
   // any overlap).
-  int64 cumulative_completed_samples_;
+  int64_t cumulative_completed_samples_;
   Timestamp initial_input_timestamp_;
   // The current timestamp is updated along with the incoming packets.
   Timestamp current_timestamp_;

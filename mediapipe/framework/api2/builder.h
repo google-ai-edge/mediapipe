@@ -425,7 +425,10 @@ using GenericNode = Node<internal::Generic>;
 template <class Calc>
 class Node : public NodeBase {
  public:
-  Node() : NodeBase(std::string(Calc::kCalculatorName)) {}
+  Node()
+      : NodeBase(
+            FunctionRegistry<NodeBase>::GetLookupName(Calc::kCalculatorName)) {}
+
   // Overrides the built-in calculator type string with the provided argument.
   // Can be used to create nodes from pure interfaces.
   // TODO: only use this for pure interfaces
@@ -546,6 +549,7 @@ class Graph {
 
   // Creates a node of a specific type. Should be used for pure interfaces,
   // which do not have a built-in type string.
+  // `type` is a calculator type-name with dot-separated namespaces.
   template <class Calc>
   Node<Calc>& AddNode(absl::string_view type) {
     auto node =
@@ -557,6 +561,7 @@ class Graph {
 
   // Creates a generic node, with no compile-time checking of inputs and
   // outputs. This can be used for calculators whose contract is not visible.
+  // `type` is a calculator type-name with dot-separated namespaces.
   GenericNode& AddNode(absl::string_view type) {
     auto node =
         std::make_unique<GenericNode>(std::string(type.data(), type.size()));

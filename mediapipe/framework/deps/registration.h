@@ -301,6 +301,18 @@ class FunctionRegistry {
     return cxx_name;
   }
 
+  // Returns a type name with '.' separated namespaces.
+  static std::string GetLookupName(const absl::string_view cxx_type_name) {
+    constexpr absl::string_view kCxxSep = "::";
+    constexpr absl::string_view kNameSep = ".";
+    std::vector<absl::string_view> names =
+        absl::StrSplit(cxx_type_name, kCxxSep);
+    if (names[0].empty()) {
+      names.erase(names.begin());
+    }
+    return absl::StrJoin(names, kNameSep);
+  }
+
  private:
   mutable absl::Mutex lock_;
   absl::flat_hash_map<std::string, Function> functions_ ABSL_GUARDED_BY(lock_);

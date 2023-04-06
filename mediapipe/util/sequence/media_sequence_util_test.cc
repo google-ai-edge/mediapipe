@@ -253,7 +253,7 @@ TEST_F(MediaSequenceUtilTest, RoundTripFloatList) {
 TEST_F(MediaSequenceUtilTest, RoundTripInt64List) {
   tensorflow::SequenceExample sequence_example;
   std::string key = "key";
-  std::vector<int64> expected_values{1, 3};
+  std::vector<int64_t> expected_values{1, 3};
   AddInt64Container(key, expected_values, &sequence_example);
   auto values = GetInt64sAt(sequence_example, key, 0);
   ASSERT_EQ(expected_values.size(), values.size());
@@ -302,7 +302,7 @@ TEST_F(MediaSequenceUtilTest, RoundTripContextFeatureList) {
   }
   // Test context in64 list.
   std::string clip_label_index_key = "clip_label_index";
-  std::vector<int64> clip_label_indices{2, 0};
+  std::vector<int64_t> clip_label_indices{2, 0};
   SetContextInt64List(clip_label_index_key, clip_label_indices,
                       &sequence_example);
   for (int i = 0; i < clip_label_indices.size(); ++i) {
@@ -333,7 +333,7 @@ TEST_F(MediaSequenceUtilTest, ContextKeyMissing) {
 TEST_F(MediaSequenceUtilTest, RoundTripFeatureListsFeature) {
   tensorflow::SequenceExample sequence_example;
   std::string timestamp_key = "timestamp";
-  int64 timestamp = 1000;
+  int64_t timestamp = 1000;
   MutableFeatureList(timestamp_key, &sequence_example)
       ->add_feature()
       ->mutable_int64_list()
@@ -413,7 +413,7 @@ TEST_F(MediaSequenceUtilTest, StringFeature) {
 
 TEST_F(MediaSequenceUtilTest, Int64Feature) {
   tensorflow::SequenceExample example;
-  int64 test_value = 47;
+  int64_t test_value = 47;
 
   ASSERT_FALSE(HasInt64Feature(example));
   SetInt64Feature(test_value, &example);
@@ -426,7 +426,7 @@ TEST_F(MediaSequenceUtilTest, Int64Feature) {
 
 TEST_F(MediaSequenceUtilTest, FloatFeature) {
   tensorflow::SequenceExample example;
-  int64 test_value = 47.0f;
+  int64_t test_value = 47.0f;
 
   ASSERT_FALSE(HasFloatFeature(example));
   SetFloatFeature(test_value, &example);
@@ -464,7 +464,7 @@ TEST_F(MediaSequenceUtilTest, StringVectorFeature) {
 
 TEST_F(MediaSequenceUtilTest, Int64VectorFeature) {
   tensorflow::SequenceExample example;
-  ::std::vector<int64> test_value = {47, 42};
+  ::std::vector<int64_t> test_value = {47, 42};
 
   ASSERT_FALSE(HasInt64VectorFeature(example));
   ASSERT_EQ(0, GetInt64VectorFeatureSize(example));
@@ -535,7 +535,7 @@ TEST_F(MediaSequenceUtilTest, StringFeatureList) {
 
 TEST_F(MediaSequenceUtilTest, Int64FeatureList) {
   tensorflow::SequenceExample example;
-  ::std::vector<int64> test_value = {47, 42};
+  ::std::vector<int64_t> test_value = {47, 42};
 
   ASSERT_FALSE(HasInt64FeatureList(example));
   ASSERT_EQ(0, GetInt64FeatureListSize(example));
@@ -602,7 +602,7 @@ TEST_F(MediaSequenceUtilTest, VectorStringFeatureList) {
 
 TEST_F(MediaSequenceUtilTest, VectorInt64FeatureList) {
   tensorflow::SequenceExample example;
-  ::std::vector<::std::vector<int64>> test_value = {{47, 42}, {3, 5}};
+  ::std::vector<::std::vector<int64_t>> test_value = {{47, 42}, {3, 5}};
 
   ASSERT_FALSE(HasVectorInt64FeatureList(example));
   ASSERT_EQ(0, GetVectorInt64FeatureListSize(example));
@@ -704,8 +704,8 @@ TEST_F(MediaSequenceUtilTest, VariablePrefixStringFeature) {
 
 TEST_F(MediaSequenceUtilTest, FixedPrefixInt64Feature) {
   tensorflow::SequenceExample example;
-  int64 test_value_1 = 47;
-  int64 test_value_2 = 49;
+  int64_t test_value_1 = 47;
+  int64_t test_value_2 = 49;
 
   ASSERT_FALSE(HasOneInt64Feature(example));
   SetOneInt64Feature(test_value_1, &example);
@@ -727,8 +727,8 @@ TEST_F(MediaSequenceUtilTest, FixedPrefixInt64Feature) {
 
 TEST_F(MediaSequenceUtilTest, FixedPrefixFloatFeature) {
   tensorflow::SequenceExample example;
-  int64 test_value_1 = 47.0f;
-  int64 test_value_2 = 49.0f;
+  int64_t test_value_1 = 47.0f;
+  int64_t test_value_2 = 49.0f;
 
   ASSERT_FALSE(HasOneFloatFeature(example));
   SetOneFloatFeature(test_value_1, &example);
@@ -795,8 +795,8 @@ TEST_F(MediaSequenceUtilTest, FixedPrefixStringVectorFeature) {
 
 TEST_F(MediaSequenceUtilTest, FixedPrefixInt64VectorFeature) {
   tensorflow::SequenceExample example;
-  ::std::vector<int64> test_value_1 = {47, 42};
-  ::std::vector<int64> test_value_2 = {49, 47};
+  ::std::vector<int64_t> test_value_1 = {47, 42};
+  ::std::vector<int64_t> test_value_2 = {49, 47};
 
   ASSERT_FALSE(HasOneInt64VectorFeature(example));
   ASSERT_EQ(0, GetOneInt64VectorFeatureSize(example));
@@ -905,7 +905,7 @@ TEST_F(MediaSequenceUtilTest, FixedPrefixStringFeatureList) {
 
 TEST_F(MediaSequenceUtilTest, FixedPrefixInt64FeatureList) {
   tensorflow::SequenceExample example;
-  ::std::vector<int64> test_value = {47, 42};
+  ::std::vector<int64_t> test_value = {47, 42};
 
   ASSERT_FALSE(HasInt64FeatureList(example));
   ASSERT_EQ(0, GetInt64FeatureListSize(example));
@@ -990,8 +990,8 @@ TEST_F(MediaSequenceUtilTest, FixedPrefixVectorStringFeatureList) {
 
 TEST_F(MediaSequenceUtilTest, FixedPrefixVectorInt64FeatureList) {
   tensorflow::SequenceExample example;
-  ::std::vector<::std::vector<int64>> test_value_1 = {{47, 42}, {3, 5}};
-  ::std::vector<::std::vector<int64>> test_value_2 = {{49, 47}, {3, 5}};
+  ::std::vector<::std::vector<int64_t>> test_value_1 = {{47, 42}, {3, 5}};
+  ::std::vector<::std::vector<int64_t>> test_value_2 = {{49, 47}, {3, 5}};
 
   ASSERT_FALSE(HasOneVectorInt64FeatureList(example));
   ASSERT_EQ(0, GetOneVectorInt64FeatureListSize(example));
