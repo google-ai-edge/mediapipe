@@ -92,13 +92,14 @@ class OpenCvProcessor : public ImageToTensorConverter {
     const int dst_data_type = output_channels == 1 ? mat_gray_type_ : mat_type_;
     switch (tensor_type_) {
       case Tensor::ElementType::kInt8:
-        RET_CHECK_GE(output_shape.num_elements(),
-                     tensor_buffer_offset / sizeof(int8) + num_elements_per_img)
+        RET_CHECK_GE(
+            output_shape.num_elements(),
+            tensor_buffer_offset / sizeof(int8_t) + num_elements_per_img)
             << "The buffer offset + the input image size is larger than the "
                "allocated tensor buffer.";
-        dst = cv::Mat(
-            output_height, output_width, dst_data_type,
-            buffer_view.buffer<int8>() + tensor_buffer_offset / sizeof(int8));
+        dst = cv::Mat(output_height, output_width, dst_data_type,
+                      buffer_view.buffer<int8_t>() +
+                          tensor_buffer_offset / sizeof(int8_t));
         break;
       case Tensor::ElementType::kFloat32:
         RET_CHECK_GE(
@@ -113,12 +114,12 @@ class OpenCvProcessor : public ImageToTensorConverter {
       case Tensor::ElementType::kUInt8:
         RET_CHECK_GE(
             output_shape.num_elements(),
-            tensor_buffer_offset / sizeof(uint8) + num_elements_per_img)
+            tensor_buffer_offset / sizeof(uint8_t) + num_elements_per_img)
             << "The buffer offset + the input image size is larger than the "
                "allocated tensor buffer.";
-        dst = cv::Mat(
-            output_height, output_width, dst_data_type,
-            buffer_view.buffer<uint8>() + tensor_buffer_offset / sizeof(uint8));
+        dst = cv::Mat(output_height, output_width, dst_data_type,
+                      buffer_view.buffer<uint8_t>() +
+                          tensor_buffer_offset / sizeof(uint8_t));
         break;
       default:
         return InvalidArgumentError(
