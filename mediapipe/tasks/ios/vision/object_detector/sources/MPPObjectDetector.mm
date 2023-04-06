@@ -84,7 +84,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
         if ([MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
           result = [MPPObjectDetectionResult
               objectDetectionResultWithDetectionsPacket:status_or_packets.value()
-                                                            [kClassificationsStreamName.cppString]];
+                                                            [kDetectionsStreamName.cppString]];
         }
         options.completion(result, callbackError);
       };
@@ -196,7 +196,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 
   return [MPPObjectDetectionResult
       objectDetectionResultWithDetectionsPacket:outputPacketMap
-                                                    .value()[kClassificationsStreamName.cppString]];
+                                                    .value()[kDetectionsStreamName.cppString]];
 }
 
 - (nullable MPPObjectDetectionResult *)detectInVideoFrame:(MPPImage *)image
