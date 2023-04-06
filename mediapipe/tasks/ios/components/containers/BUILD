@@ -54,3 +54,9 @@ objc_library(
         "//third_party/apple_frameworks:UIKit",
     ],
 )
+
+objc_library(
+    name = "MPPLandmark",
+    srcs = ["sources/MPPLandmark.m"],
+    hdrs = ["sources/MPPLandmark.h"],
+)
