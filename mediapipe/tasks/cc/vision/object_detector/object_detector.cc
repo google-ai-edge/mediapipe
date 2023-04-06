@@ -170,7 +170,7 @@ absl::StatusOr<ObjectDetectorResult> ObjectDetector::Detect(
 }
 
 absl::StatusOr<ObjectDetectorResult> ObjectDetector::DetectForVideo(
-    mediapipe::Image image, int64 timestamp_ms,
+    mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -195,7 +195,7 @@ absl::StatusOr<ObjectDetectorResult> ObjectDetector::DetectForVideo(
 }
 
 absl::Status ObjectDetector::DetectAsync(
-    Image image, int64 timestamp_ms,
+    Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(

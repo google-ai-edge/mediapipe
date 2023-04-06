@@ -64,7 +64,7 @@ using ::tflite::EnumNameContentProperties;
 using ::tflite::ProcessUnit;
 using ::tflite::ProcessUnitOptions_ScoreThresholdingOptions;
 using ::tflite::TensorMetadata;
-using LabelItems = mediapipe::proto_ns::Map<int64, ::mediapipe::LabelMapItem>;
+using LabelItems = mediapipe::proto_ns::Map<int64_t, ::mediapipe::LabelMapItem>;
 using ObjectDetectorOptionsProto =
     object_detector::proto::ObjectDetectorOptions;
 using TensorsSource =
