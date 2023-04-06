@@ -34,7 +34,9 @@ from mediapipe.tasks.python.vision.core import image_processing_options as image
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
 _BaseOptions = base_options_module.BaseOptions
-_HandLandmarkerGraphOptionsProto = hand_landmarker_graph_options_pb2.HandLandmarkerGraphOptions
+_HandLandmarkerGraphOptionsProto = (
+    hand_landmarker_graph_options_pb2.HandLandmarkerGraphOptions
+)
 _RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _TaskInfo = task_info_module.TaskInfo
@@ -56,6 +58,7 @@ _MICRO_SECONDS_PER_MILLISECOND = 1000
 
 class HandLandmark(enum.IntEnum):
   """The 21 hand landmarks."""
+
   WRIST = 0
   THUMB_CMC = 1
   THUMB_MCP = 2
@@ -95,14 +98,18 @@ class HandLandmarkerResult:
 
 
 def _build_landmarker_result(
-    output_packets: Mapping[str, packet_module.Packet]) -> HandLandmarkerResult:
+    output_packets: Mapping[str, packet_module.Packet]
+) -> HandLandmarkerResult:
   """Constructs a `HandLandmarksDetectionResult` from output packets."""
   handedness_proto_list = packet_getter.get_proto_list(
-      output_packets[_HANDEDNESS_STREAM_NAME])
+      output_packets[_HANDEDNESS_STREAM_NAME]
+  )
   hand_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_HAND_LANDMARKS_STREAM_NAME])
+      output_packets[_HAND_LANDMARKS_STREAM_NAME]
+  )
   hand_world_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_HAND_WORLD_LANDMARKS_STREAM_NAME])
+      output_packets[_HAND_WORLD_LANDMARKS_STREAM_NAME]
+  )
 
   handedness_results = []
   for proto in handedness_proto_list:
@@ -115,7 +122,9 @@ def _build_landmarker_result(
               index=handedness.index,
               score=handedness.score,
               display_name=handedness.display_name,
-              category_name=handedness.label))
+              category_name=handedness.label,
+          )
+      )
     handedness_results.append(handedness_categories)
 
   hand_landmarks_results = []
@@ -125,7 +134,8 @@ def _build_landmarker_result(
     hand_landmarks_list = []
     for hand_landmark in hand_landmarks.landmark:
       hand_landmarks_list.append(
-          landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark))
+          landmark_module.NormalizedLandmark.create_from_pb2(hand_landmark)
+      )
     hand_landmarks_results.append(hand_landmarks_list)
 
   hand_world_landmarks_results = []
@@ -135,11 +145,13 @@ def _build_landmarker_result(
     hand_world_landmarks_list = []
     for hand_world_landmark in hand_world_landmarks.landmark:
       hand_world_landmarks_list.append(
-          landmark_module.Landmark.create_from_pb2(hand_world_landmark))
+          landmark_module.Landmark.create_from_pb2(hand_world_landmark)
+      )
     hand_world_landmarks_results.append(hand_world_landmarks_list)
 
-  return HandLandmarkerResult(handedness_results, hand_landmarks_results,
-                              hand_world_landmarks_results)
+  return HandLandmarkerResult(
+      handedness_results, hand_landmarks_results, hand_world_landmarks_results
+  )
 
 
 @dataclasses.dataclass
@@ -167,28 +179,41 @@ class HandLandmarkerOptions:
       data. The result callback should only be specified when the running mode
       is set to the live stream mode.
   """
+
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
   num_hands: Optional[int] = 1
   min_hand_detection_confidence: Optional[float] = 0.5
   min_hand_presence_confidence: Optional[float] = 0.5
   min_tracking_confidence: Optional[float] = 0.5
-  result_callback: Optional[Callable[
-      [HandLandmarkerResult, image_module.Image, int], None]] = None
+  result_callback: Optional[
+      Callable[[HandLandmarkerResult, image_module.Image, int], None]
+  ] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _HandLandmarkerGraphOptionsProto:
     """Generates an HandLandmarkerGraphOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
-    base_options_proto.use_stream_mode = False if self.running_mode == _RunningMode.IMAGE else True
+    base_options_proto.use_stream_mode = (
+        False if self.running_mode == _RunningMode.IMAGE else True
+    )
 
     # Initialize the hand landmarker options from base options.
     hand_landmarker_options_proto = _HandLandmarkerGraphOptionsProto(
-        base_options=base_options_proto)
-    hand_landmarker_options_proto.min_tracking_confidence = self.min_tracking_confidence
-    hand_landmarker_options_proto.hand_detector_graph_options.num_hands = self.num_hands
-    hand_landmarker_options_proto.hand_detector_graph_options.min_detection_confidence = self.min_hand_detection_confidence
-    hand_landmarker_options_proto.hand_landmarks_detector_graph_options.min_detection_confidence = self.min_hand_presence_confidence
+        base_options=base_options_proto
+    )
+    hand_landmarker_options_proto.min_tracking_confidence = (
+        self.min_tracking_confidence
+    )
+    hand_landmarker_options_proto.hand_detector_graph_options.num_hands = (
+        self.num_hands
+    )
+    hand_landmarker_options_proto.hand_detector_graph_options.min_detection_confidence = (
+        self.min_hand_detection_confidence
+    )
+    hand_landmarker_options_proto.hand_landmarks_detector_graph_options.min_detection_confidence = (
+        self.min_hand_presence_confidence
+    )
     return hand_landmarker_options_proto
 
 
@@ -216,12 +241,14 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
     """
     base_options = _BaseOptions(model_asset_path=model_path)
     options = HandLandmarkerOptions(
-        base_options=base_options, running_mode=_RunningMode.IMAGE)
+        base_options=base_options, running_mode=_RunningMode.IMAGE
+    )
     return cls.create_from_options(options)
 
   @classmethod
-  def create_from_options(cls,
-                          options: HandLandmarkerOptions) -> 'HandLandmarker':
+  def create_from_options(
+      cls, options: HandLandmarkerOptions
+  ) -> 'HandLandmarker':
     """Creates the `HandLandmarker` object from hand landmarker options.
 
     Args:
@@ -245,14 +272,19 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
       if output_packets[_HAND_LANDMARKS_STREAM_NAME].is_empty():
         empty_packet = output_packets[_HAND_LANDMARKS_STREAM_NAME]
         options.result_callback(
-            HandLandmarkerResult([], [], []), image,
-            empty_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
+            HandLandmarkerResult([], [], []),
+            image,
+            empty_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
+        )
         return
 
       hand_landmarks_detection_result = _build_landmarker_result(output_packets)
       timestamp = output_packets[_HAND_LANDMARKS_STREAM_NAME].timestamp
-      options.result_callback(hand_landmarks_detection_result, image,
-                              timestamp.value // _MICRO_SECONDS_PER_MILLISECOND)
+      options.result_callback(
+          hand_landmarks_detection_result,
+          image,
+          timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
+      )
 
     task_info = _TaskInfo(
         task_graph=_TASK_GRAPH_NAME,
@@ -263,21 +295,26 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
         output_streams=[
             ':'.join([_HANDEDNESS_TAG, _HANDEDNESS_STREAM_NAME]),
             ':'.join([_HAND_LANDMARKS_TAG, _HAND_LANDMARKS_STREAM_NAME]),
-            ':'.join([
-                _HAND_WORLD_LANDMARKS_TAG, _HAND_WORLD_LANDMARKS_STREAM_NAME
-            ]), ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME])
+            ':'.join(
+                [_HAND_WORLD_LANDMARKS_TAG, _HAND_WORLD_LANDMARKS_STREAM_NAME]
+            ),
+            ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
         ],
-        task_options=options)
+        task_options=options,
+    )
     return cls(
         task_info.generate_graph_config(
-            enable_flow_limiting=options.running_mode ==
-            _RunningMode.LIVE_STREAM), options.running_mode,
-        packets_callback if options.result_callback else None)
+            enable_flow_limiting=options.running_mode
+            == _RunningMode.LIVE_STREAM
+        ),
+        options.running_mode,
+        packets_callback if options.result_callback else None,
+    )
 
   def detect(
       self,
       image: image_module.Image,
-      image_processing_options: Optional[_ImageProcessingOptions] = None
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> HandLandmarkerResult:
     """Performs hand landmarks detection on the given image.
 
@@ -300,12 +337,13 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
       RuntimeError: If hand landmarker detection failed to run.
     """
     normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, roi_allowed=False)
+        image_processing_options, image, roi_allowed=False
+    )
     output_packets = self._process_image_data({
-        _IMAGE_IN_STREAM_NAME:
-            packet_creator.create_image(image),
-        _NORM_RECT_STREAM_NAME:
-            packet_creator.create_proto(normalized_rect.to_pb2())
+        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
+        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
+            normalized_rect.to_pb2()
+        ),
     })
 
     if output_packets[_HAND_LANDMARKS_STREAM_NAME].is_empty():
@@ -317,7 +355,7 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
       self,
       image: image_module.Image,
       timestamp_ms: int,
-      image_processing_options: Optional[_ImageProcessingOptions] = None
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> HandLandmarkerResult:
     """Performs hand landmarks detection on the provided video frame.
 
@@ -342,14 +380,15 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
       RuntimeError: If hand landmarker detection failed to run.
     """
     normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, roi_allowed=False)
+        image_processing_options, image, roi_allowed=False
+    )
     output_packets = self._process_video_data({
-        _IMAGE_IN_STREAM_NAME:
-            packet_creator.create_image(image).at(
-                timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-        _NORM_RECT_STREAM_NAME:
-            packet_creator.create_proto(normalized_rect.to_pb2()).at(
-                timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
+        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
+            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
+        ),
+        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
+            normalized_rect.to_pb2()
+        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
     })
 
     if output_packets[_HAND_LANDMARKS_STREAM_NAME].is_empty():
@@ -361,7 +400,7 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
       self,
       image: image_module.Image,
       timestamp_ms: int,
-      image_processing_options: Optional[_ImageProcessingOptions] = None
+      image_processing_options: Optional[_ImageProcessingOptions] = None,
   ) -> None:
     """Sends live image data to perform hand landmarks detection.
 
@@ -394,12 +433,13 @@ class HandLandmarker(base_vision_task_api.BaseVisionTaskApi):
       hand landmarker has already processed.
     """
     normalized_rect = self.convert_to_normalized_rect(
-        image_processing_options, roi_allowed=False)
+        image_processing_options, image, roi_allowed=False
+    )
     self._send_live_stream_data({
-        _IMAGE_IN_STREAM_NAME:
-            packet_creator.create_image(image).at(
-                timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
-        _NORM_RECT_STREAM_NAME:
-            packet_creator.create_proto(normalized_rect.to_pb2()).at(
-                timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND)
+        _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
+            timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
+        ),
+        _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
+            normalized_rect.to_pb2()
+        ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
     })
