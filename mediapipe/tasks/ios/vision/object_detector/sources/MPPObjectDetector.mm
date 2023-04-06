@@ -25,6 +25,7 @@
 namespace {
 using ::mediapipe::NormalizedRect;
 using ::mediapipe::Packet;
+using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
 }  // namespace
@@ -80,13 +81,22 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
     if (options.completion) {
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
         NSError *callbackError = nil;
-        MPPObjectDetectionResult *result;
-        if ([MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
-          result = [MPPObjectDetectionResult
+        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
+          options.completion(nil, Timestamp::Unset().Value(), callbackError);
+          return;
+        }
+
+        PacketMap &outputPacketMap = status_or_packets.value();
+        if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
+          return;
+        }
+
+        MPPObjectDetectionResult *result = [MPPObjectDetectionResult
               objectDetectionResultWithDetectionsPacket:status_or_packets.value()
                                                             [kDetectionsStreamName.cppString]];
-        }
-        options.completion(result, callbackError);
+
+        options.completion(result, outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
+                  kMicroSecondsPerMilliSecond, callbackError);
       };
     }
 
@@ -111,7 +121,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPObjectDetectionResult *)detectINImage:(MPPImage *)image
+- (nullable MPPObjectDetectionResult *)detectInImage:(MPPImage *)image
                                     regionOfInterest:(CGRect)roi
                                                error:(NSError **)error {
   std::optional<NormalizedRect> rect =

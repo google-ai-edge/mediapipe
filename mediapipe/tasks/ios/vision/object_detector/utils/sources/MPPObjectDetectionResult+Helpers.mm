@@ -16,8 +16,6 @@
 
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPDetection+Helpers.h"
 
-static const int kMicroSecondsPerMilliSecond = 1000;
-
 namespace {
 using DetectionProto = ::mediapipe::Detection;
 using ::mediapipe::Packet;
