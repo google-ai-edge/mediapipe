@@ -30,3 +30,13 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPObjectDetectionResultHelpers",
+    srcs = ["sources/MPPObjectDetectionResult+Helpers.mm"],
+    hdrs = ["sources/MPPObjectDetectionResult+Helpers.h"],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPDetectionHelpers",
+        "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetectionResult",
+    ],
+)
