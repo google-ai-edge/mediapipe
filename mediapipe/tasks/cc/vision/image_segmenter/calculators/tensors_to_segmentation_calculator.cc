@@ -32,6 +32,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -210,8 +211,9 @@ std::vector<Image> ProcessForConfidenceMaskCpu(const Shape& input_shape,
 }  // namespace
 
 // Converts Tensors from a vector of Tensor to Segmentation masks. The
-// calculator always output confidence masks, and an optional category mask if
-// CATEGORY_MASK is connected.
+// calculator can output optional confidence masks if CONFIDENCE_MASK is
+// connected, and an optional category mask if CATEGORY_MASK is connected. At
+// least one of CONFIDENCE_MASK and CATEGORY_MASK must be connected.
 //
 // Performs optional resizing to OUTPUT_SIZE dimension if provided,
 // otherwise the segmented masks is the same size as input tensor.
@@ -296,6 +298,13 @@ absl::Status TensorsToSegmentationCalculator::Open(
                  SegmenterOptions::UNSPECIFIED)
         << "Must specify output_type as one of "
            "[CONFIDENCE_MASK|CATEGORY_MASK].";
+  } else {
+    if (!cc->Outputs().HasTag("CONFIDENCE_MASK") &&
+        !cc->Outputs().HasTag("CATEGORY_MASK")) {
+      return absl::InvalidArgumentError(
+          "At least one of CONFIDENCE_MASK and CATEGORY_MASK must be "
+          "connected.");
+    }
   }
 #ifdef __EMSCRIPTEN__
   MP_RETURN_IF_ERROR(postprocessor_.Initialize(cc, options_));
@@ -366,14 +375,16 @@ absl::Status TensorsToSegmentationCalculator::Process(
     return absl::OkStatus();
   }
 
-  std::vector<Image> confidence_masks =
-      ProcessForConfidenceMaskCpu(input_shape,
-                                  {/* height= */ output_height,
-                                   /* width= */ output_width,
-                                   /* channels= */ input_shape.channels},
-                                  options_.segmenter_options(), tensors_buffer);
-  for (int i = 0; i < confidence_masks.size(); ++i) {
-    kConfidenceMaskOut(cc)[i].Send(std::move(confidence_masks[i]));
+  if (cc->Outputs().HasTag("CONFIDENCE_MASK")) {
+    std::vector<Image> confidence_masks = ProcessForConfidenceMaskCpu(
+        input_shape,
+        {/* height= */ output_height,
+         /* width= */ output_width,
+         /* channels= */ input_shape.channels},
+        options_.segmenter_options(), tensors_buffer);
+    for (int i = 0; i < confidence_masks.size(); ++i) {
+      kConfidenceMaskOut(cc)[i].Send(std::move(confidence_masks[i]));
+    }
   }
   if (cc->Outputs().HasTag("CATEGORY_MASK")) {
     kCategoryMaskOut(cc).Send(ProcessForCategoryMaskCpu(

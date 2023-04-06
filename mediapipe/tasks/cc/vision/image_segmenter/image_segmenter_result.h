@@ -29,7 +29,7 @@ namespace image_segmenter {
 struct ImageSegmenterResult {
   // Multiple masks of float image in VEC32F1 format where, for each mask, each
   // pixel represents the prediction confidence, usually in the [0, 1] range.
-  std::vector<Image> confidence_masks;
+  std::optional<std::vector<Image>> confidence_masks;
   // A category mask of uint8 image in GRAY8 format where each pixel represents
   // the class which the pixel in the original image was predicted to belong to.
   std::optional<Image> category_mask;

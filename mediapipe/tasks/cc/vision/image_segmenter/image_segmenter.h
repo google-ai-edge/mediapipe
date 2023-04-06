@@ -53,6 +53,9 @@ struct ImageSegmenterOptions {
   // Metadata, if any. Defaults to English.
   std::string display_names_locale = "en";
 
+  // Whether to output confidence masks.
+  bool output_confidence_masks = true;
+
   // Whether to output category mask.
   bool output_category_mask = false;
 
@@ -77,8 +80,10 @@ struct ImageSegmenterOptions {
 //    - if type is kTfLiteFloat32, NormalizationOptions are required to be
 //      attached to the metadata for input normalization.
 // Output ImageSegmenterResult:
-//    Provides confidence masks and an optional category mask if
-//    `output_category_mask` is set true.
+//    Provides optional confidence masks if `output_confidence_masks` is set
+//    true,  and an optional category mask if `output_category_mask` is set
+//    true. At least one of `output_confidence_masks` and `output_category_mask`
+//    must be set to true.
 // An example of such model can be found at:
 // https://tfhub.dev/tensorflow/lite-model/deeplabv3/1/metadata/2
 class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
@@ -167,6 +172,7 @@ class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
 
  private:
   std::vector<std::string> labels_;
+  bool output_confidence_masks_;
   bool output_category_mask_;
 };
 

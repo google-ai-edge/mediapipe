@@ -278,6 +278,7 @@ TEST_F(ImageModeTest, SucceedsWithCategoryMask) {
   auto options = std::make_unique<ImageSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kDeeplabV3WithMetadata);
+  options->output_confidence_masks = false;
   options->output_category_mask = true;
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
@@ -306,7 +307,7 @@ TEST_F(ImageModeTest, SucceedsWithConfidenceMask) {
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
   MP_ASSERT_OK_AND_ASSIGN(auto result, segmenter->Segment(image));
-  EXPECT_EQ(result.confidence_masks.size(), 21);
+  EXPECT_EQ(result.confidence_masks->size(), 21);
 
   cv::Mat expected_mask = cv::imread(
       JoinPath("./", kTestDataDirectory, "cat_mask.jpg"), cv::IMREAD_GRAYSCALE);
@@ -315,7 +316,7 @@ TEST_F(ImageModeTest, SucceedsWithConfidenceMask) {
 
   // Cat category index 8.
   cv::Mat cat_mask = mediapipe::formats::MatView(
-      result.confidence_masks[8].GetImageFrameSharedPtr().get());
+      result.confidence_masks->at(8).GetImageFrameSharedPtr().get());
   EXPECT_THAT(cat_mask,
               SimilarToFloatMask(expected_mask_float, kGoldenMaskSimilarity));
 }
@@ -336,7 +337,7 @@ TEST_F(ImageModeTest, DISABLED_SucceedsWithRotation) {
   image_processing_options.rotation_degrees = -90;
   MP_ASSERT_OK_AND_ASSIGN(auto result,
                           segmenter->Segment(image, image_processing_options));
-  EXPECT_EQ(result.confidence_masks.size(), 21);
+  EXPECT_EQ(result.confidence_masks->size(), 21);
 
   cv::Mat expected_mask =
       cv::imread(JoinPath("./", kTestDataDirectory, "cat_rotated_mask.jpg"),
@@ -346,7 +347,7 @@ TEST_F(ImageModeTest, DISABLED_SucceedsWithRotation) {
 
   // Cat category index 8.
   cv::Mat cat_mask = mediapipe::formats::MatView(
-      result.confidence_masks[8].GetImageFrameSharedPtr().get());
+      result.confidence_masks->at(8).GetImageFrameSharedPtr().get());
   EXPECT_THAT(cat_mask,
               SimilarToFloatMask(expected_mask_float, kGoldenMaskSimilarity));
 }
@@ -384,7 +385,7 @@ TEST_F(ImageModeTest, SucceedsSelfie128x128Segmentation) {
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
   MP_ASSERT_OK_AND_ASSIGN(auto result, segmenter->Segment(image));
-  EXPECT_EQ(result.confidence_masks.size(), 2);
+  EXPECT_EQ(result.confidence_masks->size(), 2);
 
   cv::Mat expected_mask =
       cv::imread(JoinPath("./", kTestDataDirectory,
@@ -395,7 +396,7 @@ TEST_F(ImageModeTest, SucceedsSelfie128x128Segmentation) {
 
   // Selfie category index 1.
   cv::Mat selfie_mask = mediapipe::formats::MatView(
-      result.confidence_masks[1].GetImageFrameSharedPtr().get());
+      result.confidence_masks->at(1).GetImageFrameSharedPtr().get());
   EXPECT_THAT(selfie_mask,
               SimilarToFloatMask(expected_mask_float, kGoldenMaskSimilarity));
 }
@@ -409,7 +410,7 @@ TEST_F(ImageModeTest, SucceedsSelfie144x256Segmentations) {
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
   MP_ASSERT_OK_AND_ASSIGN(auto result, segmenter->Segment(image));
-  EXPECT_EQ(result.confidence_masks.size(), 1);
+  EXPECT_EQ(result.confidence_masks->size(), 1);
 
   cv::Mat expected_mask =
       cv::imread(JoinPath("./", kTestDataDirectory,
@@ -419,7 +420,7 @@ TEST_F(ImageModeTest, SucceedsSelfie144x256Segmentations) {
   expected_mask.convertTo(expected_mask_float, CV_32FC1, 1 / 255.f);
 
   cv::Mat selfie_mask = mediapipe::formats::MatView(
-      result.confidence_masks[0].GetImageFrameSharedPtr().get());
+      result.confidence_masks->at(0).GetImageFrameSharedPtr().get());
   EXPECT_THAT(selfie_mask,
               SimilarToFloatMask(expected_mask_float, kGoldenMaskSimilarity));
 }
@@ -434,7 +435,7 @@ TEST_F(ImageModeTest, SucceedsPortraitSelfieSegmentationConfidenceMask) {
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
   MP_ASSERT_OK_AND_ASSIGN(auto result, segmenter->Segment(image));
-  EXPECT_EQ(result.confidence_masks.size(), 1);
+  EXPECT_EQ(result.confidence_masks->size(), 1);
   MP_ASSERT_OK(segmenter->Close());
 
   cv::Mat expected_mask = cv::imread(
@@ -445,7 +446,7 @@ TEST_F(ImageModeTest, SucceedsPortraitSelfieSegmentationConfidenceMask) {
   expected_mask.convertTo(expected_mask_float, CV_32FC1, 1 / 255.f);
 
   cv::Mat selfie_mask = mediapipe::formats::MatView(
-      result.confidence_masks[0].GetImageFrameSharedPtr().get());
+      result.confidence_masks->at(0).GetImageFrameSharedPtr().get());
   EXPECT_THAT(selfie_mask,
               SimilarToFloatMask(expected_mask_float, kGoldenMaskSimilarity));
 }
@@ -506,10 +507,10 @@ TEST_F(ImageModeTest, SucceedsHairSegmentation) {
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageSegmenter> segmenter,
                           ImageSegmenter::Create(std::move(options)));
   MP_ASSERT_OK_AND_ASSIGN(auto result, segmenter->Segment(image));
-  EXPECT_EQ(result.confidence_masks.size(), 2);
+  EXPECT_EQ(result.confidence_masks->size(), 2);
 
   cv::Mat hair_mask = mediapipe::formats::MatView(
-      result.confidence_masks[1].GetImageFrameSharedPtr().get());
+      result.confidence_masks->at(1).GetImageFrameSharedPtr().get());
   MP_ASSERT_OK(segmenter->Close());
   cv::Mat expected_mask = cv::imread(
       JoinPath("./", kTestDataDirectory, "portrait_hair_expected_mask.jpg"),

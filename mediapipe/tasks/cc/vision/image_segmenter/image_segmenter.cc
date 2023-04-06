@@ -60,15 +60,19 @@ using ImageSegmenterGraphOptionsProto = ::mediapipe::tasks::vision::
 // "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph".
 CalculatorGraphConfig CreateGraphConfig(
     std::unique_ptr<ImageSegmenterGraphOptionsProto> options,
-    bool output_category_mask, bool enable_flow_limiting) {
+    bool output_confidence_masks, bool output_category_mask,
+    bool enable_flow_limiting) {
   api2::builder::Graph graph;
   auto& task_subgraph = graph.AddNode(kSubgraphTypeName);
   task_subgraph.GetOptions<ImageSegmenterGraphOptionsProto>().Swap(
       options.get());
   graph.In(kImageTag).SetName(kImageInStreamName);
   graph.In(kNormRectTag).SetName(kNormRectStreamName);
-  task_subgraph.Out(kConfidenceMasksTag).SetName(kConfidenceMasksStreamName) >>
-      graph.Out(kConfidenceMasksTag);
+  if (output_confidence_masks) {
+    task_subgraph.Out(kConfidenceMasksTag)
+            .SetName(kConfidenceMasksStreamName) >>
+        graph.Out(kConfidenceMasksTag);
+  }
   if (output_category_mask) {
     task_subgraph.Out(kCategoryMaskTag).SetName(kCategoryMaskStreamName) >>
         graph.Out(kCategoryMaskTag);
@@ -135,11 +139,17 @@ absl::StatusOr<std::vector<std::string>> GetLabelsFromGraphConfig(
 
 absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
     std::unique_ptr<ImageSegmenterOptions> options) {
+  if (!options->output_confidence_masks && !options->output_category_mask) {
+    return absl::InvalidArgumentError(
+        "At least one of `output_confidence_masks` and `output_category_mask` "
+        "must be set.");
+  }
   auto options_proto = ConvertImageSegmenterOptionsToProto(options.get());
   tasks::core::PacketsCallback packets_callback = nullptr;
   if (options->result_callback) {
     auto result_callback = options->result_callback;
     bool output_category_mask = options->output_category_mask;
+    bool output_confidence_masks = options->output_confidence_masks;
     packets_callback =
         [=](absl::StatusOr<tasks::core::PacketMap> status_or_packets) {
           if (!status_or_packets.ok()) {
@@ -151,8 +161,12 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
           if (status_or_packets.value()[kImageOutStreamName].IsEmpty()) {
             return;
           }
-          Packet confidence_masks =
-              status_or_packets.value()[kConfidenceMasksStreamName];
+          std::optional<std::vector<Image>> confidence_masks;
+          if (output_confidence_masks) {
+            confidence_masks =
+                status_or_packets.value()[kConfidenceMasksStreamName]
+                    .Get<std::vector<Image>>();
+          }
           std::optional<Image> category_mask;
           if (output_category_mask) {
             category_mask =
@@ -160,23 +174,24 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
           }
           Packet image_packet = status_or_packets.value()[kImageOutStreamName];
           result_callback(
-              {{confidence_masks.Get<std::vector<Image>>(), category_mask}},
-              image_packet.Get<Image>(),
-              confidence_masks.Timestamp().Value() /
-                  kMicroSecondsPerMilliSecond);
+              {{confidence_masks, category_mask}}, image_packet.Get<Image>(),
+              image_packet.Timestamp().Value() / kMicroSecondsPerMilliSecond);
         };
   }
   auto image_segmenter =
       core::VisionTaskApiFactory::Create<ImageSegmenter,
                                          ImageSegmenterGraphOptionsProto>(
           CreateGraphConfig(
-              std::move(options_proto), options->output_category_mask,
+              std::move(options_proto), options->output_confidence_masks,
+              options->output_category_mask,
               options->running_mode == core::RunningMode::LIVE_STREAM),
           std::move(options->base_options.op_resolver), options->running_mode,
           std::move(packets_callback));
   if (!image_segmenter.ok()) {
     return image_segmenter.status();
   }
+  image_segmenter.value()->output_confidence_masks_ =
+      options->output_confidence_masks;
   image_segmenter.value()->output_category_mask_ =
       options->output_category_mask;
   ASSIGN_OR_RETURN(
@@ -203,8 +218,11 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::Segment(
           {{kImageInStreamName, mediapipe::MakePacket<Image>(std::move(image))},
            {kNormRectStreamName,
             MakePacket<NormalizedRect>(std::move(norm_rect))}}));
-  std::vector<Image> confidence_masks =
-      output_packets[kConfidenceMasksStreamName].Get<std::vector<Image>>();
+  std::optional<std::vector<Image>> confidence_masks;
+  if (output_confidence_masks_) {
+    confidence_masks =
+        output_packets[kConfidenceMasksStreamName].Get<std::vector<Image>>();
+  }
   std::optional<Image> category_mask;
   if (output_category_mask_) {
     category_mask = output_packets[kCategoryMaskStreamName].Get<Image>();
@@ -233,8 +251,11 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
            {kNormRectStreamName,
             MakePacket<NormalizedRect>(std::move(norm_rect))
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
-  std::vector<Image> confidence_masks =
-      output_packets[kConfidenceMasksStreamName].Get<std::vector<Image>>();
+  std::optional<std::vector<Image>> confidence_masks;
+  if (output_confidence_masks_) {
+    confidence_masks =
+        output_packets[kConfidenceMasksStreamName].Get<std::vector<Image>>();
+  }
   std::optional<Image> category_mask;
   if (output_category_mask_) {
     category_mask = output_packets[kCategoryMaskStreamName].Get<Image>();
