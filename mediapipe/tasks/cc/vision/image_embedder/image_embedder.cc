@@ -163,7 +163,7 @@ absl::StatusOr<ImageEmbedderResult> ImageEmbedder::Embed(
 }
 
 absl::StatusOr<ImageEmbedderResult> ImageEmbedder::EmbedForVideo(
-    Image image, int64 timestamp_ms,
+    Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -187,7 +187,7 @@ absl::StatusOr<ImageEmbedderResult> ImageEmbedder::EmbedForVideo(
 }
 
 absl::Status ImageEmbedder::EmbedAsync(
-    Image image, int64 timestamp_ms,
+    Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(

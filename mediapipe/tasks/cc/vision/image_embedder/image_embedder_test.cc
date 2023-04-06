@@ -150,7 +150,7 @@ TEST_F(CreateTest, FailsWithIllegalCallbackInImageOrVideoMode) {
         JoinPath("./", kTestDataDirectory, kMobileNetV3Embedder);
     options->running_mode = running_mode;
     options->result_callback = [](absl::StatusOr<ImageEmbedderResult>,
-                                  const Image& image, int64 timestamp_ms) {};
+                                  const Image& image, int64_t timestamp_ms) {};
 
     auto image_embedder = ImageEmbedder::Create(std::move(options));
 
@@ -505,7 +505,7 @@ TEST_F(LiveStreamModeTest, FailsWithCallingWrongMethod) {
       JoinPath("./", kTestDataDirectory, kMobileNetV3Embedder);
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->result_callback = [](absl::StatusOr<ImageEmbedderResult>,
-                                const Image& image, int64 timestamp_ms) {};
+                                const Image& image, int64_t timestamp_ms) {};
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageEmbedder> image_embedder,
                           ImageEmbedder::Create(std::move(options)));
 
@@ -536,7 +536,7 @@ TEST_F(LiveStreamModeTest, FailsWithOutOfOrderInputTimestamps) {
       JoinPath("./", kTestDataDirectory, kMobileNetV3Embedder);
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->result_callback = [](absl::StatusOr<ImageEmbedderResult>,
-                                const Image& image, int64 timestamp_ms) {};
+                                const Image& image, int64_t timestamp_ms) {};
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ImageEmbedder> image_embedder,
                           ImageEmbedder::Create(std::move(options)));
 
@@ -555,7 +555,7 @@ TEST_F(LiveStreamModeTest, FailsWithOutOfOrderInputTimestamps) {
 struct LiveStreamModeResults {
   ImageEmbedderResult embedding_result;
   std::pair<int, int> image_size;
-  int64 timestamp_ms;
+  int64_t timestamp_ms;
 };
 
 TEST_F(LiveStreamModeTest, Succeeds) {
@@ -570,7 +570,7 @@ TEST_F(LiveStreamModeTest, Succeeds) {
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->result_callback =
       [&results](absl::StatusOr<ImageEmbedderResult> embedding_result,
-                 const Image& image, int64 timestamp_ms) {
+                 const Image& image, int64_t timestamp_ms) {
         MP_ASSERT_OK(embedding_result.status());
         results.push_back(
             {.embedding_result = std::move(embedding_result).value(),
@@ -589,7 +589,7 @@ TEST_F(LiveStreamModeTest, Succeeds) {
   // number of iterations.
   ASSERT_LE(results.size(), iterations);
   ASSERT_GT(results.size(), 0);
-  int64 timestamp_ms = -1;
+  int64_t timestamp_ms = -1;
   for (int i = 0; i < results.size(); ++i) {
     const auto& result = results[i];
     EXPECT_GT(result.timestamp_ms, timestamp_ms);
