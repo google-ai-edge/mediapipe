@@ -123,8 +123,25 @@ export abstract class VisionTaskRunner extends TaskRunner {
     this.process(imageFrame, imageProcessingOptions, timestamp);
   }
 
-  private convertToNormalizedRect(imageProcessingOptions?:
-                                      ImageProcessingOptions): NormalizedRect {
+  private getImageSourceSize(imageSource: ImageSource): [number, number] {
+    if ((imageSource as HTMLVideoElement).videoWidth !== undefined) {
+      return [
+        (imageSource as HTMLVideoElement).videoWidth,
+        (imageSource as HTMLVideoElement).videoHeight
+      ];
+    } else if ((imageSource as HTMLImageElement).naturalWidth !== undefined) {
+      return [
+        (imageSource as HTMLImageElement).naturalWidth,
+        (imageSource as HTMLImageElement).naturalHeight
+      ];
+    } else {
+      return [imageSource.width, imageSource.height];
+    }
+  }
+
+  private convertToNormalizedRect(
+      imageSource: ImageSource,
+      imageProcessingOptions?: ImageProcessingOptions): NormalizedRect {
     const normalizedRect = new NormalizedRect();
 
     if (imageProcessingOptions?.regionOfInterest) {
@@ -145,7 +162,6 @@ export abstract class VisionTaskRunner extends TaskRunner {
       normalizedRect.setYCenter((roi.top + roi.bottom) / 2.0);
       normalizedRect.setWidth(roi.right - roi.left);
       normalizedRect.setHeight(roi.bottom - roi.top);
-      return normalizedRect;
     } else {
       normalizedRect.setXCenter(0.5);
       normalizedRect.setYCenter(0.5);
@@ -163,6 +179,23 @@ export abstract class VisionTaskRunner extends TaskRunner {
       // Convert to radians anti-clockwise.
       normalizedRect.setRotation(
           -Math.PI * imageProcessingOptions.rotationDegrees / 180.0);
+
+      // For 90° and 270° rotations, we need to swap width and height.
+      // This is due to the internal behavior of ImageToTensorCalculator, which:
+      // - first denormalizes the provided rect by multiplying the rect width or
+      //   height by the image width or height, repectively.
+      // - then rotates this by denormalized rect by the provided rotation, and
+      //   uses this for cropping,
+      // - then finally rotates this back.
+      if (imageProcessingOptions?.rotationDegrees % 180 !== 0) {
+        const [imageWidth, imageHeight] = this.getImageSourceSize(imageSource);
+        // tslint:disable:no-unnecessary-type-assertion
+        const width = normalizedRect.getHeight()! * imageHeight / imageWidth;
+        const height = normalizedRect.getWidth()! * imageWidth / imageHeight;
+        // tslint:enable:no-unnecessary-type-assertion
+        normalizedRect.setWidth(width);
+        normalizedRect.setHeight(height);
+      }
     }
 
     return normalizedRect;
@@ -173,7 +206,8 @@ export abstract class VisionTaskRunner extends TaskRunner {
       imageSource: ImageSource,
       imageProcessingOptions: ImageProcessingOptions|undefined,
       timestamp: number): void {
-    const normalizedRect = this.convertToNormalizedRect(imageProcessingOptions);
+    const normalizedRect =
+        this.convertToNormalizedRect(imageSource, imageProcessingOptions);
     this.graphRunner.addProtoToStream(
         normalizedRect.serializeBinary(), 'mediapipe.NormalizedRect',
         this.normRectStreamName, timestamp);
