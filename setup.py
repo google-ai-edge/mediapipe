@@ -368,9 +368,9 @@ class BuildExtension(build_ext.build_ext):
         ]
         if subprocess.call(lipo_command) != 0:
           sys.exit(-1)
-      else:
-        for ext in self.extensions:
-          self._build_binary(ext)
+    else:
+      for ext in self.extensions:
+        self._build_binary(ext)
     build_ext.build_ext.run(self)
 
   def _build_binary(self, ext, extra_args=None):
