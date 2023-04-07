@@ -40,6 +40,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/core:task_runner",
         "//mediapipe/web/graph_runner:graph_runner_image_lib_ts",
         "//mediapipe/web/graph_runner:graph_runner_ts",
+        "//mediapipe/web/graph_runner:platform_utils",
         "//mediapipe/web/graph_runner:register_model_resources_graph_service_ts",
     ],
 )

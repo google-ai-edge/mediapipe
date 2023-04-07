@@ -1,5 +1,6 @@
 // Placeholder for internal dependency on assertTruthy
 // Placeholder for internal dependency on jsloader
+import {isWebKit} from '../../web/graph_runner/platform_utils';
 // Placeholder for internal dependency on trusted resource url
 
 // This file can serve as a common interface for most simple TypeScript
@@ -216,13 +217,15 @@ export class GraphRunner {
 
     if (glCanvas !== undefined) {
       this.wasmModule.canvas = glCanvas;
-    } else if (typeof OffscreenCanvas !== 'undefined') {
+    } else if (typeof OffscreenCanvas !== 'undefined' && !isWebKit()) {
       // If no canvas is provided, assume Chrome/Firefox and just make an
-      // OffscreenCanvas for GPU processing.
+      // OffscreenCanvas for GPU processing. Note that we exclude Safari
+      // since it does not (yet) support WebGL for OffscreenCanvas.
       this.wasmModule.canvas = new OffscreenCanvas(1, 1);
     } else {
-      console.warn('OffscreenCanvas not detected and GraphRunner constructor '
-                 + 'glCanvas parameter is undefined. Creating backup canvas.');
+      console.warn(
+          'OffscreenCanvas not supported and GraphRunner constructor ' +
+          'glCanvas parameter is undefined. Creating backup canvas.');
       this.wasmModule.canvas = document.createElement('canvas');
     }
   }
