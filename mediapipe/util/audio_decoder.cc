@@ -53,22 +53,22 @@ ABSL_FLAG(int64_t, media_decoder_allowed_audio_gap_merge, 5,
 namespace mediapipe {
 
 // MPEG PTS max value + 1, used to correct for PTS rollover. Unit is PTS ticks.
-const int64 kMpegPtsEpoch = 1LL << 33;
+const int64_t kMpegPtsEpoch = 1LL << 33;
 // Maximum PTS change between frames. Larger changes are considered to indicate
 // the MPEG PTS has rolled over. Unit is PTS ticks.
-const int64 kMpegPtsMaxDelta = kMpegPtsEpoch / 2;
+const int64_t kMpegPtsMaxDelta = kMpegPtsEpoch / 2;
 
 // BasePacketProcessor
 namespace {
 
-inline std::string TimestampToString(int64 timestamp) {
+inline std::string TimestampToString(int64_t timestamp) {
   if (timestamp == AV_NOPTS_VALUE) {
     return "NOPTS";
   }
   return absl::StrCat(timestamp);
 }
 
-float Uint32ToFloat(uint32 raw_value) {
+float Uint32ToFloat(uint32_t raw_value) {
   float value;
   memcpy(&value, &raw_value, 4);
   return value;
@@ -236,7 +236,7 @@ absl::Status BasePacketProcessor::GetData(Packet* packet) {
 }
 
 absl::Status BasePacketProcessor::Flush() {
-  int64 last_num_frames_processed;
+  int64_t last_num_frames_processed;
   do {
     std::unique_ptr<AVPacket, AVPacketDeleter> av_packet(new AVPacket());
     av_init_packet(av_packet.get());
@@ -291,8 +291,8 @@ absl::Status BasePacketProcessor::Decode(const AVPacket& packet,
   return absl::OkStatus();
 }
 
-int64 BasePacketProcessor::CorrectPtsForRollover(int64 media_pts) {
-  const int64 rollover_pts_media_bits = kMpegPtsEpoch - 1;
+int64_t BasePacketProcessor::CorrectPtsForRollover(int64_t media_pts) {
+  const int64_t rollover_pts_media_bits = kMpegPtsEpoch - 1;
   // Ensure PTS in range 0 ... kMpegPtsEpoch. This avoids errors from post
   // decode PTS corrections that overflow the epoch range (while still yielding
   // the correct result as long as the corrections do not exceed
@@ -302,16 +302,16 @@ int64 BasePacketProcessor::CorrectPtsForRollover(int64 media_pts) {
     // First seen PTS.
     rollover_corrected_last_pts_ = media_pts;
   } else {
-    int64 prev_media_pts =
+    int64_t prev_media_pts =
         rollover_corrected_last_pts_ & rollover_pts_media_bits;
-    int64 pts_step = media_pts - prev_media_pts;
+    int64_t pts_step = media_pts - prev_media_pts;
     if (pts_step > kMpegPtsMaxDelta) {
       pts_step = pts_step - kMpegPtsEpoch;
     } else if (pts_step < -kMpegPtsMaxDelta) {
       pts_step = kMpegPtsEpoch + pts_step;
     }
     rollover_corrected_last_pts_ =
-        std::max((int64)0, rollover_corrected_last_pts_ + pts_step);
+        std::max((int64_t)0, rollover_corrected_last_pts_ + pts_step);
   }
   return rollover_corrected_last_pts_;
 }
@@ -392,20 +392,21 @@ absl::Status AudioPacketProcessor::ValidateSampleFormat() {
   }
 }
 
-int64 AudioPacketProcessor::SampleNumberToTimestamp(const int64 sample_number) {
+int64_t AudioPacketProcessor::SampleNumberToTimestamp(
+    const int64_t sample_number) {
   return av_rescale_q(sample_number, sample_time_base_, source_time_base_);
 }
 
-int64 AudioPacketProcessor::TimestampToSampleNumber(const int64 timestamp) {
+int64_t AudioPacketProcessor::TimestampToSampleNumber(const int64_t timestamp) {
   return av_rescale_q(timestamp, source_time_base_, sample_time_base_);
 }
 
-int64 AudioPacketProcessor::TimestampToMicroseconds(const int64 timestamp) {
+int64_t AudioPacketProcessor::TimestampToMicroseconds(const int64_t timestamp) {
   return av_rescale_q(timestamp, source_time_base_, {1, 1000000});
 }
 
-int64 AudioPacketProcessor::SampleNumberToMicroseconds(
-    const int64 sample_number) {
+int64_t AudioPacketProcessor::SampleNumberToMicroseconds(
+    const int64_t sample_number) {
   return av_rescale_q(sample_number, sample_time_base_, {1, 1000000});
 }
 
@@ -433,19 +434,19 @@ absl::Status AudioPacketProcessor::ProcessDecodedFrame(const AVPacket& packet) {
           << " pkt_dts:" << TimestampToString(decoded_frame_->pkt_dts)
           << " dts:" << TimestampToString(packet.dts) << " size:" << packet.size
           << " decoded:" << buf_size_bytes;
-  uint8* const* data_ptr = decoded_frame_->data;
+  uint8_t* const* data_ptr = decoded_frame_->data;
   if (!data_ptr[0]) {
     return UnknownError("No data in audio frame.");
   }
   if (decoded_frame_->pts != AV_NOPTS_VALUE) {
-    int64 pts = MaybeCorrectPtsForRollover(decoded_frame_->pts);
+    int64_t pts = MaybeCorrectPtsForRollover(decoded_frame_->pts);
     if (num_frames_processed_ == 0) {
       expected_sample_number_ = TimestampToSampleNumber(pts);
     }
 
-    const int64 expected_us =
+    const int64_t expected_us =
         SampleNumberToMicroseconds(expected_sample_number_);
-    const int64 actual_us = TimestampToMicroseconds(pts);
+    const int64_t actual_us = TimestampToMicroseconds(pts);
     if (absl::Microseconds(std::abs(expected_us - actual_us)) >
         absl::Seconds(
             absl::GetFlag(FLAGS_media_decoder_allowed_audio_gap_merge))) {
@@ -474,7 +475,7 @@ absl::Status AudioPacketProcessor::ProcessDecodedFrame(const AVPacket& packet) {
 }
 
 absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
-    const Timestamp output_timestamp, uint8* const* raw_audio,
+    const Timestamp output_timestamp, uint8_t* const* raw_audio,
     int buf_size_bytes) {
   if (buf_size_bytes == 0) {
     return absl::OkStatus();
@@ -484,7 +485,8 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
     return UnknownError("Buffer is not an integral number of samples.");
   }
 
-  const int64 num_samples = buf_size_bytes / bytes_per_sample_ / num_channels_;
+  const int64_t num_samples =
+      buf_size_bytes / bytes_per_sample_ / num_channels_;
   VLOG(3) << "Adding " << num_samples << " audio samples in " << num_channels_
           << " channels to output.";
   auto current_frame = absl::make_unique<Matrix>(num_channels_, num_samples);
@@ -493,7 +495,8 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
   switch (avcodec_ctx_->sample_fmt) {
     case AV_SAMPLE_FMT_S16:
       sample_ptr = reinterpret_cast<const char*>(raw_audio[0]);
-      for (int64 sample_index = 0; sample_index < num_samples; ++sample_index) {
+      for (int64_t sample_index = 0; sample_index < num_samples;
+           ++sample_index) {
         for (int channel = 0; channel < num_channels_; ++channel) {
           (*current_frame)(channel, sample_index) =
               PcmEncodedSampleToFloat(sample_ptr);
@@ -503,7 +506,8 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
       break;
     case AV_SAMPLE_FMT_S32:
       sample_ptr = reinterpret_cast<const char*>(raw_audio[0]);
-      for (int64 sample_index = 0; sample_index < num_samples; ++sample_index) {
+      for (int64_t sample_index = 0; sample_index < num_samples;
+           ++sample_index) {
         for (int channel = 0; channel < num_channels_; ++channel) {
           (*current_frame)(channel, sample_index) =
               PcmEncodedSampleInt32ToFloat(sample_ptr);
@@ -513,7 +517,8 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
       break;
     case AV_SAMPLE_FMT_FLT:
       sample_ptr = reinterpret_cast<const char*>(raw_audio[0]);
-      for (int64 sample_index = 0; sample_index < num_samples; ++sample_index) {
+      for (int64_t sample_index = 0; sample_index < num_samples;
+           ++sample_index) {
         for (int channel = 0; channel < num_channels_; ++channel) {
           (*current_frame)(channel, sample_index) =
               Uint32ToFloat(absl::little_endian::Load32(sample_ptr));
@@ -524,7 +529,7 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
     case AV_SAMPLE_FMT_S16P:
       for (int channel = 0; channel < num_channels_; ++channel) {
         sample_ptr = reinterpret_cast<const char*>(raw_audio[channel]);
-        for (int64 sample_index = 0; sample_index < num_samples;
+        for (int64_t sample_index = 0; sample_index < num_samples;
              ++sample_index) {
           (*current_frame)(channel, sample_index) =
               PcmEncodedSampleToFloat(sample_ptr);
@@ -535,7 +540,7 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
     case AV_SAMPLE_FMT_FLTP:
       for (int channel = 0; channel < num_channels_; ++channel) {
         sample_ptr = reinterpret_cast<const char*>(raw_audio[channel]);
-        for (int64 sample_index = 0; sample_index < num_samples;
+        for (int64_t sample_index = 0; sample_index < num_samples;
              ++sample_index) {
           (*current_frame)(channel, sample_index) =
               Uint32ToFloat(absl::little_endian::Load32(sample_ptr));
@@ -576,7 +581,7 @@ absl::Status AudioPacketProcessor::FillHeader(TimeSeriesHeader* header) const {
   return absl::OkStatus();
 }
 
-int64 AudioPacketProcessor::MaybeCorrectPtsForRollover(int64 media_pts) {
+int64_t AudioPacketProcessor::MaybeCorrectPtsForRollover(int64_t media_pts) {
   return options_.correct_pts_for_rollover() ? CorrectPtsForRollover(media_pts)
                                              : media_pts;
 }
