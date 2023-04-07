@@ -1460,3 +1460,45 @@ cc_test(
         "@com_google_absl//absl/strings",
     ],
 )
+
+mediapipe_proto_library(
+    name = "face_to_rect_calculator_proto",
+    srcs = ["face_to_rect_calculator.proto"],
+)
+
+cc_library(
+    name = "face_to_rect_calculator",
+    srcs = ["face_to_rect_calculator.cc"],
+    deps = [
+        ":detections_to_rects_calculator",
+        ":face_to_rect_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:vector",
+        "@com_google_absl//absl/status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "face_to_rect_calculator_test",
+    size = "small",
+    srcs = ["face_to_rect_calculator_test.cc"],
+    deps = [
+        ":face_to_rect_calculator",
+        ":face_to_rect_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/status",
+    ],
+)
