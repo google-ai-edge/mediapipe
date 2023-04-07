@@ -16,6 +16,7 @@ mediapipe_ts_library(
     visibility = ["//visibility:public"],
     deps = [
         ":face_landmarker_types",
+        ":face_landmarks_connections",
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/framework:calculator_options_jspb_proto",
         "//mediapipe/framework/formats:classification_jspb_proto",
@@ -35,6 +36,14 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
+)
+
+mediapipe_ts_library(
+    name = "face_landmarks_connections",
+    srcs = [
+        "face_landmarks_connections.ts",
+    ],
+    visibility = ["//visibility:public"],
 )
 
 mediapipe_ts_declaration(

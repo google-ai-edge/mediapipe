@@ -36,6 +36,7 @@ import {FaceLandmarkerResult} from './face_landmarker_result';
 
 export * from './face_landmarker_options';
 export * from './face_landmarker_result';
+export * from './face_landmarks_connections';
 export {ImageSource};
 
 // The OSS JS API does not support the builder pattern.

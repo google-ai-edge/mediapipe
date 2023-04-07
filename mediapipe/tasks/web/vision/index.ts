@@ -16,7 +16,7 @@
 
 import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fileset_resolver';
 import {FaceDetector as FaceDetectorImpl} from '../../../tasks/web/vision/face_detector/face_detector';
-import {FaceLandmarker as FaceLandmarkerImpl} from '../../../tasks/web/vision/face_landmarker/face_landmarker';
+import {FaceLandmarker as FaceLandmarkerImpl, FaceLandmarksConnections as FaceLandmarksConnectionsImpl} from '../../../tasks/web/vision/face_landmarker/face_landmarker';
 import {FaceStylizer as FaceStylizerImpl} from '../../../tasks/web/vision/face_stylizer/face_stylizer';
 import {GestureRecognizer as GestureRecognizerImpl} from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer';
 import {HandLandmarker as HandLandmarkerImpl} from '../../../tasks/web/vision/hand_landmarker/hand_landmarker';
@@ -31,6 +31,7 @@ import {ObjectDetector as ObjectDetectorImpl} from '../../../tasks/web/vision/ob
 const FilesetResolver = FilesetResolverImpl;
 const FaceDetector = FaceDetectorImpl;
 const FaceLandmarker = FaceLandmarkerImpl;
+const FaceLandmarksConnections = FaceLandmarksConnectionsImpl;
 const FaceStylizer = FaceStylizerImpl;
 const GestureRecognizer = GestureRecognizerImpl;
 const HandLandmarker = HandLandmarkerImpl;
@@ -44,6 +45,7 @@ export {
   FilesetResolver,
   FaceDetector,
   FaceLandmarker,
+  FaceLandmarksConnections,
   FaceStylizer,
   GestureRecognizer,
   HandLandmarker,
