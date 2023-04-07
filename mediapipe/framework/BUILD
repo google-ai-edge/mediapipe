@@ -1670,7 +1670,6 @@ cc_test(
     name = "subgraph_test",
     srcs = ["subgraph_test.cc"],
     deps = [
-        ":calculator_cc_proto",
         ":calculator_framework",
         ":graph_service_manager",
         ":subgraph",
@@ -1682,7 +1681,6 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:sink",
         "//mediapipe/framework/tool/testdata:dub_quad_test_subgraph",
-        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings:str_format",
     ],
 )

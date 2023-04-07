@@ -16,10 +16,8 @@
 
 #include <string>
 
-#include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/calculators/core/constant_side_packet_calculator.pb.h"
-#include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -188,53 +186,6 @@ TEST_F(SubgraphTest, CheckSubgraphOptionsPassedIn) {
   auto packet = graph.GetOutputSidePacket("str");
   MP_ASSERT_OK(packet);
   EXPECT_EQ(packet.value().Get<std::string>(), "test");
-}
-
-class SubgraphUsingInternalExecutor : public Subgraph {
- public:
-  absl::StatusOr<CalculatorGraphConfig> GetConfig(
-      mediapipe::SubgraphContext* sc) override {
-    return mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
-        R"pb(
-          output_side_packet: "string"
-          executor {
-            name: "xyz"
-            type: "ThreadPoolExecutor"
-            options {
-              [mediapipe.ThreadPoolExecutorOptions.ext] { num_threads: 1 }
-            }
-          }
-          node {
-            calculator: "ConstantSidePacketCalculator"
-            executor: "xyz"
-            output_side_packet: "PACKET:string"
-            options: {
-              [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
-                packet { string_value: "passed" }
-              }
-            }
-          }
-        )pb");
-  }
-};
-REGISTER_MEDIAPIPE_GRAPH(SubgraphUsingInternalExecutor);
-
-TEST(SubgraphExecutorTest, SubgraphCanDefineAndUseInternalExecutor) {
-  CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
-        output_side_packet: "str"
-        node {
-          calculator: "SubgraphUsingInternalExecutor"
-          output_side_packet: "str"
-        }
-      )pb");
-  CalculatorGraph graph;
-  MP_ASSERT_OK(graph.Initialize(config));
-  MP_ASSERT_OK(graph.StartRun({}));
-  MP_ASSERT_OK(graph.WaitUntilDone());
-  auto packet = graph.GetOutputSidePacket("str");
-  MP_ASSERT_OK(packet);
-  EXPECT_EQ(packet->Get<std::string>(), "passed");
 }
 
 }  // namespace

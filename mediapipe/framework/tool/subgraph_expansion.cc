@@ -319,9 +319,6 @@ absl::Status ExpandSubgraphs(CalculatorGraphConfig* config,
                 subgraph.status_handler().end(),
                 proto_ns::RepeatedPtrFieldBackInserter(
                     config->mutable_status_handler()));
-      std::copy(
-          subgraph.executor().begin(), subgraph.executor().end(),
-          proto_ns::RepeatedPtrFieldBackInserter(config->mutable_executor()));
     }
   }
   return absl::OkStatus();
