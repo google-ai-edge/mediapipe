@@ -276,7 +276,7 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
   CHECK(options_.binary_tracking_data_support());
   CHECK(binary_data != nullptr);
 
-  int32 frame_flags = 0;
+  int32_t frame_flags = 0;
   const bool high_profile = options_.use_high_profile();
   if (high_profile) {
     frame_flags |= TrackingData::FLAG_PROFILE_HIGH;
@@ -293,7 +293,7 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
       tracking_data.frame_flags() & TrackingData::FLAG_BACKGROUND_UNSTABLE;
 
   const TrackingData::MotionData& motion_data = tracking_data.motion_data();
-  int32 num_vectors = motion_data.num_elements();
+  int32_t num_vectors = motion_data.num_elements();
 
   // Compute maximum vector or delta vector value.
   float max_vector_value = 0;
@@ -311,8 +311,8 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
     }
   }
 
-  const int32 domain_width = tracking_data.domain_width();
-  const int32 domain_height = tracking_data.domain_height();
+  const int32_t domain_width = tracking_data.domain_width();
+  const int32_t domain_height = tracking_data.domain_height();
   CHECK_LT(domain_height, 256) << "Only heights below 256 are supported.";
   const float frame_aspect = tracking_data.frame_aspect();
 
@@ -338,20 +338,20 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
   int scale_16 = std::ceil(kByteMax16 / max_vector_value);
   int scale_8 = std::ceil(kByteMax8 / max_vector_value);
 
-  const int32 scale =
+  const int32_t scale =
       options_.high_fidelity_16bit_encode() ? scale_16 : scale_8;
   const float inv_scale = 1.0f / scale;
   const int kByteMax =
       options_.high_fidelity_16bit_encode() ? kByteMax16 : kByteMax8;
 
   // Compressed flow to be encoded in binary format.
-  std::vector<int16> flow_compressed_16;
-  std::vector<int8> flow_compressed_8;
+  std::vector<int16_t> flow_compressed_16;
+  std::vector<int8_t> flow_compressed_8;
 
   flow_compressed_16.reserve(num_vectors);
   flow_compressed_8.reserve(num_vectors);
 
-  std::vector<uint8> row_idx;
+  std::vector<uint8_t> row_idx;
   row_idx.reserve(num_vectors);
 
   float average_error = 0;
@@ -538,7 +538,7 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
   }
 
   // Delta compress col_starts.
-  std::vector<uint8> col_start_delta(domain_width + 1, 0);
+  std::vector<uint8_t> col_start_delta(domain_width + 1, 0);
   col_start_delta[0] = col_starts[0];
   for (int k = 1; k < domain_width + 1; ++k) {
     const int delta = col_starts[k] - col_starts[k - 1];
@@ -575,10 +575,10 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
 
   std::string* data = binary_data->mutable_data();
   data->clear();
-  int32 vector_size = options_.high_fidelity_16bit_encode()
-                          ? flow_compressed_16.size()
-                          : flow_compressed_8.size();
-  int32 row_idx_size = row_idx.size();
+  int32_t vector_size = options_.high_fidelity_16bit_encode()
+                            ? flow_compressed_16.size()
+                            : flow_compressed_8.size();
+  int32_t row_idx_size = row_idx.size();
 
   absl::StrAppend(data, EncodeToString(frame_flags),
                   EncodeToString(domain_width), EncodeToString(domain_height),
@@ -605,12 +605,12 @@ void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
   CHECK(tracking_data != nullptr);
 
   absl::string_view data(container_data.data());
-  int32 frame_flags = 0;
-  int32 domain_width = 0;
-  int32 domain_height = 0;
+  int32_t frame_flags = 0;
+  int32_t domain_width = 0;
+  int32_t domain_height = 0;
   std::vector<float> background_model;
-  int32 scale = 0;
-  int32 num_vectors = 0;
+  int32_t scale = 0;
+  int32_t num_vectors = 0;
   float frame_aspect = 0.0f;
 
   DecodeFromStringView(PopSubstring(4, &data), &frame_flags);
@@ -642,7 +642,7 @@ void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
       frame_flags & TrackingData::FLAG_HIGH_FIDELITY_VECTORS;
   const float flow_denom = 1.0f / scale;
 
-  std::vector<uint8> col_starts_delta;
+  std::vector<uint8_t> col_starts_delta;
   DecodeVectorFromStringView(PopSubstring(domain_width + 1, &data),
                              &col_starts_delta);
 
@@ -656,8 +656,8 @@ void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
     col_starts.push_back(column);
   }
 
-  std::vector<uint8> row_idx;
-  int32 row_idx_size;
+  std::vector<uint8_t> row_idx;
+  int32_t row_idx_size;
   DecodeFromStringView(PopSubstring(4, &data), &row_idx_size);
 
   // Should not have more row indices than vectors. (One for each in baseline
@@ -676,14 +676,14 @@ void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
     const int kIndexMask = FlowPackagerOptions::INDEX_MASK;
 
     std::vector<int> column_expansions(domain_width, 0);
-    std::vector<uint8> row_idx_unpacked;
+    std::vector<uint8_t> row_idx_unpacked;
     row_idx_unpacked.reserve(num_vectors);
     advance.clear();
 
     for (int c = 0; c < col_starts.size() - 1; ++c) {
       const int r_start = col_starts[c];
       const int r_end = col_starts[c + 1];
-      uint8 prev_row_idx = 0;
+      uint8_t prev_row_idx = 0;
       for (int r = r_start; r < r_end; ++r) {
         // Use top bit as indicator to advance.
         advance.push_back(row_idx[r] & kAdvanceFlag);
@@ -725,7 +725,7 @@ void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
   int prev_flow_x = 0;
   int prev_flow_y = 0;
   if (high_fidelity) {
-    std::vector<int16> vector_data;
+    std::vector<int16_t> vector_data;
     DecodeVectorFromStringView(
         PopSubstring(sizeof(vector_data[0]) * vector_data_size, &data),
         &vector_data);
@@ -751,7 +751,7 @@ void FlowPackager::DecodeTrackingData(const BinaryTrackingData& container_data,
     }
     CHECK_EQ(vector_data_size, counter);
   } else {
-    std::vector<int8> vector_data;
+    std::vector<int8_t> vector_data;
     DecodeVectorFromStringView(
         PopSubstring(sizeof(vector_data[0]) * vector_data_size, &data),
         &vector_data);
@@ -813,13 +813,13 @@ void FlowPackager::DecodeMetaData(const TrackingContainer& container_data,
 
   absl::string_view data(container_data.data());
 
-  int32 num_frames;
+  int32_t num_frames;
   DecodeFromStringView(PopSubstring(4, &data), &num_frames);
   meta_data->set_num_frames(num_frames);
 
   for (int k = 0; k < num_frames; ++k) {
-    int32 msec;
-    int32 stream_offset;
+    int32_t msec;
+    int32_t stream_offset;
 
     DecodeFromStringView(PopSubstring(4, &data), &msec);
     DecodeFromStringView(PopSubstring(4, &data), &stream_offset);
@@ -831,14 +831,14 @@ void FlowPackager::DecodeMetaData(const TrackingContainer& container_data,
 }
 
 void FlowPackager::FinalizeTrackingContainerFormat(
-    std::vector<uint32>* timestamps,
+    std::vector<uint32_t>* timestamps,
     TrackingContainerFormat* container_format) {
   CHECK(container_format != nullptr);
 
   // Compute binary sizes of track_data.
   const int num_frames = container_format->track_data_size();
 
-  std::vector<uint32> msecs(num_frames, 0);
+  std::vector<uint32_t> msecs(num_frames, 0);
   if (timestamps) {
     CHECK_EQ(num_frames, timestamps->size());
     msecs = *timestamps;
@@ -876,13 +876,13 @@ void FlowPackager::FinalizeTrackingContainerFormat(
 }
 
 void FlowPackager::FinalizeTrackingContainerProto(
-    std::vector<uint32>* timestamps, TrackingContainerProto* proto) {
+    std::vector<uint32_t>* timestamps, TrackingContainerProto* proto) {
   CHECK(proto != nullptr);
 
   // Compute binary sizes of track_data.
   const int num_frames = proto->track_data_size();
 
-  std::vector<uint32> msecs(num_frames, 0);
+  std::vector<uint32_t> msecs(num_frames, 0);
   if (timestamps) {
     CHECK_EQ(num_frames, timestamps->size());
     msecs = *timestamps;
@@ -905,7 +905,7 @@ void FlowPackager::FinalizeTrackingContainerProto(
 }
 
 void FlowPackager::InitializeMetaData(int num_frames,
-                                      const std::vector<uint32>& msecs,
+                                      const std::vector<uint32_t>& msecs,
                                       const std::vector<int>& data_sizes,
                                       MetaData* meta_data) const {
   meta_data->set_num_frames(num_frames);

@@ -64,8 +64,8 @@ void ToneModelMethods<Model, Adapter>::MapImage(const Model& model,
   const float inv_norm_scale = 1.0f / norm_scale;
 
   for (int i = 0; i < input.rows; ++i) {
-    const uint8* input_ptr = input.ptr<uint8>(i);
-    uint8* output_ptr = output->ptr<uint8>(i);
+    const uint8_t* input_ptr = input.ptr<uint8_t>(i);
+    uint8_t* output_ptr = output->ptr<uint8_t>(i);
     for (int j = 0; j < input.cols;
          ++j, input_ptr += 3, output_ptr += out_channels) {
       Vector3_f color_vec(input_ptr[0], input_ptr[1], input_ptr[2]);

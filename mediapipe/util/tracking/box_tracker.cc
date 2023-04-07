@@ -112,7 +112,7 @@ void TimedBoxFromMotionBoxState(const MotionBoxState& state, TimedBox* box) {
 namespace {
 
 TimedBox BlendTimedBoxes(const TimedBox& lhs, const TimedBox& rhs,
-                         int64 time_msec) {
+                         int64_t time_msec) {
   CHECK_LT(lhs.time_msec, rhs.time_msec);
   const double alpha =
       (time_msec - lhs.time_msec) * 1.0 / (rhs.time_msec - lhs.time_msec);
@@ -246,7 +246,7 @@ BoxTracker::BoxTracker(
 void BoxTracker::AddTrackingDataChunk(const TrackingDataChunk* chunk,
                                       bool copy_data) {
   CHECK_GT(chunk->item_size(), 0) << "Empty chunk.";
-  int64 chunk_time_msec = chunk->item(0).timestamp_usec() / 1000;
+  int64_t chunk_time_msec = chunk->item(0).timestamp_usec() / 1000;
   int chunk_idx = ChunkIdxFromTime(chunk_time_msec);
   CHECK_GE(chunk_idx, tracking_data_.size()) << "Chunk is out of order.";
   if (chunk_idx > tracking_data_.size()) {
@@ -270,7 +270,7 @@ void BoxTracker::AddTrackingDataChunks(
 }
 
 void BoxTracker::NewBoxTrack(const TimedBox& initial_pos, int id,
-                             int64 min_msec, int64 max_msec) {
+                             int64_t min_msec, int64_t max_msec) {
   VLOG(1) << "New box track: " << id << " : " << initial_pos.ToString()
           << " from " << min_msec << " to " << max_msec;
 
@@ -290,7 +290,7 @@ void BoxTracker::NewBoxTrack(const TimedBox& initial_pos, int id,
   tracking_workers_->Schedule(operation);
 }
 
-std::pair<int64, int64> BoxTracker::TrackInterval(int id) {
+std::pair<int64_t, int64_t> BoxTracker::TrackInterval(int id) {
   absl::MutexLock lock(&path_mutex_);
   const Path& path = paths_[id];
   if (path.empty()) {
@@ -305,7 +305,7 @@ std::pair<int64, int64> BoxTracker::TrackInterval(int id) {
 }
 
 void BoxTracker::NewBoxTrackAsync(const TimedBox& initial_pos, int id,
-                                  int64 min_msec, int64 max_msec) {
+                                  int64_t min_msec, int64_t max_msec) {
   VLOG(1) << "Async track for id: " << id << " from " << min_msec << " to "
           << max_msec;
 
@@ -483,7 +483,7 @@ void BoxTracker::CancelTracking(int id, int checkpoint) {
   track_status_[id][checkpoint].canceled = false;
 }
 
-bool BoxTracker::GetTimedPosition(int id, int64 time_msec, TimedBox* result,
+bool BoxTracker::GetTimedPosition(int id, int64_t time_msec, TimedBox* result,
                                   std::vector<MotionBoxState>* states) {
   CHECK(result);
 
@@ -686,7 +686,7 @@ bool BoxTracker::WaitForChunkFile(int id, int checkpoint,
   return file_exists;
 }
 
-int BoxTracker::ClosestFrameIndex(int64 msec,
+int BoxTracker::ClosestFrameIndex(int64_t msec,
                                   const TrackingDataChunk& chunk) const {
   CHECK_GT(chunk.item_size(), 0);
   typedef TrackingDataChunk::Item Item;
@@ -708,8 +708,8 @@ int BoxTracker::ClosestFrameIndex(int64 msec,
   }
 
   // Determine closest timestamp.
-  const int64 lhs_diff = msec - chunk.item(pos - 1).timestamp_usec() / 1000;
-  const int64 rhs_diff = chunk.item(pos).timestamp_usec() / 1000 - msec;
+  const int64_t lhs_diff = msec - chunk.item(pos - 1).timestamp_usec() / 1000;
+  const int64_t rhs_diff = chunk.item(pos).timestamp_usec() / 1000 - msec;
 
   if (std::min(lhs_diff, rhs_diff) >= 67) {
     LOG(ERROR) << "No frame found within 67ms, probably using wrong chunk.";
@@ -849,7 +849,7 @@ void BoxTracker::TrackingImpl(const TrackingImplArgs& a) {
       MotionVectorFrame mvf;
       MotionVectorFrameFromTrackingData(a.chunk_data->item(f).tracking_data(),
                                         &mvf);
-      const int64 track_duration_ms =
+      const int64_t track_duration_ms =
           TrackingDataDurationMs(a.chunk_data->item(f));
       if (track_duration_ms > 0) {
         mvf.duration_ms = track_duration_ms;
@@ -905,8 +905,8 @@ void BoxTracker::TrackingImpl(const TrackingImplArgs& a) {
   cleanup_func();
 }
 
-bool TimedBoxAtTime(const PathSegment& segment, int64 time_msec, TimedBox* box,
-                    MotionBoxState* state) {
+bool TimedBoxAtTime(const PathSegment& segment, int64_t time_msec,
+                    TimedBox* box, MotionBoxState* state) {
   CHECK(box);
 
   if (segment.empty()) {
@@ -1028,7 +1028,7 @@ bool BoxTracker::WaitForAllOngoingTracks(int timeout_us) {
   return !IsTrackingOngoingMutexHeld();
 }
 
-bool BoxTracker::GetTrackingData(int id, int64 request_time_msec,
+bool BoxTracker::GetTrackingData(int id, int64_t request_time_msec,
                                  TrackingData* tracking_data,
                                  int* tracking_data_msec) {
   CHECK(tracking_data);
