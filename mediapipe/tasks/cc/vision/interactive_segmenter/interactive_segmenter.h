@@ -21,12 +21,14 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/tasks/cc/components/containers/keypoint.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_result.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -39,30 +41,24 @@ struct InteractiveSegmenterOptions {
   // file with metadata, accelerator options, op resolver, etc.
   tasks::core::BaseOptions base_options;
 
-  // The output type of segmentation results.
-  enum OutputType {
-    // Gives a single output mask where each pixel represents the class which
-    // the pixel in the original image was predicted to belong to.
-    CATEGORY_MASK = 0,
-    // Gives a list of output masks where, for each mask, each pixel represents
-    // the prediction confidence, usually in the [0, 1] range.
-    CONFIDENCE_MASK = 1,
-  };
+  // Whether to output confidence masks.
+  bool output_confidence_masks = true;
 
-  OutputType output_type = OutputType::CATEGORY_MASK;
+  // Whether to output category mask.
+  bool output_category_mask = false;
 };
 
 // The Region-Of-Interest (ROI) to interact with.
 struct RegionOfInterest {
-  enum Format {
-    UNSPECIFIED = 0,  // Format not specified.
-    KEYPOINT = 1,     // Using keypoint to represent ROI.
+  enum class Format {
+    kUnspecified = 0,  // Format not specified.
+    kKeyPoint = 1,     // Using keypoint to represent ROI.
   };
 
   // Specifies the format used to specify the region-of-interest. Note that
   // using `UNSPECIFIED` is invalid and will lead to an `InvalidArgument` status
   // being returned.
-  Format format = Format::UNSPECIFIED;
+  Format format = Format::kUnspecified;
 
   // Represents the ROI in keypoint format, this should be non-nullopt if
   // `format` is `KEYPOINT`.
@@ -84,13 +80,11 @@ struct RegionOfInterest {
 //    - RGB inputs is supported (`channels` is required to be 3).
 //    - if type is kTfLiteFloat32, NormalizationOptions are required to be
 //      attached to the metadata for input normalization.
-// Output tensors:
-//  (kTfLiteUInt8/kTfLiteFloat32)
-//   - list of segmented masks.
-//   - if `output_type` is CATEGORY_MASK, uint8 Image, Image vector of size 1.
-//   - if `output_type` is CONFIDENCE_MASK, float32 Image list of size
-//     `channels`.
-//   - batch is always 1
+// Output ImageSegmenterResult:
+//    Provides optional confidence masks if `output_confidence_masks` is set
+//    true, and an optional category mask if `output_category_mask` is set
+//    true. At least one of `output_confidence_masks` and `output_category_mask`
+//    must be set to true.
 class InteractiveSegmenter : tasks::vision::core::BaseVisionTaskApi {
  public:
   using BaseVisionTaskApi::BaseVisionTaskApi;
@@ -114,18 +108,17 @@ class InteractiveSegmenter : tasks::vision::core::BaseVisionTaskApi {
   // setting its 'rotation_degrees' field. Note that specifying a
   // region-of-interest using the 'region_of_interest' field is NOT supported
   // and will result in an invalid argument error being returned.
-  //
-  // If the output_type is CATEGORY_MASK, the returned vector of images is
-  // per-category segmented image mask.
-  // If the output_type is CONFIDENCE_MASK, the returned vector of images
-  // contains only one confidence image mask.
-  absl::StatusOr<std::vector<mediapipe::Image>> Segment(
+  absl::StatusOr<image_segmenter::ImageSegmenterResult> Segment(
       mediapipe::Image image, const RegionOfInterest& roi,
       std::optional<core::ImageProcessingOptions> image_processing_options =
           std::nullopt);
 
   // Shuts down the InteractiveSegmenter when all works are done.
   absl::Status Close() { return runner_->Close(); }
+
+ private:
+  bool output_confidence_masks_;
+  bool output_category_mask_;
 };
 
 }  // namespace interactive_segmenter

@@ -17,8 +17,11 @@ limitations under the License.
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "absl/flags/flag.h"
+#include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -39,6 +42,7 @@ limitations under the License.
 #include "tensorflow/lite/core/shims/cc/shims_test_util.h"
 #include "tensorflow/lite/kernels/builtin_op_kernels.h"
 #include "tensorflow/lite/mutable_op_resolver.h"
+#include "testing/base/public/gmock.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -53,13 +57,16 @@ using ::mediapipe::tasks::components::containers::RectF;
 using ::mediapipe::tasks::vision::core::ImageProcessingOptions;
 using ::testing::HasSubstr;
 using ::testing::Optional;
+using ::testing::SizeIs;
+using ::testing::status::StatusIs;
 
-constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
-constexpr char kPtmModel[] = "ptm_512_hdt_ptm_woid.tflite";
-constexpr char kCatsAndDogsJpg[] = "cats_and_dogs.jpg";
+constexpr absl::string_view kTestDataDirectory{
+    "/mediapipe/tasks/testdata/vision/"};
+constexpr absl::string_view kPtmModel{"ptm_512_hdt_ptm_woid.tflite"};
+constexpr absl::string_view kCatsAndDogsJpg{"cats_and_dogs.jpg"};
 // Golden mask for the dogs in cats_and_dogs.jpg.
-constexpr char kCatsAndDogsMaskDog1[] = "cats_and_dogs_mask_dog1.png";
-constexpr char kCatsAndDogsMaskDog2[] = "cats_and_dogs_mask_dog2.png";
+constexpr absl::string_view kCatsAndDogsMaskDog1{"cats_and_dogs_mask_dog1.png"};
+constexpr absl::string_view kCatsAndDogsMaskDog2{"cats_and_dogs_mask_dog2.png"};
 
 constexpr float kGoldenMaskSimilarity = 0.97;
 
@@ -135,35 +142,45 @@ TEST_F(CreateFromOptionsTest, FailsWithSelectiveOpResolverMissingOps) {
       JoinPath("./", kTestDataDirectory, kPtmModel);
   options->base_options.op_resolver =
       absl::make_unique<DeepLabOpResolverMissingOps>();
-  auto segmenter_or = InteractiveSegmenter::Create(std::move(options));
+  auto segmenter = InteractiveSegmenter::Create(std::move(options));
   // TODO: Make MediaPipe InferenceCalculator report the detailed
   // interpreter errors (e.g., "Encountered unresolved custom op").
-  EXPECT_EQ(segmenter_or.status().code(), absl::StatusCode::kInternal);
+  EXPECT_EQ(segmenter.status().code(), absl::StatusCode::kInternal);
   EXPECT_THAT(
-      segmenter_or.status().message(),
+      segmenter.status().message(),
       testing::HasSubstr("interpreter_builder(&interpreter) == kTfLiteOk"));
 }
 
 TEST_F(CreateFromOptionsTest, FailsWithMissingModel) {
-  absl::StatusOr<std::unique_ptr<InteractiveSegmenter>> segmenter_or =
+  absl::StatusOr<std::unique_ptr<InteractiveSegmenter>> segmenter =
       InteractiveSegmenter::Create(
           std::make_unique<InteractiveSegmenterOptions>());
 
-  EXPECT_EQ(segmenter_or.status().code(), absl::StatusCode::kInvalidArgument);
+  EXPECT_EQ(segmenter.status().code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(
-      segmenter_or.status().message(),
+      segmenter.status().message(),
       HasSubstr("ExternalFile must specify at least one of 'file_content', "
                 "'file_name', 'file_pointer_meta' or 'file_descriptor_meta'."));
-  EXPECT_THAT(segmenter_or.status().GetPayload(kMediaPipeTasksPayload),
+  EXPECT_THAT(segmenter.status().GetPayload(kMediaPipeTasksPayload),
               Optional(absl::Cord(absl::StrCat(
                   MediaPipeTasksStatus::kRunnerInitializationError))));
+}
+
+TEST_F(CreateFromOptionsTest, FailsWithNeitherOutputSet) {
+  auto options = std::make_unique<InteractiveSegmenterOptions>();
+  options->output_category_mask = false;
+  options->output_confidence_masks = false;
+
+  EXPECT_THAT(InteractiveSegmenter::Create(std::move(options)),
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       HasSubstr("At least one of")));
 }
 
 struct InteractiveSegmenterTestParams {
   std::string test_name;
   RegionOfInterest::Format format;
   NormalizedKeypoint roi;
-  std::string golden_mask_file;
+  absl::string_view golden_mask_file;
   float similarity_threshold;
 };
 
@@ -181,16 +198,18 @@ TEST_P(SucceedSegmentationWithRoi, SucceedsWithCategoryMask) {
   auto options = std::make_unique<InteractiveSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
-  options->output_type = InteractiveSegmenterOptions::OutputType::CATEGORY_MASK;
+  options->output_confidence_masks = false;
+  options->output_category_mask = true;
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<InteractiveSegmenter> segmenter,
                           InteractiveSegmenter::Create(std::move(options)));
-  MP_ASSERT_OK_AND_ASSIGN(auto category_masks,
+  MP_ASSERT_OK_AND_ASSIGN(auto result,
                           segmenter->Segment(image, interaction_roi));
-  EXPECT_EQ(category_masks.size(), 1);
+  EXPECT_TRUE(result.category_mask.has_value());
+  EXPECT_FALSE(result.confidence_masks.has_value());
 
   cv::Mat actual_mask = mediapipe::formats::MatView(
-      category_masks[0].GetImageFrameSharedPtr().get());
+      result.category_mask->GetImageFrameSharedPtr().get());
 
   cv::Mat expected_mask =
       cv::imread(JoinPath("./", kTestDataDirectory, params.golden_mask_file),
@@ -211,14 +230,13 @@ TEST_P(SucceedSegmentationWithRoi, SucceedsWithConfidenceMask) {
   auto options = std::make_unique<InteractiveSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
-  options->output_type =
-      InteractiveSegmenterOptions::OutputType::CONFIDENCE_MASK;
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<InteractiveSegmenter> segmenter,
                           InteractiveSegmenter::Create(std::move(options)));
-  MP_ASSERT_OK_AND_ASSIGN(auto confidence_masks,
+  MP_ASSERT_OK_AND_ASSIGN(auto result,
                           segmenter->Segment(image, interaction_roi));
-  EXPECT_EQ(confidence_masks.size(), 2);
+  EXPECT_FALSE(result.category_mask.has_value());
+  EXPECT_THAT(result.confidence_masks, Optional(SizeIs(2)));
 
   cv::Mat expected_mask =
       cv::imread(JoinPath("./", kTestDataDirectory, params.golden_mask_file),
@@ -227,7 +245,7 @@ TEST_P(SucceedSegmentationWithRoi, SucceedsWithConfidenceMask) {
   expected_mask.convertTo(expected_mask_float, CV_32FC1, 1 / 255.f);
 
   cv::Mat actual_mask = mediapipe::formats::MatView(
-      confidence_masks[1].GetImageFrameSharedPtr().get());
+      result.confidence_masks->at(1).GetImageFrameSharedPtr().get());
   EXPECT_THAT(actual_mask, SimilarToFloatMask(expected_mask_float,
                                               params.similarity_threshold));
 }
@@ -235,9 +253,9 @@ TEST_P(SucceedSegmentationWithRoi, SucceedsWithConfidenceMask) {
 INSTANTIATE_TEST_SUITE_P(
     SucceedSegmentationWithRoiTest, SucceedSegmentationWithRoi,
     ::testing::ValuesIn<InteractiveSegmenterTestParams>(
-        {{"PointToDog1", RegionOfInterest::KEYPOINT,
+        {{"PointToDog1", RegionOfInterest::Format::kKeyPoint,
           NormalizedKeypoint{0.44, 0.70}, kCatsAndDogsMaskDog1, 0.84f},
-         {"PointToDog2", RegionOfInterest::KEYPOINT,
+         {"PointToDog2", RegionOfInterest::Format::kKeyPoint,
           NormalizedKeypoint{0.66, 0.66}, kCatsAndDogsMaskDog2,
           kGoldenMaskSimilarity}}),
     [](const ::testing::TestParamInfo<SucceedSegmentationWithRoi::ParamType>&
@@ -252,22 +270,21 @@ TEST_F(ImageModeTest, DISABLED_SucceedsWithRotation) {
       Image image,
       DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kCatsAndDogsJpg)));
   RegionOfInterest interaction_roi;
-  interaction_roi.format = RegionOfInterest::KEYPOINT;
+  interaction_roi.format = RegionOfInterest::Format::kKeyPoint;
   interaction_roi.keypoint = NormalizedKeypoint{0.66, 0.66};
   auto options = std::make_unique<InteractiveSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
-  options->output_type =
-      InteractiveSegmenterOptions::OutputType::CONFIDENCE_MASK;
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<InteractiveSegmenter> segmenter,
                           InteractiveSegmenter::Create(std::move(options)));
   ImageProcessingOptions image_processing_options;
   image_processing_options.rotation_degrees = -90;
   MP_ASSERT_OK_AND_ASSIGN(
-      auto confidence_masks,
+      auto result,
       segmenter->Segment(image, interaction_roi, image_processing_options));
-  EXPECT_EQ(confidence_masks.size(), 2);
+  EXPECT_FALSE(result.category_mask.has_value());
+  EXPECT_EQ(result.confidence_masks->size(), 2);
 }
 
 TEST_F(ImageModeTest, FailsWithRegionOfInterest) {
@@ -275,13 +292,11 @@ TEST_F(ImageModeTest, FailsWithRegionOfInterest) {
       Image image,
       DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kCatsAndDogsJpg)));
   RegionOfInterest interaction_roi;
-  interaction_roi.format = RegionOfInterest::KEYPOINT;
+  interaction_roi.format = RegionOfInterest::Format::kKeyPoint;
   interaction_roi.keypoint = NormalizedKeypoint{0.66, 0.66};
   auto options = std::make_unique<InteractiveSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
-  options->output_type =
-      InteractiveSegmenterOptions::OutputType::CONFIDENCE_MASK;
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<InteractiveSegmenter> segmenter,
                           InteractiveSegmenter::Create(std::move(options)));

@@ -13,6 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <vector>
+
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/calculators/util/flat_color_image_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
@@ -23,8 +26,9 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/image_segmenter/proto/segmenter_options.pb.h"
 #include "mediapipe/util/color.pb.h"
-#include "mediapipe/util/label_map.pb.h"
+#include "mediapipe/util/graph_builder_utils.h"
 #include "mediapipe/util/render_data.pb.h"
 
 namespace mediapipe {
@@ -42,16 +46,18 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 
-constexpr char kSegmentationTag[] = "SEGMENTATION";
-constexpr char kGroupedSegmentationTag[] = "GROUPED_SEGMENTATION";
-constexpr char kImageTag[] = "IMAGE";
-constexpr char kImageCpuTag[] = "IMAGE_CPU";
-constexpr char kImageGpuTag[] = "IMAGE_GPU";
-constexpr char kAlphaTag[] = "ALPHA";
-constexpr char kAlphaGpuTag[] = "ALPHA_GPU";
-constexpr char kNormRectTag[] = "NORM_RECT";
-constexpr char kRoiTag[] = "ROI";
-constexpr char kVideoTag[] = "VIDEO";
+constexpr absl::string_view kSegmentationTag{"SEGMENTATION"};
+constexpr absl::string_view kGroupedSegmentationTag{"GROUPED_SEGMENTATION"};
+constexpr absl::string_view kConfidenceMaskTag{"CONFIDENCE_MASK"};
+constexpr absl::string_view kConfidenceMasksTag{"CONFIDENCE_MASKS"};
+constexpr absl::string_view kCategoryMaskTag{"CATEGORY_MASK"};
+constexpr absl::string_view kImageTag{"IMAGE"};
+constexpr absl::string_view kImageCpuTag{"IMAGE_CPU"};
+constexpr absl::string_view kImageGpuTag{"IMAGE_GPU"};
+constexpr absl::string_view kAlphaTag{"ALPHA"};
+constexpr absl::string_view kAlphaGpuTag{"ALPHA_GPU"};
+constexpr absl::string_view kNormRectTag{"NORM_RECT"};
+constexpr absl::string_view kRoiTag{"ROI"};
 
 // Updates the graph to return `roi` stream which has same dimension as
 // `image`, and rendered with `roi`. If `use_gpu` is true, returned `Source` is
@@ -87,11 +93,10 @@ Source<> RoiToAlpha(Source<Image> image, Source<RenderData> roi, bool use_gpu,
 }  // namespace
 
 // An "mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph"
-// performs semantic segmentation given user's region-of-interest. Two kinds of
-// outputs are provided: SEGMENTATION and GROUPED_SEGMENTATION. Users can
-// retrieve segmented mask of only particular category/channel from
-// SEGMENTATION, and users can also get all segmented masks from
-// GROUPED_SEGMENTATION.
+// performs semantic segmentation given the user's region-of-interest. The graph
+// can output optional confidence masks if CONFIDENCE_MASKS is connected, and an
+// optional category mask if CATEGORY_MASK is connected. At least one of
+// CONFIDENCE_MASK, CONFIDENCE_MASKS and CATEGORY_MASK must be connected.
 // - Accepts CPU input images and outputs segmented masks on CPU.
 //
 // Inputs:
@@ -106,11 +111,13 @@ Source<> RoiToAlpha(Source<Image> image, Source<RenderData> roi, bool use_gpu,
 //     @Optional: rect covering the whole image is used if not specified.
 //
 // Outputs:
-//   SEGMENTATION - mediapipe::Image @Multiple
-//     Segmented masks for individual category. Segmented mask of single
+//   CONFIDENCE_MASK - mediapipe::Image @Multiple
+//     Confidence masks for individual category. Confidence mask of single
 //     category can be accessed by index based output stream.
-//   GROUPED_SEGMENTATION - std::vector<mediapipe::Image>
-//     The output segmented masks grouped in a vector.
+//   CONFIDENCE_MASKS - std::vector<mediapipe::Image> @Optional
+//     The output confidence masks grouped in a vector.
+//   CATEGORY_MASK - mediapipe::Image @Optional
+//     Optional Category mask.
 //   IMAGE - mediapipe::Image
 //     The image that image segmenter runs on.
 //
@@ -128,9 +135,6 @@ Source<> RoiToAlpha(Source<Image> image, Source<RenderData> roi, bool use_gpu,
 //         model_asset {
 //           file_name: "/path/to/model.tflite"
 //         }
-//       }
-//       segmenter_options {
-//         output_type: CONFIDENCE_MASK
 //       }
 //     }
 //   }
@@ -176,10 +180,26 @@ class InteractiveSegmenterGraph : public core::ModelTaskGraph {
     image_with_set_alpha >> image_segmenter.In(kImageTag);
     norm_rect >> image_segmenter.In(kNormRectTag);
 
-    image_segmenter.Out(kSegmentationTag) >>
-        graph[Output<Image>(kSegmentationTag)];
-    image_segmenter.Out(kGroupedSegmentationTag) >>
-        graph[Output<std::vector<Image>>(kGroupedSegmentationTag)];
+    // TODO: remove deprecated output type support.
+    if (task_options.segmenter_options().has_output_type()) {
+      image_segmenter.Out(kSegmentationTag) >>
+          graph[Output<Image>(kSegmentationTag)];
+      image_segmenter.Out(kGroupedSegmentationTag) >>
+          graph[Output<std::vector<Image>>(kGroupedSegmentationTag)];
+    } else {
+      if (HasOutput(sc->OriginalNode(), kConfidenceMaskTag)) {
+        image_segmenter.Out(kConfidenceMaskTag) >>
+            graph[Output<Image>(kConfidenceMaskTag)];
+      }
+      if (HasOutput(sc->OriginalNode(), kConfidenceMasksTag)) {
+        image_segmenter.Out(kConfidenceMasksTag) >>
+            graph[Output<Image>(kConfidenceMasksTag)];
+      }
+      if (HasOutput(sc->OriginalNode(), kCategoryMaskTag)) {
+        image_segmenter.Out(kCategoryMaskTag) >>
+            graph[Output<Image>(kCategoryMaskTag)];
+      }
+    }
     image_segmenter.Out(kImageTag) >> graph[Output<Image>(kImageTag)];
 
     return graph.GetConfig();
