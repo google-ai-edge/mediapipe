@@ -1369,23 +1369,23 @@ const OutputStreamManager* CalculatorGraph::FindOutputStreamManager(
 }
 
 namespace {
-void PrintTimingToInfo(const std::string& label, int64 timer_value) {
-  const int64 total_seconds = timer_value / 1000000ll;
-  const int64 days = total_seconds / (3600ll * 24ll);
-  const int64 hours = (total_seconds / 3600ll) % 24ll;
-  const int64 minutes = (total_seconds / 60ll) % 60ll;
-  const int64 seconds = total_seconds % 60ll;
-  const int64 milliseconds = (timer_value / 1000ll) % 1000ll;
+void PrintTimingToInfo(const std::string& label, int64_t timer_value) {
+  const int64_t total_seconds = timer_value / 1000000ll;
+  const int64_t days = total_seconds / (3600ll * 24ll);
+  const int64_t hours = (total_seconds / 3600ll) % 24ll;
+  const int64_t minutes = (total_seconds / 60ll) % 60ll;
+  const int64_t seconds = total_seconds % 60ll;
+  const int64_t milliseconds = (timer_value / 1000ll) % 1000ll;
   LOG(INFO) << label << " took "
             << absl::StrFormat(
                    "%02lld days, %02lld:%02lld:%02lld.%03lld (total seconds: "
                    "%lld.%06lld)",
                    days, hours, minutes, seconds, milliseconds, total_seconds,
-                   timer_value % int64{1000000});
+                   timer_value % int64_t{1000000});
 }
 
-bool MetricElementComparator(const std::pair<std::string, int64>& e1,
-                             const std::pair<std::string, int64>& e2) {
+bool MetricElementComparator(const std::pair<std::string, int64_t>& e1,
+                             const std::pair<std::string, int64_t>& e2) {
   return e1.second > e2.second;
 }
 }  // namespace
