@@ -160,6 +160,7 @@ cc_test(
     deps = [
         ":port",
         "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/strings",
     ],
 )
 

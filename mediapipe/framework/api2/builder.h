@@ -713,12 +713,12 @@ class Graph {
     }
   }
 
-  std::string TaggedName(const TagIndexLocation& loc, const std::string& name) {
+  std::string TaggedName(const TagIndexLocation& loc, absl::string_view name) {
     if (loc.tag.empty()) {
       // ParseTagIndexName does not allow using explicit indices without tags,
       // while ParseTagIndex does.
       // TODO: decide whether we should just allow it.
-      return name;
+      return std::string(name);
     } else {
       if (loc.count <= 1) {
         return absl::StrCat(loc.tag, ":", name);

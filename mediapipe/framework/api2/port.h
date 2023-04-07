@@ -21,6 +21,7 @@
 #include <utility>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/api2/const_str.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/calculator_context.h"
@@ -36,6 +37,13 @@ namespace api2 {
 // directly by node code.
 class PortBase {
  public:
+  constexpr PortBase(absl::string_view tag, TypeId type_id, bool optional,
+                     bool multiple)
+      : tag_(tag.size(), tag.data()),
+        optional_(optional),
+        multiple_(multiple),
+        type_id_(type_id) {}
+
   constexpr PortBase(std::size_t tag_size, const char* tag, TypeId type_id,
                      bool optional, bool multiple)
       : tag_(tag_size, tag),
@@ -123,7 +131,7 @@ auto GetCollection(CC* cc, const SideOutputBase& port)
 }
 
 template <class Collection>
-auto GetOrNull(Collection& collection, const std::string& tag, int index)
+auto GetOrNull(Collection& collection, const absl::string_view& tag, int index)
     -> decltype(&collection.Get(std::declval<CollectionItemId>())) {
   CollectionItemId id = collection.GetId(tag, index);
   return id.IsValid() ? &collection.Get(id) : nullptr;
@@ -331,6 +339,9 @@ class PortCommon : public Base {
   using Optional = PortCommon<Base, ValueT, true, IsMultipleV>;
   using Multiple = PortCommon<Base, ValueT, IsOptionalV, true>;
   using SideFallback = SideFallbackT<Base, ValueT, IsOptionalV, IsMultipleV>;
+
+  explicit constexpr PortCommon(absl::string_view tag)
+      : Base(tag, kTypeId<ValueT>, IsOptionalV, IsMultipleV) {}
 
   template <std::size_t N>
   explicit constexpr PortCommon(const char (&tag)[N])

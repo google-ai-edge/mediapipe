@@ -1,10 +1,14 @@
 #include "mediapipe/framework/api2/port.h"
 
+#include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/gtest.h"
 
 namespace mediapipe {
 namespace api2 {
 namespace {
+
+constexpr absl::string_view kInputTag{"INPUT"};
+constexpr absl::string_view kOutputTag{"OUTPUT"};
 
 TEST(PortTest, IntInput) {
   static constexpr auto port = Input<int>("FOO");
@@ -38,6 +42,14 @@ TEST(PortTest, DeletedCopyConstructorInput) {
 
   static constexpr SideOutput<DeletedCopyType> kSideOutputPort{"SIDE_OUTPUT"};
   EXPECT_EQ(std::string(kSideOutputPort.Tag()), "SIDE_OUTPUT");
+}
+
+TEST(PortTest, DeletedCopyConstructorStringView) {
+  static constexpr Input<DeletedCopyType> kInputPort(kInputTag);
+  EXPECT_EQ(std::string(kInputPort.Tag()), kInputTag);
+
+  static constexpr Output<DeletedCopyType> kOutputPort(kOutputTag);
+  EXPECT_EQ(std::string(kOutputPort.Tag()), kOutputTag);
 }
 
 class AbstractBase {
