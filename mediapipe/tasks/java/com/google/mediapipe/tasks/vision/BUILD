@@ -319,6 +319,7 @@ android_library(
     srcs = [
         "facelandmarker/FaceLandmarker.java",
         "facelandmarker/FaceLandmarkerResult.java",
+        "facelandmarker/FaceLandmarksConnections.java",
     ],
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",
