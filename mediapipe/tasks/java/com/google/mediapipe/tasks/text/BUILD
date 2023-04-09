@@ -92,6 +92,34 @@ android_library(
     ],
 )
 
+android_library(
+    name = "languagedetector",
+    srcs = [
+        "languagedetector/LanguageDetector.java",
+        "languagedetector/LanguageDetectorResult.java",
+        "languagedetector/LanguagePrediction.java",
+    ],
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    manifest = "textembedder/AndroidManifest.xml",
+    deps = [
+        ":libmediapipe_tasks_text_jni_lib",
+        "//mediapipe/framework:calculator_options_java_proto_lite",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_java_proto_lite",
+        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_java_proto_lite",
+        "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
+        "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_java_proto_lite",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classifications",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
 load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl", "mediapipe_tasks_text_aar")
 
 mediapipe_tasks_text_aar(
