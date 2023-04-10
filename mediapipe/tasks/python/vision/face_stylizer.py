@@ -183,7 +183,8 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If face stylization failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(image_processing_options)
+    normalized_rect = self.convert_to_normalized_rect(
+        image_processing_options, image)
     output_packets = self._process_image_data({
         _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image),
         _NORM_RECT_STREAM_NAME: packet_creator.create_proto(
@@ -221,7 +222,8 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If any of the input arguments is invalid.
       RuntimeError: If face stylization failed to run.
     """
-    normalized_rect = self.convert_to_normalized_rect(image_processing_options)
+    normalized_rect = self.convert_to_normalized_rect(
+        image_processing_options, image)
     output_packets = self._process_video_data({
         _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
             timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
@@ -268,7 +270,8 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
       ValueError: If the current input timestamp is smaller than what the face
         stylizer has already processed.
     """
-    normalized_rect = self.convert_to_normalized_rect(image_processing_options)
+    normalized_rect = self.convert_to_normalized_rect(
+        image_processing_options, image)
     self._send_live_stream_data({
         _IMAGE_IN_STREAM_NAME: packet_creator.create_image(image).at(
             timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND
