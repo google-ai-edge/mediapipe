@@ -749,6 +749,7 @@ cc_test(
         ":node_chain_subgraph_cc_proto",
         ":node_chain_subgraph_options_lib",
         ":subgraph_expansion",
+        "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:graph_service_manager",
