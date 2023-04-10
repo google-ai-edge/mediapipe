@@ -54,21 +54,16 @@ class SegmentationPostprocessorGl {
   GlCalculatorHelper helper_;
 
   // GL references (programs, buffers, uniforms)
-  GLuint activation_program_ = 0;
-  GLuint argmax_program_ = 0;
-  GLuint channel_select_program_ = 0;
+  // Split program is special because it uses a custom vertex shader.
   GLuint split_program_ = 0;
   GLuint square_vertices_ = 0;
   GLuint texture_vertices_ = 0;
-  GLint activation_texture_uniform_;
-  GLint argmax_texture0_uniform_;
-  GLint argmax_texture1_uniform_;
-  GLint argmax_texture2_uniform_;
-  GLint channel_select_texture_uniform_;
-  GLint channel_select_index_uniform_;
   GLint split_texture_uniform_;
   GLint split_x_offset_uniform_;
 
+  GlShader activation_shader_;
+  GlShader argmax_shader_;
+  GlShader channel_select_shader_;
   GlShader softmax_max_shader_;
   GlShader softmax_transform_and_sum_shader_;
   GlShader softmax_normalization_shader_;

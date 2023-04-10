@@ -100,58 +100,89 @@ void main() {
   gl_FragColor = vec4(out_value, out_value, out_value, out_value);
 })";
 
-// Hard-coded for max of 3 textures for now, so num classes must be <= 12, and
-// the cost of this shader will be higher than necessary for smaller numbers of
-// classes.
-// TODO: Improve this.
+// For our argmax shader, we use a simple iterative approach to avoid the extra
+// hassle that accompanies usage of depth buffer for this, since we're not as
+// concerned with performance. Since we run the shader chunk-by-chunk, we can
+// simply hard-code our different max comparisons.
 static constexpr char kArgmaxShader[] = R"(
-DEFAULT_PRECISION(mediump, float)
+DEFAULT_PRECISION(highp, float)
 in vec2 sample_coordinate;
-uniform sampler2D input_texture0;
-uniform sampler2D input_texture1;
-uniform sampler2D input_texture2;
+uniform sampler2D prev_max_texture;  // prev_max_value, prev_max_arg, 0, 1
+uniform sampler2D current_chunk;
+uniform int num_channels;  // how many channels from current chunk to use (1-4)
+uniform int argmax_offset;  // index of first confidence mask in current chunk
 
-int argmax4(vec4 vec) {
+float max4(vec4 vec, out int argmax) {
   float aMax = max(vec.x, vec.y);
   float bMax = max(vec.z, vec.w);
   if (aMax >= bMax) {
-    if (vec.x >= vec.y) return 0;
-    return 1;
-  } else if (vec.z >= vec.w) return 2;
-  return 3;
+    if (vec.x >= vec.y) {
+        argmax = 0;
+        return vec.x;
+    }
+    argmax = 1;
+    return vec.y;
+  } else if (vec.z >= vec.w) {
+    argmax = 2;
+    return vec.z;
+  }
+  argmax = 3;
+  return vec.w;
 }
 
-float max4(vec4 vec) {
-  return max(max(vec.x, vec.y), max(vec.z, vec.w));
+float max3(vec4 vec, out int argmax) {
+    if (vec.x >= vec.y) {
+        if (vec.x >= vec.z) {
+            argmax = 0;
+            return vec.x;
+        }
+        argmax = 2;
+        return vec.z;
+    } else if (vec.y >= vec.z) {
+        argmax = 1;
+        return vec.y;
+    }
+    argmax = 2;
+    return vec.z;
+}
+
+float max2(vec4 vec, out int argmax) {
+    if (vec.x >= vec.y) {
+        argmax = 0;
+        return vec.x;
+    }
+    argmax = 1;
+    return vec.y;
 }
 
 void main() {
-  // Grab all vecs
-  vec4 pixel0 = texture2D(input_texture0, sample_coordinate);
-  vec4 pixel1 = texture2D(input_texture1, sample_coordinate);
-  vec4 pixel2 = texture2D(input_texture2, sample_coordinate);
+    vec2 prev_pixel = texture2D(prev_max_texture, sample_coordinate).xy;
+    float max_value = prev_pixel.x;
+    vec4 chunk_pixel = texture2D(current_chunk, sample_coordinate);
 
-  // Find vector which contains maximum value, and return its argmax
-  float max0 = max4(pixel0);
-  float max1 = max4(pixel1);
-  float max2 = max4(pixel2);
-
-  int argmax;
-  float out_value;
-  if (max0 >= max1) {
-    if (max0 >= max2) {
-      argmax = argmax4(pixel0);
+    int chunk_argmax;
+    float chunk_max_value;
+    if (num_channels == 1) {
+      chunk_max_value = chunk_pixel.x;
+      chunk_argmax = 0;
+    } else if (num_channels == 2) {
+      chunk_max_value = max2(chunk_pixel, chunk_argmax);
+    } else if (num_channels == 3) {
+      chunk_max_value = max3(chunk_pixel, chunk_argmax);
     } else {
-      argmax = argmax4(pixel2) + 8;
+      chunk_max_value = max4(chunk_pixel, chunk_argmax);
     }
-  } else if (max1 >= max2) {
-    argmax = argmax4(pixel1) + 4;
-  } else {
-    argmax = argmax4(pixel2) + 8;
-  }
 
-  out_value = float(argmax) / 255.0;
-  gl_FragColor = vec4(out_value, out_value, out_value, out_value);
+    // Now compare against previous max_value
+    if (chunk_max_value > max_value) {
+      // For now we convert our final integral argmax
+      // (chunk_argmax + argmax_offset) to a float from 0.0 to 1.0 in steps of
+      // 1/255.0.
+      float final_argmax = float(chunk_argmax + argmax_offset) / 255.0;
+      gl_FragColor = vec4(chunk_max_value, final_argmax, 0.0, 1.0);
+    } else {
+      gl_FragColor = vec4(max_value, prev_pixel.y, 0.0, 1.0);
+    }
 })";
 
 // Softmax is in 3 steps:
@@ -316,8 +347,7 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
     }
 
     const std::string activation_shader_source =
-        absl::StrCat(std::string(mediapipe::kMediaPipeFragmentShaderPreamble),
-                     absl::StrFormat(kActivationFragmentShader, activation_fn));
+        absl::StrFormat(kActivationFragmentShader, activation_fn);
 
     const std::string split_fragment_shader_source =
         absl::StrCat(std::string(mediapipe::kMediaPipeFragmentShaderPreamble),
@@ -326,13 +356,14 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
         absl::StrCat(std::string(mediapipe::kMediaPipeVertexShaderPreamble),
                      std::string(kSplitVertexShader));
 
-    const std::string channel_select_shader_source =
-        absl::StrCat(std::string(mediapipe::kMediaPipeFragmentShaderPreamble),
-                     std::string(kChannelSelectShader));
-
-    const std::string argmax_shader_source =
-        absl::StrCat(std::string(mediapipe::kMediaPipeFragmentShaderPreamble),
-                     std::string(kArgmaxShader));
+    // Compile all our shader programs and grab uniforms.
+    // Simple shaders (Activation and Channel-select)
+    MP_RETURN_IF_ERROR(CreateBasicFragmentShaderProgram(
+        "activation", activation_shader_source, {"input_texture"},
+        &activation_shader_));
+    MP_RETURN_IF_ERROR(CreateBasicFragmentShaderProgram(
+        "channel select", kChannelSelectShader,
+        {"input_texture", "channel_select"}, &channel_select_shader_));
 
     // Softmax shaders (Max, Transform+Sum, and Normalization)
     MP_RETURN_IF_ERROR(CreateBasicFragmentShaderProgram(
@@ -346,18 +377,14 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
         "softmax normalization", kNormalizationShader,
         {"sum_texture", "current_chunk"}, &softmax_normalization_shader_));
 
-    // Compile all our shader programs.
-    // Note: we enable `force_log_errors` so that we get full debugging error
-    //   messages when compiling shaders on web, where normally such errors are
-    //   suppressed. See //mediapipe/gpu/shader_util.cc for more
-    //   info.
-    mediapipe::GlhCreateProgram(
-        kBasicVertexShader, activation_shader_source.c_str(), NUM_ATTRIBUTES,
-        &attr_name[0], attr_location, &activation_program_,
-        /* force_log_errors */ true);
-    RET_CHECK(activation_program_)
-        << "Problem initializing the activation program.";
+    // Category mask shaders (Argmax)
+    MP_RETURN_IF_ERROR(CreateBasicFragmentShaderProgram(
+        "argmax", kArgmaxShader,
+        {"prev_max_texture", "current_chunk", "num_channels", "argmax_offset"},
+        &argmax_shader_));
 
+    // Split shader. This is created separately since it uses a custom vertex
+    // shader. TODO: Refactor so this shares common init code as well.
     mediapipe::GlhCreateProgram(split_vertex_shader_source.c_str(),
                                 split_fragment_shader_source.c_str(),
                                 NUM_ATTRIBUTES, &attr_name[0], attr_location,
@@ -365,25 +392,7 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
                                 /* force_log_errors */ true);
     RET_CHECK(split_program_) << "Problem initializing the split program.";
 
-    mediapipe::GlhCreateProgram(
-        kBasicVertexShader, channel_select_shader_source.c_str(),
-        NUM_ATTRIBUTES, &attr_name[0], attr_location, &channel_select_program_,
-        /* force_log_errors */ true);
-    RET_CHECK(channel_select_program_)
-        << "Problem initializing the channel select program.";
-
-    mediapipe::GlhCreateProgram(kBasicVertexShader,
-                                argmax_shader_source.c_str(), NUM_ATTRIBUTES,
-                                &attr_name[0], attr_location, &argmax_program_,
-                                /* force_log_errors */ true);
-    RET_CHECK(argmax_program_) << "Problem initializing the argmax program.";
-
-    // Get uniform locations.
-    activation_texture_uniform_ =
-        glGetUniformLocation(activation_program_, "input_texture");
-    RET_CHECK(activation_texture_uniform_ > 0)
-        << "activation input_texture uniform not found.";
-
+    // Get split program uniform locations.
     split_texture_uniform_ =
         glGetUniformLocation(split_program_, "input_texture");
     RET_CHECK(split_texture_uniform_ > 0)
@@ -391,28 +400,6 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
     split_x_offset_uniform_ = glGetUniformLocation(split_program_, "x_offset");
     RET_CHECK(split_x_offset_uniform_ > 0)
         << "split x_offset uniform not found.";
-
-    channel_select_texture_uniform_ =
-        glGetUniformLocation(channel_select_program_, "input_texture");
-    RET_CHECK(channel_select_texture_uniform_ > 0)
-        << "channel select input_texture uniform not found.";
-    channel_select_index_uniform_ =
-        glGetUniformLocation(channel_select_program_, "channel_select");
-    RET_CHECK(channel_select_index_uniform_ > 0)
-        << "channel select indexing uniform not found.";
-
-    argmax_texture0_uniform_ =
-        glGetUniformLocation(argmax_program_, "input_texture0");
-    RET_CHECK(argmax_texture0_uniform_ > 0)
-        << "argmax input_texture0 uniform not found.";
-    argmax_texture1_uniform_ =
-        glGetUniformLocation(argmax_program_, "input_texture1");
-    RET_CHECK(argmax_texture1_uniform_ > 0)
-        << "argmax input_texture1 uniform not found.";
-    argmax_texture2_uniform_ =
-        glGetUniformLocation(argmax_program_, "input_texture2");
-    RET_CHECK(argmax_texture2_uniform_ > 0)
-        << "argmax input_texture2 uniform not found.";
 
     // TODO: If ES3.0+ only, switch to VAO for handling attributes.
     glGenBuffers(1, &square_vertices_);
@@ -426,7 +413,6 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
                  kBasicTextureVertices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
     return absl::OkStatus();
   });
 }
@@ -492,8 +478,8 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
     glEnableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
 
     // Step 1: apply activation pass
-    glUseProgram(activation_program_);
-    glUniform1i(activation_texture_uniform_, 1);
+    glUseProgram(activation_shader_.program);
+    glUniform1i(activation_shader_.uniforms["input_texture"], 1);
     GlTexture activated_texture = helper_.CreateDestinationTexture(
         input_width, input_height, activation_output_format);
     helper_.BindFramebuffer(activated_texture);
@@ -660,48 +646,69 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
 
     std::vector<GlTexture> outputs;
     if (is_category_mask) {
-      // Step 3: For CATEGORY, apply argmax shader with up to 3 textures to
-      // extract final index mask.
-      RET_CHECK(num_chunks <= 3)
-          << "Cannot handle more than 12 classes in argmax shader.";
+      // Step 3: For CATEGORY, apply argmax shader iteratively with each chunk
+      // to get a 2-channel texture representing "combined maxval" and "argmax",
+      // and then slice off the second channel for the category mask output,
+      // using our usual channel_select program.
+      glUseProgram(argmax_shader_.program);
+      glUniform1i(argmax_shader_.uniforms["current_chunk"], 1);
+      glUniform1i(argmax_shader_.uniforms["prev_max_texture"], 2);
 
-      glUseProgram(argmax_program_);
-      glUniform1i(argmax_texture0_uniform_, 1);
-      glUniform1i(argmax_texture1_uniform_, 2);
-      glUniform1i(argmax_texture2_uniform_, 3);
+      GlTexture max_texture = helper_.CreateDestinationTexture(
+          output_width, output_height, chunk_output_format);
+      GlTexture next_max_texture = helper_.CreateDestinationTexture(
+          output_width, output_height, chunk_output_format);
+
+      // GLSL uses IEEE 754 single-precision floating-point for encoding its
+      // floats (at least for number representation, although not necessarily
+      // for operations). So we can clear to a reasonable minimum float value
+      // accordingly.
+      const float kFloatMin32 = -3.402823466e+38;
+      glClearColor(kFloatMin32, -1.0, 0.0, 1.0);
+      helper_.BindFramebuffer(max_texture);
+      glClear(GL_COLOR_BUFFER_BIT);
+      // Set our clear color back to a "normal" default.
+      glClearColor(0.0, 0.0, 0.0, 0.0);
+      for (int i = 0; i < num_chunks; ++i) {
+        int num_channels = 4;
+        if ((i + 1) * 4 > num_outputs) num_channels = num_outputs % 4;
+        glUniform1i(argmax_shader_.uniforms["num_channels"], num_channels);
+        glUniform1i(argmax_shader_.uniforms["argmax_offset"], i * 4);
+        helper_.BindFramebuffer(next_max_texture);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, max_texture.name());
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, chunks[i].name());
+        // TODO: We probably don't actually need all these clears.
+        glClear(GL_COLOR_BUFFER_BIT);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+        // Put results into max_texture, so we can repeat the process easily.
+        std::swap(max_texture, next_max_texture);
+      }
+
+      // Do final channel-select on max_texture below, selecting for argmax
       outputs.push_back(helper_.CreateDestinationTexture(
           output_width, output_height, final_output_format));
       helper_.BindFramebuffer(outputs.back());
-
-      // Bind however many chunks we have
-      for (int i = 0; i < num_chunks; ++i) {
-        glActiveTexture(GL_TEXTURE1 + i);
-        glBindTexture(GL_TEXTURE_2D, chunks[i].name());
-      }
-
-      for (int i = num_chunks; i < 3; ++i) {  // 3 is hard-coded max chunks
-        glActiveTexture(GL_TEXTURE1 + i);
-        // If texture is unbound, sampling from it should always give zeros.
-        // This is not ideal, but is ok for now for not polluting the argmax
-        // shader results too much.
-        glBindTexture(GL_TEXTURE_2D, 0);
-      }
-
+      glUseProgram(channel_select_shader_.program);
+      glUniform1i(channel_select_shader_.uniforms["input_texture"], 1);
+      // 0:max_val, 1:argmax
+      glUniform1i(channel_select_shader_.uniforms["channel_select"], 1);
+      glBindTexture(GL_TEXTURE_2D, max_texture.name());
+      // We can't interpolate across argmax values, so we disable linear
+      // interpolation there for this upsampling step.
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
       glClear(GL_COLOR_BUFFER_BIT);
       glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-      // Unbind the extra textures here.
-      for (int i = 0; i < num_chunks; ++i) {
-        glActiveTexture(GL_TEXTURE1 + i);
-        glBindTexture(GL_TEXTURE_2D, 0);
-      }
     } else {
       // Step 3: For CONFIDENCE, apply channel-select repeatedly to extract
       // final textures.
-      glUseProgram(channel_select_program_);
-      glUniform1i(channel_select_texture_uniform_, 1);
+      glUseProgram(channel_select_shader_.program);
+      glUniform1i(channel_select_shader_.uniforms["input_texture"], 1);
       for (int i = 0; i < num_outputs; i++) {
-        glUniform1i(channel_select_index_uniform_, (i % 4));
+        glUniform1i(channel_select_shader_.uniforms["channel_select"], (i % 4));
         outputs.push_back(helper_.CreateDestinationTexture(
             output_width, output_height, final_output_format));
         helper_.BindFramebuffer(outputs.back());
@@ -744,19 +751,16 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
 // Cleanup OpenGL resources on destruction
 SegmentationPostprocessorGl::~SegmentationPostprocessorGl() {
   helper_.RunInGlContext([this] {
-    glDeleteProgram(activation_program_);
-    glDeleteProgram(argmax_program_);
-    glDeleteProgram(channel_select_program_);
     glDeleteProgram(split_program_);
     glDeleteBuffers(1, &square_vertices_);
     glDeleteBuffers(1, &texture_vertices_);
-    activation_program_ = 0;
-    argmax_program_ = 0;
-    channel_select_program_ = 0;
     split_program_ = 0;
     square_vertices_ = 0;
     texture_vertices_ = 0;
 
+    glDeleteProgram(activation_shader_.program);
+    glDeleteProgram(argmax_shader_.program);
+    glDeleteProgram(channel_select_shader_.program);
     glDeleteProgram(softmax_max_shader_.program);
     glDeleteProgram(softmax_transform_and_sum_shader_.program);
     glDeleteProgram(softmax_normalization_shader_.program);
