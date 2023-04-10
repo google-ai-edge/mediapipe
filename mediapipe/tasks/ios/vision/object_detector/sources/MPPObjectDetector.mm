@@ -123,39 +123,6 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPObjectDetectionResult *)detectInImage:(MPPImage *)image
-                                    regionOfInterest:(CGRect)roi
-                                               error:(NSError **)error {
-  std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectFromRegionOfInterest:roi
-                                           imageOrientation:image.orientation
-                                                 ROIAllowed:YES
-                                                      error:error];
-  if (!rect.has_value()) {
-    return nil;
-  }
-
-  Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image error:error];
-  if (imagePacket.IsEmpty()) {
-    return nil;
-  }
-
-  Packet normalizedRectPacket =
-      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()];
-
-  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
-
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImagePacketMap:inputPacketMap
-                                                                                error:error];
-  if (!outputPacketMap.has_value()) {
-    return nil;
-  }
-
-  return [MPPObjectDetectionResult
-      objectDetectionResultWithDetectionsPacket:outputPacketMap
-                                                    .value()[kDetectionsStreamName.cppString]];
-}
-
 - (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
                                            timestampMs:(NSInteger)timestampMs
                                                  error:(NSError **)error {
