@@ -158,12 +158,11 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 
 - (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
                                            timestampMs:(NSInteger)timestampMs
-                                      regionOfInterest:(CGRect)roi
                                                  error:(NSError **)error {
   std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectFromRegionOfInterest:roi
+      [_visionTaskRunner normalizedRectFromRegionOfInterest:CGRectZero
                                            imageOrientation:image.orientation
-                                                 ROIAllowed:YES
+                                                 ROIAllowed:NO
                                                       error:error];
   if (!rect.has_value()) {
     return std::nullopt;
@@ -184,16 +183,41 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 }
 
 - (nullable MPPObjectDetectionResult *)detectInImage:(MPPImage *)image error:(NSError **)error {
-  return [self detectInImage:image regionOfInterest:CGRectZero error:error];
+  std::optional<NormalizedRect> rect =
+      [_visionTaskRunner normalizedRectFromRegionOfInterest:CGRectZero
+                                           imageOrientation:image.orientation
+                                                 ROIAllowed:YES
+                                                      error:error];
+  if (!rect.has_value()) {
+    return nil;
+  }
+
+  Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image error:error];
+  if (imagePacket.IsEmpty()) {
+    return nil;
+  }
+
+  Packet normalizedRectPacket =
+      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()];
+
+  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
+
+  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImagePacketMap:inputPacketMap
+                                                                                error:error];
+  if (!outputPacketMap.has_value()) {
+    return nil;
+  }
+
+  return [MPPObjectDetectionResult
+      objectDetectionResultWithDetectionsPacket:outputPacketMap
+                                                    .value()[kDetectionsStreamName.cppString]];
 }
 
 - (nullable MPPObjectDetectionResult *)detectInVideoFrame:(MPPImage *)image
                                               timestampMs:(NSInteger)timestampMs
-                                         regionOfInterest:(CGRect)roi
                                                     error:(NSError **)error {
   std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
                                                                  timestampMs:timestampMs
-                                                            regionOfInterest:roi
                                                                        error:error];
   if (!inputPacketMap.has_value()) {
     return nil;
@@ -211,37 +235,17 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
                                                     .value()[kDetectionsStreamName.cppString]];
 }
 
-- (nullable MPPObjectDetectionResult *)detectInVideoFrame:(MPPImage *)image
-                                              timestampMs:(NSInteger)timestampMs
-                                                    error:(NSError **)error {
-  return [self detectInVideoFrame:image
-                      timestampMs:timestampMs
-                 regionOfInterest:CGRectZero
-                            error:error];
-}
-
 - (BOOL)detectAsyncInImage:(MPPImage *)image
                timestampMs:(NSInteger)timestampMs
-          regionOfInterest:(CGRect)roi
                      error:(NSError **)error {
   std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
                                                                  timestampMs:timestampMs
-                                                            regionOfInterest:roi
                                                                        error:error];
   if (!inputPacketMap.has_value()) {
     return NO;
   }
 
   return [_visionTaskRunner processLiveStreamPacketMap:inputPacketMap.value() error:error];
-}
-
-- (BOOL)detectAsyncInImage:(MPPImage *)image
-               timestampMs:(NSInteger)timestampMs
-                     error:(NSError **)error {
-  return [self detectAsyncInImage:image
-                      timestampMs:timestampMs
-                 regionOfInterest:CGRectZero
-                            error:error];
 }
 
 @end
