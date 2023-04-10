@@ -90,7 +90,7 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
                                                        (UIImageOrientation)imageOrientation
                                                          ROIAllowed:(BOOL)ROIAllowed
                                                               error:(NSError **)error {
-  if (CGRectEqualToRect(roi, CGRectZero) && !ROIAllowed) {
+  if (!CGRectEqualToRect(roi, CGRectZero) && !ROIAllowed) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInvalidArgumentError
                           description:@"This task doesn't support region-of-interest."];
