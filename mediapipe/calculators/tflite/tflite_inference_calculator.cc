@@ -535,8 +535,9 @@ absl::Status TfLiteInferenceCalculator::ProcessInputsCpu(
     const TfLiteTensor* input_tensor = &input_tensors[i];
     RET_CHECK(input_tensor->data.raw);
     if (use_quantized_tensors_) {
-      const uint8* input_tensor_buffer = input_tensor->data.uint8;
-      uint8* local_tensor_buffer = interpreter_->typed_input_tensor<uint8>(i);
+      const uint8_t* input_tensor_buffer = input_tensor->data.uint8;
+      uint8_t* local_tensor_buffer =
+          interpreter_->typed_input_tensor<uint8_t>(i);
       std::memcpy(local_tensor_buffer, input_tensor_buffer,
                   input_tensor->bytes);
     } else {

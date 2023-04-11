@@ -26,7 +26,7 @@ namespace mediapipe {
 namespace {
 
 struct MultiScaleAnchorInfo {
-  int32 level;
+  int32_t level;
   std::vector<float> aspect_ratios;
   std::vector<float> scales;
   std::pair<float, float> base_anchor_size;

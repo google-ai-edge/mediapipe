@@ -60,7 +60,7 @@ class TfLiteTensorsToClassificationCalculatorTest : public ::testing::Test {
     auto tensors = absl::make_unique<std::vector<TfLiteTensor>>();
     tensors->emplace_back(*tensor);
 
-    int64 stream_timestamp = 0;
+    int64_t stream_timestamp = 0;
     auto& input_stream_packets =
         runner->MutableInputs()->Tag("TENSORS").packets;
 
