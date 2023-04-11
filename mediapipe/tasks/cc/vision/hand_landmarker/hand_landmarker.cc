@@ -215,7 +215,7 @@ absl::StatusOr<HandLandmarkerResult> HandLandmarker::Detect(
 }
 
 absl::StatusOr<HandLandmarkerResult> HandLandmarker::DetectForVideo(
-    mediapipe::Image image, int64 timestamp_ms,
+    mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -256,7 +256,7 @@ absl::StatusOr<HandLandmarkerResult> HandLandmarker::DetectForVideo(
 }
 
 absl::Status HandLandmarker::DetectAsync(
-    mediapipe::Image image, int64 timestamp_ms,
+    mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(

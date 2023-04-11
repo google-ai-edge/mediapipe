@@ -411,7 +411,7 @@ TEST_F(LiveStreamModeTest, FailsWithCallingWrongMethod) {
       JoinPath("./", kTestDataDirectory, kHandLandmarkerBundleAsset);
   options->running_mode = core::RunningMode::LIVE_STREAM;
   options->result_callback = [](absl::StatusOr<HandLandmarkerResult> results,
-                                const Image& image, int64 timestamp_ms) {};
+                                const Image& image, int64_t timestamp_ms) {};
 
   MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<HandLandmarker> hand_landmarker,
                           HandLandmarker::Create(std::move(options)));
@@ -444,11 +444,11 @@ TEST_P(LiveStreamModeTest, Succeeds) {
   options->running_mode = core::RunningMode::LIVE_STREAM;
   std::vector<HandLandmarkerResult> hand_landmarker_results;
   std::vector<std::pair<int, int>> image_sizes;
-  std::vector<int64> timestamps;
+  std::vector<int64_t> timestamps;
   options->result_callback = [&hand_landmarker_results, &image_sizes,
                               &timestamps](
                                  absl::StatusOr<HandLandmarkerResult> results,
-                                 const Image& image, int64 timestamp_ms) {
+                                 const Image& image, int64_t timestamp_ms) {
     MP_ASSERT_OK(results.status());
     hand_landmarker_results.push_back(std::move(results.value()));
     image_sizes.push_back({image.width(), image.height()});
@@ -483,7 +483,7 @@ TEST_P(LiveStreamModeTest, Succeeds) {
     EXPECT_EQ(image_size.first, image.width());
     EXPECT_EQ(image_size.second, image.height());
   }
-  int64 timestamp_ms = -1;
+  int64_t timestamp_ms = -1;
   for (const auto& timestamp : timestamps) {
     EXPECT_GT(timestamp, timestamp_ms);
     timestamp_ms = timestamp;
