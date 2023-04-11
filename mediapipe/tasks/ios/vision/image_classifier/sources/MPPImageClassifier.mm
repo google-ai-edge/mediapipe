@@ -120,6 +120,7 @@ static NSString *const kTaskGraphName =
                                                error:(NSError **)error {
   std::optional<NormalizedRect> rect =
       [_visionTaskRunner normalizedRectFromRegionOfInterest:roi
+                                                  imageSize:image.size
                                            imageOrientation:image.orientation
                                                  ROIAllowed:YES
                                                       error:error];
@@ -154,6 +155,7 @@ static NSString *const kTaskGraphName =
                                                  error:(NSError **)error {
   std::optional<NormalizedRect> rect =
       [_visionTaskRunner normalizedRectFromRegionOfInterest:roi
+                                                  imageSize:image.size
                                            imageOrientation:image.orientation
                                                  ROIAllowed:YES
                                                       error:error];
