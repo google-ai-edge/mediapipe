@@ -77,7 +77,7 @@ void CheckSpeechResult(const std::vector<AudioClassifierResult>& result,
   EXPECT_EQ(result.size(), 5);
   // Ignore last result, which operates on a too small chunk to return relevant
   // results.
-  std::vector<int64> timestamps_ms = {0, 975, 1950, 2925};
+  std::vector<int64_t> timestamps_ms = {0, 975, 1950, 2925};
   for (int i = 0; i < timestamps_ms.size(); i++) {
     EXPECT_EQ(result[i].timestamp_ms, timestamps_ms[i]);
     EXPECT_EQ(result[i].classifications.size(), 1);
@@ -143,7 +143,7 @@ void CheckStreamingModeResults(std::vector<AudioClassifierResult> outputs) {
   EXPECT_EQ(outputs.size(), 5);
   // Ignore last result, which operates on a too small chunk to return relevant
   // results.
-  std::vector<int64> timestamps_ms = {0, 975, 1950, 2925};
+  std::vector<int64_t> timestamps_ms = {0, 975, 1950, 2925};
   for (int i = 0; i < outputs.size() - 1; i++) {
     EXPECT_EQ(outputs[i].timestamp_ms.value(), timestamps_ms[i]);
     EXPECT_EQ(outputs[i].classifications.size(), 1);
@@ -456,7 +456,7 @@ TEST_F(ClassifyTest, SucceedsWithCategoryDenylist) {
                                               /*audio_sample_rate=*/48000));
   MP_ASSERT_OK(audio_classifier->Close());
   // All categories with the "Speech" label are filtered out.
-  std::vector<int64> timestamps_ms = {0, 975, 1950, 2925};
+  std::vector<int64_t> timestamps_ms = {0, 975, 1950, 2925};
   for (int i = 0; i < timestamps_ms.size(); i++) {
     EXPECT_EQ(result[i].timestamp_ms, timestamps_ms[i]);
     EXPECT_EQ(result[i].classifications.size(), 1);
