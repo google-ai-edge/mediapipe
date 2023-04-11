@@ -557,32 +557,32 @@ new_local_repository(
 
 http_archive(
     name = "linux_halide",
-    sha256 = "f62b2914823d6e33d18693f5b74484f274523bf5402ce51988e24393d123b375",
-    strip_prefix = "Halide-15.0.0-x86-64-linux",
-    urls = ["https://github.com/halide/Halide/releases/download/v15.0.0/Halide-15.0.0-x86-64-linux-d7651f4b32f9dbd764f243134001f7554378d62d.tar.gz"],
+    sha256 = "d290fadf3f358c94aacf43c883de6468bb98883e26116920afd491ec0e440cd2",
+    strip_prefix = "Halide-15.0.1-x86-64-linux",
+    urls = ["https://github.com/halide/Halide/releases/download/v15.0.1/Halide-15.0.1-x86-64-linux-4c63f1befa1063184c5982b11b6a2cc17d4e5815.tar.gz"],
     build_file = "@//third_party:halide.BUILD",
 )
 
 http_archive(
     name = "macos_x86_64_halide",
-    sha256 = "3d832aed942080ea89aa832462c68fbb906f3055c440b7b6d35093d7c52f6aab",
-    strip_prefix = "Halide-15.0.0-x86-64-osx",
-    urls = ["https://github.com/halide/Halide/releases/download/v15.0.0/Halide-15.0.0-x86-64-osx-d7651f4b32f9dbd764f243134001f7554378d62d.tar.gz"],
+    sha256 = "48ff073ac1aee5c4aca941a4f043cac64b38ba236cdca12567e09d803594a61c",
+    strip_prefix = "Halide-15.0.1-x86-64-osx",
+    urls = ["https://github.com/halide/Halide/releases/download/v15.0.1/Halide-15.0.1-x86-64-osx-4c63f1befa1063184c5982b11b6a2cc17d4e5815.tar.gz"],
     build_file = "@//third_party:halide.BUILD",
 )
 
 http_archive(
     name = "macos_arm_64_halide",
-    sha256 = "b1fad3c9810122b187303d7031d9e35fb43761f345d18cc4492c00ed5877f641",
-    strip_prefix = "Halide-15.0.0-arm-64-osx",
-    urls = ["https://github.com/halide/Halide/releases/download/v15.0.0/Halide-15.0.0-arm-64-osx-d7651f4b32f9dbd764f243134001f7554378d62d.tar.gz"],
+    sha256 = "db5d20d75fa7463490fcbc79c89f0abec9c23991f787c8e3e831fff411d5395c",
+    strip_prefix = "Halide-15.0.1-arm-64-osx",
+    urls = ["https://github.com/halide/Halide/releases/download/v15.0.1/Halide-15.0.1-arm-64-osx-4c63f1befa1063184c5982b11b6a2cc17d4e5815.tar.gz"],
     build_file = "@//third_party:halide.BUILD",
 )
 
 http_archive(
     name = "windows_halide",
-    sha256 = "5acf6fe161dd375856a2b43f4bb0a32815ba958b0585ee312c44e008aa7b0b64",
-    strip_prefix = "Halide-15.0.0-x86-64-windows",
-    urls = ["https://github.com/halide/Halide/releases/download/v15.0.0/Halide-15.0.0-x86-64-windows-d7651f4b32f9dbd764f243134001f7554378d62d.zip"],
+    sha256 = "61fd049bd75ee918ac6c30d0693aac6048f63f8d1fc4db31001573e58eae8dae",
+    strip_prefix = "Halide-15.0.1-x86-64-windows",
+    urls = ["https://github.com/halide/Halide/releases/download/v15.0.1/Halide-15.0.1-x86-64-windows-4c63f1befa1063184c5982b11b6a2cc17d4e5815.zip"],
     build_file = "@//third_party:halide.BUILD",
 )
