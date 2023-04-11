@@ -421,12 +421,9 @@ static const float scoreDifferenceTolerance = 1e-2f;
 
   NSArray<MPPDetection *> *detections = @[
     [[MPPDetection alloc] initWithCategories:@[
-      [[MPPCategory alloc] initWithIndex:-1
-                                   score:0.750000f
-                            categoryName:@"teddy bear"
-                             displayName:nil],
+      [[MPPCategory alloc] initWithIndex:-1 score:0.699219f categoryName:@"cat" displayName:nil],
     ]
-                                 boundingBox:CGRectMake(0, 372, 416, 276)
+                                 boundingBox:CGRectMake(0, 608, 439, 387)
                                    keypoints:nil],
   ];
 
