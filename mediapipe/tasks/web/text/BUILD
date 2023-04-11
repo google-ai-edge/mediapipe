@@ -19,6 +19,7 @@ mediapipe_files(srcs = [
 
 TEXT_LIBS = [
     "//mediapipe/tasks/web/core:fileset_resolver",
+    "//mediapipe/tasks/web/text/language_detector",
     "//mediapipe/tasks/web/text/text_classifier",
     "//mediapipe/tasks/web/text/text_embedder",
 ]
