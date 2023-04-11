@@ -469,16 +469,37 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
     bool is_softmax =
         options_.segmenter_options().activation() == SegmenterOptions::SOFTMAX;
 
+    // To make logic easier for now, we use F32 only if we have all three of the
+    // following features available for it:
+    // (1) color rendering
+    // (2) linear filtering
+    // (3) blending
+    // Otherwise, we just try for F16. See b/277656755 for more information.
+    // TODO: In the future, separate these 3 different restrictions.
+    // TODO: Also, we should extend this logic to non-web platforms.
+    static bool can_use_f32 =
+        helper_.GetGlContext().HasGlExtension("EXT_color_buffer_float") &&
+        helper_.GetGlContext().HasGlExtension("OES_texture_float_linear") &&
+        helper_.GetGlContext().HasGlExtension("EXT_float_blend");
+    static bool can_use_f16_backup =
+        helper_.GetGlContext().HasGlExtension("EXT_color_buffer_half_float");
+
+    RET_CHECK(can_use_f32 || can_use_f16_backup)
+        << "Segmentation postprocessing error: GPU does not fully support "
+        << "4-channel float32 or float16 formats.";
+
     const GpuBufferFormat activation_output_format =
-        GpuBufferFormat::kRGBAFloat128;
-    const GpuBufferFormat chunk_output_format = GpuBufferFormat::kRGBAFloat128;
+        can_use_f32 ? GpuBufferFormat::kRGBAFloat128
+                    : GpuBufferFormat::kRGBAHalf64;
+    const GpuBufferFormat chunk_output_format =
+        can_use_f32 ? GpuBufferFormat::kRGBAFloat128
+                    : GpuBufferFormat::kRGBAHalf64;
 
     // Uint8 pipeline and conversions are lacking, so for now we just use F32
     // textures even for category masks.
-    // TODO: Also, some platforms (like certain iOS devices) do not
-    //   allow for rendering to RGBAF32 textures, so we should switch to using
-    //   F16 textures in those instances.
-    const GpuBufferFormat final_output_format = GpuBufferFormat::kGrayFloat32;
+    const GpuBufferFormat final_output_format =
+        can_use_f32 ? GpuBufferFormat::kGrayFloat32
+                    : GpuBufferFormat::kGrayHalf16;
     const Tensor::OpenGlTexture2dView read_view =
         tensor.GetOpenGlTexture2dReadView();
 
@@ -702,9 +723,11 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
         // GLSL uses IEEE 754 single-precision floating-point for encoding its
         // floats (at least for number representation, although not necessarily
         // for operations). So we can clear to a reasonable minimum float value
-        // accordingly.
-        const float kFloatMin32 = -3.402823466e+38;
-        glClearColor(kFloatMin32, -1.0, 0.0, 1.0);
+        // accordingly. Min f32 value is -(2 - 2^(-23))*2^127, while min f16
+        // value is -(2 - 2^(-10))*2^15 = 65504. We use minima sufficiently
+        // close to these for our clear.
+        const float kFloatMin = can_use_f32 ? -3.402823466e+38 : -65500.0;
+        glClearColor(kFloatMin, -1.0, 0.0, 1.0);
         helper_.BindFramebuffer(max_texture);
         glClear(GL_COLOR_BUFFER_BIT);
         // Set our clear color back to a "normal" default.
