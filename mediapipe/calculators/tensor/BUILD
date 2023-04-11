@@ -988,6 +988,11 @@ cc_library(
     }) + select({
         "//mediapipe/framework/port:disable_opencv": [],
         "//conditions:default": [":image_to_tensor_converter_opencv"],
+    }) + select({
+        "//mediapipe/framework/port:enable_halide": [
+            ":image_to_tensor_converter_frame_buffer",
+        ],
+        "//conditions:default": [],
     }),
     alwayslink = 1,
 )
@@ -1118,6 +1123,26 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
+    ],
+)
+
+cc_library(
+    name = "image_to_tensor_converter_frame_buffer",
+    srcs = ["image_to_tensor_converter_frame_buffer.cc"],
+    hdrs = ["image_to_tensor_converter_frame_buffer.h"],
+    deps = [
+        ":image_to_tensor_converter",
+        ":image_to_tensor_utils",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework/formats:frame_buffer",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/gpu:frame_buffer_view",
+        "//mediapipe/util/frame_buffer:frame_buffer_util",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

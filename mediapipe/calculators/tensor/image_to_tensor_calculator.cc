@@ -34,6 +34,8 @@
 
 #if !MEDIAPIPE_DISABLE_OPENCV
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_opencv.h"
+#elif MEDIAPIPE_ENABLE_HALIDE
+#include "mediapipe/calculators/tensor/image_to_tensor_converter_frame_buffer.h"
 #endif
 
 #if !MEDIAPIPE_DISABLE_GPU
@@ -273,10 +275,19 @@ class ImageToTensorCalculator : public Node {
                          CreateOpenCvConverter(
                              cc, GetBorderMode(options_.border_mode()),
                              GetOutputTensorType(/*uses_gpu=*/false, params_)));
+// TODO: FrameBuffer-based converter needs to call GetGpuBuffer()
+// to get access to a FrameBuffer view. Investigate if GetGpuBuffer() can be
+// made available even with MEDIAPIPE_DISABLE_GPU set.
+#elif MEDIAPIPE_ENABLE_HALIDE
+        ASSIGN_OR_RETURN(cpu_converter_,
+                         CreateFrameBufferConverter(
+                             cc, GetBorderMode(options_.border_mode()),
+                             GetOutputTensorType(/*uses_gpu=*/false, params_)));
 #else
-        LOG(FATAL) << "Cannot create image to tensor opencv converter since "
-                      "MEDIAPIPE_DISABLE_OPENCV is defined.";
-#endif  // !MEDIAPIPE_DISABLE_OPENCV
+        LOG(FATAL) << "Cannot create image to tensor CPU converter since "
+                      "MEDIAPIPE_DISABLE_OPENCV is defined and "
+                      "MEDIAPIPE_ENABLE_HALIDE is not defined.";
+#endif  // !MEDIAPIPE_DISABLE_HALIDE
       }
     }
     return absl::OkStatus();

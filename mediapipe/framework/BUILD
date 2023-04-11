@@ -971,6 +971,15 @@ cc_library(
         "//mediapipe/framework/port:disable_opencv": ["MEDIAPIPE_DISABLE_OPENCV=1"],
     }) + select({
         "//conditions:default": [],
+        # TODO: Improve this. This only sets MEDIAPIPE_DISABLE_OPENCV as a "defines" Make
+        # value, not as a bazel "--define" variable, which has effects in C++ code but not in
+        # select() statements.
+        "//mediapipe/framework/port:enable_halide": [
+            "MEDIAPIPE_ENABLE_HALIDE=1",
+            "MEDIAPIPE_DISABLE_OPENCV=1",
+        ],
+    }) + select({
+        "//conditions:default": [],
         "//mediapipe/framework:disable_rtti_and_exceptions": [
             "MEDIAPIPE_HAS_RTTI=0",
         ],
