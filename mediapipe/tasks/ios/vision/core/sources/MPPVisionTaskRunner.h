@@ -70,6 +70,8 @@ NS_ASSUME_NONNULL_BEGIN
  * @param roi A `CGRect` specifying the region of interest. If the input region of interest equals
  * `CGRectZero`, the returned `NormalizedRect` covers the whole image. Make sure that `roi` equals
  * `CGRectZero` if `ROIAllowed` is NO. Otherwise, an error will be returned.
+ * @param imageSize A `CGSize` specifying the size of the image within which normalized rect is
+ * calculated.
  * @param imageOrientation A `UIImageOrientation` indicating the rotation to be applied to the
  * image. The resulting `NormalizedRect` will convert the `imageOrientation` to degrees clockwise.
  * Mirrored orientations (`UIImageOrientationUpMirrored`, `UIImageOrientationDownMirrored`,
@@ -83,6 +85,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (std::optional<mediapipe::NormalizedRect>)
     normalizedRectFromRegionOfInterest:(CGRect)roi
+                             imageSize:(CGSize)imageSize
                       imageOrientation:(UIImageOrientation)imageOrientation
                             ROIAllowed:(BOOL)ROIAllowed
                                  error:(NSError **)error;

@@ -46,8 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
     _imageSourceType = MPPImageSourceTypeImage;
     _orientation = orientation;
     _image = image;
-    _width = image.size.width * image.scale;
-    _height = image.size.height * image.scale;
+    _size = CGSizeMake(image.size.width * image.scale, image.size.height * image.scale);
   }
   return self;
 }
@@ -72,8 +71,7 @@ NS_ASSUME_NONNULL_BEGIN
     _orientation = orientation;
     CVPixelBufferRetain(pixelBuffer);
     _pixelBuffer = pixelBuffer;
-    _width = CVPixelBufferGetWidth(pixelBuffer);
-    _height = CVPixelBufferGetHeight(pixelBuffer);
+    _size = CGSizeMake(CVPixelBufferGetWidth(pixelBuffer), CVPixelBufferGetHeight(pixelBuffer));
   }
   return self;
 }
@@ -105,8 +103,7 @@ NS_ASSUME_NONNULL_BEGIN
     _orientation = orientation;
     CFRetain(sampleBuffer);
     _sampleBuffer = sampleBuffer;
-    _width = CVPixelBufferGetWidth(imageBuffer);
-    _height = CVPixelBufferGetHeight(imageBuffer);
+    _size = CGSizeMake(CVPixelBufferGetWidth(imageBuffer), CVPixelBufferGetHeight(imageBuffer));
   }
   return self;
 }

@@ -128,6 +128,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
                                                  error:(NSError **)error {
   std::optional<NormalizedRect> rect =
       [_visionTaskRunner normalizedRectFromRegionOfInterest:CGRectZero
+                                           imageSize:image.size
                                            imageOrientation:image.orientation
                                                  ROIAllowed:NO
                                                       error:error];
@@ -152,6 +153,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 - (nullable MPPObjectDetectionResult *)detectInImage:(MPPImage *)image error:(NSError **)error {
   std::optional<NormalizedRect> rect =
       [_visionTaskRunner normalizedRectFromRegionOfInterest:CGRectZero
+                                           imageSize:image.size
                                            imageOrientation:image.orientation
                                                  ROIAllowed:YES
                                                       error:error];

@@ -33,11 +33,8 @@ static const MPPImageSourceType MPPImageSourceTypeSampleBuffer = 2;
 NS_SWIFT_NAME(MPImage)
 @interface MPPImage : NSObject
 
-/** Width of the image in pixels. */
-@property(nonatomic, readonly) CGFloat width;
-
-/** Height of the image in pixels. */
-@property(nonatomic, readonly) CGFloat height;
+/** Size of the image in pixels. */
+@property(nonatomic, readonly) CGSize size;
 
 /**
  * The display orientation of the image. If `imageSourceType` is `MPPImageSourceTypeImage`, the

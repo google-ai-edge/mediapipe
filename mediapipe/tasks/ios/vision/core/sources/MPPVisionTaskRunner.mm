@@ -86,6 +86,7 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
 }
 
 - (std::optional<NormalizedRect>)normalizedRectFromRegionOfInterest:(CGRect)roi
+                                                          imageSize:(CGSize)imageSize
                                                    imageOrientation:
                                                        (UIImageOrientation)imageOrientation
                                                          ROIAllowed:(BOOL)ROIAllowed
@@ -102,8 +103,6 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
   NormalizedRect normalizedRect;
   normalizedRect.set_x_center(CGRectGetMidX(calculatedRoi));
   normalizedRect.set_y_center(CGRectGetMidY(calculatedRoi));
-  normalizedRect.set_width(CGRectGetWidth(calculatedRoi));
-  normalizedRect.set_height(CGRectGetHeight(calculatedRoi));
 
   int rotationDegrees = 0;
   switch (imageOrientation) {
@@ -133,6 +132,17 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
   }
 
   normalizedRect.set_rotation(rotationDegrees * M_PI / kMPPOrientationDegreesDown);
+
+  if (rotationDegrees % 180 == 0) {
+    normalizedRect.set_width(CGRectGetWidth(calculatedRoi));
+    normalizedRect.set_height(CGRectGetHeight(calculatedRoi));
+  } else {
+    const float width = CGRectGetHeight(calculatedRoi) * imageSize.height / imageSize.width;
+    const float height = CGRectGetWidth(calculatedRoi) * imageSize.width / imageSize.height;
+
+    normalizedRect.set_width(width);
+    normalizedRect.set_height(height);
+  }
 
   return normalizedRect;
 }
