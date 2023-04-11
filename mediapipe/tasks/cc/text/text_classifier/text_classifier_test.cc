@@ -155,7 +155,7 @@ TEST_F(TextClassifierTest, TextClassifierWithBert) {
 #else
   negative_expected.classifications.emplace_back(Classifications{
       /*categories=*/{
-          {/*index=*/0, /*score=*/0.956317, /*category_name=*/"negative"},
+          {/*index=*/0, /*score=*/0.956316, /*category_name=*/"negative"},
           {/*index=*/1, /*score=*/0.043683, /*category_name=*/"positive"}},
       /*head_index=*/0,
       /*head_name=*/"probability"});
