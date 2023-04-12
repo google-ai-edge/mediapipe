@@ -120,7 +120,7 @@ TEST(NGramHashTest, ReturnsExpectedValueWhenInputIsSane) {
 
   // A hash function that maps the given string to an index in the embedding
   // table denoted by `vocab_idx`.
-  auto hash = [vocab_sizes](std::string str, const int vocab_idx) {
+  auto hash = [vocab_sizes, kSeed](std::string str, const int vocab_idx) {
     const auto hash_value =
         MurmurHash64WithSeed(str.c_str(), str.size(), kSeed);
     return static_cast<int>((hash_value % vocab_sizes[vocab_idx]) + 1);
