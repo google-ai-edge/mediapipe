@@ -28,8 +28,7 @@ namespace mediapipe::tasks::components::containers {
 
 constexpr int kDefaultCategoryIndex = -1;
 
-Detection ConvertToDetectionResult(
-    const mediapipe::Detection& detection_proto) {
+Detection ConvertToDetection(const mediapipe::Detection& detection_proto) {
   Detection detection;
   for (int idx = 0; idx < detection_proto.score_size(); ++idx) {
     detection.categories.push_back(
@@ -78,8 +77,7 @@ DetectionResult ConvertToDetectionResult(
   DetectionResult detection_result;
   detection_result.detections.reserve(detections_proto.size());
   for (const auto& detection_proto : detections_proto) {
-    detection_result.detections.push_back(
-        ConvertToDetectionResult(detection_proto));
+    detection_result.detections.push_back(ConvertToDetection(detection_proto));
   }
   return detection_result;
 }
