@@ -44,8 +44,8 @@ constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kNormLandmarksTag[] = "NORM_LANDMARKS";
 constexpr char kLandmarksTag[] = "LANDMARKS";
 constexpr char kRefinedLandmarksTag[] = "REFINED_LANDMARKS";
-constexpr int kAttentionModelSplitNum = 6;
 constexpr int kMeshLandmarksNum = 468;
+constexpr int kMeshWithIrisLandmarksNum = 478;
 constexpr int kLipsLandmarksNum = 80;
 constexpr int kEyeLandmarksNum = 71;
 constexpr int kIrisLandmarksNum = 5;
@@ -183,15 +183,6 @@ constexpr std::array<int, kContoursNumForIrisAvg> kRightIrisAvgIndices = {
     // Upper contour (excluding corners).
     466, 388, 387, 386, 385, 384, 398};
 
-void ConfigureSplitTensorVectorCalculator(
-    mediapipe::SplitVectorCalculatorOptions* options) {
-  for (int i = 0; i < kAttentionModelSplitNum; ++i) {
-    auto* range = options->add_ranges();
-    range->set_begin(i);
-    range->set_end(i + 1);
-  }
-}
-
 Stream<NormalizedLandmarkList> ConvertTensorsToLandmarks(
     int landmarks_num, int input_image_width, int input_image_height,
     Stream<std::vector<Tensor>> tensors, Graph& graph) {
@@ -207,79 +198,9 @@ Stream<NormalizedLandmarkList> ConvertTensorsToLandmarks(
       .Cast<NormalizedLandmarkList>();
 }
 
-Stream<NormalizedLandmarkList> RefineFaceLandmarks(
-    Stream<NormalizedLandmarkList> mesh_landmarks,
-    Stream<NormalizedLandmarkList> lips_landmarks,
-    Stream<NormalizedLandmarkList> left_eye_landmarks,
-    Stream<NormalizedLandmarkList> right_eye_landmarks,
-    Stream<NormalizedLandmarkList> left_iris_landmarks,
-    Stream<NormalizedLandmarkList> right_iris_landmarks, Graph& graph) {
-  auto& refine_landmarks = graph.AddNode("LandmarksRefinementCalculator");
-  auto& refinement_options =
-      refine_landmarks
-          .GetOptions<mediapipe::LandmarksRefinementCalculatorOptions>();
-
-  // Face mesh landmarks.
-  auto* refinement_for_mesh = refinement_options.add_refinement();
-  refinement_for_mesh->mutable_indexes_mapping()->Assign(
-      kMeshLandmarksIndicesMapping.begin(), kMeshLandmarksIndicesMapping.end());
-  refinement_for_mesh->mutable_z_refinement()->mutable_copy();
-
-  // Lips landmarks.
-  auto* refinement_for_lips = refinement_options.add_refinement();
-  refinement_for_lips->mutable_indexes_mapping()->Assign(
-      kLipsLandmarksIndicesMapping.begin(), kLipsLandmarksIndicesMapping.end());
-  refinement_for_lips->mutable_z_refinement()->mutable_none();
-
-  // Left eye landmarks.
-  auto* refinement_for_left_eye = refinement_options.add_refinement();
-  refinement_for_left_eye->mutable_indexes_mapping()->Assign(
-      kLeftEyeLandmarksIndicesMapping.begin(),
-      kLeftEyeLandmarksIndicesMapping.end());
-  refinement_for_left_eye->mutable_z_refinement()->mutable_none();
-
-  // Right eye landmarks.
-  auto* refinement_for_right_eye = refinement_options.add_refinement();
-  refinement_for_right_eye->mutable_indexes_mapping()->Assign(
-      kRightEyeLandmarksIndicesMapping.begin(),
-      kRightEyeLandmarksIndicesMapping.end());
-  refinement_for_right_eye->mutable_z_refinement()->mutable_none();
-
-  // Left iris landmarks.
-  auto* refinement_for_left_iris = refinement_options.add_refinement();
-  refinement_for_left_iris->mutable_indexes_mapping()->Assign(
-      kLeftIrisLandmarksIndicesMapping.begin(),
-      kLeftIrisLandmarksIndicesMapping.end());
-  refinement_for_left_iris->mutable_z_refinement()
-      ->mutable_assign_average()
-      ->mutable_indexes_for_average()
-      ->Assign(kLeftIrisAvgIndices.begin(), kLeftIrisAvgIndices.end());
-
-  // Right iris landmarks.
-  auto* refinement_for_right_iris = refinement_options.add_refinement();
-  refinement_for_right_iris->mutable_indexes_mapping()->Assign(
-      kRightIrisLandmarksIndicesMapping.begin(),
-      kRightIrisLandmarksIndicesMapping.end());
-  refinement_for_right_iris->mutable_z_refinement()
-      ->mutable_assign_average()
-      ->mutable_indexes_for_average()
-      ->Assign(kRightIrisAvgIndices.begin(), kRightIrisAvgIndices.end());
-
-  mesh_landmarks >> refine_landmarks.In(kLandmarksTag)[0];
-  lips_landmarks >> refine_landmarks.In(kLandmarksTag)[1];
-  left_eye_landmarks >> refine_landmarks.In(kLandmarksTag)[2];
-  right_eye_landmarks >> refine_landmarks.In(kLandmarksTag)[3];
-  left_iris_landmarks >> refine_landmarks.In(kLandmarksTag)[4];
-  right_iris_landmarks >> refine_landmarks.In(kLandmarksTag)[5];
-  return refine_landmarks.Out(kRefinedLandmarksTag)
-      .Cast<NormalizedLandmarkList>();
-}
-
 }  // namespace
 
 // Graph to transform face landmarks model output tensors into landmarks.
-// The graph can support two types of model: regular and attention model with
-// refined lips, eye and irises.
 //
 // Inputs:
 //   TENSORS - std::vector<Tensor>
@@ -324,41 +245,9 @@ class TensorsToFaceLandmarksGraph : public Subgraph {
       Stream<std::vector<Tensor>> tensors, Graph& graph) {
     const int input_image_width = subgraph_options.input_image_width();
     const int input_image_height = subgraph_options.input_image_height();
-    if (subgraph_options.is_attention_model()) {
-      // Split tensors from attention model to 6 streams: mesh, lips, left_eye,
-      // right_eye, left_iris and right iris.
-      auto& split_tensors_vector = graph.AddNode("SplitTensorVectorCalculator");
-      ConfigureSplitTensorVectorCalculator(
-          &split_tensors_vector
-               .GetOptions<mediapipe::SplitVectorCalculatorOptions>());
-      tensors >> split_tensors_vector.In("");
-
-      auto mesh_landmarks = ConvertTensorsToLandmarks(
-          kMeshLandmarksNum, input_image_width, input_image_height,
-          split_tensors_vector.Out(0).Cast<std::vector<Tensor>>(), graph);
-      auto lips_landmarks = ConvertTensorsToLandmarks(
-          kLipsLandmarksNum, input_image_width, input_image_height,
-          split_tensors_vector.Out(1).Cast<std::vector<Tensor>>(), graph);
-      auto left_eye_landmarks = ConvertTensorsToLandmarks(
-          kEyeLandmarksNum, input_image_width, input_image_height,
-          split_tensors_vector.Out(2).Cast<std::vector<Tensor>>(), graph);
-      auto right_eye_landmarks = ConvertTensorsToLandmarks(
-          kEyeLandmarksNum, input_image_width, input_image_height,
-          split_tensors_vector.Out(3).Cast<std::vector<Tensor>>(), graph);
-      auto left_iris_landmarks = ConvertTensorsToLandmarks(
-          kIrisLandmarksNum, input_image_width, input_image_height,
-          split_tensors_vector.Out(4).Cast<std::vector<Tensor>>(), graph);
-      auto right_iris_landmarks = ConvertTensorsToLandmarks(
-          kIrisLandmarksNum, input_image_width, input_image_height,
-          split_tensors_vector.Out(5).Cast<std::vector<Tensor>>(), graph);
-      return RefineFaceLandmarks(mesh_landmarks, lips_landmarks,
-                                 left_eye_landmarks, right_eye_landmarks,
-                                 left_iris_landmarks, right_iris_landmarks,
-                                 graph);
-    } else {
-      return ConvertTensorsToLandmarks(kMeshLandmarksNum, input_image_width,
-                                       input_image_height, tensors, graph);
-    }
+    return ConvertTensorsToLandmarks(kMeshWithIrisLandmarksNum,
+                                     input_image_width, input_image_height,
+                                     tensors, graph);
   }
 };
 

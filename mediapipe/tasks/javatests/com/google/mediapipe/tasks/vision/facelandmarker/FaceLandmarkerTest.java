@@ -50,19 +50,16 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({FaceLandmarkerTest.General.class, FaceLandmarkerTest.RunningModeTest.class})
 public class FaceLandmarkerTest {
   private static final String FACE_LANDMARKER_BUNDLE_ASSET_FILE =
-      "face_landmarker_with_blendshapes.task";
+      "face_landmarker_v2_with_blendshapes.task";
   private static final String PORTRAIT_IMAGE = "portrait.jpg";
   private static final String CAT_IMAGE = "cat.jpg";
-  private static final String PORTRAIT_FACE_LANDMARKS =
-      "portrait_expected_face_landmarks_with_attention.pb";
-  private static final String PORTRAIT_FACE_BLENDSHAPES =
-      "portrait_expected_blendshapes_with_attention.pb";
-  private static final String PORTRAIT_FACE_GEOMETRY =
-      "portrait_expected_face_geometry_with_attention.pb";
+  private static final String PORTRAIT_FACE_LANDMARKS = "portrait_expected_face_landmarks.pb";
+  private static final String PORTRAIT_FACE_BLENDSHAPES = "portrait_expected_blendshapes.pb";
+  private static final String PORTRAIT_FACE_GEOMETRY = "portrait_expected_face_geometry.pb";
   private static final String TAG = "Face Landmarker Test";
   private static final float FACE_LANDMARKS_ERROR_TOLERANCE = 0.01f;
-  private static final float FACE_BLENDSHAPES_ERROR_TOLERANCE = 0.1f;
-  private static final float FACIAL_TRANSFORMATION_MATRIX_ERROR_TOLERANCE = 0.01f;
+  private static final float FACE_BLENDSHAPES_ERROR_TOLERANCE = 0.13f;
+  private static final float FACIAL_TRANSFORMATION_MATRIX_ERROR_TOLERANCE = 0.02f;
   private static final int IMAGE_WIDTH = 820;
   private static final int IMAGE_HEIGHT = 1024;
 

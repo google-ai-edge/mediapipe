@@ -68,19 +68,17 @@ using ::testing::proto::Approximately;
 using ::testing::proto::Partially;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
-constexpr char kFaceLandmarkerModelBundleName[] = "face_landmarker.task";
+constexpr char kFaceLandmarkerModelBundleName[] = "face_landmarker_v2.task";
 constexpr char kFaceLandmarkerWithBlendshapesModelBundleName[] =
-    "face_landmarker_with_blendshapes.task";
+    "face_landmarker_v2_with_blendshapes.task";
 constexpr char kPortraitImageName[] = "portrait.jpg";
 constexpr char kCatImageName[] = "cat.jpg";
-constexpr char kPortraitExpectedFaceLandamrksName[] =
+constexpr char kPortraitExpectedFaceLandmarksName[] =
     "portrait_expected_face_landmarks.pbtxt";
-constexpr char kPortraitExpectedFaceLandamrksWithAttentionName[] =
-    "portrait_expected_face_landmarks_with_attention.pbtxt";
 constexpr char kPortraitExpectedBlendshapesName[] =
-    "portrait_expected_blendshapes_with_attention.pbtxt";
+    "portrait_expected_blendshapes.pbtxt";
 constexpr char kPortraitExpectedFaceGeometryName[] =
-    "portrait_expected_face_geometry_with_attention.pbtxt";
+    "portrait_expected_face_geometry.pbtxt";
 
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageName[] = "image";
@@ -95,7 +93,7 @@ constexpr char kFaceGeometryName[] = "face_geometry";
 
 constexpr float kLandmarksDiffMargin = 0.03;
 constexpr float kBlendshapesDiffMargin = 0.1;
-constexpr float kFaceGeometryDiffMargin = 0.01;
+constexpr float kFaceGeometryDiffMargin = 0.02;
 
 template <typename ProtoT>
 ProtoT GetExpectedProto(absl::string_view filename) {
@@ -250,7 +248,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* test_image_name= */ kPortraitImageName,
                /* expected_landmarks_list= */
                {{GetExpectedProto<NormalizedLandmarkList>(
-                   kPortraitExpectedFaceLandamrksName)}},
+                   kPortraitExpectedFaceLandmarksName)}},
                /* expected_blendshapes= */ std::nullopt,
                /* expected_face_geometry= */ std::nullopt,
                /* landmarks_diff_threshold= */ kLandmarksDiffMargin,
@@ -275,7 +273,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* test_image_name= */ kPortraitImageName,
                /* expected_landmarks_list= */
                {{GetExpectedProto<NormalizedLandmarkList>(
-                   kPortraitExpectedFaceLandamrksWithAttentionName)}},
+                   kPortraitExpectedFaceLandmarksName)}},
                /* expected_blendshapes= */
                {{GetExpectedProto<ClassificationList>(
                    kPortraitExpectedBlendshapesName)}},
@@ -290,7 +288,7 @@ INSTANTIATE_TEST_SUITE_P(
                /* test_image_name= */ kPortraitImageName,
                /* expected_landmarks_list= */
                {{GetExpectedProto<NormalizedLandmarkList>(
-                   kPortraitExpectedFaceLandamrksWithAttentionName)}},
+                   kPortraitExpectedFaceLandmarksName)}},
                /* expected_blendshapes= */
                {{GetExpectedProto<ClassificationList>(
                    kPortraitExpectedBlendshapesName)}},

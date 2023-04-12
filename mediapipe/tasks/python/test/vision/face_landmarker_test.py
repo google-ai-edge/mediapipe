@@ -46,16 +46,11 @@ _FaceLandmarkerOptions = face_landmarker.FaceLandmarkerOptions
 _RUNNING_MODE = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 
-_FACE_LANDMARKER_BUNDLE_ASSET_FILE = 'face_landmarker.task'
+_FACE_LANDMARKER_BUNDLE_ASSET_FILE = 'face_landmarker_v2.task'
 _PORTRAIT_IMAGE = 'portrait.jpg'
 _CAT_IMAGE = 'cat.jpg'
 _PORTRAIT_EXPECTED_FACE_LANDMARKS = 'portrait_expected_face_landmarks.pbtxt'
-_PORTRAIT_EXPECTED_FACE_LANDMARKS_WITH_ATTENTION = (
-    'portrait_expected_face_landmarks_with_attention.pbtxt'
-)
-_PORTRAIT_EXPECTED_BLENDSHAPES = (
-    'portrait_expected_blendshapes_with_attention.pbtxt'
-)
+_PORTRAIT_EXPECTED_BLENDSHAPES = 'portrait_expected_blendshapes.pbtxt'
 _LANDMARKS_DIFF_MARGIN = 0.03
 _BLENDSHAPES_DIFF_MARGIN = 0.13
 _FACIAL_TRANSFORMATION_MATRIX_DIFF_MARGIN = 0.02
@@ -94,9 +89,9 @@ def _get_expected_face_blendshapes(file_path: str):
 
 def _get_expected_facial_transformation_matrixes():
   matrix = np.array([
-      [0.9995292, -0.005092691, 0.030254554, -0.37340546],
-      [0.0072318087, 0.99744856, -0.07102106, 22.212194],
-      [-0.029815676, 0.07120642, 0.9970159, -64.76358],
+      [0.9995292, -0.01294756, 0.038823195, -0.3691378],
+      [0.0072318087, 0.9937692, -0.1101321, 22.75809],
+      [-0.03715533, 0.11070588, 0.99315894, -65.765925],
       [0, 0, 0, 1],
   ])
   facial_transformation_matrixes_results = []

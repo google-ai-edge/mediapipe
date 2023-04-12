@@ -25,11 +25,7 @@ message TensorsToFaceLandmarksGraphOptions {
     optional TensorsToFaceLandmarksGraphOptions ext = 509621260;
   }
 
-  // Whether the landmarks model is with attention on lips and eyes. Attention
-  // provides more accuracy on lips and eye regions as well as iris landmarks.
-  optional bool is_attention_model = 1 [default = false];
+  optional int32 input_image_width = 1;
 
-  optional int32 input_image_width = 2;
-
-  optional int32 input_image_height = 3;
+  optional int32 input_image_height = 2;
 }

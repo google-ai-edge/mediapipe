@@ -43,6 +43,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/proto/classifier_options.pb.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
+#include "mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry.pb.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/face_landmarker_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
@@ -59,19 +60,18 @@ using ::testing::TestWithParam;
 using ::testing::Values;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
-constexpr char kFaceLandmarkerModelBundleName[] = "face_landmarker.task";
 constexpr char kFaceLandmarkerWithBlendshapesModelBundleName[] =
-    "face_landmarker_with_blendshapes.task";
+    "face_landmarker_v2_with_blendshapes.task";
 constexpr char kPortraitImageName[] = "portrait.jpg";
-constexpr char kPortraitExpectedFaceLandamrksName[] =
+constexpr char kPortraitExpectedFaceLandmarksName[] =
     "portrait_expected_face_landmarks.pbtxt";
-constexpr char kPortraitExpectedFaceLandmarksWithAttentionName[] =
-    "portrait_expected_face_landmarks_with_attention.pbtxt";
 constexpr char kPortraitExpectedBlendshapesName[] =
-    "portrait_expected_blendshapes_with_attention.pbtxt";
+    "portrait_expected_blendshapes.pbtxt";
+constexpr char kPortaitExpectedFaceGeomertyName[] =
+    "portrait_expected_face_geometry.pbtxt";
 
 constexpr float kLandmarksDiffMargin = 0.03;
-constexpr float kBlendshapesDiffMargin = 0.1;
+constexpr float kBlendshapesDiffMargin = 0.12;
 constexpr float kFacialTransformationMatrixDiffMargin = 0.02;
 
 template <typename ProtoT>
@@ -99,13 +99,9 @@ struct FaceLandmarkerTestParams {
 };
 
 mediapipe::MatrixData MakePortraitExpectedFacialTransformationMatrix() {
-  const Matrix matrix{{0.9995292, -0.005092691, 0.030254554, -0.37340546},
-                      {0.0072318087, 0.99744856, -0.07102106, 22.212194},
-                      {-0.029815676, 0.07120642, 0.9970159, -64.76358},
-                      {0, 0, 0, 1}};
-  mediapipe::MatrixData matrix_data;
-  MatrixDataProtoFromMatrix(matrix, &matrix_data);
-  return matrix_data;
+  auto face_geometry = GetExpectedProto<face_geometry::proto::FaceGeometry>(
+      kPortaitExpectedFaceGeomertyName);
+  return face_geometry.pose_transform_matrix();
 }
 
 testing::Matcher<components::containers::NormalizedLandmark> LandmarkIs(
@@ -232,51 +228,41 @@ TEST_P(ImageModeTest, Succeeds) {
 
 INSTANTIATE_TEST_SUITE_P(
     FaceLandmarkerTest, ImageModeTest,
-    Values(FaceLandmarkerTestParams{
-               /* test_name= */ "Portrait",
-               /* input_model_name= */ kFaceLandmarkerModelBundleName,
-               /* test_image_name= */ kPortraitImageName,
-               /* rotation= */ 0,
-               /* expected_result= */
-               ConvertToFaceLandmarkerResult(
-                   {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandamrksName)})},
-           FaceLandmarkerTestParams{
-               /* test_name= */ "PortraitWithAttention",
-               /* input_model_name= */
-               kFaceLandmarkerWithBlendshapesModelBundleName,
-               /* test_image_name= */ kPortraitImageName,
-               /* rotation= */ 0,
-               /* expected_result= */
-               ConvertToFaceLandmarkerResult(
-                   {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandmarksWithAttentionName)})},
-           FaceLandmarkerTestParams{
-               /* test_name= */ "PortraitWithBlendshapes",
-               /* input_model_name= */
-               kFaceLandmarkerWithBlendshapesModelBundleName,
-               /* test_image_name= */ kPortraitImageName,
-               /* rotation= */ 0,
-               /* expected_result= */
-               ConvertToFaceLandmarkerResult(
-                   {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandmarksWithAttentionName)},
-                   {{GetExpectedProto<ClassificationList>(
-                       kPortraitExpectedBlendshapesName)}})},
-           FaceLandmarkerTestParams{
-               /* test_name= */ "PortraitWithBlendshapesWithFacialTransformatio"
-                                "nMatrix",
-               /* input_model_name= */
-               kFaceLandmarkerWithBlendshapesModelBundleName,
-               /* test_image_name= */ kPortraitImageName,
-               /* rotation= */ 0,
-               /* expected_result= */
-               ConvertToFaceLandmarkerResult(
-                   {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandmarksWithAttentionName)},
-                   {{GetExpectedProto<ClassificationList>(
-                       kPortraitExpectedBlendshapesName)}},
-                   {{MakePortraitExpectedFacialTransformationMatrix()}})}),
+    Values(
+        FaceLandmarkerTestParams{/* test_name= */ "PortraitV2",
+                                 /* input_model_name= */
+                                 kFaceLandmarkerWithBlendshapesModelBundleName,
+                                 /* test_image_name= */ kPortraitImageName,
+                                 /* rotation= */ 0,
+                                 /* expected_result= */
+                                 ConvertToFaceLandmarkerResult(
+                                     {GetExpectedProto<NormalizedLandmarkList>(
+                                         kPortraitExpectedFaceLandmarksName)})},
+        FaceLandmarkerTestParams{/* test_name= */ "PortraitWithBlendshapes",
+                                 /* input_model_name= */
+                                 kFaceLandmarkerWithBlendshapesModelBundleName,
+                                 /* test_image_name= */ kPortraitImageName,
+                                 /* rotation= */ 0,
+                                 /* expected_result= */
+                                 ConvertToFaceLandmarkerResult(
+                                     {GetExpectedProto<NormalizedLandmarkList>(
+                                         kPortraitExpectedFaceLandmarksName)},
+                                     {{GetExpectedProto<ClassificationList>(
+                                         kPortraitExpectedBlendshapesName)}})},
+        FaceLandmarkerTestParams{
+            /* test_name= */ "PortraitWithBlendshapesWithFacialTransformatio"
+                             "nMatrix",
+            /* input_model_name= */
+            kFaceLandmarkerWithBlendshapesModelBundleName,
+            /* test_image_name= */ kPortraitImageName,
+            /* rotation= */ 0,
+            /* expected_result= */
+            ConvertToFaceLandmarkerResult(
+                {GetExpectedProto<NormalizedLandmarkList>(
+                    kPortraitExpectedFaceLandmarksName)},
+                {{GetExpectedProto<ClassificationList>(
+                    kPortraitExpectedBlendshapesName)}},
+                {{MakePortraitExpectedFacialTransformationMatrix()}})}),
     [](const TestParamInfo<ImageModeTest::ParamType>& info) {
       return info.param.test_name;
     });
@@ -318,37 +304,28 @@ TEST_P(VideoModeTest, Succeeds) {
 
 INSTANTIATE_TEST_SUITE_P(
     FaceLandmarkerTest, VideoModeTest,
-    Values(FaceLandmarkerTestParams{
-               /* test_name= */ "Portrait",
-               /* input_model_name= */ kFaceLandmarkerModelBundleName,
-               /* test_image_name= */ kPortraitImageName,
-               /* rotation= */ 0,
-               /* expected_result= */
-               ConvertToFaceLandmarkerResult(
-                   {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandamrksName)})},
-           FaceLandmarkerTestParams{
-               /* test_name= */ "PortraitWithAttention",
-               /* input_model_name= */
-               kFaceLandmarkerWithBlendshapesModelBundleName,
-               /* test_image_name= */ kPortraitImageName,
-               /* rotation= */ 0,
-               /* expected_result= */
-               ConvertToFaceLandmarkerResult(
-                   {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandmarksWithAttentionName)})},
-           FaceLandmarkerTestParams{
-               /* test_name= */ "PortraitWithBlendshapes",
-               /* input_model_name= */
-               kFaceLandmarkerWithBlendshapesModelBundleName,
-               /* test_image_name= */ kPortraitImageName,
-               /* rotation= */ 0,
-               /* expected_result= */
-               ConvertToFaceLandmarkerResult(
-                   {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandmarksWithAttentionName)},
-                   {{GetExpectedProto<ClassificationList>(
-                       kPortraitExpectedBlendshapesName)}})}),
+    Values(
+
+        FaceLandmarkerTestParams{/* test_name= */ "Portrait",
+                                 /* input_model_name= */
+                                 kFaceLandmarkerWithBlendshapesModelBundleName,
+                                 /* test_image_name= */ kPortraitImageName,
+                                 /* rotation= */ 0,
+                                 /* expected_result= */
+                                 ConvertToFaceLandmarkerResult(
+                                     {GetExpectedProto<NormalizedLandmarkList>(
+                                         kPortraitExpectedFaceLandmarksName)})},
+        FaceLandmarkerTestParams{/* test_name= */ "PortraitWithBlendshapes",
+                                 /* input_model_name= */
+                                 kFaceLandmarkerWithBlendshapesModelBundleName,
+                                 /* test_image_name= */ kPortraitImageName,
+                                 /* rotation= */ 0,
+                                 /* expected_result= */
+                                 ConvertToFaceLandmarkerResult(
+                                     {GetExpectedProto<NormalizedLandmarkList>(
+                                         kPortraitExpectedFaceLandmarksName)},
+                                     {{GetExpectedProto<ClassificationList>(
+                                         kPortraitExpectedBlendshapesName)}})}),
     [](const TestParamInfo<VideoModeTest::ParamType>& info) {
       return info.param.test_name;
     });
@@ -413,37 +390,27 @@ TEST_P(LiveStreamModeTest, Succeeds) {
 
 INSTANTIATE_TEST_SUITE_P(
     FaceLandmarkerTest, LiveStreamModeTest,
-    Values(FaceLandmarkerTestParams{
-               /* test_name= */ "Portrait",
-               /* input_model_name= */ kFaceLandmarkerModelBundleName,
-               /* test_image_name= */ kPortraitImageName,
-               /* rotation= */ 0,
-               /* expected_result= */
-               ConvertToFaceLandmarkerResult(
-                   {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandamrksName)})},
-           FaceLandmarkerTestParams{
-               /* test_name= */ "PortraitWithAttention",
-               /* input_model_name= */
-               kFaceLandmarkerWithBlendshapesModelBundleName,
-               /* test_image_name= */ kPortraitImageName,
-               /* rotation= */ 0,
-               /* expected_result= */
-               ConvertToFaceLandmarkerResult(
-                   {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandmarksWithAttentionName)})},
-           FaceLandmarkerTestParams{
-               /* test_name= */ "PortraitWithBlendshapes",
-               /* input_model_name= */
-               kFaceLandmarkerWithBlendshapesModelBundleName,
-               /* test_image_name= */ kPortraitImageName,
-               /* rotation= */ 0,
-               /* expected_result= */
-               ConvertToFaceLandmarkerResult(
-                   {GetExpectedProto<NormalizedLandmarkList>(
-                       kPortraitExpectedFaceLandmarksWithAttentionName)},
-                   {{GetExpectedProto<ClassificationList>(
-                       kPortraitExpectedBlendshapesName)}})}),
+    Values(
+        FaceLandmarkerTestParams{/* test_name= */ "Portrait",
+                                 /* input_model_name= */
+                                 kFaceLandmarkerWithBlendshapesModelBundleName,
+                                 /* test_image_name= */ kPortraitImageName,
+                                 /* rotation= */ 0,
+                                 /* expected_result= */
+                                 ConvertToFaceLandmarkerResult(
+                                     {GetExpectedProto<NormalizedLandmarkList>(
+                                         kPortraitExpectedFaceLandmarksName)})},
+        FaceLandmarkerTestParams{/* test_name= */ "PortraitWithBlendshapes",
+                                 /* input_model_name= */
+                                 kFaceLandmarkerWithBlendshapesModelBundleName,
+                                 /* test_image_name= */ kPortraitImageName,
+                                 /* rotation= */ 0,
+                                 /* expected_result= */
+                                 ConvertToFaceLandmarkerResult(
+                                     {GetExpectedProto<NormalizedLandmarkList>(
+                                         kPortraitExpectedFaceLandmarksName)},
+                                     {{GetExpectedProto<ClassificationList>(
+                                         kPortraitExpectedBlendshapesName)}})}),
     [](const TestParamInfo<LiveStreamModeTest::ParamType>& info) {
       return info.param.test_name;
     });

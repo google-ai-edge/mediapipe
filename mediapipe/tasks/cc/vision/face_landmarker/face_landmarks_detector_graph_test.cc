@@ -65,18 +65,15 @@ using ::testing::proto::Approximately;
 using ::testing::proto::Partially;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
-constexpr char kFaceLandmarksDetectionModel[] = "face_landmark.tflite";
-constexpr char kFaceLandmarksDetectionWithAttentionModel[] =
-    "face_landmark_with_attention.tflite";
+constexpr char kFaceLandmarksV2Model[] =
+    "facemesh2_lite_iris_faceflag_2023_02_14.tflite";
 constexpr char kPortraitImageName[] = "portrait.jpg";
 constexpr char kCatImageName[] = "cat.jpg";
-constexpr char kPortraitExpectedFaceLandamrksName[] =
+constexpr char kPortraitExpectedFaceLandmarksName[] =
     "portrait_expected_face_landmarks.pbtxt";
-constexpr char kPortraitExpectedFaceLandamrksWithAttentionName[] =
-    "portrait_expected_face_landmarks_with_attention.pbtxt";
 constexpr char kFaceBlendshapesModel[] = "face_blendshapes.tflite";
 constexpr char kPortraitExpectedBlendshapesName[] =
-    "portrait_expected_blendshapes_with_attention.pbtxt";
+    "portrait_expected_blendshapes.pbtxt";
 
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageName[] = "image";
@@ -363,35 +360,22 @@ TEST_P(MultiFaceLandmarksDetectionTest, Succeeds) {
 INSTANTIATE_TEST_SUITE_P(
     FaceLandmarksDetectionTest, SingleFaceLandmarksDetectionTest,
     Values(SingeFaceTestParams{
-               /* test_name= */ "Portrait",
-               /* landmarks_model_name= */ kFaceLandmarksDetectionModel,
-               /* blendshape_model_name= */ std::nullopt,
-               /* test_image_name=*/kPortraitImageName,
-               /* norm_rect= */ MakeNormRect(0.4987, 0.2211, 0.2877, 0.2303, 0),
-               /* expected_presence= */ true,
-               /* expected_landmarks= */
-               GetExpectedLandmarkList(kPortraitExpectedFaceLandamrksName),
-               /* expected_blendshapes= */ std::nullopt,
-               /* landmarks_diff_threshold= */ kFractionDiff,
-               /* blendshapes_diff_threshold= */ kBlendshapesDiffMargin},
-           SingeFaceTestParams{
-               /* test_name= */ "PortraitWithAttention",
+               /* test_name= */ "PortraitV2",
                /* landmarks_model_name= */
-               kFaceLandmarksDetectionWithAttentionModel,
+               kFaceLandmarksV2Model,
                /* blendshape_model_name= */ std::nullopt,
                /* test_image_name= */ kPortraitImageName,
                /* norm_rect= */ MakeNormRect(0.4987, 0.2211, 0.2877, 0.2303, 0),
                /* expected_presence= */ true,
                /* expected_landmarks= */
-               GetExpectedLandmarkList(
-                   kPortraitExpectedFaceLandamrksWithAttentionName),
+               GetExpectedLandmarkList(kPortraitExpectedFaceLandmarksName),
                /* expected_blendshapes= */ std::nullopt,
                /* landmarks_diff_threshold= */ kFractionDiff,
                /* blendshapes_diff_threshold= */ kBlendshapesDiffMargin},
            SingeFaceTestParams{
-               /* test_name= */ "PortraitWithAttentionWithBlendshapes",
+               /* test_name= */ "PortraitV2WithBlendshapes",
                /* landmarks_model_name= */
-               kFaceLandmarksDetectionWithAttentionModel,
+               kFaceLandmarksV2Model,
                /* blendshape_model_name= */ kFaceBlendshapesModel,
                /* test_image_name= */ kPortraitImageName,
                /* norm_rect= */
@@ -399,8 +383,7 @@ INSTANTIATE_TEST_SUITE_P(
                             0.008304443),
                /* expected_presence= */ true,
                /* expected_landmarks= */
-               GetExpectedLandmarkList(
-                   kPortraitExpectedFaceLandamrksWithAttentionName),
+               GetExpectedLandmarkList(kPortraitExpectedFaceLandmarksName),
                /* expected_blendshapes= */
                GetBlendshapes(kPortraitExpectedBlendshapesName),
                /* landmarks_diff_threshold= */ kFractionDiff,
@@ -414,35 +397,22 @@ INSTANTIATE_TEST_SUITE_P(
     FaceLandmarksDetectionTest, MultiFaceLandmarksDetectionTest,
     Values(
         MultiFaceTestParams{
-            /* test_name= */ "Portrait",
-            /* landmarks_model_name= */ kFaceLandmarksDetectionModel,
+            /* test_name= */ "PortraitWithV2",
+            /* landmarks_model_name= */
+            kFaceLandmarksV2Model,
             /* blendshape_model_name= */ std::nullopt,
             /* test_image_name= */ kPortraitImageName,
             /* norm_rects= */ {MakeNormRect(0.4987, 0.2211, 0.2877, 0.2303, 0)},
             /* expected_presence= */ {true},
             /* expected_landmarks_list= */
-            {{GetExpectedLandmarkList(kPortraitExpectedFaceLandamrksName)}},
+            {{GetExpectedLandmarkList(kPortraitExpectedFaceLandmarksName)}},
             /* expected_blendshapes= */ std::nullopt,
             /* landmarks_diff_threshold= */ kFractionDiff,
             /* blendshapes_diff_threshold= */ kBlendshapesDiffMargin},
         MultiFaceTestParams{
-            /* test_name= */ "PortraitWithAttention",
+            /* test_name= */ "PortraitWithV2WithBlendshapes",
             /* landmarks_model_name= */
-            kFaceLandmarksDetectionWithAttentionModel,
-            /* blendshape_model_name= */ std::nullopt,
-            /* test_image_name= */ kPortraitImageName,
-            /* norm_rects= */ {MakeNormRect(0.4987, 0.2211, 0.2877, 0.2303, 0)},
-            /* expected_presence= */ {true},
-            /* expected_landmarks_list= */
-            {{GetExpectedLandmarkList(
-                kPortraitExpectedFaceLandamrksWithAttentionName)}},
-            /* expected_blendshapes= */ std::nullopt,
-            /* landmarks_diff_threshold= */ kFractionDiff,
-            /* blendshapes_diff_threshold= */ kBlendshapesDiffMargin},
-        MultiFaceTestParams{
-            /* test_name= */ "PortraitWithAttentionWithBlendshapes",
-            /* landmarks_model_name= */
-            kFaceLandmarksDetectionWithAttentionModel,
+            kFaceLandmarksV2Model,
             /* blendshape_model_name= */ kFaceBlendshapesModel,
             /* test_image_name= */ kPortraitImageName,
             /* norm_rects= */
@@ -450,8 +420,7 @@ INSTANTIATE_TEST_SUITE_P(
                           0.008304443)},
             /* expected_presence= */ {true},
             /* expected_landmarks_list= */
-            {{GetExpectedLandmarkList(
-                kPortraitExpectedFaceLandamrksWithAttentionName)}},
+            {{GetExpectedLandmarkList(kPortraitExpectedFaceLandmarksName)}},
             /* expected_blendshapes= */
             {{GetBlendshapes(kPortraitExpectedBlendshapesName)}},
             /* landmarks_diff_threshold= */ kFractionDiff,
@@ -459,7 +428,7 @@ INSTANTIATE_TEST_SUITE_P(
         MultiFaceTestParams{
             /* test_name= */ "NoFace",
             /* landmarks_model_name= */
-            kFaceLandmarksDetectionModel,
+            kFaceLandmarksV2Model,
             /* blendshape_model_name= */ std::nullopt,
             /* test_image_name= */ kCatImageName,
             /* norm_rects= */ {MakeNormRect(0.5, 0.5, 1.0, 1.0, 0)},
