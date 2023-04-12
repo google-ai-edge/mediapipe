@@ -138,10 +138,10 @@ TEST(CalculatorTest, GetOptions) {
   EXPECT_FALSE(cc_3->HasOptions<NightLightCalculatorOptions>());
   EXPECT_TRUE(cc_3->HasOptions<SkyLightCalculatorOptions>());
 
-  // Get a google::protobuf options extension from Node::options.
+  // Get a proto2 options extension from Node::options.
   EXPECT_EQ(cc_0->Options<NightLightCalculatorOptions>().jitter(), 0.123);
 
-  // Get a google::protobuf options extension from Node::node_options.
+  // Get a proto2 options extension from Node::node_options.
   EXPECT_EQ(cc_1->Options<NightLightCalculatorOptions>().jitter(), 0.123);
 
   // Get a proto3 options protobuf::Any from Node::node_options.
