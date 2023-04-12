@@ -15,8 +15,12 @@ limitations under the License.
 
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
+#include "mediapipe/calculators/image/warp_affine_calculator.pb.h"
+#include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_landmarks_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_segmentation_calculator.pb.h"
+#include "mediapipe/calculators/util/detections_to_rects_calculator.pb.h"
+#include "mediapipe/calculators/util/rect_transformation_calculator.pb.h"
 #include "mediapipe/calculators/util/refine_landmarks_from_heatmap_calculator.pb.h"
 #include "mediapipe/calculators/util/thresholding_calculator.pb.h"
 #include "mediapipe/calculators/util/visibility_copy_calculator.pb.h"
@@ -70,6 +74,9 @@ constexpr char kNormLandmarksFromTag[] = "NORM_LANDMARKS_FROM";
 constexpr char kBatchEndTag[] = "BATCH_END";
 constexpr char kItemTag[] = "ITEM";
 constexpr char kIterableTag[] = "ITERABLE";
+constexpr char kLetterboxPaddingTag[] = "LETTERBOX_PADDING";
+constexpr char kMatrixTag[] = "MATRIX";
+constexpr char kOutputSizeTag[] = "OUTPUT_SIZE";
 
 constexpr int kModelOutputTensorSplitNum = 5;
 constexpr int kLandmarksNum = 39;
@@ -182,6 +189,28 @@ void ConfigureVisibilityCopyCalculator(
   options->set_copy_presence(true);
 }
 
+void ConfigureRectTransformationCalculator(
+    mediapipe::RectTransformationCalculatorOptions* options) {
+  options->set_scale_x(1.25);
+  options->set_scale_y(1.25);
+  options->set_square_long(true);
+}
+
+void ConfigureAlignmentPointsRectsCalculator(
+    mediapipe::DetectionsToRectsCalculatorOptions* options) {
+  // Derived from
+  // mediapipe/modules/pose_landmark/pose_landmarks_to_roi.pbtxt
+  options->set_rotation_vector_start_keypoint_index(0);
+  options->set_rotation_vector_end_keypoint_index(1);
+  options->set_rotation_vector_target_angle_degrees(90);
+}
+
+void ConfigureWarpAffineCalculator(
+    mediapipe::WarpAffineCalculatorOptions* options) {
+  options->set_border_mode(mediapipe::WarpAffineCalculatorOptions::BORDER_ZERO);
+  options->set_gpu_origin(mediapipe::GpuOrigin::TOP_LEFT);
+}
+
 // A "mediapipe.tasks.vision.pose_landmarker.SinglePoseLandmarksDetectorGraph"
 // performs pose landmarks detection.
 // - Accepts CPU input images and outputs Landmark on CPU.
@@ -288,6 +317,8 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
     image_in >> preprocessing.In(kImageTag);
     pose_rect >> preprocessing.In(kNormRectTag);
     auto image_size = preprocessing[Output<std::pair<int, int>>(kImageSizeTag)];
+    auto matrix = preprocessing[Output<std::vector<float>>(kMatrixTag)];
+    auto letterbox_padding = preprocessing.Out(kLetterboxPaddingTag);
 
     ASSIGN_OR_RETURN(auto image_tensor_specs,
                      BuildInputImageTensorSpecs(model_resources));
@@ -346,7 +377,7 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
              .GetOptions<mediapipe::TensorsToLandmarksCalculatorOptions>());
     ensured_landmarks_tensors >> tensors_to_landmarks.In(kTensorsTag);
 
-    auto landmarks =
+    auto raw_landmarks =
         tensors_to_landmarks[Output<NormalizedLandmarkList>(kNormLandmarksTag)];
 
     //  Decodes the segmentation tensor into a mask image with pixel values in
@@ -357,7 +388,8 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
         &tensors_to_segmentation
              .GetOptions<mediapipe::TensorsToSegmentationCalculatorOptions>());
     ensured_segmentation_tensors >> tensors_to_segmentation.In(kTensorsTag);
-    auto segmentation_mask = tensors_to_segmentation[Output<Image>(kMaskTag)];
+    auto raw_segmentation_mask =
+        tensors_to_segmentation[Output<Image>(kMaskTag)];
 
     // Refines landmarks with the heatmap tensor.
     auto& refine_landmarks_from_heatmap =
@@ -366,7 +398,7 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
         &refine_landmarks_from_heatmap.GetOptions<
             mediapipe::RefineLandmarksFromHeatmapCalculatorOptions>());
     ensured_heatmap_tensors >> refine_landmarks_from_heatmap.In(kTensorsTag);
-    landmarks >> refine_landmarks_from_heatmap.In(kNormLandmarksTag);
+    raw_landmarks >> refine_landmarks_from_heatmap.In(kNormLandmarksTag);
     auto landmarks_from_heatmap =
         refine_landmarks_from_heatmap[Output<NormalizedLandmarkList>(
             kNormLandmarksTag)];
@@ -379,11 +411,10 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
         &split_normalized_landmark_list
              .GetOptions<mediapipe::SplitVectorCalculatorOptions>());
     landmarks_from_heatmap >> split_normalized_landmark_list.In("");
-    auto normalized_landmarks = split_normalized_landmark_list.Out("")[0]
-                                    .Cast<NormalizedLandmarkList>();
-    auto normalized_auxiliary_landmarks =
-        split_normalized_landmark_list.Out("")[1]
-            .Cast<NormalizedLandmarkList>();
+    auto landmarks = split_normalized_landmark_list.Out("")[0]
+                         .Cast<NormalizedLandmarkList>();
+    auto auxiliary_landmarks = split_normalized_landmark_list.Out("")[1]
+                                   .Cast<NormalizedLandmarkList>();
 
     // Decodes the world-landmark tensors into a vector of world landmarks.
     auto& tensors_to_world_landmarks =
@@ -395,7 +426,7 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
              .GetOptions<mediapipe::TensorsToLandmarksCalculatorOptions>());
     ensured_world_landmark_tensors >>
         tensors_to_world_landmarks.In(kTensorsTag);
-    auto world_landmarks =
+    auto raw_world_landmarks =
         tensors_to_world_landmarks[Output<LandmarkList>(kLandmarksTag)];
 
     // Keeps only the actual world landmarks.
@@ -403,7 +434,7 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
     ConfigureSplitLandmarkListCalculator(
         &split_landmark_list
              .GetOptions<mediapipe::SplitVectorCalculatorOptions>());
-    world_landmarks >> split_landmark_list.In("");
+    raw_world_landmarks >> split_landmark_list.In("");
     auto split_landmarks = split_landmark_list.Out(0);
 
     // Reuses the visibility and presence field in pose landmarks for the world
@@ -413,39 +444,104 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
         &visibility_copy
              .GetOptions<mediapipe::VisibilityCopyCalculatorOptions>());
     split_landmarks >> visibility_copy.In(kLandmarksToTag);
-    normalized_landmarks >> visibility_copy.In(kNormLandmarksFromTag);
-    auto world_landmarks_with_visibility =
+    landmarks >> visibility_copy.In(kNormLandmarksFromTag);
+    auto world_landmarks =
         visibility_copy[Output<LandmarkList>(kLandmarksToTag)];
 
-    // Landmarks to Detections.
-    auto& landmarks_to_detection =
+    // Each raw landmark needs to pass through LandmarkLetterboxRemoval +
+    // LandmarkProjection.
+
+    // Landmark letterbox removal for landmarks.
+    auto& landmark_letterbox_removal =
+        graph.AddNode("LandmarkLetterboxRemovalCalculator");
+    letterbox_padding >> landmark_letterbox_removal.In(kLetterboxPaddingTag);
+    landmarks >> landmark_letterbox_removal.In(kLandmarksTag);
+    auto adjusted_landmarks = landmark_letterbox_removal.Out(kLandmarksTag);
+
+    // Projects the landmarks.
+    auto& landmarks_projection = graph.AddNode("LandmarkProjectionCalculator");
+    adjusted_landmarks >> landmarks_projection.In(kNormLandmarksTag);
+    pose_rect >> landmarks_projection.In(kNormRectTag);
+    auto projected_landmarks = landmarks_projection.Out(kNormLandmarksTag)
+                                   .Cast<NormalizedLandmarkList>();
+
+    // Landmark letterbox removal for auxiliary landmarks.
+    auto& auxiliary_landmark_letterbox_removal =
+        graph.AddNode("LandmarkLetterboxRemovalCalculator");
+    letterbox_padding >>
+        auxiliary_landmark_letterbox_removal.In(kLetterboxPaddingTag);
+    auxiliary_landmarks >>
+        auxiliary_landmark_letterbox_removal.In(kLandmarksTag);
+    auto auxiliary_adjusted_landmarks =
+        auxiliary_landmark_letterbox_removal.Out(kLandmarksTag);
+
+    // Projects the auxiliary landmarks.
+    auto& auxiliary_landmarks_projection =
+        graph.AddNode("LandmarkProjectionCalculator");
+    auxiliary_adjusted_landmarks >>
+        auxiliary_landmarks_projection.In(kNormLandmarksTag);
+    pose_rect >> auxiliary_landmarks_projection.In(kNormRectTag);
+    auto auxiliary_projected_landmarks =
+        auxiliary_landmarks_projection.Out(kNormLandmarksTag)
+            .Cast<NormalizedLandmarkList>();
+
+    // Project world landmarks.
+    auto& world_landmarks_projection =
+        graph.AddNode("WorldLandmarkProjectionCalculator");
+    world_landmarks >> world_landmarks_projection.In(kLandmarksTag);
+    pose_rect >> world_landmarks_projection.In(kNormRectTag);
+    auto world_projected_landmarks =
+        world_landmarks_projection.Out(kLandmarksTag).Cast<LandmarkList>();
+
+    // Calculates the inverse transformation matrix.
+    auto& inverse_matrix = graph.AddNode("InverseMatrixCalculator");
+    matrix >> inverse_matrix.In(kMatrixTag);
+    auto inverted_matrix = inverse_matrix.Out(kMatrixTag);
+
+    // Projects the segmentation mask from the letterboxed ROI back to the full
+    // image.
+    auto& warp_affine = graph.AddNode("WarpAffineCalculator");
+    ConfigureWarpAffineCalculator(
+        &warp_affine.GetOptions<mediapipe::WarpAffineCalculatorOptions>());
+    image_size >> warp_affine.In(kOutputSizeTag);
+    inverted_matrix >> warp_affine.In(kMatrixTag);
+    raw_segmentation_mask >> warp_affine.In(kImageTag);
+    auto projected_segmentation_mask = warp_affine.Out(kImageTag).Cast<Image>();
+
+    // Calculate region of interest based on auxiliary landmarks, to be used
+    // in the next frame. Consists of LandmarksToDetection +
+    // AlignmentPointsRects + RectTransformation.
+
+    auto& auxiliary_landmarks_to_detection =
         graph.AddNode("LandmarksToDetectionCalculator");
-    landmarks >> landmarks_to_detection.In(kNormLandmarksTag);
-    auto detection = landmarks_to_detection.Out(kDetectionTag);
+    auxiliary_projected_landmarks >>
+        auxiliary_landmarks_to_detection.In(kNormLandmarksTag);
+    auto detection = auxiliary_landmarks_to_detection.Out(kDetectionTag);
 
-    // Detections to Rects.
-    auto& detection_to_rects = graph.AddNode("DetectionsToRectsCalculator");
-    image_size >> detection_to_rects.In(kImageSizeTag);
-    detection >> detection_to_rects.In(kDetectionTag);
-    auto norm_rect = detection_to_rects.Out(kNormRectTag);
+    auto& detection_to_rect = graph.AddNode("AlignmentPointsRectsCalculator");
+    ConfigureAlignmentPointsRectsCalculator(
+        &detection_to_rect
+             .GetOptions<mediapipe::DetectionsToRectsCalculatorOptions>());
+    detection >> detection_to_rect.In(kDetectionTag);
+    image_size >> detection_to_rect.In(kImageSizeTag);
+    auto raw_pose_rects = detection_to_rect.Out(kNormRectTag);
 
-    // Expands the pose rectangle so that in the next video frame it's likely to
-    // still contain the pose even with some motion.
-    auto& pose_rect_transformation =
-        graph.AddNode("RectTransformationCalculator");
-    image_size >> pose_rect_transformation.In(kImageSizeTag);
-    norm_rect >> pose_rect_transformation.In(kNormRectTag);
-    auto pose_rect_next_frame =
-        pose_rect_transformation[Output<NormalizedRect>("")];
+    auto& rect_transformation = graph.AddNode("RectTransformationCalculator");
+    ConfigureRectTransformationCalculator(
+        &rect_transformation
+             .GetOptions<mediapipe::RectTransformationCalculatorOptions>());
+    image_size >> rect_transformation.In(kImageSizeTag);
+    raw_pose_rects >> rect_transformation.In("NORM_RECT");
+    auto pose_rect_next_frame = rect_transformation[Output<NormalizedRect>("")];
 
     return {{
-        /* pose_landmarks= */ normalized_landmarks,
-        /* world_pose_landmarks= */ world_landmarks_with_visibility,
-        /* auxiliary_pose_landmarks= */ normalized_auxiliary_landmarks,
+        /* pose_landmarks= */ projected_landmarks,
+        /* world_pose_landmarks= */ world_projected_landmarks,
+        /* auxiliary_pose_landmarks= */ auxiliary_projected_landmarks,
         /* pose_rect_next_frame= */ pose_rect_next_frame,
         /* pose_presence= */ pose_presence,
         /* pose_presence_score= */ pose_presence_score,
-        /* segmentation_mask= */ segmentation_mask,
+        /* segmentation_mask= */ projected_segmentation_mask,
     }};
   }
 };
