@@ -6,7 +6,7 @@ namespace mediapipe {
 namespace autoflip {
 
 namespace {
-int Median(const std::deque<std::pair<uint64, int>>& positions_raw) {
+int Median(const std::deque<std::pair<uint64_t, int>>& positions_raw) {
   std::deque<int> positions;
   for (const auto& position : positions_raw) {
     positions.push_back(position.second);
@@ -31,7 +31,7 @@ bool KinematicPathSolver::IsMotionTooSmall(double delta_degs) {
 void KinematicPathSolver::ClearHistory() { raw_positions_at_time_.clear(); }
 
 absl::Status KinematicPathSolver::PredictMotionState(int position,
-                                                     const uint64 time_us,
+                                                     const uint64_t time_us,
                                                      bool* state) {
   if (!initialized_) {
     *state = false;
@@ -41,10 +41,10 @@ absl::Status KinematicPathSolver::PredictMotionState(int position,
   auto raw_positions_at_time_copy = raw_positions_at_time_;
 
   raw_positions_at_time_copy.push_front(
-      std::pair<uint64, int>(time_us, position));
+      std::pair<uint64_t, int>(time_us, position));
   while (raw_positions_at_time_copy.size() > 1) {
-    if (static_cast<int64>(raw_positions_at_time_copy.back().first) <
-        static_cast<int64>(time_us) - options_.filtering_time_window_us()) {
+    if (static_cast<int64_t>(raw_positions_at_time_copy.back().first) <
+        static_cast<int64_t>(time_us) - options_.filtering_time_window_us()) {
       raw_positions_at_time_copy.pop_back();
     } else {
       break;
@@ -78,7 +78,7 @@ absl::Status KinematicPathSolver::PredictMotionState(int position,
 }
 
 absl::Status KinematicPathSolver::AddObservation(int position,
-                                                 const uint64 time_us) {
+                                                 const uint64_t time_us) {
   if (!initialized_) {
     if (position < min_location_) {
       current_position_px_ = min_location_;
@@ -92,7 +92,7 @@ absl::Status KinematicPathSolver::AddObservation(int position,
     motion_state_ = false;
     mean_delta_t_ = -1;
     raw_positions_at_time_.push_front(
-        std::pair<uint64, int>(time_us, position));
+        std::pair<uint64_t, int>(time_us, position));
     current_time_ = time_us;
     initialized_ = true;
     current_velocity_deg_per_s_ = 0;
@@ -131,10 +131,11 @@ absl::Status KinematicPathSolver::AddObservation(int position,
   RET_CHECK(current_time_ < time_us)
       << "Observation added before a prior observations.";
 
-  raw_positions_at_time_.push_front(std::pair<uint64, int>(time_us, position));
+  raw_positions_at_time_.push_front(
+      std::pair<uint64_t, int>(time_us, position));
   while (raw_positions_at_time_.size() > 1) {
-    if (static_cast<int64>(raw_positions_at_time_.back().first) <
-        static_cast<int64>(time_us) - options_.filtering_time_window_us()) {
+    if (static_cast<int64_t>(raw_positions_at_time_.back().first) <
+        static_cast<int64_t>(time_us) - options_.filtering_time_window_us()) {
       raw_positions_at_time_.pop_back();
     } else {
       break;
@@ -220,7 +221,7 @@ absl::Status KinematicPathSolver::AddObservation(int position,
   return UpdatePrediction(time_us);
 }
 
-absl::Status KinematicPathSolver::UpdatePrediction(const int64 time_us) {
+absl::Status KinematicPathSolver::UpdatePrediction(const int64_t time_us) {
   RET_CHECK(current_time_ < time_us)
       << "Prediction time added before a prior observation or prediction.";
 
