@@ -57,6 +57,37 @@ public class CommonShaders {
           + "  gl_FragColor = texture2D(video_frame, sample_coordinate);\n"
           + "}";
   /**
+   * Fragment shader that renders a 2D texture with a black CLAMP_TO_BORDER effect for
+   * out-of-bounds co-ordinates.
+   */
+  public static final String FRAGMENT_SHADER_CLAMP_TO_BORDER =
+      "varying mediump vec2 sample_coordinate;\n"
+          + "uniform sampler2D video_frame;\n"
+          + "\n"
+          + "void main() {\n"
+          +  " gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);\n"
+          + "  if (all(greaterThan(sample_coordinate, vec2(0.0))) \n"
+          + "      && all(lessThan(sample_coordinate, vec2(1.0)))) {\n"
+          + "    gl_FragColor = texture2D(video_frame, sample_coordinate);\n"
+          + "  }\n"
+          + "}";
+  /** Simple fragment shader that renders a texture bound to the {@link
+   * android.opengl.GLES11Ext#GL_TEXTURE_EXTERNAL_OES} target with a black CLAMP_TO_BORDER effect
+   * for out-of-bounds co-ordinates. See {@link android.graphics.SurfaceTexture}.
+   */
+  public static final String FRAGMENT_SHADER_EXTERNAL_CLAMP_TO_BORDER =
+      "#extension GL_OES_EGL_image_external : require\n"
+          + "varying mediump vec2 sample_coordinate;\n"
+          + "uniform sampler2D video_frame;\n"
+          + "\n"
+          + "void main() {\n"
+          +  " gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);\n"
+          + "  if (all(greaterThan(sample_coordinate, vec2(0.0))) \n"
+          + "      && all(lessThan(sample_coordinate, vec2(1.0)))) {\n"
+          + "    gl_FragColor = texture2D(video_frame, sample_coordinate);\n"
+          + "  }\n"
+          + "}";
+  /**
    * Vertices for a quad that fills the drawing area.
    *
    * <p>Can be used directly with {@link android.opengl.GLES10#glDrawArrays}.

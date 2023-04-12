@@ -77,6 +77,8 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   private final AtomicReference<TextureFrame> nextFrame = new AtomicReference<>();
   private final AtomicBoolean captureNextFrameBitmap = new AtomicBoolean();
   private BitmapCaptureListener bitmapCaptureListener;
+  // Specifies whether a black CLAMP_TO_BORDER effect should be used.
+  private boolean shouldClampToBorder = false;
 
   /**
    * Sets the {@link BitmapCaptureListener}.
@@ -104,12 +106,20 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     attributeLocations.put("position", ATTRIB_POSITION);
     attributeLocations.put("texture_coordinate", ATTRIB_TEXTURE_COORDINATE);
     Log.d(TAG, "external texture: " + isExternalTexture());
+    String fragmentShader;
+    if (shouldClampToBorder) {
+      fragmentShader = isExternalTexture()
+          ? CommonShaders.FRAGMENT_SHADER_EXTERNAL_CLAMP_TO_BORDER
+          : CommonShaders.FRAGMENT_SHADER_CLAMP_TO_BORDER;
+    } else {
+      fragmentShader = isExternalTexture()
+          ? CommonShaders.FRAGMENT_SHADER_EXTERNAL
+          : CommonShaders.FRAGMENT_SHADER;
+    }
     program =
         ShaderUtil.createProgram(
             CommonShaders.VERTEX_SHADER,
-            isExternalTexture()
-                ? CommonShaders.FRAGMENT_SHADER_EXTERNAL
-                : CommonShaders.FRAGMENT_SHADER,
+            fragmentShader,
             attributeLocations);
     frameUniform = GLES20.glGetUniformLocation(program, "video_frame");
     textureTransformUniform = GLES20.glGetUniformLocation(program, "texture_transform");
@@ -306,6 +316,18 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   public void setAlignment(float horizontal, float vertical) {
     alignmentHorizontal = horizontal;
     alignmentVertical = vertical;
+  }
+
+  /**
+   * Whether to use GL_CLAMP_TO_BORDER-like mode. This is useful when rendering landscape or
+   * different aspect ratio frames. The remaining area will be rendered black.
+   */
+  public void setClampToBorder(boolean shouldClampToBorder) {
+    if (program != 0) {
+      throw new IllegalStateException(
+          "setClampToBorder must be called before the surface is created");
+    }
+    this.shouldClampToBorder = shouldClampToBorder;
   }
 
   private boolean isExternalTexture() {
