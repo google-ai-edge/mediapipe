@@ -14,6 +14,8 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/testdata/night_light_calculator.pb.h"
+#include "mediapipe/framework/testdata/sky_light_calculator.pb.h"
 
 namespace mediapipe::api2::builder {
 namespace {
@@ -610,6 +612,135 @@ TEST(BuilderTest, TestSidePacketEqualsNotEqualsOperators) {
   EXPECT_FALSE(side_input0 != side_input1);
   EXPECT_TRUE(side_input0.Cast<int>() == side_input1.Cast<int>());
   EXPECT_FALSE(side_input0.Cast<float>() != side_input1.Cast<float>());
+}
+
+TEST(GetOptionsTest, AddProto3Options) {
+  Graph graph;
+  // Graph inputs.
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+  SidePacket<AnyType> side = graph.SideIn("SIDE").SetName("side");
+
+  auto& foo = graph.AddNode("Foo");
+  foo.GetOptions<mediapipe::SkyLightCalculatorOptions>();
+  base >> foo.In("BASE");
+  side >> foo.SideIn("SIDE");
+  Stream<AnyType> foo_out = foo.Out("OUT");
+
+  auto& bar = graph.AddNode("Bar");
+  foo_out >> bar.In("IN");
+  Stream<AnyType> bar_out = bar.Out("OUT");
+
+  // Graph outputs.
+  bar_out.SetName("out") >> graph.Out("OUT");
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "IN:base"
+        input_side_packet: "SIDE:side"
+        output_stream: "OUT:out"
+        node {
+          calculator: "Foo"
+          input_stream: "BASE:base"
+          input_side_packet: "SIDE:side"
+          output_stream: "OUT:__stream_0"
+          node_options {
+            [type.googleapis.com/mediapipe.SkyLightCalculatorOptions] {}
+          }
+        }
+        node {
+          calculator: "Bar"
+          input_stream: "IN:__stream_0"
+          output_stream: "OUT:out"
+        }
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
+TEST(GetOptionsTest, AddProto2Options) {
+  Graph graph;
+  // Graph inputs.
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+  SidePacket<AnyType> side = graph.SideIn("SIDE").SetName("side");
+
+  auto& foo = graph.AddNode("Foo");
+  foo.GetOptions<mediapipe::NightLightCalculatorOptions>();
+  base >> foo.In("BASE");
+  side >> foo.SideIn("SIDE");
+  Stream<AnyType> foo_out = foo.Out("OUT");
+
+  auto& bar = graph.AddNode("Bar");
+  foo_out >> bar.In("IN");
+  Stream<AnyType> bar_out = bar.Out("OUT");
+
+  // Graph outputs.
+  bar_out.SetName("out") >> graph.Out("OUT");
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "IN:base"
+        input_side_packet: "SIDE:side"
+        output_stream: "OUT:out"
+        node {
+          calculator: "Foo"
+          input_stream: "BASE:base"
+          input_side_packet: "SIDE:side"
+          output_stream: "OUT:__stream_0"
+          options {
+            [mediapipe.NightLightCalculatorOptions.ext] {}
+          }
+        }
+        node {
+          calculator: "Bar"
+          input_stream: "IN:__stream_0"
+          output_stream: "OUT:out"
+        }
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
+}
+
+TEST(GetOptionsTest, AddBothProto23Options) {
+  Graph graph;
+  // Graph inputs.
+  Stream<AnyType> base = graph.In("IN").SetName("base");
+  SidePacket<AnyType> side = graph.SideIn("SIDE").SetName("side");
+
+  auto& foo = graph.AddNode("Foo");
+  foo.GetOptions<mediapipe::SkyLightCalculatorOptions>();
+  foo.GetOptions<mediapipe::NightLightCalculatorOptions>();
+  base >> foo.In("BASE");
+  side >> foo.SideIn("SIDE");
+  Stream<AnyType> foo_out = foo.Out("OUT");
+
+  auto& bar = graph.AddNode("Bar");
+  foo_out >> bar.In("IN");
+  Stream<AnyType> bar_out = bar.Out("OUT");
+
+  // Graph outputs.
+  bar_out.SetName("out") >> graph.Out("OUT");
+
+  CalculatorGraphConfig expected =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "IN:base"
+        input_side_packet: "SIDE:side"
+        output_stream: "OUT:out"
+        node {
+          calculator: "Foo"
+          input_stream: "BASE:base"
+          input_side_packet: "SIDE:side"
+          output_stream: "OUT:__stream_0"
+          options {
+            [mediapipe.NightLightCalculatorOptions.ext] {}
+          }
+          node_options {
+            [type.googleapis.com/mediapipe.SkyLightCalculatorOptions] {}
+          }
+        }
+        node {
+          calculator: "Bar"
+          input_stream: "IN:__stream_0"
+          output_stream: "OUT:out"
+        }
+      )pb");
+  EXPECT_THAT(graph.GetConfig(), EqualsProto(expected));
 }
 
 }  // namespace
