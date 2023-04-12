@@ -14,6 +14,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -81,25 +82,34 @@ void Sigmoid(absl::Span<const float> values,
                  [](float value) { return 1. / (1 + std::exp(-value)); });
 }
 
+// Linearly interpolate the value between v0 and v1. Assume 0 <= t <= 1.
+float LinearInterpolate(float v0, float v1, float t) {
+  DCHECK(t >= 0 && t <= 1);
+  return v0 + (v1 - v0) * t;
+}
+
+// Bilinearly interpolate the value between 4 points. Assume 0 <= t0, t1 <= 1.
+float BilinearInterpolate(float v00, float v10, float v01, float v11, float t0,
+                          float t1) {
+  DCHECK(t0 >= 0 && t0 <= 1 && t1 >= 0 && t1 <= 1);
+  return LinearInterpolate(LinearInterpolate(v00, v10, t0),
+                           LinearInterpolate(v01, v11, t0), t1);
+}
+
+float GetTensorElement(const Shape& input_shape, const float* tensors_buffer,
+                       int x, int y, int c) {
+  return tensors_buffer[y * input_shape.channels * input_shape.width +
+                        x * input_shape.channels + c];
+}
+
 Image ProcessForCategoryMaskCpu(const Shape& input_shape,
                                 const Shape& output_shape,
                                 const SegmenterOptions& options,
                                 const float* tensors_buffer) {
-  cv::Mat resized_tensors_mat;
-  cv::Mat tensors_mat_view(
-      input_shape.height, input_shape.width, CV_32FC(input_shape.channels),
-      reinterpret_cast<void*>(const_cast<float*>(tensors_buffer)));
-  if (output_shape.height == input_shape.height &&
-      output_shape.width == input_shape.width) {
-    resized_tensors_mat = tensors_mat_view;
-  } else {
-    // Resize input tensors to output size.
-    // TOOD(b/273633027) Use an efficient way to find values for category mask
-    // instead of resizing the whole tensor .
-    cv::resize(tensors_mat_view, resized_tensors_mat,
-               {output_shape.width, output_shape.height}, 0, 0,
-               cv::INTER_LINEAR);
-  }
+  const float width_scale =
+      (input_shape.width - 1) / static_cast<float>(output_shape.width - 1);
+  const float height_scale =
+      (input_shape.height - 1) / static_cast<float>(output_shape.height - 1);
 
   // Category mask Image.
   ImageFrameSharedPtr image_frame_ptr = std::make_shared<ImageFrame>(
@@ -111,23 +121,37 @@ Image ProcessForCategoryMaskCpu(const Shape& input_shape,
       mediapipe::formats::MatView(image_frame_ptr.get());
   const int input_channels = input_shape.channels;
   category_mask_mat_view.forEach<uint8_t>(
-      [&resized_tensors_mat, &input_channels, &options](uint8_t& pixel,
-                                                        const int position[]) {
-        float* tensors_buffer =
-            resized_tensors_mat.ptr<float>(position[0], position[1]);
-        absl::Span<float> confidence_scores(tensors_buffer, input_channels);
+      [&tensors_buffer, &input_shape, &width_scale, &height_scale,
+       &input_channels, &options](uint8_t& pixel, const int position[]) {
+        std::vector<float> confidence_scores(input_channels);
+        int y0 = static_cast<int>(std::floor(position[0] * height_scale));
+        int x0 = static_cast<int>(std::floor(position[1] * width_scale));
+        int y1 = static_cast<int>(std::ceil(position[0] * height_scale));
+        int x1 = static_cast<int>(std::ceil(position[1] * width_scale));
+        float t0 = position[0] * height_scale - y0;
+        float t1 = position[1] * width_scale - x0;
+        for (int i = 0; i < input_channels; ++i) {
+          confidence_scores[i] = BilinearInterpolate(
+              GetTensorElement(input_shape, tensors_buffer, x0, y0, i),
+              GetTensorElement(input_shape, tensors_buffer, x0, y1, i),
+              GetTensorElement(input_shape, tensors_buffer, x1, y0, i),
+              GetTensorElement(input_shape, tensors_buffer, x1, y1, i), t0, t1);
+        }
+        absl::Span<float> confidence_scores_span(confidence_scores.data(),
+                                                 confidence_scores.size());
+
         // Only process the activation function if it is SIGMOID. If NONE,
         // we do nothing for activation, If SOFTMAX, it is required
         // to have input_channels > 1, and for input_channels > 1, we don't need
         // activation to find the maximum value.
         if (options.activation() == SegmenterOptions::SIGMOID) {
-          Sigmoid(confidence_scores, confidence_scores);
+          Sigmoid(confidence_scores_span, confidence_scores_span);
         }
         if (input_channels == 1) {
           // if the input tensor is a single mask, it is assumed to be a binary
           // foreground segmentation mask. For such a mask, we make foreground
           // category 1, and background category 0.
-          pixel = static_cast<uint8_t>(*tensors_buffer > 0.5f);
+          pixel = static_cast<uint8_t>(confidence_scores[0] > 0.5f);
         } else {
           const int maximum_category_idx =
               std::max_element(confidence_scores.begin(),
