@@ -306,8 +306,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_expected_pose_landmarks_prototxt",
-        sha256 = "0bb27e9d9729c4171419abf7edd746b4234cb91198d663f3a4363248a49dad1a",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/expected_pose_landmarks.prototxt?generation=1680543279295598"],
+        sha256 = "c230e0933e6cb4af69ec21314f3f9930fe13e7bb4bf1dbdb74427e4138c24c1e",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/expected_pose_landmarks.prototxt?generation=1681240674007127"],
     )
 
     http_file(
@@ -815,6 +815,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_ocr_text_jpg",
+        sha256 = "88052e93aa910330433741f5cef140f8f9ec463230a332aef7038b5457b06482",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/ocr_text.jpg?generation=1681240679268678"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_palm_detection_full_tflite",
         sha256 = "1b14e9422c6ad006cde6581a46c8b90dd573c07ab7f3934b5589e7cea3f89a54",
         urls = ["https://storage.googleapis.com/mediapipe-assets/palm_detection_full.tflite?generation=1662745358034050"],
@@ -930,14 +936,14 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_pose_expected_detection_pbtxt",
-        sha256 = "e0d40e98dd5320a780a642c336d0c8720243ac5bcc0e39c4061ad970a503ae24",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_expected_detection.pbtxt?generation=1678737492211540"],
+        sha256 = "16866c8dd4fbee60f6972630d73baed219b45824c055c7fbc7dc9a91c4b182cc",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_expected_detection.pbtxt?generation=1681240681879992"],
     )
 
     http_file(
         name = "com_google_mediapipe_pose_expected_expanded_rect_pbtxt",
-        sha256 = "babb2a2d50077f6fa9ee15e30d81abb6e98a920e35acad7542bb3d27b5ce7ffd",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_expected_expanded_rect.pbtxt?generation=1680543294008098"],
+        sha256 = "b0a41d25ed115757606dfc034e9d320a93a52616d92d745150b6a886ddc5a88a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_expected_expanded_rect.pbtxt?generation=1681240684183698"],
     )
 
     http_file(
@@ -948,8 +954,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_pose_landmarker_task",
-        sha256 = "ca4137626f0dc04f87893ccf2ad01949a3b1d4b55fa85ba957dde44a29dd956e",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_landmarker.task?generation=1680543298177615"],
+        sha256 = "c20284c073a891774f894269a14da4cbe4a84cab034757dab587bc19c9522b7a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_landmarker.task?generation=1681240686676992"],
     )
 
     http_file(

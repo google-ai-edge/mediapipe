@@ -131,7 +131,7 @@ void ConfigureNonMaxSuppressionCalculator(
 void ConfigureDetectionsToRectsCalculator(
     mediapipe::DetectionsToRectsCalculatorOptions* options) {
   options->set_rotation_vector_start_keypoint_index(0);
-  options->set_rotation_vector_end_keypoint_index(2);
+  options->set_rotation_vector_end_keypoint_index(1);
   options->set_rotation_vector_target_angle(90);
   options->set_output_zero_rect_for_empty_detections(true);
 }
@@ -140,10 +140,18 @@ void ConfigureDetectionsToRectsCalculator(
 // detector with model metadata.
 void ConfigureRectTransformationCalculator(
     mediapipe::RectTransformationCalculatorOptions* options) {
-  options->set_scale_x(2.6);
-  options->set_scale_y(2.6);
-  options->set_shift_y(-0.5);
+  options->set_scale_x(1.25);
+  options->set_scale_y(1.25);
   options->set_square_long(true);
+}
+
+void ConfigureAlignmentPointsRectsCalculator(
+    mediapipe::DetectionsToRectsCalculatorOptions* options) {
+  // Derived from
+  // mediapipe/modules/pose_landmark/pose_detection_to_roi.pbtxt
+  options->set_rotation_vector_start_keypoint_index(0);
+  options->set_rotation_vector_end_keypoint_index(1);
+  options->set_rotation_vector_target_angle_degrees(90);
 }
 
 }  // namespace
@@ -246,8 +254,8 @@ class PoseDetectorGraph : public core::ModelTaskGraph {
     image_in >> preprocessing.In(kImageTag);
     norm_rect_in >> preprocessing.In(kNormRectTag);
     auto preprocessed_tensors = preprocessing.Out(kTensorsTag);
-    auto matrix = preprocessing.Out(kMatrixTag);
     auto image_size = preprocessing.Out(kImageSizeTag);
+    auto letterbox_padding = preprocessing.Out("LETTERBOX_PADDING");
 
     // Pose detection model inferece.
     auto& inference = AddInference(
@@ -281,14 +289,38 @@ class PoseDetectorGraph : public core::ModelTaskGraph {
         &non_maximum_suppression
              .GetOptions<mediapipe::NonMaxSuppressionCalculatorOptions>());
     detections >> non_maximum_suppression.In("");
-    auto nms_detections = non_maximum_suppression.Out("");
+    auto filtered_detections = non_maximum_suppression.Out("");
 
-    // Projects detections back into the input image coordinates system.
-    auto& detection_projection = graph.AddNode("DetectionProjectionCalculator");
-    nms_detections >> detection_projection.In(kDetectionsTag);
-    matrix >> detection_projection.In(kProjectionMatrixTag);
-    Source<std::vector<Detection>> pose_detections =
-        detection_projection.Out(kDetectionsTag).Cast<std::vector<Detection>>();
+    // Adjust detections on the letterboxed image.
+    auto& detection_letterbox_removal =
+        graph.AddNode("DetectionLetterboxRemovalCalculator");
+    filtered_detections >> detection_letterbox_removal.In("DETECTIONS");
+    letterbox_padding >> detection_letterbox_removal.In("LETTERBOX_PADDING");
+    Source<std::vector<Detection>> adjusted_detections =
+        detection_letterbox_removal.Out("DETECTIONS")
+            .Cast<std::vector<Detection>>();
+
+    // Converts pose detection into a rectangle based on center and scale
+    // alignment points.
+    auto& detection_to_rects = graph.AddNode("AlignmentPointsRectsCalculator");
+    ConfigureAlignmentPointsRectsCalculator(
+        &detection_to_rects
+             .GetOptions<mediapipe::DetectionsToRectsCalculatorOptions>());
+    image_size >> detection_to_rects.In(kImageSizeTag);
+    adjusted_detections >> detection_to_rects.In("DETECTIONS");
+    auto pose_rects = detection_to_rects.Out("NORM_RECTS")
+                          .Cast<std::vector<NormalizedRect>>();
+
+    // Expands pose rect with margin used during training.
+    auto& pose_rect_transformation =
+        graph.AddNode("RectTransformationCalculator");
+    ConfigureRectTransformationCalculator(
+        &pose_rect_transformation
+             .GetOptions<mediapipe::RectTransformationCalculatorOptions>());
+    image_size >> pose_rect_transformation.In(kImageSizeTag);
+    pose_rects >> pose_rect_transformation.In("NORM_RECTS");
+    auto expanded_pose_rects =
+        pose_rect_transformation[Output<std::vector<NormalizedRect>>("")];
 
     if (subgraph_options.has_num_poses()) {
       // Clip face detections to maximum number of poses.
@@ -297,48 +329,13 @@ class PoseDetectorGraph : public core::ModelTaskGraph {
       clip_detection_vector_size
           .GetOptions<mediapipe::ClipVectorSizeCalculatorOptions>()
           .set_max_vec_size(subgraph_options.num_poses());
-      pose_detections >> clip_detection_vector_size.In("");
-      pose_detections =
+      adjusted_detections >> clip_detection_vector_size.In("");
+      adjusted_detections =
           clip_detection_vector_size.Out("").Cast<std::vector<Detection>>();
     }
 
-    // Converts results of pose detection into a rectangle (normalized by image
-    // size) that encloses the face and is rotated such that the line connecting
-    // left eye and right eye is aligned with the X-axis of the rectangle.
-    auto& detections_to_rects = graph.AddNode("DetectionsToRectsCalculator");
-    ConfigureDetectionsToRectsCalculator(
-        &detections_to_rects
-             .GetOptions<mediapipe::DetectionsToRectsCalculatorOptions>());
-    image_size >> detections_to_rects.In(kImageSizeTag);
-    pose_detections >> detections_to_rects.In(kDetectionsTag);
-    auto pose_rects = detections_to_rects.Out(kNormRectsTag)
-                          .Cast<std::vector<NormalizedRect>>();
-
-    // Expands and shifts the rectangle that contains the pose so that it's
-    // likely to cover the entire pose.
-    auto& rect_transformation = graph.AddNode("RectTransformationCalculator");
-    ConfigureRectTransformationCalculator(
-        &rect_transformation
-             .GetOptions<mediapipe::RectTransformationCalculatorOptions>());
-    pose_rects >> rect_transformation.In(kNormRectsTag);
-    image_size >> rect_transformation.In(kImageSizeTag);
-    auto expanded_pose_rects =
-        rect_transformation.Out("").Cast<std::vector<NormalizedRect>>();
-
-    // Calculator to convert relative detection bounding boxes to pixel
-    // detection bounding boxes.
-    auto& detection_transformation =
-        graph.AddNode("DetectionTransformationCalculator");
-    detection_projection.Out(kDetectionsTag) >>
-        detection_transformation.In(kDetectionsTag);
-    preprocessing.Out(kImageSizeTag) >>
-        detection_transformation.In(kImageSizeTag);
-    auto pose_pixel_detections =
-        detection_transformation.Out(kPixelDetectionsTag)
-            .Cast<std::vector<Detection>>();
-
     return PoseDetectionOuts{
-        /* pose_detections= */ pose_pixel_detections,
+        /* pose_detections= */ adjusted_detections,
         /* pose_rects= */ pose_rects,
         /* expanded_pose_rects= */ expanded_pose_rects,
         /* image= */ preprocessing.Out(kImageTag).Cast<Image>()};

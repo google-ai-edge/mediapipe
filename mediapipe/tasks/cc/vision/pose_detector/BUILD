@@ -29,6 +29,8 @@ cc_library(
         "//mediapipe/calculators/tensor:tensors_to_detections_calculator_cc_proto",
         "//mediapipe/calculators/tflite:ssd_anchors_calculator",
         "//mediapipe/calculators/tflite:ssd_anchors_calculator_cc_proto",
+        "//mediapipe/calculators/util:alignment_points_to_rects_calculator",
+        "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
         "//mediapipe/calculators/util:detection_projection_calculator",
         "//mediapipe/calculators/util:detection_transformation_calculator",
         "//mediapipe/calculators/util:detections_to_rects_calculator",
