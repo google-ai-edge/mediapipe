@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 
+#include "mediapipe/tasks/cc/text/custom_ops/ragged/ragged_tensor_to_tensor_tflite.h"
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/kmeans_embedding_lookup.h"
 #include "mediapipe/tasks/cc/text/language_detector/custom_ops/ngram_hash.h"
 #include "mediapipe/util/tflite/operations/landmarks_to_transform_matrix.h"
@@ -49,6 +50,9 @@ MediaPipeBuiltinOpResolver::MediaPipeBuiltinOpResolver() {
   AddCustom("NGramHash", mediapipe::tflite_operations::Register_NGRAM_HASH());
   AddCustom("KmeansEmbeddingLookup",
             mediapipe::tflite_operations::Register_KmeansEmbeddingLookup());
+  // For the UniversalSentenceEncoder model.
+  AddCustom("RaggedTensorToTensor",
+            mediapipe::tflite_operations::Register_RAGGED_TENSOR_TO_TENSOR());
 }
 }  // namespace core
 }  // namespace tasks
