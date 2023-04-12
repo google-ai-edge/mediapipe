@@ -61,8 +61,8 @@ class SimpleRunner : public CalculatorRunner {
     MutableInputs()->Index(0).header = Adopt(video_header.release());
   }
 
-  std::vector<int64> GetOutputTimestamps() const {
-    std::vector<int64> timestamps;
+  std::vector<int64_t> GetOutputTimestamps() const {
+    std::vector<int64_t> timestamps;
     for (const Packet& packet : Outputs().Index(0).packets) {
       timestamps.emplace_back(packet.Timestamp().Value());
     }
@@ -90,7 +90,7 @@ TEST(PacketThinnerCalculatorTest, StartAndEndTimeTest) {
   runner.SetInput({2, 3, 5, 7, 11, 13, 17, 19, 23, 29});
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {5, 11};
+  const std::vector<int64_t> expected_timestamps = {5, 11};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
 }
 
@@ -104,7 +104,7 @@ TEST(PacketThinnerCalculatorTest, AsyncUniformStreamThinningTest) {
   runner.SetInput({2, 4, 6, 8, 10, 12, 14});
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {2, 8, 14};
+  const std::vector<int64_t> expected_timestamps = {2, 8, 14};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
 }
 
@@ -123,10 +123,10 @@ TEST(PacketThinnerCalculatorTest, ASyncUniformStreamThinningTestBySidePacket) {
 
   SimpleRunner runner(node);
   runner.SetInput({2, 4, 6, 8, 10, 12, 14});
-  runner.MutableSidePackets()->Tag(kPeriodTag) = MakePacket<int64>(5);
+  runner.MutableSidePackets()->Tag(kPeriodTag) = MakePacket<int64_t>(5);
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {2, 8, 14};
+  const std::vector<int64_t> expected_timestamps = {2, 8, 14};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
 }
 
@@ -143,7 +143,7 @@ TEST(PacketThinnerCalculatorTest, SyncUniformStreamThinningTest1) {
   runner.SetInput({2, 4, 6, 8, 10, 12, 14});
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {2, 6, 10, 14};
+  const std::vector<int64_t> expected_timestamps = {2, 6, 10, 14};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
 }
 
@@ -162,10 +162,10 @@ TEST(PacketThinnerCalculatorTest, SyncUniformStreamThinningTestBySidePacket1) {
 
   SimpleRunner runner(node);
   runner.SetInput({2, 4, 6, 8, 10, 12, 14});
-  runner.MutableSidePackets()->Tag(kPeriodTag) = MakePacket<int64>(5);
+  runner.MutableSidePackets()->Tag(kPeriodTag) = MakePacket<int64_t>(5);
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {2, 6, 10, 14};
+  const std::vector<int64_t> expected_timestamps = {2, 6, 10, 14};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
 }
 
@@ -182,7 +182,7 @@ TEST(PacketThinnerCalculatorTest, SyncUniformStreamThinningTest2) {
   runner.SetInput({2, 4, 6, 8, 10, 12, 14});
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {0, 5, 10, 15};
+  const std::vector<int64_t> expected_timestamps = {0, 5, 10, 15};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
 }
 
@@ -200,7 +200,7 @@ TEST(PacketThinnerCalculatorTest, PrimeStreamThinningTest1) {
   runner.SetInput({2, 3, 5, 7, 11, 13, 17, 19, 23, 29});
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {2, 7, 13, 19, 29};
+  const std::vector<int64_t> expected_timestamps = {2, 7, 13, 19, 29};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
 }
 
@@ -217,7 +217,7 @@ TEST(PacketThinnerCalculatorTest, PrimeStreamThinningTest2) {
   runner.SetInput({2, 3, 5, 7, 11, 13, 17, 19, 23, 29});
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {2, 5, 11, 17, 19, 23, 29};
+  const std::vector<int64_t> expected_timestamps = {2, 5, 11, 17, 19, 23, 29};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
 }
 
@@ -236,7 +236,7 @@ TEST(PacketThinnerCalculatorTest, BoundaryTimestampTest1) {
   runner.SetInput({2, 3});
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {0, 5};
+  const std::vector<int64_t> expected_timestamps = {0, 5};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
 }
 
@@ -254,7 +254,7 @@ TEST(PacketThinnerCalculatorTest, BoundaryTimestampTest2) {
   runner.SetInput({-4, -3, 8, 9});
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {-6, 0, 6, 12};
+  const std::vector<int64_t> expected_timestamps = {-6, 0, 6, 12};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
 }
 
@@ -270,7 +270,7 @@ TEST(PacketThinnerCalculatorTest, FrameRateTest1) {
   runner.SetFrameRate(1000000.0 / 2);
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {2, 8, 14};
+  const std::vector<int64_t> expected_timestamps = {2, 8, 14};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
   // The true sampling period is 6.
   EXPECT_DOUBLE_EQ(1000000.0 / 6, runner.GetFrameRate());
@@ -287,7 +287,7 @@ TEST(PacketThinnerCalculatorTest, FrameRateTest2) {
   runner.SetInput({8, 16, 24, 32, 40, 48, 56});
   runner.SetFrameRate(1000000.0 / 8);
   MP_ASSERT_OK(runner.Run());
-  const std::vector<int64> expected_timestamps = {8, 16, 24, 32, 40, 48, 56};
+  const std::vector<int64_t> expected_timestamps = {8, 16, 24, 32, 40, 48, 56};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
   // The true sampling period is still 8.
   EXPECT_DOUBLE_EQ(1000000.0 / 8, runner.GetFrameRate());
@@ -308,7 +308,7 @@ TEST(PacketThinnerCalculatorTest, FrameRateTest3) {
   runner.SetFrameRate(1000000.0 / 2);
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {2, 6, 10, 14};
+  const std::vector<int64_t> expected_timestamps = {2, 6, 10, 14};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
   // The true (long-run) sampling period is 5.
   EXPECT_DOUBLE_EQ(1000000.0 / 5, runner.GetFrameRate());
@@ -329,7 +329,7 @@ TEST(PacketThinnerCalculatorTest, FrameRateTest4) {
   runner.SetFrameRate(1000000.0 / 2);
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {0, 5, 10, 15};
+  const std::vector<int64_t> expected_timestamps = {0, 5, 10, 15};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
   // The true (long-run) sampling period is 5.
   EXPECT_DOUBLE_EQ(1000000.0 / 5, runner.GetFrameRate());
@@ -349,7 +349,7 @@ TEST(PacketThinnerCalculatorTest, FrameRateTest5) {
   runner.SetFrameRate(1000000.0 / 8);
   MP_ASSERT_OK(runner.Run());
 
-  const std::vector<int64> expected_timestamps = {10, 15, 25, 30, 40, 50, 55};
+  const std::vector<int64_t> expected_timestamps = {10, 15, 25, 30, 40, 50, 55};
   EXPECT_EQ(expected_timestamps, runner.GetOutputTimestamps());
   // The true (long-run) sampling period is 8.
   EXPECT_DOUBLE_EQ(1000000.0 / 8, runner.GetFrameRate());

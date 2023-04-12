@@ -322,10 +322,10 @@ TEST(SidePacketToStreamCalculator, AtTimestamp) {
 
   MP_ASSERT_OK(graph.Initialize(graph_config));
   const int expected_value = 20;
-  const int64 expected_timestamp = 5;
+  const int64_t expected_timestamp = 5;
   MP_ASSERT_OK(
       graph.StartRun({{"side_packet", MakePacket<int>(expected_value)},
-                      {"timestamp", MakePacket<int64>(expected_timestamp)}}));
+                      {"timestamp", MakePacket<int64_t>(expected_timestamp)}}));
 
   MP_ASSERT_OK(graph.WaitUntilDone());
 
@@ -360,11 +360,11 @@ TEST(SidePacketToStreamCalculator, AtTimestamp_MultipleOutputs) {
   MP_ASSERT_OK(graph.Initialize(graph_config));
   const int expected_value0 = 20;
   const int expected_value1 = 15;
-  const int64 expected_timestamp = 5;
+  const int64_t expected_timestamp = 5;
   MP_ASSERT_OK(
       graph.StartRun({{"side_packet0", MakePacket<int>(expected_value0)},
                       {"side_packet1", MakePacket<int>(expected_value1)},
-                      {"timestamp", MakePacket<int64>(expected_timestamp)}}));
+                      {"timestamp", MakePacket<int64_t>(expected_timestamp)}}));
 
   MP_ASSERT_OK(graph.WaitUntilDone());
 

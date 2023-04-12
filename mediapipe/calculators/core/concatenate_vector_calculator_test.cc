@@ -30,26 +30,26 @@ namespace mediapipe {
 typedef ConcatenateVectorCalculator<int> TestConcatenateIntVectorCalculator;
 MEDIAPIPE_REGISTER_NODE(TestConcatenateIntVectorCalculator);
 
-void AddInputVector(int index, const std::vector<int>& input, int64 timestamp,
+void AddInputVector(int index, const std::vector<int>& input, int64_t timestamp,
                     CalculatorRunner* runner) {
   runner->MutableInputs()->Index(index).packets.push_back(
       MakePacket<std::vector<int>>(input).At(Timestamp(timestamp)));
 }
 
 void AddInputVectors(const std::vector<std::vector<int>>& inputs,
-                     int64 timestamp, CalculatorRunner* runner) {
+                     int64_t timestamp, CalculatorRunner* runner) {
   for (int i = 0; i < inputs.size(); ++i) {
     AddInputVector(i, inputs[i], timestamp, runner);
   }
 }
 
-void AddInputItem(int index, int input, int64 timestamp,
+void AddInputItem(int index, int input, int64_t timestamp,
                   CalculatorRunner* runner) {
   runner->MutableInputs()->Index(index).packets.push_back(
       MakePacket<int>(input).At(Timestamp(timestamp)));
 }
 
-void AddInputItems(const std::vector<int>& inputs, int64 timestamp,
+void AddInputItems(const std::vector<int>& inputs, int64_t timestamp,
                    CalculatorRunner* runner) {
   for (int i = 0; i < inputs.size(); ++i) {
     AddInputItem(i, inputs[i], timestamp, runner);
@@ -279,7 +279,7 @@ TEST(TestConcatenateIntVectorCalculatorTest, MixedVectorsAndItemsAnother) {
 }
 
 void AddInputVectors(const std::vector<std::vector<float>>& inputs,
-                     int64 timestamp, CalculatorRunner* runner) {
+                     int64_t timestamp, CalculatorRunner* runner) {
   for (int i = 0; i < inputs.size(); ++i) {
     runner->MutableInputs()->Index(i).packets.push_back(
         MakePacket<std::vector<float>>(inputs[i]).At(Timestamp(timestamp)));

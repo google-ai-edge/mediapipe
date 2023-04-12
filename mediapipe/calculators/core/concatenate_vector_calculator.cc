@@ -46,10 +46,10 @@ MEDIAPIPE_REGISTER_NODE(ConcatenateFloatVectorCalculator);
 //   input_stream: "int32_vector_2"
 //   output_stream: "concatenated_int32_vector"
 // }
-typedef ConcatenateVectorCalculator<int32> ConcatenateInt32VectorCalculator;
+typedef ConcatenateVectorCalculator<int32_t> ConcatenateInt32VectorCalculator;
 MEDIAPIPE_REGISTER_NODE(ConcatenateInt32VectorCalculator);
 
-typedef ConcatenateVectorCalculator<uint64> ConcatenateUInt64VectorCalculator;
+typedef ConcatenateVectorCalculator<uint64_t> ConcatenateUInt64VectorCalculator;
 MEDIAPIPE_REGISTER_NODE(ConcatenateUInt64VectorCalculator);
 
 typedef ConcatenateVectorCalculator<bool> ConcatenateBoolVectorCalculator;
