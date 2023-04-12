@@ -358,22 +358,42 @@ absl::Status TensorsToSegmentationCalculator::Process(
     std::tie(output_width, output_height) = kOutputSizeIn(cc).Get();
   }
 
-  // Use GPU postprocessing on web when Tensor is there already and has <= 12
-  // categories.
+  // Use GPU postprocessing on web when Tensor is there already.
 #ifdef __EMSCRIPTEN__
-  Shape output_shape = {
-      /* height= */ output_height,
-      /* width= */ output_width,
-      /* channels= */ options_.segmenter_options().output_type() ==
-              SegmenterOptions::CATEGORY_MASK
-          ? 1
-          : input_shape.channels};
-  if (input_tensor.ready_as_opengl_texture_2d() && input_shape.channels <= 12) {
+  Shape output_shape = {/* height= */ output_height,
+                        /* width= */ output_width,
+                        /* channels= */ input_shape.channels};
+  if (input_tensor.ready_as_opengl_texture_2d()) {
+    bool produce_category_mask = options_.segmenter_options().output_type() ==
+                                     SegmenterOptions::CATEGORY_MASK ||
+                                 cc->Outputs().HasTag("CATEGORY_MASK");
+    bool produce_confidence_masks =
+        options_.segmenter_options().output_type() ==
+            SegmenterOptions::CONFIDENCE_MASK ||
+        cc->Outputs().HasTag("CONFIDENCE_MASK");
     std::vector<std::unique_ptr<Image>> segmented_masks =
-        postprocessor_.GetSegmentationResultGpu(input_shape, output_shape,
-                                                input_tensor);
-    for (int i = 0; i < segmented_masks.size(); ++i) {
-      kSegmentationOut(cc)[i].Send(std::move(segmented_masks[i]));
+        postprocessor_.GetSegmentationResultGpu(
+            input_shape, output_shape, input_tensor, produce_confidence_masks,
+            produce_category_mask);
+    bool new_style = cc->Outputs().HasTag("CATEGORY_MASK") ||
+                     cc->Outputs().HasTag("CONFIDENCE_MASK");
+    if (new_style) {
+      if (produce_confidence_masks) {
+        for (int i = 0; i < input_shape.channels; ++i) {
+          kConfidenceMaskOut(cc)[i].Send(std::move(segmented_masks[i]));
+        }
+      }
+      if (produce_category_mask) {
+        int category_mask_index =
+            produce_confidence_masks ? input_shape.channels : 0;
+        kCategoryMaskOut(cc).Send(
+            std::move(segmented_masks[category_mask_index]));
+      }
+    } else {
+      // TODO: remove deprecated output type support.
+      for (int i = 0; i < segmented_masks.size(); ++i) {
+        kSegmentationOut(cc)[i].Send(std::move(segmented_masks[i]));
+      }
     }
     return absl::OkStatus();
   }

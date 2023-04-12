@@ -35,7 +35,8 @@ class SegmentationPostprocessorGl {
       TensorsToSegmentationCalculatorOptions const& options);
   std::vector<std::unique_ptr<Image>> GetSegmentationResultGpu(
       const vision::Shape& input_shape, const vision::Shape& output_shape,
-      const Tensor& tensor);
+      const Tensor& tensor, const bool produce_confidence_masks,
+      const bool produce_category_mask);
 
  private:
   struct GlShader {
@@ -43,7 +44,7 @@ class SegmentationPostprocessorGl {
     absl::flat_hash_map<std::string, GLint> uniforms;
   };
 
-  absl::Status GlInit();
+  absl::Status GlInit(const bool produce_confidence_masks);
   absl::Status CreateBasicFragmentShaderProgram(
       std::string const& program_name,
       std::string const& fragment_shader_source,

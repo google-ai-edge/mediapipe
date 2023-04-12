@@ -309,7 +309,12 @@ absl::Status SegmentationPostprocessorGl::Initialize(
     TensorsToSegmentationCalculatorOptions const& options) {
   options_ = options;  // Just copy for now
   MP_RETURN_IF_ERROR(helper_.Open(cc));
-  MP_RETURN_IF_ERROR(GlInit());
+
+  // TODO: remove deprecated output type support.
+  bool produce_confidence_masks = options_.segmenter_options().output_type() ==
+                                      SegmenterOptions::CONFIDENCE_MASK ||
+                                  cc->Outputs().HasTag("CONFIDENCE_MASK");
+  MP_RETURN_IF_ERROR(GlInit(produce_confidence_masks));
   return absl::OkStatus();
 }
 
@@ -343,29 +348,31 @@ absl::Status SegmentationPostprocessorGl::CreateBasicFragmentShaderProgram(
   return absl::OkStatus();
 }
 
-absl::Status SegmentationPostprocessorGl::GlInit() {
-  return helper_.RunInGlContext([this]() -> absl::Status {
+absl::Status SegmentationPostprocessorGl::GlInit(
+    const bool produce_confidence_masks) {
+  return helper_.RunInGlContext([this,
+                                 produce_confidence_masks]() -> absl::Status {
     // Default to passthrough/NONE
     std::string activation_fn = "vec4 out_value = in_value;";
     switch (options_.segmenter_options().activation()) {
       case SegmenterOptions::SIGMOID:
+        // TODO: We could skip this entirely if no confidence masks
+        //   are being produced AND num_classes > 1, but num_classes is only
+        //   known at runtime, so this would take a little extra refactoring.
         LOG(INFO) << "SIGMOID activation function chosen on GPU";
         activation_fn = "vec4 out_value = 1.0 / (exp(-in_value) + 1.0);";
         break;
       case SegmenterOptions::SOFTMAX:
-        LOG(WARNING) << "SOFTMAX activation function not yet efficient on GPU";
+        if (produce_confidence_masks) {
+          LOG(INFO) << "SOFTMAX activation function chosen on GPU";
+        } else {
+          LOG(INFO) << "SOFTMAX activation function chosen on GPU, but only "
+                    << "category mask produced, so not applying.";
+        }
         break;
       case SegmenterOptions::NONE:
         LOG(INFO) << "NONE activation function chosen on GPU";
         break;
-    }
-
-    // TODO: Skip activation step entirely for "NONE" to save a full
-    //     renderpass.  (And same applies for CATEGORY_MASK mode).
-    bool is_category_mask = options_.segmenter_options().output_type() ==
-                            SegmenterOptions::CATEGORY_MASK;
-    if (is_category_mask) {
-      LOG(INFO) << "CATEGORY_MASK requested; using NONE activation function.";
     }
 
     const std::string activation_shader_source =
@@ -443,12 +450,13 @@ absl::Status SegmentationPostprocessorGl::GlInit() {
 }
 
 std::vector<std::unique_ptr<Image>>
-SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
-                                                      const Shape& output_shape,
-                                                      const Tensor& tensor) {
+SegmentationPostprocessorGl::GetSegmentationResultGpu(
+    const Shape& input_shape, const Shape& output_shape, const Tensor& tensor,
+    const bool produce_confidence_masks, const bool produce_category_mask) {
   std::vector<std::unique_ptr<Image>> image_outputs;
   auto status = helper_.RunInGlContext([this, &input_shape, &output_shape,
-                                        &tensor,
+                                        &tensor, produce_confidence_masks,
+                                        produce_category_mask,
                                         &image_outputs]() -> absl::Status {
     // Get Tensor input and image output parameters
     int input_width, input_height;
@@ -464,10 +472,12 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
       LOG(ERROR) << "Tensor layout not kAligned! Cannot handle.";
     }
 
-    bool is_category_mask = options_.segmenter_options().output_type() ==
-                            SegmenterOptions::CATEGORY_MASK;
-    bool is_softmax =
-        options_.segmenter_options().activation() == SegmenterOptions::SOFTMAX;
+    // Optimization: Only apply SOFTMAX when producing confidence masks, since
+    // SOFTMAX errors out when num_classes = 1, so we don't have to worry about
+    // applying it for the 1-class argmax shader.
+    bool is_softmax = options_.segmenter_options().activation() ==
+                          SegmenterOptions::SOFTMAX &&
+                      produce_confidence_masks;
 
     // To make logic easier for now, we use F32 only if we have all three of the
     // following features available for it:
@@ -691,8 +701,32 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
     }
 
     std::vector<GlTexture> outputs;
-    if (is_category_mask) {
-      // Step 3, N = 1: For CATEGORY with 1 class, use special FG/BG argmax
+    if (produce_confidence_masks) {
+      // Step 3: For CONFIDENCE, apply channel-select repeatedly to extract
+      // final textures.
+      glUseProgram(channel_select_shader_.program);
+      glUniform1i(channel_select_shader_.uniforms["input_texture"], 1);
+      for (int i = 0; i < num_outputs; i++) {
+        glUniform1i(channel_select_shader_.uniforms["channel_select"], (i % 4));
+        outputs.push_back(helper_.CreateDestinationTexture(
+            output_width, output_height, final_output_format));
+        helper_.BindFramebuffer(outputs.back());
+
+        // We have to rebind constantly because BindFramebuffer seems to
+        // interfere with this.
+        if (is_softmax) {
+          glBindTexture(GL_TEXTURE_2D, softmax_chunks[i / 4].name());
+        } else {
+          glBindTexture(GL_TEXTURE_2D, chunks[i / 4].name());
+        }
+
+        glClear(GL_COLOR_BUFFER_BIT);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      }
+    }
+
+    if (produce_category_mask) {
+      // Step 4, N = 1: For CATEGORY with 1 class, use special FG/BG argmax
       // shader instead of our usual N-class system.
       if (num_outputs == 1) {
         outputs.push_back(helper_.CreateDestinationTexture(
@@ -707,7 +741,7 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
         glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
       } else {
-        // Step 3, N > 1: For CATEGORY with N classes, apply argmax shader
+        // Step 4, N > 1: For CATEGORY with N classes, apply argmax shader
         // iteratively with each chunk to get a 2-channel texture representing
         // "combined maxval" and "argmax", and then slice off the second channel
         // for the category mask output, using our usual channel_select program.
@@ -763,28 +797,6 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(const Shape& input_shape,
         // interpolation there for this upsampling step.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-      }
-    } else {
-      // Step 3: For CONFIDENCE, apply channel-select repeatedly to extract
-      // final textures.
-      glUseProgram(channel_select_shader_.program);
-      glUniform1i(channel_select_shader_.uniforms["input_texture"], 1);
-      for (int i = 0; i < num_outputs; i++) {
-        glUniform1i(channel_select_shader_.uniforms["channel_select"], (i % 4));
-        outputs.push_back(helper_.CreateDestinationTexture(
-            output_width, output_height, final_output_format));
-        helper_.BindFramebuffer(outputs.back());
-
-        // We have to rebind constantly because BindFramebuffer seems to
-        // interfere with this.
-        if (is_softmax) {
-          glBindTexture(GL_TEXTURE_2D, softmax_chunks[i / 4].name());
-        } else {
-          glBindTexture(GL_TEXTURE_2D, chunks[i / 4].name());
-        }
-
         glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
       }
