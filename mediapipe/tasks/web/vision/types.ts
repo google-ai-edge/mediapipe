@@ -15,6 +15,7 @@
  */
 
 export * from '../../../tasks/web/core/fileset_resolver';
+export * from '../../../tasks/web/vision/core/drawing_utils';
 export * from '../../../tasks/web/vision/face_detector/face_detector';
 export * from '../../../tasks/web/vision/face_landmarker/face_landmarker';
 export * from '../../../tasks/web/vision/face_stylizer/face_stylizer';

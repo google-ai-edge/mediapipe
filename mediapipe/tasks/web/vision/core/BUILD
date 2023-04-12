@@ -30,6 +30,16 @@ mediapipe_ts_declaration(
 )
 
 mediapipe_ts_library(
+    name = "drawing_utils",
+    srcs = ["drawing_utils.ts"],
+    deps = [
+        ":types",
+        "//mediapipe/tasks/web/components/containers:bounding_box",
+        "//mediapipe/tasks/web/components/containers:landmark",
+    ],
+)
+
+mediapipe_ts_library(
     name = "vision_task_runner",
     srcs = ["vision_task_runner.ts"],
     deps = [

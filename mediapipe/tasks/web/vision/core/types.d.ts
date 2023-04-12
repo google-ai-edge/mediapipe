@@ -52,3 +52,9 @@ export declare interface RegionOfInterest {
   /** The ROI in keypoint format. */
   keypoint: NormalizedKeypoint;
 }
+
+/** A connection between two landmarks. */
+export declare interface Connection {
+  start: number;
+  end: number;
+}

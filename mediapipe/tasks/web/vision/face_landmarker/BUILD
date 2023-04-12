@@ -40,10 +40,9 @@ mediapipe_ts_library(
 
 mediapipe_ts_library(
     name = "face_landmarks_connections",
-    srcs = [
-        "face_landmarks_connections.ts",
-    ],
+    srcs = ["face_landmarks_connections.ts"],
     visibility = ["//visibility:public"],
+    deps = ["//mediapipe/tasks/web/vision/core:types"],
 )
 
 mediapipe_ts_declaration(

@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-/** A face landmark connection. */
-export interface Connection {
-  start: number;
-  end: number;
-}
+import {Connection} from '../../../../tasks/web/vision/core/types';
 
 // tslint:disable:class-as-namespace Using for easier import by 3P users
 
@@ -27,7 +23,7 @@ export interface Connection {
  * connections.
  */
 export class FaceLandmarksConnections {
-  static FACE_LANDMARKS_LIPS = [
+  static FACE_LANDMARKS_LIPS: Connection[] = [
     {start: 61, end: 146},  {start: 146, end: 91},  {start: 91, end: 181},
     {start: 181, end: 84},  {start: 84, end: 17},   {start: 17, end: 314},
     {start: 314, end: 405}, {start: 405, end: 321}, {start: 321, end: 375},
@@ -44,7 +40,7 @@ export class FaceLandmarksConnections {
     {start: 415, end: 308}
   ];
 
-  static FACE_LANDMARKS_LEFT_EYE = [
+  static FACE_LANDMARKS_LEFT_EYE: Connection[] = [
     {start: 263, end: 249}, {start: 249, end: 390}, {start: 390, end: 373},
     {start: 373, end: 374}, {start: 374, end: 380}, {start: 380, end: 381},
     {start: 381, end: 382}, {start: 382, end: 362}, {start: 263, end: 466},
@@ -53,18 +49,18 @@ export class FaceLandmarksConnections {
     {start: 398, end: 362}
   ];
 
-  static FACE_LANDMARKS_LEFT_EYEBROW = [
+  static FACE_LANDMARKS_LEFT_EYEBROW: Connection[] = [
     {start: 276, end: 283}, {start: 283, end: 282}, {start: 282, end: 295},
     {start: 295, end: 285}, {start: 300, end: 293}, {start: 293, end: 334},
     {start: 334, end: 296}, {start: 296, end: 336}
   ];
 
-  static FACE_LANDMARKS_LEFT_IRIS = [
+  static FACE_LANDMARKS_LEFT_IRIS: Connection[] = [
     {start: 474, end: 475}, {start: 475, end: 476}, {start: 476, end: 477},
     {start: 477, end: 474}
   ];
 
-  static FACE_LANDMARKS_RIGHT_EYE = [
+  static FACE_LANDMARKS_RIGHT_EYE: Connection[] = [
     {start: 33, end: 7}, {start: 7, end: 163}, {start: 163, end: 144},
     {start: 144, end: 145}, {start: 145, end: 153}, {start: 153, end: 154},
     {start: 154, end: 155}, {start: 155, end: 133}, {start: 33, end: 246},
@@ -73,18 +69,18 @@ export class FaceLandmarksConnections {
     {start: 173, end: 133}
   ];
 
-  static FACE_LANDMARKS_RIGHT_EYEBROW = [
+  static FACE_LANDMARKS_RIGHT_EYEBROW: Connection[] = [
     {start: 46, end: 53}, {start: 53, end: 52}, {start: 52, end: 65},
     {start: 65, end: 55}, {start: 70, end: 63}, {start: 63, end: 105},
     {start: 105, end: 66}, {start: 66, end: 107}
   ];
 
-  static FACE_LANDMARKS_RIGHT_IRIS = [
+  static FACE_LANDMARKS_RIGHT_IRIS: Connection[] = [
     {start: 469, end: 470}, {start: 470, end: 471}, {start: 471, end: 472},
     {start: 472, end: 469}
   ];
 
-  static FACE_LANDMARKS_FACE_OVAL = [
+  static FACE_LANDMARKS_FACE_OVAL: Connection[] = [
     {start: 10, end: 338},  {start: 338, end: 297}, {start: 297, end: 332},
     {start: 332, end: 284}, {start: 284, end: 251}, {start: 251, end: 389},
     {start: 389, end: 356}, {start: 356, end: 454}, {start: 454, end: 323},
@@ -99,7 +95,7 @@ export class FaceLandmarksConnections {
     {start: 103, end: 67},  {start: 67, end: 109},  {start: 109, end: 10}
   ];
 
-  static FACE_LANDMARKS_CONTOURS = [
+  static FACE_LANDMARKS_CONTOURS: Connection[] = [
     ...FaceLandmarksConnections.FACE_LANDMARKS_LIPS,
     ...FaceLandmarksConnections.FACE_LANDMARKS_LEFT_EYE,
     ...FaceLandmarksConnections.FACE_LANDMARKS_LEFT_EYEBROW,
@@ -108,7 +104,7 @@ export class FaceLandmarksConnections {
     ...FaceLandmarksConnections.FACE_LANDMARKS_FACE_OVAL
   ];
 
-  static FACE_LANDMARKS_TESSELATION = [
+  static FACE_LANDMARKS_TESSELATION: Connection[] = [
     {start: 127, end: 34},  {start: 34, end: 139},  {start: 139, end: 127},
     {start: 11, end: 0},    {start: 0, end: 37},    {start: 37, end: 11},
     {start: 232, end: 231}, {start: 231, end: 120}, {start: 120, end: 232},
