@@ -60,7 +60,10 @@ public class InteractiveSegmenterTest {
               ApplicationProvider.getApplicationContext(), options);
       MPImage image = getImageFromAsset(inputImageName);
       ImageSegmenterResult actualResult = imageSegmenter.segment(image, roi);
-      List<MPImage> segmentations = actualResult.segmentations();
+      // TODO update to correct category mask output.
+      // After InteractiveSegmenter updated according to (b/276519300), update this to use
+      // categoryMask field instead of confidenceMasks.
+      List<MPImage> segmentations = actualResult.confidenceMasks().get();
       assertThat(segmentations.size()).isEqualTo(1);
     }
 
@@ -79,7 +82,7 @@ public class InteractiveSegmenterTest {
               ApplicationProvider.getApplicationContext(), options);
       ImageSegmenterResult actualResult =
           imageSegmenter.segment(getImageFromAsset(inputImageName), roi);
-      List<MPImage> segmentations = actualResult.segmentations();
+      List<MPImage> segmentations = actualResult.confidenceMasks().get();
       assertThat(segmentations.size()).isEqualTo(2);
     }
   }

@@ -45,6 +45,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
 /**
  * Performs image segmentation on images.
@@ -79,15 +80,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
   private static final List<String> INPUT_STREAMS =
       Collections.unmodifiableList(
           Arrays.asList("IMAGE:" + IMAGE_IN_STREAM_NAME, "NORM_RECT:" + NORM_RECT_IN_STREAM_NAME));
-  private static final List<String> OUTPUT_STREAMS =
-      Collections.unmodifiableList(
-          Arrays.asList(
-              "GROUPED_SEGMENTATION:segmented_mask_out",
-              "IMAGE:image_out",
-              "SEGMENTATION:0:segmentation"));
-  private static final int GROUPED_SEGMENTATION_OUT_STREAM_INDEX = 0;
-  private static final int IMAGE_OUT_STREAM_INDEX = 1;
-  private static final int SEGMENTATION_OUT_STREAM_INDEX = 2;
+  private static final int IMAGE_OUT_STREAM_INDEX = 0;
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph";
   private static final String TENSORS_TO_SEGMENTATION_CALCULATOR_NAME =
@@ -104,6 +97,33 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
    */
   public static ImageSegmenter createFromOptions(
       Context context, ImageSegmenterOptions segmenterOptions) {
+    if (!segmenterOptions.outputConfidenceMasks() && !segmenterOptions.outputCategoryMask()) {
+      throw new IllegalArgumentException(
+          "At least one of `outputConfidenceMasks` and `outputCategoryMask` must be set.");
+    }
+    List<String> outputStreams = new ArrayList<>();
+    outputStreams.add("IMAGE:image_out");
+
+    // Add an output stream to the output stream list, and get the added output stream index.
+    BiFunction<List<String>, String, Integer> getStreamIndex =
+        (List<String> streams, String streamName) -> {
+          streams.add(streamName);
+          return streams.size() - 1;
+        };
+
+    int confidenceMasksOutStreamIndex =
+        segmenterOptions.outputConfidenceMasks()
+            ? getStreamIndex.apply(outputStreams, "CONFIDENCE_MASKS:confidence_masks")
+            : -1;
+    int confidenceMaskOutStreamIndex =
+        segmenterOptions.outputConfidenceMasks()
+            ? getStreamIndex.apply(outputStreams, "CONFIDENCE_MASK:0:confidence_mask")
+            : -1;
+    int categoryMaskOutStreamIndex =
+        segmenterOptions.outputCategoryMask()
+            ? getStreamIndex.apply(outputStreams, "CATEGORY_MASK:category_mask")
+            : -1;
+
     // TODO: Consolidate OutputHandler and TaskRunner.
     OutputHandler<ImageSegmenterResult, MPImage> handler = new OutputHandler<>();
     handler.setOutputPacketConverter(
@@ -111,50 +131,65 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
           @Override
           public ImageSegmenterResult convertToTaskResult(List<Packet> packets)
               throws MediaPipeException {
-            if (packets.get(GROUPED_SEGMENTATION_OUT_STREAM_INDEX).isEmpty()) {
+            if (packets.get(IMAGE_OUT_STREAM_INDEX).isEmpty()) {
               return ImageSegmenterResult.create(
-                  new ArrayList<>(),
-                  packets.get(GROUPED_SEGMENTATION_OUT_STREAM_INDEX).getTimestamp());
+                  Optional.empty(),
+                  Optional.empty(),
+                  packets.get(IMAGE_OUT_STREAM_INDEX).getTimestamp());
             }
-            List<MPImage> segmentedMasks = new ArrayList<>();
-            int width = PacketGetter.getImageWidth(packets.get(SEGMENTATION_OUT_STREAM_INDEX));
-            int height = PacketGetter.getImageHeight(packets.get(SEGMENTATION_OUT_STREAM_INDEX));
-            int imageFormat =
-                segmenterOptions.outputType() == ImageSegmenterOptions.OutputType.CONFIDENCE_MASK
-                    ? MPImage.IMAGE_FORMAT_VEC32F1
-                    : MPImage.IMAGE_FORMAT_ALPHA;
-            int imageListSize =
-                PacketGetter.getImageListSize(packets.get(GROUPED_SEGMENTATION_OUT_STREAM_INDEX));
-            ByteBuffer[] buffersArray = new ByteBuffer[imageListSize];
-            // If resultListener is not provided, the resulted MPImage is deep copied from mediapipe
-            // graph. If provided, the result MPImage is wrapping the mediapipe packet memory.
-            if (!segmenterOptions.resultListener().isPresent()) {
-              for (int i = 0; i < imageListSize; i++) {
-                buffersArray[i] =
-                    ByteBuffer.allocateDirect(
-                        width * height * (imageFormat == MPImage.IMAGE_FORMAT_VEC32F1 ? 4 : 1));
+            boolean copyImage = !segmenterOptions.resultListener().isPresent();
+            Optional<List<MPImage>> confidenceMasks = Optional.empty();
+            if (segmenterOptions.outputConfidenceMasks()) {
+              int width = PacketGetter.getImageWidth(packets.get(confidenceMaskOutStreamIndex));
+              int height = PacketGetter.getImageHeight(packets.get(confidenceMaskOutStreamIndex));
+              confidenceMasks = Optional.of(new ArrayList<MPImage>());
+              int confidenceMasksListSize =
+                  PacketGetter.getImageListSize(packets.get(confidenceMasksOutStreamIndex));
+              ByteBuffer[] buffersArray = new ByteBuffer[confidenceMasksListSize];
+              // If resultListener is not provided, the resulted MPImage is deep copied from
+              // mediapipe graph. If provided, the result MPImage is wrapping the mediapipe packet
+              // memory.
+              if (copyImage) {
+                for (int i = 0; i < confidenceMasksListSize; i++) {
+                  buffersArray[i] = ByteBuffer.allocateDirect(width * height * 4);
+                }
+              }
+              if (!PacketGetter.getImageList(
+                  packets.get(confidenceMasksOutStreamIndex), buffersArray, copyImage)) {
+                throw new MediaPipeException(
+                    MediaPipeException.StatusCode.INTERNAL.ordinal(),
+                    "There is an error getting confidence masks.");
+              }
+              for (ByteBuffer buffer : buffersArray) {
+                ByteBufferImageBuilder builder =
+                    new ByteBufferImageBuilder(buffer, width, height, MPImage.IMAGE_FORMAT_VEC32F1);
+                confidenceMasks.get().add(builder.build());
               }
             }
-            if (!PacketGetter.getImageList(
-                packets.get(GROUPED_SEGMENTATION_OUT_STREAM_INDEX),
-                buffersArray,
-                !segmenterOptions.resultListener().isPresent())) {
-              throw new MediaPipeException(
-                  MediaPipeException.StatusCode.INTERNAL.ordinal(),
-                  "There is an error getting segmented masks. It usually results from incorrect"
-                      + " options of unsupported OutputType of given model.");
-            }
-            for (ByteBuffer buffer : buffersArray) {
+            Optional<MPImage> categoryMask = Optional.empty();
+            if (segmenterOptions.outputCategoryMask()) {
+              int width = PacketGetter.getImageWidth(packets.get(categoryMaskOutStreamIndex));
+              int height = PacketGetter.getImageHeight(packets.get(categoryMaskOutStreamIndex));
+              ByteBuffer buffer;
+              if (copyImage) {
+                buffer = ByteBuffer.allocateDirect(width * height);
+                if (!PacketGetter.getImageData(packets.get(categoryMaskOutStreamIndex), buffer)) {
+                  throw new MediaPipeException(
+                      MediaPipeException.StatusCode.INTERNAL.ordinal(),
+                      "There is an error getting category mask.");
+                }
+              } else {
+                buffer = PacketGetter.getImageDataDirectly(packets.get(categoryMaskOutStreamIndex));
+              }
               ByteBufferImageBuilder builder =
-                  new ByteBufferImageBuilder(buffer, width, height, imageFormat);
-              segmentedMasks.add(builder.build());
+                  new ByteBufferImageBuilder(buffer, width, height, MPImage.IMAGE_FORMAT_ALPHA);
+              categoryMask = Optional.of(builder.build());
             }
-
             return ImageSegmenterResult.create(
-                segmentedMasks,
+                confidenceMasks,
+                categoryMask,
                 BaseVisionTaskApi.generateResultTimestampMs(
-                    segmenterOptions.runningMode(),
-                    packets.get(GROUPED_SEGMENTATION_OUT_STREAM_INDEX)));
+                    segmenterOptions.runningMode(), packets.get(IMAGE_OUT_STREAM_INDEX)));
           }
 
           @Override
@@ -174,7 +209,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
                 .setTaskRunningModeName(segmenterOptions.runningMode().name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
-                .setOutputStreams(OUTPUT_STREAMS)
+                .setOutputStreams(outputStreams)
                 .setTaskOptions(segmenterOptions)
                 .setEnableFlowLimiting(segmenterOptions.runningMode() == RunningMode.LIVE_STREAM)
                 .build(),
@@ -553,8 +588,11 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
        */
       public abstract Builder setDisplayNamesLocale(String value);
 
-      /** The output type from image segmenter. */
-      public abstract Builder setOutputType(OutputType value);
+      /** Whether to output confidence masks. */
+      public abstract Builder setOutputConfidenceMasks(boolean value);
+
+      /** Whether to output category mask. */
+      public abstract Builder setOutputCategoryMask(boolean value);
 
       /**
        * Sets an optional {@link ResultListener} to receive the segmentation results when the graph
@@ -594,27 +632,20 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
 
     abstract String displayNamesLocale();
 
-    abstract OutputType outputType();
+    abstract boolean outputConfidenceMasks();
+
+    abstract boolean outputCategoryMask();
 
     abstract Optional<ResultListener<ImageSegmenterResult, MPImage>> resultListener();
 
     abstract Optional<ErrorListener> errorListener();
 
-    /** The output type of segmentation results. */
-    public enum OutputType {
-      // Gives a single output mask where each pixel represents the class which
-      // the pixel in the original image was predicted to belong to.
-      CATEGORY_MASK,
-      // Gives a list of output masks where, for each mask, each pixel represents
-      // the prediction confidence, usually in the [0, 1] range.
-      CONFIDENCE_MASK
-    }
-
     public static Builder builder() {
       return new AutoValue_ImageSegmenter_ImageSegmenterOptions.Builder()
           .setRunningMode(RunningMode.IMAGE)
           .setDisplayNamesLocale("en")
-          .setOutputType(OutputType.CATEGORY_MASK);
+          .setOutputConfidenceMasks(true)
+          .setOutputCategoryMask(false);
     }
 
     /**
@@ -633,14 +664,6 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
 
       SegmenterOptionsProto.SegmenterOptions.Builder segmenterOptionsBuilder =
           SegmenterOptionsProto.SegmenterOptions.newBuilder();
-      if (outputType() == OutputType.CONFIDENCE_MASK) {
-        segmenterOptionsBuilder.setOutputType(
-            SegmenterOptionsProto.SegmenterOptions.OutputType.CONFIDENCE_MASK);
-      } else if (outputType() == OutputType.CATEGORY_MASK) {
-        segmenterOptionsBuilder.setOutputType(
-            SegmenterOptionsProto.SegmenterOptions.OutputType.CATEGORY_MASK);
-      }
-
       taskOptionsBuilder.setSegmenterOptions(segmenterOptionsBuilder);
       return CalculatorOptions.newBuilder()
           .setExtension(
