@@ -374,12 +374,15 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
               .face_landmarks_detector_graph_options()
               .has_face_blendshapes_graph_options()));
     }
+    std::optional<Source<NormalizedRect>> norm_rect_in;
+    if (HasInput(sc->OriginalNode(), kNormRectTag)) {
+      norm_rect_in = graph.In(kNormRectTag).Cast<NormalizedRect>();
+    }
     ASSIGN_OR_RETURN(
         auto outs,
         BuildFaceLandmarkerGraph(
             *sc->MutableOptions<FaceLandmarkerGraphOptions>(),
-            graph[Input<Image>(kImageTag)],
-            graph[Input<NormalizedRect>::Optional(kNormRectTag)], environment,
+            graph[Input<Image>(kImageTag)], norm_rect_in, environment,
             output_blendshapes, output_geometry, graph));
     outs.landmark_lists >>
         graph[Output<std::vector<NormalizedLandmarkList>>(kNormLandmarksTag)];
@@ -422,7 +425,7 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
   // graph: the mediapipe graph instance to be updated.
   absl::StatusOr<FaceLandmarkerOutputs> BuildFaceLandmarkerGraph(
       FaceLandmarkerGraphOptions& tasks_options, Source<Image> image_in,
-      Source<NormalizedRect> norm_rect_in,
+      std::optional<Source<NormalizedRect>> norm_rect_in,
       std::optional<SidePacket<Environment>> environment,
       bool output_blendshapes, bool output_geometry, Graph& graph) {
     const int max_num_faces =
@@ -432,6 +435,8 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
         graph.AddNode("mediapipe.tasks.vision.face_detector.FaceDetectorGraph");
     face_detector.GetOptions<FaceDetectorGraphOptions>().Swap(
         tasks_options.mutable_face_detector_graph_options());
+    const auto& face_detector_options =
+        face_detector.GetOptions<FaceDetectorGraphOptions>();
     auto& clip_face_rects =
         graph.AddNode("ClipNormalizedRectVectorSizeCalculator");
     clip_face_rects.GetOptions<ClipVectorSizeCalculatorOptions>()
@@ -447,9 +452,9 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
     image_in >> face_landmarks_detector_graph.In(kImageTag);
     clipped_face_rects >> face_landmarks_detector_graph.In(kNormRectTag);
 
-    std::optional<Source<std::vector<NormalizedLandmarkList>>> face_landmarks;
-    face_landmarks = face_landmarks_detector_graph.Out(kNormLandmarksTag)
-                         .Cast<std::vector<NormalizedLandmarkList>>();
+    Source<std::vector<NormalizedLandmarkList>> face_landmarks =
+        face_landmarks_detector_graph.Out(kNormLandmarksTag)
+            .Cast<std::vector<NormalizedLandmarkList>>();
     auto face_rects_for_next_frame =
         face_landmarks_detector_graph.Out(kFaceRectsNextFrameTag)
             .Cast<std::vector<NormalizedRect>>();
@@ -460,13 +465,13 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
 
     // Apply smoothing filter only on the single face landmarks, because
     // landmakrs smoothing calculator doesn't support multiple landmarks yet.
-    if (tasks_options.face_detector_graph_options().num_faces() == 1) {
+    if (face_detector_options.num_faces() == 1) {
       // Get the single face landmarks
       auto& get_vector_item =
           graph.AddNode("GetNormalizedLandmarkListVectorItemCalculator");
       get_vector_item.GetOptions<mediapipe::GetVectorItemCalculatorOptions>()
           .set_item_index(0);
-      *face_landmarks >> get_vector_item.In(kVectorTag);
+      face_landmarks >> get_vector_item.In(kVectorTag);
       auto single_face_landmarks = get_vector_item.Out(kItemTag);
 
       // Apply smoothing filter on face landmarks.
@@ -483,8 +488,8 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
       auto& concatenate_vector =
           graph.AddNode("ConcatenateNormalizedLandmarkListVectorCalculator");
       smoothed_single_face_landmarks >> concatenate_vector.In("");
-      face_landmarks.emplace(concatenate_vector.Out("")
-                                 .Cast<std::vector<NormalizedLandmarkList>>());
+      face_landmarks = concatenate_vector.Out("")
+                           .Cast<std::vector<NormalizedLandmarkList>>();
     }
 
     if (tasks_options.base_options().use_stream_mode()) {
@@ -504,10 +509,15 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
       // track the faces from the last frame.
       auto image_for_face_detector =
           DisallowIf(image_in, has_enough_faces, graph);
-      auto norm_rect_in_for_face_detector =
-          DisallowIf(norm_rect_in, has_enough_faces, graph);
       image_for_face_detector >> face_detector.In(kImageTag);
-      norm_rect_in_for_face_detector >> face_detector.In(kNormRectTag);
+      std::optional<Source<NormalizedRect>> norm_rect_in_for_face_detector;
+      if (norm_rect_in) {
+        norm_rect_in_for_face_detector =
+            DisallowIf(norm_rect_in.value(), has_enough_faces, graph);
+      }
+      if (norm_rect_in_for_face_detector) {
+        *norm_rect_in_for_face_detector >> face_detector.In("NORM_RECT");
+      }
       auto expanded_face_rects_from_face_detector =
           face_detector.Out(kExpandedFaceRectsTag);
       auto& face_association = graph.AddNode("AssociationNormRectCalculator");
@@ -527,7 +537,9 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
       // series, and we don't want to enable the tracking and rect associations
       // between input images. Always use the face detector graph.
       image_in >> face_detector.In(kImageTag);
-      norm_rect_in >> face_detector.In(kNormRectTag);
+      if (norm_rect_in) {
+        *norm_rect_in >> face_detector.In(kNormRectTag);
+      }
       auto face_rects = face_detector.Out(kExpandedFaceRectsTag);
       face_rects >> clip_face_rects.In("");
     }
@@ -552,7 +564,7 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
       if (environment.has_value()) {
         *environment >> face_geometry_from_landmarks.SideIn(kEnvironmentTag);
       }
-      *face_landmarks >> face_geometry_from_landmarks.In(kFaceLandmarksTag);
+      face_landmarks >> face_geometry_from_landmarks.In(kFaceLandmarksTag);
       image_size >> face_geometry_from_landmarks.In(kImageSizeTag);
       face_geometry = face_geometry_from_landmarks.Out(kFaceGeometryTag)
                           .Cast<std::vector<FaceGeometry>>();
@@ -564,7 +576,7 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
     image_in >> pass_through.In("");
 
     return {{
-        /* landmark_lists= */ *face_landmarks,
+        /* landmark_lists= */ face_landmarks,
         /* face_rects_next_frame= */
         face_rects_for_next_frame,
         /* face_rects= */
