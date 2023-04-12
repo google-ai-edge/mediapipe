@@ -19,6 +19,37 @@ package(default_visibility = [
 licenses(["notice"])
 
 cc_library(
+    name = "pose_landmarker",
+    srcs = ["pose_landmarker.cc"],
+    hdrs = ["pose_landmarker.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":pose_landmarker_graph",
+        ":pose_landmarker_result",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/core:base_options",
+        "//mediapipe/tasks/cc/core:base_task_api",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core:task_runner",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
+        "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
+        "//mediapipe/tasks/cc/vision/core:image_processing_options",
+        "//mediapipe/tasks/cc/vision/core:running_mode",
+        "//mediapipe/tasks/cc/vision/core:vision_task_api_factory",
+        "//mediapipe/tasks/cc/vision/pose_detector/proto:pose_detector_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/pose_landmarker/proto:pose_landmarker_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/pose_landmarker/proto:pose_landmarks_detector_graph_options_cc_proto",
+        "@com_google_absl//absl/status:statusor",
+    ],
+)
+
+cc_library(
     name = "pose_landmarks_detector_graph",
     srcs = ["pose_landmarks_detector_graph.cc"],
     deps = [
@@ -109,4 +140,16 @@ cc_library(
         "@com_google_absl//absl/strings:str_format",
     ],
     alwayslink = 1,
+)
+
+cc_library(
+    name = "pose_landmarker_result",
+    srcs = ["pose_landmarker_result.cc"],
+    hdrs = ["pose_landmarker_result.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/tasks/cc/components/containers:landmark",
+    ],
 )

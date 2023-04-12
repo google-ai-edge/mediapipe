@@ -220,6 +220,7 @@ filegroup(
         "portrait_rotated_expected_detection.pbtxt",
         "pose_expected_detection.pbtxt",
         "pose_expected_expanded_rect.pbtxt",
+        "pose_landmarks.pbtxt",
         "thumb_up_landmarks.pbtxt",
         "thumb_up_rotated_landmarks.pbtxt",
         "victory_landmarks.pbtxt",
