@@ -121,6 +121,95 @@ class Blendshapes(enum.IntEnum):
 
 
 @dataclasses.dataclass
+class Connection:
+  start: int
+  end: int
+
+
+class FaceLandmarksConnections:
+  FACE_LANDMARKS_LIPS = [
+    Connection(61, 146), Connection(146, 91), Connection(91, 181),
+    Connection(181, 84), Connection(84, 17), Connection(17, 314),
+    Connection(314, 405), Connection(405, 321), Connection(321, 375),
+    Connection(375, 291), Connection(61, 185), Connection(185, 40),
+    Connection(40, 39), Connection(39, 37), Connection(37, 0),
+    Connection(0, 267), Connection(267, 269), Connection(269, 270),
+    Connection(270, 409), Connection(409, 291), Connection(78, 95),
+    Connection(95, 88), Connection(88, 178), Connection(178, 87),
+    Connection(87, 14), Connection(14, 317), Connection(317, 402),
+    Connection(402, 318), Connection(318, 324), Connection(324, 308),
+    Connection(78, 191), Connection(191, 80), Connection(80, 81),
+    Connection(81, 82), Connection(82, 13), Connection(13, 312),
+    Connection(312, 311), Connection(311, 310), Connection(310, 415),
+    Connection(415, 308)
+  ]
+
+  FACE_LANDMARKS_LEFT_EYE = [
+    Connection(263, 249), Connection(249, 390), Connection(390, 373),
+    Connection(373, 374), Connection(374, 380), Connection(380, 381),
+    Connection(381, 382), Connection(382, 362), Connection(263, 466),
+    Connection(466, 388), Connection(388, 387), Connection(387, 386),
+    Connection(386, 385), Connection(385, 384), Connection(384, 398),
+    Connection(398, 362)
+  ]
+
+  FACE_LANDMARKS_LEFT_EYEBROW = [
+    Connection(276, 283), Connection(283, 282), Connection(282, 295),
+    Connection(295, 285), Connection(300, 293), Connection(293, 334),
+    Connection(334, 296), Connection(296, 336)
+  ]
+
+  FACE_LANDMARKS_LEFT_IRIS = [
+    Connection(474, 475), Connection(475, 476), Connection(476, 477),
+    Connection(477, 474)
+  ]
+
+  FACE_LANDMARKS_RIGHT_EYE = [
+    Connection(33, 7), Connection(7, 163), Connection(163, 144),
+    Connection(144, 145), Connection(145, 153), Connection(153, 154),
+    Connection(154, 155), Connection(155, 133), Connection(33, 246),
+    Connection(246, 161), Connection(161, 160), Connection(160, 159),
+    Connection(159, 158), Connection(158, 157), Connection(157, 173),
+    Connection(173, 133)
+  ]
+
+  FACE_LANDMARKS_RIGHT_EYEBROW = [
+    Connection(46, 53), Connection(53, 52), Connection(52, 65),
+    Connection(65, 55), Connection(70, 63), Connection(63, 105),
+    Connection(105, 66), Connection(66, 107)
+  ]
+
+  FACE_LANDMARKS_RIGHT_IRIS = [
+    Connection(469, 470), Connection(470, 471), Connection(471, 472),
+    Connection(472, 469)
+  ]
+
+  FACE_LANDMARKS_FACE_OVAL = [
+    Connection(10, 338), Connection(338, 297), Connection(297, 332),
+    Connection(332, 284), Connection(284, 251), Connection(251, 389),
+    Connection(389, 356), Connection(356, 454), Connection(454, 323),
+    Connection(323, 361), Connection(361, 288), Connection(288, 397),
+    Connection(397, 365), Connection(365, 379), Connection(379, 378),
+    Connection(378, 400), Connection(400, 377), Connection(377, 152),
+    Connection(152, 148), Connection(148, 176), Connection(176, 149),
+    Connection(149, 150), Connection(150, 136), Connection(136, 172),
+    Connection(172, 58), Connection(58, 132), Connection(132, 93),
+    Connection(93, 234), Connection(234, 127), Connection(127, 162),
+    Connection(162, 21), Connection(21, 54), Connection(54, 103),
+    Connection(103, 67), Connection(67, 109), Connection(109, 10)
+  ]
+
+  FACE_LANDMARKS_CONTOURS = (
+      FACE_LANDMARKS_LIPS
+      + FACE_LANDMARKS_LEFT_EYE
+      + FACE_LANDMARKS_LEFT_EYEBROW
+      + FACE_LANDMARKS_RIGHT_EYE
+      + FACE_LANDMARKS_RIGHT_EYEBROW
+      + FACE_LANDMARKS_FACE_OVAL
+  )
+
+
+@dataclasses.dataclass
 class FaceLandmarkerResult:
   """The face landmarks detection result from FaceLandmarker, where each vector element represents a single face detected in the image.
 
