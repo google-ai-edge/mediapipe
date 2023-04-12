@@ -445,3 +445,9 @@ cc_library(
     hdrs = ["vector.h"],
     deps = ["//mediapipe/framework/deps:vector"],
 )
+
+cc_library(
+    name = "requires",
+    hdrs = ["requires.h"],
+    deps = ["//mediapipe/framework/deps:requires"],
+)

@@ -306,6 +306,14 @@ cc_library(
 )
 
 cc_library(
+    name = "requires",
+    hdrs = ["requires.h"],
+
+    # Use this library through "mediapipe/framework/port:requires".
+    visibility = ["//mediapipe/framework/port:__pkg__"],
+)
+
+cc_library(
     name = "ret_check",
     srcs = ["ret_check.cc"],
     hdrs = ["ret_check.h"],
