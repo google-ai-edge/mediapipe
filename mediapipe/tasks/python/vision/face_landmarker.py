@@ -142,7 +142,7 @@ class FaceLandmarksConnections:
     Connection(81, 82),   Connection(82, 13),   Connection(13, 312),
     Connection(312, 311), Connection(311, 310), Connection(310, 415),
     Connection(415, 308)
-  ];
+  ]
 
   FACE_LANDMARKS_LEFT_EYE: List[Connection] = [
     Connection(263, 249), Connection(249, 390), Connection(390, 373),
@@ -151,18 +151,18 @@ class FaceLandmarksConnections:
     Connection(466, 388), Connection(388, 387), Connection(387, 386),
     Connection(386, 385), Connection(385, 384), Connection(384, 398),
     Connection(398, 362)
-  ];
+  ]
 
   FACE_LANDMARKS_LEFT_EYEBROW: List[Connection] = [
     Connection(276, 283), Connection(283, 282), Connection(282, 295),
     Connection(295, 285), Connection(300, 293), Connection(293, 334),
     Connection(334, 296), Connection(296, 336)
-  ];
+  ]
 
   FACE_LANDMARKS_LEFT_IRIS: List[Connection] = [
     Connection(474, 475), Connection(475, 476), Connection(476, 477),
     Connection(477, 474)
-  ];
+  ]
 
   FACE_LANDMARKS_RIGHT_EYE: List[Connection] = [
     Connection(33, 7), Connection(7, 163), Connection(163, 144),
@@ -171,18 +171,18 @@ class FaceLandmarksConnections:
     Connection(246, 161), Connection(161, 160), Connection(160, 159),
     Connection(159, 158), Connection(158, 157), Connection(157, 173),
     Connection(173, 133)
-  ];
+  ]
 
   FACE_LANDMARKS_RIGHT_EYEBROW: List[Connection] = [
     Connection(46, 53), Connection(53, 52), Connection(52, 65),
     Connection(65, 55), Connection(70, 63), Connection(63, 105),
     Connection(105, 66), Connection(66, 107)
-  ];
+  ]
 
   FACE_LANDMARKS_RIGHT_IRIS: List[Connection] = [
     Connection(469, 470), Connection(470, 471), Connection(471, 472),
     Connection(472, 469)
-  ];
+  ]
 
   FACE_LANDMARKS_FACE_OVAL: List[Connection] = [
     Connection(10, 338),  Connection(338, 297), Connection(297, 332),
@@ -197,7 +197,7 @@ class FaceLandmarksConnections:
     Connection(93, 234),  Connection(234, 127), Connection(127, 162),
     Connection(162, 21),  Connection(21, 54),   Connection(54, 103),
     Connection(103, 67),  Connection(67, 109),  Connection(109, 10)
-  ];
+  ]
 
   FACE_LANDMARKS_CONTOURS: List[Connection] = (
       FACE_LANDMARKS_LIPS
@@ -208,7 +208,7 @@ class FaceLandmarksConnections:
       + FACE_LANDMARKS_FACE_OVAL
   )
 
-  FACE_LANDMARKS_TESSELATION: List[Connection]> = [
+  FACE_LANDMARKS_TESSELATION: List[Connection] = [
     Connection(127, 34),  Connection(34, 139),  Connection(139, 127),
     Connection(11, 0),    Connection(0, 37),    Connection(37, 11),
     Connection(232, 231), Connection(231, 120), Connection(120, 232),
@@ -1061,7 +1061,7 @@ class FaceLandmarksConnections:
     Connection(265, 372), Connection(372, 353), Connection(353, 265),
     Connection(390, 339), Connection(339, 249), Connection(249, 390),
     Connection(339, 448), Connection(448, 255), Connection(255, 339)
-
+  ]
 
 @dataclasses.dataclass
 class FaceLandmarkerResult:
