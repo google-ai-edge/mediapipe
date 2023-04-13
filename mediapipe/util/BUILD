@@ -341,7 +341,7 @@ cc_library(
         "//mediapipe/framework:demangle",
         "//mediapipe/framework:packet",
         "//mediapipe/framework:timestamp",
-        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:gtest",
     ],
 )
 
