@@ -200,7 +200,8 @@ class InteractiveSegmenterTest(parameterized.TestCase):
       raise ValueError('model_file_type is invalid.')
 
     options = _InteractiveSegmenterOptions(
-        base_options=base_options, output_category_mask=True
+        base_options=base_options, output_category_mask=True,
+        output_confidence_masks=False
     )
     segmenter = _InteractiveSegmenter.create_from_options(options)
 
@@ -252,7 +253,10 @@ class InteractiveSegmenterTest(parameterized.TestCase):
     roi = _RegionOfInterest(format=roi_format, keypoint=keypoint)
 
     # Run segmentation on the model in CONFIDENCE_MASK mode.
-    options = _InteractiveSegmenterOptions(base_options=base_options)
+    options = _InteractiveSegmenterOptions(
+        base_options=base_options, output_category_mask=False,
+        output_confidence_masks=True
+    )
 
     with _InteractiveSegmenter.create_from_options(options) as segmenter:
       # Perform segmentation
@@ -284,7 +288,10 @@ class InteractiveSegmenterTest(parameterized.TestCase):
     )
 
     # Run segmentation on the model in CONFIDENCE_MASK mode.
-    options = _InteractiveSegmenterOptions(base_options=base_options)
+    options = _InteractiveSegmenterOptions(
+        base_options=base_options, output_category_mask=False,
+        output_confidence_masks=True
+    )
 
     with _InteractiveSegmenter.create_from_options(options) as segmenter:
       # Perform segmentation
@@ -310,7 +317,10 @@ class InteractiveSegmenterTest(parameterized.TestCase):
     )
 
     # Run segmentation on the model in CONFIDENCE_MASK mode.
-    options = _InteractiveSegmenterOptions(base_options=base_options)
+    options = _InteractiveSegmenterOptions(
+        base_options=base_options, output_category_mask=False,
+        output_confidence_masks=True
+    )
 
     with self.assertRaisesRegex(
         ValueError, "This task doesn't support region-of-interest."
