@@ -1063,6 +1063,7 @@ class FaceLandmarksConnections:
     Connection(339, 448), Connection(448, 255), Connection(255, 339)
   ]
 
+
 @dataclasses.dataclass
 class FaceLandmarkerResult:
   """The face landmarks detection result from FaceLandmarker, where each vector element represents a single face detected in the image.
