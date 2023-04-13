@@ -17,8 +17,8 @@
 @implementation MPPObjectDetectionResult
 
 - (instancetype)initWithDetections:(NSArray<MPPDetection *> *)detections
-                       timestampMs:(NSInteger)timestampMs {
-  self = [super initWithTimestampMs:timestampMs];
+           timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+  self = [super initWithTimestampMs:timestampInMilliseconds];
   if (self) {
     _detections = detections;
   }

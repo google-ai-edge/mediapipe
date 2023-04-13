@@ -38,8 +38,9 @@ using ::mediapipe::Packet;
   }
 
   return [[MPPObjectDetectionResult alloc]
-      initWithDetections:detections
-             timestampMs:(NSInteger)(packet.Timestamp().Value() / kMicroSecondsPerMilliSecond)];
+           initWithDetections:detections
+      timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
+                                          kMicroSecondsPerMilliSecond)];
 }
 
 @end

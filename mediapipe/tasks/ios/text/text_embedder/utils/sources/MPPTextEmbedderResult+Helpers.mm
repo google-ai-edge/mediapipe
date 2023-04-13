@@ -34,7 +34,7 @@ using ::mediapipe::Packet;
 
   return [[MPPTextEmbedderResult alloc]
       initWithEmbeddingResult:embeddingResult
-                  timestampMs:(NSInteger)(packet.Timestamp().Value() /
+      timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
                                           kMicroSecondsPerMilliSecond)];
 }
 
