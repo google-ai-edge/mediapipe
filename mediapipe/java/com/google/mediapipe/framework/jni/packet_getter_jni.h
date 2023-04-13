@@ -113,6 +113,14 @@ JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageData)(
 JNIEXPORT jobject JNICALL PACKET_GETTER_METHOD(nativeGetImageDataDirect)(
     JNIEnv* env, jobject thiz, jlong packet);
 
+// Return the image width of first image from std::vector<Image>.
+JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageWidthFromImageList)(
+    JNIEnv* env, jobject thiz, jlong packet);
+
+// Return the image height of first image from std::vector<Image>.
+JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageHeightFromImageList)(
+    JNIEnv* env, jobject thiz, jlong packet);
+
 // Return the vector size of std::vector<Image>.
 JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageListSize)(
     JNIEnv* env, jobject thiz, jlong packet);

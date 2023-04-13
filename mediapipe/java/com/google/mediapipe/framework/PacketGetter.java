@@ -222,6 +222,22 @@ public final class PacketGetter {
   }
 
   /**
+   * Returns the width of first image in an image list. This helps to determine size of allocated
+   * ByteBuffer array.
+   */
+  public static int getImageWidthFromImageList(final Packet packet) {
+    return nativeGetImageWidthFromImageList(packet.getNativeHandle());
+  }
+
+  /**
+   * Returns the height of first image in an image list. This helps to determine size of allocated
+   * ByteBuffer array.
+   */
+  public static int getImageHeightFromImageList(final Packet packet) {
+    return nativeGetImageHeightFromImageList(packet.getNativeHandle());
+  }
+
+  /**
    * Assign the native image buffer array in given ByteBuffer array. It assumes given ByteBuffer
    * array has the the same size of image list packet, and assumes the output buffer stores pixels
    * contiguously. It returns false if this assumption does not hold.
@@ -408,6 +424,10 @@ public final class PacketGetter {
   private static native ByteBuffer nativeGetImageDataDirect(long nativePacketHandle);
 
   private static native int nativeGetImageListSize(long nativePacketHandle);
+
+  private static native int nativeGetImageWidthFromImageList(long nativePacketHandle);
+
+  private static native int nativeGetImageHeightFromImageList(long nativePacketHandle);
 
   private static native boolean nativeGetImageList(
       long nativePacketHandle, ByteBuffer[] bufferArray, boolean deepCopy);

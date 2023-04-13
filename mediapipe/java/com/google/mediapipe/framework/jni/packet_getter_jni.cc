@@ -16,6 +16,7 @@
 
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -84,6 +85,22 @@ bool CopyImageDataToByteBuffer(JNIEnv* env, const mediapipe::ImageFrame& image,
     }
   }
   return true;
+}
+
+void CheckImageSizeInImageList(JNIEnv* env,
+                               const std::vector<mediapipe::Image>& image_list,
+                               int height, int width, int channels) {
+  for (int i = 0; i < image_list.size(); ++i) {
+    if (image_list[i].height() != height || image_list[i].width() != width ||
+        image_list[i].channels() != channels) {
+      ThrowIfError(env, absl::InvalidArgumentError(absl::StrFormat(
+                            "Expect images in the image list having the same "
+                            "size: (%d, %d, %d), but get image at index %d "
+                            "with size: (%d, %d, %d)",
+                            height, width, channels, i, image_list[i].height(),
+                            image_list[i].width(), image_list[i].channels())));
+    }
+  }
 }
 
 }  // namespace
@@ -392,6 +409,32 @@ JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageListSize)(
   const auto& image_list =
       GetFromNativeHandle<std::vector<mediapipe::Image>>(packet);
   return image_list.size();
+}
+
+JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageWidthFromImageList)(
+    JNIEnv* env, jobject thiz, jlong packet) {
+  const auto& image_list =
+      GetFromNativeHandle<std::vector<mediapipe::Image>>(packet);
+  if (image_list.empty()) {
+    ThrowIfError(env, absl::InvalidArgumentError(
+                          "Image list from the packet is empty."));
+  }
+  CheckImageSizeInImageList(env, image_list, image_list[0].height(),
+                            image_list[0].width(), image_list[0].channels());
+  return image_list[0].width();
+}
+
+JNIEXPORT jint JNICALL PACKET_GETTER_METHOD(nativeGetImageHeightFromImageList)(
+    JNIEnv* env, jobject thiz, jlong packet) {
+  const auto& image_list =
+      GetFromNativeHandle<std::vector<mediapipe::Image>>(packet);
+  if (image_list.empty()) {
+    ThrowIfError(env, absl::InvalidArgumentError(
+                          "Image list from the packet is empty."));
+  }
+  CheckImageSizeInImageList(env, image_list, image_list[0].height(),
+                            image_list[0].width(), image_list[0].channels());
+  return image_list[0].height();
 }
 
 JNIEXPORT jboolean JNICALL PACKET_GETTER_METHOD(nativeGetImageList)(
