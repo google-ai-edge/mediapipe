@@ -530,7 +530,7 @@ TEST_F(TrackingGraphTest, TestRandomAccessTrackingTimestamps) {
 
   // Set up random access boxes
   const int num_frames = input_frames_packets_.size();
-  const int64 usec_in_sec = 1000000;
+  const int64_t usec_in_sec = 1000000;
   std::vector<Timestamp> start_timestamps{
       input_frames_packets_[0].Timestamp() - usec_in_sec,  // forward
       input_frames_packets_[0].Timestamp(),                // forward

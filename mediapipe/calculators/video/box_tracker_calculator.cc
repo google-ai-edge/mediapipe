@@ -176,7 +176,7 @@ class BoxTrackerCalculator : public CalculatorBase {
   // computed for. Used in streaming mode.
   // Returns list of ids that failed.
   void StreamTrack(const TrackingData& data, int data_frame_num,
-                   int64 dst_timestamp_ms, int64 duration_ms, bool forward,
+                   int64_t dst_timestamp_ms, int64_t duration_ms, bool forward,
                    MotionBoxMap* box_map, std::vector<int>* failed_ids);
 
   // Fast forwards specified boxes from starting position to current play head
@@ -270,16 +270,16 @@ class BoxTrackerCalculator : public CalculatorBase {
   bool RunForwardTrack(
       const std::deque<std::pair<Timestamp, TrackingData>>::iterator&
           start_data,
-      int init_frame, MotionBoxMap* single_map, int64 end_time_msec);
+      int init_frame, MotionBoxMap* single_map, int64_t end_time_msec);
 
   bool RunBackwardTrack(
       const std::deque<std::pair<Timestamp, TrackingData>>::iterator&
           start_data,
-      int init_frame, MotionBoxMap* single_map, int64 end_time_msec);
+      int init_frame, MotionBoxMap* single_map, int64_t end_time_msec);
 
   void ObtainResultOfRandomAccessTrack(
       const MotionBoxMap& single_map, const TimedBoxProto& start,
-      int64 end_time_msec,
+      int64_t end_time_msec,
       const std::unique_ptr<TimedBoxProtoList>& result_list);
 };
 
@@ -371,7 +371,7 @@ void ConvertCoordinateForRotation(float in_top, float in_left, float in_bottom,
   *out_right = out_center_x + out_width * 0.5f;
 }
 
-void AddStateToPath(const MotionBoxState& state, int64 time_msec,
+void AddStateToPath(const MotionBoxState& state, int64_t time_msec,
                     PathSegment* path) {
   CHECK(path);
   TimedBox result;
@@ -655,7 +655,7 @@ absl::Status BoxTrackerCalculator::Process(CalculatorContext* cc) {
   // Corresponding list of box states for rendering. For each id present at
   // this frame stores closest 1-2 states.
   std::vector<std::vector<MotionBoxState>> box_state_list;
-  int64 timestamp_msec = timestamp.Value() / 1000;
+  int64_t timestamp_msec = timestamp.Value() / 1000;
 
   if (box_tracker_) {  // Batch mode.
     // Ensure tracking has terminated.
@@ -695,8 +695,8 @@ absl::Status BoxTrackerCalculator::Process(CalculatorContext* cc) {
         track_data_to_render = track_data;
       }
 
-      const int64 time_ms = track_timestamps_.back().Value() / 1000;
-      const int64 duration_ms =
+      const int64_t time_ms = track_timestamps_.back().Value() / 1000;
+      const int64_t duration_ms =
           track_timestamps_.size() > 1
               ? time_ms - track_timestamps_.rbegin()[1].Value() / 1000
               : 0;
@@ -940,7 +940,7 @@ void BoxTrackerCalculator::OutputRandomAccessTrack(
 
   for (int i = 0; i < box_list.box_size(); i += 2) {
     const TimedBoxProto start = box_list.box(i);
-    int64 end_time_msec = box_list.box(i + 1).time_msec();
+    int64_t end_time_msec = box_list.box(i + 1).time_msec();
     const bool forward_track = start.time_msec() < end_time_msec;
 
     if (track_timestamps_.empty()) {
@@ -949,9 +949,9 @@ void BoxTrackerCalculator::OutputRandomAccessTrack(
     }
 
     // Performing the range check in msec (b/138399787)
-    const int64 tracking_start_timestamp_msec =
+    const int64_t tracking_start_timestamp_msec =
         track_timestamps_.front().Microseconds() / 1000;
-    const int64 tracking_end_timestamp_msec =
+    const int64_t tracking_end_timestamp_msec =
         track_timestamps_.back().Microseconds() / 1000;
     if (start.time_msec() < tracking_start_timestamp_msec) {
       LOG(WARNING) << "Request start timestamp " << start.time_msec()
@@ -1087,13 +1087,13 @@ BoxTrackerCalculator::PrepareRandomAccessTrack(
 
 bool BoxTrackerCalculator::RunForwardTrack(
     const std::deque<std::pair<Timestamp, TrackingData>>::iterator& start_data,
-    int init_frame, MotionBoxMap* single_map, int64 end_time_msec) {
+    int init_frame, MotionBoxMap* single_map, int64_t end_time_msec) {
   int curr_frame = init_frame;
   for (auto cache_pos = start_data; cache_pos != tracking_data_cache_.end();
        ++cache_pos, ++curr_frame) {
     std::vector<int> failed_box;
-    const int64 dst_time_msec = cache_pos->first.Value() / 1000;
-    const int64 curr_duration =
+    const int64_t dst_time_msec = cache_pos->first.Value() / 1000;
+    const int64_t curr_duration =
         (cache_pos == tracking_data_cache_.begin())
             ? 0
             : (cache_pos[0].first.Value() - cache_pos[-1].first.Value()) / 1000;
@@ -1112,13 +1112,13 @@ bool BoxTrackerCalculator::RunForwardTrack(
 
 bool BoxTrackerCalculator::RunBackwardTrack(
     const std::deque<std::pair<Timestamp, TrackingData>>::iterator& start_data,
-    int init_frame, MotionBoxMap* single_map, int64 end_time_msec) {
+    int init_frame, MotionBoxMap* single_map, int64_t end_time_msec) {
   int curr_frame = init_frame;
   for (auto cache_pos = start_data; cache_pos != tracking_data_cache_.begin();
        --cache_pos, --curr_frame) {
     std::vector<int> failed_box;
-    const int64 dst_time_msec = cache_pos[-1].first.Value() / 1000;
-    const int64 curr_duration =
+    const int64_t dst_time_msec = cache_pos[-1].first.Value() / 1000;
+    const int64_t curr_duration =
         (cache_pos[0].first.Value() - cache_pos[-1].first.Value()) / 1000;
     StreamTrack(cache_pos->second, curr_frame, dst_time_msec, curr_duration,
                 false,  // backward
@@ -1135,7 +1135,7 @@ bool BoxTrackerCalculator::RunBackwardTrack(
 
 void BoxTrackerCalculator::ObtainResultOfRandomAccessTrack(
     const MotionBoxMap& single_map, const TimedBoxProto& start,
-    int64 end_time_msec,
+    int64_t end_time_msec,
     const std::unique_ptr<TimedBoxProtoList>& result_list) {
   const MotionBoxPath& result_path = single_map.find(start.id())->second;
   TimedBox result_box;
@@ -1162,8 +1162,8 @@ void BoxTrackerCalculator::RenderInternalStates(
 
 void BoxTrackerCalculator::StreamTrack(const TrackingData& data,
                                        int data_frame_num,
-                                       int64 dst_timestamp_ms,
-                                       int64 duration_ms, bool forward,
+                                       int64_t dst_timestamp_ms,
+                                       int64_t duration_ms, bool forward,
                                        MotionBoxMap* box_map,
                                        std::vector<int>* failed_ids) {
   CHECK(box_map);
@@ -1274,8 +1274,8 @@ void BoxTrackerCalculator::FastForwardStartPos(
     for (auto cache_pos = start_data + 1;
          cache_pos != tracking_data_cache_.end(); ++cache_pos, ++curr_frame) {
       std::vector<int> failed_box;
-      const int64 curr_time_msec = cache_pos->first.Value() / 1000;
-      const int64 curr_duration =
+      const int64_t curr_time_msec = cache_pos->first.Value() / 1000;
+      const int64_t curr_duration =
           (cache_pos[0].first.Value() - cache_pos[-1].first.Value()) / 1000;
       StreamTrack(cache_pos->second, curr_frame, curr_time_msec, curr_duration,
                   true,  // forward
