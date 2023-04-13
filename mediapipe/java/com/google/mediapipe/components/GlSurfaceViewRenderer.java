@@ -56,6 +56,16 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     void onBitmapCaptured(Bitmap result);
   }
 
+  /**
+   * Scale to use when the frame and view have different aspect ratios.
+   */
+  public enum Scale {
+    FILL,
+    FIT,
+    FIT_TO_WIDTH,
+    FIT_TO_HEIGHT
+  };
+
   private static final String TAG = "DemoRenderer";
   private static final int ATTRIB_POSITION = 1;
   private static final int ATTRIB_TEXTURE_COORDINATE = 2;
@@ -68,7 +78,6 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   private int frameUniform;
   private int textureTarget = GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
   private int textureTransformUniform;
-  private boolean shouldFitToWidth = false;
   // Controls the alignment between frame size and surface size, 0.5f default is centered.
   private float alignmentHorizontal = 0.5f;
   private float alignmentVertical = 0.5f;
@@ -79,6 +88,7 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   private BitmapCaptureListener bitmapCaptureListener;
   // Specifies whether a black CLAMP_TO_BORDER effect should be used.
   private boolean shouldClampToBorder = false;
+  private Scale scale = Scale.FILL;
 
   /**
    * Sets the {@link BitmapCaptureListener}.
@@ -225,15 +235,21 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     // TODO: compute scale from surfaceTexture size.
     float scaleWidth = frameWidth > 0 ? (float) surfaceWidth / (float) frameWidth : 1.0f;
     float scaleHeight = frameHeight > 0 ? (float) surfaceHeight / (float) frameHeight : 1.0f;
-    // By default whichever of the two scales is greater corresponds to the dimension where the
-    // image is proportionally smaller than the view. Dividing both scales by that number results
-    // in that dimension having scale 1.0, and thus touching the edges of the view, while the
-    // other is cropped proportionally. If shouldFitToWidth is set as true, use the min scale
-    // if frame width is greater than frame height.
+
+    // By default, FILL setting is used. That is, whichever of the two scales is greater corresponds
+    // to the dimension where the image is proportionally smaller than the view. Dividing both
+    // scales by that number results in that dimension having scale 1.0, and thus touching the edges
+    // of the view, while the other is cropped proportionally.
     float scale = max(scaleWidth, scaleHeight);
-    if (shouldFitToWidth && (frameWidth > frameHeight)) {
+
+    // If any of the FIT settings are used, the min scale is divided so the frame doesn't exceed
+    // the view in that direction (or both for FIT).
+    if (this.scale == Scale.FIT
+        || (this.scale == Scale.FIT_TO_WIDTH && (frameWidth > frameHeight))
+        || (this.scale == Scale.FIT_TO_HEIGHT && (frameHeight > frameWidth))) {
       scale = min(scaleWidth, scaleHeight);
     }
+
     scaleWidth /= scale;
     scaleHeight /= scale;
 
@@ -303,11 +319,6 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     frameHeight = height;
   }
 
-  /** Supports fit to width when the frame width is greater than the frame height. */
-  public void setShouldFitToWidth(boolean shouldFitToWidth) {
-    this.shouldFitToWidth = shouldFitToWidth;
-  }
-
   /**
    * When the aspect ratios between the camera frame and the surface size are mismatched, this
    * controls how the image is aligned. 0.0 means aligning the left/bottom edges; 1.0 means aligning
@@ -328,6 +339,11 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
           "setClampToBorder must be called before the surface is created");
     }
     this.shouldClampToBorder = shouldClampToBorder;
+  }
+
+  /** {@link Scale} option to use when frame and view have different aspect ratios. */
+  public void setScale(Scale scale) {
+    this.scale = scale;
   }
 
   private boolean isExternalTexture() {
