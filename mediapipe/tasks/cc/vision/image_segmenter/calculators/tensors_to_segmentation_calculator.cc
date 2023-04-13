@@ -84,14 +84,12 @@ void Sigmoid(absl::Span<const float> values,
 
 // Linearly interpolate the value between v0 and v1. Assume 0 <= t <= 1.
 float LinearInterpolate(float v0, float v1, float t) {
-  DCHECK(t >= 0 && t <= 1);
   return v0 + (v1 - v0) * t;
 }
 
 // Bilinearly interpolate the value between 4 points. Assume 0 <= t0, t1 <= 1.
 float BilinearInterpolate(float v00, float v10, float v01, float v11, float t0,
                           float t1) {
-  DCHECK(t0 >= 0 && t0 <= 1 && t1 >= 0 && t1 <= 1);
   return LinearInterpolate(LinearInterpolate(v00, v10, t0),
                            LinearInterpolate(v01, v11, t0), t1);
 }
@@ -120,46 +118,51 @@ Image ProcessForCategoryMaskCpu(const Shape& input_shape,
   cv::Mat category_mask_mat_view =
       mediapipe::formats::MatView(image_frame_ptr.get());
   const int input_channels = input_shape.channels;
-  category_mask_mat_view.forEach<uint8_t>(
-      [&tensors_buffer, &input_shape, &width_scale, &height_scale,
-       &input_channels, &options](uint8_t& pixel, const int position[]) {
-        std::vector<float> confidence_scores(input_channels);
-        int y0 = static_cast<int>(std::floor(position[0] * height_scale));
-        int x0 = static_cast<int>(std::floor(position[1] * width_scale));
-        int y1 = static_cast<int>(std::ceil(position[0] * height_scale));
-        int x1 = static_cast<int>(std::ceil(position[1] * width_scale));
-        float t0 = position[0] * height_scale - y0;
-        float t1 = position[1] * width_scale - x0;
-        for (int i = 0; i < input_channels; ++i) {
-          confidence_scores[i] = BilinearInterpolate(
-              GetTensorElement(input_shape, tensors_buffer, x0, y0, i),
-              GetTensorElement(input_shape, tensors_buffer, x0, y1, i),
-              GetTensorElement(input_shape, tensors_buffer, x1, y0, i),
-              GetTensorElement(input_shape, tensors_buffer, x1, y1, i), t0, t1);
-        }
-        absl::Span<float> confidence_scores_span(confidence_scores.data(),
-                                                 confidence_scores.size());
+  category_mask_mat_view.forEach<uint8_t>([&tensors_buffer, &input_shape,
+                                           &width_scale, &height_scale,
+                                           &input_channels,
+                                           &options](uint8_t& pixel,
+                                                     const int position[]) {
+    std::vector<float> confidence_scores(input_channels);
+    int y0 =
+        static_cast<int>(std::max(std::floor(position[0] * height_scale), 0.f));
+    int x0 =
+        static_cast<int>(std::max(std::floor(position[1] * width_scale), 0.f));
+    int y1 = static_cast<int>(std::min(std::ceil(position[0] * height_scale),
+                                       input_shape.height - 1.f));
+    int x1 = static_cast<int>(std ::min(std::ceil(position[1] * width_scale),
+                                        input_shape.width - 1.f));
+    float t0 = std::max(std::min(position[0] * height_scale - y0, 1.f), 0.f);
+    float t1 = std::max(std::min(position[1] * width_scale - x0, 1.f), 0.f);
+    for (int i = 0; i < input_channels; ++i) {
+      confidence_scores[i] = BilinearInterpolate(
+          GetTensorElement(input_shape, tensors_buffer, x0, y0, i),
+          GetTensorElement(input_shape, tensors_buffer, x0, y1, i),
+          GetTensorElement(input_shape, tensors_buffer, x1, y0, i),
+          GetTensorElement(input_shape, tensors_buffer, x1, y1, i), t0, t1);
+    }
+    absl::Span<float> confidence_scores_span(confidence_scores.data(),
+                                             confidence_scores.size());
 
-        // Only process the activation function if it is SIGMOID. If NONE,
-        // we do nothing for activation, If SOFTMAX, it is required
-        // to have input_channels > 1, and for input_channels > 1, we don't need
-        // activation to find the maximum value.
-        if (options.activation() == SegmenterOptions::SIGMOID) {
-          Sigmoid(confidence_scores_span, confidence_scores_span);
-        }
-        if (input_channels == 1) {
-          // if the input tensor is a single mask, it is assumed to be a binary
-          // foreground segmentation mask. For such a mask, we make foreground
-          // category 1, and background category 0.
-          pixel = static_cast<uint8_t>(confidence_scores[0] > 0.5f);
-        } else {
-          const int maximum_category_idx =
-              std::max_element(confidence_scores.begin(),
-                               confidence_scores.end()) -
-              confidence_scores.begin();
-          pixel = maximum_category_idx;
-        }
-      });
+    // Only process the activation function if it is SIGMOID. If NONE,
+    // we do nothing for activation, If SOFTMAX, it is required
+    // to have input_channels > 1, and for input_channels > 1, we don't need
+    // activation to find the maximum value.
+    if (options.activation() == SegmenterOptions::SIGMOID) {
+      Sigmoid(confidence_scores_span, confidence_scores_span);
+    }
+    if (input_channels == 1) {
+      // if the input tensor is a single mask, it is assumed to be a binary
+      // foreground segmentation mask. For such a mask, we make foreground
+      // category 1, and background category 0.
+      pixel = static_cast<uint8_t>(confidence_scores[0] > 0.5f);
+    } else {
+      const int maximum_category_idx =
+          std::max_element(confidence_scores.begin(), confidence_scores.end()) -
+          confidence_scores.begin();
+      pixel = maximum_category_idx;
+    }
+  });
   return category_mask;
 }
 
