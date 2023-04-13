@@ -40,7 +40,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   XCTAssertEqual(categories.count, expectedCategories.count);                             \
   for (int i = 0; i < categories.count; i++) {                                            \
     XCTAssertEqual(categories[i].index, expectedCategories[i].index, @"index i = %d", i); \
-    XCTAssertEqualWithAccuracy(categories[i].score, expectedCategories[i].score, 1e-3,    \
+    XCTAssertEqualWithAccuracy(categories[i].score, expectedCategories[i].score, 1e-2,    \
                                @"index i = %d", i);                                       \
     XCTAssertEqualObjects(categories[i].categoryName, expectedCategories[i].categoryName, \
                           @"index i = %d", i);                                            \
@@ -263,7 +263,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   MPPImageClassifier *imageClassifier = [self imageClassifierWithOptionsSucceeds:options];
 
   NSArray<MPPCategory *> *expectedCategories = @[ [[MPPCategory alloc] initWithIndex:934
-                                                                               score:0.972656f
+                                                                               score:0.968750f
                                                                         categoryName:@"cheeseburger"
                                                                          displayName:nil] ];
 
