@@ -30,7 +30,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/model_resources_calculator.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -124,7 +124,7 @@ void RunGraphWithGraphService(std::unique_ptr<ModelResources> model_resources,
 
 }  // namespace
 
-class ModelResourcesCalculatorTest : public tflite_shims::testing::Test {};
+class ModelResourcesCalculatorTest : public tflite::testing::Test {};
 
 TEST_F(ModelResourcesCalculatorTest, MissingCalculatorOptions) {
   auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(

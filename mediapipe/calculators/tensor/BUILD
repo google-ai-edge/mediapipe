@@ -401,8 +401,8 @@ cc_library_with_tflite(
     hdrs = ["inference_calculator.h"],
     tflite_deps = [
         "//mediapipe/util/tflite:tflite_model_loader",
-        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
-        "@org_tensorflow//tensorflow/lite/core/shims:builtin_ops",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
     deps = [
         ":inference_calculator_cc_proto",
@@ -506,7 +506,7 @@ cc_library_with_tflite(
     name = "tflite_delegate_ptr",
     hdrs = ["tflite_delegate_ptr.h"],
     tflite_deps = [
-        "@org_tensorflow//tensorflow/lite/core/shims:c_api_types",
+        "@org_tensorflow//tensorflow/lite/c:c_api_types",
     ],
 )
 
@@ -517,8 +517,8 @@ cc_library_with_tflite(
     tflite_deps = [
         ":tflite_delegate_ptr",
         "//mediapipe/util/tflite:tflite_model_loader",
-        "@org_tensorflow//tensorflow/lite/core/shims:c_api_types",
-        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/c:c_api_types",
     ],
     deps = [
         ":inference_runner",
@@ -546,8 +546,8 @@ cc_library(
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
-        "@org_tensorflow//tensorflow/lite/core/shims:c_api_types",
-        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/c:c_api_types",
         "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
     ] + select({
         "//conditions:default": [],

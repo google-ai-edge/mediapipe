@@ -19,7 +19,7 @@
 #include "mediapipe/java/com/google/mediapipe/framework/jni/graph_service_jni.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
-#include "tensorflow/lite/core/shims/cc/kernels/register.h"
+#include "tensorflow/lite/kernels/register.h"
 
 namespace {
 using ::mediapipe::tasks::core::kModelResourcesCacheService;

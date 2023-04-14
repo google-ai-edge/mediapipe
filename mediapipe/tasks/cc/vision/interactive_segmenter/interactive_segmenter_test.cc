@@ -39,9 +39,9 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
 #include "tensorflow/lite/kernels/builtin_op_kernels.h"
 #include "tensorflow/lite/mutable_op_resolver.h"
+#include "tensorflow/lite/test_util.h"
 #include "testing/base/public/gmock.h"
 
 namespace mediapipe {
@@ -124,7 +124,7 @@ MATCHER_P3(SimilarToUint8Mask, expected_mask, similarity_threshold,
          similarity_threshold;
 }
 
-class CreateFromOptionsTest : public tflite_shims::testing::Test {};
+class CreateFromOptionsTest : public tflite::testing::Test {};
 
 class DeepLabOpResolverMissingOps : public ::tflite::MutableOpResolver {
  public:
@@ -261,7 +261,7 @@ INSTANTIATE_TEST_SUITE_P(
     [](const ::testing::TestParamInfo<SucceedSegmentationWithRoi::ParamType>&
            info) { return info.param.test_name; });
 
-class ImageModeTest : public tflite_shims::testing::Test {};
+class ImageModeTest : public tflite::testing::Test {};
 
 // TODO: fix this unit test after image segmenter handled post
 // processing correctly with rotated image.

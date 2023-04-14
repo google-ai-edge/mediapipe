@@ -36,7 +36,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/audio/utils/test_utils.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -66,7 +66,7 @@ Matrix GetAudioData(absl::string_view filename) {
   return matrix_mapping.matrix();
 }
 
-class CreateFromOptionsTest : public tflite_shims::testing::Test {};
+class CreateFromOptionsTest : public tflite::testing::Test {};
 
 TEST_F(CreateFromOptionsTest, FailsWithMissingModel) {
   auto audio_embedder =
@@ -124,7 +124,7 @@ TEST_F(CreateFromOptionsTest, FailsWithMissingCallbackInAudioStreamMode) {
                   MediaPipeTasksStatus::kInvalidTaskGraphConfigError))));
 }
 
-class EmbedTest : public tflite_shims::testing::Test {};
+class EmbedTest : public tflite::testing::Test {};
 
 TEST_F(EmbedTest, SucceedsWithSilentAudio) {
   auto options = std::make_unique<AudioEmbedderOptions>();
@@ -187,7 +187,7 @@ TEST_F(EmbedTest, SucceedsWithDifferentAudios) {
   MP_EXPECT_OK(audio_embedder->Close());
 }
 
-class EmbedAsyncTest : public tflite_shims::testing::Test {
+class EmbedAsyncTest : public tflite::testing::Test {
  protected:
   void RunAudioEmbedderInStreamMode(std::string audio_file_name,
                                     int sample_rate_hz,

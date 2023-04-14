@@ -26,7 +26,7 @@ limitations under the License.
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/containers/embedding_result.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe::tasks::text::text_embedder {
 namespace {
@@ -49,7 +49,7 @@ using ::mediapipe::file::JoinPath;
 using ::testing::HasSubstr;
 using ::testing::Optional;
 
-class EmbedderTest : public tflite_shims::testing::Test {};
+class EmbedderTest : public tflite::testing::Test {};
 
 TEST_F(EmbedderTest, FailsWithMissingModel) {
   auto text_embedder =

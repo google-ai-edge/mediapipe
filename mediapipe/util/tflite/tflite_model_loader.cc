@@ -19,7 +19,7 @@
 
 namespace mediapipe {
 
-using FlatBufferModel = ::tflite_shims::FlatBufferModel;
+using FlatBufferModel = ::tflite::FlatBufferModel;
 
 absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
     const std::string& path) {

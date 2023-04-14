@@ -50,7 +50,7 @@ cc_test_with_tflite(
     tflite_deps = [
         ":image_tensor_specs",
         "//mediapipe/tasks/cc/core:model_resources",
-        "@org_tensorflow//tensorflow/lite/core/shims:cc_shims_test_util",
+        "@org_tensorflow//tensorflow/lite:test_util",
     ],
     deps = [
         "//mediapipe/framework/deps:file_path",
