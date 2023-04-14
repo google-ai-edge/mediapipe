@@ -1217,10 +1217,17 @@ export async function createMediaPipeLib<LibType>(
   if (!self.ModuleFactory) {
     throw new Error('ModuleFactory not set.');
   }
+
+  // Until asset scripts work nicely with MODULARIZE, when we are given both
+  // self.Module and a fileLocator, we manually merge them into self.Module and
+  // use that. TODO: Remove this when asset scripts are fixed.
+  if (self.Module && fileLocator) {
+    (self.Module as FileLocator).locateFile = fileLocator.locateFile;
+  }
   // TODO: Ensure that fileLocator is passed in by all users
   // and make it required
   const module =
-      await self.ModuleFactory(fileLocator || self.Module as FileLocator);
+      await self.ModuleFactory(self.Module as FileLocator || fileLocator);
   // Don't reuse factory or module seed
   self.ModuleFactory = self.Module = undefined;
   return new constructorFcn(module, glCanvas);
