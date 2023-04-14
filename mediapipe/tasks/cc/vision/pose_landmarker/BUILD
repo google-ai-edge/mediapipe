@@ -100,6 +100,7 @@ cc_library(
         "//mediapipe/util:graph_builder_utils",
         "@com_google_absl//absl/status:statusor",
     ],
+    alwayslink = 1,
 )
 
 cc_library(
