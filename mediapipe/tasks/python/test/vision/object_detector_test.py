@@ -49,7 +49,10 @@ _EXPECTED_DETECTION_RESULT = _DetectionResult(
     detections=[
         _Detection(
             bounding_box=_BoundingBox(
-                origin_x=608, origin_y=161, width=381, height=439
+                origin_x=608,
+                origin_y=164,
+                width=381,
+                height=432,
             ),
             categories=[
                 _Category(
@@ -62,12 +65,15 @@ _EXPECTED_DETECTION_RESULT = _DetectionResult(
         ),
         _Detection(
             bounding_box=_BoundingBox(
-                origin_x=60, origin_y=398, width=386, height=196
+                origin_x=57,
+                origin_y=398,
+                width=386,
+                height=196,
             ),
             categories=[
                 _Category(
                     index=None,
-                    score=0.64453125,
+                    score=0.65625,
                     display_name=None,
                     category_name='cat',
                 )
@@ -75,7 +81,10 @@ _EXPECTED_DETECTION_RESULT = _DetectionResult(
         ),
         _Detection(
             bounding_box=_BoundingBox(
-                origin_x=256, origin_y=395, width=173, height=202
+                origin_x=256,
+                origin_y=394,
+                width=173,
+                height=202,
             ),
             categories=[
                 _Category(
@@ -88,7 +97,10 @@ _EXPECTED_DETECTION_RESULT = _DetectionResult(
         ),
         _Detection(
             bounding_box=_BoundingBox(
-                origin_x=362, origin_y=191, width=325, height=419
+                origin_x=360,
+                origin_y=195,
+                width=330,
+                height=412,
             ),
             categories=[
                 _Category(
