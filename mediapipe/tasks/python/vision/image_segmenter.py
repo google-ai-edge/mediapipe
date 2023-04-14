@@ -14,7 +14,6 @@
 """MediaPipe image segmenter task."""
 
 import dataclasses
-import enum
 from typing import Callable, List, Mapping, Optional
 
 from mediapipe.python import packet_creator
