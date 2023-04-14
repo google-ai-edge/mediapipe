@@ -42,7 +42,7 @@ using ::mediapipe::Timestamp;
 }
 
 + (Packet)createPacketWithMPPImage:(MPPImage *)image
-                       timestampMs:(NSInteger)timestampMs
+           timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                              error:(NSError **)error {
   std::unique_ptr<ImageFrame> imageFrame = [image imageFrameWithError:error];
 
@@ -51,7 +51,7 @@ using ::mediapipe::Timestamp;
   }
 
   return MakePacket<Image>(std::move(imageFrame))
-      .At(Timestamp(int64(timestampMs * kMicroSecondsPerMilliSecond)));
+      .At(Timestamp(int64(timestampInMilliseconds * kMicroSecondsPerMilliSecond)));
 }
 
 + (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect {
@@ -59,9 +59,9 @@ using ::mediapipe::Timestamp;
 }
 
 + (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect
-                             timestampMs:(NSInteger)timestampMs {
+                 timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   return MakePacket<NormalizedRect>(std::move(normalizedRect))
-      .At(Timestamp(int64(timestampMs * kMicroSecondsPerMilliSecond)));
+      .At(Timestamp(int64(timestampInMilliseconds * kMicroSecondsPerMilliSecond)));
 }
 
 @end
