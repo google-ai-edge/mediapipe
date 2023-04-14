@@ -445,8 +445,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
     MPPImageClassifierOptions *options = [self imageClassifierOptionsWithModelName:kFloatModelName];
 
     options.runningMode = runningModesToTest[i];
-    options.completion = ^(MPPImageClassifierResult *result, NSError *error) {
-    };
+    options.completion =
+        ^(MPPImageClassifierResult *result, NSInteger timestampMs, NSError *error) {
+        };
 
     [self
         assertCreateImageClassifierWithOptions:options
@@ -554,7 +555,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   MPPImageClassifierOptions *options = [self imageClassifierOptionsWithModelName:kFloatModelName];
 
   options.runningMode = MPPRunningModeLiveStream;
-  options.completion = ^(MPPImageClassifierResult *result, NSError *error) {
+  options.completion = ^(MPPImageClassifierResult *result, NSInteger timestampMs, NSError *error) {
 
   };
 
@@ -617,13 +618,19 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   NSInteger maxResults = 3;
   options.maxResults = maxResults;
 
+  XCTestExpectation *expectation = [[XCTestExpectation alloc]
+      initWithDescription:@"classifyWithOutOfOrderTimestampsAndLiveStream"];
+
+  expectation.expectedFulfillmentCount = 1;
+
   options.runningMode = MPPRunningModeLiveStream;
-  options.completion = ^(MPPImageClassifierResult *result, NSError *error) {
+  options.completion = ^(MPPImageClassifierResult *result, NSInteger timestampMs, NSError *error) {
     [self assertImageClassifierResult:result
            hasExpectedCategoriesCount:maxResults
                    expectedCategories:
                        [MPPImageClassifierTests
                            expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
+    [expectation fulfill];
   };
 
   MPPImageClassifier *imageClassifier = [self imageClassifierWithOptionsSucceeds:options];
@@ -643,6 +650,8 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
                             @"INVALID_ARGUMENT: Input timestamp must be monotonically increasing."
                       }];
   AssertEqualErrors(error, expectedError);
+
+  [self waitForExpectations:@[ expectation ] timeout:0.1];
 }
 
 - (void)testClassifyWithLiveStreamModeSucceeds {
@@ -651,13 +660,33 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   NSInteger maxResults = 3;
   options.maxResults = maxResults;
 
+  NSInteger iterationCount = 100;
+
+  // Because of flow limiting, we cannot ensure that the callback will be
+  // invoked `iterationCount` times.
+  // An normal expectation will fail if expectation.fullfill() is not called
+  // `expectation.expectedFulfillmentCount` times.
+  // If `expectation.isInverted = true`, the test will only succeed if
+  // expectation is not fullfilled for the specified `expectedFulfillmentCount`.
+  // Since in our case we cannot predict how many times the expectation is
+  // supposed to be fullfilled setting,
+  // `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and
+  // `expectation.isInverted = true` ensures that test succeeds if
+  // expectation is fullfilled <= `iterationCount` times.
+  XCTestExpectation *expectation =
+      [[XCTestExpectation alloc] initWithDescription:@"classifyWithLiveStream"];
+
+  expectation.expectedFulfillmentCount = iterationCount + 1;
+  expectation.inverted = YES;
+
   options.runningMode = MPPRunningModeLiveStream;
-  options.completion = ^(MPPImageClassifierResult *result, NSError *error) {
+  options.completion = ^(MPPImageClassifierResult *result, NSInteger timestampMs, NSError *error) {
     [self assertImageClassifierResult:result
            hasExpectedCategoriesCount:maxResults
                    expectedCategories:
                        [MPPImageClassifierTests
                            expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
+    [expectation fulfill];
   };
 
   MPPImageClassifier *imageClassifier = [self imageClassifierWithOptionsSucceeds:options];
@@ -667,9 +696,11 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   // `CMSampleBuffer`.
   MPPImage *image = [self imageWithFileInfo:kBurgerImage];
 
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < iterationCount; i++) {
     XCTAssertTrue([imageClassifier classifyAsyncImage:image timestampMs:i error:nil]);
   }
+
+  [self waitForExpectations:@[ expectation ] timeout:0.5];
 }
 
 @end
