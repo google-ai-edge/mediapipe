@@ -141,6 +141,25 @@ py_test(
 )
 
 py_test(
+    name = "face_stylizer_test",
+    srcs = ["face_stylizer_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+    ],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/components/containers:rect",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:face_stylizer",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+        "@com_google_protobuf//:protobuf_python",
+    ],
+)
+
+py_test(
     name = "hand_landmarker_test",
     srcs = ["hand_landmarker_test.py"],
     data = [
