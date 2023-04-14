@@ -29,7 +29,10 @@ mediapipe_ts_library(
 
 mediapipe_ts_declaration(
     name = "image_segmenter_types",
-    srcs = ["image_segmenter_options.d.ts"],
+    srcs = [
+        "image_segmenter_options.d.ts",
+        "image_segmenter_result.d.ts",
+    ],
     deps = [
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:classifier_options",
