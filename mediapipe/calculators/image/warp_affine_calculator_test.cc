@@ -101,7 +101,7 @@ void RunTest(const std::string& graph_text, const std::string& tag,
 
   ImageFrame input_image(
       input.channels() == 4 ? ImageFormat::SRGBA : ImageFormat::SRGB,
-      input.cols, input.rows, input.step, input.data, [](uint8*) {});
+      input.cols, input.rows, input.step, input.data, [](uint8_t*) {});
   MP_ASSERT_OK(graph.AddPacketToInputStream(
       "input_image",
       MakePacket<ImageFrame>(std::move(input_image)).At(Timestamp(0))));

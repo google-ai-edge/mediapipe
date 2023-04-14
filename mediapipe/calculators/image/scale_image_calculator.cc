@@ -75,16 +75,16 @@ absl::Status FindInterpolationAlgorithm(
 
 void CropImageFrame(const ImageFrame& original, int col_start, int row_start,
                     int crop_width, int crop_height, ImageFrame* cropped) {
-  const uint8* src = original.PixelData();
-  uint8* dst = cropped->MutablePixelData();
+  const uint8_t* src = original.PixelData();
+  uint8_t* dst = cropped->MutablePixelData();
 
   int des_y = 0;
   for (int y = row_start; y < row_start + crop_height; ++y) {
-    const uint8* src_line = src + y * original.WidthStep();
-    const uint8* src_pixel = src_line + col_start *
-                                            original.NumberOfChannels() *
-                                            original.ByteDepth();
-    uint8* dst_line = dst + des_y * cropped->WidthStep();
+    const uint8_t* src_line = src + y * original.WidthStep();
+    const uint8_t* src_pixel = src_line + col_start *
+                                              original.NumberOfChannels() *
+                                              original.ByteDepth();
+    uint8_t* dst_line = dst + des_y * cropped->WidthStep();
     std::memcpy(
         dst_line, src_pixel,
         crop_width * cropped->NumberOfChannels() * cropped->ByteDepth());
@@ -591,9 +591,9 @@ absl::Status ScaleImageCalculator::Process(CalculatorContext* cc) {
       const int y_size = output_width_ * output_height_;
       const int uv_size = output_width_ * output_height_ / 4;
       std::unique_ptr<uint8_t[]> yuv_data(new uint8_t[y_size + uv_size * 2]);
-      uint8* y = yuv_data.get();
-      uint8* u = y + y_size;
-      uint8* v = u + uv_size;
+      uint8_t* y = yuv_data.get();
+      uint8_t* u = y + y_size;
+      uint8_t* v = u + uv_size;
       RET_CHECK_EQ(0, I420Scale(yuv_image->data(0), yuv_image->stride(0),
                                 yuv_image->data(1), yuv_image->stride(1),
                                 yuv_image->data(2), yuv_image->stride(2),
