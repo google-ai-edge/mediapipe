@@ -67,53 +67,14 @@ absl::Status GlContext::CreateContextInternal(
   // TODO: Investigate this option in more detail, esp. on Safari.
   attrs.preserveDrawingBuffer = 0;
 
-  // Since the Emscripten canvas target finding function is visible from here,
-  // we hijack findCanvasEventTarget directly for enforcing old Module.canvas
-  // behavior if the user desires, falling back to the new DOM element CSS
-  // selector behavior next if that is specified, and finally just allowing the
-  // lookup to proceed on a null target.
-  // TODO: Ensure this works with all options (in particular,
-  //   multithreading options, like the special-case combination of USE_PTHREADS
-  //   and OFFSCREEN_FRAMEBUFFER)
-  // clang-format off
-  EM_ASM(
-    let init_once = true;
-    if (init_once) {
-      const cachedFindCanvasEventTarget = findCanvasEventTarget;
-
-      if (typeof cachedFindCanvasEventTarget !== 'function') {
-        if (typeof console !== 'undefined') {
-          console.error('Expected Emscripten global function '
-              + '"findCanvasEventTarget" not found. WebGL context creation '
-              + 'may fail.');
-        }
-        return;
-      }
-
-      findCanvasEventTarget = function(target) {
-        if (target == 0) {
-          if (Module && Module.canvas) {
-            return Module.canvas;
-          } else if (Module && Module.canvasCssSelector) {
-            return cachedFindCanvasEventTarget(Module.canvasCssSelector);
-          }
-          if (typeof console !== 'undefined') {
-            console.warn('Module properties canvas and canvasCssSelector not ' +
-                         'found during WebGL context creation.');
-          }
-        }
-        // We still go through with the find attempt, although for most use
-        // cases it will not succeed, just in case the user does want to fall-
-        // back.
-        return cachedFindCanvasEventTarget(target);
-      };  // NOLINT: Necessary semicolon.
-      init_once = false;
-    }
-  );
-  // clang-format on
-
+  // Quick patch for -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR so it also
+  // looks for our #canvas target in Module.canvas, where we expect it to be.
+  // -s OFFSCREENCANVAS_SUPPORT=1 will no longer work with this under the new
+  // event target behavior, but it was never supposed to be tapping into our
+  // canvas anyways. See b/278155946 for more background.
+  EM_ASM({ specialHTMLTargets["#canvas"] = Module.canvas; });
   EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context_handle =
-      emscripten_webgl_create_context(nullptr, &attrs);
+      emscripten_webgl_create_context("#canvas", &attrs);
 
   // Check for failure
   if (context_handle <= 0) {
