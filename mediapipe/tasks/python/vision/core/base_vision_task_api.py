@@ -208,6 +208,11 @@ class BaseVisionTaskApi(object):
     """
     self._runner.close()
 
+  def get_graph_config(self) -> calculator_pb2.CalculatorGraphConfig:
+    """Returns the canonicalized CalculatorGraphConfig of the underlying graph.
+    """
+    return self._runner.get_graph_config()
+
   def __enter__(self):
     """Return `self` upon entering the runtime context."""
     return self
