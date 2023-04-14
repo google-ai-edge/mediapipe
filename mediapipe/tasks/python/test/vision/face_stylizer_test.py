@@ -180,9 +180,7 @@ class FaceStylizerTest(parameterized.TestCase):
       image_processing_options = _ImageProcessingOptions(roi)
       # Performs face stylization on the input.
       stylized_image = stylizer.stylize(test_image, image_processing_options)
-      self.assertIsInstance(stylized_image, _Image)
-      self.assertEqual(stylized_image.width, _MODEL_IMAGE_SIZE)
-      self.assertEqual(stylized_image.height, _MODEL_IMAGE_SIZE)
+      self.assertIsNone(stylized_image)
 
   def test_missing_result_callback(self):
     options = _FaceStylizerOptions(
