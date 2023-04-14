@@ -250,7 +250,7 @@ absl::StatusOr<GestureRecognizerResult> GestureRecognizer::Recognize(
 }
 
 absl::StatusOr<GestureRecognizerResult> GestureRecognizer::RecognizeForVideo(
-    mediapipe::Image image, int64 timestamp_ms,
+    mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -289,7 +289,7 @@ absl::StatusOr<GestureRecognizerResult> GestureRecognizer::RecognizeForVideo(
 }
 
 absl::Status GestureRecognizer::RecognizeAsync(
-    mediapipe::Image image, int64 timestamp_ms,
+    mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
