@@ -105,6 +105,12 @@ public final class FaceStylizer extends BaseVisionTaskApi {
           public FaceStylizerResult convertToTaskResult(List<Packet> packets)
               throws MediaPipeException {
             Packet packet = packets.get(IMAGE_OUT_STREAM_INDEX);
+            if (packet.isEmpty()) {
+              return FaceStylizerResult.create(
+                  Optional.empty(),
+                  BaseVisionTaskApi.generateResultTimestampMs(
+                      stylizerOptions.runningMode(), packets.get(IMAGE_OUT_STREAM_INDEX)));
+            }
             int width = PacketGetter.getImageWidth(packet);
             int height = PacketGetter.getImageHeight(packet);
             int numChannels = PacketGetter.getImageNumChannels(packet);
@@ -134,7 +140,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
                 new ByteBufferImageBuilder(imageBuffer, width, height, imageFormat);
 
             return FaceStylizerResult.create(
-                imageBuilder.build(),
+                Optional.of(imageBuilder.build()),
                 BaseVisionTaskApi.generateResultTimestampMs(
                     stylizerOptions.runningMode(), packets.get(IMAGE_OUT_STREAM_INDEX)));
           }
@@ -146,6 +152,10 @@ public final class FaceStylizer extends BaseVisionTaskApi {
                 .build();
           }
         });
+    // Empty output image packets indicates that no face stylization is applied.
+    if (stylizerOptions.runningMode() != RunningMode.LIVE_STREAM) {
+      handler.setHandleTimestampBoundChanges(true);
+    }
     stylizerOptions.resultListener().ifPresent(handler::setResultListener);
     stylizerOptions.errorListener().ifPresent(handler::setErrorListener);
     TaskRunner runner =
@@ -210,7 +220,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The input image can be of any size, To ensure that the output image has reasonable quality,
+   * <p>The input image can be of any size. To ensure that the output image has reasonable quality,
    * the stylized output image size is the smaller of the model output size and the size of the
    * {@link ImageProcessingOptions#regionOfInterest} specified in {@code imageProcessingOptions}.
    *
@@ -271,7 +281,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The input image can be of any size, To ensure that the output image has reasonable quality,
+   * <p>The input image can be of any size. To ensure that the output image has reasonable quality,
    * the stylized output image size is the smaller of the model output size and the size of the
    * {@link ImageProcessingOptions#regionOfInterest} specified in {@code imageProcessingOptions}.
    *
@@ -336,7 +346,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The input image can be of any size, To ensure that the output image has reasonable quality,
+   * <p>The input image can be of any size. To ensure that the output image has reasonable quality,
    * the stylized output image size is the smaller of the model output size and the size of the
    * {@link ImageProcessingOptions#regionOfInterest} specified in {@code imageProcessingOptions}.
    *
@@ -404,7 +414,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The input image can be of any size, To ensure that the output image has reasonable quality,
+   * <p>The input image can be of any size. To ensure that the output image has reasonable quality,
    * the stylized output image size is the smaller of the model output size and the size of the
    * {@link ImageProcessingOptions#regionOfInterest} specified in {@code imageProcessingOptions}.
    *
@@ -465,7 +475,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The input image can be of any size, To ensure that the output image has reasonable quality,
+   * <p>The input image can be of any size. To ensure that the output image has reasonable quality,
    * the stylized output image size is the smaller of the model output size and the size of the
    * {@link ImageProcessingOptions#regionOfInterest} specified in {@code imageProcessingOptions}.
    *

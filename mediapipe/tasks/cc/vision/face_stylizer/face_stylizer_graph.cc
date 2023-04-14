@@ -16,20 +16,30 @@ limitations under the License.
 #include <memory>
 #include <vector>
 
+#include "absl/memory/memory.h"
 #include "absl/status/statusor.h"
+#include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/calculators/image/image_cropping_calculator.pb.h"
 #include "mediapipe/calculators/image/warp_affine_calculator.pb.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
+#include "mediapipe/calculators/util/landmarks_to_detection_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/processors/image_preprocessing_graph.h"
+#include "mediapipe/tasks/cc/core/model_resources_cache.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
+#include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
+#include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
+#include "mediapipe/tasks/cc/vision/face_detector/proto/face_detector_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarker_graph_options.pb.h"
+#include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_stylizer/calculators/tensors_to_image_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/face_stylizer/proto/face_stylizer_graph_options.pb.h"
 
@@ -45,17 +55,29 @@ using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::tasks::TensorsToImageCalculatorOptions;
+using ::mediapipe::tasks::core::ModelAssetBundleResources;
 using ::mediapipe::tasks::core::ModelResources;
+using ::mediapipe::tasks::core::proto::ExternalFile;
+using ::mediapipe::tasks::metadata::SetExternalFile;
+using ::mediapipe::tasks::vision::face_landmarker::proto::
+    FaceLandmarkerGraphOptions;
 using ::mediapipe::tasks::vision::face_stylizer::proto::
     FaceStylizerGraphOptions;
 
+constexpr char kDetectionTag[] = "DETECTION";
+constexpr char kFaceDetectorTFLiteName[] = "face_detector.tflite";
+constexpr char kFaceLandmarksDetectorTFLiteName[] =
+    "face_landmarks_detector.tflite";
+constexpr char kFaceStylizerTFLiteName[] = "face_stylizer.tflite";
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kImageCpuTag[] = "IMAGE_CPU";
 constexpr char kImageGpuTag[] = "IMAGE_GPU";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 constexpr char kMatrixTag[] = "MATRIX";
+constexpr char kNormLandmarksTag[] = "NORM_LANDMARKS";
 constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kOutputSizeTag[] = "OUTPUT_SIZE";
+constexpr char kSizeTag[] = "SIZE";
 constexpr char kStylizedImageTag[] = "STYLIZED_IMAGE";
 constexpr char kTensorsTag[] = "TENSORS";
 
@@ -65,6 +87,76 @@ struct FaceStylizerOutputStreams {
   Source<Image> stylized_image;
   Source<Image> original_image;
 };
+
+// Sets the base options in the sub tasks.
+absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
+                                   FaceStylizerGraphOptions* options,
+                                   ExternalFile* face_stylizer_external_file,
+                                   bool is_copy) {
+  auto* face_detector_graph_options =
+      options->mutable_face_landmarker_graph_options()
+          ->mutable_face_detector_graph_options();
+  if (!face_detector_graph_options->base_options().has_model_asset()) {
+    ASSIGN_OR_RETURN(const auto face_detector_file,
+                     resources.GetFile(kFaceDetectorTFLiteName));
+    SetExternalFile(face_detector_file,
+                    face_detector_graph_options->mutable_base_options()
+                        ->mutable_model_asset(),
+                    is_copy);
+  }
+  face_detector_graph_options->mutable_base_options()
+      ->mutable_acceleration()
+      ->CopyFrom(options->base_options().acceleration());
+  face_detector_graph_options->mutable_base_options()->set_use_stream_mode(
+      options->base_options().use_stream_mode());
+  auto* face_landmarks_detector_graph_options =
+      options->mutable_face_landmarker_graph_options()
+          ->mutable_face_landmarks_detector_graph_options();
+  if (!face_landmarks_detector_graph_options->base_options()
+           .has_model_asset()) {
+    ASSIGN_OR_RETURN(const auto face_landmarks_detector_file,
+                     resources.GetFile(kFaceLandmarksDetectorTFLiteName));
+    SetExternalFile(
+        face_landmarks_detector_file,
+        face_landmarks_detector_graph_options->mutable_base_options()
+            ->mutable_model_asset(),
+        is_copy);
+  }
+  face_landmarks_detector_graph_options->mutable_base_options()
+      ->mutable_acceleration()
+      ->CopyFrom(options->base_options().acceleration());
+  face_landmarks_detector_graph_options->mutable_base_options()
+      ->set_use_stream_mode(options->base_options().use_stream_mode());
+
+  ASSIGN_OR_RETURN(const auto face_stylizer_file,
+                   resources.GetFile(kFaceStylizerTFLiteName));
+  SetExternalFile(face_stylizer_file, face_stylizer_external_file, is_copy);
+  return absl::OkStatus();
+}
+
+void ConfigureSplitNormalizedLandmarkListVectorCalculator(
+    mediapipe::SplitVectorCalculatorOptions* options) {
+  auto* vector_range = options->add_ranges();
+  vector_range->set_begin(0);
+  vector_range->set_end(1);
+  options->set_element_only(true);
+}
+
+void ConfigureLandmarksToDetectionCalculator(
+    LandmarksToDetectionCalculatorOptions* options) {
+  // left eye
+  options->add_selected_landmark_indices(33);
+  // left eye
+  options->add_selected_landmark_indices(133);
+  // right eye
+  options->add_selected_landmark_indices(263);
+  // right eye
+  options->add_selected_landmark_indices(362);
+  // mouth
+  options->add_selected_landmark_indices(61);
+  // mouth
+  options->add_selected_landmark_indices(291);
+}
 
 void ConfigureTensorsToImageCalculator(
     const ImageToTensorCalculatorOptions& image_to_tensor_options,
@@ -89,7 +181,7 @@ void ConfigureTensorsToImageCalculator(
 }  // namespace
 
 // A "mediapipe.tasks.vision.face_stylizer.FaceStylizerGraph" performs face
-// stylization.
+// stylization on the detected face image.
 //
 // Inputs:
 //   IMAGE - Image
@@ -114,7 +206,7 @@ void ConfigureTensorsToImageCalculator(
 //     {
 //       base_options {
 //         model_asset {
-//           file_name: "face_stylization.tflite"
+//           file_name: "face_stylizer.task"
 //         }
 //       }
 //     }
@@ -124,25 +216,94 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(const auto* model_resources,
-                     CreateModelResources<FaceStylizerGraphOptions>(sc));
+    ASSIGN_OR_RETURN(
+        const auto* model_asset_bundle_resources,
+        CreateModelAssetBundleResources<FaceStylizerGraphOptions>(sc));
+    // Copies the file content instead of passing the pointer of file in
+    // memory if the subgraph model resource service is not available.
+    auto face_stylizer_external_file = absl::make_unique<ExternalFile>();
+    MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+        *model_asset_bundle_resources,
+        sc->MutableOptions<FaceStylizerGraphOptions>(),
+        face_stylizer_external_file.get(),
+        !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
+             .IsAvailable()));
     Graph graph;
     ASSIGN_OR_RETURN(
-        auto output_streams,
-        BuildFaceStylizerGraph(
-            sc->Options<FaceStylizerGraphOptions>(), *model_resources,
+        auto face_landmark_lists,
+        BuildFaceLandmarkerGraph(
+            sc->MutableOptions<FaceStylizerGraphOptions>()
+                ->mutable_face_landmarker_graph_options(),
             graph[Input<Image>(kImageTag)],
             graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
+    ASSIGN_OR_RETURN(
+        const auto* model_resources,
+        CreateModelResources(sc, std::move(face_stylizer_external_file)));
+    ASSIGN_OR_RETURN(
+        auto output_streams,
+        BuildFaceStylizerGraph(sc->Options<FaceStylizerGraphOptions>(),
+                               *model_resources, graph[Input<Image>(kImageTag)],
+                               face_landmark_lists, graph));
     output_streams.stylized_image >> graph[Output<Image>(kStylizedImageTag)];
     output_streams.original_image >> graph[Output<Image>(kImageTag)];
     return graph.GetConfig();
   }
 
  private:
+  absl::StatusOr<Source<std::vector<NormalizedLandmarkList>>>
+  BuildFaceLandmarkerGraph(FaceLandmarkerGraphOptions* face_landmarker_options,
+                           Source<Image> image_in,
+                           Source<NormalizedRect> norm_rect_in, Graph& graph) {
+    auto& landmarker_graph = graph.AddNode(
+        "mediapipe.tasks.vision.face_landmarker.FaceLandmarkerGraph");
+
+    if (face_landmarker_options->face_detector_graph_options()
+            .has_num_faces() &&
+        face_landmarker_options->face_detector_graph_options().num_faces() !=
+            1) {
+      return CreateStatusWithPayload(
+          absl::StatusCode::kInvalidArgument,
+          "Face stylizer currently only supports one face.",
+          MediaPipeTasksStatus::kInvalidArgumentError);
+    }
+    face_landmarker_options->mutable_face_detector_graph_options()
+        ->set_num_faces(1);
+    image_in >> landmarker_graph.In(kImageTag);
+    norm_rect_in >> landmarker_graph.In(kNormRectTag);
+    landmarker_graph.GetOptions<FaceLandmarkerGraphOptions>().Swap(
+        face_landmarker_options);
+    return landmarker_graph.Out(kNormLandmarksTag)
+        .Cast<std::vector<NormalizedLandmarkList>>();
+  }
+
   absl::StatusOr<FaceStylizerOutputStreams> BuildFaceStylizerGraph(
       const FaceStylizerGraphOptions& task_options,
       const ModelResources& model_resources, Source<Image> image_in,
-      Source<NormalizedRect> norm_rect_in, Graph& graph) {
+      Source<std::vector<NormalizedLandmarkList>> face_landmark_lists,
+      Graph& graph) {
+    auto& split_face_landmark_list =
+        graph.AddNode("SplitNormalizedLandmarkListVectorCalculator");
+    ConfigureSplitNormalizedLandmarkListVectorCalculator(
+        &split_face_landmark_list
+             .GetOptions<mediapipe::SplitVectorCalculatorOptions>());
+    face_landmark_lists >> split_face_landmark_list.In("");
+    auto face_landmarks = split_face_landmark_list.Out("");
+
+    auto& landmarks_to_detection =
+        graph.AddNode("LandmarksToDetectionCalculator");
+    ConfigureLandmarksToDetectionCalculator(
+        &landmarks_to_detection
+             .GetOptions<LandmarksToDetectionCalculatorOptions>());
+    face_landmarks >> landmarks_to_detection.In(kNormLandmarksTag);
+    auto face_detection = landmarks_to_detection.Out(kDetectionTag);
+
+    auto& get_image_size = graph.AddNode("ImagePropertiesCalculator");
+    image_in >> get_image_size.In(kImageTag);
+    auto image_size = get_image_size.Out(kSizeTag);
+    auto& face_to_rect = graph.AddNode("FaceToRectCalculator");
+    face_detection >> face_to_rect.In(kDetectionTag);
+    image_size >> face_to_rect.In(kImageSizeTag);
+    auto face_rect = face_to_rect.Out(kNormRectTag);
     // Adds preprocessing calculators and connects them to the graph input image
     // stream.
     auto& preprocessing = graph.AddNode(
@@ -163,10 +324,9 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
     image_to_tensor_options.set_border_mode(
         mediapipe::ImageToTensorCalculatorOptions::BORDER_ZERO);
     image_in >> preprocessing.In(kImageTag);
-    norm_rect_in >> preprocessing.In(kNormRectTag);
+    face_rect >> preprocessing.In(kNormRectTag);
     auto preprocessed_tensors = preprocessing.Out(kTensorsTag);
     auto transform_matrix = preprocessing.Out(kMatrixTag);
-    auto image_size = preprocessing.Out(kImageSizeTag);
 
     // Adds inference subgraph and connects its input stream to the output
     // tensors produced by the ImageToTensorCalculator.
@@ -206,7 +366,7 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
     // performing extra rotation.
     auto& strip_rotation =
         graph.AddNode("mediapipe.tasks.StripRotationCalculator");
-    norm_rect_in >> strip_rotation.In(kNormRectTag);
+    face_rect >> strip_rotation.In(kNormRectTag);
     auto norm_rect_no_rotation = strip_rotation.Out(kNormRectTag);
     auto& from_image = graph.AddNode("FromImageCalculator");
     image_to_crop >> from_image.In(kImageTag);

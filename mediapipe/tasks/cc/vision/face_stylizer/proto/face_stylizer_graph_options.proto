@@ -20,6 +20,7 @@ package mediapipe.tasks.vision.face_stylizer.proto;
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/framework/calculator_options.proto";
 import "mediapipe/tasks/cc/core/proto/base_options.proto";
+import "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarker_graph_options.proto";
 
 option java_package = "com.google.mediapipe.tasks.vision.facestylizer.proto";
 option java_outer_classname = "FaceStylizerGraphOptionsProto";
@@ -31,4 +32,8 @@ message FaceStylizerGraphOptions {
   // Base options for configuring face stylizer, such as specifying the TfLite
   // model file with metadata, accelerator options, etc.
   optional core.proto.BaseOptions base_options = 1;
+
+  // Options for face landmarker graph.
+  optional vision.face_landmarker.proto.FaceLandmarkerGraphOptions
+      face_landmarker_graph_options = 2;
 }

@@ -20,7 +20,6 @@ import static org.junit.Assert.assertThrows;
 import android.content.res.AssetManager;
 import android.graphics.BitmapFactory;
 import android.graphics.RectF;
-import android.util.Pair;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.mediapipe.framework.MediaPipeException;
@@ -41,16 +40,10 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({FaceStylizerTest.General.class, FaceStylizerTest.RunningModeTest.class})
 public class FaceStylizerTest {
-  private static final String modelFile = "face_stylization_dummy.tflite";
-  private static final String testImage = "portrait.jpg";
-  private static final int modelImageSize = 512;
-
-  public Pair<Integer, Integer> getRectPixelSize(MPImage originalImage, RectF rect) {
-    int width = originalImage.getWidth();
-    int height = originalImage.getHeight();
-    return new Pair<>(
-        (int) ((rect.right - rect.left) * width), (int) ((rect.bottom - rect.top) * height));
-  }
+  private static final String modelFile = "face_stylizer.task";
+  private static final String largeFaceTestImage = "portrait.jpg";
+  private static final String smallFaceTestImage = "portrait_small.jpg";
+  private static final int modelImageSize = 256;
 
   @RunWith(AndroidJUnit4.class)
   public static final class General extends FaceStylizerTest {
@@ -131,17 +124,19 @@ public class FaceStylizerTest {
               MediaPipeException.class,
               () ->
                   faceStylizer.stylizeForVideo(
-                      getImageFromAsset(testImage), /* timestampsMs= */ 0));
+                      getImageFromAsset(largeFaceTestImage), /* timestampsMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
       exception =
           assertThrows(
               MediaPipeException.class,
-              () -> faceStylizer.stylizeAsync(getImageFromAsset(testImage), /* timestampsMs= */ 0));
+              () ->
+                  faceStylizer.stylizeAsync(
+                      getImageFromAsset(largeFaceTestImage), /* timestampsMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
       exception =
           assertThrows(
               MediaPipeException.class,
-              () -> faceStylizer.stylizeWithResultListener(getImageFromAsset(testImage)));
+              () -> faceStylizer.stylizeWithResultListener(getImageFromAsset(largeFaceTestImage)));
       assertThat(exception)
           .hasMessageThat()
           .contains("ResultListener is not set in the FaceStylizerOptions");
@@ -159,19 +154,22 @@ public class FaceStylizerTest {
           FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       MediaPipeException exception =
           assertThrows(
-              MediaPipeException.class, () -> faceStylizer.stylize(getImageFromAsset(testImage)));
+              MediaPipeException.class,
+              () -> faceStylizer.stylize(getImageFromAsset(largeFaceTestImage)));
       assertThat(exception).hasMessageThat().contains("not initialized with the image mode");
       exception =
           assertThrows(
               MediaPipeException.class,
-              () -> faceStylizer.stylizeAsync(getImageFromAsset(testImage), /* timestampsMs= */ 0));
+              () ->
+                  faceStylizer.stylizeAsync(
+                      getImageFromAsset(largeFaceTestImage), /* timestampsMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
       exception =
           assertThrows(
               MediaPipeException.class,
               () ->
                   faceStylizer.stylizeForVideoWithResultListener(
-                      getImageFromAsset(testImage), /* timestampsMs= */ 0));
+                      getImageFromAsset(largeFaceTestImage), /* timestampsMs= */ 0));
       assertThat(exception)
           .hasMessageThat()
           .contains("ResultListener is not set in the FaceStylizerOptions");
@@ -191,14 +189,14 @@ public class FaceStylizerTest {
       MediaPipeException exception =
           assertThrows(
               MediaPipeException.class,
-              () -> faceStylizer.stylizeWithResultListener(getImageFromAsset(testImage)));
+              () -> faceStylizer.stylizeWithResultListener(getImageFromAsset(largeFaceTestImage)));
       assertThat(exception).hasMessageThat().contains("not initialized with the image mode");
       exception =
           assertThrows(
               MediaPipeException.class,
               () ->
                   faceStylizer.stylizeForVideoWithResultListener(
-                      getImageFromAsset(testImage), /* timestampsMs= */ 0));
+                      getImageFromAsset(largeFaceTestImage), /* timestampsMs= */ 0));
       assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
     }
 
@@ -213,16 +211,31 @@ public class FaceStylizerTest {
       faceStylizer =
           FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
 
-      MPImage inputImage = getImageFromAsset(testImage);
-      int inputWidth = inputImage.getWidth();
-      int inputHeight = inputImage.getHeight();
-      float inputAspectRatio = (float) inputWidth / inputHeight;
-
+      MPImage inputImage = getImageFromAsset(largeFaceTestImage);
       FaceStylizerResult actualResult = faceStylizer.stylize(inputImage);
-      MPImage stylizedImage = actualResult.stylizedImage();
+      MPImage stylizedImage = actualResult.stylizedImage().get();
       assertThat(stylizedImage).isNotNull();
-      assertThat(stylizedImage.getWidth()).isEqualTo((int) (modelImageSize * inputAspectRatio));
+      assertThat(stylizedImage.getWidth()).isEqualTo(modelImageSize);
       assertThat(stylizedImage.getHeight()).isEqualTo(modelImageSize);
+    }
+
+    @Test
+    public void stylizer_succeedsWithSmallImage() throws Exception {
+      FaceStylizerOptions options =
+          FaceStylizerOptions.builder()
+              .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
+              .setRunningMode(RunningMode.IMAGE)
+              .build();
+
+      faceStylizer =
+          FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+
+      MPImage inputImage = getImageFromAsset(smallFaceTestImage);
+      FaceStylizerResult actualResult = faceStylizer.stylize(inputImage);
+      MPImage stylizedImage = actualResult.stylizedImage().get();
+      assertThat(stylizedImage).isNotNull();
+      assertThat(stylizedImage.getWidth()).isEqualTo(83);
+      assertThat(stylizedImage.getHeight()).isEqualTo(83);
     }
 
     @Test
@@ -235,7 +248,7 @@ public class FaceStylizerTest {
       faceStylizer =
           FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
 
-      MPImage inputImage = getImageFromAsset(testImage);
+      MPImage inputImage = getImageFromAsset(largeFaceTestImage);
 
       // Region-of-interest around the face.
       RectF roi =
@@ -244,47 +257,57 @@ public class FaceStylizerTest {
           ImageProcessingOptions.builder().setRegionOfInterest(roi).build();
 
       FaceStylizerResult actualResult = faceStylizer.stylize(inputImage, imageProcessingOptions);
-      var rectPixelSize = getRectPixelSize(inputImage, roi);
-
-      MPImage stylizedImage = actualResult.stylizedImage();
+      MPImage stylizedImage = actualResult.stylizedImage().get();
       assertThat(stylizedImage).isNotNull();
-      assertThat(stylizedImage.getWidth()).isEqualTo(rectPixelSize.first);
-      assertThat(stylizedImage.getHeight()).isEqualTo(rectPixelSize.second);
+      assertThat(stylizedImage.getWidth()).isEqualTo(modelImageSize);
+      assertThat(stylizedImage.getHeight()).isEqualTo(modelImageSize);
+    }
+
+    @Test
+    public void stylizer_succeedsWithNoFaceDetected() throws Exception {
+      FaceStylizerOptions options =
+          FaceStylizerOptions.builder()
+              .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
+              .setRunningMode(RunningMode.IMAGE)
+              .build();
+      faceStylizer =
+          FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+
+      MPImage inputImage = getImageFromAsset(largeFaceTestImage);
+
+      // Region-of-interest that doesn't contain a human face.
+      RectF roi =
+          new RectF(/* left= */ 0.1f, /* top= */ 0.1f, /* right= */ 0.2f, /* bottom= */ 0.2f);
+      ImageProcessingOptions imageProcessingOptions =
+          ImageProcessingOptions.builder().setRegionOfInterest(roi).build();
+      FaceStylizerResult actualResult = faceStylizer.stylize(inputImage, imageProcessingOptions);
+      assertThat(actualResult.stylizedImage()).isNotNull();
+      assertThat(actualResult.stylizedImage().isPresent()).isFalse();
     }
 
     @Test
     public void stylizer_successWithImageModeWithResultListener() throws Exception {
-      MPImage inputImage = getImageFromAsset(testImage);
-      int inputWidth = inputImage.getWidth();
-      int inputHeight = inputImage.getHeight();
-      float inputAspectRatio = (float) inputWidth / inputHeight;
-
+      MPImage inputImage = getImageFromAsset(largeFaceTestImage);
       FaceStylizerOptions options =
           FaceStylizerOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
               .setRunningMode(RunningMode.IMAGE)
               .setResultListener(
                   (result, originalImage) -> {
-                    assertThat(originalImage).isEqualTo(inputImage);
-
-                    MPImage stylizedImage = result.stylizedImage();
+                    MPImage stylizedImage = result.stylizedImage().get();
                     assertThat(stylizedImage).isNotNull();
-                    assertThat(stylizedImage.getWidth())
-                        .isEqualTo(modelImageSize * inputAspectRatio);
+                    assertThat(stylizedImage.getWidth()).isEqualTo(modelImageSize);
                     assertThat(stylizedImage.getHeight()).isEqualTo(modelImageSize);
                   })
               .build();
       faceStylizer =
           FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      faceStylizer.stylizeWithResultListener(getImageFromAsset(testImage));
+      faceStylizer.stylizeWithResultListener(getImageFromAsset(largeFaceTestImage));
     }
 
     @Test
     public void stylizer_successWithVideoMode() throws Exception {
-      MPImage inputImage = getImageFromAsset(testImage);
-      int inputWidth = inputImage.getWidth();
-      int inputHeight = inputImage.getHeight();
-      float inputAspectRatio = (float) inputWidth / inputHeight;
+      MPImage inputImage = getImageFromAsset(largeFaceTestImage);
 
       FaceStylizerOptions options =
           FaceStylizerOptions.builder()
@@ -295,21 +318,19 @@ public class FaceStylizerTest {
           FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       for (int i = 0; i < 3; i++) {
         FaceStylizerResult actualResult =
-            faceStylizer.stylizeForVideo(getImageFromAsset(testImage), /* timestampsMs= */ i);
+            faceStylizer.stylizeForVideo(
+                getImageFromAsset(largeFaceTestImage), /* timestampsMs= */ i);
 
-        MPImage stylizedImage = actualResult.stylizedImage();
+        MPImage stylizedImage = actualResult.stylizedImage().get();
         assertThat(stylizedImage).isNotNull();
-        assertThat(stylizedImage.getWidth()).isEqualTo((int) (modelImageSize * inputAspectRatio));
+        assertThat(stylizedImage.getWidth()).isEqualTo(modelImageSize);
         assertThat(stylizedImage.getHeight()).isEqualTo(modelImageSize);
       }
     }
 
     @Test
     public void stylizer_successWithVideoModeWithResultListener() throws Exception {
-      MPImage inputImage = getImageFromAsset(testImage);
-      int inputWidth = inputImage.getWidth();
-      int inputHeight = inputImage.getHeight();
-      float inputAspectRatio = (float) inputWidth / inputHeight;
+      MPImage inputImage = getImageFromAsset(largeFaceTestImage);
 
       FaceStylizerOptions options =
           FaceStylizerOptions.builder()
@@ -317,12 +338,9 @@ public class FaceStylizerTest {
               .setRunningMode(RunningMode.VIDEO)
               .setResultListener(
                   (result, originalImage) -> {
-                    assertThat(originalImage).isEqualTo(inputImage);
-
-                    MPImage stylizedImage = result.stylizedImage();
+                    MPImage stylizedImage = result.stylizedImage().get();
                     assertThat(stylizedImage).isNotNull();
-                    assertThat(stylizedImage.getWidth())
-                        .isEqualTo((int) (modelImageSize * inputAspectRatio));
+                    assertThat(stylizedImage.getWidth()).isEqualTo(modelImageSize);
                     assertThat(stylizedImage.getHeight()).isEqualTo(modelImageSize);
                   })
               .build();
@@ -335,10 +353,7 @@ public class FaceStylizerTest {
 
     @Test
     public void stylizer_successWithLiveStreamMode() throws Exception {
-      MPImage inputImage = getImageFromAsset(testImage);
-      int inputWidth = inputImage.getWidth();
-      int inputHeight = inputImage.getHeight();
-      float inputAspectRatio = (float) inputWidth / inputHeight;
+      MPImage inputImage = getImageFromAsset(largeFaceTestImage);
 
       FaceStylizerOptions options =
           FaceStylizerOptions.builder()
@@ -346,10 +361,9 @@ public class FaceStylizerTest {
               .setRunningMode(RunningMode.LIVE_STREAM)
               .setResultListener(
                   (result, originalImage) -> {
-                    MPImage stylizedImage = result.stylizedImage();
+                    MPImage stylizedImage = result.stylizedImage().get();
                     assertThat(stylizedImage).isNotNull();
-                    assertThat(stylizedImage.getWidth())
-                        .isEqualTo((int) (modelImageSize * inputAspectRatio));
+                    assertThat(stylizedImage.getWidth()).isEqualTo(modelImageSize);
                     assertThat(stylizedImage.getHeight()).isEqualTo(modelImageSize);
                   })
               .build();
@@ -363,7 +377,7 @@ public class FaceStylizerTest {
 
     @Test
     public void stylizer_failsWithOutOfOrderInputTimestamps() throws Exception {
-      MPImage image = getImageFromAsset(testImage);
+      MPImage image = getImageFromAsset(largeFaceTestImage);
       FaceStylizerOptions options =
           FaceStylizerOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())

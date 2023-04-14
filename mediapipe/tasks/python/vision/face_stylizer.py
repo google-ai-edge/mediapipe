@@ -128,6 +128,14 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
         return
       image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
       stylized_image_packet = output_packets[_STYLIZED_IMAGE_NAME]
+      if stylized_image_packet.is_empty():
+        options.result_callback(
+            None,
+            image,
+            stylized_image_packet.timestamp.value
+            // _MICRO_SECONDS_PER_MILLISECOND,
+        )
+
       stylized_image = packet_getter.get_image(stylized_image_packet)
 
       options.result_callback(
@@ -177,7 +185,8 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
       image_processing_options: Options for image processing.
 
     Returns:
-      The stylized image.
+      The stylized image of the most visible face. None if no face is detected
+      on the input image.
 
     Raises:
       ValueError: If any of the input arguments is invalid.
@@ -191,6 +200,8 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
             normalized_rect.to_pb2()
         ),
     })
+    if output_packets[_STYLIZED_IMAGE_NAME].is_empty():
+      return None
     return packet_getter.get_image(output_packets[_STYLIZED_IMAGE_NAME])
 
   def stylize_for_video(
@@ -216,7 +227,8 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
       image_processing_options: Options for image processing.
 
     Returns:
-      The stylized image.
+      The stylized image of the most visible face. None if no face is detected
+      on the input image.
 
     Raises:
       ValueError: If any of the input arguments is invalid.
@@ -232,6 +244,8 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
             normalized_rect.to_pb2()
         ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
     })
+    if output_packets[_STYLIZED_IMAGE_NAME].is_empty():
+      return None
     return packet_getter.get_image(output_packets[_STYLIZED_IMAGE_NAME])
 
   def stylize_async(
@@ -257,7 +271,8 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
     the `region_of_interest` specified in `image_processing_options`.
 
     The `result_callback` provides:
-      - The stylized image.
+      - The stylized image of the most visible face. None if no face is detected
+        on the input image.
       - The input image that the face stylizer runs on.
       - The input timestamp in milliseconds.
 

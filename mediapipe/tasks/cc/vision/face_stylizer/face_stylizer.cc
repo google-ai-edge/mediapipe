@@ -29,6 +29,7 @@ limitations under the License.
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
 #include "mediapipe/tasks/cc/vision/core/vision_task_api_factory.h"
@@ -113,10 +114,13 @@ absl::StatusOr<std::unique_ptr<FaceStylizer>> FaceStylizer::Create(
           Packet stylized_image_packet =
               status_or_packets.value()[kStylizedImageName];
           Packet image_packet = status_or_packets.value()[kImageOutStreamName];
-          result_callback(stylized_image_packet.Get<Image>(),
-                          image_packet.Get<Image>(),
-                          stylized_image_packet.Timestamp().Value() /
-                              kMicroSecondsPerMilliSecond);
+          result_callback(
+              stylized_image_packet.IsEmpty()
+                  ? std::nullopt
+                  : std::optional<Image>(stylized_image_packet.Get<Image>()),
+              image_packet.Get<Image>(),
+              stylized_image_packet.Timestamp().Value() /
+                  kMicroSecondsPerMilliSecond);
         };
   }
   return core::VisionTaskApiFactory::Create<FaceStylizer,
@@ -128,7 +132,7 @@ absl::StatusOr<std::unique_ptr<FaceStylizer>> FaceStylizer::Create(
       std::move(packets_callback));
 }
 
-absl::StatusOr<Image> FaceStylizer::Stylize(
+absl::StatusOr<std::optional<Image>> FaceStylizer::Stylize(
     mediapipe::Image image,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
@@ -144,10 +148,13 @@ absl::StatusOr<Image> FaceStylizer::Stylize(
       ProcessImageData(
           {{kImageInStreamName, MakePacket<Image>(std::move(image))},
            {kNormRectName, MakePacket<NormalizedRect>(std::move(norm_rect))}}));
-  return output_packets[kStylizedImageName].Get<Image>();
+  return output_packets[kStylizedImageName].IsEmpty()
+             ? std::nullopt
+             : std::optional<Image>(
+                   output_packets[kStylizedImageName].Get<Image>());
 }
 
-absl::StatusOr<Image> FaceStylizer::StylizeForVideo(
+absl::StatusOr<std::optional<Image>> FaceStylizer::StylizeForVideo(
     mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
@@ -167,7 +174,10 @@ absl::StatusOr<Image> FaceStylizer::StylizeForVideo(
            {kNormRectName,
             MakePacket<NormalizedRect>(std::move(norm_rect))
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
-  return output_packets[kStylizedImageName].Get<Image>();
+  return output_packets[kStylizedImageName].IsEmpty()
+             ? std::nullopt
+             : std::optional<Image>(
+                   output_packets[kStylizedImageName].Get<Image>());
 }
 
 absl::Status FaceStylizer::StylizeAsync(
