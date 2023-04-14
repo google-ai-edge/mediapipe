@@ -78,16 +78,10 @@ class ImageSegmenterOptions:
       is set to the live stream mode.
   """
 
-  class Activation(enum.Enum):
-    NONE = 0
-    SIGMOID = 1
-    SOFTMAX = 2
-
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
   output_confidence_masks: bool = True
   output_category_mask: bool = False
-  activation: Optional[Activation] = Activation.NONE
   result_callback: Optional[
       Callable[[ImageSegmenterResult, image_module.Image, int], None]
   ] = None
@@ -99,9 +93,7 @@ class ImageSegmenterOptions:
     base_options_proto.use_stream_mode = (
         False if self.running_mode == _RunningMode.IMAGE else True
     )
-    segmenter_options_proto = _SegmenterOptionsProto(
-        activation=self.activation.value
-    )
+    segmenter_options_proto = _SegmenterOptionsProto()
     return _ImageSegmenterGraphOptionsProto(
         base_options=base_options_proto,
         segmenter_options=segmenter_options_proto,

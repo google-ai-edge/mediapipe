@@ -15,7 +15,6 @@
 
 import enum
 import os
-from typing import List
 from unittest import mock
 
 from absl.testing import absltest
@@ -34,7 +33,6 @@ ImageSegmenterResult = image_segmenter.ImageSegmenterResult
 _BaseOptions = base_options_module.BaseOptions
 _Image = image_module.Image
 _ImageFormat = image_frame.ImageFormat
-_Activation = image_segmenter.ImageSegmenterOptions.Activation
 _ImageSegmenter = image_segmenter.ImageSegmenter
 _ImageSegmenterOptions = image_segmenter.ImageSegmenterOptions
 _RUNNING_MODE = vision_task_running_mode.VisionTaskRunningMode
@@ -191,7 +189,7 @@ class ImageSegmenterTest(parameterized.TestCase):
     # Run segmentation on the model in CONFIDENCE_MASK mode.
     options = _ImageSegmenterOptions(
         base_options=base_options, output_category_mask=False,
-        output_confidence_masks=True, activation=_Activation.SOFTMAX
+        output_confidence_masks=True
     )
 
     with _ImageSegmenter.create_from_options(options) as segmenter:
