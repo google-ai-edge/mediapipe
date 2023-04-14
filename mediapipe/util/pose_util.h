@@ -20,8 +20,11 @@
 
 namespace mediapipe {
 
-void DrawPose(const mediapipe::NormalizedLandmarkList& pose, int target_width,
-              int target_height, bool flip_y, cv::Mat* image);
+void DrawPose(const mediapipe::NormalizedLandmarkList& pose, bool flip_y,
+              cv::Mat* image);
+
+void DrawFace(const mediapipe::NormalizedLandmarkList& face, bool flip_y,
+              cv::Mat* image);
 
 }  // namespace mediapipe
 
