@@ -155,7 +155,7 @@ class ObjectDetectorTest(parameterized.TestCase):
     )
 
   def _assert_approximately_equals_detection_result(self, result, expected_result):
-    self.assertLen(result.detections, 4)
+    self.assertLen(result.detections, len(expected_result.detections))
     for i, detection in enumerate(result.detections):
       bbox = detection.bounding_box
       category = detection.categories[0]
