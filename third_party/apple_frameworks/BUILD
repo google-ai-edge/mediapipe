@@ -76,3 +76,13 @@ cc_library(
     name = "QuartzCore",
     linkopts = ["-framework QuartzCore"],
 )
+
+cc_library(
+    name = "CoreAudio",
+    linkopts = ["-framework CoreAudio"],
+)
+
+cc_library(
+    name = "MediaToolbox",
+    linkopts = ["-framework MediaToolbox"],
+)
