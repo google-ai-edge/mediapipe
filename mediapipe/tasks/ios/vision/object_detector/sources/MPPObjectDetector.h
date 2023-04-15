@@ -138,8 +138,8 @@ NS_SWIFT_NAME(ObjectDetector)
  * `MPPRunningModeVideo`.
  *
  * @param image The `MPPImage` on which object detection is to be performed.
- * @param timestampMs The video frame's timestamp (in milliseconds). The input timestamps must be
- * monotonically increasing.
+ * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
+ * timestamps must be monotonically increasing.
  * @param error An optional error parameter populated when there is an error in performing object
  * detection on the input image.
  *
@@ -149,9 +149,9 @@ NS_SWIFT_NAME(ObjectDetector)
  * image data.
  */
 - (nullable MPPObjectDetectionResult *)detectInVideoFrame:(MPPImage *)image
-                                              timestampMs:(NSInteger)timestampMs
+                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                     error:(NSError **)error
-    NS_SWIFT_NAME(detect(videoFrame:timestampMs:));
+    NS_SWIFT_NAME(detect(videoFrame:timestampInMilliseconds:));
 
 /**
  * Performs object detection on the provided video frame of type `MPPImage` cropped to the
@@ -164,8 +164,8 @@ NS_SWIFT_NAME(ObjectDetector)
  *
  * @param image A live stream image data of type `MPPImage` on which object detection is to be
  * performed.
- * @param timestampMs The video frame's timestamp (in milliseconds). The input timestamps must be
- * monotonically increasing.
+ * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
+ * timestamps must be monotonically increasing.
  * @param roi A `CGRect` specifying the region of interest within the given `MPPImage`, on which
  * object detection should be performed.
  *
@@ -178,10 +178,10 @@ NS_SWIFT_NAME(ObjectDetector)
  * image data.
  */
 - (nullable MPPObjectDetectionResult *)detectInVideoFrame:(MPPImage *)image
-                                              timestampMs:(NSInteger)timestampMs
+                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                          regionOfInterest:(CGRect)roi
                                                     error:(NSError **)error
-    NS_SWIFT_NAME(detect(videoFrame:timestampMs:regionOfInterest:));
+    NS_SWIFT_NAME(detect(videoFrame:timestampInMilliseconds:regionOfInterest:));
 
 /**
  * Sends live stream image data of type `MPPImage` to perform object detection using the whole
@@ -195,16 +195,17 @@ NS_SWIFT_NAME(ObjectDetector)
  *
  * @param image A live stream image data of type `MPPImage` on which object detection is to be
  * performed.
- * @param timestampMs The timestamp (in milliseconds) which indicates when the input image is sent
- * to the object detector. The input timestamps must be monotonically increasing.
+ * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
+ * image is sent to the object detector. The input timestamps must be monotonically increasing.
  * @param error An optional error parameter populated when there is an error in performing object
  * detection on the input live stream image data.
  *
  * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
  */
 - (BOOL)detectAsyncInImage:(MPPImage *)image
-               timestampMs:(NSInteger)timestampMs
-                     error:(NSError **)error NS_SWIFT_NAME(detectAsync(image:timestampMs:));
+    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                      error:(NSError **)error
+    NS_SWIFT_NAME(detectAsync(image:timestampInMilliseconds:));
 
 /**
  * Sends live stream image data of type `MPPImage` to perform object detection, cropped to the
@@ -218,8 +219,8 @@ NS_SWIFT_NAME(ObjectDetector)
  *
  * @param image A live stream image data of type `MPPImage` on which object detection is to be
  * performed.
- * @param timestampMs The timestamp (in milliseconds) which indicates when the input image is sent
- * to the object detector. The input timestamps must be monotonically increasing.
+ * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
+ * image is sent to the object detector. The input timestamps must be monotonically increasing.
  * @param roi A `CGRect` specifying the region of interest within the given live stream image data
  * of type `MPPImage`, on which iobject detection should be performed.
  * @param error An optional error parameter populated when there is an error in performing object
@@ -228,10 +229,10 @@ NS_SWIFT_NAME(ObjectDetector)
  * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
  */
 - (BOOL)detectAsyncInImage:(MPPImage *)image
-               timestampMs:(NSInteger)timestampMs
-          regionOfInterest:(CGRect)roi
-                     error:(NSError **)error
-    NS_SWIFT_NAME(detectAsync(image:timestampMs:regionOfInterest:));
+    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+           regionOfInterest:(CGRect)roi
+                      error:(NSError **)error
+    NS_SWIFT_NAME(detectAsync(image:timestampInMilliseconds:regionOfInterest:));
 
 - (instancetype)init NS_UNAVAILABLE;
 

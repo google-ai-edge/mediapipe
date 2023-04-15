@@ -122,17 +122,17 @@ NS_SWIFT_NAME(ImageClassifier)
  * `MPPRunningModeVideo`.
  *
  * @param image The `MPPImage` on which image classification is to be performed.
- * @param timestampMs The video frame's timestamp (in milliseconds). The input timestamps must be
- * monotonically increasing.
+ * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
+ * timestamps must be monotonically increasing.
  * @param error An optional error parameter populated when there is an error in performing image
  * classification on the input video frame.
  *
  * @return  An `MPPImageClassifierResult` object that contains a list of image classifications.
  */
 - (nullable MPPImageClassifierResult *)classifyVideoFrame:(MPPImage *)image
-                                              timestampMs:(NSInteger)timestampMs
+                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                     error:(NSError **)error
-    NS_SWIFT_NAME(classify(videoFrame:timestampMs:));
+    NS_SWIFT_NAME(classify(videoFrame:timestampInMilliseconds:));
 
 /**
  * Performs image classification on the provided video frame of type `MPPImage` cropped to the
@@ -145,8 +145,8 @@ NS_SWIFT_NAME(ImageClassifier)
  *
  * @param image A live stream image data of type `MPPImage` on which image classification is to be
  * performed.
- * @param timestampMs The video frame's timestamp (in milliseconds). The input timestamps must be
- * monotonically increasing.
+ * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
+ * timestamps must be monotonically increasing.
  * @param roi A `CGRect` specifying the region of interest within the video frame of type
  * `MPPImage`, on which image classification should be performed.
  * @param error An optional error parameter populated when there is an error in performing image
@@ -155,10 +155,10 @@ NS_SWIFT_NAME(ImageClassifier)
  * @return  An `MPPImageClassifierResult` object that contains a list of image classifications.
  */
 - (nullable MPPImageClassifierResult *)classifyVideoFrame:(MPPImage *)image
-                                              timestampMs:(NSInteger)timestampMs
+                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                          regionOfInterest:(CGRect)roi
                                                     error:(NSError **)error
-    NS_SWIFT_NAME(classify(videoFrame:timestampMs:regionOfInterest:));
+    NS_SWIFT_NAME(classify(videoFrame:timestampInMilliseconds:regionOfInterest:));
 
 /**
  * Sends live stream image data of type `MPPImage` to perform image classification using the whole
@@ -172,16 +172,17 @@ NS_SWIFT_NAME(ImageClassifier)
  *
  * @param image A live stream image data of type `MPPImage` on which image classification is to be
  * performed.
- * @param timestampMs The timestamp (in milliseconds) which indicates when the input image is sent
- * to the image classifier. The input timestamps must be monotonically increasing.
+ * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
+ * image is sent to the image classifier. The input timestamps must be monotonically increasing.
  * @param error An optional error parameter populated when there is an error in performing image
  * classification on the input live stream image data.
  *
  * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
  */
 - (BOOL)classifyAsyncImage:(MPPImage *)image
-               timestampMs:(NSInteger)timestampMs
-                     error:(NSError **)error NS_SWIFT_NAME(classifyAsync(image:timestampMs:));
+    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                      error:(NSError **)error
+    NS_SWIFT_NAME(classifyAsync(image:timestampInMilliseconds:));
 
 /**
  * Sends live stream image data of type `MPPImage` to perform image classification, cropped to the
@@ -195,8 +196,8 @@ NS_SWIFT_NAME(ImageClassifier)
  *
  * @param image A live stream image data of type `MPPImage` on which image classification is to be
  * performed.
- * @param timestampMs The timestamp (in milliseconds) which indicates when the input image is sent
- * to the image classifier. The input timestamps must be monotonically increasing.
+ * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
+ * image is sent to the image classifier. The input timestamps must be monotonically increasing.
  * @param roi A `CGRect` specifying the region of interest within the given live stream image data
  * of type `MPPImage`, on which image classification should be performed.
  * @param error An optional error parameter populated when there is an error in performing image
@@ -205,10 +206,10 @@ NS_SWIFT_NAME(ImageClassifier)
  * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
  */
 - (BOOL)classifyAsyncImage:(MPPImage *)image
-               timestampMs:(NSInteger)timestampMs
-          regionOfInterest:(CGRect)roi
-                     error:(NSError **)error
-    NS_SWIFT_NAME(classifyAsync(image:timestampMs:regionOfInterest:));
+    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+           regionOfInterest:(CGRect)roi
+                      error:(NSError **)error
+    NS_SWIFT_NAME(classifyAsync(image:timestampInMilliseconds:regionOfInterest:));
 
 - (instancetype)init NS_UNAVAILABLE;
 

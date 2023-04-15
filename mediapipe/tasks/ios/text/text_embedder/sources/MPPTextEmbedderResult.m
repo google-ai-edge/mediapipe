@@ -17,8 +17,8 @@
 @implementation MPPTextEmbedderResult
 
 - (instancetype)initWithEmbeddingResult:(MPPEmbeddingResult *)embeddingResult
-                            timestampMs:(NSInteger)timestampMs {
-  self = [super initWithTimestampMs:timestampMs];
+                timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+  self = [super initWithTimestampInMilliseconds:timestampInMilliseconds];
   if (self) {
     _embeddingResult = embeddingResult;
   }

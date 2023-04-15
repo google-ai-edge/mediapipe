@@ -21,7 +21,7 @@
                        handedness:(NSArray<NSArray<MPPCategory *> *> *)handedness
                          gestures:(NSArray<NSArray<MPPCategory *> *> *)gestures
           timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
-  self = [super initWithTimestampMs:timestampInMilliseconds];
+  self = [super initWithTimestampInMilliseconds:timestampInMilliseconds];
   if (self) {
     _landmarks = landmarks;
     _worldLandmarks = worldLandmarks;

@@ -31,13 +31,13 @@ NS_SWIFT_NAME(TextEmbedderResult)
  *
  * @param embeddingResult The `MPPEmbeddingResult` instance containing one set of results
  * per classifier head.
- * @param timestampMs The timestamp for this result.
+ * @param timestampInMilliseconds The timestamp (in millisecondss) for this result.
  *
  * @return An instance of `MPPTextEmbedderResult` initialized with the given
  * `MPPEmbeddingResult` and timestamp (in milliseconds).
  */
 - (instancetype)initWithEmbeddingResult:(MPPEmbeddingResult *)embeddingResult
-                            timestampMs:(NSInteger)timestampMs;
+                timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 - (instancetype)init NS_UNAVAILABLE;
 

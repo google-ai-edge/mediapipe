@@ -41,7 +41,7 @@
  * timestamp.
  *
  * @param image The image to send to the MediaPipe graph.
- * @param timestampMs The timestamp (in milliseconds) to assign to the packet.
+ * @param timestampInMilliseconds The timestamp (in milliseconds) to assign to the packet.
  * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
  *    error will be saved.
  *
@@ -49,7 +49,7 @@
  *    occurred during the conversion.
  */
 + (mediapipe::Packet)createPacketWithMPPImage:(MPPImage *)image
-                                  timestampMs:(NSInteger)timestampMs
+                      timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                         error:(NSError **)error;
 
 /**
@@ -66,11 +66,11 @@
  * specified timestamp.
  *
  * @param image The `NormalizedRect` to send to the MediaPipe graph.
- * @param timestampMs The timestamp (in milliseconds) to assign to the packet.
+ * @param timestampInMilliseconds The timestamp (in milliseconds) to assign to the packet.
  *
  * @return The MediaPipe packet containing the normalized rect.
  */
 + (mediapipe::Packet)createPacketWithNormalizedRect:(mediapipe::NormalizedRect &)normalizedRect
-                                        timestampMs:(NSInteger)timestampMs;
+                            timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 @end

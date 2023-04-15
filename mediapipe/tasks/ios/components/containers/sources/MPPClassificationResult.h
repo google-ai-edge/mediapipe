@@ -90,7 +90,7 @@ NS_SWIFT_NAME(ClassificationResult)
  * amount of data to process might exceed the maximum size that the model can process: to solve
  * this, the input data is split into multiple chunks starting at different timestamps.
  */
-@property(nonatomic, readonly) NSInteger timestampMs;
+@property(nonatomic, readonly) NSInteger timestampInMilliseconds;
 
 /**
  * Initializes a new `MPPClassificationResult` with the given array of classifications and time
@@ -98,14 +98,15 @@ NS_SWIFT_NAME(ClassificationResult)
  *
  * @param classifications An Array of `MPPClassifications` objects containing the predicted
  * categories for each head of the model.
- * @param timestampMs The timestamp (in milliseconds) of the start of the chunk of data
+ * @param timestampInMilliseconds The timestamp (in milliseconds) of the start of the chunk of data
  * corresponding to these results.
  *
  * @return An instance of `MPPClassificationResult` initialized with the given array of
- * classifications and timestampMs.
+ * classifications and timestamp (in milliseconds).
  */
 - (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications
-                            timestampMs:(NSInteger)timestampMs NS_DESIGNATED_INITIALIZER;
+                timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+    NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 
