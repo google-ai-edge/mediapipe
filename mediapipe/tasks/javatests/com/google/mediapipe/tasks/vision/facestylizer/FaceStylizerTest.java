@@ -234,8 +234,8 @@ public class FaceStylizerTest {
       FaceStylizerResult actualResult = faceStylizer.stylize(inputImage);
       MPImage stylizedImage = actualResult.stylizedImage().get();
       assertThat(stylizedImage).isNotNull();
-      assertThat(stylizedImage.getWidth()).isEqualTo(83);
-      assertThat(stylizedImage.getHeight()).isEqualTo(83);
+      assertThat(stylizedImage.getWidth()).isEqualTo(modelImageSize);
+      assertThat(stylizedImage.getHeight()).isEqualTo(modelImageSize);
     }
 
     @Test

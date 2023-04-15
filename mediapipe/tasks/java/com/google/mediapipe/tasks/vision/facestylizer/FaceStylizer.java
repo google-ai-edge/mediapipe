@@ -198,9 +198,9 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The image can be of any size. To ensure that the output image has reasonable quality, the
-   * size of the stylized output is based the model output size and can be smaller than the input
-   * image.
+   * <p>The input image can be of any size. The output image is the stylized image with the most
+   * visible face. The stylized output image size is the same as the model output size. When no face
+   * is detected on the input image, returns {@code Optional.empty()}.
    *
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @throws MediaPipeException if there is an internal error. Or if {@link FaceStylizer} is created
@@ -220,9 +220,9 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The input image can be of any size. To ensure that the output image has reasonable quality,
-   * the stylized output image size is the smaller of the model output size and the size of the
-   * {@link ImageProcessingOptions#regionOfInterest} specified in {@code imageProcessingOptions}.
+   * <p>The input image can be of any size. The output image is the stylized image with the most
+   * visible face. The stylized output image size is the same as the model output size. When no face
+   * is detected on the input image, returns {@code Optional.empty()}.
    *
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
@@ -256,9 +256,9 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The image can be of any size. To ensure that the output image has reasonable quality, the
-   * size of the stylized output is based the model output size and can be smaller than the input
-   * image.
+   * <p>The input image can be of any size. The output image is the stylized image with the most
+   * visible face. The stylized output image size is the same as the model output size. When no face
+   * is detected on the input image, returns {@code Optional.empty()}.
    *
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
@@ -281,9 +281,9 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The input image can be of any size. To ensure that the output image has reasonable quality,
-   * the stylized output image size is the smaller of the model output size and the size of the
-   * {@link ImageProcessingOptions#regionOfInterest} specified in {@code imageProcessingOptions}.
+   * <p>The input image can be of any size. The output image is the stylized image with the most
+   * visible face. The stylized output image size is the same as the model output size. When no face
+   * is detected on the input image, returns {@code Optional.empty()}.
    *
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
@@ -320,9 +320,9 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The image can be of any size. To ensure that the output image has reasonable quality, the
-   * size of the stylized output is based the model output size and can be smaller than the input
-   * image.
+   * <p>The input image can be of any size. The output image is the stylized image with the most
+   * visible face. The stylized output image size is the same as the model output size. When no face
+   * is detected on the input image, returns {@code Optional.empty()}.
    *
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @param timestampMs the input timestamp (in milliseconds).
@@ -346,9 +346,9 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The input image can be of any size. To ensure that the output image has reasonable quality,
-   * the stylized output image size is the smaller of the model output size and the size of the
-   * {@link ImageProcessingOptions#regionOfInterest} specified in {@code imageProcessingOptions}.
+   * <p>The input image can be of any size. The output image is the stylized image with the most
+   * visible face. The stylized output image size is the same as the model output size. When no face
+   * is detected on the input image, returns {@code Optional.empty()}. *
    *
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
@@ -387,9 +387,9 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The image can be of any size. To ensure that the output image has reasonable quality, the
-   * size of the stylized output is based the model output size and can be smaller than the input
-   * image.
+   * <p>The input image can be of any size. The output image is the stylized image with the most
+   * visible face. The stylized output image size is the same as the model output size. When no face
+   * is detected on the input image, returns {@code Optional.empty()}.
    *
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @param timestampMs the input timestamp (in milliseconds).
@@ -414,9 +414,9 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The input image can be of any size. To ensure that the output image has reasonable quality,
-   * the stylized output image size is the smaller of the model output size and the size of the
-   * {@link ImageProcessingOptions#regionOfInterest} specified in {@code imageProcessingOptions}.
+   * <p>The input image can be of any size. The output image is the stylized image with the most
+   * visible face. The stylized output image size is the same as the model output size. When no face
+   * is detected on the input image, returns {@code Optional.empty()}.
    *
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @param timestampMs the input timestamp (in milliseconds).
@@ -445,9 +445,9 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *
    * <p>{@link FaceStylizer} supports the following color space types:
    *
-   * <p>The image can be of any size. To ensure that the output image has reasonable quality, the
-   * size of the stylized output is based the model output * size and can be smaller than the input
-   * image.
+   * <p>The input image can be of any size. The output image is the stylized image with the most
+   * visible face. The stylized output image size is the same as the model output size. When no face
+   * is detected on the input image, returns {@code Optional.empty()}.
    *
    * <ul>
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
@@ -475,9 +475,9 @@ public final class FaceStylizer extends BaseVisionTaskApi {
    *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
    * </ul>
    *
-   * <p>The input image can be of any size. To ensure that the output image has reasonable quality,
-   * the stylized output image size is the smaller of the model output size and the size of the
-   * {@link ImageProcessingOptions#regionOfInterest} specified in {@code imageProcessingOptions}.
+   * <p>The input image can be of any size. The output image is the stylized image with the most
+   * visible face. The stylized output image size is the same as the model output size. When no face
+   * is detected on the input image, returns {@code Optional.empty()}.
    *
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the

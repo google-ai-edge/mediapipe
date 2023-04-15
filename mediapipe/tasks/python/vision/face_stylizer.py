@@ -176,16 +176,13 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
     Only use this method when the FaceStylizer is created with the image
     running mode.
 
-    To ensure that the output image has reasonable quality, the stylized output
-    image size is the smaller of the model output size and the size of the
-    `region_of_interest` specified in `image_processing_options`.
-
     Args:
       image: MediaPipe Image.
       image_processing_options: Options for image processing.
 
     Returns:
-      The stylized image of the most visible face. None if no face is detected
+      The stylized image of the most visible face. The stylized output image
+      size is the same as the model output size. None if no face is detected
       on the input image.
 
     Raises:
@@ -217,17 +214,14 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
     milliseconds) along with the video frame. The input timestamps should be
     monotonically increasing for adjacent calls of this method.
 
-    To ensure that the output image has reasonable quality, the stylized output
-    image size is the smaller of the model output size and the size of the
-    `region_of_interest` specified in `image_processing_options`.
-
     Args:
       image: MediaPipe Image.
       timestamp_ms: The timestamp of the input video frame in milliseconds.
       image_processing_options: Options for image processing.
 
     Returns:
-      The stylized image of the most visible face. None if no face is detected
+      The stylized image of the most visible face. The stylized output image
+      size is the same as the model output size. None if no face is detected
       on the input image.
 
     Raises:
@@ -266,12 +260,9 @@ class FaceStylizer(base_vision_task_api.BaseVisionTaskApi):
     images if needed. In other words, it's not guaranteed to have output per
     input image.
 
-    To ensure that the stylized image has reasonable quality, the stylized
-    output image size is the smaller of the model output size and the size of
-    the `region_of_interest` specified in `image_processing_options`.
-
     The `result_callback` provides:
-      - The stylized image of the most visible face. None if no face is detected
+      - The stylized image of the most visible face. The stylized output image
+        size is the same as the model output size. None if no face is detected
         on the input image.
       - The input image that the face stylizer runs on.
       - The input timestamp in milliseconds.

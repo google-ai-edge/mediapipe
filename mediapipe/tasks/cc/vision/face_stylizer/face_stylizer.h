@@ -84,9 +84,7 @@ class FaceStylizer : tasks::vision::core::BaseVisionTaskApi {
   // The input image can be of any size with format RGB or RGBA.
   // When no face is detected on the input image, the method returns a
   // std::nullopt. Otherwise, returns the stylized image of the most visible
-  // face. To ensure that the output image has reasonable quality, the stylized
-  // output image size is the smaller of the model output size and the size of
-  // the 'region_of_interest' specified in 'image_processing_options'.
+  // face. The stylized output image size is the same as the model output size.
   absl::StatusOr<std::optional<mediapipe::Image>> Stylize(
       mediapipe::Image image,
       std::optional<core::ImageProcessingOptions> image_processing_options =
@@ -111,9 +109,7 @@ class FaceStylizer : tasks::vision::core::BaseVisionTaskApi {
   // must be monotonically increasing.
   // When no face is detected on the input image, the method returns a
   // std::nullopt. Otherwise, returns the stylized image of the most visible
-  // face. To ensure that the output image has reasonable quality, the stylized
-  // output image size is the smaller of the model output size and the size of
-  // the 'region_of_interest' specified in 'image_processing_options'.
+  // face. The stylized output image size is the same as the model output size.
   absl::StatusOr<std::optional<mediapipe::Image>> StylizeForVideo(
       mediapipe::Image image, int64_t timestamp_ms,
       std::optional<core::ImageProcessingOptions> image_processing_options =
@@ -143,10 +139,8 @@ class FaceStylizer : tasks::vision::core::BaseVisionTaskApi {
   // The "result_callback" provides:
   //   - When no face is detected on the input image, the method returns a
   //     std::nullopt. Otherwise, returns the stylized image of the most visible
-  //     face. To ensure that the output image has reasonable quality, the
-  //     stylized output image size is the smaller of the model output size and
-  //     the size of the 'region_of_interest' specified in
-  //     'image_processing_options'.
+  //     face. The stylized output image size is the same as the model output
+  //     size.
   //   - The input timestamp in milliseconds.
   absl::Status StylizeAsync(mediapipe::Image image, int64_t timestamp_ms,
                             std::optional<core::ImageProcessingOptions>
