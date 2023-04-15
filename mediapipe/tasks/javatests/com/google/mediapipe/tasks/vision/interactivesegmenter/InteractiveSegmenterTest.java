@@ -53,18 +53,15 @@ public class InteractiveSegmenterTest {
       InteractiveSegmenterOptions options =
           InteractiveSegmenterOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
-              .setOutputType(InteractiveSegmenterOptions.OutputType.CATEGORY_MASK)
+              .setOutputConfidenceMasks(false)
+              .setOutputCategoryMask(true)
               .build();
       InteractiveSegmenter imageSegmenter =
           InteractiveSegmenter.createFromOptions(
               ApplicationProvider.getApplicationContext(), options);
       MPImage image = getImageFromAsset(inputImageName);
       ImageSegmenterResult actualResult = imageSegmenter.segment(image, roi);
-      // TODO update to correct category mask output.
-      // After InteractiveSegmenter updated according to (b/276519300), update this to use
-      // categoryMask field instead of confidenceMasks.
-      List<MPImage> segmentations = actualResult.confidenceMasks().get();
-      assertThat(segmentations.size()).isEqualTo(1);
+      assertThat(actualResult.categoryMask().isPresent()).isTrue();
     }
 
     @Test
@@ -75,15 +72,17 @@ public class InteractiveSegmenterTest {
       InteractiveSegmenterOptions options =
           InteractiveSegmenterOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(DEEPLAB_MODEL_FILE).build())
-              .setOutputType(InteractiveSegmenterOptions.OutputType.CONFIDENCE_MASK)
+              .setOutputConfidenceMasks(true)
+              .setOutputCategoryMask(false)
               .build();
       InteractiveSegmenter imageSegmenter =
           InteractiveSegmenter.createFromOptions(
               ApplicationProvider.getApplicationContext(), options);
       ImageSegmenterResult actualResult =
           imageSegmenter.segment(getImageFromAsset(inputImageName), roi);
-      List<MPImage> segmentations = actualResult.confidenceMasks().get();
-      assertThat(segmentations.size()).isEqualTo(2);
+      assertThat(actualResult.confidenceMasks().isPresent()).isTrue();
+      List<MPImage> confidenceMasks = actualResult.confidenceMasks().get();
+      assertThat(confidenceMasks.size()).isEqualTo(2);
     }
   }
 
