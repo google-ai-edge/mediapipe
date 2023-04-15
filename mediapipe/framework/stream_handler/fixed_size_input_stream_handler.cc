@@ -131,9 +131,9 @@ class FixedSizeInputStreamHandler : public DefaultInputStreamHandler {
       ABSL_EXCLUSIVE_LOCKS_REQUIRED(erase_mutex_) {
     // Record the most recent first kept timestamp on any stream.
     for (const auto& stream : input_stream_managers_) {
-      int32 queue_size = (stream->QueueSize() >= trigger_queue_size_)
-                             ? target_queue_size_
-                             : trigger_queue_size_ - 1;
+      int32_t queue_size = (stream->QueueSize() >= trigger_queue_size_)
+                               ? target_queue_size_
+                               : trigger_queue_size_ - 1;
       if (stream->QueueSize() > queue_size) {
         kept_timestamp_ = std::max(
             kept_timestamp_, stream->GetMinTimestampAmongNLatest(queue_size + 1)
@@ -214,8 +214,8 @@ class FixedSizeInputStreamHandler : public DefaultInputStreamHandler {
   }
 
  private:
-  int32 trigger_queue_size_;
-  int32 target_queue_size_;
+  int32_t trigger_queue_size_;
+  int32_t target_queue_size_;
   bool fixed_min_size_;
   // Indicates that GetNodeReadiness has returned kReadyForProcess once, and
   // the corresponding call to FillInputSet has not yet completed.
