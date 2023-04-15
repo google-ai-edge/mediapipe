@@ -78,7 +78,7 @@ class ConstantSidePacketCalculator : public CalculatorBase {
       } else if (packet_options.has_string_value()) {
         packet.Set<std::string>();
       } else if (packet_options.has_uint64_value()) {
-        packet.Set<uint64>();
+        packet.Set<uint64_t>();
       } else if (packet_options.has_classification_list_value()) {
         packet.Set<ClassificationList>();
       } else if (packet_options.has_landmark_list_value()) {
@@ -112,7 +112,7 @@ class ConstantSidePacketCalculator : public CalculatorBase {
       } else if (packet_options.has_string_value()) {
         packet.Set(MakePacket<std::string>(packet_options.string_value()));
       } else if (packet_options.has_uint64_value()) {
-        packet.Set(MakePacket<uint64>(packet_options.uint64_value()));
+        packet.Set(MakePacket<uint64_t>(packet_options.uint64_value()));
       } else if (packet_options.has_classification_list_value()) {
         packet.Set(MakePacket<ClassificationList>(
             packet_options.classification_list_value()));
