@@ -166,7 +166,7 @@ class WarpAffineRunnerHolder<mediapipe::Image> {
       const ImageFrame image_frame(frame_ptr->Format(), frame_ptr->Width(),
                                    frame_ptr->Height(), frame_ptr->WidthStep(),
                                    const_cast<uint8_t*>(frame_ptr->PixelData()),
-                                   [](uint8* data){});
+                                   [](uint8_t* data){});
       ASSIGN_OR_RETURN(auto result,
                        runner->Run(image_frame, matrix, size, border_mode));
       return mediapipe::Image(std::make_shared<ImageFrame>(std::move(result)));
