@@ -19,7 +19,7 @@ import {Connection} from '../../../../tasks/web/vision/core/types';
 // tslint:disable:class-as-namespace Using for easier import by 3P users
 
 /**
- * A class containing the Pairs of landmark indices to be rendered with
+ * A class containing the pairs of landmark indices to be rendered with
  * connections.
  */
 export class FaceLandmarksConnections {

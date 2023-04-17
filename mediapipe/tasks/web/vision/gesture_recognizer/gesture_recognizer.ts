@@ -31,6 +31,7 @@ import {convertClassifierOptionsToProto} from '../../../../tasks/web/components/
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {HAND_CONNECTIONS} from '../../../../tasks/web/vision/hand_landmarker/hand_landmarks_connections';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
@@ -71,6 +72,12 @@ export class GestureRecognizer extends VisionTaskRunner {
   private readonly handDetectorGraphOptions: HandDetectorGraphOptions;
   private readonly handGestureRecognizerGraphOptions:
       HandGestureRecognizerGraphOptions;
+
+  /**
+   * An array containing the pairs of hand landmark indices to be rendered with
+   * connections.
+   */
+  static HAND_CONNECTIONS = HAND_CONNECTIONS;
 
   /**
    * Initializes the Wasm runtime and creates a new gesture recognizer from the

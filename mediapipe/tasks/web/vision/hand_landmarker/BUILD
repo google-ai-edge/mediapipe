@@ -16,6 +16,7 @@ mediapipe_ts_library(
     visibility = ["//visibility:public"],
     deps = [
         ":hand_landmarker_types",
+        ":hand_landmarks_connections",
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/framework:calculator_options_jspb_proto",
         "//mediapipe/framework/formats:classification_jspb_proto",
@@ -71,4 +72,10 @@ jasmine_node_test(
     name = "hand_landmarker_test",
     tags = ["nomsan"],
     deps = [":hand_landmarker_test_lib"],
+)
+
+mediapipe_ts_library(
+    name = "hand_landmarks_connections",
+    srcs = ["hand_landmarks_connections.ts"],
+    deps = ["//mediapipe/tasks/web/vision/core:types"],
 )
