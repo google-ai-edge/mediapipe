@@ -16,11 +16,11 @@
 # Set the following variables as appropriate.
 #   * BAZEL: path to bazel. defaults to the first one available in PATH
 #   * FRAMEWORK_NAME: name of the iOS framework to be built. Currently the
-#   * accepted values are TensorFlowLiteTaskVision, TensorFlowLiteTaskText.
+#   * accepted values are MediaPipeTaskText.
 #   * MPP_BUILD_VERSION: to specify the release version. defaults to 0.0.1-dev
 #   * IS_RELEASE_BUILD: set as true if this build should be a release build
 #   * ARCHIVE_FRAMEWORK: set as true if the framework should be archived
-#   * DEST_DIR: destination directory to which the framework will be copied
+#   * DEST_DIR: destination directory to which the framework will be copied.
 
 set -ex
 
@@ -32,7 +32,7 @@ fi
 BAZEL="${BAZEL:-$(which bazel)}"
 MPP_BUILD_VERSION=${MPP_BUILD_VERSION:-0.0.1-dev}
 MPP_ROOT_DIR=$(git rev-parse --show-toplevel)
-MPP_DISABLE_GPU=true
+MPP_DISABLE_GPU=1
 
 if [[ ! -x "${BAZEL}" ]]; then
   echo "bazel executable is not found."
@@ -97,23 +97,25 @@ function build_ios_frameworks_and_libraries {
   FULL_FRAMEWORK_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_framework"
   FULL_GRAPH_LIBRARY_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_GraphLibrary"
   
-  # .bazelrc sets --apple_generate_dsym=true by default which bloats the libraries to sizes of the order of GBs.
-  # All iOS framework and library build commands for distribution via CocoaPods must set 
-  # --apple_generate_dsym=false inorder to shave down the binary size to the order of a few MBs.
+  # .bazelrc sets --apple_generate_dsym=true by default which bloats the libraries to sizes of 
+  # the order of GBs. All iOS framework and library build commands for distribution via 
+  # CocoaPods must set --apple_generate_dsym=false inorder to shave down the binary size to 
+  # the order of a few MBs.
 
   # Build Text Task Library xcframework without the graph dependencies.
-  local FRAMEWORK_CQUERY_COMMAND="-c opt --define MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} --define MEDIAPIPE_AVOID_LINKING_GRAPHS=1 \
-  --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
+  local FRAMEWORK_CQUERY_COMMAND="-c opt --define MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} \
+  --define MEDIAPIPE_AVOID_LINKING_GRAPHS=1 --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
   IOS_FRAMEWORK_PATH="$(build_target "${FRAMEWORK_CQUERY_COMMAND}")"
 
   # Build fat static library for text task graphs for simulator archs.
-  local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --define MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} \
-  --apple_generate_dsym=false ${FULL_GRAPH_LIBRARY_TARGET}"
+  local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --define \
+  MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} --apple_generate_dsym=false ${FULL_GRAPH_LIBRARY_TARGET}"
   IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(build_target "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
   
-  # Build static library for text task graphs for simulator archs.
-  local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --define MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} \
-  --apple_generate_dsym=false ${FULL_GRAPH_LIBRARY_TARGET}"
+  # Build static library for iOS devices with arch ios_arm64. We don't need to build for armv7 since 
+  # our deployment target is iOS 11.0. iOS 11.0 d anupwards is not supported by old armv7 devices.
+  local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --define \
+  MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} --apple_generate_dsym=false ${FULL_GRAPH_LIBRARY_TARGET}"
   IOS_GRAPHS_DEVICE_LIBRARY_PATH="$(build_target "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
 }
 
