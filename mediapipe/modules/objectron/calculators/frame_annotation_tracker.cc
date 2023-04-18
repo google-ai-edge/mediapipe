@@ -24,8 +24,8 @@ namespace mediapipe {
 
 void FrameAnnotationTracker::AddDetectionResult(
     const FrameAnnotation& frame_annotation) {
-  const int64 time_us =
-      static_cast<int64>(std::round(frame_annotation.timestamp()));
+  const int64_t time_us =
+      static_cast<int64_t>(std::round(frame_annotation.timestamp()));
   for (const auto& object_annotation : frame_annotation.annotations()) {
     detected_objects_[time_us + object_annotation.object_id()] =
         object_annotation;
@@ -37,7 +37,7 @@ FrameAnnotation FrameAnnotationTracker::ConsolidateTrackingResult(
     absl::flat_hash_set<int>* cancel_object_ids) {
   CHECK(cancel_object_ids != nullptr);
   FrameAnnotation frame_annotation;
-  std::vector<int64> keys_to_be_deleted;
+  std::vector<int64_t> keys_to_be_deleted;
   for (const auto& detected_obj : detected_objects_) {
     const int object_id = detected_obj.second.object_id();
     if (cancel_object_ids->contains(object_id)) {
