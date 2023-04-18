@@ -175,11 +175,7 @@ py_test(
     data = [":testdata"],
     tags = ["requires-net:external"],
     deps = [
-        ":dataset",
-        ":hyperparameters",
-        ":model_spec",
-        ":object_detector",
-        ":object_detector_options",
+        ":object_detector_import",
         "//mediapipe/tasks/python/test:test_utils",
     ],
 )
