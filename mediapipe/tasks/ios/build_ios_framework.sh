@@ -58,7 +58,7 @@ if [[ -z "${DEST_DIR+x}" || "${DEST_DIR}" == ${MPP_ROOT_DIR}* ]]; then
   exit 1
 fi
 
-# get_output_file_path takes one bazel target label as an argument, and prints
+# This function takes one bazel target label as an argument, and prints
 # the path of the first output file of the specified target.
 function get_output_file_path {
   local STARLARK_OUTPUT_TMPDIR="$(mktemp -d)"
@@ -76,7 +76,7 @@ EOF
   echo ${OUTPUT_PATH}
 }
 
-# build_target builds a target using the command passed in as argument and
+# This function builds a target using the command passed in as argument and
 # uses cquery to find the path to the output of the target.
 function build_target {
   # Build using the command passed as argument.
@@ -88,23 +88,30 @@ function build_target {
   echo ${OUTPUT_PATH}
 }
 
-# build_ios_frameworks_and_libraries builds 3 targets:
+# This function builds 3 targets:
 # 1. The ios task library xcframework
-# 2. Fat static library including graphs needed for the xcframework for all simulator archs (x86_64, arm64).
+# 2. Fat static library including graphs needed for tasks in xcframework, for all simulator archs (x86_64, arm64).
 # 2. Static library including graphs needed for the xcframework for all iOS device archs (arm64).
 function build_ios_frameworks_and_libraries {
   local TARGET_PREFIX="//mediapipe/tasks/ios"
   FULL_FRAMEWORK_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_framework"
   FULL_GRAPH_LIBRARY_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_GraphLibrary"
+  
+  # .bazelrc sets --apple_generate_dsym=true by default which bloats the libraries to sizes of the order of GBs.
+  # All iOS framework and library build commands for distribution via CocoaPods must set 
+  # --apple_generate_dsym=false inorder to shave down the binary size to the order of a few MBs.
 
+  # Build Text Task Library xcframework without the graph dependencies.
   local FRAMEWORK_CQUERY_COMMAND="-c opt --define MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} --define MEDIAPIPE_AVOID_LINKING_GRAPHS=1 \
   --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
   IOS_FRAMEWORK_PATH="$(build_target "${FRAMEWORK_CQUERY_COMMAND}")"
 
+  # Build fat static library for text task graphs for simulator archs.
   local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --define MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} \
   --apple_generate_dsym=false ${FULL_GRAPH_LIBRARY_TARGET}"
   IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(build_target "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
-
+  
+  # Build static library for text task graphs for simulator archs.
   local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --define MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} \
   --apple_generate_dsym=false ${FULL_GRAPH_LIBRARY_TARGET}"
   IOS_GRAPHS_DEVICE_LIBRARY_PATH="$(build_target "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
