@@ -21,6 +21,7 @@ from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import packet
+from mediapipe.tasks.cc.vision.image_segmenter.calculators import tensors_to_segmentation_calculator_pb2
 from mediapipe.tasks.cc.vision.image_segmenter.proto import image_segmenter_graph_options_pb2
 from mediapipe.tasks.cc.vision.image_segmenter.proto import segmenter_options_pb2
 from mediapipe.tasks.python.components.containers import rect
@@ -38,6 +39,9 @@ _SegmenterOptionsProto = segmenter_options_pb2.SegmenterOptions
 _ImageSegmenterGraphOptionsProto = (
     image_segmenter_graph_options_pb2.ImageSegmenterGraphOptions
 )
+TensorsToSegmentationCalculatorOptionsProto = (
+    tensors_to_segmentation_calculator_pb2.TensorsToSegmentationCalculatorOptions
+)
 _RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _TaskInfo = task_info_module.TaskInfo
@@ -49,6 +53,7 @@ _IMAGE_OUT_STREAM_NAME = 'image_out'
 _IMAGE_TAG = 'IMAGE'
 _NORM_RECT_STREAM_NAME = 'norm_rect_in'
 _NORM_RECT_TAG = 'NORM_RECT'
+_TENSORS_TO_SEGMENTATION_CALCULATOR_NAME = 'mediapipe.tasks.TensorsToSegmentationCalculator'
 _TASK_GRAPH_NAME = 'mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph'
 _MICRO_SECONDS_PER_MILLISECOND = 1000
 
@@ -130,6 +135,40 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
   An example of such model can be found at:
   https://tfhub.dev/tensorflow/lite-model/deeplabv3/1/metadata/2
   """
+  def __init__(self, graph_config, running_mode, packet_callback):
+    super(ImageSegmenter, self).__init__(
+        graph_config, running_mode, packet_callback
+    )
+    self._populate_labels()
+
+  def _populate_labels(self):
+    """
+    Populate the labelmap in TensorsToSegmentationCalculator to labels field.
+
+    Returns:
+      Exception if there is an error during finding TensorsToSegmentationCalculator.
+    :return:
+    """
+    self.labels = []
+    graph_config = self._runner.get_graph_config()
+    found_tensors_to_segmentation = False
+
+    for node in graph_config.node:
+      if _TENSORS_TO_SEGMENTATION_CALCULATOR_NAME in node.name:
+        if found_tensors_to_segmentation:
+          raise Exception(
+              f"The graph has more than one "
+              f"{_TENSORS_TO_SEGMENTATION_CALCULATOR_NAME}."
+          )
+        found_tensors_to_segmentation = True
+        options = node.options.Extensions[
+            TensorsToSegmentationCalculatorOptionsProto.ext
+        ]
+        if options.label_items:
+          for i in range(len(options.label_items)):
+            if i not in options.label_items:
+              raise Exception(f"The labelmap has no expected key: {i}.")
+            self.labels.append(options.label_items[i].name)
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'ImageSegmenter':
@@ -208,6 +247,30 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
         options.running_mode,
         packets_callback if options.result_callback else None,
     )
+
+  def get_labels(self):
+    """ Get the category label list of the ImageSegmenter can recognize.
+
+    For CATEGORY_MASK type, the index in the category mask corresponds to the
+    category in the label list.
+    For CONFIDENCE_MASK type, the output mask list at index corresponds to the
+    category in the label list.
+
+    If there is no label map provided in the model file, empty label list is
+    returned.
+
+    Returns:
+      If the output_type is CATEGORY_MASK, the returned vector of images is
+      per-category segmented image mask.
+      If the output_type is CONFIDENCE_MASK, the returned vector of images
+      contains only one confidence image mask. A segmentation result object that
+      contains a list of segmentation masks as images.
+
+    Raises:
+      ValueError: If any of the input arguments is invalid.
+      RuntimeError: If image segmentation failed to run.
+    """
+    return self.labels
 
   def segment(
       self,

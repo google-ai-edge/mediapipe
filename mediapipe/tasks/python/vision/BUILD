@@ -71,6 +71,7 @@ py_library(
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/python:packet_creator",
         "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_py_pb2",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_py_pb2",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_py_pb2",
         "//mediapipe/tasks/python/components/containers:rect",

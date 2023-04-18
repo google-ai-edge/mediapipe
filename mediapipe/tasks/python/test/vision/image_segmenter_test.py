@@ -45,6 +45,29 @@ _SEGMENTATION_FILE = 'segmentation_golden_rotation0.png'
 _MASK_MAGNIFICATION_FACTOR = 10
 _MASK_SIMILARITY_THRESHOLD = 0.98
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/vision'
+_EXPECTED_LABELS = [
+    "background",
+    "aeroplane",
+    "bicycle",
+    "bird",
+    "boat",
+    "bottle",
+    "bus",
+    "car",
+    "cat",
+    "chair",
+    "cow",
+    "dining table",
+    "dog",
+    "horse",
+    "motorbike",
+    "person",
+    "potted plant",
+    "sheep",
+    "sofa",
+    "train",
+    "tv"
+]
 
 
 def _similar_to_uint8_mask(actual_mask, expected_mask):
@@ -213,6 +236,16 @@ class ImageSegmenterTest(parameterized.TestCase):
           _similar_to_uint8_mask(category_masks[0], self.test_seg_image),
           f'Number of pixels in the candidate mask differing from that of the '
           f'ground truth mask exceeds {_MASK_SIMILARITY_THRESHOLD}.')
+
+  def test_get_labels_succeeds(self):
+    expected_labels = _EXPECTED_LABELS
+    base_options = _BaseOptions(model_asset_path=self.model_path)
+    options = _ImageSegmenterOptions(
+        base_options=base_options, output_type=_OutputType.CATEGORY_MASK)
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      # Performs image segmentation on the input.
+      actual_labels = segmenter.get_labels()
+      self.assertListEqual(actual_labels, expected_labels)
 
   def test_missing_result_callback(self):
     options = _ImageSegmenterOptions(
