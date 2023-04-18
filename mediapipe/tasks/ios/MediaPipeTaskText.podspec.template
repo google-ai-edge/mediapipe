@@ -1,0 +1,23 @@
+Pod::Spec.new do |s|
+  s.name             = 'MediaPipeTaskText'
+  s.version          = '${MPP_BUILD_VERSION}'
+  s.authors          = 'Google Inc.'
+  s.license          = { :type => 'Apache',:file => "LICENSE" }
+  s.homepage         = 'https://github.com/google/mediapipe'
+  s.source           = { :http => '${MPP_DOWNLOAD_URL}' }
+  s.summary          = 'MediaPipe Task Library - Text'
+  s.description      = 'The Natural Language APIs of the MediaPipe Task Library'
+
+  s.ios.deployment_target = '11.0'
+
+  s.module_name = 'MediaPipeTaskText'
+  s.static_framework = true
+  s.user_target_xcconfig = {
+    'OTHER_LDFLAGS[sdk=iphonesimulator*]' => '$(inherited) -force_load "$(PODS_ROOT)/MediaPipeTaskText/frameworks/graph_libraries/libMediaPipeTaskText_simulator_graph.a"',
+    'OTHER_LDFLAGS[sdk=iphoneos*]' => '$(inherited) -force_load "$(PODS_ROOT)/MediaPipeTaskText/frameworks/graph_libraries/libMediaPipeTaskText_device_graph.a"',
+    'STRIP_INSTALLED_PRODUCT' => 'NO'
+  }
+  s.library = 'c++'
+  s.preserve_paths = 'frameworks/graph_libraries/*.a'
+  s.vendored_frameworks = 'frameworks/MediaPipeTaskText.xcframework'
+end
