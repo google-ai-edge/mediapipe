@@ -258,17 +258,6 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
 
     If there is no label map provided in the model file, empty label list is
     returned.
-
-    Returns:
-      If the output_type is CATEGORY_MASK, the returned vector of images is
-      per-category segmented image mask.
-      If the output_type is CONFIDENCE_MASK, the returned vector of images
-      contains only one confidence image mask. A segmentation result object that
-      contains a list of segmentation masks as images.
-
-    Raises:
-      ValueError: If any of the input arguments is invalid.
-      RuntimeError: If image segmentation failed to run.
     """
     return self.labels
 
