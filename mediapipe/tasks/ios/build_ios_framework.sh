@@ -83,6 +83,10 @@ function build_ios_api_framework {
   FULL_FRAMEWORK_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_framework"
   FULL_GRAPH_LIBRARY_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_GraphLibrary"
 
+  # .bazelrc sets --apple_generate_dsym=true by default which bloats the libraries to sizes 
+  # of the order of GBs. All iOS framework and library build commands for distribution via 
+  # CocoaPods must set --apple_generate_dsym=false inorder to shave down the binary size to 
+  # the order of a few MBs.
   local FRAMEWORK_CQUERY_COMMAND="-c opt --config=darwin_arm64 --apple_generate_dsym=false \
   --define=MEDIAPIPE_DISABLE_GPU=${MEDIAPIPE_DISABLE_GPU} ${FULL_FRAMEWORK_TARGET}"
   
