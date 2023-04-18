@@ -90,8 +90,10 @@ function build_target {
 
 # This function builds 3 targets:
 # 1. The ios task library xcframework
-# 2. Fat static library including graphs needed for tasks in xcframework, for all simulator archs (x86_64, arm64).
-# 2. Static library including graphs needed for the xcframework for all iOS device archs (arm64).
+# 2. Fat static library including graphs needed for tasks in xcframework, for all
+#    simulator archs (x86_64, arm64).
+# 3. Static library including graphs needed for the xcframework for all iOS device 
+#    archs (arm64).
 function build_ios_frameworks_and_libraries {
   local TARGET_PREFIX="//mediapipe/tasks/ios"
   FULL_FRAMEWORK_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_framework"
