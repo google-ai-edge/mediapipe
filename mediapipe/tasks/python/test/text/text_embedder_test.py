@@ -32,6 +32,7 @@ _TextEmbedderOptions = text_embedder.TextEmbedderOptions
 
 _BERT_MODEL_FILE = 'mobilebert_embedding_with_metadata.tflite'
 _REGEX_MODEL_FILE = 'regex_one_embedding_with_metadata.tflite'
+_USE_MODEL_FILE = 'universal_sentence_encoder_qa_with_metadata.tflite'
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/text'
 # Tolerance for embedding vector coordinate values.
 _EPSILON = 1e-4
@@ -138,6 +139,24 @@ class TextEmbedderTest(parameterized.TestCase):
           16,
           (0.549632, 0.552879),
       ),
+      (
+          False,
+          False,
+          _USE_MODEL_FILE,
+          ModelFileType.FILE_NAME,
+          0.851961,
+          100,
+          (1.422951, 1.404664),
+      ),
+      (
+          True,
+          False,
+          _USE_MODEL_FILE,
+          ModelFileType.FILE_CONTENT,
+          0.851961,
+          100,
+          (0.127049, 0.125416),
+      ),
   )
   def test_embed(self, l2_normalize, quantize, model_name, model_file_type,
                  expected_similarity, expected_size, expected_first_values):
@@ -213,6 +232,24 @@ class TextEmbedderTest(parameterized.TestCase):
           16,
           (0.549632, 0.552879),
       ),
+      (
+          False,
+          False,
+          _USE_MODEL_FILE,
+          ModelFileType.FILE_NAME,
+          0.851961,
+          100,
+          (1.422951, 1.404664),
+      ),
+      (
+          True,
+          False,
+          _USE_MODEL_FILE,
+          ModelFileType.FILE_CONTENT,
+          0.851961,
+          100,
+          (0.127049, 0.125416),
+      ),
   )
   def test_embed_in_context(self, l2_normalize, quantize, model_name,
                             model_file_type, expected_similarity, expected_size,
@@ -251,6 +288,7 @@ class TextEmbedderTest(parameterized.TestCase):
   @parameterized.parameters(
       # TODO: The similarity should likely be lower
       (_BERT_MODEL_FILE, 0.980880),
+      (_USE_MODEL_FILE, 0.780334),
   )
   def test_embed_with_different_themes(self, model_file, expected_similarity):
     # Creates embedder.
