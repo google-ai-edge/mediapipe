@@ -151,7 +151,7 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
       Exception if there is an error during finding TensorsToSegmentationCalculator.
     :return:
     """
-    self.labels = []
+    self._labels = []
     graph_config = self._runner.get_graph_config()
     found_tensors_to_segmentation = False
 
@@ -170,7 +170,7 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
           for i in range(len(options.label_items)):
             if i not in options.label_items:
               raise Exception(f"The labelmap has no expected key: {i}.")
-            self.labels.append(options.label_items[i].name)
+            self._labels.append(options.label_items[i].name)
 
   @classmethod
   def create_from_model_path(cls, model_path: str) -> 'ImageSegmenter':
@@ -270,19 +270,6 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
         options.running_mode,
         packets_callback if options.result_callback else None,
     )
-
-  def get_labels(self):
-    """ Get the category label list of the ImageSegmenter can recognize.
-
-    For CATEGORY_MASK type, the index in the category mask corresponds to the
-    category in the label list.
-    For CONFIDENCE_MASK type, the output mask list at index corresponds to the
-    category in the label list.
-
-    If there is no label map provided in the model file, empty label list is
-    returned.
-    """
-    return self.labels
 
   def segment(
       self,
@@ -427,3 +414,17 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
             normalized_rect.to_pb2()
         ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
     })
+
+  @property
+  def labels(self) -> List[str]:
+    """ Get the category label list of the ImageSegmenter can recognize.
+
+    For CATEGORY_MASK type, the index in the category mask corresponds to the
+    category in the label list.
+    For CONFIDENCE_MASK type, the output mask list at index corresponds to the
+    category in the label list.
+
+    If there is no label map provided in the model file, empty label list is
+    returned.
+    """
+    return self._labels

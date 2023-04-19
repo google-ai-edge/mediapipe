@@ -247,14 +247,16 @@ class ImageSegmenterTest(parameterized.TestCase):
           )
       )
 
-  def test_get_labels_succeeds(self):
+  def test_labels_succeeds(self):
     expected_labels = _EXPECTED_LABELS
     base_options = _BaseOptions(model_asset_path=self.model_path)
     options = _ImageSegmenterOptions(
-        base_options=base_options, output_type=_OutputType.CATEGORY_MASK)
+        base_options=base_options, output_category_mask=True,
+        output_confidence_masks=False
+    )
     with _ImageSegmenter.create_from_options(options) as segmenter:
       # Performs image segmentation on the input.
-      actual_labels = segmenter.get_labels()
+      actual_labels = segmenter.labels
       self.assertListEqual(actual_labels, expected_labels)
 
   def test_missing_result_callback(self):
