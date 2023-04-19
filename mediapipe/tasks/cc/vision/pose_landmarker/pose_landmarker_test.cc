@@ -38,7 +38,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/pose_landmarker/pose_landmarker_result.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 #include "util/tuple/dump_vars.h"
 
 namespace mediapipe {
