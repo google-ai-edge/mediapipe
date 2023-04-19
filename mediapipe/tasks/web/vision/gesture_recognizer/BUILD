@@ -34,6 +34,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/core:classifier_options",
         "//mediapipe/tasks/web/vision/core:image_processing_options",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
+        "//mediapipe/tasks/web/vision/hand_landmarker:hand_landmarks_connections",
         "//mediapipe/web/graph_runner:graph_runner_ts",
     ],
 )

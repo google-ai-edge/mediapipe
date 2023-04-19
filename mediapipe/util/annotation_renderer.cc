@@ -56,8 +56,8 @@ bool NormalizedtoPixelCoordinates(double normalized_x, double normalized_y,
     VLOG(1) << "Normalized coordinates must be between 0.0 and 1.0";
   }
 
-  *x_px = static_cast<int32>(round(normalized_x * image_width));
-  *y_px = static_cast<int32>(round(normalized_y * image_height));
+  *x_px = static_cast<int32_t>(round(normalized_x * image_width));
+  *y_px = static_cast<int32_t>(round(normalized_y * image_height));
 
   return true;
 }

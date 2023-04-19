@@ -31,12 +31,13 @@ using EmbeddingResultProto = ::mediapipe::tasks::components::containers::proto::
     [embeddings addObject:[MPPEmbedding embeddingWithProto:embeddingProto]];
   }
 
-  NSInteger timestampMs = 0;
+  NSInteger timestampInMilliseconds = 0;
   if (embeddingResultProto.has_timestamp_ms()) {
-    timestampMs = (NSInteger)embeddingResultProto.timestamp_ms();
+    timestampInMilliseconds = (NSInteger)embeddingResultProto.timestamp_ms();
   }
 
-  return [[MPPEmbeddingResult alloc] initWithEmbeddings:embeddings timestampMs:timestampMs];
+  return [[MPPEmbeddingResult alloc] initWithEmbeddings:embeddings
+                                timestampInMilliseconds:timestampInMilliseconds];
 }
 
 @end

@@ -26,17 +26,6 @@ import {NormalizedKeypoint} from '../../../../tasks/web/components/containers/ke
 export type SegmentationMask = Uint8ClampedArray|Float32Array|WebGLTexture;
 
 /**
- * A callback that receives the computed masks from the segmentation tasks. The
- * callback either receives a single element array with a category mask (as a
- * `[Uint8ClampedArray]`) or multiple confidence masks (as a `Float32Array[]`).
- * The returned data is only valid for the duration of the callback. If
- * asynchronous processing is needed, all data needs to be copied before the
- * callback returns.
- */
-export type SegmentationMaskCallback =
-    (masks: SegmentationMask[], width: number, height: number) => void;
-
-/**
  * A callback that receives an `ImageData` object from a Vision task. The
  * lifetime of the underlying data is limited to the duration of the callback.
  * If asynchronous processing is needed, all data needs to be copied before the

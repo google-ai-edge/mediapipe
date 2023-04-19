@@ -129,10 +129,6 @@ export class FaceStylizer extends VisionTaskRunner {
    * synchronously once the callback returns. Only use this method when the
    * FaceStylizer is created with the image running mode.
    *
-   * The input image can be of any size. To ensure that the output image has
-   * reasonable quality, the stylized output image size is determined by the
-   * model output size.
-   *
    * @param image An image to process.
    * @param callback The callback that is invoked with the stylized image. The
    *    lifetime of the returned data is only guaranteed for the duration of the
@@ -152,11 +148,6 @@ export class FaceStylizer extends VisionTaskRunner {
    *   'regionOfInterest' property. If not specified, the full image is used.
    *  If both are specified, the crop around the region-of-interest is extracted
    *  first, then the specified rotation is applied to the crop.
-   *
-   * The input image can be of any size. To ensure that the output image has
-   * reasonable quality, the stylized output image size is the smaller of the
-   * model output size and the size of the 'regionOfInterest' specified in
-   * 'imageProcessingOptions'.
    *
    * @param image An image to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
@@ -192,9 +183,6 @@ export class FaceStylizer extends VisionTaskRunner {
    * frame's timestamp (in milliseconds). The input timestamps must be
    * monotonically increasing.
    *
-   * To ensure that the output image has reasonable quality, the stylized
-   * output image size is determined by the model output size.
-   *
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @param callback The callback that is invoked with the stylized image. The
@@ -220,10 +208,6 @@ export class FaceStylizer extends VisionTaskRunner {
    * The input frame can be of any size. It's required to provide the video
    * frame's timestamp (in milliseconds). The input timestamps must be
    * monotonically increasing.
-   *
-   * To ensure that the output image has reasonable quality, the stylized
-   * output image size is the smaller of the model output size and the size of
-   * the 'regionOfInterest' specified in 'imageProcessingOptions'.
    *
    * @param videoFrame A video frame to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
@@ -278,8 +262,12 @@ export class FaceStylizer extends VisionTaskRunner {
 
     this.graphRunner.attachImageListener(
         STYLIZED_IMAGE_STREAM, (image, timestamp) => {
-          const imageData = this.convertToImageData(image);
-          this.userCallback(imageData, image.width, image.height);
+          if (image.data instanceof WebGLTexture) {
+            this.userCallback(image.data, image.width, image.height);
+          } else {
+            const imageData = this.convertToImageData(image);
+            this.userCallback(imageData, image.width, image.height);
+          }
           this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachEmptyPacketListener(

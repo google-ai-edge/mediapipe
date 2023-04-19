@@ -19,8 +19,7 @@ limitations under the License.
 #include "absl/memory/memory.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
-#include "mediapipe/calculators/image/image_cropping_calculator.pb.h"
-#include "mediapipe/calculators/image/warp_affine_calculator.pb.h"
+#include "mediapipe/calculators/image/image_clone_calculator.pb.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
 #include "mediapipe/calculators/util/landmarks_to_detection_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
@@ -326,7 +325,6 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
     image_in >> preprocessing.In(kImageTag);
     face_rect >> preprocessing.In(kNormRectTag);
     auto preprocessed_tensors = preprocessing.Out(kTensorsTag);
-    auto transform_matrix = preprocessing.Out(kMatrixTag);
 
     // Adds inference subgraph and connects its input stream to the output
     // tensors produced by the ImageToTensorCalculator.
@@ -344,53 +342,12 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
     model_output_tensors >> tensors_to_image.In(kTensorsTag);
     auto tensor_image = tensors_to_image.Out(kImageTag);
 
-    auto& inverse_matrix = graph.AddNode("InverseMatrixCalculator");
-    transform_matrix >> inverse_matrix.In(kMatrixTag);
-    auto inverse_transform_matrix = inverse_matrix.Out(kMatrixTag);
+    auto& image_converter = graph.AddNode("ImageCloneCalculator");
+    image_converter.GetOptions<mediapipe::ImageCloneCalculatorOptions>()
+        .set_output_on_gpu(false);
+    tensor_image >> image_converter.In("");
 
-    auto& warp_affine = graph.AddNode("WarpAffineCalculator");
-    auto& warp_affine_options =
-        warp_affine.GetOptions<WarpAffineCalculatorOptions>();
-    warp_affine_options.set_border_mode(
-        WarpAffineCalculatorOptions::BORDER_ZERO);
-    warp_affine_options.set_gpu_origin(mediapipe::GpuOrigin_Mode_TOP_LEFT);
-    tensor_image >> warp_affine.In(kImageTag);
-    inverse_transform_matrix >> warp_affine.In(kMatrixTag);
-    image_size >> warp_affine.In(kOutputSizeTag);
-    auto image_to_crop = warp_affine.Out(kImageTag);
-
-    // The following calculators are for cropping and resizing the output image
-    // based on the roi and the model output size. As the WarpAffineCalculator
-    // rotates the image based on the transform matrix, the rotation info in the
-    // rect proto is stripped to prevent the ImageCroppingCalculator from
-    // performing extra rotation.
-    auto& strip_rotation =
-        graph.AddNode("mediapipe.tasks.StripRotationCalculator");
-    face_rect >> strip_rotation.In(kNormRectTag);
-    auto norm_rect_no_rotation = strip_rotation.Out(kNormRectTag);
-    auto& from_image = graph.AddNode("FromImageCalculator");
-    image_to_crop >> from_image.In(kImageTag);
-    auto& image_cropping = graph.AddNode("ImageCroppingCalculator");
-    auto& image_cropping_opts =
-        image_cropping.GetOptions<ImageCroppingCalculatorOptions>();
-    image_cropping_opts.set_output_max_width(
-        image_to_tensor_options.output_tensor_width());
-    image_cropping_opts.set_output_max_height(
-        image_to_tensor_options.output_tensor_height());
-    norm_rect_no_rotation >> image_cropping.In(kNormRectTag);
-    auto& to_image = graph.AddNode("ToImageCalculator");
-    // ImageCroppingCalculator currently doesn't support mediapipe::Image, the
-    // graph selects its cpu or gpu path based on the image preprocessing
-    // backend.
-    if (use_gpu) {
-      from_image.Out(kImageGpuTag) >> image_cropping.In(kImageGpuTag);
-      image_cropping.Out(kImageGpuTag) >> to_image.In(kImageGpuTag);
-    } else {
-      from_image.Out(kImageCpuTag) >> image_cropping.In(kImageTag);
-      image_cropping.Out(kImageTag) >> to_image.In(kImageCpuTag);
-    }
-
-    return {{/*stylized_image=*/to_image.Out(kImageTag).Cast<Image>(),
+    return {{/*stylized_image=*/image_converter.Out("").Cast<Image>(),
              /*original_image=*/preprocessing.Out(kImageTag).Cast<Image>()}};
   }
 };

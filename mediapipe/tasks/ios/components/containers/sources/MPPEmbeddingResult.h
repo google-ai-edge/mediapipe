@@ -33,7 +33,7 @@ NS_SWIFT_NAME(EmbeddingResult)
  * cases, the amount of data to process might exceed the maximum size that the model can process. To
  * solve this, the input data is split into multiple chunks starting at different timestamps.
  */
-@property(nonatomic, readonly) NSInteger timestampMs;
+@property(nonatomic, readonly) NSInteger timestampInMilliseconds;
 
 /**
  * Initializes a new `MPPEmbedding` with the given array of embeddings and timestamp (in
@@ -41,14 +41,14 @@ NS_SWIFT_NAME(EmbeddingResult)
  *
  * @param embeddings An Array of `MPPEmbedding` objects containing the embedding results for each
  * head of the model.
- * @param timestampMs The optional timestamp (in milliseconds) of the start of the chunk of data
- * corresponding to these results. Pass `0` if timestamp is absent.
+ * @param timestampInMilliseconds The optional timestamp (in milliseconds) of the start of the chunk
+ * of data corresponding to these results. Pass `0` if timestamp is absent.
  *
  * @return An instance of `MPPEmbeddingResult` initialized with the given array of embeddings and
- * timestampMs.
+ * timestamp (in milliseconds).
  */
 - (instancetype)initWithEmbeddings:(NSArray<MPPEmbedding *> *)embeddings
-                       timestampMs:(NSInteger)timestampMs NS_DESIGNATED_INITIALIZER;
+           timestampInMilliseconds:(NSInteger)timestampInMilliseconds NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 

@@ -487,7 +487,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
   NSError *liveStreamApiCallError;
   XCTAssertFalse([imageClassifier classifyAsyncImage:image
-                                         timestampMs:0
+                             timestampInMilliseconds:0
                                                error:&liveStreamApiCallError]);
 
   NSError *expectedLiveStreamApiCallError =
@@ -501,7 +501,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   AssertEqualErrors(liveStreamApiCallError, expectedLiveStreamApiCallError);
 
   NSError *videoApiCallError;
-  XCTAssertFalse([imageClassifier classifyVideoFrame:image timestampMs:0 error:&videoApiCallError]);
+  XCTAssertFalse([imageClassifier classifyVideoFrame:image
+                             timestampInMilliseconds:0
+                                               error:&videoApiCallError]);
 
   NSError *expectedVideoApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -524,7 +526,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
   NSError *liveStreamApiCallError;
   XCTAssertFalse([imageClassifier classifyAsyncImage:image
-                                         timestampMs:0
+                             timestampInMilliseconds:0
                                                error:&liveStreamApiCallError]);
 
   NSError *expectedLiveStreamApiCallError =
@@ -575,7 +577,9 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   AssertEqualErrors(imageApiCallError, expectedImageApiCallError);
 
   NSError *videoApiCallError;
-  XCTAssertFalse([imageClassifier classifyVideoFrame:image timestampMs:0 error:&videoApiCallError]);
+  XCTAssertFalse([imageClassifier classifyVideoFrame:image
+                             timestampInMilliseconds:0
+                                               error:&videoApiCallError]);
 
   NSError *expectedVideoApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -601,7 +605,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
   for (int i = 0; i < 3; i++) {
     MPPImageClassifierResult *imageClassifierResult = [imageClassifier classifyVideoFrame:image
-                                                                              timestampMs:i
+                                                                  timestampInMilliseconds:i
                                                                                     error:nil];
     [self assertImageClassifierResult:imageClassifierResult
            hasExpectedCategoriesCount:maxResults
@@ -630,10 +634,10 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
   MPPImage *image = [self imageWithFileInfo:kBurgerImage];
 
-  XCTAssertTrue([imageClassifier classifyAsyncImage:image timestampMs:1 error:nil]);
+  XCTAssertTrue([imageClassifier classifyAsyncImage:image timestampInMilliseconds:1 error:nil]);
 
   NSError *error;
-  XCTAssertFalse([imageClassifier classifyAsyncImage:image timestampMs:0 error:&error]);
+  XCTAssertFalse([imageClassifier classifyAsyncImage:image timestampInMilliseconds:0 error:&error]);
 
   NSError *expectedError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -668,7 +672,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   MPPImage *image = [self imageWithFileInfo:kBurgerImage];
 
   for (int i = 0; i < 3; i++) {
-    XCTAssertTrue([imageClassifier classifyAsyncImage:image timestampMs:i error:nil]);
+    XCTAssertTrue([imageClassifier classifyAsyncImage:image timestampInMilliseconds:i error:nil]);
   }
 }
 

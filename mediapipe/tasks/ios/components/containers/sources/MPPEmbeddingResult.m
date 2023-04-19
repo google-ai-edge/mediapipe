@@ -17,11 +17,11 @@
 @implementation MPPEmbeddingResult
 
 - (instancetype)initWithEmbeddings:(NSArray<MPPEmbedding *> *)embeddings
-                       timestampMs:(NSInteger)timestampMs {
+           timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   self = [super init];
   if (self) {
     _embeddings = embeddings;
-    _timestampMs = timestampMs;
+    _timestampInMilliseconds = timestampInMilliseconds;
   }
 
   return self;

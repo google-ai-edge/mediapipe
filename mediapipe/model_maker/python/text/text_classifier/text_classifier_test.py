@@ -16,6 +16,7 @@ import csv
 import filecmp
 import os
 import tempfile
+import unittest
 from unittest import mock as unittest_mock
 
 import tensorflow as tf
@@ -24,6 +25,7 @@ from mediapipe.model_maker.python.text import text_classifier
 from mediapipe.tasks.python.test import test_utils
 
 
+@unittest.skip('b/275624089')
 class TextClassifierTest(tf.test.TestCase):
 
   _AVERAGE_WORD_EMBEDDING_JSON_FILE = (

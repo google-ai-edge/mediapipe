@@ -157,7 +157,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 }
 
 - (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
-                                           timestampMs:(NSInteger)timestampMs
+                               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                       regionOfInterest:(CGRect)roi
                                                  error:(NSError **)error {
   std::optional<NormalizedRect> rect =
@@ -170,14 +170,15 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
   }
 
   Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image
-                                                            timestampMs:timestampMs
+                                                timestampInMilliseconds:timestampInMilliseconds
                                                                   error:error];
   if (imagePacket.IsEmpty()) {
     return std::nullopt;
   }
 
-  Packet normalizedRectPacket = [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()
-                                                                           timestampMs:timestampMs];
+  Packet normalizedRectPacket =
+      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()
+                                     timestampInMilliseconds:timestampInMilliseconds];
 
   PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
   return inputPacketMap;
@@ -188,11 +189,11 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 }
 
 - (nullable MPPObjectDetectionResult *)detectInVideoFrame:(MPPImage *)image
-                                              timestampMs:(NSInteger)timestampMs
+                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                          regionOfInterest:(CGRect)roi
                                                     error:(NSError **)error {
   std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
-                                                                 timestampMs:timestampMs
+                                                     timestampInMilliseconds:timestampInMilliseconds
                                                             regionOfInterest:roi
                                                                        error:error];
   if (!inputPacketMap.has_value()) {
@@ -212,20 +213,20 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 }
 
 - (nullable MPPObjectDetectionResult *)detectInVideoFrame:(MPPImage *)image
-                                              timestampMs:(NSInteger)timestampMs
+                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                     error:(NSError **)error {
   return [self detectInVideoFrame:image
-                      timestampMs:timestampMs
+          timestampInMilliseconds:timestampInMilliseconds
                  regionOfInterest:CGRectZero
                             error:error];
 }
 
 - (BOOL)detectAsyncInImage:(MPPImage *)image
-               timestampMs:(NSInteger)timestampMs
-          regionOfInterest:(CGRect)roi
-                     error:(NSError **)error {
+    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+           regionOfInterest:(CGRect)roi
+                      error:(NSError **)error {
   std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
-                                                                 timestampMs:timestampMs
+                                                     timestampInMilliseconds:timestampInMilliseconds
                                                             regionOfInterest:roi
                                                                        error:error];
   if (!inputPacketMap.has_value()) {
@@ -236,10 +237,10 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 }
 
 - (BOOL)detectAsyncInImage:(MPPImage *)image
-               timestampMs:(NSInteger)timestampMs
-                     error:(NSError **)error {
+    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                      error:(NSError **)error {
   return [self detectAsyncInImage:image
-                      timestampMs:timestampMs
+          timestampInMilliseconds:timestampInMilliseconds
                  regionOfInterest:CGRectZero
                             error:error];
 }

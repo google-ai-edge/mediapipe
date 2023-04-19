@@ -35,7 +35,7 @@ using ::mediapipe::Packet;
 
   return [[MPPTextClassifierResult alloc]
       initWithClassificationResult:classificationResult
-                       timestampMs:(NSInteger)(packet.Timestamp().Value() /
+           timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
                                                kMicroSecondsPerMilliSecond)];
 }
 

@@ -36,13 +36,13 @@ NS_SWIFT_NAME(ObjectDetectionResult)
  * @param detections An array of `MPPDetection` objects each of which has a bounding box that is
  * expressed in the unrotated input frame of reference coordinates system, i.e. in `[0,image_width)
  * x [0,image_height)`, which are the dimensions of the underlying image data.
- * @param timestampMs The timestamp for this result.
+ * @param timestampInMilliseconds The timestamp (in milliseconds) for this result.
  *
  * @return An instance of `MPPObjectDetectionResult` initialized with the given array of detections
  * and timestamp (in milliseconds).
  */
 - (instancetype)initWithDetections:(NSArray<MPPDetection *> *)detections
-                       timestampMs:(NSInteger)timestampMs;
+           timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 @end
 

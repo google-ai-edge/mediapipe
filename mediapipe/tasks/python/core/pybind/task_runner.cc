@@ -204,6 +204,11 @@ This can be useful for resetting a stateful task graph to process new data.
 Raises:
   RuntimeError: The underlying medipaipe graph fails to reset and restart.
 )doc");
+
+  task_runner.def(
+      "get_graph_config",
+      [](TaskRunner* self) { return self->GetGraphConfig(); },
+      R"doc(Returns the canonicalized CalculatorGraphConfig of the underlying graph.)doc");
 }
 
 }  // namespace python

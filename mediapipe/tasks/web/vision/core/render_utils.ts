@@ -59,13 +59,12 @@ export function drawCategoryMask(
   const isFloatArray = image instanceof Float32Array;
   for (let i = 0; i < image.length; i++) {
     const colorIndex = isFloatArray ? Math.round(image[i] * 255) : image[i];
-    const color = COLOR_MAP[colorIndex];
+    let color = COLOR_MAP[colorIndex % COLOR_MAP.length];
 
-    // When we're given a confidence mask by accident, we just log and return.
-    // TODO: We should fix this.
     if (!color) {
+      // TODO: We should fix this.
       console.warn('No color for ', colorIndex);
-      return;
+      color = COLOR_MAP[colorIndex % COLOR_MAP.length];
     }
 
     rgbaArray[4 * i] = color[0];

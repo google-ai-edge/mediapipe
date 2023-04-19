@@ -38,11 +38,11 @@
 @implementation MPPClassificationResult
 
 - (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications
-                            timestampMs:(NSInteger)timestampMs {
+                timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   self = [super init];
   if (self) {
     _classifications = classifications;
-    _timestampMs = timestampMs;
+    _timestampInMilliseconds = timestampInMilliseconds;
   }
 
   return self;
