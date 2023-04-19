@@ -129,27 +129,28 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
   Output tensors:
     (kTfLiteUInt8/kTfLiteFloat32)
     - list of segmented masks.
-    - if `output_type` is CATEGORY_MASK, uint8 Image, Image vector of size 1.
-    - if `output_type` is CONFIDENCE_MASK, float32 Image list of size
+    - if `output_category_mask` is True, uint8 Image, Image vector of size 1.
+    - if `output_confidence_masks` is True, float32 Image list of size
       `channels`.
     - batch is always 1
 
   An example of such model can be found at:
   https://tfhub.dev/tensorflow/lite-model/deeplabv3/1/metadata/2
   """
-  def __init__(self, graph_config, running_mode, packet_callback):
+  def __init__(self, graph_config, running_mode, packet_callback) -> None:
+    """Initializes the `ImageSegmenter` object."""
     super(ImageSegmenter, self).__init__(
         graph_config, running_mode, packet_callback
     )
     self._populate_labels()
 
-  def _populate_labels(self):
+  def _populate_labels(self) -> None:
     """
     Populate the labelmap in TensorsToSegmentationCalculator to labels field.
 
-    Returns:
-      Exception if there is an error during finding TensorsToSegmentationCalculator.
-    :return:
+    Raises:
+      Exception if there is an error during finding
+      TensorsToSegmentationCalculator.
     """
     self._labels = []
     graph_config = self._runner.get_graph_config()

@@ -247,12 +247,13 @@ class ImageSegmenterTest(parameterized.TestCase):
           )
       )
 
-  def test_labels_succeeds(self):
+  @parameterized.parameters((True, False), (False, True))
+  def test_labels_succeeds(self, output_category_mask, output_confidence_masks):
     expected_labels = _EXPECTED_LABELS
     base_options = _BaseOptions(model_asset_path=self.model_path)
     options = _ImageSegmenterOptions(
-        base_options=base_options, output_category_mask=True,
-        output_confidence_masks=False
+        base_options=base_options, output_category_mask=output_category_mask,
+        output_confidence_masks=output_confidence_masks
     )
     with _ImageSegmenter.create_from_options(options) as segmenter:
       # Performs image segmentation on the input.
