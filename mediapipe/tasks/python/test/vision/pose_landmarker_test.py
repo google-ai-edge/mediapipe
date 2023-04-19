@@ -50,8 +50,7 @@ _POSE_LANDMARKER_BUNDLE_ASSET_FILE = 'pose_landmarker.task'
 _BURGER_IMAGE = 'burger.jpg'
 _POSE_IMAGE = 'pose.jpg'
 _POSE_LANDMARKS = 'pose_landmarks.pbtxt'
-_LANDMARKS_DIFF_MARGIN = 0.03
-_LANDMARKS_ON_VIDEO_DIFF_MARGIN = 0.03
+_LANDMARKS_MARGIN = 0.03
 
 
 def _get_expected_pose_landmarker_result(
@@ -87,10 +86,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
         _POSE_LANDMARKER_BUNDLE_ASSET_FILE)
 
   def _expect_pose_landmarks_correct(
-      self,
-      actual_landmarks: List[List[landmark_module.NormalizedLandmark]],
-      expected_landmarks: List[List[landmark_module.NormalizedLandmark]],
-      diff_margin: float
+      self, actual_landmarks, expected_landmarks, margin
   ):
     # Expects to have the same number of poses detected.
     self.assertLen(actual_landmarks, len(expected_landmarks))
@@ -98,21 +94,21 @@ class PoseLandmarkerTest(parameterized.TestCase):
     for i, _ in enumerate(actual_landmarks):
       for j, elem in enumerate(actual_landmarks[i]):
         self.assertAlmostEqual(
-          elem.x, expected_landmarks[i][j].x, delta=diff_margin
+          elem.x, expected_landmarks[i][j].x, delta=margin
         )
         self.assertAlmostEqual(
-          elem.y, expected_landmarks[i][j].y, delta=diff_margin
+          elem.y, expected_landmarks[i][j].y, delta=margin
         )
 
   def _expect_pose_landmarker_results_correct(
       self,
       actual_result: PoseLandmarkerResult,
       expected_result: PoseLandmarkerResult,
-      diff_margin: float
+      margin: float
   ):
     self._expect_pose_landmarks_correct(
         actual_result.pose_landmarks, expected_result.pose_landmarks,
-        diff_margin
+        margin
     )
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
@@ -170,7 +166,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
 
     # Comparing results.
     self._expect_pose_landmarker_results_correct(
-        detection_result, expected_detection_result, _LANDMARKS_DIFF_MARGIN
+        detection_result, expected_detection_result, _LANDMARKS_MARGIN
     )
     # Closes the pose landmarker explicitly when the pose landmarker is not used
     # in a context.
@@ -201,7 +197,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
 
       # Comparing results.
       self._expect_pose_landmarker_results_correct(
-        detection_result, expected_detection_result, _LANDMARKS_DIFF_MARGIN
+        detection_result, expected_detection_result, _LANDMARKS_MARGIN
       )
 
   def test_detect_fails_with_region_of_interest(self):
@@ -319,7 +315,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
                                              image_processing_options)
         if result.pose_landmarks:
           self._expect_pose_landmarker_results_correct(
-              result, expected_result, _LANDMARKS_ON_VIDEO_DIFF_MARGIN
+              result, expected_result, _LANDMARKS_MARGIN
           )
         else:
           self.assertEqual(result, expected_result)
@@ -373,7 +369,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
                      timestamp_ms: int):
       if result.pose_landmarks:
         self._expect_pose_landmarker_results_correct(
-            result, expected_result, _LANDMARKS_DIFF_MARGIN
+            result, expected_result, _LANDMARKS_MARGIN
         )
       else:
         self.assertEqual(result, expected_result)

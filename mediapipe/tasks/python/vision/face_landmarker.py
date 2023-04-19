@@ -2966,12 +2966,12 @@ class FaceLandmarkerOptions:
 
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
-  num_faces: Optional[int] = 1
-  min_face_detection_confidence: Optional[float] = 0.5
-  min_face_presence_confidence: Optional[float] = 0.5
-  min_tracking_confidence: Optional[float] = 0.5
-  output_face_blendshapes: Optional[bool] = False
-  output_facial_transformation_matrixes: Optional[bool] = False
+  num_faces: int = 1
+  min_face_detection_confidence: float = 0.5
+  min_face_presence_confidence: float = 0.5
+  min_tracking_confidence: float = 0.5
+  output_face_blendshapes: bool = False
+  output_facial_transformation_matrixes: bool = False
   result_callback: Optional[
       Callable[[FaceLandmarkerResult, image_module.Image, int], None]
   ] = None

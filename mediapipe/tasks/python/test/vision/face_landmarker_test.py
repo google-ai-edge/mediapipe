@@ -51,9 +51,9 @@ _PORTRAIT_IMAGE = 'portrait.jpg'
 _CAT_IMAGE = 'cat.jpg'
 _PORTRAIT_EXPECTED_FACE_LANDMARKS = 'portrait_expected_face_landmarks.pbtxt'
 _PORTRAIT_EXPECTED_BLENDSHAPES = 'portrait_expected_blendshapes.pbtxt'
-_LANDMARKS_DIFF_MARGIN = 0.03
-_BLENDSHAPES_DIFF_MARGIN = 0.13
-_FACIAL_TRANSFORMATION_MATRIX_DIFF_MARGIN = 0.02
+_LANDMARKS_MARGIN = 0.03
+_BLENDSHAPES_MARGIN = 0.13
+_FACIAL_TRANSFORMATION_MATRIX_MARGIN = 0.02
 
 
 def _get_expected_face_landmarks(file_path: str):
@@ -126,10 +126,10 @@ class FaceLandmarkerTest(parameterized.TestCase):
     for i, _ in enumerate(actual_landmarks):
       for j, elem in enumerate(actual_landmarks[i]):
         self.assertAlmostEqual(
-            elem.x, expected_landmarks[i][j].x, delta=_LANDMARKS_DIFF_MARGIN
+            elem.x, expected_landmarks[i][j].x, delta=_LANDMARKS_MARGIN
         )
         self.assertAlmostEqual(
-            elem.y, expected_landmarks[i][j].y, delta=_LANDMARKS_DIFF_MARGIN
+            elem.y, expected_landmarks[i][j].y, delta=_LANDMARKS_MARGIN
         )
 
   def _expect_blendshapes_correct(
@@ -144,7 +144,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
         self.assertAlmostEqual(
             elem.score,
             expected_blendshapes[i][j].score,
-            delta=_BLENDSHAPES_DIFF_MARGIN,
+            delta=_BLENDSHAPES_MARGIN,
         )
 
   def _expect_facial_transformation_matrixes_correct(
@@ -158,7 +158,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
       self.assertSequenceAlmostEqual(
           elem.flatten(),
           expected_matrix_list[i].flatten(),
-          delta=_FACIAL_TRANSFORMATION_MATRIX_DIFF_MARGIN,
+          delta=_FACIAL_TRANSFORMATION_MATRIX_MARGIN,
       )
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
