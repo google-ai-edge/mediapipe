@@ -66,7 +66,7 @@ using ::mediapipe::tasks::core::ModelResources;
 using ::mediapipe::tasks::metadata::ModelMetadataExtractor;
 using ::tflite::ProcessUnit;
 using ::tflite::TensorMetadata;
-using LabelItems = mediapipe::proto_ns::Map<int64, ::mediapipe::LabelMapItem>;
+using LabelItems = mediapipe::proto_ns::Map<int64_t, ::mediapipe::LabelMapItem>;
 using TensorsSource = mediapipe::api2::builder::Source<std::vector<Tensor>>;
 
 constexpr float kDefaultScoreThreshold = std::numeric_limits<float>::lowest();
