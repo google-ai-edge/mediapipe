@@ -64,7 +64,7 @@ class PoseLandmarkerResult:
     pose_world_landmarks:  Detected pose landmarks in world coordinates.
     pose_auxiliary_landmarks: Detected auxiliary landmarks, used for deriving
       ROI for next frame.
-    segmentation_masks: Segmentation masks for pose.
+    segmentation_masks: Optional segmentation masks for pose.
   """
 
   pose_landmarks: List[List[landmark_module.NormalizedLandmark]]
@@ -77,7 +77,7 @@ def _build_landmarker_result(
     output_packets: Mapping[str, packet_module.Packet]
 ) -> PoseLandmarkerResult:
   """Constructs a `PoseLandmarkerResult` from output packets."""
-  pose_landmarker_result = PoseLandmarkerResult([], [], [], [])
+  pose_landmarker_result = PoseLandmarkerResult([], [], [])
 
   if _SEGMENTATION_MASK_STREAM_NAME in output_packets:
     pose_landmarker_result.segmentation_masks = packet_getter.get_image_list(
@@ -356,7 +356,7 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
       image_processing_options: Options for image processing.
 
     Returns:
-      The pose landmarks detection results.
+      The pose landmarker detection results.
 
     Raises:
       ValueError: If any of the input arguments is invalid.
@@ -402,7 +402,7 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
     per input image.
 
     The `result_callback` provides:
-      - The pose landmarks detection results.
+      - The pose landmarker detection results.
       - The input image that the pose landmarker runs on.
       - The input timestamp in milliseconds.
 
