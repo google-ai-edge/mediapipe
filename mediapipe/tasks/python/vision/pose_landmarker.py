@@ -137,7 +137,7 @@ class PoseLandmarkerOptions:
   Attributes:
     base_options: Base options for the pose landmarker task.
     running_mode: The running mode of the task. Default to the image mode.
-      HandLandmarker has three running modes: 1) The image mode for detecting
+      PoseLandmarker has three running modes: 1) The image mode for detecting
       pose landmarks on single image inputs. 2) The video mode for detecting
       pose landmarks on the decoded frames of a video. 3) The live stream mode
       for detecting pose landmarks on the live stream of input data, such as
