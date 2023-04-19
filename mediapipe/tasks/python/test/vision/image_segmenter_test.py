@@ -45,6 +45,29 @@ _CAT_MASK = 'cat_mask.jpg'
 _MASK_MAGNIFICATION_FACTOR = 10
 _MASK_SIMILARITY_THRESHOLD = 0.98
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/vision'
+_EXPECTED_LABELS = [
+    'background',
+    'aeroplane',
+    'bicycle',
+    'bird',
+    'boat',
+    'bottle',
+    'bus',
+    'car',
+    'cat',
+    'chair',
+    'cow',
+    'dining table',
+    'dog',
+    'horse',
+    'motorbike',
+    'person',
+    'potted plant',
+    'sheep',
+    'sofa',
+    'train',
+    'tv',
+]
 
 
 def _calculate_soft_iou(m1, m2):
@@ -223,6 +246,20 @@ class ImageSegmenterTest(parameterized.TestCase):
               confidence_masks[8], expected_mask, _MASK_SIMILARITY_THRESHOLD
           )
       )
+
+  @parameterized.parameters((True, False), (False, True))
+  def test_labels_succeeds(self, output_category_mask, output_confidence_masks):
+    expected_labels = _EXPECTED_LABELS
+    base_options = _BaseOptions(model_asset_path=self.model_path)
+    options = _ImageSegmenterOptions(
+        base_options=base_options,
+        output_category_mask=output_category_mask,
+        output_confidence_masks=output_confidence_masks,
+    )
+    with _ImageSegmenter.create_from_options(options) as segmenter:
+      # Performs image segmentation on the input.
+      actual_labels = segmenter.labels
+      self.assertListEqual(actual_labels, expected_labels)
 
   def test_missing_result_callback(self):
     options = _ImageSegmenterOptions(
