@@ -418,7 +418,7 @@ class ImageSegmenter(base_vision_task_api.BaseVisionTaskApi):
 
   @property
   def labels(self) -> List[str]:
-    """ Get the category label list of the ImageSegmenter can recognize.
+    """ Get the category label list the ImageSegmenter can recognize.
 
     For CATEGORY_MASK type, the index in the category mask corresponds to the
     category in the label list.
