@@ -471,7 +471,7 @@ absl::Status AnnotationOverlayCalculator::CreateRenderTargetCpu(
     auto input_mat = formats::MatView(&input_frame);
     if (input_frame.Format() == ImageFormat::GRAY8) {
       cv::Mat rgb_mat;
-      cv::cvtColor(input_mat, rgb_mat, CV_GRAY2RGB);
+      cv::cvtColor(input_mat, rgb_mat, cv::COLOR_GRAY2RGB);
       rgb_mat.copyTo(*image_mat);
     } else {
       input_mat.copyTo(*image_mat);
