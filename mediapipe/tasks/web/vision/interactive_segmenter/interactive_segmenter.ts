@@ -55,7 +55,7 @@ const DEFAULT_OUTPUT_CONFIDENCE_MASKS = true;
  * asynchronous processing is needed, all data needs to be copied before the
  * callback returns.
  */
-export type InteractiveSegmenterCallack =
+export type InteractiveSegmenterCallback =
     (result: InteractiveSegmenterResult) => void;
 
 /**
@@ -202,7 +202,7 @@ export class InteractiveSegmenter extends VisionTaskRunner {
    */
   segment(
       image: ImageSource, roi: RegionOfInterest,
-      callback: InteractiveSegmenterCallack): void;
+      callback: InteractiveSegmenterCallback): void;
   /**
    * Performs interactive segmentation on the provided single image and invokes
    * the callback with the response. The `roi` parameter is used to represent a
@@ -231,12 +231,12 @@ export class InteractiveSegmenter extends VisionTaskRunner {
   segment(
       image: ImageSource, roi: RegionOfInterest,
       imageProcessingOptions: ImageProcessingOptions,
-      callback: InteractiveSegmenterCallack): void;
+      callback: InteractiveSegmenterCallback): void;
   segment(
       image: ImageSource, roi: RegionOfInterest,
       imageProcessingOptionsOrCallback: ImageProcessingOptions|
-      InteractiveSegmenterCallack,
-      callback?: InteractiveSegmenterCallack): void {
+      InteractiveSegmenterCallback,
+      callback?: InteractiveSegmenterCallback): void {
     const imageProcessingOptions =
         typeof imageProcessingOptionsOrCallback !== 'function' ?
         imageProcessingOptionsOrCallback :
