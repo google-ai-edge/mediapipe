@@ -56,7 +56,7 @@ const DEFAULT_OUTPUT_CONFIDENCE_MASKS = true;
  * asynchronous processing is needed, all data needs to be copied before the
  * callback returns.
  */
-export type ImageSegmenterCallack = (result: ImageSegmenterResult) => void;
+export type ImageSegmenterCallback = (result: ImageSegmenterResult) => void;
 
 /** Performs image segmentation on images. */
 export class ImageSegmenter extends VisionTaskRunner {
@@ -208,7 +208,7 @@ export class ImageSegmenter extends VisionTaskRunner {
    *    lifetime of the returned data is only guaranteed for the duration of the
    *    callback.
    */
-  segment(image: ImageSource, callback: ImageSegmenterCallack): void;
+  segment(image: ImageSource, callback: ImageSegmenterCallback): void;
   /**
    * Performs image segmentation on the provided single image and invokes the
    * callback with the response. The method returns synchronously once the
@@ -224,12 +224,12 @@ export class ImageSegmenter extends VisionTaskRunner {
    */
   segment(
       image: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      callback: ImageSegmenterCallack): void;
+      callback: ImageSegmenterCallback): void;
   segment(
       image: ImageSource,
       imageProcessingOptionsOrCallback: ImageProcessingOptions|
-      ImageSegmenterCallack,
-      callback?: ImageSegmenterCallack): void {
+      ImageSegmenterCallback,
+      callback?: ImageSegmenterCallback): void {
     const imageProcessingOptions =
         typeof imageProcessingOptionsOrCallback !== 'function' ?
         imageProcessingOptionsOrCallback :
@@ -258,7 +258,7 @@ export class ImageSegmenter extends VisionTaskRunner {
    */
   segmentForVideo(
       videoFrame: ImageSource, timestamp: number,
-      callback: ImageSegmenterCallack): void;
+      callback: ImageSegmenterCallback): void;
   /**
    * Performs image segmentation on the provided video frame and invokes the
    * callback with the response. The method returns synchronously once the
@@ -275,12 +275,12 @@ export class ImageSegmenter extends VisionTaskRunner {
    */
   segmentForVideo(
       videoFrame: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      timestamp: number, callback: ImageSegmenterCallack): void;
+      timestamp: number, callback: ImageSegmenterCallback): void;
   segmentForVideo(
       videoFrame: ImageSource,
       timestampOrImageProcessingOptions: number|ImageProcessingOptions,
-      timestampOrCallback: number|ImageSegmenterCallack,
-      callback?: ImageSegmenterCallack): void {
+      timestampOrCallback: number|ImageSegmenterCallback,
+      callback?: ImageSegmenterCallback): void {
     const imageProcessingOptions =
         typeof timestampOrImageProcessingOptions !== 'number' ?
         timestampOrImageProcessingOptions :

@@ -67,7 +67,7 @@ constexpr char kPortraitExpectedFaceLandmarksName[] =
     "portrait_expected_face_landmarks.pbtxt";
 constexpr char kPortraitExpectedBlendshapesName[] =
     "portrait_expected_blendshapes.pbtxt";
-constexpr char kPortaitExpectedFaceGeomertyName[] =
+constexpr char kPortraitExpectedFaceGeometryName[] =
     "portrait_expected_face_geometry.pbtxt";
 
 constexpr float kLandmarksDiffMargin = 0.03;
@@ -100,7 +100,7 @@ struct FaceLandmarkerTestParams {
 
 mediapipe::MatrixData MakePortraitExpectedFacialTransformationMatrix() {
   auto face_geometry = GetExpectedProto<face_geometry::proto::FaceGeometry>(
-      kPortaitExpectedFaceGeomertyName);
+      kPortraitExpectedFaceGeometryName);
   return face_geometry.pose_transform_matrix();
 }
 
