@@ -21,6 +21,7 @@
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/util/android/asset_manager_util.h"
 #include "mediapipe/util/android/file/base/helpers.h"
+#include "mediapipe/util/resource_path_manager.h"
 
 namespace mediapipe {
 
@@ -76,6 +77,15 @@ absl::StatusOr<std::string> PathToResourceAsFile(const std::string& path) {
     if (status_or_path.ok()) {
       LOG(INFO) << "Successfully loaded: " << path;
       return status_or_path;
+    }
+  }
+
+  // try to load file in potentially declared resource paths
+  {
+    auto status_or_path = ResourcePathManager::ResolveFilePath(path);
+    if (status_or_path.ok()) {
+        LOG(INFO) << "Successfully loaded: " << path;
+        return status_or_path;
     }
   }
 
