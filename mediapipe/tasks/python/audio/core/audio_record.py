@@ -47,11 +47,11 @@ class AudioRecord(object):
       raise sd_error
 
     if channels <= 0:
-      raise ValueError('channels must be postive.')
+      raise ValueError('channels must be positive.')
     if sampling_rate <= 0:
-      raise ValueError('sampling_rate must be postive.')
+      raise ValueError('sampling_rate must be positive.')
     if buffer_size <= 0:
-      raise ValueError('buffer_size must be postive.')
+      raise ValueError('buffer_size must be positive.')
 
     self._audio_buffer = []
     self._buffer_size = buffer_size
