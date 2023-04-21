@@ -31,6 +31,7 @@ mediapipe_files(srcs = [
     "bert_text_classifier.tflite",
     "mobilebert_embedding_with_metadata.tflite",
     "mobilebert_with_metadata.tflite",
+    "language_detector.tflite",
     "regex_one_embedding_with_metadata.tflite",
     "test_model_text_classifier_bool_output.tflite",
     "test_model_text_classifier_with_regex_tokenizer.tflite",
@@ -76,6 +77,11 @@ filegroup(
         "mobilebert_vocab.txt",
         "mobilebert_with_metadata.tflite",
     ],
+)
+
+filegroup(
+    name = "language_detector_model",
+    srcs = ["language_detector.tflite"],
 )
 
 filegroup(
