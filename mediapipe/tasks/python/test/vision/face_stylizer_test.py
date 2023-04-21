@@ -40,7 +40,6 @@ _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 
 _MODEL = 'face_stylizer.task'
 _LARGE_FACE_IMAGE = "portrait.jpg"
-_SMALL_FACE_IMAGE = "portrait_small.jpg"
 _MODEL_IMAGE_SIZE = 256
 _TEST_DATA_DIR = 'mediapipe/tasks/testdata/vision'
 
@@ -90,7 +89,7 @@ class FaceStylizerTest(parameterized.TestCase):
 
   @parameterized.parameters(
       (ModelFileType.FILE_NAME, _LARGE_FACE_IMAGE),
-      (ModelFileType.FILE_CONTENT, _SMALL_FACE_IMAGE)
+      (ModelFileType.FILE_CONTENT, _LARGE_FACE_IMAGE)
   )
   def test_stylize(self, model_file_type, image_file_name):
     # Load the test image.
@@ -120,7 +119,7 @@ class FaceStylizerTest(parameterized.TestCase):
 
   @parameterized.parameters(
       (ModelFileType.FILE_NAME, _LARGE_FACE_IMAGE),
-      (ModelFileType.FILE_CONTENT, _SMALL_FACE_IMAGE)
+      (ModelFileType.FILE_CONTENT, _LARGE_FACE_IMAGE)
   )
   def test_stylize_in_context(self, model_file_type, image_file_name):
     # Load the test image.
