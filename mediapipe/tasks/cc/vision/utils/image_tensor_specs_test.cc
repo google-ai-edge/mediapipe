@@ -35,7 +35,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
 #include "mediapipe/tasks/metadata/metadata_schema_generated.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -69,7 +69,7 @@ constexpr char kMobileNetMetadata[] =
 constexpr char kMobileNetQuantizedPartialMetadata[] =
     "mobilenet_v1_0.25_224_quant_without_subgraph_metadata.tflite";
 
-class ImageTensorSpecsTest : public tflite_shims::testing::Test {};
+class ImageTensorSpecsTest : public tflite::testing::Test {};
 
 TEST_F(ImageTensorSpecsTest, BuildInputImageTensorSpecsWorks) {
   auto model_file = std::make_unique<core::proto::ExternalFile>();

@@ -40,6 +40,23 @@ mediapipe_ts_library(
 )
 
 mediapipe_ts_library(
+    name = "image",
+    srcs = ["image.ts"],
+)
+
+mediapipe_ts_library(
+    name = "image_test_lib",
+    testonly = True,
+    srcs = ["image.test.ts"],
+    deps = [":image"],
+)
+
+jasmine_node_test(
+    name = "image_test",
+    deps = [":image_test_lib"],
+)
+
+mediapipe_ts_library(
     name = "vision_task_runner",
     srcs = ["vision_task_runner.ts"],
     deps = [

@@ -22,9 +22,9 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "tensorflow/lite/core/shims/c/c_api_types.h"
-#include "tensorflow/lite/core/shims/cc/interpreter.h"
-#include "tensorflow/lite/core/shims/cc/interpreter_builder.h"
+#include "tensorflow/lite/c/c_api_types.h"
+#include "tensorflow/lite/interpreter.h"
+#include "tensorflow/lite/interpreter_builder.h"
 #include "tensorflow/lite/string_util.h"
 
 #define PERFETTO_TRACK_EVENT_NAMESPACE mediapipe
@@ -33,8 +33,8 @@ namespace mediapipe {
 
 namespace {
 
-using Interpreter = ::tflite_shims::Interpreter;
-using InterpreterBuilder = ::tflite_shims::InterpreterBuilder;
+using Interpreter = ::tflite::Interpreter;
+using InterpreterBuilder = ::tflite::InterpreterBuilder;
 
 template <typename T>
 void CopyTensorBufferToInterpreter(const Tensor& input_tensor,

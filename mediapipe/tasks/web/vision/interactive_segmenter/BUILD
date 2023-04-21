@@ -30,7 +30,10 @@ mediapipe_ts_library(
 
 mediapipe_ts_declaration(
     name = "interactive_segmenter_types",
-    srcs = ["interactive_segmenter_options.d.ts"],
+    srcs = [
+        "interactive_segmenter_options.d.ts",
+        "interactive_segmenter_result.d.ts",
+    ],
     deps = [
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:classifier_options",

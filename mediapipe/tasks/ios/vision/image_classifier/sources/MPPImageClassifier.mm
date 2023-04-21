@@ -149,7 +149,7 @@ static NSString *const kTaskGraphName =
 }
 
 - (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
-                                           timestampMs:(NSInteger)timestampMs
+                               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                       regionOfInterest:(CGRect)roi
                                                  error:(NSError **)error {
   std::optional<NormalizedRect> rect =
@@ -162,14 +162,15 @@ static NSString *const kTaskGraphName =
   }
 
   Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image
-                                                            timestampMs:timestampMs
+                                                timestampInMilliseconds:timestampInMilliseconds
                                                                   error:error];
   if (imagePacket.IsEmpty()) {
     return std::nullopt;
   }
 
-  Packet normalizedRectPacket = [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()
-                                                                           timestampMs:timestampMs];
+  Packet normalizedRectPacket =
+      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()
+                                     timestampInMilliseconds:timestampInMilliseconds];
 
   PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
   return inputPacketMap;
@@ -180,11 +181,11 @@ static NSString *const kTaskGraphName =
 }
 
 - (nullable MPPImageClassifierResult *)classifyVideoFrame:(MPPImage *)image
-                                              timestampMs:(NSInteger)timestampMs
+                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                          regionOfInterest:(CGRect)roi
                                                     error:(NSError **)error {
   std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
-                                                                 timestampMs:timestampMs
+                                                     timestampInMilliseconds:timestampInMilliseconds
                                                             regionOfInterest:roi
                                                                        error:error];
   if (!inputPacketMap.has_value()) {
@@ -204,20 +205,20 @@ static NSString *const kTaskGraphName =
 }
 
 - (nullable MPPImageClassifierResult *)classifyVideoFrame:(MPPImage *)image
-                                              timestampMs:(NSInteger)timestampMs
+                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                     error:(NSError **)error {
   return [self classifyVideoFrame:image
-                      timestampMs:timestampMs
+          timestampInMilliseconds:timestampInMilliseconds
                  regionOfInterest:CGRectZero
                             error:error];
 }
 
 - (BOOL)classifyAsyncImage:(MPPImage *)image
-               timestampMs:(NSInteger)timestampMs
-          regionOfInterest:(CGRect)roi
-                     error:(NSError **)error {
+    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+           regionOfInterest:(CGRect)roi
+                      error:(NSError **)error {
   std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
-                                                                 timestampMs:timestampMs
+                                                     timestampInMilliseconds:timestampInMilliseconds
                                                             regionOfInterest:roi
                                                                        error:error];
   if (!inputPacketMap.has_value()) {
@@ -228,10 +229,10 @@ static NSString *const kTaskGraphName =
 }
 
 - (BOOL)classifyAsyncImage:(MPPImage *)image
-               timestampMs:(NSInteger)timestampMs
-                     error:(NSError **)error {
+    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                      error:(NSError **)error {
   return [self classifyAsyncImage:image
-                      timestampMs:timestampMs
+          timestampInMilliseconds:timestampInMilliseconds
                  regionOfInterest:CGRectZero
                             error:error];
 }

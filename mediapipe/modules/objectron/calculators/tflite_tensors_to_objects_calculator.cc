@@ -76,7 +76,7 @@ class TfLiteTensorsToObjectsCalculator : public CalculatorBase {
   // In a single MediaPipe session, the IDs are unique.
   // Also assign timestamp for the FrameAnnotation to be the input packet
   // timestamp.
-  void AssignObjectIdAndTimestamp(int64 timestamp_us,
+  void AssignObjectIdAndTimestamp(int64_t timestamp_us,
                                   FrameAnnotation* annotation);
 
   int num_classes_ = 0;
@@ -207,7 +207,7 @@ void TfLiteTensorsToObjectsCalculator::Project3DTo2D(
 }
 
 void TfLiteTensorsToObjectsCalculator::AssignObjectIdAndTimestamp(
-    int64 timestamp_us, FrameAnnotation* annotation) {
+    int64_t timestamp_us, FrameAnnotation* annotation) {
   for (auto& ann : *annotation->mutable_annotations()) {
     ann.set_object_id(GetNextObjectId());
   }

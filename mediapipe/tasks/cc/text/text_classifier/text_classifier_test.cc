@@ -36,7 +36,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/containers/category.h"
 #include "mediapipe/tasks/cc/components/containers/classification_result.h"
 #include "mediapipe/tasks/cc/text/text_classifier/text_classifier_test_utils.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe::tasks::text::text_classifier {
 namespace {
@@ -87,7 +87,7 @@ void ExpectApproximatelyEqual(const TextClassifierResult& actual,
 
 }  // namespace
 
-class TextClassifierTest : public tflite_shims::testing::Test {};
+class TextClassifierTest : public tflite::testing::Test {};
 
 TEST_F(TextClassifierTest, CreateSucceedsWithBertModel) {
   auto options = std::make_unique<TextClassifierOptions>();

@@ -125,7 +125,7 @@ cc_library_with_tflite(
     srcs = ["tflite_model_loader.cc"],
     hdrs = ["tflite_model_loader.h"],
     tflite_deps = [
-        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
     ],
     visibility = ["//visibility:public"],
     deps = [

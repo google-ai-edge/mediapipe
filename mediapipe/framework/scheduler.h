@@ -310,7 +310,7 @@ class Scheduler {
   absl::Mutex state_mutex_;
 
   // Current state of the scheduler.
-  std::atomic<State> state_ = ATOMIC_VAR_INIT(STATE_NOT_STARTED);
+  std::atomic<State> state_ = STATE_NOT_STARTED;
 
   // True if all graph input streams are closed.
   bool graph_input_streams_closed_ ABSL_GUARDED_BY(state_mutex_) = false;

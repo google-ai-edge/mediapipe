@@ -23,8 +23,8 @@ import {FaceDetectorGraphOptions} from '../../../../tasks/cc/vision/face_detecto
 import {FaceGeometry as FaceGeometryProto} from '../../../../tasks/cc/vision/face_geometry/proto/face_geometry_pb';
 import {FaceLandmarkerGraphOptions} from '../../../../tasks/cc/vision/face_landmarker/proto/face_landmarker_graph_options_pb';
 import {FaceLandmarksDetectorGraphOptions} from '../../../../tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options_pb';
-import {NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
 import {convertFromClassifications} from '../../../../tasks/web/components/processors/classifier_result';
+import {convertToLandmarks} from '../../../../tasks/web/components/processors/landmark_result';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
@@ -243,15 +243,7 @@ export class FaceLandmarker extends VisionTaskRunner {
     for (const binaryProto of data) {
       const faceLandmarksProto =
           NormalizedLandmarkListProto.deserializeBinary(binaryProto);
-      const landmarks: NormalizedLandmark[] = [];
-      for (const faceLandmarkProto of faceLandmarksProto.getLandmarkList()) {
-        landmarks.push({
-          x: faceLandmarkProto.getX() ?? 0,
-          y: faceLandmarkProto.getY() ?? 0,
-          z: faceLandmarkProto.getZ() ?? 0,
-        });
-      }
-      this.result.faceLandmarks.push(landmarks);
+      this.result.faceLandmarks.push(convertToLandmarks(faceLandmarksProto));
     }
   }
 

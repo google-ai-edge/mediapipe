@@ -73,14 +73,12 @@ constexpr int kMicroSecondsPerMilliSecond = 1000;
 // limit the number of frames in flight.
 CalculatorGraphConfig CreateGraphConfig(
     std::unique_ptr<PoseLandmarkerGraphOptionsProto> options,
-    bool enable_flow_limiting) {
+    bool enable_flow_limiting, bool output_segmentation_masks) {
   api2::builder::Graph graph;
   auto& subgraph = graph.AddNode(kPoseLandmarkerGraphTypeName);
   subgraph.GetOptions<PoseLandmarkerGraphOptionsProto>().Swap(options.get());
   graph.In(kImageTag).SetName(kImageInStreamName);
   graph.In(kNormRectTag).SetName(kNormRectStreamName);
-  subgraph.Out(kSegmentationMaskTag).SetName(kSegmentationMaskStreamName) >>
-      graph.Out(kSegmentationMaskTag);
   subgraph.Out(kNormLandmarksTag).SetName(kNormLandmarksStreamName) >>
       graph.Out(kNormLandmarksTag);
   subgraph.Out(kPoseWorldLandmarksTag).SetName(kPoseWorldLandmarksStreamName) >>
@@ -89,6 +87,10 @@ CalculatorGraphConfig CreateGraphConfig(
           .SetName(kPoseAuxiliaryLandmarksStreamName) >>
       graph.Out(kPoseAuxiliaryLandmarksTag);
   subgraph.Out(kImageTag).SetName(kImageOutStreamName) >> graph.Out(kImageTag);
+  if (output_segmentation_masks) {
+    subgraph.Out(kSegmentationMaskTag).SetName(kSegmentationMaskStreamName) >>
+        graph.Out(kSegmentationMaskTag);
+  }
   if (enable_flow_limiting) {
     return tasks::core::AddFlowLimiterCalculator(
         graph, subgraph, {kImageTag, kNormRectTag}, kNormLandmarksTag);
@@ -187,7 +189,8 @@ absl::StatusOr<std::unique_ptr<PoseLandmarker>> PoseLandmarker::Create(
                                           PoseLandmarkerGraphOptionsProto>(
           CreateGraphConfig(
               std::move(options_proto),
-              options->running_mode == core::RunningMode::LIVE_STREAM),
+              options->running_mode == core::RunningMode::LIVE_STREAM,
+              options->output_segmentation_masks),
           std::move(options->base_options.op_resolver), options->running_mode,
           std::move(packets_callback))));
 

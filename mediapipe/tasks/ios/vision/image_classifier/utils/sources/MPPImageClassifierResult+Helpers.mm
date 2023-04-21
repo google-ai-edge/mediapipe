@@ -34,7 +34,7 @@ using ::mediapipe::Packet;
 
   return [[MPPImageClassifierResult alloc]
       initWithClassificationResult:classificationResult
-                       timestampMs:(NSInteger)(packet.Timestamp().Value() /
+           timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
                                                kMicroSecondsPerMilliSecond)];
 }
 

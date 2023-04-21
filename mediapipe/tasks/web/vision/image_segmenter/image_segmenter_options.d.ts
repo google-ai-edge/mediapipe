@@ -24,18 +24,9 @@ export interface ImageSegmenterOptions extends VisionTaskOptions {
    */
   displayNamesLocale?: string|undefined;
 
-  /**
-   * The output type of segmentation results.
-   *
-   * The two supported modes are:
-   * - Category Mask:   Gives a single output mask where each pixel represents
-   *                    the class which the pixel in the original image was
-   *                    predicted to belong to.
-   * - Confidence Mask: Gives a list of output masks (one for each class). For
-   *                    each mask, the pixel represents the prediction
-   *                    confidence, usually in the [0.0, 0.1] range.
-   *
-   * Defaults to `CATEGORY_MASK`.
-   */
-  outputType?: 'CATEGORY_MASK'|'CONFIDENCE_MASK'|undefined;
+  /** Whether to output confidence masks. Defaults to true. */
+  outputConfidenceMasks?: boolean|undefined;
+
+  /** Whether to output the category masks. Defaults to false. */
+  outputCategoryMask?: boolean|undefined;
 }

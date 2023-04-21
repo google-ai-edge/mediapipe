@@ -37,7 +37,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/containers/category.h"
 #include "mediapipe/tasks/cc/components/containers/classification_result.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -157,7 +157,7 @@ void CheckStreamingModeResults(std::vector<AudioClassifierResult> outputs) {
   }
 }
 
-class CreateFromOptionsTest : public tflite_shims::testing::Test {};
+class CreateFromOptionsTest : public tflite::testing::Test {};
 
 TEST_F(CreateFromOptionsTest, SucceedsForModelWithMetadata) {
   auto options = std::make_unique<AudioClassifierOptions>();
@@ -270,7 +270,7 @@ TEST_F(CreateFromOptionsTest, FailsWithUnnecessaryCallback) {
                   MediaPipeTasksStatus::kInvalidTaskGraphConfigError))));
 }
 
-class ClassifyTest : public tflite_shims::testing::Test {};
+class ClassifyTest : public tflite::testing::Test {};
 
 TEST_F(ClassifyTest, Succeeds) {
   auto audio_buffer = GetAudioData(k16kTestWavFilename);
@@ -467,7 +467,7 @@ TEST_F(ClassifyTest, SucceedsWithCategoryDenylist) {
   }
 }
 
-class ClassifyAsyncTest : public tflite_shims::testing::Test {};
+class ClassifyAsyncTest : public tflite::testing::Test {};
 
 TEST_F(ClassifyAsyncTest, Succeeds) {
   constexpr int kSampleRateHz = 48000;

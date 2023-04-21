@@ -37,6 +37,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
 #include "mediapipe/tasks/cc/vision/pose_landmarker/proto/pose_landmarks_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_tensor_specs.h"
+#include "mediapipe/util/graph_builder_utils.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -48,6 +49,7 @@ using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
 using ::mediapipe::api2::builder::Graph;
 using ::mediapipe::api2::builder::Source;
+using ::mediapipe::api2::builder::Stream;
 using ::mediapipe::tasks::core::ModelResources;
 using ::mediapipe::tasks::vision::pose_landmarker::proto::
     PoseLandmarksDetectorGraphOptions;
@@ -89,7 +91,7 @@ struct SinglePoseLandmarkerOutputs {
   Source<NormalizedRect> pose_rect_next_frame;
   Source<bool> pose_presence;
   Source<float> pose_presence_score;
-  Source<Image> segmentation_mask;
+  std::optional<Source<Image>> segmentation_mask;
 };
 
 struct PoseLandmarkerOutputs {
@@ -99,7 +101,7 @@ struct PoseLandmarkerOutputs {
   Source<std::vector<NormalizedRect>> pose_rects_next_frame;
   Source<std::vector<bool>> presences;
   Source<std::vector<float>> presence_scores;
-  Source<std::vector<Image>> segmentation_masks;
+  std::optional<Source<std::vector<Image>>> segmentation_masks;
 };
 
 absl::Status SanityCheckOptions(
@@ -269,16 +271,18 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
+    bool output_segmentation_mask =
+        HasOutput(sc->OriginalNode(), kSegmentationMaskTag);
     ASSIGN_OR_RETURN(
         const auto* model_resources,
         CreateModelResources<PoseLandmarksDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(
-        auto pose_landmark_detection_outs,
-        BuildSinglePoseLandmarksDetectorGraph(
-            sc->Options<PoseLandmarksDetectorGraphOptions>(), *model_resources,
-            graph[Input<Image>(kImageTag)],
-            graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
+    ASSIGN_OR_RETURN(auto pose_landmark_detection_outs,
+                     BuildSinglePoseLandmarksDetectorGraph(
+                         sc->Options<PoseLandmarksDetectorGraphOptions>(),
+                         *model_resources, graph[Input<Image>(kImageTag)],
+                         graph[Input<NormalizedRect>::Optional(kNormRectTag)],
+                         graph, output_segmentation_mask));
     pose_landmark_detection_outs.pose_landmarks >>
         graph[Output<NormalizedLandmarkList>(kLandmarksTag)];
     pose_landmark_detection_outs.world_pose_landmarks >>
@@ -291,8 +295,10 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
         graph[Output<bool>(kPresenceTag)];
     pose_landmark_detection_outs.pose_presence_score >>
         graph[Output<float>(kPresenceScoreTag)];
-    pose_landmark_detection_outs.segmentation_mask >>
-        graph[Output<Image>(kSegmentationMaskTag)];
+    if (pose_landmark_detection_outs.segmentation_mask) {
+      *pose_landmark_detection_outs.segmentation_mask >>
+          graph[Output<Image>(kSegmentationMaskTag)];
+    }
 
     return graph.GetConfig();
   }
@@ -302,7 +308,8 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
   BuildSinglePoseLandmarksDetectorGraph(
       const PoseLandmarksDetectorGraphOptions& subgraph_options,
       const ModelResources& model_resources, Source<Image> image_in,
-      Source<NormalizedRect> pose_rect, Graph& graph) {
+      Source<NormalizedRect> pose_rect, Graph& graph,
+      bool output_segmentation_mask) {
     MP_RETURN_IF_ERROR(SanityCheckOptions(subgraph_options));
 
     auto& preprocessing = graph.AddNode(
@@ -379,17 +386,6 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
 
     auto raw_landmarks =
         tensors_to_landmarks[Output<NormalizedLandmarkList>(kNormLandmarksTag)];
-
-    //  Decodes the segmentation tensor into a mask image with pixel values in
-    //  [0, 1] (1 for person and 0 for background).
-    auto& tensors_to_segmentation =
-        graph.AddNode("TensorsToSegmentationCalculator");
-    ConfigureTensorsToSegmentationCalculator(
-        &tensors_to_segmentation
-             .GetOptions<mediapipe::TensorsToSegmentationCalculatorOptions>());
-    ensured_segmentation_tensors >> tensors_to_segmentation.In(kTensorsTag);
-    auto raw_segmentation_mask =
-        tensors_to_segmentation[Output<Image>(kMaskTag)];
 
     // Refines landmarks with the heatmap tensor.
     auto& refine_landmarks_from_heatmap =
@@ -493,20 +489,34 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto world_projected_landmarks =
         world_landmarks_projection.Out(kLandmarksTag).Cast<LandmarkList>();
 
-    // Calculates the inverse transformation matrix.
-    auto& inverse_matrix = graph.AddNode("InverseMatrixCalculator");
-    matrix >> inverse_matrix.In(kMatrixTag);
-    auto inverted_matrix = inverse_matrix.Out(kMatrixTag);
+    std::optional<Stream<Image>> segmentation_mask;
+    if (output_segmentation_mask) {
+      //  Decodes the segmentation tensor into a mask image with pixel values in
+      //  [0, 1] (1 for person and 0 for background).
+      auto& tensors_to_segmentation =
+          graph.AddNode("TensorsToSegmentationCalculator");
+      ConfigureTensorsToSegmentationCalculator(
+          &tensors_to_segmentation.GetOptions<
+              mediapipe::TensorsToSegmentationCalculatorOptions>());
+      ensured_segmentation_tensors >> tensors_to_segmentation.In(kTensorsTag);
+      auto raw_segmentation_mask =
+          tensors_to_segmentation[Output<Image>(kMaskTag)];
 
-    // Projects the segmentation mask from the letterboxed ROI back to the full
-    // image.
-    auto& warp_affine = graph.AddNode("WarpAffineCalculator");
-    ConfigureWarpAffineCalculator(
-        &warp_affine.GetOptions<mediapipe::WarpAffineCalculatorOptions>());
-    image_size >> warp_affine.In(kOutputSizeTag);
-    inverted_matrix >> warp_affine.In(kMatrixTag);
-    raw_segmentation_mask >> warp_affine.In(kImageTag);
-    auto projected_segmentation_mask = warp_affine.Out(kImageTag).Cast<Image>();
+      // Calculates the inverse transformation matrix.
+      auto& inverse_matrix = graph.AddNode("InverseMatrixCalculator");
+      matrix >> inverse_matrix.In(kMatrixTag);
+      auto inverted_matrix = inverse_matrix.Out(kMatrixTag);
+
+      // Projects the segmentation mask from the letterboxed ROI back to the
+      // full image.
+      auto& warp_affine = graph.AddNode("WarpAffineCalculator");
+      ConfigureWarpAffineCalculator(
+          &warp_affine.GetOptions<mediapipe::WarpAffineCalculatorOptions>());
+      image_size >> warp_affine.In(kOutputSizeTag);
+      inverted_matrix >> warp_affine.In(kMatrixTag);
+      raw_segmentation_mask >> warp_affine.In(kImageTag);
+      segmentation_mask = warp_affine.Out(kImageTag).Cast<Image>();
+    }
 
     // Calculate region of interest based on auxiliary landmarks, to be used
     // in the next frame. Consists of LandmarksToDetection +
@@ -541,7 +551,7 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
         /* pose_rect_next_frame= */ pose_rect_next_frame,
         /* pose_presence= */ pose_presence,
         /* pose_presence_score= */ pose_presence_score,
-        /* segmentation_mask= */ projected_segmentation_mask,
+        /* segmentation_mask= */ segmentation_mask,
     }};
   }
 };
@@ -613,12 +623,15 @@ class MultiplePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     Graph graph;
+    bool output_segmentation_masks =
+        HasOutput(sc->OriginalNode(), kSegmentationMaskTag);
     ASSIGN_OR_RETURN(
         auto pose_landmark_detection_outputs,
         BuildPoseLandmarksDetectorGraph(
             sc->Options<PoseLandmarksDetectorGraphOptions>(),
             graph[Input<Image>(kImageTag)],
-            graph[Input<std::vector<NormalizedRect>>(kNormRectTag)], graph));
+            graph[Input<std::vector<NormalizedRect>>(kNormRectTag)], graph,
+            output_segmentation_masks));
     pose_landmark_detection_outputs.landmark_lists >>
         graph[Output<std::vector<NormalizedLandmarkList>>(kLandmarksTag)];
     pose_landmark_detection_outputs.world_landmark_lists >>
@@ -631,8 +644,10 @@ class MultiplePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
         graph[Output<std::vector<bool>>(kPresenceTag)];
     pose_landmark_detection_outputs.presence_scores >>
         graph[Output<std::vector<float>>(kPresenceScoreTag)];
-    pose_landmark_detection_outputs.segmentation_masks >>
-        graph[Output<std::vector<Image>>(kSegmentationMaskTag)];
+    if (pose_landmark_detection_outputs.segmentation_masks) {
+      *pose_landmark_detection_outputs.segmentation_masks >>
+          graph[Output<std::vector<Image>>(kSegmentationMaskTag)];
+    }
 
     return graph.GetConfig();
   }
@@ -641,7 +656,8 @@ class MultiplePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
   absl::StatusOr<PoseLandmarkerOutputs> BuildPoseLandmarksDetectorGraph(
       const PoseLandmarksDetectorGraphOptions& subgraph_options,
       Source<Image> image_in,
-      Source<std::vector<NormalizedRect>> multi_pose_rects, Graph& graph) {
+      Source<std::vector<NormalizedRect>> multi_pose_rects, Graph& graph,
+      bool output_segmentation_masks) {
     auto& begin_loop_multi_pose_rects =
         graph.AddNode("BeginLoopNormalizedRectCalculator");
     image_in >> begin_loop_multi_pose_rects.In("CLONE");
@@ -664,7 +680,6 @@ class MultiplePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
         pose_landmark_subgraph.Out(kPoseRectNextFrameTag);
     auto presence = pose_landmark_subgraph.Out(kPresenceTag);
     auto presence_score = pose_landmark_subgraph.Out(kPresenceScoreTag);
-    auto segmentation_mask = pose_landmark_subgraph.Out(kSegmentationMaskTag);
 
     auto& end_loop_landmarks =
         graph.AddNode("EndLoopNormalizedLandmarkListVectorCalculator");
@@ -708,11 +723,16 @@ class MultiplePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto presence_scores =
         end_loop_presence_score[Output<std::vector<float>>(kIterableTag)];
 
-    auto& end_loop_segmentation_mask = graph.AddNode("EndLoopImageCalculator");
-    batch_end >> end_loop_segmentation_mask.In(kBatchEndTag);
-    segmentation_mask >> end_loop_segmentation_mask.In(kItemTag);
-    auto segmentation_masks =
-        end_loop_segmentation_mask[Output<std::vector<Image>>(kIterableTag)];
+    std::optional<Stream<std::vector<Image>>> segmentation_masks_vector;
+    if (output_segmentation_masks) {
+      auto segmentation_mask = pose_landmark_subgraph.Out(kSegmentationMaskTag);
+      auto& end_loop_segmentation_mask =
+          graph.AddNode("EndLoopImageCalculator");
+      batch_end >> end_loop_segmentation_mask.In(kBatchEndTag);
+      segmentation_mask >> end_loop_segmentation_mask.In(kItemTag);
+      segmentation_masks_vector =
+          end_loop_segmentation_mask[Output<std::vector<Image>>(kIterableTag)];
+    }
 
     return {{
         /* landmark_lists= */ landmark_lists,
@@ -721,7 +741,7 @@ class MultiplePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
         /* pose_rects_next_frame= */ pose_rects_next_frame,
         /* presences= */ presences,
         /* presence_scores= */ presence_scores,
-        /* segmentation_masks= */ segmentation_masks,
+        /* segmentation_masks= */ segmentation_masks_vector,
     }};
   }
 };

@@ -39,7 +39,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/components/processors/proto/embedding_postprocessing_graph_options.pb.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -86,7 +86,7 @@ absl::StatusOr<std::unique_ptr<ModelResources>> CreateModelResourcesForModel(
                                 std::move(external_file));
 }
 
-class ConfigureTest : public tflite_shims::testing::Test {};
+class ConfigureTest : public tflite::testing::Test {};
 
 TEST_F(ConfigureTest, SucceedsWithQuantizedModelWithMetadata) {
   MP_ASSERT_OK_AND_ASSIGN(
@@ -153,7 +153,7 @@ TEST_F(ConfigureTest, SucceedsWithFloatModelWithMetadata) {
                    has_quantized_outputs: false)pb")));
 }
 
-class PostprocessingTest : public tflite_shims::testing::Test {
+class PostprocessingTest : public tflite::testing::Test {
  protected:
   absl::StatusOr<OutputStreamPoller> BuildGraph(
       absl::string_view model_name, const proto::EmbedderOptions& options,

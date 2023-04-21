@@ -24,9 +24,11 @@ import {HandLandmarkerGraphOptions} from '../../../../tasks/cc/vision/hand_landm
 import {HandLandmarksDetectorGraphOptions} from '../../../../tasks/cc/vision/hand_landmarker/proto/hand_landmarks_detector_graph_options_pb';
 import {Category} from '../../../../tasks/web/components/containers/category';
 import {Landmark, NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
+import {convertToLandmarks, convertToWorldLandmarks} from '../../../../tasks/web/components/processors/landmark_result';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
+import {HAND_CONNECTIONS} from '../../../../tasks/web/vision/hand_landmarker/hand_landmarks_connections';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
 
@@ -62,6 +64,12 @@ export class HandLandmarker extends VisionTaskRunner {
   private readonly handLandmarksDetectorGraphOptions:
       HandLandmarksDetectorGraphOptions;
   private readonly handDetectorGraphOptions: HandDetectorGraphOptions;
+
+  /**
+   * An array containing the pairs of hand landmark indices to be rendered with
+   * connections.
+   */
+  static HAND_CONNECTIONS = HAND_CONNECTIONS;
 
   /**
    * Initializes the Wasm runtime and creates a new `HandLandmarker` from the
@@ -252,15 +260,7 @@ export class HandLandmarker extends VisionTaskRunner {
     for (const binaryProto of data) {
       const handLandmarksProto =
           NormalizedLandmarkList.deserializeBinary(binaryProto);
-      const landmarks: NormalizedLandmark[] = [];
-      for (const handLandmarkProto of handLandmarksProto.getLandmarkList()) {
-        landmarks.push({
-          x: handLandmarkProto.getX() ?? 0,
-          y: handLandmarkProto.getY() ?? 0,
-          z: handLandmarkProto.getZ() ?? 0,
-        });
-      }
-      this.landmarks.push(landmarks);
+      this.landmarks.push(convertToLandmarks(handLandmarksProto));
     }
   }
 
@@ -272,16 +272,8 @@ export class HandLandmarker extends VisionTaskRunner {
     for (const binaryProto of data) {
       const handWorldLandmarksProto =
           LandmarkList.deserializeBinary(binaryProto);
-      const worldLandmarks: Landmark[] = [];
-      for (const handWorldLandmarkProto of
-               handWorldLandmarksProto.getLandmarkList()) {
-        worldLandmarks.push({
-          x: handWorldLandmarkProto.getX() ?? 0,
-          y: handWorldLandmarkProto.getY() ?? 0,
-          z: handWorldLandmarkProto.getZ() ?? 0,
-        });
-      }
-      this.worldLandmarks.push(worldLandmarks);
+      this.worldLandmarks.push(
+          convertToWorldLandmarks(handWorldLandmarksProto));
     }
   }
 

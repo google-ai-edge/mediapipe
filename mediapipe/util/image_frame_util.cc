@@ -89,12 +89,12 @@ void ImageFrameToYUVImage(const ImageFrame& image_frame, YUVImage* yuv_image) {
   const int uv_stride = (uv_width + 15) & ~15;
   const int y_size = y_stride * height;
   const int uv_size = uv_stride * uv_height;
-  uint8* data =
-      reinterpret_cast<uint8*>(aligned_malloc(y_size + uv_size * 2, 16));
+  uint8_t* data =
+      reinterpret_cast<uint8_t*>(aligned_malloc(y_size + uv_size * 2, 16));
   std::function<void()> deallocate = [data]() { aligned_free(data); };
-  uint8* y = data;
-  uint8* u = y + y_size;
-  uint8* v = u + uv_size;
+  uint8_t* y = data;
+  uint8_t* u = y + y_size;
+  uint8_t* v = u + uv_size;
   yuv_image->Initialize(libyuv::FOURCC_I420, deallocate,  //
                         y, y_stride,                      //
                         u, uv_stride,                     //
@@ -123,10 +123,11 @@ void ImageFrameToYUVNV12Image(const ImageFrame& image_frame,
   const int uv_stride = y_stride;
   const int uv_height = (height + 1) / 2;
   const int uv_size = uv_stride * uv_height;
-  uint8* data = reinterpret_cast<uint8*>(aligned_malloc(y_size + uv_size, 16));
+  uint8_t* data =
+      reinterpret_cast<uint8_t*>(aligned_malloc(y_size + uv_size, 16));
   std::function<void()> deallocate = [data] { aligned_free(data); };
-  uint8* y = data;
-  uint8* uv = y + y_size;
+  uint8_t* y = data;
+  uint8_t* uv = y + y_size;
   yuv_nv12_image->Initialize(libyuv::FOURCC_NV12, deallocate, y, y_stride, uv,
                              uv_stride, nullptr, 0, width, height);
   const int rv = libyuv::I420ToNV12(
@@ -210,44 +211,44 @@ void YUVImageToImageFrameFromFormat(const YUVImage& yuv_image,
   }
 }
 
-void SrgbToMpegYCbCr(const uint8 r, const uint8 g, const uint8 b,  //
-                     uint8* y, uint8* cb, uint8* cr) {
+void SrgbToMpegYCbCr(const uint8_t r, const uint8_t g, const uint8_t b,  //
+                     uint8_t* y, uint8_t* cb, uint8_t* cr) {
   // ITU-R BT.601 conversion from sRGB to YCbCr.
   // FastIntRound is used rather than SafeRound since the possible
   // range of values is [16,235] for Y and [16,240] for Cb and Cr and we
   // don't care about the rounding direction for values exactly between
   // two integers.
-  *y = static_cast<uint8>(
+  *y = static_cast<uint8_t>(
       mediapipe::MathUtil::FastIntRound(16.0 +                 //
                                         65.481 * r / 255.0 +   //
                                         128.553 * g / 255.0 +  //
                                         24.966 * b / 255.0));
-  *cb = static_cast<uint8>(
+  *cb = static_cast<uint8_t>(
       mediapipe::MathUtil::FastIntRound(128.0 +                //
                                         -37.797 * r / 255.0 +  //
                                         -74.203 * g / 255.0 +  //
                                         112.0 * b / 255.0));
-  *cr = static_cast<uint8>(
+  *cr = static_cast<uint8_t>(
       mediapipe::MathUtil::FastIntRound(128.0 +                //
                                         112.0 * r / 255.0 +    //
                                         -93.786 * g / 255.0 +  //
                                         -18.214 * b / 255.0));
 }
 
-void MpegYCbCrToSrgb(const uint8 y, const uint8 cb, const uint8 cr,  //
-                     uint8* r, uint8* g, uint8* b) {
+void MpegYCbCrToSrgb(const uint8_t y, const uint8_t cb, const uint8_t cr,  //
+                     uint8_t* r, uint8_t* g, uint8_t* b) {
   // ITU-R BT.601 conversion from YCbCr to sRGB
   // Use SafeRound since many MPEG YCbCr values do not correspond directly
   // to an sRGB value.
-  *r = mediapipe::MathUtil::SafeRound<uint8, double>(  //
-      255.0 / 219.0 * (y - 16.0) +                     //
+  *r = mediapipe::MathUtil::SafeRound<uint8_t, double>(  //
+      255.0 / 219.0 * (y - 16.0) +                       //
       255.0 / 112.0 * 0.701 * (cr - 128.0));
-  *g = mediapipe::MathUtil::SafeRound<uint8, double>(
+  *g = mediapipe::MathUtil::SafeRound<uint8_t, double>(
       255.0 / 219.0 * (y - 16.0) -                            //
       255.0 / 112.0 * 0.886 * 0.114 / 0.587 * (cb - 128.0) -  //
       255.0 / 112.0 * 0.701 * 0.299 / 0.587 * (cr - 128.0));
-  *b = mediapipe::MathUtil::SafeRound<uint8, double>(  //
-      255.0 / 219.0 * (y - 16.0) +                     //
+  *b = mediapipe::MathUtil::SafeRound<uint8_t, double>(  //
+      255.0 / 219.0 * (y - 16.0) +                       //
       255.0 / 112.0 * 0.886 * (cb - 128.0));
 }
 
@@ -260,15 +261,15 @@ void MpegYCbCrToSrgb(const uint8 y, const uint8 cb, const uint8 cr,  //
 
 cv::Mat GetSrgbToLinearRgb16Lut() {
   cv::Mat lut(1, 256, CV_16UC1);
-  uint16* ptr = lut.ptr<uint16>();
+  uint16_t* ptr = lut.ptr<uint16_t>();
   constexpr double kUint8Max = 255.0;
   constexpr double kUint16Max = 65535.0;
   for (int i = 0; i < 256; ++i) {
     if (i < 0.04045 * kUint8Max) {
-      ptr[i] = static_cast<uint16>(
+      ptr[i] = static_cast<uint16_t>(
           (static_cast<double>(i) / kUint8Max / 12.92) * kUint16Max + .5);
     } else {
-      ptr[i] = static_cast<uint16>(
+      ptr[i] = static_cast<uint16_t>(
           pow((static_cast<double>(i) / kUint8Max + 0.055) / 1.055, 2.4) *
               kUint16Max +
           .5);
@@ -279,15 +280,15 @@ cv::Mat GetSrgbToLinearRgb16Lut() {
 
 cv::Mat GetLinearRgb16ToSrgbLut() {
   cv::Mat lut(1, 65536, CV_8UC1);
-  uint8* ptr = lut.ptr<uint8>();
+  uint8_t* ptr = lut.ptr<uint8_t>();
   constexpr double kUint8Max = 255.0;
   constexpr double kUint16Max = 65535.0;
   for (int i = 0; i < 65536; ++i) {
     if (i < 0.0031308 * kUint16Max) {
-      ptr[i] = static_cast<uint8>(
+      ptr[i] = static_cast<uint8_t>(
           (static_cast<double>(i) / kUint16Max * 12.92) * kUint8Max + .5);
     } else {
-      ptr[i] = static_cast<uint8>(
+      ptr[i] = static_cast<uint8_t>(
           (1.055 * pow(static_cast<double>(i) / kUint16Max, 1.0 / 2.4) - .055) *
               kUint8Max +
           .5);
@@ -306,13 +307,13 @@ void LinearRgb16ToSrgb(const cv::Mat& source, cv::Mat* destination) {
   destination->create(source.size(), CV_8UC(source.channels()));
 
   static const cv::Mat kLut = GetLinearRgb16ToSrgbLut();
-  const uint8* lookup_table_ptr = kLut.ptr<uint8>();
+  const uint8_t* lookup_table_ptr = kLut.ptr<uint8_t>();
   const int num_channels = source.channels();
   for (int row = 0; row < source.rows; ++row) {
     for (int col = 0; col < source.cols; ++col) {
       for (int channel = 0; channel < num_channels; ++channel) {
-        uint8* ptr = destination->ptr<uint8>(row);
-        const uint16* ptr16 = source.ptr<uint16>(row);
+        uint8_t* ptr = destination->ptr<uint8_t>(row);
+        const uint16_t* ptr16 = source.ptr<uint16_t>(row);
         ptr[col * num_channels + channel] =
             lookup_table_ptr[ptr16[col * num_channels + channel]];
       }

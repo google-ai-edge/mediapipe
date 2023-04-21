@@ -39,9 +39,9 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter_result.h"
 #include "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
 #include "tensorflow/lite/kernels/builtin_op_kernels.h"
 #include "tensorflow/lite/mutable_op_resolver.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -180,7 +180,7 @@ class DeepLabOpResolver : public ::tflite::MutableOpResolver {
   DeepLabOpResolver(const DeepLabOpResolver& r) = delete;
 };
 
-class CreateFromOptionsTest : public tflite_shims::testing::Test {};
+class CreateFromOptionsTest : public tflite::testing::Test {};
 
 class DeepLabOpResolverMissingOps : public ::tflite::MutableOpResolver {
  public:
@@ -268,7 +268,7 @@ TEST(GetLabelsTest, SucceedsWithLabelsInModel) {
   }
 }
 
-class ImageModeTest : public tflite_shims::testing::Test {};
+class ImageModeTest : public tflite::testing::Test {};
 
 TEST_F(ImageModeTest, SucceedsWithCategoryMask) {
   MP_ASSERT_OK_AND_ASSIGN(
@@ -521,7 +521,7 @@ TEST_F(ImageModeTest, SucceedsHairSegmentation) {
               SimilarToFloatMask(expected_mask_float, kGoldenMaskSimilarity));
 }
 
-class VideoModeTest : public tflite_shims::testing::Test {};
+class VideoModeTest : public tflite::testing::Test {};
 
 TEST_F(VideoModeTest, FailsWithCallingWrongMethod) {
   MP_ASSERT_OK_AND_ASSIGN(
@@ -581,7 +581,7 @@ TEST_F(VideoModeTest, Succeeds) {
   MP_ASSERT_OK(segmenter->Close());
 }
 
-class LiveStreamModeTest : public tflite_shims::testing::Test {};
+class LiveStreamModeTest : public tflite::testing::Test {};
 
 TEST_F(LiveStreamModeTest, FailsWithCallingWrongMethod) {
   MP_ASSERT_OK_AND_ASSIGN(Image image, DecodeImageFromFile(JoinPath(

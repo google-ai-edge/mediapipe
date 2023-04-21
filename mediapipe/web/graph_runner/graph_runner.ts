@@ -14,6 +14,7 @@ import {isWebKit} from '../../web/graph_runner/platform_utils';
  */
 export declare interface FileLocator {
   locateFile: (filename: string) => string;
+  mainScriptUrlOrBlob?: string;
 }
 
 /**
@@ -1222,7 +1223,11 @@ export async function createMediaPipeLib<LibType>(
   // self.Module and a fileLocator, we manually merge them into self.Module and
   // use that. TODO: Remove this when asset scripts are fixed.
   if (self.Module && fileLocator) {
-    (self.Module as FileLocator).locateFile = fileLocator.locateFile;
+    const moduleFileLocator = self.Module as FileLocator;
+    moduleFileLocator.locateFile = fileLocator.locateFile;
+    if (fileLocator.mainScriptUrlOrBlob) {
+      moduleFileLocator.mainScriptUrlOrBlob = fileLocator.mainScriptUrlOrBlob;
+    }
   }
   // TODO: Ensure that fileLocator is passed in by all users
   // and make it required

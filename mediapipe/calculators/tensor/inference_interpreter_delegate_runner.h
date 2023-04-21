@@ -23,8 +23,8 @@
 #include "mediapipe/calculators/tensor/tflite_delegate_ptr.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
+#include "tensorflow/lite/c/c_api_types.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
-#include "tensorflow/lite/core/shims/c/c_api_types.h"
 
 namespace mediapipe {
 

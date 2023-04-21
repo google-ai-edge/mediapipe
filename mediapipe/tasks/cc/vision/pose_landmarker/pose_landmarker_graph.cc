@@ -90,7 +90,7 @@ struct PoseLandmarkerOutputs {
   Source<std::vector<NormalizedLandmarkList>> auxiliary_landmark_lists;
   Source<std::vector<NormalizedRect>> pose_rects_next_frame;
   Source<std::vector<Detection>> pose_detections;
-  Source<std::vector<Image>> segmentation_masks;
+  std::optional<Source<std::vector<Image>>> segmentation_masks;
   Source<Image> image;
 };
 
@@ -183,8 +183,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
 //   input_stream: "IMAGE:image_in"
 //   input_stream: "NORM_RECT:norm_rect"
 //   output_stream: "NORM_LANDMARKS:pose_landmarks"
-//   output_stream: "LANDMARKS:world_landmarks"
-//   output_stream: "NORM_LANDMAKRS:auxiliary_landmarks"
+//   output_stream: "WORLD_LANDMARKS:world_landmarks"
+//   output_stream: "AUXILIARY_LANDMARKS:auxiliary_landmarks"
 //   output_stream: "POSE_RECTS_NEXT_FRAME:pose_rects_next_frame"
 //   output_stream: "POSE_RECTS:pose_rects"
 //   output_stream: "SEGMENTATION_MASK:segmentation_masks"
@@ -212,6 +212,8 @@ class PoseLandmarkerGraph : public core::ModelTaskGraph {
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     Graph graph;
+    bool output_segmentation_masks =
+        HasOutput(sc->OriginalNode(), kSegmentationMaskTag);
     if (sc->Options<PoseLandmarkerGraphOptions>()
             .base_options()
             .has_model_asset()) {
@@ -226,12 +228,12 @@ class PoseLandmarkerGraph : public core::ModelTaskGraph {
           !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
                .IsAvailable()));
     }
-    ASSIGN_OR_RETURN(
-        auto outs,
-        BuildPoseLandmarkerGraph(
-            *sc->MutableOptions<PoseLandmarkerGraphOptions>(),
-            graph[Input<Image>(kImageTag)],
-            graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
+    ASSIGN_OR_RETURN(auto outs,
+                     BuildPoseLandmarkerGraph(
+                         *sc->MutableOptions<PoseLandmarkerGraphOptions>(),
+                         graph[Input<Image>(kImageTag)],
+                         graph[Input<NormalizedRect>::Optional(kNormRectTag)],
+                         graph, output_segmentation_masks));
     outs.landmark_lists >>
         graph[Output<std::vector<NormalizedLandmarkList>>(kNormLandmarksTag)];
     outs.world_landmark_lists >>
@@ -241,11 +243,13 @@ class PoseLandmarkerGraph : public core::ModelTaskGraph {
             kAuxiliaryLandmarksTag)];
     outs.pose_rects_next_frame >>
         graph[Output<std::vector<NormalizedRect>>(kPoseRectsNextFrameTag)];
-    outs.segmentation_masks >>
-        graph[Output<std::vector<Image>>(kSegmentationMaskTag)];
     outs.pose_detections >>
         graph[Output<std::vector<Detection>>(kDetectionsTag)];
     outs.image >> graph[Output<Image>(kImageTag)];
+    if (outs.segmentation_masks) {
+      *outs.segmentation_masks >>
+          graph[Output<std::vector<Image>>(kSegmentationMaskTag)];
+    }
 
     // TODO remove when support is fixed.
     // As mediapipe GraphBuilder currently doesn't support configuring
@@ -272,7 +276,8 @@ class PoseLandmarkerGraph : public core::ModelTaskGraph {
   // graph: the mediapipe graph instance to be updated.
   absl::StatusOr<PoseLandmarkerOutputs> BuildPoseLandmarkerGraph(
       PoseLandmarkerGraphOptions& tasks_options, Source<Image> image_in,
-      Source<NormalizedRect> norm_rect_in, Graph& graph) {
+      Source<NormalizedRect> norm_rect_in, Graph& graph,
+      bool output_segmentation_masks) {
     const int max_num_poses =
         tasks_options.pose_detector_graph_options().num_poses();
 
@@ -307,9 +312,12 @@ class PoseLandmarkerGraph : public core::ModelTaskGraph {
     auto pose_rects_for_next_frame =
         pose_landmarks_detector_graph.Out(kPoseRectsNextFrameTag)
             .Cast<std::vector<NormalizedRect>>();
-    auto segmentation_masks =
-        pose_landmarks_detector_graph.Out(kSegmentationMaskTag)
-            .Cast<std::vector<Image>>();
+    std::optional<Source<std::vector<Image>>> segmentation_masks;
+    if (output_segmentation_masks) {
+      segmentation_masks =
+          pose_landmarks_detector_graph.Out(kSegmentationMaskTag)
+              .Cast<std::vector<Image>>();
+    }
 
     if (tasks_options.base_options().use_stream_mode()) {
       auto& previous_loopback = graph.AddNode("PreviousLoopbackCalculator");

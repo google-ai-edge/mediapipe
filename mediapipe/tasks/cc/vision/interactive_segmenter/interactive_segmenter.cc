@@ -64,7 +64,6 @@ using ::mediapipe::CalculatorGraphConfig;
 using ::mediapipe::Image;
 using ::mediapipe::NormalizedRect;
 using ::mediapipe::tasks::vision::image_segmenter::ImageSegmenterResult;
-using ::mediapipe::tasks::vision::image_segmenter::proto::SegmenterOptions;
 using ImageSegmenterGraphOptionsProto = ::mediapipe::tasks::vision::
     image_segmenter::proto::ImageSegmenterGraphOptions;
 

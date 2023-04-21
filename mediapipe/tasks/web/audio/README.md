@@ -13,7 +13,7 @@ const audio = await FilesetResolver.forAudioTasks(
 const audioClassifier = await AudioClassifier.createFromModelPath(audio,
     "https://storage.googleapis.com/mediapipe-tasks/audio_classifier/yamnet_audio_classifier_with_metadata.tflite"
 );
-const classifications = audioClassifier.classifiy(audioData);
+const classifications = audioClassifier.classify(audioData);
 ```
 
 ## Audio Embedding

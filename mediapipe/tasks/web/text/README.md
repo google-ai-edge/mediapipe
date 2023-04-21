@@ -28,7 +28,7 @@ const text = await FilesetResolver.forTextTasks(
 const textClassifier = await TextClassifier.createFromModelPath(text,
     "https://storage.googleapis.com/mediapipe-tasks/text_classifier/bert_text_classifier.tflite"
 );
-const classifications = textClassifier.classifiy(textData);
+const classifications = textClassifier.classify(textData);
 ```
 
 For more information, refer to the [Text Classification](https://developers.google.com/mediapipe/solutions/text/text_classifier/web_js) documentation.

@@ -64,7 +64,7 @@ std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Create(
   int actual_ws = image_frame.WidthStep();
   int alignment = 0;
   std::unique_ptr<ImageFrame> temp;
-  const uint8* data = image_frame.PixelData();
+  const uint8_t* data = image_frame.PixelData();
 
   // Let's see if the pixel data is tightly aligned to one of the alignments
   // supported by OpenGL, preferring 4 if possible since it's the default.

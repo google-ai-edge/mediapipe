@@ -29,7 +29,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/task_runner.h"
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_blendshapes_graph_options.pb.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -105,7 +105,7 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner() {
       graph.GetConfig(), absl::make_unique<core::MediaPipeBuiltinOpResolver>());
 }
 
-class FaceBlendshapesTest : public tflite_shims::testing::Test {};
+class FaceBlendshapesTest : public tflite::testing::Test {};
 
 TEST_F(FaceBlendshapesTest, SmokeTest) {
   // Prepare graph inputs.

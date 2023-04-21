@@ -32,6 +32,7 @@ FaceDetectorResult = face_detector.FaceDetectorResult
 FaceLandmarker = face_landmarker.FaceLandmarker
 FaceLandmarkerOptions = face_landmarker.FaceLandmarkerOptions
 FaceLandmarkerResult = face_landmarker.FaceLandmarkerResult
+FaceLandmarksConnections = face_landmarker.FaceLandmarksConnections
 FaceStylizer = face_stylizer.FaceStylizer
 FaceStylizerOptions = face_stylizer.FaceStylizerOptions
 GestureRecognizer = gesture_recognizer.GestureRecognizer

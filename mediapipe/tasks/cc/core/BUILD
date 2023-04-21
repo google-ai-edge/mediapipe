@@ -78,6 +78,7 @@ cc_library(
     hdrs = ["mediapipe_builtin_op_resolver.h"],
     deps = [
         "//mediapipe/tasks/cc/text/custom_ops/ragged:ragged_tensor_to_tensor_tflite",
+        "//mediapipe/tasks/cc/text/custom_ops/sentencepiece:sentencepiece_tokenizer_tflite",
         "//mediapipe/tasks/cc/text/language_detector/custom_ops:kmeans_embedding_lookup",
         "//mediapipe/tasks/cc/text/language_detector/custom_ops:ngram_hash",
         "//mediapipe/util/tflite/operations:landmarks_to_transform_matrix",
@@ -128,9 +129,9 @@ cc_library_with_tflite(
     srcs = ["model_resources.cc"],
     hdrs = ["model_resources.h"],
     tflite_deps = [
-        "@org_tensorflow//tensorflow/lite/core/shims:builtin_ops",
-        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
-        "@org_tensorflow//tensorflow/lite/core/shims:verifier",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@org_tensorflow//tensorflow/lite/tools:verifier",
     ],
     deps = [
         ":external_file_handler",
@@ -159,9 +160,9 @@ cc_test_with_tflite(
     ],
     tflite_deps = [
         ":model_resources",
-        "@org_tensorflow//tensorflow/lite/core/shims:cc_shims_test_util",
-        "@org_tensorflow//tensorflow/lite/core/shims:builtin_ops",
-        "@org_tensorflow//tensorflow/lite/core/shims:framework_stable",
+        "@org_tensorflow//tensorflow/lite:framework_stable",
+        "@org_tensorflow//tensorflow/lite:test_util",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
     deps = [
         ":utils",
@@ -186,7 +187,7 @@ cc_library_with_tflite(
     hdrs = ["model_resources_cache.h"],
     tflite_deps = [
         ":model_resources",
-        "@org_tensorflow//tensorflow/lite/core/shims:builtin_ops",
+        "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
     deps = [
         ":model_asset_bundle_resources",
@@ -233,7 +234,7 @@ cc_test_with_tflite(
         ":model_resources",
         ":model_resources_cache",
         ":model_resources_calculator",
-        "@org_tensorflow//tensorflow/lite/core/shims:cc_shims_test_util",
+        "@org_tensorflow//tensorflow/lite:test_util",
     ],
     deps = [
         "//mediapipe/framework/port:gtest_main",
@@ -284,7 +285,7 @@ cc_test_with_tflite(
         ":task_runner",
         ":model_resources",
         ":model_resources_cache",
-        "@org_tensorflow//tensorflow/lite/core/shims:cc_shims_test_util",
+        "@org_tensorflow//tensorflow/lite:test_util",
     ],
     deps = [
         "//mediapipe/calculators/core:pass_through_calculator",
@@ -317,6 +318,9 @@ cc_library(
         ":model_resources",
         ":task_runner",
         ":utils",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework/port:requires",
+        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",

@@ -28,16 +28,12 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_matchers.h"
 
-using mediapipe::Adopt;
 using mediapipe::CalculatorGraphConfig;
 using mediapipe::CalculatorRunner;
 using mediapipe::ImageFormat;
 using mediapipe::ImageFrame;
 using mediapipe::Packet;
 using mediapipe::PacketTypeSet;
-using mediapipe::ParseTextProtoOrDie;
-using mediapipe::Timestamp;
-using mediapipe::autoflip::Border;
 
 namespace mediapipe {
 namespace autoflip {

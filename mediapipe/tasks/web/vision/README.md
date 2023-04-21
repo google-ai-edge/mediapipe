@@ -12,7 +12,7 @@ const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
 );
 const faceDetector = await FaceDetector.createFromModelPath(vision,
-    "https://storage.googleapis.com/mediapipe-tasks/object_detector/efficientdet_lite0_uint8.tflite"
+    "https://storage.googleapis.com/mediapipe-tasks/face_detector/face_detection_short_range.tflite"
 );
 const image = document.getElementById("image") as HTMLImageElement;
 const detections = faceDetector.detect(image);
@@ -29,7 +29,7 @@ const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
 );
 const faceLandmarker = await FaceLandmarker.createFromModelPath(vision,
-    "model.task"
+    "https://storage.googleapis.com/mediapipe-tasks/face_landmarker/face_landmarker.task"
 );
 const image = document.getElementById("image") as HTMLImageElement;
 const landmarks = faceLandmarker.detect(image);
@@ -44,7 +44,7 @@ const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
 );
 const faceStylizer = await FaceStylizer.createFromModelPath(vision,
-    "model.tflite"
+    "https://storage.googleapis.com/mediapipe-tasks/face_stylizer/face_stylizer_with_metadata.tflite"
 );
 const image = document.getElementById("image") as HTMLImageElement;
 const stylizedImage = faceStylizer.stylize(image);
@@ -115,7 +115,7 @@ const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
 );
 const imageSegmenter = await ImageSegmenter.createFromModelPath(vision,
-    "model.tflite"
+    "https://storage.googleapis.com/mediapipe-tasks/image_segmenter/selfie_segmentation.tflite"
 );
 const image = document.getElementById("image") as HTMLImageElement;
 imageSegmenter.segment(image, (masks, width, height) => {
@@ -133,7 +133,8 @@ const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
 );
 const interactiveSegmenter = await InteractiveSegmenter.createFromModelPath(
-    vision, "model.tflite"
+    vision,
+    "https://storage.googleapis.com/mediapipe-tasks/interactive_segmenter/ptm_512_hdt_ptm_woid.tflite
 );
 const image = document.getElementById("image") as HTMLImageElement;
 interactiveSegmenter.segment(image, { keypoint: { x: 0.1, y: 0.2 } },

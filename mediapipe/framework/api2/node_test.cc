@@ -19,8 +19,6 @@ namespace mediapipe {
 namespace api2 {
 namespace test {
 
-using testing::ElementsAre;
-
 // Returns the packet values for a vector of Packets.
 template <typename T>
 std::vector<T> PacketValues(const std::vector<mediapipe::Packet>& packets) {

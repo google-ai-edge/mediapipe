@@ -121,7 +121,7 @@ absl::Status SidePacketToStreamCalculator::GetContract(CalculatorContract* cc) {
   if (cc->Outputs().HasTag(kTagAtTimestamp)) {
     RET_CHECK_EQ(num_entries + 1, cc->InputSidePackets().NumEntries())
         << "For AT_TIMESTAMP tag, 2 input side packets are required.";
-    cc->InputSidePackets().Tag(kTagSideInputTimestamp).Set<int64>();
+    cc->InputSidePackets().Tag(kTagSideInputTimestamp).Set<int64_t>();
   } else {
     RET_CHECK_EQ(num_entries, cc->InputSidePackets().NumEntries())
         << "Same number of input side packets and output streams is required.";
@@ -178,8 +178,8 @@ absl::Status SidePacketToStreamCalculator::Close(CalculatorContext* cc) {
           .AddPacket(cc->InputSidePackets().Index(i).At(timestamp));
     }
   } else if (cc->Outputs().HasTag(kTagAtTimestamp)) {
-    int64 timestamp =
-        cc->InputSidePackets().Tag(kTagSideInputTimestamp).Get<int64>();
+    int64_t timestamp =
+        cc->InputSidePackets().Tag(kTagSideInputTimestamp).Get<int64_t>();
     for (int i = 0; i < cc->Outputs().NumEntries(output_tag_); ++i) {
       cc->Outputs()
           .Get(output_tag_, i)
