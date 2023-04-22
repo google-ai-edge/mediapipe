@@ -67,11 +67,18 @@ py_library(
     name = "loss_functions",
     srcs = ["loss_functions.py"],
     srcs_version = "PY3",
+    deps = [
+        ":file_util",
+        ":model_util",
+    ],
 )
 
 py_test(
     name = "loss_functions_test",
     srcs = ["loss_functions_test.py"],
+    tags = [
+        "requires-net:external",
+    ],
     deps = [":loss_functions"],
 )
 
