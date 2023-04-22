@@ -16,7 +16,7 @@
 import abc
 from typing import Mapping, Sequence
 import dataclasses
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 import tensorflow as tf
@@ -128,6 +128,51 @@ class PerceptualLossWeight:
   l1: float = 1.0
   content: float = 1.0
   style: float = 1.0
+
+
+class ImagePerceptualQualityLoss(tf.keras.losses.Loss):
+  """Image perceptual quality loss.
+
+  It obtains a weighted loss between the VGGPerceptualLoss and L1 loss.
+  """
+
+  def __init__(
+      self,
+      loss_weight: Optional[PerceptualLossWeight] = None,
+      reduction: tf.keras.losses.Reduction = tf.keras.losses.Reduction.NONE,
+  ):
+    """Initializes ImagePerceptualQualityLoss."""
+    self._loss_weight = loss_weight
+    self._losses = {}
+    self._reduction = reduction
+
+  def _l1_loss(
+      self,
+      reduction: tf.keras.losses.Reduction = tf.keras.losses.Reduction.NONE,
+  ) -> Any:
+    """Calculates L1 loss."""
+    return tf.keras.losses.MeanAbsoluteError(reduction)
+
+  def __call__(
+      self,
+      img1: tf.Tensor,
+      img2: tf.Tensor,
+  ) -> tf.Tensor:
+    """Computes image perceptual quality loss."""
+    loss_value = []
+    if self._loss_weight is None:
+      self._loss_weight = PerceptualLossWeight()
+
+    if self._loss_weight.content > 0 or self._loss_weight.style > 0:
+      vgg_loss = VGGPerceptualLoss(self._loss_weight)(img1, img2)
+      vgg_loss_value = tf.math.add_n(vgg_loss.values())
+      loss_value.append(vgg_loss_value)
+    if self._loss_weight.l1 > 0:
+      l1_loss = self._l1_loss(reduction=self._reduction)(img1, img2)
+      l1_loss_value = tf_utils.safe_mean(l1_loss * self._loss_weight.l1)
+      loss_value.append(l1_loss_value)
+    total_loss = tf.math.add_n(loss_value)
+    return total_loss
 
 
 class PerceptualLoss(tf.keras.Model, metaclass=abc.ABCMeta):

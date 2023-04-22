@@ -278,5 +278,51 @@ class VGGPerceptualLossTest(tf.test.TestCase, parameterized.TestCase):
     )
 
 
+class ImagePerceptualQualityLossTest(tf.test.TestCase, parameterized.TestCase):
+
+  def setUp(self):
+    super().setUp()
+    # Mock tempfile.gettempdir() to be unique for each test to avoid race
+    # condition when downloading model since these tests may run in parallel.
+    mock_gettempdir = unittest_mock.patch.object(
+        tempfile,
+        'gettempdir',
+        return_value=self.create_tempdir(),
+        autospec=True,
+    )
+    self.mock_gettempdir = mock_gettempdir.start()
+    self.addCleanup(mock_gettempdir.stop)
+    self._img1 = tf.fill(dims=(1, 256, 256, 3), value=0.1)
+    self._img2 = tf.fill(dims=(1, 256, 256, 3), value=0.9)
+
+  @parameterized.named_parameters(
+      dict(
+          testcase_name='default_loss_weight',
+          loss_weight=None,
+          loss_value=2.501612,
+      ),
+      dict(
+          testcase_name='customized_loss_weight_zero_l1',
+          loss_weight=loss_functions.PerceptualLossWeight(
+              l1=0.0, style=10.0, content=20.0
+          ),
+          loss_value=34.032139,
+      ),
+      dict(
+          testcase_name='customized_loss_weight_nonzero_l1',
+          loss_weight=loss_functions.PerceptualLossWeight(
+              l1=10.0, style=10.0, content=20.0
+          ),
+          loss_value=42.032139,
+      ),
+  )
+  def test_image_perceptual_quality_loss(self, loss_weight, loss_value):
+    image_quality_loss = loss_functions.ImagePerceptualQualityLoss(
+        loss_weight=loss_weight
+    )
+    loss = image_quality_loss(img1=self._img1, img2=self._img2)
+    self.assertNear(loss, loss_value, 1e-4)
+
+
 if __name__ == '__main__':
   tf.test.main()
