@@ -27,6 +27,7 @@ import {ImageEmbedder as ImageEmbedderImpl} from '../../../tasks/web/vision/imag
 import {ImageSegmenter as ImageSegementerImpl} from '../../../tasks/web/vision/image_segmenter/image_segmenter';
 import {InteractiveSegmenter as InteractiveSegmenterImpl} from '../../../tasks/web/vision/interactive_segmenter/interactive_segmenter';
 import {ObjectDetector as ObjectDetectorImpl} from '../../../tasks/web/vision/object_detector/object_detector';
+import {PoseLandmarker as PoseLandmarkerImpl} from '../../../tasks/web/vision/pose_landmarker/pose_landmarker';
 
 // Declare the variables locally so that Rollup in OSS includes them explicitly
 // as exports.
@@ -44,6 +45,7 @@ const ImageEmbedder = ImageEmbedderImpl;
 const ImageSegmenter = ImageSegementerImpl;
 const InteractiveSegmenter = InteractiveSegmenterImpl;
 const ObjectDetector = ObjectDetectorImpl;
+const PoseLandmarker = PoseLandmarkerImpl;
 
 export {
   DrawingUtils,
@@ -59,5 +61,6 @@ export {
   ImageEmbedder,
   ImageSegmenter,
   InteractiveSegmenter,
-  ObjectDetector
+  ObjectDetector,
+  PoseLandmarker
 };

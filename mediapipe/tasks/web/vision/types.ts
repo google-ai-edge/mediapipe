@@ -27,3 +27,4 @@ export * from '../../../tasks/web/vision/image_embedder/image_embedder';
 export * from '../../../tasks/web/vision/image_segmenter/image_segmenter';
 export * from '../../../tasks/web/vision/interactive_segmenter/interactive_segmenter';
 export * from '../../../tasks/web/vision/object_detector/object_detector';
+export * from '../../../tasks/web/vision/pose_landmarker/pose_landmarker';
