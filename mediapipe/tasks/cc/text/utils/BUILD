@@ -25,6 +25,7 @@ cc_library(
         "vocab_utils.h",
     ],
     deps = [
+        "//mediapipe/util:resource_util",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/strings",
     ],
