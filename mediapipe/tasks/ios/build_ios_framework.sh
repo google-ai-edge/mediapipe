@@ -32,7 +32,9 @@ fi
 BAZEL="${BAZEL:-$(which bazel)}"
 MPP_BUILD_VERSION=${MPP_BUILD_VERSION:-0.0.1-dev}
 MPP_ROOT_DIR=$(git rev-parse --show-toplevel)
-MPP_DISABLE_GPU=1
+ARCHIVE_FRAMEWORK=true
+IS_RELEASE_BUILD=false
+DEST_DIR=$HOME
 
 if [[ ! -x "${BAZEL}" ]]; then
   echo "bazel executable is not found."
@@ -88,12 +90,8 @@ function build_target {
   echo ${OUTPUT_PATH}
 }
 
-# This function builds 3 targets:
-# 1. The ios task library xcframework
-# 2. Fat static library including graphs needed for tasks in xcframework, for all
-#    simulator archs (x86_64, arm64).
-# 3. Static library including graphs needed for the xcframework for all iOS device 
-#    archs (arm64).
+# This function builds 3 the xcframework and associated graph libraries if any
+# for a given framework name.
 function build_ios_frameworks_and_libraries {
   local TARGET_PREFIX="//mediapipe/tasks/ios"
   FULL_FRAMEWORK_TARGET="${TARGET_PREFIX}:${FRAMEWORK_NAME}_framework"
@@ -104,21 +102,26 @@ function build_ios_frameworks_and_libraries {
   # CocoaPods must set --apple_generate_dsym=false inorder to shave down the binary size to 
   # the order of a few MBs.
 
-  # Build Text Task Library xcframework without the graph dependencies.
-  local FRAMEWORK_CQUERY_COMMAND="-c opt --define MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} \
-  --define MEDIAPIPE_AVOID_LINKING_GRAPHS=1 --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
+  # Build Task Library xcframework.
+  local FRAMEWORK_CQUERY_COMMAND="-c opt --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
   IOS_FRAMEWORK_PATH="$(build_target "${FRAMEWORK_CQUERY_COMMAND}")"
 
-  # Build fat static library for text task graphs for simulator archs.
-  local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --define \
-  MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} --apple_generate_dsym=false ${FULL_GRAPH_LIBRARY_TARGET}"
-  IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(build_target "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
+  # `MediaPipeTaskCommonObjects`` pods must also include the task graph libraries which
+  # are to be force loaded. Hence the graph libraies are only built if the framework
+  # name is `MediaPipeTaskCommonObjects`.`
+  case $FRAMEWORK_NAME in
+    "MediaPipeTaskCommonObjects")
+      local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --apple_generate_dsym=false //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
+      IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(build_target "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
   
-  # Build static library for iOS devices with arch ios_arm64. We don't need to build for armv7 since 
-  # our deployment target is iOS 11.0. iOS 11.0 d anupwards is not supported by old armv7 devices.
-  local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --define \
-  MEDIAPIPE_DISABLE_GPU=${MPP_DISABLE_GPU} --apple_generate_dsym=false ${FULL_GRAPH_LIBRARY_TARGET}"
-  IOS_GRAPHS_DEVICE_LIBRARY_PATH="$(build_target "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
+      # Build static library for iOS devices with arch ios_arm64. We don't need to build for armv7 since 
+      # our deployment target is iOS 11.0. iOS 11.0 and upwards is not supported by old armv7 devices.
+      local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --apple_generate_dsym=false //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
+      IOS_GRAPHS_DEVICE_LIBRARY_PATH="$(build_target "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
+      ;;
+  *)
+  ;;
+  esac
 }
 
 function create_framework_archive {
@@ -137,6 +140,13 @@ function create_framework_archive {
 
   echo ${IOS_FRAMEWORK_PATH}
   unzip "${IOS_FRAMEWORK_PATH}" -d "${FRAMEWORKS_DIR}"
+
+  # If the framwork being built is `MediaPipeTaskCommonObjects`, the built graph
+  # libraries should be copied to the output directory which is to be archived. 
+  case $FRAMEWORK_NAME in
+    "MediaPipeTaskCommonObjects")
+      
+      local GRAPH_LIBRARIES_DIR="graph_libraries"
   
   local GRAPH_LIBRARIES_DIR="graph_libraries"
   
