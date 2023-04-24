@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  s.name             = 'MediaPipeTaskCommonObjects'
+  s.name             = 'MediaPipeTaskCommon'
   s.version          = '${MPP_BUILD_VERSION}'
   s.authors          = 'Google Inc.'
   s.license          = { :type => 'Apache',:file => "LICENSE" }
@@ -10,11 +10,11 @@ Pod::Spec.new do |s|
 
   s.ios.deployment_target = '11.0'
 
-  s.module_name = 'MediaPipeTaskCommonObjects'
+  s.module_name = 'MediaPipeTaskCommon'
   s.static_framework = true
   s.user_target_xcconfig = {
-    'OTHER_LDFLAGS[sdk=iphonesimulator*]' => '$(inherited) -force_load "${PODS_ROOT}/MediaPipeTaskCommonObjects/frameworks/graph_libraries/libMediaPipeTaskCommonObjects_simulator_graph.a"',
-    'OTHER_LDFLAGS[sdk=iphoneos*]' => '$(inherited) -force_load "$(PODS_ROOT)/MediaPipeTaskCommonObjects/frameworks/graph_libraries/libMediaPipeTaskCommonObjects_device_graph.a"',
+    'OTHER_LDFLAGS[sdk=iphonesimulator*]' => '$(inherited) -force_load "${PODS_ROOT}/MediaPipeTaskCommon/frameworks/graph_libraries/libMediaPipeTaskCommon_simulator_graph.a"',
+    'OTHER_LDFLAGS[sdk=iphoneos*]' => '$(inherited) -force_load "$(PODS_ROOT)/MediaPipeTaskCommon/frameworks/graph_libraries/libMediaPipeTaskCommon_device_graph.a"',
   }
   s.frameworks = 'Accelerate', 'CoreMedia', 'AssetsLibrary', 'CoreFoundation', 'CoreGraphics', 'CoreImage', 'QuartzCore', 'AVFoundation', 'CoreVideo'
   s.preserve_paths ='frameworks/graph_libraries/*.a'

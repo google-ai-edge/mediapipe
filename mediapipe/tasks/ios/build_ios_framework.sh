@@ -16,7 +16,7 @@
 # Set the following variables as appropriate.
 #   * BAZEL: path to bazel. defaults to the first one available in PATH
 #   * FRAMEWORK_NAME: name of the iOS framework to be built. Currently the
-#   * accepted values are MediaPipeTaskText.
+#   * accepted values are MediaPipeTaskCommon, MediaPipeTaskText, MediaPipeTaskVision.
 #   * MPP_BUILD_VERSION: to specify the release version. defaults to 0.0.1-dev
 #   * IS_RELEASE_BUILD: set as true if this build should be a release build
 #   * ARCHIVE_FRAMEWORK: set as true if the framework should be archived
@@ -106,11 +106,11 @@ function build_ios_frameworks_and_libraries {
   local FRAMEWORK_CQUERY_COMMAND="-c opt --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
   IOS_FRAMEWORK_PATH="$(build_target "${FRAMEWORK_CQUERY_COMMAND}")"
 
-  # `MediaPipeTaskCommonObjects`` pods must also include the task graph libraries which
+  # `MediaPipeTaskCommon`` pods must also include the task graph libraries which
   # are to be force loaded. Hence the graph libraies are only built if the framework
-  # name is `MediaPipeTaskCommonObjects`.`
+  # name is `MediaPipeTaskCommon`.`
   case $FRAMEWORK_NAME in
-    "MediaPipeTaskCommonObjects")
+    "MediaPipeTaskCommon")
       local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --apple_generate_dsym=false //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
       IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(build_target "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
   
@@ -141,10 +141,10 @@ function create_framework_archive {
   echo ${IOS_FRAMEWORK_PATH}
   unzip "${IOS_FRAMEWORK_PATH}" -d "${FRAMEWORKS_DIR}"
 
-  # If the framwork being built is `MediaPipeTaskCommonObjects`, the built graph
+  # If the framwork being built is `MediaPipeTaskCommon`, the built graph
   # libraries should be copied to the output directory which is to be archived. 
   case $FRAMEWORK_NAME in
-    "MediaPipeTaskCommonObjects")
+    "MediaPipeTaskCommon")
       
       local GRAPH_LIBRARIES_DIR="graph_libraries"
   

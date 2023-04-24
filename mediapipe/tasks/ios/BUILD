@@ -33,7 +33,7 @@ licenses(["notice"])
 # frameworks but are avoided from the framework binaries to avoid duplicate symbols
 # error when included in an xcode project:
 # 1. iOS classes shared amongst the various vision and text tasks. These classes
-# will be built with ":MediaPipeTaskCommonObjects_framework"
+# will be built with ":MediaPipeTaskCommon_framework"
 # 2. Task graphs. These will be built with ":MediaPipeTaskGraphs_library".
 # 3. gpu targets which will be built with the ":MediaPipeTaskGraphs_library".
 OBJC_COMMON_DEPS = [
@@ -102,7 +102,7 @@ apple_static_xcframework(
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
         "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedder",
     ],
-    # avoid dependencies of ":MediaPipeCommonObjects_framework" and 
+    # avoid dependencies of ":MediaPipeCommon_framework" and 
     # ":MediaPipeTaskGraphs_library in order to prevent duplicate symbols error 
     # when the frameworks are imported in iOS projects.
     avoid_deps = OBJC_COMMON_DEPS
@@ -139,7 +139,7 @@ apple_static_xcframework(
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
         "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
     ],
-    # Avoids dependencies of ":MediaPipeCommonObjects_framework" and 
+    # Avoids dependencies of ":MediaPipeCommon_framework" and 
     # ":MediaPipeTaskGraphs_library in order to prevent duplicate symbols error 
     # when the frameworks are imported in iOS projects.
     # Also avoids opencv since it will be built with 
@@ -171,7 +171,7 @@ apple_static_library(
 )
 
 apple_static_xcframework(
-    name = "MediaPipeTaskCommonObjects_framework",
+    name = "MediaPipeTaskCommon_framework",
     bundle_name = "MediaPipeTaskCommon",
     ios = {
         "simulator" : ["arm64", "x86_64"],
