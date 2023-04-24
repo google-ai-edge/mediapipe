@@ -27,13 +27,30 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
-config_setting(
-    name = "avoid_linking_graphs",
-    define_values = {
-        "MEDIAPIPE_AVOID_LINKING_GRAPHS": "1",
-    },
-    visibility = ["//visibility:public"],
-)
+# list of targets to be added in avoid_deps of ":MediaPipeTaskVision_framework"
+# and ":MediaPipeTaskText_framework". 
+# The transitive closure of the following targets are used for building the 
+# frameworks but are avoided from the framework binaries to avoid duplicate symbols
+# error when included in an xcode project:
+# 1. iOS classes shared amongst the various vision and text tasks. These classes
+# will be built with ":MediaPipeTaskCommonObjects_framework"
+# 2. Task graphs. These will be built with ":MediaPipeTaskGraphs_library".
+# 3. gpu targets which will be built with the ":MediaPipeTaskGraphs_library".
+OBJC_COMMON_DEPS = [
+    "//mediapipe/tasks/ios/core:MPPBaseOptions",
+    "//mediapipe/tasks/ios/core:MPPTaskInfo",
+    "//mediapipe/tasks/ios/core:MPPTaskOptions",
+    "//mediapipe/tasks/ios/core:MPPTaskResult",
+    "//mediapipe/tasks/ios/core:MPPTaskRunner",
+    "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+    "//mediapipe/tasks/ios/components/containers:MPPCategory",
+    "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+    "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
+    "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
+    "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
+    "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
+    "//mediapipe/gpu:metal_shared_resources",
+]
 
 strip_api_include_path_prefix(
     name = "strip_api_include_path",
@@ -84,17 +101,99 @@ apple_static_xcframework(
     deps = [
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
         "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedder",
-        "@org_tensorflow//third_party/icu/data:conversion_data",
+    ],
+    # avoid dependencies of ":MediaPipeCommonObjects_framework" and 
+    # ":MediaPipeTaskGraphs_library in order to prevent duplicate symbols error 
+    # when the frameworks are imported in iOS projects.
+    avoid_deps = OBJC_COMMON_DEPS
+)
+
+apple_static_xcframework(
+    name = "MediaPipeTaskVision_framework",
+    public_hdrs = [
+        ":MPPBaseOptions.h",
+        ":MPPCategory.h",
+        ":MPPClassificationResult.h",
+        ":MPPDetection.h",
+        ":MPPCommon.h",
+        ":MPPTaskOptions.h",
+        ":MPPTaskResult.h",
+        ":MPPImage.h",
+        ":MPPRunningMode.h",
+        ":MPPImageClassifier.h",
+        ":MPPImageClassifierOptions.h",
+        ":MPPImageClassifierResult.h",
+        ":MPPObjectDetector.h",
+        ":MPPObjectDetectorOptions.h",
+        ":MPPObjectDetectionResult.h",
+    ],
+    bundle_name = "MediaPipeTaskVision",
+    ios = {
+        "simulator" : ["arm64", "x86_64"],
+        "device" : ["arm64"],
+    },
+    minimum_os_versions = {
+        "ios": MPP_TASK_MINIMUM_OS_VERSION,
+    },
+    deps = [
+        "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
+        "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
+    ],
+    # Avoids dependencies of ":MediaPipeCommonObjects_framework" and 
+    # ":MediaPipeTaskGraphs_library in order to prevent duplicate symbols error 
+    # when the frameworks are imported in iOS projects.
+    # Also avoids opencv since it will be built with 
+    # ":MediaPipeTaskGraphs_library".
+    avoid_deps = OBJC_COMMON_DEPS + [
+        "@ios_opencv//:OpencvFramework"
     ],
 )
 
 apple_static_library(
-    name = "MediaPipeTaskText_GraphLibrary",
+    name = "MediaPipeTaskGraphs_library",
+    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
     platform_type = "ios",
     minimum_os_version =  MPP_TASK_MINIMUM_OS_VERSION,
     deps = [
+        "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
+        "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
         "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
         "@org_tensorflow//third_party/icu/data:conversion_data",
+        "@ios_opencv//:OpencvFramework"
+    ],
+    # There is no way to turn off zlib dependency in custom opencv builds. 
+    # Hence zlib is avoided to prevent duplicate symbols because of conflicts
+    # between opencv's zlib and "@zlib//:zlib"
+    avoid_deps = [
+        "@zlib//:zlib",
+    ],
+)
+
+apple_static_xcframework(
+    name = "MediaPipeTaskCommonObjects_framework",
+    bundle_name = "MediaPipeTaskCommon",
+    ios = {
+        "simulator" : ["arm64", "x86_64"],
+        "device" : ["arm64"],
+    },
+    minimum_os_versions = {
+        "ios": MPP_TASK_MINIMUM_OS_VERSION,
+    },
+    # avoids gpu targets since they will be built with 
+    # ":MediaPipeTaskGraphs_library". Otherwise it will result in
+    # duplicate symbols error when the frameworks are imported in iOS.
+    avoid_deps = [
+        "//mediapipe/gpu:metal_shared_resources",
+    ],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPBaseOptions",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/core:MPPTaskResult",
+        "//mediapipe/tasks/ios/core:MPPTaskRunner",
+        "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+        "//mediapipe/tasks/ios/components/containers:MPPCategory",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
     ],
 )

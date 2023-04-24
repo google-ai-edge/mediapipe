@@ -49,6 +49,7 @@ objc_library(
         ":MPPTextClassifierOptions",
         ":MPPTextClassifierResult",
         "//mediapipe/tasks/cc/components/containers/proto:classifications_cc_proto",
+        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
@@ -57,10 +58,5 @@ objc_library(
         "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
         "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierOptionsHelpers",
         "//mediapipe/tasks/ios/text/text_classifier/utils:MPPTextClassifierResultHelpers",
-    ] + select({
-        "//mediapipe/tasks/ios:avoid_linking_graphs": [],
-        "//conditions:default": [
-            "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
-        ],
-    }),
+    ],
 )

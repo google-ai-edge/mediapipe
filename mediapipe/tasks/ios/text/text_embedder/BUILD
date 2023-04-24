@@ -48,6 +48,7 @@ objc_library(
     deps = [
         ":MPPTextEmbedderOptions",
         ":MPPTextEmbedderResult",
+        "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/components/utils:MPPCosineSimilarity",
@@ -57,10 +58,5 @@ objc_library(
         "//mediapipe/tasks/ios/text/core:MPPTextTaskRunner",
         "//mediapipe/tasks/ios/text/text_embedder/utils:MPPTextEmbedderOptionsHelpers",
         "//mediapipe/tasks/ios/text/text_embedder/utils:MPPTextEmbedderResultHelpers",
-    ] + select({
-        "//mediapipe/tasks/ios:avoid_linking_graphs": [],
-        "//conditions:default": [
-            "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
-        ],
-    }),
+    ],
 )
