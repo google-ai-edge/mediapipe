@@ -263,7 +263,6 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
       )
 
     output_streams = [
-        ':'.join([_SEGMENTATION_MASK_TAG, _SEGMENTATION_MASK_STREAM_NAME]),
         ':'.join([_NORM_LANDMARKS_TAG, _NORM_LANDMARKS_STREAM_NAME]),
         ':'.join([
           _POSE_WORLD_LANDMARKS_TAG, _POSE_WORLD_LANDMARKS_STREAM_NAME
