@@ -12,12 +12,7 @@ Pod::Spec.new do |s|
 
   s.module_name = 'MediaPipeTaskText'
   s.static_framework = true
-  s.user_target_xcconfig = {
-    'OTHER_LDFLAGS[sdk=iphonesimulator*]' => '$(inherited) -force_load "$(PODS_ROOT)/MediaPipeTaskText/frameworks/graph_libraries/libMediaPipeTaskText_simulator_graph.a"',
-    'OTHER_LDFLAGS[sdk=iphoneos*]' => '$(inherited) -force_load "$(PODS_ROOT)/MediaPipeTaskText/frameworks/graph_libraries/libMediaPipeTaskText_device_graph.a"',
-    'STRIP_INSTALLED_PRODUCT' => 'NO'
-  }
+  s.dependency 'MediaPipeTaskCommonObjects'
   s.library = 'c++'
-  s.preserve_paths = 'frameworks/graph_libraries/*.a'
   s.vendored_frameworks = 'frameworks/MediaPipeTaskText.xcframework'
 end
