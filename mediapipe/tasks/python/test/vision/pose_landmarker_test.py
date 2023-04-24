@@ -113,7 +113,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
     )
     if output_segmentation_masks:
       self.assertIsInstance(actual_result.segmentation_masks, List)
-      for i, mask in enumerate(actual_result.segmentation_masks):
+      for _, mask in enumerate(actual_result.segmentation_masks):
         self.assertIsInstance(mask, _Image)
     else:
       self.assertIsNone(actual_result.segmentation_masks)
