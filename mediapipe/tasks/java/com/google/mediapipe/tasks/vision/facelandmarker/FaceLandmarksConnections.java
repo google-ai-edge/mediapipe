@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Face landmarks connection constants. */
-final class FaceLandmarksConnections {
+public final class FaceLandmarksConnections {
 
   /** Value class representing face landmarks connection. */
   @AutoValue
