@@ -198,8 +198,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_coco_ssd_mobilenet_v1_score_calibration_json",
-        sha256 = "f377600be924c29697477f9d739db9db5d712aec4a644548526912858db6a082",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/coco_ssd_mobilenet_v1_score_calibration.json?generation=1677522739770755"],
+        sha256 = "a850674f9043bfc775527fee7f1b639f7fe0fb56e8d3ed2b710247967c888b09",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/coco_ssd_mobilenet_v1_score_calibration.json?generation=1682456086898538"],
     )
 
     http_file(
@@ -263,9 +263,27 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_efficientdet_lite0_fp16_no_nms_anchors_csv",
+        sha256 = "284475a0f16e34afcc6c0fe68b05bd871aca5b20c83db0870c6a36dd63827176",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms_anchors.csv?generation=1682456090001817"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_efficientdet_lite0_fp16_no_nms_json",
+        sha256 = "dc3b333e41c43fb49ace048c25c18d0e34df78fb5ee77edbe169264368f78b92",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.json?generation=1682456092938505"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_efficientdet_lite0_fp16_no_nms_tflite",
+        sha256 = "bcda125c96d3767bca894c8cbe7bc458379c9974c9fd8bdc6204e7124a74082a",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.tflite?generation=1682456096034465"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_efficientdet_lite0_v1_json",
-        sha256 = "7a9e1fb625a6130a251e612637fc546cfc8cfabfadc7dbdade44c87f1d8996ca",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_v1.json?generation=1677522746026682"],
+        sha256 = "ef9706696a3ea5d87f4324ac56e877a92033d33e522c4b7d5a416fbcab24d8fc",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_v1.json?generation=1682456098581704"],
     )
 
     http_file(
@@ -1158,8 +1176,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_ssd_mobilenet_v1_no_metadata_json",
-        sha256 = "89157590b736cf3f3247aa9c8be3570c2856f4981a1e9476117e7c629e7c4825",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/ssd_mobilenet_v1_no_metadata.json?generation=1677522786336455"],
+        sha256 = "ae5a5971a1c3df705307448ef97c854d846b7e6f2183fb51015bd5af5d7deb0f",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/ssd_mobilenet_v1_no_metadata.json?generation=1682456117002011"],
     )
 
     http_file(

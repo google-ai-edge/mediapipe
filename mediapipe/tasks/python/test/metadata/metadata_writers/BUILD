@@ -86,6 +86,7 @@ py_test(
     deps = [
         "//mediapipe/tasks/metadata:metadata_schema_py",
         "//mediapipe/tasks/python/metadata",
+        "//mediapipe/tasks/python/metadata/metadata_writers:metadata_info",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
         "//mediapipe/tasks/python/metadata/metadata_writers:object_detector",
         "//mediapipe/tasks/python/test:test_utils",

@@ -328,7 +328,7 @@ class ObjectDetector(classifier.Classifier):
       converter.target_spec.supported_ops = (tf.lite.OpsSet.TFLITE_BUILTINS,)
       tflite_model = converter.convert()
 
-    writer = object_detector_writer.MetadataWriter.create(
+    writer = object_detector_writer.MetadataWriter.create_for_models_with_nms(
         tflite_model,
         self._model_spec.mean_rgb,
         self._model_spec.stddev_rgb,
