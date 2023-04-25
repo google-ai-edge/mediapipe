@@ -66,7 +66,7 @@ class CalculatorRunner {
   explicit CalculatorRunner(const std::string& node_config_string);
   // Convenience constructor to initialize a calculator which uses indexes
   // (not tags) for all its fields.
-  // NOTE: This constructor calls proto_ns::TextFormat::ParseFromString(), which
+  // NOTE -, which
   // is not available when using lite protos.
   CalculatorRunner(const std::string& calculator_type,
                    const std::string& options_string, int num_inputs,

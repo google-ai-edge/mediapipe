@@ -150,7 +150,7 @@ class CalculatorBase {
   // Packets may be output during a call to Close().  However, output packets
   // are silently discarded if Close() is called after a graph run has ended.
   //
-  // NOTE: If Close() needs to perform an action only when processing is
+  // NOTE - needs to perform an action only when processing is
   // complete, Close() must check if cc->GraphStatus() is OK.
   virtual absl::Status Close(CalculatorContext* cc) { return absl::OkStatus(); }
 

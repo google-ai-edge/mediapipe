@@ -106,7 +106,7 @@ public class ExternalTextureRenderer {
    *
    * <p>Before calling this, {@link #setup} must have been called.
    *
-   * <p>NOTE: Calls {@link SurfaceTexture#updateTexImage()} on passed surface texture.
+   * <p>NOTE -} on passed surface texture.
    */
   public void render(SurfaceTexture surfaceTexture) {
     GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);

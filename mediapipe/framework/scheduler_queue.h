@@ -102,7 +102,7 @@ class SchedulerQueue : public TaskQueue {
   // Implements the TaskQueue interface.
   void RunNextTask() override;
 
-  // NOTE: After calling SetRunning(true), the caller must call
+  // NOTE -, the caller must call
   // SubmitWaitingTasksToExecutor since tasks may have been added while the
   // queue was not running.
   void SetRunning(bool running) ABSL_LOCKS_EXCLUDED(mutex_);

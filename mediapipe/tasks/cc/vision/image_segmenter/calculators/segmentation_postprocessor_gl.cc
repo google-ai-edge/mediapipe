@@ -581,7 +581,7 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
       // Step 2.5: For SOFTMAX, apply softmax shaders (max, transformAndSum, and
       // normalization) to create softmax-transformed chunks before channel
       // extraction.
-      // NOTE: exp(x-C) / sum_over_x(exp(x-C)) = exp(x) / sum_over_x(exp(x)). So
+      // NOTE - / sum_over_x(exp(x-C)) = exp(x) / sum_over_x(exp(x)). So
       //   theoretically we can skip the max shader step entirely. However,
       //   applying it does bring all our values into a nice (0, 1] range, so it
       //   will likely be better for precision, especially when dealing with an

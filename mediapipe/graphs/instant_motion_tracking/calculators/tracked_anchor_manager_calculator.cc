@@ -25,7 +25,7 @@ constexpr char kAnchorsTag[] = "ANCHORS";
 constexpr char kBoxesInputTag[] = "BOXES";
 constexpr char kBoxesOutputTag[] = "START_POS";
 constexpr char kCancelTag[] = "CANCEL_ID";
-// TODO: Find optimal Height/Width (0.1-0.3)
+// TODO -
 constexpr float kBoxEdgeSize =
     0.2f;  // Used to establish tracking box dimensions
 constexpr float kUsToMs =

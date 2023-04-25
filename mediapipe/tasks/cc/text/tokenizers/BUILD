@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//mediapipe/calculators/tensor:__subpackages__"])
+default_visibility = ["//mediapipe/calculators/tensor:__subpackages__"]
+
+package(default_visibility = default_visibility)
 
 licenses(["notice"])
 
@@ -34,6 +36,7 @@ cc_library(
     hdrs = [
         "bert_tokenizer.h",
     ],
+    visibility = default_visibility + ["//mediapipe/tasks:users"],
     deps = [
         ":tokenizer",
         "//mediapipe/framework/port:integral_types",

@@ -50,7 +50,7 @@ class OutputStream {
   //   the only packet in the stream.
   // Violation of any of these conditions causes a CHECK-failure.
   //
-  // NOTE: AddPacket() cannot report errors via the return value. Instead of a
+  // NOTE - cannot report errors via the return value. Instead of a
   // CHECK-failure, a subclass of OutputStream should use a callback function
   // to report errors.
   virtual void AddPacket(const Packet& packet) = 0;

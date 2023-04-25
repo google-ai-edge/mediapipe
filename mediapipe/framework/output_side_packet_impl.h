@@ -48,7 +48,7 @@ class OutputSidePacketImpl : public OutputSidePacket {
 
   // Sets the output side packet. The Packet must contain the data.
   //
-  // NOTE: Set() cannot report errors via the return value. It uses an error
+  // NOTE - cannot report errors via the return value. It uses an error
   // callback function to report errors.
   void Set(const Packet& packet) override;
 

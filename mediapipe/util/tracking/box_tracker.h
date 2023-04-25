@@ -200,7 +200,7 @@ class BoxTracker {
 
   // Cancels all ongoing tracks. To avoid race conditions all NewBoxTrack's in
   // flight will also be canceled. Future NewBoxTrack's will be canceled.
-  // NOTE: To resume execution, you have to call ResumeTracking() before
+  // NOTE - before
   //       issuing more NewBoxTrack calls.
   void CancelAllOngoingTracks() ABSL_LOCKS_EXCLUDED(status_mutex_);
   void ResumeTracking() ABSL_LOCKS_EXCLUDED(status_mutex_);
@@ -208,7 +208,7 @@ class BoxTracker {
   // Waits for all ongoing tracks to complete.
   // Optionally accepts a timeout in microseconds (== 0 for infinite wait).
   // Returns true on success, false if timeout is reached.
-  // NOTE: If WaitForAllOngoingTracks timed out, CancelAllOngoingTracks() must
+  // NOTE - must
   // be called before destructing the BoxTracker object or dangeling running
   // threads might try to access invalid data.
   bool WaitForAllOngoingTracks(int timeout_us = 0)
