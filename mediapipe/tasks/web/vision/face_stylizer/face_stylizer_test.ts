@@ -30,6 +30,7 @@ class FaceStylizerFake extends FaceStylizer implements MediapipeTasksFake {
 
   fakeWasmModule: SpyWasmModule;
   imageListener: ((images: WasmImage, timestamp: number) => void)|undefined;
+  emptyPacketListener: ((timestamp: number) => void)|undefined;
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
@@ -41,6 +42,12 @@ class FaceStylizerFake extends FaceStylizer implements MediapipeTasksFake {
             .and.callFake((stream, listener) => {
               expect(stream).toEqual('stylized_image');
               this.imageListener = listener;
+            });
+    this.attachListenerSpies[1] =
+        spyOn(this.graphRunner, 'attachEmptyPacketListener')
+            .and.callFake((stream, listener) => {
+              expect(stream).toEqual('stylized_image');
+              this.emptyPacketListener = listener;
             });
     spyOn(this.graphRunner, 'setGraph').and.callFake(binaryGraph => {
       this.graph = CalculatorGraphConfig.deserializeBinary(binaryGraph);
@@ -108,6 +115,23 @@ describe('FaceStylizer', () => {
       expect(image).toBeInstanceOf(ImageData);
       expect(width).toEqual(1);
       expect(height).toEqual(1);
+      done();
+    });
+  });
+
+  it('invokes callback even when no faes are detected', (done) => {
+    // Pass the test data to our listener
+    faceStylizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      verifyListenersRegistered(faceStylizer);
+      faceStylizer.emptyPacketListener!(/* timestamp= */ 1337);
+    });
+
+    // Invoke the face stylizeer
+    faceStylizer.stylize({} as HTMLImageElement, (image, width, height) => {
+      expect(faceStylizer.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
+      expect(image).toBeNull();
+      expect(width).toEqual(0);
+      expect(height).toEqual(0);
       done();
     });
   });
