@@ -13,8 +13,15 @@
 # limitations under the License.
 """Configurable model options for face stylizer models."""
 
+from typing import Sequence
 import dataclasses
-from typing import List
+
+from mediapipe.model_maker.python.core.utils import loss_functions
+
+
+def _default_perceptual_quality_loss_weight():
+  """Default perceptual quality loss weight for face stylizer."""
+  return loss_functions.PerceptualLossWeight(l1=2.0, content=20.0, style=10.0)
 
 
 # TODO: Add more detailed instructions about hyperparameter tuning.
@@ -26,12 +33,17 @@ class FaceStylizerModelOptions:
     swap_layers: The layers of feature to be interpolated between encoding
       features and StyleGAN input features.
     alpha: Weighting coefficient for swapping layer interpolation.
-    adv_loss_weight: Weighting coeffcieint of adversarial loss versus perceptual
+    perception_loss_weight: Weighting coefficients of image perception quality
       loss.
+    adv_loss_weight: Weighting coeffcieint of adversarial loss versus image
+      perceptual quality loss.
   """
 
-  swap_layers: List[int] = dataclasses.field(
+  swap_layers: Sequence[int] = dataclasses.field(
       default_factory=lambda: [4, 5, 6, 7, 8, 9, 10, 11]
   )
   alpha: float = 1.0
+  perception_loss_weight: loss_functions.PerceptualLossWeight = (
+      dataclasses.field(default_factory=_default_perceptual_quality_loss_weight)
+  )
   adv_loss_weight: float = 1.0

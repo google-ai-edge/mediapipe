@@ -12,3 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """MediaPipe Model Maker Python Public API For Face Stylization."""
+
+from mediapipe.model_maker.python.vision.face_stylizer import dataset
+from mediapipe.model_maker.python.vision.face_stylizer import face_stylizer
+from mediapipe.model_maker.python.vision.face_stylizer import face_stylizer_options
+from mediapipe.model_maker.python.vision.face_stylizer import hyperparameters
+from mediapipe.model_maker.python.vision.face_stylizer import model_options
+from mediapipe.model_maker.python.vision.face_stylizer import model_spec
+
+FaceStylizer = face_stylizer.FaceStylizer
+SupportedModels = model_spec.SupportedModels
+ModelOptions = model_options.FaceStylizerModelOptions
+HParams = hyperparameters.HParams
+Dataset = dataset.Dataset
+FaceStylizerOptions = face_stylizer_options.FaceStylizerOptions
