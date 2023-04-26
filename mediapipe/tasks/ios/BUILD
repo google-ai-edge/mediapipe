@@ -60,6 +60,7 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/components/containers:sources/MPPClassificationResult.h",
         "//mediapipe/tasks/ios/components/containers:sources/MPPEmbedding.h",
         "//mediapipe/tasks/ios/components/containers:sources/MPPEmbeddingResult.h",
+        "//mediapipe/tasks/ios/components/containers:sources/MPPDetection.h",
         "//mediapipe/tasks/ios/core:sources/MPPBaseOptions.h",
         "//mediapipe/tasks/ios/core:sources/MPPTaskOptions.h",
         "//mediapipe/tasks/ios/core:sources/MPPTaskResult.h",
@@ -69,6 +70,14 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/text/text_embedder:sources/MPPTextEmbedder.h",
         "//mediapipe/tasks/ios/text/text_embedder:sources/MPPTextEmbedderOptions.h",
         "//mediapipe/tasks/ios/text/text_embedder:sources/MPPTextEmbedderResult.h",
+        "//mediapipe/tasks/ios/vision/core:sources/MPPRunningMode.h",
+        "//mediapipe/tasks/ios/vision/core:sources/MPPImage.h",
+        "//mediapipe/tasks/ios/vision/image_classifier:sources/MPPImageClassifier.h",
+        "//mediapipe/tasks/ios/vision/image_classifier:sources/MPPImageClassifierOptions.h",
+        "//mediapipe/tasks/ios/vision/image_classifier:sources/MPPImageClassifierResult.h",
+        "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetector.h",
+        "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectorOptions.h",
+        "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectionResult.h",
     ],
 )
 
