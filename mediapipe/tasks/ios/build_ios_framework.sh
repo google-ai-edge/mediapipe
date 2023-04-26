@@ -47,7 +47,7 @@ if [ -z ${FRAMEWORK_NAME+x} ]; then
 fi
 
 case $FRAMEWORK_NAME in
-  "MediaPipeTasksText")
+  "MediaPipeTasksCommon")
     ;;
   "MediaPipeTasksVision")
     ;;
@@ -123,8 +123,8 @@ function build_ios_frameworks_and_libraries {
       local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --apple_generate_dsym=false //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
       IOS_GRAPHS_DEVICE_LIBRARY_PATH="$(build_target "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
       ;;
-  *)
-  ;;
+    *)
+    ;;
   esac
 }
 
@@ -149,26 +149,25 @@ function create_framework_archive {
   # libraries should be copied to the output directory which is to be archived. 
   case $FRAMEWORK_NAME in
     "MediaPipeTasksCommon")
-      
       local GRAPH_LIBRARIES_DIR="graph_libraries"
-  
-  local GRAPH_LIBRARIES_DIR="graph_libraries"
-  
-  # Create the parent folder which will hold the graph libraries of all architectures.
-  mkdir -p "${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}"
+      # Create the parent folder which will hold the graph libraries of all architectures.
+      mkdir -p "${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}"
 
-  local SIMULATOR_GRAPH_LIBRARY_PATH="${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}/lib${FRAMEWORK_NAME}_simulator_graph.a"
+      local SIMULATOR_GRAPH_LIBRARY_PATH="${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}/lib${FRAMEWORK_NAME}_simulator_graph.a"
     
-  # Copy ios simulator fat library into a separate directory.
-  echo ${IOS_GRAPHS_SIMULATOR_LIBRARY_PATH}
-  cp "${IOS_GRAPHS_SIMULATOR_LIBRARY_PATH}" "${SIMULATOR_GRAPH_LIBRARY_PATH}"
-
+      # Copy ios simulator fat library into a separate directory.
+      echo ${IOS_GRAPHS_SIMULATOR_LIBRARY_PATH}
+      cp "${IOS_GRAPHS_SIMULATOR_LIBRARY_PATH}" "${SIMULATOR_GRAPH_LIBRARY_PATH}"
   
-  local IOS_DEVICE_GRAPH_LIBRARY_PATH="${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}/lib${FRAMEWORK_NAME}_device_graph.a"
+      local IOS_DEVICE_GRAPH_LIBRARY_PATH="${FRAMEWORKS_DIR}/${GRAPH_LIBRARIES_DIR}/lib${FRAMEWORK_NAME}_device_graph.a"
 
-  # Copy ios device library into a separate directory.
-  echo ${IOS_GRAPHS_DEVICE_LIBRARY_PATH}
-  cp "${IOS_GRAPHS_DEVICE_LIBRARY_PATH}" "${IOS_DEVICE_GRAPH_LIBRARY_PATH}"
+      # Copy ios device library into a separate directory.
+      echo ${IOS_GRAPHS_DEVICE_LIBRARY_PATH}
+      cp "${IOS_GRAPHS_DEVICE_LIBRARY_PATH}" "${IOS_DEVICE_GRAPH_LIBRARY_PATH}"
+      ;;
+    *)
+      ;;
+  esac
 
   #----- (3) Move the framework to the destination -----
   if [[ "${ARCHIVE_FRAMEWORK}" == true ]]; then

@@ -153,7 +153,6 @@ apple_static_library(
     name = "MediaPipeTaskGraphs_library",
     minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
     platform_type = "ios",
-    minimum_os_version =  MPP_TASK_MINIMUM_OS_VERSION,
     deps = [
         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
