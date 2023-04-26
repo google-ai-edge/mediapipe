@@ -32,9 +32,12 @@ fi
 BAZEL="${BAZEL:-$(which bazel)}"
 MPP_BUILD_VERSION=${MPP_BUILD_VERSION:-0.0.1-dev}
 MPP_ROOT_DIR=$(git rev-parse --show-toplevel)
-ARCHIVE_FRAMEWORK=true
-IS_RELEASE_BUILD=false
-DEST_DIR=$HOME
+ARCHIVE_FRAMEWORK=${ARCHIVE_FRAMEWORK:-true}
+IS_RELEASE_BUILD=${IS_RELEASE_BUILD:-false}
+DEST_DIR=${DEST_DIR:-$HOME}
+
+echo "Destination"
+echo "${DEST_DIR}"
 
 if [[ ! -x "${BAZEL}" ]]; then
   echo "bazel executable is not found."
