@@ -1019,6 +1019,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_pose_segmentation_mask_golden_png",
+        sha256 = "62ee418e18f317327572da5fcc988af703eb31e6f0b9e0bf3d55e6f4797d6953",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/pose_segmentation_mask_golden.png?generation=1682541414235372"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_ptm_512_hdt_ptm_woid_tflite",
         sha256 = "2baa1c9783d03dd26f91e3c49efbcab11dd1361ff80e40e7209e81f84f281b6a",
         urls = ["https://storage.googleapis.com/mediapipe-assets/ptm_512_hdt_ptm_woid.tflite?generation=1678323604771164"],
