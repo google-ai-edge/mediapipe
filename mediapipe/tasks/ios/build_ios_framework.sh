@@ -54,7 +54,7 @@ case $FRAMEWORK_NAME in
     ;;
   "MediaPipeTasksVision")
     ;;
-  "MediaPipeTasksCommon")
+  "MediaPipeTasksText")
     ;;
   *)
     echo "Wrong framework name. The following framework names are allowed: MediaPipeTasksText, MediaPipeTasksVision, MediaPipeTasksCommon"
