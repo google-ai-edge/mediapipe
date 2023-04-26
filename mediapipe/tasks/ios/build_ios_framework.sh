@@ -16,7 +16,7 @@
 # Set the following variables as appropriate.
 #   * BAZEL: path to bazel. defaults to the first one available in PATH
 #   * FRAMEWORK_NAME: name of the iOS framework to be built. Currently the
-#   * accepted values are MediaPipeTaskCommon, MediaPipeTaskText, MediaPipeTaskVision.
+#   * accepted values are MediaPipeTasksCommon, MediaPipeTasksText, MediaPipeTasksVision.
 #   * MPP_BUILD_VERSION: to specify the release version. defaults to 0.0.1-dev
 #   * IS_RELEASE_BUILD: set as true if this build should be a release build
 #   * ARCHIVE_FRAMEWORK: set as true if the framework should be archived
@@ -47,10 +47,14 @@ if [ -z ${FRAMEWORK_NAME+x} ]; then
 fi
 
 case $FRAMEWORK_NAME in
-  "MediaPipeTaskText")
+  "MediaPipeTasksText")
+    ;;
+  "MediaPipeTasksVision")
+    ;;
+  "MediaPipeTasksCommon")
     ;;
   *)
-    echo "Wrong framework name. The following framework names are allowed: MediaPipeTaskText"
+    echo "Wrong framework name. The following framework names are allowed: MediaPipeTasksText, MediaPipeTasksVision, MediaPipeTasksCommon"
     exit 1
   ;;
 esac
@@ -106,11 +110,11 @@ function build_ios_frameworks_and_libraries {
   local FRAMEWORK_CQUERY_COMMAND="-c opt --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
   IOS_FRAMEWORK_PATH="$(build_target "${FRAMEWORK_CQUERY_COMMAND}")"
 
-  # `MediaPipeTaskCommon`` pods must also include the task graph libraries which
+  # `MediaPipeTasksCommon`` pods must also include the task graph libraries which
   # are to be force loaded. Hence the graph libraies are only built if the framework
-  # name is `MediaPipeTaskCommon`.`
+  # name is `MediaPipeTasksCommon`.`
   case $FRAMEWORK_NAME in
-    "MediaPipeTaskCommon")
+    "MediaPipeTasksCommon")
       local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --apple_generate_dsym=false //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
       IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(build_target "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
   
@@ -141,10 +145,10 @@ function create_framework_archive {
   echo ${IOS_FRAMEWORK_PATH}
   unzip "${IOS_FRAMEWORK_PATH}" -d "${FRAMEWORKS_DIR}"
 
-  # If the framwork being built is `MediaPipeTaskCommon`, the built graph
+  # If the framwork being built is `MediaPipeTasksCommon`, the built graph
   # libraries should be copied to the output directory which is to be archived. 
   case $FRAMEWORK_NAME in
-    "MediaPipeTaskCommon")
+    "MediaPipeTasksCommon")
       
       local GRAPH_LIBRARIES_DIR="graph_libraries"
   

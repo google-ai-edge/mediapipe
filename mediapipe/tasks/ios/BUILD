@@ -27,13 +27,13 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
-# list of targets to be added in avoid_deps of ":MediaPipeTaskVision_framework"
-# and ":MediaPipeTaskText_framework". 
+# list of targets to be added in avoid_deps of ":MediaPipeTasksVision_framework"
+# and ":MediaPipeTasksText_framework". 
 # The transitive closure of the following targets are used for building the 
 # frameworks but are avoided from the framework binaries to avoid duplicate symbols
 # error when included in an xcode project:
 # 1. iOS classes shared amongst the various vision and text tasks. These classes
-# will be built with ":MediaPipeTaskCommon_framework"
+# will be built with ":MediaPipeTasksCommon_framework"
 # 2. Task graphs. These will be built with ":MediaPipeTaskGraphs_library".
 # 3. gpu targets which will be built with the ":MediaPipeTaskGraphs_library".
 OBJC_COMMON_DEPS = [
@@ -73,7 +73,7 @@ strip_api_include_path_prefix(
 )
 
 apple_static_xcframework(
-    name = "MediaPipeTaskText_framework",
+    name = "MediaPipeTasksText_framework",
     public_hdrs = [
         ":MPPBaseOptions.h",
         ":MPPCategory.h",
@@ -90,7 +90,7 @@ apple_static_xcframework(
         ":MPPTextEmbedderOptions.h",
         ":MPPTextEmbedderResult.h",
     ],
-    bundle_name = "MediaPipeTaskText",
+    bundle_name = "MediaPipeTasksText",
     ios = {
         "simulator" : ["arm64", "x86_64"],
         "device" : ["arm64"],
@@ -102,14 +102,14 @@ apple_static_xcframework(
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
         "//mediapipe/tasks/ios/text/text_embedder:MPPTextEmbedder",
     ],
-    # avoid dependencies of ":MediaPipeCommon_framework" and 
+    # avoid dependencies of ":MediaPipeTasksCommon_framework" and 
     # ":MediaPipeTaskGraphs_library in order to prevent duplicate symbols error 
     # when the frameworks are imported in iOS projects.
     avoid_deps = OBJC_COMMON_DEPS
 )
 
 apple_static_xcframework(
-    name = "MediaPipeTaskVision_framework",
+    name = "MediaPipeTasksVision_framework",
     public_hdrs = [
         ":MPPBaseOptions.h",
         ":MPPCategory.h",
@@ -127,7 +127,7 @@ apple_static_xcframework(
         ":MPPObjectDetectorOptions.h",
         ":MPPObjectDetectionResult.h",
     ],
-    bundle_name = "MediaPipeTaskVision",
+    bundle_name = "MediaPipeTasksVision",
     ios = {
         "simulator" : ["arm64", "x86_64"],
         "device" : ["arm64"],
@@ -139,7 +139,7 @@ apple_static_xcframework(
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
         "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
     ],
-    # Avoids dependencies of ":MediaPipeCommon_framework" and 
+    # Avoids dependencies of ":MediaPipeTasksCommon_framework" and 
     # ":MediaPipeTaskGraphs_library in order to prevent duplicate symbols error 
     # when the frameworks are imported in iOS projects.
     # Also avoids opencv since it will be built with 
@@ -171,8 +171,8 @@ apple_static_library(
 )
 
 apple_static_xcframework(
-    name = "MediaPipeTaskCommon_framework",
-    bundle_name = "MediaPipeTaskCommon",
+    name = "MediaPipeTasksCommon_framework",
+    bundle_name = "MediaPipeTasksCommon",
     ios = {
         "simulator" : ["arm64", "x86_64"],
         "device" : ["arm64"],
