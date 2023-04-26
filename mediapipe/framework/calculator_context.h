@@ -111,7 +111,7 @@ class CalculatorContext {
 
   // Returns the status of the graph run.
   //
-  // NOTE -.
+  // NOTE: This method should only be called during CalculatorBase::Close().
   absl::Status GraphStatus() const { return graph_status_; }
 
   ProfilingContext* GetProfilingContext() const {

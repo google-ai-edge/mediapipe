@@ -273,7 +273,7 @@ defined in the enclosing protobuf in order to be traversed using
 
 ## Cycles
 
-<!-- TODO -->
+<!-- TODO: add discussion of PreviousLoopbackCalculator -->
 
 By default, MediaPipe requires calculator graphs to be acyclic and treats cycles
 in a graph as errors. If a graph is intended to have cycles, the cycles need to

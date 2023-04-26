@@ -354,19 +354,16 @@ class ObjectDetector(classifier.Classifier):
       A tf.keras.optimizer.Optimizer for model training.
     """
     init_lr = self._hparams.learning_rate * self._hparams.batch_size / 256
-    if self._hparams.learning_rate_epoch_boundaries:
-      lr_values = [init_lr] + [
-          init_lr * m for m in self._hparams.learning_rate_decay_multipliers
-      ]
-      lr_step_boundaries = [
-          steps_per_epoch * epoch_boundary
-          for epoch_boundary in self._hparams.learning_rate_epoch_boundaries
-      ]
-      learning_rate = tf.keras.optimizers.schedules.PiecewiseConstantDecay(
-          lr_step_boundaries, lr_values
-      )
-    else:
-      learning_rate = init_lr
+    decay_epochs = (
+        self._hparams.cosine_decay_epochs
+        if self._hparams.cosine_decay_epochs
+        else self._hparams.epochs
+    )
+    learning_rate = tf.keras.optimizers.schedules.CosineDecay(
+        init_lr,
+        steps_per_epoch * decay_epochs,
+        self._hparams.cosine_decay_alpha,
+    )
     return tf.keras.optimizers.experimental.SGD(
         learning_rate=learning_rate, momentum=0.9
     )

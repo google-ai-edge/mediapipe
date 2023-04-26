@@ -164,7 +164,7 @@ class Contract {
 
   std::tuple<T...> items;
 
-  // TODO -, check for conflicts.
+  // TODO: when forwarding nested items (e.g. ports), check for conflicts.
   decltype(ExtractNestedItems(items)) all_items{ExtractNestedItems(items)};
 
   constexpr auto inputs() const {
