@@ -29,17 +29,19 @@ if (skip) {
 /** The image types supported by MPImage. */
 type ImageType = ImageData|ImageBitmap|WebGLTexture;
 
-const IMAGE_2_2 = [1, 0, 0, 255, 2, 0, 0, 255, 3, 0, 0, 255, 4, 0, 0, 255];
-const IMAGE_2_1 = [1, 0, 0, 255, 2, 0, 0, 255];
+const IMAGE_2_2 = [1, 1, 1, 255, 2, 2, 2, 255, 3, 3, 3, 255, 4, 4, 4, 255];
+const IMAGE_2_1 = [1, 1, 1, 255, 2, 2, 2, 255];
 const IMAGE_2_3 = [
-  1, 0, 0, 255, 2, 0, 0, 255, 3, 0, 0, 255,
-  4, 0, 0, 255, 5, 0, 0, 255, 6, 0, 0, 255
+  1, 1, 1, 255, 2, 2, 2, 255, 3, 3, 3, 255,
+  4, 4, 4, 255, 5, 5, 5, 255, 6, 6, 6, 255
 ];
 
 /** The test images and data to use for the unit tests below. */
 class MPImageTestContext {
   canvas!: OffscreenCanvas;
   gl!: WebGL2RenderingContext;
+  uint8ClampedArray!: Uint8ClampedArray;
+  float32Array!: Float32Array;
   imageData!: ImageData;
   imageBitmap!: ImageBitmap;
   webGLTexture!: WebGLTexture;
@@ -52,6 +54,13 @@ class MPImageTestContext {
     this.gl = this.canvas.getContext('webgl2') as WebGL2RenderingContext;
 
     const gl = this.gl;
+
+    this.uint8ClampedArray = new Uint8ClampedArray(pixels.length / 4);
+    this.float32Array = new Float32Array(pixels.length / 4);
+    for (let i = 0; i < this.uint8ClampedArray.length; ++i) {
+      this.uint8ClampedArray[i] = pixels[i * 4];
+      this.float32Array[i] = pixels[i * 4] / 255;
+    }
     this.imageData =
         new ImageData(new Uint8ClampedArray(pixels), width, height);
     this.imageBitmap = await createImageBitmap(this.imageData);
@@ -65,6 +74,10 @@ class MPImageTestContext {
 
   get(type: unknown) {
     switch (type) {
+      case Uint8ClampedArray:
+        return this.uint8ClampedArray;
+      case Float32Array:
+        return this.float32Array;
       case ImageData:
         return this.imageData;
       case ImageBitmap:
@@ -116,7 +129,13 @@ class MPImageTestContext {
   }
 
   function assertEquality(image: MPImage, expected: ImageType): void {
-    if (expected instanceof ImageData) {
+    if (expected instanceof Uint8ClampedArray) {
+      const result = image.getImage(MPImageStorageType.UINT8_CLAMPED_ARRAY);
+      expect(result).toEqual(expected);
+    } else if (expected instanceof Float32Array) {
+      const result = image.getImage(MPImageStorageType.FLOAT32_ARRAY);
+      expect(result).toEqual(expected);
+    } else if (expected instanceof ImageData) {
       const result = image.getImage(MPImageStorageType.IMAGE_DATA);
       expect(result).toEqual(expected);
     } else if (expected instanceof ImageBitmap) {
@@ -158,7 +177,9 @@ class MPImageTestContext {
     shaderContext.close();
   }
 
-  const sources = skip ? [] : [ImageData, ImageBitmap, WebGLTexture];
+  const sources = skip ?
+      [] :
+      [Uint8ClampedArray, Float32Array, ImageData, ImageBitmap, WebGLTexture];
 
   for (let i = 0; i < sources.length; i++) {
     for (let j = 0; j < sources.length; j++) {
@@ -220,15 +241,41 @@ class MPImageTestContext {
     const shaderContext = new MPImageShaderContext();
     const image = createImage(shaderContext, context.imageData, WIDTH, HEIGHT);
 
+    expect(image.hasType(MPImageStorageType.IMAGE_DATA)).toBe(true);
+    expect(image.hasType(MPImageStorageType.UINT8_CLAMPED_ARRAY)).toBe(false);
+    expect(image.hasType(MPImageStorageType.FLOAT32_ARRAY)).toBe(false);
+    expect(image.hasType(MPImageStorageType.WEBGL_TEXTURE)).toBe(false);
+    expect(image.hasType(MPImageStorageType.IMAGE_BITMAP)).toBe(false);
+
+    image.getImage(MPImageStorageType.UINT8_CLAMPED_ARRAY);
+
+    expect(image.hasType(MPImageStorageType.IMAGE_DATA)).toBe(true);
+    expect(image.hasType(MPImageStorageType.UINT8_CLAMPED_ARRAY)).toBe(true);
+    expect(image.hasType(MPImageStorageType.FLOAT32_ARRAY)).toBe(false);
+    expect(image.hasType(MPImageStorageType.WEBGL_TEXTURE)).toBe(false);
+    expect(image.hasType(MPImageStorageType.IMAGE_BITMAP)).toBe(false);
+
+    image.getImage(MPImageStorageType.FLOAT32_ARRAY);
+
+    expect(image.hasType(MPImageStorageType.IMAGE_DATA)).toBe(true);
+    expect(image.hasType(MPImageStorageType.UINT8_CLAMPED_ARRAY)).toBe(true);
+    expect(image.hasType(MPImageStorageType.FLOAT32_ARRAY)).toBe(true);
+    expect(image.hasType(MPImageStorageType.WEBGL_TEXTURE)).toBe(false);
+    expect(image.hasType(MPImageStorageType.IMAGE_BITMAP)).toBe(false);
+
     image.getImage(MPImageStorageType.WEBGL_TEXTURE);
 
     expect(image.hasType(MPImageStorageType.IMAGE_DATA)).toBe(true);
+    expect(image.hasType(MPImageStorageType.UINT8_CLAMPED_ARRAY)).toBe(true);
+    expect(image.hasType(MPImageStorageType.FLOAT32_ARRAY)).toBe(true);
     expect(image.hasType(MPImageStorageType.WEBGL_TEXTURE)).toBe(true);
     expect(image.hasType(MPImageStorageType.IMAGE_BITMAP)).toBe(false);
 
     image.getImage(MPImageStorageType.IMAGE_BITMAP);
 
     expect(image.hasType(MPImageStorageType.IMAGE_DATA)).toBe(true);
+    expect(image.hasType(MPImageStorageType.UINT8_CLAMPED_ARRAY)).toBe(true);
+    expect(image.hasType(MPImageStorageType.FLOAT32_ARRAY)).toBe(true);
     expect(image.hasType(MPImageStorageType.WEBGL_TEXTURE)).toBe(true);
     expect(image.hasType(MPImageStorageType.IMAGE_BITMAP)).toBe(true);
 
