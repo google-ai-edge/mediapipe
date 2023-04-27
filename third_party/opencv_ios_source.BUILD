@@ -123,5 +123,4 @@ cc_library(
     }),
     visibility = ["//visibility:public"],
     deps = [":opencv_xcframework"],
-    # data = [":opencv_xcframework"]
 )
