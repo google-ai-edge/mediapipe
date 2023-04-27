@@ -148,4 +148,3 @@ unzip_opencv_xcframework = rule(
         "zip_file": attr.label(mandatory = True, allow_single_file=True),
     },
 )
-
