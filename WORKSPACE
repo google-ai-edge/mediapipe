@@ -375,6 +375,18 @@ http_archive(
     url = "https://github.com/opencv/opencv/releases/download/3.2.0/opencv-3.2.0-ios-framework.zip",
 )
 
+# Building an opencv.xcframework from the OpenCV 4.5.1 sources is necessary for
+# MediaPipe iOS Task Libraries to be supported on arm64(M1) Macs. An
+# `opencv.xcframework` archive has not been released and it is recommended to
+# build the same from source using a script provided in OpenCV 4.5.0 upwards. 
+http_archive(
+    name = "ios_opencv_source",
+    sha256 = "5fbc26ee09e148a4d494b225d04217f7c913ca1a4d46115b70cca3565d7bbe05",
+    build_file = "@//third_party:opencv_ios_source.BUILD",
+    type = "zip",
+    url = "https://github.com/opencv/opencv/archive/refs/tags/4.5.1.zip",
+)
+
 http_archive(
     name = "stblib",
     strip_prefix = "stb-b42009b3b9d4ca35bc703f5310eedc74f584be58",
