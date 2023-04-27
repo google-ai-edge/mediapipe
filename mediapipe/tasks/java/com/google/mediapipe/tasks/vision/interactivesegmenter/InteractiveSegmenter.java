@@ -94,7 +94,6 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
               "IMAGE:" + IMAGE_IN_STREAM_NAME,
               "ROI:" + ROI_IN_STREAM_NAME,
               "NORM_RECT:" + NORM_RECT_IN_STREAM_NAME));
-  private static final int IMAGE_OUT_STREAM_INDEX = 0;
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph";
   private static final String TENSORS_TO_SEGMENTATION_CALCULATOR_NAME =
@@ -120,7 +119,6 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
           "At least one of `outputConfidenceMasks` and `outputCategoryMask` must be set.");
     }
     List<String> outputStreams = new ArrayList<>();
-    outputStreams.add("IMAGE:image_out");
     if (segmenterOptions.outputConfidenceMasks()) {
       outputStreams.add("CONFIDENCE_MASKS:confidence_masks");
     }
@@ -129,6 +127,9 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
       outputStreams.add("CATEGORY_MASK:category_mask");
     }
     final int categoryMaskOutStreamIndex = outputStreams.size() - 1;
+    outputStreams.add("IMAGE:image_out");
+    // TODO: add test for stream indices.
+    final int imageOutStreamIndex = outputStreams.size() - 1;
 
     // TODO: Consolidate OutputHandler and TaskRunner.
     OutputHandler<ImageSegmenterResult, MPImage> handler = new OutputHandler<>();
@@ -137,11 +138,11 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
           @Override
           public ImageSegmenterResult convertToTaskResult(List<Packet> packets)
               throws MediaPipeException {
-            if (packets.get(IMAGE_OUT_STREAM_INDEX).isEmpty()) {
+            if (packets.get(imageOutStreamIndex).isEmpty()) {
               return ImageSegmenterResult.create(
                   Optional.empty(),
                   Optional.empty(),
-                  packets.get(IMAGE_OUT_STREAM_INDEX).getTimestamp());
+                  packets.get(imageOutStreamIndex).getTimestamp());
             }
             // If resultListener is not provided, the resulted MPImage is deep copied from
             // mediapipe graph. If provided, the result MPImage is wrapping the mediapipe packet
@@ -202,13 +203,13 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
                 confidenceMasks,
                 categoryMask,
                 BaseVisionTaskApi.generateResultTimestampMs(
-                    RunningMode.IMAGE, packets.get(IMAGE_OUT_STREAM_INDEX)));
+                    RunningMode.IMAGE, packets.get(imageOutStreamIndex)));
           }
 
           @Override
           public MPImage convertToTaskInput(List<Packet> packets) {
             return new BitmapImageBuilder(
-                    AndroidPacketGetter.getBitmapFromRgb(packets.get(IMAGE_OUT_STREAM_INDEX)))
+                    AndroidPacketGetter.getBitmapFromRgb(packets.get(imageOutStreamIndex)))
                 .build();
           }
         });
