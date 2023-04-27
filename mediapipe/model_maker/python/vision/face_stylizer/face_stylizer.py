@@ -178,7 +178,7 @@ class FaceStylizer(object):
       with tf.GradientTape() as tape:
         outputs = self._decoder(
             {'inputs': in_latent + self.w_avg},
-            training=False,
+            training=True,
         )
         gen_img = outputs['image'][-1]
 

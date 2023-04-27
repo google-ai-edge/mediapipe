@@ -31,7 +31,7 @@ class HParams(hp.BaseHParams):
   """
 
   # Parameters from BaseHParams class.
-  learning_rate: float = 5e-5
+  learning_rate: float = 8e-4
   batch_size: int = 4
   epochs: int = 100
   # Parameters for face stylizer.
