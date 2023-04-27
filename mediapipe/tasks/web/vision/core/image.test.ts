@@ -29,43 +29,64 @@ if (skip) {
 /** The image types supported by MPImage. */
 type ImageType = ImageData|ImageBitmap|WebGLTexture;
 
-async function createTestData(
-    gl: WebGL2RenderingContext, data: number[], width: number,
-    height: number): Promise<[ImageData, ImageBitmap, WebGLTexture]> {
-  const imageData = new ImageData(new Uint8ClampedArray(data), width, height);
-  const imageBitmap = await createImageBitmap(imageData);
-  const webGlTexture = gl.createTexture()!;
+const IMAGE_2_2 = [1, 0, 0, 255, 2, 0, 0, 255, 3, 0, 0, 255, 4, 0, 0, 255];
+const IMAGE_2_1 = [1, 0, 0, 255, 2, 0, 0, 255];
+const IMAGE_2_3 = [
+  1, 0, 0, 255, 2, 0, 0, 255, 3, 0, 0, 255,
+  4, 0, 0, 255, 5, 0, 0, 255, 6, 0, 0, 255
+];
 
-  gl.bindTexture(gl.TEXTURE_2D, webGlTexture);
-  gl.texImage2D(
-      gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imageBitmap);
-  gl.bindTexture(gl.TEXTURE_2D, null);
+/** The test images and data to use for the unit tests below. */
+class MPImageTestContext {
+  canvas!: OffscreenCanvas;
+  gl!: WebGL2RenderingContext;
+  imageData!: ImageData;
+  imageBitmap!: ImageBitmap;
+  webGLTexture!: WebGLTexture;
 
-  return [imageData, imageBitmap, webGlTexture];
+  async init(pixels = IMAGE_2_2, width = WIDTH, height = HEIGHT):
+      Promise<void> {
+    // Initialize a canvas with default dimensions. Note that the canvas size
+    // can be different from the image size.
+    this.canvas = new OffscreenCanvas(WIDTH, HEIGHT);
+    this.gl = this.canvas.getContext('webgl2') as WebGL2RenderingContext;
+
+    const gl = this.gl;
+    this.imageData =
+        new ImageData(new Uint8ClampedArray(pixels), width, height);
+    this.imageBitmap = await createImageBitmap(this.imageData);
+    this.webGLTexture = gl.createTexture()!;
+
+    gl.bindTexture(gl.TEXTURE_2D, this.webGLTexture);
+    gl.texImage2D(
+        gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.imageBitmap);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+  }
+
+  get(type: unknown) {
+    switch (type) {
+      case ImageData:
+        return this.imageData;
+      case ImageBitmap:
+        return this.imageBitmap;
+      case WebGLTexture:
+        return this.webGLTexture;
+      default:
+        throw new Error(`Unsupported  type: ${type}`);
+    }
+  }
+
+  close(): void {
+    this.gl.deleteTexture(this.webGLTexture);
+    this.imageBitmap.close();
+  }
 }
 
 (skip ? xdescribe : describe)('MPImage', () => {
-  let canvas: OffscreenCanvas;
-  let gl: WebGL2RenderingContext;
-  let imageData: ImageData;
-  let imageBitmap: ImageBitmap;
-  let webGlTexture: WebGLTexture;
-
-  beforeEach(async () => {
-    canvas = new OffscreenCanvas(WIDTH, HEIGHT);
-    gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
-
-    const images = await createTestData(
-        gl, [1, 0, 0, 255, 2, 0, 0, 255, 3, 0, 0, 255, 4, 0, 0, 255], WIDTH,
-        HEIGHT);
-    imageData = images[0];
-    imageBitmap = images[1];
-    webGlTexture = images[2];
-  });
+  const context = new MPImageTestContext();
 
   afterEach(() => {
-    gl.deleteTexture(webGlTexture);
-    imageBitmap.close();
+    context.close();
   });
 
   function readPixelsFromImageBitmap(imageBitmap: ImageBitmap): ImageData {
@@ -78,6 +99,7 @@ async function createTestData(
   function readPixelsFromWebGLTexture(texture: WebGLTexture): Uint8Array {
     const pixels = new Uint8Array(WIDTH * WIDTH * 4);
 
+    const gl = context.gl;
     gl.bindTexture(gl.TEXTURE_2D, texture);
 
     const framebuffer = gl.createFramebuffer()!;
@@ -113,8 +135,8 @@ async function createTestData(
       height: number): MPImage {
     return new MPImage(
         [input],
-        /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false, canvas,
-        shaderContext, width, height);
+        /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false,
+        context.canvas, shaderContext, width, height);
   }
 
   function runConversionTest(
@@ -136,105 +158,67 @@ async function createTestData(
     shaderContext.close();
   }
 
-  it(`converts from ImageData to ImageData`, () => {
-    runConversionTest(imageData, imageData);
-  });
+  const sources = skip ? [] : [ImageData, ImageBitmap, WebGLTexture];
 
-  it(`converts from ImageData to ImageBitmap`, () => {
-    runConversionTest(imageData, imageBitmap);
-  });
+  for (let i = 0; i < sources.length; i++) {
+    for (let j = 0; j < sources.length; j++) {
+      it(`converts from ${sources[i].name} to ${sources[j].name}`, async () => {
+        await context.init();
+        runConversionTest(context.get(sources[i]), context.get(sources[j]));
+      });
+    }
+  }
 
-  it(`converts from ImageData to WebGLTexture`, () => {
-    runConversionTest(imageData, webGlTexture);
-  });
-
-  it(`converts from ImageBitmap to ImageData`, () => {
-    runConversionTest(imageBitmap, imageData);
-  });
-
-  it(`converts from ImageBitmap to ImageBitmap`, () => {
-    runConversionTest(imageBitmap, imageBitmap);
-  });
-
-  it(`converts from ImageBitmap to WebGLTexture`, () => {
-    runConversionTest(imageBitmap, webGlTexture);
-  });
-
-  it(`converts from WebGLTexture to ImageData`, () => {
-    runConversionTest(webGlTexture, imageData);
-  });
-
-  it(`converts from WebGLTexture to ImageBitmap`, () => {
-    runConversionTest(webGlTexture, imageBitmap);
-  });
-
-  it(`converts from WebGLTexture to WebGLTexture`, () => {
-    runConversionTest(webGlTexture, webGlTexture);
-  });
-
-  it(`clones ImageData`, () => {
-    runCloneTest(imageData);
-  });
-
-  it(`clones ImageBitmap`, () => {
-    runCloneTest(imageBitmap);
-  });
-
-  it(`clones WebGLTextures`, () => {
-    runCloneTest(webGlTexture);
-  });
+  for (let i = 0; i < sources.length; i++) {
+    it(`clones ${sources[i].name}`, async () => {
+      await context.init();
+      runCloneTest(context.get(sources[i]));
+    });
+  }
 
   it(`does not flip textures twice`, async () => {
-    const [imageData, , webGlTexture] = await createTestData(
-        gl, [1, 0, 0, 255, 2, 0, 0, 255, 3, 0, 0, 255, 4, 0, 0, 255], WIDTH,
-        HEIGHT);
+    await context.init();
 
     const shaderContext = new MPImageShaderContext();
     const image = new MPImage(
-        [webGlTexture],
-        /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false, canvas,
-        shaderContext, WIDTH, HEIGHT);
+        [context.webGLTexture],
+        /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false,
+        context.canvas, shaderContext, WIDTH, HEIGHT);
 
     const result = image.clone().getImage(MPImageStorageType.IMAGE_DATA);
-    expect(result).toEqual(imageData);
+    expect(result).toEqual(context.imageData);
 
-    gl.deleteTexture(webGlTexture);
     shaderContext.close();
   });
 
   it(`can clone and get image`, async () => {
-    const [imageData, , webGlTexture] = await createTestData(
-        gl, [1, 0, 0, 255, 2, 0, 0, 255, 3, 0, 0, 255, 4, 0, 0, 255], WIDTH,
-        HEIGHT);
+    await context.init();
 
     const shaderContext = new MPImageShaderContext();
     const image = new MPImage(
-        [webGlTexture],
-        /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false, canvas,
-        shaderContext, WIDTH, HEIGHT);
+        [context.webGLTexture],
+        /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false,
+        context.canvas, shaderContext, WIDTH, HEIGHT);
 
     // Verify that we can mix the different shader modes by running them out of
     // order.
     let result = image.getImage(MPImageStorageType.IMAGE_DATA);
-    expect(result).toEqual(imageData);
+    expect(result).toEqual(context.imageData);
 
     result = image.clone().getImage(MPImageStorageType.IMAGE_DATA);
-    expect(result).toEqual(imageData);
+    expect(result).toEqual(context.imageData);
 
     result = image.getImage(MPImageStorageType.IMAGE_DATA);
-    expect(result).toEqual(imageData);
+    expect(result).toEqual(context.imageData);
 
-    gl.deleteTexture(webGlTexture);
     shaderContext.close();
   });
 
   it('supports hasType()', async () => {
-    const shaderContext = new MPImageShaderContext();
-    const image = createImage(shaderContext, imageData, WIDTH, HEIGHT);
+    await context.init();
 
-    expect(image.hasType(MPImageStorageType.IMAGE_DATA)).toBe(true);
-    expect(image.hasType(MPImageStorageType.WEBGL_TEXTURE)).toBe(false);
-    expect(image.hasType(MPImageStorageType.IMAGE_BITMAP)).toBe(false);
+    const shaderContext = new MPImageShaderContext();
+    const image = createImage(shaderContext, context.imageData, WIDTH, HEIGHT);
 
     image.getImage(MPImageStorageType.WEBGL_TEXTURE);
 
@@ -242,7 +226,7 @@ async function createTestData(
     expect(image.hasType(MPImageStorageType.WEBGL_TEXTURE)).toBe(true);
     expect(image.hasType(MPImageStorageType.IMAGE_BITMAP)).toBe(false);
 
-    await image.getImage(MPImageStorageType.IMAGE_BITMAP);
+    image.getImage(MPImageStorageType.IMAGE_BITMAP);
 
     expect(image.hasType(MPImageStorageType.IMAGE_DATA)).toBe(true);
     expect(image.hasType(MPImageStorageType.WEBGL_TEXTURE)).toBe(true);
@@ -253,33 +237,32 @@ async function createTestData(
   });
 
   it('supports image that is smaller than the canvas', async () => {
-    const [imageData, imageBitmap, webGlTexture] = await createTestData(
-        gl, [1, 0, 0, 255, 2, 0, 0, 255], /* width= */ 2, /* height= */ 1);
+    await context.init(IMAGE_2_1, /* width= */ 2, /* height= */ 1);
 
-    runConversionTest(imageData, webGlTexture, /* width= */ 2, /* height= */ 1);
     runConversionTest(
-        webGlTexture, imageBitmap, /* width= */ 2, /* height= */ 1);
-    runConversionTest(imageBitmap, imageData, /* width= */ 2, /* height= */ 1);
+        context.imageData, context.webGLTexture, /* width= */ 2,
+        /* height= */ 1);
+    runConversionTest(
+        context.webGLTexture, context.imageBitmap, /* width= */ 2,
+        /* height= */ 1);
+    runConversionTest(
+        context.imageBitmap, context.imageData, /* width= */ 2,
+        /* height= */ 1);
 
-    gl.deleteTexture(webGlTexture);
-    imageBitmap.close();
+    context.close();
   });
 
   it('supports image that is larger than the canvas', async () => {
-    const [imageData, imageBitmap, webGlTexture] = await createTestData(
-        gl,
-        [
-          1, 0, 0, 255, 2, 0, 0, 255, 3, 0, 0, 255,
-          4, 0, 0, 255, 5, 0, 0, 255, 6, 0, 0, 255
-        ],
-        /* width= */ 2, /* height= */ 3);
+    await context.init(IMAGE_2_3, /* width= */ 2, /* height= */ 3);
 
-    runConversionTest(imageData, webGlTexture, /* width= */ 2, /* height= */ 3);
     runConversionTest(
-        webGlTexture, imageBitmap, /* width= */ 2, /* height= */ 3);
-    runConversionTest(imageBitmap, imageData, /* width= */ 2, /* height= */ 3);
-
-    gl.deleteTexture(webGlTexture);
-    imageBitmap.close();
+        context.imageData, context.webGLTexture, /* width= */ 2,
+        /* height= */ 3);
+    runConversionTest(
+        context.webGLTexture, context.imageBitmap, /* width= */ 2,
+        /* height= */ 3);
+    runConversionTest(
+        context.imageBitmap, context.imageData, /* width= */ 2,
+        /* height= */ 3);
   });
 });
