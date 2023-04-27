@@ -112,9 +112,7 @@ async function createTestData(
       shaderContext: MPImageShaderContext, input: ImageType, width: number,
       height: number): MPImage {
     return new MPImage(
-        input instanceof ImageData ? input : null,
-        input instanceof ImageBitmap ? input : null,
-        input instanceof WebGLTexture ? input : null,
+        [input],
         /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false, canvas,
         shaderContext, width, height);
   }
@@ -193,7 +191,7 @@ async function createTestData(
 
     const shaderContext = new MPImageShaderContext();
     const image = new MPImage(
-        /* imageData= */ null, /* imageBitmap= */ null, webGlTexture,
+        [webGlTexture],
         /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false, canvas,
         shaderContext, WIDTH, HEIGHT);
 
@@ -211,7 +209,7 @@ async function createTestData(
 
     const shaderContext = new MPImageShaderContext();
     const image = new MPImage(
-        /* imageData= */ null, /* imageBitmap= */ null, webGlTexture,
+        [webGlTexture],
         /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false, canvas,
         shaderContext, WIDTH, HEIGHT);
 

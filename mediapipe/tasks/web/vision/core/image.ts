@@ -24,7 +24,9 @@ export enum MPImageStorageType {
   WEBGL_TEXTURE
 }
 
-type MPImageNativeContainer = ImageData|ImageBitmap|WebGLTexture;
+/** The supported image formats. For internal usage. */
+export type MPImageNativeContainer =
+    Uint8ClampedArray|Float32Array|ImageData|ImageBitmap|WebGLTexture;
 
 const VERTEX_SHADER = `
   attribute vec2 aVertex;
@@ -274,9 +276,7 @@ export class MPImage {
 
   /** @hideconstructor */
   constructor(
-      private imageData: ImageData|null,
-      private imageBitmap: ImageBitmap|null,
-      private webGLTexture: WebGLTexture|null,
+      private readonly containers: MPImageNativeContainer[],
       private ownsImageBitmap: boolean,
       private ownsWebGLTexture: boolean,
       /** Returns the canvas element that the image is bound to. */
@@ -294,15 +294,7 @@ export class MPImage {
    * `getType()`.
    */
   hasType(type: MPImageStorageType): boolean {
-    if (type === MPImageStorageType.IMAGE_DATA) {
-      return !!this.imageData;
-    } else if (type === MPImageStorageType.IMAGE_BITMAP) {
-      return !!this.imageBitmap;
-    } else if (type === MPImageStorageType.WEBGL_TEXTURE) {
-      return !!this.webGLTexture;
-    } else {
-      throw new Error(`Type is not supported: ${type}`);
-    }
+    return !!this.getContainer(type);
   }
 
   /**
@@ -336,14 +328,37 @@ export class MPImage {
    */
   getImage(type: MPImageStorageType.WEBGL_TEXTURE): WebGLTexture;
   getImage(type?: MPImageStorageType): MPImageNativeContainer {
-    if (type === MPImageStorageType.IMAGE_DATA) {
-      return this.convertToImageData();
-    } else if (type === MPImageStorageType.IMAGE_BITMAP) {
-      return this.convertToImageBitmap();
-    } else if (type === MPImageStorageType.WEBGL_TEXTURE) {
-      return this.convertToWebGLTexture();
-    } else {
-      throw new Error(`Type is not supported: ${type}`);
+    switch (type) {
+      case MPImageStorageType.IMAGE_DATA:
+        return this.convertToImageData();
+      case MPImageStorageType.IMAGE_BITMAP:
+        return this.convertToImageBitmap();
+      case MPImageStorageType.WEBGL_TEXTURE:
+        return this.convertToWebGLTexture();
+      default:
+        throw new Error(`Type is not supported: ${type}`);
+    }
+  }
+
+  private getContainer(type: MPImageStorageType.IMAGE_DATA): ImageData
+      |undefined;
+  private getContainer(type: MPImageStorageType.IMAGE_BITMAP): ImageBitmap
+      |undefined;
+  private getContainer(type: MPImageStorageType.WEBGL_TEXTURE): WebGLTexture
+      |undefined;
+  private getContainer(type: MPImageStorageType): MPImageNativeContainer
+      |undefined;
+  private getContainer(type: MPImageStorageType): MPImageNativeContainer
+      |undefined {
+    switch (type) {
+      case MPImageStorageType.IMAGE_DATA:
+        return this.containers.find(img => img instanceof ImageData);
+      case MPImageStorageType.IMAGE_BITMAP:
+        return this.containers.find(img => img instanceof ImageBitmap);
+      case MPImageStorageType.WEBGL_TEXTURE:
+        return this.containers.find(img => img instanceof WebGLTexture);
+      default:
+        throw new Error(`Type is not supported: ${type}`);
     }
   }
 
@@ -355,54 +370,56 @@ export class MPImage {
    * avoided.
    */
   clone(): MPImage {
+    const destinationContainers: MPImageNativeContainer[] = [];
+
     // TODO: We might only want to clone one backing datastructure
-    // even if multiple are defined.
-    let destinationImageData: ImageData|null = null;
-    let destinationImageBitmap: ImageBitmap|null = null;
-    let destinationWebGLTexture: WebGLTexture|null = null;
+    // even if multiple are defined;
+    for (const container of this.containers) {
+      let destinationContainer: MPImageNativeContainer;
 
-    if (this.imageData) {
-      destinationImageData =
-          new ImageData(this.imageData.data, this.width, this.height);
-    }
+      if (container instanceof ImageData) {
+        destinationContainer =
+            new ImageData(container.data, this.width, this.height);
+      } else if (container instanceof WebGLTexture) {
+        const gl = this.getGL();
+        const shaderContext = this.getShaderContext();
 
-    if (this.webGLTexture) {
-      const gl = this.getGL();
-      const shaderContext = this.getShaderContext();
+        // Create a new texture and use it to back a framebuffer
+        gl.activeTexture(gl.TEXTURE1);
+        destinationContainer =
+            assertNotNull(gl.createTexture(), 'Failed to create texture');
+        gl.bindTexture(gl.TEXTURE_2D, destinationContainer);
 
-      // Create a new texture and use it to back a framebuffer
-      gl.activeTexture(gl.TEXTURE1);
-      destinationWebGLTexture =
-          assertNotNull(gl.createTexture(), 'Failed to create texture');
-      gl.bindTexture(gl.TEXTURE_2D, destinationWebGLTexture);
+        gl.texImage2D(
+            gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA,
+            gl.UNSIGNED_BYTE, null);
 
-      gl.texImage2D(
-          gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA,
-          gl.UNSIGNED_BYTE, null);
+        shaderContext.bindFramebuffer(gl, destinationContainer);
+        shaderContext.run(gl, /* flipVertically= */ false, () => {
+          this.bindTexture();  // This activates gl.TEXTURE0
+          gl.clearColor(0, 0, 0, 0);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+          gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+          this.unbindTexture();
+        });
+        shaderContext.unbindFramebuffer();
 
-      shaderContext.bindFramebuffer(gl, destinationWebGLTexture);
-      shaderContext.run(gl, /* flipVertically= */ false, () => {
-        this.bindTexture();  // This activates gl.TEXTURE0
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
         this.unbindTexture();
-      });
-      shaderContext.unbindFramebuffer();
+      } else if (container instanceof ImageBitmap) {
+        this.convertToWebGLTexture();
+        this.bindTexture();
+        destinationContainer = this.copyTextureToBitmap();
+        this.unbindTexture();
+      } else {
+        throw new Error(`Type is not supported: ${container}`);
+      }
 
-      this.unbindTexture();
-    }
-
-    if (this.imageBitmap) {
-      this.convertToWebGLTexture();
-      this.bindTexture();
-      destinationImageBitmap = this.copyTextureToBitmap();
-      this.unbindTexture();
+      destinationContainers.push(destinationContainer);
     }
 
     return new MPImage(
-        destinationImageData, destinationImageBitmap, destinationWebGLTexture,
-        !!destinationImageBitmap, !!destinationWebGLTexture, this.canvas,
+        destinationContainers, this.hasType(MPImageStorageType.IMAGE_BITMAP),
+        this.hasType(MPImageStorageType.WEBGL_TEXTURE), this.canvas,
         this.shaderContext, this.width, this.height);
   }
 
@@ -439,75 +456,82 @@ export class MPImage {
   }
 
   private convertToImageBitmap(): ImageBitmap {
-    if (!this.imageBitmap) {
-      if (!this.webGLTexture) {
-        this.webGLTexture = this.convertToWebGLTexture();
-      }
-      this.imageBitmap = this.convertWebGLTextureToImageBitmap();
+    let imageBitmap = this.getContainer(MPImageStorageType.IMAGE_BITMAP);
+    if (!imageBitmap) {
+      this.convertToWebGLTexture();
+      imageBitmap = this.convertWebGLTextureToImageBitmap();
+      this.containers.push(imageBitmap);
       this.ownsImageBitmap = true;
     }
-
-    return this.imageBitmap;
+    return imageBitmap;
   }
 
   private convertToImageData(): ImageData {
-    if (!this.imageData) {
+    let imageData = this.getContainer(MPImageStorageType.IMAGE_DATA);
+    if (!imageData) {
       const gl = this.getGL();
       const shaderContext = this.getShaderContext();
       const pixels = new Uint8Array(this.width * this.height * 4);
 
       // Create texture if needed
-      this.convertToWebGLTexture();
+      const webGLTexture = this.convertToWebGLTexture();
 
       // Create a framebuffer from the texture and read back pixels
-      shaderContext.bindFramebuffer(gl, this.webGLTexture!);
+      shaderContext.bindFramebuffer(gl, webGLTexture);
       gl.readPixels(
           0, 0, this.width, this.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
       shaderContext.unbindFramebuffer();
 
-      this.imageData = new ImageData(
+      imageData = new ImageData(
           new Uint8ClampedArray(pixels.buffer), this.width, this.height);
+      this.containers.push(imageData);
     }
 
-    return this.imageData;
+    return imageData;
   }
 
   private convertToWebGLTexture(): WebGLTexture {
-    if (!this.webGLTexture) {
+    let webGLTexture = this.getContainer(MPImageStorageType.WEBGL_TEXTURE);
+    if (!webGLTexture) {
       const gl = this.getGL();
-      this.bindTexture();
-      const source = (this.imageBitmap || this.imageData)!;
+      webGLTexture = this.bindTexture();
+      const source = this.getContainer(MPImageStorageType.IMAGE_BITMAP) ||
+          this.convertToImageData();
       gl.texImage2D(
           gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
       this.unbindTexture();
     }
 
-    return this.webGLTexture!;
+    return webGLTexture;
   }
 
   /**
    * Binds the backing texture to the canvas. If the texture does not yet
    * exist, creates it first.
    */
-  private bindTexture() {
+  private bindTexture(): WebGLTexture {
     const gl = this.getGL();
 
     gl.viewport(0, 0, this.width, this.height);
-
     gl.activeTexture(gl.TEXTURE0);
-    if (!this.webGLTexture) {
-      this.webGLTexture =
+
+    let webGLTexture = this.getContainer(MPImageStorageType.WEBGL_TEXTURE);
+    if (!webGLTexture) {
+      webGLTexture =
           assertNotNull(gl.createTexture(), 'Failed to create texture');
+      this.containers.push(webGLTexture);
       this.ownsWebGLTexture = true;
     }
 
-    gl.bindTexture(gl.TEXTURE_2D, this.webGLTexture);
+    gl.bindTexture(gl.TEXTURE_2D, webGLTexture);
     // TODO: Ideally, we would only set these once per texture and
     // not once every frame.
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+    return webGLTexture;
   }
 
   private unbindTexture(): void {
@@ -581,15 +605,12 @@ export class MPImage {
    */
   close(): void {
     if (this.ownsImageBitmap) {
-      this.imageBitmap!.close();
-    }
-
-    if (!this.gl) {
-      return;
+      this.getContainer(MPImageStorageType.IMAGE_BITMAP)!.close();
     }
 
     if (this.ownsWebGLTexture) {
-      this.gl.deleteTexture(this.webGLTexture!);
+      const gl = this.getGL();
+      gl.deleteTexture(this.getContainer(MPImageStorageType.WEBGL_TEXTURE)!);
     }
   }
 }
