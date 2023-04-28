@@ -56,23 +56,20 @@
               "max": 2
             }
           },
-          "stats": {
-          }
+          "stats": {}
         },
         {
           "name": "category",
           "description": "The categories of the detected boxes.",
           "content": {
             "content_properties_type": "FeatureProperties",
-            "content_properties": {
-            },
+            "content_properties": {},
             "range": {
               "min": 2,
               "max": 2
             }
           },
-          "stats": {
-          },
+          "stats": {},
           "associated_files": [
             {
               "name": "labels.txt",
@@ -86,8 +83,7 @@
           "description": "The scores of the detected boxes.",
           "content": {
             "content_properties_type": "FeatureProperties",
-            "content_properties": {
-            },
+            "content_properties": {},
             "range": {
               "min": 2,
               "max": 2
@@ -102,8 +98,7 @@
               }
             }
           ],
-          "stats": {
-          },
+          "stats": {},
           "associated_files": [
             {
               "name": "score_calibration.txt",
@@ -117,11 +112,9 @@
           "description": "The number of the detected boxes.",
           "content": {
             "content_properties_type": "FeatureProperties",
-            "content_properties": {
-            }
+            "content_properties": {}
           },
-          "stats": {
-          }
+          "stats": {}
         }
       ],
       "output_tensor_groups": [

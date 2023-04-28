@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -127,9 +127,9 @@ void ConfigureNonMaxSuppressionCalculator(
 
 void ConfigureDetectionsToRectsCalculator(
     mediapipe::DetectionsToRectsCalculatorOptions* options) {
-  // Left eye.
+  // Left eye from the observer’s point of view.
   options->set_rotation_vector_start_keypoint_index(0);
-  // Right ete.
+  // Right eye from the observer’s point of view.
   options->set_rotation_vector_end_keypoint_index(1);
   options->set_rotation_vector_target_angle_degrees(0);
 }

@@ -54,3 +54,17 @@ index 462ec7c2218..f2b583a4cbd 100644
      # copybara:comment_end
  
  def gpu_delegate_linkopts():
+diff --git a/tensorflow/tsl/platform/windows/error_windows.cc b/tensorflow/tsl/platform/windows/error_windows.cc
+index fea37ddb2ea..4070ea55425 100644
+--- a/tensorflow/tsl/platform/windows/error_windows.cc
++++ b/tensorflow/tsl/platform/windows/error_windows.cc
+@@ -15,8 +15,8 @@ limitations under the License.
+ 
+ #include "tensorflow/tsl/platform/windows/error_windows.h"
+ 
+-#include <Windows.h>
+ #include <Winsock2.h>
++#include <Windows.h>
+ 
+ #include <string>
+ 

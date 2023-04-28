@@ -57,6 +57,13 @@ FACEMESH_FACE_OVAL = frozenset([(10, 338), (338, 297), (297, 332), (332, 284),
                                 (234, 127), (127, 162), (162, 21), (21, 54),
                                 (54, 103), (103, 67), (67, 109), (109, 10)])
 
+FACEMESH_NOSE = frozenset([(168, 6), (6, 197), (197, 195), (195, 5),
+                           (5, 4), (4, 1), (1, 19), (19, 94), (94, 2), (98, 97),
+                           (97, 2), (2, 326), (326, 327), (327, 294),
+                           (294, 278), (278, 344), (344, 440), (440, 275),
+                           (275, 4), (4, 45), (45, 220), (220, 115), (115, 48),
+                           (48, 64), (64, 98)])
+
 FACEMESH_CONTOURS = frozenset().union(*[
     FACEMESH_LIPS, FACEMESH_LEFT_EYE, FACEMESH_LEFT_EYEBROW, FACEMESH_RIGHT_EYE,
     FACEMESH_RIGHT_EYEBROW, FACEMESH_FACE_OVAL

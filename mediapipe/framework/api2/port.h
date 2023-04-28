@@ -467,6 +467,11 @@ class SideFallbackT : public Base {
 // CalculatorContext (e.g. kOut(cc)), and provides a type-safe interface to
 // OutputStreamShard. Like that class, this class will not be usually named in
 // calculator code, but used as a temporary object (e.g. kOut(cc).Send(...)).
+//
+// If not connected (!IsConnected()) SetNextTimestampBound is safe to call and
+// does nothing.
+// All the sub-classes that define Send should implement it to be safe to to
+// call if not connected and do nothing in such case.
 class OutputShardAccessBase {
  public:
   OutputShardAccessBase(const CalculatorContext& cc, OutputStreamShard* output)

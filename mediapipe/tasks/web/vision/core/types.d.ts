@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,6 @@ import {NormalizedKeypoint} from '../../../../tasks/web/components/containers/ke
  */
 export type SegmentationMask = Uint8ClampedArray|Float32Array|WebGLTexture;
 
-/**
- * A callback that receives an `ImageData` object from a Vision task. The
- * lifetime of the underlying data is limited to the duration of the callback.
- * If asynchronous processing is needed, all data needs to be copied before the
- * callback returns.
- *
- * The `WebGLTexture` output type is reserved for future usage.
- */
-export type ImageCallback =
-    (image: ImageData|WebGLTexture, width: number, height: number) => void;
 
 /** A Region-Of-Interest (ROI) to represent a region within an image. */
 export declare interface RegionOfInterest {

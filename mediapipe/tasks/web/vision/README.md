@@ -160,3 +160,20 @@ const detections = objectDetector.detect(image);
 
 For more information, refer to the [Object Detector](https://developers.google.com/mediapipe/solutions/vision/object_detector/web_js) documentation.
 
+
+## Pose Landmark Detection
+
+The MediaPipe Pose Landmarker task lets you detect the landmarks of body poses
+in an image. You can use this Task to localize key points of a pose and render
+visual effects over the body.
+
+```
+const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+);
+const poseLandmarker = await PoseLandmarker.createFromModelPath(vision,
+    "model.task"
+);
+const image = document.getElementById("image") as HTMLImageElement;
+const landmarks = poseLandmarker.detect(image);
+```

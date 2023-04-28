@@ -67,7 +67,15 @@ py_library(
 py_library(
     name = "object_detector",
     srcs = ["object_detector.py"],
-    deps = [":metadata_writer"],
+    data = ["//mediapipe/tasks/metadata:object_detector_metadata_schema.fbs"],
+    deps = [
+        ":metadata_info",
+        ":metadata_writer",
+        "//mediapipe/tasks/metadata:metadata_schema_py",
+        "//mediapipe/tasks/metadata:object_detector_metadata_schema_py",
+        "//mediapipe/tasks/python/metadata",
+        "@flatbuffers//:runtime_py",
+    ],
 )
 
 py_library(

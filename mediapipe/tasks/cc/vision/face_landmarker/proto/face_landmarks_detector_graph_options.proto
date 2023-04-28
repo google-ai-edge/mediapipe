@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,6 +36,13 @@ message FaceLandmarksDetectorGraphOptions {
   // Minimum confidence value ([0.0, 1.0]) for confidence score to be considered
   // successfully detecting a face in the image.
   optional float min_detection_confidence = 2 [default = 0.5];
+
+  // Whether to smooth the detected landmarks over timestamps. Note that
+  // landmarks smoothing is only applicable for a single face. If multiple faces
+  // landmarks are given, and smooth_landmarks is true, only the first face
+  // landmarks would be smoothed, and the remaining landmarks are discarded in
+  // the returned landmarks list.
+  optional bool smooth_landmarks = 4;
 
   // Optional options for FaceBlendshapeGraph. If this options is set, the
   // FaceLandmarksDetectorGraph would output the face blendshapes.

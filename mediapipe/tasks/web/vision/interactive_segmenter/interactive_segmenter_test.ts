@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,10 @@ describe('InteractiveSegmenter', () => {
     interactiveSegmenter = new InteractiveSegmenterFake();
     await interactiveSegmenter.setOptions(
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
+  });
+
+  afterEach(() => {
+    interactiveSegmenter.close();
   });
 
   it('initializes graph', async () => {

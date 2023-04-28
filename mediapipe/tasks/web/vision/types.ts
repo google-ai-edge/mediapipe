@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,3 +27,4 @@ export * from '../../../tasks/web/vision/image_embedder/image_embedder';
 export * from '../../../tasks/web/vision/image_segmenter/image_segmenter';
 export * from '../../../tasks/web/vision/interactive_segmenter/interactive_segmenter';
 export * from '../../../tasks/web/vision/object_detector/object_detector';
+export * from '../../../tasks/web/vision/pose_landmarker/pose_landmarker';
