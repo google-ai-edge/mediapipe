@@ -54,7 +54,7 @@ py_test(
     name = "language_detector_test",
     srcs = ["language_detector_test.py"],
     data = [
-        "//mediapipe/tasks/testdata/text:language_detector_model",
+        "//mediapipe/tasks/testdata/text:language_detector",
     ],
     deps = [
         "//mediapipe/tasks/python/components/containers:category",

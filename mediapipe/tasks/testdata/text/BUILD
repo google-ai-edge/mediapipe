@@ -81,11 +81,6 @@ filegroup(
 )
 
 filegroup(
-    name = "language_detector_model",
-    srcs = ["language_detector.tflite"],
-)
-
-filegroup(
     name = "text_classifier_models",
     srcs = [
         "test_model_text_classifier_bool_output.tflite",
