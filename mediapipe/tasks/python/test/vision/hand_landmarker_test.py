@@ -32,12 +32,14 @@ from mediapipe.tasks.python.vision import hand_landmarker
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 
-_LandmarksDetectionResultProto = landmarks_detection_result_pb2.LandmarksDetectionResult
+_LandmarksDetectionResultProto = (
+    landmarks_detection_result_pb2.LandmarksDetectionResult)
 _BaseOptions = base_options_module.BaseOptions
 _Rect = rect_module.Rect
 _Landmark = landmark_module.Landmark
 _NormalizedLandmark = landmark_module.NormalizedLandmark
-_LandmarksDetectionResult = landmark_detection_result_module.LandmarksDetectionResult
+_LandmarksDetectionResult = (
+    landmark_detection_result_module.LandmarksDetectionResult)
 _Image = image_module.Image
 _HandLandmarker = hand_landmarker.HandLandmarker
 _HandLandmarkerOptions = hand_landmarker.HandLandmarkerOptions
@@ -54,7 +56,7 @@ _POINTING_UP_IMAGE = 'pointing_up.jpg'
 _POINTING_UP_LANDMARKS = 'pointing_up_landmarks.pbtxt'
 _POINTING_UP_ROTATED_IMAGE = 'pointing_up_rotated.jpg'
 _POINTING_UP_ROTATED_LANDMARKS = 'pointing_up_rotated_landmarks.pbtxt'
-_LANDMARKS_ERROR_TOLERANCE = 0.03
+_LANDMARKS_MARGIN = 0.03
 _HANDEDNESS_MARGIN = 0.05
 
 
@@ -89,39 +91,43 @@ class HandLandmarkerTest(parameterized.TestCase):
     self.model_path = test_utils.get_test_data_path(
         _HAND_LANDMARKER_BUNDLE_ASSET_FILE)
 
-  def _assert_actual_result_approximately_matches_expected_result(
-      self, actual_result: _HandLandmarkerResult,
-      expected_result: _HandLandmarkerResult):
+  def _expect_hand_landmarks_correct(
+      self, actual_landmarks, expected_landmarks, margin
+  ):
     # Expects to have the same number of hands detected.
-    self.assertLen(actual_result.hand_landmarks,
-                   len(expected_result.hand_landmarks))
-    self.assertLen(actual_result.hand_world_landmarks,
-                   len(expected_result.hand_world_landmarks))
-    self.assertLen(actual_result.handedness, len(expected_result.handedness))
-    # Actual landmarks match expected landmarks.
-    self.assertLen(actual_result.hand_landmarks[0],
-                   len(expected_result.hand_landmarks[0]))
-    actual_landmarks = actual_result.hand_landmarks[0]
-    expected_landmarks = expected_result.hand_landmarks[0]
-    for i, rename_me in enumerate(actual_landmarks):
-      self.assertAlmostEqual(
-          rename_me.x,
-          expected_landmarks[i].x,
-          delta=_LANDMARKS_ERROR_TOLERANCE)
-      self.assertAlmostEqual(
-          rename_me.y,
-          expected_landmarks[i].y,
-          delta=_LANDMARKS_ERROR_TOLERANCE)
-    # Actual handedness matches expected handedness.
-    actual_top_handedness = actual_result.handedness[0][0]
-    expected_top_handedness = expected_result.handedness[0][0]
+    self.assertLen(actual_landmarks, len(expected_landmarks))
+
+    for i, _ in enumerate(actual_landmarks):
+      for j, elem in enumerate(actual_landmarks[i]):
+        self.assertAlmostEqual(elem.x, expected_landmarks[i][j].x, delta=margin)
+        self.assertAlmostEqual(elem.y, expected_landmarks[i][j].y, delta=margin)
+
+  def _expect_handedness_correct(
+      self, actual_handedness, expected_handedness, margin
+  ):
+    # Actual top handedness matches expected top handedness.
+    actual_top_handedness = actual_handedness[0][0]
+    expected_top_handedness = expected_handedness[0][0]
     self.assertEqual(actual_top_handedness.index, expected_top_handedness.index)
     self.assertEqual(actual_top_handedness.category_name,
                      expected_top_handedness.category_name)
     self.assertAlmostEqual(
-        actual_top_handedness.score,
-        expected_top_handedness.score,
-        delta=_HANDEDNESS_MARGIN)
+        actual_top_handedness.score, expected_top_handedness.score, delta=margin
+    )
+
+  def _expect_hand_landmarker_results_correct(
+      self,
+      actual_result: _HandLandmarkerResult,
+      expected_result: _HandLandmarkerResult,
+  ):
+    self._expect_hand_landmarks_correct(
+        actual_result.hand_landmarks,
+        expected_result.hand_landmarks,
+        _LANDMARKS_MARGIN,
+    )
+    self._expect_handedness_correct(
+        actual_result.handedness, expected_result.handedness, _HANDEDNESS_MARGIN
+    )
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
     # Creates with default option and valid model file successfully.
@@ -175,8 +181,9 @@ class HandLandmarkerTest(parameterized.TestCase):
     # Performs hand landmarks detection on the input.
     detection_result = landmarker.detect(self.test_image)
     # Comparing results.
-    self._assert_actual_result_approximately_matches_expected_result(
-        detection_result, expected_detection_result)
+    self._expect_hand_landmarker_results_correct(
+        detection_result, expected_detection_result
+    )
     # Closes the hand landmarker explicitly when the hand landmarker is not used
     # in a context.
     landmarker.close()
@@ -203,8 +210,9 @@ class HandLandmarkerTest(parameterized.TestCase):
       # Performs hand landmarks detection on the input.
       detection_result = landmarker.detect(self.test_image)
       # Comparing results.
-      self._assert_actual_result_approximately_matches_expected_result(
-          detection_result, expected_detection_result)
+      self._expect_hand_landmarker_results_correct(
+          detection_result, expected_detection_result
+      )
 
   def test_detect_succeeds_with_num_hands(self):
     # Creates hand landmarker.
@@ -234,8 +242,9 @@ class HandLandmarkerTest(parameterized.TestCase):
       expected_detection_result = _get_expected_hand_landmarker_result(
           _POINTING_UP_ROTATED_LANDMARKS)
       # Comparing results.
-      self._assert_actual_result_approximately_matches_expected_result(
-          detection_result, expected_detection_result)
+      self._expect_hand_landmarker_results_correct(
+          detection_result, expected_detection_result
+      )
 
   def test_detect_fails_with_region_of_interest(self):
     # Creates hand landmarker.
@@ -350,9 +359,9 @@ class HandLandmarkerTest(parameterized.TestCase):
       for timestamp in range(0, 300, 30):
         result = landmarker.detect_for_video(test_image, timestamp,
                                              image_processing_options)
-        if result.hand_landmarks and result.hand_world_landmarks and result.handedness:
-          self._assert_actual_result_approximately_matches_expected_result(
-              result, expected_result)
+        if (result.hand_landmarks and result.hand_world_landmarks and
+            result.handedness):
+          self._expect_hand_landmarker_results_correct(result, expected_result)
         else:
           self.assertEqual(result, expected_result)
 
@@ -405,9 +414,9 @@ class HandLandmarkerTest(parameterized.TestCase):
 
     def check_result(result: _HandLandmarkerResult, output_image: _Image,
                      timestamp_ms: int):
-      if result.hand_landmarks and result.hand_world_landmarks and result.handedness:
-        self._assert_actual_result_approximately_matches_expected_result(
-            result, expected_result)
+      if (result.hand_landmarks and result.hand_world_landmarks and
+          result.handedness):
+        self._expect_hand_landmarker_results_correct(result, expected_result)
       else:
         self.assertEqual(result, expected_result)
       self.assertTrue(

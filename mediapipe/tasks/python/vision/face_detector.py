@@ -71,8 +71,8 @@ class FaceDetectorOptions:
 
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
-  min_detection_confidence: Optional[float] = None
-  min_suppression_threshold: Optional[float] = None
+  min_detection_confidence: float = 0.5
+  min_suppression_threshold: float = 0.3
   result_callback: Optional[
       Callable[
           [detections_module.DetectionResult, image_module.Image, int], None

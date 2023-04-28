@@ -51,24 +51,27 @@ _PORTRAIT_IMAGE = 'portrait.jpg'
 _CAT_IMAGE = 'cat.jpg'
 _PORTRAIT_EXPECTED_FACE_LANDMARKS = 'portrait_expected_face_landmarks.pbtxt'
 _PORTRAIT_EXPECTED_BLENDSHAPES = 'portrait_expected_blendshapes.pbtxt'
-_LANDMARKS_DIFF_MARGIN = 0.03
-_BLENDSHAPES_DIFF_MARGIN = 0.13
-_FACIAL_TRANSFORMATION_MATRIX_DIFF_MARGIN = 0.02
+_LANDMARKS_MARGIN = 0.03
+_BLENDSHAPES_MARGIN = 0.13
+_FACIAL_TRANSFORMATION_MATRIX_MARGIN = 0.02
 
 
 def _get_expected_face_landmarks(file_path: str):
   proto_file_path = test_utils.get_test_data_path(file_path)
+  face_landmarks_results = []
   with open(proto_file_path, 'rb') as f:
     proto = landmark_pb2.NormalizedLandmarkList()
     text_format.Parse(f.read(), proto)
     face_landmarks = []
     for landmark in proto.landmark:
       face_landmarks.append(_NormalizedLandmark.create_from_pb2(landmark))
-  return face_landmarks
+  face_landmarks_results.append(face_landmarks)
+  return face_landmarks_results
 
 
 def _get_expected_face_blendshapes(file_path: str):
   proto_file_path = test_utils.get_test_data_path(file_path)
+  face_blendshapes_results = []
   with open(proto_file_path, 'rb') as f:
     proto = classification_pb2.ClassificationList()
     text_format.Parse(f.read(), proto)
@@ -84,7 +87,8 @@ def _get_expected_face_blendshapes(file_path: str):
               category_name=face_blendshapes.label,
           )
       )
-  return face_blendshapes_categories
+  face_blendshapes_results.append(face_blendshapes_categories)
+  return face_blendshapes_results
 
 
 def _get_expected_facial_transformation_matrixes():
@@ -119,13 +123,14 @@ class FaceLandmarkerTest(parameterized.TestCase):
     # Expects to have the same number of faces detected.
     self.assertLen(actual_landmarks, len(expected_landmarks))
 
-    for i, elem in enumerate(actual_landmarks):
-      self.assertAlmostEqual(
-          elem.x, expected_landmarks[i].x, delta=_LANDMARKS_DIFF_MARGIN
-      )
-      self.assertAlmostEqual(
-          elem.y, expected_landmarks[i].y, delta=_LANDMARKS_DIFF_MARGIN
-      )
+    for i, _ in enumerate(actual_landmarks):
+      for j, elem in enumerate(actual_landmarks[i]):
+        self.assertAlmostEqual(
+            elem.x, expected_landmarks[i][j].x, delta=_LANDMARKS_MARGIN
+        )
+        self.assertAlmostEqual(
+            elem.y, expected_landmarks[i][j].y, delta=_LANDMARKS_MARGIN
+        )
 
   def _expect_blendshapes_correct(
       self, actual_blendshapes, expected_blendshapes
@@ -133,13 +138,14 @@ class FaceLandmarkerTest(parameterized.TestCase):
     # Expects to have the same number of blendshapes.
     self.assertLen(actual_blendshapes, len(expected_blendshapes))
 
-    for i, elem in enumerate(actual_blendshapes):
-      self.assertEqual(elem.index, expected_blendshapes[i].index)
-      self.assertAlmostEqual(
-          elem.score,
-          expected_blendshapes[i].score,
-          delta=_BLENDSHAPES_DIFF_MARGIN,
-      )
+    for i, _ in enumerate(actual_blendshapes):
+      for j, elem in enumerate(actual_blendshapes[i]):
+        self.assertEqual(elem.index, expected_blendshapes[i][j].index)
+        self.assertAlmostEqual(
+            elem.score,
+            expected_blendshapes[i][j].score,
+            delta=_BLENDSHAPES_MARGIN,
+        )
 
   def _expect_facial_transformation_matrixes_correct(
       self, actual_matrix_list, expected_matrix_list
@@ -152,7 +158,7 @@ class FaceLandmarkerTest(parameterized.TestCase):
       self.assertSequenceAlmostEqual(
           elem.flatten(),
           expected_matrix_list[i].flatten(),
-          delta=_FACIAL_TRANSFORMATION_MATRIX_DIFF_MARGIN,
+          delta=_FACIAL_TRANSFORMATION_MATRIX_MARGIN,
       )
 
   def test_create_from_file_succeeds_with_valid_model_path(self):
@@ -236,11 +242,11 @@ class FaceLandmarkerTest(parameterized.TestCase):
     # Comparing results.
     if expected_face_landmarks is not None:
       self._expect_landmarks_correct(
-          detection_result.face_landmarks[0], expected_face_landmarks
+          detection_result.face_landmarks, expected_face_landmarks
       )
     if expected_face_blendshapes is not None:
       self._expect_blendshapes_correct(
-          detection_result.face_blendshapes[0], expected_face_blendshapes
+          detection_result.face_blendshapes, expected_face_blendshapes
       )
     if expected_facial_transformation_matrixes is not None:
       self._expect_facial_transformation_matrixes_correct(
@@ -302,11 +308,11 @@ class FaceLandmarkerTest(parameterized.TestCase):
       # Comparing results.
       if expected_face_landmarks is not None:
         self._expect_landmarks_correct(
-            detection_result.face_landmarks[0], expected_face_landmarks
+            detection_result.face_landmarks, expected_face_landmarks
         )
       if expected_face_blendshapes is not None:
         self._expect_blendshapes_correct(
-            detection_result.face_blendshapes[0], expected_face_blendshapes
+            detection_result.face_blendshapes, expected_face_blendshapes
         )
       if expected_facial_transformation_matrixes is not None:
         self._expect_facial_transformation_matrixes_correct(
@@ -446,11 +452,11 @@ class FaceLandmarkerTest(parameterized.TestCase):
         # Comparing results.
         if expected_face_landmarks is not None:
           self._expect_landmarks_correct(
-              detection_result.face_landmarks[0], expected_face_landmarks
+              detection_result.face_landmarks, expected_face_landmarks
           )
         if expected_face_blendshapes is not None:
           self._expect_blendshapes_correct(
-              detection_result.face_blendshapes[0], expected_face_blendshapes
+              detection_result.face_blendshapes, expected_face_blendshapes
           )
         if expected_facial_transformation_matrixes is not None:
           self._expect_facial_transformation_matrixes_correct(
@@ -523,11 +529,11 @@ class FaceLandmarkerTest(parameterized.TestCase):
       # Comparing results.
       if expected_face_landmarks is not None:
         self._expect_landmarks_correct(
-            result.face_landmarks[0], expected_face_landmarks
+            result.face_landmarks, expected_face_landmarks
         )
       if expected_face_blendshapes is not None:
         self._expect_blendshapes_correct(
-            result.face_blendshapes[0], expected_face_blendshapes
+            result.face_blendshapes, expected_face_blendshapes
         )
       if expected_facial_transformation_matrixes is not None:
         self._expect_facial_transformation_matrixes_correct(
