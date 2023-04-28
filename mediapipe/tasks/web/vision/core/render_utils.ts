@@ -35,11 +35,10 @@ const COLOR_MAP: Array<[number, number, number, number]> = [
   [255, 255, 255, CM_ALPHA]   // class 11 is white; could do black instead?
 ];
 
-
 /** Helper function to draw a confidence mask */
 export function drawConfidenceMask(
-    ctx: CanvasRenderingContext2D, image: Float32Array, width: number,
-    height: number): void {
+  ctx: CanvasRenderingContext2D, image: Float32Array, width: number,
+  height: number): void {
   const uint8ClampedArray = new Uint8ClampedArray(width * height * 4);
   for (let i = 0; i < image.length; i++) {
     uint8ClampedArray[4 * i] = 128;
@@ -48,33 +47,6 @@ export function drawConfidenceMask(
     uint8ClampedArray[4 * i + 3] = image[i] * 255;
   }
   ctx.putImageData(new ImageData(uint8ClampedArray, width, height), 0, 0);
-}
-
-/**
- * Helper function to draw a category mask. For GPU, we only have F32Arrays
- * for now.
- */
-export function drawCategoryMask(
-    ctx: CanvasRenderingContext2D, image: Uint8ClampedArray|Float32Array,
-    width: number, height: number): void {
-  const rgbaArray = new Uint8ClampedArray(width * height * 4);
-  const isFloatArray = image instanceof Float32Array;
-  for (let i = 0; i < image.length; i++) {
-    const colorIndex = isFloatArray ? Math.round(image[i] * 255) : image[i];
-    let color = COLOR_MAP[colorIndex % COLOR_MAP.length];
-
-    if (!color) {
-      // TODO: We should fix this.
-      console.warn('No color for ', colorIndex);
-      color = COLOR_MAP[colorIndex % COLOR_MAP.length];
-    }
-
-    rgbaArray[4 * i] = color[0];
-    rgbaArray[4 * i + 1] = color[1];
-    rgbaArray[4 * i + 2] = color[2];
-    rgbaArray[4 * i + 3] = color[3];
-  }
-  ctx.putImageData(new ImageData(rgbaArray, width, height), 0, 0);
 }
 
 /** The color converter we use in our demos. */

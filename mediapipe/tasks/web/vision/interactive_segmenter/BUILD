@@ -37,6 +37,7 @@ mediapipe_ts_declaration(
     deps = [
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:classifier_options",
+        "//mediapipe/tasks/web/vision/core:image",
         "//mediapipe/tasks/web/vision/core:vision_task_options",
     ],
 )
@@ -53,6 +54,7 @@ mediapipe_ts_library(
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner_test_utils",
+        "//mediapipe/tasks/web/vision/core:image",
         "//mediapipe/util:render_data_jspb_proto",
         "//mediapipe/web/graph_runner:graph_runner_image_lib_ts",
     ],

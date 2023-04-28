@@ -16,16 +16,6 @@
 
 import {NormalizedKeypoint} from '../../../../tasks/web/components/containers/keypoint';
 
-/**
- * The segmentation tasks return the segmentation either as a WebGLTexture (when
- * the output is on GPU) or as a typed JavaScript arrays for CPU-based
- * category or confidence masks. `Uint8ClampedArray`s are used to represent
- * CPU-based category masks and `Float32Array`s are used for CPU-based
- * confidence masks.
- */
-export type SegmentationMask = Uint8ClampedArray|Float32Array|WebGLTexture;
-
-
 /** A Region-Of-Interest (ROI) to represent a region within an image. */
 export declare interface RegionOfInterest {
   /** The ROI in keypoint format. */

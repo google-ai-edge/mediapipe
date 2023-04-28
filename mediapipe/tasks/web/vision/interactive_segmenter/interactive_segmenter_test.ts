@@ -19,6 +19,7 @@ import 'jasmine';
 // Placeholder for internal dependency on encodeByteArray
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph} from '../../../../tasks/web/core/task_runner_test_utils';
+import {MPImage} from '../../../../tasks/web/vision/core/image';
 import {RenderData as RenderDataProto} from '../../../../util/render_data_pb';
 import {WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
 
@@ -170,10 +171,10 @@ describe('InteractiveSegmenter', () => {
       interactiveSegmenter.segment({} as HTMLImageElement, ROI, result => {
         expect(interactiveSegmenter.fakeWasmModule._waitUntilIdle)
             .toHaveBeenCalled();
-        expect(result.categoryMask).toEqual(mask);
+        expect(result.categoryMask).toBeInstanceOf(MPImage);
+        expect(result.categoryMask!.width).toEqual(2);
+        expect(result.categoryMask!.height).toEqual(2);
         expect(result.confidenceMasks).not.toBeDefined();
-        expect(result.width).toEqual(2);
-        expect(result.height).toEqual(2);
         resolve();
       });
     });
@@ -202,18 +203,21 @@ describe('InteractiveSegmenter', () => {
         expect(interactiveSegmenter.fakeWasmModule._waitUntilIdle)
             .toHaveBeenCalled();
         expect(result.categoryMask).not.toBeDefined();
-        expect(result.confidenceMasks).toEqual([mask1, mask2]);
-        expect(result.width).toEqual(2);
-        expect(result.height).toEqual(2);
+
+        expect(result.confidenceMasks![0]).toBeInstanceOf(MPImage);
+        expect(result.confidenceMasks![0].width).toEqual(2);
+        expect(result.confidenceMasks![0].height).toEqual(2);
+
+        expect(result.confidenceMasks![1]).toBeInstanceOf(MPImage);
         resolve();
       });
     });
   });
 
   it('supports combined category and confidence masks', async () => {
-    const categoryMask = new Uint8ClampedArray([1, 0]);
-    const confidenceMask1 = new Float32Array([0.0, 1.0]);
-    const confidenceMask2 = new Float32Array([1.0, 0.0]);
+    const categoryMask = new Uint8ClampedArray([1]);
+    const confidenceMask1 = new Float32Array([0.0]);
+    const confidenceMask2 = new Float32Array([1.0]);
 
     await interactiveSegmenter.setOptions(
         {outputCategoryMask: true, outputConfidenceMasks: true});
@@ -238,12 +242,12 @@ describe('InteractiveSegmenter', () => {
           {} as HTMLImageElement, ROI, result => {
             expect(interactiveSegmenter.fakeWasmModule._waitUntilIdle)
                 .toHaveBeenCalled();
-            expect(result.categoryMask).toEqual(categoryMask);
-            expect(result.confidenceMasks).toEqual([
-              confidenceMask1, confidenceMask2
-            ]);
-            expect(result.width).toEqual(1);
-            expect(result.height).toEqual(1);
+            expect(result.categoryMask).toBeInstanceOf(MPImage);
+            expect(result.categoryMask!.width).toEqual(1);
+            expect(result.categoryMask!.height).toEqual(1);
+
+            expect(result.confidenceMasks![0]).toBeInstanceOf(MPImage);
+            expect(result.confidenceMasks![1]).toBeInstanceOf(MPImage);
             resolve();
           });
     });
