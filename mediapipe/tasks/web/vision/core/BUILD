@@ -91,6 +91,7 @@ mediapipe_ts_library(
 mediapipe_ts_library(
     name = "render_utils",
     srcs = ["render_utils.ts"],
+    deps = [":image"],
 )
 
 jasmine_node_test(

@@ -14,24 +14,21 @@
  * limitations under the License.
  */
 
+import {MPImage} from '../../../../tasks/web/vision/core/image';
+
 /** The output result of ImageSegmenter. */
 export declare interface ImageSegmenterResult {
   /**
-   * Multiple masks as Float32Arrays or WebGLTextures where, for each mask, each
-   * pixel represents the prediction confidence, usually in the [0, 1] range.
+   * Multiple masks represented as `Float32Array` or `WebGLTexture`-backed
+   * `MPImage`s where, for each mask, each pixel represents the prediction
+   * confidence, usually in the [0, 1] range.
    */
-  confidenceMasks?: Float32Array[]|WebGLTexture[];
+  confidenceMasks?: MPImage[];
 
   /**
-   * A category mask as a Uint8ClampedArray or WebGLTexture where each
-   * pixel represents the class which the pixel in the original image was
-   * predicted to belong to.
+   * A category mask represented as a `Uint8ClampedArray` or
+   * `WebGLTexture`-backed `MPImage` where each pixel represents the class which
+   * the pixel in the original image was predicted to belong to.
    */
-  categoryMask?: Uint8ClampedArray|WebGLTexture;
-
-  /** The width of the masks. */
-  width: number;
-
-  /** The height of the masks. */
-  height: number;
+  categoryMask?: MPImage;
 }

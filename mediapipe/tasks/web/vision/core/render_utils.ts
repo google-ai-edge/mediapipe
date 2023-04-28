@@ -16,9 +16,11 @@
  * limitations under the License.
  */
 
+import {MPImageChannelConverter} from '../../../../tasks/web/vision/core/image';
+
 // Pre-baked color table for a maximum of 12 classes.
 const CM_ALPHA = 128;
-const COLOR_MAP = [
+const COLOR_MAP: Array<[number, number, number, number]> = [
   [0, 0, 0, CM_ALPHA],        // class 0 is BG = transparent
   [255, 0, 0, CM_ALPHA],      // class 1 is red
   [0, 255, 0, CM_ALPHA],      // class 2 is light green
@@ -74,3 +76,9 @@ export function drawCategoryMask(
   }
   ctx.putImageData(new ImageData(rgbaArray, width, height), 0, 0);
 }
+
+/** The color converter we use in our demos. */
+export const RENDER_UTIL_CONVERTER: MPImageChannelConverter = {
+  floatToRGBAConverter: v => [128, 0, 0, v * 255],
+  uint8ToRGBAConverter: v => COLOR_MAP[v % COLOR_MAP.length],
+};

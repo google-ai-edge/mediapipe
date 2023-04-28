@@ -231,39 +231,41 @@ export abstract class VisionTaskRunner extends TaskRunner {
    */
   protected convertToMPImage(wasmImage: WasmImage): MPImage {
     const {data, width, height} = wasmImage;
+    const pixels = width * height;
 
+    let container: ImageData|WebGLTexture|Uint8ClampedArray;
     if (data instanceof Uint8ClampedArray) {
-      let rgba: Uint8ClampedArray;
-      if (data.length === width * height * 4) {
-        rgba = data;
-      } else if (data.length === width * height * 3) {
+      if (data.length === pixels) {
+        container = data;  // Mask
+      } else if (data.length === pixels * 3) {
         // TODO: Convert in C++
-        rgba = new Uint8ClampedArray(width * height * 4);
-        for (let i = 0; i < width * height; ++i) {
+        const rgba = new Uint8ClampedArray(pixels * 4);
+        for (let i = 0; i < pixels; ++i) {
           rgba[4 * i] = data[3 * i];
           rgba[4 * i + 1] = data[3 * i + 1];
           rgba[4 * i + 2] = data[3 * i + 2];
           rgba[4 * i + 3] = 255;
         }
+        container = new ImageData(rgba, width, height);
+      } else if (data.length ===pixels * 4) {
+        container = new ImageData(data, width, height);
       } else {
-        throw new Error(
-            `Unsupported channel count: ${data.length / width / height}`);
+        throw new Error(`Unsupported channel count: ${data.length/pixels}`);
       }
-
-      return new MPImage(
-          [new ImageData(rgba, width, height)],
-          /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false,
-          this.graphRunner.wasmModule.canvas!, this.shaderContext, width,
-          height);
-    } else if (data instanceof WebGLTexture) {
-      return new MPImage(
-          [data], /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false,
-          this.graphRunner.wasmModule.canvas!, this.shaderContext, width,
-          height);
-    } else {
-      throw new Error(
-          `Cannot convert type ${data.constructor.name} to MPImage.`);
+    } else if (data instanceof Float32Array) {
+      if (data.length === pixels) {
+        container = data;  // Mask
+      } else {
+        throw new Error(`Unsupported channel count: ${data.length/pixels}`);
+      }
+    } else {  // WebGLTexture
+      container = data;
     }
+
+    return new MPImage(
+      [container], /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false,
+      this.graphRunner.wasmModule.canvas!, this.shaderContext, width,
+      height);
   }
 
   /** Closes and cleans up the resources held by this task. */
