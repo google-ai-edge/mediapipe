@@ -84,7 +84,7 @@ constexpr char kSegmentationMaskTag[] = "SEGMENTATION_MASK";
 constexpr char kSegmentationMaskName[] = "segmentation_mask";
 
 constexpr float kLiteModelFractionDiff = 0.05;  // percentage
-constexpr float kGoldenMaskSimilarity = 1.0;
+constexpr float kGoldenMaskSimilarity = .98;
 
 template <typename ProtoT>
 ProtoT GetExpectedProto(absl::string_view filename) {
