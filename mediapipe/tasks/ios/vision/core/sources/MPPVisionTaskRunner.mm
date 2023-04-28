@@ -86,11 +86,12 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
 }
 
 - (std::optional<NormalizedRect>)normalizedRectFromRegionOfInterest:(CGRect)roi
+                                                          imageSize:(CGSize)imageSize
                                                    imageOrientation:
                                                        (UIImageOrientation)imageOrientation
                                                          ROIAllowed:(BOOL)ROIAllowed
                                                               error:(NSError **)error {
-  if (CGRectEqualToRect(roi, CGRectZero) && !ROIAllowed) {
+  if (!CGRectEqualToRect(roi, CGRectZero) && !ROIAllowed) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInvalidArgumentError
                           description:@"This task doesn't support region-of-interest."];
@@ -102,8 +103,6 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
   NormalizedRect normalizedRect;
   normalizedRect.set_x_center(CGRectGetMidX(calculatedRoi));
   normalizedRect.set_y_center(CGRectGetMidY(calculatedRoi));
-  normalizedRect.set_width(CGRectGetWidth(calculatedRoi));
-  normalizedRect.set_height(CGRectGetHeight(calculatedRoi));
 
   int rotationDegrees = 0;
   switch (imageOrientation) {
@@ -133,6 +132,23 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
   }
 
   normalizedRect.set_rotation(rotationDegrees * M_PI / kMPPOrientationDegreesDown);
+
+  // For 90° and 270° rotations, we need to swap width and height.
+  // This is due to the internal behavior of ImageToTensorCalculator, which:
+  // - first denormalizes the provided rect by multiplying the rect width or height by the image
+  //   width or height, repectively.
+  // - then rotates this by denormalized rect by the provided rotation, and uses this for cropping,
+  // - then finally rotates this back.
+  if (rotationDegrees % 180 == 0) {
+    normalizedRect.set_width(CGRectGetWidth(calculatedRoi));
+    normalizedRect.set_height(CGRectGetHeight(calculatedRoi));
+  } else {
+    const float width = CGRectGetHeight(calculatedRoi) * imageSize.height / imageSize.width;
+    const float height = CGRectGetWidth(calculatedRoi) * imageSize.width / imageSize.height;
+
+    normalizedRect.set_width(width);
+    normalizedRect.set_height(height);
+  }
 
   return normalizedRect;
 }

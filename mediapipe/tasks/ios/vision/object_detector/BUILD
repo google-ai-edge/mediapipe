@@ -58,6 +58,5 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/object_detector/utils:MPPObjectDetectionResultHelpers",
         "//mediapipe/tasks/ios/vision/object_detector/utils:MPPObjectDetectorOptionsHelpers",
-        "//third_party/apple_frameworks:UIKit",
     ],
 )
