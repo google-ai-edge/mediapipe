@@ -50,6 +50,17 @@ class FaceStylizerTest(tf.test.TestCase):
       )
       self._evaluate_saved_model(model)
 
+  def test_export_face_stylizer_tflite_model(self):
+    with self.test_session(use_gpu=True):
+      face_stylizer_options = face_stylizer.FaceStylizerOptions(
+          model=face_stylizer.SupportedModels.BLAZE_FACE_STYLIZER_256,
+          hparams=face_stylizer.HParams(epochs=0),
+      )
+      model = face_stylizer.FaceStylizer.create(
+          train_data=self._train_data, options=face_stylizer_options
+      )
+      model.export_model()
+
 
 if __name__ == '__main__':
   tf.test.main()
