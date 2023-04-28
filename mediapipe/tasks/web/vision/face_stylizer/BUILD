@@ -17,6 +17,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/tasks/cc/vision/face_stylizer/proto:face_stylizer_graph_options_jspb_proto",
         "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/vision/core:image",
         "//mediapipe/tasks/web/vision/core:image_processing_options",
         "//mediapipe/tasks/web/vision/core:types",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
@@ -46,6 +47,7 @@ mediapipe_ts_library(
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner_test_utils",
+        "//mediapipe/tasks/web/vision/core:image",
         "//mediapipe/web/graph_runner:graph_runner_image_lib_ts",
     ],
 )

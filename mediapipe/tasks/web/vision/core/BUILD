@@ -60,6 +60,7 @@ mediapipe_ts_library(
     name = "vision_task_runner",
     srcs = ["vision_task_runner.ts"],
     deps = [
+        ":image",
         ":image_processing_options",
         ":vision_task_options",
         "//mediapipe/framework/formats:rect_jspb_proto",

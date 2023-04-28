@@ -19,6 +19,7 @@ import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {FaceStylizerGraphOptions as FaceStylizerGraphOptionsProto} from '../../../../tasks/cc/vision/face_stylizer/proto/face_stylizer_graph_options_pb';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {MPImage} from '../../../../tasks/web/vision/core/image';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
@@ -39,15 +40,13 @@ const FACE_STYLIZER_GRAPH =
 // tslint:disable:jspb-use-builder-pattern
 
 /**
- * A callback that receives an image from the face stylizer, or `null` if no
- * face was detected. The lifetime of the underlying data is limited to the
- * duration of the callback. If asynchronous processing is needed, all data
- * needs to be copied before the callback returns.
- *
- * The `WebGLTexture` output type is reserved for future usage.
+ * A callback that receives an `MPImage` object from the face stylizer, or
+ * `null` if no face was detected. The lifetime of the underlying data is
+ * limited to the duration of the callback. If asynchronous processing is
+ * needed, all data needs to be copied before the callback returns (via
+ * `image.clone()`).
  */
-export type FaceStylizerCallback =
-    (image: ImageData|WebGLTexture|null, width: number, height: number) => void;
+export type FaceStylizerCallback = (image: MPImage|null) => void;
 
 /** Performs face stylization on images. */
 export class FaceStylizer extends VisionTaskRunner {
@@ -270,18 +269,14 @@ export class FaceStylizer extends VisionTaskRunner {
     graphConfig.addNode(segmenterNode);
 
     this.graphRunner.attachImageListener(
-        STYLIZED_IMAGE_STREAM, (image, timestamp) => {
-          if (image.data instanceof WebGLTexture) {
-            this.userCallback(image.data, image.width, image.height);
-          } else {
-            const imageData = this.convertToImageData(image);
-            this.userCallback(imageData, image.width, image.height);
-          }
+        STYLIZED_IMAGE_STREAM, (wasmImage, timestamp) => {
+          const mpImage = this.convertToMPImage(wasmImage);
+          this.userCallback(mpImage);
           this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachEmptyPacketListener(
         STYLIZED_IMAGE_STREAM, timestamp => {
-          this.userCallback(null, /* width= */ 0, /* height= */ 0);
+          this.userCallback(null);
           this.setLatestOutputTimestamp(timestamp);
         });
 

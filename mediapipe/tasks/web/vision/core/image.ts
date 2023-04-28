@@ -59,8 +59,11 @@ function assertNotNull<T>(value: T|null, msg: string): T {
   return value;
 }
 
+// TODO: Move internal-only types to different module.
+
 /**
  * Utility class that encapsulates the buffers used by `MPImageShaderContext`.
+ * For internal use only.
  */
 class MPImageShaderBuffers {
   constructor(
@@ -87,6 +90,8 @@ class MPImageShaderBuffers {
 /**
  * A class that encapsulates the shaders used by an MPImage. Can be re-used
  * across MPImages that use the same WebGL2Rendering context.
+ *
+ * For internal use only.
  */
 export class MPImageShaderContext {
   private gl?: WebGL2RenderingContext;

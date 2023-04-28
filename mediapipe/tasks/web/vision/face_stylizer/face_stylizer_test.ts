@@ -19,6 +19,7 @@ import 'jasmine';
 // Placeholder for internal dependency on encodeByteArray
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph, verifyListenersRegistered} from '../../../../tasks/web/core/task_runner_test_utils';
+import {MPImageStorageType} from '../../../../tasks/web/vision/core/image';
 import {WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
 
 import {FaceStylizer} from './face_stylizer';
@@ -114,11 +115,33 @@ describe('FaceStylizer', () => {
     });
 
     // Invoke the face stylizeer
-    faceStylizer.stylize({} as HTMLImageElement, (image, width, height) => {
+    faceStylizer.stylize({} as HTMLImageElement, image => {
       expect(faceStylizer.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
-      expect(image).toBeInstanceOf(ImageData);
-      expect(width).toEqual(1);
-      expect(height).toEqual(1);
+      expect(image).not.toBeNull();
+      expect(image!.hasType(MPImageStorageType.IMAGE_DATA)).toBeTrue();
+      expect(image!.width).toEqual(1);
+      expect(image!.height).toEqual(1);
+      done();
+    });
+  });
+
+  it('invokes callback even when no faes are detected', (done) => {
+    if (typeof ImageData === 'undefined') {
+      console.log('ImageData tests are not supported on Node');
+      done();
+      return;
+    }
+
+    // Pass the test data to our listener
+    faceStylizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      verifyListenersRegistered(faceStylizer);
+      faceStylizer.emptyPacketListener!(/* timestamp= */ 1337);
+    });
+
+    // Invoke the face stylizeer
+    faceStylizer.stylize({} as HTMLImageElement, image => {
+      expect(faceStylizer.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
+      expect(image).toBeNull();
       done();
     });
   });
@@ -131,11 +154,9 @@ describe('FaceStylizer', () => {
     });
 
     // Invoke the face stylizeer
-    faceStylizer.stylize({} as HTMLImageElement, (image, width, height) => {
+    faceStylizer.stylize({} as HTMLImageElement, image => {
       expect(faceStylizer.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
       expect(image).toBeNull();
-      expect(width).toEqual(0);
-      expect(height).toEqual(0);
       done();
     });
   });
