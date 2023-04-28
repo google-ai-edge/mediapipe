@@ -256,6 +256,11 @@ export abstract class TaskRunner {
 
     this.baseOptions.setAcceleration(acceleration);
   }
+
+  /** Closes and cleans up the resources held by this task. */
+  close(): void {
+    this.graphRunner.closeGraph();
+  }
 }
 
 

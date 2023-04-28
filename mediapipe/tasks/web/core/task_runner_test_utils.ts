@@ -36,7 +36,8 @@ export function createSpyWasmModule(): SpyWasmModule {
     '_setAutoRenderToScreen', 'stringToNewUTF8', '_attachProtoListener',
     '_attachProtoVectorListener', '_free', '_waitUntilIdle',
     '_addStringToInputStream', '_registerModelResourcesGraphService',
-    '_configureAudio', '_malloc', '_addProtoToInputStream', '_getGraphConfig'
+    '_configureAudio', '_malloc', '_addProtoToInputStream', '_getGraphConfig',
+    '_closeGraph'
   ]);
   spyWasmModule._getGraphConfig.and.callFake(() => {
     (spyWasmModule.simpleListeners![CALCULATOR_GRAPH_CONFIG_LISTENER_NAME] as
