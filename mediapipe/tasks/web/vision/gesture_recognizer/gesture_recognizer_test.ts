@@ -113,6 +113,10 @@ describe('GestureRecognizer', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    gestureRecognizer.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(gestureRecognizer);
     verifyListenersRegistered(gestureRecognizer);

@@ -86,6 +86,10 @@ describe('AudioClassifier', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    audioClassifier.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(audioClassifier);
     verifyListenersRegistered(audioClassifier);

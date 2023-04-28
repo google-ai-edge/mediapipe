@@ -94,6 +94,10 @@ describe('FaceLandmarker', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    faceLandmarker.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(faceLandmarker);
     verifyListenersRegistered(faceLandmarker);

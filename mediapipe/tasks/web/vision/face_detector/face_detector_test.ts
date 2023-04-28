@@ -66,6 +66,10 @@ describe('FaceDetector', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    faceDetector.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(faceDetector);
     verifyListenersRegistered(faceDetector);

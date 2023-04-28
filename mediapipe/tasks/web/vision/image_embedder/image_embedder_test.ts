@@ -62,6 +62,10 @@ describe('ImageEmbedder', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    imageEmbedder.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(imageEmbedder);
     verifyListenersRegistered(imageEmbedder);

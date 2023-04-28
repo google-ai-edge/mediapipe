@@ -84,6 +84,10 @@ describe('InteractiveSegmenter', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    interactiveSegmenter.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(interactiveSegmenter);
 

@@ -62,6 +62,10 @@ describe('LanguageDetector', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    languageDetector.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(languageDetector);
     verifyListenersRegistered(languageDetector);

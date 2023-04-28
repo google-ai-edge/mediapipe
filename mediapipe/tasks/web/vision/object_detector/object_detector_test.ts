@@ -66,6 +66,10 @@ describe('ObjectDetector', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    objectDetector.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(objectDetector);
     verifyListenersRegistered(objectDetector);

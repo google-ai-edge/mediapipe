@@ -83,6 +83,10 @@ describe('HandLandmarker', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    handLandmarker.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(handLandmarker);
     verifyListenersRegistered(handLandmarker);

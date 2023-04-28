@@ -68,6 +68,10 @@ describe('ImageSegmenter', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    imageSegmenter.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(imageSegmenter);
 

@@ -76,6 +76,10 @@ describe('AudioEmbedder', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    audioEmbedder.close();
+  });
+
   it('initializes graph', () => {
     verifyGraph(audioEmbedder);
     verifyListenersRegistered(audioEmbedder);

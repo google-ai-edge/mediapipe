@@ -61,6 +61,10 @@ describe('TextEmbedder', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    textEmbedder.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(textEmbedder);
     verifyListenersRegistered(textEmbedder);

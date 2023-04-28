@@ -66,6 +66,10 @@ describe('FaceStylizer', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    faceStylizer.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(faceStylizer);
     verifyListenersRegistered(faceStylizer);

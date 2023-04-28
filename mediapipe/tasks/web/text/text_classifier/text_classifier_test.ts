@@ -61,6 +61,10 @@ describe('TextClassifier', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    textClassifier.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(textClassifier);
     verifyListenersRegistered(textClassifier);

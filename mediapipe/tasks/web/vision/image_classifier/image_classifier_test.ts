@@ -66,6 +66,10 @@ describe('ImageClassifier', () => {
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
   });
 
+  afterEach(() => {
+    imageClassifier.close();
+  });
+
   it('initializes graph', async () => {
     verifyGraph(imageClassifier);
     verifyListenersRegistered(imageClassifier);
