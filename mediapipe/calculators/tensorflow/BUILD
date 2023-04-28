@@ -400,6 +400,16 @@ cc_library(
 # compile your binary with the flag TENSORFLOW_PROTOS=lite.
 cc_library(
     name = "tensorflow_inference_calculator_no_envelope_loader",
+    deps = [
+        ":tensorflow_inference_calculator_for_boq",
+    ],
+    alwayslink = 1,
+)
+
+# This dependency removed tensorflow_jellyfish_deps and xprofilez_with_server because they failed
+# Boq conformance test. Weigh your use case to see if this will work for you.
+cc_library(
+    name = "tensorflow_inference_calculator_for_boq",
     srcs = ["tensorflow_inference_calculator.cc"],
     deps = [
         ":tensorflow_inference_calculator_cc_proto",
@@ -585,6 +595,24 @@ cc_library(
 # See yaqs/1092546221614039040
 cc_library(
     name = "tensorflow_session_from_saved_model_generator_no_envelope_loader",
+    defines = select({
+        "//mediapipe:android": ["__ANDROID__"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":tensorflow_session_from_saved_model_generator_for_boq",
+    ] + select({
+        "//conditions:default": [
+            "//learning/brain/frameworks/uptc/public:uptc_session_no_envelope_loader",
+        ],
+    }),
+    alwayslink = 1,
+)
+
+# Same library as tensorflow_session_from_saved_model_generator without uptc_session,
+# envelop_loader and remote_session dependencies.
+cc_library(
+    name = "tensorflow_session_from_saved_model_generator_for_boq",
     srcs = ["tensorflow_session_from_saved_model_generator.cc"],
     defines = select({
         "//mediapipe:android": ["__ANDROID__"],
