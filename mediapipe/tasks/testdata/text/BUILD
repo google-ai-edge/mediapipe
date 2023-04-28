@@ -29,6 +29,7 @@ mediapipe_files(srcs = [
     "30k-clean.model",
     "albert_with_metadata.tflite",
     "bert_text_classifier.tflite",
+    "language_detector.tflite",
     "mobilebert_embedding_with_metadata.tflite",
     "mobilebert_with_metadata.tflite",
     "regex_one_embedding_with_metadata.tflite",
@@ -104,4 +105,9 @@ filegroup(
 filegroup(
     name = "universal_sentence_encoder_qa",
     srcs = ["universal_sentence_encoder_qa_with_metadata.tflite"],
+)
+
+filegroup(
+    name = "language_detector",
+    srcs = ["language_detector.tflite"],
 )
