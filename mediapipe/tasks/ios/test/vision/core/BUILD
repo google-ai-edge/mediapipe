@@ -3,7 +3,7 @@ load(
     "ios_unit_test",
 )
 load(
-    "//mediapipe/tasks:ios/ios.bzl",
+    "//mediapipe/framework/tool:ios.bzl",
     "MPP_TASK_MINIMUM_OS_VERSION",
 )
 load(
