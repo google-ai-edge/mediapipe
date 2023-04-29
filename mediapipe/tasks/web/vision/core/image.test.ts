@@ -16,7 +16,7 @@
 
 import 'jasmine';
 
-import {MPImage, MPImageShaderContext, MPImageStorageType} from './image';
+import {MPImage, MPImageShaderContext, MPImageType} from './image';
 
 const WIDTH = 2;
 const HEIGHT = 2;
@@ -130,20 +130,20 @@ class MPImageTestContext {
 
   function assertEquality(image: MPImage, expected: ImageType): void {
     if (expected instanceof Uint8ClampedArray) {
-      const result = image.getImage(MPImageStorageType.UINT8_CLAMPED_ARRAY);
+      const result = image.get(MPImageType.UINT8_CLAMPED_ARRAY);
       expect(result).toEqual(expected);
     } else if (expected instanceof Float32Array) {
-      const result = image.getImage(MPImageStorageType.FLOAT32_ARRAY);
+      const result = image.get(MPImageType.FLOAT32_ARRAY);
       expect(result).toEqual(expected);
     } else if (expected instanceof ImageData) {
-      const result = image.getImage(MPImageStorageType.IMAGE_DATA);
+      const result = image.get(MPImageType.IMAGE_DATA);
       expect(result).toEqual(expected);
     } else if (expected instanceof ImageBitmap) {
-      const result = image.getImage(MPImageStorageType.IMAGE_BITMAP);
+      const result = image.get(MPImageType.IMAGE_BITMAP);
       expect(readPixelsFromImageBitmap(result))
           .toEqual(readPixelsFromImageBitmap(expected));
     } else {  // WebGLTexture
-      const result = image.getImage(MPImageStorageType.WEBGL_TEXTURE);
+      const result = image.get(MPImageType.WEBGL_TEXTURE);
       expect(readPixelsFromWebGLTexture(result))
           .toEqual(readPixelsFromWebGLTexture(expected));
     }
@@ -206,7 +206,7 @@ class MPImageTestContext {
         /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false,
         context.canvas, shaderContext, WIDTH, HEIGHT);
 
-    const result = image.clone().getImage(MPImageStorageType.IMAGE_DATA);
+    const result = image.clone().get(MPImageType.IMAGE_DATA);
     expect(result).toEqual(context.imageData);
 
     shaderContext.close();
@@ -223,61 +223,61 @@ class MPImageTestContext {
 
     // Verify that we can mix the different shader modes by running them out of
     // order.
-    let result = image.getImage(MPImageStorageType.IMAGE_DATA);
+    let result = image.get(MPImageType.IMAGE_DATA);
     expect(result).toEqual(context.imageData);
 
-    result = image.clone().getImage(MPImageStorageType.IMAGE_DATA);
+    result = image.clone().get(MPImageType.IMAGE_DATA);
     expect(result).toEqual(context.imageData);
 
-    result = image.getImage(MPImageStorageType.IMAGE_DATA);
+    result = image.get(MPImageType.IMAGE_DATA);
     expect(result).toEqual(context.imageData);
 
     shaderContext.close();
   });
 
-  it('supports hasType()', async () => {
+  it('supports has()', async () => {
     await context.init();
 
     const shaderContext = new MPImageShaderContext();
     const image = createImage(shaderContext, context.imageData, WIDTH, HEIGHT);
 
-    expect(image.hasType(MPImageStorageType.IMAGE_DATA)).toBe(true);
-    expect(image.hasType(MPImageStorageType.UINT8_CLAMPED_ARRAY)).toBe(false);
-    expect(image.hasType(MPImageStorageType.FLOAT32_ARRAY)).toBe(false);
-    expect(image.hasType(MPImageStorageType.WEBGL_TEXTURE)).toBe(false);
-    expect(image.hasType(MPImageStorageType.IMAGE_BITMAP)).toBe(false);
+    expect(image.has(MPImageType.IMAGE_DATA)).toBe(true);
+    expect(image.has(MPImageType.UINT8_CLAMPED_ARRAY)).toBe(false);
+    expect(image.has(MPImageType.FLOAT32_ARRAY)).toBe(false);
+    expect(image.has(MPImageType.WEBGL_TEXTURE)).toBe(false);
+    expect(image.has(MPImageType.IMAGE_BITMAP)).toBe(false);
 
-    image.getImage(MPImageStorageType.UINT8_CLAMPED_ARRAY);
+    image.get(MPImageType.UINT8_CLAMPED_ARRAY);
 
-    expect(image.hasType(MPImageStorageType.IMAGE_DATA)).toBe(true);
-    expect(image.hasType(MPImageStorageType.UINT8_CLAMPED_ARRAY)).toBe(true);
-    expect(image.hasType(MPImageStorageType.FLOAT32_ARRAY)).toBe(false);
-    expect(image.hasType(MPImageStorageType.WEBGL_TEXTURE)).toBe(false);
-    expect(image.hasType(MPImageStorageType.IMAGE_BITMAP)).toBe(false);
+    expect(image.has(MPImageType.IMAGE_DATA)).toBe(true);
+    expect(image.has(MPImageType.UINT8_CLAMPED_ARRAY)).toBe(true);
+    expect(image.has(MPImageType.FLOAT32_ARRAY)).toBe(false);
+    expect(image.has(MPImageType.WEBGL_TEXTURE)).toBe(false);
+    expect(image.has(MPImageType.IMAGE_BITMAP)).toBe(false);
 
-    image.getImage(MPImageStorageType.FLOAT32_ARRAY);
+    image.get(MPImageType.FLOAT32_ARRAY);
 
-    expect(image.hasType(MPImageStorageType.IMAGE_DATA)).toBe(true);
-    expect(image.hasType(MPImageStorageType.UINT8_CLAMPED_ARRAY)).toBe(true);
-    expect(image.hasType(MPImageStorageType.FLOAT32_ARRAY)).toBe(true);
-    expect(image.hasType(MPImageStorageType.WEBGL_TEXTURE)).toBe(false);
-    expect(image.hasType(MPImageStorageType.IMAGE_BITMAP)).toBe(false);
+    expect(image.has(MPImageType.IMAGE_DATA)).toBe(true);
+    expect(image.has(MPImageType.UINT8_CLAMPED_ARRAY)).toBe(true);
+    expect(image.has(MPImageType.FLOAT32_ARRAY)).toBe(true);
+    expect(image.has(MPImageType.WEBGL_TEXTURE)).toBe(false);
+    expect(image.has(MPImageType.IMAGE_BITMAP)).toBe(false);
 
-    image.getImage(MPImageStorageType.WEBGL_TEXTURE);
+    image.get(MPImageType.WEBGL_TEXTURE);
 
-    expect(image.hasType(MPImageStorageType.IMAGE_DATA)).toBe(true);
-    expect(image.hasType(MPImageStorageType.UINT8_CLAMPED_ARRAY)).toBe(true);
-    expect(image.hasType(MPImageStorageType.FLOAT32_ARRAY)).toBe(true);
-    expect(image.hasType(MPImageStorageType.WEBGL_TEXTURE)).toBe(true);
-    expect(image.hasType(MPImageStorageType.IMAGE_BITMAP)).toBe(false);
+    expect(image.has(MPImageType.IMAGE_DATA)).toBe(true);
+    expect(image.has(MPImageType.UINT8_CLAMPED_ARRAY)).toBe(true);
+    expect(image.has(MPImageType.FLOAT32_ARRAY)).toBe(true);
+    expect(image.has(MPImageType.WEBGL_TEXTURE)).toBe(true);
+    expect(image.has(MPImageType.IMAGE_BITMAP)).toBe(false);
 
-    image.getImage(MPImageStorageType.IMAGE_BITMAP);
+    image.get(MPImageType.IMAGE_BITMAP);
 
-    expect(image.hasType(MPImageStorageType.IMAGE_DATA)).toBe(true);
-    expect(image.hasType(MPImageStorageType.UINT8_CLAMPED_ARRAY)).toBe(true);
-    expect(image.hasType(MPImageStorageType.FLOAT32_ARRAY)).toBe(true);
-    expect(image.hasType(MPImageStorageType.WEBGL_TEXTURE)).toBe(true);
-    expect(image.hasType(MPImageStorageType.IMAGE_BITMAP)).toBe(true);
+    expect(image.has(MPImageType.IMAGE_DATA)).toBe(true);
+    expect(image.has(MPImageType.UINT8_CLAMPED_ARRAY)).toBe(true);
+    expect(image.has(MPImageType.FLOAT32_ARRAY)).toBe(true);
+    expect(image.has(MPImageType.WEBGL_TEXTURE)).toBe(true);
+    expect(image.has(MPImageType.IMAGE_BITMAP)).toBe(true);
 
     image.close();
     shaderContext.close();
