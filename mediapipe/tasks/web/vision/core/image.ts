@@ -263,6 +263,9 @@ export class MPImageShaderContext {
   }
 }
 
+/** A four channel color with a red, green, blue and alpha values. */
+export type RGBAColor = [number, number, number, number];
+
 /**
  * An interface that can be used to provide custom conversion functions. These
  * functions are invoked to convert pixel values between different channel
@@ -278,7 +281,7 @@ export interface MPImageChannelConverter {
    * The default conversion function is `[v * 255, v * 255, v * 255, 255]`
    * and will log a warning if invoked.
    */
-  floatToRGBAConverter?: (value: number) => [number, number, number, number];
+  floatToRGBAConverter?: (value: number) => RGBAColor;
 
   /*
    * A conversion function to convert a number in the [0, 255] range to RGBA.
@@ -288,7 +291,7 @@ export interface MPImageChannelConverter {
    * The default conversion function is `[v, v , v , 255]` and will log a
    * warning if invoked.
    */
-  uint8ToRGBAConverter?: (value: number) => [number, number, number, number];
+  uint8ToRGBAConverter?: (value: number) => RGBAColor;
 
   /**
    * A conversion function to convert an RGBA value in the range of 0 to 255 to
@@ -326,33 +329,70 @@ export interface MPImageChannelConverter {
    */
   uint8ToFloatConverter?: (value: number) => number;
 }
+/**
+ * Color converter that falls back to a default implementation if the
+ * user-provided converter does not specify a conversion.
+ */
+class DefaultColorConverter implements Required<MPImageChannelConverter> {
+  private static readonly WARNINGS_LOGGED = new Set<string>();
 
-const DEFAULT_CONVERTER: Required<MPImageChannelConverter> = {
-  floatToRGBAConverter: v => {
-    console.log('Using default floatToRGBAConverter');
+  constructor(private readonly customConverter: MPImageChannelConverter) {}
+
+  floatToRGBAConverter(v: number): RGBAColor {
+    if (this.customConverter.floatToRGBAConverter) {
+      return this.customConverter.floatToRGBAConverter(v);
+    }
+    this.logWarningOnce('floatToRGBAConverter');
     return [v * 255, v * 255, v * 255, 255];
-  },
-  uint8ToRGBAConverter: v => {
-    console.log('Using default uint8ToRGBAConverter');
+  }
+
+  uint8ToRGBAConverter(v: number): RGBAColor {
+    if (this.customConverter.uint8ToRGBAConverter) {
+      return this.customConverter.uint8ToRGBAConverter(v);
+    }
+    this.logWarningOnce('uint8ToRGBAConverter');
     return [v, v, v, 255];
-  },
-  rgbaToFloatConverter: (r, g, b) => {
-    console.log('Using default floatToRGBAConverter');
+  }
+
+  rgbaToFloatConverter(r: number, g: number, b: number, a: number): number {
+    if (this.customConverter.rgbaToFloatConverter) {
+      return this.customConverter.rgbaToFloatConverter(r, g, b, a);
+    }
+    this.logWarningOnce('rgbaToFloatConverter');
     return (r / 3 + g / 3 + b / 3) / 255;
-  },
-  rgbaToUint8Converter: (r, g, b) => {
-    console.log('Using default rgbaToUint8Converter');
+  }
+
+  rgbaToUint8Converter(r: number, g: number, b: number, a: number): number {
+    if (this.customConverter.rgbaToUint8Converter) {
+      return this.customConverter.rgbaToUint8Converter(r, g, b, a);
+    }
+    this.logWarningOnce('rgbaToUint8Converter');
     return r / 3 + g / 3 + b / 3;
-  },
-  floatToUint8Converter: v => {
-    console.log('Using default floatToUint8Converter');
+  }
+
+  floatToUint8Converter(v: number): number {
+    if (this.customConverter.floatToUint8Converter) {
+      return this.customConverter.floatToUint8Converter(v);
+    }
+    this.logWarningOnce('floatToUint8Converter');
     return v * 255;
-  },
-  uint8ToFloatConverter: v => {
-    console.log('Using default uint8ToFloatConverter');
+  }
+
+  uint8ToFloatConverter(v: number): number {
+    if (this.customConverter.uint8ToFloatConverter) {
+      return this.customConverter.uint8ToFloatConverter(v);
+    }
+    this.logWarningOnce('uint8ToFloatConverter');
     return v / 255;
-  },
-};
+  }
+
+  private logWarningOnce(methodName: string): void {
+    if (!DefaultColorConverter.WARNINGS_LOGGED.has(methodName)) {
+      console.log(`Using default ${methodName}`);
+      DefaultColorConverter.WARNINGS_LOGGED.add(methodName);
+    }
+  }
+}
 
 /**
  * The wrapper class for MediaPipe Image objects.
@@ -488,7 +528,7 @@ export class MPImage {
       converter?: MPImageChannelConverter): WebGLTexture;
   get(type?: MPImageType,
       converter?: MPImageChannelConverter): MPImageContainer {
-    const internalConverter = {...DEFAULT_CONVERTER, ...converter};
+    const internalConverter = new DefaultColorConverter(converter ?? {});
     switch (type) {
       case MPImageType.UINT8_CLAMPED_ARRAY:
         return this.convertToUint8ClampedArray(internalConverter);
@@ -579,7 +619,7 @@ export class MPImage {
 
         this.unbindTexture();
       } else if (container instanceof ImageBitmap) {
-        this.convertToWebGLTexture(DEFAULT_CONVERTER);
+        this.convertToWebGLTexture(new DefaultColorConverter({}));
         this.bindTexture();
         destinationContainer = this.copyTextureToBitmap();
         this.unbindTexture();
