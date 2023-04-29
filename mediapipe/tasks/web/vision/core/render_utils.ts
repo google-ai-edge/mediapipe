@@ -35,20 +35,6 @@ const COLOR_MAP: Array<[number, number, number, number]> = [
   [255, 255, 255, CM_ALPHA]   // class 11 is white; could do black instead?
 ];
 
-/** Helper function to draw a confidence mask */
-export function drawConfidenceMask(
-  ctx: CanvasRenderingContext2D, image: Float32Array, width: number,
-  height: number): void {
-  const uint8ClampedArray = new Uint8ClampedArray(width * height * 4);
-  for (let i = 0; i < image.length; i++) {
-    uint8ClampedArray[4 * i] = 128;
-    uint8ClampedArray[4 * i + 1] = 0;
-    uint8ClampedArray[4 * i + 2] = 0;
-    uint8ClampedArray[4 * i + 3] = image[i] * 255;
-  }
-  ctx.putImageData(new ImageData(uint8ClampedArray, width, height), 0, 0);
-}
-
 /** The color converter we use in our demos. */
 export const RENDER_UTIL_CONVERTER: MPImageChannelConverter = {
   floatToRGBAConverter: v => [128, 0, 0, v * 255],

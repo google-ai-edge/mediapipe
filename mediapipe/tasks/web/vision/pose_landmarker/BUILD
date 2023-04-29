@@ -45,6 +45,7 @@ mediapipe_ts_declaration(
         "//mediapipe/tasks/web/components/containers:category",
         "//mediapipe/tasks/web/components/containers:landmark",
         "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/vision/core:image",
         "//mediapipe/tasks/web/vision/core:vision_task_options",
     ],
 )
@@ -62,6 +63,7 @@ mediapipe_ts_library(
         "//mediapipe/tasks/web/components/processors:landmark_result",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner_test_utils",
+        "//mediapipe/tasks/web/vision/core:image",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
     ],
 )
