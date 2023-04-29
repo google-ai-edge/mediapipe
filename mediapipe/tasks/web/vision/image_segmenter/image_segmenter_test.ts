@@ -262,4 +262,34 @@ describe('ImageSegmenter', () => {
       });
     });
   });
+
+  it('invokes listener once masks are avaiblae', async () => {
+    const categoryMask = new Uint8ClampedArray([1]);
+    const confidenceMask = new Float32Array([0.0]);
+    let listenerCalled = false;
+
+    await imageSegmenter.setOptions(
+        {outputCategoryMask: true, outputConfidenceMasks: true});
+
+    // Pass the test data to our listener
+    imageSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      expect(listenerCalled).toBeFalse();
+      imageSegmenter.categoryMaskListener!
+          ({data: categoryMask, width: 1, height: 1}, 1337);
+      expect(listenerCalled).toBeFalse();
+      imageSegmenter.confidenceMasksListener!(
+          [
+            {data: confidenceMask, width: 1, height: 1},
+          ],
+          1337);
+      expect(listenerCalled).toBeTrue();
+    });
+
+    return new Promise<void>(resolve => {
+      imageSegmenter.segment({} as HTMLImageElement, () => {
+        listenerCalled = true;
+        resolve();
+      });
+    });
+  });
 });

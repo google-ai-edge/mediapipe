@@ -60,6 +60,7 @@ export type ImageSegmenterCallback = (result: ImageSegmenterResult) => void;
 export class ImageSegmenter extends VisionTaskRunner {
   private result: ImageSegmenterResult = {};
   private labels: string[] = [];
+  private userCallback: ImageSegmenterCallback = () => {};
   private outputCategoryMask = DEFAULT_OUTPUT_CATEGORY_MASK;
   private outputConfidenceMasks = DEFAULT_OUTPUT_CONFIDENCE_MASKS;
   private readonly options: ImageSegmenterGraphOptionsProto;
@@ -232,14 +233,13 @@ export class ImageSegmenter extends VisionTaskRunner {
         typeof imageProcessingOptionsOrCallback !== 'function' ?
         imageProcessingOptionsOrCallback :
         {};
-    const userCallback =
-        typeof imageProcessingOptionsOrCallback === 'function' ?
+    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
         imageProcessingOptionsOrCallback :
         callback!;
 
     this.reset();
     this.processImageData(image, imageProcessingOptions);
-    userCallback(this.result);
+    this.userCallback = () => {};
   }
 
   /**
@@ -286,13 +286,13 @@ export class ImageSegmenter extends VisionTaskRunner {
     const timestamp = typeof timestampOrImageProcessingOptions === 'number' ?
         timestampOrImageProcessingOptions :
         timestampOrCallback as number;
-    const userCallback = typeof timestampOrCallback === 'function' ?
+    this.userCallback = typeof timestampOrCallback === 'function' ?
         timestampOrCallback :
         callback!;
 
     this.reset();
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
-    userCallback(this.result);
+    this.userCallback = () => {};
   }
 
   /**
@@ -312,6 +312,18 @@ export class ImageSegmenter extends VisionTaskRunner {
 
   private reset(): void {
     this.result = {};
+  }
+
+  /** Invokes the user callback once all data has been received. */
+  private maybeInvokeCallback(): void {
+    if (this.outputConfidenceMasks && !('confidenceMasks' in this.result)) {
+      return;
+    }
+    if (this.outputCategoryMask && !('categoryMask' in this.result)) {
+      return;
+    }
+
+    this.userCallback(this.result);
   }
 
   /** Updates the MediaPipe graph configuration. */
@@ -342,10 +354,13 @@ export class ImageSegmenter extends VisionTaskRunner {
             this.result.confidenceMasks =
                 masks.map(wasmImage => this.convertToMPImage(wasmImage));
             this.setLatestOutputTimestamp(timestamp);
+            this.maybeInvokeCallback();
           });
       this.graphRunner.attachEmptyPacketListener(
           CONFIDENCE_MASKS_STREAM, timestamp => {
+            this.result.confidenceMasks = undefined;
             this.setLatestOutputTimestamp(timestamp);
+            this.maybeInvokeCallback();
           });
     }
 
@@ -357,10 +372,13 @@ export class ImageSegmenter extends VisionTaskRunner {
           CATEGORY_MASK_STREAM, (mask, timestamp) => {
             this.result.categoryMask = this.convertToMPImage(mask);
             this.setLatestOutputTimestamp(timestamp);
+            this.maybeInvokeCallback();
           });
       this.graphRunner.attachEmptyPacketListener(
           CATEGORY_MASK_STREAM, timestamp => {
+            this.result.categoryMask = undefined;
             this.setLatestOutputTimestamp(timestamp);
+            this.maybeInvokeCallback();
           });
     }
 
