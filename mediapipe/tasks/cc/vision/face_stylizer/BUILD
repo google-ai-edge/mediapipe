@@ -50,6 +50,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/face_stylizer/calculators:tensors_to_image_calculator",
         "//mediapipe/tasks/cc/vision/face_stylizer/calculators:tensors_to_image_calculator_cc_proto",
         "//mediapipe/tasks/cc/vision/face_stylizer/proto:face_stylizer_graph_options_cc_proto",
+        "//mediapipe/util:graph_builder_utils",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status:statusor",
     ],
