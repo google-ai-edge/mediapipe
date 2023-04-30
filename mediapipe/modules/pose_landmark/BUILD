@@ -160,6 +160,8 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/util:from_image_calculator",
         "//mediapipe/modules/pose_detection:pose_detection_cpu",
+        "//mediapipe/calculators/image:custom_calculator",
+
     ],
 )
 

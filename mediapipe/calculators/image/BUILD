@@ -693,6 +693,30 @@ cc_library(
     ],
 )
 
+# added by akash
+cc_library(
+    name = "custom_calculator",
+    srcs = ["image_flip_calculator.cc"],
+    visibility = ["//visibility:public"],
+
+    deps = [
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
+        "@eigen_archive//:eigen3",
+    ],
+        alwayslink = 1,
+
+)
+
+
 cc_library(
     name = "affine_transformation_runner_opencv",
     srcs = ["affine_transformation_runner_opencv.cc"],

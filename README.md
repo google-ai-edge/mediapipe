@@ -170,3 +170,17 @@ We welcome contributions. Please follow these
 
 We use GitHub issues for tracking requests and bugs. Please post questions to
 the MediaPipe Stack Overflow with a `mediapipe` tag.
+
+
+## Steps to add an image_flip_calculator
+Objective of this exercise is to create a custom calculator which can do some custom prcessing of the image('flipping') and then insert this calculator in the mediapipe graph pipe line.
+Description: Calculators are the blocks of code which reperesent a node in a subgraph in mediapipe computational graphs.
+
+1. Goto /mediapipe/calculators/image directory , which contains several image manipulation calculators, place your custom calculator code in a .cc file right here.
+2. Edit the BUILD file in the same image folder by creating a <cc_library> entry for your calculator (the name is 'custom_calculator' in this case, mentioning the name the calculator  src file in last step in the <srcs> section).
+3. Edit the /mediapipe/modules/pose_landmark/pose_landmark_cpu.pbtxt , creating a <node> entry for your calculator by giving it a name ('CustomImageFlipCalculator' in this case, same as that of the class defined by the calculator in step 1. ) whose input willbe  the inputstream  of the graph and output will connect to the node previously connected to the original input stream)
+4. The node created in the step 3 will connect to you custom_calculator by making an entry in the  BUILD file in /mediapipe/modules/pose_landmark/ ; edit the file by finding the entry which mentions name <PoseLandmarkCpu> in the <register_as> section. <PoseLandmarkCpu> is the name of the sub_graph described by the   pose_landmark_cpu.pbtxt.
+In the 'deps' section, add the calculator entry as dependency to the subgraph(in  this case "//mediapipe/calculators/image:custom_calculator").
+5. BUILD your custom calculator by running 
+"bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/calculators/image:custom_calculator" , and also for the pose_detection by running 
+"bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/pose_tracking:pose_tracking_cpu", and then run the pose detection desktop example.

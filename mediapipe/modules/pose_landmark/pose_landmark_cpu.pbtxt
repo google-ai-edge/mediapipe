@@ -30,7 +30,7 @@
 type: "PoseLandmarkCpu"
 
 # CPU image. (ImageFrame)
-input_stream: "IMAGE:image"
+input_stream: "IMAGE:image1"
 
 # Whether to filter landmarks across different input images to reduce jitter.
 # If unspecified, functions as set to true. (bool)
@@ -129,6 +129,14 @@ node {
     }
   }
 }
+
+# added by Akash for Image Flip Calculator
+
+node {
+  calculator: "CustomImageFlipCalculator"
+  input_stream: "IMAGE:image1"
+  output_stream: "IMAGE:image"
+} 
 
 # Checks if there's previous pose rect calculated from landmarks.
 node: {
