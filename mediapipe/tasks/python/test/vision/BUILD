@@ -155,7 +155,6 @@ py_test(
         "//mediapipe/tasks/python/vision:face_stylizer",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
         "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
-        "@com_google_protobuf//:protobuf_python",
     ],
 )
 
