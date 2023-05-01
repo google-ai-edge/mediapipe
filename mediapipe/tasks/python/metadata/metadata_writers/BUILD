@@ -79,6 +79,15 @@ py_library(
 )
 
 py_library(
+    name = "face_stylizer",
+    srcs = ["face_stylizer.py"],
+    deps = [
+        ":metadata_writer",
+        ":model_asset_bundle_utils",
+    ],
+)
+
+py_library(
     name = "model_asset_bundle_utils",
     srcs = ["model_asset_bundle_utils.py"],
 )

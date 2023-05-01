@@ -251,6 +251,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_dummy_face_stylizer_tflite",
+        sha256 = "c44a32a673790aac4aca63ca4b4192b9870c21045241e69d9fe09b7ad1a38d65",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/dummy_face_stylizer.tflite?generation=1682960595073526"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_dummy_gesture_recognizer_task",
         sha256 = "18e54586bda33300d459ca140cd045f6daf43d897224ba215a16db3423eae18e",
         urls = ["https://storage.googleapis.com/mediapipe-assets/dummy_gesture_recognizer.task?generation=1665707319890725"],
@@ -416,6 +422,12 @@ def external_files():
         name = "com_google_mediapipe_face_stylization_dummy_tflite",
         sha256 = "f57fd2d5638def25466f6fec142eb3397d8ad99a9bd0a9344b622bad7c3f0376",
         urls = ["https://storage.googleapis.com/mediapipe-assets/face_stylization_dummy.tflite?generation=1678323589048063"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_face_stylizer_json",
+        sha256 = "ad89860d5daba6a1c4163a576428713fc3ddab76d6bbaf06d675164423ae159f",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/face_stylizer.json?generation=1682960598942694"],
     )
 
     http_file(
