@@ -54,6 +54,7 @@ def mediapipe_proto_library_impl(
         def_java_proto = True,
         def_jspb_proto = True,
         def_go_proto = True,
+        def_dart_proto = True,
         def_options_lib = True):
     """Defines the proto_library targets needed for all mediapipe platforms.
 
@@ -75,6 +76,7 @@ def mediapipe_proto_library_impl(
       def_java_proto: define the java_proto_library target
       def_jspb_proto: define the jspb_proto_library target
       def_go_proto: define the go_proto_library target
+      def_dart_proto: define the dart_proto_library target
       def_options_lib: define the mediapipe_options_library target
     """
 
@@ -258,6 +260,7 @@ def mediapipe_proto_library(
         def_java_proto = True,
         def_jspb_proto = True,
         def_go_proto = True,
+        def_dart_proto = True,
         def_options_lib = True,
         def_rewrite = True,
         portable_deps = None):  # @unused
@@ -283,6 +286,7 @@ def mediapipe_proto_library(
       def_java_proto: define the java_proto_library target
       def_jspb_proto: define the jspb_proto_library target
       def_go_proto: define the go_proto_library target
+      def_dart_proto: define the dart_proto_library target
       def_options_lib: define the mediapipe_options_library target
       def_rewrite: define a sibling mediapipe_proto_library with package "mediapipe"
     """
@@ -304,6 +308,7 @@ def mediapipe_proto_library(
         def_java_proto = def_java_proto,
         def_jspb_proto = def_jspb_proto,
         def_go_proto = def_go_proto,
+        def_dart_proto = def_dart_proto,
         def_options_lib = def_options_lib,
     )
 
@@ -333,6 +338,7 @@ def mediapipe_proto_library(
             def_java_proto = def_java_proto,
             def_jspb_proto = def_jspb_proto,
             def_go_proto = def_go_proto,
+            def_dart_proto = def_dart_proto,
             # A clone of mediapipe_options_library() will redefine some classes.
             def_options_lib = False,
         )
