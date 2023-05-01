@@ -141,6 +141,24 @@ py_test(
 )
 
 py_test(
+    name = "face_aligner_test",
+    srcs = ["face_aligner_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/vision:test_images",
+        "//mediapipe/tasks/testdata/vision:test_models",
+    ],
+    deps = [
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/components/containers:rect",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/vision:face_aligner",
+        "//mediapipe/tasks/python/vision/core:image_processing_options",
+        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
+    ],
+)
+
+py_test(
     name = "hand_landmarker_test",
     srcs = ["hand_landmarker_test.py"],
     data = [
