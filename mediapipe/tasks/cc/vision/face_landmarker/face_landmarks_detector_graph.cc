@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,10 +19,13 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "mediapipe/calculators/core/get_vector_item_calculator.h"
+#include "mediapipe/calculators/core/get_vector_item_calculator.pb.h"
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_floats_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensors_to_landmarks_calculator.pb.h"
 #include "mediapipe/calculators/util/detections_to_rects_calculator.pb.h"
+#include "mediapipe/calculators/util/landmarks_smoothing_calculator.pb.h"
 #include "mediapipe/calculators/util/rect_transformation_calculator.pb.h"
 #include "mediapipe/calculators/util/thresholding_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
@@ -79,6 +82,9 @@ constexpr char kBatchEndTag[] = "BATCH_END";
 constexpr char kItemTag[] = "ITEM";
 constexpr char kDetectionTag[] = "DETECTION";
 constexpr char kBlendshapesTag[] = "BLENDSHAPES";
+constexpr char kNormFilteredLandmarksTag[] = "NORM_FILTERED_LANDMARKS";
+constexpr char kSizeTag[] = "SIZE";
+constexpr char kVectorTag[] = "VECTOR";
 
 // a landmarks tensor and a scores tensor
 constexpr int kFaceLandmarksOutputTensorsNum = 2;
@@ -88,7 +94,6 @@ struct SingleFaceLandmarksOutputs {
   Stream<NormalizedRect> rect_next_frame;
   Stream<bool> presence;
   Stream<float> presence_score;
-  std::optional<Stream<ClassificationList>> face_blendshapes;
 };
 
 struct MultiFaceLandmarksOutputs {
@@ -148,6 +153,19 @@ void ConfigureFaceRectTransformationCalculator(
   options->set_square_long(true);
 }
 
+void ConfigureLandmarksSmoothingCalculator(
+    mediapipe::LandmarksSmoothingCalculatorOptions& options) {
+  // Min cutoff 0.05 results into ~0.01 alpha in landmark EMA filter when
+  // landmark is static.
+  options.mutable_one_euro_filter()->set_min_cutoff(0.05f);
+  // Beta 80.0 in combintation with min_cutoff 0.05 results into ~0.94
+  // alpha in landmark EMA filter when landmark is moving fast.
+  options.mutable_one_euro_filter()->set_beta(80.0f);
+  // Derivative cutoff 1.0 results into ~0.17 alpha in landmark velocity
+  // EMA filter.
+  options.mutable_one_euro_filter()->set_derivate_cutoff(1.0f);
+}
+
 }  // namespace
 
 // A "mediapipe.tasks.vision.face_landmarker.SingleFaceLandmarksDetectorGraph"
@@ -171,62 +189,6 @@ void ConfigureFaceRectTransformationCalculator(
 //     Boolean value indicates whether the face is present.
 //   PRESENCE_SCORE - float
 //     Float value indicates the probability that the face is present.
-//   BLENDSHAPES - ClassificationList @optional
-//     Blendshape classification, available when face_blendshapes_graph_options
-//     is set.
-//     All 52 blendshape coefficients:
-//       0  - _neutral  (ignore it)
-//       1  - browDownLeft
-//       2  - browDownRight
-//       3  - browInnerUp
-//       4  - browOuterUpLeft
-//       5  - browOuterUpRight
-//       6  - cheekPuff
-//       7  - cheekSquintLeft
-//       8  - cheekSquintRight
-//       9  - eyeBlinkLeft
-//       10 - eyeBlinkRight
-//       11 - eyeLookDownLeft
-//       12 - eyeLookDownRight
-//       13 - eyeLookInLeft
-//       14 - eyeLookInRight
-//       15 - eyeLookOutLeft
-//       16 - eyeLookOutRight
-//       17 - eyeLookUpLeft
-//       18 - eyeLookUpRight
-//       19 - eyeSquintLeft
-//       20 - eyeSquintRight
-//       21 - eyeWideLeft
-//       22 - eyeWideRight
-//       23 - jawForward
-//       24 - jawLeft
-//       25 - jawOpen
-//       26 - jawRight
-//       27 - mouthClose
-//       28 - mouthDimpleLeft
-//       29 - mouthDimpleRight
-//       30 - mouthFrownLeft
-//       31 - mouthFrownRight
-//       32 - mouthFunnel
-//       33 - mouthLeft
-//       34 - mouthLowerDownLeft
-//       35 - mouthLowerDownRight
-//       36 - mouthPressLeft
-//       37 - mouthPressRight
-//       38 - mouthPucker
-//       39 - mouthRight
-//       40 - mouthRollLower
-//       41 - mouthRollUpper
-//       42 - mouthShrugLower
-//       43 - mouthShrugUpper
-//       44 - mouthSmileLeft
-//       45 - mouthSmileRight
-//       46 - mouthStretchLeft
-//       47 - mouthStretchRight
-//       48 - mouthUpperUpLeft
-//       49 - mouthUpperUpRight
-//       50 - noseSneerLeft
-//       51 - noseSneerRight
 //
 // Example:
 // node {
@@ -238,7 +200,6 @@ void ConfigureFaceRectTransformationCalculator(
 //   output_stream: "FACE_RECT_NEXT_FRAME:face_rect_next_frame"
 //   output_stream: "PRESENCE:presence"
 //   output_stream: "PRESENCE_SCORE:presence_score"
-//   output_stream: "BLENDSHAPES:blendshapes"
 //   options {
 //     [mediapipe.tasks.vision.face_landmarker.proto.FaceLandmarksDetectorGraphOptions.ext]
 //     {
@@ -278,10 +239,6 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
         graph.Out(kFaceRectNextFrameTag).Cast<NormalizedRect>();
     outs.presence >> graph.Out(kPresenceTag).Cast<bool>();
     outs.presence_score >> graph.Out(kPresenceScoreTag).Cast<float>();
-    if (outs.face_blendshapes) {
-      outs.face_blendshapes.value() >>
-          graph.Out(kBlendshapesTag).Cast<ClassificationList>();
-    }
     return graph.GetConfig();
   }
 
@@ -378,7 +335,7 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto& landmark_projection = graph.AddNode("LandmarkProjectionCalculator");
     landmarks_letterbox_removed >> landmark_projection.In(kNormLandmarksTag);
     face_rect >> landmark_projection.In(kNormRectTag);
-    auto projected_landmarks = AllowIf(
+    Stream<NormalizedLandmarkList> projected_landmarks = AllowIf(
         landmark_projection[Output<NormalizedLandmarkList>(kNormLandmarksTag)],
         presence, graph);
 
@@ -409,25 +366,11 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
         AllowIf(face_rect_transformation.Out("").Cast<NormalizedRect>(),
                 presence, graph);
 
-    std::optional<Stream<ClassificationList>> face_blendshapes;
-    if (subgraph_options.has_face_blendshapes_graph_options()) {
-      auto& face_blendshapes_graph = graph.AddNode(
-          "mediapipe.tasks.vision.face_landmarker.FaceBlendshapesGraph");
-      face_blendshapes_graph.GetOptions<proto::FaceBlendshapesGraphOptions>()
-          .Swap(subgraph_options.mutable_face_blendshapes_graph_options());
-      projected_landmarks >> face_blendshapes_graph.In(kLandmarksTag);
-      image_size >> face_blendshapes_graph.In(kImageSizeTag);
-      face_blendshapes =
-          std::make_optional(face_blendshapes_graph.Out(kBlendshapesTag)
-                                 .Cast<ClassificationList>());
-    }
-
     return {{
         /* landmarks= */ projected_landmarks,
         /* rect_next_frame= */ face_rect_next_frame,
         /* presence= */ presence,
         /* presence_score= */ presence_score,
-        /* face_blendshapes= */ face_blendshapes,
     }};
   }
 };
@@ -465,6 +408,59 @@ REGISTER_MEDIAPIPE_GRAPH(
 //   BLENDSHAPES - std::vector<ClassificationList> @optional
 //     Vector of face blendshape classification, available when
 //     face_blendshapes_graph_options is set.
+//     All 52 blendshape coefficients:
+//       0  - _neutral  (ignore it)
+//       1  - browDownLeft
+//       2  - browDownRight
+//       3  - browInnerUp
+//       4  - browOuterUpLeft
+//       5  - browOuterUpRight
+//       6  - cheekPuff
+//       7  - cheekSquintLeft
+//       8  - cheekSquintRight
+//       9  - eyeBlinkLeft
+//       10 - eyeBlinkRight
+//       11 - eyeLookDownLeft
+//       12 - eyeLookDownRight
+//       13 - eyeLookInLeft
+//       14 - eyeLookInRight
+//       15 - eyeLookOutLeft
+//       16 - eyeLookOutRight
+//       17 - eyeLookUpLeft
+//       18 - eyeLookUpRight
+//       19 - eyeSquintLeft
+//       20 - eyeSquintRight
+//       21 - eyeWideLeft
+//       22 - eyeWideRight
+//       23 - jawForward
+//       24 - jawLeft
+//       25 - jawOpen
+//       26 - jawRight
+//       27 - mouthClose
+//       28 - mouthDimpleLeft
+//       29 - mouthDimpleRight
+//       30 - mouthFrownLeft
+//       31 - mouthFrownRight
+//       32 - mouthFunnel
+//       33 - mouthLeft
+//       34 - mouthLowerDownLeft
+//       35 - mouthLowerDownRight
+//       36 - mouthPressLeft
+//       37 - mouthPressRight
+//       38 - mouthPucker
+//       39 - mouthRight
+//       40 - mouthRollLower
+//       41 - mouthRollUpper
+//       42 - mouthShrugLower
+//       43 - mouthShrugUpper
+//       44 - mouthSmileLeft
+//       45 - mouthSmileRight
+//       46 - mouthStretchLeft
+//       47 - mouthStretchRight
+//       48 - mouthUpperUpLeft
+//       49 - mouthUpperUpRight
+//       50 - noseSneerLeft
+//       51 - noseSneerRight
 //
 // Example:
 // node {
@@ -566,8 +562,9 @@ class MultiFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
         graph.AddNode("EndLoopNormalizedLandmarkListVectorCalculator");
     batch_end >> end_loop_landmarks.In(kBatchEndTag);
     landmarks >> end_loop_landmarks.In(kItemTag);
-    auto landmark_lists = end_loop_landmarks.Out(kIterableTag)
-                              .Cast<std::vector<NormalizedLandmarkList>>();
+    Stream<std::vector<NormalizedLandmarkList>> landmark_lists =
+        end_loop_landmarks.Out(kIterableTag)
+            .Cast<std::vector<NormalizedLandmarkList>>();
 
     auto& end_loop_rects_next_frame =
         graph.AddNode("EndLoopNormalizedRectCalculator");
@@ -576,16 +573,78 @@ class MultiFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto face_rects_next_frame = end_loop_rects_next_frame.Out(kIterableTag)
                                      .Cast<std::vector<NormalizedRect>>();
 
+    // Apply smoothing filter only on the single face landmarks, because
+    // landmarks smoothing calculator doesn't support multiple landmarks yet.
+    // Notice the landmarks smoothing calculator cannot be put inside the for
+    // loop calculator, because the smoothing calculator utilize the timestamp
+    // to smoote landmarks across frames but the for loop calculator makes fake
+    // timestamps for the streams.
+    if (face_landmark_subgraph
+            .GetOptions<proto::FaceLandmarksDetectorGraphOptions>()
+            .smooth_landmarks()) {
+      // Get the single face landmarks
+      auto& get_vector_item =
+          graph.AddNode("GetNormalizedLandmarkListVectorItemCalculator");
+      get_vector_item.GetOptions<mediapipe::GetVectorItemCalculatorOptions>()
+          .set_item_index(0);
+      landmark_lists >> get_vector_item.In(kVectorTag);
+      Stream<NormalizedLandmarkList> single_landmarks =
+          get_vector_item.Out(kItemTag).Cast<NormalizedLandmarkList>();
+
+      auto& image_properties = graph.AddNode("ImagePropertiesCalculator");
+      image_in >> image_properties.In(kImageTag);
+      auto image_size = image_properties.Out(kSizeTag);
+
+      // Apply smoothing filter on face landmarks.
+      auto& landmarks_smoothing = graph.AddNode("LandmarksSmoothingCalculator");
+      ConfigureLandmarksSmoothingCalculator(
+          landmarks_smoothing
+              .GetOptions<mediapipe::LandmarksSmoothingCalculatorOptions>());
+      single_landmarks >> landmarks_smoothing.In(kNormLandmarksTag);
+      image_size >> landmarks_smoothing.In(kImageSizeTag);
+      single_landmarks = landmarks_smoothing.Out(kNormFilteredLandmarksTag)
+                             .Cast<NormalizedLandmarkList>();
+
+      // Wrap the single face landmarks into a vector of landmarks.
+      auto& concatenate_vector =
+          graph.AddNode("ConcatenateNormalizedLandmarkListVectorCalculator");
+      single_landmarks >> concatenate_vector.In("");
+      landmark_lists = concatenate_vector.Out("")
+                           .Cast<std::vector<NormalizedLandmarkList>>();
+    }
+
     std::optional<Stream<std::vector<ClassificationList>>>
         face_blendshapes_vector;
     if (face_landmark_subgraph
             .GetOptions<proto::FaceLandmarksDetectorGraphOptions>()
             .has_face_blendshapes_graph_options()) {
-      auto blendshapes = face_landmark_subgraph.Out(kBlendshapesTag);
+      auto& begin_loop_multi_face_landmarks =
+          graph.AddNode("BeginLoopNormalizedLandmarkListVectorCalculator");
+      landmark_lists >> begin_loop_multi_face_landmarks.In(kIterableTag);
+      image_in >> begin_loop_multi_face_landmarks.In(kCloneTag);
+      auto image = begin_loop_multi_face_landmarks.Out(kCloneTag);
+      auto batch_end = begin_loop_multi_face_landmarks.Out(kBatchEndTag);
+      auto landmarks = begin_loop_multi_face_landmarks.Out(kItemTag);
+
+      auto& image_properties = graph.AddNode("ImagePropertiesCalculator");
+      image >> image_properties.In(kImageTag);
+      auto image_size = image_properties.Out(kSizeTag);
+
+      auto& face_blendshapes_graph = graph.AddNode(
+          "mediapipe.tasks.vision.face_landmarker.FaceBlendshapesGraph");
+      face_blendshapes_graph.GetOptions<proto::FaceBlendshapesGraphOptions>()
+          .Swap(face_landmark_subgraph
+                    .GetOptions<proto::FaceLandmarksDetectorGraphOptions>()
+                    .mutable_face_blendshapes_graph_options());
+      landmarks >> face_blendshapes_graph.In(kLandmarksTag);
+      image_size >> face_blendshapes_graph.In(kImageSizeTag);
+      auto face_blendshapes = face_blendshapes_graph.Out(kBlendshapesTag)
+                                  .Cast<ClassificationList>();
+
       auto& end_loop_blendshapes =
           graph.AddNode("EndLoopClassificationListCalculator");
       batch_end >> end_loop_blendshapes.In(kBatchEndTag);
-      blendshapes >> end_loop_blendshapes.In(kItemTag);
+      face_blendshapes >> end_loop_blendshapes.In(kItemTag);
       face_blendshapes_vector =
           std::make_optional(end_loop_blendshapes.Out(kIterableTag)
                                  .Cast<std::vector<ClassificationList>>());

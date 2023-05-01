@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import {ImageSegmenterGraphOptions as ImageSegmenterGraphOptionsProto} from '../
 import {SegmenterOptions as SegmenterOptionsProto} from '../../../../tasks/cc/vision/image_segmenter/proto/segmenter_options_pb';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
-import {SegmentationMask} from '../../../../tasks/web/vision/core/types';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {LabelMapItem} from '../../../../util/label_map_pb';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
@@ -33,7 +32,6 @@ import {ImageSegmenterResult} from './image_segmenter_result';
 
 export * from './image_segmenter_options';
 export * from './image_segmenter_result';
-export {SegmentationMask};
 export {ImageSource};  // Used in the public API
 
 const IMAGE_STREAM = 'image_in';
@@ -60,8 +58,9 @@ export type ImageSegmenterCallback = (result: ImageSegmenterResult) => void;
 
 /** Performs image segmentation on images. */
 export class ImageSegmenter extends VisionTaskRunner {
-  private result: ImageSegmenterResult = {width: 0, height: 0};
+  private result: ImageSegmenterResult = {};
   private labels: string[] = [];
+  private userCallback: ImageSegmenterCallback = () => {};
   private outputCategoryMask = DEFAULT_OUTPUT_CATEGORY_MASK;
   private outputConfidenceMasks = DEFAULT_OUTPUT_CONFIDENCE_MASKS;
   private readonly options: ImageSegmenterGraphOptionsProto;
@@ -234,14 +233,13 @@ export class ImageSegmenter extends VisionTaskRunner {
         typeof imageProcessingOptionsOrCallback !== 'function' ?
         imageProcessingOptionsOrCallback :
         {};
-    const userCallback =
-        typeof imageProcessingOptionsOrCallback === 'function' ?
+    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
         imageProcessingOptionsOrCallback :
         callback!;
 
     this.reset();
     this.processImageData(image, imageProcessingOptions);
-    userCallback(this.result);
+    this.userCallback = () => {};
   }
 
   /**
@@ -288,13 +286,13 @@ export class ImageSegmenter extends VisionTaskRunner {
     const timestamp = typeof timestampOrImageProcessingOptions === 'number' ?
         timestampOrImageProcessingOptions :
         timestampOrCallback as number;
-    const userCallback = typeof timestampOrCallback === 'function' ?
+    this.userCallback = typeof timestampOrCallback === 'function' ?
         timestampOrCallback :
         callback!;
 
     this.reset();
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
-    userCallback(this.result);
+    this.userCallback = () => {};
   }
 
   /**
@@ -313,7 +311,19 @@ export class ImageSegmenter extends VisionTaskRunner {
   }
 
   private reset(): void {
-    this.result = {width: 0, height: 0};
+    this.result = {};
+  }
+
+  /** Invokes the user callback once all data has been received. */
+  private maybeInvokeCallback(): void {
+    if (this.outputConfidenceMasks && !('confidenceMasks' in this.result)) {
+      return;
+    }
+    if (this.outputCategoryMask && !('categoryMask' in this.result)) {
+      return;
+    }
+
+    this.userCallback(this.result);
   }
 
   /** Updates the MediaPipe graph configuration. */
@@ -341,17 +351,16 @@ export class ImageSegmenter extends VisionTaskRunner {
 
       this.graphRunner.attachImageVectorListener(
           CONFIDENCE_MASKS_STREAM, (masks, timestamp) => {
-            this.result.confidenceMasks = masks.map(m => m.data);
-            if (masks.length >= 0) {
-              this.result.width = masks[0].width;
-              this.result.height = masks[0].height;
-            }
-
+            this.result.confidenceMasks =
+                masks.map(wasmImage => this.convertToMPImage(wasmImage));
             this.setLatestOutputTimestamp(timestamp);
+            this.maybeInvokeCallback();
           });
       this.graphRunner.attachEmptyPacketListener(
           CONFIDENCE_MASKS_STREAM, timestamp => {
+            this.result.confidenceMasks = undefined;
             this.setLatestOutputTimestamp(timestamp);
+            this.maybeInvokeCallback();
           });
     }
 
@@ -361,14 +370,15 @@ export class ImageSegmenter extends VisionTaskRunner {
 
       this.graphRunner.attachImageListener(
           CATEGORY_MASK_STREAM, (mask, timestamp) => {
-            this.result.categoryMask = mask.data;
-            this.result.width = mask.width;
-            this.result.height = mask.height;
+            this.result.categoryMask = this.convertToMPImage(mask);
             this.setLatestOutputTimestamp(timestamp);
+            this.maybeInvokeCallback();
           });
       this.graphRunner.attachEmptyPacketListener(
           CATEGORY_MASK_STREAM, timestamp => {
+            this.result.categoryMask = undefined;
             this.setLatestOutputTimestamp(timestamp);
+            this.maybeInvokeCallback();
           });
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fileset_resolver';
 import {DrawingUtils as DrawingUtilsImpl} from '../../../tasks/web/vision/core/drawing_utils';
-import {MPImage as MPImageImpl} from '../../../tasks/web/vision/core/image';
+import {MPImage as MPImageImpl, MPImageType as MPImageTypeImpl} from '../../../tasks/web/vision/core/image';
 import {FaceDetector as FaceDetectorImpl} from '../../../tasks/web/vision/face_detector/face_detector';
 import {FaceLandmarker as FaceLandmarkerImpl, FaceLandmarksConnections as FaceLandmarksConnectionsImpl} from '../../../tasks/web/vision/face_landmarker/face_landmarker';
 import {FaceStylizer as FaceStylizerImpl} from '../../../tasks/web/vision/face_stylizer/face_stylizer';
@@ -27,12 +27,14 @@ import {ImageEmbedder as ImageEmbedderImpl} from '../../../tasks/web/vision/imag
 import {ImageSegmenter as ImageSegementerImpl} from '../../../tasks/web/vision/image_segmenter/image_segmenter';
 import {InteractiveSegmenter as InteractiveSegmenterImpl} from '../../../tasks/web/vision/interactive_segmenter/interactive_segmenter';
 import {ObjectDetector as ObjectDetectorImpl} from '../../../tasks/web/vision/object_detector/object_detector';
+import {PoseLandmarker as PoseLandmarkerImpl} from '../../../tasks/web/vision/pose_landmarker/pose_landmarker';
 
 // Declare the variables locally so that Rollup in OSS includes them explicitly
 // as exports.
 const DrawingUtils = DrawingUtilsImpl;
 const FilesetResolver = FilesetResolverImpl;
 const MPImage = MPImageImpl;
+const MPImageType = MPImageTypeImpl;
 const FaceDetector = FaceDetectorImpl;
 const FaceLandmarker = FaceLandmarkerImpl;
 const FaceLandmarksConnections = FaceLandmarksConnectionsImpl;
@@ -44,11 +46,13 @@ const ImageEmbedder = ImageEmbedderImpl;
 const ImageSegmenter = ImageSegementerImpl;
 const InteractiveSegmenter = InteractiveSegmenterImpl;
 const ObjectDetector = ObjectDetectorImpl;
+const PoseLandmarker = PoseLandmarkerImpl;
 
 export {
   DrawingUtils,
   FilesetResolver,
   MPImage,
+  MPImageType,
   FaceDetector,
   FaceLandmarker,
   FaceLandmarksConnections,
@@ -59,5 +63,6 @@ export {
   ImageEmbedder,
   ImageSegmenter,
   InteractiveSegmenter,
-  ObjectDetector
+  ObjectDetector,
+  PoseLandmarker
 };

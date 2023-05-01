@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -67,11 +67,18 @@ py_library(
     name = "loss_functions",
     srcs = ["loss_functions.py"],
     srcs_version = "PY3",
+    deps = [
+        ":file_util",
+        ":model_util",
+    ],
 )
 
 py_test(
     name = "loss_functions_test",
     srcs = ["loss_functions_test.py"],
+    tags = [
+        "requires-net:external",
+    ],
     deps = [":loss_functions"],
 )
 

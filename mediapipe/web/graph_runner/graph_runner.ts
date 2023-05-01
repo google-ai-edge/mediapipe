@@ -63,6 +63,7 @@ export declare interface WasmModule {
   _bindTextureToCanvas: () => boolean;
   _changeBinaryGraph: (size: number, dataPtr: number) => void;
   _changeTextGraph: (size: number, dataPtr: number) => void;
+  _closeGraph: () => void;
   _free: (ptr: number) => void;
   _malloc: (size: number) => number;
   _processFrame: (width: number, height: number, timestamp: number) => void;
@@ -1147,6 +1148,16 @@ export class GraphRunner {
    */
   finishProcessing(): void {
     this.wasmModule._waitUntilIdle();
+  }
+
+  /**
+   * Closes the input streams and all calculators for this graph and frees up
+   * any C++ resources. The graph will not be usable once closed.
+   */
+  closeGraph(): void {
+    this.wasmModule._closeGraph();
+    this.wasmModule.simpleListeners = undefined;
+    this.wasmModule.emptyPacketListeners = undefined;
   }
 }
 

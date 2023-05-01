@@ -60,6 +60,7 @@ mediapipe_ts_library(
     name = "vision_task_runner",
     srcs = ["vision_task_runner.ts"],
     deps = [
+        ":image",
         ":image_processing_options",
         ":vision_task_options",
         "//mediapipe/framework/formats:rect_jspb_proto",
@@ -90,6 +91,7 @@ mediapipe_ts_library(
 mediapipe_ts_library(
     name = "render_utils",
     srcs = ["render_utils.ts"],
+    deps = [":image"],
 )
 
 jasmine_node_test(

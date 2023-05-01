@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import {NormalizedRect} from '../../../../framework/formats/rect_pb';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {MPImage, MPImageShaderContext} from '../../../../tasks/web/vision/core/image';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {GraphRunner, ImageSource, WasmMediaPipeConstructor} from '../../../../web/graph_runner/graph_runner';
 import {SupportImage, WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
@@ -51,6 +52,8 @@ function createCanvas(): HTMLCanvasElement|OffscreenCanvas|undefined {
 
 /** Base class for all MediaPipe Vision Tasks. */
 export abstract class VisionTaskRunner extends TaskRunner {
+  private readonly shaderContext = new MPImageShaderContext();
+
   protected static async createVisionInstance<T extends VisionTaskRunner>(
       type: WasmMediaPipeConstructor<T>, fileset: WasmFileset,
       options: VisionTaskOptions): Promise<T> {
@@ -186,7 +189,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
       // For 90° and 270° rotations, we need to swap width and height.
       // This is due to the internal behavior of ImageToTensorCalculator, which:
       // - first denormalizes the provided rect by multiplying the rect width or
-      //   height by the image width or height, repectively.
+      //   height by the image width or height, respectively.
       // - then rotates this by denormalized rect by the provided rotation, and
       //   uses this for cropping,
       // - then finally rotates this back.
@@ -219,29 +222,56 @@ export abstract class VisionTaskRunner extends TaskRunner {
     this.finishProcessing();
   }
 
-  /** Converts the RGB or RGBA Uint8Array of a WasmImage to ImageData. */
-  protected convertToImageData(wasmImage: WasmImage): ImageData {
+  /**
+   * Converts a WasmImage to an MPImage.
+   *
+   * Converts the underlying Uint8ClampedArray-backed images to ImageData
+   * (adding an alpha channel if necessary), passes through WebGLTextures and
+   * throws for Float32Array-backed images.
+   */
+  protected convertToMPImage(wasmImage: WasmImage): MPImage {
     const {data, width, height} = wasmImage;
-    if (!(data instanceof Uint8ClampedArray)) {
-      throw new Error(
-          'Only Uint8ClampedArray-based images can be converted to ImageData');
+    const pixels = width * height;
+
+    let container: ImageData|WebGLTexture|Uint8ClampedArray;
+    if (data instanceof Uint8ClampedArray) {
+      if (data.length === pixels) {
+        container = data;  // Mask
+      } else if (data.length === pixels * 3) {
+        // TODO: Convert in C++
+        const rgba = new Uint8ClampedArray(pixels * 4);
+        for (let i = 0; i < pixels; ++i) {
+          rgba[4 * i] = data[3 * i];
+          rgba[4 * i + 1] = data[3 * i + 1];
+          rgba[4 * i + 2] = data[3 * i + 2];
+          rgba[4 * i + 3] = 255;
+        }
+        container = new ImageData(rgba, width, height);
+      } else if (data.length ===pixels * 4) {
+        container = new ImageData(data, width, height);
+      } else {
+        throw new Error(`Unsupported channel count: ${data.length/pixels}`);
+      }
+    } else if (data instanceof Float32Array) {
+      if (data.length === pixels) {
+        container = data;  // Mask
+      } else {
+        throw new Error(`Unsupported channel count: ${data.length/pixels}`);
+      }
+    } else {  // WebGLTexture
+      container = data;
     }
 
-    if (data.length === width * height * 4) {
-      return new ImageData(data, width, height);
-    } else if (data.length === width * height * 3) {
-      const rgba = new Uint8ClampedArray(width * height * 4);
-      for (let i = 0; i < width * height; ++i) {
-        rgba[4 * i] = data[3 * i];
-        rgba[4 * i + 1] = data[3 * i + 1];
-        rgba[4 * i + 2] = data[3 * i + 2];
-        rgba[4 * i + 3] = 255;
-      }
-      return new ImageData(rgba, width, height);
-    } else {
-      throw new Error(
-          `Unsupported channel count: ${data.length / width / height}`);
-    }
+    return new MPImage(
+      [container], /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false,
+      this.graphRunner.wasmModule.canvas!, this.shaderContext, width,
+      height);
+  }
+
+  /** Closes and cleans up the resources held by this task. */
+  override close(): void {
+    this.shaderContext.close();
+    super.close();
   }
 }
 

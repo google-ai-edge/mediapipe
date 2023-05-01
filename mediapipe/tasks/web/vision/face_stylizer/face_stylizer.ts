@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import {CalculatorOptions} from '../../../../framework/calculator_options_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/base_options_pb';
 import {FaceStylizerGraphOptions as FaceStylizerGraphOptionsProto} from '../../../../tasks/cc/vision/face_stylizer/proto/face_stylizer_graph_options_pb';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
+import {MPImage} from '../../../../tasks/web/vision/core/image';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
-import {ImageCallback} from '../../../../tasks/web/vision/core/types';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
@@ -39,11 +39,18 @@ const FACE_STYLIZER_GRAPH =
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
-export {ImageCallback};
+/**
+ * A callback that receives an `MPImage` object from the face stylizer, or
+ * `null` if no face was detected. The lifetime of the underlying data is
+ * limited to the duration of the callback. If asynchronous processing is
+ * needed, all data needs to be copied before the callback returns (via
+ * `image.clone()`).
+ */
+export type FaceStylizerCallback = (image: MPImage|null) => void;
 
 /** Performs face stylization on images. */
 export class FaceStylizer extends VisionTaskRunner {
-  private userCallback: ImageCallback = () => {};
+  private userCallback: FaceStylizerCallback = () => {};
   private readonly options: FaceStylizerGraphOptionsProto;
 
   /**
@@ -134,7 +141,7 @@ export class FaceStylizer extends VisionTaskRunner {
    *    lifetime of the returned data is only guaranteed for the duration of the
    *    callback.
    */
-  stylize(image: ImageSource, callback: ImageCallback): void;
+  stylize(image: ImageSource, callback: FaceStylizerCallback): void;
   /**
    * Performs face stylization on the provided single image. The method returns
    * synchronously once the callback returns. Only use this method when the
@@ -158,11 +165,12 @@ export class FaceStylizer extends VisionTaskRunner {
    */
   stylize(
       image: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      callback: ImageCallback): void;
+      callback: FaceStylizerCallback): void;
   stylize(
       image: ImageSource,
-      imageProcessingOptionsOrCallback: ImageProcessingOptions|ImageCallback,
-      callback?: ImageCallback): void {
+      imageProcessingOptionsOrCallback: ImageProcessingOptions|
+      FaceStylizerCallback,
+      callback?: FaceStylizerCallback): void {
     const imageProcessingOptions =
         typeof imageProcessingOptionsOrCallback !== 'function' ?
         imageProcessingOptionsOrCallback :
@@ -191,7 +199,7 @@ export class FaceStylizer extends VisionTaskRunner {
    */
   stylizeForVideo(
       videoFrame: ImageSource, timestamp: number,
-      callback: ImageCallback): void;
+      callback: FaceStylizerCallback): void;
   /**
    * Performs face stylization on the provided video frame. Only use this
    * method when the FaceStylizer is created with the video running mode.
@@ -219,12 +227,12 @@ export class FaceStylizer extends VisionTaskRunner {
    */
   stylizeForVideo(
       videoFrame: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      timestamp: number, callback: ImageCallback): void;
+      timestamp: number, callback: FaceStylizerCallback): void;
   stylizeForVideo(
       videoFrame: ImageSource,
       timestampOrImageProcessingOptions: number|ImageProcessingOptions,
-      timestampOrCallback: number|ImageCallback,
-      callback?: ImageCallback): void {
+      timestampOrCallback: number|FaceStylizerCallback,
+      callback?: FaceStylizerCallback): void {
     const imageProcessingOptions =
         typeof timestampOrImageProcessingOptions !== 'number' ?
         timestampOrImageProcessingOptions :
@@ -261,17 +269,14 @@ export class FaceStylizer extends VisionTaskRunner {
     graphConfig.addNode(segmenterNode);
 
     this.graphRunner.attachImageListener(
-        STYLIZED_IMAGE_STREAM, (image, timestamp) => {
-          if (image.data instanceof WebGLTexture) {
-            this.userCallback(image.data, image.width, image.height);
-          } else {
-            const imageData = this.convertToImageData(image);
-            this.userCallback(imageData, image.width, image.height);
-          }
+        STYLIZED_IMAGE_STREAM, (wasmImage, timestamp) => {
+          const mpImage = this.convertToMPImage(wasmImage);
+          this.userCallback(mpImage);
           this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachEmptyPacketListener(
         STYLIZED_IMAGE_STREAM, timestamp => {
+          this.userCallback(null);
           this.setLatestOutputTimestamp(timestamp);
         });
 

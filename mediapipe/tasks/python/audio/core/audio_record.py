@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,11 +47,11 @@ class AudioRecord(object):
       raise sd_error
 
     if channels <= 0:
-      raise ValueError('channels must be postive.')
+      raise ValueError('channels must be positive.')
     if sampling_rate <= 0:
-      raise ValueError('sampling_rate must be postive.')
+      raise ValueError('sampling_rate must be positive.')
     if buffer_size <= 0:
-      raise ValueError('buffer_size must be postive.')
+      raise ValueError('buffer_size must be positive.')
 
     self._audio_buffer = []
     self._buffer_size = buffer_size

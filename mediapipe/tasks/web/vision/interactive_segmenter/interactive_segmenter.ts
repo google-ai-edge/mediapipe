@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import {ImageSegmenterGraphOptions as ImageSegmenterGraphOptionsProto} from '../
 import {SegmenterOptions as SegmenterOptionsProto} from '../../../../tasks/cc/vision/image_segmenter/proto/segmenter_options_pb';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
-import {RegionOfInterest, SegmentationMask} from '../../../../tasks/web/vision/core/types';
+import {RegionOfInterest} from '../../../../tasks/web/vision/core/types';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {Color as ColorProto} from '../../../../util/color_pb';
 import {RenderAnnotation as RenderAnnotationProto, RenderData as RenderDataProto} from '../../../../util/render_data_pb';
@@ -33,7 +33,7 @@ import {InteractiveSegmenterResult} from './interactive_segmenter_result';
 
 export * from './interactive_segmenter_options';
 export * from './interactive_segmenter_result';
-export {SegmentationMask, RegionOfInterest};
+export {RegionOfInterest};
 export {ImageSource};
 
 const IMAGE_IN_STREAM = 'image_in';
@@ -83,9 +83,10 @@ export type InteractiveSegmenterCallback =
  *   - batch is always 1
  */
 export class InteractiveSegmenter extends VisionTaskRunner {
-  private result: InteractiveSegmenterResult = {width: 0, height: 0};
+  private result: InteractiveSegmenterResult = {};
   private outputCategoryMask = DEFAULT_OUTPUT_CATEGORY_MASK;
   private outputConfidenceMasks = DEFAULT_OUTPUT_CONFIDENCE_MASKS;
+  private userCallback: InteractiveSegmenterCallback = () => {};
   private readonly options: ImageSegmenterGraphOptionsProto;
   private readonly segmenterOptions: SegmenterOptionsProto;
 
@@ -241,19 +242,30 @@ export class InteractiveSegmenter extends VisionTaskRunner {
         typeof imageProcessingOptionsOrCallback !== 'function' ?
         imageProcessingOptionsOrCallback :
         {};
-    const userCallback =
-        typeof imageProcessingOptionsOrCallback === 'function' ?
+    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
         imageProcessingOptionsOrCallback :
         callback!;
 
     this.reset();
     this.processRenderData(roi, this.getSynctheticTimestamp());
     this.processImageData(image, imageProcessingOptions);
-    userCallback(this.result);
+    this.userCallback = () => {};
   }
 
   private reset(): void {
-    this.result = {width: 0, height: 0};
+    this.result = {};
+  }
+
+  /** Invokes the user callback once all data has been received. */
+  private maybeInvokeCallback(): void {
+    if (this.outputConfidenceMasks && !('confidenceMasks' in this.result)) {
+      return;
+    }
+    if (this.outputCategoryMask && !('categoryMask' in this.result)) {
+      return;
+    }
+
+    this.userCallback(this.result);
   }
 
   /** Updates the MediaPipe graph configuration. */
@@ -283,17 +295,16 @@ export class InteractiveSegmenter extends VisionTaskRunner {
 
       this.graphRunner.attachImageVectorListener(
           CONFIDENCE_MASKS_STREAM, (masks, timestamp) => {
-            this.result.confidenceMasks = masks.map(m => m.data);
-            if (masks.length >= 0) {
-              this.result.width = masks[0].width;
-              this.result.height = masks[0].height;
-            }
-
+            this.result.confidenceMasks =
+                masks.map(wasmImage => this.convertToMPImage(wasmImage));
             this.setLatestOutputTimestamp(timestamp);
+            this.maybeInvokeCallback();
           });
       this.graphRunner.attachEmptyPacketListener(
           CONFIDENCE_MASKS_STREAM, timestamp => {
+            this.result.confidenceMasks = undefined;
             this.setLatestOutputTimestamp(timestamp);
+            this.maybeInvokeCallback();
           });
     }
 
@@ -303,14 +314,15 @@ export class InteractiveSegmenter extends VisionTaskRunner {
 
       this.graphRunner.attachImageListener(
           CATEGORY_MASK_STREAM, (mask, timestamp) => {
-            this.result.categoryMask = mask.data;
-            this.result.width = mask.width;
-            this.result.height = mask.height;
+            this.result.categoryMask = this.convertToMPImage(mask);
             this.setLatestOutputTimestamp(timestamp);
+            this.maybeInvokeCallback();
           });
       this.graphRunner.attachEmptyPacketListener(
           CATEGORY_MASK_STREAM, timestamp => {
+            this.result.categoryMask = undefined;
             this.setLatestOutputTimestamp(timestamp);
+            this.maybeInvokeCallback();
           });
     }
 

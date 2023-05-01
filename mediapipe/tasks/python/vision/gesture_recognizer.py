@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -194,15 +194,15 @@ class GestureRecognizerOptions:
 
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
-  num_hands: Optional[int] = 1
-  min_hand_detection_confidence: Optional[float] = 0.5
-  min_hand_presence_confidence: Optional[float] = 0.5
-  min_tracking_confidence: Optional[float] = 0.5
-  canned_gesture_classifier_options: Optional[_ClassifierOptions] = (
-      dataclasses.field(default_factory=_ClassifierOptions)
+  num_hands: int = 1
+  min_hand_detection_confidence: float = 0.5
+  min_hand_presence_confidence: float = 0.5
+  min_tracking_confidence: float = 0.5
+  canned_gesture_classifier_options: _ClassifierOptions = dataclasses.field(
+      default_factory=_ClassifierOptions
   )
-  custom_gesture_classifier_options: Optional[_ClassifierOptions] = (
-      dataclasses.field(default_factory=_ClassifierOptions)
+  custom_gesture_classifier_options: _ClassifierOptions = dataclasses.field(
+      default_factory=_ClassifierOptions
   )
   result_callback: Optional[
       Callable[[GestureRecognizerResult, image_module.Image, int], None]

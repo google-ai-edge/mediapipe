@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import 'jasmine';
 // Placeholder for internal dependency on encodeByteArray
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph, verifyListenersRegistered} from '../../../../tasks/web/core/task_runner_test_utils';
+import {MPImage} from '../../../../tasks/web/vision/core/image';
 import {WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
 
 import {FaceStylizer} from './face_stylizer';
@@ -30,6 +31,7 @@ class FaceStylizerFake extends FaceStylizer implements MediapipeTasksFake {
 
   fakeWasmModule: SpyWasmModule;
   imageListener: ((images: WasmImage, timestamp: number) => void)|undefined;
+  emptyPacketListener: ((timestamp: number) => void)|undefined;
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
@@ -41,6 +43,12 @@ class FaceStylizerFake extends FaceStylizer implements MediapipeTasksFake {
             .and.callFake((stream, listener) => {
               expect(stream).toEqual('stylized_image');
               this.imageListener = listener;
+            });
+    this.attachListenerSpies[1] =
+        spyOn(this.graphRunner, 'attachEmptyPacketListener')
+            .and.callFake((stream, listener) => {
+              expect(stream).toEqual('stylized_image');
+              this.emptyPacketListener = listener;
             });
     spyOn(this.graphRunner, 'setGraph').and.callFake(binaryGraph => {
       this.graph = CalculatorGraphConfig.deserializeBinary(binaryGraph);
@@ -57,6 +65,10 @@ describe('FaceStylizer', () => {
     faceStylizer = new FaceStylizerFake();
     await faceStylizer.setOptions(
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
+  });
+
+  afterEach(() => {
+    faceStylizer.close();
   });
 
   it('initializes graph', async () => {
@@ -103,11 +115,48 @@ describe('FaceStylizer', () => {
     });
 
     // Invoke the face stylizeer
-    faceStylizer.stylize({} as HTMLImageElement, (image, width, height) => {
+    faceStylizer.stylize({} as HTMLImageElement, image => {
       expect(faceStylizer.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
-      expect(image).toBeInstanceOf(ImageData);
-      expect(width).toEqual(1);
-      expect(height).toEqual(1);
+      expect(image).not.toBeNull();
+      expect(image!.has(MPImage.TYPE.IMAGE_DATA)).toBeTrue();
+      expect(image!.width).toEqual(1);
+      expect(image!.height).toEqual(1);
+      done();
+    });
+  });
+
+  it('invokes callback even when no faes are detected', (done) => {
+    if (typeof ImageData === 'undefined') {
+      console.log('ImageData tests are not supported on Node');
+      done();
+      return;
+    }
+
+    // Pass the test data to our listener
+    faceStylizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      verifyListenersRegistered(faceStylizer);
+      faceStylizer.emptyPacketListener!(/* timestamp= */ 1337);
+    });
+
+    // Invoke the face stylizeer
+    faceStylizer.stylize({} as HTMLImageElement, image => {
+      expect(faceStylizer.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
+      expect(image).toBeNull();
+      done();
+    });
+  });
+
+  it('invokes callback even when no faes are detected', (done) => {
+    // Pass the test data to our listener
+    faceStylizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      verifyListenersRegistered(faceStylizer);
+      faceStylizer.emptyPacketListener!(/* timestamp= */ 1337);
+    });
+
+    // Invoke the face stylizeer
+    faceStylizer.stylize({} as HTMLImageElement, image => {
+      expect(faceStylizer.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
+      expect(image).toBeNull();
       done();
     });
   });

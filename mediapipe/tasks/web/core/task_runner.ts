@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -255,6 +255,11 @@ export abstract class TaskRunner {
     }
 
     this.baseOptions.setAcceleration(acceleration);
+  }
+
+  /** Closes and cleans up the resources held by this task. */
+  close(): void {
+    this.graphRunner.closeGraph();
   }
 }
 

@@ -194,6 +194,7 @@ cc_library(
         "//mediapipe/framework:android_no_jni": ["resource_util_loonix.cc"],
         "//mediapipe:ios": ["resource_util_apple.cc"],
         "//mediapipe:macos": ["resource_util_default.cc"],
+        "//mediapipe:windows": ["resource_util_windows.cc"],
     }),
     hdrs = [
         "resource_util.h",
@@ -230,6 +231,10 @@ cc_library(
         "//mediapipe/framework:android_no_jni": [],
         "//mediapipe:ios": [],
         "//mediapipe:macos": [
+            "@com_google_absl//absl/flags:flag",
+        ],
+        "//mediapipe:windows": [
+            "@bazel_tools//tools/cpp/runfiles",
             "@com_google_absl//absl/flags:flag",
         ],
     }),

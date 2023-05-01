@@ -223,6 +223,16 @@ class SourceImpl {
     return !(*this == other);
   }
 
+  Src& SetName(const char* name) {
+    base_->name_ = std::string(name);
+    return *this;
+  }
+
+  Src& SetName(absl::string_view name) {
+    base_->name_ = std::string(name);
+    return *this;
+  }
+
   Src& SetName(std::string name) {
     base_->name_ = std::move(name);
     return *this;

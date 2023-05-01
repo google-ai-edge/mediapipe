@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Face landmarks connection constants. */
-final class FaceLandmarksConnections {
+public final class FaceLandmarksConnections {
 
   /** Value class representing face landmarks connection. */
   @AutoValue
