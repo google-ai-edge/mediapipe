@@ -81,6 +81,7 @@ constexpr char kOutputSizeTag[] = "OUTPUT_SIZE";
 constexpr char kSizeTag[] = "SIZE";
 constexpr char kStylizedImageTag[] = "STYLIZED_IMAGE";
 constexpr char kTensorsTag[] = "TENSORS";
+constexpr int kFaceAlignmentOutputSize = 256;
 
 // Struct holding the different output streams produced by the face stylizer
 // graph.
@@ -345,6 +346,9 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
           image_to_tensor.GetOptions<ImageToTensorCalculatorOptions>();
       image_to_tensor_options.mutable_output_tensor_float_range()->set_min(-1);
       image_to_tensor_options.mutable_output_tensor_float_range()->set_max(1);
+      image_to_tensor_options.set_output_tensor_width(kFaceAlignmentOutputSize);
+      image_to_tensor_options.set_output_tensor_height(
+          kFaceAlignmentOutputSize);
       image_to_tensor_options.set_keep_aspect_ratio(true);
       image_to_tensor_options.set_border_mode(
           mediapipe::ImageToTensorCalculatorOptions::BORDER_ZERO);
