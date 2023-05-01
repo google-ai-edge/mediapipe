@@ -16,7 +16,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from typing import List, Union
+from typing import Sequence
+from typing import Dict, List, Union
 
 # Dependency imports
 
@@ -92,6 +93,17 @@ def is_same_output(tflite_model: bytearray,
   keras_output = keras_model.predict_on_batch(input_tensors)
 
   return np.allclose(lite_output, keras_output, atol=atol)
+
+
+def run_tflite(
+    tflite_filename: str,
+    input_tensors: Union[List[tf.Tensor], Dict[str, tf.Tensor]],
+) -> Union[Sequence[tf.Tensor], tf.Tensor]:
+  """Runs TFLite model inference."""
+  with tf.io.gfile.GFile(tflite_filename, "rb") as f:
+    tflite_model = f.read()
+  lite_runner = model_util.get_lite_runner(tflite_model)
+  return lite_runner.run(input_tensors)
 
 
 def test_tflite(keras_model: tf.keras.Model,

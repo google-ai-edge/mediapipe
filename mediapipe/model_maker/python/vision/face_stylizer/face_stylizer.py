@@ -221,7 +221,10 @@ class FaceStylizer(object):
     inputs = tf.keras.Input(shape=(256, 256, 3))
     x = self._encoder(inputs)
     x = self._decoder({'inputs': x + self.w_avg})
-    outputs = x['image'][-1]
+    x = x['image'][-1]
+    # Scale the data range from [-1, 1] to [0, 1] to support running inference
+    # on both CPU and GPU.
+    outputs = (x + 1.0) / 2.0
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
 
     tflite_model = model_util.convert_to_tflite(
