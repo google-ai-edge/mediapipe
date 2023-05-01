@@ -130,9 +130,11 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   face_landmarks_detector_graph_options->mutable_base_options()
       ->set_use_stream_mode(options->base_options().use_stream_mode());
 
-  ASSIGN_OR_RETURN(const auto face_stylizer_file,
-                   resources.GetFile(kFaceStylizerTFLiteName));
-  SetExternalFile(face_stylizer_file, face_stylizer_external_file, is_copy);
+  if (face_stylizer_external_file) {
+    ASSIGN_OR_RETURN(const auto face_stylizer_file,
+                     resources.GetFile(kFaceStylizerTFLiteName));
+    SetExternalFile(face_stylizer_file, face_stylizer_external_file, is_copy);
+  }
   return absl::OkStatus();
 }
 
@@ -234,7 +236,7 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
     MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
         *model_asset_bundle_resources,
         sc->MutableOptions<FaceStylizerGraphOptions>(),
-        face_stylizer_external_file.get(),
+        output_stylized ? face_stylizer_external_file.get() : nullptr,
         !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
              .IsAvailable()));
     Graph graph;
