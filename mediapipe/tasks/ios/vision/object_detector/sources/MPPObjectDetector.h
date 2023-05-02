@@ -137,6 +137,9 @@ NS_SWIFT_NAME(ObjectDetector)
  * the provided `MPPImage`. Only use this method when the `MPPObjectDetector` is created with
  * `MPPRunningModeLiveStream`. Results are provided asynchronously via the `completion` callback
  * provided in the `MPPObjectDetectorOptions`.
+ * The object which needs to be continuously notified of the available results of object 
+ * detection must confirm to `MPPObjectDetectorDelegate` protocol and implement the 
+ * `objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:` delegate method.
  *
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
  * to the object detector. The input timestamps must be monotonically increasing.
