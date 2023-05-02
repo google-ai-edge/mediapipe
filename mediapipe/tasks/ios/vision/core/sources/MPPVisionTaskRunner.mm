@@ -52,20 +52,23 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
     case MPPRunningModeImage:
     case MPPRunningModeVideo: {
       if (packetsCallback) {
-        [MPPCommonUtils createCustomError:error
-                                 withCode:MPPTasksErrorCodeInvalidArgumentError
-                              description:@"The vision task is in image or video mode, a "
-                                          @"user-defined result callback should not be provided."];
+        [MPPCommonUtils
+            createCustomError:error
+                     withCode:MPPTasksErrorCodeInvalidArgumentError
+                  description:@"The vision task is in image or video mode. The delegate must not be set in the task's options."];
         return nil;
       }
       break;
     }
     case MPPRunningModeLiveStream: {
       if (!packetsCallback) {
-        [MPPCommonUtils createCustomError:error
-                                 withCode:MPPTasksErrorCodeInvalidArgumentError
-                              description:@"The vision task is in live stream mode, a user-defined "
-                                          @"result callback must be provided."];
+        [MPPCommonUtils
+            createCustomError:error
+                     withCode:MPPTasksErrorCodeInvalidArgumentError
+                  description:
+                      @"The vision task is in live stream mode. An object must be set as the "
+                      @"delegate of the task in its options to ensure asynchronous delivery of "
+                      @"results."];
         return nil;
       }
       break;
