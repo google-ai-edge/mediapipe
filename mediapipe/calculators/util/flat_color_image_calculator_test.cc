@@ -113,6 +113,35 @@ TEST(FlatColorImageCalculatorTest, SpecifyDimensionThroughOptions) {
   }
 }
 
+TEST(FlatColorImageCalculatorTest, ProducesOutputSidePacket) {
+  CalculatorRunner runner(R"pb(
+    calculator: "FlatColorImageCalculator"
+    output_side_packet: "IMAGE:out_packet"
+    options {
+      [mediapipe.FlatColorImageCalculatorOptions.ext] {
+        output_width: 1
+        output_height: 1
+        color: {
+          r: 100,
+          g: 200,
+          b: 255,
+        }
+      }
+    }
+  )pb");
+
+  MP_ASSERT_OK(runner.Run());
+
+  const auto& image = runner.OutputSidePackets().Tag(kImageTag).Get<Image>();
+  EXPECT_EQ(image.width(), 1);
+  EXPECT_EQ(image.height(), 1);
+  auto image_frame = image.GetImageFrameSharedPtr();
+  const uint8_t* pixel_data = image_frame->PixelData();
+  EXPECT_EQ(pixel_data[0], 100);
+  EXPECT_EQ(pixel_data[1], 200);
+  EXPECT_EQ(pixel_data[2], 255);
+}
+
 TEST(FlatColorImageCalculatorTest, FailureMissingDimension) {
   CalculatorRunner runner(R"pb(
     calculator: "FlatColorImageCalculator"
@@ -204,6 +233,57 @@ TEST(FlatColorImageCalculatorTest, FailureDuplicateColor) {
   }
   ASSERT_THAT(runner.Run().message(),
               HasSubstr("Either set COLOR input stream"));
+}
+
+TEST(FlatColorImageCalculatorTest, FailureDuplicateOutputs) {
+  CalculatorRunner runner(R"pb(
+    calculator: "FlatColorImageCalculator"
+    output_stream: "IMAGE:out_image"
+    output_side_packet: "IMAGE:out_packet"
+    options {
+      [mediapipe.FlatColorImageCalculatorOptions.ext] {
+        output_width: 1
+        output_height: 1
+        color: {
+          r: 100,
+          g: 200,
+          b: 255,
+        }
+      }
+    }
+  )pb");
+
+  ASSERT_THAT(
+      runner.Run().message(),
+      HasSubstr("Set IMAGE either as output stream, or as output side packet"));
+}
+
+TEST(FlatColorImageCalculatorTest, FailureSettingInputImageOnOutputSidePacket) {
+  CalculatorRunner runner(R"pb(
+    calculator: "FlatColorImageCalculator"
+    input_stream: "IMAGE:image"
+    output_side_packet: "IMAGE:out_packet"
+    options {
+      [mediapipe.FlatColorImageCalculatorOptions.ext] {
+        color: {
+          r: 100,
+          g: 200,
+          b: 255,
+        }
+      }
+    }
+  )pb");
+
+  auto image_frame = std::make_shared<ImageFrame>(ImageFormat::SRGB,
+                                                  kImageWidth, kImageHeight);
+
+  for (int ts = 0; ts < 3; ++ts) {
+    runner.MutableInputs()->Tag(kImageTag).packets.push_back(
+        MakePacket<Image>(image_frame).At(Timestamp(ts)));
+  }
+  ASSERT_THAT(runner.Run().message(),
+              HasSubstr("Set size through options, when setting IMAGE as "
+                        "output side packet"));
 }
 
 }  // namespace
