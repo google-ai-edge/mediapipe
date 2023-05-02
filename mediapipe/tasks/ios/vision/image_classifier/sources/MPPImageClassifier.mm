@@ -27,6 +27,7 @@
 namespace {
 using ::mediapipe::NormalizedRect;
 using ::mediapipe::Packet;
+using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
 }  // namespace
@@ -53,6 +54,7 @@ static NSString *const kTaskGraphName =
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
 }
+@property(nonatomic, weak) id<MPPImageClassifierDelegate> imageClassifierDelegate;
 @end
 
 @implementation MPPImageClassifier
@@ -81,16 +83,34 @@ static NSString *const kTaskGraphName =
 
     PacketsCallback packetsCallback = nullptr;
 
-    if (options.completion) {
+    if (options.imageClassifierDelegate) {
+      _imageClassifierDelegate = options.imageClassifierDelegate;
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
         NSError *callbackError = nil;
-        MPPImageClassifierResult *result;
-        if ([MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
-          result = [MPPImageClassifierResult
-              imageClassifierResultWithClassificationsPacket:
-                  status_or_packets.value()[kClassificationsStreamName.cppString]];
+        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
+          [_imageClassifierDelegate imageClassifier:self
+                  didFinishClassificationWithResult:nil
+                            timestampInMilliseconds:Timestamp::Unset().Value()
+                                              error:callbackError];
+          return;
         }
-        options.completion(result, callbackError);
+
+        PacketMap &outputPacketMap = status_or_packets.value();
+        if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
+          return;
+        }
+
+        MPPImageClassifierResult *result =
+            [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:
+                                          outputPacketMap[kClassificationsStreamName.cppString]];
+
+        [_imageClassifierDelegate imageClassifier:self
+                didFinishClassificationWithResult:result
+                          timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
+                                                      .Timestamp()
+                                                      .Value() /
+                                                  kMicroSecondsPerMilliSecond
+                                            error:callbackError];
       };
     }
 

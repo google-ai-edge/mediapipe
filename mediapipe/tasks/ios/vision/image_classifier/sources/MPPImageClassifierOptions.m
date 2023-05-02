@@ -33,7 +33,7 @@
   imageClassifierOptions.categoryDenylist = self.categoryDenylist;
   imageClassifierOptions.categoryAllowlist = self.categoryAllowlist;
   imageClassifierOptions.displayNamesLocale = self.displayNamesLocale;
-  imageClassifierOptions.completion = self.completion;
+  imageClassifierOptions.imageClassifierDelegate = self.imageClassifierDelegate;
 
   return imageClassifierOptions;
 }
