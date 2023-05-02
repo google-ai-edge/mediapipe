@@ -29,11 +29,10 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierDelegate` protocol.
  * The methods in this protocol are optional.
- * TODO: Add parameter `MPPImage` in the callback.
  */
 NS_SWIFT_NAME(ImageClassifierDelegate)
 @protocol MPPImageClassifierDelegate <NSObject>
-@required
+@optional
 - (void)imageClassifier:(MPPImageClassifier *)imageClassifier
     didFinishClassificationWithResult:(nullable MPPImageClassifierResult *)result
               timestampInMilliseconds:(NSInteger)timestampInMilliseconds

@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
  * TODO: Add parameter `MPPImage` in the callback.
  */
 @protocol MPPObjectDetectorDelegate <NSObject>
-@required
+@optional
 - (void)objectDetector:(MPPObjectDetector *)objectDetector
     didFinishDetectionWithResult:(nullable MPPObjectDetectionResult *)result
          timestampInMilliseconds:(NSInteger)timestampInMilliseconds
