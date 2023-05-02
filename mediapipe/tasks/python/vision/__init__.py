@@ -25,6 +25,7 @@ import mediapipe.tasks.python.vision.image_embedder
 import mediapipe.tasks.python.vision.image_segmenter
 import mediapipe.tasks.python.vision.interactive_segmenter
 import mediapipe.tasks.python.vision.object_detector
+import mediapipe.tasks.python.vision.pose_landmarker
 
 FaceDetector = face_detector.FaceDetector
 FaceDetectorOptions = face_detector.FaceDetectorOptions
@@ -54,6 +55,10 @@ InteractiveSegmenterOptions = interactive_segmenter.InteractiveSegmenterOptions
 InteractiveSegmenterRegionOfInterest = interactive_segmenter.RegionOfInterest
 ObjectDetector = object_detector.ObjectDetector
 ObjectDetectorOptions = object_detector.ObjectDetectorOptions
+ObjectDetectorResult = object_detector.ObjectDetectorResult
+PoseLandmarker = pose_landmarker.PoseLandmarker
+PoseLandmarkerOptions = pose_landmarker.PoseLandmarkerOptions
+PoseLandmarkerResult = pose_landmarker.PoseLandmarkerResult
 RunningMode = core.vision_task_running_mode.VisionTaskRunningMode
 
 # Remove unnecessary modules to avoid duplication in API docs.
@@ -68,4 +73,5 @@ del image_embedder
 del image_segmenter
 del interactive_segmenter
 del object_detector
+del pose_landmarker
 del mediapipe
