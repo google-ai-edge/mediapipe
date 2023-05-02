@@ -88,10 +88,15 @@ static NSString *const kTaskGraphName =
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
         NSError *callbackError = nil;
         if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
-          [_imageClassifierDelegate imageClassifier:self
-                  didFinishClassificationWithResult:nil
-                            timestampInMilliseconds:Timestamp::Unset().Value()
-                                              error:callbackError];
+          if ([_imageClassifierDelegate
+                  respondsToSelector:@selector
+                  (imageClassifier:
+                      didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
+            [_imageClassifierDelegate imageClassifier:self
+                    didFinishClassificationWithResult:nil
+                              timestampInMilliseconds:Timestamp::Unset().Value()
+                                                error:callbackError];
+          }
           return;
         }
 
@@ -104,13 +109,18 @@ static NSString *const kTaskGraphName =
             [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:
                                           outputPacketMap[kClassificationsStreamName.cppString]];
 
-        [_imageClassifierDelegate imageClassifier:self
-                didFinishClassificationWithResult:result
-                          timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
-                                                      .Timestamp()
-                                                      .Value() /
-                                                  kMicroSecondsPerMilliSecond
-                                            error:callbackError];
+        if ([_imageClassifierDelegate
+                respondsToSelector:@selector
+                (imageClassifier:
+                    didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
+          [_imageClassifierDelegate imageClassifier:self
+                  didFinishClassificationWithResult:result
+                            timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
+                                                        .Timestamp()
+                                                        .Value() /
+                                                    kMicroSecondsPerMilliSecond
+                                              error:callbackError];
+        }
       };
     }
 
