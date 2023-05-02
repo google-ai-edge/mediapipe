@@ -199,7 +199,9 @@ void ConfigureTensorsToImageCalculator(
 //   STYLIZED_IMAGE - mediapipe::Image
 //     The face stylization output image.
 //   FACE_ALIGNMENT - mediapipe::Image
-//     The face alignment output image.
+//     The aligned face image that is fed to the face stylization model to
+//     perform stylization. Also useful for preparing face stylization training
+//     data.
 //   IMAGE - mediapipe::Image
 //     The input image that the face landmarker runs on and has the pixel data
 //     stored on the target storage (CPU vs GPU).
@@ -211,6 +213,7 @@ void ConfigureTensorsToImageCalculator(
 //   input_stream: "NORM_RECT:norm_rect"
 //   output_stream: "IMAGE:image_out"
 //   output_stream: "STYLIZED_IMAGE:stylized_image"
+//   output_stream: "FACE_ALIGNMENT:face_alignment_image"
 //   options {
 //     [mediapipe.tasks.vision.face_stylizer.proto.FaceStylizerGraphOptions.ext]
 //     {
@@ -248,7 +251,7 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
                 ->mutable_face_landmarker_graph_options(),
             graph[Input<Image>(kImageTag)],
             graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
-    const ModelResources* face_stylizer_model_resources;
+    const ModelResources* face_stylizer_model_resources = nullptr;
     if (output_stylized) {
       ASSIGN_OR_RETURN(
           const auto* model_resources,
@@ -332,7 +335,7 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
     auto face_rect = face_to_rect.Out(kNormRectTag);
 
     std::optional<Source<Image>> face_alignment;
-    // Output face alignment only.
+    // Output aligned face only.
     // In this case, the face stylization model inference is not required.
     // However, to keep consistent with the inference preprocessing steps, the
     // ImageToTensorCalculator is still used to perform image rotation,
