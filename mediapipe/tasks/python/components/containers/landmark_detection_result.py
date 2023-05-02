@@ -39,9 +39,11 @@ _Landmark = landmark_module.Landmark
 class LandmarksDetectionResult:
   """Represents the landmarks detection result.
 
-  Attributes: landmarks : A list of `NormalizedLandmark` objects. categories : A
-  list of `Category` objects. world_landmarks : A list of `Landmark` objects.
-  rect : A `NormalizedRect` object.
+  Attributes:
+    landmarks: A list of `NormalizedLandmark` objects.
+    categories: A list of `Category` objects.
+    world_landmarks: A list of `Landmark` objects.
+    rect: A `NormalizedRect` object.
   """
 
   landmarks: Optional[List[_NormalizedLandmark]]
