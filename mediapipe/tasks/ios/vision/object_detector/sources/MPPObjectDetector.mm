@@ -51,6 +51,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
 }
+@property(nonatomic, weak) id<MPPObjectDetectorDelegate> objectDetectorDelegate;
 @end
 
 @implementation MPPObjectDetector
@@ -78,11 +79,15 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 
     PacketsCallback packetsCallback = nullptr;
 
-    if (options.completion) {
+    if (options.objectDetectorDelegate) {
+      _objectDetectorDelegate = options.objectDetectorDelegate;
       packetsCallback = [=](absl::StatusOr<PacketMap> statusOrPackets) {
         NSError *callbackError = nil;
         if (![MPPCommonUtils checkCppError:statusOrPackets.status() toError:&callbackError]) {
-          options.completion(nil, Timestamp::Unset().Value(), callbackError);
+          [_objectDetectorDelegate objectDetector:self
+                     didFinishDetectionWithResult:nil
+                          timestampInMilliseconds:Timestamp::Unset().Value()
+                                            error:callbackError];
           return;
         }
 
@@ -95,24 +100,28 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
             objectDetectionResultWithDetectionsPacket:statusOrPackets.value()[kDetectionsStreamName
                                                                                   .cppString]];
 
-        options.completion(result,
-                           outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-                               kMicroSecondsPerMilliSecond,
-                           callbackError);
-      };
-    }
-
-    _visionTaskRunner =
-        [[MPPVisionTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
-                                                       runningMode:options.runningMode
-                                                   packetsCallback:std::move(packetsCallback)
-                                                             error:error];
-
-    if (!_visionTaskRunner) {
-      return nil;
-    }
+        [_objectDetectorDelegate objectDetector:self
+                   didFinishDetectionWithResult:result
+                        timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
+                                                    .Timestamp()
+                                                    .Value() /
+                                                kMicroSecondsPerMilliSecond
+                                          error:callbackError];
+      }
+    };
   }
-  return self;
+
+  _visionTaskRunner =
+      [[MPPVisionTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
+                                                     runningMode:options.runningMode
+                                                 packetsCallback:std::move(packetsCallback)
+                                                           error:error];
+
+  if (!_visionTaskRunner) {
+    return nil;
+  }
+}
+return self;
 }
 
 - (instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error {
@@ -223,6 +232,5 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 
   return [_visionTaskRunner processLiveStreamPacketMap:inputPacketMap.value() error:error];
 }
-
 
 @end
