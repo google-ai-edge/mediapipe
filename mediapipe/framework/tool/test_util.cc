@@ -26,6 +26,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/calculator.pb.h"
@@ -311,6 +312,13 @@ std::unique_ptr<ImageFrame> LoadTestPng(absl::string_view path,
 // Returns the path to the output if successful.
 absl::StatusOr<std::string> SavePngTestOutput(
     const mediapipe::ImageFrame& image, absl::string_view prefix) {
+  absl::flat_hash_set<ImageFormat::Format> supported_formats = {
+      ImageFormat::GRAY8, ImageFormat::SRGB, ImageFormat::SRGBA,
+      ImageFormat::LAB8, ImageFormat::SBGRA};
+  if (!supported_formats.contains(image.Format())) {
+    return absl::CancelledError(
+        absl::StrFormat("Format %d can not be saved to PNG.", image.Format()));
+  }
   std::string now_string = absl::FormatTime(absl::Now());
   std::string output_relative_path =
       absl::StrCat(prefix, "_", now_string, ".png");
