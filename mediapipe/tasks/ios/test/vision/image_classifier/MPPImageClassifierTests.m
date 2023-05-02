@@ -27,8 +27,8 @@ static NSDictionary *const kMultiObjectsRotatedImage =
     @{@"name" : @"multi_objects_rotated", @"type" : @"jpg"};
 static const int kMobileNetCategoriesCount = 1001;
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
-static NSString *const kLiveStreamTestsDictImageClassifierKey= @"image_classifier";
-static NSString *const kLiveStreamTestsDictExpectationKey= @"expectation";
+static NSString *const kLiveStreamTestsDictImageClassifierKey = @"image_classifier";
+static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
 #define AssertEqualErrors(error, expectedError)                                               \
   XCTAssertNotNil(error);                                                                     \
@@ -55,7 +55,6 @@ static NSString *const kLiveStreamTestsDictExpectationKey= @"expectation";
   XCTAssertNotNil(imageClassifierResult.classificationResult);                         \
   XCTAssertEqual(imageClassifierResult.classificationResult.classifications.count, 1); \
   XCTAssertEqual(imageClassifierResult.classificationResult.classifications[0].headIndex, 0);
-
 
 @interface MPPImageClassifierTests : XCTestCase <MPPImageClassifierDelegate> {
   NSDictionary *liveStreamSucceedsTestDict;
@@ -442,7 +441,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey= @"expectation";
 
 #pragma mark Running Mode Tests
 
-- (void)testCreateImageClassifierFailsWithResultListenerInNonLiveStreamMode {
+- (void)testCreateImageClassifierFailsWithDelegateInNonLiveStreamMode {
   MPPRunningMode runningModesToTest[] = {MPPRunningModeImage, MPPRunningModeVideo};
   for (int i = 0; i < sizeof(runningModesToTest) / sizeof(runningModesToTest[0]); i++) {
     MPPImageClassifierOptions *options = [self imageClassifierOptionsWithModelName:kFloatModelName];
@@ -453,31 +452,32 @@ static NSString *const kLiveStreamTestsDictExpectationKey= @"expectation";
     [self
         assertCreateImageClassifierWithOptions:options
                         failsWithExpectedError:
-                            [NSError
-                                errorWithDomain:kExpectedErrorDomain
-                                           code:MPPTasksErrorCodeInvalidArgumentError
-                                       userInfo:@{
-                                         NSLocalizedDescriptionKey :
-                                          @"The vision task is in image or video mode. The delegate must not be"
-                                          @"set in the task's options."
-                                       }]];
+                            [NSError errorWithDomain:kExpectedErrorDomain
+                                                code:MPPTasksErrorCodeInvalidArgumentError
+                                            userInfo:@{
+                                              NSLocalizedDescriptionKey :
+                                                  @"The vision task is in image or video mode. The "
+                                                  @"delegate must not be set in the task's options."
+                                            }]];
   }
 }
 
-- (void)testCreateImageClassifierFailsWithMissingResultListenerInLiveStreamMode {
+- (void)testCreateImageClassifierFailsWithMissingDelegateInLiveStreamMode {
   MPPImageClassifierOptions *options = [self imageClassifierOptionsWithModelName:kFloatModelName];
 
   options.runningMode = MPPRunningModeLiveStream;
 
   [self assertCreateImageClassifierWithOptions:options
                         failsWithExpectedError:
-                            [NSError errorWithDomain:kExpectedErrorDomain
-                                                code:MPPTasksErrorCodeInvalidArgumentError
-                                            userInfo:@{
-                                              NSLocalizedDescriptionKey :
-                                                @"The vision task is in live stream mode. An object must be set as the delegate of"
-                                                @"the task in the its options to ensure asynchronous delivery of results."
-                                            }]];
+                            [NSError
+                                errorWithDomain:kExpectedErrorDomain
+                                           code:MPPTasksErrorCodeInvalidArgumentError
+                                       userInfo:@{
+                                         NSLocalizedDescriptionKey :
+                                             @"The vision task is in live stream mode. An object "
+                                             @"must be set as the delegate of the task in its "
+                                             @"options to ensure asynchronous delivery of results."
+                                       }]];
 }
 
 - (void)testClassifyFailsWithCallingWrongApiInImageMode {
@@ -619,19 +619,22 @@ static NSString *const kLiveStreamTestsDictExpectationKey= @"expectation";
   MPPImageClassifierOptions *options = [self imageClassifierOptionsWithModelName:kFloatModelName];
 
   NSInteger maxResults = 3;
-  options.maxResults = maxResults;
+  options.maxResults = 3;
 
   options.runningMode = MPPRunningModeLiveStream;
   options.imageClassifierDelegate = self;
 
-  XCTestExpectation *expectation =  [[XCTestExpectation alloc]
+  XCTestExpectation *expectation = [[XCTestExpectation alloc]
       initWithDescription:@"classifyWithOutOfOrderTimestampsAndLiveStream"];
 
   expectation.expectedFulfillmentCount = 1;
 
   MPPImageClassifier *imageClassifier = [self imageClassifierWithOptionsSucceeds:options];
-  
-  outOfOrderTimestampTestDict = @{kLiveStreamTestsDictImageClassifierKey: imageClassifier, kLiveStreamTestsDictExpectationKey: expectation};
+
+  outOfOrderTimestampTestDict = @{
+    kLiveStreamTestsDictImageClassifierKey : imageClassifier,
+    kLiveStreamTestsDictExpectationKey : expectation
+  };
 
   MPPImage *image = [self imageWithFileInfo:kBurgerImage];
 
@@ -649,7 +652,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey= @"expectation";
                       }];
   AssertEqualErrors(error, expectedError);
 
-  [self waitForExpectations:@[expectation] timeout:1e-2f];
+  [self waitForExpectations:@[ expectation ] timeout:1e-2f];
 }
 
 - (void)testClassifyWithLiveStreamModeSucceeds {
@@ -680,10 +683,12 @@ static NSString *const kLiveStreamTestsDictExpectationKey= @"expectation";
   expectation.expectedFulfillmentCount = iterationCount + 1;
   expectation.inverted = YES;
 
-
   MPPImageClassifier *imageClassifier = [self imageClassifierWithOptionsSucceeds:options];
 
-  liveStreamSucceedsTestDict = @{kLiveStreamTestsDictImageClassifierKey: imageClassifier, kLiveStreamTestsDictExpectationKey: expectation};
+  liveStreamSucceedsTestDict = @{
+    kLiveStreamTestsDictImageClassifierKey : imageClassifier,
+    kLiveStreamTestsDictExpectationKey : expectation
+  };
 
   // TODO: Mimic initialization from CMSampleBuffer as live stream mode is most likely to be used
   // with the iOS camera. AVCaptureVideoDataOutput sample buffer delegates provide frames of type
@@ -693,27 +698,27 @@ static NSString *const kLiveStreamTestsDictExpectationKey= @"expectation";
   for (int i = 0; i < iterationCount; i++) {
     XCTAssertTrue([imageClassifier classifyAsyncImage:image timestampInMilliseconds:i error:nil]);
   }
-  
-  [self waitForExpectations:@[expectation] timeout:5];
+
+  [self waitForExpectations:@[ expectation ] timeout:1e-2f];
 }
 
 - (void)imageClassifier:(MPPImageClassifier *)imageClassifier
-    didFinishImageClassificationWithResult:(MPPImageClassifierResult *)imageClassifierResult
-                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                     error:(NSError *)error {
-    NSInteger maxResults = 3;
-    [self assertImageClassifierResult:imageClassifierResult
-             hasExpectedCategoriesCount:maxResults
-                   expectedCategories:
-                       [MPPImageClassifierTests
-                           expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
-    
-    if (imageClassifier == outOfOrderTimestampTestDict[kLiveStreamTestsDictImageClassifierKey]) {
-      [outOfOrderTimestampTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
-    }
-    else if (imageClassifier == liveStreamSucceedsTestDict[kLiveStreamTestsDictImageClassifierKey]) {
-      [liveStreamSucceedsTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
-    }                                
+    didFinishClassificationWithResult:(MPPImageClassifierResult *)imageClassifierResult
+              timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                error:(NSError *)error {
+  NSInteger maxResults = 3;
+  [self assertImageClassifierResult:imageClassifierResult
+         hasExpectedCategoriesCount:maxResults
+                 expectedCategories:
+                     [MPPImageClassifierTests
+                         expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
+
+  if (imageClassifier == outOfOrderTimestampTestDict[kLiveStreamTestsDictImageClassifierKey]) {
+    [outOfOrderTimestampTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
+  } else if (imageClassifier ==
+             liveStreamSucceedsTestDict[kLiveStreamTestsDictImageClassifierKey]) {
+    [liveStreamSucceedsTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
+  }
 }
 
 @end

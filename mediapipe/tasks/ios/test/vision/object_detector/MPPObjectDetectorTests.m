@@ -451,7 +451,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
 #pragma mark Running Mode Tests
 
-- (void)testCreateObjectDetectorFailsWithResultListenerInNonLiveStreamMode {
+- (void)testCreateObjectDetectorFailsWithDelegateInNonLiveStreamMode {
   MPPRunningMode runningModesToTest[] = {MPPRunningModeImage, MPPRunningModeVideo};
   for (int i = 0; i < sizeof(runningModesToTest) / sizeof(runningModesToTest[0]); i++) {
     MPPObjectDetectorOptions *options = [self objectDetectorOptionsWithModelName:kModelName];
@@ -472,7 +472,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   }
 }
 
-- (void)testCreateObjectDetectorFailsWithMissingResultListenerInLiveStreamMode {
+- (void)testCreateObjectDetectorFailsWithMissingDelegateInLiveStreamMode {
   MPPObjectDetectorOptions *options = [self objectDetectorOptionsWithModelName:kModelName];
 
   options.runningMode = MPPRunningModeLiveStream;
@@ -484,9 +484,10 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                                            userInfo:@{
                                              NSLocalizedDescriptionKey :
                                                  @"The vision task is in live stream mode. An "
-                                                 @"object must be set as the delegate of"
-                                                 @"the task in the its options to ensure "
-                                                 @"asynchronous delivery of results."
+                                                 @"object must be set as the "
+                                                 @"delegate of the task in its options to ensure "
+                                                 @"asynchronous delivery of "
+                                                 @"results."
                                            }]];
 }
 
@@ -567,10 +568,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPObjectDetectorOptions *options = [self objectDetectorOptionsWithModelName:kModelName];
 
   options.runningMode = MPPRunningModeLiveStream;
-  options.completion =
-      ^(MPPObjectDetectionResult *result, NSInteger timestampInMilliseconds, NSError *error) {
-
-      };
+  options.objectDetectorDelegate = self;
 
   MPPObjectDetector *objectDetector = [self objectDetectorWithOptionsSucceeds:options];
 
@@ -635,13 +633,14 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   options.maxResults = maxResults;
 
   options.runningMode = MPPRunningModeLiveStream;
+  options.objectDetectorDelegate = self;
 
   XCTestExpectation *expectation = [[XCTestExpectation alloc]
       initWithDescription:@"detectWithOutOfOrderTimestampsAndLiveStream"];
   expectation.expectedFulfillmentCount = 1;
 
   MPPObjectDetector *objectDetector = [self objectDetectorWithOptionsSucceeds:options];
-  liveStreamSucceedsTestDict = {
+  liveStreamSucceedsTestDict = @{
     kLiveStreamTestsDictObjectDetectorKey : objectDetector,
     kLiveStreamTestsDictExpectationKey : expectation
   };
@@ -694,7 +693,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   MPPObjectDetector *objectDetector = [self objectDetectorWithOptionsSucceeds:options];
 
-  liveStreamSucceedsTestDict = {
+  liveStreamSucceedsTestDict = @{
     kLiveStreamTestsDictObjectDetectorKey : objectDetector,
     kLiveStreamTestsDictExpectationKey : expectation
   };
@@ -711,12 +710,13 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   [self waitForExpectations:@[ expectation ] timeout:0.5];
 }
 
+#pragma mark MPPObjectDetectorDelegate Methods
 - (void)objectDetector:(MPPObjectDetector *)objectDetector
-    didFinishObjectDetectionWithResult:(MPPObjectDetectionResult *)objectDetectionResult
-               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                 error:(NSError *)error {
+    didFinishDetectionWithResult:(MPPObjectDetectionResult *)objectDetectionResult
+         timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                           error:(NSError *)error {
   NSInteger maxResults = 4;
-  [self assertObjectDetectionResult:result
+  [self assertObjectDetectionResult:objectDetectionResult
             isEqualToExpectedResult:
                 [MPPObjectDetectorTests
                     expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
