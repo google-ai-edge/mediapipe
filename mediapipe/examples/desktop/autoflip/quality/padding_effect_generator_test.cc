@@ -190,14 +190,16 @@ TEST(PaddingEffectGeneratorTest, ScaleToMultipleOfTwo) {
   double target_aspect_ratio = 0.5;
   int expect_width = 14;
   int expect_height = input_height;
-  auto test_frame = absl::make_unique<ImageFrame>(/*format=*/ImageFormat::SRGB,
-                                                  input_width, input_height);
+  ImageFrame test_frame(/*format=*/ImageFormat::SRGB, input_width,
+                        input_height);
+  cv::Mat mat = formats::MatView(&test_frame);
+  mat = cv::Scalar(0, 0, 0);
 
-  PaddingEffectGenerator generator(test_frame->Width(), test_frame->Height(),
+  PaddingEffectGenerator generator(test_frame.Width(), test_frame.Height(),
                                    target_aspect_ratio,
                                    /*scale_to_multiple_of_two=*/true);
   ImageFrame result_frame;
-  MP_ASSERT_OK(generator.Process(*test_frame, 0.3, 40, 0.0, &result_frame));
+  MP_ASSERT_OK(generator.Process(test_frame, 0.3, 40, 0.0, &result_frame));
   EXPECT_EQ(result_frame.Width(), expect_width);
   EXPECT_EQ(result_frame.Height(), expect_height);
 }
