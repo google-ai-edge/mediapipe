@@ -60,7 +60,7 @@ NS_SWIFT_NAME(ObjectDetectorOptions)
  * to receive the results of performing asynchronous object detection on images (i.e, when
  * `runningMode` = `MPPRunningModeLiveStream`).
  */
-@property(nonatomic, weak) id<MPPObjectDetectorDelegate> objectDetectorDelegate;
+@property(nonatomic, weak, nullable) id<MPPObjectDetectorDelegate> objectDetectorDelegate;
 
 /**
  * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults

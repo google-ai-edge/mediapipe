@@ -63,7 +63,7 @@ NS_SWIFT_NAME(ImageClassifierOptions)
  * to receive the results of asynchronous classification on images (i.e, when `runningMode =
  * MPPRunningModeLiveStream`).
  */
-@property(nonatomic, weak) id<MPPImageClassifierDelegate> imageClassifierDelegate;
+@property(nonatomic, weak, nullable) id<MPPImageClassifierDelegate> imageClassifierDelegate;
 
 /**
  * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults
