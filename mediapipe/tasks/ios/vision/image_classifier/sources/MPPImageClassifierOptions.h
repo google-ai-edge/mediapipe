@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * This protocol defines an interface for the delegates of `MPPImageClassifier` object to receive
- * results of asynchronous classification of images 
+ * results of asynchronous classification of images
  * (i.e, when `runningMode = MPPRunningModeLiveStream`).
  *
  * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierDelegate` protocol.
@@ -37,12 +37,12 @@ NS_SWIFT_NAME(ImageClassifierDelegate)
 /**
  * This method notifies a delegate that the results of asynchronous classification of
  * an image submitted to the `MPPImageClassifier` is available.
- * 
+ *
  * This method is called on a private serial queue created by the `MPPImageClassifier`
  * for performing the asynchronous delegates calls.
  *
  * @param imageClassifier The image classifier which performed the classification.
- * This is useful to test equality when there are multiple instances of `MPPImageClassifier`. 
+ * This is useful to test equality when there are multiple instances of `MPPImageClassifier`.
  * @param result An `MPPImageClassifierResult` object that contains a list of image classifications.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
  * image was sent to the image classifier.
