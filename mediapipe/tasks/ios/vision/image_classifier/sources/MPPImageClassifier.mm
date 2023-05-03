@@ -89,8 +89,6 @@ static NSString *const kTaskGraphName =
       // Capturing `self` as weak in order to avoid `self` being kept in memory
       // and cause a retain cycle, after self is set to `nil`.
       MPPImageClassifier *__weak weakSelf = self;
-      dispatch_queue_t callbackQueue =
-          dispatch_queue_create("com.mediapipe.tasks.imageClassifierCallbackQueue", NULL);
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
         // Check to ensure that the delegate method is not called on a nil object
         // leading to a segmentation fault, we check `weakSelf` is `nil` before
