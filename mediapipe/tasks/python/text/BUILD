@@ -57,3 +57,22 @@ py_library(
         "//mediapipe/tasks/python/text/core:base_text_task_api",
     ],
 )
+
+py_library(
+    name = "language_detector",
+    srcs = [
+        "language_detector.py",
+    ],
+    deps = [
+        "//mediapipe/python:packet_creator",
+        "//mediapipe/python:packet_getter",
+        "//mediapipe/tasks/cc/components/containers/proto:classifications_py_pb2",
+        "//mediapipe/tasks/cc/components/processors/proto:classifier_options_py_pb2",
+        "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_py_pb2",
+        "//mediapipe/tasks/python/components/containers:classification_result",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/core:optional_dependencies",
+        "//mediapipe/tasks/python/core:task_info",
+        "//mediapipe/tasks/python/text/core:base_text_task_api",
+    ],
+)
