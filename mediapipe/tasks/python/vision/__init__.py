@@ -15,6 +15,7 @@
 """MediaPipe Tasks Vision API."""
 
 import mediapipe.tasks.python.vision.core
+import mediapipe.tasks.python.vision.face_aligner
 import mediapipe.tasks.python.vision.face_detector
 import mediapipe.tasks.python.vision.face_landmarker
 import mediapipe.tasks.python.vision.face_stylizer
@@ -27,6 +28,8 @@ import mediapipe.tasks.python.vision.interactive_segmenter
 import mediapipe.tasks.python.vision.object_detector
 import mediapipe.tasks.python.vision.pose_landmarker
 
+FaceAligner = face_aligner.FaceAligner
+FaceAlignerOptions = face_aligner.FaceAlignerOptions
 FaceDetector = face_detector.FaceDetector
 FaceDetectorOptions = face_detector.FaceDetectorOptions
 FaceDetectorResult = face_detector.FaceDetectorResult
@@ -65,6 +68,7 @@ RunningMode = core.vision_task_running_mode.VisionTaskRunningMode
 
 # Remove unnecessary modules to avoid duplication in API docs.
 del core
+del face_aligner
 del face_detector
 del face_landmarker
 del face_stylizer
