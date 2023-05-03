@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
 
 licenses(["notice"])  # Apache License 2.0
 
@@ -70,8 +71,6 @@ alias(
     visibility = ["//visibility:public"],
 )
 
-load("@rules_foreign_cc//tools/build_defs:cmake.bzl", "cmake_external")
-
 # Note: this determines the order in which the libraries are passed to the
 # linker, so if library A depends on library B, library B must come _after_.
 # Hence core is at the bottom.
@@ -94,7 +93,7 @@ OPENCV_SHARED_LIBS = True
 
 OPENCV_SO_VERSION = "3.4"
 
-cmake_external(
+cmake(
     name = "opencv_cmake",
     # Values to be passed as -Dkey=value on the CMake command line;
     # here are serving to provide some CMake script configuration options
@@ -140,6 +139,8 @@ cmake_external(
         # ccache would be able to work across sandboxed Bazel builds, either.
         # In any case, Bazel does its own caching of the rule's outputs.
         "ENABLE_CCACHE": "OFF",
+        "CMAKE_OSX_ARCHITECTURES": "x86_64;arm64",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "10.15",
     },
     lib_source = "@opencv//:all",
     linkopts = [] if OPENCV_SHARED_LIBS else [
@@ -170,7 +171,11 @@ cmake_external(
         "-lpthread",
         "-lrt",
     ],
-    shared_libraries = select({
+    out_lib_dir = select({
+        "@bazel_tools//src/conditions:windows": "x64/vc17/lib" if OPENCV_SHARED_LIBS else "x64/vc17/staticlib",
+        "//conditions:default": "lib"
+    }),
+    out_shared_libs = select({
         "@bazel_tools//src/conditions:darwin": ["libopencv_%s.%s.dylib" % (module, OPENCV_SO_VERSION) for module in OPENCV_MODULES],
         # Only the shared objects listed here will be linked in the directory
         # that Bazel adds to the RUNPATH of dependent executables. You cannot
@@ -178,7 +183,7 @@ cmake_external(
         # versioned name is the one that the executables actually reference.
         "//conditions:default": ["libopencv_%s.so.%s" % (module, OPENCV_SO_VERSION) for module in OPENCV_MODULES],
     }) if OPENCV_SHARED_LIBS else None,
-    static_libraries = [
+    out_static_libs = [
         "libopencv_%s.a" % module
         for module in OPENCV_MODULES
     ] if not OPENCV_SHARED_LIBS else None,
