@@ -38,19 +38,20 @@ NS_SWIFT_NAME(ObjectDetectorDelegate)
 /**
  * This method notifies a delegate that the results of asynchronous object detection of
  * an image submitted to the `MPPObjectDetector` is available.
- * 
+ *
  * This method is called on a private serial dispatch queue created by the `MPPObjectDetector`
  * for performing the asynchronous delegates calls.
  *
  * @param objectDetector The object detector which performed the object detection.
- * This is useful to test equality when there are multiple instances of `MPPObjectDetector`. 
- * @param result The `MPPObjectDetectionResult` object that contains a list of detections, each detection
- * has a bounding box that is expressed in the unrotated input frame of reference coordinates
- * system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the underlying
- * image data.
+ * This is useful to test equality when there are multiple instances of `MPPObjectDetector`.
+ * @param result The `MPPObjectDetectionResult` object that contains a list of detections, each
+ * detection has a bounding box that is expressed in the unrotated input frame of reference
+ * coordinates system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the
+ * underlying image data.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
  * image was sent to the object detector.
- * @param error An optional error parameter populated when there is an error in performing object detection on the input live stream image data.
+ * @param error An optional error parameter populated when there is an error in performing object
+ * detection on the input live stream image data.
  *
  */
 - (void)objectDetector:(MPPObjectDetector *)objectDetector

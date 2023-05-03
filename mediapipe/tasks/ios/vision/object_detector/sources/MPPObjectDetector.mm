@@ -86,7 +86,8 @@ static NSString *const kTaskName = @"objectDetector";
       // Capturing `self` as weak in order to avoid `self` being kept in memory
       // and cause a retain cycle, after self is set to `nil`.
       MPPObjectDetector *__weak weakSelf = self;
-      dispatch_queue_t callbackQueue = dispatch_queue_create([MPPVisionTaskRunner uniqueQueueNameWithTaskName:kTaskName], NULL);
+      dispatch_queue_t callbackQueue =
+          dispatch_queue_create([MPPVisionTaskRunner uniqueQueueNameWithTaskName:kTaskName], NULL);
       packetsCallback = [=](absl::StatusOr<PacketMap> statusOrPackets) {
         if (!weakSelf) {
           return;
@@ -101,9 +102,9 @@ static NSString *const kTaskName = @"objectDetector";
         if (![MPPCommonUtils checkCppError:statusOrPackets.status() toError:&callbackError]) {
           dispatch_async(callbackQueue, ^{
             [weakSelf.objectDetectorDelegate objectDetector:weakSelf
-                     didFinishDetectionWithResult:nil
-                          timestampInMilliseconds:Timestamp::Unset().Value()
-                                            error:callbackError];
+                               didFinishDetectionWithResult:nil
+                                    timestampInMilliseconds:Timestamp::Unset().Value()
+                                                      error:callbackError];
           });
           return;
         }
@@ -116,17 +117,15 @@ static NSString *const kTaskName = @"objectDetector";
         MPPObjectDetectionResult *result = [MPPObjectDetectionResult
             objectDetectionResultWithDetectionsPacket:statusOrPackets.value()[kDetectionsStreamName
                                                                                   .cppString]];
-        
-        NSInteger timeStampInMilliseconds = outputPacketMap[kImageOutStreamName.cppString]
-                                                      .Timestamp()
-                                                      .Value() /
-                                                  kMicroSecondsPerMilliSecond;
+
+        NSInteger timeStampInMilliseconds =
+            outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
+            kMicroSecondsPerMilliSecond;
         dispatch_async(callbackQueue, ^{
-          [weakSelf.objectDetectorDelegate
-                          objectDetector:weakSelf
-            didFinishDetectionWithResult:result
-                 timestampInMilliseconds:timeStampInMilliseconds
-                                   error:callbackError];
+          [weakSelf.objectDetectorDelegate objectDetector:weakSelf
+                             didFinishDetectionWithResult:result
+                                  timestampInMilliseconds:timeStampInMilliseconds
+                                                    error:callbackError];
         });
       };
     }
