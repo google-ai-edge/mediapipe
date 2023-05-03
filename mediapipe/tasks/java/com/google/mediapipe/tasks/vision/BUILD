@@ -213,6 +213,7 @@ android_library(
         "handlandmarker/HandLandmark.java",
         "handlandmarker/HandLandmarker.java",
         "handlandmarker/HandLandmarkerResult.java",
+        "handlandmarker/HandLandmarksConnections.java",
     ],
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",
