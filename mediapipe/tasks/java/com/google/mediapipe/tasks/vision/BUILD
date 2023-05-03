@@ -180,6 +180,7 @@ android_library(
     srcs = [
         "poselandmarker/PoseLandmarker.java",
         "poselandmarker/PoseLandmarkerResult.java",
+        "poselandmarker/PoseLandmarksConnections.java",
     ],
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",
