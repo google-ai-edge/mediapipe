@@ -59,6 +59,7 @@ ObjectDetectorResult = object_detector.ObjectDetectorResult
 PoseLandmarker = pose_landmarker.PoseLandmarker
 PoseLandmarkerOptions = pose_landmarker.PoseLandmarkerOptions
 PoseLandmarkerResult = pose_landmarker.PoseLandmarkerResult
+PoseLandmarksConnections = pose_landmarker.PoseLandmarksConnections
 RunningMode = core.vision_task_running_mode.VisionTaskRunningMode
 
 # Remove unnecessary modules to avoid duplication in API docs.
