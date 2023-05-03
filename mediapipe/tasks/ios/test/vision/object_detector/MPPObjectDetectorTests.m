@@ -459,16 +459,16 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
     options.runningMode = runningModesToTest[i];
     options.objectDetectorDelegate = self;
 
-    [self assertCreateObjectDetectorWithOptions:options
-                         failsWithExpectedError:
-                             [NSError errorWithDomain:kExpectedErrorDomain
-                                                 code:MPPTasksErrorCodeInvalidArgumentError
-                                             userInfo:@{
-                                               NSLocalizedDescriptionKey :
-                                                   @"The vision task is in image or video mode. "
-                                                   @"The delegate must not be"
-                                                   @"set in the task's options."
-                                             }]];
+    [self
+        assertCreateObjectDetectorWithOptions:options
+                       failsWithExpectedError:
+                           [NSError errorWithDomain:kExpectedErrorDomain
+                                               code:MPPTasksErrorCodeInvalidArgumentError
+                                           userInfo:@{
+                                             NSLocalizedDescriptionKey :
+                                                 @"The vision task is in image or video mode. The "
+                                                 @"delegate must not be set in the task's options."
+                                           }]];
   }
 }
 
