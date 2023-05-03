@@ -77,11 +77,13 @@ public class BaseVisionTaskApi implements AutoCloseable {
     }
     Map<String, Packet> inputPackets = new HashMap<>();
     inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
-    inputPackets.put(
-        normRectStreamName,
-        runner
-            .getPacketCreator()
-            .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
+    if (!normRectStreamName.isEmpty()) {
+      inputPackets.put(
+          normRectStreamName,
+          runner
+              .getPacketCreator()
+              .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
+    }
     return runner.process(inputPackets);
   }
 
@@ -105,11 +107,13 @@ public class BaseVisionTaskApi implements AutoCloseable {
     }
     Map<String, Packet> inputPackets = new HashMap<>();
     inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
-    inputPackets.put(
-        normRectStreamName,
-        runner
-            .getPacketCreator()
-            .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
+    if (!normRectStreamName.isEmpty()) {
+      inputPackets.put(
+          normRectStreamName,
+          runner
+              .getPacketCreator()
+              .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
+    }
     return runner.process(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
   }
 
@@ -133,11 +137,13 @@ public class BaseVisionTaskApi implements AutoCloseable {
     }
     Map<String, Packet> inputPackets = new HashMap<>();
     inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
-    inputPackets.put(
-        normRectStreamName,
-        runner
-            .getPacketCreator()
-            .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
+    if (!normRectStreamName.isEmpty()) {
+      inputPackets.put(
+          normRectStreamName,
+          runner
+              .getPacketCreator()
+              .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
+    }
     runner.send(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
   }
 
