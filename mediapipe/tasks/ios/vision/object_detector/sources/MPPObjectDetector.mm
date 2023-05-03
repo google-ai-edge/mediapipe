@@ -81,17 +81,23 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 
     if (options.objectDetectorDelegate) {
       _objectDetectorDelegate = options.objectDetectorDelegate;
+
+      // Capturing `self` as weak in order to avoid `self` being kept in memory
+      // and cause a retain cycle, after self is set to `nil`.
+      MPPObjectDetector *__weak weakSelf = self;
       packetsCallback = [=](absl::StatusOr<PacketMap> statusOrPackets) {
+        if ([!weakSelf && weakSelf.objectDetectorDelegate
+                respondsToSelector:@selector
+                (objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:)]) {
+          return;
+        }
+
         NSError *callbackError = nil;
         if (![MPPCommonUtils checkCppError:statusOrPackets.status() toError:&callbackError]) {
-          if ([_objectDetectorDelegate
-                  respondsToSelector:@selector
-                  (objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:)]) {
-            [_objectDetectorDelegate objectDetector:self
-                       didFinishDetectionWithResult:nil
-                            timestampInMilliseconds:Timestamp::Unset().Value()
-                                              error:callbackError];
-          }
+          [_objectDetectorDelegate objectDetector:weakSelf
+                     didFinishDetectionWithResult:nil
+                          timestampInMilliseconds:Timestamp::Unset().Value()
+                                            error:callbackError];
           return;
         }
 
@@ -103,17 +109,15 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
         MPPObjectDetectionResult *result = [MPPObjectDetectionResult
             objectDetectionResultWithDetectionsPacket:statusOrPackets.value()[kDetectionsStreamName
                                                                                   .cppString]];
-        if ([_objectDetectorDelegate
-                respondsToSelector:@selector
-                (objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:)]) {
-          [_objectDetectorDelegate objectDetector:self
-                     didFinishDetectionWithResult:result
-                          timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
-                                                      .Timestamp()
-                                                      .Value() /
-                                                  kMicroSecondsPerMilliSecond
-                                            error:callbackError];
-        }
+
+        [weakSelf.objectDetectorDelegate
+                          objectDetector:weakSelf
+            didFinishDetectionWithResult:result
+                 timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
+                                             .Timestamp()
+                                             .Value() /
+                                         kMicroSecondsPerMilliSecond
+                                   error:callbackError];
       };
     }
 

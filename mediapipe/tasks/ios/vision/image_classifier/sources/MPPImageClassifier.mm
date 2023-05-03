@@ -85,22 +85,34 @@ static NSString *const kTaskGraphName =
 
     if (options.imageClassifierDelegate) {
       _imageClassifierDelegate = options.imageClassifierDelegate;
+
+      // Capturing `self` as weak in order to avoid `self` being kept in memory
+      // and cause a retain cycle, after self is set to `nil`.
+      MPPImageClassifier *__weak weakSelf = self;
+      dispatch_queue_t callbackQueue =
+          dispatch_queue_create("com.mediapipe.tasks.imageClassifierCallbackQueue", NULL);
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
-        NSError *callbackError = nil;
-        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
-          if ([_imageClassifierDelegate
-                  respondsToSelector:@selector
-                  (imageClassifier:
-                      didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
-            [_imageClassifierDelegate imageClassifier:self
-                    didFinishClassificationWithResult:nil
-                              timestampInMilliseconds:Timestamp::Unset().Value()
-                                                error:callbackError];
-          }
+        // Check to ensure that the delegate method is not called on a nil object
+        // leading to a segmentation fault, we check `weakSelf` is `nil` before
+        // performing any processing.
+        if (!weakSelf ||
+            ![weakSelf.imageClassifierDelegate
+                respondsToSelector:@selector
+                (imageClassifier:
+                    didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
           return;
         }
 
-        PacketMap &outputPacketMap = status_or_packets.value();
+        NSError *callbackError = nil;
+        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
+          [weakSelf.imageClassifierDelegate imageClassifier:weakSelf
+                          didFinishClassificationWithResult:nil
+                                    timestampInMilliseconds:Timestamp::Unset().Value()
+                                                      error:callbackError];
+          return;
+        }
+
+        PacketMap outputPacketMap = status_or_packets.value();
         if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
           return;
         }
@@ -109,18 +121,14 @@ static NSString *const kTaskGraphName =
             [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:
                                           outputPacketMap[kClassificationsStreamName.cppString]];
 
-        if ([_imageClassifierDelegate
-                respondsToSelector:@selector
-                (imageClassifier:
-                    didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
-          [_imageClassifierDelegate imageClassifier:self
-                  didFinishClassificationWithResult:result
-                            timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
-                                                        .Timestamp()
-                                                        .Value() /
-                                                    kMicroSecondsPerMilliSecond
-                                              error:callbackError];
-        }
+        [weakSelf.imageClassifierDelegate
+                              imageClassifier:weakSelf
+            didFinishClassificationWithResult:result
+                      timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
+                                                  .Timestamp()
+                                                  .Value() /
+                                              kMicroSecondsPerMilliSecond
+                                        error:callbackError];
       };
     }
 
