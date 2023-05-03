@@ -42,6 +42,7 @@ GestureRecognizerResult = gesture_recognizer.GestureRecognizerResult
 HandLandmarker = hand_landmarker.HandLandmarker
 HandLandmarkerOptions = hand_landmarker.HandLandmarkerOptions
 HandLandmarkerResult = hand_landmarker.HandLandmarkerResult
+HandLandmarksConnections = hand_landmarker.HandLandmarksConnections
 ImageClassifier = image_classifier.ImageClassifier
 ImageClassifierOptions = image_classifier.ImageClassifierOptions
 ImageClassifierResult = image_classifier.ImageClassifierResult
