@@ -59,7 +59,9 @@ class ObjectDetectorModel(tf.keras.Model):
     self._num_classes = num_classes
     self._model = self._build_model()
     checkpoint_folder = self._model_spec.downloaded_files.get_path()
-    checkpoint_file = os.path.join(checkpoint_folder, 'ckpt-277200')
+    checkpoint_file = os.path.join(
+        checkpoint_folder, self._model_spec.checkpoint_name
+    )
     self.load_checkpoint(checkpoint_file)
     self._model.summary()
     self.loss_trackers = [
@@ -80,7 +82,10 @@ class ObjectDetectorModel(tf.keras.Model):
             num_scales=3, aspect_ratios=[0.5, 1.0, 2.0], anchor_size=3
         ),
         backbone=configs.backbones.Backbone(
-            type='mobilenet', mobilenet=configs.backbones.MobileNet()
+            type='mobilenet',
+            mobilenet=configs.backbones.MobileNet(
+                model_id=self._model_spec.model_id
+            ),
         ),
         decoder=configs.decoders.Decoder(
             type='fpn',
