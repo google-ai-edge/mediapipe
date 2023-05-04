@@ -41,7 +41,11 @@ mediapipe_ts_library(
 
 mediapipe_ts_library(
     name = "image",
-    srcs = ["image.ts"],
+    srcs = [
+        "image.ts",
+        "image_converter.ts",
+        "image_shader_context.ts",
+    ],
 )
 
 mediapipe_ts_library(

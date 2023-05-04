@@ -17,8 +17,9 @@
 import {NormalizedRect} from '../../../../framework/formats/rect_pb';
 import {TaskRunner} from '../../../../tasks/web/core/task_runner';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
-import {MPImage, MPImageShaderContext} from '../../../../tasks/web/vision/core/image';
+import {MPImage} from '../../../../tasks/web/vision/core/image';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
+import {MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 import {GraphRunner, ImageSource, WasmMediaPipeConstructor} from '../../../../web/graph_runner/graph_runner';
 import {SupportImage, WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
 import {isWebKit} from '../../../../web/graph_runner/platform_utils';

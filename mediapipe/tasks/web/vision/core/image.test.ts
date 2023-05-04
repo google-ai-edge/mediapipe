@@ -16,7 +16,8 @@
 
 import 'jasmine';
 
-import {MPImage, MPImageShaderContext, MPImageType} from './image';
+import {MPImage, MPImageType} from './image';
+import {MPImageShaderContext} from './image_shader_context';
 
 const WIDTH = 2;
 const HEIGHT = 2;

@@ -27,8 +27,6 @@ class HParams(hp.BaseHParams):
     learning_rate: Learning rate to use for gradient descent training.
     batch_size: Batch size for training.
     epochs: Number of training iterations over the dataset.
-    do_fine_tuning: If true, the base module is trained together with the
-      classification layer on top.
     cosine_decay_epochs: The number of epochs for cosine decay learning rate.
       See
       https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/CosineDecay
@@ -39,13 +37,13 @@ class HParams(hp.BaseHParams):
   """
 
   # Parameters from BaseHParams class.
-  learning_rate: float = 0.003
-  batch_size: int = 32
-  epochs: int = 10
+  learning_rate: float = 0.3
+  batch_size: int = 8
+  epochs: int = 30
 
   # Parameters for cosine learning rate decay
   cosine_decay_epochs: Optional[int] = None
-  cosine_decay_alpha: float = 0.0
+  cosine_decay_alpha: float = 1.0
 
 
 @dataclasses.dataclass
@@ -67,8 +65,8 @@ class QATHParams:
         for more information.
   """
 
-  learning_rate: float = 0.03
-  batch_size: int = 32
-  epochs: int = 10
-  decay_steps: int = 231
+  learning_rate: float = 0.3
+  batch_size: int = 8
+  epochs: int = 15
+  decay_steps: int = 8
   decay_rate: float = 0.96
