@@ -135,8 +135,7 @@ NS_SWIFT_NAME(ObjectDetector)
  * Sends live stream image data of type `MPPImage` to perform object detection using the whole
  * image as region of interest. Rotation will be applied according to the `orientation` property of
  * the provided `MPPImage`. Only use this method when the `MPPObjectDetector` is created with
- * `MPPRunningModeLiveStream`. Results are provided asynchronously via the `completion` callback
- * provided in the `MPPObjectDetectorOptions`.
+ * `MPPRunningModeLiveStream`. 
  * The object which needs to be continuously notified of the available results of object
  * detection must confirm to `MPPObjectDetectorLiveStreamDelegate` protocol and implement the
  * `objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:` delegate method.
