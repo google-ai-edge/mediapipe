@@ -16,6 +16,7 @@
 
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
+#import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 
 #include "absl/status/statusor.h"
 
@@ -37,6 +38,8 @@ static const NSInteger kMPPOrientationDegreesDown = -180;
 /** Rotation degrees for a 90 degree rotation to the left. */
 static const NSInteger kMPPOrientationDegreesLeft = -270;
 
+static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
+
 @interface MPPVisionTaskRunner () {
   MPPRunningMode _runningMode;
 }
@@ -54,18 +57,21 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
       if (packetsCallback) {
         [MPPCommonUtils createCustomError:error
                                  withCode:MPPTasksErrorCodeInvalidArgumentError
-                              description:@"The vision task is in image or video mode, a "
-                                          @"user-defined result callback should not be provided."];
+                              description:@"The vision task is in image or video mode. The "
+                                          @"delegate must not be set in the task's options."];
         return nil;
       }
       break;
     }
     case MPPRunningModeLiveStream: {
       if (!packetsCallback) {
-        [MPPCommonUtils createCustomError:error
-                                 withCode:MPPTasksErrorCodeInvalidArgumentError
-                              description:@"The vision task is in live stream mode, a user-defined "
-                                          @"result callback must be provided."];
+        [MPPCommonUtils
+            createCustomError:error
+                     withCode:MPPTasksErrorCodeInvalidArgumentError
+                  description:
+                      @"The vision task is in live stream mode. An object must be set as the "
+                      @"delegate of the task in its options to ensure asynchronous delivery of "
+                      @"results."];
         return nil;
       }
       break;
@@ -195,6 +201,11 @@ static const NSInteger kMPPOrientationDegreesLeft = -270;
   }
 
   return [self sendPacketMap:packetMap error:error];
+}
+
++ (const char *)uniqueDispatchQueueNameWithSuffix:(NSString *)suffix {
+  return [NSString stringWithFormat:@"%@.%@_%@", kTaskPrefix, suffix, [NSString uuidString]]
+      .UTF8String;
 }
 
 @end
