@@ -27,11 +27,11 @@ NS_ASSUME_NONNULL_BEGIN
  * results of asynchronous classification of images
  * (i.e, when `runningMode = MPPRunningModeLiveStream`).
  *
- * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierDelegate` protocol.
+ * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
  */
-NS_SWIFT_NAME(ImageClassifierDelegate)
-@protocol MPPImageClassifierDelegate <NSObject>
+NS_SWIFT_NAME(ImageClassifierLiveStreamDelegate)
+@protocol MPPImageClassifierLiveStreamDelegate <NSObject>
 
 @optional
 /**
@@ -75,12 +75,13 @@ NS_SWIFT_NAME(ImageClassifierOptions)
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
- * An object that confirms to `MPPImageClassifierDelegate` protocol. This object must implement
- * `objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:`
- * to receive the results of asynchronous classification on images (i.e, when `runningMode =
+ * An object that confirms to `MPPImageClassifierLiveStreamDelegate` protocol. This object must
+ * implement `objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:` to receive
+ * the results of asynchronous classification on images (i.e, when `runningMode =
  * MPPRunningModeLiveStream`).
  */
-@property(nonatomic, weak, nullable) id<MPPImageClassifierDelegate> imageClassifierDelegate;
+@property(nonatomic, weak, nullable) id<MPPImageClassifierLiveStreamDelegate>
+    imageClassifierLiveStreamDelegate;
 
 /**
  * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults

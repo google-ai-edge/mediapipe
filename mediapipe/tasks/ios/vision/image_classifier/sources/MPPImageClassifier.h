@@ -166,7 +166,7 @@ NS_SWIFT_NAME(ImageClassifier)
  * the provided `MPPImage`. Only use this method when the `MPPImageClassifier` is created with
  * `MPPRunningModeLiveStream`.
  * The object which needs to be continuously notified of the available results of image
- * classification must confirm to `MPPImageClassifierDelegate` protocol and implement the
+ * classification must confirm to `MPPImageClassifierLiveStreamDelegate` protocol and implement the
  * `imageClassifier:didFinishClassificationWithResult:timestampInMilliseconds:error:`
  * delegate method.
  *
@@ -193,7 +193,7 @@ NS_SWIFT_NAME(ImageClassifier)
  * of the provided `MPPImage`. Only use this method when the `MPPImageClassifier` is created with
  * `MPPRunningModeLiveStream`.
  * The object which needs to be continuously notified of the available results of image
- * classification must confirm to `MPPImageClassifierDelegate` protocol and implement the
+ * classification must confirm to `MPPImageClassifierLiveStreamDelegate` protocol and implement the
  * `imageClassifier:didFinishClassificationWithResult:timestampInMilliseconds:error:` delegate
  * method.
  *
