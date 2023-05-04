@@ -974,7 +974,7 @@ class TemplateParser::Parser::ParserImpl {
   }
 
   // Consumes an identifier and saves its value in the identifier parameter.
-  // Returns false if the token is not of type IDENTFIER.
+  // Returns false if the token is not of type IDENTIFIER.
   bool ConsumeIdentifier(std::string* identifier) {
     if (LookingAtType(io::Tokenizer::TYPE_IDENTIFIER)) {
       *identifier = tokenizer_.current().text;
@@ -1672,7 +1672,9 @@ class TemplateParser::Parser::MediaPipeParserImpl
     if (field_type == ProtoUtilLite::FieldType::TYPE_MESSAGE) {
       *args = {""};
     } else {
-      MEDIAPIPE_CHECK_OK(ProtoUtilLite::Serialize({"1"}, field_type, args));
+      constexpr char kPlaceholderValue[] = "1";
+      MEDIAPIPE_CHECK_OK(
+          ProtoUtilLite::Serialize({kPlaceholderValue}, field_type, args));
     }
   }
 
