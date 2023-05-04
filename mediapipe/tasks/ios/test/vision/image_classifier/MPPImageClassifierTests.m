@@ -56,7 +56,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   XCTAssertEqual(imageClassifierResult.classificationResult.classifications.count, 1); \
   XCTAssertEqual(imageClassifierResult.classificationResult.classifications[0].headIndex, 0);
 
-@interface MPPImageClassifierTests : XCTestCase <MPPImageClassifierDelegate> {
+@interface MPPImageClassifierTests : XCTestCase <MPPImageClassifierLiveStreamDelegate> {
   NSDictionary *liveStreamSucceedsTestDict;
   NSDictionary *outOfOrderTimestampTestDict;
 }
@@ -447,7 +447,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
     MPPImageClassifierOptions *options = [self imageClassifierOptionsWithModelName:kFloatModelName];
 
     options.runningMode = runningModesToTest[i];
-    options.imageClassifierDelegate = self;
+    options.imageClassifierLiveStreamDelegate = self;
 
     [self
         assertCreateImageClassifierWithOptions:options
@@ -558,7 +558,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImageClassifierOptions *options = [self imageClassifierOptionsWithModelName:kFloatModelName];
 
   options.runningMode = MPPRunningModeLiveStream;
-  options.imageClassifierDelegate = self;
+  options.imageClassifierLiveStreamDelegate = self;
 
   MPPImageClassifier *imageClassifier = [self imageClassifierWithOptionsSucceeds:options];
 
@@ -622,7 +622,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   options.maxResults = 3;
 
   options.runningMode = MPPRunningModeLiveStream;
-  options.imageClassifierDelegate = self;
+  options.imageClassifierLiveStreamDelegate = self;
 
   XCTestExpectation *expectation = [[XCTestExpectation alloc]
       initWithDescription:@"classifyWithOutOfOrderTimestampsAndLiveStream"];
@@ -662,7 +662,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   options.maxResults = maxResults;
 
   options.runningMode = MPPRunningModeLiveStream;
-  options.imageClassifierDelegate = self;
+  options.imageClassifierLiveStreamDelegate = self;
 
   NSInteger iterationCount = 100;
 
