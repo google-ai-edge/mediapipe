@@ -715,7 +715,7 @@ static const float scoreDifferenceTolerance = 0.02f;
     XCTAssertTrue([objectDetector detectAsyncInImage:image timestampInMilliseconds:i error:nil]);
   }
 
-  [self waitForExpectations:@[ expectation ] timeout:0.5];
+  [self waitForExpectations:@[ expectation ] timeout:0.5f];
 }
 
 @end

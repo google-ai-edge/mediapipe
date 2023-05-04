@@ -652,7 +652,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                       }];
   AssertEqualErrors(error, expectedError);
 
-  [self waitForExpectations:@[ expectation ] timeout:0.5f];
+  NSTimeInterval timeout = 0.5f;
+  [self waitForExpectations:@[ expectation ] timeout:timeout];
 }
 
 - (void)testClassifyWithLiveStreamModeSucceeds {
@@ -699,7 +700,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
     XCTAssertTrue([imageClassifier classifyAsyncImage:image timestampInMilliseconds:i error:nil]);
   }
 
-  [self waitForExpectations:@[ expectation ] timeout:0.5f];
+  NSTimeInterval timeout = 0.5f;
+  [self waitForExpectations:@[ expectation ] timeout:timeout];
 }
 
 - (void)imageClassifier:(MPPImageClassifier *)imageClassifier
