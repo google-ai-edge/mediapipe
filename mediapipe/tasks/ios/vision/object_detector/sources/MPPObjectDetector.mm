@@ -85,6 +85,11 @@ static NSString *const kTaskName = @"objectDetector";
       // Capturing `self` as weak in order to avoid `self` being kept in memory
       // and cause a retain cycle, after self is set to `nil`.
       MPPObjectDetector *__weak weakSelf = self;
+
+      // Create a private serial dispatch queue in which the deleagte method will be called
+      // asynchronously. This is to ensure that if the client performs a long running operation in
+      // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
+      // freed up to continue with its operations.
       dispatch_queue_t callbackQueue =
           dispatch_queue_create([MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], NULL);
       packetsCallback = [=](absl::StatusOr<PacketMap> statusOrPackets) {
