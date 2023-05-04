@@ -170,7 +170,8 @@ using ::mediapipe::ImageFrame;
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInvalidArgumentError
                             description:@"Unsupported pixel format for CVPixelBuffer. Supported "
-                                        @"pixel format types are kCVPixelFormatType_32BGRA"];
+                                        @"pixel format types are kCVPixelFormatType_32BGRA and "
+                                        @"kCVPixelFormatType_32RGBA"];
     }
   }
 
