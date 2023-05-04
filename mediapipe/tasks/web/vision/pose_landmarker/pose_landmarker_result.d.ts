@@ -26,13 +26,13 @@ export {Category, Landmark, NormalizedLandmark};
  */
 export declare interface PoseLandmarkerResult {
   /** Pose landmarks of detected poses. */
-  landmarks: NormalizedLandmark[];
+  landmarks: NormalizedLandmark[][];
 
   /** Pose landmarks in world coordinates of detected poses. */
-  worldLandmarks: Landmark[];
+  worldLandmarks: Landmark[][];
 
   /** Detected auxiliary landmarks, used for deriving ROI for next frame. */
-  auxilaryLandmarks: NormalizedLandmark[];
+  auxilaryLandmarks: NormalizedLandmark[][];
 
   /** Segmentation mask for the detected pose. */
   segmentationMasks?: MPImage[];

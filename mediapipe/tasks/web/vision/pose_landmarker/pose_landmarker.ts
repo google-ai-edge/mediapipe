@@ -309,7 +309,7 @@ export class PoseLandmarker extends VisionTaskRunner {
     if (!('worldLandmarks' in this.result)) {
       return;
     }
-    if (!('landmarks' in this.result)) {
+    if (!('auxilaryLandmarks' in this.result)) {
       return;
     }
     if (this.outputSegmentationMasks && !('segmentationMasks' in this.result)) {
@@ -332,10 +332,11 @@ export class PoseLandmarker extends VisionTaskRunner {
    * Converts raw data into a landmark, and adds it to our landmarks list.
    */
   private addJsLandmarks(data: Uint8Array[]): void {
+    this.result.landmarks = [];
     for (const binaryProto of data) {
       const poseLandmarksProto =
           NormalizedLandmarkList.deserializeBinary(binaryProto);
-      this.result.landmarks = convertToLandmarks(poseLandmarksProto);
+      this.result.landmarks.push(convertToLandmarks(poseLandmarksProto));
     }
   }
 
@@ -344,11 +345,12 @@ export class PoseLandmarker extends VisionTaskRunner {
    * worldLandmarks list.
    */
   private adddJsWorldLandmarks(data: Uint8Array[]): void {
+    this.result.worldLandmarks = [];
     for (const binaryProto of data) {
       const poseWorldLandmarksProto =
           LandmarkList.deserializeBinary(binaryProto);
-      this.result.worldLandmarks =
-          convertToWorldLandmarks(poseWorldLandmarksProto);
+      this.result.worldLandmarks.push(
+          convertToWorldLandmarks(poseWorldLandmarksProto));
     }
   }
 
@@ -357,11 +359,12 @@ export class PoseLandmarker extends VisionTaskRunner {
    * landmarks list.
    */
   private addJsAuxiliaryLandmarks(data: Uint8Array[]): void {
+    this.result.auxilaryLandmarks = [];
     for (const binaryProto of data) {
       const auxiliaryLandmarksProto =
           NormalizedLandmarkList.deserializeBinary(binaryProto);
-      this.result.auxilaryLandmarks =
-          convertToLandmarks(auxiliaryLandmarksProto);
+      this.result.auxilaryLandmarks.push(
+          convertToLandmarks(auxiliaryLandmarksProto));
     }
   }
 
