@@ -660,7 +660,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                             @"INVALID_ARGUMENT: Input timestamp must be monotonically increasing."
                       }];
   AssertEqualErrors(error, expectedError);
-  [self waitForExpectations:@[ expectation ] timeout:1.0];
+  [self waitForExpectations:@[ expectation ] timeout:0.5f];
 }
 
 - (void)testDetectWithLiveStreamModeSucceeds {
@@ -707,7 +707,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
     XCTAssertTrue([objectDetector detectAsyncInImage:image timestampInMilliseconds:i error:nil]);
   }
 
-  [self waitForExpectations:@[ expectation ] timeout:0.5];
+  [self waitForExpectations:@[ expectation ] timeout:0.5f];
 }
 
 #pragma mark MPPObjectDetectorLiveStreamDelegate Methods
