@@ -108,9 +108,18 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
                         ->mutable_model_asset(),
                     is_copy);
   }
-  pose_detector_graph_options->mutable_base_options()
-      ->mutable_acceleration()
-      ->CopyFrom(options->base_options().acceleration());
+  if (options->base_options().acceleration().has_gpu()) {
+    core::proto::Acceleration gpu_accel;
+    gpu_accel.mutable_gpu()->set_use_advanced_gpu_api(true);
+    pose_detector_graph_options->mutable_base_options()
+        ->mutable_acceleration()
+        ->CopyFrom(gpu_accel);
+
+  } else {
+    pose_detector_graph_options->mutable_base_options()
+        ->mutable_acceleration()
+        ->CopyFrom(options->base_options().acceleration());
+  }
   pose_detector_graph_options->mutable_base_options()->set_use_stream_mode(
       options->base_options().use_stream_mode());
   auto* pose_landmarks_detector_graph_options =

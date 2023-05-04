@@ -180,6 +180,7 @@ android_library(
     srcs = [
         "poselandmarker/PoseLandmarker.java",
         "poselandmarker/PoseLandmarkerResult.java",
+        "poselandmarker/PoseLandmarksConnections.java",
     ],
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",
@@ -212,6 +213,7 @@ android_library(
         "handlandmarker/HandLandmark.java",
         "handlandmarker/HandLandmarker.java",
         "handlandmarker/HandLandmarkerResult.java",
+        "handlandmarker/HandLandmarksConnections.java",
     ],
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",

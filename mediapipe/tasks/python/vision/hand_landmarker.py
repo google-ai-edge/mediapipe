@@ -82,6 +82,65 @@ class HandLandmark(enum.IntEnum):
   PINKY_TIP = 20
 
 
+class HandLandmarksConnections:
+  """The connections between hand landmarks."""
+
+  @dataclasses.dataclass
+  class Connection:
+    """The connection class for hand landmarks."""
+
+    start: int
+    end: int
+
+  HAND_PALM_CONNECTIONS: List[Connection] = [
+      Connection(0, 1),
+      Connection(1, 5),
+      Connection(9, 13),
+      Connection(13, 17),
+      Connection(5, 9),
+      Connection(0, 17),
+  ]
+
+  HAND_THUMB_CONNECTIONS: List[Connection] = [
+      Connection(1, 2),
+      Connection(2, 3),
+      Connection(3, 4),
+  ]
+
+  HAND_INDEX_FINGER_CONNECTIONS: List[Connection] = [
+      Connection(5, 6),
+      Connection(6, 7),
+      Connection(7, 8),
+  ]
+
+  HAND_MIDDLE_FINGER_CONNECTIONS: List[Connection] = [
+      Connection(9, 10),
+      Connection(10, 11),
+      Connection(11, 12),
+  ]
+
+  HAND_RING_FINGER_CONNECTIONS: List[Connection] = [
+      Connection(13, 14),
+      Connection(14, 15),
+      Connection(15, 16),
+  ]
+
+  HAND_PINKY_FINGER_CONNECTIONS: List[Connection] = [
+      Connection(17, 18),
+      Connection(18, 19),
+      Connection(19, 20),
+  ]
+
+  HAND_CONNECTIONS: List[Connection] = (
+      HAND_PALM_CONNECTIONS +
+      HAND_THUMB_CONNECTIONS +
+      HAND_INDEX_FINGER_CONNECTIONS +
+      HAND_MIDDLE_FINGER_CONNECTIONS +
+      HAND_RING_FINGER_CONNECTIONS +
+      HAND_PINKY_FINGER_CONNECTIONS
+  )
+
+
 @dataclasses.dataclass
 class HandLandmarkerResult:
   """The hand landmarks result from HandLandmarker, where each vector element represents a single hand detected in the image.

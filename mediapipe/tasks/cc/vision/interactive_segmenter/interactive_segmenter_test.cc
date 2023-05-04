@@ -18,9 +18,12 @@ limitations under the License.
 #include <memory>
 #include <string>
 #include <utility>
+#include <variant>
+#include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
@@ -179,22 +182,46 @@ TEST_F(CreateFromOptionsTest, FailsWithNeitherOutputSet) {
 struct InteractiveSegmenterTestParams {
   std::string test_name;
   RegionOfInterest::Format format;
-  NormalizedKeypoint roi;
+  std::variant<NormalizedKeypoint, std::vector<NormalizedKeypoint>> roi;
   absl::string_view golden_mask_file;
   float similarity_threshold;
 };
 
-using SucceedSegmentationWithRoi =
-    ::testing::TestWithParam<InteractiveSegmenterTestParams>;
+class SucceedSegmentationWithRoi
+    : public ::testing::TestWithParam<InteractiveSegmenterTestParams> {
+ public:
+  absl::StatusOr<RegionOfInterest> TestParamsToTaskOptions() {
+    const InteractiveSegmenterTestParams& params = GetParam();
+
+    RegionOfInterest interaction_roi;
+    interaction_roi.format = params.format;
+    switch (params.format) {
+      case (RegionOfInterest::Format::kKeyPoint): {
+        interaction_roi.keypoint = std::get<NormalizedKeypoint>(params.roi);
+        break;
+      }
+      case (RegionOfInterest::Format::kScribble): {
+        interaction_roi.scribble =
+            std::get<std::vector<NormalizedKeypoint>>(params.roi);
+        break;
+      }
+      default: {
+        return absl::InvalidArgumentError("Unknown ROI format");
+      }
+    }
+
+    return interaction_roi;
+  }
+};
 
 TEST_P(SucceedSegmentationWithRoi, SucceedsWithCategoryMask) {
+  MP_ASSERT_OK_AND_ASSIGN(RegionOfInterest interaction_roi,
+                          TestParamsToTaskOptions());
   const InteractiveSegmenterTestParams& params = GetParam();
+
   MP_ASSERT_OK_AND_ASSIGN(
       Image image,
       DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kCatsAndDogsJpg)));
-  RegionOfInterest interaction_roi;
-  interaction_roi.format = params.format;
-  interaction_roi.keypoint = params.roi;
   auto options = std::make_unique<InteractiveSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
@@ -220,13 +247,13 @@ TEST_P(SucceedSegmentationWithRoi, SucceedsWithCategoryMask) {
 }
 
 TEST_P(SucceedSegmentationWithRoi, SucceedsWithConfidenceMask) {
-  const auto& params = GetParam();
+  MP_ASSERT_OK_AND_ASSIGN(RegionOfInterest interaction_roi,
+                          TestParamsToTaskOptions());
+  const InteractiveSegmenterTestParams& params = GetParam();
+
   MP_ASSERT_OK_AND_ASSIGN(
       Image image,
       DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kCatsAndDogsJpg)));
-  RegionOfInterest interaction_roi;
-  interaction_roi.format = params.format;
-  interaction_roi.keypoint = params.roi;
   auto options = std::make_unique<InteractiveSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
@@ -253,11 +280,23 @@ TEST_P(SucceedSegmentationWithRoi, SucceedsWithConfidenceMask) {
 INSTANTIATE_TEST_SUITE_P(
     SucceedSegmentationWithRoiTest, SucceedSegmentationWithRoi,
     ::testing::ValuesIn<InteractiveSegmenterTestParams>(
-        {{"PointToDog1", RegionOfInterest::Format::kKeyPoint,
+        {// Keypoint input.
+         {"PointToDog1", RegionOfInterest::Format::kKeyPoint,
           NormalizedKeypoint{0.44, 0.70}, kCatsAndDogsMaskDog1, 0.84f},
          {"PointToDog2", RegionOfInterest::Format::kKeyPoint,
           NormalizedKeypoint{0.66, 0.66}, kCatsAndDogsMaskDog2,
-          kGoldenMaskSimilarity}}),
+          kGoldenMaskSimilarity},
+         // Scribble input.
+         {"ScribbleToDog1", RegionOfInterest::Format::kScribble,
+          std::vector{NormalizedKeypoint{0.44, 0.70},
+                      NormalizedKeypoint{0.44, 0.71},
+                      NormalizedKeypoint{0.44, 0.72}},
+          kCatsAndDogsMaskDog1, 0.84f},
+         {"ScribbleToDog2", RegionOfInterest::Format::kScribble,
+          std::vector{NormalizedKeypoint{0.66, 0.66},
+                      NormalizedKeypoint{0.66, 0.67},
+                      NormalizedKeypoint{0.66, 0.68}},
+          kCatsAndDogsMaskDog2, kGoldenMaskSimilarity}}),
     [](const ::testing::TestParamInfo<SucceedSegmentationWithRoi::ParamType>&
            info) { return info.param.test_name; });
 

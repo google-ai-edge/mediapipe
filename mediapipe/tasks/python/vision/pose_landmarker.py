@@ -132,6 +132,55 @@ def _build_landmarker_result(
   return pose_landmarker_result
 
 
+class PoseLandmarksConnections:
+  """The connections between pose landmarks."""
+
+  @dataclasses.dataclass
+  class Connection:
+    """The connection class for pose landmarks."""
+
+    start: int
+    end: int
+
+  POSE_LANDMARKS: List[Connection] = [
+      Connection(0, 1),
+      Connection(1, 2),
+      Connection(2, 3),
+      Connection(3, 7),
+      Connection(0, 4),
+      Connection(4, 5),
+      Connection(5, 6),
+      Connection(6, 8),
+      Connection(9, 10),
+      Connection(11, 12),
+      Connection(11, 13),
+      Connection(13, 15),
+      Connection(15, 17),
+      Connection(15, 19),
+      Connection(15, 21),
+      Connection(17, 19),
+      Connection(12, 14),
+      Connection(14, 16),
+      Connection(16, 18),
+      Connection(16, 20),
+      Connection(16, 22),
+      Connection(18, 20),
+      Connection(11, 23),
+      Connection(12, 24),
+      Connection(23, 24),
+      Connection(23, 25),
+      Connection(24, 26),
+      Connection(25, 27),
+      Connection(26, 28),
+      Connection(27, 29),
+      Connection(28, 30),
+      Connection(29, 31),
+      Connection(30, 32),
+      Connection(27, 31),
+      Connection(28, 32)
+  ]
+
+
 @dataclasses.dataclass
 class PoseLandmarkerOptions:
   """Options for the pose landmarker task.

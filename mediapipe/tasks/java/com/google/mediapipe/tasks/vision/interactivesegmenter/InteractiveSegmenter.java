@@ -502,6 +502,7 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
   /** The Region-Of-Interest (ROI) to interact with. */
   public static class RegionOfInterest {
     private NormalizedKeypoint keypoint;
+    private List<NormalizedKeypoint> scribble;
 
     private RegionOfInterest() {}
 
@@ -512,6 +513,16 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
     public static RegionOfInterest create(NormalizedKeypoint keypoint) {
       RegionOfInterest roi = new RegionOfInterest();
       roi.keypoint = keypoint;
+      return roi;
+    }
+
+    /**
+     * Creates a {@link RegionOfInterest} instance representing scribbles over the object that the
+     * user wants to segment.
+     */
+    public static RegionOfInterest create(List<NormalizedKeypoint> scribble) {
+      RegionOfInterest roi = new RegionOfInterest();
+      roi.scribble = scribble;
       return roi;
     }
   }
@@ -534,6 +545,18 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
                       RenderAnnotation.Point.newBuilder()
                           .setX(roi.keypoint.x())
                           .setY(roi.keypoint.y())))
+          .build();
+    } else if (roi.scribble != null) {
+      RenderAnnotation.Scribble.Builder scribbleBuilder = RenderAnnotation.Scribble.newBuilder();
+      for (NormalizedKeypoint p : roi.scribble) {
+        scribbleBuilder.addPoint(RenderAnnotation.Point.newBuilder().setX(p.x()).setY(p.y()));
+      }
+
+      return builder
+          .addRenderAnnotations(
+              RenderAnnotation.newBuilder()
+                  .setColor(Color.newBuilder().setR(255))
+                  .setScribble(scribbleBuilder))
           .build();
     }
 

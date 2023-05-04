@@ -28,6 +28,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/components/containers/keypoint.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
@@ -59,6 +60,8 @@ constexpr absl::string_view kNormRectTag{"NORM_RECT"};
 
 constexpr absl::string_view kSubgraphTypeName{
     "mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph"};
+
+using components::containers::NormalizedKeypoint;
 
 using ::mediapipe::CalculatorGraphConfig;
 using ::mediapipe::Image;
@@ -115,7 +118,7 @@ absl::StatusOr<RenderData> ConvertRoiToRenderData(const RegionOfInterest& roi) {
     case RegionOfInterest::Format::kUnspecified:
       return absl::InvalidArgumentError(
           "RegionOfInterest format not specified");
-    case RegionOfInterest::Format::kKeyPoint:
+    case RegionOfInterest::Format::kKeyPoint: {
       RET_CHECK(roi.keypoint.has_value());
       auto* annotation = result.add_render_annotations();
       annotation->mutable_color()->set_r(255);
@@ -124,6 +127,19 @@ absl::StatusOr<RenderData> ConvertRoiToRenderData(const RegionOfInterest& roi) {
       point->set_x(roi.keypoint->x);
       point->set_y(roi.keypoint->y);
       return result;
+    }
+    case RegionOfInterest::Format::kScribble: {
+      RET_CHECK(roi.scribble.has_value());
+      auto* annotation = result.add_render_annotations();
+      annotation->mutable_color()->set_r(255);
+      for (const NormalizedKeypoint& keypoint : *(roi.scribble)) {
+        auto* point = annotation->mutable_scribble()->add_point();
+        point->set_normalized(true);
+        point->set_x(keypoint.x);
+        point->set_y(keypoint.y);
+      }
+      return result;
+    }
   }
   return absl::UnimplementedError("Unrecognized format");
 }

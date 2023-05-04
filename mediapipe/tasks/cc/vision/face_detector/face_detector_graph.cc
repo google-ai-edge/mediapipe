@@ -242,7 +242,7 @@ class FaceDetectorGraph : public core::ModelTaskGraph {
     auto matrix = preprocessing.Out(kMatrixTag);
     auto image_size = preprocessing.Out(kImageSizeTag);
 
-    // Face detection model inferece.
+    // Face detection model inference.
     auto& inference = AddInference(
         model_resources, subgraph_options.base_options().acceleration(), graph);
     preprocessed_tensors >> inference.In(kTensorsTag);

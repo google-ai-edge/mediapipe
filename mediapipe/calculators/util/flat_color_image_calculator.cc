@@ -15,14 +15,13 @@
 #include <memory>
 
 #include "absl/status/status.h"
-#include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/util/flat_color_image_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
-#include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/util/color.pb.h"
 
 namespace mediapipe {
@@ -32,6 +31,7 @@ namespace {
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Node;
 using ::mediapipe::api2::Output;
+using ::mediapipe::api2::SideOutput;
 }  // namespace
 
 // A calculator for generating an image filled with a single color.
@@ -45,7 +45,8 @@ using ::mediapipe::api2::Output;
 //
 // Outputs:
 //   IMAGE (Image)
-//     Image filled with the requested color.
+//     Image filled with the requested color. Can be either an output_stream
+//     or an output_side_packet.
 //
 // Example useage:
 // node {
@@ -68,9 +69,10 @@ class FlatColorImageCalculator : public Node {
  public:
   static constexpr Input<Image>::Optional kInImage{"IMAGE"};
   static constexpr Input<Color>::Optional kInColor{"COLOR"};
-  static constexpr Output<Image> kOutImage{"IMAGE"};
+  static constexpr Output<Image>::Optional kOutImage{"IMAGE"};
+  static constexpr SideOutput<Image>::Optional kOutSideImage{"IMAGE"};
 
-  MEDIAPIPE_NODE_CONTRACT(kInImage, kInColor, kOutImage);
+  MEDIAPIPE_NODE_CONTRACT(kInImage, kInColor, kOutImage, kOutSideImage);
 
   static absl::Status UpdateContract(CalculatorContract* cc) {
     const auto& options = cc->Options<FlatColorImageCalculatorOptions>();
@@ -81,6 +83,13 @@ class FlatColorImageCalculator : public Node {
     RET_CHECK(kInColor(cc).IsConnected() ^ options.has_color())
         << "Either set COLOR input stream, or set through options";
 
+    RET_CHECK(kOutImage(cc).IsConnected() ^ kOutSideImage(cc).IsConnected())
+        << "Set IMAGE either as output stream, or as output side packet";
+
+    RET_CHECK(!kOutSideImage(cc).IsConnected() ||
+              (options.has_output_height() && options.has_output_width()))
+        << "Set size through options, when setting IMAGE as output side packet";
+
     return absl::OkStatus();
   }
 
@@ -88,6 +97,9 @@ class FlatColorImageCalculator : public Node {
   absl::Status Process(CalculatorContext* cc) override;
 
  private:
+  std::optional<std::shared_ptr<ImageFrame>> CreateOutputFrame(
+      CalculatorContext* cc);
+
   bool use_dimension_from_option_ = false;
   bool use_color_from_option_ = false;
 };
@@ -96,10 +108,31 @@ MEDIAPIPE_REGISTER_NODE(FlatColorImageCalculator);
 absl::Status FlatColorImageCalculator::Open(CalculatorContext* cc) {
   use_dimension_from_option_ = !kInImage(cc).IsConnected();
   use_color_from_option_ = !kInColor(cc).IsConnected();
+
+  if (!kOutImage(cc).IsConnected()) {
+    std::optional<std::shared_ptr<ImageFrame>> output_frame =
+        CreateOutputFrame(cc);
+    if (output_frame.has_value()) {
+      kOutSideImage(cc).Set(Image(output_frame.value()));
+    }
+  }
   return absl::OkStatus();
 }
 
 absl::Status FlatColorImageCalculator::Process(CalculatorContext* cc) {
+  if (kOutImage(cc).IsConnected()) {
+    std::optional<std::shared_ptr<ImageFrame>> output_frame =
+        CreateOutputFrame(cc);
+    if (output_frame.has_value()) {
+      kOutImage(cc).Send(Image(output_frame.value()));
+    }
+  }
+
+  return absl::OkStatus();
+}
+
+std::optional<std::shared_ptr<ImageFrame>>
+FlatColorImageCalculator::CreateOutputFrame(CalculatorContext* cc) {
   const auto& options = cc->Options<FlatColorImageCalculatorOptions>();
 
   int output_height = -1;
@@ -112,7 +145,7 @@ absl::Status FlatColorImageCalculator::Process(CalculatorContext* cc) {
     output_height = input_image.height();
     output_width = input_image.width();
   } else {
-    return absl::OkStatus();
+    return std::nullopt;
   }
 
   Color color;
@@ -121,7 +154,7 @@ absl::Status FlatColorImageCalculator::Process(CalculatorContext* cc) {
   } else if (!kInColor(cc).IsEmpty()) {
     color = kInColor(cc).Get();
   } else {
-    return absl::OkStatus();
+    return std::nullopt;
   }
 
   auto output_frame = std::make_shared<ImageFrame>(ImageFormat::SRGB,
@@ -130,9 +163,7 @@ absl::Status FlatColorImageCalculator::Process(CalculatorContext* cc) {
 
   output_mat.setTo(cv::Scalar(color.r(), color.g(), color.b()));
 
-  kOutImage(cc).Send(Image(output_frame));
-
-  return absl::OkStatus();
+  return output_frame;
 }
 
 }  // namespace mediapipe

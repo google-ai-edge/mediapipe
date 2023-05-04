@@ -28,7 +28,12 @@
   return self;
 }
 
-// TODO: Implement hash
+- (NSUInteger)hash {
+  NSUInteger nonNullPropertiesHash =
+      @(self.location.x).hash ^ @(self.location.y).hash ^ @(self.score).hash;
+
+  return self.label ? nonNullPropertiesHash ^ self.label.hash : nonNullPropertiesHash;
+}
 
 - (BOOL)isEqual:(nullable id)object {
   if (!object) {

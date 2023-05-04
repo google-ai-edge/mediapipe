@@ -95,7 +95,8 @@ absl::Status FrameBufferProcessor::Convert(const mediapipe::Image& input,
               static_cast<int>(range_max) == 255);
   }
 
-  auto input_frame = input.GetGpuBuffer().GetReadView<FrameBuffer>();
+  auto input_frame =
+      input.GetGpuBuffer(/*upload_to_gpu=*/false).GetReadView<FrameBuffer>();
   const auto& output_shape = output_tensor.shape();
   MP_RETURN_IF_ERROR(ValidateTensorShape(output_shape));
   FrameBuffer::Dimension output_dimension{/*width=*/output_shape.dims[2],

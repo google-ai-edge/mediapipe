@@ -49,3 +49,18 @@ py_test(
         "//mediapipe/tasks/python/text:text_embedder",
     ],
 )
+
+py_test(
+    name = "language_detector_test",
+    srcs = ["language_detector_test.py"],
+    data = [
+        "//mediapipe/tasks/testdata/text:language_detector",
+    ],
+    deps = [
+        "//mediapipe/tasks/python/components/containers:category",
+        "//mediapipe/tasks/python/components/containers:classification_result",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/tasks/python/text:language_detector",
+    ],
+)
