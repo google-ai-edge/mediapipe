@@ -37,8 +37,8 @@ static NSString *const kImageOutStreamName = @"image_out";
 static NSString *const kImageTag = @"IMAGE";
 static NSString *const kNormRectStreamName = @"norm_rect_in";
 static NSString *const kNormRectTag = @"NORM_RECT";
-
 static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorGraph";
+static NSString *const kTaskName = @"objectDetector";
 
 #define InputPacketMap(imagePacket, normalizedRectPacket) \
   {                                                       \
@@ -51,6 +51,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
 }
+@property(nonatomic, weak) id<MPPObjectDetectorLiveStreamDelegate> objectDetectorLiveStreamDelegate;
 @end
 
 @implementation MPPObjectDetector
@@ -78,11 +79,32 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 
     PacketsCallback packetsCallback = nullptr;
 
-    if (options.completion) {
+    if (options.objectDetectorLiveStreamDelegate) {
+      _objectDetectorLiveStreamDelegate = options.objectDetectorLiveStreamDelegate;
+
+      // Capturing `self` as weak in order to avoid `self` being kept in memory
+      // and cause a retain cycle, after self is set to `nil`.
+      MPPObjectDetector *__weak weakSelf = self;
+      dispatch_queue_t callbackQueue =
+          dispatch_queue_create([MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], NULL);
       packetsCallback = [=](absl::StatusOr<PacketMap> statusOrPackets) {
+        if (!weakSelf) {
+          return;
+        }
+        if (![weakSelf.objectDetectorLiveStreamDelegate
+                respondsToSelector:@selector
+                (objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:)]) {
+          return;
+        }
+
         NSError *callbackError = nil;
         if (![MPPCommonUtils checkCppError:statusOrPackets.status() toError:&callbackError]) {
-          options.completion(nil, Timestamp::Unset().Value(), callbackError);
+          dispatch_async(callbackQueue, ^{
+            [weakSelf.objectDetectorLiveStreamDelegate objectDetector:weakSelf
+                                         didFinishDetectionWithResult:nil
+                                              timestampInMilliseconds:Timestamp::Unset().Value()
+                                                                error:callbackError];
+          });
           return;
         }
 
@@ -95,10 +117,15 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
             objectDetectionResultWithDetectionsPacket:statusOrPackets.value()[kDetectionsStreamName
                                                                                   .cppString]];
 
-        options.completion(result,
-                           outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-                               kMicroSecondsPerMilliSecond,
-                           callbackError);
+        NSInteger timeStampInMilliseconds =
+            outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
+            kMicroSecondsPerMilliSecond;
+        dispatch_async(callbackQueue, ^{
+          [weakSelf.objectDetectorLiveStreamDelegate objectDetector:weakSelf
+                                       didFinishDetectionWithResult:result
+                                            timestampInMilliseconds:timeStampInMilliseconds
+                                                              error:callbackError];
+        });
       };
     }
 
@@ -112,6 +139,7 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
       return nil;
     }
   }
+
   return self;
 }
 
@@ -223,6 +251,5 @@ static NSString *const kTaskGraphName = @"mediapipe.tasks.vision.ObjectDetectorG
 
   return [_visionTaskRunner processLiveStreamPacketMap:inputPacketMap.value() error:error];
 }
-
 
 @end
