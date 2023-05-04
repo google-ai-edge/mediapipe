@@ -17,8 +17,6 @@
 
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 
-static const int kMicroSecondsPerMilliSecond = 1000;
-
 namespace {
 using ClassificationResultProto =
     ::mediapipe::tasks::components::containers::proto::ClassificationResult;
@@ -27,9 +25,16 @@ using ::mediapipe::Packet;
 
 @implementation MPPImageClassifierResult (Helpers)
 
-+ (MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
++ (nullable MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
     (const Packet &)packet {
-  MPPClassificationResult *classificationResult = [MPPClassificationResult
+  MPPClassificationResult *classificationResult;
+  MPPImageClassifierResult *imageClassifierResult;
+
+  if (!packet.ValidateAsType<ClassificationResultProto>().ok()) {
+    return nil;
+  }
+
+  classificationResult = [MPPClassificationResult
       classificationResultWithProto:packet.Get<ClassificationResultProto>()];
 
   return [[MPPImageClassifierResult alloc]
