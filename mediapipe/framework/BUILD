@@ -97,7 +97,7 @@ mediapipe_proto_library(
     name = "mediapipe_options_proto",
     srcs = ["mediapipe_options.proto"],
     visibility = [
-        ":mediapipe_internal",
+        "//visibility:public",
     ],
 )
 
@@ -126,14 +126,14 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "status_handler_proto",
     srcs = ["status_handler.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = ["//visibility:public"],
     deps = [":mediapipe_options_proto"],
 )
 
 mediapipe_proto_library(
     name = "stream_handler_proto",
     srcs = ["stream_handler.proto"],
-    visibility = [":mediapipe_internal"],
+    visibility = ["//visibility:public"],
     deps = [":mediapipe_options_proto"],
 )
 

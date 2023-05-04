@@ -41,6 +41,7 @@ Finally, imports the aar into Android Studio.
 
 """
 
+load("//mediapipe/framework/tool:build_defs.bzl", "clean_dep", "clean_deps")
 load("@build_bazel_rules_android//android:rules.bzl", "android_binary", "android_library")
 
 def mediapipe_aar(
@@ -107,19 +108,18 @@ EOF
 
     android_library(
         name = name + "_android_lib",
-        srcs = srcs + [
+        srcs = srcs + clean_deps([
                    "//mediapipe/java/com/google/mediapipe/components:java_src",
                    "//mediapipe/java/com/google/mediapipe/framework:java_src",
                    "//mediapipe/java/com/google/mediapipe/glutil:java_src",
-               ] + mediapipe_java_proto_srcs() +
+               ]) + mediapipe_java_proto_srcs() +
                select({
                    "//conditions:default": [],
                    "enable_stats_logging": mediapipe_logging_java_proto_srcs(),
                }),
         manifest = "AndroidManifest.xml",
-        proguard_specs = ["//mediapipe/java/com/google/mediapipe/framework:proguard.pgcfg"],
-        deps = [
-            ":" + name + "_jni_cc_lib",
+        proguard_specs = [clean_dep("//mediapipe/java/com/google/mediapipe/framework:proguard.pgcfg")],
+        deps = clean_deps([
             "//mediapipe/framework:calculator_java_proto_lite",
             "//mediapipe/framework:calculator_profile_java_proto_lite",
             "//mediapipe/framework:calculator_options_java_proto_lite",
@@ -142,6 +142,8 @@ EOF
             "//third_party:camerax_core",
             "//third_party:camerax_camera2",
             "//third_party:camerax_lifecycle",
+        ]) + [
+            ":" + name + "_jni_cc_lib",
             "@com_google_protobuf//:protobuf_javalite",
             "@maven//:com_google_code_findbugs_jsr305",
             "@maven//:com_google_flogger_flogger",
@@ -150,7 +152,7 @@ EOF
             "@maven//:androidx_lifecycle_lifecycle_common",
         ] + select({
             "//conditions:default": [":" + name + "_jni_opencv_cc_lib"],
-            "//mediapipe/framework/port:disable_opencv": [],
+            clean_dep("//mediapipe/framework/port:disable_opencv"): [],
             "exclude_opencv_so_lib": [],
         }) + select({
             "//conditions:default": [],
@@ -183,7 +185,7 @@ def _mediapipe_jni(name, gen_libmediapipe, calculators = []):
             linkshared = 1,
             linkstatic = 1,
             deps = [
-                "//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni",
+                clean_dep("//mediapipe/java/com/google/mediapipe/framework/jni:mediapipe_framework_jni"),
             ] + calculators,
         )
 
@@ -196,11 +198,11 @@ def _mediapipe_jni(name, gen_libmediapipe, calculators = []):
     native.cc_library(
         name = name + "_opencv_cc_lib",
         srcs = select({
-            "//mediapipe:android_arm64": ["@android_opencv//:libopencv_java3_so_arm64-v8a"],
-            "//mediapipe:android_armeabi": ["@android_opencv//:libopencv_java3_so_armeabi-v7a"],
-            "//mediapipe:android_arm": ["@android_opencv//:libopencv_java3_so_armeabi-v7a"],
-            "//mediapipe:android_x86": ["@android_opencv//:libopencv_java3_so_x86"],
-            "//mediapipe:android_x86_64": ["@android_opencv//:libopencv_java3_so_x86_64"],
+            clean_dep("//mediapipe:android_arm64"): ["@android_opencv//:libopencv_java3_so_arm64-v8a"],
+            clean_dep("//mediapipe:android_armeabi"): ["@android_opencv//:libopencv_java3_so_armeabi-v7a"],
+            clean_dep("//mediapipe:android_arm"): ["@android_opencv//:libopencv_java3_so_armeabi-v7a"],
+            clean_dep("//mediapipe:android_x86"): ["@android_opencv//:libopencv_java3_so_x86"],
+            clean_dep("//mediapipe:android_x86_64"): ["@android_opencv//:libopencv_java3_so_x86_64"],
             "//conditions:default": [],
         }),
         alwayslink = 1,
@@ -270,11 +272,11 @@ def mediapipe_java_proto_src_extractor(target, src_out, name = ""):
     """
 
     if not name:
-        name = target.split(":")[-1] + "_proto_java_src_extractor"
-    src_jar = target.replace("_java_proto_lite", "_proto-lite-src.jar").replace(":", "/").replace("//", "")
+        name = target.split(":")[-1]
+    src_jar = Label(target).workspace_root + target.replace("_java_proto_lite", "_proto-lite-src.jar").replace(":", "/").replace("//", "/")
     native.genrule(
         name = name + "_proto_java_src_extractor",
-        srcs = [target],
+        srcs = [clean_dep(target)],
         outs = [src_out],
         cmd = "unzip $(GENDIR)/" + src_jar + " -d $(GENDIR) && mv $(GENDIR)/" +
               src_out + " $$(dirname $(location " + src_out + "))",
