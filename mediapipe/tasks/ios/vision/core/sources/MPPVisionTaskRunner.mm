@@ -55,10 +55,10 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
     case MPPRunningModeImage:
     case MPPRunningModeVideo: {
       if (packetsCallback) {
-        [MPPCommonUtils
-            createCustomError:error
-                     withCode:MPPTasksErrorCodeInvalidArgumentError
-                  description:@"The vision task is in image or video mode. The delegate must not be set in the task's options."];
+        [MPPCommonUtils createCustomError:error
+                                 withCode:MPPTasksErrorCodeInvalidArgumentError
+                              description:@"The vision task is in image or video mode. The "
+                                          @"delegate must not be set in the task's options."];
         return nil;
       }
       break;
@@ -203,8 +203,9 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   return [self sendPacketMap:packetMap error:error];
 }
 
-+ (const char *)uniqueQueueNameWithTaskName:(NSString *)taskName {
-  return [NSString stringWithFormat:@"%@.%@_%@",kTaskPrefix, taskName, [NSString uuidString]].UTF8String;
++ (const char *)uniqueDispatchQueueNameWithSuffix:(NSString *)suffix {
+  return [NSString stringWithFormat:@"%@.%@_%@", kTaskPrefix, suffix, [NSString uuidString]]
+      .UTF8String;
 }
 
 @end
