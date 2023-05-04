@@ -27,6 +27,7 @@
 namespace {
 using ::mediapipe::NormalizedRect;
 using ::mediapipe::Packet;
+using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
 }  // namespace
@@ -38,9 +39,9 @@ static NSString *const kImageOutStreamName = @"image_out";
 static NSString *const kImageTag = @"IMAGE";
 static NSString *const kNormRectStreamName = @"norm_rect_in";
 static NSString *const kNormRectTag = @"NORM_RECT";
-
 static NSString *const kTaskGraphName =
     @"mediapipe.tasks.vision.image_classifier.ImageClassifierGraph";
+static NSString *const kTaskName = @"imageClassifier";
 
 #define InputPacketMap(imagePacket, normalizedRectPacket) \
   {                                                       \
@@ -53,6 +54,8 @@ static NSString *const kTaskGraphName =
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
 }
+@property(nonatomic, weak) id<MPPImageClassifierLiveStreamDelegate>
+    imageClassifierLiveStreamDelegate;
 @end
 
 @implementation MPPImageClassifier
@@ -81,16 +84,58 @@ static NSString *const kTaskGraphName =
 
     PacketsCallback packetsCallback = nullptr;
 
-    if (options.completion) {
+    if (options.imageClassifierLiveStreamDelegate) {
+      _imageClassifierLiveStreamDelegate = options.imageClassifierLiveStreamDelegate;
+      // Capturing `self` as weak in order to avoid `self` being kept in memory
+      // and cause a retain cycle, after self is set to `nil`.
+      MPPImageClassifier *__weak weakSelf = self;
+
+      // Create a private serial dispatch queue in which the deleagte method will be called
+      // asynchronously. This is to ensure that if the client performs a long running operation in
+      // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
+      // freed up to continue with its operations.
+      const char *queueName = [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName];
+      dispatch_queue_t callbackQueue = dispatch_queue_create(queueName, NULL);
       packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
-        NSError *callbackError = nil;
-        MPPImageClassifierResult *result;
-        if ([MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
-          result = [MPPImageClassifierResult
-              imageClassifierResultWithClassificationsPacket:
-                  status_or_packets.value()[kClassificationsStreamName.cppString]];
+        if (!weakSelf) {
+          return;
         }
-        options.completion(result, callbackError);
+        if (![weakSelf.imageClassifierLiveStreamDelegate
+                respondsToSelector:@selector
+                (imageClassifier:
+                    didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
+          return;
+        }
+
+        NSError *callbackError = nil;
+        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
+          dispatch_async(callbackQueue, ^{
+            [weakSelf.imageClassifierLiveStreamDelegate imageClassifier:weakSelf
+                                      didFinishClassificationWithResult:nil
+                                                timestampInMilliseconds:Timestamp::Unset().Value()
+                                                                  error:callbackError];
+          });
+          return;
+        }
+
+        PacketMap &outputPacketMap = status_or_packets.value();
+        if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
+          return;
+        }
+
+        MPPImageClassifierResult *result =
+            [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:
+                                          outputPacketMap[kClassificationsStreamName.cppString]];
+
+        NSInteger timeStampInMilliseconds =
+            outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
+            kMicroSecondsPerMilliSecond;
+        dispatch_async(callbackQueue, ^{
+          [weakSelf.imageClassifierLiveStreamDelegate imageClassifier:weakSelf
+                                    didFinishClassificationWithResult:result
+                                              timestampInMilliseconds:timeStampInMilliseconds
+                                                                error:callbackError];
+        });
       };
     }
 

@@ -164,8 +164,11 @@ NS_SWIFT_NAME(ImageClassifier)
  * Sends live stream image data of type `MPPImage` to perform image classification using the whole
  * image as region of interest. Rotation will be applied according to the `orientation` property of
  * the provided `MPPImage`. Only use this method when the `MPPImageClassifier` is created with
- * `MPPRunningModeLiveStream`. Results are provided asynchronously via the `completion` callback
- * provided in the `MPPImageClassifierOptions`.
+ * `MPPRunningModeLiveStream`.
+ * The object which needs to be continuously notified of the available results of image
+ * classification must confirm to `MPPImageClassifierLiveStreamDelegate` protocol and implement the
+ * `imageClassifier:didFinishClassificationWithResult:timestampInMilliseconds:error:`
+ * delegate method.
  *
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
  * to the image classifier. The input timestamps must be monotonically increasing.
@@ -185,11 +188,14 @@ NS_SWIFT_NAME(ImageClassifier)
     NS_SWIFT_NAME(classifyAsync(image:timestampInMilliseconds:));
 
 /**
- * Sends live stream image data of type `MPPImage` to perform image classification, cropped to the
+ * Sends live stream image data of type ``MPPImage`` to perform image classification, cropped to the
  * specified region of interest.. Rotation will be applied according to the `orientation` property
  * of the provided `MPPImage`. Only use this method when the `MPPImageClassifier` is created with
- * `MPPRunningModeLiveStream`. Results are provided asynchronously via the `completion` callback
- * provided in the `MPPImageClassifierOptions`.
+ * `MPPRunningModeLiveStream`.
+ * The object which needs to be continuously notified of the available results of image
+ * classification must confirm to `MPPImageClassifierLiveStreamDelegate` protocol and implement the
+ * `imageClassifier:didFinishClassificationWithResult:timestampInMilliseconds:error:` delegate
+ * method.
  *
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
  * to the image classifier. The input timestamps must be monotonically increasing.
