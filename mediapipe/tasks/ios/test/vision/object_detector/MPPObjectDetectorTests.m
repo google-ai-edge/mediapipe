@@ -60,7 +60,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   XCTAssertEqualWithAccuracy(boundingBox.size.height, expectedBoundingBox.size.height, \
                              pixelDifferenceTolerance, @"index i = %d", idx);
 
-@interface MPPObjectDetectorTests : XCTestCase <MPPObjectDetectorDelegate> {
+@interface MPPObjectDetectorTests : XCTestCase <MPPObjectDetectorLiveStreamDelegate> {
   NSDictionary *liveStreamSucceedsTestDict;
   NSDictionary *outOfOrderTimestampTestDict;
 }
@@ -457,7 +457,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
     MPPObjectDetectorOptions *options = [self objectDetectorOptionsWithModelName:kModelName];
 
     options.runningMode = runningModesToTest[i];
-    options.objectDetectorDelegate = self;
+    options.objectDetectorLiveStreamDelegate = self;
 
     [self
         assertCreateObjectDetectorWithOptions:options
@@ -568,7 +568,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPObjectDetectorOptions *options = [self objectDetectorOptionsWithModelName:kModelName];
 
   options.runningMode = MPPRunningModeLiveStream;
-  options.objectDetectorDelegate = self;
+  options.objectDetectorLiveStreamDelegate = self;
 
   MPPObjectDetector *objectDetector = [self objectDetectorWithOptionsSucceeds:options];
 
@@ -633,7 +633,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   options.maxResults = maxResults;
 
   options.runningMode = MPPRunningModeLiveStream;
-  options.objectDetectorDelegate = self;
+  options.objectDetectorLiveStreamDelegate = self;
 
   XCTestExpectation *expectation = [[XCTestExpectation alloc]
       initWithDescription:@"detectWithOutOfOrderTimestampsAndLiveStream"];
@@ -689,7 +689,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   expectation.expectedFulfillmentCount = iterationCount + 1;
   expectation.inverted = YES;
 
-  options.objectDetectorDelegate = self;
+  options.objectDetectorLiveStreamDelegate = self;
 
   MPPObjectDetector *objectDetector = [self objectDetectorWithOptionsSucceeds:options];
 
@@ -710,7 +710,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   [self waitForExpectations:@[ expectation ] timeout:0.5];
 }
 
-#pragma mark MPPObjectDetectorDelegate Methods
+#pragma mark MPPObjectDetectorLiveStreamDelegate Methods
 - (void)objectDetector:(MPPObjectDetector *)objectDetector
     didFinishDetectionWithResult:(MPPObjectDetectionResult *)objectDetectionResult
          timestampInMilliseconds:(NSInteger)timestampInMilliseconds

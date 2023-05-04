@@ -23,15 +23,15 @@ NS_ASSUME_NONNULL_BEGIN
 @class MPPObjectDetector;
 
 /**
- * This protocol defines an interface for the delegates of `MPPImageClassifier` object to receive
+ * This protocol defines an interface for the delegates of `MPPObjectDetector` object to receive
  * results of performing asynchronous object detection on images
  * (i.e, when `runningMode` = `MPPRunningModeLiveStream`).
  *
- * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierDelegate` protocol.
+ * The delegate of `MPPObjectDetector` must adopt `MPPObjectDetectorLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
  */
-NS_SWIFT_NAME(ObjectDetectorDelegate)
-@protocol MPPObjectDetectorDelegate <NSObject>
+NS_SWIFT_NAME(ObjectDetectorLiveStreamDelegate)
+@protocol MPPObjectDetectorLiveStreamDelegate <NSObject>
 
 @optional
 
@@ -77,12 +77,13 @@ NS_SWIFT_NAME(ObjectDetectorOptions)
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
- * An object that confirms to `MPPObjectDetectorDelegate` protocol. This object must implement
- * `objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:`
- * to receive the results of performing asynchronous object detection on images (i.e, when
- * `runningMode` = `MPPRunningModeLiveStream`).
+ * An object that confirms to `MPPObjectDetectorLiveStreamDelegate` protocol. This object must
+ * implement `objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:` to receive
+ * the results of performing asynchronous object detection on images (i.e, when `runningMode` =
+ * `MPPRunningModeLiveStream`).
  */
-@property(nonatomic, weak, nullable) id<MPPObjectDetectorDelegate> objectDetectorDelegate;
+@property(nonatomic, weak, nullable) id<MPPObjectDetectorLiveStreamDelegate>
+    objectDetectorLiveStreamDelegate;
 
 /**
  * The locale to use for display names specified through the TFLite Model Metadata, if any. Defaults
