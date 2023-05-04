@@ -125,7 +125,9 @@ apple_static_xcframework(
     # when the frameworks are imported in iOS projects.
     # Also avoids opencv since it will be built with
     # ":MediaPipeTaskGraphs_library".
-    avoid_deps = OBJC_COMMON_DEPS + ["@ios_opencv//:OpencvFramework"],  
+    avoid_deps = OBJC_COMMON_DEPS + [
+        "@ios_opencv//:OpencvFramework"
+    ],  
     bundle_name = "MediaPipeTasksVision",
     ios = {
         "simulator": [
