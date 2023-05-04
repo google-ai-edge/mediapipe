@@ -162,6 +162,7 @@ using ::mediapipe::ImageFrame;
   OSType pixelBufferFormat = CVPixelBufferGetPixelFormatType(pixelBuffer);
 
   switch (pixelBufferFormat) {
+    case kCVPixelFormatType_32RGBA:
     case kCVPixelFormatType_32BGRA: {
       return [MPPCVPixelBufferUtils rgbImageFrameFromCVPixelBuffer:pixelBuffer error:error];
     }
