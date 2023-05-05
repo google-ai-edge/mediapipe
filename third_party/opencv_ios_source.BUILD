@@ -25,12 +25,14 @@ load(
 # for MediaPipe iOS Task libraries are built. Shipping with OPENCV built with
 # Swift support throws linker errors when the MediaPipe framework is used from
 # an iOS project.
+# When building on M1 Macs, cmake version cannot be higher than 3.24.0. This is
+# is mentioned in an open issue in the opencv github repo.
 genrule(
     name = "build_opencv_xcframework",
-    srcs = glob(["opencv-4.5.1/**"]),
+    srcs = glob(["opencv-4.5.3/**"]),
     outs = ["opencv2.xcframework.zip"],
     cmd = "&&".join([
-        "$(location opencv-4.5.1/platforms/apple/build_xcframework.py) \
+        "$(location opencv-4.5.3/platforms/apple/build_xcframework.py) \
         --iphonesimulator_archs arm64,x86_64 \
         --iphoneos_archs arm64 \
         --without dnn \
@@ -89,8 +91,8 @@ cc_library(
         "@//mediapipe:ios_sim_arm64": [
             ":opencv_xcframework_simulator_headers",
         ],
-        "@//mediapipe:ios_arm64": [
-            ":opencv_xcframework_simulator_headers",
+        "@//mediapipe:ios_arm64" : [
+            ":opencv_xcframework_device_headers"
         ],
         # A value from above is chosen arbitarily.
         "//conditions:default": [
