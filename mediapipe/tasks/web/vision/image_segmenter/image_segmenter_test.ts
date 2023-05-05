@@ -263,7 +263,7 @@ describe('ImageSegmenter', () => {
     });
   });
 
-  it('invokes listener once masks are avaiblae', async () => {
+  it('invokes listener once masks are available', async () => {
     const categoryMask = new Uint8ClampedArray([1]);
     const confidenceMask = new Float32Array([0.0]);
     let listenerCalled = false;

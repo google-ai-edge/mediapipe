@@ -298,7 +298,7 @@ describe('PoseLandmarker', () => {
     });
   });
 
-  it('invokes listener once masks are avaiblae', (done) => {
+  it('invokes listener once masks are available', (done) => {
     const landmarksProto = [createLandmarks().serializeBinary()];
     const worldLandmarksProto = [createWorldLandmarks().serializeBinary()];
     const masks = [

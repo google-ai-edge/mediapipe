@@ -26,8 +26,12 @@ import {WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
 import {InteractiveSegmenter, RegionOfInterest} from './interactive_segmenter';
 
 
-const ROI: RegionOfInterest = {
+const KEYPOINT: RegionOfInterest = {
   keypoint: {x: 0.1, y: 0.2}
+};
+
+const SCRIBBLE: RegionOfInterest = {
+  scribble: [{x: 0.1, y: 0.2}, {x: 0.3, y: 0.4}]
 };
 
 class InteractiveSegmenterFake extends InteractiveSegmenter implements
@@ -134,22 +138,42 @@ describe('InteractiveSegmenter', () => {
   it('doesn\'t support region of interest', () => {
     expect(() => {
       interactiveSegmenter.segment(
-          {} as HTMLImageElement, ROI,
+          {} as HTMLImageElement, KEYPOINT,
           {regionOfInterest: {left: 0, right: 0, top: 0, bottom: 0}}, () => {});
     }).toThrowError('This task doesn\'t support region-of-interest.');
   });
 
-  it('sends region-of-interest', (done) => {
+  it('sends region-of-interest with keypoint', (done) => {
     interactiveSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       expect(interactiveSegmenter.lastRoi).toBeDefined();
       expect(interactiveSegmenter.lastRoi!.toObject().renderAnnotationsList![0])
           .toEqual(jasmine.objectContaining({
             color: {r: 255, b: undefined, g: undefined},
+            point: {x: 0.1, y: 0.2, normalized: true},
           }));
       done();
     });
 
-    interactiveSegmenter.segment({} as HTMLImageElement, ROI, () => {});
+    interactiveSegmenter.segment({} as HTMLImageElement, KEYPOINT, () => {});
+  });
+
+  it('sends region-of-interest with scribble', (done) => {
+    interactiveSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      expect(interactiveSegmenter.lastRoi).toBeDefined();
+      expect(interactiveSegmenter.lastRoi!.toObject().renderAnnotationsList![0])
+          .toEqual(jasmine.objectContaining({
+            color: {r: 255, b: undefined, g: undefined},
+            scribble: {
+              pointList: [
+                {x: 0.1, y: 0.2, normalized: true},
+                {x: 0.3, y: 0.4, normalized: true}
+              ]
+            },
+          }));
+      done();
+    });
+
+    interactiveSegmenter.segment({} as HTMLImageElement, SCRIBBLE, () => {});
   });
 
   it('supports category mask', async () => {
@@ -168,7 +192,7 @@ describe('InteractiveSegmenter', () => {
 
     // Invoke the image segmenter
     return new Promise<void>(resolve => {
-      interactiveSegmenter.segment({} as HTMLImageElement, ROI, result => {
+      interactiveSegmenter.segment({} as HTMLImageElement, KEYPOINT, result => {
         expect(interactiveSegmenter.fakeWasmModule._waitUntilIdle)
             .toHaveBeenCalled();
         expect(result.categoryMask).toBeInstanceOf(MPImage);
@@ -199,7 +223,7 @@ describe('InteractiveSegmenter', () => {
     });
     return new Promise<void>(resolve => {
       // Invoke the image segmenter
-      interactiveSegmenter.segment({} as HTMLImageElement, ROI, result => {
+      interactiveSegmenter.segment({} as HTMLImageElement, KEYPOINT, result => {
         expect(interactiveSegmenter.fakeWasmModule._waitUntilIdle)
             .toHaveBeenCalled();
         expect(result.categoryMask).not.toBeDefined();
@@ -239,7 +263,7 @@ describe('InteractiveSegmenter', () => {
     return new Promise<void>(resolve => {
       // Invoke the image segmenter
       interactiveSegmenter.segment(
-          {} as HTMLImageElement, ROI, result => {
+          {} as HTMLImageElement, KEYPOINT, result => {
             expect(interactiveSegmenter.fakeWasmModule._waitUntilIdle)
                 .toHaveBeenCalled();
             expect(result.categoryMask).toBeInstanceOf(MPImage);
@@ -276,7 +300,7 @@ describe('InteractiveSegmenter', () => {
     });
 
     return new Promise<void>(resolve => {
-      interactiveSegmenter.segment({} as HTMLImageElement, ROI, () => {
+      interactiveSegmenter.segment({} as HTMLImageElement, KEYPOINT, () => {
         listenerCalled = true;
         resolve();
       });

@@ -338,16 +338,31 @@ export class InteractiveSegmenter extends VisionTaskRunner {
     const renderData = new RenderDataProto();
 
     const renderAnnotation = new RenderAnnotationProto();
-
     const color = new ColorProto();
     color.setR(255);
     renderAnnotation.setColor(color);
 
-    const point = new RenderAnnotationProto.Point();
-    point.setNormalized(true);
-    point.setX(roi.keypoint.x);
-    point.setY(roi.keypoint.y);
-    renderAnnotation.setPoint(point);
+    if (roi.keypoint && roi.scribble) {
+      throw new Error('Cannot provide both keypoint and scribble.');
+    } else if (roi.keypoint) {
+      const point = new RenderAnnotationProto.Point();
+      point.setNormalized(true);
+      point.setX(roi.keypoint.x);
+      point.setY(roi.keypoint.y);
+      renderAnnotation.setPoint(point);
+    } else if (roi.scribble) {
+      const scribble = new RenderAnnotationProto.Scribble();
+      for (const coord of roi.scribble) {
+        const point = new RenderAnnotationProto.Point();
+        point.setNormalized(true);
+        point.setX(coord.x);
+        point.setY(coord.y);
+        scribble.addPoint(point);
+      }
+      renderAnnotation.setScribble(scribble);
+    } else {
+      throw new Error('Must provide either a keypoint or a scribble.');
+    }
 
     renderData.addRenderAnnotations(renderAnnotation);
 
