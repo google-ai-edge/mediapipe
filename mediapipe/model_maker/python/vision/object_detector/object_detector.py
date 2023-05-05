@@ -28,6 +28,7 @@ from mediapipe.model_maker.python.vision.object_detector import model_options as
 from mediapipe.model_maker.python.vision.object_detector import model_spec as ms
 from mediapipe.model_maker.python.vision.object_detector import object_detector_options
 from mediapipe.model_maker.python.vision.object_detector import preprocessor
+from mediapipe.tasks.python.metadata.metadata_writers import metadata_info
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer
 from mediapipe.tasks.python.metadata.metadata_writers import object_detector as object_detector_writer
 from official.vision.evaluation import coco_evaluator
@@ -264,6 +265,27 @@ class ObjectDetector(classifier.Classifier):
     coco_metrics = coco_eval.result()
     return losses, coco_metrics
 
+  def _create_fixed_anchor(
+      self, anchor_box: List[float]
+  ) -> object_detector_writer.FixedAnchor:
+    """Helper function to create FixedAnchor objects from an anchor box array.
+
+    Args:
+      anchor_box: List of anchor box coordinates in the format of [x_min, y_min,
+        x_max, y_max].
+
+    Returns:
+      A FixedAnchor object representing the anchor_box.
+    """
+    image_shape = self._model_spec.input_image_shape[:2]
+    y_center_norm = (anchor_box[0] + anchor_box[2]) / (2 * image_shape[0])
+    x_center_norm = (anchor_box[1] + anchor_box[3]) / (2 * image_shape[1])
+    height_norm = (anchor_box[2] - anchor_box[0]) / image_shape[0]
+    width_norm = (anchor_box[3] - anchor_box[1]) / image_shape[1]
+    return object_detector_writer.FixedAnchor(
+        x_center_norm, y_center_norm, width_norm, height_norm
+    )
+
   def export_model(
       self,
       model_name: str = 'model.tflite',
@@ -328,11 +350,40 @@ class ObjectDetector(classifier.Classifier):
       converter.target_spec.supported_ops = (tf.lite.OpsSet.TFLITE_BUILTINS,)
       tflite_model = converter.convert()
 
-    writer = object_detector_writer.MetadataWriter.create_for_models_with_nms(
+    # Build anchors
+    raw_anchor_boxes = self._preprocessor.anchor_boxes
+    anchors = []
+    for _, anchor_boxes in raw_anchor_boxes.items():
+      anchor_boxes_reshaped = anchor_boxes.numpy().reshape((-1, 4))
+      for ab in anchor_boxes_reshaped:
+        anchors.append(self._create_fixed_anchor(ab))
+
+    ssd_anchors_options = object_detector_writer.SsdAnchorsOptions(
+        object_detector_writer.FixedAnchorsSchema(anchors)
+    )
+
+    tensor_decoding_options = object_detector_writer.TensorsDecodingOptions(
+        num_classes=self._num_classes,
+        num_boxes=len(anchors),
+        num_coords=4,
+        keypoint_coord_offset=0,
+        num_keypoints=0,
+        num_values_per_keypoint=2,
+        x_scale=1,
+        y_scale=1,
+        w_scale=1,
+        h_scale=1,
+        apply_exponential_on_box_size=True,
+        sigmoid_score=False,
+    )
+    writer = object_detector_writer.MetadataWriter.create_for_models_without_nms(
         tflite_model,
         self._model_spec.mean_rgb,
         self._model_spec.stddev_rgb,
         labels=metadata_writer.Labels().add(list(self._label_names)),
+        ssd_anchors_options=ssd_anchors_options,
+        tensors_decoding_options=tensor_decoding_options,
+        output_tensors_order=metadata_info.RawDetectionOutputTensorsOrder.LOCATION_SCORE,
     )
     tflite_model_with_metadata, metadata_json = writer.populate()
     model_util.save_tflite(tflite_model_with_metadata, tflite_file)

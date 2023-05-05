@@ -89,6 +89,17 @@ py_test(
 )
 
 py_library(
+    name = "detection",
+    srcs = ["detection.py"],
+)
+
+py_test(
+    name = "detection_test",
+    srcs = ["detection_test.py"],
+    deps = [":detection"],
+)
+
+py_library(
     name = "hyperparameters",
     srcs = ["hyperparameters.py"],
     deps = [
@@ -116,6 +127,7 @@ py_library(
     name = "model",
     srcs = ["model.py"],
     deps = [
+        ":detection",
         ":model_options",
         ":model_spec",
     ],
@@ -163,6 +175,7 @@ py_library(
         "//mediapipe/model_maker/python/core/tasks:classifier",
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/core/utils:quantization",
+        "//mediapipe/tasks/python/metadata/metadata_writers:metadata_info",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
         "//mediapipe/tasks/python/metadata/metadata_writers:object_detector",
     ],

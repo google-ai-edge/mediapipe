@@ -32,6 +32,7 @@ ObjectDetectorOptions = object_detector_options.ObjectDetectorOptions
 # Remove duplicated and non-public API
 del dataset
 del dataset_util  # pylint: disable=undefined-variable
+del detection  # pylint: disable=undefined-variable
 del hyperparameters
 del model  # pylint: disable=undefined-variable
 del model_options
