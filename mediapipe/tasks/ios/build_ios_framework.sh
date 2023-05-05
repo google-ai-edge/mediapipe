@@ -79,6 +79,7 @@ def format(target):
 EOF
 
   local OUTPUT_PATH=$(bazel cquery $1 --output=starlark --starlark:file="${STARLARK_FILE}" 2> /dev/null)
+  
   rm -rf "${STARLARK_OUTPUT_TMPDIR}"
 
   echo ${OUTPUT_PATH}
