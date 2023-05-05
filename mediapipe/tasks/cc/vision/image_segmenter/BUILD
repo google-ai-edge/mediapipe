@@ -63,6 +63,8 @@ cc_library(
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/image:image_transformation_calculator_cc_proto",
+        "//mediapipe/calculators/image:set_alpha_calculator",
+        "//mediapipe/calculators/image:set_alpha_calculator_cc_proto",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator_cc_proto",
         "//mediapipe/calculators/tensor:inference_calculator",

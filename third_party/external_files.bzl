@@ -204,8 +204,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_conv2d_input_channel_1_tflite",
-        sha256 = "126edac445967799f3b8b124d15483b1506f6d6cb57a501c1636eb8f2fb3734f",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/conv2d_input_channel_1.tflite?generation=1678218348519744"],
+        sha256 = "ccb667092f3aed3a35a57fb3478fecc0c8f6360dbf477a9db9c24e5b3ec4273e",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/conv2d_input_channel_1.tflite?generation=1683252905577703"],
     )
 
     http_file(
@@ -246,8 +246,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_dense_tflite",
-        sha256 = "be9323068461b1cbf412692ee916be30dcb1a5fb59a9ee875d470bc340d9e869",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/dense.tflite?generation=1678218351373709"],
+        sha256 = "6795e7c3a263f44e97be048a5e1166e0921b453bfbaf037f4f69ac5c059ee945",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/dense.tflite?generation=1683252907920466"],
     )
 
     http_file(
