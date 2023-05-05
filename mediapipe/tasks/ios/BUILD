@@ -33,14 +33,18 @@ licenses(["notice"])
 # will be built with ":MediaPipeTasksCommon_framework"
 # 2. Task graphs. These will be built with ":MediaPipeTaskGraphs_library".
 # 3. gpu targets which will be built with the ":MediaPipeTaskGraphs_library".
+#
+# Instead of linking options and containers, we link their helpers to 
+# `MPPTasksCommon` to avoid duplicated method warnings in categories when text 
+# and vision frameworks are installed in the same Xcode project.
 OBJC_COMMON_DEPS = [
-    "//mediapipe/tasks/ios/core:MPPBaseOptions",
+    "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
     "//mediapipe/tasks/ios/core:MPPTaskInfo",
     "//mediapipe/tasks/ios/core:MPPTaskOptions",
     "//mediapipe/tasks/ios/core:MPPTaskResult",
     "//mediapipe/tasks/ios/core:MPPTaskRunner",
-    "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
-    "//mediapipe/tasks/ios/components/containers:MPPCategory",
+    "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
+    "//mediapipe/tasks/ios/components/containers/utils:MPPCategoryHelpers",
     "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
     "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
     "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
@@ -207,9 +211,9 @@ apple_static_xcframework(
     },
     deps = [
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//mediapipe/tasks/ios/components/containers:MPPCategory",
-        "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
-        "//mediapipe/tasks/ios/core:MPPBaseOptions",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPCategoryHelpers",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
+        "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
