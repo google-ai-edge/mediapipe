@@ -17,9 +17,7 @@
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe:__subpackages__"])
 
 # TODO: Remove the unnecessary test data once the demo data are moved to an open-sourced
 # directory.

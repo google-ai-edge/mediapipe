@@ -19,9 +19,7 @@ load(
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe/model_maker/python/vision/gesture_recognizer:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe/model_maker/python/vision/gesture_recognizer:__subpackages__"])
 
 mediapipe_files(
     srcs = [

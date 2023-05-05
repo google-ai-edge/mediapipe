@@ -19,9 +19,7 @@ load(
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe/model_maker/python/text/text_classifier:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe/model_maker/python/text/text_classifier:__subpackages__"])
 
 mediapipe_files(
     srcs = [
