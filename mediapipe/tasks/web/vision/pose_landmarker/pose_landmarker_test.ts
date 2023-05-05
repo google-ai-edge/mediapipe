@@ -331,4 +331,26 @@ describe('PoseLandmarker', () => {
       listenerCalled = true;
     });
   });
+
+  it('returns result', () => {
+    const landmarksProto = [createLandmarks().serializeBinary()];
+    const worldLandmarksProto = [createWorldLandmarks().serializeBinary()];
+
+    // Pass the test data to our listener
+    poseLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      poseLandmarker.listeners.get('normalized_landmarks')!
+          (landmarksProto, 1337);
+      poseLandmarker.listeners.get('world_landmarks')!
+          (worldLandmarksProto, 1337);
+      poseLandmarker.listeners.get('auxiliary_landmarks')!
+          (landmarksProto, 1337);
+    });
+
+    // Invoke the pose landmarker
+    const result = poseLandmarker.detect({} as HTMLImageElement);
+    expect(poseLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
+    expect(result.landmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
+    expect(result.worldLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
+    expect(result.auxilaryLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
+  });
 });

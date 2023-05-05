@@ -306,4 +306,22 @@ describe('InteractiveSegmenter', () => {
       });
     });
   });
+
+  it('returns result', () => {
+    const confidenceMask = new Float32Array([0.0]);
+
+    // Pass the test data to our listener
+    interactiveSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      interactiveSegmenter.confidenceMasksListener!(
+          [
+            {data: confidenceMask, width: 1, height: 1},
+          ],
+          1337);
+    });
+
+    const result =
+        interactiveSegmenter.segment({} as HTMLImageElement, KEYPOINT);
+    expect(result.confidenceMasks![0]).toBeInstanceOf(MPImage);
+    result.confidenceMasks![0].close();
+  });
 });

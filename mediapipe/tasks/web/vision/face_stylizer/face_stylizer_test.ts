@@ -99,6 +99,30 @@ describe('FaceStylizer', () => {
         ]);
   });
 
+  it('returns result', () => {
+    if (typeof ImageData === 'undefined') {
+      console.log('ImageData tests are not supported on Node');
+      return;
+    }
+
+    // Pass the test data to our listener
+    faceStylizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      verifyListenersRegistered(faceStylizer);
+      faceStylizer.imageListener!
+          ({data: new Uint8ClampedArray([1, 1, 1, 1]), width: 1, height: 1},
+           /* timestamp= */ 1337);
+    });
+
+    // Invoke the face stylizeer
+    const image = faceStylizer.stylize({} as HTMLImageElement);
+    expect(faceStylizer.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
+    expect(image).not.toBeNull();
+    expect(image!.has(MPImage.TYPE.IMAGE_DATA)).toBeTrue();
+    expect(image!.width).toEqual(1);
+    expect(image!.height).toEqual(1);
+    image!.close();
+  });
+
   it('invokes callback', (done) => {
     if (typeof ImageData === 'undefined') {
       console.log('ImageData tests are not supported on Node');
@@ -125,28 +149,7 @@ describe('FaceStylizer', () => {
     });
   });
 
-  it('invokes callback even when no faes are detected', (done) => {
-    if (typeof ImageData === 'undefined') {
-      console.log('ImageData tests are not supported on Node');
-      done();
-      return;
-    }
-
-    // Pass the test data to our listener
-    faceStylizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {
-      verifyListenersRegistered(faceStylizer);
-      faceStylizer.emptyPacketListener!(/* timestamp= */ 1337);
-    });
-
-    // Invoke the face stylizeer
-    faceStylizer.stylize({} as HTMLImageElement, image => {
-      expect(faceStylizer.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
-      expect(image).toBeNull();
-      done();
-    });
-  });
-
-  it('invokes callback even when no faes are detected', (done) => {
+  it('invokes callback even when no faces are detected', (done) => {
     // Pass the test data to our listener
     faceStylizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       verifyListenersRegistered(faceStylizer);

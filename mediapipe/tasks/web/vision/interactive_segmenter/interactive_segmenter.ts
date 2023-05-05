@@ -86,7 +86,7 @@ export class InteractiveSegmenter extends VisionTaskRunner {
   private result: InteractiveSegmenterResult = {};
   private outputCategoryMask = DEFAULT_OUTPUT_CATEGORY_MASK;
   private outputConfidenceMasks = DEFAULT_OUTPUT_CONFIDENCE_MASKS;
-  private userCallback: InteractiveSegmenterCallback = () => {};
+  private userCallback?: InteractiveSegmenterCallback;
   private readonly options: ImageSegmenterGraphOptionsProto;
   private readonly segmenterOptions: SegmenterOptionsProto;
 
@@ -186,14 +186,9 @@ export class InteractiveSegmenter extends VisionTaskRunner {
 
   /**
    * Performs interactive segmentation on the provided single image and invokes
-   * the callback with the response.  The `roi` parameter is used to represent a
-   * user's region of interest for segmentation.
-   *
-   * If the output_type is `CATEGORY_MASK`, the callback is invoked with vector
-   * of images that represent per-category segmented image mask. If the
-   * output_type is `CONFIDENCE_MASK`, the callback is invoked with a vector of
-   * images that contains only one confidence image mask. The method returns
-   * synchronously once the callback returns.
+   * the callback with the response. The method returns synchronously once the
+   * callback returns. The `roi` parameter is used to represent a user's region
+   * of interest for segmentation.
    *
    * @param image An image to process.
    * @param roi The region of interest for segmentation.
@@ -206,20 +201,15 @@ export class InteractiveSegmenter extends VisionTaskRunner {
       callback: InteractiveSegmenterCallback): void;
   /**
    * Performs interactive segmentation on the provided single image and invokes
-   * the callback with the response. The `roi` parameter is used to represent a
-   * user's region of interest for segmentation.
+   * the callback with the response. The method returns synchronously once the
+   * callback returns. The `roi` parameter is used to represent a user's region
+   * of interest for segmentation.
    *
    * The 'image_processing_options' parameter can be used to specify the
    * rotation to apply to the image before performing segmentation, by setting
    * its 'rotationDegrees' field. Note that specifying a region-of-interest
    * using the 'regionOfInterest' field is NOT supported and will result in an
    * error.
-   *
-   * If the output_type is `CATEGORY_MASK`, the callback is invoked with vector
-   * of images that represent per-category segmented image mask. If the
-   * output_type is `CONFIDENCE_MASK`, the callback is invoked with a vector of
-   * images that contains only one confidence image mask. The method returns
-   * synchronously once the callback returns.
    *
    * @param image An image to process.
    * @param roi The region of interest for segmentation.
@@ -233,23 +223,63 @@ export class InteractiveSegmenter extends VisionTaskRunner {
       image: ImageSource, roi: RegionOfInterest,
       imageProcessingOptions: ImageProcessingOptions,
       callback: InteractiveSegmenterCallback): void;
+  /**
+   * Performs interactive segmentation on the provided video frame and returns
+   * the segmentation result. This method creates a copy of the resulting masks
+   * and should not be used in high-throughput applictions. The `roi` parameter
+   * is used to represent a user's region of interest for segmentation.
+   *
+   * @param image An image to process.
+   * @param roi The region of interest for segmentation.
+   * @return The segmentation result. The data is copied to avoid lifetime
+   *     limits.
+   */
+  segment(image: ImageSource, roi: RegionOfInterest):
+      InteractiveSegmenterResult;
+  /**
+   * Performs interactive segmentation on the provided video frame and returns
+   * the segmentation result. This method creates a copy of the resulting masks
+   * and should not be used in high-throughput applictions. The `roi` parameter
+   * is used to represent a user's region of interest for segmentation.
+   *
+   * The 'image_processing_options' parameter can be used to specify the
+   * rotation to apply to the image before performing segmentation, by setting
+   * its 'rotationDegrees' field. Note that specifying a region-of-interest
+   * using the 'regionOfInterest' field is NOT supported and will result in an
+   * error.
+   *
+   * @param image An image to process.
+   * @param roi The region of interest for segmentation.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
+   * @return The segmentation result. The data is copied to avoid lifetime
+   *     limits.
+   */
   segment(
       image: ImageSource, roi: RegionOfInterest,
-      imageProcessingOptionsOrCallback: ImageProcessingOptions|
+      imageProcessingOptions: ImageProcessingOptions):
+      InteractiveSegmenterResult;
+  segment(
+      image: ImageSource, roi: RegionOfInterest,
+      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
       InteractiveSegmenterCallback,
-      callback?: InteractiveSegmenterCallback): void {
+      callback?: InteractiveSegmenterCallback): InteractiveSegmenterResult|
+      void {
     const imageProcessingOptions =
         typeof imageProcessingOptionsOrCallback !== 'function' ?
         imageProcessingOptionsOrCallback :
         {};
     this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
         imageProcessingOptionsOrCallback :
-        callback!;
+        callback;
 
     this.reset();
     this.processRenderData(roi, this.getSynctheticTimestamp());
     this.processImageData(image, imageProcessingOptions);
-    this.userCallback = () => {};
+
+    if (!this.userCallback) {
+      return this.result;
+    }
   }
 
   private reset(): void {
@@ -265,7 +295,9 @@ export class InteractiveSegmenter extends VisionTaskRunner {
       return;
     }
 
-    this.userCallback(this.result);
+    if (this.userCallback) {
+      this.userCallback(this.result);
+    }
   }
 
   /** Updates the MediaPipe graph configuration. */
@@ -295,8 +327,9 @@ export class InteractiveSegmenter extends VisionTaskRunner {
 
       this.graphRunner.attachImageVectorListener(
           CONFIDENCE_MASKS_STREAM, (masks, timestamp) => {
-            this.result.confidenceMasks =
-                masks.map(wasmImage => this.convertToMPImage(wasmImage));
+            this.result.confidenceMasks = masks.map(
+                wasmImage => this.convertToMPImage(
+                    wasmImage, /* shouldCopyData= */ !this.userCallback));
             this.setLatestOutputTimestamp(timestamp);
             this.maybeInvokeCallback();
           });
@@ -314,7 +347,8 @@ export class InteractiveSegmenter extends VisionTaskRunner {
 
       this.graphRunner.attachImageListener(
           CATEGORY_MASK_STREAM, (mask, timestamp) => {
-            this.result.categoryMask = this.convertToMPImage(mask);
+            this.result.categoryMask = this.convertToMPImage(
+                mask, /* shouldCopyData= */ !this.userCallback);
             this.setLatestOutputTimestamp(timestamp);
             this.maybeInvokeCallback();
           });

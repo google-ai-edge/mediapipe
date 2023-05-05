@@ -273,9 +273,13 @@ export class MPImage {
       case MPImageType.IMAGE_DATA:
         return this.containers.find(img => img instanceof ImageData);
       case MPImageType.IMAGE_BITMAP:
-        return this.containers.find(img => img instanceof ImageBitmap);
+        return this.containers.find(
+            img => typeof ImageBitmap !== 'undefined' &&
+                img instanceof ImageBitmap);
       case MPImageType.WEBGL_TEXTURE:
-        return this.containers.find(img => img instanceof WebGLTexture);
+        return this.containers.find(
+            img => typeof WebGLTexture !== 'undefined' &&
+                img instanceof WebGLTexture);
       default:
         throw new Error(`Type is not supported: ${type}`);
     }

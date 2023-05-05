@@ -230,7 +230,8 @@ export abstract class VisionTaskRunner extends TaskRunner {
    * (adding an alpha channel if necessary), passes through WebGLTextures and
    * throws for Float32Array-backed images.
    */
-  protected convertToMPImage(wasmImage: WasmImage): MPImage {
+  protected convertToMPImage(wasmImage: WasmImage, shouldCopyData: boolean):
+      MPImage {
     const {data, width, height} = wasmImage;
     const pixels = width * height;
 
@@ -263,10 +264,11 @@ export abstract class VisionTaskRunner extends TaskRunner {
       container = data;
     }
 
-    return new MPImage(
-      [container], /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false,
-      this.graphRunner.wasmModule.canvas!, this.shaderContext, width,
-      height);
+    const image = new MPImage(
+        [container], /* ownsImageBitmap= */ false,
+        /* ownsWebGLTexture= */ false, this.graphRunner.wasmModule.canvas!,
+        this.shaderContext, width, height);
+    return shouldCopyData ? image.clone() : image;
   }
 
   /** Closes and cleans up the resources held by this task. */

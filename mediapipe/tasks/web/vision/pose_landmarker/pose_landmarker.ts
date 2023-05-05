@@ -64,7 +64,7 @@ export type PoseLandmarkerCallback = (result: PoseLandmarkerResult) => void;
 export class PoseLandmarker extends VisionTaskRunner {
   private result: Partial<PoseLandmarkerResult> = {};
   private outputSegmentationMasks = false;
-  private userCallback: PoseLandmarkerCallback = () => {};
+  private userCallback?: PoseLandmarkerCallback;
   private readonly options: PoseLandmarkerGraphOptions;
   private readonly poseLandmarksDetectorGraphOptions:
       PoseLandmarksDetectorGraphOptions;
@@ -200,21 +200,22 @@ export class PoseLandmarker extends VisionTaskRunner {
   }
 
   /**
-   * Performs pose detection on the provided single image and waits
-   * synchronously for the response. Only use this method when the
-   * PoseLandmarker is created with running mode `image`.
+   * Performs pose detection on the provided single image and invokes the
+   * callback with the response. The method returns synchronously once the
+   * callback returns. Only use this method when the PoseLandmarker is created
+   * with running mode `image`.
    *
    * @param image An image to process.
    * @param callback The callback that is invoked with the result. The
    *    lifetime of the returned masks is only guaranteed for the duration of
    *    the callback.
-   * @return The detected pose landmarks.
    */
   detect(image: ImageSource, callback: PoseLandmarkerCallback): void;
   /**
-   * Performs pose detection on the provided single image and waits
-   * synchronously for the response. Only use this method when the
-   * PoseLandmarker is created with running mode `image`.
+   * Performs pose detection on the provided single image and invokes the
+   * callback with the response. The method returns synchronously once the
+   * callback returns. Only use this method when the PoseLandmarker is created
+   * with running mode `image`.
    *
    * @param image An image to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
@@ -222,16 +223,42 @@ export class PoseLandmarker extends VisionTaskRunner {
    * @param callback The callback that is invoked with the result. The
    *    lifetime of the returned masks is only guaranteed for the duration of
    *    the callback.
-   * @return The detected pose landmarks.
    */
   detect(
       image: ImageSource, imageProcessingOptions: ImageProcessingOptions,
       callback: PoseLandmarkerCallback): void;
+  /**
+   * Performs pose detection on the provided single image and waits
+   * synchronously for the response. This method creates a copy of the resulting
+   * masks and should not be used in high-throughput applictions. Only
+   * use this method when the PoseLandmarker is created with running mode
+   * `image`.
+   *
+   * @param image An image to process.
+   * @return The landmarker result. Any masks are copied to avoid lifetime
+   *     limits.
+   * @return The detected pose landmarks.
+   */
+  detect(image: ImageSource): PoseLandmarkerResult;
+  /**
+   * Performs pose detection on the provided single image and waits
+   * synchronously for the response. This method creates a copy of the resulting
+   * masks and should not be used in high-throughput applictions. Only
+   * use this method when the PoseLandmarker is created with running mode
+   * `image`.
+   *
+   * @param image An image to process.
+   * @return The landmarker result. Any masks are copied to avoid lifetime
+   *     limits.
+   * @return The detected pose landmarks.
+   */
+  detect(image: ImageSource, imageProcessingOptions: ImageProcessingOptions):
+      PoseLandmarkerResult;
   detect(
       image: ImageSource,
-      imageProcessingOptionsOrCallback: ImageProcessingOptions|
+      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
       PoseLandmarkerCallback,
-      callback?: PoseLandmarkerCallback): void {
+      callback?: PoseLandmarkerCallback): PoseLandmarkerResult|void {
     const imageProcessingOptions =
         typeof imageProcessingOptionsOrCallback !== 'function' ?
         imageProcessingOptionsOrCallback :
@@ -242,28 +269,32 @@ export class PoseLandmarker extends VisionTaskRunner {
 
     this.resetResults();
     this.processImageData(image, imageProcessingOptions);
-    this.userCallback = () => {};
+
+    if (!this.userCallback) {
+      return this.result as PoseLandmarkerResult;
+    }
   }
 
   /**
-   * Performs pose detection on the provided video frame and waits
-   * synchronously for the response. Only use this method when the
-   * PoseLandmarker is created with running mode `video`.
+   * Performs pose detection on the provided video frame and invokes the
+   * callback with the response. The method returns synchronously once the
+   * callback returns. Only use this method when the PoseLandmarker is created
+   * with running mode `video`.
    *
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @param callback The callback that is invoked with the result. The
    *    lifetime of the returned masks is only guaranteed for the duration of
    *    the callback.
-   * @return The detected pose landmarks.
    */
   detectForVideo(
       videoFrame: ImageSource, timestamp: number,
       callback: PoseLandmarkerCallback): void;
   /**
-   * Performs pose detection on the provided video frame and waits
-   * synchronously for the response. Only use this method when the
-   * PoseLandmarker is created with running mode `video`.
+   * Performs pose detection on the provided video frame and invokes the
+   * callback with the response. The method returns synchronously once the
+   * callback returns. Only use this method when the PoseLandmarker is created
+   * with running mode `video`.
    *
    * @param videoFrame A video frame to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
@@ -272,16 +303,45 @@ export class PoseLandmarker extends VisionTaskRunner {
    * @param callback The callback that is invoked with the result. The
    *    lifetime of the returned masks is only guaranteed for the duration of
    *    the callback.
-   * @return The detected pose landmarks.
    */
   detectForVideo(
       videoFrame: ImageSource, imageProcessingOptions: ImageProcessingOptions,
       timestamp: number, callback: PoseLandmarkerCallback): void;
+  /**
+   * Performs pose detection on the provided video frame and returns the result.
+   * This method creates a copy of the resulting masks and should not be used
+   * in high-throughput applictions. Only use this method when the
+   * PoseLandmarker is created with running mode `video`.
+   *
+   * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
+   * @return The landmarker result. Any masks are copied to extend the
+   *     lifetime of the returned data.
+   */
+  detectForVideo(videoFrame: ImageSource, timestamp: number):
+      PoseLandmarkerResult;
+  /**
+   * Performs pose detection on the provided video frame and returns the result.
+   * This method creates a copy of the resulting masks and should not be used
+   * in high-throughput applictions. The method returns synchronously once the
+   * callback returns. Only use this method when the PoseLandmarker is created
+   * with running mode `video`.
+   *
+   * @param videoFrame A video frame to process.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
+   * @param timestamp The timestamp of the current frame, in ms.
+   * @return The landmarker result. Any masks are copied to extend the lifetime
+   *     of the returned data.
+   */
+  detectForVideo(
+      videoFrame: ImageSource, imageProcessingOptions: ImageProcessingOptions,
+      timestamp: number): PoseLandmarkerResult;
   detectForVideo(
       videoFrame: ImageSource,
       timestampOrImageProcessingOptions: number|ImageProcessingOptions,
-      timestampOrCallback: number|PoseLandmarkerCallback,
-      callback?: PoseLandmarkerCallback): void {
+      timestampOrCallback?: number|PoseLandmarkerCallback,
+      callback?: PoseLandmarkerCallback): PoseLandmarkerResult|void {
     const imageProcessingOptions =
         typeof timestampOrImageProcessingOptions !== 'number' ?
         timestampOrImageProcessingOptions :
@@ -291,10 +351,14 @@ export class PoseLandmarker extends VisionTaskRunner {
         timestampOrCallback as number;
     this.userCallback = typeof timestampOrCallback === 'function' ?
         timestampOrCallback :
-        callback!;
+        callback;
+
     this.resetResults();
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
-    this.userCallback = () => {};
+
+    if (!this.userCallback) {
+      return this.result as PoseLandmarkerResult;
+    }
   }
 
   private resetResults(): void {
@@ -315,7 +379,10 @@ export class PoseLandmarker extends VisionTaskRunner {
     if (this.outputSegmentationMasks && !('segmentationMasks' in this.result)) {
       return;
     }
-    this.userCallback(this.result as Required<PoseLandmarkerResult>);
+
+    if (this.userCallback) {
+      this.userCallback(this.result as Required<PoseLandmarkerResult>);
+    }
   }
 
   /** Sets the default values for the graph. */
@@ -438,8 +505,9 @@ export class PoseLandmarker extends VisionTaskRunner {
           'SEGMENTATION_MASK:' + SEGMENTATION_MASK_STREAM);
       this.graphRunner.attachImageVectorListener(
           SEGMENTATION_MASK_STREAM, (masks, timestamp) => {
-            this.result.segmentationMasks =
-                masks.map(wasmImage => this.convertToMPImage(wasmImage));
+            this.result.segmentationMasks = masks.map(
+                wasmImage => this.convertToMPImage(
+                    wasmImage, /* shouldCopyData= */ !this.userCallback));
             this.setLatestOutputTimestamp(timestamp);
             this.maybeInvokeCallback();
           });

@@ -50,7 +50,8 @@ export type FaceStylizerCallback = (image: MPImage|null) => void;
 
 /** Performs face stylization on images. */
 export class FaceStylizer extends VisionTaskRunner {
-  private userCallback: FaceStylizerCallback = () => {};
+  private userCallback?: FaceStylizerCallback;
+  private result?: MPImage|null;
   private readonly options: FaceStylizerGraphOptionsProto;
 
   /**
@@ -130,21 +131,58 @@ export class FaceStylizer extends VisionTaskRunner {
     return super.applyOptions(options);
   }
 
-
   /**
-   * Performs face stylization on the provided single image. The method returns
-   * synchronously once the callback returns. Only use this method when the
-   * FaceStylizer is created with the image running mode.
+   * Performs face stylization on the provided single image and invokes the
+   * callback with result. The method returns synchronously once the callback
+   * returns. Only use this method when the FaceStylizer is created with the
+   * image running mode.
    *
    * @param image An image to process.
-   * @param callback The callback that is invoked with the stylized image. The
-   *    lifetime of the returned data is only guaranteed for the duration of the
-   *    callback.
+   * @param callback The callback that is invoked with the stylized image or
+   *    `null` if no face was detected. The lifetime of the returned data is
+   *     only guaranteed for the duration of the callback.
    */
   stylize(image: ImageSource, callback: FaceStylizerCallback): void;
   /**
-   * Performs face stylization on the provided single image. The method returns
-   * synchronously once the callback returns. Only use this method when the
+   * Performs face stylization on the provided single image and invokes the
+   * callback with result. The method returns synchronously once the callback
+   * returns. Only use this method when the FaceStylizer is created with the
+   * image running mode.
+   *
+   * The 'imageProcessingOptions' parameter can be used to specify one or all
+   * of:
+   *  - the rotation to apply to the image before performing stylization, by
+   *    setting its 'rotationDegrees' property.
+   *  - the region-of-interest on which to perform stylization, by setting its
+   *   'regionOfInterest' property. If not specified, the full image is used.
+   *  If both are specified, the crop around the region-of-interest is extracted
+   *  first, then the specified rotation is applied to the crop.
+   *
+   * @param image An image to process.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
+   * @param callback The callback that is invoked with the stylized image or
+   *    `null` if no face was detected. The lifetime of the returned data is
+   *    only guaranteed for the duration of the callback.
+   */
+  stylize(
+      image: ImageSource, imageProcessingOptions: ImageProcessingOptions,
+      callback: FaceStylizerCallback): void;
+  /**
+   * Performs face stylization on the provided single image and returns the
+   * result. This method creates a copy of the resulting image and should not be
+   * used in high-throughput applictions. Only use this method when the
+   * FaceStylizer is created with the image running mode.
+   *
+   * @param image An image to process.
+   * @return A stylized face or `null` if no face was detected. The result is
+   *     copied to avoid lifetime issues.
+   */
+  stylize(image: ImageSource): MPImage|null;
+  /**
+   * Performs face stylization on the provided single image and returns the
+   * result. This method creates a copy of the resulting image and should not be
+   * used in high-throughput applictions. Only use this method when the
    * FaceStylizer is created with the image running mode.
    *
    * The 'imageProcessingOptions' parameter can be used to specify one or all
@@ -159,18 +197,16 @@ export class FaceStylizer extends VisionTaskRunner {
    * @param image An image to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
-   * @param callback The callback that is invoked with the stylized image. The
-   *    lifetime of the returned data is only guaranteed for the duration of the
-   *    callback.
+   * @return A stylized face or `null` if no face was detected. The result is
+   *     copied to avoid lifetime issues.
    */
-  stylize(
-      image: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      callback: FaceStylizerCallback): void;
+  stylize(image: ImageSource, imageProcessingOptions: ImageProcessingOptions):
+      MPImage|null;
   stylize(
       image: ImageSource,
-      imageProcessingOptionsOrCallback: ImageProcessingOptions|
+      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
       FaceStylizerCallback,
-      callback?: FaceStylizerCallback): void {
+      callback?: FaceStylizerCallback): MPImage|null|void {
     const imageProcessingOptions =
         typeof imageProcessingOptionsOrCallback !== 'function' ?
         imageProcessingOptionsOrCallback :
@@ -178,14 +214,19 @@ export class FaceStylizer extends VisionTaskRunner {
 
     this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
         imageProcessingOptionsOrCallback :
-        callback!;
+        callback;
     this.processImageData(image, imageProcessingOptions ?? {});
-    this.userCallback = () => {};
+
+    if (!this.userCallback) {
+      return this.result;
+    }
   }
 
   /**
-   * Performs face stylization on the provided video frame. Only use this method
-   * when the FaceStylizer is created with the video running mode.
+   * Performs face stylization on the provided video frame and invokes the
+   * callback with result. The method returns synchronously once the callback
+   * returns. Only use this method when the FaceStylizer is created with the
+   * video running mode.
    *
    * The input frame can be of any size. It's required to provide the video
    * frame's timestamp (in milliseconds). The input timestamps must be
@@ -193,16 +234,18 @@ export class FaceStylizer extends VisionTaskRunner {
    *
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
-   * @param callback The callback that is invoked with the stylized image. The
-   *    lifetime of the returned data is only guaranteed for the duration of
-   * the callback.
+   * @param callback The callback that is invoked with the stylized image or
+   *   `null` if no face was detected. The lifetime of the returned data is only
+   *   guaranteed for the duration of the callback.
    */
   stylizeForVideo(
       videoFrame: ImageSource, timestamp: number,
       callback: FaceStylizerCallback): void;
   /**
-   * Performs face stylization on the provided video frame. Only use this
-   * method when the FaceStylizer is created with the video running mode.
+   * Performs face stylization on the provided video frame and invokes the
+   * callback with result. The method returns synchronously once the callback
+   * returns. Only use this method when the FaceStylizer is created with the
+   * video running mode.
    *
    * The 'imageProcessingOptions' parameter can be used to specify one or all
    * of:
@@ -221,18 +264,63 @@ export class FaceStylizer extends VisionTaskRunner {
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
    * @param timestamp The timestamp of the current frame, in ms.
-   * @param callback The callback that is invoked with the stylized image. The
-   *    lifetime of the returned data is only guaranteed for the duration of
-   * the callback.
+   * @param callback The callback that is invoked with the stylized image or
+   *   `null` if no face was detected. The lifetime of the returned data is only
+   *   guaranteed for the duration of the callback.
    */
   stylizeForVideo(
       videoFrame: ImageSource, imageProcessingOptions: ImageProcessingOptions,
       timestamp: number, callback: FaceStylizerCallback): void;
+  /**
+   * Performs face stylization on the provided video frame. This method creates
+   * a copy of the resulting image and should not be used in high-throughput
+   * applictions. Only use this method when the FaceStylizer is created with the
+   * video running mode.
+   *
+   * The input frame can be of any size. It's required to provide the video
+   * frame's timestamp (in milliseconds). The input timestamps must be
+   * monotonically increasing.
+   *
+   * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
+   * @return A stylized face or `null` if no face was detected. The result is
+   *     copied to avoid lifetime issues.
+   */
+  stylizeForVideo(videoFrame: ImageSource, timestamp: number): MPImage|null;
+  /**
+   * Performs face stylization on the provided video frame. This method creates
+   * a copy of the resulting image and should not be used in high-throughput
+   * applictions. Only use this method when the FaceStylizer is created with the
+   * video running mode.
+   *
+   * The 'imageProcessingOptions' parameter can be used to specify one or all
+   * of:
+   *  - the rotation to apply to the image before performing stylization, by
+   *    setting its 'rotationDegrees' property.
+   *  - the region-of-interest on which to perform stylization, by setting its
+   *   'regionOfInterest' property. If not specified, the full image is used.
+   *  If both are specified, the crop around the region-of-interest is
+   * extracted first, then the specified rotation is applied to the crop.
+   *
+   * The input frame can be of any size. It's required to provide the video
+   * frame's timestamp (in milliseconds). The input timestamps must be
+   * monotonically increasing.
+   *
+   * @param videoFrame A video frame to process.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
+   * @param timestamp The timestamp of the current frame, in ms.
+   * @return A stylized face or `null` if no face was detected. The result is
+   *     copied to avoid lifetime issues.
+   */
+  stylizeForVideo(
+      videoFrame: ImageSource, imageProcessingOptions: ImageProcessingOptions,
+      timestamp: number): MPImage|null;
   stylizeForVideo(
       videoFrame: ImageSource,
       timestampOrImageProcessingOptions: number|ImageProcessingOptions,
-      timestampOrCallback: number|FaceStylizerCallback,
-      callback?: FaceStylizerCallback): void {
+      timestampOrCallback?: number|FaceStylizerCallback,
+      callback?: FaceStylizerCallback): MPImage|null|void {
     const imageProcessingOptions =
         typeof timestampOrImageProcessingOptions !== 'number' ?
         timestampOrImageProcessingOptions :
@@ -243,9 +331,13 @@ export class FaceStylizer extends VisionTaskRunner {
 
     this.userCallback = typeof timestampOrCallback === 'function' ?
         timestampOrCallback :
-        callback!;
+        callback;
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
-    this.userCallback = () => {};
+    this.userCallback = undefined;
+
+    if (!this.userCallback) {
+      return this.result;
+    }
   }
 
   /** Updates the MediaPipe graph configuration. */
@@ -270,13 +362,20 @@ export class FaceStylizer extends VisionTaskRunner {
 
     this.graphRunner.attachImageListener(
         STYLIZED_IMAGE_STREAM, (wasmImage, timestamp) => {
-          const mpImage = this.convertToMPImage(wasmImage);
-          this.userCallback(mpImage);
+          const mpImage = this.convertToMPImage(
+              wasmImage, /* shouldCopyData= */ !this.userCallback);
+          this.result = mpImage;
+          if (this.userCallback) {
+            this.userCallback(mpImage);
+          }
           this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachEmptyPacketListener(
         STYLIZED_IMAGE_STREAM, timestamp => {
-          this.userCallback(null);
+          this.result = null;
+          if (this.userCallback) {
+            this.userCallback(null);
+          }
           this.setLatestOutputTimestamp(timestamp);
         });
 
