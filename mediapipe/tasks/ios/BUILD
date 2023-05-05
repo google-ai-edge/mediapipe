@@ -37,7 +37,7 @@ licenses(["notice"])
 # Instead of linking options and containers, we link their helpers to 
 # `MPPTasksCommon` to avoid duplicated method warnings in categories when text 
 # and vision frameworks are installed in the same Xcode project.
-OBJC_COMMON_DEPS = [
+OBJC_TASK_COMMON_DEPS = [
     "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
     "//mediapipe/tasks/ios/core:MPPTaskInfo",
     "//mediapipe/tasks/ios/core:MPPTaskOptions",
@@ -46,12 +46,14 @@ OBJC_COMMON_DEPS = [
     "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
     "//mediapipe/tasks/ios/components/containers/utils:MPPCategoryHelpers",
     "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+]
+
+CALCULATORS_AND_GRAPHS = [
     "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
     "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
     "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
     "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
     "//mediapipe/calculators/core:flow_limiter_calculator",
-    "//mediapipe/gpu:metal_shared_resources",
 ]
 
 strip_api_include_path_prefix(
@@ -88,7 +90,9 @@ apple_static_xcframework(
     # Avoid dependencies of ":MediaPipeTasksCommon_framework" and
     # ":MediaPipeTaskGraphs_library in order to prevent duplicate symbols error
     # when the frameworks are imported in iOS projects.
-    avoid_deps = OBJC_COMMON_DEPS,
+    avoid_deps = OBJC_TASK_COMMON_DEPS + CALCULATORS_AND_GRAPHS + [
+        "//mediapipe/gpu:metal_shared_resources",
+    ],
     bundle_name = "MediaPipeTasksText",
     ios = {
         "simulator": [
@@ -129,7 +133,9 @@ apple_static_xcframework(
     # when the frameworks are imported in iOS projects.
     # Also avoids opencv since it will be built with
     # ":MediaPipeTaskGraphs_library".
-    avoid_deps = OBJC_COMMON_DEPS,  
+    avoid_deps = OBJC_TASK_COMMON_DEPS + CALCULATORS_AND_GRAPHS + [
+        "//mediapipe/gpu:metal_shared_resources",
+    ], 
     bundle_name = "MediaPipeTasksVision",
     ios = {
         "simulator": [
@@ -174,12 +180,7 @@ apple_static_library(
     ],
     minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
     platform_type = "ios",
-    deps = [
-        "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
-        "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
-        "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
-        "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
-        "//mediapipe/calculators/core:flow_limiter_calculator",
+    deps = CALCULATORS_AND_GRAPHS + [
         "@org_tensorflow//third_party/icu/data:conversion_data",
     ] + select({
         "//third_party:opencv_ios_sim_arm64_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
@@ -209,14 +210,5 @@ apple_static_xcframework(
     minimum_os_versions = {
         "ios": MPP_TASK_MINIMUM_OS_VERSION,
     },
-    deps = [
-        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//mediapipe/tasks/ios/components/containers/utils:MPPCategoryHelpers",
-        "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
-        "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
-        "//mediapipe/tasks/ios/core:MPPTaskInfo",
-        "//mediapipe/tasks/ios/core:MPPTaskOptions",
-        "//mediapipe/tasks/ios/core:MPPTaskResult",
-        "//mediapipe/tasks/ios/core:MPPTaskRunner",
-    ],
+    deps = OBJC_TASK_COMMON_DEPS,
 )
