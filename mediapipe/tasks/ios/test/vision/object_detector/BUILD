@@ -41,7 +41,12 @@ objc_library(
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
-    ],
+    ] + select({
+        ":opencv_ios_sim_arm64_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
+        ":opencv_ios_arm64_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
+        ":opencv_ios_x86_64_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
+        "//conditions:default": ["@ios_opencv//:OpencvFramework"],
+    }),
 )
 
 ios_unit_test(
