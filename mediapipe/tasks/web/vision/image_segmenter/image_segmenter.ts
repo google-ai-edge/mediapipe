@@ -293,16 +293,17 @@ export class ImageSegmenter extends VisionTaskRunner {
    * created with running mode `video`.
    *
    * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input frame before running inference.
-   * @param timestamp The timestamp of the current frame, in ms.
    * @param callback The callback that is invoked with the segmented masks. The
    *    lifetime of the returned data is only guaranteed for the duration of the
    *    callback.
    */
   segmentForVideo(
-      videoFrame: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      timestamp: number, callback: ImageSegmenterCallback): void;
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptions: ImageProcessingOptions,
+      callback: ImageSegmenterCallback): void;
   /**
    * Performs image segmentation on the provided video frame and returns the
    * segmentation result. This method creates a copy of the resulting masks and
@@ -322,31 +323,26 @@ export class ImageSegmenter extends VisionTaskRunner {
    * the ImageSegmenter is created with running mode `video`.
    *
    * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input frame before running inference.
-   * @param timestamp The timestamp of the current frame, in ms.
    * @return The segmentation result. The data is copied to avoid lifetime
    *     issues.
    */
   segmentForVideo(
-      videoFrame: ImageSource,
-      imageProcessingOptions: ImageProcessingOptions,
-      timestamp: number,
-      ): ImageSegmenterResult;
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptions: ImageProcessingOptions): ImageSegmenterResult;
   segmentForVideo(
-      videoFrame: ImageSource,
-      timestampOrImageProcessingOptions: number|ImageProcessingOptions,
-      timestampOrCallback?: number|ImageSegmenterCallback,
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
+      ImageSegmenterCallback,
       callback?: ImageSegmenterCallback): ImageSegmenterResult|void {
     const imageProcessingOptions =
-        typeof timestampOrImageProcessingOptions !== 'number' ?
-        timestampOrImageProcessingOptions :
+        typeof imageProcessingOptionsOrCallback !== 'function' ?
+        imageProcessingOptionsOrCallback :
         {};
-    const timestamp = typeof timestampOrImageProcessingOptions === 'number' ?
-        timestampOrImageProcessingOptions :
-        timestampOrCallback as number;
-    this.userCallback = typeof timestampOrCallback === 'function' ?
-        timestampOrCallback :
+    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
+        imageProcessingOptionsOrCallback :
         callback;
 
     this.reset();

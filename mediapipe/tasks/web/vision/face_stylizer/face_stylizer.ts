@@ -261,16 +261,17 @@ export class FaceStylizer extends VisionTaskRunner {
    * monotonically increasing.
    *
    * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
-   * @param timestamp The timestamp of the current frame, in ms.
    * @param callback The callback that is invoked with the stylized image or
    *   `null` if no face was detected. The lifetime of the returned data is only
    *   guaranteed for the duration of the callback.
    */
   stylizeForVideo(
-      videoFrame: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      timestamp: number, callback: FaceStylizerCallback): void;
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptions: ImageProcessingOptions,
+      callback: FaceStylizerCallback): void;
   /**
    * Performs face stylization on the provided video frame. This method creates
    * a copy of the resulting image and should not be used in high-throughput
@@ -307,30 +308,29 @@ export class FaceStylizer extends VisionTaskRunner {
    * monotonically increasing.
    *
    * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
-   * @param timestamp The timestamp of the current frame, in ms.
    * @return A stylized face or `null` if no face was detected. The result is
    *     copied to avoid lifetime issues.
    */
   stylizeForVideo(
-      videoFrame: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      timestamp: number): MPImage|null;
-  stylizeForVideo(
       videoFrame: ImageSource,
-      timestampOrImageProcessingOptions: number|ImageProcessingOptions,
-      timestampOrCallback?: number|FaceStylizerCallback,
+      timestamp: number,
+      imageProcessingOptions: ImageProcessingOptions,
+      ): MPImage|null;
+  stylizeForVideo(
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
+      FaceStylizerCallback,
       callback?: FaceStylizerCallback): MPImage|null|void {
     const imageProcessingOptions =
-        typeof timestampOrImageProcessingOptions !== 'number' ?
-        timestampOrImageProcessingOptions :
+        typeof imageProcessingOptionsOrCallback !== 'function' ?
+        imageProcessingOptionsOrCallback :
         {};
-    const timestamp = typeof timestampOrImageProcessingOptions === 'number' ?
-        timestampOrImageProcessingOptions :
-        timestampOrCallback as number;
 
-    this.userCallback = typeof timestampOrCallback === 'function' ?
-        timestampOrCallback :
+    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
+        imageProcessingOptionsOrCallback :
         callback;
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
     this.userCallback = undefined;

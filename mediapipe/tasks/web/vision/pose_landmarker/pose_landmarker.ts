@@ -297,16 +297,17 @@ export class PoseLandmarker extends VisionTaskRunner {
    * with running mode `video`.
    *
    * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
-   * @param timestamp The timestamp of the current frame, in ms.
    * @param callback The callback that is invoked with the result. The
    *    lifetime of the returned masks is only guaranteed for the duration of
    *    the callback.
    */
   detectForVideo(
-      videoFrame: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      timestamp: number, callback: PoseLandmarkerCallback): void;
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptions: ImageProcessingOptions,
+      callback: PoseLandmarkerCallback): void;
   /**
    * Performs pose detection on the provided video frame and returns the result.
    * This method creates a copy of the resulting masks and should not be used
@@ -328,29 +329,26 @@ export class PoseLandmarker extends VisionTaskRunner {
    * with running mode `video`.
    *
    * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
-   * @param timestamp The timestamp of the current frame, in ms.
    * @return The landmarker result. Any masks are copied to extend the lifetime
    *     of the returned data.
    */
   detectForVideo(
-      videoFrame: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      timestamp: number): PoseLandmarkerResult;
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptions: ImageProcessingOptions): PoseLandmarkerResult;
   detectForVideo(
-      videoFrame: ImageSource,
-      timestampOrImageProcessingOptions: number|ImageProcessingOptions,
-      timestampOrCallback?: number|PoseLandmarkerCallback,
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
+      PoseLandmarkerCallback,
       callback?: PoseLandmarkerCallback): PoseLandmarkerResult|void {
     const imageProcessingOptions =
-        typeof timestampOrImageProcessingOptions !== 'number' ?
-        timestampOrImageProcessingOptions :
+        typeof imageProcessingOptionsOrCallback !== 'function' ?
+        imageProcessingOptionsOrCallback :
         {};
-    const timestamp = typeof timestampOrImageProcessingOptions === 'number' ?
-        timestampOrImageProcessingOptions :
-        timestampOrCallback as number;
-    this.userCallback = typeof timestampOrCallback === 'function' ?
-        timestampOrCallback :
+    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
+        imageProcessingOptionsOrCallback :
         callback;
 
     this.resetResults();
