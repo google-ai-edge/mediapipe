@@ -17,7 +17,7 @@
 import {assertNotNull, MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 
 /** The underlying type of the image. */
-export enum MPMaskType {
+enum MPMaskType {
   /** Represents the native `UInt8Array` type. */
   UINT8_ARRAY,
   /** Represents the native `Float32Array` type.  */
@@ -34,9 +34,9 @@ export type MPMaskContainer = Uint8Array|Float32Array|WebGLTexture;
  *
  * Masks are stored as `Uint8Array`, `Float32Array` or `WebGLTexture` objects.
  * You can convert the underlying type to any other type by passing the desired
- * type to `get()`. As type conversions can be expensive, it is recommended to
- * limit these conversions. You can verify what underlying types are already
- * available by invoking `has()`.
+ * type to `getAs...()`. As type conversions can be expensive, it is recommended
+ * to limit these conversions. You can verify what underlying types are already
+ * available by invoking `has...()`.
  *
  * Masks that are returned from a MediaPipe Tasks are owned by by the
  * underlying C++ Task. If you need to extend the lifetime of these objects,
@@ -46,9 +46,6 @@ export type MPMaskContainer = Uint8Array|Float32Array|WebGLTexture;
  */
 export class MPMask {
   private gl?: WebGL2RenderingContext;
-
-  /** The underlying type of the mask. */
-  static TYPE = MPMaskType;
 
   /** @hideconstructor */
   constructor(
@@ -63,13 +60,19 @@ export class MPMask {
       readonly height: number,
   ) {}
 
-  /**
-   * Returns whether this `MPMask` stores the mask in the desired
-   * format. This method can be called to reduce expensive conversion before
-   * invoking `get()`.
-   */
-  has(type: MPMaskType): boolean {
-    return !!this.getContainer(type);
+  /** Returns whether this `MPMask` contains a mask of type `Uint8Array`. */
+  hasUint8Array(): boolean {
+    return !!this.getContainer(MPMaskType.UINT8_ARRAY);
+  }
+
+  /** Returns whether this `MPMask` contains a mask of type `Float32Array`. */
+  hasFloat32Array(): boolean {
+    return !!this.getContainer(MPMaskType.FLOAT32_ARRAY);
+  }
+
+  /** Returns whether this `MPMask` contains a mask of type `WebGLTexture`. */
+  hasWebGLTexture(): boolean {
+    return !!this.getContainer(MPMaskType.WEBGL_TEXTURE);
   }
 
   /**
@@ -77,42 +80,34 @@ export class MPMask {
    * expensive GPU to CPU transfer if the current mask is only available as a
    * `WebGLTexture`.
    *
-   * @param type The type of mask to return.
    * @return The current data as a Uint8Array.
    */
-  get(type: MPMaskType.UINT8_ARRAY): Uint8Array;
+  getAsUint8Array(): Uint8Array {
+    return this.convertToUint8Array();
+  }
+
   /**
    * Returns the underlying mask as a single channel `Float32Array`. Note that
    * this involves an expensive GPU to CPU transfer if the current mask is only
    * available as a `WebGLTexture`.
    *
-   * @param type The type of mask to return.
    * @return The current mask as a Float32Array.
    */
-  get(type: MPMaskType.FLOAT32_ARRAY): Float32Array;
+  getAsFloat32Array(): Float32Array {
+    return this.convertToFloat32Array();
+  }
+
   /**
    * Returns the underlying mask as a `WebGLTexture` object. Note that this
    * involves a CPU to GPU transfer if the current mask is only available as
    * a CPU array. The returned texture is bound to the current canvas (see
    * `.canvas`).
    *
-   * @param type The type of mask to return.
    * @return The current mask as a WebGLTexture.
    */
-  get(type: MPMaskType.WEBGL_TEXTURE): WebGLTexture;
-  get(type?: MPMaskType): MPMaskContainer {
-    switch (type) {
-      case MPMaskType.UINT8_ARRAY:
-        return this.convertToUint8Array();
-      case MPMaskType.FLOAT32_ARRAY:
-        return this.convertToFloat32Array();
-      case MPMaskType.WEBGL_TEXTURE:
-        return this.convertToWebGLTexture();
-      default:
-        throw new Error(`Type is not supported: ${type}`);
-    }
+  getAsWebGLTexture(): WebGLTexture {
+    return this.convertToWebGLTexture();
   }
-
 
   private getContainer(type: MPMaskType.UINT8_ARRAY): Uint8Array|undefined;
   private getContainer(type: MPMaskType.FLOAT32_ARRAY): Float32Array|undefined;
@@ -186,7 +181,7 @@ export class MPMask {
     }
 
     return new MPMask(
-        destinationContainers, this.has(MPMaskType.WEBGL_TEXTURE), this.canvas,
+        destinationContainers, this.hasWebGLTexture(), this.canvas,
         this.shaderContext, this.width, this.height);
   }
 
@@ -220,9 +215,9 @@ export class MPMask {
   private convertToFloat32Array(): Float32Array {
     let float32Array = this.getContainer(MPMaskType.FLOAT32_ARRAY);
     if (!float32Array) {
-      if (this.has(MPMaskType.UINT8_ARRAY)) {
-        const source = this.getContainer(MPMaskType.UINT8_ARRAY)!;
-        float32Array = new Float32Array(source).map(v => v / 255);
+      const uint8Array = this.getContainer(MPMaskType.UINT8_ARRAY);
+      if (uint8Array) {
+        float32Array = new Float32Array(uint8Array).map(v => v / 255);
       } else {
         const gl = this.getGL();
         const shaderContext = this.getShaderContext();

@@ -17,7 +17,7 @@
 import 'jasmine';
 
 import {MPImageShaderContext} from './image_shader_context';
-import {MPMask, MPMaskType} from './mask';
+import {MPMask} from './mask';
 
 const WIDTH = 2;
 const HEIGHT = 2;
@@ -117,13 +117,13 @@ class MPMaskTestContext {
 
   function assertEquality(mask: MPMask, expected: MaskType): void {
     if (expected instanceof Uint8Array) {
-      const result = mask.get(MPMaskType.UINT8_ARRAY);
+      const result = mask.getAsUint8Array();
       expect(result).toEqual(expected);
     } else if (expected instanceof Float32Array) {
-      const result = mask.get(MPMaskType.FLOAT32_ARRAY);
+      const result = mask.getAsFloat32Array();
       expect(result).toEqual(expected);
     } else {  // WebGLTexture
-      const result = mask.get(MPMaskType.WEBGL_TEXTURE);
+      const result = mask.getAsWebGLTexture();
       expect(readPixelsFromWebGLTexture(result))
           .toEqual(readPixelsFromWebGLTexture(expected));
     }
@@ -183,7 +183,7 @@ class MPMaskTestContext {
         /* ownsWebGLTexture= */ false, context.canvas, shaderContext, WIDTH,
         HEIGHT);
 
-    const result = mask.clone().get(MPMaskType.UINT8_ARRAY);
+    const result = mask.clone().getAsUint8Array();
     expect(result).toEqual(context.uint8Array);
     shaderContext.close();
   });
@@ -199,13 +199,13 @@ class MPMaskTestContext {
 
     // Verify that we can mix the different shader modes by running them out of
     // order.
-    let result = mask.get(MPMaskType.UINT8_ARRAY);
+    let result = mask.getAsUint8Array();
     expect(result).toEqual(context.uint8Array);
 
-    result = mask.clone().get(MPMaskType.UINT8_ARRAY);
+    result = mask.clone().getAsUint8Array();
     expect(result).toEqual(context.uint8Array);
 
-    result = mask.get(MPMaskType.UINT8_ARRAY);
+    result = mask.getAsUint8Array();
     expect(result).toEqual(context.uint8Array);
 
     shaderContext.close();
@@ -217,20 +217,21 @@ class MPMaskTestContext {
     const shaderContext = new MPImageShaderContext();
     const mask = createImage(shaderContext, context.uint8Array, WIDTH, HEIGHT);
 
-    expect(mask.has(MPMaskType.UINT8_ARRAY)).toBe(true);
-    expect(mask.has(MPMaskType.FLOAT32_ARRAY)).toBe(false);
-    expect(mask.has(MPMaskType.WEBGL_TEXTURE)).toBe(false);
+    expect(mask.hasUint8Array()).toBe(true);
+    expect(mask.hasFloat32Array()).toBe(false);
+    expect(mask.hasWebGLTexture()).toBe(false);
 
-    mask.get(MPMaskType.FLOAT32_ARRAY);
+    mask.getAsFloat32Array();
 
-    expect(mask.has(MPMaskType.UINT8_ARRAY)).toBe(true);
-    expect(mask.has(MPMaskType.FLOAT32_ARRAY)).toBe(true);
+    expect(mask.hasUint8Array()).toBe(true);
+    expect(mask.hasFloat32Array()).toBe(true);
+    expect(mask.hasWebGLTexture()).toBe(false);
 
-    mask.get(MPMaskType.WEBGL_TEXTURE);
+    mask.getAsWebGLTexture();
 
-    expect(mask.has(MPMaskType.UINT8_ARRAY)).toBe(true);
-    expect(mask.has(MPMaskType.FLOAT32_ARRAY)).toBe(true);
-    expect(mask.has(MPMaskType.WEBGL_TEXTURE)).toBe(true);
+    expect(mask.hasUint8Array()).toBe(true);
+    expect(mask.hasFloat32Array()).toBe(true);
+    expect(mask.hasWebGLTexture()).toBe(true);
 
     mask.close();
     shaderContext.close();
