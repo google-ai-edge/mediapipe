@@ -109,7 +109,7 @@ describe('FaceStylizer', () => {
     faceStylizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       verifyListenersRegistered(faceStylizer);
       faceStylizer.imageListener!
-          ({data: new Uint8ClampedArray([1, 1, 1, 1]), width: 1, height: 1},
+          ({data: new Uint8Array([1, 1, 1, 1]), width: 1, height: 1},
            /* timestamp= */ 1337);
     });
 
@@ -134,7 +134,7 @@ describe('FaceStylizer', () => {
     faceStylizer.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       verifyListenersRegistered(faceStylizer);
       faceStylizer.imageListener!
-          ({data: new Uint8ClampedArray([1, 1, 1, 1]), width: 1, height: 1},
+          ({data: new Uint8Array([1, 1, 1, 1]), width: 1, height: 1},
            /* timestamp= */ 1337);
     });
 

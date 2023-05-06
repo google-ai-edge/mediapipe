@@ -20,6 +20,7 @@ import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {MPImage} from '../../../../tasks/web/vision/core/image';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
+import {MPMask} from '../../../../tasks/web/vision/core/mask';
 import {GraphRunner, ImageSource, WasmMediaPipeConstructor} from '../../../../web/graph_runner/graph_runner';
 import {SupportImage, WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
 import {isWebKit} from '../../../../web/graph_runner/platform_utils';
@@ -226,7 +227,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
   /**
    * Converts a WasmImage to an MPImage.
    *
-   * Converts the underlying Uint8ClampedArray-backed images to ImageData
+   * Converts the underlying Uint8Array-backed images to ImageData
    * (adding an alpha channel if necessary), passes through WebGLTextures and
    * throws for Float32Array-backed images.
    */
@@ -235,11 +236,9 @@ export abstract class VisionTaskRunner extends TaskRunner {
     const {data, width, height} = wasmImage;
     const pixels = width * height;
 
-    let container: ImageData|WebGLTexture|Uint8ClampedArray;
-    if (data instanceof Uint8ClampedArray) {
-      if (data.length === pixels) {
-        container = data;  // Mask
-      } else if (data.length === pixels * 3) {
+    let container: ImageData|WebGLTexture;
+    if (data instanceof Uint8Array) {
+      if (data.length === pixels * 3) {
         // TODO: Convert in C++
         const rgba = new Uint8ClampedArray(pixels * 4);
         for (let i = 0; i < pixels; ++i) {
@@ -249,19 +248,17 @@ export abstract class VisionTaskRunner extends TaskRunner {
           rgba[4 * i + 3] = 255;
         }
         container = new ImageData(rgba, width, height);
-      } else if (data.length ===pixels * 4) {
-        container = new ImageData(data, width, height);
+      } else if (data.length === pixels * 4) {
+        container = new ImageData(
+            new Uint8ClampedArray(data.buffer, data.byteOffset, data.length),
+            width, height);
       } else {
         throw new Error(`Unsupported channel count: ${data.length/pixels}`);
       }
-    } else if (data instanceof Float32Array) {
-      if (data.length === pixels) {
-        container = data;  // Mask
-      } else {
-        throw new Error(`Unsupported channel count: ${data.length/pixels}`);
-      }
-    } else {  // WebGLTexture
+    } else if (data instanceof WebGLTexture) {
       container = data;
+    } else {
+      throw new Error(`Unsupported format: ${data.constructor.name}`);
     }
 
     const image = new MPImage(
@@ -269,6 +266,30 @@ export abstract class VisionTaskRunner extends TaskRunner {
         /* ownsWebGLTexture= */ false, this.graphRunner.wasmModule.canvas!,
         this.shaderContext, width, height);
     return shouldCopyData ? image.clone() : image;
+  }
+
+  /** Converts a WasmImage to an MPMask.  */
+  protected convertToMPMask(wasmImage: WasmImage, shouldCopyData: boolean):
+      MPMask {
+    const {data, width, height} = wasmImage;
+    const pixels = width * height;
+
+    let container: WebGLTexture|Uint8Array|Float32Array;
+    if (data instanceof Uint8Array || data instanceof Float32Array) {
+      if (data.length === pixels) {
+        container = data;
+      } else {
+        throw new Error(`Unsupported channel count: ${data.length / pixels}`);
+      }
+    } else {
+      container = data;
+    }
+
+    const mask = new MPMask(
+        [container],
+        /* ownsWebGLTexture= */ false, this.graphRunner.wasmModule.canvas!,
+        this.shaderContext, width, height);
+    return shouldCopyData ? mask.clone() : mask;
   }
 
   /** Closes and cleans up the resources held by this task. */

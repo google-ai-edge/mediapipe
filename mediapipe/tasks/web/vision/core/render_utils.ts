@@ -16,8 +16,6 @@
  * limitations under the License.
  */
 
-import {MPImageChannelConverter} from '../../../../tasks/web/vision/core/image';
-
 // Pre-baked color table for a maximum of 12 classes.
 const CM_ALPHA = 128;
 const COLOR_MAP: Array<[number, number, number, number]> = [
@@ -35,8 +33,37 @@ const COLOR_MAP: Array<[number, number, number, number]> = [
   [255, 255, 255, CM_ALPHA]   // class 11 is white; could do black instead?
 ];
 
-/** The color converter we use in our demos. */
-export const RENDER_UTIL_CONVERTER: MPImageChannelConverter = {
-  floatToRGBAConverter: v => [128, 0, 0, v * 255],
-  uint8ToRGBAConverter: v => COLOR_MAP[v % COLOR_MAP.length],
-};
+
+/** Helper function to draw a confidence mask */
+export function drawConfidenceMask(
+    ctx: CanvasRenderingContext2D, image: Float32Array, width: number,
+    height: number): void {
+  const uint8Array = new Uint8ClampedArray(width * height * 4);
+  for (let i = 0; i < image.length; i++) {
+    uint8Array[4 * i] = 128;
+    uint8Array[4 * i + 1] = 0;
+    uint8Array[4 * i + 2] = 0;
+    uint8Array[4 * i + 3] = image[i] * 255;
+  }
+  ctx.putImageData(new ImageData(uint8Array, width, height), 0, 0);
+}
+
+/**
+ * Helper function to draw a category mask. For GPU, we only have F32Arrays
+ * for now.
+ */
+export function drawCategoryMask(
+    ctx: CanvasRenderingContext2D, image: Uint8Array|Float32Array,
+    width: number, height: number): void {
+  const rgbaArray = new Uint8ClampedArray(width * height * 4);
+  const isFloatArray = image instanceof Float32Array;
+  for (let i = 0; i < image.length; i++) {
+    const colorIndex = isFloatArray ? Math.round(image[i] * 255) : image[i];
+    const color = COLOR_MAP[colorIndex % COLOR_MAP.length];
+    rgbaArray[4 * i] = color[0];
+    rgbaArray[4 * i + 1] = color[1];
+    rgbaArray[4 * i + 2] = color[2];
+    rgbaArray[4 * i + 3] = color[3];
+  }
+  ctx.putImageData(new ImageData(rgbaArray, width, height), 0, 0);
+}

@@ -87,6 +87,7 @@ mediapipe_ts_library(
     deps = [
         ":image",
         ":image_processing_options",
+        ":mask",
         ":vision_task_options",
         "//mediapipe/framework/formats:rect_jspb_proto",
         "//mediapipe/tasks/web/core",

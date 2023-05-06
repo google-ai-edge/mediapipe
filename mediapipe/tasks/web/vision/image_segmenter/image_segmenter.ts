@@ -412,7 +412,7 @@ export class ImageSegmenter extends VisionTaskRunner {
       this.graphRunner.attachImageVectorListener(
           CONFIDENCE_MASKS_STREAM, (masks, timestamp) => {
             this.result.confidenceMasks = masks.map(
-                wasmImage => this.convertToMPImage(
+                wasmImage => this.convertToMPMask(
                     wasmImage, /* shouldCopyData= */ !this.userCallback));
             this.setLatestOutputTimestamp(timestamp);
             this.maybeInvokeCallback();
@@ -431,7 +431,7 @@ export class ImageSegmenter extends VisionTaskRunner {
 
       this.graphRunner.attachImageListener(
           CATEGORY_MASK_STREAM, (mask, timestamp) => {
-            this.result.categoryMask = this.convertToMPImage(
+            this.result.categoryMask = this.convertToMPMask(
                 mask, /* shouldCopyData= */ !this.userCallback);
             this.setLatestOutputTimestamp(timestamp);
             this.maybeInvokeCallback();

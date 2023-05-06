@@ -504,7 +504,7 @@ export class PoseLandmarker extends VisionTaskRunner {
       this.graphRunner.attachImageVectorListener(
           SEGMENTATION_MASK_STREAM, (masks, timestamp) => {
             this.result.segmentationMasks = masks.map(
-                wasmImage => this.convertToMPImage(
+                wasmImage => this.convertToMPMask(
                     wasmImage, /* shouldCopyData= */ !this.userCallback));
             this.setLatestOutputTimestamp(timestamp);
             this.maybeInvokeCallback();

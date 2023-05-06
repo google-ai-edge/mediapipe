@@ -18,7 +18,7 @@ import 'jasmine';
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {createLandmarks, createWorldLandmarks} from '../../../../tasks/web/components/processors/landmark_result_test_lib';
 import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph} from '../../../../tasks/web/core/task_runner_test_utils';
-import {MPImage} from '../../../../tasks/web/vision/core/image';
+import {MPMask} from '../../../../tasks/web/vision/core/mask';
 import {VisionGraphRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 
 import {PoseLandmarker} from './pose_landmarker';
@@ -225,7 +225,7 @@ describe('PoseLandmarker', () => {
       expect(result.landmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
       expect(result.worldLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
       expect(result.auxilaryLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
-      expect(result.segmentationMasks![0]).toBeInstanceOf(MPImage);
+      expect(result.segmentationMasks![0]).toBeInstanceOf(MPMask);
       done();
     });
   });
