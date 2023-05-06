@@ -43,7 +43,6 @@ const IMAGE_STREAM = 'image_in';
 const NORM_RECT_STREAM = 'norm_rect';
 const NORM_LANDMARKS_STREAM = 'normalized_landmarks';
 const WORLD_LANDMARKS_STREAM = 'world_landmarks';
-const AUXILIARY_LANDMARKS_STREAM = 'auxiliary_landmarks';
 const SEGMENTATION_MASK_STREAM = 'segmentation_masks';
 const POSE_LANDMARKER_GRAPH =
     'mediapipe.tasks.vision.pose_landmarker.PoseLandmarkerGraph';
@@ -371,9 +370,6 @@ export class PoseLandmarker extends VisionTaskRunner {
     if (!('worldLandmarks' in this.result)) {
       return;
     }
-    if (!('auxilaryLandmarks' in this.result)) {
-      return;
-    }
     if (this.outputSegmentationMasks && !('segmentationMasks' in this.result)) {
       return;
     }
@@ -419,20 +415,6 @@ export class PoseLandmarker extends VisionTaskRunner {
     }
   }
 
-  /**
-   * Converts raw data into a landmark, and adds it to our auxilary
-   * landmarks list.
-   */
-  private addJsAuxiliaryLandmarks(data: Uint8Array[]): void {
-    this.result.auxilaryLandmarks = [];
-    for (const binaryProto of data) {
-      const auxiliaryLandmarksProto =
-          NormalizedLandmarkList.deserializeBinary(binaryProto);
-      this.result.auxilaryLandmarks.push(
-          convertToLandmarks(auxiliaryLandmarksProto));
-    }
-  }
-
   /** Updates the MediaPipe graph configuration. */
   protected override refreshGraph(): void {
     const graphConfig = new CalculatorGraphConfig();
@@ -440,7 +422,6 @@ export class PoseLandmarker extends VisionTaskRunner {
     graphConfig.addInputStream(NORM_RECT_STREAM);
     graphConfig.addOutputStream(NORM_LANDMARKS_STREAM);
     graphConfig.addOutputStream(WORLD_LANDMARKS_STREAM);
-    graphConfig.addOutputStream(AUXILIARY_LANDMARKS_STREAM);
     graphConfig.addOutputStream(SEGMENTATION_MASK_STREAM);
 
     const calculatorOptions = new CalculatorOptions();
@@ -453,8 +434,6 @@ export class PoseLandmarker extends VisionTaskRunner {
     landmarkerNode.addInputStream('NORM_RECT:' + NORM_RECT_STREAM);
     landmarkerNode.addOutputStream('NORM_LANDMARKS:' + NORM_LANDMARKS_STREAM);
     landmarkerNode.addOutputStream('WORLD_LANDMARKS:' + WORLD_LANDMARKS_STREAM);
-    landmarkerNode.addOutputStream(
-        'AUXILIARY_LANDMARKS:' + AUXILIARY_LANDMARKS_STREAM);
     landmarkerNode.setOptions(calculatorOptions);
 
     graphConfig.addNode(landmarkerNode);
@@ -481,19 +460,6 @@ export class PoseLandmarker extends VisionTaskRunner {
     this.graphRunner.attachEmptyPacketListener(
         WORLD_LANDMARKS_STREAM, timestamp => {
           this.result.worldLandmarks = [];
-          this.setLatestOutputTimestamp(timestamp);
-          this.maybeInvokeCallback();
-        });
-
-    this.graphRunner.attachProtoVectorListener(
-        AUXILIARY_LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsAuxiliaryLandmarks(binaryProto);
-          this.setLatestOutputTimestamp(timestamp);
-          this.maybeInvokeCallback();
-        });
-    this.graphRunner.attachEmptyPacketListener(
-        AUXILIARY_LANDMARKS_STREAM, timestamp => {
-          this.result.auxilaryLandmarks = [];
           this.setLatestOutputTimestamp(timestamp);
           this.maybeInvokeCallback();
         });

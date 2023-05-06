@@ -40,7 +40,6 @@ public abstract class PoseLandmarkerResult implements TaskResult {
   static PoseLandmarkerResult create(
       List<LandmarkProto.NormalizedLandmarkList> landmarksProto,
       List<LandmarkProto.LandmarkList> worldLandmarksProto,
-      List<LandmarkProto.NormalizedLandmarkList> auxiliaryLandmarksProto,
       Optional<List<MPImage>> segmentationMasksData,
       long timestampMs) {
 
@@ -52,7 +51,6 @@ public abstract class PoseLandmarkerResult implements TaskResult {
 
     List<List<NormalizedLandmark>> multiPoseLandmarks = new ArrayList<>();
     List<List<Landmark>> multiPoseWorldLandmarks = new ArrayList<>();
-    List<List<NormalizedLandmark>> multiPoseAuxiliaryLandmarks = new ArrayList<>();
     for (LandmarkProto.NormalizedLandmarkList poseLandmarksProto : landmarksProto) {
       List<NormalizedLandmark> poseLandmarks = new ArrayList<>();
       multiPoseLandmarks.add(poseLandmarks);
@@ -75,24 +73,10 @@ public abstract class PoseLandmarkerResult implements TaskResult {
                 poseWorldLandmarkProto.getZ()));
       }
     }
-    for (LandmarkProto.NormalizedLandmarkList poseAuxiliaryLandmarksProto :
-        auxiliaryLandmarksProto) {
-      List<NormalizedLandmark> poseAuxiliaryLandmarks = new ArrayList<>();
-      multiPoseAuxiliaryLandmarks.add(poseAuxiliaryLandmarks);
-      for (LandmarkProto.NormalizedLandmark poseAuxiliaryLandmarkProto :
-          poseAuxiliaryLandmarksProto.getLandmarkList()) {
-        poseAuxiliaryLandmarks.add(
-            NormalizedLandmark.create(
-                poseAuxiliaryLandmarkProto.getX(),
-                poseAuxiliaryLandmarkProto.getY(),
-                poseAuxiliaryLandmarkProto.getZ()));
-      }
-    }
     return new AutoValue_PoseLandmarkerResult(
         timestampMs,
         Collections.unmodifiableList(multiPoseLandmarks),
         Collections.unmodifiableList(multiPoseWorldLandmarks),
-        Collections.unmodifiableList(multiPoseAuxiliaryLandmarks),
         multiPoseSegmentationMasks);
   }
 
@@ -104,9 +88,6 @@ public abstract class PoseLandmarkerResult implements TaskResult {
 
   /** Pose landmarks in world coordniates of detected poses. */
   public abstract List<List<Landmark>> worldLandmarks();
-
-  /** Pose auxiliary landmarks. */
-  public abstract List<List<NormalizedLandmark>> auxiliaryLandmarks();
 
   /** Pose segmentation masks. */
   public abstract Optional<List<MPImage>> segmentationMasks();

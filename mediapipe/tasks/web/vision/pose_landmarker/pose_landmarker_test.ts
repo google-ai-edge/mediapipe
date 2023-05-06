@@ -45,8 +45,7 @@ class PoseLandmarkerFake extends PoseLandmarker implements MediapipeTasksFake {
     this.attachListenerSpies[0] =
         spyOn(this.graphRunner, 'attachProtoVectorListener')
             .and.callFake((stream, listener) => {
-              expect(stream).toMatch(
-                  /(normalized_landmarks|world_landmarks|auxiliary_landmarks)/);
+              expect(stream).toMatch(/(normalized_landmarks|world_landmarks)/);
               this.listeners.set(stream, listener as PacketListener);
             });
     this.attachListenerSpies[1] =
@@ -80,23 +79,23 @@ describe('PoseLandmarker', () => {
 
   it('initializes graph', async () => {
     verifyGraph(poseLandmarker);
-    expect(poseLandmarker.listeners).toHaveSize(3);
+    expect(poseLandmarker.listeners).toHaveSize(2);
   });
 
   it('reloads graph when settings are changed', async () => {
     await poseLandmarker.setOptions({numPoses: 1});
     verifyGraph(poseLandmarker, [['poseDetectorGraphOptions', 'numPoses'], 1]);
-    expect(poseLandmarker.listeners).toHaveSize(3);
+    expect(poseLandmarker.listeners).toHaveSize(2);
 
     await poseLandmarker.setOptions({numPoses: 5});
     verifyGraph(poseLandmarker, [['poseDetectorGraphOptions', 'numPoses'], 5]);
-    expect(poseLandmarker.listeners).toHaveSize(3);
+    expect(poseLandmarker.listeners).toHaveSize(2);
   });
 
   it('registers listener for segmentation masks', async () => {
-    expect(poseLandmarker.listeners).toHaveSize(3);
+    expect(poseLandmarker.listeners).toHaveSize(2);
     await poseLandmarker.setOptions({outputSegmentationMasks: true});
-    expect(poseLandmarker.listeners).toHaveSize(4);
+    expect(poseLandmarker.listeners).toHaveSize(3);
   });
 
   it('merges options', async () => {
@@ -209,8 +208,6 @@ describe('PoseLandmarker', () => {
           (landmarksProto, 1337);
       poseLandmarker.listeners.get('world_landmarks')!
           (worldLandmarksProto, 1337);
-      poseLandmarker.listeners.get('auxiliary_landmarks')!
-          (landmarksProto, 1337);
       poseLandmarker.listeners.get('segmentation_masks')!(masks, 1337);
     });
 
@@ -224,7 +221,6 @@ describe('PoseLandmarker', () => {
 
       expect(result.landmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
       expect(result.worldLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
-      expect(result.auxilaryLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
       expect(result.segmentationMasks![0]).toBeInstanceOf(MPMask);
       done();
     });
@@ -240,8 +236,6 @@ describe('PoseLandmarker', () => {
           (landmarksProto, 1337);
       poseLandmarker.listeners.get('world_landmarks')!
           (worldLandmarksProto, 1337);
-      poseLandmarker.listeners.get('auxiliary_landmarks')!
-          (landmarksProto, 1337);
     });
 
     // Invoke the pose landmarker twice
@@ -279,8 +273,6 @@ describe('PoseLandmarker', () => {
           (landmarksProto, 1337);
       poseLandmarker.listeners.get('world_landmarks')!
           (worldLandmarksProto, 1337);
-      poseLandmarker.listeners.get('auxiliary_landmarks')!
-          (landmarksProto, 1337);
     });
 
     // Invoke the pose landmarker
@@ -290,9 +282,6 @@ describe('PoseLandmarker', () => {
       ]);
       expect(result.worldLandmarks).toEqual([
         [{'x': 1, 'y': 2, 'z': 3}], [{'x': 4, 'y': 5, 'z': 6}]
-      ]);
-      expect(result.auxilaryLandmarks).toEqual([
-        [{'x': 0.1, 'y': 0.2, 'z': 0.3}], [{'x': 0.4, 'y': 0.5, 'z': 0.6}]
       ]);
       done();
     });
@@ -318,8 +307,6 @@ describe('PoseLandmarker', () => {
       poseLandmarker.listeners.get('world_landmarks')!
           (worldLandmarksProto, 1337);
       expect(listenerCalled).toBeFalse();
-      poseLandmarker.listeners.get('auxiliary_landmarks')!
-          (landmarksProto, 1337);
       expect(listenerCalled).toBeFalse();
       poseLandmarker.listeners.get('segmentation_masks')!(masks, 1337);
       expect(listenerCalled).toBeTrue();
@@ -342,8 +329,6 @@ describe('PoseLandmarker', () => {
           (landmarksProto, 1337);
       poseLandmarker.listeners.get('world_landmarks')!
           (worldLandmarksProto, 1337);
-      poseLandmarker.listeners.get('auxiliary_landmarks')!
-          (landmarksProto, 1337);
     });
 
     // Invoke the pose landmarker
@@ -351,6 +336,5 @@ describe('PoseLandmarker', () => {
     expect(poseLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
     expect(result.landmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
     expect(result.worldLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
-    expect(result.auxilaryLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
   });
 });

@@ -37,17 +37,12 @@ struct PoseLandmarkerResult {
   std::vector<components::containers::NormalizedLandmarks> pose_landmarks;
   // Detected pose landmarks in world coordinates.
   std::vector<components::containers::Landmarks> pose_world_landmarks;
-  // Detected auxiliary landmarks, used for deriving ROI for next frame.
-  std::vector<components::containers::NormalizedLandmarks>
-      pose_auxiliary_landmarks;
 };
 
 PoseLandmarkerResult ConvertToPoseLandmarkerResult(
     std::optional<std::vector<mediapipe::Image>> segmentation_mask,
     const std::vector<mediapipe::NormalizedLandmarkList>& pose_landmarks_proto,
-    const std::vector<mediapipe::LandmarkList>& pose_world_landmarks_proto,
-    const std::vector<mediapipe::NormalizedLandmarkList>&
-        pose_auxiliary_landmarks_proto);
+    const std::vector<mediapipe::LandmarkList>& pose_world_landmarks_proto);
 
 }  // namespace pose_landmarker
 }  // namespace vision
