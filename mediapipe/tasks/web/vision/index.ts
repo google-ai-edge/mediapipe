@@ -17,6 +17,7 @@
 import {FilesetResolver as FilesetResolverImpl} from '../../../tasks/web/core/fileset_resolver';
 import {DrawingUtils as DrawingUtilsImpl} from '../../../tasks/web/vision/core/drawing_utils';
 import {MPImage as MPImageImpl, MPImageType as MPImageTypeImpl} from '../../../tasks/web/vision/core/image';
+import {MPMask as MPMaskImpl, MPMaskType as MPMaskTypeImpl} from '../../../tasks/web/vision/core/mask';
 import {FaceDetector as FaceDetectorImpl} from '../../../tasks/web/vision/face_detector/face_detector';
 import {FaceLandmarker as FaceLandmarkerImpl, FaceLandmarksConnections as FaceLandmarksConnectionsImpl} from '../../../tasks/web/vision/face_landmarker/face_landmarker';
 import {FaceStylizer as FaceStylizerImpl} from '../../../tasks/web/vision/face_stylizer/face_stylizer';
@@ -35,6 +36,8 @@ const DrawingUtils = DrawingUtilsImpl;
 const FilesetResolver = FilesetResolverImpl;
 const MPImage = MPImageImpl;
 const MPImageType = MPImageTypeImpl;
+const MPMask = MPMaskImpl;
+const MPMaskType = MPMaskTypeImpl;
 const FaceDetector = FaceDetectorImpl;
 const FaceLandmarker = FaceLandmarkerImpl;
 const FaceLandmarksConnections = FaceLandmarksConnectionsImpl;
@@ -53,6 +56,8 @@ export {
   FilesetResolver,
   MPImage,
   MPImageType,
+  MPMask,
+  MPMaskType,
   FaceDetector,
   FaceLandmarker,
   FaceLandmarksConnections,

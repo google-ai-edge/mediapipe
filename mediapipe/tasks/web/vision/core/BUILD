@@ -61,6 +61,27 @@ jasmine_node_test(
 )
 
 mediapipe_ts_library(
+    name = "mask",
+    srcs = ["mask.ts"],
+    deps = [":image"],
+)
+
+mediapipe_ts_library(
+    name = "mask_test_lib",
+    testonly = True,
+    srcs = ["mask.test.ts"],
+    deps = [
+        ":image",
+        ":mask",
+    ],
+)
+
+jasmine_node_test(
+    name = "mask_test",
+    deps = [":mask_test_lib"],
+)
+
+mediapipe_ts_library(
     name = "vision_task_runner",
     srcs = ["vision_task_runner.ts"],
     deps = [
