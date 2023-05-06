@@ -42,9 +42,9 @@ objc_library(
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
     ] + select({
-        ":opencv_ios_sim_arm64_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
-        ":opencv_ios_arm64_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
-        ":opencv_ios_x86_64_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
+        "//third_party:opencv_ios_sim_arm64_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
+        "//third_party:opencv_ios_arm64_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
+        "//third_party:opencv_ios_x86_64_source_build" : ["@ios_opencv_source//:opencv_xcframework"],
         "//conditions:default": ["@ios_opencv//:OpencvFramework"],
     }),
 )
