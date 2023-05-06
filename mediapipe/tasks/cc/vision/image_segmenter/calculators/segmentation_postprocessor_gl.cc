@@ -188,7 +188,7 @@ void main() {
 // Special argmax shader for N=1 classes. We don't need to worry about softmax
 // activation (it is assumed softmax requires N > 1 classes), but this should
 // occur after SIGMOID activation if specified. Instead of a true argmax, we
-// simply use 0.5 as the cutoff, assigning 1 (foreground) or 0 (background)
+// simply use 0.5 as the cutoff, assigning 0 (foreground) or 255 (background)
 // based on whether the confidence value reaches this cutoff or not,
 // respectively.
 static constexpr char kArgmaxOneClassShader[] = R"(
@@ -199,12 +199,12 @@ uniform sampler2D input_texture;
 void main() {
   float input_val = texture2D(input_texture, sample_coordinate).x;
   // Category is just value rounded to nearest integer; then we map to either
-  // 0 or 1/255 accordingly. If the input has been activated properly, then the
+  // 0 or 1 accordingly. If the input has been activated properly, then the
   // values should always be in the range [0, 1]. But just in case it hasn't, to
   // avoid category overflow issues when the activation function is not properly
   // chosen, we add an extra clamp here, as performance hit is minimal.
-  float category = clamp(floor(input_val + 0.5), 0.0, 1.0);
-  gl_FragColor = vec4(category / 255.0, 0.0, 0.0, 1.0);
+  float category = clamp(floor(1.5 - input_val), 0.0, 1.0);
+  gl_FragColor = vec4(category, 0.0, 0.0, 1.0);
 })";
 
 // Softmax is in 3 steps:
