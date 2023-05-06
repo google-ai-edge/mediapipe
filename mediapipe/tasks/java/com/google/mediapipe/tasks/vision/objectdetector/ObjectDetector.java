@@ -39,6 +39,7 @@ import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -170,6 +171,13 @@ public final class ObjectDetector extends BaseVisionTaskApi {
         new OutputHandler.OutputPacketConverter<ObjectDetectionResult, MPImage>() {
           @Override
           public ObjectDetectionResult convertToTaskResult(List<Packet> packets) {
+            // If there is no object detected in the image, just returns empty lists.
+            if (packets.get(DETECTIONS_OUT_STREAM_INDEX).isEmpty()) {
+              return ObjectDetectionResult.create(
+                  new ArrayList<>(),
+                  BaseVisionTaskApi.generateResultTimestampMs(
+                      detectorOptions.runningMode(), packets.get(DETECTIONS_OUT_STREAM_INDEX)));
+            }
             return ObjectDetectionResult.create(
                 PacketGetter.getProtoVector(
                     packets.get(DETECTIONS_OUT_STREAM_INDEX), Detection.parser()),
