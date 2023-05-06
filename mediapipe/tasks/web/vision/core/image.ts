@@ -14,17 +14,10 @@
  * limitations under the License.
  */
 
-import {DefaultColorConverter} from '../../../../tasks/web/vision/core/image_converter';
 import {assertNotNull, MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 
 /** The underlying type of the image. */
 export enum MPImageType {
-  /** Represents the native `UInt8ClampedArray` type. */
-  UINT8_CLAMPED_ARRAY,
-  /**
-   * Represents the native `Float32Array` type. Values range from [0.0, 1.0].
-   */
-  FLOAT32_ARRAY,
   /** Represents the native `ImageData` type. */
   IMAGE_DATA,
   /** Represents the native `ImageBitmap` type. */
@@ -34,75 +27,7 @@ export enum MPImageType {
 }
 
 /** The supported image formats. For internal usage. */
-export type MPImageContainer =
-    Uint8ClampedArray|Float32Array|ImageData|ImageBitmap|WebGLTexture;
-
-/** A four channel color with a red, green, blue and alpha values. */
-export type RGBAColor = [number, number, number, number];
-
-/**
- * An interface that can be used to provide custom conversion functions. These
- * functions are invoked to convert pixel values between different channel
- * counts and value ranges. Any conversion function that is not specified will
- * result in a default conversion.
- */
-export interface MPImageChannelConverter {
-  /**
-   * A conversion function to convert a number in the [0.0, 1.0] range to RGBA.
-   * The output is an array with four elemeents whose values range from 0 to 255
-   * inclusive.
-   *
-   * The default conversion function is `[v * 255, v * 255, v * 255, 255]`
-   * and will log a warning if invoked.
-   */
-  floatToRGBAConverter?: (value: number) => RGBAColor;
-
-  /*
-   * A conversion function to convert a number in the [0, 255] range to RGBA.
-   * The output is an array with four elemeents whose values range from 0 to 255
-   * inclusive.
-   *
-   * The default conversion function is `[v, v , v , 255]` and will log a
-   * warning if invoked.
-   */
-  uint8ToRGBAConverter?: (value: number) => RGBAColor;
-
-  /**
-   * A conversion function to convert an RGBA value in the range of 0 to 255 to
-   * a single value in the [0.0, 1.0] range.
-   *
-   * The default conversion function is `(r / 3 + g / 3 + b / 3) / 255` and will
-   * log a warning if invoked.
-   */
-  rgbaToFloatConverter?: (r: number, g: number, b: number, a: number) => number;
-
-  /**
-   * A conversion function to convert an RGBA value in the range of 0 to 255 to
-   * a single value in the [0, 255] range.
-   *
-   * The default conversion function is `r / 3 + g / 3 + b / 3` and will log a
-   * warning if invoked.
-   */
-  rgbaToUint8Converter?: (r: number, g: number, b: number, a: number) => number;
-
-  /**
-   * A conversion function to convert a single value in the 0.0 to 1.0 range to
-   * [0, 255].
-   *
-   * The default conversion function is `r * 255` and will log a warning if
-   * invoked.
-   */
-  floatToUint8Converter?: (value: number) => number;
-
-  /**
-   * A conversion function to convert a single value in the 0 to 255 range to
-   * [0.0, 1.0] .
-   *
-   * The default conversion function is `r / 255` and will log a warning if
-   * invoked.
-   */
-  uint8ToFloatConverter?: (value: number) => number;
-}
+export type MPImageContainer = ImageData|ImageBitmap|WebGLTexture;
 
 /**
  * The wrapper class for MediaPipe Image objects.
@@ -123,14 +48,6 @@ export interface MPImageChannelConverter {
  * initialized with an `OffscreenCanvas`. As we require WebGL2 support, this
  * places some limitations on Browser support as outlined here:
  * https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas/getContext
- *
- * Some MediaPipe tasks return single channel masks. These masks are stored
- * using an underlying `Uint8ClampedArray` an `Float32Array` (represented as
- * single-channel arrays). To convert these type to other formats a conversion
- * function is invoked to convert pixel values between single channel and four
- * channel RGBA values. To customize this conversion, you can specify these
- * conversion functions when you invoke `get()`. If you use the default
- * conversion function a warning will be logged to the console.
  */
 export class MPImage {
   private gl?: WebGL2RenderingContext;
@@ -162,52 +79,17 @@ export class MPImage {
   }
 
   /**
-   * Returns the underlying image as a single channel `Uint8ClampedArray`. Note
-   * that this involves an expensive GPU to CPU transfer if the current image is
-   * only available as an `ImageBitmap` or `WebGLTexture`. If necessary, this
-   * function converts RGBA data pixel-by-pixel to a single channel value by
-   * invoking a conversion function (see class comment for detail).
-   *
-   * @param type The type of image to return.
-   * @param converter A set of conversion functions that will be invoked to
-   *     convert the underlying pixel data if necessary. You may omit this
-   *     function if the requested conversion does not change the pixel format.
-   * @return The current data as a Uint8ClampedArray.
-   */
-  get(type: MPImageType.UINT8_CLAMPED_ARRAY,
-      converter?: MPImageChannelConverter): Uint8ClampedArray;
-  /**
-   * Returns the underlying image as a single channel `Float32Array`. Note
-   * that this involves an expensive GPU to CPU transfer if the current image is
-   * only available as an `ImageBitmap` or `WebGLTexture`. If necessary, this
-   * function converts RGBA data pixel-by-pixel to a single channel value by
-   * invoking a conversion function (see class comment for detail).
-   *
-   * @param type The type of image to return.
-   * @param converter A set of conversion functions that will be invoked to
-   *     convert the underlying pixel data if necessary. You may omit this
-   *     function if the requested conversion does not change the pixel format.
-   * @return The current image as a Float32Array.
-   */
-  get(type: MPImageType.FLOAT32_ARRAY,
-      converter?: MPImageChannelConverter): Float32Array;
-  /**
    * Returns the underlying image as an `ImageData` object. Note that this
    * involves an expensive GPU to CPU transfer if the current image is only
-   * available as an `ImageBitmap` or `WebGLTexture`. If necessary, this
-   * function converts single channel pixel values to RGBA by invoking a
-   * conversion function (see class comment for detail).
+   * available as an `ImageBitmap` or `WebGLTexture`.
    *
    * @return The current image as an ImageData object.
    */
-  get(type: MPImageType.IMAGE_DATA,
-      converter?: MPImageChannelConverter): ImageData;
+  get(type: MPImageType.IMAGE_DATA): ImageData;
   /**
    * Returns the underlying image as an `ImageBitmap`. Note that
    * conversions to `ImageBitmap` are expensive, especially if the data
-   * currently resides on CPU. If necessary, this function first converts single
-   * channel pixel values to RGBA by invoking a conversion function (see class
-   * comment for detail).
+   * currently resides on CPU.
    *
    * Processing with `ImageBitmap`s requires that the MediaPipe Task was
    * initialized with an `OffscreenCanvas` with WebGL2 support. See
@@ -215,13 +97,9 @@ export class MPImage {
    * for a list of supported platforms.
    *
    * @param type The type of image to return.
-   * @param converter A set of conversion functions that will be invoked to
-   *     convert the underlying pixel data if necessary. You may omit this
-   *     function if the requested conversion does not change the pixel format.
    * @return The current image as an ImageBitmap object.
    */
-  get(type: MPImageType.IMAGE_BITMAP,
-      converter?: MPImageChannelConverter): ImageBitmap;
+  get(type: MPImageType.IMAGE_BITMAP): ImageBitmap;
   /**
    * Returns the underlying image as a `WebGLTexture` object. Note that this
    * involves a CPU to GPU transfer if the current image is only available as
@@ -229,36 +107,21 @@ export class MPImage {
    * canvas (see `.canvas`).
    *
    * @param type The type of image to return.
-   * @param converter A set of conversion functions that will be invoked to
-   *     convert the underlying pixel data if necessary. You may omit this
-   *     function if the requested conversion does not change the pixel format.
    * @return The current image as a WebGLTexture.
    */
-  get(type: MPImageType.WEBGL_TEXTURE,
-      converter?: MPImageChannelConverter): WebGLTexture;
-  get(type?: MPImageType,
-      converter?: MPImageChannelConverter): MPImageContainer {
-    const internalConverter = new DefaultColorConverter(converter ?? {});
+  get(type: MPImageType.WEBGL_TEXTURE): WebGLTexture;
+  get(type?: MPImageType): MPImageContainer {
     switch (type) {
-      case MPImageType.UINT8_CLAMPED_ARRAY:
-        return this.convertToUint8ClampedArray(internalConverter);
-      case MPImageType.FLOAT32_ARRAY:
-        return this.convertToFloat32Array(internalConverter);
       case MPImageType.IMAGE_DATA:
-        return this.convertToImageData(internalConverter);
+        return this.convertToImageData();
       case MPImageType.IMAGE_BITMAP:
-        return this.convertToImageBitmap(internalConverter);
+        return this.convertToImageBitmap();
       case MPImageType.WEBGL_TEXTURE:
-        return this.convertToWebGLTexture(internalConverter);
+        return this.convertToWebGLTexture();
       default:
         throw new Error(`Type is not supported: ${type}`);
     }
   }
-
-
-  private getContainer(type: MPImageType.UINT8_CLAMPED_ARRAY): Uint8ClampedArray
-      |undefined;
-  private getContainer(type: MPImageType.FLOAT32_ARRAY): Float32Array|undefined;
   private getContainer(type: MPImageType.IMAGE_DATA): ImageData|undefined;
   private getContainer(type: MPImageType.IMAGE_BITMAP): ImageBitmap|undefined;
   private getContainer(type: MPImageType.WEBGL_TEXTURE): WebGLTexture|undefined;
@@ -266,10 +129,6 @@ export class MPImage {
   /** Returns the container for the requested storage type iff it exists. */
   private getContainer(type: MPImageType): MPImageContainer|undefined {
     switch (type) {
-      case MPImageType.UINT8_CLAMPED_ARRAY:
-        return this.containers.find(img => img instanceof Uint8ClampedArray);
-      case MPImageType.FLOAT32_ARRAY:
-        return this.containers.find(img => img instanceof Float32Array);
       case MPImageType.IMAGE_DATA:
         return this.containers.find(img => img instanceof ImageData);
       case MPImageType.IMAGE_BITMAP:
@@ -300,11 +159,7 @@ export class MPImage {
     for (const container of this.containers) {
       let destinationContainer: MPImageContainer;
 
-      if (container instanceof Uint8ClampedArray) {
-        destinationContainer = new Uint8ClampedArray(container);
-      } else if (container instanceof Float32Array) {
-        destinationContainer = new Float32Array(container);
-      } else if (container instanceof ImageData) {
+      if (container instanceof ImageData) {
         destinationContainer =
             new ImageData(container.data, this.width, this.height);
       } else if (container instanceof WebGLTexture) {
@@ -333,7 +188,7 @@ export class MPImage {
 
         this.unbindTexture();
       } else if (container instanceof ImageBitmap) {
-        this.convertToWebGLTexture(new DefaultColorConverter({}));
+        this.convertToWebGLTexture();
         this.bindTexture();
         destinationContainer = this.copyTextureToBitmap();
         this.unbindTexture();
@@ -381,11 +236,10 @@ export class MPImage {
     return this.shaderContext;
   }
 
-  private convertToImageBitmap(converter: Required<MPImageChannelConverter>):
-      ImageBitmap {
+  private convertToImageBitmap(): ImageBitmap {
     let imageBitmap = this.getContainer(MPImageType.IMAGE_BITMAP);
     if (!imageBitmap) {
-      this.convertToWebGLTexture(converter);
+      this.convertToWebGLTexture();
       imageBitmap = this.convertWebGLTextureToImageBitmap();
       this.containers.push(imageBitmap);
       this.ownsImageBitmap = true;
@@ -394,43 +248,17 @@ export class MPImage {
     return imageBitmap;
   }
 
-  private convertToImageData(converter: Required<MPImageChannelConverter>):
-      ImageData {
+  private convertToImageData(): ImageData {
     let imageData = this.getContainer(MPImageType.IMAGE_DATA);
     if (!imageData) {
-      if (this.has(MPImageType.UINT8_CLAMPED_ARRAY)) {
-        const source = this.getContainer(MPImageType.UINT8_CLAMPED_ARRAY)!;
-        const destination = new Uint8ClampedArray(this.width * this.height * 4);
-        for (let i = 0; i < this.width * this.height; i++) {
-          const rgba = converter.uint8ToRGBAConverter(source[i]);
-          destination[i * 4] = rgba[0];
-          destination[i * 4 + 1] = rgba[1];
-          destination[i * 4 + 2] = rgba[2];
-          destination[i * 4 + 3] = rgba[3];
-        }
-        imageData = new ImageData(destination, this.width, this.height);
-        this.containers.push(imageData);
-      } else if (this.has(MPImageType.FLOAT32_ARRAY)) {
-        const source = this.getContainer(MPImageType.FLOAT32_ARRAY)!;
-        const destination = new Uint8ClampedArray(this.width * this.height * 4);
-        for (let i = 0; i < this.width * this.height; i++) {
-          const rgba = converter.floatToRGBAConverter(source[i]);
-          destination[i * 4] = rgba[0];
-          destination[i * 4 + 1] = rgba[1];
-          destination[i * 4 + 2] = rgba[2];
-          destination[i * 4 + 3] = rgba[3];
-        }
-        imageData = new ImageData(destination, this.width, this.height);
-        this.containers.push(imageData);
-      } else if (
-          this.has(MPImageType.IMAGE_BITMAP) ||
+      if (this.has(MPImageType.IMAGE_BITMAP) ||
           this.has(MPImageType.WEBGL_TEXTURE)) {
         const gl = this.getGL();
         const shaderContext = this.getShaderContext();
         const pixels = new Uint8Array(this.width * this.height * 4);
 
         // Create texture if needed
-        const webGlTexture = this.convertToWebGLTexture(converter);
+        const webGlTexture = this.convertToWebGLTexture();
 
         // Create a framebuffer from the texture and read back pixels
         shaderContext.bindFramebuffer(gl, webGlTexture);
@@ -449,60 +277,13 @@ export class MPImage {
     return imageData;
   }
 
-  private convertToUint8ClampedArray(
-      converter: Required<MPImageChannelConverter>): Uint8ClampedArray {
-    let uint8ClampedArray = this.getContainer(MPImageType.UINT8_CLAMPED_ARRAY);
-    if (!uint8ClampedArray) {
-      if (this.has(MPImageType.FLOAT32_ARRAY)) {
-        const source = this.getContainer(MPImageType.FLOAT32_ARRAY)!;
-        uint8ClampedArray = new Uint8ClampedArray(
-            source.map(v => converter.floatToUint8Converter(v)));
-      } else {
-        const source = this.convertToImageData(converter).data;
-        uint8ClampedArray = new Uint8ClampedArray(this.width * this.height);
-        for (let i = 0; i < this.width * this.height; i++) {
-          uint8ClampedArray[i] = converter.rgbaToUint8Converter(
-              source[i * 4], source[i * 4 + 1], source[i * 4 + 2],
-              source[i * 4 + 3]);
-        }
-      }
-      this.containers.push(uint8ClampedArray);
-    }
-
-    return uint8ClampedArray;
-  }
-
-  private convertToFloat32Array(converter: Required<MPImageChannelConverter>):
-      Float32Array {
-    let float32Array = this.getContainer(MPImageType.FLOAT32_ARRAY);
-    if (!float32Array) {
-      if (this.has(MPImageType.UINT8_CLAMPED_ARRAY)) {
-        const source = this.getContainer(MPImageType.UINT8_CLAMPED_ARRAY)!;
-        float32Array = new Float32Array(source).map(
-            v => converter.uint8ToFloatConverter(v));
-      } else {
-        const source = this.convertToImageData(converter).data;
-        float32Array = new Float32Array(this.width * this.height);
-        for (let i = 0; i < this.width * this.height; i++) {
-          float32Array[i] = converter.rgbaToFloatConverter(
-              source[i * 4], source[i * 4 + 1], source[i * 4 + 2],
-              source[i * 4 + 3]);
-        }
-      }
-      this.containers.push(float32Array);
-    }
-
-    return float32Array;
-  }
-
-  private convertToWebGLTexture(converter: Required<MPImageChannelConverter>):
-      WebGLTexture {
+  private convertToWebGLTexture(): WebGLTexture {
     let webGLTexture = this.getContainer(MPImageType.WEBGL_TEXTURE);
     if (!webGLTexture) {
       const gl = this.getGL();
       webGLTexture = this.bindTexture();
       const source = this.getContainer(MPImageType.IMAGE_BITMAP) ||
-          this.convertToImageData(converter);
+          this.convertToImageData();
       gl.texImage2D(
           gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
       this.unbindTexture();
