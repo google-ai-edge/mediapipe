@@ -19,7 +19,6 @@ import 'jasmine';
 // Placeholder for internal dependency on encodeByteArray
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph, verifyListenersRegistered} from '../../../../tasks/web/core/task_runner_test_utils';
-import {MPImage} from '../../../../tasks/web/vision/core/image';
 import {WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
 
 import {FaceStylizer} from './face_stylizer';
@@ -117,7 +116,7 @@ describe('FaceStylizer', () => {
     const image = faceStylizer.stylize({} as HTMLImageElement);
     expect(faceStylizer.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
     expect(image).not.toBeNull();
-    expect(image!.has(MPImage.TYPE.IMAGE_DATA)).toBeTrue();
+    expect(image!.hasImageData()).toBeTrue();
     expect(image!.width).toEqual(1);
     expect(image!.height).toEqual(1);
     image!.close();
@@ -142,7 +141,7 @@ describe('FaceStylizer', () => {
     faceStylizer.stylize({} as HTMLImageElement, image => {
       expect(faceStylizer.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
       expect(image).not.toBeNull();
-      expect(image!.has(MPImage.TYPE.IMAGE_DATA)).toBeTrue();
+      expect(image!.hasImageData()).toBeTrue();
       expect(image!.width).toEqual(1);
       expect(image!.height).toEqual(1);
       done();

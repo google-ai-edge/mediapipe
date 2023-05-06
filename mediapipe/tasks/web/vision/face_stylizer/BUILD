@@ -47,7 +47,6 @@ mediapipe_ts_library(
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner_test_utils",
-        "//mediapipe/tasks/web/vision/core:image",
         "//mediapipe/web/graph_runner:graph_runner_image_lib_ts",
     ],
 )

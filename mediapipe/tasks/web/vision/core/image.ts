@@ -17,7 +17,7 @@
 import {assertNotNull, MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 
 /** The underlying type of the image. */
-export enum MPImageType {
+enum MPImageType {
   /** Represents the native `ImageData` type. */
   IMAGE_DATA,
   /** Represents the native `ImageBitmap` type. */
@@ -34,9 +34,9 @@ export type MPImageContainer = ImageData|ImageBitmap|WebGLTexture;
  *
  * Images are stored as `ImageData`, `ImageBitmap` or `WebGLTexture` objects.
  * You can convert the underlying type to any other type by passing the
- * desired type to `get()`. As type conversions can be expensive, it is
+ * desired type to `getAs...()`. As type conversions can be expensive, it is
  * recommended to limit these conversions. You can verify what underlying
- * types are already available by invoking `has()`.
+ * types are already available by invoking `has...()`.
  *
  * Images that are returned from a MediaPipe Tasks are owned by by the
  * underlying C++ Task. If you need to extend the lifetime of these objects,
@@ -52,9 +52,6 @@ export type MPImageContainer = ImageData|ImageBitmap|WebGLTexture;
 export class MPImage {
   private gl?: WebGL2RenderingContext;
 
-  /** The underlying type of the image. */
-  static TYPE = MPImageType;
-
   /** @hideconstructor */
   constructor(
       private readonly containers: MPImageContainer[],
@@ -69,13 +66,19 @@ export class MPImage {
       readonly height: number,
   ) {}
 
-  /**
-   * Returns whether this `MPImage` stores the image in the desired format.
-   * This method can be called to reduce expensive conversion before invoking
-   * `get()`.
-   */
-  has(type: MPImageType): boolean {
-    return !!this.getContainer(type);
+  /** Returns whether this `MPImage` contains a mask of type `ImageData`. */
+  hasImageData(): boolean {
+    return !!this.getContainer(MPImageType.IMAGE_DATA);
+  }
+
+  /** Returns whether this `MPImage` contains a mask of type `ImageBitmap`. */
+  hasImageBitmap(): boolean {
+    return !!this.getContainer(MPImageType.IMAGE_BITMAP);
+  }
+
+  /** Returns whether this `MPImage` contains a mask of type `WebGLTexture`. */
+  hasWebGLTexture(): boolean {
+    return !!this.getContainer(MPImageType.WEBGL_TEXTURE);
   }
 
   /**
@@ -85,7 +88,10 @@ export class MPImage {
    *
    * @return The current image as an ImageData object.
    */
-  get(type: MPImageType.IMAGE_DATA): ImageData;
+  getAsImageData(): ImageData {
+    return this.convertToImageData();
+  }
+
   /**
    * Returns the underlying image as an `ImageBitmap`. Note that
    * conversions to `ImageBitmap` are expensive, especially if the data
@@ -96,32 +102,24 @@ export class MPImage {
    * https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas/getContext
    * for a list of supported platforms.
    *
-   * @param type The type of image to return.
    * @return The current image as an ImageBitmap object.
    */
-  get(type: MPImageType.IMAGE_BITMAP): ImageBitmap;
+  getAsImageBitmap(): ImageBitmap {
+    return this.convertToImageBitmap();
+  }
+
   /**
    * Returns the underlying image as a `WebGLTexture` object. Note that this
    * involves a CPU to GPU transfer if the current image is only available as
    * an `ImageData` object. The returned texture is bound to the current
    * canvas (see `.canvas`).
    *
-   * @param type The type of image to return.
    * @return The current image as a WebGLTexture.
    */
-  get(type: MPImageType.WEBGL_TEXTURE): WebGLTexture;
-  get(type?: MPImageType): MPImageContainer {
-    switch (type) {
-      case MPImageType.IMAGE_DATA:
-        return this.convertToImageData();
-      case MPImageType.IMAGE_BITMAP:
-        return this.convertToImageBitmap();
-      case MPImageType.WEBGL_TEXTURE:
-        return this.convertToWebGLTexture();
-      default:
-        throw new Error(`Type is not supported: ${type}`);
-    }
+  getAsWebGLTexture(): WebGLTexture {
+    return this.convertToWebGLTexture();
   }
+
   private getContainer(type: MPImageType.IMAGE_DATA): ImageData|undefined;
   private getContainer(type: MPImageType.IMAGE_BITMAP): ImageBitmap|undefined;
   private getContainer(type: MPImageType.WEBGL_TEXTURE): WebGLTexture|undefined;
@@ -200,9 +198,8 @@ export class MPImage {
     }
 
     return new MPImage(
-        destinationContainers, this.has(MPImageType.IMAGE_BITMAP),
-        this.has(MPImageType.WEBGL_TEXTURE), this.canvas, this.shaderContext,
-        this.width, this.height);
+        destinationContainers, this.hasImageBitmap(), this.hasWebGLTexture(),
+        this.canvas, this.shaderContext, this.width, this.height);
   }
 
   private getOffscreenCanvas(): OffscreenCanvas {
@@ -251,27 +248,22 @@ export class MPImage {
   private convertToImageData(): ImageData {
     let imageData = this.getContainer(MPImageType.IMAGE_DATA);
     if (!imageData) {
-      if (this.has(MPImageType.IMAGE_BITMAP) ||
-          this.has(MPImageType.WEBGL_TEXTURE)) {
-        const gl = this.getGL();
-        const shaderContext = this.getShaderContext();
-        const pixels = new Uint8Array(this.width * this.height * 4);
+      const gl = this.getGL();
+      const shaderContext = this.getShaderContext();
+      const pixels = new Uint8Array(this.width * this.height * 4);
 
-        // Create texture if needed
-        const webGlTexture = this.convertToWebGLTexture();
+      // Create texture if needed
+      const webGlTexture = this.convertToWebGLTexture();
 
-        // Create a framebuffer from the texture and read back pixels
-        shaderContext.bindFramebuffer(gl, webGlTexture);
-        gl.readPixels(
-            0, 0, this.width, this.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-        shaderContext.unbindFramebuffer();
+      // Create a framebuffer from the texture and read back pixels
+      shaderContext.bindFramebuffer(gl, webGlTexture);
+      gl.readPixels(
+          0, 0, this.width, this.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+      shaderContext.unbindFramebuffer();
 
-        imageData = new ImageData(
-            new Uint8ClampedArray(pixels.buffer), this.width, this.height);
-        this.containers.push(imageData);
-      } else {
-        throw new Error('Couldn\t find backing image for ImageData conversion');
-      }
+      imageData = new ImageData(
+          new Uint8ClampedArray(pixels.buffer), this.width, this.height);
+      this.containers.push(imageData);
     }
 
     return imageData;

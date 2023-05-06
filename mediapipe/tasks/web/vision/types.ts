@@ -16,7 +16,7 @@
 
 export * from '../../../tasks/web/core/fileset_resolver';
 export * from '../../../tasks/web/vision/core/drawing_utils';
-export {MPImage, MPImageType} from '../../../tasks/web/vision/core/image';
+export {MPImage} from '../../../tasks/web/vision/core/image';
 export {MPMask, MPMaskType} from '../../../tasks/web/vision/core/mask';
 export * from '../../../tasks/web/vision/face_detector/face_detector';
 export * from '../../../tasks/web/vision/face_landmarker/face_landmarker';
