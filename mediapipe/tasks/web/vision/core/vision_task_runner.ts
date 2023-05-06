@@ -59,11 +59,6 @@ export abstract class VisionTaskRunner extends TaskRunner {
   protected static async createVisionInstance<T extends VisionTaskRunner>(
       type: WasmMediaPipeConstructor<T>, fileset: WasmFileset,
       options: VisionTaskOptions): Promise<T> {
-    if (options.baseOptions?.delegate === 'GPU') {
-      if (!options.canvas) {
-        throw new Error('You must specify a canvas for GPU processing.');
-      }
-    }
     const canvas = options.canvas ?? createCanvas();
     return TaskRunner.createInstance(type, canvas, fileset, options);
   }
