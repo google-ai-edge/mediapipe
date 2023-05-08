@@ -163,12 +163,12 @@ cc_library(
     hdrs = ["annotation_renderer.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":color_cc_proto",
         ":render_data_cc_proto",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:vector",
-        "//mediapipe/util:color_cc_proto",
     ],
 )
 
