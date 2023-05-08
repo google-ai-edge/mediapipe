@@ -52,7 +52,6 @@ NS_SWIFT_NAME(ObjectDetectorLiveStreamDelegate)
  * image was sent to the object detector.
  * @param error An optional error parameter populated when there is an error in performing object
  * detection on the input live stream image data.
- *
  */
 - (void)objectDetector:(MPPObjectDetector *)objectDetector
     didFinishDetectionWithResult:(nullable MPPObjectDetectionResult *)result
