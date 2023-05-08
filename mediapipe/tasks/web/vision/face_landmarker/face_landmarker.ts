@@ -33,10 +33,10 @@ import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner
 
 import {FaceLandmarkerOptions} from './face_landmarker_options';
 import {FaceLandmarkerResult} from './face_landmarker_result';
+import {FACE_LANDMARKS_CONTOURS, FACE_LANDMARKS_FACE_OVAL, FACE_LANDMARKS_LEFT_EYE, FACE_LANDMARKS_LEFT_EYEBROW, FACE_LANDMARKS_LEFT_IRIS, FACE_LANDMARKS_LIPS, FACE_LANDMARKS_RIGHT_EYE, FACE_LANDMARKS_RIGHT_EYEBROW, FACE_LANDMARKS_RIGHT_IRIS, FACE_LANDMARKS_TESSELATION} from './face_landmarks_connections';
 
 export * from './face_landmarker_options';
 export * from './face_landmarker_result';
-export * from './face_landmarks_connections';
 export {ImageSource};
 
 // The OSS JS API does not support the builder pattern.
@@ -111,6 +111,43 @@ export class FaceLandmarker extends VisionTaskRunner {
     return VisionTaskRunner.createVisionInstance(
         FaceLandmarker, wasmFileset, {baseOptions: {modelAssetPath}});
   }
+
+  /** Landmark connections to draw the connection between a face's lips. */
+  static FACE_LANDMARKS_LIPS = FACE_LANDMARKS_LIPS;
+
+  /** Landmark connections to draw the connection between a face's left eye. */
+  static FACE_LANDMARKS_LEFT_EYE = FACE_LANDMARKS_LEFT_EYE;
+
+  /**
+   * Landmark connections to draw the connection between a face's left eyebrow.
+   */
+  static FACE_LANDMARKS_LEFT_EYEBROW = FACE_LANDMARKS_LEFT_EYEBROW;
+
+  /** Landmark connections to draw the connection between a face's left iris. */
+  static FACE_LANDMARKS_LEFT_IRIS = FACE_LANDMARKS_LEFT_IRIS;
+
+  /** Landmark connections to draw the connection between a face's right eye. */
+  static FACE_LANDMARKS_RIGHT_EYE = FACE_LANDMARKS_RIGHT_EYE;
+
+  /**
+   * Landmark connections to draw the connection between a face's right
+   * eyebrow.
+   */
+  static FACE_LANDMARKS_RIGHT_EYEBROW = FACE_LANDMARKS_RIGHT_EYEBROW;
+
+  /**
+   * Landmark connections to draw the connection between a face's right iris.
+   */
+  static FACE_LANDMARKS_RIGHT_IRIS = FACE_LANDMARKS_RIGHT_IRIS;
+
+  /** Landmark connections to draw the face's oval. */
+  static FACE_LANDMARKS_FACE_OVAL = FACE_LANDMARKS_FACE_OVAL;
+
+  /** Landmark connections to draw the face's contour. */
+  static FACE_LANDMARKS_CONTOURS = FACE_LANDMARKS_CONTOURS;
+
+  /** Landmark connections to draw the face's tesselation. */
+  static FACE_LANDMARKS_TESSELATION = FACE_LANDMARKS_TESSELATION;
 
   /** @hideconstructor */
   constructor(

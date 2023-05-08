@@ -19,7 +19,7 @@ import {DrawingUtils as DrawingUtilsImpl} from '../../../tasks/web/vision/core/d
 import {MPImage as MPImageImpl} from '../../../tasks/web/vision/core/image';
 import {MPMask as MPMaskImpl} from '../../../tasks/web/vision/core/mask';
 import {FaceDetector as FaceDetectorImpl} from '../../../tasks/web/vision/face_detector/face_detector';
-import {FaceLandmarker as FaceLandmarkerImpl, FaceLandmarksConnections as FaceLandmarksConnectionsImpl} from '../../../tasks/web/vision/face_landmarker/face_landmarker';
+import {FaceLandmarker as FaceLandmarkerImpl} from '../../../tasks/web/vision/face_landmarker/face_landmarker';
 import {FaceStylizer as FaceStylizerImpl} from '../../../tasks/web/vision/face_stylizer/face_stylizer';
 import {GestureRecognizer as GestureRecognizerImpl} from '../../../tasks/web/vision/gesture_recognizer/gesture_recognizer';
 import {HandLandmarker as HandLandmarkerImpl} from '../../../tasks/web/vision/hand_landmarker/hand_landmarker';
@@ -38,7 +38,6 @@ const MPImage = MPImageImpl;
 const MPMask = MPMaskImpl;
 const FaceDetector = FaceDetectorImpl;
 const FaceLandmarker = FaceLandmarkerImpl;
-const FaceLandmarksConnections = FaceLandmarksConnectionsImpl;
 const FaceStylizer = FaceStylizerImpl;
 const GestureRecognizer = GestureRecognizerImpl;
 const HandLandmarker = HandLandmarkerImpl;
@@ -56,7 +55,6 @@ export {
   MPMask,
   FaceDetector,
   FaceLandmarker,
-  FaceLandmarksConnections,
   FaceStylizer,
   GestureRecognizer,
   HandLandmarker,
