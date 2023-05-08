@@ -244,7 +244,7 @@ NS_SWIFT_NAME(ImageClassifier)
  * specified region of interest.. Rotation will be applied according to the `orientation` property
  * of the provided `MPPImage`. Only use this method when the `MPPImageClassifier` is created with
  * `MPPRunningModeLiveStream`.
- * 
+ *
  * The object which needs to be continuously notified of the available results of image
  * classification must confirm to `MPPImageClassifierLiveStreamDelegate` protocol and implement the
  * `imageClassifier:didFinishClassificationWithResult:timestampInMilliseconds:error:` delegate
@@ -252,7 +252,7 @@ NS_SWIFT_NAME(ImageClassifier)
  *
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
  * to the image classifier. The input timestamps must be monotonically increasing.
- * 
+ *
  * This method supports classification of RGBA images. If your `MPPImage` has a source type of
  * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
  * must have one of the following pixel format types:
