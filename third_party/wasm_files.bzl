@@ -12,72 +12,72 @@ def wasm_files():
 
     http_file(
         name = "com_google_mediapipe_wasm_audio_wasm_internal_js",
-        sha256 = "1c555ecdb8faffca703d191626a6830e56fd0ab996d8837d7240d50098cc3109",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/audio_wasm_internal.js?generation=1682632113236604"],
+        sha256 = "b07bf0eda990b19c48f2b51c358bb281f40a7c3002f50f16986fe96f68103ac1",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/audio_wasm_internal.js?generation=1683564589395847"],
     )
 
     http_file(
         name = "com_google_mediapipe_wasm_audio_wasm_internal_wasm",
-        sha256 = "aee8e7832b876a32a323f26b9f45002d2cc9d9e25db109ae360ec57fb3ed0c2e",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/audio_wasm_internal.wasm?generation=1682632115959200"],
+        sha256 = "725fa5d13fdce79beaccb287b24d79d32e7bfb40f2cc51ef7f26a8dd8dec993c",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/audio_wasm_internal.wasm?generation=1683564592604733"],
     )
 
     http_file(
         name = "com_google_mediapipe_wasm_audio_wasm_nosimd_internal_js",
-        sha256 = "73df132f8d6ba62a406f120c514700e5a65d69a114e86de11dc9759024eedd7c",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/audio_wasm_nosimd_internal.js?generation=1682632118022450"],
+        sha256 = "f2917690317ae381782c8f4fb17d40f7d0b8e340fb490a604a37959ecee637c8",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/audio_wasm_nosimd_internal.js?generation=1683564595399509"],
     )
 
     http_file(
         name = "com_google_mediapipe_wasm_audio_wasm_nosimd_internal_wasm",
-        sha256 = "7a4400c0b16f768161574b2ce512179e0afc4f8aa313232db7a4b7c572de2abb",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/audio_wasm_nosimd_internal.wasm?generation=1682632120654892"],
+        sha256 = "908f6ce2420b5e88770b61b20b200cb3cd62a1c727cf0a134aa645351eaa1350",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/audio_wasm_nosimd_internal.wasm?generation=1683564598602444"],
     )
 
     http_file(
         name = "com_google_mediapipe_wasm_text_wasm_internal_js",
-        sha256 = "18ffadd94fa7844a106b2a9197f8258c39e601f99f01945c543fc0d879baad7f",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/text_wasm_internal.js?generation=1682632123000744"],
+        sha256 = "64c4a3927e732b99473b072228130b922427b2aba16d64863579928df16a7946",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/text_wasm_internal.js?generation=1683564601486513"],
     )
 
     http_file(
         name = "com_google_mediapipe_wasm_text_wasm_internal_wasm",
-        sha256 = "96591ca0b64da9b565554384306663f1067b0c0a823d7e856fa58b28b659405a",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/text_wasm_internal.wasm?generation=1682632125672531"],
+        sha256 = "c6e3027f4a7b1fd11d5ebbd8254f168636658e7a5d19a293e900f19497e48d5e",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/text_wasm_internal.wasm?generation=1683564604687320"],
     )
 
     http_file(
         name = "com_google_mediapipe_wasm_text_wasm_nosimd_internal_js",
-        sha256 = "668569cd80d6680c6e418ce42109d85151d6ec88ed06940206151585dba895df",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/text_wasm_nosimd_internal.js?generation=1682632128111024"],
+        sha256 = "af59aacaddc076ca9e4ea139d4f440b5b114576e72ab69e50f0f501e0e0c07e5",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/text_wasm_nosimd_internal.js?generation=1683564606939116"],
     )
 
     http_file(
         name = "com_google_mediapipe_wasm_text_wasm_nosimd_internal_wasm",
-        sha256 = "f548cfe74a77aa609b988c212e7a60aa2b078194c3eeda0a3d5802165c2b5fe7",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/text_wasm_nosimd_internal.wasm?generation=1682632130623184"],
+        sha256 = "d313497c003b6e00670664463fbbd9f5a2388946fe3d132c2794dd87cb91beb0",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/text_wasm_nosimd_internal.wasm?generation=1683564609634068"],
     )
 
     http_file(
         name = "com_google_mediapipe_wasm_vision_wasm_internal_js",
-        sha256 = "347d3ae5a947846431b6e8ea15966156b9cbf1a9ae800932954507b6c12c6ecf",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/vision_wasm_internal.js?generation=1682632132979491"],
+        sha256 = "efebf9d676d8828c31e7c0d9718c5c80de8a3de084e97aa3ea5472a5346c518e",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/vision_wasm_internal.js?generation=1683564611613681"],
     )
 
     http_file(
         name = "com_google_mediapipe_wasm_vision_wasm_internal_wasm",
-        sha256 = "849092df0b599e00d074f4d8c2d7ef16912061298d27e5748ccf353b0f93b168",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/vision_wasm_internal.wasm?generation=1682632135762121"],
+        sha256 = "0431b3bacfcb26d91d800450216b305b9378f4e063d78c2e85a944aba432e0dd",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/vision_wasm_internal.wasm?generation=1683564614567083"],
     )
 
     http_file(
         name = "com_google_mediapipe_wasm_vision_wasm_nosimd_internal_js",
-        sha256 = "7a130f5c20a320157d109a8aa767904df9717c24e77c99c4313a1716c3685e65",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/vision_wasm_nosimd_internal.js?generation=1682632137850608"],
+        sha256 = "e51fa49f60493d7122d26e6fcb45d4031a3247a05d83b3f62e5155653a89d8f8",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/vision_wasm_nosimd_internal.js?generation=1683564616879456"],
     )
 
     http_file(
         name = "com_google_mediapipe_wasm_vision_wasm_nosimd_internal_wasm",
-        sha256 = "c45e706965e0572b41e1518e6243e6dee0d6834e0ac81f49370951d23e52e387",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/vision_wasm_nosimd_internal.wasm?generation=1682632140714614"],
+        sha256 = "737830aab48e77ff5e6c1826f15801cfb2d68dbb622b3b39c3d7528334b73f94",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/wasm/vision_wasm_nosimd_internal.wasm?generation=1683564619390853"],
     )
