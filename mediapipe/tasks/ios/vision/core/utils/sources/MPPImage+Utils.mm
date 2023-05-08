@@ -162,6 +162,7 @@ using ::mediapipe::ImageFrame;
   OSType pixelBufferFormat = CVPixelBufferGetPixelFormatType(pixelBuffer);
 
   switch (pixelBufferFormat) {
+    case kCVPixelFormatType_32RGBA:
     case kCVPixelFormatType_32BGRA: {
       return [MPPCVPixelBufferUtils rgbImageFrameFromCVPixelBuffer:pixelBuffer error:error];
     }
@@ -169,7 +170,8 @@ using ::mediapipe::ImageFrame;
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInvalidArgumentError
                             description:@"Unsupported pixel format for CVPixelBuffer. Supported "
-                                        @"pixel format types are kCVPixelFormatType_32BGRA"];
+                                        @"pixel format types are kCVPixelFormatType_32BGRA and "
+                                        @"kCVPixelFormatType_32RGBA"];
     }
   }
 

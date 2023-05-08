@@ -58,6 +58,7 @@ objc_library(
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
         "//third_party/apple_frameworks:UIKit",
         "@com_google_absl//absl/status:statusor",
