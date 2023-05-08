@@ -55,7 +55,9 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
       base_options_proto.mutable_acceleration()->mutable_tflite();
       break;
     case BaseOptions::Delegate::GPU:
-      base_options_proto.mutable_acceleration()->mutable_gpu();
+      base_options_proto.mutable_acceleration()
+          ->mutable_gpu()
+          ->set_use_advanced_gpu_api(true);
       break;
     case BaseOptions::Delegate::EDGETPU_NNAPI:
       base_options_proto.mutable_acceleration()
