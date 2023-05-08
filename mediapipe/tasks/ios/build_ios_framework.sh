@@ -85,18 +85,6 @@ EOF
   echo ${OUTPUT_PATH}
 }
 
-# This function builds a target using the command passed in as argument and
-# uses cquery to find the path to the output of the target.
-function build_target {
-  # Build using the command passed as argument.
-  "${BAZEL}" build $1
-
-  # Get the path to the output file of the target.
-  local OUTPUT_PATH=$(get_output_file_path "$1")
-
-  echo ${OUTPUT_PATH}
-}
-
 # This function builds 3 the xcframework and associated graph libraries if any
 # for a given framework name.
 function build_ios_frameworks_and_libraries {
@@ -110,21 +98,24 @@ function build_ios_frameworks_and_libraries {
   # the order of a few MBs.
 
   # Build Task Library xcframework.
-  local FRAMEWORK_CQUERY_COMMAND="-c opt --apple_generate_dsym=false ${FULL_FRAMEWORK_TARGET}"
-  IOS_FRAMEWORK_PATH="$(build_target "${FRAMEWORK_CQUERY_COMMAND}")"
+  local FRAMEWORK_CQUERY_COMMAND="-c opt --apple_generate_dsym=false --define OPENCV=source ${FULL_FRAMEWORK_TARGET}"
+  ${BAZEL} build ${FRAMEWORK_CQUERY_COMMAND}
+  IOS_FRAMEWORK_PATH="$(get_output_file_path "${FRAMEWORK_CQUERY_COMMAND}")"
 
   # `MediaPipeTasksCommon` pods must also include the task graph libraries which
   # are to be force loaded. Hence the graph libraies are only built if the framework
   # name is `MediaPipeTasksCommon`.`
   case $FRAMEWORK_NAME in
     "MediaPipeTasksCommon")
-      local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --apple_generate_dsym=false //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
-      IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(build_target "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
+      local IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_sim_fat --apple_generate_dsym=false --define OPENCV=source //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
+      ${BAZEL} build ${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}
+      IOS_GRAPHS_SIMULATOR_LIBRARY_PATH="$(get_output_file_path "${IOS_SIM_FAT_LIBRARY_CQUERY_COMMAND}")"
 
       # Build static library for iOS devices with arch ios_arm64. We don't need to build for armv7 since
       # our deployment target is iOS 11.0. iOS 11.0 and upwards is not supported by old armv7 devices.
-      local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --apple_generate_dsym=false //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
-      IOS_GRAPHS_DEVICE_LIBRARY_PATH="$(build_target "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
+      local IOS_DEVICE_LIBRARY_CQUERY_COMMAND="-c opt --config=ios_arm64 --apple_generate_dsym=false --define OPENCV=source //mediapipe/tasks/ios:MediaPipeTaskGraphs_library"
+      ${BAZEL} build ${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}
+      IOS_GRAPHS_DEVICE_LIBRARY_PATH="$(get_output_file_path "${IOS_DEVICE_LIBRARY_CQUERY_COMMAND}")"
       ;;
     *)
     ;;

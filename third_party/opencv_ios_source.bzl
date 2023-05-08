@@ -27,11 +27,12 @@ _OPENCV_SIMULATOR_PLATFORM_DIR_NAME = "ios-arm64_x86_64-simulator"
 _OPENCV_DEVICE_PLATFORM_DIR_NAME = "ios-arm64"
 
 def _select_headers_impl(ctx):
+    # Should match with `/`. Othewise `ios-arm64` matches with `ios-arm64_x86-64`
     _files = [
         f
         for f in ctx.files.srcs
         if (f.basename.endswith(".h") or f.basename.endswith(".hpp")) and
-           f.dirname.find(ctx.attr.platform) != -1
+           f.dirname.find(ctx.attr.platform + "/") != -1
     ]
     return [DefaultInfo(files = depset(_files))]
 

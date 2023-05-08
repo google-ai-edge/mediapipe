@@ -18,9 +18,9 @@ load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 
 licenses(["notice"])  # Apache License 2.0
 
-exports_files(["LICENSE"])
-
 package(default_visibility = ["//visibility:public"])
+
+exports_files(["LICENSE"])
 
 cc_library(
     name = "glog",
@@ -104,7 +104,7 @@ config_setting(
     },
     values = {
         "apple_platform_type": "ios",
-        "ios_multi_cpus": "sim_arm64, x86_64",
+        "ios_multi_cpus": "sim_arm64,x86_64",
     },
 )
 
@@ -113,8 +113,8 @@ alias(
     actual = select({
         ":opencv_source_build": ":opencv_cmake",
         ":opencv_ios_sim_arm64_source_build": "@ios_opencv_source//:opencv",
-        ":opencv_ios_sim_fat_source_build": "@ios_opencv_source//:opencv",
         ":opencv_ios_arm64_source_build": "@ios_opencv_source//:opencv",
+        ":opencv_ios_x86_64_source_build": "@ios_opencv_source//:opencv",
         "//conditions:default": ":opencv_binary",
     }),
     visibility = ["//visibility:public"],
