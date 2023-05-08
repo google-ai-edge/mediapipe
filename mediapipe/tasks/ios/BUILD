@@ -34,13 +34,13 @@ licenses(["notice"])
 # 2. Task graphs. These will be built with ":MediaPipeTaskGraphs_library".
 # 3. gpu targets which will be built with the ":MediaPipeTaskGraphs_library".
 OBJC_COMMON_DEPS = [
-    "//mediapipe/tasks/ios/core/utils:MPPBaseOptions",
+    "//mediapipe/tasks/ios/core:MPPBaseOptions",
     "//mediapipe/tasks/ios/core:MPPTaskInfo",
     "//mediapipe/tasks/ios/core:MPPTaskOptions",
     "//mediapipe/tasks/ios/core:MPPTaskResult",
     "//mediapipe/tasks/ios/core:MPPTaskRunner",
-    "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResult",
-    "//mediapipe/tasks/ios/components/containers/utils:MPPCategory",
+    "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+    "//mediapipe/tasks/ios/components/containers:MPPCategory",
     "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
     "//mediapipe/calculators/core:flow_limiter_calculator",
     "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
@@ -204,9 +204,9 @@ apple_static_xcframework(
     },
     deps = [
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//mediapipe/tasks/ios/components/containers/utils:MPPCategory",
-        "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResult",
-        "//mediapipe/tasks/ios/core/utils:MPPBaseOptions",
+        "//mediapipe/tasks/ios/components/containers:MPPCategory",
+        "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+        "//mediapipe/tasks/ios/core:MPPBaseOptions",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
