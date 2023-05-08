@@ -24,8 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * This protocol defines an interface for the delegates of `MPPImageClassifier` object to receive
- * results of asynchronous classification of images
- * (i.e, when `runningMode = MPPRunningModeLiveStream`).
+ * results of asynchronous classification of images (i.e, when `runningMode =
+ * MPPRunningModeLiveStream`).
  *
  * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
@@ -48,7 +48,6 @@ NS_SWIFT_NAME(ImageClassifierLiveStreamDelegate)
  * image was sent to the image classifier.
  * @param error An optional error parameter populated when there is an error in performing image
  * classification on the input live stream image data.
- *
  */
 - (void)imageClassifier:(MPPImageClassifier *)imageClassifier
     didFinishClassificationWithResult:(nullable MPPImageClassifierResult *)result
