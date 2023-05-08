@@ -24,7 +24,7 @@
   return [NSString stringWithCString:text.c_str() encoding:[NSString defaultCStringEncoding]];
 }
 
-+ (NSString *)uuidString{
++ (NSString *)uuidString {
   return [[NSUUID UUID] UUIDString];
 }
 

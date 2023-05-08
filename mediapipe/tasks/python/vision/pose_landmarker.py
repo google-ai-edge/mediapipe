@@ -49,8 +49,6 @@ _NORM_LANDMARKS_STREAM_NAME = 'norm_landmarks'
 _NORM_LANDMARKS_TAG = 'NORM_LANDMARKS'
 _POSE_WORLD_LANDMARKS_STREAM_NAME = 'world_landmarks'
 _POSE_WORLD_LANDMARKS_TAG = 'WORLD_LANDMARKS'
-_POSE_AUXILIARY_LANDMARKS_STREAM_NAME = 'auxiliary_landmarks'
-_POSE_AUXILIARY_LANDMARKS_TAG = 'AUXILIARY_LANDMARKS'
 _TASK_GRAPH_NAME = 'mediapipe.tasks.vision.pose_landmarker.PoseLandmarkerGraph'
 _MICRO_SECONDS_PER_MILLISECOND = 1000
 
@@ -62,14 +60,11 @@ class PoseLandmarkerResult:
   Attributes:
     pose_landmarks: Detected pose landmarks in normalized image coordinates.
     pose_world_landmarks:  Detected pose landmarks in world coordinates.
-    pose_auxiliary_landmarks: Detected auxiliary landmarks, used for deriving
-      ROI for next frame.
     segmentation_masks: Optional segmentation masks for pose.
   """
 
   pose_landmarks: List[List[landmark_module.NormalizedLandmark]]
   pose_world_landmarks: List[List[landmark_module.Landmark]]
-  pose_auxiliary_landmarks: List[List[landmark_module.NormalizedLandmark]]
   segmentation_masks: Optional[List[image_module.Image]] = None
 
 
@@ -77,7 +72,7 @@ def _build_landmarker_result(
     output_packets: Mapping[str, packet_module.Packet]
 ) -> PoseLandmarkerResult:
   """Constructs a `PoseLandmarkerResult` from output packets."""
-  pose_landmarker_result = PoseLandmarkerResult([], [], [])
+  pose_landmarker_result = PoseLandmarkerResult([], [])
 
   if _SEGMENTATION_MASK_STREAM_NAME in output_packets:
     pose_landmarker_result.segmentation_masks = packet_getter.get_image_list(
@@ -89,9 +84,6 @@ def _build_landmarker_result(
   )
   pose_world_landmarks_proto_list = packet_getter.get_proto_list(
       output_packets[_POSE_WORLD_LANDMARKS_STREAM_NAME]
-  )
-  pose_auxiliary_landmarks_proto_list = packet_getter.get_proto_list(
-      output_packets[_POSE_AUXILIARY_LANDMARKS_STREAM_NAME]
   )
 
   for proto in pose_landmarks_proto_list:
@@ -116,19 +108,6 @@ def _build_landmarker_result(
         pose_world_landmarks_list
     )
 
-  for proto in pose_auxiliary_landmarks_proto_list:
-    pose_auxiliary_landmarks = landmark_pb2.NormalizedLandmarkList()
-    pose_auxiliary_landmarks.MergeFrom(proto)
-    pose_auxiliary_landmarks_list = []
-    for pose_auxiliary_landmark in pose_auxiliary_landmarks.landmark:
-      pose_auxiliary_landmarks_list.append(
-          landmark_module.NormalizedLandmark.create_from_pb2(
-              pose_auxiliary_landmark
-          )
-      )
-    pose_landmarker_result.pose_auxiliary_landmarks.append(
-        pose_auxiliary_landmarks_list
-    )
   return pose_landmarker_result
 
 
@@ -301,7 +280,7 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
       if output_packets[_NORM_LANDMARKS_STREAM_NAME].is_empty():
         empty_packet = output_packets[_NORM_LANDMARKS_STREAM_NAME]
         options.result_callback(
-            PoseLandmarkerResult([], [], []),
+            PoseLandmarkerResult([], []),
             image,
             empty_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
         )
@@ -320,10 +299,6 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
         ':'.join(
             [_POSE_WORLD_LANDMARKS_TAG, _POSE_WORLD_LANDMARKS_STREAM_NAME]
         ),
-        ':'.join([
-            _POSE_AUXILIARY_LANDMARKS_TAG,
-            _POSE_AUXILIARY_LANDMARKS_STREAM_NAME,
-        ]),
         ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
     ]
 
@@ -382,7 +357,7 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
     })
 
     if output_packets[_NORM_LANDMARKS_STREAM_NAME].is_empty():
-      return PoseLandmarkerResult([], [], [])
+      return PoseLandmarkerResult([], [])
 
     return _build_landmarker_result(output_packets)
 
@@ -427,7 +402,7 @@ class PoseLandmarker(base_vision_task_api.BaseVisionTaskApi):
     })
 
     if output_packets[_NORM_LANDMARKS_STREAM_NAME].is_empty():
-      return PoseLandmarkerResult([], [], [])
+      return PoseLandmarkerResult([], [])
 
     return _build_landmarker_result(output_packets)
 

@@ -106,7 +106,7 @@ class Dataset(classification_dataset.ClassificationDataset):
           ...
     Each <file0>.xml annotation file should have the following format:
       <annotation>
-        <filename>file0.jpg<filename>
+        <filename>file0.jpg</filename>
         <object>
           <name>kangaroo</name>
           <bndbox>
@@ -114,6 +114,7 @@ class Dataset(classification_dataset.ClassificationDataset):
             <ymin>89</ymin>
             <xmax>386</xmax>
             <ymax>262</ymax>
+          </bndbox>
         </object>
         <object>...</object>
       </annotation>

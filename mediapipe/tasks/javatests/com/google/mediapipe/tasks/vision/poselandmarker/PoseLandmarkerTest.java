@@ -330,7 +330,6 @@ public class PoseLandmarkerTest {
     return PoseLandmarkerResult.create(
         Arrays.asList(landmarksDetectionResultProto.getLandmarks()),
         Arrays.asList(landmarksDetectionResultProto.getWorldLandmarks()),
-        Arrays.asList(),
         Optional.empty(),
         /* timestampMs= */ 0);
   }

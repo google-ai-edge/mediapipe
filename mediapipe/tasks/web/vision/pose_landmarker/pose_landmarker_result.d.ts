@@ -16,7 +16,7 @@
 
 import {Category} from '../../../../tasks/web/components/containers/category';
 import {Landmark, NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
-import {MPImage} from '../../../../tasks/web/vision/core/image';
+import {MPMask} from '../../../../tasks/web/vision/core/mask';
 
 export {Category, Landmark, NormalizedLandmark};
 
@@ -26,14 +26,11 @@ export {Category, Landmark, NormalizedLandmark};
  */
 export declare interface PoseLandmarkerResult {
   /** Pose landmarks of detected poses. */
-  landmarks: NormalizedLandmark[];
+  landmarks: NormalizedLandmark[][];
 
   /** Pose landmarks in world coordinates of detected poses. */
-  worldLandmarks: Landmark[];
-
-  /** Detected auxiliary landmarks, used for deriving ROI for next frame. */
-  auxilaryLandmarks: NormalizedLandmark[];
+  worldLandmarks: Landmark[][];
 
   /** Segmentation mask for the detected pose. */
-  segmentationMasks?: MPImage[];
+  segmentationMasks?: MPMask[];
 }

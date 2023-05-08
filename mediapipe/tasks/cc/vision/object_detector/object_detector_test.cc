@@ -499,6 +499,22 @@ TEST_F(ImageModeTest, SucceedsEfficientDetNoNmsModel) {
              })pb")}));
 }
 
+TEST_F(ImageModeTest, SucceedsNoObjectDetected) {
+  MP_ASSERT_OK_AND_ASSIGN(Image image,
+                          DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
+                                                       "cats_and_dogs.jpg")));
+  auto options = std::make_unique<ObjectDetectorOptions>();
+  options->max_results = 4;
+  options->score_threshold = 1.0f;
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kEfficientDetWithoutNms);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ObjectDetector> object_detector,
+                          ObjectDetector::Create(std::move(options)));
+  MP_ASSERT_OK_AND_ASSIGN(auto results, object_detector->Detect(image));
+  MP_ASSERT_OK(object_detector->Close());
+  EXPECT_THAT(results.detections, testing::IsEmpty());
+}
+
 TEST_F(ImageModeTest, SucceedsWithoutImageResizing) {
   MP_ASSERT_OK_AND_ASSIGN(Image image, DecodeImageFromFile(JoinPath(
                                            "./", kTestDataDirectory,

@@ -33,7 +33,7 @@
   objectDetectorOptions.categoryDenylist = self.categoryDenylist;
   objectDetectorOptions.categoryAllowlist = self.categoryAllowlist;
   objectDetectorOptions.displayNamesLocale = self.displayNamesLocale;
-  objectDetectorOptions.completion = self.completion;
+  objectDetectorOptions.objectDetectorLiveStreamDelegate = self.objectDetectorLiveStreamDelegate;
 
   return objectDetectorOptions;
 }

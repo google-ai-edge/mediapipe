@@ -452,13 +452,14 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
     [self
         assertCreateImageClassifierWithOptions:options
                         failsWithExpectedError:
-                            [NSError errorWithDomain:kExpectedErrorDomain
-                                                code:MPPTasksErrorCodeInvalidArgumentError
-                                            userInfo:@{
-                                              NSLocalizedDescriptionKey :
-                                                  @"The vision task is in image or video mode. The "
-                                                  @"delegate must not be set in the task's options."
-                                            }]];
+                            [NSError
+                                errorWithDomain:kExpectedErrorDomain
+                                           code:MPPTasksErrorCodeInvalidArgumentError
+                                       userInfo:@{
+                                         NSLocalizedDescriptionKey :
+                                             @"The vision task is in image or video mode. The "
+                                             @"delegate must not be set in the task's options."
+                                       }]];
   }
 }
 
@@ -469,15 +470,15 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   [self assertCreateImageClassifierWithOptions:options
                         failsWithExpectedError:
-                            [NSError
-                                errorWithDomain:kExpectedErrorDomain
-                                           code:MPPTasksErrorCodeInvalidArgumentError
-                                       userInfo:@{
-                                         NSLocalizedDescriptionKey :
-                                             @"The vision task is in live stream mode. An object "
-                                             @"must be set as the delegate of the task in its "
-                                             @"options to ensure asynchronous delivery of results."
-                                       }]];
+                            [NSError errorWithDomain:kExpectedErrorDomain
+                                                code:MPPTasksErrorCodeInvalidArgumentError
+                                            userInfo:@{
+                                              NSLocalizedDescriptionKey :
+                                                  @"The vision task is in live stream mode. An "
+                                                  @"object must be set as the delegate of the task "
+                                                  @"in its options to ensure asynchronous delivery "
+                                                  @"of results."
+                                            }]];
 }
 
 - (void)testClassifyFailsWithCallingWrongApiInImageMode {

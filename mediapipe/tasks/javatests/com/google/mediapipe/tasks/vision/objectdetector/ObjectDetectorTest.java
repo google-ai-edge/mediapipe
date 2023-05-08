@@ -45,6 +45,7 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({ObjectDetectorTest.General.class, ObjectDetectorTest.RunningModeTest.class})
 public class ObjectDetectorTest {
   private static final String MODEL_FILE = "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.tflite";
+  private static final String NO_NMS_MODEL_FILE = "efficientdet_lite0_fp16_no_nms.tflite";
   private static final String CAT_AND_DOG_IMAGE = "cats_and_dogs.jpg";
   private static final String CAT_AND_DOG_ROTATED_IMAGE = "cats_and_dogs_rotated.jpg";
   private static final int IMAGE_WIDTH = 1200;
@@ -107,6 +108,20 @@ public class ObjectDetectorTest {
       ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
       // The score threshold should block all other other objects, except cat.
       assertContainsOnlyCat(results, CAT_BOUNDING_BOX, CAT_SCORE);
+    }
+
+    @Test
+    public void detect_succeedsWithNoObjectDetected() throws Exception {
+      ObjectDetectorOptions options =
+          ObjectDetectorOptions.builder()
+              .setBaseOptions(BaseOptions.builder().setModelAssetPath(NO_NMS_MODEL_FILE).build())
+              .setScoreThreshold(1.0f)
+              .build();
+      ObjectDetector objectDetector =
+          ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
+      ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
+      // The score threshold should block objects.
+      assertThat(results.detections()).isEmpty();
     }
 
     @Test

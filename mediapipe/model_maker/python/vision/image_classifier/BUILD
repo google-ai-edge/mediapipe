@@ -17,9 +17,7 @@
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe:__subpackages__"])
 
 ######################################################################
 # Public target of the MediaPipe Model Maker ImageClassifier APIs.

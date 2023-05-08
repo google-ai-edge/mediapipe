@@ -18,6 +18,7 @@ from typing import Mapping, Optional, Sequence, Union
 
 import tensorflow as tf
 
+from mediapipe.model_maker.python.vision.object_detector import detection
 from mediapipe.model_maker.python.vision.object_detector import model_options as model_opt
 from mediapipe.model_maker.python.vision.object_detector import model_spec as ms
 from official.core import config_definitions as cfg
@@ -29,7 +30,6 @@ from official.vision.losses import loss_utils
 from official.vision.modeling import factory
 from official.vision.modeling import retinanet_model
 from official.vision.modeling.layers import detection_generator
-from official.vision.serving import detection
 
 
 class ObjectDetectorModel(tf.keras.Model):
@@ -199,6 +199,7 @@ class ObjectDetectorModel(tf.keras.Model):
             max_detections=10,
             max_classes_per_detection=1,
             normalize_anchor_coordinates=True,
+            omit_nms=True,
         ),
     )
     tflite_post_processing_config = (

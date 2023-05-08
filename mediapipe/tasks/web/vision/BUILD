@@ -21,6 +21,7 @@ VISION_LIBS = [
     "//mediapipe/tasks/web/core:fileset_resolver",
     "//mediapipe/tasks/web/vision/core:drawing_utils",
     "//mediapipe/tasks/web/vision/core:image",
+    "//mediapipe/tasks/web/vision/core:mask",
     "//mediapipe/tasks/web/vision/face_detector",
     "//mediapipe/tasks/web/vision/face_landmarker",
     "//mediapipe/tasks/web/vision/face_stylizer",

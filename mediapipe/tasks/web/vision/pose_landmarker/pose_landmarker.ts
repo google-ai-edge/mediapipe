@@ -43,7 +43,6 @@ const IMAGE_STREAM = 'image_in';
 const NORM_RECT_STREAM = 'norm_rect';
 const NORM_LANDMARKS_STREAM = 'normalized_landmarks';
 const WORLD_LANDMARKS_STREAM = 'world_landmarks';
-const AUXILIARY_LANDMARKS_STREAM = 'auxiliary_landmarks';
 const SEGMENTATION_MASK_STREAM = 'segmentation_masks';
 const POSE_LANDMARKER_GRAPH =
     'mediapipe.tasks.vision.pose_landmarker.PoseLandmarkerGraph';
@@ -64,7 +63,7 @@ export type PoseLandmarkerCallback = (result: PoseLandmarkerResult) => void;
 export class PoseLandmarker extends VisionTaskRunner {
   private result: Partial<PoseLandmarkerResult> = {};
   private outputSegmentationMasks = false;
-  private userCallback: PoseLandmarkerCallback = () => {};
+  private userCallback?: PoseLandmarkerCallback;
   private readonly options: PoseLandmarkerGraphOptions;
   private readonly poseLandmarksDetectorGraphOptions:
       PoseLandmarksDetectorGraphOptions;
@@ -200,21 +199,22 @@ export class PoseLandmarker extends VisionTaskRunner {
   }
 
   /**
-   * Performs pose detection on the provided single image and waits
-   * synchronously for the response. Only use this method when the
-   * PoseLandmarker is created with running mode `image`.
+   * Performs pose detection on the provided single image and invokes the
+   * callback with the response. The method returns synchronously once the
+   * callback returns. Only use this method when the PoseLandmarker is created
+   * with running mode `image`.
    *
    * @param image An image to process.
    * @param callback The callback that is invoked with the result. The
    *    lifetime of the returned masks is only guaranteed for the duration of
    *    the callback.
-   * @return The detected pose landmarks.
    */
   detect(image: ImageSource, callback: PoseLandmarkerCallback): void;
   /**
-   * Performs pose detection on the provided single image and waits
-   * synchronously for the response. Only use this method when the
-   * PoseLandmarker is created with running mode `image`.
+   * Performs pose detection on the provided single image and invokes the
+   * callback with the response. The method returns synchronously once the
+   * callback returns. Only use this method when the PoseLandmarker is created
+   * with running mode `image`.
    *
    * @param image An image to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
@@ -222,16 +222,42 @@ export class PoseLandmarker extends VisionTaskRunner {
    * @param callback The callback that is invoked with the result. The
    *    lifetime of the returned masks is only guaranteed for the duration of
    *    the callback.
-   * @return The detected pose landmarks.
    */
   detect(
       image: ImageSource, imageProcessingOptions: ImageProcessingOptions,
       callback: PoseLandmarkerCallback): void;
+  /**
+   * Performs pose detection on the provided single image and waits
+   * synchronously for the response. This method creates a copy of the resulting
+   * masks and should not be used in high-throughput applictions. Only
+   * use this method when the PoseLandmarker is created with running mode
+   * `image`.
+   *
+   * @param image An image to process.
+   * @return The landmarker result. Any masks are copied to avoid lifetime
+   *     limits.
+   * @return The detected pose landmarks.
+   */
+  detect(image: ImageSource): PoseLandmarkerResult;
+  /**
+   * Performs pose detection on the provided single image and waits
+   * synchronously for the response. This method creates a copy of the resulting
+   * masks and should not be used in high-throughput applictions. Only
+   * use this method when the PoseLandmarker is created with running mode
+   * `image`.
+   *
+   * @param image An image to process.
+   * @return The landmarker result. Any masks are copied to avoid lifetime
+   *     limits.
+   * @return The detected pose landmarks.
+   */
+  detect(image: ImageSource, imageProcessingOptions: ImageProcessingOptions):
+      PoseLandmarkerResult;
   detect(
       image: ImageSource,
-      imageProcessingOptionsOrCallback: ImageProcessingOptions|
+      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
       PoseLandmarkerCallback,
-      callback?: PoseLandmarkerCallback): void {
+      callback?: PoseLandmarkerCallback): PoseLandmarkerResult|void {
     const imageProcessingOptions =
         typeof imageProcessingOptionsOrCallback !== 'function' ?
         imageProcessingOptionsOrCallback :
@@ -242,59 +268,94 @@ export class PoseLandmarker extends VisionTaskRunner {
 
     this.resetResults();
     this.processImageData(image, imageProcessingOptions);
-    this.userCallback = () => {};
+
+    if (!this.userCallback) {
+      return this.result as PoseLandmarkerResult;
+    }
   }
 
   /**
-   * Performs pose detection on the provided video frame and waits
-   * synchronously for the response. Only use this method when the
-   * PoseLandmarker is created with running mode `video`.
+   * Performs pose detection on the provided video frame and invokes the
+   * callback with the response. The method returns synchronously once the
+   * callback returns. Only use this method when the PoseLandmarker is created
+   * with running mode `video`.
    *
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @param callback The callback that is invoked with the result. The
    *    lifetime of the returned masks is only guaranteed for the duration of
    *    the callback.
-   * @return The detected pose landmarks.
    */
   detectForVideo(
       videoFrame: ImageSource, timestamp: number,
       callback: PoseLandmarkerCallback): void;
   /**
-   * Performs pose detection on the provided video frame and waits
-   * synchronously for the response. Only use this method when the
-   * PoseLandmarker is created with running mode `video`.
+   * Performs pose detection on the provided video frame and invokes the
+   * callback with the response. The method returns synchronously once the
+   * callback returns. Only use this method when the PoseLandmarker is created
+   * with running mode `video`.
    *
    * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
-   * @param timestamp The timestamp of the current frame, in ms.
    * @param callback The callback that is invoked with the result. The
    *    lifetime of the returned masks is only guaranteed for the duration of
    *    the callback.
-   * @return The detected pose landmarks.
    */
   detectForVideo(
-      videoFrame: ImageSource, imageProcessingOptions: ImageProcessingOptions,
-      timestamp: number, callback: PoseLandmarkerCallback): void;
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptions: ImageProcessingOptions,
+      callback: PoseLandmarkerCallback): void;
+  /**
+   * Performs pose detection on the provided video frame and returns the result.
+   * This method creates a copy of the resulting masks and should not be used
+   * in high-throughput applictions. Only use this method when the
+   * PoseLandmarker is created with running mode `video`.
+   *
+   * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
+   * @return The landmarker result. Any masks are copied to extend the
+   *     lifetime of the returned data.
+   */
+  detectForVideo(videoFrame: ImageSource, timestamp: number):
+      PoseLandmarkerResult;
+  /**
+   * Performs pose detection on the provided video frame and returns the result.
+   * This method creates a copy of the resulting masks and should not be used
+   * in high-throughput applictions. The method returns synchronously once the
+   * callback returns. Only use this method when the PoseLandmarker is created
+   * with running mode `video`.
+   *
+   * @param videoFrame A video frame to process.
+   * @param timestamp The timestamp of the current frame, in ms.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
+   * @return The landmarker result. Any masks are copied to extend the lifetime
+   *     of the returned data.
+   */
   detectForVideo(
-      videoFrame: ImageSource,
-      timestampOrImageProcessingOptions: number|ImageProcessingOptions,
-      timestampOrCallback: number|PoseLandmarkerCallback,
-      callback?: PoseLandmarkerCallback): void {
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptions: ImageProcessingOptions): PoseLandmarkerResult;
+  detectForVideo(
+      videoFrame: ImageSource, timestamp: number,
+      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
+      PoseLandmarkerCallback,
+      callback?: PoseLandmarkerCallback): PoseLandmarkerResult|void {
     const imageProcessingOptions =
-        typeof timestampOrImageProcessingOptions !== 'number' ?
-        timestampOrImageProcessingOptions :
+        typeof imageProcessingOptionsOrCallback !== 'function' ?
+        imageProcessingOptionsOrCallback :
         {};
-    const timestamp = typeof timestampOrImageProcessingOptions === 'number' ?
-        timestampOrImageProcessingOptions :
-        timestampOrCallback as number;
-    this.userCallback = typeof timestampOrCallback === 'function' ?
-        timestampOrCallback :
-        callback!;
+    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
+        imageProcessingOptionsOrCallback :
+        callback;
+
     this.resetResults();
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
-    this.userCallback = () => {};
+
+    if (!this.userCallback) {
+      return this.result as PoseLandmarkerResult;
+    }
   }
 
   private resetResults(): void {
@@ -309,13 +370,13 @@ export class PoseLandmarker extends VisionTaskRunner {
     if (!('worldLandmarks' in this.result)) {
       return;
     }
-    if (!('landmarks' in this.result)) {
-      return;
-    }
     if (this.outputSegmentationMasks && !('segmentationMasks' in this.result)) {
       return;
     }
-    this.userCallback(this.result as Required<PoseLandmarkerResult>);
+
+    if (this.userCallback) {
+      this.userCallback(this.result as Required<PoseLandmarkerResult>);
+    }
   }
 
   /** Sets the default values for the graph. */
@@ -332,10 +393,11 @@ export class PoseLandmarker extends VisionTaskRunner {
    * Converts raw data into a landmark, and adds it to our landmarks list.
    */
   private addJsLandmarks(data: Uint8Array[]): void {
+    this.result.landmarks = [];
     for (const binaryProto of data) {
       const poseLandmarksProto =
           NormalizedLandmarkList.deserializeBinary(binaryProto);
-      this.result.landmarks = convertToLandmarks(poseLandmarksProto);
+      this.result.landmarks.push(convertToLandmarks(poseLandmarksProto));
     }
   }
 
@@ -344,24 +406,12 @@ export class PoseLandmarker extends VisionTaskRunner {
    * worldLandmarks list.
    */
   private adddJsWorldLandmarks(data: Uint8Array[]): void {
+    this.result.worldLandmarks = [];
     for (const binaryProto of data) {
       const poseWorldLandmarksProto =
           LandmarkList.deserializeBinary(binaryProto);
-      this.result.worldLandmarks =
-          convertToWorldLandmarks(poseWorldLandmarksProto);
-    }
-  }
-
-  /**
-   * Converts raw data into a landmark, and adds it to our auxilary
-   * landmarks list.
-   */
-  private addJsAuxiliaryLandmarks(data: Uint8Array[]): void {
-    for (const binaryProto of data) {
-      const auxiliaryLandmarksProto =
-          NormalizedLandmarkList.deserializeBinary(binaryProto);
-      this.result.auxilaryLandmarks =
-          convertToLandmarks(auxiliaryLandmarksProto);
+      this.result.worldLandmarks.push(
+          convertToWorldLandmarks(poseWorldLandmarksProto));
     }
   }
 
@@ -372,7 +422,6 @@ export class PoseLandmarker extends VisionTaskRunner {
     graphConfig.addInputStream(NORM_RECT_STREAM);
     graphConfig.addOutputStream(NORM_LANDMARKS_STREAM);
     graphConfig.addOutputStream(WORLD_LANDMARKS_STREAM);
-    graphConfig.addOutputStream(AUXILIARY_LANDMARKS_STREAM);
     graphConfig.addOutputStream(SEGMENTATION_MASK_STREAM);
 
     const calculatorOptions = new CalculatorOptions();
@@ -385,8 +434,6 @@ export class PoseLandmarker extends VisionTaskRunner {
     landmarkerNode.addInputStream('NORM_RECT:' + NORM_RECT_STREAM);
     landmarkerNode.addOutputStream('NORM_LANDMARKS:' + NORM_LANDMARKS_STREAM);
     landmarkerNode.addOutputStream('WORLD_LANDMARKS:' + WORLD_LANDMARKS_STREAM);
-    landmarkerNode.addOutputStream(
-        'AUXILIARY_LANDMARKS:' + AUXILIARY_LANDMARKS_STREAM);
     landmarkerNode.setOptions(calculatorOptions);
 
     graphConfig.addNode(landmarkerNode);
@@ -417,26 +464,14 @@ export class PoseLandmarker extends VisionTaskRunner {
           this.maybeInvokeCallback();
         });
 
-    this.graphRunner.attachProtoVectorListener(
-        AUXILIARY_LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.addJsAuxiliaryLandmarks(binaryProto);
-          this.setLatestOutputTimestamp(timestamp);
-          this.maybeInvokeCallback();
-        });
-    this.graphRunner.attachEmptyPacketListener(
-        AUXILIARY_LANDMARKS_STREAM, timestamp => {
-          this.result.auxilaryLandmarks = [];
-          this.setLatestOutputTimestamp(timestamp);
-          this.maybeInvokeCallback();
-        });
-
     if (this.outputSegmentationMasks) {
       landmarkerNode.addOutputStream(
           'SEGMENTATION_MASK:' + SEGMENTATION_MASK_STREAM);
       this.graphRunner.attachImageVectorListener(
           SEGMENTATION_MASK_STREAM, (masks, timestamp) => {
-            this.result.segmentationMasks =
-                masks.map(wasmImage => this.convertToMPImage(wasmImage));
+            this.result.segmentationMasks = masks.map(
+                wasmImage => this.convertToMPMask(
+                    wasmImage, /* shouldCopyData= */ !this.userCallback));
             this.setLatestOutputTimestamp(timestamp);
             this.maybeInvokeCallback();
           });

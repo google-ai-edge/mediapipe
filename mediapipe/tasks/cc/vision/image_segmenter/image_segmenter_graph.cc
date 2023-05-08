@@ -23,6 +23,7 @@ limitations under the License.
 #include "absl/strings/str_format.h"
 #include "mediapipe/calculators/image/image_clone_calculator.pb.h"
 #include "mediapipe/calculators/image/image_transformation_calculator.pb.h"
+#include "mediapipe/calculators/image/set_alpha_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensor_converter_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
@@ -249,7 +250,8 @@ void ConfigureTensorConverterCalculator(
 // the tflite model.
 absl::StatusOr<ImageAndTensorsOnDevice> ConvertImageToTensors(
     Source<Image> image_in, Source<NormalizedRect> norm_rect_in, bool use_gpu,
-    const core::ModelResources& model_resources, Graph& graph) {
+    bool is_hair_segmentation, const core::ModelResources& model_resources,
+    Graph& graph) {
   ASSIGN_OR_RETURN(const tflite::Tensor* tflite_input_tensor,
                    GetInputTensor(model_resources));
   if (tflite_input_tensor->shape()->size() != 4) {
@@ -294,8 +296,16 @@ absl::StatusOr<ImageAndTensorsOnDevice> ConvertImageToTensors(
     // Convert from Image to legacy ImageFrame or GpuBuffer.
     auto& from_image = graph.AddNode("FromImageCalculator");
     image_on_device >> from_image.In(kImageTag);
-    auto image_cpu_or_gpu =
+    Source<api2::AnyType> image_cpu_or_gpu =
         from_image.Out(use_gpu ? kImageGpuTag : kImageCpuTag);
+
+    if (is_hair_segmentation) {
+      auto& set_alpha = graph.AddNode("SetAlphaCalculator");
+      set_alpha.GetOptions<mediapipe::SetAlphaCalculatorOptions>()
+          .set_alpha_value(0);
+      image_cpu_or_gpu >> set_alpha.In(use_gpu ? kImageGpuTag : kImageTag);
+      image_cpu_or_gpu = set_alpha.Out(use_gpu ? kImageGpuTag : kImageTag);
+    }
 
     // Resize the input image to the model input size.
     auto& image_transformation = graph.AddNode("ImageTransformationCalculator");
@@ -461,22 +471,41 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
     bool use_gpu =
         components::processors::DetermineImagePreprocessingGpuBackend(
             task_options.base_options().acceleration());
-    ASSIGN_OR_RETURN(auto image_and_tensors,
-                     ConvertImageToTensors(image_in, norm_rect_in, use_gpu,
-                                           model_resources, graph));
-    // Adds inference subgraph and connects its input stream to the output
-    // tensors produced by the ImageToTensorCalculator.
-    auto& inference = AddInference(
-        model_resources, task_options.base_options().acceleration(), graph);
-    image_and_tensors.tensors >> inference.In(kTensorsTag);
 
-    // Adds segmentation calculators for output streams.
+    // Adds segmentation calculators for output streams. Add this calculator
+    // first to get the labels.
     auto& tensor_to_images =
         graph.AddNode("mediapipe.tasks.TensorsToSegmentationCalculator");
     RET_CHECK_OK(ConfigureTensorsToSegmentationCalculator(
         task_options, model_resources,
         &tensor_to_images
              .GetOptions<TensorsToSegmentationCalculatorOptions>()));
+    const auto& tensor_to_images_options =
+        tensor_to_images.GetOptions<TensorsToSegmentationCalculatorOptions>();
+
+    // TODO: remove special logic for hair segmentation model.
+    // The alpha channel of hair segmentation model indicates the interested
+    // area. The model was designed for live stream mode, so that the mask of
+    // previous frame is used as the indicator for the next frame. For the first
+    // frame, it expects the alpha channel to be empty. To consolidate IMAGE,
+    // VIDEO and LIVE_STREAM mode in mediapipe tasks, here we forcely set the
+    // alpha channel to be empty if we find the model is the hair segmentation
+    // model.
+    bool is_hair_segmentation = false;
+    if (tensor_to_images_options.label_items_size() == 2 &&
+        tensor_to_images_options.label_items().at(1).name() == "hair") {
+      is_hair_segmentation = true;
+    }
+
+    ASSIGN_OR_RETURN(
+        auto image_and_tensors,
+        ConvertImageToTensors(image_in, norm_rect_in, use_gpu,
+                              is_hair_segmentation, model_resources, graph));
+    // Adds inference subgraph and connects its input stream to the output
+    // tensors produced by the ImageToTensorCalculator.
+    auto& inference = AddInference(
+        model_resources, task_options.base_options().acceleration(), graph);
+    image_and_tensors.tensors >> inference.In(kTensorsTag);
     inference.Out(kTensorsTag) >> tensor_to_images.In(kTensorsTag);
 
     // Adds image property calculator for output size.

@@ -61,6 +61,8 @@ using ::mediapipe::tasks::vision::GetImageLikeTensorShape;
 using ::mediapipe::tasks::vision::Shape;
 using ::mediapipe::tasks::vision::image_segmenter::proto::SegmenterOptions;
 
+constexpr uint8_t kUnLabeledPixelValue = 255;
+
 void StableSoftmax(absl::Span<const float> values,
                    absl::Span<float> activated_values) {
   float max_value = *std::max_element(values.begin(), values.end());
@@ -153,9 +155,11 @@ Image ProcessForCategoryMaskCpu(const Shape& input_shape,
     }
     if (input_channels == 1) {
       // if the input tensor is a single mask, it is assumed to be a binary
-      // foreground segmentation mask. For such a mask, we make foreground
-      // category 1, and background category 0.
-      pixel = static_cast<uint8_t>(confidence_scores[0] > 0.5f);
+      // foreground segmentation mask. For such a mask, instead of a true
+      // argmax, we simply use 0.5 as the cutoff, assigning 0 (foreground) or
+      // 255 (background) based on whether the confidence value reaches this
+      // cutoff or not, respectively.
+      pixel = confidence_scores[0] > 0.5f ? 0 : kUnLabeledPixelValue;
     } else {
       const int maximum_category_idx =
           std::max_element(confidence_scores.begin(), confidence_scores.end()) -

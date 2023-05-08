@@ -13,6 +13,9 @@
 # limitations under the License.
 #
 
+load("@rules_foreign_cc//tools/build_defs:cmake.bzl", "cmake_external")
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+
 licenses(["notice"])  # Apache License 2.0
 
 exports_files(["LICENSE"])
@@ -61,16 +64,73 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
+config_setting(
+    name = "opencv_ios_arm64_source_build",
+    define_values = {
+        "OPENCV": "source",
+    },
+    values = {
+        "apple_platform_type": "ios",
+        "cpu": "ios_arm64",
+    },
+)
+
+config_setting(
+    name = "opencv_ios_sim_arm64_source_build",
+    define_values = {
+        "OPENCV": "source",
+    },
+    values = {
+        "apple_platform_type": "ios",
+        "cpu": "ios_sim_arm64",
+    },
+)
+
+config_setting(
+    name = "opencv_ios_x86_64_source_build",
+    define_values = {
+        "OPENCV": "source",
+    },
+    values = {
+        "apple_platform_type": "ios",
+        "cpu": "ios_x86_64",
+    },
+)
+
+config_setting(
+    name = "opencv_ios_sim_fat_source_build",
+    define_values = {
+        "OPENCV": "source",
+    },
+    values = {
+        "apple_platform_type": "ios",
+        "ios_multi_cpus": "sim_arm64, x86_64",
+    },
+)
+
 alias(
     name = "opencv",
     actual = select({
         ":opencv_source_build": ":opencv_cmake",
+        ":opencv_ios_sim_arm64_source_build": "@ios_opencv_source//:opencv",
+        ":opencv_ios_sim_fat_source_build": "@ios_opencv_source//:opencv",
+        ":opencv_ios_arm64_source_build": "@ios_opencv_source//:opencv",
         "//conditions:default": ":opencv_binary",
     }),
     visibility = ["//visibility:public"],
 )
 
-load("@rules_foreign_cc//tools/build_defs:cmake.bzl", "cmake_external")
+bzl_library(
+    name = "opencv_ios_xcframework_files_bzl",
+    srcs = ["opencv_ios_xcframework_files.bzl"],
+    visibility = ["//visibility:private"],
+)
+
+bzl_library(
+    name = "opencv_ios_source_bzl",
+    srcs = ["opencv_ios_source.bzl"],
+    visibility = ["//visibility:private"],
+)
 
 # Note: this determines the order in which the libraries are passed to the
 # linker, so if library A depends on library B, library B must come _after_.

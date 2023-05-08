@@ -44,6 +44,26 @@ class Preprocessor(object):
     self._aug_scale_max = 2.0
     self._max_num_instances = 100
 
+    self._padded_size = preprocess_ops.compute_padded_size(
+        self._output_size, 2**self._max_level
+    )
+
+    input_anchor = anchor.build_anchor_generator(
+        min_level=self._min_level,
+        max_level=self._max_level,
+        num_scales=self._num_scales,
+        aspect_ratios=self._aspect_ratios,
+        anchor_size=self._anchor_size,
+    )
+    self._anchor_boxes = input_anchor(image_size=self._output_size)
+    self._anchor_labeler = anchor.AnchorLabeler(
+        self._match_threshold, self._unmatched_threshold
+    )
+
+  @property
+  def anchor_boxes(self):
+    return self._anchor_boxes
+
   def __call__(
       self, data: Mapping[str, Any], is_training: bool = True
   ) -> Tuple[tf.Tensor, Mapping[str, Any]]:
@@ -90,13 +110,10 @@ class Preprocessor(object):
     image, image_info = preprocess_ops.resize_and_crop_image(
         image,
         self._output_size,
-        padded_size=preprocess_ops.compute_padded_size(
-            self._output_size, 2**self._max_level
-        ),
+        padded_size=self._padded_size,
         aug_scale_min=(self._aug_scale_min if is_training else 1.0),
         aug_scale_max=(self._aug_scale_max if is_training else 1.0),
     )
-    image_height, image_width, _ = image.get_shape().as_list()
 
     # Resize and crop boxes.
     image_scale = image_info[2, :]
@@ -110,20 +127,9 @@ class Preprocessor(object):
     classes = tf.gather(classes, indices)
 
     # Assign anchors.
-    input_anchor = anchor.build_anchor_generator(
-        min_level=self._min_level,
-        max_level=self._max_level,
-        num_scales=self._num_scales,
-        aspect_ratios=self._aspect_ratios,
-        anchor_size=self._anchor_size,
-    )
-    anchor_boxes = input_anchor(image_size=(image_height, image_width))
-    anchor_labeler = anchor.AnchorLabeler(
-        self._match_threshold, self._unmatched_threshold
-    )
     (cls_targets, box_targets, _, cls_weights, box_weights) = (
-        anchor_labeler.label_anchors(
-            anchor_boxes, boxes, tf.expand_dims(classes, axis=1)
+        self._anchor_labeler.label_anchors(
+            self.anchor_boxes, boxes, tf.expand_dims(classes, axis=1)
         )
     )
 
@@ -134,7 +140,7 @@ class Preprocessor(object):
     labels = {
         'cls_targets': cls_targets,
         'box_targets': box_targets,
-        'anchor_boxes': anchor_boxes,
+        'anchor_boxes': self.anchor_boxes,
         'cls_weights': cls_weights,
         'box_weights': box_weights,
         'image_info': image_info,

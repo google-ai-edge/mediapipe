@@ -41,7 +41,10 @@ mediapipe_ts_library(
 
 mediapipe_ts_library(
     name = "image",
-    srcs = ["image.ts"],
+    srcs = [
+        "image.ts",
+        "image_shader_context.ts",
+    ],
 )
 
 mediapipe_ts_library(
@@ -57,11 +60,33 @@ jasmine_node_test(
 )
 
 mediapipe_ts_library(
+    name = "mask",
+    srcs = ["mask.ts"],
+    deps = [":image"],
+)
+
+mediapipe_ts_library(
+    name = "mask_test_lib",
+    testonly = True,
+    srcs = ["mask.test.ts"],
+    deps = [
+        ":image",
+        ":mask",
+    ],
+)
+
+jasmine_node_test(
+    name = "mask_test",
+    deps = [":mask_test_lib"],
+)
+
+mediapipe_ts_library(
     name = "vision_task_runner",
     srcs = ["vision_task_runner.ts"],
     deps = [
         ":image",
         ":image_processing_options",
+        ":mask",
         ":vision_task_options",
         "//mediapipe/framework/formats:rect_jspb_proto",
         "//mediapipe/tasks/web/core",
@@ -91,7 +116,6 @@ mediapipe_ts_library(
 mediapipe_ts_library(
     name = "render_utils",
     srcs = ["render_utils.ts"],
-    deps = [":image"],
 )
 
 jasmine_node_test(

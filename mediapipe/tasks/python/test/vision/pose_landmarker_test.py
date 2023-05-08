@@ -74,7 +74,6 @@ def _get_expected_pose_landmarker_result(
   return PoseLandmarkerResult(
       pose_landmarks=[landmarks_detection_result.landmarks],
       pose_world_landmarks=[],
-      pose_auxiliary_landmarks=[],
   )
 
 
@@ -296,7 +295,6 @@ class PoseLandmarkerTest(parameterized.TestCase):
       # Comparing results.
       self.assertEmpty(detection_result.pose_landmarks)
       self.assertEmpty(detection_result.pose_world_landmarks)
-      self.assertEmpty(detection_result.pose_auxiliary_landmarks)
 
   def test_missing_result_callback(self):
     options = _PoseLandmarkerOptions(
@@ -391,7 +389,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
           True,
           _get_expected_pose_landmarker_result(_POSE_LANDMARKS),
       ),
-      (_BURGER_IMAGE, 0, False, PoseLandmarkerResult([], [], [])),
+      (_BURGER_IMAGE, 0, False, PoseLandmarkerResult([], [])),
   )
   def test_detect_for_video(
       self, image_path, rotation, output_segmentation_masks, expected_result
@@ -473,7 +471,7 @@ class PoseLandmarkerTest(parameterized.TestCase):
           True,
           _get_expected_pose_landmarker_result(_POSE_LANDMARKS),
       ),
-      (_BURGER_IMAGE, 0, False, PoseLandmarkerResult([], [], [])),
+      (_BURGER_IMAGE, 0, False, PoseLandmarkerResult([], [])),
   )
   def test_detect_async_calls(
       self, image_path, rotation, output_segmentation_masks, expected_result

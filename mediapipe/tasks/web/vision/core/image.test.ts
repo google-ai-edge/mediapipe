@@ -16,7 +16,8 @@
 
 import 'jasmine';
 
-import {MPImage, MPImageShaderContext, MPImageType} from './image';
+import {MPImage} from './image';
+import {MPImageShaderContext} from './image_shader_context';
 
 const WIDTH = 2;
 const HEIGHT = 2;
@@ -40,8 +41,6 @@ const IMAGE_2_3 = [
 class MPImageTestContext {
   canvas!: OffscreenCanvas;
   gl!: WebGL2RenderingContext;
-  uint8ClampedArray!: Uint8ClampedArray;
-  float32Array!: Float32Array;
   imageData!: ImageData;
   imageBitmap!: ImageBitmap;
   webGLTexture!: WebGLTexture;
@@ -55,17 +54,11 @@ class MPImageTestContext {
 
     const gl = this.gl;
 
-    this.uint8ClampedArray = new Uint8ClampedArray(pixels.length / 4);
-    this.float32Array = new Float32Array(pixels.length / 4);
-    for (let i = 0; i < this.uint8ClampedArray.length; ++i) {
-      this.uint8ClampedArray[i] = pixels[i * 4];
-      this.float32Array[i] = pixels[i * 4] / 255;
-    }
     this.imageData =
         new ImageData(new Uint8ClampedArray(pixels), width, height);
     this.imageBitmap = await createImageBitmap(this.imageData);
-    this.webGLTexture = gl.createTexture()!;
 
+    this.webGLTexture = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, this.webGLTexture);
     gl.texImage2D(
         gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.imageBitmap);
@@ -74,10 +67,6 @@ class MPImageTestContext {
 
   get(type: unknown) {
     switch (type) {
-      case Uint8ClampedArray:
-        return this.uint8ClampedArray;
-      case Float32Array:
-        return this.float32Array;
       case ImageData:
         return this.imageData;
       case ImageBitmap:
@@ -125,25 +114,22 @@ class MPImageTestContext {
 
     gl.bindTexture(gl.TEXTURE_2D, null);
 
+    // Sanity check
+    expect(pixels.find(v => !!v)).toBeDefined();
+
     return pixels;
   }
 
   function assertEquality(image: MPImage, expected: ImageType): void {
-    if (expected instanceof Uint8ClampedArray) {
-      const result = image.get(MPImageType.UINT8_CLAMPED_ARRAY);
-      expect(result).toEqual(expected);
-    } else if (expected instanceof Float32Array) {
-      const result = image.get(MPImageType.FLOAT32_ARRAY);
-      expect(result).toEqual(expected);
-    } else if (expected instanceof ImageData) {
-      const result = image.get(MPImageType.IMAGE_DATA);
+    if (expected instanceof ImageData) {
+      const result = image.getAsImageData();
       expect(result).toEqual(expected);
     } else if (expected instanceof ImageBitmap) {
-      const result = image.get(MPImageType.IMAGE_BITMAP);
+      const result = image.getAsImageBitmap();
       expect(readPixelsFromImageBitmap(result))
           .toEqual(readPixelsFromImageBitmap(expected));
     } else {  // WebGLTexture
-      const result = image.get(MPImageType.WEBGL_TEXTURE);
+      const result = image.getAsWebGLTexture();
       expect(readPixelsFromWebGLTexture(result))
           .toEqual(readPixelsFromWebGLTexture(expected));
     }
@@ -177,9 +163,7 @@ class MPImageTestContext {
     shaderContext.close();
   }
 
-  const sources = skip ?
-      [] :
-      [Uint8ClampedArray, Float32Array, ImageData, ImageBitmap, WebGLTexture];
+  const sources = skip ? [] : [ImageData, ImageBitmap, WebGLTexture];
 
   for (let i = 0; i < sources.length; i++) {
     for (let j = 0; j < sources.length; j++) {
@@ -202,11 +186,11 @@ class MPImageTestContext {
 
     const shaderContext = new MPImageShaderContext();
     const image = new MPImage(
-        [context.webGLTexture],
-        /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false,
-        context.canvas, shaderContext, WIDTH, HEIGHT);
+        [context.webGLTexture], /* ownsImageBitmap= */ false,
+        /* ownsWebGLTexture= */ false, context.canvas, shaderContext, WIDTH,
+        HEIGHT);
 
-    const result = image.clone().get(MPImageType.IMAGE_DATA);
+    const result = image.clone().getAsImageData();
     expect(result).toEqual(context.imageData);
 
     shaderContext.close();
@@ -217,19 +201,19 @@ class MPImageTestContext {
 
     const shaderContext = new MPImageShaderContext();
     const image = new MPImage(
-        [context.webGLTexture],
-        /* ownsImageBitmap= */ false, /* ownsWebGLTexture= */ false,
-        context.canvas, shaderContext, WIDTH, HEIGHT);
+        [context.webGLTexture], /* ownsImageBitmap= */ false,
+        /* ownsWebGLTexture= */ false, context.canvas, shaderContext, WIDTH,
+        HEIGHT);
 
     // Verify that we can mix the different shader modes by running them out of
     // order.
-    let result = image.get(MPImageType.IMAGE_DATA);
+    let result = image.getAsImageData();
     expect(result).toEqual(context.imageData);
 
-    result = image.clone().get(MPImageType.IMAGE_DATA);
+    result = image.clone().getAsImageData();
     expect(result).toEqual(context.imageData);
 
-    result = image.get(MPImageType.IMAGE_DATA);
+    result = image.getAsImageData();
     expect(result).toEqual(context.imageData);
 
     shaderContext.close();
@@ -241,43 +225,21 @@ class MPImageTestContext {
     const shaderContext = new MPImageShaderContext();
     const image = createImage(shaderContext, context.imageData, WIDTH, HEIGHT);
 
-    expect(image.has(MPImageType.IMAGE_DATA)).toBe(true);
-    expect(image.has(MPImageType.UINT8_CLAMPED_ARRAY)).toBe(false);
-    expect(image.has(MPImageType.FLOAT32_ARRAY)).toBe(false);
-    expect(image.has(MPImageType.WEBGL_TEXTURE)).toBe(false);
-    expect(image.has(MPImageType.IMAGE_BITMAP)).toBe(false);
+    expect(image.hasImageData()).toBe(true);
+    expect(image.hasWebGLTexture()).toBe(false);
+    expect(image.hasImageBitmap()).toBe(false);
 
-    image.get(MPImageType.UINT8_CLAMPED_ARRAY);
+    image.getAsWebGLTexture();
 
-    expect(image.has(MPImageType.IMAGE_DATA)).toBe(true);
-    expect(image.has(MPImageType.UINT8_CLAMPED_ARRAY)).toBe(true);
-    expect(image.has(MPImageType.FLOAT32_ARRAY)).toBe(false);
-    expect(image.has(MPImageType.WEBGL_TEXTURE)).toBe(false);
-    expect(image.has(MPImageType.IMAGE_BITMAP)).toBe(false);
+    expect(image.hasImageData()).toBe(true);
+    expect(image.hasWebGLTexture()).toBe(true);
+    expect(image.hasImageBitmap()).toBe(false);
 
-    image.get(MPImageType.FLOAT32_ARRAY);
+    image.getAsImageBitmap();
 
-    expect(image.has(MPImageType.IMAGE_DATA)).toBe(true);
-    expect(image.has(MPImageType.UINT8_CLAMPED_ARRAY)).toBe(true);
-    expect(image.has(MPImageType.FLOAT32_ARRAY)).toBe(true);
-    expect(image.has(MPImageType.WEBGL_TEXTURE)).toBe(false);
-    expect(image.has(MPImageType.IMAGE_BITMAP)).toBe(false);
-
-    image.get(MPImageType.WEBGL_TEXTURE);
-
-    expect(image.has(MPImageType.IMAGE_DATA)).toBe(true);
-    expect(image.has(MPImageType.UINT8_CLAMPED_ARRAY)).toBe(true);
-    expect(image.has(MPImageType.FLOAT32_ARRAY)).toBe(true);
-    expect(image.has(MPImageType.WEBGL_TEXTURE)).toBe(true);
-    expect(image.has(MPImageType.IMAGE_BITMAP)).toBe(false);
-
-    image.get(MPImageType.IMAGE_BITMAP);
-
-    expect(image.has(MPImageType.IMAGE_DATA)).toBe(true);
-    expect(image.has(MPImageType.UINT8_CLAMPED_ARRAY)).toBe(true);
-    expect(image.has(MPImageType.FLOAT32_ARRAY)).toBe(true);
-    expect(image.has(MPImageType.WEBGL_TEXTURE)).toBe(true);
-    expect(image.has(MPImageType.IMAGE_BITMAP)).toBe(true);
+    expect(image.hasImageData()).toBe(true);
+    expect(image.hasWebGLTexture()).toBe(true);
+    expect(image.hasImageBitmap()).toBe(true);
 
     image.close();
     shaderContext.close();

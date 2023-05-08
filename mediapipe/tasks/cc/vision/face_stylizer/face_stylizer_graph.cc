@@ -361,9 +361,10 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
 
       auto& tensors_to_image =
           graph.AddNode("mediapipe.tasks.TensorsToImageCalculator");
-      ConfigureTensorsToImageCalculator(
-          image_to_tensor_options,
-          &tensors_to_image.GetOptions<TensorsToImageCalculatorOptions>());
+      auto& tensors_to_image_options =
+          tensors_to_image.GetOptions<TensorsToImageCalculatorOptions>();
+      tensors_to_image_options.mutable_input_tensor_float_range()->set_min(-1);
+      tensors_to_image_options.mutable_input_tensor_float_range()->set_max(1);
       face_alignment_image >> tensors_to_image.In(kTensorsTag);
       face_alignment = tensors_to_image.Out(kImageTag).Cast<Image>();
 

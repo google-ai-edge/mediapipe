@@ -19,7 +19,10 @@ import {NormalizedKeypoint} from '../../../../tasks/web/components/containers/ke
 /** A Region-Of-Interest (ROI) to represent a region within an image. */
 export declare interface RegionOfInterest {
   /** The ROI in keypoint format. */
-  keypoint: NormalizedKeypoint;
+  keypoint?: NormalizedKeypoint;
+
+  /** The ROI as scribbles over the object that the user wants to segment. */
+  scribble?: NormalizedKeypoint[];
 }
 
 /** A connection between two landmarks. */

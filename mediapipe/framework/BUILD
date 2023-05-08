@@ -33,7 +33,9 @@ bzl_library(
     srcs = [
         "transitive_protos.bzl",
     ],
-    visibility = ["//mediapipe/framework:__subpackages__"],
+    visibility = [
+        "//mediapipe/framework:__subpackages__",
+    ],
 )
 
 bzl_library(

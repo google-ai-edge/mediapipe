@@ -25,6 +25,8 @@ static NSDictionary *const kCatsAndDogsRotatedImage =
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 static const float pixelDifferenceTolerance = 10.0f;
 static const float scoreDifferenceTolerance = 0.02f;
+static NSString *const kLiveStreamTestsDictObjectDetectorKey = @"object_detector";
+static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
 #define AssertEqualErrors(error, expectedError)                                               \
   XCTAssertNotNil(error);                                                                     \
@@ -58,7 +60,10 @@ static const float scoreDifferenceTolerance = 0.02f;
   XCTAssertEqualWithAccuracy(boundingBox.size.height, expectedBoundingBox.size.height, \
                              pixelDifferenceTolerance, @"index i = %d", idx);
 
-@interface MPPObjectDetectorTests : XCTestCase
+@interface MPPObjectDetectorTests : XCTestCase <MPPObjectDetectorLiveStreamDelegate> {
+  NSDictionary *liveStreamSucceedsTestDict;
+  NSDictionary *outOfOrderTimestampTestDict;
+}
 @end
 
 @implementation MPPObjectDetectorTests
@@ -446,31 +451,28 @@ static const float scoreDifferenceTolerance = 0.02f;
 
 #pragma mark Running Mode Tests
 
-- (void)testCreateObjectDetectorFailsWithResultListenerInNonLiveStreamMode {
+- (void)testCreateObjectDetectorFailsWithDelegateInNonLiveStreamMode {
   MPPRunningMode runningModesToTest[] = {MPPRunningModeImage, MPPRunningModeVideo};
   for (int i = 0; i < sizeof(runningModesToTest) / sizeof(runningModesToTest[0]); i++) {
     MPPObjectDetectorOptions *options = [self objectDetectorOptionsWithModelName:kModelName];
 
     options.runningMode = runningModesToTest[i];
-    options.completion =
-        ^(MPPObjectDetectionResult *result, NSInteger timestampInMilliseconds, NSError *error) {
-        };
+    options.objectDetectorLiveStreamDelegate = self;
 
     [self
         assertCreateObjectDetectorWithOptions:options
                        failsWithExpectedError:
-                           [NSError
-                               errorWithDomain:kExpectedErrorDomain
-                                          code:MPPTasksErrorCodeInvalidArgumentError
-                                      userInfo:@{
-                                        NSLocalizedDescriptionKey :
-                                            @"The vision task is in image or video mode, a "
-                                            @"user-defined result callback should not be provided."
-                                      }]];
+                           [NSError errorWithDomain:kExpectedErrorDomain
+                                               code:MPPTasksErrorCodeInvalidArgumentError
+                                           userInfo:@{
+                                             NSLocalizedDescriptionKey :
+                                                 @"The vision task is in image or video mode. The "
+                                                 @"delegate must not be set in the task's options."
+                                           }]];
   }
 }
 
-- (void)testCreateObjectDetectorFailsWithMissingResultListenerInLiveStreamMode {
+- (void)testCreateObjectDetectorFailsWithMissingDelegateInLiveStreamMode {
   MPPObjectDetectorOptions *options = [self objectDetectorOptionsWithModelName:kModelName];
 
   options.runningMode = MPPRunningModeLiveStream;
@@ -481,8 +483,10 @@ static const float scoreDifferenceTolerance = 0.02f;
                                                code:MPPTasksErrorCodeInvalidArgumentError
                                            userInfo:@{
                                              NSLocalizedDescriptionKey :
-                                                 @"The vision task is in live stream mode, a "
-                                                 @"user-defined result callback must be provided."
+                                                 @"The vision task is in live stream mode. An "
+                                                 @"object must be set as the delegate of the task "
+                                                 @"in its options to ensure asynchronous delivery "
+                                                 @"of results."
                                            }]];
 }
 
@@ -563,10 +567,7 @@ static const float scoreDifferenceTolerance = 0.02f;
   MPPObjectDetectorOptions *options = [self objectDetectorOptionsWithModelName:kModelName];
 
   options.runningMode = MPPRunningModeLiveStream;
-  options.completion =
-      ^(MPPObjectDetectionResult *result, NSInteger timestampInMilliseconds, NSError *error) {
-
-      };
+  options.objectDetectorLiveStreamDelegate = self;
 
   MPPObjectDetector *objectDetector = [self objectDetectorWithOptionsSucceeds:options];
 
@@ -631,23 +632,17 @@ static const float scoreDifferenceTolerance = 0.02f;
   options.maxResults = maxResults;
 
   options.runningMode = MPPRunningModeLiveStream;
+  options.objectDetectorLiveStreamDelegate = self;
 
   XCTestExpectation *expectation = [[XCTestExpectation alloc]
       initWithDescription:@"detectWithOutOfOrderTimestampsAndLiveStream"];
   expectation.expectedFulfillmentCount = 1;
 
-  options.completion =
-      ^(MPPObjectDetectionResult *result, NSInteger timestampInMilliseconds, NSError *error) {
-        [self assertObjectDetectionResult:result
-                  isEqualToExpectedResult:
-                      [MPPObjectDetectorTests
-                          expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
-                              timestampInMilliseconds]
-                  expectedDetectionsCount:maxResults];
-        [expectation fulfill];
-      };
-
   MPPObjectDetector *objectDetector = [self objectDetectorWithOptionsSucceeds:options];
+  liveStreamSucceedsTestDict = @{
+    kLiveStreamTestsDictObjectDetectorKey : objectDetector,
+    kLiveStreamTestsDictExpectationKey : expectation
+  };
 
   MPPImage *image = [self imageWithFileInfo:kCatsAndDogsImage];
 
@@ -695,18 +690,14 @@ static const float scoreDifferenceTolerance = 0.02f;
   expectation.expectedFulfillmentCount = iterationCount + 1;
   expectation.inverted = YES;
 
-  options.completion =
-      ^(MPPObjectDetectionResult *result, NSInteger timestampInMilliseconds, NSError *error) {
-        [self assertObjectDetectionResult:result
-                  isEqualToExpectedResult:
-                      [MPPObjectDetectorTests
-                          expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
-                              timestampInMilliseconds]
-                  expectedDetectionsCount:maxResults];
-        [expectation fulfill];
-      };
+  options.objectDetectorLiveStreamDelegate = self;
 
   MPPObjectDetector *objectDetector = [self objectDetectorWithOptionsSucceeds:options];
+
+  liveStreamSucceedsTestDict = @{
+    kLiveStreamTestsDictObjectDetectorKey : objectDetector,
+    kLiveStreamTestsDictExpectationKey : expectation
+  };
 
   // TODO: Mimic initialization from CMSampleBuffer as live stream mode is most likely to be used
   // with the iOS camera. AVCaptureVideoDataOutput sample buffer delegates provide frames of type
@@ -719,6 +710,26 @@ static const float scoreDifferenceTolerance = 0.02f;
 
   NSTimeInterval timeout = 0.5f;
   [self waitForExpectations:@[ expectation ] timeout:timeout];
+}
+
+#pragma mark MPPObjectDetectorLiveStreamDelegate Methods
+- (void)objectDetector:(MPPObjectDetector *)objectDetector
+    didFinishDetectionWithResult:(MPPObjectDetectionResult *)objectDetectionResult
+         timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                           error:(NSError *)error {
+  NSInteger maxResults = 4;
+  [self assertObjectDetectionResult:objectDetectionResult
+            isEqualToExpectedResult:
+                [MPPObjectDetectorTests
+                    expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
+                        timestampInMilliseconds]
+            expectedDetectionsCount:maxResults];
+
+  if (objectDetector == outOfOrderTimestampTestDict[kLiveStreamTestsDictObjectDetectorKey]) {
+    [outOfOrderTimestampTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
+  } else if (objectDetector == liveStreamSucceedsTestDict[kLiveStreamTestsDictObjectDetectorKey]) {
+    [liveStreamSucceedsTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
+  }
 }
 
 @end
