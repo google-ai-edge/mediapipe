@@ -42,7 +42,6 @@ OBJC_COMMON_DEPS = [
     "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
     "//mediapipe/tasks/ios/components/containers:MPPCategory",
     "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-    "//mediapipe/calculators/core:flow_limiter_calculator",
     "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
     "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
     "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
@@ -173,7 +172,6 @@ apple_static_library(
     minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
     platform_type = "ios",
     deps = [
-        "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
         "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
         "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
