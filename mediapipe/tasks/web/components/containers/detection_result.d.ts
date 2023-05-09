@@ -37,7 +37,7 @@ export declare interface Detection {
 }
 
 /** Detection results of a model. */
-export interface DetectionResult {
+export declare interface DetectionResult {
   /** A list of Detections. */
   detections: Detection[];
 }

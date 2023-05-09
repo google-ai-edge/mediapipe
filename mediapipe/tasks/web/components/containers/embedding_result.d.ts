@@ -48,7 +48,7 @@ export declare interface Embedding {
 }
 
 /**  Embedding results for a given embedder model. */
-export interface EmbeddingResult {
+export declare interface EmbeddingResult {
   /**
    * The embedding results for each model head, i.e. one for each output tensor.
    */

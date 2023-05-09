@@ -17,4 +17,4 @@
 import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_options';
 
 /** Options to configure the MediaPipe Face Stylizer Task */
-export interface FaceStylizerOptions extends VisionTaskOptions {}
+export declare interface FaceStylizerOptions extends VisionTaskOptions {}

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_options';
 
-/** Options to configure the MediaPipe Image Segmenter Task */
-export interface ImageSegmenterOptions extends VisionTaskOptions {
-  /**
-   * The locale to use for display names specified through the TFLite Model
-   * Metadata, if any. Defaults to English.
-   */
-  displayNamesLocale?: string|undefined;
+import {TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options';
 
+/** Options to configure the MediaPipe Interactive Segmenter Task */
+export declare interface InteractiveSegmenterOptions extends TaskRunnerOptions {
   /** Whether to output confidence masks. Defaults to true. */
   outputConfidenceMasks?: boolean|undefined;
 

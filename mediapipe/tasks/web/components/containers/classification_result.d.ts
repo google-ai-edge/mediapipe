@@ -38,7 +38,7 @@ export declare interface Classifications {
 }
 
 /** Classification results of a model. */
-export interface ClassificationResult {
+export declare interface ClassificationResult {
   /** The classification results for each head of the model. */
   classifications: Classifications[];
 

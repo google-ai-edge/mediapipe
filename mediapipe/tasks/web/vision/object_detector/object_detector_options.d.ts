@@ -18,5 +18,5 @@ import {ClassifierOptions} from '../../../../tasks/web/core/classifier_options';
 import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_options';
 
 /** Options to configure the MediaPipe Object Detector Task */
-export interface ObjectDetectorOptions extends VisionTaskOptions,
-                                               ClassifierOptions {}
+export declare interface ObjectDetectorOptions extends VisionTaskOptions,
+                                                       ClassifierOptions {}
