@@ -64,7 +64,9 @@ public abstract class TaskOptions {
         break;
       case GPU:
         accelerationBuilder.setGpu(
-            InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.Gpu.getDefaultInstance());
+            InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.Gpu.newBuilder()
+                .setUseAdvancedGpuApi(true)
+                .build());
         break;
     }
     return BaseOptionsProto.BaseOptions.newBuilder()
