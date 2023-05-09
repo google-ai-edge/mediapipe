@@ -62,5 +62,6 @@ objc_library(
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
         "//third_party/apple_frameworks:UIKit",
         "@com_google_absl//absl/status:statusor",
+        "@ios_opencv//:OpencvFramework",
     ],
 )
