@@ -147,11 +147,17 @@ def main():
       f"Looking for profiles for app ids with prefix '{bundle_id_prefix}' in '{profile_dir}'"
   )
 
+  profiles_found = False
   for name in os.listdir(profile_dir):
     if not name.endswith(".mobileprovision"):
       continue
+    profiles_found = True
     profile_path = os.path.join(profile_dir, name)
     process_profile(profile_path, our_app_id_re)
+
+  if not profiles_found:
+    print("Error: Unable to find any provisioning profiles " +
+          f"(*.mobileprovision files) in '{profile_dir}'")
 
 
 if __name__ == "__main__":
