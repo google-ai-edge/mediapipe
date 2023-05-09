@@ -340,7 +340,9 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
     }
 
     LOG(INFO) << "GL version: " << gl_major_version_ << "." << gl_minor_version_
-              << " (" << version_string << ")";
+              << " (" << version_string
+              << "), renderer: " << glGetString(GL_RENDERER);
+
     {
       auto status = GetGlExtensions();
       if (!status.ok()) {
