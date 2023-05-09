@@ -458,5 +458,29 @@ TEST_F(GateCalculatorTest, AllowInitialNoStateTransition) {
   ASSERT_EQ(0, output.size());
 }
 
+// Must detect allow value for first timestamp as a state change when the
+// initial state is set to GATE_DISALLOW.
+TEST_F(GateCalculatorTest, StateChangeTriggeredWithInitialGateStateOption) {
+  SetRunner(R"(
+        calculator: "GateCalculator"
+        input_stream: "test_input"
+        input_stream: "ALLOW:allow"
+        output_stream: "test_output"
+        output_stream: "STATE_CHANGE:state_change"
+        options: {
+          [mediapipe.GateCalculatorOptions.ext] {
+            initial_gate_state: GATE_DISALLOW
+          }
+        }
+  )");
+
+  constexpr int64_t kTimestampValue0 = 42;
+  RunTimeStep(kTimestampValue0, "ALLOW", true);
+
+  const std::vector<Packet>& output =
+      runner()->Outputs().Get("STATE_CHANGE", 0).packets;
+  ASSERT_EQ(1, output.size());
+}
+
 }  // namespace
 }  // namespace mediapipe
