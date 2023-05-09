@@ -14,29 +14,17 @@
 
 package com.google.mediapipe.tasks.vision.poselandmarker;
 
-import com.google.auto.value.AutoValue;
+import com.google.mediapipe.tasks.components.containers.Connection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 /** Pose landmarks connection constants. */
-public final class PoseLandmarksConnections {
-
-  /** Value class representing pose landmarks connection. */
-  @AutoValue
-  public abstract static class Connection {
-    static Connection create(int start, int end) {
-      return new AutoValue_PoseLandmarksConnections_Connection(start, end);
-    }
-
-    public abstract int start();
-
-    public abstract int end();
-  }
+final class PoseLandmarksConnections {
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> POSE_LANDMARKS =
+  static final Set<Connection> POSE_LANDMARKS =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(

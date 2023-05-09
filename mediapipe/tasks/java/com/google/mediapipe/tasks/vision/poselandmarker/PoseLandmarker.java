@@ -27,6 +27,7 @@ import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.ByteBufferImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
+import com.google.mediapipe.tasks.components.containers.Connection;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -49,6 +50,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Performs pose landmarks detection on images.
@@ -205,6 +207,9 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
             handler);
     return new PoseLandmarker(runner, landmarkerOptions.runningMode());
   }
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> POSE_LANDMARKS = PoseLandmarksConnections.POSE_LANDMARKS;
 
   /**
    * Constructor to initialize a {@link PoseLandmarker} from a {@link TaskRunner} and a {@link

@@ -25,6 +25,7 @@ import com.google.mediapipe.framework.Packet;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
+import com.google.mediapipe.tasks.components.containers.Connection;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -49,6 +50,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Performs face landmarks detection on images.
@@ -222,6 +224,46 @@ public final class FaceLandmarker extends BaseVisionTaskApi {
             handler);
     return new FaceLandmarker(runner, landmarkerOptions.runningMode());
   }
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> FACE_LANDMARKS_LIPS =
+      FaceLandmarksConnections.FACE_LANDMARKS_LIPS;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> FACE_LANDMARKS_LEFT_EYE =
+      FaceLandmarksConnections.FACE_LANDMARKS_LEFT_EYE;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> FACE_LANDMARKS_LEFT_EYE_BROW =
+      FaceLandmarksConnections.FACE_LANDMARKS_LEFT_EYE_BROW;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> FACE_LANDMARKS_LEFT_IRIS =
+      FaceLandmarksConnections.FACE_LANDMARKS_LEFT_IRIS;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> FACE_LANDMARKS_RIGHT_EYE =
+      FaceLandmarksConnections.FACE_LANDMARKS_RIGHT_EYE;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> FACE_LANDMARKS_RIGHT_EYE_BROW =
+      FaceLandmarksConnections.FACE_LANDMARKS_RIGHT_EYE_BROW;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> FACE_LANDMARKS_RIGHT_IRIS =
+      FaceLandmarksConnections.FACE_LANDMARKS_RIGHT_IRIS;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> FACE_LANDMARKS_FACE_OVAL =
+      FaceLandmarksConnections.FACE_LANDMARKS_FACE_OVAL;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> FACE_LANDMARKS_CONNECTORS =
+      FaceLandmarksConnections.FACE_LANDMARKS_CONNECTORS;
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> FACE_LANDMARKS_TESSELATION =
+      FaceLandmarksConnections.FACE_LANDMARKS_TESSELATION;
 
   /**
    * Constructor to initialize an {@link FaceLandmarker} from a {@link TaskRunner} and a {@link

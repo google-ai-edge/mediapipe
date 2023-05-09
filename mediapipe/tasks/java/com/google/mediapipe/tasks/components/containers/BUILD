@@ -81,6 +81,15 @@ android_library(
 )
 
 android_library(
+    name = "connection",
+    srcs = ["Connection.java"],
+    deps = [
+        "//third_party:autovalue",
+        "@maven//:com_google_guava_guava",
+    ],
+)
+
+android_library(
     name = "landmark",
     srcs = ["Landmark.java"],
     deps = [

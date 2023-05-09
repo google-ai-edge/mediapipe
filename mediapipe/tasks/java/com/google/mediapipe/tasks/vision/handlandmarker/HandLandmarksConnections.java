@@ -14,7 +14,7 @@
 
 package com.google.mediapipe.tasks.vision.handlandmarker;
 
-import com.google.auto.value.AutoValue;
+import com.google.mediapipe.tasks.components.containers.Connection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -23,22 +23,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Hand landmarks connection constants. */
-public final class HandLandmarksConnections {
-
-  /** Value class representing hand landmarks connection. */
-  @AutoValue
-  public abstract static class Connection {
-    static Connection create(int start, int end) {
-      return new AutoValue_HandLandmarksConnections_Connection(start, end);
-    }
-
-    public abstract int start();
-
-    public abstract int end();
-  }
+final class HandLandmarksConnections {
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> HAND_PALM_CONNECTIONS =
+  static final Set<Connection> HAND_PALM_CONNECTIONS =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
@@ -50,28 +38,28 @@ public final class HandLandmarksConnections {
                   Connection.create(0, 17))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> HAND_THUMB_CONNECTIONS =
+  static final Set<Connection> HAND_THUMB_CONNECTIONS =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
                   Connection.create(1, 2), Connection.create(2, 3), Connection.create(3, 4))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> HAND_INDEX_FINGER_CONNECTIONS =
+  static final Set<Connection> HAND_INDEX_FINGER_CONNECTIONS =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
                   Connection.create(5, 6), Connection.create(6, 7), Connection.create(7, 8))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> HAND_MIDDLE_FINGER_CONNECTIONS =
+  static final Set<Connection> HAND_MIDDLE_FINGER_CONNECTIONS =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
                   Connection.create(9, 10), Connection.create(10, 11), Connection.create(11, 12))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> HAND_RING_FINGER_CONNECTIONS =
+  static final Set<Connection> HAND_RING_FINGER_CONNECTIONS =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
@@ -80,7 +68,7 @@ public final class HandLandmarksConnections {
                   Connection.create(15, 16))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> HAND_PINKY_FINGER_CONNECTIONS =
+  static final Set<Connection> HAND_PINKY_FINGER_CONNECTIONS =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
@@ -89,7 +77,7 @@ public final class HandLandmarksConnections {
                   Connection.create(19, 20))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> HAND_CONNECTIONS =
+  static final Set<Connection> HAND_CONNECTIONS =
       Collections.unmodifiableSet(
           Stream.of(
                   HAND_PALM_CONNECTIONS.stream(),
