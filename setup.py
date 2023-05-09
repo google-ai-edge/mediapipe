@@ -294,7 +294,12 @@ class GenerateMetadataSchema(build_ext.build_ext):
   """Generate metadata python schema files."""
 
   def run(self):
-    for target in ['metadata_schema_py', 'schema_py']:
+    for target in [
+        'image_segmenter_metadata_schema_py',
+        'metadata_schema_py',
+        'object_detector_metadata_schema_py',
+        'schema_py',
+    ]:
       bazel_command = [
           'bazel',
           'build',
