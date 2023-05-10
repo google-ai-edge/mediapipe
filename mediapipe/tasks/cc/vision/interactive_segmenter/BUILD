@@ -22,6 +22,7 @@ cc_library(
     name = "interactive_segmenter",
     srcs = ["interactive_segmenter.cc"],
     hdrs = ["interactive_segmenter.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":interactive_segmenter_graph",
         "//mediapipe/framework:calculator_cc_proto",

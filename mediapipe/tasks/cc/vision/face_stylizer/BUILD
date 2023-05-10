@@ -61,6 +61,7 @@ cc_library(
     name = "face_stylizer",
     srcs = ["face_stylizer.cc"],
     hdrs = ["face_stylizer.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":face_stylizer_graph",  # buildcleaner:keep
         "//mediapipe/framework/api2:builder",

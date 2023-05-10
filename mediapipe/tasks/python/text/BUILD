@@ -23,7 +23,6 @@ py_library(
     srcs = [
         "text_classifier.py",
     ],
-    visibility = ["//mediapipe/tasks:users"],
     deps = [
         "//mediapipe/python:packet_creator",
         "//mediapipe/python:packet_getter",

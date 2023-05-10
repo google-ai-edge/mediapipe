@@ -123,6 +123,7 @@ cc_library(
     name = "face_landmarker_result",
     srcs = ["face_landmarker_result.cc"],
     hdrs = ["face_landmarker_result.h"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
@@ -137,6 +138,7 @@ cc_library(
     name = "face_landmarker",
     srcs = ["face_landmarker.cc"],
     hdrs = ["face_landmarker.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":face_landmarker_graph",
         ":face_landmarker_result",
@@ -161,20 +163,6 @@ cc_library(
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_cc_proto",
         "@com_google_absl//absl/status:statusor",
-    ],
-)
-
-cc_library(
-    name = "face_landmarker_result_cc",
-    srcs = ["face_landmarker_result.cc"],
-    hdrs = ["face_landmarker_result.h"],
-    deps = [
-        "//mediapipe/framework/formats:classification_cc_proto",
-        "//mediapipe/framework/formats:landmark_cc_proto",
-        "//mediapipe/framework/formats:matrix",
-        "//mediapipe/framework/formats:matrix_data_cc_proto",
-        "//mediapipe/tasks/cc/components/containers:classification_result",
-        "//mediapipe/tasks/cc/components/containers:landmark",
     ],
 )
 
