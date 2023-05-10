@@ -56,6 +56,7 @@ py_test(
     srcs = ["dataset_test.py"],
     data = [":testdata"],
     tags = [
+        "not_run:arm",
         "notsan",
         "requires-net:external",
     ],
@@ -141,6 +142,7 @@ py_test(
     data = [":testdata"],
     shard_count = 2,
     tags = [
+        "not_run:arm",
         "notsan",
         "requires-net:external",
     ],
