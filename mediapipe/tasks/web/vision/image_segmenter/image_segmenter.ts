@@ -383,6 +383,10 @@ export class ImageSegmenter extends VisionTaskRunner {
 
     if (this.userCallback) {
       this.userCallback(this.result);
+
+      // Free the image memory, now that we've kept all streams alive long
+      // enough to be returned in our callbacks.
+      this.freeKeepaliveStreams();
     }
   }
 
@@ -403,11 +407,13 @@ export class ImageSegmenter extends VisionTaskRunner {
     segmenterNode.setOptions(calculatorOptions);
 
     graphConfig.addNode(segmenterNode);
+    this.addKeepaliveNode(graphConfig);
 
     if (this.outputConfidenceMasks) {
       graphConfig.addOutputStream(CONFIDENCE_MASKS_STREAM);
       segmenterNode.addOutputStream(
           'CONFIDENCE_MASKS:' + CONFIDENCE_MASKS_STREAM);
+      this.keepStreamAlive(CONFIDENCE_MASKS_STREAM);
 
       this.graphRunner.attachImageVectorListener(
           CONFIDENCE_MASKS_STREAM, (masks, timestamp) => {
@@ -428,6 +434,7 @@ export class ImageSegmenter extends VisionTaskRunner {
     if (this.outputCategoryMask) {
       graphConfig.addOutputStream(CATEGORY_MASK_STREAM);
       segmenterNode.addOutputStream('CATEGORY_MASK:' + CATEGORY_MASK_STREAM);
+      this.keepStreamAlive(CATEGORY_MASK_STREAM);
 
       this.graphRunner.attachImageListener(
           CATEGORY_MASK_STREAM, (mask, timestamp) => {

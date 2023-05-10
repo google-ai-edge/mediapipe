@@ -37,7 +37,7 @@ export function createSpyWasmModule(): SpyWasmModule {
     '_attachProtoVectorListener', '_free', '_waitUntilIdle',
     '_addStringToInputStream', '_registerModelResourcesGraphService',
     '_configureAudio', '_malloc', '_addProtoToInputStream', '_getGraphConfig',
-    '_closeGraph'
+    '_closeGraph', '_addBoolToInputStream'
   ]);
   spyWasmModule._getGraphConfig.and.callFake(() => {
     (spyWasmModule.simpleListeners![CALCULATOR_GRAPH_CONFIG_LISTENER_NAME] as
@@ -81,7 +81,10 @@ export function verifyGraph(
     expectedBaseOptions?: FieldPathToValue,
     ): void {
   expect(tasksFake.graph).toBeDefined();
-  expect(tasksFake.graph!.getNodeList().length).toBe(1);
+  // Our graphs should have at least one node in them for processing, and
+  // sometimes one additional one for keeping alive certain streams in memory.
+  expect(tasksFake.graph!.getNodeList().length).toBeGreaterThanOrEqual(1);
+  expect(tasksFake.graph!.getNodeList().length).toBeLessThanOrEqual(2);
   const node = tasksFake.graph!.getNodeList()[0].toObject();
   expect(node).toEqual(
       jasmine.objectContaining({calculator: tasksFake.calculatorName}));

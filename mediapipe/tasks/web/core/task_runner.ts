@@ -28,8 +28,15 @@ import {WasmFileset} from './wasm_fileset';
 // None of the MP Tasks ship bundle assets.
 const NO_ASSETS = undefined;
 
+// Internal stream names for temporarily keeping memory alive, then freeing it.
+const FREE_MEMORY_STREAM = 'free_memory';
+const UNUSED_STREAM_SUFFIX = '_unused_out';
+
 // tslint:disable-next-line:enforce-name-casing
 const CachedGraphRunnerType = SupportModelResourcesGraphService(GraphRunner);
+
+// The OSS JS API does not support the builder pattern.
+// tslint:disable:jspb-use-builder-pattern
 
 /**
  * An implementation of the GraphRunner that exposes the resource graph
@@ -64,6 +71,7 @@ export abstract class TaskRunner {
   protected abstract baseOptions: BaseOptionsProto;
   private processingErrors: Error[] = [];
   private latestOutputTimestamp = 0;
+  private keepaliveNode?: CalculatorGraphConfig.Node;
 
   /**
    * Creates a new instance of a Mediapipe Task. Determines if SIMD is
@@ -177,6 +185,7 @@ export abstract class TaskRunner {
     this.graphRunner.registerModelResourcesGraphService();
 
     this.graphRunner.setGraph(graphData, isBinary);
+    this.keepaliveNode = undefined;
     this.handleErrors();
   }
 
@@ -257,8 +266,36 @@ export abstract class TaskRunner {
     this.baseOptions.setAcceleration(acceleration);
   }
 
+  /**
+   * Adds a node to the graph to temporarily keep certain streams alive.
+   * NOTE: To use this call, PassThroughCalculator must be included in your wasm
+   *     dependencies.
+   */
+  protected addKeepaliveNode(graphConfig: CalculatorGraphConfig) {
+    this.keepaliveNode = new CalculatorGraphConfig.Node();
+    this.keepaliveNode.setCalculator('PassThroughCalculator');
+    this.keepaliveNode.addInputStream(FREE_MEMORY_STREAM);
+    this.keepaliveNode.addOutputStream(
+        FREE_MEMORY_STREAM + UNUSED_STREAM_SUFFIX);
+    graphConfig.addInputStream(FREE_MEMORY_STREAM);
+    graphConfig.addNode(this.keepaliveNode);
+  }
+
+  /** Adds streams to the keepalive node to be kept alive until callback. */
+  protected keepStreamAlive(streamName: string) {
+    this.keepaliveNode!.addInputStream(streamName);
+    this.keepaliveNode!.addOutputStream(streamName + UNUSED_STREAM_SUFFIX);
+  }
+
+  /** Frees any streams being kept alive by the keepStreamAlive callback. */
+  protected freeKeepaliveStreams() {
+    this.graphRunner.addBoolToStream(
+        true, FREE_MEMORY_STREAM, this.latestOutputTimestamp);
+  }
+
   /** Closes and cleans up the resources held by this task. */
   close(): void {
+    this.keepaliveNode = undefined;
     this.graphRunner.closeGraph();
   }
 }

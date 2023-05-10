@@ -376,6 +376,9 @@ export class PoseLandmarker extends VisionTaskRunner {
 
     if (this.userCallback) {
       this.userCallback(this.result as Required<PoseLandmarkerResult>);
+
+      // Free the image memory, now that we've finished our callback.
+      this.freeKeepaliveStreams();
     }
   }
 
@@ -437,6 +440,9 @@ export class PoseLandmarker extends VisionTaskRunner {
     landmarkerNode.setOptions(calculatorOptions);
 
     graphConfig.addNode(landmarkerNode);
+    // We only need to keep alive the image stream, since the protos are being
+    // deep-copied anyways via serialization+deserialization.
+    this.addKeepaliveNode(graphConfig);
 
     this.graphRunner.attachProtoVectorListener(
         NORM_LANDMARKS_STREAM, (binaryProto, timestamp) => {
@@ -467,6 +473,8 @@ export class PoseLandmarker extends VisionTaskRunner {
     if (this.outputSegmentationMasks) {
       landmarkerNode.addOutputStream(
           'SEGMENTATION_MASK:' + SEGMENTATION_MASK_STREAM);
+      this.keepStreamAlive(SEGMENTATION_MASK_STREAM);
+
       this.graphRunner.attachImageVectorListener(
           SEGMENTATION_MASK_STREAM, (masks, timestamp) => {
             this.result.segmentationMasks = masks.map(
