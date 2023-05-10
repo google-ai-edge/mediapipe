@@ -287,7 +287,7 @@ describe('PoseLandmarker', () => {
     });
   });
 
-  it('invokes listener once masks are available', (done) => {
+  it('invokes listener after masks are available', (done) => {
     const landmarksProto = [createLandmarks().serializeBinary()];
     const worldLandmarksProto = [createWorldLandmarks().serializeBinary()];
     const masks = [
@@ -309,13 +309,12 @@ describe('PoseLandmarker', () => {
       expect(listenerCalled).toBeFalse();
       expect(listenerCalled).toBeFalse();
       poseLandmarker.listeners.get('segmentation_masks')!(masks, 1337);
-      expect(listenerCalled).toBeTrue();
-      done();
     });
 
     // Invoke the pose landmarker
     poseLandmarker.detect({} as HTMLImageElement, () => {
       listenerCalled = true;
+      done();
     });
   });
 
@@ -336,5 +335,6 @@ describe('PoseLandmarker', () => {
     expect(poseLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
     expect(result.landmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
     expect(result.worldLandmarks).toEqual([[{'x': 0, 'y': 0, 'z': 0}]]);
+    result.close();
   });
 });

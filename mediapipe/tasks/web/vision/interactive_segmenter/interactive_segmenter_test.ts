@@ -277,7 +277,7 @@ describe('InteractiveSegmenter', () => {
     });
   });
 
-  it('invokes listener once masks are avaiblae', async () => {
+  it('invokes listener after masks are avaiblae', async () => {
     const categoryMask = new Uint8Array([1]);
     const confidenceMask = new Float32Array([0.0]);
     let listenerCalled = false;
@@ -296,7 +296,7 @@ describe('InteractiveSegmenter', () => {
             {data: confidenceMask, width: 1, height: 1},
           ],
           1337);
-      expect(listenerCalled).toBeTrue();
+      expect(listenerCalled).toBeFalse();
     });
 
     return new Promise<void>(resolve => {
@@ -322,6 +322,6 @@ describe('InteractiveSegmenter', () => {
     const result =
         interactiveSegmenter.segment({} as HTMLImageElement, KEYPOINT);
     expect(result.confidenceMasks![0]).toBeInstanceOf(MPMask);
-    result.confidenceMasks![0].close();
+    result.close();
   });
 });

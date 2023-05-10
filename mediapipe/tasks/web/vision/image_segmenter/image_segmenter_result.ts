@@ -17,18 +17,26 @@
 import {MPMask} from '../../../../tasks/web/vision/core/mask';
 
 /** The output result of ImageSegmenter. */
-export declare interface ImageSegmenterResult {
-  /**
-   * Multiple masks represented as `Float32Array` or `WebGLTexture`-backed
-   * `MPImage`s where, for each mask, each pixel represents the prediction
-   * confidence, usually in the [0, 1] range.
-   */
-  confidenceMasks?: MPMask[];
+export class ImageSegmenterResult {
+  constructor(
+      /**
+       * Multiple masks represented as `Float32Array` or `WebGLTexture`-backed
+       * `MPImage`s where, for each mask, each pixel represents the prediction
+       * confidence, usually in the [0, 1] range.
+       */
+      readonly confidenceMasks?: MPMask[],
+      /**
+       * A category mask represented as a `Uint8ClampedArray` or
+       * `WebGLTexture`-backed `MPImage` where each pixel represents the class
+       * which the pixel in the original image was predicted to belong to.
+       */
+      readonly categoryMask?: MPMask) {}
 
-  /**
-   * A category mask represented as a `Uint8ClampedArray` or
-   * `WebGLTexture`-backed `MPImage` where each pixel represents the class which
-   * the pixel in the original image was predicted to belong to.
-   */
-  categoryMask?: MPMask;
+  /** Frees the resources held by the category and confidence masks. */
+  close(): void {
+    this.confidenceMasks?.forEach(m => {
+      m.close();
+    });
+    this.categoryMask?.close();
+  }
 }

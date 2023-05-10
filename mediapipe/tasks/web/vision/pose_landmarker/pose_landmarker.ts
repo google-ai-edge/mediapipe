@@ -21,9 +21,11 @@ import {BaseOptions as BaseOptionsProto} from '../../../../tasks/cc/core/proto/b
 import {PoseDetectorGraphOptions} from '../../../../tasks/cc/vision/pose_detector/proto/pose_detector_graph_options_pb';
 import {PoseLandmarkerGraphOptions} from '../../../../tasks/cc/vision/pose_landmarker/proto/pose_landmarker_graph_options_pb';
 import {PoseLandmarksDetectorGraphOptions} from '../../../../tasks/cc/vision/pose_landmarker/proto/pose_landmarks_detector_graph_options_pb';
+import {Landmark, NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
 import {convertToLandmarks, convertToWorldLandmarks} from '../../../../tasks/web/components/processors/landmark_result';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
+import {MPMask} from '../../../../tasks/web/vision/core/mask';
 import {Connection} from '../../../../tasks/web/vision/core/types';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
@@ -61,7 +63,9 @@ export type PoseLandmarkerCallback = (result: PoseLandmarkerResult) => void;
 
 /** Performs pose landmarks detection on images. */
 export class PoseLandmarker extends VisionTaskRunner {
-  private result: Partial<PoseLandmarkerResult> = {};
+  private landmarks: NormalizedLandmark[][] = [];
+  private worldLandmarks: Landmark[][] = [];
+  private segmentationMasks?: MPMask[];
   private outputSegmentationMasks = false;
   private userCallback?: PoseLandmarkerCallback;
   private readonly options: PoseLandmarkerGraphOptions;
@@ -268,10 +272,7 @@ export class PoseLandmarker extends VisionTaskRunner {
 
     this.resetResults();
     this.processImageData(image, imageProcessingOptions);
-
-    if (!this.userCallback) {
-      return this.result as PoseLandmarkerResult;
-    }
+    return this.processResults();
   }
 
   /**
@@ -352,31 +353,25 @@ export class PoseLandmarker extends VisionTaskRunner {
 
     this.resetResults();
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
-
-    if (!this.userCallback) {
-      return this.result as PoseLandmarkerResult;
-    }
+    return this.processResults();
   }
 
   private resetResults(): void {
-    this.result = {};
+    this.landmarks = [];
+    this.worldLandmarks = [];
+    this.segmentationMasks = undefined;
   }
 
-  /** Invokes the user callback once all data has been received. */
-  private maybeInvokeCallback(): void {
-    if (!('landmarks' in this.result)) {
-      return;
-    }
-    if (!('worldLandmarks' in this.result)) {
-      return;
-    }
-    if (this.outputSegmentationMasks && !('segmentationMasks' in this.result)) {
-      return;
-    }
-
-    if (this.userCallback) {
-      this.userCallback(this.result as Required<PoseLandmarkerResult>);
-
+  private processResults(): PoseLandmarkerResult|void {
+    try {
+      const result = new PoseLandmarkerResult(
+          this.landmarks, this.worldLandmarks, this.segmentationMasks);
+      if (this.userCallback) {
+        this.userCallback(result);
+      } else {
+        return result;
+      }
+    } finally {
       // Free the image memory, now that we've finished our callback.
       this.freeKeepaliveStreams();
     }
@@ -396,11 +391,11 @@ export class PoseLandmarker extends VisionTaskRunner {
    * Converts raw data into a landmark, and adds it to our landmarks list.
    */
   private addJsLandmarks(data: Uint8Array[]): void {
-    this.result.landmarks = [];
+    this.landmarks = [];
     for (const binaryProto of data) {
       const poseLandmarksProto =
           NormalizedLandmarkList.deserializeBinary(binaryProto);
-      this.result.landmarks.push(convertToLandmarks(poseLandmarksProto));
+      this.landmarks.push(convertToLandmarks(poseLandmarksProto));
     }
   }
 
@@ -409,11 +404,11 @@ export class PoseLandmarker extends VisionTaskRunner {
    * worldLandmarks list.
    */
   private adddJsWorldLandmarks(data: Uint8Array[]): void {
-    this.result.worldLandmarks = [];
+    this.worldLandmarks = [];
     for (const binaryProto of data) {
       const poseWorldLandmarksProto =
           LandmarkList.deserializeBinary(binaryProto);
-      this.result.worldLandmarks.push(
+      this.worldLandmarks.push(
           convertToWorldLandmarks(poseWorldLandmarksProto));
     }
   }
@@ -448,26 +443,22 @@ export class PoseLandmarker extends VisionTaskRunner {
         NORM_LANDMARKS_STREAM, (binaryProto, timestamp) => {
           this.addJsLandmarks(binaryProto);
           this.setLatestOutputTimestamp(timestamp);
-          this.maybeInvokeCallback();
         });
     this.graphRunner.attachEmptyPacketListener(
         NORM_LANDMARKS_STREAM, timestamp => {
-          this.result.landmarks = [];
+          this.landmarks = [];
           this.setLatestOutputTimestamp(timestamp);
-          this.maybeInvokeCallback();
         });
 
     this.graphRunner.attachProtoVectorListener(
         WORLD_LANDMARKS_STREAM, (binaryProto, timestamp) => {
           this.adddJsWorldLandmarks(binaryProto);
           this.setLatestOutputTimestamp(timestamp);
-          this.maybeInvokeCallback();
         });
     this.graphRunner.attachEmptyPacketListener(
         WORLD_LANDMARKS_STREAM, timestamp => {
-          this.result.worldLandmarks = [];
+          this.worldLandmarks = [];
           this.setLatestOutputTimestamp(timestamp);
-          this.maybeInvokeCallback();
         });
 
     if (this.outputSegmentationMasks) {
@@ -477,17 +468,15 @@ export class PoseLandmarker extends VisionTaskRunner {
 
       this.graphRunner.attachImageVectorListener(
           SEGMENTATION_MASK_STREAM, (masks, timestamp) => {
-            this.result.segmentationMasks = masks.map(
+            this.segmentationMasks = masks.map(
                 wasmImage => this.convertToMPMask(
                     wasmImage, /* shouldCopyData= */ !this.userCallback));
             this.setLatestOutputTimestamp(timestamp);
-            this.maybeInvokeCallback();
           });
       this.graphRunner.attachEmptyPacketListener(
           SEGMENTATION_MASK_STREAM, timestamp => {
-            this.result.segmentationMasks = [];
+            this.segmentationMasks = [];
             this.setLatestOutputTimestamp(timestamp);
-            this.maybeInvokeCallback();
           });
     }
 

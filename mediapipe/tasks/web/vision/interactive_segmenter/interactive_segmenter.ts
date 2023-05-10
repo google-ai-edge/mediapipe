@@ -21,6 +21,7 @@ import {ImageSegmenterGraphOptions as ImageSegmenterGraphOptionsProto} from '../
 import {SegmenterOptions as SegmenterOptionsProto} from '../../../../tasks/cc/vision/image_segmenter/proto/segmenter_options_pb';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
+import {MPMask} from '../../../../tasks/web/vision/core/mask';
 import {RegionOfInterest} from '../../../../tasks/web/vision/core/types';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {Color as ColorProto} from '../../../../util/color_pb';
@@ -83,7 +84,8 @@ export type InteractiveSegmenterCallback =
  *   - batch is always 1
  */
 export class InteractiveSegmenter extends VisionTaskRunner {
-  private result: InteractiveSegmenterResult = {};
+  private categoryMask?: MPMask;
+  private confidenceMasks?: MPMask[];
   private outputCategoryMask = DEFAULT_OUTPUT_CATEGORY_MASK;
   private outputConfidenceMasks = DEFAULT_OUTPUT_CONFIDENCE_MASKS;
   private userCallback?: InteractiveSegmenterCallback;
@@ -276,28 +278,24 @@ export class InteractiveSegmenter extends VisionTaskRunner {
     this.reset();
     this.processRenderData(roi, this.getSynctheticTimestamp());
     this.processImageData(image, imageProcessingOptions);
-
-    if (!this.userCallback) {
-      return this.result;
-    }
+    return this.processResults();
   }
 
   private reset(): void {
-    this.result = {};
+    this.confidenceMasks = undefined;
+    this.categoryMask = undefined;
   }
 
-  /** Invokes the user callback once all data has been received. */
-  private maybeInvokeCallback(): void {
-    if (this.outputConfidenceMasks && !('confidenceMasks' in this.result)) {
-      return;
-    }
-    if (this.outputCategoryMask && !('categoryMask' in this.result)) {
-      return;
-    }
-
-    if (this.userCallback) {
-      this.userCallback(this.result);
-
+  private processResults(): InteractiveSegmenterResult|void {
+    try {
+      const result = new InteractiveSegmenterResult(
+          this.confidenceMasks, this.categoryMask);
+      if (this.userCallback) {
+        this.userCallback(result);
+      } else {
+        return result;
+      }
+    } finally {
       // Free the image memory, now that we've kept all streams alive long
       // enough to be returned in our callbacks.
       this.freeKeepaliveStreams();
@@ -333,17 +331,15 @@ export class InteractiveSegmenter extends VisionTaskRunner {
 
       this.graphRunner.attachImageVectorListener(
           CONFIDENCE_MASKS_STREAM, (masks, timestamp) => {
-            this.result.confidenceMasks = masks.map(
+            this.confidenceMasks = masks.map(
                 wasmImage => this.convertToMPMask(
                     wasmImage, /* shouldCopyData= */ !this.userCallback));
             this.setLatestOutputTimestamp(timestamp);
-            this.maybeInvokeCallback();
           });
       this.graphRunner.attachEmptyPacketListener(
           CONFIDENCE_MASKS_STREAM, timestamp => {
-            this.result.confidenceMasks = undefined;
+            this.confidenceMasks = [];
             this.setLatestOutputTimestamp(timestamp);
-            this.maybeInvokeCallback();
           });
     }
 
@@ -354,16 +350,14 @@ export class InteractiveSegmenter extends VisionTaskRunner {
 
       this.graphRunner.attachImageListener(
           CATEGORY_MASK_STREAM, (mask, timestamp) => {
-            this.result.categoryMask = this.convertToMPMask(
+            this.categoryMask = this.convertToMPMask(
                 mask, /* shouldCopyData= */ !this.userCallback);
             this.setLatestOutputTimestamp(timestamp);
-            this.maybeInvokeCallback();
           });
       this.graphRunner.attachEmptyPacketListener(
           CATEGORY_MASK_STREAM, timestamp => {
-            this.result.categoryMask = undefined;
+            this.categoryMask = undefined;
             this.setLatestOutputTimestamp(timestamp);
-            this.maybeInvokeCallback();
           });
     }
 

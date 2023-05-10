@@ -22,6 +22,7 @@ import {ImageSegmenterGraphOptions as ImageSegmenterGraphOptionsProto} from '../
 import {SegmenterOptions as SegmenterOptionsProto} from '../../../../tasks/cc/vision/image_segmenter/proto/segmenter_options_pb';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
+import {MPMask} from '../../../../tasks/web/vision/core/mask';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {LabelMapItem} from '../../../../util/label_map_pb';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
@@ -58,7 +59,8 @@ export type ImageSegmenterCallback = (result: ImageSegmenterResult) => void;
 
 /** Performs image segmentation on images. */
 export class ImageSegmenter extends VisionTaskRunner {
-  private result: ImageSegmenterResult = {};
+  private categoryMask?: MPMask;
+  private confidenceMasks?: MPMask[];
   private labels: string[] = [];
   private userCallback?: ImageSegmenterCallback;
   private outputCategoryMask = DEFAULT_OUTPUT_CATEGORY_MASK;
@@ -265,10 +267,7 @@ export class ImageSegmenter extends VisionTaskRunner {
 
     this.reset();
     this.processImageData(image, imageProcessingOptions);
-
-    if (!this.userCallback) {
-      return this.result;
-    }
+    return this.processResults();
   }
 
   /**
@@ -347,10 +346,7 @@ export class ImageSegmenter extends VisionTaskRunner {
 
     this.reset();
     this.processVideoData(videoFrame, imageProcessingOptions, timestamp);
-
-    if (!this.userCallback) {
-      return this.result;
-    }
+    return this.processResults();
   }
 
   /**
@@ -369,21 +365,20 @@ export class ImageSegmenter extends VisionTaskRunner {
   }
 
   private reset(): void {
-    this.result = {};
+    this.categoryMask = undefined;
+    this.confidenceMasks = undefined;
   }
 
-  /** Invokes the user callback once all data has been received. */
-  private maybeInvokeCallback(): void {
-    if (this.outputConfidenceMasks && !('confidenceMasks' in this.result)) {
-      return;
-    }
-    if (this.outputCategoryMask && !('categoryMask' in this.result)) {
-      return;
-    }
-
-    if (this.userCallback) {
-      this.userCallback(this.result);
-
+  private processResults(): ImageSegmenterResult|void {
+    try {
+      const result =
+          new ImageSegmenterResult(this.confidenceMasks, this.categoryMask);
+      if (this.userCallback) {
+        this.userCallback(result);
+      } else {
+        return result;
+      }
+    } finally {
       // Free the image memory, now that we've kept all streams alive long
       // enough to be returned in our callbacks.
       this.freeKeepaliveStreams();
@@ -417,17 +412,15 @@ export class ImageSegmenter extends VisionTaskRunner {
 
       this.graphRunner.attachImageVectorListener(
           CONFIDENCE_MASKS_STREAM, (masks, timestamp) => {
-            this.result.confidenceMasks = masks.map(
+            this.confidenceMasks = masks.map(
                 wasmImage => this.convertToMPMask(
                     wasmImage, /* shouldCopyData= */ !this.userCallback));
             this.setLatestOutputTimestamp(timestamp);
-            this.maybeInvokeCallback();
           });
       this.graphRunner.attachEmptyPacketListener(
           CONFIDENCE_MASKS_STREAM, timestamp => {
-            this.result.confidenceMasks = undefined;
+            this.confidenceMasks = [];
             this.setLatestOutputTimestamp(timestamp);
-            this.maybeInvokeCallback();
           });
     }
 
@@ -438,16 +431,14 @@ export class ImageSegmenter extends VisionTaskRunner {
 
       this.graphRunner.attachImageListener(
           CATEGORY_MASK_STREAM, (mask, timestamp) => {
-            this.result.categoryMask = this.convertToMPMask(
+            this.categoryMask = this.convertToMPMask(
                 mask, /* shouldCopyData= */ !this.userCallback);
             this.setLatestOutputTimestamp(timestamp);
-            this.maybeInvokeCallback();
           });
       this.graphRunner.attachEmptyPacketListener(
           CATEGORY_MASK_STREAM, timestamp => {
-            this.result.categoryMask = undefined;
+            this.categoryMask = undefined;
             this.setLatestOutputTimestamp(timestamp);
-            this.maybeInvokeCallback();
           });
     }
 
