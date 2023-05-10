@@ -313,7 +313,11 @@ class GenerateMetadataSchema(build_ext.build_ext):
       _copy_to_build_lib_dir(
           self.build_lib,
           'mediapipe/tasks/metadata/' + target + '_generated.py')
-      schema_file = 'mediapipe/tasks/metadata/metadata_schema.fbs'
+    for schema_file in [
+        'mediapipe/tasks/metadata/metadata_schema.fbs',
+        'mediapipe/tasks/metadata/object_detector_metadata_schema.fbs',
+        'mediapipe/tasks/metadata/image_segmenter_metadata_schema.fbs',
+    ]:
       shutil.copyfile(schema_file,
                       os.path.join(self.build_lib + '/', schema_file))
 
