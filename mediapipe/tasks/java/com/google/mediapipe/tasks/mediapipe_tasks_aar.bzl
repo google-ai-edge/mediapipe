@@ -330,6 +330,7 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:category",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classificationresult",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:classifications",
+            "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:connection",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embedding",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:embeddingresult",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:landmark",
