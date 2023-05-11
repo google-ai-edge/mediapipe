@@ -67,7 +67,7 @@ NS_SWIFT_NAME(ObjectDetectorOptions)
 
 /**
  * Running mode of the object detector task. Defaults to `MPPRunningModeImage`.
- * `MPPImageClassifier` can be created with one of the following running modes:
+ * `MPPObjectDetector` can be created with one of the following running modes:
  *  1. `MPPRunningModeImage`: The mode for performing object detection on single image inputs.
  *  2. `MPPRunningModeVideo`: The mode for performing object detection on the decoded frames of a
  *      video.
