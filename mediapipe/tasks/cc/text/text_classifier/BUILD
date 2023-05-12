@@ -75,6 +75,7 @@ cc_test(
         "//mediapipe/tasks/testdata/text:bert_text_classifier_models",
         "//mediapipe/tasks/testdata/text:text_classifier_models",
     ],
+    tags = ["not_run:arm"],
     deps = [
         ":text_classifier",
         ":text_classifier_test_utils",

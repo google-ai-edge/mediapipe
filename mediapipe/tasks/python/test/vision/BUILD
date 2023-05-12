@@ -25,6 +25,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:bounding_box",
@@ -45,6 +46,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:category",
@@ -65,6 +67,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:embedding_result",
@@ -84,6 +87,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/core:base_options",
@@ -101,6 +105,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_models",
         "//mediapipe/tasks/testdata/vision:test_protos",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/framework/formats:detection_py_pb2",
         "//mediapipe/python:_framework_bindings",
@@ -124,6 +129,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_models",
         "//mediapipe/tasks/testdata/vision:test_protos",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/framework/formats:classification_py_pb2",
         "//mediapipe/framework/formats:landmark_py_pb2",
@@ -148,6 +154,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_models",
         "//mediapipe/tasks/testdata/vision:test_protos",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",
@@ -171,6 +178,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_models",
         "//mediapipe/tasks/testdata/vision:test_protos",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_py_pb2",

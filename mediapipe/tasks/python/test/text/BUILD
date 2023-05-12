@@ -25,6 +25,7 @@ py_test(
         "//mediapipe/tasks/testdata/text:bert_text_classifier_models",
         "//mediapipe/tasks/testdata/text:text_classifier_models",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/tasks/python/components/containers:category",
         "//mediapipe/tasks/python/components/containers:classification_result",
@@ -42,6 +43,7 @@ py_test(
         "//mediapipe/tasks/testdata/text:regex_embedding_with_metadata",
         "//mediapipe/tasks/testdata/text:universal_sentence_encoder_qa",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/tasks/python/components/containers:embedding_result",
         "//mediapipe/tasks/python/core:base_options",

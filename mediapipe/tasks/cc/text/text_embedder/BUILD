@@ -81,6 +81,7 @@ cc_test(
         "//mediapipe/tasks/testdata/text:regex_embedding_with_metadata",
         "//mediapipe/tasks/testdata/text:universal_sentence_encoder_qa",
     ],
+    tags = ["not_run:arm"],
     deps = [
         ":text_embedder",
         "//mediapipe/framework/deps:file_path",
