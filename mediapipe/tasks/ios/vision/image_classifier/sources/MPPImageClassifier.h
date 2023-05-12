@@ -85,6 +85,14 @@ NS_SWIFT_NAME(ImageClassifier)
  * interest. Rotation will be applied according to the `orientation` property of the provided
  * `MPPImage`. Only use this method when the `MPPImageClassifier` is created with
  * `MPPRunningModeImage`.
+ * This method supports classification of RGBA images. If your `MPPImage` has a source type of
+ * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
+ * must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
+ * RGB with an Alpha channel.
  *
  * @param image The `MPPImage` on which image classification is to be performed.
  * @param error An optional error parameter populated when there is an error in performing image
@@ -101,6 +109,15 @@ NS_SWIFT_NAME(ImageClassifier)
  * interest. Rotation will be applied on the cropped image according to the `orientation` property
  * of the provided `MPPImage`. Only use this method when the `MPPImageClassifier` is created with
  * `MPPRunningModeImage`.
+ *
+ * This method supports classification of RGBA images. If your `MPPImage` has a source type of
+ * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
+ * must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
+ * RGB with an Alpha channel.
  *
  * @param image The `MPPImage` on which image classification is to be performed.
  * @param roi A `CGRect` specifying the region of interest within the given `MPPImage`, on which
@@ -120,6 +137,18 @@ NS_SWIFT_NAME(ImageClassifier)
  * image as region of interest. Rotation will be applied according to the `orientation` property of
  * the provided `MPPImage`. Only use this method when the `MPPImageClassifier` is created with
  * `MPPRunningModeVideo`.
+ *
+ * It's required to provide the video frame's timestamp (in milliseconds). The input timestamps must
+ * be monotonically increasing.
+ *
+ * This method supports classification of RGBA images. If your `MPPImage` has a source type of
+ * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
+ * must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
+ * RGB with an Alpha channel.
  *
  * @param image The `MPPImage` on which image classification is to be performed.
  * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
@@ -143,6 +172,15 @@ NS_SWIFT_NAME(ImageClassifier)
  * It's required to provide the video frame's timestamp (in milliseconds). The input timestamps must
  * be monotonically increasing.
  *
+ * This method supports classification of RGBA images. If your `MPPImage` has a source type of
+ * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
+ * must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
+ * RGB with an Alpha channel.
+ *
  * @param image A live stream image data of type `MPPImage` on which image classification is to be
  * performed.
  * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
@@ -164,11 +202,28 @@ NS_SWIFT_NAME(ImageClassifier)
  * Sends live stream image data of type `MPPImage` to perform image classification using the whole
  * image as region of interest. Rotation will be applied according to the `orientation` property of
  * the provided `MPPImage`. Only use this method when the `MPPImageClassifier` is created with
- * `MPPRunningModeLiveStream`. Results are provided asynchronously via the `completion` callback
- * provided in the `MPPImageClassifierOptions`.
+ * `MPPRunningModeLiveStream`.
+ *
+ * The object which needs to be continuously notified of the available results of image
+ * classification must confirm to `MPPImageClassifierLiveStreamDelegate` protocol and implement the
+ * `imageClassifier:didFinishClassificationWithResult:timestampInMilliseconds:error:`
+ * delegate method.
  *
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
  * to the image classifier. The input timestamps must be monotonically increasing.
+ *
+ * This method supports classification of RGBA images. If your `MPPImage` has a source type of
+ * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
+ * must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If the input `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color
+ * space is RGB with an Alpha channel.
+ *
+ * If this method is used for classifying live camera frames using `AVFoundation`, ensure that you
+ * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32RGBA` using its
+ * `videoSettings` property.
  *
  * @param image A live stream image data of type `MPPImage` on which image classification is to be
  * performed.
@@ -185,14 +240,31 @@ NS_SWIFT_NAME(ImageClassifier)
     NS_SWIFT_NAME(classifyAsync(image:timestampInMilliseconds:));
 
 /**
- * Sends live stream image data of type `MPPImage` to perform image classification, cropped to the
+ * Sends live stream image data of type ``MPPImage`` to perform image classification, cropped to the
  * specified region of interest.. Rotation will be applied according to the `orientation` property
  * of the provided `MPPImage`. Only use this method when the `MPPImageClassifier` is created with
- * `MPPRunningModeLiveStream`. Results are provided asynchronously via the `completion` callback
- * provided in the `MPPImageClassifierOptions`.
+ * `MPPRunningModeLiveStream`.
+ *
+ * The object which needs to be continuously notified of the available results of image
+ * classification must confirm to `MPPImageClassifierLiveStreamDelegate` protocol and implement the
+ * `imageClassifier:didFinishClassificationWithResult:timestampInMilliseconds:error:` delegate
+ * method.
  *
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
  * to the image classifier. The input timestamps must be monotonically increasing.
+ *
+ * This method supports classification of RGBA images. If your `MPPImage` has a source type of
+ * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
+ * must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If the input `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color
+ * space is RGB with an Alpha channel.
+ *
+ * If this method is used for classifying live camera frames using `AVFoundation`, ensure that you
+ * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32RGBA` using its
+ * `videoSettings` property.
  *
  * @param image A live stream image data of type `MPPImage` on which image classification is to be
  * performed.

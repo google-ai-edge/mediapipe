@@ -27,9 +27,15 @@ using ::mediapipe::Packet;
 
 @implementation MPPImageClassifierResult (Helpers)
 
-+ (MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
++ (nullable MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
     (const Packet &)packet {
-  MPPClassificationResult *classificationResult = [MPPClassificationResult
+  MPPClassificationResult *classificationResult;
+
+  if (!packet.ValidateAsType<ClassificationResultProto>().ok()) {
+    return nil;
+  }
+
+  classificationResult = [MPPClassificationResult
       classificationResultWithProto:packet.Get<ClassificationResultProto>()];
 
   return [[MPPImageClassifierResult alloc]
