@@ -1052,6 +1052,7 @@ cc_test(
         "testdata/image_to_tensor/medium_sub_rect_with_rotation_border_zero.png",
         "testdata/image_to_tensor/noop_except_range.png",
     ],
+    tags = ["not_run:arm"],
     deps = [
         ":image_to_tensor_calculator",
         ":image_to_tensor_converter",

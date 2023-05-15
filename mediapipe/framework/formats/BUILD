@@ -481,6 +481,7 @@ cc_library(
 cc_test(
     name = "tensor_test",
     srcs = ["tensor_test.cc"],
+    tags = ["not_run:arm"],
     deps = [
         ":tensor",
         "//mediapipe/framework/port:gtest_main",

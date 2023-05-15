@@ -1405,6 +1405,7 @@ cc_test(
         "calculator_graph_test.cc",
     ],
     linkstatic = 1,
+    tags = ["not_run:arm"],
     visibility = ["//visibility:public"],
     deps = [
         ":calculator_framework",

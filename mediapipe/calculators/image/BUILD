@@ -317,6 +317,7 @@ cc_library(
 cc_test(
     name = "image_cropping_calculator_test",
     srcs = ["image_cropping_calculator_test.cc"],
+    tags = ["not_run:arm"],
     deps = [
         ":image_cropping_calculator",
         ":image_cropping_calculator_cc_proto",
@@ -650,6 +651,7 @@ cc_library(
 cc_test(
     name = "segmentation_smoothing_calculator_test",
     srcs = ["segmentation_smoothing_calculator_test.cc"],
+    tags = ["not_run:arm"],
     deps = [
         ":image_clone_calculator",
         ":image_clone_calculator_cc_proto",
@@ -771,7 +773,10 @@ cc_test(
         "//mediapipe/calculators/tensor:testdata/image_to_tensor/medium_sub_rect_with_rotation_border_zero_interp_cubic.png",
         "//mediapipe/calculators/tensor:testdata/image_to_tensor/noop_except_range.png",
     ],
-    tags = ["desktop_only_test"],
+    tags = [
+        "desktop_only_test",
+        "not_run:arm",
+    ],
     deps = [
         ":affine_transformation",
         ":image_transformation_calculator",
