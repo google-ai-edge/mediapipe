@@ -17,13 +17,11 @@
 
 #include <type_traits>
 
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/collection_item_id.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
 
@@ -33,27 +31,7 @@ namespace mediapipe {
 // from the "BATCH_END" tagged input stream, it emits the aggregated results
 // at the original timestamp contained in the "BATCH_END" input stream.
 //
-// It is designed to be used like:
-//
-// node {
-//   calculator:    "BeginLoopWithIterableCalculator"
-//   input_stream:  "ITERABLE:input_iterable"      # IterableT @ext_ts
-//   output_stream: "ITEM:input_element"           # ItemT     @loop_internal_ts
-//   output_stream: "BATCH_END:ext_ts"             # Timestamp @loop_internal_ts
-// }
-//
-// node {
-//   calculator:    "ElementToBlaConverterSubgraph"
-//   input_stream:  "ITEM:input_to_loop_body"      # ItemT     @loop_internal_ts
-//   output_stream: "BLA:output_of_loop_body"      # ItemU     @loop_internal_ts
-// }
-//
-// node {
-//   calculator:    "EndLoopWithOutputCalculator"
-//   input_stream:  "ITEM:output_of_loop_body"     # ItemU     @loop_internal_ts
-//   input_stream:  "BATCH_END:ext_ts"             # Timestamp @loop_internal_ts
-//   output_stream: "ITERABLE:aggregated_result"   # IterableU @ext_ts
-// }
+// See BeginLoopCalculator for a usage example.
 template <typename IterableT>
 class EndLoopCalculator : public CalculatorBase {
   using ItemT = typename IterableT::value_type;
@@ -79,7 +57,7 @@ class EndLoopCalculator : public CalculatorBase {
       }
       // Try to consume the item and move it into the collection. If the items
       // are not consumable, then try to copy them instead. If the items are
-      // not copiable, then an error will be returned.
+      // not copyable, then an error will be returned.
       auto item_ptr_or = cc->Inputs().Tag("ITEM").Value().Consume<ItemT>();
       if (item_ptr_or.ok()) {
         input_stream_collection_->push_back(std::move(*item_ptr_or.value()));
