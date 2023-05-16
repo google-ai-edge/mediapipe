@@ -33,11 +33,11 @@ export declare type SpyWasmModule = jasmine.SpyObj<SpyWasmModuleInternal>;
  */
 export function createSpyWasmModule(): SpyWasmModule {
   const spyWasmModule = jasmine.createSpyObj<SpyWasmModuleInternal>([
-    '_setAutoRenderToScreen', 'stringToNewUTF8', '_attachProtoListener',
-    '_attachProtoVectorListener', '_free', '_waitUntilIdle',
-    '_addStringToInputStream', '_registerModelResourcesGraphService',
-    '_configureAudio', '_malloc', '_addProtoToInputStream', '_getGraphConfig',
-    '_closeGraph', '_addBoolToInputStream'
+    'FS_createDataFile', 'FS_unlink', '_addBoolToInputStream',
+    '_addProtoToInputStream', '_addStringToInputStream', '_attachProtoListener',
+    '_attachProtoVectorListener', '_closeGraph', '_configureAudio', '_free',
+    '_getGraphConfig', '_malloc', '_registerModelResourcesGraphService',
+    '_setAutoRenderToScreen', '_waitUntilIdle', 'stringToNewUTF8'
   ]);
   spyWasmModule._getGraphConfig.and.callFake(() => {
     (spyWasmModule.simpleListeners![CALCULATOR_GRAPH_CONFIG_LISTENER_NAME] as

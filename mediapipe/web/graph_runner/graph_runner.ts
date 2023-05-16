@@ -59,6 +59,14 @@ export declare interface WasmModule {
   HEAPU32: Uint32Array;
   HEAPF32: Float32Array;
   HEAPF64: Float64Array;
+  FS_createDataFile:
+      (parent: string, name: string, data: Uint8Array, canRead: boolean,
+       canWrite: boolean, canOwn: boolean) => void;
+  FS_createPath:
+      (parent: string, name: string, canRead: boolean,
+       canWrite: boolean) => void;
+  FS_unlink(path: string): void;
+
   errorListener?: ErrorListener;
   _bindTextureToCanvas: () => boolean;
   _changeBinaryGraph: (size: number, dataPtr: number) => void;

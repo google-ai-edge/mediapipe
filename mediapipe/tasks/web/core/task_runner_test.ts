@@ -19,11 +19,16 @@ import 'jasmine';
 import {InferenceCalculatorOptions} from '../../../calculators/tensor/inference_calculator_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../tasks/cc/core/proto/base_options_pb';
 import {TaskRunner} from '../../../tasks/web/core/task_runner';
+import {createSpyWasmModule, SpyWasmModule} from '../../../tasks/web/core/task_runner_test_utils';
 import {ErrorListener} from '../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource URL builder
 
 import {CachedGraphRunner} from './task_runner';
-import {TaskRunnerOptions} from './task_runner_options.d';
+import {TaskRunnerOptions} from './task_runner_options';
+
+type Writeable<T> = {
+  -readonly[P in keyof T]: T[P]
+};
 
 class TaskRunnerFake extends TaskRunner {
   private errorListener: ErrorListener|undefined;
@@ -40,7 +45,8 @@ class TaskRunnerFake extends TaskRunner {
       'setAutoRenderToScreen', 'setGraph', 'finishProcessing',
       'registerModelResourcesGraphService', 'attachErrorListener'
     ]));
-    const graphRunner = this.graphRunner as jasmine.SpyObj<CachedGraphRunner>;
+    const graphRunner =
+        this.graphRunner as jasmine.SpyObj<Writeable<CachedGraphRunner>>;
     expect(graphRunner.setAutoRenderToScreen).toHaveBeenCalled();
     graphRunner.attachErrorListener.and.callFake(listener => {
       this.errorListener = listener;
@@ -51,6 +57,11 @@ class TaskRunnerFake extends TaskRunner {
     graphRunner.finishProcessing.and.callFake(() => {
       this.throwErrors();
     });
+    graphRunner.wasmModule = createSpyWasmModule();
+  }
+
+  get wasmModule(): SpyWasmModule {
+    return this.graphRunner.wasmModule as SpyWasmModule;
   }
 
   enqueueError(message: string): void {
@@ -114,6 +125,21 @@ describe('TaskRunner', () => {
                    .SUSTAINED_SPEED,
       },
       tflite: undefined,
+      nnapi: undefined,
+    },
+  };
+  const mockFileResult = {
+    modelAsset: {
+      fileContent: '',
+      fileName: '/model.dat',
+      fileDescriptorMeta: undefined,
+      filePointerMeta: undefined,
+    },
+    useStreamMode: false,
+    acceleration: {
+      xnnpack: undefined,
+      gpu: undefined,
+      tflite: {},
       nnapi: undefined,
     },
   };
@@ -204,12 +230,13 @@ describe('TaskRunner', () => {
     }).not.toThrowError();
   });
 
-  it('downloads model', async () => {
+  it('writes model to file system', async () => {
     await taskRunner.setOptions(
         {baseOptions: {modelAssetPath: `foo`}});
 
     expect(fetchSpy).toHaveBeenCalled();
-    expect(taskRunner.baseOptions.toObject()).toEqual(mockBytesResult);
+    expect(taskRunner.wasmModule.FS_createDataFile).toHaveBeenCalled();
+    expect(taskRunner.baseOptions.toObject()).toEqual(mockFileResult);
   });
 
   it('does not download model when bytes are provided', async () => {

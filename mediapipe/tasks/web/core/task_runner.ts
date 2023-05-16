@@ -111,6 +111,7 @@ export abstract class TaskRunner {
       throw new Error(
           'Cannot set both baseOptions.modelAssetPath and baseOptions.modelAssetBuffer');
     } else if (!(this.baseOptions.getModelAsset()?.hasFileContent() ||
+                 this.baseOptions.getModelAsset()?.hasFileName() ||
                  options.baseOptions?.modelAssetBuffer ||
                  options.baseOptions?.modelAssetPath)) {
       throw new Error(
@@ -131,7 +132,19 @@ export abstract class TaskRunner {
             }
           })
           .then(buffer => {
-            this.setExternalFile(new Uint8Array(buffer));
+            try {
+              // Try to delete file as we cannot overwite an existing file using
+              // our current API.
+              this.graphRunner.wasmModule.FS_unlink('/model.dat');
+            } catch {
+            }
+            // TODO: Consider passing the model to the graph as an
+            // input side packet as this might reduce copies.
+            this.graphRunner.wasmModule.FS_createDataFile(
+                '/', 'model.dat', new Uint8Array(buffer),
+                /* canRead= */ true, /* canWrite= */ false,
+                /* canOwn= */ false);
+            this.setExternalFile('/model.dat');
             this.refreshGraph();
             this.onGraphRefreshed();
           });
@@ -236,10 +249,16 @@ export abstract class TaskRunner {
   }
 
   /** Configures the `externalFile` option */
-  private setExternalFile(modelAssetBuffer?: Uint8Array): void {
+  private setExternalFile(modelAssetPath?: string): void;
+  private setExternalFile(modelAssetBuffer?: Uint8Array): void;
+  private setExternalFile(modelAssetPathOrBuffer?: Uint8Array|string): void {
     const externalFile = this.baseOptions.getModelAsset() || new ExternalFile();
-    if (modelAssetBuffer) {
-      externalFile.setFileContent(modelAssetBuffer);
+    if (typeof modelAssetPathOrBuffer === 'string') {
+      externalFile.setFileName(modelAssetPathOrBuffer);
+      externalFile.clearFileContent();
+    } else if (modelAssetPathOrBuffer instanceof Uint8Array) {
+      externalFile.setFileContent(modelAssetPathOrBuffer);
+      externalFile.clearFileName();
     }
     this.baseOptions.setModelAsset(externalFile);
   }
