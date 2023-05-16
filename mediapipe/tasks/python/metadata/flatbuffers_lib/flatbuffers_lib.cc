@@ -42,17 +42,17 @@ PYBIND11_MODULE(_pywrap_flatbuffers, m) {
                              contents.length());
       });
   m.def("generate_text_file", &flatbuffers::GenerateTextFile);
-  m.def(
-      "generate_text",
-      [](const flatbuffers::Parser& parser,
-         const std::string& buffer) -> std::string {
-        std::string text;
-        if (!flatbuffers::GenerateText(
-                parser, reinterpret_cast<const void*>(buffer.c_str()), &text)) {
-          return "";
-        }
-        return text;
-      });
+  m.def("generate_text",
+        [](const flatbuffers::Parser& parser,
+           const std::string& buffer) -> std::string {
+          std::string text;
+          const char* result = flatbuffers::GenerateText(
+              parser, reinterpret_cast<const void*>(buffer.c_str()), &text);
+          if (result) {
+            return "";
+          }
+          return text;
+        });
 }
 
 }  // namespace support
