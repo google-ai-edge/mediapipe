@@ -16,6 +16,9 @@
 
 import {assertNotNull, MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 
+/** Number of instances a user can keep alive before we raise a warning. */
+const INSTANCE_COUNT_WARNING_THRESHOLD = 250;
+
 /** The underlying type of the image. */
 enum MPMaskType {
   /** Represents the native `UInt8Array` type. */
@@ -47,6 +50,12 @@ export type MPMaskContainer = Uint8Array|Float32Array|WebGLTexture;
 export class MPMask {
   private gl?: WebGL2RenderingContext;
 
+  /**
+   * A counter to track the number of instances of MPMask that own resources.
+   * This is used to raise a warning if the user does not close the instances.
+   */
+  private static instancesBeforeWarning = INSTANCE_COUNT_WARNING_THRESHOLD;
+
   /** @hideconstructor */
   constructor(
       private readonly containers: MPMaskContainer[],
@@ -58,7 +67,16 @@ export class MPMask {
       readonly width: number,
       /** Returns the height of the mask. */
       readonly height: number,
-  ) {}
+  ) {
+    if (this.ownsWebGLTexture) {
+      --MPMask.instancesBeforeWarning;
+      if (MPMask.instancesBeforeWarning === 0) {
+        console.error(
+            'You seem to be creating MPMask instances without invoking ' +
+            '.close(). This leaks resources.');
+      }
+    }
+  }
 
   /** Returns whether this `MPMask` contains a mask of type `Uint8Array`. */
   hasUint8Array(): boolean {
@@ -88,8 +106,8 @@ export class MPMask {
 
   /**
    * Returns the underlying mask as a single channel `Float32Array`. Note that
-   * this involves an expensive GPU to CPU transfer if the current mask is only
-   * available as a `WebGLTexture`.
+   * this involves an expensive GPU to CPU transfer if the current mask is
+   * only available as a `WebGLTexture`.
    *
    * @return The current mask as a Float32Array.
    */
@@ -311,6 +329,9 @@ export class MPMask {
       const gl = this.getGL();
       gl.deleteTexture(this.getContainer(MPMaskType.WEBGL_TEXTURE)!);
     }
+
+    // User called close(). We no longer issue warning.
+    MPMask.instancesBeforeWarning = -1;
   }
 }
 

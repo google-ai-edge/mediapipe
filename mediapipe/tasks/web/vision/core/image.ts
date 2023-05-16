@@ -16,6 +16,9 @@
 
 import {assertNotNull, MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 
+/** Number of instances a user can keep alive before we raise a warning. */
+const INSTANCE_COUNT_WARNING_THRESHOLD = 250;
+
 /** The underlying type of the image. */
 enum MPImageType {
   /** Represents the native `ImageData` type. */
@@ -52,6 +55,12 @@ export type MPImageContainer = ImageData|ImageBitmap|WebGLTexture;
 export class MPImage {
   private gl?: WebGL2RenderingContext;
 
+  /**
+   * A counter to track the number of instances of MPImage that own resources..
+   * This is used to raise a warning if the user does not close the instances.
+   */
+  private static instancesBeforeWarning = INSTANCE_COUNT_WARNING_THRESHOLD;
+
   /** @hideconstructor */
   constructor(
       private readonly containers: MPImageContainer[],
@@ -64,7 +73,16 @@ export class MPImage {
       readonly width: number,
       /** Returns the height of the image. */
       readonly height: number,
-  ) {}
+  ) {
+    if (this.ownsImageBitmap || this.ownsWebGLTexture) {
+      --MPImage.instancesBeforeWarning;
+      if (MPImage.instancesBeforeWarning === 0) {
+        console.error(
+            'You seem to be creating MPImage instances without invoking ' +
+            '.close(). This leaks resources.');
+      }
+    }
+  }
 
   /** Returns whether this `MPImage` contains a mask of type `ImageData`. */
   hasImageData(): boolean {
@@ -391,6 +409,9 @@ export class MPImage {
       const gl = this.getGL();
       gl.deleteTexture(this.getContainer(MPImageType.WEBGL_TEXTURE)!);
     }
+
+    // User called close(). We no longer issue warning.
+    MPImage.instancesBeforeWarning = -1;
   }
 }
 
