@@ -20,6 +20,7 @@ def mediapipe_cc_test(
         open_gl_driver = None,
         emulator_mini_boot = True,
         requires_full_emulation = True,
+        android_devices = {},
         # wasm_web_test arguments
         browsers = None,
         **kwargs):
