@@ -42,12 +42,14 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
 - (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
   GestureRecognizerGraphOptionsProto *gestureRecognizerGraphOptionsProto =
       optionsProto->MutableExtension(GestureRecognizerGraphOptionsProto::ext);
+  gestureRecognizerGraphOptionsProto->Clear();
 
   [self.baseOptions copyToProto:gestureRecognizerGraphOptionsProto->mutable_base_options()
               withUseStreamMode:self.runningMode != MPPRunningModeImage];
 
   HandLandmarkerGraphOptionsProto *handLandmarkerGraphOptionsProto =
       gestureRecognizerGraphOptionsProto->mutable_hand_landmarker_graph_options();
+  handLandmarkerGraphOptionsProto->Clear();
   handLandmarkerGraphOptionsProto->set_min_tracking_confidence(self.minTrackingConfidence);
 
   HandDetectorGraphOptionsProto *handDetectorGraphOptionsProto =
@@ -68,6 +70,7 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
   if (self.cannedGesturesClassifierOptions) {
     GestureClassifierGraphOptionsProto *cannedGesturesClassifierOptionsProto =
         handGestureRecognizerGraphOptionsProto->mutable_canned_gesture_classifier_graph_options();
+    cannedGesturesClassifierOptionsProto->Clear();
     [self.cannedGesturesClassifierOptions
         copyToProto:cannedGesturesClassifierOptionsProto->mutable_classifier_options()];
   }
@@ -75,6 +78,7 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
   if (self.customGesturesClassifierOptions) {
     GestureClassifierGraphOptionsProto *customGesturesClassifierOptionsProto =
         handGestureRecognizerGraphOptionsProto->mutable_custom_gesture_classifier_graph_options();
+    customGesturesClassifierOptionsProto->Clear();
     [self.customGesturesClassifierOptions
         copyToProto:customGesturesClassifierOptionsProto->mutable_classifier_options()];
   }
