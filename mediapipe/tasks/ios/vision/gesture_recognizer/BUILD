@@ -41,7 +41,6 @@ objc_library(
 
 objc_library(
     name = "MPPGestureRecognizer",
-    srcs = ["sources/MPPGestureRecognizer.mm"],
     hdrs = ["sources/MPPGestureRecognizer.h"],
     copts = [
         "-ObjC++",
