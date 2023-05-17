@@ -14,13 +14,18 @@
 """Base options for MediaPipe Task APIs."""
 
 import dataclasses
+import enum
 import os
 from typing import Any, Optional
 
+from mediapipe.calculators.tensor import inference_calculator_pb2
+from mediapipe.tasks.cc.core.proto import acceleration_pb2
 from mediapipe.tasks.cc.core.proto import base_options_pb2
 from mediapipe.tasks.cc.core.proto import external_file_pb2
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
+_DelegateProto = inference_calculator_pb2.InferenceCalculatorOptions.Delegate
+_AccelerationProto = acceleration_pb2.Acceleration
 _BaseOptionsProto = base_options_pb2.BaseOptions
 _ExternalFileProto = external_file_pb2.ExternalFile
 
@@ -42,10 +47,13 @@ class BaseOptions:
     model_asset_path: Path to the model asset file.
     model_asset_buffer: The model asset file contents as bytes.
   """
+  class Delegate(enum.Enum):
+    CPU = 0
+    GPU = 1
 
   model_asset_path: Optional[str] = None
   model_asset_buffer: Optional[bytes] = None
-  # TODO: Allow Python API to specify acceleration settings.
+  delegate: Optional[Delegate] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _BaseOptionsProto:
@@ -55,17 +63,16 @@ class BaseOptions:
     else:
       full_path = None
 
+    if self.delegate == BaseOptions.Delegate.GPU:
+      acceleration_proto = _AccelerationProto(gpu=_DelegateProto.Gpu())
+    else:
+      acceleration_proto = _AccelerationProto(tflite=_DelegateProto.TfLite())
+
     return _BaseOptionsProto(
         model_asset=_ExternalFileProto(
-            file_name=full_path, file_content=self.model_asset_buffer))
-
-  @classmethod
-  @doc_controls.do_not_generate_docs
-  def create_from_pb2(cls, pb2_obj: _BaseOptionsProto) -> 'BaseOptions':
-    """Creates a `BaseOptions` object from the given protobuf object."""
-    return BaseOptions(
-        model_asset_path=pb2_obj.model_asset.file_name,
-        model_asset_buffer=pb2_obj.model_asset.file_content)
+            file_name=full_path, file_content=self.model_asset_buffer),
+        acceleration=acceleration_proto
+    )
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.

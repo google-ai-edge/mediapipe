@@ -245,15 +245,28 @@ class BuildModules(build_ext.build_ext):
       sys.stderr.write('downloading file: %s\n' % external_file)
       self._download_external_file(external_file)
 
+    # CPU binary graphs
+    # binary_graphs = [
+    #     'face_detection/face_detection_short_range_cpu',
+    #     'face_detection/face_detection_full_range_cpu',
+    #     'face_landmark/face_landmark_front_cpu',
+    #     'hand_landmark/hand_landmark_tracking_cpu',
+    #     'holistic_landmark/holistic_landmark_cpu', 'objectron/objectron_cpu',
+    #     'pose_landmark/pose_landmark_cpu',
+    #     'selfie_segmentation/selfie_segmentation_cpu'
+    # ]
+
+    # GPU binary graphs
     binary_graphs = [
-        'face_detection/face_detection_short_range_cpu',
-        'face_detection/face_detection_full_range_cpu',
-        'face_landmark/face_landmark_front_cpu',
-        'hand_landmark/hand_landmark_tracking_cpu',
-        'holistic_landmark/holistic_landmark_cpu', 'objectron/objectron_cpu',
-        'pose_landmark/pose_landmark_cpu',
-        'selfie_segmentation/selfie_segmentation_cpu'
+        'face_detection/face_detection_short_range_gpu',
+        'face_detection/face_detection_full_range_gpu',
+        'face_landmark/face_landmark_front_gpu',
+        'hand_landmark/hand_landmark_tracking_gpu',
+        'holistic_landmark/holistic_landmark_gpu', 'objectron/objectron_gpu',
+        'pose_landmark/pose_landmark_gpu',
+        'selfie_segmentation/selfie_segmentation_gpu'
     ]
+
     for elem in binary_graphs:
       binary_graph = os.path.join('mediapipe/modules/', elem)
       sys.stderr.write('generating binarypb: %s\n' % binary_graph)
@@ -271,23 +284,42 @@ class BuildModules(build_ext.build_ext):
       sys.exit(-1)
     _copy_to_build_lib_dir(self.build_lib, external_file)
 
-  def _generate_binary_graph(self, binary_graph_target):
-    """Generate binary graph for a particular MediaPipe binary graph target."""
+  # def _generate_binary_graph(self, binary_graph_target):
+  #   """Generate binary graph for a particular MediaPipe binary graph target."""
+  #
+  #   bazel_command = [
+  #       'bazel',
+  #       'build',
+  #       '--compilation_mode=opt',
+  #       '--copt=-DNDEBUG',
+  #       '--define=MEDIAPIPE_DISABLE_GPU=1',
+  #       '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
+  #       binary_graph_target,
+  #   ]
+  #   if not self.link_opencv and not IS_WINDOWS:
+  #     bazel_command.append('--define=OPENCV=source')
+  #   if subprocess.call(bazel_command) != 0:
+  #     sys.exit(-1)
+  #   _copy_to_build_lib_dir(self.build_lib, binary_graph_target + '.binarypb')
 
-    bazel_command = [
-        'bazel',
-        'build',
-        '--compilation_mode=opt',
-        '--copt=-DNDEBUG',
-        '--define=MEDIAPIPE_DISABLE_GPU=1',
-        '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
-        binary_graph_target,
-    ]
-    if not self.link_opencv and not IS_WINDOWS:
-      bazel_command.append('--define=OPENCV=source')
-    if subprocess.call(bazel_command) != 0:
-      sys.exit(-1)
-    _copy_to_build_lib_dir(self.build_lib, binary_graph_target + '.binarypb')
+  def _generate_binary_graph(self, binary_graph_target):
+      """Generate binary graph for a particular MediaPipe binary graph target."""
+
+      bazel_command = [
+          'bazel',
+          'build',
+          '--compilation_mode=opt',
+          '--copt=-DNDEBUG',
+          '--copt=-DMESA_EGL_NO_X11_HEADERS',
+          '--copt=-DEGL_NO_X11',
+          '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
+          binary_graph_target,
+          ]
+      if not self.link_opencv and not IS_WINDOWS:
+          bazel_command.append('--define=OPENCV=source')
+      if subprocess.call(bazel_command) != 0:
+          sys.exit(-1)
+      _copy_to_build_lib_dir(self.build_lib, binary_graph_target + '.binarypb')
 
 
 class GenerateMetadataSchema(build_ext.build_ext):
@@ -300,11 +332,21 @@ class GenerateMetadataSchema(build_ext.build_ext):
         'object_detector_metadata_schema_py',
         'schema_py',
     ]:
+      # bazel_command = [
+      #     'bazel',
+      #     'build',
+      #     '--compilation_mode=opt',
+      #     '--define=MEDIAPIPE_DISABLE_GPU=1',
+      #     '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
+      #     '//mediapipe/tasks/metadata:' + target,
+      # ]
+
       bazel_command = [
           'bazel',
           'build',
           '--compilation_mode=opt',
-          '--define=MEDIAPIPE_DISABLE_GPU=1',
+          '--copt=-DMESA_EGL_NO_X11_HEADERS',
+          '--copt=-DEGL_NO_X11',
           '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
           '//mediapipe/tasks/metadata:' + target,
       ]
@@ -385,12 +427,22 @@ class BuildExtension(build_ext.build_ext):
   def _build_binary(self, ext, extra_args=None):
     if not os.path.exists(self.build_temp):
       os.makedirs(self.build_temp)
+    # bazel_command = [
+    #     'bazel',
+    #     'build',
+    #     '--compilation_mode=opt',
+    #     '--copt=-DNDEBUG',
+    #     '--define=MEDIAPIPE_DISABLE_GPU=1',
+    #     '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
+    #     str(ext.bazel_target + '.so'),
+    # ]
     bazel_command = [
         'bazel',
         'build',
         '--compilation_mode=opt',
         '--copt=-DNDEBUG',
-        '--define=MEDIAPIPE_DISABLE_GPU=1',
+        '--copt=-DMESA_EGL_NO_X11_HEADERS',
+        '--copt=-DEGL_NO_X11',
         '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         str(ext.bazel_target + '.so'),
     ]
