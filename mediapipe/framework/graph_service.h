@@ -44,7 +44,6 @@ class GraphServiceBase {
 
   constexpr GraphServiceBase(const char* key) : key(key) {}
 
-  virtual ~GraphServiceBase() = default;
   inline virtual absl::StatusOr<Packet> CreateDefaultObject() const {
     return DefaultInitializationUnsupported();
   }
@@ -52,14 +51,32 @@ class GraphServiceBase {
   const char* key;
 
  protected:
+  // `GraphService<T>` objects, deriving `GraphServiceBase` are designed to be
+  // global constants and not ever deleted through `GraphServiceBase`. Hence,
+  // protected and non-virtual destructor which helps to make `GraphService<T>`
+  // trivially destructible and properly defined as global constants.
+  //
+  // A class with any virtual functions should have a destructor that is either
+  // public and virtual or else protected and non-virtual.
+  // https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-dtor-virtual
+  ~GraphServiceBase() = default;
+
   absl::Status DefaultInitializationUnsupported() const {
     return absl::UnimplementedError(absl::StrCat(
         "Graph service '", key, "' does not support default initialization"));
   }
 };
 
+// A global constant to refer a service:
+// - Requesting `CalculatorContract::UseService` from calculator
+// - Accessing `Calculator/SubgraphContext::Service`from calculator/subgraph
+// - Setting before graph initialization `CalculatorGraph::SetServiceObject`
+//
+// NOTE: In headers, define your graph service reference safely as following:
+// `inline constexpr GraphService<YourService> kYourService("YourService");`
+//
 template <typename T>
-class GraphService : public GraphServiceBase {
+class GraphService final : public GraphServiceBase {
  public:
   using type = T;
   using packet_type = std::shared_ptr<T>;
@@ -68,7 +85,7 @@ class GraphService : public GraphServiceBase {
                                                  kDisallowDefaultInitialization)
       : GraphServiceBase(my_key), default_init_(default_init) {}
 
-  absl::StatusOr<Packet> CreateDefaultObject() const override {
+  absl::StatusOr<Packet> CreateDefaultObject() const final {
     if (default_init_ != kAllowDefaultInitialization) {
       return DefaultInitializationUnsupported();
     }

@@ -14,6 +14,8 @@
 
 #include "mediapipe/framework/graph_service.h"
 
+#include <type_traits>
+
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
@@ -159,7 +161,7 @@ TEST_F(GraphServiceTest, CreateDefault) {
 
 struct TestServiceData {};
 
-const GraphService<TestServiceData> kTestServiceAllowDefaultInitialization(
+constexpr GraphService<TestServiceData> kTestServiceAllowDefaultInitialization(
     "kTestServiceAllowDefaultInitialization",
     GraphServiceBase::kAllowDefaultInitialization);
 
@@ -272,9 +274,13 @@ TEST(AllowDefaultInitializationGraphServiceTest,
                        HasSubstr("Service is unavailable.")));
 }
 
-const GraphService<TestServiceData> kTestServiceDisallowDefaultInitialization(
-    "kTestServiceDisallowDefaultInitialization",
-    GraphServiceBase::kDisallowDefaultInitialization);
+constexpr GraphService<TestServiceData>
+    kTestServiceDisallowDefaultInitialization(
+        "kTestServiceDisallowDefaultInitialization",
+        GraphServiceBase::kDisallowDefaultInitialization);
+
+static_assert(std::is_trivially_destructible_v<GraphService<TestServiceData>>,
+              "GraphService is not trivially destructible");
 
 class FailOnUnavailableOptionalDisallowDefaultInitServiceCalculator
     : public CalculatorBase {
