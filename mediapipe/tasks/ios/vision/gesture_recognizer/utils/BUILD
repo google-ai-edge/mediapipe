@@ -31,3 +31,16 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPGestureRecognizerResultHelpers",
+    srcs = ["sources/MPPGestureRecognizerResult+Helpers.mm"],
+    hdrs = ["sources/MPPGestureRecognizerResult+Helpers.h"],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPCategoryHelpers",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPLandmarkHelpers",
+        "//mediapipe/tasks/ios/vision/gesture_recognizer:MPPGestureRecognizerResult",
+    ],
+)
