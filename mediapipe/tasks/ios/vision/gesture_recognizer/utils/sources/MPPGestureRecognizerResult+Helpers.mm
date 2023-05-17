@@ -65,7 +65,7 @@ using ::mediapipe::Packet;
       MPPCategory *category = [MPPCategory categoryWithProto:classificationProto];
       [gestures addObject:category];
     }
-    [multiHandGestures addObject:[gestures copy]];
+    [multiHandGestures addObject:gestures];
   }
 
   const std::vector<ClassificationListProto> &handednessClassificationListProtos =
@@ -80,7 +80,7 @@ using ::mediapipe::Packet;
       MPPCategory *category = [MPPCategory categoryWithProto:classificationProto];
       [handedness addObject:category];
     }
-    [multiHandHandedness addObject:[handedness copy]];
+    [multiHandHandedness addObject:handedness];
   }
 
   const std::vector<NormalizedLandmarkListProto> &handLandmarkListProtos =
@@ -96,7 +96,7 @@ using ::mediapipe::Packet;
           [MPPNormalizedLandmark normalizedLandmarkWithProto:normalizedLandmarkProto];   
       [handLandmarks addObject:normalizedLandmark];
     }
-    [multiHandLandmarks addObject:[handLandmarks copy]];
+    [multiHandLandmarks addObject:handLandmarks];
   }
 
   const std::vector<LandmarkListProto> &worldLandmarkListProtos =
@@ -112,14 +112,14 @@ using ::mediapipe::Packet;
           [MPPLandmark landmarkWithProto:landmarkProto];
       [worldLandmarks addObject:landmark];
     }
-   [multiHandWorldLandmarks addObject:[worldLandmarks copy]];
+   [multiHandWorldLandmarks addObject:worldLandmarks];
   }
 
   MPPGestureRecognizerResult *gestureRecognizerResult =
-      [[MPPGestureRecognizerResult alloc] initWithGestures:[multiHandGestures copy]
-                                                handedness:[multiHandHandedness copy]
-                                                 landmarks:[multiHandLandmarks copy]
-                                            worldLandmarks:[multiHandWorldLandmarks copy]
+      [[MPPGestureRecognizerResult alloc] initWithGestures:multiHandGestures
+                                                handedness:multiHandHandedness
+                                                 landmarks:multiHandLandmarks
+                                            worldLandmarks:multiHandWorldLandmarks
                                    timestampInMilliseconds:timestampInMilliseconds];
 
   return gestureRecognizerResult;
