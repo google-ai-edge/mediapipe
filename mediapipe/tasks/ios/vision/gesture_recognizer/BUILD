@@ -38,3 +38,22 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
     ],
 )
+
+objc_library(
+    name = "MPPGestureRecognizer",
+    srcs = ["sources/MPPGestureRecognizer.mm"],
+    hdrs = ["sources/MPPGestureRecognizer.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    module_name = "MPPGestureRecognizer",
+    deps = [
+        ":MPPGestureRecognizerOptions",
+        ":MPPGestureRecognizerResult",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/vision/core:MPPImage",
+    ],
+)
+
