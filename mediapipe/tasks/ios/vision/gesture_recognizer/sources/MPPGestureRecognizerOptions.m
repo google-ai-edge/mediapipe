@@ -19,7 +19,7 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _numHands = 1;
+    _numberOfHands = 1;
     _minHandDetectionConfidence = 0.5f;
     _minHandPresenceConfidence = 0.5f;
     _minTrackingConfidence = 0.5f;
@@ -31,8 +31,8 @@
   MPPGestureRecognizerOptions *gestureRecognizerOptions = [super copyWithZone:zone];
 
   gestureRecognizerOptions.runningMode = self.runningMode;
-  gestureRecognizerOptions.completion = self.completion;
-  gestureRecognizerOptions.numHands = self.numHands;
+  gestureRecognizerOptions.gestureRecognizerLiveStreamDelegate = self.gestureRecognizerLiveStreamDelegate;
+  gestureRecognizerOptions.numberOfHands = self.numberOfHands;
   gestureRecognizerOptions.minHandDetectionConfidence = self.minHandDetectionConfidence;
   gestureRecognizerOptions.minHandPresenceConfidence = self.minHandPresenceConfidence;
   gestureRecognizerOptions.minTrackingConfidence = self.minTrackingConfidence;
