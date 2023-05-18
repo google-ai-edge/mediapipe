@@ -37,7 +37,7 @@ NS_SWIFT_NAME(GestureRecognizerLiveStreamDelegate)
 @optional
 
 /**
- * This method notifies a delegate that the results of asynchronous object detection of
+ * This method notifies a delegate that the results of asynchronous gesture recognition of
  * an image submitted to the `MPPGestureRecognizer` is available.
  *
  * This method is called on a private serial dispatch queue created by the `MPPGestureRecognizer`
@@ -50,9 +50,9 @@ NS_SWIFT_NAME(GestureRecognizerLiveStreamDelegate)
  * coordinates system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the
  * underlying image data.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
- * image was sent to the object detector.
- * @param error An optional error parameter populated when there is an error in performing object
- * detection on the input live stream image data.
+ * image was sent to the gesture recognizer.
+ * @param error An optional error parameter populated when there is an error in performing gesture
+ * recognition on the input live stream image data.
  *
  */
 - (void)gestureRecognizer:(MPPGestureRecognizer *)gestureRecognizer
@@ -69,10 +69,10 @@ NS_SWIFT_NAME(GestureRecognizerOptions)
 /**
  * Running mode of the gesture recognizer task. Defaults to `MPPRunningModeImage`.
  * `MPPGestureRecognizer` can be created with one of the following running modes:
- *  1. `MPPRunningModeImage`: The mode for performing object detection on single image inputs.
- *  2. `MPPRunningModeVideo`: The mode for performing object detection on the decoded frames of a
+ *  1. `MPPRunningModeImage`: The mode for performing gesture recognition on single image inputs.
+ *  2. `MPPRunningModeVideo`: The mode for performing gesture recognition on the decoded frames of a
  *      video.
- *  3. `MPPRunningModeLiveStream`: The mode for performing object detection on a live stream of
+ *  3. `MPPRunningModeLiveStream`: The mode for performing gesture recognition on a live stream of
  *      input data, such as from the camera.
  */
 @property(nonatomic) MPPRunningMode runningMode;
