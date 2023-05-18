@@ -16,6 +16,7 @@
 import dataclasses
 import enum
 import os
+import platform
 from typing import Any, Optional
 
 from mediapipe.calculators.tensor import inference_calculator_pb2
@@ -63,10 +64,22 @@ class BaseOptions:
     else:
       full_path = None
 
-    if self.delegate == BaseOptions.Delegate.GPU:
-      acceleration_proto = _AccelerationProto(gpu=_DelegateProto.Gpu())
+    platform = platform.system()
+    
+    if self.delegate is not None:
+      if platform == "Linux":
+        if self.delegate == BaseOptions.Delegate.GPU:
+          acceleration_proto = _AccelerationProto(gpu=_DelegateProto.Gpu())
+        else:
+          acceleration_proto = _AccelerationProto(tflite=_DelegateProto.TfLite())
+      elif platform == "Windows":
+        raise Exception("Delegate is unsupported for Windows.")
+      elif platform == "Darwin":
+        raise Exception("Delegate is unsupported for MacOS.")
+      else:
+        raise Exception("Unidentified system")
     else:
-      acceleration_proto = _AccelerationProto(tflite=_DelegateProto.TfLite())
+      acceleration_proto = None
 
     return _BaseOptionsProto(
         model_asset=_ExternalFileProto(
