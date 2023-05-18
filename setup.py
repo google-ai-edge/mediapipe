@@ -284,24 +284,6 @@ class BuildModules(build_ext.build_ext):
       sys.exit(-1)
     _copy_to_build_lib_dir(self.build_lib, external_file)
 
-  # def _generate_binary_graph(self, binary_graph_target):
-  #   """Generate binary graph for a particular MediaPipe binary graph target."""
-  #
-  #   bazel_command = [
-  #       'bazel',
-  #       'build',
-  #       '--compilation_mode=opt',
-  #       '--copt=-DNDEBUG',
-  #       '--define=MEDIAPIPE_DISABLE_GPU=1',
-  #       '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
-  #       binary_graph_target,
-  #   ]
-  #   if not self.link_opencv and not IS_WINDOWS:
-  #     bazel_command.append('--define=OPENCV=source')
-  #   if subprocess.call(bazel_command) != 0:
-  #     sys.exit(-1)
-  #   _copy_to_build_lib_dir(self.build_lib, binary_graph_target + '.binarypb')
-
   def _generate_binary_graph(self, binary_graph_target):
       """Generate binary graph for a particular MediaPipe binary graph target."""
 
@@ -332,14 +314,6 @@ class GenerateMetadataSchema(build_ext.build_ext):
         'object_detector_metadata_schema_py',
         'schema_py',
     ]:
-      # bazel_command = [
-      #     'bazel',
-      #     'build',
-      #     '--compilation_mode=opt',
-      #     '--define=MEDIAPIPE_DISABLE_GPU=1',
-      #     '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
-      #     '//mediapipe/tasks/metadata:' + target,
-      # ]
 
       bazel_command = [
           'bazel',
@@ -427,15 +401,6 @@ class BuildExtension(build_ext.build_ext):
   def _build_binary(self, ext, extra_args=None):
     if not os.path.exists(self.build_temp):
       os.makedirs(self.build_temp)
-    # bazel_command = [
-    #     'bazel',
-    #     'build',
-    #     '--compilation_mode=opt',
-    #     '--copt=-DNDEBUG',
-    #     '--define=MEDIAPIPE_DISABLE_GPU=1',
-    #     '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
-    #     str(ext.bazel_target + '.so'),
-    # ]
     bazel_command = [
         'bazel',
         'build',
