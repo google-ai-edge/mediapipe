@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:20.04
-
+FROM nvidia/cudagl:11.3.0-devel-ubuntu20.04
 MAINTAINER <mediapipe@google.com>
 
 WORKDIR /io
