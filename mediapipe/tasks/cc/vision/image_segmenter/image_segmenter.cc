@@ -46,6 +46,8 @@ constexpr char kImageOutStreamName[] = "image_out";
 constexpr char kImageTag[] = "IMAGE";
 constexpr char kNormRectStreamName[] = "norm_rect_in";
 constexpr char kNormRectTag[] = "NORM_RECT";
+constexpr char kQualityScoresStreamName[] = "quality_scores";
+constexpr char kQualityScoresTag[] = "QUALITY_SCORES";
 constexpr char kSubgraphTypeName[] =
     "mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
@@ -77,6 +79,8 @@ CalculatorGraphConfig CreateGraphConfig(
     task_subgraph.Out(kCategoryMaskTag).SetName(kCategoryMaskStreamName) >>
         graph.Out(kCategoryMaskTag);
   }
+  task_subgraph.Out(kQualityScoresTag).SetName(kQualityScoresStreamName) >>
+      graph.Out(kQualityScoresTag);
   task_subgraph.Out(kImageTag).SetName(kImageOutStreamName) >>
       graph.Out(kImageTag);
   if (enable_flow_limiting) {
@@ -172,9 +176,13 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
             category_mask =
                 status_or_packets.value()[kCategoryMaskStreamName].Get<Image>();
           }
+          const std::vector<float>& quality_scores =
+              status_or_packets.value()[kQualityScoresStreamName]
+                  .Get<std::vector<float>>();
           Packet image_packet = status_or_packets.value()[kImageOutStreamName];
           result_callback(
-              {{confidence_masks, category_mask}}, image_packet.Get<Image>(),
+              {{confidence_masks, category_mask, quality_scores}},
+              image_packet.Get<Image>(),
               image_packet.Timestamp().Value() / kMicroSecondsPerMilliSecond);
         };
   }
@@ -227,7 +235,9 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::Segment(
   if (output_category_mask_) {
     category_mask = output_packets[kCategoryMaskStreamName].Get<Image>();
   }
-  return {{confidence_masks, category_mask}};
+  const std::vector<float>& quality_scores =
+      output_packets[kQualityScoresStreamName].Get<std::vector<float>>();
+  return {{confidence_masks, category_mask, quality_scores}};
 }
 
 absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
@@ -260,7 +270,9 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
   if (output_category_mask_) {
     category_mask = output_packets[kCategoryMaskStreamName].Get<Image>();
   }
-  return {{confidence_masks, category_mask}};
+  const std::vector<float>& quality_scores =
+      output_packets[kQualityScoresStreamName].Get<std::vector<float>>();
+  return {{confidence_masks, category_mask, quality_scores}};
 }
 
 absl::Status ImageSegmenter::SegmentAsync(

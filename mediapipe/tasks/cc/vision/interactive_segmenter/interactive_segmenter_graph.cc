@@ -58,6 +58,7 @@ constexpr absl::string_view kAlphaTag{"ALPHA"};
 constexpr absl::string_view kAlphaGpuTag{"ALPHA_GPU"};
 constexpr absl::string_view kNormRectTag{"NORM_RECT"};
 constexpr absl::string_view kRoiTag{"ROI"};
+constexpr absl::string_view kQualityScoresTag{"QUALITY_SCORES"};
 
 // Updates the graph to return `roi` stream which has same dimension as
 // `image`, and rendered with `roi`. If `use_gpu` is true, returned `Source` is
@@ -200,6 +201,8 @@ class InteractiveSegmenterGraph : public core::ModelTaskGraph {
             graph[Output<Image>(kCategoryMaskTag)];
       }
     }
+    image_segmenter.Out(kQualityScoresTag) >>
+        graph[Output<std::vector<float>>::Optional(kQualityScoresTag)];
     image_segmenter.Out(kImageTag) >> graph[Output<Image>(kImageTag)];
 
     return graph.GetConfig();

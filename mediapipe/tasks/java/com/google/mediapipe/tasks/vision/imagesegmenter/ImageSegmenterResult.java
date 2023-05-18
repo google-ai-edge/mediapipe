@@ -34,18 +34,29 @@ public abstract class ImageSegmenterResult implements TaskResult {
    * @param categoryMask an {@link Optional} MPImage in IMAGE_FORMAT_ALPHA format representing a
    *     category mask, where each pixel represents the class which the pixel in the original image
    *     was predicted to belong to.
+   * @param qualityScores The quality scores of the result masks, in the range of [0, 1]. Default to
+   *     `1` if the model doesn't output quality scores. Each element corresponds to the score of
+   *     the category in the model outputs.
    * @param timestampMs a timestamp for this result.
    */
   // TODO: consolidate output formats across platforms.
   public static ImageSegmenterResult create(
-      Optional<List<MPImage>> confidenceMasks, Optional<MPImage> categoryMask, long timestampMs) {
+      Optional<List<MPImage>> confidenceMasks,
+      Optional<MPImage> categoryMask,
+      List<Float> qualityScores,
+      long timestampMs) {
     return new AutoValue_ImageSegmenterResult(
-        confidenceMasks.map(Collections::unmodifiableList), categoryMask, timestampMs);
+        confidenceMasks.map(Collections::unmodifiableList),
+        categoryMask,
+        Collections.unmodifiableList(qualityScores),
+        timestampMs);
   }
 
   public abstract Optional<List<MPImage>> confidenceMasks();
 
   public abstract Optional<MPImage> categoryMask();
+
+  public abstract List<Float> qualityScores();
 
   @Override
   public abstract long timestampMs();
