@@ -167,6 +167,8 @@ cmake_external(
         "BUILD_PERF_TESTS": "OFF",
         "BUILD_EXAMPLES": "OFF",
         "BUILD_SHARED_LIBS": "ON" if OPENCV_SHARED_LIBS else "OFF",
+        # Disable IPP
+        "WITH_IPP": "OFF",
         "WITH_ITT": "OFF",
         "WITH_JASPER": "OFF",
         "WITH_JPEG": "ON",
@@ -174,6 +176,9 @@ cmake_external(
         "WITH_TIFF": "ON",
         "WITH_OPENCL": "OFF",
         "WITH_WEBP": "OFF",
+        # Disable carotene_o4t
+        "ENABLE_NEON": "OFF",
+        "WITH_TENGINE": "OFF",
         # Optimization flags
         "CV_ENABLE_INTRINSICS": "ON",
         "WITH_EIGEN": "ON",
