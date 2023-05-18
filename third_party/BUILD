@@ -150,7 +150,7 @@ OPENCV_MODULES = [
 # still only builds the shared libraries, so we have to choose one or the
 # other. We build shared libraries by default, but this variable can be used
 # to switch to static libraries.
-OPENCV_SHARED_LIBS = True
+OPENCV_SHARED_LIBS = False
 
 OPENCV_SO_VERSION = "3.4"
 
@@ -168,7 +168,7 @@ cmake_external(
         "BUILD_EXAMPLES": "OFF",
         "BUILD_SHARED_LIBS": "ON" if OPENCV_SHARED_LIBS else "OFF",
         # Disable IPP
-        "WITH_IPP": "OFF",
+        # "WITH_IPP": "OFF",
         "WITH_ITT": "OFF",
         "WITH_JASPER": "OFF",
         "WITH_JPEG": "ON",
@@ -177,8 +177,8 @@ cmake_external(
         "WITH_OPENCL": "OFF",
         "WITH_WEBP": "OFF",
         # Disable carotene_o4t
-        "ENABLE_NEON": "OFF",
-        "WITH_TENGINE": "OFF",
+        # "ENABLE_NEON": "OFF",
+        # "WITH_TENGINE": "OFF",
         # Optimization flags
         "CV_ENABLE_INTRINSICS": "ON",
         "WITH_EIGEN": "ON",
