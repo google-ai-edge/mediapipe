@@ -25,7 +25,7 @@ NS_SWIFT_NAME(GestureRecognizerResult)
 @interface MPPGestureRecognizerResult : MPPTaskResult
 
 /** Hand landmarks of detected hands. */
-@property(nonatomic, readonly) NSArray<NSArray<MPPLandmark *> *> *landmarks;
+@property(nonatomic, readonly) NSArray<NSArray<MPPNormalizedLandmark *> *> *landmarks;
 
 /** Hand landmarks in world coordniates of detected hands. */
 @property(nonatomic, readonly) NSArray<NSArray<MPPLandmark *> *> *worldLandmarks;
@@ -54,11 +54,11 @@ NS_SWIFT_NAME(GestureRecognizerResult)
  * landmarks, handedness and gestures.
  *
  */
-- (instancetype)initWithLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)landmarks
-                   worldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)worldLandmarks
-                       handedness:(NSArray<NSArray<MPPCategory *> *> *)handedness
-                         gestures:(NSArray<NSArray<MPPCategory *> *> *)gestures
-          timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
+- (instancetype)initWithGestures:(NSArray<NSArray<MPPCategory *> *> *)gestures
+                      handedness:(NSArray<NSArray<MPPCategory *> *> *)handedness
+                       landmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)landmarks
+                  worldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)worldLandmarks
+         timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 
 @end
 

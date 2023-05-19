@@ -21,22 +21,73 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class MPPGestureRecognizer;
+
+/**
+ * This protocol defines an interface for the delegates of `MPPGestureRecognizer` object to receive
+ * results of performing asynchronous gesture recognition on images (i.e, when `runningMode` =
+ * `MPPRunningModeLiveStream`).
+ *
+ * The delegate of `MPPGestureRecognizer` must adopt `MPPGestureRecognizerLiveStreamDelegate`
+ * protocol. The methods in this protocol are optional.
+ */
+NS_SWIFT_NAME(GestureRecognizerLiveStreamDelegate)
+@protocol MPPGestureRecognizerLiveStreamDelegate <NSObject>
+
+@optional
+
+/**
+ * This method notifies a delegate that the results of asynchronous gesture recognition of
+ * an image submitted to the `MPPGestureRecognizer` is available.
+ *
+ * This method is called on a private serial dispatch queue created by the `MPPGestureRecognizer`
+ * for performing the asynchronous delegates calls.
+ *
+ * @param gestureRecognizer The gesture recognizer which performed the gesture recognition.
+ * This is useful to test equality when there are multiple instances of `MPPGestureRecognizer`.
+ * @param result The `MPPGestureRecognizerResult` object that contains a list of detections, each
+ * detection has a bounding box that is expressed in the unrotated input frame of reference
+ * coordinates system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the
+ * underlying image data.
+ * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
+ * image was sent to the gesture recognizer.
+ * @param error An optional error parameter populated when there is an error in performing gesture
+ * recognition on the input live stream image data.
+ *
+ */
+- (void)gestureRecognizer:(MPPGestureRecognizer *)gestureRecognizer
+    didFinishRecognitionWithResult:(nullable MPPGestureRecognizerResult *)result
+           timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                             error:(nullable NSError *)error
+    NS_SWIFT_NAME(gestureRecognizer(_:didFinishGestureRecognition:timestampInMilliseconds:error:));
+@end
+
 /** Options for setting up a `MPPGestureRecognizer`. */
 NS_SWIFT_NAME(GestureRecognizerOptions)
 @interface MPPGestureRecognizerOptions : MPPTaskOptions <NSCopying>
 
+/**
+ * Running mode of the gesture recognizer task. Defaults to `MPPRunningModeImage`.
+ * `MPPGestureRecognizer` can be created with one of the following running modes:
+ *  1. `MPPRunningModeImage`: The mode for performing gesture recognition on single image inputs.
+ *  2. `MPPRunningModeVideo`: The mode for performing gesture recognition on the decoded frames of a
+ *      video.
+ *  3. `MPPRunningModeLiveStream`: The mode for performing gesture recognition on a live stream of
+ *      input data, such as from the camera.
+ */
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
- * The user-defined result callback for processing live stream data. The result callback should only
- * be specified when the running mode is set to the live stream mode.
- * TODO: Add parameter `MPPImage` in the callback.
+ * An object that confirms to `MPPGestureRecognizerLiveStreamDelegate` protocol. This object must
+ * implement `gestureRecognizer:didFinishRecognitionWithResult:timestampInMilliseconds:error:` to
+ * receive the results of performing asynchronous gesture recognition on images (i.e, when
+ * `runningMode` = `MPPRunningModeLiveStream`).
  */
-@property(nonatomic, copy) void (^completion)
-    (MPPGestureRecognizerResult *result, NSInteger timestampMs, NSError *error);
+@property(nonatomic, weak, nullable) id<MPPGestureRecognizerLiveStreamDelegate>
+    gestureRecognizerLiveStreamDelegate;
 
 /** Sets the maximum number of hands can be detected by the GestureRecognizer. */
-@property(nonatomic) NSInteger numHands;
+@property(nonatomic) NSInteger numberOfHands NS_SWIFT_NAME(numHands);
 
 /** Sets minimum confidence score for the hand detection to be considered successful */
 @property(nonatomic) float minHandDetectionConfidence;

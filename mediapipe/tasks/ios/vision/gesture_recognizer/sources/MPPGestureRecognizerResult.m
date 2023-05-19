@@ -16,11 +16,11 @@
 
 @implementation MPPGestureRecognizerResult
 
-- (instancetype)initWithLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)landmarks
-                   worldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)worldLandmarks
-                       handedness:(NSArray<NSArray<MPPCategory *> *> *)handedness
-                         gestures:(NSArray<NSArray<MPPCategory *> *> *)gestures
-          timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+- (instancetype)initWithGestures:(NSArray<NSArray<MPPCategory *> *> *)gestures
+                      handedness:(NSArray<NSArray<MPPCategory *> *> *)handedness
+                       landmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)landmarks
+                  worldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)worldLandmarks
+         timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   self = [super initWithTimestampInMilliseconds:timestampInMilliseconds];
   if (self) {
     _landmarks = landmarks;
