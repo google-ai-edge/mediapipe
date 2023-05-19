@@ -187,10 +187,11 @@ export class MPImage {
         destinationContainer =
             assertNotNull(gl.createTexture(), 'Failed to create texture');
         gl.bindTexture(gl.TEXTURE_2D, destinationContainer);
-
+        this.configureTextureParams();
         gl.texImage2D(
             gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA,
             gl.UNSIGNED_BYTE, null);
+        gl.bindTexture(gl.TEXTURE_2D, null);
 
         shaderContext.bindFramebuffer(gl, destinationContainer);
         shaderContext.run(gl, /* flipVertically= */ false, () => {
@@ -302,6 +303,20 @@ export class MPImage {
     return webGLTexture;
   }
 
+  /** Sets texture params for the currently bound texture. */
+  private configureTextureParams() {
+    const gl = this.getGL();
+    // `gl.LINEAR` might break rendering for some textures, but it allows us to
+    // do smooth resizing. Ideally, this would be user-configurable, but for now
+    // we hard-code the value here to `gl.LINEAR` (versus `gl.NEAREST` for
+    // `MPMask` where we do not want to interpolate mask values, especially for
+    // category masks).
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  }
+
   /**
    * Binds the backing texture to the canvas. If the texture does not yet
    * exist, creates it first.
@@ -318,16 +333,12 @@ export class MPImage {
           assertNotNull(gl.createTexture(), 'Failed to create texture');
       this.containers.push(webGLTexture);
       this.ownsWebGLTexture = true;
+
+      gl.bindTexture(gl.TEXTURE_2D, webGLTexture);
+      this.configureTextureParams();
+    } else {
+      gl.bindTexture(gl.TEXTURE_2D, webGLTexture);
     }
-
-    gl.bindTexture(gl.TEXTURE_2D, webGLTexture);
-    // TODO: Ideally, we would only set these once per texture and
-    // not once every frame.
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-
     return webGLTexture;
   }
 

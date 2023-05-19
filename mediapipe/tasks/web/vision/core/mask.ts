@@ -175,6 +175,7 @@ export class MPMask {
         destinationContainer =
             assertNotNull(gl.createTexture(), 'Failed to create texture');
         gl.bindTexture(gl.TEXTURE_2D, destinationContainer);
+        this.configureTextureParams();
         gl.texImage2D(
             gl.TEXTURE_2D, 0, gl.R32F, this.width, this.height, 0, gl.RED,
             gl.FLOAT, null);
@@ -283,6 +284,19 @@ export class MPMask {
     return webGLTexture;
   }
 
+  /** Sets texture params for the currently bound texture. */
+  private configureTextureParams() {
+    const gl = this.getGL();
+    // `gl.NEAREST` ensures that we do not get interpolated values for
+    // masks. In some cases, the user might want interpolation (e.g. for
+    // confidence masks), so we might want to make this user-configurable.
+    // Note that `MPImage` uses `gl.LINEAR`.
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  }
+
   /**
    * Binds the backing texture to the canvas. If the texture does not yet
    * exist, creates it first.
@@ -299,15 +313,12 @@ export class MPMask {
           assertNotNull(gl.createTexture(), 'Failed to create texture');
       this.containers.push(webGLTexture);
       this.ownsWebGLTexture = true;
-    }
 
-    gl.bindTexture(gl.TEXTURE_2D, webGLTexture);
-    // TODO: Ideally, we would only set these once per texture and
-    // not once every frame.
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.bindTexture(gl.TEXTURE_2D, webGLTexture);
+      this.configureTextureParams();
+    } else {
+      gl.bindTexture(gl.TEXTURE_2D, webGLTexture);
+    }
 
     return webGLTexture;
   }
