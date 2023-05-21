@@ -16,9 +16,9 @@
 
 /** An integer bounding box, axis aligned. */
 export declare interface BoundingBox {
-  /** The X coordinate of the top-left corner, in pixels. */
+  /** The X coordinate of the bottom-left corner, in pixels. */
   originX: number;
-  /** The Y coordinate of the top-left corner, in pixels. */
+  /** The Y coordinate of the bottom-left corner, in pixels. */
   originY: number;
   /** The width of the bounding box, in pixels. */
   width: number;
