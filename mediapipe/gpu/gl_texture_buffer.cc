@@ -47,6 +47,7 @@ std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Create(int width, int height,
   auto buf = absl::make_unique<GlTextureBuffer>(GL_TEXTURE_2D, 0, width, height,
                                                 format, nullptr);
   if (!buf->CreateInternal(data, alignment)) {
+    LOG(WARNING) << "Failed to create a GL texture";
     return nullptr;
   }
   return buf;
@@ -106,7 +107,10 @@ GlTextureBuffer::GlTextureBuffer(GLenum target, GLuint name, int width,
 
 bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
   auto context = GlContext::GetCurrent();
-  if (!context) return false;
+  if (!context) {
+    LOG(WARNING) << "Cannot create a GL texture without a valid context";
+    return false;
+  }
 
   producer_context_ = context;  // Save creation GL context.
 

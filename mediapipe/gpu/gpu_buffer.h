@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 
+#include "absl/log/check.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
@@ -72,8 +73,10 @@ class GpuBuffer {
   // are not portable. Applications and calculators should normally obtain
   // GpuBuffers in a portable way from the framework, e.g. using
   // GpuBufferMultiPool.
-  explicit GpuBuffer(std::shared_ptr<internal::GpuBufferStorage> storage)
-      : holder_(std::make_shared<StorageHolder>(std::move(storage))) {}
+  explicit GpuBuffer(std::shared_ptr<internal::GpuBufferStorage> storage) {
+    CHECK(storage) << "Cannot construct GpuBuffer with null storage";
+    holder_ = std::make_shared<StorageHolder>(std::move(storage));
+  }
 
 #if !MEDIAPIPE_DISABLE_GPU && MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   // This is used to support backward-compatible construction of GpuBuffer from
