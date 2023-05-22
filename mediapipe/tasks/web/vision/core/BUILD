@@ -62,7 +62,10 @@ jasmine_node_test(
 mediapipe_ts_library(
     name = "mask",
     srcs = ["mask.ts"],
-    deps = [":image"],
+    deps = [
+        ":image",
+        "//mediapipe/web/graph_runner:platform_utils",
+    ],
 )
 
 mediapipe_ts_library(
