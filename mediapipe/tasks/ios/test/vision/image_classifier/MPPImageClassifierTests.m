@@ -34,10 +34,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   XCTAssertNotNil(error);                                                                     \
   XCTAssertEqualObjects(error.domain, expectedError.domain);                                  \
   XCTAssertEqual(error.code, expectedError.code);                                             \
-  XCTAssertNotEqual(                                                                          \
-      [error.localizedDescription rangeOfString:expectedError.localizedDescription].location, \
-      NSNotFound)
-
+  XCTAssertEqualObjects(error.localizedDescription, expectedError.localizedDescription)                                                                        \
+      
 #define AssertEqualCategoryArrays(categories, expectedCategories)                         \
   XCTAssertEqual(categories.count, expectedCategories.count);                             \
   for (int i = 0; i < categories.count; i++) {                                            \
