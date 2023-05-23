@@ -81,7 +81,7 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/vision/image_classifier:sources/MPPImageClassifierResult.h",
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetector.h",
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectorOptions.h",
-        "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectionResult.h",
+        "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectorResult.h",
     ],
 )
 
@@ -162,7 +162,7 @@ apple_static_xcframework(
         ":MPPImageClassifierResult.h",
         ":MPPObjectDetector.h",
         ":MPPObjectDetectorOptions.h",
-        ":MPPObjectDetectionResult.h",
+        ":MPPObjectDetectorResult.h",
     ],
     deps = [
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",

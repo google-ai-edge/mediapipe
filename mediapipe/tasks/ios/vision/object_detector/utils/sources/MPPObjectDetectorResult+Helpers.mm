@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/vision/object_detector/utils/sources/MPPObjectDetectionResult+Helpers.h"
+#import "mediapipe/tasks/ios/vision/object_detector/utils/sources/MPPObjectDetectorResult+Helpers.h"
 
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPDetection+Helpers.h"
 
@@ -21,9 +21,9 @@ using DetectionProto = ::mediapipe::Detection;
 using ::mediapipe::Packet;
 }  // namespace
 
-@implementation MPPObjectDetectionResult (Helpers)
+@implementation MPPObjectDetectorResult (Helpers)
 
-+ (nullable MPPObjectDetectionResult *)objectDetectionResultWithDetectionsPacket:
++ (nullable MPPObjectDetectorResult *)objectDetectorResultWithDetectionsPacket:
     (const Packet &)packet {
   if (!packet.ValidateAsType<std::vector<DetectionProto>>().ok()) {
     return nil;
@@ -37,10 +37,10 @@ using ::mediapipe::Packet;
     [detections addObject:[MPPDetection detectionWithProto:detectionProto]];
   }
 
-  return [[MPPObjectDetectionResult alloc]
-           initWithDetections:detections
-      timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
-                                          kMicroSecondsPerMilliSecond)];
+  return
+      [[MPPObjectDetectorResult alloc] initWithDetections:detections
+                                  timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
+                                                                      kMicroSecondsPerMilliSecond)];
 }
 
 @end
