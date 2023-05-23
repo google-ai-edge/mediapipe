@@ -27,13 +27,14 @@ export declare interface Detection {
   boundingBox?: BoundingBox;
 
   /**
-   * Optional list of keypoints associated with the detection. Keypoints
-   * represent interesting points related to the detection. For example, the
-   * keypoints represent the eye, ear and mouth from face detection model. Or
-   * in the template matching detection, e.g. KNIFT, they can represent the
-   * feature points for template matching.
+   * List of keypoints associated with the detection. Keypoints represent
+   * interesting points related to the detection. For example, the keypoints
+   * represent the eye, ear and mouth from face detection model. Or in the
+   * template matching detection, e.g. KNIFT, they can represent the feature
+   * points for template matching. Contains an empty list if no keypoints are
+   * detected.
    */
-  keypoints?: NormalizedKeypoint[];
+  keypoints: NormalizedKeypoint[];
 }
 
 /** Detection results of a model. */
