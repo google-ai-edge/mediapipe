@@ -29,13 +29,20 @@ using ::mediapipe::Packet;
 
 + (nullable MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
     (const Packet &)packet {
-  MPPClassificationResult *classificationResult;
+  // Even if packet does not validate a the expected type, you can safely access the timestamp.
+  NSInteger timestampInMilliSeconds =
+      (NSInteger)(packet.Timestamp().Value() / kMicroSecondsPerMilliSecond);
 
   if (!packet.ValidateAsType<ClassificationResultProto>().ok()) {
-    return nil;
+    // MPPClassificationResult's timestamp is populated from timestamp `ClassificationResultProto`'s
+    // timestamp_ms(). It is 0 since the packet can't be validated as a `ClassificationResultProto`.
+    return [[MPPImageClassifierResult alloc]
+        initWithClassificationResult:[[MPPClassificationResult alloc] initWithClassifications:@[]
+                                                                      timestampInMilliseconds:0]
+             timestampInMilliseconds:timestampInMilliSeconds];
   }
 
-  classificationResult = [MPPClassificationResult
+  MPPClassificationResult *classificationResult = [MPPClassificationResult
       classificationResultWithProto:packet.Get<ClassificationResultProto>()];
 
   return [[MPPImageClassifierResult alloc]
