@@ -42,6 +42,7 @@ const NORM_RECT_IN_STREAM = 'norm_rect_in';
 const ROI_IN_STREAM = 'roi_in';
 const CONFIDENCE_MASKS_STREAM = 'confidence_masks';
 const CATEGORY_MASK_STREAM = 'category_mask';
+const QUALITY_SCORES_STREAM = 'quality_scores';
 const IMAGEA_SEGMENTER_GRAPH =
     'mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph';
 const DEFAULT_OUTPUT_CATEGORY_MASK = false;
@@ -86,6 +87,7 @@ export type InteractiveSegmenterCallback =
 export class InteractiveSegmenter extends VisionTaskRunner {
   private categoryMask?: MPMask;
   private confidenceMasks?: MPMask[];
+  private qualityScores?: number[];
   private outputCategoryMask = DEFAULT_OUTPUT_CATEGORY_MASK;
   private outputConfidenceMasks = DEFAULT_OUTPUT_CONFIDENCE_MASKS;
   private userCallback?: InteractiveSegmenterCallback;
@@ -284,12 +286,13 @@ export class InteractiveSegmenter extends VisionTaskRunner {
   private reset(): void {
     this.confidenceMasks = undefined;
     this.categoryMask = undefined;
+    this.qualityScores = undefined;
   }
 
   private processResults(): InteractiveSegmenterResult|void {
     try {
       const result = new InteractiveSegmenterResult(
-          this.confidenceMasks, this.categoryMask);
+          this.confidenceMasks, this.categoryMask, this.qualityScores);
       if (this.userCallback) {
         this.userCallback(result);
       } else {
@@ -360,6 +363,20 @@ export class InteractiveSegmenter extends VisionTaskRunner {
             this.setLatestOutputTimestamp(timestamp);
           });
     }
+
+    graphConfig.addOutputStream(QUALITY_SCORES_STREAM);
+    segmenterNode.addOutputStream('QUALITY_SCORES:' + QUALITY_SCORES_STREAM);
+
+    this.graphRunner.attachFloatVectorListener(
+        QUALITY_SCORES_STREAM, (scores, timestamp) => {
+          this.qualityScores = scores;
+          this.setLatestOutputTimestamp(timestamp);
+        });
+    this.graphRunner.attachEmptyPacketListener(
+        QUALITY_SCORES_STREAM, timestamp => {
+          this.categoryMask = undefined;
+          this.setLatestOutputTimestamp(timestamp);
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
