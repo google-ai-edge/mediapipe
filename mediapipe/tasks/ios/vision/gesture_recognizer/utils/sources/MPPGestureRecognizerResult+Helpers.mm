@@ -137,8 +137,8 @@ static const NSInteger kDefaultGestureIndex = -1;
                                                        .Get<std::vector<ClassificationListProto>>()
                                     handednessroto:handednessPacket
                                                        .Get<std::vector<ClassificationListProto>>()
-                               handLandmarksPacket:handednessPacket
-                                                       .Get<std::vector<ClassificationListProto>>()
+                               handLandmarksPacket:handLandmarksPacket
+                                                       .Get<std::vector<NormalizedLandmarkListProto>>()
                               worldLandmarksPacket:worldLandmarksPacket
                                                        .Get<std::vector<LandmarkListProto>>()
                            timestampInMilliSeconds:timestampInMilliseconds];
