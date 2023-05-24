@@ -71,6 +71,7 @@ android_library(
     srcs = [
         "objectdetector/ObjectDetectionResult.java",
         "objectdetector/ObjectDetector.java",
+        "objectdetector/ObjectDetectorResult.java",
     ],
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",
