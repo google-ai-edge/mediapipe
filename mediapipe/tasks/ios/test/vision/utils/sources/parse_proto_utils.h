@@ -23,6 +23,6 @@ limitations under the License.
 
 namespace mediapipe::tasks::ios::test::vision::utils {
  absl::Status get_proto_from_pbtxt(const std::string file_path, google::protobuf::Message& proto);
-}  // namespace mediapipe::tasks::ios::test::utils
+}  // namespace mediapipe::tasks::ios::test::vision::utils
 
 #endif  // MEDIAPIPE_TASKS_IOS_TEST_VISION_UTILS_H_

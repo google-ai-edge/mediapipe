@@ -17,7 +17,6 @@ limitations under the License.
 
 #include <fstream>
 #include <sstream>
-#include "google/protobuf/io/zero_copy_stream_impl.h"
 
 namespace mediapipe::tasks::ios::test::vision::utils {
 
@@ -26,18 +25,16 @@ namespace {
  }
 
  absl::Status get_proto_from_pbtxt(const std::string file_path, google::protobuf::Message& proto) {
-    std::ifstream fin(file_path);
-
-    if(!fin.is_open()) return absl::InvalidArgumentError(
+    
+    std::ifstream file_input_stream(file_path);
+    if(!file_input_stream.is_open()) return absl::InvalidArgumentError(
           "Cannot read input file.");
     
-    std::stringstream strings_stream;
-
-    strings_stream << fin.rdbuf();
+    std::stringstream strings_stream ;
+    strings_stream << file_input_stream.rdbuf();
 
     return TextFormat::ParseFromString(strings_stream.str(), &proto) ? absl::OkStatus() : absl::InvalidArgumentError(
           "Cannot read a valid proto from the input file.");
-
  }
 
-}  // namespace mediapipe::tasks::text::utils
+}  // namespace mediapipe::tasks::ios::test::vision::utils
