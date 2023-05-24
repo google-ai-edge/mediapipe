@@ -105,7 +105,7 @@ class FaceStylizer(object):
     self._train_model(train_data=train_data, preprocessor=self._preprocessor)
 
   def _create_model(self):
-    """Creates the componenets of face stylizer."""
+    """Creates the components of face stylizer."""
     self._encoder = model_util.load_keras_model(
         constants.FACE_STYLIZER_ENCODER_MODEL_FILES.get_path()
     )
@@ -138,7 +138,7 @@ class FaceStylizer(object):
     """
     train_dataset = train_data.gen_tf_dataset(preprocess=preprocessor)
 
-    # TODO: Support processing mulitple input style images. The
+    # TODO: Support processing multiple input style images. The
     # input style images are expected to have similar style.
     # style_sample represents a tuple of (style_image, style_label).
     style_sample = next(iter(train_dataset))

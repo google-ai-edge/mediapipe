@@ -668,10 +668,10 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   // Because of flow limiting, we cannot ensure that the callback will be
   // invoked `iterationCount` times.
-  // An normal expectation will fail if expectation.fullfill() is not called
+  // An normal expectation will fail if expectation.fulfill() is not called
   // `expectation.expectedFulfillmentCount` times.
   // If `expectation.isInverted = true`, the test will only succeed if
-  // expectation is not fullfilled for the specified `expectedFulfillmentCount`.
+  // expectation is not fulfilled for the specified `expectedFulfillmentCount`.
   // Since in our case we cannot predict how many times the expectation is
   // supposed to be fullfilled setting,
   // `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and

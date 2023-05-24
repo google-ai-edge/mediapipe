@@ -231,7 +231,7 @@ export class ImageSegmenter extends VisionTaskRunner {
   /**
    * Performs image segmentation on the provided single image and returns the
    * segmentation result. This method creates a copy of the resulting masks and
-   * should not be used in high-throughput applictions. Only use this method
+   * should not be used in high-throughput applications. Only use this method
    * when the ImageSegmenter is created with running mode `image`.
    *
    * @param image An image to process.
@@ -242,7 +242,7 @@ export class ImageSegmenter extends VisionTaskRunner {
   /**
    * Performs image segmentation on the provided single image and returns the
    * segmentation result. This method creates a copy of the resulting masks and
-   * should not be used in high-v applictions. Only use this method when
+   * should not be used in high-v applications. Only use this method when
    * the ImageSegmenter is created with running mode `image`.
    *
    * @param image An image to process.
@@ -320,7 +320,7 @@ export class ImageSegmenter extends VisionTaskRunner {
   /**
    * Performs image segmentation on the provided video frame and returns the
    * segmentation result. This method creates a copy of the resulting masks and
-   * should not be used in high-v applictions. Only use this method when
+   * should not be used in high-v applications. Only use this method when
    * the ImageSegmenter is created with running mode `video`.
    *
    * @param videoFrame A video frame to process.
