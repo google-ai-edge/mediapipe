@@ -55,6 +55,10 @@ MEDIAPIPE_REGISTER_NODE(ConcatenateUInt64VectorCalculator);
 typedef ConcatenateVectorCalculator<bool> ConcatenateBoolVectorCalculator;
 MEDIAPIPE_REGISTER_NODE(ConcatenateBoolVectorCalculator);
 
+typedef ConcatenateVectorCalculator<std::string>
+    ConcatenateStringVectorCalculator;
+MEDIAPIPE_REGISTER_NODE(ConcatenateStringVectorCalculator);
+
 // Example config:
 // node {
 //   calculator: "ConcatenateTfLiteTensorVectorCalculator"

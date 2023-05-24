@@ -17,7 +17,7 @@
 
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 
-static const int kMicroSecondsPerMilliSecond = 1000;
+static const int kMicrosecondsPerMillisecond = 1000;
 
 namespace {
 using ClassificationResultProto =
@@ -29,19 +29,26 @@ using ::mediapipe::Packet;
 
 + (nullable MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
     (const Packet &)packet {
-  MPPClassificationResult *classificationResult;
+  // Even if packet does not validate as the expected type, you can safely access the timestamp.
+  NSInteger timestampInMilliSeconds =
+      (NSInteger)(packet.Timestamp().Value() / kMicrosecondsPerMillisecond);
 
   if (!packet.ValidateAsType<ClassificationResultProto>().ok()) {
-    return nil;
+    // MPPClassificationResult's timestamp is populated from timestamp `ClassificationResultProto`'s
+    // timestamp_ms(). It is 0 since the packet can't be validated as a `ClassificationResultProto`.
+    return [[MPPImageClassifierResult alloc]
+        initWithClassificationResult:[[MPPClassificationResult alloc] initWithClassifications:@[]
+                                                                      timestampInMilliseconds:0]
+             timestampInMilliseconds:timestampInMilliSeconds];
   }
 
-  classificationResult = [MPPClassificationResult
+  MPPClassificationResult *classificationResult = [MPPClassificationResult
       classificationResultWithProto:packet.Get<ClassificationResultProto>()];
 
   return [[MPPImageClassifierResult alloc]
       initWithClassificationResult:classificationResult
            timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
-                                               kMicroSecondsPerMilliSecond)];
+                                               kMicrosecondsPerMillisecond)];
 }
 
 @end

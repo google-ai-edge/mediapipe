@@ -1099,6 +1099,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
     ],
+    alwayslink = True,  # Defines TestServiceCalculator
 )
 
 cc_library(

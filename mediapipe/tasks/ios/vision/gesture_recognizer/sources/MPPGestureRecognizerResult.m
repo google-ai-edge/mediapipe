@@ -18,9 +18,9 @@
 
 - (instancetype)initWithGestures:(NSArray<NSArray<MPPCategory *> *> *)gestures
                       handedness:(NSArray<NSArray<MPPCategory *> *> *)handedness
-                      landmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)landmarks
-                   worldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)worldLandmarks
-          timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
+                       landmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)landmarks
+                  worldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)worldLandmarks
+         timestampInMilliseconds:(NSInteger)timestampInMilliseconds {
   self = [super initWithTimestampInMilliseconds:timestampInMilliseconds];
   if (self) {
     _landmarks = landmarks;

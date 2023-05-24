@@ -103,8 +103,8 @@ class ModelResourcesCache {
 };
 
 // Global service for mediapipe task model resources cache.
-const mediapipe::GraphService<ModelResourcesCache> kModelResourcesCacheService(
-    "mediapipe::tasks::ModelResourcesCacheService");
+inline constexpr mediapipe::GraphService<ModelResourcesCache>
+    kModelResourcesCacheService("mediapipe::tasks::ModelResourcesCacheService");
 
 }  // namespace core
 }  // namespace tasks

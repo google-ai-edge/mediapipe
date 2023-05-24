@@ -28,6 +28,12 @@ namespace mediapipe {
 #define GL_HALF_FLOAT 0x140B
 #endif  // GL_HALF_FLOAT
 
+#ifdef __EMSCRIPTEN__
+#ifndef GL_HALF_FLOAT_OES
+#define GL_HALF_FLOAT_OES 0x8D61
+#endif  // GL_HALF_FLOAT_OES
+#endif  // __EMSCRIPTEN__
+
 #if !MEDIAPIPE_DISABLE_GPU
 #ifdef GL_ES_VERSION_2_0
 static void AdaptGlTextureInfoForGLES2(GlTextureInfo* info) {
@@ -48,6 +54,12 @@ static void AdaptGlTextureInfoForGLES2(GlTextureInfo* info) {
     case GL_RG8:
       info->gl_internal_format = info->gl_format = GL_RG_EXT;
       return;
+#ifdef __EMSCRIPTEN__
+    case GL_RGBA16F:
+      info->gl_internal_format = GL_RGBA;
+      info->gl_type = GL_HALF_FLOAT_OES;
+      return;
+#endif  // __EMSCRIPTEN__
     default:
       return;
   }

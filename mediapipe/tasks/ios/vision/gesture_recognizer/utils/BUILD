@@ -22,7 +22,12 @@ objc_library(
     hdrs = ["sources/MPPGestureRecognizerOptions+Helpers.h"],
     deps = [
         "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_classifier_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_recognizer_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:hand_gesture_recognizer_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_cc_proto",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/components/processors/utils:MPPClassifierOptionsHelpers",
         "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",

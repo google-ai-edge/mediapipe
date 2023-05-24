@@ -201,6 +201,7 @@ py_test(
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
+    tags = ["not_run:arm"],
     deps = [
         "//mediapipe/python:_framework_bindings",
         "//mediapipe/tasks/python/components/containers:rect",

@@ -26,7 +26,7 @@ export function convertFromDetectionProto(source: DetectionProto): Detection {
   const labels = source.getLabelList();
   const displayNames = source.getDisplayNameList();
 
-  const detection: Detection = {categories: []};
+  const detection: Detection = {categories: [], keypoints: []};
   for (let i = 0; i < scores.length; i++) {
     detection.categories.push({
       score: scores[i],
@@ -47,7 +47,6 @@ export function convertFromDetectionProto(source: DetectionProto): Detection {
   }
 
   if (source.getLocationData()?.getRelativeKeypointsList().length) {
-    detection.keypoints = [];
     for (const keypoint of
              source.getLocationData()!.getRelativeKeypointsList()) {
       detection.keypoints.push({

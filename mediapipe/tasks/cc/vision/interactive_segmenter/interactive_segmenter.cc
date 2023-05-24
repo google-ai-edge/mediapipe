@@ -51,12 +51,14 @@ constexpr char kImageInStreamName[] = "image_in";
 constexpr char kImageOutStreamName[] = "image_out";
 constexpr char kRoiStreamName[] = "roi_in";
 constexpr char kNormRectStreamName[] = "norm_rect_in";
+constexpr char kQualityScoresStreamName[] = "quality_scores";
 
 constexpr absl::string_view kConfidenceMasksTag{"CONFIDENCE_MASKS"};
 constexpr absl::string_view kCategoryMaskTag{"CATEGORY_MASK"};
 constexpr absl::string_view kImageTag{"IMAGE"};
 constexpr absl::string_view kRoiTag{"ROI"};
 constexpr absl::string_view kNormRectTag{"NORM_RECT"};
+constexpr absl::string_view kQualityScoresTag{"QUALITY_SCORES"};
 
 constexpr absl::string_view kSubgraphTypeName{
     "mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph"};
@@ -91,6 +93,8 @@ CalculatorGraphConfig CreateGraphConfig(
     task_subgraph.Out(kCategoryMaskTag).SetName(kCategoryMaskStreamName) >>
         graph.Out(kCategoryMaskTag);
   }
+  task_subgraph.Out(kQualityScoresTag).SetName(kQualityScoresStreamName) >>
+      graph.Out(kQualityScoresTag);
   task_subgraph.Out(kImageTag).SetName(kImageOutStreamName) >>
       graph.Out(kImageTag);
   graph.In(kImageTag) >> task_subgraph.In(kImageTag);
@@ -201,7 +205,9 @@ absl::StatusOr<ImageSegmenterResult> InteractiveSegmenter::Segment(
   if (output_category_mask_) {
     category_mask = output_packets[kCategoryMaskStreamName].Get<Image>();
   }
-  return {{confidence_masks, category_mask}};
+  const std::vector<float>& quality_scores =
+      output_packets[kQualityScoresStreamName].Get<std::vector<float>>();
+  return {{confidence_masks, category_mask, quality_scores}};
 }
 
 }  // namespace interactive_segmenter

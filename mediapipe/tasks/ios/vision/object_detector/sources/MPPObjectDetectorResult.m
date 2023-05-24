@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/vision/object_detector/sources/MPPObjectDetectionResult.h"
+#import "mediapipe/tasks/ios/vision/object_detector/sources/MPPObjectDetectorResult.h"
 
-@implementation MPPObjectDetectionResult
+@implementation MPPObjectDetectorResult
 
 - (instancetype)initWithDetections:(NSArray<MPPDetection *> *)detections
            timestampInMilliseconds:(NSInteger)timestampInMilliseconds {

@@ -32,9 +32,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   XCTAssertNotNil(error);                                                                     \
   XCTAssertEqualObjects(error.domain, expectedError.domain);                                  \
   XCTAssertEqual(error.code, expectedError.code);                                             \
-  XCTAssertNotEqual(                                                                          \
-      [error.localizedDescription rangeOfString:expectedError.localizedDescription].location, \
-      NSNotFound)
+  XCTAssertEqualObjects(error.localizedDescription, expectedError.localizedDescription)
 
 #define AssertEqualCategories(category, expectedCategory, detectionIndex, categoryIndex)           \
   XCTAssertEqual(category.index, expectedCategory.index,                                           \
@@ -70,7 +68,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
 #pragma mark Results
 
-+ (MPPObjectDetectionResult *)expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
++ (MPPObjectDetectorResult *)expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
     (NSInteger)timestampInMilliseconds {
   NSArray<MPPDetection *> *detections = @[
     [[MPPDetection alloc] initWithCategories:@[
@@ -95,8 +93,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                                    keypoints:nil],
   ];
 
-  return [[MPPObjectDetectionResult alloc] initWithDetections:detections
-                                      timestampInMilliseconds:timestampInMilliseconds];
+  return [[MPPObjectDetectorResult alloc] initWithDetections:detections
+                                     timestampInMilliseconds:timestampInMilliseconds];
 }
 
 - (void)assertDetections:(NSArray<MPPDetection *> *)detections
@@ -112,25 +110,25 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   }
 }
 
-- (void)assertObjectDetectionResult:(MPPObjectDetectionResult *)objectDetectionResult
-            isEqualToExpectedResult:(MPPObjectDetectionResult *)expectedObjectDetectionResult
-            expectedDetectionsCount:(NSInteger)expectedDetectionsCount {
-  XCTAssertNotNil(objectDetectionResult);
+- (void)assertObjectDetectorResult:(MPPObjectDetectorResult *)objectDetectorResult
+           isEqualToExpectedResult:(MPPObjectDetectorResult *)expectedObjectDetectorResult
+           expectedDetectionsCount:(NSInteger)expectedDetectionsCount {
+  XCTAssertNotNil(objectDetectorResult);
 
   NSArray<MPPDetection *> *detectionsSubsetToCompare;
-  XCTAssertEqual(objectDetectionResult.detections.count, expectedDetectionsCount);
-  if (objectDetectionResult.detections.count > expectedObjectDetectionResult.detections.count) {
-    detectionsSubsetToCompare = [objectDetectionResult.detections
-        subarrayWithRange:NSMakeRange(0, expectedObjectDetectionResult.detections.count)];
+  XCTAssertEqual(objectDetectorResult.detections.count, expectedDetectionsCount);
+  if (objectDetectorResult.detections.count > expectedObjectDetectorResult.detections.count) {
+    detectionsSubsetToCompare = [objectDetectorResult.detections
+        subarrayWithRange:NSMakeRange(0, expectedObjectDetectorResult.detections.count)];
   } else {
-    detectionsSubsetToCompare = objectDetectionResult.detections;
+    detectionsSubsetToCompare = objectDetectorResult.detections;
   }
 
   [self assertDetections:detectionsSubsetToCompare
-      isEqualToExpectedDetections:expectedObjectDetectionResult.detections];
+      isEqualToExpectedDetections:expectedObjectDetectorResult.detections];
 
-  XCTAssertEqual(objectDetectionResult.timestampInMilliseconds,
-                 expectedObjectDetectionResult.timestampInMilliseconds);
+  XCTAssertEqual(objectDetectorResult.timestampInMilliseconds,
+                 expectedObjectDetectorResult.timestampInMilliseconds);
 }
 
 #pragma mark File
@@ -195,28 +193,27 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 - (void)assertResultsOfDetectInImage:(MPPImage *)mppImage
                  usingObjectDetector:(MPPObjectDetector *)objectDetector
                           maxResults:(NSInteger)maxResults
-         equalsObjectDetectionResult:(MPPObjectDetectionResult *)expectedObjectDetectionResult {
-  MPPObjectDetectionResult *objectDetectionResult = [objectDetector detectInImage:mppImage
-                                                                            error:nil];
+          equalsObjectDetectorResult:(MPPObjectDetectorResult *)expectedObjectDetectorResult {
+  MPPObjectDetectorResult *ObjectDetectorResult = [objectDetector detectInImage:mppImage error:nil];
 
-  [self assertObjectDetectionResult:objectDetectionResult
-            isEqualToExpectedResult:expectedObjectDetectionResult
-            expectedDetectionsCount:maxResults > 0 ? maxResults
-                                                   : objectDetectionResult.detections.count];
+  [self assertObjectDetectorResult:ObjectDetectorResult
+           isEqualToExpectedResult:expectedObjectDetectorResult
+           expectedDetectionsCount:maxResults > 0 ? maxResults
+                                                  : ObjectDetectorResult.detections.count];
 }
 
 - (void)assertResultsOfDetectInImageWithFileInfo:(NSDictionary *)fileInfo
                              usingObjectDetector:(MPPObjectDetector *)objectDetector
                                       maxResults:(NSInteger)maxResults
 
-                     equalsObjectDetectionResult:
-                         (MPPObjectDetectionResult *)expectedObjectDetectionResult {
+                      equalsObjectDetectorResult:
+                          (MPPObjectDetectorResult *)expectedObjectDetectorResult {
   MPPImage *mppImage = [self imageWithFileInfo:fileInfo];
 
   [self assertResultsOfDetectInImage:mppImage
                  usingObjectDetector:objectDetector
                           maxResults:maxResults
-         equalsObjectDetectionResult:expectedObjectDetectionResult];
+          equalsObjectDetectorResult:expectedObjectDetectorResult];
 }
 
 #pragma mark General Tests
@@ -266,10 +263,10 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   [self assertResultsOfDetectInImageWithFileInfo:kCatsAndDogsImage
                              usingObjectDetector:objectDetector
                                       maxResults:-1
-                     equalsObjectDetectionResult:
-                         [MPPObjectDetectorTests
-                             expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
-                                 0]];
+                      equalsObjectDetectorResult:
+                          [MPPObjectDetectorTests
+                              expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
+                                  0]];
 }
 
 - (void)testDetectWithOptionsSucceeds {
@@ -280,10 +277,10 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   [self assertResultsOfDetectInImageWithFileInfo:kCatsAndDogsImage
                              usingObjectDetector:objectDetector
                                       maxResults:-1
-                     equalsObjectDetectionResult:
-                         [MPPObjectDetectorTests
-                             expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
-                                 0]];
+                      equalsObjectDetectorResult:
+                          [MPPObjectDetectorTests
+                              expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
+                                  0]];
 }
 
 - (void)testDetectWithMaxResultsSucceeds {
@@ -297,10 +294,10 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   [self assertResultsOfDetectInImageWithFileInfo:kCatsAndDogsImage
                              usingObjectDetector:objectDetector
                                       maxResults:maxResults
-                     equalsObjectDetectionResult:
-                         [MPPObjectDetectorTests
-                             expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
-                                 0]];
+                      equalsObjectDetectorResult:
+                          [MPPObjectDetectorTests
+                              expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
+                                  0]];
 }
 
 - (void)testDetectWithScoreThresholdSucceeds {
@@ -316,13 +313,13 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                                  boundingBox:CGRectMake(608, 161, 381, 439)
                                    keypoints:nil],
   ];
-  MPPObjectDetectionResult *expectedObjectDetectionResult =
-      [[MPPObjectDetectionResult alloc] initWithDetections:detections timestampInMilliseconds:0];
+  MPPObjectDetectorResult *expectedObjectDetectorResult =
+      [[MPPObjectDetectorResult alloc] initWithDetections:detections timestampInMilliseconds:0];
 
   [self assertResultsOfDetectInImageWithFileInfo:kCatsAndDogsImage
                              usingObjectDetector:objectDetector
                                       maxResults:-1
-                     equalsObjectDetectionResult:expectedObjectDetectionResult];
+                      equalsObjectDetectorResult:expectedObjectDetectorResult];
 }
 
 - (void)testDetectWithCategoryAllowlistSucceeds {
@@ -359,13 +356,13 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                                    keypoints:nil],
   ];
 
-  MPPObjectDetectionResult *expectedDetectionResult =
-      [[MPPObjectDetectionResult alloc] initWithDetections:detections timestampInMilliseconds:0];
+  MPPObjectDetectorResult *expectedDetectionResult =
+      [[MPPObjectDetectorResult alloc] initWithDetections:detections timestampInMilliseconds:0];
 
   [self assertResultsOfDetectInImageWithFileInfo:kCatsAndDogsImage
                              usingObjectDetector:objectDetector
                                       maxResults:-1
-                     equalsObjectDetectionResult:expectedDetectionResult];
+                      equalsObjectDetectorResult:expectedDetectionResult];
 }
 
 - (void)testDetectWithCategoryDenylistSucceeds {
@@ -414,13 +411,13 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                                    keypoints:nil],
   ];
 
-  MPPObjectDetectionResult *expectedDetectionResult =
-      [[MPPObjectDetectionResult alloc] initWithDetections:detections timestampInMilliseconds:0];
+  MPPObjectDetectorResult *expectedDetectionResult =
+      [[MPPObjectDetectorResult alloc] initWithDetections:detections timestampInMilliseconds:0];
 
   [self assertResultsOfDetectInImageWithFileInfo:kCatsAndDogsImage
                              usingObjectDetector:objectDetector
                                       maxResults:-1
-                     equalsObjectDetectionResult:expectedDetectionResult];
+                      equalsObjectDetectorResult:expectedDetectionResult];
 }
 
 - (void)testDetectWithOrientationSucceeds {
@@ -437,8 +434,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                                    keypoints:nil],
   ];
 
-  MPPObjectDetectionResult *expectedDetectionResult =
-      [[MPPObjectDetectionResult alloc] initWithDetections:detections timestampInMilliseconds:0];
+  MPPObjectDetectorResult *expectedDetectionResult =
+      [[MPPObjectDetectorResult alloc] initWithDetections:detections timestampInMilliseconds:0];
 
   MPPImage *image = [self imageWithFileInfo:kCatsAndDogsRotatedImage
                                 orientation:UIImageOrientationRight];
@@ -446,7 +443,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   [self assertResultsOfDetectInImage:image
                  usingObjectDetector:objectDetector
                           maxResults:1
-         equalsObjectDetectionResult:expectedDetectionResult];
+          equalsObjectDetectorResult:expectedDetectionResult];
 }
 
 #pragma mark Running Mode Tests
@@ -613,15 +610,15 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImage *image = [self imageWithFileInfo:kCatsAndDogsImage];
 
   for (int i = 0; i < 3; i++) {
-    MPPObjectDetectionResult *objectDetectionResult = [objectDetector detectInVideoFrame:image
-                                                                 timestampInMilliseconds:i
-                                                                                   error:nil];
+    MPPObjectDetectorResult *ObjectDetectorResult = [objectDetector detectInVideoFrame:image
+                                                               timestampInMilliseconds:i
+                                                                                 error:nil];
 
-    [self assertObjectDetectionResult:objectDetectionResult
-              isEqualToExpectedResult:
-                  [MPPObjectDetectorTests
-                      expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:i]
-              expectedDetectionsCount:maxResults];
+    [self assertObjectDetectorResult:ObjectDetectorResult
+             isEqualToExpectedResult:
+                 [MPPObjectDetectorTests
+                     expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:i]
+             expectedDetectionsCount:maxResults];
   }
 }
 
@@ -676,15 +673,15 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   // Because of flow limiting, we cannot ensure that the callback will be
   // invoked `iterationCount` times.
-  // An normal expectation will fail if expectation.fullfill() is not called
+  // An normal expectation will fail if expectation.fulfill() is not called
   // `expectation.expectedFulfillmentCount` times.
   // If `expectation.isInverted = true`, the test will only succeed if
-  // expectation is not fullfilled for the specified `expectedFulfillmentCount`.
+  // expectation is not fulfilled for the specified `expectedFulfillmentCount`.
   // Since in our case we cannot predict how many times the expectation is
-  // supposed to be fullfilled setting,
+  // supposed to be fulfilled setting,
   // `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and
   // `expectation.isInverted = true` ensures that test succeeds if
-  // expectation is fullfilled <= `iterationCount` times.
+  // expectation is fulfilled <= `iterationCount` times.
   XCTestExpectation *expectation = [[XCTestExpectation alloc]
       initWithDescription:@"detectWithOutOfOrderTimestampsAndLiveStream"];
   expectation.expectedFulfillmentCount = iterationCount + 1;
@@ -714,16 +711,16 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
 #pragma mark MPPObjectDetectorLiveStreamDelegate Methods
 - (void)objectDetector:(MPPObjectDetector *)objectDetector
-    didFinishDetectionWithResult:(MPPObjectDetectionResult *)objectDetectionResult
+    didFinishDetectionWithResult:(MPPObjectDetectorResult *)ObjectDetectorResult
          timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                            error:(NSError *)error {
   NSInteger maxResults = 4;
-  [self assertObjectDetectionResult:objectDetectionResult
-            isEqualToExpectedResult:
-                [MPPObjectDetectorTests
-                    expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
-                        timestampInMilliseconds]
-            expectedDetectionsCount:maxResults];
+  [self assertObjectDetectorResult:ObjectDetectorResult
+           isEqualToExpectedResult:
+               [MPPObjectDetectorTests
+                   expectedDetectionResultForCatsAndDogsImageWithTimestampInMilliseconds:
+                       timestampInMilliseconds]
+           expectedDetectionsCount:maxResults];
 
   if (objectDetector == outOfOrderTimestampTestDict[kLiveStreamTestsDictObjectDetectorKey]) {
     [outOfOrderTimestampTestDict[kLiveStreamTestsDictExpectationKey] fulfill];

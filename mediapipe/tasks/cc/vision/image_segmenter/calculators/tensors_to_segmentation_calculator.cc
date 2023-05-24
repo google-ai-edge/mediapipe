@@ -291,8 +291,11 @@ class TensorsToSegmentationCalculator : public Node {
   static constexpr Output<Image>::Multiple kConfidenceMaskOut{
       "CONFIDENCE_MASK"};
   static constexpr Output<Image>::Optional kCategoryMaskOut{"CATEGORY_MASK"};
+  static constexpr Output<std::vector<float>>::Optional kQualityScoresOut{
+      "QUALITY_SCORES"};
   MEDIAPIPE_NODE_CONTRACT(kTensorsIn, kOutputSizeIn, kSegmentationOut,
-                          kConfidenceMaskOut, kCategoryMaskOut);
+                          kConfidenceMaskOut, kCategoryMaskOut,
+                          kQualityScoresOut);
 
   static absl::Status UpdateContract(CalculatorContract* cc);
 
@@ -345,11 +348,32 @@ absl::Status TensorsToSegmentationCalculator::Open(
 
 absl::Status TensorsToSegmentationCalculator::Process(
     mediapipe::CalculatorContext* cc) {
-  RET_CHECK_EQ(kTensorsIn(cc).Get().size(), 1)
-      << "Expect a vector of single Tensor.";
-  const auto& input_tensor = kTensorsIn(cc).Get()[0];
+  const auto& input_tensors = kTensorsIn(cc).Get();
+  if (input_tensors.size() != 1 && input_tensors.size() != 2) {
+    return absl::InvalidArgumentError(
+        "Expect input tensor vector of size 1 or 2.");
+  }
+  const auto& input_tensor = *input_tensors.rbegin();
   ASSIGN_OR_RETURN(const Shape input_shape,
                    GetImageLikeTensorShape(input_tensor));
+
+  // TODO: should use tensor signature to get the correct output
+  // tensor.
+  if (input_tensors.size() == 2) {
+    const auto& quality_tensor = input_tensors[0];
+    const float* quality_score_buffer =
+        quality_tensor.GetCpuReadView().buffer<float>();
+    const std::vector<float> quality_scores(
+        quality_score_buffer,
+        quality_score_buffer +
+            (quality_tensor.bytes() / quality_tensor.element_size()));
+    kQualityScoresOut(cc).Send(quality_scores);
+  } else {
+    // If the input_tensors don't contain quality scores, send the default
+    // quality scores as 1.
+    const std::vector<float> quality_scores(input_shape.channels, 1.0f);
+    kQualityScoresOut(cc).Send(quality_scores);
+  }
 
   // Category mask does not require activation function.
   if (options_.segmenter_options().output_type() ==

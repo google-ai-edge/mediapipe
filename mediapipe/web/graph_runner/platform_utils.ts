@@ -21,3 +21,16 @@ export function isWebKit(browser = navigator) {
   // it uses "CriOS".
   return userAgent.includes('Safari') && !userAgent.includes('Chrome');
 }
+
+/** Detect if code is running on iOS. */
+export function isIOS() {
+  // Source:
+  // https://stackoverflow.com/questions/9038625/detect-if-device-is-ios
+  return [
+    'iPad Simulator', 'iPhone Simulator', 'iPod Simulator', 'iPad', 'iPhone',
+    'iPod'
+    // tslint:disable-next-line:deprecation
+  ].includes(navigator.platform)
+      // iPad on iOS 13 detection
+      || (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
+}

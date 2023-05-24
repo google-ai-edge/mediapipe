@@ -115,6 +115,8 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
         segmenterOptions.outputCategoryMask()
             ? getStreamIndex.apply(outputStreams, "CATEGORY_MASK:category_mask")
             : -1;
+    final int qualityScoresOutStreamIndex =
+        getStreamIndex.apply(outputStreams, "QUALITY_SCORES:quality_scores");
     final int imageOutStreamIndex = getStreamIndex.apply(outputStreams, "IMAGE:image_out");
 
     // TODO: Consolidate OutputHandler and TaskRunner.
@@ -128,6 +130,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
               return ImageSegmenterResult.create(
                   Optional.empty(),
                   Optional.empty(),
+                  new ArrayList<>(),
                   packets.get(imageOutStreamIndex).getTimestamp());
             }
             boolean copyImage = !segmenterOptions.resultListener().isPresent();
@@ -182,9 +185,16 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
                   new ByteBufferImageBuilder(buffer, width, height, MPImage.IMAGE_FORMAT_ALPHA);
               categoryMask = Optional.of(builder.build());
             }
+            float[] qualityScores =
+                PacketGetter.getFloat32Vector(packets.get(qualityScoresOutStreamIndex));
+            List<Float> qualityScoresList = new ArrayList<>(qualityScores.length);
+            for (float score : qualityScores) {
+              qualityScoresList.add(score);
+            }
             return ImageSegmenterResult.create(
                 confidenceMasks,
                 categoryMask,
+                qualityScoresList,
                 BaseVisionTaskApi.generateResultTimestampMs(
                     segmenterOptions.runningMode(), packets.get(imageOutStreamIndex)));
           }
@@ -592,8 +602,8 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
       public abstract Builder setOutputCategoryMask(boolean value);
 
       /**
-       * Sets an optional {@link ResultListener} to receive the segmentation results when the graph
-       * pipeline is done processing an image.
+       * /** Sets an optional {@link ResultListener} to receive the segmentation results when the
+       * graph pipeline is done processing an image.
        */
       public abstract Builder setResultListener(
           ResultListener<ImageSegmenterResult, MPImage> value);

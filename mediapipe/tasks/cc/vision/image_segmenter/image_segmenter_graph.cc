@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <type_traits>
@@ -81,6 +82,7 @@ constexpr char kImageGpuTag[] = "IMAGE_GPU";
 constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kOutputSizeTag[] = "OUTPUT_SIZE";
+constexpr char kQualityScoresTag[] = "QUALITY_SCORES";
 constexpr char kSegmentationMetadataName[] = "SEGMENTER_METADATA";
 
 // Struct holding the different output streams produced by the image segmenter
@@ -90,6 +92,7 @@ struct ImageSegmenterOutputs {
   std::optional<std::vector<Source<Image>>> confidence_masks;
   std::optional<Source<Image>> category_mask;
   // The same as the input image, mainly used for live stream mode.
+  std::optional<Source<std::vector<float>>> quality_scores;
   Source<Image> image;
 };
 
@@ -191,19 +194,12 @@ absl::Status ConfigureTensorsToSegmentationCalculator(
         "Segmentation tflite models are assumed to have a single subgraph.",
         MediaPipeTasksStatus::kInvalidArgumentError);
   }
-  const auto* primary_subgraph = (*model.subgraphs())[0];
-  if (primary_subgraph->outputs()->size() != 1) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Segmentation tflite models are assumed to have a single output.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
-  }
-
   ASSIGN_OR_RETURN(
       *options->mutable_label_items(),
-      GetLabelItemsIfAny(*metadata_extractor,
-                         *metadata_extractor->GetOutputTensorMetadata()->Get(0),
-                         segmenter_option.display_names_locale()));
+      GetLabelItemsIfAny(
+          *metadata_extractor,
+          **metadata_extractor->GetOutputTensorMetadata()->crbegin(),
+          segmenter_option.display_names_locale()));
   return absl::OkStatus();
 }
 
@@ -213,8 +209,14 @@ absl::StatusOr<const tflite::Tensor*> GetOutputTensor(
   const tflite::Model& model = *model_resources.GetTfLiteModel();
   const auto* primary_subgraph = (*model.subgraphs())[0];
   const auto* output_tensor =
-      (*primary_subgraph->tensors())[(*primary_subgraph->outputs())[0]];
+      (*primary_subgraph->tensors())[*(*primary_subgraph->outputs()).rbegin()];
   return output_tensor;
+}
+
+uint32_t GetOutputTensorsSize(const core::ModelResources& model_resources) {
+  const tflite::Model& model = *model_resources.GetTfLiteModel();
+  const auto* primary_subgraph = (*model.subgraphs())[0];
+  return primary_subgraph->outputs()->size();
 }
 
 // Get the input tensor from the tflite model of given model resources.
@@ -433,6 +435,10 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
         *output_streams.category_mask >> graph[Output<Image>(kCategoryMaskTag)];
       }
     }
+    if (output_streams.quality_scores) {
+      *output_streams.quality_scores >>
+          graph[Output<std::vector<float>>::Optional(kQualityScoresTag)];
+    }
     output_streams.image >> graph[Output<Image>(kImageTag)];
     return graph.GetConfig();
   }
@@ -530,9 +536,12 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
               tensor_to_images[Output<Image>::Multiple(kSegmentationTag)][i]));
         }
       }
+      auto quality_scores =
+          tensor_to_images[Output<std::vector<float>>(kQualityScoresTag)];
       return ImageSegmenterOutputs{/*segmented_masks=*/segmented_masks,
                                    /*confidence_masks=*/std::nullopt,
                                    /*category_mask=*/std::nullopt,
+                                   /*quality_scores=*/quality_scores,
                                    /*image=*/image_and_tensors.image};
     } else {
       std::optional<std::vector<Source<Image>>> confidence_masks;
@@ -552,9 +561,12 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
       if (output_category_mask_) {
         category_mask = tensor_to_images[Output<Image>(kCategoryMaskTag)];
       }
+      auto quality_scores =
+          tensor_to_images[Output<std::vector<float>>(kQualityScoresTag)];
       return ImageSegmenterOutputs{/*segmented_masks=*/std::nullopt,
                                    /*confidence_masks=*/confidence_masks,
                                    /*category_mask=*/category_mask,
+                                   /*quality_scores=*/quality_scores,
                                    /*image=*/image_and_tensors.image};
     }
   }

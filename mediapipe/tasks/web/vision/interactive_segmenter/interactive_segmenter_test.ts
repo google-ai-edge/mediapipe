@@ -46,6 +46,8 @@ class InteractiveSegmenterFake extends InteractiveSegmenter implements
       ((images: WasmImage, timestamp: number) => void)|undefined;
   confidenceMasksListener:
       ((images: WasmImage[], timestamp: number) => void)|undefined;
+  qualityScoresListener:
+      ((data: number[], timestamp: number) => void)|undefined;
   lastRoi?: RenderDataProto;
 
   constructor() {
@@ -63,6 +65,12 @@ class InteractiveSegmenterFake extends InteractiveSegmenter implements
             .and.callFake((stream, listener) => {
               expect(stream).toEqual('confidence_masks');
               this.confidenceMasksListener = listener;
+            });
+    this.attachListenerSpies[2] =
+        spyOn(this.graphRunner, 'attachFloatVectorListener')
+            .and.callFake((stream, listener) => {
+              expect(stream).toEqual('quality_scores');
+              this.qualityScoresListener = listener;
             });
     spyOn(this.graphRunner, 'setGraph').and.callFake(binaryGraph => {
       this.graph = CalculatorGraphConfig.deserializeBinary(binaryGraph);
@@ -277,9 +285,10 @@ describe('InteractiveSegmenter', () => {
     });
   });
 
-  it('invokes listener after masks are avaiblae', async () => {
+  it('invokes listener after masks are available', async () => {
     const categoryMask = new Uint8Array([1]);
     const confidenceMask = new Float32Array([0.0]);
+    const qualityScores = [1.0];
     let listenerCalled = false;
 
     await interactiveSegmenter.setOptions(
@@ -297,11 +306,16 @@ describe('InteractiveSegmenter', () => {
           ],
           1337);
       expect(listenerCalled).toBeFalse();
+      interactiveSegmenter.qualityScoresListener!(qualityScores, 1337);
+      expect(listenerCalled).toBeFalse();
     });
 
     return new Promise<void>(resolve => {
-      interactiveSegmenter.segment({} as HTMLImageElement, KEYPOINT, () => {
+      interactiveSegmenter.segment({} as HTMLImageElement, KEYPOINT, result => {
         listenerCalled = true;
+        expect(result.categoryMask).toBeInstanceOf(MPMask);
+        expect(result.confidenceMasks![0]).toBeInstanceOf(MPMask);
+        expect(result.qualityScores).toEqual(qualityScores);
         resolve();
       });
     });

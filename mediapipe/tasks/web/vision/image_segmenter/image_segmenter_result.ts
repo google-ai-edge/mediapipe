@@ -30,7 +30,13 @@ export class ImageSegmenterResult {
        * `WebGLTexture`-backed `MPImage` where each pixel represents the class
        * which the pixel in the original image was predicted to belong to.
        */
-      readonly categoryMask?: MPMask) {}
+      readonly categoryMask?: MPMask,
+      /**
+       * The quality scores of the result masks, in the range of [0, 1].
+       * Defaults to `1` if the model doesn't output quality scores. Each
+       * element corresponds to the score of the category in the model outputs.
+       */
+      readonly qualityScores?: number[]) {}
 
   /** Frees the resources held by the category and confidence masks. */
   close(): void {

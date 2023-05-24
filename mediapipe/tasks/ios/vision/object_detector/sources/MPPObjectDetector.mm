@@ -19,8 +19,8 @@
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
-#import "mediapipe/tasks/ios/vision/object_detector/utils/sources/MPPObjectDetectionResult+Helpers.h"
 #import "mediapipe/tasks/ios/vision/object_detector/utils/sources/MPPObjectDetectorOptions+Helpers.h"
+#import "mediapipe/tasks/ios/vision/object_detector/utils/sources/MPPObjectDetectorResult+Helpers.h"
 
 namespace {
 using ::mediapipe::NormalizedRect;
@@ -118,9 +118,9 @@ static NSString *const kTaskName = @"objectDetector";
           return;
         }
 
-        MPPObjectDetectionResult *result = [MPPObjectDetectionResult
-            objectDetectionResultWithDetectionsPacket:statusOrPackets.value()[kDetectionsStreamName
-                                                                                  .cppString]];
+        MPPObjectDetectorResult *result = [MPPObjectDetectorResult
+            objectDetectorResultWithDetectionsPacket:statusOrPackets
+                                                         .value()[kDetectionsStreamName.cppString]];
 
         NSInteger timeStampInMilliseconds =
             outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
@@ -184,9 +184,9 @@ static NSString *const kTaskName = @"objectDetector";
   return inputPacketMap;
 }
 
-- (nullable MPPObjectDetectionResult *)detectInImage:(MPPImage *)image
-                                    regionOfInterest:(CGRect)roi
-                                               error:(NSError **)error {
+- (nullable MPPObjectDetectorResult *)detectInImage:(MPPImage *)image
+                                   regionOfInterest:(CGRect)roi
+                                              error:(NSError **)error {
   std::optional<NormalizedRect> rect =
       [_visionTaskRunner normalizedRectFromRegionOfInterest:roi
                                                   imageSize:CGSizeMake(image.width, image.height)
@@ -213,18 +213,18 @@ static NSString *const kTaskName = @"objectDetector";
     return nil;
   }
 
-  return [MPPObjectDetectionResult
-      objectDetectionResultWithDetectionsPacket:outputPacketMap
-                                                    .value()[kDetectionsStreamName.cppString]];
+  return [MPPObjectDetectorResult
+      objectDetectorResultWithDetectionsPacket:outputPacketMap
+                                                   .value()[kDetectionsStreamName.cppString]];
 }
 
-- (nullable MPPObjectDetectionResult *)detectInImage:(MPPImage *)image error:(NSError **)error {
+- (nullable MPPObjectDetectorResult *)detectInImage:(MPPImage *)image error:(NSError **)error {
   return [self detectInImage:image regionOfInterest:CGRectZero error:error];
 }
 
-- (nullable MPPObjectDetectionResult *)detectInVideoFrame:(MPPImage *)image
-                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                    error:(NSError **)error {
+- (nullable MPPObjectDetectorResult *)detectInVideoFrame:(MPPImage *)image
+                                 timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                                   error:(NSError **)error {
   std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
                                                      timestampInMilliseconds:timestampInMilliseconds
                                                                        error:error];
@@ -239,9 +239,9 @@ static NSString *const kTaskName = @"objectDetector";
     return nil;
   }
 
-  return [MPPObjectDetectionResult
-      objectDetectionResultWithDetectionsPacket:outputPacketMap
-                                                    .value()[kDetectionsStreamName.cppString]];
+  return [MPPObjectDetectorResult
+      objectDetectorResultWithDetectionsPacket:outputPacketMap
+                                                   .value()[kDetectionsStreamName.cppString]];
 }
 
 - (BOOL)detectAsyncInImage:(MPPImage *)image

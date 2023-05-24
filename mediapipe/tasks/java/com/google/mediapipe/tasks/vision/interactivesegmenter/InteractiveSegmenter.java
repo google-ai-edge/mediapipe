@@ -127,6 +127,10 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
       outputStreams.add("CATEGORY_MASK:category_mask");
     }
     final int categoryMaskOutStreamIndex = outputStreams.size() - 1;
+
+    outputStreams.add("QUALITY_SCORES:quality_scores");
+    final int qualityScoresOutStreamIndex = outputStreams.size() - 1;
+
     outputStreams.add("IMAGE:image_out");
     // TODO: add test for stream indices.
     final int imageOutStreamIndex = outputStreams.size() - 1;
@@ -142,6 +146,7 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
               return ImageSegmenterResult.create(
                   Optional.empty(),
                   Optional.empty(),
+                  new ArrayList<>(),
                   packets.get(imageOutStreamIndex).getTimestamp());
             }
             // If resultListener is not provided, the resulted MPImage is deep copied from
@@ -199,9 +204,17 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
               categoryMask = Optional.of(builder.build());
             }
 
+            float[] qualityScores =
+                PacketGetter.getFloat32Vector(packets.get(qualityScoresOutStreamIndex));
+            List<Float> qualityScoresList = new ArrayList<>(qualityScores.length);
+            for (float score : qualityScores) {
+              qualityScoresList.add(score);
+            }
+
             return ImageSegmenterResult.create(
                 confidenceMasks,
                 categoryMask,
+                qualityScoresList,
                 BaseVisionTaskApi.generateResultTimestampMs(
                     RunningMode.IMAGE, packets.get(imageOutStreamIndex)));
           }

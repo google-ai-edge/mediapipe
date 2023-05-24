@@ -38,7 +38,10 @@ cc_library(
     srcs = ["gpu_service.cc"],
     hdrs = ["gpu_service.h"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:graph_service"] + select({
+    deps = [
+        "//mediapipe/framework:graph_service",
+        "@com_google_absl//absl/base:core_headers",
+    ] + select({
         "//conditions:default": [
             ":gpu_shared_data_internal",
         ],
@@ -292,6 +295,7 @@ cc_library(
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/functional:bind_front",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ] + select({
@@ -630,6 +634,7 @@ cc_library(
         "//mediapipe/framework:executor",
         "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/base:core_headers",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:apple": [

@@ -64,4 +64,3 @@ objc_library(
         "//mediapipe/tasks/ios/vision/gesture_recognizer/utils:MPPGestureRecognizerResultHelpers",
     ],
 )
-

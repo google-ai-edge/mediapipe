@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#import "mediapipe/tasks/ios/vision/object_detector/sources/MPPObjectDetectionResult.h"
+#import "mediapipe/tasks/ios/vision/object_detector/sources/MPPObjectDetectorResult.h"
 
 #include "mediapipe/framework/packet.h"
 
@@ -20,17 +20,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 static const int kMicroSecondsPerMilliSecond = 1000;
 
-@interface MPPObjectDetectionResult (Helpers)
+@interface MPPObjectDetectorResult (Helpers)
 
 /**
- * Creates an `MPPObjectDetectionResult` from a MediaPipe packet containing a
+ * Creates an `MPPObjectDetectorResult` from a MediaPipe packet containing a
  * `std::vector<DetectionProto>`.
  *
  * @param packet a MediaPipe packet wrapping a `std::vector<DetectionProto>`.
  *
- * @return  An `MPPObjectDetectionResult` object that contains a list of detections.
+ * @return  An `MPPObjectDetectorResult` object that contains a list of detections.
  */
-+ (nullable MPPObjectDetectionResult *)objectDetectionResultWithDetectionsPacket:
++ (nullable MPPObjectDetectorResult *)objectDetectorResultWithDetectionsPacket:
     (const mediapipe::Packet &)packet;
 
 @end

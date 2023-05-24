@@ -39,6 +39,7 @@ const IMAGE_STREAM = 'image_in';
 const NORM_RECT_STREAM = 'norm_rect';
 const CONFIDENCE_MASKS_STREAM = 'confidence_masks';
 const CATEGORY_MASK_STREAM = 'category_mask';
+const QUALITY_SCORES_STREAM = 'quality_scores';
 const IMAGE_SEGMENTER_GRAPH =
     'mediapipe.tasks.vision.image_segmenter.ImageSegmenterGraph';
 const TENSORS_TO_SEGMENTATION_CALCULATOR_NAME =
@@ -61,6 +62,7 @@ export type ImageSegmenterCallback = (result: ImageSegmenterResult) => void;
 export class ImageSegmenter extends VisionTaskRunner {
   private categoryMask?: MPMask;
   private confidenceMasks?: MPMask[];
+  private qualityScores?: number[];
   private labels: string[] = [];
   private userCallback?: ImageSegmenterCallback;
   private outputCategoryMask = DEFAULT_OUTPUT_CATEGORY_MASK;
@@ -229,7 +231,7 @@ export class ImageSegmenter extends VisionTaskRunner {
   /**
    * Performs image segmentation on the provided single image and returns the
    * segmentation result. This method creates a copy of the resulting masks and
-   * should not be used in high-throughput applictions. Only use this method
+   * should not be used in high-throughput applications. Only use this method
    * when the ImageSegmenter is created with running mode `image`.
    *
    * @param image An image to process.
@@ -240,7 +242,7 @@ export class ImageSegmenter extends VisionTaskRunner {
   /**
    * Performs image segmentation on the provided single image and returns the
    * segmentation result. This method creates a copy of the resulting masks and
-   * should not be used in high-v applictions. Only use this method when
+   * should not be used in high-v applications. Only use this method when
    * the ImageSegmenter is created with running mode `image`.
    *
    * @param image An image to process.
@@ -318,7 +320,7 @@ export class ImageSegmenter extends VisionTaskRunner {
   /**
    * Performs image segmentation on the provided video frame and returns the
    * segmentation result. This method creates a copy of the resulting masks and
-   * should not be used in high-v applictions. Only use this method when
+   * should not be used in high-v applications. Only use this method when
    * the ImageSegmenter is created with running mode `video`.
    *
    * @param videoFrame A video frame to process.
@@ -367,12 +369,13 @@ export class ImageSegmenter extends VisionTaskRunner {
   private reset(): void {
     this.categoryMask = undefined;
     this.confidenceMasks = undefined;
+    this.qualityScores = undefined;
   }
 
   private processResults(): ImageSegmenterResult|void {
     try {
-      const result =
-          new ImageSegmenterResult(this.confidenceMasks, this.categoryMask);
+      const result = new ImageSegmenterResult(
+          this.confidenceMasks, this.categoryMask, this.qualityScores);
       if (this.userCallback) {
         this.userCallback(result);
       } else {
@@ -441,6 +444,20 @@ export class ImageSegmenter extends VisionTaskRunner {
             this.setLatestOutputTimestamp(timestamp);
           });
     }
+
+    graphConfig.addOutputStream(QUALITY_SCORES_STREAM);
+    segmenterNode.addOutputStream('QUALITY_SCORES:' + QUALITY_SCORES_STREAM);
+
+    this.graphRunner.attachFloatVectorListener(
+        QUALITY_SCORES_STREAM, (scores, timestamp) => {
+          this.qualityScores = scores;
+          this.setLatestOutputTimestamp(timestamp);
+        });
+    this.graphRunner.attachEmptyPacketListener(
+        QUALITY_SCORES_STREAM, timestamp => {
+          this.categoryMask = undefined;
+          this.setLatestOutputTimestamp(timestamp);
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);

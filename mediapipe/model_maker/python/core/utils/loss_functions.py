@@ -187,7 +187,7 @@ class PerceptualLoss(tf.keras.Model, metaclass=abc.ABCMeta):
     """Instantiates perceptual loss.
 
     Args:
-      feature_weight: The weight coeffcients of multiple model extracted
+      feature_weight: The weight coefficients of multiple model extracted
         features used for calculating the perceptual loss.
       loss_weight: The weight coefficients between `style_loss` and
         `content_loss`.
