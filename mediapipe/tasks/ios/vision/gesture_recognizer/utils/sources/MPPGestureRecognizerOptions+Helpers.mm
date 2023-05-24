@@ -60,7 +60,7 @@ using ClassifierOptionsProto = ::mediapipe::tasks::components::processors::proto
   HandDetectorGraphOptionsProto *handDetectorGraphOptionsProto =
       handLandmarkerGraphOptionsProto->mutable_hand_detector_graph_options();
   handDetectorGraphOptionsProto->Clear();
-  handDetectorGraphOptionsProto->set_num_hands(self.numberOfHands);
+  handDetectorGraphOptionsProto->set_num_hands(self.numHands);
   handDetectorGraphOptionsProto->set_min_detection_confidence(self.minHandDetectionConfidence);
 
   HandLandmarksDetectorGraphOptionsProto *handLandmarksDetectorGraphOptionsProto =

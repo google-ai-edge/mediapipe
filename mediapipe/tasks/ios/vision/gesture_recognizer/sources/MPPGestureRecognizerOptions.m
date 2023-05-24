@@ -19,7 +19,7 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
-    _numberOfHands = 1;
+    _numHands = 1;
     _minHandDetectionConfidence = 0.5f;
     _minHandPresenceConfidence = 0.5f;
     _minTrackingConfidence = 0.5f;
@@ -33,7 +33,7 @@
   gestureRecognizerOptions.runningMode = self.runningMode;
   gestureRecognizerOptions.gestureRecognizerLiveStreamDelegate =
       self.gestureRecognizerLiveStreamDelegate;
-  gestureRecognizerOptions.numberOfHands = self.numberOfHands;
+  gestureRecognizerOptions.numHands = self.numHands;
   gestureRecognizerOptions.minHandDetectionConfidence = self.minHandDetectionConfidence;
   gestureRecognizerOptions.minHandPresenceConfidence = self.minHandPresenceConfidence;
   gestureRecognizerOptions.minTrackingConfidence = self.minTrackingConfidence;
