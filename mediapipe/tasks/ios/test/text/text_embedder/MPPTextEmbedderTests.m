@@ -29,7 +29,7 @@ static const float kSimilarityDiffTolerance = 1e-4;
   XCTAssertNotNil(error);                                                                     \
   XCTAssertEqualObjects(error.domain, expectedError.domain);                                  \
   XCTAssertEqual(error.code, expectedError.code);                                             \
-  XCTAssertEqualObjects(error.localizedDescription, expectedError.localizedDescription)                                                                        \
+  XCTAssertEqualObjects(error.localizedDescription, expectedError.localizedDescription)
 
 #define AssertTextEmbedderResultHasOneEmbedding(textEmbedderResult) \
   XCTAssertNotNil(textEmbedderResult);                              \

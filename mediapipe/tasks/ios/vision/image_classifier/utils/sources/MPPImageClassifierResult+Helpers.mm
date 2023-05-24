@@ -17,7 +17,7 @@
 
 #include "mediapipe/tasks/cc/components/containers/proto/classifications.pb.h"
 
-static const int kMicroSecondsPerMilliSecond = 1000;
+static const int kMicrosecondsPerMillisecond = 1000;
 
 namespace {
 using ClassificationResultProto =
@@ -29,9 +29,9 @@ using ::mediapipe::Packet;
 
 + (nullable MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
     (const Packet &)packet {
-  // Even if packet does not validate a the expected type, you can safely access the timestamp.
+  // Even if packet does not validate as the expected type, you can safely access the timestamp.
   NSInteger timestampInMilliSeconds =
-      (NSInteger)(packet.Timestamp().Value() / kMicroSecondsPerMilliSecond);
+      (NSInteger)(packet.Timestamp().Value() / kMicrosecondsPerMillisecond);
 
   if (!packet.ValidateAsType<ClassificationResultProto>().ok()) {
     // MPPClassificationResult's timestamp is populated from timestamp `ClassificationResultProto`'s
@@ -48,7 +48,7 @@ using ::mediapipe::Packet;
   return [[MPPImageClassifierResult alloc]
       initWithClassificationResult:classificationResult
            timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
-                                               kMicroSecondsPerMilliSecond)];
+                                               kMicrosecondsPerMillisecond)];
 }
 
 @end

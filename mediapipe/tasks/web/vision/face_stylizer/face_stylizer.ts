@@ -171,7 +171,7 @@ export class FaceStylizer extends VisionTaskRunner {
   /**
    * Performs face stylization on the provided single image and returns the
    * result. This method creates a copy of the resulting image and should not be
-   * used in high-throughput applictions. Only use this method when the
+   * used in high-throughput applications. Only use this method when the
    * FaceStylizer is created with the image running mode.
    *
    * @param image An image to process.
@@ -182,7 +182,7 @@ export class FaceStylizer extends VisionTaskRunner {
   /**
    * Performs face stylization on the provided single image and returns the
    * result. This method creates a copy of the resulting image and should not be
-   * used in high-throughput applictions. Only use this method when the
+   * used in high-throughput applications. Only use this method when the
    * FaceStylizer is created with the image running mode.
    *
    * The 'imageProcessingOptions' parameter can be used to specify one or all
@@ -275,7 +275,7 @@ export class FaceStylizer extends VisionTaskRunner {
   /**
    * Performs face stylization on the provided video frame. This method creates
    * a copy of the resulting image and should not be used in high-throughput
-   * applictions. Only use this method when the FaceStylizer is created with the
+   * applications. Only use this method when the FaceStylizer is created with the
    * video running mode.
    *
    * The input frame can be of any size. It's required to provide the video

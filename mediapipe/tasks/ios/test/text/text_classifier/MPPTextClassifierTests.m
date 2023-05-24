@@ -28,7 +28,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
   XCTAssertNotNil(error);                                                                     \
   XCTAssertEqualObjects(error.domain, expectedError.domain);                                  \
   XCTAssertEqual(error.code, expectedError.code);                                             \
-  XCTAssertEqualObjects(error.localizedDescription, expectedError.localizedDescription)                                                                         
+  XCTAssertEqualObjects(error.localizedDescription, expectedError.localizedDescription)
 
 #define AssertEqualCategoryArrays(categories, expectedCategories)                         \
   XCTAssertEqual(categories.count, expectedCategories.count);                             \

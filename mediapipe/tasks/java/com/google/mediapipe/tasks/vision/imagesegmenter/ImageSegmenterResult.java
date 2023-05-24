@@ -34,8 +34,8 @@ public abstract class ImageSegmenterResult implements TaskResult {
    * @param categoryMask an {@link Optional} MPImage in IMAGE_FORMAT_ALPHA format representing a
    *     category mask, where each pixel represents the class which the pixel in the original image
    *     was predicted to belong to.
-   * @param qualityScores The quality scores of the result masks, in the range of [0, 1]. Default to
-   *     `1` if the model doesn't output quality scores. Each element corresponds to the score of
+   * @param qualityScores The quality scores of the result masks, in the range of [0, 1]. Defaults
+   *     to `1` if the model doesn't output quality scores. Each element corresponds to the score of
    *     the category in the model outputs.
    * @param timestampMs a timestamp for this result.
    */

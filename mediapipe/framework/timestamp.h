@@ -57,7 +57,7 @@ namespace mediapipe {
 // have underflow/overflow etc.  This type is used internally by Timestamp
 // and TimestampDiff.
 MEDIAPIPE_DEFINE_SAFE_INT_TYPE(TimestampBaseType, int64,
-                               mediapipe::intops::LogFatalOnError);
+                               mediapipe::intops::LogFatalOnError)
 
 class TimestampDiff;
 
