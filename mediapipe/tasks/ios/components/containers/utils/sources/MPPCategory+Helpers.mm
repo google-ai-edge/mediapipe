@@ -21,7 +21,7 @@ using ClassificationProto = ::mediapipe::Classification;
 
 @implementation MPPCategory (Helpers)
 
-+ (MPPCategory *)categoryWithProto:(const ClassificationProto &)classificationProto {
++ (MPPCategory *)categoryWithProto:(const ClassificationProto &)classificationProto andIndex:(NSInteger)index {
   NSString *categoryName;
   NSString *displayName;
 
@@ -33,10 +33,15 @@ using ClassificationProto = ::mediapipe::Classification;
     displayName = [NSString stringWithCppString:classificationProto.display_name()];
   }
 
-  return [[MPPCategory alloc] initWithIndex:classificationProto.index()
+  return [[MPPCategory alloc] initWithIndex:index
                                       score:classificationProto.score()
                                categoryName:categoryName
                                 displayName:displayName];
+}
+
+
++ (MPPCategory *)categoryWithProto:(const ClassificationProto &)classificationProto {
+  return [MPPCategory categoryWithProto:classificationProto andIndex:classificationProto.index()];
 }
 
 @end
