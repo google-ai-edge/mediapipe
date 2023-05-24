@@ -160,10 +160,8 @@ static NSString *const kTaskName = @"objectDetector";
                                timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                  error:(NSError **)error {
   std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectFromRegionOfInterest:CGRectZero
+      [_visionTaskRunner normalizedRectWithImageOrientation:image.orientation
                                                   imageSize:CGSizeMake(image.width, image.height)
-                                           imageOrientation:image.orientation
-                                                 ROIAllowed:NO
                                                       error:error];
   if (!rect.has_value()) {
     return std::nullopt;
@@ -188,10 +186,8 @@ static NSString *const kTaskName = @"objectDetector";
                                    regionOfInterest:(CGRect)roi
                                               error:(NSError **)error {
   std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectFromRegionOfInterest:roi
+      [_visionTaskRunner normalizedRectWithImageOrientation:image.orientation
                                                   imageSize:CGSizeMake(image.width, image.height)
-                                           imageOrientation:image.orientation
-                                                 ROIAllowed:NO
                                                       error:error];
   if (!rect.has_value()) {
     return nil;
