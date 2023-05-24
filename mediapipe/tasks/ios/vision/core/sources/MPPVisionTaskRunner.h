@@ -58,38 +58,57 @@ NS_ASSUME_NONNULL_BEGIN
                                                  error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
- * Creates a `NormalizedRect` from a region of interest and an image orientation, performing
- * sanity checks on-the-fly.
- * If the input region of interest equals `CGRectZero`, returns a default `NormalizedRect` covering
- * the whole image with rotation set according `imageOrientation`. If `ROIAllowed` is NO, an error
- * will be returned if the input region of interest is not equal to `CGRectZero`. Mirrored
- * orientations (`UIImageOrientationUpMirrored`,`UIImageOrientationDownMirrored`,
+ * Creates a `NormalizedRect` from image orientation for a task which does not support roi,
+ * performing sanity checks on-the-fly. Mirrored orientations
+ * (`UIImageOrientationUpMirrored`,`UIImageOrientationDownMirrored`,
  * `UIImageOrientationLeftMirrored`,`UIImageOrientationRightMirrored`) are not supported. An error
  * will be returned if `imageOrientation` is equal to any one of them.
  *
- * @param roi A `CGRect` specifying the region of interest. If the input region of interest equals
- * `CGRectZero`, the returned `NormalizedRect` covers the whole image. Make sure that `roi` equals
- * `CGRectZero` if `ROIAllowed` is NO. Otherwise, an error will be returned.
- * @param imageSize A `CGSize` specifying the size of the image within which normalized rect is
- * calculated.
  * @param imageOrientation A `UIImageOrientation` indicating the rotation to be applied to the
  * image. The resulting `NormalizedRect` will convert the `imageOrientation` to degrees clockwise.
  * Mirrored orientations (`UIImageOrientationUpMirrored`, `UIImageOrientationDownMirrored`,
  * `UIImageOrientationLeftMirrored`, `UIImageOrientationRightMirrored`) are not supported. An error
  * will be returned if `imageOrientation` is equal to any one of them.
- * @param ROIAllowed Indicates if the `roi` field is allowed to be a value other than `CGRectZero`.
+ * @param imageSize A `CGSize` specifying the size of the image within which normalized rect is
+ * calculated.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ * error will be saved.
+ *
+ * @return An optional `NormalizedRect` from the given region of interest and image orientation.
+ */
+- (std::optional<mediapipe::NormalizedRect>)normalizedRectWithImageOrientation:
+                                                (UIImageOrientation)imageOrientation
+                                                                     imageSize:(CGSize)imageSize
+                                                                         error:(NSError **)error;
+
+/**
+ * Creates a `NormalizedRect` from roi and image orientation for a task which supports roi,
+ * performing sanity checks on-the-fly. If the input region of interest equals `CGRectZero`, returns
+ * a default `NormalizedRect` covering the whole image with rotation set according
+ * `imageOrientation`. Mirrored orientations
+ * (`UIImageOrientationUpMirrored`,`UIImageOrientationDownMirrored`,
+ * `UIImageOrientationLeftMirrored`,`UIImageOrientationRightMirrored`) are not supported. An error
+ * will be returned if `imageOrientation` is equal to any one of them.
+ *
+ * @param roi A `CGRect` specifying the region of interest. If the input region of interest equals
+ * `CGRectZero`, the returned `NormalizedRect` covers the whole image.
+ * @param imageOrientation A `UIImageOrientation` indicating the rotation to be applied to the
+ * image. The resulting `NormalizedRect` will convert the `imageOrientation` to degrees clockwise.
+ * Mirrored orientations (`UIImageOrientationUpMirrored`, `UIImageOrientationDownMirrored`,
+ * `UIImageOrientationLeftMirrored`, `UIImageOrientationRightMirrored`) are not supported. An error
+ * will be returned if `imageOrientation` is equal to any one of them.
+ * @param imageSize A `CGSize` specifying the size of the image within which normalized rect is
+ * calculated.
  * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
  * error will be saved.
  *
  * @return An optional `NormalizedRect` from the given region of interest and image orientation.
  */
 - (std::optional<mediapipe::NormalizedRect>)
-    normalizedRectFromRegionOfInterest:(CGRect)roi
-                             imageSize:(CGSize)imageSize
+    normalizedRectWithRegionOfInterest:(CGRect)roi
                       imageOrientation:(UIImageOrientation)imageOrientation
-                            ROIAllowed:(BOOL)ROIAllowed
+                             imageSize:(CGSize)imageSize
                                  error:(NSError **)error;
-
 /**
  * A synchronous method to invoke the C++ task runner to process single image inputs. The call
  * blocks the current thread until a failure status or a successful result is returned.
