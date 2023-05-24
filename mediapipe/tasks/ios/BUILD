@@ -49,11 +49,12 @@ OBJC_TASK_COMMON_DEPS = [
 ]
 
 CALCULATORS_AND_GRAPHS = [
-    "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
-    "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
+    "//mediapipe/calculators/core:flow_limiter_calculator",
     "//mediapipe/tasks/cc/text/text_classifier:text_classifier_graph",
     "//mediapipe/tasks/cc/text/text_embedder:text_embedder_graph",
-    "//mediapipe/calculators/core:flow_limiter_calculator",
+    "//mediapipe/tasks/cc/vision/face_detector:face_detector_graph",
+    "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
+    "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
 ]
 
 strip_api_include_path_prefix(
@@ -76,6 +77,9 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/text/text_embedder:sources/MPPTextEmbedderResult.h",
         "//mediapipe/tasks/ios/vision/core:sources/MPPRunningMode.h",
         "//mediapipe/tasks/ios/vision/core:sources/MPPImage.h",
+        "//mediapipe/tasks/ios/vision/face_detector:sources/MPPFaceDetector.h",
+        "//mediapipe/tasks/ios/vision/face_detector:sources/MPPFaceDetectorOptions.h",
+        "//mediapipe/tasks/ios/vision/face_detector:sources/MPPFaceDetectorResult.h",
         "//mediapipe/tasks/ios/vision/image_classifier:sources/MPPImageClassifier.h",
         "//mediapipe/tasks/ios/vision/image_classifier:sources/MPPImageClassifierOptions.h",
         "//mediapipe/tasks/ios/vision/image_classifier:sources/MPPImageClassifierResult.h",
@@ -157,6 +161,9 @@ apple_static_xcframework(
         ":MPPTaskResult.h",
         ":MPPImage.h",
         ":MPPRunningMode.h",
+        ":MPPFaceDetector.h",
+        ":MPPFaceDetectorOptions.h",
+        ":MPPFaceDetectorResult.h",
         ":MPPImageClassifier.h",
         ":MPPImageClassifierOptions.h",
         ":MPPImageClassifierResult.h",
@@ -165,6 +172,7 @@ apple_static_xcframework(
         ":MPPObjectDetectorResult.h",
     ],
     deps = [
+        "//mediapipe/tasks/ios/vision/face_detector:MPPFaceDetector",
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
         "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
     ],
