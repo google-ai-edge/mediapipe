@@ -80,4 +80,8 @@ typedef EndLoopCalculator<std::vector<::mediapipe::Image>>
     EndLoopImageCalculator;
 REGISTER_CALCULATOR(EndLoopImageCalculator);
 
+typedef EndLoopCalculator<std::vector<std::array<float, 16>>>
+    EndLoopAffineMatrixCalculator;
+REGISTER_CALCULATOR(EndLoopAffineMatrixCalculator);
+
 }  // namespace mediapipe

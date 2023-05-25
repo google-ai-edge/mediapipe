@@ -25,8 +25,12 @@ using ::mediapipe::Packet;
 
 + (nullable MPPObjectDetectorResult *)objectDetectorResultWithDetectionsPacket:
     (const Packet &)packet {
+
+  NSInteger timestampInMilliseconds = (NSInteger)(packet.Timestamp().Value() /
+                                                                      kMicroSecondsPerMilliSecond);
   if (!packet.ValidateAsType<std::vector<DetectionProto>>().ok()) {
-    return nil;
+    return [[MPPObjectDetectorResult alloc] initWithDetections:@[]
+                                  timestampInMilliseconds:timestampInMilliseconds];
   }
 
   const std::vector<DetectionProto> &detectionProtos = packet.Get<std::vector<DetectionProto>>();
@@ -39,8 +43,7 @@ using ::mediapipe::Packet;
 
   return
       [[MPPObjectDetectorResult alloc] initWithDetections:detections
-                                  timestampInMilliseconds:(NSInteger)(packet.Timestamp().Value() /
-                                                                      kMicroSecondsPerMilliSecond)];
+                                  timestampInMilliseconds:timestampInMilliseconds];
 }
 
 @end

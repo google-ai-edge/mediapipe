@@ -87,7 +87,7 @@ NS_SWIFT_NAME(GestureRecognizerOptions)
     gestureRecognizerLiveStreamDelegate;
 
 /** Sets the maximum number of hands can be detected by the GestureRecognizer. */
-@property(nonatomic) NSInteger numberOfHands NS_SWIFT_NAME(numHands);
+@property(nonatomic) NSInteger numHands;
 
 /** Sets minimum confidence score for the hand detection to be considered successful */
 @property(nonatomic) float minHandDetectionConfidence;

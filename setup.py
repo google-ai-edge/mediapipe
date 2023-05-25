@@ -30,6 +30,7 @@ from setuptools.command import build_py
 from setuptools.command import install
 
 __version__ = 'dev'
+MP_DISABLE_GPU = os.environ.get('MEDIAPIPE_DISABLE_GPU') != '0'
 IS_WINDOWS = (platform.system() == 'Windows')
 IS_MAC = (platform.system() == 'Darwin')
 MP_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -279,10 +280,16 @@ class BuildModules(build_ext.build_ext):
         'build',
         '--compilation_mode=opt',
         '--copt=-DNDEBUG',
-        '--define=MEDIAPIPE_DISABLE_GPU=1',
         '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         binary_graph_target,
     ]
+
+    if MP_DISABLE_GPU:
+      bazel_command.append('--define=MEDIAPIPE_DISABLE_GPU=1')
+    else:
+      bazel_command.append('--copt=-DMESA_EGL_NO_X11_HEADERS')
+      bazel_command.append('--copt=-DEGL_NO_X11')
+
     if not self.link_opencv and not IS_WINDOWS:
       bazel_command.append('--define=OPENCV=source')
     if subprocess.call(bazel_command) != 0:
@@ -300,14 +307,21 @@ class GenerateMetadataSchema(build_ext.build_ext):
         'object_detector_metadata_schema_py',
         'schema_py',
     ]:
+
       bazel_command = [
           'bazel',
           'build',
           '--compilation_mode=opt',
-          '--define=MEDIAPIPE_DISABLE_GPU=1',
           '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
           '//mediapipe/tasks/metadata:' + target,
       ]
+
+      if MP_DISABLE_GPU:
+        bazel_command.append('--define=MEDIAPIPE_DISABLE_GPU=1')
+      else:
+        bazel_command.append('--copt=-DMESA_EGL_NO_X11_HEADERS')
+        bazel_command.append('--copt=-DEGL_NO_X11')
+
       if subprocess.call(bazel_command) != 0:
         sys.exit(-1)
       _copy_to_build_lib_dir(
@@ -393,7 +407,8 @@ class BuildExtension(build_ext.build_ext):
         'build',
         '--compilation_mode=opt',
         '--copt=-DNDEBUG',
-        '--define=MEDIAPIPE_DISABLE_GPU=1',
+        '--copt=-DMESA_EGL_NO_X11_HEADERS',
+        '--copt=-DEGL_NO_X11',
         '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         str(ext.bazel_target + '.so'),
     ]

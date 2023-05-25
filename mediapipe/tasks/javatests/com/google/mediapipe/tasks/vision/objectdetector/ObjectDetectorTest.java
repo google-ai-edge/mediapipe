@@ -69,7 +69,7 @@ public class ObjectDetectorTest {
               .build();
       ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
+      ObjectDetectorResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
       assertContainsOnlyCat(results, CAT_BOUNDING_BOX, CAT_SCORE);
     }
 
@@ -77,7 +77,7 @@ public class ObjectDetectorTest {
     public void detect_successWithNoOptions() throws Exception {
       ObjectDetector objectDetector =
           ObjectDetector.createFromFile(ApplicationProvider.getApplicationContext(), MODEL_FILE);
-      ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
+      ObjectDetectorResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
       // Check if the object with the highest score is cat.
       assertIsCat(results.detections().get(0).categories().get(0), CAT_SCORE);
     }
@@ -91,7 +91,7 @@ public class ObjectDetectorTest {
               .build();
       ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
+      ObjectDetectorResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
       // results should have 8 detected objects because maxResults was set to 8.
       assertThat(results.detections()).hasSize(8);
     }
@@ -105,7 +105,7 @@ public class ObjectDetectorTest {
               .build();
       ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
+      ObjectDetectorResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
       // The score threshold should block all other other objects, except cat.
       assertContainsOnlyCat(results, CAT_BOUNDING_BOX, CAT_SCORE);
     }
@@ -119,7 +119,7 @@ public class ObjectDetectorTest {
               .build();
       ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
+      ObjectDetectorResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
       // The score threshold should block objects.
       assertThat(results.detections()).isEmpty();
     }
@@ -133,7 +133,7 @@ public class ObjectDetectorTest {
               .build();
       ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
+      ObjectDetectorResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
       // Because of the allowlist, results should only contain cat, and there are 6 detected
       // bounding boxes of cats in CAT_AND_DOG_IMAGE.
       assertThat(results.detections()).hasSize(5);
@@ -148,7 +148,7 @@ public class ObjectDetectorTest {
               .build();
       ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
+      ObjectDetectorResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
       // Because of the denylist, the highest result is not cat anymore.
       assertThat(results.detections().get(0).categories().get(0).categoryName())
           .isNotEqualTo("cat");
@@ -160,7 +160,7 @@ public class ObjectDetectorTest {
           ObjectDetector.createFromFile(
               ApplicationProvider.getApplicationContext(),
               TestUtils.loadFile(ApplicationProvider.getApplicationContext(), MODEL_FILE));
-      ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
+      ObjectDetectorResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
       // Check if the object with the highest score is cat.
       assertIsCat(results.detections().get(0).categories().get(0), CAT_SCORE);
     }
@@ -172,7 +172,7 @@ public class ObjectDetectorTest {
               ApplicationProvider.getApplicationContext(),
               TestUtils.loadToDirectByteBuffer(
                   ApplicationProvider.getApplicationContext(), MODEL_FILE));
-      ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
+      ObjectDetectorResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
       // Check if the object with the highest score is cat.
       assertIsCat(results.detections().get(0).categories().get(0), CAT_SCORE);
     }
@@ -191,7 +191,7 @@ public class ObjectDetectorTest {
               .build();
       ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
+      ObjectDetectorResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
       assertContainsOnlyCat(results, CAT_BOUNDING_BOX, CAT_SCORE);
     }
 
@@ -256,7 +256,7 @@ public class ObjectDetectorTest {
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       ImageProcessingOptions imageProcessingOptions =
           ImageProcessingOptions.builder().setRotationDegrees(-90).build();
-      ObjectDetectionResult results =
+      ObjectDetectorResult results =
           objectDetector.detect(
               getImageFromAsset(CAT_AND_DOG_ROTATED_IMAGE), imageProcessingOptions);
 
@@ -302,7 +302,7 @@ public class ObjectDetectorTest {
                     ObjectDetectorOptions.builder()
                         .setBaseOptions(BaseOptions.builder().setModelAssetPath(MODEL_FILE).build())
                         .setRunningMode(mode)
-                        .setResultListener((objectDetectionResult, inputImage) -> {})
+                        .setResultListener((ObjectDetectorResult, inputImage) -> {})
                         .build());
         assertThat(exception)
             .hasMessageThat()
@@ -381,7 +381,7 @@ public class ObjectDetectorTest {
           ObjectDetectorOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(MODEL_FILE).build())
               .setRunningMode(RunningMode.LIVE_STREAM)
-              .setResultListener((objectDetectionResult, inputImage) -> {})
+              .setResultListener((ObjectDetectorResult, inputImage) -> {})
               .build();
 
       ObjectDetector objectDetector =
@@ -411,7 +411,7 @@ public class ObjectDetectorTest {
               .build();
       ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
+      ObjectDetectorResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
       assertContainsOnlyCat(results, CAT_BOUNDING_BOX, CAT_SCORE);
     }
 
@@ -426,7 +426,7 @@ public class ObjectDetectorTest {
       ObjectDetector objectDetector =
           ObjectDetector.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       for (int i = 0; i < 3; i++) {
-        ObjectDetectionResult results =
+        ObjectDetectorResult results =
             objectDetector.detectForVideo(
                 getImageFromAsset(CAT_AND_DOG_IMAGE), /* timestampsMs= */ i);
         assertContainsOnlyCat(results, CAT_BOUNDING_BOX, CAT_SCORE);
@@ -441,8 +441,8 @@ public class ObjectDetectorTest {
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(MODEL_FILE).build())
               .setRunningMode(RunningMode.LIVE_STREAM)
               .setResultListener(
-                  (objectDetectionResult, inputImage) -> {
-                    assertContainsOnlyCat(objectDetectionResult, CAT_BOUNDING_BOX, CAT_SCORE);
+                  (ObjectDetectorResult, inputImage) -> {
+                    assertContainsOnlyCat(ObjectDetectorResult, CAT_BOUNDING_BOX, CAT_SCORE);
                     assertImageSizeIsExpected(inputImage);
                   })
               .setMaxResults(1)
@@ -468,8 +468,8 @@ public class ObjectDetectorTest {
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(MODEL_FILE).build())
               .setRunningMode(RunningMode.LIVE_STREAM)
               .setResultListener(
-                  (objectDetectionResult, inputImage) -> {
-                    assertContainsOnlyCat(objectDetectionResult, CAT_BOUNDING_BOX, CAT_SCORE);
+                  (ObjectDetectorResult, inputImage) -> {
+                    assertContainsOnlyCat(ObjectDetectorResult, CAT_BOUNDING_BOX, CAT_SCORE);
                     assertImageSizeIsExpected(inputImage);
                   })
               .setMaxResults(1)
@@ -483,6 +483,16 @@ public class ObjectDetectorTest {
     }
   }
 
+  @Test
+  @SuppressWarnings("deprecation")
+  public void detect_canUseDeprecatedApi() throws Exception {
+    ObjectDetector objectDetector =
+        ObjectDetector.createFromFile(ApplicationProvider.getApplicationContext(), MODEL_FILE);
+    ObjectDetectionResult results = objectDetector.detect(getImageFromAsset(CAT_AND_DOG_IMAGE));
+    // Check if the object with the highest score is cat.
+    assertIsCat(results.detections().get(0).categories().get(0), CAT_SCORE);
+  }
+
   private static MPImage getImageFromAsset(String filePath) throws Exception {
     AssetManager assetManager = ApplicationProvider.getApplicationContext().getAssets();
     InputStream istr = assetManager.open(filePath);
@@ -491,7 +501,7 @@ public class ObjectDetectorTest {
 
   // Checks if results has one and only detection result, which is a cat.
   private static void assertContainsOnlyCat(
-      ObjectDetectionResult result, RectF expectedBoundingBox, float expectedScore) {
+      ObjectDetectorResult result, RectF expectedBoundingBox, float expectedScore) {
     assertThat(result.detections()).hasSize(1);
     Detection catResult = result.detections().get(0);
     assertApproximatelyEqualBoundingBoxes(catResult.boundingBox(), expectedBoundingBox);

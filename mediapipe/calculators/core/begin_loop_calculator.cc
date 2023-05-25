@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "mediapipe/framework/formats/detection.pb.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
@@ -72,4 +73,7 @@ typedef BeginLoopCalculator<std::vector<GpuBuffer>>
     BeginLoopGpuBufferCalculator;
 REGISTER_CALCULATOR(BeginLoopGpuBufferCalculator);
 
+// A calculator to process std::vector<mediapipe::Image>.
+typedef BeginLoopCalculator<std::vector<Image>> BeginLoopImageCalculator;
+REGISTER_CALCULATOR(BeginLoopImageCalculator);
 }  // namespace mediapipe
