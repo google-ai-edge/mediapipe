@@ -223,16 +223,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
   AssertEqualErrors(error, expectedError);
 }
 
-- (MPPGestureRecognizer *)gestureRecognizerWithOptionsSucceeds:
-    (MPPGestureRecognizerOptions *)gestureRecognizerOptions {
-  MPPGestureRecognizer *gestureRecognizer =
-      [[MPPGestureRecognizer alloc] initWithOptions:gestureRecognizerOptions error:nil];
-  XCTAssertNotNil(gestureRecognizer);
-
-  return gestureRecognizer;
-}
-
-#pragma mark Assert Detection Results
+#pragma mark Assert Gesture Recognizer Results
 
 - (MPPImage *)imageWithFileInfo:(NSDictionary *)fileInfo {
   MPPImage *image = [MPPImage imageFromBundleWithClass:[MPPGestureRecognizerTests class]
