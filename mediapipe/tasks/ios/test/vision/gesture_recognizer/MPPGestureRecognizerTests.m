@@ -44,9 +44,6 @@ static const NSInteger kGestureExpectedIndex = -1;
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 static const float kLandmarksErrorTolerance = 0.03f;
 
-// static NSString *const kLiveStreamTestsDictObjectDetectorKey = @"object_detector";
-// static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
-
 #define AssertEqualErrors(error, expectedError)                                               \
   XCTAssertNotNil(error);                                                                     \
   XCTAssertEqualObjects(error.domain, expectedError.domain);                                  \
@@ -74,31 +71,13 @@ static const float kLandmarksErrorTolerance = 0.03f;
   XCTAssertEqualWithAccuracy(landmark.y, expectedLandmark.y, kLandmarksErrorTolerance,            \
                              @"hand index = %d landmark index j = %d", handIndex, handIndex);
 
-#define AssertEqualWorlLandmarks(landmarks, expectedLandmarks, detectionIndex, categoryIndex)      \
-  XCTAssertEqual(category.index, expectedCategory.index,                                           \
-                 @"detection Index = %d category array index j = %d", detectionIndex,              \
-                 categoryIndex);                                                                   \
-  XCTAssertEqualWithAccuracy(category.score, expectedCategory.score, scoreDifferenceTolerance,     \
-                             @"detection Index = %d, category array index j = %d", detectionIndex, \
-                             categoryIndex);                                                       \
-  XCTAssertEqualObjects(category.categoryName, expectedCategory.categoryName,                      \
-                        @"detection Index = %d, category array index j = %d", detectionIndex,      \
-                        categoryIndex);                                                            \
-  XCTAssertEqualObjects(category.displayName, expectedCategory.displayName,                        \
-                        @"detection Index = %d, category array index j = %d", detectionIndex,      \
-                        categoryIndex);
-
 #define AssertGestureRecognizerResultIsEmpty(gestureRecognizerResult) \
   XCTAssertTrue(gestureRecognizerResult.gestures.count == 0);         \
   XCTAssertTrue(gestureRecognizerResult.handedness.count == 0);       \
-  XCTAssertTrue(gestureRecognizerResult.landmarks.count == 0);        \
-  \ 
+  XCTAssertTrue(gestureRecognizerResult.landmarks.count == 0);        \ 
   XCTAssertTrue(gestureRecognizerResult.worldLandmarks.count == 0);
 
-@interface MPPGestureRecognizerTests : XCTestCase {
-  NSDictionary *liveStreamSucceedsTestDict;
-  NSDictionary *outOfOrderTimestampTestDict;
-}
+@interface MPPGestureRecognizerTests : XCTestCase
 @end
 
 @implementation MPPGestureRecognizerTests
