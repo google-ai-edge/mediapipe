@@ -14,13 +14,19 @@
 """Base options for MediaPipe Task APIs."""
 
 import dataclasses
+import enum
 import os
+import platform
 from typing import Any, Optional
 
+from mediapipe.calculators.tensor import inference_calculator_pb2
+from mediapipe.tasks.cc.core.proto import acceleration_pb2
 from mediapipe.tasks.cc.core.proto import base_options_pb2
 from mediapipe.tasks.cc.core.proto import external_file_pb2
 from mediapipe.tasks.python.core.optional_dependencies import doc_controls
 
+_DelegateProto = inference_calculator_pb2.InferenceCalculatorOptions.Delegate
+_AccelerationProto = acceleration_pb2.Acceleration
 _BaseOptionsProto = base_options_pb2.BaseOptions
 _ExternalFileProto = external_file_pb2.ExternalFile
 
@@ -41,11 +47,17 @@ class BaseOptions:
   Attributes:
     model_asset_path: Path to the model asset file.
     model_asset_buffer: The model asset file contents as bytes.
+    delegate: Accelaration to use. Supported values are GPU and CPU. GPU support
+      is currently limited to Ubuntu platforms.
   """
+
+  class Delegate(enum.Enum):
+    CPU = 0
+    GPU = 1
 
   model_asset_path: Optional[str] = None
   model_asset_buffer: Optional[bytes] = None
-  # TODO: Allow Python API to specify acceleration settings.
+  delegate: Optional[Delegate] = None
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _BaseOptionsProto:
@@ -55,17 +67,44 @@ class BaseOptions:
     else:
       full_path = None
 
+    platform_name = platform.system()
+
+    if self.delegate == BaseOptions.Delegate.GPU:
+      if platform_name == 'Linux':
+        acceleration_proto = _AccelerationProto(gpu=_DelegateProto.Gpu())
+      else:
+        raise NotImplementedError(
+            'GPU Delegate is not yet supported for ' + platform_name
+        )
+    elif self.delegate == BaseOptions.Delegate.CPU:
+      acceleration_proto = _AccelerationProto(tflite=_DelegateProto.TfLite())
+    else:
+      acceleration_proto = None
+
     return _BaseOptionsProto(
         model_asset=_ExternalFileProto(
-            file_name=full_path, file_content=self.model_asset_buffer))
+            file_name=full_path, file_content=self.model_asset_buffer
+        ),
+        acceleration=acceleration_proto,
+    )
 
   @classmethod
   @doc_controls.do_not_generate_docs
   def create_from_pb2(cls, pb2_obj: _BaseOptionsProto) -> 'BaseOptions':
     """Creates a `BaseOptions` object from the given protobuf object."""
+    delegate = None
+    if pb2_obj.acceleration is not None:
+      delegate = (
+          BaseOptions.Delegate.GPU
+          if pb2_obj.acceleration.gpu is not None
+          else BaseOptions.Delegate.CPU
+      )
+
     return BaseOptions(
         model_asset_path=pb2_obj.model_asset.file_name,
-        model_asset_buffer=pb2_obj.model_asset.file_content)
+        model_asset_buffer=pb2_obj.model_asset.file_content,
+        delegate=delegate,
+    )
 
   def __eq__(self, other: Any) -> bool:
     """Checks if this object is equal to the given object.
