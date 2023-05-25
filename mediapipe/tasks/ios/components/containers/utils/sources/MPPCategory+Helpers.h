@@ -19,7 +19,29 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MPPCategory (Helpers)
 
+/**
+ * Creates an `MPPCategory` with the given MediaPipe `Classification` proto.
+ *
+ * @param classificationProto A MediaPipe `Classification` proto.
+ * @return  An `MPPCategory` object that with the given MediaPipe `Classification` proto.
+ */
 + (MPPCategory *)categoryWithProto:(const ::mediapipe::Classification &)classificationProto;
+
+/**
+ * Creates an `MPPCategory` with the given MediaPipe `Classification` proto and the given category
+ * index. The resulting `MPPCategory` is created with the given category index instead of the
+ * category index specified in the `Classification` proto. This method is useful for tasks like
+ * gesture recognizer which always returns a default index for the recognized gestures.
+ *
+ * @param classificationProto A MediaPipe `Classification` proto.
+ * @param index The index to be used for creating the `MPPCategory` instead of the category index
+ * specified in the `Classification` proto.
+ *
+ * @return  An `MPPGestureRecognizerResult` object that contains the hand gesture recognition
+ * results.
+ */
++ (MPPCategory *)categoryWithProto:(const ::mediapipe::Classification &)classificationProto
+                             index:(NSInteger)index;
 
 @end
 
