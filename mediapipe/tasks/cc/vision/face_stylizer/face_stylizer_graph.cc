@@ -71,23 +71,21 @@ constexpr char kFaceLandmarksDetectorTFLiteName[] =
     "face_landmarks_detector.tflite";
 constexpr char kFaceStylizerTFLiteName[] = "face_stylizer.tflite";
 constexpr char kImageTag[] = "IMAGE";
-constexpr char kImageCpuTag[] = "IMAGE_CPU";
-constexpr char kImageGpuTag[] = "IMAGE_GPU";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 constexpr char kMatrixTag[] = "MATRIX";
 constexpr char kNormLandmarksTag[] = "NORM_LANDMARKS";
 constexpr char kNormRectTag[] = "NORM_RECT";
-constexpr char kOutputSizeTag[] = "OUTPUT_SIZE";
 constexpr char kSizeTag[] = "SIZE";
 constexpr char kStylizedImageTag[] = "STYLIZED_IMAGE";
 constexpr char kTensorsTag[] = "TENSORS";
-constexpr int kFaceAlignmentOutputSize = 256;
+constexpr char kTransformationMatrixTag[] = "TRANSFORMATION_MATRIX";
 
 // Struct holding the different output streams produced by the face stylizer
 // graph.
 struct FaceStylizerOutputStreams {
   std::optional<Source<Image>> stylized_image;
   std::optional<Source<Image>> face_alignment_image;
+  std::optional<Source<std::array<float, 16>>> transformation_matrix;
   Source<Image> original_image;
 };
 
@@ -202,6 +200,10 @@ void ConfigureTensorsToImageCalculator(
 //     The aligned face image that is fed to the face stylization model to
 //     perform stylization. Also useful for preparing face stylization training
 //     data.
+//   TRANSFORMATION_MATRIX - std::array<float,16>
+//     An std::array<float, 16> representing a 4x4 row-major-order matrix that
+//     maps a point on the input image to a point on the output image, and
+//     can be used to reverse the mapping by inverting the matrix.
 //   IMAGE - mediapipe::Image
 //     The input image that the face landmarker runs on and has the pixel data
 //     stored on the target storage (CPU vs GPU).
@@ -280,6 +282,8 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
       output_streams.face_alignment_image.value() >>
           graph[Output<Image>(kFaceAlignmentTag)];
     }
+    output_streams.transformation_matrix.value() >>
+        graph[Output<std::array<float, 16>>(kTransformationMatrixTag)];
     output_streams.original_image >> graph[Output<Image>(kImageTag)];
     return graph.GetConfig();
   }
@@ -357,9 +361,10 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
           image_to_tensor.GetOptions<ImageToTensorCalculatorOptions>();
       image_to_tensor_options.mutable_output_tensor_float_range()->set_min(0);
       image_to_tensor_options.mutable_output_tensor_float_range()->set_max(1);
-      image_to_tensor_options.set_output_tensor_width(kFaceAlignmentOutputSize);
+      image_to_tensor_options.set_output_tensor_width(
+          task_options.face_alignment_size());
       image_to_tensor_options.set_output_tensor_height(
-          kFaceAlignmentOutputSize);
+          task_options.face_alignment_size());
       image_to_tensor_options.set_keep_aspect_ratio(true);
       image_to_tensor_options.set_border_mode(
           mediapipe::ImageToTensorCalculatorOptions::BORDER_ZERO);
@@ -378,6 +383,8 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
 
       return {{/*stylized_image=*/std::nullopt,
                /*alignment_image=*/face_alignment,
+               /*transformation_matrix=*/
+               image_to_tensor.Out(kMatrixTag).Cast<std::array<float, 16>>(),
                /*original_image=*/pass_through.Out("").Cast<Image>()}};
     }
 
@@ -439,6 +446,8 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
 
     return {{/*stylized_image=*/stylized,
              /*alignment_image=*/face_alignment,
+             /*transformation_matrix=*/
+             preprocessing.Out(kMatrixTag).Cast<std::array<float, 16>>(),
              /*original_image=*/preprocessing.Out(kImageTag).Cast<Image>()}};
   }
 };
