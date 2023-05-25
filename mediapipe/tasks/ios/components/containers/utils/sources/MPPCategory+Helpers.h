@@ -41,7 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
  * results.
  */
 + (MPPCategory *)categoryWithProto:(const ::mediapipe::Classification &)classificationProto
-                          andIndex:(NSInteger)index;
+                             index:(NSInteger)index;
 
 @end
 

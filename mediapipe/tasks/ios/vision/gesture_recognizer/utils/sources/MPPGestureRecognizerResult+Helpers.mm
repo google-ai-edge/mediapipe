@@ -55,7 +55,7 @@ static const NSInteger kDefaultGestureIndex = -1;
         arrayWithCapacity:(NSUInteger)classificationListProto.classification().size()];
     for (const auto &classificationProto : classificationListProto.classification()) {
       MPPCategory *category = [MPPCategory categoryWithProto:classificationProto
-                                                    andIndex:kDefaultGestureIndex];
+                                                       index:kDefaultGestureIndex];
       [gestures addObject:category];
     }
     [multiHandGestures addObject:gestures];
@@ -137,8 +137,8 @@ static const NSInteger kDefaultGestureIndex = -1;
                                                        .Get<std::vector<ClassificationListProto>>()
                                     handednessroto:handednessPacket
                                                        .Get<std::vector<ClassificationListProto>>()
-                               handLandmarksPacket:handLandmarksPacket
-                                                       .Get<std::vector<NormalizedLandmarkListProto>>()
+                               handLandmarksPacket:handLandmarksPacket.Get<
+                                                       std::vector<NormalizedLandmarkListProto>>()
                               worldLandmarksPacket:worldLandmarksPacket
                                                        .Get<std::vector<LandmarkListProto>>()
                            timestampInMilliSeconds:timestampInMilliseconds];

@@ -22,7 +22,7 @@ using ClassificationProto = ::mediapipe::Classification;
 @implementation MPPCategory (Helpers)
 
 + (MPPCategory *)categoryWithProto:(const ClassificationProto &)classificationProto
-                          andIndex:(NSInteger)index {
+                             index:(NSInteger)index {
   NSString *categoryName;
   NSString *displayName;
 
