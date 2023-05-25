@@ -166,10 +166,9 @@ static const int kMicroSecondsPerMilliSecond = 1000;
                                     regionOfInterest:(CGRect)roi
                                                error:(NSError **)error {
   std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectFromRegionOfInterest:roi
-                                                  imageSize:CGSizeMake(image.width, image.height)
+      [_visionTaskRunner normalizedRectWithRegionOfInterest:roi
                                            imageOrientation:image.orientation
-                                                 ROIAllowed:YES
+                                                  imageSize:CGSizeMake(image.width, image.height)
                                                       error:error];
   if (!rect.has_value()) {
     return nil;
@@ -196,15 +195,18 @@ static const int kMicroSecondsPerMilliSecond = 1000;
                                     outputPacketMap.value()[kClassificationsStreamName.cppString]];
 }
 
+- (nullable MPPImageClassifierResult *)classifyImage:(MPPImage *)image error:(NSError **)error {
+  return [self classifyImage:image regionOfInterest:CGRectZero error:error];
+}
+
 - (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
                                timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                       regionOfInterest:(CGRect)roi
                                                  error:(NSError **)error {
   std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectFromRegionOfInterest:roi
-                                                  imageSize:CGSizeMake(image.width, image.height)
+      [_visionTaskRunner normalizedRectWithRegionOfInterest:roi
                                            imageOrientation:image.orientation
-                                                 ROIAllowed:YES
+                                                  imageSize:CGSizeMake(image.width, image.height)
                                                       error:error];
   if (!rect.has_value()) {
     return std::nullopt;
@@ -223,10 +225,6 @@ static const int kMicroSecondsPerMilliSecond = 1000;
 
   PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
   return inputPacketMap;
-}
-
-- (nullable MPPImageClassifierResult *)classifyImage:(MPPImage *)image error:(NSError **)error {
-  return [self classifyImage:image regionOfInterest:CGRectZero error:error];
 }
 
 - (nullable MPPImageClassifierResult *)classifyVideoFrame:(MPPImage *)image
