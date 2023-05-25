@@ -57,6 +57,7 @@ py_library(
     deps = [
         ":metadata_info",
         ":metadata_writer",
+        ":writer_utils",
         "//mediapipe/tasks/metadata:image_segmenter_metadata_schema_py",
         "//mediapipe/tasks/metadata:metadata_schema_py",
         "//mediapipe/tasks/python/metadata",
