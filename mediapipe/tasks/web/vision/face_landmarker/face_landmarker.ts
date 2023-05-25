@@ -59,7 +59,11 @@ const DEFAULT_SCORE_THRESHOLD = 0.5;
  * This API expects a pre-trained face landmarker model asset bundle.
  */
 export class FaceLandmarker extends VisionTaskRunner {
-  private result: FaceLandmarkerResult = {faceLandmarks: []};
+  private result: FaceLandmarkerResult = {
+    faceLandmarks: [],
+    faceBlendshapes: [],
+    facialTransformationMatrixes: []
+  };
   private outputFaceBlendshapes = false;
   private outputFacialTransformationMatrixes = false;
 
@@ -256,13 +260,11 @@ export class FaceLandmarker extends VisionTaskRunner {
   }
 
   private resetResults(): void {
-    this.result = {faceLandmarks: []};
-    if (this.outputFaceBlendshapes) {
-      this.result.faceBlendshapes = [];
-    }
-    if (this.outputFacialTransformationMatrixes) {
-      this.result.facialTransformationMatrixes = [];
-    }
+    this.result = {
+      faceLandmarks: [],
+      faceBlendshapes: [],
+      facialTransformationMatrixes: []
+    };
   }
 
   /** Sets the default values for the graph. */
@@ -286,7 +288,7 @@ export class FaceLandmarker extends VisionTaskRunner {
 
   /** Adds new blendshapes from the given proto. */
   private addBlenshape(data: Uint8Array[]): void {
-    if (!this.result.faceBlendshapes) {
+    if (!this.outputFaceBlendshapes) {
       return;
     }
 
@@ -300,7 +302,7 @@ export class FaceLandmarker extends VisionTaskRunner {
 
   /** Adds new transformation matrixes from the given proto. */
   private addFacialTransformationMatrixes(data: Uint8Array[]): void {
-    if (!this.result.facialTransformationMatrixes) {
+    if (!this.outputFacialTransformationMatrixes) {
       return;
     }
 

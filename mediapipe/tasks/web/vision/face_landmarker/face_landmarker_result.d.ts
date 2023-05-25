@@ -29,8 +29,8 @@ export declare interface FaceLandmarkerResult {
   faceLandmarks: NormalizedLandmark[][];
 
   /** Optional face blendshapes results. */
-  faceBlendshapes?: Classifications[];
+  faceBlendshapes: Classifications[];
 
   /** Optional facial transformation matrix. */
-  facialTransformationMatrixes?: Matrix[];
+  facialTransformationMatrixes: Matrix[];
 }
