@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,20 +21,22 @@ limitations under the License.
 namespace mediapipe::tasks::ios::test::vision::utils {
 
 namespace {
-  using ::google::protobuf::TextFormat;
- }
+using ::google::protobuf::TextFormat;
+}  // anonymous namespace
 
- absl::Status get_proto_from_pbtxt(const std::string file_path, google::protobuf::Message& proto) {
-    
-    std::ifstream file_input_stream(file_path);
-    if(!file_input_stream.is_open()) return absl::InvalidArgumentError(
-          "Cannot read input file.");
-    
-    std::stringstream strings_stream ;
-    strings_stream << file_input_stream.rdbuf();
+absl::Status get_proto_from_pbtxt(const std::string file_path,
+                                  google::protobuf::Message& proto) {
+  std::ifstream file_input_stream(file_path);
+  if (!file_input_stream.is_open())
+    return absl::InvalidArgumentError("Cannot read input file.");
 
-    return TextFormat::ParseFromString(strings_stream.str(), &proto) ? absl::OkStatus() : absl::InvalidArgumentError(
-          "Cannot read a valid proto from the input file.");
- }
+  std::stringstream strings_stream;
+  strings_stream << file_input_stream.rdbuf();
+
+  return TextFormat::ParseFromString(strings_stream.str(), &proto)
+             ? absl::OkStatus()
+             : absl::InvalidArgumentError(
+                   "Cannot read a valid proto from the input file.");
+}
 
 }  // namespace mediapipe::tasks::ios::test::vision::utils
