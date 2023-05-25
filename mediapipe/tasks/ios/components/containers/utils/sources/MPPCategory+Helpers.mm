@@ -41,7 +41,7 @@ using ClassificationProto = ::mediapipe::Classification;
 }
 
 + (MPPCategory *)categoryWithProto:(const ClassificationProto &)classificationProto {
-  return [MPPCategory categoryWithProto:classificationProto andIndex:classificationProto.index()];
+  return [MPPCategory categoryWithProto:classificationProto index:classificationProto.index()];
 }
 
 @end
