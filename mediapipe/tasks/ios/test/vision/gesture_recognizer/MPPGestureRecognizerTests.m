@@ -74,7 +74,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
 #define AssertGestureRecognizerResultIsEmpty(gestureRecognizerResult) \
   XCTAssertTrue(gestureRecognizerResult.gestures.count == 0);         \
   XCTAssertTrue(gestureRecognizerResult.handedness.count == 0);       \
-  XCTAssertTrue(gestureRecognizerResult.landmarks.count == 0);        \ 
+  XCTAssertTrue(gestureRecognizerResult.landmarks.count == 0);        \
   XCTAssertTrue(gestureRecognizerResult.worldLandmarks.count == 0);
 
 @interface MPPGestureRecognizerTests : XCTestCase
@@ -97,15 +97,16 @@ static const float kLandmarksErrorTolerance = 0.03f;
       [MPPGestureRecognizerTests filePathWithFileInfo:kExpectedThumbUpLandmarksFile];
 
   return [MPPGestureRecognizerResult
-      gestureRecognizerResultsFromProtobufFileWithName:filePath
-                                          gestureLabel:kExpectedThumbUpLabel];
+      gestureRecognizerResultsFromTextEncodedProtobufFileWithName:filePath
+                                                     gestureLabel:kExpectedThumbUpLabel];
 }
 
 + (MPPGestureRecognizerResult *)fistGestureRecognizerResultWithLabel:(NSString *)gestureLabel {
   NSString *filePath = [MPPGestureRecognizerTests filePathWithFileInfo:kExpectedFistLandmarksFile];
 
-  return [MPPGestureRecognizerResult gestureRecognizerResultsFromProtobufFileWithName:filePath
-                                                                         gestureLabel:gestureLabel];
+  return [MPPGestureRecognizerResult
+      gestureRecognizerResultsFromTextEncodedProtobufFileWithName:filePath
+                                                     gestureLabel:gestureLabel];
 }
 
 - (void)assertMultiHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)multiHandLandmarks

@@ -32,8 +32,8 @@ using ::mediapipe::tasks::ios::test::vision::utils::get_proto_from_pbtxt;
 @implementation MPPGestureRecognizerResult (ProtoHelpers)
 
 + (MPPGestureRecognizerResult *)
-    gestureRecognizerResultsFromProtobufFileWithName:(NSString *)fileName
-                                        gestureLabel:(NSString *)gestureLabel {
+    gestureRecognizerResultsFromTextEncodedProtobufFileWithName:(NSString *)fileName
+                                                   gestureLabel:(NSString *)gestureLabel {
   LandmarksDetectionResultProto landmarkDetectionResultProto;
 
   if (!get_proto_from_pbtxt(fileName.cppString, landmarkDetectionResultProto).ok()) {

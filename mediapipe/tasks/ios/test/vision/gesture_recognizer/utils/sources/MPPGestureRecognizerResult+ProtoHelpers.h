@@ -19,8 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPGestureRecognizerResult (ProtoHelpers)
 
 + (MPPGestureRecognizerResult *)
-    gestureRecognizerResultsFromProtobufFileWithName:(NSString *)fileName
-                                        gestureLabel:(NSString *)gestureLabel;
+    gestureRecognizerResultsFromTextEncodedProtobufFileWithName:(NSString *)fileName
+                                                   gestureLabel:(NSString *)gestureLabel;
 @end
 
 NS_ASSUME_NONNULL_END
