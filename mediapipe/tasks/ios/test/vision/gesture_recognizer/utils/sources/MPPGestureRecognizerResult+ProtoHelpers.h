@@ -20,7 +20,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (MPPGestureRecognizerResult *)
     gestureRecognizerResultsFromTextEncodedProtobufFileWithName:(NSString *)fileName
-                                                   gestureLabel:(NSString *)gestureLabel;
+                                                   gestureLabel:(NSString *)gestureLabel
+                                          shouldRemoveZPosition:(BOOL)removeZPosition;
+
 @end
 
 NS_ASSUME_NONNULL_END

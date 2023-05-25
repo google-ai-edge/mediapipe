@@ -33,18 +33,22 @@ using ::mediapipe::tasks::ios::test::vision::utils::get_proto_from_pbtxt;
 
 + (MPPGestureRecognizerResult *)
     gestureRecognizerResultsFromTextEncodedProtobufFileWithName:(NSString *)fileName
-                                                   gestureLabel:(NSString *)gestureLabel {
+                                                   gestureLabel:(NSString *)gestureLabel
+                                          shouldRemoveZPosition:(BOOL)removeZPosition {
   LandmarksDetectionResultProto landmarkDetectionResultProto;
 
   if (!get_proto_from_pbtxt(fileName.cppString, landmarkDetectionResultProto).ok()) {
     return nil;
   }
-  // Remove z position of landmarks, because they are not used in correctness
-  // testing. For video or live stream mode, the z positions varies a lot during
-  // tracking from frame to frame.
-  for (int i = 0; i < landmarkDetectionResultProto.landmarks().landmark().size(); i++) {
-    auto &landmark = *landmarkDetectionResultProto.mutable_landmarks()->mutable_landmark(i);
-    landmark.clear_z();
+
+  if (removeZPosition) {
+    // Remove z position of landmarks, because they are not used in correctness
+    // testing. For video or live stream mode, the z positions varies a lot during
+    // tracking from frame to frame.
+    for (int i = 0; i < landmarkDetectionResultProto.landmarks().landmark().size(); i++) {
+      auto &landmark = *landmarkDetectionResultProto.mutable_landmarks()->mutable_landmark(i);
+      landmark.clear_z();
+    }
   }
 
   ClassificationListProto gesturesProto;

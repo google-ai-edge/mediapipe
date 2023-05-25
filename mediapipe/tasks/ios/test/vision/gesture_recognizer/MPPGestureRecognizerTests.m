@@ -98,7 +98,8 @@ static const float kLandmarksErrorTolerance = 0.03f;
 
   return [MPPGestureRecognizerResult
       gestureRecognizerResultsFromTextEncodedProtobufFileWithName:filePath
-                                                     gestureLabel:kExpectedThumbUpLabel];
+                                                     gestureLabel:kExpectedThumbUpLabel
+                                            shouldRemoveZPosition:YES];
 }
 
 + (MPPGestureRecognizerResult *)fistGestureRecognizerResultWithLabel:(NSString *)gestureLabel {
@@ -106,7 +107,8 @@ static const float kLandmarksErrorTolerance = 0.03f;
 
   return [MPPGestureRecognizerResult
       gestureRecognizerResultsFromTextEncodedProtobufFileWithName:filePath
-                                                     gestureLabel:gestureLabel];
+                                                     gestureLabel:gestureLabel
+                                            shouldRemoveZPosition:YES];
 }
 
 - (void)assertMultiHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)multiHandLandmarks
