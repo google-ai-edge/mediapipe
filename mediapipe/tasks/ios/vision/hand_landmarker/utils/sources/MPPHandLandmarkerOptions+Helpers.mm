@@ -39,7 +39,7 @@ using HandLandmarksDetectorGraphOptionsProto =
           ->MutableExtension(HandLandmarkerGraphOptionsProto::ext)
               handLandmarkerGraphOptionsProto->Clear();
 
-  [self.baseOptions copyToProto:gestureRecognizerGraphOptionsProto->mutable_base_options()
+  [self.baseOptions copyToProto:handLandmarkerGraphOptionsProto->mutable_base_options()
               withUseStreamMode:self.runningMode != MPPRunningModeImage];
 
   handLandmarkerGraphOptionsProto->set_min_tracking_confidence(self.minTrackingConfidence);
