@@ -79,7 +79,7 @@ NS_SWIFT_NAME(HandLandmarkerOptions)
 /**
  * An object that confirms to `MPPHandLandmarkerLiveStreamDelegate` protocol. This object must
  * implement `handLandmarker:didFinishDetectionWithResult:timestampInMilliseconds:error:` to
- * receive the results of performing asynchronous gesture recognition on images (i.e, when
+ * receive the results of performing asynchronous hand landmark detection on images (i.e, when
  * `runningMode` = `MPPRunningModeLiveStream`).
  */
 @property(nonatomic, weak, nullable) id<MPPHandLandmarkerLiveStreamDelegate>
