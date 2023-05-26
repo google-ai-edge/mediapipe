@@ -31,3 +31,21 @@ objc_library(
         "//mediapipe/tasks/ios/vision/face_landmarker:MPPFaceLandmarkerOptions",
     ],
 )
+
+objc_library(
+    name = "MPPFaceLandmarkerResultHelpers",
+    srcs = ["sources/MPPFaceLandmarkerResult+Helpers.mm"],
+    hdrs = ["sources/MPPFaceLandmarkerResult+Helpers.h"],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:matrix_data_cc_proto",
+        "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_cc_proto",
+        "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+        "//mediapipe/tasks/ios/components/containers:MPPLandmark",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPLandmarkHelpers",
+        "//mediapipe/tasks/ios/vision/face_landmarker:MPPFaceLandmarkerResult",
+    ],
+)

@@ -17,6 +17,7 @@
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
 
 namespace {
+using ClassificationListProto = ::mediapipe::ClassificationList;
 using ClassificationsProto = ::mediapipe::tasks::components::containers::proto::Classifications;
 using ClassificationResultProto =
     ::mediapipe::tasks::components::containers::proto::ClassificationResult;
@@ -24,7 +25,22 @@ using ClassificationResultProto =
 
 @implementation MPPClassifications (Helpers)
 
-+ (MPPClassifications *)classificationsWithProto:
++ (MPPClassifications *)classificationsWithClassificationListProto:
+                            (const ClassificationListProto &)classificationListProto
+                                                         headIndex:(NSInteger)headIndex
+                                                          headName:(NSString *)headName {
+  NSMutableArray<MPPCategory *> *categories =
+      [NSMutableArray arrayWithCapacity:(NSUInteger)classificationListProto.classification_size()];
+  for (const auto &classification : classificationListProto.classification()) {
+    [categories addObject:[MPPCategory categoryWithProto:classification]];
+  }
+
+  return [[MPPClassifications alloc] initWithHeadIndex:headIndex
+                                              headName:headName
+                                            categories:categories];
+}
+
++ (MPPClassifications *)classificationsWithClassificationsProto:
     (const ClassificationsProto &)classificationsProto {
   NSMutableArray<MPPCategory *> *categories =
       [NSMutableArray arrayWithCapacity:(NSUInteger)classificationsProto.classification_list()
@@ -33,14 +49,14 @@ using ClassificationResultProto =
     [categories addObject:[MPPCategory categoryWithProto:classification]];
   }
 
-  NSString *headName;
-  if (classificationsProto.has_head_name()) {
-    headName = [NSString stringWithCppString:classificationsProto.head_name()];
-  }
+  NSString *headName = classificationsProto.has_head_name()
+                           ? [NSString stringWithCppString:classificationsProto.head_name()]
+                           : [NSString string];
 
-  return [[MPPClassifications alloc] initWithHeadIndex:(NSInteger)classificationsProto.head_index()
-                                              headName:headName
-                                            categories:categories];
+  return [MPPClassifications
+      classificationsWithClassificationListProto:classificationsProto.classification_list()
+                                       headIndex:(NSInteger)classificationsProto.head_index()
+                                        headName:headName];
 }
 
 @end
@@ -52,7 +68,8 @@ using ClassificationResultProto =
   NSMutableArray *classifications = [NSMutableArray
       arrayWithCapacity:(NSUInteger)classificationResultProto.classifications_size()];
   for (const auto &classificationsProto : classificationResultProto.classifications()) {
-    [classifications addObject:[MPPClassifications classificationsWithProto:classificationsProto]];
+    [classifications addObject:[MPPClassifications
+                                   classificationsWithClassificationsProto:classificationsProto]];
   }
 
   NSInteger timestampInMilliseconds = 0;
@@ -62,7 +79,6 @@ using ClassificationResultProto =
 
   return [[MPPClassificationResult alloc] initWithClassifications:classifications
                                           timestampInMilliseconds:timestampInMilliseconds];
-  ;
 }
 
 @end

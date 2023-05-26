@@ -17,6 +17,22 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 objc_library(
+    name = "MPPFaceLandmarkerResult",
+    srcs = ["sources/MPPFaceLandmarkerResult.mm"],
+    hdrs = ["sources/MPPFaceLandmarkerResult.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    deps = [
+        "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+        "//mediapipe/tasks/ios/components/containers:MPPLandmark",
+        "//mediapipe/tasks/ios/core:MPPTaskResult",
+    ],
+)
+
+objc_library(
     name = "MPPFaceLandmarkerOptions",
     srcs = ["sources/MPPFaceLandmarkerOptions.m"],
     hdrs = ["sources/MPPFaceLandmarkerOptions.h"],
