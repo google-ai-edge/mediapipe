@@ -36,7 +36,7 @@ using HandLandmarksDetectorGraphOptionsProto =
 - (void)copyToProto:(CalculatorOptionsProto *)optionsProto {
   HandLandmarkerGraphOptionsProto *handLandmarkerGraphOptionsProto =
       optionsProto
-          ->MutableExtension(HandLandmarkerGraphOptionsProto::ext)
+          ->MutableExtension(HandLandmarkerGraphOptionsProto::ext);
               handLandmarkerGraphOptionsProto->Clear();
 
   [self.baseOptions copyToProto:handLandmarkerGraphOptionsProto->mutable_base_options()
@@ -47,7 +47,7 @@ using HandLandmarksDetectorGraphOptionsProto =
   HandDetectorGraphOptionsProto *handDetectorGraphOptionsProto =
       handLandmarkerGraphOptionsProto->mutable_hand_detector_graph_options();
   handDetectorGraphOptionsProto->Clear();
-  handDetectorGraphOptionsProto->set_num_hands(self.numberOfHands);
+  handDetectorGraphOptionsProto->set_num_hands(self.numHands);
   handDetectorGraphOptionsProto->set_min_detection_confidence(self.minHandDetectionConfidence);
 
   HandLandmarksDetectorGraphOptionsProto *handLandmarksDetectorGraphOptionsProto =
