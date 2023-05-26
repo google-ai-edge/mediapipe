@@ -34,16 +34,16 @@ NS_SWIFT_NAME(HandLandmarkerResult)
 @property(nonatomic, readonly) NSArray<NSArray<MPPCategory *> *> *handedness;
 
 /**
- * Initializes a new `MPPGestureRecognizerResult` with the given landmarks, world landmarks,
- * handedness, gestures and timestamp (in milliseconds).
+ * Initializes a new `MPPHandLandmarkerResult` with the given landmarks, world landmarks,
+ * handedness and timestamp (in milliseconds).
  *
  * @param landmarks The hand landmarks of detected hands.
  * @param worldLandmarks The hand landmarks in world coordniates of detected hands.
  * @param handedness The handedness of detected hands.
  * @param timestampInMilliseconds The timestamp for this result.
  *
- * @return An instance of `MPPGestureRecognizerResult` initialized with the given landmarks, world
- * landmarks, handedness and gestures.
+ * @return An instance of `MPPGHandLandmarkerResult` initialized with the given landmarks, world
+ * landmarks, handedness and timestamp (in milliseconds).
  *
  */
 - (instancetype)initWithLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)landmarks
