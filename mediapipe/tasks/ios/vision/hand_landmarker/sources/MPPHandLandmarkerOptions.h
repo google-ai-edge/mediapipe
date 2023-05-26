@@ -24,7 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * This protocol defines an interface for the delegates of `MPPHandLandmarker` object to receive
- * results of performing asynchronous hand landmark detection on images (i.e, when `runningMode` = `MPPRunningModeLiveStream`).
+ * results of performing asynchronous hand landmark detection on images (i.e, when `runningMode` =
+ * `MPPRunningModeLiveStream`).
  *
  * The delegate of `MPPHandLandmarker` must adopt `MPPHandLandmarkerLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
@@ -35,7 +36,8 @@ NS_SWIFT_NAME(HandLandmarkerLiveStreamDelegate)
 @optional
 
 /**
- * This method notifies a delegate that the results of asynchronous hand landmark detection of an image submitted to the `MPPHandLandmarker` is available.
+ * This method notifies a delegate that the results of asynchronous hand landmark detection of an
+ * image submitted to the `MPPHandLandmarker` is available.
  *
  * This method is called on a private serial dispatch queue created by the `MPPHandLandmarker`
  * for performing the asynchronous delegates calls.
@@ -48,7 +50,8 @@ NS_SWIFT_NAME(HandLandmarkerLiveStreamDelegate)
  * underlying image data.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
  * image was sent to the hand landmarker.
- * @param error An optional error parameter populated when there is an error in performing hand landmark detection on the input live stream image data.
+ * @param error An optional error parameter populated when there is an error in performing hand
+ * landmark detection on the input live stream image data.
  */
 - (void)handLandmarker:(MPPHandLandmarker *)handLandmarker
     didFinishDetectionWithResult:(nullable MPPHandLandmarkerResult *)result
@@ -64,11 +67,12 @@ NS_SWIFT_NAME(HandLandmarkerOptions)
 /**
  * Running mode of the hand landmarker task. Defaults to `MPPRunningModeImage`.
  * `MPPHandLandmarker` can be created with one of the following running modes:
- *  1. `MPPRunningModeImage`: The mode for performing hand landmark detection on single image inputs.
- *  2. `MPPRunningModeVideo`: The mode for performing hand landmark detection on the decoded frames of a
- *      video.
- *  3. `MPPRunningModeLiveStream`: The mode for performing hand landmark detection on a live stream of
- *      input data, such as from the camera.
+ *  1. `MPPRunningModeImage`: The mode for performing hand landmark detection on single image
+ * inputs.
+ *  2. `MPPRunningModeVideo`: The mode for performing hand landmark detection on the decoded frames
+ * of a video.
+ *  3. `MPPRunningModeLiveStream`: The mode for performing hand landmark detection on a live stream
+ * of input data, such as from the camera.
  */
 @property(nonatomic) MPPRunningMode runningMode;
 
