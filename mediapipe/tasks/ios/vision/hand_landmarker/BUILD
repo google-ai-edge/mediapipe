@@ -27,3 +27,13 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPHandLandmarkerOptions",
+    srcs = ["sources/MPPHandLandmarkerOptions.m"],
+    hdrs = ["sources/MPPHandLandmarkerOptions.h"],
+    deps = [
+        ":MPPHandLandmarkerResult",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
+    ],
+)
