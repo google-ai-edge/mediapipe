@@ -21,6 +21,14 @@
 #include "mediapipe/tasks/cc/vision/image_segmenter/calculators/tensors_to_segmentation_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/utils/image_utils.h"
 
+// On Android with compute shaders we include the SSBO-to-texture converter
+#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 && \
+    defined(__ANDROID__)
+#define TASK_SEGMENTATION_USE_GLES_31_POSTPROCESSING 1
+#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/ssbo_to_texture_converter.h"
+#endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 &&
+        // defined(__ANDROID__)
+
 namespace mediapipe {
 namespace tasks {
 
@@ -45,6 +53,7 @@ class SegmentationPostprocessorGl {
   };
 
   absl::Status GlInit(const bool produce_confidence_masks);
+  bool HasGlExtension(std::string const& extension);
   absl::Status CreateBasicFragmentShaderProgram(
       std::string const& program_name,
       std::string const& fragment_shader_source,
@@ -69,6 +78,10 @@ class SegmentationPostprocessorGl {
   GlShader softmax_max_shader_;
   GlShader softmax_transform_and_sum_shader_;
   GlShader softmax_normalization_shader_;
+
+#ifdef TASK_SEGMENTATION_USE_GLES_31_POSTPROCESSING
+  SsboToTextureConverter ssbo_to_texture_converter_;
+#endif
 };
 
 }  // namespace tasks

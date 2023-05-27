@@ -50,7 +50,12 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
-    ],
+    ] + select({
+        "//conditions:default": [],
+        "//mediapipe:android": [
+            ":segmentation_postprocessor_gl",
+        ],
+    }),
     alwayslink = 1,
 )
 
@@ -72,6 +77,29 @@ cc_library(
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:str_format",
+    ] + select({
+        "//conditions:default": [],
+        "//mediapipe:android": [
+            "ssbo_to_texture_converter",
+        ],
+    }),
+)
+
+cc_library(
+    name = "ssbo_to_texture_converter",
+    srcs = ["ssbo_to_texture_converter.cc"],
+    hdrs = ["ssbo_to_texture_converter.h"],
+    tags = [
+        "nomac",
+        "notap",
+    ],
+    deps = [
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/gpu:gl_base",
+        "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_program",
+        "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_shader",
+        "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_texture",
+        "@org_tensorflow//tensorflow/lite/delegates/gpu/gl/converters:util",
     ],
 )
 

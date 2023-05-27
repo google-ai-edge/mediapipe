@@ -43,8 +43,17 @@ limitations under the License.
 #include "mediapipe/util/label_map.pb.h"
 
 #ifdef __EMSCRIPTEN__
-#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/segmentation_postprocessor_gl.h"
+#define TASK_SEGMENTATION_USE_GL_POSTPROCESSING 1
+#elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 && \
+    !MEDIAPIPE_USING_SWIFTSHADER && defined(MEDIAPIPE_ANDROID)
+#define TASK_SEGMENTATION_USE_GL_POSTPROCESSING 1
+#else
+#undef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
 #endif  // __EMSCRIPTEN__
+
+#ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
+#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/segmentation_postprocessor_gl.h"
+#endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
 
 // TODO: consolidate TensorToSegmentationCalculator.
 namespace mediapipe {
@@ -308,19 +317,19 @@ class TensorsToSegmentationCalculator : public Node {
                                               const float* tensors_buffer);
   TensorsToSegmentationCalculatorOptions options_;
 
-#ifdef __EMSCRIPTEN__
+#ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
   SegmentationPostprocessorGl postprocessor_;
-#endif  // __EMSCRIPTEN__
+#endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
 };
 
 // static
 absl::Status TensorsToSegmentationCalculator::UpdateContract(
     CalculatorContract* cc) {
-#ifdef __EMSCRIPTEN__
+#ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
   return SegmentationPostprocessorGl::UpdateContract(cc);
 #else
   return absl::OkStatus();
-#endif  // __EMSCRIPTEN__
+#endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
 }
 
 absl::Status TensorsToSegmentationCalculator::Open(
@@ -340,9 +349,9 @@ absl::Status TensorsToSegmentationCalculator::Open(
           "connected.");
     }
   }
-#ifdef __EMSCRIPTEN__
+#ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
   MP_RETURN_IF_ERROR(postprocessor_.Initialize(cc, options_));
-#endif  // __EMSCRIPTEN__
+#endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
   return absl::OkStatus();
 }
 
@@ -390,11 +399,11 @@ absl::Status TensorsToSegmentationCalculator::Process(
   }
 
   // Use GPU postprocessing on web when Tensor is there already.
-#ifdef __EMSCRIPTEN__
+#ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
   Shape output_shape = {/* height= */ output_height,
                         /* width= */ output_width,
                         /* channels= */ input_shape.channels};
-  if (input_tensor.ready_as_opengl_texture_2d()) {
+  if (input_tensor.ready_on_gpu()) {
     bool produce_category_mask = options_.segmenter_options().output_type() ==
                                      SegmenterOptions::CATEGORY_MASK ||
                                  cc->Outputs().HasTag("CATEGORY_MASK");
@@ -428,7 +437,7 @@ absl::Status TensorsToSegmentationCalculator::Process(
     }
     return absl::OkStatus();
   }
-#endif  // __EMSCRIPTEN__
+#endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
 
   // Otherwise, use CPU postprocessing.
   const float* tensors_buffer = input_tensor.GetCpuReadView().buffer<float>();
