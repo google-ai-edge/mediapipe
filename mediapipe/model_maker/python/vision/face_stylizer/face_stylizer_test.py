@@ -25,7 +25,7 @@ class FaceStylizerTest(tf.test.TestCase):
 
   def _load_data(self):
     """Loads training dataset."""
-    input_data_dir = test_utils.get_test_data_path('testdata')
+    input_data_dir = test_utils.get_test_data_path('input/style')
 
     data = face_stylizer.Dataset.from_folder(dirname=input_data_dir)
     return data

@@ -22,8 +22,7 @@ class DatasetTest(tf.test.TestCase):
 
   def setUp(self):
     super().setUp()
-    # TODO: Replace the stylize image dataset with licensed images.
-    self._test_data_dirname = 'testdata'
+    self._test_data_dirname = 'input/style'
 
   def test_from_folder(self):
     input_data_dir = test_utils.get_test_data_path(self._test_data_dirname)
