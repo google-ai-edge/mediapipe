@@ -91,7 +91,30 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   return self;
 }
 
-- (std::optional<NormalizedRect>)normalizedRectFromRegionOfInterest:(CGRect)roi
+- (std::optional<NormalizedRect>)normalizedRectWithRegionOfInterest:(CGRect)roi
+                                                   imageOrientation:
+                                                       (UIImageOrientation)imageOrientation
+                                                          imageSize:(CGSize)imageSize
+                                                              error:(NSError **)error {
+  return [self normalizedRectWithRegionOfInterest:roi
+                                        imageSize:imageSize
+                                 imageOrientation:imageOrientation
+                                       ROIAllowed:YES
+                                            error:error];
+}
+
+- (std::optional<NormalizedRect>)normalizedRectWithImageOrientation:
+                                     (UIImageOrientation)imageOrientation
+                                                          imageSize:(CGSize)imageSize
+                                                              error:(NSError **)error {
+  return [self normalizedRectWithRegionOfInterest:CGRectZero
+                                        imageSize:imageSize
+                                 imageOrientation:imageOrientation
+                                       ROIAllowed:NO
+                                            error:error];
+}
+
+- (std::optional<NormalizedRect>)normalizedRectWithRegionOfInterest:(CGRect)roi
                                                           imageSize:(CGSize)imageSize
                                                    imageOrientation:
                                                        (UIImageOrientation)imageOrientation

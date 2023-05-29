@@ -17,10 +17,6 @@
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPCategory+Helpers.h"
 #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPLandmark+Helpers.h"
 
-#include "mediapipe/framework/formats/classification.pb.h"
-#include "mediapipe/framework/formats/landmark.pb.h"
-#include "mediapipe/framework/packet.h"
-
 namespace {
 using ClassificationListProto = ::mediapipe::ClassificationList;
 using LandmarkListProto = ::mediapipe::LandmarkList;
@@ -28,52 +24,47 @@ using NormalizedLandmarkListProto = ::mediapipe::NormalizedLandmarkList;
 using ::mediapipe::Packet;
 }  // namespace
 
+static const NSInteger kDefaultGestureIndex = -1;
+
 @implementation MPPGestureRecognizerResult (Helpers)
 
++ (MPPGestureRecognizerResult *)emptyGestureRecognizerResultWithTimestampInMilliseconds:
+    (NSInteger)timestampInMilliseconds {
+  return [[MPPGestureRecognizerResult alloc] initWithGestures:@[]
+                                                   handedness:@[]
+                                                    landmarks:@[]
+                                               worldLandmarks:@[]
+                                      timestampInMilliseconds:timestampInMilliseconds];
+}
+
 + (MPPGestureRecognizerResult *)
-    gestureRecognizerResultWithHandGesturesPacket:(const Packet &)handGesturesPacket
-                                 handednessPacket:(const Packet &)handednessPacket
-                              handLandmarksPacket:(const Packet &)handLandmarksPacket
-                             worldLandmarksPacket:(const Packet &)worldLandmarksPacket {
-  NSInteger timestampInMilliseconds =
-      (NSInteger)(handGesturesPacket.Timestamp().Value() / kMicroSecondsPerMilliSecond);
-
-  if (handGesturesPacket.IsEmpty()) {
-    return [[MPPGestureRecognizerResult alloc] initWithGestures:@[]
-                                                     handedness:@[]
-                                                      landmarks:@[]
-                                                 worldLandmarks:@[]
-                                        timestampInMilliseconds:timestampInMilliseconds];
-  }
-
-  if (!handGesturesPacket.ValidateAsType<std::vector<ClassificationListProto>>().ok() ||
-      !handednessPacket.ValidateAsType<std::vector<ClassificationListProto>>().ok() ||
-      !handLandmarksPacket.ValidateAsType<std::vector<NormalizedLandmarkListProto>>().ok() ||
-      !worldLandmarksPacket.ValidateAsType<std::vector<LandmarkListProto>>().ok()) {
-    return nil;
-  }
-
-  const std::vector<ClassificationListProto> &handGesturesClassificationListProtos =
-      handGesturesPacket.Get<std::vector<ClassificationListProto>>();
+    gestureRecognizerResultWithHandGesturesProto:
+        (const std::vector<ClassificationListProto> &)handGesturesProto
+                                  handednessroto:
+                                      (const std::vector<ClassificationListProto> &)handednessProto
+                             handLandmarksPacket:(const std::vector<NormalizedLandmarkListProto> &)
+                                                     handLandmarksProto
+                            worldLandmarksPacket:
+                                (const std::vector<LandmarkListProto> &)worldLandmarksProto
+                         timestampInMilliSeconds:(NSInteger)timestampInMilliseconds {
   NSMutableArray<NSMutableArray<MPPCategory *> *> *multiHandGestures =
-      [NSMutableArray arrayWithCapacity:(NSUInteger)handGesturesClassificationListProtos.size()];
+      [NSMutableArray arrayWithCapacity:(NSUInteger)handGesturesProto.size()];
 
-  for (const auto &classificationListProto : handGesturesClassificationListProtos) {
+  for (const auto &classificationListProto : handGesturesProto) {
     NSMutableArray<MPPCategory *> *gestures = [NSMutableArray
         arrayWithCapacity:(NSUInteger)classificationListProto.classification().size()];
     for (const auto &classificationProto : classificationListProto.classification()) {
-      MPPCategory *category = [MPPCategory categoryWithProto:classificationProto];
+      MPPCategory *category = [MPPCategory categoryWithProto:classificationProto
+                                                       index:kDefaultGestureIndex];
       [gestures addObject:category];
     }
     [multiHandGestures addObject:gestures];
   }
 
-  const std::vector<ClassificationListProto> &handednessClassificationListProtos =
-      handednessPacket.Get<std::vector<ClassificationListProto>>();
   NSMutableArray<NSMutableArray<MPPCategory *> *> *multiHandHandedness =
-      [NSMutableArray arrayWithCapacity:(NSUInteger)handednessClassificationListProtos.size()];
+      [NSMutableArray arrayWithCapacity:(NSUInteger)handednessProto.size()];
 
-  for (const auto &classificationListProto : handednessClassificationListProtos) {
+  for (const auto &classificationListProto : handednessProto) {
     NSMutableArray<MPPCategory *> *handedness = [NSMutableArray
         arrayWithCapacity:(NSUInteger)classificationListProto.classification().size()];
     for (const auto &classificationProto : classificationListProto.classification()) {
@@ -83,12 +74,10 @@ using ::mediapipe::Packet;
     [multiHandHandedness addObject:handedness];
   }
 
-  const std::vector<NormalizedLandmarkListProto> &handLandmarkListProtos =
-      handLandmarksPacket.Get<std::vector<NormalizedLandmarkListProto>>();
   NSMutableArray<NSMutableArray<MPPNormalizedLandmark *> *> *multiHandLandmarks =
-      [NSMutableArray arrayWithCapacity:(NSUInteger)handLandmarkListProtos.size()];
+      [NSMutableArray arrayWithCapacity:(NSUInteger)handLandmarksProto.size()];
 
-  for (const auto &handLandmarkListProto : handLandmarkListProtos) {
+  for (const auto &handLandmarkListProto : handLandmarksProto) {
     NSMutableArray<MPPNormalizedLandmark *> *handLandmarks =
         [NSMutableArray arrayWithCapacity:(NSUInteger)handLandmarkListProto.landmark().size()];
     for (const auto &normalizedLandmarkProto : handLandmarkListProto.landmark()) {
@@ -99,12 +88,10 @@ using ::mediapipe::Packet;
     [multiHandLandmarks addObject:handLandmarks];
   }
 
-  const std::vector<LandmarkListProto> &worldLandmarkListProtos =
-      worldLandmarksPacket.Get<std::vector<LandmarkListProto>>();
   NSMutableArray<NSMutableArray<MPPLandmark *> *> *multiHandWorldLandmarks =
-      [NSMutableArray arrayWithCapacity:(NSUInteger)worldLandmarkListProtos.size()];
+      [NSMutableArray arrayWithCapacity:(NSUInteger)worldLandmarksProto.size()];
 
-  for (const auto &worldLandmarkListProto : worldLandmarkListProtos) {
+  for (const auto &worldLandmarkListProto : worldLandmarksProto) {
     NSMutableArray<MPPLandmark *> *worldLandmarks =
         [NSMutableArray arrayWithCapacity:(NSUInteger)worldLandmarkListProto.landmark().size()];
     for (const auto &landmarkProto : worldLandmarkListProto.landmark()) {
@@ -122,6 +109,39 @@ using ::mediapipe::Packet;
                                    timestampInMilliseconds:timestampInMilliseconds];
 
   return gestureRecognizerResult;
+}
+
++ (MPPGestureRecognizerResult *)
+    gestureRecognizerResultWithHandGesturesPacket:(const Packet &)handGesturesPacket
+                                 handednessPacket:(const Packet &)handednessPacket
+                              handLandmarksPacket:(const Packet &)handLandmarksPacket
+                             worldLandmarksPacket:(const Packet &)worldLandmarksPacket {
+  NSInteger timestampInMilliseconds =
+      (NSInteger)(handGesturesPacket.Timestamp().Value() / kMicroSecondsPerMilliSecond);
+
+  if (handGesturesPacket.IsEmpty()) {
+    return [MPPGestureRecognizerResult
+        emptyGestureRecognizerResultWithTimestampInMilliseconds:timestampInMilliseconds];
+  }
+
+  if (!handGesturesPacket.ValidateAsType<std::vector<ClassificationListProto>>().ok() ||
+      !handednessPacket.ValidateAsType<std::vector<ClassificationListProto>>().ok() ||
+      !handLandmarksPacket.ValidateAsType<std::vector<NormalizedLandmarkListProto>>().ok() ||
+      !worldLandmarksPacket.ValidateAsType<std::vector<LandmarkListProto>>().ok()) {
+    return [MPPGestureRecognizerResult
+        emptyGestureRecognizerResultWithTimestampInMilliseconds:timestampInMilliseconds];
+  }
+
+  return [MPPGestureRecognizerResult
+      gestureRecognizerResultWithHandGesturesProto:handGesturesPacket
+                                                       .Get<std::vector<ClassificationListProto>>()
+                                    handednessroto:handednessPacket
+                                                       .Get<std::vector<ClassificationListProto>>()
+                               handLandmarksPacket:handLandmarksPacket.Get<
+                                                       std::vector<NormalizedLandmarkListProto>>()
+                              worldLandmarksPacket:worldLandmarksPacket
+                                                       .Get<std::vector<LandmarkListProto>>()
+                           timestampInMilliSeconds:timestampInMilliseconds];
 }
 
 @end
