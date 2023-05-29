@@ -55,12 +55,51 @@ static const int kMicroSecondsPerMilliSecond = 1000;
 @interface MPPImageClassifier () {
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
+  dispatch_queue_t _callbackQueue;
 }
 @property(nonatomic, weak) id<MPPImageClassifierLiveStreamDelegate>
     imageClassifierLiveStreamDelegate;
 @end
 
 @implementation MPPImageClassifier
+
+- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
+  if (![self.imageClassifierLiveStreamDelegate
+          respondsToSelector:@selector
+          (imageClassifier:didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
+    return;
+  }
+
+  NSError *callbackError = nil;
+  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
+    dispatch_async(_callbackQueue, ^{
+      [self.imageClassifierLiveStreamDelegate imageClassifier:self
+                            didFinishClassificationWithResult:nil
+                                      timestampInMilliseconds:Timestamp::Unset().Value()
+                                                        error:callbackError];
+    });
+    return;
+  }
+
+  PacketMap &outputPacketMap = liveStreamResult.value();
+  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
+    return;
+  }
+
+  MPPImageClassifierResult *result = [MPPImageClassifierResult
+      imageClassifierResultWithClassificationsPacket:outputPacketMap[kClassificationsStreamName
+                                                                         .cppString]];
+
+  NSInteger timeStampInMilliseconds =
+      outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
+      kMicroSecondsPerMilliSecond;
+  dispatch_async(_callbackQueue, ^{
+    [self.imageClassifierLiveStreamDelegate imageClassifier:self
+                          didFinishClassificationWithResult:result
+                                    timestampInMilliseconds:timeStampInMilliseconds
+                                                      error:callbackError];
+  });
+}
 
 - (instancetype)initWithOptions:(MPPImageClassifierOptions *)options error:(NSError **)error {
   self = [super init];
@@ -88,56 +127,19 @@ static const int kMicroSecondsPerMilliSecond = 1000;
 
     if (options.imageClassifierLiveStreamDelegate) {
       _imageClassifierLiveStreamDelegate = options.imageClassifierLiveStreamDelegate;
-      // Capturing `self` as weak in order to avoid `self` being kept in memory
-      // and cause a retain cycle, after self is set to `nil`.
-      MPPImageClassifier *__weak weakSelf = self;
 
       // Create a private serial dispatch queue in which the deleagte method will be called
       // asynchronously. This is to ensure that if the client performs a long running operation in
       // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
       // freed up to continue with its operations.
-      const char *queueName = [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName];
-      dispatch_queue_t callbackQueue = dispatch_queue_create(queueName, NULL);
-      packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
-        if (!weakSelf) {
-          return;
-        }
-        if (![weakSelf.imageClassifierLiveStreamDelegate
-                respondsToSelector:@selector
-                (imageClassifier:
-                    didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
-          return;
-        }
+      _callbackQueue = dispatch_queue_create(
+          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], NULL);
 
-        NSError *callbackError = nil;
-        if (![MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
-          dispatch_async(callbackQueue, ^{
-            [weakSelf.imageClassifierLiveStreamDelegate imageClassifier:weakSelf
-                                      didFinishClassificationWithResult:nil
-                                                timestampInMilliseconds:Timestamp::Unset().Value()
-                                                                  error:callbackError];
-          });
-          return;
-        }
-
-        PacketMap &outputPacketMap = status_or_packets.value();
-        if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
-          return;
-        }
-
-        MPPImageClassifierResult *result =
-            [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:
-                                          outputPacketMap[kClassificationsStreamName.cppString]];
-
-        NSInteger timeStampInMilliseconds =
-            outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
-            kMicroSecondsPerMilliSecond;
-        dispatch_async(callbackQueue, ^{
-          [weakSelf.imageClassifierLiveStreamDelegate imageClassifier:weakSelf
-                                    didFinishClassificationWithResult:result
-                                              timestampInMilliseconds:timeStampInMilliseconds
-                                                                error:callbackError];
-        });
+      // Capturing `self` as weak in order to avoid `self` being kept in memory
+      // and cause a retain cycle, after self is set to `nil`.
+      MPPImageClassifier *__weak weakSelf = self;
+      packetsCallback = [=](absl::StatusOr<PacketMap> liveStreamResult) {
+        [weakSelf processLiveStreamResult:liveStreamResult];
       };
     }
 
