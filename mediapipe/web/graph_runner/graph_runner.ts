@@ -717,8 +717,8 @@ export class GraphRunner {
    *     given timestamp, to be parsed into the specified protobuffer type.
    * @param data The binary (serialized) raw protobuffer data.
    * @param protoType The C++ namespaced type this protobuffer data corresponds
-   *     to. It will be converted to this type when output as a packet into the
-   *     graph.
+   *     to (e.g. "foo.Bar"). It will be converted to this type when output as a
+   *     packet into the graph.
    * @param streamName The name of the graph input stream to send data into.
    * @param timestamp The timestamp of the input data, in ms.
    */

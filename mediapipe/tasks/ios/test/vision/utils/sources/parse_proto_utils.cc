@@ -13,19 +13,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/ios/test/vision/utils/sources/parse_proto_utils.h"
-
 #include <fstream>
 #include <sstream>
+
+#include "absl/status/status.h"
+#include "google/protobuf/text_format.h"
 
 namespace mediapipe::tasks::ios::test::vision::utils {
 
 namespace {
+using ::google::protobuf::Message;
 using ::google::protobuf::TextFormat;
 }  // anonymous namespace
 
-absl::Status get_proto_from_pbtxt(const std::string file_path,
-                                  google::protobuf::Message& proto) {
+::absl::Status get_proto_from_pbtxt(const std::string file_path,
+                                    Message& proto) {
   std::ifstream file_input_stream(file_path);
   if (!file_input_stream.is_open())
     return absl::InvalidArgumentError("Cannot read input file.");
@@ -34,8 +36,8 @@ absl::Status get_proto_from_pbtxt(const std::string file_path,
   strings_stream << file_input_stream.rdbuf();
 
   return TextFormat::ParseFromString(strings_stream.str(), &proto)
-             ? absl::OkStatus()
-             : absl::InvalidArgumentError(
+             ? ::absl::OkStatus()
+             : ::absl::InvalidArgumentError(
                    "Cannot read a valid proto from the input file.");
 }
 

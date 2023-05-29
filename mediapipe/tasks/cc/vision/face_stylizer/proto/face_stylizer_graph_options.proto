@@ -36,4 +36,7 @@ message FaceStylizerGraphOptions {
   // Options for face landmarker graph.
   optional vision.face_landmarker.proto.FaceLandmarkerGraphOptions
       face_landmarker_graph_options = 2;
+
+  // The width and height of the output face alignment images.
+  optional int32 face_alignment_size = 3 [default = 256];
 }

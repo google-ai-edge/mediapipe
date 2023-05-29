@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,10 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+package(default_visibility = ["//mediapipe/tasks:internal"])
+
 licenses(["notice"])
 
-filegroup(
-    name = "resource_files",
-    srcs = glob(["res/**"]),
-    visibility = ["//mediapipe/tasks/examples/android:__subpackages__"],
+objc_library(
+    name = "MPPFaceLandmarkerOptions",
+    srcs = ["sources/MPPFaceLandmarkerOptions.m"],
+    hdrs = ["sources/MPPFaceLandmarkerOptions.h"],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
+    ],
 )
