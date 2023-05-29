@@ -41,6 +41,7 @@ objc_library(
 
 objc_library(
     name = "MPPGestureRecognizer",
+    srcs = ["sources/MPPGestureRecognizer.mm"],
     hdrs = ["sources/MPPGestureRecognizer.h"],
     copts = [
         "-ObjC++",
@@ -51,7 +52,15 @@ objc_library(
     deps = [
         ":MPPGestureRecognizerOptions",
         ":MPPGestureRecognizerResult",
+        "//mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer_graph",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionPacketCreator",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
+        "//mediapipe/tasks/ios/vision/gesture_recognizer/utils:MPPGestureRecognizerOptionsHelpers",
+        "//mediapipe/tasks/ios/vision/gesture_recognizer/utils:MPPGestureRecognizerResultHelpers",
     ],
 )
