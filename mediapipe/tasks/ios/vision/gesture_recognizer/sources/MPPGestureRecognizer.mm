@@ -79,8 +79,7 @@ static NSString *const kTaskName = @"gestureRecognizer";
 }
 
 - (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
-  MPPGestureRecognizer *__weak weakSelf = self;
-  if (![weakSelf.gestureRecognizerLiveStreamDelegate
+  if (![self.gestureRecognizerLiveStreamDelegate
           respondsToSelector:@selector(gestureRecognizer:
                                  didFinishRecognitionWithResult:timestampInMilliseconds:error:)]) {
     return;
@@ -89,10 +88,10 @@ static NSString *const kTaskName = @"gestureRecognizer";
   NSError *callbackError = nil;
   if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
     dispatch_async(_callbackQueue, ^{
-      [weakSelf.gestureRecognizerLiveStreamDelegate gestureRecognizer:weakSelf
-                                       didFinishRecognitionWithResult:nil
-                                              timestampInMilliseconds:Timestamp::Unset().Value()
-                                                                error:callbackError];
+      [self.gestureRecognizerLiveStreamDelegate gestureRecognizer:self
+                                   didFinishRecognitionWithResult:nil
+                                          timestampInMilliseconds:Timestamp::Unset().Value()
+                                                            error:callbackError];
     });
     return;
   }
@@ -103,16 +102,16 @@ static NSString *const kTaskName = @"gestureRecognizer";
   }
 
   MPPGestureRecognizerResult *result =
-      [weakSelf gestureRecognizerResultWithOutputPacketMap:outputPacketMap];
+      [self gestureRecognizerResultWithOutputPacketMap:outputPacketMap];
 
   NSInteger timeStampInMilliseconds =
       outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
       kMicroSecondsPerMilliSecond;
   dispatch_async(_callbackQueue, ^{
-    [weakSelf.gestureRecognizerLiveStreamDelegate gestureRecognizer:weakSelf
-                                     didFinishRecognitionWithResult:result
-                                            timestampInMilliseconds:timeStampInMilliseconds
-                                                              error:callbackError];
+    [self.gestureRecognizerLiveStreamDelegate gestureRecognizer:self
+                                 didFinishRecognitionWithResult:result
+                                        timestampInMilliseconds:timeStampInMilliseconds
+                                                          error:callbackError];
   });
 }
 
@@ -146,16 +145,17 @@ static NSString *const kTaskName = @"gestureRecognizer";
 
     if (options.gestureRecognizerLiveStreamDelegate) {
       _gestureRecognizerLiveStreamDelegate = options.gestureRecognizerLiveStreamDelegate;
-      // Capturing `self` as weak in order to avoid `self` being kept in memory
-      // and cause a retain cycle, after self is set to `nil`.
-      MPPGestureRecognizer *__weak weakSelf = self;
 
       // Create a private serial dispatch queue in which the deleagte method will be called
       // asynchronously. This is to ensure that if the client performs a long running operation in
       // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
       // freed up to continue with its operations.
-      const char *queueName = [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName];
-      _callbackQueue = dispatch_queue_create(queueName, NULL);
+      _callbackQueue = dispatch_queue_create(
+          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], NULL);
+
+      // Capturing `self` as weak in order to avoid `self` being kept in memory
+      // and cause a retain cycle, after self is set to `nil`.
+      MPPGestureRecognizer *__weak weakSelf = self;
       packetsCallback = [=](absl::StatusOr<PacketMap> liveStreamResult) {
         [weakSelf processLiveStreamResult:liveStreamResult];
       };
