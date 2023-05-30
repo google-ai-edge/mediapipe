@@ -13,10 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include "mediapipe/tasks/ios/test/vision/utils/sources/parse_proto_utils.h"
+
 #include <fstream>
 #include <sstream>
 
-#include "absl/status/status.h"
 #include "google/protobuf/text_format.h"
 
 namespace mediapipe::tasks::ios::test::vision::utils {
