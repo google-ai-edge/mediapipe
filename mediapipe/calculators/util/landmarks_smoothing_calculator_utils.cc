@@ -14,6 +14,8 @@
 
 #include "mediapipe/calculators/util/landmarks_smoothing_calculator_utils.h"
 
+#include <iostream>
+
 #include "mediapipe/calculators/util/landmarks_smoothing_calculator.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
@@ -260,8 +262,18 @@ void NormalizedLandmarksToLandmarks(
     landmark->set_y(norm_landmark.y() * image_height);
     // Scale Z the same way as X (using image width).
     landmark->set_z(norm_landmark.z() * image_width);
-    landmark->set_visibility(norm_landmark.visibility());
-    landmark->set_presence(norm_landmark.presence());
+
+    if (norm_landmark.has_visibility()) {
+      landmark->set_visibility(norm_landmark.visibility());
+    } else {
+      landmark->clear_visibility();
+    }
+
+    if (norm_landmark.has_presence()) {
+      landmark->set_presence(norm_landmark.presence());
+    } else {
+      landmark->clear_presence();
+    }
   }
 }
 
@@ -277,8 +289,18 @@ void LandmarksToNormalizedLandmarks(const LandmarkList& landmarks,
     norm_landmark->set_y(landmark.y() / image_height);
     // Scale Z the same way as X (using image width).
     norm_landmark->set_z(landmark.z() / image_width);
-    norm_landmark->set_visibility(landmark.visibility());
-    norm_landmark->set_presence(landmark.presence());
+
+    if (landmark.has_presence()) {
+      norm_landmark->set_presence(landmark.presence());
+    } else {
+      norm_landmark->clear_presence();
+    }
+
+    if (landmark.has_visibility()) {
+      norm_landmark->set_visibility(landmark.visibility());
+    } else {
+      norm_landmark->clear_visibility();
+    }
   }
 }
 

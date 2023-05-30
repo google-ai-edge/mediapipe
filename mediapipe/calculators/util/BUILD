@@ -929,6 +929,17 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_test(
+    name = "landmarks_smoothing_calculator_utils_test",
+    size = "small",
+    srcs = ["landmarks_smoothing_calculator_utils_test.cc"],
+    deps = [
+        ":landmarks_smoothing_calculator_utils",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
+
 cc_library(
     name = "multi_landmarks_smoothing_calculator",
     srcs = ["multi_landmarks_smoothing_calculator.cc"],
