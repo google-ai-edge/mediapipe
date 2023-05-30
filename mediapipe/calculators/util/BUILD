@@ -899,16 +899,32 @@ mediapipe_proto_library(
 cc_library(
     name = "landmarks_smoothing_calculator",
     srcs = ["landmarks_smoothing_calculator.cc"],
+    hdrs = ["landmarks_smoothing_calculator.h"],
     deps = [
         ":landmarks_smoothing_calculator_cc_proto",
+        ":landmarks_smoothing_calculator_utils",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "landmarks_smoothing_calculator_utils",
+    srcs = ["landmarks_smoothing_calculator_utils.cc"],
+    hdrs = ["landmarks_smoothing_calculator_utils.h"],
+    deps = [
+        ":landmarks_smoothing_calculator_cc_proto",
+        "//mediapipe/framework:calculator_context",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util/filtering:one_euro_filter",
         "//mediapipe/util/filtering:relative_velocity_filter",
-        "@com_google_absl//absl/algorithm:container",
     ],
     alwayslink = 1,
 )
