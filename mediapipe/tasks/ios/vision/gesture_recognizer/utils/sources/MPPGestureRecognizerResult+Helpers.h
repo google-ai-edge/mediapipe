@@ -14,6 +14,8 @@
 
 #import "mediapipe/tasks/ios/vision/gesture_recognizer/sources/MPPGestureRecognizerResult.h"
 
+#include "mediapipe/framework/formats/classification.pb.h"
+#include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/packet.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -23,14 +25,14 @@ static const int kMicroSecondsPerMilliSecond = 1000;
 @interface MPPGestureRecognizerResult (Helpers)
 
 /**
- * Creates an `MPPGestureRecognizerResult` from hand gestures, handedness, hand landmarks and world
+ * Creates an `MPPGestureRecognizerResult` from  hand gestures, handedness, hand landmarks and world
  * landmarks packets.
  *
- * @param handGesturesPacket a MediaPipe packet wrapping a`std::vector<ClassificationListProto>`.
- * @param handednessPacket a MediaPipe packet wrapping a`std::vector<ClassificationListProto>`.
- * @param handLandmarksPacket a MediaPipe packet wrapping
+ * @param handGesturesPacket A MediaPipe packet wrapping a`std::vector<ClassificationListProto>`.
+ * @param handednessPacket A MediaPipe packet wrapping a`std::vector<ClassificationListProto>`.
+ * @param handLandmarksPacket A MediaPipe packet wrapping
  * a`std::vector<NormalizedlandmarkListProto>`.
- * @param handLandmarksPacket a MediaPipe packet wrapping a`std::vector<LandmarkListProto>`.
+ * @param worldLandmarksPacket A MediaPipe packet wrapping a`std::vector<LandmarkListProto>`.
  *
  * @return  An `MPPGestureRecognizerResult` object that contains the hand gesture recognition
  * results.
