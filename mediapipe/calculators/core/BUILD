@@ -297,8 +297,7 @@ cc_library(
         "//mediapipe/util:render_data_cc_proto",
         "@org_tensorflow//tensorflow/lite:framework",
     ] + select({
-        "//mediapipe/gpu:disable_gpu": [],
-        "//mediapipe:ios": [],
+        ":ios_or_disable_gpu": [],
         "//conditions:default": [
             "@org_tensorflow//tensorflow/lite/delegates/gpu/gl:gl_buffer",
         ],
