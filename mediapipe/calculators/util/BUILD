@@ -929,6 +929,40 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "multi_landmarks_smoothing_calculator",
+    srcs = ["multi_landmarks_smoothing_calculator.cc"],
+    hdrs = ["multi_landmarks_smoothing_calculator.h"],
+    deps = [
+        ":landmarks_smoothing_calculator_cc_proto",
+        ":landmarks_smoothing_calculator_utils",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "multi_world_landmarks_smoothing_calculator",
+    srcs = ["multi_world_landmarks_smoothing_calculator.cc"],
+    hdrs = ["multi_world_landmarks_smoothing_calculator.h"],
+    deps = [
+        ":landmarks_smoothing_calculator_cc_proto",
+        ":landmarks_smoothing_calculator_utils",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+    ],
+    alwayslink = 1,
+)
+
 mediapipe_proto_library(
     name = "visibility_smoothing_calculator_proto",
     srcs = ["visibility_smoothing_calculator.proto"],

@@ -55,6 +55,22 @@ class LandmarksFilter {
 absl::StatusOr<std::unique_ptr<LandmarksFilter>> InitializeLandmarksFilter(
     const mediapipe::LandmarksSmoothingCalculatorOptions& options);
 
+class MultiLandmarkFilters {
+ public:
+  virtual ~MultiLandmarkFilters() = default;
+
+  virtual absl::StatusOr<LandmarksFilter*> GetOrCreate(
+      const int64_t tracking_id,
+      const mediapipe::LandmarksSmoothingCalculatorOptions& options);
+
+  virtual void ClearUnused(const std::vector<int64_t>& tracking_ids);
+
+  virtual void Clear();
+
+ private:
+  std::map<int64_t, std::unique_ptr<LandmarksFilter>> filters_;
+};
+
 }  // namespace landmarks_smoothing
 }  // namespace mediapipe
 

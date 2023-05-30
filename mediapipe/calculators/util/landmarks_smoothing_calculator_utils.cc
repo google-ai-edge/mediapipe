@@ -318,5 +318,36 @@ absl::StatusOr<std::unique_ptr<LandmarksFilter>> InitializeLandmarksFilter(
   }
 }
 
+absl::StatusOr<LandmarksFilter*> MultiLandmarkFilters::GetOrCreate(
+    const int64_t tracking_id,
+    const mediapipe::LandmarksSmoothingCalculatorOptions& options) {
+  const auto it = filters_.find(tracking_id);
+  if (it != filters_.end()) {
+    return it->second.get();
+  }
+
+  ASSIGN_OR_RETURN(auto landmarks_filter, InitializeLandmarksFilter(options));
+  filters_[tracking_id] = std::move(landmarks_filter);
+  return filters_[tracking_id].get();
+}
+
+void MultiLandmarkFilters::ClearUnused(
+    const std::vector<int64_t>& tracking_ids) {
+  std::vector<int64_t> unused_tracking_ids;
+  for (const auto& it : filters_) {
+    bool unused = true;
+    for (int64_t tracking_id : tracking_ids) {
+      if (tracking_id == it.first) unused = false;
+    }
+    if (unused) unused_tracking_ids.push_back(it.first);
+  }
+
+  for (int64_t tracking_id : unused_tracking_ids) {
+    filters_.erase(tracking_id);
+  }
+}
+
+void MultiLandmarkFilters::Clear() { filters_.clear(); }
+
 }  // namespace landmarks_smoothing
 }  // namespace mediapipe
