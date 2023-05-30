@@ -407,11 +407,16 @@ class BuildExtension(build_ext.build_ext):
         'build',
         '--compilation_mode=opt',
         '--copt=-DNDEBUG',
-        '--copt=-DMESA_EGL_NO_X11_HEADERS',
-        '--copt=-DEGL_NO_X11',
         '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         str(ext.bazel_target + '.so'),
     ]
+
+    if MP_DISABLE_GPU:
+      bazel_command.append('--define=MEDIAPIPE_DISABLE_GPU=1')
+    else:
+      bazel_command.append('--copt=-DMESA_EGL_NO_X11_HEADERS')
+      bazel_command.append('--copt=-DEGL_NO_X11')
+
     if extra_args:
       bazel_command += extra_args
     if not self.link_opencv and not IS_WINDOWS:
