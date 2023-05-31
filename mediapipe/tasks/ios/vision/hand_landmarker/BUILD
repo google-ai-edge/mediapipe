@@ -55,3 +55,8 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPHandLandmark",
+    hdrs = ["sources/MPPHandLandmark.h"],
+    module_name = "MPPHandLandmark",
+)
