@@ -320,8 +320,8 @@ static const float kLandmarksErrorTolerance = 0.03f;
   MPPGestureRecognizerOptions *gestureRecognizerOptions =
       [self gestureRecognizerOptionsWithModelFileInfo:kGestureRecognizerBundleAssetFile];
 
-  const NSInteger numberOfHands = 2;
-  gestureRecognizerOptions.numberOfHands = numberOfHands;
+  const NSInteger numHands = 2;
+  gestureRecognizerOptions.numHands = numHands;
 
   MPPGestureRecognizer *gestureRecognizer =
       [self createGestureRecognizerWithOptionsSucceeds:gestureRecognizerOptions];
@@ -329,15 +329,15 @@ static const float kLandmarksErrorTolerance = 0.03f;
   MPPGestureRecognizerResult *gestureRecognizerResult =
       [self recognizeImageWithFileInfo:kTwoHandsImage usingGestureRecognizer:gestureRecognizer];
 
-  XCTAssertTrue(gestureRecognizerResult.handedness.count == numberOfHands);
+  XCTAssertTrue(gestureRecognizerResult.handedness.count == numHands);
 }
 
 - (void)testRecognizeWithRotationSucceeds {
   MPPGestureRecognizerOptions *gestureRecognizerOptions =
       [self gestureRecognizerOptionsWithModelFileInfo:kGestureRecognizerBundleAssetFile];
 
-  const NSInteger numberOfHands = 2;
-  gestureRecognizerOptions.numberOfHands = numberOfHands;
+  const NSInteger numHands = 2;
+  gestureRecognizerOptions.numHands = numHands;
 
   MPPGestureRecognizer *gestureRecognizer =
       [self createGestureRecognizerWithOptionsSucceeds:gestureRecognizerOptions];
@@ -360,8 +360,8 @@ static const float kLandmarksErrorTolerance = 0.03f;
   MPPGestureRecognizerOptions *gestureRecognizerOptions =
       [self gestureRecognizerOptionsWithModelFileInfo:kGestureRecognizerBundleAssetFile];
 
-  const NSInteger numberOfHands = 1;
-  gestureRecognizerOptions.numberOfHands = numberOfHands;
+  const NSInteger numHands = 1;
+  gestureRecognizerOptions.numHands = numHands;
 
   MPPGestureRecognizer *gestureRecognizer =
       [self createGestureRecognizerWithOptionsSucceeds:gestureRecognizerOptions];
@@ -379,8 +379,8 @@ static const float kLandmarksErrorTolerance = 0.03f;
   gestureRecognizerOptions.cannedGesturesClassifierOptions.scoreThreshold = 0.5f;
   gestureRecognizerOptions.cannedGesturesClassifierOptions.categoryAllowlist = @[ kFistLabel ];
 
-  const NSInteger numberOfHands = 1;
-  gestureRecognizerOptions.numberOfHands = numberOfHands;
+  const NSInteger numHands = 1;
+  gestureRecognizerOptions.numHands = numHands;
 
   MPPGestureRecognizer *gestureRecognizer =
       [self createGestureRecognizerWithOptionsSucceeds:gestureRecognizerOptions];
@@ -398,8 +398,8 @@ static const float kLandmarksErrorTolerance = 0.03f;
   gestureRecognizerOptions.cannedGesturesClassifierOptions.scoreThreshold = 0.5f;
   gestureRecognizerOptions.cannedGesturesClassifierOptions.categoryDenylist = @[ kFistLabel ];
 
-  const NSInteger numberOfHands = 1;
-  gestureRecognizerOptions.numberOfHands = numberOfHands;
+  const NSInteger numHands = 1;
+  gestureRecognizerOptions.numHands = numHands;
 
   MPPGestureRecognizer *gestureRecognizer =
       [self createGestureRecognizerWithOptionsSucceeds:gestureRecognizerOptions];
