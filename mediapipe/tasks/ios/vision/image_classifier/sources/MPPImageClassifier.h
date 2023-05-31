@@ -14,7 +14,6 @@
 
 #import <Foundation/Foundation.h>
 
-#import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 #import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifierOptions.h"
 #import "mediapipe/tasks/ios/vision/image_classifier/sources/MPPImageClassifierResult.h"
