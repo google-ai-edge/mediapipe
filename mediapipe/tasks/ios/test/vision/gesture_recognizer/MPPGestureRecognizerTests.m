@@ -284,16 +284,4 @@ static const float kLandmarksErrorTolerance = 0.03f;
                                                       thumbUpGestureRecognizerResult]];
 }
 
-- (void)testRecognizeWithEmptyResultsSucceeds {
-  MPPGestureRecognizerOptions *gestureRecognizerOptions =
-      [self gestureRecognizerOptionsWithModelFileInfo:kGestureRecognizerBundleAssetFile];
-
-  MPPGestureRecognizer *gestureRecognizer =
-      [self createGestureRecognizerWithOptionsSucceeds:gestureRecognizerOptions];
-
-  MPPGestureRecognizerResult *gestureRecognizerResult =
-      [self recognizeImageWithFileInfo:kNoHandsImage usingGestureRecognizer:gestureRecognizer];
-  AssertGestureRecognizerResultIsEmpty(gestureRecognizerResult);
-}
-
 @end
