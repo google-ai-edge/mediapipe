@@ -15,7 +15,7 @@
 #import <XCTest/XCTest.h>
 
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
-#import "mediapipe/tasks/ios/test/vision/gesture_recognizer/utils/sources/MPPGestureRecognizerResult+ProtoHelpers.h"
+#import "mediapipe/tasks/ios/test/vision/gesture_recognizer/utils/sources/MPPGestureRecognizerResult+ProtobufHelpers.h"
 #import "mediapipe/tasks/ios/test/vision/utils/sources/MPPImage+TestUtils.h"
 #import "mediapipe/tasks/ios/vision/gesture_recognizer/sources/MPPGestureRecognizer.h"
 
@@ -63,13 +63,6 @@ static const float kLandmarksErrorTolerance = 0.03f;
                              @"hand index = %d landmark index j = %d", handIndex, landmarkIndex); \
   XCTAssertEqualWithAccuracy(landmark.y, expectedLandmark.y, kLandmarksErrorTolerance,            \
                              @"hand index = %d landmark index j = %d", handIndex, landmarkIndex);
-
-#define AssertApproximatelyEqualMultiHandLandmarks(multiHandLandmarks, expectedMultiHandLandmars) \
-  XCTAssertEqual(multiHandLandmarks.count, expectedMultiHandLandmars.count)                       \
-      XCTAssertEqualWithAccuracy(landmark.x, expectedLandmark.x, kLandmarksErrorTolerance,        \
-                                 @"hand index = %d landmark index j = %d", handIndex, handIndex); \
-  XCTAssertEqualWithAccuracy(landmark.y, expectedLandmark.y, kLandmarksErrorTolerance,            \
-                             @"hand index = %d landmark index j = %d", handIndex, handIndex);
 
 #define AssertGestureRecognizerResultIsEmpty(gestureRecognizerResult) \
   XCTAssertTrue(gestureRecognizerResult.gestures.count == 0);         \

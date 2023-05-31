@@ -16,7 +16,7 @@
 #import "mediapipe/tasks/ios/vision/gesture_recognizer/sources/MPPGestureRecognizerResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
-@interface MPPGestureRecognizerResult (ProtoHelpers)
+@interface MPPGestureRecognizerResult (ProtobufHelpers)
 
 + (MPPGestureRecognizerResult *)
     gestureRecognizerResultsFromTextEncodedProtobufFileWithName:(NSString *)fileName

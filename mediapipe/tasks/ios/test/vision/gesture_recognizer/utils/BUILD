@@ -3,9 +3,9 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 objc_library(
-    name = "MPPGestureRecognizerResultProtoHelpers",
-    srcs = ["sources/MPPGestureRecognizerResult+ProtoHelpers.mm"],
-    hdrs = ["sources/MPPGestureRecognizerResult+ProtoHelpers.h"],
+    name = "MPPGestureRecognizerResultProtobufHelpers",
+    srcs = ["sources/MPPGestureRecognizerResult+ProtobufHelpers.mm"],
+    hdrs = ["sources/MPPGestureRecognizerResult+ProtobufHelpers.h"],
     copts = [
         "-ObjC++",
         "-std=c++17",

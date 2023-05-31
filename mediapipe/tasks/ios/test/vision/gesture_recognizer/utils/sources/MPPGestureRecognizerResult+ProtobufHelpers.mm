@@ -29,7 +29,7 @@ using LandmarksDetectionResultProto =
 using ::mediapipe::tasks::ios::test::vision::utils::get_proto_from_pbtxt;
 }  // anonymous namespace
 
-@implementation MPPGestureRecognizerResult (ProtoHelpers)
+@implementation MPPGestureRecognizerResult (ProtobufHelpers)
 
 + (MPPGestureRecognizerResult *)
     gestureRecognizerResultsFromTextEncodedProtobufFileWithName:(NSString *)fileName
