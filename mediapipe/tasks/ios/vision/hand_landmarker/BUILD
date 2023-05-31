@@ -37,3 +37,21 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
     ],
 )
+
+objc_library(
+    name = "MPPHandLandmarker",
+    hdrs = ["sources/MPPHandLandmarker.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    module_name = "MPPHandLandmarker",
+    deps = [
+        ":MPPHandLandmarkerOptions",
+        ":MPPHandLandmarkerResult",
+        "//mediapipe/tasks/ios/components/containers:MPPConnection",
+        "//mediapipe/tasks/ios/vision/core:MPPImage",
+    ],
+)
+
