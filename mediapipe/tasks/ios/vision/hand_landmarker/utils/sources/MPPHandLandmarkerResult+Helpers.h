@@ -41,7 +41,7 @@ static const int kMicroSecondsPerMilliSecond = 1000;
                            handednessPacket:(const mediapipe::Packet &)handednessPacket;
 
 /**
- * Creates an `MPPHandLandmarkerResult` from handedness, landmarks and world landmarks proto
+ * Creates an `MPPHandLandmarkerResult` from landmarks, world landmarks and handedness proto
  * vectors.
  *
  * @param landmarksProto A vector of protos of type `std::vector<NormalizedlandmarkListProto>`.
