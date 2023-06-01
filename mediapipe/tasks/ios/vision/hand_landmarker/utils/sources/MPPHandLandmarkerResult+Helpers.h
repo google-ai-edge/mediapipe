@@ -27,10 +27,9 @@ static const int kMicroSecondsPerMilliSecond = 1000;
 /**
  * Creates an `MPPHandLandmarkerResult` from landmarks,  world landmarks and handedness packets.
  *
- * @param landmarksPacket A MediaPipe packet wrapping
- * a`std::vector<NormalizedlandmarkListProto>`.
- * @param worldLandmarksPacket A MediaPipe packet wrapping a`std::vector<LandmarkListProto>`.
- * @param handednessPacket a MediaPipe packet wrapping a`std::vector<ClassificationListProto>`.
+ * @param landmarksPacket A MediaPipe packet wrapping a `std::vector<NormalizedlandmarkListProto>`.
+ * @param worldLandmarksPacket A MediaPipe packet wrapping a `std::vector<LandmarkListProto>`.
+ * @param handednessPacket a MediaPipe packet wrapping a `std::vector<ClassificationListProto>`.
  *
  * @return  An `MPPHandLandmarkerResult` object that contains the hand landmark detection
  * results.
