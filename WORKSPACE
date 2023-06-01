@@ -612,3 +612,19 @@ http_archive(
     urls = ["https://github.com/halide/Halide/releases/download/v15.0.1/Halide-15.0.1-x86-64-windows-4c63f1befa1063184c5982b11b6a2cc17d4e5815.zip"],
     build_file = "@//third_party:halide.BUILD",
 )
+
+# Emscripten toolchain
+http_archive(
+    name = "emsdk",
+    sha256 = "e55704006765ea8e127d76278b1573b114204d19e6972d8a3a2a18f2f2ee4c10",
+    strip_prefix = "emsdk-b113f24842c6e97fe3e352084db09a6e278593ae/bazel",
+    url = "https://github.com/emscripten-core/emsdk/archive/b113f24842c6e97fe3e352084db09a6e278593ae.tar.gz",
+)
+load("@emsdk//:deps.bzl", emsdk_deps = "deps")
+emsdk_deps()
+
+load("@emsdk//:emscripten_deps.bzl", emsdk_emscripten_deps = "emscripten_deps")
+emsdk_emscripten_deps(emscripten_version = "3.1.37")
+
+load("@emsdk//:toolchains.bzl", "register_emscripten_toolchains")
+register_emscripten_toolchains()

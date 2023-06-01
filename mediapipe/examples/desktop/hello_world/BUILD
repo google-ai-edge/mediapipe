@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@emsdk//emscripten_toolchain:wasm_rules.bzl", "wasm_cc_binary")
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
@@ -26,4 +29,9 @@ cc_binary(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
     ],
+)
+
+wasm_cc_binary(
+    name = "hello_world_wasm",
+    cc_target = ":hello_world",
 )

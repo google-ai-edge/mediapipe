@@ -103,3 +103,7 @@ try-import %workspace%/.configure.bazelrc
 
 # This bazelrc file can be used for user-specific custom build settings.
 try-import %workspace%/.user.bazelrc
+
+##### WASM #####
+
+build --incompatible_enable_cc_toolchain_resolution
