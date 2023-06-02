@@ -107,6 +107,46 @@ NS_SWIFT_NAME(FaceLandmarker)
                                                    error:(NSError **)error
     NS_SWIFT_NAME(detect(videoFrame:timestampInMilliseconds:));
 
+/**
+ * Sends live stream image data of type `MPPImage` to perform face landmark detection using the
+ * whole image as region of interest. Rotation will be applied according to the `orientation`
+ * property of the provided `MPPImage`. Only use this method when the `MPPFaceLandmarker` is created
+ * with `MPPRunningModeLiveStream`.
+ *
+ * The object which needs to be continuously notified of the available results of face
+ * detection must confirm to `MPPFaceLandmarkerLiveStreamDelegate` protocol and implement the
+ * `faceLandmarker:didFinishDetectionWithResult:timestampInMilliseconds:error:` delegate method.
+ *
+ * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
+ * to the face detector. The input timestamps must be monotonically increasing.
+ *
+ * This method supports RGBA images. If your `MPPImage` has a source type of
+ * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
+ * must have one of the following pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If the input `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color
+ * space is RGB with an Alpha channel.
+ *
+ * If this method is used for classifying live camera frames using `AVFoundation`, ensure that you
+ * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32RGBA` using its
+ * `videoSettings` property.
+ *
+ * @param image A live stream image data of type `MPPImage` on which face landmark detection is to
+ * be performed.
+ * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
+ * image is sent to the face detector. The input timestamps must be monotonically increasing.
+ * @param error An optional error parameter populated when there is an error when sending the input
+ * image to the graph.
+ *
+ * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
+ */
+- (BOOL)detectAsyncInImage:(MPPImage *)image
+    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                      error:(NSError **)error
+    NS_SWIFT_NAME(detectAsync(image:timestampInMilliseconds:));
+
 - (instancetype)init NS_UNAVAILABLE;
 
 + (instancetype)new NS_UNAVAILABLE;

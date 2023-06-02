@@ -53,6 +53,8 @@ static NSString *const kFaceLandmarkerModelName = @"face_landmarker_v2";
 static NSString *const kFaceLandmarkerWithBlendshapesModelName =
     @"face_landmarker_v2_with_blendshapes";
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
+static NSString *const kLiveStreamTestsDictFaceLandmarkerKey = @"face_landmarker";
+static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
 constexpr float kLandmarkErrorThreshold = 0.03f;
 constexpr float kBlendshapesErrorThreshold = 0.1f;
@@ -64,7 +66,9 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   XCTAssertEqual(error.code, expectedError.code);            \
   XCTAssertEqualObjects(error.localizedDescription, expectedError.localizedDescription)
 
-@interface MPPFaceLandmarkerTests : XCTestCase {
+@interface MPPFaceLandmarkerTests : XCTestCase <MPPFaceLandmarkerLiveStreamDelegate> {
+  NSDictionary *_liveStreamSucceedsTestDict;
+  NSDictionary *_outOfOrderTimestampTestDict;
 }
 @end
 
@@ -164,7 +168,121 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   }
 }
 
+#pragma mark Live Stream Mode Tests
+
+- (void)testDetectWithLiveStreamModeAndPotraitSucceeds {
+  NSInteger iterationCount = 100;
+
+  // Because of flow limiting, the callback might be invoked fewer than `iterationCount` times. An
+  // normal expectation will fail if expectation.fullfill() is not called
+  // `expectation.expectedFulfillmentCount` times. If `expectation.isInverted = true`, the test will
+  // only succeed if expectation is not fullfilled for the specified `expectedFulfillmentCount`.
+  // Since it is not possible to predict how many times the expectation is supposed to be
+  // fullfilled, `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and
+  // `expectation.isInverted = true` ensures that test succeeds if expectation is fullfilled <=
+  // `iterationCount` times.
+  XCTestExpectation *expectation = [[XCTestExpectation alloc]
+      initWithDescription:@"detectWithOutOfOrderTimestampsAndLiveStream"];
+  expectation.expectedFulfillmentCount = iterationCount + 1;
+  expectation.inverted = YES;
+
+  MPPFaceLandmarkerOptions *options =
+      [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
+  options.runningMode = MPPRunningModeLiveStream;
+  options.faceLandmarkerLiveStreamDelegate = self;
+
+  MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithOptions:options error:nil];
+  MPPImage *image = [self imageWithFileInfo:kPortraitImage];
+
+  _liveStreamSucceedsTestDict = @{
+    kLiveStreamTestsDictFaceLandmarkerKey : faceLandmarker,
+    kLiveStreamTestsDictExpectationKey : expectation
+  };
+
+  for (int i = 0; i < iterationCount; i++) {
+    XCTAssertTrue([faceLandmarker detectAsyncInImage:image timestampInMilliseconds:i error:nil]);
+  }
+
+  NSTimeInterval timeout = 0.5f;
+  [self waitForExpectations:@[ expectation ] timeout:timeout];
+}
+
+- (void)testDetectWithOutOfOrderTimestampsAndLiveStreamModeFails {
+  MPPFaceLandmarkerOptions *options =
+      [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
+  options.runningMode = MPPRunningModeLiveStream;
+  options.faceLandmarkerLiveStreamDelegate = self;
+
+  XCTestExpectation *expectation = [[XCTestExpectation alloc]
+      initWithDescription:@"detectWithOutOfOrderTimestampsAndLiveStream"];
+  expectation.expectedFulfillmentCount = 1;
+
+  MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithOptions:options error:nil];
+  _liveStreamSucceedsTestDict = @{
+    kLiveStreamTestsDictFaceLandmarkerKey : faceLandmarker,
+    kLiveStreamTestsDictExpectationKey : expectation
+  };
+
+  MPPImage *image = [self imageWithFileInfo:kPortraitImage];
+  XCTAssertTrue([faceLandmarker detectAsyncInImage:image timestampInMilliseconds:1 error:nil]);
+
+  NSError *error;
+  XCTAssertFalse([faceLandmarker detectAsyncInImage:image timestampInMilliseconds:0 error:&error]);
+
+  NSError *expectedError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey :
+                            @"INVALID_ARGUMENT: Input timestamp must be monotonically increasing."
+                      }];
+  AssertEqualErrors(error, expectedError);
+
+  NSTimeInterval timeout = 0.5f;
+  [self waitForExpectations:@[ expectation ] timeout:timeout];
+}
+
 #pragma mark Running Mode Tests
+
+- (void)testCreateFaceLandmarkerFailsWithDelegateInNonLiveStreamMode {
+  MPPRunningMode runningModesToTest[] = {MPPRunningModeImage, MPPRunningModeVideo};
+  for (int i = 0; i < sizeof(runningModesToTest) / sizeof(runningModesToTest[0]); i++) {
+    MPPFaceLandmarkerOptions *options =
+        [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
+
+    options.runningMode = runningModesToTest[i];
+    options.faceLandmarkerLiveStreamDelegate = self;
+
+    [self
+        assertCreateFaceLandmarkerWithOptions:options
+                       failsWithExpectedError:
+                           [NSError errorWithDomain:kExpectedErrorDomain
+                                               code:MPPTasksErrorCodeInvalidArgumentError
+                                           userInfo:@{
+                                             NSLocalizedDescriptionKey :
+                                                 @"The vision task is in image or video mode. The "
+                                                 @"delegate must not be set in the task's options."
+                                           }]];
+  }
+}
+
+- (void)testCreateFaceLandmarkerFailsWithMissingDelegateInLiveStreamMode {
+  MPPFaceLandmarkerOptions *options =
+      [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
+  options.runningMode = MPPRunningModeLiveStream;
+
+  [self assertCreateFaceLandmarkerWithOptions:options
+                       failsWithExpectedError:
+                           [NSError errorWithDomain:kExpectedErrorDomain
+                                               code:MPPTasksErrorCodeInvalidArgumentError
+                                           userInfo:@{
+                                             NSLocalizedDescriptionKey :
+                                                 @"The vision task is in live stream mode. An "
+                                                 @"object must be set as the delegate of the task "
+                                                 @"in its options to ensure asynchronous delivery "
+                                                 @"of results."
+                                           }]];
+}
 
 - (void)testDetectFailsWithCallingWrongAPIInImageMode {
   MPPFaceLandmarkerOptions *options =
@@ -172,6 +290,21 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithOptions:options error:nil];
 
   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
+
+  NSError *liveStreamAPICallError;
+  XCTAssertFalse([faceLandmarker detectAsyncInImage:image
+                            timestampInMilliseconds:0
+                                              error:&liveStreamAPICallError]);
+
+  NSError *expectedLiveStreamAPICallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with live "
+                                                    @"stream mode. Current Running Mode: Image"
+                      }];
+  AssertEqualErrors(liveStreamAPICallError, expectedLiveStreamAPICallError);
+
   NSError *videoAPICallError;
   XCTAssertFalse([faceLandmarker detectInVideoFrame:image
                             timestampInMilliseconds:0
@@ -195,6 +328,20 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithOptions:options error:nil];
 
   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
+  NSError *liveStreamAPICallError;
+  XCTAssertFalse([faceLandmarker detectAsyncInImage:image
+                            timestampInMilliseconds:0
+                                              error:&liveStreamAPICallError]);
+
+  NSError *expectedLiveStreamAPICallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with live "
+                                                    @"stream mode. Current Running Mode: Video"
+                      }];
+  AssertEqualErrors(liveStreamAPICallError, expectedLiveStreamAPICallError);
+
   NSError *imageAPICallError;
   XCTAssertFalse([faceLandmarker detectInImage:image error:&imageAPICallError]);
 
@@ -206,6 +353,61 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
                                                     @"image mode. Current Running Mode: Video"
                       }];
   AssertEqualErrors(imageAPICallError, expectedImageAPICallError);
+}
+
+- (void)testDetectFailsWithCallingWrongAPIInLiveStreamMode {
+  MPPFaceLandmarkerOptions *options =
+      [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
+  options.runningMode = MPPRunningModeLiveStream;
+  options.faceLandmarkerLiveStreamDelegate = self;
+  MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithOptions:options error:nil];
+
+  MPPImage *image = [self imageWithFileInfo:kPortraitImage];
+
+  NSError *imageAPICallError;
+  XCTAssertFalse([faceLandmarker detectInImage:image error:&imageAPICallError]);
+
+  NSError *expectedImageAPICallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with "
+                                                    @"image mode. Current Running Mode: Live Stream"
+                      }];
+  AssertEqualErrors(imageAPICallError, expectedImageAPICallError);
+
+  NSError *videoAPICallError;
+  XCTAssertFalse([faceLandmarker detectInVideoFrame:image
+                            timestampInMilliseconds:0
+                                              error:&videoAPICallError]);
+
+  NSError *expectedVideoAPICallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with "
+                                                    @"video mode. Current Running Mode: Live Stream"
+                      }];
+  AssertEqualErrors(videoAPICallError, expectedVideoAPICallError);
+}
+
+#pragma mark MPPFaceLandmarkerLiveStreamDelegate Methods
+- (void)faceLandmarker:(MPPFaceLandmarker *)faceLandmarker
+    didFinishDetectionWithResult:(MPPFaceLandmarkerResult *)faceLandmarkerResult
+         timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                           error:(NSError *)error {
+  NSArray<MPPNormalizedLandmark *> *expectedLandmarks =
+      [MPPFaceLandmarkerTests expectedLandmarksFromFileInfo:kPortraitExpectedLandmarksName];
+  [self assertFaceLandmarkerResult:faceLandmarkerResult
+         containsExpectedLandmarks:expectedLandmarks
+               expectedBlendshapes:NULL
+      expectedTransformationMatrix:NULL];
+
+  if (faceLandmarker == _outOfOrderTimestampTestDict[kLiveStreamTestsDictFaceLandmarkerKey]) {
+    [_outOfOrderTimestampTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
+  } else if (faceLandmarker == _liveStreamSucceedsTestDict[kLiveStreamTestsDictFaceLandmarkerKey]) {
+    [_liveStreamSucceedsTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
+  }
 }
 
 + (NSString *)filePathWithName:(NSString *)fileName extension:(NSString *)extension {

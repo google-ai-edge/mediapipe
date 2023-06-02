@@ -20,6 +20,41 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class MPPFaceLandmarker;
+
+/**
+ * This protocol defines an interface for the delegates of `MPPFaceLandmarker` face to receive
+ * results of performing asynchronous face detection on images (i.e, when `runningMode` =
+ * `MPPRunningModeLiveStream`).
+ *
+ * The delegate of `MPPFaceLandmarker` must adopt `MPPFaceLandmarkerLiveStreamDelegate` protocol.
+ * The methods in this protocol are optional.
+ */
+NS_SWIFT_NAME(FaceDetectorLiveStreamDelegate)
+@protocol MPPFaceLandmarkerLiveStreamDelegate <NSObject>
+
+/**
+ * This method notifies a delegate that the results of asynchronous face detection of
+ * an image submitted to the `MPPFaceLandmarker` is available.
+ *
+ * This method is called on a private serial dispatch queue created by the `MPPFaceLandmarker`
+ * for performing the asynchronous delegates calls.
+ *
+ * @param faceLandmarker The face landmarker which performed the face landmark detctions.
+ * This is useful to test equality when there are multiple instances of `MPPFaceLandmarker`.
+ * @param result The `MPPFaceLandmarkerResult` object that contains a list of landmarks.
+ * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
+ * image was sent to the face detector.
+ * @param error An optional error parameter populated when there is an error in performing face
+ * detection on the input live stream image data.
+ */
+- (void)faceLandmarker:(MPPFaceLandmarker *)faceLandmarker
+    didFinishDetectionWithResult:(nullable MPPFaceLandmarkerResult *)result
+         timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                           error:(nullable NSError *)error
+    NS_SWIFT_NAME(faceLandmarker(_:didFinishDetection:timestampInMilliseconds:error:));
+@end
+
 /** Options for setting up a `MPPFaceLandmarker`. */
 NS_SWIFT_NAME(FaceLandmarkerOptions)
 @interface MPPFaceLandmarkerOptions : MPPTaskOptions <NSCopying>
@@ -34,6 +69,15 @@ NS_SWIFT_NAME(FaceLandmarkerOptions)
  *      input data, such as from the camera.
  */
 @property(nonatomic) MPPRunningMode runningMode;
+
+/**
+ * An object that confirms to `MPPFaceLandmarkerLiveStreamDelegate` protocol. This object must
+ * implement `faceLandmarker:didFinishDetectionWithResult:timestampInMilliseconds:error:` to receive
+ * the results of performing asynchronous face landmark detection on images (i.e, when `runningMode`
+ * = `MPPRunningModeLiveStream`).
+ */
+@property(nonatomic, weak, nullable) id<MPPFaceLandmarkerLiveStreamDelegate>
+    faceLandmarkerLiveStreamDelegate;
 
 /** The maximum number of faces can be detected by the FaceLandmarker. Defaults to 1. */
 @property(nonatomic) NSInteger numFaces;

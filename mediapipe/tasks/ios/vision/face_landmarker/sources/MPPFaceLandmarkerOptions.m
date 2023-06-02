@@ -25,6 +25,7 @@
     _minTrackingConfidence = 0.5f;
     _outputFaceBlendshapes = NO;
     _outputFacialTransformationMatrixes = NO;
+    _outputFacialTransformationMatrixes = NO;
   }
   return self;
 }
@@ -39,6 +40,7 @@
   faceLandmarkerOptions.outputFaceBlendshapes = self.outputFaceBlendshapes;
   faceLandmarkerOptions.outputFacialTransformationMatrixes =
       self.outputFacialTransformationMatrixes;
+  faceLandmarkerOptions.faceLandmarkerLiveStreamDelegate = self.faceLandmarkerLiveStreamDelegate;
 
   return faceLandmarkerOptions;
 }

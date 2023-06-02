@@ -25,8 +25,11 @@
 
 using ::mediapipe::NormalizedRect;
 using ::mediapipe::Packet;
+using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
+
+static constexpr int kMicrosecondsPerMillisecond = 1000;
 
 // Constants for the underlying MP Tasks Graph. See
 // https://github.com/google/mediapipe/tree/master/mediapipe/tasks/cc/vision/face_landmarker/face_landmarker_graph.cc
@@ -55,8 +58,14 @@ static NSString *const kTaskName = @"faceLandmarker";
 @interface MPPFaceLandmarker () {
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
+  /**
+   * The callback queue for the live stream delegate. This is only set if the user provides a live
+   * stream delegate.
+   */
+  dispatch_queue_t _callbackQueue;
+  /** The user-provided live stream delegate if set. */
+  __weak id<MPPFaceLandmarkerLiveStreamDelegate> _faceLandmarkerLiveStreamDelegate;
 }
-
 @end
 
 @implementation MPPFaceLandmarker
@@ -94,10 +103,30 @@ static NSString *const kTaskName = @"faceLandmarker";
       return nil;
     }
 
+    PacketsCallback packetsCallback = nullptr;
+
+    if (options.faceLandmarkerLiveStreamDelegate) {
+      _faceLandmarkerLiveStreamDelegate = options.faceLandmarkerLiveStreamDelegate;
+
+      // Create a private serial dispatch queue in which the delegate method will be called
+      // asynchronously. This is to ensure that if the client performs a long running operation in
+      // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
+      // freed up to continue with its operations.
+      _callbackQueue = dispatch_queue_create(
+          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], NULL);
+
+      // Capturing `self` as weak in order to avoid `self` being kept in memory
+      // and cause a retain cycle, after self is set to `nil`.
+      MPPFaceLandmarker *__weak weakSelf = self;
+      packetsCallback = [weakSelf](absl::StatusOr<PacketMap> liveStreamResult) {
+        [weakSelf processLiveStreamResult:liveStreamResult];
+      };
+    }
+
     _visionTaskRunner =
         [[MPPVisionTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
                                                        runningMode:options.runningMode
-                                                   packetsCallback:nullptr
+                                                   packetsCallback:std::move(packetsCallback)
                                                              error:error];
 
     if (!_visionTaskRunner) {
@@ -133,7 +162,7 @@ static NSString *const kTaskName = @"faceLandmarker";
   }
 
   Packet normalizedRectPacket =
-      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()
+      [MPPVisionPacketCreator createPacketWithNormalizedRect:*rect
                                      timestampInMilliseconds:timestampInMilliseconds];
 
   PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
@@ -154,8 +183,7 @@ static NSString *const kTaskName = @"faceLandmarker";
     return nil;
   }
 
-  Packet normalizedRectPacket =
-      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()];
+  Packet normalizedRectPacket = [MPPVisionPacketCreator createPacketWithNormalizedRect:*rect];
 
   PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
 
@@ -185,8 +213,7 @@ static NSString *const kTaskName = @"faceLandmarker";
   }
 
   std::optional<PacketMap> outputPacketMap =
-      [_visionTaskRunner processVideoFramePacketMap:inputPacketMap.value() error:error];
-
+      [_visionTaskRunner processVideoFramePacketMap:*inputPacketMap error:error];
   if (!outputPacketMap.has_value()) {
     return nil;
   }
@@ -198,6 +225,56 @@ static NSString *const kTaskName = @"faceLandmarker";
                                                   .value()[kBlendshapesOutStreamName.cppString]
                  transformationMatrixesPacket:outputPacketMap
                                                   .value()[kFaceGeometryOutStreamName.cppString]];
+}
+
+- (BOOL)detectAsyncInImage:(MPPImage *)image
+    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                      error:(NSError **)error {
+  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
+                                                     timestampInMilliseconds:timestampInMilliseconds
+                                                                       error:error];
+  if (!inputPacketMap.has_value()) {
+    return NO;
+  }
+
+  return [_visionTaskRunner processLiveStreamPacketMap:*inputPacketMap error:error];
+}
+
+- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
+  NSError *callbackError;
+  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
+    dispatch_async(_callbackQueue, ^{
+      [_faceLandmarkerLiveStreamDelegate faceLandmarker:self
+                           didFinishDetectionWithResult:nil
+                                timestampInMilliseconds:Timestamp::Unset().Value()
+                                                  error:callbackError];
+    });
+    return;
+  }
+
+  PacketMap &outputPacketMap = *liveStreamResult;
+  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
+    // The graph did not return a result. We therefore do not raise the user callback. This mirrors
+    // returning `nil` in the other methods and is acceptable for the live stream delegate since
+    // it is expected that we drop frames and don't return results for every input.
+    return;
+  }
+
+  MPPFaceLandmarkerResult *result = [MPPFaceLandmarkerResult
+      faceLandmarkerResultWithLandmarksPacket:outputPacketMap[kLandmarksOutStreamName.cppString]
+                            blendshapesPacket:outputPacketMap[kBlendshapesOutStreamName.cppString]
+                 transformationMatrixesPacket:outputPacketMap[kFaceGeometryOutStreamName
+                                                                  .cppString]];
+
+  NSInteger timeStampInMilliseconds =
+      outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
+      kMicrosecondsPerMillisecond;
+  dispatch_async(_callbackQueue, ^{
+    [_faceLandmarkerLiveStreamDelegate faceLandmarker:self
+                         didFinishDetectionWithResult:result
+                              timestampInMilliseconds:timeStampInMilliseconds
+                                                error:callbackError];
+  });
 }
 
 @end
