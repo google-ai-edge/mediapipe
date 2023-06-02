@@ -165,7 +165,7 @@ template <class V, class... U>
 struct IsCompatibleType<V, OneOf<U...>>
     : std::integral_constant<bool, (std::is_same_v<V, U> || ...)> {};
 
-};  // namespace internal
+}  // namespace internal
 
 template <typename T>
 inline Packet<T> PacketBase::As() const {
@@ -259,19 +259,19 @@ struct First {
 
 template <class T>
 struct AddStatus {
-  using type = StatusOr<T>;
+  using type = absl::StatusOr<T>;
 };
 template <class T>
-struct AddStatus<StatusOr<T>> {
-  using type = StatusOr<T>;
+struct AddStatus<absl::StatusOr<T>> {
+  using type = absl::StatusOr<T>;
 };
 template <>
-struct AddStatus<Status> {
-  using type = Status;
+struct AddStatus<absl::Status> {
+  using type = absl::Status;
 };
 template <>
 struct AddStatus<void> {
-  using type = Status;
+  using type = absl::Status;
 };
 
 template <class R, class F, class... A>
@@ -282,7 +282,7 @@ struct CallAndAddStatusImpl {
 };
 template <class F, class... A>
 struct CallAndAddStatusImpl<void, F, A...> {
-  Status operator()(const F& f, A&&... a) {
+  absl::Status operator()(const F& f, A&&... a) {
     f(std::forward<A>(a)...);
     return {};
   }

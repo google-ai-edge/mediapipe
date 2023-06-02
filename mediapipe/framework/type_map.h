@@ -241,9 +241,9 @@ class StaticMap {
 #define DEFINE_MEDIAPIPE_TYPE_MAP(MapName, KeyType) \
   class MapName : public type_map_internal::StaticMap<MapName, KeyType> {};
 // Defines a map from unique typeid number to MediaPipeTypeData.
-DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeIdToMediaPipeTypeData, size_t);
+DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeIdToMediaPipeTypeData, size_t)
 // Defines a map from unique type string to MediaPipeTypeData.
-DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string);
+DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string)
 
 // MEDIAPIPE_REGISTER_TYPE can be used to register a type.
 // Convention:

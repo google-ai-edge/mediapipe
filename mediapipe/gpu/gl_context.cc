@@ -65,7 +65,7 @@ static void SetThreadName(const char* name) {
 #elif __APPLE__
   pthread_setname_np(name);
 #endif
-  ANNOTATE_THREAD_NAME(name);
+  ABSL_ANNOTATE_THREAD_NAME(name);
 }
 
 GlContext::DedicatedThread::DedicatedThread() {
