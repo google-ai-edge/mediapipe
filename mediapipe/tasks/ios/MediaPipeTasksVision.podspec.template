@@ -4,7 +4,7 @@ Pod::Spec.new do |s|
   s.authors          = 'Google Inc.'
   s.license          = { :type => 'Apache',:file => "LICENSE" }
   s.homepage         = 'https://github.com/google/mediapipe'
-  s.source           = { :http => '${MPP_DOWNLOAD_URL}' }
+  s.source           = { :http => '${MPP_VISION_DOWNLOAD_URL}' }
   s.summary          = 'MediaPipe Task Library - Vision'
   s.description      = 'The Vision APIs of the MediaPipe Task Library'
 
