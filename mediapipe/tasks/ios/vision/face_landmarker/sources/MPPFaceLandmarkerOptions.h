@@ -16,6 +16,7 @@
 
 #import "mediapipe/tasks/ios/core/sources/MPPTaskOptions.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPRunningMode.h"
+#import "mediapipe/tasks/ios/vision/face_landmarker/sources/MPPFaceLandmarkerResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -58,6 +59,13 @@ NS_SWIFT_NAME(FaceLandmarkerOptions)
  * rendering the 3D face model.
  */
 @property(nonatomic) BOOL outputFaceBlendshapes;
+
+/**
+ * Whether FaceLandmarker outputs facial transformation_matrix. Facial transformation matrix is used
+ * to transform the face landmarks in canonical face to the detected face, so that users can apply
+ * face effects on the detected landmarks.
+ */
+@property(nonatomic) BOOL outputFacialTransformationMatrixes;
 
 @end
 
