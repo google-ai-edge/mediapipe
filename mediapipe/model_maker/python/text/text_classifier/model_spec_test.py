@@ -85,8 +85,10 @@ class ModelSpecTest(tf.test.TestCase):
             steps_per_epoch=None,
             shuffle=False,
             distribution_strategy='off',
-            num_gpus=-1,
-            tpu=''))
+            num_gpus=0,
+            tpu='',
+        ),
+    )
 
   def test_custom_bert_spec(self):
     custom_bert_classifier_options = (
