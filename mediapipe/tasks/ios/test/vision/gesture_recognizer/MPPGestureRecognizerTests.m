@@ -48,10 +48,8 @@ static const float kLandmarksErrorTolerance = 0.03f;
   XCTAssertNotNil(error);                                                                     \
   XCTAssertEqualObjects(error.domain, expectedError.domain);                                  \
   XCTAssertEqual(error.code, expectedError.code);                                             \
-  XCTAssertNotEqual(                                                                          \
-      [error.localizedDescription rangeOfString:expectedError.localizedDescription].location, \
-      NSNotFound)
-
+  XCTAssertEqualObjects( error.localizedDescription, expectedError.localizedDescription) 
+                                                                    
 #define AssertEqualGestures(gesture, expectedGesture, handIndex, gestureIndex)                  \
   XCTAssertEqual(gesture.index, kGestureExpectedIndex, @"hand index = %d gesture index j = %d", \
                  handIndex, gestureIndex);                                                      \
