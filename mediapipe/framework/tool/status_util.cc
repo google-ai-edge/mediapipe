@@ -59,8 +59,8 @@ absl::Status CombinedStatus(absl::string_view general_comment,
       }
     }
   }
-  if (error_code == StatusCode::kOk) return OkStatus();
-  Status combined;
+  if (error_code == absl::StatusCode::kOk) return absl::OkStatus();
+  absl::Status combined;
   combined = absl::Status(
       error_code,
       absl::StrCat(general_comment, "\n", absl::StrJoin(errors, "\n")));

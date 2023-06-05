@@ -2096,6 +2096,12 @@ bool RegionFlowComputation::GainCorrectFrame(const cv::Mat& reference_frame,
 void RegionFlowComputation::WideBaselineMatchFeatures(
     FrameTrackingData* from_data_ptr, FrameTrackingData* to_data_ptr,
     TrackedFeatureList* results) {
+#if (defined(__ANDROID__) || defined(__APPLE__) || defined(__EMSCRIPTEN__)) && \
+    !defined(CV_WRAPPER_3X)
+  LOG(FATAL) << "Supported on only with OpenCV 3.0. "
+             << "Use bazel build flag : --define CV_WRAPPER=3X";
+#else   // (defined(__ANDROID__) || defined(__APPLE__) ||
+        // defined(__EMSCRIPTEN__)) && !defined(CV_WRAPPER_3X)
   results->clear();
 
   const auto& frame1 = from_data_ptr->frame;
@@ -2168,6 +2174,8 @@ void RegionFlowComputation::WideBaselineMatchFeatures(
       results->push_back(tracked_feature);
     }
   }
+#endif  // (defined(__ANDROID__) || defined(__APPLE__) ||
+        // defined(__EMSCRIPTEN__)) && !defined(CV_WRAPPER_3X)
 }
 
 void RegionFlowComputation::RemoveAbsentFeatures(

@@ -37,7 +37,32 @@ objc_library(
     srcs = ["sources/MPPFaceLandmarkerOptions.m"],
     hdrs = ["sources/MPPFaceLandmarkerOptions.h"],
     deps = [
+        ":MPPFaceLandmarkerResult",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
+    ],
+)
+
+objc_library(
+    name = "MPPFaceLandmarker",
+    srcs = ["sources/MPPFaceLandmarker.m"],
+    hdrs = ["sources/MPPFaceLandmarker.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    deps = [
+        ":MPPFaceLandmarkerOptions",
+        ":MPPFaceLandmarkerResult",
+        "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
+        "//mediapipe/tasks/ios/vision/core:MPPImage",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionPacketCreator",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
+        "//mediapipe/tasks/ios/vision/face_landmarker/utils:MPPFaceLandmarkerOptionsHelpers",
+        "//mediapipe/tasks/ios/vision/face_landmarker/utils:MPPFaceLandmarkerResultHelpers",
     ],
 )

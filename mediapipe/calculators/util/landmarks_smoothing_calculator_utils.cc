@@ -290,16 +290,16 @@ void LandmarksToNormalizedLandmarks(const LandmarkList& landmarks,
     // Scale Z the same way as X (using image width).
     norm_landmark->set_z(landmark.z() / image_width);
 
-    if (landmark.has_presence()) {
-      norm_landmark->set_presence(landmark.presence());
-    } else {
-      norm_landmark->clear_presence();
-    }
-
     if (landmark.has_visibility()) {
       norm_landmark->set_visibility(landmark.visibility());
     } else {
       norm_landmark->clear_visibility();
+    }
+
+    if (landmark.has_presence()) {
+      norm_landmark->set_presence(landmark.presence());
+    } else {
+      norm_landmark->clear_presence();
     }
   }
 }

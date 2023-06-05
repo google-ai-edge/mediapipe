@@ -15,8 +15,11 @@
 
 import dataclasses
 import tempfile
-
 from typing import Optional
+
+import tensorflow as tf
+
+from official.common import distribute_utils
 
 
 @dataclasses.dataclass
@@ -43,10 +46,10 @@ class BaseHParams:
       documentation for more details:
       https://www.tensorflow.org/api_docs/python/tf/distribute/Strategy.
     num_gpus: How many GPUs to use at each worker with the
-      DistributionStrategies API. The default is -1, which means utilize all
-      available GPUs.
-    tpu: The Cloud TPU to use for training. This should be either the name used
-      when creating the Cloud TPU, or a grpc://ip.address.of.tpu:8470 url.
+      DistributionStrategies API. The default is 0.
+    tpu: The TPU resource to be used for training. This should be either the
+      name used when creating the Cloud TPU, a grpc://ip.address.of.tpu:8470
+      url, or an empty string if using a local TPU.
   """
 
   # Parameters for train configuration
@@ -63,5 +66,16 @@ class BaseHParams:
 
   # Parameters for hardware acceleration
   distribution_strategy: str = 'off'
-  num_gpus: int = -1  # default value of -1 means use all available GPUs
+  num_gpus: int = 0
   tpu: str = ''
+  _strategy: tf.distribute.Strategy = dataclasses.field(init=False)
+
+  def __post_init__(self):
+    self._strategy = distribute_utils.get_distribution_strategy(
+        distribution_strategy=self.distribution_strategy,
+        num_gpus=self.num_gpus,
+        tpu_address=self.tpu,
+    )
+
+  def get_strategy(self):
+    return self._strategy

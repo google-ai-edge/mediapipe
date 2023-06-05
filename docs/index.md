@@ -1,16 +1,15 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe
 title: Home
 nav_order: 1
 ---
 
 ----
 
-**Attention:** *Thanks for your interest in MediaPipe! We have moved to
+**Attention:** *We have moved to
 [https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)
 as the primary developer documentation site for MediaPipe as of April 3, 2023.*
-
-*This notice and web page will be removed on June 1, 2023.*
 
 ![MediaPipe](https://developers.google.com/static/mediapipe/images/home/hero_01_1920.png)
 

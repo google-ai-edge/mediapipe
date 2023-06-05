@@ -211,6 +211,14 @@ GlTexture GlCalculatorHelper::CreateDestinationTexture(int width, int height,
   return MapGpuBuffer(gpu_buffer, gpu_buffer.GetWriteView<GlTextureView>(0));
 }
 
+GlTexture GlCalculatorHelper::CreateDestinationTexture(
+    const ImageFrame& image_frame) {
+  // TODO: ensure buffer pool is used when creating textures out of
+  // ImageFrame.
+  GpuBuffer gpu_buffer = GpuBufferCopyingImageFrame(image_frame);
+  return MapGpuBuffer(gpu_buffer, gpu_buffer.GetWriteView<GlTextureView>(0));
+}
+
 GlTexture GlCalculatorHelper::CreateSourceTexture(
     const mediapipe::Image& image) {
   return CreateSourceTexture(image.GetGpuBuffer());

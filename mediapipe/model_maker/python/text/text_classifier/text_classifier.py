@@ -311,9 +311,11 @@ class _BertClassifier(TextClassifier):
                label_names: Sequence[str]):
     super().__init__(model_spec, hparams, label_names)
     self._model_options = model_options
-    self._loss_function = tf.keras.losses.SparseCategoricalCrossentropy()
-    self._metric_function = tf.keras.metrics.SparseCategoricalAccuracy(
-        "test_accuracy", dtype=tf.float32)
+    with self._hparams.get_strategy().scope():
+      self._loss_function = tf.keras.losses.SparseCategoricalCrossentropy()
+      self._metric_function = tf.keras.metrics.SparseCategoricalAccuracy(
+          "test_accuracy", dtype=tf.float32
+      )
     self._text_preprocessor: preprocessor.BertClassifierPreprocessor = None
 
   @classmethod
@@ -350,8 +352,9 @@ class _BertClassifier(TextClassifier):
     """
     (processed_train_data, processed_validation_data) = (
         self._load_and_run_preprocessor(train_data, validation_data))
-    self._create_model()
-    self._create_optimizer(processed_train_data)
+    with self._hparams.get_strategy().scope():
+      self._create_model()
+      self._create_optimizer(processed_train_data)
     self._train_model(processed_train_data, processed_validation_data)
 
   def _load_and_run_preprocessor(
