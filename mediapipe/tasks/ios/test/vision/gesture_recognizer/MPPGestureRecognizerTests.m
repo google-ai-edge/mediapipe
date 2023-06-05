@@ -24,7 +24,7 @@ static NSString *const kPbFileExtension = @"pbtxt";
 
 typedef NSDictionary<NSString *, NSString *> ResourceFileInfo;
 
-static NSDictionary *const kGestureRecognizerBundleAssetFile =
+static ResourceFileInfo *const kGestureRecognizerBundleAssetFile =
     @{@"name" : @"gesture_recognizer", @"type" : @"task"};
 
 static ResourceFileInfo *const kTwoHandsImage = @{@"name" : @"right_hands", @"type" : @"jpg"};
