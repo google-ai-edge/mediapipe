@@ -58,14 +58,14 @@ static const int kMicroSecondsPerMilliSecond = 1000;
 + (MPPGestureRecognizerResult *)
     gestureRecognizerResultWithHandGesturesProto:
         (const std::vector<mediapipe::ClassificationList> &)handGesturesProto
-                                  handednessroto:
-                                      (const std::vector<mediapipe::ClassificationList> &)
-                                          handednessProto
-                             handLandmarksPacket:
-                                 (const std::vector<mediapipe::NormalizedLandmarkList> &)
-                                     handLandmarksProto
-                            worldLandmarksPacket:
-                                (const std::vector<mediapipe::LandmarkList> &)worldLandmarksProto
+                                 handednessProto:
+                                     (const std::vector<mediapipe::ClassificationList> &)
+                                         handednessProto
+                              handLandmarksProto:
+                                  (const std::vector<mediapipe::NormalizedLandmarkList> &)
+                                      handLandmarksProto
+                             worldLandmarksProto:
+                                 (const std::vector<mediapipe::LandmarkList> &)worldLandmarksProto
                          timestampInMilliSeconds:(NSInteger)timestampInMilliseconds;
 @end
 

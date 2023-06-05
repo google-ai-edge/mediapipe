@@ -40,12 +40,12 @@ static const NSInteger kDefaultGestureIndex = -1;
 + (MPPGestureRecognizerResult *)
     gestureRecognizerResultWithHandGesturesProto:
         (const std::vector<ClassificationListProto> &)handGesturesProto
-                                  handednessroto:
-                                      (const std::vector<ClassificationListProto> &)handednessProto
-                             handLandmarksPacket:(const std::vector<NormalizedLandmarkListProto> &)
+                                 handednessProto:
+                                     (const std::vector<ClassificationListProto> &)handednessProto
+                               handLandmarksroto:(const std::vector<NormalizedLandmarkListProto> &)
                                                      handLandmarksProto
-                            worldLandmarksPacket:
-                                (const std::vector<LandmarkListProto> &)worldLandmarksProto
+                             worldLandmarksProto:
+                                 (const std::vector<LandmarkListProto> &)worldLandmarksProto
                          timestampInMilliSeconds:(NSInteger)timestampInMilliseconds {
   NSMutableArray<NSMutableArray<MPPCategory *> *> *multiHandGestures =
       [NSMutableArray arrayWithCapacity:(NSUInteger)handGesturesProto.size()];
@@ -55,7 +55,7 @@ static const NSInteger kDefaultGestureIndex = -1;
         arrayWithCapacity:(NSUInteger)classificationListProto.classification().size()];
     for (const auto &classificationProto : classificationListProto.classification()) {
       MPPCategory *category = [MPPCategory categoryWithProto:classificationProto
-                                                    index:kDefaultGestureIndex];
+                                                       index:kDefaultGestureIndex];
       [gestures addObject:category];
     }
     [multiHandGestures addObject:gestures];
@@ -135,11 +135,11 @@ static const NSInteger kDefaultGestureIndex = -1;
   return [MPPGestureRecognizerResult
       gestureRecognizerResultWithHandGesturesProto:handGesturesPacket
                                                        .Get<std::vector<ClassificationListProto>>()
-                                    handednessroto:handednessPacket
+                                   handednessProto:handednessPacket
                                                        .Get<std::vector<ClassificationListProto>>()
-                               handLandmarksPacket:handLandmarksPacket
-                                                       .Get<std::vector<NormalizedLandmarkListProto>>()
-                              worldLandmarksPacket:worldLandmarksPacket
+                                handLandmarksProto:handLandmarksPacket.Get<
+                                                       std::vector<NormalizedLandmarkListProto>>()
+                               worldLandmarksProto:worldLandmarksPacket
                                                        .Get<std::vector<LandmarkListProto>>()
                            timestampInMilliSeconds:timestampInMilliseconds];
 }
