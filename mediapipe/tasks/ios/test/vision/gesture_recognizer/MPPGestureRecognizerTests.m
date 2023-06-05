@@ -49,7 +49,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
   XCTAssertEqualObjects(error.domain, expectedError.domain);                                  \
   XCTAssertEqual(error.code, expectedError.code);                                             \
   XCTAssertEqualObjects( error.localizedDescription, expectedError.localizedDescription) 
-                                                                    
+
 #define AssertEqualGestures(gesture, expectedGesture, handIndex, gestureIndex)                  \
   XCTAssertEqual(gesture.index, kGestureExpectedIndex, @"hand index = %d gesture index j = %d", \
                  handIndex, gestureIndex);                                                      \
@@ -103,7 +103,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
 }
 
 - (void)assertMultiHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)multiHandLandmarks
-    isApproximatelyEqualToExpectedMultiHandLandmarks:
+    areApproximatelyEqualToExpectedMultiHandLandmarks:
         (NSArray<NSArray<MPPNormalizedLandmark *> *> *)expectedMultiHandLandmarks {
   XCTAssertEqual(multiHandLandmarks.count, expectedMultiHandLandmarks.count);
   if (multiHandLandmarks.count == 0) {
@@ -122,7 +122,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
 }
 
 - (void)assertMultiHandWorldLandmarks:(NSArray<NSArray<MPPLandmark *> *> *)multiHandWorldLandmarks
-    isApproximatelyEqualToExpectedMultiHandWorldLandmarks:
+    areApproximatelyEqualToExpectedMultiHandWorldLandmarks:
         (NSArray<NSArray<MPPLandmark *> *> *)expectedMultiHandWorldLandmarks {
   XCTAssertEqual(multiHandWorldLandmarks.count, expectedMultiHandWorldLandmarks.count);
   if (expectedMultiHandWorldLandmarks.count == 0) {
@@ -141,7 +141,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
 }
 
 - (void)assertMultiHandGestures:(NSArray<NSArray<MPPCategory *> *> *)multiHandGestures
-    isApproximatelyEqualToExpectedMultiHandGestures:
+    areApproximatelyEqualToExpectedMultiHandGestures:
         (NSArray<NSArray<MPPCategory *> *> *)expectedMultiHandGestures {
   XCTAssertEqual(multiHandGestures.count, expectedMultiHandGestures.count);
   if (multiHandGestures.count == 0) {
@@ -163,12 +163,12 @@ static const float kLandmarksErrorTolerance = 0.03f;
     isApproximatelyEqualToExpectedResult:
         (MPPGestureRecognizerResult *)expectedGestureRecognizerResult {
   [self assertMultiHandLandmarks:gestureRecognizerResult.landmarks
-      isApproximatelyEqualToExpectedMultiHandLandmarks:expectedGestureRecognizerResult.landmarks];
+      areApproximatelyEqualToExpectedMultiHandLandmarks:expectedGestureRecognizerResult.landmarks];
   [self assertMultiHandWorldLandmarks:gestureRecognizerResult.worldLandmarks
-      isApproximatelyEqualToExpectedMultiHandWorldLandmarks:expectedGestureRecognizerResult
+      areApproximatelyEqualToExpectedMultiHandWorldLandmarks:expectedGestureRecognizerResult
                                                                 .worldLandmarks];
   [self assertMultiHandGestures:gestureRecognizerResult.gestures
-      isApproximatelyEqualToExpectedMultiHandGestures:expectedGestureRecognizerResult.gestures];
+      areApproximatelyEqualToExpectedMultiHandGestures:expectedGestureRecognizerResult.gestures];
 }
 
 #pragma mark File
