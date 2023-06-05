@@ -19,20 +19,25 @@
 #import "mediapipe/tasks/ios/test/vision/utils/sources/MPPImage+TestUtils.h"
 #import "mediapipe/tasks/ios/vision/gesture_recognizer/sources/MPPGestureRecognizer.h"
 
+
+static NSString *const kPbFileExtension = @"pbtxt";
+
+typedef NSDictionary<NSString *, NSString *> ResourceFileInfo;
+
 static NSDictionary *const kGestureRecognizerBundleAssetFile =
     @{@"name" : @"gesture_recognizer", @"type" : @"task"};
 
-static NSDictionary *const kTwoHandsImage = @{@"name" : @"right_hands", @"type" : @"jpg"};
-static NSDictionary *const kFistImage = @{@"name" : @"fist", @"type" : @"jpg"};
-static NSDictionary *const kNoHandsImage = @{@"name" : @"cats_and_dogs", @"type" : @"jpg"};
-static NSDictionary *const kThumbUpImage = @{@"name" : @"thumb_up", @"type" : @"jpg"};
-static NSDictionary *const kPointingUpRotatedImage =
+static ResourceFileInfo *const kTwoHandsImage = @{@"name" : @"right_hands", @"type" : @"jpg"};
+static ResourceFileInfo *const kFistImage = @{@"name" : @"fist", @"type" : @"jpg"};
+static ResourceFileInfo *const kNoHandsImage = @{@"name" : @"cats_and_dogs", @"type" : @"jpg"};
+static ResourceFileInfo *const kThumbUpImage = @{@"name" : @"thumb_up", @"type" : @"jpg"};
+static ResourceFileInfo *const kPointingUpRotatedImage =
     @{@"name" : @"pointing_up_rotated", @"type" : @"jpg"};
 
-static NSDictionary *const kExpectedFistLandmarksFile =
-    @{@"name" : @"fist_landmarks", @"type" : @"pbtxt"};
-static NSDictionary *const kExpectedThumbUpLandmarksFile =
-    @{@"name" : @"thumb_up_landmarks", @"type" : @"pbtxt"};
+static ResourceFileInfo *const kExpectedFistLandmarksFile =
+    @{@"name" : @"fist_landmarks", @"type" : kPbFileExtension};
+static ResourceFileInfo *const kExpectedThumbUpLandmarksFile =
+    @{@"name" : @"thumb_up_landmarks", @"type" : kPbFileExtension};
 
 static NSString *const kFistLabel = @"Closed_Fist";
 static NSString *const kExpectedThumbUpLabel = @"Thumb_Up";
