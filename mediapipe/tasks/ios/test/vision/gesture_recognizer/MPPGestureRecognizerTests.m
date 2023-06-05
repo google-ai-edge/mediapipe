@@ -178,7 +178,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
 
 #pragma mark File
 
-+ (NSString *)filePathWithFileInfo:(NSDictionary *)fileInfo {
++ (NSString *)filePathWithFileInfo:(ResourceFileInfo *)fileInfo {
   NSString *filePath = [MPPGestureRecognizerTests filePathWithName:fileInfo[@"name"]
                                                          extension:fileInfo[@"type"]];
   return filePath;
@@ -193,7 +193,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
 #pragma mark Gesture Recognizer Initializers
 
 - (MPPGestureRecognizerOptions *)gestureRecognizerOptionsWithModelFileInfo:
-    (NSDictionary *)modelFileInfo {
+    (ResourceFileInfo *)modelFileInfo {
   NSString *modelPath = [MPPGestureRecognizerTests filePathWithFileInfo:modelFileInfo];
   MPPGestureRecognizerOptions *gestureRecognizerOptions =
       [[MPPGestureRecognizerOptions alloc] init];
@@ -224,7 +224,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
 
 #pragma mark Assert Gesture Recognizer Results
 
-- (MPPImage *)imageWithFileInfo:(NSDictionary *)fileInfo {
+- (MPPImage *)imageWithFileInfo:(ResourceFileInfo *)fileInfo {
   MPPImage *image = [MPPImage imageFromBundleWithClass:[MPPGestureRecognizerTests class]
                                               fileName:fileInfo[@"name"]
                                                 ofType:fileInfo[@"type"]];
@@ -233,7 +233,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
   return image;
 }
 
-- (MPPImage *)imageWithFileInfo:(NSDictionary *)fileInfo
+- (MPPImage *)imageWithFileInfo:(ResourceFileInfo *)fileInfo
                     orientation:(UIImageOrientation)orientation {
   MPPImage *image = [MPPImage imageFromBundleWithClass:[MPPGestureRecognizerTests class]
                                               fileName:fileInfo[@"name"]
@@ -244,7 +244,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
   return image;
 }
 
-- (MPPGestureRecognizerResult *)recognizeImageWithFileInfo:(NSDictionary *)imageFileInfo
+- (MPPGestureRecognizerResult *)recognizeImageWithFileInfo:(ResourceFileInfo *)imageFileInfo
                                     usingGestureRecognizer:
                                         (MPPGestureRecognizer *)gestureRecognizer {
   MPPImage *mppImage = [self imageWithFileInfo:imageFileInfo];
@@ -255,7 +255,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
   return gestureRecognizerResult;
 }
 
-- (void)assertResultsOfRecognizeImageWithFileInfo:(NSDictionary *)fileInfo
+- (void)assertResultsOfRecognizeImageWithFileInfo:(ResourceFileInfo *)fileInfo
                            usingGestureRecognizer:(MPPGestureRecognizer *)gestureRecognizer
        approximatelyEqualsGestureRecognizerResult:
            (MPPGestureRecognizerResult *)expectedGestureRecognizerResult {
