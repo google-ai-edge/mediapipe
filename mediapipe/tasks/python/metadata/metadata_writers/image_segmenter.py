@@ -17,6 +17,7 @@ import enum
 from typing import List, Optional
 
 import flatbuffers
+
 from mediapipe.tasks.metadata import image_segmenter_metadata_schema_py_generated as _segmenter_metadata_fb
 from mediapipe.tasks.metadata import metadata_schema_py_generated as _metadata_fb
 from mediapipe.tasks.python.metadata import metadata

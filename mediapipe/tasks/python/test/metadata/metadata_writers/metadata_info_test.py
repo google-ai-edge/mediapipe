@@ -19,8 +19,8 @@ import tempfile
 
 from absl.testing import absltest
 from absl.testing import parameterized
-
 import flatbuffers
+
 from mediapipe.tasks.metadata import metadata_schema_py_generated as _metadata_fb
 from mediapipe.tasks.metadata import schema_py_generated as _schema_fb
 from mediapipe.tasks.python.metadata import metadata as _metadata

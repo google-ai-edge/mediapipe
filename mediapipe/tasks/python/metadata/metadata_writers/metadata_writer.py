@@ -22,6 +22,7 @@ import tempfile
 from typing import List, Optional, Tuple, Union
 
 import flatbuffers
+
 from mediapipe.tasks.metadata import metadata_schema_py_generated as metadata_fb
 from mediapipe.tasks.python.metadata import metadata
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_info

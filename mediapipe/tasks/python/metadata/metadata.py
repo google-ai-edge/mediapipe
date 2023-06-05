@@ -28,6 +28,7 @@ import warnings
 import zipfile
 
 import flatbuffers
+
 from mediapipe.tasks.cc.metadata.python import _pywrap_metadata_version
 from mediapipe.tasks.metadata import metadata_schema_py_generated as _metadata_fb
 from mediapipe.tasks.metadata import schema_py_generated as _schema_fb
