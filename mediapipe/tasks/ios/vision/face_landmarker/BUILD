@@ -45,7 +45,7 @@ objc_library(
 
 objc_library(
     name = "MPPFaceLandmarker",
-    srcs = ["sources/MPPFaceLandmarker.m"],
+    srcs = ["sources/MPPFaceLandmarker.mm"],
     hdrs = ["sources/MPPFaceLandmarker.h"],
     copts = [
         "-ObjC++",
