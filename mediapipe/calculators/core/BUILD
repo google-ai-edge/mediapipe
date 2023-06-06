@@ -1138,6 +1138,7 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/api2:node",
         "//mediapipe/framework/port:status",
     ],
     alwayslink = 1,
