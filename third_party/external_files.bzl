@@ -647,6 +647,18 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_leopard_bg_removal_result_png",
+        sha256 = "afd33f2058fd58d189cda86ec931647741a6139970c9bcbc637cdd151ec657c5",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/leopard_bg_removal_result.png?generation=1685997278308542"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_leopard_jpg",
+        sha256 = "d66fda0aa655f87c9fe87965a642e7b33ec990a3d9ed5812f1e5513da9d7d744",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/leopard.jpg?generation=1685997280368627"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_mobilebert_embedding_with_metadata_tflite",
         sha256 = "fa47142dcc6f446168bc672f2df9605b6da5d0c0d6264e9be62870282365b95c",
         urls = ["https://storage.googleapis.com/mediapipe-assets/mobilebert_embedding_with_metadata.tflite?generation=1664516086197724"],
@@ -662,6 +674,12 @@ def external_files():
         name = "com_google_mediapipe_mobilebert_with_metadata_tflite",
         sha256 = "5984e86eb5d4cb95f004ff78e6f44d5f59b17120575c6313955d95afbb843ca3",
         urls = ["https://storage.googleapis.com/mediapipe-assets/mobilebert_with_metadata.tflite?generation=1661875806733025"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_mobile_bg_removal_tflite",
+        sha256 = "f85797391cd1ef03988441710781342a77a980665965771fba603e5aee940ee8",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobile_bg_removal.tflite?generation=1685997284190857"],
     )
 
     http_file(
