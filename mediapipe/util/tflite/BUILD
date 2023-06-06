@@ -67,17 +67,20 @@ cc_library(
     ],
 )
 
-# TODO: Re-evaluate which of these libraries we can avoid making
-# cc_library_with_tflite and can be changed back to cc_library.
+# This target has an implementation dependency on TFLite/TFLite-in-GMSCore,
+# but it does not have any API dependency on TFLite-in-GMSCore.
 cc_library_with_tflite(
     name = "op_resolver",
     srcs = ["op_resolver.cc"],
     hdrs = ["op_resolver.h"],
     tflite_deps = [
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@org_tensorflow//tensorflow/lite/c:c_api",
+        "@org_tensorflow//tensorflow/lite/c:c_api_experimental",  # For c_api_opaque.h
+        "@org_tensorflow//tensorflow/lite/c:common",  # For builtin_op_data.h
     ],
     deps = [
-        "@org_tensorflow//tensorflow/lite:builtin_op_data",
+        "@org_tensorflow//tensorflow/lite:builtin_ops",
     ],
 )
 
