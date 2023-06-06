@@ -204,6 +204,7 @@ class GeneratePyProtos(build_ext.build_ext):
           self._protoc, '-I.',
           '--python_out=' + os.path.abspath(self.build_lib), source
       ]
+      print('Invoking: ', protoc_command)
       if subprocess.call(protoc_command) != 0:
         sys.exit(-1)
 
@@ -268,6 +269,7 @@ class BuildModules(build_ext.build_ext):
         'build',
         external_file,
     ]
+    print('Invoking: ', fetch_model_command)
     if subprocess.call(fetch_model_command) != 0:
       sys.exit(-1)
     _copy_to_build_lib_dir(self.build_lib, external_file)
@@ -292,6 +294,8 @@ class BuildModules(build_ext.build_ext):
 
     if not self.link_opencv and not IS_WINDOWS:
       bazel_command.append('--define=OPENCV=source')
+
+    print('Invoking: ', bazel_command)
     if subprocess.call(bazel_command) != 0:
       sys.exit(-1)
     _copy_to_build_lib_dir(self.build_lib, binary_graph_target + '.binarypb')
@@ -322,6 +326,7 @@ class GenerateMetadataSchema(build_ext.build_ext):
         bazel_command.append('--copt=-DMESA_EGL_NO_X11_HEADERS')
         bazel_command.append('--copt=-DEGL_NO_X11')
 
+      print('Invoking: ', bazel_command)
       if subprocess.call(bazel_command) != 0:
         sys.exit(-1)
       _copy_to_build_lib_dir(
@@ -392,6 +397,8 @@ class BuildExtension(build_ext.build_ext):
             x86_name,
             arm64_name,
         ]
+
+        print('Invoking: ', lipo_command)
         if subprocess.call(lipo_command) != 0:
           sys.exit(-1)
     else:
@@ -421,6 +428,8 @@ class BuildExtension(build_ext.build_ext):
       bazel_command += extra_args
     if not self.link_opencv and not IS_WINDOWS:
       bazel_command.append('--define=OPENCV=source')
+
+    print('Invoking: ', bazel_command)
     if subprocess.call(bazel_command) != 0:
       sys.exit(-1)
     ext_bazel_bin_path = os.path.join('bazel-bin', ext.relpath,
