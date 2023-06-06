@@ -31,3 +31,17 @@ objc_library(
         "//mediapipe/tasks/ios/vision/hand_landmarker:MPPHandLandmarkerOptions",
     ],
 )
+
+objc_library(
+    name = "MPPHandLandmarkerResultHelpers",
+    srcs = ["sources/MPPHandLandmarkerResult+Helpers.mm"],
+    hdrs = ["sources/MPPHandLandmarkerResult+Helpers.h"],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPCategoryHelpers",
+        "//mediapipe/tasks/ios/components/containers/utils:MPPLandmarkHelpers",
+        "//mediapipe/tasks/ios/vision/hand_landmarker:MPPHandLandmarkerResult",
+    ],
+)
