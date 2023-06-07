@@ -59,7 +59,7 @@ using ::mediapipe::tasks::ios::test::vision::utils::get_proto_from_pbtxt;
                                    handednessProto:{landmarkDetectionResultProto.classifications()}
                                 handLandmarksProto:{landmarkDetectionResultProto.landmarks()}
                                worldLandmarksProto:{landmarkDetectionResultProto.world_landmarks()}
-                           timestampInMilliSeconds:0];
+                           timestampInMilliseconds:0];
 }
 
 @end
