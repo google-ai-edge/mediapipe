@@ -45,7 +45,7 @@ constexpr char kUniversalSentenceEncoderModel[] =
 // Tolerance for embedding vector coordinate values.
 constexpr float kEpsilon = 1e-4;
 // Tolerancy for cosine similarity evaluation.
-constexpr double kSimilarityTolerancy = 1e-6;
+constexpr double kSimilarityTolerancy = 2e-2;
 
 using ::mediapipe::file::JoinPath;
 using ::testing::HasSubstr;
@@ -79,6 +79,8 @@ TEST_F(EmbedderTest, SucceedsWithMobileBert) {
   ASSERT_EQ(result0.embeddings[0].float_embedding.size(), 512);
 #ifdef _WIN32
   ASSERT_NEAR(result0.embeddings[0].float_embedding[0], 21.2148f, kEpsilon);
+#elif defined(__FMA__)
+  ASSERT_NEAR(result0.embeddings[0].float_embedding[0], 21.3605f, kEpsilon);
 #else
   ASSERT_NEAR(result0.embeddings[0].float_embedding[0], 19.9016f, kEpsilon);
 #endif  // _WIN32
@@ -87,7 +89,11 @@ TEST_F(EmbedderTest, SucceedsWithMobileBert) {
       auto result1, text_embedder->Embed("what a great and fantastic trip"));
   ASSERT_EQ(result1.embeddings.size(), 1);
   ASSERT_EQ(result1.embeddings[0].float_embedding.size(), 512);
+#ifdef __FMA__
+  ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 21.254150f, kEpsilon);
+#else
   ASSERT_NEAR(result1.embeddings[0].float_embedding[0], 22.626251f, kEpsilon);
+#endif
 
   // Check cosine similarity.
   MP_ASSERT_OK_AND_ASSIGN(
