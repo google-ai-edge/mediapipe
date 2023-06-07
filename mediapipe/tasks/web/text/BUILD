@@ -44,7 +44,23 @@ rollup_bundle(
     entry_point = "index.ts",
     format = "esm",
     output_dir = False,
-    sourcemap = "false",
+    sourcemap = "true",
+    deps = [
+        ":text_lib",
+        "@npm//@rollup/plugin-commonjs",
+        "@npm//@rollup/plugin-node-resolve",
+        "@npm//@rollup/plugin-terser",
+        "@npm//google-protobuf",
+    ],
+)
+
+rollup_bundle(
+    name = "text_bundle_cjs",
+    config_file = "//mediapipe/tasks/web:rollup.config.mjs",
+    entry_point = "index.ts",
+    format = "cjs",
+    output_dir = False,
+    sourcemap = "true",
     deps = [
         ":text_lib",
         "@npm//@rollup/plugin-commonjs",
@@ -78,5 +94,6 @@ pkg_npm(
         "wasm/text_wasm_nosimd_internal.wasm",
         ":package_json",
         ":text_bundle",
+        ":text_bundle_cjs",
     ],
 )

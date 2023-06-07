@@ -43,7 +43,23 @@ rollup_bundle(
     entry_point = "index.ts",
     format = "esm",
     output_dir = False,
-    sourcemap = "false",
+    sourcemap = "true",
+    deps = [
+        ":audio_lib",
+        "@npm//@rollup/plugin-commonjs",
+        "@npm//@rollup/plugin-node-resolve",
+        "@npm//@rollup/plugin-terser",
+        "@npm//google-protobuf",
+    ],
+)
+
+rollup_bundle(
+    name = "audio_bundle_cjs",
+    config_file = "//mediapipe/tasks/web:rollup.config.mjs",
+    entry_point = "index.ts",
+    format = "cjs",
+    output_dir = False,
+    sourcemap = "true",
     deps = [
         ":audio_lib",
         "@npm//@rollup/plugin-commonjs",
@@ -76,6 +92,7 @@ pkg_npm(
         "wasm/audio_wasm_nosimd_internal.js",
         "wasm/audio_wasm_nosimd_internal.wasm",
         ":audio_bundle",
+        ":audio_bundle_cjs",
         ":package_json",
     ],
 )
