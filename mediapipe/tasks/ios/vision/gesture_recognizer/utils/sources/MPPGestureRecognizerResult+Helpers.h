@@ -67,7 +67,7 @@ static const int kMicroSecondsPerMilliSecond = 1000;
                                       handLandmarksProto
                              worldLandmarksProto:
                                  (const std::vector<::mediapipe::LandmarkList> &)worldLandmarksProto
-                         timestampInMilliSeconds:(NSInteger)timestampInMilliseconds;
+                         timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 @end
 
 NS_ASSUME_NONNULL_END
