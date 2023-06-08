@@ -81,7 +81,6 @@ class TaskApiFactory {
     return std::make_unique<T>(std::move(runner));
   }
 
- private:
   template <typename Options>
   static absl::Status CheckHasValidOptions(
       const CalculatorGraphConfig::Node& node) {

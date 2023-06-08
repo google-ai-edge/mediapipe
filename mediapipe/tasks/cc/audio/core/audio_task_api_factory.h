@@ -27,6 +27,7 @@ limitations under the License.
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/tasks/cc/audio/core/base_audio_task_api.h"
+#include "mediapipe/tasks/cc/core/task_api_factory.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
 namespace mediapipe {
@@ -60,13 +61,8 @@ class AudioTaskApiFactory {
             "Task graph config should only contain one task subgraph node.",
             MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
       } else {
-        if (!node.options().HasExtension(Options::ext)) {
-          return CreateStatusWithPayload(
-              absl::StatusCode::kInvalidArgument,
-              absl::StrCat(node.calculator(),
-                           " is missing the required task options field."),
-              MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
-        }
+        MP_RETURN_IF_ERROR(
+            tasks::core::TaskApiFactory::CheckHasValidOptions<Options>(node));
         found_task_subgraph = true;
       }
     }
