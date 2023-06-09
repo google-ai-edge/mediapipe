@@ -262,27 +262,27 @@ static NSString *const kTaskName = @"handLandmarker";
 }
 
 + (NSArray<MPPConnection *> *)handPalmConnections {
-  return kHandPalmConnections;
+  return MPPHandPalmConnections;
 }
 
 + (NSArray<MPPConnection *> *)handIndexFingerConnections {
-  return kHandIndexFingerConnections;
+  return MPPHandIndexFingerConnections;
 }
 
 + (NSArray<MPPConnection *> *)handMiddleFingerConnections {
-  return kHandMiddleFingerConnections;
+  return MPPHandMiddleFingerConnections;
 }
 
 + (NSArray<MPPConnection *> *)handRingFingerConnections {
-  return kHandRingFingerConnections;
+  return MPPHandRingFingerConnections;
 }
 
 + (NSArray<MPPConnection *> *)handPinkyConnections {
-  return kHandPinkyConnections;
+  return MPPHandPinkyConnections;
 }
 
 + (NSArray<MPPConnection *> *)handConnections {
-  return kHandConnections;
+  return MPPHandConnections;
 }
 
 @end
