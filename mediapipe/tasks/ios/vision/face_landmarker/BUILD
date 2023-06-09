@@ -44,6 +44,13 @@ objc_library(
 )
 
 objc_library(
+    name = "MPPFaceLandmarksConnections",
+    hdrs = ["sources/MPPFaceLandmarksConnections.h"],
+    module_name = "MPPFaceLandmarksConnections",
+    deps = ["//mediapipe/tasks/ios/components/containers:MPPConnection"],
+)
+
+objc_library(
     name = "MPPFaceLandmarker",
     srcs = ["sources/MPPFaceLandmarker.mm"],
     hdrs = ["sources/MPPFaceLandmarker.h"],
@@ -55,9 +62,11 @@ objc_library(
     deps = [
         ":MPPFaceLandmarkerOptions",
         ":MPPFaceLandmarkerResult",
+        ":MPPFaceLandmarksConnections",
         "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/components/containers:MPPConnection",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
         "//mediapipe/tasks/ios/vision/core:MPPVisionPacketCreator",

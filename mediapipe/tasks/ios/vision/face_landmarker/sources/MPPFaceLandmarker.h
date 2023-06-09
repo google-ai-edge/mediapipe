@@ -14,6 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "mediapipe/tasks/ios/components/containers/sources/MPPConnection.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 #import "mediapipe/tasks/ios/vision/face_landmarker/sources/MPPFaceLandmarkerOptions.h"
 #import "mediapipe/tasks/ios/vision/face_landmarker/sources/MPPFaceLandmarkerResult.h"
@@ -146,6 +147,83 @@ NS_SWIFT_NAME(FaceLandmarker)
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error
     NS_SWIFT_NAME(detectAsync(image:timestampInMilliseconds:));
+
+/**
+ * Returns the connections between all the landmarks in the lips.
+ *
+ * @return An array of connections between all the landmarks in the lips.
+ */
++ (NSArray<MPPConnection *> *)lipsConnections;
+
+/**
+ * Returns the connections between all the landmarks in the left eye.
+ *
+ * @return An array of connections between all the landmarks in the left eye.
+ */
++ (NSArray<MPPConnection *> *)leftEyeConnections;
+
+/**
+ * Returns the connections between all the landmarks in the left eyebrow.
+ *
+ * @return An array of connections between all the landmarks in the left eyebrow.
+ */
++ (NSArray<MPPConnection *> *)leftEyebrowConnections;
+
+/**
+ * Returns the connections between all the landmarks in the left iris.
+ *
+ * @return An array of connections between all the landmarks in the left iris.
+ */
++ (NSArray<MPPConnection *> *)leftIrisConnections;
+
+/**
+ * Returns the connections between all the landmarks in the right eye.
+ *
+ * @return An array of connections between all the landmarks in the right eyr.
+ */
++ (NSArray<MPPConnection *> *)rightEyeConnections;
+
+/**
+ * Returns the connections between all the landmarks in the right eyebrow.
+ *
+ * @return An array of connections between all the landmarks in the right eyebrow.
+ */
++ (NSArray<MPPConnection *> *)rightEyebrowConnections;
+
+/**
+ * Returns the connections between all the landmarks in the right iris.
+ *
+ * @return An array of connections between all the landmarks in the right iris.
+ */
++ (NSArray<MPPConnection *> *)rightIrisConnections;
+
+/**
+ * Returns the connections between all the landmarks of the face oval.
+ *
+ * @return An array of connections between all the landmarks of the face oval.
+ */
++ (NSArray<MPPConnection *> *)faceOvalConnections;
+
+/**
+ * Returns the connections between making up the contours of the face.
+ *
+ * @return An array of connections between all the contours of the face.
+ */
++ (NSArray<MPPConnection *> *)contoursConnections;
+
+/**
+ * Returns the connections between all the landmarks making up the tesselation of the face.
+ *
+ * @return An array of connections between all the landmarks  making up the tesselation of the face.
+ */
++ (NSArray<MPPConnection *> *)tesselationConnections;
+
+/**
+ * Returns the connections between all the landmarks in the face.
+ *
+ * @return An array of connections between all the landmarks in the face.
+ */
++ (NSArray<MPPConnection *> *)faceConnections;
 
 - (instancetype)init NS_UNAVAILABLE;
 
