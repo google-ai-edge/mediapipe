@@ -229,8 +229,11 @@ class CalculatorGraph {
   // Wait until the running graph is in the idle mode, which is when nothing can
   // be scheduled and nothing is running in the worker threads. This function
   // can be called only after StartRun().
+  //
   // NOTE: The graph must not have any source nodes because source nodes prevent
   // the running graph from becoming idle until the source nodes are done.
+  // Currently, `WaitUntilIdle` cannot be used reliably on graphs with any
+  // source nodes.
   absl::Status WaitUntilIdle();
 
   // Wait until a packet is emitted on one of the observed output streams.

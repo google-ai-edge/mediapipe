@@ -839,6 +839,10 @@ absl::Status CalculatorGraph::PrepareForRun(
 }
 
 absl::Status CalculatorGraph::WaitUntilIdle() {
+  if (has_sources_) {
+    LOG(WARNING) << "WaitUntilIdle called on a graph with source nodes, which "
+                    "is not fully supported at the moment.";
+  }
   MP_RETURN_IF_ERROR(scheduler_.WaitUntilIdle());
   VLOG(2) << "Scheduler idle.";
   absl::Status status = absl::OkStatus();
