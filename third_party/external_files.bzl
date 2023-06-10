@@ -66,8 +66,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_BUILD",
-        sha256 = "d2b2a8346202691d7f831887c84e9642e974f64ed67851d9a58cf15c94b1f6b3",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/BUILD?generation=1661875663693976167832357639365316787374795996401679955080207504"],
+        sha256 = "cfbc1404ba18ee9eb0f08e9ee66d5b51f3fac47f683a5fa0cc23b46f30e05a1f",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/BUILD?generation=1686332366306166"],
     )
 
     http_file(
@@ -902,6 +902,30 @@ def external_files():
         name = "com_google_mediapipe_palm_detection_lite_tflite",
         sha256 = "e9a4aaddf90dda56a87235303cf00e4c2d3fb28725f68fd88772997dac905c18",
         urls = ["https://storage.googleapis.com/mediapipe-assets/palm_detection_lite.tflite?generation=1661875885885770"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_penguins_large_jpg",
+        sha256 = "3a7a74bf946b3e2b53a3953516a552df854b2854c91b3372d2d6343497ca2160",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/penguins_large.jpg?generation=1686332378707665"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_penguins_large_mask_png",
+        sha256 = "8f78486266dabb1a3f28bf52750c0d005f96233fe505d5e8dcba02c6ee3a13cb",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/penguins_large_mask.png?generation=1686332381154669"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_penguins_small_jpg",
+        sha256 = "708ca356d8be4fbf5b76d4f2fcd094e97122cc24934cfcca22ac3ab0f13c4632",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/penguins_small.jpg?generation=1686332383656645"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_penguins_small_mask_png",
+        sha256 = "65523dd7ed468ee4be3cd0cfed5badcfa41eaa5cd06444c9ab9b71b2d5951abe",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/penguins_small_mask.png?generation=1686332385707707"],
     )
 
     http_file(
