@@ -50,7 +50,7 @@ mediapipe_ts_library(
 )
 
 rollup_bundle(
-    name = "vision_bundle",
+    name = "vision_bundle_mjs",
     config_file = "//mediapipe/tasks/web:rollup.config.mjs",
     entry_point = "index.ts",
     format = "esm",
@@ -82,6 +82,29 @@ rollup_bundle(
 )
 
 genrule(
+    name = "vision_sources",
+    srcs = [
+        ":vision_bundle_cjs",
+        ":vision_bundle_mjs",
+    ],
+    outs = [
+        "vision_bundle.cjs",
+        "vision_bundle.cjs.map",
+        "vision_bundle.mjs",
+        "vision_bundle.mjs.map",
+    ],
+    cmd = (
+        "for FILE in $(SRCS); do " +
+        "  OUT_FILE=$(GENDIR)/mediapipe/tasks/web/vision/$$(" +
+        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/'" +
+        "  ); " +
+        "  echo $$FILE ; echo $$OUT_FILE ; " +
+        "  cp $$FILE $$OUT_FILE ; " +
+        "done;"
+    ),
+)
+
+genrule(
     name = "package_json",
     srcs = ["//mediapipe/tasks/web:package.json"],
     outs = ["package.json"],
@@ -104,7 +127,6 @@ pkg_npm(
         "wasm/vision_wasm_nosimd_internal.js",
         "wasm/vision_wasm_nosimd_internal.wasm",
         ":package_json",
-        ":vision_bundle",
-        ":vision_bundle_cjs",
+        ":vision_sources",
     ],
 )
