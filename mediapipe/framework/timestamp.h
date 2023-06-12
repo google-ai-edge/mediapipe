@@ -186,6 +186,10 @@ class Timestamp {
   // CHECKs that this->IsAllowedInStream().
   Timestamp NextAllowedInStream() const;
 
+  // Returns true if there's a next timestamp in the range [Min .. Max] after
+  // this one.
+  bool HasNextAllowedInStream() const;
+
   // Returns the previous timestamp in the range [Min .. Max], or
   // Unstarted() if no Packets may preceed one with this timestamp.
   Timestamp PreviousAllowedInStream() const;
