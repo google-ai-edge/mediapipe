@@ -48,10 +48,10 @@ NS_SWIFT_NAME(Mask)
 @interface MPPMask : NSObject <NSCopying>
 
 /** The width of the mask. */
-@property(nonatomic, readonly) CGFloat width;
+@property(nonatomic, readonly) NSInteger width;
 
 /** The height of the mask. */
-@property(nonatomic, readonly) CGFloat height;
+@property(nonatomic, readonly) NSInteger height;
 
 /** The data type of the mask. */
 @property(nonatomic, readonly) MPPMaskDataType dataType;
