@@ -117,11 +117,18 @@ class Tensor {
     Shape() = default;
     Shape(std::initializer_list<int> dimensions) : dims(dimensions) {}
     Shape(const std::vector<int>& dimensions) : dims(dimensions) {}
+    Shape(std::initializer_list<int> dimensions, bool is_dynamic)
+        : dims(dimensions), is_dynamic(is_dynamic) {}
+    Shape(const std::vector<int>& dimensions, bool is_dynamic)
+        : dims(dimensions), is_dynamic(is_dynamic) {}
     int num_elements() const {
       return std::accumulate(dims.begin(), dims.end(), 1,
                              std::multiplies<int>());
     }
     std::vector<int> dims;
+    // The Tensor has dynamic rather than static shape so the TFLite interpreter
+    // needs to be reallocated. Only relevant for CPU.
+    bool is_dynamic = false;
   };
   // Quantization parameters corresponding to the zero_point and scale value
   // made available by TfLite quantized (uint8/int8) tensors.
