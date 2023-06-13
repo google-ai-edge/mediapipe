@@ -1077,6 +1077,7 @@ cc_test(
     linkstatic = 1,
     deps = [
         ":tensor_to_image_frame_calculator",
+        ":tensor_to_image_frame_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/formats:image_frame",
