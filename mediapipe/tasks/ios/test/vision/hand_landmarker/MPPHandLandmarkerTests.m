@@ -40,6 +40,9 @@ static ResourceFileInfo *const kExpectedPointingUpRotatedLandmarksFile =
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 static const float kLandmarksErrorTolerance = 0.03f;
 
+static NSString *const kLiveStreamTestsDictHandLandmarkerKey = @"gesture_recognizer";
+static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
+
 #define AssertEqualErrors(error, expectedError)              \
   XCTAssertNotNil(error);                                    \
   XCTAssertEqualObjects(error.domain, expectedError.domain); \
@@ -57,7 +60,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
   XCTAssertTrue(handLandmarkerResult.landmarks.count == 0);     \
   XCTAssertTrue(handLandmarkerResult.worldLandmarks.count == 0);
 
-@interface MPPHandLandmarkerTests : XCTestCase {
+@interface MPPHandLandmarkerTests : XCTestCase <MPPHandLandmarkerLiveStreamDelegate> {
   NSDictionary<NSString *, id> *_liveStreamSucceedsTestDict;
   NSDictionary<NSString *, id> *_outOfOrderTimestampTestDict;
 }
@@ -335,7 +338,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
   MPPHandLandmarker *handLandmarker =
       [self createHandLandmarkerWithOptionsSucceeds:options];
 
-  MPPImage *image = [self imageWithFileInfo:kFistImage];
+  MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
   NSError *liveStreamApiCallError;
   XCTAssertFalse([handLandmarker detectAsyncInImage:image
@@ -375,7 +378,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
   MPPHandLandmarker *handLandmarker =
       [self createHandLandmarkerWithOptionsSucceeds:options];
 
-  MPPImage *image = [self imageWithFileInfo:kFistImage];
+  MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
   NSError *liveStreamApiCallError;
   XCTAssertFalse([handLandmarker detectAsyncInImage:image
@@ -414,7 +417,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
   MPPHandLandmarker *handLandmarker =
       [self createHandLandmarkerWithOptionsSucceeds:options];
 
-  MPPImage *image = [self imageWithFileInfo:kFistImage];
+  MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
   NSError *imageApiCallError;
   XCTAssertFalse([handLandmarker detectInImage:image error:&imageApiCallError]);
@@ -549,7 +552,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
 }
 
 - (void)handLandmarker:(MPPHandLandmarker *)handLandmarker
-    didFinishRecognitionWithResult:(MPPHandLandmarkerResult *)handLandmarkerResult
+    didFinishDetectionWithResult:(MPPHandLandmarkerResult *)handLandmarkerResult
            timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                              error:(NSError *)error {
   [self assertHandLandmarkerResult:handLandmarkerResult
