@@ -1368,6 +1368,7 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
         "//mediapipe/framework/tool:sink",
+        "@com_google_absl//absl/status",
     ],
 )
 
