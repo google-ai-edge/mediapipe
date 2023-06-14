@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
@@ -1430,10 +1431,10 @@ std::vector<const FieldDescriptor*> GetFields(const Message* src) {
 
 // Orders map entries in dst to match src.
 void OrderMapEntries(const Message* src, Message* dst,
-                     std::set<const Message*>* seen = nullptr) {
-  std::unique_ptr<std::set<const Message*>> seen_owner;
+                     absl::flat_hash_set<const Message*>* seen = nullptr) {
+  std::unique_ptr<absl::flat_hash_set<const Message*>> seen_owner;
   if (!seen) {
-    seen_owner = std::make_unique<std::set<const Message*>>();
+    seen_owner = std::make_unique<absl::flat_hash_set<const Message*>>();
     seen = seen_owner.get();
   }
   if (seen->count(src) > 0) {
