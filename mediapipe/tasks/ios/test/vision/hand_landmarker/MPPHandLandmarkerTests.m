@@ -167,7 +167,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
 - (MPPHandLandmarker *)createHandLandmarkerWithOptionsSucceeds:
     (MPPHandLandmarkerOptions *)handLandmarkerOptions {
-  NSError* error;
+  NSError *error;
   MPPHandLandmarker *handLandmarker =
       [[MPPHandLandmarker alloc] initWithOptions:handLandmarkerOptions error:&error];
   XCTAssertNotNil(handLandmarker);
@@ -298,10 +298,10 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
     options.runningMode = runningModesToTest[i];
     options.handLandmarkerLiveStreamDelegate = self;
 
-    [self assertCreateHandLandmarkerWithOptions:options
-                            failsWithExpectedError:
-                                [NSError
-                                    errorWithDomain:kExpectedErrorDomain
+    [self
+        assertCreateHandLandmarkerWithOptions:options
+                       failsWithExpectedError:
+                           [NSError errorWithDomain:kExpectedErrorDomain
                                                code:MPPTasksErrorCodeInvalidArgumentError
                                            userInfo:@{
                                              NSLocalizedDescriptionKey :
@@ -317,33 +317,31 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   options.runningMode = MPPRunningModeLiveStream;
 
-  [self
-      assertCreateHandLandmarkerWithOptions:options
-                        failsWithExpectedError:
-                            [NSError errorWithDomain:kExpectedErrorDomain
-                                                code:MPPTasksErrorCodeInvalidArgumentError
-                                            userInfo:@{
-                                              NSLocalizedDescriptionKey :
-                                                  @"The vision task is in live stream mode. An "
-                                                  @"object must be set as the delegate of the task "
-                                                  @"in its options to ensure asynchronous delivery "
-                                                  @"of results."
-                                            }]];
+  [self assertCreateHandLandmarkerWithOptions:options
+                       failsWithExpectedError:
+                           [NSError errorWithDomain:kExpectedErrorDomain
+                                               code:MPPTasksErrorCodeInvalidArgumentError
+                                           userInfo:@{
+                                             NSLocalizedDescriptionKey :
+                                                 @"The vision task is in live stream mode. An "
+                                                 @"object must be set as the delegate of the task "
+                                                 @"in its options to ensure asynchronous delivery "
+                                                 @"of results."
+                                           }]];
 }
 
 - (void)testDetectFailsWithCallingWrongApiInImageMode {
   MPPHandLandmarkerOptions *options =
       [self handLandmarkerOptionsWithModelFileInfo:kHandLandmarkerBundleAssetFile];
 
-  MPPHandLandmarker *handLandmarker =
-      [self createHandLandmarkerWithOptionsSucceeds:options];
+  MPPHandLandmarker *handLandmarker = [self createHandLandmarkerWithOptionsSucceeds:options];
 
   MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
   NSError *liveStreamApiCallError;
   XCTAssertFalse([handLandmarker detectAsyncInImage:image
-                                timestampInMilliseconds:0
-                                                  error:&liveStreamApiCallError]);
+                            timestampInMilliseconds:0
+                                              error:&liveStreamApiCallError]);
 
   NSError *expectedLiveStreamApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -357,8 +355,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   NSError *videoApiCallError;
   XCTAssertFalse([handLandmarker detectInVideoFrame:image
-                                timestampInMilliseconds:0
-                                                  error:&videoApiCallError]);
+                            timestampInMilliseconds:0
+                                              error:&videoApiCallError]);
 
   NSError *expectedVideoApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -375,15 +373,14 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
       [self handLandmarkerOptionsWithModelFileInfo:kHandLandmarkerBundleAssetFile];
   options.runningMode = MPPRunningModeVideo;
 
-  MPPHandLandmarker *handLandmarker =
-      [self createHandLandmarkerWithOptionsSucceeds:options];
+  MPPHandLandmarker *handLandmarker = [self createHandLandmarkerWithOptionsSucceeds:options];
 
   MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
   NSError *liveStreamApiCallError;
   XCTAssertFalse([handLandmarker detectAsyncInImage:image
-                                timestampInMilliseconds:0
-                                                  error:&liveStreamApiCallError]);
+                            timestampInMilliseconds:0
+                                              error:&liveStreamApiCallError]);
 
   NSError *expectedLiveStreamApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -414,8 +411,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   options.runningMode = MPPRunningModeLiveStream;
   options.handLandmarkerLiveStreamDelegate = self;
 
-  MPPHandLandmarker *handLandmarker =
-      [self createHandLandmarkerWithOptionsSucceeds:options];
+  MPPHandLandmarker *handLandmarker = [self createHandLandmarkerWithOptionsSucceeds:options];
 
   MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
@@ -433,8 +429,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   NSError *videoApiCallError;
   XCTAssertFalse([handLandmarker detectInVideoFrame:image
-                                timestampInMilliseconds:0
-                                                  error:&videoApiCallError]);
+                            timestampInMilliseconds:0
+                                              error:&videoApiCallError]);
 
   NSError *expectedVideoApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -451,17 +447,16 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
       [self handLandmarkerOptionsWithModelFileInfo:kHandLandmarkerBundleAssetFile];
   options.runningMode = MPPRunningModeVideo;
 
-  MPPHandLandmarker *handLandmarker =
-      [self createHandLandmarkerWithOptionsSucceeds:options];
+  MPPHandLandmarker *handLandmarker = [self createHandLandmarkerWithOptionsSucceeds:options];
 
   MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
   for (int i = 0; i < 3; i++) {
-    MPPHandLandmarkerResult *handLandmarkerResult =
-        [handLandmarker detectInVideoFrame:image timestampInMilliseconds:i error:nil];
+    MPPHandLandmarkerResult *handLandmarkerResult = [handLandmarker detectInVideoFrame:image
+                                                               timestampInMilliseconds:i
+                                                                                 error:nil];
     [self assertHandLandmarkerResult:handLandmarkerResult
-        isApproximatelyEqualToExpectedResult:[MPPHandLandmarkerTests
-                                                 thumbUpHandLandmarkerResult]];
+        isApproximatelyEqualToExpectedResult:[MPPHandLandmarkerTests thumbUpHandLandmarkerResult]];
   }
 }
 
@@ -476,8 +471,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   expectation.expectedFulfillmentCount = 1;
 
-  MPPHandLandmarker *handLandmarker =
-      [self createHandLandmarkerWithOptionsSucceeds:options];
+  MPPHandLandmarker *handLandmarker = [self createHandLandmarkerWithOptionsSucceeds:options];
 
   _outOfOrderTimestampTestDict = @{
     kLiveStreamTestsDictHandLandmarkerKey : handLandmarker,
@@ -489,9 +483,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   XCTAssertTrue([handLandmarker detectAsyncInImage:image timestampInMilliseconds:1 error:nil]);
 
   NSError *error;
-  XCTAssertFalse([handLandmarker detectAsyncInImage:image
-                                timestampInMilliseconds:0
-                                                  error:&error]);
+  XCTAssertFalse([handLandmarker detectAsyncInImage:image timestampInMilliseconds:0 error:&error]);
 
   NSError *expectedError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -528,8 +520,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   expectation.expectedFulfillmentCount = iterationCount + 1;
   expectation.inverted = YES;
 
-  MPPHandLandmarker *handLandmarker =
-      [self createHandLandmarkerWithOptionsSucceeds:options];
+  MPPHandLandmarker *handLandmarker = [self createHandLandmarkerWithOptionsSucceeds:options];
 
   _liveStreamSucceedsTestDict = @{
     kLiveStreamTestsDictHandLandmarkerKey : handLandmarker,
@@ -542,9 +533,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
   for (int i = 0; i < iterationCount; i++) {
-    XCTAssertTrue([handLandmarker detectAsyncInImage:image
-                                 timestampInMilliseconds:i
-                                                   error:nil]);
+    XCTAssertTrue([handLandmarker detectAsyncInImage:image timestampInMilliseconds:i error:nil]);
   }
 
   NSTimeInterval timeout = 0.5f;
@@ -553,19 +542,16 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
 - (void)handLandmarker:(MPPHandLandmarker *)handLandmarker
     didFinishDetectionWithResult:(MPPHandLandmarkerResult *)handLandmarkerResult
-           timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                             error:(NSError *)error {
+         timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                           error:(NSError *)error {
   [self assertHandLandmarkerResult:handLandmarkerResult
-      isApproximatelyEqualToExpectedResult:[MPPHandLandmarkerTests
-                                               thumbUpHandLandmarkerResult]];
+      isApproximatelyEqualToExpectedResult:[MPPHandLandmarkerTests thumbUpHandLandmarkerResult]];
 
   if (handLandmarker == _outOfOrderTimestampTestDict[kLiveStreamTestsDictHandLandmarkerKey]) {
     [_outOfOrderTimestampTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
-  } else if (handLandmarker ==
-             _liveStreamSucceedsTestDict[kLiveStreamTestsDictHandLandmarkerKey]) {
+  } else if (handLandmarker == _liveStreamSucceedsTestDict[kLiveStreamTestsDictHandLandmarkerKey]) {
     [_liveStreamSucceedsTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
   }
-
 }
 
 @end
