@@ -58,7 +58,10 @@ static const float kLandmarksErrorTolerance = 0.03f;
   XCTAssertTrue(handLandmarkerResult.landmarks.count == 0);        \
   XCTAssertTrue(handLandmarkerResult.worldLandmarks.count == 0);
 
-@interface MPPHandLandmarkerTests : XCTestCase
+@interface MPPHandLandmarkerTests : XCTestCase {
+  NSDictionary<NSString *, id> *_liveStreamSucceedsTestDict;
+  NSDictionary<NSString *, id> *_outOfOrderTimestampTestDict;
+}
 @end
 
 @implementation MPPHandLandmarkerTests
@@ -153,7 +156,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
   return filePath;
 }
 
-#pragma mark Gesture Recognizer Initializers
+#pragma mark Hand Landmarker Initializers
 
 - (MPPHandLandmarkerOptions *)handLandmarkerOptionsWithModelFileInfo:
     (ResourceFileInfo *)modelFileInfo {
@@ -185,7 +188,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
   AssertEqualErrors(error, expectedError);
 }
 
-#pragma mark Assert Gesture Recognizer Results
+#pragma mark Assert Hand Landmarker Results
 
 - (MPPImage *)imageWithFileInfo:(ResourceFileInfo *)fileInfo {
   MPPImage *image = [MPPImage imageFromBundleWithClass:[MPPHandLandmarkerTests class]
@@ -286,6 +289,287 @@ static const float kLandmarksErrorTolerance = 0.03f;
 
   [self assertHandLandmarkerResult:handLandmarkerResult
       isApproximatelyEqualToExpectedResult:[MPPHandLandmarkerTests pointingUpRotatedHandLandmarkerResult]];                                                                        
+
+}
+
+#pragma mark Running Mode Tests
+
+- (void)testCreateHandLandmarkerFailsWithDelegateInNonLiveStreamMode {
+  MPPRunningMode runningModesToTest[] = {MPPRunningModeImage, MPPRunningModeVideo};
+  for (int i = 0; i < sizeof(runningModesToTest) / sizeof(runningModesToTest[0]); i++) {
+    MPPHandLandmarkerOptions *options =
+        [self handLandmarkerOptionsWithModelFileInfo:kHandLandmarkerBundleAssetFile];
+
+    options.runningMode = runningModesToTest[i];
+    options.handLandmarkerLiveStreamDelegate = self;
+
+    [self assertCreateHandLandmarkerWithOptions:options
+                            failsWithExpectedError:
+                                [NSError
+                                    errorWithDomain:kExpectedErrorDomain
+                                               code:MPPTasksErrorCodeInvalidArgumentError
+                                           userInfo:@{
+                                             NSLocalizedDescriptionKey :
+                                                 @"The vision task is in image or video mode. The "
+                                                 @"delegate must not be set in the task's options."
+                                           }]];
+  }
+}
+
+- (void)testCreateHandLandmarkerFailsWithMissingDelegateInLiveStreamMode {
+  MPPHandLandmarkerOptions *options =
+      [self handLandmarkerOptionsWithModelFileInfo:kHandLandmarkerBundleAssetFile];
+
+  options.runningMode = MPPRunningModeLiveStream;
+
+  [self
+      assertCreateHandLandmarkerWithOptions:options
+                        failsWithExpectedError:
+                            [NSError errorWithDomain:kExpectedErrorDomain
+                                                code:MPPTasksErrorCodeInvalidArgumentError
+                                            userInfo:@{
+                                              NSLocalizedDescriptionKey :
+                                                  @"The vision task is in live stream mode. An "
+                                                  @"object must be set as the delegate of the task "
+                                                  @"in its options to ensure asynchronous delivery "
+                                                  @"of results."
+                                            }]];
+}
+
+- (void)testDetectFailsWithCallingWrongApiInImageMode {
+  MPPHandLandmarkerOptions *options =
+      [self handLandmarkerOptionsWithModelFileInfo:kHandLandmarkerBundleAssetFile];
+
+  MPPHandLandmarker *handLandmarker =
+      [self createHandLandmarkerWithOptionsSucceeds:options];
+
+  MPPImage *image = [self imageWithFileInfo:kFistImage];
+
+  NSError *liveStreamApiCallError;
+  XCTAssertFalse([handLandmarker detectAsyncInImage:image
+                                timestampInMilliseconds:0
+                                                  error:&liveStreamApiCallError]);
+
+  NSError *expectedLiveStreamApiCallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with live "
+                                                    @"stream mode. Current Running Mode: Image"
+                      }];
+
+  AssertEqualErrors(liveStreamApiCallError, expectedLiveStreamApiCallError);
+
+  NSError *videoApiCallError;
+  XCTAssertFalse([handLandmarker detectInVideoFrame:image
+                                timestampInMilliseconds:0
+                                                  error:&videoApiCallError]);
+
+  NSError *expectedVideoApiCallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with "
+                                                    @"video mode. Current Running Mode: Image"
+                      }];
+  AssertEqualErrors(videoApiCallError, expectedVideoApiCallError);
+}
+
+- (void)testDetectFailsWithCallingWrongApiInVideoMode {
+  MPPHandLandmarkerOptions *options =
+      [self handLandmarkerOptionsWithModelFileInfo:kHandLandmarkerBundleAssetFile];
+  options.runningMode = MPPRunningModeVideo;
+
+  MPPHandLandmarker *handLandmarker =
+      [self createHandLandmarkerWithOptionsSucceeds:options];
+
+  MPPImage *image = [self imageWithFileInfo:kFistImage];
+
+  NSError *liveStreamApiCallError;
+  XCTAssertFalse([handLandmarker detectAsyncInImage:image
+                                timestampInMilliseconds:0
+                                                  error:&liveStreamApiCallError]);
+
+  NSError *expectedLiveStreamApiCallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with live "
+                                                    @"stream mode. Current Running Mode: Video"
+                      }];
+
+  AssertEqualErrors(liveStreamApiCallError, expectedLiveStreamApiCallError);
+
+  NSError *imageApiCallError;
+  XCTAssertFalse([handLandmarker detectInImage:image error:&imageApiCallError]);
+
+  NSError *expectedImageApiCallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with "
+                                                    @"image mode. Current Running Mode: Video"
+                      }];
+  AssertEqualErrors(imageApiCallError, expectedImageApiCallError);
+}
+
+- (void)testDetectFailsWithCallingWrongApiInLiveStreamMode {
+  MPPHandLandmarkerOptions *options =
+      [self handLandmarkerOptionsWithModelFileInfo:kHandLandmarkerBundleAssetFile];
+  options.runningMode = MPPRunningModeLiveStream;
+  options.handLandmarkerLiveStreamDelegate = self;
+
+  MPPHandLandmarker *handLandmarker =
+      [self createHandLandmarkerWithOptionsSucceeds:options];
+
+  MPPImage *image = [self imageWithFileInfo:kFistImage];
+
+  NSError *imageApiCallError;
+  XCTAssertFalse([handLandmarker detectInImage:image error:&imageApiCallError]);
+
+  NSError *expectedImageApiCallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with "
+                                                    @"image mode. Current Running Mode: Live Stream"
+                      }];
+  AssertEqualErrors(imageApiCallError, expectedImageApiCallError);
+
+  NSError *videoApiCallError;
+  XCTAssertFalse([handLandmarker detectInVideoFrame:image
+                                timestampInMilliseconds:0
+                                                  error:&videoApiCallError]);
+
+  NSError *expectedVideoApiCallError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey : @"The vision task is not initialized with "
+                                                    @"video mode. Current Running Mode: Live Stream"
+                      }];
+  AssertEqualErrors(videoApiCallError, expectedVideoApiCallError);
+}
+
+- (void)testDetectWithVideoModeSucceeds {
+  MPPHandLandmarkerOptions *options =
+      [self handLandmarkerOptionsWithModelFileInfo:kHandLandmarkerBundleAssetFile];
+  options.runningMode = MPPRunningModeVideo;
+
+  MPPHandLandmarker *handLandmarker =
+      [self createHandLandmarkerWithOptionsSucceeds:options];
+
+  MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
+
+  for (int i = 0; i < 3; i++) {
+    MPPHandLandmarkerResult *handLandmarkerResult =
+        [handLandmarker detectInVideoFrame:image timestampInMilliseconds:i error:nil];
+    [self assertHandLandmarkerResult:handLandmarkerResult
+        isApproximatelyEqualToExpectedResult:[MPPHandLandmarkerTests
+                                                 thumbUpHandLandmarkerResult]];
+  }
+}
+
+- (void)testDetectWithOutOfOrderTimestampsAndLiveStreamModeFails {
+  MPPHandLandmarkerOptions *options =
+      [self handLandmarkerOptionsWithModelFileInfo:kHandLandmarkerBundleAssetFile];
+  options.runningMode = MPPRunningModeLiveStream;
+  options.handLandmarkerLiveStreamDelegate = self;
+
+  XCTestExpectation *expectation = [[XCTestExpectation alloc]
+      initWithDescription:@"detectWiththOutOfOrderTimestampsAndLiveStream"];
+
+  expectation.expectedFulfillmentCount = 1;
+
+  MPPHandLandmarker *handLandmarker =
+      [self createHandLandmarkerWithOptionsSucceeds:options];
+
+  _outOfOrderTimestampTestDict = @{
+    kLiveStreamTestsDictHandLandmarkerKey : handLandmarker,
+    kLiveStreamTestsDictExpectationKey : expectation
+  };
+
+  MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
+
+  XCTAssertTrue([handLandmarker detectAsyncInImage:image timestampInMilliseconds:1 error:nil]);
+
+  NSError *error;
+  XCTAssertFalse([handLandmarker detectAsyncInImage:image
+                                timestampInMilliseconds:0
+                                                  error:&error]);
+
+  NSError *expectedError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey :
+                            @"INVALID_ARGUMENT: Input timestamp must be monotonically increasing."
+                      }];
+  AssertEqualErrors(error, expectedError);
+
+  NSTimeInterval timeout = 0.5f;
+  [self waitForExpectations:@[ expectation ] timeout:timeout];
+}
+
+- (void)testDetectWithLiveStreamModeSucceeds {
+  MPPHandLandmarkerOptions *options =
+      [self handLandmarkerOptionsWithModelFileInfo:kHandLandmarkerBundleAssetFile];
+  options.runningMode = MPPRunningModeLiveStream;
+  options.handLandmarkerLiveStreamDelegate = self;
+
+  NSInteger iterationCount = 100;
+
+  // Because of flow limiting, we cannot ensure that the callback will be invoked `iterationCount`
+  // times. An normal expectation will fail if expectation.fulfill() is not called
+  // `expectation.expectedFulfillmentCount` times. If `expectation.isInverted = true`, the test will
+  // only succeed if expectation is not fulfilled for the specified `expectedFulfillmentCount`.
+  // Since in our case we cannot predict how many times the expectation is supposed to be fullfilled
+  // setting, `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and
+  // `expectation.isInverted = true` ensures that test succeeds ifexpectation is fullfilled <=
+  // `iterationCount` times.
+  XCTestExpectation *expectation =
+      [[XCTestExpectation alloc] initWithDescription:@"detectWithLiveStream"];
+
+  expectation.expectedFulfillmentCount = iterationCount + 1;
+  expectation.inverted = YES;
+
+  MPPHandLandmarker *handLandmarker =
+      [self createHandLandmarkerWithOptionsSucceeds:options];
+
+  _liveStreamSucceedsTestDict = @{
+    kLiveStreamTestsDictHandLandmarkerKey : handLandmarker,
+    kLiveStreamTestsDictExpectationKey : expectation
+  };
+
+  // TODO: Mimic initialization from CMSampleBuffer as live stream mode is most likely to be used
+  // with the iOS camera. AVCaptureVideoDataOutput sample buffer delegates provide frames of type
+  // `CMSampleBuffer`.
+  MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
+
+  for (int i = 0; i < iterationCount; i++) {
+    XCTAssertTrue([handLandmarker detectAsyncInImage:image
+                                 timestampInMilliseconds:i
+                                                   error:nil]);
+  }
+
+  NSTimeInterval timeout = 0.5f;
+  [self waitForExpectations:@[ expectation ] timeout:timeout];
+}
+
+- (void)handLandmarker:(MPPHandLandmarker *)handLandmarker
+    didFinishRecognitionWithResult:(MPPHandLandmarkerResult *)handLandmarkerResult
+           timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                             error:(NSError *)error {
+  [self assertHandLandmarkerResult:handLandmarkerResult
+      isApproximatelyEqualToExpectedResult:[MPPHandLandmarkerTests
+                                               thumbUpHandLandmarkerResult]];
+
+  if (handLandmarker == _outOfOrderTimestampTestDict[kLiveStreamTestsDictHandLandmarkerKey]) {
+    [_outOfOrderTimestampTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
+  } else if (handLandmarker ==
+             _liveStreamSucceedsTestDict[kLiveStreamTestsDictHandLandmarkerKey]) {
+    [_liveStreamSucceedsTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
+  }
 
 }
 
