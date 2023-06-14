@@ -41,3 +41,5 @@ mediapipe_proto_library(
         "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_proto",
     ],
 )
+
+# TODO: open source hand joints graph
