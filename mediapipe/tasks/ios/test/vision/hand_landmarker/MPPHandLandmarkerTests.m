@@ -37,7 +37,6 @@ static ResourceFileInfo *const kExpectedThumbUpLandmarksFile =
 static ResourceFileInfo *const kExpectedPointingUpRotatedLandmarksFile =
     @{@"name" : @"pointing_up_rotated_landmarks", @"type" : kPbFileExtension};
 
-
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 static const float kLandmarksErrorTolerance = 0.03f;
 
@@ -54,8 +53,8 @@ static const float kLandmarksErrorTolerance = 0.03f;
                              @"hand index = %d landmark index j = %d", handIndex, landmarkIndex);
 
 #define AssertHandLandmarkerResultIsEmpty(handLandmarkerResult) \
-  XCTAssertTrue(handLandmarkerResult.handedness.count == 0);       \
-  XCTAssertTrue(handLandmarkerResult.landmarks.count == 0);        \
+  XCTAssertTrue(handLandmarkerResult.handedness.count == 0);    \
+  XCTAssertTrue(handLandmarkerResult.landmarks.count == 0);     \
   XCTAssertTrue(handLandmarkerResult.worldLandmarks.count == 0);
 
 @interface MPPHandLandmarkerTests : XCTestCase {
@@ -70,28 +69,25 @@ static const float kLandmarksErrorTolerance = 0.03f;
 
 + (MPPHandLandmarkerResult *)emptyHandLandmarkerResult {
   return [[MPPHandLandmarkerResult alloc] initWithLandmarks:@[]
-                                                 worldLandmarks:@[]
-                                                   handedness:@[]
-                                  
-                                      timestampInMilliseconds:0];
+                                             worldLandmarks:@[]
+                                                 handedness:@[]
+
+                                    timestampInMilliseconds:0];
 }
 
 + (MPPHandLandmarkerResult *)thumbUpHandLandmarkerResult {
-  NSString *filePath =
-      [MPPHandLandmarkerTests filePathWithFileInfo:kExpectedThumbUpLandmarksFile];
+  NSString *filePath = [MPPHandLandmarkerTests filePathWithFileInfo:kExpectedThumbUpLandmarksFile];
 
-  return [MPPHandLandmarkerResult
-      handLandmarkerResultFromTextEncodedProtobufFileWithName:filePath
-                                            shouldRemoveZPosition:YES];
+  return [MPPHandLandmarkerResult handLandmarkerResultFromProtobufFileWithName:filePath
+                                                         shouldRemoveZPosition:YES];
 }
 
 + (MPPHandLandmarkerResult *)pointingUpRotatedHandLandmarkerResult {
   NSString *filePath =
       [MPPHandLandmarkerTests filePathWithFileInfo:kExpectedPointingUpRotatedLandmarksFile];
 
-  return [MPPHandLandmarkerResult
-      handLandmarkerResultFromTextEncodedProtobufFileWithName:filePath
-                                            shouldRemoveZPosition:YES];
+  return [MPPHandLandmarkerResult handLandmarkerResultFromProtobufFileWithName:filePath
+                                                         shouldRemoveZPosition:YES];
 }
 
 - (void)assertMultiHandLandmarks:(NSArray<NSArray<MPPNormalizedLandmark *> *> *)multiHandLandmarks
@@ -133,8 +129,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
 }
 
 - (void)assertHandLandmarkerResult:(MPPHandLandmarkerResult *)handLandmarkerResult
-    isApproximatelyEqualToExpectedResult:
-        (MPPHandLandmarkerResult *)expectedHandLandmarkerResult {
+    isApproximatelyEqualToExpectedResult:(MPPHandLandmarkerResult *)expectedHandLandmarkerResult {
   [self assertMultiHandLandmarks:handLandmarkerResult.landmarks
       areApproximatelyEqualToExpectedMultiHandLandmarks:expectedHandLandmarkerResult.landmarks];
   [self assertMultiHandWorldLandmarks:handLandmarkerResult.worldLandmarks
@@ -146,7 +141,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
 
 + (NSString *)filePathWithFileInfo:(ResourceFileInfo *)fileInfo {
   NSString *filePath = [MPPHandLandmarkerTests filePathWithName:fileInfo[@"name"]
-                                                         extension:fileInfo[@"type"]];
+                                                      extension:fileInfo[@"type"]];
   return filePath;
 }
 
@@ -161,8 +156,7 @@ static const float kLandmarksErrorTolerance = 0.03f;
 - (MPPHandLandmarkerOptions *)handLandmarkerOptionsWithModelFileInfo:
     (ResourceFileInfo *)modelFileInfo {
   NSString *modelPath = [MPPHandLandmarkerTests filePathWithFileInfo:modelFileInfo];
-  MPPHandLandmarkerOptions *handLandmarkerOptions =
-      [[MPPHandLandmarkerOptions alloc] init];
+  MPPHandLandmarkerOptions *handLandmarkerOptions = [[MPPHandLandmarkerOptions alloc] init];
   handLandmarkerOptions.baseOptions.modelAssetPath = modelPath;
 
   return handLandmarkerOptions;
@@ -170,21 +164,22 @@ static const float kLandmarksErrorTolerance = 0.03f;
 
 - (MPPHandLandmarker *)createHandLandmarkerWithOptionsSucceeds:
     (MPPHandLandmarkerOptions *)handLandmarkerOptions {
+  NSError* error;
   MPPHandLandmarker *handLandmarker =
-      [[MPPHandLandmarker alloc] initWithOptions:handLandmarkerOptions error:nil];
+      [[MPPHandLandmarker alloc] initWithOptions:handLandmarkerOptions error:&error];
   XCTAssertNotNil(handLandmarker);
+  XCTAssertNil(error);
 
   return handLandmarker;
 }
 
-- (void)assertCreateHandLandmarkerWithOptions:
-            (MPPHandLandmarkerOptions *)handLandmarkerOptions
-                          failsWithExpectedError:(NSError *)expectedError {
+- (void)assertCreateHandLandmarkerWithOptions:(MPPHandLandmarkerOptions *)handLandmarkerOptions
+                       failsWithExpectedError:(NSError *)expectedError {
   NSError *error = nil;
   MPPHandLandmarker *handLandmarker =
       [[MPPHandLandmarker alloc] initWithOptions:handLandmarkerOptions error:&error];
 
-  XCTAssertNil(handLandmarkerOptions);
+  XCTAssertNil(handLandmarker);
   AssertEqualErrors(error, expectedError);
 }
 
@@ -211,22 +206,20 @@ static const float kLandmarksErrorTolerance = 0.03f;
 }
 
 - (MPPHandLandmarkerResult *)detectInImageWithFileInfo:(ResourceFileInfo *)imageFileInfo
-                                    usingHandLandmarker:
-                                        (MPPHandLandmarker *)handLandmarker {
+                                   usingHandLandmarker:(MPPHandLandmarker *)handLandmarker {
   MPPImage *mppImage = [self imageWithFileInfo:imageFileInfo];
-  MPPHandLandmarkerResult *handLandmarkerResult = [handLandmarker detectInImage:mppImage
-                                                                                    error:nil];
+  MPPHandLandmarkerResult *handLandmarkerResult = [handLandmarker detectInImage:mppImage error:nil];
   XCTAssertNotNil(handLandmarkerResult);
 
   return handLandmarkerResult;
 }
 
 - (void)assertResultsOfDetectInImageWithFileInfo:(ResourceFileInfo *)fileInfo
-                           usingHandLandmarker:(MPPHandLandmarker *)handLandmarker
-       approximatelyEqualsHandLandmarkerResult:
-           (MPPHandLandmarkerResult *)expectedHandLandmarkerResult {
-  MPPHandLandmarkerResult *handLandmarkerResult =
-      [self detectInImageWithFileInfo:fileInfo usingHandLandmarker:handLandmarker];
+                             usingHandLandmarker:(MPPHandLandmarker *)handLandmarker
+         approximatelyEqualsHandLandmarkerResult:
+             (MPPHandLandmarkerResult *)expectedHandLandmarkerResult {
+  MPPHandLandmarkerResult *handLandmarkerResult = [self detectInImageWithFileInfo:fileInfo
+                                                              usingHandLandmarker:handLandmarker];
   [self assertHandLandmarkerResult:handLandmarkerResult
       isApproximatelyEqualToExpectedResult:expectedHandLandmarkerResult];
 }
@@ -236,14 +229,14 @@ static const float kLandmarksErrorTolerance = 0.03f;
 - (void)testDetectWithModelPathSucceeds {
   NSString *modelPath =
       [MPPHandLandmarkerTests filePathWithFileInfo:kHandLandmarkerBundleAssetFile];
-  MPPHandLandmarker *handLandmarker =
-      [[MPPHandLandmarker alloc] initWithModelPath:modelPath error:nil];
+  MPPHandLandmarker *handLandmarker = [[MPPHandLandmarker alloc] initWithModelPath:modelPath
+                                                                             error:nil];
   XCTAssertNotNil(handLandmarker);
 
   [self assertResultsOfDetectInImageWithFileInfo:kThumbUpImage
-                           usingHandLandmarker:handLandmarker
-       approximatelyEqualsHandLandmarkerResult:[MPPHandLandmarkerTests
-                                                      thumbUpHandLandmarkerResult]];
+                             usingHandLandmarker:handLandmarker
+         approximatelyEqualsHandLandmarkerResult:[MPPHandLandmarkerTests
+                                                     thumbUpHandLandmarkerResult]];
 }
 
 - (void)testDetectWithEmptyResultsSucceeds {
@@ -253,8 +246,8 @@ static const float kLandmarksErrorTolerance = 0.03f;
   MPPHandLandmarker *handLandmarker =
       [self createHandLandmarkerWithOptionsSucceeds:handLandmarkerOptions];
 
-  MPPHandLandmarkerResult *handLandmarkerResult =
-      [self detectInImageWithFileInfo:kNoHandsImage usingHandLandmarker:handLandmarker];
+  MPPHandLandmarkerResult *handLandmarkerResult = [self detectInImageWithFileInfo:kNoHandsImage
+                                                              usingHandLandmarker:handLandmarker];
   AssertHandLandmarkerResultIsEmpty(handLandmarkerResult);
 }
 
@@ -268,8 +261,8 @@ static const float kLandmarksErrorTolerance = 0.03f;
   MPPHandLandmarker *handLandmarker =
       [self createHandLandmarkerWithOptionsSucceeds:handLandmarkerOptions];
 
-  MPPHandLandmarkerResult *handLandmarkerResult =
-      [self detectInImageWithFileInfo:kTwoHandsImage usingHandLandmarker:handLandmarker];
+  MPPHandLandmarkerResult *handLandmarkerResult = [self detectInImageWithFileInfo:kTwoHandsImage
+                                                              usingHandLandmarker:handLandmarker];
 
   XCTAssertTrue(handLandmarkerResult.handedness.count == numHands);
 }
@@ -284,12 +277,11 @@ static const float kLandmarksErrorTolerance = 0.03f;
   MPPImage *mppImage = [self imageWithFileInfo:kPointingUpRotatedImage
                                    orientation:UIImageOrientationRight];
 
-  MPPHandLandmarkerResult *handLandmarkerResult = [handLandmarker detectInImage:mppImage
-                                                                          error:nil];
+  MPPHandLandmarkerResult *handLandmarkerResult = [handLandmarker detectInImage:mppImage error:nil];
 
   [self assertHandLandmarkerResult:handLandmarkerResult
-      isApproximatelyEqualToExpectedResult:[MPPHandLandmarkerTests pointingUpRotatedHandLandmarkerResult]];                                                                        
-
+      isApproximatelyEqualToExpectedResult:[MPPHandLandmarkerTests
+                                               pointingUpRotatedHandLandmarkerResult]];
 }
 
 #pragma mark Running Mode Tests

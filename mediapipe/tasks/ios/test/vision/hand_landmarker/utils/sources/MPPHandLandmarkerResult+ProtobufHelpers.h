@@ -18,9 +18,8 @@
 NS_ASSUME_NONNULL_BEGIN
 @interface MPPHandLandmarkerResult (ProtobufHelpers)
 
-+ (MPPHandLandmarkerResult *)
-    handLandmarkerResultFromTextEncodedProtobufFileWithName:(NSString *)fileName
-                                          shouldRemoveZPosition:(BOOL)removeZPosition;
++ (MPPHandLandmarkerResult *)handLandmarkerResultFromProtobufFileWithName:(NSString *)fileName
+                                                    shouldRemoveZPosition:(BOOL)removeZPosition;
 
 @end
 

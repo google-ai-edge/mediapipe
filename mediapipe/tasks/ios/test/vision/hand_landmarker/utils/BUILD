@@ -12,10 +12,11 @@ objc_library(
         "-x objective-c++",
     ],
     deps = [
-        "//mediapipe/tasks/ios/test/vision/utils:parse_proto_utils",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/tasks/cc/components/containers/proto:landmarks_detection_result_cc_proto",
-        "//mediapipe/tasks/ios/vision/hand_landmarker/utils:MPPHandLandmarkerResultHelpers",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/test/vision/utils:parse_proto_utils",
+        "//mediapipe/tasks/ios/vision/hand_landmarker:MPPHandLandmarkerResult",
+        "//mediapipe/tasks/ios/vision/hand_landmarker/utils:MPPHandLandmarkerResultHelpers",
     ],
 )

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <string>
 
 #include "absl/strings/string_view.h"
@@ -58,6 +59,7 @@ TEST(ConstantSidePacketCalculatorTest, EveryPossibleType) {
   DoTestSingleSidePacket("{ float_value: 6.5f }", 6.5f);
   DoTestSingleSidePacket("{ bool_value: true }", true);
   DoTestSingleSidePacket<std::string>(R"({ string_value: "str" })", "str");
+  DoTestSingleSidePacket<int64_t>("{ int64_value: 63 }", 63);
 }
 
 TEST(ConstantSidePacketCalculatorTest, MultiplePackets) {

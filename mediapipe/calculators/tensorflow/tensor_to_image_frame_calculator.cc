@@ -65,6 +65,7 @@ class TensorToImageFrameCalculator : public CalculatorBase {
 
  private:
   float scale_factor_;
+  bool scale_per_frame_min_max_;
 };
 
 REGISTER_CALCULATOR(TensorToImageFrameCalculator);
@@ -88,6 +89,8 @@ absl::Status TensorToImageFrameCalculator::GetContract(CalculatorContract* cc) {
 absl::Status TensorToImageFrameCalculator::Open(CalculatorContext* cc) {
   scale_factor_ =
       cc->Options<TensorToImageFrameCalculatorOptions>().scale_factor();
+  scale_per_frame_min_max_ = cc->Options<TensorToImageFrameCalculatorOptions>()
+                                 .scale_per_frame_min_max();
   cc->SetOffset(TimestampDiff(0));
   return absl::OkStatus();
 }
@@ -109,16 +112,38 @@ absl::Status TensorToImageFrameCalculator::Process(CalculatorContext* cc) {
   auto format = (depth == 3 ? ImageFormat::SRGB : ImageFormat::GRAY8);
   const int32_t total_size = height * width * depth;
 
+  if (scale_per_frame_min_max_) {
+    RET_CHECK_EQ(input_tensor.dtype(), tensorflow::DT_FLOAT)
+        << "Setting scale_per_frame_min_max requires FLOAT input tensors.";
+  }
   ::std::unique_ptr<const ImageFrame> output;
   if (input_tensor.dtype() == tensorflow::DT_FLOAT) {
     // Allocate buffer with alignments.
     std::unique_ptr<uint8_t[]> buffer(
         new (std::align_val_t(EIGEN_MAX_ALIGN_BYTES)) uint8_t[total_size]);
     auto data = input_tensor.flat<float>().data();
+    float min = 1e23;
+    float max = -1e23;
+    if (scale_per_frame_min_max_) {
+      for (int i = 0; i < total_size; ++i) {
+        float d = scale_factor_ * data[i];
+        if (d < min) {
+          min = d;
+        }
+        if (d > max) {
+          max = d;
+        }
+      }
+    }
     for (int i = 0; i < total_size; ++i) {
-      float d = scale_factor_ * data[i];
-      if (d < 0) d = 0;
-      if (d > 255) d = 255;
+      float d = data[i];
+      if (scale_per_frame_min_max_) {
+        d = 255 * (d - min) / (max - min + 1e-9);
+      } else {
+        d = scale_factor_ * d;
+        if (d < 0) d = 0;
+        if (d > 255) d = 255;
+      }
       buffer[i] = d;
     }
     output = ::absl::make_unique<ImageFrame>(

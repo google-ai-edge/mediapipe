@@ -38,7 +38,7 @@ mediapipe_files(srcs = [
 ])
 
 rollup_bundle(
-    name = "audio_bundle",
+    name = "audio_bundle_mjs",
     config_file = "//mediapipe/tasks/web:rollup.config.mjs",
     entry_point = "index.ts",
     format = "esm",
@@ -70,6 +70,29 @@ rollup_bundle(
 )
 
 genrule(
+    name = "audio_sources",
+    srcs = [
+        ":audio_bundle_cjs",
+        ":audio_bundle_mjs",
+    ],
+    outs = [
+        "audio_bundle.cjs",
+        "audio_bundle.cjs.map",
+        "audio_bundle.mjs",
+        "audio_bundle.mjs.map",
+    ],
+    cmd = (
+        "for FILE in $(SRCS); do " +
+        "  OUT_FILE=$(GENDIR)/mediapipe/tasks/web/audio/$$(" +
+        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/'" +
+        "  ); " +
+        "  echo $$FILE ; echo $$OUT_FILE ; " +
+        "  cp $$FILE $$OUT_FILE ; " +
+        "done;"
+    ),
+)
+
+genrule(
     name = "package_json",
     srcs = ["//mediapipe/tasks/web:package.json"],
     outs = ["package.json"],
@@ -91,8 +114,7 @@ pkg_npm(
         "wasm/audio_wasm_internal.wasm",
         "wasm/audio_wasm_nosimd_internal.js",
         "wasm/audio_wasm_nosimd_internal.wasm",
-        ":audio_bundle",
-        ":audio_bundle_cjs",
+        ":audio_sources",
         ":package_json",
     ],
 )

@@ -228,7 +228,6 @@ cc_library(
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -280,7 +279,6 @@ cc_library(
         "//mediapipe/tasks/cc/text/tokenizers:tokenizer_utils",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
     ],
     alwayslink = 1,
 )

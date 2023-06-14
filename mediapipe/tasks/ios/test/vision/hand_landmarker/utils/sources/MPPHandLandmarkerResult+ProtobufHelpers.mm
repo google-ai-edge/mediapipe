@@ -31,9 +31,8 @@ using ::mediapipe::tasks::ios::test::vision::utils::get_proto_from_pbtxt;
 
 @implementation MPPHandLandmarkerResult (ProtobufHelpers)
 
-+ (MPPHandLandmarkerResult *)
-    handLandmarkerResultFromTextEncodedProtobufFileWithName:(NSString *)fileName
-                                          shouldRemoveZPosition:(BOOL)removeZPosition {
++ (MPPHandLandmarkerResult *)handLandmarkerResultFromProtobufFileWithName:(NSString *)fileName
+                                                    shouldRemoveZPosition:(BOOL)removeZPosition {
   LandmarksDetectionResultProto landmarkDetectionResultProto;
 
   if (!get_proto_from_pbtxt(fileName.cppString, landmarkDetectionResultProto).ok()) {
@@ -51,9 +50,9 @@ using ::mediapipe::tasks::ios::test::vision::utils::get_proto_from_pbtxt;
 
   return [MPPHandLandmarkerResult
       handLandmarkerResultWithLandmarksProto:{landmarkDetectionResultProto.landmarks()}
-                                     worldLandmarksProto:{landmarkDetectionResultProto.world_landmarks()}
-                                   handednessProto:{landmarkDetectionResultProto.classifications()}
-                           timestampInMilliSeconds:0];
+                         worldLandmarksProto:{landmarkDetectionResultProto.world_landmarks()}
+                             handednessProto:{landmarkDetectionResultProto.classifications()}
+                     timestampInMilliSeconds:0];
 }
 
 @end

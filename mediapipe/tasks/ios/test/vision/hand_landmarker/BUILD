@@ -34,7 +34,7 @@ objc_library(
         "-x objective-c++",
     ],
     data = [
-        "//mediapipe/tasks/testdata/vision:test_models",
+        "//mediapipe/tasks/testdata/vision:hand_landmarker.task",
         "//mediapipe/tasks/testdata/vision:test_images",
         "//mediapipe/tasks/testdata/vision:test_protos",
     ],
