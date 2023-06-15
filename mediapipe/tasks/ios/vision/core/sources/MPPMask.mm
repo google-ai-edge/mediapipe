@@ -129,7 +129,7 @@ void copyData(const T *destination, const T *source, size_t length) {
       }
       float *data = allocateDataPtr(_allocatedFloat32Data, _width * _height);
       for (int i = 0; i < _width * _height; i++) {
-        data[i] = _uint8Data[i] / 255;
+        data[i] = (float)_uint8Data[i] / 255;
       }
       return data;
     }
