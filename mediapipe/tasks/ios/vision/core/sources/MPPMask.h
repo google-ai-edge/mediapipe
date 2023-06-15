@@ -93,8 +93,7 @@ NS_SWIFT_NAME(Mask)
  */
 - (nullable instancetype)initWithFloat32Data:(const float *)float32Data
                                        width:(NSInteger)width
-                                      height:(NSInteger)height
-                                       error:(NSError **)error NS_DESIGNATED_INITIALIZER;
+                                      height:(NSInteger)height NS_DESIGNATED_INITIALIZER;
 
 
 // TODO: Add methods for CVPixelBuffer conversion.
