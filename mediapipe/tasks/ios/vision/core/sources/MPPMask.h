@@ -34,7 +34,7 @@ typedef NS_ENUM(NSUInteger, MPPMaskDataType) {
  * Every mask is has an underlying type which can be accessed using `dataType`. You can access the
  * mask as any other type using the appropriate properties. For eg:, if the underlying type is
  * `MPPMaskDataTypeUInt8`, in addition to accessing the mask using `uint8Array`, you can access
- * 'floatArray` to get the float 32 data. The first time you access the data as a type different
+ * 'floatArray` to get the 32 bit float data. The first time you access the data as a type different
  * from the underlying type, an expensive type conversion is performed. Subsequent accesses return a
  * pointer to the memory location fo the same type converted array. As type conversions can be
  * expensive, it is recommended to limit the accesses to data of types different from the underlying
