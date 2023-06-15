@@ -32,8 +32,8 @@ void copyData(const T *destination, const T *source, size_t length) {
 @interface MPPMask () {
   const UInt8 *_uint8Data;
   const float *_float32Data;
-  std::unique_ptr<UInt8[]> _allocatedUInt8Data;
-  std::unique_ptr<float[]> _allocatedFloat32Data;
+  std::unique_ptr<UInt8[]> _uint8DataPtr;
+  std::unique_ptr<float[]> _float32DataPtr;
 }
 @end
 
@@ -84,7 +84,7 @@ void copyData(const T *destination, const T *source, size_t length) {
                                  height:(NSInteger)height {
   self = [self initWithWidth:width height:height dataType:MPPMaskDataTypeUInt8 error:nil];
   if (self) {
-    _uint8Data = allocateDataPtr(_allocatedUInt8Data, _width * _height);
+    _uint8Data = allocateDataPtr(_uint8DataPtr, _width * _height);
     copyData(_uint8Data, uint8DataToCopy, _width * _height);
   }
   return self;
@@ -95,7 +95,7 @@ void copyData(const T *destination, const T *source, size_t length) {
                                    height:(NSInteger)height {
   self = [self initWithWidth:width height:height dataType:MPPMaskDataTypeFloat32 error:nil];
   if (self) {
-    _float32Data = allocateDataPtr(_allocatedFloat32Data, _width * _height);
+    _float32Data = allocateDataPtr(_float32DataPtr, _width * _height);
     copyData(_float32Data, float32DataToCopy, _width * _height);
   }
   return self;
@@ -107,10 +107,10 @@ void copyData(const T *destination, const T *source, size_t length) {
       return _uint8Data;
     }
     case MPPMaskDataTypeFloat32: {
-      if (_allocatedUInt8Data) {
-        return _allocatedUInt8Data.get();
+      if (_uint8DataPtr) {
+        return _uint8DataPtr.get();
       }
-      UInt8 *data = allocateDataPtr(_allocatedUInt8Data, _width * _height);
+      UInt8 *data = allocateDataPtr(_uint8DataPtr, _width * _height);
       for (int i = 0; i < _width * _height; i++) {
         data[i] = _float32Data[i] * 255;
       }
@@ -124,13 +124,15 @@ void copyData(const T *destination, const T *source, size_t length) {
 - (const float *)float32Data {
   switch (_dataType) {
     case MPPMaskDataTypeUInt8: {
-      if (_allocatedFloat32Data) {
-        return _allocatedFloat32Data.get();
+      if (_float32DataPtr) {
+        NSLog(@"Get repeated");
+        return _float32DataPtr.get();
       }
-      float *data = allocateDataPtr(_allocatedFloat32Data, _width * _height);
+      float *data = allocateDataPtr(_float32DataPtr, _width * _height);
       for (int i = 0; i < _width * _height; i++) {
         data[i] = (float)_uint8Data[i] / 255;
       }
+      NSLog(@"Get new");
       return data;
     }
     case MPPMaskDataTypeFloat32: {
