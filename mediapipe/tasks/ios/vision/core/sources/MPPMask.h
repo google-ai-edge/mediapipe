@@ -68,7 +68,7 @@ NS_SWIFT_NAME(Mask)
 @property(nonatomic, readonly, assign) const float *float32Data;
 
 /**
- * Initializes an `MPPMask` object of tyep `MPPMaskDataTypeUInt8` with the given `UInt8*` data,
+ * Initializes an `MPPMask` object of type `MPPMaskDataTypeUInt8` with the given `UInt8*` data,
  * width and height.
  *
  * @param uint8Data A pointer to the memory location of the `UInt8` data array.
@@ -82,7 +82,7 @@ NS_SWIFT_NAME(Mask)
                                     height:(NSInteger)height NS_DESIGNATED_INITIALIZER;
 
 /**
- * Initializes an `MPPMask` object of tyep `MPPMaskDataTypeFloat32` with the given `float*` data,
+ * Initializes an `MPPMask` object of type `MPPMaskDataTypeFloat32` with the given `float*` data,
  * width and height.
  *
  * @param uint8Data A pointer to the memory location of the `float` data array.
