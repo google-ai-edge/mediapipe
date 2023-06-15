@@ -58,7 +58,8 @@ TfLiteRegistration* RegisterMaxPoolingWithArgmax2D() {
         });
     return r;
   }();
-  static TfLiteRegistration reg = {.registration_external = reg_external};
+  static TfLiteRegistration reg{};
+  reg.registration_external = reg_external;
   return &reg;
 }
 
@@ -68,7 +69,8 @@ TfLiteRegistration* RegisterMaxUnpooling2D() {
       TfLiteRegistrationExternalCreate(kTfLiteBuiltinCustom,
                                        kMaxUnpooling2DOpName,
                                        kMaxUnpooling2DOpVersion);
-  static TfLiteRegistration reg = {.registration_external = reg_external};
+  static TfLiteRegistration reg{};
+  reg.registration_external = reg_external;
   return &reg;
 }
 
@@ -78,7 +80,8 @@ TfLiteRegistration* RegisterConvolution2DTransposeBias() {
       TfLiteRegistrationExternalCreate(kTfLiteBuiltinCustom,
                                        kConvolution2DTransposeBiasOpName,
                                        kConvolution2DTransposeBiasOpVersion);
-  static TfLiteRegistration reg = {.registration_external = reg_external};
+  static TfLiteRegistration reg{};
+  reg.registration_external = reg_external;
   return &reg;
 }
 
