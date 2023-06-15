@@ -16,19 +16,6 @@
 #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 
-namespace {
-template <typename T>
-T *allocateDataPtr(std::unique_ptr<T[]> &data, size_t length) {
-  data = std::unique_ptr<T[]>(new T[length]);
-  return data.get();
-}
-
-template <typename T>
-void copyData(const T *destination, const T *source, size_t length) {
-  memcpy((void *)destination, source, length * sizeof(T));
-}
-}  // namespace
-
 @interface MPPMask () {
   const UInt8 *_uint8Data;
   const float *_float32Data;
@@ -84,8 +71,10 @@ void copyData(const T *destination, const T *source, size_t length) {
                                  height:(NSInteger)height {
   self = [self initWithWidth:width height:height dataType:MPPMaskDataTypeUInt8 error:nil];
   if (self) {
-    _uint8Data = allocateDataPtr(_uint8DataPtr, _width * _height);
-    copyData(_uint8Data, uint8DataToCopy, _width * _height);
+    size_t length = _width * _height;
+    _uint8DataPtr = std::unique_ptr<UInt8[]>(new UInt8[length]);
+    _uint8Data = _uint8DataPtr.get();
+    memcpy((UInt8 *)_uint8Data, uint8DataToCopy, length * sizeof(UInt8));
   }
   return self;
 }
@@ -95,8 +84,10 @@ void copyData(const T *destination, const T *source, size_t length) {
                                    height:(NSInteger)height {
   self = [self initWithWidth:width height:height dataType:MPPMaskDataTypeFloat32 error:nil];
   if (self) {
-    _float32Data = allocateDataPtr(_float32DataPtr, _width * _height);
-    copyData(_float32Data, float32DataToCopy, _width * _height);
+    size_t length = _width * _height;
+    _float32DataPtr = std::unique_ptr<float[]>(new float[length]);
+    _float32Data = _float32DataPtr.get();
+    memcpy((float *)_float32Data, float32DataToCopy, length * sizeof(float));
   }
   return self;
 }
@@ -110,8 +101,11 @@ void copyData(const T *destination, const T *source, size_t length) {
       if (_uint8DataPtr) {
         return _uint8DataPtr.get();
       }
-      UInt8 *data = allocateDataPtr(_uint8DataPtr, _width * _height);
-      for (int i = 0; i < _width * _height; i++) {
+
+      size_t length = _width * _height;
+      _uint8DataPtr = std::unique_ptr<UInt8[]>(new UInt8[length]);
+      UInt8 *data = _uint8DataPtr.get();
+      for (int i = 0; i < length; i++) {
         data[i] = _float32Data[i] * 255;
       }
       return data;
@@ -125,14 +119,15 @@ void copyData(const T *destination, const T *source, size_t length) {
   switch (_dataType) {
     case MPPMaskDataTypeUInt8: {
       if (_float32DataPtr) {
-        NSLog(@"Get repeated");
         return _float32DataPtr.get();
       }
-      float *data = allocateDataPtr(_float32DataPtr, _width * _height);
-      for (int i = 0; i < _width * _height; i++) {
+
+      size_t length = _width * _height;
+      _float32DataPtr = std::unique_ptr<float[]>(new float[length]);
+      float *data = _float32DataPtr.get();
+      for (int i = 0; i < length; i++) {
         data[i] = (float)_uint8Data[i] / 255;
       }
-      NSLog(@"Get new");
       return data;
     }
     case MPPMaskDataTypeFloat32: {

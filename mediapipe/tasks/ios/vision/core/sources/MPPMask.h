@@ -95,9 +95,7 @@ NS_SWIFT_NAME(Mask)
                                        width:(NSInteger)width
                                       height:(NSInteger)height NS_DESIGNATED_INITIALIZER;
 
-
 // TODO: Add methods for CVPixelBuffer conversion.
-
 
 /** Unavailable. */
 - (instancetype)init NS_UNAVAILABLE;
