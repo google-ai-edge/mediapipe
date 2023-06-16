@@ -54,9 +54,9 @@
   if (self) {
     if (shouldCopy) {
       size_t length = _width * _height;
-      _float32DataPtr = std::unique_ptr<float[]>(new float[length]);
-      _float32Data = _float32DataPtr.get();
-      memcpy((float *)_float32Data, float32DataToCopy, length * sizeof(float));
+      _uint8DataPtr = std::unique_ptr<UInt8[]>(new UInt8[length]);
+      _uint8Data = _uint8DataPtr.get();
+      memcpy((UInt8 *)_uint8Data, uint8Data, length * sizeof(UInt8));
     } else {
       _uint8Data = uint8Data;
     }
@@ -67,14 +67,14 @@
 - (nullable instancetype)initWithFloat32Data:(const float *)float32Data
                                        width:(NSInteger)width
                                       height:(NSInteger)height
-                                  shouldCopy:(BOO)shouldCopy {
+                                  shouldCopy:(BOOL)shouldCopy {
   self = [self initWithWidth:width height:height dataType:MPPMaskDataTypeFloat32 error:nil];
   if (self) {
     if (shouldCopy) {
-      size_t length = _width * _height;
-      _uint8DataPtr = std::unique_ptr<UInt8[]>(new UInt8[length]);
-      _uint8Data = _uint8DataPtr.get();
-      memcpy((UInt8 *)_uint8Data, uint8DataToCopy, length * sizeof(UInt8));
+       size_t length = _width * _height;
+      _float32DataPtr = std::unique_ptr<float[]>(new float[length]);
+      _float32Data = _float32DataPtr.get();
+      memcpy((float *)_float32Data, float32Data, length * sizeof(float));
     } else {
       _float32Data = float32Data;
     }
@@ -131,12 +131,12 @@
 - (id)copyWithZone:(NSZone *)zone {
   switch (_dataType) {
     case MPPMaskDataTypeUInt8:
-      return [[MPPMask alloc] initWithUInt8DataToCopy:self.uint8Data
+      return [[MPPMask alloc] initWithUInt8Data:self.uint8Data
                                                 width:self.width
                                                height:self.height
                                            shouldCopy:YES];
     case MPPMaskDataTypeFloat32:
-      return [[MPPMask alloc] initWithFloat32DataToCopy:self.float32Data
+      return [[MPPMask alloc] initWithFloat32Data:self.float32Data
                                                   width:self.width
                                                  height:self.height
                                              shouldCopy:YES];
