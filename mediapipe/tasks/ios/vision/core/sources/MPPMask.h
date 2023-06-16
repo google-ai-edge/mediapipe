@@ -71,31 +71,21 @@ NS_SWIFT_NAME(Mask)
  * Initializes an `MPPMask` object of type `MPPMaskDataTypeUInt8` with the given `UInt8*` data,
  * width and height.
  *
- * If `shouldCopy` is set to `YES`, the newly created `MPPMask` stores a reference to a deep copied
- * `uint8Data`. Since deep copies are expensive, it is recommended to not set `shouldCopy` unless
- * the `MPPMask` must outlive the passed in `uint8Data`.
- *
  * @param uint8Data A pointer to the memory location of the `UInt8` data array.
  * @param width The width of the mask.
  * @param height The height of the mask.
- * @param shouldCopy The height of the mask.
  *
  * @return A new `MPPMask` instance with the given `UInt8*` data, width and height.
  */
 - (nullable instancetype)initWithUInt8Data:(const UInt8 *)uint8Data
                                      width:(NSInteger)width
-                                    height:(NSInteger)height
-                                shouldCopy:(BOOL)shouldCopy NS_DESIGNATED_INITIALIZER;
+                                    height:(NSInteger)height NS_DESIGNATED_INITIALIZER;
 
 /**
  * Initializes an `MPPMask` object of type `MPPMaskDataTypeFloat32` with the given `float*` data,
  * width and height.
  *
- * If `shouldCopy` is set to `YES`, the newly created `MPPMask` stores a reference to a deep copied
- * `float32Data`. Since deep copies are expensive, it is recommended to not set `shouldCopy` unless
- * the `MPPMask` must outlive the passed in `float32Data`.
- *
- * @param float32Data A pointer to the memory location of the `float` data array.
+ * @param uint8Data A pointer to the memory location of the `float` data array.
  * @param width The width of the mask.
  * @param height The height of the mask.
  *
@@ -103,8 +93,7 @@ NS_SWIFT_NAME(Mask)
  */
 - (nullable instancetype)initWithFloat32Data:(const float *)float32Data
                                        width:(NSInteger)width
-                                      height:(NSInteger)height
-                                  shouldCopy:(BOOL)shouldCopy NS_DESIGNATED_INITIALIZER;
+                                      height:(NSInteger)height NS_DESIGNATED_INITIALIZER;
 
 // TODO: Add methods for CVPixelBuffer conversion.
 
