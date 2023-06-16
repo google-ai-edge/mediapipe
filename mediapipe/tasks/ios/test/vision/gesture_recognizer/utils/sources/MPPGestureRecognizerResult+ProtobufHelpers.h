@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPGestureRecognizerResult (ProtobufHelpers)
 
 + (MPPGestureRecognizerResult *)
-    gestureRecognizerResultsFromTextEncodedProtobufFileWithName:(NSString *)fileName
-                                                   gestureLabel:(NSString *)gestureLabel
-                                          shouldRemoveZPosition:(BOOL)removeZPosition;
+    gestureRecognizerResultsFromProtobufFileWithName:(NSString *)fileName
+                                        gestureLabel:(NSString *)gestureLabel
+                               shouldRemoveZPosition:(BOOL)removeZPosition;
 
 @end
 

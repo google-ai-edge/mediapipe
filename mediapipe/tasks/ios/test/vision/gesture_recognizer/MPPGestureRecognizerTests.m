@@ -98,18 +98,17 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
       [MPPGestureRecognizerTests filePathWithFileInfo:kExpectedThumbUpLandmarksFile];
 
   return [MPPGestureRecognizerResult
-      gestureRecognizerResultsFromTextEncodedProtobufFileWithName:filePath
-                                                     gestureLabel:kExpectedThumbUpLabel
-                                            shouldRemoveZPosition:YES];
+      gestureRecognizerResultsFromProtobufFileWithName:filePath
+                                          gestureLabel:kExpectedThumbUpLabel
+                                 shouldRemoveZPosition:YES];
 }
 
 + (MPPGestureRecognizerResult *)fistGestureRecognizerResultWithLabel:(NSString *)gestureLabel {
   NSString *filePath = [MPPGestureRecognizerTests filePathWithFileInfo:kExpectedFistLandmarksFile];
 
-  return [MPPGestureRecognizerResult
-      gestureRecognizerResultsFromTextEncodedProtobufFileWithName:filePath
-                                                     gestureLabel:gestureLabel
-                                            shouldRemoveZPosition:YES];
+  return [MPPGestureRecognizerResult gestureRecognizerResultsFromProtobufFileWithName:filePath
+                                                                         gestureLabel:gestureLabel
+                                                                shouldRemoveZPosition:YES];
 }
 
 #pragma mark Assert Gesture Recognizer Results
