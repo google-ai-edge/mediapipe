@@ -161,9 +161,8 @@ class TextClassifier(classifier.Classifier):
         path is {self._hparams.export_dir}/{model_name}.
       quantization_config: The configuration for model quantization.
     """
-    if not tf.io.gfile.exists(self._hparams.export_dir):
-      tf.io.gfile.makedirs(self._hparams.export_dir)
     tflite_file = os.path.join(self._hparams.export_dir, model_name)
+    tf.io.gfile.makedirs(os.path.dirname(tflite_file))
     metadata_file = os.path.join(self._hparams.export_dir, "metadata.json")
 
     tflite_model = model_util.convert_to_tflite(
@@ -174,7 +173,7 @@ class TextClassifier(classifier.Classifier):
     writer = self._get_metadata_writer(tflite_model, vocab_filepath)
     tflite_model_with_metadata, metadata_json = writer.populate()
     model_util.save_tflite(tflite_model_with_metadata, tflite_file)
-    with open(metadata_file, "w") as f:
+    with tf.io.gfile.GFile(metadata_file, "w") as f:
       f.write(metadata_json)
 
   @abc.abstractmethod
