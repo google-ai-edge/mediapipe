@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "mediapipe/framework/formats/classification.pb.h"
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/integral_types.h"
@@ -104,4 +105,7 @@ typedef ConcatenateVectorCalculator<mediapipe::RenderData>
     ConcatenateRenderDataVectorCalculator;
 MEDIAPIPE_REGISTER_NODE(ConcatenateRenderDataVectorCalculator);
 
+typedef ConcatenateVectorCalculator<mediapipe::Image>
+    ConcatenateImageVectorCalculator;
+MEDIAPIPE_REGISTER_NODE(ConcatenateImageVectorCalculator);
 }  // namespace mediapipe

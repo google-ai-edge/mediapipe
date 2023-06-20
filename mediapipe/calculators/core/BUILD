@@ -289,6 +289,7 @@ cc_library(
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:integral_types",
