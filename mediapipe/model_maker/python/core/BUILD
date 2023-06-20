@@ -14,7 +14,10 @@
 
 # Placeholder for internal Python strict library and test compatibility macro.
 
-package(default_visibility = ["//mediapipe:__subpackages__"])
+package(default_visibility = [
+    "//cloud/ml/applications/vision/model_garden/model_oss/mediapipe:__subpackages__",
+    "//mediapipe:__subpackages__",
+])
 
 licenses(["notice"])
 
