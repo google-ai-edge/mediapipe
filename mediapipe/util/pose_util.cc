@@ -125,6 +125,12 @@ const cv::Scalar kPeachColor = cv::Scalar{255, 229, 180};
 const cv::Scalar kWhiteColor = cv::Scalar(224, 224, 224);
 const cv::Scalar kCyanColor = cv::Scalar{48, 255, 192};
 const cv::Scalar kMagentaColor = cv::Scalar{255, 48, 192};
+
+void ReverseRGB(cv::Scalar* color) {
+  int tmp = color->val[0];
+  color->val[0] = color->val[2];
+  color->val[2] = tmp;
+}
 }  // namespace
 
 namespace mediapipe {
@@ -186,8 +192,8 @@ void DrawPose(const mediapipe::NormalizedLandmarkList& pose, bool flip_y,
 }
 
 void DrawFace(const mediapipe::NormalizedLandmarkList& face, bool flip_y,
-              bool draw_nose, bool color_style, int draw_line_width,
-              cv::Mat* image) {
+              bool draw_nose, bool color_style, bool reverse_color,
+              int draw_line_width, cv::Mat* image) {
   const int target_width = image->cols;
   const int target_height = image->rows;
   std::vector<cv::Point> landmarks;
@@ -215,6 +221,18 @@ void DrawFace(const mediapipe::NormalizedLandmarkList& face, bool flip_y,
     kRightEyebrowColor = kRedColor;
     kRightEyeIrisColor = kRedColor;
     kNoseColor = kYellowColor;
+  }
+
+  if (reverse_color) {
+    ReverseRGB(&kFaceOvalColor);
+    ReverseRGB(&kLipsColor);
+    ReverseRGB(&kLeftEyeColor);
+    ReverseRGB(&kLeftEyebrowColor);
+    ReverseRGB(&kLeftEyeIrisColor);
+    ReverseRGB(&kRightEyeColor);
+    ReverseRGB(&kRightEyebrowColor);
+    ReverseRGB(&kRightEyeIrisColor);
+    ReverseRGB(&kNoseColor);
   }
 
   for (int j = 0; j < 36; ++j) {
