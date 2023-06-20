@@ -230,7 +230,7 @@ export class InteractiveSegmenter extends VisionTaskRunner {
   /**
    * Performs interactive segmentation on the provided video frame and returns
    * the segmentation result. This method creates a copy of the resulting masks
-   * and should not be used in high-throughput applictions. The `roi` parameter
+   * and should not be used in high-throughput applications. The `roi` parameter
    * is used to represent a user's region of interest for segmentation.
    *
    * @param image An image to process.
@@ -243,7 +243,7 @@ export class InteractiveSegmenter extends VisionTaskRunner {
   /**
    * Performs interactive segmentation on the provided video frame and returns
    * the segmentation result. This method creates a copy of the resulting masks
-   * and should not be used in high-throughput applictions. The `roi` parameter
+   * and should not be used in high-throughput applications. The `roi` parameter
    * is used to represent a user's region of interest for segmentation.
    *
    * The 'image_processing_options' parameter can be used to specify the

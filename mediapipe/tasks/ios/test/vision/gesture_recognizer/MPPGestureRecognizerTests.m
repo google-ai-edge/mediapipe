@@ -654,9 +654,9 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   // times. An normal expectation will fail if expectation.fulfill() is not called
   // `expectation.expectedFulfillmentCount` times. If `expectation.isInverted = true`, the test will
   // only succeed if expectation is not fulfilled for the specified `expectedFulfillmentCount`.
-  // Since in our case we cannot predict how many times the expectation is supposed to be fullfilled
+  // Since in our case we cannot predict how many times the expectation is supposed to be fulfilled
   // setting, `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and
-  // `expectation.isInverted = true` ensures that test succeeds ifexpectation is fullfilled <=
+  // `expectation.isInverted = true` ensures that test succeeds ifexpectation is fulfilled <=
   // `iterationCount` times.
   XCTestExpectation *expectation =
       [[XCTestExpectation alloc] initWithDescription:@"recognizeWithLiveStream"];
