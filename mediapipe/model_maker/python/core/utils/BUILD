@@ -80,6 +80,14 @@ py_test(
     deps = [":loss_functions"],
 )
 
+######################################################################
+# Public target of the MediaPipe Model Maker Quantization Config.
+
+# Quantization Config is used to export a quantized model. Please refer
+# to the specific task documentations such as:
+# https://developers.google.com/mediapipe/solutions/vision/image_classifier/customize
+# for usage information.
+######################################################################
 py_library(
     name = "metrics",
     srcs = ["metrics.py"],
@@ -95,6 +103,7 @@ py_library(
     name = "quantization",
     srcs = ["quantization.py"],
     srcs_version = "PY3",
+    visibility = ["//visibility:public"],
     deps = ["//mediapipe/model_maker/python/core/data:dataset"],
 )
 
