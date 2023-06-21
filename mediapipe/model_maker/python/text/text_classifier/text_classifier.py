@@ -24,6 +24,7 @@ import tensorflow_hub as hub
 from mediapipe.model_maker.python.core import hyperparameters as hp
 from mediapipe.model_maker.python.core.data import dataset as ds
 from mediapipe.model_maker.python.core.tasks import classifier
+from mediapipe.model_maker.python.core.utils import metrics
 from mediapipe.model_maker.python.core.utils import model_util
 from mediapipe.model_maker.python.core.utils import quantization
 from mediapipe.model_maker.python.text.text_classifier import dataset as text_ds
@@ -123,12 +124,24 @@ class TextClassifier(classifier.Classifier):
 
     return text_classifier
 
-  def evaluate(self, data: ds.Dataset, batch_size: int = 32) -> Any:
+  def evaluate(
+      self,
+      data: ds.Dataset,
+      batch_size: int = 32,
+      desired_precisions: Optional[Sequence[float]] = None,
+      desired_recalls: Optional[Sequence[float]] = None,
+  ) -> Any:
     """Overrides Classifier.evaluate().
 
     Args:
       data: Evaluation dataset. Must be a TextClassifier Dataset.
       batch_size: Number of samples per evaluation step.
+      desired_precisions: If specified, adds a RecallAtPrecision metric per
+        desired_precisions[i] entry which tracks the recall given the constraint
+        on precision. Only supported for binary classification.
+      desired_recalls: If specified, adds a PrecisionAtRecall metric per
+        desired_recalls[i] entry which tracks the precision given the constraint
+        on recall. Only supported for binary classification.
 
     Returns:
       The loss value and accuracy.
@@ -144,6 +157,28 @@ class TextClassifier(classifier.Classifier):
 
     processed_data = self._text_preprocessor.preprocess(data)
     dataset = processed_data.gen_tf_dataset(batch_size, is_training=False)
+
+    additional_metrics = []
+    if desired_precisions and len(data.label_names) == 2:
+      for precision in desired_precisions:
+        additional_metrics.append(
+            metrics.BinarySparseRecallAtPrecision(
+                precision, name=f"recall_at_precision_{precision}"
+            )
+        )
+    if desired_recalls and len(data.label_names) == 2:
+      for recall in desired_recalls:
+        additional_metrics.append(
+            metrics.BinarySparsePrecisionAtRecall(
+                recall, name=f"precision_at_recall_{recall}"
+            )
+        )
+    metric_functions = self._metric_functions + additional_metrics
+    self._model.compile(
+        optimizer=self._optimizer,
+        loss=self._loss_function,
+        metrics=metric_functions,
+    )
     return self._model.evaluate(dataset)
 
   def export_model(
@@ -196,7 +231,11 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
     super().__init__(model_spec, hparams, label_names)
     self._model_options = model_options
     self._loss_function = "sparse_categorical_crossentropy"
-    self._metric_function = "accuracy"
+    self._metric_functions = [
+        "accuracy",
+        metrics.SparsePrecision(name="precision", dtype=tf.float32),
+        metrics.SparseRecall(name="recall", dtype=tf.float32),
+    ]
     self._text_preprocessor: (
         preprocessor.AverageWordEmbeddingClassifierPreprocessor) = None
 
@@ -312,9 +351,13 @@ class _BertClassifier(TextClassifier):
     self._model_options = model_options
     with self._hparams.get_strategy().scope():
       self._loss_function = tf.keras.losses.SparseCategoricalCrossentropy()
-      self._metric_function = tf.keras.metrics.SparseCategoricalAccuracy(
-          "test_accuracy", dtype=tf.float32
-      )
+      self._metric_functions = [
+          tf.keras.metrics.SparseCategoricalAccuracy(
+              "test_accuracy", dtype=tf.float32
+          ),
+          metrics.SparsePrecision(name="precision", dtype=tf.float32),
+          metrics.SparseRecall(name="recall", dtype=tf.float32),
+      ]
     self._text_preprocessor: preprocessor.BertClassifierPreprocessor = None
 
   @classmethod

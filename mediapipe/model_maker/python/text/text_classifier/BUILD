@@ -118,6 +118,7 @@ py_library(
         "//mediapipe/model_maker/python/core:hyperparameters",
         "//mediapipe/model_maker/python/core/data:dataset",
         "//mediapipe/model_maker/python/core/tasks:classifier",
+        "//mediapipe/model_maker/python/core/utils:metrics",
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/core/utils:quantization",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",

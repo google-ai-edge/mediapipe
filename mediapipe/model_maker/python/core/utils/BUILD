@@ -81,6 +81,17 @@ py_test(
 )
 
 py_library(
+    name = "metrics",
+    srcs = ["metrics.py"],
+)
+
+py_test(
+    name = "metrics_test",
+    srcs = ["metrics_test.py"],
+    deps = [":metrics"],
+)
+
+py_library(
     name = "quantization",
     srcs = ["quantization.py"],
     srcs_version = "PY3",

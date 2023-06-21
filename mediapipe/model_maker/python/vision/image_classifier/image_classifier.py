@@ -59,7 +59,7 @@ class ImageClassifier(classifier.Classifier):
     self._callbacks = model_util.get_default_callbacks(self._hparams.export_dir)
     self._loss_function = tf.keras.losses.CategoricalCrossentropy(
         label_smoothing=self._hparams.label_smoothing)
-    self._metric_function = 'accuracy'
+    self._metric_functions = ['accuracy']
     self._history = None  # Training history returned from `keras_model.fit`.
 
   @classmethod
