@@ -208,6 +208,7 @@ Matrix TimeSeriesFramerCalculator::SampleBlockBuffer::CopySamples(
     int offset = first_block_offset_;
     int n;
     Timestamp last_block_ts;
+    int last_sample_index;
 
     for (auto it = blocks_.begin(); it != blocks_.end() && count > 0; ++it) {
       n = std::min(it->num_samples() - offset, count);
@@ -216,12 +217,13 @@ Matrix TimeSeriesFramerCalculator::SampleBlockBuffer::CopySamples(
       count -= n;
       num_copied += n;
       last_block_ts = it->timestamp;
+      last_sample_index = offset + n - 1;
       offset = 0;  // No samples have been discarded in subsequent blocks.
     }
 
     // Compute the timestamp of the last copied sample.
     *last_timestamp =
-        last_block_ts + std::round(ts_units_per_sample_ * (n - 1));
+        last_block_ts + std::round(ts_units_per_sample_ * last_sample_index);
   }
 
   if (count > 0) {
