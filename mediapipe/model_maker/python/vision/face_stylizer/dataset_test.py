@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
 import tensorflow as tf
 
+from mediapipe.model_maker.python.vision.core import image_utils
 from mediapipe.model_maker.python.vision.face_stylizer import dataset
 from mediapipe.tasks.python.test import test_utils
 
@@ -22,10 +24,10 @@ class DatasetTest(tf.test.TestCase):
 
   def setUp(self):
     super().setUp()
-    self._test_data_dirname = 'input/style'
 
   def test_from_folder(self):
-    input_data_dir = test_utils.get_test_data_path(self._test_data_dirname)
+    test_data_dirname = 'input/style'
+    input_data_dir = test_utils.get_test_data_path(test_data_dirname)
     data = dataset.Dataset.from_folder(dirname=input_data_dir)
     self.assertEqual(data.num_classes, 2)
     self.assertEqual(data.label_names, ['cartoon', 'sketch'])
