@@ -19,6 +19,7 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/framework/formats/classification.proto";
 import "mediapipe/framework/formats/landmark.proto";
+import "mediapipe/framework/formats/matrix_data.proto";
 import "mediapipe/framework/formats/time_series_header.proto";
 
 message ConstantSidePacketCalculatorOptions {
@@ -38,6 +39,7 @@ message ConstantSidePacketCalculatorOptions {
       ClassificationList classification_list_value = 6;
       LandmarkList landmark_list_value = 7;
       TimeSeriesHeader time_series_header_value = 10;
+      MatrixData matrix_data_value = 12;
     }
   }
 
