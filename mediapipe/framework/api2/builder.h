@@ -32,7 +32,7 @@ template <class T>
 struct dependent_false : std::false_type {};
 
 template <typename T>
-T& GetWithAutoGrow(std::vector<std::unique_ptr<T>>* vecp, int index) {
+T& GetWithAutoGrow(std::vector<std::unique_ptr<T>>* vecp, size_t index) {
   auto& vec = *vecp;
   if (vec.size() <= index) {
     vec.resize(index + 1);
