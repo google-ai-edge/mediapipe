@@ -737,7 +737,7 @@ class MetadataDisplayer(object):
     metadata_buffer = get_metadata_buffer(model_buffer)
     if not metadata_buffer:
       raise ValueError("The model does not have metadata.")
-    associated_file_list = cls._parse_packed_associted_file_list(model_buffer)
+    associated_file_list = cls._parse_packed_associated_file_list(model_buffer)
     return cls(model_buffer, metadata_buffer, associated_file_list)
 
   def get_associated_file_buffer(self, filename):
@@ -775,8 +775,8 @@ class MetadataDisplayer(object):
     """
     return copy.deepcopy(self._associated_file_list)
 
-  @staticmethod
-  def _parse_packed_associted_file_list(model_buf):
+  @classmethod
+  def _parse_packed_associated_file_list(cls, model_buf):
     """Gets a list of associated files packed to the model file.
 
     Args:
