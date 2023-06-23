@@ -33,6 +33,7 @@
 - (id)copyWithZone:(NSZone *)zone {
   MPPFaceLandmarkerOptions *faceLandmarkerOptions = [super copyWithZone:zone];
 
+  faceDetectorOptions.runningMode = self.runningMode;
   faceLandmarkerOptions.numFaces = self.numFaces;
   faceLandmarkerOptions.minFaceDetectionConfidence = self.minFaceDetectionConfidence;
   faceLandmarkerOptions.minFacePresenceConfidence = self.minFacePresenceConfidence;
