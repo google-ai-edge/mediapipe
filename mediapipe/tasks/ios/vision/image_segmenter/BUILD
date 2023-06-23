@@ -26,3 +26,13 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPImageSegmenterOptions",
+    srcs = ["sources/MPPImageSegmenterOptions.m"],
+    hdrs = ["sources/MPPImageSegmenterOptions.h"],
+    deps = [
+        ":MPPImageSegmenterResult",
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+        "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
+    ],
+)
