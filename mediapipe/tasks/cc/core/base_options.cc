@@ -17,14 +17,55 @@ limitations under the License.
 
 #include <memory>
 #include <string>
+#include <variant>
 
+#include "absl/log/log.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/tasks/cc/core/proto/acceleration.pb.h"
+#include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
 
 namespace mediapipe {
 namespace tasks {
 namespace core {
+
+proto::Acceleration ConvertDelegateOptionsToAccelerationProto(
+    const BaseOptions::CpuOptions& options) {
+  proto::Acceleration acceleration_proto = proto::Acceleration();
+  acceleration_proto.mutable_tflite();
+  return acceleration_proto;
+}
+
+proto::Acceleration ConvertDelegateOptionsToAccelerationProto(
+    const BaseOptions::GpuOptions& options) {
+  proto::Acceleration acceleration_proto = proto::Acceleration();
+  auto* gpu = acceleration_proto.mutable_gpu();
+  gpu->set_use_advanced_gpu_api(true);
+  gpu->set_cached_kernel_path(options.cached_kernel_path);
+  gpu->set_serialized_model_dir(options.serialized_model_dir);
+  gpu->set_model_token(options.model_token);
+  return acceleration_proto;
+}
+
+template <typename T>
+void SetDelegateOptionsOrDie(const BaseOptions* base_options,
+                             proto::BaseOptions& base_options_proto) {
+  if (base_options->delegate_options.has_value()) {
+    if (!std::holds_alternative<T>(*base_options->delegate_options)) {
+      LOG(FATAL) << "Specified Delegate type does not match the provided "
+                    "delegate options.";
+    } else {
+      std::visit(
+          [&base_options_proto](const auto& delegate_options) {
+            proto::Acceleration acceleration_proto =
+                ConvertDelegateOptionsToAccelerationProto(delegate_options);
+            base_options_proto.mutable_acceleration()->Swap(
+                &acceleration_proto);
+          },
+          *base_options->delegate_options);
+    }
+  }
+}
 
 proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
   proto::BaseOptions base_options_proto;
@@ -53,11 +94,15 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
   switch (base_options->delegate) {
     case BaseOptions::Delegate::CPU:
       base_options_proto.mutable_acceleration()->mutable_tflite();
+      SetDelegateOptionsOrDie<BaseOptions::CpuOptions>(base_options,
+                                                       base_options_proto);
       break;
     case BaseOptions::Delegate::GPU:
       base_options_proto.mutable_acceleration()
           ->mutable_gpu()
           ->set_use_advanced_gpu_api(true);
+      SetDelegateOptionsOrDie<BaseOptions::GpuOptions>(base_options,
+                                                       base_options_proto);
       break;
     case BaseOptions::Delegate::EDGETPU_NNAPI:
       base_options_proto.mutable_acceleration()
@@ -65,7 +110,6 @@ proto::BaseOptions ConvertBaseOptionsToProto(BaseOptions* base_options) {
           ->set_accelerator_name("google-edgetpu");
       break;
   }
-
   return base_options_proto;
 }
 }  // namespace core
