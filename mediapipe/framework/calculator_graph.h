@@ -597,6 +597,9 @@ class CalculatorGraph {
   // status before taking any action.
   void UpdateThrottledNodes(InputStreamManager* stream, bool* stream_was_full);
 
+  // Returns a comma-separated list of source nodes.
+  std::string ListSourceNodes() const;
+
 #if !MEDIAPIPE_DISABLE_GPU
   // Owns the legacy GpuSharedData if we need to create one for backwards
   // compatibility.
