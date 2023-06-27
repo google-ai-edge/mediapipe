@@ -86,10 +86,9 @@ cc_test(
         "//mediapipe/tasks/cc/components/containers:classification_result",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:cord",
-        "@com_google_sentencepiece//src:sentencepiece_processor",
+        "@com_google_sentencepiece//src:sentencepiece_processor",  # fixdeps: keep
         "@org_tensorflow//tensorflow/lite:test_util",
     ],
 )

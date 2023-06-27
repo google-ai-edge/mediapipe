@@ -15,8 +15,6 @@ limitations under the License.
 
 #include "mediapipe/tasks/cc/text/text_classifier/text_classifier.h"
 
-#include <cmath>
-#include <cstdlib>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -24,7 +22,6 @@ limitations under the License.
 
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/cord.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
