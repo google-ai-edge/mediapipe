@@ -28,6 +28,7 @@
 - (id)copyWithZone:(NSZone *)zone {
   MPPObjectDetectorOptions *objectDetectorOptions = [super copyWithZone:zone];
 
+  objectDetectorOptions.runningMode = self.runningMode;
   objectDetectorOptions.scoreThreshold = self.scoreThreshold;
   objectDetectorOptions.maxResults = self.maxResults;
   objectDetectorOptions.categoryDenylist = self.categoryDenylist;

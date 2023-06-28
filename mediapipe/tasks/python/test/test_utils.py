@@ -22,7 +22,6 @@ import six
 from google.protobuf import descriptor
 from google.protobuf import descriptor_pool
 from google.protobuf import text_format
-
 from mediapipe.python._framework_bindings import image as image_module
 from mediapipe.python._framework_bindings import image_frame as image_frame_module
 
@@ -44,18 +43,21 @@ def test_srcdir():
 
 def get_test_data_path(file_or_dirname_path: str) -> str:
   """Returns full test data path."""
-  for (directory, subdirs, files) in os.walk(test_srcdir()):
+  for directory, subdirs, files in os.walk(test_srcdir()):
     for f in subdirs + files:
       path = os.path.join(directory, f)
       if path.endswith(file_or_dirname_path):
         return path
-  raise ValueError("No %s in test directory: %s." %
-                   (file_or_dirname_path, test_srcdir()))
+  raise ValueError(
+      "No %s in test directory: %s." % (file_or_dirname_path, test_srcdir())
+  )
 
 
-def create_calibration_file(file_dir: str,
-                            file_name: str = "score_calibration.txt",
-                            content: str = "1.0,2.0,3.0,4.0") -> str:
+def create_calibration_file(
+    file_dir: str,
+    file_name: str = "score_calibration.txt",
+    content: str = "1.0,2.0,3.0,4.0",
+) -> str:
   """Creates the calibration file."""
   calibration_file = os.path.join(file_dir, file_name)
   with open(calibration_file, mode="w") as file:
@@ -63,12 +65,9 @@ def create_calibration_file(file_dir: str,
   return calibration_file
 
 
-def assert_proto_equals(self,
-                        a,
-                        b,
-                        check_initialized=True,
-                        normalize_numbers=True,
-                        msg=None):
+def assert_proto_equals(
+    self, a, b, check_initialized=True, normalize_numbers=True, msg=None
+):
   """assert_proto_equals() is useful for unit tests.
 
   It produces much more helpful output than assertEqual() for proto2 messages.
@@ -113,7 +112,8 @@ def assert_proto_equals(self,
     self.assertMultiLineEqual(a_str, b_str, msg=msg)
   else:
     diff = "".join(
-        difflib.unified_diff(a_str.splitlines(True), b_str.splitlines(True)))
+        difflib.unified_diff(a_str.splitlines(True), b_str.splitlines(True))
+    )
     if diff:
       self.fail("%s :\n%s" % (msg, diff))
 
@@ -147,14 +147,18 @@ def _normalize_number_fields(pb):
     # We force 32-bit values to int and 64-bit values to long to make
     # alternate implementations where the distinction is more significant
     # (e.g. the C++ implementation) simpler.
-    if desc.type in (descriptor.FieldDescriptor.TYPE_INT64,
-                     descriptor.FieldDescriptor.TYPE_UINT64,
-                     descriptor.FieldDescriptor.TYPE_SINT64):
+    if desc.type in (
+        descriptor.FieldDescriptor.TYPE_INT64,
+        descriptor.FieldDescriptor.TYPE_UINT64,
+        descriptor.FieldDescriptor.TYPE_SINT64,
+    ):
       normalized_values = [int(x) for x in values]
-    elif desc.type in (descriptor.FieldDescriptor.TYPE_INT32,
-                       descriptor.FieldDescriptor.TYPE_UINT32,
-                       descriptor.FieldDescriptor.TYPE_SINT32,
-                       descriptor.FieldDescriptor.TYPE_ENUM):
+    elif desc.type in (
+        descriptor.FieldDescriptor.TYPE_INT32,
+        descriptor.FieldDescriptor.TYPE_UINT32,
+        descriptor.FieldDescriptor.TYPE_SINT32,
+        descriptor.FieldDescriptor.TYPE_ENUM,
+    ):
       normalized_values = [int(x) for x in values]
     elif desc.type == descriptor.FieldDescriptor.TYPE_FLOAT:
       normalized_values = [round(x, 4) for x in values]
@@ -168,14 +172,20 @@ def _normalize_number_fields(pb):
       else:
         setattr(pb, desc.name, normalized_values[0])
 
-    if (desc.type == descriptor.FieldDescriptor.TYPE_MESSAGE or
-        desc.type == descriptor.FieldDescriptor.TYPE_GROUP):
-      if (desc.type == descriptor.FieldDescriptor.TYPE_MESSAGE and
-          desc.message_type.has_options and
-          desc.message_type.GetOptions().map_entry):
+    if (
+        desc.type == descriptor.FieldDescriptor.TYPE_MESSAGE
+        or desc.type == descriptor.FieldDescriptor.TYPE_GROUP
+    ):
+      if (
+          desc.type == descriptor.FieldDescriptor.TYPE_MESSAGE
+          and desc.message_type.has_options
+          and desc.message_type.GetOptions().map_entry
+      ):
         # This is a map, only recurse if the values have a message type.
-        if (desc.message_type.fields_by_number[2].type ==
-            descriptor.FieldDescriptor.TYPE_MESSAGE):
+        if (
+            desc.message_type.fields_by_number[2].type
+            == descriptor.FieldDescriptor.TYPE_MESSAGE
+        ):
           for v in six.itervalues(values):
             _normalize_number_fields(v)
       else:

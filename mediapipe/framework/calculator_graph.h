@@ -229,8 +229,11 @@ class CalculatorGraph {
   // Wait until the running graph is in the idle mode, which is when nothing can
   // be scheduled and nothing is running in the worker threads. This function
   // can be called only after StartRun().
+  //
   // NOTE: The graph must not have any source nodes because source nodes prevent
   // the running graph from becoming idle until the source nodes are done.
+  // Currently, `WaitUntilIdle` cannot be used reliably on graphs with any
+  // source nodes.
   absl::Status WaitUntilIdle();
 
   // Wait until a packet is emitted on one of the observed output streams.
@@ -593,6 +596,9 @@ class CalculatorGraph {
   // invoking a callback, this method must re-lock the stream and query its
   // status before taking any action.
   void UpdateThrottledNodes(InputStreamManager* stream, bool* stream_was_full);
+
+  // Returns a comma-separated list of source nodes.
+  std::string ListSourceNodes() const;
 
 #if !MEDIAPIPE_DISABLE_GPU
   // Owns the legacy GpuSharedData if we need to create one for backwards

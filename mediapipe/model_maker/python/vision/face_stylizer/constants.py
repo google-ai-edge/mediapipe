@@ -41,5 +41,11 @@ FACE_STYLIZER_W_FILES = file_util.DownloadedFiles(
     'https://storage.googleapis.com/mediapipe-assets/face_stylizer_w_avg.npy',
 )
 
+FACE_ALIGNER_TASK_FILES = file_util.DownloadedFiles(
+    'face_stylizer/face_landmarker_v2.task',
+    'https://storage.googleapis.com/mediapipe-assets/face_landmarker_v2.task',
+    is_folder=False,
+)
+
 # Dimension of the input style vector to the decoder
 STYLE_DIM = 512

@@ -96,6 +96,19 @@ absl::StatusOr<std::vector<Tensor>> InferenceInterpreterDelegateRunner::Run(
     CalculatorContext* cc, const std::vector<Tensor>& input_tensors) {
   // Read CPU input into tensors.
   RET_CHECK_EQ(interpreter_->inputs().size(), input_tensors.size());
+
+  // If the input tensors have dynamic shape, then the tensors need to be
+  // resized and reallocated before we can copy the tensor values.
+  bool resized_tensor_shapes = false;
+  for (int i = 0; i < input_tensors.size(); ++i) {
+    if (input_tensors[i].shape().is_dynamic) {
+      interpreter_->ResizeInputTensorStrict(i, input_tensors[i].shape().dims);
+      resized_tensor_shapes = true;
+    }
+  }
+  // Reallocation is needed for memory sanity.
+  if (resized_tensor_shapes) interpreter_->AllocateTensors();
+
   for (int i = 0; i < input_tensors.size(); ++i) {
     const TfLiteType input_tensor_type =
         interpreter_->tensor(interpreter_->inputs()[i])->type;

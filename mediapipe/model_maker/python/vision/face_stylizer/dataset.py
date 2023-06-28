@@ -13,13 +13,37 @@
 # limitations under the License.
 """Face stylizer dataset library."""
 
+from typing import Sequence
 import logging
 import os
 
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.data import classification_dataset
-from mediapipe.model_maker.python.vision.core import image_utils
+from mediapipe.model_maker.python.vision.face_stylizer import constants
+from mediapipe.python._framework_bindings import image as image_module
+from mediapipe.tasks.python.core import base_options as base_options_module
+from mediapipe.tasks.python.vision import face_aligner
+
+
+def _preprocess_face_dataset(
+    all_image_paths: Sequence[str],
+) -> Sequence[tf.Tensor]:
+  """Preprocess face image dataset by aligning the face."""
+  path = constants.FACE_ALIGNER_TASK_FILES.get_path()
+  base_options = base_options_module.BaseOptions(model_asset_path=path)
+  options = face_aligner.FaceAlignerOptions(base_options=base_options)
+  aligner = face_aligner.FaceAligner.create_from_options(options)
+
+  preprocessed_images = []
+  for path in all_image_paths:
+    tf.compat.v1.logging.info('Preprocess image %s', path)
+    image = image_module.Image.create_from_file(path)
+    aligned_image = aligner.align(image)
+    aligned_image_tensor = tf.convert_to_tensor(aligned_image.numpy_view())
+    preprocessed_images.append(aligned_image_tensor)
+
+  return preprocessed_images
 
 
 # TODO: Change to a unlabeled dataset if it makes sense.
@@ -58,6 +82,7 @@ class Dataset(classification_dataset.ClassificationDataset):
     ):
       raise ValueError('No images found under given directory')
 
+    image_data = _preprocess_face_dataset(all_image_paths)
     label_names = sorted(
         name
         for name in os.listdir(data_root)
@@ -73,11 +98,7 @@ class Dataset(classification_dataset.ClassificationDataset):
         for path in all_image_paths
     ]
 
-    path_ds = tf.data.Dataset.from_tensor_slices(all_image_paths)
-
-    image_ds = path_ds.map(
-        image_utils.load_image, num_parallel_calls=tf.data.AUTOTUNE
-    )
+    image_ds = tf.data.Dataset.from_tensor_slices(image_data)
 
     # Load label
     label_ds = tf.data.Dataset.from_tensor_slices(

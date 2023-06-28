@@ -153,6 +153,8 @@ cc_library(
     alwayslink = 1,
 )
 
+# TODO: open source hand joints graph
+
 cc_library(
     name = "hand_landmarker_result",
     srcs = ["hand_landmarker_result.cc"],

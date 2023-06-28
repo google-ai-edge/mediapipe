@@ -29,6 +29,7 @@ cc_library(
         "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/memory",
         "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",

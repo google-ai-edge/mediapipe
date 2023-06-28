@@ -14,7 +14,7 @@
 """APIs to train face stylization model."""
 
 import os
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import numpy as np
 import tensorflow as tf
@@ -54,7 +54,6 @@ class FaceStylizer(object):
     self._model_spec = model_spec
     self._model_options = model_options
     self._hparams = hparams
-    # TODO: Support face alignment in image preprocessor.
     self._preprocessor = image_preprocessing.Preprocessor(
         input_shape=self._model_spec.input_image_shape,
         num_classes=1,
@@ -128,7 +127,7 @@ class FaceStylizer(object):
   def _train_model(
       self,
       train_data: classification_ds.ClassificationDataset,
-      preprocessor: Optional[Callable[..., bool]] = None,
+      preprocessor: Optional[Callable[..., Any]] = None,
   ):
     """Trains the face stylizer model.
 

@@ -54,3 +54,20 @@ ios_unit_test(
         ":MPPImageObjcTestLibrary",
     ],
 )
+
+objc_library(
+    name = "MPPMaskObjcTestLibrary",
+    testonly = 1,
+    srcs = ["MPPMaskTests.m"],
+    deps = ["//mediapipe/tasks/ios/vision/core:MPPMask"],
+)
+
+ios_unit_test(
+    name = "MPPMaskObjcTest",
+    minimum_os_version = MPP_TASK_MINIMUM_OS_VERSION,
+    runner = tflite_ios_lab_runner("IOS_LATEST"),
+    tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
+    deps = [
+        ":MPPMaskObjcTestLibrary",
+    ],
+)

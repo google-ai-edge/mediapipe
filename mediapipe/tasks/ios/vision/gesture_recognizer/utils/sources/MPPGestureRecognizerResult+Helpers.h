@@ -43,6 +43,31 @@ static const int kMicroSecondsPerMilliSecond = 1000;
                               handLandmarksPacket:(const mediapipe::Packet &)handLandmarksPacket
                              worldLandmarksPacket:(const mediapipe::Packet &)worldLandmarksPacket;
 
+/**
+ * Creates an `MPPGestureRecognizerResult` from hand gestures, handedness, hand landmarks and world
+ * landmarks proto vectors.
+ *
+ * @param handGesturesProto A vector of protos of type `std::vector<ClassificationListProto>`.
+ * @param handednessPacket A vector of protos of type  `std::vector<ClassificationListProto>`.
+ * @param handLandmarksPacket A vector of protos of type `std::vector<NormalizedlandmarkListProto>`.
+ * @param handLandmarksPacket A vector of protos of type `std::vector<LandmarkListProto>`.
+ * @param timestampInMilliSeconds The timestamp of the result.
+ *
+ * @return  An `MPPGestureRecognizerResult` object that contains the hand gesture recognition
+ * results.
+ */
++ (MPPGestureRecognizerResult *)
+    gestureRecognizerResultWithHandGesturesProto:
+        (const std::vector<::mediapipe::ClassificationList> &)handGesturesProto
+                                 handednessProto:
+                                     (const std::vector<::mediapipe::ClassificationList> &)
+                                         handednessProto
+                              handLandmarksProto:
+                                  (const std::vector<::mediapipe::NormalizedLandmarkList> &)
+                                      handLandmarksProto
+                             worldLandmarksProto:
+                                 (const std::vector<::mediapipe::LandmarkList> &)worldLandmarksProto
+                         timestampInMilliseconds:(NSInteger)timestampInMilliseconds;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -26,4 +26,8 @@ message TensorToImageFrameCalculatorOptions {
   // Multiples floating point tensor outputs by this value before converting to
   // uint8. This is useful for converting from range [0, 1] to [0, 255]
   optional float scale_factor = 1 [default = 1.0];
+
+  // If true, scales any FLOAT tensor input of [min, max] to be between [0, 255]
+  // per frame. This overrides any explicit scale_factor.
+  optional bool scale_per_frame_min_max = 2 [default = false];
 }

@@ -26,6 +26,7 @@ limitations under the License.
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/tasks/cc/core/task_api_factory.h"
 #include "mediapipe/tasks/cc/vision/core/base_vision_task_api.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 
@@ -60,13 +61,8 @@ class VisionTaskApiFactory {
             "Task graph config should only contain one task subgraph node.",
             MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
       } else {
-        if (!node.options().HasExtension(Options::ext)) {
-          return CreateStatusWithPayload(
-              absl::StatusCode::kInvalidArgument,
-              absl::StrCat(node.calculator(),
-                           " is missing the required task options field."),
-              MediaPipeTasksStatus::kInvalidTaskGraphConfigError);
-        }
+        MP_RETURN_IF_ERROR(
+            tasks::core::TaskApiFactory::CheckHasValidOptions<Options>(node));
         found_task_subgraph = true;
       }
     }

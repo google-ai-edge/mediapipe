@@ -20,6 +20,7 @@
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionPacketCreator.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
+#import "mediapipe/tasks/ios/vision/face_landmarker/sources/MPPFaceLandmarksConnections.h"
 #import "mediapipe/tasks/ios/vision/face_landmarker/utils/sources/MPPFaceLandmarkerOptions+Helpers.h"
 #import "mediapipe/tasks/ios/vision/face_landmarker/utils/sources/MPPFaceLandmarkerResult+Helpers.h"
 
@@ -275,6 +276,50 @@ static NSString *const kTaskName = @"faceLandmarker";
                               timestampInMilliseconds:timeStampInMilliseconds
                                                 error:callbackError];
   });
+}
+
++ (NSArray<MPPConnection *> *)lipsConnections {
+  return MPPFaceLandmarksLips;
+}
+
++ (NSArray<MPPConnection *> *)leftEyeConnections {
+  return MPPFaceLandmarksLeftEye;
+}
+
++ (NSArray<MPPConnection *> *)leftEyebrowConnections {
+  return MPPFaceLandmarksLeftEyebrow;
+}
+
++ (NSArray<MPPConnection *> *)leftIrisConnections {
+  return MPPFaceLandmarksLeftIris;
+}
+
++ (NSArray<MPPConnection *> *)rightEyeConnections {
+  return MPPFaceLandmarksRightEye;
+}
+
++ (NSArray<MPPConnection *> *)rightEyebrowConnections {
+  return MPPFaceLandmarksRightEyebrow;
+}
+
++ (NSArray<MPPConnection *> *)rightIrisConnections {
+  return MPPFaceLandmarksLeftIris;
+}
+
++ (NSArray<MPPConnection *> *)faceOvalConnections {
+  return MPPFaceLandmarksFaceOval;
+}
+
++ (NSArray<MPPConnection *> *)contoursConnections {
+  return MPPFaceLandmarksContours;
+}
+
++ (NSArray<MPPConnection *> *)tesselationConnections {
+  return MPPFaceLandmarksTesselation;
+}
+
++ (NSArray<MPPConnection *> *)faceConnections {
+  return MPPFaceConnections;
 }
 
 @end

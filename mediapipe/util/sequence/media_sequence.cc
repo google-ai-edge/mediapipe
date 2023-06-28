@@ -147,6 +147,22 @@ absl::Status ReconcileMetadataImages(const std::string& prefix,
   return absl::OkStatus();
 }
 
+// Reconciles metadata for all images.
+absl::Status ReconcileMetadataImages(tensorflow::SequenceExample* sequence) {
+  RET_CHECK_OK(ReconcileMetadataImages("", sequence));
+  for (const auto& key_value : sequence->feature_lists().feature_list()) {
+    const auto& key = key_value.first;
+    if (::absl::StrContains(key, kImageTimestampKey)) {
+      std::string prefix = "";
+      if (key != kImageTimestampKey) {
+        prefix = key.substr(0, key.size() - sizeof(kImageTimestampKey));
+      }
+      RET_CHECK_OK(ReconcileMetadataImages(prefix, sequence));
+    }
+  }
+  return absl::OkStatus();
+}
+
 // Sets the values of "feature/${TAG}/dimensions", and
 // "feature/${TAG}/frame_rate" for each float list feature TAG. If the
 // dimensions are already present as a context feature, this method verifies
@@ -545,10 +561,7 @@ absl::Status ReconcileMetadata(bool reconcile_bbox_annotations,
                                bool reconcile_region_annotations,
                                tensorflow::SequenceExample* sequence) {
   RET_CHECK_OK(ReconcileAnnotationIndicesByImageTimestamps(sequence));
-  RET_CHECK_OK(ReconcileMetadataImages("", sequence));
-  RET_CHECK_OK(ReconcileMetadataImages(kForwardFlowPrefix, sequence));
-  RET_CHECK_OK(ReconcileMetadataImages(kClassSegmentationPrefix, sequence));
-  RET_CHECK_OK(ReconcileMetadataImages(kInstanceSegmentationPrefix, sequence));
+  RET_CHECK_OK(ReconcileMetadataImages(sequence));
   RET_CHECK_OK(ReconcileMetadataFeatureFloats(sequence));
   if (reconcile_bbox_annotations) {
     RET_CHECK_OK(ReconcileMetadataBoxAnnotations("", sequence));

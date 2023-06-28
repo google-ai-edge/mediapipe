@@ -131,6 +131,13 @@ Timestamp Timestamp::NextAllowedInStream() const {
   return *this + 1;
 }
 
+bool Timestamp::HasNextAllowedInStream() const {
+  if (*this >= Max() || *this == PreStream()) {
+    return false;
+  }
+  return true;
+}
+
 Timestamp Timestamp::PreviousAllowedInStream() const {
   if (*this <= Min() || *this == PostStream()) {
     // Indicates that no previous timestamps may occur.

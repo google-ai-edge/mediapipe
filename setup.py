@@ -20,6 +20,7 @@ import os
 import platform
 import posixpath
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -37,6 +38,15 @@ MP_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 MP_DIR_INIT_PY = os.path.join(MP_ROOT_PATH, 'mediapipe/__init__.py')
 MP_THIRD_PARTY_BUILD = os.path.join(MP_ROOT_PATH, 'third_party/BUILD')
 MP_ROOT_INIT_PY = os.path.join(MP_ROOT_PATH, '__init__.py')
+
+GPU_OPTIONS_DISBALED = ['--define=MEDIAPIPE_DISABLE_GPU=1']
+GPU_OPTIONS_ENBALED = [
+    '--copt=-DTFLITE_GPU_EXTRA_GLES_DEPS',
+    '--copt=-DMEDIAPIPE_OMIT_EGL_WINDOW_BIT',
+    '--copt=-DMESA_EGL_NO_X11_HEADERS',
+    '--copt=-DEGL_NO_X11',
+]
+GPU_OPTIONS = GPU_OPTIONS_DISBALED if MP_DISABLE_GPU else GPU_OPTIONS_ENBALED
 
 
 def _normalize_path(path):
@@ -140,6 +150,16 @@ def _copy_to_build_lib_dir(build_lib, file):
   shutil.copyfile(os.path.join('bazel-bin/', file), dst)
 
 
+def _invoke_shell_command(shell_commands):
+  """Invokes shell command from the list of arguments."""
+  print('Invoking:', shlex.join(shell_commands))
+  try:
+    subprocess.run(shell_commands, check=True)
+  except subprocess.CalledProcessError as e:
+    print(e)
+    sys.exit(e.returncode)
+
+
 class GeneratePyProtos(build_ext.build_ext):
   """Generate MediaPipe Python protobuf files by Protocol Compiler."""
 
@@ -204,8 +224,7 @@ class GeneratePyProtos(build_ext.build_ext):
           self._protoc, '-I.',
           '--python_out=' + os.path.abspath(self.build_lib), source
       ]
-      if subprocess.call(protoc_command) != 0:
-        sys.exit(-1)
+      _invoke_shell_command(protoc_command)
 
 
 class BuildModules(build_ext.build_ext):
@@ -268,8 +287,7 @@ class BuildModules(build_ext.build_ext):
         'build',
         external_file,
     ]
-    if subprocess.call(fetch_model_command) != 0:
-      sys.exit(-1)
+    _invoke_shell_command(fetch_model_command)
     _copy_to_build_lib_dir(self.build_lib, external_file)
 
   def _generate_binary_graph(self, binary_graph_target):
@@ -282,18 +300,12 @@ class BuildModules(build_ext.build_ext):
         '--copt=-DNDEBUG',
         '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         binary_graph_target,
-    ]
-
-    if MP_DISABLE_GPU:
-      bazel_command.append('--define=MEDIAPIPE_DISABLE_GPU=1')
-    else:
-      bazel_command.append('--copt=-DMESA_EGL_NO_X11_HEADERS')
-      bazel_command.append('--copt=-DEGL_NO_X11')
+    ] + GPU_OPTIONS
 
     if not self.link_opencv and not IS_WINDOWS:
       bazel_command.append('--define=OPENCV=source')
-    if subprocess.call(bazel_command) != 0:
-      sys.exit(-1)
+
+    _invoke_shell_command(bazel_command)
     _copy_to_build_lib_dir(self.build_lib, binary_graph_target + '.binarypb')
 
 
@@ -314,16 +326,9 @@ class GenerateMetadataSchema(build_ext.build_ext):
           '--compilation_mode=opt',
           '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
           '//mediapipe/tasks/metadata:' + target,
-      ]
+      ] + GPU_OPTIONS
 
-      if MP_DISABLE_GPU:
-        bazel_command.append('--define=MEDIAPIPE_DISABLE_GPU=1')
-      else:
-        bazel_command.append('--copt=-DMESA_EGL_NO_X11_HEADERS')
-        bazel_command.append('--copt=-DEGL_NO_X11')
-
-      if subprocess.call(bazel_command) != 0:
-        sys.exit(-1)
+      _invoke_shell_command(bazel_command)
       _copy_to_build_lib_dir(
           self.build_lib,
           'mediapipe/tasks/metadata/' + target + '_generated.py')
@@ -392,8 +397,7 @@ class BuildExtension(build_ext.build_ext):
             x86_name,
             arm64_name,
         ]
-        if subprocess.call(lipo_command) != 0:
-          sys.exit(-1)
+        _invoke_shell_command(lipo_command)
     else:
       for ext in self.extensions:
         self._build_binary(ext)
@@ -409,20 +413,14 @@ class BuildExtension(build_ext.build_ext):
         '--copt=-DNDEBUG',
         '--action_env=PYTHON_BIN_PATH=' + _normalize_path(sys.executable),
         str(ext.bazel_target + '.so'),
-    ]
-
-    if MP_DISABLE_GPU:
-      bazel_command.append('--define=MEDIAPIPE_DISABLE_GPU=1')
-    else:
-      bazel_command.append('--copt=-DMESA_EGL_NO_X11_HEADERS')
-      bazel_command.append('--copt=-DEGL_NO_X11')
+    ] + GPU_OPTIONS
 
     if extra_args:
       bazel_command += extra_args
     if not self.link_opencv and not IS_WINDOWS:
       bazel_command.append('--define=OPENCV=source')
-    if subprocess.call(bazel_command) != 0:
-      sys.exit(-1)
+
+    _invoke_shell_command(bazel_command)
     ext_bazel_bin_path = os.path.join('bazel-bin', ext.relpath,
                                       ext.target_name + '.so')
     ext_dest_path = self.get_ext_fullpath(ext.name)

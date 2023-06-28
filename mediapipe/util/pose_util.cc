@@ -108,9 +108,29 @@ const int kFaceMeshFaceOval[36][2] = {
     {172, 58},  {58, 132},  {132, 93},  {93, 234},  {234, 127}, {127, 162},
     {162, 21},  {21, 54},   {54, 103},  {103, 67},  {67, 109},  {109, 10}};
 
-const cv::Scalar kRightEyeColor = cv::Scalar(255.0, 48.0, 48.0);
-const cv::Scalar kLeftEyeColor = cv::Scalar(48.0, 255.0, 48.0);
-const cv::Scalar kFaceContourColor = cv::Scalar(224.0, 224.0, 224.0);
+const int kFaceMeshNose[25][2] = {
+    {168, 6},   {6, 197},   {197, 195}, {195, 5},   {5, 4},
+    {4, 1},     {1, 19},    {19, 94},   {94, 2},    {98, 97},
+    {97, 2},    {2, 326},   {326, 327}, {327, 294}, {294, 278},
+    {278, 344}, {344, 440}, {440, 275}, {275, 4},   {4, 45},
+    {45, 220},  {220, 115}, {115, 48},  {48, 64},   {64, 98}};
+
+const cv::Scalar kRedColor = cv::Scalar{255, 48, 48};
+const cv::Scalar kGreenColor = cv::Scalar{48, 255, 48};
+const cv::Scalar kBlueColor = cv::Scalar{21, 101, 192};
+const cv::Scalar kYellowColor = cv::Scalar{255, 204, 0};
+const cv::Scalar kGrayColor = cv::Scalar{128, 128, 128};
+const cv::Scalar kPurpleColor = cv::Scalar{128, 64, 128};
+const cv::Scalar kPeachColor = cv::Scalar{255, 229, 180};
+const cv::Scalar kWhiteColor = cv::Scalar(224, 224, 224);
+const cv::Scalar kCyanColor = cv::Scalar{48, 255, 192};
+const cv::Scalar kMagentaColor = cv::Scalar{255, 48, 192};
+
+void ReverseRGB(cv::Scalar* color) {
+  int tmp = color->val[0];
+  color->val[0] = color->val[2];
+  color->val[2] = tmp;
+}
 }  // namespace
 
 namespace mediapipe {
@@ -172,7 +192,8 @@ void DrawPose(const mediapipe::NormalizedLandmarkList& pose, bool flip_y,
 }
 
 void DrawFace(const mediapipe::NormalizedLandmarkList& face, bool flip_y,
-              cv::Mat* image) {
+              bool draw_nose, bool color_style, bool reverse_color,
+              int draw_line_width, cv::Mat* image) {
   const int target_width = image->cols;
   const int target_height = image->rows;
   std::vector<cv::Point> landmarks;
@@ -181,17 +202,48 @@ void DrawFace(const mediapipe::NormalizedLandmarkList& face, bool flip_y,
                            (flip_y ? 1.0f - lm.y() : lm.y()) * target_height);
   }
 
-  constexpr int draw_line_width = 2;
+  cv::Scalar kFaceOvalColor = kWhiteColor;
+  cv::Scalar kLipsColor = kWhiteColor;
+  cv::Scalar kLeftEyeColor = kGreenColor;
+  cv::Scalar kLeftEyebrowColor = kGreenColor;
+  cv::Scalar kLeftEyeIrisColor = kGreenColor;
+  cv::Scalar kRightEyeColor = kRedColor;
+  cv::Scalar kRightEyebrowColor = kRedColor;
+  cv::Scalar kRightEyeIrisColor = kRedColor;
+  cv::Scalar kNoseColor = kWhiteColor;
+  if (color_style) {
+    kFaceOvalColor = kWhiteColor;
+    kLipsColor = kBlueColor;
+    kLeftEyeColor = kCyanColor;
+    kLeftEyebrowColor = kGreenColor;
+    kLeftEyeIrisColor = kGreenColor;
+    kRightEyeColor = kMagentaColor;
+    kRightEyebrowColor = kRedColor;
+    kRightEyeIrisColor = kRedColor;
+    kNoseColor = kYellowColor;
+  }
+
+  if (reverse_color) {
+    ReverseRGB(&kFaceOvalColor);
+    ReverseRGB(&kLipsColor);
+    ReverseRGB(&kLeftEyeColor);
+    ReverseRGB(&kLeftEyebrowColor);
+    ReverseRGB(&kLeftEyeIrisColor);
+    ReverseRGB(&kRightEyeColor);
+    ReverseRGB(&kRightEyebrowColor);
+    ReverseRGB(&kRightEyeIrisColor);
+    ReverseRGB(&kNoseColor);
+  }
+
   for (int j = 0; j < 36; ++j) {
     cv::line(*image, landmarks[kFaceMeshFaceOval[j][0]],
-             landmarks[kFaceMeshFaceOval[j][1]], kFaceContourColor,
+             landmarks[kFaceMeshFaceOval[j][1]], kFaceOvalColor,
              draw_line_width);
   }
 
   for (int j = 0; j < 40; ++j) {
     cv::line(*image, landmarks[kFaceMeshLips[j][0]],
-             landmarks[kFaceMeshLips[j][1]], kFaceContourColor,
-             draw_line_width);
+             landmarks[kFaceMeshLips[j][1]], kLipsColor, draw_line_width);
   }
 
   for (int j = 0; j < 16; ++j) {
@@ -201,13 +253,13 @@ void DrawFace(const mediapipe::NormalizedLandmarkList& face, bool flip_y,
 
   for (int j = 0; j < 8; ++j) {
     cv::line(*image, landmarks[kFaceMeshLeftEyebrow[j][0]],
-             landmarks[kFaceMeshLeftEyebrow[j][1]], kLeftEyeColor,
+             landmarks[kFaceMeshLeftEyebrow[j][1]], kLeftEyebrowColor,
              draw_line_width);
   }
 
   for (int j = 0; j < 4; ++j) {
     cv::line(*image, landmarks[kFaceMeshLeftIris[j][0]],
-             landmarks[kFaceMeshLeftIris[j][1]], kLeftEyeColor,
+             landmarks[kFaceMeshLeftIris[j][1]], kLeftEyeIrisColor,
              draw_line_width);
   }
 
@@ -219,14 +271,21 @@ void DrawFace(const mediapipe::NormalizedLandmarkList& face, bool flip_y,
 
   for (int j = 0; j < 8; ++j) {
     cv::line(*image, landmarks[kFaceMeshRightEyebrow[j][0]],
-             landmarks[kFaceMeshRightEyebrow[j][1]], kRightEyeColor,
+             landmarks[kFaceMeshRightEyebrow[j][1]], kRightEyebrowColor,
              draw_line_width);
   }
 
   for (int j = 0; j < 4; ++j) {
     cv::line(*image, landmarks[kFaceMeshRightIris[j][0]],
-             landmarks[kFaceMeshRightIris[j][1]], kRightEyeColor,
+             landmarks[kFaceMeshRightIris[j][1]], kRightEyeIrisColor,
              draw_line_width);
+  }
+
+  if (draw_nose) {
+    for (int j = 0; j < 25; ++j) {
+      cv::line(*image, landmarks[kFaceMeshNose[j][0]],
+               landmarks[kFaceMeshNose[j][1]], kNoseColor, draw_line_width);
+    }
   }
 }
 }  // namespace mediapipe

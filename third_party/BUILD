@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 
-load("@rules_foreign_cc//tools/build_defs:cmake.bzl", "cmake_external")
+load("@rules_foreign_cc//foreign_cc:cmake.bzl", "cmake")
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 
 licenses(["notice"])  # Apache License 2.0
@@ -154,7 +154,7 @@ OPENCV_SHARED_LIBS = True
 
 OPENCV_SO_VERSION = "3.4"
 
-cmake_external(
+cmake(
     name = "opencv_cmake",
     # Values to be passed as -Dkey=value on the CMake command line;
     # here are serving to provide some CMake script configuration options
@@ -230,7 +230,7 @@ cmake_external(
         "-lpthread",
         "-lrt",
     ],
-    shared_libraries = select({
+    out_shared_libs = select({
         "@bazel_tools//src/conditions:darwin": ["libopencv_%s.%s.dylib" % (module, OPENCV_SO_VERSION) for module in OPENCV_MODULES],
         # Only the shared objects listed here will be linked in the directory
         # that Bazel adds to the RUNPATH of dependent executables. You cannot
@@ -238,7 +238,7 @@ cmake_external(
         # versioned name is the one that the executables actually reference.
         "//conditions:default": ["libopencv_%s.so.%s" % (module, OPENCV_SO_VERSION) for module in OPENCV_MODULES],
     }) if OPENCV_SHARED_LIBS else None,
-    static_libraries = [
+    out_static_libs = [
         "libopencv_%s.a" % module
         for module in OPENCV_MODULES
     ] if not OPENCV_SHARED_LIBS else None,

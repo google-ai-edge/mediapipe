@@ -839,6 +839,13 @@ absl::Status CalculatorGraph::PrepareForRun(
 }
 
 absl::Status CalculatorGraph::WaitUntilIdle() {
+  if (has_sources_) {
+    LOG_FIRST_N(WARNING, 1)
+        << "WaitUntilIdle called on a graph with source nodes, which "
+           "is not fully supported at the moment. Source nodes: "
+        << ListSourceNodes();
+  }
+
   MP_RETURN_IF_ERROR(scheduler_.WaitUntilIdle());
   VLOG(2) << "Scheduler idle.";
   absl::Status status = absl::OkStatus();
@@ -1366,6 +1373,16 @@ const OutputStreamManager* CalculatorGraph::FindOutputStreamManager(
     const std::string& name) {
   return &output_stream_managers_
               .get()[validated_graph_->OutputStreamIndex(name)];
+}
+
+std::string CalculatorGraph::ListSourceNodes() const {
+  std::vector<std::string> sources;
+  for (auto& node : nodes_) {
+    if (node->IsSource()) {
+      sources.push_back(node->DebugName());
+    }
+  }
+  return absl::StrJoin(sources, ", ");
 }
 
 namespace {

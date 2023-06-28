@@ -13,12 +13,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <memory>
 #include <vector>
 
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/calculators/util/flat_color_image_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
+#include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image.h"
@@ -35,6 +37,51 @@ namespace mediapipe {
 namespace tasks {
 namespace vision {
 namespace interactive_segmenter {
+namespace internal {
+
+// A calculator to add thickness to the render data according to the image size,
+// so that the render data is scale invariant to the image size. If the render
+// data already has thickness, it will be kept as is.
+class AddThicknessToRenderDataCalculator : public api2::Node {
+ public:
+  static constexpr api2::Input<Image> kImageIn{"IMAGE"};
+  static constexpr api2::Input<mediapipe::RenderData> kRenderDataIn{
+      "RENDER_DATA"};
+  static constexpr api2::Output<mediapipe::RenderData> kRenderDataOut{
+      "RENDER_DATA"};
+
+  static constexpr int kModelInputTensorWidth = 512;
+  static constexpr int kModelInputTensorHeight = 512;
+
+  MEDIAPIPE_NODE_CONTRACT(kImageIn, kRenderDataIn, kRenderDataOut);
+
+  absl::Status Process(CalculatorContext* cc) final {
+    mediapipe::RenderData render_data = kRenderDataIn(cc).Get();
+    Image image = kImageIn(cc).Get();
+    double thickness = std::max(
+        std::max(image.width() / static_cast<double>(kModelInputTensorWidth),
+                 image.height() / static_cast<double>(kModelInputTensorHeight)),
+        1.0);
+
+    for (auto& annotation : *render_data.mutable_render_annotations()) {
+      if (!annotation.has_thickness()) {
+        annotation.set_thickness(thickness);
+      }
+    }
+    kRenderDataOut(cc).Send(render_data);
+    return absl::OkStatus();
+  }
+};
+
+// NOLINTBEGIN: Node registration doesn't work when part of calculator name is
+// moved to next line.
+// clang-format off
+MEDIAPIPE_REGISTER_NODE(
+    ::mediapipe::tasks::vision::interactive_segmenter::internal::AddThicknessToRenderDataCalculator);
+// clang-format on
+// NOLINTEND
+
+}  // namespace internal
 
 namespace {
 
@@ -59,6 +106,7 @@ constexpr absl::string_view kAlphaGpuTag{"ALPHA_GPU"};
 constexpr absl::string_view kNormRectTag{"NORM_RECT"};
 constexpr absl::string_view kRoiTag{"ROI"};
 constexpr absl::string_view kQualityScoresTag{"QUALITY_SCORES"};
+constexpr absl::string_view kRenderDataTag{"RENDER_DATA"};
 
 // Updates the graph to return `roi` stream which has same dimension as
 // `image`, and rendered with `roi`. If `use_gpu` is true, returned `Source` is
@@ -69,14 +117,23 @@ Source<> RoiToAlpha(Source<Image> image, Source<RenderData> roi, bool use_gpu,
   const absl::string_view image_tag_with_suffix =
       use_gpu ? kImageGpuTag : kImageCpuTag;
 
+  // Adds thickness to the render data so that the render data is scale
+  // invariant to the input image size.
+  auto& add_thickness = graph.AddNode(
+      "mediapipe::tasks::vision::interactive_segmenter::internal::"
+      "AddThicknessToRenderDataCalculator");
+  image >> add_thickness.In(kImageTag);
+  roi >> add_thickness.In(kRenderDataTag);
+  auto roi_with_thickness = add_thickness.Out(kRenderDataTag);
+
   // Generates a blank canvas with same size as input image.
   auto& flat_color = graph.AddNode("FlatColorImageCalculator");
   auto& flat_color_options =
       flat_color.GetOptions<FlatColorImageCalculatorOptions>();
   // SetAlphaCalculator only takes 1st channel.
   flat_color_options.mutable_color()->set_r(0);
-  image >> flat_color.In(kImageTag)[0];
-  auto blank_canvas = flat_color.Out(kImageTag)[0];
+  image >> flat_color.In(kImageTag);
+  auto blank_canvas = flat_color.Out(kImageTag);
 
   auto& from_mp_image = graph.AddNode("FromImageCalculator");
   blank_canvas >> from_mp_image.In(kImageTag);
@@ -85,7 +142,7 @@ Source<> RoiToAlpha(Source<Image> image, Source<RenderData> roi, bool use_gpu,
   auto& roi_to_alpha = graph.AddNode("AnnotationOverlayCalculator");
   blank_canvas_in_cpu_or_gpu >>
       roi_to_alpha.In(use_gpu ? kImageGpuTag : kImageTag);
-  roi >> roi_to_alpha.In(0);
+  roi_with_thickness >> roi_to_alpha.In(0);
   auto alpha = roi_to_alpha.Out(use_gpu ? kImageGpuTag : kImageTag);
 
   return alpha;
@@ -163,6 +220,7 @@ class InteractiveSegmenterGraph : public core::ModelTaskGraph {
     image >> from_mp_image.In(kImageTag);
     auto image_in_cpu_or_gpu = from_mp_image.Out(image_tag_with_suffix);
 
+    // Creates an RGBA image with model input tensor size.
     auto alpha_in_cpu_or_gpu = RoiToAlpha(image, roi, use_gpu, graph);
 
     auto& set_alpha = graph.AddNode("SetAlphaCalculator");

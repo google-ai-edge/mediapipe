@@ -66,14 +66,16 @@ def run(data_dir,
   quantization_config = None
   if (supported_model ==
       text_classifier.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER):
-    hparams = text_classifier.HParams(
-        epochs=10, batch_size=32, learning_rate=0, export_dir=export_dir)
+    hparams = text_classifier.AverageWordEmbeddingHParams(
+        epochs=10, batch_size=32, learning_rate=0, export_dir=export_dir
+    )
   # Warning: This takes extremely long to run on CPU
   elif (
       supported_model == text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER):
     quantization_config = quantization.QuantizationConfig.for_dynamic()
-    hparams = text_classifier.HParams(
-        epochs=3, batch_size=48, learning_rate=3e-5, export_dir=export_dir)
+    hparams = text_classifier.BertHParams(
+        epochs=3, batch_size=48, learning_rate=3e-5, export_dir=export_dir
+    )
 
   # Fine-tunes the model.
   options = text_classifier.TextClassifierOptions(

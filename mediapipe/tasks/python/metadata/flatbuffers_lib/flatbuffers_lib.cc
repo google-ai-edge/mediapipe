@@ -41,12 +41,12 @@ PYBIND11_MODULE(_pywrap_flatbuffers, m) {
         self->PushFlatBuffer(reinterpret_cast<const uint8_t*>(contents.c_str()),
                              contents.length());
       });
-  m.def("generate_text_file", &flatbuffers::GenerateTextFile);
+  m.def("generate_text_file", &flatbuffers::GenTextFile);
   m.def("generate_text",
         [](const flatbuffers::Parser& parser,
            const std::string& buffer) -> std::string {
           std::string text;
-          const char* result = flatbuffers::GenerateText(
+          const char* result = flatbuffers::GenText(
               parser, reinterpret_cast<const void*>(buffer.c_str()), &text);
           if (result) {
             return "";

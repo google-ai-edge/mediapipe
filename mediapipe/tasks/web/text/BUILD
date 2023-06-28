@@ -39,12 +39,12 @@ mediapipe_ts_library(
 )
 
 rollup_bundle(
-    name = "text_bundle",
+    name = "text_bundle_mjs",
     config_file = "//mediapipe/tasks/web:rollup.config.mjs",
     entry_point = "index.ts",
     format = "esm",
     output_dir = False,
-    sourcemap = "false",
+    sourcemap = "true",
     deps = [
         ":text_lib",
         "@npm//@rollup/plugin-commonjs",
@@ -52,6 +52,45 @@ rollup_bundle(
         "@npm//@rollup/plugin-terser",
         "@npm//google-protobuf",
     ],
+)
+
+rollup_bundle(
+    name = "text_bundle_cjs",
+    config_file = "//mediapipe/tasks/web:rollup.config.mjs",
+    entry_point = "index.ts",
+    format = "cjs",
+    output_dir = False,
+    sourcemap = "true",
+    deps = [
+        ":text_lib",
+        "@npm//@rollup/plugin-commonjs",
+        "@npm//@rollup/plugin-node-resolve",
+        "@npm//@rollup/plugin-terser",
+        "@npm//google-protobuf",
+    ],
+)
+
+genrule(
+    name = "text_sources",
+    srcs = [
+        ":text_bundle_cjs",
+        ":text_bundle_mjs",
+    ],
+    outs = [
+        "text_bundle.cjs",
+        "text_bundle.cjs.map",
+        "text_bundle.mjs",
+        "text_bundle.mjs.map",
+    ],
+    cmd = (
+        "for FILE in $(SRCS); do " +
+        "  OUT_FILE=$(GENDIR)/mediapipe/tasks/web/text/$$(" +
+        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/'" +
+        "  ); " +
+        "  echo $$FILE ; echo $$OUT_FILE ; " +
+        "  cp $$FILE $$OUT_FILE ; " +
+        "done;"
+    ),
 )
 
 genrule(
@@ -77,6 +116,6 @@ pkg_npm(
         "wasm/text_wasm_nosimd_internal.js",
         "wasm/text_wasm_nosimd_internal.wasm",
         ":package_json",
-        ":text_bundle",
+        ":text_sources",
     ],
 )

@@ -64,3 +64,17 @@ objc_library(
         "@com_google_absl//absl/status:statusor",
     ],
 )
+
+objc_library(
+    name = "MPPMask",
+    srcs = ["sources/MPPMask.mm"],
+    hdrs = ["sources/MPPMask.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = [
+        "//mediapipe/tasks/ios/common:MPPCommon",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+    ],
+)

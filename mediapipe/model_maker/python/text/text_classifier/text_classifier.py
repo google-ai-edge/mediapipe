@@ -19,14 +19,16 @@ import tempfile
 from typing import Any, Optional, Sequence, Tuple
 
 import tensorflow as tf
+from tensorflow_addons import optimizers as tfa_optimizers
 import tensorflow_hub as hub
 
-from mediapipe.model_maker.python.core import hyperparameters as hp
 from mediapipe.model_maker.python.core.data import dataset as ds
 from mediapipe.model_maker.python.core.tasks import classifier
+from mediapipe.model_maker.python.core.utils import metrics
 from mediapipe.model_maker.python.core.utils import model_util
 from mediapipe.model_maker.python.core.utils import quantization
 from mediapipe.model_maker.python.text.text_classifier import dataset as text_ds
+from mediapipe.model_maker.python.text.text_classifier import hyperparameters as hp
 from mediapipe.model_maker.python.text.text_classifier import model_options as mo
 from mediapipe.model_maker.python.text.text_classifier import model_spec as ms
 from mediapipe.model_maker.python.text.text_classifier import preprocessor
@@ -54,22 +56,26 @@ def _validate(options: text_classifier_options.TextClassifierOptions):
        ms.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER)):
     raise ValueError("Expected AVERAGE_WORD_EMBEDDING_CLASSIFIER,"
                      f" got {options.supported_model}")
-  if (isinstance(options.model_options, mo.BertModelOptions) and
-      (options.supported_model != ms.SupportedModels.MOBILEBERT_CLASSIFIER)):
+  if isinstance(options.model_options, mo.BertModelOptions) and (
+      options.supported_model != ms.SupportedModels.MOBILEBERT_CLASSIFIER
+      and options.supported_model != ms.SupportedModels.EXBERT_CLASSIFIER
+  ):
     raise ValueError(
-        f"Expected MOBILEBERT_CLASSIFIER, got {options.supported_model}")
+        "Expected a Bert Classifier(MobileBERT or EXBERT), got "
+        f"{options.supported_model}"
+    )
 
 
 class TextClassifier(classifier.Classifier):
   """API for creating and training a text classification model."""
 
-  def __init__(self, model_spec: Any, hparams: hp.BaseHParams,
-               label_names: Sequence[str]):
+  def __init__(
+      self, model_spec: Any, label_names: Sequence[str], shuffle: bool
+  ):
     super().__init__(
-        model_spec=model_spec, label_names=label_names, shuffle=hparams.shuffle)
+        model_spec=model_spec, label_names=label_names, shuffle=shuffle
+    )
     self._model_spec = model_spec
-    self._hparams = hparams
-    self._callbacks = model_util.get_default_callbacks(self._hparams.export_dir)
     self._text_preprocessor: preprocessor.TextClassifierPreprocessor = None
 
   @classmethod
@@ -106,7 +112,10 @@ class TextClassifier(classifier.Classifier):
     if options.hparams is None:
       options.hparams = options.supported_model.value().hparams
 
-    if options.supported_model == ms.SupportedModels.MOBILEBERT_CLASSIFIER:
+    if (
+        options.supported_model == ms.SupportedModels.MOBILEBERT_CLASSIFIER
+        or options.supported_model == ms.SupportedModels.EXBERT_CLASSIFIER
+    ):
       text_classifier = (
           _BertClassifier.create_bert_classifier(train_data, validation_data,
                                                  options,
@@ -123,12 +132,24 @@ class TextClassifier(classifier.Classifier):
 
     return text_classifier
 
-  def evaluate(self, data: ds.Dataset, batch_size: int = 32) -> Any:
+  def evaluate(
+      self,
+      data: ds.Dataset,
+      batch_size: int = 32,
+      desired_precisions: Optional[Sequence[float]] = None,
+      desired_recalls: Optional[Sequence[float]] = None,
+  ) -> Any:
     """Overrides Classifier.evaluate().
 
     Args:
       data: Evaluation dataset. Must be a TextClassifier Dataset.
       batch_size: Number of samples per evaluation step.
+      desired_precisions: If specified, adds a RecallAtPrecision metric per
+        desired_precisions[i] entry which tracks the recall given the constraint
+        on precision. Only supported for binary classification.
+      desired_recalls: If specified, adds a PrecisionAtRecall metric per
+        desired_recalls[i] entry which tracks the precision given the constraint
+        on recall. Only supported for binary classification.
 
     Returns:
       The loss value and accuracy.
@@ -144,6 +165,28 @@ class TextClassifier(classifier.Classifier):
 
     processed_data = self._text_preprocessor.preprocess(data)
     dataset = processed_data.gen_tf_dataset(batch_size, is_training=False)
+
+    additional_metrics = []
+    if desired_precisions and len(data.label_names) == 2:
+      for precision in desired_precisions:
+        additional_metrics.append(
+            metrics.BinarySparseRecallAtPrecision(
+                precision, name=f"recall_at_precision_{precision}"
+            )
+        )
+    if desired_recalls and len(data.label_names) == 2:
+      for recall in desired_recalls:
+        additional_metrics.append(
+            metrics.BinarySparsePrecisionAtRecall(
+                recall, name=f"precision_at_recall_{recall}"
+            )
+        )
+    metric_functions = self._metric_functions + additional_metrics
+    self._model.compile(
+        optimizer=self._optimizer,
+        loss=self._loss_function,
+        metrics=metric_functions,
+    )
     return self._model.evaluate(dataset)
 
   def export_model(
@@ -161,9 +204,8 @@ class TextClassifier(classifier.Classifier):
         path is {self._hparams.export_dir}/{model_name}.
       quantization_config: The configuration for model quantization.
     """
-    if not tf.io.gfile.exists(self._hparams.export_dir):
-      tf.io.gfile.makedirs(self._hparams.export_dir)
     tflite_file = os.path.join(self._hparams.export_dir, model_name)
+    tf.io.gfile.makedirs(os.path.dirname(tflite_file))
     metadata_file = os.path.join(self._hparams.export_dir, "metadata.json")
 
     tflite_model = model_util.convert_to_tflite(
@@ -174,7 +216,7 @@ class TextClassifier(classifier.Classifier):
     writer = self._get_metadata_writer(tflite_model, vocab_filepath)
     tflite_model_with_metadata, metadata_json = writer.populate()
     model_util.save_tflite(tflite_model_with_metadata, tflite_file)
-    with open(metadata_file, "w") as f:
+    with tf.io.gfile.GFile(metadata_file, "w") as f:
       f.write(metadata_json)
 
   @abc.abstractmethod
@@ -191,13 +233,23 @@ class _AverageWordEmbeddingClassifier(TextClassifier):
 
   _DELIM_REGEX_PATTERN = r"[^\w\']+"
 
-  def __init__(self, model_spec: ms.AverageWordEmbeddingClassifierSpec,
-               model_options: mo.AverageWordEmbeddingModelOptions,
-               hparams: hp.BaseHParams, label_names: Sequence[str]):
-    super().__init__(model_spec, hparams, label_names)
+  def __init__(
+      self,
+      model_spec: ms.AverageWordEmbeddingClassifierSpec,
+      model_options: mo.AverageWordEmbeddingModelOptions,
+      hparams: hp.AverageWordEmbeddingHParams,
+      label_names: Sequence[str],
+  ):
+    super().__init__(model_spec, label_names, hparams.shuffle)
     self._model_options = model_options
+    self._hparams = hparams
+    self._callbacks = model_util.get_default_callbacks(self._hparams.export_dir)
     self._loss_function = "sparse_categorical_crossentropy"
-    self._metric_function = "accuracy"
+    self._metric_functions = [
+        "accuracy",
+        metrics.SparsePrecision(name="precision", dtype=tf.float32),
+        metrics.SparseRecall(name="recall", dtype=tf.float32),
+    ]
     self._text_preprocessor: (
         preprocessor.AverageWordEmbeddingClassifierPreprocessor) = None
 
@@ -306,16 +358,26 @@ class _BertClassifier(TextClassifier):
 
   _INITIALIZER_RANGE = 0.02
 
-  def __init__(self, model_spec: ms.BertClassifierSpec,
-               model_options: mo.BertModelOptions, hparams: hp.BaseHParams,
-               label_names: Sequence[str]):
-    super().__init__(model_spec, hparams, label_names)
+  def __init__(
+      self,
+      model_spec: ms.BertClassifierSpec,
+      model_options: mo.BertModelOptions,
+      hparams: hp.BertHParams,
+      label_names: Sequence[str],
+  ):
+    super().__init__(model_spec, label_names, hparams.shuffle)
+    self._hparams = hparams
+    self._callbacks = model_util.get_default_callbacks(self._hparams.export_dir)
     self._model_options = model_options
     with self._hparams.get_strategy().scope():
       self._loss_function = tf.keras.losses.SparseCategoricalCrossentropy()
-      self._metric_function = tf.keras.metrics.SparseCategoricalAccuracy(
-          "test_accuracy", dtype=tf.float32
-      )
+      self._metric_functions = [
+          tf.keras.metrics.SparseCategoricalAccuracy(
+              "test_accuracy", dtype=tf.float32
+          ),
+          metrics.SparsePrecision(name="precision", dtype=tf.float32),
+          metrics.SparseRecall(name="recall", dtype=tf.float32),
+      ]
     self._text_preprocessor: preprocessor.BertClassifierPreprocessor = None
 
   @classmethod
@@ -438,11 +500,26 @@ class _BertClassifier(TextClassifier):
           initial_learning_rate=initial_lr,
           decay_schedule_fn=lr_schedule,
           warmup_steps=warmup_steps)
-
-    self._optimizer = tf.keras.optimizers.experimental.AdamW(
-        lr_schedule, weight_decay=0.01, epsilon=1e-6, global_clipnorm=1.0)
-    self._optimizer.exclude_from_weight_decay(
-        var_names=["LayerNorm", "layer_norm", "bias"])
+    if self._hparams.optimizer == hp.BertOptimizer.ADAMW:
+      self._optimizer = tf.keras.optimizers.experimental.AdamW(
+          lr_schedule, weight_decay=0.01, epsilon=1e-6, global_clipnorm=1.0
+      )
+      self._optimizer.exclude_from_weight_decay(
+          var_names=["LayerNorm", "layer_norm", "bias"]
+      )
+    elif self._hparams.optimizer == hp.BertOptimizer.LAMB:
+      self._optimizer = tfa_optimizers.LAMB(
+          lr_schedule,
+          weight_decay_rate=0.01,
+          epsilon=1e-6,
+          exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"],
+          global_clipnorm=1.0,
+      )
+    else:
+      raise ValueError(
+          "BertHParams.optimizer must be set to ADAM or "
+          f"LAMB. Got {self._hparams.optimizer}."
+      )
 
   def _save_vocab(self, vocab_filepath: str):
     tf.io.gfile.copy(
