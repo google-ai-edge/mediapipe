@@ -56,6 +56,8 @@ objc_library(
         "//mediapipe/objc:mediapipe_framework_ios",
         "//mediapipe/objc:mediapipe_input_sources_ios",
         "//mediapipe/calculators/core:packet_presence_calculator",
+        "//mediapipe/framework/port:opencv_video",
+        "//mediapipe/framework/port:opencv_imgcodecs",
 #        "//mediapipe/objc:mediapipe_layer_renderer", # no need for layer renderer since I don't render
     ] + select({
         "//conditions:default": [

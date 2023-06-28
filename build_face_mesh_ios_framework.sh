@@ -1,5 +1,7 @@
 #!/bin/sh
 
+sudo rm -rf frameworkbuild
+
 # Create output directories~
 mkdir -p ./frameworkbuild/FaceMeshSDK/arm64
 # XCFramework is how we're going to use it.
