@@ -61,17 +61,51 @@ public abstract class TaskOptions {
         accelerationBuilder.setTflite(
             InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.TfLite
                 .getDefaultInstance());
+        options
+            .delegateOptions()
+            .ifPresent(
+                delegateOptions ->
+                    setDelegateOptions(
+                        accelerationBuilder,
+                        (BaseOptions.DelegateOptions.CpuOptions) delegateOptions));
         break;
       case GPU:
         accelerationBuilder.setGpu(
             InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.Gpu.newBuilder()
                 .setUseAdvancedGpuApi(true)
                 .build());
+        options
+            .delegateOptions()
+            .ifPresent(
+                delegateOptions ->
+                    setDelegateOptions(
+                        accelerationBuilder,
+                        (BaseOptions.DelegateOptions.GpuOptions) delegateOptions));
         break;
     }
+
     return BaseOptionsProto.BaseOptions.newBuilder()
         .setModelAsset(externalFileBuilder.build())
         .setAcceleration(accelerationBuilder.build())
         .build();
+  }
+
+  private void setDelegateOptions(
+      AccelerationProto.Acceleration.Builder accelerationBuilder,
+      BaseOptions.DelegateOptions.CpuOptions options) {
+    accelerationBuilder.setTflite(
+        InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.TfLite.getDefaultInstance());
+  }
+
+  private void setDelegateOptions(
+      AccelerationProto.Acceleration.Builder accelerationBuilder,
+      BaseOptions.DelegateOptions.GpuOptions options) {
+    InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.Gpu.Builder gpuBuilder =
+        InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.Gpu.newBuilder()
+            .setUseAdvancedGpuApi(true);
+    options.cachedKernelPath().ifPresent(gpuBuilder::setCachedKernelPath);
+    options.serializedModelDir().ifPresent(gpuBuilder::setSerializedModelDir);
+    options.modelToken().ifPresent(gpuBuilder::setModelToken);
+    accelerationBuilder.setGpu(gpuBuilder.build());
   }
 }

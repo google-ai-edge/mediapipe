@@ -54,6 +54,9 @@ public abstract class BaseOptions {
      */
     public abstract Builder setDelegate(Delegate delegate);
 
+    /** Options for the chosen delegate. If not set, the default delegate options is used. */
+    public abstract Builder setDelegateOptions(DelegateOptions delegateOptions);
+
     abstract BaseOptions autoBuild();
 
     /**
@@ -79,6 +82,23 @@ public abstract class BaseOptions {
         throw new IllegalArgumentException(
             "The model buffer should be either a direct ByteBuffer or a MappedByteBuffer.");
       }
+      boolean delegateMatchesDelegateOptions = true;
+      if (options.delegateOptions().isPresent()) {
+        switch (options.delegate()) {
+          case CPU:
+            delegateMatchesDelegateOptions =
+                options.delegateOptions().get() instanceof DelegateOptions.CpuOptions;
+            break;
+          case GPU:
+            delegateMatchesDelegateOptions =
+                options.delegateOptions().get() instanceof DelegateOptions.GpuOptions;
+            break;
+        }
+        if (!delegateMatchesDelegateOptions) {
+          throw new IllegalArgumentException(
+              "Specified Delegate type does not match the provided delegate options.");
+        }
+      }
       return options;
     }
   }
@@ -90,6 +110,67 @@ public abstract class BaseOptions {
   abstract Optional<ByteBuffer> modelAssetBuffer();
 
   abstract Delegate delegate();
+
+  abstract Optional<DelegateOptions> delegateOptions();
+
+  /** Advanced config options for the used delegate. */
+  public abstract static class DelegateOptions {
+
+    /** Options for CPU. */
+    @AutoValue
+    public abstract static class CpuOptions extends DelegateOptions {
+
+      public static Builder builder() {
+        Builder builder = new AutoValue_BaseOptions_DelegateOptions_CpuOptions.Builder();
+        return builder;
+      }
+
+      /** Builder for {@link CpuOptions}. */
+      @AutoValue.Builder
+      public abstract static class Builder {
+
+        public abstract CpuOptions build();
+      }
+    }
+
+    /** Options for GPU. */
+    @AutoValue
+    public abstract static class GpuOptions extends DelegateOptions {
+      // Load pre-compiled serialized binary cache to accelerate init process.
+      // Only available on Android. Kernel caching will only be enabled if this
+      // path is set. NOTE: binary cache usage may be skipped if valid serialized
+      // model, specified by "serialized_model_dir", exists.
+      abstract Optional<String> cachedKernelPath();
+
+      // A dir to load from and save to a pre-compiled serialized model used to
+      // accelerate init process.
+      // NOTE: serialized model takes precedence over binary cache
+      // specified by "cached_kernel_path", which still can be used if
+      // serialized model is invalid or missing.
+      abstract Optional<String> serializedModelDir();
+
+      // Unique token identifying the model. Used in conjunction with
+      // "serialized_model_dir". It is the caller's responsibility to ensure
+      // there is no clash of the tokens.
+      abstract Optional<String> modelToken();
+
+      public static Builder builder() {
+        return new AutoValue_BaseOptions_DelegateOptions_GpuOptions.Builder();
+      }
+
+      /** Builder for {@link GpuOptions}. */
+      @AutoValue.Builder
+      public abstract static class Builder {
+        public abstract Builder setCachedKernelPath(String cachedKernelPath);
+
+        public abstract Builder setSerializedModelDir(String serializedModelDir);
+
+        public abstract Builder setModelToken(String modelToken);
+
+        public abstract GpuOptions build();
+      }
+    }
+  }
 
   public static Builder builder() {
     return new AutoValue_BaseOptions.Builder().setDelegate(Delegate.CPU);

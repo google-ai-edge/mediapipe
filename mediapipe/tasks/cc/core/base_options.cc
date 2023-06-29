@@ -41,9 +41,15 @@ proto::Acceleration ConvertDelegateOptionsToAccelerationProto(
   proto::Acceleration acceleration_proto = proto::Acceleration();
   auto* gpu = acceleration_proto.mutable_gpu();
   gpu->set_use_advanced_gpu_api(true);
-  gpu->set_cached_kernel_path(options.cached_kernel_path);
-  gpu->set_serialized_model_dir(options.serialized_model_dir);
-  gpu->set_model_token(options.model_token);
+  if (!options.cached_kernel_path.empty()) {
+    gpu->set_cached_kernel_path(options.cached_kernel_path);
+  }
+  if (!options.serialized_model_dir.empty()) {
+    gpu->set_serialized_model_dir(options.serialized_model_dir);
+  }
+  if (!options.model_token.empty()) {
+    gpu->set_model_token(options.model_token);
+  }
   return acceleration_proto;
 }
 

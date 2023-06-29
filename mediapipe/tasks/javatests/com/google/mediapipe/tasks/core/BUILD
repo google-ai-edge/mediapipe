@@ -23,3 +23,5 @@ android_library(
         "//third_party/java/android_libs/guava_jdk5:io",
     ],
 )
+
+# TODO: Enable this in OSS
