@@ -395,7 +395,7 @@ class ObjectDetector(classifier.Classifier):
   ) -> tf.keras.optimizers.Optimizer:
     """Creates an optimizer with learning rate schedule for regular training.
 
-    Uses Keras PiecewiseConstantDecay schedule by default.
+    Uses Keras CosineDecay schedule by default.
 
     Args:
       steps_per_epoch: Steps per epoch to calculate the step boundaries from the
@@ -404,6 +404,8 @@ class ObjectDetector(classifier.Classifier):
     Returns:
       A tf.keras.optimizer.Optimizer for model training.
     """
+    total_steps = steps_per_epoch * self._hparams.epochs
+    warmup_steps = int(total_steps * 0.1)
     init_lr = self._hparams.learning_rate * self._hparams.batch_size / 256
     decay_epochs = (
         self._hparams.cosine_decay_epochs
@@ -414,6 +416,11 @@ class ObjectDetector(classifier.Classifier):
         init_lr,
         steps_per_epoch * decay_epochs,
         self._hparams.cosine_decay_alpha,
+    )
+    learning_rate = model_util.WarmUp(
+        initial_learning_rate=init_lr,
+        decay_schedule_fn=learning_rate,
+        warmup_steps=warmup_steps,
     )
     return tf.keras.optimizers.experimental.SGD(
         learning_rate=learning_rate, momentum=0.9
