@@ -30,10 +30,10 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 static NSString *const kLiveStreamTestsDictImageClassifierKey = @"image_classifier";
 static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
-#define AssertEqualErrors(error, expectedError)              \
-  XCTAssertNotNil(error);                                    \
-  XCTAssertEqualObjects(error.domain, expectedError.domain); \
-  XCTAssertEqual(error.code, expectedError.code);            \
+#define AssertEqualErrors(error, expectedError)                                               \
+  XCTAssertNotNil(error);                                                                     \
+  XCTAssertEqualObjects(error.domain, expectedError.domain);                                  \
+  XCTAssertEqual(error.code, expectedError.code);                                             \
   XCTAssertEqualObjects(error.localizedDescription, expectedError.localizedDescription)
 
 #define AssertEqualCategoryArrays(categories, expectedCategories)                         \
