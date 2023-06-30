@@ -18,7 +18,7 @@ load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:private"])
+package(default_visibility = ["//visibility:public"])
 
 # The MediaPipe internal package group. No mediapipe users should be added to this group.
 package_group(
@@ -299,9 +299,6 @@ cc_library(
     hdrs = [
         "calculator_graph.h",
         "scheduler.h",
-    ],
-    visibility = [
-        ":mediapipe_internal",
     ],
     deps = [
         ":calculator_base",

@@ -39,13 +39,13 @@ if [ -z "$1" ]
   then
     echo "Installing OpenCV from source"
     if [[ -x "$(command -v apt)" ]]; then
-      sudo apt update && sudo apt install build-essential git
-      sudo apt install cmake ffmpeg libavformat-dev libdc1394-22-dev libgtk2.0-dev \
+      apt update && apt install -y build-essential git
+      apt install -y cmake ffmpeg libavformat-dev libdc1394-22-dev libgtk2.0-dev \
                        libjpeg-dev libpng-dev libswscale-dev libtbb2 libtbb-dev \
                        libtiff-dev
     elif [[ -x "$(command -v dnf)" ]]; then
-      sudo dnf update && sudo dnf install cmake gcc gcc-c git
-      sudo dnf install ffmpeg-devel libdc1394-devel gtk2-devel \
+      dnf update && dnf install -y cmake gcc gcc-c git
+      dnf install ffmpeg-devel libdc1394-devel gtk2-devel \
                        libjpeg-turbo-devel libpng-devel tbb-devel \
                        libtiff-devel
     fi
@@ -56,11 +56,12 @@ if [ -z "$1" ]
     git clone https://github.com/opencv/opencv.git
     mkdir opencv/release
     cd opencv_contrib
-    git checkout 3.4
+    git checkout 4.7.0
     cd ../opencv
-    git checkout 3.4
+    git checkout 4.7.0
     cd release
     cmake .. -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=/usr/local \
+          -DBUILD_LIST=core,improc,imgcodecs,calib3d,features2d,highgui,imgproc,video,videoio,optflow \
           -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_opencv_ts=OFF \
           -DOPENCV_EXTRA_MODULES_PATH=/tmp/build_opencv/opencv_contrib/modules \
           -DBUILD_opencv_aruco=OFF -DBUILD_opencv_bgsegm=OFF -DBUILD_opencv_bioinspired=OFF \
@@ -75,14 +76,14 @@ if [ -z "$1" ]
           -DCV_ENABLE_INTRINSICS=ON -DWITH_EIGEN=ON -DWITH_PTHREADS=ON -DWITH_PTHREADS_PF=ON \
           -DWITH_JPEG=ON -DWITH_PNG=ON -DWITH_TIFF=ON
     make -j 16
-    sudo make install
+    make install
     rm -rf /tmp/build_opencv
     echo "OpenCV has been built. You can find the header files and libraries in /usr/local/include/opencv2/ and /usr/local/lib"
 
     # https://github.com/cggos/dip_cvqt/issues/1#issuecomment-284103343
-    sudo touch /etc/ld.so.conf.d/mp_opencv.conf
-    sudo bash -c  "echo /usr/local/lib >> /etc/ld.so.conf.d/mp_opencv.conf"
-    sudo ldconfig -v
+    touch /etc/ld.so.conf.d/mp_opencv.conf
+    bash -c  "echo /usr/local/lib >> /etc/ld.so.conf.d/mp_opencv.conf"
+    ldconfig -v
 fi
 
 # Modify the build file.
@@ -93,4 +94,5 @@ linux_opencv_config=$(grep -n 'linux_opencv' $workspace_file | awk -F  ":" '{pri
 path_line=$((linux_opencv_config + 2))
 sed -i "$path_line d" $workspace_file
 sed -i "$path_line i\    path = \"/usr/local\"," $workspace_file
+cat $opencv_build_file
 echo "Done"

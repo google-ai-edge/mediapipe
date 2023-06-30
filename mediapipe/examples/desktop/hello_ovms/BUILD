@@ -1,4 +1,5 @@
-# Copyright 2019 The MediaPipe Authors.
+#
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,22 +18,13 @@ licenses(["notice"])
 package(default_visibility = ["//visibility:public"])
 
 cc_binary(
-    name = "hello_world",
-    srcs = ["hello_world.cc"],
-    deps = [
-        "//mediapipe/calculators/core:pass_through_calculator",
-        "//mediapipe/framework:calculator_graph",
-        "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
-    ],
-)
-
-cc_binary(
     name = "hello_ovms",
-    srcs = ["hello_ovms.cc"],
+    srcs = [
+        "hello_ovms.cc",
+        "c_api_test_utils.hpp"
+    ],
     deps = [
-        "//mediapipe/calculators/core:ovms_calculator",
+        "//mediapipe/calculators/ovms:ovms_calculator",
         "//mediapipe/framework:calculator_graph",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:parse_text_proto",
@@ -43,6 +35,10 @@ cc_binary(
         "-luuid",
         "-lstdc++fs",
         "-lcrypto",
+    ],
+    copts = [
+        "-Iexternal/intel_ovms/src",
+        "-Iexternal/intel_ovms/src/test"
     ]
 )
 

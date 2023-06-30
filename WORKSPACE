@@ -146,6 +146,11 @@ http_archive(
     patch_args = [
         "-p1",
     ],
+    # TODO ouble check checksum
+    #sha256 = "1fbf1c2962af287607232b2eddeaec9b4f4a7a6f5934e1a9276e9af76952f7e0",
+    #strip_prefix = "protobuf-3.9.2",
+    #urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.9.2.tar.gz"],
+    # need to drop patch in older version
 )
 
 load("//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
@@ -256,7 +261,7 @@ http_archive(
 new_local_repository(
     name = "linux_opencv",
     build_file = "@//third_party:opencv_linux.BUILD",
-    path = "/usr",
+    path = "/usr/local",
 )
 
 new_local_repository(
@@ -496,7 +501,6 @@ libedgetpu_dependencies()
 load("@coral_crosstool//:configure.bzl", "cc_crosstool")
 cc_crosstool(name = "crosstool")
 
-
 # Node dependencies
 http_archive(
     name = "build_bazel_rules_nodejs",
@@ -544,3 +548,196 @@ external_files()
 
 load("//third_party:wasm_files.bzl", "wasm_files")
 wasm_files()
+
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "intel_ovms",
+    remote = "https://github.com/openvinotoolkit/model_server",
+    branch = "main",
+)
+
+# DEV ovms - adjust local repository path for build
+#new_local_repository(
+#    name = "intel_ovms",
+#    path = "/ovms/",
+#    build_file = "/ovms/src/BUILD",
+#)
+
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
+
+# minitrace
+new_git_repository(
+    name = "minitrace",
+    remote = "https://github.com/hrydgard/minitrace.git",
+    commit = "020f42b189e8d6ad50e4d8f45d69edee0a6b3f23",
+    build_file_content = """
+cc_library(
+    name = "trace",
+    hdrs = ["minitrace.h"],
+    srcs = ["minitrace.c"],
+    visibility = ["//visibility:public"],
+    local_defines = [
+    ],
+)
+""",
+)
+
+# Tensorflow serving
+git_repository(
+    name = "tensorflow_serving",
+    remote = "https://github.com/tensorflow/serving.git",
+    tag = "2.6.5",
+    patch_args = ["-p1"],
+    patches = ["@intel_ovms//external:net_http.patch", "@intel_ovms//external:listen.patch"]
+    #                             ^^^^^^^^^^^^
+    #                       make bind address configurable
+    #          ^^^^^^^^^^^^
+    #        allow all http methods
+)
+
+# AWS S3 SDK
+new_local_repository(
+    name = "awssdk",
+    build_file = "@intel_ovms//third_party/aws:BUILD",
+    path = "/awssdk",
+)
+
+# Azure Storage SDK
+new_local_repository(
+    name = "azure",
+    build_file = "@intel_ovms//third_party/azure:BUILD",
+    path = "/azure/azure-storage-cpp",
+)
+
+# Azure Storage SDK dependency - cpprest
+new_local_repository(
+    name = "cpprest",
+    build_file = "@intel_ovms//third_party/cpprest:BUILD",
+    path = "/azure/cpprestsdk",
+)
+
+# Boost (needed for Azure Storage SDK)
+
+new_local_repository(
+    name = "boost",
+    path = "/usr/local/lib/",
+    build_file = "@intel_ovms//third_party/boost:BUILD"
+)
+
+# Google Cloud SDK
+http_archive(
+    name = "com_github_googleapis_google_cloud_cpp",
+    sha256 = "a370bcf2913717c674a7250c4a310250448ffeb751b930be559a6f1887155f3b",
+    strip_prefix = "google-cloud-cpp-0.21.0",
+    url = "https://github.com/googleapis/google-cloud-cpp/archive/v0.21.0.tar.gz",
+    repo_mapping = {"@com_github_curl_curl" : "@curl"}
+)
+
+load("@com_github_googleapis_google_cloud_cpp//bazel:google_cloud_cpp_deps.bzl", "google_cloud_cpp_deps")
+google_cloud_cpp_deps()
+
+load("@com_google_googleapis//:repository_rules.bzl", "switched_rules_by_language")
+switched_rules_by_language(
+    name = "com_google_googleapis_imports",
+    cc = True,  # C++ support is only "Partially implemented", roll our own.
+    grpc = True,
+)
+
+load("@com_github_googleapis_google_cloud_cpp_common//bazel:google_cloud_cpp_common_deps.bzl", "google_cloud_cpp_common_deps")
+google_cloud_cpp_common_deps()
+
+load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
+grpc_deps()
+
+load("@com_github_grpc_grpc//bazel:grpc_extra_deps.bzl", "grpc_extra_deps")
+grpc_extra_deps()
+
+# cxxopts
+http_archive(
+    name = "com_github_jarro2783_cxxopts",
+    url = "https://github.com/jarro2783/cxxopts/archive/v2.2.0.zip",
+    sha256 = "f9640c00d9938bedb291a21f9287902a3a8cee38db6910b905f8eba4a6416204",
+    strip_prefix = "cxxopts-2.2.0",
+    build_file = "@intel_ovms//third_party/cxxopts:BUILD",
+)
+
+# RapidJSON
+http_archive(
+    name = "com_github_tencent_rapidjson",
+    url = "https://github.com/Tencent/rapidjson/archive/v1.1.0.zip",
+    sha256 = "8e00c38829d6785a2dfb951bb87c6974fa07dfe488aa5b25deec4b8bc0f6a3ab",
+    strip_prefix = "rapidjson-1.1.0",
+    build_file = "@intel_ovms//third_party/rapidjson:BUILD"
+)
+
+# spdlog
+http_archive(
+    name = "com_github_gabime_spdlog",
+    url = "https://github.com/gabime/spdlog/archive/v1.4.0.tar.gz",
+    sha256 = "afd18f62d1bc466c60bef088e6b637b0284be88c515cedc59ad4554150af6043",
+    strip_prefix = "spdlog-1.4.0",
+    build_file = "@intel_ovms//third_party/spdlog:BUILD"
+)
+
+# fmtlib
+http_archive(
+    name = "fmtlib",
+    url = "https://github.com/fmtlib/fmt/archive/6.0.0.tar.gz",
+    sha256 = "f1907a58d5e86e6c382e51441d92ad9e23aea63827ba47fd647eacc0d3a16c78",
+    strip_prefix = "fmt-6.0.0",
+    build_file = "@intel_ovms//third_party/fmtlib:BUILD"
+)
+
+# libevent
+http_archive(
+    name = "com_github_libevent_libevent",
+    url = "https://github.com/libevent/libevent/archive/release-2.1.8-stable.zip",
+    sha256 = "70158101eab7ed44fd9cc34e7f247b3cae91a8e4490745d9d6eb7edc184e4d96",
+    strip_prefix = "libevent-release-2.1.8-stable",
+    build_file = "@intel_ovms//third_party/libevent:BUILD",
+)
+
+# prometheus-cpp
+http_archive(
+    name = "com_github_jupp0r_prometheus_cpp",
+    strip_prefix = "prometheus-cpp-1.0.1",
+    urls = ["https://github.com/jupp0r/prometheus-cpp/archive/refs/tags/v1.0.1.zip"],
+)
+load("@com_github_jupp0r_prometheus_cpp//bazel:repositories.bzl", "prometheus_cpp_repositories")
+prometheus_cpp_repositories()
+
+#new_local_repository(
+#    name = "mediapipe_calculators",
+#    build_file = "@intel_ovms//third_party/mediapipe_calculators:BUILD",
+#    path = "/opt/ovms/",
+#)
+
+new_local_repository(
+    name = "linux_openvino",
+    build_file = "@intel_ovms//third_party/openvino:BUILD",
+    path = "/opt/intel/openvino/runtime",
+)
+
+git_repository(
+    name = "oneTBB",
+    branch = "v2021.8.0",
+    remote = "https://github.com/oneapi-src/oneTBB/",
+    patch_args = ["-p1"],
+    patches = ["@intel_ovms//external:mwaitpkg.patch",]
+)
+
+new_git_repository(
+    name = "model_api",
+    remote = "https:///github.com/openvinotoolkit/model_api/",
+    build_file_content = """
+cc_library(
+    name = "adapter_api",
+    hdrs = ["model_api/cpp/adapters/include/adapters/inference_adapter.h",],
+    includes = ["model_api/cpp/adapters/include"],
+    deps = ["@linux_openvino//:openvino"],
+    visibility = ["//visibility:public"],
+)
+    """,
+    commit = "7e163416c60ba9ccdf440c6c049d6c7e7137e144"
+)

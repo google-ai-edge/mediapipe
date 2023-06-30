@@ -53,6 +53,12 @@ proto_library(
 )
 
 proto_library(
+    name = "ovms_inference_calculator_proto",
+    srcs = ["ovms_inference_calculator.proto"],
+    deps = ["//mediapipe/framework:calculator_proto"],
+)
+
+proto_library(
     name = "tensor_squeeze_dimensions_calculator_proto",
     srcs = ["tensor_squeeze_dimensions_calculator.proto"],
     deps = ["//mediapipe/framework:calculator_proto"],
@@ -152,6 +158,13 @@ mediapipe_cc_proto_library(
     srcs = ["object_detection_tensors_to_detections_calculator.proto"],
     cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
     deps = [":object_detection_tensors_to_detections_calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "tensorflow_inference_calculator_cc_proto",
+    srcs = ["tensorflow_inference_calculator.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    deps = [":tensorflow_inference_calculator_proto"],
 )
 
 mediapipe_cc_proto_library(
@@ -404,6 +417,39 @@ cc_library(
     deps = [
         ":tensorflow_inference_calculator_cc_proto",
         ":tensorflow_session",
+        "@com_google_absl//absl/log:check",
+        "//mediapipe/framework:timestamp",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/memory",
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/synchronization",
+        "//mediapipe/framework/deps:clock",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:map_util",
+        "//mediapipe/framework:packet",
+    ] + select({
+        "//conditions:default": [
+            "@org_tensorflow//tensorflow/core:framework",
+        ],
+        "//mediapipe:android": [
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib_lite",
+        ],
+        "//mediapipe:ios": [
+            "@org_tensorflow//tensorflow/core:portable_tensorflow_lib",
+        ],
+    }),
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "ovms_inference_calculator",
+    srcs = ["ovms_inference_calculator.cc"],
+    deps = [
+        ":ovms_inference_calculator_cc_proto",
         "@com_google_absl//absl/log:check",
         "//mediapipe/framework:timestamp",
         "@com_google_absl//absl/base:core_headers",

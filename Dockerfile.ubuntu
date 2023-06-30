@@ -1,0 +1,143 @@
+#
+# Copyright (c) 2021 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+ARG BASE_IMAGE
+FROM ubuntu:20.04
+
+LABEL version="0.0.1"
+ARG JOBS=16
+SHELL ["/bin/bash", "-xo", "pipefail", "-c"]
+#######
+# Install dependencies
+#######
+# # to avoid question for continent
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update
+RUN apt-get install --no-install-recommends -y \
+    cmake \
+    automake \
+    autoconf \
+    curl \
+    libcurl4-openssl-dev \
+    git \
+    wget \
+    vim \
+    ca-certificates \
+    python3 \
+    python3-numpy \
+    pip \
+    libopencv-core-dev \
+    libopencv-highgui-dev \
+    libopencv-calib3d-dev \
+    libopencv-features2d-dev \
+    libopencv-imgproc-dev \
+    libopencv-video-dev \
+    build-essential \
+    libboost-filesystem1.71.0 \
+    libboost-thread1.71.0 \
+    libboost-program-options1.71.0 \
+    libboost-chrono1.71.0 \
+    libboost-date-time1.71.0 \
+    libboost-atomic1.71.0 \
+    libjson-c4 \
+    unzip
+    
+# install ovms_lib requirements
+# xml2, uuid for azure
+RUN  apt-get install -y curl libpugixml1v5 libtbb2 libxml2-dev uuid-dev uuid libssl-dev --no-install-recommends
+
+RUN apt-get update && apt-get install --no-install-recommends -y libtool
+
+# Install bazel
+ARG BAZEL_VERSION=5.3.1
+RUN mkdir /bazel && \
+    wget --no-check-certificate -O /bazel/installer.sh "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/b\
+azel-${BAZEL_VERSION}-installer-linux-x86_64.sh" && \
+    wget --no-check-certificate -O  /bazel/LICENSE.txt "https://raw.githubusercontent.com/bazelbuild/bazel/master/LICENSE" && \
+    chmod +x /bazel/installer.sh && \
+    /bazel/installer.sh  && \
+    rm -f /bazel/installer.sh
+
+#OPENVINO
+ARG DLDT_PACKAGE_URL=https://storage.openvinotoolkit.org/repositories/openvino/packages/2023.0/linux/l_openvino_toolkit_ubuntu20_2023.0.0.10926.b4452d56304_x86_64.tgz
+# OV toolkit package
+RUN wget -nv $DLDT_PACKAGE_URL && \
+    mkdir /opt/intel && \
+    tar -zxf l_openvino_toolkit*.tgz -C /opt/intel && \
+    ln -s /opt/intel/l_openvino_toolkit* /opt/intel/openvino && \
+    ln -s /opt/intel/l_openvino_toolkit* /opt/intel/openvino_2022
+
+####### Azure SDK needs new boost:
+WORKDIR /boost
+# hadolint ignore=DL3003
+RUN wget -nv https://sourceforge.net/projects/boost/files/boost/1.69.0/boost_1_69_0.tar.gz && \
+tar xvf boost_1_69_0.tar.gz && cd boost_1_69_0 && ./bootstrap.sh && \
+./b2 -j ${JOBS} cxxstd=17 link=static cxxflags='-fPIC' cflags='-fPIC' \
+--with-chrono --with-date_time --with-filesystem --with-program_options --with-system \
+--with-random --with-thread --with-atomic --with-regex \
+--with-log --with-locale \
+install
+
+ARG OVMS_BRANCH="mediapipe_integration"
+RUN mkdir /opt/ovms
+RUN wget -nv -P /opt/ovms https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_BRANCH}/third_party/cpprest/rest_sdk_v2.10.16.patch
+RUN wget -nv -P /opt/ovms https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_BRANCH}/third_party/azure/azure_sdk.patch
+RUN wget -nv -P /opt/ovms https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_BRANCH}/third_party/build_bazel_rules_apple/bazel_rules_apple.patch
+RUN mkdir -p /root/ovms/dummy/1
+RUN wget -nv -O /root/ovms/config.json https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_BRANCH}/src/test/mediapipe/config_standard_dummy.json
+RUN sed -i 's:/ovms/src/test/dummy:/root/ovms/dummy:g' /root/ovms/config.json
+RUN wget -nv -O /root/ovms/dummy/1/dummy.xml https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_BRANCH}/src/test/dummy/1/dummy.xml
+RUN wget -nv -O /root/ovms/dummy/1/dummy.bin https://raw.githubusercontent.com/openvinotoolkit/model_server/${OVMS_BRANCH}/src/test/dummy/1/dummy.bin
+
+####### Azure SDK
+WORKDIR /azure
+RUN apt-get update && apt-get install --no-install-recommends -y uuid uuid-dev && rm -rf /var/lib/apt/lists/*
+RUN git clone --recurse-submodules --depth 1 --branch v2.10.16 https://github.com/Microsoft/cpprestsdk.git && \
+    git clone --depth 1 --branch v7.5.0 https://github.com/Azure/azure-storage-cpp.git && \
+    patch -d /azure/cpprestsdk/ -p1 < /opt/ovms/rest_sdk_v2.10.16.patch && \
+    patch -d /azure/azure-storage-cpp/ -p1 < /opt/ovms/azure_sdk.patch
+
+WORKDIR /azure/cpprestsdk/Release/build.release
+RUN cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_USE_STATIC_LIBS=ON -DWERROR=OFF -DBUILD_SAMPLES=OFF -DBUILD_TESTS=OFF && make --jobs=$JOBS install
+
+WORKDIR /azure/azure-storage-cpp/Microsoft.WindowsAzure.Storage/build.release
+RUN CASABLANCA_DIR=/azure/cpprestsdk cmake .. -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_USE_STATIC_LIBS=ON -DCMAKE_VERBOSE_MAKEFILE=ON && make --jobs=$JOBS && make --jobs=$JOBS install
+####### End of Azure SDK
+
+# Build AWS S3 SDK
+RUN git clone https://github.com/aws/aws-sdk-cpp.git --branch 1.7.129 --single-branch --depth 1 /awssdk
+WORKDIR /awssdk/build
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_ONLY=s3 -DENABLE_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DMINIMIZE_SIZE=ON -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DFORCE_SHARED_CRT=OFF -DSIMPLE_INSTALL=OFF -DCMAKE_CXX_FLAGS=" -D_GLIBCXX_USE_CXX11_ABI=1 " .. && make --jobs=$JOBS
+
+####### End of AWS S3 SDK
+
+COPY . /mediapipe/
+
+# RUN examples
+WORKDIR /mediapipe
+
+####### Build OpenCV
+RUN sed -i 's:git checkout 3.4:git checkout 4.7.0:g' setup_opencv.sh
+RUN sed -i 's:#"include/opencv4/opencv2/\*\*/\*\.h\*",:"include/opencv4/opencv2/\*\*/\*\.h\*",:g' third_party/opencv_linux.BUILD
+RUN sed -i 's:#"include/opencv4/opencv2/\*\.h\*",:"include/opencv4/opencv2/\*\.h\*",:g' third_party/opencv_linux.BUILD
+RUN sed -i 's:#"include/opencv4/",:"include/opencv4/",:g' third_party/opencv_linux.BUILD
+
+RUN ./setup_opencv.sh
+####### End of OpenCV
+
+RUN bazel build --jobs=${JOBS} --define MEDIAPIPE_DISABLE_GPU=1 --define MEDIAPIPE_DISABLE=1 --cxxopt=-DMEDIAPIPE_DISABLE=1 mediapipe/examples/desktop/hello_ovms:hello_ovms
+ENV LD_LIBRARY_PATH="/opt/intel/openvino/runtime/lib/intel64/:${LD_LIBRARY_PATH}"
+RUN bazel-bin/mediapipe/examples/desktop/hello_ovms/hello_ovms
