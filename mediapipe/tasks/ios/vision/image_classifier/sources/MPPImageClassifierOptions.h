@@ -33,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 NS_SWIFT_NAME(ImageClassifierLiveStreamDelegate)
 @protocol MPPImageClassifierLiveStreamDelegate <NSObject>
 
-@optional
+@required
 /**
  * This method notifies a delegate that the results of asynchronous classification of
  * an image submitted to the `MPPImageClassifier` is available.
