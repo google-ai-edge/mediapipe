@@ -51,39 +51,14 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
                                            runningMode:(MPPRunningMode)runningMode
                                        packetsCallback:(PacketsCallback)packetsCallback
                                                  error:(NSError **)error {
-  switch (runningMode) {
-    case MPPRunningModeImage:
-    case MPPRunningModeVideo: {
-      if (packetsCallback) {
-        [MPPCommonUtils createCustomError:error
-                                 withCode:MPPTasksErrorCodeInvalidArgumentError
-                              description:@"The vision task is in image or video mode. The "
-                                          @"delegate must not be set in the task's options."];
-        return nil;
-      }
-      break;
-    }
-    case MPPRunningModeLiveStream: {
-      if (!packetsCallback) {
-        [MPPCommonUtils
-            createCustomError:error
-                     withCode:MPPTasksErrorCodeInvalidArgumentError
-                  description:
-                      @"The vision task is in live stream mode. An object must be set as the "
-                      @"delegate of the task in its options to ensure asynchronous delivery of "
-                      @"results."];
-        return nil;
-      }
-      break;
-    }
-    default: {
+
+  if (_runningMode > MPPRunningModeLiveStream) {
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInvalidArgumentError
                             description:@"Unrecognized running mode"];
       return nil;
-    }
-  }
-
+    }                                     
+  
   _runningMode = runningMode;
   self = [super initWithCalculatorGraphConfig:graphConfig
                               packetsCallback:packetsCallback
