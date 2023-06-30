@@ -25,7 +25,6 @@ SHELL ["/bin/bash", "-xo", "pipefail", "-c"]
 #######
 # # to avoid question for continent
 ENV DEBIAN_FRONTEND=noninteractive
-RUN env | grep proxy
 RUN apt-get update
 RUN apt-get install --no-install-recommends -y \
     cmake \
@@ -141,4 +140,3 @@ RUN ./setup_opencv.sh
 
 RUN bazel build --jobs=${JOBS} --define MEDIAPIPE_DISABLE_GPU=1 --define MEDIAPIPE_DISABLE=1 --cxxopt=-DMEDIAPIPE_DISABLE=1 mediapipe/examples/desktop/hello_ovms:hello_ovms
 ENV LD_LIBRARY_PATH="/opt/intel/openvino/runtime/lib/intel64/:${LD_LIBRARY_PATH}"
-RUN bazel-bin/mediapipe/examples/desktop/hello_ovms/hello_ovms

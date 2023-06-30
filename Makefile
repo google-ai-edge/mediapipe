@@ -28,3 +28,7 @@ docker_build:
 	--build-arg JOBS=$(JOBS) . \
 	--build-arg OVMS_BRANCH=$(OVMS_BRANCH) \
 	-t $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG)
+
+tests:
+	docker exec $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel-bin/mediapipe/examples/desktop/hello_ovms/hello_ovms
+
