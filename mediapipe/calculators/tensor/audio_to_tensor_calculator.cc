@@ -282,18 +282,23 @@ absl::Status AudioToTensorCalculator::Open(CalculatorContext* cc) {
   if (options.has_volume_gain_db()) {
     gain_ = pow(10, options.volume_gain_db() / 20.0);
   }
-  RET_CHECK(kAudioSampleRateIn(cc).IsConnected() ^
-            !kAudioIn(cc).Header().IsEmpty())
-      << "Must either specify the time series header of the \"AUDIO\" stream "
-         "or have the \"SAMPLE_RATE\" stream connected.";
-  if (!kAudioIn(cc).Header().IsEmpty()) {
-    mediapipe::TimeSeriesHeader input_header;
-    MP_RETURN_IF_ERROR(mediapipe::time_series_util::FillTimeSeriesHeaderIfValid(
-        kAudioIn(cc).Header(), &input_header));
-    if (stream_mode_) {
-      MP_RETURN_IF_ERROR(SetupStreamingResampler(input_header.sample_rate()));
-    } else {
-      source_sample_rate_ = input_header.sample_rate();
+  if (options.has_source_sample_rate()) {
+    source_sample_rate_ = options.source_sample_rate();
+  } else {
+    RET_CHECK(kAudioSampleRateIn(cc).IsConnected() ^
+              !kAudioIn(cc).Header().IsEmpty())
+        << "Must either specify the time series header of the \"AUDIO\" stream "
+           "or have the \"SAMPLE_RATE\" stream connected.";
+    if (!kAudioIn(cc).Header().IsEmpty()) {
+      mediapipe::TimeSeriesHeader input_header;
+      MP_RETURN_IF_ERROR(
+          mediapipe::time_series_util::FillTimeSeriesHeaderIfValid(
+              kAudioIn(cc).Header(), &input_header));
+      if (stream_mode_) {
+        MP_RETURN_IF_ERROR(SetupStreamingResampler(input_header.sample_rate()));
+      } else {
+        source_sample_rate_ = input_header.sample_rate();
+      }
     }
   }
   AppendZerosToSampleBuffer(padding_samples_before_);
