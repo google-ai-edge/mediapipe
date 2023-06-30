@@ -25,6 +25,7 @@ SHELL ["/bin/bash", "-xo", "pipefail", "-c"]
 #######
 # # to avoid question for continent
 ENV DEBIAN_FRONTEND=noninteractive
+RUN env | grep proxy
 RUN apt-get update
 RUN apt-get install --no-install-recommends -y \
     cmake \
