@@ -466,8 +466,7 @@ struct MessageRegistrationImpl {
 template <typename T>
 NoDestructor<mediapipe::RegistrationToken>
     MessageRegistrationImpl<T>::registration(MessageHolderRegistry::Register(
-        T{}.GetTypeName(), MessageRegistrationImpl<T>::CreateMessageHolder,
-        __FILE__, __LINE__));
+        T{}.GetTypeName(), MessageRegistrationImpl<T>::CreateMessageHolder));
 
 // For non-Message payloads, this does nothing.
 template <typename T, typename Enable = void>
