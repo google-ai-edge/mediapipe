@@ -38,7 +38,7 @@ std::string FourCCToString(libyuv::FourCC fourcc) {
   buf[0] = (fourcc >> 24) & 0xff;
   buf[1] = (fourcc >> 16) & 0xff;
   buf[2] = (fourcc >> 8) & 0xff;
-  buf[3] = (fourcc)&0xff;
+  buf[3] = (fourcc) & 0xff;
   buf[4] = 0;
   return std::string(buf);
 }
