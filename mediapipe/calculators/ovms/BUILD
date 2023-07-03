@@ -24,14 +24,14 @@ cc_library(
             "modelapiovmsinferencecalculator.cc",
             "modelapiovmssessioncalculator.cc"],
     deps = [
-        "@intel_ovms//src:ovms_lib",
+        "@ovms//src:ovms_lib",
         "//mediapipe/calculators/ovms:modelapiovmsinferencecalculator_cc_proto",
         "//mediapipe/calculators/ovms:modelapiovmssessioncalculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:status",
         "@model_api//:adapter_api",
     ],
-    copts = ["-Iexternal/intel_ovms/src"],
+    copts = ["-Iexternal/intel_ovms/src","-Isrc"],
     linkopts = ["-Lmediapipe/"],
     alwayslink = 1,
 )

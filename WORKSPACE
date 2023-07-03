@@ -555,6 +555,7 @@ git_repository(
     name = "intel_ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
     branch = "main",
+    repo_mapping = {"@ovms" : "@intel_ovms"}
 )
 
 # DEV ovms - adjust local repository path for build
