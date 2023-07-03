@@ -30,3 +30,13 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPImageSegmenterResultHelpers",
+    srcs = ["sources/MPPImageSegmenterResult+Helpers.mm"],
+    hdrs = ["sources/MPPImageSegmenterResult+Helpers.h"],
+    deps = [
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenterResult",
+    ],
+)
