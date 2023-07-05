@@ -124,7 +124,7 @@ absl::StatusOr<mediapipe::NormalizedLandmarkList> RefineLandmarksFromHeatMap(
     int center_row = out_lms.landmark(lm_index).y() * hm_height;
     // Point is outside of the image let's keep it intact.
     if (center_col < 0 || center_col >= hm_width || center_row < 0 ||
-        center_col >= hm_height) {
+        center_row >= hm_height) {
       continue;
     }
 
