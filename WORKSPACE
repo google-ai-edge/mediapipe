@@ -708,11 +708,11 @@ http_archive(
 load("@com_github_jupp0r_prometheus_cpp//bazel:repositories.bzl", "prometheus_cpp_repositories")
 prometheus_cpp_repositories()
 
-#new_local_repository(
-#    name = "mediapipe_calculators",
-#    build_file = "@intel_ovms//third_party/mediapipe_calculators:BUILD",
-#    path = "/opt/ovms/",
-#)
+new_local_repository(
+    name = "mediapipe_calculators",
+    build_file = "@intel_ovms//third_party/mediapipe_calculators:BUILD",
+    path = "/opt/ovms/",
+)
 
 new_local_repository(
     name = "linux_openvino",

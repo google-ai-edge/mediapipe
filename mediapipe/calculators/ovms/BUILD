@@ -24,7 +24,7 @@ cc_library(
             "modelapiovmsinferencecalculator.cc",
             "modelapiovmssessioncalculator.cc"],
     deps = [
-        "@ovms//src:ovms_lib",
+        "@intel_ovms//src:ovms_lib",
         "//mediapipe/calculators/ovms:modelapiovmsinferencecalculator_cc_proto",
         "//mediapipe/calculators/ovms:modelapiovmssessioncalculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
