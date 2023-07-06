@@ -30,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * @param confidenceMasksPacket A MediaPipe packet wrapping a `std::vector<mediapipe::Image>`.
  * @param categoryMaskPacket A MediaPipe packet wrapping a `<mediapipe::Image>`.
- * @param qualityScoresPacket a MediaPipe packet wrapping a `std::vector<float>`.
+ * @param qualityScoresPacket A MediaPipe packet wrapping a `std::vector<float>`.
  * @param shouldCopyMaskPacketData A `BOOL` which indicates if the pixel data of the output masks
  * must be deep copied to the newly created `MPPImageSegmenterResult`.
  *
