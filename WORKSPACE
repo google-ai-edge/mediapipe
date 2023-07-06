@@ -552,15 +552,14 @@ wasm_files()
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-    name = "intel_ovms",
+    name = "ovms",
     remote = "https://github.com/openvinotoolkit/model_server",
     branch = "main",
-    repo_mapping = {"@ovms" : "@intel_ovms"}
 )
 
 # DEV ovms - adjust local repository path for build
 #new_local_repository(
-#    name = "intel_ovms",
+#    name = "ovms",
 #    path = "/ovms/",
 #    build_file = "/ovms/src/BUILD",
 #)
@@ -590,7 +589,7 @@ git_repository(
     remote = "https://github.com/tensorflow/serving.git",
     tag = "2.6.5",
     patch_args = ["-p1"],
-    patches = ["@intel_ovms//external:net_http.patch", "@intel_ovms//external:listen.patch"]
+    patches = ["@ovms//external:net_http.patch", "@ovms//external:listen.patch"]
     #                             ^^^^^^^^^^^^
     #                       make bind address configurable
     #          ^^^^^^^^^^^^
@@ -600,21 +599,21 @@ git_repository(
 # AWS S3 SDK
 new_local_repository(
     name = "awssdk",
-    build_file = "@intel_ovms//third_party/aws:BUILD",
+    build_file = "@ovms//third_party/aws:BUILD",
     path = "/awssdk",
 )
 
 # Azure Storage SDK
 new_local_repository(
     name = "azure",
-    build_file = "@intel_ovms//third_party/azure:BUILD",
+    build_file = "@ovms//third_party/azure:BUILD",
     path = "/azure/azure-storage-cpp",
 )
 
 # Azure Storage SDK dependency - cpprest
 new_local_repository(
     name = "cpprest",
-    build_file = "@intel_ovms//third_party/cpprest:BUILD",
+    build_file = "@ovms//third_party/cpprest:BUILD",
     path = "/azure/cpprestsdk",
 )
 
@@ -623,7 +622,7 @@ new_local_repository(
 new_local_repository(
     name = "boost",
     path = "/usr/local/lib/",
-    build_file = "@intel_ovms//third_party/boost:BUILD"
+    build_file = "@ovms//third_party/boost:BUILD"
 )
 
 # Google Cloud SDK
@@ -660,7 +659,7 @@ http_archive(
     url = "https://github.com/jarro2783/cxxopts/archive/v2.2.0.zip",
     sha256 = "f9640c00d9938bedb291a21f9287902a3a8cee38db6910b905f8eba4a6416204",
     strip_prefix = "cxxopts-2.2.0",
-    build_file = "@intel_ovms//third_party/cxxopts:BUILD",
+    build_file = "@ovms//third_party/cxxopts:BUILD",
 )
 
 # RapidJSON
@@ -669,7 +668,7 @@ http_archive(
     url = "https://github.com/Tencent/rapidjson/archive/v1.1.0.zip",
     sha256 = "8e00c38829d6785a2dfb951bb87c6974fa07dfe488aa5b25deec4b8bc0f6a3ab",
     strip_prefix = "rapidjson-1.1.0",
-    build_file = "@intel_ovms//third_party/rapidjson:BUILD"
+    build_file = "@ovms//third_party/rapidjson:BUILD"
 )
 
 # spdlog
@@ -678,7 +677,7 @@ http_archive(
     url = "https://github.com/gabime/spdlog/archive/v1.4.0.tar.gz",
     sha256 = "afd18f62d1bc466c60bef088e6b637b0284be88c515cedc59ad4554150af6043",
     strip_prefix = "spdlog-1.4.0",
-    build_file = "@intel_ovms//third_party/spdlog:BUILD"
+    build_file = "@ovms//third_party/spdlog:BUILD"
 )
 
 # fmtlib
@@ -687,7 +686,7 @@ http_archive(
     url = "https://github.com/fmtlib/fmt/archive/6.0.0.tar.gz",
     sha256 = "f1907a58d5e86e6c382e51441d92ad9e23aea63827ba47fd647eacc0d3a16c78",
     strip_prefix = "fmt-6.0.0",
-    build_file = "@intel_ovms//third_party/fmtlib:BUILD"
+    build_file = "@ovms//third_party/fmtlib:BUILD"
 )
 
 # libevent
@@ -696,7 +695,7 @@ http_archive(
     url = "https://github.com/libevent/libevent/archive/release-2.1.8-stable.zip",
     sha256 = "70158101eab7ed44fd9cc34e7f247b3cae91a8e4490745d9d6eb7edc184e4d96",
     strip_prefix = "libevent-release-2.1.8-stable",
-    build_file = "@intel_ovms//third_party/libevent:BUILD",
+    build_file = "@ovms//third_party/libevent:BUILD",
 )
 
 # prometheus-cpp
@@ -710,13 +709,13 @@ prometheus_cpp_repositories()
 
 new_local_repository(
     name = "mediapipe_calculators",
-    build_file = "@intel_ovms//third_party/mediapipe_calculators:BUILD",
+    build_file = "@ovms//third_party/mediapipe_calculators:BUILD",
     path = "/opt/ovms/",
 )
 
 new_local_repository(
     name = "linux_openvino",
-    build_file = "@intel_ovms//third_party/openvino:BUILD",
+    build_file = "@ovms//third_party/openvino:BUILD",
     path = "/opt/intel/openvino/runtime",
 )
 
@@ -725,7 +724,7 @@ git_repository(
     branch = "v2021.8.0",
     remote = "https://github.com/oneapi-src/oneTBB/",
     patch_args = ["-p1"],
-    patches = ["@intel_ovms//external:mwaitpkg.patch",]
+    patches = ["@ovms//external:mwaitpkg.patch",]
 )
 
 new_git_repository(

@@ -37,8 +37,8 @@ cc_binary(
         "-lcrypto",
     ],
     copts = [
-        "-Iexternal/intel_ovms/src",
-        "-Iexternal/intel_ovms/src/test"
+        "-Iexternal/ovms/src",
+        "-Iexternal/ovms/src/test"
     ]
 )
 
