@@ -343,7 +343,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPGestureRecognizer *gestureRecognizer =
       [self createGestureRecognizerWithOptionsSucceeds:gestureRecognizerOptions];
   MPPImage *mppImage = [self imageWithFileInfo:kPointingUpRotatedImage
-                                   orientation:UIImageOrientationRight];
+                                   orientation:UIImageOrientationLeft];
 
   MPPGestureRecognizerResult *gestureRecognizerResult = [gestureRecognizer recognizeImage:mppImage
                                                                                     error:nil];

@@ -438,7 +438,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
       [[MPPObjectDetectorResult alloc] initWithDetections:detections timestampInMilliseconds:0];
 
   MPPImage *image = [self imageWithFileInfo:kCatsAndDogsRotatedImage
-                                orientation:UIImageOrientationRight];
+                                orientation:UIImageOrientationLeft];
 
   [self assertResultsOfDetectInImage:image
                  usingObjectDetector:objectDetector
