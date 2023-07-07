@@ -30,13 +30,13 @@ using ::mediapipe::tasks::core::PacketsCallback;
 }  // namespace
 
 /** Rotation degrees for a 90 degree rotation to the right. */
-static const NSInteger kMPPOrientationDegreesRight = -90;
+static const NSInteger kMPPOrientationDegreesRight = -270;
 
 /** Rotation degrees for a 180 degree rotation. */
 static const NSInteger kMPPOrientationDegreesDown = -180;
 
 /** Rotation degrees for a 90 degree rotation to the left. */
-static const NSInteger kMPPOrientationDegreesLeft = -270;
+static const NSInteger kMPPOrientationDegreesLeft = -90;
 
 static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
 

@@ -402,7 +402,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   ];
 
   MPPImage *image = [self imageWithFileInfo:kBurgerRotatedImage
-                                orientation:UIImageOrientationRight];
+                                orientation:UIImageOrientationLeft];
 
   [self assertResultsOfClassifyImage:image
                 usingImageClassifier:imageClassifier
@@ -425,7 +425,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                                 displayName:nil] ];
 
   MPPImage *image = [self imageWithFileInfo:kMultiObjectsRotatedImage
-                                orientation:UIImageOrientationRight];
+                                orientation:UIImageOrientationLeft];
 
   // roi around folding chair
   MPPImageClassifierResult *imageClassifierResult =
