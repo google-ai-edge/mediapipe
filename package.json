@@ -16,7 +16,7 @@
     "google-protobuf": "^3.21.2",
     "jasmine": "^4.5.0",
     "jasmine-core": "^4.5.0",
-    "protobufjs": "^7.1.2",
+    "protobufjs": "^7.2.4",
     "protobufjs-cli": "^1.0.2",
     "rollup": "^2.3.0",
     "ts-protoc-gen": "^0.15.0",
