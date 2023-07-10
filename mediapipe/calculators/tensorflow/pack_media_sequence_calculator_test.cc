@@ -23,7 +23,6 @@
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/location_opencv.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -96,7 +95,8 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoImages) {
   mpms::SetClipMediaId(test_video_id, input_sequence.get());
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   OpenCvImageEncoderCalculatorResults encoded_image;
   encoded_image.set_encoded_image(bytes.data(), bytes.size());
   encoded_image.set_width(2);
@@ -139,7 +139,8 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoPrefixedImages) {
   mpms::SetClipMediaId(test_video_id, input_sequence.get());
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   OpenCvImageEncoderCalculatorResults encoded_image;
   encoded_image.set_encoded_image(bytes.data(), bytes.size());
   encoded_image.set_width(2);
@@ -378,7 +379,8 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksAdditionalContext) {
       Adopt(input_sequence.release());
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   OpenCvImageEncoderCalculatorResults encoded_image;
   encoded_image.set_encoded_image(bytes.data(), bytes.size());
   auto image_ptr =
@@ -410,7 +412,8 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoForwardFlowEncodeds) {
 
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   std::string test_flow_string(bytes.begin(), bytes.end());
   OpenCvImageEncoderCalculatorResults encoded_flow;
   encoded_flow.set_encoded_image(test_flow_string);
@@ -618,7 +621,8 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksBBoxWithImages) {
   }
   cv::Mat image(height, width, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   OpenCvImageEncoderCalculatorResults encoded_image;
   encoded_image.set_encoded_image(bytes.data(), bytes.size());
   encoded_image.set_width(width);
@@ -767,7 +771,8 @@ TEST_F(PackMediaSequenceCalculatorTest, MissingStreamOK) {
 
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   std::string test_flow_string(bytes.begin(), bytes.end());
   OpenCvImageEncoderCalculatorResults encoded_flow;
   encoded_flow.set_encoded_image(test_flow_string);
@@ -813,7 +818,8 @@ TEST_F(PackMediaSequenceCalculatorTest, MissingStreamNotOK) {
   mpms::SetClipMediaId(test_video_id, input_sequence.get());
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   std::string test_flow_string(bytes.begin(), bytes.end());
   OpenCvImageEncoderCalculatorResults encoded_flow;
   encoded_flow.set_encoded_image(test_flow_string);
@@ -970,7 +976,8 @@ TEST_F(PackMediaSequenceCalculatorTest, TestReconcilingAnnotations) {
   auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   OpenCvImageEncoderCalculatorResults encoded_image;
   encoded_image.set_encoded_image(bytes.data(), bytes.size());
   encoded_image.set_width(2);
@@ -1021,7 +1028,8 @@ TEST_F(PackMediaSequenceCalculatorTest, TestOverwritingAndReconciling) {
   auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   OpenCvImageEncoderCalculatorResults encoded_image;
   encoded_image.set_encoded_image(bytes.data(), bytes.size());
   int height = 2;
