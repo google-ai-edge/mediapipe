@@ -19,10 +19,12 @@
 #include <unordered_map>
 
 #include <adapters/inference_adapter.h>  // TODO fix path  model_api/model_api/cpp/adapters/include/adapters/inference_adapter.h
+#include <openvino/core/shape.hpp>
 #include <openvino/openvino.hpp>
 
-#include "ovms.h"           // NOLINT
-#include "stringutils.hpp"  // TODO dispose
+#include "ovms.h"  // NOLINT
+#include "stringutils.hpp"
+#include "tfs_frontend/tfs_utils.hpp"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/calculators/ovms/modelapiovmsinferencecalculator.pb.h"
@@ -51,10 +53,41 @@ namespace {
 }  // namespace
 
 const std::string SESSION_TAG{"SESSION"};
+const std::string OVTENSOR_TAG{"OVTENSOR"};
+const std::string TFTENSOR_TAG{"TENSOR"};
+
+static tensorflow::Tensor convertOVTensor2TFTensor(const ov::Tensor& t) {
+    using tensorflow::Tensor;
+    using tensorflow::TensorShape;
+    auto datatype = ovms::getPrecisionAsDataType(ovms::ovElementTypeToOvmsPrecision(t.get_element_type()));
+    TensorShape tensorShape;
+    std::vector<int64_t> rawShape;
+    for (size_t i = 0; i < t.get_shape().size(); i++) {
+        rawShape.emplace_back(t.get_shape()[i]);
+    }
+    int64_t dimsCount = rawShape.size();
+    tensorflow::TensorShapeUtils::MakeShape(rawShape.data(), dimsCount, &tensorShape);
+    TensorShape::BuildTensorShapeBase(rawShape, static_cast<tensorflow::TensorShapeBase<TensorShape>*>(&tensorShape));
+    // here we allocate default TF CPU allocator
+    tensorflow::Tensor result(datatype, tensorShape);
+    void* tftensordata = result.data();
+    std::memcpy(tftensordata, t.data(), t.get_byte_size());
+    return result;
+}
+static ov::Tensor convertTFTensor2OVTensor(const tensorflow::Tensor& t) {
+    void* data = t.data();
+    auto datatype = ovms::ovmsPrecisionToIE2Precision(ovms::TFSPrecisionToOvmsPrecision(t.dtype()));
+    ov::Shape shape;
+    for (const auto& dim : t.shape()) {
+        shape.emplace_back(dim.size);
+    }
+    ov::Tensor result(datatype, shape, data);
+    return result;
+}
 
 class ModelAPISideFeedCalculator : public CalculatorBase {
     std::shared_ptr<::InferenceAdapter> session{nullptr};
-    std::unordered_map<std::string, std::string> outputNameToTag;  // TODO move to Open();
+    std::unordered_map<std::string, std::string> outputNameToTag;
 
 public:
     static absl::Status GetContract(CalculatorContract* cc) {
@@ -62,10 +95,41 @@ public:
         RET_CHECK(!cc->Inputs().GetTags().empty());
         RET_CHECK(!cc->Outputs().GetTags().empty());
         for (const std::string& tag : cc->Inputs().GetTags()) {
-            cc->Inputs().Tag(tag).Set<ov::Tensor>();
+            // could be replaced with absl::StartsWith when migrated to MP
+            if (ovms::startsWith(tag, OVTENSOR_TAG)) {
+                LOG(INFO) << "setting input tag:" << tag << " to OVTensor";
+                cc->Inputs().Tag(tag).Set<ov::Tensor>();
+            } else if (ovms::startsWith(tag, TFTENSOR_TAG)) {
+                LOG(INFO) << "setting input tag:" << tag << " to TFTensor";
+                cc->Inputs().Tag(tag).Set<tensorflow::Tensor>();
+            } else {
+                // TODO decide which will be easier to migrating later
+                // using OV tensor by default will be more performant
+                // but harder to migrate
+                /*
+                cc->Inputs().Tag(tag).Set<tensorflow::Tensor>();
+                */
+                LOG(INFO) << "setting input tag:" << tag << " to OVTensor";
+                cc->Inputs().Tag(tag).Set<ov::Tensor>();
+            }
         }
         for (const std::string& tag : cc->Outputs().GetTags()) {
-            cc->Outputs().Tag(tag).Set<ov::Tensor>();
+            if (ovms::startsWith(tag, OVTENSOR_TAG)) {
+                cc->Outputs().Tag(tag).Set<ov::Tensor>();
+                LOG(INFO) << "setting output tag:" << tag << " to OVTensor";
+            } else if (ovms::startsWith(tag, TFTENSOR_TAG)) {
+                cc->Outputs().Tag(tag).Set<tensorflow::Tensor>();
+                LOG(INFO) << "setting output tag:" << tag << " to TFTensor";
+            } else {
+                // TODO decide which will be easier to migrating later
+                // using OV tensor by default will be more performant
+                // but harder to migrate
+                /*    
+                cc->Outputs().Tag(tag).Set<tensorflow::Tensor>();
+                */
+                LOG(INFO) << "setting output tag:" << tag << " to OVTensor";
+                cc->Outputs().Tag(tag).Set<ov::Tensor>();
+            }
         }
         cc->InputSidePackets().Tag(SESSION_TAG.c_str()).Set<std::shared_ptr<::InferenceAdapter>>();
         LOG(INFO) << "Main GetContract end";
@@ -123,19 +187,31 @@ public:
             } else {
                 realInputName = it->second.c_str();
             }
-            auto& packet = cc->Inputs().Tag(tag).Get<ov::Tensor>();
-            input[realInputName] = packet;
+            if (ovms::startsWith(tag, OVTENSOR_TAG)) {
+                auto& packet = cc->Inputs().Tag(tag).Get<ov::Tensor>();
+                input[realInputName] = packet;
 #if 0
-            ov::Tensor input_tensor(packet);
-            const float* input_tensor_access = reinterpret_cast<float*>(input_tensor.data());
-            std::stringstream ss;
-            ss << "ModelAPICalculator received tensor: [ ";
-            for (int x = 0; x < 10; ++x) {
-                ss << input_tensor_access[x] << " ";
-            }
-            ss << " ] timestamp: " << cc->InputTimestamp().DebugString() << endl;
-            LOG(INFO) << ss.str();
+                ov::Tensor input_tensor(packet);
+                const float* input_tensor_access = reinterpret_cast<float*>(input_tensor.data());
+                std::stringstream ss;
+                ss << "ModelAPICalculator received tensor: [ ";
+                for (int x = 0; x < 10; ++x) {
+                    ss << input_tensor_access[x] << " ";
+                }
+                ss << " ] timestamp: " << cc->InputTimestamp().DebugString() << endl;
+                LOG(INFO) << ss.str();
 #endif
+            } else if (ovms::startsWith(tag, TFTENSOR_TAG)) {
+                auto& packet = cc->Inputs().Tag(tag).Get<tensorflow::Tensor>();
+                input[realInputName] = convertTFTensor2OVTensor(packet);
+            } else {
+                /*
+                auto& packet = cc->Inputs().Tag(tag).Get<tensorflow::Tensor>();
+                input[realInputName] = convertTFTensor2OVTensor(packet);
+                */
+                auto& packet = cc->Inputs().Tag(tag).Get<ov::Tensor>();
+                input[realInputName] = packet;
+            }
         }
         //////////////////
         //  INFERENCE
@@ -164,9 +240,24 @@ public:
                 LOG(INFO) << "Could not find: " << tensorName << " in inference output";
                 RET_CHECK(false);
             }
-            cc->Outputs().Tag(tag).Add(
-                new ov::Tensor(tensorIt->second),
-                cc->InputTimestamp());
+            if (ovms::startsWith(tag, OVTENSOR_TAG)) {
+                cc->Outputs().Tag(tag).Add(
+                    new ov::Tensor(tensorIt->second),
+                    cc->InputTimestamp());
+            } else if (ovms::startsWith(tag, TFTENSOR_TAG)) {
+                cc->Outputs().Tag(tag).Add(
+                    new tensorflow::Tensor(convertOVTensor2TFTensor(tensorIt->second)),
+                    cc->InputTimestamp());
+            } else {
+                /*
+                cc->Outputs().Tag(tag).Add(
+                    new tensorflow::Tensor(convertOVTensor2TFTensor(tensorIt->second)),
+                    cc->InputTimestamp());
+                    */
+                cc->Outputs().Tag(tag).Add(
+                    new ov::Tensor(tensorIt->second),
+                    cc->InputTimestamp());
+            }
         }
         LOG(INFO) << "Main process end";
         return absl::OkStatus();
