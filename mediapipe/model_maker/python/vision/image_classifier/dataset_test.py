@@ -41,7 +41,7 @@ class DatasetTest(tf.test.TestCase):
 
   def test_split(self):
     ds = tf.data.Dataset.from_tensor_slices([[0, 1], [1, 1], [0, 0], [1, 0]])
-    data = dataset.Dataset(dataset=ds, size=4, label_names=['pos', 'neg'])
+    data = dataset.Dataset(dataset=ds, label_names=['pos', 'neg'], size=4)
     train_data, test_data = data.split(fraction=0.5)
 
     self.assertLen(train_data, 2)

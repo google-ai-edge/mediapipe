@@ -115,5 +115,7 @@ class Dataset(classification_dataset.ClassificationDataset):
         ', '.join(label_names),
     )
     return Dataset(
-        dataset=image_label_ds, size=all_image_size, label_names=label_names
+        dataset=image_label_ds,
+        label_names=label_names,
+        size=all_image_size,
     )

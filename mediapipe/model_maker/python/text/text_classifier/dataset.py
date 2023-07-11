@@ -85,4 +85,5 @@ class Dataset(classification_dataset.ClassificationDataset):
     text_label_ds = tf.data.Dataset.zip((text_ds, label_index_ds))
 
     return Dataset(
-        dataset=text_label_ds, size=len(texts), label_names=label_names)
+        dataset=text_label_ds, label_names=label_names, size=len(texts)
+    )

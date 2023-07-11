@@ -176,5 +176,5 @@ class Dataset(classification_dataset.ClassificationDataset):
     label_names = [label_map[k] for k in sorted(label_map.keys())]
 
     return Dataset(
-        dataset=dataset, size=meta_data['size'], label_names=label_names
+        dataset=dataset, label_names=label_names, size=meta_data['size']
     )
