@@ -24,4 +24,10 @@ export declare interface BoundingBox {
   width: number;
   /** The height of the bounding box, in pixels. */
   height: number;
+  /**
+   * Angle of rotation of the original non-rotated box around the top left
+   * corner of the original non-rotated box, in clockwise degrees from the
+   * horizontal.
+   */
+  angle: number;
 }

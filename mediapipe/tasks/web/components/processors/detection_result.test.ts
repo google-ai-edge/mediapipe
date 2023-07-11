@@ -58,7 +58,7 @@ describe('convertFromDetectionProto()', () => {
         categoryName: 'foo',
         displayName: 'bar',
       }],
-      boundingBox: {originX: 1, originY: 2, width: 3, height: 4},
+      boundingBox: {originX: 1, originY: 2, width: 3, height: 4, angle: 0},
       keypoints: [{
         x: 5,
         y: 6,
@@ -85,7 +85,7 @@ describe('convertFromDetectionProto()', () => {
         categoryName: '',
         displayName: '',
       }],
-      boundingBox: {originX: 0, originY: 0, width: 0, height: 0},
+      boundingBox: {originX: 0, originY: 0, width: 0, height: 0, angle: 0},
       keypoints: []
     });
   });

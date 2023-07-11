@@ -191,7 +191,7 @@ describe('FaceDetector', () => {
         categoryName: '',
         displayName: '',
       }],
-      boundingBox: {originX: 0, originY: 0, width: 0, height: 0},
+      boundingBox: {originX: 0, originY: 0, width: 0, height: 0, angle: 0},
       keypoints: []
     });
   });
