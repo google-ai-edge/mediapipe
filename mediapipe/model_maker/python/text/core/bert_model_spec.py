@@ -46,13 +46,17 @@ class BertModelSpec:
   """
 
   downloaded_files: file_util.DownloadedFiles
-  hparams: hp.BaseHParams = hp.BaseHParams(
-      epochs=3,
-      batch_size=32,
-      learning_rate=3e-5,
-      distribution_strategy='mirrored')
-  model_options: bert_model_options.BertModelOptions = (
-      bert_model_options.BertModelOptions())
+  hparams: hp.BaseHParams = dataclasses.field(
+      default_factory=lambda: hp.BaseHParams(
+          epochs=3,
+          batch_size=32,
+          learning_rate=3e-5,
+          distribution_strategy='mirrored',
+      )
+  )
+  model_options: bert_model_options.BertModelOptions = dataclasses.field(
+      default_factory=bert_model_options.BertModelOptions
+  )
   do_lower_case: bool = True
   tflite_input_name: Dict[str, str] = dataclasses.field(
       default_factory=lambda: _DEFAULT_TFLITE_INPUT_NAME)
