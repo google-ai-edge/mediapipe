@@ -19,7 +19,6 @@ import shutil
 from unittest import mock as unittest_mock
 
 import tensorflow as tf
-import yaml
 
 from mediapipe.model_maker.python.vision.core import test_utils
 from mediapipe.model_maker.python.vision.object_detector import dataset_util
@@ -30,13 +29,10 @@ class DatasetUtilTest(tf.test.TestCase):
 
   def _assert_cache_files_equal(self, cf1, cf2):
     self.assertEqual(cf1.cache_prefix, cf2.cache_prefix)
-    self.assertCountEqual(cf1.tfrecord_files, cf2.tfrecord_files)
-    self.assertEqual(cf1.meta_data_file, cf2.meta_data_file)
+    self.assertEqual(cf1.num_shards, cf2.num_shards)
 
   def _assert_cache_files_not_equal(self, cf1, cf2):
     self.assertNotEqual(cf1.cache_prefix, cf2.cache_prefix)
-    self.assertNotEqual(cf1.tfrecord_files, cf2.tfrecord_files)
-    self.assertNotEqual(cf1.meta_data_file, cf2.meta_data_file)
 
   def _get_cache_files_and_assert_neq_fn(self, cache_files_fn):
     def get_cache_files_and_assert_neq(cf, data_dir, cache_dir):
@@ -57,7 +53,7 @@ class DatasetUtilTest(tf.test.TestCase):
     self.assertEqual(
         cache_files.tfrecord_files[0], '/tmp/train-00000-of-00001.tfrecord'
     )
-    self.assertEqual(cache_files.meta_data_file, '/tmp/train_meta_data.yaml')
+    self.assertEqual(cache_files.metadata_file, '/tmp/train_metadata.yaml')
 
   def test_matching_get_cache_files_coco(self):
     cache_dir = self.create_tempdir()
@@ -118,7 +114,7 @@ class DatasetUtilTest(tf.test.TestCase):
     self.assertEqual(
         cache_files.tfrecord_files[0], '/tmp/train-00000-of-00001.tfrecord'
     )
-    self.assertEqual(cache_files.meta_data_file, '/tmp/train_meta_data.yaml')
+    self.assertEqual(cache_files.metadata_file, '/tmp/train_metadata.yaml')
 
   def test_matching_get_cache_files_pascal_voc(self):
     cache_dir = self.create_tempdir()
@@ -173,13 +169,13 @@ class DatasetUtilTest(tf.test.TestCase):
     cache_files = dataset_util.get_cache_files_coco(
         tasks_test_utils.get_test_data_path('coco_data'), cache_dir=tempdir
     )
-    self.assertFalse(dataset_util.is_cached(cache_files))
+    self.assertFalse(cache_files.is_cached())
     with open(cache_files.tfrecord_files[0], 'w') as f:
       f.write('test')
-    self.assertFalse(dataset_util.is_cached(cache_files))
-    with open(cache_files.meta_data_file, 'w') as f:
+    self.assertFalse(cache_files.is_cached())
+    with open(cache_files.metadata_file, 'w') as f:
       f.write('test')
-    self.assertTrue(dataset_util.is_cached(cache_files))
+    self.assertTrue(cache_files.is_cached())
 
   def test_get_label_map_coco(self):
     coco_dir = tasks_test_utils.get_test_data_path('coco_data')
@@ -203,13 +199,11 @@ class DatasetUtilTest(tf.test.TestCase):
     self.assertTrue(os.path.isfile(cache_files.tfrecord_files[0]))
     self.assertGreater(os.path.getsize(cache_files.tfrecord_files[0]), 0)
 
-    # Checks the meta_data file
-    self.assertTrue(os.path.isfile(cache_files.meta_data_file))
-    self.assertGreater(os.path.getsize(cache_files.meta_data_file), 0)
-    with tf.io.gfile.GFile(cache_files.meta_data_file, 'r') as f:
-      meta_data_dict = yaml.load(f, Loader=yaml.FullLoader)
-      # Size is 3 because some examples are skipped for having poor bboxes
-      self.assertEqual(meta_data_dict['size'], expected_size)
+    # Checks the metadata file
+    self.assertTrue(os.path.isfile(cache_files.metadata_file))
+    self.assertGreater(os.path.getsize(cache_files.metadata_file), 0)
+    metadata_dict = cache_files.load_metadata()
+    self.assertEqual(metadata_dict['size'], expected_size)
 
   def test_coco_cache_files_writer(self):
     tempdir = self.create_tempdir()

@@ -15,23 +15,18 @@
 
 import abc
 import collections
-import dataclasses
 import hashlib
 import json
 import math
 import os
 import tempfile
-from typing import Any, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional
 import xml.etree.ElementTree as ET
 
 import tensorflow as tf
-import yaml
 
+from mediapipe.model_maker.python.core.data import cache_files
 from official.vision.data import tfrecord_lib
-
-
-# Suffix of the meta data file name.
-META_DATA_FILE_SUFFIX = '_meta_data.yaml'
 
 
 def _xml_get(node: ET.Element, name: str) -> ET.Element:
@@ -71,18 +66,9 @@ def _get_dir_basename(data_dir: str) -> str:
   return os.path.basename(os.path.abspath(data_dir))
 
 
-@dataclasses.dataclass(frozen=True)
-class CacheFiles:
-  """Cache files for object detection."""
-
-  cache_prefix: str
-  tfrecord_files: Sequence[str]
-  meta_data_file: str
-
-
 def _get_cache_files(
     cache_dir: Optional[str], cache_prefix_filename: str, num_shards: int = 10
-) -> CacheFiles:
+) -> cache_files.TFRecordCacheFiles:
   """Creates an object of CacheFiles class.
 
   Args:
@@ -96,28 +82,16 @@ def _get_cache_files(
     An object of CacheFiles class.
   """
   cache_dir = _get_cache_dir_or_create(cache_dir)
-  # The cache prefix including the cache directory and the cache prefix
-  # filename, e.g: '/tmp/cache/train'.
-  cache_prefix = os.path.join(cache_dir, cache_prefix_filename)
-  tf.compat.v1.logging.info(
-      'Cache will be stored in %s with prefix filename %s. Cache_prefix is %s'
-      % (cache_dir, cache_prefix_filename, cache_prefix)
-  )
-
-  # Cached files including the TFRecord files and the meta data file.
-  tfrecord_files = [
-      cache_prefix + '-%05d-of-%05d.tfrecord' % (i, num_shards)
-      for i in range(num_shards)
-  ]
-  meta_data_file = cache_prefix + META_DATA_FILE_SUFFIX
-  return CacheFiles(
-      cache_prefix=cache_prefix,
-      tfrecord_files=tuple(tfrecord_files),
-      meta_data_file=meta_data_file,
+  return cache_files.TFRecordCacheFiles(
+      cache_prefix_filename=cache_prefix_filename,
+      cache_dir=cache_dir,
+      num_shards=num_shards,
   )
 
 
-def get_cache_files_coco(data_dir: str, cache_dir: str) -> CacheFiles:
+def get_cache_files_coco(
+    data_dir: str, cache_dir: str
+) -> cache_files.TFRecordCacheFiles:
   """Creates an object of CacheFiles class using a COCO formatted dataset.
 
   Args:
@@ -152,7 +126,9 @@ def get_cache_files_coco(data_dir: str, cache_dir: str) -> CacheFiles:
   return _get_cache_files(cache_dir, cache_prefix_filename, num_shards)
 
 
-def get_cache_files_pascal_voc(data_dir: str, cache_dir: str) -> CacheFiles:
+def get_cache_files_pascal_voc(
+    data_dir: str, cache_dir: str
+) -> cache_files.TFRecordCacheFiles:
   """Gets an object of CacheFiles using a PASCAL VOC formatted dataset.
 
   Args:
@@ -181,14 +157,6 @@ def get_cache_files_pascal_voc(data_dir: str, cache_dir: str) -> CacheFiles:
   return _get_cache_files(cache_dir, cache_prefix_filename, num_shards)
 
 
-def is_cached(cache_files: CacheFiles) -> bool:
-  """Checks whether cache files are already cached."""
-  all_cached_files = list(cache_files.tfrecord_files) + [
-      cache_files.meta_data_file
-  ]
-  return all(tf.io.gfile.exists(path) for path in all_cached_files)
-
-
 class CacheFilesWriter(abc.ABC):
   """CacheFilesWriter class to write the cached files."""
 
@@ -208,19 +176,22 @@ class CacheFilesWriter(abc.ABC):
     self.label_map = label_map
     self.max_num_images = max_num_images
 
-  def write_files(self, cache_files: CacheFiles, *args, **kwargs) -> None:
-    """Writes TFRecord and meta_data files.
+  def write_files(
+      self,
+      tfrecord_cache_files: cache_files.TFRecordCacheFiles,
+      *args,
+      **kwargs,
+  ) -> None:
+    """Writes TFRecord and metadata files.
 
     Args:
-      cache_files: CacheFiles object including a list of TFRecord files and the
-        meta data yaml file to save the meta_data including data size and
-        label_map.
+      tfrecord_cache_files: TFRecordCacheFiles object including a list of
+        TFRecord files and the meta data yaml file to save the metadata
+        including data size and label_map.
       *args: Non-keyword of parameters used in the `_get_example` method.
       **kwargs: Keyword parameters used in the `_get_example` method.
     """
-    writers = [
-        tf.io.TFRecordWriter(path) for path in cache_files.tfrecord_files
-    ]
+    writers = tfrecord_cache_files.get_writers()
 
     # Writes tf.Example into TFRecord files.
     size = 0
@@ -235,10 +206,9 @@ class CacheFilesWriter(abc.ABC):
     for writer in writers:
       writer.close()
 
-    # Writes meta_data into meta_data_file.
-    meta_data = {'size': size, 'label_map': self.label_map}
-    with tf.io.gfile.GFile(cache_files.meta_data_file, 'w') as f:
-      yaml.dump(meta_data, f)
+    # Writes metadata into metadata_file.
+    metadata = {'size': size, 'label_map': self.label_map}
+    tfrecord_cache_files.save_metadata(metadata)
 
   @abc.abstractmethod
   def _get_example(self, *args, **kwargs):

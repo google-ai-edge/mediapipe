@@ -57,3 +57,14 @@ py_test(
     srcs = ["classification_dataset_test.py"],
     deps = [":classification_dataset"],
 )
+
+py_library(
+    name = "cache_files",
+    srcs = ["cache_files.py"],
+)
+
+py_test(
+    name = "cache_files_test",
+    srcs = ["cache_files_test.py"],
+    deps = [":cache_files"],
+)

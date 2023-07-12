@@ -54,6 +54,7 @@ py_library(
     srcs = ["dataset.py"],
     deps = [
         ":dataset_util",
+        "//mediapipe/model_maker/python/core/data:cache_files",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
     ],
 )
@@ -73,6 +74,7 @@ py_test(
 py_library(
     name = "dataset_util",
     srcs = ["dataset_util.py"],
+    deps = ["//mediapipe/model_maker/python/core/data:cache_files"],
 )
 
 py_test(
