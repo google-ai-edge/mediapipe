@@ -100,6 +100,10 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
                {GL_R8, GL_RED, GL_UNSIGNED_BYTE, 1},
 #endif  // TARGET_OS_OSX
            }},
+          {GpuBufferFormat::kOneComponent8Alpha,
+           {
+               {GL_ALPHA, GL_ALPHA, GL_UNSIGNED_BYTE, 1},
+           }},
           {GpuBufferFormat::kOneComponent8Red,
            {
                {GL_R8, GL_RED, GL_UNSIGNED_BYTE, 1},
@@ -221,6 +225,7 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
     case GpuBufferFormat::kRGBA32:
       // TODO: this likely maps to ImageFormat::SRGBA
     case GpuBufferFormat::kGrayHalf16:
+    case GpuBufferFormat::kOneComponent8Alpha:
     case GpuBufferFormat::kOneComponent8Red:
     case GpuBufferFormat::kTwoComponent8:
     case GpuBufferFormat::kTwoComponentHalf16:

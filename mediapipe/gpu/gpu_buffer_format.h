@@ -43,6 +43,7 @@ enum class GpuBufferFormat : uint32_t {
   kGrayFloat32 = MEDIAPIPE_FOURCC('L', '0', '0', 'f'),
   kGrayHalf16 = MEDIAPIPE_FOURCC('L', '0', '0', 'h'),
   kOneComponent8 = MEDIAPIPE_FOURCC('L', '0', '0', '8'),
+  kOneComponent8Alpha = MEDIAPIPE_FOURCC('A', '0', '0', '8'),
   kOneComponent8Red = MEDIAPIPE_FOURCC('R', '0', '0', '8'),
   kTwoComponent8 = MEDIAPIPE_FOURCC('2', 'C', '0', '8'),
   kTwoComponentHalf16 = MEDIAPIPE_FOURCC('2', 'C', '0', 'h'),
@@ -101,6 +102,7 @@ inline OSType CVPixelFormatForGpuBufferFormat(GpuBufferFormat format) {
       return kCVPixelFormatType_OneComponent32Float;
     case GpuBufferFormat::kOneComponent8:
       return kCVPixelFormatType_OneComponent8;
+    case GpuBufferFormat::kOneComponent8Alpha:
     case GpuBufferFormat::kOneComponent8Red:
       return -1;
     case GpuBufferFormat::kTwoComponent8:
