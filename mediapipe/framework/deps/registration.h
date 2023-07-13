@@ -144,6 +144,23 @@ template <typename T>
 struct WrapStatusOr<absl::StatusOr<T>> {
   using type = absl::StatusOr<T>;
 };
+
+// Defining a member of this type causes P to be ODR-used, which forces its
+// instantiation if it's a static member of a template.
+// Previously we depended on the pointer's value to determine whether the size
+// of a character array is 0 or 1, forcing it to be instantiated so the
+// compiler can determine the object's layout. But using it as a template
+// argument is more compact.
+template <auto* P>
+struct ForceStaticInstantiation {
+#ifdef _MSC_VER
+  // Just having it as the template argument does not count as a use for
+  // MSVC.
+  static constexpr bool Use() { return P != nullptr; }
+  char force_static[Use()];
+#endif  // _MSC_VER
+};
+
 }  // namespace registration_internal
 
 class NamespaceAllowlist {
@@ -407,6 +424,64 @@ class GlobalFactoryRegistry {
   static auto* REGISTRY_STATIC_VAR(var_name, __LINE__) =                       \
       new mediapipe::RegistrationToken(                                        \
           RegistryType::Register(#name, __VA_ARGS__))
+
+// Defines a utility registrator class which can be used to automatically
+// register factory functions.
+//
+// Example:
+// === Defining a registry ================================================
+//
+//  class Component {};
+//
+//  using ComponentRegistry = GlobalFactoryRegistry<std::unique_ptr<Component>>;
+//
+// === Defining a registrator =============================================
+//
+//  MEDIAPIPE_STATIC_REGISTRATOR_TEMPLATE(ComponentRegistrator,
+//                                        ComponentRegistry, T::kName,
+//                                        absl::make_unique<T>);
+//
+// === Defining and registering a new component. ==========================
+//
+//  class MyComponent : public Component,
+//                      private ComponentRegistrator<MyComponent> {
+//   public:
+//    static constexpr char kName[] = "MyComponent";
+//    ...
+//  };
+//
+// NOTE:
+// - MyComponent is automatically registered in ComponentRegistry by
+//   "MyComponent" name.
+// - Every component is require to provide its name (T::kName here.)
+#define MEDIAPIPE_STATIC_REGISTRATOR_TEMPLATE(RegistratorName, RegistryType,  \
+                                              name, ...)                      \
+  template <typename T>                                                       \
+  struct Internal##RegistratorName {                                          \
+    static NoDestructor<mediapipe::RegistrationToken> registration;           \
+                                                                              \
+    static mediapipe::RegistrationToken Make() {                              \
+      return RegistryType::Register(name, __VA_ARGS__);                       \
+    }                                                                         \
+                                                                              \
+    using RequireStatics =                                                    \
+        registration_internal::ForceStaticInstantiation<&registration>;       \
+  };                                                                          \
+  /* Static members of template classes can be defined in the header. */      \
+  template <typename T>                                                       \
+  NoDestructor<mediapipe::RegistrationToken>                                  \
+      Internal##RegistratorName<T>::registration(                             \
+          Internal##RegistratorName<T>::Make());                              \
+                                                                              \
+  template <typename T>                                                       \
+  class RegistratorName {                                                     \
+   private:                                                                   \
+    /* The member below triggers instantiation of the registration static. */ \
+    /* Note that the constructor of calculator subclasses is only invoked  */ \
+    /* through the registration token, and so we cannot simply use the     */ \
+    /* static in theconstructor.                                           */ \
+    typename Internal##RegistratorName<T>::RequireStatics register_;          \
+  };
 
 }  // namespace mediapipe
 
