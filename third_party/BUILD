@@ -378,3 +378,10 @@ java_library(
         "@maven//:com_google_auto_value_auto_value_annotations",
     ],
 )
+
+java_proto_library(
+    name = "any_java_proto",
+    deps = [
+        "@com_google_protobuf//:any_proto",
+    ],
+)

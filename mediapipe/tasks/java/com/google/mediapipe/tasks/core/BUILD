@@ -32,6 +32,7 @@ android_library(
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:external_file_java_proto_lite",
         "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
+        "//third_party:any_java_proto",
         "//third_party:autovalue",
         "@com_google_protobuf//:protobuf_javalite",
         "@maven//:com_google_guava_guava",

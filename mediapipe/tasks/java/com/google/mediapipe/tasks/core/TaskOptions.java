@@ -20,18 +20,26 @@ import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
 import com.google.mediapipe.tasks.core.proto.AccelerationProto;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.core.proto.ExternalFileProto;
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 
 /**
  * MediaPipe Tasks options base class. Any MediaPipe task-specific options class should extend
- * {@link TaskOptions}.
+ * {@link TaskOptions} and implement exactly one of converTo*Proto() methods.
  */
 public abstract class TaskOptions {
   /**
    * Converts a MediaPipe Tasks task-specific options to a {@link CalculatorOptions} protobuf
    * message.
    */
-  public abstract CalculatorOptions convertToCalculatorOptionsProto();
+  public CalculatorOptions convertToCalculatorOptionsProto() {
+    return null;
+  }
+
+  /** Converts a MediaPipe Tasks task-specific options to an proto3 {@link Any} message. */
+  public Any convertToAnyProto() {
+    return null;
+  }
 
   /**
    * Converts a {@link BaseOptions} instance to a {@link BaseOptionsProto.BaseOptions} protobuf
