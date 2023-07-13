@@ -396,6 +396,13 @@ class GlobalFactoryRegistry {
       new mediapipe::RegistrationToken(                              \
           RegistryType::Register(#name, __VA_ARGS__))
 
+#define MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, \
+                                                      name, ...)              \
+  static auto* REGISTRY_STATIC_VAR(var_name, __LINE__) =                      \
+      new mediapipe::RegistrationToken(                                       \
+          RegistryType::Register(name, __VA_ARGS__))
+
+// TODO: migrate to the above.
 #define REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, name, ...) \
   static auto* REGISTRY_STATIC_VAR(var_name, __LINE__) =                       \
       new mediapipe::RegistrationToken(                                        \
