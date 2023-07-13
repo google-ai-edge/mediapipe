@@ -28,13 +28,13 @@ halide_library_runtimes()
         name = target_name,
         actual = select(
             {
-                ":halide_config_linux_x86_64": "@linux_halide//:%s" % target_name,
-                ":halide_config_macos_x86_64": "@macos_x86_64_halide//:%s" % target_name,
-                ":halide_config_macos_arm64": "@macos_arm_64_halide//:%s" % target_name,
-                ":halide_config_windows_x86_64": "@windows_halide//:%s" % target_name,
-                # deliberately no //condition:default clause here
+                "@mediapipe//mediapipe:macos_x86_64": "@macos_x86_64_halide//:%s" % target_name,
+                "@mediapipe//mediapipe:macos_arm64": "@macos_arm_64_halide//:%s" % target_name,
+                "@mediapipe//mediapipe:windows": "@windows_halide//:%s" % target_name,
+                # Assume Linux x86_64 by default.
+                # TODO: add mediapipe configs for linux to avoid assuming it's the default.
+                "//conditions:default": "@linux_halide//:%s" % target_name,
             },
-            no_match_error = "Compiling Halide code requires that the build host is one of Linux x86-64, Windows x86-64, macOS x86-64, or macOS arm64.",
         ),
     )
     for target_name in [
