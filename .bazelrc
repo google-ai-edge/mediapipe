@@ -100,3 +100,12 @@ try-import %workspace%/.configure.bazelrc
 
 # This bazelrc file can be used for user-specific custom build settings.
 try-import %workspace%/.user.bazelrc
+
+# Disable native ovms mediapipe support when building in mediapipe repository
+build --define=MEDIAPIPE_DISABLE=1
+coverage --define=MEDIAPIPE_DISABLE=1
+test --define=MEDIAPIPE_DISABLE=1
+
+build --cxxopt=-DMEDIAPIPE_DISABLE=1
+coverage --cxxopt=-DMEDIAPIPE_DISABLE=1
+test --cxxopt=-DMEDIAPIPE_DISABLE=1

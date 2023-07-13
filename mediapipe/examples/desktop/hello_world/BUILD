@@ -28,21 +28,3 @@ cc_binary(
     ],
 )
 
-cc_binary(
-    name = "hello_ovms",
-    srcs = ["hello_ovms.cc"],
-    deps = [
-        "//mediapipe/calculators/core:ovms_calculator",
-        "//mediapipe/framework:calculator_graph",
-        "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
-    ],
-    linkopts = [
-        "-lxml2",
-        "-luuid",
-        "-lstdc++fs",
-        "-lcrypto",
-    ]
-)
-

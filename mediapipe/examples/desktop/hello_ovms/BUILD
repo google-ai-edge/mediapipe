@@ -38,7 +38,7 @@ cc_binary(
     ],
     copts = [
         "-Iexternal/ovms/src",
-        "-Iexternal/ovms/src/test"
-    ]
+        "-Iexternal/ovms/src/test",
+    ],
 )
 
