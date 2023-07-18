@@ -29,4 +29,5 @@ message ModelAPIOVMSSessionCalculatorOptions {
     required string servable_version = 2;
     // service_url: "13.21.212.171:9718"
     optional string service_url = 3;
+    optional string server_config = 4;
 }

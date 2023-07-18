@@ -1,0 +1,60 @@
+// Copyright (c) 2023 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+// Full Example:
+//
+// node {
+//   calculator: "OpenVINOInferenceCalculator"
+//   input_stream: "TENSOR_IN:image_tensors"
+//   output_stream: "TENSOR_OUT:result_tensors"
+//   options {
+//     [mediapipe.OpenVINOInferenceCalculatorOptions.ext] {
+//       model_path: "model.openvino"
+//       device { gpu {} }
+//     }
+//   }
+// }
+//
+message OpenVINOInferenceCalculatorOptions {
+  extend mediapipe.CalculatorOptions {
+    optional OpenVINOInferenceCalculatorOptions ext = 113766539;
+  }
+
+  message Device {
+    // Default inference provided by openvino.
+    message CPU {}
+    message GPU {}
+    message AUTO {}
+
+    oneof device {
+      AUTO auto = 1;
+      CPU cpu = 2;
+      GPU gpu = 3;
+    }
+  }
+
+  // Path to the OpenVINO supported model (IR, ONNX, ...)
+  optional string model_path = 1;
+
+  // OpenVINO device to run inference.
+  optional Device device = 2;
+}
+

@@ -74,6 +74,56 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "desktop_openvino_calculators",
+    deps = [
+        "//mediapipe/calculators/core:concatenate_vector_calculator",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/core:previous_loopback_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/calculators/image:image_transformation_calculator",
+        "//mediapipe/calculators/tflite:ssd_anchors_calculator",
+        "//mediapipe/calculators/openvino:openvino_converter_calculator",
+        "//mediapipe/calculators/openvino:openvino_inference_calculator",
+        "//mediapipe/calculators/openvino:openvino_tensors_to_detections_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:detection_label_id_to_text_calculator",
+        "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/calculators/util:non_max_suppression_calculator",
+        "//mediapipe/calculators/video:opencv_video_decoder_calculator",
+        "//mediapipe/calculators/video:opencv_video_encoder_calculator",
+    ],
+)
+
+# TODO for now we use TF Tensor as input so we may want to replace those in the end to pure OV::Tensor converters
+cc_library(
+    name = "desktop_ovms_calculators",
+    deps = [
+# we should follow more closely MP with tflite convention. for now using the same approach as Nico's demo
+        #"//mediapipe/calculators/openvino:openvino_converter_calculator",
+        #"//mediapipe/calculators/openvino:openvino_inference_calculator",
+        #"//mediapipe/calculators/openvino:openvino_tensors_to_detections_calculator",
+
+        #"//mediapipe/calculators/openvino:openvino_converter_calculator",
+        #"//mediapipe/calculators/ovms:openvino_inference_calculator",
+        #"//mediapipe/calculators/openvino:openvino_tensors_to_detections_calculator",
+# shared part
+	"//mediapipe/calculators/ovms:ovms_calculator", # this includes both calculators
+        "//mediapipe/calculators/core:concatenate_vector_calculator",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/core:previous_loopback_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/calculators/image:image_transformation_calculator",
+        "//mediapipe/calculators/tflite:ssd_anchors_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:detection_label_id_to_text_calculator",
+        "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/calculators/util:non_max_suppression_calculator",
+        "//mediapipe/calculators/video:opencv_video_decoder_calculator",
+        "//mediapipe/calculators/video:opencv_video_encoder_calculator",
+    ],
+)
+
 load(
     "//mediapipe/framework/tool:mediapipe_graph.bzl",
     "mediapipe_binary_graph",

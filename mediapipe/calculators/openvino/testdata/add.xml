@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<net name="model_name" version="11">
+	<layers>
+		<layer id="0" name="data1" type="Parameter" version="opset1">
+			<data shape="1,3,8,8" element_type="u8" />
+			<output>
+				<port id="0" precision="U8" names="data1">
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>8</dim>
+					<dim>8</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="1" name="concat" type="Concat" version="opset1">
+			<data axis="1" />
+			<input>
+				<port id="0" precision="U8">
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>8</dim>
+					<dim>8</dim>
+				</port>
+				<port id="1" precision="U8">
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>8</dim>
+					<dim>8</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="U8">
+					<dim>1</dim>
+					<dim>6</dim>
+					<dim>8</dim>
+					<dim>8</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="2" name="add" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="U8">
+					<dim>1</dim>
+					<dim>6</dim>
+					<dim>8</dim>
+					<dim>8</dim>
+				</port>
+				<port id="1" precision="U8">
+					<dim>1</dim>
+					<dim>6</dim>
+					<dim>8</dim>
+					<dim>8</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="U8">
+					<dim>1</dim>
+					<dim>6</dim>
+					<dim>8</dim>
+					<dim>8</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="3" name="result" type="Result" version="opset1">
+			<input>
+				<port id="0" precision="U8">
+					<dim>1</dim>
+					<dim>6</dim>
+					<dim>8</dim>
+					<dim>8</dim>
+				</port>
+			</input>
+		</layer>
+	</layers>
+	<edges>
+		<edge from-layer="0" from-port="0" to-layer="1" to-port="0" />
+		<edge from-layer="0" from-port="0" to-layer="1" to-port="1" />
+		<edge from-layer="1" from-port="2" to-layer="2" to-port="0" />
+		<edge from-layer="1" from-port="2" to-layer="2" to-port="1" />
+		<edge from-layer="2" from-port="2" to-layer="3" to-port="0" />
+	</edges>
+</net>

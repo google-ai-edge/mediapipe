@@ -90,7 +90,7 @@ OPENCV_MODULES = [
 # still only builds the shared libraries, so we have to choose one or the
 # other. We build shared libraries by default, but this variable can be used
 # to switch to static libraries.
-OPENCV_SHARED_LIBS = True
+OPENCV_SHARED_LIBS = False
 
 OPENCV_SO_VERSION = "3.4"
 

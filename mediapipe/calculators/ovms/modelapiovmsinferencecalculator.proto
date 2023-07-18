@@ -27,4 +27,7 @@ message ModelAPIInferenceCalculatorOptions {
     }
     map<string, string> tag_to_input_tensor_names = 1;
     map<string, string> tag_to_output_tensor_names = 2;
+    // repeated gives optional option by default
+    repeated string input_order_list = 3;
+    repeated string output_order_list = 4;
 }

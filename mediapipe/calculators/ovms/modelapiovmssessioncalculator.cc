@@ -36,10 +36,26 @@ using std::endl;
 const std::string SESSION_TAG{"SESSION"};
 ov::Core UNUSED_OV_CORE;
 
+#define ASSERT_CAPI_STATUS_NULL(C_API_CALL)                                                 \
+    {                                                                                       \
+        auto* err = C_API_CALL;                                                             \
+        if (err != nullptr) {                                                               \
+            uint32_t code = 0;                                                              \
+            const char* msg = nullptr;                                                      \
+            OVMS_StatusGetCode(err, &code);                                                 \
+            OVMS_StatusGetDetails(err, &msg);                                               \
+            LOG(INFO) << "Error encountred in OVMSCalculator:" << msg << " code: " << code; \
+            OVMS_StatusDelete(err);                                                         \
+            RET_CHECK(err == nullptr);                                                      \
+        }                                                                                   \
+    }
 class ModelAPISessionCalculator : public CalculatorBase {
     std::shared_ptr<::InferenceAdapter> adapter;
     std::unordered_map<std::string, std::string> outputNameToTag;
-
+    // TODO where to place members
+    OVMS_Server* cserver{nullptr};
+    OVMS_ServerSettings* _serverSettings{nullptr};
+    OVMS_ModelsSettings* _modelsSettings{nullptr};
 public:
     static absl::Status GetContract(CalculatorContract* cc) {
         LOG(INFO) << "Session GetContract start";
@@ -76,6 +92,19 @@ public:
         cc->SetOffset(TimestampDiff(0));
 
         const auto& options = cc->Options<ModelAPIOVMSSessionCalculatorOptions>();
+        // if config is in calc then we start the server
+        LOG(INFO) << "Will check if we want to start server";
+        if (!options.server_config().empty()) {
+            LOG(INFO) << "Will start new server";
+            OVMS_ServerNew(&cserver);
+            OVMS_ServerSettingsNew(&_serverSettings);
+            OVMS_ModelsSettingsNew(&_modelsSettings);
+            OVMS_ModelsSettingsSetConfigPath(_modelsSettings, options.server_config().c_str());
+            OVMS_ServerSettingsSetLogLevel(_serverSettings, OVMS_LOG_DEBUG);
+            ASSERT_CAPI_STATUS_NULL(OVMS_ServerStartFromConfigurationFile(cserver, _serverSettings, _modelsSettings));
+            LOG(INFO) << "Started new server";
+        }
+
         const std::string& servableName = options.servable_name();
         const std::string& servableVersionStr = options.servable_version();
         auto servableVersionOpt = ::ovms::stou32(servableVersionStr);
@@ -91,6 +120,7 @@ public:
             LOG(INFO) << "Catched unknown exception";
             RET_CHECK(false);
         }
+
         LOG(INFO) << "Session create adapter";
         cc->OutputSidePackets().Tag(SESSION_TAG.c_str()).Set(MakePacket<std::shared_ptr<InferenceAdapter>>(session));
         LOG(INFO) << "Session Open end";

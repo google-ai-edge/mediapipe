@@ -34,6 +34,7 @@ set -e
 out_dir="."
 build_only=false
 run_only=false
+one_target=false
 app_dir="mediapipe/examples/desktop"
 bin_dir="bazel-bin"
 declare -a default_bazel_flags=(build -c opt --define MEDIAPIPE_DISABLE_GPU=1)
@@ -49,6 +50,12 @@ while [[ -n $1 ]]; do
       ;;
     -r)
       run_only=true
+      ;;
+    -t)
+      one_target=true
+      shift
+      one_target_name=$1
+      echo "one_target_name: $one_target_name"
       ;;
     *)
       echo "Unsupported input argument $1."
@@ -77,6 +84,8 @@ for app in ${apps}; do
         target="${app}:run_${target_name}"
     elif [[ "${target_name}" == "object_detection_3d" ]]; then
         target="${app}:objectron_cpu"
+    elif [[ "${target_name}" == "object_detection" ]]; then
+        target="${app}:${target_name}_ovms"
     elif [[ "${target_name}" == "template_matching" ]]; then
         target="${app}:template_matching_tflite"
     elif [[ "${target_name}" == "youtube8m" ]]; then
@@ -84,6 +93,20 @@ for app in ${apps}; do
         continue
     else
       target="${app}:${target_name}_cpu"
+    fi
+
+    echo "target_name:${target_name}"
+    echo "target:${target}"
+    if [[ $one_target == true ]]; then
+      if [[ "${target_name}" == "${one_target_name}" ]]; then
+        bazel_flags=("${default_bazel_flags[@]}")
+        bazel_flags+=(${target})
+        echo "BUILD COMMAND:bazelisk ${bazel_flags[@]}"
+        bazelisk "${bazel_flags[@]}"
+        exit 0
+      else
+        continue
+      fi
     fi
 
     if [[ $run_only == false ]]; then

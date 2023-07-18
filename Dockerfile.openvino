@@ -53,6 +53,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get install -y mesa-utils && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# python setup.py requirements
+RUN pip3 install --upgrade setuptools
+RUN pip3 install wheel
+RUN pip3 install future
+RUN pip3 install absl-py numpy opencv-contrib-python protobuf==3.20.1
+RUN pip3 install six==1.14.0
+RUN pip3 install tensorflow
+RUN pip3 install tf_slim
+
+RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN apt-get update && apt-get install -y protobuf-compiler
     
 # Install unit tests and examples requierments
 RUN wget https://github.com/bazelbuild/bazelisk/releases/download/v1.17.0/bazelisk-linux-amd64 && \
@@ -89,7 +101,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # install ovms_lib requirements
 # xml2, uuid for azure
-RUN  apt-get install -y curl libpugixml1v5 libtbb2 libxml2-dev uuid-dev uuid libssl-dev --no-install-recommends
+RUN apt-get install -y curl libpugixml1v5 libtbb2 libxml2-dev uuid-dev uuid libssl-dev --no-install-recommends
 
 RUN apt-get update && apt-get install --no-install-recommends -y libtool
 
