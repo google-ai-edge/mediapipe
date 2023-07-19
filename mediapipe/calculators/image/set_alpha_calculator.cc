@@ -142,7 +142,7 @@ class SetAlphaCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(SetAlphaCalculator);
 
 absl::Status SetAlphaCalculator::GetContract(CalculatorContract* cc) {
-  CHECK_GE(cc->Inputs().NumEntries(), 1);
+  RET_CHECK_GE(cc->Inputs().NumEntries(), 1);
 
   bool use_gpu = false;
 
