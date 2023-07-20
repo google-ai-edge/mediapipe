@@ -58,7 +58,15 @@ public abstract class PoseLandmarkerResult implements TaskResult {
           poseLandmarksProto.getLandmarkList()) {
         poseLandmarks.add(
             NormalizedLandmark.create(
-                poseLandmarkProto.getX(), poseLandmarkProto.getY(), poseLandmarkProto.getZ()));
+                poseLandmarkProto.getX(),
+                poseLandmarkProto.getY(),
+                poseLandmarkProto.getZ(),
+                poseLandmarkProto.hasVisibility()
+                    ? Optional.of(poseLandmarkProto.getVisibility())
+                    : Optional.empty(),
+                poseLandmarkProto.hasPresence()
+                    ? Optional.of(poseLandmarkProto.getPresence())
+                    : Optional.empty()));
       }
     }
     for (LandmarkProto.LandmarkList poseWorldLandmarksProto : worldLandmarksProto) {
@@ -70,7 +78,13 @@ public abstract class PoseLandmarkerResult implements TaskResult {
             Landmark.create(
                 poseWorldLandmarkProto.getX(),
                 poseWorldLandmarkProto.getY(),
-                poseWorldLandmarkProto.getZ()));
+                poseWorldLandmarkProto.getZ(),
+                poseWorldLandmarkProto.hasVisibility()
+                    ? Optional.of(poseWorldLandmarkProto.getVisibility())
+                    : Optional.empty(),
+                poseWorldLandmarkProto.hasPresence()
+                    ? Optional.of(poseWorldLandmarkProto.getPresence())
+                    : Optional.empty()));
       }
     }
     return new AutoValue_PoseLandmarkerResult(
