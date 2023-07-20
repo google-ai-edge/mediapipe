@@ -30,7 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
  * The delegate of `MPPFaceLandmarker` must adopt `MPPFaceLandmarkerLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
  */
-NS_SWIFT_NAME(FaceDetectorLiveStreamDelegate)
+NS_SWIFT_NAME(FaceLandmarkerLiveStreamDelegate)
 @protocol MPPFaceLandmarkerLiveStreamDelegate <NSObject>
 
 /**
