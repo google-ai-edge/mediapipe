@@ -555,9 +555,9 @@ without timestamps, use the `context`.
 |`PREFIX/feature/dimensions`|context int list|`set_feature_dimensions` / `SetFeatureDimensions`|A list of integer dimensions for each feature.|
 |`PREFIX/feature/rate`|context float|`set_feature_rate` / `SetFeatureRate`|The rate that features are calculated as features per second.|
 |`PREFIX/feature/bytes/format`|context bytes|`set_feature_bytes_format` / `SetFeatureBytesFormat`|The encoding format if any for features stored as bytes.|
-|`PREFIX/context_feature/floats`|context float list|`add_context_feature_floats` / `AddContextFeatureFloats`|A list of floats for the entire example.|
-|`PREFIX/context_feature/bytes`|context bytes list|`add_context_feature_bytes` / `AddContextFeatureBytes`|A list of bytes for the entire example. Maybe be encoded.|
-|`PREFIX/context_feature/ints`|context int list|`add_context_feature_ints` / `AddContextFeatureInts`|A list of ints for the entire example.|
+|`PREFIX/context_feature/floats`|context float list|`set_context_feature_floats` / `AddContextFeatureFloats`|A list of floats for the entire example.|
+|`PREFIX/context_feature/bytes`|context bytes list|`set_context_feature_bytes` / `AddContextFeatureBytes`|A list of bytes for the entire example. Maybe be encoded.|
+|`PREFIX/context_feature/ints`|context int list|`set_context_feature_ints` / `AddContextFeatureInts`|A list of ints for the entire example.|
 
 ### Keys related to audio
 Audio is a special subtype of generic features with additional data about the
