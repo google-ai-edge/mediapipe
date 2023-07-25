@@ -16,6 +16,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/image_segmenter/image_segmenter.h"
 
 #include <optional>
+#include <utility>
 
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/api2/builder.h"
@@ -41,6 +42,8 @@ constexpr char kConfidenceMasksTag[] = "CONFIDENCE_MASKS";
 constexpr char kConfidenceMasksStreamName[] = "confidence_masks";
 constexpr char kCategoryMaskTag[] = "CATEGORY_MASK";
 constexpr char kCategoryMaskStreamName[] = "category_mask";
+constexpr char kOutputSizeTag[] = "OUTPUT_SIZE";
+constexpr char kOutputSizeStreamName[] = "output_size";
 constexpr char kImageInStreamName[] = "image_in";
 constexpr char kImageOutStreamName[] = "image_out";
 constexpr char kImageTag[] = "IMAGE";
@@ -70,6 +73,7 @@ CalculatorGraphConfig CreateGraphConfig(
       options.get());
   graph.In(kImageTag).SetName(kImageInStreamName);
   graph.In(kNormRectTag).SetName(kNormRectStreamName);
+  graph.In(kOutputSizeTag).SetName(kOutputSizeStreamName);
   if (output_confidence_masks) {
     task_subgraph.Out(kConfidenceMasksTag)
             .SetName(kConfidenceMasksStreamName) >>
@@ -85,10 +89,12 @@ CalculatorGraphConfig CreateGraphConfig(
       graph.Out(kImageTag);
   if (enable_flow_limiting) {
     return tasks::core::AddFlowLimiterCalculator(
-        graph, task_subgraph, {kImageTag, kNormRectTag}, kConfidenceMasksTag);
+        graph, task_subgraph, {kImageTag, kNormRectTag, kOutputSizeTag},
+        kConfidenceMasksTag);
   }
   graph.In(kImageTag) >> task_subgraph.In(kImageTag);
   graph.In(kNormRectTag) >> task_subgraph.In(kNormRectTag);
+  graph.In(kOutputSizeTag) >> task_subgraph.In(kOutputSizeTag);
   return graph.GetConfig();
 }
 
@@ -211,6 +217,13 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
 absl::StatusOr<ImageSegmenterResult> ImageSegmenter::Segment(
     mediapipe::Image image,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
+  return Segment(image, image.width(), image.height(),
+                 std::move(image_processing_options));
+}
+
+absl::StatusOr<ImageSegmenterResult> ImageSegmenter::Segment(
+    mediapipe::Image image, int output_width, int output_height,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -225,7 +238,10 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::Segment(
       ProcessImageData(
           {{kImageInStreamName, mediapipe::MakePacket<Image>(std::move(image))},
            {kNormRectStreamName,
-            MakePacket<NormalizedRect>(std::move(norm_rect))}}));
+            MakePacket<NormalizedRect>(std::move(norm_rect))},
+           {kOutputSizeStreamName,
+            MakePacket<std::pair<int, int>>(
+                std::make_pair(output_width, output_height))}}));
   std::optional<std::vector<Image>> confidence_masks;
   if (output_confidence_masks_) {
     confidence_masks =
@@ -242,6 +258,14 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::Segment(
 
 absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
     mediapipe::Image image, int64_t timestamp_ms,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
+  return SegmentForVideo(image, image.width(), image.height(), timestamp_ms,
+                         image_processing_options);
+}
+
+absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
+    mediapipe::Image image, int output_width, int output_height,
+    int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
@@ -260,6 +284,10 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
            {kNormRectStreamName,
             MakePacket<NormalizedRect>(std::move(norm_rect))
+                .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
+           {kOutputSizeStreamName,
+            MakePacket<std::pair<int, int>>(
+                std::make_pair(output_width, output_height))
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
   std::optional<std::vector<Image>> confidence_masks;
   if (output_confidence_masks_) {
@@ -278,6 +306,13 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
 absl::Status ImageSegmenter::SegmentAsync(
     Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
+  return SegmentAsync(image, image.width(), image.height(), timestamp_ms,
+                      image_processing_options);
+}
+
+absl::Status ImageSegmenter::SegmentAsync(
+    Image image, int output_width, int output_height, int64_t timestamp_ms,
+    std::optional<core::ImageProcessingOptions> image_processing_options) {
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -293,6 +328,10 @@ absl::Status ImageSegmenter::SegmentAsync(
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
        {kNormRectStreamName,
         MakePacket<NormalizedRect>(std::move(norm_rect))
+            .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
+       {kOutputSizeStreamName,
+        MakePacket<std::pair<int, int>>(
+            std::make_pair(output_width, output_height))
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
 }
 

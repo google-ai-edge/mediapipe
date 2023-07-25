@@ -102,14 +102,33 @@ class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
   //
   // The image can be of any size with format RGB or RGBA.
   //
+  // The output size is the same as the input image size.
+  //
   // The optional 'image_processing_options' parameter can be used to specify
   // the rotation to apply to the image before performing segmentation, by
   // setting its 'rotation_degrees' field. Note that specifying a
   // region-of-interest using the 'region_of_interest' field is NOT supported
   // and will result in an invalid argument error being returned.
-
   absl::StatusOr<ImageSegmenterResult> Segment(
       mediapipe::Image image,
+      std::optional<core::ImageProcessingOptions> image_processing_options =
+          std::nullopt);
+
+  // Performs image segmentation on the provided single image.
+  // Only use this method when the ImageSegmenter is created with the image
+  // running mode.
+  //
+  // The image can be of any size with format RGB or RGBA.
+  //
+  // The output width and height specify the size of the resulted mask.
+  //
+  // The optional 'image_processing_options' parameter can be used to specify
+  // the rotation to apply to the image before performing segmentation, by
+  // setting its 'rotation_degrees' field. Note that specifying a
+  // region-of-interest using the 'region_of_interest' field is NOT supported
+  // and will result in an invalid argument error being returned.
+  absl::StatusOr<ImageSegmenterResult> Segment(
+      mediapipe::Image image, int output_width, int output_height,
       std::optional<core::ImageProcessingOptions> image_processing_options =
           std::nullopt);
 
@@ -121,13 +140,36 @@ class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
   // provide the video frame's timestamp (in milliseconds). The input timestamps
   // must be monotonically increasing.
   //
-  // The optional 'image_processing_options' parameter can be used to specify
-  // the rotation to apply to the image before performing segmentation, by
-  // setting its 'rotation_degrees' field. Note that specifying a
-  // region-of-interest using the 'region_of_interest' field is NOT supported
+  // The output size is the same as the input image size.
+  //
+  // The optional 'image_processing_options' parameter can be used
+  // to specify the rotation to apply to the image before performing
+  // segmentation, by setting its 'rotation_degrees' field. Note that specifying
+  // a region-of-interest using the 'region_of_interest' field is NOT supported
   // and will result in an invalid argument error being returned.
   absl::StatusOr<ImageSegmenterResult> SegmentForVideo(
       mediapipe::Image image, int64_t timestamp_ms,
+      std::optional<core::ImageProcessingOptions> image_processing_options =
+          std::nullopt);
+
+  // Performs image segmentation on the provided video frame.
+  // Only use this method when the ImageSegmenter is created with the video
+  // running mode.
+  //
+  // The image can be of any size with format RGB or RGBA. It's required to
+  // provide the video frame's timestamp (in milliseconds). The input timestamps
+  // must be monotonically increasing.
+  //
+  // The output width and height specify the size of the resulted mask.
+  //
+  // The optional 'image_processing_options' parameter can be used
+  // to specify the rotation to apply to the image before performing
+  // segmentation, by setting its 'rotation_degrees' field. Note that specifying
+  // a region-of-interest using the 'region_of_interest' field is NOT supported
+  // and will result in an invalid argument error being returned.
+  absl::StatusOr<ImageSegmenterResult> SegmentForVideo(
+      mediapipe::Image image, int output_width, int output_height,
+      int64_t timestamp_ms,
       std::optional<core::ImageProcessingOptions> image_processing_options =
           std::nullopt);
 
@@ -140,6 +182,8 @@ class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
   // provide a timestamp (in milliseconds) to indicate when the input image is
   // sent to the image segmenter. The input timestamps must be monotonically
   // increasing.
+  //
+  // The output size is the same as the input image size.
   //
   // The optional 'image_processing_options' parameter can be used to specify
   // the rotation to apply to the image before performing segmentation, by
@@ -155,6 +199,36 @@ class ImageSegmenter : tasks::vision::core::BaseVisionTaskApi {
   //     outside of the callback, callers need to make a copy of the image.
   //   - The input timestamp in milliseconds.
   absl::Status SegmentAsync(mediapipe::Image image, int64_t timestamp_ms,
+                            std::optional<core::ImageProcessingOptions>
+                                image_processing_options = std::nullopt);
+
+  // Sends live image data to perform image segmentation, and the results will
+  // be available via the "result_callback" provided in the
+  // ImageSegmenterOptions. Only use this method when the ImageSegmenter is
+  // created with the live stream running mode.
+  //
+  // The image can be of any size with format RGB or RGBA. It's required to
+  // provide a timestamp (in milliseconds) to indicate when the input image is
+  // sent to the image segmenter. The input timestamps must be monotonically
+  // increasing.
+  //
+  // The output width and height specify the size of the resulted mask.
+  //
+  // The optional 'image_processing_options' parameter can be used to specify
+  // the rotation to apply to the image before performing segmentation, by
+  // setting its 'rotation_degrees' field. Note that specifying a
+  // region-of-interest using the 'region_of_interest' field is NOT supported
+  // and will result in an invalid argument error being returned.
+  //
+  // The "result_callback" prvoides
+  //   - An ImageSegmenterResult.
+  //   - The const reference to the corresponding input image that the image
+  //     segmentation runs on. Note that the const reference to the image will
+  //     no longer be valid when the callback returns. To access the image data
+  //     outside of the callback, callers need to make a copy of the image.
+  //   - The input timestamp in milliseconds.
+  absl::Status SegmentAsync(mediapipe::Image image, int output_width,
+                            int output_height, int64_t timestamp_ms,
                             std::optional<core::ImageProcessingOptions>
                                 image_processing_options = std::nullopt);
 

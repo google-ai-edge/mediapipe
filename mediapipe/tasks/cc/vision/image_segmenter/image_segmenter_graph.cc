@@ -82,6 +82,7 @@ constexpr char kImageGpuTag[] = "IMAGE_GPU";
 constexpr char kNormRectTag[] = "NORM_RECT";
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kOutputSizeTag[] = "OUTPUT_SIZE";
+constexpr char kSizeTag[] = "SIZE";
 constexpr char kQualityScoresTag[] = "QUALITY_SCORES";
 constexpr char kSegmentationMetadataName[] = "SEGMENTER_METADATA";
 
@@ -356,6 +357,9 @@ absl::StatusOr<ImageAndTensorsOnDevice> ConvertImageToTensors(
 //     Describes image rotation and region of image to perform detection
 //     on.
 //     @Optional: rect covering the whole image is used if not specified.
+//   OUTPUT_SIZE - std::pair<int, int> @Optional
+//     The output size of the mask, in width and height. If not specified, the
+//     output size of the input image is used.
 //
 // Outputs:
 //   CONFIDENCE_MASK - mediapipe::Image @Multiple
@@ -400,11 +404,16 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
     if (!options.segmenter_options().has_output_type()) {
       MP_RETURN_IF_ERROR(SanityCheck(sc));
     }
+    std::optional<Source<std::pair<int, int>>> output_size;
+    if (HasInput(sc->OriginalNode(), kOutputSizeTag)) {
+      output_size = graph.In(kOutputSizeTag).Cast<std::pair<int, int>>();
+    }
     ASSIGN_OR_RETURN(
         auto output_streams,
         BuildSegmentationTask(
             options, *model_resources, graph[Input<Image>(kImageTag)],
-            graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
+            graph[Input<NormalizedRect>::Optional(kNormRectTag)], output_size,
+            graph));
 
     // TODO: remove deprecated output type support.
     if (options.segmenter_options().has_output_type()) {
@@ -469,7 +478,8 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
   absl::StatusOr<ImageSegmenterOutputs> BuildSegmentationTask(
       const ImageSegmenterGraphOptions& task_options,
       const core::ModelResources& model_resources, Source<Image> image_in,
-      Source<NormalizedRect> norm_rect_in, Graph& graph) {
+      Source<NormalizedRect> norm_rect_in,
+      std::optional<Source<std::pair<int, int>>> output_size, Graph& graph) {
     MP_RETURN_IF_ERROR(SanityCheckOptions(task_options));
 
     // Adds preprocessing calculators and connects them to the graph input image
@@ -514,10 +524,14 @@ class ImageSegmenterGraph : public core::ModelTaskGraph {
     image_and_tensors.tensors >> inference.In(kTensorsTag);
     inference.Out(kTensorsTag) >> tensor_to_images.In(kTensorsTag);
 
-    // Adds image property calculator for output size.
-    auto& image_properties = graph.AddNode("ImagePropertiesCalculator");
-    image_in >> image_properties.In("IMAGE");
-    image_properties.Out("SIZE") >> tensor_to_images.In(kOutputSizeTag);
+    if (output_size.has_value()) {
+      *output_size >> tensor_to_images.In(kOutputSizeTag);
+    } else {
+      // Adds image property calculator for output size.
+      auto& image_properties = graph.AddNode("ImagePropertiesCalculator");
+      image_in >> image_properties.In(kImageTag);
+      image_properties.Out(kSizeTag) >> tensor_to_images.In(kOutputSizeTag);
+    }
 
     // Exports multiple segmented masks.
     // TODO: remove deprecated output type support.

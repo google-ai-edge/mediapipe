@@ -647,6 +647,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_leopard_bg_removal_result_512x512_png",
+        sha256 = "30be22e89fdd1d7b985294498ec67509b0caa1ca941fe291fa25f43a3873e4dd",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/leopard_bg_removal_result_512x512.png?generation=1690239134617707"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_leopard_bg_removal_result_png",
         sha256 = "afd33f2058fd58d189cda86ec931647741a6139970c9bcbc637cdd151ec657c5",
         urls = ["https://storage.googleapis.com/mediapipe-assets/leopard_bg_removal_result.png?generation=1685997278308542"],
