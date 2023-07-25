@@ -45,6 +45,8 @@ class TFRecordCacheFiles:
   num_shards: int = 1
 
   def __post_init__(self):
+    if not tf.io.gfile.exists(self.cache_dir):
+      tf.io.gfile.makedirs(self.cache_dir)
     if not self.cache_prefix_filename:
       raise ValueError('cache_prefix_filename cannot be empty.')
     if self.num_shards <= 0:
@@ -79,8 +81,6 @@ class TFRecordCacheFiles:
     Returns:
       Array of TFRecordWriter objects
     """
-    if not tf.io.gfile.exists(self.cache_dir):
-      tf.io.gfile.makedirs(self.cache_dir)
     return [tf.io.TFRecordWriter(path) for path in self.tfrecord_files]
 
   def save_metadata(self, metadata):

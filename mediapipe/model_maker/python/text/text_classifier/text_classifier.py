@@ -435,6 +435,7 @@ class _BertClassifier(TextClassifier):
         seq_len=self._model_options.seq_len,
         do_lower_case=self._model_spec.do_lower_case,
         uri=self._model_spec.downloaded_files.get_path(),
+        model_name=self._model_spec.name,
     )
     return (self._text_preprocessor.preprocess(train_data),
             self._text_preprocessor.preprocess(validation_data))

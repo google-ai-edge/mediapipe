@@ -76,7 +76,10 @@ py_test(
 py_library(
     name = "dataset",
     srcs = ["dataset.py"],
-    deps = ["//mediapipe/model_maker/python/core/data:classification_dataset"],
+    deps = [
+        "//mediapipe/model_maker/python/core/data:cache_files",
+        "//mediapipe/model_maker/python/core/data:classification_dataset",
+    ],
 )
 
 py_test(
@@ -88,7 +91,10 @@ py_test(
 py_library(
     name = "preprocessor",
     srcs = ["preprocessor.py"],
-    deps = [":dataset"],
+    deps = [
+        ":dataset",
+        "//mediapipe/model_maker/python/core/data:cache_files",
+    ],
 )
 
 py_test(
@@ -99,6 +105,7 @@ py_test(
         ":dataset",
         ":model_spec",
         ":preprocessor",
+        "//mediapipe/model_maker/python/core/data:cache_files",
     ],
 )
 
