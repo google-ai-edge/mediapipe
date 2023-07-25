@@ -110,7 +110,9 @@ class Classifier(custom_model.CustomModel):
         # dataset is exhausted even if there are epochs remaining.
         steps_per_epoch=None,
         validation_data=validation_dataset,
-        callbacks=self._callbacks)
+        callbacks=self._callbacks,
+        class_weight=self._hparams.class_weights,
+    )
 
   def evaluate(self, data: dataset.Dataset, batch_size: int = 32) -> Any:
     """Evaluates the classifier with the provided evaluation dataset.

@@ -15,7 +15,7 @@
 
 import dataclasses
 import tempfile
-from typing import Optional
+from typing import Mapping, Optional
 
 import tensorflow as tf
 
@@ -36,6 +36,8 @@ class BaseHParams:
     steps_per_epoch: An optional integer indicate the number of training steps
       per epoch. If not set, the training pipeline calculates the default steps
       per epoch as the training dataset size divided by batch size.
+    class_weights: An optional mapping of indices to weights for weighting the
+      loss function during training.
     shuffle: True if the dataset is shuffled before training.
     export_dir: The location of the model checkpoint files.
     distribution_strategy: A string specifying which Distribution Strategy to
@@ -57,6 +59,7 @@ class BaseHParams:
   batch_size: int
   epochs: int
   steps_per_epoch: Optional[int] = None
+  class_weights: Optional[Mapping[int, float]] = None
 
   # Dataset-related parameters
   shuffle: bool = False
