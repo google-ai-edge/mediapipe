@@ -131,6 +131,7 @@ py_library(
         ":text_classifier_options",
         "//mediapipe/model_maker/python/core/data:dataset",
         "//mediapipe/model_maker/python/core/tasks:classifier",
+        "//mediapipe/model_maker/python/core/utils:loss_functions",
         "//mediapipe/model_maker/python/core/utils:metrics",
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/core/utils:quantization",
@@ -154,6 +155,7 @@ py_test(
     ],
     deps = [
         ":text_classifier_import",
+        "//mediapipe/model_maker/python/core/utils:loss_functions",
         "//mediapipe/tasks/python/test:test_utils",
     ],
 )

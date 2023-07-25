@@ -46,11 +46,13 @@ class ModelSpecTest(tf.test.TestCase):
     self.assertTrue(os.path.exists(model_spec_obj.downloaded_files.get_path()))
     self.assertTrue(model_spec_obj.do_lower_case)
     self.assertEqual(
-        model_spec_obj.tflite_input_name, {
-            'ids': 'serving_default_input_1:0',
-            'mask': 'serving_default_input_3:0',
-            'segment_ids': 'serving_default_input_2:0'
-        })
+        model_spec_obj.tflite_input_name,
+        {
+            'ids': 'serving_default_input_word_ids:0',
+            'mask': 'serving_default_input_mask:0',
+            'segment_ids': 'serving_default_input_type_ids:0',
+        },
+    )
     self.assertEqual(
         model_spec_obj.model_options,
         classifier_model_options.BertModelOptions(
