@@ -719,6 +719,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_mobilenetsweep_dptrigmqn384_unit_384_384_fp16quant_fp32input_opt_tflite",
+        sha256 = "3c4c7e36b35fc903ecfb51b351b4849b23c57cc18d1416cf6cabaa1522d84760",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobilenetsweep_dptrigmqn384_unit_384_384_fp16quant_fp32input_opt.tflite?generation=1690302146106240"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_mobilenet_v1_0_25_192_quantized_1_default_1_tflite",
         sha256 = "f80999b6324c6f101300c3ee38fbe7e11e74a743b5e0be7350602087fe7430a3",
         urls = ["https://storage.googleapis.com/mediapipe-assets/mobilenet_v1_0.25_192_quantized_1_default_1.tflite?generation=1661875821863721"],

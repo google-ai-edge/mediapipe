@@ -66,6 +66,7 @@ mediapipe_files(srcs = [
     "mobilenet_v1_0.25_224_quant_without_subgraph_metadata.tflite",
     "mobilenet_v2_1.0_224.tflite",
     "mobilenet_v3_small_100_224_embedder.tflite",
+    "mobilenetsweep_dptrigmqn384_unit_384_384_fp16quant_fp32input_opt.tflite",
     "mozart_square.jpg",
     "multi_objects.jpg",
     "multi_objects_rotated.jpg",
