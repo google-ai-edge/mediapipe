@@ -231,9 +231,6 @@ cc_library(
         ],
         "//mediapipe/framework:android_no_jni": [],
         "//mediapipe:ios": [],
-        "//mediapipe:macos": [
-            "@com_google_absl//absl/flags:flag",
-        ],
         "//mediapipe:windows": [
             "@bazel_tools//tools/cpp/runfiles",
             "@com_google_absl//absl/flags:flag",
