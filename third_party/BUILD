@@ -379,9 +379,9 @@ java_library(
     ],
 )
 
-java_proto_library(
+java_import(
     name = "any_java_proto",
-    deps = [
-        "@com_google_protobuf//:any_proto",
+    jars = [
+        "@com_google_protobuf//java/core:libcore.jar",
     ],
 )
