@@ -84,8 +84,8 @@ def run(data_dir,
                                                 options)
 
   # Gets evaluation results.
-  _, acc = model.evaluate(validation_data)
-  print('Eval accuracy: %f' % acc)
+  metrics = model.evaluate(validation_data)
+  print('Eval accuracy: %f' % metrics[1])
 
   model.export_model(quantization_config=quantization_config)
   model.export_labels(export_dir=options.hparams.export_dir)
