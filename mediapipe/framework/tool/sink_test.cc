@@ -17,7 +17,6 @@
 #include <memory>
 #include <vector>
 
-#include "absl/functional/bind_front.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -26,7 +25,6 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/tool/validate_type.h"
-#include "util/functional/to_callback.h"
 
 namespace mediapipe {
 
