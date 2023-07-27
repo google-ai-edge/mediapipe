@@ -119,16 +119,13 @@ def draw_detection(
 def draw_landmarks(
     image: np.ndarray,
     landmark_list: landmark_pb2.NormalizedLandmarkList,
-    connections: Optional[
-        Union[frozenset[Tuple[int, int]], List[Tuple[int, int]]]
-    ] = None,
-    landmark_drawing_spec: Optional[Union[
-        DrawingSpec, Mapping[int, DrawingSpec]
-    ]] = None,
-    connection_drawing_spec: Union[
-        DrawingSpec, Mapping[Tuple[int, int], DrawingSpec]
-    ] = DrawingSpec(),
-):
+    connections: Optional[List[Tuple[int, int]]] = None,
+    landmark_drawing_spec: Union[DrawingSpec,
+                                 Mapping[int, DrawingSpec]] = DrawingSpec(
+                                     color=RED_COLOR),
+    connection_drawing_spec: Union[DrawingSpec,
+                                   Mapping[Tuple[int, int],
+                                           DrawingSpec]] = DrawingSpec()):
   """Draws the landmarks and the connections on the image.
 
   Args:
