@@ -602,6 +602,8 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+        "//util/functional:to_callback",
+        "@com_google_absl//absl/functional:bind_front",
         "@com_google_absl//absl/strings",
     ],
 )
