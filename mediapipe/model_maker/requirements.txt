@@ -5,4 +5,4 @@ opencv-python
 tensorflow>=2.10
 tensorflow-datasets
 tensorflow-hub
-tf-models-official==2.11.6
+tf-models-official=>2.13.1
