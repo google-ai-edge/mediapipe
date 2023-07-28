@@ -41,15 +41,30 @@ index 4028ccc..483e639 100644
      // It's 99.44% certain that we don't need to worry about doing this.
 
 diff --git a/bazel/glog.bzl b/bazel/glog.bzl
-index dacd934..62d2a88 100644
+index dacd934..b56a6b9 100644
 --- a/bazel/glog.bzl
 +++ b/bazel/glog.bzl
-@@ -53,7 +53,7 @@ def glog_library(namespace = "google", with_gflags = 1, **kwargs):
+@@ -53,7 +53,6 @@ def glog_library(namespace = "google", with_gflags = 1, **kwargs):
      )
  
      common_copts = [
 -        "-std=c++14",
-+        "-std=c++17",
          "-DGLOG_BAZEL_BUILD",
          # Inject a C++ namespace.
          "-DGOOGLE_NAMESPACE='%s'" % namespace,
+@@ -83,6 +82,7 @@ def glog_library(namespace = "google", with_gflags = 1, **kwargs):
+     ]
+ 
+     linux_or_darwin_copts = wasm_copts + [
++        "-std=c++14",
+         "-DGLOG_EXPORT=__attribute__((visibility(\\\"default\\\")))",
+         # For src/utilities.cc.
+         "-DHAVE_SYS_SYSCALL_H",
+@@ -110,6 +110,7 @@ def glog_library(namespace = "google", with_gflags = 1, **kwargs):
+     ]
+ 
+     windows_only_copts = [
++        "-std=c++17",
+         # Override -DGLOG_EXPORT= from the cc_library's defines.
+         "-DGLOG_EXPORT=__declspec(dllexport)",
+         "-DGLOG_NO_ABBREVIATED_SEVERITIES",
