@@ -34,13 +34,13 @@ struct TextClassifierOptions {
 };
 
 // Creates a TextClassifier from the provided `options`.
-void* text_classsifier_create(struct TextClassifierOptions options);
+void* text_classifier_create(struct TextClassifierOptions options);
 
 // Performs classification on the input `text`.
 TextClassifierResult text_classifier_classify(void* classifier,
                                               char* utf8_text);
 
 // Shuts down the TextClassifier when all the work is done. Frees all memory.
-void text_classsifier_close(void* classifier);
+void text_classifier_close(void* classifier);
 
 #endif  // MEDIAPIPE_TASKS_C_TEXT_TEXT_CLASSIFIER_TEXT_CLASSIFIER_H_
