@@ -18,16 +18,27 @@ package(default_visibility = ["//visibility:public"])
 
 android_library(
     name = "core",
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    exports = [
+        ":core_java",
+        ":libmediapipe_tasks_vision_jni_lib",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+    ],
+)
+
+android_library(
+    name = "core_java",
     srcs = glob(["core/*.java"]),
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",
     ],
     deps = [
-        ":libmediapipe_tasks_vision_jni_lib",
         "//mediapipe/framework/formats:rect_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/java/com/google/mediapipe/framework/image",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
@@ -246,6 +257,20 @@ android_library(
 
 android_library(
     name = "imagesegmenter",
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    manifest = "imagesegmenter/AndroidManifest.xml",
+    exports = [
+        ":core",
+        ":imagesegmenter_java",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+    ],
+    deps = ["@maven//:com_google_guava_guava"],
+)
+
+android_library(
+    name = "imagesegmenter_java",
     srcs = [
         "imagesegmenter/ImageSegmenter.java",
         "imagesegmenter/ImageSegmenterResult.java",
@@ -255,15 +280,15 @@ android_library(
     ],
     manifest = "imagesegmenter/AndroidManifest.xml",
     deps = [
-        ":core",
+        ":core_java",
         "//mediapipe/framework:calculator_options_java_proto_lite",
-        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/java/com/google/mediapipe/framework/image",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_java_proto_lite",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:core_java",
         "//third_party:autovalue",
         "@maven//:com_google_guava_guava",
     ],
