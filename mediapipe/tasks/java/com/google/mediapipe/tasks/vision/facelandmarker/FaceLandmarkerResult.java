@@ -53,7 +53,15 @@ public abstract class FaceLandmarkerResult implements TaskResult {
           faceLandmarksProto.getLandmarkList()) {
         faceLandmarks.add(
             NormalizedLandmark.create(
-                faceLandmarkProto.getX(), faceLandmarkProto.getY(), faceLandmarkProto.getZ()));
+                faceLandmarkProto.getX(),
+                faceLandmarkProto.getY(),
+                faceLandmarkProto.getZ(),
+                faceLandmarkProto.hasVisibility()
+                    ? Optional.of(faceLandmarkProto.getVisibility())
+                    : Optional.empty(),
+                faceLandmarkProto.hasPresence()
+                    ? Optional.of(faceLandmarkProto.getPresence())
+                    : Optional.empty()));
       }
     }
     Optional<List<List<Category>>> multiFaceBlendshapes = Optional.empty();

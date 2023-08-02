@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python strict binary and library compatibility macro.
 # Placeholder for internal Python strict test compatibility macro.
 
 package(default_visibility = ["//mediapipe:__subpackages__"])
@@ -76,7 +76,10 @@ py_test(
 py_library(
     name = "dataset",
     srcs = ["dataset.py"],
-    deps = ["//mediapipe/model_maker/python/core/data:classification_dataset"],
+    deps = [
+        "//mediapipe/model_maker/python/core/data:cache_files",
+        "//mediapipe/model_maker/python/core/data:classification_dataset",
+    ],
 )
 
 py_test(
@@ -88,7 +91,10 @@ py_test(
 py_library(
     name = "preprocessor",
     srcs = ["preprocessor.py"],
-    deps = [":dataset"],
+    deps = [
+        ":dataset",
+        "//mediapipe/model_maker/python/core/data:cache_files",
+    ],
 )
 
 py_test(
@@ -99,6 +105,7 @@ py_test(
         ":dataset",
         ":model_spec",
         ":preprocessor",
+        "//mediapipe/model_maker/python/core/data:cache_files",
     ],
 )
 
@@ -124,6 +131,7 @@ py_library(
         ":text_classifier_options",
         "//mediapipe/model_maker/python/core/data:dataset",
         "//mediapipe/model_maker/python/core/tasks:classifier",
+        "//mediapipe/model_maker/python/core/utils:loss_functions",
         "//mediapipe/model_maker/python/core/utils:metrics",
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/core/utils:quantization",
@@ -147,6 +155,7 @@ py_test(
     ],
     deps = [
         ":text_classifier_import",
+        "//mediapipe/model_maker/python/core/utils:loss_functions",
         "//mediapipe/tasks/python/test:test_utils",
     ],
 )

@@ -64,58 +64,13 @@ class CalculatorBaseFactoryFor<
 namespace api2 {
 namespace internal {
 
-// Defining a member of this type causes P to be ODR-used, which forces its
-// instantiation if it's a static member of a template.
-// Previously we depended on the pointer's value to determine whether the size
-// of a character array is 0 or 1, forcing it to be instantiated so the
-// compiler can determine the object's layout. But using it as a template
-// argument is more compact.
-template <auto* P>
-struct ForceStaticInstantiation {
-#ifdef _MSC_VER
-  // Just having it as the template argument does not count as a use for
-  // MSVC.
-  static constexpr bool Use() { return P != nullptr; }
-  char force_static[Use()];
-#endif  // _MSC_VER
-};
+MEDIAPIPE_STATIC_REGISTRATOR_TEMPLATE(
+    NodeRegistrator, mediapipe::CalculatorBaseRegistry, T::kCalculatorName,
+    absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<T>>)
 
-// Helper template for forcing the definition of a static registration token.
-template <typename T>
-struct NodeRegistrationStatic {
-  static NoDestructor<mediapipe::RegistrationToken> registration;
-
-  static mediapipe::RegistrationToken Make() {
-    return mediapipe::CalculatorBaseRegistry::Register(
-        T::kCalculatorName,
-        absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<T>>,
-        __FILE__, __LINE__);
-  }
-
-  using RequireStatics = ForceStaticInstantiation<&registration>;
-};
-
-// Static members of template classes can be defined in the header.
-template <typename T>
-NoDestructor<mediapipe::RegistrationToken>
-    NodeRegistrationStatic<T>::registration(NodeRegistrationStatic<T>::Make());
-
-template <typename T>
-struct SubgraphRegistrationImpl {
-  static NoDestructor<mediapipe::RegistrationToken> registration;
-
-  static mediapipe::RegistrationToken Make() {
-    return mediapipe::SubgraphRegistry::Register(
-        T::kCalculatorName, absl::make_unique<T>, __FILE__, __LINE__);
-  }
-
-  using RequireStatics = ForceStaticInstantiation<&registration>;
-};
-
-template <typename T>
-NoDestructor<mediapipe::RegistrationToken>
-    SubgraphRegistrationImpl<T>::registration(
-        SubgraphRegistrationImpl<T>::Make());
+MEDIAPIPE_STATIC_REGISTRATOR_TEMPLATE(SubgraphRegistrator,
+                                      mediapipe::SubgraphRegistry,
+                                      T::kCalculatorName, absl::make_unique<T>)
 
 }  // namespace internal
 
@@ -128,14 +83,7 @@ template <class Impl = void>
 class RegisteredNode;
 
 template <class Impl>
-class RegisteredNode : public Node {
- private:
-  // The member below triggers instantiation of the registration static.
-  // Note that the constructor of calculator subclasses is only invoked through
-  // the registration token, and so we cannot simply use the static in the
-  // constructor.
-  typename internal::NodeRegistrationStatic<Impl>::RequireStatics register_;
-};
+class RegisteredNode : public Node, private internal::NodeRegistrator<Impl> {};
 
 // No-op version for backwards compatibility.
 template <>
@@ -217,31 +165,27 @@ class NodeImpl : public RegisteredNode<Impl>, public Intf {
 // TODO: verify that the subgraph config fully implements the
 // declared interface.
 template <class Intf, class Impl>
-class SubgraphImpl : public Subgraph, public Intf {
- private:
-  typename internal::SubgraphRegistrationImpl<Impl>::RequireStatics register_;
-};
+class SubgraphImpl : public Subgraph,
+                     public Intf,
+                     private internal::SubgraphRegistrator<Impl> {};
 
 // This macro is used to register a calculator that does not use automatic
 // registration. Deprecated.
-#define MEDIAPIPE_NODE_IMPLEMENTATION(Impl)                                   \
-  static mediapipe::NoDestructor<mediapipe::RegistrationToken>                \
-  REGISTRY_STATIC_VAR(calculator_registration,                                \
-                      __LINE__)(mediapipe::CalculatorBaseRegistry::Register(  \
-      Impl::kCalculatorName,                                                  \
-      absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<Impl>>, \
-      __FILE__, __LINE__))
+#define MEDIAPIPE_NODE_IMPLEMENTATION(Impl)                       \
+  MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(                  \
+      mediapipe::CalculatorBaseRegistry, calculator_registration, \
+      Impl::kCalculatorName,                                      \
+      absl::make_unique<mediapipe::internal::CalculatorBaseFactoryFor<Impl>>)
 
 // This macro is used to register a non-split-contract calculator. Deprecated.
 #define MEDIAPIPE_REGISTER_NODE(name) REGISTER_CALCULATOR(name)
 
 // This macro is used to define a subgraph that does not use automatic
 // registration. Deprecated.
-#define MEDIAPIPE_SUBGRAPH_IMPLEMENTATION(Impl)                        \
-  static mediapipe::NoDestructor<mediapipe::RegistrationToken>         \
-  REGISTRY_STATIC_VAR(subgraph_registration,                           \
-                      __LINE__)(mediapipe::SubgraphRegistry::Register( \
-      Impl::kCalculatorName, absl::make_unique<Impl>, __FILE__, __LINE__))
+#define MEDIAPIPE_SUBGRAPH_IMPLEMENTATION(Impl)           \
+  MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(          \
+      mediapipe::SubgraphRegistry, subgraph_registration, \
+      Impl::kCalculatorName, absl::make_unique<Impl>)
 
 }  // namespace api2
 }  // namespace mediapipe

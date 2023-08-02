@@ -378,3 +378,10 @@ java_library(
         "@maven//:com_google_auto_value_auto_value_annotations",
     ],
 )
+
+java_import(
+    name = "any_java_proto",
+    jars = [
+        "@com_google_protobuf//java/core:libcore.jar",
+    ],
+)

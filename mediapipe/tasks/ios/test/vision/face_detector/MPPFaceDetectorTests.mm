@@ -25,7 +25,7 @@
 static NSDictionary *const kPortraitImage =
     @{@"name" : @"portrait", @"type" : @"jpg", @"orientation" : @(UIImageOrientationUp)};
 static NSDictionary *const kPortraitRotatedImage =
-    @{@"name" : @"portrait_rotated", @"type" : @"jpg", @"orientation" : @(UIImageOrientationRight)};
+    @{@"name" : @"portrait_rotated", @"type" : @"jpg", @"orientation" : @(UIImageOrientationLeft)};
 static NSDictionary *const kCatImage = @{@"name" : @"cat", @"type" : @"jpg"};
 static NSString *const kShortRangeBlazeFaceModel = @"face_detection_short_range";
 static NSArray<NSArray *> *const kPortraitExpectedKeypoints = @[

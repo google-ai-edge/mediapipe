@@ -35,3 +35,13 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
     ],
 )
+
+objc_library(
+    name = "MPPImageSegmenter",
+    hdrs = ["sources/MPPImageSegmenterOptions.h"],
+    deps = [
+        ":MPPImageSegmenterOptions",
+        ":MPPImageSegmenterResult",
+        "//mediapipe/tasks/ios/vision/core:MPPImage",
+    ],
+)

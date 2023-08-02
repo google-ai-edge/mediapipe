@@ -228,7 +228,9 @@ absl::Status CompareAndSaveImageOutput(
   auto status = CompareImageFrames(**expected, actual, options.max_color_diff,
                                    options.max_alpha_diff, options.max_avg_diff,
                                    diff_img);
-  ASSIGN_OR_RETURN(auto diff_img_path, SavePngTestOutput(*diff_img, "diff"));
+  if (diff_img) {
+    ASSIGN_OR_RETURN(auto diff_img_path, SavePngTestOutput(*diff_img, "diff"));
+  }
 
   return status;
 }

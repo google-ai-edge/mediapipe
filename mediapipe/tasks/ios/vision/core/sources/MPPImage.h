@@ -62,10 +62,10 @@ NS_SWIFT_NAME(MPImage)
 
 /**
  * Initializes an `MPPImage` object with the given `UIImage`.
- * The orientation of the newly created `MPPImage` will be `UIImageOrientationUp`.
- * Hence, if this image is used as input for any MediaPipe vision tasks, inference will be
- * performed on the it without any rotation. To create an `MPPImage` with a different orientation,
- * please use `[MPPImage initWithImage:orientation:error:]`.
+ * The orientation of the newly created `MPPImage` will be equal to the `imageOrientation` of
+ * `UIImage` and when sent to the vision tasks for inference, rotation will be applied accordingly.
+ * To create an `MPPImage` with an orientation different from its `imageOrientation`, please use
+ * `[MPPImage initWithImage:orientation:error:]`.
  *
  * @param image The image to use as the source. Its `CGImage` property must not be `NULL`.
  * @param error An optional error parameter populated when there is an error in initializing the
@@ -77,14 +77,19 @@ NS_SWIFT_NAME(MPImage)
 - (nullable instancetype)initWithUIImage:(UIImage *)image error:(NSError **)error;
 
 /**
- * Initializes an `MPPImage` object with the given `UIImabe` and orientation.
+ * Initializes an `MPPImage` object with the given `UIImage` and orientation. The given orientation
+ * will be used to calculate the rotation to be applied to the `UIImage` before inference is
+ * performed on it by the vision tasks. The `imageOrientation` stored in the `UIImage` is ignored
+ * when `MPImage` objects created by this method are sent to the vision tasks for inference. Use
+ * `[MPPImage initWithImage:orientation:error:]` to initialize images with the `imageOrientation` of
+ * `UIImage`.
  *
  * If the newly created `MPPImage` is used as input for any MediaPipe vision tasks, inference
  * will be performed on a copy of the image rotated according to the orientation.
  *
  * @param image The image to use as the source. Its `CGImage` property must not be `NULL`.
  * @param orientation The display orientation of the image. This will be stored in the property
- *     `orientation`. `MPPImage`.
+ *     `orientation` `MPPImage` and will override the `imageOrientation` of the passed in `UIImage`.
  * @param error An optional error parameter populated when there is an error in initializing the
  *     `MPPImage`.
  *

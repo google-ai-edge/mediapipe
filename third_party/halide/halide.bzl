@@ -82,22 +82,22 @@ def halide_runtime_linkopts():
 # Map of halide-target-base -> config_settings
 _HALIDE_TARGET_CONFIG_SETTINGS_MAP = {
     # Android
-    "arm-32-android": ["@halide//:halide_config_android_arm"],
-    "arm-64-android": ["@halide//:halide_config_android_arm64"],
-    "x86-32-android": ["@halide//:halide_config_android_x86_32"],
-    "x86-64-android": ["@halide//:halide_config_android_x86_64"],
+    "arm-32-android": ["@mediapipe//mediapipe:android_arm"],
+    "arm-64-android": ["@mediapipe//mediapipe:android_arm64"],
+    "x86-32-android": ["@mediapipe//mediapipe:android_x86"],
+    "x86-64-android": ["@mediapipe//mediapipe:android_x86_64"],
     # iOS
-    "arm-32-ios": ["@halide//:halide_config_ios_arm"],
-    "arm-64-ios": ["@halide//:halide_config_ios_arm64"],
+    "arm-32-ios": ["@mediapipe//mediapipe:ios_armv7"],
+    "arm-64-ios": ["@mediapipe//mediapipe:ios_arm64", "@mediapipe//mediapipe:ios_arm64e"],
     # OSX (or iOS simulator)
-    "x86-32-osx": ["@halide//:halide_config_macos_x86_32", "@halide//:halide_config_ios_x86_32"],
-    "x86-64-osx": ["@halide//:halide_config_macos_x86_64", "@halide//:halide_config_ios_x86_64"],
-    "arm-64-osx": ["@halide//:halide_config_macos_arm64"],
+    "x86-32-osx": ["@mediapipe//mediapipe:ios_i386"],
+    "x86-64-osx": ["@mediapipe//mediapipe:macos_x86_64", "@mediapipe//mediapipe:ios_x86_64"],
+    "arm-64-osx": ["@mediapipe//mediapipe:macos_arm64"],
     # Windows
-    "x86-64-windows": ["@halide//:halide_config_windows_x86_64"],
+    "x86-64-windows": ["@mediapipe//mediapipe:windows"],
     # Linux
-    "x86-64-linux": ["@halide//:halide_config_linux_x86_64"],
-    # deliberately nothing here using //conditions:default
+    # TODO: add mediapipe configs for linux to avoid assuming it's the default.
+    "x86-64-linux": ["//conditions:default"],
 }
 
 _HALIDE_TARGET_MAP_DEFAULT = {
@@ -618,19 +618,6 @@ def _standard_library_runtime_names():
     return collections.uniq([_halide_library_runtime_target_name(f) for f in _standard_library_runtime_features()])
 
 def halide_library_runtimes(compatible_with = []):
-    # Note that we don't use all of these combinations
-    # (and some are invalid), but that's ok.
-    for cpu in ["arm", "arm64", "x86_32", "x86_64"]:
-        for os in ["android", "linux", "windows", "ios", "macos"]:
-            native.config_setting(
-                name = "halide_config_%s_%s" % (os, cpu),
-                constraint_values = [
-                    "@platforms//os:%s" % os,
-                    "@platforms//cpu:%s" % cpu,
-                ],
-                visibility = ["//visibility:public"],
-            )
-
     unused = [
         _define_halide_library_runtime(f, compatible_with = compatible_with)
         for f in _standard_library_runtime_features()

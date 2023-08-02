@@ -62,6 +62,9 @@ class TFLiteGPURunner {
 
   void ForceOpenGL() { opengl_is_forced_ = true; }
   void ForceOpenCL() { opencl_is_forced_ = true; }
+  void ForceOpenCLInitFromSerializedModel() {
+    opencl_init_from_serialized_model_is_forced_ = true;
+  }
 
   absl::Status BindSSBOToInputTensor(GLuint ssbo_id, int input_id);
   absl::Status BindSSBOToOutputTensor(GLuint ssbo_id, int output_id);
@@ -141,6 +144,7 @@ class TFLiteGPURunner {
 
   bool opencl_is_forced_ = false;
   bool opengl_is_forced_ = false;
+  bool opencl_init_from_serialized_model_is_forced_ = false;
 };
 
 }  // namespace gpu

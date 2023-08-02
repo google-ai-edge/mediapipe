@@ -164,8 +164,8 @@ class PackMediaSequenceCalculator : public CalculatorBase {
       }
     }
 
-    CHECK(cc->Outputs().HasTag(kSequenceExampleTag) ||
-          cc->OutputSidePackets().HasTag(kSequenceExampleTag))
+    RET_CHECK(cc->Outputs().HasTag(kSequenceExampleTag) ||
+              cc->OutputSidePackets().HasTag(kSequenceExampleTag))
         << "Neither the output stream nor the output side packet is set to "
            "output the sequence example.";
     if (cc->Outputs().HasTag(kSequenceExampleTag)) {

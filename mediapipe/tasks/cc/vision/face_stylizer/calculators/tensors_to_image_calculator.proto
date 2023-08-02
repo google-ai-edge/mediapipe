@@ -48,4 +48,8 @@ message TensorsToImageCalculatorOptions {
     FloatRange input_tensor_float_range = 2;
     UIntRange input_tensor_uint_range = 3;
   }
+
+  // Determines which output tensor to slice when there are multiple output
+  // tensors available (e.g. network has multiple heads)
+  optional int32 tensor_position = 4 [default = 0];
 }

@@ -47,11 +47,14 @@ class AverageWordEmbeddingClassifierSpec:
   """
 
   # `learning_rate` is unused for the average word embedding model
-  hparams: hp.AverageWordEmbeddingHParams = hp.AverageWordEmbeddingHParams(
-      epochs=10, batch_size=32, learning_rate=0
+  hparams: hp.AverageWordEmbeddingHParams = dataclasses.field(
+      default_factory=lambda: hp.AverageWordEmbeddingHParams(
+          epochs=10, batch_size=32, learning_rate=0
+      )
   )
-  model_options: mo.AverageWordEmbeddingModelOptions = (
-      mo.AverageWordEmbeddingModelOptions())
+  model_options: mo.AverageWordEmbeddingModelOptions = dataclasses.field(
+      default_factory=mo.AverageWordEmbeddingModelOptions
+  )
   name: str = 'AverageWordEmbedding'
 
 average_word_embedding_classifier_spec = functools.partial(
@@ -66,7 +69,7 @@ class BertClassifierSpec(bert_model_spec.BertModelSpec):
   inherited from the BertModelSpec.
   """
 
-  hparams: hp.BertHParams = hp.BertHParams()
+  hparams: hp.BertHParams = dataclasses.field(default_factory=hp.BertHParams)
 
 
 mobilebert_classifier_spec = functools.partial(
@@ -76,11 +79,6 @@ mobilebert_classifier_spec = functools.partial(
         epochs=3, batch_size=48, learning_rate=3e-5, distribution_strategy='off'
     ),
     name='MobileBert',
-    tflite_input_name={
-        'ids': 'serving_default_input_1:0',
-        'segment_ids': 'serving_default_input_2:0',
-        'mask': 'serving_default_input_3:0',
-    },
 )
 
 exbert_classifier_spec = functools.partial(
@@ -90,11 +88,6 @@ exbert_classifier_spec = functools.partial(
         epochs=3, batch_size=48, learning_rate=3e-5, distribution_strategy='off'
     ),
     name='ExBert',
-    tflite_input_name={
-        'ids': 'serving_default_input_1:0',
-        'segment_ids': 'serving_default_input_2:0',
-        'mask': 'serving_default_input_3:0',
-    },
 )
 
 

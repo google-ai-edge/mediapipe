@@ -210,6 +210,23 @@ REGISTER_CALCULATOR(SpectrogramCalculator);
 // Factor to convert ln(SQUARED_MAGNITUDE) to deciBels = 10.0/ln(10.0).
 const float SpectrogramCalculator::kLnSquaredMagnitudeToDb = 4.342944819032518;
 
+namespace {
+std::unique_ptr<audio_dsp::WindowFunction> MakeWindowFun(
+    const SpectrogramCalculatorOptions::WindowType window_type) {
+  switch (window_type) {
+    // The cosine window and square root of Hann are equivalent.
+    case SpectrogramCalculatorOptions::COSINE:
+    case SpectrogramCalculatorOptions::SQRT_HANN:
+      return std::make_unique<audio_dsp::CosineWindow>();
+    case SpectrogramCalculatorOptions::HANN:
+      return std::make_unique<audio_dsp::HannWindow>();
+    case SpectrogramCalculatorOptions::HAMMING:
+      return std::make_unique<audio_dsp::HammingWindow>();
+  }
+  return nullptr;
+}
+}  // namespace
+
 absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
   SpectrogramCalculatorOptions spectrogram_options =
       cc->Options<SpectrogramCalculatorOptions>();
@@ -266,28 +283,14 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
 
   output_scale_ = spectrogram_options.output_scale();
 
-  std::vector<double> window;
-  switch (spectrogram_options.window_type()) {
-    case SpectrogramCalculatorOptions::COSINE:
-      audio_dsp::CosineWindow().GetPeriodicSamples(frame_duration_samples_,
-                                                   &window);
-      break;
-    case SpectrogramCalculatorOptions::HANN:
-      audio_dsp::HannWindow().GetPeriodicSamples(frame_duration_samples_,
-                                                 &window);
-      break;
-    case SpectrogramCalculatorOptions::HAMMING:
-      audio_dsp::HammingWindow().GetPeriodicSamples(frame_duration_samples_,
-                                                    &window);
-      break;
-    case SpectrogramCalculatorOptions::SQRT_HANN: {
-      audio_dsp::HannWindow().GetPeriodicSamples(frame_duration_samples_,
-                                                 &window);
-      absl::c_transform(window, window.begin(),
-                        [](double x) { return std::sqrt(x); });
-      break;
-    }
+  auto window_fun = MakeWindowFun(spectrogram_options.window_type());
+  if (window_fun == nullptr) {
+    return absl::Status(absl::StatusCode::kInvalidArgument,
+                        absl::StrCat("Invalid window type ",
+                                     spectrogram_options.window_type()));
   }
+  std::vector<double> window;
+  window_fun->GetPeriodicSamples(frame_duration_samples_, &window);
 
   // Propagate settings down to the actual Spectrogram object.
   spectrogram_generators_.clear();

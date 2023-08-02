@@ -13,7 +13,7 @@
 # limitations under the License.
 """Common classification dataset library."""
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import tensorflow as tf
 
@@ -23,8 +23,12 @@ from mediapipe.model_maker.python.core.data import dataset as ds
 class ClassificationDataset(ds.Dataset):
   """Dataset Loader for classification models."""
 
-  def __init__(self, dataset: tf.data.Dataset, size: int,
-               label_names: List[str]):
+  def __init__(
+      self,
+      dataset: tf.data.Dataset,
+      label_names: List[str],
+      size: Optional[int] = None,
+  ):
     super().__init__(dataset, size)
     self._label_names = label_names
 

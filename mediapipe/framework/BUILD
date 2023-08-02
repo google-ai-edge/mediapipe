@@ -44,6 +44,9 @@ bzl_library(
         "encode_binary_proto.bzl",
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_skylib//lib:paths",
+    ],
 )
 
 alias(

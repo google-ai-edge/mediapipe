@@ -74,8 +74,8 @@ class ObjectDetectorModel(tf.keras.Model):
       generator_config: configs.retinanet.DetectionGenerator = configs.retinanet.DetectionGenerator(),
   ) -> configs.retinanet.RetinaNet:
     model_config = configs.retinanet.RetinaNet(
-        min_level=3,
-        max_level=7,
+        min_level=self._model_spec.min_level,
+        max_level=self._model_spec.max_level,
         num_classes=self._num_classes,
         input_size=self._model_spec.input_image_shape,
         anchor=configs.retinanet.Anchor(

@@ -16,7 +16,6 @@
 #define MEDIAPIPE_DEPS_REGISTRATION_H_
 
 #include <algorithm>
-#include <cstdint>
 #include <functional>
 #include <string>
 #include <tuple>
@@ -145,6 +144,23 @@ template <typename T>
 struct WrapStatusOr<absl::StatusOr<T>> {
   using type = absl::StatusOr<T>;
 };
+
+// Defining a member of this type causes P to be ODR-used, which forces its
+// instantiation if it's a static member of a template.
+// Previously we depended on the pointer's value to determine whether the size
+// of a character array is 0 or 1, forcing it to be instantiated so the
+// compiler can determine the object's layout. But using it as a template
+// argument is more compact.
+template <auto* P>
+struct ForceStaticInstantiation {
+#ifdef _MSC_VER
+  // Just having it as the template argument does not count as a use for
+  // MSVC.
+  static constexpr bool Use() { return P != nullptr; }
+  char force_static[Use()];
+#endif  // _MSC_VER
+};
+
 }  // namespace registration_internal
 
 class NamespaceAllowlist {
@@ -162,8 +178,7 @@ class FunctionRegistry {
   FunctionRegistry(const FunctionRegistry&) = delete;
   FunctionRegistry& operator=(const FunctionRegistry&) = delete;
 
-  RegistrationToken Register(absl::string_view name, Function func,
-                             std::string filename, uint64_t line)
+  RegistrationToken Register(absl::string_view name, Function func)
       ABSL_LOCKS_EXCLUDED(lock_) {
     std::string normalized_name = GetNormalizedName(name);
     absl::WriterMutexLock lock(&lock_);
@@ -173,21 +188,10 @@ class FunctionRegistry {
     }
     if (functions_.insert(std::make_pair(normalized_name, std::move(func)))
             .second) {
-#ifndef NDEBUG
-      locations_.emplace(normalized_name,
-                         std::make_pair(std::move(filename), line));
-#endif
       return RegistrationToken(
           [this, normalized_name]() { Unregister(normalized_name); });
     }
-#ifndef NDEBUG
-    LOG(FATAL) << "Function with name " << name << " already registered."
-               << " First registration at "
-               << locations_.at(normalized_name).first << ":"
-               << locations_.at(normalized_name).second;
-#else
     LOG(FATAL) << "Function with name " << name << " already registered.";
-#endif
     return RegistrationToken([]() {});
   }
 
@@ -316,11 +320,6 @@ class FunctionRegistry {
  private:
   mutable absl::Mutex lock_;
   absl::flat_hash_map<std::string, Function> functions_ ABSL_GUARDED_BY(lock_);
-#ifndef NDEBUG
-  // Stores filename and line number for useful debug log.
-  absl::flat_hash_map<std::string, std::pair<std::string, uint32_t>> locations_
-      ABSL_GUARDED_BY(lock_);
-#endif
 
   // For names included in NamespaceAllowlist, strips the namespace.
   std::string GetAdjustedName(absl::string_view name) {
@@ -351,10 +350,8 @@ class GlobalFactoryRegistry {
 
  public:
   static RegistrationToken Register(absl::string_view name,
-                                    typename Functions::Function func,
-                                    std::string filename, uint64_t line) {
-    return functions()->Register(name, std::move(func), std::move(filename),
-                                 line);
+                                    typename Functions::Function func) {
+    return functions()->Register(name, std::move(func));
   }
 
   // Invokes the specified factory function and returns the result.
@@ -414,12 +411,77 @@ class GlobalFactoryRegistry {
 #define MEDIAPIPE_REGISTER_FACTORY_FUNCTION(RegistryType, name, ...) \
   static auto* REGISTRY_STATIC_VAR(registration_##name, __LINE__) =  \
       new mediapipe::RegistrationToken(                              \
-          RegistryType::Register(#name, __VA_ARGS__, __FILE__, __LINE__))
+          RegistryType::Register(#name, __VA_ARGS__))
 
+#define MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, \
+                                                      name, ...)              \
+  static auto* REGISTRY_STATIC_VAR(var_name, __LINE__) =                      \
+      new mediapipe::RegistrationToken(                                       \
+          RegistryType::Register(name, __VA_ARGS__))
+
+// TODO: migrate to the above.
 #define REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, name, ...) \
   static auto* REGISTRY_STATIC_VAR(var_name, __LINE__) =                       \
       new mediapipe::RegistrationToken(                                        \
-          RegistryType::Register(#name, __VA_ARGS__, __FILE__, __LINE__))
+          RegistryType::Register(#name, __VA_ARGS__))
+
+// Defines a utility registrator class which can be used to automatically
+// register factory functions.
+//
+// Example:
+// === Defining a registry ================================================
+//
+//  class Component {};
+//
+//  using ComponentRegistry = GlobalFactoryRegistry<std::unique_ptr<Component>>;
+//
+// === Defining a registrator =============================================
+//
+//  MEDIAPIPE_STATIC_REGISTRATOR_TEMPLATE(ComponentRegistrator,
+//                                        ComponentRegistry, T::kName,
+//                                        absl::make_unique<T>);
+//
+// === Defining and registering a new component. ==========================
+//
+//  class MyComponent : public Component,
+//                      private ComponentRegistrator<MyComponent> {
+//   public:
+//    static constexpr char kName[] = "MyComponent";
+//    ...
+//  };
+//
+// NOTE:
+// - MyComponent is automatically registered in ComponentRegistry by
+//   "MyComponent" name.
+// - Every component is require to provide its name (T::kName here.)
+#define MEDIAPIPE_STATIC_REGISTRATOR_TEMPLATE(RegistratorName, RegistryType,  \
+                                              name, ...)                      \
+  template <typename T>                                                       \
+  struct Internal##RegistratorName {                                          \
+    static NoDestructor<mediapipe::RegistrationToken> registration;           \
+                                                                              \
+    static mediapipe::RegistrationToken Make() {                              \
+      return RegistryType::Register(name, __VA_ARGS__);                       \
+    }                                                                         \
+                                                                              \
+    using RequireStatics =                                                    \
+        registration_internal::ForceStaticInstantiation<&registration>;       \
+  };                                                                          \
+  /* Static members of template classes can be defined in the header. */      \
+  template <typename T>                                                       \
+  NoDestructor<mediapipe::RegistrationToken>                                  \
+      Internal##RegistratorName<T>::registration(                             \
+          Internal##RegistratorName<T>::Make());                              \
+                                                                              \
+  template <typename T>                                                       \
+  class RegistratorName {                                                     \
+   private:                                                                   \
+    /* The member below triggers instantiation of the registration static. */ \
+    /* Note that the constructor of calculator subclasses is only invoked  */ \
+    /* through the registration token, and so we cannot simply use the     */ \
+    /* static in theconstructor.                                           */ \
+    typename Internal##RegistratorName<T>::RequireStatics register_;          \
+  };
 
 }  // namespace mediapipe
 

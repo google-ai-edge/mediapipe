@@ -16,8 +16,8 @@
           }
         },
         {
-          "name": "mask",
-          "description": "Mask with 1 for real tokens and 0 for padding tokens.",
+          "name": "segment_ids",
+          "description": "0 for the first sequence, 1 for the second sequence if exists.",
           "content": {
             "content_properties_type": "FeatureProperties",
             "content_properties": {
@@ -27,8 +27,8 @@
           }
         },
         {
-          "name": "segment_ids",
-          "description": "0 for the first sequence, 1 for the second sequence if exists.",
+          "name": "mask",
+          "description": "Mask with 1 for real tokens and 0 for padding tokens.",
           "content": {
             "content_properties_type": "FeatureProperties",
             "content_properties": {

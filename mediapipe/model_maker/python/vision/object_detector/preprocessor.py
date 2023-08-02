@@ -32,8 +32,8 @@ class Preprocessor(object):
     self._mean_norm = model_spec.mean_norm
     self._stddev_norm = model_spec.stddev_norm
     self._output_size = model_spec.input_image_shape[:2]
-    self._min_level = 3
-    self._max_level = 7
+    self._min_level = model_spec.min_level
+    self._max_level = model_spec.max_level
     self._num_scales = 3
     self._aspect_ratios = [0.5, 1, 2]
     self._anchor_size = 3

@@ -406,8 +406,13 @@ cc_library(
     alwayslink = 1,
 )
 
-# This dependency removed tensorflow_jellyfish_deps and xprofilez_with_server because they failed
-# Boq conformance test. Weigh your use case to see if this will work for you.
+# This dependency removed the following 3 targets because they failed Boq conformance test:
+#
+# tensorflow_jellyfish_deps
+# jfprof_lib
+# xprofilez_with_server
+#
+# If you need them plz consider tensorflow_inference_calculator_no_envelope_loader.
 cc_library(
     name = "tensorflow_inference_calculator_for_boq",
     srcs = ["tensorflow_inference_calculator.cc"],
@@ -927,7 +932,6 @@ cc_test(
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/formats:location_opencv",
         "//mediapipe/framework/port:gtest_main",

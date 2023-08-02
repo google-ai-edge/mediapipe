@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python strict binary and library compatibility macro.
 # Placeholder for internal Python strict test compatibility macro.
 
 licenses(["notice"])
@@ -54,6 +54,7 @@ py_library(
     srcs = ["dataset.py"],
     deps = [
         ":dataset_util",
+        "//mediapipe/model_maker/python/core/data:cache_files",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
     ],
 )
@@ -73,6 +74,7 @@ py_test(
 py_library(
     name = "dataset_util",
     srcs = ["dataset_util.py"],
+    deps = ["//mediapipe/model_maker/python/core/data:cache_files"],
 )
 
 py_test(

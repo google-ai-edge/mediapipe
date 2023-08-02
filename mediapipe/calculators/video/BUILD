@@ -130,7 +130,6 @@ cc_library(
         "//mediapipe/framework/formats:video_stream_header",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:opencv_video",
-        "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
     ],
@@ -341,7 +340,6 @@ cc_test(
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:test_util",
-        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -367,7 +365,6 @@ cc_test(
         "//mediapipe/framework/port:opencv_video",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:test_util",
-        "@com_google_absl//absl/flags:flag",
     ],
 )
 
@@ -451,7 +448,6 @@ cc_test(
         "//mediapipe/framework/tool:test_util",
         "//mediapipe/util/tracking:box_tracker_cc_proto",
         "//mediapipe/util/tracking:tracking_cc_proto",
-        "@com_google_absl//absl/flags:flag",
     ],
 )
 

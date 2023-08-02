@@ -261,8 +261,8 @@ cc_library(
 )
 
 cc_library(
-    name = "opencv_highgui",
-    hdrs = ["opencv_highgui_inc.h"],
+    name = "opencv_photo",
+    hdrs = ["opencv_photo_inc.h"],
     deps = [
         ":opencv_core",
         "//third_party:opencv",
@@ -291,6 +291,15 @@ cc_library(
 cc_library(
     name = "opencv_calib3d",
     hdrs = ["opencv_calib3d_inc.h"],
+    deps = [
+        ":opencv_core",
+        "//third_party:opencv",
+    ],
+)
+
+cc_library(
+    name = "opencv_highgui",
+    hdrs = ["opencv_highgui_inc.h"],
     deps = [
         ":opencv_core",
         "//third_party:opencv",

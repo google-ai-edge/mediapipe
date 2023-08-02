@@ -59,14 +59,15 @@ TEST(DelegateOptionsTest, SucceedGpuOptions) {
   BaseOptions base_options;
   base_options.delegate = BaseOptions::Delegate::GPU;
   BaseOptions::GpuOptions gpu_options;
-  gpu_options.cached_kernel_path = kCachedModelDir;
+  gpu_options.serialized_model_dir = kCachedModelDir;
   gpu_options.model_token = kModelToken;
   base_options.delegate_options = gpu_options;
   proto::BaseOptions proto = ConvertBaseOptionsToProto(&base_options);
   ASSERT_TRUE(proto.acceleration().has_gpu());
   ASSERT_FALSE(proto.acceleration().has_tflite());
   EXPECT_TRUE(proto.acceleration().gpu().use_advanced_gpu_api());
-  EXPECT_EQ(proto.acceleration().gpu().cached_kernel_path(), kCachedModelDir);
+  EXPECT_FALSE(proto.acceleration().gpu().has_cached_kernel_path());
+  EXPECT_EQ(proto.acceleration().gpu().serialized_model_dir(), kCachedModelDir);
   EXPECT_EQ(proto.acceleration().gpu().model_token(), kModelToken);
 }
 

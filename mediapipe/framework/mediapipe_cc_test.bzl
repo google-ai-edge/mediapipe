@@ -15,7 +15,7 @@ def mediapipe_cc_test(
         platforms = ["linux", "android", "ios", "wasm"],
         exclude_platforms = None,
         # ios_unit_test arguments
-        ios_minimum_os_version = "11.0",
+        ios_minimum_os_version = "12.0",
         # android_cc_test arguments
         open_gl_driver = None,
         emulator_mini_boot = True,

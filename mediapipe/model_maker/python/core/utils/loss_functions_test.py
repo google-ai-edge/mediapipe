@@ -101,6 +101,23 @@ class FocalLossTest(tf.test.TestCase, parameterized.TestCase):
     self.assertNear(loss, expected_loss, 1e-4)
 
 
+class SparseFocalLossTest(tf.test.TestCase):
+
+  def test_sparse_focal_loss_matches_focal_loss(self):
+    num_classes = 2
+    y_pred = tf.constant([[0.8, 0.2], [0.3, 0.7]])
+    y_true = tf.constant([1, 0])
+    y_true_one_hot = tf.one_hot(y_true, num_classes)
+    for gamma in [0.0, 0.5, 1.0]:
+      expected_loss_fn = loss_functions.FocalLoss(gamma=gamma)
+      loss_fn = loss_functions.SparseFocalLoss(
+          gamma=gamma, num_classes=num_classes
+      )
+      expected_loss = expected_loss_fn(y_true_one_hot, y_pred)
+      loss = loss_fn(y_true, y_pred)
+      self.assertNear(loss, expected_loss, 1e-4)
+
+
 class MockPerceptualLoss(loss_functions.PerceptualLoss):
   """A mock class with implementation of abstract methods for testing."""
 

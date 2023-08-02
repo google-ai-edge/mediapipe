@@ -85,4 +85,7 @@ message AudioToTensorCalculatorOptions {
   // The volume gain, measured in dB.
   // Scale the input audio amplitude by 10^(volume_gain_db/20).
   optional double volume_gain_db = 12;
+
+  // The source number of samples per second (hertz) of the input audio buffers.
+  optional double source_sample_rate = 13;
 }

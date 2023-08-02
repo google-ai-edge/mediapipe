@@ -109,9 +109,8 @@ absl::Status GlContext::CreateContext(
   }
   MP_RETURN_IF_ERROR(status);
 
-  LOG(INFO) << "Successfully created a WebGL context with major version "
-            << gl_major_version_ << " and handle " << context_;
-
+  VLOG(1) << "Successfully created a WebGL context with major version "
+          << gl_major_version_ << " and handle " << context_;
   return absl::OkStatus();
 }
 

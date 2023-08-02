@@ -22,4 +22,6 @@ export declare interface WasmFileset {
   wasmLoaderPath: string;
   /** The path to the Wasm binary. */
   wasmBinaryPath: string;
+  /** The optional path to the asset loader script. */
+  assetLoaderPath?: string;
 }

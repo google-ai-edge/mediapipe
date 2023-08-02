@@ -69,6 +69,7 @@ class InferenceCalculatorGlAdvancedImpl
             gpu_delegate_options);
     absl::Status ReadGpuCaches(tflite::gpu::TFLiteGPURunner* gpu_runner) const;
     absl::Status SaveGpuCaches(tflite::gpu::TFLiteGPURunner* gpu_runner) const;
+    bool UseSerializedModel() const { return use_serialized_model_; }
 
    private:
     bool use_kernel_caching_ = false;
@@ -150,8 +151,6 @@ InferenceCalculatorGlAdvancedImpl::GpuInferenceRunner::Process(
 }
 
 absl::Status InferenceCalculatorGlAdvancedImpl::GpuInferenceRunner::Close() {
-  MP_RETURN_IF_ERROR(
-      on_disk_cache_helper_.SaveGpuCaches(tflite_gpu_runner_.get()));
   return gpu_helper_.RunInGlContext([this]() -> absl::Status {
     tflite_gpu_runner_.reset();
     return absl::OkStatus();
@@ -226,9 +225,14 @@ InferenceCalculatorGlAdvancedImpl::GpuInferenceRunner::InitTFLiteGPURunner(
                          tflite_gpu_runner_->GetOutputShapes()[i].c};
   }
 
+  if (on_disk_cache_helper_.UseSerializedModel()) {
+    tflite_gpu_runner_->ForceOpenCLInitFromSerializedModel();
+  }
+
   MP_RETURN_IF_ERROR(
       on_disk_cache_helper_.ReadGpuCaches(tflite_gpu_runner_.get()));
-  return tflite_gpu_runner_->Build();
+  MP_RETURN_IF_ERROR(tflite_gpu_runner_->Build());
+  return on_disk_cache_helper_.SaveGpuCaches(tflite_gpu_runner_.get());
 }
 
 #if defined(MEDIAPIPE_ANDROID) || defined(MEDIAPIPE_CHROMIUMOS)

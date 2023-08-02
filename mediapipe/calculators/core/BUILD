@@ -381,17 +381,6 @@ cc_library(
     alwayslink = 1,
 )
 
-cc_library(
-    name = "clip_detection_vector_size_calculator",
-    srcs = ["clip_detection_vector_size_calculator.cc"],
-    deps = [
-        ":clip_vector_size_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/formats:detection_cc_proto",
-    ],
-    alwayslink = 1,
-)
-
 cc_test(
     name = "clip_vector_size_calculator_test",
     srcs = ["clip_vector_size_calculator_test.cc"],

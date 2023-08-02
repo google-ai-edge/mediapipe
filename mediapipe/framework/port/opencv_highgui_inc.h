@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MEDIAPIPE_PORT_OPENCV_HIGHGUI_INC_H_
-#define MEDIAPIPE_PORT_OPENCV_HIGHGUI_INC_H_
+#ifndef MEDIAPIPE_FRAMEWORK_PORT_OPENCV_HIGHGUI_INC_H_
+#define MEDIAPIPE_FRAMEWORK_PORT_OPENCV_HIGHGUI_INC_H_
 
 #include <opencv2/core/version.hpp>
 
@@ -25,4 +25,4 @@
 #include <opencv2/highgui.hpp>
 #endif
 
-#endif  // MEDIAPIPE_PORT_OPENCV_HIGHGUI_INC_H_
+#endif  // MEDIAPIPE_FRAMEWORK_PORT_OPENCV_HIGHGUI_INC_H_

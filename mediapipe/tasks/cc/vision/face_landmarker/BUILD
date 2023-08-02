@@ -217,3 +217,8 @@ cc_library(
     ],
     alwayslink = 1,
 )
+
+cc_library(
+    name = "face_landmarks_connections",
+    hdrs = ["face_landmarks_connections.h"],
+)

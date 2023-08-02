@@ -20,6 +20,8 @@ import com.google.mediapipe.proto.CalculatorProto.CalculatorGraphConfig;
 import com.google.mediapipe.proto.CalculatorProto.CalculatorGraphConfig.Node;
 import com.google.mediapipe.proto.CalculatorProto.InputStreamInfo;
 import com.google.mediapipe.calculator.proto.FlowLimiterCalculatorProto.FlowLimiterCalculatorOptions;
+import com.google.mediapipe.framework.MediaPipeException;
+import com.google.protobuf.Any;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -110,10 +112,21 @@ public abstract class TaskInfo<T extends TaskOptions> {
    */
   CalculatorGraphConfig generateGraphConfig() {
     CalculatorGraphConfig.Builder graphBuilder = CalculatorGraphConfig.newBuilder();
-    Node.Builder taskSubgraphBuilder =
-        Node.newBuilder()
-            .setCalculator(taskGraphName())
-            .setOptions(taskOptions().convertToCalculatorOptionsProto());
+    CalculatorOptions options = taskOptions().convertToCalculatorOptionsProto();
+    Any anyOptions = taskOptions().convertToAnyProto();
+    if (!(options == null ^ anyOptions == null)) {
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.INVALID_ARGUMENT.ordinal(),
+          "Only one of convertTo*Proto() method should be implemented for "
+              + taskOptions().getClass());
+    }
+    Node.Builder taskSubgraphBuilder = Node.newBuilder().setCalculator(taskGraphName());
+    if (options != null) {
+      taskSubgraphBuilder.setOptions(options);
+    }
+    if (anyOptions != null) {
+      taskSubgraphBuilder.addNodeOptions(anyOptions);
+    }
     for (String outputStream : outputStreams()) {
       taskSubgraphBuilder.addOutputStream(outputStream);
       graphBuilder.addOutputStream(outputStream);

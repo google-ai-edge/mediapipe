@@ -647,6 +647,12 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_leopard_bg_removal_result_512x512_png",
+        sha256 = "30be22e89fdd1d7b985294498ec67509b0caa1ca941fe291fa25f43a3873e4dd",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/leopard_bg_removal_result_512x512.png?generation=1690239134617707"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_leopard_bg_removal_result_png",
         sha256 = "afd33f2058fd58d189cda86ec931647741a6139970c9bcbc637cdd151ec657c5",
         urls = ["https://storage.googleapis.com/mediapipe-assets/leopard_bg_removal_result.png?generation=1685997278308542"],
@@ -710,6 +716,12 @@ def external_files():
         name = "com_google_mediapipe_mobile_ica_8bit-with-unsupported-metadata-version_tflite",
         sha256 = "5ea0341c481367df51741d7aa2fab4e3ba59f67ab366b18f6dcd50cb859ed548",
         urls = ["https://storage.googleapis.com/mediapipe-assets/mobile_ica_8bit-with-unsupported-metadata-version.tflite?generation=1661875819091013"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_mobilenetsweep_dptrigmqn384_unit_384_384_fp16quant_fp32input_opt_tflite",
+        sha256 = "3c4c7e36b35fc903ecfb51b351b4849b23c57cc18d1416cf6cabaa1522d84760",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/mobilenetsweep_dptrigmqn384_unit_384_384_fp16quant_fp32input_opt.tflite?generation=1690302146106240"],
     )
 
     http_file(

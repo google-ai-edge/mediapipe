@@ -76,4 +76,9 @@ REGISTER_CALCULATOR(BeginLoopGpuBufferCalculator);
 // A calculator to process std::vector<mediapipe::Image>.
 typedef BeginLoopCalculator<std::vector<Image>> BeginLoopImageCalculator;
 REGISTER_CALCULATOR(BeginLoopImageCalculator);
+
+// A calculator to process std::vector<float>.
+typedef BeginLoopCalculator<std::vector<float>> BeginLoopFloatCalculator;
+REGISTER_CALCULATOR(BeginLoopFloatCalculator);
+
 }  // namespace mediapipe

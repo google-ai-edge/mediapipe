@@ -239,7 +239,7 @@ public final class PacketGetter {
 
   /**
    * Assign the native image buffer array in given ByteBuffer array. It assumes given ByteBuffer
-   * array has the the same size of image list packet, and assumes the output buffer stores pixels
+   * array has the same size of image list packet, and assumes the output buffer stores pixels
    * contiguously. It returns false if this assumption does not hold.
    *
    * <p>If deepCopy is true, it assumes the given buffersArray has allocated the required size of

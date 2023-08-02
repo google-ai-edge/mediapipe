@@ -1,5 +1,6 @@
 #include "mediapipe/util/pose_util.h"
 
+#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 
 namespace {
@@ -192,7 +193,7 @@ void DrawPose(const mediapipe::NormalizedLandmarkList& pose, bool flip_y,
 }
 
 void DrawFace(const mediapipe::NormalizedLandmarkList& face, bool flip_y,
-              bool draw_nose, bool color_style, bool reverse_color,
+              bool draw_nose, int color_style, bool reverse_color,
               int draw_line_width, cv::Mat* image) {
   const int target_width = image->cols;
   const int target_height = image->rows;
@@ -202,16 +203,26 @@ void DrawFace(const mediapipe::NormalizedLandmarkList& face, bool flip_y,
                            (flip_y ? 1.0f - lm.y() : lm.y()) * target_height);
   }
 
-  cv::Scalar kFaceOvalColor = kWhiteColor;
-  cv::Scalar kLipsColor = kWhiteColor;
-  cv::Scalar kLeftEyeColor = kGreenColor;
-  cv::Scalar kLeftEyebrowColor = kGreenColor;
-  cv::Scalar kLeftEyeIrisColor = kGreenColor;
-  cv::Scalar kRightEyeColor = kRedColor;
-  cv::Scalar kRightEyebrowColor = kRedColor;
-  cv::Scalar kRightEyeIrisColor = kRedColor;
-  cv::Scalar kNoseColor = kWhiteColor;
-  if (color_style) {
+  cv::Scalar kFaceOvalColor;
+  cv::Scalar kLipsColor;
+  cv::Scalar kLeftEyeColor;
+  cv::Scalar kLeftEyebrowColor;
+  cv::Scalar kLeftEyeIrisColor;
+  cv::Scalar kRightEyeColor;
+  cv::Scalar kRightEyebrowColor;
+  cv::Scalar kRightEyeIrisColor;
+  cv::Scalar kNoseColor;
+  if (color_style == 0) {
+    kFaceOvalColor = kWhiteColor;
+    kLipsColor = kWhiteColor;
+    kLeftEyeColor = kGreenColor;
+    kLeftEyebrowColor = kGreenColor;
+    kLeftEyeIrisColor = kGreenColor;
+    kRightEyeColor = kRedColor;
+    kRightEyebrowColor = kRedColor;
+    kRightEyeIrisColor = kRedColor;
+    kNoseColor = kWhiteColor;
+  } else if (color_style == 1) {
     kFaceOvalColor = kWhiteColor;
     kLipsColor = kBlueColor;
     kLeftEyeColor = kCyanColor;
@@ -221,6 +232,18 @@ void DrawFace(const mediapipe::NormalizedLandmarkList& face, bool flip_y,
     kRightEyebrowColor = kRedColor;
     kRightEyeIrisColor = kRedColor;
     kNoseColor = kYellowColor;
+  } else if (color_style == 2) {
+    kFaceOvalColor = kWhiteColor;
+    kLipsColor = kBlueColor;
+    kLeftEyeColor = kCyanColor;
+    kLeftEyebrowColor = kGreenColor;
+    kLeftEyeIrisColor = kRedColor;
+    kRightEyeColor = kCyanColor;
+    kRightEyebrowColor = kGreenColor;
+    kRightEyeIrisColor = kRedColor;
+    kNoseColor = kYellowColor;
+  } else {
+    LOG(ERROR) << "color_style not supported.";
   }
 
   if (reverse_color) {

@@ -53,7 +53,7 @@ class DatasetTest(tf.test.TestCase):
 
   def test_split(self):
     ds = tf.data.Dataset.from_tensor_slices(['good', 'bad', 'neutral', 'odd'])
-    data = dataset.Dataset(ds, 4, ['pos', 'neg'])
+    data = dataset.Dataset(ds, ['pos', 'neg'], size=4)
     train_data, test_data = data.split(0.5)
     expected_train_data = [b'good', b'bad']
     expected_test_data = [b'neutral', b'odd']
