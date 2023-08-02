@@ -25,6 +25,7 @@
 
 #include "absl/container/fixed_array.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -387,6 +388,7 @@ absl::Status CalculatorGraph::InitializeDefaultExecutor(
         "", std::make_shared<internal::DelegatingExecutor>(
                 std::bind(&internal::Scheduler::AddApplicationThreadTask,
                           &scheduler_, std::placeholders::_1))));
+    VLOG(1) << "Using default executor and application thread.";
     return absl::OkStatus();
   }
 
@@ -406,6 +408,8 @@ absl::Status CalculatorGraph::InitializeDefaultExecutor(
   }
   MP_RETURN_IF_ERROR(
       CreateDefaultThreadPool(default_executor_options, num_threads));
+  VLOG(1) << absl::StrCat("Using default executor with num_threads: ",
+                          num_threads);
   return absl::OkStatus();
 }
 
