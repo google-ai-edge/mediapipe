@@ -110,12 +110,12 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixColMajor) {
 
     // Wait until the calculator done processing.
     MP_ASSERT_OK(graph_->WaitUntilIdle());
-    EXPECT_EQ(1, output_packets.size());
+    ASSERT_EQ(output_packets.size(), 1);
 
     // Get and process results.
     const std::vector<Tensor>& tensor_vec =
         output_packets[0].Get<std::vector<Tensor>>();
-    EXPECT_EQ(1, tensor_vec.size());
+    ASSERT_EQ(tensor_vec.size(), 1);
 
     const Tensor* tensor = &tensor_vec[0];
     EXPECT_EQ(Tensor::ElementType::kFloat32, tensor->element_type());
@@ -172,12 +172,12 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixRowMajor) {
 
     // Wait until the calculator done processing.
     MP_ASSERT_OK(graph_->WaitUntilIdle());
-    EXPECT_EQ(1, output_packets.size());
+    ASSERT_EQ(output_packets.size(), 1);
 
     // Get and process results.
     const std::vector<Tensor>& tensor_vec =
         output_packets[0].Get<std::vector<Tensor>>();
-    EXPECT_EQ(1, tensor_vec.size());
+    ASSERT_EQ(tensor_vec.size(), 1);
 
     const Tensor* tensor = &tensor_vec[0];
     EXPECT_EQ(Tensor::ElementType::kFloat32, tensor->element_type());
@@ -239,7 +239,7 @@ TEST_F(TensorConverterCalculatorTest, CustomDivAndSub) {
   // Get and process results.
   const std::vector<Tensor>& tensor_vec =
       output_packets[0].Get<std::vector<Tensor>>();
-  EXPECT_EQ(1, tensor_vec.size());
+  ASSERT_EQ(tensor_vec.size(), 1);
 
   const Tensor* tensor = &tensor_vec[0];
   EXPECT_EQ(Tensor::ElementType::kFloat32, tensor->element_type());
@@ -289,12 +289,12 @@ TEST_F(TensorConverterCalculatorTest, SetOutputRange) {
 
     // Wait until the calculator finishes processing.
     MP_ASSERT_OK(graph.WaitUntilIdle());
-    EXPECT_THAT(output_packets.size(), Eq(1));
+    ASSERT_EQ(output_packets.size(), 1);
 
     // Get and process results.
     const std::vector<Tensor>& tensor_vec =
         output_packets[0].Get<std::vector<Tensor>>();
-    EXPECT_THAT(tensor_vec.size(), Eq(1));
+    ASSERT_EQ(tensor_vec.size(), 1);
 
     const Tensor* tensor = &tensor_vec[0];
 
@@ -302,7 +302,7 @@ TEST_F(TensorConverterCalculatorTest, SetOutputRange) {
     float normalized_value =
         range.first + (200 * (range.second - range.first)) / 255.0;
 
-    EXPECT_THAT(tensor->element_type(), Eq(Tensor::ElementType::kFloat32));
+    EXPECT_EQ(tensor->element_type(), Tensor::ElementType::kFloat32);
     auto view = tensor->GetCpuReadView();
     float dataf = *view.buffer<float>();
     EXPECT_THAT(
@@ -351,16 +351,16 @@ TEST_F(TensorConverterCalculatorTest, FlipVertically) {
 
   // Wait until the calculator finishes processing.
   MP_ASSERT_OK(graph.WaitUntilIdle());
-  ASSERT_THAT(output_packets.size(), Eq(1));
+  ASSERT_EQ(output_packets.size(), 1);
 
   // Get and process results.
   const std::vector<Tensor>& tensor_vec =
       output_packets[0].Get<std::vector<Tensor>>();
-  EXPECT_THAT(tensor_vec.size(), Eq(1));
+  ASSERT_EQ(tensor_vec.size(), 1);
 
   const Tensor* tensor = &tensor_vec[0];
 
-  EXPECT_THAT(tensor->element_type(), Eq(Tensor::ElementType::kFloat32));
+  EXPECT_EQ(tensor->element_type(), Tensor::ElementType::kFloat32);
   const float* dataf = tensor->GetCpuReadView().buffer<float>();
   EXPECT_EQ(kY1Value, static_cast<int>(roundf(dataf[0])));  // Y0, Y1 flipped!
   EXPECT_EQ(kY0Value, static_cast<int>(roundf(dataf[1])));
@@ -406,16 +406,16 @@ TEST_F(TensorConverterCalculatorTest, GpuOriginOverridesFlipVertically) {
 
   // Wait until the calculator finishes processing.
   MP_ASSERT_OK(graph.WaitUntilIdle());
-  EXPECT_THAT(output_packets.size(), Eq(1));
+  ASSERT_EQ(output_packets.size(), 1);
 
   // Get and process results.
   const std::vector<Tensor>& tensor_vec =
       output_packets[0].Get<std::vector<Tensor>>();
-  EXPECT_THAT(tensor_vec.size(), Eq(1));
+  ASSERT_EQ(tensor_vec.size(), 1);
 
   const Tensor* tensor = &tensor_vec[0];
 
-  EXPECT_THAT(tensor->element_type(), Eq(Tensor::ElementType::kFloat32));
+  EXPECT_EQ(tensor->element_type(), Tensor::ElementType::kFloat32);
   const float* dataf = tensor->GetCpuReadView().buffer<float>();
   EXPECT_EQ(kY0Value, static_cast<int>(roundf(dataf[0])));  // Not flipped!
   EXPECT_EQ(kY1Value, static_cast<int>(roundf(dataf[1])));
