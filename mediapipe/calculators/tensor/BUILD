@@ -620,6 +620,7 @@ mediapipe_proto_library(
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
+        "//mediapipe/gpu:gpu_origin_proto",
     ],
 )
 
@@ -649,7 +650,11 @@ cc_library(
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:statusor",
+        "//mediapipe/gpu:gpu_origin_cc_proto",
         "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/strings:str_format",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": ["tensor_converter_calculator_gpu_deps"],
