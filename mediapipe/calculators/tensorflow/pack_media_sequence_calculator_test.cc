@@ -12,27 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
+#include <string>
+#include <vector>
 
-#include "absl/container/flat_hash_map.h"
 #include "absl/memory/memory.h"
-#include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/image/opencv_image_encoder_calculator.pb.h"
 #include "mediapipe/calculators/tensorflow/pack_media_sequence_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
+#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
-#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/location_opencv.h"
-#include "mediapipe/framework/port/gmock.h"
-#include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/util/sequence/media_sequence.h"
 #include "tensorflow/core/example/example.pb.h"
 #include "tensorflow/core/example/feature.pb.h"
+#include "testing/base/public/gmock.h"
+#include "testing/base/public/gunit.h"
 
 namespace mediapipe {
 namespace {
@@ -58,6 +58,8 @@ constexpr char kFloatFeatureOtherTag[] = "FLOAT_FEATURE_OTHER";
 constexpr char kFloatFeatureTestTag[] = "FLOAT_FEATURE_TEST";
 constexpr char kIntFeatureOtherTag[] = "INT_FEATURE_OTHER";
 constexpr char kIntFeatureTestTag[] = "INT_FEATURE_TEST";
+constexpr char kImageLabelTestTag[] = "IMAGE_LABEL_TEST";
+constexpr char kImageLabelOtherTag[] = "IMAGE_LABEL_OTHER";
 constexpr char kImagePrefixTag[] = "IMAGE_PREFIX";
 constexpr char kSequenceExampleTag[] = "SEQUENCE_EXAMPLE";
 constexpr char kImageTag[] = "IMAGE";
@@ -310,6 +312,68 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoBytesLists) {
     ASSERT_THAT(mpms::GetFeatureBytesAt("OTHER", output_sequence, i),
                 ::testing::ElementsAreArray(
                     std::vector<std::string>(2, absl::StrCat("bar", 2 << i))));
+  }
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, PacksTwoImageLabels) {
+  SetUpCalculator(
+      {"IMAGE_LABEL_TEST:test_labels", "IMAGE_LABEL_OTHER:test_labels2"}, {},
+      false, true);
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+
+  int num_timesteps = 2;
+  for (int i = 0; i < num_timesteps; ++i) {
+    Classification cls;
+    cls.set_label(absl::StrCat("foo", 2 << i));
+    cls.set_score(0.1 * i);
+    auto label_ptr = ::absl::make_unique<std::vector<Classification>>(2, cls);
+    runner_->MutableInputs()
+        ->Tag(kImageLabelTestTag)
+        .packets.push_back(Adopt(label_ptr.release()).At(Timestamp(i)));
+    cls.set_label(absl::StrCat("bar", 2 << i));
+    cls.set_score(0.2 * i);
+    label_ptr = ::absl::make_unique<std::vector<Classification>>(2, cls);
+    runner_->MutableInputs()
+        ->Tag(kImageLabelOtherTag)
+        .packets.push_back(Adopt(label_ptr.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_EQ(num_timesteps,
+            mpms::GetImageTimestampSize("TEST", output_sequence));
+  ASSERT_EQ(num_timesteps,
+            mpms::GetImageLabelStringSize("TEST", output_sequence));
+  ASSERT_EQ(num_timesteps,
+            mpms::GetImageLabelConfidenceSize("TEST", output_sequence));
+  ASSERT_EQ(num_timesteps,
+            mpms::GetImageTimestampSize("OTHER", output_sequence));
+  ASSERT_EQ(num_timesteps,
+            mpms::GetImageLabelStringSize("OTHER", output_sequence));
+  ASSERT_EQ(num_timesteps,
+            mpms::GetImageLabelConfidenceSize("OTHER", output_sequence));
+  for (int i = 0; i < num_timesteps; ++i) {
+    ASSERT_EQ(i, mpms::GetImageTimestampAt("TEST", output_sequence, i));
+    ASSERT_THAT(mpms::GetImageLabelStringAt("TEST", output_sequence, i),
+                ::testing::ElementsAreArray(
+                    std::vector<std::string>(2, absl::StrCat("foo", 2 << i))));
+    ASSERT_THAT(mpms::GetImageLabelConfidenceAt("TEST", output_sequence, i),
+                ::testing::ElementsAreArray(std::vector<float>(2, 0.1 * i)));
+    ASSERT_EQ(i, mpms::GetImageTimestampAt("OTHER", output_sequence, i));
+    ASSERT_THAT(mpms::GetImageLabelStringAt("OTHER", output_sequence, i),
+                ::testing::ElementsAreArray(
+                    std::vector<std::string>(2, absl::StrCat("bar", 2 << i))));
+    ASSERT_THAT(mpms::GetImageLabelConfidenceAt("OTHER", output_sequence, i),
+                ::testing::ElementsAreArray(std::vector<float>(2, 0.2 * i)));
   }
 }
 
