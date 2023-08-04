@@ -501,7 +501,6 @@ cc_library(
         ":calculator_graph_template_cc_proto",
         ":proto_util_lite",
         "//mediapipe/framework:calculator_cc_proto",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:numbers",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",

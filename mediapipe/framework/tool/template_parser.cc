@@ -471,7 +471,7 @@ class TemplateParser::Parser::ParserImpl {
                     "\" stored in google.protobuf.Any.");
         return false;
       }
-      DO(ConsumeAnyValue(value_descriptor, &serialized_value));
+      DO(ConsumeAnyValue(any_value_field, value_descriptor, &serialized_value));
       if (singular_overwrite_policy_ == FORBID_SINGULAR_OVERWRITES) {
         // Fail if any_type_url_field has already been specified.
         if ((!any_type_url_field->is_repeated() &&
@@ -709,7 +709,7 @@ class TemplateParser::Parser::ParserImpl {
     // If the parse information tree is not NULL, create a nested one
     // for the nested message.
     ParseInfoTree* parent = parse_info_tree_;
-    if (parent != NULL) {
+    if (parent) {
       parse_info_tree_ = parent->CreateNested(field);
     }
 
@@ -1191,8 +1191,20 @@ class TemplateParser::Parser::ParserImpl {
 
   // A helper function for reconstructing Any::value. Consumes a text of
   // full_type_name, then serializes it into serialized_value.
-  bool ConsumeAnyValue(const Descriptor* value_descriptor,
+  bool ConsumeAnyValue(const FieldDescriptor* field,
+                       const Descriptor* value_descriptor,
                        std::string* serialized_value) {
+    if (--recursion_limit_ < 0) {
+      ReportError("Message is too deep");
+      return false;
+    }
+    // If the parse information tree is not NULL, create a nested one
+    // for the nested message.
+    ParseInfoTree* parent = parse_info_tree_;
+    if (parent) {
+      parse_info_tree_ = parent->CreateNested(field);
+    }
+
     DynamicMessageFactory factory;
     const Message* value_prototype = factory.GetPrototype(value_descriptor);
     if (value_prototype == NULL) {
@@ -1214,6 +1226,11 @@ class TemplateParser::Parser::ParserImpl {
       }
       value->AppendToString(serialized_value);
     }
+
+    ++recursion_limit_;
+
+    // Reset the parse information tree.
+    parse_info_tree_ = parent;
     return true;
   }
 
