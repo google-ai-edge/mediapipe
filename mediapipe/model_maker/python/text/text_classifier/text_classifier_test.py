@@ -104,13 +104,9 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
 
   @parameterized.named_parameters(
       # Skipping mobilebert b/c OSS test timeout/flakiness: b/275624089
-      # dict(
-      #     testcase_name='mobilebert',
-      #     supported_model=text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER,
-      # ),
       dict(
-          testcase_name='exbert',
-          supported_model=text_classifier.SupportedModels.EXBERT_CLASSIFIER,
+          testcase_name='mobilebert',
+          supported_model=text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER,
       ),
   )
   def test_create_and_train_bert(self, supported_model):
@@ -156,7 +152,7 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
 
   def test_label_mismatch(self):
     options = text_classifier.TextClassifierOptions(
-        supported_model=(text_classifier.SupportedModels.EXBERT_CLASSIFIER)
+        supported_model=(text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER)
     )
     train_tf_dataset = tf.data.Dataset.from_tensor_slices([[0]])
     train_data = text_classifier.Dataset(train_tf_dataset, ['foo'], 1)
@@ -174,13 +170,13 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
     train_data, validation_data = self._get_data()
 
     avg_options = text_classifier.TextClassifierOptions(
-        supported_model=(text_classifier.SupportedModels.EXBERT_CLASSIFIER),
+        supported_model=(text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER),
         model_options=text_classifier.AverageWordEmbeddingModelOptions(),
     )
     with self.assertRaisesWithLiteralMatch(
         ValueError,
         'Expected AVERAGE_WORD_EMBEDDING_CLASSIFIER, got'
-        ' SupportedModels.EXBERT_CLASSIFIER',
+        ' SupportedModels.MOBILEBERT_CLASSIFIER',
     ):
       text_classifier.TextClassifier.create(
           train_data, validation_data, avg_options
@@ -194,7 +190,7 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
     )
     with self.assertRaisesWithLiteralMatch(
         ValueError,
-        'Expected a Bert Classifier(MobileBERT or EXBERT), got'
+        'Expected a Bert Classifier, got'
         ' SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER',
     ):
       text_classifier.TextClassifier.create(
@@ -203,7 +199,7 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
 
   def test_bert_loss_and_metrics_creation(self):
     train_data, validation_data = self._get_data()
-    supported_model = text_classifier.SupportedModels.EXBERT_CLASSIFIER
+    supported_model = text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER
     hparams = text_classifier.BertHParams(
         desired_recalls=[0.2],
         desired_precisions=[0.9],

@@ -87,11 +87,11 @@ class PreprocessorTest(tf.test.TestCase):
     csv_file = self._get_csv_file()
     dataset = text_classifier_ds.Dataset.from_csv(
         filename=csv_file, csv_params=self.CSV_PARAMS_)
-    bert_spec = model_spec.SupportedModels.EXBERT_CLASSIFIER.value()
+    bert_spec = model_spec.SupportedModels.MOBILEBERT_CLASSIFIER.value()
     bert_preprocessor = preprocessor.BertClassifierPreprocessor(
         seq_len=5,
         do_lower_case=bert_spec.do_lower_case,
-        uri=bert_spec.downloaded_files.get_path(),
+        uri=bert_spec.get_path(),
         model_name=bert_spec.name,
     )
     preprocessed_dataset = bert_preprocessor.preprocess(dataset)
@@ -121,11 +121,11 @@ class PreprocessorTest(tf.test.TestCase):
         csv_params=self.CSV_PARAMS_,
         cache_dir=self.get_temp_dir(),
     )
-    bert_spec = model_spec.SupportedModels.EXBERT_CLASSIFIER.value()
+    bert_spec = model_spec.SupportedModels.MOBILEBERT_CLASSIFIER.value()
     bert_preprocessor = preprocessor.BertClassifierPreprocessor(
         seq_len=5,
         do_lower_case=bert_spec.do_lower_case,
-        uri=bert_spec.downloaded_files.get_path(),
+        uri=bert_spec.get_path(),
         model_name=bert_spec.name,
     )
     ds_cache_files = dataset.tfrecord_cache_files
@@ -153,7 +153,7 @@ class PreprocessorTest(tf.test.TestCase):
     bert_preprocessor = preprocessor.BertClassifierPreprocessor(
         seq_len=seq_len,
         do_lower_case=do_lower_case,
-        uri=bert_spec.downloaded_files.get_path(),
+        uri=bert_spec.get_path(),
         model_name=bert_spec.name,
     )
     new_cf = bert_preprocessor._get_tfrecord_cache_files(cf)
@@ -167,10 +167,6 @@ class PreprocessorTest(tf.test.TestCase):
         cache_dir=self.get_temp_dir(),
         num_shards=1,
     )
-    exbert_spec = model_spec.SupportedModels.EXBERT_CLASSIFIER.value()
-    all_cf_prefixes.add(self._get_new_prefix(cf, exbert_spec, 5, True))
-    all_cf_prefixes.add(self._get_new_prefix(cf, exbert_spec, 10, True))
-    all_cf_prefixes.add(self._get_new_prefix(cf, exbert_spec, 5, False))
     mobilebert_spec = model_spec.SupportedModels.MOBILEBERT_CLASSIFIER.value()
     all_cf_prefixes.add(self._get_new_prefix(cf, mobilebert_spec, 5, True))
     all_cf_prefixes.add(self._get_new_prefix(cf, mobilebert_spec, 10, True))
@@ -180,10 +176,10 @@ class PreprocessorTest(tf.test.TestCase):
         cache_dir=self.get_temp_dir(),
         num_shards=1,
     )
-    all_cf_prefixes.add(self._get_new_prefix(new_cf, exbert_spec, 5, True))
+    all_cf_prefixes.add(self._get_new_prefix(new_cf, mobilebert_spec, 5, True))
 
-    # Each item of all_cf_prefixes should be unique, so 7 total.
-    self.assertLen(all_cf_prefixes, 7)
+    # Each item of all_cf_prefixes should be unique.
+    self.assertLen(all_cf_prefixes, 4)
 
 
 if __name__ == '__main__':

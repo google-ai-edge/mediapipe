@@ -19,6 +19,13 @@ licenses(["notice"])
 
 package(default_visibility = ["//mediapipe:__subpackages__"])
 
+filegroup(
+    name = "testdata",
+    srcs = glob([
+        "testdata/**",
+    ]),
+)
+
 py_library(
     name = "test_util",
     testonly = 1,
@@ -56,9 +63,24 @@ py_library(
 py_test(
     name = "file_util_test",
     srcs = ["file_util_test.py"],
-    data = ["//mediapipe/model_maker/python/core/utils/testdata"],
+    data = [":testdata"],
     tags = ["requires-net:external"],
     deps = [":file_util"],
+)
+
+py_library(
+    name = "hub_loader",
+    srcs = ["hub_loader.py"],
+)
+
+py_test(
+    name = "hub_loader_test",
+    srcs = ["hub_loader_test.py"],
+    data = [":testdata"],
+    deps = [
+        ":hub_loader",
+        "//mediapipe/tasks/python/test:test_utils",
+    ],
 )
 
 py_library(

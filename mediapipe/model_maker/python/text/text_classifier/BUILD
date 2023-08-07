@@ -131,6 +131,7 @@ py_library(
         ":text_classifier_options",
         "//mediapipe/model_maker/python/core/data:dataset",
         "//mediapipe/model_maker/python/core/tasks:classifier",
+        "//mediapipe/model_maker/python/core/utils:hub_loader",
         "//mediapipe/model_maker/python/core/utils:loss_functions",
         "//mediapipe/model_maker/python/core/utils:metrics",
         "//mediapipe/model_maker/python/core/utils:model_util",

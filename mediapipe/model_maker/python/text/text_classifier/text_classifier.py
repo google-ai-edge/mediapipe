@@ -24,6 +24,7 @@ import tensorflow_hub as hub
 
 from mediapipe.model_maker.python.core.data import dataset as ds
 from mediapipe.model_maker.python.core.tasks import classifier
+from mediapipe.model_maker.python.core.utils import hub_loader
 from mediapipe.model_maker.python.core.utils import loss_functions
 from mediapipe.model_maker.python.core.utils import metrics
 from mediapipe.model_maker.python.core.utils import model_util
@@ -52,18 +53,21 @@ def _validate(options: text_classifier_options.TextClassifierOptions):
   if options.model_options is None:
     return
 
-  if (isinstance(options.model_options, mo.AverageWordEmbeddingModelOptions) and
-      (options.supported_model !=
-       ms.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER)):
-    raise ValueError("Expected AVERAGE_WORD_EMBEDDING_CLASSIFIER,"
-                     f" got {options.supported_model}")
-  if isinstance(options.model_options, mo.BertModelOptions) and (
-      options.supported_model != ms.SupportedModels.MOBILEBERT_CLASSIFIER
-      and options.supported_model != ms.SupportedModels.EXBERT_CLASSIFIER
+  if isinstance(
+      options.model_options, mo.AverageWordEmbeddingModelOptions
+  ) and (
+      options.supported_model
+      != ms.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER
   ):
     raise ValueError(
-        "Expected a Bert Classifier(MobileBERT or EXBERT), got "
-        f"{options.supported_model}"
+        "Expected AVERAGE_WORD_EMBEDDING_CLASSIFIER,"
+        f" got {options.supported_model}"
+    )
+  if isinstance(options.model_options, mo.BertModelOptions) and (
+      not isinstance(options.supported_model.value(), ms.BertClassifierSpec)
+  ):
+    raise ValueError(
+        f"Expected a Bert Classifier, got {options.supported_model}"
     )
 
 
@@ -113,15 +117,13 @@ class TextClassifier(classifier.Classifier):
     if options.hparams is None:
       options.hparams = options.supported_model.value().hparams
 
-    if (
-        options.supported_model == ms.SupportedModels.MOBILEBERT_CLASSIFIER
-        or options.supported_model == ms.SupportedModels.EXBERT_CLASSIFIER
-    ):
+    if isinstance(options.supported_model.value(), ms.BertClassifierSpec):
       text_classifier = _BertClassifier.create_bert_classifier(
           train_data, validation_data, options
       )
-    elif (options.supported_model ==
-          ms.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER):
+    elif isinstance(
+        options.supported_model.value(), ms.AverageWordEmbeddingClassifierSpec
+    ):
       text_classifier = _AverageWordEmbeddingClassifier.create_average_word_embedding_classifier(
           train_data, validation_data, options
       )
@@ -348,12 +350,12 @@ class _BertClassifier(TextClassifier):
     self._hparams = hparams
     self._callbacks = model_util.get_default_callbacks(self._hparams.export_dir)
     self._model_options = model_options
+    self._text_preprocessor: preprocessor.BertClassifierPreprocessor = None
     with self._hparams.get_strategy().scope():
       self._loss_function = loss_functions.SparseFocalLoss(
           self._hparams.gamma, self._num_classes
       )
       self._metric_functions = self._create_metrics()
-      self._text_preprocessor: preprocessor.BertClassifierPreprocessor = None
 
   @classmethod
   def create_bert_classifier(
@@ -410,7 +412,7 @@ class _BertClassifier(TextClassifier):
     self._text_preprocessor = preprocessor.BertClassifierPreprocessor(
         seq_len=self._model_options.seq_len,
         do_lower_case=self._model_spec.do_lower_case,
-        uri=self._model_spec.downloaded_files.get_path(),
+        uri=self._model_spec.get_path(),
         model_name=self._model_spec.name,
     )
     return (
@@ -488,12 +490,26 @@ class _BertClassifier(TextClassifier):
             name="input_type_ids",
         ),
     )
-    encoder = hub.KerasLayer(
-        self._model_spec.downloaded_files.get_path(),
-        trainable=self._model_options.do_fine_tuning,
-    )
-    encoder_outputs = encoder(encoder_inputs)
-    pooled_output = encoder_outputs["pooled_output"]
+    if self._model_spec.is_tf2:
+      encoder = hub.KerasLayer(
+          self._model_spec.get_path(),
+          trainable=self._model_options.do_fine_tuning,
+      )
+      encoder_outputs = encoder(encoder_inputs)
+      pooled_output = encoder_outputs["pooled_output"]
+    else:
+      renamed_inputs = dict(
+          input_ids=encoder_inputs["input_word_ids"],
+          input_mask=encoder_inputs["input_mask"],
+          segment_ids=encoder_inputs["input_type_ids"],
+      )
+      encoder = hub_loader.HubKerasLayerV1V2(
+          self._model_spec.get_path(),
+          signature="tokens",
+          output_key="pooled_output",
+          trainable=self._model_options.do_fine_tuning,
+      )
+      pooled_output = encoder(renamed_inputs)
 
     output = tf.keras.layers.Dropout(rate=self._model_options.dropout_rate)(
         pooled_output)
