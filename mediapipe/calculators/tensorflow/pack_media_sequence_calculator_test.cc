@@ -593,6 +593,10 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoBBoxDetections) {
     auto class_indices = mpms::GetPredictedBBoxLabelIndexAt(output_sequence, i);
     ASSERT_EQ(0, class_indices[0]);
     ASSERT_EQ(1, class_indices[1]);
+    auto class_scores =
+        mpms::GetPredictedBBoxLabelConfidenceAt(output_sequence, i);
+    ASSERT_FLOAT_EQ(0.5, class_scores[0]);
+    ASSERT_FLOAT_EQ(0.75, class_scores[1]);
   }
 }
 
@@ -735,6 +739,10 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksBBoxWithImages) {
     auto class_indices = mpms::GetPredictedBBoxLabelIndexAt(output_sequence, i);
     ASSERT_EQ(0, class_indices[0]);
     ASSERT_EQ(1, class_indices[1]);
+    auto class_scores =
+        mpms::GetPredictedBBoxLabelConfidenceAt(output_sequence, i);
+    ASSERT_FLOAT_EQ(0.5, class_scores[0]);
+    ASSERT_FLOAT_EQ(0.75, class_scores[1]);
   }
 }
 
@@ -1129,6 +1137,7 @@ TEST_F(PackMediaSequenceCalculatorTest, TestOverwritingAndReconciling) {
     mpms::AddBBoxNumRegions(-1, input_sequence.get());
     mpms::AddBBoxLabelString({"anything"}, input_sequence.get());
     mpms::AddBBoxLabelIndex({-1}, input_sequence.get());
+    mpms::AddBBoxLabelConfidence({-1}, input_sequence.get());
     mpms::AddBBoxClassString({"anything"}, input_sequence.get());
     mpms::AddBBoxClassIndex({-1}, input_sequence.get());
     mpms::AddBBoxTrackString({"anything"}, input_sequence.get());

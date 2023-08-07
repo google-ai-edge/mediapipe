@@ -243,6 +243,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           mpms::ClearBBoxNumRegions(key, sequence_.get());
           mpms::ClearBBoxLabelString(key, sequence_.get());
           mpms::ClearBBoxLabelIndex(key, sequence_.get());
+          mpms::ClearBBoxLabelConfidence(key, sequence_.get());
           mpms::ClearBBoxClassString(key, sequence_.get());
           mpms::ClearBBoxClassIndex(key, sequence_.get());
           mpms::ClearBBoxTrackString(key, sequence_.get());
@@ -427,6 +428,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
             mpms::ClearBBoxNumRegions(prefix, sequence_.get());
             mpms::ClearBBoxLabelString(prefix, sequence_.get());
             mpms::ClearBBoxLabelIndex(prefix, sequence_.get());
+            mpms::ClearBBoxLabelConfidence(prefix, sequence_.get());
             mpms::ClearBBoxClassString(prefix, sequence_.get());
             mpms::ClearBBoxClassIndex(prefix, sequence_.get());
             mpms::ClearBBoxTrackString(prefix, sequence_.get());
@@ -494,6 +496,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         }
         std::vector<Location> predicted_locations;
         std::vector<std::string> predicted_class_strings;
+        std::vector<float> predicted_class_confidences;
         std::vector<int> predicted_label_ids;
         for (auto& detection :
              cc->Inputs().Tag(tag).Get<std::vector<Detection>>()) {
@@ -522,6 +525,9 @@ class PackMediaSequenceCalculator : public CalculatorBase {
             if (detection.label_id_size() > 0) {
               predicted_label_ids.push_back(detection.label_id(0));
             }
+            if (detection.score_size() > 0) {
+              predicted_class_confidences.push_back(detection.score(0));
+            }
           }
         }
         if (!predicted_locations.empty()) {
@@ -534,6 +540,10 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           }
           if (!predicted_label_ids.empty()) {
             mpms::AddBBoxLabelIndex(key, predicted_label_ids, sequence_.get());
+          }
+          if (!predicted_class_confidences.empty()) {
+            mpms::AddBBoxLabelConfidence(key, predicted_class_confidences,
+                                         sequence_.get());
           }
         }
       }
