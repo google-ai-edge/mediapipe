@@ -65,6 +65,11 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:simple_run_graph_main",
         "//mediapipe/graphs/object_detection:desktop_ovms_calculators",
+        # here we declare dependencies on tflite as we can support 2 types
+        # of graphs:
+        # 1) using tflite converters & tensors as packet streams
+        # 2) using openvino converters & tensors as packet streams
+        "//mediapipe/graphs/object_detection:desktop_tflite_calculators",
     ],
 )
 
@@ -79,3 +84,4 @@ cc_binary(
         "//mediapipe/graphs/object_detection:desktop_tflite_calculators",
     ],
 )
+

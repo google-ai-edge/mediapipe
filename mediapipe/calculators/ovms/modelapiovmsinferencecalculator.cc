@@ -13,8 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //*****************************************************************************
+#include <algorithm>
 #include <iostream>
 #include <memory>
+#include <openvino/core/type/element_type.hpp>
 #include <sstream>
 #include <unordered_map>
 
@@ -28,6 +30,8 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/calculators/ovms/modelapiovmsinferencecalculator.pb.h"
+#include "tensorflow/lite/c/common.h"
+#include "tensorflow/lite/interpreter.h"
 // here we need to decide if we have several calculators (1 for OVMS repository, 1-N inside mediapipe)
 // for the one inside OVMS repo it makes sense to reuse code from ovms lib
 namespace mediapipe {
@@ -57,6 +61,8 @@ const std::string OVTENSOR_TAG{"OVTENSOR"};
 const std::string OVTENSORS_TAG{"OVTENSORS"};
 const std::string TFTENSOR_TAG{"TENSOR"};
 const std::string TFTENSORS_TAG{"TENSORS"};
+const std::string TFLITE_TENSOR_TAG{"TFLITE_TENSOR"};
+const std::string TFLITE_TENSORS_TAG{"TFLITE_TENSORS"};
 
 static tensorflow::Tensor convertOVTensor2TFTensor(const ov::Tensor& t) {
     using tensorflow::Tensor;
@@ -86,12 +92,31 @@ static ov::Tensor convertTFTensor2OVTensor(const tensorflow::Tensor& t) {
     ov::Tensor result(datatype, shape, data);
     return result;
 }
+static ov::Tensor convertTFLiteTensor2OVTensor(const TfLiteTensor& t) {
+    void* data = t.data.f; // TODO probably works only for floats
+    auto datatype = ov::element::f32;
+    ov::Shape shape;
+    // TODO FIXME HACK
+    // for some reason TfLite tensor does not have bs dim
+    shape.emplace_back(1);
+    for (int i = 0; i < t.dims->size; ++i) {
+ //       RET_CHECK_GT(t.dims->data[i], 0);
+ //       num_values *= raw_tensor->dims->data[i];
+        shape.emplace_back(t.dims->data[i]);
+    }
+    ov::Tensor result(datatype, shape, data);
+    return result;
+}
 
 class ModelAPISideFeedCalculator : public CalculatorBase {
     std::shared_ptr<::InferenceAdapter> session{nullptr};
     std::unordered_map<std::string, std::string> outputNameToTag;
     std::vector<std::string> input_order_list;
     std::vector<std::string> output_order_list;
+    // TODO create only if required
+  std::unique_ptr<tflite::Interpreter> interpreter_ = absl::make_unique<tflite::Interpreter>();
+  bool initialized = false;
+
 public:
     static absl::Status GetContract(CalculatorContract* cc) {
         LOG(INFO) << "Main GetContract start";
@@ -111,6 +136,12 @@ public:
             } else if (ovms::startsWith(tag, TFTENSOR_TAG)) {
                 LOG(INFO) << "setting input tag:" << tag << " to TFTensor";
                 cc->Inputs().Tag(tag).Set<tensorflow::Tensor>();
+            } else if (ovms::startsWith(tag, TFLITE_TENSORS_TAG)) {
+                LOG(INFO) << "setting input tag:" << tag << " to TFLITE_Tensor";
+                cc->Inputs().Tag(tag).Set<std::vector<TfLiteTensor>>();
+            } else if (ovms::startsWith(tag, TFLITE_TENSOR_TAG)) {
+                LOG(INFO) << "setting input tag:" << tag << " to TFLITE_Tensor";
+                cc->Inputs().Tag(tag).Set<TfLiteTensor>();
             } else {
                 // TODO decide which will be easier to migrating later
                 // using OV tensor by default will be more performant
@@ -135,6 +166,12 @@ public:
             } else if (ovms::startsWith(tag, TFTENSOR_TAG)) {
                 LOG(INFO) << "setting input tag:" << tag << " to TFTensor";
                 cc->Outputs().Tag(tag).Set<tensorflow::Tensor>();
+            } else if (ovms::startsWith(tag, TFLITE_TENSORS_TAG)) {
+                LOG(INFO) << "setting input tag:" << tag << " to TFLITE_Tensor";
+                cc->Outputs().Tag(tag).Set<std::vector<TfLiteTensor>>();
+            } else if (ovms::startsWith(tag, TFLITE_TENSOR_TAG)) {
+                LOG(INFO) << "setting input tag:" << tag << " to TFLITE_Tensor";
+                cc->Outputs().Tag(tag).Set<TfLiteTensor>();
             } else {
                 // TODO decide which will be easier to migrating later
                 // using OV tensor by default will be more performant
@@ -232,6 +269,9 @@ public:
                 } else if (packet.size() == 1)  {
                     input[realInputName] = packet[0];
                 }
+            } else if (ovms::startsWith(tag, TFLITE_TENSORS_TAG)) {
+                auto& packet = cc->Inputs().Tag(tag).Get<std::vector<TfLiteTensor>>(); // TODO FIXME onlu 1st tensor taken
+                input[realInputName] = convertTFLiteTensor2OVTensor(packet[0]);
             } else if (ovms::startsWith(tag, OVTENSOR_TAG)) {
                 auto& packet = cc->Inputs().Tag(tag).Get<ov::Tensor>();
                 input[realInputName] = packet;
@@ -318,15 +358,83 @@ public:
                 //break; // TODO FIXME order of outputs
                 // no need to break since we only have one tag
                 // create concatenator calc
+            } else if (ovms::startsWith(tag, TFLITE_TENSORS_TAG)) {
+                LOG(INFO) << "YYYY will process TfLite tensors";
+                // TODO BEGIN move to Open()
+                auto outputStreamTensors = std::vector<TfLiteTensor>();
+                if (!this->initialized) {
+                interpreter_->AddTensors(output.size()); // HARDCODE
+                interpreter_->SetInputs({0,1}); // HARDCODE was 0 for single input
+                LOG(INFO) << "YYYY will process TfLite tensors: " << interpreter_->inputs().size();
+                // TODO END move to Open()
+                // interpreter Process()
+                //auto outputStreamTensors = std::make_unique<std::vector<TfLiteTensor>>();
+                LOG(INFO) << "YYYY will process TfLite tensors";
+                size_t tensorId = 0;
+                for (auto& [name,tensor] : output) {
+                    LOG(INFO) << "YYYY will process TfLite tensors";
+                    std::vector<int> tfliteshape;
+                    for (auto& d : tensor.get_shape()) {
+                    LOG(INFO) << "YYYY will process TfLite tensors shape d: " << d;
+                        tfliteshape.emplace_back(d);
+                    }
+                    LOG(INFO) << "YYYY will process TfLite tensor name: " << name;
+                    // TODO check if with resize will work
+                    interpreter_->SetTensorParametersReadWrite(/*tensor_index*/tensorId, kTfLiteFloat32, name.c_str(),
+                                                   tfliteshape, TfLiteQuantization());
+                    ++tensorId;
+                }
+                interpreter_->AllocateTensors();
+                    this->initialized = true;
+                }
+                size_t tensorId = 0;
+                for (auto& [name,tensor] : output) {
+                    LOG(INFO) << "YYYY will process TfLite tensors of tensorId: " << tensorId;
+                    const int interpreterTensorId = interpreter_->inputs()[tensorId];
+                    LOG(INFO) << "YYYY will process TfLite tensors of interpreterTensorId: " << interpreterTensorId;
+                    TfLiteTensor* tflitetensor = interpreter_->tensor(interpreterTensorId);
+                    LOG(INFO) << "YYYY will process TfLite tensors of type: " << tflitetensor->type;
+                    //void* tensor_ptr = tflitetensor->data.f; // TODO copy data
+                    // check if direct data works as per TfLite docs other dtypes are obsolete
+                    void* tensor_ptr = tflitetensor->data.f; // TODO copy data
+                    LOG(INFO) << "YYYY will process TfLite tensors of interpreterTensorId: " << interpreterTensorId;
+                    LOG(INFO) << "YYYY will memcpy TfLite tensors with TfLite bytes: " << tflitetensor->bytes
+                              << " ovTensor: " << tensor.get_byte_size();
+                    std::memcpy(tensor_ptr, tensor.data(), tensor.get_byte_size());
+                    auto tflitedims = tflitetensor->dims;
+                    LOG(INFO) << "YYYY TfLite tensors dims size: " << tflitedims->size;
+                    for(size_t j = 0; j < tflitedims->size; ++j) {
+                        LOG(INFO) << "YYYY TfLite dim:" << tflitedims->data[j];
+                    }
+                    LOG(INFO) << "YYYY will process TfLite tensors";
+                    outputStreamTensors.emplace_back(*tflitetensor);
+                    ++tensorId;
+                }
+                //std::reverse(outputStreamTensors.begin(), outputStreamTensors.end());
+                LOG(INFO) << "YYYY output size: " << outputStreamTensors.size();
+                LOG(INFO) << "YYYY output address: " << (void*)&outputStreamTensors;
+                const auto raw_box_tensor = &(outputStreamTensors)[0];
+                LOG(INFO) << "raw_box_tensor: " << raw_box_tensor;
+                LOG(INFO) << "raw_box_tensor dimsize: " << raw_box_tensor->dims->size;
+                cc->Outputs().Tag(tag).AddPacket(MakePacket<std::vector<TfLiteTensor>>(std::move(outputStreamTensors)).At( cc->InputTimestamp()));
+ //               cc->Outputs().Tag(tag).Send(std::move(outputStreamTensors, cc->InputTimestamp()));
+            /*    cc->Outputs().Tag(tag).Add(
+                    outputStreamTensors.release(),
+                    cc->InputTimestamp());
+                    */
+                break;
             }else if (ovms::startsWith(tag, OVTENSOR_TAG)) {
+                LOG(INFO) << "YYYY will process TfLite tensors";
                 cc->Outputs().Tag(tag).Add(
                     new ov::Tensor(tensorIt->second),
                     cc->InputTimestamp());
             } else if (ovms::startsWith(tag, TFTENSOR_TAG)) {
+                LOG(INFO) << "YYYY will process TfLite tensors";
                 cc->Outputs().Tag(tag).Add(
                     new tensorflow::Tensor(convertOVTensor2TFTensor(tensorIt->second)),
                     cc->InputTimestamp());
             } else {
+                LOG(INFO) << "YYYY will process TfLite tensors";
                 /*
                 cc->Outputs().Tag(tag).Add(
                     new tensorflow::Tensor(convertOVTensor2TFTensor(tensorIt->second)),
@@ -336,6 +444,7 @@ public:
                     new ov::Tensor(tensorIt->second),
                     cc->InputTimestamp());
             }
+            LOG(INFO) << "YYYY will process TfLite tensors";
         }
         LOG(INFO) << "Main process end";
         return absl::OkStatus();

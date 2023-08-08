@@ -53,6 +53,8 @@ cc_library(
     ],
 )
 
+# TODO for now we use TF Tensor as input so we may want to replace those in the end to pure OV::Tensor converters
+
 cc_library(
     name = "desktop_tflite_calculators",
     deps = [
