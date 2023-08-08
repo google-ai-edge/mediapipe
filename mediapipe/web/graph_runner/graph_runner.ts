@@ -1253,21 +1253,22 @@ export async function createMediaPipeLib<LibType>(
     assetLoaderScript?: string|null,
     glCanvas?: HTMLCanvasElement|OffscreenCanvas|null,
     fileLocator?: FileLocator): Promise<LibType> {
-  const scripts = [];
   // Run wasm-loader script here
   if (wasmLoaderScript) {
-    scripts.push(wasmLoaderScript);
+    await runScript(wasmLoaderScript);
   }
-  // Run asset-loader script here
-  if (assetLoaderScript) {
-    scripts.push(assetLoaderScript);
-  }
-  // Load scripts in parallel, browser will execute them in sequence.
-  if (scripts.length) {
-    await Promise.all(scripts.map(runScript));
-  }
+
   if (!self.ModuleFactory) {
     throw new Error('ModuleFactory not set.');
+  }
+
+  // Run asset-loader script here; must be run after wasm-loader script if we
+  // are re-wrapping the existing MODULARIZE export.
+  if (assetLoaderScript) {
+    await runScript(assetLoaderScript);
+    if (!self.ModuleFactory) {
+      throw new Error('ModuleFactory not set.');
+    }
   }
 
   // Until asset scripts work nicely with MODULARIZE, when we are given both
