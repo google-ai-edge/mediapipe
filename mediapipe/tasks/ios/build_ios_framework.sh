@@ -30,11 +30,12 @@ if [[ "$(uname)" != "Darwin" ]]; then
 fi
 
 BAZEL="${BAZEL:-$(which bazel)}"
+FRAMEWORK_NAME="MediaPipeTasksCommon"
 MPP_BUILD_VERSION=${MPP_BUILD_VERSION:-0.0.1-dev}
 MPP_ROOT_DIR=$(git rev-parse --show-toplevel)
 ARCHIVE_FRAMEWORK=${ARCHIVE_FRAMEWORK:-true}
-IS_RELEASE_BUILD=${IS_RELEASE_BUILD:-false}
-DEST_DIR=${DEST_DIR:-$HOME}
+IS_RELEASE_BUILD=${IS_RELEASE_BUILD:-true}
+DEST_DIR=${DEST_DIR:-$HOME/Desktop/mediapipe}
 
 echo "Destination"
 echo "${DEST_DIR}"
@@ -165,8 +166,7 @@ function create_framework_archive {
 
   #----- (3) Move the framework to the destination -----
   if [[ "${ARCHIVE_FRAMEWORK}" == true ]]; then
-    local TARGET_DIR="$(realpath "${FRAMEWORK_NAME}")"
-
+    local TARGET_DIR="$(realpath)/${FRAMEWORK_NAME}"
     # Create the framework archive directory.
 
     local FRAMEWORK_ARCHIVE_DIR

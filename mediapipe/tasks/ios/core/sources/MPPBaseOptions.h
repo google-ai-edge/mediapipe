@@ -14,6 +14,13 @@
 
 #import <Foundation/Foundation.h>
 
+typedef enum : NSUInteger {
+    MPPBaseOptionsDelegateType_Unknown,
+    MPPBaseOptionsDelegateType_Cpu,
+    MPPBaseOptionsDelegateType_Gpu,
+    MPPBaseOptionsDelegateType_Tpu
+} MPPBaseOptionsDelegateType;
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
@@ -25,6 +32,8 @@ NS_SWIFT_NAME(BaseOptions)
 
 /** The path to the model asset to open and mmap in memory. */
 @property(nonatomic, copy) NSString *modelAssetPath;
+
+@property(nonatomic, assign) MPPBaseOptionsDelegateType delegateType;
 
 @end
 

@@ -1,4 +1,5 @@
-package(default_visibility = ["//mediapipe/tasks:internal"])
+#package(default_visibility = ["//mediapipe/tasks:internal"])
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 

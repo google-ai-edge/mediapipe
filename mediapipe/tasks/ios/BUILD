@@ -46,6 +46,14 @@ OBJC_TASK_COMMON_DEPS = [
     "//mediapipe/tasks/ios/components/containers/utils:MPPClassificationResultHelpers",
     "//mediapipe/tasks/ios/components/containers/utils:MPPCategoryHelpers",
     "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+    "//mediapipe/tasks/ios/vision/core:MPPMask",
+    "//mediapipe/tasks/ios/components/containers:MPPLandmark",
+    "//mediapipe/tasks/ios/components/containers:MPPConnection",
+    "//mediapipe/tasks/ios/components/containers:MPPDetection",
+    "//mediapipe/tasks/ios/components/containers:MPPEmbeddingResult",
+    "//mediapipe/tasks/ios/components/containers:MPPEmbedding",
+    "//mediapipe/tasks/ios/components/containers:MPPClassificationResult",
+    "//mediapipe/tasks/ios/components/containers:MPPCategory",
 ]
 
 CALCULATORS_AND_GRAPHS = [
@@ -56,6 +64,8 @@ CALCULATORS_AND_GRAPHS = [
     "//mediapipe/tasks/cc/vision/face_landmarker:face_landmarker_graph",
     "//mediapipe/tasks/cc/vision/image_classifier:image_classifier_graph",
     "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
+    "//mediapipe/tasks/cc/vision/hand_landmarker:hand_landmarker_graph",
+    "//mediapipe/tasks/cc/vision/pose_landmarker:pose_landmarker_graph",
 ]
 
 strip_api_include_path_prefix(
@@ -69,6 +79,7 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/components/containers:sources/MPPConnection.h",
         "//mediapipe/tasks/ios/components/containers:sources/MPPDetection.h",
         "//mediapipe/tasks/ios/components/containers:sources/MPPLandmark.h",
+        "//mediapipe/tasks/ios/vision/core:sources/MPPMask.h",
         "//mediapipe/tasks/ios/core:sources/MPPBaseOptions.h",
         "//mediapipe/tasks/ios/core:sources/MPPTaskOptions.h",
         "//mediapipe/tasks/ios/core:sources/MPPTaskResult.h",
@@ -92,6 +103,12 @@ strip_api_include_path_prefix(
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetector.h",
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectorOptions.h",
         "//mediapipe/tasks/ios/vision/object_detector:sources/MPPObjectDetectorResult.h",
+        "//mediapipe/tasks/ios/vision/hand_landmarker:sources/MPPHandLandmarkerResult.h",
+        "//mediapipe/tasks/ios/vision/hand_landmarker:sources/MPPHandLandmarkerOptions.h",
+        "//mediapipe/tasks/ios/vision/hand_landmarker:sources/MPPHandLandmarker.h",
+        "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarker.h",
+        "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarkerOptions.h",
+        "//mediapipe/tasks/ios/vision/pose_landmarker:sources/MPPPoseLandmarkerResult.h",
     ],
 )
 
@@ -181,12 +198,21 @@ apple_static_xcframework(
         ":MPPObjectDetector.h",
         ":MPPObjectDetectorOptions.h",
         ":MPPObjectDetectorResult.h",
+        ":MPPHandLandmarker.h",
+        ":MPPHandLandmarkerOptions.h",
+        ":MPPHandLandmarkerResult.h",
+        ":MPPPoseLandmarker.h",
+        ":MPPPoseLandmarkerOptions.h",
+        ":MPPPoseLandmarkerResult.h",
+        ":MPPMask.h",
     ],
     deps = [
         "//mediapipe/tasks/ios/vision/face_detector:MPPFaceDetector",
         "//mediapipe/tasks/ios/vision/face_landmarker:MPPFaceLandmarker",
         "//mediapipe/tasks/ios/vision/image_classifier:MPPImageClassifier",
         "//mediapipe/tasks/ios/vision/object_detector:MPPObjectDetector",
+        "//mediapipe/tasks/ios/vision/hand_landmarker:MPPHandLandmarker",
+        "//mediapipe/tasks/ios/vision/pose_landmarker:MPPPoseLandmarker",
     ],
 )
 
