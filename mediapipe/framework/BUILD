@@ -272,6 +272,8 @@ cc_library(
     ],
     deps = [
         ":calculator_base",
+        ":calculator_context",
+        ":calculator_contract",
         ":calculator_graph",
         ":calculator_registry",
         ":counter_factory",
