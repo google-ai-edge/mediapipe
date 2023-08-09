@@ -192,15 +192,20 @@ void DrawPose(const mediapipe::NormalizedLandmarkList& pose, bool flip_y,
   }
 }
 
-void DrawFace(const mediapipe::NormalizedLandmarkList& face, bool flip_y,
-              bool draw_nose, int color_style, bool reverse_color,
+void DrawFace(const mediapipe::NormalizedLandmarkList& face,
+              const std::pair<int, int>& image_size, const cv::Mat& affine,
+              bool flip_y, bool draw_nose, int color_style, bool reverse_color,
               int draw_line_width, cv::Mat* image) {
-  const int target_width = image->cols;
-  const int target_height = image->rows;
   std::vector<cv::Point> landmarks;
   for (const auto& lm : face.landmark()) {
-    landmarks.emplace_back(lm.x() * target_width,
-                           (flip_y ? 1.0f - lm.y() : lm.y()) * target_height);
+    float ori_x = lm.x() * image_size.first;
+    float ori_y = (flip_y ? 1.0f - lm.y() : lm.y()) * image_size.second;
+
+    landmarks.emplace_back(
+        affine.at<float>(0, 0) * ori_x + affine.at<float>(0, 1) * ori_y +
+            affine.at<float>(0, 2),
+        affine.at<float>(1, 0) * ori_x + affine.at<float>(1, 1) * ori_y +
+            affine.at<float>(1, 2));
   }
 
   cv::Scalar kFaceOvalColor;

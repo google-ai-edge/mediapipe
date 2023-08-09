@@ -23,8 +23,9 @@ namespace mediapipe {
 void DrawPose(const mediapipe::NormalizedLandmarkList& pose, bool flip_y,
               cv::Mat* image);
 
-void DrawFace(const mediapipe::NormalizedLandmarkList& face, bool flip_y,
-              bool draw_nose, int color_style, bool reverse_color,
+void DrawFace(const mediapipe::NormalizedLandmarkList& face,
+              const std::pair<int, int>& image_size, const cv::Mat& affine,
+              bool flip_y, bool draw_nose, int color_style, bool reverse_color,
               int draw_line_width, cv::Mat* image);
 
 }  // namespace mediapipe
