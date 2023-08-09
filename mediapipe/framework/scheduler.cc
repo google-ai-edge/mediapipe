@@ -270,13 +270,6 @@ absl::Status Scheduler::WaitForObservedOutput() {
   return observed ? absl::OkStatus() : absl::OutOfRangeError("Graph is done.");
 }
 
-// Idleness requires:
-// 1. either the graph has no source nodes or all source nodes are closed, and
-// 2. no packets are added to graph input streams.
-// For simplicity, we only fully support WaitUntilIdle() to be called on a graph
-// with no source nodes.
-// The application must ensure no other threads are adding packets to graph
-// input streams while a WaitUntilIdle() call is in progress.
 absl::Status Scheduler::WaitUntilIdle() {
   RET_CHECK_NE(state_, STATE_NOT_STARTED);
   ApplicationThreadAwait(std::bind(&Scheduler::IsIdle, this));
