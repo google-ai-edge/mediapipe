@@ -1423,5 +1423,13 @@ TEST_F(GraphTracerE2ETest, DestructGraph) {
   }
 }
 
+TEST(TraceBuilderTest, EventDataIsExtracted) {
+  int value = 10;
+  Packet p = PointToForeign(&value);
+  TraceEvent event;
+  event.set_packet_data_id(&p);
+  EXPECT_EQ(event.event_data, reinterpret_cast<int64_t>(&value));
+}
+
 }  // namespace
 }  // namespace mediapipe

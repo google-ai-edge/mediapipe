@@ -18,6 +18,7 @@
 #define MEDIAPIPE_FRAMEWORK_PACKET_H_
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -368,11 +369,14 @@ class HolderBase {
   }
   // Returns a printable string identifying the type stored in the holder.
   virtual const std::string DebugTypeName() const = 0;
+  // Returns debug data id.
+  virtual int64_t DebugDataId() const = 0;
   // Returns the registered type name if it's available, otherwise the
   // empty string.
   virtual const std::string RegisteredTypeName() const = 0;
   // Get the type id of the underlying data type.
   virtual TypeId GetTypeId() const = 0;
+
   // Downcasts this to Holder<T>.  Returns nullptr if deserialization
   // failed or if the requested type is not what is stored.
   template <typename T>
@@ -534,6 +538,7 @@ class Holder : public HolderBase {
   const std::string DebugTypeName() const final {
     return MediaPipeTypeStringOrDemangled<T>();
   }
+  int64_t DebugDataId() const final { return reinterpret_cast<int64_t>(ptr_); }
   const std::string RegisteredTypeName() const final {
     const std::string* type_string = MediaPipeTypeString<T>();
     if (type_string) {
