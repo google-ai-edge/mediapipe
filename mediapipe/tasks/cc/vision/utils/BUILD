@@ -28,6 +28,7 @@ cc_library_with_tflite(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
