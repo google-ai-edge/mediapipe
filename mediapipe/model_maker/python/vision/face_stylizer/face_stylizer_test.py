@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import zipfile
 
 import tensorflow as tf
 
@@ -65,10 +66,23 @@ class FaceStylizerTest(tf.test.TestCase):
       model = face_stylizer.FaceStylizer.create(
           train_data=self._train_data, options=face_stylizer_options
       )
-      tflite_model_name = 'custom_face_stylizer.tflite'
-      model.export_model(model_name=tflite_model_name)
+      model.export_model()
+      model_bundle_file = os.path.join(
+          self.get_temp_dir(), 'face_stylizer.task'
+      )
+      with zipfile.ZipFile(model_bundle_file) as zf:
+        self.assertEqual(
+            set(zf.namelist()),
+            set([
+                'face_detector.tflite',
+                'face_landmarks_detector.tflite',
+                'face_stylizer.tflite',
+            ]),
+        )
+        zf.extractall(self.get_temp_dir())
+
       face_stylizer_tflite_file = os.path.join(
-          self.get_temp_dir(), tflite_model_name
+          self.get_temp_dir(), 'face_stylizer.tflite'
       )
       spec = face_stylizer.SupportedModels.get(model_enum)
       input_image_shape = spec.input_image_shape

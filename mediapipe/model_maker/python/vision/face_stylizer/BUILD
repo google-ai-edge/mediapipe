@@ -86,6 +86,7 @@ py_library(
         "//mediapipe/model_maker/python/core/utils:loss_functions",
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/vision/core:image_preprocessing",
+        "//mediapipe/tasks/python/metadata/metadata_writers:face_stylizer",
     ],
 )
 
