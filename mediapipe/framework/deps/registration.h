@@ -477,9 +477,6 @@ class GlobalFactoryRegistry {
   class RegistratorName {                                                     \
    private:                                                                   \
     /* The member below triggers instantiation of the registration static. */ \
-    /* Note that the constructor of calculator subclasses is only invoked  */ \
-    /* through the registration token, and so we cannot simply use the     */ \
-    /* static in theconstructor.                                           */ \
     typename Internal##RegistratorName<T>::RequireStatics register_;          \
   };
 

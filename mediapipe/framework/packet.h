@@ -455,60 +455,37 @@ struct is_concrete_proto_t
                     !std::is_same<proto_ns::MessageLite, T>{} &&
                     !std::is_same<proto_ns::Message, T>{}> {};
 
-// Registers a message type. T must be a non-cv-qualified concrete proto type.
 template <typename T>
-struct MessageRegistrationImpl {
-  static NoDestructor<mediapipe::RegistrationToken> registration;
-  // This could have been a lambda inside registration's initializer below, but
-  // MSVC has a bug with lambdas, so we put it here as a workaround.
-  static std::unique_ptr<Holder<T>> CreateMessageHolder() {
-    return absl::make_unique<Holder<T>>(new T);
-  }
-};
+std::unique_ptr<HolderBase> CreateMessageHolder() {
+  return absl::make_unique<Holder<T>>(new T);
+}
 
-// Static members of template classes can be defined in the header.
-template <typename T>
-NoDestructor<mediapipe::RegistrationToken>
-    MessageRegistrationImpl<T>::registration(MessageHolderRegistry::Register(
-        T{}.GetTypeName(), MessageRegistrationImpl<T>::CreateMessageHolder));
+// Registers a message type. T must be a non-cv-qualified concrete proto type.
+MEDIAPIPE_STATIC_REGISTRATOR_TEMPLATE(MessageRegistrator, MessageHolderRegistry,
+                                      T{}.GetTypeName(), CreateMessageHolder<T>)
 
 // For non-Message payloads, this does nothing.
 template <typename T, typename Enable = void>
-struct HolderSupport {
-  static void EnsureStaticInit() {}
-};
+struct HolderPayloadRegistrator {};
 
 // This template ensures that, for each concrete MessageLite subclass that is
 // stored in a Packet, we register a function that allows us to create a
 // Holder with the correct payload type from the proto's type name.
+//
+// We must use std::remove_cv to ensure we don't try to register Foo twice if
+// there are Holder<Foo> and Holder<const Foo>. TODO: lift this
+// up to Holder?
 template <typename T>
-struct HolderSupport<T,
-                     typename std::enable_if<is_concrete_proto_t<T>{}>::type> {
-  // We must use std::remove_cv to ensure we don't try to register Foo twice if
-  // there are Holder<Foo> and Holder<const Foo>. TODO: lift this
-  // up to Holder?
-  using R = MessageRegistrationImpl<typename std::remove_cv<T>::type>;
-  // For the registration static member to be instantiated, it needs to be
-  // referenced in a context that requires the definition to exist (see ISO/IEC
-  // C++ 2003 standard, 14.7.1). Calling this ensures that's the case.
-  // We need two different call-sites to cover proto types for which packets
-  // are only ever created (i.e. the protos are only produced by calculators)
-  // and proto types for which packets are only ever consumed (i.e. the protos
-  // are only consumed by calculators).
-  static void EnsureStaticInit() { CHECK(R::registration.get() != nullptr); }
-};
+struct HolderPayloadRegistrator<
+    T, typename std::enable_if<is_concrete_proto_t<T>{}>::type>
+    : private MessageRegistrator<typename std::remove_cv<T>::type> {};
 
 template <typename T>
-class Holder : public HolderBase {
+class Holder : public HolderBase, private HolderPayloadRegistrator<T> {
  public:
-  explicit Holder(const T* ptr) : ptr_(ptr) {
-    HolderSupport<T>::EnsureStaticInit();
-  }
+  explicit Holder(const T* ptr) : ptr_(ptr) {}
   ~Holder() override { delete_helper(); }
-  const T& data() const {
-    HolderSupport<T>::EnsureStaticInit();
-    return *ptr_;
-  }
+  const T& data() const { return *ptr_; }
   TypeId GetTypeId() const final { return kTypeId<T>; }
   // Releases the underlying data pointer and transfers the ownership to a
   // unique pointer.
