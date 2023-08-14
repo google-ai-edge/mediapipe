@@ -51,9 +51,16 @@ export async function createTaskRunner<T extends TaskRunner>(
     canvas: HTMLCanvasElement|OffscreenCanvas|null|undefined,
     fileset: WasmFileset, options: TaskRunnerOptions): Promise<T> {
   const fileLocator: FileLocator = {
-    locateFile() {
-      // The only file loaded with this mechanism is the Wasm binary
-      return fileset.wasmBinaryPath.toString();
+    locateFile(file): string {
+      const wasm = fileset.wasmBinaryPath.toString();
+      if (wasm.includes(file)) {
+        return wasm;
+      }
+      const asset = fileset.assetBinaryPath?.toString();
+      if (asset?.includes(file)) {
+        return asset;
+      }
+      return file;
     }
   };
 

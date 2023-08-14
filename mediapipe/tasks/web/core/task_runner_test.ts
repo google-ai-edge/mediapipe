@@ -20,11 +20,13 @@ import {InferenceCalculatorOptions} from '../../../calculators/tensor/inference_
 import {BaseOptions as BaseOptionsProto} from '../../../tasks/cc/core/proto/base_options_pb';
 import {TaskRunner} from '../../../tasks/web/core/task_runner';
 import {createSpyWasmModule, SpyWasmModule} from '../../../tasks/web/core/task_runner_test_utils';
+import * as graphRunner from '../../../web/graph_runner/graph_runner';
 import {ErrorListener} from '../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource URL builder
 
-import {CachedGraphRunner} from './task_runner';
+import {CachedGraphRunner, createTaskRunner} from './task_runner';
 import {TaskRunnerOptions} from './task_runner_options';
+import {WasmFileset} from './wasm_fileset';
 
 type Writeable<T> = {
   -readonly[P in keyof T]: T[P]
@@ -147,6 +149,9 @@ describe('TaskRunner', () => {
   let fetchSpy: jasmine.Spy;
   let taskRunner: TaskRunnerFake;
   let fetchStatus: number;
+  let locator: graphRunner.FileLocator|undefined;
+
+  let oldCreate = graphRunner.createMediaPipeLib;
 
   beforeEach(() => {
     fetchStatus = 200;
@@ -159,7 +164,68 @@ describe('TaskRunner', () => {
     });
     global.fetch = fetchSpy;
 
+    // Monkeypatch an exported static method for testing!
+    oldCreate = graphRunner.createMediaPipeLib;
+    locator = undefined;
+    (graphRunner as {createMediaPipeLib: Function}).createMediaPipeLib =
+        jasmine.createSpy().and.callFake(
+            (type, wasmLoaderPath, assetLoaderPath, canvas, fileLocator) => {
+              locator = fileLocator;
+              // tslint:disable-next-line:no-any Monkeypatching for test mocks.
+              return Promise.resolve(taskRunner as any);
+            });
+
     taskRunner = TaskRunnerFake.createFake();
+  });
+
+  afterEach(() => {
+    // Restore the monkeypatch.
+    (graphRunner as {createMediaPipeLib: Function}).createMediaPipeLib =
+        oldCreate;
+  });
+
+  it('constructs with useful file locators for asset.data files', () => {
+    const fileset: WasmFileset = {
+      wasmLoaderPath: `wasm.js`,
+      wasmBinaryPath: `a/b/c/wasm.wasm`,
+      assetLoaderPath: `asset.js`,
+      assetBinaryPath: `a/b/c/asset.data`,
+    };
+
+    const options = {
+      baseOptions: {
+        modelAssetPath: `modelAssetPath`,
+      }
+    };
+
+    const runner = createTaskRunner(TaskRunnerFake, null, fileset, options);
+    expect(runner).toBeDefined();
+    expect(locator).toBeDefined();
+    expect(locator?.locateFile('wasm.wasm')).toEqual('a/b/c/wasm.wasm');
+    expect(locator?.locateFile('asset.data')).toEqual('a/b/c/asset.data');
+    expect(locator?.locateFile('unknown')).toEqual('unknown');
+  });
+
+  it('constructs without useful file locators with no asset.data file', () => {
+    const fileset: WasmFileset = {
+      wasmLoaderPath: `wasm.js`,
+      wasmBinaryPath: `a/b/c/wasm.wasm`,
+      assetLoaderPath: `asset.js`,
+      // No path to the assets binary.
+    };
+
+    const options = {
+      baseOptions: {
+        modelAssetPath: `modelAssetPath`,
+      }
+    };
+
+    const runner = createTaskRunner(TaskRunnerFake, null, fileset, options);
+    expect(runner).toBeDefined();
+    expect(locator).toBeDefined();
+    expect(locator?.locateFile('wasm.wasm')).toEqual('a/b/c/wasm.wasm');
+    expect(locator?.locateFile('asset.data')).toEqual('asset.data');
+    expect(locator?.locateFile('unknown')).toEqual('unknown');
   });
 
   it('handles errors during graph update', () => {
