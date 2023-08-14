@@ -37,13 +37,6 @@ class DartProtoBuilder {
           repositoryRoot.absolute.path, 'mediapipe', 'dart', 'dart_builder'),
     );
 
-    _buildDirectory = io.Directory(
-      path.join(
-        io.Directory.current.parent.parent.parent.parent.absolute.path,
-        'build',
-      ),
-    );
-
     _outputDirectory = options.outputPath != null
         ? io.Directory(options.outputPath!)
         : io.Directory(
@@ -67,12 +60,11 @@ class DartProtoBuilder {
   io.Directory get mediapipeDir => _mediapipeDir!;
   io.Directory? _mediapipeDir;
 
-  io.Directory get buildDirectory => _buildDirectory!;
-  io.Directory? _buildDirectory;
-
+  /// Directory to place compiled protobufs.
   io.Directory get outputDirectory => _outputDirectory!;
   io.Directory? _outputDirectory;
 
+  /// Location of this command.
   io.Directory get dartBuilderDirectory => _dartBuilderDirectory!;
   io.Directory? _dartBuilderDirectory;
 
@@ -100,7 +92,7 @@ class DartProtoBuilder {
         [ansi.green],
       ),
     );
-    // await _buildProtos();
+    await _buildProtos();
     await _buildBarrelFiles();
   }
 
@@ -228,16 +220,13 @@ class DartProtoBuilder {
       ).absolute.path;
 
   Future<void> _confirmOutputDirectories() async {
-    if (!await _buildDirectory!.exists()) {
-      _buildDirectory!.create();
-    }
     if (!await _outputDirectory!.exists()) {
       _outputDirectory!.create();
     }
   }
 
   Future<void> _prepareProtos() async {
-    if (!(await outputDirectory.exists())) {
+    if (!await outputDirectory.exists()) {
       io.stdout.writeln('Creating output directory');
       outputDirectory.create();
     }

@@ -23,6 +23,8 @@ class TextClassifier {
 
   /// Configuration options for this [TextClassifier].
   final TextClassifierOptions options;
+
+  /// Configuration object passed to the [TaskRunner].
   final TaskInfo _taskInfo;
 
   TaskRunner get taskRunner => _taskRunner!;
@@ -35,11 +37,12 @@ class TextClassifier {
   static const taskGraphName =
       'mediapipe.tasks.text.text_classifier.TextClassifierGraph';
 
+  // TODO: Don't return protobuf objects. Instead, convert to plain Dart objects.
   /// Performs classification on the input `text`.
   Future<tasks_pb.ClassificationResult> classify(String text) async {
     // TODO: Actually decode this line to correctly fill up this map parameter
     // https://source.corp.google.com/piper///depot/google3/third_party/mediapipe/tasks/python/text/text_classifier.py;l=181
-    final outputPackets = taskRunner.process({});
+    final outputPackets = taskRunner.process({textInStreamName: Object()});
 
     // TODO: Obviously this is not real
     return tasks_pb.ClassificationResult.create();
