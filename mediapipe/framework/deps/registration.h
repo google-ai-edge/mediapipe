@@ -408,22 +408,38 @@ class GlobalFactoryRegistry {
 #define REGISTRY_STATIC_VAR(var_name, line) \
   REGISTRY_STATIC_VAR_INNER(var_name, line)
 
-#define MEDIAPIPE_REGISTER_FACTORY_FUNCTION(RegistryType, name, ...) \
-  static auto* REGISTRY_STATIC_VAR(registration_##name, __LINE__) =  \
-      new mediapipe::RegistrationToken(                              \
-          RegistryType::Register(#name, __VA_ARGS__))
+// Disables all static registration in MediaPipe accomplished using:
+// - REGISTER_FACTORY_FUNCTION_QUALIFIED
+// - MEDIAPIPE_REGISTER_FACTORY_FUNCTION
+// - MEDIAPIPE_STATIC_REGISTRATOR_TEMPLATE
+//
+// Which includes:
+// - calculators
+// - input stream handlers
+// - output stream handlers
+// - generators
+// - anything else registered using above macros
+#if !defined(MEDIAPIPE_DISABLE_STATIC_REGISTRATION)
+#define MEDIAPIPE_DISABLE_STATIC_REGISTRATION 0
+#endif  // !defined(MEDIAPIPE_DISABLE_STATIC_REGISTRATION)
+
+#if MEDIAPIPE_DISABLE_STATIC_REGISTRATION
+
+#define MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, \
+                                                      name, ...)
+#define MEDIAPIPE_STATIC_REGISTRATOR_TEMPLATE(RegistratorName, RegistryType, \
+                                              name, ...)                     \
+  template <typename T>                                                      \
+  class RegistratorName {};
+
+#else
 
 #define MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, \
                                                       name, ...)              \
-  static auto* REGISTRY_STATIC_VAR(var_name, __LINE__) =                      \
+  static mediapipe::RegistrationToken* REGISTRY_STATIC_VAR(var_name,          \
+                                                           __LINE__) =        \
       new mediapipe::RegistrationToken(                                       \
-          RegistryType::Register(name, __VA_ARGS__))
-
-// TODO: migrate to the above.
-#define REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, name, ...) \
-  static auto* REGISTRY_STATIC_VAR(var_name, __LINE__) =                       \
-      new mediapipe::RegistrationToken(                                        \
-          RegistryType::Register(#name, __VA_ARGS__))
+          RegistryType::Register(name, __VA_ARGS__));
 
 // Defines a utility registrator class which can be used to automatically
 // register factory functions.
@@ -479,6 +495,18 @@ class GlobalFactoryRegistry {
     /* The member below triggers instantiation of the registration static. */ \
     typename Internal##RegistratorName<T>::RequireStatics register_;          \
   };
+
+#endif  // MEDIAPIPE_DISABLE_STATIC_REGISTRATION
+
+#define MEDIAPIPE_REGISTER_FACTORY_FUNCTION(RegistryType, name, ...) \
+  MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(                     \
+      RegistryType, registration_##name, #name, __VA_ARGS__)
+
+// TODO: migrate usages to use
+// MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED.
+#define REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, name, ...) \
+  MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, #name, \
+                                                __VA_ARGS__)
 
 }  // namespace mediapipe
 
