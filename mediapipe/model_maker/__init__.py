@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+from mediapipe.model_maker.python.core.utils import image_utils
 from mediapipe.model_maker.python.core.utils import quantization
 from mediapipe.model_maker.python.core.utils import model_util
 
