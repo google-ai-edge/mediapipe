@@ -335,6 +335,7 @@ mediapipe_cc_test(
 cc_library(
     name = "packet_generator_wrapper_calculator",
     srcs = ["packet_generator_wrapper_calculator.cc"],
+    hdrs = ["packet_generator_wrapper_calculator.h"],
     visibility = ["//mediapipe/framework:__subpackages__"],
     deps = [
         ":packet_generator_wrapper_calculator_cc_proto",
@@ -342,6 +343,9 @@ cc_library(
         "//mediapipe/framework:calculator_registry",
         "//mediapipe/framework:output_side_packet",
         "//mediapipe/framework:packet_generator",
+        "//mediapipe/framework:packet_set",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -386,21 +390,22 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":name_util",
+        ":status_util",
         "//mediapipe/calculators/internal:callback_packet_calculator",
         "//mediapipe/calculators/internal:callback_packet_calculator_cc_proto",
         "//mediapipe/framework:calculator_base",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_graph",
         "//mediapipe/framework:calculator_registry",
-        "//mediapipe/framework:input_stream",
         "//mediapipe/framework:packet",
         "//mediapipe/framework:packet_type",
-        "//mediapipe/framework/port:logging",
+        "//mediapipe/framework:timestamp",
         "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
     ],
     alwayslink = 1,
 )

@@ -18,54 +18,58 @@
 
 #include "mediapipe/framework/tool/sink.h"
 
+#include <stdio.h>
+
+#include <functional>
+#include <map>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
 #include "mediapipe/calculators/internal/callback_packet_calculator.pb.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/calculator_graph.h"
 #include "mediapipe/framework/calculator_registry.h"
-#include "mediapipe/framework/input_stream.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status_builder.h"
+#include "mediapipe/framework/timestamp.h"
 #include "mediapipe/framework/tool/name_util.h"
+#include "mediapipe/framework/tool/status_util.h"
 
 namespace mediapipe {
 
 namespace tool {
-namespace {
-// Produces an output packet with the PostStream timestamp containing the
-// input side packet.
-class MediaPipeInternalSidePacketToPacketStreamCalculator
-    : public CalculatorBase {
- public:
-  static absl::Status GetContract(CalculatorContract* cc) {
-    cc->InputSidePackets().Index(0).SetAny();
-    cc->Outputs().Index(0).SetSameAs(&cc->InputSidePackets().Index(0));
-    return absl::OkStatus();
-  }
 
-  absl::Status Open(CalculatorContext* cc) final {
-    cc->Outputs().Index(0).AddPacket(
-        cc->InputSidePackets().Index(0).At(Timestamp::PostStream()));
-    cc->Outputs().Index(0).Close();
-    return absl::OkStatus();
-  }
+absl::Status MediaPipeInternalSidePacketToPacketStreamCalculator::GetContract(
+    CalculatorContract* cc) {
+  cc->InputSidePackets().Index(0).SetAny();
+  cc->Outputs().Index(0).SetSameAs(&cc->InputSidePackets().Index(0));
+  return absl::OkStatus();
+}
 
-  absl::Status Process(CalculatorContext* cc) final {
-    // The framework treats this calculator as a source calculator.
-    return mediapipe::tool::StatusStop();
-  }
-};
+absl::Status MediaPipeInternalSidePacketToPacketStreamCalculator::Open(
+    CalculatorContext* cc) {
+  cc->Outputs().Index(0).AddPacket(
+      cc->InputSidePackets().Index(0).At(Timestamp::PostStream()));
+  cc->Outputs().Index(0).Close();
+  return absl::OkStatus();
+}
+
+absl::Status MediaPipeInternalSidePacketToPacketStreamCalculator::Process(
+    CalculatorContext* cc) {
+  // The framework treats this calculator as a source calculator.
+  return mediapipe::tool::StatusStop();
+}
+
 REGISTER_CALCULATOR(MediaPipeInternalSidePacketToPacketStreamCalculator);
-}  // namespace
 
 void AddVectorSink(const std::string& stream_name,  //
                    CalculatorGraphConfig* config,   //
