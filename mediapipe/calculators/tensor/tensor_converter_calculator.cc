@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -25,6 +26,7 @@
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
@@ -406,16 +408,27 @@ absl::Status TensorConverterCalculator::InitGpu(CalculatorContext* cc) {
   // Get input image sizes.
   const auto& input =
       cc->Inputs().Tag(kGpuBufferTag).Get<mediapipe::GpuBuffer>();
-  mediapipe::ImageFormat::Format format =
-      mediapipe::ImageFormatForGpuBufferFormat(input.format());
+  mediapipe::GpuBufferFormat format = input.format();
   const bool include_alpha = (max_num_channels_ == 4);
   const bool single_channel = (max_num_channels_ == 1);
-  if (!(format == mediapipe::ImageFormat::GRAY8 ||
-        format == mediapipe::ImageFormat::SRGB ||
-        format == mediapipe::ImageFormat::SRGBA))
-    RET_CHECK_FAIL() << "Unsupported GPU input format.";
-  if (include_alpha && (format != mediapipe::ImageFormat::SRGBA))
-    RET_CHECK_FAIL() << "Num input channels is less than desired output.";
+
+  RET_CHECK(format == mediapipe::GpuBufferFormat::kBGRA32 ||
+            format == mediapipe::GpuBufferFormat::kRGB24 ||
+            format == mediapipe::GpuBufferFormat::kRGBA32 ||
+            format == mediapipe::GpuBufferFormat::kRGBAFloat128 ||
+            format == mediapipe::GpuBufferFormat::kRGBAHalf64 ||
+            format == mediapipe::GpuBufferFormat::kGrayFloat32 ||
+            format == mediapipe::GpuBufferFormat::kGrayHalf16 ||
+            format == mediapipe::GpuBufferFormat::kOneComponent8)
+      << "Unsupported GPU input format: " << static_cast<uint32_t>(format);
+  if (include_alpha) {
+    RET_CHECK(format == mediapipe::GpuBufferFormat::kBGRA32 ||
+              format == mediapipe::GpuBufferFormat::kRGBA32 ||
+              format == mediapipe::GpuBufferFormat::kRGBAFloat128 ||
+              format == mediapipe::GpuBufferFormat::kRGBAHalf64)
+        << "Num input channels is less than desired output, input format: "
+        << static_cast<uint32_t>(format);
+  }
 
 #if MEDIAPIPE_METAL_ENABLED
   id<MTLDevice> device = gpu_helper_.mtlDevice;
