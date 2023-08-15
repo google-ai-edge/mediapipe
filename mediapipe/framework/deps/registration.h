@@ -423,7 +423,31 @@ class GlobalFactoryRegistry {
 #define MEDIAPIPE_DISABLE_STATIC_REGISTRATION 0
 #endif  // !defined(MEDIAPIPE_DISABLE_STATIC_REGISTRATION)
 
+// Enables "Dry Run" for MediaPipe static registration: MediaPipe logs the
+// registration code, instead of actual registration.
+//
+// The intended use: if you plan to disable static registration using
+// MEDIAPIPE_DISABLE_STATIC_REGISTRATION, you may find it useful to build your
+// MediaPipe dependency first with only:
+//   MEDIAPIPE_ENABLE_STATIC_REGISTRATION_DRY_RUN
+// and load it to see what manual registration will be required when you build
+// with:
+//   MEDIAPIPE_DISABLE_STATIC_REGISTRATION
+#if !defined(MEDIAPIPE_ENABLE_STATIC_REGISTRATION_DRY_RUN)
+#define MEDIAPIPE_ENABLE_STATIC_REGISTRATION_DRY_RUN 0
+#endif  // !defined(MEDIAPIPE_ENABLE_STATIC_REGISTRATION_DRY_RUN)
+
+#if MEDIAPIPE_DISABLE_STATIC_REGISTRATION && \
+    MEDIAPIPE_ENABLE_STATIC_REGISTRATION_DRY_RUN
+static_assert(false,
+              "Cannot do static registration Dry Run as static registration is "
+              "disabled.");
+#endif  // MEDIAPIPE_DISABLE_STATIC_REGISTRATION &&
+        // MEDIAPIPE_ENABLE_STATIC_REGISTRATION_DRY_RUN
+
 #if MEDIAPIPE_DISABLE_STATIC_REGISTRATION
+// When static registration is disabled, make sure corresponding macros don't do
+// any registration.
 
 #define MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, \
                                                       name, ...)
@@ -432,7 +456,59 @@ class GlobalFactoryRegistry {
   template <typename T>                                                      \
   class RegistratorName {};
 
+#elif MEDIAPIPE_ENABLE_STATIC_REGISTRATION_DRY_RUN
+// When static registration is enabled and running in Dry-Run mode, make sure
+// corresponding macros print registration details instead of doing actual
+// registration.
+
+#define INTERNAL_MEDIAPIPE_REGISTER_FACTORY_STRINGIFY_HELPER(x) #x
+#define INTERNAL_MEDIAPIPE_REGISTER_FACTORY_STRINGIFY(x) \
+  INTERNAL_MEDIAPIPE_REGISTER_FACTORY_STRINGIFY_HELPER(x)
+
+#define MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, \
+                                                      name, ...)              \
+  static mediapipe::RegistrationToken* REGISTRY_STATIC_VAR(var_name,          \
+                                                           __LINE__) = []() { \
+    ABSL_RAW_LOG(WARNING, "Registration Dry Run: %s",                         \
+                 INTERNAL_MEDIAPIPE_REGISTER_FACTORY_STRINGIFY(               \
+                     RegistryType::Register(name, __VA_ARGS__)));             \
+    return nullptr;                                                           \
+  }();
+
+#define MEDIAPIPE_STATIC_REGISTRATOR_TEMPLATE(RegistratorName, RegistryType,  \
+                                              names, ...)                     \
+  template <typename T>                                                       \
+  struct Internal##RegistratorName {                                          \
+    static NoDestructor<mediapipe::RegistrationToken> registration;           \
+                                                                              \
+    static mediapipe::RegistrationToken Make() {                              \
+      ABSL_RAW_LOG(WARNING, "Registration Dry Run: %s",                       \
+                   INTERNAL_MEDIAPIPE_REGISTER_FACTORY_STRINGIFY(             \
+                       RegistryType::Register(names, __VA_ARGS__)));          \
+      ABSL_RAW_LOG(WARNING, "Where typeid(T).name() is: %s",                  \
+                   typeid(T).name());                                         \
+      return {};                                                              \
+    }                                                                         \
+                                                                              \
+    using RequireStatics =                                                    \
+        registration_internal::ForceStaticInstantiation<&registration>;       \
+  };                                                                          \
+  /* Static members of template classes can be defined in the header. */      \
+  template <typename T>                                                       \
+  NoDestructor<mediapipe::RegistrationToken>                                  \
+      Internal##RegistratorName<T>::registration(                             \
+          Internal##RegistratorName<T>::Make());                              \
+                                                                              \
+  template <typename T>                                                       \
+  class RegistratorName {                                                     \
+   private:                                                                   \
+    /* The member below triggers instantiation of the registration static. */ \
+    typename Internal##RegistratorName<T>::RequireStatics register_;          \
+  };
+
 #else
+// When static registration is enabled and NOT running in Dry-Run mode, make
+// sure corresponding macros do proper static registration.
 
 #define MEDIAPIPE_REGISTER_FACTORY_FUNCTION_QUALIFIED(RegistryType, var_name, \
                                                       name, ...)              \
