@@ -11,83 +11,28 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include "mediapipe/framework/stream_handler/sync_set_input_stream_handler.h"
 
-#include <algorithm>
+#include <functional>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
-// TODO: Move protos in another CL after the C++ code migration.
-#include "absl/strings/substitute.h"
+#include "absl/log/check.h"
 #include "absl/synchronization/mutex.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
 #include "mediapipe/framework/input_stream_handler.h"
-#include "mediapipe/framework/mediapipe_options.pb.h"
 #include "mediapipe/framework/packet_set.h"
+#include "mediapipe/framework/port/map_util.h"
+#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/stream_handler/sync_set_input_stream_handler.pb.h"
 #include "mediapipe/framework/timestamp.h"
-#include "mediapipe/framework/tool/tag_map.h"
 
 namespace mediapipe {
 
-// An input stream handler which separates the inputs into sets which
-// are each independently synchronized.  For example, if 5 inputs are
-// present, then the first three can be grouped (and will be synchronized
-// as if they were in a calculator with only those three streams) and the
-// remaining 2 streams can be independently grouped.  The calculator will
-// always be called with all the available packets from a single sync set
-// (never more than one).  The input timestamps seen by the calculator
-// will be ordered sequentially for each sync set but may jump around
-// between sync sets.
-class SyncSetInputStreamHandler : public InputStreamHandler {
- public:
-  SyncSetInputStreamHandler() = delete;
-  SyncSetInputStreamHandler(std::shared_ptr<tool::TagMap> tag_map,
-                            CalculatorContextManager* cc_manager,
-                            const MediaPipeOptions& extendable_options,
-                            bool calculator_run_in_parallel);
-
-  void PrepareForRun(std::function<void()> headers_ready_callback,
-                     std::function<void()> notification_callback,
-                     std::function<void(CalculatorContext*)> schedule_callback,
-                     std::function<void(absl::Status)> error_callback) override;
-
- protected:
-  // In SyncSetInputStreamHandler, a node is "ready" if any
-  // of its sync sets are ready in the traditional sense (See
-  // DefaultInputStreamHandler).
-  NodeReadiness GetNodeReadiness(Timestamp* min_stream_timestamp) override;
-
-  // Only invoked when associated GetNodeReadiness() returned kReadyForProcess.
-  // Populates packets for the ready sync-set, and populates timestamp bounds
-  // for all sync-sets.
-  void FillInputSet(Timestamp input_timestamp,
-                    InputStreamShardSet* input_set) override;
-
-  // Populates timestamp bounds for streams outside the ready sync-set.
-  void FillInputBounds(Timestamp input_timestamp,
-                       InputStreamShardSet* input_set)
-      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
-
-  // Returns the number of sync-sets maintained by this input-handler.
-  int SyncSetCount() override;
-
- private:
-  absl::Mutex mutex_;
-  // The ids of each set of inputs.
-  std::vector<SyncSet> sync_sets_ ABSL_GUARDED_BY(mutex_);
-  // The index of the ready sync set.  A value of -1 indicates that no
-  // sync sets are ready.
-  int ready_sync_set_index_ ABSL_GUARDED_BY(mutex_) = -1;
-  // The timestamp at which the sync set is ready.  If no sync set is
-  // ready then this variable should be Timestamp::Done() .
-  Timestamp ready_timestamp_ ABSL_GUARDED_BY(mutex_);
-};
-
 REGISTER_INPUT_STREAM_HANDLER(SyncSetInputStreamHandler);
-
-SyncSetInputStreamHandler::SyncSetInputStreamHandler(
-    std::shared_ptr<tool::TagMap> tag_map, CalculatorContextManager* cc_manager,
-    const MediaPipeOptions& extendable_options, bool calculator_run_in_parallel)
-    : InputStreamHandler(std::move(tag_map), cc_manager, extendable_options,
-                         calculator_run_in_parallel) {}
 
 void SyncSetInputStreamHandler::PrepareForRun(
     std::function<void()> headers_ready_callback,
@@ -95,7 +40,7 @@ void SyncSetInputStreamHandler::PrepareForRun(
     std::function<void(CalculatorContext*)> schedule_callback,
     std::function<void(absl::Status)> error_callback) {
   const auto& handler_options =
-      options_.GetExtension(SyncSetInputStreamHandlerOptions::ext);
+      options_.GetExtension(mediapipe::SyncSetInputStreamHandlerOptions::ext);
   {
     absl::MutexLock lock(&mutex_);
     sync_sets_.clear();
