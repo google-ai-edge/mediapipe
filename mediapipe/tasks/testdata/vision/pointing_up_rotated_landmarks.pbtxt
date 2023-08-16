@@ -1,8 +1,8 @@
 classifications {
   classification {
     score: 1.0
-    label: "Left"
-    display_name: "Left"
+    label: "Right"
+    display_name: "Right"
   }
 }
 

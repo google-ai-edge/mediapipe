@@ -38,10 +38,10 @@ mediapipe::ClassificationList ClassificationForHandedness(float handedness) {
   mediapipe::ClassificationList result;
   auto* h = result.add_classification();
   if (handedness < 0.5f) {
-    h->set_label("Right");
+    h->set_label("Left");
     h->set_score(1.0f - handedness);
   } else {
-    h->set_label("Left");
+    h->set_label("Right");
     h->set_score(handedness);
   }
   return result;
@@ -84,8 +84,8 @@ TEST_P(HandednessToMatrixCalculatorTest, OutputsCorrectResult) {
 INSTANTIATE_TEST_CASE_P(
     HandednessToMatrixCalculatorTests, HandednessToMatrixCalculatorTest,
     testing::ValuesIn<HandednessToMatrixCalculatorTestCase>(
-        {{/* test_name= */ "TestWithRightHand", /* handedness= */ 0.01f},
-         {/* test_name= */ "TestWithLeftHand", /* handedness= */ 0.99f}}),
+        {{/* test_name= */ "TestWithLeftHand", /* handedness= */ 0.01f},
+         {/* test_name= */ "TestWithRightHand", /* handedness= */ 0.99f}}),
     [](const testing::TestParamInfo<
         HandednessToMatrixCalculatorTest::ParamType>& info) {
       return info.param.test_name;
