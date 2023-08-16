@@ -112,6 +112,39 @@ def get_steps_per_epoch(steps_per_epoch: Optional[int] = None,
     return len(train_data) // batch_size
 
 
+def convert_to_tflite_from_file(
+    saved_model_file: str,
+    quantization_config: Optional[quantization.QuantizationConfig] = None,
+    supported_ops: Tuple[tf.lite.OpsSet, ...] = (
+        tf.lite.OpsSet.TFLITE_BUILTINS,
+    ),
+    preprocess: Optional[Callable[..., Any]] = None,
+) -> bytearray:
+  """Converts the input Keras model to TFLite format.
+
+  Args:
+    saved_model_file: Keras model to be converted to TFLite.
+    quantization_config: Configuration for post-training quantization.
+    supported_ops: A list of supported ops in the converted TFLite file.
+    preprocess: A callable to preprocess the representative dataset for
+      quantization. The callable takes three arguments in order: feature, label,
+      and is_training.
+
+  Returns:
+    bytearray of TFLite model
+  """
+  converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_file)
+
+  if quantization_config:
+    converter = quantization_config.set_converter_with_quantization(
+        converter, preprocess=preprocess
+    )
+
+  converter.target_spec.supported_ops = supported_ops
+  tflite_model = converter.convert()
+  return tflite_model
+
+
 def convert_to_tflite(
     model: tf.keras.Model,
     quantization_config: Optional[quantization.QuantizationConfig] = None,
@@ -135,16 +168,14 @@ def convert_to_tflite(
   """
   with tempfile.TemporaryDirectory() as temp_dir:
     save_path = os.path.join(temp_dir, 'saved_model')
-    model.save(save_path, include_optimizer=False, save_format='tf')
-    converter = tf.lite.TFLiteConverter.from_saved_model(save_path)
-
-    if quantization_config:
-      converter = quantization_config.set_converter_with_quantization(
-          converter, preprocess=preprocess)
-
-    converter.target_spec.supported_ops = supported_ops
-    tflite_model = converter.convert()
-    return tflite_model
+    model.save(
+        save_path,
+        include_optimizer=False,
+        save_format='tf',
+    )
+    return convert_to_tflite_from_file(
+        save_path, quantization_config, supported_ops, preprocess
+    )
 
 
 def save_tflite(tflite_model: bytearray, tflite_file: str) -> None:
