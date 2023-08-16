@@ -231,8 +231,8 @@ class FaceStylizer(object):
 
     # Create an end-to-end model by concatenating encoder and decoder
     inputs = tf.keras.Input(shape=(256, 256, 3))
-    x = self._encoder(inputs)
-    x = self._decoder({'inputs': x + self.w_avg})
+    x = self._encoder(inputs, training=True)
+    x = self._decoder({'inputs': x + self.w_avg}, training=True)
     x = x['image'][-1]
     # Scale the data range from [-1, 1] to [0, 1] to support running inference
     # on both CPU and GPU.
@@ -241,6 +241,10 @@ class FaceStylizer(object):
 
     face_stylizer_model_buffer = model_util.convert_to_tflite(
         model=model,
+        supported_ops=[
+            tf.lite.OpsSet.TFLITE_BUILTINS,
+            tf.lite.OpsSet.SELECT_TF_OPS,
+        ],
         preprocess=self._preprocessor,
     )
 
