@@ -66,7 +66,7 @@ class LegacyCalculatorSupport {
   };
 };
 
-#if !defined(_MSC_VER)
+#if !defined(_MSC_VER) || defined(__clang__)
 // We only declare this variable for two specializations of the template because
 // it is only meant to be used for these two types.
 // Note that, since these variables are members of specific template
