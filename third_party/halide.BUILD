@@ -42,7 +42,7 @@ cc_library(
 cc_library(
     name = "lib_halide_static",
     srcs = select({
-        "@mediapipe//mediapipe:windows": [
+        "@halide//:halide_config_windows_x86_64": [
             "bin/Release/Halide.dll",
             "lib/Release/Halide.lib",
         ],
