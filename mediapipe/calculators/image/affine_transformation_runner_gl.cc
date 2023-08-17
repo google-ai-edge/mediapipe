@@ -384,6 +384,8 @@ class GlTextureWarpAffineRunner
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    glFlush();
+
     return absl::OkStatus();
   }
 
