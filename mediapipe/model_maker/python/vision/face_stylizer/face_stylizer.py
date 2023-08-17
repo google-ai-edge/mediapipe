@@ -241,10 +241,11 @@ class FaceStylizer(object):
 
     face_stylizer_model_buffer = model_util.convert_to_tflite(
         model=model,
-        supported_ops=[
+        quantization_config=None,
+        supported_ops=(
             tf.lite.OpsSet.TFLITE_BUILTINS,
             tf.lite.OpsSet.SELECT_TF_OPS,
-        ],
+        ),
         preprocess=self._preprocessor,
     )
 
