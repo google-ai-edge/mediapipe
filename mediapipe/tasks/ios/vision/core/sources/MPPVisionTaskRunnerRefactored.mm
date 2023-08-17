@@ -59,10 +59,17 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
 
 @implementation MPPVisionTaskRunner
 
-- (nullable instancetype)initWithCalculatorGraphConfig:(CalculatorGraphConfig)graphConfig
-                                           runningMode:(MPPRunningMode)runningMode
-                                       packetsCallback:(PacketsCallback)packetsCallback
-                                                 error:(NSError **)error {
+- (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
+                              runningMode:(MPPRunningMode)runningMode
+                               roiAllowed:(BOOL)roiAllowed
+                          packetsCallback:(PacketsCallback)packetsCallback
+                     imageInputStreamName:(NSString *)imageInputStreamName
+                  normRectInputStreamName:(NSString *)normRectInputStreamName
+                                    error:(NSError **)error {
+  _roiAllowed = roiAllowed;
+  _imageInStreamName = imageInputStreamName.cppString;
+  _normRectInStreamName = normRectInputStreamName.cppString;
+
   switch (runningMode) {
     case MPPRunningModeImage:
     case MPPRunningModeVideo: {
@@ -97,26 +104,10 @@ static NSString *const kTaskPrefix = @"com.mediapipe.tasks.vision";
   }
 
   _runningMode = runningMode;
-  self = [super initWithCalculatorGraphConfig:graphConfig
+  self = [super initWithCalculatorGraphConfig: [taskInfo generateGraphConfig]
                               packetsCallback:packetsCallback
                                         error:error];
   return self;
-}
-
-- (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
-                              runningMode:(MPPRunningMode)runningMode
-                               roiAllowed:(BOOL)roiAllowed
-                          packetsCallback:(PacketsCallback)packetsCallback
-                     imageInputStreamName:(NSString *)imageInputStreamName
-                  normRectInputStreamName:(NSString *)normRectInputStreamName
-                                    error:(NSError **)error {
-  _roiAllowed = roiAllowed;
-  _imageInStreamName = imageInputStreamName.cppString;
-  _normRectInStreamName = normRectInputStreamName.cppString;
-
-  return [self initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
-                             packetsCallback:packetsCallback
-                                       error:error];
 }
 
 - (std::optional<NormalizedRect>)normalizedRectWithRegionOfInterest:(CGRect)roi
