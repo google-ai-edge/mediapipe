@@ -427,6 +427,17 @@ cc_test(
     ],
 )
 
+# Used by vendor processes that don't have access to libandroid.so, but want to use AHardwareBuffer.
+config_setting(
+    name = "android_link_native_window",
+    define_values = {
+        "MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW": "1",
+        "MEDIAPIPE_NO_JNI": "1",
+    },
+    values = {"crosstool_top": "//external:android/crosstool"},
+    visibility = ["//visibility:private"],
+)
+
 cc_library(
     name = "tensor",
     srcs =
@@ -449,7 +460,13 @@ cc_library(
         "//conditions:default": [],
     }),
     defines = select({
+        # Excludes AHardwareBuffer features from vendor processes
         "//mediapipe/framework:android_no_jni": ["MEDIAPIPE_NO_JNI"],
+        # unless they're linked against nativewindow.
+        ":android_link_native_window": [
+            "MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW",
+            "MEDIAPIPE_NO_JNI",
+        ],
         "//conditions:default": [],
     }),
     linkopts = select({
@@ -461,6 +478,9 @@ cc_library(
         "//mediapipe/framework:android_no_jni": [],
         "//mediapipe:android": [
             "-landroid",
+        ],
+        ":android_link_native_window": [
+            "-lnativewindow",  # Provides <android/hardware_buffer.h> to vendor processes on Android API >= 26.
         ],
     }),
     deps = [
