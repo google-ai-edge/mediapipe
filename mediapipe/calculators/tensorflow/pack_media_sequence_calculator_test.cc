@@ -25,6 +25,7 @@
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/location_opencv.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/timestamp.h"
@@ -63,6 +64,7 @@ constexpr char kImageLabelOtherTag[] = "IMAGE_LABEL_OTHER";
 constexpr char kImagePrefixTag[] = "IMAGE_PREFIX";
 constexpr char kSequenceExampleTag[] = "SEQUENCE_EXAMPLE";
 constexpr char kImageTag[] = "IMAGE";
+constexpr char kClipMediaIdTag[] = "CLIP_MEDIA_ID";
 
 class PackMediaSequenceCalculatorTest : public ::testing::Test {
  protected:
@@ -70,10 +72,14 @@ class PackMediaSequenceCalculatorTest : public ::testing::Test {
                        const tf::Features& features,
                        const bool output_only_if_all_present,
                        const bool replace_instead_of_append,
-                       const bool output_as_zero_timestamp = false) {
+                       const bool output_as_zero_timestamp = false,
+                       const std::vector<std::string>& input_side_packets = {
+                           "SEQUENCE_EXAMPLE:input_sequence"}) {
     CalculatorGraphConfig::Node config;
     config.set_calculator("PackMediaSequenceCalculator");
-    config.add_input_side_packet("SEQUENCE_EXAMPLE:input_sequence");
+    for (const std::string& side_packet : input_side_packets) {
+      config.add_input_side_packet(side_packet);
+    }
     config.add_output_stream("SEQUENCE_EXAMPLE:output_sequence");
     for (const std::string& stream : input_streams) {
       config.add_input_stream(stream);
@@ -831,6 +837,88 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoMaskDetections) {
   }
   ASSERT_THAT(mpms::GetClassSegmentationClassLabelString(output_sequence),
               testing::ElementsAreArray(::std::vector<std::string>({"mask"})));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, AddClipMediaId) {
+  SetUpCalculator(
+      /*input_streams=*/{"FLOAT_FEATURE_TEST:test",
+                         "FLOAT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false,
+      /*replace_instead_of_append=*/true,
+      /*output_as_zero_timestamp=*/false, /*input_side_packets=*/
+      {"SEQUENCE_EXAMPLE:input_sequence", "CLIP_MEDIA_ID:video_id"});
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+  const std::string test_video_id = "test_video_id";
+
+  int num_timesteps = 2;
+  for (int i = 0; i < num_timesteps; ++i) {
+    auto vf_ptr = ::absl::make_unique<std::vector<float>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kFloatFeatureTestTag)
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+    vf_ptr = ::absl::make_unique<std::vector<float>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kFloatFeatureOtherTag)
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag(kClipMediaIdTag) =
+      MakePacket<std::string>(test_video_id);
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_EQ(test_video_id, mpms::GetClipMediaId(output_sequence));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, ReplaceClipMediaId) {
+  SetUpCalculator(
+      /*input_streams=*/{"FLOAT_FEATURE_TEST:test",
+                         "FLOAT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false,
+      /*replace_instead_of_append=*/true,
+      /*output_as_zero_timestamp=*/false, /*input_side_packets=*/
+      {"SEQUENCE_EXAMPLE:input_sequence", "CLIP_MEDIA_ID:video_id"});
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+  const std::string existing_video_id = "existing_video_id";
+  mpms::SetClipMediaId(existing_video_id, input_sequence.get());
+  const std::string test_video_id = "test_video_id";
+
+  int num_timesteps = 2;
+  for (int i = 0; i < num_timesteps; ++i) {
+    auto vf_ptr = ::absl::make_unique<std::vector<float>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kFloatFeatureTestTag)
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+    vf_ptr = ::absl::make_unique<std::vector<float>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kFloatFeatureOtherTag)
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag(kClipMediaIdTag) =
+      MakePacket<std::string>(test_video_id).At(Timestamp(0));
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_EQ(test_video_id, mpms::GetClipMediaId(output_sequence));
 }
 
 TEST_F(PackMediaSequenceCalculatorTest, MissingStreamOK) {

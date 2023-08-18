@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -45,6 +46,7 @@ const char kForwardFlowEncodedTag[] = "FORWARD_FLOW_ENCODED";
 const char kBBoxTag[] = "BBOX";
 const char kKeypointsTag[] = "KEYPOINTS";
 const char kSegmentationMaskTag[] = "CLASS_SEGMENTATION";
+const char kClipMediaIdTag[] = "CLIP_MEDIA_ID";
 
 namespace tf = ::tensorflow;
 namespace mpms = mediapipe::mediasequence;
@@ -56,17 +58,21 @@ namespace mpms = mediapipe::mediasequence;
 // context features can be supplied verbatim in the calculator's options. The
 // SequenceExample will conform to the description in media_sequence.h.
 //
-// The supported input stream tags are "IMAGE", which stores the encoded
-// images from the OpenCVImageEncoderCalculator, "IMAGE_LABEL", which stores
-// image labels from vector<Classification>, "FORWARD_FLOW_ENCODED", which
-// stores the encoded optical flow from the same calculator, "BBOX" which stores
-// bounding boxes from vector<Detections>, and streams with the
-// "FLOAT_FEATURE_${NAME}" pattern, which stores the values from vector<float>'s
-// associated with the name ${NAME}. "KEYPOINTS" stores a map of 2D keypoints
-// from flat_hash_map<string, vector<pair<float, float>>>. "IMAGE_${NAME}",
-// "BBOX_${NAME}", and "KEYPOINTS_${NAME}" will also store prefixed versions of
-// each stream, which allows for multiple image streams to be included. However,
-// the default names are suppored by more tools.
+// The supported input stream tags are:
+// * "IMAGE", which stores the encoded images from the
+//   OpenCVImageEncoderCalculator,
+// * "IMAGE_LABEL", which stores image labels from vector<Classification>,
+// * "FORWARD_FLOW_ENCODED", which stores the encoded optical flow from the same
+//   calculator,
+// * "BBOX" which stores bounding boxes from vector<Detections>,
+// * streams with the "FLOAT_FEATURE_${NAME}" pattern, which stores the values
+//   from vector<float>'s associated with the name ${NAME},
+// * "KEYPOINTS" stores a map of 2D keypoints from flat_hash_map<string,
+//   vector<pair<float, float>>>,
+// * "CLIP_MEDIA_ID", which stores the clip's media ID as a string.
+// "IMAGE_${NAME}", "BBOX_${NAME}", and "KEYPOINTS_${NAME}" will also store
+// prefixed versions of each stream, which allows for multiple image streams to
+// be included. However, the default names are suppored by more tools.
 //
 // Example config:
 // node {
@@ -102,6 +108,9 @@ class PackMediaSequenceCalculator : public CalculatorBase {
   static absl::Status GetContract(CalculatorContract* cc) {
     RET_CHECK(cc->InputSidePackets().HasTag(kSequenceExampleTag));
     cc->InputSidePackets().Tag(kSequenceExampleTag).Set<tf::SequenceExample>();
+    if (cc->InputSidePackets().HasTag(kClipMediaIdTag)) {
+      cc->InputSidePackets().Tag(kClipMediaIdTag).Set<std::string>();
+    }
 
     if (cc->Inputs().HasTag(kForwardFlowEncodedTag)) {
       cc->Inputs()
@@ -190,6 +199,11 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         cc->InputSidePackets()
             .Tag(kSequenceExampleTag)
             .Get<tf::SequenceExample>());
+    if (cc->InputSidePackets().HasTag(kClipMediaIdTag) &&
+        !cc->InputSidePackets().Tag(kClipMediaIdTag).IsEmpty()) {
+      clip_media_id_ =
+          cc->InputSidePackets().Tag(kClipMediaIdTag).Get<std::string>();
+    }
 
     const auto& context_features =
         cc->Options<PackMediaSequenceCalculatorOptions>().context_feature_map();
@@ -592,10 +606,14 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         }
       }
     }
+    if (clip_media_id_.has_value()) {
+      mpms::SetClipMediaId(*clip_media_id_, sequence_.get());
+    }
     return absl::OkStatus();
   }
 
   std::unique_ptr<tf::SequenceExample> sequence_;
+  std::optional<std::string> clip_media_id_ = std::nullopt;
   std::map<std::string, bool> features_present_;
   bool replace_keypoints_;
 };

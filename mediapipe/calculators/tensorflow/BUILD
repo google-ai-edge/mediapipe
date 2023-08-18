@@ -929,6 +929,7 @@ cc_test(
         "//mediapipe/calculators/image:opencv_image_encoder_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:detection_cc_proto",
