@@ -118,14 +118,20 @@ const int kFaceMeshNose[25][2] = {
 
 const cv::Scalar kRedColor = cv::Scalar{255, 48, 48};
 const cv::Scalar kGreenColor = cv::Scalar{48, 255, 48};
+const cv::Scalar kGreenColor2 = cv::Scalar{0, 128, 0};
 const cv::Scalar kBlueColor = cv::Scalar{21, 101, 192};
+const cv::Scalar kBlueColor2 = cv::Scalar{0, 204, 255};
 const cv::Scalar kYellowColor = cv::Scalar{255, 204, 0};
+const cv::Scalar kYellowColor2 = cv::Scalar{192, 255, 48};
 const cv::Scalar kGrayColor = cv::Scalar{128, 128, 128};
 const cv::Scalar kPurpleColor = cv::Scalar{128, 64, 128};
 const cv::Scalar kPeachColor = cv::Scalar{255, 229, 180};
 const cv::Scalar kWhiteColor = cv::Scalar(224, 224, 224);
 const cv::Scalar kCyanColor = cv::Scalar{48, 255, 192};
+const cv::Scalar kCyanColor2 = cv::Scalar{48, 48, 255};
 const cv::Scalar kMagentaColor = cv::Scalar{255, 48, 192};
+const cv::Scalar kPinkColor = cv::Scalar{255, 0, 255};
+const cv::Scalar kOrangeColor = cv::Scalar{192, 101, 21};
 
 void ReverseRGB(cv::Scalar* color) {
   int tmp = color->val[0];
@@ -196,7 +202,7 @@ void DrawFace(const mediapipe::NormalizedLandmarkList& face,
               const std::pair<int, int>& image_size, const cv::Mat& affine,
               bool flip_y, bool draw_nose, int color_style, bool reverse_color,
               int draw_line_width, cv::Mat* image) {
-  std::vector<cv::Point> landmarks;
+  std::vector<cv::Point2f> landmarks;
   for (const auto& lm : face.landmark()) {
     float ori_x = lm.x() * image_size.first;
     float ori_y = (flip_y ? 1.0f - lm.y() : lm.y()) * image_size.second;
@@ -239,14 +245,14 @@ void DrawFace(const mediapipe::NormalizedLandmarkList& face,
     kNoseColor = kYellowColor;
   } else if (color_style == 2) {
     kFaceOvalColor = kWhiteColor;
-    kLipsColor = kBlueColor;
-    kLeftEyeColor = kCyanColor;
+    kLipsColor = kRedColor;
+    kLeftEyeColor = kYellowColor2;
     kLeftEyebrowColor = kGreenColor;
-    kLeftEyeIrisColor = kRedColor;
-    kRightEyeColor = kCyanColor;
-    kRightEyebrowColor = kGreenColor;
-    kRightEyeIrisColor = kRedColor;
-    kNoseColor = kYellowColor;
+    kLeftEyeIrisColor = kBlueColor2;
+    kRightEyeColor = kPinkColor;
+    kRightEyebrowColor = kGreenColor2;
+    kRightEyeIrisColor = kCyanColor2;
+    kNoseColor = kOrangeColor;
   } else {
     LOG(ERROR) << "color_style not supported.";
   }
@@ -266,53 +272,56 @@ void DrawFace(const mediapipe::NormalizedLandmarkList& face,
   for (int j = 0; j < 36; ++j) {
     cv::line(*image, landmarks[kFaceMeshFaceOval[j][0]],
              landmarks[kFaceMeshFaceOval[j][1]], kFaceOvalColor,
-             draw_line_width);
+             draw_line_width, cv::LINE_AA);
   }
 
   for (int j = 0; j < 40; ++j) {
     cv::line(*image, landmarks[kFaceMeshLips[j][0]],
-             landmarks[kFaceMeshLips[j][1]], kLipsColor, draw_line_width);
+             landmarks[kFaceMeshLips[j][1]], kLipsColor, draw_line_width,
+             cv::LINE_AA);
   }
 
   for (int j = 0; j < 16; ++j) {
     cv::line(*image, landmarks[kFaceMeshLeftEye[j][0]],
-             landmarks[kFaceMeshLeftEye[j][1]], kLeftEyeColor, draw_line_width);
+             landmarks[kFaceMeshLeftEye[j][1]], kLeftEyeColor, draw_line_width,
+             cv::LINE_AA);
   }
 
   for (int j = 0; j < 8; ++j) {
     cv::line(*image, landmarks[kFaceMeshLeftEyebrow[j][0]],
              landmarks[kFaceMeshLeftEyebrow[j][1]], kLeftEyebrowColor,
-             draw_line_width);
+             draw_line_width, cv::LINE_AA);
   }
 
   for (int j = 0; j < 4; ++j) {
     cv::line(*image, landmarks[kFaceMeshLeftIris[j][0]],
              landmarks[kFaceMeshLeftIris[j][1]], kLeftEyeIrisColor,
-             draw_line_width);
+             draw_line_width, cv::LINE_AA);
   }
 
   for (int j = 0; j < 16; ++j) {
     cv::line(*image, landmarks[kFaceMeshRightEye[j][0]],
              landmarks[kFaceMeshRightEye[j][1]], kRightEyeColor,
-             draw_line_width);
+             draw_line_width, cv::LINE_AA);
   }
 
   for (int j = 0; j < 8; ++j) {
     cv::line(*image, landmarks[kFaceMeshRightEyebrow[j][0]],
              landmarks[kFaceMeshRightEyebrow[j][1]], kRightEyebrowColor,
-             draw_line_width);
+             draw_line_width, cv::LINE_AA);
   }
 
   for (int j = 0; j < 4; ++j) {
     cv::line(*image, landmarks[kFaceMeshRightIris[j][0]],
              landmarks[kFaceMeshRightIris[j][1]], kRightEyeIrisColor,
-             draw_line_width);
+             draw_line_width, cv::LINE_AA);
   }
 
   if (draw_nose) {
     for (int j = 0; j < 25; ++j) {
       cv::line(*image, landmarks[kFaceMeshNose[j][0]],
-               landmarks[kFaceMeshNose[j][1]], kNoseColor, draw_line_width);
+               landmarks[kFaceMeshNose[j][1]], kNoseColor, draw_line_width,
+               cv::LINE_AA);
     }
   }
 }
