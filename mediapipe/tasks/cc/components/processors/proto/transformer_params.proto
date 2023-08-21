@@ -43,4 +43,7 @@ message TransformerParameters {
 
   // Number of stacked transformers, `N` in the paper.
   int32 num_stacks = 7;
+
+  // Whether to use Multi-Query-Attention (MQA).
+  bool use_mqa = 8;
 }
