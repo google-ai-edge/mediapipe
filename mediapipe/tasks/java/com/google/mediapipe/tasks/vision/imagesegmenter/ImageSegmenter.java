@@ -775,7 +775,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
 
     abstract ImageProcessingOptions imageProcessingOptions();
 
-    static Builder builder() {
+    public static Builder builder() {
       return new AutoValue_ImageSegmenter_SegmentationOptions.Builder()
           .setImageProcessingOptions(ImageProcessingOptions.builder().build());
     }
