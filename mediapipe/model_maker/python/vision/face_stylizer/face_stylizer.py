@@ -13,6 +13,7 @@
 # limitations under the License.
 """APIs to train face stylization model."""
 
+import logging
 import os
 from typing import Any, Callable, Optional
 import zipfile
@@ -102,6 +103,37 @@ class FaceStylizer(object):
     )
     face_stylizer._create_and_train_model(train_data)
     return face_stylizer
+
+  def stylize(
+      self, data: classification_ds.ClassificationDataset
+  ) -> classification_ds.ClassificationDataset:
+    """Stylizes the images represented by the input dataset.
+
+    Args:
+      data: Dataset of input images, can contain multiple images.
+
+    Returns:
+      A dataset contains the stylized images
+    """
+    input_dataset = data.gen_tf_dataset(preprocess=self._preprocessor)
+    output_img_list = []
+    for sample in input_dataset:
+      image = sample[0]
+      w = self._encoder(image, training=True)
+      x = self._decoder({'inputs': w + self.w_avg}, training=True)
+      output_batch = x['image'][-1]
+      output_img_tensor = (tf.squeeze(output_batch).numpy() + 1.0) * 127.5
+      output_img_list.append(output_img_tensor)
+
+    image_ds = tf.data.Dataset.from_tensor_slices(output_img_list)
+
+    logging.info('Stylized %s images.', len(output_img_list))
+
+    return classification_ds.ClassificationDataset(
+        dataset=image_ds,
+        label_names=['stylized'],
+        size=len(output_img_list),
+    )
 
   def _create_and_train_model(
       self, train_data: classification_ds.ClassificationDataset
