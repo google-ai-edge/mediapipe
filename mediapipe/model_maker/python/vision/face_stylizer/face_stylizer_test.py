@@ -24,11 +24,13 @@ from mediapipe.tasks.python.test import test_utils
 
 class FaceStylizerTest(tf.test.TestCase):
 
-  def _load_data(self):
-    """Loads training dataset."""
-    input_data_dir = test_utils.get_test_data_path('input/style')
+  def _create_training_dataset(self):
+    """Creates training dataset."""
+    input_style_image_file = test_utils.get_test_data_path(
+        'input/style/cartoon/cartoon.jpg'
+    )
 
-    data = face_stylizer.Dataset.from_folder(dirname=input_data_dir)
+    data = face_stylizer.Dataset.from_image(filename=input_style_image_file)
     return data
 
   def _evaluate_saved_model(self, model: face_stylizer.FaceStylizer):
@@ -41,7 +43,7 @@ class FaceStylizerTest(tf.test.TestCase):
 
   def setUp(self):
     super().setUp()
-    self._train_data = self._load_data()
+    self._train_data = self._create_training_dataset()
 
   def test_finetuning_face_stylizer_with_single_input_style_image(self):
     with self.test_session(use_gpu=True):
