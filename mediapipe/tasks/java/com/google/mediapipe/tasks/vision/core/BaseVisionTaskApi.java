@@ -27,7 +27,7 @@ import java.util.Map;
 
 /** The base class of MediaPipe vision tasks. */
 public class BaseVisionTaskApi implements AutoCloseable {
-  private static final long MICROSECONDS_PER_MILLISECOND = 1000;
+  protected static final long MICROSECONDS_PER_MILLISECOND = 1000;
   protected final TaskRunner runner;
   protected final RunningMode runningMode;
   protected final String imageStreamName;
@@ -69,12 +69,6 @@ public class BaseVisionTaskApi implements AutoCloseable {
    */
   protected TaskResult processImageData(
       MPImage image, ImageProcessingOptions imageProcessingOptions) {
-    if (runningMode != RunningMode.IMAGE) {
-      throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
-          "Task is not initialized with the image mode. Current running mode:"
-              + runningMode.name());
-    }
     Map<String, Packet> inputPackets = new HashMap<>();
     inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
     if (!normRectStreamName.isEmpty()) {
@@ -83,6 +77,23 @@ public class BaseVisionTaskApi implements AutoCloseable {
           runner
               .getPacketCreator()
               .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
+    }
+    return processImageData(inputPackets);
+  }
+
+  /**
+   * A synchronous method to process single image inputs. The call blocks the current thread until a
+   * failure status or a successful result is returned.
+   *
+   * @param inputPackets the maps of input stream names to the input packets.
+   * @throws MediaPipeException if the task is not in the image mode.
+   */
+  protected TaskResult processImageData(Map<String, Packet> inputPackets) {
+    if (runningMode != RunningMode.IMAGE) {
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          "Task is not initialized with the image mode. Current running mode:"
+              + runningMode.name());
     }
     return runner.process(inputPackets);
   }
@@ -99,12 +110,6 @@ public class BaseVisionTaskApi implements AutoCloseable {
    */
   protected TaskResult processVideoData(
       MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
-    if (runningMode != RunningMode.VIDEO) {
-      throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
-          "Task is not initialized with the video mode. Current running mode:"
-              + runningMode.name());
-    }
     Map<String, Packet> inputPackets = new HashMap<>();
     inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
     if (!normRectStreamName.isEmpty()) {
@@ -113,6 +118,24 @@ public class BaseVisionTaskApi implements AutoCloseable {
           runner
               .getPacketCreator()
               .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
+    }
+    return processVideoData(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
+  }
+
+  /**
+   * A synchronous method to process continuous video frames. The call blocks the current thread
+   * until a failure status or a successful result is returned.
+   *
+   * @param inputPackets the maps of input stream names to the input packets.
+   * @param timestampMs the corresponding timestamp of the input image in milliseconds.
+   * @throws MediaPipeException if the task is not in the video mode.
+   */
+  protected TaskResult processVideoData(Map<String, Packet> inputPackets, long timestampMs) {
+    if (runningMode != RunningMode.VIDEO) {
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          "Task is not initialized with the video mode. Current running mode:"
+              + runningMode.name());
     }
     return runner.process(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
   }
@@ -129,12 +152,6 @@ public class BaseVisionTaskApi implements AutoCloseable {
    */
   protected void sendLiveStreamData(
       MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
-    if (runningMode != RunningMode.LIVE_STREAM) {
-      throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
-          "Task is not initialized with the live stream mode. Current running mode:"
-              + runningMode.name());
-    }
     Map<String, Packet> inputPackets = new HashMap<>();
     inputPackets.put(imageStreamName, runner.getPacketCreator().createImage(image));
     if (!normRectStreamName.isEmpty()) {
@@ -143,6 +160,24 @@ public class BaseVisionTaskApi implements AutoCloseable {
           runner
               .getPacketCreator()
               .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
+    }
+    sendLiveStreamData(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
+  }
+
+  /**
+   * An asynchronous method to send live stream data to the {@link TaskRunner}. The results will be
+   * available in the user-defined result listener.
+   *
+   * @param inputPackets the maps of input stream names to the input packets.
+   * @param timestampMs the corresponding timestamp of the input image in milliseconds.
+   * @throws MediaPipeException if the task is not in the stream mode.
+   */
+  protected void sendLiveStreamData(Map<String, Packet> inputPackets, long timestampMs) {
+    if (runningMode != RunningMode.LIVE_STREAM) {
+      throw new MediaPipeException(
+          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
+          "Task is not initialized with the live stream mode. Current running mode:"
+              + runningMode.name());
     }
     runner.send(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
   }
