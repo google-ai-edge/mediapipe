@@ -111,3 +111,23 @@ cc_test(
         "//mediapipe/tasks/cc/components/containers:rect",
     ],
 )
+
+cc_library(
+    name = "data_renderer",
+    srcs = ["data_renderer.cc"],
+    hdrs = ["data_renderer.h"],
+    deps = [
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
+        "//mediapipe/calculators/util:landmarks_to_render_data_calculator_cc_proto",
+        "//mediapipe/calculators/util:rect_to_render_data_calculator_cc_proto",
+        "//mediapipe/calculators/util:rect_to_render_scale_calculator",
+        "//mediapipe/calculators/util:rect_to_render_scale_calculator_cc_proto",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/util:render_data_cc_proto",
+        "@com_google_absl//absl/types:span",
+    ],
+)
