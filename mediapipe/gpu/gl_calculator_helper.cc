@@ -219,6 +219,10 @@ GlTexture GlCalculatorHelper::CreateDestinationTexture(
   return MapGpuBuffer(gpu_buffer, gpu_buffer.GetWriteView<GlTextureView>(0));
 }
 
+GlTexture GlCalculatorHelper::CreateDestinationTexture(GpuBuffer& gpu_buffer) {
+  return MapGpuBuffer(gpu_buffer, gpu_buffer.GetWriteView<GlTextureView>(0));
+}
+
 GlTexture GlCalculatorHelper::CreateSourceTexture(
     const mediapipe::Image& image) {
   return CreateSourceTexture(image.GetGpuBuffer());
