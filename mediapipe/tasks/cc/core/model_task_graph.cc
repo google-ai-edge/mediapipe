@@ -186,6 +186,21 @@ absl::StatusOr<const ModelResources*> ModelTaskGraph::CreateModelResources(
   return model_resources_cache_service.GetObject().GetModelResources(tag);
 }
 
+absl::StatusOr<const ModelResources*> ModelTaskGraph::GetOrCreateModelResources(
+    SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file,
+    std::string tag_suffix) {
+  auto model_resources_cache_service = sc->Service(kModelResourcesCacheService);
+  if (model_resources_cache_service.IsAvailable()) {
+    std::string tag =
+        absl::StrCat(CreateModelResourcesTag(sc->OriginalNode()), tag_suffix);
+    if (model_resources_cache_service.GetObject().Exists(tag)) {
+      return model_resources_cache_service.GetObject().GetModelResources(tag);
+    }
+  }
+  return ModelTaskGraph::CreateModelResources(sc, std::move(external_file),
+                                              tag_suffix);
+}
+
 absl::StatusOr<const ModelAssetBundleResources*>
 ModelTaskGraph::CreateModelAssetBundleResources(
     SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file,
