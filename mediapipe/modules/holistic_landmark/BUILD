@@ -171,6 +171,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:landmark_projection_calculator",
         "//mediapipe/calculators/util:landmarks_to_detection_calculator",
         "//mediapipe/calculators/util:rect_transformation_calculator",
+        "//mediapipe/graphs/object_detection:desktop_ovms_calculators"
     ],
 )
 

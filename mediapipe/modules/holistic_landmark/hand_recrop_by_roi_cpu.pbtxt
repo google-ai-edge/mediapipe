@@ -36,17 +36,48 @@ node {
 }
 
 # Predicts hand re-crop rectangle.
+#node {
+#  calculator: "InferenceCalculator"
+#  input_stream: "TENSORS:initial_crop_tensor"
+#  output_stream: "TENSORS:landmark_tensors"
+#  options: {
+#    [mediapipe.InferenceCalculatorOptions.ext] {
+#      model_path: "mediapipe/modules/holistic_landmark/hand_recrop.tflite"
+#      delegate { xnnpack {} }
+#    }
+#  }
+#}
 node {
-  calculator: "InferenceCalculator"
-  input_stream: "TENSORS:initial_crop_tensor"
-  output_stream: "TENSORS:landmark_tensors"
-  options: {
-    [mediapipe.InferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/modules/holistic_landmark/hand_recrop.tflite"
-      delegate { xnnpack {} }
+  calculator: "ModelAPISessionCalculator"
+  output_side_packet: "SESSION:session"
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIOVMSSessionCalculatorOptions]: {
+      servable_name: "hand_recrop"
+      servable_version: "1"
+      server_config: "mediapipe/models/ovms/config_holistic.json"
     }
   }
 }
+node {
+  calculator: "ModelAPISideFeedCalculator"
+  input_side_packet: "SESSION:session"
+  input_stream: "TENSORS:initial_crop_tensor"
+  output_stream: "TENSORS:landmark_tensors"
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIInferenceCalculatorOptions]: {
+          tag_to_input_tensor_names {
+            key: "TENSORS"
+            value: "input_1"
+          }
+          tag_to_output_tensor_names {
+            key: "TENSORS"
+            value: "output_crop"
+          }
+        }
+  }
+}
+#Input name: input_1; mapping_name: input_1; shape: (1,256,256,3); precision: FP32; layout: N...
+#Output name: output_crop; mapping_name: output_crop; shape: (1,1,1,4); precision: FP32; layout: N...
 
 # Decodes the landmark tensors into a vector of landmarks, where the landmark
 # coordinates are normalized by the size of the input image to the model. Two

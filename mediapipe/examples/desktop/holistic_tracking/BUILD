@@ -24,6 +24,7 @@ cc_binary(
         "//mediapipe/modules/holistic_landmark:hand_recrop.tflite",
         "//mediapipe/modules/pose_detection:pose_detection.tflite",
         "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+        "//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite"
     ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",

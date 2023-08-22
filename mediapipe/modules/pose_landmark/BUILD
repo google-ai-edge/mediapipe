@@ -62,6 +62,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/tensor:image_to_tensor_calculator",
         "//mediapipe/calculators/tensor:inference_calculator",
+        "//mediapipe/graphs/object_detection:desktop_ovms_calculators"
     ],
 )
 

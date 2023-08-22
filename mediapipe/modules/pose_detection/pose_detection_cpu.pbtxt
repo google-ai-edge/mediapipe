@@ -65,19 +65,52 @@ node: {
 # Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
+#node {
+#  calculator: "InferenceCalculator"
+#  input_stream: "TENSORS:input_tensors"
+#  output_stream: "TENSORS:detection_tensors"
+#  options: {
+#    [mediapipe.InferenceCalculatorOptions.ext] {
+#      model_path: "mediapipe/modules/pose_detection/pose_detection.tflite"
+#      delegate {
+#        xnnpack {}
+#      }
+#    }
+#  }
+#}
 node {
-  calculator: "InferenceCalculator"
-  input_stream: "TENSORS:input_tensors"
-  output_stream: "TENSORS:detection_tensors"
-  options: {
-    [mediapipe.InferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/modules/pose_detection/pose_detection.tflite"
-      delegate {
-        xnnpack {}
-      }
+  calculator: "ModelAPISessionCalculator"
+  output_side_packet: "SESSION:session"
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIOVMSSessionCalculatorOptions]: {
+      servable_name: "pose_detection"
+      servable_version: "1"
+      server_config: "mediapipe/models/ovms/config_holistic.json"
     }
   }
 }
+node {
+  calculator: "ModelAPISideFeedCalculator"
+  input_side_packet: "SESSION:session"
+  input_stream: "TENSORS:input_tensors"
+  output_stream: "TENSORS:detection_tensors"
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIInferenceCalculatorOptions]: {
+          output_order_list: ["Identity:0", "Identity_1:0"]
+          tag_to_input_tensor_names {
+            key: "TENSORS"
+            value: "input_1:0"
+          }
+          tag_to_output_tensor_names {
+            key: "TENSORS"
+            value: "Identity:0"
+          }
+        }
+  }
+}
+#Input name: input_1:0; mapping_name: input_1; shape: (1,3,224,224); precision: FP32; layout: N...
+#Output name: Identity:0; mapping_name: Identity; shape: (1,2254,12); precision: FP32; layout: N...
+#Output name: Identity_1; mapping_name: Identity_1; shape: (1,2254,1); precision: FP32; layout: N...
 
 # Generates a single side packet containing a vector of SSD anchors based on
 # the specification in the options.

@@ -21,6 +21,8 @@ OVMS_MEDIA_IMAGE_TAG ?= latest
 OVMS_BRANCH ?= "mediapipe_integration"
 JOBS ?= $(shell python3 -c 'import multiprocessing as mp; print(mp.cpu_count())')
 DLDT_PACKAGE_URL ?= https://storage.openvinotoolkit.org/repositories/openvino/packages/2023.0/linux/l_openvino_toolkit_ubuntu20_2023.0.0.10926.b4452d56304_x86_64.tgz
+
+# Targets to use outside running mediapipe_ovms container
 docker_build:
 	docker build -f Dockerfile.openvino \
 	--build-arg http_proxy=$(HTTP_PROXY) --build-arg https_proxy=$(HTTPS_PROXY) \
@@ -39,7 +41,16 @@ run_unit_tests:
 run_hello_world:
 	docker run -it $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel-bin/mediapipe/examples/desktop/hello_world/hello_world | grep "Hello World!"
 
-# TODO: relative path not working in docker run
-#run_object_detection:
-#	docker run -it $(OVMS_MEDIA_DOCKER_IMAGE):$(OVMS_MEDIA_IMAGE_TAG) bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_ovms --calculator_graph_config_file mediapipe/graphs/object_detection/object_detection_desktop_ovms1_graph.pbtxt --input_side_packets "input_video_path=/mediapipe/mediapipe/examples/desktop/object_detection/test_video.mp4,output_video_path=/mediapipe/tested_video.mp4" && ls /mediapipe/tested_video.mp4 | wc -l | grep 1
-
+# Targets to use inside running mediapipe_ovms container
+run_object_detection:
+	bash build_desktop_examples.sh -t object_detection
+	bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_ovms --calculator_graph_config_file mediapipe/graphs/object_detection/object_detection_desktop_ovms1_graph.pbtxt --input_side_packets "input_video_path=/mediapipe/mediapipe/examples/desktop/object_detection/test_video.mp4,output_video_path=/mediapipe/tested_video.mp4"
+	
+run_holistic_tracking:
+	rm -rf /mediapipe/output_holistic_tflite.mp4
+	rm -rf video.mp4
+	wget http://s3.toolbox.iotg.sclab.intel.com/dtrawins-tmp/mediapipe/video.mp4
+	python setup_ovms.py --get_models
+	python setup_ovms.py --convert_pose
+	bash build_desktop_examples.sh -t holistic_tracking
+	bazel-bin/mediapipe/examples/desktop/holistic_tracking/holistic_tracking_cpu --calculator_graph_config_file /mediapipe/mediapipe/graphs/holistic_tracking/holistic_tracking_cpu.pbtxt --input_video_path=/mediapipe/video.mp4 --output_video_path=/mediapipe/output_holistic_tflite.mp4

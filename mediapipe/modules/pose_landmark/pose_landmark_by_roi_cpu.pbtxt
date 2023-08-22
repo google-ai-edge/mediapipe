@@ -134,17 +134,53 @@ node {
 }
 
 # Runs model inference on CPU.
+#node {
+#  calculator: "InferenceCalculator"
+#  input_side_packet: "MODEL:model"
+#  input_stream: "TENSORS:input_tensors"
+#  output_stream: "TENSORS:output_tensors"
+#  options: {
+#    [mediapipe.InferenceCalculatorOptions.ext] {
+#      delegate { xnnpack {} }
+#    }
+#  }
+#}
 node {
-  calculator: "InferenceCalculator"
-  input_side_packet: "MODEL:model"
-  input_stream: "TENSORS:input_tensors"
-  output_stream: "TENSORS:output_tensors"
-  options: {
-    [mediapipe.InferenceCalculatorOptions.ext] {
-      delegate { xnnpack {} }
+  calculator: "ModelAPISessionCalculator"
+  output_side_packet: "SESSION:session"
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIOVMSSessionCalculatorOptions]: {
+      servable_name: "pose_landmark_full"
+      servable_version: "1"
+      server_config: "mediapipe/models/ovms/config_holistic.json"
     }
   }
 }
+node {
+  calculator: "ModelAPISideFeedCalculator"
+  input_side_packet: "SESSION:session"
+  input_stream: "TENSORS:input_tensors"
+  output_stream: "TENSORS:output_tensors"
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIInferenceCalculatorOptions]: {
+          output_order_list: ["Identity","Identity_1","Identity_2","Identity_3","Identity_4"]
+          tag_to_input_tensor_names {
+            key: "TENSORS"
+            value: "input_1"
+          }
+          tag_to_output_tensor_names {
+            key: "TENSORS"
+            value: "Identity"
+          }
+        }
+  }
+}
+#Input name: input_1; mapping_name: input_1; shape: (1,256,256,3); precision: FP32; layout: N...
+#Output name: Identity; mapping_name: Identity; shape: (1,195); precision: FP32; layout: N...
+#Output name: Identity_1; mapping_name: Identity_1; shape: (1,1); precision: FP32; layout: N...
+#Output name: Identity_2; mapping_name: Identity_2; shape: (1,256,256,1); precision: FP32; layout: N...
+#Output name: Identity_3; mapping_name: Identity_3; shape: (1,64,64,39); precision: FP32; layout: N...
+#Output name: Identity_4; mapping_name: Identity_4; shape: (1,117); precision: FP32; layout: N...
 
 # Decodes the tensors into the corresponding landmark and segmentation mask
 # representation.

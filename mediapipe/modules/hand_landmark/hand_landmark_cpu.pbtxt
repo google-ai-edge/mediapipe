@@ -65,19 +65,54 @@ node {
 # Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
+#node {
+#  calculator: "InferenceCalculator"
+#  input_side_packet: "MODEL:model"
+#  input_stream: "TENSORS:input_tensor"
+#  output_stream: "TENSORS:output_tensors"
+#  options: {
+#    [mediapipe.InferenceCalculatorOptions.ext] {
+#      delegate {
+#        xnnpack {}
+#      }
+#    }
+#  }
+#}
 node {
-  calculator: "InferenceCalculator"
-  input_side_packet: "MODEL:model"
-  input_stream: "TENSORS:input_tensor"
-  output_stream: "TENSORS:output_tensors"
-  options: {
-    [mediapipe.InferenceCalculatorOptions.ext] {
-      delegate {
-        xnnpack {}
-      }
+  calculator: "ModelAPISessionCalculator"
+  output_side_packet: "SESSION:session"
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIOVMSSessionCalculatorOptions]: {
+      servable_name: "hand_landmark_full"
+      servable_version: "1"
+      server_config: "mediapipe/models/ovms/config_holistic.json"
     }
   }
 }
+node {
+  calculator: "ModelAPISideFeedCalculator"
+  input_side_packet: "SESSION:session"
+  input_stream: "TENSORS:input_tensor"
+  output_stream: "TENSORS:output_tensors"
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIInferenceCalculatorOptions]: {
+          output_order_list: ["Identity","Identity_1","Identity_2","Identity_3"]
+          tag_to_input_tensor_names {
+            key: "TENSORS"
+            value: "input_1"
+          }
+          tag_to_output_tensor_names { # not tagging other outputs due to hardcode
+            key: "TENSORS"
+            value: "Identity"
+          }
+        }
+  }
+}
+#Input name: input_1; mapping_name: input_1; shape: (1,224,224,3); precision: FP32; layout: N...
+#Output name: Identity; mapping_name: Identity; shape: (1,63); precision: FP32; layout: N...
+#Output name: Identity_1; mapping_name: Identity_1; shape: (1,1); precision: FP32; layout: N...
+#Output name: Identity_2; mapping_name: Identity_2; shape: (1,1); precision: FP32; layout: N...
+#Output name: Identity_3; mapping_name: Identity_3; shape: (1,63); precision: FP32; layout: N...
 
 # Splits a vector of tensors to multiple vectors according to the ranges
 # specified in option.

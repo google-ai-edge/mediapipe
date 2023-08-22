@@ -36,6 +36,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tflite:ssd_anchors_calculator",
         "//mediapipe/calculators/util:detection_letterbox_removal_calculator",
         "//mediapipe/calculators/util:non_max_suppression_calculator",
+        "//mediapipe/graphs/object_detection:desktop_ovms_calculators"
     ],
 )
 

@@ -61,6 +61,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:landmark_projection_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
         "//mediapipe/calculators/util:world_landmark_projection_calculator",
+        "//mediapipe/graphs/object_detection:desktop_ovms_calculators"
     ],
 )
 

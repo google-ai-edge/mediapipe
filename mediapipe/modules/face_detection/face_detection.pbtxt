@@ -62,15 +62,49 @@ node: {
 # Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
+#node {
+#  calculator: "InferenceCalculator"
+#  input_stream: "TENSORS:input_tensors"
+#  output_stream: "TENSORS:detection_tensors"
+#  options: {
+#    [mediapipe.InferenceCalculatorOptions.ext] {}
+#  }
+#  option_value: "delegate:options/delegate"
+#  option_value: "model_path:options/model_path"
+#}
 node {
-  calculator: "InferenceCalculator"
+  calculator: "ModelAPISessionCalculator"
+  output_side_packet: "SESSION:session"
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIOVMSSessionCalculatorOptions]: {
+      servable_name: "face_detection"
+      servable_version: "1"
+      server_config: "mediapipe/models/ovms/config_holistic.json"
+    }
+  }
+}
+node {
+  calculator: "ModelAPISideFeedCalculator"
+  input_side_packet: "SESSION:session"
   input_stream: "TENSORS:input_tensors"
   output_stream: "TENSORS:detection_tensors"
-  options: {
-    [mediapipe.InferenceCalculatorOptions.ext] {}
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIInferenceCalculatorOptions]: {
+          output_order_list: ["regressors", "classificators"]
+          tag_to_input_tensor_names {
+            key: "TENSORS"
+            value: "input"
+          }
+          tag_to_output_tensor_names {
+            key: "TENSORS"
+            value: "regressors"
+          }
+          tag_to_output_tensor_names {
+            key: "TENSORS"
+            value: "classificators"
+          }
+        }
   }
-  option_value: "delegate:options/delegate"
-  option_value: "model_path:options/model_path"
 }
 
 # Detection tensors. (std::vector<Tensor>)

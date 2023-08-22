@@ -77,19 +77,56 @@ node {
 # Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
+#node {
+#  calculator: "InferenceCalculator"
+#  input_stream: "TENSORS:input_tensors"
+#  input_side_packet: "MODEL:model"
+#  input_side_packet: "OP_RESOLVER:op_resolver"
+#  output_stream: "TENSORS:output_tensors"
+#  options: {
+#    [mediapipe.InferenceCalculatorOptions.ext] {
+#      delegate { xnnpack {} }
+#    }
+#  }
+#}
 node {
-  calculator: "InferenceCalculator"
-  input_stream: "TENSORS:input_tensors"
-  input_side_packet: "MODEL:model"
-  input_side_packet: "OP_RESOLVER:op_resolver"
-  output_stream: "TENSORS:output_tensors"
-  options: {
-    [mediapipe.InferenceCalculatorOptions.ext] {
-      delegate { xnnpack {} }
+  calculator: "ModelAPISessionCalculator"
+  output_side_packet: "SESSION:session"
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIOVMSSessionCalculatorOptions]: {
+      #servable_name: "face_landmark_with_attention" # could be enabled when we have IR model
+      servable_name: "face_landmark"
+      servable_version: "1"
+      server_config: "mediapipe/models/ovms/config_holistic.json"
     }
   }
 }
-
+node {
+  calculator: "ModelAPISideFeedCalculator"
+  input_side_packet: "SESSION:session"
+  input_stream: "TENSORS:input_tensors"
+  output_stream: "TENSORS:output_tensors"
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIInferenceCalculatorOptions]: {
+          output_order_list: ["conv2d_21", "conv2d_31"]
+          tag_to_input_tensor_names {
+            key: "TENSORS"
+            value: "input_1"
+          }
+          tag_to_output_tensor_names {
+            key: "TENSORS"
+            value: "conv2d_21"
+          }
+          tag_to_output_tensor_names {
+            key: "TENSORS"
+            value: "conv2d_31"
+          }
+        }
+  }
+}
+#Input name: input_1; mapping_name: input_1; shape: (1,192,192,3); precision: FP32; layout: N...
+#Output name: conv2d_21; mapping_name: conv2d_21; shape: (1,1,1,1404); precision: FP32; layout: N...
+#Output name: conv2d_31; mapping_name: conv2d_31; shape: (1,1,1,1); precision: FP32; layout: N.
 # Splits a vector of tensors into landmark tensors and face flag tensor.
 node {
   calculator: "SwitchContainer"

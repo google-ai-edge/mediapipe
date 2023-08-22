@@ -111,6 +111,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:detection_projection_calculator",
         "//mediapipe/calculators/util:non_max_suppression_calculator",
         "//mediapipe/calculators/util:to_image_calculator",
+        "//mediapipe/graphs/object_detection:desktop_ovms_calculators"
     ],
 )
 

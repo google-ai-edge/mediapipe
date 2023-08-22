@@ -29,6 +29,7 @@
 #include "tfs_frontend/tfs_utils.hpp"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
+#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/calculators/ovms/modelapiovmsinferencecalculator.pb.h"
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/interpreter.h"
@@ -59,10 +60,38 @@ namespace {
 const std::string SESSION_TAG{"SESSION"};
 const std::string OVTENSOR_TAG{"OVTENSOR"};
 const std::string OVTENSORS_TAG{"OVTENSORS"};
-const std::string TFTENSOR_TAG{"TENSOR"};
-const std::string TFTENSORS_TAG{"TENSORS"};
+const std::string TFTENSOR_TAG{"TFTENSOR"};
+const std::string TFTENSORS_TAG{"TFTENSORS"};
+const std::string MPTENSOR_TAG{"TENSOR"};
+const std::string MPTENSORS_TAG{"TENSORS"};
 const std::string TFLITE_TENSOR_TAG{"TFLITE_TENSOR"};
 const std::string TFLITE_TENSORS_TAG{"TFLITE_TENSORS"};
+
+static ov::Tensor convertMPTensor2OVTensor(const Tensor& inputTensor) {
+    // TODO FIXME support for other types/perf
+    void* data = reinterpret_cast<void*>(const_cast<float*>(inputTensor.GetCpuReadView().buffer<float>()));
+    auto datatype = ov::element::f32;
+    ov::Shape shape;
+    for (const auto& dim : inputTensor.shape().dims) {
+        shape.emplace_back(dim);
+    }
+    ov::Tensor result(datatype, shape, data);
+    // TODO do we need to memcpy or not
+    return result;
+}
+
+static Tensor convertOVTensor2MPTensor(const ov::Tensor& t) {
+    // TODO FIXME support for other types/perf
+    std::vector<int> rawShape;
+    for (size_t i = 0; i < t.get_shape().size(); i++) {
+        rawShape.emplace_back(t.get_shape()[i]);
+    }
+    Tensor::Shape shape{rawShape};
+    Tensor outputTensor(Tensor::ElementType::kFloat32, shape);
+    void* data = reinterpret_cast<void*>(const_cast<float*>(outputTensor.GetCpuWriteView().buffer<float>()));
+    std::memcpy(data, t.data(), t.get_byte_size());
+    return outputTensor;
+}
 
 static tensorflow::Tensor convertOVTensor2TFTensor(const ov::Tensor& t) {
     using tensorflow::Tensor;
@@ -82,6 +111,7 @@ static tensorflow::Tensor convertOVTensor2TFTensor(const ov::Tensor& t) {
     std::memcpy(tftensordata, t.data(), t.get_byte_size());
     return result;
 }
+
 static ov::Tensor convertTFTensor2OVTensor(const tensorflow::Tensor& t) {
     void* data = t.data();
     auto datatype = ovms::ovmsPrecisionToIE2Precision(ovms::TFSPrecisionToOvmsPrecision(t.dtype()));
@@ -130,6 +160,12 @@ public:
             } else if (ovms::startsWith(tag, OVTENSOR_TAG)) {
                 LOG(INFO) << "setting input tag:" << tag << " to OVTensor";
                 cc->Inputs().Tag(tag).Set<ov::Tensor>();
+            } else if (ovms::startsWith(tag, MPTENSORS_TAG)) {
+                LOG(INFO) << "setting input tag:" << tag << " to MPTensor";
+                cc->Inputs().Tag(tag).Set<std::vector<Tensor>>();
+            } else if (ovms::startsWith(tag, MPTENSOR_TAG)) {
+                LOG(INFO) << "setting input tag:" << tag << " to MPTensor";
+                cc->Inputs().Tag(tag).Set<Tensor>();
             } else if (ovms::startsWith(tag, TFTENSORS_TAG)) {
                 LOG(INFO) << "setting input tag:" << tag << " to TFTensor";
                 cc->Inputs().Tag(tag).Set<std::vector<tensorflow::Tensor>>();
@@ -160,6 +196,12 @@ public:
             } else if (ovms::startsWith(tag, OVTENSOR_TAG)) {
                 LOG(INFO) << "setting input tag:" << tag << " to OVTensor";
                 cc->Outputs().Tag(tag).Set<ov::Tensor>();
+            } else if (ovms::startsWith(tag, MPTENSORS_TAG)) {
+                LOG(INFO) << "setting input tag:" << tag << " to MPTensor";
+                cc->Outputs().Tag(tag).Set<std::vector<Tensor>>();
+            } else if (ovms::startsWith(tag, MPTENSOR_TAG)) {
+                LOG(INFO) << "setting input tag:" << tag << " to MPTensor";
+                cc->Outputs().Tag(tag).Set<Tensor>();
             } else if (ovms::startsWith(tag, TFTENSORS_TAG)) {
                 LOG(INFO) << "setting input tag:" << tag << " to TFTensor";
                 cc->Outputs().Tag(tag).Set<std::vector<tensorflow::Tensor>>();
@@ -251,27 +293,27 @@ public:
             } else {
                 realInputName = it->second.c_str();
             } 
+#define DESERIALIZE_TENSORS(TYPE, DESERIALIZE_FUN) \
+                auto& packet = cc->Inputs().Tag(tag).Get<std::vector<TYPE>>();                \
+                if ( packet.size() > 1 && input_order_list.size() != packet.size()) {                 \
+                    LOG(INFO) << "input_order_list not set properly in options for multiple inputs."; \
+                    RET_CHECK(false);                                                                 \
+                }                                                                                     \
+                if (this->input_order_list.size() > 0){                                               \
+                    for (int i = 0; i < this->input_order_list.size(); i++) {                         \
+                        auto& tensor = packet[i];                                                     \
+                        input[this->input_order_list[i]] = DESERIALIZE_FUN(tensor);                   \
+                    }                                                                                 \
+                } else if (packet.size() == 1) {                                                      \
+                    input[realInputName] = DESERIALIZE_FUN(packet[0]);                                \
+                }
 
             if (ovms::startsWith(tag, OVTENSORS_TAG)) {
-                auto& packet = cc->Inputs().Tag(tag).Get<std::vector<ov::Tensor>>();
-                
-                if ( packet.size() > 1 && input_order_list.size() <= 1)
-                {
-                    LOG(INFO) << "input_order_list not set in options for multiple inputs.";
-                    RET_CHECK(false);
-                }
-                if (this->input_order_list.size() > 0){
-                    for (int i = 0; i < this->input_order_list.size(); i++)
-                    {
-                        auto& tensor = packet[i];
-                        input[this->input_order_list[i]] = tensor;
-                    }
-                } else if (packet.size() == 1)  {
-                    input[realInputName] = packet[0];
-                }
+                DESERIALIZE_TENSORS(ov::Tensor,);
             } else if (ovms::startsWith(tag, TFLITE_TENSORS_TAG)) {
-                auto& packet = cc->Inputs().Tag(tag).Get<std::vector<TfLiteTensor>>(); // TODO FIXME onlu 1st tensor taken
-                input[realInputName] = convertTFLiteTensor2OVTensor(packet[0]);
+                DESERIALIZE_TENSORS(TfLiteTensor, convertTFLiteTensor2OVTensor);
+            } else if (ovms::startsWith(tag, MPTENSORS_TAG)) {
+                DESERIALIZE_TENSORS(Tensor, convertMPTensor2OVTensor);
             } else if (ovms::startsWith(tag, OVTENSOR_TAG)) {
                 auto& packet = cc->Inputs().Tag(tag).Get<ov::Tensor>();
                 input[realInputName] = packet;
@@ -328,15 +370,15 @@ public:
                 RET_CHECK(false);
             }
             if (ovms::startsWith(tag, OVTENSORS_TAG)) {
+                LOG(INFO) << "OVMS calculator will process vector<ov::Tensor>";
                 auto tensors = std::make_unique<std::vector<ov::Tensor>>();
-                if ( output.size() > 1 && this->output_order_list.size() <= 1)
+                if ( output.size() > 1 && this->output_order_list.size() != this->output_order_list.size())
                 {
-                    LOG(INFO) << "output_order_list not set in options for multiple outputs.";
+                    LOG(INFO) << "output_order_list not set properly in options for multiple outputs.";
                     RET_CHECK(false);
                 }
                 if (this->output_order_list.size() > 0) {
-                    for (int i = 0; i < this->output_order_list.size(); i++)
-                    {
+                    for (int i = 0; i < this->output_order_list.size(); i++) {
                         tensorName = this->output_order_list[i];
                         tensorIt = output.find(tensorName);
                         if (tensorIt == output.end()) {
@@ -350,91 +392,87 @@ public:
                         tensors->emplace_back(tensor);
                     }
                 }
-
                 cc->Outputs().Tag(tag).Add(
                     tensors.release(),
                     cc->InputTimestamp());
-
+                //break; // TODO FIXME order of outputs
+                // no need to break since we only have one tag
+                // create concatenator calc
+            } else if (ovms::startsWith(tag, MPTENSORS_TAG)) {
+                LOG(INFO) << "OVMS calculator will process vector<Tensor>";
+                auto tensors = std::make_unique<std::vector<Tensor>>();
+                if ( output.size() > 1 && this->output_order_list.size() != this->output_order_list.size())
+                {
+                    LOG(INFO) << "output_order_list not set properly in options for multiple outputs.";
+                    RET_CHECK(false);
+                }
+                if (this->output_order_list.size() > 0) {
+                    for (int i = 0; i < this->output_order_list.size(); i++) {
+                        tensorName = this->output_order_list[i];
+                        tensorIt = output.find(tensorName);
+                        if (tensorIt == output.end()) {
+                            LOG(INFO) << "Could not find: " << tensorName << " in inference output";
+                            RET_CHECK(false);
+                        }
+                        tensors->emplace_back(convertOVTensor2MPTensor(tensorIt->second));
+                    }
+                } else {
+                    for (auto& [name,tensor] : output) {
+                        tensors->emplace_back(convertOVTensor2MPTensor(tensor));
+                    }
+                }
+                cc->Outputs().Tag(tag).Add(
+                    tensors.release(),
+                    cc->InputTimestamp());
                 //break; // TODO FIXME order of outputs
                 // no need to break since we only have one tag
                 // create concatenator calc
             } else if (ovms::startsWith(tag, TFLITE_TENSORS_TAG)) {
-                LOG(INFO) << "YYYY will process TfLite tensors";
-                // TODO BEGIN move to Open()
+                // TODO FIXME use output_order_list
+                LOG(INFO) << "OVMS calculator will process vector<TfLiteTensor>";
                 auto outputStreamTensors = std::vector<TfLiteTensor>();
                 if (!this->initialized) {
-                interpreter_->AddTensors(output.size()); // HARDCODE
-                interpreter_->SetInputs({0,1}); // HARDCODE was 0 for single input
-                LOG(INFO) << "YYYY will process TfLite tensors: " << interpreter_->inputs().size();
-                // TODO END move to Open()
-                // interpreter Process()
-                //auto outputStreamTensors = std::make_unique<std::vector<TfLiteTensor>>();
-                LOG(INFO) << "YYYY will process TfLite tensors";
-                size_t tensorId = 0;
-                for (auto& [name,tensor] : output) {
-                    LOG(INFO) << "YYYY will process TfLite tensors";
-                    std::vector<int> tfliteshape;
-                    for (auto& d : tensor.get_shape()) {
-                    LOG(INFO) << "YYYY will process TfLite tensors shape d: " << d;
-                        tfliteshape.emplace_back(d);
+                    interpreter_->AddTensors(output.size()); // HARDCODE
+                    interpreter_->SetInputs({0,1}); // HARDCODE was 0 for single input
+                    size_t tensorId = 0;
+                    for (auto& [name,tensor] : output) {
+                        std::vector<int> tfliteshape;
+                        for (auto& d : tensor.get_shape()) {
+                            tfliteshape.emplace_back(d);
+                        }
+                        interpreter_->SetTensorParametersReadWrite(/*tensor_index*/tensorId, kTfLiteFloat32, name.c_str(),
+                                                       tfliteshape, TfLiteQuantization());
+                        ++tensorId;
                     }
-                    LOG(INFO) << "YYYY will process TfLite tensor name: " << name;
-                    // TODO check if with resize will work
-                    interpreter_->SetTensorParametersReadWrite(/*tensor_index*/tensorId, kTfLiteFloat32, name.c_str(),
-                                                   tfliteshape, TfLiteQuantization());
-                    ++tensorId;
-                }
-                interpreter_->AllocateTensors();
+                    interpreter_->AllocateTensors();
                     this->initialized = true;
                 }
                 size_t tensorId = 0;
                 for (auto& [name,tensor] : output) {
-                    LOG(INFO) << "YYYY will process TfLite tensors of tensorId: " << tensorId;
                     const int interpreterTensorId = interpreter_->inputs()[tensorId];
-                    LOG(INFO) << "YYYY will process TfLite tensors of interpreterTensorId: " << interpreterTensorId;
                     TfLiteTensor* tflitetensor = interpreter_->tensor(interpreterTensorId);
-                    LOG(INFO) << "YYYY will process TfLite tensors of type: " << tflitetensor->type;
-                    //void* tensor_ptr = tflitetensor->data.f; // TODO copy data
-                    // check if direct data works as per TfLite docs other dtypes are obsolete
-                    void* tensor_ptr = tflitetensor->data.f; // TODO copy data
-                    LOG(INFO) << "YYYY will process TfLite tensors of interpreterTensorId: " << interpreterTensorId;
-                    LOG(INFO) << "YYYY will memcpy TfLite tensors with TfLite bytes: " << tflitetensor->bytes
-                              << " ovTensor: " << tensor.get_byte_size();
+                    void* tensor_ptr = tflitetensor->data.f;
                     std::memcpy(tensor_ptr, tensor.data(), tensor.get_byte_size());
                     auto tflitedims = tflitetensor->dims;
-                    LOG(INFO) << "YYYY TfLite tensors dims size: " << tflitedims->size;
-                    for(size_t j = 0; j < tflitedims->size; ++j) {
-                        LOG(INFO) << "YYYY TfLite dim:" << tflitedims->data[j];
-                    }
-                    LOG(INFO) << "YYYY will process TfLite tensors";
                     outputStreamTensors.emplace_back(*tflitetensor);
                     ++tensorId;
                 }
                 //std::reverse(outputStreamTensors.begin(), outputStreamTensors.end());
-                LOG(INFO) << "YYYY output size: " << outputStreamTensors.size();
-                LOG(INFO) << "YYYY output address: " << (void*)&outputStreamTensors;
                 const auto raw_box_tensor = &(outputStreamTensors)[0];
-                LOG(INFO) << "raw_box_tensor: " << raw_box_tensor;
-                LOG(INFO) << "raw_box_tensor dimsize: " << raw_box_tensor->dims->size;
                 cc->Outputs().Tag(tag).AddPacket(MakePacket<std::vector<TfLiteTensor>>(std::move(outputStreamTensors)).At( cc->InputTimestamp()));
- //               cc->Outputs().Tag(tag).Send(std::move(outputStreamTensors, cc->InputTimestamp()));
-            /*    cc->Outputs().Tag(tag).Add(
-                    outputStreamTensors.release(),
-                    cc->InputTimestamp());
-                    */
                 break;
             }else if (ovms::startsWith(tag, OVTENSOR_TAG)) {
-                LOG(INFO) << "YYYY will process TfLite tensors";
+                LOG(INFO) << "OVMS calculator will process ov::Tensor";
                 cc->Outputs().Tag(tag).Add(
                     new ov::Tensor(tensorIt->second),
                     cc->InputTimestamp());
             } else if (ovms::startsWith(tag, TFTENSOR_TAG)) {
-                LOG(INFO) << "YYYY will process TfLite tensors";
+                LOG(INFO) << "OVMS calculator will process tensorflow::Tensor";
                 cc->Outputs().Tag(tag).Add(
                     new tensorflow::Tensor(convertOVTensor2TFTensor(tensorIt->second)),
                     cc->InputTimestamp());
             } else {
-                LOG(INFO) << "YYYY will process TfLite tensors";
+                LOG(INFO) << "OVMS calculator will process ov::Tensor";
                 /*
                 cc->Outputs().Tag(tag).Add(
                     new tensorflow::Tensor(convertOVTensor2TFTensor(tensorIt->second)),
@@ -444,7 +482,7 @@ public:
                     new ov::Tensor(tensorIt->second),
                     cc->InputTimestamp());
             }
-            LOG(INFO) << "YYYY will process TfLite tensors";
+            LOG(INFO) << "OVMS calculator will process TfLite tensors";
         }
         LOG(INFO) << "Main process end";
         return absl::OkStatus();
