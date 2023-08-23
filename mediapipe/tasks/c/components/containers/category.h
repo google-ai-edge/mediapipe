@@ -16,6 +16,9 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_H_
 #define MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_H_
 
+#include "mediapipe/tasks/cc/components/containers/category.h"
+
+extern "C" {
 // Defines a single classification result.
 //
 // The label maps packed into the TFLite Model Metadata [1] are used to populate
@@ -32,11 +35,19 @@ struct Category {
 
   // The optional ID for the category, read from the label map packed in the
   // TFLite Model Metadata if present. Not necessarily human-readable.
-  char* category_name;
+  const char* category_name;
 
   // The optional human-readable name for the category, read from the label map
   // packed in the TFLite Model Metadata if present.
-  char* display_name;
+  const char* display_name;
 };
+}
+
+namespace mediapie::tasks::c::components::containers {
+
+void CppConvertToCategory(mediapipe::tasks::components::containers::Category in,
+                          Category* out);
+
+}  // namespace mediapie::tasks::c::components::containers
 
 #endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_H_

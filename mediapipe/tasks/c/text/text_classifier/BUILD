@@ -18,11 +18,13 @@ licenses(["notice"])
 
 cc_library(
     name = "text_classifier",
+    srcs = ["text_classifier.cc"],
     hdrs = ["text_classifier.h"],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/c/components/containers:classification_result",
         "//mediapipe/tasks/c/components/processors:classifier_options",
         "//mediapipe/tasks/c/core:base_options",
+        "//mediapipe/tasks/cc/text/text_classifier",
     ],
 )

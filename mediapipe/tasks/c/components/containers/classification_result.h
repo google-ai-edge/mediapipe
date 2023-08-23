@@ -19,6 +19,10 @@ limitations under the License.
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "mediapipe/tasks/cc/components/containers/classification_result.h"
+
+extern "C" {
+
 // Defines classification results for a given classifier head.
 struct Classifications {
   // The array of predicted categories, usually sorted by descending scores,
@@ -35,7 +39,7 @@ struct Classifications {
   // Metadata [1] if present. This is useful for multi-head models.
   //
   // [1]: https://www.tensorflow.org/lite/convert/metadata
-  char* head_name;
+  const char* head_name;
 };
 
 // Defines classification results of a model.
@@ -56,5 +60,14 @@ struct ClassificationResult {
   // Specifies whether the timestamp contains a valid value.
   bool has_timestamp_ms;
 };
+}
+
+namespace mediapipe::tasks::c::components::containers {
+
+void CppConvertToClassificationResult(
+    mediapipe::tasks::components::containers::ClassificationResult in,
+    ClassificationResult* out);
+
+}  // namespace mediapipe::tasks::c::components::containers
 
 #endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CLASSIFICATION_RESULT_H_

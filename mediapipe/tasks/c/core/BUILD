@@ -18,5 +18,7 @@ licenses(["notice"])
 
 cc_library(
     name = "base_options",
+    srcs = ["base_options.cc"],
     hdrs = ["base_options.h"],
+    deps = ["//mediapipe/tasks/cc/core:base_options"],
 )

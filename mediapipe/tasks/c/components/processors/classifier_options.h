@@ -18,6 +18,8 @@ limitations under the License.
 
 #include <stdint.h>
 
+#include "mediapipe/tasks/cc/components/processors/classifier_options.h"
+
 // Classifier options for MediaPipe C classification Tasks.
 struct ClassifierOptions {
   // The locale to use for display names specified through the TFLite Model
@@ -47,5 +49,13 @@ struct ClassifierOptions {
   // The number of elements in the category denylist.
   uint32_t category_denylist_count;
 };
+
+namespace mediapipe::tasks::c::components::processors {
+
+void CppConvertToClassifierOptions(
+    ClassifierOptions in,
+    mediapipe::tasks::components::processors::ClassifierOptions* out);
+
+}  // namespace mediapipe::tasks::c::components::processors
 
 #endif  // MEDIAPIPE_TASKS_C_COMPONENTS_PROCESSORS_CLASSIFIER_OPTIONS_H_

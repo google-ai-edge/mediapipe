@@ -20,6 +20,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
 
+extern "C" {
 typedef ClassificationResult TextClassifierResult;
 
 // The options for configuring a MediaPipe text classifier task.
@@ -37,10 +38,12 @@ struct TextClassifierOptions {
 void* text_classifier_create(struct TextClassifierOptions options);
 
 // Performs classification on the input `text`.
-TextClassifierResult text_classifier_classify(void* classifier,
-                                              char* utf8_text);
+bool text_classifier_classify(void* classifier, char* utf8_str,
+                              TextClassifierResult* result);
 
 // Shuts down the TextClassifier when all the work is done. Frees all memory.
 void text_classifier_close(void* classifier);
+
+}  // extern C
 
 #endif  // MEDIAPIPE_TASKS_C_TEXT_TEXT_CLASSIFIER_TEXT_CLASSIFIER_H_

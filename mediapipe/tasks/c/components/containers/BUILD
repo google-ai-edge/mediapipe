@@ -1,5 +1,3 @@
-# TODO: describe this package.
-
 # Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +18,17 @@ licenses(["notice"])
 
 cc_library(
     name = "category",
+    srcs = ["category.cc"],
     hdrs = ["category.h"],
+    deps = ["//mediapipe/tasks/cc/components/containers:category"],
 )
 
 cc_library(
     name = "classification_result",
+    srcs = ["classification_result.cc"],
     hdrs = ["classification_result.h"],
+    deps = [
+        ":category",
+        "//mediapipe/tasks/cc/components/containers:classification_result",
+    ],
 )
