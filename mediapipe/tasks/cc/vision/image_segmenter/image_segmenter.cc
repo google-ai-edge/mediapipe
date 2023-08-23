@@ -23,6 +23,7 @@ limitations under the License.
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
@@ -217,13 +218,16 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
 absl::StatusOr<ImageSegmenterResult> ImageSegmenter::Segment(
     mediapipe::Image image,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
-  return Segment(image, image.width(), image.height(),
-                 std::move(image_processing_options));
+  return Segment(image, {
+                            /*output_width=*/image.width(),
+                            /*output_height=*/image.height(),
+                            std::move(image_processing_options),
+                        });
 }
 
 absl::StatusOr<ImageSegmenterResult> ImageSegmenter::Segment(
-    mediapipe::Image image, int output_width, int output_height,
-    std::optional<core::ImageProcessingOptions> image_processing_options) {
+    mediapipe::Image image, SegmentationOptions segmentation_options) {
+  MP_RETURN_IF_ERROR(ValidateSegmentationOptions(segmentation_options));
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -231,8 +235,9 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::Segment(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image,
-                                           /*roi_allowed=*/false));
+                   ConvertToNormalizedRect(
+                       segmentation_options.image_processing_options, image,
+                       /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
@@ -241,7 +246,8 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::Segment(
             MakePacket<NormalizedRect>(std::move(norm_rect))},
            {kOutputSizeStreamName,
             MakePacket<std::pair<int, int>>(
-                std::make_pair(output_width, output_height))}}));
+                std::make_pair(segmentation_options.output_width,
+                               segmentation_options.output_height))}}));
   std::optional<std::vector<Image>> confidence_masks;
   if (output_confidence_masks_) {
     confidence_masks =
@@ -259,14 +265,18 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::Segment(
 absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
     mediapipe::Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
-  return SegmentForVideo(image, image.width(), image.height(), timestamp_ms,
-                         image_processing_options);
+  return SegmentForVideo(image, timestamp_ms,
+                         {
+                             /*output_width=*/image.width(),
+                             /*output_height=*/image.height(),
+                             std::move(image_processing_options),
+                         });
 }
 
 absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
-    mediapipe::Image image, int output_width, int output_height,
-    int64_t timestamp_ms,
-    std::optional<core::ImageProcessingOptions> image_processing_options) {
+    mediapipe::Image image, int64_t timestamp_ms,
+    SegmentationOptions segmentation_options) {
+  MP_RETURN_IF_ERROR(ValidateSegmentationOptions(segmentation_options));
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -274,8 +284,9 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image,
-                                           /*roi_allowed=*/false));
+                   ConvertToNormalizedRect(
+                       segmentation_options.image_processing_options, image,
+                       /*roi_allowed=*/false));
   ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
@@ -287,7 +298,8 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
            {kOutputSizeStreamName,
             MakePacket<std::pair<int, int>>(
-                std::make_pair(output_width, output_height))
+                std::make_pair(segmentation_options.output_width,
+                               segmentation_options.output_height))
                 .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
   std::optional<std::vector<Image>> confidence_masks;
   if (output_confidence_masks_) {
@@ -306,13 +318,18 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
 absl::Status ImageSegmenter::SegmentAsync(
     Image image, int64_t timestamp_ms,
     std::optional<core::ImageProcessingOptions> image_processing_options) {
-  return SegmentAsync(image, image.width(), image.height(), timestamp_ms,
-                      image_processing_options);
+  return SegmentAsync(image, timestamp_ms,
+                      {
+                          /*output_width=*/image.width(),
+                          /*output_height=*/image.height(),
+                          std::move(image_processing_options),
+                      });
 }
 
 absl::Status ImageSegmenter::SegmentAsync(
-    Image image, int output_width, int output_height, int64_t timestamp_ms,
-    std::optional<core::ImageProcessingOptions> image_processing_options) {
+    Image image, int64_t timestamp_ms,
+    SegmentationOptions segmentation_options) {
+  MP_RETURN_IF_ERROR(ValidateSegmentationOptions(segmentation_options));
   if (image.UsesGpu()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -320,8 +337,9 @@ absl::Status ImageSegmenter::SegmentAsync(
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
   ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image,
-                                           /*roi_allowed=*/false));
+                   ConvertToNormalizedRect(
+                       segmentation_options.image_processing_options, image,
+                       /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))
@@ -331,7 +349,8 @@ absl::Status ImageSegmenter::SegmentAsync(
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
        {kOutputSizeStreamName,
         MakePacket<std::pair<int, int>>(
-            std::make_pair(output_width, output_height))
+            std::make_pair(segmentation_options.output_width,
+                           segmentation_options.output_height))
             .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
 }
 

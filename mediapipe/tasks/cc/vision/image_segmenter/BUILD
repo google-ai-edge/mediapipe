@@ -37,6 +37,7 @@ cc_library(
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc/core:base_options",
         "//mediapipe/tasks/cc/core:utils",
         "//mediapipe/tasks/cc/vision/core:base_vision_task_api",
