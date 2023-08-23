@@ -124,6 +124,7 @@ def _encode_binary_proto_impl(ctx):
         command = "${@:3} < $1 > $2",
         arguments = [args],
         mnemonic = "EncodeProto",
+        toolchain = None,
     )
 
     output_depset = depset([binarypb])
