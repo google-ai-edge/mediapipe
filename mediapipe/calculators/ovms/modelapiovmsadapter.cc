@@ -194,23 +194,18 @@ void OVMSInferenceAdapter::loadModel(const std::shared_ptr<const ov::Model>& mod
     OVMS_ServableMetadataDelete(servableMetadata);
 }
 
-ov::Shape OVMSInferenceAdapter::getInputShape(const std::string& inputName) const {
+ov::PartialShape OVMSInferenceAdapter::getInputShape(const std::string& inputName) const {
     auto it = inShapesMinMaxes.find(inputName);
     if (it == inShapesMinMaxes.end()) {
         LOG(INFO) << "Could not find input:" << inputName;
         throw std::runtime_error(std::string("Adapter could not find input:") + inputName);
     }
 
-    ov::Shape ovShape;
+    ov::PartialShape ovShape;
     const auto& [minBorder, maxBorder] = it->second;
     ovShape.reserve(minBorder.size());
-    for (const auto& d : minBorder) {
-        ovShape.emplace_back(d);
-    }
-    // TODO support partial shapes (dynamic)
-    ov::Shape ovShape2;
-    for (const auto& d : maxBorder) {
-        ovShape2.emplace_back(d);
+    for (size_t i = 0; i < minBorder.size(); ++i) {
+        ovShape.emplace_back(ov::Dimension{minBorder[i], maxBorder[i]});
     }
     return ovShape;
 }
