@@ -10,5 +10,49 @@ cc_library(
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
     ],
-    alwayslink = 1,
+)
+
+cc_test(
+    name = "loopback_test",
+    srcs = ["loopback_test.cc"],
+    deps = [
+        ":loopback",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+    ],
+)
+
+cc_library(
+    name = "image_size",
+    hdrs = ["image_size.h"],
+    deps = [
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/gpu:gpu_buffer",
+    ],
+)
+
+cc_test(
+    name = "image_size_test",
+    srcs = ["image_size_test.cc"],
+    deps = [
+        ":image_size",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+        "//mediapipe/gpu:gpu_buffer",
+    ],
 )

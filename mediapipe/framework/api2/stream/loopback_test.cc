@@ -6,6 +6,7 @@
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
+#include "mediapipe/framework/port/status_matchers.h"
 
 namespace mediapipe::api2::builder {
 namespace {
@@ -33,22 +34,22 @@ TEST(LoopbackTest, GetLoopbackData) {
   // PreviousLoopbackCalculator configuration is incorrect here and should be
   // updated when corresponding b/175887687 is fixed.
   // Use mediapipe::aimatter::GraphBuilder to fix back edges in the graph.
-  EXPECT_THAT(graph.GetConfig(),
-              testing::EqualsProto(
-                  mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
-                    node {
-                      calculator: "PreviousLoopbackCalculator"
-                      input_stream: "LOOP:__stream_2"
-                      input_stream: "MAIN:__stream_0"
-                      output_stream: "PREV_LOOP:__stream_1"
-                    }
-                    node {
-                      calculator: "TestDataProducer"
-                      input_stream: "LOOPBACK_DATA:__stream_1"
-                      output_stream: "PRODUCED_DATA:__stream_2"
-                    }
-                    input_stream: "TICK:__stream_0"
-                  )pb")));
+  EXPECT_THAT(
+      graph.GetConfig(),
+      EqualsProto(mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        node {
+          calculator: "PreviousLoopbackCalculator"
+          input_stream: "LOOP:__stream_2"
+          input_stream: "MAIN:__stream_0"
+          output_stream: "PREV_LOOP:__stream_1"
+        }
+        node {
+          calculator: "TestDataProducer"
+          input_stream: "LOOPBACK_DATA:__stream_1"
+          output_stream: "PRODUCED_DATA:__stream_2"
+        }
+        input_stream: "TICK:__stream_0"
+      )pb")));
 }
 
 }  // namespace
