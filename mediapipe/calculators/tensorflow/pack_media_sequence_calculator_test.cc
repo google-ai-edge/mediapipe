@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -21,7 +22,6 @@
 #include "mediapipe/calculators/tensorflow/pack_media_sequence_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
-#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/location_opencv.h"
@@ -329,21 +329,27 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoImageLabels) {
 
   int num_timesteps = 2;
   for (int i = 0; i < num_timesteps; ++i) {
-    Classification cls;
-    cls.set_label(absl::StrCat("foo", 2 << i));
-    cls.set_score(0.1 * i);
-    auto label_ptr = ::absl::make_unique<std::vector<Classification>>(2, cls);
+    Detection detection1;
+    detection1.add_label(absl::StrCat("foo", 2 << i));
+    detection1.add_label_id(i);
+    detection1.add_score(0.1 * i);
+    detection1.add_label(absl::StrCat("foo", 2 << i));
+    detection1.add_label_id(i);
+    detection1.add_score(0.1 * i);
+    auto label_ptr1 = ::absl::make_unique<Detection>(detection1);
     runner_->MutableInputs()
         ->Tag(kImageLabelTestTag)
-        .packets.push_back(Adopt(label_ptr.release()).At(Timestamp(i)));
-    cls.set_label(absl::StrCat("bar", 2 << i));
-    cls.set_score(0.2 * i);
-    label_ptr = ::absl::make_unique<std::vector<Classification>>(2, cls);
+        .packets.push_back(Adopt(label_ptr1.release()).At(Timestamp(i)));
+    Detection detection2;
+    detection2.add_label(absl::StrCat("bar", 2 << i));
+    detection2.add_score(0.2 * i);
+    detection2.add_label(absl::StrCat("bar", 2 << i));
+    detection2.add_score(0.2 * i);
+    auto label_ptr2 = ::absl::make_unique<Detection>(detection2);
     runner_->MutableInputs()
         ->Tag(kImageLabelOtherTag)
-        .packets.push_back(Adopt(label_ptr.release()).At(Timestamp(i)));
+        .packets.push_back(Adopt(label_ptr2.release()).At(Timestamp(i)));
   }
-
   runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
       Adopt(input_sequence.release());
 
@@ -372,6 +378,8 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoImageLabels) {
     ASSERT_THAT(mpms::GetImageLabelStringAt("TEST", output_sequence, i),
                 ::testing::ElementsAreArray(
                     std::vector<std::string>(2, absl::StrCat("foo", 2 << i))));
+    ASSERT_THAT(mpms::GetImageLabelIndexAt("TEST", output_sequence, i),
+                ::testing::ElementsAreArray(std::vector<int32_t>(2, i)));
     ASSERT_THAT(mpms::GetImageLabelConfidenceAt("TEST", output_sequence, i),
                 ::testing::ElementsAreArray(std::vector<float>(2, 0.1 * i)));
     ASSERT_EQ(i, mpms::GetImageTimestampAt("OTHER", output_sequence, i));

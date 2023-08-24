@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -22,7 +23,6 @@
 #include "mediapipe/calculators/image/opencv_image_encoder_calculator.pb.h"
 #include "mediapipe/calculators/tensorflow/pack_media_sequence_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/location_opencv.h"
@@ -61,7 +61,7 @@ namespace mpms = mediapipe::mediasequence;
 // The supported input stream tags are:
 // * "IMAGE", which stores the encoded images from the
 //   OpenCVImageEncoderCalculator,
-// * "IMAGE_LABEL", which stores image labels from vector<Classification>,
+// * "IMAGE_LABEL", which stores whole image labels from Detection,
 // * "FORWARD_FLOW_ENCODED", which stores the encoded optical flow from the same
 //   calculator,
 // * "BBOX" which stores bounding boxes from vector<Detections>,
@@ -124,7 +124,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
     for (const auto& tag : cc->Inputs().GetTags()) {
       if (absl::StartsWith(tag, kImageTag)) {
         if (absl::StartsWith(tag, kImageLabelPrefixTag)) {
-          cc->Inputs().Tag(tag).Set<std::vector<Classification>>();
+          cc->Inputs().Tag(tag).Set<Detection>();
           continue;
         }
         std::string key = "";
@@ -377,19 +377,29 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         if (absl::StartsWith(tag, kImageLabelPrefixTag)) {
           std::string key =
               std::string(absl::StripPrefix(tag, kImageLabelPrefixTag));
-          std::vector<std::string> labels;
-          std::vector<float> confidences;
-          for (const auto& classification :
-               cc->Inputs().Tag(tag).Get<std::vector<Classification>>()) {
-            labels.push_back(classification.label());
-            confidences.push_back(classification.score());
+          const auto& detection = cc->Inputs().Tag(tag).Get<Detection>();
+          if (detection.label().empty()) continue;
+          RET_CHECK(detection.label_size() == detection.score_size())
+              << "Wrong image label data format: " << detection.label_size()
+              << " vs " << detection.score_size();
+          if (!detection.label_id().empty()) {
+            RET_CHECK(detection.label_id_size() == detection.label_size())
+                << "Wrong image label ID format: " << detection.label_id_size()
+                << " vs " << detection.label_size();
           }
+          std::vector<std::string> labels(detection.label().begin(),
+                                          detection.label().end());
+          std::vector<float> confidences(detection.score().begin(),
+                                         detection.score().end());
+          std::vector<int32_t> ids(detection.label_id().begin(),
+                                   detection.label_id().end());
           if (!key.empty() || mpms::HasImageEncoded(*sequence_)) {
             mpms::AddImageTimestamp(key, cc->InputTimestamp().Value(),
                                     sequence_.get());
           }
           mpms::AddImageLabelString(key, labels, sequence_.get());
           mpms::AddImageLabelConfidence(key, confidences, sequence_.get());
+          if (!ids.empty()) mpms::AddImageLabelIndex(key, ids, sequence_.get());
           continue;
         }
         if (tag != kImageTag) {
