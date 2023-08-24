@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Placeholder: load py_library
+# Placeholder: load py_binary
+
 licenses(["notice"])
 
 package(default_visibility = ["//mediapipe/examples:__subpackages__"])

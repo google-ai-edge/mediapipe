@@ -13,6 +13,9 @@
 # limitations under the License.
 #
 
+# Placeholder: load py_library
+# Placeholder: load py_test
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
