@@ -56,3 +56,29 @@ cc_test(
         "//mediapipe/gpu:gpu_buffer",
     ],
 )
+
+cc_library(
+    name = "rect_transformation",
+    srcs = ["rect_transformation.cc"],
+    hdrs = ["rect_transformation.h"],
+    deps = [
+        "//mediapipe/calculators/util:rect_transformation_calculator",
+        "//mediapipe/calculators/util:rect_transformation_calculator_cc_proto",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "@com_google_absl//absl/types:optional",
+    ],
+)
+
+cc_test(
+    name = "rect_transformation_test",
+    srcs = ["rect_transformation_test.cc"],
+    deps = [
+        ":rect_transformation",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+    ],
+)
