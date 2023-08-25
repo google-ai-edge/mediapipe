@@ -57,27 +57,23 @@ NS_SWIFT_NAME(FaceDetector)
 @interface MPPFaceDetector : NSObject
 
 /**
- * Creates a new instance of `MPPFaceDetector` from an absolute path to a TensorFlow Lite model
- * file stored locally on the device and the default `MPPFaceDetector`.
+ * Creates a new instance of `FaceDetector` from an absolute path to a TensorFlow Lite model
+ * file stored locally on the device and the default `FaceDetector`.
  *
  * @param modelPath An absolute path to a TensorFlow Lite model file stored locally on the device.
- * @param error An optional error parameter populated when there is an error in initializing the
- * face detector.
  *
- * @return A new instance of `MPPFaceDetector` with the given model path. `nil` if there is an
+ * @return A new instance of `FaceDetector` with the given model path. `nil` if there is an
  * error in initializing the face detector.
  */
 - (nullable instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error;
 
 /**
- * Creates a new instance of `MPPFaceDetector` from the given `MPPFaceDetectorOptions`.
+ * Creates a new instance of `FaceDetector` from the given `FaceDetectorOptions`.
  *
- * @param options The options of type `MPPFaceDetectorOptions` to use for configuring the
- * `MPPFaceDetector`.
- * @param error An optional error parameter populated when there is an error in initializing the
- * face detector.
+ * @param options The options of type `FaceDetectorOptions` to use for configuring the
+ * `FaceDetector`.
  *
- * @return A new instance of `MPPFaceDetector` with the given options. `nil` if there is an error
+ * @return A new instance of `FaceDetector` with the given options. `nil` if there is an error
  * in initializing the face detector.
  */
 - (nullable instancetype)initWithOptions:(MPPFaceDetectorOptions *)options
@@ -86,23 +82,21 @@ NS_SWIFT_NAME(FaceDetector)
 /**
  * Performs face detection on the provided MPPImage using the whole image as region of
  * interest. Rotation will be applied according to the `orientation` property of the provided
- * `MPPImage`. Only use this method when the `MPPFaceDetector` is created with
- * `MPPRunningModeImage`.
+ * `MPImage`. Only use this method when the `MPPFaceDetector` is created with running mode
+ * `.image`.
  *
- * This method supports classification of RGBA images. If your `MPPImage` has a source type of
- * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
- * must have one of the following pixel format types:
+ * This method supports classification of RGBA images. If your `MPImage` has a source type of
+ * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the
+ * following pixel format types:
  * 1. kCVPixelFormatType_32BGRA
  * 2. kCVPixelFormatType_32RGBA
  *
- * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
+ * If your `MPImage` has a source type of `.image` ensure that the color space is
  * RGB with an Alpha channel.
  *
- * @param image The `MPPImage` on which face detection is to be performed.
- * @param error An optional error parameter populated when there is an error in performing face
- * detection on the input image.
+ * @param image The `MPImage` on which face detection is to be performed.
  *
- * @return An `MPPFaceDetectorResult` face that contains a list of detections, each detection
+ * @return An `FaceDetectorResult` face that contains a list of detections, each detection
  * has a bounding box that is expressed in the unrotated input frame of reference coordinates
  * system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the underlying
  * image data.
@@ -111,27 +105,25 @@ NS_SWIFT_NAME(FaceDetector)
                                             error:(NSError **)error NS_SWIFT_NAME(detect(image:));
 
 /**
- * Performs face detection on the provided video frame of type `MPPImage` using the whole
+ * Performs face detection on the provided video frame of type `MPImage` using the whole
  * image as region of interest. Rotation will be applied according to the `orientation` property of
- * the provided `MPPImage`. Only use this method when the `MPPFaceDetector` is created with
- * `MPPRunningModeVideo`.
+ * the provided `MPImage`. Only use this method when the `FaceDetector` is created with running
+ * mode `.video`.
  *
- * This method supports classification of RGBA images. If your `MPPImage` has a source type of
- * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
- * must have one of the following pixel format types:
+ * This method supports classification of RGBA images. If your `MPImage` has a source type of
+ * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the
+ * following pixel format types:
  * 1. kCVPixelFormatType_32BGRA
  * 2. kCVPixelFormatType_32RGBA
  *
- * If your `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color space is
- * RGB with an Alpha channel.
+ * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
+ * channel.
  *
- * @param image The `MPPImage` on which face detection is to be performed.
+ * @param image The `MPImage` on which face detection is to be performed.
  * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
  * timestamps must be monotonically increasing.
- * @param error An optional error parameter populated when there is an error in performing face
- * detection on the input image.
  *
- * @return An `MPPFaceDetectorResult` face that contains a list of detections, each detection
+ * @return An `FaceDetectorResult` face that contains a list of detections, each detection
  * has a bounding box that is expressed in the unrotated input frame of reference coordinates
  * system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the underlying
  * image data.
@@ -142,39 +134,37 @@ NS_SWIFT_NAME(FaceDetector)
     NS_SWIFT_NAME(detect(videoFrame:timestampInMilliseconds:));
 
 /**
- * Sends live stream image data of type `MPPImage` to perform face detection using the whole
+ * Sends live stream image data of type `MPImage` to perform face detection using the whole
  * image as region of interest. Rotation will be applied according to the `orientation` property of
- * the provided `MPPImage`. Only use this method when the `MPPFaceDetector` is created with
- * `MPPRunningModeLiveStream`.
+ * the provided `MPImage`. Only use this method when the `FaceDetector` is created with
+ * `.liveStream`.
  *
  * The object which needs to be continuously notified of the available results of face
- * detection must confirm to `MPPFaceDetectorLiveStreamDelegate` protocol and implement the
- * `faceDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:` delegate method.
+ * detection must confirm to `FaceDetectorLiveStreamDelegate` protocol and implement the
+ * `faceDetector(_:didFinishDetectionWithResult:timestampInMilliseconds:error:)` delegate method.
  *
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
  * to the face detector. The input timestamps must be monotonically increasing.
  *
- * This method supports classification of RGBA images. If your `MPPImage` has a source type of
- * `MPPImageSourceTypePixelBuffer` or `MPPImageSourceTypeSampleBuffer`, the underlying pixel buffer
- * must have one of the following pixel format types:
+ * This method supports classification of RGBA images. If your `MPImage` has a source type of
+ * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the
+ * following pixel format types:
  * 1. kCVPixelFormatType_32BGRA
  * 2. kCVPixelFormatType_32RGBA
  *
- * If the input `MPPImage` has a source type of `MPPImageSourceTypeImage` ensure that the color
+ * If the input `MPImage` has a source type of `.image` ensure that the color
  * space is RGB with an Alpha channel.
  *
  * If this method is used for classifying live camera frames using `AVFoundation`, ensure that you
  * request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32RGBA` using its
  * `videoSettings` property.
  *
- * @param image A live stream image data of type `MPPImage` on which face detection is to be
+ * @param image A live stream image data of type `MPImage` on which face detection is to be
  * performed.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
  * image is sent to the face detector. The input timestamps must be monotonically increasing.
- * @param error An optional error parameter populated when there is an error in performing face
- * detection on the input live stream image data.
  *
- * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
+ * @return `true` if the image was sent to the task successfully, otherwise `false`.
  */
 - (BOOL)detectAsyncInImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
