@@ -20,6 +20,7 @@ limitations under the License.
 #include <optional>
 #include <string>
 #include <variant>
+#include <vector>
 
 #include "absl/memory/memory.h"
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
