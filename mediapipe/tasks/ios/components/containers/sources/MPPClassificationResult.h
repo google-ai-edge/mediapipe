@@ -32,32 +32,32 @@ NS_SWIFT_NAME(Classifications)
 /** The optional name of the classifier head, which is the corresponding tensor metadata name. */
 @property(nonatomic, readonly, nullable) NSString *headName;
 
-/** An array of `MPPCategory` objects containing the predicted categories. */
+/** An array of `Category` objects containing the predicted categories. */
 @property(nonatomic, readonly) NSArray<MPPCategory *> *categories;
 
 /**
- * Initializes a new `MPPClassifications` object with the given head index and array of categories.
+ * Initializes a new `Classifications` object with the given head index and array of categories.
  * Head name is initialized to `nil`.
  *
  * @param headIndex The index of the classifier head.
- * @param categories  An array of `MPPCategory` objects containing the predicted categories.
+ * @param categories  An array of `Category` objects containing the predicted categories.
  *
- * @return An instance of `MPPClassifications` initialized with the given head index and
+ * @return An instance of `Classifications` initialized with the given head index and
  * array of categories.
  */
 - (instancetype)initWithHeadIndex:(NSInteger)headIndex
                        categories:(NSArray<MPPCategory *> *)categories;
 
 /**
- * Initializes a new `MPPClassifications` with the given head index, head name and array of
+ * Initializes a new `Classifications` with the given head index, head name and array of
  * categories.
  *
  * @param headIndex The index of the classifier head.
  * @param headName The name of the classifier head, which is the corresponding tensor metadata
  * name.
- * @param categories An array of `MPPCategory` objects containing the predicted categories.
+ * @param categories An array of `Category` objects containing the predicted categories.
  *
- * @return An object of `MPPClassifications` initialized with the given head index, head name and
+ * @return An object of `Classifications` initialized with the given head index, head name and
  * array of categories.
  */
 - (instancetype)initWithHeadIndex:(NSInteger)headIndex
@@ -78,7 +78,7 @@ NS_SWIFT_NAME(ClassificationResult)
 @interface MPPClassificationResult : NSObject
 
 /**
- * An Array of `MPPClassifications` objects containing the predicted categories for each head of
+ * An Array of `Classifications` objects containing the predicted categories for each head of
  * the model.
  */
 @property(nonatomic, readonly) NSArray<MPPClassifications *> *classifications;
@@ -93,15 +93,15 @@ NS_SWIFT_NAME(ClassificationResult)
 @property(nonatomic, readonly) NSInteger timestampInMilliseconds;
 
 /**
- * Initializes a new `MPPClassificationResult` with the given array of classifications and time
+ * Initializes a new `ClassificationResult` with the given array of classifications and time
  * stamp (in milliseconds).
  *
- * @param classifications An Array of `MPPClassifications` objects containing the predicted
+ * @param classifications An Array of `Classifications` objects containing the predicted
  * categories for each head of the model.
  * @param timestampInMilliseconds The timestamp (in milliseconds) of the start of the chunk of data
  * corresponding to these results.
  *
- * @return An instance of `MPPClassificationResult` initialized with the given array of
+ * @return An instance of `ClassificationResult` initialized with the given array of
  * classifications and timestamp (in milliseconds).
  */
 - (instancetype)initWithClassifications:(NSArray<MPPClassifications *> *)classifications

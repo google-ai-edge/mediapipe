@@ -23,11 +23,11 @@ NS_ASSUME_NONNULL_BEGIN
 @class MPPFaceLandmarker;
 
 /**
- * This protocol defines an interface for the delegates of `MPPFaceLandmarker` face to receive
+ * This protocol defines an interface for the delegates of `FaceLandmarker` face to receive
  * results of performing asynchronous face detection on images (i.e, when `runningMode` =
- * `MPPRunningModeLiveStream`).
+ * `.liveStream`).
  *
- * The delegate of `MPPFaceLandmarker` must adopt `MPPFaceLandmarkerLiveStreamDelegate` protocol.
+ * The delegate of `FaceLandmarker` must adopt `FaceLandmarkerLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
  */
 NS_SWIFT_NAME(FaceLandmarkerLiveStreamDelegate)
@@ -35,14 +35,14 @@ NS_SWIFT_NAME(FaceLandmarkerLiveStreamDelegate)
 
 /**
  * This method notifies a delegate that the results of asynchronous face detection of
- * an image submitted to the `MPPFaceLandmarker` is available.
+ * an image submitted to the `FaceLandmarker` is available.
  *
- * This method is called on a private serial dispatch queue created by the `MPPFaceLandmarker`
+ * This method is called on a private serial dispatch queue created by the `FaceLandmarker`
  * for performing the asynchronous delegates calls.
  *
  * @param faceLandmarker The face landmarker which performed the face landmark detctions.
- * This is useful to test equality when there are multiple instances of `MPPFaceLandmarker`.
- * @param result The `MPPFaceLandmarkerResult` object that contains a list of landmarks.
+ * This is useful to test equality when there are multiple instances of `FaceLandmarker`.
+ * @param result The `FaceLandmarkerResult` object that contains a list of landmarks.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
  * image was sent to the face detector.
  * @param error An optional error parameter populated when there is an error in performing face
@@ -55,26 +55,25 @@ NS_SWIFT_NAME(FaceLandmarkerLiveStreamDelegate)
     NS_SWIFT_NAME(faceLandmarker(_:didFinishDetection:timestampInMilliseconds:error:));
 @end
 
-/** Options for setting up a `MPPFaceLandmarker`. */
+/** Options for setting up a `FaceLandmarker`. */
 NS_SWIFT_NAME(FaceLandmarkerOptions)
 @interface MPPFaceLandmarkerOptions : MPPTaskOptions <NSCopying>
 
 /**
- * Running mode of the face landmark dection task. Defaults to `MPPRunningModeImage`.
- * `MPPFaceLandmarker` can be created with one of the following running modes:
- *  1. `MPPRunningModeImage`: The mode for performing face detection on single image inputs.
- *  2. `MPPRunningModeVideo`: The mode for performing face detection on the decoded frames of a
- *      video.
- *  3. `MPPRunningModeLiveStream`: The mode for performing face detection on a live stream of
- *      input data, such as from the camera.
+ * Running mode of the face landmark dection task. Defaults to `.image`. `FaceLandmarker` can be
+ * created with one of the following running modes:
+ *  1. `.image`: The mode for performing face detection on single image inputs.
+ *  2. `.video`: The mode for performing face detection on the decoded frames of a video.
+ *  3. `.liveStream`: The mode for performing face detection on a live stream of input data, such as
+ * from the camera.
  */
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
- * An object that confirms to `MPPFaceLandmarkerLiveStreamDelegate` protocol. This object must
- * implement `faceLandmarker:didFinishDetectionWithResult:timestampInMilliseconds:error:` to receive
- * the results of performing asynchronous face landmark detection on images (i.e, when `runningMode`
- * = `MPPRunningModeLiveStream`).
+ * An object that confirms to `FaceLandmarkerLiveStreamDelegate` protocol. This object must
+ * implement `faceLandmarker(_:didFinishDetectionWithResult:timestampInMilliseconds:error:)` to
+ * receive the results of performing asynchronous face landmark detection on images (i.e, when
+ * `runningMode` = `.liveStream`).
  */
 @property(nonatomic, weak, nullable) id<MPPFaceLandmarkerLiveStreamDelegate>
     faceLandmarkerLiveStreamDelegate;

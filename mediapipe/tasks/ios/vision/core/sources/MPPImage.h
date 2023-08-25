@@ -40,10 +40,10 @@ NS_SWIFT_NAME(MPImage)
 @property(nonatomic, readonly) CGFloat height;
 
 /**
- * The display orientation of the image. If `imageSourceType` is `MPPImageSourceTypeImage`, the
+ * The display orientation of the image. If `imageSourceType` is `.image`, the
  * default value is `image.imageOrientation`; otherwise the default value is
- * `UIImageOrientationUp`. If the `MPPImage` is being used as input for any MediaPipe vision tasks
- * and is set to any orientation other than `UIImageOrientationUp`, inference will be performed on
+ * `UIImage.Orientation.up`. If the `MPImage` is being used as input for any MediaPipe vision tasks
+ * and is set to any orientation other than `UIImage.Orientation.up`, inference will be performed on
  * a rotated copy of the image according to the orientation.
  */
 @property(nonatomic, readonly) UIImageOrientation orientation;
@@ -54,46 +54,48 @@ NS_SWIFT_NAME(MPImage)
 /** The source image. `nil` if `imageSourceType` is not `.image`. */
 @property(nonatomic, readonly, nullable) UIImage *image;
 
-/** The source pixel buffer. `nil` if `imageSourceType` is not `.pixelBuffer`. */
+/** The source pixel buffer. `nil` if ``imageSourceType`` is not `.pixelBuffer`. */
 @property(nonatomic, readonly, nullable) CVPixelBufferRef pixelBuffer;
 
-/** The source sample buffer. `nil` if `imageSourceType` is not `.sampleBuffer`. */
+/** The source sample buffer. `nil` if ``imageSourceType`` is not `.sampleBuffer`. */
 @property(nonatomic, readonly, nullable) CMSampleBufferRef sampleBuffer;
 
 /**
- * Initializes an `MPPImage` object with the given `UIImage`.
- * The orientation of the newly created `MPPImage` will be equal to the `imageOrientation` of
+ * Initializes an `MPImage` object with the given `UIImage`.
+ *
+ * The orientation of the newly created `MPImage` will be equal to the `imageOrientation` of
  * `UIImage` and when sent to the vision tasks for inference, rotation will be applied accordingly.
- * To create an `MPPImage` with an orientation different from its `imageOrientation`, please use
- * `[MPPImage initWithImage:orientation:error:]`.
+ * To create an `MPImage` with an orientation different from its `imageOrientation`, please use
+ * `MPImage(uiImage:orientation:)s`.
  *
  * @param image The image to use as the source. Its `CGImage` property must not be `NULL`.
  * @param error An optional error parameter populated when there is an error in initializing the
- * `MPPImage`.
+ * `MPImage`.
  *
- * @return A new `MPPImage` instance with the given image as the source. `nil` if the given
+ * @return A new `MPImage` instance with the given image as the source. `nil` if the given
  * `image` is `nil` or invalid.
  */
 - (nullable instancetype)initWithUIImage:(UIImage *)image error:(NSError **)error;
 
 /**
- * Initializes an `MPPImage` object with the given `UIImage` and orientation. The given orientation
- * will be used to calculate the rotation to be applied to the `UIImage` before inference is
- * performed on it by the vision tasks. The `imageOrientation` stored in the `UIImage` is ignored
- * when `MPImage` objects created by this method are sent to the vision tasks for inference. Use
- * `[MPPImage initWithImage:orientation:error:]` to initialize images with the `imageOrientation` of
+ * Initializes an `MPImage` object with the given `UIImage` and orientation.
+ *
+ * The given orientation will be used to calculate the rotation to be applied to the `UIImage`
+ * before inference is performed on it by the vision tasks. The `imageOrientation` stored in the
+ * `UIImage` is ignored when `MPImage` objects created by this method are sent to the vision tasks
+ * for inference. Use `MPImage(uiImage:)` to initialize images with the `imageOrientation` of
  * `UIImage`.
  *
- * If the newly created `MPPImage` is used as input for any MediaPipe vision tasks, inference
+ * If the newly created `MPImage` is used as input for any MediaPipe vision tasks, inference
  * will be performed on a copy of the image rotated according to the orientation.
  *
  * @param image The image to use as the source. Its `CGImage` property must not be `NULL`.
  * @param orientation The display orientation of the image. This will be stored in the property
- *     `orientation` `MPPImage` and will override the `imageOrientation` of the passed in `UIImage`.
+ *     `orientation` `MPImage` and will override the `imageOrientation` of the passed in `UIImage`.
  * @param error An optional error parameter populated when there is an error in initializing the
- *     `MPPImage`.
+ *     `MPImage`.
  *
- * @return A new `MPPImage` instance with the given image as the source. `nil` if the given
+ * @return A new `MPImage` instance with the given image as the source. `nil` if the given
  *     `image` is `nil` or invalid.
  */
 - (nullable instancetype)initWithUIImage:(UIImage *)image
@@ -101,36 +103,36 @@ NS_SWIFT_NAME(MPImage)
                                    error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
- * Initializes an `MPPImage` object with the given pixel buffer.
+ * Initializes an `MPImage` object with the given pixel buffer.
  *
- * The orientation of the newly created `MPPImage` will be `UIImageOrientationUp`.
+ * The orientation of the newly created `MPImage` will be `UIImageOrientationUp`.
  * Hence, if this image is used as input for any MediaPipe vision tasks, inference will be
- * performed on the it without any rotation. To create an `MPPImage` with a different
- * orientation, please use `[MPPImage initWithPixelBuffer:orientation:error:]`.
+ * performed on the it without any rotation. To create an `MPImage` with a different
+ * orientation, please use `MPImage(pixelBuffer:orientation:)`.
  *
  * @param pixelBuffer The pixel buffer to use as the source. It will be retained by the new
- *     `MPPImage` instance for the duration of its lifecycle.
+ *     `MPImage` instance for the duration of its lifecycle.
  * @param error An optional error parameter populated when there is an error in initializing the
- *     `MPPImage`.
+ *     `MPImage`.
  *
- * @return A new `MPPImage` instance with the given pixel buffer as the source. `nil` if the
+ * @return A new `MPImage` instance with the given pixel buffer as the source. `nil` if the
  * given pixel buffer is `nil` or invalid.
  */
 - (nullable instancetype)initWithPixelBuffer:(CVPixelBufferRef)pixelBuffer error:(NSError **)error;
 
 /**
- * Initializes an `MPPImage` object with the given pixel buffer and orientation.
+ * Initializes an `MPImage` object with the given pixel buffer and orientation.
  *
- * If the newly created `MPPImage` is used as input for any MediaPipe vision tasks, inference
+ * If the newly created `MPImage` is used as input for any MediaPipe vision tasks, inference
  * will be performed on a copy of the image rotated according to the orientation.
  *
  * @param pixelBuffer The pixel buffer to use as the source. It will be retained by the new
- *     `MPPImage` instance for the duration of its lifecycle.
+ *     `MPImage` instance for the duration of its lifecycle.
  * @param orientation The display orientation of the image.
  * @param error An optional error parameter populated when there is an error in initializing the
- *     `MPPImage`.
+ *     `MPImage`.
  *
- * @return A new `MPPImage` instance with the given orientation and pixel buffer as the source.
+ * @return A new `MPImage` instance with the given orientation and pixel buffer as the source.
  * `nil` if the given pixel buffer is `nil` or invalid.
  */
 - (nullable instancetype)initWithPixelBuffer:(CVPixelBufferRef)pixelBuffer
@@ -138,35 +140,35 @@ NS_SWIFT_NAME(MPImage)
                                        error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
- * Initializes an `MPPImage` object with the given sample buffer.
+ * Initializes an `MPImage` object with the given sample buffer.
  *
- * The orientation of the newly created `MPPImage` will be `UIImageOrientationUp`.
+ * The orientation of the newly created `MPImage` will be `UIImageOrientationUp`.
  * Hence, if this image is used as input for any MediaPipe vision tasks, inference will be
- * performed on the it without any rotation. To create an `MPPImage` with a different orientation,
- * please use `[MPPImage initWithSampleBuffer:orientation:error:]`.
+ * performed on the it without any rotation. To create an `MPImage` with a different orientation,
+ * please use `MPImage(sampleBuffer:orientation:)`.
  *
  * @param sampleBuffer The sample buffer to use as the source. It will be retained by the new
- *     `MPPImage` instance for the duration of its lifecycle. The sample buffer must be based on
+ *     `MPImage` instance for the duration of its lifecycle. The sample buffer must be based on
  *     a pixel buffer (not compressed data). In practice, it should be the video output of the
  *     camera on an iOS device, not other arbitrary types of `CMSampleBuffer`s.
- * @return A new `MPPImage` instance with the given sample buffer as the source. `nil` if the
+ * @return A new `MPImage` instance with the given sample buffer as the source. `nil` if the
  *     given sample buffer is `nil` or invalid.
  */
 - (nullable instancetype)initWithSampleBuffer:(CMSampleBufferRef)sampleBuffer
                                         error:(NSError **)error;
 
 /**
- * Initializes an `MPPImage` object with the given sample buffer and orientation.
+ * Initializes an `MPImage` object with the given sample buffer and orientation.
  *
- * If the newly created `MPPImage` is used as input for any MediaPipe vision tasks, inference
+ * If the newly created `MPImage` is used as input for any MediaPipe vision tasks, inference
  * will be performed on a copy of the image rotated according to the orientation.
  *
  * @param sampleBuffer The sample buffer to use as the source. It will be retained by the new
- *     `MPPImage` instance for the duration of its lifecycle. The sample buffer must be based on
+ *     `MPImage` instance for the duration of its lifecycle. The sample buffer must be based on
  *     a pixel buffer (not compressed data). In practice, it should be the video output of the
  *     camera on an iOS device, not other arbitrary types of `CMSampleBuffer`s.
  * @param orientation The display orientation of the image.
- * @return A new `MPPImage` instance with the given orientation and sample buffer as the source.
+ * @return A new `MPImage` instance with the given orientation and sample buffer as the source.
  *     `nil` if the given sample buffer is `nil` or invalid.
  */
 - (nullable instancetype)initWithSampleBuffer:(CMSampleBufferRef)sampleBuffer

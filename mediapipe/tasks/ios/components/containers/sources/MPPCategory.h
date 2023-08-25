@@ -44,14 +44,14 @@ NS_SWIFT_NAME(ResultCategory)
 @property(nonatomic, readonly, nullable) NSString *displayName;
 
 /**
- * Initializes a new `MPPCategory` with the given index, score, category name and display name.
+ * Initializes a new `Category` with the given index, score, category name and display name.
  *
  * @param index The index of the label in the corresponding label file.
  * @param score The probability score of this label category.
  * @param categoryName The label of this category object.
  * @param displayName The display name of the label.
  *
- * @return An instance of `MPPCategory` initialized with the given index, score, category name and
+ * @return An instance of `Category` initialized with the given index, score, category name and
  * display name.
  */
 - (instancetype)initWithIndex:(NSInteger)index
