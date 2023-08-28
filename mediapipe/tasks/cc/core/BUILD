@@ -80,6 +80,7 @@ cc_library(
         "//mediapipe/tasks/cc/text/custom_ops/sentencepiece:sentencepiece_tokenizer_tflite",
         "//mediapipe/tasks/cc/text/language_detector/custom_ops:kmeans_embedding_lookup",
         "//mediapipe/tasks/cc/text/language_detector/custom_ops:ngram_hash",
+        "//mediapipe/tasks/cc/vision/custom_ops:fused_batch_norm",
         "//mediapipe/util/tflite/operations:landmarks_to_transform_matrix",
         "//mediapipe/util/tflite/operations:max_pool_argmax",
         "//mediapipe/util/tflite/operations:max_unpooling",
