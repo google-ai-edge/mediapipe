@@ -44,14 +44,11 @@ constexpr int kOutputSavedVarIndex = 4;
 template <typename T, int NDIMS = 1, typename IndexType = Eigen::DenseIndex>
 struct TTypes {
   // Rank-<NDIMS> tensor of scalar type T.
-  typedef Eigen::TensorMap<Eigen::Tensor<T, NDIMS, Eigen::RowMajor, IndexType>,
-                           Eigen::Aligned>
+  typedef Eigen::TensorMap<Eigen::Tensor<T, NDIMS, Eigen::RowMajor, IndexType>>
       Tensor;
 
   // Rank-1 tensor (vector) of scalar type T.
-  typedef Eigen::TensorMap<Eigen::Tensor<T, 1, Eigen::RowMajor, IndexType>,
-                           Eigen::Aligned>
-      Vec;
+  typedef Eigen::TensorMap<Eigen::Tensor<T, 1, Eigen::RowMajor, IndexType>> Vec;
   typedef Eigen::TensorMap<
       Eigen::Tensor<const T, 1, Eigen::RowMajor, IndexType>>
       ConstVec;
