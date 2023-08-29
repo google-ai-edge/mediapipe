@@ -1,0 +1,66 @@
+
+/* Copyright 2023 The MediaPipe Authors.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================*/
+syntax = "proto3";
+
+package mediapipe.tasks.vision.image_generator.proto;
+
+import "mediapipe/framework/calculator.proto";
+import "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarker_graph_options.proto";
+import "mediapipe/tasks/cc/vision/image_segmenter/proto/image_segmenter_graph_options.proto";
+
+option java_package = "com.google.mediapipe.tasks.vision.imagegenerator.proto";
+option java_outer_classname = "ConditionedImageGraphOptionsProto";
+
+message ConditionedImageGraphOptions {
+  // For conditioned image graph based on face landmarks.
+  message FaceConditionTypeOptions {
+    // Options for the face landmarker used in the face landmarks type graph.
+    face_landmarker.proto.FaceLandmarkerGraphOptions
+        face_landmarker_graph_options = 1;
+  }
+
+  // For conditioned image graph base on edges detection.
+  message EdgeConditionTypeOptions {
+    // These parameters are used to config Canny edge algorithm of OpenCV.
+    // See more details:
+    // https://docs.opencv.org/3.4/dd/d1a/group__imgproc__feature.html#ga04723e007ed888ddf11d9ba04e2232de
+
+    // First threshold for the hysteresis procedure.
+    float threshold_1 = 1;
+
+    // Second threshold for the hysteresis procedure.
+    float threshold_2 = 2;
+
+    // Aperture size for the Sobel operator. Typical range is 3~7.
+    int32 aperture_size = 3;
+
+    // A flag, indicating whether a more accurate L2 norm should be used to
+    // calculate the image gradient magnitude ( L2gradient=true ), or whether
+    // the default L1 norm is enough ( L2gradient=false ).
+    bool l2_gradient = 4;
+  }
+
+  // For conditioned image graph base on depth map.
+  message DepthConditionTypeOptions {
+    // Options for the image segmenter used in the depth condition type graph.
+    image_segmenter.proto.ImageSegmenterGraphOptions
+        image_segmenter_graph_options = 1;
+  }
+
+  // The options for configuring the conditioned image graph.
+  oneof condition_type_options {
+    FaceConditionTypeOptions face_condition_type_options = 2;
+    EdgeConditionTypeOptions edge_condition_type_options = 3;
+    DepthConditionTypeOptions depth_condition_type_options = 4;
+  }
+}
