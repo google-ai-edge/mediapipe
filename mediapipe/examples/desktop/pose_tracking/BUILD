@@ -23,6 +23,7 @@ cc_binary(
         "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
     ],
     deps = [
+        "@ovms//src:ovms_lib",
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/pose_tracking:pose_tracking_cpu_deps",
     ],

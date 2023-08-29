@@ -49,6 +49,7 @@ cc_binary(
     name = "iris_tracking_cpu",
     data = ["//mediapipe/modules/iris_landmark:iris_landmark.tflite"],
     deps = [
+        "@ovms//src:ovms_lib",
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/iris_tracking:iris_tracking_cpu_deps",
     ],

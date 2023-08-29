@@ -63,6 +63,7 @@ cc_binary(
         "//mediapipe/models:ssdlite_object_detection_labelmap.txt",
 	],
     deps = [
+        "@ovms//src:ovms_lib",
         "//mediapipe/examples/desktop:simple_run_graph_main",
         "//mediapipe/graphs/object_detection:desktop_ovms_calculators",
         # here we declare dependencies on tflite as we can support 2 types

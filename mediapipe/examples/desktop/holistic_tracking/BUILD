@@ -27,6 +27,7 @@ cc_binary(
         "//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite"
     ],
     deps = [
+        "@ovms//src:ovms_lib",
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/holistic_tracking:holistic_tracking_cpu_graph_deps",
     ],

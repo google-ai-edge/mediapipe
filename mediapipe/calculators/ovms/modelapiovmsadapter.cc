@@ -25,7 +25,6 @@
 
 #include <openvino/openvino.hpp>
 
-#include "stringutils.hpp"  // TODO dispose
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 // here we need to decide if we have several calculators (1 for OVMS repository, 1-N inside mediapipe)

@@ -56,11 +56,11 @@ node {
 }
 
 # Loads the hand landmark TF Lite model.
-node {
-  calculator: "HandLandmarkModelLoader"
-  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
-  output_side_packet: "MODEL:model"
-}
+#node {
+#  calculator: "HandLandmarkModelLoader"
+#  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+#  output_side_packet: "MODEL:model"
+#}
 
 # Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
@@ -171,7 +171,7 @@ node {
   options: {
     [mediapipe.TensorsToClassificationCalculatorOptions.ext] {
       top_k: 1
-      label_map_path: "mediapipe/modules/hand_landmark/handedness.txt"
+      label_map_path: "/mediapipe/mediapipe/modules/hand_landmark/handedness.txt"
       binary_classification: true
     }
   }

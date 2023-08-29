@@ -24,6 +24,7 @@ cc_binary(
         "c_api_test_utils.hpp"
     ],
     deps = [
+        "@ovms//src:ovms_lib",
         "//mediapipe/calculators/ovms:ovms_calculator",
         "//mediapipe/framework:calculator_graph",
         "//mediapipe/framework/port:logging",

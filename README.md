@@ -4,6 +4,34 @@ title: Home
 nav_order: 1
 ---
 
+# OpenVINO&trade; Model Server fork of [MediaPipe](https://google.github.io/mediapipe/) repository allowing users to take advantage of OpenVINO&trade; Model Serving in mediapipe examples.
+
+# Building docker container with dependencies
+```bash
+git clone https://github.com/openvinotoolkit/mediapipe.git
+cd mediapipe
+make docker_build
+```
+# You can check the integrity of the built image by running tests
+```bash
+make tests
+```
+
+# Running demo applications inside mediapipe_ovms container
+```bash
+docker run -it mediapipe_ovms:latest bash
+```
+
+# Running object detection demo
+```bash
+make run_object_detection
+```
+
+# Running holistic tracking demo
+```bash
+make run_holistic_tracking
+```
+
 ![MediaPipe](https://mediapipe.dev/images/mediapipe_small.png)
 
 --------------------------------------------------------------------------------

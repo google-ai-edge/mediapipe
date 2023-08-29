@@ -35,6 +35,7 @@ cc_binary(
         "//mediapipe/modules/palm_detection:palm_detection_full.tflite",
     ],
     deps = [
+        "@ovms//src:ovms_lib",
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/hand_tracking:desktop_tflite_calculators",
     ],

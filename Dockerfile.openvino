@@ -173,15 +173,15 @@ WORKDIR /mediapipe
 RUN ./setup_opencv.sh
 ####### End of OpenCV
 
+# tools for pose_detection model convertion for missing tflite densify op nodes support workaround
+RUN pip3 install tflite2tensorflow pandas==1.4.2 gdown tensorflow-datasets
+RUN wget https://github.com/PINTO0309/tflite2tensorflow/raw/main/schema/schema.fbs
+RUN git clone -b v2.0.8 https://github.com/google/flatbuffers.git
+RUN cd flatbuffers && mkdir build && cd build && cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release .. && make -j$(nproc) && cd ../..
+
 COPY . /mediapipe/
 
 # BUILD examples
 ENV GLOG_logtostderr=1
 ENV LD_LIBRARY_PATH="/opt/intel/openvino/runtime/lib/intel64/:${LD_LIBRARY_PATH}"
 RUN bash build_desktop_examples.sh -b
-
-# tools for pose_detection model convertion for missing tflite densify op nodes support workaround
-RUN pip3 install tflite2tensorflow pandas==1.4.2 gdown tensorflow-datasets
-RUN wget https://github.com/PINTO0309/tflite2tensorflow/raw/main/schema/schema.fbs
-RUN git clone -b v2.0.8 https://github.com/google/flatbuffers.git
-RUN cd flatbuffers && mkdir build && cd build && cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release .. && make -j$(nproc) && cd ../..

@@ -29,6 +29,7 @@ cc_binary(
     name = "face_mesh_cpu",
     data = ["//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite"],
     deps = [
+        "@ovms//src:ovms_lib",
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/face_mesh:desktop_live_calculators",
     ],

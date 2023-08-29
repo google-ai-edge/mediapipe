@@ -23,7 +23,6 @@
 #include <openvino/openvino.hpp>
 
 #include "ovms.h"           // NOLINT
-#include "stringutils.hpp"  // TODO dispose
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "modelapiovmsadapter.hpp"
@@ -64,6 +63,35 @@ ov::Core UNUSED_OV_CORE;
             OVMS_StatusDelete(err);                                                         \
         }                                                                                   \
     }
+
+// Function from ovms/src/string_utils.h
+void erase_spaces(std::string& str) {
+    str.erase(std::remove_if(str.begin(), str.end(),
+                  [](char c) -> bool {
+                      return std::isspace<char>(c, std::locale::classic());
+                  }),
+        str.end());
+}
+
+// Function from ovms/src/string_utils.h
+std::optional<uint32_t> stou32(const std::string& input) {
+    std::string str = input;
+    erase_spaces(str);
+
+    if (str.size() > 0 && str[0] == '-') {
+        return std::nullopt;
+    }
+
+    try {
+        uint64_t val = std::stoul(str);
+        if (val > std::numeric_limits<uint32_t>::max()) {
+            return std::nullopt;
+        }
+        return {static_cast<uint32_t>(val)};
+    } catch (...) {
+        return std::nullopt;
+    }
+}
 
 class ModelAPISessionCalculator : public CalculatorBase {
     std::shared_ptr<::InferenceAdapter> adapter;
@@ -132,7 +160,7 @@ public:
 
         const std::string& servableName = options.servable_name();
         const std::string& servableVersionStr = options.servable_version();
-        auto servableVersionOpt = ::ovms::stou32(servableVersionStr);
+        auto servableVersionOpt = stou32(servableVersionStr);
         // 0 means default
         uint32_t servableVersion = servableVersionOpt.value_or(0);
         auto session = std::make_shared<OVMSInferenceAdapter>(servableName, servableVersion);
