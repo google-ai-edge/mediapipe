@@ -104,29 +104,112 @@ TFSDataType getPrecisionAsDataType(ov::element::Type_t precision) {
     return it->second;
 }
 
+static Tensor::ElementType OVType2MPType(ov::element::Type_t precision) {
+    static std::unordered_map<ov::element::Type_t, Tensor::ElementType> precisionMap{
+//        {ov::element::Type_t::f64, Tensor::ElementType::},
+        {ov::element::Type_t::f32, Tensor::ElementType::kFloat32},
+        {ov::element::Type_t::f16, Tensor::ElementType::kFloat16},
+//        {ov::element::Type_t::i64, Tensor::ElementType::64},
+        {ov::element::Type_t::i32, Tensor::ElementType::kInt32},
+//        {ov::element::Type_t::i16, Tensor::ElementType::},
+        {ov::element::Type_t::i8, Tensor::ElementType::kInt8},
+//        {ov::element::Type_t::u64, Tensor::ElementType::64},
+//        {ov::element::Type_t::u32, Tensor::ElementType::},
+//        {ov::element::Type_t::u16, Tensor::ElementType::},
+        {ov::element::Type_t::u8, Tensor::ElementType::kUInt8},
+        {ov::element::Type_t::boolean, Tensor::ElementType::kBool}
+//        {ov::element::Type_t::, Tensor::ElementType::kChar}
+    };
+    auto it = precisionMap.find(precision);
+    if (it == precisionMap.end()) {
+        return Tensor::ElementType::kNone;
+    }
+    return it->second;
+}
+
+static ov::element::Type_t MPType2OVType(Tensor::ElementType precision) {
+    static std::unordered_map<Tensor::ElementType, ov::element::Type_t> precisionMap{
+//        Tensor::ElementType::, ov::element::Type_t::f64},
+        {Tensor::ElementType::kFloat32, ov::element::Type_t::f32},
+        {Tensor::ElementType::kFloat16, ov::element::Type_t::f16},
+//        {Tensor::ElementType::, ov::element::Type_t::i64},
+        {Tensor::ElementType::kInt32, ov::element::Type_t::i32},
+//        {Tensor::ElementType::, ov::element::Type_t::i16},
+        {Tensor::ElementType::kInt8, ov::element::Type_t::i8},
+//        {Tensor::ElementType::, ov::element::Type_t::u64},
+//        {Tensor::ElementType::, ov::element::Type_t::u32},
+//        {Tensor::ElementType::, ov::element::Type_t::u16},
+        {Tensor::ElementType::kUInt8, ov::element::Type_t::u8},
+        {Tensor::ElementType::kBool, ov::element::Type_t::boolean}
+//        {Tensor::ElementType::kChar, ov::element::Type_t::}
+    };
+    auto it = precisionMap.find(precision);
+    if (it == precisionMap.end()) {
+        return ov::element::Type_t::undefined;
+    }
+    return it->second;
+}
+
 static ov::Tensor convertMPTensor2OVTensor(const Tensor& inputTensor) {
     // TODO FIXME support for other types/perf
-    void* data = reinterpret_cast<void*>(const_cast<float*>(inputTensor.GetCpuReadView().buffer<float>()));
-    auto datatype = ov::element::f32;
+    void* data;
+    switch(inputTensor.element_type()) {
+    case Tensor::ElementType::kFloat32:
+    case Tensor::ElementType::kFloat16:
+        data = reinterpret_cast<void*>(const_cast<float*>(inputTensor.GetCpuReadView().buffer<float>()));
+        break;
+    case Tensor::ElementType::kUInt8:
+        data = reinterpret_cast<void*>(const_cast<uint8_t*>(inputTensor.GetCpuReadView().buffer<uint8_t>()));
+        break;
+    case Tensor::ElementType::kInt8:
+        data = reinterpret_cast<void*>(const_cast<int8_t*>(inputTensor.GetCpuReadView().buffer<int8_t>()));
+        break;
+    case Tensor::ElementType::kInt32:
+        data = reinterpret_cast<void*>(const_cast<int32_t*>(inputTensor.GetCpuReadView().buffer<int32_t>()));
+        break;
+    case Tensor::ElementType::kBool:
+        data = reinterpret_cast<void*>(const_cast<bool*>(inputTensor.GetCpuReadView().buffer<bool>()));
+    default:
+        data = reinterpret_cast<void*>(const_cast<void*>(inputTensor.GetCpuReadView().buffer<void>()));
+    }
+    auto datatype = MPType2OVType(inputTensor.element_type());;
     ov::Shape shape;
     for (const auto& dim : inputTensor.shape().dims) {
         shape.emplace_back(dim);
     }
     ov::Tensor result(datatype, shape, data);
-    // TODO do we need to memcpy or not
     return result;
 }
 
-static Tensor convertOVTensor2MPTensor(const ov::Tensor& t) {
-    // TODO FIXME support for other types/perf
+static Tensor convertOVTensor2MPTensor(const ov::Tensor& inputTensor) {
     std::vector<int> rawShape;
-    for (size_t i = 0; i < t.get_shape().size(); i++) {
-        rawShape.emplace_back(t.get_shape()[i]);
+    for (size_t i = 0; i < inputTensor.get_shape().size(); i++) {
+        rawShape.emplace_back(inputTensor.get_shape()[i]);
     }
     Tensor::Shape shape{rawShape};
-    Tensor outputTensor(Tensor::ElementType::kFloat32, shape);
-    void* data = reinterpret_cast<void*>(const_cast<float*>(outputTensor.GetCpuWriteView().buffer<float>()));
-    std::memcpy(data, t.data(), t.get_byte_size());
+    auto datatype = OVType2MPType(inputTensor.get_element_type());
+    Tensor outputTensor(datatype, shape);
+    void* data;
+    switch(inputTensor.get_element_type()) {
+    case ov::element::Type_t::f32:
+    case ov::element::Type_t::f16:
+        data = reinterpret_cast<void*>(const_cast<float*>(outputTensor.GetCpuWriteView().buffer<float>()));
+        break;
+    case ov::element::Type_t::u8:
+        data = reinterpret_cast<void*>(const_cast<uint8_t*>(outputTensor.GetCpuWriteView().buffer<uint8_t>()));
+        break;
+    case ov::element::Type_t::i8:
+        data = reinterpret_cast<void*>(const_cast<int8_t*>(outputTensor.GetCpuWriteView().buffer<int8_t>()));
+        break;
+    case ov::element::Type_t::i32:
+        data = reinterpret_cast<void*>(const_cast<int32_t*>(outputTensor.GetCpuWriteView().buffer<int32_t>()));
+        break;
+    case ov::element::Type_t::boolean:
+        data = reinterpret_cast<void*>(const_cast<bool*>(outputTensor.GetCpuWriteView().buffer<bool>()));
+    default:
+        data = reinterpret_cast<void*>(const_cast<void*>(outputTensor.GetCpuWriteView().buffer<void>()));
+    }
+    std::memcpy(data, inputTensor.data(), inputTensor.get_byte_size());
     return outputTensor;
 }
 
