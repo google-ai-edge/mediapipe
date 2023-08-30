@@ -61,7 +61,6 @@ typedef struct {
   int image_width;
   int image_height;
   int run_unet_with_plugins;
-  float plugins_strength;
   DiffuserEnvironmentOptions env_options;
 } DiffuserConfig;
 
@@ -76,7 +75,7 @@ typedef struct {
 
 DG_EXPORT DiffuserContext* DiffuserCreate(const DiffuserConfig*);  // NOLINT
 DG_EXPORT int DiffuserReset(DiffuserContext*,                      // NOLINT
-                            const char*, int, int, const void*);
+                            const char*, int, int, float, const void*);
 DG_EXPORT int DiffuserIterate(DiffuserContext*, int, int);  // NOLINT
 DG_EXPORT int DiffuserDecode(DiffuserContext*, uint8_t*);   // NOLINT
 DG_EXPORT void DiffuserDelete(DiffuserContext*);            // NOLINT
