@@ -40,6 +40,12 @@ def _preprocess_face_dataset(
     tf.compat.v1.logging.info('Preprocess image %s', path)
     image = image_module.Image.create_from_file(path)
     aligned_image = aligner.align(image)
+    if aligned_image is None:
+      raise ValueError(
+          'ERROR: Invalid image. No face is detected and aligned. Please make'
+          ' sure the image has a single face that is facing straightforward and'
+          ' not significantly rotated.'
+      )
     aligned_image_tensor = tf.convert_to_tensor(aligned_image.numpy_view())
     preprocessed_images.append(aligned_image_tensor)
 

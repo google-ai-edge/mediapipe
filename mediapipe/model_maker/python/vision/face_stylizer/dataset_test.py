@@ -27,8 +27,8 @@ class DatasetTest(tf.test.TestCase):
 
   def test_from_image(self):
     test_image_file = 'input/style/cartoon/cartoon.jpg'
-    input_data_dir = test_utils.get_test_data_path(test_image_file)
-    data = dataset.Dataset.from_image(filename=input_data_dir)
+    input_image_path = test_utils.get_test_data_path(test_image_file)
+    data = dataset.Dataset.from_image(filename=input_image_path)
     self.assertEqual(data.num_classes, 1)
     self.assertEqual(data.label_names, ['cartoon'])
     self.assertLen(data, 1)
@@ -36,6 +36,12 @@ class DatasetTest(tf.test.TestCase):
   def test_from_image_raise_value_error_for_invalid_path(self):
     with self.assertRaisesRegex(ValueError, 'Unsupported image formats: .zip'):
       dataset.Dataset.from_image(filename='input/style/cartoon/cartoon.zip')
+
+  def test_from_image_raise_value_error_for_invalid_image(self):
+    with self.assertRaisesRegex(ValueError, 'Invalid image'):
+      test_image_file = 'input/style/sketch/boy-6030802_1280.jpg'
+      input_image_path = test_utils.get_test_data_path(test_image_file)
+      dataset.Dataset.from_image(filename=input_image_path)
 
 
 if __name__ == '__main__':
