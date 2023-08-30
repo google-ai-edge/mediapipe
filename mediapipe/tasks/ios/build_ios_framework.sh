@@ -124,7 +124,7 @@ function build_ios_frameworks_and_libraries {
 
 function create_framework_archive {
   # Change to the Bazel iOS output directory.
-  pushd "${BAZEL_IOS_OUTDIR}"
+  pushd "${MPP_ROOT_DIR}"
 
   # Create the temporary directory for the given framework.
   local ARCHIVE_NAME="${FRAMEWORK_NAME}-${MPP_BUILD_VERSION}"
@@ -165,9 +165,9 @@ function create_framework_archive {
 
   #----- (3) Move the framework to the destination -----
   if [[ "${ARCHIVE_FRAMEWORK}" == true ]]; then
-    local TARGET_DIR="$(realpath "${FRAMEWORK_NAME}")"
-
     # Create the framework archive directory.
+    mkdir -p "${FRAMEWORK_NAME}"
+    local TARGET_DIR="$(realpath "${FRAMEWORK_NAME}")"
 
     local FRAMEWORK_ARCHIVE_DIR
     if [[ "${IS_RELEASE_BUILD}" == true ]]; then
@@ -178,7 +178,7 @@ function create_framework_archive {
       FRAMEWORK_ARCHIVE_DIR="${TARGET_DIR}/${MPP_BUILD_VERSION}"
     fi
     mkdir -p "${FRAMEWORK_ARCHIVE_DIR}"
-
+    
     # Zip up the framework and move to the archive directory.
     pushd "${MPP_TMPDIR}"
     local MPP_ARCHIVE_FILE="${ARCHIVE_NAME}.tar.gz"
@@ -186,8 +186,11 @@ function create_framework_archive {
     mv "${MPP_ARCHIVE_FILE}" "${FRAMEWORK_ARCHIVE_DIR}"
     popd
 
-    # Move the target directory to the Kokoro artifacts directory.
-    mv "${TARGET_DIR}" "$(realpath "${DEST_DIR}")"/
+    # Move the target directory to the Kokoro artifacts directory and clean up
+    # the artifacts directory in the mediapipe root directory even if the 
+    # move command fails.
+    mv "${TARGET_DIR}" "$(realpath "${DEST_DIR}")"/ || true
+    rm -rf "${TARGET_DIR}"
   else
     rsync -r "${MPP_TMPDIR}/" "$(realpath "${DEST_DIR}")/"
   fi
