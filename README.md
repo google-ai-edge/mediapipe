@@ -22,12 +22,12 @@ make tests
 docker run -it mediapipe_ovms:latest bash
 ```
 
-# Running object detection demo
+# Running object detection demo inside mediapipe_ovms container
 ```bash
 make run_object_detection
 ```
 
-# Running holistic tracking demo
+# Running holistic tracking demo inside mediapipe_ovms container
 ```bash
 make run_holistic_tracking
 ```

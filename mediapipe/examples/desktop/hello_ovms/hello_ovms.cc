@@ -15,10 +15,13 @@
 
 #include "ovms.h"
 #include "c_api_test_utils.hpp"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include "mediapipe/framework/calculator_graph.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
+#pragma GCC diagnostic pop
 
 #include <openvino/openvino.hpp>
 

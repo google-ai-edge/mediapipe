@@ -2,7 +2,7 @@
     "model_config_list" : [
         { "config": {
                 "name":"ssdlite_object_detection",
-                "base_path":"/mediapipe/mediapipe/models/ssdlite_object_detection_openvino"
+                "base_path":"/mediapipe/mediapipe/models/ovms/ssdlite_object_detection"
             }
         }
     ]

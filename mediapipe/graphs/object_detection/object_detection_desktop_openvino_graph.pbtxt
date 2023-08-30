@@ -57,7 +57,7 @@ node {
   output_stream: "TENSORS:detection_tensors"
   node_options: {
     [type.googleapis.com/mediapipe.OpenVINOInferenceCalculatorOptions] {
-      model_path: "/mediapipe/mediapipe/models/ssdlite_object_detection_openvino/ssdlite_object_detection.xml"
+      model_path: "/mediapipe/mediapipe/models/ovms/ssdlite_object_detection/1/ssdlite_object_detection.tflite"
     }
   }
 }
@@ -139,7 +139,7 @@ node {
   output_stream: "output_detections"
   node_options: {
     [type.googleapis.com/mediapipe.DetectionLabelIdToTextCalculatorOptions] {
-      label_map_path: "/mediapipe/mediapipe/models/ssdlite_object_detection_openvino/ssdlite_object_detection_labelmap.txt"
+      label_map_path: "mediapipe/models/ssdlite_object_detection_labelmap.txt"
     }
   }
 }

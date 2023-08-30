@@ -45,8 +45,6 @@ cc_binary(
 cc_binary(
     name = "object_detection_openvino",
     data = [
-        "//mediapipe/models/ssdlite_object_detection_openvino/1:ssdlite_object_detection.xml",
-        "//mediapipe/models/ssdlite_object_detection_openvino/1:ssdlite_object_detection.bin",
         "//mediapipe/models:ssdlite_object_detection_labelmap.txt",
     ],
     deps = [
@@ -58,8 +56,6 @@ cc_binary(
 cc_binary(
     name = "object_detection_ovms",
     data = [
-        "//mediapipe/models/ssdlite_object_detection_openvino/1:ssdlite_object_detection.xml",
-        "//mediapipe/models/ssdlite_object_detection_openvino/1:ssdlite_object_detection.bin",
         "//mediapipe/models:ssdlite_object_detection_labelmap.txt",
 	],
     deps = [

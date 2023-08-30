@@ -39,13 +39,20 @@ class SetupOpenvinoModelServer():
     # Workaround to copy every model in separate directory
     model_name = os.path.basename(file).replace(".tflite","")
     dir_name = os.path.basename(dst_dir)
+
     if dir_name != model_name:
         dst = dst.replace(dir_name + "/", model_name + "/")
+
+    if 'ssdlite_object_detection' in file:
+       build_file = os.path.join('mediapipe/', file)
+       dst = os.path.join(build_lib + '/', file.replace("/","/1/"))
+       dst = dst.replace('models/1', model_name + '/1')
+    else:
+       build_file = os.path.join('mediapipe/modules/', file)
 
     dst_dir = os.path.dirname(dst)
     if not os.path.exists(dst_dir):
       os.makedirs(dst_dir)
-    build_file = os.path.join('mediapipe/modules/', file)
     print("Copy to: " + dst)
     shutil.copyfile(os.path.join('bazel-bin/', build_file), dst)
 
@@ -53,6 +60,8 @@ class SetupOpenvinoModelServer():
     """Download an external file from GCS via Bazel."""
 
     build_file = os.path.join('mediapipe/modules/', external_file)
+    if 'ssdlite_object_detection' in external_file:
+       build_file = os.path.join('mediapipe/', external_file)
     fetch_model_command = [
         'bazel',
         'build',
@@ -132,6 +141,7 @@ class SetupOpenvinoModelServer():
        # Not working
        # 'selfie_segmentation/selfie_segmentation.tflite',
        # 'selfie_segmentation/selfie_segmentation_landscape.tflite',
+        'models/ssdlite_object_detection.tflite',
     ]
     for elem in external_files:
       sys.stderr.write('downloading file: %s\n' % elem)
