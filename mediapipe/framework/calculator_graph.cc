@@ -17,13 +17,14 @@
 #include <stdio.h>
 
 #include <algorithm>
+#include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
-#include <queue>
+#include <string>
 #include <utility>
 #include <vector>
 
-#include "absl/container/fixed_array.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/log/log.h"
 #include "absl/memory/memory.h"
@@ -38,9 +39,15 @@
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/counter_factory.h"
 #include "mediapipe/framework/delegating_executor.h"
+#include "mediapipe/framework/executor.h"
+#include "mediapipe/framework/graph_output_stream.h"
 #include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/input_stream_manager.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
+#include "mediapipe/framework/output_side_packet_impl.h"
+#include "mediapipe/framework/output_stream_manager.h"
+#include "mediapipe/framework/output_stream_poller.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_generator.h"
 #include "mediapipe/framework/packet_generator.pb.h"
 #include "mediapipe/framework/packet_set.h"
@@ -49,14 +56,18 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
+#include "mediapipe/framework/port/status_macros.h"
+#include "mediapipe/framework/scheduler.h"
 #include "mediapipe/framework/status_handler.h"
 #include "mediapipe/framework/status_handler.pb.h"
 #include "mediapipe/framework/thread_pool_executor.h"
 #include "mediapipe/framework/thread_pool_executor.pb.h"
+#include "mediapipe/framework/timestamp.h"
 #include "mediapipe/framework/tool/fill_packet_set.h"
 #include "mediapipe/framework/tool/status_util.h"
 #include "mediapipe/framework/tool/tag_map.h"
@@ -133,7 +144,7 @@ CalculatorGraph::CalculatorGraph(CalculatorGraphConfig config)
 // they only need to be fully visible here, where their destructor is
 // instantiated.
 CalculatorGraph::~CalculatorGraph() {
-  // Stop periodic profiler output to ublock Executor destructors.
+  // Stop periodic profiler output to unblock Executor destructors.
   absl::Status status = profiler()->Stop();
   if (!status.ok()) {
     LOG(ERROR) << "During graph destruction: " << status;
@@ -180,6 +191,7 @@ absl::Status CalculatorGraph::InitializeStreams() {
     const EdgeInfo& edge_info = validated_graph_->InputStreamInfos()[index];
     MP_RETURN_IF_ERROR(input_stream_managers_[index].Initialize(
         edge_info.name, edge_info.packet_type, edge_info.back_edge));
+    input_stream_to_index_[&input_stream_managers_[index]] = index;
   }
 
   // Create and initialize the output streams.
@@ -1223,7 +1235,7 @@ bool CalculatorGraph::UnthrottleSources() {
   // NOTE: We can be sure that this function will grow input streams enough
   // to unthrottle at least one source node.  The current stream queue sizes
   // will remain unchanged until at least one source node becomes unthrottled.
-  // This is a sufficient because succesfully growing at least one full input
+  // This is a sufficient because successfully growing at least one full input
   // stream during each call to UnthrottleSources will eventually resolve
   // each deadlock.
   absl::flat_hash_set<InputStreamManager*> full_streams;
@@ -1243,7 +1255,8 @@ bool CalculatorGraph::UnthrottleSources() {
   for (InputStreamManager* stream : full_streams) {
     if (Config().report_deadlock()) {
       RecordError(absl::UnavailableError(absl::StrCat(
-          "Detected a deadlock due to input throttling for: \"", stream->Name(),
+          "Detected a deadlock due to input throttling for input stream: \"",
+          stream->Name(), "\" of a node \"", GetParentNodeDebugName(stream),
           "\". All calculators are idle while packet sources remain active "
           "and throttled.  Consider adjusting \"max_queue_size\" or "
           "\"report_deadlock\".")));
@@ -1251,10 +1264,11 @@ bool CalculatorGraph::UnthrottleSources() {
     }
     int new_size = stream->QueueSize() + 1;
     stream->SetMaxQueueSize(new_size);
-    LOG_EVERY_N(WARNING, 100)
-        << "Resolved a deadlock by increasing max_queue_size of input stream: "
-        << stream->Name() << " to: " << new_size
-        << ". Consider increasing max_queue_size for better performance.";
+    LOG_EVERY_N(WARNING, 100) << absl::StrCat(
+        "Resolved a deadlock by increasing max_queue_size of input stream: \"",
+        stream->Name(), "\" of a node \"", GetParentNodeDebugName(stream),
+        "\" to ", new_size,
+        ". Consider increasing max_queue_size for better performance.");
   }
   return !full_streams.empty();
 }
@@ -1391,6 +1405,27 @@ std::string CalculatorGraph::ListSourceNodes() const {
     }
   }
   return absl::StrJoin(sources, ", ");
+}
+
+std::string CalculatorGraph::GetParentNodeDebugName(
+    InputStreamManager* stream) const {
+  auto iter = input_stream_to_index_.find(stream);
+  if (iter == input_stream_to_index_.end()) {
+    return absl::StrCat("Unknown (node with input stream: ", stream->Name(),
+                        ")");
+  }
+
+  const int input_stream_index = iter->second;
+  const EdgeInfo& edge_info =
+      validated_graph_->InputStreamInfos()[input_stream_index];
+  const int node_index = edge_info.parent_node.index;
+  const CalculatorGraphConfig& config = validated_graph_->Config();
+  if (node_index < 0 || node_index >= config.node_size()) {
+    return absl::StrCat("Unknown (node index: ", node_index,
+                        ", with input stream: ", stream->Name(), ")");
+  }
+
+  return DebugName(config.node(node_index));
 }
 
 namespace {

@@ -17,16 +17,20 @@
 #include <pthread.h>
 
 #include <atomic>
+#include <cstdint>
 #include <ctime>
 #include <deque>
+#include <functional>
 #include <map>
 #include <memory>
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 #include "absl/container/fixed_array.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -2549,6 +2553,129 @@ TEST(CalculatorGraph, OutputPacketInOpen2) {
   EXPECT_EQ(Timestamp(i), packet_dump[i].Timestamp());
 }
 
+TEST(CalculatorGraph, DeadlockIsReportedAndSufficientInfoProvided) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        report_deadlock: true
+        max_queue_size: 1
+        input_stream: 'input1'
+        input_stream: 'input2'
+        node {
+          calculator: 'PassThroughCalculator'
+          input_stream: 'input1'
+          input_stream: 'input2'
+          output_stream: 'output1'
+          output_stream: 'output2'
+        }
+      )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  Packet packet = MakePacket<int>(1);
+  MP_EXPECT_OK(graph.AddPacketToInputStream("input1", packet.At(Timestamp(0))));
+  absl::Status status =
+      graph.AddPacketToInputStream("input1", packet.At(Timestamp(1)));
+
+  EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable);
+  EXPECT_THAT(status.message(),
+              testing::AllOf(testing::HasSubstr("deadlock"),
+                             testing::HasSubstr("input1"),
+                             testing::HasSubstr("PassThroughCalculator")));
+  graph.Cancel();
+}
+
+TEST(CalculatorGraph,
+     DeadlockIsReportedAndSufficientInfoProvidedMultipleCalculators) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        report_deadlock: true
+        max_queue_size: 1
+        input_stream: 'input1'
+        input_stream: 'input2'
+        node {
+          calculator: 'PassThroughCalculator'
+          input_stream: 'input1'
+          input_stream: 'input2'
+          output_stream: 'output1'
+          output_stream: 'output2'
+        }
+        node {
+          calculator: 'MergeCalculator'
+          input_stream: 'output1'
+          input_stream: 'output2'
+          output_stream: 'output3'
+        }
+      )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  Packet packet = MakePacket<int>(1);
+  MP_EXPECT_OK(graph.AddPacketToInputStream("input1", packet.At(Timestamp(0))));
+  absl::Status status =
+      graph.AddPacketToInputStream("input1", packet.At(Timestamp(1)));
+
+  EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable);
+  EXPECT_THAT(status.message(),
+              testing::AllOf(testing::HasSubstr("deadlock"),
+                             testing::HasSubstr("input1"),
+                             testing::HasSubstr("PassThroughCalculator")));
+  graph.Cancel();
+}
+
+TEST(CalculatorGraph, TwoDeadlocksAreReportedAndSufficientInfoProvided) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        report_deadlock: true
+        max_queue_size: 1
+        input_stream: 'input1'
+        input_stream: 'input2'
+        node {
+          calculator: 'PassThroughCalculator'
+          input_stream: 'input1'
+          input_stream: 'input2'
+          output_stream: 'output1'
+          output_stream: 'output2'
+        }
+        node {
+          calculator: 'PassThroughCalculator'
+          input_stream: 'output1'
+          input_stream: 'output2'
+          output_stream: 'output3'
+          output_stream: 'output4'
+        }
+        node {
+          calculator: 'MergeCalculator'
+          input_stream: 'input1'
+          input_stream: 'output1'
+          input_stream: 'output2'
+          input_stream: 'output3'
+          input_stream: 'output4'
+          output_stream: 'output5'
+        }
+      )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  Packet packet = MakePacket<int>(1);
+  MP_EXPECT_OK(graph.AddPacketToInputStream("input1", packet.At(Timestamp(0))));
+  absl::Status status =
+      graph.AddPacketToInputStream("input1", packet.At(Timestamp(1)));
+
+  EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable);
+  EXPECT_THAT(status.message(),
+              testing::AllOf(testing::HasSubstr("deadlock"),
+                             testing::HasSubstr("input1"),
+                             testing::HasSubstr("PassThroughCalculator"),
+                             testing::HasSubstr("MergeCalculator")));
+  graph.Cancel();
+}
+
 // Tests that no packets are available on input streams in Open(), even if the
 // upstream calculator outputs a packet in Open().
 TEST(CalculatorGraph, EmptyInputInOpen) {
@@ -2619,7 +2746,7 @@ TEST(CalculatorGraph, UnthrottleRespectsLayers) {
   std::map<std::string, Packet> input_side_packets;
   input_side_packets["global_counter"] = Adopt(new auto(&global_counter));
   // TODO: Set this value to true. When the calculator outputs a
-  // packet in Open, it will trigget b/33568859, and the test will fail. Use
+  // packet in Open, it will trigger b/33568859, and the test will fail. Use
   // this test to verify that b/33568859 is fixed.
   constexpr bool kOutputInOpen = true;
   input_side_packets["output_in_open"] = MakePacket<bool>(kOutputInOpen);
@@ -3339,7 +3466,7 @@ TEST(CalculatorGraph, SetInputStreamMaxQueueSizeWorksSlowCalculator) {
 // Verify the scheduler unthrottles the graph input stream to avoid a deadlock,
 // and won't enter a busy loop.
 TEST(CalculatorGraph, AddPacketNoBusyLoop) {
-  // The DecimatorCalculator ouputs 1 out of every 101 input packets and drops
+  // The DecimatorCalculator outputs 1 out of every 101 input packets and drops
   // the rest, without setting the next timestamp bound on its output. As a
   // result, the MergeCalculator is not runnable in between and packets on its
   // "in" input stream will be queued and exceed the max queue size.

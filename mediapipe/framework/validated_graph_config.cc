@@ -15,6 +15,7 @@
 #include "mediapipe/framework/validated_graph_config.h"
 
 #include <memory>
+#include <string>
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/memory/memory.h"
@@ -33,6 +34,7 @@
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status.h"
@@ -48,8 +50,6 @@
 #include "mediapipe/framework/tool/validate_name.h"
 
 namespace mediapipe {
-
-namespace {
 
 // Create a debug string name for a set of edge.  An edge can be either
 // a stream or a side packet.
@@ -78,6 +78,8 @@ std::string DebugName(const CalculatorGraphConfig::Node& node_config) {
   return name;
 }
 
+namespace {
+
 std::string DebugName(const PacketGeneratorConfig& node_config) {
   return absl::StrCat(
       "[", node_config.packet_generator(), ", ",
@@ -98,7 +100,7 @@ std::string DebugName(const CalculatorGraphConfig& config,
                       NodeTypeInfo::NodeType node_type, int node_index) {
   switch (node_type) {
     case NodeTypeInfo::NodeType::CALCULATOR:
-      return DebugName(config.node(node_index));
+      return mediapipe::DebugName(config.node(node_index));
     case NodeTypeInfo::NodeType::PACKET_GENERATOR:
       return DebugName(config.packet_generator(node_index));
     case NodeTypeInfo::NodeType::GRAPH_INPUT_STREAM:
@@ -900,8 +902,8 @@ absl::Status ValidatedGraphConfig::ValidateSidePacketTypes() {
           "\"$3\" but the connected output side packet will be of type \"$4\"",
           side_packet.name,
           NodeTypeInfo::NodeTypeToString(side_packet.parent_node.type),
-          mediapipe::DebugName(config_, side_packet.parent_node.type,
-                               side_packet.parent_node.index),
+          DebugName(config_, side_packet.parent_node.type,
+                    side_packet.parent_node.index),
           side_packet.packet_type->DebugTypeName(),
           output_side_packets_[side_packet.upstream]
               .packet_type->DebugTypeName()));

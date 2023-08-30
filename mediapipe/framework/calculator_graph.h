@@ -26,10 +26,12 @@
 #include <utility>
 #include <vector>
 
-#include "absl/base/macros.h"
-#include "absl/container/fixed_array.h"
+#include "absl/base/attributes.h"
+#include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_base.h"
@@ -41,18 +43,17 @@
 #include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
 #include "mediapipe/framework/output_side_packet_impl.h"
-#include "mediapipe/framework/output_stream.h"
 #include "mediapipe/framework/output_stream_manager.h"
 #include "mediapipe/framework/output_stream_poller.h"
 #include "mediapipe/framework/output_stream_shard.h"
 #include "mediapipe/framework/packet.h"
-#include "mediapipe/framework/packet_generator.pb.h"
 #include "mediapipe/framework/packet_generator_graph.h"
-#include "mediapipe/framework/port.h"
-#include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/scheduler.h"
+#include "mediapipe/framework/scheduler_shared.h"
+#include "mediapipe/framework/subgraph.h"
 #include "mediapipe/framework/thread_pool_executor.pb.h"
+#include "mediapipe/framework/timestamp.h"
+#include "mediapipe/framework/validated_graph_config.h"
 
 namespace mediapipe {
 
@@ -600,6 +601,9 @@ class CalculatorGraph {
   // Returns a comma-separated list of source nodes.
   std::string ListSourceNodes() const;
 
+  // Returns a parent node name for the given input stream.
+  std::string GetParentNodeDebugName(InputStreamManager* stream) const;
+
 #if !MEDIAPIPE_DISABLE_GPU
   // Owns the legacy GpuSharedData if we need to create one for backwards
   // compatibility.
@@ -654,6 +658,9 @@ class CalculatorGraph {
   // Note that this vector contains an unused entry for each non-source node.
   std::vector<absl::flat_hash_set<InputStreamManager*>> full_input_streams_
       ABSL_GUARDED_BY(full_input_streams_mutex_);
+
+  // Input stream to index within `input_stream_managers_` mapping.
+  absl::flat_hash_map<InputStreamManager*, int> input_stream_to_index_;
 
   // Maps stream names to graph input stream objects.
   absl::flat_hash_map<std::string, std::unique_ptr<GraphInputStream>>
