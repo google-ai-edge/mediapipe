@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
 #include "libyuv/scale.h"
@@ -293,7 +294,7 @@ absl::Status ScaleImageCalculator::InitializeFrameInfo(CalculatorContext* cc) {
     header->width = output_width_;
     header->height = output_height_;
     header->format = output_format_;
-    LOG(INFO) << "OUTPUTTING HEADER on stream";
+    ABSL_LOG(INFO) << "OUTPUTTING HEADER on stream";
     cc->Outputs()
         .Tag("VIDEO_HEADER")
         .Add(header.release(), Timestamp::PreStream());
@@ -393,10 +394,11 @@ absl::Status ScaleImageCalculator::Open(CalculatorContext* cc) {
           .SetHeader(Adopt(output_header.release()));
       has_header_ = true;
     } else {
-      LOG(WARNING) << "Stream had a VideoHeader which didn't have sufficient "
-                      "information.  "
-                      "Dropping VideoHeader and trying to deduce needed "
-                      "information.";
+      ABSL_LOG(WARNING)
+          << "Stream had a VideoHeader which didn't have sufficient "
+             "information.  "
+             "Dropping VideoHeader and trying to deduce needed "
+             "information.";
       input_width_ = 0;
       input_height_ = 0;
       if (!options_.has_input_format()) {

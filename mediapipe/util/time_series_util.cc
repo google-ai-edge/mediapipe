@@ -19,10 +19,10 @@
 #include <iostream>
 #include <string>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"
-#include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
 namespace time_series_util {
@@ -36,8 +36,8 @@ bool LogWarningIfTimestampIsInconsistent(const Timestamp& current_timestamp,
   // Don't accept other special timestamp values.  We may need to change this
   // depending on how they're used in practice.
   if (!current_timestamp.IsRangeValue()) {
-    LOG(WARNING) << "Unexpected special timestamp: "
-                 << current_timestamp.DebugString();
+    ABSL_LOG(WARNING) << "Unexpected special timestamp: "
+                      << current_timestamp.DebugString();
     return false;
   }
 
@@ -48,7 +48,7 @@ bool LogWarningIfTimestampIsInconsistent(const Timestamp& current_timestamp,
       initial_timestamp.Seconds() + cumulative_samples / sample_rate;
   if (fabs(current_timestamp.Seconds() - expected_timestamp_seconds) >
       0.5 / sample_rate) {
-    LOG_EVERY_N(WARNING, 20)
+    ABSL_LOG_EVERY_N(WARNING, 20)
         << std::fixed << "Timestamp " << current_timestamp.Seconds()
         << " not consistent with number of samples " << cumulative_samples
         << " and initial timestamp " << initial_timestamp

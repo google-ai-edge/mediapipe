@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "mediapipe/calculators/tensor/tensors_to_detections_calculator.pb.h"
@@ -329,7 +330,7 @@ absl::Status TensorsToDetectionsCalculator::Process(CalculatorContext* cc) {
     } else if (status.code() == absl::StatusCode::kFailedPrecondition) {
       // For initialization error because of hardware limitation, fallback to
       // CPU processing.
-      LOG(WARNING) << status.message();
+      ABSL_LOG(WARNING) << status.message();
     } else {
       // For other error, let the error propagates.
       return status;
@@ -668,7 +669,7 @@ absl::Status TensorsToDetectionsCalculator::ProcessGPU(
                                          output_detections));
 
 #else
-  LOG(ERROR) << "GPU input on non-Android not supported yet.";
+  ABSL_LOG(ERROR) << "GPU input on non-Android not supported yet.";
 #endif  // !defined(MEDIAPIPE_DISABLE_GL_COMPUTE)
   return absl::OkStatus();
 }

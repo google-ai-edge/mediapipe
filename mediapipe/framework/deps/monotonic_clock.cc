@@ -16,9 +16,10 @@
 
 #include "absl/base/macros.h"
 #include "absl/base/thread_annotations.h"
+#include "absl/log/absl_log.h"
+#include "absl/log/check.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
-#include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
 
@@ -205,7 +206,7 @@ MonotonicClock* MonotonicClock::CreateSynchronizedMonotonicClock() {
 
 // Test access methods.
 void MonotonicClockAccess::SynchronizedMonotonicClockReset() {
-  LOG(INFO) << "Resetting SynchronizedMonotonicClock";
+  ABSL_LOG(INFO) << "Resetting SynchronizedMonotonicClock";
   State* sync_state = GlobalSyncState();
   absl::MutexLock m(&sync_state->lock);
   sync_state->max_time = absl::UnixEpoch();

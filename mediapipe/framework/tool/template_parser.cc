@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
@@ -31,7 +32,6 @@
 #include "mediapipe/framework/deps/proto_descriptor.pb.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -181,11 +181,11 @@ void CheckFieldIndex(const FieldDescriptor* field, int index) {
   }
 
   if (field->is_repeated() && index == -1) {
-    LOG(DFATAL) << "Index must be in range of repeated field values. "
-                << "Field: " << field->name();
+    ABSL_LOG(ERROR) << "Index must be in range of repeated field values. "
+                    << "Field: " << field->name();
   } else if (!field->is_repeated() && index != -1) {
-    LOG(DFATAL) << "Index must be -1 for singular fields."
-                << "Field: " << field->name();
+    ABSL_LOG(ERROR) << "Index must be -1 for singular fields."
+                    << "Field: " << field->name();
   }
 }
 
@@ -305,7 +305,7 @@ class TemplateParser::Parser::ParserImpl {
   // Parses the ASCII representation specified in input and saves the
   // information into the output pointer (a Message). Returns
   // false if an error occurs (an error will also be logged to
-  // LOG(ERROR)).
+  // ABSL_LOG(ERROR)).
   virtual bool Parse(Message* output) {
     // Consume fields until we cannot do so anymore.
     while (true) {
@@ -335,12 +335,12 @@ class TemplateParser::Parser::ParserImpl {
     had_errors_ = true;
     if (error_collector_ == NULL) {
       if (line >= 0) {
-        LOG(ERROR) << "Error parsing text-format "
-                   << root_message_type_->full_name() << ": " << (line + 1)
-                   << ":" << (col + 1) << ": " << message;
+        ABSL_LOG(ERROR) << "Error parsing text-format "
+                        << root_message_type_->full_name() << ": " << (line + 1)
+                        << ":" << (col + 1) << ": " << message;
       } else {
-        LOG(ERROR) << "Error parsing text-format "
-                   << root_message_type_->full_name() << ": " << message;
+        ABSL_LOG(ERROR) << "Error parsing text-format "
+                        << root_message_type_->full_name() << ": " << message;
       }
     } else {
       error_collector_->AddError(line, col, std::string(message));
@@ -350,12 +350,12 @@ class TemplateParser::Parser::ParserImpl {
   void ReportWarning(int line, int col, absl::string_view message) {
     if (error_collector_ == NULL) {
       if (line >= 0) {
-        LOG(WARNING) << "Warning parsing text-format "
-                     << root_message_type_->full_name() << ": " << (line + 1)
-                     << ":" << (col + 1) << ": " << message;
+        ABSL_LOG(WARNING) << "Warning parsing text-format "
+                          << root_message_type_->full_name() << ": "
+                          << (line + 1) << ":" << (col + 1) << ": " << message;
       } else {
-        LOG(WARNING) << "Warning parsing text-format "
-                     << root_message_type_->full_name() << ": " << message;
+        ABSL_LOG(WARNING) << "Warning parsing text-format "
+                          << root_message_type_->full_name() << ": " << message;
       }
     } else {
       error_collector_->AddWarning(line, col, std::string(message));
@@ -884,7 +884,7 @@ class TemplateParser::Parser::ParserImpl {
       case FieldDescriptor::CPPTYPE_MESSAGE: {
         // We should never get here. Put here instead of a default
         // so that if new types are added, we get a nice compiler warning.
-        LOG(FATAL) << "Reached an unintended state: CPPTYPE_MESSAGE";
+        ABSL_LOG(FATAL) << "Reached an unintended state: CPPTYPE_MESSAGE";
         break;
       }
     }

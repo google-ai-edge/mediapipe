@@ -14,6 +14,7 @@
 
 #include <memory>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/util/annotation_overlay_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -24,7 +25,6 @@
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/image_opencv.h"
 #include "mediapipe/framework/formats/video_stream_header.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status.h"
@@ -274,7 +274,8 @@ absl::Status AnnotationOverlayCalculator::Open(CalculatorContext* cc) {
   renderer_->SetFlipTextVertically(options_.flip_text_vertically());
   if (use_gpu_) renderer_->SetScaleFactor(options_.gpu_scale_factor());
   if (renderer_->GetScaleFactor() < 1.0 && HasImageTag(cc))
-    LOG(WARNING) << "Annotation scale factor only supports GPU backed Image.";
+    ABSL_LOG(WARNING)
+        << "Annotation scale factor only supports GPU backed Image.";
 
   // Set the output header based on the input header (if present).
   const char* tag = HasImageTag(cc) ? kImageTag

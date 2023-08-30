@@ -14,13 +14,13 @@
 
 #include <memory>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/calculators/image/set_alpha_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status.h"
@@ -268,7 +268,7 @@ absl::Status SetAlphaCalculator::RenderCpu(CalculatorContext* cc) {
   const auto& input_frame = cc->Inputs().Tag(kInputFrameTag).Get<ImageFrame>();
   const cv::Mat input_mat = formats::MatView(&input_frame);
   if (!(input_mat.type() == CV_8UC3 || input_mat.type() == CV_8UC4)) {
-    LOG(ERROR) << "Only 3 or 4 channel 8-bit input image supported";
+    ABSL_LOG(ERROR) << "Only 3 or 4 channel 8-bit input image supported";
   }
 
   // Setup destination image
@@ -328,7 +328,7 @@ absl::Status SetAlphaCalculator::RenderGpu(CalculatorContext* cc) {
       cc->Inputs().Tag(kInputFrameTagGpu).Get<mediapipe::GpuBuffer>();
   if (!(input_frame.format() == mediapipe::GpuBufferFormat::kBGRA32 ||
         input_frame.format() == mediapipe::GpuBufferFormat::kRGB24)) {
-    LOG(ERROR) << "Only RGB or RGBA input image supported";
+    ABSL_LOG(ERROR) << "Only RGB or RGBA input image supported";
   }
   auto input_texture = gpu_helper_.CreateSourceTexture(input_frame);
 

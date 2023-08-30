@@ -100,6 +100,7 @@ cc_library(
                "//mediapipe:ios": [],
                "//mediapipe:macos": [],
                "//conditions:default": [
+                   "//mediapipe/framework/port:logging",
                    "//mediapipe/framework/port:ret_check",
                    "//mediapipe/framework/port:status",
                    "//mediapipe/framework/port:statusor",

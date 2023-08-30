@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/logging.h"
 
 #if DEBUG
@@ -26,7 +27,7 @@
     if (log_length > 0) {                                         \
       GLchar* log = static_cast<GLchar*>(malloc(log_length));     \
       glGet##type##InfoLog(object, log_length, &log_length, log); \
-      LOG(INFO) << #type " " action " log:\n" << log;             \
+      ABSL_LOG(INFO) << #type " " action " log:\n" << log;        \
       free(log);                                                  \
     }                                                             \
   } while (0)
@@ -41,7 +42,7 @@
     if (log_length > 0) {                                         \
       GLchar* log = static_cast<GLchar*>(malloc(log_length));     \
       glGet##type##InfoLog(object, log_length, &log_length, log); \
-      LOG(ERROR) << #type " " action " log:\n" << log;            \
+      ABSL_LOG(ERROR) << #type " " action " log:\n" << log;       \
       free(log);                                                  \
     }                                                             \
   } while (0)
@@ -70,13 +71,14 @@ GLint GlhCompileShader(GLenum target, const GLchar* source, GLuint* shader,
   GLint status;
 
   glGetShaderiv(*shader, GL_COMPILE_STATUS, &status);
-  LOG_IF(ERROR, status == GL_FALSE) << "Failed to compile shader:\n" << source;
+  ABSL_LOG_IF(ERROR, status == GL_FALSE) << "Failed to compile shader:\n"
+                                         << source;
 
   if (status == GL_FALSE) {
     int length = 0;
     GLchar cmessage[kMaxShaderInfoLength];
     glGetShaderInfoLog(*shader, kMaxShaderInfoLength, &length, cmessage);
-    LOG(ERROR) << "Error message: " << std::string(cmessage, length);
+    ABSL_LOG(ERROR) << "Error message: " << std::string(cmessage, length);
   }
   return status;
 }
@@ -95,7 +97,8 @@ GLint GlhLinkProgram(GLuint program, bool force_log_errors) {
   GL_DEBUG_LOG(Program, program, "link");
 
   glGetProgramiv(program, GL_LINK_STATUS, &status);
-  LOG_IF(ERROR, status == GL_FALSE) << "Failed to link program " << program;
+  ABSL_LOG_IF(ERROR, status == GL_FALSE)
+      << "Failed to link program " << program;
 
   return status;
 }
@@ -108,7 +111,8 @@ GLint GlhValidateProgram(GLuint program) {
   GL_DEBUG_LOG(Program, program, "validate");
 
   glGetProgramiv(program, GL_VALIDATE_STATUS, &status);
-  LOG_IF(ERROR, status == GL_FALSE) << "Failed to validate program " << program;
+  ABSL_LOG_IF(ERROR, status == GL_FALSE)
+      << "Failed to validate program " << program;
 
   return status;
 }

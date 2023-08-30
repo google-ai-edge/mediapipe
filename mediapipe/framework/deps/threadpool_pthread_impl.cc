@@ -18,6 +18,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "mediapipe/framework/deps/threadpool.h"
@@ -67,9 +68,9 @@ void* ThreadPool::WorkerThread::ThreadBody(void* arg) {
     if (nice(nice_priority_level) != -1 || errno == 0) {
       VLOG(1) << "Changed the nice priority level by " << nice_priority_level;
     } else {
-      LOG(ERROR) << "Error : " << strerror(errno) << std::endl
-                 << "Could not change the nice priority level by "
-                 << nice_priority_level;
+      ABSL_LOG(ERROR) << "Error : " << strerror(errno) << std::endl
+                      << "Could not change the nice priority level by "
+                      << nice_priority_level;
     }
   }
   if (!selected_cpus.empty()) {
@@ -84,27 +85,27 @@ void* ThreadPool::WorkerThread::ThreadBody(void* arg) {
       VLOG(1) << "Pinned the thread pool executor to processor "
               << absl::StrJoin(selected_cpus, ", processor ") << ".";
     } else {
-      LOG(ERROR) << "Error : " << strerror(errno) << std::endl
-                 << "Failed to set processor affinity. Ignore processor "
-                    "affinity setting for now.";
+      ABSL_LOG(ERROR) << "Error : " << strerror(errno) << std::endl
+                      << "Failed to set processor affinity. Ignore processor "
+                         "affinity setting for now.";
     }
   }
   int error = pthread_setname_np(pthread_self(), name.c_str());
   if (error != 0) {
-    LOG(ERROR) << "Error : " << strerror(error) << std::endl
-               << "Failed to set name for thread: " << name;
+    ABSL_LOG(ERROR) << "Error : " << strerror(error) << std::endl
+                    << "Failed to set name for thread: " << name;
   }
 #else
   const std::string name = internal::CreateThreadName(thread->name_prefix_, 0);
   if (nice_priority_level != 0 || !selected_cpus.empty()) {
-    LOG(ERROR) << "Thread priority and processor affinity feature aren't "
-                  "supported on the current platform.";
+    ABSL_LOG(ERROR) << "Thread priority and processor affinity feature aren't "
+                       "supported on the current platform.";
   }
 #if __APPLE__
   int error = pthread_setname_np(name.c_str());
   if (error != 0) {
-    LOG(ERROR) << "Error : " << strerror(error) << std::endl
-               << "Failed to set name for thread: " << name;
+    ABSL_LOG(ERROR) << "Error : " << strerror(error) << std::endl
+                    << "Failed to set name for thread: " << name;
   }
 #endif  // __APPLE__
 #endif  // __linux__

@@ -18,6 +18,7 @@
 
 #include <cmath>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/mathutil.h"
@@ -25,7 +26,6 @@
 #include "mediapipe/framework/formats/location_opencv.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/point2.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/type_map.h"
@@ -253,7 +253,7 @@ bool OpticalFlowField::AllWithinMargin(const OpticalFlowField& other,
       const cv::Point2f& other_motion = other.flow_data().at<cv::Point2f>(r, c);
       if (!MathUtil::WithinMargin(this_motion.x, other_motion.x, margin) ||
           !MathUtil::WithinMargin(this_motion.y, other_motion.y, margin)) {
-        LOG(INFO) << "First failure at" << r << " " << c;
+        ABSL_LOG(INFO) << "First failure at" << r << " " << c;
         return false;
       }
     }

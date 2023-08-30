@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -169,8 +170,8 @@ class PacketTypeSetErrorHandler {
 
   // In the const setting produce a FATAL error.
   const PacketType& GetFallback(const absl::string_view tag, int index) const {
-    LOG(FATAL) << "Failed to get tag \"" << tag << "\" index " << index
-               << ".  Unable to defer error due to const specifier.";
+    ABSL_LOG(FATAL) << "Failed to get tag \"" << tag << "\" index " << index
+                    << ".  Unable to defer error due to const specifier.";
     std::abort();
   }
 

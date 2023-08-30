@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/util/tracking/image_util.h"
 #include "mediapipe/util/tracking/push_pull_filtering.pb.h"
@@ -309,7 +310,7 @@ PushPullFiltering<C, FilterWeightMultiplier>::PushPullFiltering(
       weight_adjuster_(weight_adjuster) {
   border_ = BorderFromFilterType(filter_type);
   if (border_ < 0) {
-    LOG(FATAL) << "Unknown filter requested.";
+    ABSL_LOG(FATAL) << "Unknown filter requested.";
   }
 
   SetupFilters();
@@ -507,7 +508,7 @@ void PushPullFiltering<C, FilterWeightMultiplier>::CopyNecessaryBorder(
       CopyMatBorder<T, 2, channels>(mat);
       break;
     default:
-      LOG(FATAL) << "Unknown filter";
+      ABSL_LOG(FATAL) << "Unknown filter";
   }
 }
 
@@ -867,7 +868,7 @@ void PushPullFiltering<C, FilterWeightMultiplier>::PerformPushPullImpl(
       filter_weights = gaussian5_weights_.data();
       break;
     default:
-      LOG(FATAL) << "Unknown filter requested.";
+      ABSL_LOG(FATAL) << "Unknown filter requested.";
   }
 
   const std::vector<cv::Mat*>& mip_map = *mip_map_ptr;
@@ -1131,7 +1132,7 @@ void PushPullFiltering<C, FilterWeightMultiplier>::PushUpSampling(
                          tap_weights, tap_offsets, tap_space_offsets);
         break;
       default:
-        LOG(FATAL) << "Filter unknown";
+        ABSL_LOG(FATAL) << "Filter unknown";
     }
 
     // Local copy for faster access.

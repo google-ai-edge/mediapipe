@@ -22,11 +22,11 @@
 #include <string>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_log.h"
 #include "absl/time/clock.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
@@ -117,7 +117,7 @@ void RegionFlowComputationTest::MakeMovie(
   int seed = 900913;  // google.
   if (absl::GetFlag(FLAGS_time_seed)) {
     seed = ToUnixMillis(absl::Now()) % (1 << 16);
-    LOG(INFO) << "Using time seed: " << seed;
+    ABSL_LOG(INFO) << "Using time seed: " << seed;
   }
 
   RandomEngine random(seed);

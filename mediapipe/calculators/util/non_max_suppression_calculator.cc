@@ -18,12 +18,12 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/calculators/util/non_max_suppression_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/location.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/rectangle.h"
 #include "mediapipe/framework/port/status.h"
 
@@ -92,7 +92,7 @@ float OverlapSimilarity(
       normalization = rect1.Area() + rect2.Area() - intersection_area;
       break;
     default:
-      LOG(FATAL) << "Unrecognized overlap type: " << overlap_type;
+      ABSL_LOG(FATAL) << "Unrecognized overlap type: " << overlap_type;
   }
   return normalization > 0.0f ? intersection_area / normalization : 0.0f;
 }

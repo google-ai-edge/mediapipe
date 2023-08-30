@@ -15,13 +15,13 @@
 #include <algorithm>
 #include <memory>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/calculators/image/segmentation_smoothing_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/vector.h"
 
@@ -273,7 +273,7 @@ absl::Status SegmentationSmoothingCalculator::RenderGpu(CalculatorContext* cc) {
 
   const auto& previous_frame = cc->Inputs().Tag(kPreviousMaskTag).Get<Image>();
   if (previous_frame.format() != current_frame.format()) {
-    LOG(ERROR) << "Warning: mixing input format types. ";
+    ABSL_LOG(ERROR) << "Warning: mixing input format types. ";
   }
   auto previous_texture = gpu_helper_.CreateSourceTexture(previous_frame);
 

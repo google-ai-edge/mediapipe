@@ -14,6 +14,7 @@
 
 #include "mediapipe/gpu/gl_texture_buffer.h"
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gl_texture_view.h"
@@ -47,7 +48,7 @@ std::unique_ptr<GlTextureBuffer> GlTextureBuffer::Create(int width, int height,
   auto buf = absl::make_unique<GlTextureBuffer>(GL_TEXTURE_2D, 0, width, height,
                                                 format, nullptr);
   if (!buf->CreateInternal(data, alignment)) {
-    LOG(WARNING) << "Failed to create a GL texture";
+    ABSL_LOG(WARNING) << "Failed to create a GL texture";
     return nullptr;
   }
   return buf;
@@ -108,7 +109,7 @@ GlTextureBuffer::GlTextureBuffer(GLenum target, GLuint name, int width,
 bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
   auto context = GlContext::GetCurrent();
   if (!context) {
-    LOG(WARNING) << "Cannot create a GL texture without a valid context";
+    ABSL_LOG(WARNING) << "Cannot create a GL texture without a valid context";
     return false;
   }
 
@@ -216,7 +217,7 @@ void GlTextureBuffer::DidRead(std::shared_ptr<GlSyncPoint> cons_token) const {
     consumer_multi_sync_->Add(std::move(cons_token));
   } else {
     // TODO: change to a CHECK.
-    LOG_FIRST_N(WARNING, 5) << "unexpected null sync in DidRead";
+    ABSL_LOG_FIRST_N(WARNING, 5) << "unexpected null sync in DidRead";
   }
 }
 

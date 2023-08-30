@@ -21,6 +21,7 @@
 #include <numeric>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/util/tracking/motion_models.pb.h"
 #include "mediapipe/util/tracking/tone_models.pb.h"
 
@@ -303,8 +304,8 @@ void ToneEstimation::EstimateGainBiasModel(int irls_iterations,
   const float det = gain_bias_model->gain_c1() * gain_bias_model->gain_c2() *
                     gain_bias_model->gain_c3();
   if (fabs(det) < 1e-6f) {
-    LOG(WARNING) << "Estimated gain bias model is not invertible. "
-                 << "Falling back to identity model.";
+    ABSL_LOG(WARNING) << "Estimated gain bias model is not invertible. "
+                      << "Falling back to identity model.";
     gain_bias_model->CopyFrom(GainBiasModel());
   }
 }

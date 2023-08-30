@@ -17,6 +17,7 @@
 #include <android/native_window_jni.h>
 #endif  // __ANDROID__
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/gpu/egl_surface_holder.h"
@@ -99,7 +100,7 @@ JNIEXPORT void JNICALL MEDIAPIPE_SURFACE_OUTPUT_METHOD(nativeSetSurface)(
     ANativeWindow_release(window);
   }
 #else
-  LOG(FATAL) << "setSurface is only supported on Android";
+  ABSL_LOG(FATAL) << "setSurface is only supported on Android";
 #endif  // __ANDROID__
 }
 

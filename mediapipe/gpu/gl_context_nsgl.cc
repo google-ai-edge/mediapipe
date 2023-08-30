@@ -14,8 +14,8 @@
 
 #include <utility>
 
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -83,7 +83,7 @@ absl::Status GlContext::CreateContext(NSOpenGLContext* share_context) {
   if (!pixel_format_) {
     // On several Forge machines, the default config fails. For now let's do
     // this.
-    LOG(WARNING)
+    ABSL_LOG(WARNING)
         << "failed to create pixel format; trying without acceleration";
     NSOpenGLPixelFormatAttribute attrs_no_accel[] = {NSOpenGLPFAColorSize,
                                                      24,
@@ -102,7 +102,8 @@ absl::Status GlContext::CreateContext(NSOpenGLContext* share_context) {
 
   // Try to query pixel format from shared context.
   if (!context_) {
-    LOG(WARNING) << "Requested context not created, using queried context.";
+    ABSL_LOG(WARNING)
+        << "Requested context not created, using queried context.";
     CGLContextObj cgl_ctx =
         static_cast<CGLContextObj>([share_context CGLContextObj]);
     CGLPixelFormatObj cgl_fmt =

@@ -19,9 +19,9 @@
 
 #include "Eigen/Core"
 #include "Eigen/Dense"
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "mediapipe/framework/port/canonical_errors.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
@@ -220,7 +220,7 @@ absl::Status Decoder::Lift2DTo3D(
     auto status = SolveEpnp(projection_matrix, portrait, input_points_2d,
                             &output_points_3d);
     if (!status.ok()) {
-      LOG(ERROR) << status;
+      ABSL_LOG(ERROR) << status;
       return status;
     }
 

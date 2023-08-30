@@ -213,6 +213,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_cc_proto",
         "//mediapipe/util:graph_builder_utils",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings:str_format",
     ],
     alwayslink = 1,

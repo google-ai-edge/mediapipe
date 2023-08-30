@@ -15,6 +15,7 @@
 // Converts a single int or vector<int> or vector<vector<int>> to 1D (or 2D)
 // tf::Tensor.
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensorflow/vector_int_to_tensor_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -86,7 +87,7 @@ absl::Status VectorIntToTensorCalculator::GetContract(CalculatorContract* cc) {
       cc->Inputs().Tag(kVectorInt).Set<std::vector<int>>();
     }
   } else {
-    LOG(FATAL) << "input size not supported";
+    ABSL_LOG(FATAL) << "input size not supported";
   }
   RET_CHECK_EQ(cc->Outputs().NumEntries(), 1)
       << "Only one output stream is supported.";
@@ -140,7 +141,7 @@ absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
               AssignMatrixValue<int>(c, r, input[r][c], output.get());
               break;
             default:
-              LOG(FATAL) << "tensor data type is not supported.";
+              ABSL_LOG(FATAL) << "tensor data type is not supported.";
           }
         }
       }
@@ -158,7 +159,7 @@ absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
               AssignMatrixValue<int>(r, c, input[r][c], output.get());
               break;
             default:
-              LOG(FATAL) << "tensor data type is not supported.";
+              ABSL_LOG(FATAL) << "tensor data type is not supported.";
           }
         }
       }
@@ -188,12 +189,12 @@ absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
           output->tensor<int, 1>()(i) = input.at(i);
           break;
         default:
-          LOG(FATAL) << "tensor data type is not supported.";
+          ABSL_LOG(FATAL) << "tensor data type is not supported.";
       }
     }
     cc->Outputs().Tag(kTensorOut).Add(output.release(), cc->InputTimestamp());
   } else {
-    LOG(FATAL) << "input size not supported";
+    ABSL_LOG(FATAL) << "input size not supported";
   }
   return absl::OkStatus();
 }

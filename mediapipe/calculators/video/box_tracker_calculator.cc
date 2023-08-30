@@ -22,6 +22,7 @@
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/node_hash_map.h"
 #include "absl/container/node_hash_set.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/numbers.h"
 #include "mediapipe/calculators/video/box_tracker_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -29,7 +30,6 @@
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/video_stream_header.h"
 #include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -358,7 +358,7 @@ void ConvertCoordinateForRotation(float in_top, float in_left, float in_bottom,
       out_height = in_width;
       break;
     default:
-      LOG(ERROR) << "invalid rotation " << rotation;
+      ABSL_LOG(ERROR) << "invalid rotation " << rotation;
       out_center_x = in_center_x;
       out_center_y = in_center_y;
       out_width = in_width;
@@ -384,7 +384,8 @@ void AddStateToPath(const MotionBoxState& state, int64_t time_msec,
     path->insert(insert_pos,
                  InternalTimedBox(result, new MotionBoxState(state)));
   } else {
-    LOG(ERROR) << "Box at time " << time_msec << " already present; ignoring";
+    ABSL_LOG(ERROR) << "Box at time " << time_msec
+                    << " already present; ignoring";
   }
 }
 
@@ -486,8 +487,9 @@ absl::Status BoxTrackerCalculator::Open(CalculatorContext* cc) {
 
 #if !defined(__ANDROID__) && !defined(__APPLE__) && !defined(__EMSCRIPTEN__)
   if (cc->InputSidePackets().HasTag(kInitialPosTag)) {
-    LOG(INFO) << "Parsing: "
-              << cc->InputSidePackets().Tag(kInitialPosTag).Get<std::string>();
+    ABSL_LOG(INFO)
+        << "Parsing: "
+        << cc->InputSidePackets().Tag(kInitialPosTag).Get<std::string>();
     initial_pos_ = ParseTextProtoOrDie<TimedBoxProtoList>(
         cc->InputSidePackets().Tag(kInitialPosTag).Get<std::string>());
   }
@@ -624,7 +626,7 @@ absl::Status BoxTrackerCalculator::Process(CalculatorContext* cc) {
   if (cancel_object_id_stream && !cancel_object_id_stream->IsEmpty()) {
     const int cancel_object_id = cancel_object_id_stream->Get<int>();
     if (streaming_motion_boxes_.erase(cancel_object_id) == 0) {
-      LOG(WARNING) << "box id " << cancel_object_id << " does not exist.";
+      ABSL_LOG(WARNING) << "box id " << cancel_object_id << " does not exist.";
     }
   }
 
@@ -944,7 +946,7 @@ void BoxTrackerCalculator::OutputRandomAccessTrack(
     const bool forward_track = start.time_msec() < end_time_msec;
 
     if (track_timestamps_.empty()) {
-      LOG(WARNING) << "No tracking data cached yet.";
+      ABSL_LOG(WARNING) << "No tracking data cached yet.";
       continue;
     }
 
@@ -954,27 +956,27 @@ void BoxTrackerCalculator::OutputRandomAccessTrack(
     const int64_t tracking_end_timestamp_msec =
         track_timestamps_.back().Microseconds() / 1000;
     if (start.time_msec() < tracking_start_timestamp_msec) {
-      LOG(WARNING) << "Request start timestamp " << start.time_msec()
-                   << " too old. First frame in the window: "
-                   << tracking_start_timestamp_msec;
+      ABSL_LOG(WARNING) << "Request start timestamp " << start.time_msec()
+                        << " too old. First frame in the window: "
+                        << tracking_start_timestamp_msec;
       continue;
     }
     if (start.time_msec() > tracking_end_timestamp_msec) {
-      LOG(WARNING) << "Request start timestamp " << start.time_msec()
-                   << " too new. Last frame in the window: "
-                   << tracking_end_timestamp_msec;
+      ABSL_LOG(WARNING) << "Request start timestamp " << start.time_msec()
+                        << " too new. Last frame in the window: "
+                        << tracking_end_timestamp_msec;
       continue;
     }
     if (end_time_msec < tracking_start_timestamp_msec) {
-      LOG(WARNING) << "Request end timestamp " << end_time_msec
-                   << " too old. First frame in the window: "
-                   << tracking_start_timestamp_msec;
+      ABSL_LOG(WARNING) << "Request end timestamp " << end_time_msec
+                        << " too old. First frame in the window: "
+                        << tracking_start_timestamp_msec;
       continue;
     }
     if (end_time_msec > tracking_end_timestamp_msec) {
-      LOG(WARNING) << "Request end timestamp " << end_time_msec
-                   << " too new. Last frame in the window: "
-                   << tracking_end_timestamp_msec;
+      ABSL_LOG(WARNING) << "Request end timestamp " << end_time_msec
+                        << " too new. Last frame in the window: "
+                        << tracking_end_timestamp_msec;
       continue;
     }
 
@@ -982,7 +984,7 @@ void BoxTrackerCalculator::OutputRandomAccessTrack(
         GetRandomAccessTimestampPos(start, forward_track);
 
     if (timestamp_pos == track_timestamps_.end()) {
-      LOG(ERROR) << "Random access outside cached range";
+      ABSL_LOG(ERROR) << "Random access outside cached range";
       continue;
     }
 
@@ -993,7 +995,7 @@ void BoxTrackerCalculator::OutputRandomAccessTrack(
     // TODO: Interpolate random access tracking start_data instead
     // of dropping the request in the case of missing processed frame.
     if (start_data == tracking_data_cache_.end()) {
-      LOG(ERROR) << "Random access starts at unprocessed frame.";
+      ABSL_LOG(ERROR) << "Random access starts at unprocessed frame.";
       continue;
     }
 
@@ -1010,7 +1012,7 @@ void BoxTrackerCalculator::OutputRandomAccessTrack(
                                               &single_map, end_time_msec);
 
     if (track_error) {
-      LOG(ERROR) << "Could not track box.";
+      ABSL_LOG(ERROR) << "Could not track box.";
       continue;
     }
 
@@ -1197,7 +1199,7 @@ void BoxTrackerCalculator::StreamTrack(const TrackingData& data,
     if (!motion_box.second.box.TrackStep(from_frame,  // from frame.
                                          mvf, forward)) {
       failed_ids->push_back(motion_box.first);
-      LOG(INFO) << "lost track. pushed failed id: " << motion_box.first;
+      ABSL_LOG(INFO) << "lost track. pushed failed id: " << motion_box.first;
     } else {
       // Store result.
       PathSegment& path = motion_box.second.path;
@@ -1224,8 +1226,8 @@ void BoxTrackerCalculator::FastForwardStartPos(
                                           track_timestamps_.end(), timestamp);
 
     if (timestamp_pos == track_timestamps_.end()) {
-      LOG(WARNING) << "Received start pos beyond current timestamp, "
-                   << "Starting to track once frame arrives.";
+      ABSL_LOG(WARNING) << "Received start pos beyond current timestamp, "
+                        << "Starting to track once frame arrives.";
       *initial_pos_.add_box() = start_pos;
       continue;
     }
@@ -1242,8 +1244,9 @@ void BoxTrackerCalculator::FastForwardStartPos(
             -> bool { return item.first == timestamp_pos[0]; });
 
     if (start_data == tracking_data_cache_.end()) {
-      LOG(ERROR) << "Box to fast forward outside tracking data cache. Ignoring."
-                 << " To avoid this error consider increasing the cache size.";
+      ABSL_LOG(ERROR)
+          << "Box to fast forward outside tracking data cache. Ignoring."
+          << " To avoid this error consider increasing the cache size.";
       continue;
     }
 
@@ -1281,7 +1284,8 @@ void BoxTrackerCalculator::FastForwardStartPos(
                   true,  // forward
                   &single_map, &failed_box);
       if (!failed_box.empty()) {
-        LOG(WARNING) << "Unable to fast forward box at frame " << curr_frame;
+        ABSL_LOG(WARNING) << "Unable to fast forward box at frame "
+                          << curr_frame;
         track_error = true;
         break;
       }

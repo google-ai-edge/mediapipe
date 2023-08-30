@@ -22,6 +22,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/Dense"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_format.h"
 
 // Set to true to use catmull rom mixture weights instead of Gaussian weights
@@ -151,7 +152,7 @@ SimilarityModel ModelAdapter<SimilarityModel>::Invert(
   bool success = true;
   const SimilarityModel result = InvertChecked(model, &success);
   if (!success) {
-    LOG(ERROR) << "Model not invertible. Returning identity.";
+    ABSL_LOG(ERROR) << "Model not invertible. Returning identity.";
     return SimilarityModel();
   } else {
     return result;
@@ -218,7 +219,7 @@ float ModelAdapter<SimilarityModel>::GetParameter(const SimilarityModel& model,
     case 3:
       return model.rotation();
     default:
-      LOG(FATAL) << "Parameter id is out of bounds";
+      ABSL_LOG(FATAL) << "Parameter id is out of bounds";
   }
 
   return 0;
@@ -550,7 +551,7 @@ Homography ModelAdapter<Homography>::InvertChecked(const Homography& model,
   Eigen::Matrix3d inv_model_mat = model_mat.inverse();
 
   if (inv_model_mat(2, 2) == 0) {
-    LOG(ERROR) << "Degenerate homography. See proto.";
+    ABSL_LOG(ERROR) << "Degenerate homography. See proto.";
     *success = false;
     return Homography();
   }
@@ -730,7 +731,7 @@ float ModelMethods<Model>::NormalizedIntersectionArea(const Model& model_1,
                                                       const Vector2_f& rect) {
   const float rect_area = rect.x() * rect.y();
   if (rect_area <= 0) {
-    LOG(WARNING) << "Empty rectangle passed -> empty intersection.";
+    ABSL_LOG(WARNING) << "Empty rectangle passed -> empty intersection.";
     return 0.0f;
   }
 
@@ -756,7 +757,7 @@ float ModelMethods<Model>::NormalizedIntersectionArea(const Model& model_1,
 
   const float average_area = 0.5f * (model_1_area + model_2_area);
   if (average_area <= 0) {
-    LOG(WARNING) << "Degenerative models passed -> empty intersection.";
+    ABSL_LOG(WARNING) << "Degenerative models passed -> empty intersection.";
     return 0.0f;
   }
 
@@ -764,7 +765,7 @@ float ModelMethods<Model>::NormalizedIntersectionArea(const Model& model_1,
   bool success = true;
   Model diff = ModelDiffChecked(model_2, model_1, &success);
   if (!success) {
-    LOG(WARNING) << "Model difference is singular -> empty intersection.";
+    ABSL_LOG(WARNING) << "Model difference is singular -> empty intersection.";
     return 0.0f;
   }
 
@@ -786,7 +787,7 @@ float ModelMethods<Model>::NormalizedIntersectionArea(const Model& model_1,
   // Second, clip transformed rectangle against origin defined by model_2.
   Model inv_diff = Adapter::InvertChecked(diff, &success);
   if (!success) {
-    LOG(WARNING) << "Model difference is singular -> empty intersection.";
+    ABSL_LOG(WARNING) << "Model difference is singular -> empty intersection.";
     return 0.0f;
   }
 
@@ -829,10 +830,11 @@ MixtureRowWeights::MixtureRowWeights(int frame_height, int margin, float sigma,
 
     // No margin support for splines.
     if (margin_ > 0) {
-      LOG(WARNING) << "No margin support when flag catmull_rom_mixture_weights "
-                   << "is set. Margin is reset to zero, it is recommended "
-                   << "that RowWeightsBoundChecked is used to prevent "
-                   << "segfaults.";
+      ABSL_LOG(WARNING)
+          << "No margin support when flag catmull_rom_mixture_weights "
+          << "is set. Margin is reset to zero, it is recommended "
+          << "that RowWeightsBoundChecked is used to prevent "
+          << "segfaults.";
       margin_ = 0;
     }
 

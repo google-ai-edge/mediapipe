@@ -17,9 +17,11 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/calculators/tflite/tflite_inference_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/tflite/config.h"
 
@@ -406,8 +408,9 @@ absl::Status TfLiteInferenceCalculator::Open(CalculatorContext* cc) {
   }
 
   if (use_advanced_gpu_api_ && !gpu_input_) {
-    LOG(WARNING) << "Cannot use advanced GPU APIs, input must be GPU buffers."
-                    "Falling back to the default TFLite API.";
+    ABSL_LOG(WARNING)
+        << "Cannot use advanced GPU APIs, input must be GPU buffers."
+           "Falling back to the default TFLite API.";
     use_advanced_gpu_api_ = false;
   }
   CHECK(!use_advanced_gpu_api_ || gpu_inference_);
@@ -1053,7 +1056,7 @@ absl::Status TfLiteInferenceCalculator::LoadDelegate(CalculatorContext* cc) {
           gpu_data_in_[i]->shape.w * gpu_data_in_[i]->shape.c;
       // Input to model can be RGBA only.
       if (tensor->dims->data[3] != 4) {
-        LOG(WARNING) << "Please ensure input GPU tensor is 4 channels.";
+        ABSL_LOG(WARNING) << "Please ensure input GPU tensor is 4 channels.";
       }
       const std::string shader_source =
           absl::Substitute(R"(#include <metal_stdlib>

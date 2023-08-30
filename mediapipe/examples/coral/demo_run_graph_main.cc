@@ -17,6 +17,7 @@
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
@@ -45,17 +46,17 @@ absl::Status RunMPPGraph() {
   MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
       absl::GetFlag(FLAGS_calculator_graph_config_file),
       &calculator_graph_config_contents));
-  LOG(INFO) << "Get calculator graph config contents: "
-            << calculator_graph_config_contents;
+  ABSL_LOG(INFO) << "Get calculator graph config contents: "
+                 << calculator_graph_config_contents;
   mediapipe::CalculatorGraphConfig config =
       mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(
           calculator_graph_config_contents);
 
-  LOG(INFO) << "Initialize the calculator graph.";
+  ABSL_LOG(INFO) << "Initialize the calculator graph.";
   mediapipe::CalculatorGraph graph;
   MP_RETURN_IF_ERROR(graph.Initialize(config));
 
-  LOG(INFO) << "Initialize the camera or load the video.";
+  ABSL_LOG(INFO) << "Initialize the camera or load the video.";
   cv::VideoCapture capture;
   const bool load_video = !absl::GetFlag(FLAGS_input_video_path).empty();
   if (load_video) {
@@ -68,7 +69,7 @@ absl::Status RunMPPGraph() {
   cv::VideoWriter writer;
   const bool save_video = !absl::GetFlag(FLAGS_output_video_path).empty();
   if (save_video) {
-    LOG(INFO) << "Prepare video writer.";
+    ABSL_LOG(INFO) << "Prepare video writer.";
     cv::Mat test_frame;
     capture.read(test_frame);                    // Consume first frame.
     capture.set(cv::CAP_PROP_POS_AVI_RATIO, 0);  // Rewind to beginning.
@@ -85,12 +86,12 @@ absl::Status RunMPPGraph() {
     capture.set(cv::CAP_PROP_FPS, 30);
   }
 
-  LOG(INFO) << "Start running the calculator graph.";
+  ABSL_LOG(INFO) << "Start running the calculator graph.";
   ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller poller,
                    graph.AddOutputStreamPoller(kOutputStream));
   MP_RETURN_IF_ERROR(graph.StartRun({}));
 
-  LOG(INFO) << "Start grabbing and processing frames.";
+  ABSL_LOG(INFO) << "Start grabbing and processing frames.";
   bool grab_frames = true;
   while (grab_frames) {
     // Capture opencv camera or video frame.
@@ -135,7 +136,7 @@ absl::Status RunMPPGraph() {
     }
   }
 
-  LOG(INFO) << "Shutting down.";
+  ABSL_LOG(INFO) << "Shutting down.";
   if (writer.isOpened()) writer.release();
   MP_RETURN_IF_ERROR(graph.CloseInputStream(kInputStream));
   return graph.WaitUntilDone();
@@ -146,10 +147,10 @@ int main(int argc, char** argv) {
   absl::ParseCommandLine(argc, argv);
   absl::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
-    LOG(ERROR) << "Failed to run the graph: " << run_status.message();
+    ABSL_LOG(ERROR) << "Failed to run the graph: " << run_status.message();
     return EXIT_FAILURE;
   } else {
-    LOG(INFO) << "Success!";
+    ABSL_LOG(INFO) << "Success!";
   }
   return EXIT_SUCCESS;
 }

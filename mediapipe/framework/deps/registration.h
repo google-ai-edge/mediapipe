@@ -28,6 +28,8 @@
 #include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_log.h"
+#include "absl/log/check.h"
 #include "absl/meta/type_traits.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
@@ -35,7 +37,6 @@
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/deps/registration_token.h"
 #include "mediapipe/framework/port/canonical_errors.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {
@@ -191,7 +192,7 @@ class FunctionRegistry {
       return RegistrationToken(
           [this, normalized_name]() { Unregister(normalized_name); });
     }
-    LOG(FATAL) << "Function with name " << name << " already registered.";
+    ABSL_LOG(FATAL) << "Function with name " << name << " already registered.";
     return RegistrationToken([]() {});
   }
 

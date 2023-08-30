@@ -14,10 +14,11 @@
 
 #include <utility>
 
+#include "absl/log/absl_log.h"
+#include "absl/log/check.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -58,7 +59,7 @@ static void EglThreadExitCallback(void* key_value) {
 static void MakeEglReleaseThreadKey() {
   int err = pthread_key_create(&egl_release_thread_key, EglThreadExitCallback);
   if (err) {
-    LOG(ERROR) << "cannot create pthread key: " << err;
+    ABSL_LOG(ERROR) << "cannot create pthread key: " << err;
   }
 }
 
@@ -81,8 +82,8 @@ static absl::StatusOr<EGLDisplay> GetInitializedDefaultEglDisplay() {
   EGLint minor = 0;
   EGLBoolean egl_initialized = eglInitialize(display, &major, &minor);
   RET_CHECK(egl_initialized) << "Unable to initialize EGL";
-  LOG(INFO) << "Successfully initialized EGL. Major : " << major
-            << " Minor: " << minor;
+  ABSL_LOG(INFO) << "Successfully initialized EGL. Major : " << major
+                 << " Minor: " << minor;
 
   return display;
 }
@@ -180,8 +181,9 @@ absl::Status GlContext::CreateContext(EGLContext share_context) {
 
   auto status = CreateContextInternal(share_context, 3);
   if (!status.ok()) {
-    LOG(WARNING) << "Creating a context with OpenGL ES 3 failed: " << status;
-    LOG(WARNING) << "Fall back on OpenGL ES 2.";
+    ABSL_LOG(WARNING) << "Creating a context with OpenGL ES 3 failed: "
+                      << status;
+    ABSL_LOG(WARNING) << "Fall back on OpenGL ES 2.";
     status = CreateContextInternal(share_context, 2);
   }
   MP_RETURN_IF_ERROR(status);
@@ -208,13 +210,13 @@ void GlContext::DestroyContext() {
       if (eglMakeCurrent(display_, surface_, surface_, context_)) {
         glUseProgram(0);
       } else {
-        LOG(ERROR) << "eglMakeCurrent() returned error " << std::showbase
-                   << std::hex << eglGetError();
+        ABSL_LOG(ERROR) << "eglMakeCurrent() returned error " << std::showbase
+                        << std::hex << eglGetError();
       }
       return SetCurrentContextBinding(saved_context);
     };
     auto status = thread_ ? thread_->Run(detach_program) : detach_program();
-    LOG_IF(ERROR, !status.ok()) << status;
+    ABSL_LOG_IF(ERROR, !status.ok()) << status;
   }
 #endif  // __ANDROID__
 
@@ -236,21 +238,21 @@ void GlContext::DestroyContext() {
   if (IsCurrent()) {
     if (!eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE,
                         EGL_NO_CONTEXT)) {
-      LOG(ERROR) << "eglMakeCurrent() returned error " << std::showbase
-                 << std::hex << eglGetError();
+      ABSL_LOG(ERROR) << "eglMakeCurrent() returned error " << std::showbase
+                      << std::hex << eglGetError();
     }
   }
   if (surface_ != EGL_NO_SURFACE) {
     if (!eglDestroySurface(display_, surface_)) {
-      LOG(ERROR) << "eglDestroySurface() returned error " << std::showbase
-                 << std::hex << eglGetError();
+      ABSL_LOG(ERROR) << "eglDestroySurface() returned error " << std::showbase
+                      << std::hex << eglGetError();
     }
     surface_ = EGL_NO_SURFACE;
   }
   if (context_ != EGL_NO_CONTEXT) {
     if (!eglDestroyContext(display_, context_)) {
-      LOG(ERROR) << "eglDestroyContext() returned error " << std::showbase
-                 << std::hex << eglGetError();
+      ABSL_LOG(ERROR) << "eglDestroyContext() returned error " << std::showbase
+                      << std::hex << eglGetError();
     }
     context_ = EGL_NO_CONTEXT;
   }

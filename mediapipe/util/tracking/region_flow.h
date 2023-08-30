@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include "mediapipe/framework/port/logging.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/tracking/motion_models.h"
 #include "mediapipe/util/tracking/region_flow.pb.h"
@@ -118,7 +118,7 @@ double RegionFlowFeatureIRLSSum(const RegionFlowFeatureList& feature_list);
 // Computes per region flow feature texturedness score. Score is within [0, 1],
 // where 0 means low texture and 1 high texture. Requires for each feature
 // descriptor to be computed (via ComputeRegionFlowFeatureDescriptors). If
-// missing, LOG(WARNING) is issued and value defaults to 1.
+// missing, ABSL_LOG(WARNING) is issued and value defaults to 1.
 // If use_15percent_as_max is set, score is scaled and threshold back to [0, 1]
 // such that 1 is assumed at 15% of maximum PER channel variance.
 void ComputeRegionFlowFeatureTexturedness(

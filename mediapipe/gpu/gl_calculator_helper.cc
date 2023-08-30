@@ -14,6 +14,7 @@
 
 #include "mediapipe/gpu/gl_calculator_helper.h"
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/legacy_calculator_support.h"
@@ -76,7 +77,7 @@ absl::Status GlCalculatorHelper::SetupInputSidePackets(
   }
 
   // TODO: remove when we can.
-  LOG(WARNING)
+  ABSL_LOG(WARNING)
       << "CalculatorContract not available. If you're calling this "
          "from a GetContract method, call GlCalculatorHelper::UpdateContract "
          "instead.";

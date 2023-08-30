@@ -53,6 +53,7 @@ cc_library(
         "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -67,6 +68,7 @@ cc_library(
     hdrs = ["piecewise_linear_function.h"],
     deps = [
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -192,6 +194,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -234,6 +237,7 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -327,6 +331,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 

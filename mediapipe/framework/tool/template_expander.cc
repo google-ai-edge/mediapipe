@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_log.h"
+#include "absl/log/check.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
@@ -687,7 +689,7 @@ absl::Status TemplateExpander::ExpandTemplates(
   }
   absl::Status status;
   for (const absl::Status& error : errors_) {
-    LOG(ERROR) << error;
+    ABSL_LOG(ERROR) << error;
     status.Update(error);
   }
   return status;

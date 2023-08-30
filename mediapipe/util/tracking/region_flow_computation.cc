@@ -28,6 +28,7 @@
 #include "Eigen/Core"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/node_hash_set.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
@@ -490,9 +491,10 @@ struct RegionFlowComputation::LongTrackData {
     // Advance.
     ++next_track_id;
     if (next_track_id < 0) {
-      LOG(ERROR) << "Exhausted maximum possible ids. RegionFlowComputation "
-                 << "instance lifetime is likely to be too long. Consider "
-                 << "chunking the input.";
+      ABSL_LOG(ERROR)
+          << "Exhausted maximum possible ids. RegionFlowComputation "
+          << "instance lifetime is likely to be too long. Consider "
+          << "chunking the input.";
       next_track_id = 0;
     }
 
@@ -683,7 +685,7 @@ RegionFlowComputation::RegionFlowComputation(
     frame_width_ += frame_width_ % 2;
     frame_height_ += frame_height_ % 2;
 
-    LOG(INFO) << "Using a downsampling scale of " << downsample_scale_;
+    ABSL_LOG(INFO) << "Using a downsampling scale of " << downsample_scale_;
   }
 
   // Make sure value is equal to local variable, in case someone uses that on
@@ -720,9 +722,9 @@ RegionFlowComputation::RegionFlowComputation(
   switch (options_.tracking_options().tracking_policy()) {
     case TrackingOptions::POLICY_SINGLE_FRAME:
       if (options_.tracking_options().multi_frames_to_track() > 1) {
-        LOG(ERROR) << "TrackingOptions::multi_frames_to_track is > 1, "
-                   << "but tracking_policy is set to POLICY_SINGLE_FRAME. "
-                   << "Consider using POLICY_MULTI_FRAME instead.";
+        ABSL_LOG(ERROR) << "TrackingOptions::multi_frames_to_track is > 1, "
+                        << "but tracking_policy is set to POLICY_SINGLE_FRAME. "
+                        << "Consider using POLICY_MULTI_FRAME instead.";
       }
 
       frames_to_track_ = 1;
@@ -733,18 +735,19 @@ RegionFlowComputation::RegionFlowComputation(
       break;
     case TrackingOptions::POLICY_LONG_TRACKS:
       if (options_.tracking_options().multi_frames_to_track() > 1) {
-        LOG(ERROR) << "TrackingOptions::multi_frames_to_track is > 1, "
-                   << "but tracking_policy is set to POLICY_LONG_TRACKS. "
-                   << "Use TrackingOptions::long_tracks_max_frames to set "
-                   << "length of long feature tracks.";
+        ABSL_LOG(ERROR) << "TrackingOptions::multi_frames_to_track is > 1, "
+                        << "but tracking_policy is set to POLICY_LONG_TRACKS. "
+                        << "Use TrackingOptions::long_tracks_max_frames to set "
+                        << "length of long feature tracks.";
       }
 
       if (options_.tracking_options().internal_tracking_direction() !=
           TrackingOptions::FORWARD) {
-        LOG(ERROR) << "Long tracks are only supported if tracking direction "
-                   << "is set to FORWARD. Adjusting direction to FORWARD. "
-                   << "This does not affect the expected "
-                   << "output_flow_direction";
+        ABSL_LOG(ERROR)
+            << "Long tracks are only supported if tracking direction "
+            << "is set to FORWARD. Adjusting direction to FORWARD. "
+            << "This does not affect the expected "
+            << "output_flow_direction";
         options_.mutable_tracking_options()->set_internal_tracking_direction(
             TrackingOptions::FORWARD);
       }
@@ -764,8 +767,9 @@ RegionFlowComputation::RegionFlowComputation(
   use_cv_tracking_ = options_.tracking_options().use_cv_tracking_algorithm();
 #if CV_MAJOR_VERSION < 3
   if (use_cv_tracking_) {
-    LOG(WARNING) << "Compiled without OpenCV 3.0 but cv_tracking_algorithm "
-                 << "was requested. Falling back to older algorithm";
+    ABSL_LOG(WARNING)
+        << "Compiled without OpenCV 3.0 but cv_tracking_algorithm "
+        << "was requested. Falling back to older algorithm";
     use_cv_tracking_ = false;
   }
 #endif
@@ -963,15 +967,15 @@ bool RegionFlowComputation::InitFrame(const cv::Mat& source,
       options_.image_format() !=
           RegionFlowComputationOptions::FORMAT_GRAYSCALE) {
     options_.set_image_format(RegionFlowComputationOptions::FORMAT_GRAYSCALE);
-    LOG(WARNING) << "#channels = 1, but image_format was not set to "
-                    "FORMAT_GRAYSCALE. Assuming GRAYSCALE input.";
+    ABSL_LOG(WARNING) << "#channels = 1, but image_format was not set to "
+                         "FORMAT_GRAYSCALE. Assuming GRAYSCALE input.";
   }
 
   // Convert image to grayscale.
   switch (options_.image_format()) {
     case RegionFlowComputationOptions::FORMAT_RGB:
       if (3 != source_ptr->channels()) {
-        LOG(ERROR) << "Expecting 3 channel input for RGB.";
+        ABSL_LOG(ERROR) << "Expecting 3 channel input for RGB.";
         return false;
       }
       cv::cvtColor(*source_ptr, dest_frame, cv::COLOR_RGB2GRAY);
@@ -979,7 +983,7 @@ bool RegionFlowComputation::InitFrame(const cv::Mat& source,
 
     case RegionFlowComputationOptions::FORMAT_BGR:
       if (3 != source_ptr->channels()) {
-        LOG(ERROR) << "Expecting 3 channel input for BGR.";
+        ABSL_LOG(ERROR) << "Expecting 3 channel input for BGR.";
         return false;
       }
       cv::cvtColor(*source_ptr, dest_frame, cv::COLOR_BGR2GRAY);
@@ -987,7 +991,7 @@ bool RegionFlowComputation::InitFrame(const cv::Mat& source,
 
     case RegionFlowComputationOptions::FORMAT_RGBA:
       if (4 != source_ptr->channels()) {
-        LOG(ERROR) << "Expecting 4 channel input for RGBA.";
+        ABSL_LOG(ERROR) << "Expecting 4 channel input for RGBA.";
         return false;
       }
       cv::cvtColor(*source_ptr, dest_frame, cv::COLOR_RGBA2GRAY);
@@ -995,7 +999,7 @@ bool RegionFlowComputation::InitFrame(const cv::Mat& source,
 
     case RegionFlowComputationOptions::FORMAT_BGRA:
       if (4 != source_ptr->channels()) {
-        LOG(ERROR) << "Expecting 4 channel input for BGRA.";
+        ABSL_LOG(ERROR) << "Expecting 4 channel input for BGRA.";
         return false;
       }
       cv::cvtColor(*source_ptr, dest_frame, cv::COLOR_BGRA2GRAY);
@@ -1003,7 +1007,7 @@ bool RegionFlowComputation::InitFrame(const cv::Mat& source,
 
     case RegionFlowComputationOptions::FORMAT_GRAYSCALE:
       if (1 != source_ptr->channels()) {
-        LOG(ERROR) << "Expecting 1 channel input for GRAYSCALE.";
+        ABSL_LOG(ERROR) << "Expecting 1 channel input for GRAYSCALE.";
         return false;
       }
       CHECK_EQ(1, source_ptr->channels());
@@ -1043,33 +1047,33 @@ bool RegionFlowComputation::AddImageAndTrack(
   if (options_.downsample_mode() ==
       RegionFlowComputationOptions::DOWNSAMPLE_TO_INPUT_SIZE) {
     if (frame_width_ != source.cols || frame_height_ != source.rows) {
-      LOG(ERROR) << "Source input dimensions incompatible with "
-                 << "DOWNSAMPLE_TO_INPUT_SIZE. frame_width_: " << frame_width_
-                 << ", source.cols: " << source.cols
-                 << ", frame_height_: " << frame_height_
-                 << ", source.rows: " << source.rows;
+      ABSL_LOG(ERROR) << "Source input dimensions incompatible with "
+                      << "DOWNSAMPLE_TO_INPUT_SIZE. frame_width_: "
+                      << frame_width_ << ", source.cols: " << source.cols
+                      << ", frame_height_: " << frame_height_
+                      << ", source.rows: " << source.rows;
       return false;
     }
 
     if (!source_mask.empty()) {
       if (frame_width_ != source_mask.cols ||
           frame_height_ != source_mask.rows) {
-        LOG(ERROR) << "Input mask dimensions incompatible with "
-                   << "DOWNSAMPLE_TO_INPUT_SIZE";
+        ABSL_LOG(ERROR) << "Input mask dimensions incompatible with "
+                        << "DOWNSAMPLE_TO_INPUT_SIZE";
         return false;
       }
     }
   } else {
     if (original_width_ != source.cols || original_height_ != source.rows) {
-      LOG(ERROR) << "Source input dimensions differ from those specified "
-                 << "in the constructor";
+      ABSL_LOG(ERROR) << "Source input dimensions differ from those specified "
+                      << "in the constructor";
       return false;
     }
     if (!source_mask.empty()) {
       if (original_width_ != source_mask.cols ||
           original_height_ != source_mask.rows) {
-        LOG(ERROR) << "Input mask dimensions incompatible with those "
-                   << "specified in the constructor";
+        ABSL_LOG(ERROR) << "Input mask dimensions incompatible with those "
+                        << "specified in the constructor";
         return false;
       }
     }
@@ -1100,7 +1104,7 @@ bool RegionFlowComputation::AddImageAndTrack(
   }
 
   if (!InitFrame(source, source_mask, curr_data)) {
-    LOG(ERROR) << "Could not init frame.";
+    ABSL_LOG(ERROR) << "Could not init frame.";
     return false;
   }
 
@@ -2098,8 +2102,8 @@ void RegionFlowComputation::WideBaselineMatchFeatures(
     TrackedFeatureList* results) {
 #if (defined(__ANDROID__) || defined(__APPLE__) || defined(__EMSCRIPTEN__)) && \
     !defined(CV_WRAPPER_3X)
-  LOG(FATAL) << "Supported on only with OpenCV 3.0. "
-             << "Use bazel build flag : --define CV_WRAPPER=3X";
+  ABSL_LOG(FATAL) << "Supported on only with OpenCV 3.0. "
+                  << "Use bazel build flag : --define CV_WRAPPER=3X";
 #else   // (defined(__ANDROID__) || defined(__APPLE__) ||
         // defined(__EMSCRIPTEN__)) && !defined(CV_WRAPPER_3X)
   results->clear();
@@ -2218,8 +2222,8 @@ void RegionFlowComputation::ExtractFeatures(
     const TrackedFeatureList* prev_result, FrameTrackingData* data) {
   MEASURE_TIME << "ExtractFeatures";
   if (!options_.tracking_options().adaptive_good_features_to_track()) {
-    LOG(FATAL) << "Deprecated! Activate adaptive_good_features_to_track "
-               << "in TrackingOptions";
+    ABSL_LOG(FATAL) << "Deprecated! Activate adaptive_good_features_to_track "
+                    << "in TrackingOptions";
   }
 
   // Check if features can simply be re-used.
@@ -2373,11 +2377,11 @@ void RegionFlowComputation::ExtractFeatures(
       const int track_id = feature.track_id;
       if (track_id < 0) {
         // TODO: Use LOG_FIRST_N here.
-        LOG_IF(WARNING,
-               []() {
-                 static int k = 0;
-                 return k++ < 2;
-               }())
+        ABSL_LOG_IF(WARNING,
+                    []() {
+                      static int k = 0;
+                      return k++ < 2;
+                    }())
             << "Expecting an assigned track id, "
             << "skipping feature.";
         continue;
@@ -2386,7 +2390,7 @@ void RegionFlowComputation::ExtractFeatures(
       // Skip features for which the track would get too long.
       const int start_frame = long_track_data_->StartFrameForId(track_id);
       if (start_frame < 0) {
-        LOG(ERROR) << "Id is not present, skipping feature.";
+        ABSL_LOG(ERROR) << "Id is not present, skipping feature.";
         continue;
       }
 
@@ -2611,12 +2615,12 @@ void RegionFlowComputation::TrackFeatures(FrameTrackingData* from_data_ptr,
                                cv_window_size, pyramid_levels_, cv_criteria,
                                tracking_flags);
     } else {
-      LOG(ERROR) << "Tracking method unspecified.";
+      ABSL_LOG(ERROR) << "Tracking method unspecified.";
       return;
     }
 #endif
   } else {
-    LOG(ERROR) << "only cv tracking is supported.";
+    ABSL_LOG(ERROR) << "only cv tracking is supported.";
     return;
   }
 
@@ -2791,7 +2795,7 @@ void RegionFlowComputation::TrackFeatures(FrameTrackingData* from_data_ptr,
                                pyramid_levels_, cv_criteria, tracking_flags);
 #endif
     } else {
-      LOG(ERROR) << "only cv tracking is supported.";
+      ABSL_LOG(ERROR) << "only cv tracking is supported.";
       return;
     }
 

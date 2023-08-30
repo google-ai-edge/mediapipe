@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -367,19 +368,20 @@ absl::Status SegmentationPostprocessorGl::GlInit(
         // TODO: We could skip this entirely if no confidence masks
         //   are being produced AND num_classes > 1, but num_classes is only
         //   known at runtime, so this would take a little extra refactoring.
-        LOG(INFO) << "SIGMOID activation function chosen on GPU";
+        ABSL_LOG(INFO) << "SIGMOID activation function chosen on GPU";
         activation_fn = "vec4 out_value = 1.0 / (exp(-in_value) + 1.0);";
         break;
       case SegmenterOptions::SOFTMAX:
         if (produce_confidence_masks) {
-          LOG(INFO) << "SOFTMAX activation function chosen on GPU";
+          ABSL_LOG(INFO) << "SOFTMAX activation function chosen on GPU";
         } else {
-          LOG(INFO) << "SOFTMAX activation function chosen on GPU, but only "
-                    << "category mask produced, so not applying.";
+          ABSL_LOG(INFO)
+              << "SOFTMAX activation function chosen on GPU, but only "
+              << "category mask produced, so not applying.";
         }
         break;
       case SegmenterOptions::NONE:
-        LOG(INFO) << "NONE activation function chosen on GPU";
+        ABSL_LOG(INFO) << "NONE activation function chosen on GPU";
         break;
     }
 
@@ -490,7 +492,7 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
     int input_width, input_height;
 
     if (!tensor.ready_on_gpu()) {
-      LOG(WARNING) << "Tensor wasn't ready on GPU; using slow workaround.";
+      ABSL_LOG(WARNING) << "Tensor wasn't ready on GPU; using slow workaround.";
       (void)tensor.GetCpuReadView();
     }
 
@@ -507,7 +509,7 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
     const auto layout = tensor.GetOpenGlTexture2dReadView().GetLayoutDimensions(
         tensor.shape(), &input_width, &input_height);
     if (layout != Tensor::OpenGlTexture2dView::Layout::kAligned) {
-      LOG(ERROR) << "Tensor layout not kAligned! Cannot handle.";
+      ABSL_LOG(ERROR) << "Tensor layout not kAligned! Cannot handle.";
     }
 #endif  // TASK_SEGMENTATION_USE_GLES_31_POSTPROCESSING
 
@@ -853,7 +855,7 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
   });
 
   if (!status.ok()) {
-    LOG(ERROR) << "Error with rendering: " << status;
+    ABSL_LOG(ERROR) << "Error with rendering: " << status;
   }
 
   return image_outputs;

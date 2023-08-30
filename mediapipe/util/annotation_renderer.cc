@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/color.pb.h"
@@ -116,7 +117,7 @@ void AnnotationRenderer::RenderDataOnImage(const RenderData& render_data) {
     } else if (annotation.data_case() == RenderAnnotation::kScribble) {
       DrawScribble(annotation);
     } else {
-      LOG(FATAL) << "Unknown annotation type: " << annotation.data_case();
+      ABSL_LOG(FATAL) << "Unknown annotation type: " << annotation.data_case();
     }
   }
 }

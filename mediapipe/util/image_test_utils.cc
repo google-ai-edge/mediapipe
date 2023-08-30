@@ -4,7 +4,7 @@
 #include <memory>
 #include <utility>
 
-#include "absl/log/log.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -46,7 +46,7 @@ mediapipe::ImageFormat::Format GetImageFormat(int image_channels) {
   } else if (image_channels == 1) {
     return ImageFormat::GRAY8;
   }
-  LOG(FATAL) << "Unsupported input image channles: " << image_channels;
+  ABSL_LOG(FATAL) << "Unsupported input image channles: " << image_channels;
 }
 
 Packet MakeImageFramePacket(cv::Mat input, int timestamp) {

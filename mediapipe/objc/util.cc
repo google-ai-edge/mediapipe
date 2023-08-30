@@ -15,6 +15,7 @@
 #include "mediapipe/objc/util.h"
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -504,7 +505,7 @@ absl::Status CreateCGImageFromCVPixelBuffer(CVPixelBufferRef image_buffer,
       break;
 
     default:
-      LOG(FATAL) << "Unsupported pixelFormat " << pixel_format;
+      ABSL_LOG(FATAL) << "Unsupported pixelFormat " << pixel_format;
       break;
   }
 
@@ -623,7 +624,7 @@ std::unique_ptr<mediapipe::ImageFrame> CreateImageFrameForCVPixelBuffer(
                             static_cast<char>(pixel_format >> 16 & 0xFF),
                             static_cast<char>(pixel_format >> 8 & 0xFF),
                             static_cast<char>(pixel_format & 0xFF), 0};
-      LOG(FATAL) << "unsupported pixel format: " << format_str;
+      ABSL_LOG(FATAL) << "unsupported pixel format: " << format_str;
     } break;
   }
 

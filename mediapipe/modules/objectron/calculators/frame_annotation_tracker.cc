@@ -15,7 +15,7 @@
 #include "mediapipe/modules/objectron/calculators/frame_annotation_tracker.h"
 
 #include "absl/container/flat_hash_set.h"
-#include "mediapipe/framework/port/logging.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
 #include "mediapipe/modules/objectron/calculators/box_util.h"
 #include "mediapipe/util/tracking/box_tracker.pb.h"
@@ -53,8 +53,8 @@ FrameAnnotation FrameAnnotationTracker::ConsolidateTrackingResult(
       }
     }
     if (!ref_box.has_id() || ref_box.id() < 0) {
-      LOG(ERROR) << "Can't find matching tracked box for object id: "
-                 << object_id << ". Likely lost tracking of it.";
+      ABSL_LOG(ERROR) << "Can't find matching tracked box for object id: "
+                      << object_id << ". Likely lost tracking of it.";
       keys_to_be_deleted.push_back(detected_obj.first);
       continue;
     }

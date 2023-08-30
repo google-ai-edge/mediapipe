@@ -24,11 +24,11 @@
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/collection_item_id.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/tool/tag_map.h"
 #include "mediapipe/framework/tool/tag_map_helper.h"
 #include "mediapipe/framework/tool/validate_name.h"
@@ -52,7 +52,7 @@ struct CollectionErrorHandlerFatal {
   // get away with only one version of this function (which is const
   // but returns a non-const reference).
   T& GetFallback(const absl::string_view tag, int index) const {
-    LOG(FATAL) << "Failed to get tag \"" << tag << "\" index " << index;
+    ABSL_LOG(FATAL) << "Failed to get tag \"" << tag << "\" index " << index;
     std::abort();
   }
 };
@@ -365,7 +365,7 @@ class Collection {
   std::unique_ptr<stored_type[]> data_;
 
   // A class which allows errors to be reported flexibly.  The default
-  // instantiation performs a LOG(FATAL) and does not have any member
+  // instantiation performs a ABSL_LOG(FATAL) and does not have any member
   // variables (zero size).
   ErrorHandler error_handler_;
 };

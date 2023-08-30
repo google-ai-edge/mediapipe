@@ -69,6 +69,7 @@ cc_library(
         "//third_party:libffmpeg",
         "@com_google_absl//absl/base:endian",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@eigen_archive//:eigen3",
@@ -122,10 +123,10 @@ cc_library(
         "//mediapipe/framework/port",
         "//mediapipe/framework/port:aligned_malloc_and_free",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@libyuv",
     ],
@@ -153,9 +154,9 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/formats:landmark_cc_proto",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -171,6 +172,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:vector",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -220,6 +222,7 @@ cc_library(
         "//mediapipe/framework/port:singleton",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ] + select({
@@ -299,8 +302,8 @@ cc_library(
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -321,6 +324,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@eigen_archive//:eigen3",
     ],
@@ -405,7 +409,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
-        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 

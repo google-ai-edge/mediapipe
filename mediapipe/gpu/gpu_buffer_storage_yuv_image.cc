@@ -19,8 +19,8 @@ limitations under the License.
 #include <memory>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/log/check.h"
-#include "absl/log/log.h"
 #include "libyuv/video_common.h"
 #include "mediapipe/framework/formats/frame_buffer.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -123,7 +123,7 @@ std::shared_ptr<FrameBuffer> YuvImageToFrameBuffer(
       break;
     }
     default:
-      LOG(FATAL)
+      ABSL_LOG(FATAL)
           << "Invalid format. Only FOURCC_NV12, FOURCC_NV21, FOURCC_YV12 and "
              "FOURCC_I420 are supported.";
   }
@@ -195,7 +195,7 @@ GpuBufferStorageYuvImage::GpuBufferStorageYuvImage(int width, int height,
       break;
     }
     default:
-      LOG(FATAL)
+      ABSL_LOG(FATAL)
           << "Invalid format. Only kNV12, kNV21, kYV12 and kYV21 are supported";
   }
 }
@@ -223,6 +223,6 @@ std::shared_ptr<ImageFrame> GpuBufferStorageYuvImage::GetWriteView(
     internal::types<ImageFrame>) {
   // Not supported on purpose: writes into the resulting ImageFrame cannot
   // easily be ported back to the original YUV image.
-  LOG(FATAL) << "GetWriteView<ImageFrame> is not supported.";
+  ABSL_LOG(FATAL) << "GetWriteView<ImageFrame> is not supported.";
 }
 }  // namespace mediapipe

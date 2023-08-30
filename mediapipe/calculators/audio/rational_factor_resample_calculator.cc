@@ -16,6 +16,7 @@
 
 #include "mediapipe/calculators/audio/rational_factor_resample_calculator.h"
 
+#include "absl/log/absl_log.h"
 #include "audio/dsp/resampler_q.h"
 
 using audio_dsp::Resampler;
@@ -77,7 +78,7 @@ absl::Status RationalFactorResampleCalculator::Open(CalculatorContext* cc) {
       r = ResamplerFromOptions(source_sample_rate_, target_sample_rate_,
                                resample_options);
       if (!r) {
-        LOG(ERROR) << "Failed to initialize resampler.";
+        ABSL_LOG(ERROR) << "Failed to initialize resampler.";
         return absl::UnknownError("Failed to initialize resampler.");
       }
     }

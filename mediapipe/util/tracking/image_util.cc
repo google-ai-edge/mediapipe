@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <vector>
 
-#include "mediapipe/framework/port/logging.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/util/tracking/motion_models.h"
 #include "mediapipe/util/tracking/region_flow.h"
 
@@ -71,7 +71,7 @@ void JetColoring(int steps, std::vector<Vector3_f>* color_map) {
       (*color_map)[i] =
           Vector3_f(1.0f + (frac - 0.8f) * -2.0f, 0.0f, 0.0f) * 255.0f;
     } else {
-      LOG(ERROR) << "Out of bound value. Should not occur.";
+      ABSL_LOG(ERROR) << "Out of bound value. Should not occur.";
     }
   }
 }

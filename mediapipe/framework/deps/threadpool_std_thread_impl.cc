@@ -26,9 +26,9 @@
 #include <unistd.h>
 #endif
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
 
@@ -67,8 +67,9 @@ void* ThreadPool::WorkerThread::ThreadBody(void* arg) {
       thread->pool_->thread_options().nice_priority_level();
   const std::set<int> selected_cpus = thread->pool_->thread_options().cpu_set();
   if (nice_priority_level != 0 || !selected_cpus.empty()) {
-    LOG(ERROR) << "Thread priority and processor affinity feature aren't "
-                  "supported by the std::thread threadpool implementation.";
+    ABSL_LOG(ERROR)
+        << "Thread priority and processor affinity feature aren't "
+           "supported by the std::thread threadpool implementation.";
   }
   thread->pool_->RunWorker();
   return nullptr;

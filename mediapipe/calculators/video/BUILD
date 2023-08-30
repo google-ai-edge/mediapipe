@@ -132,6 +132,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_video",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/log:absl_log",
     ],
     alwayslink = 1,
 )
@@ -153,6 +154,7 @@ cc_library(
         "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -193,6 +195,7 @@ cc_library(
         "//mediapipe/util/tracking:motion_estimation",
         "//mediapipe/util/tracking:motion_models",
         "//mediapipe/util/tracking:region_flow_cc_proto",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -205,10 +208,10 @@ cc_library(
         ":flow_packager_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/util/tracking:camera_motion_cc_proto",
         "//mediapipe/util/tracking:flow_packager",
         "//mediapipe/util/tracking:region_flow_cc_proto",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ],
@@ -225,7 +228,6 @@ cc_library(
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/formats:video_stream_header",  # fixdeps: keep -- required for exobazel build.
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
@@ -236,6 +238,7 @@ cc_library(
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/container:node_hash_set",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -251,7 +254,6 @@ cc_library(
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/formats:video_stream_header",  # fixdeps: keep -- required for exobazel build.
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_features2d",
         "//mediapipe/framework/port:ret_check",
@@ -263,6 +265,7 @@ cc_library(
         "//mediapipe/util/tracking:box_tracker_cc_proto",
         "//mediapipe/util/tracking:flow_packager_cc_proto",
         "//mediapipe/util/tracking:tracking_visualization_utilities",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ] + select({
@@ -359,12 +362,12 @@ cc_test(
         "//mediapipe/framework/formats:video_stream_header",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_highgui",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:opencv_video",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:test_util",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -448,6 +451,7 @@ cc_test(
         "//mediapipe/framework/tool:test_util",
         "//mediapipe/util/tracking:box_tracker_cc_proto",
         "//mediapipe/util/tracking:tracking_cc_proto",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 

@@ -22,6 +22,8 @@
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_log.h"
+#include "absl/log/check.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
@@ -35,7 +37,6 @@
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/file_helpers.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -196,7 +197,7 @@ absl::Status CompareImageFrames(const ImageFrame& image1,
       return CompareDiff<float>(image1, image2, max_color_diff, max_alpha_diff,
                                 max_avg_diff, diff_image);
     default:
-      LOG(FATAL) << ImageFrame::InvalidFormatString(image1.Format());
+      ABSL_LOG(FATAL) << ImageFrame::InvalidFormatString(image1.Format());
   }
 }
 
@@ -336,15 +337,15 @@ absl::StatusOr<std::string> SavePngTestOutput(
 bool LoadTestGraph(CalculatorGraphConfig* proto, const std::string& path) {
   int fd = open(path.c_str(), O_RDONLY);
   if (fd == -1) {
-    LOG(ERROR) << "could not open test graph: " << path
-               << ", error: " << strerror(errno);
+    ABSL_LOG(ERROR) << "could not open test graph: " << path
+                    << ", error: " << strerror(errno);
     return false;
   }
   proto_ns::io::FileInputStream input(fd);
   bool success = proto->ParseFromZeroCopyStream(&input);
   close(fd);
   if (!success) {
-    LOG(ERROR) << "could not parse test graph: " << path;
+    ABSL_LOG(ERROR) << "could not parse test graph: " << path;
   }
   return success;
 }
@@ -355,7 +356,7 @@ std::unique_ptr<ImageFrame> GenerateLuminanceImage(
   const int height = original_image.Height();
   const int channels = original_image.NumberOfChannels();
   if (channels != 3 && channels != 4) {
-    LOG(ERROR) << "Invalid number of image channels: " << channels;
+    ABSL_LOG(ERROR) << "Invalid number of image channels: " << channels;
     return nullptr;
   }
   auto luminance_image =

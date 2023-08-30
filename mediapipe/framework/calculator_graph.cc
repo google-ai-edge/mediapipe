@@ -26,7 +26,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
-#include "absl/log/log.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -147,7 +147,7 @@ CalculatorGraph::~CalculatorGraph() {
   // Stop periodic profiler output to unblock Executor destructors.
   absl::Status status = profiler()->Stop();
   if (!status.ok()) {
-    LOG(ERROR) << "During graph destruction: " << status;
+    ABSL_LOG(ERROR) << "During graph destruction: " << status;
   }
 }
 
@@ -600,7 +600,7 @@ absl::Status CalculatorGraph::MaybeSetUpGpuServiceFromLegacySidePacket(
   if (legacy_sp.IsEmpty()) return absl::OkStatus();
   auto gpu_resources = service_manager_.GetServiceObject(kGpuService);
   if (gpu_resources) {
-    LOG(WARNING)
+    ABSL_LOG(WARNING)
         << "::mediapipe::GpuSharedData provided as a side packet while the "
         << "graph already had one; ignoring side packet";
     return absl::OkStatus();
@@ -728,7 +728,7 @@ absl::Status CalculatorGraph::PrepareForRun(
   absl::Status error_status;
   if (has_error_) {
     GetCombinedErrors(&error_status);
-    LOG(ERROR) << error_status.ToString(kStatusLogFlags);
+    ABSL_LOG(ERROR) << error_status.ToString(kStatusLogFlags);
     return error_status;
   }
 
@@ -807,7 +807,7 @@ absl::Status CalculatorGraph::PrepareForRun(
   }
 
   if (GetCombinedErrors(&error_status)) {
-    LOG(ERROR) << error_status.ToString(kStatusLogFlags);
+    ABSL_LOG(ERROR) << error_status.ToString(kStatusLogFlags);
     CleanupAfterRun(&error_status);
     return error_status;
   }
@@ -861,7 +861,7 @@ absl::Status CalculatorGraph::PrepareForRun(
 
 absl::Status CalculatorGraph::WaitUntilIdle() {
   if (has_sources_) {
-    LOG_FIRST_N(WARNING, 1)
+    ABSL_LOG_FIRST_N(WARNING, 1)
         << "WaitUntilIdle called on a graph with source nodes, which "
            "is not fully supported at the moment. Source nodes: "
         << ListSourceNodes();
@@ -871,7 +871,7 @@ absl::Status CalculatorGraph::WaitUntilIdle() {
   VLOG(2) << "Scheduler idle.";
   absl::Status status = absl::OkStatus();
   if (GetCombinedErrors(&status)) {
-    LOG(ERROR) << status.ToString(kStatusLogFlags);
+    ABSL_LOG(ERROR) << status.ToString(kStatusLogFlags);
   }
   return status;
 }
@@ -1064,10 +1064,11 @@ void CalculatorGraph::RecordError(const absl::Status& error) {
     }
     if (errors_.size() > kMaxNumAccumulatedErrors) {
       for (const absl::Status& error : errors_) {
-        LOG(ERROR) << error;
+        ABSL_LOG(ERROR) << error;
       }
-      LOG(FATAL) << "Forcefully aborting to prevent the framework running out "
-                    "of memory.";
+      ABSL_LOG(FATAL)
+          << "Forcefully aborting to prevent the framework running out "
+             "of memory.";
     }
   }
 }
@@ -1264,7 +1265,7 @@ bool CalculatorGraph::UnthrottleSources() {
     }
     int new_size = stream->QueueSize() + 1;
     stream->SetMaxQueueSize(new_size);
-    LOG_EVERY_N(WARNING, 100) << absl::StrCat(
+    ABSL_LOG_EVERY_N(WARNING, 100) << absl::StrCat(
         "Resolved a deadlock by increasing max_queue_size of input stream: \"",
         stream->Name(), "\" of a node \"", GetParentNodeDebugName(stream),
         "\" to ", new_size,
@@ -1436,12 +1437,13 @@ void PrintTimingToInfo(const std::string& label, int64_t timer_value) {
   const int64_t minutes = (total_seconds / 60ll) % 60ll;
   const int64_t seconds = total_seconds % 60ll;
   const int64_t milliseconds = (timer_value / 1000ll) % 1000ll;
-  LOG(INFO) << label << " took "
-            << absl::StrFormat(
-                   "%02lld days, %02lld:%02lld:%02lld.%03lld (total seconds: "
-                   "%lld.%06lld)",
-                   days, hours, minutes, seconds, milliseconds, total_seconds,
-                   timer_value % int64_t{1000000});
+  ABSL_LOG(INFO)
+      << label << " took "
+      << absl::StrFormat(
+             "%02lld days, %02lld:%02lld:%02lld.%03lld (total seconds: "
+             "%lld.%06lld)",
+             days, hours, minutes, seconds, milliseconds, total_seconds,
+             timer_value % int64_t{1000000});
 }
 
 bool MetricElementComparator(const std::pair<std::string, int64_t>& e1,

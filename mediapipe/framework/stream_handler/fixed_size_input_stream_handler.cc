@@ -19,8 +19,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/log/check.h"
-#include "absl/log/log.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_context_manager.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -182,7 +182,7 @@ void FixedSizeInputStreamHandler::FillInputSet(Timestamp input_timestamp,
   CHECK(input_set);
   absl::MutexLock lock(&erase_mutex_);
   if (!pending_) {
-    LOG(ERROR) << "FillInputSet called without GetNodeReadiness.";
+    ABSL_LOG(ERROR) << "FillInputSet called without GetNodeReadiness.";
   }
   // input_timestamp is recalculated here to process the most recent packets.
   EraseSurplusPackets(true);

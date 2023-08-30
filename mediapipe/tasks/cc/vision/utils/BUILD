@@ -28,12 +28,12 @@ cc_library_with_tflite(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/metadata:metadata_extractor",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "@com_google_absl//absl/algorithm:container",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",

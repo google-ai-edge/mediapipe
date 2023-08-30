@@ -17,13 +17,13 @@
 #include <functional>
 
 #include "absl/container/node_hash_map.h"
+#include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/threadpool.h"
 
 namespace {
@@ -134,9 +134,9 @@ TEST(ShardedMapTest, TestParallelAccess) {
     ShardedMap<int64, int64> sharded_map(4999);
     TestParallelAccess(sharded_map, 13);
   });
-  LOG(INFO) << "Ellapsed time: simple_map: " << simple_time;
-  LOG(INFO) << "Ellapsed time: safe_map: " << safe_time;
-  LOG(INFO) << "Ellapsed time: sharded_map: " << sharded_time;
+  ABSL_LOG(INFO) << "Ellapsed time: simple_map: " << simple_time;
+  ABSL_LOG(INFO) << "Ellapsed time: safe_map: " << safe_time;
+  ABSL_LOG(INFO) << "Ellapsed time: sharded_map: " << sharded_time;
 }
 
 }  // namespace

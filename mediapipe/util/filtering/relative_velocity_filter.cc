@@ -17,8 +17,9 @@
 #include <cmath>
 #include <deque>
 
+#include "absl/log/absl_log.h"
+#include "absl/log/check.h"
 #include "absl/memory/memory.h"
-#include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
 
@@ -28,7 +29,7 @@ float RelativeVelocityFilter::Apply(absl::Duration timestamp, float value_scale,
   if (last_timestamp_ >= new_timestamp) {
     // Results are unpredictable in this case, so nothing to do but
     // return same value
-    LOG(WARNING) << "New timestamp is equal or less than the last one.";
+    ABSL_LOG(WARNING) << "New timestamp is equal or less than the last one.";
     return value;
   }
 

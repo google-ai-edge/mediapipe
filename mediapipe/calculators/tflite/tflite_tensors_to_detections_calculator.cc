@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
 #include "mediapipe/calculators/tflite/tflite_tensors_to_detections_calculator.pb.h"
@@ -541,7 +542,7 @@ absl::Status TfLiteTensorsToDetectionsCalculator::ProcessGPU(
                                          output_detections));
 
 #else
-  LOG(ERROR) << "GPU input on non-Android not supported yet.";
+  ABSL_LOG(ERROR) << "GPU input on non-Android not supported yet.";
 #endif  // MEDIAPIPE_TFLITE_GL_INFERENCE
   return absl::OkStatus();
 }

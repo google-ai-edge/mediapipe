@@ -104,7 +104,7 @@ cc_library(
     srcs = ["deleting_file.cc"],
     hdrs = ["deleting_file.h"],
     deps = [
-        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -155,11 +155,12 @@ cc_library(
         "//mediapipe/framework/port:aligned_malloc_and_free",
         "//mediapipe/framework/port:core_proto",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/tool:type_util",
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ] + select({
@@ -206,7 +207,6 @@ cc_library(
         "//mediapipe/framework/formats/annotation:locus_cc_proto",
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:point",
         "//mediapipe/framework/port:rectangle",
         "//mediapipe/framework/port:ret_check",
@@ -214,6 +214,7 @@ cc_library(
         "//mediapipe/framework/port:statusor",
         "//mediapipe/framework/tool:status_util",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
@@ -234,6 +235,7 @@ cc_library(
         ":location",
         "//mediapipe/framework/formats/annotation:rasterization_cc_proto",
         "//mediapipe/framework/port:opencv_imgproc",
+        "@com_google_absl//absl/log:absl_log",
     ],
     alwayslink = 1,
 )
@@ -485,8 +487,8 @@ cc_library(
     }),
     deps = [
         "//mediapipe/framework:port",
-        "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
     ] + select({

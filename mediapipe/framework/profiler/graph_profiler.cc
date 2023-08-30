@@ -17,13 +17,13 @@
 #include <fstream>
 #include <list>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/port/advanced_proto_lite_inc.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/file_helpers.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/re2.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -251,10 +251,10 @@ absl::Status GraphProfiler::Start(mediapipe::Executor* executor) {
         file::SetContents(absl::StrCat(trace_log_path, "trace_writing_check"),
                           "can write trace logs to this location");
     if (status.ok()) {
-      LOG(INFO) << "trace_log_path: " << trace_log_path;
+      ABSL_LOG(INFO) << "trace_log_path: " << trace_log_path;
     } else {
-      LOG(ERROR) << "cannot write to trace_log_path: " << trace_log_path << ": "
-                 << status;
+      ABSL_LOG(ERROR) << "cannot write to trace_log_path: " << trace_log_path
+                      << ": " << status;
     }
 
     is_running_ = true;
@@ -315,7 +315,7 @@ void GraphProfiler::AddPacketInfo(const TraceEvent& packet_info) {
     return;
   }
   if (!packet_timestamp.IsRangeValue()) {
-    LOG(WARNING) << absl::Substitute(
+    ABSL_LOG(WARNING) << absl::Substitute(
         "Skipped adding packet info because the timestamp $0 for stream "
         "\"$1\" is not valid.",
         packet_timestamp.Value(), stream_name);
@@ -482,7 +482,7 @@ void GraphProfiler::SetCloseRuntime(const CalculatorContext& calculator_context,
 void GraphProfiler::AddTimeSample(int64 start_time_usec, int64 end_time_usec,
                                   TimeHistogram* histogram) {
   if (end_time_usec < start_time_usec) {
-    LOG(ERROR) << absl::Substitute(
+    ABSL_LOG(ERROR) << absl::Substitute(
         "end_time_usec ($0) is < start_time_usec ($1)", end_time_usec,
         start_time_usec);
     return;
@@ -519,8 +519,8 @@ int64 GraphProfiler::AddInputStreamTimeSamples(
       // This is a condition rather than a failure CHECK because
       // under certain conditions the consumer calculator's Process()
       // can start before the producer calculator's Process() is finished.
-      LOG_FIRST_N(WARNING, 10) << "Expected packet info is missing for: "
-                               << PacketIdToString(packet_id);
+      ABSL_LOG_FIRST_N(WARNING, 10) << "Expected packet info is missing for: "
+                                    << PacketIdToString(packet_id);
       continue;
     }
     AddTimeSample(

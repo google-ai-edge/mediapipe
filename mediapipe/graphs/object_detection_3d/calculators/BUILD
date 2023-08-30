@@ -74,6 +74,7 @@ cc_library(
         "//mediapipe/gpu:shader_util",
         "//mediapipe/modules/objectron/calculators:camera_parameters_cc_proto",
         "//mediapipe/util/android:asset_manager_util",
+        "@com_google_absl//absl/log:absl_log",
     ],
     alwayslink = 1,
 )

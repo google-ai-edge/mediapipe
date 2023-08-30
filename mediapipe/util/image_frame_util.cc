@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
@@ -34,7 +35,6 @@
 #include "mediapipe/framework/formats/yuv_image.h"
 #include "mediapipe/framework/port/aligned_malloc_and_free.h"
 #include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/port.h"
 #include "mediapipe/framework/port/status_macros.h"
 
@@ -207,7 +207,7 @@ void YUVImageToImageFrameFromFormat(const YUVImage& yuv_image,
           yuv_image.width(), yuv_image.height());
       break;
     default:
-      LOG(FATAL) << "Unsupported YUVImage format.";
+      ABSL_LOG(FATAL) << "Unsupported YUVImage format.";
   }
 }
 

@@ -14,8 +14,8 @@
 
 #include "mediapipe/framework/deps/clock.h"
 
+#include "absl/log/absl_log.h"
 #include "absl/time/clock.h"
-#include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
 
@@ -28,7 +28,7 @@ namespace {
 class RealTimeClock : public Clock {
  public:
   virtual ~RealTimeClock() {
-    LOG(FATAL) << "RealTimeClock should never be destroyed";
+    ABSL_LOG(FATAL) << "RealTimeClock should never be destroyed";
   }
 
   absl::Time TimeNow() override { return absl::Now(); }

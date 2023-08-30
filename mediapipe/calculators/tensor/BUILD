@@ -474,6 +474,7 @@ cc_library(
         "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//mediapipe/util/tflite:config",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
         "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate",
@@ -744,6 +745,7 @@ cc_library(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/formats/object_detection:anchor_cc_proto",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
     ] + selects.with_or({
@@ -992,6 +994,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/gpu:gpu_origin_cc_proto",
+        "@com_google_absl//absl/log:absl_log",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [":image_to_tensor_calculator_gpu_deps"],
@@ -1211,6 +1214,7 @@ cc_library(
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:shader_util",
+            "@com_google_absl//absl/log:absl_log",
             "@com_google_absl//absl/strings",
         ],
     }),

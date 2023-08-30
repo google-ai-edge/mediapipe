@@ -23,8 +23,9 @@
 #include <vector>
 
 #include "absl/container/node_hash_map.h"
+#include "absl/log/absl_log.h"
+#include "absl/log/check.h"
 #include "absl/types/any.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/tool/type_util.h"
 
 namespace mediapipe {
@@ -395,8 +396,8 @@ T* StreamingBuffer::GetMutableDatum(const std::string& tag,
   } else {
     const absl::any& packet = buffer[frame_index];
     if (absl::any_cast<PointerType<T>>(&packet) == nullptr) {
-      LOG(ERROR) << "Stored item is not of requested type. "
-                 << "Check data configuration.";
+      ABSL_LOG(ERROR) << "Stored item is not of requested type. "
+                      << "Check data configuration.";
       return nullptr;
     }
 
@@ -447,8 +448,8 @@ bool StreamingBuffer::IsInitialized(const std::string& tag) const {
     const PointerType<T>* pointer = absl::any_cast<const PointerType<T>>(&item);
     CHECK(pointer != nullptr);
     if (*pointer == nullptr) {
-      LOG(ERROR) << "Data for " << tag << " at frame " << idx
-                 << " is not initialized.";
+      ABSL_LOG(ERROR) << "Data for " << tag << " at frame " << idx
+                      << " is not initialized.";
       return false;
     }
   }
@@ -463,8 +464,8 @@ std::vector<T*> StreamingBuffer::GetMutableDatumVector(
   std::vector<T*> result;
   for (const auto& packet : buffer) {
     if (absl::any_cast<PointerType<T>>(&packet) == nullptr) {
-      LOG(ERROR) << "Stored item is not of requested type. "
-                 << "Check data configuration.";
+      ABSL_LOG(ERROR) << "Stored item is not of requested type. "
+                      << "Check data configuration.";
       result.push_back(nullptr);
     } else {
       result.push_back(
@@ -496,8 +497,8 @@ std::unique_ptr<T> StreamingBuffer::ReleaseDatum(const std::string& tag,
   } else {
     const absl::any& packet = buffer[frame_index];
     if (absl::any_cast<PointerType<T>>(&packet) == nullptr) {
-      LOG(ERROR) << "Stored item is not of requested type. "
-                 << "Check data configuration.";
+      ABSL_LOG(ERROR) << "Stored item is not of requested type. "
+                      << "Check data configuration.";
       return nullptr;
     }
 

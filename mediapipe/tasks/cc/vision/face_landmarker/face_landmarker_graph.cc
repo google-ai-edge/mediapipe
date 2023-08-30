@@ -18,6 +18,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/calculators/core/clip_vector_size_calculator.pb.h"
 #include "mediapipe/calculators/core/concatenate_vector_calculator.h"
@@ -165,8 +166,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
         ->mutable_base_options()
         ->mutable_acceleration()
         ->mutable_xnnpack();
-    LOG(WARNING) << "Face blendshape model contains CPU only ops. Sets "
-                 << "FaceBlendshapesGraph acceleration to Xnnpack.";
+    ABSL_LOG(WARNING) << "Face blendshape model contains CPU only ops. Sets "
+                      << "FaceBlendshapesGraph acceleration to Xnnpack.";
   }
 
   return absl::OkStatus();

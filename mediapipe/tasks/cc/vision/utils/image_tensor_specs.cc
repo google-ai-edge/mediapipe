@@ -21,13 +21,13 @@ limitations under the License.
 #include <type_traits>
 
 #include "absl/algorithm/container.h"
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/types/optional.h"
 #include "flatbuffers/flatbuffers.h"
 #include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/metadata/metadata_extractor.h"
@@ -245,8 +245,9 @@ absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
   // TODO: Investigate if there is any better solutions support
   // running inference with multiple subgraphs.
   if (model.subgraphs()->size() != 1) {
-    LOG(WARNING) << "TFLite model has more than 1 subgraphs. Use subrgaph 0 as "
-                    "the primary subgraph for inference";
+    ABSL_LOG(WARNING)
+        << "TFLite model has more than 1 subgraphs. Use subrgaph 0 as "
+           "the primary subgraph for inference";
   }
   const auto* primary_subgraph = (*model.subgraphs())[0];
   if (primary_subgraph->inputs()->size() != 1) {

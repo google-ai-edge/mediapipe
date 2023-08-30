@@ -86,7 +86,7 @@ cc_test(
     deps = [
         ":buffer",
         "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -96,7 +96,7 @@ cc_test(
     deps = [
         ":buffer",
         "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -106,6 +106,6 @@ cc_test(
     deps = [
         ":buffer",
         "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )

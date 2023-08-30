@@ -1,6 +1,6 @@
 #include "mediapipe/util/pose_util.h"
 
-#include "mediapipe/framework/port/logging.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 
 namespace {
@@ -254,7 +254,7 @@ void DrawFace(const mediapipe::NormalizedLandmarkList& face,
     kRightEyeIrisColor = kCyanColor2;
     kNoseColor = kOrangeColor;
   } else {
-    LOG(ERROR) << "color_style not supported.";
+    ABSL_LOG(ERROR) << "color_style not supported.";
   }
 
   if (reverse_color) {

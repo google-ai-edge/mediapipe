@@ -29,6 +29,7 @@
 #include <vector>
 
 #include "absl/container/fixed_array.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/escaping.h"
@@ -51,7 +52,6 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -1410,7 +1410,7 @@ void RunComprehensiveTest(CalculatorGraph* graph,
   // Call graph->Run() several times, to make sure that the appropriate
   // cleanup happens between iterations.
   for (int iteration = 0; iteration < 2; ++iteration) {
-    LOG(INFO) << "Loop iteration " << iteration;
+    ABSL_LOG(INFO) << "Loop iteration " << iteration;
     dumped_final_sum_packet = Packet();
     dumped_final_stddev_packet = Packet();
     dumped_final_packet = Packet();
@@ -1452,7 +1452,7 @@ void RunComprehensiveTest(CalculatorGraph* graph,
                                        ->GetCounter("copy_range5-PassThrough")
                                        ->Get());
   }
-  LOG(INFO) << "After Loop Runs.";
+  ABSL_LOG(INFO) << "After Loop Runs.";
   // Verify that the graph can still run (but not successfully) when
   // one of the nodes is caused to fail.
   extra_side_packets.clear();
@@ -1463,9 +1463,9 @@ void RunComprehensiveTest(CalculatorGraph* graph,
   dumped_final_sum_packet = Packet();
   dumped_final_stddev_packet = Packet();
   dumped_final_packet = Packet();
-  LOG(INFO) << "Expect an error to be logged here.";
+  ABSL_LOG(INFO) << "Expect an error to be logged here.";
   ASSERT_FALSE(graph->Run(extra_side_packets).ok());
-  LOG(INFO) << "Error should have been logged.";
+  ABSL_LOG(INFO) << "Error should have been logged.";
 }
 
 TEST(CalculatorGraph, BadInitialization) {

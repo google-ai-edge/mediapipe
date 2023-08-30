@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensorflow/tensor_squeeze_dimensions_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -99,10 +100,11 @@ class TensorSqueezeDimensionsCalculator : public CalculatorBase {
       }
     }
     if (remove_dims_.empty()) {
-      LOG(ERROR) << "TensorSqueezeDimensionsCalculator is squeezing input with "
-                    "no single-dimensions. Calculator will be a no-op.";
-      LOG(ERROR) << "Input to TensorSqueezeDimensionsCalculator has shape "
-                 << tensor_shape.DebugString();
+      ABSL_LOG(ERROR)
+          << "TensorSqueezeDimensionsCalculator is squeezing input with "
+             "no single-dimensions. Calculator will be a no-op.";
+      ABSL_LOG(ERROR) << "Input to TensorSqueezeDimensionsCalculator has shape "
+                      << tensor_shape.DebugString();
     }
   }
 };

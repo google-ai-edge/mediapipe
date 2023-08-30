@@ -103,6 +103,7 @@
 #include <type_traits>
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/port.h"
 
@@ -134,7 +135,7 @@ struct NullStrongIntValidator {
   //
   //   template<typename T, typename U>
   //   static void ValidateInit(U arg) {
-  //     if (arg < 0) LOG(FATAL) << "arg < 0";
+  //     if (arg < 0) ABSL_LOG(FATAL) << "arg < 0";
   //   }
   //
   //   template<typename T, typename U>

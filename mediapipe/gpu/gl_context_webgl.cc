@@ -14,6 +14,7 @@
 
 #include <utility>
 
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -78,7 +79,7 @@ absl::Status GlContext::CreateContextInternal(
 
   // Check for failure
   if (context_handle <= 0) {
-    LOG(INFO) << "Couldn't create webGL " << webgl_version << " context.";
+    ABSL_LOG(INFO) << "Couldn't create webGL " << webgl_version << " context.";
     return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
            << "emscripten_webgl_create_context() returned error "
            << context_handle;
@@ -103,8 +104,8 @@ absl::Status GlContext::CreateContext(
 
   auto status = CreateContextInternal(external_context, 2);
   if (!status.ok()) {
-    LOG(WARNING) << "Creating a context with WebGL 2 failed: " << status;
-    LOG(WARNING) << "Fall back on WebGL 1.";
+    ABSL_LOG(WARNING) << "Creating a context with WebGL 2 failed: " << status;
+    ABSL_LOG(WARNING) << "Fall back on WebGL 1.";
     status = CreateContextInternal(external_context, 1);
   }
   MP_RETURN_IF_ERROR(status);
@@ -117,17 +118,18 @@ absl::Status GlContext::CreateContext(
 void GlContext::DestroyContext() {
   if (thread_) {
     // For now, we force web MediaPipe to be single-threaded, so error here.
-    LOG(ERROR) << "thread_ should not exist in DestroyContext() on web.";
+    ABSL_LOG(ERROR) << "thread_ should not exist in DestroyContext() on web.";
   }
 
   // Destroy the context and surface.
   if (context_ != 0) {
     EMSCRIPTEN_RESULT res = emscripten_webgl_destroy_context(context_);
     if (res != EMSCRIPTEN_RESULT_SUCCESS) {
-      LOG(ERROR) << "emscripten_webgl_destroy_context() returned error " << res;
+      ABSL_LOG(ERROR) << "emscripten_webgl_destroy_context() returned error "
+                      << res;
     } else {
-      LOG(INFO) << "Successfully destroyed WebGL context with handle "
-                << context_;
+      ABSL_LOG(INFO) << "Successfully destroyed WebGL context with handle "
+                     << context_;
     }
     context_ = 0;
   }

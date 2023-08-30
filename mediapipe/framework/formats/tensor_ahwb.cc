@@ -7,9 +7,9 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
+#include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/port.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/gpu/gl_base.h"
 #endif  // MEDIAPIPE_TENSOR_USE_AHWB
 
@@ -342,7 +342,8 @@ void Tensor::MoveCpuOrSsboToAhwb() const {
     // of the Ahwb at the next request to the OpenGlBufferView.
     valid_ &= ~kValidOpenGlBuffer;
   } else {
-    LOG(FATAL) << "Can't convert tensor with mask " << valid_ << " into AHWB.";
+    ABSL_LOG(FATAL) << "Can't convert tensor with mask " << valid_
+                    << " into AHWB.";
   }
   if (__builtin_available(android 26, *)) {
     auto error = AHardwareBuffer_unlock(ahwb_, nullptr);

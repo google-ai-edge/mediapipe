@@ -103,6 +103,7 @@ cc_library(
         "//mediapipe/framework/formats/object_detection:anchor_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_log",
     ],
     alwayslink = 1,
 )
@@ -196,10 +197,12 @@ cc_library(
     deps = [
         ":tflite_inference_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
         "//mediapipe/util/tflite:config",
         "//mediapipe/util/tflite:tflite_model_loader",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/delegates/xnnpack:xnnpack_delegate",
@@ -392,6 +395,7 @@ cc_library(
         "//mediapipe/framework/formats/object_detection:anchor_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util/tflite:config",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
         "@org_tensorflow//tensorflow/lite:framework",

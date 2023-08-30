@@ -95,13 +95,13 @@ cc_library(
         "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/formats:video_stream_header",
         "//mediapipe/framework/port:core_proto",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:singleton",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:threadpool",
         "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler",
         "//mediapipe/framework/tool:executor_util",
         "//mediapipe/framework/tool:name_util",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
@@ -138,8 +138,8 @@ cc_library(
     hdrs = ["jni_util.h"],
     deps = [
         ":class_registry",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/synchronization",
     ] + select({
         "//conditions:default": [
@@ -173,8 +173,8 @@ cc_library(
         ":class_registry",
         ":loose_headers",
         ":mediapipe_framework_jni",
-        "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/container:node_hash_map",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ] + select({

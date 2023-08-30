@@ -3,6 +3,7 @@
 #include <tuple>
 #include <utility>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/api2/test_contracts.h"
@@ -570,7 +571,7 @@ struct LogSinkNode : public Node {
   MEDIAPIPE_NODE_CONTRACT(kIn);
 
   absl::Status Process(CalculatorContext* cc) override {
-    LOG(INFO) << "LogSinkNode received: " << kIn(cc).Get();
+    ABSL_LOG(INFO) << "LogSinkNode received: " << kIn(cc).Get();
     return {};
   }
 };

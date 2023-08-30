@@ -19,6 +19,7 @@
 #include <fstream>
 #include <limits>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
@@ -250,7 +251,7 @@ void BoxTracker::AddTrackingDataChunk(const TrackingDataChunk* chunk,
   int chunk_idx = ChunkIdxFromTime(chunk_time_msec);
   CHECK_GE(chunk_idx, tracking_data_.size()) << "Chunk is out of order.";
   if (chunk_idx > tracking_data_.size()) {
-    LOG(INFO) << "Resize tracking_data_ to " << chunk_idx;
+    ABSL_LOG(INFO) << "Resize tracking_data_ to " << chunk_idx;
     tracking_data_.resize(chunk_idx);
   }
   if (copy_data) {
@@ -278,7 +279,7 @@ void BoxTracker::NewBoxTrack(const TimedBox& initial_pos, int id,
   absl::MutexLock lock(&status_mutex_);
 
   if (canceling_) {
-    LOG(WARNING) << "Box Tracker is in cancel state. Refusing request.";
+    ABSL_LOG(WARNING) << "Box Tracker is in cancel state. Refusing request.";
     return;
   }
   ++track_status_[id][kInitCheckpoint].tracks_ongoing;
@@ -319,8 +320,8 @@ void BoxTracker::NewBoxTrackAsync(const TimedBox& initial_pos, int id,
   if (!tracking_chunk.first) {
     absl::MutexLock lock(&status_mutex_);
     --track_status_[id][kInitCheckpoint].tracks_ongoing;
-    LOG(ERROR) << "Could not read tracking chunk from file: " << chunk_idx
-               << " for start position: " << initial_pos.ToString();
+    ABSL_LOG(ERROR) << "Could not read tracking chunk from file: " << chunk_idx
+                    << " for start position: " << initial_pos.ToString();
     return;
   }
 
@@ -502,7 +503,7 @@ bool BoxTracker::GetTimedPosition(int id, int64_t time_msec, TimedBox* result,
   absl::MutexLock lock(&path_mutex_);
   const Path& path = paths_[id];
   if (path.empty()) {
-    LOG(ERROR) << "Empty path!";
+    ABSL_LOG(ERROR) << "Empty path!";
     return false;
   }
 
@@ -586,7 +587,7 @@ BoxTracker::AugmentedChunkPtr BoxTracker::ReadChunk(int id, int checkpoint,
     if (chunk_idx < tracking_data_.size()) {
       return std::make_pair(tracking_data_[chunk_idx], false);
     } else {
-      LOG(ERROR) << "chunk_idx >= tracking_data_.size()";
+      ABSL_LOG(ERROR) << "chunk_idx >= tracking_data_.size()";
       return std::make_pair(nullptr, false);
     }
   } else {
@@ -607,7 +608,7 @@ std::unique_ptr<TrackingDataChunk> BoxTracker::ReadChunkFromCache(
   if (format_runtime) {
     chunk_file = cache_dir_ + "/" + absl::StrFormat(*format_runtime, chunk_idx);
   } else {
-    LOG(ERROR) << "chache_file_format wrong. fall back to chunk_%04d.";
+    ABSL_LOG(ERROR) << "chache_file_format wrong. fall back to chunk_%04d.";
     chunk_file = cache_dir_ + "/" + absl::StrFormat("chunk_%04d", chunk_idx);
   }
 
@@ -625,7 +626,7 @@ std::unique_ptr<TrackingDataChunk> BoxTracker::ReadChunkFromCache(
 
   std::ifstream in(chunk_file, std::ios::in | std::ios::binary);
   if (!in) {
-    LOG(ERROR) << "Could not read chunk file: " << chunk_file;
+    ABSL_LOG(ERROR) << "Could not read chunk file: " << chunk_file;
     return nullptr;
   }
 
@@ -712,7 +713,8 @@ int BoxTracker::ClosestFrameIndex(int64_t msec,
   const int64_t rhs_diff = chunk.item(pos).timestamp_usec() / 1000 - msec;
 
   if (std::min(lhs_diff, rhs_diff) >= 67) {
-    LOG(ERROR) << "No frame found within 67ms, probably using wrong chunk.";
+    ABSL_LOG(ERROR)
+        << "No frame found within 67ms, probably using wrong chunk.";
   }
 
   if (lhs_diff < rhs_diff) {
@@ -831,7 +833,7 @@ void BoxTracker::TrackingImpl(const TrackingImplArgs& a) {
           TrackingImpl(next_args);
         } else {
           cleanup_func();
-          LOG(ERROR) << "Can't read expected chunk file!";
+          ABSL_LOG(ERROR) << "Can't read expected chunk file!";
         }
       }
     }
@@ -892,10 +894,10 @@ void BoxTracker::TrackingImpl(const TrackingImplArgs& a) {
           TrackingImpl(prev_args);
         } else {
           cleanup_func();
-          LOG(ERROR) << "Can't read expected chunk file! " << a.chunk_idx - 1
-                     << " while tracking @"
-                     << a.chunk_data->item(f).timestamp_usec() / 1000
-                     << " with cutoff " << a.min_msec;
+          ABSL_LOG(ERROR) << "Can't read expected chunk file! "
+                          << a.chunk_idx - 1 << " while tracking @"
+                          << a.chunk_data->item(f).timestamp_usec() / 1000
+                          << " with cutoff " << a.min_msec;
           return;
         }
       }
@@ -1039,7 +1041,7 @@ bool BoxTracker::GetTrackingData(int id, int64_t request_time_msec,
   if (!tracking_chunk.first) {
     absl::MutexLock lock(&status_mutex_);
     --track_status_[id][kInitCheckpoint].tracks_ongoing;
-    LOG(ERROR) << "Could not read tracking chunk from file.";
+    ABSL_LOG(ERROR) << "Could not read tracking chunk from file.";
     return false;
   }
 

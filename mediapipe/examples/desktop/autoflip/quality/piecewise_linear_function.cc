@@ -20,6 +20,7 @@
 #include <limits>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {

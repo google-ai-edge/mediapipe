@@ -14,6 +14,7 @@
 //
 // Converts vector<float> (or vector<vector<float>>) to 1D (or 2D) tf::Tensor.
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensorflow/vector_float_to_tensor_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -68,7 +69,7 @@ absl::Status VectorFloatToTensorCalculator::GetContract(
         // Output vector<float>.
     );
   } else {
-    LOG(FATAL) << "input size not supported";
+    ABSL_LOG(FATAL) << "input size not supported";
   }
   RET_CHECK_EQ(cc->Outputs().NumEntries(), 1)
       << "Only one output stream is supported.";
@@ -125,7 +126,7 @@ absl::Status VectorFloatToTensorCalculator::Process(CalculatorContext* cc) {
     }
     cc->Outputs().Index(0).Add(output.release(), cc->InputTimestamp());
   } else {
-    LOG(FATAL) << "input size not supported";
+    ABSL_LOG(FATAL) << "input size not supported";
   }
   return absl::OkStatus();
 }

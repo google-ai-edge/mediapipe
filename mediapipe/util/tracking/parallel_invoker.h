@@ -71,8 +71,9 @@
 
 #include <memory>
 
+#include "absl/log/absl_log.h"
+#include "absl/log/check.h"
 #include "absl/synchronization/mutex.h"
-#include "mediapipe/framework/port/logging.h"
 
 #ifdef PARALLEL_INVOKER_ACTIVE
 #include "mediapipe/framework/port/threadpool.h"
@@ -233,13 +234,13 @@ inline void CheckAndSetInvokerOptions() {
       flags_parallel_invoker_mode != PARALLEL_INVOKER_THREAD_POOL &&
       flags_parallel_invoker_mode != PARALLEL_INVOKER_OPENMP) {
 #if defined(_OPENMP)
-    LOG(WARNING) << "Unsupported invoker mode selected on Android. "
-                 << "OpenMP linkage detected, so falling back to OpenMP";
+    ABSL_LOG(WARNING) << "Unsupported invoker mode selected on Android. "
+                      << "OpenMP linkage detected, so falling back to OpenMP";
     flags_parallel_invoker_mode = PARALLEL_INVOKER_OPENMP;
 #else   // _OPENMP
     // Fallback mode for active parallel invoker without OpenMP is ThreadPool.
-    LOG(WARNING) << "Unsupported invoker mode selected on Android. "
-                 << "Falling back to ThreadPool";
+    ABSL_LOG(WARNING) << "Unsupported invoker mode selected on Android. "
+                      << "Falling back to ThreadPool";
     flags_parallel_invoker_mode = PARALLEL_INVOKER_THREAD_POOL;
 #endif  // _OPENMP
   }
@@ -253,8 +254,8 @@ inline void CheckAndSetInvokerOptions() {
       flags_parallel_invoker_mode != PARALLEL_INVOKER_GCD &&
 #endif  // USE_PARALLEL_INVOKER_GCD
       flags_parallel_invoker_mode != PARALLEL_INVOKER_THREAD_POOL) {
-    LOG(WARNING) << "Unsupported invoker mode selected on iOS. "
-                 << "Falling back to ThreadPool mode";
+    ABSL_LOG(WARNING) << "Unsupported invoker mode selected on iOS. "
+                      << "Falling back to ThreadPool mode";
     flags_parallel_invoker_mode = PARALLEL_INVOKER_THREAD_POOL;
   }
 #endif  // __APPLE__ || __EMSCRIPTEN__
@@ -267,17 +268,19 @@ inline void CheckAndSetInvokerOptions() {
   // to ThreadPool if not.
   if (flags_parallel_invoker_mode == PARALLEL_INVOKER_OPENMP) {
 #if !defined(_OPENMP)
-    LOG(ERROR) << "OpenMP invoker mode selected but not compiling with OpenMP "
-               << "enabled. Falling back to ThreadPool";
+    ABSL_LOG(ERROR)
+        << "OpenMP invoker mode selected but not compiling with OpenMP "
+        << "enabled. Falling back to ThreadPool";
     flags_parallel_invoker_mode = PARALLEL_INVOKER_THREAD_POOL;
 #endif  // _OPENMP
   }
 
 #else   // PARALLEL_INVOKER_ACTIVE
   if (flags_parallel_invoker_mode != PARALLEL_INVOKER_NONE) {
-    LOG(ERROR) << "Parallel execution requested but PARALLEL_INVOKER_ACTIVE "
-               << "compile flag is not set. Falling back to single threaded "
-               << "execution.";
+    ABSL_LOG(ERROR)
+        << "Parallel execution requested but PARALLEL_INVOKER_ACTIVE "
+        << "compile flag is not set. Falling back to single threaded "
+        << "execution.";
     flags_parallel_invoker_mode = PARALLEL_INVOKER_NONE;
   }
 #endif  // PARALLEL_INVOKER_ACTIVE
@@ -385,7 +388,7 @@ void ParallelFor(size_t start, size_t end, size_t grain_size,
     }
 
     case PARALLEL_INVOKER_MAX_VALUE: {
-      LOG(FATAL) << "Impossible.";
+      ABSL_LOG(FATAL) << "Impossible.";
       break;
     }
   }
@@ -493,7 +496,7 @@ void ParallelFor2D(size_t start_row, size_t end_row, size_t start_col,
     }
 
     case PARALLEL_INVOKER_MAX_VALUE: {
-      LOG(FATAL) << "Impossible.";
+      ABSL_LOG(FATAL) << "Impossible.";
       break;
     }
   }

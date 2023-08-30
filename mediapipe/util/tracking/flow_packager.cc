@@ -20,6 +20,7 @@
 #include <cmath>
 #include <memory>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/port/logging.h"
@@ -321,9 +322,9 @@ void FlowPackager::EncodeTrackingData(const TrackingData& tracking_data,
   const float max_vector_threshold = hypot(domain_width, domain_height) * 0.2f;
   // Warn if too much truncation.
   if (max_vector_value > max_vector_threshold * 1.5f) {
-    LOG(WARNING) << "A lot of truncation will occur during encoding. "
-                 << "Vector magnitudes are larger than 20% of the "
-                 << "frame diameter.";
+    ABSL_LOG(WARNING) << "A lot of truncation will occur during encoding. "
+                      << "Vector magnitudes are larger than 20% of the "
+                      << "frame diameter.";
   }
 
   max_vector_value =

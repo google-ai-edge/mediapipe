@@ -19,6 +19,7 @@
 #if !defined(__ANDROID__)
 #include "mediapipe/framework/port/file_helpers.h"
 #endif
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_replace.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_saved_model_generator.pb.h"
@@ -75,7 +76,7 @@ const std::string MaybeConvertSignatureToTag(
                    [](unsigned char c) { return std::toupper(c); });
     output = absl::StrReplaceAll(
         output, {{"/", "_"}, {"-", "_"}, {".", "_"}, {":", "_"}});
-    LOG(INFO) << "Renamed TAG from: " << name << " to " << output;
+    ABSL_LOG(INFO) << "Renamed TAG from: " << name << " to " << output;
     return output;
   } else {
     return name;

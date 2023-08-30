@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "Eigen/Core"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
@@ -186,7 +187,8 @@ class TimeSeriesCalculatorTest : public ::testing::Test {
 
   void InitializeGraph(const CalculatorOptions& options) {
     if (num_external_inputs_ != -1) {
-      LOG(WARNING) << "Use num_side_packets_ instead of num_external_inputs_.";
+      ABSL_LOG(WARNING)
+          << "Use num_side_packets_ instead of num_external_inputs_.";
       num_side_packets_ = num_external_inputs_;
     }
 

@@ -24,6 +24,7 @@
 #include <type_traits>
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
@@ -734,7 +735,7 @@ inline const T& Packet::Get() const {
   if (holder == nullptr) {
     // Produce a good error message.
     absl::Status status = ValidateAsType<T>();
-    LOG(FATAL) << "Packet::Get() failed: " << status.message();
+    ABSL_LOG(FATAL) << "Packet::Get() failed: " << status.message();
   }
   return holder->data();
 }

@@ -18,6 +18,7 @@
 #include <string>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -110,8 +111,8 @@ std::string DebugName(const CalculatorGraphConfig& config,
     case NodeTypeInfo::NodeType::UNKNOWN:
       /* Fall through. */ {}
   }
-  LOG(FATAL) << "Unknown NodeTypeInfo::NodeType: "
-             << NodeTypeInfo::NodeTypeToString(node_type);
+  ABSL_LOG(FATAL) << "Unknown NodeTypeInfo::NodeType: "
+                  << NodeTypeInfo::NodeTypeToString(node_type);
 }
 
 // Adds the ExecutorConfigs for predefined executors, if they are not in
@@ -160,8 +161,8 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
     case NodeTypeInfo::NodeType::UNKNOWN:
       return "Unknown Node";
   }
-  LOG(FATAL) << "Unknown NodeTypeInfo::NodeType: "
-             << static_cast<int>(node_type);
+  ABSL_LOG(FATAL) << "Unknown NodeTypeInfo::NodeType: "
+                  << static_cast<int>(node_type);
 }
 
 absl::Status NodeTypeInfo::Initialize(
@@ -694,12 +695,13 @@ absl::Status ValidatedGraphConfig::AddInputStreamsForNode(
       if (edge_info.back_edge) {
         // A back edge was specified, but its output side was already seen.
         if (!need_sorting_ptr) {
-          LOG(WARNING) << "Input Stream \"" << name
-                       << "\" for node with sorted index " << node_index
-                       << " name " << node_type_info->Contract().GetNodeName()
-                       << " is marked as a back edge, but its output stream is "
-                          "already available.  This means it was not necessary "
-                          "to mark it as a back edge.";
+          ABSL_LOG(WARNING)
+              << "Input Stream \"" << name << "\" for node with sorted index "
+              << node_index << " name "
+              << node_type_info->Contract().GetNodeName()
+              << " is marked as a back edge, but its output stream is "
+                 "already available.  This means it was not necessary "
+                 "to mark it as a back edge.";
         }
       } else {
         edge_info.upstream = iter->second;

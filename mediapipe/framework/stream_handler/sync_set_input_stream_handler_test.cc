@@ -17,6 +17,7 @@
 #include <tuple>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_framework.h"
 // TODO: Move protos in another CL after the C++ code migration.
@@ -215,7 +216,7 @@ TEST(SyncSetInputStreamHandlerTest, OrdinaryOperation) {
 
   RandomEngine rng(testing::UnitTest::GetInstance()->random_seed());
   for (int iter = 0; iter < 1000; ++iter) {
-    LOG(INFO) << "Starting command shuffling iteration " << iter;
+    ABSL_LOG(INFO) << "Starting command shuffling iteration " << iter;
 
     // Merge the commands for each sync set together into a serial list.
     // This is done by randomly choosing which list to grab from next.

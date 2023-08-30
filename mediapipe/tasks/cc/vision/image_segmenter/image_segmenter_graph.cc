@@ -19,6 +19,7 @@ limitations under the License.
 #include <type_traits>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
@@ -184,7 +185,7 @@ absl::Status ConfigureTensorsToSegmentationCalculator(
     }
   }
   if (!found_activation_in_metadata) {
-    LOG(WARNING)
+    ABSL_LOG(WARNING)
         << "No activation type is found in model metadata. Use NONE for "
            "ImageSegmenterGraph.";
   }
