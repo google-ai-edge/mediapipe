@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
+#import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 
 #include "mediapipe/tasks/cc/core/mediapipe_builtin_op_resolver.h"
@@ -28,6 +29,7 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 @interface MPPTaskRunner () {
   // Cpp Task Runner
   std::unique_ptr<TaskRunnerCpp> _cppTaskRunner;
+  BOOL _initializedWithPacketsCallback;
 }
 @end
 
@@ -46,6 +48,7 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
       return nil;
     }
     _cppTaskRunner = std::move(taskRunnerResult.value());
+    _initializedWithPacketsCallback = packetsCallback ? YES : NO;
   }
   return self;
 }
@@ -59,7 +62,20 @@ using TaskRunnerCpp = ::mediapipe::tasks::core::TaskRunner;
 }
 
 - (BOOL)sendPacketMap:(const PacketMap &)packetMap error:(NSError **)error {
+  if (!_initializedWithPacketsCallback) {
+    [MPPCommonUtils
+        createCustomError:error
+                 withCode:MPPTasksErrorCodeFailedPreconditionError
+              description:[NSString
+                              stringWithFormat:@"This method can only be called if the task is "
+                                               @"running in a stream mode and an object of a class "
+                                               @"is provided as the delegate in the task options "
+                                               @"to receive the results asynchronously."]];
+    return NO;
+  }
+
   absl::Status sendStatus = _cppTaskRunner->Send(packetMap);
+
   return [MPPCommonUtils checkCppError:sendStatus toError:error];
 }
 

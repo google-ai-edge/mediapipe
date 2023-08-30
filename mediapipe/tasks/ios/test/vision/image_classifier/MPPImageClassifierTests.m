@@ -439,7 +439,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
 #pragma mark Running Mode Tests
 
-- (void)testCreateImageClassifierFailsWithDelegateInNonLiveStreamMode {
+- (void)testCreateImageClassifierSucceedsWithDelegateInNonLiveStreamMode {
   MPPRunningMode runningModesToTest[] = {MPPRunningModeImage, MPPRunningModeVideo};
   for (int i = 0; i < sizeof(runningModesToTest) / sizeof(runningModesToTest[0]); i++) {
     MPPImageClassifierOptions *options = [self imageClassifierOptionsWithModelName:kFloatModelName];
@@ -447,36 +447,20 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
     options.runningMode = runningModesToTest[i];
     options.imageClassifierLiveStreamDelegate = self;
 
-    [self
-        assertCreateImageClassifierWithOptions:options
-                        failsWithExpectedError:
-                            [NSError
-                                errorWithDomain:kExpectedErrorDomain
-                                           code:MPPTasksErrorCodeInvalidArgumentError
-                                       userInfo:@{
-                                         NSLocalizedDescriptionKey :
-                                             @"The vision task is in image or video mode. The "
-                                             @"delegate must not be set in the task's options."
-                                       }]];
+    MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options
+                                                                                error:nil];
+    XCTAssertNotNil(imageClassifier);
   }
 }
 
-- (void)testCreateImageClassifierFailsWithMissingDelegateInLiveStreamMode {
+- (void)testCreateImageClassifieSucceedsWithMissingDelegateInLiveStreamMode {
   MPPImageClassifierOptions *options = [self imageClassifierOptionsWithModelName:kFloatModelName];
 
   options.runningMode = MPPRunningModeLiveStream;
 
-  [self assertCreateImageClassifierWithOptions:options
-                        failsWithExpectedError:
-                            [NSError errorWithDomain:kExpectedErrorDomain
-                                                code:MPPTasksErrorCodeInvalidArgumentError
-                                            userInfo:@{
-                                              NSLocalizedDescriptionKey :
-                                                  @"The vision task is in live stream mode. An "
-                                                  @"object must be set as the delegate of the task "
-                                                  @"in its options to ensure asynchronous delivery "
-                                                  @"of results."
-                                            }]];
+  MPPImageClassifier *imageClassifier = [[MPPImageClassifier alloc] initWithOptions:options
+                                                                              error:nil];
+  XCTAssertNotNil(imageClassifier);
 }
 
 - (void)testClassifyFailsWithCallingWrongApiInImageMode {
@@ -612,6 +596,30 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                        [MPPImageClassifierTests
                            expectedResultCategoriesForClassifyBurgerImageWithFloatModel]];
   }
+}
+
+- (void)testClassifyFailsWithMissingDelegateInLiveStreamMode {
+  MPPImageClassifierOptions *options = [self imageClassifierOptionsWithModelName:kFloatModelName];
+  options.runningMode = MPPRunningModeLiveStream;
+
+  MPPImageClassifier *imageClassifier = [self imageClassifierWithOptionsSucceeds:options];
+
+  NSError *expectedError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeFailedPreconditionError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey :
+                            @"This method can only be called if the task is running in a stream "
+                            @"mode and an object of a class is provided as the delegate in the "
+                            @"task options to receive the results asynchronously."
+                      }];
+
+  MPPImage *image = [self imageWithFileInfo:kBurgerImage];
+
+  NSError *error = nil;
+  XCTAssertFalse([imageClassifier classifyAsyncImage:image timestampInMilliseconds:1 error:&error]);
+
+  AssertEqualErrors(error, expectedError);
 }
 
 - (void)testClassifyWithOutOfOrderTimestampsAndLiveStreamModeFails {

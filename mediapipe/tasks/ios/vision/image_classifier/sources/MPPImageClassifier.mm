@@ -64,12 +64,7 @@ static const int kMicroSecondsPerMilliSecond = 1000;
 @implementation MPPImageClassifier
 
 - (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
-  if (![self.imageClassifierLiveStreamDelegate
-          respondsToSelector:@selector
-          (imageClassifier:didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
-    return;
-  }
-
+ 
   NSError *callbackError = nil;
   if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
     dispatch_async(_callbackQueue, ^{
