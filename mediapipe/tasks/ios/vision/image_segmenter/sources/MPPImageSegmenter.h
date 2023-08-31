@@ -103,7 +103,7 @@ NS_SWIFT_NAME(ImageSegmenter)
  * The lifetime of the returned masks is only guaranteed for the duration of the block.
  */
 - (void)segmentImage:(MPPImage *)image
-    withCompletionHandler:((void ^)(MPPImageSegmenterResult *_Nullable result,
+    withCompletionHandler:(void (^)(MPPImageSegmenterResult *_Nullable result,
                                     NSError *_Nullable error))completionHandler
     NS_SWIFT_NAME(segment(image:completion:));
 
@@ -163,7 +163,7 @@ NS_SWIFT_NAME(ImageSegmenter)
  */
 - (void)segmentVideoFrame:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-      withCompletionHandler:((void ^)(MPPImageSegmenterResult *_Nullable result,
+      withCompletionHandler:(void (^)(MPPImageSegmenterResult *_Nullable result,
                                       NSError *_Nullable error))completionHandler
     NS_SWIFT_NAME(segment(videoFrame:timestampInMilliseconds:completion:));
 
