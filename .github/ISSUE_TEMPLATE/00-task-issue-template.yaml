@@ -40,7 +40,7 @@ body:
       label: Programming Language and version (e.g. C++, Python, Java)
     validations:
       required: true
-  - type: input
+  - type: markdown
     id: current_model
     attributes:
       label: Describe the actual behavior
