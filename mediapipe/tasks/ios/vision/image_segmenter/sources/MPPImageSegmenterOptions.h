@@ -33,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 NS_SWIFT_NAME(ObjectDetectorLiveStreamDelegate)
 @protocol MPPImageSegmenterLiveStreamDelegate <NSObject>
 
-@required
+@optional
 
 /**
  * This method notifies a delegate that the results of asynchronous segmentation of
