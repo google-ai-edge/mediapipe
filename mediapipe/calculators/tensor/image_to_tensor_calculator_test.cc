@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/substitute.h"
@@ -205,7 +206,7 @@ mediapipe::ImageFormat::Format GetImageFormat(int image_channels) {
   } else if (image_channels == 1) {
     return ImageFormat::GRAY8;
   }
-  CHECK(false) << "Unsupported input image channles: " << image_channels;
+  ABSL_CHECK(false) << "Unsupported input image channles: " << image_channels;
 }
 
 Packet MakeImageFramePacket(cv::Mat input) {

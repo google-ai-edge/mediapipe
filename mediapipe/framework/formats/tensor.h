@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/absl_check.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/formats/tensor/internal.h"
 #include "mediapipe/framework/port.h"
@@ -204,12 +205,12 @@ class Tensor {
     }
     int file_descriptor() const { return file_descriptor_; }
     void SetReadingFinishedFunc(FinishingFunc&& func) {
-      CHECK(ahwb_written_)
+      ABSL_CHECK(ahwb_written_)
           << "AHWB write view can't accept 'reading finished callback'";
       *ahwb_written_ = std::move(func);
     }
     void SetWritingFinishedFD(int fd, FinishingFunc func = nullptr) {
-      CHECK(fence_fd_)
+      ABSL_CHECK(fence_fd_)
           << "AHWB read view can't accept 'writing finished file descriptor'";
       *fence_fd_ = fd;
       *ahwb_written_ = std::move(func);

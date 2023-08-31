@@ -14,6 +14,7 @@
 
 #include "mediapipe/util/tracking/tracking_visualization_utilities.h"
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
@@ -25,7 +26,7 @@ namespace mediapipe {
 void RenderState(const MotionBoxState& box_state, bool print_stats,
                  cv::Mat* frame) {
 #ifndef NO_RENDERING
-  CHECK(frame != nullptr);
+  ABSL_CHECK(frame != nullptr);
 
   const int frame_width = frame->cols;
   const int frame_height = frame->rows;
@@ -137,7 +138,7 @@ void RenderState(const MotionBoxState& box_state, bool print_stats,
 void RenderInternalState(const MotionBoxInternalState& internal,
                          cv::Mat* frame) {
 #ifndef NO_RENDERING
-  CHECK(frame != nullptr);
+  ABSL_CHECK(frame != nullptr);
 
   const int num_vectors = internal.pos_x_size();
 
@@ -177,7 +178,7 @@ void RenderInternalState(const MotionBoxInternalState& internal,
 void RenderTrackingData(const TrackingData& data, cv::Mat* mat,
                         bool antialiasing) {
 #ifndef NO_RENDERING
-  CHECK(mat != nullptr);
+  ABSL_CHECK(mat != nullptr);
 
   MotionVectorFrame mvf;
   MotionVectorFrameFromTrackingData(data, &mvf);
@@ -206,7 +207,7 @@ void RenderTrackingData(const TrackingData& data, cv::Mat* mat,
 
 void RenderBox(const TimedBoxProto& box_proto, cv::Mat* mat) {
 #ifndef NO_RENDERING
-  CHECK(mat != nullptr);
+  ABSL_CHECK(mat != nullptr);
 
   TimedBox box = TimedBox::FromProto(box_proto);
   std::array<Vector2_f, 4> corners = box.Corners(mat->cols, mat->rows);

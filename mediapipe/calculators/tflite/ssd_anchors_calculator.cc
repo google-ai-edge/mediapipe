@@ -16,6 +16,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tflite/ssd_anchors_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -275,11 +276,11 @@ absl::Status SsdAnchorsCalculator::GenerateAnchors(
     if (options.strides_size()) {
       ABSL_LOG(ERROR) << "Found feature map shapes. Strides will be ignored.";
     }
-    CHECK_EQ(options.feature_map_height_size(), kNumLayers);
-    CHECK_EQ(options.feature_map_height_size(),
-             options.feature_map_width_size());
+    ABSL_CHECK_EQ(options.feature_map_height_size(), kNumLayers);
+    ABSL_CHECK_EQ(options.feature_map_height_size(),
+                  options.feature_map_width_size());
   } else {
-    CHECK_EQ(options.strides_size(), kNumLayers);
+    ABSL_CHECK_EQ(options.strides_size(), kNumLayers);
   }
 
   if (options.multiscale_anchor_generation()) {

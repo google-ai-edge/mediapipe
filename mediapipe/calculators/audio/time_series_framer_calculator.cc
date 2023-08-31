@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "Eigen/Core"
+#include "absl/log/absl_check.h"
 #include "audio/dsp/window_functions.h"
 #include "mediapipe/calculators/audio/time_series_framer_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -104,7 +105,7 @@ class TimeSeriesFramerCalculator : public CalculatorBase {
     // All numbers are in input samples.
     const int64_t current_output_frame_start = static_cast<int64_t>(
         round(cumulative_output_frames_ * average_frame_step_samples_));
-    CHECK_EQ(current_output_frame_start, cumulative_completed_samples_);
+    ABSL_CHECK_EQ(current_output_frame_start, cumulative_completed_samples_);
     const int64_t next_output_frame_start = static_cast<int64_t>(
         round((cumulative_output_frames_ + 1) * average_frame_step_samples_));
     return next_output_frame_start - current_output_frame_start;

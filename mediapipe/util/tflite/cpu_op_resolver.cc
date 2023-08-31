@@ -14,6 +14,7 @@
 
 #include "mediapipe/util/tflite/cpu_op_resolver.h"
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/util/tflite/operations/landmarks_to_transform_matrix.h"
 #include "mediapipe/util/tflite/operations/max_pool_argmax.h"
@@ -27,7 +28,7 @@
 namespace mediapipe {
 
 void MediaPipe_RegisterTfLiteOpResolver(tflite::MutableOpResolver *resolver) {
-  CHECK(resolver != nullptr);
+  ABSL_CHECK(resolver != nullptr);
   resolver->AddCustom("MaxPoolingWithArgmax2D",
                       tflite_operations::RegisterMaxPoolingWithArgmax2D());
   resolver->AddCustom("MaxUnpooling2D",

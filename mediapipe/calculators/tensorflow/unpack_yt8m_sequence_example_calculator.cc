@@ -14,6 +14,7 @@
 
 #include <iterator>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensorflow/lapped_tensor_buffer_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -47,7 +48,7 @@ std::string GetQuantizedFeature(
                                .Get(index)
                                .bytes_list()
                                .value();
-  CHECK_EQ(1, bytes_list.size());
+  ABSL_CHECK_EQ(1, bytes_list.size());
   return bytes_list.Get(0);
 }
 }  // namespace

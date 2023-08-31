@@ -18,6 +18,7 @@
 
 #include <memory>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -104,7 +105,7 @@ class CalculatorNodeTest : public ::testing::Test {
   void ReadyForOpen(int* count) { ++(*count); }
 
   void Notification(CalculatorContext* cc, int* count) {
-    CHECK(cc);
+    ABSL_CHECK(cc);
     cc_ = cc;
     ++(*count);
   }

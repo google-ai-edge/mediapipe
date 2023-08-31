@@ -21,6 +21,7 @@ limitations under the License.
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -138,8 +139,8 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
 
 HandDetectorResult GetExpectedHandDetectorResult(absl::string_view file_name) {
   HandDetectorResult result;
-  CHECK_OK(GetTextProto(file::JoinPath("./", kTestDataDirectory, file_name),
-                        &result, Defaults()))
+  ABSL_CHECK_OK(GetTextProto(
+      file::JoinPath("./", kTestDataDirectory, file_name), &result, Defaults()))
       << "Expected hand detector result does not exist.";
   return result;
 }

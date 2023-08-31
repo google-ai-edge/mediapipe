@@ -24,9 +24,9 @@
 #include <limits>
 #include <type_traits>
 
+#include "absl/log/absl_check.h"
 #include "absl/utility/utility.h"
 #include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 
 template <typename T>
 class Vector2;
@@ -78,13 +78,13 @@ class BasicVector {
   void Clear() { AsD() = D(); }
 
   T& operator[](int b) {
-    DCHECK_GE(b, 0);
-    DCHECK_LT(b, SIZE);
+    ABSL_DCHECK_GE(b, 0);
+    ABSL_DCHECK_LT(b, SIZE);
     return static_cast<D&>(*this).Data()[b];
   }
   T operator[](int b) const {
-    DCHECK_GE(b, 0);
-    DCHECK_LT(b, SIZE);
+    ABSL_DCHECK_GE(b, 0);
+    ABSL_DCHECK_LT(b, SIZE);
     return static_cast<const D&>(*this).Data()[b];
   }
 

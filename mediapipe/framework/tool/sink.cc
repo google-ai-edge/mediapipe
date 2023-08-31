@@ -27,8 +27,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
-#include "absl/log/check.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -75,8 +75,8 @@ REGISTER_CALCULATOR(MediaPipeInternalSidePacketToPacketStreamCalculator);
 void AddVectorSink(const std::string& stream_name,  //
                    CalculatorGraphConfig* config,   //
                    std::vector<Packet>* dumped_data) {
-  CHECK(config);
-  CHECK(dumped_data);
+  ABSL_CHECK(config);
+  ABSL_CHECK(dumped_data);
 
   std::string input_side_packet_name;
   tool::AddCallbackCalculator(stream_name, config, &input_side_packet_name,
@@ -95,15 +95,15 @@ void AddVectorSink(const std::string& stream_name,  //
   // Up to 64-bit pointer in hex (16 characters) and an optional "0x" prepended.
   char address[19];
   int written = snprintf(address, sizeof(address), "%p", dumped_data);
-  CHECK(written > 0 && written < sizeof(address));
+  ABSL_CHECK(written > 0 && written < sizeof(address));
   options->set_pointer(address);
 }
 
 void AddPostStreamPacketSink(const std::string& stream_name,
                              CalculatorGraphConfig* config,
                              Packet* post_stream_packet) {
-  CHECK(config);
-  CHECK(post_stream_packet);
+  ABSL_CHECK(config);
+  ABSL_CHECK(post_stream_packet);
 
   std::string input_side_packet_name;
   tool::AddCallbackCalculator(stream_name, config, &input_side_packet_name,
@@ -121,14 +121,14 @@ void AddPostStreamPacketSink(const std::string& stream_name,
   // Up to 64-bit pointer in hex (16 characters) and an optional "0x" prepended.
   char address[19];
   int written = snprintf(address, sizeof(address), "%p", post_stream_packet);
-  CHECK(written > 0 && written < sizeof(address));
+  ABSL_CHECK(written > 0 && written < sizeof(address));
   options->set_pointer(address);
 }
 
 void AddSidePacketSink(const std::string& side_packet_name,
                        CalculatorGraphConfig* config, Packet* dumped_packet) {
-  CHECK(config);
-  CHECK(dumped_packet);
+  ABSL_CHECK(config);
+  ABSL_CHECK(dumped_packet);
 
   CalculatorGraphConfig::Node* conversion_node = config->add_node();
   const std::string node_name = GetUnusedNodeName(
@@ -150,8 +150,8 @@ void AddCallbackCalculator(const std::string& stream_name,
                            CalculatorGraphConfig* config,
                            std::string* callback_side_packet_name,
                            bool use_std_function) {
-  CHECK(config);
-  CHECK(callback_side_packet_name);
+  ABSL_CHECK(config);
+  ABSL_CHECK(callback_side_packet_name);
   CalculatorGraphConfig::Node* sink_node = config->add_node();
   sink_node->set_name(GetUnusedNodeName(
       *config,
@@ -187,8 +187,8 @@ void AddMultiStreamCallback(
     std::function<void(const std::vector<Packet>&)> callback,
     CalculatorGraphConfig* config, std::map<std::string, Packet>* side_packets,
     bool observe_timestamp_bounds) {
-  CHECK(config);
-  CHECK(side_packets);
+  ABSL_CHECK(config);
+  ABSL_CHECK(side_packets);
   CalculatorGraphConfig::Node* sink_node = config->add_node();
   const std::string name = GetUnusedNodeName(
       *config, absl::StrCat("multi_callback_", absl::StrJoin(streams, "_")));
@@ -222,8 +222,8 @@ void AddCallbackWithHeaderCalculator(const std::string& stream_name,
                                      CalculatorGraphConfig* config,
                                      std::string* callback_side_packet_name,
                                      bool use_std_function) {
-  CHECK(config);
-  CHECK(callback_side_packet_name);
+  ABSL_CHECK(config);
+  ABSL_CHECK(callback_side_packet_name);
   CalculatorGraphConfig::Node* sink_node = config->add_node();
   sink_node->set_name(GetUnusedNodeName(
       *config,
@@ -331,7 +331,7 @@ absl::Status CallbackWithHeaderCalculator::GetContract(CalculatorContract* cc) {
   cc->Inputs().Tag("HEADER").SetAny();
 
   if (cc->InputSidePackets().UsesTags()) {
-    CHECK(cc->InputSidePackets().HasTag("CALLBACK"));
+    ABSL_CHECK(cc->InputSidePackets().HasTag("CALLBACK"));
     cc->InputSidePackets()
         .Tag("CALLBACK")
         .Set<std::function<void(const Packet&, const Packet&)>>();

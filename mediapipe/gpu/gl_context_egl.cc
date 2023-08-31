@@ -14,8 +14,8 @@
 
 #include <utility>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
-#include "absl/log/check.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -115,7 +115,7 @@ GlContext::StatusOrGlContext GlContext::Create(EGLContext share_context,
 
 absl::Status GlContext::CreateContextInternal(EGLContext share_context,
                                               int gl_version) {
-  CHECK(gl_version == 2 || gl_version == 3);
+  ABSL_CHECK(gl_version == 2 || gl_version == 3);
 
   const EGLint config_attr[] = {
       // clang-format off

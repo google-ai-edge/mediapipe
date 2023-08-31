@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_inference_calculator.pb.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_session_from_frozen_graph_generator.pb.h"
@@ -119,7 +120,7 @@ class TensorflowInferenceCalculatorTest : public ::testing::Test {
   // Create tensor from Vector and add as a Packet to the provided tag as input.
   void AddVectorToInputsAsPacket(const std::vector<Packet>& packets,
                                  const std::string& tag) {
-    CHECK(!packets.empty())
+    ABSL_CHECK(!packets.empty())
         << "Please specify at least some data in the packet";
     auto packets_ptr = absl::make_unique<std::vector<Packet>>(packets);
     runner_->MutableInputs()->Tag(tag).packets.push_back(

@@ -122,6 +122,7 @@ cc_library(
         "//mediapipe/framework/tool:name_util",
         "//mediapipe/framework/tool:tag_map",
         "//mediapipe/framework/tool:validate_name",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
@@ -257,6 +258,7 @@ cc_test(
         "//mediapipe/framework/tool:simulation_clock_executor",
         "//mediapipe/framework/tool:status_util",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/time",
     ],
 )

@@ -17,6 +17,7 @@
 #include <fstream>
 #include <list>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/substitute.h"
 #include "absl/synchronization/mutex.h"
@@ -158,7 +159,7 @@ void GraphProfiler::Initialize(
     const ValidatedGraphConfig& validated_graph_config) {
   absl::WriterMutexLock lock(&profiler_mutex_);
   validated_graph_ = &validated_graph_config;
-  CHECK(!is_initialized_)
+  ABSL_CHECK(!is_initialized_)
       << "Cannot initialize the profiler for the same graph multiple times.";
   profiler_config_ = validated_graph_config.Config().profiler_config();
   int64 interval_size_usec = profiler_config_.histogram_interval_size_usec();
@@ -190,7 +191,7 @@ void GraphProfiler::Initialize(
     }
 
     auto iter = calculator_profiles_.insert({node_name, profile});
-    CHECK(iter.second) << absl::Substitute(
+    ABSL_CHECK(iter.second) << absl::Substitute(
         "Calculator \"$0\" has already been added.", node_name);
   }
   profile_builder_ = std::make_unique<GraphProfileBuilder>(this);
@@ -201,7 +202,7 @@ void GraphProfiler::Initialize(
 
 void GraphProfiler::SetClock(const std::shared_ptr<mediapipe::Clock>& clock) {
   absl::WriterMutexLock lock(&profiler_mutex_);
-  CHECK(clock) << "GraphProfiler::SetClock() is called with a nullptr.";
+  ABSL_CHECK(clock) << "GraphProfiler::SetClock() is called with a nullptr.";
   clock_ = clock;
 }
 
@@ -386,7 +387,7 @@ std::set<int> GraphProfiler::GetBackEdgeIds(
         tool::ParseTagIndex(input_stream_info.tag_index(), &tag, &index))
         << absl::Substitute("Cannot parse TAG or index for the backedge \"$0\"",
                             input_stream_info.tag_index());
-    CHECK(0 <= index && index < input_tag_map.NumEntries(tag))
+    ABSL_CHECK(0 <= index && index < input_tag_map.NumEntries(tag))
         << absl::Substitute(
                "The input_stream_info for tag \"$0\" (index "
                "$1) does not match any input_stream.",
@@ -445,7 +446,7 @@ void GraphProfiler::SetOpenRuntime(const CalculatorContext& calculator_context,
   const std::string& node_name = calculator_context.NodeName();
   int64 time_usec = end_time_usec - start_time_usec;
   auto profile_iter = calculator_profiles_.find(node_name);
-  CHECK(profile_iter != calculator_profiles_.end()) << absl::Substitute(
+  ABSL_CHECK(profile_iter != calculator_profiles_.end()) << absl::Substitute(
       "Calculator \"$0\" has not been added during initialization.",
       calculator_context.NodeName());
   CalculatorProfile* calculator_profile = &profile_iter->second;
@@ -467,7 +468,7 @@ void GraphProfiler::SetCloseRuntime(const CalculatorContext& calculator_context,
   const std::string& node_name = calculator_context.NodeName();
   int64 time_usec = end_time_usec - start_time_usec;
   auto profile_iter = calculator_profiles_.find(node_name);
-  CHECK(profile_iter != calculator_profiles_.end()) << absl::Substitute(
+  ABSL_CHECK(profile_iter != calculator_profiles_.end()) << absl::Substitute(
       "Calculator \"$0\" has not been added during initialization.",
       calculator_context.NodeName());
   CalculatorProfile* calculator_profile = &profile_iter->second;
@@ -545,7 +546,7 @@ void GraphProfiler::AddProcessSample(
 
   const std::string& node_name = calculator_context.NodeName();
   auto profile_iter = calculator_profiles_.find(node_name);
-  CHECK(profile_iter != calculator_profiles_.end()) << absl::Substitute(
+  ABSL_CHECK(profile_iter != calculator_profiles_.end()) << absl::Substitute(
       "Calculator \"$0\" has not been added during initialization.",
       calculator_context.NodeName());
   CalculatorProfile* calculator_profile = &profile_iter->second;

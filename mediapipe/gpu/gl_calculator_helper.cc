@@ -14,6 +14,7 @@
 
 #include "mediapipe/gpu/gl_calculator_helper.h"
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -37,7 +38,7 @@ void GlCalculatorHelper::InitializeInternal(CalculatorContext* cc,
 }
 
 absl::Status GlCalculatorHelper::Open(CalculatorContext* cc) {
-  CHECK(cc);
+  ABSL_CHECK(cc);
   auto gpu_service = cc->Service(kGpuService);
   RET_CHECK(gpu_service.IsAvailable())
       << "GPU service not available. Did you forget to call "
@@ -72,7 +73,7 @@ absl::Status GlCalculatorHelper::SetupInputSidePackets(
     PacketTypeSet* input_side_packets) {
   auto cc = LegacyCalculatorSupport::Scoped<CalculatorContract>::current();
   if (cc) {
-    CHECK_EQ(input_side_packets, &cc->InputSidePackets());
+    ABSL_CHECK_EQ(input_side_packets, &cc->InputSidePackets());
     return UpdateContract(cc);
   }
 
@@ -184,9 +185,9 @@ GpuBuffer GlCalculatorHelper::GpuBufferCopyingImageFrame(
     const ImageFrame& image_frame) {
 #if MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   auto maybe_buffer = CreateCVPixelBufferCopyingImageFrame(image_frame);
-  // Converts absl::StatusOr to absl::Status since CHECK_OK() currently only
-  // deals with absl::Status in MediaPipe OSS.
-  CHECK_OK(maybe_buffer.status());
+  // Converts absl::StatusOr to absl::Status since ABSL_CHECK_OK() currently
+  // only deals with absl::Status in MediaPipe OSS.
+  ABSL_CHECK_OK(maybe_buffer.status());
   return GpuBuffer(std::move(maybe_buffer).value());
 #else
   return GpuBuffer(GlTextureBuffer::Create(image_frame));
@@ -195,8 +196,8 @@ GpuBuffer GlCalculatorHelper::GpuBufferCopyingImageFrame(
 
 void GlCalculatorHelper::GetGpuBufferDimensions(const GpuBuffer& pixel_buffer,
                                                 int* width, int* height) {
-  CHECK(width);
-  CHECK(height);
+  ABSL_CHECK(width);
+  ABSL_CHECK(height);
   *width = pixel_buffer.width();
   *height = pixel_buffer.height();
 }

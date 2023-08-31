@@ -22,6 +22,7 @@
 
 #include "Eigen/Core"
 #include "absl/base/internal/endian.h"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
@@ -228,8 +229,8 @@ BasePacketProcessor::~BasePacketProcessor() { Close(); }
 bool BasePacketProcessor::HasData() { return !buffer_.empty(); }
 
 absl::Status BasePacketProcessor::GetData(Packet* packet) {
-  CHECK(packet);
-  CHECK(!buffer_.empty());
+  ABSL_CHECK(packet);
+  ABSL_CHECK(!buffer_.empty());
   *packet = buffer_.front();
   buffer_.pop_front();
 
@@ -336,7 +337,7 @@ inline float PcmEncodedSampleInt32ToFloat(const char* data) {
 
 AudioPacketProcessor::AudioPacketProcessor(const AudioStreamOptions& options)
     : sample_time_base_{0, 0}, options_(options) {
-  DCHECK(absl::little_endian::IsLittleEndian());
+  ABSL_DCHECK(absl::little_endian::IsLittleEndian());
 }
 
 absl::Status AudioPacketProcessor::Open(int id, AVStream* stream) {
@@ -350,7 +351,7 @@ absl::Status AudioPacketProcessor::Open(int id, AVStream* stream) {
   if (avcodec_open2(avcodec_ctx_, avcodec_, &avcodec_opts_) < 0) {
     return UnknownError("avcodec_open() failed.");
   }
-  CHECK(avcodec_ctx_->codec);
+  ABSL_CHECK(avcodec_ctx_->codec);
 
   source_time_base_ = stream->time_base;
   source_frame_rate_ = stream->r_frame_rate;
@@ -412,7 +413,7 @@ int64_t AudioPacketProcessor::SampleNumberToMicroseconds(
 }
 
 absl::Status AudioPacketProcessor::ProcessPacket(AVPacket* packet) {
-  CHECK(packet);
+  ABSL_CHECK(packet);
   if (flushed_) {
     return UnknownError(
         "ProcessPacket was called, but AudioPacketProcessor is already "
@@ -578,7 +579,7 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
 }
 
 absl::Status AudioPacketProcessor::FillHeader(TimeSeriesHeader* header) const {
-  CHECK(header);
+  ABSL_CHECK(header);
   header->set_sample_rate(sample_rate_);
   header->set_num_channels(num_channels_);
   return absl::OkStatus();
@@ -658,14 +659,14 @@ absl::Status AudioDecoder::Initialize(
 
           MP_RETURN_IF_ERROR(processor->Open(stream_id, stream));
           audio_processor_.emplace(stream_id, std::move(processor));
-          CHECK(InsertIfNotPresent(
+          ABSL_CHECK(InsertIfNotPresent(
               &stream_index_to_stream_id_,
               options.audio_stream(*options_index_ptr).stream_index(),
               stream_id));
-          CHECK(InsertIfNotPresent(&stream_id_to_audio_options_index_,
-                                   stream_id, *options_index_ptr));
-          CHECK(InsertIfNotPresent(&audio_options_index_to_stream_id,
-                                   *options_index_ptr, stream_id));
+          ABSL_CHECK(InsertIfNotPresent(&stream_id_to_audio_options_index_,
+                                        stream_id, *options_index_ptr));
+          ABSL_CHECK(InsertIfNotPresent(&audio_options_index_to_stream_id,
+                                        *options_index_ptr, stream_id));
         }
         ++current_audio_index;
         break;
@@ -775,8 +776,8 @@ absl::Status AudioDecoder::ProcessPacket() {
   av_packet->data = nullptr;
   int ret = av_read_frame(avformat_ctx_, av_packet.get());
   if (ret >= 0) {
-    CHECK(av_packet->data) << "AVPacket does not include any data but "
-                              "av_read_frame was successful.";
+    ABSL_CHECK(av_packet->data) << "AVPacket does not include any data but "
+                                   "av_read_frame was successful.";
     const int stream_id = av_packet->stream_index;
     auto audio_iterator = audio_processor_.find(stream_id);
     if (audio_iterator != audio_processor_.end()) {

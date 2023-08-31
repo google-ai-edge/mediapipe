@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_context_manager.h"
@@ -104,7 +105,7 @@ class ImmediateInputStreamHandlerTest : public ::testing::Test {
   void NotifyNoOp() {}
 
   void Schedule(CalculatorContext* cc) {
-    CHECK(cc);
+    ABSL_CHECK(cc);
     cc_ = cc;
   }
 
@@ -132,7 +133,7 @@ class ImmediateInputStreamHandlerTest : public ::testing::Test {
   }
 
   const InputStream& Input(const CollectionItemId& id) {
-    CHECK(cc_);
+    ABSL_CHECK(cc_);
     return cc_->Inputs().Get(id);
   }
 

@@ -14,6 +14,7 @@
 
 #include "mediapipe/framework/output_stream_shard.h"
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -23,7 +24,7 @@ namespace mediapipe {
 OutputStreamShard::OutputStreamShard() : closed_(false) {}
 
 void OutputStreamShard::SetSpec(OutputStreamSpec* output_stream_spec) {
-  CHECK(output_stream_spec);
+  ABSL_CHECK(output_stream_spec);
   output_stream_spec_ = output_stream_spec;
 }
 

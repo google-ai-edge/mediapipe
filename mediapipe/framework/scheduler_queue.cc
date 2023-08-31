@@ -18,6 +18,7 @@
 #include <queue>
 #include <utility>
 
+#include "absl/log/absl_check.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_node.h"
 #include "mediapipe/framework/executor.h"
@@ -36,8 +37,8 @@ namespace internal {
 
 SchedulerQueue::Item::Item(CalculatorNode* node, CalculatorContext* cc)
     : node_(node), cc_(cc) {
-  CHECK(node);
-  CHECK(cc);
+  ABSL_CHECK(node);
+  ABSL_CHECK(cc);
   is_source_ = node->IsSource();
   id_ = node->Id();
   if (is_source_) {
@@ -48,7 +49,7 @@ SchedulerQueue::Item::Item(CalculatorNode* node, CalculatorContext* cc)
 
 SchedulerQueue::Item::Item(CalculatorNode* node)
     : node_(node), cc_(nullptr), is_open_node_(true) {
-  CHECK(node);
+  ABSL_CHECK(node);
   is_source_ = node->IsSource();
   id_ = node->Id();
   if (is_source_) {
@@ -104,7 +105,7 @@ bool SchedulerQueue::IsIdle() {
 void SchedulerQueue::SetRunning(bool running) {
   absl::MutexLock lock(&mutex_);
   running_count_ += running ? 1 : -1;
-  DCHECK_LE(running_count_, 1);
+  ABSL_DCHECK_LE(running_count_, 1);
 }
 
 void SchedulerQueue::AddNode(CalculatorNode* node, CalculatorContext* cc) {
@@ -117,7 +118,7 @@ void SchedulerQueue::AddNode(CalculatorNode* node, CalculatorContext* cc) {
     // Only happens when the framework tries to schedule an unthrottled source
     // node while it's running. For non-source nodes, if a calculator context is
     // prepared, it is committed to be scheduled.
-    CHECK(node->IsSource()) << node->DebugName();
+    ABSL_CHECK(node->IsSource()) << node->DebugName();
     return;
   }
   AddItemToQueue(Item(node, cc));
@@ -192,15 +193,16 @@ void SchedulerQueue::RunNextTask() {
   {
     absl::MutexLock lock(&mutex_);
 
-    CHECK(!queue_.empty()) << "Called RunNextTask when the queue is empty. "
-                              "This should not happen.";
+    ABSL_CHECK(!queue_.empty())
+        << "Called RunNextTask when the queue is empty. "
+           "This should not happen.";
 
     node = queue_.top().Node();
     calculator_context = queue_.top().Context();
     is_open_node = queue_.top().IsOpenNode();
     queue_.pop();
 
-    CHECK(!node->Closed())
+    ABSL_CHECK(!node->Closed())
         << "Scheduled a node that was closed. This should not happen.";
   }
 
@@ -211,7 +213,7 @@ void SchedulerQueue::RunNextTask() {
   // do it here to ensure all executors are covered.
   AUTORELEASEPOOL {
     if (is_open_node) {
-      DCHECK(!calculator_context);
+      ABSL_DCHECK(!calculator_context);
       OpenCalculatorNode(node);
     } else {
       RunCalculatorNode(node, calculator_context);
@@ -221,7 +223,7 @@ void SchedulerQueue::RunNextTask() {
   bool is_idle;
   {
     absl::MutexLock lock(&mutex_);
-    DCHECK_GT(num_pending_tasks_, 0);
+    ABSL_DCHECK_GT(num_pending_tasks_, 0);
     --num_pending_tasks_;
     is_idle = IsIdle();
   }
@@ -266,8 +268,8 @@ void SchedulerQueue::RunCalculatorNode(CalculatorNode* node,
         // that all sources will be closed and no further sources should be
         // scheduled. The graph will be terminated as soon as its scheduler
         // queue becomes empty.
-        CHECK(!node->IsSource());  // ProcessNode takes care of StatusStop()
-                                   // from sources.
+        ABSL_CHECK(!node->IsSource());  // ProcessNode takes care of
+                                        // StatusStop() from sources.
         shared_->stopping = true;
       } else {
         // If we have an error in this calculator.
@@ -299,8 +301,8 @@ void SchedulerQueue::CleanupAfterRun() {
   {
     absl::MutexLock lock(&mutex_);
     was_idle = IsIdle();
-    CHECK_EQ(num_pending_tasks_, 0);
-    CHECK_EQ(num_tasks_to_add_, queue_.size());
+    ABSL_CHECK_EQ(num_pending_tasks_, 0);
+    ABSL_CHECK_EQ(num_tasks_to_add_, queue_.size());
     num_tasks_to_add_ = 0;
     while (!queue_.empty()) {
       queue_.pop();

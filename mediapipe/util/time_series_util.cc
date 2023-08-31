@@ -19,6 +19,7 @@
 #include <iostream>
 #include <string>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -79,7 +80,7 @@ absl::Status IsTimeSeriesHeaderValid(const TimeSeriesHeader& header) {
 
 absl::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
                                          TimeSeriesHeader* header) {
-  CHECK(header);
+  ABSL_CHECK(header);
   if (header_packet.IsEmpty()) {
     return tool::StatusFail("No header found.");
   }
@@ -92,7 +93,7 @@ absl::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
 
 absl::Status FillMultiStreamTimeSeriesHeaderIfValid(
     const Packet& header_packet, MultiStreamTimeSeriesHeader* header) {
-  CHECK(header);
+  ABSL_CHECK(header);
   if (header_packet.IsEmpty()) {
     return tool::StatusFail("No header found.");
   }
@@ -127,7 +128,7 @@ int64_t SecondsToSamples(double time_in_seconds, double sample_rate) {
 }
 
 double SamplesToSeconds(int64_t num_samples, double sample_rate) {
-  DCHECK_NE(sample_rate, 0.0);
+  ABSL_DCHECK_NE(sample_rate, 0.0);
   return (num_samples / sample_rate);
 }
 

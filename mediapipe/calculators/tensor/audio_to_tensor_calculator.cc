@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -348,7 +349,7 @@ absl::Status AudioToTensorCalculator::Process(CalculatorContext* cc) {
     return absl::InvalidArgumentError(
         "The audio data should be stored in column-major.");
   }
-  CHECK(channels_match || mono_output);
+  ABSL_CHECK(channels_match || mono_output);
   const Matrix& input = channels_match ? input_frame
                                        // Mono mixdown.
                                        : input_frame.colwise().mean();
@@ -457,7 +458,7 @@ absl::Status AudioToTensorCalculator::SetupStreamingResampler(
 }
 
 void AudioToTensorCalculator::AppendZerosToSampleBuffer(int num_samples) {
-  CHECK_GE(num_samples, 0);  // Ensured by `UpdateContract`.
+  ABSL_CHECK_GE(num_samples, 0);  // Ensured by `UpdateContract`.
   if (num_samples == 0) {
     return;
   }

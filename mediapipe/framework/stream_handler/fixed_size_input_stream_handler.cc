@@ -19,8 +19,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
-#include "absl/log/check.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_context_manager.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -135,7 +135,7 @@ void FixedSizeInputStreamHandler::EraseSurplusPackets(bool keep_one) {
 
 NodeReadiness FixedSizeInputStreamHandler::GetNodeReadiness(
     Timestamp* min_stream_timestamp) {
-  DCHECK(min_stream_timestamp);
+  ABSL_DCHECK(min_stream_timestamp);
   absl::MutexLock lock(&erase_mutex_);
   // kReadyForProcess is returned only once until FillInputSet completes.
   // In late_preparation mode, GetNodeReadiness must return kReadyForProcess
@@ -179,7 +179,7 @@ void FixedSizeInputStreamHandler::MovePackets(CollectionItemId id,
 
 void FixedSizeInputStreamHandler::FillInputSet(Timestamp input_timestamp,
                                                InputStreamShardSet* input_set) {
-  CHECK(input_set);
+  ABSL_CHECK(input_set);
   absl::MutexLock lock(&erase_mutex_);
   if (!pending_) {
     ABSL_LOG(ERROR) << "FillInputSet called without GetNodeReadiness.";

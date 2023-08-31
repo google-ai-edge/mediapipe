@@ -17,8 +17,8 @@
 #include <cmath>
 #include <deque>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
-#include "absl/log/check.h"
 #include "absl/memory/memory.h"
 
 namespace mediapipe {
@@ -37,8 +37,8 @@ float RelativeVelocityFilter::Apply(absl::Duration timestamp, float value_scale,
   if (last_timestamp_ == -1) {
     alpha = 1.0;
   } else {
-    DCHECK(distance_mode_ == DistanceEstimationMode::kLegacyTransition ||
-           distance_mode_ == DistanceEstimationMode::kForceCurrentScale);
+    ABSL_DCHECK(distance_mode_ == DistanceEstimationMode::kLegacyTransition ||
+                distance_mode_ == DistanceEstimationMode::kForceCurrentScale);
     const float distance =
         distance_mode_ == DistanceEstimationMode::kLegacyTransition
             ? value * value_scale -

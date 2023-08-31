@@ -15,6 +15,7 @@
 // Converts a single int or vector<int> or vector<vector<int>> to 1D (or 2D)
 // tf::Tensor.
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensorflow/vector_int_to_tensor_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -114,11 +115,11 @@ absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
             .Get<std::vector<std::vector<int>>>();
 
     const int32_t rows = input.size();
-    CHECK_GE(rows, 1);
+    ABSL_CHECK_GE(rows, 1);
     const int32_t cols = input[0].size();
-    CHECK_GE(cols, 1);
+    ABSL_CHECK_GE(cols, 1);
     for (int i = 1; i < rows; ++i) {
-      CHECK_EQ(input[i].size(), cols);
+      ABSL_CHECK_EQ(input[i].size(), cols);
     }
     if (options_.transpose()) {
       tensor_shape = tf::TensorShape({cols, rows});
@@ -172,7 +173,7 @@ absl::Status VectorIntToTensorCalculator::Process(CalculatorContext* cc) {
     } else {
       input = cc->Inputs().Tag(kVectorInt).Value().Get<std::vector<int>>();
     }
-    CHECK_GE(input.size(), 1);
+    ABSL_CHECK_GE(input.size(), 1);
     const int32_t length = input.size();
     tensor_shape = tf::TensorShape({length});
     auto output = ::absl::make_unique<tf::Tensor>(options_.tensor_data_type(),

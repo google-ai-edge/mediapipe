@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -78,7 +79,7 @@ absl::Status RunGenerateAndValidateTypes(
     const PacketGeneratorOptions& extendable_options,
     const PacketSet& input_side_packets, PacketSet* output_side_packets,
     const std::string& package) {
-  CHECK(output_side_packets);
+  ABSL_CHECK(output_side_packets);
   // Get static access to functions.
   ASSIGN_OR_RETURN(
       auto static_access,

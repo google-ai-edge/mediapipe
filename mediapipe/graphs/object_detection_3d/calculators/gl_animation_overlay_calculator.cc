@@ -19,6 +19,7 @@
 #include <iostream>
 #endif
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -510,8 +511,8 @@ bool GlAnimationOverlayCalculator::LoadAnimation(const std::string &filename) {
 void GlAnimationOverlayCalculator::ComputeAspectRatioAndFovFromCameraParameters(
     const CameraParametersProto &camera_parameters, float *aspect_ratio,
     float *vertical_fov_degrees) {
-  CHECK(aspect_ratio != nullptr);
-  CHECK(vertical_fov_degrees != nullptr);
+  ABSL_CHECK(aspect_ratio != nullptr);
+  ABSL_CHECK(vertical_fov_degrees != nullptr);
   *aspect_ratio =
       camera_parameters.portrait_width() / camera_parameters.portrait_height();
   *vertical_fov_degrees =
@@ -612,7 +613,7 @@ void GlAnimationOverlayCalculator::LoadModelMatrices(
   current_model_matrices->clear();
   for (int i = 0; i < model_matrices.model_matrix_size(); ++i) {
     const auto &model_matrix = model_matrices.model_matrix(i);
-    CHECK(model_matrix.matrix_entries_size() == kNumMatrixEntries)
+    ABSL_CHECK(model_matrix.matrix_entries_size() == kNumMatrixEntries)
         << "Invalid Model Matrix";
     current_model_matrices->emplace_back();
     ModelMatrix &new_matrix = current_model_matrices->back();

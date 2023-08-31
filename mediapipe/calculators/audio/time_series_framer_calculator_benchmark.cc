@@ -17,6 +17,7 @@
 #include <random>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "benchmark/benchmark.h"
 #include "mediapipe/calculators/audio/time_series_framer_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -70,7 +71,7 @@ void BM_TimeSeriesFramerCalculator(benchmark::State& state) {
     }
     // Initialize graph.
     mediapipe::CalculatorGraph graph;
-    CHECK_OK(graph.Initialize(config));
+    ABSL_CHECK_OK(graph.Initialize(config));
     // Prepare input header.
     auto header = std::make_unique<mediapipe::TimeSeriesHeader>();
     header->set_sample_rate(kSampleRate);
@@ -78,13 +79,13 @@ void BM_TimeSeriesFramerCalculator(benchmark::State& state) {
 
     state.ResumeTiming();  // Resume benchmark timing.
 
-    CHECK_OK(graph.StartRun({}, {{"input", Adopt(header.release())}}));
+    ABSL_CHECK_OK(graph.StartRun({}, {{"input", Adopt(header.release())}}));
     for (auto& packet : input_packets) {
-      CHECK_OK(graph.AddPacketToInputStream("input", packet));
+      ABSL_CHECK_OK(graph.AddPacketToInputStream("input", packet));
     }
-    CHECK(!graph.HasError());
-    CHECK_OK(graph.CloseAllInputStreams());
-    CHECK_OK(graph.WaitUntilIdle());
+    ABSL_CHECK(!graph.HasError());
+    ABSL_CHECK_OK(graph.CloseAllInputStreams());
+    ABSL_CHECK_OK(graph.WaitUntilIdle());
   }
 }
 BENCHMARK(BM_TimeSeriesFramerCalculator);

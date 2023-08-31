@@ -18,6 +18,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -49,7 +50,7 @@ ThreadPool::WorkerThread::WorkerThread(ThreadPool* pool,
                                        const std::string& name_prefix)
     : pool_(pool), name_prefix_(name_prefix) {
   int res = pthread_create(&thread_, nullptr, ThreadBody, this);
-  CHECK_EQ(res, 0) << "pthread_create failed";
+  ABSL_CHECK_EQ(res, 0) << "pthread_create failed";
 }
 
 ThreadPool::WorkerThread::~WorkerThread() {}

@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/core/packet_thinner_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -70,7 +71,7 @@ class SimpleRunner : public CalculatorRunner {
   }
 
   double GetFrameRate() const {
-    CHECK(!Outputs().Index(0).header.IsEmpty());
+    ABSL_CHECK(!Outputs().Index(0).header.IsEmpty());
     return Outputs().Index(0).header.Get<VideoHeader>().frame_rate;
   }
 };

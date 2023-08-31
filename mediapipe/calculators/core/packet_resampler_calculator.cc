@@ -16,6 +16,7 @@
 
 #include <memory>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 
 namespace {
@@ -202,15 +203,15 @@ PacketResamplerCalculator::GetSamplingStrategy(
 
 Timestamp PacketResamplerCalculator::PeriodIndexToTimestamp(
     int64_t index) const {
-  CHECK_EQ(jitter_, 0.0);
-  CHECK_NE(first_timestamp_, Timestamp::Unset());
+  ABSL_CHECK_EQ(jitter_, 0.0);
+  ABSL_CHECK_NE(first_timestamp_, Timestamp::Unset());
   return first_timestamp_ + TimestampDiffFromSeconds(index / frame_rate_);
 }
 
 int64_t PacketResamplerCalculator::TimestampToPeriodIndex(
     Timestamp timestamp) const {
-  CHECK_EQ(jitter_, 0.0);
-  CHECK_NE(first_timestamp_, Timestamp::Unset());
+  ABSL_CHECK_EQ(jitter_, 0.0);
+  ABSL_CHECK_NE(first_timestamp_, Timestamp::Unset());
   return MathUtil::SafeRound<int64_t, double>(
       (timestamp - first_timestamp_).Seconds() * frame_rate_);
 }
@@ -344,8 +345,8 @@ void LegacyJitterWithReflectionStrategy::UpdateNextOutputTimestampWithJitter() {
   next_output_timestamp_ = Timestamp(ReflectBetween(
       next_output_timestamp_.Value(), next_output_timestamp_min_.Value(),
       next_output_timestamp_max_.Value()));
-  CHECK_GE(next_output_timestamp_, next_output_timestamp_min_);
-  CHECK_LT(next_output_timestamp_, next_output_timestamp_max_);
+  ABSL_CHECK_GE(next_output_timestamp_, next_output_timestamp_min_);
+  ABSL_CHECK_LT(next_output_timestamp_, next_output_timestamp_max_);
 }
 
 absl::Status ReproducibleJitterWithReflectionStrategy::Open(

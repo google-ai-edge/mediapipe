@@ -17,7 +17,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "absl/log/check.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/api2/node.h"
@@ -49,7 +49,7 @@ class DiffusionPluginsOutputCalculator : public Node {
       return absl::InternalError("Input tensor vector is not consumable.");
     }
     if (kIterationIn(cc).IsConnected()) {
-      CHECK_EQ(kIterationIn(cc).Get(), 0);
+      ABSL_CHECK_EQ(kIterationIn(cc).Get(), 0);
       kTensorsOut(cc).Send(std::move(*status_or_tensor.value()));
       kTensorsOut(cc).SetNextTimestampBound(cc->InputTimestamp() +
                                             kStepsIn(cc).Get());

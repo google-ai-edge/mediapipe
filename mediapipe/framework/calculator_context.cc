@@ -14,35 +14,37 @@
 
 #include "mediapipe/framework/calculator_context.h"
 
+#include "absl/log/absl_check.h"
+
 namespace mediapipe {
 
 const std::string& CalculatorContext::CalculatorType() const {
-  CHECK(calculator_state_);
+  ABSL_CHECK(calculator_state_);
   return calculator_state_->CalculatorType();
 }
 
 const CalculatorOptions& CalculatorContext::Options() const {
-  CHECK(calculator_state_);
+  ABSL_CHECK(calculator_state_);
   return calculator_state_->Options();
 }
 
 const std::string& CalculatorContext::NodeName() const {
-  CHECK(calculator_state_);
+  ABSL_CHECK(calculator_state_);
   return calculator_state_->NodeName();
 }
 
 int CalculatorContext::NodeId() const {
-  CHECK(calculator_state_);
+  ABSL_CHECK(calculator_state_);
   return calculator_state_->NodeId();
 }
 
 Counter* CalculatorContext::GetCounter(const std::string& name) {
-  CHECK(calculator_state_);
+  ABSL_CHECK(calculator_state_);
   return calculator_state_->GetCounter(name);
 }
 
 CounterFactory* CalculatorContext::GetCounterFactory() {
-  CHECK(calculator_state_);
+  ABSL_CHECK(calculator_state_);
   return calculator_state_->GetCounterFactory();
 }
 

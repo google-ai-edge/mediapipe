@@ -14,6 +14,7 @@
 
 #include <utility>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/port/logging.h"
@@ -49,7 +50,7 @@ GlContext::StatusOrGlContext GlContext::Create(
 
 absl::Status GlContext::CreateContextInternal(
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE external_context, int webgl_version) {
-  CHECK(webgl_version == 1 || webgl_version == 2);
+  ABSL_CHECK(webgl_version == 1 || webgl_version == 2);
 
   EmscriptenWebGLContextAttributes attrs;
   emscripten_webgl_init_context_attributes(&attrs);

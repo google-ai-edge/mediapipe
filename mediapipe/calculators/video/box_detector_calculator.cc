@@ -17,6 +17,7 @@
 #include <memory>
 #include <unordered_set>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/numbers.h"
@@ -277,8 +278,8 @@ absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
                                        ? &(cc->Inputs().Tag(kDescriptorsTag))
                                        : nullptr;
 
-  CHECK(track_stream != nullptr || video_stream != nullptr ||
-        (feature_stream != nullptr && descriptor_stream != nullptr))
+  ABSL_CHECK(track_stream != nullptr || video_stream != nullptr ||
+             (feature_stream != nullptr && descriptor_stream != nullptr))
       << "One and only one of {tracking_data, input image frame, "
          "feature/descriptor} need to be valid.";
 
@@ -296,7 +297,7 @@ absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
 
     const TrackingData& tracking_data = track_stream->Get<TrackingData>();
 
-    CHECK(tracked_boxes_stream != nullptr) << "tracked_boxes needed.";
+    ABSL_CHECK(tracked_boxes_stream != nullptr) << "tracked_boxes needed.";
 
     const TimedBoxProtoList tracked_boxes =
         tracked_boxes_stream->Get<TimedBoxProtoList>();
@@ -360,7 +361,7 @@ absl::Status BoxDetectorCalculator::Process(CalculatorContext* cc) {
 
     const auto& descriptors = descriptor_stream->Get<std::vector<float>>();
     const int dims = options_.detector_options().descriptor_dims();
-    CHECK_GE(descriptors.size(), feature_size * dims);
+    ABSL_CHECK_GE(descriptors.size(), feature_size * dims);
     cv::Mat descriptors_mat(feature_size, dims, CV_32F);
     for (int j = 0; j < feature_size; ++j) {
       features_vec[j].Set(features[j].pt.x * inv_scale,

@@ -68,9 +68,9 @@ namespace tool {
 //   // Call tool::AddVectorSink() more times if you wish. Note that each stream
 //   // needs to get its own packet vector.
 //   CalculatorGraph graph;
-//   CHECK_OK(graph.Initialize(config));
+//   ABSL_CHECK_OK(graph.Initialize(config));
 //   // Set other input side packets.
-//   CHECK_OK(graph.Run());
+//   ABSL_CHECK_OK(graph.Run());
 //   for (const Packet& packet : packet_dump) {
 //     // Do something.
 //   }
@@ -160,7 +160,7 @@ void AddCallbackWithHeaderCalculator(const std::string& stream_name,
 //   tool::AddCallbackCalculator("the_output_stream", &config,
 //                               &input_side_packet_name, true);
 //   CalculatorGraph graph(config);
-//   CHECK_OK(graph.Run(
+//   ABSL_CHECK_OK(graph.Run(
 //       {{input_side_packet_name,
 //         MakePacket<std::function<void(const Packet&)>>(
 //             std::bind(&MyClass::MyFunction, this, std::placeholders::_1))}}

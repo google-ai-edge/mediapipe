@@ -78,8 +78,8 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/synchronization",
         "@com_google_absl//absl/time",
     ],
@@ -132,8 +132,8 @@ cc_library(
         "//mediapipe/framework/port",
         "//mediapipe/framework/port:integral_types",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/log:check",
     ],
 )
 
@@ -151,7 +151,10 @@ cc_library(
 
     # Use this library through "mediapipe/framework/port:map_util".
     visibility = ["//mediapipe/framework/port:__pkg__"],
-    deps = ["//mediapipe/framework/port:logging"],
+    deps = [
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
+    ],
 )
 
 cc_library(
@@ -162,7 +165,7 @@ cc_library(
     ],
     deps = [
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )
 
@@ -235,8 +238,8 @@ cc_library(
         "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/meta:type_traits",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
@@ -347,6 +350,7 @@ cc_library(
     deps = [
         ":thread_options",
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
@@ -362,6 +366,7 @@ cc_library(
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
     ],
 )
@@ -374,7 +379,7 @@ cc_library(
     visibility = ["//mediapipe/framework/port:__pkg__"],
     deps = [
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/utility",
     ],
 )

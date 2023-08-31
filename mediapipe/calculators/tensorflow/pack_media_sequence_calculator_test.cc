@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/image/opencv_image_encoder_calculator.pb.h"

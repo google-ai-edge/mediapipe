@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
@@ -429,7 +430,7 @@ absl::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
       selection_input_ ? &(cc->Inputs().Tag(kSelectionTag)) : nullptr;
 
   // Checked on Open.
-  CHECK(video_stream || selection_stream);
+  ABSL_CHECK(video_stream || selection_stream);
 
   // Lazy init.
   if (frame_width_ < 0 || frame_height_ < 0) {
@@ -473,7 +474,7 @@ absl::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
   // Always use frame if selection is not activated.
   bool use_frame = !selection_input_;
   if (selection_input_) {
-    CHECK(selection_stream);
+    ABSL_CHECK(selection_stream);
 
     // Fill in timestamps we process.
     if (!selection_stream->Value().IsEmpty()) {
@@ -621,7 +622,7 @@ void MotionAnalysisCalculator::OutputMotionAnalyzedFrames(
   const int num_results = motion_analysis_->GetResults(
       flush, &features, &camera_motions, with_saliency_ ? &saliency : nullptr);
 
-  CHECK_LE(num_results, buffer_size);
+  ABSL_CHECK_LE(num_results, buffer_size);
 
   if (num_results == 0) {
     return;
@@ -696,7 +697,7 @@ void MotionAnalysisCalculator::OutputMotionAnalyzedFrames(
 
   if (hybrid_meta_analysis_) {
     hybrid_meta_offset_ -= num_results;
-    CHECK_GE(hybrid_meta_offset_, 0);
+    ABSL_CHECK_GE(hybrid_meta_offset_, 0);
   }
 
   timestamp_buffer_.erase(timestamp_buffer_.begin(),
@@ -767,7 +768,7 @@ absl::Status MotionAnalysisCalculator::InitOnProcess(
 
   // Filled by CSV file parsing.
   if (!meta_homographies_.empty()) {
-    CHECK(csv_file_input_);
+    ABSL_CHECK(csv_file_input_);
     AppendCameraMotionsFromHomographies(meta_homographies_,
                                         true,  // append identity.
                                         &meta_motions_, &meta_features_);
@@ -814,7 +815,7 @@ bool MotionAnalysisCalculator::ParseModelCSV(
 bool MotionAnalysisCalculator::HomographiesFromValues(
     const std::vector<float>& homog_values,
     std::deque<Homography>* homographies) {
-  CHECK(homographies);
+  ABSL_CHECK(homographies);
 
   // Obvious constants are obvious :D
   constexpr int kHomographyValues = 9;
@@ -856,7 +857,7 @@ bool MotionAnalysisCalculator::HomographiesFromValues(
 void MotionAnalysisCalculator::SubtractMetaMotion(
     const CameraMotion& meta_motion, RegionFlowFeatureList* features) {
   if (meta_motion.mixture_homography().model_size() > 0) {
-    CHECK(row_weights_ != nullptr);
+    ABSL_CHECK(row_weights_ != nullptr);
     RegionFlowFeatureListViaTransform(meta_motion.mixture_homography(),
                                       features, -1.0f,
                                       1.0f,  // subtract transformed.
@@ -902,7 +903,7 @@ void MotionAnalysisCalculator::AddMetaMotion(
     const CameraMotion& meta_motion, const RegionFlowFeatureList& meta_features,
     RegionFlowFeatureList* features, CameraMotion* motion) {
   // Restore old feature location.
-  CHECK_EQ(meta_features.feature_size(), features->feature_size());
+  ABSL_CHECK_EQ(meta_features.feature_size(), features->feature_size());
   for (int k = 0; k < meta_features.feature_size(); ++k) {
     auto feature = features->mutable_feature(k);
     const auto& meta_feature = meta_features.feature(k);
@@ -923,8 +924,8 @@ void MotionAnalysisCalculator::AppendCameraMotionsFromHomographies(
     const std::deque<Homography>& homographies, bool append_identity,
     std::deque<CameraMotion>* camera_motions,
     std::deque<RegionFlowFeatureList>* features) {
-  CHECK(camera_motions);
-  CHECK(features);
+  ABSL_CHECK(camera_motions);
+  ABSL_CHECK(features);
 
   CameraMotion identity;
   identity.set_frame_width(frame_width_);
@@ -948,8 +949,9 @@ void MotionAnalysisCalculator::AppendCameraMotionsFromHomographies(
   }
 
   const int models_per_frame = options_.meta_models_per_frame();
-  CHECK_GT(models_per_frame, 0) << "At least one model per frame is needed";
-  CHECK_EQ(0, homographies.size() % models_per_frame);
+  ABSL_CHECK_GT(models_per_frame, 0)
+      << "At least one model per frame is needed";
+  ABSL_CHECK_EQ(0, homographies.size() % models_per_frame);
   const int num_frames = homographies.size() / models_per_frame;
 
   // Heuristic sigma, similar to what we use for rolling shutter removal.

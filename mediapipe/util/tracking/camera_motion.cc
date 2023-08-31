@@ -16,6 +16,7 @@
 
 #include <numeric>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/util/tracking/region_flow.h"
@@ -77,8 +78,8 @@ void CameraMotionToMixtureHomography(const CameraMotion& camera_motion,
 
 CameraMotion ComposeCameraMotion(const CameraMotion& lhs,
                                  const CameraMotion& rhs) {
-  CHECK_EQ(lhs.frame_width(), rhs.frame_width());
-  CHECK_EQ(lhs.frame_height(), rhs.frame_height());
+  ABSL_CHECK_EQ(lhs.frame_width(), rhs.frame_width());
+  ABSL_CHECK_EQ(lhs.frame_height(), rhs.frame_height());
 
   CameraMotion result = rhs;
   if (lhs.has_translation() || rhs.has_translation()) {
@@ -186,8 +187,8 @@ CameraMotion InvertCameraMotion(const CameraMotion& motion) {
 void SubtractCameraMotionFromFeatures(
     const std::vector<CameraMotion>& camera_motions,
     std::vector<RegionFlowFeatureList*>* feature_lists) {
-  CHECK(feature_lists != nullptr);
-  CHECK_GE(camera_motions.size(), feature_lists->size());
+  ABSL_CHECK(feature_lists != nullptr);
+  ABSL_CHECK_GE(camera_motions.size(), feature_lists->size());
   if (feature_lists->empty()) {
     return;
   }

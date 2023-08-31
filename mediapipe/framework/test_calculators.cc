@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "Eigen/Core"
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -203,7 +204,7 @@ class RangeCalculator : public CalculatorBase {
 
   // Initializes this object.
   void Initialize(CalculatorContext* cc) {
-    CHECK(!initialized_);
+    ABSL_CHECK(!initialized_);
 
     cc->Options();  // Ensure Options() can be called here.
     std::tie(n_, k_) =
@@ -380,10 +381,10 @@ class RandomMatrixCalculator : public CalculatorBase {
 
   absl::Status Open(CalculatorContext* cc) override {
     auto& options = cc->Options<RandomMatrixCalculatorOptions>();
-    CHECK_LT(0, options.timestamp_step());
-    CHECK_LT(0, options.rows());
-    CHECK_LT(0, options.cols());
-    CHECK_LT(options.start_timestamp(), options.limit_timestamp());
+    ABSL_CHECK_LT(0, options.timestamp_step());
+    ABSL_CHECK_LT(0, options.rows());
+    ABSL_CHECK_LT(0, options.cols());
+    ABSL_CHECK_LT(options.start_timestamp(), options.limit_timestamp());
 
     current_timestamp_ = Timestamp(options.start_timestamp());
     cc->Outputs().Index(0).SetNextTimestampBound(current_timestamp_);
@@ -447,13 +448,13 @@ class MeanAndCovarianceCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override {
     const Eigen::MatrixXd sample =
         cc->Inputs().Index(0).Get<Matrix>().cast<double>();
-    CHECK_EQ(1, sample.cols());
+    ABSL_CHECK_EQ(1, sample.cols());
     if (num_samples_ == 0) {
       rows_ = sample.rows();
       sum_vector_ = Eigen::VectorXd::Zero(rows_);
       outer_product_sum_ = Eigen::MatrixXd::Zero(rows_, rows_);
     } else {
-      CHECK_EQ(sample.rows(), rows_);
+      ABSL_CHECK_EQ(sample.rows(), rows_);
     }
     sum_vector_ += sample;
     outer_product_sum_ += sample * sample.transpose();

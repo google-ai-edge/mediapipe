@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
@@ -86,7 +87,7 @@ class TextEmbedderGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    CHECK(sc != nullptr);
+    ABSL_CHECK(sc != nullptr);
     ASSIGN_OR_RETURN(const ModelResources* model_resources,
                      CreateModelResources<proto::TextEmbedderGraphOptions>(sc));
     Graph graph;

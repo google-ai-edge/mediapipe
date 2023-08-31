@@ -135,6 +135,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/util/tracking:box_tracker_cc_proto",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )
 
@@ -149,6 +150,7 @@ cc_library(
         "//mediapipe/util/tracking:box_tracker_cc_proto",
         "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
     ],
 )
@@ -163,6 +165,7 @@ cc_library(
     ],
     deps = [
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings:str_format",
         "@eigen_archive//:eigen3",
@@ -185,6 +188,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@eigen_archive//:eigen3",
@@ -203,6 +207,7 @@ cc_library(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
+        "@com_google_absl//absl/log:absl_check",
         "@org_tensorflow//tensorflow/lite:framework",
     ],
 )
@@ -223,6 +228,7 @@ cc_library(
         ":annotation_cc_proto",
         ":object_cc_proto",
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
         "@eigen_archive//:eigen3",
     ],
 )
@@ -277,6 +283,7 @@ cc_library(
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
@@ -302,6 +309,7 @@ cc_library(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
@@ -419,5 +427,6 @@ cc_test(
         "//mediapipe/framework/port:logging",
         "//mediapipe/util/tracking:box_tracker_cc_proto",
         "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )
