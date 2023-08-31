@@ -43,8 +43,8 @@ run_hello_world:
 
 # Targets to use inside running mediapipe_ovms container
 run_object_detection:
-	bash build_desktop_examples.sh -t object_detection
 	python setup_ovms.py --get_models
+	bash build_desktop_examples.sh -t object_detection
 	bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_ovms --calculator_graph_config_file mediapipe/graphs/object_detection/object_detection_desktop_ovms1_graph.pbtxt --input_side_packets "input_video_path=/mediapipe/mediapipe/examples/desktop/object_detection/test_video.mp4,output_video_path=/mediapipe/tested_video.mp4"
 	
 run_holistic_tracking:
