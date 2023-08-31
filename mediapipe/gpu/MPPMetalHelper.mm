@@ -14,8 +14,8 @@
 
 #import "mediapipe/gpu/MPPMetalHelper.h"
 
-#import "third_party/absl/log/absl_check.h"
-#import "third_party/absl/log/absl_log.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #import "mediapipe/gpu/gpu_buffer.h"
 #import "mediapipe/gpu/gpu_service.h"
 #import "mediapipe/gpu/graph_support.h"
