@@ -92,7 +92,7 @@ NS_SWIFT_NAME(ImageSegmenterOptions)
 @property(nonatomic) BOOL shouldOutputConfidenceMasks;
 
 /** Represents whether to output category mask. */
-@property(nonatomic) BOOL shouldOutputCategoryMasks;
+@property(nonatomic) BOOL shouldOutputCategoryMask;
 
 @end
 
