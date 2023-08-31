@@ -52,7 +52,7 @@ using ::mediapipe::Packet;
 using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
-} // anonymous namespace
+}  // anonymous namespace
 
 @interface MPPImageSegmenter () {
   /** iOS Vision Task Runner */
@@ -66,67 +66,18 @@ using ::mediapipe::tasks::core::PacketsCallback;
 
 @implementation MPPImageSegmenter
 
-- (nullable MPPImageSegmenterResult *)
-    imageSegmenterResultWithOutputPacketMap:(PacketMap &)outputPacketMap
-                   shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData {
-  return [MPPImageSegmenterResult
-      imageSegmenterResultWithConfidenceMasksPacket:outputPacketMap[kConfidenceMasksStreamName
-                                                                        .cppString]
-                                 categoryMaskPacket:outputPacketMap[kCategoryMaskStreamName
-                                                                        .cppString]
-                                qualityScoresPacket:outputPacketMap[kQualityScoresStreamName
-                                                                        .cppString]
-                            timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
-                                                        .Timestamp()
-                                                        .Value() /
-                                                    kMicrosecondsPerMillisecond
-                           shouldCopyMaskPacketData:shouldCopyMaskPacketData];
-}
-
-- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
-  if (![self.imageSegmenterLiveStreamDelegate
-          respondsToSelector:@selector(imageSegmenter:
-                                 didFinishSegmentationWithResult:timestampInMilliseconds:error:)]) {
-    return;
-  }
-  NSError *callbackError = nil;
-  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
-    dispatch_async(_callbackQueue, ^{
-      [self.imageSegmenterLiveStreamDelegate imageSegmenter:self
-                            didFinishSegmentationWithResult:nil
-                                    timestampInMilliseconds:Timestamp::Unset().Value()
-                                                      error:callbackError];
-    });
-    return;
-  }
-
-  PacketMap &outputPacketMap = liveStreamResult.value();
-  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
-    return;
-  }
-
-  MPPImageSegmenterResult *result = [self imageSegmenterResultWithOutputPacketMap:outputPacketMap
-                                                         shouldCopyMaskPacketData:NO];
-
-  dispatch_async(_callbackQueue, ^{
-    [self.imageSegmenterLiveStreamDelegate imageSegmenter:self
-                          didFinishSegmentationWithResult:result
-                                  timestampInMilliseconds:result.timestampInMilliseconds
-                                                    error:callbackError];
-  });
-}
+#pragma mark - Public
 
 - (instancetype)initWithOptions:(MPPImageSegmenterOptions *)options error:(NSError **)error {
   self = [super init];
   if (self) {
     NSMutableArray<NSString *> *outputStreams = [NSMutableArray
-        arrayWithObjects:[NSString
-                             stringWithFormat:@"%@:%@", kQualityScoresTag, kQualityScoresStreamName],
-                         [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName],
-                         nil];
+        arrayWithObjects:[NSString stringWithFormat:@"%@:%@", kQualityScoresTag,
+                                                    kQualityScoresStreamName],
+                         [NSString stringWithFormat:@"%@:%@", kImageTag, kImageOutStreamName], nil];
     if (options.shouldOutputConfidenceMasks) {
-      [outputStreams addObject:[NSString
-                     stringWithFormat:@"%@:%@", kConfidenceMasksTag, kConfidenceMasksStreamName]];
+      [outputStreams addObject:[NSString stringWithFormat:@"%@:%@", kConfidenceMasksTag,
+                                                          kConfidenceMasksStreamName]];
     }
     if (options.shouldOutputCategoryMask) {
       [outputStreams addObject:[NSString stringWithFormat:@"%@:%@", kCategoryMaskTag,
@@ -192,22 +143,10 @@ using ::mediapipe::tasks::core::PacketsCallback;
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPImageSegmenterResult *)
-    imageSegmenterResultWithOptionalOutputPacketMap:(std::optional<PacketMap> &)outputPacketMap
-                           shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData {
-  if (!outputPacketMap.has_value()) {
-    return nil;
-  }
-  MPPImageSegmenterResult *result =
-      [self imageSegmenterResultWithOutputPacketMap:outputPacketMap.value()
-                           shouldCopyMaskPacketData:shouldCopyMaskPacketData];
-  return result;
-}
-
 - (nullable MPPImageSegmenterResult *)segmentImage:(MPPImage *)image error:(NSError **)error {
   std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
-  return [self imageSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
-                                      shouldCopyMaskPacketData:YES];
+  return [MPPImageSegmenter imageSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
+                                                   shouldCopyMaskPacketData:YES];
 }
 
 - (void)segmentImage:(MPPImage *)image
@@ -217,8 +156,8 @@ using ::mediapipe::tasks::core::PacketsCallback;
   std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:&error];
 
   MPPImageSegmenterResult *result =
-      [self imageSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
-                                   shouldCopyMaskPacketData:NO];
+      [MPPImageSegmenter imageSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
+                                                shouldCopyMaskPacketData:NO];
   completionHandler(result, error);
 }
 
@@ -230,8 +169,8 @@ using ::mediapipe::tasks::core::PacketsCallback;
                    timestampInMilliseconds:timestampInMilliseconds
                                      error:error];
 
-  return [self imageSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
-                                      shouldCopyMaskPacketData:YES];
+  return [MPPImageSegmenter imageSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
+                                                   shouldCopyMaskPacketData:YES];
 }
 
 - (void)segmentVideoFrame:(MPPImage *)image
@@ -245,8 +184,8 @@ using ::mediapipe::tasks::core::PacketsCallback;
                                      error:&error];
 
   MPPImageSegmenterResult *result =
-      [self imageSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
-                                   shouldCopyMaskPacketData:NO];
+      [MPPImageSegmenter imageSegmenterResultWithOptionalOutputPacketMap:outputPacketMap
+                                                shouldCopyMaskPacketData:NO];
   completionHandler(result, error);
 }
 
@@ -256,6 +195,70 @@ using ::mediapipe::tasks::core::PacketsCallback;
   return [_visionTaskRunner processLiveStreamImage:image
                            timestampInMilliseconds:timestampInMilliseconds
                                              error:error];
+}
+
+#pragma mark - Private
+
++ (nullable MPPImageSegmenterResult *)
+    imageSegmenterResultWithOptionalOutputPacketMap:(std::optional<PacketMap> &)outputPacketMap
+                           shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData {
+  if (!outputPacketMap.has_value()) {
+    return nil;
+  }
+  MPPImageSegmenterResult *result =
+      [self imageSegmenterResultWithOutputPacketMap:outputPacketMap.value()
+                           shouldCopyMaskPacketData:shouldCopyMaskPacketData];
+  return result;
+}
+
++ (nullable MPPImageSegmenterResult *)
+    imageSegmenterResultWithOutputPacketMap:(PacketMap &)outputPacketMap
+                   shouldCopyMaskPacketData:(BOOL)shouldCopyMaskPacketData {
+  return [MPPImageSegmenterResult
+      imageSegmenterResultWithConfidenceMasksPacket:outputPacketMap[kConfidenceMasksStreamName
+                                                                        .cppString]
+                                 categoryMaskPacket:outputPacketMap[kCategoryMaskStreamName
+                                                                        .cppString]
+                                qualityScoresPacket:outputPacketMap[kQualityScoresStreamName
+                                                                        .cppString]
+                            timestampInMilliseconds:outputPacketMap[kImageOutStreamName.cppString]
+                                                        .Timestamp()
+                                                        .Value() /
+                                                    kMicrosecondsPerMillisecond
+                           shouldCopyMaskPacketData:shouldCopyMaskPacketData];
+}
+
+- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
+  if (![self.imageSegmenterLiveStreamDelegate
+          respondsToSelector:@selector(imageSegmenter:
+                                 didFinishSegmentationWithResult:timestampInMilliseconds:error:)]) {
+    return;
+  }
+  NSError *callbackError = nil;
+  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
+    dispatch_async(_callbackQueue, ^{
+      [self.imageSegmenterLiveStreamDelegate imageSegmenter:self
+                            didFinishSegmentationWithResult:nil
+                                    timestampInMilliseconds:Timestamp::Unset().Value()
+                                                      error:callbackError];
+    });
+    return;
+  }
+
+  PacketMap &outputPacketMap = liveStreamResult.value();
+  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
+    return;
+  }
+
+  MPPImageSegmenterResult *result = [self imageSegmenterResultWithOutputPacketMap:outputPacketMap
+                                                         shouldCopyMaskPacketData:NO];
+
+  dispatch_async(_callbackQueue, ^{
+    [self.imageSegmenterLiveStreamDelegate imageSegmenter:self
+                          didFinishSegmentationWithResult:result
+                                  timestampInMilliseconds:result.timestampInMilliseconds
+                                                    error:callbackError];
+  });
 }
 
 @end
