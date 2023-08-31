@@ -250,8 +250,9 @@ using ::mediapipe::tasks::core::PacketsCallback;
     return;
   }
 
-  MPPImageSegmenterResult *result = [self imageSegmenterResultWithOutputPacketMap:outputPacketMap
-                                                         shouldCopyMaskPacketData:NO];
+  MPPImageSegmenterResult *result =
+      [MPPImageSegmenter imageSegmenterResultWithOutputPacketMap:outputPacketMap
+                                        shouldCopyMaskPacketData:NO];
 
   dispatch_async(_callbackQueue, ^{
     [self.imageSegmenterLiveStreamDelegate imageSegmenter:self
