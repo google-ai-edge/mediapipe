@@ -38,10 +38,24 @@ objc_library(
 
 objc_library(
     name = "MPPImageSegmenter",
-    hdrs = ["sources/MPPImageSegmenterOptions.h"],
+    srcs = ["sources/MPPImageSegmenter.mm"],
+    hdrs = ["sources/MPPImageSegmenter.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+        "-x objective-c++",
+    ],
+    module_name = "MPPImageSegmenter",
     deps = [
         ":MPPImageSegmenterOptions",
         ":MPPImageSegmenterResult",
+        "//mediapipe/tasks/cc/vision/image_segmenter:image_segmenter_graph",
+        "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
+        "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunnerRefactored",
+        "//mediapipe/tasks/ios/vision/image_segmenter/utils:MPPImageSegmenterOptionsHelpers",
+        "//mediapipe/tasks/ios/vision/image_segmenter/utils:MPPImageSegmenterResultHelpers",
     ],
 )

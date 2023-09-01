@@ -33,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 NS_SWIFT_NAME(ObjectDetectorLiveStreamDelegate)
 @protocol MPPImageSegmenterLiveStreamDelegate <NSObject>
 
-@required
+@optional
 
 /**
  * This method notifies a delegate that the results of asynchronous segmentation of
@@ -92,7 +92,7 @@ NS_SWIFT_NAME(ImageSegmenterOptions)
 @property(nonatomic) BOOL shouldOutputConfidenceMasks;
 
 /** Represents whether to output category mask. */
-@property(nonatomic) BOOL shouldOutputCategoryMasks;
+@property(nonatomic) BOOL shouldOutputCategoryMask;
 
 @end
 
