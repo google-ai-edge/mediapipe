@@ -17,18 +17,10 @@
 
 #include <thread>  // NOLINT(build/c++11)
 
-#include "mediapipe/framework/deps/threadpool.h"
-
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <sys/syscall.h>
-#include <unistd.h>
-#endif
-
 #include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "mediapipe/framework/deps/threadpool.h"
 
 namespace mediapipe {
 
