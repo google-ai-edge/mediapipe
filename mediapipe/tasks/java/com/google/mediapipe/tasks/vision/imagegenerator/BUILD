@@ -44,8 +44,11 @@ cc_binary(
 )
 
 cc_library(
-    name = "libmediapipe_tasks_vision_image_generator_jni_lib",
-    srcs = [":libmediapipe_tasks_vision_image_generator_jni.so"],
+    name = "mediapipe_tasks_vision_image_generator_jni_lib",
+    srcs = [
+        ":libimagegenerator_gpu.so",
+        ":libmediapipe_tasks_vision_image_generator_jni.so",
+    ],
     alwayslink = 1,
 )
 
@@ -86,6 +89,10 @@ load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl"
 
 mediapipe_tasks_vision_image_generator_aar(
     name = "tasks_vision_image_generator",
-    srcs = glob(["**/*.java"]),
+    srcs = glob(["**/*.java"]) + [
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:core_java_src",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:face_landmarker_java_src",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:image_segmenter_java_src",
+    ],
     native_library = ":libmediapipe_tasks_vision_image_generator_jni_lib",
 )
