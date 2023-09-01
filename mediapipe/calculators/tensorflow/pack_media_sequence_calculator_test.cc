@@ -58,6 +58,8 @@ constexpr char kBytesFeatureTestTag[] = "BYTES_FEATURE_TEST";
 constexpr char kForwardFlowEncodedTag[] = "FORWARD_FLOW_ENCODED";
 constexpr char kFloatContextFeatureOtherTag[] = "FLOAT_CONTEXT_FEATURE_OTHER";
 constexpr char kFloatContextFeatureTestTag[] = "FLOAT_CONTEXT_FEATURE_TEST";
+constexpr char kIntsContextFeatureTestTag[] = "INTS_CONTEXT_FEATURE_TEST";
+constexpr char kIntsContextFeatureOtherTag[] = "INTS_CONTEXT_FEATURE_OTHER";
 constexpr char kFloatFeatureOtherTag[] = "FLOAT_FEATURE_OTHER";
 constexpr char kFloatFeatureTestTag[] = "FLOAT_FEATURE_TEST";
 constexpr char kIntFeatureOtherTag[] = "INT_FEATURE_OTHER";
@@ -449,6 +451,119 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoContextFloatLists) {
               testing::ElementsAre(3, 3));
   ASSERT_THAT(mpms::GetContextFeatureFloats("OTHER", output_sequence),
               testing::ElementsAre(4, 4));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, PackTwoContextIntLists) {
+  SetUpCalculator(
+      /*input_streams=*/{"INTS_CONTEXT_FEATURE_TEST:test",
+                         "INTS_CONTEXT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false, /*replace_instead_of_append=*/true);
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+
+  const std::vector<int64_t> vi_1 = {2, 3};
+  runner_->MutableInputs()
+      ->Tag(kIntsContextFeatureTestTag)
+      .packets.push_back(
+          MakePacket<std::vector<int64_t>>(vi_1).At(Timestamp::PostStream()));
+  const std::vector<int64_t> vi_2 = {2, 4};
+  runner_->MutableInputs()
+      ->Tag(kIntsContextFeatureOtherTag)
+      .packets.push_back(
+          MakePacket<std::vector<int64_t>>(vi_2).At(Timestamp::PostStream()));
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_THAT(mpms::GetContextFeatureInts("TEST", output_sequence),
+              testing::ElementsAre(2, 3));
+  ASSERT_THAT(mpms::GetContextFeatureInts("OTHER", output_sequence),
+              testing::ElementsAre(2, 4));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, ReplaceTwoContextIntLists) {
+  SetUpCalculator(
+      /*input_streams=*/{"INTS_CONTEXT_FEATURE_TEST:test",
+                         "INTS_CONTEXT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false, /*replace_instead_of_append=*/true);
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+  mpms::SetContextFeatureInts("TEST", {2, 3}, input_sequence.get());
+  mpms::SetContextFeatureInts("OTHER", {2, 4}, input_sequence.get());
+
+  const std::vector<int64_t> vi_1 = {5, 6};
+  runner_->MutableInputs()
+      ->Tag(kIntsContextFeatureTestTag)
+      .packets.push_back(
+          MakePacket<std::vector<int64_t>>(vi_1).At(Timestamp::PostStream()));
+  const std::vector<int64_t> vi_2 = {7, 8};
+  runner_->MutableInputs()
+      ->Tag(kIntsContextFeatureOtherTag)
+      .packets.push_back(
+          MakePacket<std::vector<int64_t>>(vi_2).At(Timestamp::PostStream()));
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_THAT(mpms::GetContextFeatureInts("TEST", output_sequence),
+              testing::ElementsAre(5, 6));
+  ASSERT_THAT(mpms::GetContextFeatureInts("OTHER", output_sequence),
+              testing::ElementsAre(7, 8));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, AppendTwoContextIntLists) {
+  SetUpCalculator(
+      /*input_streams=*/{"INTS_CONTEXT_FEATURE_TEST:test",
+                         "INTS_CONTEXT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false,
+      /*replace_instead_of_append=*/false);
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+  mpms::SetContextFeatureInts("TEST", {2, 3}, input_sequence.get());
+  mpms::SetContextFeatureInts("OTHER", {2, 4}, input_sequence.get());
+
+  const std::vector<int64_t> vi_1 = {5, 6};
+  runner_->MutableInputs()
+      ->Tag(kIntsContextFeatureTestTag)
+      .packets.push_back(
+          MakePacket<std::vector<int64_t>>(vi_1).At(Timestamp::PostStream()));
+  const std::vector<int64_t> vi_2 = {7, 8};
+  runner_->MutableInputs()
+      ->Tag(kIntsContextFeatureOtherTag)
+      .packets.push_back(
+          MakePacket<std::vector<int64_t>>(vi_2).At(Timestamp::PostStream()));
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_THAT(mpms::GetContextFeatureInts("TEST", output_sequence),
+              testing::ElementsAre(2, 3, 5, 6));
+  ASSERT_THAT(mpms::GetContextFeatureInts("OTHER", output_sequence),
+              testing::ElementsAre(2, 4, 7, 8));
 }
 
 TEST_F(PackMediaSequenceCalculatorTest, PacksAdditionalContext) {

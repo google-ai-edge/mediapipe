@@ -41,6 +41,7 @@ const char kImageTag[] = "IMAGE";
 const char kImageLabelPrefixTag[] = "IMAGE_LABEL_";
 const char kClipLabelPrefixTag[] = "CLIP_LABEL_";
 const char kFloatContextFeaturePrefixTag[] = "FLOAT_CONTEXT_FEATURE_";
+const char kIntsContextFeaturePrefixTag[] = "INTS_CONTEXT_FEATURE_";
 const char kFloatFeaturePrefixTag[] = "FLOAT_FEATURE_";
 const char kIntFeaturePrefixTag[] = "INT_FEATURE_";
 const char kBytesFeaturePrefixTag[] = "BYTES_FEATURE_";
@@ -175,6 +176,9 @@ class PackMediaSequenceCalculator : public CalculatorBase {
       if (absl::StartsWith(tag, kFloatContextFeaturePrefixTag)) {
         cc->Inputs().Tag(tag).Set<std::vector<float>>();
       }
+      if (absl::StartsWith(tag, kIntsContextFeaturePrefixTag)) {
+        cc->Inputs().Tag(tag).Set<std::vector<int64_t>>();
+      }
       if (absl::StartsWith(tag, kFloatFeaturePrefixTag)) {
         cc->Inputs().Tag(tag).Set<std::vector<float>>();
       }
@@ -278,6 +282,13 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           mpms::ClearClipLabelIndex(key, sequence_.get());
           mpms::ClearClipLabelString(key, sequence_.get());
           mpms::ClearClipLabelConfidence(key, sequence_.get());
+        }
+        if (absl::StartsWith(tag, kIntsContextFeaturePrefixTag)) {
+          const std::string& key =
+              tag.substr(sizeof(kIntsContextFeaturePrefixTag) /
+                             sizeof(*kIntsContextFeaturePrefixTag) -
+                         1);
+          mpms::ClearContextFeatureInts(key, sequence_.get());
         }
         if (absl::StartsWith(tag, kFloatFeaturePrefixTag)) {
           std::string key = tag.substr(sizeof(kFloatFeaturePrefixTag) /
@@ -517,6 +528,19 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         mpms::SetContextFeatureFloats(
             key, cc->Inputs().Tag(tag).Get<std::vector<float>>(),
             sequence_.get());
+      }
+      if (absl::StartsWith(tag, kIntsContextFeaturePrefixTag) &&
+          !cc->Inputs().Tag(tag).IsEmpty()) {
+        const std::string& key =
+            tag.substr(sizeof(kIntsContextFeaturePrefixTag) /
+                           sizeof(*kIntsContextFeaturePrefixTag) -
+                       1);
+        // To ensure only one packet is provided for this tag.
+        RET_CHECK_EQ(cc->InputTimestamp(), Timestamp::PostStream());
+        for (const auto& value :
+             cc->Inputs().Tag(tag).Get<std::vector<int64_t>>()) {
+          mpms::AddContextFeatureInts(key, value, sequence_.get());
+        }
       }
       if (absl::StartsWith(tag, kFloatFeaturePrefixTag) &&
           !cc->Inputs().Tag(tag).IsEmpty()) {
