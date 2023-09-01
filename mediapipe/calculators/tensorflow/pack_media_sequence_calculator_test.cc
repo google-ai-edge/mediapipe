@@ -60,6 +60,8 @@ constexpr char kFloatContextFeatureOtherTag[] = "FLOAT_CONTEXT_FEATURE_OTHER";
 constexpr char kFloatContextFeatureTestTag[] = "FLOAT_CONTEXT_FEATURE_TEST";
 constexpr char kIntsContextFeatureTestTag[] = "INTS_CONTEXT_FEATURE_TEST";
 constexpr char kIntsContextFeatureOtherTag[] = "INTS_CONTEXT_FEATURE_OTHER";
+constexpr char kBytesContextFeatureTestTag[] = "BYTES_CONTEXT_FEATURE_TEST";
+constexpr char kBytesContextFeatureOtherTag[] = "BYTES_CONTEXT_FEATURE_OTHER";
 constexpr char kFloatFeatureOtherTag[] = "FLOAT_FEATURE_OTHER";
 constexpr char kFloatFeatureTestTag[] = "FLOAT_FEATURE_TEST";
 constexpr char kIntFeatureOtherTag[] = "INT_FEATURE_OTHER";
@@ -564,6 +566,125 @@ TEST_F(PackMediaSequenceCalculatorTest, AppendTwoContextIntLists) {
               testing::ElementsAre(2, 3, 5, 6));
   ASSERT_THAT(mpms::GetContextFeatureInts("OTHER", output_sequence),
               testing::ElementsAre(2, 4, 7, 8));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, PackTwoContextByteLists) {
+  SetUpCalculator(
+      /*input_streams=*/{"BYTES_CONTEXT_FEATURE_TEST:test",
+                         "BYTES_CONTEXT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false, /*replace_instead_of_append=*/true);
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+
+  const std::vector<std::string> vb_1 = {"value_1", "value_2"};
+  runner_->MutableInputs()
+      ->Tag(kBytesContextFeatureTestTag)
+      .packets.push_back(MakePacket<std::vector<std::string>>(vb_1).At(
+          Timestamp::PostStream()));
+  const std::vector<std::string> vb_2 = {"value_3", "value_4"};
+  runner_->MutableInputs()
+      ->Tag(kBytesContextFeatureOtherTag)
+      .packets.push_back(MakePacket<std::vector<std::string>>(vb_2).At(
+          Timestamp::PostStream()));
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_THAT(mpms::GetContextFeatureBytes("TEST", output_sequence),
+              testing::ElementsAre("value_1", "value_2"));
+  ASSERT_THAT(mpms::GetContextFeatureBytes("OTHER", output_sequence),
+              testing::ElementsAre("value_3", "value_4"));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, ReplaceTwoContextByteLists) {
+  SetUpCalculator(
+      /*input_streams=*/{"BYTES_CONTEXT_FEATURE_TEST:test",
+                         "BYTES_CONTEXT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false, /*replace_instead_of_append=*/true);
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+  mpms::SetContextFeatureBytes("TEST", {"existing_value_1", "existing_value_2"},
+                               input_sequence.get());
+  mpms::SetContextFeatureBytes(
+      "OTHER", {"existing_value_3", "existing_value_4"}, input_sequence.get());
+
+  const std::vector<std::string> vb_1 = {"value_1", "value_2"};
+  runner_->MutableInputs()
+      ->Tag(kBytesContextFeatureTestTag)
+      .packets.push_back(MakePacket<std::vector<std::string>>(vb_1).At(
+          Timestamp::PostStream()));
+  const std::vector<std::string> vb_2 = {"value_3", "value_4"};
+  runner_->MutableInputs()
+      ->Tag(kBytesContextFeatureOtherTag)
+      .packets.push_back(MakePacket<std::vector<std::string>>(vb_2).At(
+          Timestamp::PostStream()));
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_THAT(mpms::GetContextFeatureBytes("TEST", output_sequence),
+              testing::ElementsAre("value_1", "value_2"));
+  ASSERT_THAT(mpms::GetContextFeatureBytes("OTHER", output_sequence),
+              testing::ElementsAre("value_3", "value_4"));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, AppendTwoContextByteLists) {
+  SetUpCalculator(
+      /*input_streams=*/{"BYTES_CONTEXT_FEATURE_TEST:test",
+                         "BYTES_CONTEXT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false,
+      /*replace_instead_of_append=*/false);
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+  mpms::SetContextFeatureBytes("TEST", {"existing_value_1", "existing_value_2"},
+                               input_sequence.get());
+  mpms::SetContextFeatureBytes(
+      "OTHER", {"existing_value_3", "existing_value_4"}, input_sequence.get());
+
+  const std::vector<std::string> vb_1 = {"value_1", "value_2"};
+  runner_->MutableInputs()
+      ->Tag(kBytesContextFeatureTestTag)
+      .packets.push_back(MakePacket<std::vector<std::string>>(vb_1).At(
+          Timestamp::PostStream()));
+  const std::vector<std::string> vb_2 = {"value_3", "value_4"};
+  runner_->MutableInputs()
+      ->Tag(kBytesContextFeatureOtherTag)
+      .packets.push_back(MakePacket<std::vector<std::string>>(vb_2).At(
+          Timestamp::PostStream()));
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_THAT(mpms::GetContextFeatureBytes("TEST", output_sequence),
+              testing::ElementsAre("existing_value_1", "existing_value_2",
+                                   "value_1", "value_2"));
+  ASSERT_THAT(mpms::GetContextFeatureBytes("OTHER", output_sequence),
+              testing::ElementsAre("existing_value_3", "existing_value_4",
+                                   "value_3", "value_4"));
 }
 
 TEST_F(PackMediaSequenceCalculatorTest, PacksAdditionalContext) {
