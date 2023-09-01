@@ -19,6 +19,7 @@ import android.graphics.Bitmap;
 import android.util.Log;
 import androidx.annotation.Nullable;
 import com.google.auto.value.AutoValue;
+import com.google.mediapipe.calculator.proto.StableDiffusionIterateCalculatorOptionsProto;
 import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
 import com.google.mediapipe.framework.AndroidPacketGetter;
 import com.google.mediapipe.framework.Packet;
@@ -28,8 +29,6 @@ import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler;
-import com.google.mediapipe.tasks.core.OutputHandler.PureResultListener;
-import com.google.mediapipe.tasks.core.OutputHandler.ResultListener;
 import com.google.mediapipe.tasks.core.TaskInfo;
 import com.google.mediapipe.tasks.core.TaskOptions;
 import com.google.mediapipe.tasks.core.TaskResult;
@@ -64,17 +63,23 @@ public final class ImageGenerator extends BaseVisionTaskApi {
   private static final String SOURCE_CONDITION_IMAGE_STREAM_NAME = "source_condition_image";
   private static final String CONDITION_IMAGE_STREAM_NAME = "condition_image";
   private static final String SELECT_STREAM_NAME = "select";
+  private static final String SHOW_RESULT_STREAM_NAME = "show_result";
   private static final int GENERATED_IMAGE_OUT_STREAM_INDEX = 0;
   private static final int STEPS_OUT_STREAM_INDEX = 1;
   private static final int ITERATION_OUT_STREAM_INDEX = 2;
+  private static final int SHOW_RESULT_OUT_STREAM_INDEX = 3;
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.image_generator.ImageGeneratorGraph";
   private static final String CONDITION_IMAGE_GRAPHS_CONTAINER_NAME =
       "mediapipe.tasks.vision.image_generator.ConditionedImageGraphContainer";
   private static final String TAG = "ImageGenerator";
+  private static final int GENERATED_IMAGE_WIDTH = 512;
+  private static final int GENERATED_IMAGE_HEIGHT = 512;
   private TaskRunner conditionImageGraphsContainerTaskRunner;
   private Map<ConditionOptions.ConditionType, Integer> conditionTypeIndex;
   private boolean useConditionImage = false;
+  private CachedInputs cachedInputs = new CachedInputs();
+  private boolean inProcessing = false;
 
   /**
    * Creates an {@link ImageGenerator} instance from an {@link ImageGeneratorOptions}.
@@ -107,7 +112,8 @@ public final class ImageGenerator extends BaseVisionTaskApi {
             "STEPS:" + STEPS_STREAM_NAME,
             "ITERATION:" + ITERATION_STREAM_NAME,
             "PROMPT:" + PROMPT_STREAM_NAME,
-            "RAND_SEED:" + RAND_SEED_STREAM_NAME));
+            "RAND_SEED:" + RAND_SEED_STREAM_NAME,
+            "SHOW_RESULT:" + SHOW_RESULT_STREAM_NAME));
     final boolean useConditionImage = conditionOptions != null;
     if (useConditionImage) {
       inputStreams.add("SELECT:" + SELECT_STREAM_NAME);
@@ -115,7 +121,11 @@ public final class ImageGenerator extends BaseVisionTaskApi {
       generatorOptions.conditionOptions = Optional.of(conditionOptions);
     }
     List<String> outputStreams =
-        Arrays.asList("IMAGE:image_out", "STEPS:steps_out", "ITERATION:iteration_out");
+        Arrays.asList(
+            "IMAGE:image_out",
+            "STEPS:steps_out",
+            "ITERATION:iteration_out",
+            "SHOW_RESULT:show_result_out");
 
     OutputHandler<ImageGeneratorResult, Void> handler = new OutputHandler<>();
     handler.setOutputPacketConverter(
@@ -125,16 +135,22 @@ public final class ImageGenerator extends BaseVisionTaskApi {
           public ImageGeneratorResult convertToTaskResult(List<Packet> packets) {
             int iteration = PacketGetter.getInt32(packets.get(ITERATION_OUT_STREAM_INDEX));
             int steps = PacketGetter.getInt32(packets.get(STEPS_OUT_STREAM_INDEX));
-            Log.i("ImageGenerator", "Iteration: " + iteration + ", Steps: " + steps);
-            if (iteration != steps - 1) {
+            boolean showResult =
+                PacketGetter.getBool(packets.get(SHOW_RESULT_OUT_STREAM_INDEX))
+                    || iteration == steps - 1;
+            Log.i(
+                "ImageGenerator",
+                "Iteration: " + iteration + ", Steps: " + steps + ", ShowResult: " + showResult);
+            if (showResult) {
+              Log.i("ImageGenerator", "processing generated image");
+              Packet packet = packets.get(GENERATED_IMAGE_OUT_STREAM_INDEX);
+              Bitmap generatedBitmap = AndroidPacketGetter.getBitmapFromRgb(packet);
+              BitmapImageBuilder bitmapImageBuilder = new BitmapImageBuilder(generatedBitmap);
+              return ImageGeneratorResult.create(
+                  bitmapImageBuilder.build(), packet.getTimestamp() / MICROSECONDS_PER_MILLISECOND);
+            } else {
               return null;
             }
-            Log.i("ImageGenerator", "processing generated image");
-            Packet packet = packets.get(GENERATED_IMAGE_OUT_STREAM_INDEX);
-            Bitmap generatedBitmap = AndroidPacketGetter.getBitmapFromRgb(packet);
-            BitmapImageBuilder bitmapImageBuilder = new BitmapImageBuilder(generatedBitmap);
-            return ImageGeneratorResult.create(
-                bitmapImageBuilder.build(), packet.getTimestamp() / MICROSECONDS_PER_MILLISECOND);
           }
 
           @Override
@@ -143,16 +159,6 @@ public final class ImageGenerator extends BaseVisionTaskApi {
           }
         });
     handler.setHandleTimestampBoundChanges(true);
-    if (generatorOptions.resultListener().isPresent()) {
-      ResultListener<ImageGeneratorResult, Void> resultListener =
-          new ResultListener<ImageGeneratorResult, Void>() {
-            @Override
-            public void run(ImageGeneratorResult imageGeneratorResult, Void input) {
-              generatorOptions.resultListener().get().run(imageGeneratorResult);
-            }
-          };
-      handler.setResultListener(resultListener);
-    }
     generatorOptions.errorListener().ifPresent(handler::setErrorListener);
     TaskRunner runner =
         TaskRunner.create(
@@ -229,17 +235,28 @@ public final class ImageGenerator extends BaseVisionTaskApi {
    * Generates an image for iterations and the given random seed. Only valid when the ImageGenerator
    * is created without condition options.
    *
+   * <p>This is an e2e API, which runs {@code iterations} to generate an image. Consider using the
+   * iterative API instead to fetch the intermediate results.
+   *
    * @param prompt The text prompt describing the image to be generated.
    * @param iterations The total iterations to generate the image.
    * @param seed The random seed used during image generation.
    */
   public ImageGeneratorResult generate(String prompt, int iterations, int seed) {
+    if (useConditionImage) {
+      throw new IllegalArgumentException(
+          "ImageGenerator is created with condition options. Must use the methods with condition "
+              + "options.");
+    }
     return runIterations(prompt, iterations, seed, null, 0);
   }
 
   /**
    * Generates an image based on the source image for iterations and the given random seed. Only
    * valid when the ImageGenerator is created with condition options.
+   *
+   * <p>This is an e2e API, which runs {@code iterations} to generate an image. Consider using the
+   * iterative API instead to fetch the intermediate results.
    *
    * @param prompt The text prompt describing the image to be generated.
    * @param sourceConditionImage The source image used to create the condition image, which is used
@@ -255,12 +272,108 @@ public final class ImageGenerator extends BaseVisionTaskApi {
       ConditionOptions.ConditionType conditionType,
       int iterations,
       int seed) {
+    if (!useConditionImage) {
+      throw new IllegalArgumentException(
+          "ImageGenerator is created without condition options. Must use the methods without "
+              + "condition options.");
+    }
     return runIterations(
         prompt,
         iterations,
         seed,
         createConditionImage(sourceConditionImage, conditionType),
         conditionTypeIndex.get(conditionType));
+  }
+
+  /**
+   * Sets the inputs of the ImageGenerator. There is {@link setInputs} and {@link execute} method
+   * pair for iterative usage. Users must call {@link setInputs} before {@link execute}. Only valid
+   * when the ImageGenerator is created without condition options.
+   *
+   * @param prompt The text prompt describing the image to be generated.
+   * @param iterations The total iterations to generate the image.
+   * @param seed The random seed used during image generation.
+   */
+  public void setInputs(String prompt, int iterations, int seed) {
+    if (useConditionImage) {
+      throw new IllegalArgumentException(
+          "ImageGenerator is created with condition options. Must use the methods with condition "
+              + "options.");
+    }
+    cachedInputs = new CachedInputs();
+    cachedInputs.prompt = prompt;
+    cachedInputs.iterations = iterations;
+    cachedInputs.seed = seed;
+    cachedInputs.step = 0;
+    inProcessing = true;
+  }
+
+  /**
+   * Sets the inputs of the ImageGenerator. For iterative usage, use {@link setInputs} and {@link
+   * execute} in pairs. Users must call {@link setInputs} before {@link execute}. Only valid when
+   * the ImageGenerator is created with condition options.
+   *
+   * @param prompt The text prompt describing the image to be generated.
+   * @param sourceConditionImage The source image used to create the condition image, which is used
+   *     as a guidance for the image generation.
+   * @param conditionType The {@link ConditionOptions.ConditionType} specifying the type of
+   *     condition image.
+   * @param iterations The total iterations to generate the image.
+   * @param seed The random seed used during image generation.
+   */
+  public void setInputs(
+      String prompt,
+      MPImage sourceConditionImage,
+      ConditionOptions.ConditionType conditionType,
+      int iterations,
+      int seed) {
+    if (!useConditionImage) {
+      throw new IllegalArgumentException(
+          "ImageGenerator is created without condition options. Must use the methods without "
+              + "condition options.");
+    }
+    cachedInputs = new CachedInputs();
+    cachedInputs.prompt = prompt;
+    cachedInputs.iterations = iterations;
+    cachedInputs.seed = seed;
+    cachedInputs.step = 0;
+    cachedInputs.cachedConditionImage = createConditionImage(sourceConditionImage, conditionType);
+    cachedInputs.conditionType = conditionType;
+    inProcessing = true;
+  }
+
+  /**
+   * Executes one iteration of image generation. The method must be called {@code iterations} times
+   * to generate the final image. Must call {@link setInputs} before calling this method.
+   *
+   * <p>This is an iterative API, which must be called iteratively.
+   *
+   * <p>This API is useful for showing the intermediate image generation results and the image
+   * generation progress. Note that requesting the intermediate results will result in a larger
+   * latency. Consider using the e2e API instead for latency consideration.
+   *
+   * <p>Example usage:
+   *
+   * <p>imageGenerator.setInputs(prompt, iterations, seed); for (int step = 0; step < iterations;
+   * step++) { ImageGeneratorResult result = imageGenerator.execute(true); }
+   *
+   * @param showResult Whether to get the generated image result in the intermediate iterations. If
+   *     false, null is returned. The generated image result is always returned at the last
+   *     iteration, regardless of showResult value.
+   */
+  @Nullable
+  public ImageGeneratorResult execute(boolean showResult) {
+    if (!inProcessing) {
+      throw new IllegalArgumentException("Must call setInputs before execute.");
+    }
+    return runStep(
+        cachedInputs.prompt,
+        cachedInputs.iterations,
+        cachedInputs.step++,
+        cachedInputs.seed,
+        cachedInputs.cachedConditionImage,
+        useConditionImage ? conditionTypeIndex.get(cachedInputs.conditionType) : 0,
+        showResult);
   }
 
   /**
@@ -295,6 +408,11 @@ public final class ImageGenerator extends BaseVisionTaskApi {
 
   private ImageGeneratorResult runIterations(
       String prompt, int steps, int seed, @Nullable MPImage conditionImage, int select) {
+    if (inProcessing) {
+      throw new IllegalArgumentException(
+          "Iterative API was called previously. It is not allowed to called batch API during"
+              + "iterative processing.");
+    }
     ImageGeneratorResult result = null;
     long timestamp = System.currentTimeMillis() * MICROSECONDS_PER_MILLISECOND;
     for (int i = 0; i < steps; i++) {
@@ -318,11 +436,84 @@ public final class ImageGenerator extends BaseVisionTaskApi {
     return result;
   }
 
+  @Nullable
+  private ImageGeneratorResult runStep(
+      String prompt,
+      int iterations,
+      int step,
+      int seed,
+      @Nullable MPImage conditionImage,
+      int select,
+      boolean showResult) {
+    if (step == 0) {
+      cachedInputs.cachedTimestamp = System.currentTimeMillis() * MICROSECONDS_PER_MILLISECOND;
+    }
+    Map<String, Packet> inputPackets = new HashMap<>();
+    if (step == 0 && useConditionImage) {
+      inputPackets.put(
+          CONDITION_IMAGE_STREAM_NAME, runner.getPacketCreator().createImage(conditionImage));
+      inputPackets.put(SELECT_STREAM_NAME, runner.getPacketCreator().createInt32(select));
+    }
+    inputPackets.put(PROMPT_STREAM_NAME, runner.getPacketCreator().createString(prompt));
+    inputPackets.put(STEPS_STREAM_NAME, runner.getPacketCreator().createInt32(iterations));
+    inputPackets.put(ITERATION_STREAM_NAME, runner.getPacketCreator().createInt32(step));
+    inputPackets.put(RAND_SEED_STREAM_NAME, runner.getPacketCreator().createInt32(seed));
+    inputPackets.put(SHOW_RESULT_STREAM_NAME, runner.getPacketCreator().createBool(showResult));
+    ImageGeneratorResult result =
+        (ImageGeneratorResult) runner.process(inputPackets, cachedInputs.cachedTimestamp++);
+    if (result != null && useConditionImage) {
+      // Add condition image to the ImageGeneratorResult.
+      result =
+          ImageGeneratorResult.create(
+              result.generatedImage(), conditionImage, result.timestampMs());
+    }
+    if (step == iterations - 1) {
+      inProcessing = false;
+      cachedInputs = new CachedInputs();
+    }
+    return result;
+  }
+
   /** Closes and cleans up the task runners. */
   @Override
   public void close() {
-    runner.close();
-    conditionImageGraphsContainerTaskRunner.close();
+    if (runner != null) {
+      runner.close();
+    }
+    if (conditionImageGraphsContainerTaskRunner != null) {
+      conditionImageGraphsContainerTaskRunner.close();
+    }
+  }
+
+  // Helper class to holder inputs to be checked with the inputs of next step.
+  private static class CachedInputs {
+    public CachedInputs() {
+      this.prompt = "";
+      this.iterations = 0;
+      this.step = 0;
+      this.seed = 0;
+    }
+
+    @Override
+    public final String toString() {
+      return "Prompt: "
+          + prompt
+          + ", Iterations: "
+          + iterations
+          + ", Step: "
+          + step
+          + ", Seed: "
+          + seed
+          + (conditionType == null ? "" : ", ConditionType: " + conditionType.name());
+    }
+
+    public String prompt;
+    public int iterations;
+    public int step;
+    public int seed;
+    public ConditionOptions.ConditionType conditionType;
+    public MPImage cachedConditionImage;
+    public long cachedTimestamp;
   }
 
   /** A container class for the condition image. */
@@ -343,14 +534,11 @@ public final class ImageGenerator extends BaseVisionTaskApi {
     @AutoValue.Builder
     public abstract static class Builder {
 
-      /** Sets the text to image model directory storing the model weights. */
-      public abstract Builder setText2ImageModelDirectory(String modelDirectory);
+      /** Sets the image generator model directory storing the model weights. */
+      public abstract Builder setImageGeneratorModelDirectory(String modelDirectory);
 
       /** Sets the path to LoRA weights file. */
       public abstract Builder setLoraWeightsFilePath(String loraWeightsFilePath);
-
-      public abstract Builder setResultListener(
-          PureResultListener<ImageGeneratorResult> resultListener);
 
       /** Sets an optional {@link ErrorListener}}. */
       public abstract Builder setErrorListener(ErrorListener value);
@@ -363,11 +551,9 @@ public final class ImageGenerator extends BaseVisionTaskApi {
       }
     }
 
-    abstract String text2ImageModelDirectory();
+    abstract String imageGeneratorModelDirectory();
 
     abstract Optional<String> loraWeightsFilePath();
-
-    abstract Optional<PureResultListener<ImageGeneratorResult>> resultListener();
 
     abstract Optional<ErrorListener> errorListener();
 
@@ -375,7 +561,7 @@ public final class ImageGenerator extends BaseVisionTaskApi {
 
     public static Builder builder() {
       return new AutoValue_ImageGenerator_ImageGeneratorOptions.Builder()
-          .setText2ImageModelDirectory("");
+          .setImageGeneratorModelDirectory("");
     }
 
     /** Converts an {@link ImageGeneratorOptions} to a {@link Any} protobuf message. */
@@ -393,13 +579,23 @@ public final class ImageGenerator extends BaseVisionTaskApi {
           e.printStackTrace();
         }
       }
-      taskOptionsBuilder.setText2ImageModelDirectory(text2ImageModelDirectory());
+      taskOptionsBuilder.setText2ImageModelDirectory(imageGeneratorModelDirectory());
       if (loraWeightsFilePath().isPresent()) {
         ExternalFileProto.ExternalFile.Builder externalFileBuilder =
             ExternalFileProto.ExternalFile.newBuilder();
         externalFileBuilder.setFileName(loraWeightsFilePath().get());
         taskOptionsBuilder.setLoraWeightsFile(externalFileBuilder.build());
       }
+      taskOptionsBuilder.setStableDiffusionIterateOptions(
+          StableDiffusionIterateCalculatorOptionsProto.StableDiffusionIterateCalculatorOptions
+              .newBuilder()
+              .setBaseSeed(0)
+              .setFileFolder(imageGeneratorModelDirectory())
+              .setOutputImageWidth(GENERATED_IMAGE_WIDTH)
+              .setOutputImageHeight(GENERATED_IMAGE_HEIGHT)
+              .setEmitEmptyPacket(true)
+              .setShowEveryNIteration(100)
+              .build());
       return Any.newBuilder()
           .setTypeUrl(
               "type.googleapis.com/mediapipe.tasks.vision.image_generator.proto.ImageGeneratorGraphOptions")
@@ -465,7 +661,8 @@ public final class ImageGenerator extends BaseVisionTaskApi {
         taskOptionsBuilder.addControlPluginGraphsOptions(
             ControlPluginGraphOptionsProto.ControlPluginGraphOptions.newBuilder()
                 .setBaseOptions(
-                    convertBaseOptionsToProto(faceConditionOptions().get().baseOptions()))
+                    convertBaseOptionsToProto(
+                        faceConditionOptions().get().pluginModelBaseOptions()))
                 .setConditionedImageGraphOptions(
                     ConditionedImageGraphOptions.newBuilder()
                         .setFaceConditionTypeOptions(faceConditionOptions().get().convertToProto())
@@ -476,7 +673,8 @@ public final class ImageGenerator extends BaseVisionTaskApi {
         taskOptionsBuilder.addControlPluginGraphsOptions(
             ControlPluginGraphOptionsProto.ControlPluginGraphOptions.newBuilder()
                 .setBaseOptions(
-                    convertBaseOptionsToProto(edgeConditionOptions().get().baseOptions()))
+                    convertBaseOptionsToProto(
+                        edgeConditionOptions().get().pluginModelBaseOptions()))
                 .setConditionedImageGraphOptions(
                     ConditionedImageGraphOptions.newBuilder()
                         .setEdgeConditionTypeOptions(edgeConditionOptions().get().convertToProto())
@@ -486,7 +684,8 @@ public final class ImageGenerator extends BaseVisionTaskApi {
           taskOptionsBuilder.addControlPluginGraphsOptions(
               ControlPluginGraphOptionsProto.ControlPluginGraphOptions.newBuilder()
                   .setBaseOptions(
-                      convertBaseOptionsToProto(depthConditionOptions().get().baseOptions()))
+                      convertBaseOptionsToProto(
+                          depthConditionOptions().get().pluginModelBaseOptions()))
                   .setConditionedImageGraphOptions(
                       ConditionedImageGraphOptions.newBuilder()
                           .setDepthConditionTypeOptions(
@@ -510,11 +709,16 @@ public final class ImageGenerator extends BaseVisionTaskApi {
       @AutoValue.Builder
       public abstract static class Builder {
         /** Set the base options for plugin model. */
-        public abstract Builder setBaseOptions(BaseOptions baseOptions);
+        public abstract Builder setPluginModelBaseOptions(BaseOptions baseOptions);
 
-        /* {@link FaceLandmarkerOptions} used to detect face landmarks in the source image. */
-        public abstract Builder setFaceLandmarkerOptions(
-            FaceLandmarkerOptions faceLandmarkerOptions);
+        /** Set base options for face landmarks model. */
+        public abstract Builder setFaceModelBaseOptions(BaseOptions baseOptions);
+
+        /** Set minimum confidence score of face presence score in the face landmark detection. */
+        public abstract Builder setMinFaceDetectionConfidence(float minFaceDetectionConfidence);
+
+        /** Set the face presence threshold */
+        public abstract Builder setMinFacePresenceConfidence(float minFacePresenceConfidence);
 
         abstract FaceConditionOptions autoBuild();
 
@@ -524,23 +728,36 @@ public final class ImageGenerator extends BaseVisionTaskApi {
         }
       }
 
-      abstract BaseOptions baseOptions();
+      abstract BaseOptions pluginModelBaseOptions();
 
-      abstract FaceLandmarkerOptions faceLandmarkerOptions();
+      abstract BaseOptions faceModelBaseOptions();
+
+      abstract float minFaceDetectionConfidence();
+
+      abstract float minFacePresenceConfidence();
 
       public static Builder builder() {
-        return new AutoValue_ImageGenerator_ConditionOptions_FaceConditionOptions.Builder();
+        return new AutoValue_ImageGenerator_ConditionOptions_FaceConditionOptions.Builder()
+            .setMinFaceDetectionConfidence(0.5f)
+            .setMinFacePresenceConfidence(0.5f);
       }
 
       ConditionedImageGraphOptions.FaceConditionTypeOptions convertToProto() {
+        FaceLandmarkerOptions faceLandmarkerOptions =
+            FaceLandmarkerOptions.builder()
+                .setBaseOptions(faceModelBaseOptions())
+                .setMinFaceDetectionConfidence(minFaceDetectionConfidence())
+                .setMinFacePresenceConfidence(minFacePresenceConfidence())
+                .setRunningMode(RunningMode.IMAGE)
+                .setOutputFaceBlendshapes(false)
+                .setOutputFacialTransformationMatrixes(false)
+                .setNumFaces(1)
+                .build();
         return ConditionedImageGraphOptions.FaceConditionTypeOptions.newBuilder()
             .setFaceLandmarkerGraphOptions(
-                FaceLandmarkerGraphOptions.newBuilder()
-                    .mergeFrom(
-                        faceLandmarkerOptions()
-                            .convertToCalculatorOptionsProto()
-                            .getExtension(FaceLandmarkerGraphOptions.ext))
-                    .build())
+                faceLandmarkerOptions
+                    .convertToCalculatorOptionsProto()
+                    .getExtension(FaceLandmarkerGraphOptions.ext))
             .build();
       }
     }
@@ -553,12 +770,11 @@ public final class ImageGenerator extends BaseVisionTaskApi {
       @AutoValue.Builder
       public abstract static class Builder {
 
-        /** Set the base options for plugin model. */
-        public abstract Builder setBaseOptions(BaseOptions baseOptions);
+        /** Set the base options for the plugin model. */
+        public abstract Builder setPluginModelBaseOptions(BaseOptions baseOptions);
 
-        /** {@link ImageSegmenterOptions} used to detect depth image from the source image. */
-        public abstract Builder setImageSegmenterOptions(
-            ImageSegmenterOptions imageSegmenterOptions);
+        /** Set the base options for the depth model. */
+        public abstract Builder setDepthModelBaseOptions(BaseOptions baseOptions);
 
         abstract DepthConditionOptions autoBuild();
 
@@ -569,18 +785,25 @@ public final class ImageGenerator extends BaseVisionTaskApi {
         }
       }
 
-      abstract BaseOptions baseOptions();
+      abstract BaseOptions pluginModelBaseOptions();
 
-      abstract ImageSegmenterOptions imageSegmenterOptions();
+      abstract BaseOptions depthModelBaseOptions();
 
       public static Builder builder() {
         return new AutoValue_ImageGenerator_ConditionOptions_DepthConditionOptions.Builder();
       }
 
       ConditionedImageGraphOptions.DepthConditionTypeOptions convertToProto() {
+        ImageSegmenterOptions imageSegmenterOptions =
+            ImageSegmenterOptions.builder()
+                .setBaseOptions(depthModelBaseOptions())
+                .setOutputConfidenceMasks(true)
+                .setOutputCategoryMask(false)
+                .setRunningMode(RunningMode.IMAGE)
+                .build();
         return ConditionedImageGraphOptions.DepthConditionTypeOptions.newBuilder()
             .setImageSegmenterGraphOptions(
-                imageSegmenterOptions()
+                imageSegmenterOptions
                     .convertToCalculatorOptionsProto()
                     .getExtension(ImageSegmenterGraphOptions.ext))
             .build();
@@ -603,7 +826,7 @@ public final class ImageGenerator extends BaseVisionTaskApi {
       public abstract static class Builder {
 
         /** Set the base options for plugin model. */
-        public abstract Builder setBaseOptions(BaseOptions baseOptions);
+        public abstract Builder setPluginModelBaseOptions(BaseOptions baseOptions);
 
         /** First threshold for the hysteresis procedure. */
         public abstract Builder setThreshold1(Float threshold1);
@@ -629,7 +852,7 @@ public final class ImageGenerator extends BaseVisionTaskApi {
         }
       }
 
-      abstract BaseOptions baseOptions();
+      abstract BaseOptions pluginModelBaseOptions();
 
       abstract Float threshold1();
 

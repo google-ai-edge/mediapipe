@@ -48,5 +48,6 @@ mediapipe_proto_library(
     deps = [
         ":control_plugin_graph_options_proto",
         "//mediapipe/tasks/cc/core/proto:external_file_proto",
+        "//mediapipe/tasks/cc/vision/image_generator/diffuser:stable_diffusion_iterate_calculator_proto",
     ],
 )

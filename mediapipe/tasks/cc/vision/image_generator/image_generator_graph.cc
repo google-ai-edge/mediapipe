@@ -68,6 +68,7 @@ constexpr absl::string_view kRandSeedTag = "RAND_SEED";
 constexpr absl::string_view kPluginTensorsTag = "PLUGIN_TENSORS";
 constexpr absl::string_view kConditionImageTag = "CONDITION_IMAGE";
 constexpr absl::string_view kSelectTag = "SELECT";
+constexpr absl::string_view kShowResultTag = "SHOW_RESULT";
 constexpr absl::string_view kMetadataFilename = "metadata";
 constexpr absl::string_view kLoraRankStr = "lora_rank";
 
@@ -78,6 +79,7 @@ struct ImageGeneratorInputs {
   Source<int> rand_seed;
   std::optional<Source<Image>> condition_image;
   std::optional<Source<int>> select_condition_type;
+  std::optional<Source<bool>> show_result;
 };
 
 struct ImageGeneratorOutputs {
@@ -209,6 +211,9 @@ REGISTER_MEDIAPIPE_GRAPH(
 //     valid, if condtrol plugin graph options are set in the graph options.
 //   SELECT - int
 //     The index of the selected the control plugin graph.
+//   SHOW_RESULT - bool @Optional
+//     Whether to show the diffusion result at the current step. If this stream
+//     is not empty, regardless show_every_n_iteration in the options.
 //
 // Outputs:
 //   IMAGE - Image
@@ -218,6 +223,9 @@ REGISTER_MEDIAPIPE_GRAPH(
 //   ITERATION - int @optional
 //    The current iteration in the generating steps. The same as ITERATION
 //    input.
+//   SHOW_RESULT - bool @Optional
+//     Whether to show the diffusion result at the current step. The same as
+//     input SHOW_RESULT.
 class ImageGeneratorGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
@@ -239,6 +247,10 @@ class ImageGeneratorGraph : public core::ModelTaskGraph {
       condition_image = graph.In(kConditionImageTag).Cast<Image>();
       select_condition_type = graph.In(kSelectTag).Cast<int>();
     }
+    std::optional<Source<bool>> show_result;
+    if (HasInput(sc->OriginalNode(), kShowResultTag)) {
+      show_result = graph.In(kShowResultTag).Cast<bool>();
+    }
     ASSIGN_OR_RETURN(
         auto outputs,
         BuildImageGeneratorGraph(
@@ -251,6 +263,7 @@ class ImageGeneratorGraph : public core::ModelTaskGraph {
                 /*rand_seed=*/graph.In(kRandSeedTag).Cast<int>(),
                 /*condition_image*/ condition_image,
                 /*select_condition_type*/ select_condition_type,
+                /*show_result*/ show_result,
             },
             graph));
     outputs.generated_image >> graph.Out(kImageTag).Cast<Image>();
@@ -261,6 +274,10 @@ class ImageGeneratorGraph : public core::ModelTaskGraph {
     graph.In(kStepsTag) >> pass_through.In(1);
     pass_through.Out(0) >> graph[Output<int>::Optional(kIterationTag)];
     pass_through.Out(1) >> graph[Output<int>::Optional(kStepsTag)];
+    if (HasOutput(sc->OriginalNode(), kShowResultTag)) {
+      graph.In(kShowResultTag) >> pass_through.In(2);
+      pass_through.Out(2) >> graph[Output<bool>::Optional(kShowResultTag)];
+    }
     return graph.GetConfig();
   }
 
@@ -299,15 +316,22 @@ class ImageGeneratorGraph : public core::ModelTaskGraph {
     inputs.steps >> stable_diff.In(kStepsTag);
     inputs.iteration >> stable_diff.In(kIterationTag);
     inputs.rand_seed >> stable_diff.In(kRandSeedTag);
+    if (inputs.show_result.has_value()) {
+      *inputs.show_result >> stable_diff.In(kShowResultTag);
+    }
     mediapipe::StableDiffusionIterateCalculatorOptions& options =
         stable_diff
             .GetOptions<mediapipe::StableDiffusionIterateCalculatorOptions>();
-    options.set_base_seed(0);
-    options.set_output_image_height(kPluginsOutputSize);
-    options.set_output_image_width(kPluginsOutputSize);
-    options.set_file_folder(subgraph_options.text2image_model_directory());
-    options.set_show_every_n_iteration(100);
-    options.set_emit_empty_packet(true);
+    if (subgraph_options.has_stable_diffusion_iterate_options()) {
+      options = subgraph_options.stable_diffusion_iterate_options();
+    } else {
+      options.set_base_seed(0);
+      options.set_output_image_height(kPluginsOutputSize);
+      options.set_output_image_width(kPluginsOutputSize);
+      options.set_file_folder(subgraph_options.text2image_model_directory());
+      options.set_show_every_n_iteration(100);
+      options.set_emit_empty_packet(true);
+    }
     if (lora_resources.has_value()) {
       auto& lora_layer_weights_mapping =
           *options.mutable_lora_weights_layer_mapping();
