@@ -122,6 +122,8 @@ describe('TaskRunner', () => {
         allowPrecisionLoss: true,
         cachedKernelPath: undefined,
         serializedModelDir: undefined,
+        cacheWritingBehavior: InferenceCalculatorOptions.Delegate.Gpu
+                                  .CacheWritingBehavior.WRITE_OR_ERROR,
         modelToken: undefined,
         usage: InferenceCalculatorOptions.Delegate.Gpu.InferenceUsage
                    .SUSTAINED_SPEED,
