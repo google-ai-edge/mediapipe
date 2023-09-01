@@ -12,9 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load(
+    "//mediapipe/framework/tool:mediapipe_files.bzl",
+    "mediapipe_files",
+)
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
+
+mediapipe_files(srcs = ["libimagegenerator_gpu.so"])
 
 # The native library of MediaPipe vision image generator tasks.
 cc_binary(
