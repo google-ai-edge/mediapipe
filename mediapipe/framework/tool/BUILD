@@ -427,6 +427,7 @@ cc_library(
         ":tag_map",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:graph_service_manager",
+        "//mediapipe/framework:packet_generator",
         "//mediapipe/framework:packet_generator_cc_proto",
         "//mediapipe/framework:port",
         "//mediapipe/framework:status_handler_cc_proto",
@@ -436,12 +437,8 @@ cc_library(
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "@com_google_absl//absl/container:flat_hash_set",
-        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -785,7 +782,6 @@ cc_test(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/tool/testdata:dub_quad_test_subgraph",
         "//mediapipe/framework/tool/testdata:nested_test_subgraph",
-        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
 )

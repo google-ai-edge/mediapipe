@@ -15,7 +15,6 @@
 
 #include <memory>
 
-#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -772,7 +771,9 @@ class InternalExecutorSubgraph : public Subgraph {
 };
 REGISTER_MEDIAPIPE_GRAPH(InternalExecutorSubgraph);
 
-TEST(SubgraphExpansionTest, SubgraphExecutorWorks) {
+// This test confirms that none of existing subgraphs can actually create an
+// executor when used as subgraphs and not like a final graph.
+TEST(SubgraphExpansionTest, SubgraphExecutorIsIgnored) {
   CalculatorGraphConfig supergraph =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input"
@@ -784,27 +785,23 @@ TEST(SubgraphExpansionTest, SubgraphExecutorWorks) {
       )pb");
   CalculatorGraphConfig expected_graph =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "input"
         node {
           name: "internalexecutorsubgraph__PassThroughCalculator"
           calculator: "PassThroughCalculator"
           input_stream: "input"
           output_stream: "output"
-          executor: "internalexecutorsubgraph__xyz"
-        }
-        input_stream: "input"
-        executor {
-          name: "internalexecutorsubgraph__xyz"
-          type: "ThreadPoolExecutor"
-          options {
-            [mediapipe.ThreadPoolExecutorOptions.ext] { num_threads: 1 }
-          }
+          executor: "xyz"
         }
       )pb");
   MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
   EXPECT_THAT(supergraph, mediapipe::EqualsProto(expected_graph));
 
   CalculatorGraph calculator_graph;
-  MP_EXPECT_OK(calculator_graph.Initialize(supergraph));
+  EXPECT_THAT(calculator_graph.Initialize(supergraph),
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       HasSubstr("The executor \"xyz\" is "
+                                 "not declared in an ExecutorConfig.")));
 }
 
 class NestedInternalExecutorsSubgraph : public Subgraph {
@@ -850,7 +847,7 @@ class NestedInternalExecutorsSubgraph : public Subgraph {
 };
 REGISTER_MEDIAPIPE_GRAPH(NestedInternalExecutorsSubgraph);
 
-TEST(SubgraphExpansionTest, NestedSubgraphExecutorsWork) {
+TEST(SubgraphExpansionTest, NestedSubgraphExecutorsAreIgnored) {
   CalculatorGraphConfig supergraph =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input"
@@ -867,55 +864,35 @@ TEST(SubgraphExpansionTest, NestedSubgraphExecutorsWork) {
       calculator: "PassThroughCalculator"
       input_stream: "nestedinternalexecutorssubgraph__bar_0"
       output_stream: "nestedinternalexecutorssubgraph__bar_1"
-      executor: "nestedinternalexecutorssubgraph__xyz"
+      executor: "xyz"
     }
     node {
       name: "nestedinternalexecutorssubgraph__PassThroughCalculator_2"
       calculator: "PassThroughCalculator"
       input_stream: "nestedinternalexecutorssubgraph__bar_1"
       output_stream: "output"
-      executor: "nestedinternalexecutorssubgraph__abc"
+      executor: "abc"
     }
     node {
       name: "nestedinternalexecutorssubgraph__internalexecutorsubgraph__PassThroughCalculator"
       calculator: "PassThroughCalculator"
       input_stream: "input"
       output_stream: "nestedinternalexecutorssubgraph__bar_0"
-      executor: "nestedinternalexecutorssubgraph__internalexecutorsubgraph__xyz"
+      executor: "xyz"
     }
     input_stream: "input"
-    executor {
-      name: "nestedinternalexecutorssubgraph__xyz"
-      type: "ThreadPoolExecutor"
-      options {
-        [mediapipe.ThreadPoolExecutorOptions.ext] { num_threads: 1 }
-      }
-    }
-    executor {
-      name: "nestedinternalexecutorssubgraph__abc"
-      type: "ThreadPoolExecutor"
-      options {
-        [mediapipe.ThreadPoolExecutorOptions.ext] { num_threads: 1 }
-      }
-    }
-    executor {
-      name: "nestedinternalexecutorssubgraph__internalexecutorsubgraph__xyz"
-      type: "ThreadPoolExecutor"
-      options {
-        [mediapipe.ThreadPoolExecutorOptions.ext] { num_threads: 1 }
-      }
-    }
   )pb");
   MP_EXPECT_OK(tool::ExpandSubgraphs(&supergraph));
   EXPECT_THAT(supergraph, mediapipe::EqualsProto(expected_graph));
 
   CalculatorGraph calculator_graph;
-  MP_EXPECT_OK(calculator_graph.Initialize(supergraph));
+  EXPECT_THAT(calculator_graph.Initialize(supergraph),
+              StatusIs(absl::StatusCode::kInvalidArgument,
+                       HasSubstr("The executor \"xyz\" is "
+                                 "not declared in an ExecutorConfig.")));
 }
 
-// For backward compatibility.
-TEST(SubgraphExpansionTest,
-     TopLevelGraphExecutorsCauseSameNamedSubgraphExecutorsToBeRemoved) {
+TEST(SubgraphExpansionTest, GraphExecutorsSubstituteSubgraphExecutors) {
   CalculatorGraphConfig supergraph =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
         input_stream: "input"
