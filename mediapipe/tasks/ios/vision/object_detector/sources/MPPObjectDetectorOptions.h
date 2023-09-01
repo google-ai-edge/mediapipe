@@ -23,11 +23,11 @@ NS_ASSUME_NONNULL_BEGIN
 @class MPPObjectDetector;
 
 /**
- * This protocol defines an interface for the delegates of `MPPObjectDetector` object to receive
+ * This protocol defines an interface for the delegates of `ObjectDetector` object to receive
  * results of performing asynchronous object detection on images (i.e, when `runningMode` =
- * `MPPRunningModeLiveStream`).
+ * `.liveStream`).
  *
- * The delegate of `MPPObjectDetector` must adopt `MPPObjectDetectorLiveStreamDelegate` protocol.
+ * The delegate of `ObjectDetector` must adopt `ObjectDetectorLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
  */
 NS_SWIFT_NAME(ObjectDetectorLiveStreamDelegate)
@@ -37,14 +37,14 @@ NS_SWIFT_NAME(ObjectDetectorLiveStreamDelegate)
 
 /**
  * This method notifies a delegate that the results of asynchronous object detection of
- * an image submitted to the `MPPObjectDetector` is available.
+ * an image submitted to the `ObjectDetector` is available.
  *
- * This method is called on a private serial dispatch queue created by the `MPPObjectDetector`
+ * This method is called on a private serial dispatch queue created by the `ObjectDetector`
  * for performing the asynchronous delegates calls.
  *
  * @param objectDetector The object detector which performed the object detection.
- * This is useful to test equality when there are multiple instances of `MPPObjectDetector`.
- * @param result The `MPPObjectDetectorResult` object that contains a list of detections, each
+ * This is useful to test equality when there are multiple instances of `ObjectDetector`.
+ * @param result The `ObjectDetectorResult` object that contains a list of detections, each
  * detection has a bounding box that is expressed in the unrotated input frame of reference
  * coordinates system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the
  * underlying image data.
@@ -60,26 +60,27 @@ NS_SWIFT_NAME(ObjectDetectorLiveStreamDelegate)
     NS_SWIFT_NAME(objectDetector(_:didFinishDetection:timestampInMilliseconds:error:));
 @end
 
-/** Options for setting up a `MPPObjectDetector`. */
+/** Options for setting up a `ObjectDetector`. */
 NS_SWIFT_NAME(ObjectDetectorOptions)
 @interface MPPObjectDetectorOptions : MPPTaskOptions <NSCopying>
 
 /**
- * Running mode of the object detector task. Defaults to `MPPRunningModeImage`.
- * `MPPObjectDetector` can be created with one of the following running modes:
- *  1. `MPPRunningModeImage`: The mode for performing object detection on single image inputs.
- *  2. `MPPRunningModeVideo`: The mode for performing object detection on the decoded frames of a
+ * Running mode of the object detector task. Defaults to `.image`.
+ * `ObjectDetector` can be created with one of the following running modes:
+ *  1. `.image`: The mode for performing object detection on single image inputs.
+ *  2. `.video`: The mode for performing object detection on the decoded frames of a
  *      video.
- *  3. `MPPRunningModeLiveStream`: The mode for performing object detection on a live stream of
+ *  3. `.liveStream`: The mode for performing object detection on a live stream of
  *      input data, such as from the camera.
  */
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
- * An object that confirms to `MPPObjectDetectorLiveStreamDelegate` protocol. This object must
- * implement `objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:` to receive
- * the results of performing asynchronous object detection on images (i.e, when `runningMode` =
- * `MPPRunningModeLiveStream`).
+ * An object that confirms to `ObjectDetectorLiveStreamDelegate` protocol. This object must
+ * implement `objectDetector(_:didFinishDetectionWithResult:timestampInMilliseconds:error:)` to
+ * receive the results of performing asynchronous object detection on images (i.e, when
+ * `runningMode` =
+ * `.liveStream`).
  */
 @property(nonatomic, weak, nullable) id<MPPObjectDetectorLiveStreamDelegate>
     objectDetectorLiveStreamDelegate;

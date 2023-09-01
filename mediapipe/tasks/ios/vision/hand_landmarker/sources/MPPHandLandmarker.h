@@ -29,6 +29,24 @@ NS_ASSUME_NONNULL_BEGIN
 NS_SWIFT_NAME(HandLandmarker)
 @interface MPPHandLandmarker : NSObject
 
+/** The array of connections between the landmarks in the palm. */
+@property(class, nonatomic, readonly) NSArray<MPPConnection *> *handPalmConnections;
+
+/** The array of connections between the landmarks in the index finger. */
+@property(class, nonatomic, readonly) NSArray<MPPConnection *> *handIndexFingerConnections;
+
+/** The array of connections between the landmarks in the middle finger. */
+@property(class, nonatomic, readonly) NSArray<MPPConnection *> *handMiddleFingerConnections;
+
+/** The array of connections between the landmarks in the ring finger. */
+@property(class, nonatomic, readonly) NSArray<MPPConnection *> *handRingFingerConnections;
+
+/** The array of connections between the landmarks in the pinky. */
+@property(class, nonatomic, readonly) NSArray<MPPConnection *> *handPinkyConnections;
+
+/** The array of connections between all the landmarks in the hand. */
+@property(class, nonatomic, readonly) NSArray<MPPConnection *> *handConnections;
+
 /**
  * Creates a new instance of `MPPHandLandmarker` from an absolute path to a model asset bundle
  * stored locally on the device and the default `MPPHandLandmarkerOptions`.
@@ -155,48 +173,6 @@ NS_SWIFT_NAME(HandLandmarker)
     NS_SWIFT_NAME(detectAsync(image:timestampInMilliseconds:));
 
 - (instancetype)init NS_UNAVAILABLE;
-
-/**
- * Returns the connections between the landmarks in the palm.
- *
- * @return An array of connections between the landmarks in the palm.
- */
-+ (NSArray<MPPConnection *> *)handPalmConnections;
-
-/**
- * Returns the connections between the landmarks in the index finger.
- *
- * @return An array of connections between the landmarks in the index finger.
- */
-+ (NSArray<MPPConnection *> *)handIndexFingerConnections;
-
-/**
- * Returns the connections between the landmarks in the middle finger.
- *
- * @return An array of connections between the landmarks in the middle finger.
- */
-+ (NSArray<MPPConnection *> *)handMiddleFingerConnections;
-
-/**
- * Returns the connections between the landmarks in the ring finger.
- *
- * @return An array of connections between the landmarks in the ring finger.
- */
-+ (NSArray<MPPConnection *> *)handRingFingerConnections;
-
-/**
- * Returns the connections between the landmarks in the pinky.
- *
- * @return An array of connections between the landmarks in the pinky.
- */
-+ (NSArray<MPPConnection *> *)handPinkyConnections;
-
-/**
- * Returns the connections between all the landmarks in the hand.
- *
- * @return An array of connections between all the landmarks in the hand.
- */
-+ (NSArray<MPPConnection *> *)handConnections;
 
 + (instancetype)new NS_UNAVAILABLE;
 

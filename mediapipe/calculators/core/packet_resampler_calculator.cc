@@ -16,6 +16,9 @@
 
 #include <memory>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
+
 namespace {
 // Reflect an integer against the lower and upper bound of an interval.
 int64_t ReflectBetween(int64_t ts, int64_t ts_min, int64_t ts_max) {
@@ -177,7 +180,7 @@ PacketResamplerCalculator::GetSamplingStrategy(
     const PacketResamplerCalculatorOptions& options) {
   if (options.reproducible_sampling()) {
     if (!options.jitter_with_reflection()) {
-      LOG(WARNING)
+      ABSL_LOG(WARNING)
           << "reproducible_sampling enabled w/ jitter_with_reflection "
              "disabled. "
           << "reproducible_sampling always uses jitter with reflection, "
@@ -200,15 +203,15 @@ PacketResamplerCalculator::GetSamplingStrategy(
 
 Timestamp PacketResamplerCalculator::PeriodIndexToTimestamp(
     int64_t index) const {
-  CHECK_EQ(jitter_, 0.0);
-  CHECK_NE(first_timestamp_, Timestamp::Unset());
+  ABSL_CHECK_EQ(jitter_, 0.0);
+  ABSL_CHECK_NE(first_timestamp_, Timestamp::Unset());
   return first_timestamp_ + TimestampDiffFromSeconds(index / frame_rate_);
 }
 
 int64_t PacketResamplerCalculator::TimestampToPeriodIndex(
     Timestamp timestamp) const {
-  CHECK_EQ(jitter_, 0.0);
-  CHECK_NE(first_timestamp_, Timestamp::Unset());
+  ABSL_CHECK_EQ(jitter_, 0.0);
+  ABSL_CHECK_NE(first_timestamp_, Timestamp::Unset());
   return MathUtil::SafeRound<int64_t, double>(
       (timestamp - first_timestamp_).Seconds() * frame_rate_);
 }
@@ -229,13 +232,15 @@ absl::Status LegacyJitterWithReflectionStrategy::Open(CalculatorContext* cc) {
 
   if (resampler_options.output_header() !=
       PacketResamplerCalculatorOptions::NONE) {
-    LOG(WARNING) << "VideoHeader::frame_rate holds the target value and not "
-                    "the actual value.";
+    ABSL_LOG(WARNING)
+        << "VideoHeader::frame_rate holds the target value and not "
+           "the actual value.";
   }
 
   if (calculator_->flush_last_packet_) {
-    LOG(WARNING) << "PacketResamplerCalculatorOptions.flush_last_packet is "
-                    "ignored, because we are adding jitter.";
+    ABSL_LOG(WARNING)
+        << "PacketResamplerCalculatorOptions.flush_last_packet is "
+           "ignored, because we are adding jitter.";
   }
 
   const auto& seed = cc->InputSidePackets().Tag(kSeedTag).Get<std::string>();
@@ -254,7 +259,7 @@ absl::Status LegacyJitterWithReflectionStrategy::Open(CalculatorContext* cc) {
 }
 absl::Status LegacyJitterWithReflectionStrategy::Close(CalculatorContext* cc) {
   if (!packet_reservoir_->IsEmpty()) {
-    LOG(INFO) << "Emitting pack from reservoir.";
+    ABSL_LOG(INFO) << "Emitting pack from reservoir.";
     calculator_->OutputWithinLimits(cc, packet_reservoir_->GetSample());
   }
   return absl::OkStatus();
@@ -285,7 +290,7 @@ absl::Status LegacyJitterWithReflectionStrategy::Process(
 
   if (calculator_->frame_time_usec_ <
       (cc->InputTimestamp() - calculator_->last_packet_.Timestamp()).Value()) {
-    LOG_FIRST_N(WARNING, 2)
+    ABSL_LOG_FIRST_N(WARNING, 2)
         << "Adding jitter is not very useful when upsampling.";
   }
 
@@ -340,8 +345,8 @@ void LegacyJitterWithReflectionStrategy::UpdateNextOutputTimestampWithJitter() {
   next_output_timestamp_ = Timestamp(ReflectBetween(
       next_output_timestamp_.Value(), next_output_timestamp_min_.Value(),
       next_output_timestamp_max_.Value()));
-  CHECK_GE(next_output_timestamp_, next_output_timestamp_min_);
-  CHECK_LT(next_output_timestamp_, next_output_timestamp_max_);
+  ABSL_CHECK_GE(next_output_timestamp_, next_output_timestamp_min_);
+  ABSL_CHECK_LT(next_output_timestamp_, next_output_timestamp_max_);
 }
 
 absl::Status ReproducibleJitterWithReflectionStrategy::Open(
@@ -352,13 +357,15 @@ absl::Status ReproducibleJitterWithReflectionStrategy::Open(
 
   if (resampler_options.output_header() !=
       PacketResamplerCalculatorOptions::NONE) {
-    LOG(WARNING) << "VideoHeader::frame_rate holds the target value and not "
-                    "the actual value.";
+    ABSL_LOG(WARNING)
+        << "VideoHeader::frame_rate holds the target value and not "
+           "the actual value.";
   }
 
   if (calculator_->flush_last_packet_) {
-    LOG(WARNING) << "PacketResamplerCalculatorOptions.flush_last_packet is "
-                    "ignored, because we are adding jitter.";
+    ABSL_LOG(WARNING)
+        << "PacketResamplerCalculatorOptions.flush_last_packet is "
+           "ignored, because we are adding jitter.";
   }
 
   const auto& seed = cc->InputSidePackets().Tag(kSeedTag).Get<std::string>();
@@ -411,7 +418,7 @@ absl::Status ReproducibleJitterWithReflectionStrategy::Process(
     // Note, if the stream is upsampling, this could lead to the same packet
     // being emitted twice.  Upsampling and jitter doesn't make much sense
     // but does technically work.
-    LOG_FIRST_N(WARNING, 2)
+    ABSL_LOG_FIRST_N(WARNING, 2)
         << "Adding jitter is not very useful when upsampling.";
   }
 
@@ -499,13 +506,15 @@ absl::Status JitterWithoutReflectionStrategy::Open(CalculatorContext* cc) {
 
   if (resampler_options.output_header() !=
       PacketResamplerCalculatorOptions::NONE) {
-    LOG(WARNING) << "VideoHeader::frame_rate holds the target value and not "
-                    "the actual value.";
+    ABSL_LOG(WARNING)
+        << "VideoHeader::frame_rate holds the target value and not "
+           "the actual value.";
   }
 
   if (calculator_->flush_last_packet_) {
-    LOG(WARNING) << "PacketResamplerCalculatorOptions.flush_last_packet is "
-                    "ignored, because we are adding jitter.";
+    ABSL_LOG(WARNING)
+        << "PacketResamplerCalculatorOptions.flush_last_packet is "
+           "ignored, because we are adding jitter.";
   }
 
   const auto& seed = cc->InputSidePackets().Tag(kSeedTag).Get<std::string>();
@@ -555,7 +564,7 @@ absl::Status JitterWithoutReflectionStrategy::Process(CalculatorContext* cc) {
 
   if (calculator_->frame_time_usec_ <
       (cc->InputTimestamp() - calculator_->last_packet_.Timestamp()).Value()) {
-    LOG_FIRST_N(WARNING, 2)
+    ABSL_LOG_FIRST_N(WARNING, 2)
         << "Adding jitter is not very useful when upsampling.";
   }
 

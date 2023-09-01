@@ -20,9 +20,10 @@
 #include <deque>
 #include <memory>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/tracking/camera_motion.h"
 #include "mediapipe/util/tracking/camera_motion.pb.h"
@@ -92,8 +93,8 @@ MotionAnalysis::MotionAnalysis(const MotionAnalysisOptions& options,
       use_spatial_bias;
 
   if (compute_feature_descriptors_) {
-    CHECK_EQ(RegionFlowComputationOptions::FORMAT_RGB,
-             options_.flow_options().image_format())
+    ABSL_CHECK_EQ(RegionFlowComputationOptions::FORMAT_RGB,
+                  options_.flow_options().image_format())
         << "Feature descriptors only support RGB currently.";
     prev_frame_.reset(new cv::Mat(frame_height_, frame_width_, CV_8UC3));
   }
@@ -362,15 +363,15 @@ bool MotionAnalysis::AddFrameGeneric(
     RegionFlowFeatureList* output_feature_list) {
   // Don't check input sizes here, RegionFlowComputation does that based
   // on its internal options.
-  CHECK(feature_computation_) << "Calls to AddFrame* can NOT be mixed "
-                              << "with AddFeatures";
+  ABSL_CHECK(feature_computation_) << "Calls to AddFrame* can NOT be mixed "
+                                   << "with AddFeatures";
 
   // Compute RegionFlow.
   {
     MEASURE_TIME << "CALL RegionFlowComputation::AddImage";
     if (!region_flow_computation_->AddImageWithSeed(frame, timestamp_usec,
                                                     initial_transform)) {
-      LOG(ERROR) << "Error while computing region flow.";
+      ABSL_LOG(ERROR) << "Error while computing region flow.";
       return false;
     }
   }
@@ -401,7 +402,7 @@ bool MotionAnalysis::AddFrameGeneric(
             compute_feature_match_descriptors ? prev_frame_.get() : nullptr));
 
     if (feature_list == nullptr) {
-      LOG(ERROR) << "Error retrieving feature list.";
+      ABSL_LOG(ERROR) << "Error retrieving feature list.";
       return false;
     }
   }
@@ -461,7 +462,7 @@ void MotionAnalysis::AddFeatures(const RegionFlowFeatureList& features) {
 void MotionAnalysis::EnqueueFeaturesAndMotions(
     const RegionFlowFeatureList& features, const CameraMotion& motion) {
   feature_computation_ = false;
-  CHECK(buffer_->HaveEqualSize({"motion", "features"}))
+  ABSL_CHECK(buffer_->HaveEqualSize({"motion", "features"}))
       << "Can not be mixed with other Add* calls";
   buffer_->EmplaceDatum("features", new RegionFlowFeatureList(features));
   buffer_->EmplaceDatum("motion", new CameraMotion(motion));
@@ -479,7 +480,7 @@ int MotionAnalysis::GetResults(
 
   const int num_features_lists = buffer_->BufferSize("features");
   const int num_new_feature_lists = num_features_lists - overlap_start_;
-  CHECK_GE(num_new_feature_lists, 0);
+  ABSL_CHECK_GE(num_new_feature_lists, 0);
 
   if (!flush && num_new_feature_lists < options_.estimation_clip_size()) {
     // Nothing to compute, return.
@@ -487,7 +488,7 @@ int MotionAnalysis::GetResults(
   }
 
   const bool compute_saliency = options_.compute_motion_saliency();
-  CHECK_EQ(compute_saliency, saliency != nullptr)
+  ABSL_CHECK_EQ(compute_saliency, saliency != nullptr)
       << "Computing saliency requires saliency output and vice versa";
 
   // Estimate motions for newly buffered RegionFlowFeatureLists, which also
@@ -514,7 +515,7 @@ int MotionAnalysis::GetResults(
     }
   }
 
-  CHECK(buffer_->HaveEqualSize({"features", "motion"}));
+  ABSL_CHECK(buffer_->HaveEqualSize({"features", "motion"}));
 
   if (compute_saliency) {
     ComputeSaliency();
@@ -528,9 +529,9 @@ int MotionAnalysis::OutputResults(
     std::vector<std::unique_ptr<CameraMotion>>* camera_motion,
     std::vector<std::unique_ptr<SalientPointFrame>>* saliency) {
   const bool compute_saliency = options_.compute_motion_saliency();
-  CHECK_EQ(compute_saliency, saliency != nullptr)
+  ABSL_CHECK_EQ(compute_saliency, saliency != nullptr)
       << "Computing saliency requires saliency output and vice versa";
-  CHECK(buffer_->HaveEqualSize({"features", "motion"}));
+  ABSL_CHECK(buffer_->HaveEqualSize({"features", "motion"}));
 
   // Discard prev. overlap (already output, just used for filtering here).
   buffer_->DiscardData(buffer_->AllTags(), prev_overlap_start_);
@@ -598,9 +599,9 @@ int MotionAnalysis::OutputResults(
 
   // Reset for next chunk.
   prev_overlap_start_ = num_output_frames - new_overlap_start;
-  CHECK_GE(prev_overlap_start_, 0);
+  ABSL_CHECK_GE(prev_overlap_start_, 0);
 
-  CHECK(buffer_->TruncateBuffer(flush));
+  ABSL_CHECK(buffer_->TruncateBuffer(flush));
 
   overlap_start_ = buffer_->MaxBufferSize();
   return num_output_frames;
@@ -611,9 +612,9 @@ void MotionAnalysis::RenderResults(const RegionFlowFeatureList& feature_list,
                                    const SalientPointFrame* saliency,
                                    cv::Mat* rendered_results) {
 #ifndef NO_RENDERING
-  CHECK(rendered_results != nullptr);
-  CHECK_EQ(frame_width_, rendered_results->cols);
-  CHECK_EQ(frame_height_, rendered_results->rows);
+  ABSL_CHECK(rendered_results != nullptr);
+  ABSL_CHECK_EQ(frame_width_, rendered_results->cols);
+  ABSL_CHECK_EQ(frame_height_, rendered_results->rows);
 
   const auto viz_options = options_.visualization_options();
 
@@ -670,7 +671,7 @@ void MotionAnalysis::RenderResults(const RegionFlowFeatureList& feature_list,
                 text_scale * 3, cv::LINE_AA);
   }
 #else
-  LOG(FATAL) << "Code stripped out because of NO_RENDERING";
+  ABSL_LOG(FATAL) << "Code stripped out because of NO_RENDERING";
 #endif
 }
 
@@ -698,10 +699,10 @@ void MotionAnalysis::ComputeDenseForeground(
       &foreground_weights);
 
   // Setup push pull map (with border). Ensure constructor used the right type.
-  CHECK(foreground_push_pull_->filter_type() ==
-            PushPullFilteringC1::BINOMIAL_5X5 ||
-        foreground_push_pull_->filter_type() ==
-            PushPullFilteringC1::GAUSSIAN_5X5);
+  ABSL_CHECK(foreground_push_pull_->filter_type() ==
+                 PushPullFilteringC1::BINOMIAL_5X5 ||
+             foreground_push_pull_->filter_type() ==
+                 PushPullFilteringC1::GAUSSIAN_5X5);
 
   cv::Mat foreground_map(frame_height_ + 4, frame_width_ + 4, CV_32FC2);
   std::vector<Vector2_f> feature_locations;
@@ -741,8 +742,8 @@ void MotionAnalysis::ComputeDenseForeground(
 
 void MotionAnalysis::VisualizeDenseForeground(const cv::Mat& foreground_mask,
                                               cv::Mat* output) {
-  CHECK(output != nullptr);
-  CHECK(foreground_mask.size() == output->size());
+  ABSL_CHECK(output != nullptr);
+  ABSL_CHECK(foreground_mask.size() == output->size());
   // Map foreground measure to color (green by default).
   std::vector<Vector3_f> color_map;
   if (options_.visualization_options().foreground_jet_coloring()) {
@@ -780,7 +781,7 @@ void MotionAnalysis::VisualizeDenseForeground(const cv::Mat& foreground_mask,
 }
 
 void MotionAnalysis::VisualizeBlurAnalysisRegions(cv::Mat* input_view) {
-  CHECK(input_view != nullptr);
+  ABSL_CHECK(input_view != nullptr);
 
   cv::Mat intensity;
   cv::cvtColor(*input_view, intensity, cv::COLOR_RGB2GRAY);
@@ -797,7 +798,7 @@ void MotionAnalysis::VisualizeBlurAnalysisRegions(cv::Mat* input_view) {
 
 void MotionAnalysis::ComputeSaliency() {
   MEASURE_TIME << "Saliency computation.";
-  CHECK_EQ(overlap_start_, buffer_->BufferSize("saliency"));
+  ABSL_CHECK_EQ(overlap_start_, buffer_->BufferSize("saliency"));
 
   const int num_features_lists = buffer_->BufferSize("features");
 
@@ -821,7 +822,7 @@ void MotionAnalysis::ComputeSaliency() {
     buffer_->AddDatum("saliency", std::move(saliency));
   }
 
-  CHECK(buffer_->HaveEqualSize({"features", "motion", "saliency"}));
+  ABSL_CHECK(buffer_->HaveEqualSize({"features", "motion", "saliency"}));
 
   // Clear output saliency and copy from saliency.
   buffer_->DiscardDatum("output_saliency",

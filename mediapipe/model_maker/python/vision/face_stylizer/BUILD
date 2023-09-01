@@ -20,13 +20,6 @@ licenses(["notice"])
 
 package(default_visibility = ["//mediapipe:__subpackages__"])
 
-filegroup(
-    name = "testdata",
-    srcs = glob([
-        "testdata/**",
-    ]),
-)
-
 py_library(
     name = "constants",
     srcs = ["constants.py"],
@@ -72,18 +65,11 @@ py_library(
     name = "dataset",
     srcs = ["dataset.py"],
     deps = [
+        ":constants",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
-        "//mediapipe/model_maker/python/vision/core:image_utils",
-    ],
-)
-
-py_test(
-    name = "dataset_test",
-    srcs = ["dataset_test.py"],
-    data = [":testdata"],
-    deps = [
-        ":dataset",
-        "//mediapipe/tasks/python/test:test_utils",
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/vision:face_aligner",
     ],
 )
 
@@ -100,6 +86,7 @@ py_library(
         "//mediapipe/model_maker/python/core/utils:loss_functions",
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/vision/core:image_preprocessing",
+        "//mediapipe/tasks/python/metadata/metadata_writers:face_stylizer",
     ],
 )
 

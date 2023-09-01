@@ -17,6 +17,7 @@
 
 #include <memory>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/graph_output_stream.h"
 
 namespace mediapipe {
@@ -34,7 +35,7 @@ class OutputStreamPoller {
   // Resets OutputStramPollerImpl and cleans the internal packet queue.
   void Reset() {
     auto poller = internal_poller_impl_.lock();
-    CHECK(poller) << "OutputStreamPollerImpl is already destroyed.";
+    ABSL_CHECK(poller) << "OutputStreamPollerImpl is already destroyed.";
     poller->Reset();
   }
 
@@ -50,14 +51,14 @@ class OutputStreamPoller {
 
   void SetMaxQueueSize(int queue_size) {
     auto poller = internal_poller_impl_.lock();
-    CHECK(poller) << "OutputStreamPollerImpl is already destroyed.";
+    ABSL_CHECK(poller) << "OutputStreamPollerImpl is already destroyed.";
     return poller->SetMaxQueueSize(queue_size);
   }
 
   // Returns the number of packets in the queue.
   int QueueSize() {
     auto poller = internal_poller_impl_.lock();
-    CHECK(poller) << "OutputStreamPollerImpl is already destroyed.";
+    ABSL_CHECK(poller) << "OutputStreamPollerImpl is already destroyed.";
     return poller->QueueSize();
   }
 

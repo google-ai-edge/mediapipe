@@ -16,6 +16,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
@@ -284,9 +285,9 @@ class ImageToTensorCalculator : public Node {
                              cc, GetBorderMode(options_.border_mode()),
                              GetOutputTensorType(/*uses_gpu=*/false, params_)));
 #else
-        LOG(FATAL) << "Cannot create image to tensor CPU converter since "
-                      "MEDIAPIPE_DISABLE_OPENCV is defined and "
-                      "MEDIAPIPE_ENABLE_HALIDE is not defined.";
+        ABSL_LOG(FATAL) << "Cannot create image to tensor CPU converter since "
+                           "MEDIAPIPE_DISABLE_OPENCV is defined and "
+                           "MEDIAPIPE_ENABLE_HALIDE is not defined.";
 #endif  // !MEDIAPIPE_DISABLE_HALIDE
       }
     }

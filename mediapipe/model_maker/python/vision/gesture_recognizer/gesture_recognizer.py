@@ -54,7 +54,7 @@ class GestureRecognizer(classifier.Classifier):
     self._model_options = model_options
     self._hparams = hparams
     self._loss_function = loss_functions.FocalLoss(gamma=self._hparams.gamma)
-    self._metric_function = 'categorical_accuracy'
+    self._metric_functions = ['categorical_accuracy']
     self._optimizer = 'adam'
     self._callbacks = self._get_callbacks()
     self._history = None

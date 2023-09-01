@@ -21,6 +21,8 @@
 #include <numeric>
 #include <vector>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/util/tracking/motion_models.pb.h"
 #include "mediapipe/util/tracking/tone_models.pb.h"
 
@@ -58,7 +60,7 @@ ToneEstimation::ToneEstimation(const ToneEstimationOptions& options,
       break;
     }
     case ToneEstimationOptions::DOWNSAMPLE_BY_FACTOR: {
-      CHECK_GE(options_.downsample_factor(), 1);
+      ABSL_CHECK_GE(options_.downsample_factor(), 1);
       frame_width_ /= options_.downsample_factor();
       frame_height_ /= options_.downsample_factor();
       downsample_scale_ = options_.downsample_factor();
@@ -80,9 +82,9 @@ void ToneEstimation::EstimateToneChange(
     const RegionFlowFeatureList& feature_list_input,
     const cv::Mat& curr_frame_input, const cv::Mat* prev_frame_input,
     ToneChange* tone_change, cv::Mat* debug_output) {
-  CHECK_EQ(original_height_, curr_frame_input.rows);
-  CHECK_EQ(original_width_, curr_frame_input.cols);
-  CHECK(tone_change != nullptr);
+  ABSL_CHECK_EQ(original_height_, curr_frame_input.rows);
+  ABSL_CHECK_EQ(original_width_, curr_frame_input.cols);
+  ABSL_CHECK(tone_change != nullptr);
 
   const cv::Mat& curr_frame =
       use_downsampling_ ? *resized_input_ : curr_frame_input;
@@ -106,8 +108,8 @@ void ToneEstimation::EstimateToneChange(
     TransformRegionFlowFeatureList(scale_transform, &scaled_feature_list);
   }
 
-  CHECK_EQ(frame_height_, curr_frame.rows);
-  CHECK_EQ(frame_width_, curr_frame.cols);
+  ABSL_CHECK_EQ(frame_height_, curr_frame.rows);
+  ABSL_CHECK_EQ(frame_width_, curr_frame.cols);
 
   ClipMask<3> curr_clip;
   ComputeClipMask<3>(options_.clip_mask_options(), curr_frame, &curr_clip);
@@ -212,15 +214,15 @@ void ToneEstimation::IntensityPercentiles(const cv::Mat& frame,
 void ToneEstimation::EstimateGainBiasModel(int irls_iterations,
                                            ColorToneMatches* color_tone_matches,
                                            GainBiasModel* gain_bias_model) {
-  CHECK(color_tone_matches != nullptr);
-  CHECK(gain_bias_model != nullptr);
+  ABSL_CHECK(color_tone_matches != nullptr);
+  ABSL_CHECK(gain_bias_model != nullptr);
 
   // Effectively estimate each model independently.
   float solution_ptr[6] = {1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f};
 
   const int num_channels = color_tone_matches->size();
-  CHECK_GT(num_channels, 0);
-  CHECK_LE(num_channels, 3);
+  ABSL_CHECK_GT(num_channels, 0);
+  ABSL_CHECK_LE(num_channels, 3);
 
   // TODO: One IRLS weight per color match.
   for (int c = 0; c < num_channels; ++c) {
@@ -303,8 +305,8 @@ void ToneEstimation::EstimateGainBiasModel(int irls_iterations,
   const float det = gain_bias_model->gain_c1() * gain_bias_model->gain_c2() *
                     gain_bias_model->gain_c3();
   if (fabs(det) < 1e-6f) {
-    LOG(WARNING) << "Estimated gain bias model is not invertible. "
-                 << "Falling back to identity model.";
+    ABSL_LOG(WARNING) << "Estimated gain bias model is not invertible. "
+                      << "Falling back to identity model.";
     gain_bias_model->CopyFrom(GainBiasModel());
   }
 }

@@ -16,6 +16,7 @@ package com.google.mediapipe.tasks.components.containers;
 
 import com.google.auto.value.AutoValue;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Landmark represents a point in 3D space with x, y, z coordinates. The landmark coordinates are in
@@ -27,7 +28,12 @@ public abstract class Landmark {
   private static final float TOLERANCE = 1e-6f;
 
   public static Landmark create(float x, float y, float z) {
-    return new AutoValue_Landmark(x, y, z);
+    return new AutoValue_Landmark(x, y, z, Optional.empty(), Optional.empty());
+  }
+
+  public static Landmark create(
+      float x, float y, float z, Optional<Float> visibility, Optional<Float> presence) {
+    return new AutoValue_Landmark(x, y, z, visibility, presence);
   }
 
   // The x coordinates of the landmark.
@@ -38,6 +44,12 @@ public abstract class Landmark {
 
   // The z coordinates of the landmark.
   public abstract float z();
+
+  // Visibility of the normalized landmark.
+  public abstract Optional<Float> visibility();
+
+  // Presence of the normalized landmark.
+  public abstract Optional<Float> presence();
 
   @Override
   public final boolean equals(Object o) {
@@ -57,6 +69,16 @@ public abstract class Landmark {
 
   @Override
   public final String toString() {
-    return "<Landmark (x=" + x() + " y=" + y() + " z=" + z() + ")>";
+    return "<Landmark (x="
+        + x()
+        + " y="
+        + y()
+        + " z="
+        + z()
+        + " visibility= "
+        + visibility()
+        + " presence="
+        + presence()
+        + ")>";
   }
 }

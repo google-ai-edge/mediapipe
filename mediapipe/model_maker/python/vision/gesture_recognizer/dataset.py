@@ -249,5 +249,6 @@ class Dataset(classification_dataset.ClassificationDataset):
             len(valid_hand_data), len(label_names), ','.join(label_names)))
     return Dataset(
         dataset=hand_embedding_label_ds,
+        label_names=label_names,
         size=len(valid_hand_data),
-        label_names=label_names)
+    )

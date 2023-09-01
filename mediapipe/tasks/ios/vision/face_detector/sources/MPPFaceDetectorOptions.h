@@ -23,11 +23,11 @@ NS_ASSUME_NONNULL_BEGIN
 @class MPPFaceDetector;
 
 /**
- * This protocol defines an interface for the delegates of `MPPFaceDetector` face to receive
+ * This protocol defines an interface for the delegates of `FaceDetector` face to receive
  * results of performing asynchronous face detection on images (i.e, when `runningMode` =
- * `MPPRunningModeLiveStream`).
+ * `.liveStream`).
  *
- * The delegate of `MPPFaceDetector` must adopt `MPPFaceDetectorLiveStreamDelegate` protocol.
+ * The delegate of `FaceDetector` must adopt `FaceDetectorLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
  */
 NS_SWIFT_NAME(FaceDetectorLiveStreamDelegate)
@@ -37,14 +37,14 @@ NS_SWIFT_NAME(FaceDetectorLiveStreamDelegate)
 
 /**
  * This method notifies a delegate that the results of asynchronous face detection of
- * an image submitted to the `MPPFaceDetector` is available.
+ * an image submitted to the `FaceDetector` is available.
  *
- * This method is called on a private serial dispatch queue created by the `MPPFaceDetector`
+ * This method is called on a private serial dispatch queue created by the `FaceDetector`
  * for performing the asynchronous delegates calls.
  *
  * @param faceDetector The face detector which performed the face detection.
- * This is useful to test equality when there are multiple instances of `MPPFaceDetector`.
- * @param result The `MPPFaceDetectorResult` object that contains a list of detections, each
+ * This is useful to test equality when there are multiple instances of `FaceDetector`.
+ * @param result The `FaceDetectorResult` object that contains a list of detections, each
  * detection has a bounding box that is expressed in the unrotated input frame of reference
  * coordinates system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the
  * underlying image data.
@@ -60,26 +60,26 @@ NS_SWIFT_NAME(FaceDetectorLiveStreamDelegate)
     NS_SWIFT_NAME(faceDetector(_:didFinishDetection:timestampInMilliseconds:error:));
 @end
 
-/** Options for setting up a `MPPFaceDetector`. */
+/** Options for setting up a `FaceDetector`. */
 NS_SWIFT_NAME(FaceDetectorOptions)
 @interface MPPFaceDetectorOptions : MPPTaskOptions <NSCopying>
 
 /**
- * Running mode of the face detector task. Defaults to `MPPRunningModeImage`.
- * `MPPFaceDetector` can be created with one of the following running modes:
- *  1. `MPPRunningModeImage`: The mode for performing face detection on single image inputs.
- *  2. `MPPRunningModeVideo`: The mode for performing face detection on the decoded frames of a
+ * Running mode of the face detector task. Defaults to `.image`.
+ * `FaceDetector` can be created with one of the following running modes:
+ *  1. `.image`: The mode for performing face detection on single image inputs.
+ *  2. `.video`: The mode for performing face detection on the decoded frames of a
  *      video.
- *  3. `MPPRunningModeLiveStream`: The mode for performing face detection on a live stream of
+ *  3. `.liveStream`: The mode for performing face detection on a live stream of
  *      input data, such as from the camera.
  */
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
- * An object that confirms to `MPPFaceDetectorLiveStreamDelegate` protocol. This object must
- * implement `faceDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:` to receive
- * the results of performing asynchronous face detection on images (i.e, when `runningMode` =
- * `MPPRunningModeLiveStream`).
+ * An object that confirms to `FaceDetectorLiveStreamDelegate` protocol. This object must
+ * implement `faceDetector(_:didFinishDetectionWithResult:timestampInMilliseconds:error:)` to
+ * receive the results of performing asynchronous face detection on images (i.e, when `runningMode`
+ * = `.liveStream`).
  */
 @property(nonatomic, weak, nullable) id<MPPFaceDetectorLiveStreamDelegate>
     faceDetectorLiveStreamDelegate;

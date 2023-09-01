@@ -39,7 +39,7 @@ mediapipe_ts_library(
 )
 
 rollup_bundle(
-    name = "text_bundle",
+    name = "text_bundle_mjs",
     config_file = "//mediapipe/tasks/web:rollup.config.mjs",
     entry_point = "index.ts",
     format = "esm",
@@ -71,6 +71,29 @@ rollup_bundle(
 )
 
 genrule(
+    name = "text_sources",
+    srcs = [
+        ":text_bundle_cjs",
+        ":text_bundle_mjs",
+    ],
+    outs = [
+        "text_bundle.cjs",
+        "text_bundle.cjs.map",
+        "text_bundle.mjs",
+        "text_bundle.mjs.map",
+    ],
+    cmd = (
+        "for FILE in $(SRCS); do " +
+        "  OUT_FILE=$(GENDIR)/mediapipe/tasks/web/text/$$(" +
+        "      basename $$FILE | sed -E 's/_([cm])js\\.js/.\\1js/'" +
+        "  ); " +
+        "  echo $$FILE ; echo $$OUT_FILE ; " +
+        "  cp $$FILE $$OUT_FILE ; " +
+        "done;"
+    ),
+)
+
+genrule(
     name = "package_json",
     srcs = ["//mediapipe/tasks/web:package.json"],
     outs = ["package.json"],
@@ -93,7 +116,6 @@ pkg_npm(
         "wasm/text_wasm_nosimd_internal.js",
         "wasm/text_wasm_nosimd_internal.wasm",
         ":package_json",
-        ":text_bundle",
-        ":text_bundle_cjs",
+        ":text_sources",
     ],
 )

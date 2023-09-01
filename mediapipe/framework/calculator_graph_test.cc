@@ -17,16 +17,22 @@
 #include <pthread.h>
 
 #include <atomic>
+#include <cstdint>
 #include <ctime>
 #include <deque>
+#include <functional>
 #include <map>
 #include <memory>
+#include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 #include "absl/container/fixed_array.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -47,7 +53,6 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -725,13 +730,13 @@ class SlowCountingSinkCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override {
     absl::SleepFor(absl::Milliseconds(10));
     int value = cc->Inputs().Index(0).Get<int>();
-    CHECK_EQ(value, counter_);
+    ABSL_CHECK_EQ(value, counter_);
     ++counter_;
     return absl::OkStatus();
   }
 
   absl::Status Close(CalculatorContext* cc) override {
-    CHECK_EQ(10, counter_);
+    ABSL_CHECK_EQ(10, counter_);
     return absl::OkStatus();
   }
 
@@ -1014,7 +1019,7 @@ class CheckInputTimestampSourceCalculator : public CalculatorBase {
   absl::Status Close(CalculatorContext* cc) final {
     // Must use CHECK instead of RET_CHECK in Close(), because the framework
     // may call the Close() method of a source node with .IgnoreError().
-    CHECK_EQ(cc->InputTimestamp(), Timestamp::Done());
+    ABSL_CHECK_EQ(cc->InputTimestamp(), Timestamp::Done());
     return absl::OkStatus();
   }
 
@@ -1092,7 +1097,7 @@ class CheckInputTimestamp2SourceCalculator : public CalculatorBase {
   absl::Status Close(CalculatorContext* cc) final {
     // Must use CHECK instead of RET_CHECK in Close(), because the framework
     // may call the Close() method of a source node with .IgnoreError().
-    CHECK_EQ(cc->InputTimestamp(), Timestamp::Done());
+    ABSL_CHECK_EQ(cc->InputTimestamp(), Timestamp::Done());
     return absl::OkStatus();
   }
 
@@ -1242,8 +1247,8 @@ REGISTER_STATUS_HANDLER(IncrementingStatusHandler);
 class CurrentThreadExecutor : public Executor {
  public:
   ~CurrentThreadExecutor() override {
-    CHECK(!executing_);
-    CHECK(tasks_.empty());
+    ABSL_CHECK(!executing_);
+    ABSL_CHECK(tasks_.empty());
   }
 
   void Schedule(std::function<void()> task) override {
@@ -1254,7 +1259,7 @@ class CurrentThreadExecutor : public Executor {
       // running) to avoid an indefinitely-deep call stack.
       tasks_.emplace_back(std::move(task));
     } else {
-      CHECK(tasks_.empty());
+      ABSL_CHECK(tasks_.empty());
       executing_ = true;
       task();
       while (!tasks_.empty()) {
@@ -1406,7 +1411,7 @@ void RunComprehensiveTest(CalculatorGraph* graph,
   // Call graph->Run() several times, to make sure that the appropriate
   // cleanup happens between iterations.
   for (int iteration = 0; iteration < 2; ++iteration) {
-    LOG(INFO) << "Loop iteration " << iteration;
+    ABSL_LOG(INFO) << "Loop iteration " << iteration;
     dumped_final_sum_packet = Packet();
     dumped_final_stddev_packet = Packet();
     dumped_final_packet = Packet();
@@ -1448,7 +1453,7 @@ void RunComprehensiveTest(CalculatorGraph* graph,
                                        ->GetCounter("copy_range5-PassThrough")
                                        ->Get());
   }
-  LOG(INFO) << "After Loop Runs.";
+  ABSL_LOG(INFO) << "After Loop Runs.";
   // Verify that the graph can still run (but not successfully) when
   // one of the nodes is caused to fail.
   extra_side_packets.clear();
@@ -1459,9 +1464,9 @@ void RunComprehensiveTest(CalculatorGraph* graph,
   dumped_final_sum_packet = Packet();
   dumped_final_stddev_packet = Packet();
   dumped_final_packet = Packet();
-  LOG(INFO) << "Expect an error to be logged here.";
+  ABSL_LOG(INFO) << "Expect an error to be logged here.";
   ASSERT_FALSE(graph->Run(extra_side_packets).ok());
-  LOG(INFO) << "Error should have been logged.";
+  ABSL_LOG(INFO) << "Error should have been logged.";
 }
 
 TEST(CalculatorGraph, BadInitialization) {
@@ -2549,6 +2554,129 @@ TEST(CalculatorGraph, OutputPacketInOpen2) {
   EXPECT_EQ(Timestamp(i), packet_dump[i].Timestamp());
 }
 
+TEST(CalculatorGraph, DeadlockIsReportedAndSufficientInfoProvided) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        report_deadlock: true
+        max_queue_size: 1
+        input_stream: 'input1'
+        input_stream: 'input2'
+        node {
+          calculator: 'PassThroughCalculator'
+          input_stream: 'input1'
+          input_stream: 'input2'
+          output_stream: 'output1'
+          output_stream: 'output2'
+        }
+      )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  Packet packet = MakePacket<int>(1);
+  MP_EXPECT_OK(graph.AddPacketToInputStream("input1", packet.At(Timestamp(0))));
+  absl::Status status =
+      graph.AddPacketToInputStream("input1", packet.At(Timestamp(1)));
+
+  EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable);
+  EXPECT_THAT(status.message(),
+              testing::AllOf(testing::HasSubstr("deadlock"),
+                             testing::HasSubstr("input1"),
+                             testing::HasSubstr("PassThroughCalculator")));
+  graph.Cancel();
+}
+
+TEST(CalculatorGraph,
+     DeadlockIsReportedAndSufficientInfoProvidedMultipleCalculators) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        report_deadlock: true
+        max_queue_size: 1
+        input_stream: 'input1'
+        input_stream: 'input2'
+        node {
+          calculator: 'PassThroughCalculator'
+          input_stream: 'input1'
+          input_stream: 'input2'
+          output_stream: 'output1'
+          output_stream: 'output2'
+        }
+        node {
+          calculator: 'MergeCalculator'
+          input_stream: 'output1'
+          input_stream: 'output2'
+          output_stream: 'output3'
+        }
+      )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  Packet packet = MakePacket<int>(1);
+  MP_EXPECT_OK(graph.AddPacketToInputStream("input1", packet.At(Timestamp(0))));
+  absl::Status status =
+      graph.AddPacketToInputStream("input1", packet.At(Timestamp(1)));
+
+  EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable);
+  EXPECT_THAT(status.message(),
+              testing::AllOf(testing::HasSubstr("deadlock"),
+                             testing::HasSubstr("input1"),
+                             testing::HasSubstr("PassThroughCalculator")));
+  graph.Cancel();
+}
+
+TEST(CalculatorGraph, TwoDeadlocksAreReportedAndSufficientInfoProvided) {
+  CalculatorGraphConfig config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        report_deadlock: true
+        max_queue_size: 1
+        input_stream: 'input1'
+        input_stream: 'input2'
+        node {
+          calculator: 'PassThroughCalculator'
+          input_stream: 'input1'
+          input_stream: 'input2'
+          output_stream: 'output1'
+          output_stream: 'output2'
+        }
+        node {
+          calculator: 'PassThroughCalculator'
+          input_stream: 'output1'
+          input_stream: 'output2'
+          output_stream: 'output3'
+          output_stream: 'output4'
+        }
+        node {
+          calculator: 'MergeCalculator'
+          input_stream: 'input1'
+          input_stream: 'output1'
+          input_stream: 'output2'
+          input_stream: 'output3'
+          input_stream: 'output4'
+          output_stream: 'output5'
+        }
+      )pb");
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(config));
+  MP_ASSERT_OK(graph.StartRun({}));
+
+  Packet packet = MakePacket<int>(1);
+  MP_EXPECT_OK(graph.AddPacketToInputStream("input1", packet.At(Timestamp(0))));
+  absl::Status status =
+      graph.AddPacketToInputStream("input1", packet.At(Timestamp(1)));
+
+  EXPECT_EQ(status.code(), absl::StatusCode::kUnavailable);
+  EXPECT_THAT(status.message(),
+              testing::AllOf(testing::HasSubstr("deadlock"),
+                             testing::HasSubstr("input1"),
+                             testing::HasSubstr("PassThroughCalculator"),
+                             testing::HasSubstr("MergeCalculator")));
+  graph.Cancel();
+}
+
 // Tests that no packets are available on input streams in Open(), even if the
 // upstream calculator outputs a packet in Open().
 TEST(CalculatorGraph, EmptyInputInOpen) {
@@ -2619,7 +2747,7 @@ TEST(CalculatorGraph, UnthrottleRespectsLayers) {
   std::map<std::string, Packet> input_side_packets;
   input_side_packets["global_counter"] = Adopt(new auto(&global_counter));
   // TODO: Set this value to true. When the calculator outputs a
-  // packet in Open, it will trigget b/33568859, and the test will fail. Use
+  // packet in Open, it will trigger b/33568859, and the test will fail. Use
   // this test to verify that b/33568859 is fixed.
   constexpr bool kOutputInOpen = true;
   input_side_packets["output_in_open"] = MakePacket<bool>(kOutputInOpen);
@@ -3339,7 +3467,7 @@ TEST(CalculatorGraph, SetInputStreamMaxQueueSizeWorksSlowCalculator) {
 // Verify the scheduler unthrottles the graph input stream to avoid a deadlock,
 // and won't enter a busy loop.
 TEST(CalculatorGraph, AddPacketNoBusyLoop) {
-  // The DecimatorCalculator ouputs 1 out of every 101 input packets and drops
+  // The DecimatorCalculator outputs 1 out of every 101 input packets and drops
   // the rest, without setting the next timestamp bound on its output. As a
   // result, the MergeCalculator is not runnable in between and packets on its
   // "in" input stream will be queued and exceed the max queue size.
@@ -3467,7 +3595,7 @@ REGISTER_CALCULATOR(::mediapipe::nested_ns::ProcessCallbackCalculator);
 
 TEST(CalculatorGraph, CalculatorInNamepsace) {
   CalculatorGraphConfig config;
-  CHECK(proto_ns::TextFormat::ParseFromString(R"(
+  ABSL_CHECK(proto_ns::TextFormat::ParseFromString(R"(
       input_stream: 'in_a'
       node {
         calculator: 'mediapipe.nested_ns.ProcessCallbackCalculator'
@@ -3476,7 +3604,7 @@ TEST(CalculatorGraph, CalculatorInNamepsace) {
         input_side_packet: 'callback_1'
       }
       )",
-                                              &config));
+                                                   &config));
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   nested_ns::ProcessFunction callback_1;

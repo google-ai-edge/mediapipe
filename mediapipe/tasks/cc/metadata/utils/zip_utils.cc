@@ -19,6 +19,7 @@ limitations under the License.
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "contrib/minizip/ioapi.h"
@@ -63,7 +64,7 @@ absl::StatusOr<ZipFileInfo> GetCurrentZipFileInfo(const unzFile& zf) {
   absl::Cleanup unzipper_closer = [zf]() {
     auto status = UnzipErrorToStatus(unzCloseCurrentFile(zf));
     if (!status.ok()) {
-      LOG(ERROR) << "Failed to close the current zip file: " << status;
+      ABSL_LOG(ERROR) << "Failed to close the current zip file: " << status;
     }
   };
   if (method != Z_NO_COMPRESSION) {
@@ -125,7 +126,7 @@ absl::Status ExtractFilesfromZipFile(
   }
   absl::Cleanup unzipper_closer = [zf]() {
     if (unzClose(zf) != UNZ_OK) {
-      LOG(ERROR) << "Unable to close zip archive.";
+      ABSL_LOG(ERROR) << "Unable to close zip archive.";
     }
   };
   // Get number of files.

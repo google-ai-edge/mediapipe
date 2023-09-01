@@ -20,18 +20,26 @@ import com.google.mediapipe.proto.CalculatorOptionsProto.CalculatorOptions;
 import com.google.mediapipe.tasks.core.proto.AccelerationProto;
 import com.google.mediapipe.tasks.core.proto.BaseOptionsProto;
 import com.google.mediapipe.tasks.core.proto.ExternalFileProto;
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 
 /**
  * MediaPipe Tasks options base class. Any MediaPipe task-specific options class should extend
- * {@link TaskOptions}.
+ * {@link TaskOptions} and implement exactly one of converTo*Proto() methods.
  */
 public abstract class TaskOptions {
   /**
    * Converts a MediaPipe Tasks task-specific options to a {@link CalculatorOptions} protobuf
    * message.
    */
-  public abstract CalculatorOptions convertToCalculatorOptionsProto();
+  public CalculatorOptions convertToCalculatorOptionsProto() {
+    return null;
+  }
+
+  /** Converts a MediaPipe Tasks task-specific options to an proto3 {@link Any} message. */
+  public Any convertToAnyProto() {
+    return null;
+  }
 
   /**
    * Converts a {@link BaseOptions} instance to a {@link BaseOptionsProto.BaseOptions} protobuf
@@ -61,17 +69,51 @@ public abstract class TaskOptions {
         accelerationBuilder.setTflite(
             InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.TfLite
                 .getDefaultInstance());
+        options
+            .delegateOptions()
+            .ifPresent(
+                delegateOptions ->
+                    setDelegateOptions(
+                        accelerationBuilder,
+                        (BaseOptions.DelegateOptions.CpuOptions) delegateOptions));
         break;
       case GPU:
         accelerationBuilder.setGpu(
             InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.Gpu.newBuilder()
                 .setUseAdvancedGpuApi(true)
                 .build());
+        options
+            .delegateOptions()
+            .ifPresent(
+                delegateOptions ->
+                    setDelegateOptions(
+                        accelerationBuilder,
+                        (BaseOptions.DelegateOptions.GpuOptions) delegateOptions));
         break;
     }
+
     return BaseOptionsProto.BaseOptions.newBuilder()
         .setModelAsset(externalFileBuilder.build())
         .setAcceleration(accelerationBuilder.build())
         .build();
+  }
+
+  private void setDelegateOptions(
+      AccelerationProto.Acceleration.Builder accelerationBuilder,
+      BaseOptions.DelegateOptions.CpuOptions options) {
+    accelerationBuilder.setTflite(
+        InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.TfLite.getDefaultInstance());
+  }
+
+  private void setDelegateOptions(
+      AccelerationProto.Acceleration.Builder accelerationBuilder,
+      BaseOptions.DelegateOptions.GpuOptions options) {
+    InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.Gpu.Builder gpuBuilder =
+        InferenceCalculatorProto.InferenceCalculatorOptions.Delegate.Gpu.newBuilder()
+            .setUseAdvancedGpuApi(true);
+    options.cachedKernelPath().ifPresent(gpuBuilder::setCachedKernelPath);
+    options.serializedModelDir().ifPresent(gpuBuilder::setSerializedModelDir);
+    options.modelToken().ifPresent(gpuBuilder::setModelToken);
+    accelerationBuilder.setGpu(gpuBuilder.build());
   }
 }

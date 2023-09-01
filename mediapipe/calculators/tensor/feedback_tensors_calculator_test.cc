@@ -18,6 +18,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/calculators/tensor/feedback_tensors_calculator.pb.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -65,7 +66,7 @@ template <typename T>
 Tensor MakeTensor(std::initializer_list<int> shape,
                   std::initializer_list<T> values) {
   Tensor tensor(TensorElementType<T>::value, shape);
-  CHECK_EQ(values.size(), tensor.shape().num_elements())
+  ABSL_CHECK_EQ(values.size(), tensor.shape().num_elements())
       << "The size of `values` is incompatible with `shape`";
   absl::c_copy(values, tensor.GetCpuWriteView().buffer<T>());
   return tensor;

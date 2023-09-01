@@ -28,10 +28,12 @@
 #ifndef MEDIAPIPE_FRAMEWORK_TOOL_SINK_H_
 #define MEDIAPIPE_FRAMEWORK_TOOL_SINK_H_
 
+#include <functional>
 #include <string>
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/status/status.h"
 #include "mediapipe/framework/calculator_base.h"
 #include "mediapipe/framework/packet_type.h"
 #include "mediapipe/framework/port/status.h"
@@ -66,9 +68,9 @@ namespace tool {
 //   // Call tool::AddVectorSink() more times if you wish. Note that each stream
 //   // needs to get its own packet vector.
 //   CalculatorGraph graph;
-//   CHECK_OK(graph.Initialize(config));
+//   ABSL_CHECK_OK(graph.Initialize(config));
 //   // Set other input side packets.
-//   CHECK_OK(graph.Run());
+//   ABSL_CHECK_OK(graph.Run());
 //   for (const Packet& packet : packet_dump) {
 //     // Do something.
 //   }
@@ -158,7 +160,7 @@ void AddCallbackWithHeaderCalculator(const std::string& stream_name,
 //   tool::AddCallbackCalculator("the_output_stream", &config,
 //                               &input_side_packet_name, true);
 //   CalculatorGraph graph(config);
-//   CHECK_OK(graph.Run(
+//   ABSL_CHECK_OK(graph.Run(
 //       {{input_side_packet_name,
 //         MakePacket<std::function<void(const Packet&)>>(
 //             std::bind(&MyClass::MyFunction, this, std::placeholders::_1))}}
@@ -203,6 +205,16 @@ class CallbackWithHeaderCalculator : public CalculatorBase {
   // the current implementation, or in the Process() call when the header stream
   // has the packet.
   Packet header_packet_;
+};
+
+// Produces an output packet with the PostStream timestamp containing the
+// input side packet.
+class MediaPipeInternalSidePacketToPacketStreamCalculator
+    : public CalculatorBase {
+ public:
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) final;
+  absl::Status Process(CalculatorContext* cc) final;
 };
 
 }  // namespace tool

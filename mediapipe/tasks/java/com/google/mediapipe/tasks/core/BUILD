@@ -16,6 +16,20 @@ package(default_visibility = ["//visibility:public"])
 
 android_library(
     name = "core",
+    javacopts = [
+        "-Xep:AndroidJdkLibsChecker:OFF",
+    ],
+    manifest = "AndroidManifest.xml",
+    exports = [
+        ":core_java",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
+    ],
+    deps = ["@maven//:com_google_guava_guava"],
+)
+
+android_library(
+    name = "core_java",
     srcs = glob(["*.java"]),
     javacopts = [
         "-Xep:AndroidJdkLibsChecker:OFF",
@@ -27,11 +41,11 @@ android_library(
         "//mediapipe/calculators/tensor:inference_calculator_java_proto_lite",
         "//mediapipe/framework:calculator_java_proto_lite",
         "//mediapipe/framework:calculator_options_java_proto_lite",
-        "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/java/com/google/mediapipe/framework:android_framework_no_mff",
         "//mediapipe/tasks/cc/core/proto:acceleration_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:base_options_java_proto_lite",
         "//mediapipe/tasks/cc/core/proto:external_file_java_proto_lite",
-        "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni:model_resources_cache_jni",
+        "//third_party:any_java_proto",
         "//third_party:autovalue",
         "@com_google_protobuf//:protobuf_javalite",
         "@maven//:com_google_guava_guava",

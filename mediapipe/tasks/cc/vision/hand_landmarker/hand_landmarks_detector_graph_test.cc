@@ -342,7 +342,7 @@ INSTANTIATE_TEST_SUITE_P(
             .test_name = "HandLandmarkerLiteModelRightUpHand",
             .input_model_name = kHandLandmarkerLiteModel,
             .test_image_name = kRightHandsImage,
-            .hand_rect = MakeHandRect(0.25, 0.5, 0.5, 1.0, 0),
+            .hand_rect = MakeHandRect(0.75, 0.5, 0.5, 1.0, 0),
             .expected_presence = true,
             .expected_landmarks =
                 GetExpectedLandmarkList(kExpectedRightUpHandLandmarksFilename),
@@ -352,7 +352,7 @@ INSTANTIATE_TEST_SUITE_P(
             .test_name = "HandLandmarkerLiteModelRightDownHand",
             .input_model_name = kHandLandmarkerLiteModel,
             .test_image_name = kRightHandsImage,
-            .hand_rect = MakeHandRect(0.75, 0.5, 0.5, 1.0, M_PI),
+            .hand_rect = MakeHandRect(0.25, 0.5, 0.5, 1.0, M_PI),
             .expected_presence = true,
             .expected_landmarks = GetExpectedLandmarkList(
                 kExpectedRightDownHandLandmarksFilename),
@@ -362,7 +362,7 @@ INSTANTIATE_TEST_SUITE_P(
             .test_name = "HandLandmarkerFullModelRightUpHand",
             .input_model_name = kHandLandmarkerFullModel,
             .test_image_name = kRightHandsImage,
-            .hand_rect = MakeHandRect(0.25, 0.5, 0.5, 1.0, 0),
+            .hand_rect = MakeHandRect(0.75, 0.5, 0.5, 1.0, 0),
             .expected_presence = true,
             .expected_landmarks =
                 GetExpectedLandmarkList(kExpectedRightUpHandLandmarksFilename),
@@ -372,7 +372,7 @@ INSTANTIATE_TEST_SUITE_P(
             .test_name = "HandLandmarkerFullModelRightDownHand",
             .input_model_name = kHandLandmarkerFullModel,
             .test_image_name = kRightHandsImage,
-            .hand_rect = MakeHandRect(0.75, 0.5, 0.5, 1.0, M_PI),
+            .hand_rect = MakeHandRect(0.25, 0.5, 0.5, 1.0, M_PI),
             .expected_presence = true,
             .expected_landmarks = GetExpectedLandmarkList(
                 kExpectedRightDownHandLandmarksFilename),
@@ -382,7 +382,7 @@ INSTANTIATE_TEST_SUITE_P(
             .test_name = "HandLandmarkerLiteModelLeftUpHand",
             .input_model_name = kHandLandmarkerLiteModel,
             .test_image_name = kLeftHandsImage,
-            .hand_rect = MakeHandRect(0.75, 0.5, 0.5, 1.0, 0),
+            .hand_rect = MakeHandRect(0.25, 0.5, 0.5, 1.0, 0),
             .expected_presence = true,
             .expected_landmarks =
                 GetExpectedLandmarkList(kExpectedLeftUpHandLandmarksFilename),
@@ -392,7 +392,7 @@ INSTANTIATE_TEST_SUITE_P(
             .test_name = "HandLandmarkerLiteModelLeftDownHand",
             .input_model_name = kHandLandmarkerLiteModel,
             .test_image_name = kLeftHandsImage,
-            .hand_rect = MakeHandRect(0.25, 0.5, 0.5, 1.0, M_PI),
+            .hand_rect = MakeHandRect(0.75, 0.5, 0.5, 1.0, M_PI),
             .expected_presence = true,
             .expected_landmarks =
                 GetExpectedLandmarkList(kExpectedLeftDownHandLandmarksFilename),
@@ -402,7 +402,7 @@ INSTANTIATE_TEST_SUITE_P(
             .test_name = "HandLandmarkerFullModelLeftUpHand",
             .input_model_name = kHandLandmarkerFullModel,
             .test_image_name = kLeftHandsImage,
-            .hand_rect = MakeHandRect(0.75, 0.5, 0.5, 1.0, 0),
+            .hand_rect = MakeHandRect(0.25, 0.5, 0.5, 1.0, 0),
             .expected_presence = true,
             .expected_landmarks =
                 GetExpectedLandmarkList(kExpectedLeftUpHandLandmarksFilename),
@@ -412,7 +412,7 @@ INSTANTIATE_TEST_SUITE_P(
             .test_name = "HandLandmarkerFullModelLeftDownHand",
             .input_model_name = kHandLandmarkerFullModel,
             .test_image_name = kLeftHandsImage,
-            .hand_rect = MakeHandRect(0.25, 0.5, 0.5, 1.0, M_PI),
+            .hand_rect = MakeHandRect(0.75, 0.5, 0.5, 1.0, M_PI),
             .expected_presence = true,
             .expected_landmarks =
                 GetExpectedLandmarkList(kExpectedLeftDownHandLandmarksFilename),
@@ -431,8 +431,8 @@ INSTANTIATE_TEST_SUITE_P(
             .test_image_name = kRightHandsImage,
             .hand_rects =
                 {
-                    MakeHandRect(0.25, 0.5, 0.5, 1.0, 0),
-                    MakeHandRect(0.75, 0.5, 0.5, 1.0, M_PI),
+                    MakeHandRect(0.75, 0.5, 0.5, 1.0, 0),
+                    MakeHandRect(0.25, 0.5, 0.5, 1.0, M_PI),
                 },
             .expected_presences = {true, true},
             .expected_landmark_lists =
@@ -449,8 +449,8 @@ INSTANTIATE_TEST_SUITE_P(
             .test_image_name = kLeftHandsImage,
             .hand_rects =
                 {
-                    MakeHandRect(0.75, 0.5, 0.5, 1.0, 0),
-                    MakeHandRect(0.25, 0.5, 0.5, 1.0, M_PI),
+                    MakeHandRect(0.25, 0.5, 0.5, 1.0, 0),
+                    MakeHandRect(0.75, 0.5, 0.5, 1.0, M_PI),
                 },
             .expected_presences = {true, true},
             .expected_landmark_lists =

@@ -19,6 +19,7 @@
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
@@ -55,11 +56,11 @@ absl::StatusOr<std::string> ReadFileToString(const std::string& file_path) {
 }
 
 absl::Status ProcessImage(std::unique_ptr<mediapipe::CalculatorGraph> graph) {
-  LOG(INFO) << "Load the image.";
+  ABSL_LOG(INFO) << "Load the image.";
   ASSIGN_OR_RETURN(const std::string raw_image,
                    ReadFileToString(absl::GetFlag(FLAGS_input_image_path)));
 
-  LOG(INFO) << "Start running the calculator graph.";
+  ABSL_LOG(INFO) << "Start running the calculator graph.";
   ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller output_image_poller,
                    graph->AddOutputStreamPoller(kOutputImageStream));
   ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller left_iris_depth_poller,
@@ -108,7 +109,7 @@ absl::Status ProcessImage(std::unique_ptr<mediapipe::CalculatorGraph> graph) {
   cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
   const bool save_image = !absl::GetFlag(FLAGS_output_image_path).empty();
   if (save_image) {
-    LOG(INFO) << "Saving image to file...";
+    ABSL_LOG(INFO) << "Saving image to file...";
     cv::imwrite(absl::GetFlag(FLAGS_output_image_path), output_frame_mat);
   } else {
     cv::namedWindow(kWindowName, /*flags=WINDOW_AUTOSIZE*/ 1);
@@ -117,7 +118,7 @@ absl::Status ProcessImage(std::unique_ptr<mediapipe::CalculatorGraph> graph) {
     cv::waitKey(0);
   }
 
-  LOG(INFO) << "Shutting down.";
+  ABSL_LOG(INFO) << "Shutting down.";
   MP_RETURN_IF_ERROR(graph->CloseInputStream(kInputStream));
   return graph->WaitUntilDone();
 }
@@ -126,13 +127,13 @@ absl::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
   MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
       kCalculatorGraphConfigFile, &calculator_graph_config_contents));
-  LOG(INFO) << "Get calculator graph config contents: "
-            << calculator_graph_config_contents;
+  ABSL_LOG(INFO) << "Get calculator graph config contents: "
+                 << calculator_graph_config_contents;
   mediapipe::CalculatorGraphConfig config =
       mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(
           calculator_graph_config_contents);
 
-  LOG(INFO) << "Initialize the calculator graph.";
+  ABSL_LOG(INFO) << "Initialize the calculator graph.";
   std::unique_ptr<mediapipe::CalculatorGraph> graph =
       absl::make_unique<mediapipe::CalculatorGraph>();
   MP_RETURN_IF_ERROR(graph->Initialize(config));
@@ -152,10 +153,10 @@ int main(int argc, char** argv) {
   absl::ParseCommandLine(argc, argv);
   absl::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
-    LOG(ERROR) << "Failed to run the graph: " << run_status.message();
+    ABSL_LOG(ERROR) << "Failed to run the graph: " << run_status.message();
     return EXIT_FAILURE;
   } else {
-    LOG(INFO) << "Success!";
+    ABSL_LOG(INFO) << "Success!";
   }
   return EXIT_SUCCESS;
 }

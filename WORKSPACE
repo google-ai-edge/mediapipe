@@ -73,12 +73,9 @@ http_archive(
 http_archive(
     name = "zlib",
     build_file = "@//third_party:zlib.BUILD",
-    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
-    strip_prefix = "zlib-1.2.11",
-    urls = [
-        "http://mirror.bazel.build/zlib.net/fossils/zlib-1.2.11.tar.gz",
-        "http://zlib.net/fossils/zlib-1.2.11.tar.gz",  # 2017-01-15
-    ],
+    sha256 = "b3a24de97a8fdbc835b9833169501030b8977031bcb54b3b3ac13740f846ab30",
+    strip_prefix = "zlib-1.2.13",
+    url = "http://zlib.net/fossils/zlib-1.2.13.tar.gz",
     patches = [
         "@//third_party:zlib.diff",
     ],
@@ -157,22 +154,22 @@ http_archive(
 # 2020-08-21
 http_archive(
     name = "com_github_glog_glog",
-    strip_prefix = "glog-0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6",
-    sha256 = "58c9b3b6aaa4dd8b836c0fd8f65d0f941441fb95e27212c5eeb9979cfd3592ab",
+    strip_prefix = "glog-3a0d4d22c5ae0b9a2216988411cfa6bf860cc372",
+    sha256 = "170d08f80210b82d95563f4723a15095eff1aad1863000e8eeb569c96a98fefb",
     urls = [
-        "https://github.com/google/glog/archive/0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6.zip",
+        "https://github.com/google/glog/archive/3a0d4d22c5ae0b9a2216988411cfa6bf860cc372.zip",
     ],
 )
 http_archive(
     name = "com_github_glog_glog_no_gflags",
-    strip_prefix = "glog-0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6",
-    sha256 = "58c9b3b6aaa4dd8b836c0fd8f65d0f941441fb95e27212c5eeb9979cfd3592ab",
+    strip_prefix = "glog-3a0d4d22c5ae0b9a2216988411cfa6bf860cc372",
+    sha256 = "170d08f80210b82d95563f4723a15095eff1aad1863000e8eeb569c96a98fefb",
     build_file = "@//third_party:glog_no_gflags.BUILD",
     urls = [
-        "https://github.com/google/glog/archive/0a2e5931bd5ff22fd3bf8999eb8ce776f159cda6.zip",
+        "https://github.com/google/glog/archive/3a0d4d22c5ae0b9a2216988411cfa6bf860cc372.zip",
     ],
     patches = [
-        "@//third_party:com_github_glog_glog_9779e5ea6ef59562b030248947f787d1256132ae.diff",
+        "@//third_party:com_github_glog_glog.diff",
     ],
     patch_args = [
         "-p1",
@@ -485,9 +482,10 @@ http_archive(
 )
 
 # TensorFlow repo should always go after the other external dependencies.
-# TF on 2023-05-26.
-_TENSORFLOW_GIT_COMMIT = "67d5c561981edc45daf3f9d73ddd1a77963733ca"
-_TENSORFLOW_SHA256 = "0c8326285e9cb695313e194b97d388eea70bf8bf5b13e8f0962ca8eed5179ece"
+# TF on 2023-07-26.
+_TENSORFLOW_GIT_COMMIT = "e92261fd4cec0b726692081c4d2966b75abf31dd"
+# curl -L https://github.com/tensorflow/tensorflow/archive/<TENSORFLOW_GIT_COMMIT>.tar.gz | shasum -a 256
+_TENSORFLOW_SHA256 = "478a229bd4ec70a5b568ac23b5ea013d9fca46a47d6c43e30365a0412b9febf4"
 http_archive(
     name = "org_tensorflow",
     urls = [
@@ -495,6 +493,7 @@ http_archive(
     ],
     patches = [
         "@//third_party:org_tensorflow_compatibility_fixes.diff",
+        "@//third_party:org_tensorflow_system_python.diff",
         # Diff is generated with a script, don't update it manually.
         "@//third_party:org_tensorflow_custom_ops.diff",
     ],

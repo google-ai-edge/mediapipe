@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "absl/base/thread_annotations.h"
+#include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_split.h"
 #include "absl/synchronization/mutex.h"
@@ -515,7 +516,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
         tf::Tensor concated;
         const tf::Status concat_status =
             tf::tensor::Concat(keyed_tensors.second, &concated);
-        CHECK(concat_status.ok()) << concat_status.ToString();
+        ABSL_CHECK(concat_status.ok()) << concat_status.ToString();
         input_tensors.emplace_back(tag_to_tensor_map_[keyed_tensors.first],
                                    concated);
       }
@@ -597,7 +598,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
         std::vector<tf::Tensor> split_tensors;
         const tf::Status split_status =
             tf::tensor::Split(outputs[i], split_vector, &split_tensors);
-        CHECK(split_status.ok()) << split_status.ToString();
+        ABSL_CHECK(split_status.ok()) << split_status.ToString();
         // Loop over timestamps so that we don't copy the padding.
         for (int j = 0; j < inference_state->batch_timestamps_.size(); ++j) {
           tf::Tensor output_tensor(split_tensors[j]);

@@ -402,7 +402,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   ];
 
   MPPImage *image = [self imageWithFileInfo:kBurgerRotatedImage
-                                orientation:UIImageOrientationRight];
+                                orientation:UIImageOrientationLeft];
 
   [self assertResultsOfClassifyImage:image
                 usingImageClassifier:imageClassifier
@@ -425,7 +425,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                                 displayName:nil] ];
 
   MPPImage *image = [self imageWithFileInfo:kMultiObjectsRotatedImage
-                                orientation:UIImageOrientationRight];
+                                orientation:UIImageOrientationLeft];
 
   // roi around folding chair
   MPPImageClassifierResult *imageClassifierResult =
@@ -673,10 +673,10 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   // If `expectation.isInverted = true`, the test will only succeed if
   // expectation is not fulfilled for the specified `expectedFulfillmentCount`.
   // Since in our case we cannot predict how many times the expectation is
-  // supposed to be fullfilled setting,
+  // supposed to be fulfilled setting,
   // `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and
   // `expectation.isInverted = true` ensures that test succeeds if
-  // expectation is fullfilled <= `iterationCount` times.
+  // expectation is fulfilled <= `iterationCount` times.
   XCTestExpectation *expectation =
       [[XCTestExpectation alloc] initWithDescription:@"classifyWithLiveStream"];
 

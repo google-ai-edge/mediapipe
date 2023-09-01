@@ -12,28 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
+#include <cstdint>
+#include <string>
+#include <vector>
 
-#include "absl/container/flat_hash_map.h"
+#include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
-#include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/image/opencv_image_encoder_calculator.pb.h"
 #include "mediapipe/calculators/tensorflow/pack_media_sequence_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/formats/detection.pb.h"
-#include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/formats/location.h"
 #include "mediapipe/framework/formats/location_opencv.h"
-#include "mediapipe/framework/port/gmock.h"
-#include "mediapipe/framework/port/gtest.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/framework/timestamp.h"
 #include "mediapipe/util/sequence/media_sequence.h"
 #include "tensorflow/core/example/example.pb.h"
 #include "tensorflow/core/example/feature.pb.h"
+#include "testing/base/public/gmock.h"
+#include "testing/base/public/gunit.h"
 
 namespace mediapipe {
 namespace {
@@ -59,9 +60,12 @@ constexpr char kFloatFeatureOtherTag[] = "FLOAT_FEATURE_OTHER";
 constexpr char kFloatFeatureTestTag[] = "FLOAT_FEATURE_TEST";
 constexpr char kIntFeatureOtherTag[] = "INT_FEATURE_OTHER";
 constexpr char kIntFeatureTestTag[] = "INT_FEATURE_TEST";
+constexpr char kImageLabelTestTag[] = "IMAGE_LABEL_TEST";
+constexpr char kImageLabelOtherTag[] = "IMAGE_LABEL_OTHER";
 constexpr char kImagePrefixTag[] = "IMAGE_PREFIX";
 constexpr char kSequenceExampleTag[] = "SEQUENCE_EXAMPLE";
 constexpr char kImageTag[] = "IMAGE";
+constexpr char kClipMediaIdTag[] = "CLIP_MEDIA_ID";
 
 class PackMediaSequenceCalculatorTest : public ::testing::Test {
  protected:
@@ -69,10 +73,14 @@ class PackMediaSequenceCalculatorTest : public ::testing::Test {
                        const tf::Features& features,
                        const bool output_only_if_all_present,
                        const bool replace_instead_of_append,
-                       const bool output_as_zero_timestamp = false) {
+                       const bool output_as_zero_timestamp = false,
+                       const std::vector<std::string>& input_side_packets = {
+                           "SEQUENCE_EXAMPLE:input_sequence"}) {
     CalculatorGraphConfig::Node config;
     config.set_calculator("PackMediaSequenceCalculator");
-    config.add_input_side_packet("SEQUENCE_EXAMPLE:input_sequence");
+    for (const std::string& side_packet : input_side_packets) {
+      config.add_input_side_packet(side_packet);
+    }
     config.add_output_stream("SEQUENCE_EXAMPLE:output_sequence");
     for (const std::string& stream : input_streams) {
       config.add_input_stream(stream);
@@ -96,7 +104,8 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoImages) {
   mpms::SetClipMediaId(test_video_id, input_sequence.get());
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   OpenCvImageEncoderCalculatorResults encoded_image;
   encoded_image.set_encoded_image(bytes.data(), bytes.size());
   encoded_image.set_width(2);
@@ -139,7 +148,8 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoPrefixedImages) {
   mpms::SetClipMediaId(test_video_id, input_sequence.get());
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   OpenCvImageEncoderCalculatorResults encoded_image;
   encoded_image.set_encoded_image(bytes.data(), bytes.size());
   encoded_image.set_width(2);
@@ -312,6 +322,76 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoBytesLists) {
   }
 }
 
+TEST_F(PackMediaSequenceCalculatorTest, PacksTwoImageLabels) {
+  SetUpCalculator(
+      {"IMAGE_LABEL_TEST:test_labels", "IMAGE_LABEL_OTHER:test_labels2"}, {},
+      false, true);
+  auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
+
+  int num_timesteps = 2;
+  for (int i = 0; i < num_timesteps; ++i) {
+    Detection detection1;
+    detection1.add_label(absl::StrCat("foo", 2 << i));
+    detection1.add_label_id(i);
+    detection1.add_score(0.1 * i);
+    detection1.add_label(absl::StrCat("foo", 2 << i));
+    detection1.add_label_id(i);
+    detection1.add_score(0.1 * i);
+    auto label_ptr1 = ::absl::make_unique<Detection>(detection1);
+    runner_->MutableInputs()
+        ->Tag(kImageLabelTestTag)
+        .packets.push_back(Adopt(label_ptr1.release()).At(Timestamp(i)));
+    Detection detection2;
+    detection2.add_label(absl::StrCat("bar", 2 << i));
+    detection2.add_score(0.2 * i);
+    detection2.add_label(absl::StrCat("bar", 2 << i));
+    detection2.add_score(0.2 * i);
+    auto label_ptr2 = ::absl::make_unique<Detection>(detection2);
+    runner_->MutableInputs()
+        ->Tag(kImageLabelOtherTag)
+        .packets.push_back(Adopt(label_ptr2.release()).At(Timestamp(i)));
+  }
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_EQ(num_timesteps,
+            mpms::GetImageTimestampSize("TEST", output_sequence));
+  ASSERT_EQ(num_timesteps,
+            mpms::GetImageLabelStringSize("TEST", output_sequence));
+  ASSERT_EQ(num_timesteps,
+            mpms::GetImageLabelConfidenceSize("TEST", output_sequence));
+  ASSERT_EQ(num_timesteps,
+            mpms::GetImageTimestampSize("OTHER", output_sequence));
+  ASSERT_EQ(num_timesteps,
+            mpms::GetImageLabelStringSize("OTHER", output_sequence));
+  ASSERT_EQ(num_timesteps,
+            mpms::GetImageLabelConfidenceSize("OTHER", output_sequence));
+  for (int i = 0; i < num_timesteps; ++i) {
+    ASSERT_EQ(i, mpms::GetImageTimestampAt("TEST", output_sequence, i));
+    ASSERT_THAT(mpms::GetImageLabelStringAt("TEST", output_sequence, i),
+                ::testing::ElementsAreArray(
+                    std::vector<std::string>(2, absl::StrCat("foo", 2 << i))));
+    ASSERT_THAT(mpms::GetImageLabelIndexAt("TEST", output_sequence, i),
+                ::testing::ElementsAreArray(std::vector<int32_t>(2, i)));
+    ASSERT_THAT(mpms::GetImageLabelConfidenceAt("TEST", output_sequence, i),
+                ::testing::ElementsAreArray(std::vector<float>(2, 0.1 * i)));
+    ASSERT_EQ(i, mpms::GetImageTimestampAt("OTHER", output_sequence, i));
+    ASSERT_THAT(mpms::GetImageLabelStringAt("OTHER", output_sequence, i),
+                ::testing::ElementsAreArray(
+                    std::vector<std::string>(2, absl::StrCat("bar", 2 << i))));
+    ASSERT_THAT(mpms::GetImageLabelConfidenceAt("OTHER", output_sequence, i),
+                ::testing::ElementsAreArray(std::vector<float>(2, 0.2 * i)));
+  }
+}
+
 TEST_F(PackMediaSequenceCalculatorTest, OutputAsZeroTimestamp) {
   SetUpCalculator({"FLOAT_FEATURE_TEST:test"}, {}, false, true, true);
   auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
@@ -378,7 +458,8 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksAdditionalContext) {
       Adopt(input_sequence.release());
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   OpenCvImageEncoderCalculatorResults encoded_image;
   encoded_image.set_encoded_image(bytes.data(), bytes.size());
   auto image_ptr =
@@ -410,7 +491,8 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoForwardFlowEncodeds) {
 
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   std::string test_flow_string(bytes.begin(), bytes.end());
   OpenCvImageEncoderCalculatorResults encoded_flow;
   encoded_flow.set_encoded_image(test_flow_string);
@@ -526,6 +608,10 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoBBoxDetections) {
     auto class_indices = mpms::GetPredictedBBoxLabelIndexAt(output_sequence, i);
     ASSERT_EQ(0, class_indices[0]);
     ASSERT_EQ(1, class_indices[1]);
+    auto class_scores =
+        mpms::GetPredictedBBoxLabelConfidenceAt(output_sequence, i);
+    ASSERT_FLOAT_EQ(0.5, class_scores[0]);
+    ASSERT_FLOAT_EQ(0.75, class_scores[1]);
   }
 }
 
@@ -618,7 +704,8 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksBBoxWithImages) {
   }
   cv::Mat image(height, width, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   OpenCvImageEncoderCalculatorResults encoded_image;
   encoded_image.set_encoded_image(bytes.data(), bytes.size());
   encoded_image.set_width(width);
@@ -667,6 +754,10 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksBBoxWithImages) {
     auto class_indices = mpms::GetPredictedBBoxLabelIndexAt(output_sequence, i);
     ASSERT_EQ(0, class_indices[0]);
     ASSERT_EQ(1, class_indices[1]);
+    auto class_scores =
+        mpms::GetPredictedBBoxLabelConfidenceAt(output_sequence, i);
+    ASSERT_FLOAT_EQ(0.5, class_scores[0]);
+    ASSERT_FLOAT_EQ(0.75, class_scores[1]);
   }
 }
 
@@ -757,6 +848,88 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoMaskDetections) {
               testing::ElementsAreArray(::std::vector<std::string>({"mask"})));
 }
 
+TEST_F(PackMediaSequenceCalculatorTest, AddClipMediaId) {
+  SetUpCalculator(
+      /*input_streams=*/{"FLOAT_FEATURE_TEST:test",
+                         "FLOAT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false,
+      /*replace_instead_of_append=*/true,
+      /*output_as_zero_timestamp=*/false, /*input_side_packets=*/
+      {"SEQUENCE_EXAMPLE:input_sequence", "CLIP_MEDIA_ID:video_id"});
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+  const std::string test_video_id = "test_video_id";
+
+  int num_timesteps = 2;
+  for (int i = 0; i < num_timesteps; ++i) {
+    auto vf_ptr = ::absl::make_unique<std::vector<float>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kFloatFeatureTestTag)
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+    vf_ptr = ::absl::make_unique<std::vector<float>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kFloatFeatureOtherTag)
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag(kClipMediaIdTag) =
+      MakePacket<std::string>(test_video_id);
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_EQ(test_video_id, mpms::GetClipMediaId(output_sequence));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, ReplaceClipMediaId) {
+  SetUpCalculator(
+      /*input_streams=*/{"FLOAT_FEATURE_TEST:test",
+                         "FLOAT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false,
+      /*replace_instead_of_append=*/true,
+      /*output_as_zero_timestamp=*/false, /*input_side_packets=*/
+      {"SEQUENCE_EXAMPLE:input_sequence", "CLIP_MEDIA_ID:video_id"});
+  auto input_sequence = absl::make_unique<tf::SequenceExample>();
+  const std::string existing_video_id = "existing_video_id";
+  mpms::SetClipMediaId(existing_video_id, input_sequence.get());
+  const std::string test_video_id = "test_video_id";
+
+  int num_timesteps = 2;
+  for (int i = 0; i < num_timesteps; ++i) {
+    auto vf_ptr = ::absl::make_unique<std::vector<float>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kFloatFeatureTestTag)
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+    vf_ptr = ::absl::make_unique<std::vector<float>>(2, 2 << i);
+    runner_->MutableInputs()
+        ->Tag(kFloatFeatureOtherTag)
+        .packets.push_back(Adopt(vf_ptr.release()).At(Timestamp(i)));
+  }
+
+  runner_->MutableSidePackets()->Tag(kClipMediaIdTag) =
+      MakePacket<std::string>(test_video_id).At(Timestamp(0));
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_EQ(test_video_id, mpms::GetClipMediaId(output_sequence));
+}
+
 TEST_F(PackMediaSequenceCalculatorTest, MissingStreamOK) {
   SetUpCalculator(
       {"FORWARD_FLOW_ENCODED:flow", "FLOAT_FEATURE_I3D_FLOW:feature"}, {},
@@ -767,7 +940,8 @@ TEST_F(PackMediaSequenceCalculatorTest, MissingStreamOK) {
 
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   std::string test_flow_string(bytes.begin(), bytes.end());
   OpenCvImageEncoderCalculatorResults encoded_flow;
   encoded_flow.set_encoded_image(test_flow_string);
@@ -813,7 +987,8 @@ TEST_F(PackMediaSequenceCalculatorTest, MissingStreamNotOK) {
   mpms::SetClipMediaId(test_video_id, input_sequence.get());
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   std::string test_flow_string(bytes.begin(), bytes.end());
   OpenCvImageEncoderCalculatorResults encoded_flow;
   encoded_flow.set_encoded_image(test_flow_string);
@@ -970,7 +1145,8 @@ TEST_F(PackMediaSequenceCalculatorTest, TestReconcilingAnnotations) {
   auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   OpenCvImageEncoderCalculatorResults encoded_image;
   encoded_image.set_encoded_image(bytes.data(), bytes.size());
   encoded_image.set_width(2);
@@ -1021,7 +1197,8 @@ TEST_F(PackMediaSequenceCalculatorTest, TestOverwritingAndReconciling) {
   auto input_sequence = ::absl::make_unique<tf::SequenceExample>();
   cv::Mat image(2, 3, CV_8UC3, cv::Scalar(0, 0, 255));
   std::vector<uchar> bytes;
-  ASSERT_TRUE(cv::imencode(".jpg", image, bytes, {80}));
+  ASSERT_TRUE(
+      cv::imencode(".jpg", image, bytes, {cv::IMWRITE_HDR_COMPRESSION, 1}));
   OpenCvImageEncoderCalculatorResults encoded_image;
   encoded_image.set_encoded_image(bytes.data(), bytes.size());
   int height = 2;
@@ -1057,6 +1234,7 @@ TEST_F(PackMediaSequenceCalculatorTest, TestOverwritingAndReconciling) {
     mpms::AddBBoxNumRegions(-1, input_sequence.get());
     mpms::AddBBoxLabelString({"anything"}, input_sequence.get());
     mpms::AddBBoxLabelIndex({-1}, input_sequence.get());
+    mpms::AddBBoxLabelConfidence({-1}, input_sequence.get());
     mpms::AddBBoxClassString({"anything"}, input_sequence.get());
     mpms::AddBBoxClassIndex({-1}, input_sequence.get());
     mpms::AddBBoxTrackString({"anything"}, input_sequence.get());

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/calculators/tflite/tflite_tensors_to_landmarks_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
@@ -199,7 +200,7 @@ absl::Status TfLiteTensorsToLandmarksCalculator::Process(
     num_values *= raw_tensor->dims->data[i];
   }
   const int num_dimensions = num_values / num_landmarks_;
-  CHECK_GT(num_dimensions, 0);
+  ABSL_CHECK_GT(num_dimensions, 0);
 
   const float* raw_landmarks = raw_tensor->data.f;
 

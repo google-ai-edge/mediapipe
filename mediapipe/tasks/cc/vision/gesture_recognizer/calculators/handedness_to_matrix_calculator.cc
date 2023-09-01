@@ -34,15 +34,15 @@ namespace api2 {
 
 namespace {
 
-using ::mediapipe::tasks::vision::gesture_recognizer::GetLeftHandScore;
+using ::mediapipe::tasks::vision::gesture_recognizer::GetRightHandScore;
 
 constexpr char kHandednessTag[] = "HANDEDNESS";
 constexpr char kHandednessMatrixTag[] = "HANDEDNESS_MATRIX";
 
 absl::StatusOr<std::unique_ptr<Matrix>> HandednessToMatrix(
     const mediapipe::ClassificationList& classification_list) {
-  // Feature value is the probability that the hand is a left hand.
-  ASSIGN_OR_RETURN(float score, GetLeftHandScore(classification_list));
+  // Feature value is the probability that the hand is a right hand.
+  ASSIGN_OR_RETURN(float score, GetRightHandScore(classification_list));
   auto matrix = Matrix(1, 1);
   matrix(0, 0) = score;
   auto result = std::make_unique<Matrix>();

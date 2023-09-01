@@ -21,9 +21,11 @@
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/port/advanced_proto_inc.h"
 #include "mediapipe/framework/port/canonical_errors.h"
+#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
@@ -33,10 +35,10 @@ ABSL_FLAG(std::string, proto_source, "",
 ABSL_FLAG(std::string, proto_output, "",
           "An output template file in binary CalculatorGraphTemplate form.");
 
-#define EXIT_IF_ERROR(status) \
-  if (!status.ok()) {         \
-    LOG(ERROR) << status;     \
-    return EXIT_FAILURE;      \
+#define EXIT_IF_ERROR(status)  \
+  if (!status.ok()) {          \
+    ABSL_LOG(ERROR) << status; \
+    return EXIT_FAILURE;       \
   }
 
 namespace mediapipe {

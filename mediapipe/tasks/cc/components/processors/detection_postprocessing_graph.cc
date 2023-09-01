@@ -20,6 +20,7 @@ limitations under the License.
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
@@ -336,7 +337,7 @@ absl::StatusOr<std::vector<int>> GetOutputTensorIndices(
       int output_index = output_indices[i];
       // If tensor name is not found, set the default output indices.
       if (output_index == -1) {
-        LOG(WARNING) << absl::StrFormat(
+        ABSL_LOG(WARNING) << absl::StrFormat(
             "You don't seem to be matching tensor names in metadata list. The "
             "tensor name \"%s\" at index %d in the model metadata doesn't "
             "match "
@@ -360,7 +361,7 @@ absl::StatusOr<std::vector<int>> GetOutputTensorIndices(
       int output_index = output_indices[i];
       // If tensor name is not found, set the default output indices.
       if (output_index == -1) {
-        LOG(WARNING) << absl::StrFormat(
+        ABSL_LOG(WARNING) << absl::StrFormat(
             "You don't seem to be matching tensor names in metadata list. The "
             "tensor name \"%s\" at index %d in the model metadata doesn't "
             "match "

@@ -25,6 +25,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
@@ -150,8 +151,8 @@ template <int C>
 void ToneEstimation::ComputeClipMask(const ClipMaskOptions& options,
                                      const cv::Mat& frame,
                                      ClipMask<C>* clip_mask) {
-  CHECK(clip_mask != nullptr);
-  CHECK_EQ(frame.channels(), C);
+  ABSL_CHECK(clip_mask != nullptr);
+  ABSL_CHECK_EQ(frame.channels(), C);
 
   // Over / Underexposure handling.
   // Masks pixels affected by clipping.
@@ -163,7 +164,7 @@ void ToneEstimation::ComputeClipMask(const ClipMaskOptions& options,
 
   std::vector<cv::Mat> planes;
   cv::split(frame, planes);
-  CHECK_EQ(C, planes.size());
+  ABSL_CHECK_EQ(C, planes.size());
   float min_exposure[C];
   float max_exposure[C];
   for (int c = 0; c < C; ++c) {
@@ -223,9 +224,9 @@ void ToneEstimation::ComputeToneMatches(
     const ClipMask<C>& curr_clip_mask,  // Optional.
     const ClipMask<C>& prev_clip_mask,  // Optional.
     ColorToneMatches* color_tone_matches, cv::Mat* debug_output) {
-  CHECK(color_tone_matches != nullptr);
-  CHECK_EQ(curr_frame.channels(), C);
-  CHECK_EQ(prev_frame.channels(), C);
+  ABSL_CHECK(color_tone_matches != nullptr);
+  ABSL_CHECK_EQ(curr_frame.channels(), C);
+  ABSL_CHECK_EQ(prev_frame.channels(), C);
 
   color_tone_matches->clear();
   color_tone_matches->resize(C);

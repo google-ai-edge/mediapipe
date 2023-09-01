@@ -15,6 +15,7 @@
 package com.google.mediapipe.tasks.vision.poselandmarker;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertThrows;
 
 import android.content.res.AssetManager;
@@ -26,6 +27,7 @@ import com.google.common.truth.Correspondence;
 import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
+import com.google.mediapipe.tasks.components.containers.Landmark;
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark;
 import com.google.mediapipe.tasks.components.containers.proto.LandmarksDetectionResultProto.LandmarksDetectionResult;
 import com.google.mediapipe.tasks.core.BaseOptions;
@@ -34,6 +36,7 @@ import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker.PoseLandmarkerOptions;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,6 +53,8 @@ public class PoseLandmarkerTest {
   private static final String NO_POSES_IMAGE = "burger.jpg";
   private static final String TAG = "Pose Landmarker Test";
   private static final float LANDMARKS_ERROR_TOLERANCE = 0.03f;
+  private static final float VISIBILITY_TOLERANCE = 0.9f;
+  private static final float PRESENCE_TOLERANCE = 0.9f;
   private static final int IMAGE_WIDTH = 1000;
   private static final int IMAGE_HEIGHT = 667;
 
@@ -70,6 +75,8 @@ public class PoseLandmarkerTest {
       PoseLandmarkerResult actualResult = poseLandmarker.detect(getImageFromAsset(POSE_IMAGE));
       PoseLandmarkerResult expectedResult = getExpectedPoseLandmarkerResult(POSE_LANDMARKS);
       assertActualResultApproximatelyEqualsToExpectedResult(actualResult, expectedResult);
+      assertAllLandmarksAreVisibleAndPresent(
+          actualResult, VISIBILITY_TOLERANCE, PRESENCE_TOLERANCE);
     }
 
     @Test
@@ -360,5 +367,41 @@ public class PoseLandmarkerTest {
     assertThat(inputImage).isNotNull();
     assertThat(inputImage.getWidth()).isEqualTo(IMAGE_WIDTH);
     assertThat(inputImage.getHeight()).isEqualTo(IMAGE_HEIGHT);
+  }
+
+  private static void assertAllLandmarksAreVisibleAndPresent(
+      PoseLandmarkerResult result, float visbilityThreshold, float presenceThreshold) {
+    for (int i = 0; i < result.landmarks().size(); i++) {
+      List<NormalizedLandmark> landmarks = result.landmarks().get(i);
+      for (int j = 0; j < landmarks.size(); j++) {
+        NormalizedLandmark landmark = landmarks.get(j);
+        String landmarkMessage = "Landmark List " + i + " landmark " + j + ": " + landmark;
+        landmark
+            .visibility()
+            .ifPresent(
+                val ->
+                    assertWithMessage(landmarkMessage).that(val).isAtLeast((visbilityThreshold)));
+        landmark
+            .presence()
+            .ifPresent(
+                val -> assertWithMessage(landmarkMessage).that(val).isAtLeast((presenceThreshold)));
+      }
+    }
+    for (int i = 0; i < result.worldLandmarks().size(); i++) {
+      List<Landmark> landmarks = result.worldLandmarks().get(i);
+      for (int j = 0; j < landmarks.size(); j++) {
+        Landmark landmark = landmarks.get(j);
+        String landmarkMessage = "World Landmark List " + i + " landmark " + j + ": " + landmark;
+        landmark
+            .visibility()
+            .ifPresent(
+                val ->
+                    assertWithMessage(landmarkMessage).that(val).isAtLeast((visbilityThreshold)));
+        landmark
+            .presence()
+            .ifPresent(
+                val -> assertWithMessage(landmarkMessage).that(val).isAtLeast((presenceThreshold)));
+      }
+    }
   }
 }

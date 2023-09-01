@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -95,7 +96,7 @@ absl::Status GlSurfaceSinkCalculator::Process(CalculatorContext* cc) {
     absl::MutexLock lock(&surface_holder_->mutex);
     EGLSurface surface = surface_holder_->surface;
     if (surface == EGL_NO_SURFACE) {
-      LOG_EVERY_N(INFO, 300) << "GlSurfaceSinkCalculator: no surface";
+      ABSL_LOG_EVERY_N(INFO, 300) << "GlSurfaceSinkCalculator: no surface";
       return absl::OkStatus();
     }
 

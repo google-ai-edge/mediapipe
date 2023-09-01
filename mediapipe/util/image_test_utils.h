@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 
@@ -26,6 +26,9 @@ Packet MakeImageFramePacket(cv::Mat input, int timestamp = 0);
 
 // Converts the cv::Mat into Image packet.
 Packet MakeImagePacket(cv::Mat input, int timestamp = 0);
+
+// Converts RGBA Mat to BGR.
+cv::Mat RgbaToBgr(cv::Mat rgba);
 
 }  // namespace mediapipe
 

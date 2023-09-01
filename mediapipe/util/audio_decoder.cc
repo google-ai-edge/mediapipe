@@ -22,6 +22,8 @@
 
 #include "Eigen/Core"
 #include "absl/base/internal/endian.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/substitute.h"
@@ -196,7 +198,7 @@ absl::Status LogStatus(const absl::Status& status,
           << (packet.flags & AV_PKT_FLAG_KEY ? " Key Frame." : "");
 
   if (always_return_ok_status) {
-    LOG(WARNING) << status.message();
+    ABSL_LOG(WARNING) << status.message();
     return absl::OkStatus();
   } else {
     return status;
@@ -227,8 +229,8 @@ BasePacketProcessor::~BasePacketProcessor() { Close(); }
 bool BasePacketProcessor::HasData() { return !buffer_.empty(); }
 
 absl::Status BasePacketProcessor::GetData(Packet* packet) {
-  CHECK(packet);
-  CHECK(!buffer_.empty());
+  ABSL_CHECK(packet);
+  ABSL_CHECK(!buffer_.empty());
   *packet = buffer_.front();
   buffer_.pop_front();
 
@@ -335,7 +337,7 @@ inline float PcmEncodedSampleInt32ToFloat(const char* data) {
 
 AudioPacketProcessor::AudioPacketProcessor(const AudioStreamOptions& options)
     : sample_time_base_{0, 0}, options_(options) {
-  DCHECK(absl::little_endian::IsLittleEndian());
+  ABSL_DCHECK(absl::little_endian::IsLittleEndian());
 }
 
 absl::Status AudioPacketProcessor::Open(int id, AVStream* stream) {
@@ -349,7 +351,7 @@ absl::Status AudioPacketProcessor::Open(int id, AVStream* stream) {
   if (avcodec_open2(avcodec_ctx_, avcodec_, &avcodec_opts_) < 0) {
     return UnknownError("avcodec_open() failed.");
   }
-  CHECK(avcodec_ctx_->codec);
+  ABSL_CHECK(avcodec_ctx_->codec);
 
   source_time_base_ = stream->time_base;
   source_frame_rate_ = stream->r_frame_rate;
@@ -411,7 +413,7 @@ int64_t AudioPacketProcessor::SampleNumberToMicroseconds(
 }
 
 absl::Status AudioPacketProcessor::ProcessPacket(AVPacket* packet) {
-  CHECK(packet);
+  ABSL_CHECK(packet);
   if (flushed_) {
     return UnknownError(
         "ProcessPacket was called, but AudioPacketProcessor is already "
@@ -450,17 +452,18 @@ absl::Status AudioPacketProcessor::ProcessDecodedFrame(const AVPacket& packet) {
     if (absl::Microseconds(std::abs(expected_us - actual_us)) >
         absl::Seconds(
             absl::GetFlag(FLAGS_media_decoder_allowed_audio_gap_merge))) {
-      LOG(ERROR) << "The expected time based on how many samples we have seen ("
-                 << expected_us
-                 << " microseconds) no longer matches the time based "
-                    "on what the audio stream is telling us ("
-                 << actual_us
-                 << " microseconds).  The difference is more than "
-                    "--media_decoder_allowed_audio_gap_merge ("
-                 << absl::FormatDuration(absl::Seconds(absl::GetFlag(
-                        FLAGS_media_decoder_allowed_audio_gap_merge)))
-                 << " microseconds).  Resetting the timestamps to track what "
-                    "the audio stream is telling us.";
+      ABSL_LOG(ERROR)
+          << "The expected time based on how many samples we have seen ("
+          << expected_us
+          << " microseconds) no longer matches the time based "
+             "on what the audio stream is telling us ("
+          << actual_us
+          << " microseconds).  The difference is more than "
+             "--media_decoder_allowed_audio_gap_merge ("
+          << absl::FormatDuration(absl::Seconds(
+                 absl::GetFlag(FLAGS_media_decoder_allowed_audio_gap_merge)))
+          << " microseconds).  Resetting the timestamps to track what "
+             "the audio stream is telling us.";
       expected_sample_number_ = TimestampToSampleNumber(pts);
     }
   }
@@ -560,14 +563,15 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
     last_timestamp_ = output_timestamp;
     if (last_frame_time_regression_detected_) {
       last_frame_time_regression_detected_ = false;
-      LOG(INFO) << "Processor " << this << " resumed audio packet processing.";
+      ABSL_LOG(INFO) << "Processor " << this
+                     << " resumed audio packet processing.";
     }
   } else if (!last_frame_time_regression_detected_) {
     last_frame_time_regression_detected_ = true;
-    LOG(ERROR) << "Processor " << this
-               << " is dropping an audio packet because the timestamps "
-                  "regressed.  Was "
-               << last_timestamp_ << " but got " << output_timestamp;
+    ABSL_LOG(ERROR) << "Processor " << this
+                    << " is dropping an audio packet because the timestamps "
+                       "regressed.  Was "
+                    << last_timestamp_ << " but got " << output_timestamp;
   }
   expected_sample_number_ += num_samples;
 
@@ -575,7 +579,7 @@ absl::Status AudioPacketProcessor::AddAudioDataToBuffer(
 }
 
 absl::Status AudioPacketProcessor::FillHeader(TimeSeriesHeader* header) const {
-  CHECK(header);
+  ABSL_CHECK(header);
   header->set_sample_rate(sample_rate_);
   header->set_num_channels(num_channels_);
   return absl::OkStatus();
@@ -592,8 +596,8 @@ AudioDecoder::AudioDecoder() { av_register_all(); }
 AudioDecoder::~AudioDecoder() {
   absl::Status status = Close();
   if (!status.ok()) {
-    LOG(ERROR) << "Encountered error while closing media file: "
-               << status.message();
+    ABSL_LOG(ERROR) << "Encountered error while closing media file: "
+                    << status.message();
   }
 }
 
@@ -615,8 +619,8 @@ absl::Status AudioDecoder::Initialize(
   Cleanup<std::function<void()>> decoder_closer([this]() {
     absl::Status status = Close();
     if (!status.ok()) {
-      LOG(ERROR) << "Encountered error while closing media file: "
-                 << status.message();
+      ABSL_LOG(ERROR) << "Encountered error while closing media file: "
+                      << status.message();
     }
   });
 
@@ -645,24 +649,24 @@ absl::Status AudioDecoder::Initialize(
               absl::make_unique<AudioPacketProcessor>(
                   options.audio_stream(*options_index_ptr));
           if (!ContainsKey(audio_processor_, stream_id)) {
-            LOG(INFO) << "Created audio processor " << processor.get()
-                      << " for file \"" << input_file << "\"";
+            ABSL_LOG(INFO) << "Created audio processor " << processor.get()
+                           << " for file \"" << input_file << "\"";
           } else {
-            LOG(ERROR) << "Stream " << stream_id
-                       << " already mapped to audio processor "
-                       << audio_processor_[stream_id].get();
+            ABSL_LOG(ERROR) << "Stream " << stream_id
+                            << " already mapped to audio processor "
+                            << audio_processor_[stream_id].get();
           }
 
           MP_RETURN_IF_ERROR(processor->Open(stream_id, stream));
           audio_processor_.emplace(stream_id, std::move(processor));
-          CHECK(InsertIfNotPresent(
+          ABSL_CHECK(InsertIfNotPresent(
               &stream_index_to_stream_id_,
               options.audio_stream(*options_index_ptr).stream_index(),
               stream_id));
-          CHECK(InsertIfNotPresent(&stream_id_to_audio_options_index_,
-                                   stream_id, *options_index_ptr));
-          CHECK(InsertIfNotPresent(&audio_options_index_to_stream_id,
-                                   *options_index_ptr, stream_id));
+          ABSL_CHECK(InsertIfNotPresent(&stream_id_to_audio_options_index_,
+                                        stream_id, *options_index_ptr));
+          ABSL_CHECK(InsertIfNotPresent(&audio_options_index_to_stream_id,
+                                        *options_index_ptr, stream_id));
         }
         ++current_audio_index;
         break;
@@ -703,10 +707,10 @@ absl::Status AudioDecoder::GetData(int* options_index, Packet* data) {
         // Ignore packets which are out of the requested timestamp range.
         if (start_time_ != Timestamp::Unset()) {
           if (is_first_packet && data->Timestamp() > start_time_) {
-            LOG(ERROR) << "First packet in audio stream " << *options_index
-                       << " has timestamp " << data->Timestamp()
-                       << " which is after start time of " << start_time_
-                       << ".";
+            ABSL_LOG(ERROR)
+                << "First packet in audio stream " << *options_index
+                << " has timestamp " << data->Timestamp()
+                << " which is after start time of " << start_time_ << ".";
           }
           if (data->Timestamp() < start_time_) {
             VLOG(1) << "Skipping audio frame with timestamp "
@@ -772,8 +776,8 @@ absl::Status AudioDecoder::ProcessPacket() {
   av_packet->data = nullptr;
   int ret = av_read_frame(avformat_ctx_, av_packet.get());
   if (ret >= 0) {
-    CHECK(av_packet->data) << "AVPacket does not include any data but "
-                              "av_read_frame was successful.";
+    ABSL_CHECK(av_packet->data) << "AVPacket does not include any data but "
+                                   "av_read_frame was successful.";
     const int stream_id = av_packet->stream_index;
     auto audio_iterator = audio_processor_.find(stream_id);
     if (audio_iterator != audio_processor_.end()) {

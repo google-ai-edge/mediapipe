@@ -1,3 +1,5 @@
+# Placeholder: load py_library
+# Placeholder: load py_binary
 load("//mediapipe/tasks/metadata:build_defs.bzl", "stamp_metadata_parser_version")
 
 package(

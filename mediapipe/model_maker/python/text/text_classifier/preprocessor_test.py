@@ -13,14 +13,17 @@
 # limitations under the License.
 
 import csv
+import io
 import os
 import tempfile
 from unittest import mock as unittest_mock
 
+import mock
 import numpy as np
 import numpy.testing as npt
 import tensorflow as tf
 
+from mediapipe.model_maker.python.core.data import cache_files
 from mediapipe.model_maker.python.text.text_classifier import dataset as text_classifier_ds
 from mediapipe.model_maker.python.text.text_classifier import model_spec
 from mediapipe.model_maker.python.text.text_classifier import preprocessor
@@ -88,7 +91,8 @@ class PreprocessorTest(tf.test.TestCase):
     bert_preprocessor = preprocessor.BertClassifierPreprocessor(
         seq_len=5,
         do_lower_case=bert_spec.do_lower_case,
-        uri=bert_spec.downloaded_files.get_path(),
+        uri=bert_spec.get_path(),
+        model_name=bert_spec.name,
     )
     preprocessed_dataset = bert_preprocessor.preprocess(dataset)
     labels = []
@@ -97,18 +101,87 @@ class PreprocessorTest(tf.test.TestCase):
       self.assertEqual(label.shape, [1])
       labels.append(label.numpy()[0])
       self.assertSameElements(
-          features.keys(), ['input_word_ids', 'input_mask', 'input_type_ids'])
+          features.keys(), ['input_word_ids', 'input_mask', 'input_type_ids']
+      )
       for feature in features.values():
         self.assertEqual(feature.shape, [1, 5])
       input_masks.append(features['input_mask'].numpy()[0])
-      npt.assert_array_equal(features['input_type_ids'].numpy()[0],
-                             [0, 0, 0, 0, 0])
+      npt.assert_array_equal(
+          features['input_type_ids'].numpy()[0], [0, 0, 0, 0, 0]
+      )
     npt.assert_array_equal(
-        np.stack(input_masks), np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 0]]))
+        np.stack(input_masks), np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 0]])
+    )
     self.assertEqual(labels, [1, 0])
+
+  def test_bert_preprocessor_cache(self):
+    csv_file = self._get_csv_file()
+    dataset = text_classifier_ds.Dataset.from_csv(
+        filename=csv_file,
+        csv_params=self.CSV_PARAMS_,
+        cache_dir=self.get_temp_dir(),
+    )
+    bert_spec = model_spec.SupportedModels.MOBILEBERT_CLASSIFIER.value()
+    bert_preprocessor = preprocessor.BertClassifierPreprocessor(
+        seq_len=5,
+        do_lower_case=bert_spec.do_lower_case,
+        uri=bert_spec.get_path(),
+        model_name=bert_spec.name,
+    )
+    ds_cache_files = dataset.tfrecord_cache_files
+    preprocessed_cache_files = bert_preprocessor._get_tfrecord_cache_files(
+        ds_cache_files
+    )
+    self.assertFalse(preprocessed_cache_files.is_cached())
+    preprocessed_dataset = bert_preprocessor.preprocess(dataset)
+    self.assertTrue(preprocessed_cache_files.is_cached())
+    self.assertEqual(
+        preprocessed_dataset.tfrecord_cache_files, preprocessed_cache_files
+    )
+
+    # The second time running preprocessor, it should load from cache directly
+    mock_stdout = io.StringIO()
+    with mock.patch('sys.stdout', mock_stdout):
+      _ = bert_preprocessor.preprocess(dataset)
+    self.assertEqual(
+        mock_stdout.getvalue(),
+        'Using existing cache files at'
+        f' {preprocessed_cache_files.cache_prefix}\n',
+    )
+
+  def _get_new_prefix(self, cf, bert_spec, seq_len, do_lower_case):
+    bert_preprocessor = preprocessor.BertClassifierPreprocessor(
+        seq_len=seq_len,
+        do_lower_case=do_lower_case,
+        uri=bert_spec.get_path(),
+        model_name=bert_spec.name,
+    )
+    new_cf = bert_preprocessor._get_tfrecord_cache_files(cf)
+    return new_cf.cache_prefix_filename
+
+  def test_bert_get_tfrecord_cache_files(self):
+    # Test to ensure regenerated cache_files have different prefixes
+    all_cf_prefixes = set()
+    cf = cache_files.TFRecordCacheFiles(
+        cache_prefix_filename='cache_prefix',
+        cache_dir=self.get_temp_dir(),
+        num_shards=1,
+    )
+    mobilebert_spec = model_spec.SupportedModels.MOBILEBERT_CLASSIFIER.value()
+    all_cf_prefixes.add(self._get_new_prefix(cf, mobilebert_spec, 5, True))
+    all_cf_prefixes.add(self._get_new_prefix(cf, mobilebert_spec, 10, True))
+    all_cf_prefixes.add(self._get_new_prefix(cf, mobilebert_spec, 5, False))
+    new_cf = cache_files.TFRecordCacheFiles(
+        cache_prefix_filename='new_cache_prefix',
+        cache_dir=self.get_temp_dir(),
+        num_shards=1,
+    )
+    all_cf_prefixes.add(self._get_new_prefix(new_cf, mobilebert_spec, 5, True))
+
+    # Each item of all_cf_prefixes should be unique.
+    self.assertLen(all_cf_prefixes, 4)
 
 
 if __name__ == '__main__':
   # Load compressed models from tensorflow_hub
-  os.environ['TFHUB_MODEL_LOAD_FORMAT'] = 'COMPRESSED'
   tf.test.main()

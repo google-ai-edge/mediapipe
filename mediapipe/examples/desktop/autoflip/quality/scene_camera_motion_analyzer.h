@@ -43,7 +43,7 @@ namespace autoflip {
 //   SceneCameraMotionAnalyzer analyzer(options);
 //   SceneKeyFrameCropSummary scene_summary;
 //   std::vector<FocusPointFrame> focus_point_frames;
-//   CHECK_OK(analyzer.AnalyzeScenePopulateFocusPointFrames(
+//   ABSL_CHECK_OK(analyzer.AnalyzeScenePopulateFocusPointFrames(
 //       key_frame_crop_infos, key_frame_crop_options, key_frame_crop_results,
 //       scene_frame_width, scene_frame_height, scene_frame_timestamps,
 //       &scene_summary, &focus_point_frames));

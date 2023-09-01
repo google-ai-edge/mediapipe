@@ -14,9 +14,11 @@
 
 #import "mediapipe/gpu/MPPMetalHelper.h"
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #import "mediapipe/gpu/gpu_buffer.h"
-#import "mediapipe/gpu/graph_support.h"
 #import "mediapipe/gpu/gpu_service.h"
+#import "mediapipe/gpu/graph_support.h"
 #import "mediapipe/gpu/metal_shared_resources.h"
 #import "GTMDefines.h"
 
@@ -78,14 +80,13 @@ class MetalHelperLegacySupport {
 - (instancetype)initWithSidePackets:(const mediapipe::PacketSet&)inputSidePackets {
   auto cc = mediapipe::MetalHelperLegacySupport::GetCalculatorContext();
   if (cc) {
-    CHECK_EQ(&inputSidePackets, &cc->InputSidePackets());
+    ABSL_CHECK_EQ(&inputSidePackets, &cc->InputSidePackets());
     return [self initWithCalculatorContext:cc];
   }
 
   // TODO: remove when we can.
-  LOG(WARNING)
-      << "CalculatorContext not available. If this calculator uses "
-         "CalculatorBase, call initWithCalculatorContext instead.";
+  ABSL_LOG(WARNING) << "CalculatorContext not available. If this calculator uses "
+                       "CalculatorBase, call initWithCalculatorContext instead.";
   mediapipe::GpuSharedData* gpu_shared =
       inputSidePackets.Tag(mediapipe::kGpuSharedTagName).Get<mediapipe::GpuSharedData*>();
 
@@ -96,14 +97,13 @@ class MetalHelperLegacySupport {
 + (absl::Status)setupInputSidePackets:(mediapipe::PacketTypeSet*)inputSidePackets {
   auto cc = mediapipe::MetalHelperLegacySupport::GetCalculatorContract();
   if (cc) {
-    CHECK_EQ(inputSidePackets, &cc->InputSidePackets());
+    ABSL_CHECK_EQ(inputSidePackets, &cc->InputSidePackets());
     return [self updateContract:cc];
   }
 
   // TODO: remove when we can.
-  LOG(WARNING)
-      << "CalculatorContract not available. If you're calling this "
-         "from a GetContract method, call updateContract instead.";
+  ABSL_LOG(WARNING) << "CalculatorContract not available. If you're calling this "
+                       "from a GetContract method, call updateContract instead.";
   auto id = inputSidePackets->GetId(mediapipe::kGpuSharedTagName, 0);
   RET_CHECK(id.IsValid())
       << "A " << mediapipe::kGpuSharedTagName
@@ -180,7 +180,7 @@ class MetalHelperLegacySupport {
       NULL, _gpuResources->metal_shared().resources().mtlTextureCache,
       mediapipe::GetCVPixelBufferRef(gpuBuffer), NULL, metalPixelFormat, width, height, plane,
       &texture);
-  CHECK_EQ(err, kCVReturnSuccess);
+  ABSL_CHECK_EQ(err, kCVReturnSuccess);
   return texture;
 }
 

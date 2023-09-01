@@ -26,7 +26,6 @@
 #include <fstream>
 
 #include "absl/algorithm/container.h"
-#include "absl/flags/flag.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
@@ -35,23 +34,14 @@
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/statusor.h"
 
-ABSL_FLAG(std::string, system_cpu_max_freq_file,
-          "/sys/devices/system/cpu/cpu$0/cpufreq/cpuinfo_max_freq",
-          "The file pattern for CPU max frequencies, where $0 will be replaced "
-          "with the CPU id.");
-
 namespace mediapipe {
 namespace {
 
 constexpr uint32_t kBufferLength = 64;
 
 absl::StatusOr<std::string> GetFilePath(int cpu) {
-  if (!absl::StrContains(absl::GetFlag(FLAGS_system_cpu_max_freq_file), "$0")) {
-    return absl::InvalidArgumentError(
-        absl::StrCat("Invalid frequency file: ",
-                     absl::GetFlag(FLAGS_system_cpu_max_freq_file)));
-  }
-  return absl::Substitute(absl::GetFlag(FLAGS_system_cpu_max_freq_file), cpu);
+  return absl::Substitute(
+      "/sys/devices/system/cpu/cpu$0/cpufreq/cpuinfo_max_freq", cpu);
 }
 
 absl::StatusOr<uint64_t> GetCpuMaxFrequency(int cpu) {

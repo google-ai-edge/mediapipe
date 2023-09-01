@@ -23,10 +23,11 @@
 #include <algorithm>
 #include <utility>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/port/aligned_malloc_and_free.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/proto_ns.h"
 
 namespace mediapipe {
@@ -98,8 +99,8 @@ void ImageFrame::Reset(ImageFormat::Format format, int width, int height,
   format_ = format;
   width_ = width;
   height_ = height;
-  CHECK_NE(ImageFormat::UNKNOWN, format_);
-  CHECK(IsValidAlignmentNumber(alignment_boundary));
+  ABSL_CHECK_NE(ImageFormat::UNKNOWN, format_);
+  ABSL_CHECK(IsValidAlignmentNumber(alignment_boundary));
   width_step_ = width * NumberOfChannels() * ByteDepth();
   if (alignment_boundary == 1) {
     pixel_data_ = {new uint8_t[height * width_step_],
@@ -124,8 +125,8 @@ void ImageFrame::AdoptPixelData(ImageFormat::Format format, int width,
   height_ = height;
   width_step_ = width_step;
 
-  CHECK_NE(ImageFormat::UNKNOWN, format_);
-  CHECK_GE(width_step_, width * NumberOfChannels() * ByteDepth());
+  ABSL_CHECK_NE(ImageFormat::UNKNOWN, format_);
+  ABSL_CHECK_GE(width_step_, width * NumberOfChannels() * ByteDepth());
 
   pixel_data_ = {pixel_data, deleter};
 }
@@ -136,8 +137,8 @@ std::unique_ptr<uint8_t[], ImageFrame::Deleter> ImageFrame::Release() {
 
 void ImageFrame::InternalCopyFrom(int width, int height, int width_step,
                                   int channel_size, const uint8_t* pixel_data) {
-  CHECK_EQ(width_, width);
-  CHECK_EQ(height_, height);
+  ABSL_CHECK_EQ(width_, width);
+  ABSL_CHECK_EQ(height_, height);
   // row_bytes = channel_size * num_channels * width
   const int row_bytes = channel_size * NumberOfChannels() * width;
   if (width_step == 0) {
@@ -187,8 +188,8 @@ void ImageFrame::SetAlignmentPaddingAreas() {
   if (!pixel_data_) {
     return;
   }
-  CHECK_GE(width_, 1);
-  CHECK_GE(height_, 1);
+  ABSL_CHECK_GE(width_, 1);
+  ABSL_CHECK_GE(height_, 1);
 
   const int pixel_size = ByteDepth() * NumberOfChannels();
   const int padding_size = width_step_ - width_ * pixel_size;
@@ -222,7 +223,7 @@ bool ImageFrame::IsContiguous() const {
 }
 
 bool ImageFrame::IsAligned(uint32_t alignment_boundary) const {
-  CHECK(IsValidAlignmentNumber(alignment_boundary));
+  ABSL_CHECK(IsValidAlignmentNumber(alignment_boundary));
   if (!pixel_data_) {
     return false;
   }
@@ -287,7 +288,7 @@ int ImageFrame::NumberOfChannelsForFormat(ImageFormat::Format format) {
     case ImageFormat::SBGRA:
       return 4;
     default:
-      LOG(FATAL) << InvalidFormatString(format);
+      ABSL_LOG(FATAL) << InvalidFormatString(format);
   }
 }
 
@@ -318,7 +319,7 @@ int ImageFrame::ChannelSizeForFormat(ImageFormat::Format format) {
     case ImageFormat::SBGRA:
       return sizeof(uint8_t);
     default:
-      LOG(FATAL) << InvalidFormatString(format);
+      ABSL_LOG(FATAL) << InvalidFormatString(format);
   }
 }
 
@@ -349,7 +350,7 @@ int ImageFrame::ByteDepthForFormat(ImageFormat::Format format) {
     case ImageFormat::SBGRA:
       return 1;
     default:
-      LOG(FATAL) << InvalidFormatString(format);
+      ABSL_LOG(FATAL) << InvalidFormatString(format);
   }
 }
 
@@ -359,7 +360,7 @@ void ImageFrame::CopyFrom(const ImageFrame& image_frame,
   Reset(image_frame.Format(), image_frame.Width(), image_frame.Height(),
         alignment_boundary);
 
-  CHECK_EQ(format_, image_frame.Format());
+  ABSL_CHECK_EQ(format_, image_frame.Format());
   InternalCopyFrom(image_frame.Width(), image_frame.Height(),
                    image_frame.WidthStep(), image_frame.ChannelSize(),
                    image_frame.PixelData());
@@ -382,10 +383,10 @@ void ImageFrame::CopyPixelData(ImageFormat::Format format, int width,
 }
 
 void ImageFrame::CopyToBuffer(uint8_t* buffer, int buffer_size) const {
-  CHECK(buffer);
-  CHECK_EQ(1, ByteDepth());
+  ABSL_CHECK(buffer);
+  ABSL_CHECK_EQ(1, ByteDepth());
   const int data_size = width_ * height_ * NumberOfChannels();
-  CHECK_LE(data_size, buffer_size);
+  ABSL_CHECK_LE(data_size, buffer_size);
   if (IsContiguous()) {
     // The data is stored contiguously, we can just copy.
     const uint8_t* src = reinterpret_cast<const uint8_t*>(pixel_data_.get());
@@ -397,10 +398,10 @@ void ImageFrame::CopyToBuffer(uint8_t* buffer, int buffer_size) const {
 }
 
 void ImageFrame::CopyToBuffer(uint16_t* buffer, int buffer_size) const {
-  CHECK(buffer);
-  CHECK_EQ(2, ByteDepth());
+  ABSL_CHECK(buffer);
+  ABSL_CHECK_EQ(2, ByteDepth());
   const int data_size = width_ * height_ * NumberOfChannels();
-  CHECK_LE(data_size, buffer_size);
+  ABSL_CHECK_LE(data_size, buffer_size);
   if (IsContiguous()) {
     // The data is stored contiguously, we can just copy.
     const uint16_t* src = reinterpret_cast<const uint16_t*>(pixel_data_.get());
@@ -412,10 +413,10 @@ void ImageFrame::CopyToBuffer(uint16_t* buffer, int buffer_size) const {
 }
 
 void ImageFrame::CopyToBuffer(float* buffer, int buffer_size) const {
-  CHECK(buffer);
-  CHECK_EQ(4, ByteDepth());
+  ABSL_CHECK(buffer);
+  ABSL_CHECK_EQ(4, ByteDepth());
   const int data_size = width_ * height_ * NumberOfChannels();
-  CHECK_LE(data_size, buffer_size);
+  ABSL_CHECK_LE(data_size, buffer_size);
   if (IsContiguous()) {
     // The data is stored contiguously, we can just copy.
     const float* src = reinterpret_cast<float*>(pixel_data_.get());

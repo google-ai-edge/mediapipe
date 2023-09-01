@@ -18,11 +18,14 @@
 #define MEDIAPIPE_FRAMEWORK_PACKET_H_
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <type_traits>
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
@@ -368,11 +371,14 @@ class HolderBase {
   }
   // Returns a printable string identifying the type stored in the holder.
   virtual const std::string DebugTypeName() const = 0;
+  // Returns debug data id.
+  virtual int64_t DebugDataId() const = 0;
   // Returns the registered type name if it's available, otherwise the
   // empty string.
   virtual const std::string RegisteredTypeName() const = 0;
   // Get the type id of the underlying data type.
   virtual TypeId GetTypeId() const = 0;
+
   // Downcasts this to Holder<T>.  Returns nullptr if deserialization
   // failed or if the requested type is not what is stored.
   template <typename T>
@@ -451,61 +457,37 @@ struct is_concrete_proto_t
                     !std::is_same<proto_ns::MessageLite, T>{} &&
                     !std::is_same<proto_ns::Message, T>{}> {};
 
-// Registers a message type. T must be a non-cv-qualified concrete proto type.
 template <typename T>
-struct MessageRegistrationImpl {
-  static NoDestructor<mediapipe::RegistrationToken> registration;
-  // This could have been a lambda inside registration's initializer below, but
-  // MSVC has a bug with lambdas, so we put it here as a workaround.
-  static std::unique_ptr<Holder<T>> CreateMessageHolder() {
-    return absl::make_unique<Holder<T>>(new T);
-  }
-};
+std::unique_ptr<HolderBase> CreateMessageHolder() {
+  return absl::make_unique<Holder<T>>(new T);
+}
 
-// Static members of template classes can be defined in the header.
-template <typename T>
-NoDestructor<mediapipe::RegistrationToken>
-    MessageRegistrationImpl<T>::registration(MessageHolderRegistry::Register(
-        T{}.GetTypeName(), MessageRegistrationImpl<T>::CreateMessageHolder,
-        __FILE__, __LINE__));
+// Registers a message type. T must be a non-cv-qualified concrete proto type.
+MEDIAPIPE_STATIC_REGISTRATOR_TEMPLATE(MessageRegistrator, MessageHolderRegistry,
+                                      T{}.GetTypeName(), CreateMessageHolder<T>)
 
 // For non-Message payloads, this does nothing.
 template <typename T, typename Enable = void>
-struct HolderSupport {
-  static void EnsureStaticInit() {}
-};
+struct HolderPayloadRegistrator {};
 
 // This template ensures that, for each concrete MessageLite subclass that is
 // stored in a Packet, we register a function that allows us to create a
 // Holder with the correct payload type from the proto's type name.
+//
+// We must use std::remove_cv to ensure we don't try to register Foo twice if
+// there are Holder<Foo> and Holder<const Foo>. TODO: lift this
+// up to Holder?
 template <typename T>
-struct HolderSupport<T,
-                     typename std::enable_if<is_concrete_proto_t<T>{}>::type> {
-  // We must use std::remove_cv to ensure we don't try to register Foo twice if
-  // there are Holder<Foo> and Holder<const Foo>. TODO: lift this
-  // up to Holder?
-  using R = MessageRegistrationImpl<typename std::remove_cv<T>::type>;
-  // For the registration static member to be instantiated, it needs to be
-  // referenced in a context that requires the definition to exist (see ISO/IEC
-  // C++ 2003 standard, 14.7.1). Calling this ensures that's the case.
-  // We need two different call-sites to cover proto types for which packets
-  // are only ever created (i.e. the protos are only produced by calculators)
-  // and proto types for which packets are only ever consumed (i.e. the protos
-  // are only consumed by calculators).
-  static void EnsureStaticInit() { CHECK(R::registration.get() != nullptr); }
-};
+struct HolderPayloadRegistrator<
+    T, typename std::enable_if<is_concrete_proto_t<T>{}>::type>
+    : private MessageRegistrator<typename std::remove_cv<T>::type> {};
 
 template <typename T>
-class Holder : public HolderBase {
+class Holder : public HolderBase, private HolderPayloadRegistrator<T> {
  public:
-  explicit Holder(const T* ptr) : ptr_(ptr) {
-    HolderSupport<T>::EnsureStaticInit();
-  }
+  explicit Holder(const T* ptr) : ptr_(ptr) {}
   ~Holder() override { delete_helper(); }
-  const T& data() const {
-    HolderSupport<T>::EnsureStaticInit();
-    return *ptr_;
-  }
+  const T& data() const { return *ptr_; }
   TypeId GetTypeId() const final { return kTypeId<T>; }
   // Releases the underlying data pointer and transfers the ownership to a
   // unique pointer.
@@ -535,6 +517,7 @@ class Holder : public HolderBase {
   const std::string DebugTypeName() const final {
     return MediaPipeTypeStringOrDemangled<T>();
   }
+  int64_t DebugDataId() const final { return reinterpret_cast<int64_t>(ptr_); }
   const std::string RegisteredTypeName() const final {
     const std::string* type_string = MediaPipeTypeString<T>();
     if (type_string) {
@@ -743,7 +726,7 @@ inline Packet& Packet::operator=(Packet&& packet) {
 inline bool Packet::IsEmpty() const { return holder_ == nullptr; }
 
 inline TypeId Packet::GetTypeId() const {
-  CHECK(holder_);
+  ABSL_CHECK(holder_);
   return holder_->GetTypeId();
 }
 
@@ -753,7 +736,7 @@ inline const T& Packet::Get() const {
   if (holder == nullptr) {
     // Produce a good error message.
     absl::Status status = ValidateAsType<T>();
-    LOG(FATAL) << "Packet::Get() failed: " << status.message();
+    ABSL_LOG(FATAL) << "Packet::Get() failed: " << status.message();
   }
   return holder->data();
 }
@@ -762,13 +745,13 @@ inline Timestamp Packet::Timestamp() const { return timestamp_; }
 
 template <typename T>
 Packet Adopt(const T* ptr) {
-  CHECK(ptr != nullptr);
+  ABSL_CHECK(ptr != nullptr);
   return packet_internal::Create(new packet_internal::Holder<T>(ptr));
 }
 
 template <typename T>
 Packet PointToForeign(const T* ptr) {
-  CHECK(ptr != nullptr);
+  ABSL_CHECK(ptr != nullptr);
   return packet_internal::Create(new packet_internal::ForeignHolder<T>(ptr));
 }
 

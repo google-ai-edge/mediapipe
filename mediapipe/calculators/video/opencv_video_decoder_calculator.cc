@@ -14,6 +14,7 @@
 
 #include <stdlib.h>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
@@ -168,9 +169,10 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
             .Tag(kSavedAudioPathTag)
             .Set(MakePacket<std::string>(saved_audio_path));
       } else {
-        LOG(WARNING) << "FFmpeg can't extract audio from " << input_file_path
-                     << " by executing the following command: "
-                     << ffmpeg_command;
+        ABSL_LOG(WARNING) << "FFmpeg can't extract audio from "
+                          << input_file_path
+                          << " by executing the following command: "
+                          << ffmpeg_command;
         cc->OutputSidePackets()
             .Tag(kSavedAudioPathTag)
             .Set(MakePacket<std::string>(std::string()));
@@ -227,9 +229,9 @@ class OpenCvVideoDecoderCalculator : public CalculatorBase {
       cap_->release();
     }
     if (decoded_frames_ != frame_count_) {
-      LOG(WARNING) << "Not all the frames are decoded (total frames: "
-                   << frame_count_ << " vs decoded frames: " << decoded_frames_
-                   << ").";
+      ABSL_LOG(WARNING) << "Not all the frames are decoded (total frames: "
+                        << frame_count_
+                        << " vs decoded frames: " << decoded_frames_ << ").";
     }
     return absl::OkStatus();
   }

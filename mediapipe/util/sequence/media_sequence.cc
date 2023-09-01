@@ -17,6 +17,7 @@
 #include <cmath>
 #include <limits>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_split.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -143,6 +144,22 @@ absl::Status ReconcileMetadataImages(const std::string& prefix,
     float rate = TimestampsToRate(GetImageTimestampAt(prefix, *sequence, 0),
                                   GetImageTimestampAt(prefix, *sequence, 1));
     SetImageFrameRate(prefix, rate, sequence);
+  }
+  return absl::OkStatus();
+}
+
+// Reconciles metadata for all images.
+absl::Status ReconcileMetadataImages(tensorflow::SequenceExample* sequence) {
+  RET_CHECK_OK(ReconcileMetadataImages("", sequence));
+  for (const auto& key_value : sequence->feature_lists().feature_list()) {
+    const auto& key = key_value.first;
+    if (::absl::StrContains(key, kImageTimestampKey)) {
+      std::string prefix = "";
+      if (key != kImageTimestampKey) {
+        prefix = key.substr(0, key.size() - sizeof(kImageTimestampKey));
+      }
+      RET_CHECK_OK(ReconcileMetadataImages(prefix, sequence));
+    }
   }
   return absl::OkStatus();
 }
@@ -514,11 +531,11 @@ std::unique_ptr<mediapipe::Matrix> GetAudioFromFeatureAt(
     const std::string& prefix, const tensorflow::SequenceExample& sequence,
     int index) {
   const auto& flat_data = GetFeatureFloatsAt(prefix, sequence, index);
-  CHECK(HasFeatureNumChannels(prefix, sequence))
+  ABSL_CHECK(HasFeatureNumChannels(prefix, sequence))
       << "GetAudioAt requires num_channels context to be specified as key: "
       << merge_prefix(prefix, kFeatureNumChannelsKey);
   int num_channels = GetFeatureNumChannels(prefix, sequence);
-  CHECK_EQ(flat_data.size() % num_channels, 0)
+  ABSL_CHECK_EQ(flat_data.size() % num_channels, 0)
       << "The data size is not a multiple of the number of channels: "
       << flat_data.size() << " % " << num_channels << " = "
       << flat_data.size() % num_channels << " for sequence index " << index;
@@ -545,10 +562,7 @@ absl::Status ReconcileMetadata(bool reconcile_bbox_annotations,
                                bool reconcile_region_annotations,
                                tensorflow::SequenceExample* sequence) {
   RET_CHECK_OK(ReconcileAnnotationIndicesByImageTimestamps(sequence));
-  RET_CHECK_OK(ReconcileMetadataImages("", sequence));
-  RET_CHECK_OK(ReconcileMetadataImages(kForwardFlowPrefix, sequence));
-  RET_CHECK_OK(ReconcileMetadataImages(kClassSegmentationPrefix, sequence));
-  RET_CHECK_OK(ReconcileMetadataImages(kInstanceSegmentationPrefix, sequence));
+  RET_CHECK_OK(ReconcileMetadataImages(sequence));
   RET_CHECK_OK(ReconcileMetadataFeatureFloats(sequence));
   if (reconcile_bbox_annotations) {
     RET_CHECK_OK(ReconcileMetadataBoxAnnotations("", sequence));

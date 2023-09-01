@@ -1,0 +1,68 @@
+diff --git a/src/logging.cc b/src/logging.cc
+index 4028ccc..483e639 100644
+--- a/src/logging.cc
++++ b/src/logging.cc
+@@ -1743,6 +1743,23 @@ ostream& LogMessage::stream() {
+   return data_->stream_;
+ }
+
++namespace {
++#if defined(__ANDROID__)
++int AndroidLogLevel(const int severity) {
++  switch (severity) {
++    case 3:
++      return ANDROID_LOG_FATAL;
++    case 2:
++      return ANDROID_LOG_ERROR;
++    case 1:
++      return ANDROID_LOG_WARN;
++    default:
++      return ANDROID_LOG_INFO;
++  }
++}
++#endif  // defined(__ANDROID__)
++}  // namespace
++
+ // Flush buffered message, called by the destructor, or any other function
+ // that needs to synchronize the log.
+ void LogMessage::Flush() {
+@@ -1779,6 +1796,12 @@ void LogMessage::Flush() {
+   }
+   LogDestination::WaitForSinks(data_);
+
++#if defined(__ANDROID__)
++  const int level = AndroidLogLevel((int)data_->severity_);
++  const std::string text = std::string(data_->message_text_);
++  __android_log_write(level, "native", text.substr(0,data_->num_chars_to_log_).c_str());
++#endif  // defined(__ANDROID__)
++
+   if (append_newline) {
+     // Fix the ostrstream back how it was before we screwed with it.
+     // It's 99.44% certain that we don't need to worry about doing this.
+
+diff --git a/bazel/glog.bzl b/bazel/glog.bzl
+index dacd934..d7b3d78 100644
+--- a/bazel/glog.bzl
++++ b/bazel/glog.bzl
+@@ -53,7 +53,6 @@ def glog_library(namespace = "google", with_gflags = 1, **kwargs):
+     )
+ 
+     common_copts = [
+-        "-std=c++14",
+         "-DGLOG_BAZEL_BUILD",
+         # Inject a C++ namespace.
+         "-DGOOGLE_NAMESPACE='%s'" % namespace,
+@@ -145,7 +144,13 @@ def glog_library(namespace = "google", with_gflags = 1, **kwargs):
+         ],
+     })
+ 
++    c14_opts = ["-std=c++14"]
++    c17_opts = ["-std=c++17"]
++
+     final_lib_copts = select({
++        "@bazel_tools//src/conditions:windows": c17_opts,
++         "//conditions:default": c14_opts,
++    }) + select({
+         "@bazel_tools//src/conditions:windows": common_copts + windows_only_copts,
+         "@bazel_tools//src/conditions:darwin": common_copts + linux_or_darwin_copts + darwin_only_copts,
+         "@bazel_tools//src/conditions:freebsd": common_copts + linux_or_darwin_copts + freebsd_only_copts,

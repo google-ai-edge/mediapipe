@@ -19,7 +19,7 @@ package mediapipe;
 import "mediapipe/framework/calculator.proto";
 import "mediapipe/gpu/scale_mode.proto";
 
-// Next id: 8.
+// Next id: 9.
 message GlScalerCalculatorOptions {
   extend CalculatorOptions {
     optional GlScalerCalculatorOptions ext = 166373014;
@@ -39,4 +39,7 @@ message GlScalerCalculatorOptions {
   // Flip the output texture horizontally. This is applied after rotation.
   optional bool flip_horizontal = 5;
   optional ScaleMode.Mode scale_mode = 6;
+  // Whether to use nearest neighbor interpolation. Default to use linear
+  // interpolation.
+  optional bool use_nearest_neighbor_interpolation = 8 [default = false];
 }

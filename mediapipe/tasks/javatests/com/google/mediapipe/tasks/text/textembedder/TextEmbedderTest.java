@@ -140,7 +140,7 @@ public class TextEmbedderTest {
         TextEmbedder.cosineSimilarity(
             result0.embeddingResult().embeddings().get(0),
             result1.embeddingResult().embeddings().get(0));
-    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.3477488707202946);
+    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.3565317439544432);
   }
 
   @Test

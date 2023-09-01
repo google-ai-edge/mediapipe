@@ -47,6 +47,7 @@
 #include <cmath>
 #include <string>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/deps/safe_int.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
@@ -186,6 +187,10 @@ class Timestamp {
   // CHECKs that this->IsAllowedInStream().
   Timestamp NextAllowedInStream() const;
 
+  // Returns true if there's a next timestamp in the range [Min .. Max] after
+  // this one.
+  bool HasNextAllowedInStream() const;
+
   // Returns the previous timestamp in the range [Min .. Max], or
   // Unstarted() if no Packets may preceed one with this timestamp.
   Timestamp PreviousAllowedInStream() const;
@@ -266,14 +271,14 @@ std::ostream& operator<<(std::ostream& os, TimestampDiff arg);
 inline Timestamp::Timestamp() : timestamp_(kint64min) {}
 
 inline Timestamp::Timestamp(int64 timestamp) : timestamp_(timestamp) {
-  CHECK(!IsSpecialValue())
+  ABSL_CHECK(!IsSpecialValue())
       << "Cannot directly create a Timestamp with a special value: "
       << CreateNoErrorChecking(timestamp);
 }
 
 inline Timestamp::Timestamp(TimestampBaseType timestamp)
     : timestamp_(timestamp) {
-  CHECK(!IsSpecialValue())
+  ABSL_CHECK(!IsSpecialValue())
       << "Cannot directly create a Timestamp with a special value: "
       << CreateNoErrorChecking(timestamp.value());
 }

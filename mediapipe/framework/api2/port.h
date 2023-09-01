@@ -20,6 +20,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/api2/const_str.h"
@@ -243,8 +244,8 @@ class MultiplePortAccess {
   // container?
   int Count() { return count_; }
   AccessT operator[](int pos) {
-    CHECK_GE(pos, 0);
-    CHECK_LT(pos, count_);
+    ABSL_CHECK_GE(pos, 0);
+    ABSL_CHECK_LT(pos, count_);
     return SinglePortAccess<ValueT>(cc_, &first_[pos]);
   }
 

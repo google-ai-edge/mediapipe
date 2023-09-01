@@ -16,6 +16,7 @@
 
 #include <cmath>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_format.h"
 
 namespace mediapipe {
@@ -47,13 +48,13 @@ void ToneModelMethods<Model, Adapter>::MapImage(const Model& model,
                                                 bool normalized_model,
                                                 const cv::Mat& input,
                                                 cv::Mat* output) {
-  CHECK(output != nullptr);
+  ABSL_CHECK(output != nullptr);
 
   const int out_channels = output->channels();
-  CHECK_EQ(input.channels(), 3);
-  CHECK_LE(out_channels, 3);
-  CHECK_EQ(input.rows, output->rows);
-  CHECK_EQ(input.cols, output->cols);
+  ABSL_CHECK_EQ(input.channels(), 3);
+  ABSL_CHECK_LE(out_channels, 3);
+  ABSL_CHECK_EQ(input.rows, output->rows);
+  ABSL_CHECK_EQ(input.cols, output->cols);
 
   float norm_scale =
       normalized_model

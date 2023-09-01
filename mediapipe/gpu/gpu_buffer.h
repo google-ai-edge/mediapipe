@@ -20,7 +20,7 @@
 #include <memory>
 #include <utility>
 
-#include "absl/log/check.h"
+#include "absl/log/absl_check.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/gpu/gpu_buffer_format.h"
@@ -74,7 +74,7 @@ class GpuBuffer {
   // GpuBuffers in a portable way from the framework, e.g. using
   // GpuBufferMultiPool.
   explicit GpuBuffer(std::shared_ptr<internal::GpuBufferStorage> storage) {
-    CHECK(storage) << "Cannot construct GpuBuffer with null storage";
+    ABSL_CHECK(storage) << "Cannot construct GpuBuffer with null storage";
     holder_ = std::make_shared<StorageHolder>(std::move(storage));
   }
 

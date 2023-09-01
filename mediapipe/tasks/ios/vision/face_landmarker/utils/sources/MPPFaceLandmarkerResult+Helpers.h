@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @param transformationMatrixesPacket a MediaPipe packet wrapping a
  * `std::vector<FaceGeometryProto>`.
  *
- * @return An `MPPFaceLandmarkerResult` object that contains the contenst of the provided packets.
+ * @return An `MPPFaceLandmarkerResult` object that contains the contents of the provided packets.
  */
 + (MPPFaceLandmarkerResult *)
     faceLandmarkerResultWithLandmarksPacket:(const ::mediapipe::Packet &)landmarksPacket

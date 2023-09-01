@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/calculators/tensor/inference_calculator.h"
@@ -74,7 +75,7 @@ tflite::gpu::BHWC BhwcFromTensorShape(const Tensor::Shape& shape) {
       break;
     default:
       // Handles 0 and >4.
-      LOG(FATAL)
+      ABSL_LOG(FATAL)
           << "Dimensions size must be in range [1,4] for GPU inference, but "
           << shape.dims.size() << " is provided";
   }

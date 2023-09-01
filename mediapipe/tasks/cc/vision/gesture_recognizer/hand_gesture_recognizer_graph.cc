@@ -17,6 +17,7 @@ limitations under the License.
 #include <type_traits>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/tensors_to_classification_calculator.pb.h"
@@ -246,7 +247,7 @@ class SingleHandGestureRecognizerGraph : public core::ModelTaskGraph {
           options->base_options(),
           custom_gesture_classifier_graph_options->mutable_base_options());
     } else {
-      LOG(INFO) << "Custom gesture classifier is not defined.";
+      ABSL_LOG(INFO) << "Custom gesture classifier is not defined.";
     }
     return absl::OkStatus();
   }

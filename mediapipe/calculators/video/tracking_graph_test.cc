@@ -19,6 +19,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/calculators/video/box_tracker_calculator.pb.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -52,7 +54,7 @@ bool LoadBinaryTestGraph(const std::string& graph_path,
   bool success = config->ParseFromZeroCopyStream(&in_stream);
   ifs.close();
   if (!success) {
-    LOG(ERROR) << "could not parse test graph: " << graph_path;
+    ABSL_LOG(ERROR) << "could not parse test graph: " << graph_path;
   }
   return success;
 }
@@ -297,7 +299,7 @@ std::unique_ptr<TimedBoxProtoList>
 TrackingGraphTest::CreateRandomAccessTrackingBoxList(
     const std::vector<Timestamp>& start_timestamps,
     const std::vector<Timestamp>& end_timestamps) const {
-  CHECK_EQ(start_timestamps.size(), end_timestamps.size());
+  ABSL_CHECK_EQ(start_timestamps.size(), end_timestamps.size());
   auto ra_boxes = absl::make_unique<TimedBoxProtoList>();
   for (int i = 0; i < start_timestamps.size(); ++i) {
     auto start_box_list =
@@ -620,7 +622,7 @@ TEST_F(TrackingGraphTest, TestTransitionFramesForReacquisition) {
     // Add TRACK_TIME stream queries in between 2 frames.
     if (j > 0) {
       Timestamp track_time = Timestamp((j - 0.5f) * kFrameIntervalUs);
-      LOG(INFO) << track_time.Value();
+      ABSL_LOG(INFO) << track_time.Value();
       Packet track_time_packet = Adopt(new Timestamp).At(track_time);
       MP_EXPECT_OK(
           graph_.AddPacketToInputStream("track_time", track_time_packet));

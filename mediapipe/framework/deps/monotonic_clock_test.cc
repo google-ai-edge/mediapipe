@@ -21,13 +21,13 @@
 #include <vector>
 
 #include "absl/base/thread_annotations.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/threadpool.h"
 #include "mediapipe/framework/tool/simulation_clock.h"
 
@@ -254,8 +254,8 @@ TEST_F(MonotonicClockTest, RealTime) {
   // Just out of curiousity -- did real clock go backwards?
   int clock_num_corrections;
   mono_clock->GetCorrectionMetrics(&clock_num_corrections, NULL);
-  LOG(INFO) << clock_num_corrections << " corrections in " << num_calls
-            << " calls to mono_clock->Now()";
+  ABSL_LOG(INFO) << clock_num_corrections << " corrections in " << num_calls
+                 << " calls to mono_clock->Now()";
   delete mono_clock;
 }
 
@@ -523,13 +523,13 @@ TEST_F(MonotonicClockTest, RealFrenzy) {
   // Just out of curiousity -- did real clock go backwards?
   int clock_num_corrections;
   m1->GetCorrectionMetrics(&clock_num_corrections, NULL);
-  LOG_IF(INFO, clock_num_corrections > 0)
+  ABSL_LOG_IF(INFO, clock_num_corrections > 0)
       << clock_num_corrections << " corrections";
   m2->GetCorrectionMetrics(&clock_num_corrections, NULL);
-  LOG_IF(INFO, clock_num_corrections > 0)
+  ABSL_LOG_IF(INFO, clock_num_corrections > 0)
       << clock_num_corrections << " corrections";
   m3->GetCorrectionMetrics(&clock_num_corrections, NULL);
-  LOG_IF(INFO, clock_num_corrections > 0)
+  ABSL_LOG_IF(INFO, clock_num_corrections > 0)
       << clock_num_corrections << " corrections";
   delete m1;
   delete m2;

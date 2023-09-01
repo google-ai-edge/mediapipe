@@ -22,6 +22,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_converter.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_converter_gl_utils.h"
@@ -259,7 +260,7 @@ class GlProcessor : public ImageToTensorConverter {
     // error. So in that case, we'll grab the transpose of our original matrix
     // and send that instead.
     const auto gl_context = mediapipe::GlContext::GetCurrent();
-    LOG_IF(FATAL, !gl_context) << "GlContext is not bound to the thread.";
+    ABSL_LOG_IF(FATAL, !gl_context) << "GlContext is not bound to the thread.";
     if (gl_context->GetGlVersion() == mediapipe::GlVersion::kGLES2) {
       GetTransposedRotatedSubRectToRectTransformMatrix(
           sub_rect, texture.width(), texture.height(), flip_horizontaly,

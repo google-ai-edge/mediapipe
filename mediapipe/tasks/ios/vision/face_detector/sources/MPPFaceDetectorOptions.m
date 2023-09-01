@@ -28,6 +28,7 @@
 - (id)copyWithZone:(NSZone *)zone {
   MPPFaceDetectorOptions *faceDetectorOptions = [super copyWithZone:zone];
 
+  faceDetectorOptions.runningMode = self.runningMode;
   faceDetectorOptions.minDetectionConfidence = self.minDetectionConfidence;
   faceDetectorOptions.minSuppressionThreshold = self.minSuppressionThreshold;
   faceDetectorOptions.faceDetectorLiveStreamDelegate = self.faceDetectorLiveStreamDelegate;

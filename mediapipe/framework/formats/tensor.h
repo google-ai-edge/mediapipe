@@ -25,16 +25,21 @@
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/absl_check.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/formats/tensor/internal.h"
 #include "mediapipe/framework/port.h"
 
-#ifndef MEDIAPIPE_NO_JNI
+// Supported use cases for tensor_ahwb:
+// 1. Native code running in Android apps.
+// 2. Android vendor processes linked against nativewindow.
+#if !defined(MEDIAPIPE_NO_JNI) || defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)
 #if __ANDROID_API__ >= 26 || defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
 #define MEDIAPIPE_TENSOR_USE_AHWB 1
 #endif  // __ANDROID_API__ >= 26 ||
         // defined(__ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__)
-#endif  // MEDIAPIPE_NO_JNI
+#endif  // !defined(MEDIAPIPE_NO_JNI) ||
+        // defined(MEDIAPIPE_ANDROID_LINK_NATIVE_WINDOW)
 
 #ifdef MEDIAPIPE_TENSOR_USE_AHWB
 #include <EGL/egl.h>
@@ -117,11 +122,18 @@ class Tensor {
     Shape() = default;
     Shape(std::initializer_list<int> dimensions) : dims(dimensions) {}
     Shape(const std::vector<int>& dimensions) : dims(dimensions) {}
+    Shape(std::initializer_list<int> dimensions, bool is_dynamic)
+        : dims(dimensions), is_dynamic(is_dynamic) {}
+    Shape(const std::vector<int>& dimensions, bool is_dynamic)
+        : dims(dimensions), is_dynamic(is_dynamic) {}
     int num_elements() const {
       return std::accumulate(dims.begin(), dims.end(), 1,
                              std::multiplies<int>());
     }
     std::vector<int> dims;
+    // The Tensor has dynamic rather than static shape so the TFLite interpreter
+    // needs to be reallocated. Only relevant for CPU.
+    bool is_dynamic = false;
   };
   // Quantization parameters corresponding to the zero_point and scale value
   // made available by TfLite quantized (uint8/int8) tensors.
@@ -193,12 +205,12 @@ class Tensor {
     }
     int file_descriptor() const { return file_descriptor_; }
     void SetReadingFinishedFunc(FinishingFunc&& func) {
-      CHECK(ahwb_written_)
+      ABSL_CHECK(ahwb_written_)
           << "AHWB write view can't accept 'reading finished callback'";
       *ahwb_written_ = std::move(func);
     }
     void SetWritingFinishedFD(int fd, FinishingFunc func = nullptr) {
-      CHECK(fence_fd_)
+      ABSL_CHECK(fence_fd_)
           << "AHWB read view can't accept 'writing finished file descriptor'";
       *fence_fd_ = fd;
       *ahwb_written_ = std::move(func);

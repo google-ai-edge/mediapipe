@@ -21,11 +21,11 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_options.pb.h"
 #include "mediapipe/framework/mediapipe_options.pb.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/tool/tag_map.h"
@@ -92,7 +92,7 @@ class TestContextBuilder {
       spec.name = output_map_->Names()[id.value()];
       spec.packet_type = packet_type;
       spec.error_callback = [](const absl::Status& status) {
-        LOG(ERROR) << status;
+        ABSL_LOG(ERROR) << status;
       };
       output_specs_[spec.name] = spec;
     }

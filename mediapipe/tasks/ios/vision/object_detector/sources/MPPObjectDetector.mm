@@ -81,8 +81,7 @@ static NSString *const kTaskName = @"objectDetector";
   }
 
   MPPObjectDetectorResult *result = [MPPObjectDetectorResult
-      objectDetectorResultWithDetectionsPacket:
-                               outputPacketMap[kDetectionsStreamName.cppString]];
+      objectDetectorResultWithDetectionsPacket:outputPacketMap[kDetectionsStreamName.cppString]];
 
   NSInteger timeStampInMilliseconds =
       outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /

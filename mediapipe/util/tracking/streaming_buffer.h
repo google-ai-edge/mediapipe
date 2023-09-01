@@ -23,8 +23,9 @@
 #include <vector>
 
 #include "absl/container/node_hash_map.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/types/any.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/tool/type_util.h"
 
 namespace mediapipe {
@@ -77,7 +78,7 @@ namespace mediapipe {
 //  // Reached chunk boundary?
 //  if (buffer_size == 100) {
 //    // Check that we buffered one frame for each motion.
-//    CHECK(streaming_buffer.HaveEqualSize({"frame", "motion"}));
+//    ABSL_CHECK(streaming_buffer.HaveEqualSize({"frame", "motion"}));
 //
 //    // Compute saliency.
 //    for (int k = 0; k < 100; ++k) {
@@ -296,7 +297,7 @@ class StreamingBuffer {
   // Terminates recursive template expansion for AddDataImpl. Will never be
   // called.
   void AddDataImpl(const std::vector<std::string>& tags) {
-    CHECK(tags.empty());
+    ABSL_CHECK(tags.empty());
   }
 
  private:
@@ -323,8 +324,8 @@ StreamingBuffer::PointerType<T> StreamingBuffer::CreatePointer(T* t) {
 template <class T>
 void StreamingBuffer::AddDatum(const std::string& tag,
                                std::unique_ptr<T> pointer) {
-  CHECK(HasTag(tag));
-  CHECK_EQ(data_config_[tag], kTypeId<PointerType<T>>.hash_code());
+  ABSL_CHECK(HasTag(tag));
+  ABSL_CHECK_EQ(data_config_[tag], kTypeId<PointerType<T>>.hash_code());
   auto& buffer = data_[tag];
   absl::any packet(PointerType<T>(CreatePointer(pointer.release())));
   buffer.push_back(packet);
@@ -344,7 +345,7 @@ void StreamingBuffer::AddDatumCopy(const std::string& tag, const T& datum) {
 template <class... Types>
 void StreamingBuffer::AddData(const std::vector<std::string>& tags,
                               std::unique_ptr<Types>... pointers) {
-  CHECK_EQ(tags.size(), sizeof...(pointers))
+  ABSL_CHECK_EQ(tags.size(), sizeof...(pointers))
       << "Number of tags and data pointers is inconsistent";
   return AddDataImpl(tags, std::move(pointers)...);
 }
@@ -387,16 +388,16 @@ T& StreamingBuffer::GetDatumRef(const std::string& tag, int frame_index) const {
 template <class T>
 T* StreamingBuffer::GetMutableDatum(const std::string& tag,
                                     int frame_index) const {
-  CHECK_GE(frame_index, 0);
-  CHECK(HasTag(tag));
+  ABSL_CHECK_GE(frame_index, 0);
+  ABSL_CHECK(HasTag(tag));
   auto& buffer = data_.find(tag)->second;
   if (frame_index > buffer.size()) {
     return nullptr;
   } else {
     const absl::any& packet = buffer[frame_index];
     if (absl::any_cast<PointerType<T>>(&packet) == nullptr) {
-      LOG(ERROR) << "Stored item is not of requested type. "
-                 << "Check data configuration.";
+      ABSL_LOG(ERROR) << "Stored item is not of requested type. "
+                      << "Check data configuration.";
       return nullptr;
     }
 
@@ -440,15 +441,15 @@ StreamingBuffer::GetConstReferenceVector(const std::string& tag) const {
 
 template <class T>
 bool StreamingBuffer::IsInitialized(const std::string& tag) const {
-  CHECK(HasTag(tag));
+  ABSL_CHECK(HasTag(tag));
   const auto& buffer = data_.find(tag)->second;
   int idx = 0;
   for (const auto& item : buffer) {
     const PointerType<T>* pointer = absl::any_cast<const PointerType<T>>(&item);
-    CHECK(pointer != nullptr);
+    ABSL_CHECK(pointer != nullptr);
     if (*pointer == nullptr) {
-      LOG(ERROR) << "Data for " << tag << " at frame " << idx
-                 << " is not initialized.";
+      ABSL_LOG(ERROR) << "Data for " << tag << " at frame " << idx
+                      << " is not initialized.";
       return false;
     }
   }
@@ -458,13 +459,13 @@ bool StreamingBuffer::IsInitialized(const std::string& tag) const {
 template <class T>
 std::vector<T*> StreamingBuffer::GetMutableDatumVector(
     const std::string& tag) const {
-  CHECK(HasTag(tag));
+  ABSL_CHECK(HasTag(tag));
   auto& buffer = data_.find(tag)->second;
   std::vector<T*> result;
   for (const auto& packet : buffer) {
     if (absl::any_cast<PointerType<T>>(&packet) == nullptr) {
-      LOG(ERROR) << "Stored item is not of requested type. "
-                 << "Check data configuration.";
+      ABSL_LOG(ERROR) << "Stored item is not of requested type. "
+                      << "Check data configuration.";
       result.push_back(nullptr);
     } else {
       result.push_back(
@@ -477,7 +478,7 @@ std::vector<T*> StreamingBuffer::GetMutableDatumVector(
 template <class T, class Functor>
 void StreamingBuffer::OutputDatum(bool flush, const std::string& tag,
                                   const Functor& functor) {
-  CHECK(HasTag(tag));
+  ABSL_CHECK(HasTag(tag));
   const int end_frame = MaxBufferSize() - (flush ? 0 : overlap_);
   for (int k = 0; k < end_frame; ++k) {
     functor(k, ReleaseDatum<T>(tag, k));
@@ -487,8 +488,8 @@ void StreamingBuffer::OutputDatum(bool flush, const std::string& tag,
 template <class T>
 std::unique_ptr<T> StreamingBuffer::ReleaseDatum(const std::string& tag,
                                                  int frame_index) {
-  CHECK(HasTag(tag));
-  CHECK_GE(frame_index, 0);
+  ABSL_CHECK(HasTag(tag));
+  ABSL_CHECK_GE(frame_index, 0);
 
   auto& buffer = data_.find(tag)->second;
   if (frame_index >= buffer.size()) {
@@ -496,8 +497,8 @@ std::unique_ptr<T> StreamingBuffer::ReleaseDatum(const std::string& tag,
   } else {
     const absl::any& packet = buffer[frame_index];
     if (absl::any_cast<PointerType<T>>(&packet) == nullptr) {
-      LOG(ERROR) << "Stored item is not of requested type. "
-                 << "Check data configuration.";
+      ABSL_LOG(ERROR) << "Stored item is not of requested type. "
+                      << "Check data configuration.";
       return nullptr;
     }
 

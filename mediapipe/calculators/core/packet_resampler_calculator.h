@@ -13,7 +13,6 @@
 #include "mediapipe/framework/deps/random_base.h"
 #include "mediapipe/framework/formats/video_stream_header.h"
 #include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"

@@ -16,8 +16,8 @@
 from typing import Optional
 
 import tensorflow as tf
-import yaml
 
+from mediapipe.model_maker.python.core.data import cache_files
 from mediapipe.model_maker.python.core.data import classification_dataset
 from mediapipe.model_maker.python.vision.object_detector import dataset_util
 from official.vision.dataloaders import tf_example_decoder
@@ -76,14 +76,16 @@ class Dataset(classification_dataset.ClassificationDataset):
       ValueError: If the label_name for id 0 is set to something other than
         the 'background' class.
     """
-    cache_files = dataset_util.get_cache_files_coco(data_dir, cache_dir)
-    if not dataset_util.is_cached(cache_files):
+    tfrecord_cache_files = dataset_util.get_cache_files_coco(
+        data_dir, cache_dir
+    )
+    if not tfrecord_cache_files.is_cached():
       label_map = dataset_util.get_label_map_coco(data_dir)
       cache_writer = dataset_util.COCOCacheFilesWriter(
           label_map=label_map, max_num_images=max_num_images
       )
-      cache_writer.write_files(cache_files, data_dir)
-    return cls.from_cache(cache_files.cache_prefix)
+      cache_writer.write_files(tfrecord_cache_files, data_dir)
+    return cls.from_cache(tfrecord_cache_files)
 
   @classmethod
   def from_pascal_voc_folder(
@@ -134,47 +136,48 @@ class Dataset(classification_dataset.ClassificationDataset):
     Raises:
       ValueError: if the input data directory is empty.
     """
-    cache_files = dataset_util.get_cache_files_pascal_voc(data_dir, cache_dir)
-    if not dataset_util.is_cached(cache_files):
+    tfrecord_cache_files = dataset_util.get_cache_files_pascal_voc(
+        data_dir, cache_dir
+    )
+    if not tfrecord_cache_files.is_cached():
       label_map = dataset_util.get_label_map_pascal_voc(data_dir)
       cache_writer = dataset_util.PascalVocCacheFilesWriter(
           label_map=label_map, max_num_images=max_num_images
       )
-      cache_writer.write_files(cache_files, data_dir)
+      cache_writer.write_files(tfrecord_cache_files, data_dir)
 
-    return cls.from_cache(cache_files.cache_prefix)
+    return cls.from_cache(tfrecord_cache_files)
 
   @classmethod
-  def from_cache(cls, cache_prefix: str) -> 'Dataset':
+  def from_cache(
+      cls, tfrecord_cache_files: cache_files.TFRecordCacheFiles
+  ) -> 'Dataset':
     """Loads the TFRecord data from cache.
 
     Args:
-      cache_prefix: The cache prefix including the cache directory and the cache
-        prefix filename, e.g: '/tmp/cache/train'.
+      tfrecord_cache_files: The TFRecordCacheFiles object containing the already
+        cached TFRecord and metadata files.
 
     Returns:
       ObjectDetectorDataset object.
+
+    Raises:
+      ValueError if tfrecord_cache_files are not already cached.
     """
-    # Get TFRecord Files
-    tfrecord_file_pattern = cache_prefix + '*.tfrecord'
-    matched_files = tf.io.gfile.glob(tfrecord_file_pattern)
-    if not matched_files:
-      raise ValueError('TFRecord files are empty.')
+    if not tfrecord_cache_files.is_cached():
+      raise ValueError(
+          'Cache files must be already cached to use the from_cache method.'
+      )
 
-    # Load meta_data.
-    meta_data_file = cache_prefix + dataset_util.META_DATA_FILE_SUFFIX
-    if not tf.io.gfile.exists(meta_data_file):
-      raise ValueError("Metadata file %s doesn't exist." % meta_data_file)
-    with tf.io.gfile.GFile(meta_data_file, 'r') as f:
-      meta_data = yaml.load(f, Loader=yaml.FullLoader)
+    metadata = tfrecord_cache_files.load_metadata()
 
-    dataset = tf.data.TFRecordDataset(matched_files)
+    dataset = tf.data.TFRecordDataset(tfrecord_cache_files.tfrecord_files)
     decoder = tf_example_decoder.TfExampleDecoder(regenerate_source_id=False)
     dataset = dataset.map(decoder.decode, num_parallel_calls=tf.data.AUTOTUNE)
 
-    label_map = meta_data['label_map']
+    label_map = metadata['label_map']
     label_names = [label_map[k] for k in sorted(label_map.keys())]
 
     return Dataset(
-        dataset=dataset, size=meta_data['size'], label_names=label_names
+        dataset=dataset, label_names=label_names, size=metadata['size']
     )

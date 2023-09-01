@@ -42,7 +42,8 @@ export function convertFromDetectionProto(source: DetectionProto): Detection {
       originX: boundingBox.getXmin() ?? 0,
       originY: boundingBox.getYmin() ?? 0,
       width: boundingBox.getWidth() ?? 0,
-      height: boundingBox.getHeight() ?? 0
+      height: boundingBox.getHeight() ?? 0,
+      angle: 0.0,
     };
   }
 

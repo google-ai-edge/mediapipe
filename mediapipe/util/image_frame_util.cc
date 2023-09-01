@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
@@ -34,7 +36,6 @@
 #include "mediapipe/framework/formats/yuv_image.h"
 #include "mediapipe/framework/port/aligned_malloc_and_free.h"
 #include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/port.h"
 #include "mediapipe/framework/port/status_macros.h"
 
@@ -46,8 +47,8 @@ void RescaleImageFrame(const ImageFrame& source_frame, const int width,
                        const int height, const int alignment_boundary,
                        const int open_cv_interpolation_algorithm,
                        ImageFrame* destination_frame) {
-  CHECK(destination_frame);
-  CHECK_EQ(ImageFormat::SRGB, source_frame.Format());
+  ABSL_CHECK(destination_frame);
+  ABSL_CHECK_EQ(ImageFormat::SRGB, source_frame.Format());
 
   cv::Mat source_mat = ::mediapipe::formats::MatView(&source_frame);
   destination_frame->Reset(source_frame.Format(), width, height,
@@ -61,7 +62,7 @@ void RescaleImageFrame(const ImageFrame& source_frame, const int width,
 void RescaleSrgbImage(const cv::Mat& source, const int width, const int height,
                       const int open_cv_interpolation_algorithm,
                       cv::Mat* destination) {
-  CHECK(destination);
+  ABSL_CHECK(destination);
 
   // Convert input_mat into 16 bit per channel linear RGB space.
   cv::Mat input_mat16;
@@ -106,7 +107,7 @@ void ImageFrameToYUVImage(const ImageFrame& image_frame, YUVImage* yuv_image) {
                         u, uv_stride,                                      //
                         v, uv_stride,                                      //
                         width, height);
-  CHECK_EQ(0, rv);
+  ABSL_CHECK_EQ(0, rv);
 }
 
 void ImageFrameToYUVNV12Image(const ImageFrame& image_frame,
@@ -136,12 +137,12 @@ void ImageFrameToYUVNV12Image(const ImageFrame& image_frame,
       yuv_i420_image.stride(2), yuv_nv12_image->mutable_data(0),
       yuv_nv12_image->stride(0), yuv_nv12_image->mutable_data(1),
       yuv_nv12_image->stride(1), width, height);
-  CHECK_EQ(0, rv);
+  ABSL_CHECK_EQ(0, rv);
 }
 
 void YUVImageToImageFrame(const YUVImage& yuv_image, ImageFrame* image_frame,
                           bool use_bt709) {
-  CHECK(image_frame);
+  ABSL_CHECK(image_frame);
   int width = yuv_image.width();
   int height = yuv_image.height();
   image_frame->Reset(ImageFormat::SRGB, width, height, 16);
@@ -161,12 +162,12 @@ void YUVImageToImageFrame(const YUVImage& yuv_image, ImageFrame* image_frame,
                            image_frame->MutablePixelData(),
                            image_frame->WidthStep(), width, height);
   }
-  CHECK_EQ(0, rv);
+  ABSL_CHECK_EQ(0, rv);
 }
 
 void YUVImageToImageFrameFromFormat(const YUVImage& yuv_image,
                                     ImageFrame* image_frame) {
-  CHECK(image_frame);
+  ABSL_CHECK(image_frame);
   int width = yuv_image.width();
   int height = yuv_image.height();
   image_frame->Reset(ImageFormat::SRGB, width, height, 16);
@@ -207,7 +208,7 @@ void YUVImageToImageFrameFromFormat(const YUVImage& yuv_image,
           yuv_image.width(), yuv_image.height());
       break;
     default:
-      LOG(FATAL) << "Unsupported YUVImage format.";
+      ABSL_LOG(FATAL) << "Unsupported YUVImage format.";
   }
 }
 

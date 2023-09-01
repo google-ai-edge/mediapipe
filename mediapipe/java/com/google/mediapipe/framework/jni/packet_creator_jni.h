@@ -118,6 +118,9 @@ JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateFloat32Vector)(
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateInt32Array)(
     JNIEnv* env, jobject thiz, jlong context, jintArray data);
 
+JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateInt32Pair)(
+    JNIEnv* env, jobject thiz, jlong context, jint first, jint second);
+
 JNIEXPORT jlong JNICALL PACKET_CREATOR_METHOD(nativeCreateStringFromByteArray)(
     JNIEnv* env, jobject thiz, jlong context, jbyteArray data);
 

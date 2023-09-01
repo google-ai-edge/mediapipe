@@ -66,6 +66,7 @@ export declare interface WasmModule {
       (parent: string, name: string, canRead: boolean,
        canWrite: boolean) => void;
   FS_unlink(path: string): void;
+  gpuOriginForWebTexturesIsBottomLeft?: boolean;
 
   errorListener?: ErrorListener;
   _bindTextureToCanvas: () => boolean;
@@ -350,6 +351,31 @@ export class GraphRunner {
   }
 
   /**
+   * Overrides the vertical orientation for input GpuBuffers and the automatic
+   * render-to-screen code.  The default for our OpenGL code on other platforms
+   * (Android, Linux) is to use a bottom-left origin.  But the default for WebGL
+   * is to use a top-left origin. We use WebGL default normally, and many
+   * calculators and graphs have platform-specific code to handle the resulting
+   * orientation flip. However, in order to be able to use a single graph on all
+   * platforms without alterations, it may be useful to send images into a web
+   * graph using the OpenGL orientation. Users can call this function with
+   * `bottomLeftIsOrigin = true` in order to enforce an orientation for all
+   * GpuBuffer inputs which is consistent with OpenGL on other platforms.
+   * This call will also vertically flip the automatic render-to-screen code as
+   * well, so that webcam input (for example) will render properly when passed
+   * through the graph still.
+   * NOTE: This will immediately affect GpuBuffer inputs, but must be called
+   * *before* graph start in order to affect the automatic render-to-screen
+   * code!
+   * @param bottomLeftIsOrigin True will flip our input GpuBuffers and auto
+   * render-to-screen to match the classic OpenGL orientation, while false will
+   * disable this feature to match the default WebGL orientation.
+   */
+  setGpuBufferVerticalFlip(bottomLeftIsOrigin: boolean): void {
+    this.wasmModule.gpuOriginForWebTexturesIsBottomLeft = bottomLeftIsOrigin;
+  }
+
+  /**
    * Bind texture to our internal canvas, and upload image source to GPU.
    * Returns tuple [width, height] of texture.  Intended for internal usage.
    */
@@ -374,8 +400,14 @@ export class GraphRunner {
           'Failed to obtain WebGL context from the provided canvas. ' +
           '`getContext()` should only be invoked with `webgl` or `webgl2`.');
     }
+    if (this.wasmModule.gpuOriginForWebTexturesIsBottomLeft) {
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    }
     gl.texImage2D(
         gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imageSource);
+    if (this.wasmModule.gpuOriginForWebTexturesIsBottomLeft) {
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    }
 
     let width, height;
     if ((imageSource as HTMLVideoElement).videoWidth) {
@@ -1221,21 +1253,22 @@ export async function createMediaPipeLib<LibType>(
     assetLoaderScript?: string|null,
     glCanvas?: HTMLCanvasElement|OffscreenCanvas|null,
     fileLocator?: FileLocator): Promise<LibType> {
-  const scripts = [];
   // Run wasm-loader script here
   if (wasmLoaderScript) {
-    scripts.push(wasmLoaderScript);
+    await runScript(wasmLoaderScript);
   }
-  // Run asset-loader script here
-  if (assetLoaderScript) {
-    scripts.push(assetLoaderScript);
-  }
-  // Load scripts in parallel, browser will execute them in sequence.
-  if (scripts.length) {
-    await Promise.all(scripts.map(runScript));
-  }
+
   if (!self.ModuleFactory) {
     throw new Error('ModuleFactory not set.');
+  }
+
+  // Run asset-loader script here; must be run after wasm-loader script if we
+  // are re-wrapping the existing MODULARIZE export.
+  if (assetLoaderScript) {
+    await runScript(assetLoaderScript);
+    if (!self.ModuleFactory) {
+      throw new Error('ModuleFactory not set.');
+    }
   }
 
   // Until asset scripts work nicely with MODULARIZE, when we are given both

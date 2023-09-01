@@ -25,7 +25,7 @@
 static NSDictionary *const kPortraitImage =
     @{@"name" : @"portrait", @"type" : @"jpg", @"orientation" : @(UIImageOrientationUp)};
 static NSDictionary *const kPortraitRotatedImage =
-    @{@"name" : @"portrait_rotated", @"type" : @"jpg", @"orientation" : @(UIImageOrientationRight)};
+    @{@"name" : @"portrait_rotated", @"type" : @"jpg", @"orientation" : @(UIImageOrientationLeft)};
 static NSDictionary *const kCatImage = @{@"name" : @"cat", @"type" : @"jpg"};
 static NSString *const kShortRangeBlazeFaceModel = @"face_detection_short_range";
 static NSArray<NSArray *> *const kPortraitExpectedKeypoints = @[
@@ -155,12 +155,12 @@ static const float kKeypointErrorThreshold = 1e-2;
   NSInteger iterationCount = 100;
 
   // Because of flow limiting, the callback might be invoked fewer than `iterationCount` times. An
-  // normal expectation will fail if expectation.fullfill() is not called
+  // normal expectation will fail if expectation.fulfill() is not called
   // `expectation.expectedFulfillmentCount` times. If `expectation.isInverted = true`, the test will
-  // only succeed if expectation is not fullfilled for the specified `expectedFulfillmentCount`.
+  // only succeed if expectation is not fulfilled for the specified `expectedFulfillmentCount`.
   // Since it is not possible to predict how many times the expectation is supposed to be
-  // fullfilled, `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and
-  // `expectation.isInverted = true` ensures that test succeeds if expectation is fullfilled <=
+  // fulfilled, `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and
+  // `expectation.isInverted = true` ensures that test succeeds if expectation is fulfilled <=
   // `iterationCount` times.
   XCTestExpectation *expectation = [[XCTestExpectation alloc]
       initWithDescription:@"detectWithOutOfOrderTimestampsAndLiveStream"];
@@ -385,13 +385,13 @@ static const float kKeypointErrorThreshold = 1e-2;
   NSInteger iterationCount = 100;
 
   // Because of flow limiting, the callback might be invoked fewer than `iterationCount` times. An
-  // normal expectation will fail if expectation.fullfill() is not called times. An normal
-  // expectation will fail if expectation.fullfill() is not called
+  // normal expectation will fail if expectation.fulfill() is not called times. An normal
+  // expectation will fail if expectation.fulfill() is not called
   // `expectation.expectedFulfillmentCount` times. If `expectation.isInverted = true`, the test will
-  // only succeed if expectation is not fullfilled for the specified `expectedFulfillmentCount`.
+  // only succeed if expectation is not fulfilled for the specified `expectedFulfillmentCount`.
   // Since it it not possible to determine how many times the expectation is supposed to be
-  // fullfilled, `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and
-  // `expectation.isInverted = true` ensures that test succeeds if expectation is fullfilled <=
+  // fulfilled, `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and
+  // `expectation.isInverted = true` ensures that test succeeds if expectation is fulfilled <=
   // `iterationCount` times.
   XCTestExpectation *expectation = [[XCTestExpectation alloc]
       initWithDescription:@"detectWithOutOfOrderTimestampsAndLiveStream"];

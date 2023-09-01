@@ -155,3 +155,13 @@ cc_library(
         "//mediapipe/tasks/cc/components/containers:landmark",
     ],
 )
+
+cc_library(
+    name = "pose_landmarks_connections",
+    hdrs = ["pose_landmarks_connections.h"],
+)
+
+cc_library(
+    name = "pose_landmark",
+    hdrs = ["pose_landmark.h"],
+)

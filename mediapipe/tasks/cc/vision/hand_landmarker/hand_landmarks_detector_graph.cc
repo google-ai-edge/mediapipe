@@ -142,8 +142,8 @@ void ConfigureTensorsToHandednessCalculator(
   LabelMapItem right_hand = LabelMapItem();
   right_hand.set_name("Right");
   right_hand.set_display_name("Right");
-  (*options->mutable_label_items())[0] = std::move(left_hand);
-  (*options->mutable_label_items())[1] = std::move(right_hand);
+  (*options->mutable_label_items())[0] = std::move(right_hand);
+  (*options->mutable_label_items())[1] = std::move(left_hand);
 }
 
 void ConfigureHandRectTransformationCalculator(

@@ -59,6 +59,22 @@ _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/vision/pose_landmarker/proto:pose_landmarks_detector_graph_options_java_proto_lite",
 ]
 
+_VISION_TASKS_IMAGE_GENERATOR_JAVA_PROTO_LITE_TARGETS = [
+    "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/face_geometry/proto:mesh_3d_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_blendshapes_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/image_segmenter/calculators:tensors_to_segmentation_calculator_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_java_proto_lite",
+]
+
 _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_java_proto_lite",
@@ -249,6 +265,39 @@ EOF
         native_library = native_library,
     )
 
+def mediapipe_tasks_vision_image_generator_aar(name, srcs, native_library):
+    """Builds medaipipe tasks vision image generator AAR.
+
+    Args:
+      name: The bazel target name.
+      srcs: MediaPipe Vision Tasks' source files.
+      native_library: The native library that contains image generator task's graph and calculators.
+    """
+
+    native.genrule(
+        name = name + "tasks_manifest_generator",
+        outs = ["AndroidManifest.xml"],
+        cmd = """
+cat > $(OUTS) <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.google.mediapipe.tasks.vision.imagegenerator">
+    <uses-sdk
+        android:minSdkVersion="24"
+        android:targetSdkVersion="30" />
+</manifest>
+EOF
+""",
+    )
+
+    _mediapipe_tasks_aar(
+        name = name,
+        srcs = srcs,
+        manifest = "AndroidManifest.xml",
+        java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _VISION_TASKS_IMAGE_GENERATOR_JAVA_PROTO_LITE_TARGETS,
+        native_library = native_library,
+    )
+
 def mediapipe_tasks_text_aar(name, srcs, native_library):
     """Builds medaipipe tasks text AAR.
 
@@ -300,7 +349,6 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
         name = name + "_jni_opencv_cc_lib",
         srcs = select({
             "//mediapipe:android_arm64": ["@android_opencv//:libopencv_java3_so_arm64-v8a"],
-            "//mediapipe:android_armeabi": ["@android_opencv//:libopencv_java3_so_armeabi-v7a"],
             "//mediapipe:android_arm": ["@android_opencv//:libopencv_java3_so_armeabi-v7a"],
             "//mediapipe:android_x86": ["@android_opencv//:libopencv_java3_so_x86"],
             "//mediapipe:android_x86_64": ["@android_opencv//:libopencv_java3_so_x86_64"],
@@ -345,6 +393,7 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
             "//third_party:androidx_annotation",
             "//third_party:autovalue",
             "@maven//:com_google_guava_guava",
+            "@com_google_protobuf//:protobuf_javalite",
         ] + select({
             "//conditions:default": [":" + name + "_jni_opencv_cc_lib"],
             "//mediapipe/framework/port:disable_opencv": [],

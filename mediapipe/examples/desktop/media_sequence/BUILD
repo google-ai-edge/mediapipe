@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Placeholder: load py_library
+# Placeholder: load py_binary
+
 licenses(["notice"])
 
 package(default_visibility = ["//mediapipe/examples:__subpackages__"])
@@ -27,6 +30,7 @@ cc_library(
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
     ],
 )

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Placeholder for internal Python strict test compatibility macro.
-# Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python strict binary and library compatibility macro.
 
 licenses(["notice"])
 

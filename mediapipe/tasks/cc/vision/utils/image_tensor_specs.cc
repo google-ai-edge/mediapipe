@@ -21,6 +21,7 @@ limitations under the License.
 #include <type_traits>
 
 #include "absl/algorithm/container.h"
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
@@ -241,11 +242,12 @@ absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
 absl::StatusOr<ImageTensorSpecs> BuildInputImageTensorSpecs(
     const core::ModelResources& model_resources) {
   const tflite::Model& model = *model_resources.GetTfLiteModel();
+  // TODO: Investigate if there is any better solutions support
+  // running inference with multiple subgraphs.
   if (model.subgraphs()->size() != 1) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        "Image tflite models are assumed to have a single subgraph.",
-        MediaPipeTasksStatus::kInvalidArgumentError);
+    ABSL_LOG(WARNING)
+        << "TFLite model has more than 1 subgraphs. Use subrgaph 0 as "
+           "the primary subgraph for inference";
   }
   const auto* primary_subgraph = (*model.subgraphs())[0];
   if (primary_subgraph->inputs()->size() != 1) {

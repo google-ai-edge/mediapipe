@@ -3,6 +3,7 @@ mediapipe>=0.10.0
 numpy
 opencv-python
 tensorflow>=2.10
+tensorflow-addons
 tensorflow-datasets
 tensorflow-hub
-tf-models-official==2.11.6
+tf-models-official>=2.13.1

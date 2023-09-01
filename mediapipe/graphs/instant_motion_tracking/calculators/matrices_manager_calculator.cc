@@ -18,6 +18,7 @@
 #include "Eigen/Core"
 #include "Eigen/Dense"
 #include "Eigen/Geometry"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -116,8 +117,8 @@ class MatricesManagerCalculator : public CalculatorBase {
         return user_scaling.scale_factor;
       }
     }
-    LOG(WARNING) << "Cannot find sticker_id: " << sticker_id
-                 << ", returning 1.0f scaling";
+    ABSL_LOG(WARNING) << "Cannot find sticker_id: " << sticker_id
+                      << ", returning 1.0f scaling";
     return 1.0f;
   }
 
@@ -129,8 +130,8 @@ class MatricesManagerCalculator : public CalculatorBase {
         return rotation.rotation_radians;
       }
     }
-    LOG(WARNING) << "Cannot find sticker_id: " << sticker_id
-                 << ", returning 0.0f rotation";
+    ABSL_LOG(WARNING) << "Cannot find sticker_id: " << sticker_id
+                      << ", returning 0.0f rotation";
     return 0.0f;
   }
 };
@@ -221,8 +222,9 @@ absl::Status MatricesManagerCalculator::Process(CalculatorContext* cc) {
       model_matrix = asset_matrices_gif->add_model_matrix();
     } else {  // Asset 3D
       if (render_data[render_idx] != 1) {
-        LOG(ERROR) << "render id: " << render_data[render_idx]
-                   << " is not supported. Fall back to using render_id = 1.";
+        ABSL_LOG(ERROR)
+            << "render id: " << render_data[render_idx]
+            << " is not supported. Fall back to using render_id = 1.";
       }
       model_matrix = asset_matrices_1->add_model_matrix();
     }
@@ -379,8 +381,8 @@ DiagonalMatrix3f MatricesManagerCalculator::GetDefaultRenderScaleDiagonal(
       break;
     }
     default: {
-      LOG(INFO) << "Unsupported render_id: " << render_id
-                << ", returning default render_scale";
+      ABSL_LOG(INFO) << "Unsupported render_id: " << render_id
+                     << ", returning default render_scale";
       break;
     }
   }

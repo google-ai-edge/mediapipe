@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/match.h"
 #include "mediapipe/calculators/core/packet_resampler_calculator.pb.h"
 #include "mediapipe/calculators/tensorflow/unpack_media_sequence_calculator.pb.h"
@@ -201,8 +202,8 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
     first_timestamp_seen_ = Timestamp::OneOverPostStream().Value();
     for (const auto& map_kv : sequence_->feature_lists().feature_list()) {
       if (absl::StrContains(map_kv.first, "/timestamp")) {
-        LOG(INFO) << "Found feature timestamps: " << map_kv.first
-                  << " with size: " << map_kv.second.feature_size();
+        ABSL_LOG(INFO) << "Found feature timestamps: " << map_kv.first
+                       << " with size: " << map_kv.second.feature_size();
         int64_t recent_timestamp = Timestamp::PreStream().Value();
         for (int i = 0; i < map_kv.second.feature_size(); ++i) {
           int64_t next_timestamp =
@@ -309,8 +310,8 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
         audio_decoder_options->set_end_time(
             end_time + options.extra_padding_from_media_decoder());
       }
-      LOG(INFO) << "Created AudioDecoderOptions:\n"
-                << audio_decoder_options->DebugString();
+      ABSL_LOG(INFO) << "Created AudioDecoderOptions:\n"
+                     << audio_decoder_options->DebugString();
       cc->OutputSidePackets()
           .Tag(kAudioDecoderOptions)
           .Set(Adopt(audio_decoder_options.release()));
@@ -331,8 +332,8 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
             ->set_end_time(Timestamp::FromSeconds(end_time).Value());
       }
 
-      LOG(INFO) << "Created PacketResamplerOptions:\n"
-                << resampler_options->DebugString();
+      ABSL_LOG(INFO) << "Created PacketResamplerOptions:\n"
+                     << resampler_options->DebugString();
       cc->OutputSidePackets()
           .Tag(kPacketResamplerOptions)
           .Set(Adopt(resampler_options.release()));
@@ -351,7 +352,8 @@ class UnpackMediaSequenceCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override {
     if (timestamps_.empty()) {
       // This occurs when we only have metadata to unpack.
-      LOG(INFO) << "only unpacking metadata because there are no timestamps.";
+      ABSL_LOG(INFO)
+          << "only unpacking metadata because there are no timestamps.";
       return tool::StatusStop();
     }
     // In Process(), we loop through timestamps on a reference stream and emit

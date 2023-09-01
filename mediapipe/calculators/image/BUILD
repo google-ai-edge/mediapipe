@@ -97,6 +97,7 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:source_location",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_check",
     ],
     alwayslink = 1,
 )
@@ -125,6 +126,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_check",
     ],
     alwayslink = 1,
 )
@@ -135,7 +137,6 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame_opencv",
-        "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:status",
     ],
@@ -152,11 +153,11 @@ cc_library(
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
+        "@com_google_absl//absl/log:absl_log",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
@@ -203,6 +204,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/strings",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
@@ -301,6 +303,7 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_log",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
@@ -397,6 +400,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -421,6 +425,8 @@ cc_library(
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:image_frame_util",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@libyuv",
     ],
@@ -626,9 +632,9 @@ cc_library(
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:vector",
+        "@com_google_absl//absl/log:absl_log",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
@@ -666,6 +672,7 @@ cc_test(
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 

@@ -16,6 +16,7 @@ package com.google.mediapipe.tasks.components.containers;
 
 import com.google.auto.value.AutoValue;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Normalized Landmark represents a point in 3D space with x, y, z coordinates. x and y are
@@ -28,7 +29,12 @@ public abstract class NormalizedLandmark {
   private static final float TOLERANCE = 1e-6f;
 
   public static NormalizedLandmark create(float x, float y, float z) {
-    return new AutoValue_NormalizedLandmark(x, y, z);
+    return new AutoValue_NormalizedLandmark(x, y, z, Optional.empty(), Optional.empty());
+  }
+
+  public static NormalizedLandmark create(
+      float x, float y, float z, Optional<Float> visibility, Optional<Float> presence) {
+    return new AutoValue_NormalizedLandmark(x, y, z, visibility, presence);
   }
 
   // The x coordinates of the normalized landmark.
@@ -39,6 +45,12 @@ public abstract class NormalizedLandmark {
 
   // The z coordinates of the normalized landmark.
   public abstract float z();
+
+  // Visibility of the normalized landmark.
+  public abstract Optional<Float> visibility();
+
+  // Presence of the normalized landmark.
+  public abstract Optional<Float> presence();
 
   @Override
   public final boolean equals(Object o) {
@@ -58,6 +70,16 @@ public abstract class NormalizedLandmark {
 
   @Override
   public final String toString() {
-    return "<Normalized Landmark (x=" + x() + " y=" + y() + " z=" + z() + ")>";
+    return "<Normalized Landmark (x="
+        + x()
+        + " y="
+        + y()
+        + " z="
+        + z()
+        + " visibility= "
+        + visibility()
+        + " presence="
+        + presence()
+        + ")>";
   }
 }

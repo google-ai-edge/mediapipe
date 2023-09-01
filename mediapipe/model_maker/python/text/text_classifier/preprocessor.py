@@ -15,16 +15,16 @@
 """Preprocessors for text classification."""
 
 import collections
+import hashlib
 import os
 import re
-import tempfile
 from typing import Mapping, Sequence, Tuple, Union
 
 import tensorflow as tf
 import tensorflow_hub
 
+from mediapipe.model_maker.python.core.data import cache_files as cache_files_lib
 from mediapipe.model_maker.python.text.text_classifier import dataset as text_classifier_ds
-from official.nlp.data import classifier_data_lib
 from official.nlp.tools import tokenization
 
 
@@ -75,19 +75,20 @@ def _decode_record(
   return bert_features, example["label_ids"]
 
 
-def _single_file_dataset(
-    input_file: str, name_to_features: Mapping[str, tf.io.FixedLenFeature]
+def _tfrecord_dataset(
+    tfrecord_files: Sequence[str],
+    name_to_features: Mapping[str, tf.io.FixedLenFeature],
 ) -> tf.data.TFRecordDataset:
   """Creates a single-file dataset to be passed for BERT custom training.
 
   Args:
-    input_file: Filepath for the dataset.
+    tfrecord_files: Filepaths for the dataset.
     name_to_features: Maps record keys to feature types.
 
   Returns:
     Dataset containing BERT model input features and labels.
   """
-  d = tf.data.TFRecordDataset(input_file)
+  d = tf.data.TFRecordDataset(tfrecord_files)
   d = d.map(
       lambda record: _decode_record(record, name_to_features),
       num_parallel_calls=tf.data.AUTOTUNE)
@@ -221,15 +222,23 @@ class BertClassifierPreprocessor:
     seq_len: Length of the input sequence to the model.
     vocab_file: File containing the BERT vocab.
     tokenizer: BERT tokenizer.
+    model_name: Name of the model provided by the model_spec. Used to associate
+      cached files with specific Bert model vocab.
   """
 
-  def __init__(self, seq_len: int, do_lower_case: bool, uri: str):
+  def __init__(
+      self, seq_len: int, do_lower_case: bool, uri: str, model_name: str
+  ):
     self._seq_len = seq_len
     # Vocab filepath is tied to the BERT module's URI.
     self._vocab_file = os.path.join(
-        tensorflow_hub.resolve(uri), "assets", "vocab.txt")
-    self._tokenizer = tokenization.FullTokenizer(self._vocab_file,
-                                                 do_lower_case)
+        tensorflow_hub.resolve(uri), "assets", "vocab.txt"
+    )
+    self._do_lower_case = do_lower_case
+    self._tokenizer = tokenization.FullTokenizer(
+        self._vocab_file, self._do_lower_case
+    )
+    self._model_name = model_name
 
   def _get_name_to_features(self):
     """Gets the dictionary mapping record keys to feature types."""
@@ -244,8 +253,62 @@ class BertClassifierPreprocessor:
     """Returns the vocab file of the BertClassifierPreprocessor."""
     return self._vocab_file
 
+  def _get_tfrecord_cache_files(
+      self, ds_cache_files
+  ) -> cache_files_lib.TFRecordCacheFiles:
+    """Helper to regenerate cache prefix filename using preprocessor info.
+
+    We need to update the dataset cache_prefix cache because the actual cached
+    dataset depends on the preprocessor parameters such as model_name, seq_len,
+    and do_lower_case in addition to the raw dataset parameters which is already
+    included in the ds_cache_files.cache_prefix_filename
+
+    Specifically, the new cache_prefix_filename used by the preprocessor will
+    be a hash generated from the following:
+      1. cache_prefix_filename of the initial raw dataset
+      2. model_name
+      3. seq_len
+      4. do_lower_case
+
+    Args:
+      ds_cache_files: TFRecordCacheFiles from the original raw dataset object
+
+    Returns:
+      A new TFRecordCacheFiles object which incorporates the preprocessor
+      parameters.
+    """
+    hasher = hashlib.md5()
+    hasher.update(ds_cache_files.cache_prefix_filename.encode("utf-8"))
+    hasher.update(self._model_name.encode("utf-8"))
+    hasher.update(str(self._seq_len).encode("utf-8"))
+    hasher.update(str(self._do_lower_case).encode("utf-8"))
+    cache_prefix_filename = hasher.hexdigest()
+    return cache_files_lib.TFRecordCacheFiles(
+        cache_prefix_filename,
+        ds_cache_files.cache_dir,
+        ds_cache_files.num_shards,
+    )
+
+  def _process_bert_features(self, text: str) -> Mapping[str, Sequence[int]]:
+    tokens = self._tokenizer.tokenize(text)
+    tokens = tokens[0 : (self._seq_len - 2)]  # account for [CLS] and [SEP]
+    tokens.insert(0, "[CLS]")
+    tokens.append("[SEP]")
+    input_ids = self._tokenizer.convert_tokens_to_ids(tokens)
+    input_mask = [1] * len(input_ids)
+    while len(input_ids) < self._seq_len:
+      input_ids.append(0)
+      input_mask.append(0)
+    segment_ids = [0] * self._seq_len
+    return {
+        "input_ids": input_ids,
+        "input_mask": input_mask,
+        "segment_ids": segment_ids,
+    }
+
   def preprocess(
-      self, dataset: text_classifier_ds.Dataset) -> text_classifier_ds.Dataset:
+      self, dataset: text_classifier_ds.Dataset
+  ) -> text_classifier_ds.Dataset:
     """Preprocesses data into input for a BERT-based classifier.
 
     Args:
@@ -254,32 +317,54 @@ class BertClassifierPreprocessor:
     Returns:
       Dataset containing (bert_features, label) data.
     """
-    examples = []
-    for index, (text, label) in enumerate(dataset.gen_tf_dataset()):
-      _validate_text_and_label(text, label)
-      examples.append(
-          classifier_data_lib.InputExample(
-              guid=str(index),
-              text_a=text.numpy()[0].decode("utf-8"),
-              text_b=None,
-              # InputExample expects the label name rather than the int ID
-              label=dataset.label_names[label.numpy()[0]]))
+    ds_cache_files = dataset.tfrecord_cache_files
+    # Get new tfrecord_cache_files by including preprocessor information.
+    tfrecord_cache_files = self._get_tfrecord_cache_files(ds_cache_files)
+    if not tfrecord_cache_files.is_cached():
+      print(f"Writing new cache files to {tfrecord_cache_files.cache_prefix}")
+      writers = tfrecord_cache_files.get_writers()
+      size = 0
+      for index, (text, label) in enumerate(dataset.gen_tf_dataset()):
+        _validate_text_and_label(text, label)
+        feature = self._process_bert_features(text.numpy()[0].decode("utf-8"))
+        def create_int_feature(values):
+          f = tf.train.Feature(
+              int64_list=tf.train.Int64List(value=list(values))
+          )
+          return f
 
-    tfrecord_file = os.path.join(tempfile.mkdtemp(), "bert_features.tfrecord")
-    classifier_data_lib.file_based_convert_examples_to_features(
-        examples=examples,
-        label_list=dataset.label_names,
-        max_seq_length=self._seq_len,
-        tokenizer=self._tokenizer,
-        output_file=tfrecord_file)
-    preprocessed_ds = _single_file_dataset(tfrecord_file,
-                                           self._get_name_to_features())
+        features = collections.OrderedDict()
+        features["input_ids"] = create_int_feature(feature["input_ids"])
+        features["input_mask"] = create_int_feature(feature["input_mask"])
+        features["segment_ids"] = create_int_feature(feature["segment_ids"])
+        features["label_ids"] = create_int_feature([label.numpy()[0]])
+        tf_example = tf.train.Example(
+            features=tf.train.Features(feature=features)
+        )
+        writers[index % len(writers)].write(tf_example.SerializeToString())
+        size = index + 1
+      for writer in writers:
+        writer.close()
+      metadata = {"size": size, "label_names": dataset.label_names}
+      tfrecord_cache_files.save_metadata(metadata)
+    else:
+      print(
+          f"Using existing cache files at {tfrecord_cache_files.cache_prefix}"
+      )
+      metadata = tfrecord_cache_files.load_metadata()
+    size = metadata["size"]
+    label_names = metadata["label_names"]
+    preprocessed_ds = _tfrecord_dataset(
+        tfrecord_cache_files.tfrecord_files, self._get_name_to_features()
+    )
     return text_classifier_ds.Dataset(
         dataset=preprocessed_ds,
-        size=dataset.size,
-        label_names=dataset.label_names)
+        size=size,
+        label_names=label_names,
+        tfrecord_cache_files=tfrecord_cache_files,
+    )
 
 
-TextClassifierPreprocessor = (
-    Union[BertClassifierPreprocessor,
-          AverageWordEmbeddingClassifierPreprocessor])
+TextClassifierPreprocessor = Union[
+    BertClassifierPreprocessor, AverageWordEmbeddingClassifierPreprocessor
+]

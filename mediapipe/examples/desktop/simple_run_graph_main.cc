@@ -22,6 +22,7 @@
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
@@ -102,8 +103,8 @@ absl::Status RunMPPGraph() {
   MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
       absl::GetFlag(FLAGS_calculator_graph_config_file),
       &calculator_graph_config_contents));
-  LOG(INFO) << "Get calculator graph config contents: "
-            << calculator_graph_config_contents;
+  ABSL_LOG(INFO) << "Get calculator graph config contents: "
+                 << calculator_graph_config_contents;
   mediapipe::CalculatorGraphConfig config =
       mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(
           calculator_graph_config_contents);
@@ -119,14 +120,14 @@ absl::Status RunMPPGraph() {
           mediapipe::MakePacket<std::string>(name_and_value[1]);
     }
   }
-  LOG(INFO) << "Initialize the calculator graph.";
+  ABSL_LOG(INFO) << "Initialize the calculator graph.";
   mediapipe::CalculatorGraph graph;
   MP_RETURN_IF_ERROR(graph.Initialize(config, input_side_packets));
   if (!absl::GetFlag(FLAGS_output_stream).empty() &&
       !absl::GetFlag(FLAGS_output_stream_file).empty()) {
     ASSIGN_OR_RETURN(auto poller, graph.AddOutputStreamPoller(
                                       absl::GetFlag(FLAGS_output_stream)));
-    LOG(INFO) << "Start running the calculator graph.";
+    ABSL_LOG(INFO) << "Start running the calculator graph.";
     MP_RETURN_IF_ERROR(graph.StartRun({}));
     MP_RETURN_IF_ERROR(OutputStreamToLocalFile(poller));
   } else {
@@ -134,7 +135,7 @@ absl::Status RunMPPGraph() {
               absl::GetFlag(FLAGS_output_stream_file).empty())
         << "--output_stream and --output_stream_file should be specified in "
            "pair.";
-    LOG(INFO) << "Start running the calculator graph.";
+    ABSL_LOG(INFO) << "Start running the calculator graph.";
     MP_RETURN_IF_ERROR(graph.StartRun({}));
   }
   MP_RETURN_IF_ERROR(graph.WaitUntilDone());
@@ -146,10 +147,10 @@ int main(int argc, char** argv) {
   absl::ParseCommandLine(argc, argv);
   absl::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
-    LOG(ERROR) << "Failed to run the graph: " << run_status.message();
+    ABSL_LOG(ERROR) << "Failed to run the graph: " << run_status.message();
     return EXIT_FAILURE;
   } else {
-    LOG(INFO) << "Success!";
+    ABSL_LOG(INFO) << "Success!";
   }
   return EXIT_SUCCESS;
 }

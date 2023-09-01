@@ -154,6 +154,13 @@ cc_library(
 )
 
 cc_library(
+    name = "hand_landmarks_connections",
+    hdrs = ["hand_landmarks_connections.h"],
+)
+
+# TODO: open source hand joints graph
+
+cc_library(
     name = "hand_landmarker_result",
     srcs = ["hand_landmarker_result.cc"],
     hdrs = ["hand_landmarker_result.h"],

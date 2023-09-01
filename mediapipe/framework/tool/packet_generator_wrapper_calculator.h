@@ -1,4 +1,4 @@
-// Copyright 2019 The MediaPipe Authors.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
+#ifndef MEDIAPIPE_FRAMEWORK_TOOL_PACKET_GENERATOR_WRAPPER_CALCULATOR_H_
+#define MEDIAPIPE_FRAMEWORK_TOOL_PACKET_GENERATOR_WRAPPER_CALCULATOR_H_
 
-#include "mediapipe/calculators/core/clip_vector_size_calculator.h"
-#include "mediapipe/framework/formats/detection.pb.h"
+#include "absl/status/status.h"
+#include "mediapipe/framework/calculator_base.h"
 
 namespace mediapipe {
 
-typedef ClipVectorSizeCalculator<::mediapipe::Detection>
-    ClipDetectionVectorSizeCalculator;
-REGISTER_CALCULATOR(ClipDetectionVectorSizeCalculator);
+class PacketGeneratorWrapperCalculator : public CalculatorBase {
+ public:
+  static absl::Status GetContract(CalculatorContract* cc);
+  absl::Status Open(CalculatorContext* cc) override;
+  absl::Status Process(CalculatorContext* cc) override;
+};
 
 }  // namespace mediapipe
+
+#endif  // MEDIAPIPE_FRAMEWORK_TOOL_PACKET_GENERATOR_WRAPPER_CALCULATOR_H_

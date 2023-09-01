@@ -16,6 +16,7 @@
 
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
 
@@ -59,9 +60,9 @@ void CounterSet::PublishCounters() ABSL_LOCKS_EXCLUDED(mu_) {}
 
 void CounterSet::PrintCounters() ABSL_LOCKS_EXCLUDED(mu_) {
   absl::ReaderMutexLock lock(&mu_);
-  LOG_IF(INFO, !counters_.empty()) << "MediaPipe Counters:";
+  ABSL_LOG_IF(INFO, !counters_.empty()) << "MediaPipe Counters:";
   for (const auto& counter : counters_) {
-    LOG(INFO) << counter.first << ": " << counter.second->Get();
+    ABSL_LOG(INFO) << counter.first << ": " << counter.second->Get();
   }
 }
 

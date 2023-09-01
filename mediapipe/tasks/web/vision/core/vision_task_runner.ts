@@ -70,7 +70,8 @@ export abstract class VisionTaskRunner extends TaskRunner {
    * @param imageStreamName the name of the input image stream.
    * @param normRectStreamName the name of the input normalized rect image
    *     stream used to provide (mandatory) rotation and (optional)
-   *     region-of-interest.
+   *     region-of-interest. `null` if the graph does not support normalized
+   *     rects.
    * @param roiAllowed Whether this task supports Region-Of-Interest
    *     pre-processing
    *
@@ -79,13 +80,20 @@ export abstract class VisionTaskRunner extends TaskRunner {
   constructor(
       protected override readonly graphRunner: VisionGraphRunner,
       private readonly imageStreamName: string,
-      private readonly normRectStreamName: string,
+      private readonly normRectStreamName: string|null,
       private readonly roiAllowed: boolean) {
     super(graphRunner);
   }
 
-  /** Configures the shared options of a vision task. */
-  override applyOptions(options: VisionTaskOptions): Promise<void> {
+  /**
+   * Configures the shared options of a vision task.
+   *
+   * @param options The options for the task.
+   * @param loadTfliteModel Whether to load the model specified in
+   *     `options.baseOptions`.
+   */
+  override applyOptions(options: VisionTaskOptions, loadTfliteModel = true):
+      Promise<void> {
     if ('runningMode' in options) {
       const useStreamMode =
           !!options.runningMode && options.runningMode !== 'IMAGE';
@@ -98,7 +106,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
       }
     }
 
-    return super.applyOptions(options);
+    return super.applyOptions(options, loadTfliteModel);
   }
 
   /** Sends a single image to the graph and awaits results. */
@@ -209,11 +217,13 @@ export abstract class VisionTaskRunner extends TaskRunner {
       imageSource: ImageSource,
       imageProcessingOptions: ImageProcessingOptions|undefined,
       timestamp: number): void {
-    const normalizedRect =
-        this.convertToNormalizedRect(imageSource, imageProcessingOptions);
-    this.graphRunner.addProtoToStream(
-        normalizedRect.serializeBinary(), 'mediapipe.NormalizedRect',
-        this.normRectStreamName, timestamp);
+    if (this.normRectStreamName) {
+      const normalizedRect =
+          this.convertToNormalizedRect(imageSource, imageProcessingOptions);
+      this.graphRunner.addProtoToStream(
+          normalizedRect.serializeBinary(), 'mediapipe.NormalizedRect',
+          this.normRectStreamName, timestamp);
+    }
     this.graphRunner.addGpuBufferAsImageToStream(
         imageSource, this.imageStreamName, timestamp ?? performance.now());
     this.finishProcessing();

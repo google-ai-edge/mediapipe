@@ -15,6 +15,7 @@
 // Calculator converts from one-dimensional Tensor of DT_FLOAT to Matrix
 // OR from (batched) two-dimensional Tensor of DT_FLOAT to Matrix.
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/calculators/tensorflow/tensor_to_matrix_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/matrix.h"
@@ -36,7 +37,7 @@ constexpr char kReference[] = "REFERENCE";
 
 absl::Status FillTimeSeriesHeaderIfValid(const Packet& header_packet,
                                          TimeSeriesHeader* header) {
-  CHECK(header);
+  ABSL_CHECK(header);
   if (header_packet.IsEmpty()) {
     return absl::UnknownError("No header found.");
   }
@@ -191,7 +192,7 @@ absl::Status TensorToMatrixCalculator::Process(CalculatorContext* cc) {
       << "Tensor stream packet does not contain a Tensor.";
 
   const tf::Tensor& input_tensor = cc->Inputs().Tag(kTensor).Get<tf::Tensor>();
-  CHECK(1 == input_tensor.dims() || 2 == input_tensor.dims())
+  ABSL_CHECK(1 == input_tensor.dims() || 2 == input_tensor.dims())
       << "Only 1-D or 2-D Tensors can be converted to matrices.";
   const int32_t length = input_tensor.dim_size(input_tensor.dims() - 1);
   const int32_t width =

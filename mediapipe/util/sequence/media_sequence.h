@@ -634,6 +634,10 @@ PREFIXED_IMAGE(InstanceSegmentation, kInstanceSegmentationPrefix);
 const char kTextLanguageKey[] = "text/language";
 // A large block of text that applies to the media.
 const char kTextContextContentKey[] = "text/context/content";
+// A large block of text that applies to the media as token ids.
+const char kTextContextTokenIdKey[] = "text/context/token_id";
+// A large block of text that applies to the media as embeddings.
+const char kTextContextEmbeddingKey[] = "text/context/embedding";
 
 // Feature list keys:
 // The text contents for a given time.
@@ -651,6 +655,8 @@ const char kTextTokenIdKey[] = "text/token/id";
 
 BYTES_CONTEXT_FEATURE(TextLanguage, kTextLanguageKey);
 BYTES_CONTEXT_FEATURE(TextContextContent, kTextContextContentKey);
+VECTOR_INT64_CONTEXT_FEATURE(TextContextTokenId, kTextContextTokenIdKey);
+VECTOR_FLOAT_CONTEXT_FEATURE(TextContextEmbedding, kTextContextEmbeddingKey);
 BYTES_FEATURE_LIST(TextContent, kTextContentKey);
 INT64_FEATURE_LIST(TextTimestamp, kTextTimestampKey);
 INT64_FEATURE_LIST(TextDuration, kTextDurationKey);

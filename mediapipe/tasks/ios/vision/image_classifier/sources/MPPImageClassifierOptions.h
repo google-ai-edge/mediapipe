@@ -23,11 +23,11 @@ NS_ASSUME_NONNULL_BEGIN
 @class MPPImageClassifier;
 
 /**
- * This protocol defines an interface for the delegates of `MPPImageClassifier` object to receive
+ * This protocol defines an interface for the delegates of `ImageClassifier` object to receive
  * results of asynchronous classification of images (i.e, when `runningMode =
- * MPPRunningModeLiveStream`).
+ * .liveStream`).
  *
- * The delegate of `MPPImageClassifier` must adopt `MPPImageClassifierLiveStreamDelegate` protocol.
+ * The delegate of `ImageClassifier` must adopt `ImageClassifierLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
  */
 NS_SWIFT_NAME(ImageClassifierLiveStreamDelegate)
@@ -36,14 +36,14 @@ NS_SWIFT_NAME(ImageClassifierLiveStreamDelegate)
 @optional
 /**
  * This method notifies a delegate that the results of asynchronous classification of
- * an image submitted to the `MPPImageClassifier` is available.
+ * an image submitted to the `ImageClassifier` is available.
  *
- * This method is called on a private serial queue created by the `MPPImageClassifier`
+ * This method is called on a private serial queue created by the `ImageClassifier`
  * for performing the asynchronous delegates calls.
  *
  * @param imageClassifier The image classifier which performed the classification.
- * This is useful to test equality when there are multiple instances of `MPPImageClassifier`.
- * @param result An `MPPImageClassifierResult` object that contains a list of image classifications.
+ * This is useful to test equality when there are multiple instances of `ImageClassifier`.
+ * @param result An `ImageClassifierResult` object that contains a list of image classifications.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
  * image was sent to the image classifier.
  * @param error An optional error parameter populated when there is an error in performing image
@@ -57,27 +57,27 @@ NS_SWIFT_NAME(ImageClassifierLiveStreamDelegate)
 @end
 
 /**
- * Options for setting up a `MPPImageClassifier`.
+ * Options for setting up a `ImageClassifier`.
  */
 NS_SWIFT_NAME(ImageClassifierOptions)
 @interface MPPImageClassifierOptions : MPPTaskOptions <NSCopying>
 
 /**
- * Running mode of the image classifier task. Defaults to `MPPRunningModeImage`.
- * `MPPImageClassifier` can be created with one of the following running modes:
- *  1. `MPPRunningModeImage`: The mode for performing classification on single image inputs.
- *  2. `MPPRunningModeVideo`: The mode for performing classification on the decoded frames of a
+ * Running mode of the image classifier task. Defaults to `.image`.
+ * `ImageClassifier` can be created with one of the following running modes:
+ *  1. `.image`: The mode for performing classification on single image inputs.
+ *  2. `.video`: The mode for performing classification on the decoded frames of a
  *      video.
- *  3. `MPPRunningModeLiveStream`: The mode for performing classification on a live stream of input
+ *  3. `.liveStream`: The mode for performing classification on a live stream of input
  *      data, such as from the camera.
  */
 @property(nonatomic) MPPRunningMode runningMode;
 
 /**
- * An object that confirms to `MPPImageClassifierLiveStreamDelegate` protocol. This object must
- * implement `objectDetector:didFinishDetectionWithResult:timestampInMilliseconds:error:` to receive
- * the results of asynchronous classification on images (i.e, when `runningMode =
- * MPPRunningModeLiveStream`).
+ * An object that confirms to `ImageClassifierLiveStreamDelegate` protocol. This object must
+ * implement `objectDetector(_:didFinishDetectionWithResult:timestampInMilliseconds:error:)` to
+ * receive the results of asynchronous classification on images (i.e, when `runningMode =
+ * .liveStream`).
  */
 @property(nonatomic, weak, nullable) id<MPPImageClassifierLiveStreamDelegate>
     imageClassifierLiveStreamDelegate;

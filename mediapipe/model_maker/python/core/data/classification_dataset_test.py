@@ -36,9 +36,14 @@ class ClassificationDatasetTest(tf.test.TestCase):
         value: A value variable stored by the mock dataset class for testing.
       """
 
-      def __init__(self, dataset: tf.data.Dataset, size: int,
-                   label_names: List[str], value: Any):
-        super().__init__(dataset=dataset, size=size, label_names=label_names)
+      def __init__(
+          self,
+          dataset: tf.data.Dataset,
+          label_names: List[str],
+          value: Any,
+          size: int,
+      ):
+        super().__init__(dataset=dataset, label_names=label_names, size=size)
         self.value = value
 
       def split(self, fraction: float) -> Tuple[_DatasetT, _DatasetT]:
@@ -52,7 +57,8 @@ class ClassificationDatasetTest(tf.test.TestCase):
     # Create data loader from sample data.
     ds = tf.data.Dataset.from_tensor_slices([[0, 1], [1, 1], [0, 0], [1, 0]])
     data = MagicClassificationDataset(
-        dataset=ds, size=len(ds), label_names=label_names, value=magic_value)
+        dataset=ds, label_names=label_names, value=magic_value, size=len(ds)
+    )
 
     # Train/Test data split.
     fraction = .25

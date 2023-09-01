@@ -23,8 +23,13 @@
 #include <utility>
 #include <vector>
 
+#include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
+#include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/graph_service_manager.h"
 #include "mediapipe/framework/packet_generator.pb.h"
 #include "mediapipe/framework/port.h"
@@ -122,6 +127,19 @@ absl::Status TransformNames(
   for (auto& status_handler : *config->mutable_status_handler()) {
     MP_RETURN_IF_ERROR(TransformStreamNames(
         status_handler.mutable_input_side_packet(), transform));
+  }
+  // Prefix executor names, but only those defined in the current graph.
+  absl::flat_hash_set<std::string> local_executor_names;
+  for (auto& executor : *config->mutable_executor()) {
+    if (!executor.name().empty()) {
+      local_executor_names.insert(executor.name());
+      *executor.mutable_name() = transform(executor.name());
+    }
+  }
+  for (auto& node : *config->mutable_node()) {
+    if (local_executor_names.contains(node.executor())) {
+      *node.mutable_executor() = transform(node.executor());
+    }
   }
   return absl::OkStatus();
 }
@@ -273,6 +291,41 @@ absl::Status ConnectSubgraphStreams(
   return absl::OkStatus();
 }
 
+absl::Status RemoveDuplicateExecutors(
+    const absl::flat_hash_set<std::string>& seen_executors,
+    CalculatorGraphConfig* config) {
+  auto* mutable_executors = config->mutable_executor();
+  auto unique_executors_it = std::remove_if(
+      mutable_executors->begin(), mutable_executors->end(),
+      [&seen_executors](const mediapipe::ExecutorConfig& executor_config) {
+        bool is_duplicate = seen_executors.contains(executor_config.name());
+        // This can happen in the following situation: you define an
+        // executor at the top-level-graph and one or more of your
+        // subgraphs declare executors with the same name as well.
+        //
+        // Historically, executors defined in subgraphs were ignored
+        // (unless you use your subgraph as a top-level-graph).
+        //
+        // Now executors can be defined in subgraphs (their names are
+        // automatically updated to be prefixed with subgraph name). To be
+        // backward compatible, MediaPipe will ignore (remove) executors
+        // defined in subgraphs if they have the same names as one of
+        // top-level-graph defined executors.
+        //
+        // NOTE: If you see this warning, you may want to verify if you
+        // actually use the same executors and consider removing one or
+        // another.
+        if (is_duplicate) {
+          ABSL_LOG(WARNING) << absl::StrFormat(
+              "Removing a duplicate of top-level-graph executor: %s",
+              executor_config.name());
+        }
+        return is_duplicate;
+      });
+  mutable_executors->erase(unique_executors_it, mutable_executors->end());
+  return absl::OkStatus();
+}
+
 absl::Status ExpandSubgraphs(CalculatorGraphConfig* config,
                              const GraphRegistry* graph_registry,
                              const Subgraph::SubgraphOptions* graph_options,
@@ -283,6 +336,12 @@ absl::Status ExpandSubgraphs(CalculatorGraphConfig* config,
 
   MP_RETURN_IF_ERROR(mediapipe::tool::DefineGraphOptions(
       graph_options ? *graph_options : CalculatorGraphConfig::Node(), config));
+
+  absl::flat_hash_set<std::string> seen_executors;
+  for (int i = 0; i < config->executor_size(); ++i) {
+    seen_executors.insert(config->executor(i).name());
+  }
+
   auto* nodes = config->mutable_node();
   while (1) {
     auto subgraph_nodes_start = std::stable_partition(
@@ -303,6 +362,7 @@ absl::Status ExpandSubgraphs(CalculatorGraphConfig* config,
                                           config->package(), node.calculator(),
                                           &subgraph_context));
       MP_RETURN_IF_ERROR(mediapipe::tool::DefineGraphOptions(node, &subgraph));
+      MP_RETURN_IF_ERROR(RemoveDuplicateExecutors(seen_executors, &subgraph));
       MP_RETURN_IF_ERROR(PrefixNames(node_name, &subgraph));
       MP_RETURN_IF_ERROR(ConnectSubgraphStreams(node, &subgraph));
       subgraphs.push_back(subgraph);
@@ -319,6 +379,9 @@ absl::Status ExpandSubgraphs(CalculatorGraphConfig* config,
                 subgraph.status_handler().end(),
                 proto_ns::RepeatedPtrFieldBackInserter(
                     config->mutable_status_handler()));
+      std::copy(
+          subgraph.executor().begin(), subgraph.executor().end(),
+          proto_ns::RepeatedPtrFieldBackInserter(config->mutable_executor()));
     }
   }
   return absl::OkStatus();

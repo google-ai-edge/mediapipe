@@ -29,7 +29,7 @@ py_library(
     name = "base_options",
     srcs = ["base_options.py"],
     visibility = [
-        "//mediapipe/model_maker/python/vision/gesture_recognizer:__subpackages__",
+        "//mediapipe/model_maker:__subpackages__",
         "//mediapipe/tasks:users",
     ],
     deps = [

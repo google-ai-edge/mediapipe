@@ -237,6 +237,10 @@ public class PacketCreator {
     return Packet.create(nativeCreateInt32Array(mediapipeGraph.getNativeHandle(), data));
   }
 
+  public Packet createInt32Pair(int first, int second) {
+    return Packet.create(nativeCreateInt32Pair(mediapipeGraph.getNativeHandle(), first, second));
+  }
+
   public Packet createFloat32Array(float[] data) {
     return Packet.create(nativeCreateFloat32Array(mediapipeGraph.getNativeHandle(), data));
   }
@@ -448,6 +452,8 @@ public class PacketCreator {
       long context, ByteBuffer buffer, int width, int height, int rowBytes, int numChannels);
 
   private native long nativeCreateInt32Array(long context, int[] data);
+
+  private native long nativeCreateInt32Pair(long context, int first, int second);
 
   private native long nativeCreateFloat32Array(long context, float[] data);
 

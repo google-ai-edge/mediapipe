@@ -1,7 +1,15 @@
 #include "mediapipe/util/image_test_utils.h"
 
+#include <cstdint>
+#include <memory>
+#include <utility>
+
+#include "absl/log/absl_log.h"
+#include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/image_format.pb.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
+#include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
@@ -38,20 +46,29 @@ mediapipe::ImageFormat::Format GetImageFormat(int image_channels) {
   } else if (image_channels == 1) {
     return ImageFormat::GRAY8;
   }
-  LOG(FATAL) << "Unsupported input image channles: " << image_channels;
+  ABSL_LOG(FATAL) << "Unsupported input image channles: " << image_channels;
 }
 
 Packet MakeImageFramePacket(cv::Mat input, int timestamp) {
   ImageFrame input_image(GetImageFormat(input.channels()), input.cols,
-                         input.rows, input.step, input.data, [](uint8_t*) {});
-  return MakePacket<ImageFrame>(std::move(input_image)).At(Timestamp(0));
+                         input.rows, input.step, input.data,
+                         [input](uint8_t*) mutable { input.release(); });
+  return MakePacket<ImageFrame>(std::move(input_image))
+      .At(Timestamp(timestamp));
 }
 
 Packet MakeImagePacket(cv::Mat input, int timestamp) {
   mediapipe::Image input_image(std::make_shared<mediapipe::ImageFrame>(
       GetImageFormat(input.channels()), input.cols, input.rows, input.step,
-      input.data, [](uint8_t*) {}));
-  return MakePacket<mediapipe::Image>(std::move(input_image)).At(Timestamp(0));
+      input.data, [input](uint8_t*) mutable { input.release(); }));
+  return MakePacket<mediapipe::Image>(std::move(input_image))
+      .At(Timestamp(timestamp));
+}
+
+cv::Mat RgbaToBgr(cv::Mat rgba) {
+  cv::Mat bgra;
+  cv::cvtColor(rgba, bgra, cv::COLOR_RGBA2BGR);
+  return bgra;
 }
 
 }  // namespace mediapipe

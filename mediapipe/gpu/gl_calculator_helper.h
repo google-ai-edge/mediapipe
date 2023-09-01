@@ -162,6 +162,9 @@ class GlCalculatorHelper {
       int output_width, int output_height,
       GpuBufferFormat format = GpuBufferFormat::kBGRA32);
 
+  // Allows user provided buffers to be used as rendering destinations.
+  GlTexture CreateDestinationTexture(GpuBuffer& buffer);
+
   // Creates a destination texture copying and uploading passed image frame.
   //
   // WARNING: mind that this functions creates a new texture every time and

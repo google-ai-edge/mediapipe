@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+
+# Placeholder: load py_library
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 
@@ -68,6 +69,8 @@ cc_library(
         "//third_party:libffmpeg",
         "@com_google_absl//absl/base:endian",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@eigen_archive//:eigen3",
@@ -121,10 +124,11 @@ cc_library(
         "//mediapipe/framework/port",
         "//mediapipe/framework/port:aligned_malloc_and_free",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/tool:status_util",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@libyuv",
     ],
@@ -154,6 +158,7 @@ cc_library(
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -169,6 +174,8 @@ cc_library(
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:vector",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -218,6 +225,7 @@ cc_library(
         "//mediapipe/framework/port:singleton",
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
     ] + select({
@@ -248,6 +256,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/container:flat_hash_map",
         "@com_google_absl//absl/functional:function_ref",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )
 
@@ -297,8 +306,9 @@ cc_library(
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -319,6 +329,8 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
         "@eigen_archive//:eigen3",
     ],
@@ -397,11 +409,13 @@ cc_library(
         "//mediapipe/framework:packet",
         "//mediapipe/framework:timestamp",
         "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 

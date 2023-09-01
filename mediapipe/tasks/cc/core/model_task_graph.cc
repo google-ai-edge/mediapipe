@@ -21,6 +21,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
@@ -30,7 +31,6 @@ limitations under the License.
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/calculator.pb.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources.h"
@@ -165,7 +165,7 @@ absl::StatusOr<const ModelResources*> ModelTaskGraph::CreateModelResources(
   if (!model_resources_cache_service.IsAvailable()) {
     ASSIGN_OR_RETURN(auto local_model_resource,
                      ModelResources::Create("", std::move(external_file)));
-    LOG(WARNING)
+    ABSL_LOG(WARNING)
         << "A local ModelResources object is created. Please consider using "
            "ModelResourcesCacheService to cache the created ModelResources "
            "object in the CalculatorGraph.";
@@ -186,6 +186,21 @@ absl::StatusOr<const ModelResources*> ModelTaskGraph::CreateModelResources(
   return model_resources_cache_service.GetObject().GetModelResources(tag);
 }
 
+absl::StatusOr<const ModelResources*> ModelTaskGraph::GetOrCreateModelResources(
+    SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file,
+    std::string tag_suffix) {
+  auto model_resources_cache_service = sc->Service(kModelResourcesCacheService);
+  if (model_resources_cache_service.IsAvailable()) {
+    std::string tag =
+        absl::StrCat(CreateModelResourcesTag(sc->OriginalNode()), tag_suffix);
+    if (model_resources_cache_service.GetObject().Exists(tag)) {
+      return model_resources_cache_service.GetObject().GetModelResources(tag);
+    }
+  }
+  return ModelTaskGraph::CreateModelResources(sc, std::move(external_file),
+                                              tag_suffix);
+}
+
 absl::StatusOr<const ModelAssetBundleResources*>
 ModelTaskGraph::CreateModelAssetBundleResources(
     SubgraphContext* sc, std::unique_ptr<proto::ExternalFile> external_file,
@@ -200,7 +215,7 @@ ModelTaskGraph::CreateModelAssetBundleResources(
         auto local_model_asset_bundle_resource,
         ModelAssetBundleResources::Create("", std::move(external_file)));
     if (!has_file_pointer_meta) {
-      LOG(WARNING)
+      ABSL_LOG(WARNING)
           << "A local ModelResources object is created. Please consider using "
              "ModelResourcesCacheService to cache the created ModelResources "
              "object in the CalculatorGraph.";

@@ -52,6 +52,8 @@
 #define MEDIAPIPE_FRAMEWORK_CALCULATOR_FRAMEWORK_H_
 
 #include "mediapipe/framework/calculator_base.h"
+#include "mediapipe/framework/calculator_context.h"
+#include "mediapipe/framework/calculator_contract.h"
 #include "mediapipe/framework/calculator_graph.h"
 #include "mediapipe/framework/calculator_registry.h"
 #include "mediapipe/framework/counter_factory.h"

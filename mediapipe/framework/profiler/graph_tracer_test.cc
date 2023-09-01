@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -332,7 +333,7 @@ TEST_F(GraphTracerTest, GraphTrace) {
 class GraphTracerE2ETest : public ::testing::Test {
  protected:
   void SetUpPassThroughGraph() {
-    CHECK(proto_ns::TextFormat::ParseFromString(R"(
+    ABSL_CHECK(proto_ns::TextFormat::ParseFromString(R"(
         input_stream: "input_0"
         node {
           calculator: "LambdaCalculator"
@@ -346,11 +347,11 @@ class GraphTracerE2ETest : public ::testing::Test {
           trace_enabled: true
         }
         )",
-                                                &graph_config_));
+                                                     &graph_config_));
   }
 
   void SetUpDemuxInFlightGraph() {
-    CHECK(proto_ns::TextFormat::ParseFromString(R"(
+    ABSL_CHECK(proto_ns::TextFormat::ParseFromString(R"(
         node {
           calculator: "LambdaCalculator"
           input_side_packet: 'callback_2'
@@ -404,7 +405,7 @@ class GraphTracerE2ETest : public ::testing::Test {
           trace_enabled: true
         }
         )",
-                                                &graph_config_));
+                                                     &graph_config_));
   }
 
   absl::Time ParseTime(const std::string& date_time_str) {
@@ -1372,7 +1373,7 @@ TEST_F(GraphTracerE2ETest, GpuTaskTrace) {
 
 // Show that trace_enabled activates the GlContextProfiler.
 TEST_F(GraphTracerE2ETest, GpuTracing) {
-  CHECK(proto_ns::TextFormat::ParseFromString(R"(
+  ABSL_CHECK(proto_ns::TextFormat::ParseFromString(R"(
         input_stream: "input_buffer"
         input_stream: "render_data"
         output_stream: "annotated_buffer"
@@ -1386,7 +1387,7 @@ TEST_F(GraphTracerE2ETest, GpuTracing) {
           trace_enabled: true
         }
         )",
-                                              &graph_config_));
+                                                   &graph_config_));
 
   // Create the CalculatorGraph with only trace_enabled set.
   MP_ASSERT_OK(graph_.Initialize(graph_config_, {}));
@@ -1421,6 +1422,14 @@ TEST_F(GraphTracerE2ETest, DestructGraph) {
     MP_ASSERT_OK(graph.StartRun({}));
     // Destroy the graph immediately.
   }
+}
+
+TEST(TraceBuilderTest, EventDataIsExtracted) {
+  int value = 10;
+  Packet p = PointToForeign(&value);
+  TraceEvent event;
+  event.set_packet_data_id(&p);
+  EXPECT_EQ(event.event_data, reinterpret_cast<int64_t>(&value));
 }
 
 }  // namespace

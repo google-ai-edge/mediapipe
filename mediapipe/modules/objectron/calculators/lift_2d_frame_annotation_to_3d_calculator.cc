@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "Eigen/Dense"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
@@ -137,7 +138,7 @@ absl::Status Lift2DFrameAnnotationTo3DCalculator::ProcessCPU(
   auto status = decoder_->Lift2DTo3D(projection_matrix_, /*portrait*/ false,
                                      output_objects);
   if (!status.ok()) {
-    LOG(ERROR) << status;
+    ABSL_LOG(ERROR) << status;
     return status;
   }
   AssignObjectIdAndTimestamp(cc->InputTimestamp().Microseconds(),

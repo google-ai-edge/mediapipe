@@ -296,7 +296,7 @@ void ConfigureClassificationAggregationCalculator(
   if (output_tensors_metadata == nullptr) {
     return;
   }
-  for (const auto& metadata : *output_tensors_metadata) {
+  for (const auto metadata : *output_tensors_metadata) {
     options->add_head_names(metadata->name()->str());
   }
 }
