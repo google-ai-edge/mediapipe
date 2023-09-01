@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/strip.h"
 #include "mediapipe/calculators/image/opencv_image_encoder_calculator.pb.h"
@@ -38,6 +39,7 @@ namespace mediapipe {
 const char kSequenceExampleTag[] = "SEQUENCE_EXAMPLE";
 const char kImageTag[] = "IMAGE";
 const char kImageLabelPrefixTag[] = "IMAGE_LABEL_";
+const char kClipLabelPrefixTag[] = "CLIP_LABEL_";
 const char kFloatContextFeaturePrefixTag[] = "FLOAT_CONTEXT_FEATURE_";
 const char kFloatFeaturePrefixTag[] = "FLOAT_FEATURE_";
 const char kIntFeaturePrefixTag[] = "INT_FEATURE_";
@@ -70,6 +72,8 @@ namespace mpms = mediapipe::mediasequence;
 // * "KEYPOINTS" stores a map of 2D keypoints from flat_hash_map<string,
 //   vector<pair<float, float>>>,
 // * "CLIP_MEDIA_ID", which stores the clip's media ID as a string.
+// * "CLIP_LABEL_${NAME}" which stores sparse feature labels, ID and scores in
+//   mediapipe::Detection.
 // "IMAGE_${NAME}", "BBOX_${NAME}", and "KEYPOINTS_${NAME}" will also store
 // prefixed versions of each stream, which allows for multiple image streams to
 // be included. However, the default names are suppored by more tools.
@@ -165,6 +169,9 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         }
         cc->Inputs().Tag(tag).Set<std::vector<Detection>>();
       }
+      if (absl::StartsWith(tag, kClipLabelPrefixTag)) {
+        cc->Inputs().Tag(tag).Set<Detection>();
+      }
       if (absl::StartsWith(tag, kFloatContextFeaturePrefixTag)) {
         cc->Inputs().Tag(tag).Set<std::vector<float>>();
       }
@@ -217,6 +224,7 @@ class PackMediaSequenceCalculator : public CalculatorBase {
     replace_keypoints_ = false;
     if (cc->Options<PackMediaSequenceCalculatorOptions>()
             .replace_data_instead_of_append()) {
+      // Clear the existing values under the same key.
       for (const auto& tag : cc->Inputs().GetTags()) {
         if (absl::StartsWith(tag, kImageTag)) {
           if (absl::StartsWith(tag, kImageLabelPrefixTag)) {
@@ -263,6 +271,13 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           mpms::ClearBBoxTrackString(key, sequence_.get());
           mpms::ClearBBoxTrackIndex(key, sequence_.get());
           mpms::ClearUnmodifiedBBoxTimestamp(key, sequence_.get());
+        }
+        if (absl::StartsWith(tag, kClipLabelPrefixTag)) {
+          const std::string& key = tag.substr(
+              sizeof(kClipLabelPrefixTag) / sizeof(*kClipLabelPrefixTag) - 1);
+          mpms::ClearClipLabelIndex(key, sequence_.get());
+          mpms::ClearClipLabelString(key, sequence_.get());
+          mpms::ClearClipLabelConfidence(key, sequence_.get());
         }
         if (absl::StartsWith(tag, kFloatFeaturePrefixTag)) {
           std::string key = tag.substr(sizeof(kFloatFeaturePrefixTag) /
@@ -464,6 +479,33 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           mpms::AddBBoxPoint(prefix, pair.second, sequence_.get());
         }
         replace_keypoints_ = false;
+      }
+      if (absl::StartsWith(tag, kClipLabelPrefixTag) &&
+          !cc->Inputs().Tag(tag).IsEmpty()) {
+        const std::string& key = tag.substr(
+            sizeof(kClipLabelPrefixTag) / sizeof(*kClipLabelPrefixTag) - 1);
+        const Detection& detection = cc->Inputs().Tag(tag).Get<Detection>();
+        if (detection.label().size() != detection.score().size()) {
+          return absl::InvalidArgumentError(
+              "Different size of detection.label and detection.score");
+        }
+        // Allow empty label_ids, but if label_ids is not empty, it should have
+        // the same size as the label and score fields.
+        if (!detection.label_id().empty()) {
+          if (detection.label_id().size() != detection.label().size()) {
+            return absl::InvalidArgumentError(
+                "Different size of detection.label_id and detection.label");
+          }
+        }
+        for (int i = 0; i < detection.label().size(); ++i) {
+          if (!detection.label_id().empty()) {
+            mpms::AddClipLabelIndex(key, detection.label_id(i),
+                                    sequence_.get());
+          }
+          mpms::AddClipLabelString(key, detection.label(i), sequence_.get());
+          mpms::AddClipLabelConfidence(key, detection.score(i),
+                                       sequence_.get());
+        }
       }
       if (absl::StartsWith(tag, kFloatContextFeaturePrefixTag) &&
           !cc->Inputs().Tag(tag).IsEmpty()) {
