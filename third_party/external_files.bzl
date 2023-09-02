@@ -282,8 +282,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_efficientdet_lite0_fp16_no_nms_tflite",
-        sha256 = "bcda125c96d3767bca894c8cbe7bc458379c9974c9fd8bdc6204e7124a74082a",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.tflite?generation=1693433007348701"],
+        sha256 = "237a58389081333e5cf4154e42b593ce7dd357445536fcaf4ca5bc51c2c50f1c",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/efficientdet_lite0_fp16_no_nms.tflite?generation=1693610182046114"],
     )
 
     http_file(
@@ -666,8 +666,8 @@ def external_files():
 
     http_file(
         name = "com_google_mediapipe_libimagegenerator_gpu_so",
-        sha256 = "39ed9738297fa051a7f3cc9bdb7189418a9e118aa3cad4e1d577995837fdd58c",
-        urls = ["https://storage.googleapis.com/mediapipe-assets/libimagegenerator_gpu.so?generation=1693433013917189"],
+        sha256 = "cbbe1c11a2ec3809241646e222fd672473c19911eaa76faf6178c960d0de8583",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/libimagegenerator_gpu.so?generation=1693610187480136"],
     )
 
     http_file(
