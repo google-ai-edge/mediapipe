@@ -119,6 +119,7 @@ def convert_to_tflite_from_file(
         tf.lite.OpsSet.TFLITE_BUILTINS,
     ),
     preprocess: Optional[Callable[..., Any]] = None,
+    allow_custom_ops: bool = False,
 ) -> bytearray:
   """Converts the input Keras model to TFLite format.
 
@@ -129,6 +130,8 @@ def convert_to_tflite_from_file(
     preprocess: A callable to preprocess the representative dataset for
       quantization. The callable takes three arguments in order: feature, label,
       and is_training.
+    allow_custom_ops: A boolean flag to enable custom ops in model convsion.
+      Default to False.
 
   Returns:
     bytearray of TFLite model
@@ -140,6 +143,7 @@ def convert_to_tflite_from_file(
         converter, preprocess=preprocess
     )
 
+  converter.allow_custom_ops = allow_custom_ops
   converter.target_spec.supported_ops = supported_ops
   tflite_model = converter.convert()
   return tflite_model
@@ -152,6 +156,7 @@ def convert_to_tflite(
         tf.lite.OpsSet.TFLITE_BUILTINS,
     ),
     preprocess: Optional[Callable[..., Any]] = None,
+    allow_custom_ops: bool = False,
 ) -> bytearray:
   """Converts the input Keras model to TFLite format.
 
@@ -162,6 +167,8 @@ def convert_to_tflite(
     preprocess: A callable to preprocess the representative dataset for
       quantization. The callable takes three arguments in order: feature, label,
       and is_training.
+    allow_custom_ops: A boolean flag to enable custom ops in model conversion.
+      Default to False.
 
   Returns:
     bytearray of TFLite model
@@ -174,7 +181,11 @@ def convert_to_tflite(
         save_format='tf',
     )
     return convert_to_tflite_from_file(
-        save_path, quantization_config, supported_ops, preprocess
+        save_path,
+        quantization_config,
+        supported_ops,
+        preprocess,
+        allow_custom_ops,
     )
 
 
