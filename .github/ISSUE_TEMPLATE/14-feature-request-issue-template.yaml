@@ -28,33 +28,37 @@ body:
         - 'No'
     validations:
       required: false
-  - type: input
+  - type: textarea
     id: behaviour
     attributes:
       label: Describe the feature and the current behaviour/state
+      render: shell
     validations:
       required: true
-  - type: input
+  - type: textarea
     id: api_change
     attributes:
       label: Will this change the current API? How?
+      render: shell
     validations:
       required: false
-  - type: input
+  - type: textarea
     id: benifit
     attributes:
       label: Who will benefit with this feature?
     validations:
        required: false
-  - type: input
+  - type: textarea
     id: use_case
     attributes:
       label: Please specify the use cases for this feature
+      render: shell
     validations:
        required: true
-  - type: input
+  - type: textarea
     id: info_other
     attributes:
       label: Any Other info
+      render: shell
     validations:
       required: false

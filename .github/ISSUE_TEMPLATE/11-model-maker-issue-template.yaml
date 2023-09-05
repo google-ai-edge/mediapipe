@@ -41,16 +41,18 @@ body:
       label: Task name (e.g. Image classification, Gesture recognition etc.)
     validations:
       required: true
-  - type: input
+  - type: textarea
     id: current_model
     attributes:
       label: Describe the actual behavior
+      render: shell
     validations:
       required: true
-  - type: input
+  - type: textarea
     id: expected_model
     attributes:
       label: Describe the expected behaviour
+      render: shell
     validations:
       required: true
   - type: textarea

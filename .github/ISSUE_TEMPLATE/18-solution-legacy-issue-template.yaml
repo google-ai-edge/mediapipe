@@ -48,16 +48,18 @@ body:
       placeholder: e.g. C++, Python, Java
     validations:
       required: false
-  - type: input
+  - type: textarea
     id: current_model
     attributes:
       label: Describe the actual behavior
+      render: shell
     validations:
       required: false
-  - type: input
+  - type: textarea
     id: expected_model
     attributes:
       label: Describe the expected behaviour
+      render: shell
     validations:
       required: false
   - type: textarea
