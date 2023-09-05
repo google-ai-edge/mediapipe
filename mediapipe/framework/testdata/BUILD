@@ -36,6 +36,12 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
+    name = "proto3_options_proto",
+    srcs = ["proto3_options.proto"],
+    visibility = ["//visibility:public"],
+)
+
+mediapipe_proto_library(
     name = "zoo_mutator_proto",
     srcs = ["zoo_mutator.proto"],
     deps = ["@com_google_protobuf//:any_proto"],
