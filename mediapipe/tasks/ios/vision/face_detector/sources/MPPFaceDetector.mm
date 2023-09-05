@@ -179,13 +179,13 @@ static NSString *const kTaskName = @"faceDetector";
 
   MPPFaceDetectorResult *result = FaceDetectorResultWithOutputPacketMap(liveStreamResult.value());
 
-  NSInteger timeStampInMilliseconds =
+  NSInteger timestampInMilliseconds =
       outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
       kMicrosecondsPerMillisecond;
   dispatch_async(_callbackQueue, ^{
     [self.faceDetectorLiveStreamDelegate faceDetector:self
                          didFinishDetectionWithResult:result
-                              timestampInMilliseconds:timeStampInMilliseconds
+                              timestampInMilliseconds:timestampInMilliseconds
                                                 error:callbackError];
   });
 }

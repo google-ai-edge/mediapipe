@@ -219,13 +219,13 @@ static const int kMicroSecondsPerMilliSecond = 1000;
 
   MPPImageClassifierResult *result = ImageClassifierResultWithOutputPacketMap(outputPacketMap);
 
-  NSInteger timeStampInMilliseconds =
+  NSInteger timestampInMilliseconds =
       outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
       kMicroSecondsPerMilliSecond;
   dispatch_async(_callbackQueue, ^{
     [self.imageClassifierLiveStreamDelegate imageClassifier:self
                           didFinishClassificationWithResult:result
-                                    timestampInMilliseconds:timeStampInMilliseconds
+                                    timestampInMilliseconds:timestampInMilliseconds
                                                       error:callbackError];
   });
 }
