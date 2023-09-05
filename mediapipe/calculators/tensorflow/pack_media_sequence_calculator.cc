@@ -287,6 +287,13 @@ class PackMediaSequenceCalculator : public CalculatorBase {
           mpms::ClearClipLabelString(key, sequence_.get());
           mpms::ClearClipLabelConfidence(key, sequence_.get());
         }
+        if (absl::StartsWith(tag, kFloatContextFeaturePrefixTag)) {
+          const std::string& key =
+              tag.substr(sizeof(kFloatContextFeaturePrefixTag) /
+                             sizeof(*kFloatContextFeaturePrefixTag) -
+                         1);
+          mpms::ClearContextFeatureFloats(key, sequence_.get());
+        }
         if (absl::StartsWith(tag, kIntsContextFeaturePrefixTag)) {
           const std::string& key =
               tag.substr(sizeof(kIntsContextFeaturePrefixTag) /
@@ -536,9 +543,10 @@ class PackMediaSequenceCalculator : public CalculatorBase {
                            sizeof(*kFloatContextFeaturePrefixTag) -
                        1);
         RET_CHECK_EQ(cc->InputTimestamp(), Timestamp::PostStream());
-        mpms::SetContextFeatureFloats(
-            key, cc->Inputs().Tag(tag).Get<std::vector<float>>(),
-            sequence_.get());
+        for (const auto& value :
+             cc->Inputs().Tag(tag).Get<std::vector<float>>()) {
+          mpms::AddContextFeatureFloats(key, value, sequence_.get());
+        }
       }
       if (absl::StartsWith(tag, kIntsContextFeaturePrefixTag) &&
           !cc->Inputs().Tag(tag).IsEmpty()) {
