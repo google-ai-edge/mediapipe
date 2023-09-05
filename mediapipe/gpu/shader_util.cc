@@ -16,7 +16,15 @@
 
 #include <stdlib.h>
 
+#include <cmath>
+#include <string>
+#include <vector>
+
 #include "absl/log/absl_log.h"
+#include "absl/log/check.h"
+#include "absl/strings/str_format.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 #include "mediapipe/framework/port/logging.h"
 
 #if DEBUG
@@ -48,8 +56,25 @@
   } while (0)
 
 namespace mediapipe {
+namespace {
 
 constexpr int kMaxShaderInfoLength = 1024;
+
+std::string AddLineNumbers(const GLchar* source) {
+  // Use format "%ni %s", with n=1 for 1..9 lines, n=2 for 10..99 lines etc.
+  // Note that StrFormat needs either a constexpr format or a ParsedFormat.
+  std::vector<std::string> lines = absl::StrSplit(source, '\n');
+  std::string format = absl::StrFormat(
+      "%%%ii %%s", static_cast<int>(ceilf(log10(1 + lines.size()))));
+  auto parsed_format = absl::ParsedFormat<'i', 's'>::New(format);
+  CHECK(parsed_format);
+  for (int n = 0; n < lines.size(); n++) {
+    lines[n] = absl::StrFormat(*parsed_format, n + 1, lines[n]);
+  }
+  return absl::StrJoin(lines, "\n");
+}
+
+}  // namespace
 
 GLint GlhCompileShader(GLenum target, const GLchar* source, GLuint* shader,
                        bool force_log_errors) {
@@ -72,7 +97,7 @@ GLint GlhCompileShader(GLenum target, const GLchar* source, GLuint* shader,
 
   glGetShaderiv(*shader, GL_COMPILE_STATUS, &status);
   ABSL_LOG_IF(ERROR, status == GL_FALSE) << "Failed to compile shader:\n"
-                                         << source;
+                                         << AddLineNumbers(source);
 
   if (status == GL_FALSE) {
     int length = 0;
@@ -145,6 +170,9 @@ GLint GlhCreateProgram(const GLchar* vert_src, const GLchar* frag_src,
     }
 
     ok = GlhLinkProgram(*program, force_log_errors);
+
+    glDetachShader(*program, frag_shader);
+    glDetachShader(*program, vert_shader);
   }
 
   if (vert_shader) glDeleteShader(vert_shader);
@@ -172,7 +200,8 @@ bool CompileShader(GLenum shader_type, const std::string& shader_source,
   GLint compiled;
   glGetShaderiv(*shader, GL_COMPILE_STATUS, &compiled);
   if (!compiled) {
-    VLOG(2) << "Unable to compile shader:\n" << shader_source;
+    VLOG(2) << "Unable to compile shader:\n"
+            << AddLineNumbers(shader_source_cstr);
     GL_ERROR_LOG(Shader, *shader, "compile");
     glDeleteShader(*shader);
     *shader = 0;
