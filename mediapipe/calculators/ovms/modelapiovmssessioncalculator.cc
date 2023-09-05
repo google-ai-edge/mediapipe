@@ -46,8 +46,8 @@ ov::Core UNUSED_OV_CORE;
         if (err != nullptr) {                                                               \
             uint32_t code = 0;                                                              \
             const char* msg = nullptr;                                                      \
-            OVMS_StatusGetCode(err, &code);                                                 \
-            OVMS_StatusGetDetails(err, &msg);                                               \
+            OVMS_StatusCode(err, &code);                                                 \
+            OVMS_StatusDetails(err, &msg);                                               \
             LOG(INFO) << "Error encountred in OVMSCalculator:" << msg << " code: " << code; \
             OVMS_StatusDelete(err);                                                         \
             RET_CHECK(nullptr == err);                                                      \
@@ -60,8 +60,8 @@ ov::Core UNUSED_OV_CORE;
         if (err != nullptr) {                                                               \
             uint32_t code = 0;                                                              \
             const char* msg = nullptr;                                                      \
-            OVMS_StatusGetCode(err, &code);                                                 \
-            OVMS_StatusGetDetails(err, &msg);                                               \
+            OVMS_StatusCode(err, &code);                                                 \
+            OVMS_StatusDetails(err, &msg);                                               \
             LOG(INFO) << "Error encountred in OVMSCalculator:" << msg << " code: " << code; \
             OVMS_StatusDelete(err);                                                         \
         }                                                                                   \

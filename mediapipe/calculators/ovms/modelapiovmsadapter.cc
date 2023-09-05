@@ -42,8 +42,8 @@ using std::endl;
         if (err != nullptr) {                                                               \
             uint32_t code = 0;                                                              \
             const char* msg = nullptr;                                                      \
-            OVMS_StatusGetCode(err, &code);                                                 \
-            OVMS_StatusGetDetails(err, &msg);                                               \
+            OVMS_StatusCode(err, &code);                                                 \
+            OVMS_StatusDetails(err, &msg);                                               \
             LOG(INFO) << "Error encountred in OVMSCalculator:" << msg << " code: " << code; \
             std::runtime_error exc(msg);                                                    \
             OVMS_StatusDelete(err);                                                         \
@@ -127,8 +127,8 @@ InferenceOutput OVMSInferenceAdapter::infer(const InferenceInput& input) {
     if (nullptr != status) {
         uint32_t code = 0;
         const char* msg = nullptr;
-        OVMS_StatusGetCode(status, &code);
-        OVMS_StatusGetDetails(status, &msg);
+        OVMS_StatusCode(status, &code);
+        OVMS_StatusDetails(status, &msg);
         std::stringstream ss;
         ss << "Inference in OVMSAdapter failed: ";
         ss << msg << " code: " << code;
@@ -139,9 +139,9 @@ InferenceOutput OVMSInferenceAdapter::infer(const InferenceInput& input) {
     CREATE_GUARD(responseGuard, OVMS_InferenceResponse, response);
     // verify GetOutputCount
     uint32_t outputCount = 42;
-    ASSERT_CAPI_STATUS_NULL(OVMS_InferenceResponseGetOutputCount(response, &outputCount));
+    ASSERT_CAPI_STATUS_NULL(OVMS_InferenceResponseOutputCount(response, &outputCount));
     uint32_t parameterCount = 42;
-    ASSERT_CAPI_STATUS_NULL(OVMS_InferenceResponseGetParameterCount(response, &parameterCount));
+    ASSERT_CAPI_STATUS_NULL(OVMS_InferenceResponseParameterCount(response, &parameterCount));
     // TODO handle output filtering. Graph definition could suggest
     // that we are not interested in all outputs from OVMS Inference
     const void* voutputData;
@@ -153,7 +153,7 @@ InferenceOutput OVMSInferenceAdapter::infer(const InferenceInput& input) {
     uint32_t deviceId = 42;
     const char* outputName{nullptr};
     for (size_t i = 0; i < outputCount; ++i) {
-        ASSERT_CAPI_STATUS_NULL(OVMS_InferenceResponseGetOutput(response, i, &outputName, &datatype, &shape, &dimCount, &voutputData, &bytesize, &bufferType, &deviceId));
+        ASSERT_CAPI_STATUS_NULL(OVMS_InferenceResponseOutput(response, i, &outputName, &datatype, &shape, &dimCount, &voutputData, &bytesize, &bufferType, &deviceId));
         output[outputName] = makeOvTensorO(datatype, shape, dimCount, voutputData, bytesize);  // TODO optimize FIXME
     }
     return output;
@@ -166,8 +166,8 @@ void OVMSInferenceAdapter::loadModel(const std::shared_ptr<const ov::Model>& mod
     uint32_t inputCount = 0;
     uint32_t outputCount = 0;
     // TODO ensure Metadata object removal in all paths
-    ASSERT_CAPI_STATUS_NULL(OVMS_ServableMetadataGetInputCount(servableMetadata, &inputCount));
-    ASSERT_CAPI_STATUS_NULL(OVMS_ServableMetadataGetOutputCount(servableMetadata, &outputCount));
+    ASSERT_CAPI_STATUS_NULL(OVMS_ServableMetadataInputCount(servableMetadata, &inputCount));
+    ASSERT_CAPI_STATUS_NULL(OVMS_ServableMetadataOutputCount(servableMetadata, &outputCount));
 
     uint32_t id = 0;
     OVMS_DataType datatype = (OVMS_DataType)199;
@@ -176,7 +176,7 @@ void OVMSInferenceAdapter::loadModel(const std::shared_ptr<const ov::Model>& mod
     size_t dimCount = 42;
     const char* tensorName{nullptr};
     for (id = 0; id < inputCount; ++id) {
-        ASSERT_CAPI_STATUS_NULL(OVMS_ServableMetadataGetInput(servableMetadata, id, &tensorName, &datatype, &dimCount, &shapeMin, &shapeMax));
+        ASSERT_CAPI_STATUS_NULL(OVMS_ServableMetadataInput(servableMetadata, id, &tensorName, &datatype, &dimCount, &shapeMin, &shapeMax));
         inputNames.emplace_back(tensorName);
         shape_min_max_t inputMinMax;
         for (size_t i = 0; i < dimCount; ++i) {
@@ -187,11 +187,11 @@ void OVMSInferenceAdapter::loadModel(const std::shared_ptr<const ov::Model>& mod
         this->inShapesMinMaxes.insert({tensorName, std::move(inputMinMax)});
     }
     for (id = 0; id < outputCount; ++id) {
-        ASSERT_CAPI_STATUS_NULL(OVMS_ServableMetadataGetOutput(servableMetadata, id, &tensorName, &datatype, &dimCount, &shapeMin, &shapeMax));
+        ASSERT_CAPI_STATUS_NULL(OVMS_ServableMetadataOutput(servableMetadata, id, &tensorName, &datatype, &dimCount, &shapeMin, &shapeMax));
         outputNames.emplace_back(tensorName);
     }
     const ov::AnyMap* servableMetadataRtInfo;
-    ASSERT_CAPI_STATUS_NULL(OVMS_ServableMetadataGetInfo(servableMetadata, reinterpret_cast<const void**>(&servableMetadataRtInfo)));
+    ASSERT_CAPI_STATUS_NULL(OVMS_ServableMetadataInfo(servableMetadata, reinterpret_cast<const void**>(&servableMetadataRtInfo)));
     this->modelConfig = *servableMetadataRtInfo;
     OVMS_ServableMetadataDelete(servableMetadata);
 }
