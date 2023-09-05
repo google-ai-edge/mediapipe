@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 
-#include "absl/log/check.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_context_manager.h"
@@ -83,7 +83,7 @@ NodeReadiness ImmediateInputStreamHandler::GetNodeReadiness(
       ready_timestamps_[i] = stream_ts;
       input_timestamp = std::min(input_timestamp, stream_ts);
     } else if (readiness == NodeReadiness::kReadyForClose) {
-      CHECK_EQ(stream_ts, Timestamp::Done());
+      ABSL_CHECK_EQ(stream_ts, Timestamp::Done());
       if (ProcessTimestampBounds()) {
         // With kReadyForClose, the timestamp-bound Done is returned.
         // TODO: Make all InputStreamHandlers process Done() like this.

@@ -16,6 +16,7 @@
 
 #include <tuple>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
@@ -411,7 +412,7 @@ static absl::Status DeserializeValue(const FieldValue& bytes,
     }
     case W::TYPE_GROUP:
     case W::TYPE_MESSAGE:
-      CHECK(false) << "DeserializeValue cannot deserialize a Message.";
+      ABSL_CHECK(false) << "DeserializeValue cannot deserialize a Message.";
     case W::TYPE_UINT32:
       return ReadPrimitive<uint32_t, W::TYPE_UINT32>(&input, result);
     case W::TYPE_ENUM:

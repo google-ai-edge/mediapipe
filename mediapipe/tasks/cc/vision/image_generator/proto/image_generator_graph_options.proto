@@ -18,6 +18,7 @@ syntax = "proto3";
 package mediapipe.tasks.vision.image_generator.proto;
 
 import "mediapipe/tasks/cc/core/proto/external_file.proto";
+import "mediapipe/tasks/cc/vision/image_generator/diffuser/stable_diffusion_iterate_calculator.proto";
 import "mediapipe/tasks/cc/vision/image_generator/proto/control_plugin_graph_options.proto";
 
 option java_package = "com.google.mediapipe.tasks.vision.imagegenerator.proto";
@@ -32,4 +33,7 @@ message ImageGeneratorGraphOptions {
   core.proto.ExternalFile lora_weights_file = 2;
 
   repeated proto.ControlPluginGraphOptions control_plugin_graphs_options = 3;
+
+  mediapipe.StableDiffusionIterateCalculatorOptions
+      stable_diffusion_iterate_options = 4;
 }

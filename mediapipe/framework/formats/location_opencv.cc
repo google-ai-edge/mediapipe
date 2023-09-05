@@ -14,6 +14,7 @@
 
 #include "mediapipe/framework/formats/location_opencv.h"
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/substitute.h"
@@ -26,7 +27,7 @@ namespace mediapipe {
 
 namespace {
 Rectangle_i MaskToRectangle(const LocationData& location_data) {
-  CHECK(location_data.mask().has_rasterization());
+  ABSL_CHECK(location_data.mask().has_rasterization());
   const auto& rasterization = location_data.mask().rasterization();
   if (rasterization.interval_size() == 0) {
     return Rectangle_i(0, 0, 0, 0);
@@ -85,7 +86,7 @@ Location CreateBBoxLocation(const cv::Rect& rect) {
 
 std::unique_ptr<cv::Mat> GetCvMask(const Location& location) {
   const auto location_data = location.ConvertToProto();
-  CHECK_EQ(LocationData::MASK, location_data.format());
+  ABSL_CHECK_EQ(LocationData::MASK, location_data.format());
   const auto& mask = location_data.mask();
   std::unique_ptr<cv::Mat> mat(
       new cv::Mat(mask.height(), mask.width(), CV_8UC1, cv::Scalar(0)));
@@ -128,7 +129,7 @@ std::unique_ptr<cv::Mat> ConvertToCvMask(const Location& location,
 }
 
 void EnlargeLocation(Location& location, const float factor) {
-  CHECK_GT(factor, 0.0f);
+  ABSL_CHECK_GT(factor, 0.0f);
   if (factor == 1.0f) return;
   auto location_data = location.ConvertToProto();
   switch (location_data.format()) {
@@ -183,7 +184,7 @@ void EnlargeLocation(Location& location, const float factor) {
 
 template <typename T>
 Location CreateCvMaskLocation(const cv::Mat_<T>& mask) {
-  CHECK_EQ(1, mask.channels())
+  ABSL_CHECK_EQ(1, mask.channels())
       << "The specified cv::Mat mask should be single-channel.";
 
   LocationData location_data;

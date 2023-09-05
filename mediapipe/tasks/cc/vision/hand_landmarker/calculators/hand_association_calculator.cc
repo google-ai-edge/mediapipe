@@ -17,6 +17,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
@@ -89,8 +90,8 @@ class HandAssociationCalculator : public CalculatorBase {
     cc->SetOffset(TimestampDiff(0));
 
     options_ = cc->Options<HandAssociationCalculatorOptions>();
-    CHECK_GT(options_.min_similarity_threshold(), 0.0);
-    CHECK_LE(options_.min_similarity_threshold(), 1.0);
+    ABSL_CHECK_GT(options_.min_similarity_threshold(), 0.0);
+    ABSL_CHECK_LE(options_.min_similarity_threshold(), 1.0);
 
     return absl::OkStatus();
   }

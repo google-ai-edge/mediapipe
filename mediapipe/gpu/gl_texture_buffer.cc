@@ -14,6 +14,7 @@
 
 #include "mediapipe/gpu/gl_texture_buffer.h"
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/gpu/gl_context.h"
@@ -128,7 +129,7 @@ bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
   if (info.gl_internal_format == GL_RGBA16F &&
       context->GetGlVersion() != GlVersion::kGLES2 &&
       SymbolAvailable(&glTexStorage2D)) {
-    CHECK(data == nullptr) << "unimplemented";
+    ABSL_CHECK(data == nullptr) << "unimplemented";
     glTexStorage2D(target_, 1, info.gl_internal_format, width_, height_);
   } else {
     glTexImage2D(target_, 0 /* level */, info.gl_internal_format, width_,
@@ -150,10 +151,10 @@ bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
 
   // Use the deletion callback to delete the texture on the context
   // that created it.
-  CHECK(!deletion_callback_);
+  ABSL_CHECK(!deletion_callback_);
   deletion_callback_ = [this,
                         context](std::shared_ptr<GlSyncPoint> sync_token) {
-    CHECK_NE(name_, 0);
+    ABSL_CHECK_NE(name_, 0);
     GLuint name_to_delete = name_;
     context->RunWithoutWaiting([name_to_delete]() {
       // Note that we do not wait for consumers to be done before deleting the
@@ -201,9 +202,9 @@ void GlTextureBuffer::Reuse() {
 }
 
 void GlTextureBuffer::Updated(std::shared_ptr<GlSyncPoint> prod_token) {
-  CHECK(!producer_sync_)
+  ABSL_CHECK(!producer_sync_)
       << "Updated existing texture which had not been marked for reuse!";
-  CHECK(prod_token);
+  ABSL_CHECK(prod_token);
   producer_sync_ = std::move(prod_token);
   const auto& synced_context = producer_sync_->GetContext();
   if (synced_context) {
@@ -264,11 +265,11 @@ void GlTextureBuffer::WaitForConsumersOnGpu() {
 GlTextureView GlTextureBuffer::GetReadView(internal::types<GlTextureView>,
                                            int plane) const {
   auto gl_context = GlContext::GetCurrent();
-  CHECK(gl_context);
-  CHECK_EQ(plane, 0);
+  ABSL_CHECK(gl_context);
+  ABSL_CHECK_EQ(plane, 0);
   // Note that this method is only supposed to be called by GpuBuffer, which
   // ensures this condition is satisfied.
-  DCHECK(!weak_from_this().expired())
+  ABSL_DCHECK(!weak_from_this().expired())
       << "GlTextureBuffer must be held in shared_ptr to get a GlTextureView";
   // Insert wait call to sync with the producer.
   WaitOnGpu();
@@ -285,11 +286,11 @@ GlTextureView GlTextureBuffer::GetReadView(internal::types<GlTextureView>,
 GlTextureView GlTextureBuffer::GetWriteView(internal::types<GlTextureView>,
                                             int plane) {
   auto gl_context = GlContext::GetCurrent();
-  CHECK(gl_context);
-  CHECK_EQ(plane, 0);
+  ABSL_CHECK(gl_context);
+  ABSL_CHECK_EQ(plane, 0);
   // Note that this method is only supposed to be called by GpuBuffer, which
   // ensures this condition is satisfied.
-  DCHECK(!weak_from_this().expired())
+  ABSL_DCHECK(!weak_from_this().expired())
       << "GlTextureBuffer must be held in shared_ptr to get a GlTextureView";
   // Insert wait call to sync with the producer.
   WaitOnGpu();
@@ -346,7 +347,7 @@ static void ReadTexture(GlContext& ctx, const GlTextureView& view,
   // won't overflow the buffer with glReadPixels, we'd also need to check or
   // reset several glPixelStore parameters (e.g. what if someone had the
   // ill-advised idea of setting GL_PACK_SKIP_PIXELS?).
-  CHECK(view.gl_context());
+  ABSL_CHECK(view.gl_context());
   GlTextureInfo info = GlTextureInfoForGpuBufferFormat(
       format, view.plane(), view.gl_context()->GetGlVersion());
 

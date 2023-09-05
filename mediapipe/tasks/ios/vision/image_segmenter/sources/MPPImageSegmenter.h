@@ -76,7 +76,7 @@ NS_SWIFT_NAME(ImageSegmenter)
  * @return An `MPPImageSegmenterResult` that contains the segmented masks.
  */
 - (nullable MPPImageSegmenterResult *)segmentImage:(MPPImage *)image
-                                             error:(NSError *)error NS_SWIFT_NAME(segment(image:));
+                                             error:(NSError **)error NS_SWIFT_NAME(segment(image:));
 
 /**
  * Performs segmentation on the provided MPPImage using the whole image as region of interest and

@@ -19,6 +19,7 @@
 #include <memory>
 #include <numeric>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/util/tracking/measure_time.h"
@@ -47,7 +48,7 @@ void VisualizeRegionFlowImpl(const RegionFlowFrame& region_flow_frame,
 
 void VisualizeRegionFlow(const RegionFlowFrame& region_flow_frame,
                          cv::Mat* output) {
-  CHECK(output);
+  ABSL_CHECK(output);
   VisualizeRegionFlowImpl(region_flow_frame, output);
 }
 
@@ -118,7 +119,7 @@ void VisualizeRegionFlowFeatures(const RegionFlowFeatureList& feature_list,
                                  const cv::Scalar& outlier,
                                  bool irls_visualization, float scale_x,
                                  float scale_y, cv::Mat* output) {
-  CHECK(output);
+  ABSL_CHECK(output);
   VisualizeRegionFlowFeaturesImpl(feature_list, color, outlier,
                                   irls_visualization, scale_x, scale_y, output);
 }
@@ -138,7 +139,7 @@ void VisualizeLongFeatureStreamImpl(const LongFeatureStream& stream,
     if (min_track_length > 0 && pts.size() < min_track_length) {
       continue;
     }
-    CHECK_GT(pts.size(), 1);  // Should have at least two points per track.
+    ABSL_CHECK_GT(pts.size(), 1);  // Should have at least two points per track.
 
     // Tracks are ordered with oldest point first, most recent one last.
     const int start_k =
@@ -186,7 +187,7 @@ void VisualizeLongFeatureStream(const LongFeatureStream& stream,
                                 const cv::Scalar& outlier, int min_track_length,
                                 int max_points_per_track, float scale_x,
                                 float scale_y, cv::Mat* output) {
-  CHECK(output);
+  ABSL_CHECK(output);
   VisualizeLongFeatureStreamImpl(stream, color, outlier, min_track_length,
 
                                  max_points_per_track, scale_x, scale_y,

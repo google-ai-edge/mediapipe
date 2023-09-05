@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "absl/functional/bind_front.h"
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "mediapipe/framework/port/logging.h"
@@ -127,10 +128,11 @@ internal::GpuBufferStorage& GpuBuffer::GetStorageForViewOrDie(
     TypeId view_provider_type, bool for_writing) const {
   auto* chosen_storage =
       GpuBuffer::GetStorageForView(view_provider_type, for_writing);
-  CHECK(chosen_storage) << "no view provider found for requested view "
-                        << view_provider_type.name() << "; storages available: "
-                        << (holder_ ? holder_->DebugString() : "invalid");
-  DCHECK(chosen_storage->can_down_cast_to(view_provider_type));
+  ABSL_CHECK(chosen_storage)
+      << "no view provider found for requested view "
+      << view_provider_type.name() << "; storages available: "
+      << (holder_ ? holder_->DebugString() : "invalid");
+  ABSL_DCHECK(chosen_storage->can_down_cast_to(view_provider_type));
   return *chosen_storage;
 }
 

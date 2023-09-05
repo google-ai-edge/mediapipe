@@ -64,8 +64,8 @@
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
-#include "absl/log/check.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/demangle.h"
 #include "mediapipe/framework/port/status.h"
@@ -129,7 +129,7 @@ class StaticMap {
   }
 
   static void GetKeys(std::vector<KeyType>* keys) {
-    CHECK(keys);
+    ABSL_CHECK(keys);
     keys->clear();
     const MapType& internal_map = GetMap()->internal_map_;
     for (typename MapType::const_iterator i = internal_map.begin();
@@ -160,12 +160,12 @@ class StaticMap {
 
       // Type has been already registered.
       const MediaPipeTypeData& existing_data = it->second.second;
-      CHECK_EQ(existing_data.type_id, value.type_id)
+      ABSL_CHECK_EQ(existing_data.type_id, value.type_id)
           << "Found inconsistent type ids (" << existing_data.type_id << " vs "
           << value.type_id
           << ") during mediapipe type registration. Previous definition at "
           << it->second.first << " and current definition at " << file_and_line;
-      CHECK_EQ(existing_data.type_string, value.type_string)
+      ABSL_CHECK_EQ(existing_data.type_string, value.type_string)
           << "Found inconsistent type strings (" << existing_data.type_string
           << " vs " << value.type_string
           << ") during mediapipe type registration. Previous registration at "
@@ -173,7 +173,7 @@ class StaticMap {
           << file_and_line;
       if (value.serialize_fn && value.deserialize_fn) {
         // Doesn't allow to redefine the existing type serialization functions.
-        CHECK(!existing_data.serialize_fn && !existing_data.deserialize_fn)
+        ABSL_CHECK(!existing_data.serialize_fn && !existing_data.deserialize_fn)
             << "Attempting to redefine serialization functions of type "
             << value.type_string << ", that have been defined at "
             << it->second.first << ", at " << file_and_line;

@@ -15,6 +15,7 @@
 #include "mediapipe/gpu/gpu_buffer_format.h"
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/port/logging.h"
 
@@ -189,16 +190,16 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
   }
 
   auto iter = format_info->find(format);
-  CHECK(iter != format_info->end())
+  ABSL_CHECK(iter != format_info->end())
       << "unsupported format: "
       << static_cast<std::underlying_type_t<decltype(format)>>(format);
   const auto& planes = iter->second;
 #ifndef __APPLE__
-  CHECK_EQ(planes.size(), 1)
+  ABSL_CHECK_EQ(planes.size(), 1)
       << "multiplanar formats are not supported on this platform";
 #endif
-  CHECK_GE(plane, 0) << "invalid plane number";
-  CHECK_LT(plane, planes.size()) << "invalid plane number";
+  ABSL_CHECK_GE(plane, 0) << "invalid plane number";
+  ABSL_CHECK_LT(plane, planes.size()) << "invalid plane number";
   return planes[plane];
 }
 #endif  // MEDIAPIPE_DISABLE_GPU

@@ -24,6 +24,7 @@ cc_binary(
         "//mediapipe/framework:calculator_graph",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
     ],
 )

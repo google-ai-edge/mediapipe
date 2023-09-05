@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
@@ -162,8 +163,8 @@ absl::Status TensorsToImageCalculator::Open(CalculatorContext* cc) {
 #endif  // MEDIAPIPE_METAL_ENABLED
 #endif  // !MEDIAPIPE_DISABLE_GPU
   } else {
-    CHECK(options_.has_input_tensor_float_range() ^
-          options_.has_input_tensor_uint_range())
+    ABSL_CHECK(options_.has_input_tensor_float_range() ^
+               options_.has_input_tensor_uint_range())
         << "Must specify either `input_tensor_float_range` or "
            "`input_tensor_uint_range` in the calculator options";
   }

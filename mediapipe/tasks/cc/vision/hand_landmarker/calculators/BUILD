@@ -42,6 +42,7 @@ cc_library(
         "//mediapipe/framework/port:rectangle",
         "//mediapipe/framework/port:status",
         "//mediapipe/util:rectangle_util",
+        "@com_google_absl//absl/log:absl_check",
     ],
     alwayslink = 1,
 )

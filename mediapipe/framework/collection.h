@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
@@ -413,16 +414,16 @@ bool Collection<T, storage, ErrorHandler>::UsesTags() const {
 template <typename T, CollectionStorage storage, typename ErrorHandler>
 typename Collection<T, storage, ErrorHandler>::value_type&
 Collection<T, storage, ErrorHandler>::Get(CollectionItemId id) {
-  CHECK_LE(BeginId(), id);
-  CHECK_LT(id, EndId());
+  ABSL_CHECK_LE(BeginId(), id);
+  ABSL_CHECK_LT(id, EndId());
   return begin()[id.value()];
 }
 
 template <typename T, CollectionStorage storage, typename ErrorHandler>
 const typename Collection<T, storage, ErrorHandler>::value_type&
 Collection<T, storage, ErrorHandler>::Get(CollectionItemId id) const {
-  CHECK_LE(BeginId(), id);
-  CHECK_LT(id, EndId());
+  ABSL_CHECK_LE(BeginId(), id);
+  ABSL_CHECK_LT(id, EndId());
   return begin()[id.value()];
 }
 
@@ -433,8 +434,8 @@ Collection<T, storage, ErrorHandler>::GetPtr(CollectionItemId id) {
                 "mediapipe::internal::Collection<T>::GetPtr() is only "
                 "available for collections that were defined with template "
                 "argument storage == CollectionStorage::kStorePointer.");
-  CHECK_LE(BeginId(), id);
-  CHECK_LT(id, EndId());
+  ABSL_CHECK_LE(BeginId(), id);
+  ABSL_CHECK_LT(id, EndId());
   return data_[id.value()];
 }
 
@@ -445,8 +446,8 @@ Collection<T, storage, ErrorHandler>::GetPtr(CollectionItemId id) const {
                 "mediapipe::internal::Collection<T>::GetPtr() is only "
                 "available for collections that were defined with template "
                 "argument storage == CollectionStorage::kStorePointer.");
-  CHECK_LE(BeginId(), id);
-  CHECK_LT(id, EndId());
+  ABSL_CHECK_LE(BeginId(), id);
+  ABSL_CHECK_LT(id, EndId());
   return data_[id.value()];
 }
 

@@ -49,6 +49,7 @@ cc_library_with_tflite(
         "//mediapipe/util/tflite/operations:transform_landmarks",
         "//mediapipe/util/tflite/operations:transform_tensor_bilinear",
         "//mediapipe/util/tflite/operations:transpose_conv_bias",
+        "@com_google_absl//absl/log:absl_check",
         "@org_tensorflow//tensorflow/lite:builtin_op_data",
     ],
     # For using the symbol `MediaPipe_RegisterTfLiteOpResolver` in Python

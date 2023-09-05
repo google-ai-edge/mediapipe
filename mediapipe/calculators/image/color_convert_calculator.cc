@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
@@ -25,8 +26,8 @@
 namespace mediapipe {
 namespace {
 void SetColorChannel(int channel, uint8 value, cv::Mat* mat) {
-  CHECK(mat->depth() == CV_8U);
-  CHECK(channel < mat->channels());
+  ABSL_CHECK(mat->depth() == CV_8U);
+  ABSL_CHECK(channel < mat->channels());
   const int step = mat->channels();
   for (int r = 0; r < mat->rows; ++r) {
     uint8* row_ptr = mat->ptr<uint8>(r);

@@ -274,11 +274,9 @@ class FaceStylizer(object):
     face_stylizer_model_buffer = model_util.convert_to_tflite(
         model=model,
         quantization_config=None,
-        supported_ops=(
-            tf.lite.OpsSet.TFLITE_BUILTINS,
-            tf.lite.OpsSet.SELECT_TF_OPS,
-        ),
+        supported_ops=(tf.lite.OpsSet.TFLITE_BUILTINS,),
         preprocess=self._preprocessor,
+        allow_custom_ops=True,
     )
 
     face_aligner_task_file_path = constants.FACE_ALIGNER_TASK_FILES.get_path()

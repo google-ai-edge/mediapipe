@@ -57,8 +57,8 @@ cc_library(
     hdrs = ["relative_velocity_filter.h"],
     deps = [
         ":low_pass_filter",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/time",
     ],
@@ -71,6 +71,7 @@ cc_test(
         ":relative_velocity_filter",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/time",
     ],

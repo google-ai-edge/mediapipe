@@ -29,6 +29,7 @@
 #include <vector>
 
 #include "absl/container/fixed_array.h"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -729,13 +730,13 @@ class SlowCountingSinkCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override {
     absl::SleepFor(absl::Milliseconds(10));
     int value = cc->Inputs().Index(0).Get<int>();
-    CHECK_EQ(value, counter_);
+    ABSL_CHECK_EQ(value, counter_);
     ++counter_;
     return absl::OkStatus();
   }
 
   absl::Status Close(CalculatorContext* cc) override {
-    CHECK_EQ(10, counter_);
+    ABSL_CHECK_EQ(10, counter_);
     return absl::OkStatus();
   }
 
@@ -1018,7 +1019,7 @@ class CheckInputTimestampSourceCalculator : public CalculatorBase {
   absl::Status Close(CalculatorContext* cc) final {
     // Must use CHECK instead of RET_CHECK in Close(), because the framework
     // may call the Close() method of a source node with .IgnoreError().
-    CHECK_EQ(cc->InputTimestamp(), Timestamp::Done());
+    ABSL_CHECK_EQ(cc->InputTimestamp(), Timestamp::Done());
     return absl::OkStatus();
   }
 
@@ -1096,7 +1097,7 @@ class CheckInputTimestamp2SourceCalculator : public CalculatorBase {
   absl::Status Close(CalculatorContext* cc) final {
     // Must use CHECK instead of RET_CHECK in Close(), because the framework
     // may call the Close() method of a source node with .IgnoreError().
-    CHECK_EQ(cc->InputTimestamp(), Timestamp::Done());
+    ABSL_CHECK_EQ(cc->InputTimestamp(), Timestamp::Done());
     return absl::OkStatus();
   }
 
@@ -1246,8 +1247,8 @@ REGISTER_STATUS_HANDLER(IncrementingStatusHandler);
 class CurrentThreadExecutor : public Executor {
  public:
   ~CurrentThreadExecutor() override {
-    CHECK(!executing_);
-    CHECK(tasks_.empty());
+    ABSL_CHECK(!executing_);
+    ABSL_CHECK(tasks_.empty());
   }
 
   void Schedule(std::function<void()> task) override {
@@ -1258,7 +1259,7 @@ class CurrentThreadExecutor : public Executor {
       // running) to avoid an indefinitely-deep call stack.
       tasks_.emplace_back(std::move(task));
     } else {
-      CHECK(tasks_.empty());
+      ABSL_CHECK(tasks_.empty());
       executing_ = true;
       task();
       while (!tasks_.empty()) {
@@ -3594,7 +3595,7 @@ REGISTER_CALCULATOR(::mediapipe::nested_ns::ProcessCallbackCalculator);
 
 TEST(CalculatorGraph, CalculatorInNamepsace) {
   CalculatorGraphConfig config;
-  CHECK(proto_ns::TextFormat::ParseFromString(R"(
+  ABSL_CHECK(proto_ns::TextFormat::ParseFromString(R"(
       input_stream: 'in_a'
       node {
         calculator: 'mediapipe.nested_ns.ProcessCallbackCalculator'
@@ -3603,7 +3604,7 @@ TEST(CalculatorGraph, CalculatorInNamepsace) {
         input_side_packet: 'callback_1'
       }
       )",
-                                              &config));
+                                                   &config));
   CalculatorGraph graph;
   MP_ASSERT_OK(graph.Initialize(config));
   nested_ns::ProcessFunction callback_1;

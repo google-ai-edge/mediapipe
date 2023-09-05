@@ -20,6 +20,7 @@
 #include <string>
 #include <utility>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/calculator_state.h"
 #include "mediapipe/framework/counter.h"
 #include "mediapipe/framework/graph_service.h"
@@ -147,7 +148,7 @@ class CalculatorContext {
   }
 
   void PopInputTimestamp() {
-    CHECK(!input_timestamps_.empty());
+    ABSL_CHECK(!input_timestamps_.empty());
     input_timestamps_.pop();
   }
 

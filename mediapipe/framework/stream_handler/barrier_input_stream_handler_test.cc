@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_context_manager.h"
@@ -105,7 +106,7 @@ class BarrierInputStreamHandlerTest : public ::testing::Test {
   void NotifyNoOp() {}
 
   void Schedule(CalculatorContext* calculator_context) {
-    CHECK(calculator_context);
+    ABSL_CHECK(calculator_context);
     calculator_context_ = calculator_context;
   }
 

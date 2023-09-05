@@ -48,7 +48,6 @@ static NSString *const kTaskName = @"imageSegmenter";
   }
 
 namespace {
-using ::mediapipe::Packet;
 using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
@@ -109,7 +108,7 @@ using ::mediapipe::tasks::core::PacketsCallback;
       // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
       // freed up to continue with its operations.
       _callbackQueue = dispatch_queue_create(
-          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], NULL);
+          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], nullptr);
 
       // Capturing `self` as weak in order to avoid `self` being kept in memory
       // and cause a retain cycle, after self is set to `nil`.
@@ -188,8 +187,7 @@ using ::mediapipe::tasks::core::PacketsCallback;
                                                 shouldCopyMaskPacketData:NO];
   completionHandler(result, error);
 }
-
-- (BOOL)segmentAsyncImage:(MPPImage *)image
+- (BOOL)segmentAsyncInImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
   return [_visionTaskRunner processLiveStreamImage:image
@@ -250,8 +248,9 @@ using ::mediapipe::tasks::core::PacketsCallback;
     return;
   }
 
-  MPPImageSegmenterResult *result = [self imageSegmenterResultWithOutputPacketMap:outputPacketMap
-                                                         shouldCopyMaskPacketData:NO];
+  MPPImageSegmenterResult *result =
+      [MPPImageSegmenter imageSegmenterResultWithOutputPacketMap:outputPacketMap
+                                        shouldCopyMaskPacketData:NO];
 
   dispatch_async(_callbackQueue, ^{
     [self.imageSegmenterLiveStreamDelegate imageSegmenter:self

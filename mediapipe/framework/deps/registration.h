@@ -28,8 +28,8 @@
 #include "absl/base/thread_annotations.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
-#include "absl/log/check.h"
 #include "absl/meta/type_traits.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
@@ -271,7 +271,7 @@ class FunctionRegistry {
     if (names[0].empty()) {
       names.erase(names.begin());
     } else {
-      CHECK_EQ(1u, names.size())
+      ABSL_CHECK_EQ(1u, names.size())
           << "A registered class name must be either fully qualified "
           << "with a leading :: or unqualified, got: " << name << ".";
     }

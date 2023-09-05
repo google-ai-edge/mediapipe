@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -172,7 +173,7 @@ absl::Status CalculatorGraph::InitializePacketGeneratorGraph(
   Executor* default_executor = nullptr;
   if (!use_application_thread_) {
     default_executor = executors_[""].get();
-    CHECK(default_executor);
+    ABSL_CHECK(default_executor);
   }
   // If default_executor is nullptr, then packet_generator_graph_ will create
   // its own DelegatingExecutor to use the application thread.
@@ -925,7 +926,7 @@ absl::Status CalculatorGraph::AddPacketToInputStreamInternal(
       "graph input stream.",
       stream_name);
   int node_id = mediapipe::FindOrDie(graph_input_stream_node_ids_, stream_name);
-  CHECK_GE(node_id, validated_graph_->CalculatorInfos().size());
+  ABSL_CHECK_GE(node_id, validated_graph_->CalculatorInfos().size());
   {
     absl::MutexLock lock(&full_input_streams_mutex_);
     if (full_input_streams_.empty()) {
@@ -1113,7 +1114,8 @@ void CalculatorGraph::CallStatusHandlers(GraphRunState graph_run_state,
     absl::StatusOr<std::unique_ptr<internal::StaticAccessToStatusHandler>>
         static_access_statusor = internal::StaticAccessToStatusHandlerRegistry::
             CreateByNameInNamespace(validated_graph_->Package(), handler_type);
-    CHECK(static_access_statusor.ok()) << handler_type << " is not registered.";
+    ABSL_CHECK(static_access_statusor.ok())
+        << handler_type << " is not registered.";
     auto static_access = std::move(static_access_statusor).value();
     absl::Status handler_result;
     if (graph_run_state == GraphRunState::PRE_RUN) {
@@ -1154,7 +1156,7 @@ void CalculatorGraph::UpdateThrottledNodes(InputStreamManager* stream,
     upstream_nodes =
         &validated_graph_->CalculatorInfos()[node_index].AncestorSources();
   }
-  CHECK(upstream_nodes);
+  ABSL_CHECK(upstream_nodes);
   std::vector<CalculatorNode*> nodes_to_schedule;
 
   {
@@ -1176,10 +1178,10 @@ void CalculatorGraph::UpdateThrottledNodes(InputStreamManager* stream,
                                 .set_stream_id(&stream->Name()));
         bool was_throttled = !full_input_streams_[node_id].empty();
         if (stream_is_full) {
-          DCHECK_EQ(full_input_streams_[node_id].count(stream), 0);
+          ABSL_DCHECK_EQ(full_input_streams_[node_id].count(stream), 0);
           full_input_streams_[node_id].insert(stream);
         } else {
-          DCHECK_EQ(full_input_streams_[node_id].count(stream), 1);
+          ABSL_DCHECK_EQ(full_input_streams_[node_id].count(stream), 1);
           full_input_streams_[node_id].erase(stream);
         }
 
@@ -1363,7 +1365,7 @@ void CalculatorGraph::CleanupAfterRun(absl::Status* status) {
     // Obtain the combined status again, so that it includes the new errors
     // added by CallStatusHandlers.
     GetCombinedErrors(status);
-    CHECK(!status->ok());
+    ABSL_CHECK(!status->ok());
   } else {
     MEDIAPIPE_CHECK_OK(*status);
   }

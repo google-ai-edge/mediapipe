@@ -16,7 +16,7 @@
 #include <functional>
 #include <utility>
 
-#include "absl/log/check.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/collection_item_id.h"
@@ -39,7 +39,7 @@ void BarrierInputStreamHandler::PrepareForRun(
 
 NodeReadiness BarrierInputStreamHandler::GetNodeReadiness(
     Timestamp* min_stream_timestamp) {
-  DCHECK(min_stream_timestamp);
+  ABSL_DCHECK(min_stream_timestamp);
   *min_stream_timestamp = Timestamp::Done();
   bool all_available = true;
   for (const auto& stream : input_stream_managers_) {
@@ -55,7 +55,7 @@ NodeReadiness BarrierInputStreamHandler::GetNodeReadiness(
     *min_stream_timestamp = std::min(*min_stream_timestamp, stream_timestamp);
   }
 
-  CHECK_NE(*min_stream_timestamp, Timestamp::Done());
+  ABSL_CHECK_NE(*min_stream_timestamp, Timestamp::Done());
   if (all_available) {
     return NodeReadiness::kReadyForProcess;
   }
@@ -64,8 +64,8 @@ NodeReadiness BarrierInputStreamHandler::GetNodeReadiness(
 
 void BarrierInputStreamHandler::FillInputSet(Timestamp input_timestamp,
                                              InputStreamShardSet* input_set) {
-  CHECK(input_timestamp.IsAllowedInStream());
-  CHECK(input_set);
+  ABSL_CHECK(input_timestamp.IsAllowedInStream());
+  ABSL_CHECK(input_set);
   for (CollectionItemId id = input_stream_managers_.BeginId();
        id < input_stream_managers_.EndId(); ++id) {
     auto& stream = input_stream_managers_.Get(id);

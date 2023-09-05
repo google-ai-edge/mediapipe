@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/tracking/flow_packager.pb.h"
@@ -121,9 +122,9 @@ void MotionBoxBoundingBox(const MotionBoxState& state, Vector2_f* top_left,
 // existing score.
 inline void MotionBoxInliers(const MotionBoxState& state,
                              std::unordered_map<int, int>* inliers) {
-  CHECK(inliers);
+  ABSL_CHECK(inliers);
   const int num_inliers = state.inlier_ids_size();
-  DCHECK_EQ(num_inliers, state.inlier_length_size());
+  ABSL_DCHECK_EQ(num_inliers, state.inlier_length_size());
 
   for (int k = 0; k < num_inliers; ++k) {
     (*inliers)[state.inlier_ids(k)] =
@@ -573,7 +574,7 @@ class MotionBox {
     // Check if it is a convex quad.
     static bool IsValidQuad(const MotionBoxState::Quad& quad) {
       const int kQuadVerticesSize = 8;
-      CHECK_EQ(quad.vertices_size(), kQuadVerticesSize);
+      ABSL_CHECK_EQ(quad.vertices_size(), kQuadVerticesSize);
       for (int a = 0; a < kQuadVerticesSize; a += 2) {
         int b = (a + 2) % kQuadVerticesSize;
         int c = (a - 2 + kQuadVerticesSize) % kQuadVerticesSize;
@@ -596,7 +597,7 @@ class MotionBox {
     static bool IsQuadOutOfFov(const MotionBoxState::Quad& quad,
                                const Vector2_f& fov) {
       const int kQuadVerticesSize = 8;
-      CHECK_EQ(quad.vertices_size(), kQuadVerticesSize);
+      ABSL_CHECK_EQ(quad.vertices_size(), kQuadVerticesSize);
       bool too_far = true;
       for (int j = 0; j < kQuadVerticesSize; j += 2) {
         if (quad.vertices(j) < fov.x() && quad.vertices(j) > 0.0f &&

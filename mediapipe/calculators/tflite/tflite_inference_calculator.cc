@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/calculators/tflite/tflite_inference_calculator.pb.h"
@@ -111,8 +112,8 @@ std::unique_ptr<tflite::Interpreter> BuildEdgeTpuInterpreter(
     edgetpu::EdgeTpuContext* edgetpu_context) {
   resolver->AddCustom(edgetpu::kCustomOp, edgetpu::RegisterCustomOp());
   std::unique_ptr<tflite::Interpreter> interpreter;
-  CHECK_EQ(tflite::InterpreterBuilder(model, *resolver)(&interpreter),
-           kTfLiteOk);
+  ABSL_CHECK_EQ(tflite::InterpreterBuilder(model, *resolver)(&interpreter),
+                kTfLiteOk);
   interpreter->SetExternalContext(kTfLiteEdgeTpuContext, edgetpu_context);
   return interpreter;
 }
@@ -413,7 +414,7 @@ absl::Status TfLiteInferenceCalculator::Open(CalculatorContext* cc) {
            "Falling back to the default TFLite API.";
     use_advanced_gpu_api_ = false;
   }
-  CHECK(!use_advanced_gpu_api_ || gpu_inference_);
+  ABSL_CHECK(!use_advanced_gpu_api_ || gpu_inference_);
 
   MP_RETURN_IF_ERROR(LoadModel(cc));
 
@@ -805,9 +806,10 @@ absl::Status TfLiteInferenceCalculator::InitTFLiteGPURunner(
       const int tensor_idx = interpreter_->inputs()[i];
       interpreter_->SetTensorParametersReadWrite(tensor_idx, kTfLiteFloat32, "",
                                                  shape, quant);
-      CHECK(interpreter_->ResizeInputTensor(tensor_idx, shape) == kTfLiteOk);
+      ABSL_CHECK(interpreter_->ResizeInputTensor(tensor_idx, shape) ==
+                 kTfLiteOk);
     }
-    CHECK(interpreter_->AllocateTensors() == kTfLiteOk);
+    ABSL_CHECK(interpreter_->AllocateTensors() == kTfLiteOk);
   }
 
   // Create and bind OpenGL buffers for outputs.

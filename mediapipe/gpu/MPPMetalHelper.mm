@@ -14,7 +14,8 @@
 
 #import "mediapipe/gpu/MPPMetalHelper.h"
 
-#import "third_party/absl/log/absl_log.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #import "mediapipe/gpu/gpu_buffer.h"
 #import "mediapipe/gpu/gpu_service.h"
 #import "mediapipe/gpu/graph_support.h"
@@ -79,7 +80,7 @@ class MetalHelperLegacySupport {
 - (instancetype)initWithSidePackets:(const mediapipe::PacketSet&)inputSidePackets {
   auto cc = mediapipe::MetalHelperLegacySupport::GetCalculatorContext();
   if (cc) {
-    CHECK_EQ(&inputSidePackets, &cc->InputSidePackets());
+    ABSL_CHECK_EQ(&inputSidePackets, &cc->InputSidePackets());
     return [self initWithCalculatorContext:cc];
   }
 
@@ -96,7 +97,7 @@ class MetalHelperLegacySupport {
 + (absl::Status)setupInputSidePackets:(mediapipe::PacketTypeSet*)inputSidePackets {
   auto cc = mediapipe::MetalHelperLegacySupport::GetCalculatorContract();
   if (cc) {
-    CHECK_EQ(inputSidePackets, &cc->InputSidePackets());
+    ABSL_CHECK_EQ(inputSidePackets, &cc->InputSidePackets());
     return [self updateContract:cc];
   }
 
@@ -179,7 +180,7 @@ class MetalHelperLegacySupport {
       NULL, _gpuResources->metal_shared().resources().mtlTextureCache,
       mediapipe::GetCVPixelBufferRef(gpuBuffer), NULL, metalPixelFormat, width, height, plane,
       &texture);
-  CHECK_EQ(err, kCVReturnSuccess);
+  ABSL_CHECK_EQ(err, kCVReturnSuccess);
   return texture;
 }
 

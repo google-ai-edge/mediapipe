@@ -31,8 +31,8 @@
 #include <memory>
 #include <sstream>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
-#include "absl/log/check.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/synchronization/mutex.h"
@@ -102,7 +102,7 @@ class ScopedWallTimer {
         show_output_(show_output),
         accumulator_(accumulator) {
     if (show_output_) {
-      CHECK(accumulator_);
+      ABSL_CHECK(accumulator_);
       start_time_ = GetWallTime();
     }
   }

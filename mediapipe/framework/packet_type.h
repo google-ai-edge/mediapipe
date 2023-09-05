@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_split.h"
@@ -163,7 +164,7 @@ class PacketTypeSetErrorHandler {
     if (!missing_) {
       missing_ = absl::make_unique<Missing>();
     }
-    CHECK(!missing_->initialized_errors);
+    ABSL_CHECK(!missing_->initialized_errors);
     std::string key = absl::StrCat(tag, ":", index);
     return missing_->entries[key];
   }
@@ -182,9 +183,9 @@ class PacketTypeSetErrorHandler {
   // Get the error messages that have been deferred.
   // This function can only be called if HasError() is true.
   const std::vector<std::string>& ErrorMessages() const {
-    CHECK(missing_) << "ErrorMessages() can only be called if errors have "
-                       "occurred.  Call HasError() before calling this "
-                       "function.";
+    ABSL_CHECK(missing_) << "ErrorMessages() can only be called if errors have "
+                            "occurred.  Call HasError() before calling this "
+                            "function.";
     if (!missing_->initialized_errors) {
       for (const auto& entry : missing_->entries) {
         // Optional entries that were missing are not considered errors.

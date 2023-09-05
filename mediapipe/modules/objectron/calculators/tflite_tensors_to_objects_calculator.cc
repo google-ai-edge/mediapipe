@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "Eigen/Dense"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
@@ -179,7 +180,7 @@ absl::Status TfLiteTensorsToObjectsCalculator::LoadOptions(
   num_keypoints_ = options_.num_keypoints();
 
   // Currently only support 2D when num_values_per_keypoint equals to 2.
-  CHECK_EQ(options_.num_values_per_keypoint(), 2);
+  ABSL_CHECK_EQ(options_.num_values_per_keypoint(), 2);
 
   return absl::OkStatus();
 }

@@ -326,6 +326,7 @@ cc_library(
         ":core_proto",
         ":logging",
         "//mediapipe/framework:port",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )
 

@@ -12,9 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load(
+    "//mediapipe/framework/tool:mediapipe_files.bzl",
+    "mediapipe_files",
+)
+
 licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
+
+mediapipe_files(srcs = ["libimagegenerator_gpu.so"])
 
 # The native library of MediaPipe vision image generator tasks.
 cc_binary(
@@ -37,8 +44,11 @@ cc_binary(
 )
 
 cc_library(
-    name = "libmediapipe_tasks_vision_image_generator_jni_lib",
-    srcs = [":libmediapipe_tasks_vision_image_generator_jni.so"],
+    name = "mediapipe_tasks_vision_image_generator_jni_lib",
+    srcs = [
+        ":libimagegenerator_gpu.so",
+        ":libmediapipe_tasks_vision_image_generator_jni.so",
+    ],
     alwayslink = 1,
 )
 
@@ -57,8 +67,8 @@ android_library(
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
         "//mediapipe/java/com/google/mediapipe/framework/image",
         "//mediapipe/tasks/cc/core/proto:external_file_java_proto_lite",
-        "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_java_proto_lite",
+        "//mediapipe/tasks/cc/vision/image_generator/diffuser:stable_diffusion_iterate_calculator_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_generator/proto:conditioned_image_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_generator/proto:control_plugin_graph_options_java_proto_lite",
         "//mediapipe/tasks/cc/vision/image_generator/proto:image_generator_graph_options_java_proto_lite",
@@ -79,6 +89,10 @@ load("//mediapipe/tasks/java/com/google/mediapipe/tasks:mediapipe_tasks_aar.bzl"
 
 mediapipe_tasks_vision_image_generator_aar(
     name = "tasks_vision_image_generator",
-    srcs = glob(["**/*.java"]),
+    srcs = glob(["**/*.java"]) + [
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:core_java_src",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:face_landmarker_java_src",
+        "//mediapipe/tasks/java/com/google/mediapipe/tasks/vision:image_segmenter_java_src",
+    ],
     native_library = ":libmediapipe_tasks_vision_image_generator_jni_lib",
 )

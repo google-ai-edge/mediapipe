@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
@@ -623,7 +624,7 @@ absl::Status TensorConverterCalculator::LoadOptions(CalculatorContext* cc) {
   if (options.has_output_tensor_float_range()) {
     output_range_.emplace(options.output_tensor_float_range().min(),
                           options.output_tensor_float_range().max());
-    CHECK_GT(output_range_->second, output_range_->first);
+    ABSL_CHECK_GT(output_range_->second, output_range_->first);
   }
 
   // Custom div and sub values.
@@ -641,9 +642,9 @@ absl::Status TensorConverterCalculator::LoadOptions(CalculatorContext* cc) {
 
   // Get desired way to handle input channels.
   max_num_channels_ = options.max_num_channels();
-  CHECK_GE(max_num_channels_, 1);
-  CHECK_LE(max_num_channels_, 4);
-  CHECK_NE(max_num_channels_, 2);
+  ABSL_CHECK_GE(max_num_channels_, 1);
+  ABSL_CHECK_LE(max_num_channels_, 4);
+  ABSL_CHECK_NE(max_num_channels_, 2);
   return absl::OkStatus();
 }
 

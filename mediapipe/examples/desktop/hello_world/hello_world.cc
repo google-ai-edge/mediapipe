@@ -14,6 +14,7 @@
 //
 // A simple example to print out "Hello World!" from a MediaPipe graph.
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator_graph.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -62,6 +63,6 @@ absl::Status PrintHelloWorld() {
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
-  CHECK(mediapipe::PrintHelloWorld().ok());
+  ABSL_CHECK(mediapipe::PrintHelloWorld().ok());
   return 0;
 }

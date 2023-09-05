@@ -41,7 +41,7 @@ namespace autoflip {
 //   SceneCropperOptions scene_cropper_options;
 //   SceneCropper scene_cropper(scene_cropper_options);
 //   std::vector<cv::Mat> cropped_frames;
-//   CHECK_OK(scene_cropper.CropFrames(
+//   ABSL_CHECK_OK(scene_cropper.CropFrames(
 //       scene_summary, scene_frames, focus_point_frames,
 //       prior_focus_point_frames, &cropped_frames));
 class SceneCropper {

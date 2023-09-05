@@ -19,6 +19,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/calculators/video/box_tracker_calculator.pb.h"
 #include "mediapipe/framework/calculator.pb.h"
@@ -298,7 +299,7 @@ std::unique_ptr<TimedBoxProtoList>
 TrackingGraphTest::CreateRandomAccessTrackingBoxList(
     const std::vector<Timestamp>& start_timestamps,
     const std::vector<Timestamp>& end_timestamps) const {
-  CHECK_EQ(start_timestamps.size(), end_timestamps.size());
+  ABSL_CHECK_EQ(start_timestamps.size(), end_timestamps.size());
   auto ra_boxes = absl::make_unique<TimedBoxProtoList>();
   for (int i = 0; i < start_timestamps.size(); ++i) {
     auto start_box_list =

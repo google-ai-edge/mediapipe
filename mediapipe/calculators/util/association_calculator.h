@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/calculators/util/association_calculator.pb.h"
 #include "mediapipe/framework/calculator_context.h"
@@ -72,7 +73,7 @@ class AssociationCalculator : public CalculatorBase {
       prev_input_stream_id_ = cc->Inputs().GetId("PREV", 0);
     }
     options_ = cc->Options<::mediapipe::AssociationCalculatorOptions>();
-    CHECK_GE(options_.min_similarity_threshold(), 0);
+    ABSL_CHECK_GE(options_.min_similarity_threshold(), 0);
 
     return absl::OkStatus();
   }

@@ -18,6 +18,7 @@
 #include <string>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
@@ -748,7 +749,7 @@ int ValidatedGraphConfig::SorterIndexForNode(NodeTypeInfo::NodeRef node) const {
     case NodeTypeInfo::NodeType::CALCULATOR:
       return generators_.size() + node.index;
     default:
-      CHECK(false);
+      ABSL_CHECK(false);
   }
 }
 

@@ -25,6 +25,7 @@
 
 // TODO: Move protos in another CL after the C++ code migration.
 #include "absl/base/thread_annotations.h"
+#include "absl/log/absl_check.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_context_manager.h"
 #include "mediapipe/framework/collection.h"
@@ -63,7 +64,7 @@ class OutputStreamHandler {
         calculator_context_manager_(calculator_context_manager),
         options_(options),
         calculator_run_in_parallel_(calculator_run_in_parallel) {
-    CHECK(calculator_context_manager_);
+    ABSL_CHECK(calculator_context_manager_);
   }
 
   virtual ~OutputStreamHandler() = default;

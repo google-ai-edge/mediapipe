@@ -22,8 +22,8 @@
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
-#include "absl/log/check.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
@@ -60,8 +60,8 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
                          const float max_avg_diff,
                          std::unique_ptr<ImageFrame>& diff_image) {
   // Verify image byte depth matches expected byte depth.
-  CHECK_EQ(sizeof(T), image1.ByteDepth());
-  CHECK_EQ(sizeof(T), image2.ByteDepth());
+  ABSL_CHECK_EQ(sizeof(T), image1.ByteDepth());
+  ABSL_CHECK_EQ(sizeof(T), image2.ByteDepth());
 
   const int width = image1.Width();
   const int height = image1.Height();
@@ -72,8 +72,8 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
   const int num_channels = std::min(channels1, channels2);
 
   // Verify the width steps are multiples of byte depth.
-  CHECK_EQ(image1.WidthStep() % image1.ByteDepth(), 0);
-  CHECK_EQ(image2.WidthStep() % image2.ByteDepth(), 0);
+  ABSL_CHECK_EQ(image1.WidthStep() % image1.ByteDepth(), 0);
+  ABSL_CHECK_EQ(image2.WidthStep() % image2.ByteDepth(), 0);
   const int width_padding1 =
       image1.WidthStep() / image1.ByteDepth() - width * channels1;
   const int width_padding2 =
@@ -144,7 +144,7 @@ absl::Status CompareDiff(const ImageFrame& image1, const ImageFrame& image2,
 std::string GetBinaryDirectory() {
   char full_path[PATH_MAX + 1];
   int length = readlink("/proc/self/exe", full_path, PATH_MAX + 1);
-  CHECK_GT(length, 0);
+  ABSL_CHECK_GT(length, 0);
   return std::string(
       ::mediapipe::file::Dirname(absl::string_view(full_path, length)));
 }

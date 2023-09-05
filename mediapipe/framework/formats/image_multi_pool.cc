@@ -16,6 +16,7 @@
 
 #include <tuple>
 
+#include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/port/logging.h"
@@ -43,7 +44,7 @@ ImageMultiPool::SimplePoolGpu ImageMultiPool::MakeSimplePoolGpu(
     IBufferSpec spec) {
   OSType cv_format = mediapipe::CVPixelFormatForGpuBufferFormat(
       GpuBufferFormatForImageFormat(spec.format));
-  CHECK_NE(cv_format, -1) << "unsupported pixel format";
+  ABSL_CHECK_NE(cv_format, -1) << "unsupported pixel format";
   return MakeCFHolderAdopting(mediapipe::CreateCVPixelBufferPool(
       spec.width, spec.height, cv_format, kKeepCount,
       0.1 /* max age in seconds */));
@@ -61,11 +62,11 @@ Image ImageMultiPool::GetBufferFromSimplePool(
   // pool to give us contiguous data.
   OSType cv_format = mediapipe::CVPixelFormatForGpuBufferFormat(
       mediapipe::GpuBufferFormatForImageFormat(spec.format));
-  CHECK_NE(cv_format, -1) << "unsupported pixel format";
+  ABSL_CHECK_NE(cv_format, -1) << "unsupported pixel format";
   CVPixelBufferRef buffer;
   CVReturn err = mediapipe::CreateCVPixelBufferWithoutPool(
       spec.width, spec.height, cv_format, &buffer);
-  CHECK(!err) << "Error creating pixel buffer: " << err;
+  ABSL_CHECK(!err) << "Error creating pixel buffer: " << err;
   return Image(MakeCFHolderAdopting(buffer));
 #else
   CVPixelBufferRef buffer;
@@ -87,7 +88,7 @@ Image ImageMultiPool::GetBufferFromSimplePool(
         }
       },
       &buffer);
-  CHECK(!err) << "Error creating pixel buffer: " << err;
+  ABSL_CHECK(!err) << "Error creating pixel buffer: " << err;
   return Image(MakeCFHolderAdopting(buffer));
 #endif  // TARGET_IPHONE_SIMULATOR
 }
@@ -188,7 +189,7 @@ Image ImageMultiPool::GetBuffer(int width, int height, bool use_gpu,
 ImageMultiPool::~ImageMultiPool() {
 #if !MEDIAPIPE_DISABLE_GPU
 #ifdef __APPLE__
-  CHECK_EQ(texture_caches_.size(), 0)
+  ABSL_CHECK_EQ(texture_caches_.size(), 0)
       << "Failed to unregister texture caches before deleting pool";
 #endif  // defined(__APPLE__)
 #endif  // !MEDIAPIPE_DISABLE_GPU
@@ -199,8 +200,8 @@ ImageMultiPool::~ImageMultiPool() {
 void ImageMultiPool::RegisterTextureCache(mediapipe::CVTextureCacheType cache) {
   absl::MutexLock lock(&mutex_gpu_);
 
-  CHECK(std::find(texture_caches_.begin(), texture_caches_.end(), cache) ==
-        texture_caches_.end())
+  ABSL_CHECK(std::find(texture_caches_.begin(), texture_caches_.end(), cache) ==
+             texture_caches_.end())
       << "Attempting to register a texture cache twice";
   texture_caches_.emplace_back(cache);
 }
@@ -210,7 +211,7 @@ void ImageMultiPool::UnregisterTextureCache(
   absl::MutexLock lock(&mutex_gpu_);
 
   auto it = std::find(texture_caches_.begin(), texture_caches_.end(), cache);
-  CHECK(it != texture_caches_.end())
+  ABSL_CHECK(it != texture_caches_.end())
       << "Attempting to unregister an unknown texture cache";
   texture_caches_.erase(it);
 }

@@ -19,6 +19,7 @@
 #include <fstream>
 #include <limits>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
@@ -37,8 +38,8 @@ static constexpr int kInitCheckpoint = -1;
 
 void MotionBoxStateQuadToVertices(const MotionBoxState::Quad& quad,
                                   std::vector<Vector2_f>* vertices) {
-  CHECK_EQ(TimedBox::kNumQuadVertices * 2, quad.vertices_size());
-  CHECK(vertices != nullptr);
+  ABSL_CHECK_EQ(TimedBox::kNumQuadVertices * 2, quad.vertices_size());
+  ABSL_CHECK(vertices != nullptr);
   vertices->clear();
   for (int i = 0; i < TimedBox::kNumQuadVertices; ++i) {
     vertices->push_back(
@@ -48,8 +49,8 @@ void MotionBoxStateQuadToVertices(const MotionBoxState::Quad& quad,
 
 void VerticesToMotionBoxStateQuad(const std::vector<Vector2_f>& vertices,
                                   MotionBoxState::Quad* quad) {
-  CHECK_EQ(TimedBox::kNumQuadVertices, vertices.size());
-  CHECK(quad != nullptr);
+  ABSL_CHECK_EQ(TimedBox::kNumQuadVertices, vertices.size());
+  ABSL_CHECK(quad != nullptr);
   for (const Vector2_f& vertex : vertices) {
     quad->add_vertices(vertex.x());
     quad->add_vertices(vertex.y());
@@ -57,7 +58,7 @@ void VerticesToMotionBoxStateQuad(const std::vector<Vector2_f>& vertices,
 }
 
 void MotionBoxStateFromTimedBox(const TimedBox& box, MotionBoxState* state) {
-  CHECK(state);
+  ABSL_CHECK(state);
   state->set_pos_x(box.left);
   state->set_pos_y(box.top);
   state->set_width(box.right - box.left);
@@ -91,7 +92,7 @@ void MotionBoxStateFromTimedBox(const TimedBox& box, MotionBoxState* state) {
 }
 
 void TimedBoxFromMotionBoxState(const MotionBoxState& state, TimedBox* box) {
-  CHECK(box);
+  ABSL_CHECK(box);
   const float scale_dx = state.width() * (state.scale() - 1.0f) * 0.5f;
   const float scale_dy = state.height() * (state.scale() - 1.0f) * 0.5f;
   box->left = state.pos_x() - scale_dx;
@@ -114,7 +115,7 @@ namespace {
 
 TimedBox BlendTimedBoxes(const TimedBox& lhs, const TimedBox& rhs,
                          int64_t time_msec) {
-  CHECK_LT(lhs.time_msec, rhs.time_msec);
+  ABSL_CHECK_LT(lhs.time_msec, rhs.time_msec);
   const double alpha =
       (time_msec - lhs.time_msec) * 1.0 / (rhs.time_msec - lhs.time_msec);
   return TimedBox::Blend(lhs, rhs, alpha);
@@ -246,10 +247,10 @@ BoxTracker::BoxTracker(
 
 void BoxTracker::AddTrackingDataChunk(const TrackingDataChunk* chunk,
                                       bool copy_data) {
-  CHECK_GT(chunk->item_size(), 0) << "Empty chunk.";
+  ABSL_CHECK_GT(chunk->item_size(), 0) << "Empty chunk.";
   int64_t chunk_time_msec = chunk->item(0).timestamp_usec() / 1000;
   int chunk_idx = ChunkIdxFromTime(chunk_time_msec);
-  CHECK_GE(chunk_idx, tracking_data_.size()) << "Chunk is out of order.";
+  ABSL_CHECK_GE(chunk_idx, tracking_data_.size()) << "Chunk is out of order.";
   if (chunk_idx > tracking_data_.size()) {
     ABSL_LOG(INFO) << "Resize tracking_data_ to " << chunk_idx;
     tracking_data_.resize(chunk_idx);
@@ -486,12 +487,12 @@ void BoxTracker::CancelTracking(int id, int checkpoint) {
 
 bool BoxTracker::GetTimedPosition(int id, int64_t time_msec, TimedBox* result,
                                   std::vector<MotionBoxState>* states) {
-  CHECK(result);
+  ABSL_CHECK(result);
 
   MotionBoxState* lhs_box_state = nullptr;
   MotionBoxState* rhs_box_state = nullptr;
   if (states) {
-    CHECK(options_.record_path_states())
+    ABSL_CHECK(options_.record_path_states())
         << "Requesting corresponding tracking states requires option "
         << "record_path_states to be set";
     states->resize(1);
@@ -689,7 +690,7 @@ bool BoxTracker::WaitForChunkFile(int id, int checkpoint,
 
 int BoxTracker::ClosestFrameIndex(int64_t msec,
                                   const TrackingDataChunk& chunk) const {
-  CHECK_GT(chunk.item_size(), 0);
+  ABSL_CHECK_GT(chunk.item_size(), 0);
   typedef TrackingDataChunk::Item Item;
   Item item_to_find;
   item_to_find.set_timestamp_usec(msec * 1000);
@@ -751,8 +752,8 @@ void BoxTracker::TrackingImpl(const TrackingImplArgs& a) {
   MotionBox motion_box(track_step_options);
   const int chunk_data_size = a.chunk_data->item_size();
 
-  CHECK_GE(a.start_frame, 0);
-  CHECK_LT(a.start_frame, chunk_data_size);
+  ABSL_CHECK_GE(a.start_frame, 0);
+  ABSL_CHECK_LT(a.start_frame, chunk_data_size);
 
   VLOG(1) << " a.start_frame = " << a.start_frame << " @"
           << a.chunk_data->item(a.start_frame).timestamp_usec() << " with "
@@ -909,7 +910,7 @@ void BoxTracker::TrackingImpl(const TrackingImplArgs& a) {
 
 bool TimedBoxAtTime(const PathSegment& segment, int64_t time_msec,
                     TimedBox* box, MotionBoxState* state) {
-  CHECK(box);
+  ABSL_CHECK(box);
 
   if (segment.empty()) {
     return false;
@@ -1033,7 +1034,7 @@ bool BoxTracker::WaitForAllOngoingTracks(int timeout_us) {
 bool BoxTracker::GetTrackingData(int id, int64_t request_time_msec,
                                  TrackingData* tracking_data,
                                  int* tracking_data_msec) {
-  CHECK(tracking_data);
+  ABSL_CHECK(tracking_data);
 
   int chunk_idx = ChunkIdxFromTime(request_time_msec);
 
