@@ -268,9 +268,12 @@ static ov::Tensor convertTFTensor2OVTensor(const tensorflow::Tensor& t) {
     for (const auto& dim : t.shape()) {
         shape.emplace_back(dim.size);
     }
-    ov::Tensor result(datatype, shape, data);
-    return result;
+    if (ov::shape_size(shape) <= 0)
+        return ov::Tensor(datatype, shape);  // OV does not allow nullptr as data
+    return ov::Tensor(datatype, shape, data);
 }
+
+
 static ov::Tensor convertTFLiteTensor2OVTensor(const TfLiteTensor& t) {
     void* data = t.data.f; // TODO probably works only for floats
     auto datatype = ov::element::f32;
@@ -278,6 +281,7 @@ static ov::Tensor convertTFLiteTensor2OVTensor(const TfLiteTensor& t) {
     // TODO FIXME HACK
     // for some reason TfLite tensor does not have bs dim
     shape.emplace_back(1);
+    // TODO: Support scalars and no data tensors with 0-dim
     for (int i = 0; i < t.dims->size; ++i) {
  //       RET_CHECK_GT(t.dims->data[i], 0);
  //       num_values *= raw_tensor->dims->data[i];
