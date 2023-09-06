@@ -192,9 +192,8 @@ cc_test(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
         "//mediapipe/framework/testdata:night_light_calculator_cc_proto",
-        "//mediapipe/framework/testdata:night_light_calculator_options_lib",
+        "//mediapipe/framework/testdata:proto3_options_cc_proto",
     ],
 )
 

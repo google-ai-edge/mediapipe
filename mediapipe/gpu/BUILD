@@ -768,6 +768,9 @@ cc_library(
         ":gl_base",
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 

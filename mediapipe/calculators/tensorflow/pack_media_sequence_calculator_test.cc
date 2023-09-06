@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -453,6 +454,83 @@ TEST_F(PackMediaSequenceCalculatorTest, PacksTwoContextFloatLists) {
               testing::ElementsAre(3, 3));
   ASSERT_THAT(mpms::GetContextFeatureFloats("OTHER", output_sequence),
               testing::ElementsAre(4, 4));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, ReplaceTwoContextFloatLists) {
+  SetUpCalculator(
+      /*input_streams=*/{"FLOAT_CONTEXT_FEATURE_TEST:test",
+                         "FLOAT_CONTEXT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false, /*replace_instead_of_append=*/true);
+  auto input_sequence = std::make_unique<tf::SequenceExample>();
+  mpms::SetContextFeatureFloats("TEST", {2, 3}, input_sequence.get());
+  mpms::SetContextFeatureFloats("OTHER", {2, 4}, input_sequence.get());
+
+  const std::vector<float> vf_1 = {5, 6};
+  runner_->MutableInputs()
+      ->Tag(kFloatContextFeatureTestTag)
+      .packets.push_back(
+          MakePacket<std::vector<float>>(vf_1).At(Timestamp::PostStream()));
+  const std::vector<float> vf_2 = {7, 8};
+  runner_->MutableInputs()
+      ->Tag(kFloatContextFeatureOtherTag)
+      .packets.push_back(
+          MakePacket<std::vector<float>>(vf_2).At(Timestamp::PostStream()));
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  ASSERT_THAT(mpms::GetContextFeatureFloats("TEST", output_sequence),
+              testing::ElementsAre(5, 6));
+  ASSERT_THAT(mpms::GetContextFeatureFloats("OTHER", output_sequence),
+              testing::ElementsAre(7, 8));
+}
+
+TEST_F(PackMediaSequenceCalculatorTest, AppendTwoContextFloatLists) {
+  SetUpCalculator(
+      /*input_streams=*/{"FLOAT_CONTEXT_FEATURE_TEST:test",
+                         "FLOAT_CONTEXT_FEATURE_OTHER:test2"},
+      /*features=*/{},
+      /*output_only_if_all_present=*/false,
+      /*replace_instead_of_append=*/false);
+  auto input_sequence = std::make_unique<tf::SequenceExample>();
+  mpms::SetContextFeatureFloats("TEST", {2, 3}, input_sequence.get());
+  mpms::SetContextFeatureFloats("OTHER", {2, 4}, input_sequence.get());
+
+  const std::vector<float> vf_1 = {5, 6};
+  runner_->MutableInputs()
+      ->Tag(kFloatContextFeatureTestTag)
+      .packets.push_back(
+          MakePacket<std::vector<float>>(vf_1).At(Timestamp::PostStream()));
+  const std::vector<float> vf_2 = {7, 8};
+  runner_->MutableInputs()
+      ->Tag(kFloatContextFeatureOtherTag)
+      .packets.push_back(
+          MakePacket<std::vector<float>>(vf_2).At(Timestamp::PostStream()));
+
+  runner_->MutableSidePackets()->Tag(kSequenceExampleTag) =
+      Adopt(input_sequence.release());
+
+  MP_ASSERT_OK(runner_->Run());
+
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag(kSequenceExampleTag).packets;
+  ASSERT_EQ(1, output_packets.size());
+  const tf::SequenceExample& output_sequence =
+      output_packets[0].Get<tf::SequenceExample>();
+
+  EXPECT_THAT(mpms::GetContextFeatureFloats("TEST", output_sequence),
+              testing::ElementsAre(2, 3, 5, 6));
+  EXPECT_THAT(mpms::GetContextFeatureFloats("OTHER", output_sequence),
+              testing::ElementsAre(2, 4, 7, 8));
 }
 
 TEST_F(PackMediaSequenceCalculatorTest, PackTwoContextIntLists) {

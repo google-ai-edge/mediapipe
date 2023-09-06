@@ -355,6 +355,12 @@ absl::Status InferenceCalculatorGlAdvancedImpl::OnDiskCacheHelper::Init(
   return absl::OkStatus();
 }
 
+absl::Status InferenceCalculatorGlAdvancedImpl::OnDiskCacheHelper::
+    SaveGpuCachesBasedOnBehavior(
+        tflite::gpu::TFLiteGPURunner* gpu_runner) const {
+  return absl::OkStatus();
+}
+
 absl::Status
 InferenceCalculatorGlAdvancedImpl::OnDiskCacheHelper::ReadGpuCaches(
     tflite::gpu::TFLiteGPURunner* gpu_runner) const {

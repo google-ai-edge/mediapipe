@@ -44,7 +44,7 @@ cc_binary(
 )
 
 cc_library(
-    name = "mediapipe_tasks_vision_image_generator_jni_lib",
+    name = "libmediapipe_tasks_vision_image_generator_jni_lib",
     srcs = [
         ":libimagegenerator_gpu.so",
         ":libmediapipe_tasks_vision_image_generator_jni.so",
