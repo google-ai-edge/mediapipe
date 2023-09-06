@@ -14,6 +14,7 @@
 
 #import "mediapipe/tasks/ios/test/vision/utils/sources/MPPImage+TestUtils.h"
 
+// TODO: Remove this category after all tests are migrated to the new methods.
 @interface UIImage (FileUtils)
 
 + (nullable UIImage *)imageFromBundleWithClass:(Class)classObject
@@ -37,6 +38,28 @@
 
 @implementation MPPImage (TestUtils)
 
++ (MPPImage *)imageWithFileInfo:(MPPFileInfo *)fileInfo {
+  if (!fileInfo.path) return nil;
+
+  UIImage *image = [[UIImage alloc] initWithContentsOfFile:fileInfo.path];
+
+  if (!image) return nil;
+
+  return [[MPPImage alloc] initWithUIImage:image error:nil];
+}
+
++ (MPPImage *)imageWithFileInfo:(MPPFileInfo *)fileInfo
+                    orientation:(UIImageOrientation)orientation {
+  if (!fileInfo.path) return nil;
+
+  UIImage *image = [[UIImage alloc] initWithContentsOfFile:fileInfo.path];
+
+  if (!image) return nil;
+
+  return [[MPPImage alloc] initWithUIImage:image orientation:orientation error:nil];
+}
+
+// TODO: Remove after all tests are migrated
 + (nullable MPPImage *)imageFromBundleWithClass:(Class)classObject
                                        fileName:(NSString *)name
                                          ofType:(NSString *)type {
@@ -45,6 +68,7 @@
   return [[MPPImage alloc] initWithUIImage:image error:nil];
 }
 
+// TODO: Remove after all tests are migrated
 + (nullable MPPImage *)imageFromBundleWithClass:(Class)classObject
                                        fileName:(NSString *)name
                                          ofType:(NSString *)type
