@@ -448,6 +448,7 @@ cc_library(
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/gpu:gl_calculator_helper",
         "//mediapipe/util/tflite:tflite_gpu_runner",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
