@@ -7,7 +7,21 @@ objc_library(
     srcs = ["sources/MPPImage+TestUtils.m"],
     hdrs = ["sources/MPPImage+TestUtils.h"],
     module_name = "MPPImageTestUtils",
-    deps = ["//mediapipe/tasks/ios/vision/core:MPPImage"],
+    deps = [
+        "//mediapipe/tasks/ios/vision/core:MPPImage",
+        "//mediapipe/tasks/ios/test/utils:MPPFileInfo"],
+)
+
+objc_library(
+    name = "MPPMaskTestUtils",
+    srcs = ["sources/MPPMask+TestUtils.m"],
+    hdrs = ["sources/MPPMask+TestUtils.h"],
+    module_name = "MPPMaskTestUtils",
+    deps = [
+        "//mediapipe/tasks/ios/vision/core:MPPMask",
+        "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
+        "//third_party/apple_frameworks:UIKit",
+    ]
 )
 
 cc_library(
