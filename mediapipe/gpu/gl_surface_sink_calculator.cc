@@ -40,6 +40,10 @@ enum { kAttribVertex, kAttribTexturePosition, kNumberOfAttributes };
 //   SURFACE: unique_ptr to an EglSurfaceHolder to draw to.
 //
 // See GlSurfaceSinkCalculatorOptions for options.
+//
+// NOTE: all GlSurfaceSinkCalculators use a common dedicated shared GL context
+// thread by default, which is different from the main GL context thread used by
+// the graph. (If MediaPipe uses multithreading and multiple OpenGL contexts.)
 class GlSurfaceSinkCalculator : public Node {
  public:
   static constexpr Input<

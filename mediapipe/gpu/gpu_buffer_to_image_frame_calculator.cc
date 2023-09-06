@@ -27,6 +27,22 @@
 namespace mediapipe {
 
 // Convert an input image (GpuBuffer or ImageFrame) to ImageFrame.
+//
+// NOTE: all GpuBufferToImageFrameCalculators use a common dedicated shared GL
+// context thread by default, which is different from the main GL context thread
+// used by the graph. (If MediaPipe uses multithreading and multiple OpenGL
+// contexts.)
+//
+// IMPORTANT: graph writer must make sure input GpuBuffer backed OpenGL texture
+// is not in use before the calculator starts processing and not used by any
+// other code until the calculator returns:
+// - pixel transfer involves attaching GpuBuffer backing texture as a logical
+//   buffer to a particular bound framebuffer.
+// - and if texture is already bound and enabled for texturing, this may lead
+//   to a "feedback loop" and undefined results.
+// See, OpenGL ES 3.0 Spec 4.4.3 "Feedback Loops between Textures and the
+// Framebuffer"
+//
 class GpuBufferToImageFrameCalculator : public CalculatorBase {
  public:
   GpuBufferToImageFrameCalculator() {}
