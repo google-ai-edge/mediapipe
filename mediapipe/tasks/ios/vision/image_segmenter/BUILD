@@ -54,7 +54,7 @@ objc_library(
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
-        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunnerRefactored",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/image_segmenter/utils:MPPImageSegmenterOptionsHelpers",
         "//mediapipe/tasks/ios/vision/image_segmenter/utils:MPPImageSegmenterResultHelpers",
     ],

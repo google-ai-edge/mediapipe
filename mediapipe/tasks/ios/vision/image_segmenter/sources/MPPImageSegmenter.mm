@@ -17,7 +17,7 @@
 #import "mediapipe/tasks/ios/common/utils/sources/MPPCommonUtils.h"
 #import "mediapipe/tasks/ios/common/utils/sources/NSString+Helpers.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
-#import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunnerRefactored.h"
+#import "mediapipe/tasks/ios/vision/core/sources/MPPVisionTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/image_segmenter/utils/sources/MPPImageSegmenterOptions+Helpers.h"
 #import "mediapipe/tasks/ios/vision/image_segmenter/utils/sources/MPPImageSegmenterResult+Helpers.h"
 
