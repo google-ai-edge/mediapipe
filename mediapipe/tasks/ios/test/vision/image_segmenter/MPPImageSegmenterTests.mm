@@ -13,563 +13,222 @@
 // limitations under the License.
 
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 #import <XCTest/XCTest.h>
 
-// #include "mediapipe/framework/formats/classification.pb.h"
-// #include "mediapipe/framework/formats/landmark.pb.h"
-// #include "mediapipe/framework/formats/matrix_data.pb.h"
-// #include "mediapipe/tasks/cc/vision/face_geometry/proto/face_geometry.pb.h"
-// #import "mediapipe/tasks/ios/common/sources/MPPCommon.h"
-// #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPClassificationResult+Helpers.h"
-// #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPDetection+Helpers.h"
-// #import "mediapipe/tasks/ios/components/containers/utils/sources/MPPLandmark+Helpers.h"
 #import "mediapipe/tasks/ios/test/vision/utils/sources/MPPImage+TestUtils.h"
-// #include "mediapipe/tasks/ios/test/vision/utils/sources/parse_proto_utils.h"
+#import "mediapipe/tasks/ios/test/vision/utils/sources/MPPMask+TestUtils.h"
 #import "mediapipe/tasks/ios/vision/image_segmenter/sources/MPPImageSegmenter.h"
 #import "mediapipe/tasks/ios/vision/image_segmenter/sources/MPPImageSegmenterResult.h"
 
-// using NormalizedLandmarkListProto = ::mediapipe::NormalizedLandmarkList;
-// using ClassificationListProto = ::mediapipe::ClassificationList;
-// using FaceGeometryProto = ::mediapipe::tasks::vision::face_geometry::proto::FaceGeometry;
-// using ::mediapipe::tasks::ios::test::vision::utils::get_proto_from_pbtxt;
-
-static NSString *const kPbFileExtension = @"pbtxt";
-
-typedef NSDictionary<NSString *, NSString *> ResourceFileInfo;
-
-// static ResourceFileInfo *const kPortraitImage =
-//     @{@"name" : @"portrait", @"type" : @"jpg", @"orientation" : @(UIImageOrientationUp)};
-// static ResourceFileInfo *const kPortraitRotatedImage =
-//     @{@"name" : @"portrait_rotated", @"type" : @"jpg", @"orientation" : @(UIImageOrientationRight)};
-static ResourceFileInfo *const kCatImage = @{@"name" : @"cat", @"type" : @"jpg"};
-// static ResourceFileInfo *const kPortraitExpectedLandmarksName =
-//     @{@"name" : @"portrait_expected_face_landmarks", @"type" : kPbFileExtension};
-// static ResourceFileInfo *const kPortraitExpectedBlendshapesName =
-//     @{@"name" : @"portrait_expected_blendshapes", @"type" : kPbFileExtension};
-// static ResourceFileInfo *const kPortraitExpectedGeometryName =
-//     @{@"name" : @"portrait_expected_face_geometry", @"type" : kPbFileExtension};
-static NSString *const kImageSegmenterModelName = @"deeplabv3";
-// static NSString *const kFaceLandmarkerWithBlendshapesModelName =
-//     @"face_landmarker_v2_with_blendshapes";
+static MPPFileInfo *const kCatImageFileInfo = [[MPPFileInfo alloc] initWithName:@"cat"
+                                                                      type:@"jpg"];
+static MPPFileInfo *const kCatGoldenImageFileInfo = [[MPPFileInfo alloc] initWithName:@"cat_mask"
+                                                                            type:@"jpg"];
+static MPPFileInfo *const kSegmentationImageFileInfo =
+    [[MPPFileInfo alloc] initWithName:@"segmentation_input_rotation0" type:@"jpg"];
+static MPPFileInfo *const kSegmentationGoldenImageFileInfo =
+    [[MPPFileInfo alloc] initWithName:@"segmentation_golden_rotation0" type:@"png"];
+static MPPFileInfo *const kImageSegmenterModel = [[MPPFileInfo alloc] initWithName:@"deeplabv3"
+                                                                         type:@"tflite"];
 static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
-static NSString *const kLiveStreamTestsDictFaceLandmarkerKey = @"image_segmenter";
-static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
+constexpr float kSimilarityThreshold = 0.96f;
+constexpr NSInteger kMagnificationFactor = 10;
 
-constexpr float kLandmarkErrorThreshold = 0.03f;
-constexpr float kBlendshapesErrorThreshold = 0.1f;
-constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
-
-#define AssertEqualErrors(error, expectedError)              \
-  XCTAssertNotNil(error);                                    \
-  XCTAssertEqualObjects(error.domain, expectedError.domain); \
-  XCTAssertEqual(error.code, expectedError.code);            \
-  XCTAssertEqualObjects(error.localizedDescription, expectedError.localizedDescription)
-
-@interface MPPImageSegmenterTests : XCTestCase <MPPImageSegmenterLiveStreamDelegate> {
-  NSDictionary *_liveStreamSucceedsTestDict;
-  NSDictionary *_outOfOrderTimestampTestDict;
+double sum(const float *mask, size_t size) {
+  double sum = 0.0;
+  for (int i = 0; i < size; i++) {
+    sum += mask[i];
+  }
+  return sum;
 }
+
+float *multiply(const float *mask1, const float *mask2, size_t size) {
+  double sum = 0.0;
+  float *multipliedMask = (float *)malloc(size * sizeof(float));
+  if (!multipliedMask) {
+    exit(-1);
+  }
+  for (int i = 0; i < size; i++) {
+    multipliedMask[i] = mask1[i] * mask2[i];
+  }
+
+  return multipliedMask;
+}
+
+double softIOU(const float *mask1, const float *mask2, size_t size) {
+  float *interSectionVector = multiply(mask1, mask2, size);
+  double interSectionSum = sum(interSectionVector, size);
+  free(interSectionVector);
+
+  float *m1m1Vector = multiply(mask1, mask1, size);
+  double m1m1 = sum(m1m1Vector, size);
+  free(m1m1Vector);
+
+  float *m2m2Vector = multiply(mask2, mask2, size);
+  double m2m2 = sum(m2m2Vector, size);
+  free(m2m2Vector);
+
+  double unionSum = m1m1 + m2m2 - interSectionSum;
+
+  return unionSum > 0.0 ? interSectionSum / unionSum : 0.0;
+}
+
+@interface MPPImageSegmenterTests : XCTestCase <MPPImageSegmenterLiveStreamDelegate> 
+
 @end
 
 @implementation MPPImageSegmenterTests
 
 #pragma mark General Tests
 
-- (MPPImage *)imageWithFileInfo:(ResourceFileInfo *)fileInfo {
-  UIImageOrientation orientation = (UIImageOrientation)[fileInfo[@"orientation"] intValue];
-  MPPImage *image = [MPPImage imageFromBundleWithClass:[MPPImageSegmenterTests class]
-                                              fileName:fileInfo[@"name"]
-                                                ofType:fileInfo[@"type"]
-                                           orientation:orientation];
-  XCTAssertNotNil(image);
-  return image;
+- (void)setUp {
+  // When expected and actual mask sizes are not equal, iterating through mask data results in a
+  // segmentation fault. Setting this property to `NO`, prevents each test case from executing the
+  // remaining flow after a failure. Since expected and actual mask sizes are compared before
+  // iterating through them, this prevents any illegal memory access.
+  self.continueAfterFailure = NO;
 }
 
-+ (NSString *)filePathWithName:(NSString *)fileName extension:(NSString *)extension {
++ (NSString *)filePathWithName : (NSString *)fileName extension : (NSString *)extension {
   NSString *filePath =
       [[NSBundle bundleForClass:[MPPImageSegmenterTests class]] pathForResource:fileName
                                                                          ofType:extension];
   return filePath;
 }
 
-// - (void)testCreateImageSegmenterWithMissingModelPathFails {
-//   NSString *modelPath = [MPPFaceLandmarkerTests filePathWithName:@"" extension:@""];
-
-//   NSError *error = nil;
-//   MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithModelPath:modelPath
-//                                                                              error:&error];
-//   XCTAssertNil(faceLandmarker);
-
-//   NSError *expectedError = [NSError
-//       errorWithDomain:kExpectedErrorDomain
-//                  code:MPPTasksErrorCodeInvalidArgumentError
-//              userInfo:@{
-//                NSLocalizedDescriptionKey :
-//                    @"INVALID_ARGUMENT: ExternalFile must specify at least one of 'file_content', "
-//                    @"'file_name', 'file_pointer_meta' or 'file_descriptor_meta'."
-//              }];
-//   AssertEqualErrors(error, expectedError);
-// }
-
 #pragma mark Image Mode Tests
 
-- (void)testDetectWithImageModeAndPotraitSucceeds {
-  NSString *modelPath = [MPPImageSegmenterTests filePathWithName:kImageSegmenterModelName
-                                                       extension:@"tflite"];
-  MPPImageSegmenter *imageSegmenter = [[MPPImageSegmenter alloc] initWithModelPath:modelPath
-                                                                             error:nil];
+- (void)testSegmentWithCategoryMaskSucceeds {
+  MPPImageSegmenterOptions *options =
+      [self imageSegmenterOptionsWithModelFileInfo:kImageSegmenterModel];
+  options.shouldOutputConfidenceMasks = NO;
+  options.shouldOutputCategoryMask = YES;
 
-  MPPImage *image = [self imageWithFileInfo:kCatImage];
-  MPPImageSegmenterResult *result = [imageSegmenter segmentImage:image error:nil];                                                                           
-  // NSArray<MPPNormalizedLandmark *> *expectedLandmarks =
-  //     [MPPFaceLandmarkerTests expectedLandmarksFromFileInfo:kPortraitExpectedLandmarksName];
-  // [self assertResultsOfDetectInImageWithFileInfo:kPortraitImage
-  //                            usingFaceLandmarker:faceLandmarker
-  //                      containsExpectedLandmarks:expectedLandmarks
-  //                            expectedBlendshapes:NULL
-  //                   expectedTransformationMatrix:NULL];
+  MPPImageSegmenter *imageSegmenter = [self createImageSegmenterWithOptionsSucceeds:options];
+
+  [self assertResultsOfSegmentImageWithFileInfo:kSegmentationImageFileInfo
+                                           usingImageSegmenter:imageSegmenter
+      approximatelyEqualsExpectedCategoryMaskImageWithFileInfo:kSegmentationGoldenImageFileInfo
+                                     shouldHaveConfidenceMasks:NO];
+}
+
+- (void)testSegmentWithConfidenceMaskSucceeds {
+  MPPImageSegmenterOptions *options =
+      [self imageSegmenterOptionsWithModelFileInfo:kImageSegmenterModel];
+
+  MPPImageSegmenter *imageSegmenter = [self createImageSegmenterWithOptionsSucceeds:options];
+
+  [self assertResultsOfSegmentImageWithFileInfo:kCatImageFileInfo
+                                             usingImageSegmenter:imageSegmenter
+      approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:kCatGoldenImageFileInfo
+                                                         atIndex:8
+                                          shouldHaveCategoryMask:NO];
+}
+
+#pragma mark - Image Segmenter Initializers
+
+- (MPPImageSegmenterOptions *)imageSegmenterOptionsWithModelFileInfo:(MPPFileInfo *)fileInfo {
+  MPPImageSegmenterOptions *options = [[MPPImageSegmenterOptions alloc] init];
+  options.baseOptions.modelAssetPath = fileInfo.path;
+  return options;
+}
+
+- (MPPImageSegmenter *)createImageSegmenterWithOptionsSucceeds:(MPPImageSegmenterOptions *)options {
+  NSError *error;
+  MPPImageSegmenter *imageSegmenter = [[MPPImageSegmenter alloc] initWithOptions:options
+                                                                           error:&error];
+  XCTAssertNotNil(imageSegmenter);
+  XCTAssertNil(error);
+
+  return imageSegmenter;
+}
+
+#pragma mark Assert Segmenter Results
+- (void)assertResultsOfSegmentImageWithFileInfo:(MPPFileInfo *)imageFileInfo
+                                         usingImageSegmenter:(MPPImageSegmenter *)imageSegmenter
+    approximatelyEqualsExpectedCategoryMaskImageWithFileInfo:
+        (MPPFileInfo *)expectedCategoryMaskFileInfo
+                                   shouldHaveConfidenceMasks:(BOOL)shouldHaveConfidenceMasks {
+  MPPImageSegmenterResult *result = [self segmentImageWithFileInfo:imageFileInfo
+                                               usingImageSegmenter:imageSegmenter];
+
+  XCTAssertNotNil(result.categoryMask);
+  shouldHaveConfidenceMasks ? XCTAssertNotNil(result.confidenceMasks)
+                            : XCTAssertNil(result.confidenceMasks);
+
+  [self assertCategoryMask:result.categoryMask
+      approximatelyEqualsExpectedCategoryMaskImageWithFileInfo:expectedCategoryMaskFileInfo];
+}
+
+- (void)assertResultsOfSegmentImageWithFileInfo:(MPPFileInfo *)imageFileInfo
+                                           usingImageSegmenter:(MPPImageSegmenter *)imageSegmenter
+    approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:
+        (MPPFileInfo *)expectedConfidenceMaskFileInfo
+                                                       atIndex:(NSInteger)index
+                                        shouldHaveCategoryMask:(BOOL)shouldHaveCategoryMask {
+  MPPImageSegmenterResult *result = [self segmentImageWithFileInfo:imageFileInfo
+                                               usingImageSegmenter:imageSegmenter];
+
+  XCTAssertNotNil(result.confidenceMasks);
+  shouldHaveCategoryMask ? XCTAssertNotNil(result.categoryMask) : XCTAssertNil(result.categoryMask);
+
+  XCTAssertLessThan(index, result.confidenceMasks.count);
+
+  [self assertConfidenceMask:result.confidenceMasks[index]
+      approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:expectedConfidenceMaskFileInfo];
+}
+
+- (MPPImageSegmenterResult *)segmentImageWithFileInfo:(MPPFileInfo *)fileInfo
+                                  usingImageSegmenter:(MPPImageSegmenter *)imageSegmenter {
+  MPPImage *image = [MPPImage imageWithFileInfo:fileInfo];
+  XCTAssertNotNil(image);
+
+  NSError *error;
+  MPPImageSegmenterResult *result = [imageSegmenter segmentImage:image error:&error];
+  XCTAssertNil(error);
+  XCTAssertNotNil(result);
+
+  return result;
+}
+
+- (void)assertCategoryMask:(MPPMask *)categoryMask
+    approximatelyEqualsExpectedCategoryMaskImageWithFileInfo:
+        (MPPFileInfo *)expectedCategoryMaskImageFileInfo {
+  MPPMask *expectedCategoryMask =
+      [[MPPMask alloc] initWithImageFileInfo:expectedCategoryMaskImageFileInfo];
+
+  XCTAssertEqual(categoryMask.width, expectedCategoryMask.width);
+  XCTAssertEqual(categoryMask.height, expectedCategoryMask.height);
+
+  size_t maskSize = categoryMask.width * categoryMask.height;
+
+  const UInt8 *categoryMaskPixelData = categoryMask.uint8Data;
+  const UInt8 *expectedCategoryMaskPixelData = expectedCategoryMask.uint8Data;
+
+  NSInteger consistentPixels = 0;
+
+  for (int i = 0; i < maskSize; i++) {
+    consistentPixels +=
+        categoryMaskPixelData[i] * kMagnificationFactor == expectedCategoryMaskPixelData[i] ? 1 : 0;
+  }
+
+  XCTAssertGreaterThan((float)consistentPixels / (float)maskSize, kSimilarityThreshold);
+}
+
+- (void)assertConfidenceMask:(MPPMask *)confidenceMask
+    approximatelyEqualsExpectedConfidenceMaskImageWithFileInfo:
+        (MPPFileInfo *)expectedConfidenceMaskImageFileInfo {
+  MPPMask *expectedConfidenceMask =
+      [[MPPMask alloc] initWithImageFileInfo:expectedConfidenceMaskImageFileInfo];
+
+  XCTAssertEqual(confidenceMask.width, expectedConfidenceMask.width);
+  XCTAssertEqual(confidenceMask.height, expectedConfidenceMask.height);
+
+  size_t maskSize = confidenceMask.width * confidenceMask.height;
+
+  XCTAssertGreaterThan(
+      softIOU(confidenceMask.float32Data, expectedConfidenceMask.float32Data, maskSize),
+      kSimilarityThreshold);
 }
 
 @end
-
-// - (void)testDetectWithImageModeAndPotraitAndFacialTransformationMatrixesSucceeds {
-//   MPPFaceLandmarkerOptions *options =
-//       [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
-//   options.outputFacialTransformationMatrixes = YES;
-//   MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithOptions:options error:nil];
-
-//   NSArray<MPPNormalizedLandmark *> *expectedLandmarks =
-//       [MPPFaceLandmarkerTests expectedLandmarksFromFileInfo:kPortraitExpectedLandmarksName];
-//   MPPTransformMatrix *expectedTransformationMatrix = [MPPFaceLandmarkerTests
-//       expectedTransformationMatrixFromFileInfo:kPortraitExpectedGeometryName];
-//   [self assertResultsOfDetectInImageWithFileInfo:kPortraitImage
-//                              usingFaceLandmarker:faceLandmarker
-//                        containsExpectedLandmarks:expectedLandmarks
-//                              expectedBlendshapes:NULL
-//                     expectedTransformationMatrix:expectedTransformationMatrix];
-// }
-
-// - (void)testDetectWithImageModeAndNoFaceSucceeds {
-//   NSString *modelPath = [MPPFaceLandmarkerTests filePathWithName:kFaceLandmarkerModelName
-//                                                        extension:@"task"];
-//   MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithModelPath:modelPath
-//                                                                              error:nil];
-//   XCTAssertNotNil(faceLandmarker);
-
-//   NSError *error;
-//   MPPImage *mppImage = [self imageWithFileInfo:kCatImage];
-//   MPPFaceLandmarkerResult *faceLandmarkerResult = [faceLandmarker detectInImage:mppImage
-//                                                                           error:&error];
-//   XCTAssertNil(error);
-//   XCTAssertNotNil(faceLandmarkerResult);
-//   XCTAssertEqualObjects(faceLandmarkerResult.faceLandmarks, [NSArray array]);
-//   XCTAssertEqualObjects(faceLandmarkerResult.faceBlendshapes, [NSArray array]);
-//   XCTAssertEqualObjects(faceLandmarkerResult.facialTransformationMatrixes, [NSArray array]);
-// }
-
-// #pragma mark Video Mode Tests
-
-// - (void)testDetectWithVideoModeAndPotraitSucceeds {
-//   MPPFaceLandmarkerOptions *options =
-//       [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
-//   options.runningMode = MPPRunningModeVideo;
-//   MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithOptions:options error:nil];
-
-//   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
-//   NSArray<MPPNormalizedLandmark *> *expectedLandmarks =
-//       [MPPFaceLandmarkerTests expectedLandmarksFromFileInfo:kPortraitExpectedLandmarksName];
-//   for (int i = 0; i < 3; i++) {
-//     MPPFaceLandmarkerResult *faceLandmarkerResult = [faceLandmarker detectInVideoFrame:image
-//                                                                timestampInMilliseconds:i
-//                                                                                  error:nil];
-//     [self assertFaceLandmarkerResult:faceLandmarkerResult
-//            containsExpectedLandmarks:expectedLandmarks
-//                  expectedBlendshapes:NULL
-//         expectedTransformationMatrix:NULL];
-//   }
-// }
-
-// #pragma mark Live Stream Mode Tests
-
-// - (void)testDetectWithLiveStreamModeAndPotraitSucceeds {
-//   NSInteger iterationCount = 100;
-
-//   // Because of flow limiting, the callback might be invoked fewer than `iterationCount` times. An
-//   // normal expectation will fail if expectation.fulfill() is not called
-//   // `expectation.expectedFulfillmentCount` times. If `expectation.isInverted = true`, the test will
-//   // only succeed if expectation is not fulfilled for the specified `expectedFulfillmentCount`.
-//   // Since it is not possible to predict how many times the expectation is supposed to be
-//   // fulfilled, `expectation.expectedFulfillmentCount` = `iterationCount` + 1 and
-//   // `expectation.isInverted = true` ensures that test succeeds if expectation is fulfilled <=
-//   // `iterationCount` times.
-//   XCTestExpectation *expectation = [[XCTestExpectation alloc]
-//       initWithDescription:@"detectWithOutOfOrderTimestampsAndLiveStream"];
-//   expectation.expectedFulfillmentCount = iterationCount + 1;
-//   expectation.inverted = YES;
-
-//   MPPFaceLandmarkerOptions *options =
-//       [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
-//   options.runningMode = MPPRunningModeLiveStream;
-//   options.faceLandmarkerLiveStreamDelegate = self;
-
-//   MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithOptions:options error:nil];
-//   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
-
-//   _liveStreamSucceedsTestDict = @{
-//     kLiveStreamTestsDictFaceLandmarkerKey : faceLandmarker,
-//     kLiveStreamTestsDictExpectationKey : expectation
-//   };
-
-//   for (int i = 0; i < iterationCount; i++) {
-//     XCTAssertTrue([faceLandmarker detectAsyncInImage:image timestampInMilliseconds:i error:nil]);
-//   }
-
-//   NSTimeInterval timeout = 0.5f;
-//   [self waitForExpectations:@[ expectation ] timeout:timeout];
-// }
-
-// - (void)testDetectWithOutOfOrderTimestampsAndLiveStreamModeFails {
-//   MPPFaceLandmarkerOptions *options =
-//       [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
-//   options.runningMode = MPPRunningModeLiveStream;
-//   options.faceLandmarkerLiveStreamDelegate = self;
-
-//   XCTestExpectation *expectation = [[XCTestExpectation alloc]
-//       initWithDescription:@"detectWithOutOfOrderTimestampsAndLiveStream"];
-//   expectation.expectedFulfillmentCount = 1;
-
-//   MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithOptions:options error:nil];
-//   _liveStreamSucceedsTestDict = @{
-//     kLiveStreamTestsDictFaceLandmarkerKey : faceLandmarker,
-//     kLiveStreamTestsDictExpectationKey : expectation
-//   };
-
-//   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
-//   XCTAssertTrue([faceLandmarker detectAsyncInImage:image timestampInMilliseconds:1 error:nil]);
-
-//   NSError *error;
-//   XCTAssertFalse([faceLandmarker detectAsyncInImage:image timestampInMilliseconds:0 error:&error]);
-
-//   NSError *expectedError =
-//       [NSError errorWithDomain:kExpectedErrorDomain
-//                           code:MPPTasksErrorCodeInvalidArgumentError
-//                       userInfo:@{
-//                         NSLocalizedDescriptionKey :
-//                             @"INVALID_ARGUMENT: Input timestamp must be monotonically increasing."
-//                       }];
-//   AssertEqualErrors(error, expectedError);
-
-//   NSTimeInterval timeout = 0.5f;
-//   [self waitForExpectations:@[ expectation ] timeout:timeout];
-// }
-
-// #pragma mark Running Mode Tests
-
-// - (void)testCreateFaceLandmarkerFailsWithDelegateInNonLiveStreamMode {
-//   MPPRunningMode runningModesToTest[] = {MPPRunningModeImage, MPPRunningModeVideo};
-//   for (int i = 0; i < sizeof(runningModesToTest) / sizeof(runningModesToTest[0]); i++) {
-//     MPPFaceLandmarkerOptions *options =
-//         [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
-
-//     options.runningMode = runningModesToTest[i];
-//     options.faceLandmarkerLiveStreamDelegate = self;
-
-//     [self
-//         assertCreateFaceLandmarkerWithOptions:options
-//                        failsWithExpectedError:
-//                            [NSError errorWithDomain:kExpectedErrorDomain
-//                                                code:MPPTasksErrorCodeInvalidArgumentError
-//                                            userInfo:@{
-//                                              NSLocalizedDescriptionKey :
-//                                                  @"The vision task is in image or video mode. The "
-//                                                  @"delegate must not be set in the task's options."
-//                                            }]];
-//   }
-// }
-
-// - (void)testCreateFaceLandmarkerFailsWithMissingDelegateInLiveStreamMode {
-//   MPPFaceLandmarkerOptions *options =
-//       [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
-//   options.runningMode = MPPRunningModeLiveStream;
-
-//   [self assertCreateFaceLandmarkerWithOptions:options
-//                        failsWithExpectedError:
-//                            [NSError errorWithDomain:kExpectedErrorDomain
-//                                                code:MPPTasksErrorCodeInvalidArgumentError
-//                                            userInfo:@{
-//                                              NSLocalizedDescriptionKey :
-//                                                  @"The vision task is in live stream mode. An "
-//                                                  @"object must be set as the delegate of the task "
-//                                                  @"in its options to ensure asynchronous delivery "
-//                                                  @"of results."
-//                                            }]];
-// }
-
-// - (void)testDetectFailsWithCallingWrongAPIInImageMode {
-//   MPPFaceLandmarkerOptions *options =
-//       [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
-//   MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithOptions:options error:nil];
-
-//   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
-
-//   NSError *liveStreamAPICallError;
-//   XCTAssertFalse([faceLandmarker detectAsyncInImage:image
-//                             timestampInMilliseconds:0
-//                                               error:&liveStreamAPICallError]);
-
-//   NSError *expectedLiveStreamAPICallError =
-//       [NSError errorWithDomain:kExpectedErrorDomain
-//                           code:MPPTasksErrorCodeInvalidArgumentError
-//                       userInfo:@{
-//                         NSLocalizedDescriptionKey : @"The vision task is not initialized with live "
-//                                                     @"stream mode. Current Running Mode: Image"
-//                       }];
-//   AssertEqualErrors(liveStreamAPICallError, expectedLiveStreamAPICallError);
-
-//   NSError *videoAPICallError;
-//   XCTAssertFalse([faceLandmarker detectInVideoFrame:image
-//                             timestampInMilliseconds:0
-//                                               error:&videoAPICallError]);
-
-//   NSError *expectedVideoAPICallError =
-//       [NSError errorWithDomain:kExpectedErrorDomain
-//                           code:MPPTasksErrorCodeInvalidArgumentError
-//                       userInfo:@{
-//                         NSLocalizedDescriptionKey : @"The vision task is not initialized with "
-//                                                     @"video mode. Current Running Mode: Image"
-//                       }];
-//   AssertEqualErrors(videoAPICallError, expectedVideoAPICallError);
-// }
-
-// - (void)testDetectFailsWithCallingWrongAPIInVideoMode {
-//   MPPFaceLandmarkerOptions *options =
-//       [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
-//   options.runningMode = MPPRunningModeVideo;
-
-//   MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithOptions:options error:nil];
-
-//   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
-//   NSError *liveStreamAPICallError;
-//   XCTAssertFalse([faceLandmarker detectAsyncInImage:image
-//                             timestampInMilliseconds:0
-//                                               error:&liveStreamAPICallError]);
-
-//   NSError *expectedLiveStreamAPICallError =
-//       [NSError errorWithDomain:kExpectedErrorDomain
-//                           code:MPPTasksErrorCodeInvalidArgumentError
-//                       userInfo:@{
-//                         NSLocalizedDescriptionKey : @"The vision task is not initialized with live "
-//                                                     @"stream mode. Current Running Mode: Video"
-//                       }];
-//   AssertEqualErrors(liveStreamAPICallError, expectedLiveStreamAPICallError);
-
-//   NSError *imageAPICallError;
-//   XCTAssertFalse([faceLandmarker detectInImage:image error:&imageAPICallError]);
-
-//   NSError *expectedImageAPICallError =
-//       [NSError errorWithDomain:kExpectedErrorDomain
-//                           code:MPPTasksErrorCodeInvalidArgumentError
-//                       userInfo:@{
-//                         NSLocalizedDescriptionKey : @"The vision task is not initialized with "
-//                                                     @"image mode. Current Running Mode: Video"
-//                       }];
-//   AssertEqualErrors(imageAPICallError, expectedImageAPICallError);
-// }
-
-// - (void)testDetectFailsWithCallingWrongAPIInLiveStreamMode {
-//   MPPFaceLandmarkerOptions *options =
-//       [self faceLandmarkerOptionsWithModelName:kFaceLandmarkerModelName];
-//   options.runningMode = MPPRunningModeLiveStream;
-//   options.faceLandmarkerLiveStreamDelegate = self;
-//   MPPFaceLandmarker *faceLandmarker = [[MPPFaceLandmarker alloc] initWithOptions:options error:nil];
-
-//   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
-
-//   NSError *imageAPICallError;
-//   XCTAssertFalse([faceLandmarker detectInImage:image error:&imageAPICallError]);
-
-//   NSError *expectedImageAPICallError =
-//       [NSError errorWithDomain:kExpectedErrorDomain
-//                           code:MPPTasksErrorCodeInvalidArgumentError
-//                       userInfo:@{
-//                         NSLocalizedDescriptionKey : @"The vision task is not initialized with "
-//                                                     @"image mode. Current Running Mode: Live Stream"
-//                       }];
-//   AssertEqualErrors(imageAPICallError, expectedImageAPICallError);
-
-//   NSError *videoAPICallError;
-//   XCTAssertFalse([faceLandmarker detectInVideoFrame:image
-//                             timestampInMilliseconds:0
-//                                               error:&videoAPICallError]);
-
-//   NSError *expectedVideoAPICallError =
-//       [NSError errorWithDomain:kExpectedErrorDomain
-//                           code:MPPTasksErrorCodeInvalidArgumentError
-//                       userInfo:@{
-//                         NSLocalizedDescriptionKey : @"The vision task is not initialized with "
-//                                                     @"video mode. Current Running Mode: Live Stream"
-//                       }];
-//   AssertEqualErrors(videoAPICallError, expectedVideoAPICallError);
-// }
-
-// #pragma mark MPPFaceLandmarkerLiveStreamDelegate Methods
-// - (void)faceLandmarker:(MPPFaceLandmarker *)faceLandmarker
-//     didFinishDetectionWithResult:(MPPFaceLandmarkerResult *)faceLandmarkerResult
-//          timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-//                            error:(NSError *)error {
-//   NSArray<MPPNormalizedLandmark *> *expectedLandmarks =
-//       [MPPFaceLandmarkerTests expectedLandmarksFromFileInfo:kPortraitExpectedLandmarksName];
-//   [self assertFaceLandmarkerResult:faceLandmarkerResult
-//          containsExpectedLandmarks:expectedLandmarks
-//                expectedBlendshapes:NULL
-//       expectedTransformationMatrix:NULL];
-
-//   if (faceLandmarker == _outOfOrderTimestampTestDict[kLiveStreamTestsDictFaceLandmarkerKey]) {
-//     [_outOfOrderTimestampTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
-//   } else if (faceLandmarker == _liveStreamSucceedsTestDict[kLiveStreamTestsDictFaceLandmarkerKey]) {
-//     [_liveStreamSucceedsTestDict[kLiveStreamTestsDictExpectationKey] fulfill];
-//   }
-// }
-
-// + (NSString *)filePathWithName:(NSString *)fileName extension:(NSString *)extension {
-//   NSString *filePath =
-//       [[NSBundle bundleForClass:[MPPFaceLandmarkerTests class]] pathForResource:fileName
-//                                                                          ofType:extension];
-//   return filePath;
-// }
-
-// + (NSArray<MPPNormalizedLandmark *> *)expectedLandmarksFromFileInfo:(NSDictionary *)fileInfo {
-//   NSString *filePath = [self filePathWithName:fileInfo[@"name"] extension:fileInfo[@"type"]];
-//   NormalizedLandmarkListProto proto;
-//   if (!get_proto_from_pbtxt([filePath UTF8String], proto).ok()) {
-//     return nil;
-//   }
-//   NSMutableArray<MPPNormalizedLandmark *> *landmarks =
-//       [NSMutableArray arrayWithCapacity:(NSUInteger)proto.landmark_size()];
-//   for (const auto &landmarkProto : proto.landmark()) {
-//     [landmarks addObject:[MPPNormalizedLandmark normalizedLandmarkWithProto:landmarkProto]];
-//   }
-//   return landmarks;
-// }
-
-// + (MPPClassifications *)expectedBlendshapesFromFileInfo:(NSDictionary *)fileInfo {
-//   NSString *filePath = [self filePathWithName:fileInfo[@"name"] extension:fileInfo[@"type"]];
-//   ClassificationListProto proto;
-//   if (!get_proto_from_pbtxt([filePath UTF8String], proto).ok()) {
-//     return nil;
-//   }
-//   return [MPPClassifications classificationsWithClassificationListProto:proto
-//                                                               headIndex:0
-//                                                                headName:[NSString string]];
-// }
-
-// + (MPPTransformMatrix *)expectedTransformationMatrixFromFileInfo:(NSDictionary *)fileInfo {
-//   NSString *filePath = [self filePathWithName:fileInfo[@"name"] extension:fileInfo[@"type"]];
-//   FaceGeometryProto proto;
-//   if (!get_proto_from_pbtxt([filePath UTF8String], proto).ok()) {
-//     return nil;
-//   }
-//   return [[MPPTransformMatrix alloc] initWithData:proto.pose_transform_matrix().packed_data().data()
-//                                              rows:proto.pose_transform_matrix().rows()
-//                                           columns:proto.pose_transform_matrix().cols()];
-// }
-
-// - (void)assertFaceLandmarkerResult:(MPPFaceLandmarkerResult *)faceLandmarkerResult
-//          containsExpectedLandmarks:(NSArray<MPPNormalizedLandmark *> *)expectedLandmarks
-//                expectedBlendshapes:(nullable MPPClassifications *)expectedBlendshapes
-//       expectedTransformationMatrix:(nullable MPPTransformMatrix *)expectedTransformationMatrix {
-//   NSArray<MPPNormalizedLandmark *> *landmarks = faceLandmarkerResult.faceLandmarks[0];
-//   XCTAssertEqual(landmarks.count, expectedLandmarks.count);
-//   for (int i = 0; i < landmarks.count; ++i) {
-//     XCTAssertEqualWithAccuracy(landmarks[i].x, expectedLandmarks[i].x, kLandmarkErrorThreshold,
-//                                @"index i = %d", i);
-//     XCTAssertEqualWithAccuracy(landmarks[i].y, expectedLandmarks[i].y, kLandmarkErrorThreshold,
-//                                @"index i = %d", i);
-//   }
-
-//   if (expectedBlendshapes == NULL) {
-//     XCTAssertEqualObjects(faceLandmarkerResult.faceBlendshapes, [NSArray array]);
-//   } else {
-//     MPPClassifications *blendshapes = faceLandmarkerResult.faceBlendshapes[0];
-//     NSArray<MPPCategory *> *actualCategories = blendshapes.categories;
-//     NSArray<MPPCategory *> *expectedCategories = expectedBlendshapes.categories;
-//     XCTAssertEqual(actualCategories.count, expectedCategories.count);
-//     for (int i = 0; i < actualCategories.count; ++i) {
-//       XCTAssertEqual(actualCategories[i].index, expectedCategories[i].index, @"index i = %d", i);
-//       XCTAssertEqualWithAccuracy(actualCategories[i].score, expectedCategories[i].score,
-//                                  kBlendshapesErrorThreshold, @"index i = %d", i);
-//       XCTAssertEqualObjects(actualCategories[i].categoryName, expectedCategories[i].categoryName,
-//                             @"index i = %d", i);
-//       XCTAssertEqualObjects(actualCategories[i].displayName, expectedCategories[i].displayName,
-//                             @"index i = %d", i);
-//     }
-//   }
-
-//   if (expectedTransformationMatrix == NULL) {
-//     XCTAssertEqualObjects(faceLandmarkerResult.facialTransformationMatrixes, [NSArray array]);
-//   } else {
-//     MPPTransformMatrix *actualTransformationMatrix =
-//         faceLandmarkerResult.facialTransformationMatrixes[0];
-//     XCTAssertEqual(actualTransformationMatrix.rows, expectedTransformationMatrix.rows);
-//     XCTAssertEqual(actualTransformationMatrix.columns, expectedTransformationMatrix.columns);
-//     for (int i = 0; i < actualTransformationMatrix.rows * actualTransformationMatrix.columns; ++i) {
-//       XCTAssertEqualWithAccuracy(actualTransformationMatrix.data[i],
-//                                  expectedTransformationMatrix.data[i],
-//                                  kFacialTransformationMatrixErrorThreshold, @"index i = %d", i);
-//     }
-//   }
-// }
-
-// #pragma mark Face Landmarker Initializers
-
-// - (MPPFaceLandmarkerOptions *)faceLandmarkerOptionsWithModelName:(NSString *)modelName {
-//   NSString *modelPath = [MPPFaceLandmarkerTests filePathWithName:modelName extension:@"task"];
-//   MPPFaceLandmarkerOptions *faceLandmarkerOptions = [[MPPFaceLandmarkerOptions alloc] init];
-//   faceLandmarkerOptions.baseOptions.modelAssetPath = modelPath;
-//   return faceLandmarkerOptions;
-// }
-
-// - (void)assertCreateFaceLandmarkerWithOptions:(MPPFaceLandmarkerOptions *)faceLandmarkerOptions
-//                        failsWithExpectedError:(NSError *)expectedError {
-//   NSError *error = nil;
-//   MPPFaceLandmarker *faceLandmarker =
-//       [[MPPFaceLandmarker alloc] initWithOptions:faceLandmarkerOptions error:&error];
-//   XCTAssertNil(faceLandmarker);
-//   AssertEqualErrors(error, expectedError);
-// }
-
-// #pragma mark Assert Detection Results
-
-// - (MPPImage *)imageWithFileInfo:(ResourceFileInfo *)fileInfo {
-//   UIImageOrientation orientation = (UIImageOrientation)[fileInfo[@"orientation"] intValue];
-//   MPPImage *image = [MPPImage imageFromBundleWithClass:[MPPFaceLandmarkerTests class]
-//                                               fileName:fileInfo[@"name"]
-//                                                 ofType:fileInfo[@"type"]
-//                                            orientation:orientation];
-//   XCTAssertNotNil(image);
-//   return image;
-// }
-
-// - (void)assertResultsOfDetectInImageWithFileInfo:(ResourceFileInfo *)fileInfo
-//                              usingFaceLandmarker:(MPPFaceLandmarker *)faceLandmarker
-//                        containsExpectedLandmarks:
-//                            (NSArray<MPPNormalizedLandmark *> *)expectedLandmarks
-//                              expectedBlendshapes:(nullable MPPClassifications *)expectedBlendshapes
-//                     expectedTransformationMatrix:
-//                         (nullable MPPTransformMatrix *)expectedTransformationMatrix {
-//   MPPImage *mppImage = [self imageWithFileInfo:fileInfo];
-
-//   NSError *error;
-//   MPPFaceLandmarkerResult *faceLandmarkerResult = [faceLandmarker detectInImage:mppImage
-//                                                                           error:&error];
-//   XCTAssertNil(error);
-//   XCTAssertNotNil(faceLandmarkerResult);
-
-//   [self assertFaceLandmarkerResult:faceLandmarkerResult
-//          containsExpectedLandmarks:expectedLandmarks
-//                expectedBlendshapes:expectedBlendshapes
-//       expectedTransformationMatrix:expectedTransformationMatrix];
-// }
-
-// @end
