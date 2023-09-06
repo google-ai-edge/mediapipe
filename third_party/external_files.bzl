@@ -665,6 +665,18 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_male_full_height_hands_jpg",
+        sha256 = "8a7fe5be8b90d6078b09913ca28f7e5d342f8d3cde856ab4e3327d2970b887f8",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/male_full_height_hands.jpg?generation=1692651585540897"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_male_full_height_hands_result_cpu_pbtxt",
+        sha256 = "f7bea74f60386baa05716341844876c89f43aaee64c110d259a824c4696ed451",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/male_full_height_hands_result_cpu.pbtxt?generation=1692651587930202"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_libimagegenerator_gpu_so",
         sha256 = "cbbe1c11a2ec3809241646e222fd672473c19911eaa76faf6178c960d0de8583",
         urls = ["https://storage.googleapis.com/mediapipe-assets/libimagegenerator_gpu.so?generation=1693610187480136"],
