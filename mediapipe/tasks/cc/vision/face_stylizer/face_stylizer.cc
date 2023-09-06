@@ -60,7 +60,7 @@ using FaceStylizerGraphOptionsProto =
 // "mediapipe.tasks.vision.face_stylizer.FaceStylizerGraph".
 CalculatorGraphConfig CreateGraphConfig(
     std::unique_ptr<FaceStylizerGraphOptionsProto> options,
-    bool enable_flow_limiting) {
+    bool enable_flow_limiting = false) {
   api2::builder::Graph graph;
   auto& task_subgraph = graph.AddNode(kSubgraphTypeName);
   task_subgraph.GetOptions<FaceStylizerGraphOptionsProto>().Swap(options.get());
@@ -87,8 +87,6 @@ ConvertFaceStylizerOptionsToProto(FaceStylizerOptions* options) {
   auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
       tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
-  options_proto->mutable_base_options()->set_use_stream_mode(
-      options->running_mode != core::RunningMode::IMAGE);
   return options_proto;
 }
 
@@ -125,10 +123,8 @@ absl::StatusOr<std::unique_ptr<FaceStylizer>> FaceStylizer::Create(
   }
   return core::VisionTaskApiFactory::Create<FaceStylizer,
                                             FaceStylizerGraphOptionsProto>(
-      CreateGraphConfig(
-          std::move(options_proto),
-          options->running_mode == core::RunningMode::LIVE_STREAM),
-      std::move(options->base_options.op_resolver), options->running_mode,
+      CreateGraphConfig(std::move(options_proto)),
+      std::move(options->base_options.op_resolver), core::RunningMode::IMAGE,
       std::move(packets_callback));
 }
 

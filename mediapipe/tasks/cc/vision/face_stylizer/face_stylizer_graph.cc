@@ -108,8 +108,6 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   face_detector_graph_options->mutable_base_options()
       ->mutable_acceleration()
       ->CopyFrom(options->base_options().acceleration());
-  face_detector_graph_options->mutable_base_options()->set_use_stream_mode(
-      options->base_options().use_stream_mode());
   auto* face_landmarks_detector_graph_options =
       options->mutable_face_landmarker_graph_options()
           ->mutable_face_landmarks_detector_graph_options();

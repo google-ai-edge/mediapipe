@@ -41,15 +41,6 @@ struct FaceStylizerOptions {
   // file with metadata, accelerator options, op resolver, etc.
   tasks::core::BaseOptions base_options;
 
-  // The running mode of the task. Default to the image mode.
-  // Face stylizer has three running modes:
-  // 1) The image mode for stylizing faces on single image inputs.
-  // 2) The video mode for stylizing faces on the decoded frames of a video.
-  // 3) The live stream mode for stylizing faces on the live stream of input
-  // data, such as from camera. In this mode, the "result_callback" below must
-  // be specified to receive the stylization results asynchronously.
-  core::RunningMode running_mode = core::RunningMode::IMAGE;
-
   // The user-defined result callback for processing live stream data.
   // The result callback should only be specified when the running mode is set
   // to RunningMode::LIVE_STREAM.
