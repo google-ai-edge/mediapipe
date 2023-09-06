@@ -14,6 +14,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "mediapipe/tasks/ios/test/utils/sources/MPPFileInfo.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -23,6 +24,34 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @interface MPPImage (TestUtils)
 
+/**
+ * Loads an image from a file in an app bundle into a `MPPImage` object.
+ *
+ * @param fileInfo The file info specifying the name and extension of the image
+ * file in the bundle.
+ *
+ * @return The `MPPImage` object contains the loaded image. This method returns
+ * nil if it cannot load the image.
+ */
++ (MPPImage *)imageWithFileInfo:(MPPFileInfo *)fileInfo;
+
+NS_SWIFT_NAME(image(withFileInfo:));
+
+/**
+ * Loads an image from a file in an app bundle into a `MPPImage` object with the specified
+ * orientation.
+ *
+ * @param fileInfo The file info specifying the name and extension of the image
+ * file in the bundle.
+ *
+ * @return The `MPPImage` object contains the loaded image. This method returns
+ * nil if it cannot load the image.
+ */
++ (MPPImage *)imageWithFileInfo:(MPPFileInfo *)fileInfo
+                    orientation:(UIImageOrientation)orientation
+    NS_SWIFT_NAME(image(withFileInfo:orientation:));
+
+// TODO: Remove after all tests are migrated
 /**
  * Loads an image from a file in an app bundle into a `MPPImage` object.
  *
@@ -39,6 +68,7 @@ NS_ASSUME_NONNULL_BEGIN
                                          ofType:(NSString *)type
     NS_SWIFT_NAME(imageFromBundle(class:filename:type:));
 
+// TODO: Remove after all tests are migrated
 /**
  * Loads an image from a file in an app bundle into a `MPPImage` object with the specified
  * orientation.
