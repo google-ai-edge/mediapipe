@@ -137,7 +137,7 @@ export class MPMask {
    * Returns the texture format used for writing float textures on this
    * platform.
    */
-  getTexImage2DFormat(): GLenum {
+  private getTexImage2DFormat(): GLenum {
     const gl = this.getGL();
     if (!MPMask.texImage2DFormat) {
       // Note: This is the same check we use in
