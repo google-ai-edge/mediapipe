@@ -173,7 +173,7 @@ bool GlTextureBuffer::CreateInternal(const void* data, int alignment) {
       // normal single-context behavior. E.g. if you do bind, delete, render,
       // unbind, the object is not deleted until the unbind, and it waits for
       // the render to finish.
-      DLOG_IF(ERROR, !glIsTexture(name_to_delete))
+      ABSL_DLOG_IF(ERROR, !glIsTexture(name_to_delete))
           << "Deleting invalid texture id: " << name_to_delete;
       glDeleteTextures(1, &name_to_delete);
     });

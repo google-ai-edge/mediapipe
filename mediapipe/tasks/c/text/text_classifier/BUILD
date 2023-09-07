@@ -26,5 +26,6 @@ cc_library(
         "//mediapipe/tasks/c/components/processors:classifier_options",
         "//mediapipe/tasks/c/core:base_options",
         "//mediapipe/tasks/cc/text/text_classifier",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )

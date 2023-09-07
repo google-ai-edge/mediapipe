@@ -20,8 +20,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
-#include "absl/log/check.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
@@ -67,7 +67,7 @@ std::string AddLineNumbers(const GLchar* source) {
   std::string format = absl::StrFormat(
       "%%%ii %%s", static_cast<int>(ceilf(log10(1 + lines.size()))));
   auto parsed_format = absl::ParsedFormat<'i', 's'>::New(format);
-  CHECK(parsed_format);
+  ABSL_CHECK(parsed_format);
   for (int n = 0; n < lines.size(); n++) {
     lines[n] = absl::StrFormat(*parsed_format, n + 1, lines[n]);
   }

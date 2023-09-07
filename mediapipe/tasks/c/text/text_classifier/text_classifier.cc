@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <memory>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/tasks/c/components/containers/classification_result.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
@@ -44,7 +45,8 @@ TextClassifier* CppTextClassifierCreate(TextClassifierOptions options) {
 
   auto classifier = TextClassifier::Create(std::move(cpp_options));
   if (!classifier.ok()) {
-    LOG(ERROR) << "Failed to create TextClassifier: " << classifier.status();
+    ABSL_LOG(ERROR) << "Failed to create TextClassifier: "
+                    << classifier.status();
     return nullptr;
   }
   return classifier->release();
@@ -55,7 +57,7 @@ bool CppTextClassifierClassify(void* classifier, char* utf8_str,
   auto cpp_classifier = static_cast<TextClassifier*>(classifier);
   auto cpp_result = cpp_classifier->Classify(utf8_str);
   if (!cpp_result.ok()) {
-    LOG(ERROR) << "Classification failed: " << cpp_result.status();
+    ABSL_LOG(ERROR) << "Classification failed: " << cpp_result.status();
     return false;
   }
   CppConvertToClassificationResult(*cpp_result, result);
@@ -66,7 +68,7 @@ void CppTextClassifierClose(void* classifier) {
   auto cpp_classifier = static_cast<TextClassifier*>(classifier);
   auto result = cpp_classifier->Close();
   if (!result.ok()) {
-    LOG(ERROR) << "Failed to close TextClassifier: " << result;
+    ABSL_LOG(ERROR) << "Failed to close TextClassifier: " << result;
   }
   delete cpp_classifier;
 }
