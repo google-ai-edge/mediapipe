@@ -150,52 +150,6 @@ absl::StatusOr<std::optional<Image>> FaceStylizer::Stylize(
                    output_packets[kStylizedImageName].Get<Image>());
 }
 
-absl::StatusOr<std::optional<Image>> FaceStylizer::StylizeForVideo(
-    mediapipe::Image image, int64_t timestamp_ms,
-    std::optional<core::ImageProcessingOptions> image_processing_options) {
-  if (image.UsesGpu()) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        absl::StrCat("GPU input images are currently not supported."),
-        MediaPipeTasksStatus::kRunnerUnexpectedInputError);
-  }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image));
-  ASSIGN_OR_RETURN(
-      auto output_packets,
-      ProcessVideoData(
-          {{kImageInStreamName,
-            MakePacket<Image>(std::move(image))
-                .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
-           {kNormRectName,
-            MakePacket<NormalizedRect>(std::move(norm_rect))
-                .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
-  return output_packets[kStylizedImageName].IsEmpty()
-             ? std::nullopt
-             : std::optional<Image>(
-                   output_packets[kStylizedImageName].Get<Image>());
-}
-
-absl::Status FaceStylizer::StylizeAsync(
-    Image image, int64_t timestamp_ms,
-    std::optional<core::ImageProcessingOptions> image_processing_options) {
-  if (image.UsesGpu()) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        absl::StrCat("GPU input images are currently not supported."),
-        MediaPipeTasksStatus::kRunnerUnexpectedInputError);
-  }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image));
-  return SendLiveStreamData(
-      {{kImageInStreamName,
-        MakePacket<Image>(std::move(image))
-            .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
-       {kNormRectName,
-        MakePacket<NormalizedRect>(std::move(norm_rect))
-            .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
-}
-
 }  // namespace face_stylizer
 }  // namespace vision
 }  // namespace tasks
