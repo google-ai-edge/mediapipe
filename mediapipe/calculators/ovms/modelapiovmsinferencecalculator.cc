@@ -582,7 +582,6 @@ public:
                     std::vector<int> indexes(output.size());
                     std::iota(indexes.begin(), indexes.end(), 0);
                     interpreter_->SetInputs(indexes);
-                    RET_CHECK(output.size() == 2);
                     size_t tensorId = 0;
                     for (auto& [name,tensor] : output) {
                         std::vector<int> tfliteshape;
@@ -590,7 +589,7 @@ public:
                             tfliteshape.emplace_back(d);
                         }
                         interpreter_->SetTensorParametersReadWrite(
-                                        /*tensor_index*/tensorId,
+                                        tensorId,
                                         kTfLiteFloat32, // TODO datatype
                                         name.c_str(),
                                         tfliteshape,
@@ -612,7 +611,7 @@ public:
                 }
                 cc->Outputs().Tag(tag).AddPacket(MakePacket<std::vector<TfLiteTensor>>(std::move(outputStreamTensors)).At( cc->InputTimestamp()));
                 break;
-            }else if (startsWith(tag, OVTENSOR_TAG)) {
+            } else if (startsWith(tag, OVTENSOR_TAG)) {
                 LOG(INFO) << "OVMS calculator will process ov::Tensor";
                 cc->Outputs().Tag(tag).Add(
                     new ov::Tensor(tensorIt->second),
