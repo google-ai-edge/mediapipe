@@ -44,7 +44,6 @@ import com.google.mediapipe.tasks.vision.imagegenerator.proto.ImageGeneratorGrap
 import com.google.mediapipe.tasks.vision.imagesegmenter.ImageSegmenter.ImageSegmenterOptions;
 import com.google.mediapipe.tasks.vision.imagesegmenter.proto.ImageSegmenterGraphOptionsProto.ImageSegmenterGraphOptions;
 import com.google.protobuf.Any;
-import com.google.protobuf.ExtensionRegistryLite;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -566,14 +565,13 @@ public final class ImageGenerator extends BaseVisionTaskApi {
 
     /** Converts an {@link ImageGeneratorOptions} to a {@link Any} protobuf message. */
     @Override
+    @SuppressWarnings("ProtoParseWithRegistry")
     public Any convertToAnyProto() {
       ImageGeneratorGraphOptionsProto.ImageGeneratorGraphOptions.Builder taskOptionsBuilder =
           ImageGeneratorGraphOptionsProto.ImageGeneratorGraphOptions.newBuilder();
       if (conditionOptions != null && conditionOptions.isPresent()) {
         try {
-          taskOptionsBuilder.mergeFrom(
-              conditionOptions.get().convertToAnyProto().getValue(),
-              ExtensionRegistryLite.getGeneratedRegistry());
+          taskOptionsBuilder.mergeFrom(conditionOptions.get().convertToAnyProto().getValue());
         } catch (InvalidProtocolBufferException e) {
           Log.e(TAG, "Error converting ConditionOptions to proto. " + e.getMessage());
           e.printStackTrace();
