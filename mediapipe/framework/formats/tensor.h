@@ -323,6 +323,7 @@ class Tensor {
       case ElementType::kBool:
         return sizeof(bool);
     }
+    return 0; // making compiler happy
   }
   int bytes() const { return shape_.num_elements() * element_size(); }
 
