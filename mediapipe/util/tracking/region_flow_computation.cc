@@ -120,14 +120,6 @@ void InvertFeatureList(const TrackedFeatureList& list,
   }
 }
 
-// Allocates pyramid images of sufficient size (suggested OpenCV settings,
-// independent of number of pyramid levels).
-void AllocatePyramid(int frame_width, int frame_height, cv::Mat* pyramid) {
-  const int pyramid_width = frame_width + 8;
-  const int pyramid_height = frame_height / 2 + 1;
-  pyramid->create(pyramid_height, pyramid_width, CV_8UC1);
-}
-
 namespace {
 
 // lab_window is used as scratch space only, to avoid allocations.
@@ -370,11 +362,7 @@ struct RegionFlowComputation::FrameTrackingData {
 
   ORBFeatureDescriptors orb;
 
-  bool use_cv_tracking = false;
-
-  FrameTrackingData(int width, int height, int extraction_levels,
-                    bool _use_cv_tracking)
-      : use_cv_tracking(_use_cv_tracking) {
+  FrameTrackingData(int width, int height, int extraction_levels) {
     // Extraction pyramid.
     extraction_pyramid.clear();
     for (int i = 0, iwidth = width, iheight = height; i < extraction_levels;
@@ -386,28 +374,16 @@ struct RegionFlowComputation::FrameTrackingData {
     ABSL_CHECK_GE(extraction_levels, 1);
     // Frame is the same as first extraction level.
     frame = extraction_pyramid[0];
-
-    if (!use_cv_tracking) {
-      // Tracking pyramid for old c-interface.
-      pyramid.resize(1);
-      AllocatePyramid(width, height, &pyramid[0]);
-    }
   }
 
   void BuildPyramid(int levels, int window_size, bool with_derivative) {
-    if (use_cv_tracking) {
 #if CV_MAJOR_VERSION >= 3
-      // No-op if not called for opencv 3.0 (c interface computes
-      // pyramids in place).
-      // OpenCV changed how window size gets specified from our radius setting
-      // < 2.2 to diameter in 2.2+.
-      cv::buildOpticalFlowPyramid(
-          frame, pyramid, cv::Size(2 * window_size + 1, 2 * window_size + 1),
-          levels, with_derivative);
-      // Store max level for above pyramid.
-      pyramid_levels = levels;
+    cv::buildOpticalFlowPyramid(
+        frame, pyramid, cv::Size(2 * window_size + 1, 2 * window_size + 1),
+        levels, with_derivative);
+    // Store max level for above pyramid.
+    pyramid_levels = levels;
 #endif
-    }
   }
 
   void Reset(int frame_num_, int64_t timestamp_) {
@@ -766,22 +742,13 @@ RegionFlowComputation::RegionFlowComputation(
       << "supported.";
 
   // Tracking algorithm dependent on cv support and flag.
-  use_cv_tracking_ = options_.tracking_options().use_cv_tracking_algorithm();
 #if CV_MAJOR_VERSION < 3
-  if (use_cv_tracking_) {
-    ABSL_LOG(WARNING)
-        << "Compiled without OpenCV 3.0 but cv_tracking_algorithm "
-        << "was requested. Falling back to older algorithm";
-    use_cv_tracking_ = false;
-  }
+  ABSL_LOG(WARNING) << "Tracking is not supported with OpenCV < 3.0";
+  return;
 #endif
 
   if (options_.gain_correction()) {
     gain_image_.reset(new cv::Mat(frame_height_, frame_width_, CV_8UC1));
-    if (!use_cv_tracking_) {
-      gain_pyramid_.reset(new cv::Mat());
-      AllocatePyramid(frame_width_, frame_height_, gain_pyramid_.get());
-    }
   }
 
   // Determine number of levels at which to extract features. If lowest image
@@ -1089,7 +1056,7 @@ bool RegionFlowComputation::AddImageAndTrack(
     data_queue_.pop_front();
   } else {
     data_queue_.push_back(MakeUnique(new FrameTrackingData(
-        frame_width_, frame_height_, extraction_levels_, use_cv_tracking_)));
+        frame_width_, frame_height_, extraction_levels_)));
   }
 
   FrameTrackingData* curr_data = data_queue_.back().get();
@@ -2601,31 +2568,29 @@ void RegionFlowComputation::TrackFeatures(FrameTrackingData* from_data_ptr,
 
   feature_track_error_.resize(num_features);
   feature_status_.resize(num_features);
-  if (use_cv_tracking_) {
 #if CV_MAJOR_VERSION >= 3
-    if (gain_correction) {
-      if (!frame1_gain_reference) {
-        input_frame1 = cv::_InputArray(*gain_image_);
-      } else {
-        input_frame2 = cv::_InputArray(*gain_image_);
-      }
-    }
-
-    if (options_.tracking_options().klt_tracker_implementation() ==
-        TrackingOptions::KLT_OPENCV) {
-      cv::calcOpticalFlowPyrLK(input_frame1, input_frame2, features1, features2,
-                               feature_status_, feature_track_error_,
-                               cv_window_size, pyramid_levels_, cv_criteria,
-                               tracking_flags);
+  if (gain_correction) {
+    if (!frame1_gain_reference) {
+      input_frame1 = cv::_InputArray(*gain_image_);
     } else {
-      ABSL_LOG(ERROR) << "Tracking method unspecified.";
-      return;
+      input_frame2 = cv::_InputArray(*gain_image_);
     }
-#endif
+  }
+
+  if (options_.tracking_options().klt_tracker_implementation() ==
+      TrackingOptions::KLT_OPENCV) {
+    cv::calcOpticalFlowPyrLK(input_frame1, input_frame2, features1, features2,
+                             feature_status_, feature_track_error_,
+                             cv_window_size, pyramid_levels_, cv_criteria,
+                             tracking_flags);
   } else {
-    ABSL_LOG(ERROR) << "only cv tracking is supported.";
+    ABSL_LOG(ERROR) << "Tracking method unspecified.";
     return;
   }
+#else
+  ABSL_LOG(ERROR) << "Only OpenCV >= 3.0 supports tracking.";
+  return;
+#endif
 
   // Inherit corner response and octaves from extracted features.
   corner_responses2 = corner_responses1;
@@ -2790,17 +2755,15 @@ void RegionFlowComputation::TrackFeatures(FrameTrackingData* from_data_ptr,
     std::vector<float> verify_track_error(num_to_verify);
     feature_status_.resize(num_to_verify);
 
-    if (use_cv_tracking_) {
 #if CV_MAJOR_VERSION >= 3
-      cv::calcOpticalFlowPyrLK(input_frame2, input_frame1, verify_features,
-                               verify_features_tracked, feature_status_,
-                               verify_track_error, cv_window_size,
-                               pyramid_levels_, cv_criteria, tracking_flags);
+    cv::calcOpticalFlowPyrLK(input_frame2, input_frame1, verify_features,
+                             verify_features_tracked, feature_status_,
+                             verify_track_error, cv_window_size,
+                             pyramid_levels_, cv_criteria, tracking_flags);
+#else
+    ABSL_LOG(ERROR) << "Only OpenCV >= 3.0 supports tracking.";
+    return;
 #endif
-    } else {
-      ABSL_LOG(ERROR) << "only cv tracking is supported.";
-      return;
-    }
 
     // Check feature destinations, that when tracked back to from data1 to
     // data2, don't differ more than a threshold from their original location

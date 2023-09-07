@@ -150,7 +150,6 @@ void MotionAnalysis::InitPolicyOptions() {
 
       // Better features.
       tracking_options->set_adaptive_features_levels(3);
-      tracking_options->set_use_cv_tracking_algorithm(true);
 
       // Speed.
       flow_options->set_downsample_mode(
@@ -196,7 +195,6 @@ void MotionAnalysis::InitPolicyOptions() {
       tracking_options->set_fractional_tracking_distance(0.1);
       tracking_options->set_reuse_features_max_frame_distance(15);
       tracking_options->set_max_features(500);
-      tracking_options->set_use_cv_tracking_algorithm(true);
 
       flow_options->set_downsample_mode(
           RegionFlowComputationOptions::DOWNSAMPLE_TO_MIN_SIZE);
@@ -248,7 +246,6 @@ void MotionAnalysis::InitPolicyOptions() {
       tracking_options->set_reuse_features_min_survived_frac(0.6);
       tracking_options->set_max_features(240);
       tracking_options->set_adaptive_tracking_distance(true);
-      tracking_options->set_use_cv_tracking_algorithm(true);
 
       // Assumes downsampled input.
       flow_options->set_pre_blur_sigma(0);
@@ -305,7 +302,6 @@ void MotionAnalysis::InitPolicyOptions() {
       tracking_options->set_adaptive_features_levels(3);
 
       // Speed.
-      tracking_options->set_use_cv_tracking_algorithm(true);
       flow_options->set_downsample_mode(
           RegionFlowComputationOptions::DOWNSAMPLE_BY_SCHEDULE);
 
