@@ -75,18 +75,52 @@ node {
 # Runs a TensorFlow Lite model on CPU that takes an image tensor and outputs a
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
+#node {
+#  calculator: "TfLiteInferenceCalculator"
+#  input_stream: "TENSORS:image_tensor"
+#  output_stream: "TENSORS:output_tensors"
+#  options: {
+#    [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
+#      model_path: "mediapipe/modules/iris_landmark/iris_landmark.tflite"
+#      delegate { xnnpack {} }
+#    }
+#  }
+#}
 node {
-  calculator: "TfLiteInferenceCalculator"
-  input_stream: "TENSORS:image_tensor"
-  output_stream: "TENSORS:output_tensors"
-  options: {
-    [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
-      model_path: "mediapipe/modules/iris_landmark/iris_landmark.tflite"
-      delegate { xnnpack {} }
+  calculator: "ModelAPISessionCalculator"
+  output_side_packet: "SESSION:session"
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIOVMSSessionCalculatorOptions]: {
+      servable_name: "iris_landmark"
+      servable_version: "1"
+      server_config: "mediapipe/models/ovms/config_holistic.json"
     }
   }
 }
 
+node {
+  calculator: "ModelAPISideFeedCalculator"
+  input_side_packet: "SESSION:session"
+  input_stream: "TFLITE_TENSORS:image_tensor"
+  output_stream: "TFLITE_TENSORS:output_tensors"
+  node_options: {
+    [type.googleapis.com / mediapipe.ModelAPIInferenceCalculatorOptions]: {
+          output_order_list: ["output_eyes_contours_and_brows", "output_iris"]
+          tag_to_input_tensor_names {
+            key: "TFLITE_TENSORS"
+            value: "input_1"
+          }
+          tag_to_output_tensor_names {
+            key: "TFLITE_TENSORS"
+            value: "output_eyes_contours_and_brows"
+          }
+          tag_to_output_tensor_names {
+            key: "TFLITE_TENSORS"
+            value: "output_iris"
+          }
+        }
+  }
+}
 # Splits a vector of TFLite tensors to multiple vectors according to the ranges
 # specified in option.
 node {

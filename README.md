@@ -6,6 +6,25 @@ nav_order: 1
 
 # OpenVINO&trade; Model Server fork of [MediaPipe](https://google.github.io/mediapipe/) repository allowing users to take advantage of OpenVINO&trade; Model Serving in mediapipe examples.
 
+[]()                                                                                      | Android                                                         | iOS                                                     | C++                                                     | Python                                                        | JS                                                            | Coral                                                                 
+:---------------------------------------------------------------------------------------- | :-------------------------------------------------------------: | :-----------------------------------------------------: | :-----------------------------------------------------: | :-----------------------------------------------------------: | :-----------------------------------------------------------: | :--------------------------------------------------------------------:
+[Face Detection](https://google.github.io/mediapipe/solutions/face_detection)                   |                                                              |                                                      | ✅                                                       |                                                      |                                                     |
+[Face Mesh](https://google.github.io/mediapipe/solutions/face_mesh)                             |                                                              |                                                      |                                                         |                                                      |                                                     |
+[Iris](https://google.github.io/mediapipe/solutions/iris)                                       |                                                              |                                                      | ✅                                                       |                                                       |                                                      |
+[Hands](https://google.github.io/mediapipe/solutions/hands)                                     |                                                              |                                                      |                                                        |                                                      |                                                     |
+[Pose](https://google.github.io/mediapipe/solutions/pose)                                       |                                                              |                                                      | ✅                                                       |                                                      |                                                     |
+[Holistic](https://google.github.io/mediapipe/solutions/holistic)                               |                                                              |                                                      | ✅                                                       |                                                      |                                                     |
+[Selfie Segmentation](https://google.github.io/mediapipe/solutions/selfie_segmentation)         |                                                              |                                                      |                                                        |                                                      |                                                     |
+[Hair Segmentation](https://google.github.io/mediapipe/solutions/hair_segmentation)             |                                                              |                                                     |                                                        |                                                       |                                                       |
+[Object Detection](https://google.github.io/mediapipe/solutions/object_detection)               |                                                              |                                                      | ✅                                                       |                                                       |                                                      |
+[Box Tracking](https://google.github.io/mediapipe/solutions/box_tracking)                       |                                                              |                                                      |                                                        |                                                       |                                                      |
+[Instant Motion Tracking](https://google.github.io/mediapipe/solutions/instant_motion_tracking) |                                                              |                                                     |                                                         |                                                      |                                                       |
+[Objectron](https://google.github.io/mediapipe/solutions/objectron)                             |                                                              |                                                         |                                                        |                                                       |                                                      |
+[KNIFT](https://google.github.io/mediapipe/solutions/knift)                                     |                                                              |                                                         |                                                         |                                                      |                                                        |
+[AutoFlip](https://google.github.io/mediapipe/solutions/autoflip)                               |                                                             |                                                         |                                                        |                                                      |                                                        |
+[MediaSequence](https://google.github.io/mediapipe/solutions/media_sequence)                    |                                                                 |                                                         |                                                        |                                                      |                                                        |
+[YouTube 8M](https://google.github.io/mediapipe/solutions/youtube_8m)                           |                                                                 |                                                         |                                                        |                                                      |                                                        |
+
 # Building docker container with dependencies
 ```bash
 git clone https://github.com/openvinotoolkit/mediapipe.git
@@ -30,6 +49,21 @@ make run_object_detection
 # Running holistic tracking demo inside mediapipe_ovms container
 ```bash
 make run_holistic_tracking
+```
+
+# Running iris tracking demo inside mediapipe_ovms container
+```bash
+make run_iris_tracking
+```
+
+# Running pose tracking demo inside mediapipe_ovms container
+```bash
+make run_pose_tracking
+```
+
+# Running face detection demo inside mediapipe_ovms container
+```bash
+make run_face_detection
 ```
 
 ![MediaPipe](https://mediapipe.dev/images/mediapipe_small.png)

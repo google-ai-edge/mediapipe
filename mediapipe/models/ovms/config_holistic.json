@@ -35,6 +35,12 @@
                 "base_path":"./pose_landmark_full",
                 "plugin_config": {"PERFORMANCE_HINT": "LATENCY", "AFFINITY": "NUMA"}
             }
+        },
+        { "config": {
+                "name":"iris_landmark",
+                "base_path":"./iris_landmark",
+                "plugin_config": {"PERFORMANCE_HINT": "LATENCY", "AFFINITY": "NUMA"}
+            }
         }
     ]
 }

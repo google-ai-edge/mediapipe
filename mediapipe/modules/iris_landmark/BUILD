@@ -41,6 +41,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tflite:tflite_tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
+        "//mediapipe/graphs/object_detection:desktop_ovms_calculators",
     ],
 )
 

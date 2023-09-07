@@ -79,6 +79,7 @@ for app in ${apps}; do
       target="${app}:${target_name}"
     elif [[ "${target_name}" == "media_sequence" ]]; then
         target="${app}:${target_name}_demo"
+        echo "Skipping target ${target}"
         continue
     elif [[ "${target_name}" == "autoflip" ]]; then
         target="${app}:run_${target_name}"
@@ -90,6 +91,7 @@ for app in ${apps}; do
         target="${app}:template_matching_tflite"
     elif [[ "${target_name}" == "youtube8m" ]]; then
         target="${app}:extract_yt8m_features"
+        echo "Skipping target ${target}"
         continue
     else
       target="${app}:${target_name}_cpu"
