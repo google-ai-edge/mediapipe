@@ -75,6 +75,7 @@ export class FaceLandmarker extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new `FaceLandmarker` from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param faceLandmarkerOptions The options for the FaceLandmarker.
@@ -91,6 +92,7 @@ export class FaceLandmarker extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new `FaceLandmarker` based on
    * the provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
@@ -105,6 +107,7 @@ export class FaceLandmarker extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new `FaceLandmarker` based on
    * the path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
@@ -116,41 +119,65 @@ export class FaceLandmarker extends VisionTaskRunner {
         FaceLandmarker, wasmFileset, {baseOptions: {modelAssetPath}});
   }
 
-  /** Landmark connections to draw the connection between a face's lips. */
+  /**
+   * Landmark connections to draw the connection between a face's lips.
+   * @export
+   */
   static FACE_LANDMARKS_LIPS = FACE_LANDMARKS_LIPS;
 
-  /** Landmark connections to draw the connection between a face's left eye. */
+  /**
+   * Landmark connections to draw the connection between a face's left eye.
+   * @export
+   */
   static FACE_LANDMARKS_LEFT_EYE = FACE_LANDMARKS_LEFT_EYE;
 
   /**
    * Landmark connections to draw the connection between a face's left eyebrow.
+   * @export
    */
   static FACE_LANDMARKS_LEFT_EYEBROW = FACE_LANDMARKS_LEFT_EYEBROW;
 
-  /** Landmark connections to draw the connection between a face's left iris. */
+  /**
+   * Landmark connections to draw the connection between a face's left iris.
+   * @export
+   */
   static FACE_LANDMARKS_LEFT_IRIS = FACE_LANDMARKS_LEFT_IRIS;
 
-  /** Landmark connections to draw the connection between a face's right eye. */
+  /**
+   * Landmark connections to draw the connection between a face's right eye.
+   * @export
+   */
   static FACE_LANDMARKS_RIGHT_EYE = FACE_LANDMARKS_RIGHT_EYE;
 
   /**
    * Landmark connections to draw the connection between a face's right
    * eyebrow.
+   * @export
    */
   static FACE_LANDMARKS_RIGHT_EYEBROW = FACE_LANDMARKS_RIGHT_EYEBROW;
 
   /**
    * Landmark connections to draw the connection between a face's right iris.
+   * @export
    */
   static FACE_LANDMARKS_RIGHT_IRIS = FACE_LANDMARKS_RIGHT_IRIS;
 
-  /** Landmark connections to draw the face's oval. */
+  /**
+   * Landmark connections to draw the face's oval.
+   * @export
+   */
   static FACE_LANDMARKS_FACE_OVAL = FACE_LANDMARKS_FACE_OVAL;
 
-  /** Landmark connections to draw the face's contour. */
+  /**
+   * Landmark connections to draw the face's contour.
+   * @export
+   */
   static FACE_LANDMARKS_CONTOURS = FACE_LANDMARKS_CONTOURS;
 
-  /** Landmark connections to draw the face's tesselation. */
+  /**
+   * Landmark connections to draw the face's tesselation.
+   * @export
+   */
   static FACE_LANDMARKS_TESSELATION = FACE_LANDMARKS_TESSELATION;
 
   /** @hideconstructor */
@@ -188,6 +215,7 @@ export class FaceLandmarker extends VisionTaskRunner {
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
+   * @export
    * @param options The options for the face landmarker.
    */
   override setOptions(options: FaceLandmarkerOptions): Promise<void> {
@@ -228,6 +256,7 @@ export class FaceLandmarker extends VisionTaskRunner {
    * synchronously for the response. Only use this method when the
    * FaceLandmarker is created with running mode `image`.
    *
+   * @export
    * @param image An image to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
@@ -245,6 +274,7 @@ export class FaceLandmarker extends VisionTaskRunner {
    * synchronously for the response. Only use this method when the
    * FaceLandmarker is created with running mode `video`.
    *
+   * @export
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how

@@ -73,6 +73,7 @@ export class ImageSegmenter extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new image segmenter from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of
    *     the Wasm binary and its loader.
    * @param imageSegmenterOptions The options for the Image Segmenter. Note
@@ -89,6 +90,7 @@ export class ImageSegmenter extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new image segmenter based on
    * the provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of
    *     the Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
@@ -103,6 +105,7 @@ export class ImageSegmenter extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new image segmenter based on
    * the path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of
    *     the Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
@@ -142,6 +145,7 @@ export class ImageSegmenter extends VisionTaskRunner {
    * options. You can reset an option back to its default value by
    * explicitly setting it to `undefined`.
    *
+   * @export
    * @param options The options for the image segmenter.
    */
   override setOptions(options: ImageSegmenterOptions): Promise<void> {
@@ -253,6 +257,7 @@ export class ImageSegmenter extends VisionTaskRunner {
    */
   segment(image: ImageSource, imageProcessingOptions: ImageProcessingOptions):
       ImageSegmenterResult;
+  /** @export */
   segment(
       image: ImageSource,
       imageProcessingOptionsOrCallback?: ImageProcessingOptions|
@@ -333,6 +338,7 @@ export class ImageSegmenter extends VisionTaskRunner {
   segmentForVideo(
       videoFrame: ImageSource, timestamp: number,
       imageProcessingOptions: ImageProcessingOptions): ImageSegmenterResult;
+  /** @export */
   segmentForVideo(
       videoFrame: ImageSource, timestamp: number,
       imageProcessingOptionsOrCallback?: ImageProcessingOptions|
@@ -360,6 +366,7 @@ export class ImageSegmenter extends VisionTaskRunner {
    * If there is no labelmap provided in the model file, empty label array is
    * returned.
    *
+   * @export
    * @return The labels used by the current model.
    */
   getLabels(): string[] {

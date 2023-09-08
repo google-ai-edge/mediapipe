@@ -92,8 +92,8 @@ export abstract class VisionTaskRunner extends TaskRunner {
    * @param loadTfliteModel Whether to load the model specified in
    *     `options.baseOptions`.
    */
-  override applyOptions(options: VisionTaskOptions, loadTfliteModel = true):
-      Promise<void> {
+  protected override applyOptions(
+      options: VisionTaskOptions, loadTfliteModel = true): Promise<void> {
     if ('runningMode' in options) {
       const useStreamMode =
           !!options.runningMode && options.runningMode !== 'IMAGE';
@@ -297,7 +297,10 @@ export abstract class VisionTaskRunner extends TaskRunner {
     return shouldCopyData ? mask.clone() : mask;
   }
 
-  /** Closes and cleans up the resources held by this task. */
+  /**
+   * Closes and cleans up the resources held by this task.
+   * @export
+   */
   override close(): void {
     this.shaderContext.close();
     super.close();

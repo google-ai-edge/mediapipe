@@ -325,7 +325,10 @@ export abstract class TaskRunner {
         true, FREE_MEMORY_STREAM, this.latestOutputTimestamp);
   }
 
-  /** Closes and cleans up the resources held by this task. */
+  /**
+   * Closes and cleans up the resources held by this task.
+   * @export
+   */
   close(): void {
     this.keepaliveNode = undefined;
     this.graphRunner.closeGraph();

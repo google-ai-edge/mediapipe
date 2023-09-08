@@ -76,6 +76,7 @@ export class PoseLandmarker extends VisionTaskRunner {
   /**
    * An array containing the pairs of pose landmark indices to be rendered with
    * connections.
+   * @export
    */
   static POSE_CONNECTIONS: Connection[] = [
     {start: 0, end: 1},   {start: 1, end: 2},   {start: 2, end: 3},
@@ -95,6 +96,7 @@ export class PoseLandmarker extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new `PoseLandmarker` from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param poseLandmarkerOptions The options for the PoseLandmarker.
@@ -111,6 +113,7 @@ export class PoseLandmarker extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new `PoseLandmarker` based on
    * the provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
@@ -125,6 +128,7 @@ export class PoseLandmarker extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new `PoseLandmarker` based on
    * the path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
@@ -171,6 +175,7 @@ export class PoseLandmarker extends VisionTaskRunner {
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
+   * @export
    * @param options The options for the pose landmarker.
    */
   override setOptions(options: PoseLandmarkerOptions): Promise<void> {
@@ -257,6 +262,7 @@ export class PoseLandmarker extends VisionTaskRunner {
    */
   detect(image: ImageSource, imageProcessingOptions: ImageProcessingOptions):
       PoseLandmarkerResult;
+  /** @export */
   detect(
       image: ImageSource,
       imageProcessingOptionsOrCallback?: ImageProcessingOptions|
@@ -338,6 +344,7 @@ export class PoseLandmarker extends VisionTaskRunner {
   detectForVideo(
       videoFrame: ImageSource, timestamp: number,
       imageProcessingOptions: ImageProcessingOptions): PoseLandmarkerResult;
+  /** @export */
   detectForVideo(
       videoFrame: ImageSource, timestamp: number,
       imageProcessingOptionsOrCallback?: ImageProcessingOptions|

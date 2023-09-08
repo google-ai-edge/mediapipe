@@ -76,6 +76,7 @@ export class FilesetResolver {
    * you can use `isSimdSupported()` to decide whether to load the SIMD-based
    * assets.
    *
+   * @export
    * @return Whether SIMD support was detected in the current environment.
    */
   static isSimdSupported(): Promise<boolean> {
@@ -85,6 +86,7 @@ export class FilesetResolver {
   /**
    * Creates a fileset for the MediaPipe Audio tasks.
    *
+   * @export
    * @param basePath An optional base path to specify the directory the Wasm
    *    files should be loaded from. If not specified, the Wasm files are
    *    loaded from the host's root directory.
@@ -98,6 +100,7 @@ export class FilesetResolver {
   /**
    * Creates a fileset for the MediaPipe Text tasks.
    *
+   * @export
    * @param basePath An optional base path to specify the directory the Wasm
    *    files should be loaded from. If not specified, the Wasm files are
    *    loaded from the host's root directory.
@@ -111,6 +114,7 @@ export class FilesetResolver {
   /**
    * Creates a fileset for the MediaPipe Vision tasks.
    *
+   * @export
    * @param basePath An optional base path to specify the directory the Wasm
    *    files should be loaded from. If not specified, the Wasm files are
    *    loaded from the host's root directory.

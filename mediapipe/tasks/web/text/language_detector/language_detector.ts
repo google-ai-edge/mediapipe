@@ -48,6 +48,7 @@ export class LanguageDetector extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new language detector from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param textClassifierOptions The options for the language detector. Note
@@ -65,6 +66,7 @@ export class LanguageDetector extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new language detector based on
    * the provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
@@ -80,6 +82,7 @@ export class LanguageDetector extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new language detector based on
    * the path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
@@ -107,6 +110,7 @@ export class LanguageDetector extends TaskRunner {
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
+   * @export
    * @param options The options for the language detector.
    */
   override setOptions(options: LanguageDetectorOptions): Promise<void> {
@@ -126,6 +130,7 @@ export class LanguageDetector extends TaskRunner {
   /**
    * Predicts the language of the input text.
    *
+   * @export
    * @param text The text to process.
    * @return The languages detected in the input text.
    */

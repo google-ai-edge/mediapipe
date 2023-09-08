@@ -68,12 +68,14 @@ export class HandLandmarker extends VisionTaskRunner {
   /**
    * An array containing the pairs of hand landmark indices to be rendered with
    * connections.
+   * @export
    */
   static HAND_CONNECTIONS = HAND_CONNECTIONS;
 
   /**
    * Initializes the Wasm runtime and creates a new `HandLandmarker` from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param handLandmarkerOptions The options for the HandLandmarker.
@@ -90,6 +92,7 @@ export class HandLandmarker extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new `HandLandmarker` based on
    * the provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
@@ -104,6 +107,7 @@ export class HandLandmarker extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new `HandLandmarker` based on
    * the path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
@@ -150,6 +154,7 @@ export class HandLandmarker extends VisionTaskRunner {
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
+   * @export
    * @param options The options for the hand landmarker.
    */
   override setOptions(options: HandLandmarkerOptions): Promise<void> {
@@ -181,6 +186,7 @@ export class HandLandmarker extends VisionTaskRunner {
    * synchronously for the response. Only use this method when the
    * HandLandmarker is created with running mode `image`.
    *
+   * @export
    * @param image An image to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
@@ -198,6 +204,7 @@ export class HandLandmarker extends VisionTaskRunner {
    * synchronously for the response. Only use this method when the
    * HandLandmarker is created with running mode `video`.
    *
+   * @export
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
