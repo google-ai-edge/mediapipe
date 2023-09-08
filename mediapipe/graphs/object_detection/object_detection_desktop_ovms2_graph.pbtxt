@@ -91,7 +91,7 @@ node {
   input_stream: "TFLITE_TENSORS:image_tensor"
   output_stream: "TFLITE_TENSORS2:detection_tensors"
   node_options: {
-    [type.googleapis.com / mediapipe.OpenVINOInferenceOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
           tag_to_input_tensor_names {
             key: "TFLITE_TENSORS"
             value: "normalized_input_image_tensor"

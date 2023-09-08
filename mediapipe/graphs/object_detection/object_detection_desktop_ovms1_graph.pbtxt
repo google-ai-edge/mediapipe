@@ -68,7 +68,7 @@ node {
   input_stream: "OVTENSORS:image_tensor"
   output_stream: "OVTENSORS2:detection_tensors"
   node_options: {
-    [type.googleapis.com / mediapipe.OpenVINOInferenceOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
           input_order_list :["normalized_input_image_tensor"]
           output_order_list :["raw_outputs/box_encodings","raw_outputs/class_predictions"]
           tag_to_input_tensor_names {

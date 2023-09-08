@@ -19,11 +19,11 @@ package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
 
-message OpenVINOInferenceOptions {
+message OpenVINOInferenceCalculatorOptions {
   extend mediapipe.CalculatorOptions {
     // https://github.com/google/mediapipe/issues/634 have to be unique in app
     // no rule to obtain this
-    optional OpenVINOInferenceOptions ext = 113473743;
+    optional OpenVINOInferenceCalculatorOptions ext = 113473743;
     }
     map<string, string> tag_to_input_tensor_names = 1;
     map<string, string> tag_to_output_tensor_names = 2;

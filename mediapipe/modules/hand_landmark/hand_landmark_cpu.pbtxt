@@ -95,7 +95,7 @@ node {
   input_stream: "TENSORS:input_tensor"
   output_stream: "TENSORS:output_tensors"
   node_options: {
-    [type.googleapis.com / mediapipe.OpenVINOInferenceOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
           output_order_list: ["Identity","Identity_1","Identity_2","Identity_3"]
           tag_to_input_tensor_names {
             key: "TENSORS"

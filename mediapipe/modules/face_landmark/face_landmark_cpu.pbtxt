@@ -107,7 +107,7 @@ node {
   input_stream: "TENSORS:input_tensors"
   output_stream: "TENSORS:output_tensors"
   node_options: {
-    [type.googleapis.com / mediapipe.OpenVINOInferenceOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
           output_order_list: ["conv2d_21", "conv2d_31"]
           tag_to_input_tensor_names {
             key: "TENSORS"

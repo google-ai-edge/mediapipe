@@ -104,7 +104,7 @@ node {
   input_stream: "TFLITE_TENSORS:image_tensor"
   output_stream: "TFLITE_TENSORS:output_tensors"
   node_options: {
-    [type.googleapis.com / mediapipe.OpenVINOInferenceOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
           output_order_list: ["output_eyes_contours_and_brows", "output_iris"]
           tag_to_input_tensor_names {
             key: "TFLITE_TENSORS"

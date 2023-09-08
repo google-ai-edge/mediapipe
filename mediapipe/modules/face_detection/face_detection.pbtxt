@@ -89,7 +89,7 @@ node {
   input_stream: "TENSORS:input_tensors"
   output_stream: "TENSORS:detection_tensors"
   node_options: {
-    [type.googleapis.com / mediapipe.OpenVINOInferenceOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
           output_order_list: ["regressors", "classificators"]
           tag_to_input_tensor_names {
             key: "TENSORS"

@@ -390,7 +390,7 @@ public:
                 cc->OutputSidePackets().Get(id).Set(cc->InputSidePackets().Get(id));
             }
         }
-        const auto& options = cc->Options<OpenVINOInferenceOptions>();
+        const auto& options = cc->Options<OpenVINOInferenceCalculatorOptions>();
         for (const auto& [key, value] : options.tag_to_output_tensor_names()) {
             outputNameToTag[value] = key;
         }
@@ -420,7 +420,7 @@ public:
         // PREPARE INPUT MAP
         /////////////////////
 
-        const auto& options = cc->Options<OpenVINOInferenceOptions>();
+        const auto& options = cc->Options<OpenVINOInferenceCalculatorOptions>();
         const auto& inputTagInputMap = options.tag_to_input_tensor_names();
         ::InferenceInput input;
         ::InferenceOutput output;

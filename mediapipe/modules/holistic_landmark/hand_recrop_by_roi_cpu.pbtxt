@@ -64,7 +64,7 @@ node {
   input_stream: "TENSORS:initial_crop_tensor"
   output_stream: "TENSORS:landmark_tensors"
   node_options: {
-    [type.googleapis.com / mediapipe.OpenVINOInferenceOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
           tag_to_input_tensor_names {
             key: "TENSORS"
             value: "input_1"
