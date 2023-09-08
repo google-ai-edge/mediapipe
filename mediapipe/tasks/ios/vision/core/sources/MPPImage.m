@@ -98,6 +98,8 @@ NS_ASSUME_NONNULL_BEGIN
   if (imageBuffer == NULL) {
     return nil;
   }
+  _pixelBuffer = imageBuffer;
+  CVPixelBufferRetain(imageBuffer);
 
   self = [super init];
   if (self != nil) {

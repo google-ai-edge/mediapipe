@@ -33,6 +33,16 @@ using BaseOptionsProto = ::mediapipe::tasks::core::proto::BaseOptions;
   if (self.modelAssetPath) {
     baseOptionsProto->mutable_model_asset()->set_file_name(self.modelAssetPath.UTF8String);
   }
+  switch (self.delegate) {
+    case MPPBaseOptionsDelegateCPU: {
+      baseOptionsProto->mutable_acceleration()->mutable_tflite();
+      break;
+    }
+    case MPPBaseOptionsDelegateGPU: {
+      baseOptionsProto->mutable_acceleration()->mutable_gpu();
+      break;
+    }
+  }
 }
 
 @end

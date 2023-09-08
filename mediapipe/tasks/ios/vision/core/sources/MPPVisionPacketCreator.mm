@@ -32,6 +32,10 @@ using ::mediapipe::Timestamp;
 @implementation MPPVisionPacketCreator
 
 + (Packet)createPacketWithMPPImage:(MPPImage *)image error:(NSError **)error {
+  if ((image.imageSourceType == MPPImageSourceTypePixelBuffer || image.imageSourceType == MPPImageSourceTypeSampleBuffer) && [image pixelBuffer] != nil) {
+      return MakePacket<mediapipe::Image>([image pixelBuffer]);
+  }
+
   std::unique_ptr<ImageFrame> imageFrame = [image imageFrameWithError:error];
 
   if (!imageFrame) {
@@ -44,14 +48,9 @@ using ::mediapipe::Timestamp;
 + (Packet)createPacketWithMPPImage:(MPPImage *)image
            timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                              error:(NSError **)error {
-  std::unique_ptr<ImageFrame> imageFrame = [image imageFrameWithError:error];
+  auto packet = [self createPacketWithMPPImage:image error:error];
 
-  if (!imageFrame) {
-    return Packet();
-  }
-
-  return MakePacket<Image>(std::move(imageFrame))
-      .At(Timestamp(int64(timestampInMilliseconds * kMicroSecondsPerMilliSecond)));
+  return packet.At(Timestamp(int64(timestampInMilliseconds * kMicroSecondsPerMilliSecond)));
 }
 
 + (Packet)createPacketWithNormalizedRect:(NormalizedRect &)normalizedRect {
