@@ -3,6 +3,34 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 cc_library(
+    name = "landmarks_to_detection",
+    srcs = ["landmarks_to_detection.cc"],
+    hdrs = ["landmarks_to_detection.h"],
+    deps = [
+        "//mediapipe/calculators/util:landmarks_to_detection_calculator",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "landmarks_to_detection_test",
+    srcs = ["landmarks_to_detection_test.cc"],
+    deps = [
+        ":landmarks_to_detection",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:status_matchers",
+    ],
+)
+
+cc_library(
     name = "landmarks_projection",
     srcs = ["landmarks_projection.cc"],
     hdrs = ["landmarks_projection.h"],
