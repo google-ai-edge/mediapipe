@@ -21,11 +21,11 @@ cc_library(
     name = "ovms_calculator",
     srcs = ["modelapiovmsadapter.cc",
             "modelapiovmsadapter.hpp",
-            "modelapiovmsinferencecalculator.cc",
-            "modelapiovmssessioncalculator.cc"],
+            "openvinomodelserversessioncalculator.cc",
+            "openvinoinferencecalculator.cc"],
     deps = [
-        "//mediapipe/calculators/ovms:modelapiovmsinferencecalculator_cc_proto",
-        "//mediapipe/calculators/ovms:modelapiovmssessioncalculator_cc_proto",
+        "//mediapipe/calculators/ovms:openvinoinferencecalculator_cc_proto",
+        "//mediapipe/calculators/ovms:openvinomodelserversessioncalculator_cc_proto",
         "//mediapipe/calculators/openvino:openvino_tensors_to_classification_calculator_cc_proto",
         "//mediapipe/calculators/openvino:openvino_tensors_to_detections_calculator_cc_proto",
         "//mediapipe/calculators/openvino:openvino_converter_calculator_cc_proto",
@@ -49,8 +49,8 @@ load("@mediapipe//mediapipe/framework/port:build_config.bzl", "mediapipe_cc_prot
 
 # ovms
 mediapipe_proto_library(
-    name = "modelapiovmsinferencecalculator_proto",
-    srcs = ["modelapiovmsinferencecalculator.proto"],
+    name = "openvinoinferencecalculator_proto",
+    srcs = ["openvinoinferencecalculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
         "@mediapipe//mediapipe/framework:calculator_options_proto",
@@ -58,8 +58,8 @@ mediapipe_proto_library(
     ],
 )
 mediapipe_proto_library(
-    name = "modelapiovmssessioncalculator_proto",
-    srcs = ["modelapiovmssessioncalculator.proto"],
+    name = "openvinomodelserversessioncalculator_proto",
+    srcs = ["openvinomodelserversessioncalculator.proto"],
     visibility = ["//visibility:public"],
     deps = [
         "@mediapipe//mediapipe/framework:calculator_options_proto",

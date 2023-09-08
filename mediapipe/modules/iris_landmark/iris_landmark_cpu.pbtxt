@@ -87,10 +87,10 @@ node {
 #  }
 #}
 node {
-  calculator: "ModelAPISessionCalculator"
+  calculator: "OpenVINOModelServerSessionCalculator"
   output_side_packet: "SESSION:session"
   node_options: {
-    [type.googleapis.com / mediapipe.ModelAPIOVMSSessionCalculatorOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
       servable_name: "iris_landmark"
       servable_version: "1"
       server_config: "mediapipe/models/ovms/config_holistic.json"
@@ -99,12 +99,12 @@ node {
 }
 
 node {
-  calculator: "ModelAPISideFeedCalculator"
+  calculator: "OpenVINOInferenceCalculator"
   input_side_packet: "SESSION:session"
   input_stream: "TFLITE_TENSORS:image_tensor"
   output_stream: "TFLITE_TENSORS:output_tensors"
   node_options: {
-    [type.googleapis.com / mediapipe.ModelAPIInferenceCalculatorOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOInferenceOptions]: {
           output_order_list: ["output_eyes_contours_and_brows", "output_iris"]
           tag_to_input_tensor_names {
             key: "TFLITE_TENSORS"

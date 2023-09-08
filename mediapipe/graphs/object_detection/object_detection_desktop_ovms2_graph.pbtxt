@@ -73,10 +73,10 @@ node {
 #  }
 #}
 node {
-  calculator: "ModelAPISessionCalculator"
+  calculator: "OpenVINOModelServerSessionCalculator"
   output_side_packet: "SESSION:session"
   node_options: {
-    [type.googleapis.com / mediapipe.ModelAPIOVMSSessionCalculatorOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
       servable_name: "ssdlite_object_detection2"  # servable name inside OVMS
       servable_version: "1"
       server_config: "mediapipe/config.json"
@@ -86,12 +86,12 @@ node {
 # TODO vector<tensor>
 # TODO read config.json
 node {
-  calculator: "ModelAPISideFeedCalculator"
+  calculator: "OpenVINOInferenceCalculator"
   input_side_packet: "SESSION:session"
   input_stream: "TFLITE_TENSORS:image_tensor"
   output_stream: "TFLITE_TENSORS2:detection_tensors"
   node_options: {
-    [type.googleapis.com / mediapipe.ModelAPIInferenceCalculatorOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOInferenceOptions]: {
           tag_to_input_tensor_names {
             key: "TFLITE_TENSORS"
             value: "normalized_input_image_tensor"

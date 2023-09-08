@@ -49,23 +49,23 @@ absl::Status RunMediapipeGraph() {
         input_stream: "in2"
         output_stream: "out"
         node {
-          calculator: "ModelAPISessionCalculator"
+          calculator: "OpenVINOModelServerSessionCalculator"
           output_side_packet: "SESSION:session"
           node_options: {
-            [type.googleapis.com / mediapipe.ModelAPIOVMSSessionCalculatorOptions]: {
+            [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
               servable_name: "add"
               servable_version: "1"
             }
           }
         }
         node {
-          calculator: "ModelAPISideFeedCalculator"
+          calculator: "OpenVINOInferenceCalculator"
           input_side_packet: "SESSION:session"
           input_stream: "INPUT1:in1"
           input_stream: "INPUT2:in2"
           output_stream: "SUM:out"
           node_options: {
-            [type.googleapis.com / mediapipe.ModelAPIInferenceCalculatorOptions]: {
+            [type.googleapis.com / mediapipe.OpenVINOInferenceCalculatorOptions]: {
               tag_to_input_tensor_names {
                 key: "INPUT1"
                 value: "input1"

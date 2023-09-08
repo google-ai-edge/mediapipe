@@ -90,10 +90,10 @@ node {
 #  }
 #}
 node {
-  calculator: "ModelAPISessionCalculator"
+  calculator: "OpenVINOModelServerSessionCalculator"
   output_side_packet: "SESSION:session"
   node_options: {
-    [type.googleapis.com / mediapipe.ModelAPIOVMSSessionCalculatorOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
       #servable_name: "face_landmark_with_attention" # could be enabled when we have IR model
       servable_name: "face_landmark"
       servable_version: "1"
@@ -102,12 +102,12 @@ node {
   }
 }
 node {
-  calculator: "ModelAPISideFeedCalculator"
+  calculator: "OpenVINOInferenceCalculator"
   input_side_packet: "SESSION:session"
   input_stream: "TENSORS:input_tensors"
   output_stream: "TENSORS:output_tensors"
   node_options: {
-    [type.googleapis.com / mediapipe.ModelAPIInferenceCalculatorOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOInferenceOptions]: {
           output_order_list: ["conv2d_21", "conv2d_31"]
           tag_to_input_tensor_names {
             key: "TENSORS"

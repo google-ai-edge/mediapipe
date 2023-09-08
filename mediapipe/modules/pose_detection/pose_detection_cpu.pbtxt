@@ -79,10 +79,10 @@ node: {
 #  }
 #}
 node {
-  calculator: "ModelAPISessionCalculator"
+  calculator: "OpenVINOModelServerSessionCalculator"
   output_side_packet: "SESSION:session"
   node_options: {
-    [type.googleapis.com / mediapipe.ModelAPIOVMSSessionCalculatorOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
       servable_name: "pose_detection"
       servable_version: "1"
       server_config: "mediapipe/models/ovms/config_holistic.json"
@@ -90,12 +90,12 @@ node {
   }
 }
 node {
-  calculator: "ModelAPISideFeedCalculator"
+  calculator: "OpenVINOInferenceCalculator"
   input_side_packet: "SESSION:session"
   input_stream: "TENSORS:input_tensors"
   output_stream: "TENSORS:detection_tensors"
   node_options: {
-    [type.googleapis.com / mediapipe.ModelAPIInferenceCalculatorOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOInferenceOptions]: {
           output_order_list: ["Identity:0", "Identity_1:0"]
           tag_to_input_tensor_names {
             key: "TENSORS"

@@ -19,11 +19,11 @@ package mediapipe;
 
 import "mediapipe/framework/calculator.proto";
 
-message ModelAPIOVMSSessionCalculatorOptions {
+message OpenVINOModelServerSessionCalculatorOptions {
   extend mediapipe.CalculatorOptions {
     // https://github.com/google/mediapipe/issues/634 have to be unique in app
     // no rule to obtain this
-    optional ModelAPIOVMSSessionCalculatorOptions ext = 113473744;
+    optional OpenVINOModelServerSessionCalculatorOptions ext = 113473744;
     }
     required string servable_name = 1;
     required string servable_version = 2;

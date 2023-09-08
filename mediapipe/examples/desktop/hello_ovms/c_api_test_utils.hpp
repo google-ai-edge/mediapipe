@@ -38,8 +38,8 @@
         if (err != nullptr) {                 \
             uint32_t code = 0;                \
             const char* msg = nullptr;        \
-            OVMS_StatusGetCode(err, &code);   \
-            OVMS_StatusGetDetails(err, &msg); \
+            OVMS_StatusCode(err, &code);   \
+            OVMS_StatusDetails(err, &msg); \
             std::string smsg(msg);            \
             OVMS_StatusDelete(err);           \
             EXPECT_EQ1(0, code, smsg);        \
@@ -63,8 +63,8 @@
         if (err != nullptr) {                                                                                  \
             uint32_t code = 0;                                                                                 \
             const char* details = nullptr;                                                                     \
-            EXPECT_EQ1(OVMS_StatusGetCode(err, &code), nullptr,"OVMS_StatusGetCode");                          \
-            EXPECT_EQ1(OVMS_StatusGetDetails(err, &details), nullptr);                                         \
+            EXPECT_EQ1(OVMS_StatusCode(err, &code), nullptr,"OVMS_StatusCode");                          \
+            EXPECT_EQ1(OVMS_StatusDetails(err, &details), nullptr);                                         \
             EXPECT_NEQ1(details, nullptr, "details error");                                                    \
             EXPECT_EQ1(code, static_cast<uint32_t>(EXPECTED_STATUS_CODE),                                      \
                  std::string{"wrong code: "} + std::to_string(code) + std::string{"; details: "});             \

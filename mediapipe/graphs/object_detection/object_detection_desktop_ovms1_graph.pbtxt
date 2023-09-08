@@ -52,10 +52,10 @@ node {
 # vector of tensors representing, for instance, detection boxes/keypoints and
 # scores.
 node {
-  calculator: "ModelAPISessionCalculator"
+  calculator: "OpenVINOModelServerSessionCalculator"
   output_side_packet: "SESSION:session"
   node_options: {
-    [type.googleapis.com / mediapipe.ModelAPIOVMSSessionCalculatorOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOModelServerSessionCalculatorOptions]: {
       servable_name: "ssdlite_object_detection"  # servable name inside OVMS
       servable_version: "1"
       server_config: "mediapipe/calculators/ovms/config.json"
@@ -63,12 +63,12 @@ node {
   }
 }
 node {
-  calculator: "ModelAPISideFeedCalculator"
+  calculator: "OpenVINOInferenceCalculator"
   input_side_packet: "SESSION:session"
   input_stream: "OVTENSORS:image_tensor"
   output_stream: "OVTENSORS2:detection_tensors"
   node_options: {
-    [type.googleapis.com / mediapipe.ModelAPIInferenceCalculatorOptions]: {
+    [type.googleapis.com / mediapipe.OpenVINOInferenceOptions]: {
           input_order_list :["normalized_input_image_tensor"]
           output_order_list :["raw_outputs/box_encodings","raw_outputs/class_predictions"]
           tag_to_input_tensor_names {
