@@ -55,7 +55,7 @@ objc_library(
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
         "//mediapipe/tasks/ios/vision/core:MPPVisionPacketCreator",
-        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunnerRefactored",
+        "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/object_detector/utils:MPPObjectDetectorOptionsHelpers",
         "//mediapipe/tasks/ios/vision/object_detector/utils:MPPObjectDetectorResultHelpers",
     ],
