@@ -79,8 +79,7 @@ NS_SWIFT_NAME(ObjectDetectorOptions)
  * An object that confirms to `ObjectDetectorLiveStreamDelegate` protocol. This object must
  * implement `objectDetector(_:didFinishDetectionWithResult:timestampInMilliseconds:error:)` to
  * receive the results of performing asynchronous object detection on images (i.e, when
- * `runningMode` =
- * `.liveStream`).
+ * `runningMode` = `.liveStream`).
  */
 @property(nonatomic, weak, nullable) id<MPPObjectDetectorLiveStreamDelegate>
     objectDetectorLiveStreamDelegate;

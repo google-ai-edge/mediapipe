@@ -80,10 +80,9 @@ NS_SWIFT_NAME(FaceDetector)
                                    error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
- * Performs face detection on the provided MPPImage using the whole image as region of
+ * Performs face detection on the provided `MPImage` using the whole image as region of
  * interest. Rotation will be applied according to the `orientation` property of the provided
- * `MPImage`. Only use this method when the `MPPFaceDetector` is created with running mode
- * `.image`.
+ * `MPImage`. Only use this method when the `FaceDetector` is created with running mode `.image`.
  *
  * This method supports classification of RGBA images. If your `MPImage` has a source type of
  * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the

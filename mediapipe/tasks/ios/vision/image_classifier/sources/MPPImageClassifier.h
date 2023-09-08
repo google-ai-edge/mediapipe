@@ -76,7 +76,7 @@ NS_SWIFT_NAME(ImageClassifier)
                                    error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
- * Performs image classification on the provided MPPImage using the whole image as region of
+ * Performs image classification on the provided `MPImage` using the whole image as region of
  * interest. Rotation will be applied according to the `orientation` property of the provided
  * `MPImage`. Only use this method when the `ImageClassifier` is created with running mode,
  * `.image`.
@@ -90,7 +90,7 @@ NS_SWIFT_NAME(ImageClassifier)
  * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
  * channel.
  *
- * @param image The `MPPImage` on which image classification is to be performed.
+ * @param image The `MPImage` on which image classification is to be performed.
  *
  * @return  An `ImageClassifierResult` object that contains a list of image classifications.
  */
@@ -101,7 +101,7 @@ NS_SWIFT_NAME(ImageClassifier)
 /**
  * Performs image classification on the provided `MPImage` cropped to the specified region of
  * interest. Rotation will be applied on the cropped image according to the `orientation` property
- * of the provided `MPImage`. Only use this method when the `MPPImageClassifier` is created with
+ * of the provided `MPImage`. Only use this method when the `ImageClassifier` is created with
  * running mode, `.image`.
  *
  * This method supports classification of RGBA images. If your `MPImage` has a source type of
@@ -127,7 +127,7 @@ NS_SWIFT_NAME(ImageClassifier)
 /**
  * Performs image classification on the provided video frame of type `MPImage` using the whole
  * image as region of interest. Rotation will be applied according to the `orientation` property of
- * the provided `MPImage`. Only use this method when the `MPPImageClassifier` is created with
+ * the provided `MPImage`. Only use this method when the `ImageClassifier` is created with
  * running mode `.video`.
  *
  * It's required to provide the video frame's timestamp (in milliseconds). The input timestamps must
@@ -142,7 +142,7 @@ NS_SWIFT_NAME(ImageClassifier)
  * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
  * channel.
  *
- * @param image The `MPPImage` on which image classification is to be performed.
+ * @param image The `MPImage` on which image classification is to be performed.
  * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
  * timestamps must be monotonically increasing.
  *
@@ -188,8 +188,8 @@ NS_SWIFT_NAME(ImageClassifier)
 /**
  * Sends live stream image data of type `MPImage` to perform image classification using the whole
  * image as region of interest. Rotation will be applied according to the `orientation` property of
- * the provided `MPImage`. Only use this method when the `ImageClassifier` is created with
- * `MPPRunningModeLiveStream`.
+ * the provided `MPImage`. Only use this method when the `ImageClassifier` is created with running
+ * mode `.liveStream`.
  *
  * The object which needs to be continuously notified of the available results of image
  * classification must confirm to `ImageClassifierLiveStreamDelegate` protocol and implement the

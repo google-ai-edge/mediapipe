@@ -43,8 +43,7 @@ NS_SWIFT_NAME(FaceLandmarker)
 /**
  * Creates a new instance of `FaceLandmarker` from the given `FaceLandmarkerOptions`.
  *
- * @param options The options of type `FaceLandmarkerOptions` to use for configuring the
- * `MPPFaceLandmarker`.
+ * @param options The options of type `FaceLandmarkerOptions` to use for configuring the `FaceLandmarker`.
  *
  * @return A new instance of `FaceLandmarker` with the given options. `nil` if there is an error
  * in initializing the face landmaker.
@@ -53,11 +52,11 @@ NS_SWIFT_NAME(FaceLandmarker)
                                    error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
- * Performs face landmark detection on the provided MPPImage using the whole image as region of
+ * Performs face landmark detection on the provided `MPImage` using the whole image as region of
  * interest. Rotation will be applied according to the `orientation` property of the provided
  * `MPImage`. Only use this method when the `FaceLandmarker` is created with `.image`.
  *
- * This method supports RGBA images. If your `MPPImage` has a source type of `.pixelBuffer` or
+ * This method supports RGBA images. If your `MPImage` has a source type of `.pixelBuffer` or
  * `.sampleBuffer`, the underlying pixel buffer must have one of the following pixel format
  * types:
  * 1. kCVPixelFormatType_32BGRA
@@ -68,8 +67,7 @@ NS_SWIFT_NAME(FaceLandmarker)
  *
  * @param image The `MPImage` on which face landmark detection is to be performed.
  *
- * @return An `MPPFaceLandmarkerResult` that contains a list of landmarks. `nil` if there is an
- * error in initializing the face landmaker.
+ * @return An `FaceLandmarkerResult` that contains a list of landmarks. `nil` if there is an error in initializing the face landmaker.
  */
 - (nullable MPPFaceLandmarkerResult *)detectInImage:(MPPImage *)image
                                               error:(NSError **)error NS_SWIFT_NAME(detect(image:));
@@ -77,8 +75,7 @@ NS_SWIFT_NAME(FaceLandmarker)
 /**
  * Performs face landmark detection on the provided video frame of type `MPImage` using the whole
  * image as region of interest. Rotation will be applied according to the `orientation` property of
- * the provided `MPImage`. Only use this method when the `MPPFaceLandmarker` is created with
- * running mode `.video`.
+ * the provided `MPImage`. Only use this method when the `FaceLandmarker` is created with running mode `.video`.
  *
  * This method supports RGBA images. If your `MPImage` has a source type of `.pixelBuffer` or
  * `.sampleBuffer`, the underlying pixel buffer must have one of the following pixel format types:
