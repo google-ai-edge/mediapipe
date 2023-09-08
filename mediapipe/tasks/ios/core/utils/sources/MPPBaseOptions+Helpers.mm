@@ -35,17 +35,16 @@ using BaseOptionsProto = ::mediapipe::tasks::core::proto::BaseOptions;
   }
   if (self.delegateType != MPPBaseOptionsDelegateType_Unknown) {
       switch (self.delegateType) {
-          case MPPBaseOptionsDelegateType_Cpu:
-              baseOptionsProto->mutable_acceleration()->mutable_tflite();
-              break;
-          case MPPBaseOptionsDelegateType_Gpu:
-              baseOptionsProto->mutable_acceleration()->mutable_gpu()->set_use_advanced_gpu_api(true);
-              break;
-          case MPPBaseOptionsDelegateType_Tpu:
-              baseOptionsProto->mutable_acceleration()->mutable_nnapi()->set_accelerator_name("google-edgetpu");
-              break;
-          default:
-              break;
+        case MPPBaseOptionsDelegateType_Cpu: {
+          baseOptionsProto->mutable_acceleration()->mutable_tflite();
+        }
+          break;
+        case MPPBaseOptionsDelegateType_Gpu: {
+          baseOptionsProto->mutable_acceleration()->mutable_gpu()->set_use_advanced_gpu_api(true);
+        }
+          break;
+        default:
+          break;
       }
   }
 }

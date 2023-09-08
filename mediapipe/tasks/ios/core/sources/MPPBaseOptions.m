@@ -28,6 +28,7 @@
   MPPBaseOptions *baseOptions = [[MPPBaseOptions alloc] init];
 
   baseOptions.modelAssetPath = self.modelAssetPath;
+  baseOptions.delegateType = self.delegateType;
 
   return baseOptions;
 }

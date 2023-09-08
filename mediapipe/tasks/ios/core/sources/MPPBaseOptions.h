@@ -17,8 +17,7 @@
 typedef enum : NSUInteger {
     MPPBaseOptionsDelegateType_Unknown,
     MPPBaseOptionsDelegateType_Cpu,
-    MPPBaseOptionsDelegateType_Gpu,
-    MPPBaseOptionsDelegateType_Tpu
+    MPPBaseOptionsDelegateType_Gpu
 } MPPBaseOptionsDelegateType;
 
 NS_ASSUME_NONNULL_BEGIN
