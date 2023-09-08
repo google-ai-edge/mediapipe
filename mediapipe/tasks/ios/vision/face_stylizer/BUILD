@@ -35,3 +35,12 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPFaceStylizer",
+    hdrs = ["sources/MPPFaceStylizer.h"],
+    deps = [
+        ":MPPFaceStylizerOptions",
+        ":MPPFaceStylizerResult",
+        "//mediapipe/tasks/ios/vision/core:MPPImage",
+    ],
+)
