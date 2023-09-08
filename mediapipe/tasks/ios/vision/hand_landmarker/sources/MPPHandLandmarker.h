@@ -21,6 +21,53 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+
+/**
+ * The enum containing the 21 hand landmarks.
+ */
+typedef NS_ENUM(NSUInteger, MPPHandLandmark) {
+  MPPHandLandmarkWrist,
+
+  MPPHandLandmarkThumbCMC,
+
+  MPPHandLandmarkThumbMCP,
+
+  MPPHandLandmarkThumbIP,
+
+  MPPHandLandmarkIndexFingerMCP,
+
+  MPPHandLandmarkIndexFingerPIP,
+
+  MPPHandLandmarkIndexFingerDIP,
+
+  MPPHandLandmarkIndexFingerTIP,
+
+  MPPHandLandmarkMiddleFingerMCP,
+
+  MPPHandLandmarkMiddleFingerPIP,
+
+  MPPHandLandmarkMiddleFingerDIP,
+
+  MPPHandLandmarkMiddleFingerTIP,
+
+  MPPHandLandmarkRingFingerMCP,
+
+  MPPHandLandmarkRingFingerPIP,
+
+  MPPHandLandmarkRingFingerDIP,
+
+  MPPHandLandmarkRingFingerTIP,
+
+  MPPHandLandmarkPinkyMCP,
+
+  MPPHandLandmarkPinkyPIP,
+
+  MPPHandLandmarkPinkyDIP,
+
+  MPPHandLandmarkPinkyTIP,
+
+} NS_SWIFT_NAME(HandLandmark);
+
 /**
  * @brief Performs hand landmarks detection on images.
  *
