@@ -1202,7 +1202,7 @@ export class GraphRunner {
 }
 
 // Quick private helper to run the given script safely
-async function runScript(scriptUrl: string) {
+async function runScript(scriptUrl: string|string) {
   if (typeof importScripts === 'function') {
     importScripts(scriptUrl.toString());
   } else {
