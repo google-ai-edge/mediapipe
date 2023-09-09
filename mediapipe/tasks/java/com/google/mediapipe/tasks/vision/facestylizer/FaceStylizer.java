@@ -166,6 +166,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)
                 .setTaskOptions(stylizerOptions)
+                .setEnableFlowLimiting(false)
                 .build(),
             handler);
     return new FaceStylizer(
