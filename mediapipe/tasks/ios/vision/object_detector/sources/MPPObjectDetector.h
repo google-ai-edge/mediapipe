@@ -118,8 +118,7 @@ NS_SWIFT_NAME(ObjectDetector)
 /**
  * Performs object detection on the provided video frame of type `MPImage` using the whole
  * image as region of interest. Rotation will be applied according to the `orientation` property of
- * the provided `MPImage`. Only use this method when the `MPPObjectDetector` is created with
- * `.video`.
+ * the provided `MPImage`. Only use this method when the `ObjectDetector` is created with `.video`.
  *
  * This method supports detecting objects in of RGBA images. If your `MPImage` has a source type of
  * .pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the following
@@ -170,7 +169,7 @@ NS_SWIFT_NAME(ObjectDetector)
  * that you request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32RGBA` using its
  * `videoSettings` property.
  *
- * @param image A live stream image data of type `MPPImage` on which object detection is to be
+ * @param image A live stream image data of type `MPImage` on which object detection is to be
  * performed.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
  * image is sent to the object detector. The input timestamps must be monotonically increasing.

@@ -71,9 +71,3 @@ objc_library(
         "//mediapipe/tasks/ios/vision/hand_landmarker/utils:MPPHandLandmarkerResultHelpers",
     ],
 )
-
-objc_library(
-    name = "MPPHandLandmark",
-    hdrs = ["sources/MPPHandLandmark.h"],
-    module_name = "MPPHandLandmark",
-)

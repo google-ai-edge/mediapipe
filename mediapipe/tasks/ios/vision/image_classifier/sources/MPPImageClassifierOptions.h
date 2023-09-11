@@ -24,8 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * This protocol defines an interface for the delegates of `ImageClassifier` object to receive
- * results of asynchronous classification of images (i.e, when `runningMode =
- * .liveStream`).
+ * results of asynchronous classification of images (i.e, when `runningMode` = `.liveStream`).
  *
  * The delegate of `ImageClassifier` must adopt `ImageClassifierLiveStreamDelegate` protocol.
  * The methods in this protocol are optional.
