@@ -269,6 +269,7 @@ cc_library(
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_buffer_format",
             "//mediapipe/gpu:shader_util",
         ],
     }),

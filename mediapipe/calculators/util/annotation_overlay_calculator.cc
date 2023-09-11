@@ -37,6 +37,7 @@
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
 #include "mediapipe/gpu/gpu_buffer.h"
+#include "mediapipe/gpu/gpu_buffer_format.h"
 #include "mediapipe/gpu/shader_util.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
@@ -449,7 +450,8 @@ absl::Status AnnotationOverlayCalculator::RenderToGpu(CalculatorContext* cc,
   auto input_texture = gpu_helper_.CreateSourceTexture(input_frame);
 
   auto output_texture = gpu_helper_.CreateDestinationTexture(
-      width_, height_, mediapipe::GpuBufferFormat::kBGRA32);
+      input_texture.width(), input_texture.height(),
+      mediapipe::GpuBufferFormat::kBGRA32);
 
   // Upload render target to GPU.
   {
@@ -478,7 +480,7 @@ absl::Status AnnotationOverlayCalculator::RenderToGpu(CalculatorContext* cc,
   }
 
   // Send out blended image as GPU packet.
-  auto output_frame = output_texture.GetFrame<Type>();
+  auto output_frame = output_texture.template GetFrame<Type>();
   cc->Outputs().Tag(Tag).Add(output_frame.release(), cc->InputTimestamp());
 
   // Cleanup
