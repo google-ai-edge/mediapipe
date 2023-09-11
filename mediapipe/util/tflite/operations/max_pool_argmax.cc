@@ -156,6 +156,7 @@ TfLiteStatus Prepare(TfLiteContext* context, TfLiteNode* node) {
   output_size->data[3] = channels_out;
   TfLiteIntArray* indices_size = TfLiteIntArrayCopy(output_size);
   if (context->ResizeTensor(context, output, output_size) != kTfLiteOk) {
+    TfLiteIntArrayFree(indices_size);
     return kTfLiteError;
   }
   if (context->ResizeTensor(context, indices, indices_size) != kTfLiteOk) {

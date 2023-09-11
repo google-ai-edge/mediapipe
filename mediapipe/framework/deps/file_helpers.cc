@@ -151,6 +151,7 @@ absl::Status GetContents(absl::string_view file_name, std::string* output,
     char buf[4096];
     size_t ret = fread(buf, 1, 4096, fp);
     if (ret == 0 && ferror(fp)) {
+      fclose(fp);
       return mediapipe::InternalErrorBuilder(MEDIAPIPE_LOC)
              << "Error while reading file: " << file_name;
     }
