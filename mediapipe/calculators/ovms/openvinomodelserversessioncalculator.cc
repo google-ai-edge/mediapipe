@@ -15,6 +15,7 @@
 //*****************************************************************************
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <chrono>
 #include <sstream>
@@ -103,6 +104,8 @@ class OpenVINOModelServerSessionCalculator : public CalculatorBase {
     OVMS_Server* cserver{nullptr};
     OVMS_ServerSettings* _serverSettings{nullptr};
     OVMS_ModelsSettings* _modelsSettings{nullptr};
+    static bool triedToStartOVMS;
+    static std::mutex loadingMtx;
 public:
     static absl::Status GetContract(CalculatorContract* cc) {
         LOG(INFO) << "Session GetContract start";
@@ -142,23 +145,29 @@ public:
         // if config is in calc then we start the server
         LOG(INFO) << "Will check if we want to start server";
         if (!options.server_config().empty()) {
-            LOG(INFO) << "Will start new server";
-            OVMS_ServerNew(&cserver);
-            OVMS_ServerSettingsNew(&_serverSettings);
-            OVMS_ModelsSettingsNew(&_modelsSettings);
-            OVMS_ModelsSettingsSetConfigPath(_modelsSettings, options.server_config().c_str());
-            LOG(INFO) << "state config file:" << options.server_config();
-            OVMS_ServerSettingsSetLogLevel(_serverSettings, OVMS_LOG_DEBUG);
+            // Lock access to server from multiple calculator instances during the model loading phase
+            std::unique_lock<std::mutex> lk(ModelAPISessionCalculator::loadingMtx);
             bool isServerReady = false;
-            ASSERT_CAPI_STATUS_NULL(OVMS_ServerReady(cserver, &isServerReady));
-            if (!isServerReady) {
-                REPORT_CAPI_STATUS_NULL(OVMS_ServerStartFromConfigurationFile(cserver, _serverSettings, _modelsSettings));
-            }
-            while (!isServerReady) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            OVMS_ServerNew(&cserver);
+
+            if (triedToStartOVMS){
                 ASSERT_CAPI_STATUS_NULL(OVMS_ServerReady(cserver, &isServerReady));
+                RET_CHECK(isServerReady);
+            } else {
+                LOG(INFO) << "Will start new server";
+                triedToStartOVMS = true;
+
+                OVMS_ServerSettingsNew(&_serverSettings);
+                OVMS_ModelsSettingsNew(&_modelsSettings);
+                OVMS_ModelsSettingsSetConfigPath(_modelsSettings, options.server_config().c_str());
+                LOG(INFO) << "state config file:" << options.server_config();
+                OVMS_ServerSettingsSetLogLevel(_serverSettings, OVMS_LOG_DEBUG);
+
+                ASSERT_CAPI_STATUS_NULL(OVMS_ServerStartFromConfigurationFile(cserver, _serverSettings, _modelsSettings));
+                ASSERT_CAPI_STATUS_NULL(OVMS_ServerReady(cserver, &isServerReady));
+                RET_CHECK(isServerReady);
+                LOG(INFO) << "Server started";
             }
-            LOG(INFO) << "Ensured server is ready";
         }
 
         const std::string& servableName = options.servable_name();
@@ -188,6 +197,9 @@ public:
         return absl::OkStatus();
     }
 };
+
+bool OpenVINOModelServerSessionCalculator::triedToStartOVMS = false;
+std::mutex OpenVINOModelServerSessionCalculator::loadingMtx;
 
 REGISTER_CALCULATOR(OpenVINOModelServerSessionCalculator);
 }  // namespace mediapipe
