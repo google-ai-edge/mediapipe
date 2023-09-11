@@ -16,9 +16,10 @@ limitations under the License.
 #ifndef MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_H_
 #define MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_H_
 
-#include "mediapipe/tasks/cc/components/containers/category.h"
-
+#ifdef __cplusplus
 extern "C" {
+#endif
+
 // Defines a single classification result.
 //
 // The label maps packed into the TFLite Model Metadata [1] are used to populate
@@ -41,13 +42,9 @@ struct Category {
   // packed in the TFLite Model Metadata if present.
   const char* display_name;
 };
-}
 
-namespace mediapie::tasks::c::components::containers {
-
-void CppConvertToCategory(mediapipe::tasks::components::containers::Category in,
-                          Category* out);
-
-}  // namespace mediapie::tasks::c::components::containers
+#ifdef __cplusplus
+}  // extern C
+#endif
 
 #endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_H_

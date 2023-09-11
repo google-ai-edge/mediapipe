@@ -23,8 +23,11 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/tasks/c/components/containers:classification_result",
+        "//mediapipe/tasks/c/components/containers:classification_result_converter",
         "//mediapipe/tasks/c/components/processors:classifier_options",
+        "//mediapipe/tasks/c/components/processors:classifier_options_converter",
         "//mediapipe/tasks/c/core:base_options",
+        "//mediapipe/tasks/c/core:base_options_converter",
         "//mediapipe/tasks/cc/text/text_classifier",
         "@com_google_absl//absl/log:absl_log",
     ],

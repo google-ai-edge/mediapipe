@@ -13,11 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/c/components/processors/classifier_options.h"
-
 #include <cstdint>
 #include <vector>
 
+#include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 
 namespace mediapie::c::components::processors {

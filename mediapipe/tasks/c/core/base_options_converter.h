@@ -13,18 +13,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/c/components/containers/category.h"
+#ifndef MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_CONVERTER_H_
+#define MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_CONVERTER_H_
 
-namespace mediapie::tasks::c::components::containers {
+#include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/cc/core/base_options.h"
 
-void CppConvertToCategory(mediapipe::tasks::components::containers::Category in,
-                          Category* out) {
-  out->index = in.index;
-  out->score = in.score;
-  out->category_name =
-      in.category_name.has_value() ? in.category_name->c_str() : nullptr;
-  out->display_name =
-      in.display_name.has_value() ? in.display_name->c_str() : nullptr;
-}
+namespace mediapipe::tasks::c::components::containers {
 
-}  // namespace mediapie::tasks::c::components::containers
+void CppConvertToBaseOptions(BaseOptions in,
+                             mediapipe::tasks::core::BaseOptions* out);
+
+}  // namespace mediapipe::tasks::c::components::containers
+
+#endif  // MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_H_

@@ -18,7 +18,15 @@ licenses(["notice"])
 
 cc_library(
     name = "classifier_options",
-    srcs = ["classifier_options.cc"],
     hdrs = ["classifier_options.h"],
-    deps = ["//mediapipe/tasks/cc/components/processors:classifier_options"],
+)
+
+cc_library(
+    name = "classifier_options_converter",
+    srcs = ["classifier_options_converter.cc"],
+    hdrs = ["classifier_options_converter.h"],
+    deps = [
+        ":classifier_options",
+        "//mediapipe/tasks/cc/components/processors:classifier_options",
+    ],
 )

@@ -19,8 +19,11 @@ limitations under the License.
 
 #include "absl/log/absl_log.h"
 #include "mediapipe/tasks/c/components/containers/classification_result.h"
+#include "mediapipe/tasks/c/components/containers/classification_result_converter.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
+#include "mediapipe/tasks/c/components/processors/classifier_options_converter.h"
 #include "mediapipe/tasks/c/core/base_options.h"
+#include "mediapipe/tasks/c/core/base_options_converter.h"
 #include "mediapipe/tasks/cc/text/text_classifier/text_classifier.h"
 
 namespace mediapipe::tasks::c::text::text_classifier {

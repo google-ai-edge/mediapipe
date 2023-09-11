@@ -13,24 +13,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_H_
-#define MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_H_
+#include "mediapipe/tasks/c/components/containers/category_converter.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace mediapie::tasks::c::components::containers {
 
-// Base options for MediaPipe C Tasks.
-struct BaseOptions {
-  // The model asset file contents as a string.
-  char* model_asset_buffer;
+void CppConvertToCategory(mediapipe::tasks::components::containers::Category in,
+                          Category* out) {
+  out->index = in.index;
+  out->score = in.score;
+  out->category_name =
+      in.category_name.has_value() ? in.category_name->c_str() : nullptr;
+  out->display_name =
+      in.display_name.has_value() ? in.display_name->c_str() : nullptr;
+}
 
-  // The path to the model asset to open and mmap in memory.
-  char* model_asset_path;
-};
-
-#ifdef __cplusplus
-}  // extern C
-#endif
-
-#endif  // MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_H_
+}  // namespace mediapie::tasks::c::components::containers

@@ -19,9 +19,9 @@ limitations under the License.
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "mediapipe/tasks/cc/components/containers/classification_result.h"
-
+#ifdef __cplusplus
 extern "C" {
+#endif
 
 // Defines classification results for a given classifier head.
 struct Classifications {
@@ -60,14 +60,9 @@ struct ClassificationResult {
   // Specifies whether the timestamp contains a valid value.
   bool has_timestamp_ms;
 };
-}
 
-namespace mediapipe::tasks::c::components::containers {
-
-void CppConvertToClassificationResult(
-    mediapipe::tasks::components::containers::ClassificationResult in,
-    ClassificationResult* out);
-
-}  // namespace mediapipe::tasks::c::components::containers
+#ifdef __cplusplus
+}  // extern C
+#endif
 
 #endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CLASSIFICATION_RESULT_H_

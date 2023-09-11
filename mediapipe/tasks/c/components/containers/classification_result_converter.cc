@@ -13,9 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/c/components/containers/classification_result.h"
+#include "mediapipe/tasks/c/components/containers/classification_result_converter.h"
 
 #include "mediapipe/tasks/c/components/containers/category.h"
+#include "mediapipe/tasks/c/components/containers/category_converter.h"
 
 namespace mediapipe::tasks::c::components::containers {
 

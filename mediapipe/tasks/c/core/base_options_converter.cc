@@ -13,24 +13,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_H_
-#define MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_H_
+#include "mediapipe/tasks/c/core/base_options_converter.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "mediapipe/tasks/cc/core/base_options.h"
 
-// Base options for MediaPipe C Tasks.
-struct BaseOptions {
-  // The model asset file contents as a string.
-  char* model_asset_buffer;
+namespace mediapipe::tasks::c::components::containers {
 
-  // The path to the model asset to open and mmap in memory.
-  char* model_asset_path;
-};
+void CppConvertToBaseOptions(BaseOptions in,
+                             mediapipe::tasks::core::BaseOptions* out) {
+  out->model_asset_buffer =
+      std::make_unique<std::string>(in.model_asset_buffer);
+  out->model_asset_path = in.model_asset_path;
+}
 
-#ifdef __cplusplus
-}  // extern C
-#endif
-
-#endif  // MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_H_
+}  // namespace mediapipe::tasks::c::components::containers

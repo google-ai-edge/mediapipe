@@ -13,17 +13,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "mediapipe/tasks/c/core/base_options.h"
+#ifndef MEDIAPIPE_TASKS_C_COMPONENTS_PROCESSORS_CLASSIFIER_OPTIONS_CONVERTER_H_
+#define MEDIAPIPE_TASKS_C_COMPONENTS_PROCESSORS_CLASSIFIER_OPTIONS_CONVERTER_H_
 
-#include "mediapipe/tasks/cc/core/base_options.h"
+#include "mediapipe/tasks/c/components/processors/classifier_options.h"
+#include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 
-namespace mediapipe::tasks::c::components::containers {
+namespace mediapipe::tasks::c::components::processors {
 
-void CppConvertToBaseOptions(BaseOptions in,
-                             mediapipe::tasks::core::BaseOptions* out) {
-  out->model_asset_buffer =
-      std::make_unique<std::string>(in.model_asset_buffer);
-  out->model_asset_path = in.model_asset_path;
-}
+void CppConvertToClassifierOptions(
+    ClassifierOptions in,
+    mediapipe::tasks::components::processors::ClassifierOptions* out);
 
-}  // namespace mediapipe::tasks::c::components::containers
+}  // namespace mediapipe::tasks::c::components::processors
+
+#endif  // MEDIAPIPE_TASKS_C_COMPONENTS_PROCESSORS_CLASSIFIER_OPTIONS_CONVERTER_H_
