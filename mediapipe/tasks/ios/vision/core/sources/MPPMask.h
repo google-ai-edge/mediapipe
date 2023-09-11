@@ -36,7 +36,7 @@ typedef NS_ENUM(NSUInteger, MPPMaskDataType) {
  * `MPPMaskDataTypeUInt8`, in addition to accessing the mask using `uint8Data`, you can access
  * `float32Data` to get the 32 bit float data (with values ranging from 0.0 to 1.0). The first
  * time you access the data as a type different from the underlying type, an expensive type
- * conversion is performed. Subsequent accesses return a pointer to the memory location fo the same
+ * conversion is performed. Subsequent accesses return a pointer to the memory location for the same
  * type converted array. As type conversions can be expensive, it is recommended to limit the
  * accesses to data of types different from the underlying type.
  *

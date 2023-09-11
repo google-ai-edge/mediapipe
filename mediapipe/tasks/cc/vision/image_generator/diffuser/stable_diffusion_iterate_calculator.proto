@@ -60,7 +60,7 @@ message StableDiffusionIterateCalculatorOptions {
   // If set to be True, the calculator will perform a GPU-CPU sync and emit an
   // empty packet. It is used to provide the signal of which iterations it is
   // currently at, typically used to create a progress bar. Note that this also
-  // introduce overhead, but not significanly based on our experiments (~1ms).
+  // introduce overhead, but not significantly based on our experiments (~1ms).
   optional bool emit_empty_packet = 6 [default = false];
 
   enum ClPriorityHint {
