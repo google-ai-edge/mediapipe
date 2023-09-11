@@ -84,17 +84,26 @@ export class MPMask {
     }
   }
 
-  /** Returns whether this `MPMask` contains a mask of type `Uint8Array`. */
+  /**
+   * Returns whether this `MPMask` contains a mask of type `Uint8Array`.
+   * @export
+   */
   hasUint8Array(): boolean {
     return !!this.getContainer(MPMaskType.UINT8_ARRAY);
   }
 
-  /** Returns whether this `MPMask` contains a mask of type `Float32Array`. */
+  /**
+   * Returns whether this `MPMask` contains a mask of type `Float32Array`.
+   * @export
+   */
   hasFloat32Array(): boolean {
     return !!this.getContainer(MPMaskType.FLOAT32_ARRAY);
   }
 
-  /** Returns whether this `MPMask` contains a mask of type `WebGLTexture`. */
+  /**
+   * Returns whether this `MPMask` contains a mask of type `WebGLTexture`.
+   * @export
+   */
   hasWebGLTexture(): boolean {
     return !!this.getContainer(MPMaskType.WEBGL_TEXTURE);
   }
@@ -104,6 +113,7 @@ export class MPMask {
    * expensive GPU to CPU transfer if the current mask is only available as a
    * `WebGLTexture`.
    *
+   * @export
    * @return The current data as a Uint8Array.
    */
   getAsUint8Array(): Uint8Array {
@@ -115,6 +125,7 @@ export class MPMask {
    * this involves an expensive GPU to CPU transfer if the current mask is
    * only available as a `WebGLTexture`.
    *
+   * @export
    * @return The current mask as a Float32Array.
    */
   getAsFloat32Array(): Float32Array {
@@ -127,6 +138,7 @@ export class MPMask {
    * a CPU array. The returned texture is bound to the current canvas (see
    * `.canvas`).
    *
+   * @export
    * @return The current mask as a WebGLTexture.
    */
   getAsWebGLTexture(): WebGLTexture {
@@ -182,6 +194,8 @@ export class MPMask {
    * MediaPipe Task. Note that performance critical applications should aim to
    * only use the `MPMask` within the MediaPipe Task callback so that
    * copies can be avoided.
+   *
+   * @export
    */
   clone(): MPMask {
     const destinationContainers: MPMaskContainer[] = [];
@@ -375,6 +389,8 @@ export class MPMask {
    * Task, as these are freed automatically once you leave the MediaPipe
    * callback. Additionally, some shared state is freed only once you invoke
    * the Task's `close()` method.
+   *
+   * @export
    */
   close(): void {
     if (this.ownsWebGLTexture) {

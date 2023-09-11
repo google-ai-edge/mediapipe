@@ -84,17 +84,26 @@ export class MPImage {
     }
   }
 
-  /** Returns whether this `MPImage` contains a mask of type `ImageData`. */
+  /**
+   * Returns whether this `MPImage` contains a mask of type `ImageData`.
+   * @export
+   */
   hasImageData(): boolean {
     return !!this.getContainer(MPImageType.IMAGE_DATA);
   }
 
-  /** Returns whether this `MPImage` contains a mask of type `ImageBitmap`. */
+  /**
+   * Returns whether this `MPImage` contains a mask of type `ImageBitmap`.
+   * @export
+   */
   hasImageBitmap(): boolean {
     return !!this.getContainer(MPImageType.IMAGE_BITMAP);
   }
 
-  /** Returns whether this `MPImage` contains a mask of type `WebGLTexture`. */
+  /**
+   * Returns whether this `MPImage` contains a mask of type `WebGLTexture`.
+   * @export
+   */
   hasWebGLTexture(): boolean {
     return !!this.getContainer(MPImageType.WEBGL_TEXTURE);
   }
@@ -104,6 +113,7 @@ export class MPImage {
    * involves an expensive GPU to CPU transfer if the current image is only
    * available as an `ImageBitmap` or `WebGLTexture`.
    *
+   * @export
    * @return The current image as an ImageData object.
    */
   getAsImageData(): ImageData {
@@ -120,6 +130,7 @@ export class MPImage {
    * https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas/getContext
    * for a list of supported platforms.
    *
+   * @export
    * @return The current image as an ImageBitmap object.
    */
   getAsImageBitmap(): ImageBitmap {
@@ -132,6 +143,7 @@ export class MPImage {
    * an `ImageData` object. The returned texture is bound to the current
    * canvas (see `.canvas`).
    *
+   * @export
    * @return The current image as a WebGLTexture.
    */
   getAsWebGLTexture(): WebGLTexture {
@@ -166,6 +178,8 @@ export class MPImage {
    * Task. Note that performance critical applications should aim to only use
    * the `MPImage` within the MediaPipe Task callback so that copies can be
    * avoided.
+   *
+   * @export
    */
   clone(): MPImage {
     const destinationContainers: MPImageContainer[] = [];
@@ -410,6 +424,8 @@ export class MPImage {
    * Task, as these are freed automatically once you leave the MediaPipe
    * callback. Additionally, some shared state is freed only once you invoke the
    * Task's `close()` method.
+   *
+   * @export
    */
   close(): void {
     if (this.ownsImageBitmap) {
