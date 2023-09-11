@@ -166,8 +166,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
         ->mutable_base_options()
         ->mutable_acceleration()
         ->mutable_xnnpack();
-    ABSL_LOG(WARNING) << "Face blendshape model contains CPU only ops. Sets "
-                      << "FaceBlendshapesGraph acceleration to Xnnpack.";
+    ABSL_LOG(WARNING) << "Sets FaceBlendshapesGraph acceleration to xnnpack "
+                      << "by default.";
   }
 
   return absl::OkStatus();
