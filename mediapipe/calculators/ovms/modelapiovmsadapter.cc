@@ -36,14 +36,24 @@ namespace mediapipe {
 
 using std::endl;
 
+
+#define THROW_IF_CIRCULAR_ERR(C_API_CALL)                                       \
+    {                                                                           \
+        auto* fatalErr = C_API_CALL;                                            \
+        if (fatalErr != nullptr) {                                              \
+            std::runtime_error exc("Getting status details circular error");    \
+            throw exc;                                                          \
+        }                                                                       \ 
+    }
+
 #define ASSERT_CAPI_STATUS_NULL(C_API_CALL)                                                 \
     {                                                                                       \
         auto* err = C_API_CALL;                                                             \
         if (err != nullptr) {                                                               \
             uint32_t code = 0;                                                              \
             const char* msg = nullptr;                                                      \
-            OVMS_StatusCode(err, &code);                                                 \
-            OVMS_StatusDetails(err, &msg);                                               \
+            THROW_IF_CIRCULAR_ERR(OVMS_StatusCode(err, &code));                             \
+            THROW_IF_CIRCULAR_ERR(OVMS_StatusDetails(err, &msg));                           \
             LOG(INFO) << "Error encountred in OVMSCalculator:" << msg << " code: " << code; \
             std::runtime_error exc(msg);                                                    \
             OVMS_StatusDelete(err);                                                         \
@@ -127,8 +137,8 @@ InferenceOutput OVMSInferenceAdapter::infer(const InferenceInput& input) {
     if (nullptr != status) {
         uint32_t code = 0;
         const char* msg = nullptr;
-        OVMS_StatusCode(status, &code);
-        OVMS_StatusDetails(status, &msg);
+        THROW_IF_CIRCULAR_ERR(OVMS_StatusCode(status, &code));
+        THROW_IF_CIRCULAR_ERR(OVMS_StatusDetails(status, &msg));
         std::stringstream ss;
         ss << "Inference in OVMSAdapter failed: ";
         ss << msg << " code: " << code;

@@ -44,14 +44,21 @@ namespace mediapipe {
 using std::endl;
 
 namespace {
+
+#define ASSERT_CIRCULAR_ERR(C_API_CALL) \
+    {                                   \
+        auto* fatalErr = C_API_CALL;    \
+        RET_CHECK(fatalErr == nullptr); \
+    }
+
 #define ASSERT_CAPI_STATUS_NULL(C_API_CALL)                                                 \
     {                                                                                       \
         auto* err = C_API_CALL;                                                             \
         if (err != nullptr) {                                                               \
             uint32_t code = 0;                                                              \
             const char* msg = nullptr;                                                      \
-            OVMS_StatusCode(err, &code);                                                 \
-            OVMS_StatusDetails(err, &msg);                                               \
+            ASSERT_CIRCULAR_ERR(OVMS_StatusCode(err, &code));                               \
+            ASSERT_CIRCULAR_ERR(OVMS_StatusDetails(err, &msg));                             \
             LOG(INFO) << "Error encountred in OVMSCalculator:" << msg << " code: " << code; \
             OVMS_StatusDelete(err);                                                         \
             RET_CHECK(err == nullptr);                                                      \
@@ -174,8 +181,10 @@ static ov::Tensor convertMPTensor2OVTensor(const Tensor& inputTensor) {
         break;
     case Tensor::ElementType::kBool:
         data = reinterpret_cast<void*>(const_cast<bool*>(inputTensor.GetCpuReadView().buffer<bool>()));
+        break;
     default:
         data = reinterpret_cast<void*>(const_cast<void*>(inputTensor.GetCpuReadView().buffer<void>()));
+        break;
     }
     auto datatype = MPType2OVType(inputTensor.element_type());;
     ov::Shape shape;
@@ -211,8 +220,10 @@ static Tensor convertOVTensor2MPTensor(const ov::Tensor& inputTensor) {
         break;
     case ov::element::Type_t::boolean:
         data = reinterpret_cast<void*>(const_cast<bool*>(outputTensor.GetCpuWriteView().buffer<bool>()));
+        break;
     default:
         data = reinterpret_cast<void*>(const_cast<void*>(outputTensor.GetCpuWriteView().buffer<void>()));
+        break;
     }
     std::memcpy(data, inputTensor.data(), inputTensor.get_byte_size());
     return outputTensor;
