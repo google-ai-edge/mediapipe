@@ -153,9 +153,14 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
                                                usingImageSegmenter:imageSegmenter];
 
   XCTAssertNotNil(result.categoryMask);
-  shouldHaveConfidenceMasks ? XCTAssertNotNil(result.confidenceMasks)
-                            : XCTAssertNil(result.confidenceMasks);
-
+  
+  if (shouldHaveConfidenceMasks) {
+    XCTAssertNotNil(result.confidenceMasks);
+  }
+  else {
+    XCTAssertNil(result.confidenceMasks);
+  }
+ 
   [self assertCategoryMask:result.categoryMask
       approximatelyEqualsExpectedCategoryMaskImageWithFileInfo:expectedCategoryMaskFileInfo];
 }
@@ -170,7 +175,13 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
                                                usingImageSegmenter:imageSegmenter];
 
   XCTAssertNotNil(result.confidenceMasks);
-  shouldHaveCategoryMask ? XCTAssertNotNil(result.categoryMask) : XCTAssertNil(result.categoryMask);
+
+  if (shouldHaveCategoryMask) {
+    XCTAssertNotNil(result.categoryMask);
+  }
+  else {
+    XCTAssertNil(result.categoryMask);
+  }
 
   XCTAssertLessThan(index, result.confidenceMasks.count);
 
