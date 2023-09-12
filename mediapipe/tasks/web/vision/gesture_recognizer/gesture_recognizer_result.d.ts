@@ -30,6 +30,12 @@ export declare interface GestureRecognizerResult {
   worldLandmarks: Landmark[][];
 
   /** Handedness of detected hands. */
+  handedness: Category[][];
+
+  /**
+   * Handedness of detected hands.
+   * @deprecated Use `.handedness` instead.
+   */
   handednesses: Category[][];
 
   /**

@@ -93,7 +93,7 @@ struct HandLandmarkerOutputs {
   Source<std::vector<NormalizedRect>> hand_rects_next_frame;
   Source<std::vector<bool>> presences;
   Source<std::vector<float>> presence_scores;
-  Source<std::vector<ClassificationList>> handednesses;
+  Source<std::vector<ClassificationList>> handedness;
 };
 
 absl::Status SanityCheckOptions(
@@ -478,7 +478,7 @@ class MultipleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
         graph[Output<std::vector<bool>>(kPresenceTag)];
     hand_landmark_detection_outputs.presence_scores >>
         graph[Output<std::vector<float>>(kPresenceScoreTag)];
-    hand_landmark_detection_outputs.handednesses >>
+    hand_landmark_detection_outputs.handedness >>
         graph[Output<std::vector<ClassificationList>>(kHandednessTag)];
 
     return graph.GetConfig();
@@ -562,7 +562,7 @@ class MultipleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
         /* hand_rects_next_frame= */ hand_rects_next_frame,
         /* presences= */ presences,
         /* presence_scores= */ presence_scores,
-        /* handednesses= */ handednesses,
+        /* handedness= */ handednesses,
     }};
   }
 };

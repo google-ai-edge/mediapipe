@@ -30,7 +30,7 @@ import {HandLandmarkerOptions} from './hand_landmarker_options';
 
 type ProtoListener = ((binaryProtos: Uint8Array[], timestamp: number) => void);
 
-function createHandednesses(): ClassificationList {
+function createHandedness(): ClassificationList {
   const handsProto = new ClassificationList();
   const classification = new Classification();
   classification.setScore(0.1);
@@ -198,7 +198,7 @@ describe('HandLandmarker', () => {
   it('transforms results', async () => {
     const landmarksProto = [createLandmarks().serializeBinary()];
     const worldLandmarksProto = [createWorldLandmarks().serializeBinary()];
-    const handednessProto = [createHandednesses().serializeBinary()];
+    const handednessProto = [createHandedness().serializeBinary()];
 
     // Pass the test data to our listener
     handLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
@@ -220,6 +220,12 @@ describe('HandLandmarker', () => {
     expect(landmarks).toEqual({
       'landmarks': [[{'x': 0, 'y': 0, 'z': 0}]],
       'worldLandmarks': [[{'x': 0, 'y': 0, 'z': 0}]],
+      'handedness': [[{
+        'score': 0.1,
+        'index': 1,
+        'categoryName': 'handedness_label',
+        'displayName': 'handedness_display_name'
+      }]],
       'handednesses': [[{
         'score': 0.1,
         'index': 1,
@@ -232,7 +238,7 @@ describe('HandLandmarker', () => {
   it('clears results between invoations', async () => {
     const landmarks = [createLandmarks().serializeBinary()];
     const worldLandmarks = [createWorldLandmarks().serializeBinary()];
-    const handedness = [createHandednesses().serializeBinary()];
+    const handedness = [createHandedness().serializeBinary()];
 
     // Pass the test data to our listener
     handLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {

@@ -58,7 +58,7 @@ const DEFAULT_CATEGORY_INDEX = -1;
 export class HandLandmarker extends VisionTaskRunner {
   private landmarks: NormalizedLandmark[][] = [];
   private worldLandmarks: Landmark[][] = [];
-  private handednesses: Category[][] = [];
+  private handedness: Category[][] = [];
 
   private readonly options: HandLandmarkerGraphOptions;
   private readonly handLandmarksDetectorGraphOptions:
@@ -222,14 +222,15 @@ export class HandLandmarker extends VisionTaskRunner {
   private resetResults(): void {
     this.landmarks = [];
     this.worldLandmarks = [];
-    this.handednesses = [];
+    this.handedness = [];
   }
 
   private processResults(): HandLandmarkerResult {
     return {
       landmarks: this.landmarks,
       worldLandmarks: this.worldLandmarks,
-      handednesses: this.handednesses
+      handednesses: this.handedness,
+      handedness: this.handedness,
     };
   }
 
@@ -330,7 +331,7 @@ export class HandLandmarker extends VisionTaskRunner {
 
     this.graphRunner.attachProtoVectorListener(
         HANDEDNESS_STREAM, (binaryProto, timestamp) => {
-          this.handednesses.push(...this.toJsCategories(binaryProto));
+          this.handedness.push(...this.toJsCategories(binaryProto));
           this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachEmptyPacketListener(

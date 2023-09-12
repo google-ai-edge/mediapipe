@@ -114,11 +114,21 @@ public abstract class GestureRecognizerResult implements TaskResult {
   /** Hand landmarks of detected hands. */
   public abstract List<List<NormalizedLandmark>> landmarks();
 
-  /** Hand landmarks in world coordniates of detected hands. */
+  /** Hand landmarks in world coordinates of detected hands. */
   public abstract List<List<Landmark>> worldLandmarks();
 
+  /**
+   * Handedness of detected hands.
+   *
+   * @deprecated Use {@link #handedness()} instead.
+   */
+  @Deprecated
+  public List<List<Category>> handednesses() {
+    return handedness();
+  }
+
   /** Handedness of detected hands. */
-  public abstract List<List<Category>> handednesses();
+  public abstract List<List<Category>> handedness();
 
   /**
    * Recognized hand gestures of detected hands. Note that the index of the gesture is always -1,

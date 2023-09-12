@@ -63,7 +63,7 @@ export class GestureRecognizer extends VisionTaskRunner {
   private gestures: Category[][] = [];
   private landmarks: NormalizedLandmark[][] = [];
   private worldLandmarks: Landmark[][] = [];
-  private handednesses: Category[][] = [];
+  private handedness: Category[][] = [];
 
   private readonly options: GestureRecognizerGraphOptions;
   private readonly handLandmarkerGraphOptions: HandLandmarkerGraphOptions;
@@ -273,7 +273,7 @@ export class GestureRecognizer extends VisionTaskRunner {
     this.gestures = [];
     this.landmarks = [];
     this.worldLandmarks = [];
-    this.handednesses = [];
+    this.handedness = [];
   }
 
   private processResults(): GestureRecognizerResult {
@@ -283,14 +283,16 @@ export class GestureRecognizer extends VisionTaskRunner {
         gestures: [],
         landmarks: [],
         worldLandmarks: [],
-        handednesses: [],
+        handedness: [],
+        handednesses: []
       };
     } else {
       return {
         gestures: this.gestures,
         landmarks: this.landmarks,
         worldLandmarks: this.worldLandmarks,
-        handednesses: this.handednesses
+        handedness: this.handedness,
+        handednesses: this.handedness
       };
     }
   }
@@ -416,7 +418,7 @@ export class GestureRecognizer extends VisionTaskRunner {
 
     this.graphRunner.attachProtoVectorListener(
         HANDEDNESS_STREAM, (binaryProto, timestamp) => {
-          this.handednesses.push(...this.toJsCategories(binaryProto));
+          this.handedness.push(...this.toJsCategories(binaryProto));
           this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachEmptyPacketListener(HANDEDNESS_STREAM, timestamp => {

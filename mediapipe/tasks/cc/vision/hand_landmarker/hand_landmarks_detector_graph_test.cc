@@ -319,15 +319,15 @@ TEST_P(MultiHandLandmarkerTest, Succeeds) {
 
   const std::vector<bool>& presences =
       (*output_packets)[kPresenceName].Get<std::vector<bool>>();
-  const std::vector<ClassificationList>& handednesses =
+  const std::vector<ClassificationList>& handedness =
       (*output_packets)[kHandednessName].Get<std::vector<ClassificationList>>();
   const std::vector<NormalizedLandmarkList>& landmark_lists =
       (*output_packets)[kLandmarksName]
           .Get<std::vector<NormalizedLandmarkList>>();
 
   EXPECT_THAT(presences, ElementsAreArray(GetParam().expected_presences));
-  EXPECT_THAT(handednesses, Pointwise(Partially(EqualsProto()),
-                                      GetParam().expected_handedness));
+  EXPECT_THAT(handedness, Pointwise(Partially(EqualsProto()),
+                                    GetParam().expected_handedness));
   EXPECT_THAT(
       landmark_lists,
       Pointwise(Approximately(Partially(EqualsProto()), /*margin=*/kAbsMargin,
