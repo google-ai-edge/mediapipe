@@ -44,14 +44,14 @@ double sum(const float *mask, size_t size) {
 
 float *multiply(const float *mask1, const float *mask2, size_t size) {
   double sum = 0.0;
-  float *multipliedMask = (float *)malloc(size * sizeof(float));
-  if (!multipliedMask) {
-    exit(-1);
-  }
+  
+  std::vector<float> multipliedMask;
+  multipliedMask.reserve(size);
+  
   for (int i = 0; i < size; i++) {
-    multipliedMask[i] = mask1[i] * mask2[i];
+    multipliedMask.push_back(mask1[i] * mask2[i]);
   }
-
+  
   return multipliedMask;
 }
 
