@@ -54,4 +54,15 @@ message ImageTransformationCalculatorOptions {
   // The color for the padding. This option is only used when the scale mode is
   // FIT. Default is black. This is for CPU only.
   optional Color padding_color = 8;
+
+  // Interpolation method to use. Note that on CPU when LINEAR is specified,
+  // INTER_LINEAR is used for upscaling and INTER_AREA is used for downscaling.
+  enum InterpolationMode {
+    DEFAULT = 0;
+    LINEAR = 1;
+    NEAREST = 2;
+  }
+
+  // Mode DEFAULT will use LINEAR interpolation.
+  optional InterpolationMode interpolation_mode = 9;
 }
