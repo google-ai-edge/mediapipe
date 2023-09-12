@@ -660,6 +660,7 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
   glBindTexture(src1.target(), src1.name());
 
   if (interpolation_mode_ == ImageTransformationCalculatorOptions::NEAREST) {
+    // TODO: revert texture params.
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   }
@@ -668,10 +669,6 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
       src1.width(), src1.height(), dst.width(), dst.height(), scale_mode,
       rotation, flip_horizontally_, flip_vertically_,
       /*flip_texture=*/false));
-
-  // Reset interpolation modes to MediaPipe defaults.
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(src1.target(), 0);
