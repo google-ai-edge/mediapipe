@@ -73,10 +73,10 @@ absl::StatusOr<bool> ShouldFlipVertically(
 #else
       return true;
 #endif
+    default:
+      return absl::InvalidArgumentError(
+          absl::StrFormat("Unhandled GPU origin %i", options.gpu_origin()));
   }
-
-  return absl::InvalidArgumentError(
-      absl::StrFormat("Unhandled GPU origin %i", options.gpu_origin()));
 }
 
 typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>

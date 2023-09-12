@@ -20,6 +20,7 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "Eigen/LU"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -53,6 +54,10 @@ bool IsMatrixVerticalFlipNeeded(GpuOrigin::Mode gpu_origin) {
 #endif  //  __APPLE__
     case GpuOrigin::TOP_LEFT:
       return false;
+    default:
+      ABSL_LOG(ERROR) << "Incorrect GpuOrigin: "
+                      << static_cast<int>(gpu_origin);
+      return true;
   }
 }
 
