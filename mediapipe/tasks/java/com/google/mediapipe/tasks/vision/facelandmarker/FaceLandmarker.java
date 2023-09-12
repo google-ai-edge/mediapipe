@@ -86,6 +86,10 @@ public final class FaceLandmarker extends BaseVisionTaskApi {
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.face_landmarker.FaceLandmarkerGraph";
 
+  static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
+  }
+
   /**
    * Creates a {@link FaceLandmarker} instance from a model asset bundle path and the default {@link
    * FaceLandmarkerOptions}.

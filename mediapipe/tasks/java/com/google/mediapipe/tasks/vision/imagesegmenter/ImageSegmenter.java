@@ -93,6 +93,10 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
   private boolean hasResultListener = false;
   private List<String> labels = new ArrayList<>();
 
+  static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
+  }
+
   /**
    * Creates an {@link ImageSegmenter} instance from an {@link ImageSegmenterOptions}.
    *

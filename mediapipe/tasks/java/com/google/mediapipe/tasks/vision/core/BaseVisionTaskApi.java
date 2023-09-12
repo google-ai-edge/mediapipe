@@ -34,7 +34,6 @@ public class BaseVisionTaskApi implements AutoCloseable {
   protected final String normRectStreamName;
 
   static {
-    System.loadLibrary("mediapipe_tasks_vision_jni");
     ProtoUtil.registerTypeName(NormalizedRect.class, "mediapipe.NormalizedRect");
   }
 

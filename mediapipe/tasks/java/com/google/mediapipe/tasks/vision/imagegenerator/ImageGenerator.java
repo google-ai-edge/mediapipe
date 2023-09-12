@@ -80,6 +80,10 @@ public final class ImageGenerator extends BaseVisionTaskApi {
   private CachedInputs cachedInputs = new CachedInputs();
   private boolean inProcessing = false;
 
+  static {
+    System.loadLibrary("mediapipe_tasks_vision_image_generator_jni");
+  }
+
   /**
    * Creates an {@link ImageGenerator} instance from an {@link ImageGeneratorOptions}.
    *

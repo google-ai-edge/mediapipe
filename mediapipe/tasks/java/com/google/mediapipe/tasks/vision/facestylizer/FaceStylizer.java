@@ -88,6 +88,10 @@ public final class FaceStylizer extends BaseVisionTaskApi {
       "mediapipe.tasks.vision.face_stylizer.FaceStylizerGraph";
   private final boolean hasResultListener;
 
+  static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
+  }
+
   /**
    * Creates an {@link FaceStylizer} instance from an {@link FaceStylizerOptions}.
    *

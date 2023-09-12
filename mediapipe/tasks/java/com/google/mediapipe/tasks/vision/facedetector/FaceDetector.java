@@ -81,6 +81,10 @@ public final class FaceDetector extends BaseVisionTaskApi {
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.face_detector.FaceDetectorGraph";
 
+  static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
+  }
+
   /**
    * Creates a {@link FaceDetector} instance from a model file and the default {@link
    * FaceDetectorOptions}.
