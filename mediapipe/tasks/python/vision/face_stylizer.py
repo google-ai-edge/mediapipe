@@ -14,7 +14,7 @@
 """MediaPipe face stylizer task."""
 
 import dataclasses
-from typing import Optional, Callable
+from typing import Optional
 
 from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
