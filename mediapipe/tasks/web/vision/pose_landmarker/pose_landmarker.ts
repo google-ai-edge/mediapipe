@@ -51,7 +51,7 @@ const POSE_LANDMARKER_GRAPH =
 
 const DEFAULT_NUM_POSES = 1;
 const DEFAULT_SCORE_THRESHOLD = 0.5;
-const DEFAULT_OUTPUT_SEGMANTATION_MASKS = false;
+const DEFAULT_OUTPUT_SEGMENTATION_MASKS = false;
 
 /**
  * A callback that receives the result from the pose detector. The returned
@@ -201,7 +201,7 @@ export class PoseLandmarker extends VisionTaskRunner {
 
     if ('outputSegmentationMasks' in options) {
       this.outputSegmentationMasks =
-          options.outputSegmentationMasks ?? DEFAULT_OUTPUT_SEGMANTATION_MASKS;
+          options.outputSegmentationMasks ?? DEFAULT_OUTPUT_SEGMENTATION_MASKS;
     }
 
     return this.applyOptions(options);
