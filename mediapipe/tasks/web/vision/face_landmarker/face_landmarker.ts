@@ -122,30 +122,35 @@ export class FaceLandmarker extends VisionTaskRunner {
   /**
    * Landmark connections to draw the connection between a face's lips.
    * @export
+   * @nocollapse
    */
   static FACE_LANDMARKS_LIPS = FACE_LANDMARKS_LIPS;
 
   /**
    * Landmark connections to draw the connection between a face's left eye.
    * @export
+   * @nocollapse
    */
   static FACE_LANDMARKS_LEFT_EYE = FACE_LANDMARKS_LEFT_EYE;
 
   /**
    * Landmark connections to draw the connection between a face's left eyebrow.
    * @export
+   * @nocollapse
    */
   static FACE_LANDMARKS_LEFT_EYEBROW = FACE_LANDMARKS_LEFT_EYEBROW;
 
   /**
    * Landmark connections to draw the connection between a face's left iris.
    * @export
+   * @nocollapse
    */
   static FACE_LANDMARKS_LEFT_IRIS = FACE_LANDMARKS_LEFT_IRIS;
 
   /**
    * Landmark connections to draw the connection between a face's right eye.
    * @export
+   * @nocollapse
    */
   static FACE_LANDMARKS_RIGHT_EYE = FACE_LANDMARKS_RIGHT_EYE;
 
@@ -153,30 +158,35 @@ export class FaceLandmarker extends VisionTaskRunner {
    * Landmark connections to draw the connection between a face's right
    * eyebrow.
    * @export
+   * @nocollapse
    */
   static FACE_LANDMARKS_RIGHT_EYEBROW = FACE_LANDMARKS_RIGHT_EYEBROW;
 
   /**
    * Landmark connections to draw the connection between a face's right iris.
    * @export
+   * @nocollapse
    */
   static FACE_LANDMARKS_RIGHT_IRIS = FACE_LANDMARKS_RIGHT_IRIS;
 
   /**
    * Landmark connections to draw the face's oval.
    * @export
+   * @nocollapse
    */
   static FACE_LANDMARKS_FACE_OVAL = FACE_LANDMARKS_FACE_OVAL;
 
   /**
    * Landmark connections to draw the face's contour.
    * @export
+   * @nocollapse
    */
   static FACE_LANDMARKS_CONTOURS = FACE_LANDMARKS_CONTOURS;
 
   /**
    * Landmark connections to draw the face's tesselation.
    * @export
+   * @nocollapse
    */
   static FACE_LANDMARKS_TESSELATION = FACE_LANDMARKS_TESSELATION;
 

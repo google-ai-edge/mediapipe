@@ -69,6 +69,7 @@ export class HandLandmarker extends VisionTaskRunner {
    * An array containing the pairs of hand landmark indices to be rendered with
    * connections.
    * @export
+   * @nocollapse
    */
   static HAND_CONNECTIONS = HAND_CONNECTIONS;
 

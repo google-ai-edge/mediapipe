@@ -77,6 +77,7 @@ export class PoseLandmarker extends VisionTaskRunner {
    * An array containing the pairs of pose landmark indices to be rendered with
    * connections.
    * @export
+   * @nocollapse
    */
   static POSE_CONNECTIONS: Connection[] = [
     {start: 0, end: 1},   {start: 1, end: 2},   {start: 2, end: 3},
