@@ -25,10 +25,10 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
-#include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/scale_mode.pb.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_quad_renderer.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"

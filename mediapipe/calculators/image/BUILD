@@ -263,13 +263,13 @@ cc_library(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
-        "//mediapipe/gpu:gl_base_hdr",
         "//mediapipe/gpu:scale_mode_cc_proto",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [
+            "//mediapipe/gpu:gl_base_hdr",
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_quad_renderer",
             "//mediapipe/gpu:gl_simple_shaders",
