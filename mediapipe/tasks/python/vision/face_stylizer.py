@@ -14,7 +14,7 @@
 """MediaPipe face stylizer task."""
 
 import dataclasses
-from typing import Optional
+from typing import Optional, Callable
 
 from mediapipe.python import packet_creator
 from mediapipe.python import packet_getter
@@ -31,6 +31,7 @@ _BaseOptions = base_options_module.BaseOptions
 _FaceStylizerGraphOptionsProto = (
     face_stylizer_graph_options_pb2.FaceStylizerGraphOptions
 )
+_RunningMode = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _TaskInfo = task_info_module.TaskInfo
 
@@ -54,11 +55,15 @@ class FaceStylizerOptions:
   """
 
   base_options: _BaseOptions
+  running_mode: _RunningMode = _RunningMode.IMAGE
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _FaceStylizerGraphOptionsProto:
     """Generates an FaceStylizerOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
+    base_options_proto.use_stream_mode = (
+        False if self.running_mode == _RunningMode.IMAGE else True
+    )
     return _FaceStylizerGraphOptionsProto(base_options=base_options_proto)
 
 

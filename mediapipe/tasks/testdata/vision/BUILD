@@ -48,7 +48,6 @@ mediapipe_files(srcs = [
     "face_landmark.tflite",
     "face_landmarker.task",
     "face_landmarker_v2.task",
-    "face_stylizer_color_ink.task",
     "fist.jpg",
     "fist.png",
     "gesture_recognizer.task",
