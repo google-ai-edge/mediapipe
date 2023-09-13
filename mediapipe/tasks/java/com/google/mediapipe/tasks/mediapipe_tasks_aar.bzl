@@ -59,6 +59,12 @@ _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/vision/pose_landmarker/proto:pose_landmarks_detector_graph_options_java_proto_lite",
 ]
 
+_VISION_TASKS_IMAGE_GENERATOR_JAVA_PROTO_LITE_SRC_TARGETS = [
+    "//mediapipe/tasks/cc/vision/image_generator/proto:conditioned_image_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/image_generator/proto:control_plugin_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/image_generator/proto:image_generator_graph_options_java_proto_lite",
+]
+
 _VISION_TASKS_IMAGE_GENERATOR_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/vision/face_detector/proto:face_detector_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/face_geometry/proto:face_geometry_graph_options_java_proto_lite",
@@ -125,6 +131,11 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
             _mediapipe_tasks_java_proto_src_extractor(target = target),
         )
 
+    for target in _VISION_TASKS_IMAGE_GENERATOR_JAVA_PROTO_LITE_SRC_TARGETS:
+        mediapipe_tasks_java_proto_srcs.append(
+            _mediapipe_tasks_java_proto_src_extractor(target = target),
+        )
+
     mediapipe_tasks_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
         target = "//mediapipe/calculators/core:flow_limiter_calculator_java_proto_lite",
         src_out = "com/google/mediapipe/calculator/proto/FlowLimiterCalculatorProto.java",
@@ -143,6 +154,11 @@ def mediapipe_tasks_core_aar(name, srcs, manifest):
     mediapipe_tasks_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
         target = "//mediapipe/tasks/cc/vision/face_geometry/calculators:geometry_pipeline_calculator_java_proto_lite",
         src_out = "com/google/mediapipe/tasks/vision/facegeometry/calculators/proto/FaceGeometryPipelineCalculatorOptionsProto.java",
+    ))
+
+    mediapipe_tasks_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/tasks/cc/vision/image_generator/diffuser:stable_diffusion_iterate_calculator_java_proto_lite",
+        src_out = "com/google/mediapipe/calculator/proto/StableDiffusionIterateCalculatorOptionsProto.java",
     ))
 
     android_library(
