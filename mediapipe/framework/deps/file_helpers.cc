@@ -106,8 +106,7 @@ std::string NativeToUtf8(const PathString& string) {
 using PathString = std::string;
 PathString Utf8ToNative(const std::string& string) { return string; }
 std::string NativeToUtf8(const PathString& string) { return string; }
-#define FILE_PATH_LITERAL_INTERNAL(x) ##x
-#define FILE_PATH_LITERAL(x) FILE_PATH_LITERAL_INTERNAL(x)
+#define FILE_PATH_LITERAL(x) x
 #endif
 
 class DirectoryListing {
