@@ -996,14 +996,15 @@ cc_library(
     name = "port",
     hdrs = ["port.h"],
     defines = select({
-        "//conditions:default": [],
-    }) + select({
-        "//conditions:default": [],
-        "//mediapipe/gpu:disable_gpu": ["MEDIAPIPE_DISABLE_GPU=1"],
-    }) + select({
-        "//conditions:default": [],
-        "//mediapipe/framework/port:disable_opencv": ["MEDIAPIPE_DISABLE_OPENCV=1"],
-    }) + select({
+                  "//conditions:default": [],
+              }) + select({
+                  "//conditions:default": [],
+                  "//mediapipe/gpu:disable_gpu": ["MEDIAPIPE_DISABLE_GPU=1"],
+              }) +
+              select({
+                  "//conditions:default": [],
+                  "//mediapipe/framework/port:disable_opencv": ["MEDIAPIPE_DISABLE_OPENCV=1"],
+              }) + select({
         "//conditions:default": [],
         # TODO: Improve this. This only sets MEDIAPIPE_DISABLE_OPENCV as a "defines" Make
         # value, not as a bazel "--define" variable, which has effects in C++ code but not in
