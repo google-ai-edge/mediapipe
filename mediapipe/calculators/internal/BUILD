@@ -31,12 +31,14 @@ mediapipe_proto_library(
 cc_library(
     name = "callback_packet_calculator",
     srcs = ["callback_packet_calculator.cc"],
+    hdrs = ["callback_packet_calculator.h"],
     visibility = ["//mediapipe/framework:__subpackages__"],
     deps = [
         ":callback_packet_calculator_cc_proto",
         "//mediapipe/framework:calculator_base",
         "//mediapipe/framework:calculator_registry",
         "//mediapipe/framework:output_side_packet",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )

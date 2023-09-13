@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -94,7 +94,6 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
               "IMAGE:" + IMAGE_IN_STREAM_NAME,
               "ROI:" + ROI_IN_STREAM_NAME,
               "NORM_RECT:" + NORM_RECT_IN_STREAM_NAME));
-  private static final int IMAGE_OUT_STREAM_INDEX = 0;
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph";
   private static final String TENSORS_TO_SEGMENTATION_CALCULATOR_NAME =
@@ -103,6 +102,7 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
   private List<String> labels = new ArrayList<>();
 
   static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
     ProtoUtil.registerTypeName(RenderData.class, "mediapipe.RenderData");
   }
 
@@ -120,7 +120,6 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
           "At least one of `outputConfidenceMasks` and `outputCategoryMask` must be set.");
     }
     List<String> outputStreams = new ArrayList<>();
-    outputStreams.add("IMAGE:image_out");
     if (segmenterOptions.outputConfidenceMasks()) {
       outputStreams.add("CONFIDENCE_MASKS:confidence_masks");
     }
@@ -130,6 +129,13 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
     }
     final int categoryMaskOutStreamIndex = outputStreams.size() - 1;
 
+    outputStreams.add("QUALITY_SCORES:quality_scores");
+    final int qualityScoresOutStreamIndex = outputStreams.size() - 1;
+
+    outputStreams.add("IMAGE:image_out");
+    // TODO: add test for stream indices.
+    final int imageOutStreamIndex = outputStreams.size() - 1;
+
     // TODO: Consolidate OutputHandler and TaskRunner.
     OutputHandler<ImageSegmenterResult, MPImage> handler = new OutputHandler<>();
     handler.setOutputPacketConverter(
@@ -137,11 +143,12 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
           @Override
           public ImageSegmenterResult convertToTaskResult(List<Packet> packets)
               throws MediaPipeException {
-            if (packets.get(IMAGE_OUT_STREAM_INDEX).isEmpty()) {
+            if (packets.get(imageOutStreamIndex).isEmpty()) {
               return ImageSegmenterResult.create(
                   Optional.empty(),
                   Optional.empty(),
-                  packets.get(IMAGE_OUT_STREAM_INDEX).getTimestamp());
+                  new ArrayList<>(),
+                  packets.get(imageOutStreamIndex).getTimestamp());
             }
             // If resultListener is not provided, the resulted MPImage is deep copied from
             // mediapipe graph. If provided, the result MPImage is wrapping the mediapipe packet
@@ -198,17 +205,25 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
               categoryMask = Optional.of(builder.build());
             }
 
+            float[] qualityScores =
+                PacketGetter.getFloat32Vector(packets.get(qualityScoresOutStreamIndex));
+            List<Float> qualityScoresList = new ArrayList<>(qualityScores.length);
+            for (float score : qualityScores) {
+              qualityScoresList.add(score);
+            }
+
             return ImageSegmenterResult.create(
                 confidenceMasks,
                 categoryMask,
+                qualityScoresList,
                 BaseVisionTaskApi.generateResultTimestampMs(
-                    RunningMode.IMAGE, packets.get(IMAGE_OUT_STREAM_INDEX)));
+                    RunningMode.IMAGE, packets.get(imageOutStreamIndex)));
           }
 
           @Override
           public MPImage convertToTaskInput(List<Packet> packets) {
             return new BitmapImageBuilder(
-                    AndroidPacketGetter.getBitmapFromRgb(packets.get(IMAGE_OUT_STREAM_INDEX)))
+                    AndroidPacketGetter.getBitmapFromRgb(packets.get(imageOutStreamIndex)))
                 .build();
           }
         });
@@ -501,6 +516,7 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
   /** The Region-Of-Interest (ROI) to interact with. */
   public static class RegionOfInterest {
     private NormalizedKeypoint keypoint;
+    private List<NormalizedKeypoint> scribble;
 
     private RegionOfInterest() {}
 
@@ -511,6 +527,16 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
     public static RegionOfInterest create(NormalizedKeypoint keypoint) {
       RegionOfInterest roi = new RegionOfInterest();
       roi.keypoint = keypoint;
+      return roi;
+    }
+
+    /**
+     * Creates a {@link RegionOfInterest} instance representing scribbles over the object that the
+     * user wants to segment.
+     */
+    public static RegionOfInterest create(List<NormalizedKeypoint> scribble) {
+      RegionOfInterest roi = new RegionOfInterest();
+      roi.scribble = scribble;
       return roi;
     }
   }
@@ -533,6 +559,18 @@ public final class InteractiveSegmenter extends BaseVisionTaskApi {
                       RenderAnnotation.Point.newBuilder()
                           .setX(roi.keypoint.x())
                           .setY(roi.keypoint.y())))
+          .build();
+    } else if (roi.scribble != null) {
+      RenderAnnotation.Scribble.Builder scribbleBuilder = RenderAnnotation.Scribble.newBuilder();
+      for (NormalizedKeypoint p : roi.scribble) {
+        scribbleBuilder.addPoint(RenderAnnotation.Point.newBuilder().setX(p.x()).setY(p.y()));
+      }
+
+      return builder
+          .addRenderAnnotations(
+              RenderAnnotation.newBuilder()
+                  .setColor(Color.newBuilder().setR(255))
+                  .setScribble(scribbleBuilder))
           .build();
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -53,7 +53,15 @@ public abstract class FaceLandmarkerResult implements TaskResult {
           faceLandmarksProto.getLandmarkList()) {
         faceLandmarks.add(
             NormalizedLandmark.create(
-                faceLandmarkProto.getX(), faceLandmarkProto.getY(), faceLandmarkProto.getZ()));
+                faceLandmarkProto.getX(),
+                faceLandmarkProto.getY(),
+                faceLandmarkProto.getZ(),
+                faceLandmarkProto.hasVisibility()
+                    ? Optional.of(faceLandmarkProto.getVisibility())
+                    : Optional.empty(),
+                faceLandmarkProto.hasPresence()
+                    ? Optional.of(faceLandmarkProto.getPresence())
+                    : Optional.empty()));
       }
     }
     Optional<List<List<Category>>> multiFaceBlendshapes = Optional.empty();

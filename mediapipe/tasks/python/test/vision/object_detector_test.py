@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ _ObjectDetectorOptions = object_detector.ObjectDetectorOptions
 _RUNNING_MODE = running_mode_module.VisionTaskRunningMode
 
 _MODEL_FILE = 'coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.tflite'
+_NO_NMS_MODEL_FILE = 'efficientdet_lite0_fp16_no_nms.tflite'
 _IMAGE_FILE = 'cats_and_dogs.jpg'
 _EXPECTED_DETECTION_RESULT = _DetectionResult(
     detections=[
@@ -304,9 +305,21 @@ class ObjectDetectorTest(parameterized.TestCase):
       with _ObjectDetector.create_from_options(options) as unused_detector:
         pass
 
-  def test_empty_detection_outputs(self):
+  def test_empty_detection_outputs_with_in_model_nms(self):
     options = _ObjectDetectorOptions(
         base_options=_BaseOptions(model_asset_path=self.model_path),
+        score_threshold=1,
+    )
+    with _ObjectDetector.create_from_options(options) as detector:
+      # Performs object detection on the input.
+      detection_result = detector.detect(self.test_image)
+      self.assertEmpty(detection_result.detections)
+
+  def test_empty_detection_outputs_without_in_model_nms(self):
+    options = _ObjectDetectorOptions(
+        base_options=_BaseOptions(
+            model_asset_path=test_utils.get_test_data_path(
+                os.path.join(_TEST_DATA_DIR, _NO_NMS_MODEL_FILE))),
         score_threshold=1,
     )
     with _ObjectDetector.create_from_options(options) as detector:

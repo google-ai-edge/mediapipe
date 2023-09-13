@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ export declare interface Embedding {
 }
 
 /**  Embedding results for a given embedder model. */
-export interface EmbeddingResult {
+export declare interface EmbeddingResult {
   /**
    * The embedding results for each model head, i.e. one for each output tensor.
    */

@@ -1,5 +1,6 @@
 ---
-layout: default
+layout: forward
+target: https://developers.google.com/mediapipe/solutions/guide#legacy
 title: MediaPipe Legacy Solutions
 nav_order: 3
 has_children: true
@@ -13,8 +14,7 @@ has_toc: false
 {:toc}
 ---
 
-**Attention:** *Thank you for your interest in MediaPipe Solutions. We have
-ended support for
+**Attention:** *We have ended support for
 [these MediaPipe Legacy Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
 as of March 1, 2023. All other
 [MediaPipe Legacy Solutions will be upgraded](https://developers.google.com/mediapipe/solutions/guide#legacy)
@@ -24,14 +24,6 @@ and prebuilt binaries for all MediaPipe Legacy Solutions will continue to
 be provided on an as-is basis. We encourage you to check out the new MediaPipe
 Solutions at:
 [https://developers.google.com/mediapipe/solutions](https://developers.google.com/mediapipe/solutions)*
-
-*This notice and web page will be removed on June 1, 2023.*
-
-----
-
-<br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br><br><br><br>
 
 ----
 

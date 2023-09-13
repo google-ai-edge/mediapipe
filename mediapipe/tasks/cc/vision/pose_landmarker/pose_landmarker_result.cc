@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,15 +27,12 @@ namespace pose_landmarker {
 PoseLandmarkerResult ConvertToPoseLandmarkerResult(
     std::optional<std::vector<mediapipe::Image>> segmentation_masks,
     const std::vector<mediapipe::NormalizedLandmarkList>& pose_landmarks_proto,
-    const std::vector<mediapipe::LandmarkList>& pose_world_landmarks_proto,
-    const std::vector<mediapipe::NormalizedLandmarkList>&
-        pose_auxiliary_landmarks_proto) {
+    const std::vector<mediapipe::LandmarkList>& pose_world_landmarks_proto) {
   PoseLandmarkerResult result;
   result.segmentation_masks = segmentation_masks;
 
   result.pose_landmarks.resize(pose_landmarks_proto.size());
   result.pose_world_landmarks.resize(pose_world_landmarks_proto.size());
-  result.pose_auxiliary_landmarks.resize(pose_auxiliary_landmarks_proto.size());
   std::transform(pose_landmarks_proto.begin(), pose_landmarks_proto.end(),
                  result.pose_landmarks.begin(),
                  components::containers::ConvertToNormalizedLandmarks);
@@ -43,10 +40,6 @@ PoseLandmarkerResult ConvertToPoseLandmarkerResult(
                  pose_world_landmarks_proto.end(),
                  result.pose_world_landmarks.begin(),
                  components::containers::ConvertToLandmarks);
-  std::transform(pose_auxiliary_landmarks_proto.begin(),
-                 pose_auxiliary_landmarks_proto.end(),
-                 result.pose_auxiliary_landmarks.begin(),
-                 components::containers::ConvertToNormalizedLandmarks);
   return result;
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,12 +22,10 @@ import android.graphics.BitmapFactory;
 import android.graphics.RectF;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import com.google.mediapipe.framework.MediaPipeException;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions;
-import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.facestylizer.FaceStylizer.FaceStylizerOptions;
 import java.io.InputStream;
 import org.junit.After;
@@ -96,116 +94,10 @@ public class FaceStylizerTest {
     }
 
     @Test
-    public void create_failsWithMissingResultListenerInLiveSteamMode() throws Exception {
-      IllegalArgumentException exception =
-          assertThrows(
-              IllegalArgumentException.class,
-              () ->
-                  FaceStylizerOptions.builder()
-                      .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
-                      .setRunningMode(RunningMode.LIVE_STREAM)
-                      .build());
-      assertThat(exception)
-          .hasMessageThat()
-          .contains("a user-defined result listener must be provided");
-    }
-
-    @Test
-    public void stylizer_failsWithCallingWrongApiInImageMode() throws Exception {
-      FaceStylizerOptions options =
-          FaceStylizerOptions.builder()
-              .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
-              .setRunningMode(RunningMode.IMAGE)
-              .build();
-      faceStylizer =
-          FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      MediaPipeException exception =
-          assertThrows(
-              MediaPipeException.class,
-              () ->
-                  faceStylizer.stylizeForVideo(
-                      getImageFromAsset(largeFaceTestImage), /* timestampsMs= */ 0));
-      assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
-      exception =
-          assertThrows(
-              MediaPipeException.class,
-              () ->
-                  faceStylizer.stylizeAsync(
-                      getImageFromAsset(largeFaceTestImage), /* timestampsMs= */ 0));
-      assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
-      exception =
-          assertThrows(
-              MediaPipeException.class,
-              () -> faceStylizer.stylizeWithResultListener(getImageFromAsset(largeFaceTestImage)));
-      assertThat(exception)
-          .hasMessageThat()
-          .contains("ResultListener is not set in the FaceStylizerOptions");
-    }
-
-    @Test
-    public void stylizer_failsWithCallingWrongApiInVideoMode() throws Exception {
-      FaceStylizerOptions options =
-          FaceStylizerOptions.builder()
-              .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
-              .setRunningMode(RunningMode.VIDEO)
-              .build();
-
-      faceStylizer =
-          FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      MediaPipeException exception =
-          assertThrows(
-              MediaPipeException.class,
-              () -> faceStylizer.stylize(getImageFromAsset(largeFaceTestImage)));
-      assertThat(exception).hasMessageThat().contains("not initialized with the image mode");
-      exception =
-          assertThrows(
-              MediaPipeException.class,
-              () ->
-                  faceStylizer.stylizeAsync(
-                      getImageFromAsset(largeFaceTestImage), /* timestampsMs= */ 0));
-      assertThat(exception).hasMessageThat().contains("not initialized with the live stream mode");
-      exception =
-          assertThrows(
-              MediaPipeException.class,
-              () ->
-                  faceStylizer.stylizeForVideoWithResultListener(
-                      getImageFromAsset(largeFaceTestImage), /* timestampsMs= */ 0));
-      assertThat(exception)
-          .hasMessageThat()
-          .contains("ResultListener is not set in the FaceStylizerOptions");
-    }
-
-    @Test
-    public void stylizer_failsWithCallingWrongApiInLiveSteamMode() throws Exception {
-      FaceStylizerOptions options =
-          FaceStylizerOptions.builder()
-              .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
-              .setRunningMode(RunningMode.LIVE_STREAM)
-              .setResultListener((result, inputImage) -> {})
-              .build();
-
-      faceStylizer =
-          FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      MediaPipeException exception =
-          assertThrows(
-              MediaPipeException.class,
-              () -> faceStylizer.stylizeWithResultListener(getImageFromAsset(largeFaceTestImage)));
-      assertThat(exception).hasMessageThat().contains("not initialized with the image mode");
-      exception =
-          assertThrows(
-              MediaPipeException.class,
-              () ->
-                  faceStylizer.stylizeForVideoWithResultListener(
-                      getImageFromAsset(largeFaceTestImage), /* timestampsMs= */ 0));
-      assertThat(exception).hasMessageThat().contains("not initialized with the video mode");
-    }
-
-    @Test
     public void stylizer_succeedsWithImageMode() throws Exception {
       FaceStylizerOptions options =
           FaceStylizerOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
-              .setRunningMode(RunningMode.IMAGE)
               .build();
 
       faceStylizer =
@@ -224,7 +116,6 @@ public class FaceStylizerTest {
       FaceStylizerOptions options =
           FaceStylizerOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
-              .setRunningMode(RunningMode.IMAGE)
               .build();
 
       faceStylizer =
@@ -243,7 +134,6 @@ public class FaceStylizerTest {
       FaceStylizerOptions options =
           FaceStylizerOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
-              .setRunningMode(RunningMode.IMAGE)
               .build();
       faceStylizer =
           FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -268,7 +158,6 @@ public class FaceStylizerTest {
       FaceStylizerOptions options =
           FaceStylizerOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
-              .setRunningMode(RunningMode.IMAGE)
               .build();
       faceStylizer =
           FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
@@ -291,7 +180,6 @@ public class FaceStylizerTest {
       FaceStylizerOptions options =
           FaceStylizerOptions.builder()
               .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
-              .setRunningMode(RunningMode.IMAGE)
               .setResultListener(
                   (result, originalImage) -> {
                     MPImage stylizedImage = result.stylizedImage().get();
@@ -303,97 +191,6 @@ public class FaceStylizerTest {
       faceStylizer =
           FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       faceStylizer.stylizeWithResultListener(getImageFromAsset(largeFaceTestImage));
-    }
-
-    @Test
-    public void stylizer_successWithVideoMode() throws Exception {
-      MPImage inputImage = getImageFromAsset(largeFaceTestImage);
-
-      FaceStylizerOptions options =
-          FaceStylizerOptions.builder()
-              .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
-              .setRunningMode(RunningMode.VIDEO)
-              .build();
-      faceStylizer =
-          FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      for (int i = 0; i < 3; i++) {
-        FaceStylizerResult actualResult =
-            faceStylizer.stylizeForVideo(
-                getImageFromAsset(largeFaceTestImage), /* timestampsMs= */ i);
-
-        MPImage stylizedImage = actualResult.stylizedImage().get();
-        assertThat(stylizedImage).isNotNull();
-        assertThat(stylizedImage.getWidth()).isEqualTo(modelImageSize);
-        assertThat(stylizedImage.getHeight()).isEqualTo(modelImageSize);
-      }
-    }
-
-    @Test
-    public void stylizer_successWithVideoModeWithResultListener() throws Exception {
-      MPImage inputImage = getImageFromAsset(largeFaceTestImage);
-
-      FaceStylizerOptions options =
-          FaceStylizerOptions.builder()
-              .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
-              .setRunningMode(RunningMode.VIDEO)
-              .setResultListener(
-                  (result, originalImage) -> {
-                    MPImage stylizedImage = result.stylizedImage().get();
-                    assertThat(stylizedImage).isNotNull();
-                    assertThat(stylizedImage.getWidth()).isEqualTo(modelImageSize);
-                    assertThat(stylizedImage.getHeight()).isEqualTo(modelImageSize);
-                  })
-              .build();
-      faceStylizer =
-          FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      for (int i = 0; i < 3; i++) {
-        faceStylizer.stylizeForVideoWithResultListener(inputImage, /* timestampsMs= */ i);
-      }
-    }
-
-    @Test
-    public void stylizer_successWithLiveStreamMode() throws Exception {
-      MPImage inputImage = getImageFromAsset(largeFaceTestImage);
-
-      FaceStylizerOptions options =
-          FaceStylizerOptions.builder()
-              .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
-              .setRunningMode(RunningMode.LIVE_STREAM)
-              .setResultListener(
-                  (result, originalImage) -> {
-                    MPImage stylizedImage = result.stylizedImage().get();
-                    assertThat(stylizedImage).isNotNull();
-                    assertThat(stylizedImage.getWidth()).isEqualTo(modelImageSize);
-                    assertThat(stylizedImage.getHeight()).isEqualTo(modelImageSize);
-                  })
-              .build();
-
-      faceStylizer =
-          FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      for (int i = 0; i < 3; i++) {
-        faceStylizer.stylizeAsync(inputImage, /* timestampsMs= */ i);
-      }
-    }
-
-    @Test
-    public void stylizer_failsWithOutOfOrderInputTimestamps() throws Exception {
-      MPImage image = getImageFromAsset(largeFaceTestImage);
-      FaceStylizerOptions options =
-          FaceStylizerOptions.builder()
-              .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelFile).build())
-              .setRunningMode(RunningMode.LIVE_STREAM)
-              .setResultListener((result, inputImage) -> {})
-              .build();
-      faceStylizer =
-          FaceStylizer.createFromOptions(ApplicationProvider.getApplicationContext(), options);
-      faceStylizer.stylizeAsync(image, /* timestampsMs= */ 1);
-      MediaPipeException exception =
-          assertThrows(
-              MediaPipeException.class,
-              () -> faceStylizer.stylizeAsync(image, /* timestampsMs= */ 0));
-      assertThat(exception)
-          .hasMessageThat()
-          .contains("having a smaller timestamp than the processed timestamp");
     }
   }
 

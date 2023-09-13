@@ -38,7 +38,10 @@ cc_library(
     srcs = ["gpu_service.cc"],
     hdrs = ["gpu_service.h"],
     visibility = ["//visibility:public"],
-    deps = ["//mediapipe/framework:graph_service"] + select({
+    deps = [
+        "//mediapipe/framework:graph_service",
+        "@com_google_absl//absl/base:core_headers",
+    ] + select({
         "//conditions:default": [
             ":gpu_shared_data_internal",
         ],
@@ -201,6 +204,8 @@ cc_library(
         "//mediapipe/framework/port:threadpool",
         "@com_google_absl//absl/base:dynamic_annotations",
         "@com_google_absl//absl/debugging:leak_check",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
@@ -232,6 +237,8 @@ cc_library(
         ":gpu_buffer_format",
         ":gpu_buffer_storage",
         ":gpu_buffer_storage_image_frame",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         # TODO: remove this dependency. Some other teams' tests
         # depend on having an indirect image_frame dependency, need to be
@@ -292,6 +299,7 @@ cc_library(
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/functional:bind_front",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ] + select({
@@ -328,6 +336,7 @@ cc_library(
         "//mediapipe/framework/formats:image_format_cc_proto",
         "//mediapipe/framework/port:logging",
         "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/log:absl_check",
     ] + select({
         "//conditions:default": [
             ":gl_base",
@@ -364,6 +373,8 @@ cc_library(
         ":image_frame_view",
         "//mediapipe/objc:CFHolder",
         "//mediapipe/objc:util",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -394,6 +405,7 @@ cc_library(
         ":pixel_buffer_pool_util",
         "//mediapipe/framework/port:logging",
         "//mediapipe/objc:CFHolder",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -417,6 +429,7 @@ cc_library(
         "//mediapipe/framework/port:logging",
         "//mediapipe/objc:CFHolder",
         "//mediapipe/objc:util",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/synchronization",
     ],
 )
@@ -433,6 +446,7 @@ cc_library(
         ":image_frame_view",
         "//mediapipe/framework/formats:frame_buffer",
         "//mediapipe/framework/formats:image_frame",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )
 
@@ -472,8 +486,8 @@ cc_library(
         "//mediapipe/framework/formats:yuv_image",
         "//mediapipe/util/frame_buffer:frame_buffer_util",
         "//third_party/libyuv",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -630,6 +644,8 @@ cc_library(
         "//mediapipe/framework:executor",
         "//mediapipe/framework/deps:no_destructor",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_check",
     ] + select({
         "//conditions:default": [],
         "//mediapipe:apple": [
@@ -751,6 +767,10 @@ cc_library(
     deps = [
         ":gl_base",
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
     ],
 )
 
@@ -813,11 +833,12 @@ cc_library(
         "//mediapipe/framework/deps:registration",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/base:core_headers",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/synchronization",
     ] + select({
@@ -843,6 +864,8 @@ objc_library(
         "//mediapipe/objc:mediapipe_framework_ios",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:Metal",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@google_toolbox_for_mac//:GTM_Defines",
     ],
 )
@@ -985,6 +1008,7 @@ cc_library(
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/synchronization",
     ],
     alwayslink = 1,
@@ -1116,7 +1140,7 @@ objc_library(
     alwayslink = 1,
 )
 
-MIN_IOS_VERSION = "11.0"
+MIN_IOS_VERSION = "12.0"
 
 test_suite(
     name = "ios",
@@ -1203,5 +1227,6 @@ mediapipe_cc_test(
         "//mediapipe/framework/formats:yuv_image",
         "//mediapipe/framework/port:gtest_main",
         "//third_party/libyuv",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )

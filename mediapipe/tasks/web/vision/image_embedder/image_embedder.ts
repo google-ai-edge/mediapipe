@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ export class ImageEmbedder extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new image embedder from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param imageEmbedderOptions The options for the image embedder. Note that
@@ -70,6 +71,7 @@ export class ImageEmbedder extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new image embedder based on the
    * provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the TFLite model.
@@ -84,6 +86,7 @@ export class ImageEmbedder extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new image embedder based on the
    * path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the TFLite model.
@@ -120,6 +123,7 @@ export class ImageEmbedder extends VisionTaskRunner {
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
+   * @export
    * @param options The options for the image embedder.
    */
   override setOptions(options: ImageEmbedderOptions): Promise<void> {
@@ -133,6 +137,7 @@ export class ImageEmbedder extends VisionTaskRunner {
    * synchronously for the response. Only use this method when the
    * ImageEmbedder is created with running mode `image`.
    *
+   * @export
    * @param image The image to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
@@ -149,6 +154,7 @@ export class ImageEmbedder extends VisionTaskRunner {
    * synchronously for the response. Only use this method when the
    * ImageEmbedder is created with running mode `video`.
    *
+   * @export
    * @param imageFrame The image frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
@@ -168,6 +174,7 @@ export class ImageEmbedder extends VisionTaskRunner {
    *
    * [1]: https://en.wikipedia.org/wiki/Cosine_similarity
    *
+   * @export
    * @throws if the embeddings are of different types(float vs. quantized), have
    *     different sizes, or have an L2-norm of 0.
    */

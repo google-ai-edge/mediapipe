@@ -22,7 +22,6 @@
 
 #include "absl/container/flat_hash_set.h"
 #include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/substitute.h"
@@ -244,7 +243,8 @@ std::vector<Tensor> BertPreprocessorCalculator::GenerateInputTensors(
   input_tensors.reserve(kNumInputTensorsForBert);
   for (int i = 0; i < kNumInputTensorsForBert; ++i) {
     input_tensors.push_back(
-        {Tensor::ElementType::kInt32, Tensor::Shape({tensor_size})});
+        {Tensor::ElementType::kInt32,
+         Tensor::Shape({1, tensor_size}, has_dynamic_input_tensors_)});
   }
   std::memcpy(input_tensors[input_ids_tensor_index_]
                   .GetCpuWriteView()

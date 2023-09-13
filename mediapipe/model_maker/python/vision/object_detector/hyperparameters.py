@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 """Hyperparameters for training object detection models."""
 
 import dataclasses
-from typing import List
+from typing import Optional
 
 from mediapipe.model_maker.python.core import hyperparameters as hp
 
@@ -27,56 +27,23 @@ class HParams(hp.BaseHParams):
     learning_rate: Learning rate to use for gradient descent training.
     batch_size: Batch size for training.
     epochs: Number of training iterations over the dataset.
-    do_fine_tuning: If true, the base module is trained together with the
-      classification layer on top.
-    learning_rate_epoch_boundaries: List of epoch boundaries where
-      learning_rate_epoch_boundaries[i] is the epoch where the learning rate
-      will decay to learning_rate * learning_rate_decay_multipliers[i].
-    learning_rate_decay_multipliers: List of learning rate multipliers which
-      calculates the learning rate at the ith boundary as learning_rate *
-      learning_rate_decay_multipliers[i].
+    cosine_decay_epochs: The number of epochs for cosine decay learning rate.
+      See
+      https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/CosineDecay
+        for more info.
+    cosine_decay_alpha: The alpha value for cosine decay learning rate. See
+      https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/CosineDecay
+        for more info.
   """
 
   # Parameters from BaseHParams class.
-  learning_rate: float = 0.003
-  batch_size: int = 32
-  epochs: int = 10
+  learning_rate: float = 0.3
+  batch_size: int = 8
+  epochs: int = 30
 
-  # Parameters for learning rate decay
-  learning_rate_epoch_boundaries: List[int] = dataclasses.field(
-      default_factory=lambda: []
-  )
-  learning_rate_decay_multipliers: List[float] = dataclasses.field(
-      default_factory=lambda: []
-  )
-
-  def __post_init__(self):
-    # Validate stepwise learning rate parameters
-    lr_boundary_len = len(self.learning_rate_epoch_boundaries)
-    lr_decay_multipliers_len = len(self.learning_rate_decay_multipliers)
-    if lr_boundary_len != lr_decay_multipliers_len:
-      raise ValueError(
-          "Length of learning_rate_epoch_boundaries and ",
-          "learning_rate_decay_multipliers do not match: ",
-          f"{lr_boundary_len}!={lr_decay_multipliers_len}",
-      )
-    # Validate learning_rate_epoch_boundaries
-    if (
-        sorted(self.learning_rate_epoch_boundaries)
-        != self.learning_rate_epoch_boundaries
-    ):
-      raise ValueError(
-          "learning_rate_epoch_boundaries is not in ascending order: ",
-          self.learning_rate_epoch_boundaries,
-      )
-    if (
-        self.learning_rate_epoch_boundaries
-        and self.learning_rate_epoch_boundaries[-1] > self.epochs
-    ):
-      raise ValueError(
-          "Values in learning_rate_epoch_boundaries cannot be greater ",
-          "than epochs",
-      )
+  # Parameters for cosine learning rate decay
+  cosine_decay_epochs: Optional[int] = None
+  cosine_decay_alpha: float = 1.0
 
 
 @dataclasses.dataclass
@@ -98,8 +65,8 @@ class QATHParams:
         for more information.
   """
 
-  learning_rate: float = 0.03
-  batch_size: int = 32
-  epochs: int = 10
-  decay_steps: int = 231
+  learning_rate: float = 0.3
+  batch_size: int = 8
+  epochs: int = 15
+  decay_steps: int = 8
   decay_rate: float = 0.96

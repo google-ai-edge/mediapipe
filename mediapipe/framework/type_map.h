@@ -64,6 +64,8 @@
 #include <vector>
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/demangle.h"
 #include "mediapipe/framework/port/status.h"
@@ -127,7 +129,7 @@ class StaticMap {
   }
 
   static void GetKeys(std::vector<KeyType>* keys) {
-    CHECK(keys);
+    ABSL_CHECK(keys);
     keys->clear();
     const MapType& internal_map = GetMap()->internal_map_;
     for (typename MapType::const_iterator i = internal_map.begin();
@@ -158,12 +160,12 @@ class StaticMap {
 
       // Type has been already registered.
       const MediaPipeTypeData& existing_data = it->second.second;
-      CHECK_EQ(existing_data.type_id, value.type_id)
+      ABSL_CHECK_EQ(existing_data.type_id, value.type_id)
           << "Found inconsistent type ids (" << existing_data.type_id << " vs "
           << value.type_id
           << ") during mediapipe type registration. Previous definition at "
           << it->second.first << " and current definition at " << file_and_line;
-      CHECK_EQ(existing_data.type_string, value.type_string)
+      ABSL_CHECK_EQ(existing_data.type_string, value.type_string)
           << "Found inconsistent type strings (" << existing_data.type_string
           << " vs " << value.type_string
           << ") during mediapipe type registration. Previous registration at "
@@ -171,29 +173,31 @@ class StaticMap {
           << file_and_line;
       if (value.serialize_fn && value.deserialize_fn) {
         // Doesn't allow to redefine the existing type serialization functions.
-        CHECK(!existing_data.serialize_fn && !existing_data.deserialize_fn)
+        ABSL_CHECK(!existing_data.serialize_fn && !existing_data.deserialize_fn)
             << "Attempting to redefine serialization functions of type "
             << value.type_string << ", that have been defined at "
             << it->second.first << ", at " << file_and_line;
         const std::string previous_file_and_line = it->second.first;
         it->second.first = file_and_line;
         it->second.second = value;
-        LOG(WARNING) << "Redo mediapipe type registration of type "
-                     << value.type_string << " with serialization function at "
-                     << file_and_line << ". It was registered at "
-                     << previous_file_and_line;
+        ABSL_LOG(WARNING) << "Redo mediapipe type registration of type "
+                          << value.type_string
+                          << " with serialization function at " << file_and_line
+                          << ". It was registered at "
+                          << previous_file_and_line;
       } else if (!value.serialize_fn && !value.deserialize_fn) {
         // Prefers type registration with serialization functions. If type has
         // been registered with some serialization functions, the
         // non-serialization version will be ignored.
-        LOG(WARNING) << "Ignore mediapipe type registration of type "
-                     << value.type_string << " at " << file_and_line
-                     << ", since type has been registered with serialization "
-                        "functions at "
-                     << it->second.first;
+        ABSL_LOG(WARNING)
+            << "Ignore mediapipe type registration of type "
+            << value.type_string << " at " << file_and_line
+            << ", since type has been registered with serialization "
+               "functions at "
+            << it->second.first;
       } else {
         // Doesn't allow to only have one of serialize_fn and deserialize_fn.
-        LOG(FATAL)
+        ABSL_LOG(FATAL)
             << "Invalid mediapipe type registration at " << file_and_line
             << ". Serialization functions should be provided at the same time.";
       }
@@ -241,9 +245,9 @@ class StaticMap {
 #define DEFINE_MEDIAPIPE_TYPE_MAP(MapName, KeyType) \
   class MapName : public type_map_internal::StaticMap<MapName, KeyType> {};
 // Defines a map from unique typeid number to MediaPipeTypeData.
-DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeIdToMediaPipeTypeData, size_t);
+DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeIdToMediaPipeTypeData, size_t)
 // Defines a map from unique type string to MediaPipeTypeData.
-DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string);
+DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string)
 
 // MEDIAPIPE_REGISTER_TYPE can be used to register a type.
 // Convention:
@@ -272,17 +276,20 @@ DEFINE_MEDIAPIPE_TYPE_MAP(PacketTypeStringToMediaPipeTypeData, std::string);
 #define MEDIAPIPE_REGISTER_TYPE(type, type_name, serialize_fn, deserialize_fn) \
   SET_MEDIAPIPE_TYPE_MAP_VALUE(                                                \
       mediapipe::PacketTypeIdToMediaPipeTypeData,                              \
-      mediapipe::tool::GetTypeHash<                                            \
-          mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(),     \
+      mediapipe::TypeId::Of<                                                   \
+          mediapipe::type_map_internal::ReflectType<void(type*)>::Type>()      \
+          .hash_code(),                                                        \
       (mediapipe::MediaPipeTypeData{                                           \
-          mediapipe::tool::GetTypeHash<                                        \
-              mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(), \
+          mediapipe::TypeId::Of<                                               \
+              mediapipe::type_map_internal::ReflectType<void(type*)>::Type>()  \
+              .hash_code(),                                                    \
           type_name, serialize_fn, deserialize_fn}));                          \
   SET_MEDIAPIPE_TYPE_MAP_VALUE(                                                \
       mediapipe::PacketTypeStringToMediaPipeTypeData, type_name,               \
       (mediapipe::MediaPipeTypeData{                                           \
-          mediapipe::tool::GetTypeHash<                                        \
-              mediapipe::type_map_internal::ReflectType<void(type*)>::Type>(), \
+          mediapipe::TypeId::Of<                                               \
+              mediapipe::type_map_internal::ReflectType<void(type*)>::Type>()  \
+              .hash_code(),                                                    \
           type_name, serialize_fn, deserialize_fn}));
 // End define MEDIAPIPE_REGISTER_TYPE.
 

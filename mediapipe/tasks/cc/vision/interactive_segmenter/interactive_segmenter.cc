@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/tasks/cc/common.h"
+#include "mediapipe/tasks/cc/components/containers/keypoint.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 #include "mediapipe/tasks/cc/vision/core/image_processing_options.h"
 #include "mediapipe/tasks/cc/vision/core/running_mode.h"
@@ -50,21 +51,24 @@ constexpr char kImageInStreamName[] = "image_in";
 constexpr char kImageOutStreamName[] = "image_out";
 constexpr char kRoiStreamName[] = "roi_in";
 constexpr char kNormRectStreamName[] = "norm_rect_in";
+constexpr char kQualityScoresStreamName[] = "quality_scores";
 
 constexpr absl::string_view kConfidenceMasksTag{"CONFIDENCE_MASKS"};
 constexpr absl::string_view kCategoryMaskTag{"CATEGORY_MASK"};
 constexpr absl::string_view kImageTag{"IMAGE"};
 constexpr absl::string_view kRoiTag{"ROI"};
 constexpr absl::string_view kNormRectTag{"NORM_RECT"};
+constexpr absl::string_view kQualityScoresTag{"QUALITY_SCORES"};
 
 constexpr absl::string_view kSubgraphTypeName{
     "mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph"};
+
+using components::containers::NormalizedKeypoint;
 
 using ::mediapipe::CalculatorGraphConfig;
 using ::mediapipe::Image;
 using ::mediapipe::NormalizedRect;
 using ::mediapipe::tasks::vision::image_segmenter::ImageSegmenterResult;
-using ::mediapipe::tasks::vision::image_segmenter::proto::SegmenterOptions;
 using ImageSegmenterGraphOptionsProto = ::mediapipe::tasks::vision::
     image_segmenter::proto::ImageSegmenterGraphOptions;
 
@@ -89,6 +93,8 @@ CalculatorGraphConfig CreateGraphConfig(
     task_subgraph.Out(kCategoryMaskTag).SetName(kCategoryMaskStreamName) >>
         graph.Out(kCategoryMaskTag);
   }
+  task_subgraph.Out(kQualityScoresTag).SetName(kQualityScoresStreamName) >>
+      graph.Out(kQualityScoresTag);
   task_subgraph.Out(kImageTag).SetName(kImageOutStreamName) >>
       graph.Out(kImageTag);
   graph.In(kImageTag) >> task_subgraph.In(kImageTag);
@@ -116,7 +122,7 @@ absl::StatusOr<RenderData> ConvertRoiToRenderData(const RegionOfInterest& roi) {
     case RegionOfInterest::Format::kUnspecified:
       return absl::InvalidArgumentError(
           "RegionOfInterest format not specified");
-    case RegionOfInterest::Format::kKeyPoint:
+    case RegionOfInterest::Format::kKeyPoint: {
       RET_CHECK(roi.keypoint.has_value());
       auto* annotation = result.add_render_annotations();
       annotation->mutable_color()->set_r(255);
@@ -125,6 +131,19 @@ absl::StatusOr<RenderData> ConvertRoiToRenderData(const RegionOfInterest& roi) {
       point->set_x(roi.keypoint->x);
       point->set_y(roi.keypoint->y);
       return result;
+    }
+    case RegionOfInterest::Format::kScribble: {
+      RET_CHECK(roi.scribble.has_value());
+      auto* annotation = result.add_render_annotations();
+      annotation->mutable_color()->set_r(255);
+      for (const NormalizedKeypoint& keypoint : *(roi.scribble)) {
+        auto* point = annotation->mutable_scribble()->add_point();
+        point->set_normalized(true);
+        point->set_x(keypoint.x);
+        point->set_y(keypoint.y);
+      }
+      return result;
+    }
   }
   return absl::UnimplementedError("Unrecognized format");
 }
@@ -186,7 +205,9 @@ absl::StatusOr<ImageSegmenterResult> InteractiveSegmenter::Segment(
   if (output_category_mask_) {
     category_mask = output_packets[kCategoryMaskStreamName].Get<Image>();
   }
-  return {{confidence_masks, category_mask}};
+  const std::vector<float>& quality_scores =
+      output_packets[kQualityScoresStreamName].Get<std::vector<float>>();
+  return {{confidence_masks, category_mask, quality_scores}};
 }
 
 }  // namespace interactive_segmenter

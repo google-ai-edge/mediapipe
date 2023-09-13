@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ cc_test(
     deps = [
         ":kmeans_embedding_lookup",
         "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/log:absl_check",
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/c:common",
         "@org_tensorflow//tensorflow/lite/kernels:test_util",
@@ -66,6 +67,7 @@ cc_test(
         ":ngram_hash",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/tasks/cc/text/language_detector/custom_ops/utils/hash:murmur",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/types:optional",
         "@flatbuffers",
         "@org_tensorflow//tensorflow/lite:framework",

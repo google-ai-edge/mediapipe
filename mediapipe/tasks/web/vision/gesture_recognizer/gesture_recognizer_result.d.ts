@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,12 @@ export declare interface GestureRecognizerResult {
   worldLandmarks: Landmark[][];
 
   /** Handedness of detected hands. */
+  handedness: Category[][];
+
+  /**
+   * Handedness of detected hands.
+   * @deprecated Use `.handedness` instead.
+   */
   handednesses: Category[][];
 
   /**

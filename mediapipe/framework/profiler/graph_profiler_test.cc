@@ -14,6 +14,7 @@
 
 #include "mediapipe/framework/profiler/graph_profiler.h"
 
+#include "absl/log/absl_log.h"
 #include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 #include "absl/time/time.h"
@@ -59,7 +60,8 @@ CalculatorProfile GetProfileWithName(
       return p;
     }
   }
-  LOG(FATAL) << "Cannot find calulator profile with name " << calculator_name;
+  ABSL_LOG(FATAL) << "Cannot find calulator profile with name "
+                  << calculator_name;
   return CalculatorProfile::default_instance();
 }
 
@@ -1227,7 +1229,7 @@ TEST(GraphProfilerTest, ParallelReads) {
     EXPECT_EQ(1003, profiles[0].process_runtime().count(0));
     EXPECT_EQ(1000, profiles[1].process_runtime().count(0));
   } else {
-    LOG(FATAL) << "Unexpected profile name " << profiles[0].name();
+    ABSL_LOG(FATAL) << "Unexpected profile name " << profiles[0].name();
   }
   EXPECT_EQ(1001, out_1_packets.size());
 }

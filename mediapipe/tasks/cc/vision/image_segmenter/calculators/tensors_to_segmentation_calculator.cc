@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,8 +43,17 @@ limitations under the License.
 #include "mediapipe/util/label_map.pb.h"
 
 #ifdef __EMSCRIPTEN__
-#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/segmentation_postprocessor_gl.h"
+#define TASK_SEGMENTATION_USE_GL_POSTPROCESSING 1
+#elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31 && \
+    !MEDIAPIPE_USING_SWIFTSHADER && defined(MEDIAPIPE_ANDROID)
+#define TASK_SEGMENTATION_USE_GL_POSTPROCESSING 1
+#else
+#undef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
 #endif  // __EMSCRIPTEN__
+
+#ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
+#include "mediapipe/tasks/cc/vision/image_segmenter/calculators/segmentation_postprocessor_gl.h"
+#endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
 
 // TODO: consolidate TensorToSegmentationCalculator.
 namespace mediapipe {
@@ -60,6 +69,8 @@ using ::mediapipe::tasks::TensorsToSegmentationCalculatorOptions;
 using ::mediapipe::tasks::vision::GetImageLikeTensorShape;
 using ::mediapipe::tasks::vision::Shape;
 using ::mediapipe::tasks::vision::image_segmenter::proto::SegmenterOptions;
+
+constexpr uint8_t kUnLabeledPixelValue = 255;
 
 void StableSoftmax(absl::Span<const float> values,
                    absl::Span<float> activated_values) {
@@ -153,9 +164,11 @@ Image ProcessForCategoryMaskCpu(const Shape& input_shape,
     }
     if (input_channels == 1) {
       // if the input tensor is a single mask, it is assumed to be a binary
-      // foreground segmentation mask. For such a mask, we make foreground
-      // category 1, and background category 0.
-      pixel = static_cast<uint8_t>(confidence_scores[0] > 0.5f);
+      // foreground segmentation mask. For such a mask, instead of a true
+      // argmax, we simply use 0.5 as the cutoff, assigning 0 (foreground) or
+      // 255 (background) based on whether the confidence value reaches this
+      // cutoff or not, respectively.
+      pixel = confidence_scores[0] > 0.5f ? 0 : kUnLabeledPixelValue;
     } else {
       const int maximum_category_idx =
           std::max_element(confidence_scores.begin(), confidence_scores.end()) -
@@ -287,8 +300,11 @@ class TensorsToSegmentationCalculator : public Node {
   static constexpr Output<Image>::Multiple kConfidenceMaskOut{
       "CONFIDENCE_MASK"};
   static constexpr Output<Image>::Optional kCategoryMaskOut{"CATEGORY_MASK"};
+  static constexpr Output<std::vector<float>>::Optional kQualityScoresOut{
+      "QUALITY_SCORES"};
   MEDIAPIPE_NODE_CONTRACT(kTensorsIn, kOutputSizeIn, kSegmentationOut,
-                          kConfidenceMaskOut, kCategoryMaskOut);
+                          kConfidenceMaskOut, kCategoryMaskOut,
+                          kQualityScoresOut);
 
   static absl::Status UpdateContract(CalculatorContract* cc);
 
@@ -301,19 +317,19 @@ class TensorsToSegmentationCalculator : public Node {
                                               const float* tensors_buffer);
   TensorsToSegmentationCalculatorOptions options_;
 
-#ifdef __EMSCRIPTEN__
+#ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
   SegmentationPostprocessorGl postprocessor_;
-#endif  // __EMSCRIPTEN__
+#endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
 };
 
 // static
 absl::Status TensorsToSegmentationCalculator::UpdateContract(
     CalculatorContract* cc) {
-#ifdef __EMSCRIPTEN__
+#ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
   return SegmentationPostprocessorGl::UpdateContract(cc);
 #else
   return absl::OkStatus();
-#endif  // __EMSCRIPTEN__
+#endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
 }
 
 absl::Status TensorsToSegmentationCalculator::Open(
@@ -333,19 +349,40 @@ absl::Status TensorsToSegmentationCalculator::Open(
           "connected.");
     }
   }
-#ifdef __EMSCRIPTEN__
+#ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
   MP_RETURN_IF_ERROR(postprocessor_.Initialize(cc, options_));
-#endif  // __EMSCRIPTEN__
+#endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
   return absl::OkStatus();
 }
 
 absl::Status TensorsToSegmentationCalculator::Process(
     mediapipe::CalculatorContext* cc) {
-  RET_CHECK_EQ(kTensorsIn(cc).Get().size(), 1)
-      << "Expect a vector of single Tensor.";
-  const auto& input_tensor = kTensorsIn(cc).Get()[0];
+  const auto& input_tensors = kTensorsIn(cc).Get();
+  if (input_tensors.size() != 1 && input_tensors.size() != 2) {
+    return absl::InvalidArgumentError(
+        "Expect input tensor vector of size 1 or 2.");
+  }
+  const auto& input_tensor = *input_tensors.rbegin();
   ASSIGN_OR_RETURN(const Shape input_shape,
                    GetImageLikeTensorShape(input_tensor));
+
+  // TODO: should use tensor signature to get the correct output
+  // tensor.
+  if (input_tensors.size() == 2) {
+    const auto& quality_tensor = input_tensors[0];
+    const float* quality_score_buffer =
+        quality_tensor.GetCpuReadView().buffer<float>();
+    const std::vector<float> quality_scores(
+        quality_score_buffer,
+        quality_score_buffer +
+            (quality_tensor.bytes() / quality_tensor.element_size()));
+    kQualityScoresOut(cc).Send(quality_scores);
+  } else {
+    // If the input_tensors don't contain quality scores, send the default
+    // quality scores as 1.
+    const std::vector<float> quality_scores(input_shape.channels, 1.0f);
+    kQualityScoresOut(cc).Send(quality_scores);
+  }
 
   // Category mask does not require activation function.
   if (options_.segmenter_options().output_type() ==
@@ -362,11 +399,11 @@ absl::Status TensorsToSegmentationCalculator::Process(
   }
 
   // Use GPU postprocessing on web when Tensor is there already.
-#ifdef __EMSCRIPTEN__
+#ifdef TASK_SEGMENTATION_USE_GL_POSTPROCESSING
   Shape output_shape = {/* height= */ output_height,
                         /* width= */ output_width,
                         /* channels= */ input_shape.channels};
-  if (input_tensor.ready_as_opengl_texture_2d()) {
+  if (input_tensor.ready_on_gpu()) {
     bool produce_category_mask = options_.segmenter_options().output_type() ==
                                      SegmenterOptions::CATEGORY_MASK ||
                                  cc->Outputs().HasTag("CATEGORY_MASK");
@@ -400,7 +437,7 @@ absl::Status TensorsToSegmentationCalculator::Process(
     }
     return absl::OkStatus();
   }
-#endif  // __EMSCRIPTEN__
+#endif  // TASK_SEGMENTATION_USE_GL_POSTPROCESSING
 
   // Otherwise, use CPU postprocessing.
   const float* tensors_buffer = input_tensor.GetCpuReadView().buffer<float>();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ export function convertFromDetectionProto(source: DetectionProto): Detection {
   const labels = source.getLabelList();
   const displayNames = source.getDisplayNameList();
 
-  const detection: Detection = {categories: []};
+  const detection: Detection = {categories: [], keypoints: []};
   for (let i = 0; i < scores.length; i++) {
     detection.categories.push({
       score: scores[i],
@@ -42,12 +42,12 @@ export function convertFromDetectionProto(source: DetectionProto): Detection {
       originX: boundingBox.getXmin() ?? 0,
       originY: boundingBox.getYmin() ?? 0,
       width: boundingBox.getWidth() ?? 0,
-      height: boundingBox.getHeight() ?? 0
+      height: boundingBox.getHeight() ?? 0,
+      angle: 0.0,
     };
   }
 
   if (source.getLocationData()?.getRelativeKeypointsList().length) {
-    detection.keypoints = [];
     for (const keypoint of
              source.getLocationData()!.getRelativeKeypointsList()) {
       detection.keypoints.push({

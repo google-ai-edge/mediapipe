@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 objc_library(
-    name = "MPPObjectDetectionResult",
-    srcs = ["sources/MPPObjectDetectionResult.m"],
-    hdrs = ["sources/MPPObjectDetectionResult.h"],
+    name = "MPPObjectDetectorResult",
+    srcs = ["sources/MPPObjectDetectorResult.m"],
+    hdrs = ["sources/MPPObjectDetectorResult.h"],
     deps = [
         "//mediapipe/tasks/ios/components/containers:MPPDetection",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
@@ -31,7 +31,7 @@ objc_library(
     srcs = ["sources/MPPObjectDetectorOptions.m"],
     hdrs = ["sources/MPPObjectDetectorOptions.h"],
     deps = [
-        ":MPPObjectDetectionResult",
+        ":MPPObjectDetectorResult",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
     ],
@@ -47,8 +47,8 @@ objc_library(
         "-x objective-c++",
     ],
     deps = [
-        ":MPPObjectDetectionResult",
         ":MPPObjectDetectorOptions",
+        ":MPPObjectDetectorResult",
         "//mediapipe/tasks/cc/vision/object_detector:object_detector_graph",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
@@ -56,8 +56,7 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPImage",
         "//mediapipe/tasks/ios/vision/core:MPPVisionPacketCreator",
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
-        "//mediapipe/tasks/ios/vision/object_detector/utils:MPPObjectDetectionResultHelpers",
         "//mediapipe/tasks/ios/vision/object_detector/utils:MPPObjectDetectorOptionsHelpers",
-        "//third_party/apple_frameworks:UIKit",
+        "//mediapipe/tasks/ios/vision/object_detector/utils:MPPObjectDetectorResultHelpers",
     ],
 )

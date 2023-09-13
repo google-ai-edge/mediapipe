@@ -1,0 +1,108 @@
+name: Build/Install Issue
+description: Use this template to report build/install issue
+labels: 'type:build/install'
+body:
+  - type: markdown
+    id: link
+    attributes:
+      value: Please make sure that this is a build/installation issue and also refer to the [troubleshooting](https://google.github.io/mediapipe/getting_started/troubleshooting.html) documentation before raising any issues.
+  - type: input
+    id: os
+    attributes:
+      label: OS Platform and Distribution
+      description:
+      placeholder: e.g. Linux Ubuntu 16.04, Android 11, iOS 14.4
+    validations:
+      required: true
+  - type: input
+    id: compilerversion
+    attributes:
+      label: Compiler version
+      description:
+      placeholder: e.g. gcc/g++ 8 /Apple clang version 12.0.0
+    validations:
+      required: false
+  - type: input
+    id: programminglang
+    attributes:
+      label: Programming Language and version
+      description:
+      placeholder: e.g. C++ 14, Python 3.6, Java
+    validations:
+      required: true
+  - type: input
+    id: virtualenv
+    attributes:
+      label: Installed using virtualenv? pip? Conda?(if python)
+      description:
+      placeholder:
+    validations:
+      required: false
+  - type: input
+    id: mediapipever
+    attributes:
+      label: MediaPipe version
+      description:
+      placeholder: e.g. 0.8.11, 0.9.1
+    validations:
+      required: false
+  - type: input
+    id: bazelver
+    attributes:
+      label: Bazel version
+      description:
+      placeholder: e.g. 5.0, 5.1
+    validations:
+      required: false
+  - type: input
+    id: xcodeversion
+    attributes:
+      label: XCode and Tulsi versions (if iOS)
+      description:
+      placeholder:
+    validations:
+      required: false
+  - type: input
+    id: sdkndkversion
+    attributes:
+      label: Android SDK and NDK versions (if android)
+      description:
+      placeholder:
+    validations:
+      required: false
+  - type: dropdown
+    id: androidaar
+    attributes:
+      label: Android AAR (if android)
+      options:
+        - 'Yes'
+        - 'No'
+    validations:
+      required: false
+  - type: input
+    id: opencvversion
+    attributes:
+      label: OpenCV version (if running on desktop)
+      description:
+      placeholder:
+    validations:
+      required: false
+  - type: input
+    id: what-happened
+    attributes:
+      label: Describe the problem
+      description: Provide the exact sequence of commands / steps that you executed before running into the [problem](https://google.github.io/mediapipe/getting_started/getting_started.html)
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+    validations:
+      required: true
+  - type: textarea
+    id: code-to-reproduce
+    attributes:
+      label: Complete Logs
+      description: Include Complete Log information or source code that would be helpful to diagnose the problem. If including tracebacks, please include the full traceback. Large logs and files should be attached
+      placeholder: Tell us what you see!
+      value:
+      render: shell
+    validations:
+      required: true

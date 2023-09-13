@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ limitations under the License.
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/types/optional.h"
 #include "flatbuffers/flexbuffers.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -78,13 +79,13 @@ class NGramHashModel : public tflite::SingleOpModel {
 
   void SetupInputTensor(const std::string& input) {
     PopulateStringTensor(input_, {input});
-    CHECK(interpreter_->AllocateTensors() == kTfLiteOk)
+    ABSL_CHECK(interpreter_->AllocateTensors() == kTfLiteOk)
         << "Cannot allocate tensors";
   }
 
   void Invoke(const std::string& input) {
     SetupInputTensor(input);
-    CHECK_EQ(SingleOpModel::Invoke(), kTfLiteOk);
+    ABSL_CHECK_EQ(SingleOpModel::Invoke(), kTfLiteOk);
   }
 
   TfLiteStatus InvokeUnchecked(const std::string& input) {

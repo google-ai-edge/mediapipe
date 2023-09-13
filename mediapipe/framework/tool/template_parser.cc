@@ -20,6 +20,9 @@
 #include <utility>
 #include <vector>
 
+#include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
@@ -30,7 +33,6 @@
 #include "mediapipe/framework/deps/proto_descriptor.pb.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -180,11 +182,11 @@ void CheckFieldIndex(const FieldDescriptor* field, int index) {
   }
 
   if (field->is_repeated() && index == -1) {
-    LOG(DFATAL) << "Index must be in range of repeated field values. "
-                << "Field: " << field->name();
+    ABSL_LOG(ERROR) << "Index must be in range of repeated field values. "
+                    << "Field: " << field->name();
   } else if (!field->is_repeated() && index != -1) {
-    LOG(DFATAL) << "Index must be -1 for singular fields."
-                << "Field: " << field->name();
+    ABSL_LOG(ERROR) << "Index must be -1 for singular fields."
+                    << "Field: " << field->name();
   }
 }
 
@@ -304,7 +306,7 @@ class TemplateParser::Parser::ParserImpl {
   // Parses the ASCII representation specified in input and saves the
   // information into the output pointer (a Message). Returns
   // false if an error occurs (an error will also be logged to
-  // LOG(ERROR)).
+  // ABSL_LOG(ERROR)).
   virtual bool Parse(Message* output) {
     // Consume fields until we cannot do so anymore.
     while (true) {
@@ -334,12 +336,12 @@ class TemplateParser::Parser::ParserImpl {
     had_errors_ = true;
     if (error_collector_ == NULL) {
       if (line >= 0) {
-        LOG(ERROR) << "Error parsing text-format "
-                   << root_message_type_->full_name() << ": " << (line + 1)
-                   << ":" << (col + 1) << ": " << message;
+        ABSL_LOG(ERROR) << "Error parsing text-format "
+                        << root_message_type_->full_name() << ": " << (line + 1)
+                        << ":" << (col + 1) << ": " << message;
       } else {
-        LOG(ERROR) << "Error parsing text-format "
-                   << root_message_type_->full_name() << ": " << message;
+        ABSL_LOG(ERROR) << "Error parsing text-format "
+                        << root_message_type_->full_name() << ": " << message;
       }
     } else {
       error_collector_->AddError(line, col, std::string(message));
@@ -349,12 +351,12 @@ class TemplateParser::Parser::ParserImpl {
   void ReportWarning(int line, int col, absl::string_view message) {
     if (error_collector_ == NULL) {
       if (line >= 0) {
-        LOG(WARNING) << "Warning parsing text-format "
-                     << root_message_type_->full_name() << ": " << (line + 1)
-                     << ":" << (col + 1) << ": " << message;
+        ABSL_LOG(WARNING) << "Warning parsing text-format "
+                          << root_message_type_->full_name() << ": "
+                          << (line + 1) << ":" << (col + 1) << ": " << message;
       } else {
-        LOG(WARNING) << "Warning parsing text-format "
-                     << root_message_type_->full_name() << ": " << message;
+        ABSL_LOG(WARNING) << "Warning parsing text-format "
+                          << root_message_type_->full_name() << ": " << message;
       }
     } else {
       error_collector_->AddWarning(line, col, std::string(message));
@@ -470,7 +472,7 @@ class TemplateParser::Parser::ParserImpl {
                     "\" stored in google.protobuf.Any.");
         return false;
       }
-      DO(ConsumeAnyValue(value_descriptor, &serialized_value));
+      DO(ConsumeAnyValue(any_value_field, value_descriptor, &serialized_value));
       if (singular_overwrite_policy_ == FORBID_SINGULAR_OVERWRITES) {
         // Fail if any_type_url_field has already been specified.
         if ((!any_type_url_field->is_repeated() &&
@@ -564,7 +566,8 @@ class TemplateParser::Parser::ParserImpl {
 
     // Skips unknown or reserved fields.
     if (field == NULL) {
-      CHECK(allow_unknown_field_ || allow_unknown_extension_ || reserved_field);
+      ABSL_CHECK(allow_unknown_field_ || allow_unknown_extension_ ||
+                 reserved_field);
 
       // Try to guess the type of this field.
       // If this field is not a message, there should be a ":" between the
@@ -708,7 +711,7 @@ class TemplateParser::Parser::ParserImpl {
     // If the parse information tree is not NULL, create a nested one
     // for the nested message.
     ParseInfoTree* parent = parse_info_tree_;
-    if (parent != NULL) {
+    if (parent) {
       parse_info_tree_ = parent->CreateNested(field);
     }
 
@@ -883,7 +886,7 @@ class TemplateParser::Parser::ParserImpl {
       case FieldDescriptor::CPPTYPE_MESSAGE: {
         // We should never get here. Put here instead of a default
         // so that if new types are added, we get a nice compiler warning.
-        LOG(FATAL) << "Reached an unintended state: CPPTYPE_MESSAGE";
+        ABSL_LOG(FATAL) << "Reached an unintended state: CPPTYPE_MESSAGE";
         break;
       }
     }
@@ -974,7 +977,7 @@ class TemplateParser::Parser::ParserImpl {
   }
 
   // Consumes an identifier and saves its value in the identifier parameter.
-  // Returns false if the token is not of type IDENTFIER.
+  // Returns false if the token is not of type IDENTIFIER.
   bool ConsumeIdentifier(std::string* identifier) {
     if (LookingAtType(io::Tokenizer::TYPE_IDENTIFIER)) {
       *identifier = tokenizer_.current().text;
@@ -1190,8 +1193,20 @@ class TemplateParser::Parser::ParserImpl {
 
   // A helper function for reconstructing Any::value. Consumes a text of
   // full_type_name, then serializes it into serialized_value.
-  bool ConsumeAnyValue(const Descriptor* value_descriptor,
+  bool ConsumeAnyValue(const FieldDescriptor* field,
+                       const Descriptor* value_descriptor,
                        std::string* serialized_value) {
+    if (--recursion_limit_ < 0) {
+      ReportError("Message is too deep");
+      return false;
+    }
+    // If the parse information tree is not NULL, create a nested one
+    // for the nested message.
+    ParseInfoTree* parent = parse_info_tree_;
+    if (parent) {
+      parse_info_tree_ = parent->CreateNested(field);
+    }
+
     DynamicMessageFactory factory;
     const Message* value_prototype = factory.GetPrototype(value_descriptor);
     if (value_prototype == NULL) {
@@ -1213,6 +1228,11 @@ class TemplateParser::Parser::ParserImpl {
       }
       value->AppendToString(serialized_value);
     }
+
+    ++recursion_limit_;
+
+    // Reset the parse information tree.
+    parse_info_tree_ = parent;
     return true;
   }
 
@@ -1379,7 +1399,7 @@ bool DeterministicallySerialize(const Message& proto, std::string* result) {
 void SerializeField(const Message* message, const FieldDescriptor* field,
                     std::vector<ProtoUtilLite::FieldValue>* result) {
   ProtoUtilLite::FieldValue message_bytes;
-  CHECK(DeterministicallySerialize(*message, &message_bytes));
+  ABSL_CHECK(DeterministicallySerialize(*message, &message_bytes));
   ProtoUtilLite::FieldAccess access(
       field->number(), static_cast<ProtoUtilLite::FieldType>(field->type()));
   MEDIAPIPE_CHECK_OK(access.SetMessage(message_bytes));
@@ -1430,10 +1450,10 @@ std::vector<const FieldDescriptor*> GetFields(const Message* src) {
 
 // Orders map entries in dst to match src.
 void OrderMapEntries(const Message* src, Message* dst,
-                     std::set<const Message*>* seen = nullptr) {
-  std::unique_ptr<std::set<const Message*>> seen_owner;
+                     absl::flat_hash_set<const Message*>* seen = nullptr) {
+  std::unique_ptr<absl::flat_hash_set<const Message*>> seen_owner;
   if (!seen) {
-    seen_owner = std::make_unique<std::set<const Message*>>();
+    seen_owner = std::make_unique<absl::flat_hash_set<const Message*>>();
     seen = seen_owner.get();
   }
   if (seen->count(src) > 0) {
@@ -1672,7 +1692,9 @@ class TemplateParser::Parser::MediaPipeParserImpl
     if (field_type == ProtoUtilLite::FieldType::TYPE_MESSAGE) {
       *args = {""};
     } else {
-      MEDIAPIPE_CHECK_OK(ProtoUtilLite::Serialize({"1"}, field_type, args));
+      constexpr char kPlaceholderValue[] = "1";
+      MEDIAPIPE_CHECK_OK(
+          ProtoUtilLite::Serialize({kPlaceholderValue}, field_type, args));
     }
   }
 
@@ -1682,13 +1704,13 @@ class TemplateParser::Parser::MediaPipeParserImpl
       const std::vector<ProtoUtilLite::FieldValue>& args) {
     auto field_type = static_cast<ProtoUtilLite::FieldType>(field->type());
     ProtoUtilLite::FieldValue message_bytes;
-    CHECK(message->SerializePartialToString(&message_bytes));
+    ABSL_CHECK(message->SerializePartialToString(&message_bytes));
     int count;
     MEDIAPIPE_CHECK_OK(ProtoUtilLite::GetFieldCount(
         message_bytes, {{field->number(), 0}}, field_type, &count));
     MEDIAPIPE_CHECK_OK(ProtoUtilLite::ReplaceFieldRange(
         &message_bytes, {{field->number(), count}}, 0, field_type, args));
-    CHECK(message->ParsePartialFromString(message_bytes));
+    ABSL_CHECK(message->ParsePartialFromString(message_bytes));
   }
 
   // Parse and record a template definition for the current field path.

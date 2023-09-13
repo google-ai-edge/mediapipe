@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ cc_library(
         "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@org_tensorflow//tensorflow/lite/core/api:op_resolver",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
@@ -61,15 +62,13 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
+        "//mediapipe/util:resource_util",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
-    ] + select({
-        "//mediapipe:windows": ["@bazel_tools//tools/cpp/runfiles"],
-        "//conditions:default": [],
-    }),
+    ],
 )
 
 cc_library(
@@ -81,6 +80,7 @@ cc_library(
         "//mediapipe/tasks/cc/text/custom_ops/sentencepiece:sentencepiece_tokenizer_tflite",
         "//mediapipe/tasks/cc/text/language_detector/custom_ops:kmeans_embedding_lookup",
         "//mediapipe/tasks/cc/text/language_detector/custom_ops:ngram_hash",
+        "//mediapipe/tasks/cc/vision/custom_ops:fused_batch_norm",
         "//mediapipe/util/tflite/operations:landmarks_to_transform_matrix",
         "//mediapipe/util/tflite/operations:max_pool_argmax",
         "//mediapipe/util/tflite/operations:max_unpooling",
@@ -108,13 +108,13 @@ cc_library(
         "//mediapipe/framework:subgraph",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
-        "//mediapipe/framework/port:logging",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core/proto:acceleration_cc_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",
         "//mediapipe/tasks/cc/core/proto:inference_subgraph_cc_proto",
         "//mediapipe/tasks/cc/core/proto:model_resources_calculator_cc_proto",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -318,6 +318,9 @@ cc_library(
         ":model_resources",
         ":task_runner",
         ":utils",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework/port:requires",
+        "//mediapipe/framework/port:status",
         "//mediapipe/tasks/cc:common",
         "//mediapipe/tasks/cc/core/proto:base_options_cc_proto",
         "//mediapipe/tasks/cc/core/proto:external_file_cc_proto",

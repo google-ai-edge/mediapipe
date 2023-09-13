@@ -1,0 +1,110 @@
+name: Bug Issues
+description: Use this template for reporting a bug. If this doesn’t look right, choose a different type.
+labels: 'type:bug'
+body:
+  - type: markdown
+    id: link
+    attributes:
+      value: Please make sure that this is a bug and also refer to the [troubleshooting](https://google.github.io/mediapipe/getting_started/troubleshooting.html), FAQ documentation before raising any issues.
+  - type: dropdown
+    id: customcode_model
+    attributes:
+      label: Have I written custom code (as opposed to using a stock example script provided in MediaPipe)
+      options:
+        - 'Yes'
+        - 'No'
+    validations:
+      required: false
+  - type: input
+    id: os
+    attributes:
+      label: OS Platform and Distribution
+      description:
+      placeholder: e.g. Linux Ubuntu 16.04, Android 11, iOS 14.4
+    validations:
+      required: true
+  - type: input
+    id: mobile_device
+    attributes:
+      label: Mobile device if the issue happens on mobile device
+      description:
+      placeholder: e.g. iPhone 8, Pixel 2, Samsung Galaxy
+    validations:
+      required: false
+  - type: input
+    id: browser_version
+    attributes:
+      label: Browser and version if the issue happens on browser
+      placeholder: e.g. Google Chrome 109.0.5414.119, Safari 16.3
+    validations:
+      required: false
+  - type: input
+    id: programminglang
+    attributes:
+      label: Programming Language and version
+      placeholder: e.g. C++, Python, Java
+    validations:
+      required: true
+  - type: input
+    id: mediapipever
+    attributes:
+      label: MediaPipe version
+      description:
+      placeholder: e.g. 0.8.11, 0.9.1
+    validations:
+      required: false
+  - type: input
+    id: bazelver
+    attributes:
+      label: Bazel version
+      description:
+      placeholder: e.g. 5.0, 5.1
+    validations:
+      required: false
+  - type: input
+    id: solution
+    attributes:
+      label: Solution
+      placeholder: e.g. FaceMesh, Pose, Holistic
+    validations:
+      required: true
+  - type: input
+    id: sdkndkversion
+    attributes:
+      label: Android Studio, NDK, SDK versions (if issue is related to building in Android environment)
+    validations:
+      required: false
+  - type: input
+    id: xcode_ver
+    attributes:
+      label: Xcode & Tulsi version (if issue is related to building for iOS)
+    validations:
+      required: false
+  - type: input
+    id: current_model
+    attributes:
+      label: Describe the actual behavior
+    validations:
+      required: true
+  - type: input
+    id: expected_model
+    attributes:
+      label: Describe the expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened_model
+    attributes:
+      label: Standalone code/steps you may have used to try to get what you need
+      description: If there is a problem, provide a reproducible test case that is the bare minimum necessary to generate the problem. If possible, please share a link to Colab, GitHub repo link or anything that we can use to reproduce the problem
+      render: shell
+    validations:
+       required: true
+  - type: textarea
+    id: other_info
+    attributes:
+      label: Other info / Complete Logs
+      description: Include any logs or source code that would be helpful to diagnose the problem. If including tracebacks, please include the full traceback. Large logs and files should be attached
+      render: shell
+    validations:
+      required: false

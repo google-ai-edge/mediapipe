@@ -15,8 +15,8 @@
 #import <Foundation/Foundation.h>
 
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
-#import "mediapipe/tasks/ios/vision/object_detector/sources/MPPObjectDetectionResult.h"
 #import "mediapipe/tasks/ios/vision/object_detector/sources/MPPObjectDetectorOptions.h"
+#import "mediapipe/tasks/ios/vision/object_detector/sources/MPPObjectDetectorResult.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -64,175 +64,122 @@ NS_SWIFT_NAME(ObjectDetector)
 @interface MPPObjectDetector : NSObject
 
 /**
- * Creates a new instance of `MPPObjectDetector` from an absolute path to a TensorFlow Lite model
- * file stored locally on the device and the default `MPPObjectDetector`.
+ * Creates a new instance of `ObjectDetector` from an absolute path to a TensorFlow Lite model
+ * file stored locally on the device and the default `ObjectDetector`.
  *
  * @param modelPath An absolute path to a TensorFlow Lite model file stored locally on the device.
  * @param error An optional error parameter populated when there is an error in initializing the
  * object detector.
  *
- * @return A new instance of `MPPObjectDetector` with the given model path. `nil` if there is an
+ * @return A new instance of `ObjectDetector` with the given model path. `nil` if there is an
  * error in initializing the object detector.
  */
 - (nullable instancetype)initWithModelPath:(NSString *)modelPath error:(NSError **)error;
 
 /**
- * Creates a new instance of `MPPObjectDetector` from the given `MPPObjectDetectorOptions`.
+ * Creates a new instance of `ObjectDetector` from the given `ObjectDetectorOptions`.
  *
- * @param options The options of type `MPPObjectDetectorOptions` to use for configuring the
- * `MPPImageClassifMPPObjectDetectorier`.
+ * @param options The options of type `ObjectDetectorOptions` to use for configuring the
+ * `ObjectDetector`.
  * @param error An optional error parameter populated when there is an error in initializing the
  * object detector.
  *
- * @return A new instance of `MPPObjectDetector` with the given options. `nil` if there is an error
+ * @return A new instance of `ObjectDetector` with the given options. `nil` if there is an error
  * in initializing the object detector.
  */
 - (nullable instancetype)initWithOptions:(MPPObjectDetectorOptions *)options
                                    error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
- * Performs object detection on the provided MPPImage using the whole image as region of
+ * Performs object detection on the provided MPImage using the whole image as region of
  * interest. Rotation will be applied according to the `orientation` property of the provided
- * `MPPImage`. Only use this method when the `MPPObjectDetector` is created with
- * `MPPRunningModeImage`.
+ * `MPImage`. Only use this method when the `ObjectDetector` is created with
+ * `.image`.
  *
- * @param image The `MPPImage` on which object detection is to be performed.
- * @param error An optional error parameter populated when there is an error in performing object
- * detection on the input image.
+ * This method supports detecting objects in RGBA images. If your `MPImage` has a source type of
+ * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the following
+ * pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
  *
- * @return An `MPPObjectDetectionResult` object that contains a list of detections, each detection
+ * If your `MPImage` has a source type of `.image` ensure that the color space is
+ * RGB with an Alpha channel.
+ *
+ * @param image The `.image` on which object detection is to be performed.
+ *
+ * @return An `ObjectDetectorResult` object that contains a list of detections, each detection
  * has a bounding box that is expressed in the unrotated input frame of reference coordinates
  * system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the underlying
  * image data.
  */
-- (nullable MPPObjectDetectionResult *)detectInImage:(MPPImage *)image
-                                               error:(NSError **)error
-    NS_SWIFT_NAME(detect(image:));
+- (nullable MPPObjectDetectorResult *)detectInImage:(MPPImage *)image
+                                              error:(NSError **)error NS_SWIFT_NAME(detect(image:));
 
 /**
- * Performs object detectionon the provided `MPPImage` cropped to the specified region of
- * interest. Rotation will be applied on the cropped image according to the `orientation` property
- * of the provided `MPPImage`. Only use this method when the `MPPObjectDetector` is created with
- * `MPPRunningModeImage`.
- *
- * @param image The `MPPImage` on which object detection is to be performed.
- * @param roi A `CGRect` specifying the region of interest within the given `MPPImage`, on which
- * object detection should be performed.
- * @param error An optional error parameter populated when there is an error in performing object
- * detection on the input image.
- *
- * @return An `MPPObjectDetectionResult` object that contains a list of detections, each detection
- * has a bounding box that is expressed in the unrotated input frame of reference coordinates
- * system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the underlying
- * image data.
- */
-- (nullable MPPObjectDetectionResult *)detectInImage:(MPPImage *)image
-                                    regionOfInterest:(CGRect)roi
-                                               error:(NSError **)error
-    NS_SWIFT_NAME(detect(image:regionOfInterest:));
-
-/**
- * Performs object detection on the provided video frame of type `MPPImage` using the whole
+ * Performs object detection on the provided video frame of type `MPImage` using the whole
  * image as region of interest. Rotation will be applied according to the `orientation` property of
- * the provided `MPPImage`. Only use this method when the `MPPObjectDetector` is created with
- * `MPPRunningModeVideo`.
+ * the provided `MPImage`. Only use this method when the `ObjectDetector` is created with `.video`.
  *
- * @param image The `MPPImage` on which object detection is to be performed.
+ * This method supports detecting objects in of RGBA images. If your `MPImage` has a source type of
+ * .pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the following
+ * pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If your `MPImage` has a source type of `.image` ensure that the color space is RGB with an Alpha
+ * channel.
+ *
+ * @param image The `MPImage` on which object detection is to be performed.
  * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
  * timestamps must be monotonically increasing.
- * @param error An optional error parameter populated when there is an error in performing object
- * detection on the input image.
  *
- * @return An `MPPObjectDetectionResult` object that contains a list of detections, each detection
+ * @return An `ObjectDetectorResult` object that contains a list of detections, each detection
  * has a bounding box that is expressed in the unrotated input frame of reference coordinates
  * system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the underlying
  * image data.
  */
-- (nullable MPPObjectDetectionResult *)detectInVideoFrame:(MPPImage *)image
-                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                    error:(NSError **)error
+- (nullable MPPObjectDetectorResult *)detectInVideoFrame:(MPPImage *)image
+                                 timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                                   error:(NSError **)error
     NS_SWIFT_NAME(detect(videoFrame:timestampInMilliseconds:));
 
 /**
- * Performs object detection on the provided video frame of type `MPPImage` cropped to the
- * specified region of interest. Rotation will be applied according to the `orientation` property of
- * the provided `MPPImage`. Only use this method when the `MPPObjectDetector` is created with
- * `MPPRunningModeVideo`.
- *
- * It's required to provide the video frame's timestamp (in milliseconds). The input timestamps must
- * be monotonically increasing.
- *
- * @param image A live stream image data of type `MPPImage` on which object detection is to be
- * performed.
- * @param timestampInMilliseconds The video frame's timestamp (in milliseconds). The input
- * timestamps must be monotonically increasing.
- * @param roi A `CGRect` specifying the region of interest within the given `MPPImage`, on which
- * object detection should be performed.
- *
- * @param error An optional error parameter populated when there is an error in performing object
- * detection on the input image.
- *
- * @return An `MPPObjectDetectionResult` object that contains a list of detections, each detection
- * has a bounding box that is expressed in the unrotated input frame of reference coordinates
- * system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the underlying
- * image data.
- */
-- (nullable MPPObjectDetectionResult *)detectInVideoFrame:(MPPImage *)image
-                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                         regionOfInterest:(CGRect)roi
-                                                    error:(NSError **)error
-    NS_SWIFT_NAME(detect(videoFrame:timestampInMilliseconds:regionOfInterest:));
-
-/**
- * Sends live stream image data of type `MPPImage` to perform object detection using the whole
+ * Sends live stream image data of type `MPImage` to perform object detection using the whole
  * image as region of interest. Rotation will be applied according to the `orientation` property of
- * the provided `MPPImage`. Only use this method when the `MPPObjectDetector` is created with
- * `MPPRunningModeLiveStream`. Results are provided asynchronously via the `completion` callback
- * provided in the `MPPObjectDetectorOptions`.
+ * the provided `MPImage`. Only use this method when the `ObjectDetector` is created with
+ * `.liveStream`.
+ *
+ * The object which needs to be continuously notified of the available results of object
+ * detection must confirm to `ObjectDetectorLiveStreamDelegate` protocol and implement the
+ * `objectDetector(_:didFinishDetectionWithResult:timestampInMilliseconds:error:)` delegate method.
  *
  * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
  * to the object detector. The input timestamps must be monotonically increasing.
  *
- * @param image A live stream image data of type `MPPImage` on which object detection is to be
+ * This method supports detecting objects in RGBA images. If your `MPImage` has a source type of
+ * `.pixelBuffer` or `.sampleBuffer`, the underlying pixel buffer must have one of the following
+ * pixel format types:
+ * 1. kCVPixelFormatType_32BGRA
+ * 2. kCVPixelFormatType_32RGBA
+ *
+ * If the input `MPImage` has a source type of `.image` ensure that the color space is RGB with an
+ * Alpha channel.
+ *
+ * If this method is used for detecting objects in live camera frames using `AVFoundation`, ensure
+ * that you request `AVCaptureVideoDataOutput` to output frames in `kCMPixelFormat_32RGBA` using its
+ * `videoSettings` property.
+ *
+ * @param image A live stream image data of type `MPImage` on which object detection is to be
  * performed.
  * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
  * image is sent to the object detector. The input timestamps must be monotonically increasing.
- * @param error An optional error parameter populated when there is an error in performing object
- * detection on the input live stream image data.
  *
- * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
+ * @return `true` if the image was sent to the task successfully, otherwise `false`.
  */
 - (BOOL)detectAsyncInImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error
     NS_SWIFT_NAME(detectAsync(image:timestampInMilliseconds:));
-
-/**
- * Sends live stream image data of type `MPPImage` to perform object detection, cropped to the
- * specified region of interest. Rotation will be applied according to the `orientation` property
- * of the provided `MPPImage`. Only use this method when the `MPPObjectDetector` is created with
- * `MPPRunningModeLiveStream`. Results are provided asynchronously via the `completion` callback
- * provided in the `MPPObjectDetectorOptions`.
- *
- * It's required to provide a timestamp (in milliseconds) to indicate when the input image is sent
- * to the object detector. The input timestamps must be monotonically increasing.
- *
- * @param image A live stream image data of type `MPPImage` on which object detection is to be
- * performed.
- * @param timestampInMilliseconds The timestamp (in milliseconds) which indicates when the input
- * image is sent to the object detector. The input timestamps must be monotonically increasing.
- * @param roi A `CGRect` specifying the region of interest within the given live stream image data
- * of type `MPPImage`, on which iobject detection should be performed.
- * @param error An optional error parameter populated when there is an error in performing object
- * detection on the input live stream image data.
- *
- * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
- */
-- (BOOL)detectAsyncInImage:(MPPImage *)image
-    timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-           regionOfInterest:(CGRect)roi
-                      error:(NSError **)error
-    NS_SWIFT_NAME(detectAsync(image:timestampInMilliseconds:regionOfInterest:));
 
 - (instancetype)init NS_UNAVAILABLE;
 

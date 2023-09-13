@@ -27,6 +27,7 @@
 namespace {
 using ::mediapipe::NormalizedRect;
 using ::mediapipe::Packet;
+using ::mediapipe::Timestamp;
 using ::mediapipe::tasks::core::PacketMap;
 using ::mediapipe::tasks::core::PacketsCallback;
 }  // namespace
@@ -38,9 +39,11 @@ static NSString *const kImageOutStreamName = @"image_out";
 static NSString *const kImageTag = @"IMAGE";
 static NSString *const kNormRectStreamName = @"norm_rect_in";
 static NSString *const kNormRectTag = @"NORM_RECT";
-
 static NSString *const kTaskGraphName =
     @"mediapipe.tasks.vision.image_classifier.ImageClassifierGraph";
+static NSString *const kTaskName = @"imageClassifier";
+
+static const int kMicroSecondsPerMilliSecond = 1000;
 
 #define InputPacketMap(imagePacket, normalizedRectPacket) \
   {                                                       \
@@ -49,13 +52,25 @@ static NSString *const kTaskGraphName =
     }                                                     \
   }
 
+#define ImageClassifierResultWithOutputPacketMap(outputPacketMap)                                 \
+  (                                                                                               \
+    [MPPImageClassifierResult                                                                     \
+        imageClassifierResultWithClassificationsPacket:outputPacketMap[kClassificationsStreamName \
+                                                                           .cppString]]           \
+  )
+
 @interface MPPImageClassifier () {
   /** iOS Vision Task Runner */
   MPPVisionTaskRunner *_visionTaskRunner;
+  dispatch_queue_t _callbackQueue;
 }
+@property(nonatomic, weak) id<MPPImageClassifierLiveStreamDelegate>
+    imageClassifierLiveStreamDelegate;
 @end
 
 @implementation MPPImageClassifier
+
+#pragma mark - Public
 
 - (instancetype)initWithOptions:(MPPImageClassifierOptions *)options error:(NSError **)error {
   self = [super init];
@@ -81,24 +96,31 @@ static NSString *const kTaskGraphName =
 
     PacketsCallback packetsCallback = nullptr;
 
-    if (options.completion) {
-      packetsCallback = [=](absl::StatusOr<PacketMap> status_or_packets) {
-        NSError *callbackError = nil;
-        MPPImageClassifierResult *result;
-        if ([MPPCommonUtils checkCppError:status_or_packets.status() toError:&callbackError]) {
-          result = [MPPImageClassifierResult
-              imageClassifierResultWithClassificationsPacket:
-                  status_or_packets.value()[kClassificationsStreamName.cppString]];
-        }
-        options.completion(result, callbackError);
+    if (options.imageClassifierLiveStreamDelegate) {
+      _imageClassifierLiveStreamDelegate = options.imageClassifierLiveStreamDelegate;
+
+      // Create a private serial dispatch queue in which the deleagte method will be called
+      // asynchronously. This is to ensure that if the client performs a long running operation in
+      // the delegate method, the queue on which the C++ callbacks is invoked is not blocked and is
+      // freed up to continue with its operations.
+      _callbackQueue = dispatch_queue_create(
+          [MPPVisionTaskRunner uniqueDispatchQueueNameWithSuffix:kTaskName], NULL);
+
+      // Capturing `self` as weak in order to avoid `self` being kept in memory
+      // and cause a retain cycle, after self is set to `nil`.
+      MPPImageClassifier *__weak weakSelf = self;
+      packetsCallback = [=](absl::StatusOr<PacketMap> liveStreamResult) {
+        [weakSelf processLiveStreamResult:liveStreamResult];
       };
     }
 
-    _visionTaskRunner =
-        [[MPPVisionTaskRunner alloc] initWithCalculatorGraphConfig:[taskInfo generateGraphConfig]
-                                                       runningMode:options.runningMode
-                                                   packetsCallback:std::move(packetsCallback)
-                                                             error:error];
+    _visionTaskRunner = [[MPPVisionTaskRunner alloc] initWithTaskInfo:taskInfo
+                                                          runningMode:options.runningMode
+                                                           roiAllowed:YES
+                                                      packetsCallback:std::move(packetsCallback)
+                                                 imageInputStreamName:kImageInStreamName
+                                              normRectInputStreamName:kNormRectStreamName
+                                                                error:error];
 
     if (!_visionTaskRunner) {
       return nil;
@@ -118,62 +140,11 @@ static NSString *const kTaskGraphName =
 - (nullable MPPImageClassifierResult *)classifyImage:(MPPImage *)image
                                     regionOfInterest:(CGRect)roi
                                                error:(NSError **)error {
-  std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectFromRegionOfInterest:roi
-                                           imageOrientation:image.orientation
-                                                 ROIAllowed:YES
-                                                      error:error];
-  if (!rect.has_value()) {
-    return nil;
-  }
+  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image
+                                                            regionOfInterest:roi
+                                                                       error:error];
 
-  Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image error:error];
-  if (imagePacket.IsEmpty()) {
-    return nil;
-  }
-
-  Packet normalizedRectPacket =
-      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()];
-
-  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
-
-  std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImagePacketMap:inputPacketMap
-                                                                                error:error];
-  if (!outputPacketMap.has_value()) {
-    return nil;
-  }
-
-  return
-      [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:
-                                    outputPacketMap.value()[kClassificationsStreamName.cppString]];
-}
-
-- (std::optional<PacketMap>)inputPacketMapWithMPPImage:(MPPImage *)image
-                               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                      regionOfInterest:(CGRect)roi
-                                                 error:(NSError **)error {
-  std::optional<NormalizedRect> rect =
-      [_visionTaskRunner normalizedRectFromRegionOfInterest:roi
-                                           imageOrientation:image.orientation
-                                                 ROIAllowed:YES
-                                                      error:error];
-  if (!rect.has_value()) {
-    return std::nullopt;
-  }
-
-  Packet imagePacket = [MPPVisionPacketCreator createPacketWithMPPImage:image
-                                                timestampInMilliseconds:timestampInMilliseconds
-                                                                  error:error];
-  if (imagePacket.IsEmpty()) {
-    return std::nullopt;
-  }
-
-  Packet normalizedRectPacket =
-      [MPPVisionPacketCreator createPacketWithNormalizedRect:rect.value()
-                                     timestampInMilliseconds:timestampInMilliseconds];
-
-  PacketMap inputPacketMap = InputPacketMap(imagePacket, normalizedRectPacket);
-  return inputPacketMap;
+  return [MPPImageClassifier imageClassifierResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
 - (nullable MPPImageClassifierResult *)classifyImage:(MPPImage *)image error:(NSError **)error {
@@ -184,24 +155,13 @@ static NSString *const kTaskGraphName =
                                   timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                          regionOfInterest:(CGRect)roi
                                                     error:(NSError **)error {
-  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
-                                                     timestampInMilliseconds:timestampInMilliseconds
-                                                            regionOfInterest:roi
-                                                                       error:error];
-  if (!inputPacketMap.has_value()) {
-    return nil;
-  }
-
   std::optional<PacketMap> outputPacketMap =
-      [_visionTaskRunner processVideoFramePacketMap:inputPacketMap.value() error:error];
+      [_visionTaskRunner processVideoFrame:image
+                          regionOfInterest:roi
+                   timestampInMilliseconds:timestampInMilliseconds
+                                     error:error];
 
-  if (!outputPacketMap.has_value()) {
-    return nil;
-  }
-
-  return
-      [MPPImageClassifierResult imageClassifierResultWithClassificationsPacket:
-                                    outputPacketMap.value()[kClassificationsStreamName.cppString]];
+  return [MPPImageClassifier imageClassifierResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
 - (nullable MPPImageClassifierResult *)classifyVideoFrame:(MPPImage *)image
@@ -217,15 +177,10 @@ static NSString *const kTaskGraphName =
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
            regionOfInterest:(CGRect)roi
                       error:(NSError **)error {
-  std::optional<PacketMap> inputPacketMap = [self inputPacketMapWithMPPImage:image
-                                                     timestampInMilliseconds:timestampInMilliseconds
-                                                            regionOfInterest:roi
-                                                                       error:error];
-  if (!inputPacketMap.has_value()) {
-    return NO;
-  }
-
-  return [_visionTaskRunner processLiveStreamPacketMap:inputPacketMap.value() error:error];
+  return [_visionTaskRunner processLiveStreamImage:image
+                                  regionOfInterest:roi
+                           timestampInMilliseconds:timestampInMilliseconds
+                                             error:error];
 }
 
 - (BOOL)classifyAsyncImage:(MPPImage *)image
@@ -235,6 +190,53 @@ static NSString *const kTaskGraphName =
           timestampInMilliseconds:timestampInMilliseconds
                  regionOfInterest:CGRectZero
                             error:error];
+}
+
+#pragma mark - Private
+
+- (void)processLiveStreamResult:(absl::StatusOr<PacketMap>)liveStreamResult {
+  if (![self.imageClassifierLiveStreamDelegate
+          respondsToSelector:@selector
+          (imageClassifier:didFinishClassificationWithResult:timestampInMilliseconds:error:)]) {
+    return;
+  }
+
+  NSError *callbackError = nil;
+  if (![MPPCommonUtils checkCppError:liveStreamResult.status() toError:&callbackError]) {
+    dispatch_async(_callbackQueue, ^{
+      [self.imageClassifierLiveStreamDelegate imageClassifier:self
+                            didFinishClassificationWithResult:nil
+                                      timestampInMilliseconds:Timestamp::Unset().Value()
+                                                        error:callbackError];
+    });
+    return;
+  }
+
+  PacketMap &outputPacketMap = liveStreamResult.value();
+  if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
+    return;
+  }
+
+  MPPImageClassifierResult *result = ImageClassifierResultWithOutputPacketMap(outputPacketMap);
+
+  NSInteger timestampInMilliseconds =
+      outputPacketMap[kImageOutStreamName.cppString].Timestamp().Value() /
+      kMicroSecondsPerMilliSecond;
+  dispatch_async(_callbackQueue, ^{
+    [self.imageClassifierLiveStreamDelegate imageClassifier:self
+                          didFinishClassificationWithResult:result
+                                    timestampInMilliseconds:timestampInMilliseconds
+                                                      error:callbackError];
+  });
+}
+
++ (nullable MPPImageClassifierResult *)imageClassifierResultWithOptionalOutputPacketMap:
+    (std::optional<PacketMap>)outputPacketMap {
+  if (!outputPacketMap.has_value()) {
+    return nil;
+  }
+
+  return ImageClassifierResultWithOutputPacketMap(outputPacketMap.value());
 }
 
 @end

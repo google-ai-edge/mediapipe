@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -73,6 +73,8 @@ cc_library(
         ":tensors_to_face_landmarks_graph",
         "//mediapipe/calculators/core:begin_loop_calculator",
         "//mediapipe/calculators/core:end_loop_calculator",
+        "//mediapipe/calculators/core:get_vector_item_calculator",
+        "//mediapipe/calculators/core:get_vector_item_calculator_cc_proto",
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/core:split_vector_calculator_cc_proto",
         "//mediapipe/calculators/image:image_properties_calculator",
@@ -86,6 +88,8 @@ cc_library(
         "//mediapipe/calculators/util:detections_to_rects_calculator_cc_proto",
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
+        "//mediapipe/calculators/util:landmarks_smoothing_calculator",
+        "//mediapipe/calculators/util:landmarks_smoothing_calculator_cc_proto",
         "//mediapipe/calculators/util:landmarks_to_detection_calculator",
         "//mediapipe/calculators/util:rect_transformation_calculator",
         "//mediapipe/calculators/util:rect_transformation_calculator_cc_proto",
@@ -119,6 +123,7 @@ cc_library(
     name = "face_landmarker_result",
     srcs = ["face_landmarker_result.cc"],
     hdrs = ["face_landmarker_result.h"],
+    visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
@@ -133,6 +138,7 @@ cc_library(
     name = "face_landmarker",
     srcs = ["face_landmarker.cc"],
     hdrs = ["face_landmarker.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":face_landmarker_graph",
         ":face_landmarker_result",
@@ -161,20 +167,6 @@ cc_library(
 )
 
 cc_library(
-    name = "face_landmarker_result_cc",
-    srcs = ["face_landmarker_result.cc"],
-    hdrs = ["face_landmarker_result.h"],
-    deps = [
-        "//mediapipe/framework/formats:classification_cc_proto",
-        "//mediapipe/framework/formats:landmark_cc_proto",
-        "//mediapipe/framework/formats:matrix",
-        "//mediapipe/framework/formats:matrix_data_cc_proto",
-        "//mediapipe/tasks/cc/components/containers:classification_result",
-        "//mediapipe/tasks/cc/components/containers:landmark",
-    ],
-)
-
-cc_library(
     name = "face_landmarker_graph",
     srcs = ["face_landmarker_graph.cc"],
     deps = [
@@ -194,8 +186,6 @@ cc_library(
         "//mediapipe/calculators/util:association_norm_rect_calculator",
         "//mediapipe/calculators/util:collection_has_min_size_calculator",
         "//mediapipe/calculators/util:collection_has_min_size_calculator_cc_proto",
-        "//mediapipe/calculators/util:landmarks_smoothing_calculator",
-        "//mediapipe/calculators/util:landmarks_smoothing_calculator_cc_proto",
         "//mediapipe/framework/api2:builder",
         "//mediapipe/framework/api2:port",
         "//mediapipe/framework/formats:classification_cc_proto",
@@ -223,7 +213,13 @@ cc_library(
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarker_graph_options_cc_proto",
         "//mediapipe/tasks/cc/vision/face_landmarker/proto:face_landmarks_detector_graph_options_cc_proto",
         "//mediapipe/util:graph_builder_utils",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings:str_format",
     ],
     alwayslink = 1,
+)
+
+cc_library(
+    name = "face_landmarks_connections",
+    hdrs = ["face_landmarks_connections.h"],
 )

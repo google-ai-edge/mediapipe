@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <string>
+#include <vector>
 
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -32,6 +33,17 @@ TEST(General, TestDataTypes) {
 
   Tensor t_bool(Tensor::ElementType::kBool, Tensor::Shape{2, 3});
   EXPECT_EQ(t_bool.bytes(), t_bool.shape().num_elements() * sizeof(bool));
+}
+
+TEST(General, TestDynamic) {
+  Tensor t1(Tensor::ElementType::kFloat32, Tensor::Shape({1, 2, 3, 4}, true));
+  EXPECT_EQ(t1.shape().num_elements(), 1 * 2 * 3 * 4);
+  EXPECT_TRUE(t1.shape().is_dynamic);
+
+  std::vector<int> t2_dims = {4, 3, 2, 3};
+  Tensor t2(Tensor::ElementType::kFloat16, Tensor::Shape(t2_dims, true));
+  EXPECT_EQ(t2.shape().num_elements(), 4 * 3 * 2 * 3);
+  EXPECT_TRUE(t2.shape().is_dynamic);
 }
 
 TEST(Cpu, TestMemoryAllocation) {

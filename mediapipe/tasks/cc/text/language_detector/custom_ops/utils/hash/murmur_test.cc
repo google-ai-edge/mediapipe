@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ limitations under the License.
 ==============================================================================*/
 // Forked from a test library written by Jyrki Alakuijala.
 // Original copyright message below.
-// Copyright 2009 Google Inc. All Rights Reserved.
+// Copyright 2009 Google Inc.
 // Author: jyrki@google.com (Jyrki Alakuijala)
 //
 // Tests for the fast hashing algorithm based on Austin Appleby's

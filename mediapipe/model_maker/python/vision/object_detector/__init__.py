@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ ObjectDetectorOptions = object_detector_options.ObjectDetectorOptions
 # Remove duplicated and non-public API
 del dataset
 del dataset_util  # pylint: disable=undefined-variable
+del detection  # pylint: disable=undefined-variable
 del hyperparameters
 del model  # pylint: disable=undefined-variable
 del model_options

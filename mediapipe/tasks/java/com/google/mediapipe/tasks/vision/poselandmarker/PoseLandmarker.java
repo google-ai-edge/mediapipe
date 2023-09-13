@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.ByteBufferImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
+import com.google.mediapipe.tasks.components.containers.Connection;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.core.ErrorListener;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -49,6 +50,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Performs pose landmarks detection on images.
@@ -79,11 +81,14 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
 
   private static final int LANDMARKS_OUT_STREAM_INDEX = 0;
   private static final int WORLD_LANDMARKS_OUT_STREAM_INDEX = 1;
-  private static final int AUXILIARY_LANDMARKS_OUT_STREAM_INDEX = 2;
-  private static final int IMAGE_OUT_STREAM_INDEX = 3;
+  private static final int IMAGE_OUT_STREAM_INDEX = 2;
   private static int segmentationMasksOutStreamIndex = -1;
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.pose_landmarker.PoseLandmarkerGraph";
+
+  static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
+  }
 
   /**
    * Creates a {@link PoseLandmarker} instance from a model file and the default {@link
@@ -145,7 +150,6 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
     List<String> outputStreams = new ArrayList<>();
     outputStreams.add("NORM_LANDMARKS:pose_landmarks");
     outputStreams.add("WORLD_LANDMARKS:world_landmarks");
-    outputStreams.add("AUXILIARY_LANDMARKS:auxiliary_landmarks");
     outputStreams.add("IMAGE:image_out");
     if (landmarkerOptions.outputSegmentationMasks()) {
       outputStreams.add("SEGMENTATION_MASK:segmentation_masks");
@@ -163,7 +167,6 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
               return PoseLandmarkerResult.create(
                   new ArrayList<>(),
                   new ArrayList<>(),
-                  new ArrayList<>(),
                   Optional.empty(),
                   BaseVisionTaskApi.generateResultTimestampMs(
                       landmarkerOptions.runningMode(), packets.get(LANDMARKS_OUT_STREAM_INDEX)));
@@ -179,9 +182,6 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
                     packets.get(LANDMARKS_OUT_STREAM_INDEX), NormalizedLandmarkList.parser()),
                 PacketGetter.getProtoVector(
                     packets.get(WORLD_LANDMARKS_OUT_STREAM_INDEX), LandmarkList.parser()),
-                PacketGetter.getProtoVector(
-                    packets.get(AUXILIARY_LANDMARKS_OUT_STREAM_INDEX),
-                    NormalizedLandmarkList.parser()),
                 segmentedMasks,
                 BaseVisionTaskApi.generateResultTimestampMs(
                     landmarkerOptions.runningMode(), packets.get(LANDMARKS_OUT_STREAM_INDEX)));
@@ -211,6 +211,9 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
             handler);
     return new PoseLandmarker(runner, landmarkerOptions.runningMode());
   }
+
+  @SuppressWarnings("ConstantCaseForConstants")
+  public static final Set<Connection> POSE_LANDMARKS = PoseLandmarksConnections.POSE_LANDMARKS;
 
   /**
    * Constructor to initialize a {@link PoseLandmarker} from a {@link TaskRunner} and a {@link

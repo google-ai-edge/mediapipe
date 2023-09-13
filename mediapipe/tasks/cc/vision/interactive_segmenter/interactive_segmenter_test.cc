@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,9 +18,12 @@ limitations under the License.
 #include <memory>
 #include <string>
 #include <utility>
+#include <variant>
+#include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
@@ -31,6 +34,7 @@ limitations under the License.
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/status_matchers.h"
+#include "mediapipe/framework/tool/test_util.h"
 #include "mediapipe/tasks/cc/components/containers/keypoint.h"
 #include "mediapipe/tasks/cc/components/containers/rect.h"
 #include "mediapipe/tasks/cc/core/proto/base_options.pb.h"
@@ -67,6 +71,10 @@ constexpr absl::string_view kCatsAndDogsJpg{"cats_and_dogs.jpg"};
 // Golden mask for the dogs in cats_and_dogs.jpg.
 constexpr absl::string_view kCatsAndDogsMaskDog1{"cats_and_dogs_mask_dog1.png"};
 constexpr absl::string_view kCatsAndDogsMaskDog2{"cats_and_dogs_mask_dog2.png"};
+constexpr absl::string_view kPenguinsLarge{"penguins_large.jpg"};
+constexpr absl::string_view kPenguinsSmall{"penguins_small.jpg"};
+constexpr absl::string_view kPenguinsSmallMask{"penguins_small_mask.png"};
+constexpr absl::string_view kPenguinsLargeMask{"penguins_large_mask.png"};
 
 constexpr float kGoldenMaskSimilarity = 0.97;
 
@@ -179,22 +187,47 @@ TEST_F(CreateFromOptionsTest, FailsWithNeitherOutputSet) {
 struct InteractiveSegmenterTestParams {
   std::string test_name;
   RegionOfInterest::Format format;
-  NormalizedKeypoint roi;
+  std::variant<NormalizedKeypoint, std::vector<NormalizedKeypoint>> roi;
+  absl::string_view input_image_file;
   absl::string_view golden_mask_file;
   float similarity_threshold;
 };
 
-using SucceedSegmentationWithRoi =
-    ::testing::TestWithParam<InteractiveSegmenterTestParams>;
+class SucceedSegmentationWithRoi
+    : public ::testing::TestWithParam<InteractiveSegmenterTestParams> {
+ public:
+  absl::StatusOr<RegionOfInterest> TestParamsToTaskOptions() {
+    const InteractiveSegmenterTestParams& params = GetParam();
+
+    RegionOfInterest interaction_roi;
+    interaction_roi.format = params.format;
+    switch (params.format) {
+      case (RegionOfInterest::Format::kKeyPoint): {
+        interaction_roi.keypoint = std::get<NormalizedKeypoint>(params.roi);
+        break;
+      }
+      case (RegionOfInterest::Format::kScribble): {
+        interaction_roi.scribble =
+            std::get<std::vector<NormalizedKeypoint>>(params.roi);
+        break;
+      }
+      default: {
+        return absl::InvalidArgumentError("Unknown ROI format");
+      }
+    }
+
+    return interaction_roi;
+  }
+};
 
 TEST_P(SucceedSegmentationWithRoi, SucceedsWithCategoryMask) {
+  MP_ASSERT_OK_AND_ASSIGN(RegionOfInterest interaction_roi,
+                          TestParamsToTaskOptions());
   const InteractiveSegmenterTestParams& params = GetParam();
+
   MP_ASSERT_OK_AND_ASSIGN(
-      Image image,
-      DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kCatsAndDogsJpg)));
-  RegionOfInterest interaction_roi;
-  interaction_roi.format = params.format;
-  interaction_roi.keypoint = params.roi;
+      Image image, DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
+                                                params.input_image_file)));
   auto options = std::make_unique<InteractiveSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
@@ -217,16 +250,25 @@ TEST_P(SucceedSegmentationWithRoi, SucceedsWithCategoryMask) {
   EXPECT_THAT(actual_mask,
               SimilarToUint8Mask(expected_mask, params.similarity_threshold,
                                  kGoldenMaskMagnificationFactor));
+
+  cv::Mat visualized_mask;
+  actual_mask.convertTo(visualized_mask, CV_8UC1, /*alpha=*/255);
+  ImageFrame visualized_image(mediapipe::ImageFormat::GRAY8,
+                              visualized_mask.cols, visualized_mask.rows,
+                              visualized_mask.step, visualized_mask.data,
+                              [visualized_mask](uint8_t[]) {});
+  MP_EXPECT_OK(SavePngTestOutput(
+      visualized_image, absl::StrFormat("%s_category_mask", params.test_name)));
 }
 
 TEST_P(SucceedSegmentationWithRoi, SucceedsWithConfidenceMask) {
-  const auto& params = GetParam();
+  MP_ASSERT_OK_AND_ASSIGN(RegionOfInterest interaction_roi,
+                          TestParamsToTaskOptions());
+  const InteractiveSegmenterTestParams& params = GetParam();
+
   MP_ASSERT_OK_AND_ASSIGN(
-      Image image,
-      DecodeImageFromFile(JoinPath("./", kTestDataDirectory, kCatsAndDogsJpg)));
-  RegionOfInterest interaction_roi;
-  interaction_roi.format = params.format;
-  interaction_roi.keypoint = params.roi;
+      Image image, DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
+                                                params.input_image_file)));
   auto options = std::make_unique<InteractiveSegmenterOptions>();
   options->base_options.model_asset_path =
       JoinPath("./", kTestDataDirectory, kPtmModel);
@@ -248,16 +290,44 @@ TEST_P(SucceedSegmentationWithRoi, SucceedsWithConfidenceMask) {
       result.confidence_masks->at(1).GetImageFrameSharedPtr().get());
   EXPECT_THAT(actual_mask, SimilarToFloatMask(expected_mask_float,
                                               params.similarity_threshold));
+  cv::Mat visualized_mask;
+  actual_mask.convertTo(visualized_mask, CV_8UC1, /*alpha=*/255);
+  ImageFrame visualized_image(mediapipe::ImageFormat::GRAY8,
+                              visualized_mask.cols, visualized_mask.rows,
+                              visualized_mask.step, visualized_mask.data,
+                              [visualized_mask](uint8_t[]) {});
+  MP_EXPECT_OK(SavePngTestOutput(
+      visualized_image,
+      absl::StrFormat("%s_confidence_mask", params.test_name)));
 }
 
 INSTANTIATE_TEST_SUITE_P(
     SucceedSegmentationWithRoiTest, SucceedSegmentationWithRoi,
     ::testing::ValuesIn<InteractiveSegmenterTestParams>(
-        {{"PointToDog1", RegionOfInterest::Format::kKeyPoint,
-          NormalizedKeypoint{0.44, 0.70}, kCatsAndDogsMaskDog1, 0.84f},
+        {// Keypoint input.
+         {"PointToDog1", RegionOfInterest::Format::kKeyPoint,
+          NormalizedKeypoint{0.44, 0.70}, kCatsAndDogsJpg, kCatsAndDogsMaskDog1,
+          0.84f},
          {"PointToDog2", RegionOfInterest::Format::kKeyPoint,
-          NormalizedKeypoint{0.66, 0.66}, kCatsAndDogsMaskDog2,
-          kGoldenMaskSimilarity}}),
+          NormalizedKeypoint{0.66, 0.66}, kCatsAndDogsJpg, kCatsAndDogsMaskDog2,
+          kGoldenMaskSimilarity},
+         {"PenguinsSmall", RegionOfInterest::Format::kKeyPoint,
+          NormalizedKeypoint{0.329, 0.545}, kPenguinsSmall, kPenguinsSmallMask,
+          0.9f},
+         {"PenguinsLarge", RegionOfInterest::Format::kKeyPoint,
+          NormalizedKeypoint{0.329, 0.545}, kPenguinsLarge, kPenguinsLargeMask,
+          0.9f},
+         // Scribble input.
+         {"ScribbleToDog1", RegionOfInterest::Format::kScribble,
+          std::vector{NormalizedKeypoint{0.44, 0.70},
+                      NormalizedKeypoint{0.44, 0.71},
+                      NormalizedKeypoint{0.44, 0.72}},
+          kCatsAndDogsJpg, kCatsAndDogsMaskDog1, 0.84f},
+         {"ScribbleToDog2", RegionOfInterest::Format::kScribble,
+          std::vector{NormalizedKeypoint{0.66, 0.66},
+                      NormalizedKeypoint{0.66, 0.67},
+                      NormalizedKeypoint{0.66, 0.68}},
+          kCatsAndDogsJpg, kCatsAndDogsMaskDog2, kGoldenMaskSimilarity}}),
     [](const ::testing::TestParamInfo<SucceedSegmentationWithRoi::ParamType>&
            info) { return info.param.test_name; });
 

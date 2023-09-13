@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@ load(
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe/model_maker/python/text/text_classifier:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe/model_maker/python/text/text_classifier:__subpackages__"])
 
 mediapipe_files(
     srcs = [

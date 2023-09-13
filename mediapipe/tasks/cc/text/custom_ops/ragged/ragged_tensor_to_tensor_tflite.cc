@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -357,7 +357,7 @@ void CalculateOutputIndexValueRowID(const TfLiteTensor& value_rowids,
   };
   int current_output_column = 0;
   int current_value_rowid = value_rowids_val(0);
-  // DCHECK_LT(current_value_rowid, parent_output_index.size());
+  // ABSL_DCHECK_LT(current_value_rowid, parent_output_index.size());
   int current_output_index = parent_output_index[current_value_rowid];
   result->push_back(current_output_index);
   for (int i = 1; i < index_size; ++i) {
@@ -374,12 +374,12 @@ void CalculateOutputIndexValueRowID(const TfLiteTensor& value_rowids,
     } else {
       current_output_column = 0;
       current_value_rowid = next_value_rowid;
-      // DCHECK_LT(next_value_rowid, parent_output_index.size());
+      // ABSL_DCHECK_LT(next_value_rowid, parent_output_index.size());
       current_output_index = parent_output_index[next_value_rowid];
     }
     result->push_back(current_output_index);
   }
-  // DCHECK_EQ(result->size(), value_rowids.size());
+  // ABSL_DCHECK_EQ(result->size(), value_rowids.size());
 }
 
 void CalculateOutputIndexRowSplit(const TfLiteTensor& row_split,
@@ -420,7 +420,7 @@ void CalculateOutputIndexRowSplit(const TfLiteTensor& row_split,
     }
   }
   // if (row_split_size > 0) {
-  //  DCHECK_EQ(result->size(), row_split(row_split_size - 1));
+  //  ABSL_DCHECK_EQ(result->size(), row_split(row_split_size - 1));
   //}
 }
 

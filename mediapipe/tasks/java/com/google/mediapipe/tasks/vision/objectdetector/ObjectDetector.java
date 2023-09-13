@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.google.mediapipe.formats.proto.DetectionProto.Detection;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -98,14 +99,23 @@ public final class ObjectDetector extends BaseVisionTaskApi {
   private static final String TAG = ObjectDetector.class.getSimpleName();
   private static final String IMAGE_IN_STREAM_NAME = "image_in";
   private static final String NORM_RECT_IN_STREAM_NAME = "norm_rect_in";
+
+  @SuppressWarnings("ConstantCaseForConstants")
   private static final List<String> INPUT_STREAMS =
       Collections.unmodifiableList(
           Arrays.asList("IMAGE:" + IMAGE_IN_STREAM_NAME, "NORM_RECT:" + NORM_RECT_IN_STREAM_NAME));
+
+  @SuppressWarnings("ConstantCaseForConstants")
   private static final List<String> OUTPUT_STREAMS =
       Collections.unmodifiableList(Arrays.asList("DETECTIONS:detections_out", "IMAGE:image_out"));
+
   private static final int DETECTIONS_OUT_STREAM_INDEX = 0;
   private static final int IMAGE_OUT_STREAM_INDEX = 1;
   private static final String TASK_GRAPH_NAME = "mediapipe.tasks.vision.ObjectDetectorGraph";
+
+  static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
+  }
 
   /**
    * Creates an {@link ObjectDetector} instance from a model file and the default {@link
@@ -165,12 +175,19 @@ public final class ObjectDetector extends BaseVisionTaskApi {
   public static ObjectDetector createFromOptions(
       Context context, ObjectDetectorOptions detectorOptions) {
     // TODO: Consolidate OutputHandler and TaskRunner.
-    OutputHandler<ObjectDetectionResult, MPImage> handler = new OutputHandler<>();
+    OutputHandler<ObjectDetectorResult, MPImage> handler = new OutputHandler<>();
     handler.setOutputPacketConverter(
-        new OutputHandler.OutputPacketConverter<ObjectDetectionResult, MPImage>() {
+        new OutputHandler.OutputPacketConverter<ObjectDetectorResult, MPImage>() {
           @Override
-          public ObjectDetectionResult convertToTaskResult(List<Packet> packets) {
-            return ObjectDetectionResult.create(
+          public ObjectDetectorResult convertToTaskResult(List<Packet> packets) {
+            // If there is no object detected in the image, just returns empty lists.
+            if (packets.get(DETECTIONS_OUT_STREAM_INDEX).isEmpty()) {
+              return ObjectDetectorResult.create(
+                  new ArrayList<>(),
+                  BaseVisionTaskApi.generateResultTimestampMs(
+                      detectorOptions.runningMode(), packets.get(DETECTIONS_OUT_STREAM_INDEX)));
+            }
+            return ObjectDetectorResult.create(
                 PacketGetter.getProtoVector(
                     packets.get(DETECTIONS_OUT_STREAM_INDEX), Detection.parser()),
                 BaseVisionTaskApi.generateResultTimestampMs(
@@ -227,7 +244,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    * @param image a MediaPipe {@link MPImage} object for processing.
    * @throws MediaPipeException if there is an internal error.
    */
-  public ObjectDetectionResult detect(MPImage image) {
+  public ObjectDetectorResult detect(MPImage image) {
     return detect(image, ImageProcessingOptions.builder().build());
   }
 
@@ -250,10 +267,9 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public ObjectDetectionResult detect(
-      MPImage image, ImageProcessingOptions imageProcessingOptions) {
+  public ObjectDetectorResult detect(MPImage image, ImageProcessingOptions imageProcessingOptions) {
     validateImageProcessingOptions(imageProcessingOptions);
-    return (ObjectDetectionResult) processImageData(image, imageProcessingOptions);
+    return (ObjectDetectorResult) processImageData(image, imageProcessingOptions);
   }
 
   /**
@@ -274,7 +290,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    * @param timestampMs the input timestamp (in milliseconds).
    * @throws MediaPipeException if there is an internal error.
    */
-  public ObjectDetectionResult detectForVideo(MPImage image, long timestampMs) {
+  public ObjectDetectorResult detectForVideo(MPImage image, long timestampMs) {
     return detectForVideo(image, ImageProcessingOptions.builder().build(), timestampMs);
   }
 
@@ -301,10 +317,10 @@ public final class ObjectDetector extends BaseVisionTaskApi {
    *     region-of-interest.
    * @throws MediaPipeException if there is an internal error.
    */
-  public ObjectDetectionResult detectForVideo(
+  public ObjectDetectorResult detectForVideo(
       MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
     validateImageProcessingOptions(imageProcessingOptions);
-    return (ObjectDetectionResult) processVideoData(image, imageProcessingOptions, timestampMs);
+    return (ObjectDetectorResult) processVideoData(image, imageProcessingOptions, timestampMs);
   }
 
   /**
@@ -427,7 +443,7 @@ public final class ObjectDetector extends BaseVisionTaskApi {
        * object detector is in the live stream mode.
        */
       public abstract Builder setResultListener(
-          ResultListener<ObjectDetectionResult, MPImage> value);
+          ResultListener<ObjectDetectorResult, MPImage> value);
 
       /** Sets an optional {@link ErrorListener}}. */
       public abstract Builder setErrorListener(ErrorListener value);
@@ -468,11 +484,13 @@ public final class ObjectDetector extends BaseVisionTaskApi {
 
     abstract Optional<Float> scoreThreshold();
 
+    @SuppressWarnings("AutoValueImmutableFields")
     abstract List<String> categoryAllowlist();
 
+    @SuppressWarnings("AutoValueImmutableFields")
     abstract List<String> categoryDenylist();
 
-    abstract Optional<ResultListener<ObjectDetectionResult, MPImage>> resultListener();
+    abstract Optional<ResultListener<ObjectDetectorResult, MPImage>> resultListener();
 
     abstract Optional<ErrorListener> errorListener();
 

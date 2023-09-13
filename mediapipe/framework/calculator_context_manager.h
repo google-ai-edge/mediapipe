@@ -21,6 +21,7 @@
 #include <memory>
 
 #include "absl/base/thread_annotations.h"
+#include "absl/log/absl_check.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_state.h"
@@ -97,18 +98,18 @@ class CalculatorContextManager {
 
   void PushInputTimestampToContext(CalculatorContext* calculator_context,
                                    Timestamp input_timestamp) {
-    CHECK(calculator_context);
+    ABSL_CHECK(calculator_context);
     calculator_context->PushInputTimestamp(input_timestamp);
   }
 
   void PopInputTimestampFromContext(CalculatorContext* calculator_context) {
-    CHECK(calculator_context);
+    ABSL_CHECK(calculator_context);
     calculator_context->PopInputTimestamp();
   }
 
   void SetGraphStatusInContext(CalculatorContext* calculator_context,
                                const absl::Status& status) {
-    CHECK(calculator_context);
+    ABSL_CHECK(calculator_context);
     calculator_context->SetGraphStatus(status);
   }
 

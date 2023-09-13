@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -63,8 +63,6 @@ constexpr char kNormLandmarksTag[] = "NORM_LANDMARKS";
 constexpr char kNormLandmarksStreamName[] = "norm_landmarks";
 constexpr char kPoseWorldLandmarksTag[] = "WORLD_LANDMARKS";
 constexpr char kPoseWorldLandmarksStreamName[] = "world_landmarks";
-constexpr char kPoseAuxiliaryLandmarksTag[] = "AUXILIARY_LANDMARKS";
-constexpr char kPoseAuxiliaryLandmarksStreamName[] = "auxiliary_landmarks";
 constexpr int kMicroSecondsPerMilliSecond = 1000;
 
 // Creates a MediaPipe graph config that contains a subgraph node of
@@ -83,9 +81,6 @@ CalculatorGraphConfig CreateGraphConfig(
       graph.Out(kNormLandmarksTag);
   subgraph.Out(kPoseWorldLandmarksTag).SetName(kPoseWorldLandmarksStreamName) >>
       graph.Out(kPoseWorldLandmarksTag);
-  subgraph.Out(kPoseAuxiliaryLandmarksTag)
-          .SetName(kPoseAuxiliaryLandmarksStreamName) >>
-      graph.Out(kPoseAuxiliaryLandmarksTag);
   subgraph.Out(kImageTag).SetName(kImageOutStreamName) >> graph.Out(kImageTag);
   if (output_segmentation_masks) {
     subgraph.Out(kSegmentationMaskTag).SetName(kSegmentationMaskStreamName) >>
@@ -163,8 +158,6 @@ absl::StatusOr<std::unique_ptr<PoseLandmarker>> PoseLandmarker::Create(
           status_or_packets.value()[kNormLandmarksStreamName];
       Packet pose_world_landmarks_packet =
           status_or_packets.value()[kPoseWorldLandmarksStreamName];
-      Packet pose_auxiliary_landmarks_packet =
-          status_or_packets.value()[kPoseAuxiliaryLandmarksStreamName];
       std::optional<std::vector<Image>> segmentation_mask = std::nullopt;
       if (output_segmentation_masks) {
         segmentation_mask = segmentation_mask_packet.Get<std::vector<Image>>();
@@ -175,9 +168,7 @@ absl::StatusOr<std::unique_ptr<PoseLandmarker>> PoseLandmarker::Create(
               /* pose_landmarks= */
               pose_landmarks_packet.Get<std::vector<NormalizedLandmarkList>>(),
               /* pose_world_landmarks= */
-              pose_world_landmarks_packet.Get<std::vector<LandmarkList>>(),
-              pose_auxiliary_landmarks_packet
-                  .Get<std::vector<NormalizedLandmarkList>>()),
+              pose_world_landmarks_packet.Get<std::vector<LandmarkList>>()),
           image_packet.Get<Image>(),
           pose_landmarks_packet.Timestamp().Value() /
               kMicroSecondsPerMilliSecond);
@@ -234,10 +225,7 @@ absl::StatusOr<PoseLandmarkerResult> PoseLandmarker::Detect(
           .Get<std::vector<mediapipe::NormalizedLandmarkList>>(),
       /* pose_world_landmarks */
       output_packets[kPoseWorldLandmarksStreamName]
-          .Get<std::vector<mediapipe::LandmarkList>>(),
-      /*pose_auxiliary_landmarks= */
-      output_packets[kPoseAuxiliaryLandmarksStreamName]
-          .Get<std::vector<mediapipe::NormalizedLandmarkList>>());
+          .Get<std::vector<mediapipe::LandmarkList>>());
 }
 
 absl::StatusOr<PoseLandmarkerResult> PoseLandmarker::DetectForVideo(
@@ -277,10 +265,7 @@ absl::StatusOr<PoseLandmarkerResult> PoseLandmarker::DetectForVideo(
           .Get<std::vector<mediapipe::NormalizedLandmarkList>>(),
       /* pose_world_landmarks */
       output_packets[kPoseWorldLandmarksStreamName]
-          .Get<std::vector<mediapipe::LandmarkList>>(),
-      /* pose_auxiliary_landmarks= */
-      output_packets[kPoseAuxiliaryLandmarksStreamName]
-          .Get<std::vector<mediapipe::NormalizedLandmarkList>>());
+          .Get<std::vector<mediapipe::LandmarkList>>());
 }
 
 absl::Status PoseLandmarker::DetectAsync(

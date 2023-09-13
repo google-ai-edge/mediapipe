@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ struct RegionOfInterest {
   enum class Format {
     kUnspecified = 0,  // Format not specified.
     kKeyPoint = 1,     // Using keypoint to represent ROI.
+    kScribble = 2,     // Using scribble to represent ROI.
   };
 
   // Specifies the format used to specify the region-of-interest. Note that
@@ -61,8 +62,13 @@ struct RegionOfInterest {
   Format format = Format::kUnspecified;
 
   // Represents the ROI in keypoint format, this should be non-nullopt if
-  // `format` is `KEYPOINT`.
+  // `format` is `kKeyPoint`.
   std::optional<components::containers::NormalizedKeypoint> keypoint;
+
+  // Represents the ROI in scribble format, this should be non-nullopt if
+  // `format` is `kScribble`.
+  std::optional<std::vector<components::containers::NormalizedKeypoint>>
+      scribble;
 };
 
 // Performs interactive segmentation on images.

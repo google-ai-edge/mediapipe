@@ -37,29 +37,33 @@ Args:
   output: The desired name of the output file. Optional.
 """
 
+load("@bazel_skylib//lib:paths.bzl", "paths")
+
 PROTOC = "@com_google_protobuf//:protoc"
 
-def _canonicalize_proto_path_oss(all_protos, genfile_path):
-    """For the protos from external repository, canonicalize the proto path and the file name.
+def _canonicalize_proto_path_oss(f):
+    if not f.root.path:
+        return struct(
+            proto_path = ".",
+            file_name = f.short_path,
+        )
 
-    Returns:
-       Proto path list and proto source file list.
-    """
-    proto_paths = []
-    proto_file_names = []
-    for s in all_protos.to_list():
-        if s.path.startswith(genfile_path):
-            repo_name, _, file_name = s.path[len(genfile_path + "/external/"):].partition("/")
+    # `f.path` looks like "<genfiles>/external/<repo>/(_virtual_imports/<library>/)?<file_name>"
+    repo_name, _, file_name = f.path[len(paths.join(f.root.path, "external") + "/"):].partition("/")
+    if file_name.startswith("_virtual_imports/"):
+        # This is a virtual import; move "_virtual_imports/<library>" from `repo_name` to `file_name`.
+        repo_name = paths.join(repo_name, *file_name.split("/", 2)[:2])
+        file_name = file_name.split("/", 2)[-1]
+    return struct(
+        proto_path = paths.join(f.root.path, "external", repo_name),
+        file_name = file_name,
+    )
 
-            # handle virtual imports
-            if file_name.startswith("_virtual_imports"):
-                repo_name = repo_name + "/" + "/".join(file_name.split("/", 2)[:2])
-                file_name = file_name.split("/", 2)[-1]
-            proto_paths.append(genfile_path + "/external/" + repo_name)
-            proto_file_names.append(file_name)
-        else:
-            proto_file_names.append(s.path)
-    return ([" --proto_path=" + path for path in proto_paths], proto_file_names)
+def _map_root_path(f):
+    return _canonicalize_proto_path_oss(f).proto_path
+
+def _map_short_path(f):
+    return _canonicalize_proto_path_oss(f).file_name
 
 def _get_proto_provider(dep):
     """Get the provider for protocol buffers from a dependnecy.
@@ -90,25 +94,37 @@ def _encode_binary_proto_impl(ctx):
         sibling = textpb,
     )
 
-    path_list, file_list = _canonicalize_proto_path_oss(all_protos, ctx.genfiles_dir.path)
+    args = ctx.actions.args()
+    args.add(textpb)
+    args.add(binarypb)
+    args.add(ctx.executable._proto_compiler)
+    args.add(ctx.attr.message_type, format = "--encode=%s")
+    args.add("--proto_path=.")
+    args.add_all(
+        all_protos,
+        map_each = _map_root_path,
+        format_each = "--proto_path=%s",
+        uniquify = True,
+    )
+    args.add_all(
+        all_protos,
+        map_each = _map_short_path,
+        uniquify = True,
+    )
 
     # Note: the combination of absolute_paths and proto_path, as well as the exact
     # order of gendir before ., is needed for the proto compiler to resolve
     # import statements that reference proto files produced by a genrule.
     ctx.actions.run_shell(
-        tools = all_protos.to_list() + [textpb, ctx.executable._proto_compiler],
-        outputs = [binarypb],
-        command = " ".join(
-            [
-                ctx.executable._proto_compiler.path,
-                "--encode=" + ctx.attr.message_type,
-                "--proto_path=" + ctx.genfiles_dir.path,
-                "--proto_path=" + ctx.bin_dir.path,
-                "--proto_path=.",
-            ] + path_list + file_list +
-            ["<", textpb.path, ">", binarypb.path],
+        tools = depset(
+            direct = [textpb, ctx.executable._proto_compiler],
+            transitive = [all_protos],
         ),
+        outputs = [binarypb],
+        command = "${@:3} < $1 > $2",
+        arguments = [args],
         mnemonic = "EncodeProto",
+        toolchain = None,
     )
 
     output_depset = depset([binarypb])

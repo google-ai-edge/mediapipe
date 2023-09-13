@@ -57,6 +57,7 @@ mediapipe_ts_library(
     deps = [
         ":core",
         ":task_runner",
+        ":task_runner_test_utils",
         "//mediapipe/calculators/tensor:inference_calculator_jspb_proto",
         "//mediapipe/tasks/cc/core/proto:base_options_jspb_proto",
         "//mediapipe/web/graph_runner:graph_runner_ts",

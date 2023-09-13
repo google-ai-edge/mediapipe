@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ limitations under the License.
 #include <memory>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/formats/frame_buffer.h"
 #include "mediapipe/framework/formats/image_frame.h"
 
@@ -43,7 +44,7 @@ std::shared_ptr<FrameBuffer> ImageFrameToFrameBuffer(
     std::shared_ptr<ImageFrame> image_frame) {
   FrameBuffer::Format format =
       FrameBufferFormatForImageFrameFormat(image_frame->Format());
-  CHECK(format != FrameBuffer::Format::kUNKNOWN)
+  ABSL_CHECK(format != FrameBuffer::Format::kUNKNOWN)
       << "Invalid format. Only SRGB, SRGBA and GRAY8 are supported.";
   const FrameBuffer::Dimension dimension{/*width=*/image_frame->Width(),
                                          /*height=*/image_frame->Height()};

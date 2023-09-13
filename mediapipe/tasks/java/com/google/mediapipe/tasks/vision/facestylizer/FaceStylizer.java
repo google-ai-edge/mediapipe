@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -88,6 +88,10 @@ public final class FaceStylizer extends BaseVisionTaskApi {
       "mediapipe.tasks.vision.face_stylizer.FaceStylizerGraph";
   private final boolean hasResultListener;
 
+  static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
+  }
+
   /**
    * Creates an {@link FaceStylizer} instance from an {@link FaceStylizerOptions}.
    *
@@ -109,7 +113,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
               return FaceStylizerResult.create(
                   Optional.empty(),
                   BaseVisionTaskApi.generateResultTimestampMs(
-                      stylizerOptions.runningMode(), packets.get(IMAGE_OUT_STREAM_INDEX)));
+                      RunningMode.IMAGE, packets.get(IMAGE_OUT_STREAM_INDEX)));
             }
             int width = PacketGetter.getImageWidth(packet);
             int height = PacketGetter.getImageHeight(packet);
@@ -142,7 +146,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
             return FaceStylizerResult.create(
                 Optional.of(imageBuilder.build()),
                 BaseVisionTaskApi.generateResultTimestampMs(
-                    stylizerOptions.runningMode(), packets.get(IMAGE_OUT_STREAM_INDEX)));
+                    RunningMode.IMAGE, packets.get(IMAGE_OUT_STREAM_INDEX)));
           }
 
           @Override
@@ -153,9 +157,7 @@ public final class FaceStylizer extends BaseVisionTaskApi {
           }
         });
     // Empty output image packets indicates that no face stylization is applied.
-    if (stylizerOptions.runningMode() != RunningMode.LIVE_STREAM) {
-      handler.setHandleTimestampBoundChanges(true);
-    }
+    handler.setHandleTimestampBoundChanges(true);
     stylizerOptions.resultListener().ifPresent(handler::setResultListener);
     stylizerOptions.errorListener().ifPresent(handler::setErrorListener);
     TaskRunner runner =
@@ -163,16 +165,16 @@ public final class FaceStylizer extends BaseVisionTaskApi {
             context,
             TaskInfo.<FaceStylizerOptions>builder()
                 .setTaskName(FaceStylizer.class.getSimpleName())
-                .setTaskRunningModeName(stylizerOptions.runningMode().name())
+                .setTaskRunningModeName(RunningMode.IMAGE.name())
                 .setTaskGraphName(TASK_GRAPH_NAME)
                 .setInputStreams(INPUT_STREAMS)
                 .setOutputStreams(OUTPUT_STREAMS)
                 .setTaskOptions(stylizerOptions)
-                .setEnableFlowLimiting(stylizerOptions.runningMode() == RunningMode.LIVE_STREAM)
+                .setEnableFlowLimiting(false)
                 .build(),
             handler);
     return new FaceStylizer(
-        runner, stylizerOptions.runningMode(), stylizerOptions.resultListener().isPresent());
+        runner, RunningMode.IMAGE, stylizerOptions.resultListener().isPresent());
   }
 
   /**
@@ -306,194 +308,6 @@ public final class FaceStylizer extends BaseVisionTaskApi {
     TaskResult unused = processImageData(image, imageProcessingOptions);
   }
 
-  /**
-   * Performs face stylization on the provided video frame with default image processing options,
-   * i.e. without any rotation applied. Only use this method when the {@link FaceStylizer} is
-   * created with {@link RunningMode#VIDEO}.
-   *
-   * <p>It's required to provide the video frame's timestamp (in milliseconds). The input timestamps
-   * must be monotonically increasing.
-   *
-   * <p>{@link FaceStylizer} supports the following color space types:
-   *
-   * <ul>
-   *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
-   * </ul>
-   *
-   * <p>The input image can be of any size. The output image is the stylized image with the most
-   * visible face. The stylized output image size is the same as the model output size. When no face
-   * is detected on the input image, returns {@code Optional.empty()}.
-   *
-   * @param image a MediaPipe {@link MPImage} object for processing.
-   * @param timestampMs the input timestamp (in milliseconds).
-   * @throws MediaPipeException if there is an internal error. Or if {@link FaceStylizer} is created
-   *     with a {@link ResultListener}.
-   */
-  public FaceStylizerResult stylizeForVideo(MPImage image, long timestampMs) {
-    return stylizeForVideo(image, ImageProcessingOptions.builder().build(), timestampMs);
-  }
-
-  /**
-   * Performs face stylization on the provided video frame. Only use this method when the {@link
-   * FaceStylizer} is created with {@link RunningMode#VIDEO}.
-   *
-   * <p>It's required to provide the video frame's timestamp (in milliseconds). The input timestamps
-   * must be monotonically increasing.
-   *
-   * <p>{@link FaceStylizer} supports the following color space types:
-   *
-   * <ul>
-   *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
-   * </ul>
-   *
-   * <p>The input image can be of any size. The output image is the stylized image with the most
-   * visible face. The stylized output image size is the same as the model output size. When no face
-   * is detected on the input image, returns {@code Optional.empty()}. *
-   *
-   * @param image a MediaPipe {@link MPImage} object for processing.
-   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
-   *     input image before running inference. Note that region-of-interest is <b>not</b> supported
-   *     by this task: specifying {@link ImageProcessingOptions#regionOfInterest()} will result in
-   *     this method throwing an IllegalArgumentException.
-   * @param timestampMs the input timestamp (in milliseconds).
-   * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
-   *     region-of-interest.
-   * @throws MediaPipeException if there is an internal error. Or if {@link FaceStylizer} is created
-   *     with a {@link ResultListener}.
-   */
-  public FaceStylizerResult stylizeForVideo(
-      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
-    if (hasResultListener) {
-      throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
-          "ResultListener is provided in the FaceStylizerOptions, but this method will return an"
-              + " ImageSegmentationResult.");
-    }
-    return (FaceStylizerResult) processVideoData(image, imageProcessingOptions, timestampMs);
-  }
-
-  /**
-   * Performs face stylization on the provided video frame with default image processing options,
-   * i.e. without any rotation applied, and provides zero-copied results via {@link ResultListener}
-   * in {@link FaceStylizerOptions}. Only use this method when the {@link FaceStylizer} is created
-   * with {@link RunningMode#VIDEO}.
-   *
-   * <p>It's required to provide the video frame's timestamp (in milliseconds). The input timestamps
-   * must be monotonically increasing.
-   *
-   * <p>{@link FaceStylizer} supports the following color space types:
-   *
-   * <ul>
-   *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
-   * </ul>
-   *
-   * <p>The input image can be of any size. The output image is the stylized image with the most
-   * visible face. The stylized output image size is the same as the model output size. When no face
-   * is detected on the input image, returns {@code Optional.empty()}.
-   *
-   * @param image a MediaPipe {@link MPImage} object for processing.
-   * @param timestampMs the input timestamp (in milliseconds).
-   * @throws MediaPipeException if there is an internal error. Or if {@link FaceStylizer} is not
-   *     created with {@link ResultListener} set in {@link FaceStylizerOptions}.
-   */
-  public void stylizeForVideoWithResultListener(MPImage image, long timestampMs) {
-    stylizeForVideoWithResultListener(image, ImageProcessingOptions.builder().build(), timestampMs);
-  }
-
-  /**
-   * Performs face stylization on the provided video frame, and provides zero-copied results via
-   * {@link ResultListener} in {@link FaceStylizerOptions}. Only use this method when the {@link
-   * FaceStylizer} is created with {@link RunningMode#VIDEO}.
-   *
-   * <p>It's required to provide the video frame's timestamp (in milliseconds). The input timestamps
-   * must be monotonically increasing.
-   *
-   * <p>{@link FaceStylizer} supports the following color space types:
-   *
-   * <ul>
-   *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
-   * </ul>
-   *
-   * <p>The input image can be of any size. The output image is the stylized image with the most
-   * visible face. The stylized output image size is the same as the model output size. When no face
-   * is detected on the input image, returns {@code Optional.empty()}.
-   *
-   * @param image a MediaPipe {@link MPImage} object for processing.
-   * @param timestampMs the input timestamp (in milliseconds).
-   * @throws MediaPipeException if there is an internal error. Or if {@link FaceStylizer} is not
-   *     created with {@link ResultListener} set in {@link FaceStylizerOptions}.
-   */
-  public void stylizeForVideoWithResultListener(
-      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
-    if (!hasResultListener) {
-      throw new MediaPipeException(
-          MediaPipeException.StatusCode.FAILED_PRECONDITION.ordinal(),
-          "ResultListener is not set in the FaceStylizerOptions, but this method expects a"
-              + " ResultListener to process ImageSegmentationResult.");
-    }
-    TaskResult unused = processVideoData(image, imageProcessingOptions, timestampMs);
-  }
-
-  /**
-   * Sends live image data to perform face stylization with default image processing options, i.e.
-   * without any rotation applied, and the results will be available via the {@link ResultListener}
-   * provided in the {@link FaceStylizerOptions}. Only use this method when the {@link FaceStylizer
-   * } is created with {@link RunningMode#LIVE_STREAM}.
-   *
-   * <p>It's required to provide a timestamp (in milliseconds) to indicate when the input image is
-   * sent to the face stylizer. The input timestamps must be monotonically increasing.
-   *
-   * <p>{@link FaceStylizer} supports the following color space types:
-   *
-   * <p>The input image can be of any size. The output image is the stylized image with the most
-   * visible face. The stylized output image size is the same as the model output size. When no face
-   * is detected on the input image, returns {@code Optional.empty()}.
-   *
-   * <ul>
-   *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
-   * </ul>
-   *
-   * @param image a MediaPipe {@link MPImage} object for processing.
-   * @param timestampMs the input timestamp (in milliseconds).
-   * @throws MediaPipeException if there is an internal error.
-   */
-  public void stylizeAsync(MPImage image, long timestampMs) {
-    stylizeAsync(image, ImageProcessingOptions.builder().build(), timestampMs);
-  }
-
-  /**
-   * Sends live image data to perform face stylization, and the results will be available via the
-   * {@link ResultListener} provided in the {@link FaceStylizerOptions}. Only use this method when
-   * the {@link FaceStylizer} is created with {@link RunningMode#LIVE_STREAM}.
-   *
-   * <p>It's required to provide a timestamp (in milliseconds) to indicate when the input image is
-   * sent to the face stylizer. The input timestamps must be monotonically increasing.
-   *
-   * <p>{@link FaceStylizer} supports the following color space types:
-   *
-   * <ul>
-   *   <li>{@link android.graphics.Bitmap.Config#ARGB_8888}
-   * </ul>
-   *
-   * <p>The input image can be of any size. The output image is the stylized image with the most
-   * visible face. The stylized output image size is the same as the model output size. When no face
-   * is detected on the input image, returns {@code Optional.empty()}.
-   *
-   * @param image a MediaPipe {@link MPImage} object for processing.
-   * @param imageProcessingOptions the {@link ImageProcessingOptions} specifying how to process the
-   *     input image before running inference. Note that region-of-interest is <b>not</b> supported
-   *     by this task: specifying {@link ImageProcessingOptions#regionOfInterest()} will result in
-   *     this method throwing an IllegalArgumentException.
-   * @param timestampMs the input timestamp (in milliseconds).
-   * @throws IllegalArgumentException if the {@link ImageProcessingOptions} specify a
-   *     region-of-interest.
-   * @throws MediaPipeException if there is an internal error.
-   */
-  public void stylizeAsync(
-      MPImage image, ImageProcessingOptions imageProcessingOptions, long timestampMs) {
-    sendLiveStreamData(image, imageProcessingOptions, timestampMs);
-  }
-
   /** Options for setting up an {@link FaceStylizer}. */
   @AutoValue
   public abstract static class FaceStylizerOptions extends TaskOptions {
@@ -503,20 +317,6 @@ public final class FaceStylizer extends BaseVisionTaskApi {
     public abstract static class Builder {
       /** Sets the base options for the face stylizer task. */
       public abstract Builder setBaseOptions(BaseOptions value);
-
-      /**
-       * Sets the running mode for the face stylizer task. Default to the image mode. Image stylizer
-       * has three modes:
-       *
-       * <ul>
-       *   <li>IMAGE: The mode for stylizeing image on single image inputs.
-       *   <li>VIDEO: The mode for stylizeing image on the decoded frames of a video.
-       *   <li>LIVE_STREAM: The mode for for stylizeing image on a live stream of input data, such
-       *       as from camera. In this mode, {@code setResultListener} must be called to set up a
-       *       listener to receive the recognition results asynchronously.
-       * </ul>
-       */
-      public abstract Builder setRunningMode(RunningMode value);
 
       /**
        * Sets an optional {@link ResultListener} to receive the stylization results when the graph
@@ -529,37 +329,20 @@ public final class FaceStylizer extends BaseVisionTaskApi {
 
       abstract FaceStylizerOptions autoBuild();
 
-      /**
-       * Validates and builds the {@link FaceStylizerOptions} instance.
-       *
-       * @throws IllegalArgumentException if the result listener and the running mode are not
-       *     properly configured. The result listener must be set when the face stylizer is in the
-       *     live stream mode.
-       */
+      /** Builds the {@link FaceStylizerOptions} instance. */
       public final FaceStylizerOptions build() {
-        FaceStylizerOptions options = autoBuild();
-        if (options.runningMode() == RunningMode.LIVE_STREAM) {
-          if (!options.resultListener().isPresent()) {
-            throw new IllegalArgumentException(
-                "The face stylizer is in the live stream mode, a user-defined result listener"
-                    + " must be provided in FaceStylizerOptions.");
-          }
-        }
-        return options;
+        return autoBuild();
       }
     }
 
     abstract BaseOptions baseOptions();
-
-    abstract RunningMode runningMode();
 
     abstract Optional<ResultListener<FaceStylizerResult, MPImage>> resultListener();
 
     abstract Optional<ErrorListener> errorListener();
 
     public static Builder builder() {
-      return new AutoValue_FaceStylizer_FaceStylizerOptions.Builder()
-          .setRunningMode(RunningMode.IMAGE);
+      return new AutoValue_FaceStylizer_FaceStylizerOptions.Builder();
     }
 
     /** Converts an {@link FaceStylizerOptions} to a {@link CalculatorOptions} protobuf message. */
@@ -569,7 +352,6 @@ public final class FaceStylizer extends BaseVisionTaskApi {
           FaceStylizerGraphOptionsProto.FaceStylizerGraphOptions.newBuilder()
               .setBaseOptions(
                   BaseOptionsProto.BaseOptions.newBuilder()
-                      .setUseStreamMode(runningMode() != RunningMode.IMAGE)
                       .mergeFrom(convertBaseOptionsToProto(baseOptions()))
                       .build())
               .build();

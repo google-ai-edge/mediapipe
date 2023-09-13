@@ -28,12 +28,13 @@
 - (id)copyWithZone:(NSZone *)zone {
   MPPImageClassifierOptions *imageClassifierOptions = [super copyWithZone:zone];
 
+  imageClassifierOptions.runningMode = self.runningMode;
   imageClassifierOptions.scoreThreshold = self.scoreThreshold;
   imageClassifierOptions.maxResults = self.maxResults;
   imageClassifierOptions.categoryDenylist = self.categoryDenylist;
   imageClassifierOptions.categoryAllowlist = self.categoryAllowlist;
   imageClassifierOptions.displayNamesLocale = self.displayNamesLocale;
-  imageClassifierOptions.completion = self.completion;
+  imageClassifierOptions.imageClassifierLiveStreamDelegate = self.imageClassifierLiveStreamDelegate;
 
   return imageClassifierOptions;
 }

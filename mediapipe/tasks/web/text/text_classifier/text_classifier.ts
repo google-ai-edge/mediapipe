@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ export class TextClassifier extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new text classifier from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param textClassifierOptions The options for the text classifier. Note that
@@ -65,6 +66,7 @@ export class TextClassifier extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new text classifier based on the
    * provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
@@ -80,6 +82,7 @@ export class TextClassifier extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new text classifier based on the
    * path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
@@ -107,6 +110,7 @@ export class TextClassifier extends TaskRunner {
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
+   * @export
    * @param options The options for the text classifier.
    */
   override setOptions(options: TextClassifierOptions): Promise<void> {
@@ -127,6 +131,7 @@ export class TextClassifier extends TaskRunner {
    * Performs Natural Language classification on the provided text and waits
    * synchronously for the response.
    *
+   * @export
    * @param text The text to process.
    * @return The classification result of the text
    */

@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -47,13 +47,6 @@ TEST(ConvertFromProto, Succeeds) {
   landmark_proto.set_y(5.2);
   landmark_proto.set_z(4.3);
 
-  mediapipe::NormalizedLandmarkList auxiliary_landmark_list_proto;
-  mediapipe::NormalizedLandmark& auxiliary_landmark_proto =
-      *auxiliary_landmark_list_proto.add_landmark();
-  auxiliary_landmark_proto.set_x(0.5);
-  auxiliary_landmark_proto.set_y(0.5);
-  auxiliary_landmark_proto.set_z(0.5);
-
   std::vector<Image> segmentation_masks_lists = {segmentation_mask};
 
   std::vector<mediapipe::NormalizedLandmarkList> normalized_landmarks_lists = {
@@ -62,12 +55,9 @@ TEST(ConvertFromProto, Succeeds) {
   std::vector<mediapipe::LandmarkList> world_landmarks_lists = {
       world_landmark_list_proto};
 
-  std::vector<mediapipe::NormalizedLandmarkList> auxiliary_landmarks_lists = {
-      auxiliary_landmark_list_proto};
-
   PoseLandmarkerResult pose_landmarker_result = ConvertToPoseLandmarkerResult(
       segmentation_masks_lists, normalized_landmarks_lists,
-      world_landmarks_lists, auxiliary_landmarks_lists);
+      world_landmarks_lists);
 
   EXPECT_EQ(pose_landmarker_result.pose_landmarks.size(), 1);
   EXPECT_EQ(pose_landmarker_result.pose_landmarks[0].landmarks.size(), 1);
@@ -81,14 +71,6 @@ TEST(ConvertFromProto, Succeeds) {
   EXPECT_THAT(pose_landmarker_result.pose_world_landmarks[0].landmarks[0],
               testing::FieldsAre(testing::FloatEq(3.1), testing::FloatEq(5.2),
                                  testing::FloatEq(4.3), std::nullopt,
-                                 std::nullopt, std::nullopt));
-
-  EXPECT_EQ(pose_landmarker_result.pose_auxiliary_landmarks.size(), 1);
-  EXPECT_EQ(pose_landmarker_result.pose_auxiliary_landmarks[0].landmarks.size(),
-            1);
-  EXPECT_THAT(pose_landmarker_result.pose_auxiliary_landmarks[0].landmarks[0],
-              testing::FieldsAre(testing::FloatEq(0.5), testing::FloatEq(0.5),
-                                 testing::FloatEq(0.5), std::nullopt,
                                  std::nullopt, std::nullopt));
 }
 

@@ -20,9 +20,9 @@ nav_order: 2
 ---
 
 **Attention:** *Thank you for your interest in MediaPipe Solutions.
-As of March 1, 2023, this solution is planned to be upgraded to a new MediaPipe
+As of May 10, 2023, this solution was upgraded to a new MediaPipe
 Solution. For more information, see the
-[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/guide#legacy)
+[MediaPipe Solutions](https://developers.google.com/mediapipe/solutions/vision/face_landmarker)
 site.*
 
 ----

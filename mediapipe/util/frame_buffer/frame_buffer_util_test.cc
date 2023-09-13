@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/formats/frame_buffer.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/gmock.h"
@@ -784,7 +785,7 @@ TEST(FrameBufferUtil, RgbRotate) {
 absl::StatusOr<std::shared_ptr<FrameBuffer>> CreateYuvBuffer(
     uint8_t* buffer, FrameBuffer::Dimension dimension, int plane_count,
     FrameBuffer::Format format) {
-  DCHECK(plane_count > 0 && plane_count < 4);
+  ABSL_DCHECK(plane_count > 0 && plane_count < 4);
   ASSIGN_OR_RETURN(auto uv_dimension, GetUvPlaneDimension(dimension, format));
 
   if (plane_count == 1) {
@@ -793,8 +794,8 @@ absl::StatusOr<std::shared_ptr<FrameBuffer>> CreateYuvBuffer(
                              /*pixel_stride_bytes=*/1}}};
     return std::make_shared<FrameBuffer>(planes, dimension, format);
   } else if (plane_count == 2) {
-    CHECK(format == FrameBuffer::Format::kNV12 ||
-          format == FrameBuffer::Format::kNV21);
+    ABSL_CHECK(format == FrameBuffer::Format::kNV12 ||
+               format == FrameBuffer::Format::kNV21);
     const std::vector<FrameBuffer::Plane> planes = {
         {buffer,
          /*stride=*/{/*row_stride_bytes=*/dimension.width,

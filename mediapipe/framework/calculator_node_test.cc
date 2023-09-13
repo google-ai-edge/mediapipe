@@ -18,11 +18,12 @@
 
 #include <memory>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -95,7 +96,8 @@ int CountCalculator::num_destroyed_ = 0;
 void SourceNodeOpenedNoOp() {}
 
 void CheckFail(const absl::Status& status) {
-  LOG(FATAL) << "The test triggered the error callback with status: " << status;
+  ABSL_LOG(FATAL) << "The test triggered the error callback with status: "
+                  << status;
 }
 
 class CalculatorNodeTest : public ::testing::Test {
@@ -103,7 +105,7 @@ class CalculatorNodeTest : public ::testing::Test {
   void ReadyForOpen(int* count) { ++(*count); }
 
   void Notification(CalculatorContext* cc, int* count) {
-    CHECK(cc);
+    ABSL_CHECK(cc);
     cc_ = cc;
     ++(*count);
   }

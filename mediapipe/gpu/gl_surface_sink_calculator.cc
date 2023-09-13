@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -39,6 +40,10 @@ enum { kAttribVertex, kAttribTexturePosition, kNumberOfAttributes };
 //   SURFACE: unique_ptr to an EglSurfaceHolder to draw to.
 //
 // See GlSurfaceSinkCalculatorOptions for options.
+//
+// NOTE: all GlSurfaceSinkCalculators use a common dedicated shared GL context
+// thread by default, which is different from the main GL context thread used by
+// the graph. (If MediaPipe uses multithreading and multiple OpenGL contexts.)
 class GlSurfaceSinkCalculator : public Node {
  public:
   static constexpr Input<
@@ -95,7 +100,7 @@ absl::Status GlSurfaceSinkCalculator::Process(CalculatorContext* cc) {
     absl::MutexLock lock(&surface_holder_->mutex);
     EGLSurface surface = surface_holder_->surface;
     if (surface == EGL_NO_SURFACE) {
-      LOG_EVERY_N(INFO, 300) << "GlSurfaceSinkCalculator: no surface";
+      ABSL_LOG_EVERY_N(INFO, 300) << "GlSurfaceSinkCalculator: no surface";
       return absl::OkStatus();
     }
 

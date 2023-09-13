@@ -87,6 +87,7 @@ cc_library(
         "//mediapipe/framework/formats:time_series_header_cc_proto",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/util:time_series_util",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
@@ -181,6 +182,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:tensor",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
@@ -198,6 +200,7 @@ cc_test(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/log:absl_check",
         "@org_tensorflow//tensorflow/lite/c:common",
     ],
 )
@@ -228,7 +231,6 @@ cc_library(
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "@com_google_absl//absl/container:flat_hash_set",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
     ],
     alwayslink = 1,
@@ -280,7 +282,6 @@ cc_library(
         "//mediapipe/tasks/cc/text/tokenizers:tokenizer_utils",
         "//mediapipe/tasks/metadata:metadata_schema_cc",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
     ],
     alwayslink = 1,
 )
@@ -394,7 +395,7 @@ mediapipe_proto_library(
 # If you want to have precise control of which implementations to include (e.g. for strict binary
 # size concerns), depend on those implementations directly, and do not depend on
 # :inference_calculator.
-# In all cases, use "InferenceCalulator" in your graphs.
+# In all cases, use "InferenceCalculator" in your graphs.
 cc_library_with_tflite(
     name = "inference_calculator_interface",
     srcs = ["inference_calculator.cc"],
@@ -447,6 +448,7 @@ cc_library(
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/gpu:gl_calculator_helper",
         "//mediapipe/util/tflite:tflite_gpu_runner",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
@@ -476,6 +478,7 @@ cc_library(
         "//mediapipe/gpu:gpu_buffer",
         "//mediapipe/objc:mediapipe_framework_ios",
         "//mediapipe/util/tflite:config",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings:str_format",
         "@org_tensorflow//tensorflow/lite/delegates/gpu:metal_delegate",
@@ -622,6 +625,7 @@ mediapipe_proto_library(
     deps = [
         "//mediapipe/framework:calculator_options_proto",
         "//mediapipe/framework:calculator_proto",
+        "//mediapipe/gpu:gpu_origin_proto",
     ],
 )
 
@@ -651,10 +655,21 @@ cc_library(
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:statusor",
+        "//mediapipe/gpu:gpu_buffer_format",
+        "//mediapipe/gpu:gpu_origin_cc_proto",
         "//mediapipe/util:resource_util",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/strings:str_format",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": ["tensor_converter_calculator_gpu_deps"],
+    }) + select({
+        "//mediapipe:apple": [
+            "//third_party/apple_frameworks:MetalKit",
+        ],
+        "//conditions:default": [],
     }),
     alwayslink = 1,
 )
@@ -696,6 +711,7 @@ cc_test(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:integral_types",
+        "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:validate_type",
         "@com_google_absl//absl/memory",
@@ -734,6 +750,8 @@ cc_library(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/formats/object_detection:anchor_cc_proto",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/types:span",
     ] + selects.with_or({
@@ -790,6 +808,7 @@ cc_library(
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/log:absl_check",
     ],
     alwayslink = 1,
 )
@@ -982,6 +1001,8 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:statusor",
         "//mediapipe/gpu:gpu_origin_cc_proto",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
     ] + select({
         "//mediapipe/gpu:disable_gpu": [],
         "//conditions:default": [":image_to_tensor_calculator_gpu_deps"],
@@ -1052,6 +1073,7 @@ cc_test(
         "testdata/image_to_tensor/medium_sub_rect_with_rotation_border_zero.png",
         "testdata/image_to_tensor/noop_except_range.png",
     ],
+    tags = ["not_run:arm"],
     deps = [
         ":image_to_tensor_calculator",
         ":image_to_tensor_converter",
@@ -1073,6 +1095,7 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/util:image_test_utils",
         "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -1200,6 +1223,7 @@ cc_library(
             "//mediapipe/gpu:gl_calculator_helper",
             "//mediapipe/gpu:gl_simple_shaders",
             "//mediapipe/gpu:shader_util",
+            "@com_google_absl//absl/log:absl_log",
             "@com_google_absl//absl/strings",
         ],
     }),

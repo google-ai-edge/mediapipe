@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "mediapipe/framework/calculator.pb.h"
@@ -24,7 +25,6 @@
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -128,7 +128,7 @@ class IntegerOutputSidePacketCalculator : public CalculatorBase {
   }
 
   absl::Status Process(CalculatorContext* cc) final {
-    LOG(FATAL) << "Not reached.";
+    ABSL_LOG(FATAL) << "Not reached.";
     return absl::OkStatus();
   }
 };
@@ -153,7 +153,7 @@ class SidePacketAdderCalculator : public CalculatorBase {
   }
 
   absl::Status Process(CalculatorContext* cc) final {
-    LOG(FATAL) << "Not reached.";
+    ABSL_LOG(FATAL) << "Not reached.";
     return absl::OkStatus();
   }
 };
@@ -778,7 +778,7 @@ class OutputSidePacketCachedCalculator : public CalculatorBase {
   }
 
   absl::Status Process(CalculatorContext* cc) final {
-    LOG(FATAL) << "Not reached.";
+    ABSL_LOG(FATAL) << "Not reached.";
     return absl::OkStatus();
   }
 };

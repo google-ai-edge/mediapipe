@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -66,6 +66,7 @@ cc_library(
         "//mediapipe/tasks/cc/core/proto:model_resources_calculator_cc_proto",
         "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_cc_proto",
         "//mediapipe/tasks/cc/text/utils:text_model_utils",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
@@ -81,6 +82,7 @@ cc_test(
         "//mediapipe/tasks/testdata/text:regex_embedding_with_metadata",
         "//mediapipe/tasks/testdata/text:universal_sentence_encoder_qa",
     ],
+    tags = ["not_run:arm"],
     deps = [
         ":text_embedder",
         "//mediapipe/framework/deps:file_path",

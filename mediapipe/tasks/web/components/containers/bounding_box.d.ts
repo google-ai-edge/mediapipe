@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,4 +24,10 @@ export declare interface BoundingBox {
   width: number;
   /** The height of the bounding box, in pixels. */
   height: number;
+  /**
+   * Angle of rotation of the original non-rotated box around the top left
+   * corner of the original non-rotated box, in clockwise degrees from the
+   * horizontal.
+   */
+  angle: number;
 }

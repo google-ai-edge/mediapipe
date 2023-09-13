@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,15 @@ import {SupportModelResourcesGraphService} from '../../../web/graph_runner/regis
 
 import {WasmFileset} from './wasm_fileset';
 
-// None of the MP Tasks ship bundle assets.
-const NO_ASSETS = undefined;
+// Internal stream names for temporarily keeping memory alive, then freeing it.
+const FREE_MEMORY_STREAM = 'free_memory';
+const UNUSED_STREAM_SUFFIX = '_unused_out';
 
 // tslint:disable-next-line:enforce-name-casing
 const CachedGraphRunnerType = SupportModelResourcesGraphService(GraphRunner);
+
+// The OSS JS API does not support the builder pattern.
+// tslint:disable:jspb-use-builder-pattern
 
 /**
  * An implementation of the GraphRunner that exposes the resource graph
@@ -47,14 +51,22 @@ export async function createTaskRunner<T extends TaskRunner>(
     canvas: HTMLCanvasElement|OffscreenCanvas|null|undefined,
     fileset: WasmFileset, options: TaskRunnerOptions): Promise<T> {
   const fileLocator: FileLocator = {
-    locateFile() {
-      // The only file loaded with this mechanism is the Wasm binary
-      return fileset.wasmBinaryPath.toString();
+    locateFile(file): string {
+      const wasm = fileset.wasmBinaryPath.toString();
+      if (wasm.includes(file)) {
+        return wasm;
+      }
+      const asset = fileset.assetBinaryPath?.toString();
+      if (asset?.includes(file)) {
+        return asset;
+      }
+      return file;
     }
   };
 
   const instance = await createMediaPipeLib(
-      type, fileset.wasmLoaderPath, NO_ASSETS, canvas, fileLocator);
+      type, fileset.wasmLoaderPath, fileset.assetLoaderPath, canvas,
+      fileLocator);
   await instance.setOptions(options);
   return instance;
 }
@@ -64,6 +76,7 @@ export abstract class TaskRunner {
   protected abstract baseOptions: BaseOptionsProto;
   private processingErrors: Error[] = [];
   private latestOutputTimestamp = 0;
+  private keepaliveNode?: CalculatorGraphConfig.Node;
 
   /**
    * Creates a new instance of a Mediapipe Task. Determines if SIMD is
@@ -88,52 +101,73 @@ export abstract class TaskRunner {
   abstract setOptions(options: TaskRunnerOptions): Promise<void>;
 
   /**
-   * Applies the current set of options, including any base options that have
-   * not been processed by the task implementation. The options are applied
-   * synchronously unless a `modelAssetPath` is provided. This ensures that
-   * for most use cases options are applied directly and immediately affect
+   * Applies the current set of options, including optionally any base options
+   * that have not been processed by the task implementation. The options are
+   * applied synchronously unless a `modelAssetPath` is provided. This ensures
+   * that for most use cases options are applied directly and immediately affect
    * the next inference.
+   *
+   * @param options The options for the task.
+   * @param loadTfliteModel Whether to load the model specified in
+   *     `options.baseOptions`.
    */
-  protected applyOptions(options: TaskRunnerOptions): Promise<void> {
-    const baseOptions: BaseOptions = options.baseOptions || {};
+  protected applyOptions(options: TaskRunnerOptions, loadTfliteModel = true):
+      Promise<void> {
+    if (loadTfliteModel) {
+      const baseOptions: BaseOptions = options.baseOptions || {};
 
-    // Validate that exactly one model is configured
-    if (options.baseOptions?.modelAssetBuffer &&
-        options.baseOptions?.modelAssetPath) {
-      throw new Error(
-          'Cannot set both baseOptions.modelAssetPath and baseOptions.modelAssetBuffer');
-    } else if (!(this.baseOptions.getModelAsset()?.hasFileContent() ||
-                 options.baseOptions?.modelAssetBuffer ||
-                 options.baseOptions?.modelAssetPath)) {
-      throw new Error(
-          'Either baseOptions.modelAssetPath or baseOptions.modelAssetBuffer must be set');
+      // Validate that exactly one model is configured
+      if (options.baseOptions?.modelAssetBuffer &&
+          options.baseOptions?.modelAssetPath) {
+        throw new Error(
+            'Cannot set both baseOptions.modelAssetPath and baseOptions.modelAssetBuffer');
+      } else if (!(this.baseOptions.getModelAsset()?.hasFileContent() ||
+                   this.baseOptions.getModelAsset()?.hasFileName() ||
+                   options.baseOptions?.modelAssetBuffer ||
+                   options.baseOptions?.modelAssetPath)) {
+        throw new Error(
+            'Either baseOptions.modelAssetPath or baseOptions.modelAssetBuffer must be set');
+      }
+
+      this.setAcceleration(baseOptions);
+      if (baseOptions.modelAssetPath) {
+        // We don't use `await` here since we want to apply most settings
+        // synchronously.
+        return fetch(baseOptions.modelAssetPath.toString())
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`Failed to fetch model: ${
+                    baseOptions.modelAssetPath} (${response.status})`);
+              } else {
+                return response.arrayBuffer();
+              }
+            })
+            .then(buffer => {
+              try {
+                // Try to delete file as we cannot overwrite an existing file
+                // using our current API.
+                this.graphRunner.wasmModule.FS_unlink('/model.dat');
+              } catch {
+              }
+              // TODO: Consider passing the model to the graph as an
+              // input side packet as this might reduce copies.
+              this.graphRunner.wasmModule.FS_createDataFile(
+                  '/', 'model.dat', new Uint8Array(buffer),
+                  /* canRead= */ true, /* canWrite= */ false,
+                  /* canOwn= */ false);
+              this.setExternalFile('/model.dat');
+              this.refreshGraph();
+              this.onGraphRefreshed();
+            });
+      } else {
+        this.setExternalFile(baseOptions.modelAssetBuffer);
+      }
     }
 
-    this.setAcceleration(baseOptions);
-    if (baseOptions.modelAssetPath) {
-      // We don't use `await` here since we want to apply most settings
-      // synchronously.
-      return fetch(baseOptions.modelAssetPath.toString())
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`Failed to fetch model: ${
-                  baseOptions.modelAssetPath} (${response.status})`);
-            } else {
-              return response.arrayBuffer();
-            }
-          })
-          .then(buffer => {
-            this.setExternalFile(new Uint8Array(buffer));
-            this.refreshGraph();
-            this.onGraphRefreshed();
-          });
-    } else {
-      // Apply the setting synchronously.
-      this.setExternalFile(baseOptions.modelAssetBuffer);
-      this.refreshGraph();
-      this.onGraphRefreshed();
-      return Promise.resolve();
-    }
+    // If there is no model to download, we can apply the setting synchronously.
+    this.refreshGraph();
+    this.onGraphRefreshed();
+    return Promise.resolve();
   }
 
   /** Appliest the current options to the MediaPipe graph. */
@@ -177,6 +211,7 @@ export abstract class TaskRunner {
     this.graphRunner.registerModelResourcesGraphService();
 
     this.graphRunner.setGraph(graphData, isBinary);
+    this.keepaliveNode = undefined;
     this.handleErrors();
   }
 
@@ -227,10 +262,16 @@ export abstract class TaskRunner {
   }
 
   /** Configures the `externalFile` option */
-  private setExternalFile(modelAssetBuffer?: Uint8Array): void {
+  private setExternalFile(modelAssetPath?: string): void;
+  private setExternalFile(modelAssetBuffer?: Uint8Array): void;
+  private setExternalFile(modelAssetPathOrBuffer?: Uint8Array|string): void {
     const externalFile = this.baseOptions.getModelAsset() || new ExternalFile();
-    if (modelAssetBuffer) {
-      externalFile.setFileContent(modelAssetBuffer);
+    if (typeof modelAssetPathOrBuffer === 'string') {
+      externalFile.setFileName(modelAssetPathOrBuffer);
+      externalFile.clearFileContent();
+    } else if (modelAssetPathOrBuffer instanceof Uint8Array) {
+      externalFile.setFileContent(modelAssetPathOrBuffer);
+      externalFile.clearFileName();
     }
     this.baseOptions.setModelAsset(externalFile);
   }
@@ -255,6 +296,42 @@ export abstract class TaskRunner {
     }
 
     this.baseOptions.setAcceleration(acceleration);
+  }
+
+  /**
+   * Adds a node to the graph to temporarily keep certain streams alive.
+   * NOTE: To use this call, PassThroughCalculator must be included in your wasm
+   *     dependencies.
+   */
+  protected addKeepaliveNode(graphConfig: CalculatorGraphConfig) {
+    this.keepaliveNode = new CalculatorGraphConfig.Node();
+    this.keepaliveNode.setCalculator('PassThroughCalculator');
+    this.keepaliveNode.addInputStream(FREE_MEMORY_STREAM);
+    this.keepaliveNode.addOutputStream(
+        FREE_MEMORY_STREAM + UNUSED_STREAM_SUFFIX);
+    graphConfig.addInputStream(FREE_MEMORY_STREAM);
+    graphConfig.addNode(this.keepaliveNode);
+  }
+
+  /** Adds streams to the keepalive node to be kept alive until callback. */
+  protected keepStreamAlive(streamName: string) {
+    this.keepaliveNode!.addInputStream(streamName);
+    this.keepaliveNode!.addOutputStream(streamName + UNUSED_STREAM_SUFFIX);
+  }
+
+  /** Frees any streams being kept alive by the keepStreamAlive callback. */
+  protected freeKeepaliveStreams() {
+    this.graphRunner.addBoolToStream(
+        true, FREE_MEMORY_STREAM, this.latestOutputTimestamp);
+  }
+
+  /**
+   * Closes and cleans up the resources held by this task.
+   * @export
+   */
+  close(): void {
+    this.keepaliveNode = undefined;
+    this.graphRunner.closeGraph();
   }
 }
 

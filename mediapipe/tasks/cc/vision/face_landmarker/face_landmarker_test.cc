@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ constexpr char kPortraitExpectedFaceLandmarksName[] =
     "portrait_expected_face_landmarks.pbtxt";
 constexpr char kPortraitExpectedBlendshapesName[] =
     "portrait_expected_blendshapes.pbtxt";
-constexpr char kPortaitExpectedFaceGeomertyName[] =
+constexpr char kPortraitExpectedFaceGeometryName[] =
     "portrait_expected_face_geometry.pbtxt";
 
 constexpr float kLandmarksDiffMargin = 0.03;
@@ -100,7 +100,7 @@ struct FaceLandmarkerTestParams {
 
 mediapipe::MatrixData MakePortraitExpectedFacialTransformationMatrix() {
   auto face_geometry = GetExpectedProto<face_geometry::proto::FaceGeometry>(
-      kPortaitExpectedFaceGeomertyName);
+      kPortraitExpectedFaceGeometryName);
   return face_geometry.pose_transform_matrix();
 }
 

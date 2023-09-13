@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -66,14 +66,16 @@ def run(data_dir,
   quantization_config = None
   if (supported_model ==
       text_classifier.SupportedModels.AVERAGE_WORD_EMBEDDING_CLASSIFIER):
-    hparams = text_classifier.HParams(
-        epochs=10, batch_size=32, learning_rate=0, export_dir=export_dir)
+    hparams = text_classifier.AverageWordEmbeddingHParams(
+        epochs=10, batch_size=32, learning_rate=0, export_dir=export_dir
+    )
   # Warning: This takes extremely long to run on CPU
   elif (
       supported_model == text_classifier.SupportedModels.MOBILEBERT_CLASSIFIER):
     quantization_config = quantization.QuantizationConfig.for_dynamic()
-    hparams = text_classifier.HParams(
-        epochs=3, batch_size=48, learning_rate=3e-5, export_dir=export_dir)
+    hparams = text_classifier.BertHParams(
+        epochs=3, batch_size=48, learning_rate=3e-5, export_dir=export_dir
+    )
 
   # Fine-tunes the model.
   options = text_classifier.TextClassifierOptions(
@@ -82,8 +84,8 @@ def run(data_dir,
                                                 options)
 
   # Gets evaluation results.
-  _, acc = model.evaluate(validation_data)
-  print('Eval accuracy: %f' % acc)
+  metrics = model.evaluate(validation_data)
+  print('Eval accuracy: %f' % metrics[1])
 
   model.export_model(quantization_config=quantization_config)
   model.export_labels(export_dir=options.hparams.export_dir)

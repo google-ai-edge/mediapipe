@@ -27,10 +27,6 @@ namespace options_field_util {
 
 using ::mediapipe::proto_ns::internal::WireFormatLite;
 using FieldType = WireFormatLite::FieldType;
-using ::mediapipe::proto_ns::io::ArrayInputStream;
-using ::mediapipe::proto_ns::io::CodedInputStream;
-using ::mediapipe::proto_ns::io::CodedOutputStream;
-using ::mediapipe::proto_ns::io::StringOutputStream;
 
 // Utility functions for OptionsFieldUtil.
 namespace {

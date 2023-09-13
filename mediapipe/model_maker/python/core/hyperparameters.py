@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
 
 import dataclasses
 import tempfile
+from typing import Mapping, Optional
 
-from typing import Optional
+import tensorflow as tf
+
+from official.common import distribute_utils
 
 
 @dataclasses.dataclass
@@ -33,6 +36,8 @@ class BaseHParams:
     steps_per_epoch: An optional integer indicate the number of training steps
       per epoch. If not set, the training pipeline calculates the default steps
       per epoch as the training dataset size divided by batch size.
+    class_weights: An optional mapping of indices to weights for weighting the
+      loss function during training.
     shuffle: True if the dataset is shuffled before training.
     export_dir: The location of the model checkpoint files.
     distribution_strategy: A string specifying which Distribution Strategy to
@@ -43,10 +48,10 @@ class BaseHParams:
       documentation for more details:
       https://www.tensorflow.org/api_docs/python/tf/distribute/Strategy.
     num_gpus: How many GPUs to use at each worker with the
-      DistributionStrategies API. The default is -1, which means utilize all
-      available GPUs.
-    tpu: The Cloud TPU to use for training. This should be either the name used
-      when creating the Cloud TPU, or a grpc://ip.address.of.tpu:8470 url.
+      DistributionStrategies API. The default is 0.
+    tpu: The TPU resource to be used for training. This should be either the
+      name used when creating the Cloud TPU, a grpc://ip.address.of.tpu:8470
+      url, or an empty string if using a local TPU.
   """
 
   # Parameters for train configuration
@@ -54,6 +59,7 @@ class BaseHParams:
   batch_size: int
   epochs: int
   steps_per_epoch: Optional[int] = None
+  class_weights: Optional[Mapping[int, float]] = None
 
   # Dataset-related parameters
   shuffle: bool = False
@@ -63,5 +69,16 @@ class BaseHParams:
 
   # Parameters for hardware acceleration
   distribution_strategy: str = 'off'
-  num_gpus: int = -1  # default value of -1 means use all available GPUs
+  num_gpus: int = 0
   tpu: str = ''
+  _strategy: tf.distribute.Strategy = dataclasses.field(init=False)
+
+  def __post_init__(self):
+    self._strategy = distribute_utils.get_distribution_strategy(
+        distribution_strategy=self.distribution_strategy,
+        num_gpus=self.num_gpus,
+        tpu_address=self.tpu,
+    )
+
+  def get_strategy(self):
+    return self._strategy

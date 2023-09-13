@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -154,4 +154,14 @@ cc_library(
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/tasks/cc/components/containers:landmark",
     ],
+)
+
+cc_library(
+    name = "pose_landmarks_connections",
+    hdrs = ["pose_landmarks_connections.h"],
+)
+
+cc_library(
+    name = "pose_landmark",
+    hdrs = ["pose_landmark.h"],
 )

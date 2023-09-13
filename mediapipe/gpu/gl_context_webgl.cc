@@ -14,6 +14,8 @@
 
 #include <utility>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -48,7 +50,7 @@ GlContext::StatusOrGlContext GlContext::Create(
 
 absl::Status GlContext::CreateContextInternal(
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE external_context, int webgl_version) {
-  CHECK(webgl_version == 1 || webgl_version == 2);
+  ABSL_CHECK(webgl_version == 1 || webgl_version == 2);
 
   EmscriptenWebGLContextAttributes attrs;
   emscripten_webgl_init_context_attributes(&attrs);
@@ -78,7 +80,7 @@ absl::Status GlContext::CreateContextInternal(
 
   // Check for failure
   if (context_handle <= 0) {
-    LOG(INFO) << "Couldn't create webGL " << webgl_version << " context.";
+    ABSL_LOG(INFO) << "Couldn't create webGL " << webgl_version << " context.";
     return ::mediapipe::UnknownErrorBuilder(MEDIAPIPE_LOC)
            << "emscripten_webgl_create_context() returned error "
            << context_handle;
@@ -103,32 +105,32 @@ absl::Status GlContext::CreateContext(
 
   auto status = CreateContextInternal(external_context, 2);
   if (!status.ok()) {
-    LOG(WARNING) << "Creating a context with WebGL 2 failed: " << status;
-    LOG(WARNING) << "Fall back on WebGL 1.";
+    ABSL_LOG(WARNING) << "Creating a context with WebGL 2 failed: " << status;
+    ABSL_LOG(WARNING) << "Fall back on WebGL 1.";
     status = CreateContextInternal(external_context, 1);
   }
   MP_RETURN_IF_ERROR(status);
 
-  LOG(INFO) << "Successfully created a WebGL context with major version "
-            << gl_major_version_ << " and handle " << context_;
-
+  VLOG(1) << "Successfully created a WebGL context with major version "
+          << gl_major_version_ << " and handle " << context_;
   return absl::OkStatus();
 }
 
 void GlContext::DestroyContext() {
   if (thread_) {
     // For now, we force web MediaPipe to be single-threaded, so error here.
-    LOG(ERROR) << "thread_ should not exist in DestroyContext() on web.";
+    ABSL_LOG(ERROR) << "thread_ should not exist in DestroyContext() on web.";
   }
 
   // Destroy the context and surface.
   if (context_ != 0) {
     EMSCRIPTEN_RESULT res = emscripten_webgl_destroy_context(context_);
     if (res != EMSCRIPTEN_RESULT_SUCCESS) {
-      LOG(ERROR) << "emscripten_webgl_destroy_context() returned error " << res;
+      ABSL_LOG(ERROR) << "emscripten_webgl_destroy_context() returned error "
+                      << res;
     } else {
-      LOG(INFO) << "Successfully destroyed WebGL context with handle "
-                << context_;
+      ABSL_LOG(INFO) << "Successfully destroyed WebGL context with handle "
+                     << context_;
     }
     context_ = 0;
   }

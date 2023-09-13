@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/status/status.h"
 #include "mediapipe/calculators/image/image_transformation_calculator.pb.h"
 #include "mediapipe/calculators/image/rotation_mode.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -27,6 +28,7 @@
 #include "mediapipe/gpu/scale_mode.pb.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_calculator_helper.h"
 #include "mediapipe/gpu/gl_quad_renderer.h"
 #include "mediapipe/gpu/gl_simple_shaders.h"
@@ -60,42 +62,42 @@ constexpr char kVideoPrestreamTag[] = "VIDEO_PRESTREAM";
 
 int RotationModeToDegrees(mediapipe::RotationMode_Mode rotation) {
   switch (rotation) {
-    case mediapipe::RotationMode_Mode_UNKNOWN:
-    case mediapipe::RotationMode_Mode_ROTATION_0:
+    case mediapipe::RotationMode::UNKNOWN:
+    case mediapipe::RotationMode::ROTATION_0:
       return 0;
-    case mediapipe::RotationMode_Mode_ROTATION_90:
+    case mediapipe::RotationMode::ROTATION_90:
       return 90;
-    case mediapipe::RotationMode_Mode_ROTATION_180:
+    case mediapipe::RotationMode::ROTATION_180:
       return 180;
-    case mediapipe::RotationMode_Mode_ROTATION_270:
+    case mediapipe::RotationMode::ROTATION_270:
       return 270;
   }
 }
 mediapipe::RotationMode_Mode DegreesToRotationMode(int degrees) {
   switch (degrees) {
     case 0:
-      return mediapipe::RotationMode_Mode_ROTATION_0;
+      return mediapipe::RotationMode::ROTATION_0;
     case 90:
-      return mediapipe::RotationMode_Mode_ROTATION_90;
+      return mediapipe::RotationMode::ROTATION_90;
     case 180:
-      return mediapipe::RotationMode_Mode_ROTATION_180;
+      return mediapipe::RotationMode::ROTATION_180;
     case 270:
-      return mediapipe::RotationMode_Mode_ROTATION_270;
+      return mediapipe::RotationMode::ROTATION_270;
     default:
-      return mediapipe::RotationMode_Mode_UNKNOWN;
+      return mediapipe::RotationMode::UNKNOWN;
   }
 }
 mediapipe::ScaleMode_Mode ParseScaleMode(
     mediapipe::ScaleMode_Mode scale_mode,
     mediapipe::ScaleMode_Mode default_mode) {
   switch (scale_mode) {
-    case mediapipe::ScaleMode_Mode_DEFAULT:
+    case mediapipe::ScaleMode::DEFAULT:
       return default_mode;
-    case mediapipe::ScaleMode_Mode_STRETCH:
+    case mediapipe::ScaleMode::STRETCH:
       return scale_mode;
-    case mediapipe::ScaleMode_Mode_FIT:
+    case mediapipe::ScaleMode::FIT:
       return scale_mode;
-    case mediapipe::ScaleMode_Mode_FILL_AND_CROP:
+    case mediapipe::ScaleMode::FILL_AND_CROP:
       return scale_mode;
     default:
       return default_mode;
@@ -208,6 +210,8 @@ class ImageTransformationCalculator : public CalculatorBase {
 
   bool use_gpu_ = false;
   cv::Scalar padding_color_;
+  ImageTransformationCalculatorOptions::InterpolationMode interpolation_mode_;
+
 #if !MEDIAPIPE_DISABLE_GPU
   GlCalculatorHelper gpu_helper_;
   std::unique_ptr<QuadRenderer> rgb_renderer_;
@@ -343,6 +347,11 @@ absl::Status ImageTransformationCalculator::Open(CalculatorContext* cc) {
                               options_.padding_color().green(),
                               options_.padding_color().blue());
 
+  interpolation_mode_ = options_.interpolation_mode();
+  if (options_.interpolation_mode() ==
+      ImageTransformationCalculatorOptions::DEFAULT) {
+    interpolation_mode_ = ImageTransformationCalculatorOptions::LINEAR;
+  }
   if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
     // Let the helper access the GL context information.
@@ -457,26 +466,48 @@ absl::Status ImageTransformationCalculator::RenderCpu(CalculatorContext* cc) {
   ComputeOutputDimensions(input_width, input_height, &output_width,
                           &output_height);
 
+  int opencv_interpolation_mode = cv::INTER_LINEAR;
   if (output_width_ > 0 && output_height_ > 0) {
     cv::Mat scaled_mat;
-    if (scale_mode_ == mediapipe::ScaleMode_Mode_STRETCH) {
-      int scale_flag =
-          input_mat.cols > output_width_ && input_mat.rows > output_height_
-              ? cv::INTER_AREA
-              : cv::INTER_LINEAR;
+    if (scale_mode_ == mediapipe::ScaleMode::STRETCH) {
+      if (interpolation_mode_ == ImageTransformationCalculatorOptions::LINEAR) {
+        // Use INTER_AREA for downscaling if interpolation mode is set to
+        // LINEAR.
+        if (input_mat.cols > output_width_ && input_mat.rows > output_height_) {
+          opencv_interpolation_mode = cv::INTER_AREA;
+
+        } else {
+          opencv_interpolation_mode = cv::INTER_LINEAR;
+        }
+      } else {
+        opencv_interpolation_mode = cv::INTER_NEAREST;
+      }
       cv::resize(input_mat, scaled_mat, cv::Size(output_width_, output_height_),
-                 0, 0, scale_flag);
+                 0, 0, opencv_interpolation_mode);
     } else {
       const float scale =
           std::min(static_cast<float>(output_width_) / input_width,
                    static_cast<float>(output_height_) / input_height);
       const int target_width = std::round(input_width * scale);
       const int target_height = std::round(input_height * scale);
-      int scale_flag = scale < 1.0f ? cv::INTER_AREA : cv::INTER_LINEAR;
-      if (scale_mode_ == mediapipe::ScaleMode_Mode_FIT) {
+
+      if (interpolation_mode_ == ImageTransformationCalculatorOptions::LINEAR) {
+        // Use INTER_AREA for downscaling if interpolation mode is set to
+        // LINEAR.
+        if (scale < 1.0f) {
+          opencv_interpolation_mode = cv::INTER_AREA;
+        } else {
+          opencv_interpolation_mode = cv::INTER_LINEAR;
+        }
+      } else {
+        opencv_interpolation_mode = cv::INTER_NEAREST;
+      }
+
+      if (scale_mode_ == mediapipe::ScaleMode::FIT) {
         cv::Mat intermediate_mat;
         cv::resize(input_mat, intermediate_mat,
-                   cv::Size(target_width, target_height), 0, 0, scale_flag);
+                   cv::Size(target_width, target_height), 0, 0,
+                   opencv_interpolation_mode);
         const int top = (output_height_ - target_height) / 2;
         const int bottom = output_height_ - target_height - top;
         const int left = (output_width_ - target_width) / 2;
@@ -488,7 +519,7 @@ absl::Status ImageTransformationCalculator::RenderCpu(CalculatorContext* cc) {
                            padding_color_);
       } else {
         cv::resize(input_mat, scaled_mat, cv::Size(target_width, target_height),
-                   0, 0, scale_flag);
+                   0, 0, opencv_interpolation_mode);
         output_width = target_width;
         output_height = target_height;
       }
@@ -514,17 +545,17 @@ absl::Status ImageTransformationCalculator::RenderCpu(CalculatorContext* cc) {
     cv::warpAffine(input_mat, rotated_mat, rotation_mat, rotated_size);
   } else {
     switch (rotation_) {
-      case mediapipe::RotationMode_Mode_UNKNOWN:
-      case mediapipe::RotationMode_Mode_ROTATION_0:
+      case mediapipe::RotationMode::UNKNOWN:
+      case mediapipe::RotationMode::ROTATION_0:
         rotated_mat = input_mat;
         break;
-      case mediapipe::RotationMode_Mode_ROTATION_90:
+      case mediapipe::RotationMode::ROTATION_90:
         cv::rotate(input_mat, rotated_mat, cv::ROTATE_90_COUNTERCLOCKWISE);
         break;
-      case mediapipe::RotationMode_Mode_ROTATION_180:
+      case mediapipe::RotationMode::ROTATION_180:
         cv::rotate(input_mat, rotated_mat, cv::ROTATE_180);
         break;
-      case mediapipe::RotationMode_Mode_ROTATION_270:
+      case mediapipe::RotationMode::ROTATION_270:
         cv::rotate(input_mat, rotated_mat, cv::ROTATE_90_CLOCKWISE);
         break;
     }
@@ -561,7 +592,7 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
   ComputeOutputDimensions(input_width, input_height, &output_width,
                           &output_height);
 
-  if (scale_mode_ == mediapipe::ScaleMode_Mode_FILL_AND_CROP) {
+  if (scale_mode_ == mediapipe::ScaleMode::FILL_AND_CROP) {
     const float scale =
         std::min(static_cast<float>(output_width_) / input_width,
                  static_cast<float>(output_height_) / input_height);
@@ -628,6 +659,12 @@ absl::Status ImageTransformationCalculator::RenderGpu(CalculatorContext* cc) {
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(src1.target(), src1.name());
 
+  if (interpolation_mode_ == ImageTransformationCalculatorOptions::NEAREST) {
+    // TODO: revert texture params.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  }
+
   MP_RETURN_IF_ERROR(renderer->GlRender(
       src1.width(), src1.height(), dst.width(), dst.height(), scale_mode,
       rotation, flip_horizontally_, flip_vertically_,
@@ -652,8 +689,8 @@ void ImageTransformationCalculator::ComputeOutputDimensions(
   if (output_width_ > 0 && output_height_ > 0) {
     *output_width = output_width_;
     *output_height = output_height_;
-  } else if (rotation_ == mediapipe::RotationMode_Mode_ROTATION_90 ||
-             rotation_ == mediapipe::RotationMode_Mode_ROTATION_270) {
+  } else if (rotation_ == mediapipe::RotationMode::ROTATION_90 ||
+             rotation_ == mediapipe::RotationMode::ROTATION_270) {
     *output_width = input_height;
     *output_height = input_width;
   } else {
@@ -666,9 +703,9 @@ void ImageTransformationCalculator::ComputeOutputLetterboxPadding(
     int input_width, int input_height, int output_width, int output_height,
     std::array<float, 4>* padding) {
   padding->fill(0.f);
-  if (scale_mode_ == mediapipe::ScaleMode_Mode_FIT) {
-    if (rotation_ == mediapipe::RotationMode_Mode_ROTATION_90 ||
-        rotation_ == mediapipe::RotationMode_Mode_ROTATION_270) {
+  if (scale_mode_ == mediapipe::ScaleMode::FIT) {
+    if (rotation_ == mediapipe::RotationMode::ROTATION_90 ||
+        rotation_ == mediapipe::RotationMode::ROTATION_270) {
       std::swap(input_width, input_height);
     }
     const float input_aspect_ratio =

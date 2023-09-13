@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,10 +43,7 @@ limitations under the License.
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/core/proto/external_file.pb.h"
-
-#ifdef _WIN32
-#include "tools/cpp/runfiles/runfiles.h"
-#endif  // _WIN32
+#include "mediapipe/util/resource_util.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -94,30 +91,6 @@ ExternalFileHandler::CreateFromExternalFile(
   MP_RETURN_IF_ERROR(handler->MapExternalFile());
 
   return handler;
-}
-
-absl::StatusOr<std::string> PathToResourceAsFile(std::string path) {
-#ifndef _WIN32
-  return path;
-#else
-  std::string qualified_path = path;
-  if (absl::StartsWith(qualified_path, "./")) {
-    qualified_path = "mediapipe" + qualified_path.substr(1);
-  } else if (path[0] != '/') {
-    qualified_path = "mediapipe/" + qualified_path;
-  }
-
-  std::string error;
-  // TODO: We should ideally use `CreateForTests` when this is
-  // accessed from unit tests.
-  std::unique_ptr<::bazel::tools::cpp::runfiles::Runfiles> runfiles(
-      ::bazel::tools::cpp::runfiles::Runfiles::Create("", &error));
-  if (!runfiles) {
-    // Return the original path when Runfiles is not available (e.g. for Python)
-    return path;
-  }
-  return runfiles->Rlocation(qualified_path);
-#endif  // _WIN32
 }
 
 absl::Status ExternalFileHandler::MapExternalFile() {

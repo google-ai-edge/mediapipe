@@ -45,6 +45,7 @@ from mediapipe.python.solutions.face_mesh_connections import FACEMESH_LEFT_EYE
 from mediapipe.python.solutions.face_mesh_connections import FACEMESH_LEFT_EYEBROW
 from mediapipe.python.solutions.face_mesh_connections import FACEMESH_LEFT_IRIS
 from mediapipe.python.solutions.face_mesh_connections import FACEMESH_LIPS
+from mediapipe.python.solutions.face_mesh_connections import FACEMESH_NOSE
 from mediapipe.python.solutions.face_mesh_connections import FACEMESH_RIGHT_EYE
 from mediapipe.python.solutions.face_mesh_connections import FACEMESH_RIGHT_EYEBROW
 from mediapipe.python.solutions.face_mesh_connections import FACEMESH_RIGHT_IRIS

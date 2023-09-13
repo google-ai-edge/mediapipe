@@ -49,6 +49,7 @@ cc_library_with_tflite(
         "//mediapipe/util/tflite/operations:transform_landmarks",
         "//mediapipe/util/tflite/operations:transform_tensor_bilinear",
         "//mediapipe/util/tflite/operations:transpose_conv_bias",
+        "@com_google_absl//absl/log:absl_check",
         "@org_tensorflow//tensorflow/lite:builtin_op_data",
     ],
     # For using the symbol `MediaPipe_RegisterTfLiteOpResolver` in Python
@@ -67,17 +68,20 @@ cc_library(
     ],
 )
 
-# TODO: Re-evaluate which of these libraries we can avoid making
-# cc_library_with_tflite and can be changed back to cc_library.
+# This target has an implementation dependency on TFLite/TFLite-in-GMSCore,
+# but it does not have any API dependency on TFLite-in-GMSCore.
 cc_library_with_tflite(
     name = "op_resolver",
     srcs = ["op_resolver.cc"],
     hdrs = ["op_resolver.h"],
     tflite_deps = [
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
+        "@org_tensorflow//tensorflow/lite/c:c_api",
+        "@org_tensorflow//tensorflow/lite/c:c_api_experimental",  # For c_api_opaque.h
+        "@org_tensorflow//tensorflow/lite/c:common",  # For builtin_op_data.h
     ],
     deps = [
-        "@org_tensorflow//tensorflow/lite:builtin_op_data",
+        "@org_tensorflow//tensorflow/lite:builtin_ops",
     ],
 )
 
@@ -97,6 +101,7 @@ cc_library(
                "//mediapipe:ios": [],
                "//mediapipe:macos": [],
                "//conditions:default": [
+                   "//mediapipe/framework/port:logging",
                    "//mediapipe/framework/port:ret_check",
                    "//mediapipe/framework/port:status",
                    "//mediapipe/framework/port:statusor",
@@ -124,9 +129,7 @@ cc_library_with_tflite(
     name = "tflite_model_loader",
     srcs = ["tflite_model_loader.cc"],
     hdrs = ["tflite_model_loader.h"],
-    tflite_deps = [
-        "@org_tensorflow//tensorflow/lite:framework_stable",
-    ],
+    tflite_deps = ["@org_tensorflow//tensorflow/lite:framework_stable"],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework/api2:packet",

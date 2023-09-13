@@ -9,7 +9,10 @@ licenses(["notice"])
 
 mediapipe_ts_library(
     name = "interactive_segmenter",
-    srcs = ["interactive_segmenter.ts"],
+    srcs = [
+        "interactive_segmenter.ts",
+        "interactive_segmenter_result.ts",
+    ],
     deps = [
         ":interactive_segmenter_types",
         "//mediapipe/framework:calculator_jspb_proto",
@@ -19,7 +22,9 @@ mediapipe_ts_library(
         "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_jspb_proto",
         "//mediapipe/tasks/web/components/containers:keypoint",
         "//mediapipe/tasks/web/core",
+        "//mediapipe/tasks/web/core:classifier_options",
         "//mediapipe/tasks/web/vision/core:image_processing_options",
+        "//mediapipe/tasks/web/vision/core:mask",
         "//mediapipe/tasks/web/vision/core:types",
         "//mediapipe/tasks/web/vision/core:vision_task_runner",
         "//mediapipe/util:color_jspb_proto",
@@ -30,13 +35,9 @@ mediapipe_ts_library(
 
 mediapipe_ts_declaration(
     name = "interactive_segmenter_types",
-    srcs = [
-        "interactive_segmenter_options.d.ts",
-        "interactive_segmenter_result.d.ts",
-    ],
+    srcs = ["interactive_segmenter_options.d.ts"],
     deps = [
         "//mediapipe/tasks/web/core",
-        "//mediapipe/tasks/web/core:classifier_options",
         "//mediapipe/tasks/web/vision/core:vision_task_options",
     ],
 )
@@ -49,10 +50,10 @@ mediapipe_ts_library(
     ],
     deps = [
         ":interactive_segmenter",
-        ":interactive_segmenter_types",
         "//mediapipe/framework:calculator_jspb_proto",
         "//mediapipe/tasks/web/core",
         "//mediapipe/tasks/web/core:task_runner_test_utils",
+        "//mediapipe/tasks/web/vision/core:mask",
         "//mediapipe/util:render_data_jspb_proto",
         "//mediapipe/web/graph_runner:graph_runner_image_lib_ts",
     ],

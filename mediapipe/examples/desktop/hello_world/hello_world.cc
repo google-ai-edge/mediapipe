@@ -14,8 +14,9 @@
 //
 // A simple example to print out "Hello World!" from a MediaPipe graph.
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator_graph.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
 
@@ -54,7 +55,7 @@ absl::Status PrintHelloWorld() {
   mediapipe::Packet packet;
   // Get the output packets string.
   while (poller.Next(&packet)) {
-    LOG(INFO) << packet.Get<std::string>();
+    ABSL_LOG(INFO) << packet.Get<std::string>();
   }
   return graph.WaitUntilDone();
 }
@@ -62,6 +63,6 @@ absl::Status PrintHelloWorld() {
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
-  CHECK(mediapipe::PrintHelloWorld().ok());
+  ABSL_CHECK(mediapipe::PrintHelloWorld().ok());
   return 0;
 }

@@ -22,10 +22,11 @@
 #include <utility>
 
 #include "absl/base/dynamic_annotations.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_builder.h"
@@ -59,27 +60,27 @@ static void SetThreadName(const char* name) {
   thread_name[sizeof(thread_name) - 1] = '\0';
   int res = pthread_setname_np(pthread_self(), thread_name);
   if (res != 0) {
-    LOG_FIRST_N(INFO, 1) << "Can't set pthread names: name: \"" << name
-                         << "\"; error: " << res;
+    ABSL_LOG_FIRST_N(INFO, 1)
+        << "Can't set pthread names: name: \"" << name << "\"; error: " << res;
   }
 #elif __APPLE__
   pthread_setname_np(name);
 #endif
-  ANNOTATE_THREAD_NAME(name);
+  ABSL_ANNOTATE_THREAD_NAME(name);
 }
 
 GlContext::DedicatedThread::DedicatedThread() {
-  CHECK_EQ(pthread_create(&gl_thread_id_, nullptr, ThreadBody, this), 0);
+  ABSL_CHECK_EQ(pthread_create(&gl_thread_id_, nullptr, ThreadBody, this), 0);
 }
 
 GlContext::DedicatedThread::~DedicatedThread() {
   if (IsCurrentThread()) {
-    CHECK(self_destruct_);
-    CHECK_EQ(pthread_detach(gl_thread_id_), 0);
+    ABSL_CHECK(self_destruct_);
+    ABSL_CHECK_EQ(pthread_detach(gl_thread_id_), 0);
   } else {
     // Give an invalid job to signal termination.
     PutJob({});
-    CHECK_EQ(pthread_join(gl_thread_id_, nullptr), 0);
+    ABSL_CHECK_EQ(pthread_join(gl_thread_id_, nullptr), 0);
   }
 }
 
@@ -168,7 +169,7 @@ void GlContext::DedicatedThread::RunWithoutWaiting(GlVoidFunction gl_func) {
   // non-calculator tasks in the presence of GL source calculators, calculator
   // tasks must always be scheduled as new tasks, or another solution needs to
   // be set up to avoid starvation. See b/78522434.
-  CHECK(gl_func);
+  ABSL_CHECK(gl_func);
   PutJob(std::move(gl_func));
 }
 
@@ -236,9 +237,10 @@ absl::Status GlContext::GetGlExtensions() {
   // platforms to avoid possible undefined symbol or runtime errors.
 #if (GL_VERSION_3_0 || GL_ES_VERSION_3_0) && !defined(__EMSCRIPTEN__)
   if (!SymbolAvailable(&glGetStringi)) {
-    LOG(ERROR) << "GL major version > 3.0 indicated, but glGetStringi not "
-               << "defined. Falling back to deprecated GL extensions querying "
-               << "method.";
+    ABSL_LOG(ERROR)
+        << "GL major version > 3.0 indicated, but glGetStringi not "
+        << "defined. Falling back to deprecated GL extensions querying "
+        << "method.";
     return absl::InternalError("glGetStringi not defined, but queried");
   }
   int num_extensions = 0;
@@ -269,7 +271,7 @@ absl::Status GlContext::GetGlExtensionsCompat() {
 
   const GLubyte* res = glGetString(GL_EXTENSIONS);
   if (glGetError() != 0 || res == nullptr) {
-    LOG(ERROR) << "Error querying for GL extensions";
+    ABSL_LOG(ERROR) << "Error querying for GL extensions";
     return absl::InternalError("Error querying for GL extensions");
   }
   const char* signed_res = reinterpret_cast<const char*>(res);
@@ -297,7 +299,7 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
     } else {
       // This may happen when using SwiftShader, but the numeric versions are
       // available and will be used instead.
-      LOG(WARNING) << "failed to get GL_VERSION string";
+      ABSL_LOG(WARNING) << "failed to get GL_VERSION string";
     }
 
     // We will decide later whether we want to use the version numbers we query
@@ -315,8 +317,8 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
       // parse the version string.
       if (!ParseGlVersion(version_string, &gl_major_version_,
                           &gl_minor_version_)) {
-        LOG(WARNING) << "invalid GL_VERSION format: '" << version_string
-                     << "'; assuming 2.0";
+        ABSL_LOG(WARNING) << "invalid GL_VERSION format: '" << version_string
+                          << "'; assuming 2.0";
         gl_major_version_ = 2;
         gl_minor_version_ = 0;
       }
@@ -330,17 +332,19 @@ absl::Status GlContext::FinishInitialization(bool create_thread) {
     // for more details.
     if (gl_major_version_from_context_creation > 0 &&
         gl_major_version_ != gl_major_version_from_context_creation) {
-      LOG(WARNING) << "Requested a context with major GL version "
-                   << gl_major_version_from_context_creation
-                   << " but context reports major version " << gl_major_version_
-                   << ". Setting to " << gl_major_version_from_context_creation
-                   << ".0";
+      ABSL_LOG(WARNING) << "Requested a context with major GL version "
+                        << gl_major_version_from_context_creation
+                        << " but context reports major version "
+                        << gl_major_version_ << ". Setting to "
+                        << gl_major_version_from_context_creation << ".0";
       gl_major_version_ = gl_major_version_from_context_creation;
       gl_minor_version_ = 0;
     }
 
-    LOG(INFO) << "GL version: " << gl_major_version_ << "." << gl_minor_version_
-              << " (" << version_string << ")";
+    ABSL_LOG(INFO) << "GL version: " << gl_major_version_ << "."
+                   << gl_minor_version_ << " (" << version_string
+                   << "), renderer: " << glGetString(GL_RENDERER);
+
     {
       auto status = GetGlExtensions();
       if (!status.ok()) {
@@ -387,7 +391,7 @@ GlContext::~GlContext() {
       clear_attachments();
       return ExitContext(nullptr);
     });
-    LOG_IF(ERROR, !status.ok())
+    ABSL_LOG_IF(ERROR, !status.ok())
         << "Failed to deactivate context on thread: " << status;
     if (thread_->IsCurrentThread()) {
       thread_.release()->SelfDestruct();
@@ -401,7 +405,7 @@ GlContext::~GlContext() {
         clear_attachments();
         return absl::OkStatus();
       });
-      LOG_IF(ERROR, !status.ok()) << status;
+      ABSL_LOG_IF(ERROR, !status.ok()) << status;
     }
   }
   DestroyContext();
@@ -466,7 +470,7 @@ void GlContext::RunWithoutWaiting(GlVoidFunction gl_func) {
       return absl::OkStatus();
     });
     if (!status.ok()) {
-      LOG(ERROR) << "Error in RunWithoutWaiting: " << status;
+      ABSL_LOG(ERROR) << "Error in RunWithoutWaiting: " << status;
     }
   }
 }
@@ -492,10 +496,10 @@ absl::Status GlContext::SwitchContext(ContextBinding* saved_context,
   }
   // Check that the context object is consistent with the native context.
   if (old_context_obj && saved_context) {
-    DCHECK(old_context_obj->context_ == saved_context->context);
+    ABSL_DCHECK(old_context_obj->context_ == saved_context->context);
   }
   if (new_context_obj) {
-    DCHECK(new_context_obj->context_ == new_context.context);
+    ABSL_DCHECK(new_context_obj->context_ == new_context.context);
   }
 
   if (new_context_obj && (old_context_obj == new_context_obj)) {
@@ -535,7 +539,7 @@ GlContext::ContextBinding GlContext::ThisContextBinding() {
 }
 
 absl::Status GlContext::EnterContext(ContextBinding* saved_context) {
-  DCHECK(HasContext());
+  ABSL_DCHECK(HasContext());
   return SwitchContext(saved_context, ThisContextBinding());
 }
 
@@ -846,7 +850,7 @@ bool GlContext::IsAnyContextCurrent() {
 std::shared_ptr<GlSyncPoint>
 GlContext::CreateSyncTokenForCurrentExternalContext(
     const std::shared_ptr<GlContext>& delegate_graph_context) {
-  CHECK(delegate_graph_context);
+  ABSL_CHECK(delegate_graph_context);
   if (!IsAnyContextCurrent()) return nullptr;
   if (delegate_graph_context->ShouldUseFenceSync()) {
     return std::shared_ptr<GlSyncPoint>(
@@ -897,7 +901,7 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
     // from the GlContext, and we must wait for gl_finish_count_ to pass it.
     // Therefore, we need to do at most one more glFinish call. This DCHECK
     // is used for documentation and sanity-checking purposes.
-    DCHECK(gl_finish_count_ >= count_to_pass);
+    ABSL_DCHECK(gl_finish_count_ >= count_to_pass);
     if (gl_finish_count_ == count_to_pass) {
       glFinish();
       GlFinishCalled();
@@ -918,7 +922,7 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
     // it can signal the right condition variable if it is asked to do a
     // glFinish.
     absl::MutexLock other_lock(&other->mutex_);
-    DCHECK(!other->context_waiting_on_);
+    ABSL_DCHECK(!other->context_waiting_on_);
     other->context_waiting_on_ = this;
   }
   // We do not schedule this action using Run because we don't necessarily
@@ -962,12 +966,12 @@ void GlContext::WaitForGlFinishCountPast(int64_t count_to_pass) {
 }
 
 void GlContext::WaitSyncToken(const std::shared_ptr<GlSyncPoint>& token) {
-  CHECK(token);
+  ABSL_CHECK(token);
   token->Wait();
 }
 
 bool GlContext::SyncTokenIsReady(const std::shared_ptr<GlSyncPoint>& token) {
-  CHECK(token);
+  ABSL_CHECK(token);
   return token->IsReady();
 }
 
@@ -980,7 +984,7 @@ bool GlContext::CheckForGlErrors() { return CheckForGlErrors(false); }
 bool GlContext::CheckForGlErrors(bool force) {
 #if UNSAFE_EMSCRIPTEN_SKIP_GL_ERROR_HANDLING
   if (!force) {
-    LOG_FIRST_N(WARNING, 1) << "OpenGL error checking is disabled";
+    ABSL_LOG_FIRST_N(WARNING, 1) << "OpenGL error checking is disabled";
     return false;
   }
 #endif
@@ -992,23 +996,23 @@ bool GlContext::CheckForGlErrors(bool force) {
     had_error = true;
     switch (error) {
       case GL_INVALID_ENUM:
-        LOG(INFO) << "Found unchecked GL error: GL_INVALID_ENUM";
+        ABSL_LOG(INFO) << "Found unchecked GL error: GL_INVALID_ENUM";
         break;
       case GL_INVALID_VALUE:
-        LOG(INFO) << "Found unchecked GL error: GL_INVALID_VALUE";
+        ABSL_LOG(INFO) << "Found unchecked GL error: GL_INVALID_VALUE";
         break;
       case GL_INVALID_OPERATION:
-        LOG(INFO) << "Found unchecked GL error: GL_INVALID_OPERATION";
+        ABSL_LOG(INFO) << "Found unchecked GL error: GL_INVALID_OPERATION";
         break;
       case GL_INVALID_FRAMEBUFFER_OPERATION:
-        LOG(INFO)
+        ABSL_LOG(INFO)
             << "Found unchecked GL error: GL_INVALID_FRAMEBUFFER_OPERATION";
         break;
       case GL_OUT_OF_MEMORY:
-        LOG(INFO) << "Found unchecked GL error: GL_OUT_OF_MEMORY";
+        ABSL_LOG(INFO) << "Found unchecked GL error: GL_OUT_OF_MEMORY";
         break;
       default:
-        LOG(INFO) << "Found unchecked GL error: UNKNOWN ERROR";
+        ABSL_LOG(INFO) << "Found unchecked GL error: UNKNOWN ERROR";
         break;
     }
   }
@@ -1020,16 +1024,16 @@ void GlContext::LogUncheckedGlErrors(bool had_gl_errors) {
     // TODO: ideally we would print a backtrace here, or at least
     // the name of the current calculator, to make it easier to find the
     // culprit. In practice, getting a backtrace from Android without crashing
-    // is nearly impossible, so screw it. Just change this to LOG(FATAL) when
-    // you want to debug.
-    LOG(WARNING) << "Ignoring unchecked GL error.";
+    // is nearly impossible, so screw it. Just change this to ABSL_LOG(FATAL)
+    // when you want to debug.
+    ABSL_LOG(WARNING) << "Ignoring unchecked GL error.";
   }
 }
 
 const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
                                                      int plane) {
   std::shared_ptr<GlContext> ctx = GlContext::GetCurrent();
-  CHECK(ctx != nullptr);
+  ABSL_CHECK(ctx != nullptr);
   return GlTextureInfoForGpuBufferFormat(format, plane, ctx->GetGlVersion());
 }
 

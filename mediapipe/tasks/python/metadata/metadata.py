@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import warnings
 import zipfile
 
 import flatbuffers
+
 from mediapipe.tasks.cc.metadata.python import _pywrap_metadata_version
 from mediapipe.tasks.metadata import metadata_schema_py_generated as _metadata_fb
 from mediapipe.tasks.metadata import schema_py_generated as _schema_fb
@@ -736,7 +737,7 @@ class MetadataDisplayer(object):
     metadata_buffer = get_metadata_buffer(model_buffer)
     if not metadata_buffer:
       raise ValueError("The model does not have metadata.")
-    associated_file_list = cls._parse_packed_associted_file_list(model_buffer)
+    associated_file_list = cls._parse_packed_associated_file_list(model_buffer)
     return cls(model_buffer, metadata_buffer, associated_file_list)
 
   def get_associated_file_buffer(self, filename):
@@ -774,8 +775,8 @@ class MetadataDisplayer(object):
     """
     return copy.deepcopy(self._associated_file_list)
 
-  @staticmethod
-  def _parse_packed_associted_file_list(model_buf):
+  @classmethod
+  def _parse_packed_associated_file_list(cls, model_buf):
     """Gets a list of associated files packed to the model file.
 
     Args:

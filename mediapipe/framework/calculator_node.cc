@@ -19,6 +19,8 @@
 #include <unordered_map>
 #include <utility>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
@@ -59,7 +61,7 @@ const PacketType* GetPacketType(const PacketTypeSet& packet_type_set,
   } else {
     id = packet_type_set.GetId(tag, 0);
   }
-  CHECK(id.IsValid()) << "Internal mediapipe error.";
+  ABSL_CHECK(id.IsValid()) << "Internal mediapipe error.";
   return &packet_type_set.Get(id);
 }
 
@@ -341,7 +343,7 @@ absl::Status CalculatorNode::ConnectShardsToStreams(
 
 void CalculatorNode::SetExecutor(const std::string& executor) {
   absl::MutexLock status_lock(&status_mutex_);
-  CHECK_LT(status_, kStateOpened);
+  ABSL_CHECK_LT(status_, kStateOpened);
   executor_ = executor;
 }
 
@@ -366,7 +368,7 @@ bool CalculatorNode::Closed() const {
 }
 
 void CalculatorNode::SetMaxInputStreamQueueSize(int max_queue_size) {
-  CHECK(input_stream_handler_);
+  ABSL_CHECK(input_stream_handler_);
   input_stream_handler_->SetMaxQueueSize(max_queue_size);
 }
 
@@ -506,7 +508,7 @@ absl::Status CalculatorNode::OpenNode() {
                                                             Timestamp(0));
   }
 
-  LOG_IF(FATAL, result == tool::StatusStop()) << absl::Substitute(
+  ABSL_LOG_IF(FATAL, result == tool::StatusStop()) << absl::Substitute(
       "Open() on node \"$0\" returned tool::StatusStop() which should only be "
       "used to signal that a source node is done producing data.",
       DebugName());
@@ -519,7 +521,7 @@ absl::Status CalculatorNode::OpenNode() {
     offset_enabled = offset_enabled || stream->Spec()->offset_enabled;
   }
   if (offset_enabled && input_stream_handler_->SyncSetCount() > 1) {
-    LOG(WARNING) << absl::Substitute(
+    ABSL_LOG(WARNING) << absl::Substitute(
         "Calculator node \"$0\" is configured with multiple input sync-sets "
         "and an output timestamp-offset, which will often conflict due to "
         "the order of packet arrival.  With multiple input sync-sets, use "
@@ -539,7 +541,7 @@ absl::Status CalculatorNode::OpenNode() {
 
 void CalculatorNode::ActivateNode() {
   absl::MutexLock status_lock(&status_mutex_);
-  CHECK_EQ(status_, kStateOpened) << DebugName();
+  ABSL_CHECK_EQ(status_, kStateOpened) << DebugName();
   status_ = kStateActive;
 }
 
@@ -601,7 +603,7 @@ absl::Status CalculatorNode::CloseNode(const absl::Status& graph_status,
   }
   needs_to_close_ = false;
 
-  LOG_IF(FATAL, result == tool::StatusStop()) << absl::Substitute(
+  ABSL_LOG_IF(FATAL, result == tool::StatusStop()) << absl::Substitute(
       "Close() on node \"$0\" returned tool::StatusStop() which should only be "
       "used to signal that a source node is done producing data.",
       DebugName());
@@ -694,8 +696,8 @@ void CalculatorNode::InputStreamHeadersReady() {
   bool ready_for_open = false;
   {
     absl::MutexLock lock(&status_mutex_);
-    CHECK_EQ(status_, kStatePrepared) << DebugName();
-    CHECK(!input_stream_headers_ready_called_);
+    ABSL_CHECK_EQ(status_, kStatePrepared) << DebugName();
+    ABSL_CHECK(!input_stream_headers_ready_called_);
     input_stream_headers_ready_called_ = true;
     input_stream_headers_ready_ = true;
     ready_for_open = input_side_packets_ready_;
@@ -709,8 +711,8 @@ void CalculatorNode::InputSidePacketsReady() {
   bool ready_for_open = false;
   {
     absl::MutexLock lock(&status_mutex_);
-    CHECK_EQ(status_, kStatePrepared) << DebugName();
-    CHECK(!input_side_packets_ready_called_);
+    ABSL_CHECK_EQ(status_, kStatePrepared) << DebugName();
+    ABSL_CHECK(!input_side_packets_ready_called_);
     input_side_packets_ready_called_ = true;
     input_side_packets_ready_ = true;
     ready_for_open = input_stream_headers_ready_;
@@ -760,7 +762,7 @@ void CalculatorNode::EndScheduling() {
       return;
     }
     --current_in_flight_;
-    CHECK_GE(current_in_flight_, 0);
+    ABSL_CHECK_GE(current_in_flight_, 0);
 
     if (scheduling_state_ == kScheduling) {
       // Changes the state to scheduling pending if another thread is doing the
@@ -790,7 +792,7 @@ std::string CalculatorNode::DebugInputStreamNames() const {
 }
 
 std::string CalculatorNode::DebugName() const {
-  DCHECK(calculator_state_);
+  ABSL_DCHECK(calculator_state_);
   return calculator_state_->NodeName();
 }
 
@@ -893,9 +895,9 @@ absl::Status CalculatorNode::ProcessNode(
         // open input streams for Process(). So this node needs to be closed
         // too.
         // If the streams are closed, there shouldn't be more input.
-        CHECK_EQ(calculator_context_manager_.NumberOfContextTimestamps(
-                     *calculator_context),
-                 1);
+        ABSL_CHECK_EQ(calculator_context_manager_.NumberOfContextTimestamps(
+                          *calculator_context),
+                      1);
         return CloseNode(absl::OkStatus(), /*graph_run_ended=*/false);
       } else {
         RET_CHECK_FAIL()
@@ -910,7 +912,7 @@ absl::Status CalculatorNode::ProcessNode(
 void CalculatorNode::SetQueueSizeCallbacks(
     InputStreamManager::QueueSizeCallback becomes_full_callback,
     InputStreamManager::QueueSizeCallback becomes_not_full_callback) {
-  CHECK(input_stream_handler_);
+  ABSL_CHECK(input_stream_handler_);
   input_stream_handler_->SetQueueSizeCallbacks(
       std::move(becomes_full_callback), std::move(becomes_not_full_callback));
 }

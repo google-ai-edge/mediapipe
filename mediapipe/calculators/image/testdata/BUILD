@@ -18,6 +18,7 @@ licenses(["notice"])
 filegroup(
     name = "test_images",
     srcs = [
+        "binary_mask.png",
         "dino.jpg",
         "dino_quality_50.jpg",
         "dino_quality_80.jpg",

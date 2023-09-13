@@ -14,11 +14,12 @@
 
 #include "mediapipe/framework/formats/location_opencv.h"
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/formats/annotation/rasterization.pb.h"
 #include "mediapipe/framework/formats/location.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/statusor.h"
 
@@ -26,7 +27,7 @@ namespace mediapipe {
 
 namespace {
 Rectangle_i MaskToRectangle(const LocationData& location_data) {
-  CHECK(location_data.mask().has_rasterization());
+  ABSL_CHECK(location_data.mask().has_rasterization());
   const auto& rasterization = location_data.mask().rasterization();
   if (rasterization.interval_size() == 0) {
     return Rectangle_i(0, 0, 0, 0);
@@ -85,7 +86,7 @@ Location CreateBBoxLocation(const cv::Rect& rect) {
 
 std::unique_ptr<cv::Mat> GetCvMask(const Location& location) {
   const auto location_data = location.ConvertToProto();
-  CHECK_EQ(LocationData::MASK, location_data.format());
+  ABSL_CHECK_EQ(LocationData::MASK, location_data.format());
   const auto& mask = location_data.mask();
   std::unique_ptr<cv::Mat> mat(
       new cv::Mat(mask.height(), mask.width(), CV_8UC1, cv::Scalar(0)));
@@ -108,7 +109,7 @@ std::unique_ptr<cv::Mat> ConvertToCvMask(const Location& location,
           image_width, image_height,
           location.ConvertToBBox<Rectangle_i>(image_width, image_height));
       if (!status_or_mat.ok()) {
-        LOG(ERROR) << status_or_mat.status().message();
+        ABSL_LOG(ERROR) << status_or_mat.status().message();
         return nullptr;
       }
       return std::move(status_or_mat).value();
@@ -120,15 +121,15 @@ std::unique_ptr<cv::Mat> ConvertToCvMask(const Location& location,
 // This should never happen; a new LocationData::Format enum was introduced
 // without updating this function's switch(...) to support it.
 #if !defined(MEDIAPIPE_MOBILE) && !defined(MEDIAPIPE_LITE)
-  LOG(ERROR) << "Location's LocationData has format not supported by "
-                "Location::ConvertToMask: "
-             << location_data.DebugString();
+  ABSL_LOG(ERROR) << "Location's LocationData has format not supported by "
+                     "Location::ConvertToMask: "
+                  << location_data.DebugString();
 #endif
   return nullptr;
 }
 
 void EnlargeLocation(Location& location, const float factor) {
-  CHECK_GT(factor, 0.0f);
+  ABSL_CHECK_GT(factor, 0.0f);
   if (factor == 1.0f) return;
   auto location_data = location.ConvertToProto();
   switch (location_data.format()) {
@@ -183,7 +184,7 @@ void EnlargeLocation(Location& location, const float factor) {
 
 template <typename T>
 Location CreateCvMaskLocation(const cv::Mat_<T>& mask) {
-  CHECK_EQ(1, mask.channels())
+  ABSL_CHECK_EQ(1, mask.channels())
       << "The specified cv::Mat mask should be single-channel.";
 
   LocationData location_data;

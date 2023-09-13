@@ -41,6 +41,7 @@ cc_test(
         "//mediapipe/framework/formats:tensor",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )
 
@@ -86,7 +87,7 @@ cc_test(
     deps = [
         ":buffer",
         "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -96,7 +97,7 @@ cc_test(
     deps = [
         ":buffer",
         "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )
 
@@ -106,6 +107,6 @@ cc_test(
     deps = [
         ":buffer",
         "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:absl_log",
     ],
 )

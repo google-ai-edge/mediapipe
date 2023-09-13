@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ limitations under the License.
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/port/file_helpers.h"
@@ -57,8 +58,9 @@ constexpr float kKeypointErrorThreshold = 1e-2;
 
 FaceDetectorResult GetExpectedFaceDetectorResult(absl::string_view file_name) {
   mediapipe::Detection detection;
-  CHECK_OK(GetTextProto(file::JoinPath("./", kTestDataDirectory, file_name),
-                        &detection, Defaults()))
+  ABSL_CHECK_OK(
+      GetTextProto(file::JoinPath("./", kTestDataDirectory, file_name),
+                   &detection, Defaults()))
       << "Expected face detection result does not exist.";
   return components::containers::ConvertToDetectionResult({detection});
 }

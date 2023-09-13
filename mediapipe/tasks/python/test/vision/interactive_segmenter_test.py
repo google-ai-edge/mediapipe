@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,12 +30,12 @@ from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import interactive_segmenter
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 
+InteractiveSegmenterResult = interactive_segmenter.InteractiveSegmenterResult
 _BaseOptions = base_options_module.BaseOptions
 _Image = image_module.Image
 _ImageFormat = image_frame.ImageFormat
 _NormalizedKeypoint = keypoint_module.NormalizedKeypoint
 _Rect = rect.Rect
-_OutputType = interactive_segmenter.InteractiveSegmenterOptions.OutputType
 _InteractiveSegmenter = interactive_segmenter.InteractiveSegmenter
 _InteractiveSegmenterOptions = interactive_segmenter.InteractiveSegmenterOptions
 _RegionOfInterest = interactive_segmenter.RegionOfInterest
@@ -200,15 +200,16 @@ class InteractiveSegmenterTest(parameterized.TestCase):
       raise ValueError('model_file_type is invalid.')
 
     options = _InteractiveSegmenterOptions(
-        base_options=base_options, output_type=_OutputType.CATEGORY_MASK
+        base_options=base_options,
+        output_category_mask=True,
+        output_confidence_masks=False,
     )
     segmenter = _InteractiveSegmenter.create_from_options(options)
 
     # Performs image segmentation on the input.
     roi = _RegionOfInterest(format=roi_format, keypoint=keypoint)
-    category_masks = segmenter.segment(self.test_image, roi)
-    self.assertLen(category_masks, 1)
-    category_mask = category_masks[0]
+    segmentation_result = segmenter.segment(self.test_image, roi)
+    category_mask = segmentation_result.category_mask
     result_pixels = category_mask.numpy_view().flatten()
 
     # Check if data type of `category_mask` is correct.
@@ -219,7 +220,7 @@ class InteractiveSegmenterTest(parameterized.TestCase):
 
     self.assertTrue(
         _similar_to_uint8_mask(
-            category_masks[0], test_seg_image, similarity_threshold
+            category_mask, test_seg_image, similarity_threshold
         ),
         (
             'Number of pixels in the candidate mask differing from that of the'
@@ -254,12 +255,15 @@ class InteractiveSegmenterTest(parameterized.TestCase):
 
     # Run segmentation on the model in CONFIDENCE_MASK mode.
     options = _InteractiveSegmenterOptions(
-        base_options=base_options, output_type=_OutputType.CONFIDENCE_MASK
+        base_options=base_options,
+        output_category_mask=False,
+        output_confidence_masks=True,
     )
 
     with _InteractiveSegmenter.create_from_options(options) as segmenter:
       # Perform segmentation
-      confidence_masks = segmenter.segment(self.test_image, roi)
+      segmentation_result = segmenter.segment(self.test_image, roi)
+      confidence_masks = segmentation_result.confidence_masks
 
       # Check if confidence mask shape is correct.
       self.assertLen(
@@ -287,15 +291,18 @@ class InteractiveSegmenterTest(parameterized.TestCase):
 
     # Run segmentation on the model in CONFIDENCE_MASK mode.
     options = _InteractiveSegmenterOptions(
-        base_options=base_options, output_type=_OutputType.CONFIDENCE_MASK
+        base_options=base_options,
+        output_category_mask=False,
+        output_confidence_masks=True,
     )
 
     with _InteractiveSegmenter.create_from_options(options) as segmenter:
       # Perform segmentation
       image_processing_options = _ImageProcessingOptions(rotation_degrees=-90)
-      confidence_masks = segmenter.segment(
+      segmentation_result = segmenter.segment(
           self.test_image, roi, image_processing_options
       )
+      confidence_masks = segmentation_result.confidence_masks
 
       # Check if confidence mask shape is correct.
       self.assertLen(
@@ -314,7 +321,9 @@ class InteractiveSegmenterTest(parameterized.TestCase):
 
     # Run segmentation on the model in CONFIDENCE_MASK mode.
     options = _InteractiveSegmenterOptions(
-        base_options=base_options, output_type=_OutputType.CONFIDENCE_MASK
+        base_options=base_options,
+        output_category_mask=False,
+        output_confidence_masks=True,
     )
 
     with self.assertRaisesRegex(

@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 package com.google.mediapipe.tasks.vision.facelandmarker;
 
-import com.google.auto.value.AutoValue;
+import com.google.mediapipe.tasks.components.containers.Connection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -25,20 +25,8 @@ import java.util.stream.Stream;
 /** Face landmarks connection constants. */
 final class FaceLandmarksConnections {
 
-  /** Value class representing face landmarks connection. */
-  @AutoValue
-  public abstract static class Connection {
-    static Connection create(int start, int end) {
-      return new AutoValue_FaceLandmarksConnections_Connection(start, end);
-    }
-
-    public abstract int start();
-
-    public abstract int end();
-  }
-
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> FACE_LANDMARKS_LIPS =
+  static final Set<Connection> FACE_LANDMARKS_LIPS =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
@@ -84,7 +72,7 @@ final class FaceLandmarksConnections {
                   Connection.create(415, 308))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> FACE_LANDMARKS_LEFT_EYE =
+  static final Set<Connection> FACE_LANDMARKS_LEFT_EYE =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
@@ -106,7 +94,7 @@ final class FaceLandmarksConnections {
                   Connection.create(398, 362))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> FACE_LANDMARKS_LEFT_EYE_BROW =
+  static final Set<Connection> FACE_LANDMARKS_LEFT_EYE_BROW =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
@@ -120,7 +108,7 @@ final class FaceLandmarksConnections {
                   Connection.create(296, 336))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> FACE_LANDMARKS_LEFT_IRIS =
+  static final Set<Connection> FACE_LANDMARKS_LEFT_IRIS =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
@@ -130,7 +118,7 @@ final class FaceLandmarksConnections {
                   Connection.create(477, 474))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> FACE_LANDMARKS_RIGHT_EYE =
+  static final Set<Connection> FACE_LANDMARKS_RIGHT_EYE =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
@@ -152,7 +140,7 @@ final class FaceLandmarksConnections {
                   Connection.create(173, 133))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> FACE_LANDMARKS_RIGHT_EYE_BROW =
+  static final Set<Connection> FACE_LANDMARKS_RIGHT_EYE_BROW =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
@@ -166,7 +154,7 @@ final class FaceLandmarksConnections {
                   Connection.create(66, 107))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> FACE_LANDMARKS_RIGHT_IRIS =
+  static final Set<Connection> FACE_LANDMARKS_RIGHT_IRIS =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
@@ -176,7 +164,7 @@ final class FaceLandmarksConnections {
                   Connection.create(472, 469))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> FACE_LANDMARKS_FACE_OVAL =
+  static final Set<Connection> FACE_LANDMARKS_FACE_OVAL =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(
@@ -218,7 +206,7 @@ final class FaceLandmarksConnections {
                   Connection.create(109, 10))));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> FACE_LANDMARKS_CONNECTORS =
+  static final Set<Connection> FACE_LANDMARKS_CONNECTORS =
       Collections.unmodifiableSet(
           Stream.of(
                   FACE_LANDMARKS_LIPS.stream(),
@@ -231,7 +219,7 @@ final class FaceLandmarksConnections {
               .collect(Collectors.toSet()));
 
   @SuppressWarnings("ConstantCaseForConstants")
-  public static final Set<Connection> FACE_LANDMARKS_TESSELATION =
+  static final Set<Connection> FACE_LANDMARKS_TESSELATION =
       Collections.unmodifiableSet(
           new HashSet<>(
               Arrays.asList(

@@ -15,6 +15,7 @@
 #include "mediapipe/gpu/gpu_buffer_format.h"
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/deps/no_destructor.h"
 #include "mediapipe/framework/port/logging.h"
 
@@ -27,6 +28,12 @@ namespace mediapipe {
 #ifndef GL_HALF_FLOAT
 #define GL_HALF_FLOAT 0x140B
 #endif  // GL_HALF_FLOAT
+
+#ifdef __EMSCRIPTEN__
+#ifndef GL_HALF_FLOAT_OES
+#define GL_HALF_FLOAT_OES 0x8D61
+#endif  // GL_HALF_FLOAT_OES
+#endif  // __EMSCRIPTEN__
 
 #if !MEDIAPIPE_DISABLE_GPU
 #ifdef GL_ES_VERSION_2_0
@@ -48,6 +55,12 @@ static void AdaptGlTextureInfoForGLES2(GlTextureInfo* info) {
     case GL_RG8:
       info->gl_internal_format = info->gl_format = GL_RG_EXT;
       return;
+#ifdef __EMSCRIPTEN__
+    case GL_RGBA16F:
+      info->gl_internal_format = GL_RGBA;
+      info->gl_type = GL_HALF_FLOAT_OES;
+      return;
+#endif  // __EMSCRIPTEN__
     default:
       return;
   }
@@ -87,6 +100,10 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
 #else
                {GL_R8, GL_RED, GL_UNSIGNED_BYTE, 1},
 #endif  // TARGET_OS_OSX
+           }},
+          {GpuBufferFormat::kOneComponent8Alpha,
+           {
+               {GL_ALPHA, GL_ALPHA, GL_UNSIGNED_BYTE, 1},
            }},
           {GpuBufferFormat::kOneComponent8Red,
            {
@@ -173,16 +190,16 @@ const GlTextureInfo& GlTextureInfoForGpuBufferFormat(GpuBufferFormat format,
   }
 
   auto iter = format_info->find(format);
-  CHECK(iter != format_info->end())
+  ABSL_CHECK(iter != format_info->end())
       << "unsupported format: "
       << static_cast<std::underlying_type_t<decltype(format)>>(format);
   const auto& planes = iter->second;
 #ifndef __APPLE__
-  CHECK_EQ(planes.size(), 1)
+  ABSL_CHECK_EQ(planes.size(), 1)
       << "multiplanar formats are not supported on this platform";
 #endif
-  CHECK_GE(plane, 0) << "invalid plane number";
-  CHECK_LT(plane, planes.size()) << "invalid plane number";
+  ABSL_CHECK_GE(plane, 0) << "invalid plane number";
+  ABSL_CHECK_LT(plane, planes.size()) << "invalid plane number";
   return planes[plane];
 }
 #endif  // MEDIAPIPE_DISABLE_GPU
@@ -209,6 +226,7 @@ ImageFormat::Format ImageFormatForGpuBufferFormat(GpuBufferFormat format) {
     case GpuBufferFormat::kRGBA32:
       // TODO: this likely maps to ImageFormat::SRGBA
     case GpuBufferFormat::kGrayHalf16:
+    case GpuBufferFormat::kOneComponent8Alpha:
     case GpuBufferFormat::kOneComponent8Red:
     case GpuBufferFormat::kTwoComponent8:
     case GpuBufferFormat::kTwoComponentHalf16:

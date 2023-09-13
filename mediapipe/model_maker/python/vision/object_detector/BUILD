@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python strict binary and library compatibility macro.
 # Placeholder for internal Python strict test compatibility macro.
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe:__subpackages__"])
 
 py_library(
     name = "object_detector_import",
@@ -56,6 +54,7 @@ py_library(
     srcs = ["dataset.py"],
     deps = [
         ":dataset_util",
+        "//mediapipe/model_maker/python/core/data:cache_files",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
     ],
 )
@@ -75,6 +74,7 @@ py_test(
 py_library(
     name = "dataset_util",
     srcs = ["dataset_util.py"],
+    deps = ["//mediapipe/model_maker/python/core/data:cache_files"],
 )
 
 py_test(
@@ -86,6 +86,17 @@ py_test(
         "//mediapipe/model_maker/python/vision/core:test_utils",
         "//mediapipe/tasks/python/test:test_utils",
     ],
+)
+
+py_library(
+    name = "detection",
+    srcs = ["detection.py"],
+)
+
+py_test(
+    name = "detection_test",
+    srcs = ["detection_test.py"],
+    deps = [":detection"],
 )
 
 py_library(
@@ -116,6 +127,7 @@ py_library(
     name = "model",
     srcs = ["model.py"],
     deps = [
+        ":detection",
         ":model_options",
         ":model_spec",
     ],
@@ -163,6 +175,7 @@ py_library(
         "//mediapipe/model_maker/python/core/tasks:classifier",
         "//mediapipe/model_maker/python/core/utils:model_util",
         "//mediapipe/model_maker/python/core/utils:quantization",
+        "//mediapipe/tasks/python/metadata/metadata_writers:metadata_info",
         "//mediapipe/tasks/python/metadata/metadata_writers:metadata_writer",
         "//mediapipe/tasks/python/metadata/metadata_writers:object_detector",
     ],
@@ -175,11 +188,7 @@ py_test(
     data = [":testdata"],
     tags = ["requires-net:external"],
     deps = [
-        ":dataset",
-        ":hyperparameters",
-        ":model_spec",
-        ":object_detector",
-        ":object_detector_options",
+        ":object_detector_import",
         "//mediapipe/tasks/python/test:test_utils",
     ],
 )

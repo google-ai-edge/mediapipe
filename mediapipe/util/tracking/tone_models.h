@@ -23,8 +23,9 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/integral_types.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/vector.h"
 #include "mediapipe/util/tracking/tone_models.pb.h"
@@ -246,7 +247,7 @@ typedef MixtureToneAdapter<AffineToneModelTraits> MixtureAffineToneModelAdapter;
 template <class T>
 GainBiasModel ToneModelAdapter<GainBiasModel>::FromPointer(const T* args,
                                                            bool identity) {
-  DCHECK(args);
+  ABSL_DCHECK(args);
   GainBiasModel model;
   const float id_shift = identity ? 1.0f : 0.0f;
   model.set_gain_c1(args[0] + id_shift);
@@ -292,7 +293,7 @@ inline GainBiasModel ToneModelAdapter<GainBiasModel>::InvertChecked(
   const float det = GainBiasModelAdapter::Determinant(model);
   if (fabs(det) < 1e-10f) {
     *success = false;
-    LOG(ERROR) << "Model not invertible.";
+    ABSL_LOG(ERROR) << "Model not invertible.";
     return GainBiasModel();
   }
 
@@ -338,7 +339,7 @@ inline float ToneModelAdapter<GainBiasModel>::GetParameter(
     case 5:
       return model.bias_c3();
     default:
-      LOG(FATAL) << "Unknown parameter requested.";
+      ABSL_LOG(FATAL) << "Unknown parameter requested.";
   }
 
   return 0.0f;
@@ -346,7 +347,7 @@ inline float ToneModelAdapter<GainBiasModel>::GetParameter(
 template <class T>
 AffineToneModel ToneModelAdapter<AffineToneModel>::FromPointer(const T* args,
                                                                bool identity) {
-  DCHECK(args);
+  ABSL_DCHECK(args);
   AffineToneModel model;
   const float id_shift = identity ? 1.0f : 0.0f;
   model.set_g_00(args[0] + id_shift);
@@ -369,7 +370,7 @@ AffineToneModel ToneModelAdapter<AffineToneModel>::FromPointer(const T* args,
 template <class T>
 void ToneModelAdapter<AffineToneModel>::ToPointerPad(
     const AffineToneModel& model, bool pad_square, T* args) {
-  DCHECK(args);
+  ABSL_DCHECK(args);
   args[0] = model.g_00();
   args[1] = model.g_01();
   args[2] = model.g_02();
@@ -413,7 +414,7 @@ inline AffineToneModel ToneModelAdapter<AffineToneModel>::InvertChecked(
   cv::Mat inv_model_mat(4, 4, CV_64F, inv_data);
 
   if (cv::invert(model_mat, inv_model_mat) < 1e-10) {
-    LOG(ERROR) << "AffineToneModel not invertible, det is zero.";
+    ABSL_LOG(ERROR) << "AffineToneModel not invertible, det is zero.";
     *success = false;
     return AffineToneModel();
   }
@@ -467,7 +468,7 @@ inline float ToneModelAdapter<AffineToneModel>::GetParameter(
     case 11:
       return model.g_23();
     default:
-      LOG(FATAL) << "Unknown parameter requested.";
+      ABSL_LOG(FATAL) << "Unknown parameter requested.";
   }
 
   return 0.0f;
@@ -592,9 +593,9 @@ template <int C>
 void ToneModelMethods<Model, Adapter>::MapImageIndependent(
     const Model& model, bool log_domain, bool normalized_model,
     const cv::Mat& input, cv::Mat* output) {
-  CHECK(output != nullptr);
-  CHECK_EQ(input.channels(), C);
-  CHECK_EQ(output->channels(), C);
+  ABSL_CHECK(output != nullptr);
+  ABSL_CHECK_EQ(input.channels(), C);
+  ABSL_CHECK_EQ(output->channels(), C);
 
   // Input LUT which will be mapped to the output LUT by the tone change model.
   // Needs 3 channels to represent input RGB colors, but since they are assumed

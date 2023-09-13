@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -92,6 +92,10 @@ public final class GestureRecognizer extends BaseVisionTaskApi {
   private static final int IMAGE_OUT_STREAM_INDEX = 4;
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.gesture_recognizer.GestureRecognizerGraph";
+
+  static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
+  }
 
   /**
    * Creates a {@link GestureRecognizer} instance from a model file and the default {@link

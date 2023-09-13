@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ _TEST_DATA_DIR = 'mediapipe/tasks/testdata/audio'
 _TWO_HEADS_WAV_16K_MONO = 'two_heads_16000_hz_mono.wav'
 _TWO_HEADS_WAV_44K_MONO = 'two_heads_44100_hz_mono.wav'
 _YAMNET_NUM_OF_SAMPLES = 15600
-_MILLSECONDS_PER_SECOND = 1000
+_MILLISECONDS_PER_SECOND = 1000
 
 
 class AudioClassifierTest(parameterized.TestCase):
@@ -75,7 +75,7 @@ class AudioClassifierTest(parameterized.TestCase):
       end = min(start + (int)(step_size), len(buffer))
       audio_data_list.append((_AudioData.create_from_array(
           buffer[start:end].astype(float) / np.iinfo(np.int16).max,
-          sample_rate), (int)(start / sample_rate * _MILLSECONDS_PER_SECOND)))
+          sample_rate), (int)(start / sample_rate * _MILLISECONDS_PER_SECOND)))
       start = end
     return audio_data_list
 

@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -520,7 +520,7 @@ TEST_F(PostprocessingTest, SucceedsWithoutMetadata) {
       auto poller,
       BuildGraph(kQuantizedImageClassifierWithoutMetadata, options));
   // Build input tensors.
-  std::vector<uint8> tensor(kMobileNetNumClasses, 0);
+  std::vector<uint8_t> tensor(kMobileNetNumClasses, 0);
   tensor[1] = 18;
   tensor[2] = 16;
 
@@ -552,7 +552,7 @@ TEST_F(PostprocessingTest, SucceedsWithMetadata) {
   MP_ASSERT_OK_AND_ASSIGN(
       auto poller, BuildGraph(kQuantizedImageClassifierWithMetadata, options));
   // Build input tensors.
-  std::vector<uint8> tensor(kMobileNetNumClasses, 0);
+  std::vector<uint8_t> tensor(kMobileNetNumClasses, 0);
   tensor[1] = 12;
   tensor[2] = 14;
   tensor[3] = 16;
@@ -589,7 +589,7 @@ TEST_F(PostprocessingTest, SucceedsWithScoreCalibration) {
       auto poller,
       BuildGraph(kQuantizedImageClassifierWithDummyScoreCalibration, options));
   // Build input tensors.
-  std::vector<uint8> tensor(kMobileNetNumClasses, 0);
+  std::vector<uint8_t> tensor(kMobileNetNumClasses, 0);
   tensor[1] = 12;
   tensor[2] = 14;
   tensor[3] = 16;
@@ -677,11 +677,11 @@ TEST_F(PostprocessingTest, SucceedsWithTimestamps) {
       auto poller, BuildGraph(kQuantizedImageClassifierWithMetadata, options,
                               /*connect_timestamps=*/true));
   // Build input tensors.
-  std::vector<uint8> tensor_0(kMobileNetNumClasses, 0);
+  std::vector<uint8_t> tensor_0(kMobileNetNumClasses, 0);
   tensor_0[1] = 12;
   tensor_0[2] = 14;
   tensor_0[3] = 16;
-  std::vector<uint8> tensor_1(kMobileNetNumClasses, 0);
+  std::vector<uint8_t> tensor_1(kMobileNetNumClasses, 0);
   tensor_1[5] = 12;
   tensor_1[6] = 14;
   tensor_1[7] = 16;

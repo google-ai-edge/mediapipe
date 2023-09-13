@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ limitations under the License.
 #include <type_traits>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/api2/builder.h"
@@ -125,8 +126,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
     hand_gesture_recognizer_graph_options->mutable_base_options()
         ->mutable_acceleration()
         ->mutable_xnnpack();
-    LOG(WARNING) << "Hand Gesture Recognizer contains CPU only ops. Sets "
-                 << "HandGestureRecognizerGraph acceleration to Xnnpack.";
+    ABSL_LOG(WARNING) << "Hand Gesture Recognizer contains CPU only ops. Sets "
+                      << "HandGestureRecognizerGraph acceleration to Xnnpack.";
   }
   hand_gesture_recognizer_graph_options->mutable_base_options()
       ->set_use_stream_mode(options->base_options().use_stream_mode());

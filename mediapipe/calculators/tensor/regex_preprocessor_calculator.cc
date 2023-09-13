@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "mediapipe/calculators/tensor/regex_preprocessor_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/port.h"
@@ -161,7 +160,7 @@ absl::Status RegexPreprocessorCalculator::Process(CalculatorContext* cc) {
   // not found in the tokenizer vocab.
   std::vector<Tensor> result;
   result.push_back(
-      {Tensor::ElementType::kInt32, Tensor::Shape({max_seq_len_})});
+      {Tensor::ElementType::kInt32, Tensor::Shape({1, max_seq_len_})});
   std::memcpy(result[0].GetCpuWriteView().buffer<int32_t>(),
               input_tokens.data(), input_tokens.size() * sizeof(int32_t));
   kTensorsOut(cc).Send(std::move(result));

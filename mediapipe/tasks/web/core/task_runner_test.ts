@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,18 @@ import 'jasmine';
 import {InferenceCalculatorOptions} from '../../../calculators/tensor/inference_calculator_pb';
 import {BaseOptions as BaseOptionsProto} from '../../../tasks/cc/core/proto/base_options_pb';
 import {TaskRunner} from '../../../tasks/web/core/task_runner';
+import {createSpyWasmModule, SpyWasmModule} from '../../../tasks/web/core/task_runner_test_utils';
+import * as graphRunner from '../../../web/graph_runner/graph_runner';
 import {ErrorListener} from '../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource URL builder
 
-import {CachedGraphRunner} from './task_runner';
-import {TaskRunnerOptions} from './task_runner_options.d';
+import {CachedGraphRunner, createTaskRunner} from './task_runner';
+import {TaskRunnerOptions} from './task_runner_options';
+import {WasmFileset} from './wasm_fileset';
+
+type Writeable<T> = {
+  -readonly[P in keyof T]: T[P]
+};
 
 class TaskRunnerFake extends TaskRunner {
   private errorListener: ErrorListener|undefined;
@@ -40,7 +47,8 @@ class TaskRunnerFake extends TaskRunner {
       'setAutoRenderToScreen', 'setGraph', 'finishProcessing',
       'registerModelResourcesGraphService', 'attachErrorListener'
     ]));
-    const graphRunner = this.graphRunner as jasmine.SpyObj<CachedGraphRunner>;
+    const graphRunner =
+        this.graphRunner as jasmine.SpyObj<Writeable<CachedGraphRunner>>;
     expect(graphRunner.setAutoRenderToScreen).toHaveBeenCalled();
     graphRunner.attachErrorListener.and.callFake(listener => {
       this.errorListener = listener;
@@ -51,6 +59,11 @@ class TaskRunnerFake extends TaskRunner {
     graphRunner.finishProcessing.and.callFake(() => {
       this.throwErrors();
     });
+    graphRunner.wasmModule = createSpyWasmModule();
+  }
+
+  get wasmModule(): SpyWasmModule {
+    return this.graphRunner.wasmModule as SpyWasmModule;
   }
 
   enqueueError(message: string): void {
@@ -109,6 +122,8 @@ describe('TaskRunner', () => {
         allowPrecisionLoss: true,
         cachedKernelPath: undefined,
         serializedModelDir: undefined,
+        cacheWritingBehavior: InferenceCalculatorOptions.Delegate.Gpu
+                                  .CacheWritingBehavior.WRITE_OR_ERROR,
         modelToken: undefined,
         usage: InferenceCalculatorOptions.Delegate.Gpu.InferenceUsage
                    .SUSTAINED_SPEED,
@@ -117,10 +132,28 @@ describe('TaskRunner', () => {
       nnapi: undefined,
     },
   };
+  const mockFileResult = {
+    modelAsset: {
+      fileContent: '',
+      fileName: '/model.dat',
+      fileDescriptorMeta: undefined,
+      filePointerMeta: undefined,
+    },
+    useStreamMode: false,
+    acceleration: {
+      xnnpack: undefined,
+      gpu: undefined,
+      tflite: {},
+      nnapi: undefined,
+    },
+  };
 
   let fetchSpy: jasmine.Spy;
   let taskRunner: TaskRunnerFake;
   let fetchStatus: number;
+  let locator: graphRunner.FileLocator|undefined;
+
+  let oldCreate = graphRunner.createMediaPipeLib;
 
   beforeEach(() => {
     fetchStatus = 200;
@@ -133,7 +166,68 @@ describe('TaskRunner', () => {
     });
     global.fetch = fetchSpy;
 
+    // Monkeypatch an exported static method for testing!
+    oldCreate = graphRunner.createMediaPipeLib;
+    locator = undefined;
+    (graphRunner as {createMediaPipeLib: Function}).createMediaPipeLib =
+        jasmine.createSpy().and.callFake(
+            (type, wasmLoaderPath, assetLoaderPath, canvas, fileLocator) => {
+              locator = fileLocator;
+              // tslint:disable-next-line:no-any Monkeypatching for test mocks.
+              return Promise.resolve(taskRunner as any);
+            });
+
     taskRunner = TaskRunnerFake.createFake();
+  });
+
+  afterEach(() => {
+    // Restore the monkeypatch.
+    (graphRunner as {createMediaPipeLib: Function}).createMediaPipeLib =
+        oldCreate;
+  });
+
+  it('constructs with useful file locators for asset.data files', () => {
+    const fileset: WasmFileset = {
+      wasmLoaderPath: `wasm.js`,
+      wasmBinaryPath: `a/b/c/wasm.wasm`,
+      assetLoaderPath: `asset.js`,
+      assetBinaryPath: `a/b/c/asset.data`,
+    };
+
+    const options = {
+      baseOptions: {
+        modelAssetPath: `modelAssetPath`,
+      }
+    };
+
+    const runner = createTaskRunner(TaskRunnerFake, null, fileset, options);
+    expect(runner).toBeDefined();
+    expect(locator).toBeDefined();
+    expect(locator?.locateFile('wasm.wasm')).toEqual('a/b/c/wasm.wasm');
+    expect(locator?.locateFile('asset.data')).toEqual('a/b/c/asset.data');
+    expect(locator?.locateFile('unknown')).toEqual('unknown');
+  });
+
+  it('constructs without useful file locators with no asset.data file', () => {
+    const fileset: WasmFileset = {
+      wasmLoaderPath: `wasm.js`,
+      wasmBinaryPath: `a/b/c/wasm.wasm`,
+      assetLoaderPath: `asset.js`,
+      // No path to the assets binary.
+    };
+
+    const options = {
+      baseOptions: {
+        modelAssetPath: `modelAssetPath`,
+      }
+    };
+
+    const runner = createTaskRunner(TaskRunnerFake, null, fileset, options);
+    expect(runner).toBeDefined();
+    expect(locator).toBeDefined();
+    expect(locator?.locateFile('wasm.wasm')).toEqual('a/b/c/wasm.wasm');
+    expect(locator?.locateFile('asset.data')).toEqual('asset.data');
+    expect(locator?.locateFile('unknown')).toEqual('unknown');
   });
 
   it('handles errors during graph update', () => {
@@ -204,12 +298,13 @@ describe('TaskRunner', () => {
     }).not.toThrowError();
   });
 
-  it('downloads model', async () => {
+  it('writes model to file system', async () => {
     await taskRunner.setOptions(
         {baseOptions: {modelAssetPath: `foo`}});
 
     expect(fetchSpy).toHaveBeenCalled();
-    expect(taskRunner.baseOptions.toObject()).toEqual(mockBytesResult);
+    expect(taskRunner.wasmModule.FS_createDataFile).toHaveBeenCalled();
+    expect(taskRunner.baseOptions.toObject()).toEqual(mockFileResult);
   });
 
   it('does not download model when bytes are provided', async () => {

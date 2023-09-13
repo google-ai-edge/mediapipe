@@ -28,11 +28,8 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 
-using mediapipe::Adopt;
-using mediapipe::CalculatorBase;
 using mediapipe::ImageFrame;
 using mediapipe::PacketTypeSet;
-using mediapipe::autoflip::Border;
 
 constexpr char kDetectedBorders[] = "DETECTED_BORDERS";
 constexpr int kMinBorderDistance = 5;

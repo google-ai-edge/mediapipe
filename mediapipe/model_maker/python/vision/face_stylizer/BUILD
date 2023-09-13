@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,16 +14,16 @@
 
 # Placeholder for internal Python strict test compatibility macro.
 # Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python GPU test rule.
 
 licenses(["notice"])
 
 package(default_visibility = ["//mediapipe:__subpackages__"])
 
-filegroup(
-    name = "testdata",
-    srcs = glob([
-        "testdata/**",
-    ]),
+py_library(
+    name = "constants",
+    srcs = ["constants.py"],
+    deps = ["//mediapipe/model_maker/python/core/utils:file_util"],
 )
 
 py_library(
@@ -37,6 +37,7 @@ py_library(
 py_library(
     name = "model_options",
     srcs = ["model_options.py"],
+    deps = ["//mediapipe/model_maker/python/core/utils:loss_functions"],
 )
 
 py_library(
@@ -64,19 +65,41 @@ py_library(
     name = "dataset",
     srcs = ["dataset.py"],
     deps = [
+        ":constants",
         "//mediapipe/model_maker/python/core/data:classification_dataset",
-        "//mediapipe/model_maker/python/vision/core:image_utils",
+        "//mediapipe/python:_framework_bindings",
+        "//mediapipe/tasks/python/core:base_options",
+        "//mediapipe/tasks/python/vision:face_aligner",
     ],
 )
 
-py_test(
-    name = "dataset_test",
-    srcs = ["dataset_test.py"],
-    data = [
-        ":testdata",
+py_library(
+    name = "face_stylizer",
+    srcs = ["face_stylizer.py"],
+    deps = [
+        ":constants",
+        ":face_stylizer_options",
+        ":hyperparameters",
+        ":model_options",
+        ":model_spec",
+        "//mediapipe/model_maker/python/core/data:classification_dataset",
+        "//mediapipe/model_maker/python/core/utils:loss_functions",
+        "//mediapipe/model_maker/python/core/utils:model_util",
+        "//mediapipe/model_maker/python/vision/core:image_preprocessing",
+        "//mediapipe/tasks/python/metadata/metadata_writers:face_stylizer",
     ],
+)
+
+py_library(
+    name = "face_stylizer_import",
+    srcs = ["__init__.py"],
+    visibility = ["//visibility:public"],
     deps = [
         ":dataset",
-        "//mediapipe/tasks/python/test:test_utils",
+        ":face_stylizer",
+        ":face_stylizer_options",
+        ":hyperparameters",
+        ":model_options",
+        ":model_spec",
     ],
 )

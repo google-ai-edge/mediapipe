@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import tempfile
 from typing import List, Optional, Tuple, Union
 
 import flatbuffers
+
 from mediapipe.tasks.metadata import metadata_schema_py_generated as metadata_fb
 from mediapipe.tasks.python.metadata import metadata
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_info
@@ -632,7 +633,7 @@ class MetadataWriter(object):
       score_calibration: Optional[ScoreCalibration] = None,
       group_name: str = _DETECTION_GROUP_NAME,
   ) -> 'MetadataWriter':
-    """Adds a detection head metadata for detection output tensor.
+    """Adds a detection head metadata for detection output tensor of models with postprocessing.
 
     Args:
       labels: an instance of Labels helper class.
@@ -659,6 +660,33 @@ class MetadataWriter(object):
         tensor_names=[output_md.name for output_md in detection_output_mds[:3]],
     )
     self._output_group_mds.append(group_md)
+    return self
+
+  def add_raw_detection_output(
+      self,
+      labels: Optional[Labels] = None,
+      output_tensors_order: metadata_info.RawDetectionOutputTensorsOrder = metadata_info.RawDetectionOutputTensorsOrder.UNSPECIFIED,
+  ) -> 'MetadataWriter':
+    """Adds a detection head metadata for detection output tensor of models without postprocessing.
+
+    Args:
+      labels: an instance of Labels helper class.
+      output_tensors_order: the order of the output tensors. For models of
+        out-of-graph non-maximum-suppression only.
+
+    Returns:
+      The current Writer instance to allow chained operation.
+    """
+    label_files = self._create_label_file_md(labels)
+    detection_output_mds = metadata_info.RawDetectionOutputTensorsMd(
+        self._model_buffer,
+        label_files=label_files,
+        output_tensors_order=output_tensors_order,
+    ).output_mds
+    self._output_mds.extend(detection_output_mds)
+    # Outputs are location, score.
+    if len(detection_output_mds) != 2:
+      raise ValueError('The size of detections output should be 2.')
     return self
 
   def add_segmentation_output(

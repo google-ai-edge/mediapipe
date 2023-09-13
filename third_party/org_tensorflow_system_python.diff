@@ -1,0 +1,51 @@
+diff --git a/tensorflow/tools/toolchains/cpus/aarch64/aarch64_compiler_configure.bzl b/tensorflow/tools/toolchains/cpus/aarch64/aarch64_compiler_configure.bzl
+index a2bdd6a7eed..ec25c23d8d4 100644
+--- a/tensorflow/tools/toolchains/cpus/aarch64/aarch64_compiler_configure.bzl
++++ b/tensorflow/tools/toolchains/cpus/aarch64/aarch64_compiler_configure.bzl
+@@ -2,7 +2,7 @@
+ 
+ load("//tensorflow/tools/toolchains:cpus/aarch64/aarch64.bzl", "remote_aarch64_configure")
+ load("//third_party/remote_config:remote_platform_configure.bzl", "remote_platform_configure")
+-load("//third_party/py:python_configure.bzl", "remote_python_configure")
++load("//third_party/py/non_hermetic:python_configure.bzl", "remote_python_configure")
+ 
+ def ml2014_tf_aarch64_configs(name_container_map, env):
+     for name, container in name_container_map.items():
+diff --git a/tensorflow/tools/toolchains/remote_config/rbe_config.bzl b/tensorflow/tools/toolchains/remote_config/rbe_config.bzl
+index 9f71a414bf7..57f70752323 100644
+--- a/tensorflow/tools/toolchains/remote_config/rbe_config.bzl
++++ b/tensorflow/tools/toolchains/remote_config/rbe_config.bzl
+@@ -1,6 +1,6 @@
+ """Macro that creates external repositories for remote config."""
+ 
+-load("//third_party/py:python_configure.bzl", "local_python_configure", "remote_python_configure")
++load("//third_party/py/non_hermetic:python_configure.bzl", "local_python_configure", "remote_python_configure")
+ load("//third_party/gpus:cuda_configure.bzl", "remote_cuda_configure")
+ load("//third_party/nccl:nccl_configure.bzl", "remote_nccl_configure")
+ load("//third_party/gpus:rocm_configure.bzl", "remote_rocm_configure")
+diff --git a/tensorflow/workspace2.bzl b/tensorflow/workspace2.bzl
+index 953e1d1bea6..664608592a5 100644
+--- a/tensorflow/workspace2.bzl
++++ b/tensorflow/workspace2.bzl
+@@ -8,7 +8,7 @@ load("//third_party/gpus:rocm_configure.bzl", "rocm_configure")
+ load("//third_party/tensorrt:tensorrt_configure.bzl", "tensorrt_configure")
+ load("//third_party/nccl:nccl_configure.bzl", "nccl_configure")
+ load("//third_party/git:git_configure.bzl", "git_configure")
+-load("//third_party/py:python_configure.bzl", "python_configure")
++load("//third_party/py/non_hermetic:python_configure.bzl", "python_configure")
+ load("//third_party/systemlibs:syslibs_configure.bzl", "syslibs_configure")
+ load("//tensorflow/tools/toolchains:cpus/aarch64/aarch64_compiler_configure.bzl", "aarch64_compiler_configure")
+ load("//tensorflow/tools/toolchains:cpus/arm/arm_compiler_configure.bzl", "arm_compiler_configure")
+diff --git a/third_party/py/non_hermetic/python_configure.bzl b/third_party/py/non_hermetic/python_configure.bzl
+index 300cbfb6c71..09d98505dd9 100644
+--- a/third_party/py/non_hermetic/python_configure.bzl
++++ b/third_party/py/non_hermetic/python_configure.bzl
+@@ -206,7 +206,7 @@ def _create_local_python_repository(repository_ctx):
+     # Resolve all labels before doing any real work. Resolving causes the
+     # function to be restarted with all previous state being lost. This
+     # can easily lead to a O(n^2) runtime in the number of labels.
+-    build_tpl = repository_ctx.path(Label("//third_party/py:BUILD.tpl"))
++    build_tpl = repository_ctx.path(Label("//third_party/py/non_hermetic:BUILD.tpl"))
+
+     python_bin = get_python_bin(repository_ctx)
+     _check_python_bin(repository_ctx, python_bin)

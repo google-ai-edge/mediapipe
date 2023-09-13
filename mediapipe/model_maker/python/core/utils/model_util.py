@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ ESTIMITED_STEPS_PER_EPOCH = 1000
 
 
 def get_default_callbacks(
-    export_dir: str) -> Sequence[tf.keras.callbacks.Callback]:
+    export_dir: str,
+) -> Sequence[tf.keras.callbacks.Callback]:
   """Gets default callbacks."""
   summary_dir = os.path.join(export_dir, 'summaries')
   summary_callback = tf.keras.callbacks.TensorBoard(summary_dir)
@@ -43,12 +44,14 @@ def get_default_callbacks(
   checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
       os.path.join(checkpoint_path, 'model-{epoch:04d}'),
       save_weights_only=True,
-      period=5)
+      period=5,
+  )
   return [summary_callback, checkpoint_callback]
 
 
-def load_keras_model(model_path: str,
-                     compile_on_load: bool = False) -> tf.keras.Model:
+def load_keras_model(
+    model_path: str, compile_on_load: bool = False
+) -> tf.keras.Model:
   """Loads a tensorflow Keras model from file and returns the Keras model.
 
   Args:
@@ -82,9 +85,11 @@ def load_tflite_model_buffer(model_path: str) -> bytearray:
   return tflite_model_buffer
 
 
-def get_steps_per_epoch(steps_per_epoch: Optional[int] = None,
-                        batch_size: Optional[int] = None,
-                        train_data: Optional[dataset.Dataset] = None) -> int:
+def get_steps_per_epoch(
+    steps_per_epoch: Optional[int] = None,
+    batch_size: Optional[int] = None,
+    train_data: Optional[dataset.Dataset] = None,
+) -> int:
   """Gets the estimated training steps per epoch.
 
   1. If `steps_per_epoch` is set, returns `steps_per_epoch` directly.
@@ -112,6 +117,43 @@ def get_steps_per_epoch(steps_per_epoch: Optional[int] = None,
     return len(train_data) // batch_size
 
 
+def convert_to_tflite_from_file(
+    saved_model_file: str,
+    quantization_config: Optional[quantization.QuantizationConfig] = None,
+    supported_ops: Tuple[tf.lite.OpsSet, ...] = (
+        tf.lite.OpsSet.TFLITE_BUILTINS,
+    ),
+    preprocess: Optional[Callable[..., Any]] = None,
+    allow_custom_ops: bool = False,
+) -> bytearray:
+  """Converts the input Keras model to TFLite format.
+
+  Args:
+    saved_model_file: Keras model to be converted to TFLite.
+    quantization_config: Configuration for post-training quantization.
+    supported_ops: A list of supported ops in the converted TFLite file.
+    preprocess: A callable to preprocess the representative dataset for
+      quantization. The callable takes three arguments in order: feature, label,
+      and is_training.
+    allow_custom_ops: A boolean flag to enable custom ops in model convsion.
+      Default to False.
+
+  Returns:
+    bytearray of TFLite model
+  """
+  converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_file)
+
+  if quantization_config:
+    converter = quantization_config.set_converter_with_quantization(
+        converter, preprocess=preprocess
+    )
+
+  converter.allow_custom_ops = allow_custom_ops
+  converter.target_spec.supported_ops = supported_ops
+  tflite_model = converter.convert()
+  return tflite_model
+
+
 def convert_to_tflite(
     model: tf.keras.Model,
     quantization_config: Optional[quantization.QuantizationConfig] = None,
@@ -119,6 +161,7 @@ def convert_to_tflite(
         tf.lite.OpsSet.TFLITE_BUILTINS,
     ),
     preprocess: Optional[Callable[..., Any]] = None,
+    allow_custom_ops: bool = False,
 ) -> bytearray:
   """Converts the input Keras model to TFLite format.
 
@@ -129,22 +172,26 @@ def convert_to_tflite(
     preprocess: A callable to preprocess the representative dataset for
       quantization. The callable takes three arguments in order: feature, label,
       and is_training.
+    allow_custom_ops: A boolean flag to enable custom ops in model conversion.
+      Default to False.
 
   Returns:
     bytearray of TFLite model
   """
   with tempfile.TemporaryDirectory() as temp_dir:
     save_path = os.path.join(temp_dir, 'saved_model')
-    model.save(save_path, include_optimizer=False, save_format='tf')
-    converter = tf.lite.TFLiteConverter.from_saved_model(save_path)
-
-    if quantization_config:
-      converter = quantization_config.set_converter_with_quantization(
-          converter, preprocess=preprocess)
-
-    converter.target_spec.supported_ops = supported_ops
-    tflite_model = converter.convert()
-    return tflite_model
+    model.save(
+        save_path,
+        include_optimizer=False,
+        save_format='tf',
+    )
+    return convert_to_tflite_from_file(
+        save_path,
+        quantization_config,
+        supported_ops,
+        preprocess,
+        allow_custom_ops,
+    )
 
 
 def save_tflite(tflite_model: bytearray, tflite_file: str) -> None:
@@ -159,17 +206,20 @@ def save_tflite(tflite_model: bytearray, tflite_file: str) -> None:
   with tf.io.gfile.GFile(tflite_file, 'wb') as f:
     f.write(tflite_model)
   tf.compat.v1.logging.info(
-      'TensorFlow Lite model exported successfully to: %s' % tflite_file)
+      'TensorFlow Lite model exported successfully to: %s' % tflite_file
+  )
 
 
 class WarmUp(tf.keras.optimizers.schedules.LearningRateSchedule):
   """Applies a warmup schedule on a given learning rate decay schedule."""
 
-  def __init__(self,
-               initial_learning_rate: float,
-               decay_schedule_fn: Callable[[Any], Any],
-               warmup_steps: int,
-               name: Optional[str] = None):
+  def __init__(
+      self,
+      initial_learning_rate: float,
+      decay_schedule_fn: Callable[[Any], Any],
+      warmup_steps: int,
+      name: Optional[str] = None,
+  ):
     """Initializes a new instance of the `WarmUp` class.
 
     Args:
@@ -197,14 +247,15 @@ class WarmUp(tf.keras.optimizers.schedules.LearningRateSchedule):
           global_step_float < warmup_steps_float,
           lambda: warmup_learning_rate,
           lambda: self.decay_schedule_fn(step),
-          name=name)
+          name=name,
+      )
 
   def get_config(self) -> Dict[str, Any]:
     return {
         'initial_learning_rate': self.initial_learning_rate,
         'decay_schedule_fn': self.decay_schedule_fn,
         'warmup_steps': self.warmup_steps,
-        'name': self.name
+        'name': self.name,
     }
 
 
@@ -238,7 +289,8 @@ class LiteRunner(object):
     """
 
     if not isinstance(input_tensors, list) and not isinstance(
-        input_tensors, dict):
+        input_tensors, dict
+    ):
       input_tensors = [input_tensors]
 
     interpreter = self.interpreter
@@ -246,19 +298,18 @@ class LiteRunner(object):
     # Reshape inputs
     for i, input_detail in enumerate(self.input_details):
       input_tensor = _get_input_tensor(
-          input_tensors=input_tensors,
-          input_details=self.input_details,
-          index=i)
+          input_tensors=input_tensors, input_details=self.input_details, index=i
+      )
       interpreter.resize_tensor_input(
-          input_index=input_detail['index'], tensor_size=input_tensor.shape)
+          input_index=input_detail['index'], tensor_size=input_tensor.shape
+      )
     interpreter.allocate_tensors()
 
     # Feed input to the interpreter
     for i, input_detail in enumerate(self.input_details):
       input_tensor = _get_input_tensor(
-          input_tensors=input_tensors,
-          input_details=self.input_details,
-          index=i)
+          input_tensors=input_tensors, input_details=self.input_details, index=i
+      )
       if input_detail['quantization'] != (DEFAULT_SCALE, DEFAULT_ZERO_POINT):
         # Quantize the input
         scale, zero_point = input_detail['quantization']
@@ -289,9 +340,11 @@ def get_lite_runner(tflite_buffer: bytearray) -> 'LiteRunner':
   return lite_runner
 
 
-def _get_input_tensor(input_tensors: Union[List[tf.Tensor], Dict[str,
-                                                                 tf.Tensor]],
-                      input_details: Dict[str, Any], index: int) -> tf.Tensor:
+def _get_input_tensor(
+    input_tensors: Union[List[tf.Tensor], Dict[str, tf.Tensor]],
+    input_details: Dict[str, Any],
+    index: int,
+) -> tf.Tensor:
   """Returns input tensor in `input_tensors` that maps `input_detail[i]`."""
   if isinstance(input_tensors, dict):
     # Gets the mapped input tensor.
@@ -299,7 +352,9 @@ def _get_input_tensor(input_tensors: Union[List[tf.Tensor], Dict[str,
     for input_tensor_name, input_tensor in input_tensors.items():
       if input_tensor_name in input_detail['name']:
         return input_tensor
-    raise ValueError('Input tensors don\'t contains a tensor that mapped the '
-                     'input detail %s' % str(input_detail))
+    raise ValueError(
+        "Input tensors don't contains a tensor that mapped the input detail %s"
+        % str(input_detail)
+    )
   else:
     return input_tensors[index]

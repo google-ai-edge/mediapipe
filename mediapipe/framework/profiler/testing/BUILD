@@ -15,9 +15,7 @@
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe/framework:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe/framework:__subpackages__"])
 
 cc_library(
     name = "simple_calculator",
@@ -25,6 +23,7 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/log:absl_log",
     ],
     alwayslink = 1,
 )

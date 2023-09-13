@@ -103,6 +103,7 @@
 #include <type_traits>
 
 #include "absl/base/macros.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/port.h"
 
@@ -134,7 +135,7 @@ struct NullStrongIntValidator {
   //
   //   template<typename T, typename U>
   //   static void ValidateInit(U arg) {
-  //     if (arg < 0) LOG(FATAL) << "arg < 0";
+  //     if (arg < 0) ABSL_LOG(FATAL) << "arg < 0";
   //   }
   //
   //   template<typename T, typename U>
@@ -403,11 +404,11 @@ std::ostream &operator<<(std::ostream &os,
     lhs op## = rhs;                                                       \
     return lhs;                                                           \
   }
-STRONG_INT_VS_STRONG_INT_BINARY_OP(+);
-STRONG_INT_VS_STRONG_INT_BINARY_OP(-);
-STRONG_INT_VS_STRONG_INT_BINARY_OP(&);
-STRONG_INT_VS_STRONG_INT_BINARY_OP(|);
-STRONG_INT_VS_STRONG_INT_BINARY_OP(^);
+STRONG_INT_VS_STRONG_INT_BINARY_OP(+)
+STRONG_INT_VS_STRONG_INT_BINARY_OP(-)
+STRONG_INT_VS_STRONG_INT_BINARY_OP(&)
+STRONG_INT_VS_STRONG_INT_BINARY_OP(|)
+STRONG_INT_VS_STRONG_INT_BINARY_OP(^)
 #undef STRONG_INT_VS_STRONG_INT_BINARY_OP
 
 // Define operators that take one StrongInt and one native integer argument.
@@ -431,12 +432,12 @@ STRONG_INT_VS_STRONG_INT_BINARY_OP(^);
     rhs op## = lhs;                                                       \
     return rhs;                                                           \
   }
-STRONG_INT_VS_NUMERIC_BINARY_OP(*);
-NUMERIC_VS_STRONG_INT_BINARY_OP(*);
-STRONG_INT_VS_NUMERIC_BINARY_OP(/);
-STRONG_INT_VS_NUMERIC_BINARY_OP(%);
-STRONG_INT_VS_NUMERIC_BINARY_OP(<<);  // NOLINT(whitespace/operators)
-STRONG_INT_VS_NUMERIC_BINARY_OP(>>);  // NOLINT(whitespace/operators)
+STRONG_INT_VS_NUMERIC_BINARY_OP(*)
+NUMERIC_VS_STRONG_INT_BINARY_OP(*)
+STRONG_INT_VS_NUMERIC_BINARY_OP(/)
+STRONG_INT_VS_NUMERIC_BINARY_OP(%)
+STRONG_INT_VS_NUMERIC_BINARY_OP(<<)  // NOLINT(whitespace/operators)
+STRONG_INT_VS_NUMERIC_BINARY_OP(>>)  // NOLINT(whitespace/operators)
 #undef STRONG_INT_VS_NUMERIC_BINARY_OP
 #undef NUMERIC_VS_STRONG_INT_BINARY_OP
 
@@ -447,12 +448,12 @@ STRONG_INT_VS_NUMERIC_BINARY_OP(>>);  // NOLINT(whitespace/operators)
                           StrongInt<TagType, ValueType, ValidatorType> rhs) { \
     return lhs.value() op rhs.value();                                        \
   }
-STRONG_INT_COMPARISON_OP(==);  // NOLINT(whitespace/operators)
-STRONG_INT_COMPARISON_OP(!=);  // NOLINT(whitespace/operators)
-STRONG_INT_COMPARISON_OP(<);   // NOLINT(whitespace/operators)
-STRONG_INT_COMPARISON_OP(<=);  // NOLINT(whitespace/operators)
-STRONG_INT_COMPARISON_OP(>);   // NOLINT(whitespace/operators)
-STRONG_INT_COMPARISON_OP(>=);  // NOLINT(whitespace/operators)
+STRONG_INT_COMPARISON_OP(==)  // NOLINT(whitespace/operators)
+STRONG_INT_COMPARISON_OP(!=)  // NOLINT(whitespace/operators)
+STRONG_INT_COMPARISON_OP(<)   // NOLINT(whitespace/operators)
+STRONG_INT_COMPARISON_OP(<=)  // NOLINT(whitespace/operators)
+STRONG_INT_COMPARISON_OP(>)   // NOLINT(whitespace/operators)
+STRONG_INT_COMPARISON_OP(>=)  // NOLINT(whitespace/operators)
 #undef STRONG_INT_COMPARISON_OP
 
 }  // namespace intops

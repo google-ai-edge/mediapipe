@@ -131,6 +131,10 @@ message RenderAnnotation {
     optional Color color2 = 7;
   }
 
+  message Scribble {
+    repeated Point point = 1;
+  }
+
   message Arrow {
     // The arrow head will be drawn at (x_end, y_end).
     optional double x_start = 1;
@@ -192,6 +196,7 @@ message RenderAnnotation {
     RoundedRectangle rounded_rectangle = 9;
     FilledRoundedRectangle filled_rounded_rectangle = 10;
     GradientLine gradient_line = 14;
+    Scribble scribble = 15;
   }
 
   // Thickness for drawing the annotation.

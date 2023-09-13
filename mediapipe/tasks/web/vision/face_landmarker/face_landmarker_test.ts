@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ import 'jasmine';
 
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {Classification, ClassificationList} from '../../../../framework/formats/classification_pb';
-import {NormalizedLandmark, NormalizedLandmarkList} from '../../../../framework/formats/landmark_pb';
 import {MatrixData as MatrixDataProto} from '../../../../framework/formats/matrix_data_pb';
 import {FaceGeometry as FaceGeometryProto} from '../../../../tasks/cc/vision/face_geometry/proto/face_geometry_pb';
+import {createLandmarks} from '../../../../tasks/web/components/processors/landmark_result_test_lib';
 import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph, verifyListenersRegistered} from '../../../../tasks/web/core/task_runner_test_utils';
 import {VisionGraphRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 
@@ -31,7 +31,7 @@ import {FaceLandmarkerOptions} from './face_landmarker_options';
 
 type ProtoListener = ((binaryProtos: Uint8Array[], timestamp: number) => void);
 
-function createBlendshapes(): Uint8Array[] {
+function createBlendshapes(): ClassificationList {
   const blendshapesProto = new ClassificationList();
   const classification = new Classification();
   classification.setScore(0.1);
@@ -39,27 +39,17 @@ function createBlendshapes(): Uint8Array[] {
   classification.setLabel('face_label');
   classification.setDisplayName('face_display_name');
   blendshapesProto.addClassification(classification);
-  return [blendshapesProto.serializeBinary()];
+  return blendshapesProto;
 }
 
-function createFacialTransformationMatrixes(): Uint8Array[] {
+function createFacialTransformationMatrixes(): FaceGeometryProto {
   const faceGeometryProto = new FaceGeometryProto();
   const posteTransformationMatrix = new MatrixDataProto();
   posteTransformationMatrix.setRows(1);
   posteTransformationMatrix.setCols(1);
   posteTransformationMatrix.setPackedDataList([1.0]);
   faceGeometryProto.setPoseTransformMatrix(posteTransformationMatrix);
-  return [faceGeometryProto.serializeBinary()];
-}
-
-function createLandmarks(): Uint8Array[] {
-  const faceLandmarksProto = new NormalizedLandmarkList();
-  const landmark = new NormalizedLandmark();
-  landmark.setX(0.3);
-  landmark.setY(0.4);
-  landmark.setZ(0.5);
-  faceLandmarksProto.addLandmark(landmark);
-  return [faceLandmarksProto.serializeBinary()];
+  return faceGeometryProto;
 }
 
 class FaceLandmarkerFake extends FaceLandmarker implements MediapipeTasksFake {
@@ -102,6 +92,10 @@ describe('FaceLandmarker', () => {
     faceLandmarker = new FaceLandmarkerFake();
     await faceLandmarker.setOptions(
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
+  });
+
+  afterEach(() => {
+    faceLandmarker.close();
   });
 
   it('initializes graph', async () => {
@@ -243,13 +237,17 @@ describe('FaceLandmarker', () => {
   });
 
   it('transforms results', async () => {
+    const landmarksProto = [createLandmarks().serializeBinary()];
+    const blendshapesProto = [createBlendshapes().serializeBinary()];
+    const faceGeometryProto =
+        [createFacialTransformationMatrixes().serializeBinary()];
+
     // Pass the test data to our listener
     faceLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
       verifyListenersRegistered(faceLandmarker);
-      faceLandmarker.listeners.get('face_landmarks')!(createLandmarks(), 1337);
-      faceLandmarker.listeners.get('blendshapes')!(createBlendshapes(), 1337);
-      faceLandmarker.listeners.get('face_geometry')!
-          (createFacialTransformationMatrixes(), 1337);
+      faceLandmarker.listeners.get('face_landmarks')!(landmarksProto, 1337);
+      faceLandmarker.listeners.get('blendshapes')!(blendshapesProto, 1337);
+      faceLandmarker.listeners.get('face_geometry')!(faceGeometryProto, 1337);
     });
 
     await faceLandmarker.setOptions({
@@ -266,7 +264,7 @@ describe('FaceLandmarker', () => {
     expect(faceLandmarker.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
 
     expect(landmarks).toEqual({
-      faceLandmarks: [[{x: 0.3, y: 0.4, z: 0.5}]],
+      faceLandmarks: [[{x: 0, y: 0, z: 0}]],
       faceBlendshapes: [{
         categories: [{
           index: 1,
@@ -282,12 +280,16 @@ describe('FaceLandmarker', () => {
   });
 
   it('clears results between invoations', async () => {
+    const landmarksProto = [createLandmarks().serializeBinary()];
+    const blendshapesProto = [createBlendshapes().serializeBinary()];
+    const faceGeometryProto =
+        [createFacialTransformationMatrixes().serializeBinary()];
+
     // Pass the test data to our listener
     faceLandmarker.fakeWasmModule._waitUntilIdle.and.callFake(() => {
-      faceLandmarker.listeners.get('face_landmarks')!(createLandmarks(), 1337);
-      faceLandmarker.listeners.get('blendshapes')!(createBlendshapes(), 1337);
-      faceLandmarker.listeners.get('face_geometry')!
-          (createFacialTransformationMatrixes(), 1337);
+      faceLandmarker.listeners.get('face_landmarks')!(landmarksProto, 1337);
+      faceLandmarker.listeners.get('blendshapes')!(blendshapesProto, 1337);
+      faceLandmarker.listeners.get('face_geometry')!(faceGeometryProto, 1337);
     });
 
     await faceLandmarker.setOptions({

@@ -23,7 +23,7 @@ cc_library(
     srcs = ["low_pass_filter.cc"],
     hdrs = ["low_pass_filter.h"],
     deps = [
-        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
     ],
 )
@@ -45,7 +45,7 @@ cc_library(
     deps = [
         ":low_pass_filter",
         "//mediapipe/framework/port:integral_types",
-        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/time",
     ],
@@ -57,7 +57,8 @@ cc_library(
     hdrs = ["relative_velocity_filter.h"],
     deps = [
         ":low_pass_filter",
-        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/time",
     ],
@@ -70,6 +71,7 @@ cc_test(
         ":relative_velocity_filter",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/time",
     ],

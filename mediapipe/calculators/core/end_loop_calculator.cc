@@ -14,15 +14,19 @@
 
 #include "mediapipe/calculators/core/end_loop_calculator.h"
 
+#include <array>
+#include <utility>
 #include <vector>
 
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/image.h"
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/formats/tensor.h"
+#include "mediapipe/gpu/gpu_buffer.h"
 #include "mediapipe/util/render_data.pb.h"
 #include "tensorflow/lite/interpreter.h"
 
@@ -68,8 +72,22 @@ REGISTER_CALCULATOR(EndLoopMatrixCalculator);
 typedef EndLoopCalculator<std::vector<Tensor>> EndLoopTensorCalculator;
 REGISTER_CALCULATOR(EndLoopTensorCalculator);
 
+typedef EndLoopCalculator<std::vector<ImageFrame>> EndLoopImageFrameCalculator;
+REGISTER_CALCULATOR(EndLoopImageFrameCalculator);
+
+typedef EndLoopCalculator<std::vector<GpuBuffer>> EndLoopGpuBufferCalculator;
+REGISTER_CALCULATOR(EndLoopGpuBufferCalculator);
+
 typedef EndLoopCalculator<std::vector<::mediapipe::Image>>
     EndLoopImageCalculator;
 REGISTER_CALCULATOR(EndLoopImageCalculator);
+
+typedef EndLoopCalculator<std::vector<std::array<float, 16>>>
+    EndLoopAffineMatrixCalculator;
+REGISTER_CALCULATOR(EndLoopAffineMatrixCalculator);
+
+typedef EndLoopCalculator<std::vector<std::pair<int, int>>>
+    EndLoopImageSizeCalculator;
+REGISTER_CALCULATOR(EndLoopImageSizeCalculator);
 
 }  // namespace mediapipe

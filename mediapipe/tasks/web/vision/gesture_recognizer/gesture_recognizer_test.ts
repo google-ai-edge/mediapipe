@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import {GestureRecognizer, GestureRecognizerOptions} from './gesture_recognizer'
 
 type ProtoListener = ((binaryProtos: Uint8Array[], timestamp: number) => void);
 
-function createHandednesses(): Uint8Array[] {
+function createHandedness(): Uint8Array[] {
   const handsProto = new ClassificationList();
   const classification = new Classification();
   classification.setScore(0.1);
@@ -111,6 +111,10 @@ describe('GestureRecognizer', () => {
     gestureRecognizer = new GestureRecognizerFake();
     await gestureRecognizer.setOptions(
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
+  });
+
+  afterEach(() => {
+    gestureRecognizer.close();
   });
 
   it('initializes graph', async () => {
@@ -278,8 +282,7 @@ describe('GestureRecognizer', () => {
           (createLandmarks(), 1337);
       gestureRecognizer.listeners.get('world_hand_landmarks')!
           (createWorldLandmarks(), 1337);
-      gestureRecognizer.listeners.get('handedness')!
-          (createHandednesses(), 1337);
+      gestureRecognizer.listeners.get('handedness')!(createHandedness(), 1337);
       gestureRecognizer.listeners.get('hand_gestures')!(createGestures(), 1337);
     });
 
@@ -300,6 +303,12 @@ describe('GestureRecognizer', () => {
       }]],
       'landmarks': [[{'x': 0.3, 'y': 0.4, 'z': 0.5}]],
       'worldLandmarks': [[{'x': 21, 'y': 22, 'z': 23}]],
+      'handedness': [[{
+        'score': 0.1,
+        'index': 1,
+        'categoryName': 'handedness_label',
+        'displayName': 'handedness_display_name'
+      }]],
       'handednesses': [[{
         'score': 0.1,
         'index': 1,
@@ -316,8 +325,7 @@ describe('GestureRecognizer', () => {
           (createLandmarks(), 1337);
       gestureRecognizer.listeners.get('world_hand_landmarks')!
           (createWorldLandmarks(), 1337);
-      gestureRecognizer.listeners.get('handedness')!
-          (createHandednesses(), 1337);
+      gestureRecognizer.listeners.get('handedness')!(createHandedness(), 1337);
       gestureRecognizer.listeners.get('hand_gestures')!(createGestures(), 1337);
     });
 
@@ -338,8 +346,7 @@ describe('GestureRecognizer', () => {
           (createLandmarks(), 1337);
       gestureRecognizer.listeners.get('world_hand_landmarks')!
           (createWorldLandmarks(), 1337);
-      gestureRecognizer.listeners.get('handedness')!
-          (createHandednesses(), 1337);
+      gestureRecognizer.listeners.get('handedness')!(createHandedness(), 1337);
       gestureRecognizer.listeners.get('hand_gestures')!([], 1337);
     });
 
@@ -349,6 +356,7 @@ describe('GestureRecognizer', () => {
       'gestures': [],
       'landmarks': [],
       'worldLandmarks': [],
+      'handedness': [],
       'handednesses': []
     });
   });

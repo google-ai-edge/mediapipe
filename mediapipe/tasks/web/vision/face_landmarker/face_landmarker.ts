@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import {FaceDetectorGraphOptions} from '../../../../tasks/cc/vision/face_detecto
 import {FaceGeometry as FaceGeometryProto} from '../../../../tasks/cc/vision/face_geometry/proto/face_geometry_pb';
 import {FaceLandmarkerGraphOptions} from '../../../../tasks/cc/vision/face_landmarker/proto/face_landmarker_graph_options_pb';
 import {FaceLandmarksDetectorGraphOptions} from '../../../../tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options_pb';
-import {NormalizedLandmark} from '../../../../tasks/web/components/containers/landmark';
 import {convertFromClassifications} from '../../../../tasks/web/components/processors/classifier_result';
+import {convertToLandmarks} from '../../../../tasks/web/components/processors/landmark_result';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
@@ -33,10 +33,10 @@ import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner
 
 import {FaceLandmarkerOptions} from './face_landmarker_options';
 import {FaceLandmarkerResult} from './face_landmarker_result';
+import {FACE_LANDMARKS_CONTOURS, FACE_LANDMARKS_FACE_OVAL, FACE_LANDMARKS_LEFT_EYE, FACE_LANDMARKS_LEFT_EYEBROW, FACE_LANDMARKS_LEFT_IRIS, FACE_LANDMARKS_LIPS, FACE_LANDMARKS_RIGHT_EYE, FACE_LANDMARKS_RIGHT_EYEBROW, FACE_LANDMARKS_RIGHT_IRIS, FACE_LANDMARKS_TESSELATION} from './face_landmarks_connections';
 
 export * from './face_landmarker_options';
 export * from './face_landmarker_result';
-export * from './face_landmarks_connections';
 export {ImageSource};
 
 // The OSS JS API does not support the builder pattern.
@@ -59,7 +59,11 @@ const DEFAULT_SCORE_THRESHOLD = 0.5;
  * This API expects a pre-trained face landmarker model asset bundle.
  */
 export class FaceLandmarker extends VisionTaskRunner {
-  private result: FaceLandmarkerResult = {faceLandmarks: []};
+  private result: FaceLandmarkerResult = {
+    faceLandmarks: [],
+    faceBlendshapes: [],
+    facialTransformationMatrixes: []
+  };
   private outputFaceBlendshapes = false;
   private outputFacialTransformationMatrixes = false;
 
@@ -71,6 +75,7 @@ export class FaceLandmarker extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new `FaceLandmarker` from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param faceLandmarkerOptions The options for the FaceLandmarker.
@@ -87,6 +92,7 @@ export class FaceLandmarker extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new `FaceLandmarker` based on
    * the provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
@@ -101,6 +107,7 @@ export class FaceLandmarker extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new `FaceLandmarker` based on
    * the path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
@@ -111,6 +118,67 @@ export class FaceLandmarker extends VisionTaskRunner {
     return VisionTaskRunner.createVisionInstance(
         FaceLandmarker, wasmFileset, {baseOptions: {modelAssetPath}});
   }
+
+  /**
+   * Landmark connections to draw the connection between a face's lips.
+   * @export
+   */
+  static FACE_LANDMARKS_LIPS = FACE_LANDMARKS_LIPS;
+
+  /**
+   * Landmark connections to draw the connection between a face's left eye.
+   * @export
+   */
+  static FACE_LANDMARKS_LEFT_EYE = FACE_LANDMARKS_LEFT_EYE;
+
+  /**
+   * Landmark connections to draw the connection between a face's left eyebrow.
+   * @export
+   */
+  static FACE_LANDMARKS_LEFT_EYEBROW = FACE_LANDMARKS_LEFT_EYEBROW;
+
+  /**
+   * Landmark connections to draw the connection between a face's left iris.
+   * @export
+   */
+  static FACE_LANDMARKS_LEFT_IRIS = FACE_LANDMARKS_LEFT_IRIS;
+
+  /**
+   * Landmark connections to draw the connection between a face's right eye.
+   * @export
+   */
+  static FACE_LANDMARKS_RIGHT_EYE = FACE_LANDMARKS_RIGHT_EYE;
+
+  /**
+   * Landmark connections to draw the connection between a face's right
+   * eyebrow.
+   * @export
+   */
+  static FACE_LANDMARKS_RIGHT_EYEBROW = FACE_LANDMARKS_RIGHT_EYEBROW;
+
+  /**
+   * Landmark connections to draw the connection between a face's right iris.
+   * @export
+   */
+  static FACE_LANDMARKS_RIGHT_IRIS = FACE_LANDMARKS_RIGHT_IRIS;
+
+  /**
+   * Landmark connections to draw the face's oval.
+   * @export
+   */
+  static FACE_LANDMARKS_FACE_OVAL = FACE_LANDMARKS_FACE_OVAL;
+
+  /**
+   * Landmark connections to draw the face's contour.
+   * @export
+   */
+  static FACE_LANDMARKS_CONTOURS = FACE_LANDMARKS_CONTOURS;
+
+  /**
+   * Landmark connections to draw the face's tesselation.
+   * @export
+   */
+  static FACE_LANDMARKS_TESSELATION = FACE_LANDMARKS_TESSELATION;
 
   /** @hideconstructor */
   constructor(
@@ -147,6 +215,7 @@ export class FaceLandmarker extends VisionTaskRunner {
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
+   * @export
    * @param options The options for the face landmarker.
    */
   override setOptions(options: FaceLandmarkerOptions): Promise<void> {
@@ -187,6 +256,7 @@ export class FaceLandmarker extends VisionTaskRunner {
    * synchronously for the response. Only use this method when the
    * FaceLandmarker is created with running mode `image`.
    *
+   * @export
    * @param image An image to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
@@ -204,6 +274,7 @@ export class FaceLandmarker extends VisionTaskRunner {
    * synchronously for the response. Only use this method when the
    * FaceLandmarker is created with running mode `video`.
    *
+   * @export
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
@@ -219,13 +290,11 @@ export class FaceLandmarker extends VisionTaskRunner {
   }
 
   private resetResults(): void {
-    this.result = {faceLandmarks: []};
-    if (this.outputFaceBlendshapes) {
-      this.result.faceBlendshapes = [];
-    }
-    if (this.outputFacialTransformationMatrixes) {
-      this.result.facialTransformationMatrixes = [];
-    }
+    this.result = {
+      faceLandmarks: [],
+      faceBlendshapes: [],
+      facialTransformationMatrixes: []
+    };
   }
 
   /** Sets the default values for the graph. */
@@ -243,21 +312,13 @@ export class FaceLandmarker extends VisionTaskRunner {
     for (const binaryProto of data) {
       const faceLandmarksProto =
           NormalizedLandmarkListProto.deserializeBinary(binaryProto);
-      const landmarks: NormalizedLandmark[] = [];
-      for (const faceLandmarkProto of faceLandmarksProto.getLandmarkList()) {
-        landmarks.push({
-          x: faceLandmarkProto.getX() ?? 0,
-          y: faceLandmarkProto.getY() ?? 0,
-          z: faceLandmarkProto.getZ() ?? 0,
-        });
-      }
-      this.result.faceLandmarks.push(landmarks);
+      this.result.faceLandmarks.push(convertToLandmarks(faceLandmarksProto));
     }
   }
 
   /** Adds new blendshapes from the given proto. */
   private addBlenshape(data: Uint8Array[]): void {
-    if (!this.result.faceBlendshapes) {
+    if (!this.outputFaceBlendshapes) {
       return;
     }
 
@@ -271,7 +332,7 @@ export class FaceLandmarker extends VisionTaskRunner {
 
   /** Adds new transformation matrixes from the given proto. */
   private addFacialTransformationMatrixes(data: Uint8Array[]): void {
-    if (!this.result.facialTransformationMatrixes) {
+    if (!this.outputFacialTransformationMatrixes) {
       return;
     }
 

@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ using FaceStylizerGraphOptionsProto =
 // "mediapipe.tasks.vision.face_stylizer.FaceStylizerGraph".
 CalculatorGraphConfig CreateGraphConfig(
     std::unique_ptr<FaceStylizerGraphOptionsProto> options,
-    bool enable_flow_limiting) {
+    bool enable_flow_limiting = false) {
   api2::builder::Graph graph;
   auto& task_subgraph = graph.AddNode(kSubgraphTypeName);
   task_subgraph.GetOptions<FaceStylizerGraphOptionsProto>().Swap(options.get());
@@ -87,8 +87,6 @@ ConvertFaceStylizerOptionsToProto(FaceStylizerOptions* options) {
   auto base_options_proto = std::make_unique<tasks::core::proto::BaseOptions>(
       tasks::core::ConvertBaseOptionsToProto(&(options->base_options)));
   options_proto->mutable_base_options()->Swap(base_options_proto.get());
-  options_proto->mutable_base_options()->set_use_stream_mode(
-      options->running_mode != core::RunningMode::IMAGE);
   return options_proto;
 }
 
@@ -125,10 +123,8 @@ absl::StatusOr<std::unique_ptr<FaceStylizer>> FaceStylizer::Create(
   }
   return core::VisionTaskApiFactory::Create<FaceStylizer,
                                             FaceStylizerGraphOptionsProto>(
-      CreateGraphConfig(
-          std::move(options_proto),
-          options->running_mode == core::RunningMode::LIVE_STREAM),
-      std::move(options->base_options.op_resolver), options->running_mode,
+      CreateGraphConfig(std::move(options_proto)),
+      std::move(options->base_options.op_resolver), core::RunningMode::IMAGE,
       std::move(packets_callback));
 }
 
@@ -152,52 +148,6 @@ absl::StatusOr<std::optional<Image>> FaceStylizer::Stylize(
              ? std::nullopt
              : std::optional<Image>(
                    output_packets[kStylizedImageName].Get<Image>());
-}
-
-absl::StatusOr<std::optional<Image>> FaceStylizer::StylizeForVideo(
-    mediapipe::Image image, int64_t timestamp_ms,
-    std::optional<core::ImageProcessingOptions> image_processing_options) {
-  if (image.UsesGpu()) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        absl::StrCat("GPU input images are currently not supported."),
-        MediaPipeTasksStatus::kRunnerUnexpectedInputError);
-  }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image));
-  ASSIGN_OR_RETURN(
-      auto output_packets,
-      ProcessVideoData(
-          {{kImageInStreamName,
-            MakePacket<Image>(std::move(image))
-                .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
-           {kNormRectName,
-            MakePacket<NormalizedRect>(std::move(norm_rect))
-                .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}}));
-  return output_packets[kStylizedImageName].IsEmpty()
-             ? std::nullopt
-             : std::optional<Image>(
-                   output_packets[kStylizedImageName].Get<Image>());
-}
-
-absl::Status FaceStylizer::StylizeAsync(
-    Image image, int64_t timestamp_ms,
-    std::optional<core::ImageProcessingOptions> image_processing_options) {
-  if (image.UsesGpu()) {
-    return CreateStatusWithPayload(
-        absl::StatusCode::kInvalidArgument,
-        absl::StrCat("GPU input images are currently not supported."),
-        MediaPipeTasksStatus::kRunnerUnexpectedInputError);
-  }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image));
-  return SendLiveStreamData(
-      {{kImageInStreamName,
-        MakePacket<Image>(std::move(image))
-            .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))},
-       {kNormRectName,
-        MakePacket<NormalizedRect>(std::move(norm_rect))
-            .At(Timestamp(timestamp_ms * kMicroSecondsPerMilliSecond))}});
 }
 
 }  // namespace face_stylizer

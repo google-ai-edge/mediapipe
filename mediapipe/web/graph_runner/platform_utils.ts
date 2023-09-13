@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,4 +20,18 @@ export function isWebKit(browser = navigator) {
   // Note that this returns true for Chrome on iOS (which is running WebKit) as
   // it uses "CriOS".
   return userAgent.includes('Safari') && !userAgent.includes('Chrome');
+}
+
+/** Detect if code is running on iOS. */
+export function isIOS() {
+  // Source:
+  // https://stackoverflow.com/questions/9038625/detect-if-device-is-ios
+  return [
+    'iPad Simulator', 'iPhone Simulator', 'iPod Simulator', 'iPad', 'iPhone',
+    'iPod'
+    // tslint:disable-next-line:deprecation
+  ].includes(navigator.platform)
+      // iPad on iOS 13 detection
+      || (navigator.userAgent.includes('Mac') &&
+          (typeof document !== undefined && 'ontouchend' in document));
 }

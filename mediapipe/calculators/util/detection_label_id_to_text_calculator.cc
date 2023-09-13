@@ -19,6 +19,7 @@
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/status.h"
+#include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/util/label_map.pb.h"
 #include "mediapipe/util/resource_util.h"
 
@@ -85,7 +86,8 @@ absl::Status DetectionLabelIdToTextCalculator::Open(CalculatorContext* cc) {
     ASSIGN_OR_RETURN(string_path,
                      PathToResourceAsFile(options.label_map_path()));
     std::string label_map_string;
-    MP_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
+    MP_RETURN_IF_ERROR(
+        mediapipe::GetResourceContents(string_path, &label_map_string));
 
     std::istringstream stream(label_map_string);
     std::string line;

@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -2939,7 +2939,7 @@ class FaceLandmarkerOptions:
   Attributes:
     base_options: Base options for the face landmarker task.
     running_mode: The running mode of the task. Default to the image mode.
-      HandLandmarker has three running modes: 1) The image mode for detecting
+      FaceLandmarker has three running modes: 1) The image mode for detecting
       face landmarks on single image inputs. 2) The video mode for detecting
       face landmarks on the decoded frames of a video. 3) The live stream mode
       for detecting face landmarks on the live stream of input data, such as
@@ -2966,12 +2966,12 @@ class FaceLandmarkerOptions:
 
   base_options: _BaseOptions
   running_mode: _RunningMode = _RunningMode.IMAGE
-  num_faces: Optional[int] = 1
-  min_face_detection_confidence: Optional[float] = 0.5
-  min_face_presence_confidence: Optional[float] = 0.5
-  min_tracking_confidence: Optional[float] = 0.5
-  output_face_blendshapes: Optional[bool] = False
-  output_facial_transformation_matrixes: Optional[bool] = False
+  num_faces: int = 1
+  min_face_detection_confidence: float = 0.5
+  min_face_presence_confidence: float = 0.5
+  min_tracking_confidence: float = 0.5
+  output_face_blendshapes: bool = False
+  output_facial_transformation_matrixes: bool = False
   result_callback: Optional[
       Callable[[FaceLandmarkerResult, image_module.Image, int], None]
   ] = None

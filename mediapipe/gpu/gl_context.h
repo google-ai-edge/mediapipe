@@ -22,6 +22,7 @@
 #include <memory>
 
 #include "absl/container/flat_hash_map.h"
+#include "absl/log/absl_check.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/executor.h"
 #include "mediapipe/framework/mediapipe_profiling.h"
@@ -295,7 +296,7 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // TOOD: const result?
   template <class T>
   T& GetCachedAttachment(const Attachment<T>& attachment) {
-    DCHECK(IsCurrent());
+    ABSL_DCHECK(IsCurrent());
     internal::AttachmentPtr<void>& entry = attachments_[&attachment];
     if (entry == nullptr) {
       entry = attachment.factory()(*this);
@@ -454,8 +455,8 @@ class GlContext : public std::enable_shared_from_this<GlContext> {
   // Number of glFinish calls completed on the GL thread.
   // Changes should be guarded by mutex_. However, we use simple atomic
   // loads for efficiency on the fast path.
-  std::atomic<int64_t> gl_finish_count_ = ATOMIC_VAR_INIT(0);
-  std::atomic<int64_t> gl_finish_count_target_ = ATOMIC_VAR_INIT(0);
+  std::atomic<int64_t> gl_finish_count_ = 0;
+  std::atomic<int64_t> gl_finish_count_target_ = 0;
 
   GlContext* context_waiting_on_ ABSL_GUARDED_BY(mutex_) = nullptr;
 

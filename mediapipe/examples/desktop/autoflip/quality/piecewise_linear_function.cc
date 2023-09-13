@@ -20,6 +20,7 @@
 #include <limits>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "mediapipe/framework/port/status.h"
 
 namespace mediapipe {
@@ -27,7 +28,7 @@ namespace autoflip {
 
 void PiecewiseLinearFunction::AddPoint(double x, double y) {
   if (!points_.empty()) {
-    CHECK_GE(x, points_.back().x)
+    ABSL_CHECK_GE(x, points_.back().x)
         << "Points must be provided in non-decreasing x order.";
   }
   points_.push_back(PiecewiseLinearFunction::Point(x, y));
@@ -45,8 +46,8 @@ PiecewiseLinearFunction::GetIntervalIterator(double input) const {
 double PiecewiseLinearFunction::Interpolate(
     const PiecewiseLinearFunction::Point& p1,
     const PiecewiseLinearFunction::Point& p2, double input) const {
-  CHECK_LT(p1.x, input);
-  CHECK_GE(p2.x, input);
+  ABSL_CHECK_LT(p1.x, input);
+  ABSL_CHECK_GE(p2.x, input);
 
   return p2.y - (p2.x - input) / (p2.x - p1.x) * (p2.y - p1.y);
 }

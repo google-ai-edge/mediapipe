@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -76,15 +76,18 @@ using ::testing::HasSubstr;
 using ::testing::Optional;
 using DetectionProto = mediapipe::Detection;
 
-constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
-constexpr char kMobileSsdWithMetadata[] =
-    "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.tflite";
-constexpr char kMobileSsdWithDummyScoreCalibration[] =
+constexpr absl::string_view kTestDataDirectory{
+    "/mediapipe/tasks/testdata/vision/"};
+constexpr absl::string_view kMobileSsdWithMetadata{
+    "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.tflite"};
+constexpr absl::string_view kMobileSsdWithDummyScoreCalibration{
     "coco_ssd_mobilenet_v1_1.0_quant_2018_06_29_with_dummy_score_calibration."
-    "tflite";
+    "tflite"};
 // The model has different output tensor order.
-constexpr char kEfficientDetWithMetadata[] =
-    "coco_efficientdet_lite0_v1_1.0_quant_2021_09_06.tflite";
+constexpr absl::string_view kEfficientDetWithMetadata{
+    "coco_efficientdet_lite0_v1_1.0_quant_2021_09_06.tflite"};
+constexpr absl::string_view kEfficientDetWithoutNms{
+    "efficientdet_lite0_fp16_no_nms.tflite"};
 
 // Checks that the two provided `Detection` proto vectors are equal, with a
 // tolerancy on floating-point scores to account for numerical instabilities.
@@ -449,6 +452,67 @@ TEST_F(ImageModeTest, SucceedsEfficientDetModel) {
                format: BOUNDING_BOX
                bounding_box { xmin: 601 ymin: 166 width: 298 height: 437 }
              })pb")}));
+}
+
+TEST_F(ImageModeTest, SucceedsEfficientDetNoNmsModel) {
+  MP_ASSERT_OK_AND_ASSIGN(Image image,
+                          DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
+                                                       "cats_and_dogs.jpg")));
+  auto options = std::make_unique<ObjectDetectorOptions>();
+  options->max_results = 4;
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kEfficientDetWithoutNms);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ObjectDetector> object_detector,
+                          ObjectDetector::Create(std::move(options)));
+  MP_ASSERT_OK_AND_ASSIGN(auto results, object_detector->Detect(image));
+  MP_ASSERT_OK(object_detector->Close());
+  ExpectApproximatelyEqual(
+      results,
+      ConvertToDetectionResult(
+          {ParseTextProtoOrDie<DetectionProto>(R"pb(
+             label: "dog"
+             score: 0.733542
+             location_data {
+               format: BOUNDING_BOX
+               bounding_box { xmin: 636 ymin: 160 width: 282 height: 451 }
+             })pb"),
+           ParseTextProtoOrDie<DetectionProto>(R"pb(
+             label: "cat"
+             score: 0.699751
+             location_data {
+               format: BOUNDING_BOX
+               bounding_box { xmin: 870 ymin: 411 width: 208 height: 187 }
+             })pb"),
+           ParseTextProtoOrDie<DetectionProto>(R"pb(
+             label: "dog"
+             score: 0.682425
+             location_data {
+               format: BOUNDING_BOX
+               bounding_box { xmin: 386 ymin: 216 width: 256 height: 376 }
+             })pb"),
+           ParseTextProtoOrDie<DetectionProto>(R"pb(
+             label: "cat"
+             score: 0.646585
+             location_data {
+               format: BOUNDING_BOX
+               bounding_box { xmin: 83 ymin: 399 width: 347 height: 198 }
+             })pb")}));
+}
+
+TEST_F(ImageModeTest, SucceedsNoObjectDetected) {
+  MP_ASSERT_OK_AND_ASSIGN(Image image,
+                          DecodeImageFromFile(JoinPath("./", kTestDataDirectory,
+                                                       "cats_and_dogs.jpg")));
+  auto options = std::make_unique<ObjectDetectorOptions>();
+  options->max_results = 4;
+  options->score_threshold = 1.0f;
+  options->base_options.model_asset_path =
+      JoinPath("./", kTestDataDirectory, kEfficientDetWithoutNms);
+  MP_ASSERT_OK_AND_ASSIGN(std::unique_ptr<ObjectDetector> object_detector,
+                          ObjectDetector::Create(std::move(options)));
+  MP_ASSERT_OK_AND_ASSIGN(auto results, object_detector->Detect(image));
+  MP_ASSERT_OK(object_detector->Close());
+  EXPECT_THAT(results.detections, testing::IsEmpty());
 }
 
 TEST_F(ImageModeTest, SucceedsWithoutImageResizing) {

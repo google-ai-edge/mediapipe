@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ limitations under the License.
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -76,8 +77,8 @@ using ::testing::proto::Partially;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/vision/";
 constexpr char kPalmDetectionModel[] = "palm_detection_full.tflite";
-constexpr char kTestRightHandsImage[] = "right_hands.jpg";
-constexpr char kTestRightHandsRotatedImage[] = "right_hands_rotated.jpg";
+constexpr char kTestLeftHandsImage[] = "left_hands.jpg";
+constexpr char kTestLeftHandsRotatedImage[] = "left_hands_rotated.jpg";
 constexpr char kTestModelResourcesTag[] = "test_model_resources";
 
 constexpr char kOneHandResultFile[] = "hand_detector_result_one_hand.pbtxt";
@@ -138,8 +139,8 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
 
 HandDetectorResult GetExpectedHandDetectorResult(absl::string_view file_name) {
   HandDetectorResult result;
-  CHECK_OK(GetTextProto(file::JoinPath("./", kTestDataDirectory, file_name),
-                        &result, Defaults()))
+  ABSL_CHECK_OK(GetTextProto(
+      file::JoinPath("./", kTestDataDirectory, file_name), &result, Defaults()))
       << "Expected hand detector result does not exist.";
   return result;
 }
@@ -207,21 +208,21 @@ INSTANTIATE_TEST_SUITE_P(
     HandDetectionTest, HandDetectionTest,
     Values(TestParams{.test_name = "DetectOneHand",
                       .hand_detection_model_name = kPalmDetectionModel,
-                      .test_image_name = kTestRightHandsImage,
+                      .test_image_name = kTestLeftHandsImage,
                       .rotation = 0,
                       .num_hands = 1,
                       .expected_result =
                           GetExpectedHandDetectorResult(kOneHandResultFile)},
            TestParams{.test_name = "DetectTwoHands",
                       .hand_detection_model_name = kPalmDetectionModel,
-                      .test_image_name = kTestRightHandsImage,
+                      .test_image_name = kTestLeftHandsImage,
                       .rotation = 0,
                       .num_hands = 2,
                       .expected_result =
                           GetExpectedHandDetectorResult(kTwoHandsResultFile)},
            TestParams{.test_name = "DetectOneHandWithRotation",
                       .hand_detection_model_name = kPalmDetectionModel,
-                      .test_image_name = kTestRightHandsRotatedImage,
+                      .test_image_name = kTestLeftHandsRotatedImage,
                       .rotation = M_PI / 2.0f,
                       .num_hands = 1,
                       .expected_result = GetExpectedHandDetectorResult(

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -356,18 +357,18 @@ TEST_F(GateCalculatorTest, AllowWithStateChangeNoDataStreams) {
   RunTimeStepWithoutDataStream(kTimestampValue2, "ALLOW", true);
   constexpr int64_t kTimestampValue3 = 45;
   RunTimeStepWithoutDataStream(kTimestampValue3, "ALLOW", false);
-  LOG(INFO) << "a";
+  ABSL_LOG(INFO) << "a";
   const std::vector<Packet>& output =
       runner()->Outputs().Get("STATE_CHANGE", 0).packets;
-  LOG(INFO) << "s";
+  ABSL_LOG(INFO) << "s";
   ASSERT_EQ(2, output.size());
-  LOG(INFO) << "d";
+  ABSL_LOG(INFO) << "d";
   EXPECT_EQ(kTimestampValue1, output[0].Timestamp().Value());
   EXPECT_EQ(kTimestampValue3, output[1].Timestamp().Value());
-  LOG(INFO) << "f";
+  ABSL_LOG(INFO) << "f";
   EXPECT_EQ(true, output[0].Get<bool>());   // Allow.
   EXPECT_EQ(false, output[1].Get<bool>());  // Disallow.
-  LOG(INFO) << "g";
+  ABSL_LOG(INFO) << "g";
 }
 
 TEST_F(GateCalculatorTest, DisallowWithStateChange) {
@@ -456,6 +457,30 @@ TEST_F(GateCalculatorTest, AllowInitialNoStateTransition) {
   const std::vector<Packet>& output =
       runner()->Outputs().Get("STATE_CHANGE", 0).packets;
   ASSERT_EQ(0, output.size());
+}
+
+// Must detect allow value for first timestamp as a state change when the
+// initial state is set to GATE_DISALLOW.
+TEST_F(GateCalculatorTest, StateChangeTriggeredWithInitialGateStateOption) {
+  SetRunner(R"(
+        calculator: "GateCalculator"
+        input_stream: "test_input"
+        input_stream: "ALLOW:allow"
+        output_stream: "test_output"
+        output_stream: "STATE_CHANGE:state_change"
+        options: {
+          [mediapipe.GateCalculatorOptions.ext] {
+            initial_gate_state: GATE_DISALLOW
+          }
+        }
+  )");
+
+  constexpr int64_t kTimestampValue0 = 42;
+  RunTimeStep(kTimestampValue0, "ALLOW", true);
+
+  const std::vector<Packet>& output =
+      runner()->Outputs().Get("STATE_CHANGE", 0).packets;
+  ASSERT_EQ(1, output.size());
 }
 
 }  // namespace

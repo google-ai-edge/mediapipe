@@ -83,8 +83,8 @@ class ABSL_MUST_USE_RESULT StatusBuilder {
     return std::move(*this << msg);
   }
 
-  operator Status() const&;
-  operator Status() &&;
+  operator absl::Status() const&;
+  operator absl::Status() &&;
 
   absl::Status JoinMessageToStatus();
 

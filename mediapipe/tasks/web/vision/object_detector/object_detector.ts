@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,9 @@ export {ImageSource};  // Used in the public API
 // The OSS JS API does not support the builder pattern.
 // tslint:disable:jspb-use-builder-pattern
 
-/** Performs object detection on images. */
+/**
+ * Performs object detection on images.
+ */
 export class ObjectDetector extends VisionTaskRunner {
   private result: ObjectDetectorResult = {detections: []};
   private readonly options = new ObjectDetectorOptionsProto();
@@ -49,6 +51,7 @@ export class ObjectDetector extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new object detector from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param objectDetectorOptions The options for the Object Detector. Note that
@@ -65,6 +68,7 @@ export class ObjectDetector extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new object detector based on the
    * provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
@@ -79,6 +83,7 @@ export class ObjectDetector extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new object detector based on the
    * path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
@@ -115,6 +120,7 @@ export class ObjectDetector extends VisionTaskRunner {
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
+   * @export
    * @param options The options for the object detector.
    */
   override setOptions(options: ObjectDetectorOptions): Promise<void> {
@@ -159,6 +165,7 @@ export class ObjectDetector extends VisionTaskRunner {
    * synchronously for the response. Only use this method when the
    * ObjectDetector is created with running mode `image`.
    *
+   * @export
    * @param image An image to process.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
    *    to process the input image before running inference.
@@ -176,6 +183,7 @@ export class ObjectDetector extends VisionTaskRunner {
    * synchronously for the response. Only use this method when the
    * ObjectDetector is created with running mode `video`.
    *
+   * @export
    * @param videoFrame A video frame to process.
    * @param timestamp The timestamp of the current frame, in ms.
    * @param imageProcessingOptions the `ImageProcessingOptions` specifying how

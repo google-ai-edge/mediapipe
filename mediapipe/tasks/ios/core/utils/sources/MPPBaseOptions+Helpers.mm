@@ -33,20 +33,6 @@ using BaseOptionsProto = ::mediapipe::tasks::core::proto::BaseOptions;
   if (self.modelAssetPath) {
     baseOptionsProto->mutable_model_asset()->set_file_name(self.modelAssetPath.UTF8String);
   }
-
-  switch (self.delegate) {
-    case MPPDelegateCPU: {
-      baseOptionsProto->mutable_acceleration()->mutable_tflite();
-      break;
-    }
-    case MPPDelegateGPU: {
-      // TODO: Provide an implementation for GPU Delegate.
-      [NSException raise:@"Invalid value for delegate" format:@"GPU Delegate is not implemented."];
-      break;
-    }
-    default:
-      break;
-  }
 }
 
 @end

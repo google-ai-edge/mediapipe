@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ from unittest import mock as unittest_mock
 
 import tensorflow as tf
 
-from mediapipe.model_maker.python.core import hyperparameters as hp
+from mediapipe.model_maker.python.text.text_classifier import hyperparameters as hp
 from mediapipe.model_maker.python.text.text_classifier import model_options as classifier_model_options
 from mediapipe.model_maker.python.text.text_classifier import model_spec as ms
 
@@ -42,26 +42,30 @@ class ModelSpecTest(tf.test.TestCase):
   def test_predefined_bert_spec(self):
     model_spec_obj = ms.SupportedModels.MOBILEBERT_CLASSIFIER.value()
     self.assertIsInstance(model_spec_obj, ms.BertClassifierSpec)
-    self.assertEqual(model_spec_obj.name, 'MobileBert')
-    self.assertTrue(os.path.exists(model_spec_obj.downloaded_files.get_path()))
+    self.assertEqual(model_spec_obj.name, 'MobileBERT')
+    self.assertTrue(model_spec_obj.files)
     self.assertTrue(model_spec_obj.do_lower_case)
     self.assertEqual(
-        model_spec_obj.tflite_input_name, {
-            'ids': 'serving_default_input_1:0',
-            'mask': 'serving_default_input_3:0',
-            'segment_ids': 'serving_default_input_2:0'
-        })
+        model_spec_obj.tflite_input_name,
+        {
+            'ids': 'serving_default_input_word_ids:0',
+            'mask': 'serving_default_input_mask:0',
+            'segment_ids': 'serving_default_input_type_ids:0',
+        },
+    )
     self.assertEqual(
         model_spec_obj.model_options,
         classifier_model_options.BertModelOptions(
             seq_len=128, do_fine_tuning=True, dropout_rate=0.1))
     self.assertEqual(
         model_spec_obj.hparams,
-        hp.BaseHParams(
+        hp.BertHParams(
             epochs=3,
             batch_size=48,
             learning_rate=3e-5,
-            distribution_strategy='off'))
+            distribution_strategy='off',
+        ),
+    )
 
   def test_predefined_average_word_embedding_spec(self):
     model_spec_obj = (
@@ -78,15 +82,17 @@ class ModelSpecTest(tf.test.TestCase):
             dropout_rate=0.2))
     self.assertEqual(
         model_spec_obj.hparams,
-        hp.BaseHParams(
+        hp.AverageWordEmbeddingHParams(
             epochs=10,
             batch_size=32,
             learning_rate=0,
             steps_per_epoch=None,
             shuffle=False,
             distribution_strategy='off',
-            num_gpus=-1,
-            tpu=''))
+            num_gpus=0,
+            tpu='',
+        ),
+    )
 
   def test_custom_bert_spec(self):
     custom_bert_classifier_options = (
@@ -99,7 +105,7 @@ class ModelSpecTest(tf.test.TestCase):
                      custom_bert_classifier_options)
 
   def test_custom_average_word_embedding_spec(self):
-    custom_hparams = hp.BaseHParams(
+    custom_hparams = hp.AverageWordEmbeddingHParams(
         learning_rate=0.4,
         batch_size=64,
         epochs=10,
@@ -108,7 +114,8 @@ class ModelSpecTest(tf.test.TestCase):
         export_dir='foo/bar',
         distribution_strategy='mirrored',
         num_gpus=3,
-        tpu='tpu/address')
+        tpu='tpu/address',
+    )
     custom_average_word_embedding_model_options = (
         classifier_model_options.AverageWordEmbeddingModelOptions(
             seq_len=512,

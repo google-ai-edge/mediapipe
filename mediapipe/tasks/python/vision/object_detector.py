@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -198,6 +198,15 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
     def packets_callback(output_packets: Mapping[str, packet_module.Packet]):
       if output_packets[_IMAGE_OUT_STREAM_NAME].is_empty():
         return
+      image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
+      if output_packets[_DETECTIONS_OUT_STREAM_NAME].is_empty():
+        empty_packet = output_packets[_DETECTIONS_OUT_STREAM_NAME]
+        options.result_callback(
+            ObjectDetectorResult([]),
+            image,
+            empty_packet.timestamp.value // _MICRO_SECONDS_PER_MILLISECOND,
+        )
+        return
       detection_proto_list = packet_getter.get_proto_list(
           output_packets[_DETECTIONS_OUT_STREAM_NAME]
       )
@@ -207,7 +216,6 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
               for result in detection_proto_list
           ]
       )
-      image = packet_getter.get_image(output_packets[_IMAGE_OUT_STREAM_NAME])
       timestamp = output_packets[_IMAGE_OUT_STREAM_NAME].timestamp
       options.result_callback(detection_result, image, timestamp)
 
@@ -266,6 +274,8 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
             normalized_rect.to_pb2()
         ),
     })
+    if output_packets[_DETECTIONS_OUT_STREAM_NAME].is_empty():
+      return ObjectDetectorResult([])
     detection_proto_list = packet_getter.get_proto_list(
         output_packets[_DETECTIONS_OUT_STREAM_NAME]
     )
@@ -315,6 +325,8 @@ class ObjectDetector(base_vision_task_api.BaseVisionTaskApi):
             normalized_rect.to_pb2()
         ).at(timestamp_ms * _MICRO_SECONDS_PER_MILLISECOND),
     })
+    if output_packets[_DETECTIONS_OUT_STREAM_NAME].is_empty():
+      return ObjectDetectorResult([])
     detection_proto_list = packet_getter.get_proto_list(
         output_packets[_DETECTIONS_OUT_STREAM_NAME]
     )

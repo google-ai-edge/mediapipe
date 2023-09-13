@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_HAND_LANDMARKER_RESULT_H_
-#define MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_HAND_LANDMARKER_RESULT_H_
+#ifndef MEDIAPIPE_TASKS_CC_VISION_POSE_LANDMARKER_POSE_LANDMARKER_RESULT_H_
+#define MEDIAPIPE_TASKS_CC_VISION_POSE_LANDMARKER_POSE_LANDMARKER_RESULT_H_
 
 #include <vector>
 
@@ -37,21 +37,16 @@ struct PoseLandmarkerResult {
   std::vector<components::containers::NormalizedLandmarks> pose_landmarks;
   // Detected pose landmarks in world coordinates.
   std::vector<components::containers::Landmarks> pose_world_landmarks;
-  // Detected auxiliary landmarks, used for deriving ROI for next frame.
-  std::vector<components::containers::NormalizedLandmarks>
-      pose_auxiliary_landmarks;
 };
 
 PoseLandmarkerResult ConvertToPoseLandmarkerResult(
     std::optional<std::vector<mediapipe::Image>> segmentation_mask,
     const std::vector<mediapipe::NormalizedLandmarkList>& pose_landmarks_proto,
-    const std::vector<mediapipe::LandmarkList>& pose_world_landmarks_proto,
-    const std::vector<mediapipe::NormalizedLandmarkList>&
-        pose_auxiliary_landmarks_proto);
+    const std::vector<mediapipe::LandmarkList>& pose_world_landmarks_proto);
 
 }  // namespace pose_landmarker
 }  // namespace vision
 }  // namespace tasks
 }  // namespace mediapipe
 
-#endif  // MEDIAPIPE_TASKS_CC_VISION_HAND_LANDMARKER_HAND_LANDMARKER_RESULT_H_
+#endif  // MEDIAPIPE_TASKS_CC_VISION_POSE_LANDMARKER_POSE_LANDMARKER_RESULT_H_

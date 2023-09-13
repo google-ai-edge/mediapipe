@@ -31,7 +31,8 @@
   MPPGestureRecognizerOptions *gestureRecognizerOptions = [super copyWithZone:zone];
 
   gestureRecognizerOptions.runningMode = self.runningMode;
-  gestureRecognizerOptions.completion = self.completion;
+  gestureRecognizerOptions.gestureRecognizerLiveStreamDelegate =
+      self.gestureRecognizerLiveStreamDelegate;
   gestureRecognizerOptions.numHands = self.numHands;
   gestureRecognizerOptions.minHandDetectionConfidence = self.minHandDetectionConfidence;
   gestureRecognizerOptions.minHandPresenceConfidence = self.minHandPresenceConfidence;

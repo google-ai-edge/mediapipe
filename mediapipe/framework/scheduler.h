@@ -76,6 +76,16 @@ class Scheduler {
   // be scheduled and nothing is running in the worker threads.  This function
   // can be called only after Start().
   // Runs application thread tasks while waiting.
+  //
+  // Idleness requires:
+  // 1. either the graph has no source nodes or all source nodes are closed, and
+  // 2. no packets are added to graph input streams.
+  //
+  // For simplicity, we only fully support WaitUntilIdle() to be called on a
+  // graph with no source nodes.
+  //
+  // The application must ensure no other threads are adding packets to graph
+  // input streams while a WaitUntilIdle() call is in progress.
   absl::Status WaitUntilIdle() ABSL_LOCKS_EXCLUDED(state_mutex_);
 
   // Wait until any graph input stream has been unthrottled.
@@ -310,7 +320,7 @@ class Scheduler {
   absl::Mutex state_mutex_;
 
   // Current state of the scheduler.
-  std::atomic<State> state_ = ATOMIC_VAR_INIT(STATE_NOT_STARTED);
+  std::atomic<State> state_ = STATE_NOT_STARTED;
 
   // True if all graph input streams are closed.
   bool graph_input_streams_closed_ ABSL_GUARDED_BY(state_mutex_) = false;

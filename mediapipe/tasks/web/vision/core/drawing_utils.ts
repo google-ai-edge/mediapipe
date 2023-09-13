@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ export class DrawingUtils {
   /**
    * Restricts a number between two endpoints (order doesn't matter).
    *
+   * @export
    * @param x The number to clamp.
    * @param x0 The first boundary.
    * @param x1 The second boundary.
@@ -104,6 +105,7 @@ export class DrawingUtils {
    * Linearly interpolates a value between two points, clamping that value to
    * the endpoints.
    *
+   * @export
    * @param x The number to interpolate.
    * @param x0 The x coordinate of the start value.
    * @param x1 The x coordinate of the end value.
@@ -121,6 +123,7 @@ export class DrawingUtils {
   /**
    * Draws circles onto the provided landmarks.
    *
+   * @export
    * @param landmarks The landmarks to draw.
    * @param style The style to visualize the landmarks.
    */
@@ -156,6 +159,7 @@ export class DrawingUtils {
   /**
    * Draws lines between landmarks (given a connection graph).
    *
+   * @export
    * @param landmarks The landmarks to draw.
    * @param connections The connections array that contains the start and the
    *     end indices for the connections to draw.
@@ -191,6 +195,7 @@ export class DrawingUtils {
   /**
    * Draws a bounding box.
    *
+   * @export
    * @param boundingBox The bounding box to draw.
    * @param style The style to visualize the boundin box.
    */

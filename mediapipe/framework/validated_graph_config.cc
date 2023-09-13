@@ -15,8 +15,11 @@
 #include "mediapipe/framework/validated_graph_config.h"
 
 #include <memory>
+#include <string>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
@@ -33,6 +36,7 @@
 #include "mediapipe/framework/port/core_proto_inc.h"
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/logging.h"
+#include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/source_location.h"
 #include "mediapipe/framework/port/status.h"
@@ -48,8 +52,6 @@
 #include "mediapipe/framework/tool/validate_name.h"
 
 namespace mediapipe {
-
-namespace {
 
 // Create a debug string name for a set of edge.  An edge can be either
 // a stream or a side packet.
@@ -78,6 +80,8 @@ std::string DebugName(const CalculatorGraphConfig::Node& node_config) {
   return name;
 }
 
+namespace {
+
 std::string DebugName(const PacketGeneratorConfig& node_config) {
   return absl::StrCat(
       "[", node_config.packet_generator(), ", ",
@@ -98,7 +102,7 @@ std::string DebugName(const CalculatorGraphConfig& config,
                       NodeTypeInfo::NodeType node_type, int node_index) {
   switch (node_type) {
     case NodeTypeInfo::NodeType::CALCULATOR:
-      return DebugName(config.node(node_index));
+      return mediapipe::DebugName(config.node(node_index));
     case NodeTypeInfo::NodeType::PACKET_GENERATOR:
       return DebugName(config.packet_generator(node_index));
     case NodeTypeInfo::NodeType::GRAPH_INPUT_STREAM:
@@ -108,8 +112,8 @@ std::string DebugName(const CalculatorGraphConfig& config,
     case NodeTypeInfo::NodeType::UNKNOWN:
       /* Fall through. */ {}
   }
-  LOG(FATAL) << "Unknown NodeTypeInfo::NodeType: "
-             << NodeTypeInfo::NodeTypeToString(node_type);
+  ABSL_LOG(FATAL) << "Unknown NodeTypeInfo::NodeType: "
+                  << NodeTypeInfo::NodeTypeToString(node_type);
 }
 
 // Adds the ExecutorConfigs for predefined executors, if they are not in
@@ -158,8 +162,8 @@ std::string NodeTypeInfo::NodeTypeToString(NodeType node_type) {
     case NodeTypeInfo::NodeType::UNKNOWN:
       return "Unknown Node";
   }
-  LOG(FATAL) << "Unknown NodeTypeInfo::NodeType: "
-             << static_cast<int>(node_type);
+  ABSL_LOG(FATAL) << "Unknown NodeTypeInfo::NodeType: "
+                  << static_cast<int>(node_type);
 }
 
 absl::Status NodeTypeInfo::Initialize(
@@ -692,12 +696,13 @@ absl::Status ValidatedGraphConfig::AddInputStreamsForNode(
       if (edge_info.back_edge) {
         // A back edge was specified, but its output side was already seen.
         if (!need_sorting_ptr) {
-          LOG(WARNING) << "Input Stream \"" << name
-                       << "\" for node with sorted index " << node_index
-                       << " name " << node_type_info->Contract().GetNodeName()
-                       << " is marked as a back edge, but its output stream is "
-                          "already available.  This means it was not necessary "
-                          "to mark it as a back edge.";
+          ABSL_LOG(WARNING)
+              << "Input Stream \"" << name << "\" for node with sorted index "
+              << node_index << " name "
+              << node_type_info->Contract().GetNodeName()
+              << " is marked as a back edge, but its output stream is "
+                 "already available.  This means it was not necessary "
+                 "to mark it as a back edge.";
         }
       } else {
         edge_info.upstream = iter->second;
@@ -744,7 +749,7 @@ int ValidatedGraphConfig::SorterIndexForNode(NodeTypeInfo::NodeRef node) const {
     case NodeTypeInfo::NodeType::CALCULATOR:
       return generators_.size() + node.index;
     default:
-      CHECK(false);
+      ABSL_CHECK(false);
   }
 }
 
@@ -900,8 +905,8 @@ absl::Status ValidatedGraphConfig::ValidateSidePacketTypes() {
           "\"$3\" but the connected output side packet will be of type \"$4\"",
           side_packet.name,
           NodeTypeInfo::NodeTypeToString(side_packet.parent_node.type),
-          mediapipe::DebugName(config_, side_packet.parent_node.type,
-                               side_packet.parent_node.index),
+          DebugName(config_, side_packet.parent_node.type,
+                    side_packet.parent_node.index),
           side_packet.packet_type->DebugTypeName(),
           output_side_packets_[side_packet.upstream]
               .packet_type->DebugTypeName()));

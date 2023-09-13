@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_split.h"
 #include "mediapipe/examples/desktop/autoflip/autoflip_messages.pb.h"
 #include "mediapipe/examples/desktop/autoflip/quality/focus_point.pb.h"
@@ -744,7 +745,7 @@ TEST(SceneCameraMotionAnalyzerTest,
     std::vector<std::string> r = absl::StrSplit(line, ',');
     records.insert(records.end(), r.begin(), r.end());
   }
-  CHECK_EQ(records.size(), kNumSceneFrames * 3 + 1);
+  ABSL_CHECK_EQ(records.size(), kNumSceneFrames * 3 + 1);
 
   std::vector<FocusPointFrame> focus_point_frames;
   MP_EXPECT_OK(analyzer.PopulateFocusPointFrames(

@@ -14,6 +14,7 @@
 
 #include <deque>
 
+#include "absl/log/absl_log.h"
 #include "mediapipe/calculators/core/sequence_shift_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -101,7 +102,7 @@ void SequenceShiftCalculator::ProcessPositiveOffset(CalculatorContext* cc) {
     kOut(cc).Send(packet_cache_.front().At(cc->InputTimestamp()));
     packet_cache_.pop_front();
   } else if (emit_empty_packets_before_first_packet_) {
-    LOG(FATAL) << "Not supported yet";
+    ABSL_LOG(FATAL) << "Not supported yet";
   }
   // Store current packet for later output.
   packet_cache_.push_back(kIn(cc).packet());

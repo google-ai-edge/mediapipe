@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ limitations under the License.
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -119,8 +120,9 @@ absl::StatusOr<std::unique_ptr<TaskRunner>> CreateTaskRunner(
 
 Detection GetExpectedFaceDetectionResult(absl::string_view file_name) {
   Detection detection;
-  CHECK_OK(GetTextProto(file::JoinPath("./", kTestDataDirectory, file_name),
-                        &detection, Defaults()))
+  ABSL_CHECK_OK(
+      GetTextProto(file::JoinPath("./", kTestDataDirectory, file_name),
+                   &detection, Defaults()))
       << "Expected face detection result does not exist.";
   return detection;
 }

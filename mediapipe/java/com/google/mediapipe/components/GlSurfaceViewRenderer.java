@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -231,7 +232,7 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   }
 
   /** Returns the texture left, right, bottom, and top visible boundaries. */
-  protected float[] calculateTextureBoundary() {
+  public float[] calculateTextureBoundary() {
     // TODO: compute scale from surfaceTexture size.
     float scaleWidth = frameWidth > 0 ? (float) surfaceWidth / (float) frameWidth : 1.0f;
     float scaleHeight = frameHeight > 0 ? (float) surfaceHeight / (float) frameHeight : 1.0f;
@@ -303,7 +304,7 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
   }
 
   // Use this when the texture is not a SurfaceTexture.
-  public void setNextFrame(TextureFrame frame) {
+  public void setNextFrame(@Nullable TextureFrame frame) {
     if (surfaceTexture != null) {
       Matrix.setIdentityM(textureTransformMatrix, 0 /* offset */);
     }

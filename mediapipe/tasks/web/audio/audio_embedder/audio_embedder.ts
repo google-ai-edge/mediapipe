@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
   /**
    * Initializes the Wasm runtime and creates a new audio embedder from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param audioEmbedderOptions The options for the audio embedder. Note that
@@ -67,6 +68,7 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
   /**
    * Initializes the Wasm runtime and creates a new audio embedder based on the
    * provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the TFLite model.
@@ -81,6 +83,7 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
   /**
    * Initializes the Wasm runtime and creates a new audio embedder based on the
    * path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the TFLite model.
@@ -115,6 +118,7 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
+   * @export
    * @param options The options for the audio embedder.
    */
   override setOptions(options: AudioEmbedderOptions): Promise<void> {
@@ -129,6 +133,7 @@ export class AudioEmbedder extends AudioTaskRunner<AudioEmbedderResult[]> {
    * Performs embeding extraction on the provided audio clip and waits
    * synchronously for the response.
    *
+   * @export
    * @param audioData An array of raw audio capture data, like from a call to
    *     `getChannelData()` on an AudioBuffer.
    * @param sampleRate The sample rate in Hz of the provided audio data. If not

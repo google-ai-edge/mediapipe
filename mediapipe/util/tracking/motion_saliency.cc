@@ -24,7 +24,8 @@
 #include <memory>
 #include <vector>
 
-#include "mediapipe/framework/port/logging.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/util/tracking/camera_motion.h"
 #include "mediapipe/util/tracking/measure_time.h"
 #include "mediapipe/util/tracking/region_flow.h"
@@ -44,12 +45,12 @@ void MotionSaliency::SaliencyFromFeatures(
     const RegionFlowFeatureList& feature_list,
     std::vector<float>* irls_weights,  // optional.
     SalientPointFrame* salient_frame) {
-  CHECK(salient_frame);
-  CHECK_EQ(frame_width_, feature_list.frame_width());
-  CHECK_EQ(frame_height_, feature_list.frame_height());
+  ABSL_CHECK(salient_frame);
+  ABSL_CHECK_EQ(frame_width_, feature_list.frame_width());
+  ABSL_CHECK_EQ(frame_height_, feature_list.frame_height());
 
   if (irls_weights) {
-    CHECK_EQ(feature_list.feature_size(), irls_weights->size());
+    ABSL_CHECK_EQ(feature_list.feature_size(), irls_weights->size());
   }
 
   if (feature_list.feature_size() < 1) {
@@ -105,8 +106,8 @@ void MotionSaliency::SaliencyFromPoints(const std::vector<Vector2_f>* points,
                                         const std::vector<float>* weights,
                                         SalientPointFrame* salient_frame) {
   // TODO: Handle vectors of size zero.
-  CHECK(salient_frame);
-  CHECK_EQ(points->size(), weights->size());
+  ABSL_CHECK(salient_frame);
+  ABSL_CHECK_EQ(points->size(), weights->size());
 
   float max_weight = *std::max_element(weights->begin(), weights->end());
 
@@ -212,7 +213,7 @@ void MotionSaliency::SelectSaliencyInliers(
 
 void MotionSaliency::FilterMotionSaliency(
     std::vector<SalientPointFrame*>* saliency_point_list) {
-  CHECK(saliency_point_list != nullptr);
+  ABSL_CHECK(saliency_point_list != nullptr);
   const float sigma_time = options_.filtering_sigma_time();
   const float sigma_space = options_.filtering_sigma_space();
 
@@ -329,7 +330,7 @@ void MotionSaliency::FilterMotionSaliency(
 void MotionSaliency::CollapseMotionSaliency(
     const SaliencyPointList& input_saliency, const Vector4_f& bounds,
     SaliencyPointList* output_saliency) {
-  CHECK(output_saliency);
+  ABSL_CHECK(output_saliency);
   output_saliency->clear();
   output_saliency->resize(input_saliency.size());
 
@@ -378,8 +379,8 @@ void DetermineFeatureModes(
     const std::vector<float>& space_lut, float space_scale,
     std::vector<std::list<FeatureMode>>* mode_grid,
     std::vector<FeatureMode*>* mode_ptrs) {
-  CHECK(mode_grid);
-  CHECK(mode_ptrs);
+  ABSL_CHECK(mode_grid);
+  ABSL_CHECK(mode_ptrs);
   const int num_features = features.size();
   mode_ptrs->reserve(num_features);
 
@@ -417,8 +418,8 @@ void DetermineFeatureModes(
           center = new_center;
         }
       } else {
-        LOG(WARNING) << "No features found in band_width radius, "
-                     << "should not happen. ";
+        ABSL_LOG(WARNING) << "No features found in band_width radius, "
+                          << "should not happen. ";
         break;
       }
     }
@@ -439,8 +440,8 @@ void DetermineFeatureModes(
 
 void MotionSaliency::SalientModeFinding(std::vector<SalientLocation>* locations,
                                         std::vector<SalientMode>* modes) {
-  CHECK(modes);
-  CHECK(locations);
+  ABSL_CHECK(modes);
+  ABSL_CHECK(locations);
   if (locations->empty()) {
     return;
   }
@@ -477,7 +478,7 @@ void MotionSaliency::SalientModeFinding(std::vector<SalientLocation>* locations,
       nullptr, &grid_dims, &feature_grids);
 
   // Just one frame input, expect one grid as output.
-  CHECK_EQ(1, feature_grids.size());
+  ABSL_CHECK_EQ(1, feature_grids.size());
   const auto& feature_grid = feature_grids[0];
 
   // Setup Gaussian LUT for smoothing in space, using 2^10 discretization bins.
@@ -595,8 +596,8 @@ void MotionSaliency::SalientModeFinding(std::vector<SalientLocation>* locations,
         if (angle < 0) {
           angle += M_PI;
         }
-        CHECK_GE(angle, 0);
-        CHECK_LE(angle, M_PI + 1e-3);
+        ABSL_CHECK_GE(angle, 0);
+        ABSL_CHECK_LE(angle, M_PI + 1e-3);
       }
 
       SalientMode irls_mode;
@@ -622,7 +623,7 @@ void MotionSaliency::SalientModeFinding(std::vector<SalientLocation>* locations,
 // mode finding and scales each point based on frame size.
 void MotionSaliency::DetermineSalientFrame(
     std::vector<SalientLocation> locations, SalientPointFrame* salient_frame) {
-  CHECK(salient_frame);
+  ABSL_CHECK(salient_frame);
 
   std::vector<SalientMode> modes;
   {
@@ -660,12 +661,12 @@ void ForegroundWeightsFromFeatures(const RegionFlowFeatureList& feature_list,
                                    float foreground_gamma,
                                    const CameraMotion* camera_motion,
                                    std::vector<float>* weights) {
-  CHECK(weights != nullptr);
+  ABSL_CHECK(weights != nullptr);
   weights->clear();
 
   constexpr float kEpsilon = 1e-4f;
 
-  CHECK_GT(foreground_threshold, 0.0f);
+  ABSL_CHECK_GT(foreground_threshold, 0.0f);
   if (camera_motion) {
     foreground_threshold *=
         std::max(kEpsilon, InlierCoverage(*camera_motion, false));
@@ -694,7 +695,7 @@ void ForegroundWeightsFromFeatures(const RegionFlowFeatureList& feature_list,
           std::max(kEpsilon, std::pow(foreground_measure, foreground_gamma)));
     }
   }
-  CHECK_EQ(feature_list.feature_size(), weights->size());
+  ABSL_CHECK_EQ(feature_list.feature_size(), weights->size());
 }
 
 }  // namespace mediapipe

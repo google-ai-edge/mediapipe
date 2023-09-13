@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -87,6 +87,7 @@ public final class ImageEmbedder extends BaseVisionTaskApi {
       "mediapipe.tasks.vision.image_embedder.ImageEmbedderGraph";
 
   static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
     ProtoUtil.registerTypeName(
         EmbeddingsProto.EmbeddingResult.class,
         "mediapipe.tasks.components.containers.proto.EmbeddingResult");

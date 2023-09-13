@@ -17,6 +17,8 @@
 #include <vector>
 
 #include "Eigen/Dense"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/str_format.h"
 #include "absl/types/span.h"
@@ -148,7 +150,7 @@ absl::Status TensorsToObjectsCalculator::ProcessCPU(
   auto status = decoder_->Lift2DTo3D(projection_matrix_, /*portrait*/ true,
                                      output_objects);
   if (!status.ok()) {
-    LOG(ERROR) << status;
+    ABSL_LOG(ERROR) << status;
     return status;
   }
   Project3DTo2D(/*portrait*/ true, output_objects);
@@ -170,7 +172,7 @@ absl::Status TensorsToObjectsCalculator::LoadOptions(CalculatorContext* cc) {
   num_keypoints_ = options_.num_keypoints();
 
   // Currently only support 2D when num_values_per_keypoint equals to 2.
-  CHECK_EQ(options_.num_values_per_keypoint(), 2);
+  ABSL_CHECK_EQ(options_.num_values_per_keypoint(), 2);
 
   return absl::OkStatus();
 }

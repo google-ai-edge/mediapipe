@@ -1,7 +1,7 @@
 /** @fileoverview Utility functions used in the vision demos. */
 
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 // Pre-baked color table for a maximum of 12 classes.
 const CM_ALPHA = 128;
-const COLOR_MAP = [
+const COLOR_MAP: Array<[number, number, number, number]> = [
   [0, 0, 0, CM_ALPHA],        // class 0 is BG = transparent
   [255, 0, 0, CM_ALPHA],      // class 1 is red
   [0, 255, 0, CM_ALPHA],      // class 2 is light green
@@ -38,14 +38,14 @@ const COLOR_MAP = [
 export function drawConfidenceMask(
     ctx: CanvasRenderingContext2D, image: Float32Array, width: number,
     height: number): void {
-  const uint8ClampedArray = new Uint8ClampedArray(width * height * 4);
+  const uint8Array = new Uint8ClampedArray(width * height * 4);
   for (let i = 0; i < image.length; i++) {
-    uint8ClampedArray[4 * i] = 128;
-    uint8ClampedArray[4 * i + 1] = 0;
-    uint8ClampedArray[4 * i + 2] = 0;
-    uint8ClampedArray[4 * i + 3] = image[i] * 255;
+    uint8Array[4 * i] = 128;
+    uint8Array[4 * i + 1] = 0;
+    uint8Array[4 * i + 2] = 0;
+    uint8Array[4 * i + 3] = image[i] * 255;
   }
-  ctx.putImageData(new ImageData(uint8ClampedArray, width, height), 0, 0);
+  ctx.putImageData(new ImageData(uint8Array, width, height), 0, 0);
 }
 
 /**
@@ -53,20 +53,13 @@ export function drawConfidenceMask(
  * for now.
  */
 export function drawCategoryMask(
-    ctx: CanvasRenderingContext2D, image: Uint8ClampedArray|Float32Array,
+    ctx: CanvasRenderingContext2D, image: Uint8Array|Float32Array,
     width: number, height: number): void {
   const rgbaArray = new Uint8ClampedArray(width * height * 4);
   const isFloatArray = image instanceof Float32Array;
   for (let i = 0; i < image.length; i++) {
     const colorIndex = isFloatArray ? Math.round(image[i] * 255) : image[i];
-    let color = COLOR_MAP[colorIndex % COLOR_MAP.length];
-
-    if (!color) {
-      // TODO: We should fix this.
-      console.warn('No color for ', colorIndex);
-      color = COLOR_MAP[colorIndex % COLOR_MAP.length];
-    }
-
+    const color = COLOR_MAP[colorIndex % COLOR_MAP.length];
     rgbaArray[4 * i] = color[0];
     rgbaArray[4 * i + 1] = color[1];
     rgbaArray[4 * i + 2] = color[2];

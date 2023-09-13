@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "absl/log/absl_check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/packet.h"
@@ -244,7 +245,7 @@ Timestamp InputStreamManager::MinTimestampOrBoundHelper() const
 Packet InputStreamManager::PopPacketAtTimestamp(Timestamp timestamp,
                                                 int* num_packets_dropped,
                                                 bool* stream_is_done) {
-  CHECK(enable_timestamps_);
+  ABSL_CHECK(enable_timestamps_);
   *num_packets_dropped = -1;
   *stream_is_done = false;
   bool queue_became_non_full = false;
@@ -252,7 +253,7 @@ Packet InputStreamManager::PopPacketAtTimestamp(Timestamp timestamp,
   {
     absl::MutexLock stream_lock(&stream_mutex_);
     // Make sure timestamp didn't decrease from last time.
-    CHECK_LE(last_select_timestamp_, timestamp);
+    ABSL_CHECK_LE(last_select_timestamp_, timestamp);
     last_select_timestamp_ = timestamp;
 
     // Make sure AddPacket and SetNextTimestampBound are not called with
@@ -299,7 +300,7 @@ Packet InputStreamManager::PopPacketAtTimestamp(Timestamp timestamp,
 }
 
 Packet InputStreamManager::PopQueueHead(bool* stream_is_done) {
-  CHECK(!enable_timestamps_);
+  ABSL_CHECK(!enable_timestamps_);
   *stream_is_done = false;
   bool queue_became_non_full = false;
   Packet packet;

@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -158,6 +158,53 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "detection_postprocessing_graph",
+    srcs = ["detection_postprocessing_graph.cc"],
+    hdrs = ["detection_postprocessing_graph.h"],
+    deps = [
+        "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/calculators/core:split_vector_calculator_cc_proto",
+        "//mediapipe/calculators/tensor:tensors_to_detections_calculator",
+        "//mediapipe/calculators/tensor:tensors_to_detections_calculator_cc_proto",
+        "//mediapipe/calculators/tflite:ssd_anchors_calculator",
+        "//mediapipe/calculators/tflite:ssd_anchors_calculator_cc_proto",
+        "//mediapipe/calculators/util:detection_label_id_to_text_calculator",
+        "//mediapipe/calculators/util:detection_label_id_to_text_calculator_cc_proto",
+        "//mediapipe/calculators/util:non_max_suppression_calculator",
+        "//mediapipe/calculators/util:non_max_suppression_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/formats/object_detection:anchor_cc_proto",
+        "//mediapipe/tasks/cc:common",
+        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator",
+        "//mediapipe/tasks/cc/components/calculators:score_calibration_calculator_cc_proto",
+        "//mediapipe/tasks/cc/components/calculators:score_calibration_utils",
+        "//mediapipe/tasks/cc/components/processors/proto:detection_postprocessing_graph_options_cc_proto",
+        "//mediapipe/tasks/cc/components/processors/proto:detector_options_cc_proto",
+        "//mediapipe/tasks/cc/core:model_resources",
+        "//mediapipe/tasks/cc/core:utils",
+        "//mediapipe/tasks/cc/metadata:metadata_extractor",
+        "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_cc_proto",
+        "//mediapipe/tasks/metadata:metadata_schema_cc",
+        "//mediapipe/tasks/metadata:object_detector_metadata_schema_cc",
+        "//mediapipe/util:label_map_cc_proto",
+        "//mediapipe/util:label_map_util",
+        "@com_google_absl//absl/container:flat_hash_set",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/strings:str_format",
+        "@org_tensorflow//tensorflow/lite/schema:schema_fbs",
     ],
     alwayslink = 1,
 )

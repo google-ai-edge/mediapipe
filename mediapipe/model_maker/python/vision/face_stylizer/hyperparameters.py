@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ class HParams(hp.BaseHParams):
   """
 
   # Parameters from BaseHParams class.
-  learning_rate: float = 5e-5
+  learning_rate: float = 8e-4
   batch_size: int = 4
   epochs: int = 100
   # Parameters for face stylizer.

@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ public class TextEmbedderTest {
         TextEmbedder.cosineSimilarity(
             result0.embeddingResult().embeddings().get(0),
             result1.embeddingResult().embeddings().get(0));
-    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.3477488707202946);
+    assertThat(similarity).isWithin(DOUBLE_DIFF_TOLERANCE).of(0.3565317439544432);
   }
 
   @Test

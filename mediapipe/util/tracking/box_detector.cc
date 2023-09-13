@@ -16,6 +16,8 @@
 
 #include <vector>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "mediapipe/framework/port/opencv_calib3d_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
@@ -43,10 +45,10 @@ void ScaleBox(float scale_x, float scale_y, TimedBoxProto *box) {
 }
 
 cv::Mat ConvertDescriptorsToMat(const std::vector<std::string> &descriptors) {
-  CHECK(!descriptors.empty()) << "empty descriptors.";
+  ABSL_CHECK(!descriptors.empty()) << "empty descriptors.";
 
   const int descriptors_dims = descriptors[0].size();
-  CHECK_GT(descriptors_dims, 0);
+  ABSL_CHECK_GT(descriptors_dims, 0);
 
   cv::Mat mat(descriptors.size(), descriptors_dims, CV_8U);
 
@@ -59,13 +61,13 @@ cv::Mat ConvertDescriptorsToMat(const std::vector<std::string> &descriptors) {
 
 cv::Mat GetDescriptorsWithIndices(const cv::Mat &frame_descriptors,
                                   const std::vector<int> &indices) {
-  CHECK_GT(frame_descriptors.rows, 0);
+  ABSL_CHECK_GT(frame_descriptors.rows, 0);
 
   const int num_inlier_descriptors = indices.size();
-  CHECK_GT(num_inlier_descriptors, 0);
+  ABSL_CHECK_GT(num_inlier_descriptors, 0);
 
   const int descriptors_dims = frame_descriptors.cols;
-  CHECK_GT(descriptors_dims, 0);
+  ABSL_CHECK_GT(descriptors_dims, 0);
 
   cv::Mat mat(num_inlier_descriptors, descriptors_dims, CV_32F);
 
@@ -97,7 +99,7 @@ std::unique_ptr<BoxDetectorInterface> BoxDetectorInterface::Create(
   if (options.index_type() == BoxDetectorOptions::OPENCV_BF) {
     return absl::make_unique<BoxDetectorOpencvBfImpl>(options);
   } else {
-    LOG(FATAL) << "index type undefined.";
+    ABSL_LOG(FATAL) << "index type undefined.";
   }
 }
 
@@ -186,7 +188,8 @@ void BoxDetectorInterface::DetectAndAddBox(
 
   if (features_from_tracking_data.empty() ||
       descriptors_from_tracking_data.empty()) {
-    LOG(WARNING) << "Detection skipped due to empty features or descriptors.";
+    ABSL_LOG(WARNING)
+        << "Detection skipped due to empty features or descriptors.";
     return;
   }
 
@@ -301,7 +304,7 @@ void BoxDetectorInterface::DetectAndAddBox(
   orb_extractor_->detect(resize_image, keypoints);
   orb_extractor_->compute(resize_image, keypoints, descriptors);
 
-  CHECK_EQ(keypoints.size(), descriptors.rows);
+  ABSL_CHECK_EQ(keypoints.size(), descriptors.rows);
 
   float inv_scale = 1.0f / std::max(resize_image.cols, resize_image.rows);
   std::vector<Vector2_f> v_keypoints(keypoints.size());
@@ -395,9 +398,9 @@ TimedBoxProtoList BoxDetectorInterface::FindQuadFromFeatureCorrespondence(
   TimedBoxProtoList result_list;
 
   if (matches.points_frame.size() != matches.points_index.size()) {
-    LOG(ERROR) << matches.points_frame.size() << " vs "
-               << matches.points_index.size()
-               << ". Correpondence size doesn't match.";
+    ABSL_LOG(ERROR) << matches.points_frame.size() << " vs "
+                    << matches.points_index.size()
+                    << ". Correpondence size doesn't match.";
     return result_list;
   }
 
@@ -681,15 +684,15 @@ void BoxDetectorInterface::AddBoxDetectorIndex(const BoxDetectorIndex &index) {
         continue;
       }
 
-      CHECK_EQ(frame_entry.keypoints_size(),
-               frame_entry.descriptors_size() * 2);
+      ABSL_CHECK_EQ(frame_entry.keypoints_size(),
+                    frame_entry.descriptors_size() * 2);
 
       const int num_features = frame_entry.descriptors_size();
-      CHECK_GT(num_features, 0);
+      ABSL_CHECK_GT(num_features, 0);
       std::vector<Vector2_f> features(num_features);
 
       const int descriptors_dims = frame_entry.descriptors(0).data().size();
-      CHECK_GT(descriptors_dims, 0);
+      ABSL_CHECK_GT(descriptors_dims, 0);
 
       cv::Mat descriptors_mat(num_features, descriptors_dims / sizeof(float),
                               CV_32F);
@@ -713,7 +716,7 @@ std::vector<FeatureCorrespondence>
 BoxDetectorOpencvBfImpl::MatchFeatureDescriptors(
     const std::vector<Vector2_f> &features, const cv::Mat &descriptors,
     int box_idx) {
-  CHECK_EQ(features.size(), descriptors.rows);
+  ABSL_CHECK_EQ(features.size(), descriptors.rows);
 
   std::vector<FeatureCorrespondence> correspondence_result(
       frame_box_[box_idx].size());

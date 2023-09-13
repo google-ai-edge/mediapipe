@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * @return  An `MPPImageClassifierResult` object that contains a list of image classifications.
  */
-+ (MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
++ (nullable MPPImageClassifierResult *)imageClassifierResultWithClassificationsPacket:
     (const mediapipe::Packet &)packet;
 
 @end

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import {ClassifierOptions} from '../../../../tasks/web/core/classifier_options';
 import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_options';
 
 /** Options to configure the MediaPipe Face Detector Task */
-export interface FaceDetectorOptions extends VisionTaskOptions {
+export declare interface FaceDetectorOptions extends VisionTaskOptions {
   /**
    * The minimum confidence score for the face detection to be considered
    * successful. Defaults to 0.5.

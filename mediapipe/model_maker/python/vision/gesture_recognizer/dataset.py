@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -249,5 +249,6 @@ class Dataset(classification_dataset.ClassificationDataset):
             len(valid_hand_data), len(label_names), ','.join(label_names)))
     return Dataset(
         dataset=hand_embedding_label_ds,
+        label_names=label_names,
         size=len(valid_hand_data),
-        label_names=label_names)
+    )

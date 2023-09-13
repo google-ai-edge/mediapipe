@@ -261,8 +261,8 @@ cc_library(
 )
 
 cc_library(
-    name = "opencv_highgui",
-    hdrs = ["opencv_highgui_inc.h"],
+    name = "opencv_photo",
+    hdrs = ["opencv_photo_inc.h"],
     deps = [
         ":opencv_core",
         "//third_party:opencv",
@@ -298,6 +298,15 @@ cc_library(
 )
 
 cc_library(
+    name = "opencv_highgui",
+    hdrs = ["opencv_highgui_inc.h"],
+    deps = [
+        ":opencv_core",
+        "//third_party:opencv",
+    ],
+)
+
+cc_library(
     name = "opencv_videoio",
     hdrs = ["opencv_videoio_inc.h"],
     deps = [
@@ -317,6 +326,7 @@ cc_library(
         ":core_proto",
         ":logging",
         "//mediapipe/framework:port",
+        "@com_google_absl//absl/log:absl_check",
     ],
 )
 

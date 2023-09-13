@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,8 +41,10 @@ _RunningMode = vision_task_running_mode.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 _TaskInfo = task_info_module.TaskInfo
 
-_SEGMENTATION_OUT_STREAM_NAME = 'segmented_mask_out'
-_SEGMENTATION_TAG = 'GROUPED_SEGMENTATION'
+_CONFIDENCE_MASKS_STREAM_NAME = 'confidence_masks'
+_CONFIDENCE_MASKS_TAG = 'CONFIDENCE_MASKS'
+_CATEGORY_MASK_STREAM_NAME = 'category_mask'
+_CATEGORY_MASK_TAG = 'CATEGORY_MASK'
 _IMAGE_IN_STREAM_NAME = 'image_in'
 _IMAGE_OUT_STREAM_NAME = 'image_out'
 _ROI_STREAM_NAME = 'roi_in'
@@ -56,31 +58,40 @@ _TASK_GRAPH_NAME = (
 
 
 @dataclasses.dataclass
+class InteractiveSegmenterResult:
+  """Output result of InteractiveSegmenter.
+
+  confidence_masks: multiple masks of float image where, for each mask, each
+  pixel represents the prediction confidence, usually in the [0, 1] range.
+
+  category_mask: a category mask of uint8 image where each pixel represents the
+  class which the pixel in the original image was predicted to belong to.
+  """
+
+  confidence_masks: Optional[List[image_module.Image]] = None
+  category_mask: Optional[image_module.Image] = None
+
+
+@dataclasses.dataclass
 class InteractiveSegmenterOptions:
   """Options for the interactive segmenter task.
 
   Attributes:
     base_options: Base options for the interactive segmenter task.
-    output_type: The output mask type allows specifying the type of
-      post-processing to perform on the raw model results.
+    output_confidence_masks: Whether to output confidence masks.
+    output_category_mask: Whether to output category mask.
   """
 
-  class OutputType(enum.Enum):
-    UNSPECIFIED = 0
-    CATEGORY_MASK = 1
-    CONFIDENCE_MASK = 2
-
   base_options: _BaseOptions
-  output_type: Optional[OutputType] = OutputType.CATEGORY_MASK
+  output_confidence_masks: bool = True
+  output_category_mask: bool = False
 
   @doc_controls.do_not_generate_docs
   def to_pb2(self) -> _ImageSegmenterGraphOptionsProto:
-    """Generates an InteractiveSegmenterOptions protobuf object."""
+    """Generates an ImageSegmenterGraphOptions protobuf object."""
     base_options_proto = self.base_options.to_pb2()
     base_options_proto.use_stream_mode = False
-    segmenter_options_proto = _SegmenterOptionsProto(
-        output_type=self.output_type.value
-    )
+    segmenter_options_proto = _SegmenterOptionsProto()
     return _ImageSegmenterGraphOptionsProto(
         base_options=base_options_proto,
         segmenter_options=segmenter_options_proto,
@@ -192,6 +203,20 @@ class InteractiveSegmenter(base_vision_task_api.BaseVisionTaskApi):
       RuntimeError: If other types of error occurred.
     """
 
+    output_streams = [
+        ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
+    ]
+
+    if options.output_confidence_masks:
+      output_streams.append(
+          ':'.join([_CONFIDENCE_MASKS_TAG, _CONFIDENCE_MASKS_STREAM_NAME])
+      )
+
+    if options.output_category_mask:
+      output_streams.append(
+          ':'.join([_CATEGORY_MASK_TAG, _CATEGORY_MASK_STREAM_NAME])
+      )
+
     task_info = _TaskInfo(
         task_graph=_TASK_GRAPH_NAME,
         input_streams=[
@@ -199,10 +224,7 @@ class InteractiveSegmenter(base_vision_task_api.BaseVisionTaskApi):
             ':'.join([_ROI_TAG, _ROI_STREAM_NAME]),
             ':'.join([_NORM_RECT_TAG, _NORM_RECT_STREAM_NAME]),
         ],
-        output_streams=[
-            ':'.join([_SEGMENTATION_TAG, _SEGMENTATION_OUT_STREAM_NAME]),
-            ':'.join([_IMAGE_TAG, _IMAGE_OUT_STREAM_NAME]),
-        ],
+        output_streams=output_streams,
         task_options=options,
     )
     return cls(
@@ -216,7 +238,7 @@ class InteractiveSegmenter(base_vision_task_api.BaseVisionTaskApi):
       image: image_module.Image,
       roi: RegionOfInterest,
       image_processing_options: Optional[_ImageProcessingOptions] = None,
-  ) -> List[image_module.Image]:
+  ) -> InteractiveSegmenterResult:
     """Performs the actual segmentation task on the provided MediaPipe Image.
 
     The image can be of any size with format RGB.
@@ -248,7 +270,16 @@ class InteractiveSegmenter(base_vision_task_api.BaseVisionTaskApi):
             normalized_rect.to_pb2()
         ),
     })
-    segmentation_result = packet_getter.get_image_list(
-        output_packets[_SEGMENTATION_OUT_STREAM_NAME]
-    )
+    segmentation_result = InteractiveSegmenterResult()
+
+    if _CONFIDENCE_MASKS_STREAM_NAME in output_packets:
+      segmentation_result.confidence_masks = packet_getter.get_image_list(
+          output_packets[_CONFIDENCE_MASKS_STREAM_NAME]
+      )
+
+    if _CATEGORY_MASK_STREAM_NAME in output_packets:
+      segmentation_result.category_mask = packet_getter.get_image(
+          output_packets[_CATEGORY_MASK_STREAM_NAME]
+      )
+
     return segmentation_result

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import 'jasmine';
 // Placeholder for internal dependency on encodeByteArray
 import {CalculatorGraphConfig} from '../../../../framework/calculator_pb';
 import {addJasmineCustomFloatEqualityTester, createSpyWasmModule, MediapipeTasksFake, SpyWasmModule, verifyGraph} from '../../../../tasks/web/core/task_runner_test_utils';
+import {MPMask} from '../../../../tasks/web/vision/core/mask';
 import {WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
 
 import {ImageSegmenter} from './image_segmenter';
@@ -34,6 +35,8 @@ class ImageSegmenterFake extends ImageSegmenter implements MediapipeTasksFake {
       ((images: WasmImage, timestamp: number) => void)|undefined;
   confidenceMasksListener:
       ((images: WasmImage[], timestamp: number) => void)|undefined;
+  qualityScoresListener:
+      ((data: number[], timestamp: number) => void)|undefined;
 
   constructor() {
     super(createSpyWasmModule(), /* glCanvas= */ null);
@@ -51,6 +54,12 @@ class ImageSegmenterFake extends ImageSegmenter implements MediapipeTasksFake {
               expect(stream).toEqual('confidence_masks');
               this.confidenceMasksListener = listener;
             });
+    this.attachListenerSpies[2] =
+        spyOn(this.graphRunner, 'attachFloatVectorListener')
+            .and.callFake((stream, listener) => {
+              expect(stream).toEqual('quality_scores');
+              this.qualityScoresListener = listener;
+            });
     spyOn(this.graphRunner, 'setGraph').and.callFake(binaryGraph => {
       this.graph = CalculatorGraphConfig.deserializeBinary(binaryGraph);
     });
@@ -66,6 +75,10 @@ describe('ImageSegmenter', () => {
     imageSegmenter = new ImageSegmenterFake();
     await imageSegmenter.setOptions(
         {baseOptions: {modelAssetBuffer: new Uint8Array([])}});
+  });
+
+  afterEach(() => {
+    imageSegmenter.close();
   });
 
   it('initializes graph', async () => {
@@ -160,7 +173,7 @@ describe('ImageSegmenter', () => {
   });
 
   it('supports category mask', async () => {
-    const mask = new Uint8ClampedArray([1, 2, 3, 4]);
+    const mask = new Uint8Array([1, 2, 3, 4]);
 
     await imageSegmenter.setOptions(
         {outputCategoryMask: true, outputConfidenceMasks: false});
@@ -178,10 +191,10 @@ describe('ImageSegmenter', () => {
     return new Promise<void>(resolve => {
       imageSegmenter.segment({} as HTMLImageElement, result => {
         expect(imageSegmenter.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
-        expect(result.categoryMask).toEqual(mask);
+        expect(result.categoryMask).toBeInstanceOf(MPMask);
         expect(result.confidenceMasks).not.toBeDefined();
-        expect(result.width).toEqual(2);
-        expect(result.height).toEqual(2);
+        expect(result.categoryMask!.width).toEqual(2);
+        expect(result.categoryMask!.height).toEqual(2);
         resolve();
       });
     });
@@ -210,18 +223,21 @@ describe('ImageSegmenter', () => {
       imageSegmenter.segment({} as HTMLImageElement, result => {
         expect(imageSegmenter.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
         expect(result.categoryMask).not.toBeDefined();
-        expect(result.confidenceMasks).toEqual([mask1, mask2]);
-        expect(result.width).toEqual(2);
-        expect(result.height).toEqual(2);
+
+        expect(result.confidenceMasks![0]).toBeInstanceOf(MPMask);
+        expect(result.confidenceMasks![0].width).toEqual(2);
+        expect(result.confidenceMasks![0].height).toEqual(2);
+
+        expect(result.confidenceMasks![1]).toBeInstanceOf(MPMask);
         resolve();
       });
     });
   });
 
   it('supports combined category and confidence masks', async () => {
-    const categoryMask = new Uint8ClampedArray([1, 0]);
-    const confidenceMask1 = new Float32Array([0.0, 1.0]);
-    const confidenceMask2 = new Float32Array([1.0, 0.0]);
+    const categoryMask = new Uint8Array([1]);
+    const confidenceMask1 = new Float32Array([0.0]);
+    const confidenceMask2 = new Float32Array([1.0]);
 
     await imageSegmenter.setOptions(
         {outputCategoryMask: true, outputConfidenceMasks: true});
@@ -244,14 +260,67 @@ describe('ImageSegmenter', () => {
       // Invoke the image segmenter
       imageSegmenter.segment({} as HTMLImageElement, result => {
         expect(imageSegmenter.fakeWasmModule._waitUntilIdle).toHaveBeenCalled();
-        expect(result.categoryMask).toEqual(categoryMask);
-        expect(result.confidenceMasks).toEqual([
-          confidenceMask1, confidenceMask2
-        ]);
-        expect(result.width).toEqual(1);
-        expect(result.height).toEqual(1);
+        expect(result.categoryMask).toBeInstanceOf(MPMask);
+        expect(result.categoryMask!.width).toEqual(1);
+        expect(result.categoryMask!.height).toEqual(1);
+
+        expect(result.confidenceMasks![0]).toBeInstanceOf(MPMask);
+        expect(result.confidenceMasks![1]).toBeInstanceOf(MPMask);
         resolve();
       });
     });
+  });
+
+  it('invokes listener after masks are available', async () => {
+    const categoryMask = new Uint8Array([1]);
+    const confidenceMask = new Float32Array([0.0]);
+    const qualityScores = [1.0];
+    let listenerCalled = false;
+
+    await imageSegmenter.setOptions(
+        {outputCategoryMask: true, outputConfidenceMasks: true});
+
+    // Pass the test data to our listener
+    imageSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      expect(listenerCalled).toBeFalse();
+      imageSegmenter.categoryMaskListener!
+          ({data: categoryMask, width: 1, height: 1}, 1337);
+      expect(listenerCalled).toBeFalse();
+      imageSegmenter.confidenceMasksListener!(
+          [
+            {data: confidenceMask, width: 1, height: 1},
+          ],
+          1337);
+      expect(listenerCalled).toBeFalse();
+      imageSegmenter.qualityScoresListener!(qualityScores, 1337);
+      expect(listenerCalled).toBeFalse();
+    });
+
+    return new Promise<void>(resolve => {
+      imageSegmenter.segment({} as HTMLImageElement, result => {
+        listenerCalled = true;
+        expect(result.categoryMask).toBeInstanceOf(MPMask);
+        expect(result.confidenceMasks![0]).toBeInstanceOf(MPMask);
+        expect(result.qualityScores).toEqual(qualityScores);
+        resolve();
+      });
+    });
+  });
+
+  it('returns result', () => {
+    const confidenceMask = new Float32Array([0.0]);
+
+    // Pass the test data to our listener
+    imageSegmenter.fakeWasmModule._waitUntilIdle.and.callFake(() => {
+      imageSegmenter.confidenceMasksListener!(
+          [
+            {data: confidenceMask, width: 1, height: 1},
+          ],
+          1337);
+    });
+
+    const result = imageSegmenter.segment({} as HTMLImageElement);
+    expect(result.confidenceMasks![0]).toBeInstanceOf(MPMask);
+    result.close();
   });
 });

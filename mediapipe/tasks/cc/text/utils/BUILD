@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ cc_library(
         "vocab_utils.h",
     ],
     deps = [
+        "//mediapipe/util:resource_util",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/strings",
     ],

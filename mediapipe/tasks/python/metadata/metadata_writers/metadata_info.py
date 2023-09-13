@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import abc
 import collections
 import csv
+import enum
 import os
 from typing import List, Optional, Type, Union
 
@@ -992,6 +993,84 @@ class DetectionOutputTensorsMd:
 
     # Align tensor names with metadata.
     self._output_mds = [location_md, category_md, score_md, number_md]
+    if len(self._output_mds) != len(tensor_indices_and_names):
+      raise ValueError(
+          "The size of TFLite output should be " + str(len(self._output_mds))
+      )
+    for i, output_md in enumerate(self._output_mds):
+      output_md.tensor_name = tensor_indices_and_names[i][1]
+
+  @property
+  def output_mds(self) -> List[TensorMd]:
+    return self._output_mds
+
+
+class RawDetectionOutputTensorsOrder(enum.Enum):
+  """Output tensors order for detection models without postprocessing.
+
+  Because it is not able to determined the order of output tensors for models
+  without postprocessing, it is needed to specify the output tensors order for
+  metadata writer.
+  """
+
+  UNSPECIFIED = 0
+  # The first tensor is score, and the second tensor is location.
+  SCORE_LOCATION = 1
+  # The first tensor is location, and the second tensor is score.
+  LOCATION_SCORE = 2
+
+
+class RawDetectionOutputTensorsMd:
+  """A container for the output tensor metadata of detection models without postprocessing."""
+
+  _LOCATION_NAME = "location"
+  _LOCATION_DESCRIPTION = "The locations of the detected boxes."
+  _SCORE_NAME = "score"
+  _SCORE_DESCRIPTION = "The scores of the detected boxes."
+  _CONTENT_VALUE_DIM = 2
+
+  def __init__(
+      self,
+      model_buffer: bytearray,
+      label_files: Optional[List[LabelFileMd]] = None,
+      output_tensors_order: RawDetectionOutputTensorsOrder = RawDetectionOutputTensorsOrder.UNSPECIFIED,
+  ) -> None:
+    """Initializes the instance of DetectionOutputTensorsMd.
+
+    Args:
+      model_buffer: A valid flatbuffer loaded from the TFLite model file.
+      label_files: information of the label files [1] in the classification
+        tensor.
+      output_tensors_order: the order of the output tensors.
+      [1]:
+        https://github.com/google/mediapipe/blob/f8af41b1eb49ff4bdad756ff19d1d36f486be614/mediapipe/tasks/metadata/metadata_schema.fbs#L9
+    """
+    # Get the output tensor indices and names from the tflite model.
+    tensor_indices_and_names = list(
+        zip(
+            writer_utils.get_output_tensor_indices(model_buffer),
+            writer_utils.get_output_tensor_names(model_buffer),
+        )
+    )
+    location_md = LocationTensorMd(
+        name=self._LOCATION_NAME,
+        description=self._LOCATION_DESCRIPTION,
+    )
+    score_md = ClassificationTensorMd(
+        name=self._SCORE_NAME,
+        description=self._SCORE_DESCRIPTION,
+        label_files=label_files,
+    )
+
+    if output_tensors_order == RawDetectionOutputTensorsOrder.SCORE_LOCATION:
+      self._output_mds = [score_md, location_md]
+    elif output_tensors_order == RawDetectionOutputTensorsOrder.LOCATION_SCORE:
+      self._output_mds = [location_md, score_md]
+    else:
+      raise ValueError(
+          f"Unsupported OutputTensorsOrder value: {output_tensors_order}"
+      )
+
     if len(self._output_mds) != len(tensor_indices_and_names):
       raise ValueError(
           "The size of TFLite output should be " + str(len(self._output_mds))

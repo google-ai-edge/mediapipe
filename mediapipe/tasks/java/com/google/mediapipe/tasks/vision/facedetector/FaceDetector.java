@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -80,6 +80,10 @@ public final class FaceDetector extends BaseVisionTaskApi {
   private static final int IMAGE_OUT_STREAM_INDEX = 1;
   private static final String TASK_GRAPH_NAME =
       "mediapipe.tasks.vision.face_detector.FaceDetectorGraph";
+
+  static {
+    System.loadLibrary("mediapipe_tasks_vision_jni");
+  }
 
   /**
    * Creates a {@link FaceDetector} instance from a model file and the default {@link

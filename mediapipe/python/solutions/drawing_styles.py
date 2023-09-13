@@ -30,6 +30,8 @@ _GRAY = (128, 128, 128)
 _PURPLE = (128, 64, 128)
 _PEACH = (180, 229, 255)
 _WHITE = (224, 224, 224)
+_CYAN = (192, 255, 48)
+_MAGENTA = (192, 48, 255)
 
 # Hands
 _THICKNESS_WRIST_MCP = 3
@@ -109,6 +111,23 @@ _FACEMESH_CONTOURS_CONNECTION_STYLE = {
         DrawingSpec(color=_WHITE, thickness=_THICKNESS_CONTOURS)
 }
 
+_FACEMESH_CONTOURS_CONNECTION_STYLE_1 = {
+    face_mesh_connections.FACEMESH_LIPS:
+        DrawingSpec(color=_BLUE, thickness=_THICKNESS_CONTOURS),
+    face_mesh_connections.FACEMESH_LEFT_EYE:
+        DrawingSpec(color=_CYAN, thickness=_THICKNESS_CONTOURS),
+    face_mesh_connections.FACEMESH_LEFT_EYEBROW:
+        DrawingSpec(color=_GREEN, thickness=_THICKNESS_CONTOURS),
+    face_mesh_connections.FACEMESH_RIGHT_EYE:
+        DrawingSpec(color=_MAGENTA, thickness=_THICKNESS_CONTOURS),
+    face_mesh_connections.FACEMESH_RIGHT_EYEBROW:
+        DrawingSpec(color=_RED, thickness=_THICKNESS_CONTOURS),
+    face_mesh_connections.FACEMESH_FACE_OVAL:
+        DrawingSpec(color=_WHITE, thickness=_THICKNESS_CONTOURS),
+    face_mesh_connections.FACEMESH_NOSE:
+        DrawingSpec(color=_YELLOW, thickness=_THICKNESS_CONTOURS)
+}
+
 # Pose
 _THICKNESS_POSE_LANDMARKS = 2
 _POSE_LANDMARKS_LEFT = frozenset([
@@ -161,15 +180,24 @@ def get_default_hand_connections_style(
 
 
 def get_default_face_mesh_contours_style(
+    i: int = 0,
 ) -> Mapping[Tuple[int, int], DrawingSpec]:
   """Returns the default face mesh contours drawing style.
+
+  Args:
+      i: The id for default style. Currently there are two default styles.
 
   Returns:
       A mapping from each face mesh contours connection to its default drawing
       spec.
   """
+  default_style = (
+      _FACEMESH_CONTOURS_CONNECTION_STYLE_1
+      if i == 1
+      else _FACEMESH_CONTOURS_CONNECTION_STYLE
+  )
   face_mesh_contours_connection_style = {}
-  for k, v in _FACEMESH_CONTOURS_CONNECTION_STYLE.items():
+  for k, v in default_style.items():
     for connection in k:
       face_mesh_contours_connection_style[connection] = v
   return face_mesh_contours_connection_style

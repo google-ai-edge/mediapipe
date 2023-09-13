@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
 # limitations under the License.
 
 # Placeholder for internal Python strict test compatibility macro.
-# Placeholder for internal Python strict library and test compatibility macro.
+# Placeholder for internal Python strict binary and library compatibility macro.
 
 licenses(["notice"])
 
-package(
-    default_visibility = ["//mediapipe:__subpackages__"],
-)
+package(default_visibility = ["//mediapipe:__subpackages__"])
 
 # TODO: Remove the unnecessary test data once the demo data are moved to an open-sourced
 # directory.
@@ -58,6 +56,7 @@ py_test(
     srcs = ["dataset_test.py"],
     data = [":testdata"],
     tags = [
+        "not_run:arm",
         "notsan",
         "requires-net:external",
     ],
@@ -143,6 +142,7 @@ py_test(
     data = [":testdata"],
     shard_count = 2,
     tags = [
+        "not_run:arm",
         "notsan",
         "requires-net:external",
     ],

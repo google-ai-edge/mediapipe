@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@ import enum
 from typing import List, Optional
 
 import flatbuffers
+
 from mediapipe.tasks.metadata import image_segmenter_metadata_schema_py_generated as _segmenter_metadata_fb
 from mediapipe.tasks.metadata import metadata_schema_py_generated as _metadata_fb
 from mediapipe.tasks.python.metadata import metadata
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_info
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer
+from mediapipe.tasks.python.metadata.metadata_writers import writer_utils
 
 
 _MODEL_NAME = "ImageSegmenter"
@@ -148,10 +150,17 @@ class MetadataWriter(metadata_writer.MetadataWriterBase):
     writer = metadata_writer.MetadataWriter(model_buffer)
     writer.add_general_info(_MODEL_NAME, _MODEL_DESCRIPTION)
     writer.add_image_input(input_norm_mean, input_norm_std)
-    writer.add_segmentation_output(labels=labels)
     if activation is not None:
       option_md = ImageSegmenterOptionsMd(activation)
       writer.add_custom_metadata(option_md)
+    num_output_tensors = writer_utils.get_subgraph(model_buffer).OutputsLength()
+    if num_output_tensors == 2:
+      # For image segmenter model with 2 output tensors, the first one is
+      # quality score, and the second one is matting mask.
+      writer.add_feature_output(
+          "quality score", "The quality score of matting result."
+      )
+    writer.add_segmentation_output(labels=labels)
     return cls(writer)
 
   def populate(self) -> tuple[bytearray, str]:

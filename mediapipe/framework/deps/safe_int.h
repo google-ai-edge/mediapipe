@@ -34,7 +34,7 @@
 //         define any custom policy they desire.
 //
 // PolicyTypes:
-//     LogFatalOnError: LOG(FATAL) when a error occurs.
+//     LogFatalOnError: ABSL_LOG(FATAL) when a error occurs.
 
 #ifndef MEDIAPIPE_DEPS_SAFE_INT_H_
 #define MEDIAPIPE_DEPS_SAFE_INT_H_
@@ -44,8 +44,9 @@
 #include <limits>
 #include <type_traits>
 
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "mediapipe/framework/deps/strong_int.h"
-#include "mediapipe/framework/port/logging.h"
 
 namespace mediapipe {
 namespace intops {
@@ -67,17 +68,17 @@ class SafeIntStrongIntValidator {
     // Check that the underlying integral type provides a range that is
     // compatible with two's complement.
     if (std::numeric_limits<T>::is_signed) {
-      CHECK_EQ(-1,
-               std::numeric_limits<T>::min() + std::numeric_limits<T>::max())
+      ABSL_CHECK_EQ(
+          -1, std::numeric_limits<T>::min() + std::numeric_limits<T>::max())
           << "unexpected integral bounds";
     }
 
     // Check that division truncates towards 0 (implementation defined in
     // C++'03, but standard in C++'11).
-    CHECK_EQ(12, 127 / 10) << "division does not truncate towards 0";
-    CHECK_EQ(-12, -127 / 10) << "division does not truncate towards 0";
-    CHECK_EQ(-12, 127 / -10) << "division does not truncate towards 0";
-    CHECK_EQ(12, -127 / -10) << "division does not truncate towards 0";
+    ABSL_CHECK_EQ(12, 127 / 10) << "division does not truncate towards 0";
+    ABSL_CHECK_EQ(-12, -127 / 10) << "division does not truncate towards 0";
+    ABSL_CHECK_EQ(-12, 127 / -10) << "division does not truncate towards 0";
+    ABSL_CHECK_EQ(12, -127 / -10) << "division does not truncate towards 0";
   }
 
  public:
@@ -88,10 +89,13 @@ class SafeIntStrongIntValidator {
 
     // If the argument is floating point, we can do a simple check to make
     // sure the value is in range.  It is undefined behavior to convert to int
-    // from a float that is out of range.
+    // from a float that is out of range. Since large integers will loose some
+    // precision when being converted to floating point, the integer max and min
+    // are explicitly converted back to floating point for this comparison, in
+    // order to satisfy compiler warnings.
     if (std::is_floating_point<U>::value) {
-      if (arg < std::numeric_limits<T>::min() ||
-          arg > std::numeric_limits<T>::max()) {
+      if (arg < static_cast<U>(std::numeric_limits<T>::min()) ||
+          arg > static_cast<U>(std::numeric_limits<T>::max())) {
         ErrorType::Error("SafeInt: init from out of bounds float", arg, "=");
       }
     } else {
@@ -281,15 +285,15 @@ class SafeIntStrongIntValidator {
   }
 };
 
-// A SafeIntStrongIntValidator policy class to LOG(FATAL) on errors.
+// A SafeIntStrongIntValidator policy class to ABSL_LOG(FATAL) on errors.
 struct LogFatalOnError {
   template <typename Tlhs, typename Trhs>
-  static void Error(const char *error, Tlhs lhs, Trhs rhs, const char *op) {
-    LOG(FATAL) << error << ": (" << lhs << " " << op << " " << rhs << ")";
+  static void Error(const char* error, Tlhs lhs, Trhs rhs, const char* op) {
+    ABSL_LOG(FATAL) << error << ": (" << lhs << " " << op << " " << rhs << ")";
   }
   template <typename Tval>
-  static void Error(const char *error, Tval val, const char *op) {
-    LOG(FATAL) << error << ": (" << op << val << ")";
+  static void Error(const char* error, Tval val, const char* op) {
+    ABSL_LOG(FATAL) << error << ": (" << op << val << ")";
   }
 };
 

@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "Eigen/Core"
+#include "absl/log/absl_log.h"
 #include "audio/dsp/window_functions.h"
 #include "mediapipe/calculators/audio/time_series_framer_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -186,11 +187,12 @@ class TimeSeriesFramerCalculatorTest
     const int num_unique_output_samples =
         round((output().packets.size() - 1) * frame_step_samples) +
         frame_duration_samples;
-    LOG(INFO) << "packets.size()=" << output().packets.size()
-              << " frame_duration_samples=" << frame_duration_samples
-              << " frame_step_samples=" << frame_step_samples
-              << " num_input_samples_=" << num_input_samples_
-              << " num_unique_output_samples=" << num_unique_output_samples;
+    ABSL_LOG(INFO) << "packets.size()=" << output().packets.size()
+                   << " frame_duration_samples=" << frame_duration_samples
+                   << " frame_step_samples=" << frame_step_samples
+                   << " num_input_samples_=" << num_input_samples_
+                   << " num_unique_output_samples="
+                   << num_unique_output_samples;
     const int num_padding_samples =
         num_unique_output_samples - num_input_samples_;
     if (options_.pad_final_packet()) {

@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ from typing import Mapping, Optional, Sequence, Union
 
 import tensorflow as tf
 
+from mediapipe.model_maker.python.vision.object_detector import detection
 from mediapipe.model_maker.python.vision.object_detector import model_options as model_opt
 from mediapipe.model_maker.python.vision.object_detector import model_spec as ms
 from official.core import config_definitions as cfg
@@ -29,7 +30,6 @@ from official.vision.losses import loss_utils
 from official.vision.modeling import factory
 from official.vision.modeling import retinanet_model
 from official.vision.modeling.layers import detection_generator
-from official.vision.serving import detection
 
 
 class ObjectDetectorModel(tf.keras.Model):
@@ -59,7 +59,9 @@ class ObjectDetectorModel(tf.keras.Model):
     self._num_classes = num_classes
     self._model = self._build_model()
     checkpoint_folder = self._model_spec.downloaded_files.get_path()
-    checkpoint_file = os.path.join(checkpoint_folder, 'ckpt-277200')
+    checkpoint_file = os.path.join(
+        checkpoint_folder, self._model_spec.checkpoint_name
+    )
     self.load_checkpoint(checkpoint_file)
     self._model.summary()
     self.loss_trackers = [
@@ -72,15 +74,18 @@ class ObjectDetectorModel(tf.keras.Model):
       generator_config: configs.retinanet.DetectionGenerator = configs.retinanet.DetectionGenerator(),
   ) -> configs.retinanet.RetinaNet:
     model_config = configs.retinanet.RetinaNet(
-        min_level=3,
-        max_level=7,
+        min_level=self._model_spec.min_level,
+        max_level=self._model_spec.max_level,
         num_classes=self._num_classes,
         input_size=self._model_spec.input_image_shape,
         anchor=configs.retinanet.Anchor(
             num_scales=3, aspect_ratios=[0.5, 1.0, 2.0], anchor_size=3
         ),
         backbone=configs.backbones.Backbone(
-            type='mobilenet', mobilenet=configs.backbones.MobileNet()
+            type='mobilenet',
+            mobilenet=configs.backbones.MobileNet(
+                model_id=self._model_spec.model_id
+            ),
         ),
         decoder=configs.decoders.Decoder(
             type='fpn',
@@ -96,14 +101,17 @@ class ObjectDetectorModel(tf.keras.Model):
     )
     return model_config
 
-  def _build_model(self) -> tf.keras.Model:
+  def _build_model(self, omit_l2=False) -> tf.keras.Model:
     """Builds a RetinaNet object detector model."""
     input_specs = tf.keras.layers.InputSpec(
         shape=[None] + self._model_spec.input_image_shape
     )
-    l2_regularizer = tf.keras.regularizers.l2(
-        self._model_options.l2_weight_decay / 2.0
-    )
+    if omit_l2:
+      l2_regularizer = None
+    else:
+      l2_regularizer = tf.keras.regularizers.l2(
+          self._model_options.l2_weight_decay / 2.0
+      )
     model_config = self._get_model_config()
 
     return factory.build_retinanet(input_specs, model_config, l2_regularizer)
@@ -162,7 +170,7 @@ class ObjectDetectorModel(tf.keras.Model):
 
   def convert_to_qat(self) -> None:
     """Converts the model to a QAT RetinaNet model."""
-    model = self._build_model()
+    model = self._build_model(omit_l2=True)
     dummy_input = tf.zeros([1] + self._model_spec.input_image_shape)
     model(dummy_input, training=True)
     model.set_weights(self._model.get_weights())
@@ -194,6 +202,7 @@ class ObjectDetectorModel(tf.keras.Model):
             max_detections=10,
             max_classes_per_detection=1,
             normalize_anchor_coordinates=True,
+            omit_nms=True,
         ),
     )
     tflite_post_processing_config = (

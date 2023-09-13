@@ -1,4 +1,4 @@
-# Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2023 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,7 @@
 # limitations under the License.
 
 package(default_visibility = [
-    # "//mediapipe/tasks:internal",
-    "//visibility:public",
+    "//mediapipe/tasks:internal",
 ])
 
 licenses(["notice"])
@@ -63,6 +62,7 @@ cc_library(
     name = "face_detector",
     srcs = ["face_detector.cc"],
     hdrs = ["face_detector.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":face_detector_graph",
         "//mediapipe/framework/api2:builder",

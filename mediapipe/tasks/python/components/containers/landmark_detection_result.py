@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,9 +39,11 @@ _Landmark = landmark_module.Landmark
 class LandmarksDetectionResult:
   """Represents the landmarks detection result.
 
-  Attributes: landmarks : A list of `NormalizedLandmark` objects. categories : A
-  list of `Category` objects. world_landmarks : A list of `Landmark` objects.
-  rect : A `NormalizedRect` object.
+  Attributes:
+    landmarks: A list of `NormalizedLandmark` objects.
+    categories: A list of `Category` objects.
+    world_landmarks: A list of `Landmark` objects.
+    rect: A `NormalizedRect` object.
   """
 
   landmarks: Optional[List[_NormalizedLandmark]]

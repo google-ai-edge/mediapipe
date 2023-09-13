@@ -22,11 +22,12 @@
 #include <string>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/time/clock.h"
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #include "mediapipe/framework/port/opencv_imgcodecs_inc.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
@@ -104,8 +105,8 @@ INSTANTIATE_TEST_SUITE_P(FlowDirection, RegionFlowComputationTest,
 void RegionFlowComputationTest::MakeMovie(
     int num_frames, RegionFlowComputationOptions::ImageFormat format,
     std::vector<cv::Mat>* movie, std::vector<Vector2_f>* positions) {
-  CHECK(positions != nullptr);
-  CHECK(movie != nullptr);
+  ABSL_CHECK(positions != nullptr);
+  ABSL_CHECK(movie != nullptr);
 
   const int border = 40;
   int frame_width = original_frame_.cols - 2 * border;
@@ -117,7 +118,7 @@ void RegionFlowComputationTest::MakeMovie(
   int seed = 900913;  // google.
   if (absl::GetFlag(FLAGS_time_seed)) {
     seed = ToUnixMillis(absl::Now()) % (1 << 16);
-    LOG(INFO) << "Using time seed: " << seed;
+    ABSL_LOG(INFO) << "Using time seed: " << seed;
   }
 
   RandomEngine random(seed);
@@ -178,7 +179,7 @@ void RegionFlowComputationTest::MakeMovie(
 
 void RegionFlowComputationTest::GetResizedFrame(int width, int height,
                                                 cv::Mat* result) const {
-  CHECK(result != nullptr);
+  ABSL_CHECK(result != nullptr);
   cv::resize(original_frame_, *result, cv::Size(width, height));
 }
 

@@ -17,13 +17,13 @@
 #include <vector>
 
 #include "absl/container/node_hash_set.h"
+#include "absl/log/absl_log.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/formats/location_data.pb.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/re2.h"
 #include "mediapipe/framework/port/status.h"
@@ -264,11 +264,11 @@ bool FilterDetectionCalculator::IsValidLabel(const std::string& label) {
 
 bool FilterDetectionCalculator::IsValidScore(float score) {
   if (options_.has_min_score() && score < options_.min_score()) {
-    LOG(ERROR) << "Filter out detection with low score " << score;
+    ABSL_LOG(ERROR) << "Filter out detection with low score " << score;
     return false;
   }
   if (options_.has_max_score() && score > options_.max_score()) {
-    LOG(ERROR) << "Filter out detection with high score " << score;
+    ABSL_LOG(ERROR) << "Filter out detection with high score " << score;
     return false;
   }
   return true;

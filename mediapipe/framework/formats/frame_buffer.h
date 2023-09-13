@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ limitations under the License.
 
 #include <vector>
 
-#include "absl/log/check.h"
+#include "absl/log/absl_check.h"
 #include "absl/status/statusor.h"
 #include "mediapipe/framework/port/integral_types.h"
 
@@ -147,15 +147,15 @@ class FrameBuffer {
 
   // Returns plane indexed by the input `index`.
   const Plane& plane(int index) const {
-    CHECK_GE(index, 0);
-    CHECK_LT(static_cast<size_t>(index), planes_.size());
+    ABSL_CHECK_GE(index, 0);
+    ABSL_CHECK_LT(static_cast<size_t>(index), planes_.size());
     return planes_[index];
   }
 
   // Returns mutable plane indexed by the input `index`.
   Plane mutable_plane(int index) {
-    CHECK_GE(index, 0);
-    CHECK_LT(static_cast<size_t>(index), planes_.size());
+    ABSL_CHECK_GE(index, 0);
+    ABSL_CHECK_LT(static_cast<size_t>(index), planes_.size());
     return planes_[index];
   }
 

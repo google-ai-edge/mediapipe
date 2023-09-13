@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
 #include "absl/strings/numbers.h"
 #include "mediapipe/calculators/core/packet_resampler_calculator.pb.h"
@@ -81,7 +82,7 @@ class UnpackMediaSequenceCalculatorTest : public ::testing::Test {
     if (options != nullptr) {
       *config.mutable_options() = *options;
     }
-    LOG(INFO) << config.DebugString();
+    ABSL_LOG(INFO) << config.DebugString();
     runner_ = absl::make_unique<CalculatorRunner>(config);
   }
 

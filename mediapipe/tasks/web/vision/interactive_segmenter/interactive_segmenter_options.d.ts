@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 import {TaskRunnerOptions} from '../../../../tasks/web/core/task_runner_options';
 
 /** Options to configure the MediaPipe Interactive Segmenter Task */
-export interface InteractiveSegmenterOptions extends TaskRunnerOptions {
+export declare interface InteractiveSegmenterOptions extends TaskRunnerOptions {
   /** Whether to output confidence masks. Defaults to true. */
   outputConfidenceMasks?: boolean|undefined;
 

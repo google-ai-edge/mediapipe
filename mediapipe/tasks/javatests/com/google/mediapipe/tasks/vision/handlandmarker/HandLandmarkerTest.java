@@ -1,4 +1,4 @@
-// Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2022 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public class HandLandmarkerTest {
           handLandmarker.detect(getImageFromAsset(NO_HANDS_IMAGE));
       assertThat(actualResult.landmarks()).isEmpty();
       assertThat(actualResult.worldLandmarks()).isEmpty();
-      assertThat(actualResult.handednesses()).isEmpty();
+      assertThat(actualResult.handedness()).isEmpty();
     }
 
     @Test
@@ -109,7 +109,7 @@ public class HandLandmarkerTest {
           HandLandmarker.createFromOptions(ApplicationProvider.getApplicationContext(), options);
       HandLandmarkerResult actualResult =
           handLandmarker.detect(getImageFromAsset(TWO_HANDS_IMAGE));
-      assertThat(actualResult.handednesses()).hasSize(2);
+      assertThat(actualResult.handedness()).hasSize(2);
     }
 
     @Test
@@ -393,7 +393,7 @@ public class HandLandmarkerTest {
     // Expects to have the same number of hands detected.
     assertThat(actualResult.landmarks()).hasSize(expectedResult.landmarks().size());
     assertThat(actualResult.worldLandmarks()).hasSize(expectedResult.worldLandmarks().size());
-    assertThat(actualResult.handednesses()).hasSize(expectedResult.handednesses().size());
+    assertThat(actualResult.handedness()).hasSize(expectedResult.handedness().size());
 
     // Actual landmarks match expected landmarks.
     assertThat(actualResult.landmarks().get(0))
@@ -410,8 +410,8 @@ public class HandLandmarkerTest {
         .containsExactlyElementsIn(expectedResult.landmarks().get(0));
 
     // Actual handedness matches expected handedness.
-    Category actualTopHandedness = actualResult.handednesses().get(0).get(0);
-    Category expectedTopHandedness = expectedResult.handednesses().get(0).get(0);
+    Category actualTopHandedness = actualResult.handedness().get(0).get(0);
+    Category expectedTopHandedness = expectedResult.handedness().get(0).get(0);
     assertThat(actualTopHandedness.index()).isEqualTo(expectedTopHandedness.index());
     assertThat(actualTopHandedness.categoryName()).isEqualTo(expectedTopHandedness.categoryName());
   }

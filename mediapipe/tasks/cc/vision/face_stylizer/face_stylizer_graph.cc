@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ limitations under the License.
 #include "mediapipe/tasks/cc/vision/face_landmarker/proto/face_landmarks_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/face_stylizer/calculators/tensors_to_image_calculator.pb.h"
 #include "mediapipe/tasks/cc/vision/face_stylizer/proto/face_stylizer_graph_options.pb.h"
+#include "mediapipe/util/graph_builder_utils.h"
 
 namespace mediapipe {
 namespace tasks {
@@ -64,26 +65,27 @@ using ::mediapipe::tasks::vision::face_stylizer::proto::
     FaceStylizerGraphOptions;
 
 constexpr char kDetectionTag[] = "DETECTION";
+constexpr char kFaceAlignmentTag[] = "FACE_ALIGNMENT";
 constexpr char kFaceDetectorTFLiteName[] = "face_detector.tflite";
 constexpr char kFaceLandmarksDetectorTFLiteName[] =
     "face_landmarks_detector.tflite";
 constexpr char kFaceStylizerTFLiteName[] = "face_stylizer.tflite";
 constexpr char kImageTag[] = "IMAGE";
-constexpr char kImageCpuTag[] = "IMAGE_CPU";
-constexpr char kImageGpuTag[] = "IMAGE_GPU";
 constexpr char kImageSizeTag[] = "IMAGE_SIZE";
 constexpr char kMatrixTag[] = "MATRIX";
 constexpr char kNormLandmarksTag[] = "NORM_LANDMARKS";
 constexpr char kNormRectTag[] = "NORM_RECT";
-constexpr char kOutputSizeTag[] = "OUTPUT_SIZE";
 constexpr char kSizeTag[] = "SIZE";
 constexpr char kStylizedImageTag[] = "STYLIZED_IMAGE";
 constexpr char kTensorsTag[] = "TENSORS";
+constexpr char kTransformationMatrixTag[] = "TRANSFORMATION_MATRIX";
 
 // Struct holding the different output streams produced by the face stylizer
 // graph.
 struct FaceStylizerOutputStreams {
-  Source<Image> stylized_image;
+  std::optional<Source<Image>> stylized_image;
+  std::optional<Source<Image>> face_alignment_image;
+  std::optional<Source<std::array<float, 16>>> transformation_matrix;
   Source<Image> original_image;
 };
 
@@ -106,8 +108,6 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   face_detector_graph_options->mutable_base_options()
       ->mutable_acceleration()
       ->CopyFrom(options->base_options().acceleration());
-  face_detector_graph_options->mutable_base_options()->set_use_stream_mode(
-      options->base_options().use_stream_mode());
   auto* face_landmarks_detector_graph_options =
       options->mutable_face_landmarker_graph_options()
           ->mutable_face_landmarks_detector_graph_options();
@@ -127,9 +127,11 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   face_landmarks_detector_graph_options->mutable_base_options()
       ->set_use_stream_mode(options->base_options().use_stream_mode());
 
-  ASSIGN_OR_RETURN(const auto face_stylizer_file,
-                   resources.GetFile(kFaceStylizerTFLiteName));
-  SetExternalFile(face_stylizer_file, face_stylizer_external_file, is_copy);
+  if (face_stylizer_external_file) {
+    ASSIGN_OR_RETURN(const auto face_stylizer_file,
+                     resources.GetFile(kFaceStylizerTFLiteName));
+    SetExternalFile(face_stylizer_file, face_stylizer_external_file, is_copy);
+  }
   return absl::OkStatus();
 }
 
@@ -164,7 +166,7 @@ void ConfigureTensorsToImageCalculator(
   if (image_to_tensor_options.has_output_tensor_float_range()) {
     auto* mutable_range =
         tensors_to_image_options->mutable_input_tensor_float_range();
-    // TODO: Make the float range flexiable.
+    // TODO: Make the float range flexible.
     mutable_range->set_min(0);
     mutable_range->set_max(1);
   } else if (image_to_tensor_options.has_output_tensor_uint_range()) {
@@ -190,8 +192,19 @@ void ConfigureTensorsToImageCalculator(
 //     @Optional: rect covering the whole image is used if not specified.
 //
 // Outputs:
-//   IMAGE - mediapipe::Image
+//   STYLIZED_IMAGE - mediapipe::Image
 //     The face stylization output image.
+//   FACE_ALIGNMENT - mediapipe::Image
+//     The aligned face image that is fed to the face stylization model to
+//     perform stylization. Also useful for preparing face stylization training
+//     data.
+//   TRANSFORMATION_MATRIX - std::array<float,16>
+//     An std::array<float, 16> representing a 4x4 row-major-order matrix that
+//     maps a point on the input image to a point on the output image, and
+//     can be used to reverse the mapping by inverting the matrix.
+//   IMAGE - mediapipe::Image
+//     The input image that the face landmarker runs on and has the pixel data
+//     stored on the target storage (CPU vs GPU).
 //
 // Example:
 // node {
@@ -200,6 +213,7 @@ void ConfigureTensorsToImageCalculator(
 //   input_stream: "NORM_RECT:norm_rect"
 //   output_stream: "IMAGE:image_out"
 //   output_stream: "STYLIZED_IMAGE:stylized_image"
+//   output_stream: "FACE_ALIGNMENT:face_alignment_image"
 //   options {
 //     [mediapipe.tasks.vision.face_stylizer.proto.FaceStylizerGraphOptions.ext]
 //     {
@@ -215,18 +229,28 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(
-        const auto* model_asset_bundle_resources,
-        CreateModelAssetBundleResources<FaceStylizerGraphOptions>(sc));
-    // Copies the file content instead of passing the pointer of file in
-    // memory if the subgraph model resource service is not available.
+    bool output_stylized = HasOutput(sc->OriginalNode(), kStylizedImageTag);
+    bool output_alignment = HasOutput(sc->OriginalNode(), kFaceAlignmentTag);
     auto face_stylizer_external_file = absl::make_unique<ExternalFile>();
-    MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
-        *model_asset_bundle_resources,
-        sc->MutableOptions<FaceStylizerGraphOptions>(),
-        face_stylizer_external_file.get(),
-        !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
-             .IsAvailable()));
+    if (sc->Options<FaceStylizerGraphOptions>().has_base_options()) {
+      ASSIGN_OR_RETURN(
+          const auto* model_asset_bundle_resources,
+          CreateModelAssetBundleResources<FaceStylizerGraphOptions>(sc));
+      // Copies the file content instead of passing the pointer of file in
+      // memory if the subgraph model resource service is not available.
+      MP_RETURN_IF_ERROR(SetSubTaskBaseOptions(
+          *model_asset_bundle_resources,
+          sc->MutableOptions<FaceStylizerGraphOptions>(),
+          output_stylized ? face_stylizer_external_file.get() : nullptr,
+          !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
+               .IsAvailable()));
+    } else if (output_stylized) {
+      return CreateStatusWithPayload(
+          absl::StatusCode::kInvalidArgument,
+          "Face stylizer must specify its base options when the "
+          "\"STYLIZED_IMAGE\" output stream is connected.",
+          MediaPipeTasksStatus::kInvalidArgumentError);
+    }
     Graph graph;
     ASSIGN_OR_RETURN(
         auto face_landmark_lists,
@@ -235,15 +259,29 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
                 ->mutable_face_landmarker_graph_options(),
             graph[Input<Image>(kImageTag)],
             graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph));
-    ASSIGN_OR_RETURN(
-        const auto* model_resources,
-        CreateModelResources(sc, std::move(face_stylizer_external_file)));
+    const ModelResources* face_stylizer_model_resources = nullptr;
+    if (output_stylized) {
+      ASSIGN_OR_RETURN(
+          const auto* model_resources,
+          CreateModelResources(sc, std::move(face_stylizer_external_file)));
+      face_stylizer_model_resources = model_resources;
+    }
     ASSIGN_OR_RETURN(
         auto output_streams,
         BuildFaceStylizerGraph(sc->Options<FaceStylizerGraphOptions>(),
-                               *model_resources, graph[Input<Image>(kImageTag)],
+                               face_stylizer_model_resources, output_alignment,
+                               graph[Input<Image>(kImageTag)],
                                face_landmark_lists, graph));
-    output_streams.stylized_image >> graph[Output<Image>(kStylizedImageTag)];
+    if (output_stylized) {
+      output_streams.stylized_image.value() >>
+          graph[Output<Image>(kStylizedImageTag)];
+    }
+    if (output_alignment) {
+      output_streams.face_alignment_image.value() >>
+          graph[Output<Image>(kFaceAlignmentTag)];
+    }
+    output_streams.transformation_matrix.value() >>
+        graph[Output<std::array<float, 16>>(kTransformationMatrixTag)];
     output_streams.original_image >> graph[Output<Image>(kImageTag)];
     return graph.GetConfig();
   }
@@ -277,9 +315,11 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
 
   absl::StatusOr<FaceStylizerOutputStreams> BuildFaceStylizerGraph(
       const FaceStylizerGraphOptions& task_options,
-      const ModelResources& model_resources, Source<Image> image_in,
+      const ModelResources* model_resources, bool output_alignment,
+      Source<Image> image_in,
       Source<std::vector<NormalizedLandmarkList>> face_landmark_lists,
       Graph& graph) {
+    bool output_stylized = model_resources != nullptr;
     auto& split_face_landmark_list =
         graph.AddNode("SplitNormalizedLandmarkListVectorCalculator");
     ConfigureSplitNormalizedLandmarkListVectorCalculator(
@@ -303,15 +343,59 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
     face_detection >> face_to_rect.In(kDetectionTag);
     image_size >> face_to_rect.In(kImageSizeTag);
     auto face_rect = face_to_rect.Out(kNormRectTag);
-    // Adds preprocessing calculators and connects them to the graph input image
-    // stream.
+
+    std::optional<Source<Image>> face_alignment;
+    // Output aligned face only.
+    // In this case, the face stylization model inference is not required.
+    // However, to keep consistent with the inference preprocessing steps, the
+    // ImageToTensorCalculator is still used to perform image rotation,
+    // cropping, and resizing.
+    if (!output_stylized) {
+      auto& pass_through = graph.AddNode("PassThroughCalculator");
+      image_in >> pass_through.In("");
+
+      auto& image_to_tensor = graph.AddNode("ImageToTensorCalculator");
+      auto& image_to_tensor_options =
+          image_to_tensor.GetOptions<ImageToTensorCalculatorOptions>();
+      image_to_tensor_options.mutable_output_tensor_float_range()->set_min(0);
+      image_to_tensor_options.mutable_output_tensor_float_range()->set_max(1);
+      image_to_tensor_options.set_output_tensor_width(
+          task_options.face_alignment_size());
+      image_to_tensor_options.set_output_tensor_height(
+          task_options.face_alignment_size());
+      image_to_tensor_options.set_keep_aspect_ratio(true);
+      image_to_tensor_options.set_border_mode(
+          mediapipe::ImageToTensorCalculatorOptions::BORDER_ZERO);
+      image_in >> image_to_tensor.In(kImageTag);
+      face_rect >> image_to_tensor.In(kNormRectTag);
+      auto face_alignment_image = image_to_tensor.Out(kTensorsTag);
+
+      auto& tensors_to_image =
+          graph.AddNode("mediapipe.tasks.TensorsToImageCalculator");
+      auto& tensors_to_image_options =
+          tensors_to_image.GetOptions<TensorsToImageCalculatorOptions>();
+      tensors_to_image_options.mutable_input_tensor_float_range()->set_min(0);
+      tensors_to_image_options.mutable_input_tensor_float_range()->set_max(1);
+      face_alignment_image >> tensors_to_image.In(kTensorsTag);
+      face_alignment = tensors_to_image.Out(kImageTag).Cast<Image>();
+
+      return {{/*stylized_image=*/std::nullopt,
+               /*alignment_image=*/face_alignment,
+               /*transformation_matrix=*/
+               image_to_tensor.Out(kMatrixTag).Cast<std::array<float, 16>>(),
+               /*original_image=*/pass_through.Out("").Cast<Image>()}};
+    }
+
+    std::optional<Source<Image>> stylized;
+    // Adds preprocessing calculators and connects them to the graph input
+    // image stream.
     auto& preprocessing = graph.AddNode(
         "mediapipe.tasks.components.processors.ImagePreprocessingGraph");
     bool use_gpu =
         components::processors::DetermineImagePreprocessingGpuBackend(
             task_options.base_options().acceleration());
     MP_RETURN_IF_ERROR(components::processors::ConfigureImagePreprocessingGraph(
-        model_resources, use_gpu,
+        *model_resources, use_gpu,
         &preprocessing.GetOptions<tasks::components::processors::proto::
                                       ImagePreprocessingGraphOptions>()));
     auto& image_to_tensor_options =
@@ -329,7 +413,7 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
     // Adds inference subgraph and connects its input stream to the output
     // tensors produced by the ImageToTensorCalculator.
     auto& inference = AddInference(
-        model_resources, task_options.base_options().acceleration(), graph);
+        *model_resources, task_options.base_options().acceleration(), graph);
     preprocessed_tensors >> inference.In(kTensorsTag);
     auto model_output_tensors =
         inference.Out(kTensorsTag).Cast<std::vector<Tensor>>();
@@ -346,8 +430,22 @@ class FaceStylizerGraph : public core::ModelTaskGraph {
     image_converter.GetOptions<mediapipe::ImageCloneCalculatorOptions>()
         .set_output_on_gpu(false);
     tensor_image >> image_converter.In("");
+    stylized = image_converter.Out("").Cast<Image>();
 
-    return {{/*stylized_image=*/image_converter.Out("").Cast<Image>(),
+    if (output_alignment) {
+      auto& tensors_to_image =
+          graph.AddNode("mediapipe.tasks.TensorsToImageCalculator");
+      ConfigureTensorsToImageCalculator(
+          image_to_tensor_options,
+          &tensors_to_image.GetOptions<TensorsToImageCalculatorOptions>());
+      preprocessed_tensors >> tensors_to_image.In(kTensorsTag);
+      face_alignment = tensors_to_image.Out(kImageTag).Cast<Image>();
+    }
+
+    return {{/*stylized_image=*/stylized,
+             /*alignment_image=*/face_alignment,
+             /*transformation_matrix=*/
+             preprocessing.Out(kMatrixTag).Cast<std::array<float, 16>>(),
              /*original_image=*/preprocessing.Out(kImageTag).Cast<Image>()}};
   }
 };

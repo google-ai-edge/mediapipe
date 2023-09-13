@@ -448,8 +448,6 @@ class RegionFlowComputation {
   // Records data for long feature tracks.
   std::unique_ptr<LongTrackData> long_track_data_;
 
-  bool use_cv_tracking_ = false;
-
   // Counter used for controlling how ofter do we run descriptor extraction.
   // Count from 0 to options_.extract_descriptor_every_n_frame() - 1.
   // Extract descriptors only when counter == 0.

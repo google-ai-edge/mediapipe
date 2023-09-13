@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2023 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,8 @@ import {ImageSegmenterGraphOptions as ImageSegmenterGraphOptionsProto} from '../
 import {SegmenterOptions as SegmenterOptionsProto} from '../../../../tasks/cc/vision/image_segmenter/proto/segmenter_options_pb';
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
-import {RegionOfInterest, SegmentationMask} from '../../../../tasks/web/vision/core/types';
+import {MPMask} from '../../../../tasks/web/vision/core/mask';
+import {RegionOfInterest} from '../../../../tasks/web/vision/core/types';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {Color as ColorProto} from '../../../../util/color_pb';
 import {RenderAnnotation as RenderAnnotationProto, RenderData as RenderDataProto} from '../../../../util/render_data_pb';
@@ -33,7 +34,7 @@ import {InteractiveSegmenterResult} from './interactive_segmenter_result';
 
 export * from './interactive_segmenter_options';
 export * from './interactive_segmenter_result';
-export {SegmentationMask, RegionOfInterest};
+export {RegionOfInterest};
 export {ImageSource};
 
 const IMAGE_IN_STREAM = 'image_in';
@@ -41,6 +42,7 @@ const NORM_RECT_IN_STREAM = 'norm_rect_in';
 const ROI_IN_STREAM = 'roi_in';
 const CONFIDENCE_MASKS_STREAM = 'confidence_masks';
 const CATEGORY_MASK_STREAM = 'category_mask';
+const QUALITY_SCORES_STREAM = 'quality_scores';
 const IMAGEA_SEGMENTER_GRAPH =
     'mediapipe.tasks.vision.interactive_segmenter.InteractiveSegmenterGraph';
 const DEFAULT_OUTPUT_CATEGORY_MASK = false;
@@ -55,7 +57,7 @@ const DEFAULT_OUTPUT_CONFIDENCE_MASKS = true;
  * asynchronous processing is needed, all data needs to be copied before the
  * callback returns.
  */
-export type InteractiveSegmenterCallack =
+export type InteractiveSegmenterCallback =
     (result: InteractiveSegmenterResult) => void;
 
 /**
@@ -83,15 +85,19 @@ export type InteractiveSegmenterCallack =
  *   - batch is always 1
  */
 export class InteractiveSegmenter extends VisionTaskRunner {
-  private result: InteractiveSegmenterResult = {width: 0, height: 0};
+  private categoryMask?: MPMask;
+  private confidenceMasks?: MPMask[];
+  private qualityScores?: number[];
   private outputCategoryMask = DEFAULT_OUTPUT_CATEGORY_MASK;
   private outputConfidenceMasks = DEFAULT_OUTPUT_CONFIDENCE_MASKS;
+  private userCallback?: InteractiveSegmenterCallback;
   private readonly options: ImageSegmenterGraphOptionsProto;
   private readonly segmenterOptions: SegmenterOptionsProto;
 
   /**
    * Initializes the Wasm runtime and creates a new interactive segmenter from
    * the provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of
    *     the Wasm binary and its loader.
    * @param interactiveSegmenterOptions The options for the Interactive
@@ -110,6 +116,7 @@ export class InteractiveSegmenter extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new interactive segmenter based
    * on the provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of
    *     the Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the model.
@@ -125,6 +132,7 @@ export class InteractiveSegmenter extends VisionTaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new interactive segmenter based
    * on the path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of
    *     the Wasm binary and its loader.
    * @param modelAssetPath The path to the model asset.
@@ -166,6 +174,7 @@ export class InteractiveSegmenter extends VisionTaskRunner {
    * options. You can reset an option back to its default value by
    * explicitly setting it to `undefined`.
    *
+   * @export
    * @param options The options for the interactive segmenter.
    * @return A Promise that resolves when the settings have been applied.
    */
@@ -185,14 +194,9 @@ export class InteractiveSegmenter extends VisionTaskRunner {
 
   /**
    * Performs interactive segmentation on the provided single image and invokes
-   * the callback with the response.  The `roi` parameter is used to represent a
-   * user's region of interest for segmentation.
-   *
-   * If the output_type is `CATEGORY_MASK`, the callback is invoked with vector
-   * of images that represent per-category segmented image mask. If the
-   * output_type is `CONFIDENCE_MASK`, the callback is invoked with a vector of
-   * images that contains only one confidence image mask. The method returns
-   * synchronously once the callback returns.
+   * the callback with the response. The method returns synchronously once the
+   * callback returns. The `roi` parameter is used to represent a user's region
+   * of interest for segmentation.
    *
    * @param image An image to process.
    * @param roi The region of interest for segmentation.
@@ -202,23 +206,18 @@ export class InteractiveSegmenter extends VisionTaskRunner {
    */
   segment(
       image: ImageSource, roi: RegionOfInterest,
-      callback: InteractiveSegmenterCallack): void;
+      callback: InteractiveSegmenterCallback): void;
   /**
    * Performs interactive segmentation on the provided single image and invokes
-   * the callback with the response. The `roi` parameter is used to represent a
-   * user's region of interest for segmentation.
+   * the callback with the response. The method returns synchronously once the
+   * callback returns. The `roi` parameter is used to represent a user's region
+   * of interest for segmentation.
    *
    * The 'image_processing_options' parameter can be used to specify the
    * rotation to apply to the image before performing segmentation, by setting
    * its 'rotationDegrees' field. Note that specifying a region-of-interest
    * using the 'regionOfInterest' field is NOT supported and will result in an
    * error.
-   *
-   * If the output_type is `CATEGORY_MASK`, the callback is invoked with vector
-   * of images that represent per-category segmented image mask. If the
-   * output_type is `CONFIDENCE_MASK`, the callback is invoked with a vector of
-   * images that contains only one confidence image mask. The method returns
-   * synchronously once the callback returns.
    *
    * @param image An image to process.
    * @param roi The region of interest for segmentation.
@@ -231,29 +230,84 @@ export class InteractiveSegmenter extends VisionTaskRunner {
   segment(
       image: ImageSource, roi: RegionOfInterest,
       imageProcessingOptions: ImageProcessingOptions,
-      callback: InteractiveSegmenterCallack): void;
+      callback: InteractiveSegmenterCallback): void;
+  /**
+   * Performs interactive segmentation on the provided video frame and returns
+   * the segmentation result. This method creates a copy of the resulting masks
+   * and should not be used in high-throughput applications. The `roi` parameter
+   * is used to represent a user's region of interest for segmentation.
+   *
+   * @param image An image to process.
+   * @param roi The region of interest for segmentation.
+   * @return The segmentation result. The data is copied to avoid lifetime
+   *     limits.
+   */
+  segment(image: ImageSource, roi: RegionOfInterest):
+      InteractiveSegmenterResult;
+  /**
+   * Performs interactive segmentation on the provided video frame and returns
+   * the segmentation result. This method creates a copy of the resulting masks
+   * and should not be used in high-throughput applications. The `roi` parameter
+   * is used to represent a user's region of interest for segmentation.
+   *
+   * The 'image_processing_options' parameter can be used to specify the
+   * rotation to apply to the image before performing segmentation, by setting
+   * its 'rotationDegrees' field. Note that specifying a region-of-interest
+   * using the 'regionOfInterest' field is NOT supported and will result in an
+   * error.
+   *
+   * @param image An image to process.
+   * @param roi The region of interest for segmentation.
+   * @param imageProcessingOptions the `ImageProcessingOptions` specifying how
+   *    to process the input image before running inference.
+   * @return The segmentation result. The data is copied to avoid lifetime
+   *     limits.
+   */
   segment(
       image: ImageSource, roi: RegionOfInterest,
-      imageProcessingOptionsOrCallback: ImageProcessingOptions|
-      InteractiveSegmenterCallack,
-      callback?: InteractiveSegmenterCallack): void {
+      imageProcessingOptions: ImageProcessingOptions):
+      InteractiveSegmenterResult;
+  /** @export */
+  segment(
+      image: ImageSource, roi: RegionOfInterest,
+      imageProcessingOptionsOrCallback?: ImageProcessingOptions|
+      InteractiveSegmenterCallback,
+      callback?: InteractiveSegmenterCallback): InteractiveSegmenterResult|
+      void {
     const imageProcessingOptions =
         typeof imageProcessingOptionsOrCallback !== 'function' ?
         imageProcessingOptionsOrCallback :
         {};
-    const userCallback =
-        typeof imageProcessingOptionsOrCallback === 'function' ?
+    this.userCallback = typeof imageProcessingOptionsOrCallback === 'function' ?
         imageProcessingOptionsOrCallback :
-        callback!;
+        callback;
 
     this.reset();
     this.processRenderData(roi, this.getSynctheticTimestamp());
     this.processImageData(image, imageProcessingOptions);
-    userCallback(this.result);
+    return this.processResults();
   }
 
   private reset(): void {
-    this.result = {width: 0, height: 0};
+    this.confidenceMasks = undefined;
+    this.categoryMask = undefined;
+    this.qualityScores = undefined;
+  }
+
+  private processResults(): InteractiveSegmenterResult|void {
+    try {
+      const result = new InteractiveSegmenterResult(
+          this.confidenceMasks, this.categoryMask, this.qualityScores);
+      if (this.userCallback) {
+        this.userCallback(result);
+      } else {
+        return result;
+      }
+    } finally {
+      // Free the image memory, now that we've kept all streams alive long
+      // enough to be returned in our callbacks.
+      this.freeKeepaliveStreams();
+    }
   }
 
   /** Updates the MediaPipe graph configuration. */
@@ -275,24 +329,24 @@ export class InteractiveSegmenter extends VisionTaskRunner {
     segmenterNode.setOptions(calculatorOptions);
 
     graphConfig.addNode(segmenterNode);
+    this.addKeepaliveNode(graphConfig);
 
     if (this.outputConfidenceMasks) {
       graphConfig.addOutputStream(CONFIDENCE_MASKS_STREAM);
       segmenterNode.addOutputStream(
           'CONFIDENCE_MASKS:' + CONFIDENCE_MASKS_STREAM);
+      this.keepStreamAlive(CONFIDENCE_MASKS_STREAM);
 
       this.graphRunner.attachImageVectorListener(
           CONFIDENCE_MASKS_STREAM, (masks, timestamp) => {
-            this.result.confidenceMasks = masks.map(m => m.data);
-            if (masks.length >= 0) {
-              this.result.width = masks[0].width;
-              this.result.height = masks[0].height;
-            }
-
+            this.confidenceMasks = masks.map(
+                wasmImage => this.convertToMPMask(
+                    wasmImage, /* shouldCopyData= */ !this.userCallback));
             this.setLatestOutputTimestamp(timestamp);
           });
       this.graphRunner.attachEmptyPacketListener(
           CONFIDENCE_MASKS_STREAM, timestamp => {
+            this.confidenceMasks = [];
             this.setLatestOutputTimestamp(timestamp);
           });
     }
@@ -300,19 +354,34 @@ export class InteractiveSegmenter extends VisionTaskRunner {
     if (this.outputCategoryMask) {
       graphConfig.addOutputStream(CATEGORY_MASK_STREAM);
       segmenterNode.addOutputStream('CATEGORY_MASK:' + CATEGORY_MASK_STREAM);
+      this.keepStreamAlive(CATEGORY_MASK_STREAM);
 
       this.graphRunner.attachImageListener(
           CATEGORY_MASK_STREAM, (mask, timestamp) => {
-            this.result.categoryMask = mask.data;
-            this.result.width = mask.width;
-            this.result.height = mask.height;
+            this.categoryMask = this.convertToMPMask(
+                mask, /* shouldCopyData= */ !this.userCallback);
             this.setLatestOutputTimestamp(timestamp);
           });
       this.graphRunner.attachEmptyPacketListener(
           CATEGORY_MASK_STREAM, timestamp => {
+            this.categoryMask = undefined;
             this.setLatestOutputTimestamp(timestamp);
           });
     }
+
+    graphConfig.addOutputStream(QUALITY_SCORES_STREAM);
+    segmenterNode.addOutputStream('QUALITY_SCORES:' + QUALITY_SCORES_STREAM);
+
+    this.graphRunner.attachFloatVectorListener(
+        QUALITY_SCORES_STREAM, (scores, timestamp) => {
+          this.qualityScores = scores;
+          this.setLatestOutputTimestamp(timestamp);
+        });
+    this.graphRunner.attachEmptyPacketListener(
+        QUALITY_SCORES_STREAM, timestamp => {
+          this.categoryMask = undefined;
+          this.setLatestOutputTimestamp(timestamp);
+        });
 
     const binaryGraph = graphConfig.serializeBinary();
     this.setGraph(new Uint8Array(binaryGraph), /* isBinary= */ true);
@@ -326,16 +395,31 @@ export class InteractiveSegmenter extends VisionTaskRunner {
     const renderData = new RenderDataProto();
 
     const renderAnnotation = new RenderAnnotationProto();
-
     const color = new ColorProto();
     color.setR(255);
     renderAnnotation.setColor(color);
 
-    const point = new RenderAnnotationProto.Point();
-    point.setNormalized(true);
-    point.setX(roi.keypoint.x);
-    point.setY(roi.keypoint.y);
-    renderAnnotation.setPoint(point);
+    if (roi.keypoint && roi.scribble) {
+      throw new Error('Cannot provide both keypoint and scribble.');
+    } else if (roi.keypoint) {
+      const point = new RenderAnnotationProto.Point();
+      point.setNormalized(true);
+      point.setX(roi.keypoint.x);
+      point.setY(roi.keypoint.y);
+      renderAnnotation.setPoint(point);
+    } else if (roi.scribble) {
+      const scribble = new RenderAnnotationProto.Scribble();
+      for (const coord of roi.scribble) {
+        const point = new RenderAnnotationProto.Point();
+        point.setNormalized(true);
+        point.setX(coord.x);
+        point.setY(coord.y);
+        scribble.addPoint(point);
+      }
+      renderAnnotation.setScribble(scribble);
+    } else {
+      throw new Error('Must provide either a keypoint or a scribble.');
+    }
 
     renderData.addRenderAnnotations(renderAnnotation);
 

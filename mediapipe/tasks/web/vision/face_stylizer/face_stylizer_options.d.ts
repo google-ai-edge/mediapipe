@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,4 +17,4 @@
 import {VisionTaskOptions} from '../../../../tasks/web/vision/core/vision_task_options';
 
 /** Options to configure the MediaPipe Face Stylizer Task */
-export interface FaceStylizerOptions extends VisionTaskOptions {}
+export declare interface FaceStylizerOptions extends VisionTaskOptions {}

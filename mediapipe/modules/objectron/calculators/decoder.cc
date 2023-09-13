@@ -19,9 +19,10 @@
 
 #include "Eigen/Core"
 #include "Eigen/Dense"
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "mediapipe/framework/port/canonical_errors.h"
-#include "mediapipe/framework/port/logging.h"
 #include "mediapipe/framework/port/opencv_imgproc_inc.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/modules/objectron/calculators/annotation_data.pb.h"
@@ -46,10 +47,10 @@ inline void SetPoint3d(const Eigen::Vector3f& point_vec, Point3D* point_3d) {
 
 FrameAnnotation Decoder::DecodeBoundingBoxKeypoints(
     const cv::Mat& heatmap, const cv::Mat& offsetmap) const {
-  CHECK_EQ(1, heatmap.channels());
-  CHECK_EQ(kNumOffsetmaps, offsetmap.channels());
-  CHECK_EQ(heatmap.cols, offsetmap.cols);
-  CHECK_EQ(heatmap.rows, offsetmap.rows);
+  ABSL_CHECK_EQ(1, heatmap.channels());
+  ABSL_CHECK_EQ(kNumOffsetmaps, offsetmap.channels());
+  ABSL_CHECK_EQ(heatmap.cols, offsetmap.cols);
+  ABSL_CHECK_EQ(heatmap.rows, offsetmap.rows);
 
   const float offset_scale = std::min(offsetmap.cols, offsetmap.rows);
   const std::vector<cv::Point> center_points = ExtractCenterKeypoints(heatmap);
@@ -201,10 +202,10 @@ std::vector<cv::Point> Decoder::ExtractCenterKeypoints(
 absl::Status Decoder::Lift2DTo3D(
     const Eigen::Matrix<float, 4, 4, Eigen::RowMajor>& projection_matrix,
     bool portrait, FrameAnnotation* estimated_box) const {
-  CHECK(estimated_box != nullptr);
+  ABSL_CHECK(estimated_box != nullptr);
 
   for (auto& annotation : *estimated_box->mutable_annotations()) {
-    CHECK_EQ(kNumKeypoints, annotation.keypoints_size());
+    ABSL_CHECK_EQ(kNumKeypoints, annotation.keypoints_size());
 
     // Fill input 2D Points;
     std::vector<Vector2f> input_points_2d;
@@ -220,7 +221,7 @@ absl::Status Decoder::Lift2DTo3D(
     auto status = SolveEpnp(projection_matrix, portrait, input_points_2d,
                             &output_points_3d);
     if (!status.ok()) {
-      LOG(ERROR) << status;
+      ABSL_LOG(ERROR) << status;
       return status;
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,9 +47,14 @@ async function isSimdSupported(): Promise<boolean> {
 }
 
 async function createFileset(
-    taskName: MediapipeTaskCategory, basePath = ''): Promise<WasmFileset> {
+    taskName: MediapipeTaskCategory, basePath?: string): Promise<WasmFileset> {
   const suffix =
       await isSimdSupported() ? 'wasm_internal' : 'wasm_nosimd_internal';
+
+  // For backwards compatiblity, we treat an unset `basePath` as a relative
+  // path. FilesetResolver provides an empty path as a default, which is not
+  // rewritten to '.'.
+  basePath = basePath ?? '.';
 
   return {
     wasmLoaderPath: `${basePath}/${taskName}_${suffix}.js`,
@@ -76,6 +81,7 @@ export class FilesetResolver {
    * you can use `isSimdSupported()` to decide whether to load the SIMD-based
    * assets.
    *
+   * @export
    * @return Whether SIMD support was detected in the current environment.
    */
   static isSimdSupported(): Promise<boolean> {
@@ -85,39 +91,42 @@ export class FilesetResolver {
   /**
    * Creates a fileset for the MediaPipe Audio tasks.
    *
+   * @export
    * @param basePath An optional base path to specify the directory the Wasm
    *    files should be loaded from. If not specified, the Wasm files are
    *    loaded from the host's root directory.
    * @return A `WasmFileset` that can be used to initialize MediaPipe Audio
    *    tasks.
    */
-  static forAudioTasks(basePath?: string): Promise<WasmFileset> {
+  static forAudioTasks(basePath = ''): Promise<WasmFileset> {
     return createFileset('audio', basePath);
   }
 
   /**
    * Creates a fileset for the MediaPipe Text tasks.
    *
+   * @export
    * @param basePath An optional base path to specify the directory the Wasm
    *    files should be loaded from. If not specified, the Wasm files are
    *    loaded from the host's root directory.
    * @return A `WasmFileset` that can be used to initialize MediaPipe Text
    *    tasks.
    */
-  static forTextTasks(basePath?: string): Promise<WasmFileset> {
+  static forTextTasks(basePath = ''): Promise<WasmFileset> {
     return createFileset('text', basePath);
   }
 
   /**
    * Creates a fileset for the MediaPipe Vision tasks.
    *
+   * @export
    * @param basePath An optional base path to specify the directory the Wasm
    *    files should be loaded from. If not specified, the Wasm files are
    *    loaded from the host's root directory.
    * @return A `WasmFileset` that can be used to initialize MediaPipe Vision
    *    tasks.
    */
-  static forVisionTasks(basePath?: string): Promise<WasmFileset> {
+  static forVisionTasks(basePath = ''): Promise<WasmFileset> {
     return createFileset('vision', basePath);
   }
 }

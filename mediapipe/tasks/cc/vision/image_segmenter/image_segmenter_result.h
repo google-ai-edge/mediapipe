@@ -1,4 +1,4 @@
-/* Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2023 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,6 +33,10 @@ struct ImageSegmenterResult {
   // A category mask of uint8 image in GRAY8 format where each pixel represents
   // the class which the pixel in the original image was predicted to belong to.
   std::optional<Image> category_mask;
+  // The quality scores of the result masks, in the range of [0, 1]. Defaults to
+  // `1` if the model doesn't output quality scores. Each element corresponds to
+  // the score of the category in the model outputs.
+  std::vector<float> quality_scores;
 };
 
 }  // namespace image_segmenter

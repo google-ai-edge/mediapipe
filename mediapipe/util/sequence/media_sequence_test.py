@@ -129,6 +129,8 @@ class MediaSequenceTest(tf.test.TestCase):
     ms.add_bbox_embedding_confidence((0.47, 0.49), example)
     ms.set_text_language(b"test", example)
     ms.set_text_context_content(b"text", example)
+    ms.set_text_context_token_id([47, 49], example)
+    ms.set_text_context_embedding([0.47, 0.49], example)
     ms.add_text_content(b"one", example)
     ms.add_text_timestamp(47, example)
     ms.add_text_confidence(0.47, example)
@@ -260,6 +262,29 @@ class MediaSequenceTest(tf.test.TestCase):
     self.assertFalse(ms.has_feature_dimensions(example, "1"))
     self.assertFalse(ms.has_feature_dimensions(example, "2"))
 
+  def test_text_context_round_trip(self):
+    example = tf.train.SequenceExample()
+    text_content = b"text content"
+    text_token_ids = np.array([1, 2, 3, 4])
+    text_embeddings = np.array([0.1, 0.2, 0.3, 0.4])
+    self.assertFalse(ms.has_text_context_embedding(example))
+    self.assertFalse(ms.has_text_context_token_id(example))
+    self.assertFalse(ms.has_text_context_content(example))
+    ms.set_text_context_content(text_content, example)
+    ms.set_text_context_token_id(text_token_ids, example)
+    ms.set_text_context_embedding(text_embeddings, example)
+    self.assertEqual(text_content, ms.get_text_context_content(example))
+    self.assertAllClose(text_token_ids, ms.get_text_context_token_id(example))
+    self.assertAllClose(text_embeddings, ms.get_text_context_embedding(example))
+    self.assertTrue(ms.has_text_context_embedding(example))
+    self.assertTrue(ms.has_text_context_token_id(example))
+    self.assertTrue(ms.has_text_context_content(example))
+    ms.clear_text_context_content(example)
+    ms.clear_text_context_token_id(example)
+    ms.clear_text_context_embedding(example)
+    self.assertFalse(ms.has_text_context_embedding(example))
+    self.assertFalse(ms.has_text_context_token_id(example))
+    self.assertFalse(ms.has_text_context_content(example))
 
 if __name__ == "__main__":
   tf.test.main()

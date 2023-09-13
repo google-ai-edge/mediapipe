@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+ * Copyright 2022 The MediaPipe Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ export class TextEmbedder extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new text embedder from the
    * provided options.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param textEmbedderOptions The options for the text embedder. Note that
@@ -68,6 +69,7 @@ export class TextEmbedder extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new text embedder based on the
    * provided model asset buffer.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetBuffer A binary representation of the TFLite model.
@@ -83,6 +85,7 @@ export class TextEmbedder extends TaskRunner {
   /**
    * Initializes the Wasm runtime and creates a new text embedder based on the
    * path to the model asset.
+   * @export
    * @param wasmFileset A configuration object that provides the location of the
    *     Wasm binary and its loader.
    * @param modelAssetPath The path to the TFLite model.
@@ -110,6 +113,7 @@ export class TextEmbedder extends TaskRunner {
    * You can reset an option back to its default value by explicitly setting it
    * to `undefined`.
    *
+   * @export
    * @param options The options for the text embedder.
    */
   override setOptions(options: TextEmbedderOptions): Promise<void> {
@@ -130,6 +134,7 @@ export class TextEmbedder extends TaskRunner {
    * Performs embeding extraction on the provided text and waits synchronously
    * for the response.
    *
+   * @export
    * @param text The text to process.
    * @return The embedding resuls of the text
    */
@@ -146,6 +151,7 @@ export class TextEmbedder extends TaskRunner {
    *
    * [1]: https://en.wikipedia.org/wiki/Cosine_similarity
    *
+   * @export
    * @throws if the embeddings are of different types(float vs. quantized), have
    *     different sizes, or have an L2-norm of 0.
    */

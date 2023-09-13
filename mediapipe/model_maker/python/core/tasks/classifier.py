@@ -1,4 +1,4 @@
-# Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+# Copyright 2022 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ class Classifier(custom_model.CustomModel):
     self._model: tf.keras.Model = None
     self._optimizer: Union[str, tf.keras.optimizers.Optimizer] = None
     self._loss_function: Union[str, tf.keras.losses.Loss] = None
-    self._metric_function: Union[str, tf.keras.metrics.Metric] = None
+    self._metric_functions: Sequence[Union[str, tf.keras.metrics.Metric]] = None
     self._callbacks: Sequence[tf.keras.callbacks.Callback] = None
     self._hparams: hp.BaseHParams = None
     self._history: tf.keras.callbacks.History = None
@@ -92,7 +92,8 @@ class Classifier(custom_model.CustomModel):
     self._model.compile(
         optimizer=self._optimizer,
         loss=self._loss_function,
-        metrics=[self._metric_function])
+        metrics=self._metric_functions,
+    )
 
     latest_checkpoint = (
         tf.train.latest_checkpoint(checkpoint_path)
@@ -109,7 +110,9 @@ class Classifier(custom_model.CustomModel):
         # dataset is exhausted even if there are epochs remaining.
         steps_per_epoch=None,
         validation_data=validation_dataset,
-        callbacks=self._callbacks)
+        callbacks=self._callbacks,
+        class_weight=self._hparams.class_weights,
+    )
 
   def evaluate(self, data: dataset.Dataset, batch_size: int = 32) -> Any:
     """Evaluates the classifier with the provided evaluation dataset.

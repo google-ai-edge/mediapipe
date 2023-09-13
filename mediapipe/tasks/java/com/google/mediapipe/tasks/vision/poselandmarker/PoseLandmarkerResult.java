@@ -1,4 +1,4 @@
-// Copyright 2023 The MediaPipe Authors. All Rights Reserved.
+// Copyright 2023 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ public abstract class PoseLandmarkerResult implements TaskResult {
   static PoseLandmarkerResult create(
       List<LandmarkProto.NormalizedLandmarkList> landmarksProto,
       List<LandmarkProto.LandmarkList> worldLandmarksProto,
-      List<LandmarkProto.NormalizedLandmarkList> auxiliaryLandmarksProto,
       Optional<List<MPImage>> segmentationMasksData,
       long timestampMs) {
 
@@ -52,7 +51,6 @@ public abstract class PoseLandmarkerResult implements TaskResult {
 
     List<List<NormalizedLandmark>> multiPoseLandmarks = new ArrayList<>();
     List<List<Landmark>> multiPoseWorldLandmarks = new ArrayList<>();
-    List<List<NormalizedLandmark>> multiPoseAuxiliaryLandmarks = new ArrayList<>();
     for (LandmarkProto.NormalizedLandmarkList poseLandmarksProto : landmarksProto) {
       List<NormalizedLandmark> poseLandmarks = new ArrayList<>();
       multiPoseLandmarks.add(poseLandmarks);
@@ -60,7 +58,15 @@ public abstract class PoseLandmarkerResult implements TaskResult {
           poseLandmarksProto.getLandmarkList()) {
         poseLandmarks.add(
             NormalizedLandmark.create(
-                poseLandmarkProto.getX(), poseLandmarkProto.getY(), poseLandmarkProto.getZ()));
+                poseLandmarkProto.getX(),
+                poseLandmarkProto.getY(),
+                poseLandmarkProto.getZ(),
+                poseLandmarkProto.hasVisibility()
+                    ? Optional.of(poseLandmarkProto.getVisibility())
+                    : Optional.empty(),
+                poseLandmarkProto.hasPresence()
+                    ? Optional.of(poseLandmarkProto.getPresence())
+                    : Optional.empty()));
       }
     }
     for (LandmarkProto.LandmarkList poseWorldLandmarksProto : worldLandmarksProto) {
@@ -72,27 +78,19 @@ public abstract class PoseLandmarkerResult implements TaskResult {
             Landmark.create(
                 poseWorldLandmarkProto.getX(),
                 poseWorldLandmarkProto.getY(),
-                poseWorldLandmarkProto.getZ()));
-      }
-    }
-    for (LandmarkProto.NormalizedLandmarkList poseAuxiliaryLandmarksProto :
-        auxiliaryLandmarksProto) {
-      List<NormalizedLandmark> poseAuxiliaryLandmarks = new ArrayList<>();
-      multiPoseAuxiliaryLandmarks.add(poseAuxiliaryLandmarks);
-      for (LandmarkProto.NormalizedLandmark poseAuxiliaryLandmarkProto :
-          poseAuxiliaryLandmarksProto.getLandmarkList()) {
-        poseAuxiliaryLandmarks.add(
-            NormalizedLandmark.create(
-                poseAuxiliaryLandmarkProto.getX(),
-                poseAuxiliaryLandmarkProto.getY(),
-                poseAuxiliaryLandmarkProto.getZ()));
+                poseWorldLandmarkProto.getZ(),
+                poseWorldLandmarkProto.hasVisibility()
+                    ? Optional.of(poseWorldLandmarkProto.getVisibility())
+                    : Optional.empty(),
+                poseWorldLandmarkProto.hasPresence()
+                    ? Optional.of(poseWorldLandmarkProto.getPresence())
+                    : Optional.empty()));
       }
     }
     return new AutoValue_PoseLandmarkerResult(
         timestampMs,
         Collections.unmodifiableList(multiPoseLandmarks),
         Collections.unmodifiableList(multiPoseWorldLandmarks),
-        Collections.unmodifiableList(multiPoseAuxiliaryLandmarks),
         multiPoseSegmentationMasks);
   }
 
@@ -104,9 +102,6 @@ public abstract class PoseLandmarkerResult implements TaskResult {
 
   /** Pose landmarks in world coordniates of detected poses. */
   public abstract List<List<Landmark>> worldLandmarks();
-
-  /** Pose auxiliary landmarks. */
-  public abstract List<List<NormalizedLandmark>> auxiliaryLandmarks();
 
   /** Pose segmentation masks. */
   public abstract Optional<List<MPImage>> segmentationMasks();

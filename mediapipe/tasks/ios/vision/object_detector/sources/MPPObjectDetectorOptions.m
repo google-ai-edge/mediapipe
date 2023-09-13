@@ -28,12 +28,13 @@
 - (id)copyWithZone:(NSZone *)zone {
   MPPObjectDetectorOptions *objectDetectorOptions = [super copyWithZone:zone];
 
+  objectDetectorOptions.runningMode = self.runningMode;
   objectDetectorOptions.scoreThreshold = self.scoreThreshold;
   objectDetectorOptions.maxResults = self.maxResults;
   objectDetectorOptions.categoryDenylist = self.categoryDenylist;
   objectDetectorOptions.categoryAllowlist = self.categoryAllowlist;
   objectDetectorOptions.displayNamesLocale = self.displayNamesLocale;
-  objectDetectorOptions.completion = self.completion;
+  objectDetectorOptions.objectDetectorLiveStreamDelegate = self.objectDetectorLiveStreamDelegate;
 
   return objectDetectorOptions;
 }

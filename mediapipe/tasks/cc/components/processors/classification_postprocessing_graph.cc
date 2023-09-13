@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ using ::mediapipe::tasks::core::ModelResources;
 using ::mediapipe::tasks::metadata::ModelMetadataExtractor;
 using ::tflite::ProcessUnit;
 using ::tflite::TensorMetadata;
-using LabelItems = mediapipe::proto_ns::Map<int64, ::mediapipe::LabelMapItem>;
+using LabelItems = mediapipe::proto_ns::Map<int64_t, ::mediapipe::LabelMapItem>;
 using TensorsSource = mediapipe::api2::builder::Source<std::vector<Tensor>>;
 
 constexpr float kDefaultScoreThreshold = std::numeric_limits<float>::lowest();
@@ -296,7 +296,7 @@ void ConfigureClassificationAggregationCalculator(
   if (output_tensors_metadata == nullptr) {
     return;
   }
-  for (const auto& metadata : *output_tensors_metadata) {
+  for (const auto metadata : *output_tensors_metadata) {
     options->add_head_names(metadata->name()->str());
   }
 }

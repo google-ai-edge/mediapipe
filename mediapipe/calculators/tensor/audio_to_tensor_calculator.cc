@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
@@ -282,18 +283,23 @@ absl::Status AudioToTensorCalculator::Open(CalculatorContext* cc) {
   if (options.has_volume_gain_db()) {
     gain_ = pow(10, options.volume_gain_db() / 20.0);
   }
-  RET_CHECK(kAudioSampleRateIn(cc).IsConnected() ^
-            !kAudioIn(cc).Header().IsEmpty())
-      << "Must either specify the time series header of the \"AUDIO\" stream "
-         "or have the \"SAMPLE_RATE\" stream connected.";
-  if (!kAudioIn(cc).Header().IsEmpty()) {
-    mediapipe::TimeSeriesHeader input_header;
-    MP_RETURN_IF_ERROR(mediapipe::time_series_util::FillTimeSeriesHeaderIfValid(
-        kAudioIn(cc).Header(), &input_header));
-    if (stream_mode_) {
-      MP_RETURN_IF_ERROR(SetupStreamingResampler(input_header.sample_rate()));
-    } else {
-      source_sample_rate_ = input_header.sample_rate();
+  if (options.has_source_sample_rate()) {
+    source_sample_rate_ = options.source_sample_rate();
+  } else {
+    RET_CHECK(kAudioSampleRateIn(cc).IsConnected() ^
+              !kAudioIn(cc).Header().IsEmpty())
+        << "Must either specify the time series header of the \"AUDIO\" stream "
+           "or have the \"SAMPLE_RATE\" stream connected.";
+    if (!kAudioIn(cc).Header().IsEmpty()) {
+      mediapipe::TimeSeriesHeader input_header;
+      MP_RETURN_IF_ERROR(
+          mediapipe::time_series_util::FillTimeSeriesHeaderIfValid(
+              kAudioIn(cc).Header(), &input_header));
+      if (stream_mode_) {
+        MP_RETURN_IF_ERROR(SetupStreamingResampler(input_header.sample_rate()));
+      } else {
+        source_sample_rate_ = input_header.sample_rate();
+      }
     }
   }
   AppendZerosToSampleBuffer(padding_samples_before_);
@@ -343,7 +349,7 @@ absl::Status AudioToTensorCalculator::Process(CalculatorContext* cc) {
     return absl::InvalidArgumentError(
         "The audio data should be stored in column-major.");
   }
-  CHECK(channels_match || mono_output);
+  ABSL_CHECK(channels_match || mono_output);
   const Matrix& input = channels_match ? input_frame
                                        // Mono mixdown.
                                        : input_frame.colwise().mean();
@@ -452,7 +458,7 @@ absl::Status AudioToTensorCalculator::SetupStreamingResampler(
 }
 
 void AudioToTensorCalculator::AppendZerosToSampleBuffer(int num_samples) {
-  CHECK_GE(num_samples, 0);  // Ensured by `UpdateContract`.
+  ABSL_CHECK_GE(num_samples, 0);  // Ensured by `UpdateContract`.
   if (num_samples == 0) {
     return;
   }

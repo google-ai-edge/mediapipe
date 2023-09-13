@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/absl_log.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -15,6 +16,14 @@
 namespace mediapipe {
 namespace tasks {
 namespace {
+
+// On most platforms, glGetUniformLocation returns -1 for an error status, but
+// on web we'll see 0 instead.
+#ifdef __EMSCRIPTEN__
+const GLint kUniformErrorStatus = 0;
+#else
+const GLint kUniformErrorStatus = -1;
+#endif  // __EMSCRIPTEN__
 
 using mediapipe::kBasicSquareVertices;
 using mediapipe::kBasicTextureVertices;
@@ -188,7 +197,7 @@ void main() {
 // Special argmax shader for N=1 classes. We don't need to worry about softmax
 // activation (it is assumed softmax requires N > 1 classes), but this should
 // occur after SIGMOID activation if specified. Instead of a true argmax, we
-// simply use 0.5 as the cutoff, assigning 1 (foreground) or 0 (background)
+// simply use 0.5 as the cutoff, assigning 0 (foreground) or 255 (background)
 // based on whether the confidence value reaches this cutoff or not,
 // respectively.
 static constexpr char kArgmaxOneClassShader[] = R"(
@@ -199,12 +208,12 @@ uniform sampler2D input_texture;
 void main() {
   float input_val = texture2D(input_texture, sample_coordinate).x;
   // Category is just value rounded to nearest integer; then we map to either
-  // 0 or 1/255 accordingly. If the input has been activated properly, then the
+  // 0 or 1 accordingly. If the input has been activated properly, then the
   // values should always be in the range [0, 1]. But just in case it hasn't, to
   // avoid category overflow issues when the activation function is not properly
   // chosen, we add an extra clamp here, as performance hit is minimal.
-  float category = clamp(floor(input_val + 0.5), 0.0, 1.0);
-  gl_FragColor = vec4(category / 255.0, 0.0, 0.0, 1.0);
+  float category = clamp(floor(1.5 - input_val), 0.0, 1.0);
+  gl_FragColor = vec4(category, 0.0, 0.0, 1.0);
 })";
 
 // Softmax is in 3 steps:
@@ -341,7 +350,7 @@ absl::Status SegmentationPostprocessorGl::CreateBasicFragmentShaderProgram(
   for (const auto& uniform_name : uniform_names) {
     shader_struct_ptr->uniforms[uniform_name] =
         glGetUniformLocation(shader_struct_ptr->program, uniform_name.c_str());
-    RET_CHECK(shader_struct_ptr->uniforms[uniform_name] > 0)
+    RET_CHECK(shader_struct_ptr->uniforms[uniform_name] > kUniformErrorStatus)
         << uniform_name << " uniform not found for " << program_name
         << " program";
   }
@@ -359,19 +368,20 @@ absl::Status SegmentationPostprocessorGl::GlInit(
         // TODO: We could skip this entirely if no confidence masks
         //   are being produced AND num_classes > 1, but num_classes is only
         //   known at runtime, so this would take a little extra refactoring.
-        LOG(INFO) << "SIGMOID activation function chosen on GPU";
+        ABSL_LOG(INFO) << "SIGMOID activation function chosen on GPU";
         activation_fn = "vec4 out_value = 1.0 / (exp(-in_value) + 1.0);";
         break;
       case SegmenterOptions::SOFTMAX:
         if (produce_confidence_masks) {
-          LOG(INFO) << "SOFTMAX activation function chosen on GPU";
+          ABSL_LOG(INFO) << "SOFTMAX activation function chosen on GPU";
         } else {
-          LOG(INFO) << "SOFTMAX activation function chosen on GPU, but only "
-                    << "category mask produced, so not applying.";
+          ABSL_LOG(INFO)
+              << "SOFTMAX activation function chosen on GPU, but only "
+              << "category mask produced, so not applying.";
         }
         break;
       case SegmenterOptions::NONE:
-        LOG(INFO) << "NONE activation function chosen on GPU";
+        ABSL_LOG(INFO) << "NONE activation function chosen on GPU";
         break;
     }
 
@@ -427,10 +437,10 @@ absl::Status SegmentationPostprocessorGl::GlInit(
     // Get split program uniform locations.
     split_texture_uniform_ =
         glGetUniformLocation(split_program_, "input_texture");
-    RET_CHECK(split_texture_uniform_ > 0)
+    RET_CHECK(split_texture_uniform_ > kUniformErrorStatus)
         << "split input_texture uniform not found.";
     split_x_offset_uniform_ = glGetUniformLocation(split_program_, "x_offset");
-    RET_CHECK(split_x_offset_uniform_ > 0)
+    RET_CHECK(split_x_offset_uniform_ > kUniformErrorStatus)
         << "split x_offset uniform not found.";
 
     // TODO: If ES3.0+ only, switch to VAO for handling attributes.
@@ -445,8 +455,22 @@ absl::Status SegmentationPostprocessorGl::GlInit(
                  kBasicTextureVertices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+#ifdef TASK_SEGMENTATION_USE_GLES_31_POSTPROCESSING
+    MP_RETURN_IF_ERROR(ssbo_to_texture_converter_.Init());
+#endif  // TASK_SEGMENTATION_USE_GLES_31_POSTPROCESSING
+
     return absl::OkStatus();
   });
+}
+
+// On Android, the extensions are prefixed by GL_, whereas on web they are not.
+bool SegmentationPostprocessorGl::HasGlExtension(std::string const& extension) {
+#ifdef __EMSCRIPTEN__
+  return helper_.GetGlContext().HasGlExtension(extension);
+#else
+  return helper_.GetGlContext().HasGlExtension("GL_" + extension);
+#endif  // __EMSCRIPTEN__
 }
 
 std::vector<std::unique_ptr<Image>>
@@ -459,18 +483,35 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
                                         produce_category_mask,
                                         &image_outputs]() -> absl::Status {
     // Get Tensor input and image output parameters
+    const int width = input_shape.width;           // Slice width from shape
+    const int height = input_shape.height;         // Slice height from chape
+    const int num_outputs = input_shape.channels;  // One output per channel
+    const int num_chunks = (input_shape.channels + 3) / 4;  // ceil(channels/4)
+    const int output_width = output_shape.width;    // Final output width
+    const int output_height = output_shape.height;  // Final output height
     int input_width, input_height;
 
-    if (!tensor.ready_as_opengl_texture_2d()) {
-      LOG(WARNING) << "Tensor wasn't ready on GPU; using slow workaround.";
+    if (!tensor.ready_on_gpu()) {
+      ABSL_LOG(WARNING) << "Tensor wasn't ready on GPU; using slow workaround.";
       (void)tensor.GetCpuReadView();
     }
 
+#ifdef TASK_SEGMENTATION_USE_GLES_31_POSTPROCESSING
+    // If our Tensor is an SSBO, then it's also linearized, so we convert to a
+    // kAligned 2d texture using a special converter and then proceed as before.
+    GLuint ssbo_tex_id;
+    ASSIGN_OR_RETURN(ssbo_tex_id,
+                     ssbo_to_texture_converter_.ConvertTensorToGlTexture(
+                         tensor, width, height, num_outputs));
+    std::tie(input_width, input_height) =
+        ssbo_to_texture_converter_.GetTextureSize();
+#else
     const auto layout = tensor.GetOpenGlTexture2dReadView().GetLayoutDimensions(
         tensor.shape(), &input_width, &input_height);
     if (layout != Tensor::OpenGlTexture2dView::Layout::kAligned) {
-      LOG(ERROR) << "Tensor layout not kAligned! Cannot handle.";
+      ABSL_LOG(ERROR) << "Tensor layout not kAligned! Cannot handle.";
     }
+#endif  // TASK_SEGMENTATION_USE_GLES_31_POSTPROCESSING
 
     // Optimization: Only apply SOFTMAX when producing confidence masks, since
     // SOFTMAX errors out when num_classes = 1, so we don't have to worry about
@@ -486,14 +527,12 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
     // (3) blending
     // Otherwise, we just try for F16. See b/277656755 for more information.
     // TODO: In the future, separate these 3 different restrictions.
-    // TODO: Also, we should extend this logic to non-web platforms.
-    static bool can_use_f32 =
-        helper_.GetGlContext().HasGlExtension("EXT_color_buffer_float") &&
-        helper_.GetGlContext().HasGlExtension("OES_texture_float_linear") &&
-        helper_.GetGlContext().HasGlExtension("EXT_float_blend");
+    // TODO: Also, we should extend this logic to all platforms.
+    static bool can_use_f32 = HasGlExtension("EXT_color_buffer_float") &&
+                              HasGlExtension("OES_texture_float_linear") &&
+                              HasGlExtension("EXT_float_blend");
     static bool can_use_f16_backup =
-        helper_.GetGlContext().HasGlExtension("EXT_color_buffer_half_float");
-
+        HasGlExtension("EXT_color_buffer_half_float");
     RET_CHECK(can_use_f32 || can_use_f16_backup)
         << "Segmentation postprocessing error: GPU does not fully support "
         << "4-channel float32 or float16 formats.";
@@ -510,15 +549,6 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
     const GpuBufferFormat final_output_format =
         can_use_f32 ? GpuBufferFormat::kGrayFloat32
                     : GpuBufferFormat::kGrayHalf16;
-    const Tensor::OpenGlTexture2dView read_view =
-        tensor.GetOpenGlTexture2dReadView();
-
-    const int width = input_shape.width;           // Slice width from shape
-    const int height = input_shape.height;         // Slice height from chape
-    const int num_outputs = input_shape.channels;  // One output per channel
-    const int num_chunks = (input_shape.channels + 3) / 4;  // ceil(channels/4)
-    const int output_width = output_shape.width;    // Final output width
-    const int output_height = output_shape.height;  // Final output height
 
     // We disable blending or else our alpha channel may destroy our other
     // channels' data.
@@ -540,9 +570,16 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
         input_width, input_height, activation_output_format);
     helper_.BindFramebuffer(activated_texture);
 
-    // All our input source textures are just simple GL_TEXTURE_2D types.
+    // All our input source textures will be just simple GL_TEXTURE_2D types.
     glActiveTexture(GL_TEXTURE1);
+
+#ifdef TASK_SEGMENTATION_USE_GLES_31_POSTPROCESSING
+    glBindTexture(GL_TEXTURE_2D, ssbo_tex_id);
+#else
+    const Tensor::OpenGlTexture2dView read_view =
+        tensor.GetOpenGlTexture2dReadView();
     glBindTexture(GL_TEXTURE_2D, read_view.name());
+#endif  // TASK_SEGMENTATION_USE_GLES_31_POSTPROCESSING
 
     // Render
     glClear(GL_COLOR_BUFFER_BIT);
@@ -818,7 +855,7 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
   });
 
   if (!status.ok()) {
-    LOG(ERROR) << "Error with rendering: " << status;
+    ABSL_LOG(ERROR) << "Error with rendering: " << status;
   }
 
   return image_outputs;
@@ -841,6 +878,10 @@ SegmentationPostprocessorGl::~SegmentationPostprocessorGl() {
     glDeleteProgram(softmax_max_shader_.program);
     glDeleteProgram(softmax_transform_and_sum_shader_.program);
     glDeleteProgram(softmax_normalization_shader_.program);
+
+#ifdef TASK_SEGMENTATION_USE_GLES_31_POSTPROCESSING
+    ssbo_to_texture_converter_.Close();
+#endif  // TASK_SEGMENTATION_USE_GLES_31_POSTPROCESSING
   });
 }
 

@@ -1,4 +1,4 @@
-/* Copyright 2022 The MediaPipe Authors. All Rights Reserved.
+/* Copyright 2022 The MediaPipe Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ limitations under the License.
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/status_matchers.h"
 #include "mediapipe/tasks/cc/common.h"
-#include "tensorflow/lite/core/shims/cc/shims_test_util.h"
+#include "tensorflow/lite/test_util.h"
 
 namespace mediapipe::tasks::text::language_detector {
 namespace {
@@ -75,7 +75,7 @@ absl::Status MatchesLanguageDetectorResult(
 
 }  // namespace
 
-class LanguageDetectorTest : public tflite_shims::testing::Test {};
+class LanguageDetectorTest : public tflite::testing::Test {};
 
 TEST_F(LanguageDetectorTest, CreateFailsWithMissingModel) {
   auto options = std::make_unique<LanguageDetectorOptions>();

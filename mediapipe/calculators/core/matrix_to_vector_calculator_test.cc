@@ -35,7 +35,7 @@ class MatrixToVectorCalculatorTest
   void SetUp() override { calculator_name_ = "MatrixToVectorCalculator"; }
 
   void AppendInput(const std::vector<float>& column_major_data,
-                   int64 timestamp) {
+                   int64_t timestamp) {
     ASSERT_EQ(num_input_samples_ * num_input_channels_,
               column_major_data.size());
     Eigen::Map<const Matrix> data_map(&column_major_data[0],
