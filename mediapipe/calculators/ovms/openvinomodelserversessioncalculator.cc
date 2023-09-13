@@ -152,12 +152,14 @@ public:
             // Lock access to server from multiple calculator instances during the model loading phase
             std::unique_lock<std::mutex> lk(OpenVINOModelServerSessionCalculator::loadingMtx);
             bool isServerReady = false;
+            bool isServerLive = false;
             OVMS_ServerNew(&cserver);
 
-            if (triedToStartOVMS){
-                ASSERT_CAPI_STATUS_NULL(OVMS_ServerReady(cserver, &isServerReady));
-                RET_CHECK(isServerReady);
-            } else {
+            ASSERT_CAPI_STATUS_NULL(OVMS_ServerLive(cserver, &isServerLive));
+
+            if (triedToStartOVMS) {
+                RET_CHECK(isServerLive);
+            } else if (!isServerLive) {
                 LOG(INFO) << "Will start new server";
                 triedToStartOVMS = true;
                 OVMS_ServerSettings* serverSettings{nullptr};

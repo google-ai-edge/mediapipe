@@ -50,8 +50,7 @@ run_object_detection:
 	
 run_holistic_tracking:
 	rm -rf /mediapipe/output_holistic_ovms.mp4
-	rm -rf video.mp4
-	wget -O video.mp4 "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"
+	if [ ! -f video.mp4 ]; then wget -O video.mp4 "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"; fi
 	python setup_ovms.py --get_models
 	python setup_ovms.py --convert_pose
 	bash build_desktop_examples.sh -t holistic_tracking
@@ -59,8 +58,7 @@ run_holistic_tracking:
 
 run_face_detection:
 	rm -rf /mediapipe/output_face_detection_ovms.mp4
-	rm -rf video.mp4
-	wget -O video.mp4 "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"
+	if [ ! -f video.mp4 ]; then wget -O video.mp4 "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"; fi
 	python setup_ovms.py --get_models
 	python setup_ovms.py --convert_pose
 	bash build_desktop_examples.sh -t face_detection
@@ -68,8 +66,7 @@ run_face_detection:
 
 run_iris_tracking:
 	rm -rf /mediapipe/output_iris_tracking_ovms.mp4
-	rm -rf video.mp4
-	wget -O video.mp4 "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"
+	if [ ! -f video.mp4 ]; then wget -O video.mp4 "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"; fi
 	python setup_ovms.py --get_models
 	python setup_ovms.py --convert_pose
 	bash build_desktop_examples.sh -t iris_tracking
@@ -77,8 +74,7 @@ run_iris_tracking:
 
 run_pose_tracking:
 	rm -rf /mediapipe/output_pose_track_ovms.mp4
-	rm -rf video.mp4
-	wget -O video.mp4 "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"
+	if [ ! -f video.mp4 ]; then wget -O video.mp4 "https://www.pexels.com/download/video/3044127/?fps=24.0&h=1080&w=1920"; fi
 	python setup_ovms.py --get_models
 	python setup_ovms.py --convert_pose
 	bash build_desktop_examples.sh -t pose_tracking
