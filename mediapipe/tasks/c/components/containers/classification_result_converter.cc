@@ -20,10 +20,6 @@ limitations under the License.
 
 namespace mediapipe::tasks::c::components::containers {
 
-namespace {
-using mediapie::tasks::c::components::containers::CppConvertToCategory;
-}  // namespace
-
 void CppConvertToClassificationResult(
     mediapipe::tasks::components::containers::ClassificationResult in,
     ClassificationResult* out) {

@@ -19,7 +19,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/cc/components/processors/classifier_options.h"
 
-namespace mediapie::c::components::processors {
+namespace mediapipe::c::components::processors {
 
 void CppConvertToClassifierOptions(
     ClassifierOptions in,
@@ -38,4 +38,4 @@ void CppConvertToClassifierOptions(
   }
 }
 
-}  // namespace mediapie::c::components::processors
+}  // namespace mediapipe::c::components::processors

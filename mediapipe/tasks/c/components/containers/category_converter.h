@@ -19,11 +19,11 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/cc/components/containers/category.h"
 
-namespace mediapie::tasks::c::components::containers {
+namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToCategory(mediapipe::tasks::components::containers::Category in,
                           Category* out);
 
-}  // namespace mediapie::tasks::c::components::containers
+}  // namespace mediapipe::tasks::c::components::containers
 
 #endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_CONVERTER_H_
