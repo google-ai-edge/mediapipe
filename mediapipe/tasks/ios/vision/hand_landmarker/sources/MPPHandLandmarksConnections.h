@@ -44,8 +44,8 @@ NSArray<MPPConnection *> *const MPPHandRingFingerConnections = @[
 ];
 
 NSArray<MPPConnection *> *const MPPHandPinkyConnections = @[
-  [[MPPConnection alloc] initWithStart:16 end:17], [[MPPConnection alloc] initWithStart:17 end:18],
-  [[MPPConnection alloc] initWithStart:18 end:19]
+  [[MPPConnection alloc] initWithStart:17 end:18], [[MPPConnection alloc] initWithStart:18 end:19],
+  [[MPPConnection alloc] initWithStart:19 end:20]
 ];
 
 NSArray<MPPConnection *> *const MPPHandConnections = [[[[[[NSArray
