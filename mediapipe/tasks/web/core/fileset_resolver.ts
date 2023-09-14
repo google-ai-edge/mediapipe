@@ -51,11 +51,6 @@ async function createFileset(
   const suffix =
       await isSimdSupported() ? 'wasm_internal' : 'wasm_nosimd_internal';
 
-  // For backwards compatiblity, we treat an unset `basePath` as a relative
-  // path. FilesetResolver provides an empty path as a default, which is not
-  // rewritten to '.'.
-  basePath = basePath ?? '.';
-
   return {
     wasmLoaderPath: `${basePath}/${taskName}_${suffix}.js`,
     wasmBinaryPath: `${basePath}/${taskName}_${suffix}.wasm`,
