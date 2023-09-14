@@ -55,16 +55,16 @@ class EndLoopCalculator : public CalculatorBase {
       if (!input_stream_collection_) {
         input_stream_collection_.reset(new IterableT);
       }
-      // Try to consume the item and move it into the collection. If the items
-      // are not consumable, then try to copy them instead. If the items are
-      // not copyable, then an error will be returned.
-      auto item_ptr_or = cc->Inputs().Tag("ITEM").Value().Consume<ItemT>();
-      if (item_ptr_or.ok()) {
-        input_stream_collection_->push_back(std::move(*item_ptr_or.value()));
+
+      if constexpr (std::is_copy_constructible_v<ItemT>) {
+        input_stream_collection_->push_back(
+            cc->Inputs().Tag("ITEM").Get<ItemT>());
       } else {
-        if constexpr (std::is_copy_constructible_v<ItemT>) {
-          input_stream_collection_->push_back(
-              cc->Inputs().Tag("ITEM").template Get<ItemT>());
+        // Try to consume the item and move it into the collection. Return an
+        // error if the items are not consumable.
+        auto item_ptr_or = cc->Inputs().Tag("ITEM").Value().Consume<ItemT>();
+        if (item_ptr_or.ok()) {
+          input_stream_collection_->push_back(std::move(*item_ptr_or.value()));
         } else {
           return absl::InternalError(
               "The item type is not copiable. Consider making the "

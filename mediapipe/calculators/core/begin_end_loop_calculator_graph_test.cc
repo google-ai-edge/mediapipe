@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/memory/memory.h"
@@ -161,6 +162,75 @@ TEST_F(BeginEndLoopCalculatorGraphTest, MultipleVectors) {
               testing::ElementsAre(
                   PacketOfIntsEq(input_timestamp0, std::vector<int>{1, 2}),
                   PacketOfIntsEq(input_timestamp2, std::vector<int>{3, 4})));
+}
+
+TEST(BeginEndLoopCalculatorPossibleDataRaceTest,
+     EndLoopForIntegersDoesNotRace) {
+  auto graph_config = ParseTextProtoOrDie<CalculatorGraphConfig>(
+      R"pb(
+        num_threads: 4
+        input_stream: "ints"
+        node {
+          calculator: "BeginLoopIntegerCalculator"
+          input_stream: "ITERABLE:ints"
+          output_stream: "ITEM:int"
+          output_stream: "BATCH_END:timestamp"
+        }
+        node {
+          calculator: "IncrementCalculator"
+          input_stream: "int"
+          output_stream: "int_plus_one"
+        }
+        # BEGIN: Data race possibility
+        # EndLoop###Calculator and another calculator using the same input
+        # may introduce race due to EndLoop###Calculator possibly consuming
+        # packet.
+        node {
+          calculator: "EndLoopIntegersCalculator"
+          input_stream: "ITEM:int_plus_one"
+          input_stream: "BATCH_END:timestamp"
+          output_stream: "ITERABLE:ints_plus_one"
+        }
+        node {
+          calculator: "IncrementCalculator"
+          input_stream: "int_plus_one"
+          output_stream: "int_plus_two"
+        }
+        # END: Data race possibility
+        node {
+          calculator: "EndLoopIntegersCalculator"
+          input_stream: "ITEM:int_plus_two"
+          input_stream: "BATCH_END:timestamp"
+          output_stream: "ITERABLE:ints_plus_two"
+        }
+      )pb");
+  std::vector<Packet> int_plus_one_packets;
+  tool::AddVectorSink("ints_plus_one", &graph_config, &int_plus_one_packets);
+  std::vector<Packet> int_original_packets;
+  tool::AddVectorSink("ints_plus_two", &graph_config, &int_original_packets);
+
+  CalculatorGraph graph;
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  for (int i = 0; i < 100; ++i) {
+    std::vector<int> ints = {i, i + 1, i + 2};
+    Timestamp ts = Timestamp(i);
+    MP_ASSERT_OK(graph.AddPacketToInputStream(
+        "ints", MakePacket<std::vector<int>>(std::move(ints)).At(ts)));
+    MP_ASSERT_OK(graph.WaitUntilIdle());
+    EXPECT_THAT(int_plus_one_packets,
+                testing::ElementsAre(
+                    PacketOfIntsEq(ts, std::vector<int>{i + 1, i + 2, i + 3})));
+    EXPECT_THAT(int_original_packets,
+                testing::ElementsAre(
+                    PacketOfIntsEq(ts, std::vector<int>{i + 2, i + 3, i + 4})));
+
+    int_plus_one_packets.clear();
+    int_original_packets.clear();
+  }
+
+  MP_ASSERT_OK(graph.CloseAllPacketSources());
+  MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
 // Passes non empty vector through or outputs empty vector in case of timestamp
