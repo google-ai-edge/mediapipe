@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <type_traits>
 
@@ -27,6 +28,7 @@
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/memory/memory.h"
+#include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/deps/no_destructor.h"
@@ -112,7 +114,18 @@ class Packet {
   // Transfers the ownership of holder's data to a unique pointer
   // of the object if the packet is the sole owner of a non-foreign
   // holder. Otherwise, returns error when the packet can't be consumed.
-  // See ConsumeOrCopy for threading requirements and example usage.
+  //
+  // --- WARNING ---
+  // Packet is thread-compatible and this member function is non-const. Hence,
+  // calling it requires exclusive access to the object - callers are
+  // responsible for ensuring that no other thread is doing anything with the
+  // packet.
+  //
+  // For example, if a node/calculator calls this function, then no other
+  // calculator should be processing the same packet. Nodes/calculators cannot
+  // enforce/guarantee this as they don't know of each other, which means graph
+  // must be written in a special way to account for that. It's error-prone and
+  // general recommendation is to avoid calling this function.
   template <typename T>
   absl::StatusOr<std::unique_ptr<T>> Consume();
 
@@ -120,13 +133,22 @@ class Packet {
   // unique pointer if the packet is the sole owner of a non-foreign
   // holder. Otherwise, the unique pointer holds a copy of the original
   // data. In either case, the original packet is set to empty. The
-  // method returns error when the packet can't be consumed or copied. If
+  // function returns error when the packet can't be consumed or copied. If
   // was_copied is not nullptr, it is set to indicate whether the packet
   // data was copied.
-  // Packet is thread-compatible, therefore Packet::ConsumeOrCopy()
-  // must be thread-compatible: clients who use this function are
-  // responsible for ensuring that no other thread is doing anything
-  // with the Packet.
+  //
+  // --- WARNING ---
+  // Packet is thread-compatible and this member function is non-const. Hence,
+  // calling it requires exclusive access to the object - callers are
+  // responsible for ensuring that no other thread is doing anything with the
+  // packet.
+  //
+  // For example, if a node/calculator calls this function, then no other
+  // calculator should be processing the same packet. Nodes/calculators cannot
+  // enforce/guarantee this as they don't know of each other, which means graph
+  // must be written in a special way to account for that. It's error-prone and
+  // general recommendation is to avoid calling this function.
+  //
   // Example usage:
   //   ASSIGN_OR_RETURN(std::unique_ptr<Detection> detection,
   //                    p.ConsumeOrCopy<Detection>());

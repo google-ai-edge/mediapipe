@@ -895,6 +895,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status:statusor",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
     ],
@@ -996,14 +997,15 @@ cc_library(
     name = "port",
     hdrs = ["port.h"],
     defines = select({
-        "//conditions:default": [],
-    }) + select({
-        "//conditions:default": [],
-        "//mediapipe/gpu:disable_gpu": ["MEDIAPIPE_DISABLE_GPU=1"],
-    }) + select({
-        "//conditions:default": [],
-        "//mediapipe/framework/port:disable_opencv": ["MEDIAPIPE_DISABLE_OPENCV=1"],
-    }) + select({
+                  "//conditions:default": [],
+              }) + select({
+                  "//conditions:default": [],
+                  "//mediapipe/gpu:disable_gpu": ["MEDIAPIPE_DISABLE_GPU=1"],
+              }) +
+              select({
+                  "//conditions:default": [],
+                  "//mediapipe/framework/port:disable_opencv": ["MEDIAPIPE_DISABLE_OPENCV=1"],
+              }) + select({
         "//conditions:default": [],
         # TODO: Improve this. This only sets MEDIAPIPE_DISABLE_OPENCV as a "defines" Make
         # value, not as a bazel "--define" variable, which has effects in C++ code but not in

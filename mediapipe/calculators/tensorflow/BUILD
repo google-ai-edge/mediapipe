@@ -723,6 +723,7 @@ cc_library(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@org_tensorflow//tensorflow/core/platform:bfloat16",
     ] + select({
         "//conditions:default": [
             "@org_tensorflow//tensorflow/core:framework",
@@ -1139,6 +1140,7 @@ cc_test(
         "//mediapipe/util:packet_test_util",
         "@org_tensorflow//tensorflow/core:framework",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
+        "@org_tensorflow//tensorflow/core/platform:bfloat16",
     ],
 )
 

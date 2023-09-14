@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
 #include "mediapipe/calculators/tensorflow/tensor_to_vector_float_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -19,6 +21,7 @@
 #include "mediapipe/util/packet_test_util.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/framework/types.pb.h"
+#include "tensorflow/core/platform/bfloat16.h"
 
 namespace mediapipe {
 
@@ -67,6 +70,62 @@ TEST_F(TensorToVectorFloatCalculatorTest, ConvertsToVectorFloat) {
 
   EXPECT_EQ(5, output_vector.size());
   for (int i = 0; i < 5; ++i) {
+    const float expected = static_cast<float>(1 << i);
+    EXPECT_EQ(expected, output_vector[i]);
+  }
+}
+
+TEST_F(TensorToVectorFloatCalculatorTest, CheckBFloat16Type) {
+  SetUpRunner(false, false);
+  const tf::TensorShape tensor_shape(std::vector<tf::int64>{5});
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_BFLOAT16, tensor_shape);
+  auto tensor_vec = tensor->vec<tf::bfloat16>();
+  for (int i = 0; i < 5; ++i) {
+    tensor_vec(i) = static_cast<tf::bfloat16>(1 << i);
+  }
+
+  const int64_t time = 1234;
+  runner_->MutableInputs()->Index(0).packets.push_back(
+      Adopt(tensor.release()).At(Timestamp(time)));
+
+  EXPECT_TRUE(runner_->Run().ok());
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Index(0).packets;
+  EXPECT_EQ(1, output_packets.size());
+  EXPECT_EQ(time, output_packets[0].Timestamp().Value());
+  const std::vector<float>& output_vector =
+      output_packets[0].Get<std::vector<float>>();
+
+  EXPECT_EQ(5, output_vector.size());
+  for (int i = 0; i < 5; ++i) {
+    const float expected = static_cast<float>(1 << i);
+    EXPECT_EQ(expected, output_vector[i]);
+  }
+}
+
+TEST_F(TensorToVectorFloatCalculatorTest, CheckBFloat16TypeAllDim) {
+  SetUpRunner(false, true);
+  const tf::TensorShape tensor_shape(std::vector<tf::int64>{2, 2, 2});
+  auto tensor = std::make_unique<tf::Tensor>(tf::DT_BFLOAT16, tensor_shape);
+  auto slice = tensor->flat<tf::bfloat16>();
+  for (int i = 0; i < 2 * 2 * 2; ++i) {
+    // 2^i can be represented exactly in floating point numbers if 'i' is small.
+    slice(i) = static_cast<tf::bfloat16>(1 << i);
+  }
+
+  const int64_t time = 1234;
+  runner_->MutableInputs()->Index(0).packets.push_back(
+      Adopt(tensor.release()).At(Timestamp(time)));
+
+  EXPECT_TRUE(runner_->Run().ok());
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Index(0).packets;
+  EXPECT_EQ(1, output_packets.size());
+  EXPECT_EQ(time, output_packets[0].Timestamp().Value());
+  const std::vector<float>& output_vector =
+      output_packets[0].Get<std::vector<float>>();
+  EXPECT_EQ(2 * 2 * 2, output_vector.size());
+  for (int i = 0; i < 2 * 2 * 2; ++i) {
     const float expected = static_cast<float>(1 << i);
     EXPECT_EQ(expected, output_vector[i]);
   }
