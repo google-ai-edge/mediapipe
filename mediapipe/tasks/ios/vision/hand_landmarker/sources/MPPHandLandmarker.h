@@ -78,6 +78,9 @@ NS_SWIFT_NAME(HandLandmarker)
 /** The array of connections between the landmarks in the palm. */
 @property(class, nonatomic, readonly) NSArray<MPPConnection *> *handPalmConnections;
 
+/** The array of connections between the landmarks in the thumb. */
+@property(class, nonatomic, readonly) NSArray<MPPConnection *> *handThumbConnections;
+
 /** The array of connections between the landmarks in the index finger. */
 @property(class, nonatomic, readonly) NSArray<MPPConnection *> *handIndexFingerConnections;
 
