@@ -82,11 +82,9 @@ class ExternalFileHandler {
 
   // The aligned mapped memory buffer offset, if any.
   int64 buffer_aligned_offset_{};
-#ifndef _WIN32
   // The aligned mapped memory buffer size in bytes taking into account the
   // offset shift introduced by buffer_aligned_memory_offset_, if any.
   int64 buffer_aligned_size_{};
-#endif
 };
 
 }  // namespace core
