@@ -32,6 +32,8 @@ typedef NS_ENUM(NSUInteger, MPPHandLandmark) {
   MPPHandLandmarkThumbMCP,
 
   MPPHandLandmarkThumbIP,
+    
+  MPPHandLandmarkThumbTIP,
 
   MPPHandLandmarkIndexFingerMCP,
 
