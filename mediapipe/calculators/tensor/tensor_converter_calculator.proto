@@ -44,12 +44,14 @@ message TensorConverterCalculatorOptions {
   // with a coordinate system where the origin is at the bottom-left corner
   // (e.g., in OpenGL) whereas the ML model expects an image with a top-left
   // origin.
-  // Prefer gpu_origin over this field.
+  // Prefer gpu_origin over this field when using GPU input images.
   optional bool flip_vertically = 2 [default = false];
 
-  // Determines when the input image should be flipped vertically.
+  // Determines when the input GPU image should be flipped vertically.
   // See GpuOrigin.Mode for more information.
+  // Affects only IMAGE_GPU inputs.
   // If unset, falls back to flip_vertically for backwards compatibility.
+  // Cannot set both gpu_origin and flip_vertically.
   optional GpuOrigin.Mode gpu_origin = 10;
 
   // Controls how many channels of the input image get passed through to the

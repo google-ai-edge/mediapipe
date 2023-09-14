@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <random>
@@ -19,6 +20,7 @@
 #include <vector>
 
 #include "absl/memory/memory.h"
+#include "absl/status/status.h"
 #include "absl/strings/substitute.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
@@ -45,6 +47,7 @@ constexpr char kTransposeOptionsString[] =
 }  // namespace
 
 using RandomEngine = std::mt19937_64;
+using ::testing::HasSubstr;
 const uint32_t kSeed = 1234;
 const int kNumSizes = 8;
 const int sizes[kNumSizes][2] = {{1, 1}, {12, 1}, {1, 9},   {2, 2},
@@ -57,7 +60,7 @@ class TensorConverterCalculatorTest : public ::testing::Test {
                        bool row_major_matrix = false) {
     RandomEngine random(kSeed);
     std::uniform_real_distribution<> uniform_dist(0, 1.0);
-    auto matrix = ::absl::make_unique<Matrix>();
+    auto matrix = std::make_unique<Matrix>();
     matrix->resize(num_rows, num_columns);
     if (row_major_matrix) {
       for (int y = 0; y < num_rows; ++y) {
@@ -105,7 +108,7 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixColMajor) {
     tool::AddVectorSink("tensor", &graph_config, &output_packets);
 
     // Run the graph.
-    graph_ = absl::make_unique<CalculatorGraph>();
+    graph_ = std::make_unique<CalculatorGraph>();
     MP_ASSERT_OK(graph_->Initialize(graph_config));
     MP_ASSERT_OK(graph_->StartRun({}));
 
@@ -167,7 +170,7 @@ TEST_F(TensorConverterCalculatorTest, RandomMatrixRowMajor) {
     tool::AddVectorSink("tensor", &graph_config, &output_packets);
 
     // Run the graph.
-    graph_ = absl::make_unique<CalculatorGraph>();
+    graph_ = std::make_unique<CalculatorGraph>();
     MP_ASSERT_OK(graph_->Initialize(graph_config));
     MP_ASSERT_OK(graph_->StartRun({}));
 
@@ -231,7 +234,7 @@ TEST_F(TensorConverterCalculatorTest, CustomDivAndSub) {
   // Run the graph.
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
-  auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
+  auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
   cv::Mat mat = mediapipe::formats::MatView(input_image.get());
   mat.at<uint8_t>(0, 0) = 200;
   MP_ASSERT_OK(graph.AddPacketToInputStream(
@@ -285,7 +288,7 @@ TEST_F(TensorConverterCalculatorTest, SetOutputRange) {
     // Run the graph.
     MP_ASSERT_OK(graph.Initialize(graph_config));
     MP_ASSERT_OK(graph.StartRun({}));
-    auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
+    auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
     cv::Mat mat = mediapipe::formats::MatView(input_image.get());
     mat.at<uint8_t>(0, 0) = 200;
     MP_ASSERT_OK(graph.AddPacketToInputStream(
@@ -341,7 +344,7 @@ TEST_F(TensorConverterCalculatorTest, FlipVertically) {
   // Run the graph.
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
-  auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 2);
+  auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 2);
   cv::Mat mat = mediapipe::formats::MatView(input_image.get());
   constexpr uint8_t kY0Value = 100;
   constexpr uint8_t kY1Value = 200;
@@ -372,7 +375,8 @@ TEST_F(TensorConverterCalculatorTest, FlipVertically) {
   MP_ASSERT_OK(graph.WaitUntilDone());
 }
 
-TEST_F(TensorConverterCalculatorTest, GpuOriginOverridesFlipVertically) {
+TEST_F(TensorConverterCalculatorTest,
+       CannotSpecifyBothFlipVerticallyAndGpuOrigin) {
   CalculatorGraph graph;
   CalculatorGraphConfig graph_config =
       mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
@@ -396,7 +400,46 @@ TEST_F(TensorConverterCalculatorTest, GpuOriginOverridesFlipVertically) {
   // Run the graph.
   MP_ASSERT_OK(graph.Initialize(graph_config));
   MP_ASSERT_OK(graph.StartRun({}));
-  auto input_image = absl::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 2);
+  auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 1);
+  MP_ASSERT_OK(graph.AddPacketToInputStream(
+      "input_image", Adopt(input_image.release()).At(Timestamp(0))));
+
+  // Processing should fail as we specified both flip_vertically and gpu_origin.
+  absl::Status status = graph.WaitUntilIdle();
+  EXPECT_FALSE(status.ok());
+  EXPECT_THAT(status.message(), HasSubstr("flip_vertically and gpu_origin"));
+  EXPECT_EQ(output_packets.size(), 0);
+
+  // Fully close graph at end, otherwise calculator+tensors are destroyed
+  // after calling WaitUntilDone().
+  MP_ASSERT_OK(graph.CloseInputStream("input_image"));
+  EXPECT_FALSE(graph.WaitUntilDone().ok());
+}
+
+TEST_F(TensorConverterCalculatorTest, GpuOriginIsIgnoredWithCpuImage) {
+  CalculatorGraph graph;
+  CalculatorGraphConfig graph_config =
+      mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(R"pb(
+        input_stream: "input_image"
+        node {
+          calculator: "TensorConverterCalculator"
+          input_stream: "IMAGE:input_image"
+          output_stream: "TENSORS:tensor"
+          options {
+            [mediapipe.TensorConverterCalculatorOptions.ext] {
+              gpu_origin: CONVENTIONAL
+              output_tensor_float_range { min: 0 max: 255 }
+            }
+          }
+        }
+      )pb");
+  std::vector<Packet> output_packets;
+  tool::AddVectorSink("tensor", &graph_config, &output_packets);
+
+  // Run the graph.
+  MP_ASSERT_OK(graph.Initialize(graph_config));
+  MP_ASSERT_OK(graph.StartRun({}));
+  auto input_image = std::make_unique<ImageFrame>(ImageFormat::GRAY8, 1, 2);
   cv::Mat mat = mediapipe::formats::MatView(input_image.get());
   constexpr uint8_t kY0Value = 100;
   constexpr uint8_t kY1Value = 200;
