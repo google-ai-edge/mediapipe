@@ -24,7 +24,6 @@ from mediapipe.tasks.python.core import base_options as base_options_module
 from mediapipe.tasks.python.components.containers import rect
 from mediapipe.tasks.python.test import test_utils
 from mediapipe.tasks.python.vision import face_stylizer
-from mediapipe.tasks.python.vision.core import vision_task_running_mode as running_mode_module
 from mediapipe.tasks.python.vision.core import image_processing_options as image_processing_options_module
 
 
@@ -33,7 +32,6 @@ _Rect = rect.Rect
 _Image = image_module.Image
 _FaceStylizer = face_stylizer.FaceStylizer
 _FaceStylizerOptions = face_stylizer.FaceStylizerOptions
-_RUNNING_MODE = running_mode_module.VisionTaskRunningMode
 _ImageProcessingOptions = image_processing_options_module.ImageProcessingOptions
 
 _MODEL = 'face_stylizer_color_ink.task'

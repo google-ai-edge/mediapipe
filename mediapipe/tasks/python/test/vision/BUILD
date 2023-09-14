@@ -226,6 +226,5 @@ py_test(
         "//mediapipe/tasks/python/test:test_utils",
         "//mediapipe/tasks/python/vision:face_stylizer",
         "//mediapipe/tasks/python/vision/core:image_processing_options",
-        "//mediapipe/tasks/python/vision/core:vision_task_running_mode",
     ],
 )
