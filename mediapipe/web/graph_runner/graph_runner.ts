@@ -1,6 +1,6 @@
 // Placeholder for internal dependency on assertTruthy
-// Placeholder for internal dependency on jsloader
 import {isWebKit} from '../../web/graph_runner/platform_utils';
+import {runScript} from '../../web/graph_runner/run_script_helper';
 // Placeholder for internal dependency on trusted resource url
 
 import {GraphRunnerApi, ImageSource} from './graph_runner_api';
@@ -714,26 +714,6 @@ export class GraphRunner implements GraphRunnerApi {
     this.wasmModule._closeGraph();
     this.wasmModule.simpleListeners = undefined;
     this.wasmModule.emptyPacketListeners = undefined;
-  }
-}
-
-// Quick private helper to run the given script safely
-async function runScript(scriptUrl: string|string) {
-  if (typeof importScripts === 'function') {
-    importScripts(scriptUrl.toString());
-  } else {
-    const script = document.createElement('script');
-    script.setAttribute('src', scriptUrl);
-    script.setAttribute('crossorigin', 'anonymous');
-    return new Promise<void>((resolve) => {
-      script.addEventListener('load', () => {
-        resolve();
-      }, false);
-      script.addEventListener('error', () => {
-        resolve();
-      }, false);
-      document.body.appendChild(script);
-    });
   }
 }
 

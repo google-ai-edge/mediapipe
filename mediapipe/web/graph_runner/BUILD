@@ -60,6 +60,7 @@ mediapipe_ts_library(
         ":graph_runner_factory_api",
         ":listener_types",
         ":platform_utils",
+        ":run_script_helper",
         ":wasm_module_private",
     ],
 )
@@ -96,6 +97,18 @@ mediapipe_ts_library(
         "platform_utils.test.ts",
     ],
     deps = [":platform_utils"],
+)
+
+genrule(
+    name = "run_script_genrule",
+    srcs = ["run_script_helper.ts.template"],
+    outs = ["run_script_helper.ts"],
+    cmd = "cp $< $@",
+)
+
+mediapipe_ts_library(
+    name = "run_script_helper",
+    srcs = ["run_script_helper.ts"],
 )
 
 jasmine_node_test(
