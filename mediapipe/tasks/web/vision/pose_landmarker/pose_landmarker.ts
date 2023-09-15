@@ -26,7 +26,7 @@ import {convertToLandmarks, convertToWorldLandmarks} from '../../../../tasks/web
 import {WasmFileset} from '../../../../tasks/web/core/wasm_fileset';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {MPMask} from '../../../../tasks/web/vision/core/mask';
-import {Connection} from '../../../../tasks/web/vision/core/types';
+import {convertToConnections} from '../../../../tasks/web/vision/core/types';
 import {VisionGraphRunner, VisionTaskRunner} from '../../../../tasks/web/vision/core/vision_task_runner';
 import {ImageSource, WasmModule} from '../../../../web/graph_runner/graph_runner';
 // Placeholder for internal dependency on trusted resource url
@@ -79,20 +79,12 @@ export class PoseLandmarker extends VisionTaskRunner {
    * @export
    * @nocollapse
    */
-  static POSE_CONNECTIONS: Connection[] = [
-    {start: 0, end: 1},   {start: 1, end: 2},   {start: 2, end: 3},
-    {start: 3, end: 7},   {start: 0, end: 4},   {start: 4, end: 5},
-    {start: 5, end: 6},   {start: 6, end: 8},   {start: 9, end: 10},
-    {start: 11, end: 12}, {start: 11, end: 13}, {start: 13, end: 15},
-    {start: 15, end: 17}, {start: 15, end: 19}, {start: 15, end: 21},
-    {start: 17, end: 19}, {start: 12, end: 14}, {start: 14, end: 16},
-    {start: 16, end: 18}, {start: 16, end: 20}, {start: 16, end: 22},
-    {start: 18, end: 20}, {start: 11, end: 23}, {start: 12, end: 24},
-    {start: 23, end: 24}, {start: 23, end: 25}, {start: 24, end: 26},
-    {start: 25, end: 27}, {start: 26, end: 28}, {start: 27, end: 29},
-    {start: 28, end: 30}, {start: 29, end: 31}, {start: 30, end: 32},
-    {start: 27, end: 31}, {start: 28, end: 32}
-  ];
+  static POSE_CONNECTIONS = convertToConnections(
+      [0, 1], [1, 2], [2, 3], [3, 7], [0, 4], [4, 5], [5, 6], [6, 8], [9, 10],
+      [11, 12], [11, 13], [13, 15], [15, 17], [15, 19], [15, 21], [17, 19],
+      [12, 14], [14, 16], [16, 18], [16, 20], [16, 22], [18, 20], [11, 23],
+      [12, 24], [23, 24], [23, 25], [24, 26], [25, 27], [26, 28], [27, 29],
+      [28, 30], [29, 31], [30, 32], [27, 31], [28, 32]);
 
   /**
    * Initializes the Wasm runtime and creates a new `PoseLandmarker` from the

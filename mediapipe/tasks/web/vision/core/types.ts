@@ -30,3 +30,9 @@ export declare interface Connection {
   start: number;
   end: number;
 }
+
+/** Converts a list of connection in array notation to a list of Connections. */
+export function convertToConnections(...connections: Array<[number, number]>):
+    Connection[] {
+  return connections.map(([start, end]) => ({start, end}));
+}

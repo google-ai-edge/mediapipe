@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-import {Connection} from '../../../../tasks/web/vision/core/types';
+import {convertToConnections} from '../../../../tasks/web/vision/core/types';
 
 /**
  * An array containing the pairs of hand landmark indices to be rendered with
  * connections.
  */
-export const HAND_CONNECTIONS: Connection[] = [
-  {start: 0, end: 1},   {start: 1, end: 2},   {start: 2, end: 3},
-  {start: 3, end: 4},   {start: 0, end: 5},   {start: 5, end: 6},
-  {start: 6, end: 7},   {start: 7, end: 8},   {start: 5, end: 9},
-  {start: 9, end: 10},  {start: 10, end: 11}, {start: 11, end: 12},
-  {start: 9, end: 13},  {start: 13, end: 14}, {start: 14, end: 15},
-  {start: 15, end: 16}, {start: 13, end: 17}, {start: 0, end: 17},
-  {start: 17, end: 18}, {start: 18, end: 19}, {start: 19, end: 20}
-];
+export const HAND_CONNECTIONS = convertToConnections(
+    [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [5, 9],
+    [9, 10], [10, 11], [11, 12], [9, 13], [13, 14], [14, 15], [15, 16],
+    [13, 17], [0, 17], [17, 18], [18, 19], [19, 20]);

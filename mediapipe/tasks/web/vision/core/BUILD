@@ -1,7 +1,7 @@
 # This package contains options shared by all MediaPipe Vision Tasks for Web.
 
-load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_ts_declaration", "mediapipe_ts_library")
+load("@npm//@bazel/jasmine:index.bzl", "jasmine_node_test")
 
 package(default_visibility = ["//mediapipe/tasks:internal"])
 
@@ -21,9 +21,9 @@ mediapipe_ts_declaration(
     ],
 )
 
-mediapipe_ts_declaration(
+mediapipe_ts_library(
     name = "types",
-    srcs = ["types.d.ts"],
+    srcs = ["types.ts"],
     deps = [
         "//mediapipe/tasks/web/components/containers:keypoint",
     ],
