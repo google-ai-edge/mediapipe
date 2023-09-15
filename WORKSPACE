@@ -146,11 +146,6 @@ http_archive(
     patch_args = [
         "-p1",
     ],
-    # TODO ouble check checksum
-    #sha256 = "1fbf1c2962af287607232b2eddeaec9b4f4a7a6f5934e1a9276e9af76952f7e0",
-    #strip_prefix = "protobuf-3.9.2",
-    #urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.9.2.tar.gz"],
-    # need to drop patch in older version
 )
 
 load("//third_party/flatbuffers:workspace.bzl", flatbuffers = "repo")
