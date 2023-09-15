@@ -26,3 +26,12 @@ objc_library(
     ],
 )
 
+objc_library(
+    name = "MPPFaceStylizerOptions",
+    srcs = ["sources/MPPFaceStylizerOptions.m"],
+    hdrs = ["sources/MPPFaceStylizerOptions.h"],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPTaskOptions",
+    ],
+)
+
