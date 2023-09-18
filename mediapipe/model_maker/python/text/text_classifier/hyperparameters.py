@@ -18,6 +18,7 @@ import enum
 from typing import Sequence, Union
 
 from mediapipe.model_maker.python.core import hyperparameters as hp
+from mediapipe.model_maker.python.text.text_classifier import bert_tokenizer
 
 
 @dataclasses.dataclass
@@ -53,6 +54,8 @@ class BertHParams(hp.BaseHParams):
       on recall. Only supported for binary classification.
     gamma: Gamma parameter for focal loss. To use cross entropy loss, set this
       value to 0. Defaults to 2.0.
+    tokenizer: Tokenizer to use for preprocessing. Must be one of the enum
+      options of SupportedBertTokenizers. Defaults to FULL_TOKENIZER.
   """
 
   learning_rate: float = 3e-5
@@ -67,6 +70,10 @@ class BertHParams(hp.BaseHParams):
   desired_recalls: Sequence[float] = dataclasses.field(default_factory=list)
 
   gamma: float = 2.0
+
+  tokenizer: bert_tokenizer.SupportedBertTokenizers = (
+      bert_tokenizer.SupportedBertTokenizers.FULL_TOKENIZER
+  )
 
 
 HParams = Union[BertHParams, AverageWordEmbeddingHParams]

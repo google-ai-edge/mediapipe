@@ -24,8 +24,8 @@ import tensorflow as tf
 import tensorflow_hub
 
 from mediapipe.model_maker.python.core.data import cache_files as cache_files_lib
+from mediapipe.model_maker.python.text.text_classifier import bert_tokenizer
 from mediapipe.model_maker.python.text.text_classifier import dataset as text_classifier_ds
-from official.nlp.tools import tokenization
 
 
 def _validate_text_and_label(text: tf.Tensor, label: tf.Tensor) -> None:
@@ -68,9 +68,9 @@ def _decode_record(
     example[name] = tf.cast(example[name], tf.int32)
 
   bert_features = {
-      "input_word_ids": example["input_ids"],
+      "input_word_ids": example["input_word_ids"],
       "input_mask": example["input_mask"],
-      "input_type_ids": example["segment_ids"]
+      "input_type_ids": example["input_type_ids"],
   }
   return bert_features, example["label_ids"]
 
@@ -224,10 +224,17 @@ class BertClassifierPreprocessor:
     tokenizer: BERT tokenizer.
     model_name: Name of the model provided by the model_spec. Used to associate
       cached files with specific Bert model vocab.
+    preprocessor: Which preprocessor to use. Must be one of the enum values of
+      SupportedBertPreprocessors.
   """
 
   def __init__(
-      self, seq_len: int, do_lower_case: bool, uri: str, model_name: str
+      self,
+      seq_len: int,
+      do_lower_case: bool,
+      uri: str,
+      model_name: str,
+      tokenizer: bert_tokenizer.SupportedBertTokenizers,
   ):
     self._seq_len = seq_len
     # Vocab filepath is tied to the BERT module's URI.
@@ -235,17 +242,27 @@ class BertClassifierPreprocessor:
         tensorflow_hub.resolve(uri), "assets", "vocab.txt"
     )
     self._do_lower_case = do_lower_case
-    self._tokenizer = tokenization.FullTokenizer(
-        self._vocab_file, self._do_lower_case
-    )
+    self._tokenizer: bert_tokenizer.BertTokenizer = None
+    if tokenizer == bert_tokenizer.SupportedBertTokenizers.FULL_TOKENIZER:
+      self._tokenizer = bert_tokenizer.BertFullTokenizer(
+          self._vocab_file, self._do_lower_case, self._seq_len
+      )
+    elif (
+        tokenizer == bert_tokenizer.SupportedBertTokenizers.FAST_BERT_TOKENIZER
+    ):
+      self._tokenizer = bert_tokenizer.BertFastTokenizer(
+          self._vocab_file, self._do_lower_case, self._seq_len
+      )
+    else:
+      raise ValueError(f"Unsupported tokenizer: {tokenizer}")
     self._model_name = model_name
 
   def _get_name_to_features(self):
     """Gets the dictionary mapping record keys to feature types."""
     return {
-        "input_ids": tf.io.FixedLenFeature([self._seq_len], tf.int64),
+        "input_word_ids": tf.io.FixedLenFeature([self._seq_len], tf.int64),
         "input_mask": tf.io.FixedLenFeature([self._seq_len], tf.int64),
-        "segment_ids": tf.io.FixedLenFeature([self._seq_len], tf.int64),
+        "input_type_ids": tf.io.FixedLenFeature([self._seq_len], tf.int64),
         "label_ids": tf.io.FixedLenFeature([], tf.int64),
     }
 
@@ -269,6 +286,7 @@ class BertClassifierPreprocessor:
       2. model_name
       3. seq_len
       4. do_lower_case
+      5. tokenizer name
 
     Args:
       ds_cache_files: TFRecordCacheFiles from the original raw dataset object
@@ -282,29 +300,13 @@ class BertClassifierPreprocessor:
     hasher.update(self._model_name.encode("utf-8"))
     hasher.update(str(self._seq_len).encode("utf-8"))
     hasher.update(str(self._do_lower_case).encode("utf-8"))
+    hasher.update(self._tokenizer.name.encode("utf-8"))
     cache_prefix_filename = hasher.hexdigest()
     return cache_files_lib.TFRecordCacheFiles(
         cache_prefix_filename,
         ds_cache_files.cache_dir,
         ds_cache_files.num_shards,
     )
-
-  def _process_bert_features(self, text: str) -> Mapping[str, Sequence[int]]:
-    tokens = self._tokenizer.tokenize(text)
-    tokens = tokens[0 : (self._seq_len - 2)]  # account for [CLS] and [SEP]
-    tokens.insert(0, "[CLS]")
-    tokens.append("[SEP]")
-    input_ids = self._tokenizer.convert_tokens_to_ids(tokens)
-    input_mask = [1] * len(input_ids)
-    while len(input_ids) < self._seq_len:
-      input_ids.append(0)
-      input_mask.append(0)
-    segment_ids = [0] * self._seq_len
-    return {
-        "input_ids": input_ids,
-        "input_mask": input_mask,
-        "segment_ids": segment_ids,
-    }
 
   def preprocess(
       self, dataset: text_classifier_ds.Dataset
@@ -326,18 +328,20 @@ class BertClassifierPreprocessor:
       size = 0
       for index, (text, label) in enumerate(dataset.gen_tf_dataset()):
         _validate_text_and_label(text, label)
-        feature = self._process_bert_features(text.numpy()[0].decode("utf-8"))
+        feature = self._tokenizer.process(text)
         def create_int_feature(values):
-          f = tf.train.Feature(
-              int64_list=tf.train.Int64List(value=list(values))
-          )
+          f = tf.train.Feature(int64_list=tf.train.Int64List(value=values))
           return f
 
         features = collections.OrderedDict()
-        features["input_ids"] = create_int_feature(feature["input_ids"])
+        features["input_word_ids"] = create_int_feature(
+            feature["input_word_ids"]
+        )
         features["input_mask"] = create_int_feature(feature["input_mask"])
-        features["segment_ids"] = create_int_feature(feature["segment_ids"])
-        features["label_ids"] = create_int_feature([label.numpy()[0]])
+        features["input_type_ids"] = create_int_feature(
+            feature["input_type_ids"]
+        )
+        features["label_ids"] = create_int_feature(label.numpy().tolist())
         tf_example = tf.train.Example(
             features=tf.train.Features(feature=features)
         )

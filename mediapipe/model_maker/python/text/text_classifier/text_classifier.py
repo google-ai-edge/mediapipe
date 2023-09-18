@@ -437,6 +437,7 @@ class _BertClassifier(TextClassifier):
         do_lower_case=self._model_spec.do_lower_case,
         uri=self._model_spec.get_path(),
         model_name=self._model_spec.name,
+        tokenizer=self._hparams.tokenizer,
     )
     return (
         self._text_preprocessor.preprocess(train_data),

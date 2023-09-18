@@ -18,18 +18,20 @@ import os
 import tempfile
 from unittest import mock as unittest_mock
 
+from absl.testing import parameterized
 import mock
 import numpy as np
 import numpy.testing as npt
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.data import cache_files
+from mediapipe.model_maker.python.text.text_classifier import bert_tokenizer
 from mediapipe.model_maker.python.text.text_classifier import dataset as text_classifier_ds
 from mediapipe.model_maker.python.text.text_classifier import model_spec
 from mediapipe.model_maker.python.text.text_classifier import preprocessor
 
 
-class PreprocessorTest(tf.test.TestCase):
+class PreprocessorTest(tf.test.TestCase, parameterized.TestCase):
   CSV_PARAMS_ = text_classifier_ds.CSVParameters(
       text_column='text', label_column='label')
 
@@ -83,7 +85,19 @@ class PreprocessorTest(tf.test.TestCase):
     npt.assert_array_equal(
         np.stack(features_list), np.array([[1, 3, 3, 3, 3], [1, 5, 6, 0, 0]]))
 
-  def test_bert_preprocessor(self):
+  @parameterized.named_parameters(
+      dict(
+          testcase_name='fulltokenizer',
+          tokenizer=bert_tokenizer.SupportedBertTokenizers.FULL_TOKENIZER,
+      ),
+      dict(
+          testcase_name='fastberttokenizer',
+          tokenizer=bert_tokenizer.SupportedBertTokenizers.FAST_BERT_TOKENIZER,
+      ),
+  )
+  def test_bert_preprocessor(
+      self, tokenizer: bert_tokenizer.SupportedBertTokenizers
+  ):
     csv_file = self._get_csv_file()
     dataset = text_classifier_ds.Dataset.from_csv(
         filename=csv_file, csv_params=self.CSV_PARAMS_)
@@ -93,6 +107,7 @@ class PreprocessorTest(tf.test.TestCase):
         do_lower_case=bert_spec.do_lower_case,
         uri=bert_spec.get_path(),
         model_name=bert_spec.name,
+        tokenizer=tokenizer,
     )
     preprocessed_dataset = bert_preprocessor.preprocess(dataset)
     labels = []
@@ -122,11 +137,13 @@ class PreprocessorTest(tf.test.TestCase):
         cache_dir=self.get_temp_dir(),
     )
     bert_spec = model_spec.SupportedModels.MOBILEBERT_CLASSIFIER.value()
+    tokenizer = bert_tokenizer.SupportedBertTokenizers.FULL_TOKENIZER
     bert_preprocessor = preprocessor.BertClassifierPreprocessor(
         seq_len=5,
         do_lower_case=bert_spec.do_lower_case,
         uri=bert_spec.get_path(),
         model_name=bert_spec.name,
+        tokenizer=tokenizer,
     )
     ds_cache_files = dataset.tfrecord_cache_files
     preprocessed_cache_files = bert_preprocessor._get_tfrecord_cache_files(
@@ -149,12 +166,13 @@ class PreprocessorTest(tf.test.TestCase):
         f' {preprocessed_cache_files.cache_prefix}\n',
     )
 
-  def _get_new_prefix(self, cf, bert_spec, seq_len, do_lower_case):
+  def _get_new_prefix(self, cf, bert_spec, seq_len, do_lower_case, tokenizer):
     bert_preprocessor = preprocessor.BertClassifierPreprocessor(
         seq_len=seq_len,
         do_lower_case=do_lower_case,
         uri=bert_spec.get_path(),
         model_name=bert_spec.name,
+        tokenizer=tokenizer,
     )
     new_cf = bert_preprocessor._get_tfrecord_cache_files(cf)
     return new_cf.cache_prefix_filename
@@ -167,19 +185,31 @@ class PreprocessorTest(tf.test.TestCase):
         cache_dir=self.get_temp_dir(),
         num_shards=1,
     )
+    tokenizer = bert_tokenizer.SupportedBertTokenizers.FULL_TOKENIZER
     mobilebert_spec = model_spec.SupportedModels.MOBILEBERT_CLASSIFIER.value()
-    all_cf_prefixes.add(self._get_new_prefix(cf, mobilebert_spec, 5, True))
-    all_cf_prefixes.add(self._get_new_prefix(cf, mobilebert_spec, 10, True))
-    all_cf_prefixes.add(self._get_new_prefix(cf, mobilebert_spec, 5, False))
+    all_cf_prefixes.add(
+        self._get_new_prefix(cf, mobilebert_spec, 5, True, tokenizer)
+    )
+    all_cf_prefixes.add(
+        self._get_new_prefix(cf, mobilebert_spec, 10, True, tokenizer)
+    )
+    all_cf_prefixes.add(
+        self._get_new_prefix(cf, mobilebert_spec, 5, False, tokenizer)
+    )
     new_cf = cache_files.TFRecordCacheFiles(
         cache_prefix_filename='new_cache_prefix',
         cache_dir=self.get_temp_dir(),
         num_shards=1,
     )
-    all_cf_prefixes.add(self._get_new_prefix(new_cf, mobilebert_spec, 5, True))
-
+    all_cf_prefixes.add(
+        self._get_new_prefix(new_cf, mobilebert_spec, 5, True, tokenizer)
+    )
+    new_tokenizer = bert_tokenizer.SupportedBertTokenizers.FAST_BERT_TOKENIZER
+    all_cf_prefixes.add(
+        self._get_new_prefix(cf, mobilebert_spec, 5, True, new_tokenizer)
+    )
     # Each item of all_cf_prefixes should be unique.
-    self.assertLen(all_cf_prefixes, 4)
+    self.assertLen(all_cf_prefixes, 5)
 
 
 if __name__ == '__main__':
