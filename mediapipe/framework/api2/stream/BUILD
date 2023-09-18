@@ -3,6 +3,36 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 cc_library(
+    name = "detections_to_rects",
+    srcs = ["detections_to_rects.cc"],
+    hdrs = ["detections_to_rects.h"],
+    deps = [
+        "//mediapipe/calculators/util:alignment_points_to_rects_calculator",
+        "//mediapipe/calculators/util:detections_to_rects_calculator",
+        "//mediapipe/calculators/util:detections_to_rects_calculator_cc_proto",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+    ],
+)
+
+cc_test(
+    name = "detections_to_rects_test",
+    srcs = ["detections_to_rects_test.cc"],
+    deps = [
+        ":detections_to_rects",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+    ],
+)
+
+cc_library(
     name = "landmarks_to_detection",
     srcs = ["landmarks_to_detection.cc"],
     hdrs = ["landmarks_to_detection.h"],
