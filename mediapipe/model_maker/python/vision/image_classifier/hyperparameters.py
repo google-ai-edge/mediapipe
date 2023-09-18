@@ -38,7 +38,7 @@ class HParams(hp.BaseHParams):
     decay_samples: Number of training samples used to calculate the decay steps
       and create the training optimizer.
     warmup_steps: Number of warmup steps for a linear increasing warmup schedule
-       on learning rate. Used to set up warmup schedule by model_util.WarmUp.s
+      on learning rate. Used to set up warmup schedule by model_util.WarmUp.
   """
   # Parameters from BaseHParams class.
   learning_rate: float = 0.001
