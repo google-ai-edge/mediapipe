@@ -118,7 +118,7 @@ public class BaseVisionTaskApi implements AutoCloseable {
               .getPacketCreator()
               .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
     }
-    return processVideoData(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
+    return processVideoData(inputPackets, timestampMs);
   }
 
   /**
@@ -160,7 +160,7 @@ public class BaseVisionTaskApi implements AutoCloseable {
               .getPacketCreator()
               .createProto(convertToNormalizedRect(imageProcessingOptions, image)));
     }
-    sendLiveStreamData(inputPackets, timestampMs * MICROSECONDS_PER_MILLISECOND);
+    sendLiveStreamData(inputPackets, timestampMs);
   }
 
   /**
