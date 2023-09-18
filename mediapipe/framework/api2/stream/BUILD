@@ -167,3 +167,28 @@ cc_test(
         "//mediapipe/framework/port:parse_text_proto",
     ],
 )
+
+cc_library(
+    name = "threshold",
+    srcs = ["threshold.cc"],
+    hdrs = ["threshold.h"],
+    deps = [
+        "//mediapipe/calculators/util:thresholding_calculator",
+        "//mediapipe/calculators/util:thresholding_calculator_cc_proto",
+        "//mediapipe/framework/api2:builder",
+    ],
+)
+
+cc_test(
+    name = "threshold_test",
+    srcs = ["threshold_test.cc"],
+    deps = [
+        ":threshold",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+    ],
+)
