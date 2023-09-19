@@ -203,7 +203,7 @@ NS_SWIFT_NAME(ImageSegmenter)
  *
  * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
  */
-- (BOOL)segmentAsyncInImage:(MPPImage *)image
+- (BOOL)segmentAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error
     NS_SWIFT_NAME(segmentAsync(image:timestampInMilliseconds:));

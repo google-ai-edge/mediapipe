@@ -187,7 +187,7 @@ using ::mediapipe::tasks::core::PacketsCallback;
                                                 shouldCopyMaskPacketData:NO];
   completionHandler(result, error);
 }
-- (BOOL)segmentAsyncInImage:(MPPImage *)image
+- (BOOL)segmentAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
   return [_visionTaskRunner processLiveStreamImage:image
