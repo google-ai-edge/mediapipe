@@ -243,16 +243,18 @@ using ::mediapipe::tasks::core::PacketsCallback;
     return;
   }
 
-  PacketMap &outputPacketMap = liveStreamResult.value();
+  // Output packet map is moved to a block variable that will not be deallocated for the lifetime of the `dispatch_async` call. Eventhough masks are not copied, we have to ensure that they are not de allocated before the delegate call completes. 
+  __block PacketMap outputPacketMap = std::move(liveStreamResult.value());
   if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
     return;
   }
-
-  MPPImageSegmenterResult *result =
+  
+  dispatch_async(_callbackQueue, ^{
+   
+   MPPImageSegmenterResult *result =
       [MPPImageSegmenter imageSegmenterResultWithOutputPacketMap:outputPacketMap
                                         shouldCopyMaskPacketData:NO];
 
-  dispatch_async(_callbackQueue, ^{
     [self.imageSegmenterLiveStreamDelegate imageSegmenter:self
                           didFinishSegmentationWithResult:result
                                   timestampInMilliseconds:result.timestampInMilliseconds
