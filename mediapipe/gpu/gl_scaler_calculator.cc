@@ -292,6 +292,14 @@ absl::Status GlScalerCalculator::Process(CalculatorContext* cc) {
                                                 GetOutputFormat());
 
     helper_.BindFramebuffer(dst);
+
+    if (scale_mode_ == FrameScaleMode::kFit) {
+      // In kFit scale mode, the rendered quad does not fill the whole
+      // framebuffer, so clear it beforehand.
+      glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+      glClear(GL_COLOR_BUFFER_BIT);
+    }
+
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(src1.target(), src1.name());
     if (src2.name()) {
