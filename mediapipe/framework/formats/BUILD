@@ -533,3 +533,19 @@ cc_library(
         "@com_google_absl//absl/status:statusor",
     ],
 )
+
+mediapipe_proto_library(
+    name = "body_rig_proto",
+    srcs = ["body_rig.proto"],
+)
+
+mediapipe_register_type(
+    base_name = "body_rig",
+    include_headers = ["mediapipe/framework/formats/body_rig.pb.h"],
+    types = [
+        "::mediapipe::Joint",
+        "::mediapipe::JointList",
+        "::std::vector<::mediapipe::JointList>",
+    ],
+    deps = [":body_rig_cc_proto"],
+)
