@@ -187,6 +187,12 @@ static ov::Tensor convertMPTensor2OVTensor(const Tensor& inputTensor) {
         break;
     }
     auto datatype = MPType2OVType(inputTensor.element_type());;
+    if (datatype == ov::element::Type_t::undefined) {
+        std::stringstream ss;
+        LOG(INFO) << "Not supported precision for Mediapipe tensor deserialization";
+        std::runtime_error exc("Not supported precision for Mediapipe tensor deserialization");
+        throw exc;
+    }
     ov::Shape shape;
     for (const auto& dim : inputTensor.shape().dims) {
         shape.emplace_back(dim);
@@ -202,6 +208,12 @@ static Tensor convertOVTensor2MPTensor(const ov::Tensor& inputTensor) {
     }
     Tensor::Shape shape{rawShape};
     auto datatype = OVType2MPType(inputTensor.get_element_type());
+    if (datatype == mediapipe::Tensor::ElementType::kNone) {
+        std::stringstream ss;
+        LOG(INFO) << "Not supported precision for Mediapipe tensor serialization: " << inputTensor.get_element_type();
+        std::runtime_error exc("Not supported precision for Mediapipe tensor serialization");
+        throw exc;
+    }
     Tensor outputTensor(datatype, shape);
     void* data;
     switch(inputTensor.get_element_type()) {
@@ -259,6 +271,12 @@ static tensorflow::Tensor convertOVTensor2TFTensor(const ov::Tensor& t) {
     using tensorflow::Tensor;
     using tensorflow::TensorShape;
     auto datatype = getPrecisionAsDataType(t.get_element_type());
+    if (datatype == TFSDataType::DT_INVALID) {
+        std::stringstream ss;
+        LOG(INFO) << "Not supported precision for Tensorflow tensor serialization: " << t.get_element_type();
+        std::runtime_error exc("Not supported precision for Tensorflow tensor serialization");
+        throw exc;
+    }
     TensorShape tensorShape;
     std::vector<int64_t> rawShape;
     for (size_t i = 0; i < t.get_shape().size(); i++) {
@@ -277,6 +295,12 @@ static tensorflow::Tensor convertOVTensor2TFTensor(const ov::Tensor& t) {
 static ov::Tensor convertTFTensor2OVTensor(const tensorflow::Tensor& t) {
     void* data = t.data();
     auto datatype = TFSPrecisionToIE2Precision(t.dtype());
+    if (datatype == ov::element::Type_t::undefined) {
+        std::stringstream ss;
+        LOG(INFO) << "Not supported precision for Tensorflow tensor deserialization: " << t.dtype();
+        std::runtime_error exc("Not supported precision for Tensorflow tensor deserialization");
+        throw exc;
+    }
     ov::Shape shape;
     for (const auto& dim : t.shape()) {
         shape.emplace_back(dim.size);
@@ -311,7 +335,7 @@ class OpenVINOInferenceCalculator : public CalculatorBase {
 
 public:
     static absl::Status GetContract(CalculatorContract* cc) {
-        LOG(INFO) << "Main GetContract start";
+        LOG(INFO) << "OpenVINOInferenceCalculator GetContract start";
         RET_CHECK(!cc->Inputs().GetTags().empty());
         RET_CHECK(!cc->Outputs().GetTags().empty());
         for (const std::string& tag : cc->Inputs().GetTags()) {
@@ -376,16 +400,16 @@ public:
             }
         }
         cc->InputSidePackets().Tag(SESSION_TAG.c_str()).Set<std::shared_ptr<::InferenceAdapter>>();
-        LOG(INFO) << "Main GetContract end";
+        LOG(INFO) << "OpenVINOInferenceCalculator GetContract end";
         return absl::OkStatus();
     }
 
     absl::Status Close(CalculatorContext* cc) final {
-        LOG(INFO) << "Main Close";
+        LOG(INFO) << "OpenVINOInferenceCalculator Close";
         return absl::OkStatus();
     }
     absl::Status Open(CalculatorContext* cc) final {
-        LOG(INFO) << "Main Open start";
+        LOG(INFO) << "OpenVINOInferenceCalculator Open start";
         session = cc->InputSidePackets()
                       .Tag(SESSION_TAG.c_str())
                       .Get<std::shared_ptr<::InferenceAdapter>>();
@@ -418,12 +442,12 @@ public:
         }
 
         cc->SetOffset(TimestampDiff(0));
-        LOG(INFO) << "Main Open end";
+        LOG(INFO) << "OpenVINOInferenceCalculator Open end";
         return absl::OkStatus();
     }
 
     absl::Status Process(CalculatorContext* cc) final {
-        LOG(INFO) << "Main process start";
+        LOG(INFO) << "OpenVINOInferenceCalculator process start";
         if (cc->Inputs().NumEntries() == 0) {
             return tool::StatusStop();
         }
@@ -457,7 +481,7 @@ public:
                 } else if (packet.size() == 1) {                                                      \
                     input[realInputName] = DESERIALIZE_FUN(packet[0]);                                \
                 }
-
+            try {
             if (startsWith(tag, OVTENSORS_TAG)) {
                 DESERIALIZE_TENSORS(ov::Tensor,);
             } else if (startsWith(tag, TFLITE_TENSORS_TAG)) {
@@ -479,6 +503,10 @@ public:
             } else {
                 auto& packet = cc->Inputs().Tag(tag).Get<ov::Tensor>();
                 input[realInputName] = packet;
+            }
+            } catch (const std::runtime_error& e) {
+                LOG(INFO) << "Failed to deserialize tensor error:" << e.what();
+                RET_CHECK(false);
             }
         }
         //////////////////
@@ -510,6 +538,7 @@ public:
                 LOG(INFO) << "Could not find: " << tensorName << " in inference output";
                 RET_CHECK(false);
             }
+            try {
             if (startsWith(tag, OVTENSORS_TAG)) {
                 LOG(INFO) << "OVMS calculator will process vector<ov::Tensor>";
                 auto tensors = std::make_unique<std::vector<ov::Tensor>>();
@@ -627,9 +656,13 @@ public:
                     new ov::Tensor(tensorIt->second),
                     cc->InputTimestamp());
             }
+            } catch (const std::runtime_error& e) {
+                LOG(INFO) << "Failed to deserialize tensor error:" << e.what();
+                RET_CHECK(false);
+            }
             LOG(INFO) << "OVMS calculator will process TfLite tensors";
         }
-        LOG(INFO) << "Main process end";
+        LOG(INFO) << "OpenVINOInferenceCalculator process end";
         return absl::OkStatus();
     }
 };

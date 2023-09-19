@@ -112,7 +112,7 @@ class OpenVINOModelServerSessionCalculator : public CalculatorBase {
     static std::mutex loadingMtx;
 public:
     static absl::Status GetContract(CalculatorContract* cc) {
-        LOG(INFO) << "Session GetContract start";
+        LOG(INFO) << "OpenVINOModelServerSessionCalculator GetContract start";
         RET_CHECK(cc->Inputs().GetTags().empty());
         RET_CHECK(cc->Outputs().GetTags().empty());
         cc->OutputSidePackets().Tag(SESSION_TAG.c_str()).Set<std::shared_ptr<::InferenceAdapter>>();
@@ -121,16 +121,16 @@ public:
         // TODO validate version from string
         // TODO validate service url format
         // this is for later support for remote server inference
-        LOG(INFO) << "Session GetContract end";
+        LOG(INFO) << "OpenVINOModelServerSessionCalculator GetContract end";
         return absl::OkStatus();
     }
 
     absl::Status Close(CalculatorContext* cc) final {
-        LOG(INFO) << "Session Close";
+        LOG(INFO) << "OpenVINOModelServerSessionCalculator Close";
         return absl::OkStatus();
     }
     absl::Status Open(CalculatorContext* cc) final {
-        LOG(INFO) << "Session Open start";
+        LOG(INFO) << "OpenVINOModelServerSessionCalculator Open start";
         for (CollectionItemId id = cc->Inputs().BeginId();
              id < cc->Inputs().EndId(); ++id) {
             if (!cc->Inputs().Get(id).Header().IsEmpty()) {
@@ -196,14 +196,14 @@ public:
             RET_CHECK(false);
         }
 
-        LOG(INFO) << "Session create adapter";
+        LOG(INFO) << "OpenVINOModelServerSessionCalculator create adapter";
         cc->OutputSidePackets().Tag(SESSION_TAG.c_str()).Set(MakePacket<std::shared_ptr<InferenceAdapter>>(session));
-        LOG(INFO) << "Session Open end";
+        LOG(INFO) << "OpenVINOModelServerSessionCalculator Open end";
         return absl::OkStatus();
     }
 
     absl::Status Process(CalculatorContext* cc) final {
-        LOG(INFO) << "Session Process";
+        LOG(INFO) << "OpenVINOModelServerSessionCalculator Process";
         return absl::OkStatus();
     }
 };
