@@ -186,6 +186,7 @@ filegroup(
         "face_detection_short_range.tflite",
         "face_landmarker.task",
         "face_landmarker_v2.task",
+        "face_stylizer_color_ink.task",
         "hair_segmentation.tflite",
         "hand_landmark_full.tflite",
         "hand_landmark_lite.tflite",
