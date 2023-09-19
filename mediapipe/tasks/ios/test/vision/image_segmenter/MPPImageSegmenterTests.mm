@@ -368,47 +368,44 @@ double softIOU(const float *mask1, const float *mask2, size_t size) {
   }
 }
 
-// - (void)testSegmentWithOutOfOrderTimestampsAndLiveStreamModeFails {
-//  MPPImageSegmenterOptions *options =
-//       [self imageSegmenterOptionsWithModelFileInfo:kImageSegmenterModelFileInfo];
-//   options.runningMode = MPPRunningModeLiveStream;
-//   options.imageSegmenterLiveStreamDelegate = self;
+- (void)testSegmentWithOutOfOrderTimestampsAndLiveStreamModeFails {
+  MPPImageSegmenterOptions *options =
+      [self imageSegmenterOptionsWithModelFileInfo:kImageSegmenterModelFileInfo];
+  options.runningMode = MPPRunningModeLiveStream;
+  options.imageSegmenterLiveStreamDelegate = self;
 
-//   XCTestExpectation *expectation = [[XCTestExpectation alloc]
-//       initWithDescription:@"segmentWithOutOfOrderTimestampsAndLiveStream"];
+  XCTestExpectation *expectation = [[XCTestExpectation alloc]
+      initWithDescription:@"segmentWithOutOfOrderTimestampsAndLiveStream"];
 
-//   expectation.expectedFulfillmentCount = 1;
+  expectation.expectedFulfillmentCount = 1;
 
-//   MPPImageSegmenter *imageSegmenter = [self createImageSegmenterWithOptionsSucceeds:options];
+  MPPImageSegmenter *imageSegmenter = [self createImageSegmenterWithOptionsSucceeds:options];
 
-//   _outOfOrderTimestampTestDict = @{
-//     kLiveStreamTestsDictImageSegmenterKey : imageSegmenter,
-//     kLiveStreamTestsDictExpectationKey : expectation
-//   };
+  _outOfOrderTimestampTestDict = @{
+    kLiveStreamTestsDictImageSegmenterKey : imageSegmenter,
+    kLiveStreamTestsDictExpectationKey : expectation
+  };
 
-//   MPPImage *image = [MPPImage imageWithFileInfo:kCatImageFileInfo];
-//   XCTAssertNotNil(image);
+  MPPImage *image = [MPPImage imageWithFileInfo:kCatImageFileInfo];
+  XCTAssertNotNil(image);
 
-//   XCTAssertTrue([imageSegmenter segmentAsyncImage:image timestampInMilliseconds:1 error:nil]);
+  XCTAssertTrue([imageSegmenter segmentAsyncImage:image timestampInMilliseconds:1 error:nil]);
 
-//   NSError *error;
-//   XCTAssertFalse([imageSegmenter segmentAsyncImage:image
-//                                 timestampInMilliseconds:0
-//                                                   error:&error]);
+  NSError *error;
+  XCTAssertFalse([imageSegmenter segmentAsyncImage:image timestampInMilliseconds:0 error:&error]);
 
-//   NSError *expectedError =
-//       [NSError errorWithDomain:kExpectedErrorDomain
-//                           code:MPPTasksErrorCodeInvalidArgumentError
-//                       userInfo:@{
-//                         NSLocalizedDescriptionKey :
-//                             @"INVALID_ARGUMENT: Input timestamp must be monotonically
-//                             increasing."
-//                       }];
-//   AssertEqualErrors(error, expectedError);
+  NSError *expectedError =
+      [NSError errorWithDomain:kExpectedErrorDomain
+                          code:MPPTasksErrorCodeInvalidArgumentError
+                      userInfo:@{
+                        NSLocalizedDescriptionKey :
+                            @"INVALID_ARGUMENT: Input timestamp must be monotonically increasing."
+                      }];
+  AssertEqualErrors(error, expectedError);
 
-//   NSTimeInterval timeout = 0.5f;
-//   [self waitForExpectations:@[ expectation ] timeout:timeout];
-// }
+  NSTimeInterval timeout = 0.5f;
+  [self waitForExpectations:@[ expectation ] timeout:timeout];
+}
 
 - (void)testSegmentWithLiveStreamModeSucceeds {
   MPPImageSegmenterOptions *options =
