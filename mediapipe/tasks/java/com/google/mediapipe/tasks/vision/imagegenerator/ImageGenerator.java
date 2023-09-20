@@ -429,6 +429,7 @@ public final class ImageGenerator extends BaseVisionTaskApi {
       inputPackets.put(STEPS_STREAM_NAME, runner.getPacketCreator().createInt32(steps));
       inputPackets.put(ITERATION_STREAM_NAME, runner.getPacketCreator().createInt32(i));
       inputPackets.put(RAND_SEED_STREAM_NAME, runner.getPacketCreator().createInt32(seed));
+      inputPackets.put(SHOW_RESULT_STREAM_NAME, runner.getPacketCreator().createBool(false));
       result = (ImageGeneratorResult) runner.process(inputPackets, timestamp++);
     }
     if (useConditionImage) {
