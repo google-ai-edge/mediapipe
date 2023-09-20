@@ -187,7 +187,7 @@ using ::mediapipe::tasks::core::PacketsCallback;
                                                 shouldCopyMaskPacketData:NO];
   completionHandler(result, error);
 }
-- (BOOL)segmentAsyncInImage:(MPPImage *)image
+- (BOOL)segmentAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
   return [_visionTaskRunner processLiveStreamImage:image
@@ -243,16 +243,19 @@ using ::mediapipe::tasks::core::PacketsCallback;
     return;
   }
 
-  PacketMap &outputPacketMap = liveStreamResult.value();
+  // Output packet map is moved to a block variable that will not be deallocated for the lifetime of
+  // the `dispatch_async` call. Since masks are not copied, this ensures that they are only
+  // deallocated after the delegate call completes.
+  __block PacketMap outputPacketMap = std::move(liveStreamResult.value());
   if (outputPacketMap[kImageOutStreamName.cppString].IsEmpty()) {
     return;
   }
 
-  MPPImageSegmenterResult *result =
-      [MPPImageSegmenter imageSegmenterResultWithOutputPacketMap:outputPacketMap
-                                        shouldCopyMaskPacketData:NO];
-
   dispatch_async(_callbackQueue, ^{
+    MPPImageSegmenterResult *result =
+        [MPPImageSegmenter imageSegmenterResultWithOutputPacketMap:outputPacketMap
+                                          shouldCopyMaskPacketData:NO];
+
     [self.imageSegmenterLiveStreamDelegate imageSegmenter:self
                           didFinishSegmentationWithResult:result
                                   timestampInMilliseconds:result.timestampInMilliseconds

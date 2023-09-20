@@ -53,6 +53,7 @@ objc_library(
         "//mediapipe/tasks/testdata/vision:test_protos",
     ],
     deps = [
+        "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         "//mediapipe/tasks/ios/test/vision/utils:MPPMaskTestUtils",
         "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenter",
