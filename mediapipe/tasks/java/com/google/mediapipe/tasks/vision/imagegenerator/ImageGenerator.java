@@ -683,7 +683,8 @@ public final class ImageGenerator extends BaseVisionTaskApi {
                         .setEdgeConditionTypeOptions(edgeConditionOptions().get().convertToProto())
                         .build())
                 .build());
-        if (depthConditionOptions().isPresent()) {
+      }
+      if (depthConditionOptions().isPresent()) {
           taskOptionsBuilder.addControlPluginGraphsOptions(
               ControlPluginGraphOptionsProto.ControlPluginGraphOptions.newBuilder()
                   .setBaseOptions(
@@ -695,7 +696,6 @@ public final class ImageGenerator extends BaseVisionTaskApi {
                               depthConditionOptions().get().convertToProto())
                           .build())
                   .build());
-        }
       }
       return Any.newBuilder()
           .setTypeUrl(
