@@ -1,0 +1,131 @@
+node {
+  name: "mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_components_processors_imagepreprocessinggraph__ImageCloneCalculator"
+  calculator: "ImageCloneCalculator"
+  input_stream: "image"
+  output_stream: "mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_components_processors_imagepreprocessinggraph____stream_5"
+  options {
+    [mediapipe.ImageCloneCalculatorOptions.ext] {
+      output_on_gpu: false
+    }
+  }
+}
+node {
+  name: "mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_components_processors_imagepreprocessinggraph__ImageToTensorCalculator"
+  calculator: "ImageToTensorCalculator"
+  input_stream: "IMAGE:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_components_processors_imagepreprocessinggraph____stream_5"
+  input_stream: "NORM_RECT:roi"
+  output_stream: "LETTERBOX_PADDING:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_components_processors_imagepreprocessinggraph____stream_2"
+  output_stream: "MATRIX:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_3"
+  output_stream: "TENSORS:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_4"
+  options {
+    [mediapipe.ImageToTensorCalculatorOptions.ext] {
+      output_tensor_width: 256
+      output_tensor_height: 256
+      keep_aspect_ratio: true
+      output_tensor_float_range {
+        min: 0
+        max: 1
+      }
+      gpu_origin: TOP_LEFT
+      border_mode: BORDER_REPLICATE
+    }
+  }
+}
+node {
+  name: "mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_components_processors_imagepreprocessinggraph__ImagePropertiesCalculator"
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:image"
+  output_stream: "SIZE:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_2"
+}
+node {
+  name: "mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_components_processors_imagepreprocessinggraph__PassThroughCalculator"
+  calculator: "PassThroughCalculator"
+  input_stream: "image"
+  output_stream: "mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_components_processors_imagepreprocessinggraph____stream_7"
+}
+node {
+  name: "mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_core_inferencesubgraph__ModelResourcesCalculator"
+  calculator: "ModelResourcesCalculator"
+  output_side_packet: "METADATA_EXTRACTOR:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_core_inferencesubgraph____side_packet_1"
+  output_side_packet: "MODEL:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_core_inferencesubgraph____side_packet_2"
+  output_side_packet: "OP_RESOLVER:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_core_inferencesubgraph____side_packet_3"
+  options {
+    [mediapipe.tasks.core.proto.ModelResourcesCalculatorOptions.ext] {
+      model_file {
+        file_name: "mediapipe/tasks/testdata/vision/handrecrop_2020_07_21_v0.f16.tflite"
+      }
+    }
+  }
+}
+node {
+  name: "mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_core_inferencesubgraph__inferencecalculator__mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_core_inferencesubgraph__InferenceCalculator"
+  calculator: "InferenceCalculatorCpu"
+  input_stream: "TENSORS:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_4"
+  output_stream: "TENSORS:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_5"
+  input_side_packet: "MODEL:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_core_inferencesubgraph____side_packet_2"
+  input_side_packet: "OP_RESOLVER:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__mediapipe_tasks_core_inferencesubgraph____side_packet_3"
+  options {
+    [mediapipe.InferenceCalculatorOptions.ext] { delegate {} }
+  }
+}
+node {
+  name: "mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__TensorsToLandmarksCalculator"
+  calculator: "TensorsToLandmarksCalculator"
+  input_stream: "TENSORS:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_5"
+  output_stream: "NORM_LANDMARKS:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_6"
+  options {
+    [mediapipe.TensorsToLandmarksCalculatorOptions.ext] {
+      num_landmarks: 2
+      input_image_width: 256
+      input_image_height: 256
+      normalize_z: 1
+    }
+  }
+}
+node {
+  name: "mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__LandmarkProjectionCalculator"
+  calculator: "LandmarkProjectionCalculator"
+  input_stream: "NORM_LANDMARKS:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_6"
+  input_stream: "PROJECTION_MATRIX:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_3"
+  output_stream: "NORM_LANDMARKS:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_7"
+}
+node {
+  name: "mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__LandmarksToDetectionCalculator"
+  calculator: "LandmarksToDetectionCalculator"
+  input_stream: "NORM_LANDMARKS:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_7"
+  output_stream: "DETECTION:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_8"
+}
+node {
+  name: "mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__AlignmentPointsRectsCalculator"
+  calculator: "AlignmentPointsRectsCalculator"
+  input_stream: "DETECTION:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_8"
+  input_stream: "IMAGE_SIZE:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_2"
+  output_stream: "NORM_RECT:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_9"
+  options {
+    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
+      rotation_vector_start_keypoint_index: 0
+      rotation_vector_end_keypoint_index: 1
+      rotation_vector_target_angle_degrees: -90
+    }
+  }
+}
+node {
+  name: "mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph__RectTransformationCalculator"
+  calculator: "RectTransformationCalculator"
+  input_stream: "IMAGE_SIZE:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_2"
+  input_stream: "NORM_RECT:mediapipe_tasks_vision_hand_landmarker_handroirefinementgraph____stream_9"
+  output_stream: "refined_roi"
+  options {
+    [mediapipe.RectTransformationCalculatorOptions.ext] {
+      scale_x: 1
+      scale_y: 1
+      shift_x: 0
+      shift_y: -0.1
+      square_long: true
+    }
+  }
+}
+input_stream: "IMAGE:image"
+input_stream: "NORM_RECT:roi"
+executor {
+}

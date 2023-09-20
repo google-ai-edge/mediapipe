@@ -533,9 +533,21 @@ def external_files():
     )
 
     http_file(
+        name = "com_google_mediapipe_handrecrop_2020_07_21_v0_f16_tflite",
+        sha256 = "d40b15e15f93f6c909a3cfb881ce16c9ff9aa6d57417a0c906a6624f1f60b60c",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/handrecrop_2020_07_21_v0.f16.tflite?generation=1695159193831748"],
+    )
+
+    http_file(
         name = "com_google_mediapipe_hand_recrop_tflite",
         sha256 = "67d996ce96f9d36fe17d2693022c6da93168026ab2f028f9e2365398d8ac7d5d",
         urls = ["https://storage.googleapis.com/mediapipe-assets/hand_recrop.tflite?generation=1661875770633070"],
+    )
+
+    http_file(
+        name = "com_google_mediapipe_hand_roi_refinement_generated_graph_pbtxt",
+        sha256 = "a2304dedc6f1d167996d7261cd5b5e5db843c3b5657a367d9341388f350bdcc2",
+        urls = ["https://storage.googleapis.com/mediapipe-assets/hand_roi_refinement_generated_graph.pbtxt?generation=1695159196033618"],
     )
 
     http_file(
