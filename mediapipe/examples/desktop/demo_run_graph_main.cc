@@ -14,6 +14,7 @@
 //
 // An example of sending OpenCV webcam frames into a MediaPipe graph.
 #include <cstdlib>
+#include <chrono>
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
@@ -83,6 +84,9 @@ absl::Status RunMPPGraph() {
 
   LOG(INFO) << "Start grabbing and processing frames.";
   bool grab_frames = true;
+  int count_frames = 0;
+  auto begin = std::chrono::high_resolution_clock::now();
+
   while (grab_frames) {
     // Capture opencv camera or video frame.
     cv::Mat camera_frame_raw;
@@ -95,6 +99,7 @@ absl::Status RunMPPGraph() {
       LOG(INFO) << "Empty frame, end of video reached.";
       break;
     }
+    count_frames+=1;
     cv::Mat camera_frame;
     cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
     if (!load_video) {
@@ -139,7 +144,12 @@ absl::Status RunMPPGraph() {
       if (pressed_key >= 0 && pressed_key != 255) grab_frames = false;
     }
   }
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - begin);
+  auto totalTime = duration.count();
+  float avgFps = (1000000 * (float)(count_frames) / (float)totalTime);
+  float avgLatencyms = 1000 / avgFps;
 
+  LOG(INFO) << "Frames:" << count_frames << ", Duration [ms]:" << totalTime / 1000 << ", FPS:" << avgFps << ", Avg latency [ms]:" << avgLatencyms;   
   LOG(INFO) << "Shutting down.";
   if (writer.isOpened()) writer.release();
   MP_RETURN_IF_ERROR(graph.CloseInputStream(kInputStream));

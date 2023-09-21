@@ -21,7 +21,7 @@ docker run -it mediapipe_ovms:latest bash
 ## Prepare models and build application
 ```bash
 python setup_ovms.py --get_models
-build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/object_detection:object_detection_ovms
+bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/object_detection:object_detection_ovms
 ```
 
 ## Download the input video or prepare your own input as 'video.mp4'

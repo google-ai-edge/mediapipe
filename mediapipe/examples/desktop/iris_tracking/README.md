@@ -21,8 +21,8 @@ docker run -it mediapipe_ovms:latest bash
 ## Prepare models and build application
 ```bash
 python setup_ovms.py --get_models
-python setup_ovms.py --convert_pose
-build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/iris_tracking:iris_tracking_cpu
+python setup_ovms.py --convert_pose --force
+bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 mediapipe/examples/desktop/iris_tracking:iris_tracking_cpu
 ```
 
 ## Download the input video or prepare your own input as 'video.mp4'

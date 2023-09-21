@@ -105,9 +105,19 @@ class SetupOpenvinoModelServer():
 
   def convert_pose(self):
     dst = "mediapipe/models/ovms/pose_detection/1/pose_detection.tflite"
-    if os.path.exists(dst) and not self.force:
-      print("file exists, not converting: " + dst + " use --force argument to overwrite.\n")
-      return
+    
+    if os.path.exists(dst):
+      if not self.force:
+        print("File exists , not converting: " + dst + " use --force argument to overwrite.\n")
+        return
+      else:
+         print("Re downloading pose model for conversion.")
+         self._download_external_file('pose_detection/pose_detection.tflite')
+      
+    else:
+       print("File not downloaded: " + dst + " Run setup_ovms.py --get_models first.")
+       exit(0)
+       
     print("Converting pose detection model")
     self.run_command("cp -r  " + dst +" .")
     self.run_command("tflite2tensorflow --model_path pose_detection.tflite --flatc_path flatbuffers/build/flatc --schema_path schema.fbs --output_pb")
