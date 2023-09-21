@@ -44,7 +44,7 @@
 #include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/tool/type_util.h"
 
-#define IMAGE_FRAME_RAW_IMAGE MEDIAPIPE_HAS_RTTI
+#define IMAGE_FRAME_RAW_IMAGE MEDIAPIPE_HAS_RTTI && !defined(NO_RAW_IMAGE)
 
 namespace mediapipe {
 
