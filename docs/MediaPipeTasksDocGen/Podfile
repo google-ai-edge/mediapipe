@@ -6,6 +6,6 @@ target 'MediaPipeTasksDocGen' do
   use_frameworks!
 
   # Pods for MediaPipeTasksDocGen
-  pod 'MediaPipeTasksText', '0.10.5'
-  pod 'MediaPipeTasksVision', '0.10.5'
+  pod 'MediaPipeTasksText'
+  pod 'MediaPipeTasksVision'
 end
