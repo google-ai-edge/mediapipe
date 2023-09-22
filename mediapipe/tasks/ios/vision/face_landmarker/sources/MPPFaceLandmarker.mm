@@ -154,15 +154,15 @@ static NSString *const kTaskName = @"faceLandmarker";
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPFaceLandmarkerResult *)detectInImage:(MPPImage *)image error:(NSError **)error {
+- (nullable MPPFaceLandmarkerResult *)detectImage:(MPPImage *)image error:(NSError **)error {
   std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
 
   return [MPPFaceLandmarker faceLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
-- (nullable MPPFaceLandmarkerResult *)detectInVideoFrame:(MPPImage *)image
-                                 timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                   error:(NSError **)error {
+- (nullable MPPFaceLandmarkerResult *)detectVideoFrame:(MPPImage *)image
+                               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                                 error:(NSError **)error {
   std::optional<PacketMap> outputPacketMap =
       [_visionTaskRunner processVideoFrame:image
                    timestampInMilliseconds:timestampInMilliseconds
@@ -171,7 +171,7 @@ static NSString *const kTaskName = @"faceLandmarker";
   return [MPPFaceLandmarker faceLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
-- (BOOL)detectAsyncInImage:(MPPImage *)image
+- (BOOL)detectAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
   return [_visionTaskRunner processLiveStreamImage:image

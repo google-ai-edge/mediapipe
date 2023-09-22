@@ -71,8 +71,8 @@ NS_SWIFT_NAME(FaceLandmarker)
  * @return An `FaceLandmarkerResult` that contains a list of landmarks. `nil` if there is an error
  * in initializing the face landmaker.
  */
-- (nullable MPPFaceLandmarkerResult *)detectInImage:(MPPImage *)image
-                                              error:(NSError **)error NS_SWIFT_NAME(detect(image:));
+- (nullable MPPFaceLandmarkerResult *)detectImage:(MPPImage *)image
+                                            error:(NSError **)error NS_SWIFT_NAME(detect(image:));
 
 /**
  * Performs face landmark detection on the provided video frame of type `MPImage` using the whole
@@ -95,9 +95,9 @@ NS_SWIFT_NAME(FaceLandmarker)
  * @return An `FaceLandmarkerResult` that contains a list of landmarks. `nil` if there is an
  * error in initializing the face landmaker.
  */
-- (nullable MPPFaceLandmarkerResult *)detectInVideoFrame:(MPPImage *)image
-                                 timestampInMilliseconds:(NSInteger)timestampInMilliseconds
-                                                   error:(NSError **)error
+- (nullable MPPFaceLandmarkerResult *)detectVideoFrame:(MPPImage *)image
+                               timestampInMilliseconds:(NSInteger)timestampInMilliseconds
+                                                 error:(NSError **)error
     NS_SWIFT_NAME(detect(videoFrame:timestampInMilliseconds:));
 
 /**
@@ -132,7 +132,7 @@ NS_SWIFT_NAME(FaceLandmarker)
  *
  * @return `true` if the image was sent to the task successfully, otherwise `false`.
  */
-- (BOOL)detectAsyncInImage:(MPPImage *)image
+- (BOOL)detectAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error
     NS_SWIFT_NAME(detectAsync(image:timestampInMilliseconds:));
