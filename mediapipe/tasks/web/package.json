@@ -9,7 +9,7 @@
     "import":  "./__NAME___bundle.mjs",
     "require": "./__NAME___bundle.cjs",
     "default":  "./__NAME___bundle.mjs",
-    "types":  "./__NAME___.d.ts"
+    "types":  "./__TYPES__"
   },
   "author": "mediapipe@google.com",
   "license": "Apache-2.0",
