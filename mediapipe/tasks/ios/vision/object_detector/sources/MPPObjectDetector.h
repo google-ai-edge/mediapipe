@@ -112,7 +112,7 @@ NS_SWIFT_NAME(ObjectDetector)
  * system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the underlying
  * image data.
  */
-- (nullable MPPObjectDetectorResult *)detectInImage:(MPPImage *)image
+- (nullable MPPObjectDetectorResult *)detectImage:(MPPImage *)image
                                               error:(NSError **)error NS_SWIFT_NAME(detect(image:));
 
 /**
@@ -138,7 +138,7 @@ NS_SWIFT_NAME(ObjectDetector)
  * system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the underlying
  * image data.
  */
-- (nullable MPPObjectDetectorResult *)detectInVideoFrame:(MPPImage *)image
+- (nullable MPPObjectDetectorResult *)detectVideoFrame:(MPPImage *)image
                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                    error:(NSError **)error
     NS_SWIFT_NAME(detect(videoFrame:timestampInMilliseconds:));
@@ -176,7 +176,7 @@ NS_SWIFT_NAME(ObjectDetector)
  *
  * @return `true` if the image was sent to the task successfully, otherwise `false`.
  */
-- (BOOL)detectAsyncInImage:(MPPImage *)image
+- (BOOL)detectAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error
     NS_SWIFT_NAME(detectAsync(image:timestampInMilliseconds:));
