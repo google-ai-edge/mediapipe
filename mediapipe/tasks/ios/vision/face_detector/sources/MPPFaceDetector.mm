@@ -130,13 +130,13 @@ static NSString *const kTaskName = @"faceDetector";
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPFaceDetectorResult *)detectInImage:(MPPImage *)image error:(NSError **)error {
+- (nullable MPPFaceDetectorResult *)detectImage:(MPPImage *)image error:(NSError **)error {
   std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
 
   return [MPPFaceDetector faceDetectorResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
-- (nullable MPPFaceDetectorResult *)detectInVideoFrame:(MPPImage *)image
+- (nullable MPPFaceDetectorResult *)detectVideoFrame:(MPPImage *)image
                                timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                  error:(NSError **)error {
   std::optional<PacketMap> outputPacketMap =
@@ -147,7 +147,7 @@ static NSString *const kTaskName = @"faceDetector";
   return [MPPFaceDetector faceDetectorResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
-- (BOOL)detectAsyncInImage:(MPPImage *)image
+- (BOOL)detectAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
   return [_visionTaskRunner processLiveStreamImage:image

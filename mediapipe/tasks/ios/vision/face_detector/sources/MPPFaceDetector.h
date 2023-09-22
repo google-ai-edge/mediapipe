@@ -100,7 +100,7 @@ NS_SWIFT_NAME(FaceDetector)
  * system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the underlying
  * image data.
  */
-- (nullable MPPFaceDetectorResult *)detectInImage:(MPPImage *)image
+- (nullable MPPFaceDetectorResult *)detectImage:(MPPImage *)image
                                             error:(NSError **)error NS_SWIFT_NAME(detect(image:));
 
 /**
@@ -127,7 +127,7 @@ NS_SWIFT_NAME(FaceDetector)
  * system, i.e. in `[0,image_width) x [0,image_height)`, which are the dimensions of the underlying
  * image data.
  */
-- (nullable MPPFaceDetectorResult *)detectInVideoFrame:(MPPImage *)image
+- (nullable MPPFaceDetectorResult *)detectVideoFrame:(MPPImage *)image
                                timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                  error:(NSError **)error
     NS_SWIFT_NAME(detect(videoFrame:timestampInMilliseconds:));
@@ -165,7 +165,7 @@ NS_SWIFT_NAME(FaceDetector)
  *
  * @return `true` if the image was sent to the task successfully, otherwise `false`.
  */
-- (BOOL)detectAsyncInImage:(MPPImage *)image
+- (BOOL)detectAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error
     NS_SWIFT_NAME(detectAsync(image:timestampInMilliseconds:));
