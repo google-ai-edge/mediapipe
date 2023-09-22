@@ -31,6 +31,21 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "holistic_tracking_cpu_out",
+    data = [
+        "//mediapipe/modules/face_landmark:face_landmark.tflite",
+        "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",
+        "//mediapipe/modules/holistic_landmark:hand_recrop.tflite",
+        "//mediapipe/modules/pose_detection:pose_detection.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+    ],
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_out_holistic",
+        "//mediapipe/graphs/holistic_tracking:holistic_tracking_cpu_graph_deps",
+    ],
+)
+
 # Linux only
 cc_binary(
     name = "holistic_tracking_gpu",

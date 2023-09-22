@@ -30,7 +30,16 @@ cc_binary(
     data = ["//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite"],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
-        "//mediapipe/graphs/face_mesh:desktop_live_calculators",
+        "//mediapipe/graphs/face_mesh:desktop_calculators",
+    ],
+)
+
+cc_binary(
+    name = "face_mesh_out_cpu",
+    data = ["//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite"],
+    deps = [
+        "//mediapipe/examples/desktop:demo_run_graph_main_out_face",
+        "//mediapipe/graphs/face_mesh:desktop_calculators",
     ],
 )
 
