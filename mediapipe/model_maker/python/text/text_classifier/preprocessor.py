@@ -368,6 +368,10 @@ class BertClassifierPreprocessor:
         tfrecord_cache_files=tfrecord_cache_files,
     )
 
+  @property
+  def tokenizer(self) -> bert_tokenizer.BertTokenizer:
+    return self._tokenizer
+
 
 TextClassifierPreprocessor = Union[
     BertClassifierPreprocessor, AverageWordEmbeddingClassifierPreprocessor

@@ -56,6 +56,15 @@ class BertFullTokenizer(BertTokenizer):
     self._seq_len = seq_len
 
   def process(self, input_tensor: tf.Tensor) -> Mapping[str, Sequence[int]]:
+    """Processes one input_tensor example.
+
+    Args:
+      input_tensor: A tensor with shape (1, None) of a utf-8 encoded string.
+
+    Returns:
+      A dictionary of lists all with shape (1, self._seq_len) containing the
+        keys "input_word_ids", "input_type_ids", and "input_mask".
+    """
     tokens = self._tokenizer.tokenize(input_tensor.numpy()[0].decode("utf-8"))
     tokens = tokens[0 : (self._seq_len - 2)]  # account for [CLS] and [SEP]
     tokens.insert(0, "[CLS]")
@@ -96,7 +105,18 @@ class BertFastTokenizer(BertTokenizer):
     self._sep_id = vocab.index("[SEP]")
     self._pad_id = vocab.index("[PAD]")
 
-  def process(self, input_tensor: tf.Tensor) -> Mapping[str, Sequence[int]]:
+  def process_fn(self, input_tensor: tf.Tensor) -> Mapping[str, tf.Tensor]:
+    """Tensor implementation of the process function.
+
+    This implementation can be used within a model graph directly since it
+    takes in tensors and outputs tensors.
+
+    Args:
+      input_tensor: Input string tensor
+
+    Returns:
+      Dictionary of tf.Tensors.
+    """
     input_ids = self._tokenizer.tokenize(input_tensor).flat_values
     input_ids = input_ids[: (self._seq_len - 2)]
     input_ids = tf.concat(
@@ -112,7 +132,20 @@ class BertFastTokenizer(BertTokenizer):
     input_type_ids = tf.zeros(self._seq_len, dtype=tf.int32)
     input_mask = tf.cast(input_ids != self._pad_id, dtype=tf.int32)
     return {
-        "input_word_ids": input_ids.numpy().tolist(),
-        "input_type_ids": input_type_ids.numpy().tolist(),
-        "input_mask": input_mask.numpy().tolist(),
+        "input_word_ids": input_ids,
+        "input_type_ids": input_type_ids,
+        "input_mask": input_mask,
     }
+
+  def process(self, input_tensor: tf.Tensor) -> Mapping[str, Sequence[int]]:
+    """Processes one input_tensor example.
+
+    Args:
+      input_tensor: A tensor with shape (1, None) of a utf-8 encoded string.
+
+    Returns:
+      A dictionary of lists all with shape (1, self._seq_len) containing the
+        keys "input_word_ids", "input_type_ids", and "input_mask".
+    """
+    result = self.process_fn(input_tensor)
+    return {k: v.numpy().tolist() for k, v in result.items()}
