@@ -146,7 +146,7 @@ NS_SWIFT_NAME(HandLandmarker)
  * @return  An `HandLandmarkerResult` object that contains the hand hand landmarks detection
  * results.
  */
-- (nullable MPPHandLandmarkerResult *)detectInImage:(MPPImage *)image
+- (nullable MPPHandLandmarkerResult *)detectImage:(MPPImage *)image
                                               error:(NSError **)error NS_SWIFT_NAME(detect(image:));
 
 /**
@@ -176,7 +176,7 @@ NS_SWIFT_NAME(HandLandmarker)
  * @return  An `HandLandmarkerResult` object that contains the hand hand landmarks detection
  * results.
  */
-- (nullable MPPHandLandmarkerResult *)detectInVideoFrame:(MPPImage *)image
+- (nullable MPPHandLandmarkerResult *)detectVideoFrame:(MPPImage *)image
                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                    error:(NSError **)error
     NS_SWIFT_NAME(detect(videoFrame:timestampInMilliseconds:));
@@ -216,7 +216,7 @@ NS_SWIFT_NAME(HandLandmarker)
  *
  * @return `YES` if the image was sent to the task successfully, otherwise `NO`.
  */
-- (BOOL)detectAsyncInImage:(MPPImage *)image
+- (BOOL)detectAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error
     NS_SWIFT_NAME(detectAsync(image:timestampInMilliseconds:));
