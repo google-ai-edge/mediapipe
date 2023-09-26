@@ -39,3 +39,18 @@ index 4028ccc..483e639 100644
    if (append_newline) {
      // Fix the ostrstream back how it was before we screwed with it.
      // It's 99.44% certain that we don't need to worry about doing this.
+
+diff --git a/bazel/glog.bzl b/bazel/glog.bzl
+index 4208d9e..3c86abf 100644
+--- a/bazel/glog.bzl
++++ b/bazel/glog.bzl
+@@ -180,6 +180,9 @@ def glog_library(namespace = "google", with_gflags = 1, **kwargs):
+         }),
+         copts =
+             select({
++                "@bazel_tools//src/conditions:windows": ["-std=c++17"],
++                "//conditions:default": [],
++            }) + select({
+                 "@bazel_tools//src/conditions:windows": common_copts + windows_only_copts,
+                 "@bazel_tools//src/conditions:darwin": common_copts + linux_or_darwin_copts + darwin_only_copts,
+                 "@bazel_tools//src/conditions:freebsd": common_copts + linux_or_darwin_copts + freebsd_only_copts,
