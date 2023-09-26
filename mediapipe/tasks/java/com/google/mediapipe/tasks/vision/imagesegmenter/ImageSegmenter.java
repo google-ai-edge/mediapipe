@@ -739,7 +739,7 @@ public final class ImageSegmenter extends BaseVisionTaskApi {
   @AutoValue
   public abstract static class SegmentationOptions {
 
-    /** Builder fo {@link SegmentationOptions} */
+    /** Builder for {@link SegmentationOptions} */
     @AutoValue.Builder
     public abstract static class Builder {
 

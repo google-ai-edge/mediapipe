@@ -277,7 +277,7 @@ export class HandLandmarker extends VisionTaskRunner {
    * Converts raw data into a world landmark, and adds it to our worldLandmarks
    * list.
    */
-  private adddJsWorldLandmarks(data: Uint8Array[]): void {
+  private addJsWorldLandmarks(data: Uint8Array[]): void {
     for (const binaryProto of data) {
       const handWorldLandmarksProto =
           LandmarkList.deserializeBinary(binaryProto);
@@ -322,7 +322,7 @@ export class HandLandmarker extends VisionTaskRunner {
 
     this.graphRunner.attachProtoVectorListener(
         WORLD_LANDMARKS_STREAM, (binaryProto, timestamp) => {
-          this.adddJsWorldLandmarks(binaryProto);
+          this.addJsWorldLandmarks(binaryProto);
           this.setLatestOutputTimestamp(timestamp);
         });
     this.graphRunner.attachEmptyPacketListener(

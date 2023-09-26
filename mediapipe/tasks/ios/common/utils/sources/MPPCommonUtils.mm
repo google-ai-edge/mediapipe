@@ -59,12 +59,12 @@ using absl::StatusCode;
     return NULL;
   }
 
-  void *allocedMemory = malloc(memSize);
-  if (!allocedMemory) {
+  void *allocatedMemory = malloc(memSize);
+  if (!allocatedMemory) {
     exit(-1);
   }
 
-  return allocedMemory;
+  return allocatedMemory;
 }
 
 + (BOOL)checkCppError:(const absl::Status &)status toError:(NSError *_Nullable *)error {
