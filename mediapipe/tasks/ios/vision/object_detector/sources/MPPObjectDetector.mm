@@ -128,13 +128,13 @@ static NSString *const kTaskName = @"objectDetector";
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPObjectDetectorResult *)detectInImage:(MPPImage *)image error:(NSError **)error {
+- (nullable MPPObjectDetectorResult *)detectImage:(MPPImage *)image error:(NSError **)error {
   std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
 
   return [MPPObjectDetector objectDetectorResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
-- (nullable MPPObjectDetectorResult *)detectInVideoFrame:(MPPImage *)image
+- (nullable MPPObjectDetectorResult *)detectVideoFrame:(MPPImage *)image
                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                    error:(NSError **)error {
   std::optional<PacketMap> outputPacketMap =
@@ -145,7 +145,7 @@ static NSString *const kTaskName = @"objectDetector";
   return [MPPObjectDetector objectDetectorResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
-- (BOOL)detectAsyncInImage:(MPPImage *)image
+- (BOOL)detectAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
   return [_visionTaskRunner processLiveStreamImage:image

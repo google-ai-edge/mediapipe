@@ -137,8 +137,8 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
 
   NSError *error;
   MPPImage *mppImage = [self imageWithFileInfo:kCatImage];
-  MPPFaceLandmarkerResult *faceLandmarkerResult = [faceLandmarker detectInImage:mppImage
-                                                                          error:&error];
+  MPPFaceLandmarkerResult *faceLandmarkerResult = [faceLandmarker detectImage:mppImage
+                                                                        error:&error];
   XCTAssertNil(error);
   XCTAssertNotNil(faceLandmarkerResult);
   XCTAssertEqualObjects(faceLandmarkerResult.faceLandmarks, [NSArray array]);
@@ -158,9 +158,9 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   NSArray<MPPNormalizedLandmark *> *expectedLandmarks =
       [MPPFaceLandmarkerTests expectedLandmarksFromFileInfo:kPortraitExpectedLandmarksName];
   for (int i = 0; i < 3; i++) {
-    MPPFaceLandmarkerResult *faceLandmarkerResult = [faceLandmarker detectInVideoFrame:image
-                                                               timestampInMilliseconds:i
-                                                                                 error:nil];
+    MPPFaceLandmarkerResult *faceLandmarkerResult = [faceLandmarker detectVideoFrame:image
+                                                             timestampInMilliseconds:i
+                                                                               error:nil];
     [self assertFaceLandmarkerResult:faceLandmarkerResult
            containsExpectedLandmarks:expectedLandmarks
                  expectedBlendshapes:NULL
@@ -200,7 +200,7 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   };
 
   for (int i = 0; i < iterationCount; i++) {
-    XCTAssertTrue([faceLandmarker detectAsyncInImage:image timestampInMilliseconds:i error:nil]);
+    XCTAssertTrue([faceLandmarker detectAsyncImage:image timestampInMilliseconds:i error:nil]);
   }
 
   NSTimeInterval timeout = 0.5f;
@@ -224,10 +224,10 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   };
 
   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
-  XCTAssertTrue([faceLandmarker detectAsyncInImage:image timestampInMilliseconds:1 error:nil]);
+  XCTAssertTrue([faceLandmarker detectAsyncImage:image timestampInMilliseconds:1 error:nil]);
 
   NSError *error;
-  XCTAssertFalse([faceLandmarker detectAsyncInImage:image timestampInMilliseconds:0 error:&error]);
+  XCTAssertFalse([faceLandmarker detectAsyncImage:image timestampInMilliseconds:0 error:&error]);
 
   NSError *expectedError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -292,9 +292,9 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
 
   NSError *liveStreamAPICallError;
-  XCTAssertFalse([faceLandmarker detectAsyncInImage:image
-                            timestampInMilliseconds:0
-                                              error:&liveStreamAPICallError]);
+  XCTAssertFalse([faceLandmarker detectAsyncImage:image
+                          timestampInMilliseconds:0
+                                            error:&liveStreamAPICallError]);
 
   NSError *expectedLiveStreamAPICallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -306,9 +306,9 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   AssertEqualErrors(liveStreamAPICallError, expectedLiveStreamAPICallError);
 
   NSError *videoAPICallError;
-  XCTAssertFalse([faceLandmarker detectInVideoFrame:image
-                            timestampInMilliseconds:0
-                                              error:&videoAPICallError]);
+  XCTAssertFalse([faceLandmarker detectVideoFrame:image
+                          timestampInMilliseconds:0
+                                            error:&videoAPICallError]);
 
   NSError *expectedVideoAPICallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -329,9 +329,9 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
 
   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
   NSError *liveStreamAPICallError;
-  XCTAssertFalse([faceLandmarker detectAsyncInImage:image
-                            timestampInMilliseconds:0
-                                              error:&liveStreamAPICallError]);
+  XCTAssertFalse([faceLandmarker detectAsyncImage:image
+                          timestampInMilliseconds:0
+                                            error:&liveStreamAPICallError]);
 
   NSError *expectedLiveStreamAPICallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -343,7 +343,7 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   AssertEqualErrors(liveStreamAPICallError, expectedLiveStreamAPICallError);
 
   NSError *imageAPICallError;
-  XCTAssertFalse([faceLandmarker detectInImage:image error:&imageAPICallError]);
+  XCTAssertFalse([faceLandmarker detectImage:image error:&imageAPICallError]);
 
   NSError *expectedImageAPICallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -365,7 +365,7 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   MPPImage *image = [self imageWithFileInfo:kPortraitImage];
 
   NSError *imageAPICallError;
-  XCTAssertFalse([faceLandmarker detectInImage:image error:&imageAPICallError]);
+  XCTAssertFalse([faceLandmarker detectImage:image error:&imageAPICallError]);
 
   NSError *expectedImageAPICallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -377,9 +377,9 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   AssertEqualErrors(imageAPICallError, expectedImageAPICallError);
 
   NSError *videoAPICallError;
-  XCTAssertFalse([faceLandmarker detectInVideoFrame:image
-                            timestampInMilliseconds:0
-                                              error:&videoAPICallError]);
+  XCTAssertFalse([faceLandmarker detectVideoFrame:image
+                          timestampInMilliseconds:0
+                                            error:&videoAPICallError]);
 
   NSError *expectedVideoAPICallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -484,7 +484,7 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
     }
   }
 
-  if (expectedTransformationMatrix == NULL) {
+  if (expectedTransformationMatrix == nullptr) {
     XCTAssertEqualObjects(faceLandmarkerResult.facialTransformationMatrixes, [NSArray array]);
   } else {
     MPPTransformMatrix *actualTransformationMatrix =
@@ -539,8 +539,8 @@ constexpr float kFacialTransformationMatrixErrorThreshold = 0.2f;
   MPPImage *mppImage = [self imageWithFileInfo:fileInfo];
 
   NSError *error;
-  MPPFaceLandmarkerResult *faceLandmarkerResult = [faceLandmarker detectInImage:mppImage
-                                                                          error:&error];
+  MPPFaceLandmarkerResult *faceLandmarkerResult = [faceLandmarker detectImage:mppImage
+                                                                        error:&error];
   XCTAssertNil(error);
   XCTAssertNotNil(faceLandmarkerResult);
 
