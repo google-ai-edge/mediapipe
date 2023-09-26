@@ -103,6 +103,20 @@ std::optional<uint32_t> stou32(const std::string& input) {
     }
 }
 
+class SettingsGuard {
+public:
+    OVMS_ServerSettings* serverSettings{nullptr};
+    OVMS_ModelsSettings* modelsSettings{nullptr};
+    SettingsGuard() {
+        OVMS_ServerSettingsNew(&serverSettings);
+        OVMS_ModelsSettingsNew(&modelsSettings);
+    }
+    ~SettingsGuard() {
+        OVMS_ServerSettingsDelete(serverSettings);
+        OVMS_ModelsSettingsDelete(modelsSettings);
+    }
+};
+
 class OpenVINOModelServerSessionCalculator : public CalculatorBase {
     std::shared_ptr<::InferenceAdapter> adapter;
     std::unordered_map<std::string, std::string> outputNameToTag;
@@ -162,17 +176,14 @@ public:
             } else if (!isServerLive) {
                 LOG(INFO) << "Will start new server";
                 triedToStartOVMS = true;
-                OVMS_ServerSettings* serverSettings{nullptr};
-                OVMS_ModelsSettings* modelsSettings{nullptr};
-                OVMS_ServerSettingsNew(&serverSettings);
-                OVMS_ModelsSettingsNew(&modelsSettings);
-                OVMS_ModelsSettingsSetConfigPath(modelsSettings, options.server_config().c_str());
+                SettingsGuard guard;
+                OVMS_ServerSettingsNew(&guard.serverSettings);
+                OVMS_ModelsSettingsNew(&guard.modelsSettings);
+                OVMS_ModelsSettingsSetConfigPath(guard.modelsSettings, options.server_config().c_str());
                 LOG(INFO) << "state config file:" << options.server_config();
-                OVMS_ServerSettingsSetLogLevel(serverSettings, OVMS_LOG_DEBUG);
+                OVMS_ServerSettingsSetLogLevel(guard.serverSettings, OVMS_LOG_DEBUG);
 
-                ASSERT_CAPI_STATUS_NULL(OVMS_ServerStartFromConfigurationFile(cserver, serverSettings, modelsSettings));
-                OVMS_ServerSettingsDelete(serverSettings);
-                OVMS_ModelsSettingsDelete(modelsSettings);
+                ASSERT_CAPI_STATUS_NULL(OVMS_ServerStartFromConfigurationFile(cserver, guard.serverSettings, guard.modelsSettings));
 
                 ASSERT_CAPI_STATUS_NULL(OVMS_ServerReady(cserver, &isServerReady));
                 RET_CHECK(isServerReady);
