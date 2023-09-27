@@ -1390,3 +1390,26 @@ cc_test(
         "@com_google_absl//absl/types:optional",
     ],
 )
+
+cc_library(
+    name = "value_or_default_calculator",
+    srcs = ["value_or_default_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = True,
+)
+
+cc_test(
+    name = "value_or_default_calculator_test",
+    srcs = ["value_or_default_calculator_test.cc"],
+    deps = [
+        ":value_or_default_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/port:gtest_main",
+    ],
+)
