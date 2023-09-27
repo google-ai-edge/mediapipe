@@ -174,6 +174,9 @@ class TensorsToSegmentationCalculator : public CalculatorBase {
   mediapipe::GlCalculatorHelper gpu_helper_;
   GLuint upsample_program_;
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+  int cached_width_ = 0;
+  int cached_height_ = 0;
+  std::unique_ptr<tflite::gpu::gl::GlTexture> small_mask_texture_;
   std::unique_ptr<GlProgram> mask_program_31_;
 #else
   GLuint mask_program_20_;
@@ -307,6 +310,7 @@ absl::Status TensorsToSegmentationCalculator::Close(CalculatorContext* cc) {
     upsample_program_ = 0;
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
     mask_program_31_.reset();
+    small_mask_texture_.reset();
 #else
     if (mask_program_20_) glDeleteProgram(mask_program_20_);
     mask_program_20_ = 0;
@@ -448,21 +452,24 @@ absl::Status TensorsToSegmentationCalculator::ProcessGpu(
   }
 
   // Create initial working mask texture.
-#if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-  tflite::gpu::gl::GlTexture small_mask_texture;
-#else
+#if !(MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31)
   mediapipe::GlTexture small_mask_texture;
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
 
   // Run shader, process mask tensor.
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
   {
-    MP_RETURN_IF_ERROR(CreateReadWriteRgbaImageTexture(
-        tflite::gpu::DataType::UINT8,  // GL_RGBA8
-        {tensor_width, tensor_height}, &small_mask_texture));
+    // Only recreate if the size has changed. See b/297809673 for more details.
+    if (tensor_width != cached_width_ || tensor_height != cached_height_) {
+      MP_RETURN_IF_ERROR(CreateReadWriteRgbaImageTexture(
+          tflite::gpu::DataType::UINT8,  // GL_RGBA8
+          {tensor_width, tensor_height}, small_mask_texture_.get()));
+      cached_width_ = tensor_width;
+      cached_height_ = tensor_height;
+    }
 
     const int output_index = 0;
-    glBindImageTexture(output_index, small_mask_texture.id(), 0, GL_FALSE, 0,
+    glBindImageTexture(output_index, small_mask_texture_->id(), 0, GL_FALSE, 0,
                        GL_WRITE_ONLY, GL_RGBA8);
 
     auto read_view = input_tensors[0].GetOpenGlBufferReadView();
@@ -547,7 +554,7 @@ absl::Status TensorsToSegmentationCalculator::ProcessGpu(
     gpu_helper_.BindFramebuffer(output_texture);
     glActiveTexture(GL_TEXTURE1);
 #if MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-    glBindTexture(GL_TEXTURE_2D, small_mask_texture.id());
+    glBindTexture(GL_TEXTURE_2D, small_mask_texture_->id());
 #else
     glBindTexture(GL_TEXTURE_2D, small_mask_texture.name());
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
@@ -854,6 +861,7 @@ void main() {
     mask_program_31_ = absl::make_unique<GlProgram>();
     MP_RETURN_IF_ERROR(GlProgram::CreateWithShader(shader_without_previous,
                                                    mask_program_31_.get()));
+    small_mask_texture_ = absl::make_unique<tflite::gpu::gl::GlTexture>();
 #elif MEDIAPIPE_METAL_ENABLED
     id<MTLDevice> device = metal_helper_.mtlDevice;
     NSString* library_source =
