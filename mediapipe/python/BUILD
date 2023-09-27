@@ -52,6 +52,7 @@ pybind_extension(
         "@stblib//:stb_image",
         # Type registration.
         "//mediapipe/framework:basic_types_registration",
+        "//mediapipe/framework/formats:body_rig_registration",
         "//mediapipe/framework/formats:classification_registration",
         "//mediapipe/framework/formats:detection_registration",
         "//mediapipe/framework/formats:landmark_registration",
