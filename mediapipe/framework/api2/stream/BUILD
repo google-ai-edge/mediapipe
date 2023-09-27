@@ -65,6 +65,37 @@ cc_test(
 )
 
 cc_library(
+    name = "get_vector_item",
+    hdrs = ["get_vector_item.h"],
+    deps = [
+        "//mediapipe/calculators/core:get_vector_item_calculator",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "@org_tensorflow//tensorflow/lite/c:common",
+    ],
+)
+
+cc_test(
+    name = "get_vector_item_test",
+    srcs = ["get_vector_item_test.cc"],
+    deps = [
+        ":get_vector_item",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:classification_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+    ],
+)
+
+cc_library(
     name = "landmarks_to_detection",
     srcs = ["landmarks_to_detection.cc"],
     hdrs = ["landmarks_to_detection.h"],
