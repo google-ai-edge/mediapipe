@@ -406,6 +406,7 @@ absl::Status TensorConverterCalculator::ProcessGPU(CalculatorContext* cc) {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, 0);
 #endif  // MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
+        glFlush();
         src.Release();
         return absl::OkStatus();
       }));

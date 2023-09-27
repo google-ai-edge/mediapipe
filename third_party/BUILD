@@ -45,7 +45,7 @@ cc_library(
             "@com_github_glog_glog//:glog",
         ],
         "//mediapipe:windows": [
-            "@com_github_glog_glog//:glog",
+            "@com_github_glog_glog_windows//:glog",
         ],
         "//conditions:default": [
             "@com_github_glog_glog//:glog",

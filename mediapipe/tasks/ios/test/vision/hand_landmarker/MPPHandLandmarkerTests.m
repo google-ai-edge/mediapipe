@@ -208,10 +208,10 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   return image;
 }
 
-- (MPPHandLandmarkerResult *)detectInImageWithFileInfo:(ResourceFileInfo *)imageFileInfo
-                                   usingHandLandmarker:(MPPHandLandmarker *)handLandmarker {
+- (MPPHandLandmarkerResult *)detectImageWithFileInfo:(ResourceFileInfo *)imageFileInfo
+                                 usingHandLandmarker:(MPPHandLandmarker *)handLandmarker {
   MPPImage *mppImage = [self imageWithFileInfo:imageFileInfo];
-  MPPHandLandmarkerResult *handLandmarkerResult = [handLandmarker detectInImage:mppImage error:nil];
+  MPPHandLandmarkerResult *handLandmarkerResult = [handLandmarker detectImage:mppImage error:nil];
   XCTAssertNotNil(handLandmarkerResult);
 
   return handLandmarkerResult;
@@ -221,8 +221,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
                              usingHandLandmarker:(MPPHandLandmarker *)handLandmarker
          approximatelyEqualsHandLandmarkerResult:
              (MPPHandLandmarkerResult *)expectedHandLandmarkerResult {
-  MPPHandLandmarkerResult *handLandmarkerResult = [self detectInImageWithFileInfo:fileInfo
-                                                              usingHandLandmarker:handLandmarker];
+  MPPHandLandmarkerResult *handLandmarkerResult = [self detectImageWithFileInfo:fileInfo
+                                                            usingHandLandmarker:handLandmarker];
   [self assertHandLandmarkerResult:handLandmarkerResult
       isApproximatelyEqualToExpectedResult:expectedHandLandmarkerResult];
 }
@@ -249,8 +249,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPHandLandmarker *handLandmarker =
       [self createHandLandmarkerWithOptionsSucceeds:handLandmarkerOptions];
 
-  MPPHandLandmarkerResult *handLandmarkerResult = [self detectInImageWithFileInfo:kNoHandsImage
-                                                              usingHandLandmarker:handLandmarker];
+  MPPHandLandmarkerResult *handLandmarkerResult = [self detectImageWithFileInfo:kNoHandsImage
+                                                            usingHandLandmarker:handLandmarker];
   AssertHandLandmarkerResultIsEmpty(handLandmarkerResult);
 }
 
@@ -264,8 +264,8 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPHandLandmarker *handLandmarker =
       [self createHandLandmarkerWithOptionsSucceeds:handLandmarkerOptions];
 
-  MPPHandLandmarkerResult *handLandmarkerResult = [self detectInImageWithFileInfo:kTwoHandsImage
-                                                              usingHandLandmarker:handLandmarker];
+  MPPHandLandmarkerResult *handLandmarkerResult = [self detectImageWithFileInfo:kTwoHandsImage
+                                                            usingHandLandmarker:handLandmarker];
 
   XCTAssertTrue(handLandmarkerResult.handedness.count == numHands);
 }
@@ -280,7 +280,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImage *mppImage = [self imageWithFileInfo:kPointingUpRotatedImage
                                    orientation:UIImageOrientationRight];
 
-  MPPHandLandmarkerResult *handLandmarkerResult = [handLandmarker detectInImage:mppImage error:nil];
+  MPPHandLandmarkerResult *handLandmarkerResult = [handLandmarker detectImage:mppImage error:nil];
 
   [self assertHandLandmarkerResult:handLandmarkerResult
       isApproximatelyEqualToExpectedResult:[MPPHandLandmarkerTests
@@ -339,9 +339,9 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
   NSError *liveStreamApiCallError;
-  XCTAssertFalse([handLandmarker detectAsyncInImage:image
-                            timestampInMilliseconds:0
-                                              error:&liveStreamApiCallError]);
+  XCTAssertFalse([handLandmarker detectAsyncImage:image
+                          timestampInMilliseconds:0
+                                            error:&liveStreamApiCallError]);
 
   NSError *expectedLiveStreamApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -354,9 +354,9 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   AssertEqualErrors(liveStreamApiCallError, expectedLiveStreamApiCallError);
 
   NSError *videoApiCallError;
-  XCTAssertFalse([handLandmarker detectInVideoFrame:image
-                            timestampInMilliseconds:0
-                                              error:&videoApiCallError]);
+  XCTAssertFalse([handLandmarker detectVideoFrame:image
+                          timestampInMilliseconds:0
+                                            error:&videoApiCallError]);
 
   NSError *expectedVideoApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -378,9 +378,9 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
   NSError *liveStreamApiCallError;
-  XCTAssertFalse([handLandmarker detectAsyncInImage:image
-                            timestampInMilliseconds:0
-                                              error:&liveStreamApiCallError]);
+  XCTAssertFalse([handLandmarker detectAsyncImage:image
+                          timestampInMilliseconds:0
+                                            error:&liveStreamApiCallError]);
 
   NSError *expectedLiveStreamApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -393,7 +393,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   AssertEqualErrors(liveStreamApiCallError, expectedLiveStreamApiCallError);
 
   NSError *imageApiCallError;
-  XCTAssertFalse([handLandmarker detectInImage:image error:&imageApiCallError]);
+  XCTAssertFalse([handLandmarker detectImage:image error:&imageApiCallError]);
 
   NSError *expectedImageApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -416,7 +416,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
   NSError *imageApiCallError;
-  XCTAssertFalse([handLandmarker detectInImage:image error:&imageApiCallError]);
+  XCTAssertFalse([handLandmarker detectImage:image error:&imageApiCallError]);
 
   NSError *expectedImageApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -428,9 +428,9 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   AssertEqualErrors(imageApiCallError, expectedImageApiCallError);
 
   NSError *videoApiCallError;
-  XCTAssertFalse([handLandmarker detectInVideoFrame:image
-                            timestampInMilliseconds:0
-                                              error:&videoApiCallError]);
+  XCTAssertFalse([handLandmarker detectVideoFrame:image
+                          timestampInMilliseconds:0
+                                            error:&videoApiCallError]);
 
   NSError *expectedVideoApiCallError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -452,9 +452,9 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
   for (int i = 0; i < 3; i++) {
-    MPPHandLandmarkerResult *handLandmarkerResult = [handLandmarker detectInVideoFrame:image
-                                                               timestampInMilliseconds:i
-                                                                                 error:nil];
+    MPPHandLandmarkerResult *handLandmarkerResult = [handLandmarker detectVideoFrame:image
+                                                             timestampInMilliseconds:i
+                                                                               error:nil];
     [self assertHandLandmarkerResult:handLandmarkerResult
         isApproximatelyEqualToExpectedResult:[MPPHandLandmarkerTests thumbUpHandLandmarkerResult]];
   }
@@ -480,10 +480,10 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
 
   MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
-  XCTAssertTrue([handLandmarker detectAsyncInImage:image timestampInMilliseconds:1 error:nil]);
+  XCTAssertTrue([handLandmarker detectAsyncImage:image timestampInMilliseconds:1 error:nil]);
 
   NSError *error;
-  XCTAssertFalse([handLandmarker detectAsyncInImage:image timestampInMilliseconds:0 error:&error]);
+  XCTAssertFalse([handLandmarker detectAsyncImage:image timestampInMilliseconds:0 error:&error]);
 
   NSError *expectedError =
       [NSError errorWithDomain:kExpectedErrorDomain
@@ -533,7 +533,7 @@ static NSString *const kLiveStreamTestsDictExpectationKey = @"expectation";
   MPPImage *image = [self imageWithFileInfo:kThumbUpImage];
 
   for (int i = 0; i < iterationCount; i++) {
-    XCTAssertTrue([handLandmarker detectAsyncInImage:image timestampInMilliseconds:i error:nil]);
+    XCTAssertTrue([handLandmarker detectAsyncImage:image timestampInMilliseconds:i error:nil]);
   }
 
   NSTimeInterval timeout = 0.5f;

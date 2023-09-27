@@ -68,7 +68,7 @@ NS_SWIFT_NAME(FaceStylizer)
  * @return A `FaceStylizerResult` that contains the stylized image of the most visible face. The
  * returned image is copied. The stylized output image size is the same as the model output
  * size. The `stylizedImage` of the `FaceStylizerResult` is `nil` if there is no face detected in
- * the imput image. `FaceStylizerResult` is `nil` if there is an error in initializing the face
+ * the input image. `FaceStylizerResult` is `nil` if there is an error in initializing the face
  * stylizer.
  */
 - (nullable MPPFaceStylizerResult *)stylizeImage:(MPPImage *)image
@@ -92,7 +92,7 @@ NS_SWIFT_NAME(FaceStylizer)
  *
  * @param image The `MPImage` on which face stylization is to be performed.
  * @param completionHandler A block to be invoked with the results of performing face stylization on
- * the imput image. The block takes two arguments, the optional `FaceStylizerResult` that contains
+ * the input image. The block takes two arguments, the optional `FaceStylizerResult` that contains
  * the zero-copied stylized image if face stylization was successful and an optional error populated
  * upon failure. The lifetime of the stylized image is only guaranteed for the duration of the
  * block.

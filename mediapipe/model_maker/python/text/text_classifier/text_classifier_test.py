@@ -149,6 +149,12 @@ class TextClassifierTest(tf.test.TestCase, parameterized.TestCase):
             output_metadata_file, self._BERT_CLASSIFIER_JSON_FILE, shallow=False
         )
     )
+    bert_classifier.export_model_with_tokenizer()
+    output_tflite_with_tokenizer_file = os.path.join(
+        options.hparams.export_dir, 'model_with_tokenizer.tflite'
+    )
+    self.assertTrue(os.path.exists(output_tflite_with_tokenizer_file))
+    self.assertGreater(os.path.getsize(output_tflite_with_tokenizer_file), 0)
 
   def test_label_mismatch(self):
     options = text_classifier.TextClassifierOptions(

@@ -94,6 +94,23 @@ py_test(
 )
 
 py_library(
+    name = "model_with_tokenizer",
+    srcs = ["model_with_tokenizer.py"],
+)
+
+py_test(
+    name = "model_with_tokenizer_test",
+    srcs = ["model_with_tokenizer_test.py"],
+    tags = ["requires-net:external"],
+    deps = [
+        ":bert_tokenizer",
+        ":model_spec",
+        ":model_with_tokenizer",
+        "//mediapipe/model_maker/python/core/utils:hub_loader",
+    ],
+)
+
+py_library(
     name = "bert_tokenizer",
     srcs = ["bert_tokenizer.py"],
 )
@@ -145,10 +162,12 @@ py_library(
     name = "text_classifier",
     srcs = ["text_classifier.py"],
     deps = [
+        ":bert_tokenizer",
         ":dataset",
         ":hyperparameters",
         ":model_options",
         ":model_spec",
+        ":model_with_tokenizer",
         ":preprocessor",
         ":text_classifier_options",
         "//mediapipe/model_maker/python/core/data:dataset",
@@ -165,7 +184,7 @@ py_library(
 
 py_test(
     name = "text_classifier_test",
-    size = "large",
+    size = "enormous",
     srcs = ["text_classifier_test.py"],
     data = [
         "//mediapipe/model_maker/python/text/text_classifier/testdata",

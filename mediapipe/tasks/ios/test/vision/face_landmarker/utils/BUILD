@@ -25,7 +25,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 ]
 
 objc_library(
-    name = "MPPFaceLandmarkeResultHelpersTestLibary",
+    name = "MPPFaceLandmarkeResultHelpersTestLibrary",
     testonly = 1,
     srcs = ["sources/MPPFaceLandmarkerResult+HelpersTests.mm"],
     copts = [
@@ -50,6 +50,6 @@ ios_unit_test(
     runner = tflite_ios_lab_runner("IOS_LATEST"),
     tags = TFL_DEFAULT_TAGS + TFL_DISABLED_SANITIZER_TAGS,
     deps = [
-        ":MPPFaceLandmarkeResultHelpersTestLibary",
+        ":MPPFaceLandmarkeResultHelpersTestLibrary",
     ],
 )

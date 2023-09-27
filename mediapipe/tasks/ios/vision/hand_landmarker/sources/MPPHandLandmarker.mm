@@ -140,13 +140,13 @@ static NSString *const kTaskName = @"handLandmarker";
   return [self initWithOptions:options error:error];
 }
 
-- (nullable MPPHandLandmarkerResult *)detectInImage:(MPPImage *)image error:(NSError **)error {
+- (nullable MPPHandLandmarkerResult *)detectImage:(MPPImage *)image error:(NSError **)error {
   std::optional<PacketMap> outputPacketMap = [_visionTaskRunner processImage:image error:error];
 
   return [MPPHandLandmarker handLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
-- (nullable MPPHandLandmarkerResult *)detectInVideoFrame:(MPPImage *)image
+- (nullable MPPHandLandmarkerResult *)detectVideoFrame:(MPPImage *)image
                                  timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                                                    error:(NSError **)error {
   std::optional<PacketMap> outputPacketMap =
@@ -157,7 +157,7 @@ static NSString *const kTaskName = @"handLandmarker";
   return [MPPHandLandmarker handLandmarkerResultWithOptionalOutputPacketMap:outputPacketMap];
 }
 
-- (BOOL)detectAsyncInImage:(MPPImage *)image
+- (BOOL)detectAsyncImage:(MPPImage *)image
     timestampInMilliseconds:(NSInteger)timestampInMilliseconds
                       error:(NSError **)error {
   return [_visionTaskRunner processLiveStreamImage:image

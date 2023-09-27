@@ -29,10 +29,12 @@ from mediapipe.model_maker.python.core.utils import loss_functions
 from mediapipe.model_maker.python.core.utils import metrics
 from mediapipe.model_maker.python.core.utils import model_util
 from mediapipe.model_maker.python.core.utils import quantization
+from mediapipe.model_maker.python.text.text_classifier import bert_tokenizer
 from mediapipe.model_maker.python.text.text_classifier import dataset as text_ds
 from mediapipe.model_maker.python.text.text_classifier import hyperparameters as hp
 from mediapipe.model_maker.python.text.text_classifier import model_options as mo
 from mediapipe.model_maker.python.text.text_classifier import model_spec as ms
+from mediapipe.model_maker.python.text.text_classifier import model_with_tokenizer
 from mediapipe.model_maker.python.text.text_classifier import preprocessor
 from mediapipe.model_maker.python.text.text_classifier import text_classifier_options
 from mediapipe.tasks.python.metadata.metadata_writers import metadata_writer
@@ -620,3 +622,56 @@ class _BertClassifier(TextClassifier):
         ids_name=self._model_spec.tflite_input_name["ids"],
         mask_name=self._model_spec.tflite_input_name["mask"],
         segment_name=self._model_spec.tflite_input_name["segment_ids"])
+
+  def export_model_with_tokenizer(
+      self,
+      model_name: str = "model_with_tokenizer.tflite",
+      quantization_config: Optional[quantization.QuantizationConfig] = None,
+  ):
+    """Converts and saves the model to a TFLite file with the tokenizer.
+
+    Note that unlike the export_model method, this export method will include
+    a FastBertTokenizer in the TFLite graph. The resulting TFLite will not have
+    metadata information to use with MediaPipe Tasks, but can be run directly
+    using TFLite Inference: https://www.tensorflow.org/lite/guide/inference
+
+    For more information on the tokenizer, see:
+      https://www.tensorflow.org/text/api_docs/python/text/FastBertTokenizer
+
+    Args:
+      model_name: File name to save TFLite model with tokenizer. The full export
+        path is {self._hparams.export_dir}/{model_name}.
+      quantization_config: The configuration for model quantization.
+    """
+    tf.io.gfile.makedirs(self._hparams.export_dir)
+    tflite_file = os.path.join(self._hparams.export_dir, model_name)
+    if (
+        self._hparams.tokenizer
+        != bert_tokenizer.SupportedBertTokenizers.FAST_BERT_TOKENIZER
+    ):
+      print(
+          f"WARNING: This model was trained with {self._hparams.tokenizer} "
+          "tokenizer, but the exported model with tokenizer will have a "
+          f"{bert_tokenizer.SupportedBertTokenizers.FAST_BERT_TOKENIZER} "
+          "tokenizer."
+      )
+      tokenizer = bert_tokenizer.BertFastTokenizer(
+          vocab_file=self._text_preprocessor.get_vocab_file(),
+          do_lower_case=self._model_spec.do_lower_case,
+          seq_len=self._model_options.seq_len,
+      )
+    else:
+      tokenizer = self._text_preprocessor.tokenizer
+
+    model = model_with_tokenizer.ModelWithTokenizer(tokenizer, self._model)
+    model(tf.constant(["Example input data".encode("utf-8")]))  # build model
+    saved_model_file = os.path.join(
+        self._hparams.export_dir, "saved_model_with_tokenizer"
+    )
+    model.save(saved_model_file)
+    tflite_model = model_util.convert_to_tflite_from_file(
+        saved_model_file,
+        quantization_config=quantization_config,
+        allow_custom_ops=True,
+    )
+    model_util.save_tflite(tflite_model, tflite_file)

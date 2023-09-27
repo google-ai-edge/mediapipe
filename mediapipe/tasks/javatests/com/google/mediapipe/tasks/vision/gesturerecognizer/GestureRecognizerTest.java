@@ -289,7 +289,7 @@ public class GestureRecognizerTest {
     }
 
     @Test
-    public void recognize_successWithPreferAlowListThanDenyList() throws Exception {
+    public void recognize_successWithPreferAllowListThanDenyList() throws Exception {
       GestureRecognizerOptions options =
           GestureRecognizerOptions.builder()
               .setBaseOptions(
