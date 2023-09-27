@@ -75,7 +75,8 @@ namespace mpms = mediapipe::mediasequence;
 //   vector<pair<float, float>>>,
 // * "CLIP_MEDIA_ID", which stores the clip's media ID as a string.
 // * "CLIP_LABEL_${NAME}" which stores sparse feature labels, ID and scores in
-//   mediapipe::Detection.
+//   mediapipe::Detection. In the input Detection, the score field is required,
+//   and label and label_id are optional but at least one of them should be set.
 // "IMAGE_${NAME}", "BBOX_${NAME}", and "KEYPOINTS_${NAME}" will also store
 // prefixed versions of each stream, which allows for multiple image streams to
 // be included. However, the default names are suppored by more tools.
@@ -514,24 +515,37 @@ class PackMediaSequenceCalculator : public CalculatorBase {
         const std::string& key = tag.substr(
             sizeof(kClipLabelPrefixTag) / sizeof(*kClipLabelPrefixTag) - 1);
         const Detection& detection = cc->Inputs().Tag(tag).Get<Detection>();
-        if (detection.label().size() != detection.score().size()) {
-          return absl::InvalidArgumentError(
-              "Different size of detection.label and detection.score");
+        if (detection.score().empty()) {
+          continue;
         }
-        // Allow empty label_ids, but if label_ids is not empty, it should have
-        // the same size as the label and score fields.
-        if (!detection.label_id().empty()) {
-          if (detection.label_id().size() != detection.label().size()) {
+        if (detection.label().empty() && detection.label_id().empty()) {
+          return absl::InvalidArgumentError(
+              "detection.label and detection.label_id can't be both empty");
+        }
+        // Allow empty label (for indexed feature inputs), but if label is not
+        // empty, it should have the same size as the score field.
+        if (!detection.label().empty()) {
+          if (detection.label().size() != detection.score().size()) {
             return absl::InvalidArgumentError(
-                "Different size of detection.label_id and detection.label");
+                "Different size of detection.label and detection.score");
           }
         }
-        for (int i = 0; i < detection.label().size(); ++i) {
+        // Allow empty label_ids, but if label_ids is not empty, it should have
+        // the same size as the score field.
+        if (!detection.label_id().empty()) {
+          if (detection.label_id().size() != detection.score().size()) {
+            return absl::InvalidArgumentError(
+                "Different size of detection.label_id and detection.score");
+          }
+        }
+        for (int i = 0; i < detection.score().size(); ++i) {
           if (!detection.label_id().empty()) {
             mpms::AddClipLabelIndex(key, detection.label_id(i),
                                     sequence_.get());
           }
-          mpms::AddClipLabelString(key, detection.label(i), sequence_.get());
+          if (!detection.label().empty()) {
+            mpms::AddClipLabelString(key, detection.label(i), sequence_.get());
+          }
           mpms::AddClipLabelConfidence(key, detection.score(i),
                                        sequence_.get());
         }
