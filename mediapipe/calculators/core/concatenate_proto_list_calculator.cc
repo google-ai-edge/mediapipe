@@ -18,6 +18,7 @@
 #include "mediapipe/calculators/core/concatenate_vector_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/body_rig.pb.h"
 #include "mediapipe/framework/formats/classification.pb.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/port/canonical_errors.h"
@@ -127,6 +128,19 @@ class ConcatenateClassificationListCalculator
   }
 };
 MEDIAPIPE_REGISTER_NODE(ConcatenateClassificationListCalculator);
+
+class ConcatenateJointListCalculator
+    : public ConcatenateListsCalculator<Joint, JointList> {
+ protected:
+  int ListSize(const JointList& list) const override {
+    return list.joint_size();
+  }
+  const Joint GetItem(const JointList& list, int idx) const override {
+    return list.joint(idx);
+  }
+  Joint* AddItem(JointList& list) const override { return list.add_joint(); }
+};
+MEDIAPIPE_REGISTER_NODE(ConcatenateJointListCalculator);
 
 }  // namespace api2
 }  // namespace mediapipe

@@ -3,6 +3,38 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])
 
 cc_library(
+    name = "concatenate",
+    hdrs = ["concatenate.h"],
+    deps = [
+        "//mediapipe/calculators/core:concatenate_proto_list_calculator",
+        "//mediapipe/calculators/core:concatenate_vector_calculator",
+        "//mediapipe/calculators/core:concatenate_vector_calculator_cc_proto",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:body_rig_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+    ],
+)
+
+cc_test(
+    name = "concatenate_test",
+    srcs = ["concatenate_test.cc"],
+    deps = [
+        ":concatenate",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:body_rig_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+    ],
+)
+
+cc_library(
     name = "detections_to_rects",
     srcs = ["detections_to_rects.cc"],
     hdrs = ["detections_to_rects.h"],

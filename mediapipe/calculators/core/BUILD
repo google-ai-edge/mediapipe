@@ -325,6 +325,7 @@ cc_library(
         ":concatenate_vector_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:body_rig_cc_proto",
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/port:ret_check",
