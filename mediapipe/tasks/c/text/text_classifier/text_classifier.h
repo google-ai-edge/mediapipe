@@ -20,11 +20,15 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/core/base_options.h"
 
+#ifndef MP_EXPORT
+#define MP_EXPORT __attribute__((visibility("default")))
+#endif  // MP_EXPORT
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef ClassificationResult TextClassifierResult;
+typedef struct ClassificationResult TextClassifierResult;
 
 // The options for configuring a MediaPipe text classifier task.
 struct TextClassifierOptions {
@@ -38,14 +42,14 @@ struct TextClassifierOptions {
 };
 
 // Creates a TextClassifier from the provided `options`.
-void* text_classifier_create(struct TextClassifierOptions options);
+MP_EXPORT void* text_classifier_create(struct TextClassifierOptions* options);
 
 // Performs classification on the input `text`.
-bool text_classifier_classify(void* classifier, char* utf8_str,
-                              TextClassifierResult* result);
+MP_EXPORT int text_classifier_classify(void* classifier, char* utf8_str,
+                                       TextClassifierResult* result);
 
 // Shuts down the TextClassifier when all the work is done. Frees all memory.
-void text_classifier_close(void* classifier);
+MP_EXPORT void text_classifier_close(void* classifier);
 
 #ifdef __cplusplus
 }  // extern C

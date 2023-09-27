@@ -15,10 +15,14 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/components/containers/category_converter.h"
 
+#include "mediapipe/tasks/c/components/containers/category.h"
+#include "mediapipe/tasks/cc/components/containers/category.h"
+
 namespace mediapipe::tasks::c::components::containers {
 
-void CppConvertToCategory(mediapipe::tasks::components::containers::Category in,
-                          Category* out) {
+void CppConvertToCategory(
+    const mediapipe::tasks::components::containers::Category& in,
+    Category* out) {
   out->index = in.index;
   out->score = in.score;
   out->category_name =

@@ -17,7 +17,7 @@ package(default_visibility = ["//mediapipe/tasks:internal"])
 licenses(["notice"])
 
 cc_library(
-    name = "text_classifier",
+    name = "text_classifier_lib",
     srcs = ["text_classifier.cc"],
     hdrs = ["text_classifier.h"],
     visibility = ["//visibility:public"],
@@ -31,4 +31,39 @@ cc_library(
         "//mediapipe/tasks/cc/text/text_classifier",
         "@com_google_absl//absl/log:absl_log",
     ],
+    alwayslink = 1,
+)
+
+# bazel build -c opt --linkopt -s --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
+# //mediapipe/tasks/c/text/text_classifier:libtext_classifier.so
+cc_binary(
+    name = "libtext_classifier.so",
+    linkopts = [
+        "-Wl,-soname=libtext_classifier.so",
+        "-fvisibility=hidden",
+    ],
+    linkshared = True,
+    tags = [
+        "manual",
+        "nobuilder",
+        "notap",
+    ],
+    deps = [":text_classifier_lib"],
+)
+
+# bazel build --config darwin_arm64 -c opt --strip always --define MEDIAPIPE_DISABLE_GPU=1 \
+# //mediapipe/tasks/c/text/text_classifier:libtext_classifier.dylib
+cc_binary(
+    name = "libtext_classifier.dylib",
+    linkopts = [
+        "-Wl,-install_name,libtext_classifier.dylib",
+        "-fvisibility=hidden",
+    ],
+    linkshared = True,
+    tags = [
+        "manual",
+        "nobuilder",
+        "notap",
+    ],
+    deps = [":text_classifier_lib"],
 )

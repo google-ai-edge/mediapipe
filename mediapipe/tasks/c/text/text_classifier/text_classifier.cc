@@ -16,9 +16,9 @@ limitations under the License.
 #include "mediapipe/tasks/c/text/text_classifier/text_classifier.h"
 
 #include <memory>
+#include <utility>
 
 #include "absl/log/absl_log.h"
-#include "mediapipe/tasks/c/components/containers/classification_result.h"
 #include "mediapipe/tasks/c/components/containers/classification_result_converter.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
 #include "mediapipe/tasks/c/components/processors/classifier_options_converter.h"
@@ -38,7 +38,7 @@ using ::mediapipe::tasks::c::components::processors::
 using ::mediapipe::tasks::text::text_classifier::TextClassifier;
 }  // namespace
 
-TextClassifier* CppTextClassifierCreate(TextClassifierOptions options) {
+TextClassifier* CppTextClassifierCreate(const TextClassifierOptions& options) {
   auto cpp_options = std::make_unique<
       ::mediapipe::tasks::text::text_classifier::TextClassifierOptions>();
 
@@ -80,13 +80,13 @@ void CppTextClassifierClose(void* classifier) {
 
 extern "C" {
 
-void* text_classifier_create(struct TextClassifierOptions options) {
+void* text_classifier_create(struct TextClassifierOptions* options) {
   return mediapipe::tasks::c::text::text_classifier::CppTextClassifierCreate(
-      options);
+      *options);
 }
 
-bool text_classifier_classify(void* classifier, char* utf8_str,
-                              TextClassifierResult* result) {
+int text_classifier_classify(void* classifier, char* utf8_str,
+                             TextClassifierResult* result) {
   return mediapipe::tasks::c::text::text_classifier::CppTextClassifierClassify(
       classifier, utf8_str, result);
 }

@@ -15,11 +15,12 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/core/base_options_converter.h"
 
+#include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 
 namespace mediapipe::tasks::c::components::containers {
 
-void CppConvertToBaseOptions(BaseOptions in,
+void CppConvertToBaseOptions(const BaseOptions& in,
                              mediapipe::tasks::core::BaseOptions* out) {
   out->model_asset_buffer =
       std::make_unique<std::string>(in.model_asset_buffer);

@@ -21,8 +21,9 @@ limitations under the License.
 
 namespace mediapipe::tasks::c::components::containers {
 
-void CppConvertToCategory(mediapipe::tasks::components::containers::Category in,
-                          Category* out);
+void CppConvertToCategory(
+    const mediapipe::tasks::components::containers::Category& in,
+    Category* out);
 
 }  // namespace mediapipe::tasks::c::components::containers
 

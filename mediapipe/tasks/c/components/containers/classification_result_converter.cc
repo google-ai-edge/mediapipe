@@ -17,11 +17,12 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/components/containers/category_converter.h"
+#include "mediapipe/tasks/cc/components/containers/classification_result.h"
 
 namespace mediapipe::tasks::c::components::containers {
 
 void CppConvertToClassificationResult(
-    mediapipe::tasks::components::containers::ClassificationResult in,
+    const mediapipe::tasks::components::containers::ClassificationResult& in,
     ClassificationResult* out) {
   out->has_timestamp_ms = in.timestamp_ms.has_value();
   if (out->has_timestamp_ms) {

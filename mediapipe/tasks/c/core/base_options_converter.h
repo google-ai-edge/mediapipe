@@ -21,7 +21,7 @@ limitations under the License.
 
 namespace mediapipe::tasks::c::components::containers {
 
-void CppConvertToBaseOptions(BaseOptions in,
+void CppConvertToBaseOptions(const BaseOptions& in,
                              mediapipe::tasks::core::BaseOptions* out);
 
 }  // namespace mediapipe::tasks::c::components::containers

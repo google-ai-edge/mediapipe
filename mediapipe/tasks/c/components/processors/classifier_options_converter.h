@@ -22,7 +22,7 @@ limitations under the License.
 namespace mediapipe::tasks::c::components::processors {
 
 void CppConvertToClassifierOptions(
-    ClassifierOptions in,
+    const ClassifierOptions& in,
     mediapipe::tasks::components::processors::ClassifierOptions* out);
 
 }  // namespace mediapipe::tasks::c::components::processors
