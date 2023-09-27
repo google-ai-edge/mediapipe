@@ -57,8 +57,8 @@ cc_library(
 )
 
 cc_library(
-    name = "demo_run_graph_main_out_hand",
-    srcs = ["demo_run_graph_main_out_hand.cc"],
+    name = "demo_run_graph_main_out_hand_cam",
+    srcs = ["demo_run_graph_main_out_hand_cam.cc"],
     deps = [
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
         "//mediapipe/framework:calculator_framework",
@@ -116,6 +116,25 @@ cc_library(
 cc_library(
     name = "demo_run_graph_main_out_holistic",
     srcs = ["demo_run_graph_main_out_holistic.cc"],
+    deps = [
+        "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:commandlineflags",
+        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_video",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+    ],
+)
+
+cc_library(
+    name = "holistic_0926",
+    srcs = ["holistic_0926.cc"],
     deps = [
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
         "//mediapipe/framework:calculator_framework",

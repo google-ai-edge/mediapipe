@@ -43,7 +43,7 @@ cc_binary(
 cc_binary(
     name = "hand_tracking_out_cpu",
     deps = [
-        "//mediapipe/examples/desktop:demo_run_graph_main_out_hand",
+        "//mediapipe/examples/desktop:demo_run_graph_main_out_hand_cam",
         "//mediapipe/graphs/hand_tracking:desktop_tflite_calculators",
     ],
 )

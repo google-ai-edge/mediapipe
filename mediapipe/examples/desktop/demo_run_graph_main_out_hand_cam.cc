@@ -34,10 +34,7 @@
 // input and output streams to be used/retrieved by calculators
 constexpr char kInputStream[] = "input_video";
 constexpr char kOutputStream[] = "output_video";
-constexpr char kPoseLandmarksStream[] = "pose_landmarks";
-constexpr char kLeftHandLandmarksStream[] = "left_hand_landmarks";
-constexpr char kRightHandLandmarksStream[] = "right_hand_landmarks";
-constexpr char kFaceLandmarksStream[] = "face_landmarks";
+constexpr char kLandmarksStream[] = "landmarks";
 constexpr char kWindowName[] = "MediaPipe";
 
 // 定义命令行参数，用于指定MediaPipe图配置文件的位置
@@ -78,14 +75,8 @@ DEFINE_string(
     LOG(INFO) << "Start running the calculator graph.";
     ASSIGN_OR_RETURN(::mediapipe::OutputStreamPoller poller,
                      graph.AddOutputStreamPoller(kOutputStream));
-    ASSIGN_OR_RETURN(::mediapipe::OutputStreamPoller pose_poller_landmark,
-                     graph.AddOutputStreamPoller(kPoseLandmarksStream));
-    ASSIGN_OR_RETURN(::mediapipe::OutputStreamPoller face_poller_landmark,
-                     graph.AddOutputStreamPoller(kFaceLandmarksStream));
-    ASSIGN_OR_RETURN(::mediapipe::OutputStreamPoller left_hand_poller_landmark,
-                     graph.AddOutputStreamPoller(kLeftHandLandmarksStream));
-    ASSIGN_OR_RETURN(::mediapipe::OutputStreamPoller right_hand_poller_landmark,
-                     graph.AddOutputStreamPoller(kRightHandLandmarksStream));
+    ASSIGN_OR_RETURN(::mediapipe::OutputStreamPoller poller_landmark,
+                     graph.AddOutputStreamPoller(kLandmarksStream));
     MP_RETURN_IF_ERROR(graph.StartRun({}));
 
     // 捕获摄像头的每一帧，转换颜色格式，并在需要时进行水平翻转
@@ -128,65 +119,41 @@ DEFINE_string(
 
         // 从MediaPipe图的输出流中提取手部标记，并将其存储在`multi_hand_landmarks`变量中。
         // Get the packet containing multi_hand_landmarks.
-        ::mediapipe::Packet pose_landmarks_packet;
-        ::mediapipe::Packet face_landmarks_packet;
-        ::mediapipe::Packet left_hand_landmarks_packet;
-        ::mediapipe::Packet right_hand_landmarks_packet;
-
-        if (!pose_poller_landmark.Next(&pose_landmarks_packet))
-            break;
-        if (!face_poller_landmark.Next(&face_landmarks_packet))
-            break;
-        if (!left_hand_poller_landmark.Next(&left_hand_landmarks_packet))
-            break;
-        if (!right_hand_poller_landmark.Next(&right_hand_landmarks_packet))
-            break;
-
-        const auto &pose_landmarks = pose_landmarks_packet.Get<mediapipe::NormalizedLandmarkList>();
-        const auto &face_landmarks = face_landmarks_packet.Get<mediapipe::NormalizedLandmarkList>();
-        const auto &left_hand_landmarks = left_hand_landmarks_packet.Get<mediapipe::NormalizedLandmarkList>();
-        const auto &right_hand_landmarks = right_hand_landmarks_packet.Get<mediapipe::NormalizedLandmarkList>();
-
-        LOG(INFO) << "#Pose landmarks: " << pose_landmarks.landmark_size();
-        for (int i = 0; i < pose_landmarks.landmark_size(); ++i)
+        ::mediapipe::Packet landmarks_packet;
+        if (!poller_landmark.Next(&landmarks_packet))
         {
-            const auto &landmark = pose_landmarks.landmark(i);
-            LOG(INFO) << "\tPose Landmark [" << i << "]: ("
-                      << landmark.x() << ", "
-                      << landmark.y() << ", "
-                      << landmark.z() << ")";
+            LOG(INFO)<<"No hand";
+            break;
         }
+        const auto &multi_hand_landmarks =
+            landmarks_packet.Get<
+                std::vector<::mediapipe::NormalizedLandmarkList>>();
+        // LOG(INFO)<<"multi_hand_landmarks: "<<multi_hand_landmarks.;
+        // if(multi_hand_landmarks.size()==0)
+        // {
+            // LOG(INFO)<<"No hand";
+        // }
+        // else
+        // {
 
-        LOG(INFO) << "#Face landmarks: " << face_landmarks.landmark_size();
-        for (int i = 0; i < face_landmarks.landmark_size(); ++i)
-        {
-            const auto &landmark = face_landmarks.landmark(i);
-            LOG(INFO) << "\tFace Landmark [" << i << "]: ("
-                      << landmark.x() << ", "
-                      << landmark.y() << ", "
-                      << landmark.z() << ")";
-        }
-
-        LOG(INFO) << "#Left Hand landmarks: " << left_hand_landmarks.landmark_size();
-        for (int i = 0; i < left_hand_landmarks.landmark_size(); ++i)
-        {
-            const auto &landmark = left_hand_landmarks.landmark(i);
-            LOG(INFO) << "\tLeft Hand Landmark [" << i << "]: ("
-                      << landmark.x() << ", "
-                      << landmark.y() << ", "
-                      << landmark.z() << ")";
-        }
-
-        LOG(INFO) << "#Right Hand landmarks: " << right_hand_landmarks.landmark_size();
-        for (int i = 0; i < right_hand_landmarks.landmark_size(); ++i)
-        {
-            const auto &landmark = right_hand_landmarks.landmark(i);
-            LOG(INFO) << "\tFace Landmark [" << i << "]: ("
-                      << landmark.x() << ", "
-                      << landmark.y() << ", "
-                      << landmark.z() << ")";
-        }
-        // Use packet.Get to recover values from packet
+            // 详细记录并打印检测到的所有手的标记坐标。MediaPipe框架中的`LOG(INFO)`函数用于记录和打印信息，而此代码片段使用它来可视化检测到的手部标记的位置
+            LOG(INFO) << "#Multi Hand landmarks: " << multi_hand_landmarks.size();
+            int hand_id = 0;
+            for (const auto &single_hand_landmarks : multi_hand_landmarks)
+            {
+                 std::cout <<single_hand_landmarks.DebugString();
+                ++hand_id;
+                LOG(INFO) << "Hand [" << hand_id << "]:";
+                for (int i = 0; i < single_hand_landmarks.landmark_size(); ++i)
+                {
+                    const auto &landmark = single_hand_landmarks.landmark(i);
+                    LOG(INFO) << "\tLandmark [" << i << "]: ("
+                            << landmark.x() << ", "
+                            << landmark.y() << ", "
+                            << landmark.z() << ")";
+                }
+            }
+        // }
 
         // 使用OpenCV和MediaPipe进行图像处理和显示。
         // Convert back to opencv for display or saving.

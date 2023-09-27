@@ -36,7 +36,7 @@ constexpr char kInputStream[] = "input_video";
 constexpr char kOutputStream[] = "output_video";
 constexpr char kPoseLandmarksStream[] = "pose_landmarks";
 constexpr char kLeftHandLandmarksStream[] = "left_hand_landmarks";
-constexpr char kRightHandLandmarksStream[] = "right_hand_landmarks";
+// constexpr char kRightHandLandmarksStream[] = "right_hand_landmarks";
 constexpr char kFaceLandmarksStream[] = "face_landmarks";
 constexpr char kWindowName[] = "MediaPipe";
 
@@ -84,8 +84,8 @@ DEFINE_string(
                      graph.AddOutputStreamPoller(kFaceLandmarksStream));
     ASSIGN_OR_RETURN(::mediapipe::OutputStreamPoller left_hand_poller_landmark,
                      graph.AddOutputStreamPoller(kLeftHandLandmarksStream));
-    ASSIGN_OR_RETURN(::mediapipe::OutputStreamPoller right_hand_poller_landmark,
-                     graph.AddOutputStreamPoller(kRightHandLandmarksStream));
+    // ASSIGN_OR_RETURN(::mediapipe::OutputStreamPoller right_hand_poller_landmark,
+    //                  graph.AddOutputStreamPoller(kRightHandLandmarksStream));
     MP_RETURN_IF_ERROR(graph.StartRun({}));
 
     // 捕获摄像头的每一帧，转换颜色格式，并在需要时进行水平翻转
@@ -131,7 +131,7 @@ DEFINE_string(
         ::mediapipe::Packet pose_landmarks_packet;
         ::mediapipe::Packet face_landmarks_packet;
         ::mediapipe::Packet left_hand_landmarks_packet;
-        ::mediapipe::Packet right_hand_landmarks_packet;
+        // ::mediapipe::Packet right_hand_landmarks_packet;
 
         if (!pose_poller_landmark.Next(&pose_landmarks_packet))
             break;
@@ -139,13 +139,13 @@ DEFINE_string(
             break;
         if (!left_hand_poller_landmark.Next(&left_hand_landmarks_packet))
             break;
-        if (!right_hand_poller_landmark.Next(&right_hand_landmarks_packet))
-            break;
+        // if (!right_hand_poller_landmark.Next(&right_hand_landmarks_packet))
+        //     break;
 
         const auto &pose_landmarks = pose_landmarks_packet.Get<mediapipe::NormalizedLandmarkList>();
         const auto &face_landmarks = face_landmarks_packet.Get<mediapipe::NormalizedLandmarkList>();
-        const auto &left_hand_landmarks = left_hand_landmarks_packet.Get<mediapipe::NormalizedLandmarkList>();
-        const auto &right_hand_landmarks = right_hand_landmarks_packet.Get<mediapipe::NormalizedLandmarkList>();
+        // const auto &left_hand_landmarks = left_hand_landmarks_packet.Get<mediapipe::NormalizedLandmarkList>();
+        // const auto &right_hand_landmarks = right_hand_landmarks_packet.Get<mediapipe::NormalizedLandmarkList>();
 
         LOG(INFO) << "#Pose landmarks: " << pose_landmarks.landmark_size();
         for (int i = 0; i < pose_landmarks.landmark_size(); ++i)
@@ -167,25 +167,25 @@ DEFINE_string(
                       << landmark.z() << ")";
         }
 
-        LOG(INFO) << "#Left Hand landmarks: " << left_hand_landmarks.landmark_size();
-        for (int i = 0; i < left_hand_landmarks.landmark_size(); ++i)
-        {
-            const auto &landmark = left_hand_landmarks.landmark(i);
-            LOG(INFO) << "\tLeft Hand Landmark [" << i << "]: ("
-                      << landmark.x() << ", "
-                      << landmark.y() << ", "
-                      << landmark.z() << ")";
-        }
+        // LOG(INFO) << "#Left Hand landmarks: " << left_hand_landmarks.landmark_size();
+        // for (int i = 0; i < left_hand_landmarks.landmark_size(); ++i)
+        // {
+        //     const auto &landmark = left_hand_landmarks.landmark(i);
+        //     LOG(INFO) << "\tLeft Hand Landmark [" << i << "]: ("
+        //               << landmark.x() << ", "
+        //               << landmark.y() << ", "
+        //               << landmark.z() << ")";
+        // }
 
-        LOG(INFO) << "#Right Hand landmarks: " << right_hand_landmarks.landmark_size();
-        for (int i = 0; i < right_hand_landmarks.landmark_size(); ++i)
-        {
-            const auto &landmark = right_hand_landmarks.landmark(i);
-            LOG(INFO) << "\tFace Landmark [" << i << "]: ("
-                      << landmark.x() << ", "
-                      << landmark.y() << ", "
-                      << landmark.z() << ")";
-        }
+        // LOG(INFO) << "#Right Hand landmarks: " << right_hand_landmarks.landmark_size();
+        // for (int i = 0; i < right_hand_landmarks.landmark_size(); ++i)
+        // {
+        //     const auto &landmark = right_hand_landmarks.landmark(i);
+        //     LOG(INFO) << "\tFace Landmark [" << i << "]: ("
+        //               << landmark.x() << ", "
+        //               << landmark.y() << ", "
+        //               << landmark.z() << ")";
+        // }
         // Use packet.Get to recover values from packet
 
         // 使用OpenCV和MediaPipe进行图像处理和显示。
