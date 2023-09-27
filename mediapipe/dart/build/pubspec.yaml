@@ -1,5 +1,5 @@
-name: moveheaders
-description: A sample command-line application.
+name: build
+description: Performs build operations for google/flutter-mediapipe that depend on contents in this repository.
 version: 1.0.0
 # repository: https://github.com/my_org/my_repo
 environment:
