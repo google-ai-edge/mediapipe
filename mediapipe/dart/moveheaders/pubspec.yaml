@@ -1,0 +1,18 @@
+name: moveheaders
+description: A sample command-line application.
+version: 1.0.0
+# repository: https://github.com/my_org/my_repo
+environment:
+  sdk: ^3.2.0-162.0.dev
+
+# Add regular dependencies here.
+dependencies:
+  args: ^2.4.2
+  io: ^1.0.4
+  logging: ^1.2.0
+  path: ^1.8.0
+  process: ^5.0.0
+
+dev_dependencies:
+  lints: ^2.1.0
+  test: ^1.24.0
