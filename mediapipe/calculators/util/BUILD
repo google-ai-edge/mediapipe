@@ -1575,3 +1575,44 @@ cc_test(
         "@com_google_absl//absl/status",
     ],
 )
+
+mediapipe_proto_library(
+    name = "landmarks_transformation_calculator_proto",
+    srcs = ["landmarks_transformation_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "landmarks_transformation_calculator",
+    srcs = ["landmarks_transformation_calculator.cc"],
+    hdrs = ["landmarks_transformation_calculator.h"],
+    deps = [
+        ":landmarks_transformation_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:statusor",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "landmarks_transformation_calculator_test",
+    srcs = ["landmarks_transformation_calculator_test.cc"],
+    deps = [
+        ":landmarks_transformation_calculator",
+        ":landmarks_transformation_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/strings",
+    ],
+)
