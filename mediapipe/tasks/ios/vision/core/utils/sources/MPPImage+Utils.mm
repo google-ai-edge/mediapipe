@@ -32,8 +32,11 @@ using ::mediapipe::ImageFrame;
 vImage_Buffer allocatedVImageBuffer(vImagePixelCount width, vImagePixelCount height,
                                     size_t rowBytes) {
   UInt8 *data = new UInt8[height * rowBytes];
-
   return {.data = data, .width = width, .height = height, .rowBytes = rowBytes};
+}
+
+static void FreeDataProviderReleaseCallback(void *info, const void *data, size_t size) {
+  delete[] info;
 }
 
 }  // namespace
@@ -169,12 +172,6 @@ vImage_Buffer allocatedVImageBuffer(vImagePixelCount width, vImagePixelCount hei
 @end
 
 @implementation MPPCGImageUtils
-
-namespace {
-static void FreeDataProviderReleaseCallback(void *info, const void *data, size_t size) {
-  free(info);
-}
-}  // namespace
 
 + (std::unique_ptr<ImageFrame>)imageFrameFromCGImage:(CGImageRef)cgImage error:(NSError **)error {
   size_t width = CGImageGetWidth(cgImage);
