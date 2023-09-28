@@ -124,6 +124,38 @@ cc_test(
 )
 
 cc_library(
+    name = "landmarks_to_tensor",
+    srcs = ["landmarks_to_tensor.cc"],
+    hdrs = ["landmarks_to_tensor.h"],
+    deps = [
+        "//mediapipe/calculators/tensor:landmarks_to_tensor_calculator",
+        "//mediapipe/calculators/tensor:landmarks_to_tensor_calculator_cc_proto",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_test(
+    name = "landmarks_to_tensor_test",
+    srcs = ["landmarks_to_tensor_test.cc"],
+    deps = [
+        ":landmarks_to_tensor",
+        "//mediapipe/calculators/tensor:landmarks_to_tensor_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+    ],
+)
+
+cc_library(
     name = "landmarks_projection",
     srcs = ["landmarks_projection.cc"],
     hdrs = ["landmarks_projection.h"],
