@@ -36,7 +36,7 @@ void CppConvertToClassificationResult(
 
   for (uint32_t i = 0; i < out->classifications_count; ++i) {
     auto classification_in = in.classifications[i];
-    auto classification_out = out->classifications[i];
+    auto& classification_out = out->classifications[i];
 
     classification_out.categories_count = classification_in.categories.size();
     classification_out.categories =
