@@ -320,7 +320,6 @@ rewrite_target_list = [
     "warp_affine_calculator_proto",
     "xenomorph_proto",
     "xenomorph_result_proto",
-    "xenomorph_rig_combined_proto",
     "xenomorph_rig_proto",
     "zoo_mutation_calculator_proto",
     "zoo_mutator_proto",
