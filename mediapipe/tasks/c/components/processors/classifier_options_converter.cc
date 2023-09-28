@@ -14,6 +14,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "mediapipe/tasks/c/components/processors/classifier_options.h"
@@ -24,7 +25,8 @@ namespace mediapipe::tasks::c::components::processors {
 void CppConvertToClassifierOptions(
     const ClassifierOptions& in,
     mediapipe::tasks::components::processors::ClassifierOptions* out) {
-  out->display_names_locale = in.display_names_locale;
+  out->display_names_locale =
+      in.display_names_locale ? std::string(in.display_names_locale) : "";
   out->max_results = in.max_results;
   out->score_threshold = in.score_threshold;
   out->category_allowlist =
