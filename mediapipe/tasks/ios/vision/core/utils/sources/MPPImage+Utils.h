@@ -14,7 +14,9 @@
 
 #import <Foundation/Foundation.h>
 
+#include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
+
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -25,9 +27,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPImage (Utils)
 /**
  * Converts the `MPPImage` into a `mediapipe::ImageFrame`.
- * Irrespective of whether the underlying buffer is grayscale, RGB, RGBA, BGRA etc., the MPPImage is
- * converted to an RGB format. In case of grayscale images, the mono channel is duplicated in the R,
- * G, B channels.
+ * Irrespective of whether the underlying buffer is grayscale, RGBA, BGRA etc., the `MPPImage` is
+ * converted to an RGBA format. In case of grayscale images, the mono channel is duplicated in the
+ * R, G, B channels.
  *
  * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
  * error will be saved.
@@ -35,6 +37,32 @@ NS_ASSUME_NONNULL_BEGIN
  * @return An std::unique_ptr<mediapipe::ImageFrame> or `nullptr` in case of errors.
  */
 - (std::unique_ptr<mediapipe::ImageFrame>)imageFrameWithError:(NSError **)error;
+
+/**
+ * Initializes an `MPPImage` object with the pixels from the given `mediapipe::Image` and source
+ * type and orientation from the given source image.
+ *
+ * Only supports initialization from `mediapipe::Image` of format RGBA.
+ * If `shouldCopyPixelData` is set to `YES`, the newly created `MPPImage` stores a reference to a
+ * deep copied pixel data of the given `image`. Since deep copies are expensive, it is recommended
+ * to not set `shouldCopyPixelData` unless the `MPPImage` must outlive the passed in `image`.
+ *
+ * @param image The `mediapipe::Image` whose pixels are used for creating the `MPPImage`.
+ * @param sourceImage The `MPPImage` whose `orientation` and `imageSourceType` are used for creating
+ * the new `MPPImage`.
+ * @param shouldCopyPixelData `BOOL` that determines if the newly created `MPPImage` stores a
+ * reference to a deep copied pixel data of the given `image` or not.
+ *
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ * error will be saved.
+ *
+ * @return A new `MPImage` instance with the pixels from the given `mediapipe::Image` and meta data
+ * equal to the `sourceImage`. `nil` if there is an error in initializing the `MPPImage`.
+ */
+- (nullable instancetype)initWithCppImage:(mediapipe::Image &)image
+           cloningPropertiesOfSourceImage:(MPPImage *)sourceImage
+                      shouldCopyPixelData:(BOOL)shouldCopyPixelData
+                                    error:(NSError **)error;
 
 @end
 
