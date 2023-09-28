@@ -326,6 +326,33 @@ cc_test(
 )
 
 cc_library(
+    name = "segmentation_smoothing",
+    srcs = ["segmentation_smoothing.cc"],
+    hdrs = ["segmentation_smoothing.h"],
+    deps = [
+        "//mediapipe/calculators/image:segmentation_smoothing_calculator",
+        "//mediapipe/calculators/image:segmentation_smoothing_calculator_cc_proto",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:image",
+    ],
+)
+
+cc_test(
+    name = "segmentation_smoothing_test",
+    srcs = ["segmentation_smoothing_test.cc"],
+    deps = [
+        ":segmentation_smoothing",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+    ],
+)
+
+cc_library(
     name = "split",
     hdrs = ["split.h"],
     deps = [
