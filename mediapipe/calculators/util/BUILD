@@ -1616,3 +1616,34 @@ cc_test(
         "@com_google_absl//absl/strings",
     ],
 )
+
+cc_library(
+    name = "pass_through_or_empty_detection_vector_calculator",
+    srcs = ["pass_through_or_empty_detection_vector_calculator.cc"],
+    hdrs = ["pass_through_or_empty_detection_vector_calculator.h"],
+    deps = [
+        "//mediapipe/framework:calculator_context",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/api2:packet",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "@com_google_absl//absl/status",
+    ],
+    alwayslink = 1,
+)
+
+cc_test(
+    name = "pass_through_or_empty_detection_vector_calculator_test",
+    srcs = ["pass_through_or_empty_detection_vector_calculator_test.cc"],
+    tags = ["desktop_only_test"],
+    deps = [
+        ":pass_through_or_empty_detection_vector_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/status",
+    ],
+)
