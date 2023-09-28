@@ -981,6 +981,48 @@ cc_test(
 )
 
 cc_library(
+    name = "tensor_to_joints_calculator",
+    srcs = ["tensor_to_joints_calculator.cc"],
+    hdrs = ["tensor_to_joints_calculator.h"],
+    deps = [
+        ":tensor_to_joints_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:body_rig_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_proto_library(
+    name = "tensor_to_joints_calculator_proto",
+    srcs = ["tensor_to_joints_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_test(
+    name = "tensor_to_joints_calculator_test",
+    srcs = ["tensor_to_joints_calculator_test.cc"],
+    deps = [
+        ":tensor_to_joints_calculator",
+        ":tensor_to_joints_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:timestamp",
+        "//mediapipe/framework/formats:body_rig_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_library(
     name = "image_to_tensor_calculator",
     srcs = ["image_to_tensor_calculator.cc"],
     copts = select({
