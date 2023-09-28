@@ -324,3 +324,34 @@ cc_test(
         "//mediapipe/framework/port:status_matchers",
     ],
 )
+
+cc_library(
+    name = "tensor_to_joints",
+    srcs = ["tensor_to_joints.cc"],
+    hdrs = ["tensor_to_joints.h"],
+    deps = [
+        "//mediapipe/calculators/tensor:tensor_to_joints_calculator",
+        "//mediapipe/calculators/tensor:tensor_to_joints_calculator_cc_proto",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/api2:port",
+        "//mediapipe/framework/formats:body_rig_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+    ],
+)
+
+cc_test(
+    name = "tensor_to_joints_test",
+    srcs = ["tensor_to_joints_test.cc"],
+    deps = [
+        ":tensor_to_joints",
+        "//mediapipe/calculators/tensor:tensor_to_joints_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:body_rig_cc_proto",
+        "//mediapipe/framework/formats:tensor",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+    ],
+)
