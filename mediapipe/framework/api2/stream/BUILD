@@ -289,6 +289,43 @@ cc_test(
 )
 
 cc_library(
+    name = "smoothing",
+    srcs = ["smoothing.cc"],
+    hdrs = ["smoothing.h"],
+    deps = [
+        "//mediapipe/calculators/util:landmarks_smoothing_calculator",
+        "//mediapipe/calculators/util:landmarks_smoothing_calculator_cc_proto",
+        "//mediapipe/calculators/util:multi_landmarks_smoothing_calculator",
+        "//mediapipe/calculators/util:multi_world_landmarks_smoothing_calculator",
+        "//mediapipe/calculators/util:visibility_smoothing_calculator",
+        "//mediapipe/calculators/util:visibility_smoothing_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "@com_google_absl//absl/types:optional",
+    ],
+)
+
+cc_test(
+    name = "smoothing_test",
+    srcs = ["smoothing_test.cc"],
+    deps = [
+        ":smoothing",
+        "//mediapipe/calculators/util:landmarks_smoothing_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:builder",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/types:optional",
+    ],
+)
+
+cc_library(
     name = "split",
     hdrs = ["split.h"],
     deps = [
