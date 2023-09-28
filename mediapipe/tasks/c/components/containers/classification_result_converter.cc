@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/components/containers/classification_result_converter.h"
 
+#include <cstdint>
+
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/components/containers/category_converter.h"
 #include "mediapipe/tasks/cc/components/containers/classification_result.h"
@@ -32,14 +34,14 @@ void CppConvertToClassificationResult(
   out->classifications_count = in.classifications.size();
   out->classifications = new Classifications[out->classifications_count];
 
-  for (uint32_t i = 0; i <= out->classifications_count; ++i) {
+  for (uint32_t i = 0; i < out->classifications_count; ++i) {
     auto classification_in = in.classifications[i];
     auto classification_out = out->classifications[i];
 
     classification_out.categories_count = classification_in.categories.size();
     classification_out.categories =
         new Category[classification_out.categories_count];
-    for (uint32_t j = 0; j <= classification_out.categories_count; ++j) {
+    for (uint32_t j = 0; j < classification_out.categories_count; ++j) {
       CppConvertToCategory(classification_in.categories[j],
                            &(classification_out.categories[j]));
     }
@@ -47,7 +49,7 @@ void CppConvertToClassificationResult(
     classification_out.head_index = classification_in.head_index;
     classification_out.head_name =
         classification_in.head_name.has_value()
-            ? classification_in.head_name.value().c_str()
+            ? strdup(classification_in.head_name->c_str())
             : nullptr;
   }
 }

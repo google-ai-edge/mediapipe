@@ -25,10 +25,11 @@ void CppConvertToCategory(
     Category* out) {
   out->index = in.index;
   out->score = in.score;
-  out->category_name =
-      in.category_name.has_value() ? in.category_name->c_str() : nullptr;
+  out->category_name = in.category_name.has_value()
+                           ? strdup(in.category_name->c_str())
+                           : nullptr;
   out->display_name =
-      in.display_name.has_value() ? in.display_name->c_str() : nullptr;
+      in.display_name.has_value() ? strdup(in.display_name->c_str()) : nullptr;
 }
 
 }  // namespace mediapipe::tasks::c::components::containers
