@@ -30,3 +30,15 @@ cc_library(
         "//mediapipe/tasks/cc/core:base_options",
     ],
 )
+
+cc_test(
+    name = "base_options_converter_test",
+    srcs = ["base_options_converter_test.cc"],
+    deps = [
+        ":base_options",
+        ":base_options_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/core:base_options",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

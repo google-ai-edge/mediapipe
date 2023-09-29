@@ -21,7 +21,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 
-namespace mediapipe::tasks::c::components::containers {
+namespace mediapipe::tasks::c::core {
 
 void CppConvertToBaseOptions(const BaseOptions& in,
                              mediapipe::tasks::core::BaseOptions* out) {
@@ -33,4 +33,4 @@ void CppConvertToBaseOptions(const BaseOptions& in,
       in.model_asset_path ? std::string(in.model_asset_path) : "";
 }
 
-}  // namespace mediapipe::tasks::c::components::containers
+}  // namespace mediapipe::tasks::c::core

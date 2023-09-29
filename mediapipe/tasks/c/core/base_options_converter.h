@@ -19,11 +19,11 @@ limitations under the License.
 #include "mediapipe/tasks/c/core/base_options.h"
 #include "mediapipe/tasks/cc/core/base_options.h"
 
-namespace mediapipe::tasks::c::components::containers {
+namespace mediapipe::tasks::c::core {
 
 void CppConvertToBaseOptions(const BaseOptions& in,
                              mediapipe::tasks::core::BaseOptions* out);
 
-}  // namespace mediapipe::tasks::c::components::containers
+}  // namespace mediapipe::tasks::c::core
 
 #endif  // MEDIAPIPE_TASKS_C_CORE_BASE_OPTIONS_H_

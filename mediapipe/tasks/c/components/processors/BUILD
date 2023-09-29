@@ -30,3 +30,15 @@ cc_library(
         "//mediapipe/tasks/cc/components/processors:classifier_options",
     ],
 )
+
+cc_test(
+    name = "classifier_options_converter_test",
+    srcs = ["classifier_options_converter_test.cc"],
+    deps = [
+        ":classifier_options",
+        ":classifier_options_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/processors:classifier_options",
+        "@com_google_googletest//:gtest_main",
+    ],
+)

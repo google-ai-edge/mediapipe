@@ -30,11 +30,11 @@ namespace mediapipe::tasks::c::text::text_classifier {
 
 namespace {
 
-using ::mediapipe::tasks::c::components::containers::CppConvertToBaseOptions;
 using ::mediapipe::tasks::c::components::containers::
     CppConvertToClassificationResult;
 using ::mediapipe::tasks::c::components::processors::
     CppConvertToClassifierOptions;
+using ::mediapipe::tasks::c::core::CppConvertToBaseOptions;
 using ::mediapipe::tasks::text::text_classifier::TextClassifier;
 }  // namespace
 
