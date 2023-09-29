@@ -39,7 +39,7 @@ struct Classifications {
   // Metadata [1] if present. This is useful for multi-head models.
   //
   // [1]: https://www.tensorflow.org/lite/convert/metadata
-  const char* head_name;
+  char* head_name;
 };
 
 // Defines classification results of a model.

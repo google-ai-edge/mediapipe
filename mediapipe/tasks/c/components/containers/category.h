@@ -36,11 +36,11 @@ struct Category {
 
   // The optional ID for the category, read from the label map packed in the
   // TFLite Model Metadata if present. Not necessarily human-readable.
-  const char* category_name;
+  char* category_name;
 
   // The optional human-readable name for the category, read from the label map
   // packed in the TFLite Model Metadata if present.
-  const char* display_name;
+  char* display_name;
 };
 
 #ifdef __cplusplus

@@ -31,6 +31,18 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "category_converter_test",
+    srcs = ["category_converter_test.cc"],
+    deps = [
+        ":category",
+        ":category_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/containers:category",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "classification_result",
     hdrs = ["classification_result.h"],
@@ -45,5 +57,17 @@ cc_library(
         ":category_converter",
         ":classification_result",
         "//mediapipe/tasks/cc/components/containers:classification_result",
+    ],
+)
+
+cc_test(
+    name = "classification_result_converter_test",
+    srcs = ["classification_result_converter_test.cc"],
+    deps = [
+        ":classification_result",
+        ":classification_result_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/containers:classification_result",
+        "@com_google_googletest//:gtest_main",
     ],
 )
