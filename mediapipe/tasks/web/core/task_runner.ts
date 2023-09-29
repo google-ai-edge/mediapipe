@@ -52,13 +52,14 @@ export async function createTaskRunner<T extends TaskRunner>(
     fileset: WasmFileset, options: TaskRunnerOptions): Promise<T> {
   const fileLocator: FileLocator = {
     locateFile(file): string {
-      const wasm = fileset.wasmBinaryPath.toString();
-      if (wasm.includes(file)) {
-        return wasm;
-      }
-      const asset = fileset.assetBinaryPath?.toString();
-      if (asset?.includes(file)) {
-        return asset;
+      // We currently only use a single .wasm file and a single .data file (for
+      // the tasks that have to load assets). We need to revisit how we
+      // initialize the file locator if we ever need to differentiate between
+      // diffferent files.
+      if (file.endsWith('.wasm')) {
+        return fileset.wasmBinaryPath.toString();
+      } else if (fileset.assetBinaryPath && file.endsWith('.data')) {
+        return fileset.assetBinaryPath.toString();
       }
       return file;
     }
