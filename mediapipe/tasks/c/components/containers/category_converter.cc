@@ -15,6 +15,8 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/components/containers/category_converter.h"
 
+#include <cstdlib>
+
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/cc/components/containers/category.h"
 
@@ -30,6 +32,11 @@ void CppConvertToCategory(
                            : nullptr;
   out->display_name =
       in.display_name.has_value() ? strdup(in.display_name->c_str()) : nullptr;
+}
+
+void CppCloseCategory(Category* in) {
+  free(in->category_name);
+  free(in->display_name);
 }
 
 }  // namespace mediapipe::tasks::c::components::containers

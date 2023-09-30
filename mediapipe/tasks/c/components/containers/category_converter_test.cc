@@ -40,8 +40,7 @@ TEST(CategoryConverterTest, ConvertsCategoryCustomValues) {
   EXPECT_EQ(std::string{c_category.category_name}, "category_name");
   EXPECT_EQ(std::string{c_category.display_name}, "display_name");
 
-  free(c_category.category_name);
-  free(c_category.display_name);
+  CppCloseCategory(&c_category);
 }
 
 TEST(CategoryConverterTest, ConvertsCategoryDefaultValues) {
@@ -58,6 +57,8 @@ TEST(CategoryConverterTest, ConvertsCategoryDefaultValues) {
   EXPECT_FLOAT_EQ(c_category.score, 0.1);
   EXPECT_EQ(c_category.category_name, nullptr);
   EXPECT_EQ(c_category.display_name, nullptr);
+
+  CppCloseCategory(&c_category);
 }
 
 }  // namespace mediapipe::tasks::c::components::containers

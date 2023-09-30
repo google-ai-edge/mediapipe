@@ -25,6 +25,8 @@ void CppConvertToClassificationResult(
     const mediapipe::tasks::components::containers::ClassificationResult& in,
     ClassificationResult* out);
 
+void CppCloseClassificationResult(ClassificationResult* in);
+
 }  // namespace mediapipe::tasks::c::components::containers
 
 #endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CLASSIFICATION_RESULT_CONVERTER_H_

@@ -45,8 +45,12 @@ struct TextClassifierOptions {
 MP_EXPORT void* text_classifier_create(struct TextClassifierOptions* options);
 
 // Performs classification on the input `text`.
-MP_EXPORT int text_classifier_classify(void* classifier, char* utf8_str,
+MP_EXPORT int text_classifier_classify(void* classifier, const char* utf8_str,
                                        TextClassifierResult* result);
+
+// Frees the memory allocated inside a TextClassifierResult result. Does not
+// free the result pointer itself.
+MP_EXPORT void text_classifier_close_result(TextClassifierResult* result);
 
 // Shuts down the TextClassifier when all the work is done. Frees all memory.
 MP_EXPORT void text_classifier_close(void* classifier);

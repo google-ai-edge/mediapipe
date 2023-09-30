@@ -16,6 +16,7 @@ limitations under the License.
 #include "mediapipe/tasks/c/components/containers/classification_result_converter.h"
 
 #include <cstdint>
+#include <cstdlib>
 
 #include "mediapipe/tasks/c/components/containers/category.h"
 #include "mediapipe/tasks/c/components/containers/category_converter.h"
@@ -55,6 +56,21 @@ void CppConvertToClassificationResult(
             ? strdup(classification_in.head_name->c_str())
             : nullptr;
   }
+}
+
+void CppCloseClassificationResult(ClassificationResult* in) {
+  for (uint32_t i = 0; i < in->classifications_count; ++i) {
+    auto classification_in = in->classifications[i];
+
+    for (uint32_t j = 0; j < classification_in.categories_count; ++j) {
+      CppCloseCategory(&classification_in.categories[j]);
+    }
+    delete[] classification_in.categories;
+
+    free(classification_in.head_name);
+  }
+
+  delete[] in->classifications;
 }
 
 }  // namespace mediapipe::tasks::c::components::containers

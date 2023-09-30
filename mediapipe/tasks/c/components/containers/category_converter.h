@@ -25,6 +25,8 @@ void CppConvertToCategory(
     const mediapipe::tasks::components::containers::Category& in,
     Category* out);
 
+void CppCloseCategory(Category* in);
+
 }  // namespace mediapipe::tasks::c::components::containers
 
 #endif  // MEDIAPIPE_TASKS_C_COMPONENTS_CONTAINERS_CATEGORY_CONVERTER_H_

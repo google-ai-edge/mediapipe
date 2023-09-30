@@ -31,6 +31,8 @@ namespace mediapipe::tasks::c::text::text_classifier {
 namespace {
 
 using ::mediapipe::tasks::c::components::containers::
+    CppCloseClassificationResult;
+using ::mediapipe::tasks::c::components::containers::
     CppConvertToClassificationResult;
 using ::mediapipe::tasks::c::components::processors::
     CppConvertToClassifierOptions;
@@ -55,7 +57,7 @@ TextClassifier* CppTextClassifierCreate(const TextClassifierOptions& options) {
   return classifier->release();
 }
 
-bool CppTextClassifierClassify(void* classifier, char* utf8_str,
+bool CppTextClassifierClassify(void* classifier, const char* utf8_str,
                                TextClassifierResult* result) {
   auto cpp_classifier = static_cast<TextClassifier*>(classifier);
   auto cpp_result = cpp_classifier->Classify(utf8_str);
@@ -65,6 +67,10 @@ bool CppTextClassifierClassify(void* classifier, char* utf8_str,
   }
   CppConvertToClassificationResult(*cpp_result, result);
   return true;
+}
+
+void CppTextClassifierCloseResult(TextClassifierResult* result) {
+  CppCloseClassificationResult(result);
 }
 
 void CppTextClassifierClose(void* classifier) {
@@ -85,10 +91,15 @@ void* text_classifier_create(struct TextClassifierOptions* options) {
       *options);
 }
 
-int text_classifier_classify(void* classifier, char* utf8_str,
+int text_classifier_classify(void* classifier, const char* utf8_str,
                              TextClassifierResult* result) {
   return mediapipe::tasks::c::text::text_classifier::CppTextClassifierClassify(
       classifier, utf8_str, result);
+}
+
+void text_classifier_close_result(TextClassifierResult* result) {
+  mediapipe::tasks::c::text::text_classifier::CppTextClassifierCloseResult(
+      result);
 }
 
 void text_classifier_close(void* classifier) {

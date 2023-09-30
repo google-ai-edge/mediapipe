@@ -53,9 +53,7 @@ TEST(ClassificationResultConverterTest,
   EXPECT_EQ(c_classification_result.timestamp_ms, 42);
   EXPECT_EQ(c_classification_result.has_timestamp_ms, true);
 
-  free(c_classification_result.classifications[0].categories);
-  free(c_classification_result.classifications[0].head_name);
-  free(c_classification_result.classifications);
+  CppCloseClassificationResult(&c_classification_result);
 }
 
 TEST(ClassificationResultConverterTest,
@@ -79,7 +77,7 @@ TEST(ClassificationResultConverterTest,
   EXPECT_EQ(c_classification_result.timestamp_ms, 0);
   EXPECT_EQ(c_classification_result.has_timestamp_ms, false);
 
-  free(c_classification_result.classifications);
+  CppCloseClassificationResult(&c_classification_result);
 }
 
 TEST(ClassificationResultConverterTest,
@@ -97,6 +95,8 @@ TEST(ClassificationResultConverterTest,
   EXPECT_EQ(c_classification_result.classifications_count, 0);
   EXPECT_EQ(c_classification_result.timestamp_ms, 0);
   EXPECT_EQ(c_classification_result.has_timestamp_ms, false);
+
+  CppCloseClassificationResult(&c_classification_result);
 }
 
 }  // namespace mediapipe::tasks::c::components::containers
