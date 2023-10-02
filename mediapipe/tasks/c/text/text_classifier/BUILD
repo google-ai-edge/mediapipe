@@ -30,6 +30,7 @@ cc_library(
         "//mediapipe/tasks/c/core:base_options_converter",
         "//mediapipe/tasks/cc/text/text_classifier",
         "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -78,7 +79,6 @@ cc_test(
         "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:gtest",
         "//mediapipe/tasks/c/components/containers:category",
-        "//mediapipe/tasks/cc/components/containers:category",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_googletest//:gtest_main",

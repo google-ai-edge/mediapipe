@@ -15,17 +15,20 @@ limitations under the License.
 
 #include "mediapipe/tasks/c/text/text_classifier/text_classifier.h"
 
+#include <cstdlib>
 #include <string>
 
 #include "absl/flags/flag.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/framework/deps/file_path.h"
+#include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/tasks/c/components/containers/category.h"
 
 namespace {
 
 using ::mediapipe::file::JoinPath;
+using testing::HasSubstr;
 
 constexpr char kTestDataDirectory[] = "/mediapipe/tasks/testdata/text/";
 constexpr char kTestBertModelPath[] = "bert_text_classifier.tflite";
@@ -65,6 +68,23 @@ TEST(TextClassifierTest, SmokeTest) {
 
   text_classifier_close_result(&result);
   text_classifier_close(classifier);
+}
+
+TEST(TextClassifierTest, ErrorHandling) {
+  // It is an error to set neither the asset buffer nor the path.
+  TextClassifierOptions options = {
+      /* base_options= */ {/* model_asset_buffer= */ nullptr,
+                           /* model_asset_path= */ nullptr},
+      /* classifier_options= */ {},
+  };
+
+  char* error_msg;
+  void* classifier = text_classifier_create(&options, &error_msg);
+  EXPECT_EQ(classifier, nullptr);
+
+  EXPECT_THAT(error_msg, HasSubstr("INVALID_ARGUMENT"));
+
+  free(error_msg);
 }
 
 }  // namespace
