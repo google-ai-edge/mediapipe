@@ -126,7 +126,8 @@ static void FreeDataProviderReleaseCallback(void *info, const void *data, size_t
   if (convertError != kvImageNoError) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInternalError
-                          description:@"Image format conversion failed."];
+                          description:@"Some error occured while preprocessing the input image. "
+                                      @"Please verify that the image is not corrupted."];
     return nullptr;
   }
 
