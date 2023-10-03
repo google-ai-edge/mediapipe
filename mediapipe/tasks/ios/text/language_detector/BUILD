@@ -25,3 +25,11 @@ objc_library(
     deps = ["//mediapipe/tasks/ios/core:MPPTaskOptions"],
 )
 
+objc_library(
+    name = "MPPLanguageDetectorResult",
+    srcs = ["sources/MPPLanguageDetectorResult.m"],
+    hdrs = ["sources/MPPLanguageDetectorResult.h"],
+    deps = [
+        "//mediapipe/tasks/ios/core:MPPTaskResult",
+    ],
+)
