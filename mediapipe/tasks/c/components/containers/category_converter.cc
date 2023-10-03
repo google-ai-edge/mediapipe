@@ -36,7 +36,9 @@ void CppConvertToCategory(
 
 void CppCloseCategory(Category* in) {
   free(in->category_name);
+  in->category_name = nullptr;
   free(in->display_name);
+  in->display_name = nullptr;
 }
 
 }  // namespace mediapipe::tasks::c::components::containers

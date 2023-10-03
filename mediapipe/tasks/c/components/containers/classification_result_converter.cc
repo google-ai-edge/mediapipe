@@ -60,17 +60,20 @@ void CppConvertToClassificationResult(
 
 void CppCloseClassificationResult(ClassificationResult* in) {
   for (uint32_t i = 0; i < in->classifications_count; ++i) {
-    auto classification_in = in->classifications[i];
+    auto& classification_in = in->classifications[i];
 
     for (uint32_t j = 0; j < classification_in.categories_count; ++j) {
       CppCloseCategory(&classification_in.categories[j]);
     }
     delete[] classification_in.categories;
+    classification_in.categories = nullptr;
 
     free(classification_in.head_name);
+    classification_in.head_name = nullptr;
   }
 
   delete[] in->classifications;
+  in->classifications = nullptr;
 }
 
 }  // namespace mediapipe::tasks::c::components::containers

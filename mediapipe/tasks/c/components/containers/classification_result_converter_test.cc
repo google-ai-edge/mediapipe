@@ -99,4 +99,20 @@ TEST(ClassificationResultConverterTest,
   CppCloseClassificationResult(&c_classification_result);
 }
 
+TEST(ClassificationResultConverterTest, FreesMemory) {
+  mediapipe::tasks::components::containers::ClassificationResult
+      cpp_classification_result = {
+          /* classifications= */ {{{}, 0, "foo"}},
+          /* timestamp_ms= */ 42,
+      };
+
+  ClassificationResult c_classification_result;
+  CppConvertToClassificationResult(cpp_classification_result,
+                                   &c_classification_result);
+  EXPECT_NE(c_classification_result.classifications, nullptr);
+
+  CppCloseClassificationResult(&c_classification_result);
+  EXPECT_EQ(c_classification_result.classifications, nullptr);
+}
+
 }  // namespace mediapipe::tasks::c::components::containers
