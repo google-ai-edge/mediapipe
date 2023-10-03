@@ -42,3 +42,30 @@ cc_test(
         "@com_google_googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "embedder_options",
+    hdrs = ["embedder_options.h"],
+)
+
+cc_library(
+    name = "embedder_options_converter",
+    srcs = ["embedder_options_converter.cc"],
+    hdrs = ["embedder_options_converter.h"],
+    deps = [
+        ":embedder_options",
+        "//mediapipe/tasks/cc/components/processors:embedder_options",
+    ],
+)
+
+cc_test(
+    name = "embedder_options_converter_test",
+    srcs = ["embedder_options_converter_test.cc"],
+    deps = [
+        ":embedder_options",
+        ":embedder_options_converter",
+        "//mediapipe/framework/port:gtest",
+        "//mediapipe/tasks/cc/components/processors:embedder_options",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
