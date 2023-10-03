@@ -242,7 +242,7 @@ static void FreeDataProviderReleaseCallback(void *info, const void *data, size_t
     default:
       [MPPCommonUtils createCustomError:error
                                withCode:MPPTasksErrorCodeInternalError
-                            description:@"Unsupported Image Format Conversion."];
+                            description:@"Some internal error occured."];
       return NULL;
   }
 
@@ -271,13 +271,13 @@ static void FreeDataProviderReleaseCallback(void *info, const void *data, size_t
 
   // Pre-multiply the raw pixels from a `mediapipe::Image` before creating a `CGImage` to ensure
   // that pixels are displayed correctly irrespective of their alpha values.
-  vImage_Error convertError =
+  vImage_Error premultiplyError =
       vImagePremultiplyData_RGBA8888(&sourceBuffer, &destBuffer, kvImageNoFlags);
 
-  if (convertError != kvImageNoError) {
+  if (premultiplyError != kvImageNoError) {
     [MPPCommonUtils createCustomError:error
                              withCode:MPPTasksErrorCodeInternalError
-                          description:@"Image format conversion failed."];
+                          description:@"Some internal error occured."];
 
     return NULL;
   }
