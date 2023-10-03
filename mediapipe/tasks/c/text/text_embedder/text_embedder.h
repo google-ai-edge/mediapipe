@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef MEDIAPIPE_TASKS_C_TEXT_TEXT_CLASSIFIER_TEXT_EMBEDDER_H_
-#define MEDIAPIPE_TASKS_C_TEXT_TEXT_CLASSIFIER_TEXT_EMBEDDER_H_
+#ifndef MEDIAPIPE_TASKS_C_TEXT_TEXT_EMBEDDER_TEXT_EMBEDDER_H_
+#define MEDIAPIPE_TASKS_C_TEXT_TEXT_EMBEDDER_TEXT_EMBEDDER_H_
 
 #include "mediapipe/tasks/c/components/containers/embedding_result.h"
 #include "mediapipe/tasks/c/components/processors/embedder_options.h"
@@ -72,4 +72,4 @@ MP_EXPORT int text_embedder_close(void* embedder,
 }  // extern C
 #endif
 
-#endif  // MEDIAPIPE_TASKS_C_TEXT_TEXT_CLASSIFIER_TEXT_EMBEDDER_H_
+#endif  // MEDIAPIPE_TASKS_C_TEXT_TEXT_EMBEDDER_TEXT_EMBEDDER_H_

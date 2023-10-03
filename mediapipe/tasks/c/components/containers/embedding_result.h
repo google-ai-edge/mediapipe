@@ -62,8 +62,8 @@ struct EmbeddingResult {
   // The optional timestamp (in milliseconds) of the start of the chunk of data
   // corresponding to these results.
   //
-  // This is only used for classification on time series (e.g. audio
-  // classification). In these use cases, the amount of data to process might
+  // This is only used for embedding extraction on time series (e.g. audio
+  // embedding). In these use cases, the amount of data to process might
   // exceed the maximum size that the model can process: to solve this, the
   // input data is split into multiple chunks starting at different timestamps.
   int64_t timestamp_ms;
