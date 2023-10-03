@@ -98,7 +98,7 @@ void ImageSubmodule(pybind11::module* module) {
             return Image(std::shared_ptr<ImageFrame>(
                 CreateImageFrame<uint8_t>(format, data)));
           }),
-          R"doc(For uint8 data type, valid ImageFormat are GRAY8, SGRB, and SRGBA.)doc",
+          R"doc(For uint8 data type, valid ImageFormat are GRAY8, SRGB, and SRGBA.)doc",
           py::arg("image_format"), py::arg("data").noconvert())
       .def(
           py::init([](mediapipe::ImageFormat::Format format,
