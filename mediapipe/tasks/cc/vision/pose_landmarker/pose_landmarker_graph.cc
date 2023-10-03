@@ -13,12 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include <memory>
-#include <type_traits>
-#include <utility>
 #include <vector>
 
-#include "absl/strings/str_format.h"
+#include "absl/status/status.h"
 #include "mediapipe/calculators/core/clip_vector_size_calculator.pb.h"
 #include "mediapipe/calculators/core/gate_calculator.pb.h"
 #include "mediapipe/calculators/util/association_calculator.pb.h"
@@ -29,14 +26,11 @@ limitations under the License.
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
-#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/status_macros.h"
-#include "mediapipe/tasks/cc/common.h"
 #include "mediapipe/tasks/cc/components/utils/gate.h"
 #include "mediapipe/tasks/cc/core/model_asset_bundle_resources.h"
 #include "mediapipe/tasks/cc/core/model_resources_cache.h"
 #include "mediapipe/tasks/cc/core/model_task_graph.h"
-#include "mediapipe/tasks/cc/core/utils.h"
 #include "mediapipe/tasks/cc/metadata/utils/zip_utils.h"
 #include "mediapipe/tasks/cc/vision/pose_detector/proto/pose_detector_graph_options.pb.h"
 #include "mediapipe/tasks/cc/vision/pose_landmarker/proto/pose_landmarker_graph_options.pb.h"
@@ -292,7 +286,9 @@ class PoseLandmarkerGraph : public core::ModelTaskGraph {
 
     auto& pose_detector =
         graph.AddNode("mediapipe.tasks.vision.pose_detector.PoseDetectorGraph");
-    pose_detector.GetOptions<PoseDetectorGraphOptions>().Swap(
+    auto& pose_detector_options =
+        pose_detector.GetOptions<PoseDetectorGraphOptions>();
+    pose_detector_options.Swap(
         tasks_options.mutable_pose_detector_graph_options());
     auto& clip_pose_rects =
         graph.AddNode("ClipNormalizedRectVectorSizeCalculator");
@@ -303,9 +299,23 @@ class PoseLandmarkerGraph : public core::ModelTaskGraph {
     auto& pose_landmarks_detector_graph = graph.AddNode(
         "mediapipe.tasks.vision.pose_landmarker."
         "MultiplePoseLandmarksDetectorGraph");
-    pose_landmarks_detector_graph
-        .GetOptions<PoseLandmarksDetectorGraphOptions>()
-        .Swap(tasks_options.mutable_pose_landmarks_detector_graph_options());
+    auto& pose_landmarks_detector_graph_options =
+        pose_landmarks_detector_graph
+            .GetOptions<PoseLandmarksDetectorGraphOptions>();
+    pose_landmarks_detector_graph_options.Swap(
+        tasks_options.mutable_pose_landmarks_detector_graph_options());
+
+    // Apply smoothing filter only on the single pose landmarks, because
+    // landmarks smoothing calculator doesn't support multiple landmarks yet.
+    if (pose_detector_options.num_poses() == 1) {
+      pose_landmarks_detector_graph_options.set_smooth_landmarks(
+          tasks_options.base_options().use_stream_mode());
+    } else if (pose_detector_options.num_poses() > 1 &&
+               pose_landmarks_detector_graph_options.smooth_landmarks()) {
+      return absl::InvalidArgumentError(
+          "Currently pose landmarks smoothing only supports a single pose.");
+    }
+
     image_in >> pose_landmarks_detector_graph.In(kImageTag);
     clipped_pose_rects >> pose_landmarks_detector_graph.In(kNormRectTag);
 

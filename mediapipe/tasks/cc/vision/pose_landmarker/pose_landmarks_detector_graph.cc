@@ -13,7 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <optional>
+#include <utility>
+#include <vector>
+
 #include "absl/status/statusor.h"
+#include "mediapipe/calculators/core/constant_side_packet_calculator.pb.h"
 #include "mediapipe/calculators/core/split_vector_calculator.pb.h"
 #include "mediapipe/calculators/image/warp_affine_calculator.pb.h"
 #include "mediapipe/calculators/tensor/image_to_tensor_calculator.pb.h"
@@ -26,6 +31,9 @@ limitations under the License.
 #include "mediapipe/calculators/util/visibility_copy_calculator.pb.h"
 #include "mediapipe/framework/api2/builder.h"
 #include "mediapipe/framework/api2/port.h"
+#include "mediapipe/framework/api2/stream/get_vector_item.h"
+#include "mediapipe/framework/api2/stream/image_size.h"
+#include "mediapipe/framework/api2/stream/smoothing.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
@@ -47,7 +55,10 @@ namespace pose_landmarker {
 using ::mediapipe::NormalizedRect;
 using ::mediapipe::api2::Input;
 using ::mediapipe::api2::Output;
+using ::mediapipe::api2::builder::GetImageSize;
 using ::mediapipe::api2::builder::Graph;
+using ::mediapipe::api2::builder::SmoothLandmarks;
+using ::mediapipe::api2::builder::SmoothLandmarksVisibility;
 using ::mediapipe::api2::builder::Source;
 using ::mediapipe::api2::builder::Stream;
 using ::mediapipe::tasks::core::ModelResources;
@@ -211,6 +222,23 @@ void ConfigureWarpAffineCalculator(
     mediapipe::WarpAffineCalculatorOptions* options) {
   options->set_border_mode(mediapipe::WarpAffineCalculatorOptions::BORDER_ZERO);
   options->set_gpu_origin(mediapipe::GpuOrigin::TOP_LEFT);
+}
+
+template <typename TickT>
+Stream<int> CreateIntConstantStream(Stream<TickT> tick_stream, int constant_int,
+                                    Graph& graph) {
+  auto& constant_side_packet_node =
+      graph.AddNode("ConstantSidePacketCalculator");
+  constant_side_packet_node
+      .GetOptions<mediapipe::ConstantSidePacketCalculatorOptions>()
+      .add_packet()
+      ->set_int_value(constant_int);
+  auto side_packet = constant_side_packet_node.SideOut("PACKET");
+
+  auto& side_packet_to_stream = graph.AddNode("SidePacketToStreamCalculator");
+  tick_stream.ConnectTo(side_packet_to_stream.In("TICK"));
+  side_packet.ConnectTo(side_packet_to_stream.SideIn(""));
+  return side_packet_to_stream.Out("AT_TICK").Cast<int>();
 }
 
 // A "mediapipe.tasks.vision.pose_landmarker.SinglePoseLandmarksDetectorGraph"
@@ -669,8 +697,8 @@ class MultiplePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto& pose_landmark_subgraph = graph.AddNode(
         "mediapipe.tasks.vision.pose_landmarker."
         "SinglePoseLandmarksDetectorGraph");
-    pose_landmark_subgraph.GetOptions<PoseLandmarksDetectorGraphOptions>()
-        .CopyFrom(subgraph_options);
+    pose_landmark_subgraph.GetOptions<PoseLandmarksDetectorGraphOptions>() =
+        subgraph_options;
     image >> pose_landmark_subgraph.In(kImageTag);
     pose_rect >> pose_landmark_subgraph.In(kNormRectTag);
     auto landmarks = pose_landmark_subgraph.Out(kLandmarksTag);
@@ -732,6 +760,70 @@ class MultiplePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
       segmentation_mask >> end_loop_segmentation_mask.In(kItemTag);
       segmentation_masks_vector =
           end_loop_segmentation_mask[Output<std::vector<Image>>(kIterableTag)];
+    }
+
+    // Apply smoothing filter only on the single pose landmarks, because
+    // landmarks smoothing calculator doesn't support multiple landmarks yet.
+    // Notice the landmarks smoothing calculator cannot be put inside the for
+    // loop calculator, because the smoothing calculator utilize the timestamp
+    // to smoote landmarks across frames but the for loop calculator makes fake
+    // timestamps for the streams.
+    if (subgraph_options.smooth_landmarks()) {
+      Stream<std::pair<int, int>> image_size = GetImageSize(image_in, graph);
+      Stream<int> zero_index =
+          CreateIntConstantStream(landmark_lists, 0, graph);
+      Stream<NormalizedLandmarkList> landmarks =
+          GetItem(landmark_lists, zero_index, graph);
+      Stream<LandmarkList> world_landmarks =
+          GetItem(world_landmark_lists, zero_index, graph);
+      Stream<NormalizedRect> roi =
+          GetItem(pose_rects_next_frame, zero_index, graph);
+
+      // Apply smoothing filter on pose landmarks.
+      landmarks = SmoothLandmarksVisibility(
+          landmarks, /*low_pass_filter_alpha=*/0.1f, graph);
+      landmarks = SmoothLandmarks(
+          landmarks, image_size, roi,
+          {// Min cutoff 0.05 results into ~0.01 alpha in landmark EMA filter
+           // when landmark is static.
+           /*min_cutoff=*/0.05f,
+           // Beta 80.0 in combination with min_cutoff 0.05 results into ~0.94
+           // alpha in landmark EMA filter when landmark is moving fast.
+           /*beta=*/80.0f,
+           // Derivative cutoff 1.0 results into ~0.17 alpha in landmark
+           // velocity EMA filter.
+           /*derivate_cutoff=*/1.0f},
+          graph);
+
+      // Apply smoothing filter on pose world landmarks.
+      world_landmarks = SmoothLandmarksVisibility(
+          world_landmarks, /*low_pass_filter_alpha=*/0.1f, graph);
+      world_landmarks = SmoothLandmarks(
+          world_landmarks,
+          /*scale_roi=*/std::nullopt,
+          {// Min cutoff 0.1 results into ~ 0.02 alpha in landmark EMA filter
+           // when landmark is static.
+           /*min_cutoff=*/0.1f,
+           // Beta 40.0 in combination with min_cutoff 0.1 results into ~0.8
+           // alpha in landmark EMA filter when landmark is moving fast.
+           /*beta=*/40.0f,
+           // Derivative cutoff 1.0 results into ~0.17 alpha in landmark
+           // velocity EMA filter.
+           /*derivate_cutoff=*/1.0f},
+          graph);
+
+      // Wrap the single pose landmarks into a vector of landmarks.
+      auto& concat_landmarks =
+          graph.AddNode("ConcatenateNormalizedLandmarkListVectorCalculator");
+      landmarks >> concat_landmarks.In("");
+      landmark_lists =
+          concat_landmarks.Out("").Cast<std::vector<NormalizedLandmarkList>>();
+
+      auto& concat_world_landmarks =
+          graph.AddNode("ConcatenateLandmarkListVectorCalculator");
+      world_landmarks >> concat_world_landmarks.In("");
+      world_landmark_lists =
+          concat_world_landmarks.Out("").Cast<std::vector<LandmarkList>>();
     }
 
     return {{

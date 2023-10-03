@@ -240,7 +240,7 @@ TEST_P(ImageModeTest, Succeeds) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    PoseGestureTest, ImageModeTest,
+    PoseTest, ImageModeTest,
     Values(TestParams{
                /* test_name= */ "Pose",
                /* test_image_name= */ kPoseImage,
@@ -328,7 +328,7 @@ TEST_P(VideoModeTest, Succeeds) {
 // TODO Investigate PoseLandmarker performance in VideoMode.
 
 INSTANTIATE_TEST_SUITE_P(
-    PoseGestureTest, VideoModeTest,
+    PoseTest, VideoModeTest,
     Values(TestParams{
                /* test_name= */ "Pose",
                /* test_image_name= */ kPoseImage,
@@ -444,7 +444,7 @@ TEST_P(LiveStreamModeTest, Succeeds) {
 // Investigate PoseLandmarker performance in LiveStreamMode.
 
 INSTANTIATE_TEST_SUITE_P(
-    PoseGestureTest, LiveStreamModeTest,
+    PoseTest, LiveStreamModeTest,
     Values(TestParams{
                /* test_name= */ "Pose",
                /* test_image_name= */ kPoseImage,
