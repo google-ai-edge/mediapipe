@@ -107,6 +107,7 @@ def _metal_library_impl(ctx):
             outputs = [obj, diagnostics, deps_dump],
             mnemonic = "MetalCompile",
             executable = "/usr/bin/xcrun",
+            toolchain = None,
             arguments = args,
             use_default_shell_env = False,
             progress_message = ("Compiling Metal shader %s" %
@@ -128,6 +129,7 @@ def _metal_library_impl(ctx):
         outputs = (output_lib,),
         mnemonic = "MetalLink",
         executable = "/usr/bin/xcrun",
+        toolchain = None,
         arguments = args,
         progress_message = (
             "Linking Metal library %s" % ctx.label.name
