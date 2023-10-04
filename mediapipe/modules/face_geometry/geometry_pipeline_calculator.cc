@@ -92,7 +92,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
 
     const auto& options = cc->Options<FaceGeometryPipelineCalculatorOptions>();
 
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         face_geometry::GeometryPipelineMetadata metadata,
         ReadMetadataFromFile(options.metadata_path()),
         _ << "Failed to read the geometry pipeline metadata from file!");
@@ -109,7 +109,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
     MP_RETURN_IF_ERROR(face_geometry::ValidateEnvironment(environment))
         << "Invalid environment!";
 
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         geometry_pipeline_,
         face_geometry::CreateGeometryPipeline(environment, metadata),
         _ << "Failed to create a geometry pipeline!");
@@ -136,7 +136,7 @@ class GeometryPipelineCalculator : public CalculatorBase {
     auto multi_face_geometry =
         absl::make_unique<std::vector<face_geometry::FaceGeometry>>();
 
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         *multi_face_geometry,
         geometry_pipeline_->EstimateFaceGeometry(
             multi_face_landmarks,  //
@@ -160,9 +160,9 @@ class GeometryPipelineCalculator : public CalculatorBase {
  private:
   static absl::StatusOr<face_geometry::GeometryPipelineMetadata>
   ReadMetadataFromFile(const std::string& metadata_path) {
-    ASSIGN_OR_RETURN(std::string metadata_blob,
-                     ReadContentBlobFromFile(metadata_path),
-                     _ << "Failed to read a metadata blob from file!");
+    MP_ASSIGN_OR_RETURN(std::string metadata_blob,
+                        ReadContentBlobFromFile(metadata_path),
+                        _ << "Failed to read a metadata blob from file!");
 
     face_geometry::GeometryPipelineMetadata metadata;
     RET_CHECK(metadata.ParseFromString(metadata_blob))
@@ -173,9 +173,10 @@ class GeometryPipelineCalculator : public CalculatorBase {
 
   static absl::StatusOr<std::string> ReadContentBlobFromFile(
       const std::string& unresolved_path) {
-    ASSIGN_OR_RETURN(std::string resolved_path,
-                     mediapipe::PathToResourceAsFile(unresolved_path),
-                     _ << "Failed to resolve path! Path = " << unresolved_path);
+    MP_ASSIGN_OR_RETURN(
+        std::string resolved_path,
+        mediapipe::PathToResourceAsFile(unresolved_path),
+        _ << "Failed to resolve path! Path = " << unresolved_path);
 
     std::string content_blob;
     MP_RETURN_IF_ERROR(

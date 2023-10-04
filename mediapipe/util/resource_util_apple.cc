@@ -50,7 +50,7 @@ absl::Status DefaultGetResourceContents(const std::string& path,
     ABSL_LOG(WARNING)
         << "Setting \"read_as_binary\" to false is a no-op on ios.";
   }
-  ASSIGN_OR_RETURN(std::string full_path, PathToResourceAsFile(path));
+  MP_ASSIGN_OR_RETURN(std::string full_path, PathToResourceAsFile(path));
   return file::GetContents(full_path, output, read_as_binary);
 }
 }  // namespace internal

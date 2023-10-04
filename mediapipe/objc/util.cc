@@ -315,8 +315,8 @@ absl::Status CreateCVPixelBufferForImageFramePacket(
   auto image_frame = std::const_pointer_cast<mediapipe::ImageFrame>(
       mediapipe::SharedPtrWithPacket<mediapipe::ImageFrame>(
           image_frame_packet));
-  ASSIGN_OR_RETURN(*out_buffer, CreateCVPixelBufferForImageFrame(
-                                    image_frame, can_overwrite));
+  MP_ASSIGN_OR_RETURN(*out_buffer, CreateCVPixelBufferForImageFrame(
+                                       image_frame, can_overwrite));
   return absl::OkStatus();
 }
 
@@ -339,9 +339,9 @@ absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferForImageFrame(
       if (can_overwrite) {
         v_dest = v_image;
       } else {
-        ASSIGN_OR_RETURN(pixel_buffer,
-                         CreateCVPixelBufferWithoutPool(
-                             frame.Width(), frame.Height(), pixel_format));
+        MP_ASSIGN_OR_RETURN(pixel_buffer,
+                            CreateCVPixelBufferWithoutPool(
+                                frame.Width(), frame.Height(), pixel_format));
         status = CVPixelBufferLockBaseAddress(*pixel_buffer,
                                               kCVPixelBufferLock_ReadOnly);
         RET_CHECK(status == kCVReturnSuccess)
@@ -456,9 +456,9 @@ absl::StatusOr<CFHolder<CVPixelBufferRef>> CreateCVPixelBufferCopyingImageFrame(
   }
 
   CVReturn cv_err;
-  ASSIGN_OR_RETURN(pixel_buffer, CreateCVPixelBufferWithoutPool(
-                                     image_frame.Width(), image_frame.Height(),
-                                     pixel_format));
+  MP_ASSIGN_OR_RETURN(pixel_buffer, CreateCVPixelBufferWithoutPool(
+                                        image_frame.Width(),
+                                        image_frame.Height(), pixel_format));
   cv_err =
       CVPixelBufferLockBaseAddress(*pixel_buffer, kCVPixelBufferLock_ReadOnly);
   RET_CHECK(cv_err == kCVReturnSuccess)

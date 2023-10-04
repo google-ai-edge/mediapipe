@@ -86,7 +86,7 @@ absl::Status ToImageCalculator::UpdateContract(CalculatorContract* cc) {
 }
 
 absl::Status ToImageCalculator::Process(CalculatorContext* cc) {
-  ASSIGN_OR_RETURN(auto output, GetInputImage(cc));
+  MP_ASSIGN_OR_RETURN(auto output, GetInputImage(cc));
   kOut(cc).Send(output.At(cc->InputTimestamp()));
   return absl::OkStatus();
 }

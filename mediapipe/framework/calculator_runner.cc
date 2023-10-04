@@ -111,20 +111,20 @@ absl::Status CalculatorRunner::InitializeFromNodeConfig(
         node_config_.mutable_input_side_packet());
   }
 
-  ASSIGN_OR_RETURN(auto input_map,
-                   tool::TagMap::Create(node_config_.input_stream()));
+  MP_ASSIGN_OR_RETURN(auto input_map,
+                      tool::TagMap::Create(node_config_.input_stream()));
   inputs_ = absl::make_unique<StreamContentsSet>(input_map);
 
-  ASSIGN_OR_RETURN(auto output_map,
-                   tool::TagMap::Create(node_config_.output_stream()));
+  MP_ASSIGN_OR_RETURN(auto output_map,
+                      tool::TagMap::Create(node_config_.output_stream()));
   outputs_ = absl::make_unique<StreamContentsSet>(output_map);
 
-  ASSIGN_OR_RETURN(auto input_side_map,
-                   tool::TagMap::Create(node_config_.input_side_packet()));
+  MP_ASSIGN_OR_RETURN(auto input_side_map,
+                      tool::TagMap::Create(node_config_.input_side_packet()));
   input_side_packets_ = absl::make_unique<PacketSet>(input_side_map);
 
-  ASSIGN_OR_RETURN(auto output_side_map,
-                   tool::TagMap::Create(node_config_.output_side_packet()));
+  MP_ASSIGN_OR_RETURN(auto output_side_map,
+                      tool::TagMap::Create(node_config_.output_side_packet()));
   output_side_packets_ = absl::make_unique<PacketSet>(output_side_map);
 
   return absl::OkStatus();
@@ -353,7 +353,7 @@ absl::Status CalculatorRunner::Run() {
         node_config_.output_side_packet(i), &tag, &index, &name));
     Packet& contents = output_side_packets_->Get(
         tag, (index == -1) ? ++positional_index : index);
-    ASSIGN_OR_RETURN(contents, graph_->GetOutputSidePacket(name));
+    MP_ASSIGN_OR_RETURN(contents, graph_->GetOutputSidePacket(name));
   }
   return absl::OkStatus();
 }

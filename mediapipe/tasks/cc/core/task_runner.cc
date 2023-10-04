@@ -202,7 +202,8 @@ absl::StatusOr<PacketMap> TaskRunner::Process(PacketMap inputs) {
         "callback is provided.",
         MediaPipeTasksStatus::kRunnerApiCalledInWrongModeError);
   }
-  ASSIGN_OR_RETURN(auto input_timestamp, ValidateAndGetPacketTimestamp(inputs));
+  MP_ASSIGN_OR_RETURN(auto input_timestamp,
+                      ValidateAndGetPacketTimestamp(inputs));
   // MediaPipe reports runtime errors through CalculatorGraph::WaitUntilIdle or
   // WaitUntilDone without indicating the exact packet timestamp.
   // To ensure that the TaskRunner::Process reports errors per invocation,
@@ -264,7 +265,8 @@ absl::Status TaskRunner::Send(PacketMap inputs) {
         "callback is not provided.",
         MediaPipeTasksStatus::kRunnerApiCalledInWrongModeError);
   }
-  ASSIGN_OR_RETURN(auto input_timestamp, ValidateAndGetPacketTimestamp(inputs));
+  MP_ASSIGN_OR_RETURN(auto input_timestamp,
+                      ValidateAndGetPacketTimestamp(inputs));
   if (!input_timestamp.IsAllowedInStream()) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,

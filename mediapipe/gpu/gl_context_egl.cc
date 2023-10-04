@@ -177,7 +177,7 @@ absl::Status GlContext::CreateContextInternal(EGLContext share_context,
 }
 
 absl::Status GlContext::CreateContext(EGLContext share_context) {
-  ASSIGN_OR_RETURN(display_, GetInitializedEglDisplay());
+  MP_ASSIGN_OR_RETURN(display_, GetInitializedEglDisplay());
 
   auto status = CreateContextInternal(share_context, 3);
   if (!status.ok()) {

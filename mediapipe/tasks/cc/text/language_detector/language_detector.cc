@@ -112,7 +112,7 @@ absl::StatusOr<std::unique_ptr<LanguageDetector>> LanguageDetector::Create(
 
 absl::StatusOr<LanguageDetectorResult> LanguageDetector::Detect(
     absl::string_view text) {
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       runner_->Process(
           {{kTextStreamName, MakePacket<std::string>(std::string(text))}}));

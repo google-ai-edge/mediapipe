@@ -42,8 +42,8 @@ absl::Status PrintHelloWorld() {
 
   CalculatorGraph graph;
   MP_RETURN_IF_ERROR(graph.Initialize(config));
-  ASSIGN_OR_RETURN(OutputStreamPoller poller,
-                   graph.AddOutputStreamPoller("out"));
+  MP_ASSIGN_OR_RETURN(OutputStreamPoller poller,
+                      graph.AddOutputStreamPoller("out"));
   MP_RETURN_IF_ERROR(graph.StartRun({}));
   // Give 10 input packets that contains the same string "Hello World!".
   for (int i = 0; i < 10; ++i) {

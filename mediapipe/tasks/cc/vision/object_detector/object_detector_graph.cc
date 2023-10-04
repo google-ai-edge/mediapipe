@@ -131,10 +131,10 @@ class ObjectDetectorGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(const auto* model_resources,
-                     CreateModelResources<ObjectDetectorOptionsProto>(sc));
+    MP_ASSIGN_OR_RETURN(const auto* model_resources,
+                        CreateModelResources<ObjectDetectorOptionsProto>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildObjectDetectionTask(
             sc->Options<ObjectDetectorOptionsProto>(), *model_resources,

@@ -175,7 +175,8 @@ StatusOr<int> FindExtensionIndex(const FieldData& message_data,
   }
   std::string& extension_type = entry->extension_type;
   std::vector<FieldData> field_values;
-  ASSIGN_OR_RETURN(field_values, GetFieldValues(message_data, *entry->field));
+  MP_ASSIGN_OR_RETURN(field_values,
+                      GetFieldValues(message_data, *entry->field));
   for (int i = 0; i < field_values.size(); ++i) {
     FieldData extension = ParseProtobufAny(field_values[i]);
     if (extension_type == "*" ||
@@ -275,7 +276,7 @@ absl::Status FindExtension(const FieldData& message_data,
   }
 
   // For repeated protobuf::Any, find the index for the extension_type.
-  ASSIGN_OR_RETURN(int index, FindExtensionIndex(message_data, entry));
+  MP_ASSIGN_OR_RETURN(int index, FindExtensionIndex(message_data, entry));
   if (index != -1) {
     entry->index = index;
     return absl::OkStatus();
@@ -367,7 +368,7 @@ absl::StatusOr<std::vector<FieldData>> GetFieldValues(
     MP_RETURN_IF_ERROR(FindExtension(message_data, &head));
   }
   RET_CHECK_NE(head.field, nullptr);
-  ASSIGN_OR_RETURN(results, GetFieldValues(message_data, *head.field));
+  MP_ASSIGN_OR_RETURN(results, GetFieldValues(message_data, *head.field));
   if (IsProtobufAny(head.field)) {
     for (int i = 0; i < results.size(); ++i) {
       results[i] = ParseProtobufAny(results[i]);
@@ -381,7 +382,7 @@ absl::StatusOr<std::vector<FieldData>> GetFieldValues(
   }
   if (!tail.empty()) {
     FieldData child = results.at(index);
-    ASSIGN_OR_RETURN(results, GetFieldValues(child, tail));
+    MP_ASSIGN_OR_RETURN(results, GetFieldValues(child, tail));
   } else if (index > -1) {
     FieldData child = results.at(index);
     results.clear();
@@ -394,7 +395,7 @@ absl::StatusOr<std::vector<FieldData>> GetFieldValues(
 absl::StatusOr<FieldData> GetField(const FieldData& message_data,
                                    const FieldPath& field_path) {
   std::vector<FieldData> results;
-  ASSIGN_OR_RETURN(results, GetFieldValues(message_data, field_path));
+  MP_ASSIGN_OR_RETURN(results, GetFieldValues(message_data, field_path));
   if (results.empty()) {
     FieldPathEntry tail = field_path.back();
     return absl::OutOfRangeError(absl::StrCat(
@@ -452,12 +453,12 @@ absl::Status MergeFieldValues(FieldData& message_data,
                                             : field_path.back().field->type();
   std::vector<FieldData> results = values;
   std::vector<FieldData> prevs;
-  ASSIGN_OR_RETURN(prevs, GetFieldValues(message_data, field_path));
+  MP_ASSIGN_OR_RETURN(prevs, GetFieldValues(message_data, field_path));
   if (field_type == FieldType::TYPE_MESSAGE) {
     for (int i = 0; i < std::min(values.size(), prevs.size()); ++i) {
       FieldData& v = results[i];
       FieldData& b = prevs[i];
-      ASSIGN_OR_RETURN(v, MergeMessages(b, v));
+      MP_ASSIGN_OR_RETURN(v, MergeMessages(b, v));
     }
   }
   status.Update(SetFieldValues(message_data, field_path, results));

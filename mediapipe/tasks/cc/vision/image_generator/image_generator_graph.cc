@@ -167,7 +167,7 @@ class ControlPluginGraph : public core::ModelTaskGraph {
     image_frame >> image_to_tensor.In(kImageTag);
 
     // Create the plugin model resource.
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         const core::ModelResources* plugin_model_resources,
         CreateModelResources(
             sc,
@@ -238,8 +238,8 @@ class ImageGeneratorGraph : public core::ModelTaskGraph {
     if (subgraph_options->has_lora_weights_file()) {
       auto external_file = std::make_unique<tasks::core::proto::ExternalFile>();
       external_file->Swap(subgraph_options->mutable_lora_weights_file());
-      ASSIGN_OR_RETURN(lora_resources, CreateModelAssetBundleResources(
-                                           sc, std::move(external_file)));
+      MP_ASSIGN_OR_RETURN(lora_resources, CreateModelAssetBundleResources(
+                                              sc, std::move(external_file)));
     }
     std::optional<Source<Image>> condition_image;
     std::optional<Source<int>> select_condition_type;
@@ -251,7 +251,7 @@ class ImageGeneratorGraph : public core::ModelTaskGraph {
     if (HasInput(sc->OriginalNode(), kShowResultTag)) {
       show_result = graph.In(kShowResultTag).Cast<bool>();
     }
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto outputs,
         BuildImageGeneratorGraph(
             *sc->MutableOptions<proto::ImageGeneratorGraphOptions>(),
@@ -337,8 +337,8 @@ class ImageGeneratorGraph : public core::ModelTaskGraph {
           *options.mutable_lora_weights_layer_mapping();
       for (const auto& file_path : (*lora_resources)->ListFiles()) {
         auto basename = file::Basename(file_path);
-        ASSIGN_OR_RETURN(auto file_content,
-                         (*lora_resources)->GetFile(std::string(file_path)));
+        MP_ASSIGN_OR_RETURN(auto file_content,
+                            (*lora_resources)->GetFile(std::string(file_path)));
         if (file_path == kMetadataFilename) {
           MP_RETURN_IF_ERROR(
               ParseLoraMetadataAndConfigOptions(file_content, options));

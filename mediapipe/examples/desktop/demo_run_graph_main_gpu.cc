@@ -62,7 +62,7 @@ absl::Status RunMPPGraph() {
   MP_RETURN_IF_ERROR(graph.Initialize(config));
 
   ABSL_LOG(INFO) << "Initialize the GPU.";
-  ASSIGN_OR_RETURN(auto gpu_resources, mediapipe::GpuResources::Create());
+  MP_ASSIGN_OR_RETURN(auto gpu_resources, mediapipe::GpuResources::Create());
   MP_RETURN_IF_ERROR(graph.SetGpuResources(std::move(gpu_resources)));
   mediapipe::GlCalculatorHelper gpu_helper;
   gpu_helper.InitializeForTest(graph.GetGpuResources().get());
@@ -89,8 +89,8 @@ absl::Status RunMPPGraph() {
   }
 
   ABSL_LOG(INFO) << "Start running the calculator graph.";
-  ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller poller,
-                   graph.AddOutputStreamPoller(kOutputStream));
+  MP_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller poller,
+                      graph.AddOutputStreamPoller(kOutputStream));
   MP_RETURN_IF_ERROR(graph.StartRun({}));
 
   ABSL_LOG(INFO) << "Start grabbing and processing frames.";

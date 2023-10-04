@@ -267,7 +267,8 @@ absl::Status TensorsToSegmentationCalculator::Process(CalculatorContext* cc) {
   {
     RET_CHECK(!input_tensors.empty());
     RET_CHECK(input_tensors[0].element_type() == Tensor::ElementType::kFloat32);
-    ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensors[0].shape().dims));
+    MP_ASSIGN_OR_RETURN(auto hwc,
+                        GetHwcFromDims(input_tensors[0].shape().dims));
     int tensor_channels = std::get<2>(hwc);
     typedef mediapipe::TensorsToSegmentationCalculatorOptions Options;
     switch (options_.activation()) {
@@ -330,7 +331,7 @@ absl::Status TensorsToSegmentationCalculator::ProcessCpu(
   // Get input streams, and dimensions.
   const auto& input_tensors =
       cc->Inputs().Tag(kTensorsTag).Get<std::vector<Tensor>>();
-  ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensors[0].shape().dims));
+  MP_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensors[0].shape().dims));
   auto [tensor_height, tensor_width, tensor_channels] = hwc;
   int output_width = tensor_width, output_height = tensor_height;
   if (cc->Inputs().HasTag(kOutputSizeTag)) {
@@ -441,7 +442,7 @@ absl::Status TensorsToSegmentationCalculator::ProcessGpu(
   // Get input streams, and dimensions.
   const auto& input_tensors =
       cc->Inputs().Tag(kTensorsTag).Get<std::vector<Tensor>>();
-  ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensors[0].shape().dims));
+  MP_ASSIGN_OR_RETURN(auto hwc, GetHwcFromDims(input_tensors[0].shape().dims));
   auto [tensor_height, tensor_width, tensor_channels] = hwc;
   int output_width = tensor_width, output_height = tensor_height;
   if (cc->Inputs().HasTag(kOutputSizeTag)) {

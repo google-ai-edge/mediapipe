@@ -142,9 +142,9 @@ class ScreenToMetricSpaceConverter {
     Eigen::Matrix3Xf intermediate_landmarks(screen_landmarks);
     ChangeHandedness(intermediate_landmarks);
 
-    ASSIGN_OR_RETURN(const float first_iteration_scale,
-                     EstimateScale(intermediate_landmarks),
-                     _ << "Failed to estimate first iteration scale!");
+    MP_ASSIGN_OR_RETURN(const float first_iteration_scale,
+                        EstimateScale(intermediate_landmarks),
+                        _ << "Failed to estimate first iteration scale!");
 
     // 2nd iteration: unproject XY using the scale from the 1st iteration.
     intermediate_landmarks = screen_landmarks;
@@ -167,9 +167,9 @@ class ScreenToMetricSpaceConverter {
            canonical_metric_landmarks_.colwise().homogeneous())
               .row(2);
     }
-    ASSIGN_OR_RETURN(const float second_iteration_scale,
-                     EstimateScale(intermediate_landmarks),
-                     _ << "Failed to estimate second iteration scale!");
+    MP_ASSIGN_OR_RETURN(const float second_iteration_scale,
+                        EstimateScale(intermediate_landmarks),
+                        _ << "Failed to estimate second iteration scale!");
 
     // Use the total scale to unproject the screen landmarks.
     const float total_scale = first_iteration_scale * second_iteration_scale;

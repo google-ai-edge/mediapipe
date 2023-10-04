@@ -51,9 +51,9 @@ absl::StatusOr<absl::string_view> CheckAndLoadFirstAssociatedFile(
         "Invalid vocab_file from input process unit.",
         MediaPipeTasksStatus::kMetadataInvalidTokenizerError);
   }
-  ASSIGN_OR_RETURN(absl::string_view vocab_buffer,
-                   metadata_extractor->GetAssociatedFile(
-                       associated_files->Get(0)->name()->str()));
+  MP_ASSIGN_OR_RETURN(absl::string_view vocab_buffer,
+                      metadata_extractor->GetAssociatedFile(
+                          associated_files->Get(0)->name()->str()));
   return vocab_buffer;
 }
 }  // namespace
@@ -61,9 +61,9 @@ absl::StatusOr<absl::string_view> CheckAndLoadFirstAssociatedFile(
 absl::StatusOr<std::unique_ptr<RegexTokenizer>> CreateRegexTokenizerFromOptions(
     const tflite::RegexTokenizerOptions* options,
     const metadata::ModelMetadataExtractor* metadata_extractor) {
-  ASSIGN_OR_RETURN(absl::string_view vocab_buffer,
-                   CheckAndLoadFirstAssociatedFile(options->vocab_file(),
-                                                   metadata_extractor));
+  MP_ASSIGN_OR_RETURN(absl::string_view vocab_buffer,
+                      CheckAndLoadFirstAssociatedFile(options->vocab_file(),
+                                                      metadata_extractor));
   if (options->delim_regex_pattern() == nullptr) {
     return CreateStatusWithPayload(
         absl::StatusCode::kInvalidArgument,
@@ -108,9 +108,9 @@ absl::StatusOr<std::unique_ptr<Tokenizer>> CreateTokenizerFromProcessUnit(
     case tflite::ProcessUnitOptions_BertTokenizerOptions: {
       const tflite::BertTokenizerOptions* options =
           tokenizer_process_unit->options_as<tflite::BertTokenizerOptions>();
-      ASSIGN_OR_RETURN(absl::string_view vocab_buffer,
-                       CheckAndLoadFirstAssociatedFile(options->vocab_file(),
-                                                       metadata_extractor));
+      MP_ASSIGN_OR_RETURN(absl::string_view vocab_buffer,
+                          CheckAndLoadFirstAssociatedFile(options->vocab_file(),
+                                                          metadata_extractor));
       return std::make_unique<BertTokenizer>(vocab_buffer.data(),
                                              vocab_buffer.size());
     }
@@ -118,9 +118,10 @@ absl::StatusOr<std::unique_ptr<Tokenizer>> CreateTokenizerFromProcessUnit(
       const tflite::SentencePieceTokenizerOptions* options =
           tokenizer_process_unit
               ->options_as<tflite::SentencePieceTokenizerOptions>();
-      ASSIGN_OR_RETURN(absl::string_view model_buffer,
-                       CheckAndLoadFirstAssociatedFile(
-                           options->sentencePiece_model(), metadata_extractor));
+      MP_ASSIGN_OR_RETURN(
+          absl::string_view model_buffer,
+          CheckAndLoadFirstAssociatedFile(options->sentencePiece_model(),
+                                          metadata_extractor));
       return std::make_unique<SentencePieceTokenizer>(model_buffer.data(),
                                                       model_buffer.size());
     }

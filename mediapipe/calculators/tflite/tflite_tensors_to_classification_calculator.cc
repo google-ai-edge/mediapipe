@@ -101,8 +101,8 @@ absl::Status TfLiteTensorsToClassificationCalculator::Open(
   top_k_ = options_.top_k();
   if (options_.has_label_map_path()) {
     std::string string_path;
-    ASSIGN_OR_RETURN(string_path,
-                     PathToResourceAsFile(options_.label_map_path()));
+    MP_ASSIGN_OR_RETURN(string_path,
+                        PathToResourceAsFile(options_.label_map_path()));
     std::string label_map_string;
     MP_RETURN_IF_ERROR(file::GetContents(string_path, &label_map_string));
 

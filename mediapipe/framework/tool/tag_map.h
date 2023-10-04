@@ -53,7 +53,7 @@ class TagMap {
 
   // Create a TagMap from a repeated string proto field of TAG:<index>:name.
   // This is the most common usage:
-  // ASSIGN_OR_RETURN(std::shared_ptr<TagMap> tag_map,
+  // MP_ASSIGN_OR_RETURN(std::shared_ptr<TagMap> tag_map,
   //                  tool::TagMap::Create(node.input_streams()));
   static absl::StatusOr<std::shared_ptr<TagMap>> Create(
       const proto_ns::RepeatedPtrField<ProtoString>& tag_index_names) {

@@ -303,14 +303,15 @@ absl::Status CalculatorNode::InitializeInputStreamHandler(
   const ProtoString& input_stream_handler_name =
       handler_config.input_stream_handler();
   RET_CHECK(!input_stream_handler_name.empty());
-  ASSIGN_OR_RETURN(input_stream_handler_,
-                   InputStreamHandlerRegistry::CreateByNameInNamespace(
-                       validated_graph_->Package(), input_stream_handler_name,
-                       input_stream_types.TagMap(),
-                       &calculator_context_manager_, handler_config.options(),
-                       /*calculator_run_in_parallel=*/max_in_flight_ > 1),
-                   _ << "\"" << input_stream_handler_name
-                     << "\" is not a registered input stream handler.");
+  MP_ASSIGN_OR_RETURN(
+      input_stream_handler_,
+      InputStreamHandlerRegistry::CreateByNameInNamespace(
+          validated_graph_->Package(), input_stream_handler_name,
+          input_stream_types.TagMap(), &calculator_context_manager_,
+          handler_config.options(),
+          /*calculator_run_in_parallel=*/max_in_flight_ > 1),
+      _ << "\"" << input_stream_handler_name
+        << "\" is not a registered input stream handler.");
 
   return absl::OkStatus();
 }
@@ -321,14 +322,15 @@ absl::Status CalculatorNode::InitializeOutputStreamHandler(
   const ProtoString& output_stream_handler_name =
       handler_config.output_stream_handler();
   RET_CHECK(!output_stream_handler_name.empty());
-  ASSIGN_OR_RETURN(output_stream_handler_,
-                   OutputStreamHandlerRegistry::CreateByNameInNamespace(
-                       validated_graph_->Package(), output_stream_handler_name,
-                       output_stream_types.TagMap(),
-                       &calculator_context_manager_, handler_config.options(),
-                       /*calculator_run_in_parallel=*/max_in_flight_ > 1),
-                   _ << "\"" << output_stream_handler_name
-                     << "\" is not a registered output stream handler.");
+  MP_ASSIGN_OR_RETURN(
+      output_stream_handler_,
+      OutputStreamHandlerRegistry::CreateByNameInNamespace(
+          validated_graph_->Package(), output_stream_handler_name,
+          output_stream_types.TagMap(), &calculator_context_manager_,
+          handler_config.options(),
+          /*calculator_run_in_parallel=*/max_in_flight_ > 1),
+      _ << "\"" << output_stream_handler_name
+        << "\" is not a registered output stream handler.");
   return absl::OkStatus();
 }
 
@@ -420,7 +422,7 @@ absl::Status CalculatorNode::PrepareForRun(
   MP_RETURN_IF_ERROR(calculator_context_manager_.PrepareForRun(std::bind(
       &CalculatorNode::ConnectShardsToStreams, this, std::placeholders::_1)));
 
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto calculator_factory,
       CalculatorBaseRegistry::CreateByNameInNamespace(
           validated_graph_->Package(), calculator_state_->CalculatorType()));

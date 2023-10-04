@@ -55,7 +55,7 @@ const HolderBase* GetHolder(const Packet& packet) {
 
 absl::StatusOr<Packet> PacketFromDynamicProto(const std::string& type_name,
                                               const std::string& serialized) {
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto message_holder,
       packet_internal::MessageHolderRegistry::CreateByName(type_name));
   auto* message =

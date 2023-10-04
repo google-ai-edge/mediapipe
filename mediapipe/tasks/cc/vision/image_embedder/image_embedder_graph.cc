@@ -95,11 +95,11 @@ class ImageEmbedderGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         const auto* model_resources,
         CreateModelResources<proto::ImageEmbedderGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildImageEmbedderTask(
             sc->Options<proto::ImageEmbedderGraphOptions>(), *model_resources,

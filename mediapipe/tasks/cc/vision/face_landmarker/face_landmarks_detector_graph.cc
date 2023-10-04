@@ -223,11 +223,11 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         const auto* model_resources,
         CreateModelResources<proto::FaceLandmarksDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto outs,
         BuildSingleFaceLandmarksDetectorGraph(
             *sc->MutableOptions<proto::FaceLandmarksDetectorGraphOptions>(),
@@ -291,8 +291,8 @@ class SingleFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
 
     // Decodes the landmark tensors into a list of landmarks, where the landmark
     // coordinates are normalized by the size of the input image to the model.
-    ASSIGN_OR_RETURN(auto image_tensor_specs,
-                     vision::BuildInputImageTensorSpecs(model_resources));
+    MP_ASSIGN_OR_RETURN(auto image_tensor_specs,
+                        vision::BuildInputImageTensorSpecs(model_resources));
     auto& tensors_to_face_landmarks = graph.AddNode(
         "mediapipe.tasks.vision.face_landmarker.TensorsToFaceLandmarksGraph");
     ConfigureTensorsToFaceLandmarksGraph(
@@ -497,7 +497,7 @@ class MultiFaceLandmarksDetectorGraph : public core::ModelTaskGraph {
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto outs,
         BuildFaceLandmarksDetectorGraph(
             *sc->MutableOptions<proto::FaceLandmarksDetectorGraphOptions>(),

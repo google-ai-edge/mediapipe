@@ -301,16 +301,17 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
       SubgraphContext* sc) override {
     bool output_segmentation_mask =
         HasOutput(sc->OriginalNode(), kSegmentationMaskTag);
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         const auto* model_resources,
         CreateModelResources<PoseLandmarksDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(auto pose_landmark_detection_outs,
-                     BuildSinglePoseLandmarksDetectorGraph(
-                         sc->Options<PoseLandmarksDetectorGraphOptions>(),
-                         *model_resources, graph[Input<Image>(kImageTag)],
-                         graph[Input<NormalizedRect>::Optional(kNormRectTag)],
-                         graph, output_segmentation_mask));
+    MP_ASSIGN_OR_RETURN(
+        auto pose_landmark_detection_outs,
+        BuildSinglePoseLandmarksDetectorGraph(
+            sc->Options<PoseLandmarksDetectorGraphOptions>(), *model_resources,
+            graph[Input<Image>(kImageTag)],
+            graph[Input<NormalizedRect>::Optional(kNormRectTag)], graph,
+            output_segmentation_mask));
     pose_landmark_detection_outs.pose_landmarks >>
         graph[Output<NormalizedLandmarkList>(kLandmarksTag)];
     pose_landmark_detection_outs.world_pose_landmarks >>
@@ -355,8 +356,8 @@ class SinglePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
     auto matrix = preprocessing[Output<std::vector<float>>(kMatrixTag)];
     auto letterbox_padding = preprocessing.Out(kLetterboxPaddingTag);
 
-    ASSIGN_OR_RETURN(auto image_tensor_specs,
-                     BuildInputImageTensorSpecs(model_resources));
+    MP_ASSIGN_OR_RETURN(auto image_tensor_specs,
+                        BuildInputImageTensorSpecs(model_resources));
 
     auto& inference = AddInference(
         model_resources, subgraph_options.base_options().acceleration(), graph);
@@ -653,7 +654,7 @@ class MultiplePoseLandmarksDetectorGraph : public core::ModelTaskGraph {
     Graph graph;
     bool output_segmentation_masks =
         HasOutput(sc->OriginalNode(), kSegmentationMaskTag);
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto pose_landmark_detection_outputs,
         BuildPoseLandmarksDetectorGraph(
             sc->Options<PoseLandmarksDetectorGraphOptions>(),

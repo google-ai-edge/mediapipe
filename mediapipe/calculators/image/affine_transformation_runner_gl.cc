@@ -223,7 +223,7 @@ class GlTextureWarpAffineRunner
           absl::StrCat(mediapipe::kMediaPipeFragmentShaderPreamble,
                        interpolation_def, kFragShader);
 
-      ASSIGN_OR_RETURN(program_, create_fn(vert_src, frag_src));
+      MP_ASSIGN_OR_RETURN(program_, create_fn(vert_src, frag_src));
 
       auto create_custom_zero_fn = [&]() -> absl::StatusOr<Program> {
         std::string custom_zero_border_mode_def = R"(
@@ -236,10 +236,10 @@ class GlTextureWarpAffineRunner
       };
 #if GL_CLAMP_TO_BORDER_MAY_BE_SUPPORTED
       if (!IsGlClampToBorderSupported(gl_helper_->GetGlContext())) {
-        ASSIGN_OR_RETURN(program_custom_zero_, create_custom_zero_fn());
+        MP_ASSIGN_OR_RETURN(program_custom_zero_, create_custom_zero_fn());
       }
 #else
-      ASSIGN_OR_RETURN(program_custom_zero_, create_custom_zero_fn());
+      MP_ASSIGN_OR_RETURN(program_custom_zero_, create_custom_zero_fn());
 #endif  // GL_CLAMP_TO_BORDER_MAY_BE_SUPPORTED
 
       glGenFramebuffers(1, &framebuffer_);

@@ -193,10 +193,10 @@ class GlProcessor : public ImageToTensorConverter {
 
           constexpr float kInputImageRangeMin = 0.0f;
           constexpr float kInputImageRangeMax = 1.0f;
-          ASSIGN_OR_RETURN(auto transform,
-                           GetValueRangeTransformation(kInputImageRangeMin,
-                                                       kInputImageRangeMax,
-                                                       range_min, range_max));
+          MP_ASSIGN_OR_RETURN(auto transform,
+                              GetValueRangeTransformation(
+                                  kInputImageRangeMin, kInputImageRangeMax,
+                                  range_min, range_max));
           auto tensor_view = output_tensor.GetOpenGlTexture2dWriteView();
           MP_RETURN_IF_ERROR(ExtractSubRect(input_texture, roi,
                                             /*flip_horizontaly=*/false,

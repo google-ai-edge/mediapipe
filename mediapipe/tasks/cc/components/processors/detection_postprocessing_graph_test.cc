@@ -318,8 +318,8 @@ class PostprocessingTest : public tflite::testing::Test {
  protected:
   absl::StatusOr<OutputStreamPoller> BuildGraph(
       absl::string_view model_name, const proto::DetectorOptions& options) {
-    ASSIGN_OR_RETURN(auto model_resources,
-                     CreateModelResourcesForModel(model_name));
+    MP_ASSIGN_OR_RETURN(auto model_resources,
+                        CreateModelResourcesForModel(model_name));
 
     Graph graph;
     auto& postprocessing = graph.AddNode(
@@ -335,8 +335,8 @@ class PostprocessingTest : public tflite::testing::Test {
     postprocessing.Out(kDetectionsTag).SetName(std::string(kDetectionsName)) >>
         graph[Output<std::vector<Detection>>(kDetectionsTag)];
     MP_RETURN_IF_ERROR(calculator_graph_.Initialize(graph.GetConfig()));
-    ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
-                                      std::string(kDetectionsName)));
+    MP_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
+                                         std::string(kDetectionsName)));
     MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
     return poller;
   }

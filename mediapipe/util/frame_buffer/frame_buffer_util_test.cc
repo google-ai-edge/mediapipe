@@ -786,7 +786,8 @@ absl::StatusOr<std::shared_ptr<FrameBuffer>> CreateYuvBuffer(
     uint8_t* buffer, FrameBuffer::Dimension dimension, int plane_count,
     FrameBuffer::Format format) {
   ABSL_DCHECK(plane_count > 0 && plane_count < 4);
-  ASSIGN_OR_RETURN(auto uv_dimension, GetUvPlaneDimension(dimension, format));
+  MP_ASSIGN_OR_RETURN(auto uv_dimension,
+                      GetUvPlaneDimension(dimension, format));
 
   if (plane_count == 1) {
     const std::vector<FrameBuffer::Plane> planes = {

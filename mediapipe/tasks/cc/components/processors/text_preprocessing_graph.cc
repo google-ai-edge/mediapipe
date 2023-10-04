@@ -180,8 +180,8 @@ absl::Status ConfigureTextPreprocessingGraph(
         MediaPipeTasksStatus::kInvalidArgumentError);
   }
 
-  ASSIGN_OR_RETURN(TextModelType::ModelType model_type,
-                   GetModelType(model_resources));
+  MP_ASSIGN_OR_RETURN(TextModelType::ModelType model_type,
+                      GetModelType(model_resources));
   const tflite::SubGraph& model_graph =
       *(*model_resources.GetTfLiteModel()->subgraphs())[0];
   options.set_model_type(model_type);
@@ -193,13 +193,13 @@ absl::Status ConfigureTextPreprocessingGraph(
     }
     case TextModelType::BERT_MODEL:
     case TextModelType::REGEX_MODEL: {
-      ASSIGN_OR_RETURN(int max_seq_len, GetMaxSeqLen(model_graph));
+      MP_ASSIGN_OR_RETURN(int max_seq_len, GetMaxSeqLen(model_graph));
       options.set_max_seq_len(max_seq_len);
     }
   }
   if (model_type == TextModelType::BERT_MODEL) {
-    ASSIGN_OR_RETURN(bool has_dynamic_input_tensors,
-                     HasDynamicInputTensors(model_graph));
+    MP_ASSIGN_OR_RETURN(bool has_dynamic_input_tensors,
+                        HasDynamicInputTensors(model_graph));
     options.set_has_dynamic_input_tensors(has_dynamic_input_tensors);
   }
   return absl::OkStatus();
@@ -227,7 +227,7 @@ class TextPreprocessingGraph : public mediapipe::Subgraph {
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         Source<std::vector<Tensor>> tensors_in,
         BuildTextPreprocessing(
             sc->Options<TextPreprocessingGraphOptions>(),
@@ -242,8 +242,8 @@ class TextPreprocessingGraph : public mediapipe::Subgraph {
   absl::StatusOr<Source<std::vector<Tensor>>> BuildTextPreprocessing(
       const TextPreprocessingGraphOptions& options, Source<std::string> text_in,
       SideSource<ModelMetadataExtractor> metadata_extractor_in, Graph& graph) {
-    ASSIGN_OR_RETURN(std::string preprocessor_name,
-                     GetCalculatorNameFromModelType(options.model_type()));
+    MP_ASSIGN_OR_RETURN(std::string preprocessor_name,
+                        GetCalculatorNameFromModelType(options.model_type()));
     auto& text_preprocessor = graph.AddNode(preprocessor_name);
     switch (options.model_type()) {
       case TextModelType::UNSPECIFIED_MODEL:

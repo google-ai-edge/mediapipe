@@ -192,18 +192,19 @@ class ImageToTensorCalculator : public Node {
     }
 
 #if MEDIAPIPE_DISABLE_GPU
-    ASSIGN_OR_RETURN(auto image, GetInputImage(kIn(cc)));
+    MP_ASSIGN_OR_RETURN(auto image, GetInputImage(kIn(cc)));
 #else
     const bool is_input_gpu = kInGpu(cc).IsConnected();
-    ASSIGN_OR_RETURN(auto image, is_input_gpu ? GetInputImage(kInGpu(cc))
-                                              : GetInputImage(kIn(cc)));
+    MP_ASSIGN_OR_RETURN(auto image, is_input_gpu ? GetInputImage(kInGpu(cc))
+                                                 : GetInputImage(kIn(cc)));
 #endif  // MEDIAPIPE_DISABLE_GPU
 
     RotatedRect roi = GetRoi(image->width(), image->height(), norm_rect);
     const int tensor_width = params_.output_width.value_or(image->width());
     const int tensor_height = params_.output_height.value_or(image->height());
-    ASSIGN_OR_RETURN(auto padding, PadRoi(tensor_width, tensor_height,
-                                          options_.keep_aspect_ratio(), &roi));
+    MP_ASSIGN_OR_RETURN(auto padding,
+                        PadRoi(tensor_width, tensor_height,
+                               options_.keep_aspect_ratio(), &roi));
     if (kOutLetterboxPadding(cc).IsConnected()) {
       kOutLetterboxPadding(cc).Send(padding);
     }
@@ -247,20 +248,20 @@ class ImageToTensorCalculator : public Node {
       if (!gpu_converter_) {
 #if !MEDIAPIPE_DISABLE_GPU
 #if MEDIAPIPE_METAL_ENABLED
-        ASSIGN_OR_RETURN(
+        MP_ASSIGN_OR_RETURN(
             gpu_converter_,
             CreateMetalConverter(cc, GetBorderMode(options_.border_mode())));
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_31
-        ASSIGN_OR_RETURN(gpu_converter_,
-                         CreateImageToGlBufferTensorConverter(
-                             cc, DoesGpuInputStartAtBottom(options_),
-                             GetBorderMode(options_.border_mode())));
+        MP_ASSIGN_OR_RETURN(gpu_converter_,
+                            CreateImageToGlBufferTensorConverter(
+                                cc, DoesGpuInputStartAtBottom(options_),
+                                GetBorderMode(options_.border_mode())));
 #else
         if (!gpu_converter_) {
-          ASSIGN_OR_RETURN(gpu_converter_,
-                           CreateImageToGlTextureTensorConverter(
-                               cc, DoesGpuInputStartAtBottom(options_),
-                               GetBorderMode(options_.border_mode())));
+          MP_ASSIGN_OR_RETURN(gpu_converter_,
+                              CreateImageToGlTextureTensorConverter(
+                                  cc, DoesGpuInputStartAtBottom(options_),
+                                  GetBorderMode(options_.border_mode())));
         }
         if (!gpu_converter_) {
           return absl::UnimplementedError(
@@ -272,18 +273,20 @@ class ImageToTensorCalculator : public Node {
     } else {
       if (!cpu_converter_) {
 #if !MEDIAPIPE_DISABLE_OPENCV
-        ASSIGN_OR_RETURN(cpu_converter_,
-                         CreateOpenCvConverter(
-                             cc, GetBorderMode(options_.border_mode()),
-                             GetOutputTensorType(/*uses_gpu=*/false, params_)));
+        MP_ASSIGN_OR_RETURN(
+            cpu_converter_,
+            CreateOpenCvConverter(
+                cc, GetBorderMode(options_.border_mode()),
+                GetOutputTensorType(/*uses_gpu=*/false, params_)));
 // TODO: FrameBuffer-based converter needs to call GetGpuBuffer()
 // to get access to a FrameBuffer view. Investigate if GetGpuBuffer() can be
 // made available even with MEDIAPIPE_DISABLE_GPU set.
 #elif MEDIAPIPE_ENABLE_HALIDE
-        ASSIGN_OR_RETURN(cpu_converter_,
-                         CreateFrameBufferConverter(
-                             cc, GetBorderMode(options_.border_mode()),
-                             GetOutputTensorType(/*uses_gpu=*/false, params_)));
+        MP_ASSIGN_OR_RETURN(
+            cpu_converter_,
+            CreateFrameBufferConverter(
+                cc, GetBorderMode(options_.border_mode()),
+                GetOutputTensorType(/*uses_gpu=*/false, params_)));
 #else
         ABSL_LOG(FATAL) << "Cannot create image to tensor CPU converter since "
                            "MEDIAPIPE_DISABLE_OPENCV is defined and "

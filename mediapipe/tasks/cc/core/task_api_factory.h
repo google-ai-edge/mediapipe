@@ -74,7 +74,7 @@ class TaskApiFactory {
         found_task_subgraph = true;
       }
     }
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto runner,
         core::TaskRunner::Create(std::move(graph_config), std::move(resolver),
                                  std::move(packets_callback)));

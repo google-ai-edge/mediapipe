@@ -97,27 +97,27 @@
 //
 // Interface:
 //
-//   ASSIGN_OR_RETURN(lhs, rexpr)
-//   ASSIGN_OR_RETURN(lhs, rexpr, error_expression);
+//   MP_ASSIGN_OR_RETURN(lhs, rexpr)
+//   MP_ASSIGN_OR_RETURN(lhs, rexpr, error_expression);
 //
 // WARNING: expands into multiple statements; it cannot be used in a single
 // statement (e.g. as the body of an if statement without {})!
 //
 // Example: Declaring and initializing a new variable (ValueType can be anything
 //          that can be initialized with assignment, including references):
-//   ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(arg));
+//   MP_ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(arg));
 //
 // Example: Assigning to an existing variable:
 //   ValueType value;
-//   ASSIGN_OR_RETURN(value, MaybeGetValue(arg));
+//   MP_ASSIGN_OR_RETURN(value, MaybeGetValue(arg));
 //
 // Example: Assigning to an expression with side effects:
 //   MyProto data;
-//   ASSIGN_OR_RETURN(*data.mutable_str(), MaybeGetValue(arg));
+//   MP_ASSIGN_OR_RETURN(*data.mutable_str(), MaybeGetValue(arg));
 //   // No field "str" is added on error.
 //
 // Example: Assigning to a std::unique_ptr.
-//   ASSIGN_OR_RETURN(std::unique_ptr<T> ptr, MaybeGetPtr(arg));
+//   MP_ASSIGN_OR_RETURN(std::unique_ptr<T> ptr, MaybeGetPtr(arg));
 //
 // If passed, the `error_expression` is evaluated to produce the return
 // value. The expression may reference any variable visible in scope, as
@@ -128,16 +128,16 @@
 // returnable by the function, including (void). For example:
 //
 // Example: Adjusting the error message.
-//   ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(query),
+//   MP_ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(query),
 //                    _ << "while processing query " << query.DebugString());
 //
 // Example: Logging the error on failure.
-//   ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(query), _.LogError());
+//   MP_ASSIGN_OR_RETURN(ValueType value, MaybeGetValue(query), _.LogError());
 //
-#define ASSIGN_OR_RETURN(...)                                  \
-  MP_STATUS_MACROS_IMPL_GET_VARIADIC_(                         \
-      (__VA_ARGS__, MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_3_, \
-       MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_2_))             \
+#define MP_ASSIGN_OR_RETURN(...)                                  \
+  MP_STATUS_MACROS_IMPL_GET_VARIADIC_(                            \
+      (__VA_ARGS__, MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_3_, \
+       MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_2_))             \
   (__VA_ARGS__)
 
 // =================================================================
@@ -150,16 +150,16 @@
 #define MP_STATUS_MACROS_IMPL_GET_VARIADIC_(args) \
   MP_STATUS_MACROS_IMPL_GET_VARIADIC_HELPER_ args
 
-#define MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_2_(lhs, rexpr)                  \
-  MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(                                     \
+#define MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_2_(lhs, rexpr)               \
+  MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_(                                  \
       MP_STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr,   \
       return mediapipe::StatusBuilder(                                         \
           std::move(MP_STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__)) \
               .status(),                                                       \
           MEDIAPIPE_LOC))
-#define MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_3_(lhs, rexpr,                  \
-                                                  error_expression)            \
-  MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(                                     \
+#define MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_3_(lhs, rexpr,               \
+                                                     error_expression)         \
+  MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_(                                  \
       MP_STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__), lhs, rexpr,   \
       mediapipe::StatusBuilder _(                                              \
           std::move(MP_STATUS_MACROS_IMPL_CONCAT_(_status_or_value, __LINE__)) \
@@ -167,12 +167,12 @@
           MEDIAPIPE_LOC);                                                      \
       (void)_; /* error_expression is allowed to not use this variable */      \
       return (error_expression))
-#define MP_STATUS_MACROS_IMPL_ASSIGN_OR_RETURN_(statusor, lhs, rexpr, \
-                                                error_expression)     \
-  auto statusor = (rexpr);                                            \
-  if (ABSL_PREDICT_FALSE(!statusor.ok())) {                           \
-    error_expression;                                                 \
-  }                                                                   \
+#define MP_STATUS_MACROS_IMPL_MP_ASSIGN_OR_RETURN_(statusor, lhs, rexpr, \
+                                                   error_expression)     \
+  auto statusor = (rexpr);                                               \
+  if (ABSL_PREDICT_FALSE(!statusor.ok())) {                              \
+    error_expression;                                                    \
+  }                                                                      \
   lhs = std::move(statusor).value()
 
 // Internal helper for concatenating macro values.

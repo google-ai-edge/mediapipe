@@ -196,7 +196,7 @@ absl::Status ProtoUtilLite::ReplaceFieldRange(
   proto_path.erase(proto_path.begin());
   FieldType type =
       !proto_path.empty() ? WireFormatLite::TYPE_MESSAGE : field_type;
-  ASSIGN_OR_RETURN(auto r, AccessField(entry, type, *message));
+  MP_ASSIGN_OR_RETURN(auto r, AccessField(entry, type, *message));
   FieldAccess& access = r.first;
   int index = r.second;
   std::vector<FieldValue>& v = *access.mutable_field_values();
@@ -223,7 +223,7 @@ absl::Status ProtoUtilLite::GetFieldRange(
   proto_path.erase(proto_path.begin());
   FieldType type =
       !proto_path.empty() ? WireFormatLite::TYPE_MESSAGE : field_type;
-  ASSIGN_OR_RETURN(auto r, AccessField(entry, type, message));
+  MP_ASSIGN_OR_RETURN(auto r, AccessField(entry, type, message));
   FieldAccess& access = r.first;
   int index = r.second;
   std::vector<FieldValue>& v = *access.mutable_field_values();
@@ -252,7 +252,7 @@ absl::Status ProtoUtilLite::GetFieldCount(const FieldValue& message,
   proto_path.erase(proto_path.begin());
   FieldType type =
       !proto_path.empty() ? WireFormatLite::TYPE_MESSAGE : field_type;
-  ASSIGN_OR_RETURN(auto r, AccessField(entry, type, message));
+  MP_ASSIGN_OR_RETURN(auto r, AccessField(entry, type, message));
   FieldAccess& access = r.first;
   int index = r.second;
   std::vector<FieldValue>& v = *access.mutable_field_values();

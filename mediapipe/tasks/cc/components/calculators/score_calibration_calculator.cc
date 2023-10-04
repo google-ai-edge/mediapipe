@@ -178,9 +178,9 @@ absl::Status ScoreCalibrationCalculator::Process(CalculatorContext* cc) {
     for (int i = 0; i < num_scores; ++i) {
       // Use the "safe" flavor as we need to check that the externally provided
       // indices are not out-of-bounds.
-      ASSIGN_OR_RETURN(raw_calibrated_scores[i],
-                       SafeComputeCalibratedScore(
-                           static_cast<int>(raw_indices[i]), raw_scores[i]));
+      MP_ASSIGN_OR_RETURN(raw_calibrated_scores[i],
+                          SafeComputeCalibratedScore(
+                              static_cast<int>(raw_indices[i]), raw_scores[i]));
     }
   } else {
     if (num_scores != options_.sigmoids_size()) {

@@ -348,7 +348,8 @@ absl::StatusOr<LandmarksFilter*> MultiLandmarkFilters::GetOrCreate(
     return it->second.get();
   }
 
-  ASSIGN_OR_RETURN(auto landmarks_filter, InitializeLandmarksFilter(options));
+  MP_ASSIGN_OR_RETURN(auto landmarks_filter,
+                      InitializeLandmarksFilter(options));
   filters_[tracking_id] = std::move(landmarks_filter);
   return filters_[tracking_id].get();
 }

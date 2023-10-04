@@ -151,7 +151,7 @@ class ObjectDetectionTensorsToDetectionsCalculator : public CalculatorBase {
     tf::Tensor input_num_detections_tensor =
         tf::Tensor(tf::DT_FLOAT, tf::TensorShape({0}));
     if (cc->Inputs().HasTag(kClasses)) {
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           input_num_detections_tensor,
           MaybeSqueezeDims(kNumDetections,
                            cc->Inputs().Tag(kNumDetections).Get<tf::Tensor>()));
@@ -160,12 +160,12 @@ class ObjectDetectionTensorsToDetectionsCalculator : public CalculatorBase {
       RET_CHECK_EQ(input_num_detections_tensor.dtype(), tf::DT_FLOAT);
     }
 
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto input_boxes_tensor,
         MaybeSqueezeDims(kBoxes, cc->Inputs().Tag(kBoxes).Get<tf::Tensor>()));
     RET_CHECK_EQ(input_boxes_tensor.dtype(), tf::DT_FLOAT);
 
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto input_scores_tensor,
         MaybeSqueezeDims(kScores, cc->Inputs().Tag(kScores).Get<tf::Tensor>()));
     RET_CHECK_EQ(input_scores_tensor.dtype(), tf::DT_FLOAT);
@@ -173,7 +173,7 @@ class ObjectDetectionTensorsToDetectionsCalculator : public CalculatorBase {
     tf::Tensor input_classes_tensor =
         tf::Tensor(tf::DT_FLOAT, tf::TensorShape({0}));
     if (cc->Inputs().HasTag(kClasses)) {
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           input_classes_tensor,
           MaybeSqueezeDims(kClasses,
                            cc->Inputs().Tag(kClasses).Get<tf::Tensor>()));

@@ -175,9 +175,9 @@ absl::Status FrameBufferProcessor::CropRotateResize90Degrees(
       cropped_buffer_ = std::make_unique<uint8_t[]>(cropped_buffer_size);
       cropped_buffer_size_ = cropped_buffer_size;
     }
-    ASSIGN_OR_RETURN(cropped,
-                     frame_buffer::CreateFromRawBuffer(
-                         cropped_buffer_.get(), cropped_dims, input->format()));
+    MP_ASSIGN_OR_RETURN(
+        cropped, frame_buffer::CreateFromRawBuffer(
+                     cropped_buffer_.get(), cropped_dims, input->format()));
   }
   MP_RETURN_IF_ERROR(
       frame_buffer::Crop(*input, left, top, right, bottom, cropped.get()));
@@ -194,9 +194,9 @@ absl::Status FrameBufferProcessor::CropRotateResize90Degrees(
         rotated_buffer_ = std::make_unique<uint8_t[]>(rotated_buffer_size);
         rotated_buffer_size_ = rotated_buffer_size;
       }
-      ASSIGN_OR_RETURN(auto rotated, frame_buffer::CreateFromRawBuffer(
-                                         rotated_buffer_.get(), rotated_dims,
-                                         cropped->format()));
+      MP_ASSIGN_OR_RETURN(auto rotated, frame_buffer::CreateFromRawBuffer(
+                                            rotated_buffer_.get(), rotated_dims,
+                                            cropped->format()));
     }
     MP_RETURN_IF_ERROR(
         frame_buffer::Rotate(*cropped, rotation_degrees, rotated.get()));
@@ -217,9 +217,10 @@ absl::Status FrameBufferProcessor::ConvertToFloatTensor(
   RET_CHECK(output_tensor.element_type() == Tensor::ElementType::kFloat32);
   constexpr float kInputImageRangeMin = 0.0f;
   constexpr float kInputImageRangeMax = 255.0f;
-  ASSIGN_OR_RETURN(auto transform, GetValueRangeTransformation(
-                                       kInputImageRangeMin, kInputImageRangeMax,
-                                       range_min, range_max));
+  MP_ASSIGN_OR_RETURN(
+      auto transform,
+      GetValueRangeTransformation(kInputImageRangeMin, kInputImageRangeMax,
+                                  range_min, range_max));
   return frame_buffer::ToFloatTensor(*input_frame, transform.scale,
                                      transform.offset, output_tensor);
 }

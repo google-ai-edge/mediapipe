@@ -83,8 +83,8 @@ absl::Status OutputSidePacketsToLocalFile(mediapipe::CalculatorGraph& graph) {
     std::vector<std::string> side_packet_names =
         absl::StrSplit(absl::GetFlag(FLAGS_output_side_packets), ',');
     for (const std::string& side_packet_name : side_packet_names) {
-      ASSIGN_OR_RETURN(auto status_or_packet,
-                       graph.GetOutputSidePacket(side_packet_name));
+      MP_ASSIGN_OR_RETURN(auto status_or_packet,
+                          graph.GetOutputSidePacket(side_packet_name));
       file << absl::StrCat(side_packet_name, ":",
                            status_or_packet.Get<std::string>(), "\n");
     }
@@ -125,8 +125,8 @@ absl::Status RunMPPGraph() {
   MP_RETURN_IF_ERROR(graph.Initialize(config, input_side_packets));
   if (!absl::GetFlag(FLAGS_output_stream).empty() &&
       !absl::GetFlag(FLAGS_output_stream_file).empty()) {
-    ASSIGN_OR_RETURN(auto poller, graph.AddOutputStreamPoller(
-                                      absl::GetFlag(FLAGS_output_stream)));
+    MP_ASSIGN_OR_RETURN(auto poller, graph.AddOutputStreamPoller(
+                                         absl::GetFlag(FLAGS_output_stream)));
     ABSL_LOG(INFO) << "Start running the calculator graph.";
     MP_RETURN_IF_ERROR(graph.StartRun({}));
     MP_RETURN_IF_ERROR(OutputStreamToLocalFile(poller));

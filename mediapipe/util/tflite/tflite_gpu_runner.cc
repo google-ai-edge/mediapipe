@@ -237,7 +237,7 @@ absl::Status TFLiteGPURunner::InitializeOpenCL(
 
   if (serialized_model_.empty() &&
       opencl_init_from_serialized_model_is_forced_) {
-    ASSIGN_OR_RETURN(serialized_model_, GetSerializedModel());
+    MP_ASSIGN_OR_RETURN(serialized_model_, GetSerializedModel());
   }
 
   // Try to initialize from serialized model first.

@@ -100,7 +100,7 @@ absl::Status InferenceCalculatorGlImpl::GpuInferenceRunner::Init(
 
 absl::Status InferenceCalculatorGlImpl::GpuInferenceRunner::LoadModel(
     CalculatorContext* cc) {
-  ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(cc));
+  MP_ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(cc));
   const auto& model = *model_packet_.Get();
   if (kSideInOpResolver(cc).IsConnected()) {
     const tflite::OpResolver& op_resolver = kSideInOpResolver(cc).Get();

@@ -209,7 +209,7 @@ absl::StatusOr<std::unique_ptr<ImageSegmenter>> ImageSegmenter::Create(
       options->output_confidence_masks;
   image_segmenter.value()->output_category_mask_ =
       options->output_category_mask;
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       (*image_segmenter)->labels_,
       GetLabelsFromGraphConfig((*image_segmenter)->runner_->GetGraphConfig()));
   return image_segmenter;
@@ -234,11 +234,11 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::Segment(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(
-                       segmentation_options.image_processing_options, image,
-                       /*roi_allowed=*/false));
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(
+                          segmentation_options.image_processing_options, image,
+                          /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
           {{kImageInStreamName, mediapipe::MakePacket<Image>(std::move(image))},
@@ -283,11 +283,11 @@ absl::StatusOr<ImageSegmenterResult> ImageSegmenter::SegmentForVideo(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(
-                       segmentation_options.image_processing_options, image,
-                       /*roi_allowed=*/false));
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(
+                          segmentation_options.image_processing_options, image,
+                          /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessVideoData(
           {{kImageInStreamName,
@@ -336,10 +336,10 @@ absl::Status ImageSegmenter::SegmentAsync(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(
-                       segmentation_options.image_processing_options, image,
-                       /*roi_allowed=*/false));
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(
+                          segmentation_options.image_processing_options, image,
+                          /*roi_allowed=*/false));
   return SendLiveStreamData(
       {{kImageInStreamName,
         MakePacket<Image>(std::move(image))

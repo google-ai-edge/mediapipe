@@ -363,8 +363,8 @@ absl::Status TensorsToSegmentationCalculator::Process(
         "Expect input tensor vector of size 1 or 2.");
   }
   const auto& input_tensor = *input_tensors.rbegin();
-  ASSIGN_OR_RETURN(const Shape input_shape,
-                   GetImageLikeTensorShape(input_tensor));
+  MP_ASSIGN_OR_RETURN(const Shape input_shape,
+                      GetImageLikeTensorShape(input_tensor));
 
   // TODO: should use tensor signature to get the correct output
   // tensor.

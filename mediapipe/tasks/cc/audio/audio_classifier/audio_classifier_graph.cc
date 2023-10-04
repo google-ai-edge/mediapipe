@@ -91,7 +91,7 @@ absl::StatusOr<AudioTensorSpecs> BuildPreprocessingSpecs(
   }
   const auto* input_tensor =
       (*primary_subgraph->tensors())[(*primary_subgraph->inputs())[0]];
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       const auto* audio_tensor_metadata,
       GetAudioTensorMetadataIfAny(*model_resources.GetMetadataExtractor(), 0));
   return BuildInputAudioTensorSpecs(*input_tensor, audio_tensor_metadata);
@@ -154,11 +154,11 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         const auto* model_resources,
         CreateModelResources<proto::AudioClassifierGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildAudioClassificationTask(
             sc->Options<proto::AudioClassifierGraphOptions>(), *model_resources,
@@ -202,8 +202,8 @@ class AudioClassifierGraph : public core::ModelTaskGraph {
     }
 
     // Adds AudioToTensorCalculator and connects it to the graph input streams.
-    ASSIGN_OR_RETURN(auto audio_tensor_specs,
-                     BuildPreprocessingSpecs(model_resources));
+    MP_ASSIGN_OR_RETURN(auto audio_tensor_specs,
+                        BuildPreprocessingSpecs(model_resources));
     auto& audio_to_tensor = graph.AddNode("AudioToTensorCalculator");
     ConfigureAudioToTensorCalculator(
         audio_tensor_specs, use_stream_mode,

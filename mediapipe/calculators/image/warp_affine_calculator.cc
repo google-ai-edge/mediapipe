@@ -79,8 +79,8 @@ class WarpAffineRunnerHolder<ImageFrame> {
   }
   absl::StatusOr<RunnerType*> GetRunner() {
     if (!runner_) {
-      ASSIGN_OR_RETURN(runner_,
-                       CreateAffineTransformationOpenCvRunner(interpolation_));
+      MP_ASSIGN_OR_RETURN(
+          runner_, CreateAffineTransformationOpenCvRunner(interpolation_));
     }
     return runner_.get();
   }
@@ -108,8 +108,9 @@ class WarpAffineRunnerHolder<mediapipe::GpuBuffer> {
   }
   absl::StatusOr<RunnerType*> GetRunner() {
     if (!runner_) {
-      ASSIGN_OR_RETURN(runner_, CreateAffineTransformationGlRunner(
-                                    gl_helper_, gpu_origin_, interpolation_));
+      MP_ASSIGN_OR_RETURN(
+          runner_, CreateAffineTransformationGlRunner(gl_helper_, gpu_origin_,
+                                                      interpolation_));
     }
     return runner_.get();
   }
@@ -151,24 +152,25 @@ class WarpAffineRunnerHolder<mediapipe::Image> {
         AffineTransformation::BorderMode border_mode) override {
       if (input.UsesGpu()) {
 #if !MEDIAPIPE_DISABLE_GPU
-        ASSIGN_OR_RETURN(auto* runner, gpu_holder_.GetRunner());
-        ASSIGN_OR_RETURN(auto result, runner->Run(input.GetGpuBuffer(), matrix,
-                                                  size, border_mode));
+        MP_ASSIGN_OR_RETURN(auto* runner, gpu_holder_.GetRunner());
+        MP_ASSIGN_OR_RETURN(
+            auto result,
+            runner->Run(input.GetGpuBuffer(), matrix, size, border_mode));
         return mediapipe::Image(*result);
 #else
         return absl::UnavailableError("GPU support is disabled");
 #endif  // !MEDIAPIPE_DISABLE_GPU
       }
 #if !MEDIAPIPE_DISABLE_OPENCV
-      ASSIGN_OR_RETURN(auto* runner, cpu_holder_.GetRunner());
+      MP_ASSIGN_OR_RETURN(auto* runner, cpu_holder_.GetRunner());
       const auto& frame_ptr = input.GetImageFrameSharedPtr();
       // Wrap image into image frame.
       const ImageFrame image_frame(frame_ptr->Format(), frame_ptr->Width(),
                                    frame_ptr->Height(), frame_ptr->WidthStep(),
                                    const_cast<uint8_t*>(frame_ptr->PixelData()),
                                    [](uint8_t* data){});
-      ASSIGN_OR_RETURN(auto result,
-                       runner->Run(image_frame, matrix, size, border_mode));
+      MP_ASSIGN_OR_RETURN(auto result,
+                          runner->Run(image_frame, matrix, size, border_mode));
       return mediapipe::Image(std::make_shared<ImageFrame>(std::move(result)));
 #else
       return absl::UnavailableError("OpenCV support is disabled");
@@ -213,8 +215,8 @@ class WarpAffineCalculatorImpl : public mediapipe::api2::NodeImpl<InterfaceT> {
     AffineTransformation::Size output_size;
     output_size.width = out_width;
     output_size.height = out_height;
-    ASSIGN_OR_RETURN(auto* runner, holder_.GetRunner());
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(auto* runner, holder_.GetRunner());
+    MP_ASSIGN_OR_RETURN(
         auto result,
         runner->Run(
             *InterfaceT::kInImage(cc), transform, output_size,

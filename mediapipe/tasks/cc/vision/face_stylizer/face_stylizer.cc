@@ -137,9 +137,9 @@ absl::StatusOr<std::optional<Image>> FaceStylizer::Stylize(
         absl::StrCat("GPU input images are currently not supported."),
         MediaPipeTasksStatus::kRunnerUnexpectedInputError);
   }
-  ASSIGN_OR_RETURN(NormalizedRect norm_rect,
-                   ConvertToNormalizedRect(image_processing_options, image));
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(NormalizedRect norm_rect,
+                      ConvertToNormalizedRect(image_processing_options, image));
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       ProcessImageData(
           {{kImageInStreamName, MakePacket<Image>(std::move(image))},

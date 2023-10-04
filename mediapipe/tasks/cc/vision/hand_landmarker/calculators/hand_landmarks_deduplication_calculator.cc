@@ -176,8 +176,9 @@ class HandDuplicatesFinder : public DuplicatesFinder {
     std::vector<RectF> bounds;
     bounds.reserve(num);
     for (const NormalizedLandmarkList& list : multi_landmarks) {
-      ASSIGN_OR_RETURN(const float baseline_distance,
-                       HandBaselineDistance(list, input_width, input_height));
+      MP_ASSIGN_OR_RETURN(
+          const float baseline_distance,
+          HandBaselineDistance(list, input_width, input_height));
       baseline_distances.push_back(baseline_distance);
       bounds.push_back(CalculateBound(list));
     }
@@ -194,9 +195,9 @@ class HandDuplicatesFinder : public DuplicatesFinder {
             std::max(stable_distance_i, stable_distance_j) *
             kAllowedBaselineDistanceRatio;
 
-        ASSIGN_OR_RETURN(const std::vector<float> distances,
-                         Distances(multi_landmarks[i], multi_landmarks[j],
-                                   input_width, input_height));
+        MP_ASSIGN_OR_RETURN(const std::vector<float> distances,
+                            Distances(multi_landmarks[i], multi_landmarks[j],
+                                      input_width, input_height));
         const int num_matched_landmarks = absl::c_count_if(
             distances,
             [&](float distance) { return distance < distance_threshold; });
@@ -254,9 +255,9 @@ absl::Status HandLandmarksDeduplicationCalculator::Process(
 
   std::unique_ptr<DuplicatesFinder> duplicates_finder =
       CreateHandDuplicatesFinder(/*start_from_the_end=*/false);
-  ASSIGN_OR_RETURN(absl::flat_hash_set<int> indices_to_remove,
-                   duplicates_finder->FindDuplicates(
-                       in_landmarks, image_size.first, image_size.second));
+  MP_ASSIGN_OR_RETURN(absl::flat_hash_set<int> indices_to_remove,
+                      duplicates_finder->FindDuplicates(
+                          in_landmarks, image_size.first, image_size.second));
 
   if (indices_to_remove.empty()) {
     kOutLandmarks(cc).Send(kInLandmarks(cc));
@@ -267,12 +268,12 @@ absl::Status HandLandmarksDeduplicationCalculator::Process(
     std::vector<NormalizedLandmarkList> out_landmarks;
     const int num = in_landmarks.size();
 
-    ASSIGN_OR_RETURN(absl::optional<std::vector<NormalizedRect>> out_rois,
-                     VerifyNumAndMaybeInitOutput(kInRois, cc, num));
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(absl::optional<std::vector<NormalizedRect>> out_rois,
+                        VerifyNumAndMaybeInitOutput(kInRois, cc, num));
+    MP_ASSIGN_OR_RETURN(
         absl::optional<std::vector<LandmarkList>> out_world_landmarks,
         VerifyNumAndMaybeInitOutput(kInWorldLandmarks, cc, num));
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         absl::optional<std::vector<ClassificationList>> out_classifications,
         VerifyNumAndMaybeInitOutput(kInClassifications, cc, num));
 

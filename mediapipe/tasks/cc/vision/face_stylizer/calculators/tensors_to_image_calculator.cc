@@ -232,10 +232,10 @@ absl::Status TensorsToImageCalculator::CpuProcess(CalculatorContext* cc) {
         CV_MAKETYPE(CV_32F, tensor_in_channels),
         const_cast<float*>(input_tensor.GetCpuReadView().buffer<float>()));
     auto input_range = options_.input_tensor_float_range();
-    ASSIGN_OR_RETURN(auto transform,
-                     GetValueRangeTransformation(
-                         input_range.min(), input_range.max(),
-                         kOutputImageRangeMin, kOutputImageRangeMax));
+    MP_ASSIGN_OR_RETURN(auto transform,
+                        GetValueRangeTransformation(
+                            input_range.min(), input_range.max(),
+                            kOutputImageRangeMin, kOutputImageRangeMax));
     tensor_matview.convertTo(output_matview,
                              CV_MAKETYPE(CV_8U, tensor_in_channels),
                              transform.scale, transform.offset);
@@ -245,10 +245,10 @@ absl::Status TensorsToImageCalculator::CpuProcess(CalculatorContext* cc) {
         CV_MAKETYPE(CV_8U, tensor_in_channels),
         const_cast<uint8_t*>(input_tensor.GetCpuReadView().buffer<uint8_t>()));
     auto input_range = options_.input_tensor_uint_range();
-    ASSIGN_OR_RETURN(auto transform,
-                     GetValueRangeTransformation(
-                         input_range.min(), input_range.max(),
-                         kOutputImageRangeMin, kOutputImageRangeMax));
+    MP_ASSIGN_OR_RETURN(auto transform,
+                        GetValueRangeTransformation(
+                            input_range.min(), input_range.max(),
+                            kOutputImageRangeMin, kOutputImageRangeMax));
     tensor_matview.convertTo(output_matview,
                              CV_MAKETYPE(CV_8U, tensor_in_channels),
                              transform.scale, transform.offset);

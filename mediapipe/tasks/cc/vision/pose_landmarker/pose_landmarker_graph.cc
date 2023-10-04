@@ -95,8 +95,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   auto* pose_detector_graph_options =
       options->mutable_pose_detector_graph_options();
   if (!pose_detector_graph_options->base_options().has_model_asset()) {
-    ASSIGN_OR_RETURN(const auto pose_detector_file,
-                     resources.GetFile(kPoseDetectorTFLiteName));
+    MP_ASSIGN_OR_RETURN(const auto pose_detector_file,
+                        resources.GetFile(kPoseDetectorTFLiteName));
     SetExternalFile(pose_detector_file,
                     pose_detector_graph_options->mutable_base_options()
                         ->mutable_model_asset(),
@@ -120,8 +120,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       options->mutable_pose_landmarks_detector_graph_options();
   if (!pose_landmarks_detector_graph_options->base_options()
            .has_model_asset()) {
-    ASSIGN_OR_RETURN(const auto pose_landmarks_detector_file,
-                     resources.GetFile(kPoseLandmarksDetectorTFLiteName));
+    MP_ASSIGN_OR_RETURN(const auto pose_landmarks_detector_file,
+                        resources.GetFile(kPoseLandmarksDetectorTFLiteName));
     SetExternalFile(
         pose_landmarks_detector_file,
         pose_landmarks_detector_graph_options->mutable_base_options()
@@ -220,7 +220,7 @@ class PoseLandmarkerGraph : public core::ModelTaskGraph {
     if (sc->Options<PoseLandmarkerGraphOptions>()
             .base_options()
             .has_model_asset()) {
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           const auto* model_asset_bundle_resources,
           CreateModelAssetBundleResources<PoseLandmarkerGraphOptions>(sc));
       // Copies the file content instead of passing the pointer of file in
@@ -231,12 +231,12 @@ class PoseLandmarkerGraph : public core::ModelTaskGraph {
           !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
                .IsAvailable()));
     }
-    ASSIGN_OR_RETURN(auto outs,
-                     BuildPoseLandmarkerGraph(
-                         *sc->MutableOptions<PoseLandmarkerGraphOptions>(),
-                         graph[Input<Image>(kImageTag)],
-                         graph[Input<NormalizedRect>::Optional(kNormRectTag)],
-                         graph, output_segmentation_masks));
+    MP_ASSIGN_OR_RETURN(
+        auto outs, BuildPoseLandmarkerGraph(
+                       *sc->MutableOptions<PoseLandmarkerGraphOptions>(),
+                       graph[Input<Image>(kImageTag)],
+                       graph[Input<NormalizedRect>::Optional(kNormRectTag)],
+                       graph, output_segmentation_masks));
     outs.landmark_lists >>
         graph[Output<std::vector<NormalizedLandmarkList>>(kNormLandmarksTag)];
     outs.world_landmark_lists >>

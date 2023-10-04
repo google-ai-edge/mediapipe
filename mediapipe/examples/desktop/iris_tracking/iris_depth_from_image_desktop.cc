@@ -57,16 +57,16 @@ absl::StatusOr<std::string> ReadFileToString(const std::string& file_path) {
 
 absl::Status ProcessImage(std::unique_ptr<mediapipe::CalculatorGraph> graph) {
   ABSL_LOG(INFO) << "Load the image.";
-  ASSIGN_OR_RETURN(const std::string raw_image,
-                   ReadFileToString(absl::GetFlag(FLAGS_input_image_path)));
+  MP_ASSIGN_OR_RETURN(const std::string raw_image,
+                      ReadFileToString(absl::GetFlag(FLAGS_input_image_path)));
 
   ABSL_LOG(INFO) << "Start running the calculator graph.";
-  ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller output_image_poller,
-                   graph->AddOutputStreamPoller(kOutputImageStream));
-  ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller left_iris_depth_poller,
-                   graph->AddOutputStreamPoller(kLeftIrisDepthMmStream));
-  ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller right_iris_depth_poller,
-                   graph->AddOutputStreamPoller(kRightIrisDepthMmStream));
+  MP_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller output_image_poller,
+                      graph->AddOutputStreamPoller(kOutputImageStream));
+  MP_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller left_iris_depth_poller,
+                      graph->AddOutputStreamPoller(kLeftIrisDepthMmStream));
+  MP_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller right_iris_depth_poller,
+                      graph->AddOutputStreamPoller(kRightIrisDepthMmStream));
   MP_RETURN_IF_ERROR(graph->StartRun({}));
 
   // Send image packet into the graph.

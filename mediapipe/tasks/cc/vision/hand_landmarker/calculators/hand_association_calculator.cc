@@ -97,7 +97,7 @@ class HandAssociationCalculator : public CalculatorBase {
   }
 
   absl::Status Process(CalculatorContext* cc) override {
-    ASSIGN_OR_RETURN(auto result, GetNonOverlappingElements(cc));
+    MP_ASSIGN_OR_RETURN(auto result, GetNonOverlappingElements(cc));
 
     auto output =
         std::make_unique<std::vector<NormalizedRect>>(std::move(result));
@@ -139,7 +139,7 @@ class HandAssociationCalculator : public CalculatorBase {
       }
 
       for (auto rect : input_stream.Get<std::vector<NormalizedRect>>()) {
-        ASSIGN_OR_RETURN(
+        MP_ASSIGN_OR_RETURN(
             bool is_overlapping,
             mediapipe::DoesRectOverlap(rect, result,
                                        options_.min_similarity_threshold()));

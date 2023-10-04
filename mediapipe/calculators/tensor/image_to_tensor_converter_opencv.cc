@@ -159,7 +159,7 @@ class OpenCvProcessor : public ImageToTensorConverter {
 
     constexpr float kInputImageRangeMin = 0.0f;
     constexpr float kInputImageRangeMax = 255.0f;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto transform,
         GetValueRangeTransformation(kInputImageRangeMin, kInputImageRangeMax,
                                     range_min, range_max));

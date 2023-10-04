@@ -42,7 +42,7 @@ constexpr char kHandednessMatrixTag[] = "HANDEDNESS_MATRIX";
 absl::StatusOr<std::unique_ptr<Matrix>> HandednessToMatrix(
     const mediapipe::ClassificationList& classification_list) {
   // Feature value is the probability that the hand is a right hand.
-  ASSIGN_OR_RETURN(float score, GetRightHandScore(classification_list));
+  MP_ASSIGN_OR_RETURN(float score, GetRightHandScore(classification_list));
   auto matrix = Matrix(1, 1);
   matrix(0, 0) = score;
   auto result = std::make_unique<Matrix>();
@@ -92,7 +92,7 @@ absl::Status HandednessToMatrixCalculator::Process(CalculatorContext* cc) {
   auto handedness =
       cc->Inputs().Tag(kHandednessTag).Get<mediapipe::ClassificationList>();
 
-  ASSIGN_OR_RETURN(auto handedness_matrix, HandednessToMatrix(handedness));
+  MP_ASSIGN_OR_RETURN(auto handedness_matrix, HandednessToMatrix(handedness));
   cc->Outputs()
       .Tag(kHandednessMatrixTag)
       .Add(handedness_matrix.release(), cc->InputTimestamp());

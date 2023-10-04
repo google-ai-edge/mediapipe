@@ -207,7 +207,7 @@ absl::Status BoxDetectorCalculator::Open(CalculatorContext* cc) {
 
   for (const auto& filename : options_.index_proto_filename()) {
     std::string string_path;
-    ASSIGN_OR_RETURN(string_path, PathToResourceAsFile(filename));
+    MP_ASSIGN_OR_RETURN(string_path, PathToResourceAsFile(filename));
     std::string index_string;
     MP_RETURN_IF_ERROR(file::GetContents(string_path, &index_string));
     BoxDetectorIndex predefined_index;

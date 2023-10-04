@@ -345,9 +345,9 @@ class MetalProcessor : public ImageToTensorConverter {
   absl::Status Init(CalculatorContext* cc, BorderMode border_mode) {
     metal_helper_ = [[MPPMetalHelper alloc] initWithCalculatorContext:cc];
     RET_CHECK(metal_helper_);
-    ASSIGN_OR_RETURN(extractor_, SubRectExtractorMetal::Make(
-                                     metal_helper_.mtlDevice,
-                                     OutputFormat::kF32C4, border_mode));
+    MP_ASSIGN_OR_RETURN(extractor_, SubRectExtractorMetal::Make(
+                                        metal_helper_.mtlDevice,
+                                        OutputFormat::kF32C4, border_mode));
     return absl::OkStatus();
   }
 
@@ -373,7 +373,7 @@ class MetalProcessor : public ImageToTensorConverter {
 
       constexpr float kInputImageRangeMin = 0.0f;
       constexpr float kInputImageRangeMax = 1.0f;
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           auto transform,
           GetValueRangeTransformation(kInputImageRangeMin, kInputImageRangeMax,
                                       range_min, range_max));

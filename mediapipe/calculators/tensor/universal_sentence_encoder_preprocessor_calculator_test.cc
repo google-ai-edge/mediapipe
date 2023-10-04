@@ -61,9 +61,10 @@ RunUniversalSentenceEncoderPreprocessorCalculator(absl::string_view text) {
 
   std::string model_buffer =
       tasks::core::LoadBinaryContent(kTestModelPath.data());
-  ASSIGN_OR_RETURN(std::unique_ptr<ModelMetadataExtractor> metadata_extractor,
-                   ModelMetadataExtractor::CreateFromModelBuffer(
-                       model_buffer.data(), model_buffer.size()));
+  MP_ASSIGN_OR_RETURN(
+      std::unique_ptr<ModelMetadataExtractor> metadata_extractor,
+      ModelMetadataExtractor::CreateFromModelBuffer(model_buffer.data(),
+                                                    model_buffer.size()));
   // Run the graph.
   CalculatorGraph graph;
   MP_RETURN_IF_ERROR(graph.Initialize(

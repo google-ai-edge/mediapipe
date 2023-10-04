@@ -141,7 +141,7 @@ absl::Status ExtractFilesfromZipFile(
   if (global_info.number_entry > 0) {
     int error = unzGoToFirstFile(zf);
     while (error == UNZ_OK) {
-      ASSIGN_OR_RETURN(auto zip_file_info, GetCurrentZipFileInfo(zf));
+      MP_ASSIGN_OR_RETURN(auto zip_file_info, GetCurrentZipFileInfo(zf));
       // Store result in map.
       (*files)[zip_file_info.name] = absl::string_view(
           buffer_data + zip_file_info.position, zip_file_info.size);

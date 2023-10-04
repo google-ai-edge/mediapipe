@@ -92,7 +92,7 @@ class BypassCalculator : public Node {
     auto options = cc->Options<BypassCalculatorOptions>();
     RET_CHECK_EQ(options.pass_input_stream().size(),
                  options.pass_output_stream().size());
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto pass_streams,
         GetPassMap(options, *cc->Inputs().TagMap(), *cc->Outputs().TagMap()));
     std::set<CollectionItemId> pass_out;
@@ -121,8 +121,9 @@ class BypassCalculator : public Node {
   // Saves the map of passthrough input and output stream ids.
   absl::Status Open(CalculatorContext* cc) override {
     auto options = cc->Options<BypassCalculatorOptions>();
-    ASSIGN_OR_RETURN(pass_streams_, GetPassMap(options, *cc->Inputs().TagMap(),
-                                               *cc->Outputs().TagMap()));
+    MP_ASSIGN_OR_RETURN(
+        pass_streams_,
+        GetPassMap(options, *cc->Inputs().TagMap(), *cc->Outputs().TagMap()));
     return absl::OkStatus();
   }
 

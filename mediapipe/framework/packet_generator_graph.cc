@@ -97,7 +97,7 @@ absl::Status Generate(const ValidatedGraphConfig& validated_graph,
       validated_graph.Config().packet_generator(generator_index);
   const auto& generator_name = generator_config.packet_generator();
 
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto static_access,
       internal::StaticAccessToGeneratorRegistry::CreateByNameInNamespace(
           validated_graph.Package(), generator_name),

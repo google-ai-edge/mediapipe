@@ -161,9 +161,9 @@ absl::Status BertPreprocessorCalculator::Open(CalculatorContext* cc) {
       &kMetadataExtractorSideIn(cc).Get();
   const tflite::ProcessUnit* tokenizer_metadata =
       metadata_extractor->GetInputProcessUnit(kTokenizerProcessUnitIndex);
-  ASSIGN_OR_RETURN(tokenizer_,
-                   tasks::text::tokenizers::CreateTokenizerFromProcessUnit(
-                       tokenizer_metadata, metadata_extractor));
+  MP_ASSIGN_OR_RETURN(tokenizer_,
+                      tasks::text::tokenizers::CreateTokenizerFromProcessUnit(
+                          tokenizer_metadata, metadata_extractor));
 
   auto* input_tensors_metadata = metadata_extractor->GetInputTensorMetadata();
   input_ids_tensor_index_ = FindTensorIndexByMetadataName(

@@ -589,9 +589,9 @@ absl::Status Graph::SetParentGlContext(int64_t java_gl_context) {
         "trying to set the parent GL context, but the gpu shared "
         "data has already been set up.");
   }
-  ASSIGN_OR_RETURN(gpu_resources_,
-                   mediapipe::GpuResources::Create(
-                       reinterpret_cast<EGLContext>(java_gl_context)));
+  MP_ASSIGN_OR_RETURN(gpu_resources_,
+                      mediapipe::GpuResources::Create(
+                          reinterpret_cast<EGLContext>(java_gl_context)));
 #endif  // MEDIAPIPE_DISABLE_GPU
   return absl::OkStatus();
 }

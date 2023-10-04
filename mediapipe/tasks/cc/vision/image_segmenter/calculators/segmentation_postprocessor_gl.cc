@@ -500,9 +500,9 @@ SegmentationPostprocessorGl::GetSegmentationResultGpu(
     // If our Tensor is an SSBO, then it's also linearized, so we convert to a
     // kAligned 2d texture using a special converter and then proceed as before.
     GLuint ssbo_tex_id;
-    ASSIGN_OR_RETURN(ssbo_tex_id,
-                     ssbo_to_texture_converter_.ConvertTensorToGlTexture(
-                         tensor, width, height, num_outputs));
+    MP_ASSIGN_OR_RETURN(ssbo_tex_id,
+                        ssbo_to_texture_converter_.ConvertTensorToGlTexture(
+                            tensor, width, height, num_outputs));
     std::tie(input_width, input_height) =
         ssbo_to_texture_converter_.GetTextureSize();
 #else

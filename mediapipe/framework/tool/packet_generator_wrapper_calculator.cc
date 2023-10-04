@@ -15,10 +15,10 @@ absl::Status PacketGeneratorWrapperCalculator::GetContract(
     CalculatorContract* cc) {
   const auto& options =
       cc->Options<::mediapipe::PacketGeneratorWrapperCalculatorOptions>();
-  ASSIGN_OR_RETURN(auto static_access,
-                   mediapipe::internal::StaticAccessToGeneratorRegistry::
-                       CreateByNameInNamespace(options.package(),
-                                               options.packet_generator()));
+  MP_ASSIGN_OR_RETURN(auto static_access,
+                      mediapipe::internal::StaticAccessToGeneratorRegistry::
+                          CreateByNameInNamespace(options.package(),
+                                                  options.packet_generator()));
   MP_RETURN_IF_ERROR(static_access->FillExpectations(options.options(),
                                                      &cc->InputSidePackets(),
                                                      &cc->OutputSidePackets()))
@@ -30,10 +30,10 @@ absl::Status PacketGeneratorWrapperCalculator::GetContract(
 absl::Status PacketGeneratorWrapperCalculator::Open(CalculatorContext* cc) {
   const auto& options =
       cc->Options<::mediapipe::PacketGeneratorWrapperCalculatorOptions>();
-  ASSIGN_OR_RETURN(auto static_access,
-                   mediapipe::internal::StaticAccessToGeneratorRegistry::
-                       CreateByNameInNamespace(options.package(),
-                                               options.packet_generator()));
+  MP_ASSIGN_OR_RETURN(auto static_access,
+                      mediapipe::internal::StaticAccessToGeneratorRegistry::
+                          CreateByNameInNamespace(options.package(),
+                                                  options.packet_generator()));
   mediapipe::PacketSet output_packets(cc->OutputSidePackets().TagMap());
   MP_RETURN_IF_ERROR(static_access->Generate(options.options(),
                                              cc->InputSidePackets(),

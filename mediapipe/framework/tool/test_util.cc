@@ -215,22 +215,24 @@ bool CompareImageFrames(const ImageFrame& image1, const ImageFrame& image2,
 absl::Status CompareAndSaveImageOutput(
     absl::string_view golden_image_path, const ImageFrame& actual,
     const ImageFrameComparisonOptions& options) {
-  ASSIGN_OR_RETURN(auto output_img_path, SavePngTestOutput(actual, "output"));
+  MP_ASSIGN_OR_RETURN(auto output_img_path,
+                      SavePngTestOutput(actual, "output"));
 
   auto expected =
       LoadTestImage(GetTestFilePath(golden_image_path), ImageFormat::UNKNOWN);
   if (!expected.ok()) {
     return expected.status();
   }
-  ASSIGN_OR_RETURN(auto expected_img_path,
-                   SavePngTestOutput(**expected, "expected"));
+  MP_ASSIGN_OR_RETURN(auto expected_img_path,
+                      SavePngTestOutput(**expected, "expected"));
 
   std::unique_ptr<ImageFrame> diff_img;
   auto status = CompareImageFrames(**expected, actual, options.max_color_diff,
                                    options.max_alpha_diff, options.max_avg_diff,
                                    diff_img);
   if (diff_img) {
-    ASSIGN_OR_RETURN(auto diff_img_path, SavePngTestOutput(*diff_img, "diff"));
+    MP_ASSIGN_OR_RETURN(auto diff_img_path,
+                        SavePngTestOutput(*diff_img, "diff"));
   }
 
   return status;

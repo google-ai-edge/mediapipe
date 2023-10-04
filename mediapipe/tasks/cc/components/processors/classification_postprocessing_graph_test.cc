@@ -422,8 +422,8 @@ class PostprocessingTest : public tflite::testing::Test {
   absl::StatusOr<OutputStreamPoller> BuildGraph(
       absl::string_view model_name, const proto::ClassifierOptions& options,
       bool connect_timestamps = false) {
-    ASSIGN_OR_RETURN(auto model_resources,
-                     CreateModelResourcesForModel(model_name));
+    MP_ASSIGN_OR_RETURN(auto model_resources,
+                        CreateModelResourcesForModel(model_name));
 
     Graph graph;
     auto& postprocessing = graph.AddNode(
@@ -450,13 +450,13 @@ class PostprocessingTest : public tflite::testing::Test {
 
     MP_RETURN_IF_ERROR(calculator_graph_.Initialize(graph.GetConfig()));
     if (connect_timestamps) {
-      ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
-                                        kTimestampedClassificationsName));
+      MP_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
+                                           kTimestampedClassificationsName));
       MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
       return poller;
     }
-    ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
-                                      kClassificationsName));
+    MP_ASSIGN_OR_RETURN(auto poller, calculator_graph_.AddOutputStreamPoller(
+                                         kClassificationsName));
     MP_RETURN_IF_ERROR(calculator_graph_.StartRun(/*extra_side_packets=*/{}));
     return poller;
   }

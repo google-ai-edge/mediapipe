@@ -207,7 +207,7 @@ absl::Status CalculatorGraph::InitializeStreams() {
 
   // Initialize GraphInputStreams.
   int graph_input_stream_count = 0;
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto input_tag_map,
       tool::TagMap::Create(validated_graph_->Config().input_stream()));
   for (const auto& stream_name : input_tag_map->Names()) {
@@ -371,7 +371,7 @@ absl::Status CalculatorGraph::InitializeExecutors() {
                 "CalculatorGraph::SetExecutor() call.";
     }
     // clang-format off
-    ASSIGN_OR_RETURN(Executor* executor,
+    MP_ASSIGN_OR_RETURN(Executor* executor,
                      ExecutorRegistry::CreateByNameInNamespace(
                          validated_graph_->Package(),
                          executor_config.type(), executor_config.options()));
@@ -1335,7 +1335,7 @@ absl::Status CalculatorGraph::CreateDefaultThreadPool(
   }
   options->set_num_threads(num_threads);
   // clang-format off
-  ASSIGN_OR_RETURN(Executor* executor,
+  MP_ASSIGN_OR_RETURN(Executor* executor,
                    ThreadPoolExecutor::Create(extendable_options));
   // clang-format on
   return SetExecutorInternal("", std::shared_ptr<Executor>(executor));

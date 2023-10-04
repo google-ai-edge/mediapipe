@@ -103,11 +103,11 @@ class ImageClassifierGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         const auto* model_resources,
         CreateModelResources<proto::ImageClassifierGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildImageClassificationTask(
             sc->Options<proto::ImageClassifierGraphOptions>(), *model_resources,

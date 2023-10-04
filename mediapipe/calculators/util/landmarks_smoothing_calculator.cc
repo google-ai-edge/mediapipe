@@ -43,9 +43,10 @@ class LandmarksSmoothingCalculatorImpl
     : public NodeImpl<LandmarksSmoothingCalculator> {
  public:
   absl::Status Open(CalculatorContext* cc) override {
-    ASSIGN_OR_RETURN(landmarks_filter_,
-                     InitializeLandmarksFilter(
-                         cc->Options<LandmarksSmoothingCalculatorOptions>()));
+    MP_ASSIGN_OR_RETURN(
+        landmarks_filter_,
+        InitializeLandmarksFilter(
+            cc->Options<LandmarksSmoothingCalculatorOptions>()));
     return absl::OkStatus();
   }
 

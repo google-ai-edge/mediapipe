@@ -79,8 +79,8 @@ absl::Status RunMPPGraph() {
   }
 
   ABSL_LOG(INFO) << "Start running the calculator graph.";
-  ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller poller,
-                   graph.AddOutputStreamPoller(kOutputStream));
+  MP_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller poller,
+                      graph.AddOutputStreamPoller(kOutputStream));
   MP_RETURN_IF_ERROR(graph.StartRun({}));
 
   ABSL_LOG(INFO) << "Start grabbing and processing frames.";

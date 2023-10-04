@@ -246,7 +246,7 @@ absl::Status GraphProfiler::Start(mediapipe::Executor* executor) {
   if (is_tracing_ && IsTraceIntervalEnabled(profiler_config_, tracer()) &&
       executor != nullptr) {
     // Inform the user via logging the path to the trace logs.
-    ASSIGN_OR_RETURN(std::string trace_log_path, GetTraceLogPath());
+    MP_ASSIGN_OR_RETURN(std::string trace_log_path, GetTraceLogPath());
     // Check that we can actually write to it.
     auto status =
         file::SetContents(absl::StrCat(trace_log_path, "trace_writing_check"),
@@ -655,7 +655,8 @@ absl::StatusOr<std::string> GraphProfiler::GetTraceLogPath() {
         "Trace log writing is disabled, unable to get trace_log_path.");
   }
   if (profiler_config_.trace_log_path().empty()) {
-    ASSIGN_OR_RETURN(std::string directory_path, GetDefaultTraceLogDirectory());
+    MP_ASSIGN_OR_RETURN(std::string directory_path,
+                        GetDefaultTraceLogDirectory());
     std::string trace_log_path =
         absl::StrCat(directory_path, "/", kDefaultLogFilePrefix);
     return trace_log_path;
@@ -705,7 +706,7 @@ absl::Status GraphProfiler::WriteProfile() {
     // Logging is disabled, so we can exit writing without error.
     return absl::OkStatus();
   }
-  ASSIGN_OR_RETURN(std::string trace_log_path, GetTraceLogPath());
+  MP_ASSIGN_OR_RETURN(std::string trace_log_path, GetTraceLogPath());
   int log_interval_count = GetLogIntervalCount(profiler_config_);
   int log_file_count = GetLogFileCount(profiler_config_);
   GraphProfile profile;

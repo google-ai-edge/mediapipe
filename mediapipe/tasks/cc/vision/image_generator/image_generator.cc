@@ -278,9 +278,10 @@ absl::StatusOr<std::unique_ptr<ImageGenerator>> ImageGenerator::Create(
     std::unique_ptr<ImageGeneratorOptions> image_generator_options,
     std::unique_ptr<ConditionOptions> condition_options) {
   bool use_condition_image = condition_options != nullptr;
-  ASSIGN_OR_RETURN(auto options_proto_and_condition_index,
-                   ConvertImageGeneratorGraphOptionsProto(
-                       image_generator_options.get(), condition_options.get()));
+  MP_ASSIGN_OR_RETURN(
+      auto options_proto_and_condition_index,
+      ConvertImageGeneratorGraphOptionsProto(image_generator_options.get(),
+                                             condition_options.get()));
   std::unique_ptr<proto::ImageGeneratorGraphOptions>
       options_proto_for_condition_image_graphs_container;
   if (use_condition_image) {
@@ -289,7 +290,7 @@ absl::StatusOr<std::unique_ptr<ImageGenerator>> ImageGenerator::Create(
     options_proto_for_condition_image_graphs_container->CopyFrom(
         *options_proto_and_condition_index.options_proto);
   }
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto image_generator,
       (core::VisionTaskApiFactory::Create<ImageGenerator,
                                           ImageGeneratorGraphOptionsProto>(
@@ -303,7 +304,7 @@ absl::StatusOr<std::unique_ptr<ImageGenerator>> ImageGenerator::Create(
   if (use_condition_image) {
     image_generator->condition_type_index_ =
         std::move(options_proto_and_condition_index.condition_type_index);
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         image_generator->condition_image_graphs_container_task_runner_,
         tasks::core::TaskRunner::Create(
             CreateConditionedImageGraphContainerConfig(
@@ -322,7 +323,7 @@ absl::StatusOr<Image> ImageGenerator::CreateConditionImage(
     return absl::InvalidArgumentError(
         "The condition type is not created during initialization.");
   }
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       condition_image_graphs_container_task_runner_->Process({
           {std::string(kSourceConditionImageName),
@@ -349,8 +350,8 @@ absl::StatusOr<ImageGeneratorResult> ImageGenerator::Generate(
     return absl::InvalidArgumentError(
         "ImageGenerator is created to use without conditioned image.");
   }
-  ASSIGN_OR_RETURN(auto plugin_model_image,
-                   CreateConditionImage(condition_image, condition_type));
+  MP_ASSIGN_OR_RETURN(auto plugin_model_image,
+                      CreateConditionImage(condition_image, condition_type));
   return RunIterations(
       prompt, iterations, seed,
       ConditionInputs{plugin_model_image,
@@ -380,7 +381,7 @@ absl::StatusOr<ImageGeneratorResult> ImageGenerator::RunIterations(
         MakePacket<std::string>(prompt).At(Timestamp(timestamp));
     input_packets[std::string(kRandSeedName)] =
         MakePacket<int>(rand_seed).At(Timestamp(timestamp));
-    ASSIGN_OR_RETURN(output_packets, ProcessImageData(input_packets));
+    MP_ASSIGN_OR_RETURN(output_packets, ProcessImageData(input_packets));
     timestamp += 1;
   }
   result.generated_image =

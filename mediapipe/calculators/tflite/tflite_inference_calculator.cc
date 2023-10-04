@@ -489,8 +489,8 @@ absl::Status TfLiteInferenceCalculator::WriteKernelsToFile() {
 #if MEDIAPIPE_TFLITE_GL_INFERENCE && defined(MEDIAPIPE_ANDROID)
   if (use_kernel_caching_) {
     // Save kernel file.
-    ASSIGN_OR_RETURN(std::vector<uint8_t> kernel_cache,
-                     tflite_gpu_runner_->GetSerializedBinaryCache());
+    MP_ASSIGN_OR_RETURN(std::vector<uint8_t> kernel_cache,
+                        tflite_gpu_runner_->GetSerializedBinaryCache());
     std::string cache_str(kernel_cache.begin(), kernel_cache.end());
     MP_RETURN_IF_ERROR(
         mediapipe::file::SetContents(cached_kernel_filename_, cache_str));
@@ -733,7 +733,7 @@ absl::Status TfLiteInferenceCalculator::ReadKernelsFromFile() {
 absl::Status TfLiteInferenceCalculator::InitTFLiteGPURunner(
     CalculatorContext* cc) {
 #if MEDIAPIPE_TFLITE_GL_INFERENCE
-  ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(*cc));
+  MP_ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(*cc));
   const auto& model = *model_packet_.Get<TfLiteModelPtr>();
 
   tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates
@@ -817,8 +817,8 @@ absl::Status TfLiteInferenceCalculator::InitTFLiteGPURunner(
   gpu_data_out_.resize(tflite_gpu_runner_->outputs_size());
   for (int i = 0; i < tflite_gpu_runner_->outputs_size(); ++i) {
     gpu_data_out_[i] = absl::make_unique<GPUData>();
-    ASSIGN_OR_RETURN(gpu_data_out_[i]->elements,
-                     tflite_gpu_runner_->GetOutputElements(i));
+    MP_ASSIGN_OR_RETURN(gpu_data_out_[i]->elements,
+                        tflite_gpu_runner_->GetOutputElements(i));
     // Create and bind input buffer.
     MP_RETURN_IF_ERROR(
         ::tflite::gpu::gl::CreateReadWriteShaderStorageBuffer<float>(
@@ -839,7 +839,7 @@ absl::Status TfLiteInferenceCalculator::LoadModel(CalculatorContext* cc) {
     return absl::OkStatus();
   }
 
-  ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(*cc));
+  MP_ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(*cc));
   const auto& model = *model_packet_.Get<TfLiteModelPtr>();
 
   tflite::ops::builtin::BuiltinOpResolverWithoutDefaultDelegates

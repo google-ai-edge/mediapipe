@@ -212,11 +212,11 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         const auto* model_resources,
         CreateModelResources<HandLandmarksDetectorGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto hand_landmark_detection_outs,
         BuildSingleHandLandmarksDetectorGraph(
             sc->Options<HandLandmarksDetectorGraphOptions>(), *model_resources,
@@ -269,8 +269,8 @@ class SingleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
     hand_rect >> preprocessing.In("NORM_RECT");
     auto image_size = preprocessing[Output<std::pair<int, int>>("IMAGE_SIZE")];
 
-    ASSIGN_OR_RETURN(auto image_tensor_specs,
-                     BuildInputImageTensorSpecs(model_resources));
+    MP_ASSIGN_OR_RETURN(auto image_tensor_specs,
+                        BuildInputImageTensorSpecs(model_resources));
 
     auto& inference = AddInference(
         model_resources, subgraph_options.base_options().acceleration(), graph);
@@ -462,7 +462,7 @@ class MultipleHandLandmarksDetectorGraph : public core::ModelTaskGraph {
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto hand_landmark_detection_outputs,
         BuildHandLandmarksDetectorGraph(
             sc->Options<HandLandmarksDetectorGraphOptions>(),

@@ -31,8 +31,8 @@ absl::StatusOr<api2::Packet<TfLiteModelPtr>> TfLiteModelLoader::LoadFromPath(
   // TODO: get rid of manual resolving with PathToResourceAsFile
   // as soon as it's incorporated into GetResourceContents.
   if (!status_or_content.ok()) {
-    ASSIGN_OR_RETURN(auto resolved_path,
-                     mediapipe::PathToResourceAsFile(model_path));
+    MP_ASSIGN_OR_RETURN(auto resolved_path,
+                        mediapipe::PathToResourceAsFile(model_path));
     VLOG(2) << "Loading the model from " << resolved_path;
     MP_RETURN_IF_ERROR(
         mediapipe::GetResourceContents(resolved_path, &model_blob));

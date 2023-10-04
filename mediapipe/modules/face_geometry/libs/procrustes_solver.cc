@@ -172,7 +172,7 @@ class FloatPrecisionProcrustesSolver : public ProcrustesSolver {
     MP_RETURN_IF_ERROR(ComputeOptimalRotation(
         weighted_targets * centered_weighted_sources.transpose(), rotation))
         << "Failed to compute the optimal rotation!";
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         float scale,
         ComputeOptimalScale(centered_weighted_sources, weighted_sources,
                             weighted_targets, rotation),

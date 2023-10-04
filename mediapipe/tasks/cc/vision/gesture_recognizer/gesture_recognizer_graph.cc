@@ -92,8 +92,8 @@ struct GestureRecognizerOutputs {
 absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
                                    GestureRecognizerGraphOptions* options,
                                    bool is_copy) {
-  ASSIGN_OR_RETURN(const auto hand_landmarker_file,
-                   resources.GetFile(kHandLandmarkerBundleAssetName));
+  MP_ASSIGN_OR_RETURN(const auto hand_landmarker_file,
+                      resources.GetFile(kHandLandmarkerBundleAssetName));
   auto* hand_landmarker_graph_options =
       options->mutable_hand_landmarker_graph_options();
   SetExternalFile(hand_landmarker_file,
@@ -106,8 +106,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   hand_landmarker_graph_options->mutable_base_options()->set_use_stream_mode(
       options->base_options().use_stream_mode());
 
-  ASSIGN_OR_RETURN(const auto hand_gesture_recognizer_file,
-                   resources.GetFile(kHandGestureRecognizerBundleAssetName));
+  MP_ASSIGN_OR_RETURN(const auto hand_gesture_recognizer_file,
+                      resources.GetFile(kHandGestureRecognizerBundleAssetName));
   auto* hand_gesture_recognizer_graph_options =
       options->mutable_hand_gesture_recognizer_graph_options();
   SetExternalFile(hand_gesture_recognizer_file,
@@ -204,7 +204,7 @@ class GestureRecognizerGraph : public core::ModelTaskGraph {
     if (sc->Options<GestureRecognizerGraphOptions>()
             .base_options()
             .has_model_asset()) {
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           const auto* model_asset_bundle_resources,
           CreateModelAssetBundleResources<GestureRecognizerGraphOptions>(sc));
       // When the model resources cache service is available, filling in
@@ -216,7 +216,7 @@ class GestureRecognizerGraph : public core::ModelTaskGraph {
           !sc->Service(::mediapipe::tasks::core::kModelResourcesCacheService)
                .IsAvailable()));
     }
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto hand_gesture_recognition_output,
         BuildGestureRecognizerGraph(
             *sc->MutableOptions<GestureRecognizerGraphOptions>(),

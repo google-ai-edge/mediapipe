@@ -122,8 +122,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
   auto* face_detector_graph_options =
       options->mutable_face_detector_graph_options();
   if (!face_detector_graph_options->base_options().has_model_asset()) {
-    ASSIGN_OR_RETURN(const auto face_detector_file,
-                     resources.GetFile(kFaceDetectorTFLiteName));
+    MP_ASSIGN_OR_RETURN(const auto face_detector_file,
+                        resources.GetFile(kFaceDetectorTFLiteName));
     SetExternalFile(face_detector_file,
                     face_detector_graph_options->mutable_base_options()
                         ->mutable_model_asset(),
@@ -138,8 +138,8 @@ absl::Status SetSubTaskBaseOptions(const ModelAssetBundleResources& resources,
       options->mutable_face_landmarks_detector_graph_options();
   if (!face_landmarks_detector_graph_options->base_options()
            .has_model_asset()) {
-    ASSIGN_OR_RETURN(const auto face_landmarks_detector_file,
-                     resources.GetFile(kFaceLandmarksDetectorTFLiteName));
+    MP_ASSIGN_OR_RETURN(const auto face_landmarks_detector_file,
+                        resources.GetFile(kFaceLandmarksDetectorTFLiteName));
     SetExternalFile(
         face_landmarks_detector_file,
         face_landmarks_detector_graph_options->mutable_base_options()
@@ -319,7 +319,7 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
     if (sc->Options<FaceLandmarkerGraphOptions>()
             .base_options()
             .has_model_asset()) {
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           const auto* model_asset_bundle_resources,
           CreateModelAssetBundleResources<FaceLandmarkerGraphOptions>(sc));
       // Copies the file content instead of passing the pointer of file in
@@ -332,9 +332,9 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
       if (output_geometry) {
         // Set the face geometry metadata file for
         // FaceGeometryFromLandmarksGraph.
-        ASSIGN_OR_RETURN(auto face_geometry_pipeline_metadata_file,
-                         model_asset_bundle_resources->GetFile(
-                             kFaceGeometryPipelineMetadataName));
+        MP_ASSIGN_OR_RETURN(auto face_geometry_pipeline_metadata_file,
+                            model_asset_bundle_resources->GetFile(
+                                kFaceGeometryPipelineMetadataName));
         SetExternalFile(face_geometry_pipeline_metadata_file,
                         sc->MutableOptions<FaceLandmarkerGraphOptions>()
                             ->mutable_face_geometry_graph_options()
@@ -365,7 +365,7 @@ class FaceLandmarkerGraph : public core::ModelTaskGraph {
     if (HasInput(sc->OriginalNode(), kNormRectTag)) {
       norm_rect_in = graph.In(kNormRectTag).Cast<NormalizedRect>();
     }
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto outs,
         BuildFaceLandmarkerGraph(
             *sc->MutableOptions<FaceLandmarkerGraphOptions>(),

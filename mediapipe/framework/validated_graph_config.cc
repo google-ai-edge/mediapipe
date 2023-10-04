@@ -216,10 +216,11 @@ absl::Status NodeTypeInfo::Initialize(
   LegacyCalculatorSupport::Scoped<CalculatorContract> s(&contract_);
   // A number of calculators use the non-CC methods on GlCalculatorHelper
   // even though they are CalculatorBase-based.
-  ASSIGN_OR_RETURN(auto calculator_factory,
-                   CalculatorBaseRegistry::CreateByNameInNamespace(
-                       validated_graph.Package(), node_class),
-                   _ << "Unable to find Calculator \"" << node_class << "\"");
+  MP_ASSIGN_OR_RETURN(
+      auto calculator_factory,
+      CalculatorBaseRegistry::CreateByNameInNamespace(validated_graph.Package(),
+                                                      node_class),
+      _ << "Unable to find Calculator \"" << node_class << "\"");
   MP_RETURN_IF_ERROR(calculator_factory->GetContract(&contract_)).SetPrepend()
       << node_class << ": ";
 
@@ -261,7 +262,7 @@ absl::Status NodeTypeInfo::Initialize(
 
   // Run FillExpectations.
   const std::string& node_class = node.packet_generator();
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto static_access,
       internal::StaticAccessToGeneratorRegistry::CreateByNameInNamespace(
           validated_graph.Package(), node_class),
@@ -302,7 +303,7 @@ absl::Status NodeTypeInfo::Initialize(
 
   // Run FillExpectations.
   const std::string& node_class = node.status_handler();
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto static_access,
       internal::StaticAccessToStatusHandlerRegistry::CreateByNameInNamespace(
           validated_graph.Package(), node_class),
@@ -602,8 +603,8 @@ absl::Status ValidatedGraphConfig::AddOutputSidePacketsForNode(
 absl::Status ValidatedGraphConfig::InitializeStreamInfo(
     bool* need_sorting_ptr) {
   // Define output streams for graph input streams.
-  ASSIGN_OR_RETURN(std::shared_ptr<tool::TagMap> graph_input_streams,
-                   tool::TagMap::Create(config_.input_stream()));
+  MP_ASSIGN_OR_RETURN(std::shared_ptr<tool::TagMap> graph_input_streams,
+                      tool::TagMap::Create(config_.input_stream()));
   for (int index = 0; index < graph_input_streams->Names().size(); ++index) {
     std::string name = graph_input_streams->Names()[index];
     owned_packet_types_.emplace_back(new PacketType());

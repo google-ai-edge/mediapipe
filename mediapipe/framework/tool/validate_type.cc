@@ -46,7 +46,7 @@ absl::Status RunGeneratorFillExpectations(
   // side packet.
   PacketGeneratorConfig config = input_config;
 
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto static_access,
       internal::StaticAccessToGeneratorRegistry::CreateByNameInNamespace(
           package, config.packet_generator()),
@@ -81,7 +81,7 @@ absl::Status RunGenerateAndValidateTypes(
     const std::string& package) {
   ABSL_CHECK(output_side_packets);
   // Get static access to functions.
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto static_access,
       internal::StaticAccessToGeneratorRegistry::CreateByNameInNamespace(
           package, packet_generator_name),

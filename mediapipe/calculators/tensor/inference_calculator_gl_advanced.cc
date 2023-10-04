@@ -170,7 +170,7 @@ absl::Status
 InferenceCalculatorGlAdvancedImpl::GpuInferenceRunner::InitTFLiteGPURunner(
     CalculatorContext* cc,
     const mediapipe::InferenceCalculatorOptions::Delegate& delegate) {
-  ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(cc));
+  MP_ASSIGN_OR_RETURN(model_packet_, GetModelAsPacket(cc));
   const auto& model = *model_packet_.Get();
 
   bool allow_precision_loss = delegate.gpu().allow_precision_loss();
@@ -306,16 +306,16 @@ InferenceCalculatorGlAdvancedImpl::OnDiskCacheHelper::SaveGpuCaches(
     tflite::gpu::TFLiteGPURunner* gpu_runner) const {
   if (use_kernel_caching_) {
     // Save kernel file.
-    ASSIGN_OR_RETURN(std::vector<uint8_t> kernel_cache,
-                     gpu_runner->GetSerializedBinaryCache());
+    MP_ASSIGN_OR_RETURN(std::vector<uint8_t> kernel_cache,
+                        gpu_runner->GetSerializedBinaryCache());
     std::string cache_str(kernel_cache.begin(), kernel_cache.end());
     MP_RETURN_IF_ERROR(
         mediapipe::file::SetContents(cached_kernel_filename_, cache_str));
   }
   if (use_serialized_model_) {
     // Save serialized model file.
-    ASSIGN_OR_RETURN(std::vector<uint8_t> serialized_model_vec,
-                     gpu_runner->GetSerializedModel());
+    MP_ASSIGN_OR_RETURN(std::vector<uint8_t> serialized_model_vec,
+                        gpu_runner->GetSerializedModel());
     absl::string_view serialized_model(
         reinterpret_cast<char*>(serialized_model_vec.data()),
         serialized_model_vec.size());
@@ -412,8 +412,8 @@ absl::Status InferenceCalculatorGlAdvancedImpl::Process(CalculatorContext* cc) {
   RET_CHECK(!input_tensors.empty());
   auto output_tensors = absl::make_unique<std::vector<Tensor>>();
 
-  ASSIGN_OR_RETURN(*output_tensors,
-                   gpu_inference_runner_->Process(cc, input_tensors));
+  MP_ASSIGN_OR_RETURN(*output_tensors,
+                      gpu_inference_runner_->Process(cc, input_tensors));
 
   kOutTensors(cc).Send(std::move(output_tensors));
   return absl::OkStatus();

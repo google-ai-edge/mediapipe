@@ -221,15 +221,16 @@ absl::StatusOr<LabelItems> GetLabelItemsIfAny(
     LabelItems empty_label_items;
     return empty_label_items;
   }
-  ASSIGN_OR_RETURN(absl::string_view labels_file,
-                   metadata_extractor.GetAssociatedFile(labels_filename));
+  MP_ASSIGN_OR_RETURN(absl::string_view labels_file,
+                      metadata_extractor.GetAssociatedFile(labels_filename));
   const std::string display_names_filename =
       ModelMetadataExtractor::FindFirstAssociatedFileName(
           tensor_metadata, associated_file_type, locale);
   absl::string_view display_names_file;
   if (!display_names_filename.empty()) {
-    ASSIGN_OR_RETURN(display_names_file, metadata_extractor.GetAssociatedFile(
-                                             display_names_filename));
+    MP_ASSIGN_OR_RETURN(
+        display_names_file,
+        metadata_extractor.GetAssociatedFile(display_names_filename));
   }
   return mediapipe::BuildLabelMapFromFiles(labels_file, display_names_file);
 }
@@ -237,7 +238,7 @@ absl::StatusOr<LabelItems> GetLabelItemsIfAny(
 absl::StatusOr<float> GetScoreThreshold(
     const ModelMetadataExtractor& metadata_extractor,
     const TensorMetadata& tensor_metadata) {
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       const ProcessUnit* score_thresholding_process_unit,
       metadata_extractor.FindFirstProcessUnit(
           tensor_metadata, ProcessUnitOptions_ScoreThresholdingOptions));
@@ -288,7 +289,7 @@ GetScoreCalibrationOptionsIfAny(
     const ModelMetadataExtractor& metadata_extractor,
     const TensorMetadata& tensor_metadata) {
   // Get ScoreCalibrationOptions, if any.
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       const ProcessUnit* score_calibration_process_unit,
       metadata_extractor.FindFirstProcessUnit(
           tensor_metadata, tflite::ProcessUnitOptions_ScoreCalibrationOptions));
@@ -309,7 +310,7 @@ GetScoreCalibrationOptionsIfAny(
         "parameters file with type TENSOR_AXIS_SCORE_CALIBRATION.",
         MediaPipeTasksStatus::kMetadataAssociatedFileNotFoundError);
   }
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       absl::string_view score_calibration_file,
       metadata_extractor.GetAssociatedFile(score_calibration_filename));
   ScoreCalibrationCalculatorOptions score_calibration_calculator_options;
@@ -393,13 +394,13 @@ absl::StatusOr<PostProcessingSpecs> BuildPostProcessingSpecs(
       metadata_extractor->GetOutputTensorMetadata();
   PostProcessingSpecs specs;
   specs.max_results = options.max_results();
-  ASSIGN_OR_RETURN(specs.output_tensor_indices,
-                   GetOutputTensorIndices(output_tensors_metadata));
+  MP_ASSIGN_OR_RETURN(specs.output_tensor_indices,
+                      GetOutputTensorIndices(output_tensors_metadata));
   // Extracts mandatory BoundingBoxProperties and performs sanity checks on the
   // fly.
-  ASSIGN_OR_RETURN(const BoundingBoxProperties* bounding_box_properties,
-                   GetBoundingBoxProperties(*output_tensors_metadata->Get(
-                       specs.output_tensor_indices[0])));
+  MP_ASSIGN_OR_RETURN(const BoundingBoxProperties* bounding_box_properties,
+                      GetBoundingBoxProperties(*output_tensors_metadata->Get(
+                          specs.output_tensor_indices[0])));
   if (bounding_box_properties->index() == nullptr) {
     specs.bounding_box_corners_order = {0, 1, 2, 3};
   } else {
@@ -415,7 +416,7 @@ absl::StatusOr<PostProcessingSpecs> BuildPostProcessingSpecs(
   // For models with in-model-nms, the label map is stored in the Category
   // tensor which use TENSOR_VALUE_LABELS. For models with out-of-model-nms, the
   // label map is stored in the Score tensor which use TENSOR_AXIS_LABELS.
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       specs.label_items,
       GetLabelItemsIfAny(
           *metadata_extractor,
@@ -425,7 +426,7 @@ absl::StatusOr<PostProcessingSpecs> BuildPostProcessingSpecs(
           options.display_names_locale()));
   // Obtains allow/deny categories.
   specs.is_allowlist = !options.category_allowlist().empty();
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       specs.allow_or_deny_categories,
       GetAllowOrDenyCategoryIndicesIfAny(options, specs.label_items));
 
@@ -433,7 +434,7 @@ absl::StatusOr<PostProcessingSpecs> BuildPostProcessingSpecs(
   if (options.has_score_threshold()) {
     specs.score_threshold = options.score_threshold();
   } else {
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         specs.score_threshold,
         GetScoreThreshold(
             *metadata_extractor,
@@ -444,7 +445,7 @@ absl::StatusOr<PostProcessingSpecs> BuildPostProcessingSpecs(
   }
   if (in_model_nms) {
     // Builds score calibration options (if available) from metadata.
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         specs.score_calibration_options,
         GetScoreCalibrationOptionsIfAny(
             *metadata_extractor,
@@ -741,9 +742,9 @@ absl::Status ConfigureDetectionPostprocessingGraph(
   const ModelMetadataExtractor* metadata_extractor =
       model_resources.GetMetadataExtractor();
   if (in_model_nms) {
-    ASSIGN_OR_RETURN(auto post_processing_specs,
-                     BuildInModelNmsPostProcessingSpecs(detector_options,
-                                                        metadata_extractor));
+    MP_ASSIGN_OR_RETURN(auto post_processing_specs,
+                        BuildInModelNmsPostProcessingSpecs(detector_options,
+                                                           metadata_extractor));
     ConfigureInModelNmsTensorsToDetectionsCalculator(
         post_processing_specs, options.mutable_tensors_to_detections_options());
     ConfigureDetectionLabelIdToTextCalculator(
@@ -754,9 +755,9 @@ absl::Status ConfigureDetectionPostprocessingGraph(
           std::move(*post_processing_specs.score_calibration_options);
     }
   } else {
-    ASSIGN_OR_RETURN(auto post_processing_specs,
-                     BuildOutModelNmsPostProcessingSpecs(detector_options,
-                                                         metadata_extractor));
+    MP_ASSIGN_OR_RETURN(auto post_processing_specs,
+                        BuildOutModelNmsPostProcessingSpecs(
+                            detector_options, metadata_extractor));
     MP_RETURN_IF_ERROR(ConfigureOutModelNmsTensorsToDetectionsCalculator(
         metadata_extractor, post_processing_specs,
         options.mutable_tensors_to_detections_options()));
@@ -795,7 +796,7 @@ class DetectionPostprocessingGraph : public mediapipe::Subgraph {
   absl::StatusOr<mediapipe::CalculatorGraphConfig> GetConfig(
       mediapipe::SubgraphContext* sc) override {
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto output_streams,
         BuildDetectionPostprocessing(
             *sc->MutableOptions<proto::DetectionPostprocessingGraphOptions>(),
@@ -823,8 +824,8 @@ class DetectionPostprocessingGraph : public mediapipe::Subgraph {
     if (!graph_options.has_non_max_suppression_options()) {
       // Calculators to perform score calibration, if specified in the options.
       if (graph_options.has_score_calibration_options()) {
-        ASSIGN_OR_RETURN(tensors_in,
-                         CalibrateScores(tensors_in, graph_options, graph));
+        MP_ASSIGN_OR_RETURN(tensors_in,
+                            CalibrateScores(tensors_in, graph_options, graph));
       }
       // Calculator to convert output tensors to a detection proto vector.
       auto& tensors_to_detections =

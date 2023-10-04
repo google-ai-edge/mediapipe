@@ -150,16 +150,16 @@ class Packet {
   // general recommendation is to avoid calling this function.
   //
   // Example usage:
-  //   ASSIGN_OR_RETURN(std::unique_ptr<Detection> detection,
+  //   MP_ASSIGN_OR_RETURN(std::unique_ptr<Detection> detection,
   //                    p.ConsumeOrCopy<Detection>());
   //   // The unique_ptr type can be omitted with auto.
-  //   ASSIGN_OR_RETURN(auto detection, p.ConsumeOrCopy<Detection>());
-  //   If you would like to crash on failure (prefer ASSIGN_OR_RETURN):
+  //   MP_ASSIGN_OR_RETURN(auto detection, p.ConsumeOrCopy<Detection>());
+  //   If you would like to crash on failure (prefer MP_ASSIGN_OR_RETURN):
   //   auto detection = p.ConsumeOrCopy<Detection>().value();
   //   // In functions which do not return absl::Status use an adaptor
-  //   // function as the third argument to ASSIGN_OR_RETURN.  In tests,
+  //   // function as the third argument to MP_ASSIGN_OR_RETURN.  In tests,
   //   // use an adaptor which returns void.
-  //   ASSIGN_OR_RETURN(auto detection, p.ConsumeOrCopy<Detection>(),
+  //   MP_ASSIGN_OR_RETURN(auto detection, p.ConsumeOrCopy<Detection>(),
   //                    _.With([](const absl::Status& status) {
   //                      MP_EXPECT_OK(status);
   //                      // Use CHECK_OK to crash and report a usable line

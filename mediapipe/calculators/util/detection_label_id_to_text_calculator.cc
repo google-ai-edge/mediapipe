@@ -83,8 +83,8 @@ absl::Status DetectionLabelIdToTextCalculator::Open(CalculatorContext* cc) {
         << "Only can set one of the following fields in the CalculatorOptions: "
            "label_map_path, label, and label_items.";
     std::string string_path;
-    ASSIGN_OR_RETURN(string_path,
-                     PathToResourceAsFile(options.label_map_path()));
+    MP_ASSIGN_OR_RETURN(string_path,
+                        PathToResourceAsFile(options.label_map_path()));
     std::string label_map_string;
     MP_RETURN_IF_ERROR(
         mediapipe::GetResourceContents(string_path, &label_map_string));

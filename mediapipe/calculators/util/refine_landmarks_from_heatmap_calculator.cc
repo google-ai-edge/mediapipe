@@ -77,7 +77,7 @@ class RefineLandmarksFromHeatmapCalculatorImpl
     const auto& options =
         cc->Options<mediapipe::RefineLandmarksFromHeatmapCalculatorOptions>();
 
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto out_lms,
         RefineLandmarksFromHeatMap(
             in_lms, hm_raw, hm_tensor.shape().dims, options.kernel_size(),
@@ -108,7 +108,7 @@ absl::StatusOr<mediapipe::NormalizedLandmarkList> RefineLandmarksFromHeatMap(
     const float* heatmap_raw_data, const std::vector<int>& heatmap_dims,
     int kernel_size, float min_confidence_to_refine, bool refine_presence,
     bool refine_visibility) {
-  ASSIGN_OR_RETURN(auto hm_dims, GetHwcFromDims(heatmap_dims));
+  MP_ASSIGN_OR_RETURN(auto hm_dims, GetHwcFromDims(heatmap_dims));
   auto [hm_height, hm_width, hm_channels] = hm_dims;
 
   RET_CHECK_EQ(in_lms.landmark_size(), hm_channels)

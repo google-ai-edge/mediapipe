@@ -517,8 +517,8 @@ absl::Status AudioToTensorCalculator::OutputTensor(const Matrix& block,
         // The last two elements are Nyquist component.
         fft_output_matrix(fft_size_ - 2) = fft_output_[1];  // Nyquist real part
         fft_output_matrix(fft_size_ - 1) = 0.0f;  // Nyquist imagery part
-        ASSIGN_OR_RETURN(output_tensor, ConvertToTensor(fft_output_matrix,
-                                                        {2, fft_size_ / 2}));
+        MP_ASSIGN_OR_RETURN(output_tensor, ConvertToTensor(fft_output_matrix,
+                                                           {2, fft_size_ / 2}));
         break;
       }
       case Options::WITH_DC_AND_NYQUIST: {
@@ -529,7 +529,7 @@ absl::Status AudioToTensorCalculator::OutputTensor(const Matrix& block,
         // The last two elements are  Nyquist component.
         fft_output_matrix(fft_size_) = fft_output_[1];  // Nyquist real part
         fft_output_matrix(fft_size_ + 1) = 0.0f;        // Nyquist imagery part
-        ASSIGN_OR_RETURN(
+        MP_ASSIGN_OR_RETURN(
             output_tensor,
             ConvertToTensor(fft_output_matrix, {2, (fft_size_ + 2) / 2}));
         break;
@@ -537,7 +537,7 @@ absl::Status AudioToTensorCalculator::OutputTensor(const Matrix& block,
       case Options::WITHOUT_DC_AND_NYQUIST: {
         Matrix fft_output_matrix =
             Eigen::Map<const Matrix>(fft_output_.data() + 2, 1, fft_size_ - 2);
-        ASSIGN_OR_RETURN(
+        MP_ASSIGN_OR_RETURN(
             output_tensor,
             ConvertToTensor(fft_output_matrix, {2, (fft_size_ - 2) / 2}));
         break;
@@ -547,8 +547,8 @@ absl::Status AudioToTensorCalculator::OutputTensor(const Matrix& block,
     }
 
   } else {
-    ASSIGN_OR_RETURN(output_tensor,
-                     ConvertToTensor(block, {num_channels_, num_samples_}));
+    MP_ASSIGN_OR_RETURN(output_tensor,
+                        ConvertToTensor(block, {num_channels_, num_samples_}));
   }
   kTensorsOut(cc).Send(std::move(output_tensor), timestamp);
   return absl::OkStatus();

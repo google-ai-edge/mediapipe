@@ -88,11 +88,11 @@ absl::Status CopyLiteralOptions(CalculatorGraphConfig::Node parent_node,
       FieldData parent_options;
       ASSIGN_IF_OK(parent_options,
                    GetNodeOptions(parent_data, graph_extension_type));
-      ASSIGN_OR_RETURN(graph_options,
-                       MergeMessages(graph_options, parent_options));
+      MP_ASSIGN_OR_RETURN(graph_options,
+                          MergeMessages(graph_options, parent_options));
       FieldData node_options;
-      ASSIGN_OR_RETURN(node_options,
-                       GetNodeOptions(node_data, node_extension_type));
+      MP_ASSIGN_OR_RETURN(node_options,
+                          GetNodeOptions(node_data, node_extension_type));
       if (!node_options.has_message_value() ||
           !graph_options.has_message_value()) {
         continue;
@@ -100,7 +100,8 @@ absl::Status CopyLiteralOptions(CalculatorGraphConfig::Node parent_node,
       FieldPath graph_path = GetPath(graph_tag, MessageType(graph_options));
       FieldPath node_path = GetPath(node_tag, MessageType(node_options));
       std::vector<FieldData> packet_data;
-      ASSIGN_OR_RETURN(packet_data, GetFieldValues(graph_options, graph_path));
+      MP_ASSIGN_OR_RETURN(packet_data,
+                          GetFieldValues(graph_options, graph_path));
       MP_RETURN_IF_ERROR(
           MergeFieldValues(node_options, node_path, packet_data));
       options_field_util::SetOptionsMessage(node_options, &node);

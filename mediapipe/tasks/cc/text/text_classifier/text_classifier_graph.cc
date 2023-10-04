@@ -85,11 +85,11 @@ class TextClassifierGraph : public core::ModelTaskGraph {
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       SubgraphContext* sc) override {
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         const ModelResources* model_resources,
         CreateModelResources<proto::TextClassifierGraphOptions>(sc));
     Graph graph;
-    ASSIGN_OR_RETURN(
+    MP_ASSIGN_OR_RETURN(
         auto classifications,
         BuildTextClassifierTask(
             sc->Options<proto::TextClassifierGraphOptions>(), *model_resources,

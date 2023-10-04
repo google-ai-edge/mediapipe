@@ -255,7 +255,7 @@ class GlProcessor : public ImageToTensorConverter {
           << "OpenGL ES 3.1 is required.";
       command_queue_ = tflite::gpu::gl::NewCommandQueue(gpu_info);
 
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           auto extractor,
           SubRectExtractorGl::Create(gl_helper_.GetGlContext(),
                                      input_starts_at_bottom, border_mode));
@@ -293,10 +293,10 @@ class GlProcessor : public ImageToTensorConverter {
 
           constexpr float kInputImageRangeMin = 0.0f;
           constexpr float kInputImageRangeMax = 1.0f;
-          ASSIGN_OR_RETURN(auto transform,
-                           GetValueRangeTransformation(kInputImageRangeMin,
-                                                       kInputImageRangeMax,
-                                                       range_min, range_max));
+          MP_ASSIGN_OR_RETURN(auto transform,
+                              GetValueRangeTransformation(
+                                  kInputImageRangeMin, kInputImageRangeMax,
+                                  range_min, range_max));
 
           const int output_size = output_tensor.bytes() / output_shape.dims[0];
           auto buffer_view = output_tensor.GetOpenGlBufferWriteView();

@@ -656,7 +656,7 @@ absl::Status TensorConverterCalculator::LoadOptions(CalculatorContext* cc,
   }
 
   // Get y-flip mode.
-  ASSIGN_OR_RETURN(flip_vertically_, ShouldFlipVertically(options, use_gpu));
+  MP_ASSIGN_OR_RETURN(flip_vertically_, ShouldFlipVertically(options, use_gpu));
 
   // Get row_major_matrix mode.
   row_major_matrix_ = options.row_major_matrix();

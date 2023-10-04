@@ -106,7 +106,7 @@ absl::Status RegexPreprocessorCalculator::Open(CalculatorContext* cc) {
     return absl::InvalidArgumentError("No tensor metadata found");
   }
 
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       const auto* tokenizer_metadata,
       metadata_extractor->FindFirstProcessUnit(
           *tensor_metadata, tflite::ProcessUnitOptions_RegexTokenizerOptions));
@@ -115,9 +115,9 @@ absl::Status RegexPreprocessorCalculator::Open(CalculatorContext* cc) {
   }
   const tflite::RegexTokenizerOptions* regex_tokenizer_options =
       tokenizer_metadata->options_as<tflite::RegexTokenizerOptions>();
-  ASSIGN_OR_RETURN(tokenizer_,
-                   tasks::text::tokenizers::CreateRegexTokenizerFromOptions(
-                       regex_tokenizer_options, metadata_extractor));
+  MP_ASSIGN_OR_RETURN(tokenizer_,
+                      tasks::text::tokenizers::CreateRegexTokenizerFromOptions(
+                          regex_tokenizer_options, metadata_extractor));
 
   const auto& options =
       cc->Options<mediapipe::RegexPreprocessorCalculatorOptions>();

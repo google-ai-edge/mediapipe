@@ -478,7 +478,7 @@ absl::Status MotionAnalysisCalculator::Process(CalculatorContext* cc) {
 
     // Fill in timestamps we process.
     if (!selection_stream->Value().IsEmpty()) {
-      ASSIGN_OR_RETURN(
+      MP_ASSIGN_OR_RETURN(
           frame_selection_result,
           selection_stream->Value().ConsumeOrCopy<FrameSelectionResult>());
       use_frame = true;

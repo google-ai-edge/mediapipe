@@ -87,7 +87,7 @@ absl::StatusOr<std::unique_ptr<TextEmbedder>> TextEmbedder::Create(
 }
 
 absl::StatusOr<TextEmbedderResult> TextEmbedder::Embed(absl::string_view text) {
-  ASSIGN_OR_RETURN(
+  MP_ASSIGN_OR_RETURN(
       auto output_packets,
       runner_->Process(
           {{kTextInStreamName, MakePacket<std::string>(std::string(text))}}));

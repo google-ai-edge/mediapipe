@@ -67,9 +67,10 @@ absl::StatusOr<std::vector<int>> RunRegexPreprocessorCalculator(
   tool::AddVectorSink("tensors", &graph_config, &output_packets);
 
   std::string model_buffer = tasks::core::LoadBinaryContent(kTestModelPath);
-  ASSIGN_OR_RETURN(std::unique_ptr<ModelMetadataExtractor> metadata_extractor,
-                   ModelMetadataExtractor::CreateFromModelBuffer(
-                       model_buffer.data(), model_buffer.size()));
+  MP_ASSIGN_OR_RETURN(
+      std::unique_ptr<ModelMetadataExtractor> metadata_extractor,
+      ModelMetadataExtractor::CreateFromModelBuffer(model_buffer.data(),
+                                                    model_buffer.size()));
   // Run the graph.
   CalculatorGraph graph;
   MP_RETURN_IF_ERROR(graph.Initialize(
