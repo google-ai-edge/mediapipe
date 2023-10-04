@@ -248,7 +248,6 @@ rewrite_target_list = [
     "segmenter_proto",
     "sequence_shift_calculator_proto",
     "set_alpha_calculator_proto",
-    "set_joints_visibility_calculator_proto",
     "sharpen_calculator_gl_proto",
     "simple_calculator_proto",
     "single_shot_detector_gpu_cpu_proto",

@@ -1660,6 +1660,49 @@ cc_test(
 )
 
 cc_library(
+    name = "set_joints_visibility_calculator",
+    srcs = ["set_joints_visibility_calculator.cc"],
+    hdrs = ["set_joints_visibility_calculator.h"],
+    deps = [
+        ":set_joints_visibility_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/api2:node",
+        "//mediapipe/framework/formats:body_rig_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_proto_library(
+    name = "set_joints_visibility_calculator_proto",
+    srcs = ["set_joints_visibility_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_test(
+    name = "set_joints_visibility_calculator_test",
+    srcs = ["set_joints_visibility_calculator_test.cc"],
+    deps = [
+        ":set_joints_visibility_calculator",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/formats:body_rig_cc_proto",
+        "//mediapipe/framework/formats:landmark_cc_proto",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status_matchers",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:optional",
+    ],
+)
+
+cc_library(
     name = "pass_through_or_empty_detection_vector_calculator",
     srcs = ["pass_through_or_empty_detection_vector_calculator.cc"],
     hdrs = ["pass_through_or_empty_detection_vector_calculator.h"],

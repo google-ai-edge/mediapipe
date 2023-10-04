@@ -1,0 +1,55 @@
+// Copyright 2023 The MediaPipe Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message SetJointsVisibilityCalculatorOptions {
+  extend CalculatorOptions {
+    optional SetJointsVisibilityCalculatorOptions ext = 406440186;
+  }
+
+  // Mapping that tells where to take visibility for the joint.
+  message Mapping {
+    // Keep visibility unchanged.
+    message Unchanged {}
+
+    // Copy visibility as is from the given landmark.
+    message Copy {
+      // Index of the landmark.
+      optional int32 idx = 1;
+    }
+
+    // Take the highest visibility among the given landmarks.
+    message Highest {
+      // Indexes of landmarks to take the highest visibility value from. At
+      // least one index must be provided.
+      repeated int32 idx = 1 [packed = true];
+    }
+
+    oneof mapping {
+      Unchanged unchanged = 1;
+      Copy copy = 2;
+      Highest highest = 3;
+    }
+  }
+
+  // Mapping that tells where to take visibility for each joint.
+  // Number of mappings must be equal to number of provided joints. Each mapping
+  // must contain exactly one rule for how to set the joint visibility.
+  repeated Mapping mapping = 1;
+}
