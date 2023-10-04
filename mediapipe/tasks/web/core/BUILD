@@ -28,6 +28,13 @@ mediapipe_ts_library(
     ],
 )
 
+genrule(
+    name = "run_script_genrule",
+    srcs = ["fileset_resolver.ts.template"],
+    outs = ["fileset_resolver.ts"],
+    cmd = "cp $< $@",
+)
+
 mediapipe_ts_library(
     name = "fileset_resolver",
     srcs = ["fileset_resolver.ts"],

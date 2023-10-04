@@ -47,7 +47,7 @@ async function isSimdSupported(): Promise<boolean> {
 }
 
 async function createFileset(
-    taskName: MediapipeTaskCategory, basePath?: string): Promise<WasmFileset> {
+    taskName: MediapipeTaskCategory, basePath = ''): Promise<WasmFileset> {
   const suffix =
       await isSimdSupported() ? 'wasm_internal' : 'wasm_nosimd_internal';
 
@@ -93,7 +93,7 @@ export class FilesetResolver {
    * @return A `WasmFileset` that can be used to initialize MediaPipe Audio
    *    tasks.
    */
-  static forAudioTasks(basePath = ''): Promise<WasmFileset> {
+  static forAudioTasks(basePath?: string): Promise<WasmFileset> {
     return createFileset('audio', basePath);
   }
 
@@ -107,7 +107,7 @@ export class FilesetResolver {
    * @return A `WasmFileset` that can be used to initialize MediaPipe Text
    *    tasks.
    */
-  static forTextTasks(basePath = ''): Promise<WasmFileset> {
+  static forTextTasks(basePath?: string): Promise<WasmFileset> {
     return createFileset('text', basePath);
   }
 
@@ -121,7 +121,7 @@ export class FilesetResolver {
    * @return A `WasmFileset` that can be used to initialize MediaPipe Vision
    *    tasks.
    */
-  static forVisionTasks(basePath = ''): Promise<WasmFileset> {
+  static forVisionTasks(basePath?: string): Promise<WasmFileset> {
     return createFileset('vision', basePath);
   }
 }
