@@ -21,6 +21,7 @@ import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
+import android.opengl.GLES31;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
@@ -204,11 +205,36 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
     // Capture Bitmap if requested.
     BitmapCaptureListener bitmapCaptureListener = this.bitmapCaptureListener;
     if (captureNextFrameBitmap.getAndSet(false) && bitmapCaptureListener != null) {
-      int bitmapSize = surfaceWidth * surfaceHeight;
+      // Find the name of the bound texture.
+      int[] texName = new int[1];
+      if (surfaceTexture != null) {
+        GLES20.glGetIntegerv(GLES11Ext.GL_TEXTURE_BINDING_EXTERNAL_OES, texName, 0);
+      } else {
+        texName[0] = frame.getTextureName();
+      }
+
+      // Find texture size and create byte buffer large enough to hold an RGBA image.
+      int[] texDims = new int[2];
+      GLES31.glGetTexLevelParameteriv(textureTarget, 0, GLES31.GL_TEXTURE_WIDTH, texDims, 0);
+      GLES31.glGetTexLevelParameteriv(textureTarget, 0, GLES31.GL_TEXTURE_HEIGHT, texDims, 1);
+      int texWidth = texDims[0];
+      int texHeight = texDims[1];
+      int bitmapSize = texWidth * texHeight;
       ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bitmapSize * 4);
       byteBuffer.order(ByteOrder.nativeOrder());
+
+      // Read pixels from texture.
+      int[] fbo = new int[1];
+      GLES20.glGenFramebuffers(1, fbo, 0);
+      GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fbo[0]);
+      GLES20.glFramebufferTexture2D(
+          GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, texName[0], 0);
       GLES20.glReadPixels(
-          0, 0, surfaceWidth, surfaceHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, byteBuffer);
+          0, 0, texWidth, texHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, byteBuffer);
+      GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+      GLES20.glDeleteFramebuffers(1, fbo, 0);
+      ShaderUtil.checkGlError("capture frame");
+
       int[] pixelBuffer = new int[bitmapSize];
       byteBuffer.asIntBuffer().get(pixelBuffer);
       for (int i = 0; i < bitmapSize; i++) {
@@ -218,10 +244,17 @@ public class GlSurfaceViewRenderer implements GLSurfaceView.Renderer {
                 | ((pixelBuffer[i] & 0x000000ff) << 16)
                 | ((pixelBuffer[i] & 0x00ff0000) >> 16);
       }
-      Bitmap bitmap = Bitmap.createBitmap(surfaceWidth, surfaceHeight, Bitmap.Config.ARGB_8888);
+
+      // Send bitmap.
+      Bitmap bitmap = Bitmap.createBitmap(texWidth, texHeight, Bitmap.Config.ARGB_8888);
       bitmap.setPixels(
-          pixelBuffer, /* offset= */bitmapSize - surfaceWidth, /* stride= */-surfaceWidth,
-          /* x= */0, /* y= */0, surfaceWidth, surfaceHeight);
+          pixelBuffer,
+          /* offset= */ bitmapSize - texWidth,
+          /* stride= */ -texWidth,
+          /* x= */ 0,
+          /* y= */ 0,
+          texWidth,
+          texHeight);
       bitmapCaptureListener.onBitmapCaptured(bitmap);
     }
 
